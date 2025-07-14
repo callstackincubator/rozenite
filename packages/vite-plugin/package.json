@@ -1,0 +1,55 @@
+{
+  "name": "@rozenite/vite-plugin",
+  "version": "0.0.1",
+  "description": "Vite plugin for developing React Native DevTools plugins with hot reload and development tools",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "keywords": [
+    "react-native",
+    "devtools",
+    "vite",
+    "plugin"
+  ],
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "license": "MIT",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "ejs": "^3.1.9",
+    "vite-require": "^0.2.3"
+  },
+  "peerDependencies": {
+    "vite": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

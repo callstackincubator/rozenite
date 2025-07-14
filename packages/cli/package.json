@@ -1,0 +1,48 @@
+{
+  "name": "rozenite",
+  "version": "0.0.1",
+  "description": "Command-line interface for creating and managing React Native DevTools plugins",
+  "type": "module",
+  "bin": {
+    "rozenite": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "react-native",
+    "devtools",
+    "cli",
+    "plugin",
+    "generator"
+  ],
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "commander": "^14.0.0",
+    "ejs": "^3.1.10",
+    "is-unicode-supported": "^2.1.0",
+    "nano-spawn": "^1.0.2",
+    "picocolors": "^1.1.1",
+    "validate-npm-package-name": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5",
+    "@types/validate-npm-package-name": "^4.0.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

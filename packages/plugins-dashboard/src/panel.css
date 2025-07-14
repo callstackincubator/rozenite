@@ -1,0 +1,259 @@
+html,
+body {
+  min-height: 100vh;
+  background-color: #000000;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
+.header {
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+  border-bottom: 2px solid #444444;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.header-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(130, 50, 255, 0.1) 0%,
+    transparent 50%
+  );
+  z-index: 1;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  position: relative;
+  z-index: 2;
+  flex-wrap: wrap;
+}
+
+.header-text {
+  text-align: center;
+}
+
+.title {
+  font-size: 2.8rem;
+  font-weight: bold;
+  margin: 0;
+  background: linear-gradient(135deg, #8232ff 0%, #a855f7 50%, #8232ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 20px rgba(130, 50, 255, 0.3);
+  letter-spacing: 0.02em;
+  position: relative;
+  z-index: 2;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #a0a0a0;
+  margin: 0.5rem 0 0 0;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  position: relative;
+  z-index: 2;
+}
+
+/* Content styles */
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Plugins grid */
+.plugins-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Plugin card styles */
+.plugin-card {
+  background-color: #111111;
+  border: 1px solid #333333;
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.plugin-card:hover {
+  border-color: #555555 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.05);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  background-color: #222222;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.plugin-card:hover .card-icon {
+  background-color: #333333 !important;
+}
+
+.category {
+  font-size: 0.75rem;
+  color: #888888;
+  background-color: #222222;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.plugin-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  color: #ffffff;
+}
+
+.plugin-id {
+  font-size: 0.8rem;
+  color: #8232ff;
+  background-color: #1a1a1a;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
+  margin: 0 0 0.75rem 0;
+  display: inline-block;
+  border: 1px solid #333333;
+}
+
+.plugin-description {
+  font-size: 0.9375rem;
+  color: #a0a0a0;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stats {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: #888888;
+  transition: color 0.3s ease;
+}
+
+.plugin-card:hover .stat-badge {
+  color: #cccccc !important;
+}
+
+.stat-icon {
+  font-size: 0.75rem;
+}
+
+.link-icon {
+  color: #666666;
+  transition: color 0.3s ease;
+}
+
+.plugin-card:hover .link-icon {
+  color: #ffffff !important;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  height: 50px;
+  width: auto;
+  color: #8232ff;
+  filter: drop-shadow(0 0 15px rgba(130, 50, 255, 0.4));
+}
+
+@media (max-width: 768px) {
+  .plugins-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-section {
+    flex-direction: column !important;
+    text-align: center !important;
+  }
+
+  .hero-text {
+    min-width: auto !important;
+  }
+
+  .hero-image {
+    flex: none !important;
+  }
+
+  .title {
+    font-size: 2.5rem !important;
+  }
+
+  .stats {
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 2rem 1rem !important;
+  }
+
+  .content {
+    padding: 2rem 1rem !important;
+  }
+
+  .plugins-grid {
+    gap: 1rem !important;
+  }
+
+  .plugin-card {
+    padding: 1rem !important;
+  }
+
+  .title {
+    font-size: 2rem !important;
+  }
+}

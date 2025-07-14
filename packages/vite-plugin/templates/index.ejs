@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hello World Plugin - Panel Index</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+          'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+          'Helvetica Neue', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #007acc;
+        padding-bottom: 10px;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+      li {
+        margin: 10px 0;
+      }
+      a {
+        display: block;
+        padding: 15px 20px;
+        background: #007acc;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+        font-weight: 500;
+      }
+      a:hover {
+        background: #005a9e;
+      }
+      .devtools-link {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+      }
+      .devtools-link a {
+        background: #28a745;
+      }
+      .devtools-link a:hover {
+        background: #1e7e34;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Hello World Plugin - Available Panels</h1>
+      <ul>
+        <% panels.forEach(function(panel) { %>
+        <li><a href="/<%= panel.htmlFile %>"><%= panel.name %></a></li>
+        <% }); %>
+      </ul>
+      <div class="devtools-link">
+        <a href="/devtools.html">DevTools Interface</a>
+      </div>
+    </div>
+  </body>
+</html>

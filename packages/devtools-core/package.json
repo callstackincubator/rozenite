@@ -1,0 +1,52 @@
+{
+  "name": "@rozenite/devtools-core",
+  "version": "0.0.1",
+  "description": "Core framework for React Native DevTools plugin orchestration, providing host-guest RPC communication and plugin management",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "react-native",
+    "devtools",
+    "framework",
+    "plugin",
+    "orchestration"
+  ],
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "license": "MIT",
+  "exports": {
+    "./guest": {
+      "types": "./dist/guest.d.ts",
+      "import": "./dist/guest.js",
+      "require": "./dist/guest.cjs"
+    },
+    "./host": {
+      "types": "./dist/host.d.ts",
+      "import": "./dist/host.js",
+      "require": "./dist/host.cjs"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build:host": "VITE_ENTRY_FILE=host vite build",
+    "build:guest": "VITE_ENTRY_FILE=guest vite build",
+    "build": "pnpm run clean && pnpm run build:host && pnpm run build:guest"
+  },
+  "dependencies": {
+    "birpc": "^2.4.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=22"
+  }
+}

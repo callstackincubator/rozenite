@@ -1,0 +1,43 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "types": ["node"],
+    "rootDir": "src",
+    "jsx": "react-jsx",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noUnusedLocals": false,
+    "lib": ["dom"],
+    "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo"
+  },
+  "files": ["../../node_modules/@nx/react-native/typings/svg.d.ts"],
+  "exclude": [
+    "out-tsc",
+    "dist",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.js",
+    "src/**/*.spec.js",
+    "src/**/*.test.jsx",
+    "src/**/*.spec.jsx",
+    "src/test-setup.ts"
+  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
+  "references": [
+    {
+      "path": "../../packages/hello-world-plugin/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/devtools-core/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/cli/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/devtools-metro/tsconfig.lib.json"
+    }
+  ]
+}

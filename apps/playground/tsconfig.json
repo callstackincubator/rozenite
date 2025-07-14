@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "../../packages/hello-world-plugin"
+    },
+    {
+      "path": "../../packages/devtools-core"
+    },
+    {
+      "path": "../../packages/cli"
+    },
+    {
+      "path": "../../packages/devtools-metro"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ]
+}

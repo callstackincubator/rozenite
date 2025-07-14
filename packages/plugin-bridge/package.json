@@ -1,0 +1,63 @@
+{
+  "name": "@rozenite/plugin-bridge",
+  "version": "0.0.1",
+  "description": "Isomorphic communication layer for React Native DevTools plugins across Node.js, React Native, and web environments",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "react-native",
+    "devtools",
+    "plugin",
+    "bridge",
+    "isomorphic"
+  ],
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": {
+        "node": "./dist/node.d.ts",
+        "browser": "./dist/browser.d.ts",
+        "react-native": "./dist/browser.d.ts",
+        "default": "./dist/browser.d.ts"
+      },
+      "import": {
+        "node": "./dist/node.js",
+        "browser": "./dist/browser.js",
+        "react-native": "./dist/browser.js",
+        "default": "./dist/browser.js"
+      },
+      "require": {
+        "node": "./dist/node.cjs",
+        "browser": "./dist/browser.cjs",
+        "react-native": "./dist/browser.cjs",
+        "default": "./dist/browser.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {},
+  "peerDependencies": {
+    "react": ">=17"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

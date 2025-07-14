@@ -1,0 +1,8 @@
+{
+  "version": "0.0.1",
+  "name": "Callstack Plugins Dashboard",
+  "description": "A plugin that displays a dashboard of all registered plugins",
+  "homepage_url": "https://github.com/callstackincubator/devtools-framework",
+  "manifest_version": 1,
+  "devtools_page": "devtools.html"
+}

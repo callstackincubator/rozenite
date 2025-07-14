@@ -1,0 +1,22 @@
+{
+  "name": "@rn-devtools/playground",
+  "version": "0.0.1",
+  "dependencies": {
+    "@redux-devtools/remote": "^0.9.5",
+    "@tanstack/react-query": "^5.81.5",
+    "expo-atlas": "^0.4.0",
+    "expo-atlas-without-expo": "^1.0.1",
+    "react-native": "*",
+    "react-redux": "^9.2.0",
+    "redux": "^5.0.1"
+  },
+  "devDependencies": {
+    "@babel/runtime": "*",
+    "@rozenite/devtools-core": "workspace:*",
+    "@rozenite/hello-world-plugin": "workspace:*",
+    "@rozenite/metro": "workspace:*",
+    "http-proxy": "^1.18.1",
+    "rozenite": "workspace:*"
+  },
+  "private": true
+}
