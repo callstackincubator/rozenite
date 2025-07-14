@@ -41,6 +41,7 @@
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "ejs": "^3.1.9",
+    "vite-plugin-react-native-web": "^2.1.1",
     "vite-require": "^0.2.3"
   },
   "peerDependencies": {
