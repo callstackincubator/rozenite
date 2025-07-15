@@ -14,10 +14,8 @@ export default defineConfig({
   base: './',
   build: {
     lib: {
-      entry: {
-        browser: resolve(__dirname, 'src/browser.ts'),
-        node: resolve(__dirname, 'src/node.ts'),
-      },
+      entry: resolve(__dirname, 'src/index.ts'),
+      fileName: 'index',
       formats: ['es', 'cjs'],
     },
     rollupOptions: {

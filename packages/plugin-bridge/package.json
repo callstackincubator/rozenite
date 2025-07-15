@@ -27,22 +27,19 @@
   "exports": {
     ".": {
       "types": {
-        "node": "./dist/node.d.ts",
-        "browser": "./dist/browser.d.ts",
-        "react-native": "./dist/browser.d.ts",
-        "default": "./dist/browser.d.ts"
+        "browser": "./dist/index.d.ts",
+        "react-native": "./dist/index.d.ts",
+        "default": "./dist/index.d.ts"
       },
       "import": {
-        "node": "./dist/node.js",
-        "browser": "./dist/browser.js",
-        "react-native": "./dist/browser.js",
-        "default": "./dist/browser.js"
+        "browser": "./dist/index.js",
+        "react-native": "./dist/index.js",
+        "default": "./dist/index.js"
       },
       "require": {
-        "node": "./dist/node.cjs",
-        "browser": "./dist/browser.cjs",
-        "react-native": "./dist/browser.cjs",
-        "default": "./dist/browser.cjs"
+        "browser": "./dist/index.cjs",
+        "react-native": "./dist/index.cjs",
+        "default": "./dist/index.cjs"
       }
     }
   },

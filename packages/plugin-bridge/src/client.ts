@@ -1,5 +1,6 @@
-import { getWebSocketBroadcastServer } from './broadcast-server';
+import { getChannel } from './channel/factory.js';
 import { getDevToolsMessage } from './message';
+import { Subscription } from './types';
 
 const clients = new Map<
   string,
@@ -23,22 +24,16 @@ export type DevToolsPluginClient<
   close: () => void;
 };
 
-export type Subscription = {
-  remove: () => void;
-};
-
 const createDevToolsPluginClient = async <
   TEventMap extends Record<string, unknown> = Record<string, unknown>
 >(
   pluginId: string
 ): Promise<DevToolsPluginClient<TEventMap>> => {
-  const serverUrl = getWebSocketBroadcastServer();
-  const ws = new WebSocket(serverUrl);
-
+  const channel = await getChannel();
   const listeners = new Map<string, Set<MessageListener>>();
 
-  const handleMessage = async (event: MessageEvent) => {
-    const message = getDevToolsMessage(event.data);
+  const handleMessage = async (cdpMessage: unknown) => {
+    const message = getDevToolsMessage(cdpMessage);
 
     if (!message || message.pluginId !== pluginId) {
       return;
@@ -57,16 +52,14 @@ const createDevToolsPluginClient = async <
     type: TType,
     payload: TEventMap[TType]
   ) => {
-    ws.send(
-      JSON.stringify({
-        pluginId,
-        type,
-        payload,
-      })
-    );
+    channel.send({
+      pluginId,
+      type,
+      payload,
+    });
   };
 
-  ws.addEventListener('message', handleMessage);
+  const subscription = channel.onMessage(handleMessage);
 
   const client: DevToolsPluginClient<TEventMap> = {
     send,
@@ -85,21 +78,12 @@ const createDevToolsPluginClient = async <
       };
     },
     close: () => {
-      ws.close();
+      listeners.clear();
+      subscription.remove();
+      channel.close();
     },
   };
-
-  return new Promise((resolve, reject) => {
-    ws.addEventListener(
-      'open',
-      () => {
-        resolve(client);
-      },
-      { once: true }
-    );
-
-    ws.addEventListener('error', reject, { once: true });
-  });
+  return client;
 };
 
 export const getDevToolsPluginClient = async <

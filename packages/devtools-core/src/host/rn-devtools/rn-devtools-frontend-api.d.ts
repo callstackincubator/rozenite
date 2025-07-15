@@ -3,7 +3,7 @@ declare module '/callstack/ui/legacy/legacy.js' {
     export class SimpleView extends Widget.Widget {
       contentElement: HTMLElement;
 
-      constructor(title: string);
+      constructor(title: string, useShadowDom?: boolean, viewId?: string);
       viewId(): string;
       widget(): Promise<Widget.Widget>;
     }
@@ -41,6 +41,218 @@ declare module '/callstack/ui/legacy/legacy.js' {
       static instance(): InspectorView;
       addPanel(panel: View.SimpleView): void;
       hasPanel(panelName: string): boolean;
+    }
+  }
+}
+
+declare module '/callstack/models/react_native/react_native.js' {
+  export namespace RuntimeModel {
+    export type ProtocolResponseWithError = {
+      /** Returns an error message if the request failed. */
+      getError(): string | undefined;
+    };
+
+    export type EvaluateResponse = {
+      result: {
+        type:
+          | 'object'
+          | 'function'
+          | 'undefined'
+          | 'string'
+          | 'number'
+          | 'boolean'
+          | 'symbol'
+          | 'accessor'
+          | 'bigint';
+        subtype?:
+          | 'array'
+          | 'null'
+          | 'node'
+          | 'regexp'
+          | 'date'
+          | 'map'
+          | 'set'
+          | 'weakmap'
+          | 'weakset'
+          | 'iterator'
+          | 'generator'
+          | 'error'
+          | 'proxy'
+          | 'promise'
+          | 'typedarray'
+          | 'arraybuffer'
+          | 'dataview'
+          | 'webassemblymemory'
+          | 'wasmvalue';
+        className?: string;
+        value?: any;
+        unserializableValue?: string;
+        description?: string;
+        objectId?: string;
+        preview?: {
+          type: string;
+          subtype?: string;
+          description?: string;
+          overflow: boolean;
+          properties: Array<{
+            name: string;
+            type: string;
+            value?: string;
+            valuePreview?: any;
+            subtype?: string;
+          }>;
+          entries?: Array<any>;
+        };
+        customPreview?: {
+          header: string;
+          bodyGetterId: string;
+          formatterObjectId?: string;
+          hasBody?: boolean;
+        };
+      };
+      exceptionDetails?: {
+        exceptionId: number;
+        text: string;
+        lineNumber: number;
+        columnNumber: number;
+        scriptId?: string;
+        url?: string;
+        stackTrace?: {
+          callFrames: Array<{
+            functionName: string;
+            scriptId: string;
+            url: string;
+            lineNumber: number;
+            columnNumber: number;
+          }>;
+          parent?: any;
+          promiseCreationFrame?: any;
+          asyncStackTrace?: any;
+          description?: string;
+        };
+        exception?: {
+          type:
+            | 'object'
+            | 'function'
+            | 'undefined'
+            | 'string'
+            | 'number'
+            | 'boolean'
+            | 'symbol'
+            | 'accessor'
+            | 'bigint';
+          subtype?: string;
+          className?: string;
+          value?: any;
+          unserializableValue?: string;
+          description?: string;
+          objectId?: string;
+          preview?: any;
+          customPreview?: any;
+        };
+        executionContextId?: number;
+        exceptionMetaData?: any;
+      };
+    };
+
+    export class RuntimeModel extends SDKModel.SDKModel {
+      addEventListener<T>(
+        event: string,
+        callback: (message: RuntimeEvent<T>) => void,
+        thisArg: unknown
+      ): void;
+      removeEventListener<T>(
+        event: string,
+        callback: (message: RuntimeEvent<T>) => void,
+        thisArg: unknown
+      ): void;
+      agent: {
+        invoke_evaluate: (params: {
+          expression: string;
+          returnByValue?: boolean;
+        }) => Promise<RuntimeModel.EvaluateResponse>;
+        invoke_addBinding: (params: {
+          name: string;
+        }) => Promise<RuntimeModel.ProtocolResponseWithError>;
+      };
+    }
+  }
+  export namespace ReactDevToolsBindingsModel {
+    export class ReactDevToolsBindingsModel {
+      initializeDomain(domain: string): Promise<void>;
+      subscribeToDomainMessages(
+        domain: string,
+        callback: (message: unknown) => void
+      ): void;
+      sendMessage(domain: string, message: unknown): Promise<void>;
+      unsubscribeFromDomainMessages(
+        domain: string,
+        callback: (message: unknown) => void
+      ): void;
+      addEventListener(
+        event: string,
+        callback: (message: unknown) => void,
+        thisArg: unknown
+      ): void;
+      removeEventListener(
+        event: string,
+        callback: (message: unknown) => void,
+        thisArg: unknown
+      ): void;
+      enable(): Promise<void>;
+      isEnabled(): boolean;
+    }
+  }
+}
+
+declare module '/callstack/core/sdk/sdk.js' {
+  export namespace SDKModel {
+    export class SDKModel<T = unknown> {
+      static register(
+        model: typeof SDKModel<T>,
+        options: {
+          capabilities: Target.Capability;
+          autostart: boolean;
+        }
+      ): void;
+      constructor(target: Target.Target);
+      dispose(): void;
+      dispatchEventToListeners(event: string, ...args: unknown[]): void;
+      target(): Target.Target;
+      addEventListener<T>(
+        event: string,
+        callback: (message: RuntimeEvent<T>) => void,
+        thisArg: unknown
+      ): void;
+      removeEventListener<T>(
+        event: string,
+        callback: (message: RuntimeEvent<T>) => void,
+        thisArg: unknown
+      ): void;
+    }
+  }
+
+  export namespace Target {
+    export class Target {
+      model<T>(model: T): InstanceType<T> | null;
+    }
+  }
+
+  export namespace TargetManager {
+    export interface SDKModelObserver<T> {
+      modelAdded(model: T): void;
+      modelRemoved(model: T): void;
+    }
+
+    export class TargetManager {
+      static instance(): TargetManager;
+      observeModels(
+        model: typeof SDKModel.SDKModel<T>,
+        observer: SDKModelObserver<T>
+      ): void;
+      primaryPageTarget(): {
+        model<T>(model: typeof SDKModel.SDKModel<T>): T | null;
+      };
     }
   }
 }

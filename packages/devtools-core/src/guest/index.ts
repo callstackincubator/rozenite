@@ -1,7 +1,14 @@
 import type { GuestFunctions, HostFunctions, Plugin } from '../bridge/index.js';
 import { createBirpc } from 'birpc';
 
-const guestFunctions: GuestFunctions = {};
+const listeners = new Map<string, ((message: unknown) => void)[]>();
+
+const guestFunctions: GuestFunctions = {
+  onMessage: (message: any) => {
+    const typeListeners = listeners.get(message.type) ?? [];
+    typeListeners.forEach((listener) => listener(message));
+  },
+};
 
 const rpc = createBirpc<HostFunctions, GuestFunctions>(guestFunctions, {
   post: (data) => window.parent.postMessage(data, '*'),
@@ -12,7 +19,6 @@ const rpc = createBirpc<HostFunctions, GuestFunctions>(guestFunctions, {
 
 export const callstackDevtoolsApi = {
   createPanel: rpc.createPanel.bind(rpc),
-  getPlugins: rpc.getPlugins.bind(rpc),
 } as const;
 
 export { Plugin };

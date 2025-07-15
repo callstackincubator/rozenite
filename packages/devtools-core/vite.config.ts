@@ -22,7 +22,11 @@ export default defineConfig({
         `${process.env.VITE_ENTRY_FILE}.${format === 'es' ? 'js' : 'cjs'}`,
     },
     rollupOptions: {
-      external: ['/callstack/ui/legacy/legacy.js'],
+      external: [
+        '/callstack/ui/legacy/legacy.js',
+        '/callstack/core/sdk/sdk.js',
+        '/callstack/models/react_native/react_native.js',
+      ],
       output: {
         inlineDynamicImports: true,
       },

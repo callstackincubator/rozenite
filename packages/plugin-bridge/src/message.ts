@@ -5,22 +5,17 @@ export type DevToolsPluginMessage = {
 };
 
 export const getDevToolsMessage = (
-  data: string
+  message: unknown
 ): DevToolsPluginMessage | null => {
-  try {
-    const message = JSON.parse(data);
-    if (
-      typeof message !== 'object' ||
-      message === null ||
-      !('pluginId' in message) ||
-      !('type' in message) ||
-      !('payload' in message)
-    ) {
-      return null;
-    }
-
-    return message;
-  } catch {
+  if (
+    typeof message !== 'object' ||
+    message === null ||
+    !('type' in message) ||
+    !('payload' in message) ||
+    !('pluginId' in message)
+  ) {
     return null;
   }
+
+  return message as DevToolsPluginMessage;
 };

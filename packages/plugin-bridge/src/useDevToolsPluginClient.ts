@@ -31,6 +31,7 @@ export const useDevToolsPluginClient = <
           setClient(client);
         }
       } catch (error) {
+        console.error('Error setting up client', error);
         if (isMounted) {
           setError(error);
         }

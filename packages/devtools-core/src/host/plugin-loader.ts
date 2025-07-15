@@ -1,5 +1,4 @@
-import { getRpcForClient } from './guest-rpc.js';
-import { PluginInstance } from './types.js';
+import { getRpcForClient } from './guest-rpc';
 
 export const getPluginScopedUrl = (pluginId: string, path: string) => {
   return `http://localhost:8081/callstack/plugins/${pluginId.replace(
@@ -12,15 +11,10 @@ export const loadPlugin = async (
   pluginId: string
 ): Promise<HTMLIFrameElement> => {
   const devtoolsPage = getPluginScopedUrl(pluginId, 'devtools.html');
+
   const iframe = document.createElement('iframe');
 
-  const plugin: PluginInstance = {
-    id: pluginId,
-    devtoolsIframe: iframe,
-    panels: [],
-  };
-
-  getRpcForClient(plugin, iframe);
+  getRpcForClient(pluginId, iframe);
 
   iframe.src = devtoolsPage;
   iframe.style.display = 'none';

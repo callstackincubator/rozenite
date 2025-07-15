@@ -1,15 +1,6 @@
 import { createExpoAtlasMiddleware } from 'expo-atlas/cli';
 import baseSerializer from 'expo-atlas-without-expo/base-serializer';
 import connect from 'connect';
-import { getDevToolsPluginClient } from '@rozenite/plugin-bridge';
-
-const initClient = async () => {
-  const client = await getDevToolsPluginClient('hello-world-plugin');
-  client.onMessage('handshake', (payload: unknown) => {
-    client.send('handshake', payload + 'bar');
-  });
-  process.addListener('beforeExit', () => client.close());
-};
 
 const withExpoAtlas = (config: any): any => {
   if (!config.serializer?.customSerializer) {
@@ -56,8 +47,6 @@ const withReduxDevTools = (config: any): any => {
 };
 
 const withHelloWorldPlugin = (config: any): any => {
-  initClient();
-
   return withExpoAtlas(withReduxDevTools(config));
 };
 

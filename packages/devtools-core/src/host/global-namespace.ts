@@ -1,8 +1,6 @@
-import { InstalledPlugin } from './types.js';
-
 declare global {
   var __CALLSTACK__: {
-    installedPlugins: InstalledPlugin[];
+    installedPlugins: string[];
   };
 }
 
