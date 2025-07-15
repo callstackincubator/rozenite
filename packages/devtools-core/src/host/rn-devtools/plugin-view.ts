@@ -10,7 +10,7 @@ export class PluginView
   #src: string;
 
   constructor(panelId: string, name: string, url: string) {
-    super(name, true, panelId);
+    super(name + ' 💎', true, panelId);
 
     this.#src = url;
 
