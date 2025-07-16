@@ -1,19 +1,20 @@
 {
-  "name": "@rn-devtools/playground",
+  "name": "@rozenite/playground",
   "version": "0.0.1",
   "dependencies": {
+    "@react-navigation/elements": "^2.5.2",
+    "@react-navigation/native": "^7.1.14",
+    "@react-navigation/native-stack": "^7.3.21",
     "@redux-devtools/remote": "^0.9.5",
     "@tanstack/react-query": "^5.81.5",
     "expo-atlas": "^0.4.0",
     "expo-atlas-without-expo": "^1.0.1",
     "react-native": "*",
-    "react-redux": "^9.2.0",
-    "redux": "^5.0.1",
-    "hello-world": "workspace:*"
+    "react-native-safe-area-context": "^5.5.2",
+    "react-native-screens": "^4.11.1"
   },
   "devDependencies": {
     "@babel/runtime": "*",
-    "@rozenite/devtools-core": "workspace:*",
     "@rozenite/metro": "workspace:*",
     "rozenite": "workspace:*"
   },

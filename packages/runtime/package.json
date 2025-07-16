@@ -1,7 +1,7 @@
 {
-  "name": "@rozenite/devtools-core",
+  "name": "@rozenite/runtime",
   "version": "0.0.1",
-  "description": "Core framework for React Native DevTools plugin orchestration, providing host-guest RPC communication and plugin management",
+  "description": "Rozenite runtime for React Native DevTools.",
   "type": "module",
   "files": [
     "dist"
@@ -24,10 +24,10 @@
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
   "exports": {
-    "./host": {
-      "types": "./dist/host.d.ts",
-      "import": "./dist/host.js",
-      "require": "./dist/host.cjs"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "scripts": {

@@ -4,22 +4,22 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/devtools-metro"
-    },
-    {
       "path": "./apps/playground"
     },
     {
       "path": "./packages/vite-plugin"
     },
     {
-      "path": "./packages/devtools-core"
-    },
-    {
       "path": "./packages/plugin-bridge"
     },
     {
       "path": "./packages/cli"
+    },
+    {
+      "path": "./packages/runtime"
+    },
+    {
+      "path": "./packages/metro"
     }
   ]
 }

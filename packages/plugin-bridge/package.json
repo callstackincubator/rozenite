@@ -1,7 +1,7 @@
 {
   "name": "@rozenite/plugin-bridge",
   "version": "0.0.1",
-  "description": "Isomorphic communication layer for React Native DevTools plugins across Node.js, React Native, and web environments",
+  "description": "Communication layer for React Native DevTools plugins across React Native and web environments",
   "private": true,
   "type": "module",
   "files": [

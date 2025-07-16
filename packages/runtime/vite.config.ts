@@ -15,9 +15,9 @@ export default defineConfig({
   base: './',
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/host/index.ts'),
+      entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es' as const, 'cjs' as const],
-      fileName: (format) => `host.${format === 'es' ? 'js' : 'cjs'}`,
+      fileName: (format) => `index.${format === 'es' ? 'js' : 'cjs'}`,
     },
     rollupOptions: {
       external: [

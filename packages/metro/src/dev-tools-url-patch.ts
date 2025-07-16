@@ -15,13 +15,12 @@ export const patchDevtoolsFrontendUrl = (): void => {
     devServerUrl: string,
     options: unknown
   ) => {
-    console.log(webSocketDebuggerUrl, options);
     const originalUrl = getDevToolsFrontendUrl(
       experiments,
       webSocketDebuggerUrl,
       devServerUrl,
       options
     );
-    return originalUrl.replace('/debugger-frontend/', '/callstack/');
+    return originalUrl.replace('/debugger-frontend/', '/rozenite/');
   };
 };

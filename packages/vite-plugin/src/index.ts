@@ -5,6 +5,7 @@ import reactNativeWeb from 'vite-plugin-react-native-web';
 import { rozeniteServerPlugin } from './server-plugin.js';
 import { rozeniteClientPlugin } from './client-plugin.js';
 import { rozeniteReactNativePlugin } from './react-native-plugin.js';
+import dtsPlugin from 'vite-plugin-dts';
 
 export const rozenitePlugin = (): PluginOption[] => {
   const isServer = process.env.VITE_ROZENITE_TARGET === 'server';
@@ -13,7 +14,12 @@ export const rozenitePlugin = (): PluginOption[] => {
   if (isServer) {
     return [rozeniteServerPlugin()];
   } else if (isReactNative) {
-    return [react(), viteRequire(), rozeniteReactNativePlugin()];
+    return [
+      react(),
+      viteRequire(),
+      rozeniteReactNativePlugin(),
+      dtsPlugin({ rollupTypes: true }),
+    ];
   }
 
   return [

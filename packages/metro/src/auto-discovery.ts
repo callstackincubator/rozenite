@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { logger } from './logger.js';
 import { getNodeModulesPaths } from './node-modules-paths.js';
+import { ROZENITE_MANIFEST } from './constants.js';
 
 export type InstalledPlugin = {
   name: string;
@@ -134,7 +135,7 @@ const tryExtractPlugin = async (
   packagePath: string,
   packageName: string
 ): Promise<InstalledPlugin | null> => {
-  const rozeniteConfigPath = path.join(packagePath, 'dist', 'rozenite.json');
+  const rozeniteConfigPath = path.join(packagePath, 'dist', ROZENITE_MANIFEST);
 
   try {
     await fs.access(rozeniteConfigPath);

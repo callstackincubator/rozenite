@@ -16,7 +16,13 @@ export const rozeniteReactNativePlugin = (): Plugin => {
         fileName: (format) => `react-native.${format === 'es' ? 'js' : 'cjs'}`,
       };
 
-      config.build.rollupOptions.external = ['react', 'react-native'];
+      config.build.rollupOptions.external = (id) => {
+        if (id.startsWith('node:')) {
+          return true;
+        }
+
+        return !id.startsWith('.') && !path.isAbsolute(id);
+      };
 
       delete config.build.rollupOptions.input;
     },

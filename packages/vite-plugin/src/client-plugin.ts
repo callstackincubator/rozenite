@@ -8,6 +8,7 @@ import { loadConfig, RozeniteConfig } from './load-config.js';
 
 type PanelEntry = {
   name: string;
+  label: string;
   sourceFile: string;
   htmlFile: string;
 };
@@ -40,6 +41,7 @@ export const rozeniteClientPlugin = (): Plugin => {
 
       return {
         name,
+        label: entry.name,
         sourceFile: path.resolve(projectRoot, entry.source),
         htmlFile: name + '.html',
       };
@@ -179,7 +181,7 @@ export const rozeniteClientPlugin = (): Plugin => {
         fileName: 'rozenite.json',
         source: JSON.stringify({
           panels: panels.map((panel) => ({
-            name: panel.name,
+            name: panel.label,
             source: panel.htmlFile,
           })),
         }),

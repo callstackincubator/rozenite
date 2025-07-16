@@ -12,15 +12,15 @@ export const getMiddleware = (
 ): Application => {
   const app = express();
   const frameworkPath = path.resolve(
-    require.resolve('@rozenite/devtools-core/host'),
+    require.resolve('@rozenite/runtime'),
     '..'
   );
 
   app.use((req, _, next) => {
     assert(req.url, 'req.url is required');
 
-    if (req.url.includes('/callstack')) {
-      req.url = req.url.replace('/callstack', '');
+    if (req.url.includes('/rozenite')) {
+      req.url = req.url.replace('/rozenite', '');
     }
 
     next();

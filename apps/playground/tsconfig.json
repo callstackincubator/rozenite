@@ -7,10 +7,7 @@
       "path": "../../packages/cli"
     },
     {
-      "path": "../../packages/devtools-core"
-    },
-    {
-      "path": "../../packages/devtools-metro"
+      "path": "../../packages/metro"
     },
     {
       "path": "./tsconfig.app.json"
