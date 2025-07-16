@@ -12,7 +12,7 @@ export const rozeniteReactNativePlugin = (): Plugin => {
 
       config.build.lib = {
         entry: path.resolve(projectRoot, 'react-native.ts'),
-        formats: ['es'],
+        formats: ['es' as const, 'cjs' as const],
         fileName: (format) => `react-native.${format === 'es' ? 'js' : 'cjs'}`,
       };
 

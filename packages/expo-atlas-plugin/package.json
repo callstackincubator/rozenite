@@ -1,7 +1,7 @@
 {
-  "name": "<%- name %>",
+  "name": "@rozenite/expo-atlas-plugin",
   "version": "0.0.1",
-  "description": "<%- description %>",
+  "description": "Expo Atlas for Rozenite.",
   "type": "module",
   "main": "./dist/react-native.cjs",
   "module": "./dist/react-native.js",
@@ -11,13 +11,18 @@
     "dev": "vite dev"
   },
   "dependencies": {
-    "@rozenite/plugin-bridge": "workspace:*"
+    "@rozenite/plugin-bridge": "workspace:*",
+    "connect": "^3.7.0",
+    "expo-atlas": "^0.4.0",
+    "expo-atlas-without-expo": "^1.0.1"
   },
   "devDependencies": {
-    "vite": "^6.0.0",
     "@rozenite/vite-plugin": "workspace:*",
+    "@types/connect": "^3.4.38",
+    "metro-config": "^0.82.5",
+    "rozenite": "workspace:*",
     "typescript": "^5.7.3",
-    "rozenite": "workspace:*"
+    "vite": "^6.0.0"
   },
   "peerDependencies": {
     "react": ">= 17.0.0",

@@ -1,7 +1,7 @@
 const { withNxMetro } = require('@nx/react-native');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
-const { withExpoAtlasWithoutExpo } = require('expo-atlas-without-expo');
+const { withRozeniteExpoAtlasPlugin } = require('@rozenite/expo-atlas-plugin');
 
 const defaultConfig = getDefaultConfig(__dirname);
 const { assetExts, sourceExts } = defaultConfig.resolver;
@@ -26,8 +26,8 @@ const customConfig = {
 };
 
 module.exports = withRozenite(
-  withNxMetro(
-    withExpoAtlasWithoutExpo(mergeConfig(defaultConfig, customConfig)),
+  withRozeniteExpoAtlasPlugin(withNxMetro(
+    mergeConfig(defaultConfig, customConfig),
     {
       // Change this to true to see debugging info.
       // Useful if you have issues resolving modules
@@ -37,5 +37,5 @@ module.exports = withRozenite(
       // Specify folders to watch, in addition to Nx defaults (workspace libraries and node_modules)
       watchFolders: [],
     }
-  )
+  ))
 );

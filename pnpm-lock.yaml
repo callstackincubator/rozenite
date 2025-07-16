@@ -168,6 +168,9 @@ importers:
       '@redux-devtools/remote':
         specifier: ^0.9.5
         version: 0.9.5(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@18.3.23)(react@18.3.1)(redux@5.0.1))(react@18.3.1)(redux@5.0.1))(immutable@5.1.3)(redux@5.0.1)
+      '@rozenite/expo-atlas-plugin':
+        specifier: workspace:*
+        version: link:../../packages/expo-atlas-plugin
       '@tanstack/react-query':
         specifier: ^5.81.5
         version: 5.81.5(react@18.3.1)
@@ -227,6 +230,46 @@ importers:
       '@types/validate-npm-package-name':
         specifier: ^4.0.2
         version: 4.0.2
+
+  packages/expo-atlas-plugin:
+    dependencies:
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      connect:
+        specifier: ^3.7.0
+        version: 3.7.0
+      expo-atlas:
+        specifier: ^0.4.0
+        version: 0.4.0(expo@53.0.18(@babel/core@7.28.0)(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))
+      expo-atlas-without-expo:
+        specifier: ^1.0.1
+        version: 1.0.1(expo-atlas@0.4.0(expo@53.0.18(@babel/core@7.28.0)(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)))(metro@0.82.5)
+      react:
+        specifier: '>= 17.0.0'
+        version: 18.3.1
+      react-native:
+        specifier: '>= 0.74.0'
+        version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
+    devDependencies:
+      '@rozenite/vite-plugin':
+        specifier: workspace:*
+        version: link:../vite-plugin
+      '@types/connect':
+        specifier: ^3.4.38
+        version: 3.4.38
+      metro-config:
+        specifier: ^0.82.5
+        version: 0.82.5
+      rozenite:
+        specifier: workspace:*
+        version: link:../cli
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.27.0)(terser@5.43.1)(yaml@2.8.0)
 
   packages/metro:
     dependencies:

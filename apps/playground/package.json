@@ -14,7 +14,8 @@
     "expo-atlas-without-expo": "^1.0.1",
     "react-native": "*",
     "react-native-safe-area-context": "^5.5.2",
-    "react-native-screens": "^4.11.1"
+    "react-native-screens": "^4.11.1",
+    "@rozenite/expo-atlas-plugin": "workspace:*"
   },
   "devDependencies": {
     "@babel/runtime": "*",
