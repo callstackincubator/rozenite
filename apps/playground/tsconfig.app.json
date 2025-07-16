@@ -28,13 +28,13 @@
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
   "references": [
     {
-      "path": "../../packages/hello-world-plugin/tsconfig.lib.json"
-    },
-    {
-      "path": "../../packages/devtools-core/tsconfig.lib.json"
+      "path": "../../packages/hello-world"
     },
     {
       "path": "../../packages/cli/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/devtools-core/tsconfig.lib.json"
     },
     {
       "path": "../../packages/devtools-metro/tsconfig.lib.json"

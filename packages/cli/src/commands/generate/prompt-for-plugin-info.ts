@@ -1,10 +1,6 @@
 import { promptGroup, promptText } from '../../utils/prompts.js';
 import validateNpmPackage from 'validate-npm-package-name';
-
-export type PluginInfo = {
-  name: string;
-  description: string;
-};
+import type { PluginInfo } from '../../types.js';
 
 export const promptForPluginInfo = async (): Promise<PluginInfo> => {
   return await promptGroup({

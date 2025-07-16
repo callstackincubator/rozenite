@@ -4,13 +4,10 @@
   "include": [],
   "references": [
     {
-      "path": "../../packages/hello-world-plugin"
+      "path": "../../packages/cli"
     },
     {
       "path": "../../packages/devtools-core"
-    },
-    {
-      "path": "../../packages/cli"
     },
     {
       "path": "../../packages/devtools-metro"

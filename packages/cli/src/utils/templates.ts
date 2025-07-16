@@ -1,7 +1,7 @@
 import ejs from 'ejs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { PluginInfo } from '../plugin-info.js';
+import type { PluginInfo } from '../types.js';
 
 const renderTemplateFile = async (
   src: string,
@@ -18,6 +18,9 @@ const renderTemplateFile = async (
     escape: (value: string) => value.replace(/\./g, path.sep),
   });
   const targetFilePath = path.join(path.dirname(dest), basename);
+
+  const targetDir = path.dirname(targetFilePath);
+  await fs.mkdir(targetDir, { recursive: true });
 
   await fs.writeFile(targetFilePath, content, 'utf8');
   const { mode } = await fs.stat(src);

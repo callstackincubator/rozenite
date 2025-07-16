@@ -3,8 +3,8 @@ import path from 'node:path';
 import fs from 'node:fs';
 import process from 'node:process';
 import ejs from 'ejs';
-import { memo } from './utils.js';
 import { fileURLToPath } from 'node:url';
+import { loadConfig, RozeniteConfig } from './load-config.js';
 
 type PanelEntry = {
   name: string;
@@ -24,37 +24,38 @@ const PANELS_DIR = './panels';
 export const rozeniteClientPlugin = (): Plugin => {
   let projectRoot = process.cwd();
   let viteServer: ViteDevServer | null = null;
+  let rozeniteConfig: RozeniteConfig | null = null;
 
-  const getPanels = memo((): PanelEntry[] => {
-    const panelsDir = path.resolve(projectRoot, PANELS_DIR);
-    const panelFiles = fs
-      .readdirSync(panelsDir)
-      .filter((file) => /\.(ts|tsx|js|jsx)$/.test(file));
+  const getRozeniteConfig = (): RozeniteConfig => {
+    if (!rozeniteConfig) {
+      throw new Error('rozenite.config.ts not found');
+    }
 
-    return panelFiles.map((file) => {
-      const name = path.basename(file, path.extname(file));
+    return rozeniteConfig;
+  };
+
+  const getPanels = (): PanelEntry[] => {
+    return getRozeniteConfig().panels.map((entry) => {
+      const name = path.basename(entry.source, path.extname(entry.source));
 
       return {
         name,
-        sourceFile: file,
+        sourceFile: path.resolve(projectRoot, entry.source),
         htmlFile: name + '.html',
       };
     });
-  });
+  };
 
-  const DEVTOOLS_TEMPLATE = path.join(TEMPLATES_DIR, 'devtools.ejs');
   const PANEL_TEMPLATE = path.join(TEMPLATES_DIR, 'panel.ejs');
   const INDEX_TEMPLATE = path.join(TEMPLATES_DIR, 'index.ejs');
 
-  const generateDevtoolsHtmlContent = (): string => {
-    const template = fs.readFileSync(DEVTOOLS_TEMPLATE, 'utf-8');
-    return ejs.render(template, {});
-  };
-
-  const generatePanelHtmlContent = (panelFile: string): string => {
+  const generatePanelHtmlContent = (panel: PanelEntry): string => {
     const template = fs.readFileSync(PANEL_TEMPLATE, 'utf-8');
-    const panelName = path.basename(panelFile, path.extname(panelFile));
-    return ejs.render(template, { panelName, panelFile });
+    const relativePath = path.relative(projectRoot, panel.sourceFile);
+    return ejs.render(template, {
+      panelName: panel.name,
+      panelFile: relativePath,
+    });
   };
 
   const generateIndexHtmlContent = (): string => {
@@ -72,18 +73,20 @@ export const rozeniteClientPlugin = (): Plugin => {
 
   return {
     name: 'rozenite-client-plugin',
-    config(config) {
+    async config(config) {
       if (config.root) {
         projectRoot = config.root;
       }
 
+      rozeniteConfig = await loadConfig(
+        path.resolve(projectRoot, 'rozenite.config.ts')
+      );
       const panels = getPanels();
 
       config.build ??= {};
       config.build.rollupOptions ??= {};
       config.build.rollupOptions.input = {
         ...(config.build.rollupOptions.input as Record<string, string>),
-        devtools: path.resolve(projectRoot, 'devtools.html'),
         ...Object.fromEntries(
           panels.map((panel) => [panel.name, panel.htmlFile])
         ),
@@ -92,9 +95,8 @@ export const rozeniteClientPlugin = (): Plugin => {
 
     resolveId(id) {
       const isPanel = getPanels().some((panel) => panel.htmlFile === id);
-      const isDevtools = id === 'devtools.html';
 
-      if (isPanel || isDevtools) {
+      if (isPanel) {
         return id;
       }
 
@@ -105,11 +107,7 @@ export const rozeniteClientPlugin = (): Plugin => {
       const panel = getPanels().find((panel) => panel.htmlFile === id);
 
       if (panel) {
-        return generatePanelHtmlContent(panel.sourceFile);
-      }
-
-      if (id === 'devtools.html') {
-        return generateDevtoolsHtmlContent();
+        return generatePanelHtmlContent(panel);
       }
 
       return null;
@@ -138,7 +136,7 @@ export const rozeniteClientPlugin = (): Plugin => {
         const panel = panels.find((panel) => panel.htmlFile === url);
 
         if (panel) {
-          const htmlContent = generatePanelHtmlContent(panel.sourceFile);
+          const htmlContent = generatePanelHtmlContent(panel);
 
           server
             .transformIndexHtml(req.url || '/', htmlContent)
@@ -152,23 +150,10 @@ export const rozeniteClientPlugin = (): Plugin => {
           return;
         }
 
-        if (url === 'devtools.html') {
-          const htmlContent = generateDevtoolsHtmlContent();
-
-          server
-            .transformIndexHtml(req.url || '/', htmlContent)
-            .then((html) => {
-              res.setHeader('Content-Type', 'text/html');
-              res.end(html);
-            })
-            .catch((err) => {
-              next(err);
-            });
-          return;
-        }
         next();
       });
     },
+
     watchChange(id, change) {
       if (change.event !== 'create' && change.event !== 'delete') {
         return;
@@ -183,6 +168,21 @@ export const rozeniteClientPlugin = (): Plugin => {
       viteServer?.ws.send({
         type: 'full-reload',
         path: '/',
+      });
+    },
+
+    generateBundle() {
+      const panels = getPanels();
+
+      this.emitFile({
+        type: 'asset',
+        fileName: 'rozenite.json',
+        source: JSON.stringify({
+          panels: panels.map((panel) => ({
+            name: panel.name,
+            source: panel.htmlFile,
+          })),
+        }),
       });
     },
   };

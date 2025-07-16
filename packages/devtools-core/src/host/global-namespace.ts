@@ -1,8 +1,8 @@
 declare global {
-  var __CALLSTACK__: {
+  var __ROZENITE__: {
     installedPlugins: string[];
   };
 }
 
-export const getGlobalNamespace = (): typeof globalThis.__CALLSTACK__ =>
-  globalThis.__CALLSTACK__;
+export const getGlobalNamespace = (): typeof globalThis.__ROZENITE__ =>
+  globalThis.__ROZENITE__;

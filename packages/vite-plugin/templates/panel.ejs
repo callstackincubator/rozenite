@@ -27,9 +27,9 @@
     <div id="root"></div>
     <script type="module">
       import { AppRegistry } from 'react-native';
-      import PanelComponent from './panels/<%= panelFile %>';
+      import PanelComponent from '/<%= panelFile %>';
 
-      const panelName = '<%= panelFile %>';
+      const panelName = '<%= panelName %>';
 
       AppRegistry.registerComponent(panelName, () => PanelComponent);
 

@@ -24,11 +24,6 @@
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
   "exports": {
-    "./guest": {
-      "types": "./dist/guest.d.ts",
-      "import": "./dist/guest.js",
-      "require": "./dist/guest.cjs"
-    },
     "./host": {
       "types": "./dist/host.d.ts",
       "import": "./dist/host.js",
@@ -37,12 +32,9 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build:host": "VITE_ENTRY_FILE=host vite build",
-    "build:guest": "VITE_ENTRY_FILE=guest vite build",
-    "build": "pnpm run clean && pnpm run build:host && pnpm run build:guest"
+    "build": "vite build"
   },
   "dependencies": {
-    "birpc": "^2.4.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {},

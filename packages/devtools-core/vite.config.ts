@@ -8,7 +8,6 @@ export default defineConfig({
     dts({
       rollupTypes: true,
       tsconfigPath: resolve(__dirname, 'tsconfig.lib.json'),
-      bundledPackages: ['birpc'],
     }),
   ],
   root: __dirname,
@@ -16,10 +15,9 @@ export default defineConfig({
   base: './',
   build: {
     lib: {
-      entry: resolve(__dirname, `src/${process.env.VITE_ENTRY_FILE}/index.ts`),
+      entry: resolve(__dirname, 'src/host/index.ts'),
       formats: ['es' as const, 'cjs' as const],
-      fileName: (format) =>
-        `${process.env.VITE_ENTRY_FILE}.${format === 'es' ? 'js' : 'cjs'}`,
+      fileName: (format) => `host.${format === 'es' ? 'js' : 'cjs'}`,
     },
     rollupOptions: {
       external: [

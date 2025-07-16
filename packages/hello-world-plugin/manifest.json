@@ -1,9 +1,0 @@
-{
-  "version": "0.0.1",
-  "name": "Hello World Plugin",
-  "description": "A plugin that says hello world",
-  "homepage_url": "https://github.com/callstackincubator/devtools-framework",
-  "manifest_version": 1,
-  "devtools_page": "devtools.html",
-  "background_script": "background.js"
-}

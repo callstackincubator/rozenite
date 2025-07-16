@@ -5,8 +5,11 @@ import assert from 'node:assert';
 import path from 'node:path';
 import fs from 'node:fs';
 import { getEntryPointHTML } from './entry-point.js';
+import { InstalledPlugin } from './auto-discovery.js';
 
-export const getMiddleware = (installedPlugins: string[]): Application => {
+export const getMiddleware = (
+  installedPlugins: InstalledPlugin[]
+): Application => {
   const app = express();
   const frameworkPath = path.resolve(
     require.resolve('@rozenite/devtools-core/host'),
@@ -23,14 +26,20 @@ export const getMiddleware = (installedPlugins: string[]): Application => {
     next();
   });
 
-  app.get('/plugins/:plugin/*others', (req, res) => {
+  app.get('/plugins/:plugin/*others', (req, res, next) => {
     const pluginName = req.params.plugin.replace('_', '/');
-    const pluginPath = path.dirname(require.resolve(pluginName));
-    req.url = req.url.replace('plugins/' + pluginName.replace('/', '_'), '');
+    const plugin = installedPlugins.find(
+      (plugin) => plugin.name === pluginName
+    );
 
-    serveStatic(pluginPath)(req, res, (err) => {
-      throw err;
-    });
+    if (!plugin) {
+      res.status(404).send('Plugin not found');
+      return;
+    }
+
+    const pluginPath = path.join(plugin.path, 'dist');
+    req.url = req.url.replace('plugins/' + pluginName.replace('/', '_'), '');
+    serveStatic(pluginPath)(req, res, next);
   });
 
   app.get('/embedder-static/embedderScript.js', (_, res) => {
@@ -40,7 +49,7 @@ export const getMiddleware = (installedPlugins: string[]): Application => {
 
   app.get('/rn_fusebox.html', (_, res) => {
     res.setHeader('Content-Type', 'text/html');
-    res.send(getEntryPointHTML(installedPlugins));
+    res.send(getEntryPointHTML(installedPlugins.map((plugin) => plugin.name)));
   });
 
   app.get('/host.js', (_, res) => {

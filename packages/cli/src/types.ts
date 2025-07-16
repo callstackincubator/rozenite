@@ -1,8 +1,4 @@
-export type InstalledPlugin = {
-  id: string;
+export type PluginInfo = {
+  name: string;
+  description: string;
 };
-
-export interface PluginApprovalCache {
-  approvedPlugins: string[];
-  lastUpdated: string;
-}
