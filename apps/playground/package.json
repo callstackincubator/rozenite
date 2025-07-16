@@ -1,6 +1,9 @@
 {
   "name": "@rozenite/playground",
   "version": "0.0.1",
+  "scripts": {
+    "start": "react-native start"
+  },
   "dependencies": {
     "@react-navigation/elements": "^2.5.2",
     "@react-navigation/native": "^7.1.14",

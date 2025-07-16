@@ -1,6 +1,6 @@
 const { withNxMetro } = require('@nx/react-native');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-const { withDebuggerFramework } = require('@rozenite/metro');
+const { withRozenite } = require('@rozenite/metro');
 const { withExpoAtlasWithoutExpo } = require('expo-atlas-without-expo');
 
 const defaultConfig = getDefaultConfig(__dirname);
@@ -25,7 +25,7 @@ const customConfig = {
   server: {},
 };
 
-module.exports = withDebuggerFramework(
+module.exports = withRozenite(
   withNxMetro(
     withExpoAtlasWithoutExpo(mergeConfig(defaultConfig, customConfig)),
     {

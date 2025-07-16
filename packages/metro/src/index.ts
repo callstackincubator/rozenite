@@ -4,7 +4,7 @@ import { getMiddleware } from './middleware.js';
 import { logger } from './logger.js';
 import { getInstalledPlugins } from './auto-discovery.js';
 
-export const withDebuggerFramework = async (
+export const withRozenite = async (
   config: MetroConfig | Promise<MetroConfig>
 ) => {
   const resolvedConfig = await config;
