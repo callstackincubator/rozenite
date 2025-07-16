@@ -4,7 +4,6 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 
 import { LandingScreen } from './screens/LandingScreen';
 import { HelloWorldScreen } from './screens/HelloWorldScreen';
@@ -26,8 +25,6 @@ const Navigation = createStaticNavigation(Stack);
 
 export const App = () => {
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
-
-  useReactNavigationDevTools(navigationRef);
 
   return (
     <SafeAreaProvider>

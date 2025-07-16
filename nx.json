@@ -45,7 +45,8 @@
         "typecheckTargetName": "vite:typecheck",
         "buildDepsTargetName": "build-deps",
         "watchDepsTargetName": "watch-deps"
-      }
+      },
+      "exclude": ["packages/cli/template/**/*"]
     },
     {
       "plugin": "@nx/react-native/plugin",

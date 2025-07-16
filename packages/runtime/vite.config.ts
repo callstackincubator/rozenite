@@ -11,25 +11,25 @@ export default defineConfig({
     }),
   ],
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/devtools-core',
+  cacheDir: '../../node_modules/.vite/runtime',
   base: './',
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es' as const, 'cjs' as const],
-      fileName: (format) => `index.${format === 'es' ? 'js' : 'cjs'}`,
+      fileName: (format) => `host.${format === 'es' ? 'js' : 'cjs'}`,
     },
     rollupOptions: {
       external: [
-        '/callstack/ui/legacy/legacy.js',
-        '/callstack/core/sdk/sdk.js',
-        '/callstack/models/react_native/react_native.js',
+        '/rozenite/ui/legacy/legacy.js',
+        '/rozenite/core/sdk/sdk.js',
+        '/rozenite/models/react_native/react_native.js',
       ],
       output: {
         inlineDynamicImports: true,
       },
     },
-    emptyOutDir: false,
+    emptyOutDir: true,
   },
   server: {
     port: 3000,

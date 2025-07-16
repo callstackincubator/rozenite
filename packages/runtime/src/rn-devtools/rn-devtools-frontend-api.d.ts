@@ -1,4 +1,4 @@
-declare module '/callstack/ui/legacy/legacy.js' {
+declare module '/rozenite/ui/legacy/legacy.js' {
   export namespace View {
     export class SimpleView extends Widget.Widget {
       contentElement: HTMLElement;
@@ -45,7 +45,7 @@ declare module '/callstack/ui/legacy/legacy.js' {
   }
 }
 
-declare module '/callstack/models/react_native/react_native.js' {
+declare module '/rozenite/models/react_native/react_native.js' {
   export namespace RuntimeModel {
     export type ProtocolResponseWithError = {
       /** Returns an error message if the request failed. */
@@ -205,7 +205,7 @@ declare module '/callstack/models/react_native/react_native.js' {
   }
 }
 
-declare module '/callstack/core/sdk/sdk.js' {
+declare module '/rozenite/core/sdk/sdk.js' {
   export namespace SDKModel {
     export class SDKModel<T = unknown> {
       static register(

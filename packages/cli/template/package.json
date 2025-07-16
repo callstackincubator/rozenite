@@ -9,8 +9,7 @@
     "dev": "vite dev"
   },
   "dependencies": {
-    "@rozenite/plugin-bridge": "workspace:*",
-    "@rozenite/devtools-core": "workspace:*"
+    "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
     "vite": "^6.0.0",

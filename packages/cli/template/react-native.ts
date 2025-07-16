@@ -7,3 +7,7 @@
  * To communicate with the DevTools panel, use the `@rozenite/plugin-bridge` package
  * which provides a reliable communication channel between your plugin and the DevTools interface.
  */
+
+export const useDevTools = () => {
+    // TODO: Implement your plugin!
+};

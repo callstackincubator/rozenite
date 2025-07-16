@@ -1,10 +1,10 @@
 import { createPanel } from './create-panel';
 
 export const getPluginScopedUrl = (pluginId: string, path: string) => {
-  return `http://localhost:8081/callstack/plugins/${pluginId.replace(
-    '/',
-    '_'
-  )}/${path}`;
+  const url = new URL(location.href);
+  url.search = '';
+  url.pathname = `/rozenite/plugins/${pluginId.replace('/', '_')}/${path}`;
+  return url.toString();
 };
 
 export type RozeniteManifest = {

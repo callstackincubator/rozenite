@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 export default defineConfig({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/devtools-metro',
+  cacheDir: '../../node_modules/.vite/metro',
   base: './',
   build: {
     ssr: true,
