@@ -7,9 +7,9 @@ This guide will walk you through the complete process of creating a React Native
 Generate a new plugin in seconds:
 
 ```shell title="Terminal"
-npx rozenite generate my-awesome-plugin
+npx rozenite generate
 cd my-awesome-plugin
-npm run dev
+rozenite dev
 ```
 
 ## Step 1: Generate Your Plugin
@@ -216,25 +216,73 @@ export default function setupPlugin(client: DevToolsPluginClient<PluginEvents>) 
 }
 ```
 
-## Step 5: Development Workflow
+## Step 5: Local Development Workflow
 
-### Start Development Server
+### Complete Development Setup
+
+For local plugin development, follow these steps:
+
+#### Step 1: Create and Start Your Plugin
 
 ```shell title="Terminal"
-npm run dev
+# Create a new plugin
+rozenite generate
+cd my-awesome-plugin
+
+# Start the development server
+rozenite dev
 ```
 
 This starts a development server that:
 - Watches for file changes
-- Hot reloads your panels
-- Provides debugging information
+- Hot reloads your panels automatically
+- Provides real-time feedback during development
+
+#### Step 2: Link to React Native Playground
+
+1. **Create or use a React Native playground project** that has Rozenite configured
+2. **Add your plugin to the playground's dependencies** (you can use `npm link`, `yarn link` or `pnpm link` for local development)
+3. **Configure Metro to exclude your plugin package** in the playground's Metro config:
+
+```javascript title="metro.config.js"
+const { withRozenite } = require('@rozenite/metro');
+
+module.exports = withRozenite(config, { 
+  exclude: ['my-awesome-plugin'] 
+});
+```
+
+#### Step 3: Run Your React Native App
+
+```shell title="Terminal"
+# In your playground project directory
+npx react-native start
+# Or if using Expo
+npx expo start
+```
+
+Then run the app on your device or simulator.
+
+#### Step 4: Open DevTools
+
+1. Open React Native DevTools in your browser
+2. Your plugin panels should appear in the sidebar automatically
+
+### Hot Reloading
+
+Your development workflow supports automatic hot reloading:
+
+- **Panel changes**: Your DevTools panels will automatically update when you make changes to your plugin code
+- **React Native integration changes**: Changes to your `react-native.ts` file will also hot reload
+- **New panels**: If you add a new panel to your `rozenite.config.ts`, restart React Native DevTools by pressing `Ctrl+R` (or `Cmd+R` on Mac)
+- **Configuration changes**: Most changes to `rozenite.config.ts` require a DevTools restart
 
 ### Testing Your Plugin
 
-1. Start your React Native app with DevTools enabled
-2. Open DevTools in your browser
-3. Your plugin panels will appear in the sidebar
-4. Make changes to your code and see them update instantly
+1. Make changes to your panel components - they should update instantly
+2. Modify your React Native integration code - changes should be reflected immediately
+3. Add new panels - remember to restart DevTools with `Ctrl+R`
+4. Test communication between your panels and React Native code
 
 ## Step 6: Building for Production
 
@@ -252,94 +300,10 @@ This creates optimized bundles:
 ### Build Output
 
 The build creates a `dist/` directory with:
-- `panel.js` - Your DevTools panels
+- `*.js` - Individual DevTools panel files (one file per panel, names reflect your config)
 - `react-native.js` - React Native integration (if applicable)
+- `rozenite.json` - Plugin manifest with metadata and configuration
 - Source maps for debugging
-
-## Advanced Configuration
-
-### Custom Vite Configuration
-
-Extend the default Vite config in `vite.config.ts`:
-
-```typescript title="vite.config.ts"
-import { defineConfig } from 'vite';
-import rozenite from '@rozenite/vite-plugin';
-
-export default defineConfig({
-  plugins: [rozenite()],
-  build: {
-    rollupOptions: {
-      external: ['react', 'react-dom'],
-    },
-  },
-});
-```
-
-### Multiple Entry Points
-
-Create complex plugins with multiple panels:
-
-```typescript title="rozenite.config.ts"
-export default {
-  panels: [
-    {
-      name: 'Network Monitor',
-      source: './src/network-panel.tsx',
-    },
-    {
-      name: 'State Inspector',
-      source: './src/state-panel.tsx',
-    },
-    {
-      name: 'Performance',
-      source: './src/performance-panel.tsx',
-    },
-  ],
-};
-```
-
-## Best Practices
-
-### Panel Design
-
-- Keep panels focused on a single responsibility
-- Use consistent styling and layout
-- Provide clear error states and loading indicators
-- Make panels responsive for different screen sizes
-
-### Performance
-
-- Avoid expensive operations in render cycles
-- Use React.memo for expensive components
-- Debounce frequent updates
-- Clean up event listeners and subscriptions
-
-### Communication
-
-- Use typed message interfaces
-- Handle connection errors gracefully
-- Provide fallback data when React Native is unavailable
-- Use meaningful method names for messages
-
-## Troubleshooting
-
-### Common Issues
-
-**Panel not appearing in DevTools:**
-- Check `rozenite.config.ts` syntax
-- Ensure the source file exists
-- Verify the component exports correctly
-
-**Build errors:**
-- Check TypeScript compilation
-- Verify all dependencies are installed
-- Ensure Node.js version is 22+
-
-**Runtime errors:**
-- Check browser console for errors
-- Verify plugin bridge usage
-- Ensure React Native integration is correct
 
 ## Next Steps
 
