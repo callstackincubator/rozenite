@@ -242,15 +242,25 @@ This starts a development server that:
 
 1. **Create or use a React Native playground project** that has Rozenite configured
 2. **Add your plugin to the playground's dependencies** (you can use `npm link`, `yarn link` or `pnpm link` for local development)
-3. **Configure Metro to exclude your plugin package** in the playground's Metro config:
+3. **Configure Metro to exclude your plugin package and add watchFolders** in the playground's Metro config:
 
 ```javascript title="metro.config.js"
 const { withRozenite } = require('@rozenite/metro');
+const path = require('path');
+
+const config = {
+  watchFolders: [
+    // Update this path to match your plugin's actual location
+    path.resolve(__dirname, '../my-awesome-plugin')
+  ]
+}
 
 module.exports = withRozenite(config, { 
-  exclude: ['my-awesome-plugin'] 
+  exclude: ['my-awesome-plugin'],
 });
 ```
+
+**Note**: Adjust the path in `watchFolders` to match the actual location of your plugin relative to your playground project.
 
 #### Step 3: Run Your React Native App
 
