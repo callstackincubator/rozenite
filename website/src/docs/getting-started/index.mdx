@@ -1,0 +1,90 @@
+import { PackageManagerTabs } from 'rspress/theme';
+
+# Quick start
+
+## Pre-requisites
+
+If you're already familiar with JavaScript, React and React Native, then you'll be able to get moving quickly! Otherwise, it's highly recommended to get yourself familiar with these topics and then come back here:
+
+- [React Native documentation](https://reactnative.dev/)
+- [Metro bundler documentation](https://facebook.github.io/metro/)
+
+## Installation
+
+To add Rozenite to your existing React Native project, install the required packages:
+
+<PackageManagerTabs command="npm install @rozenite/metro" />
+
+## Metro Configuration
+
+To enable Rozenite's auto-discovery and plugin system, you need to modify your Metro configuration. Rozenite will automatically discover and enable all installed plugins.
+
+### Basic Configuration
+
+Update your `metro.config.js` file:
+
+```javascript
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { withRozenite } = require('@rozenite/metro');
+
+const defaultConfig = getDefaultConfig(__dirname);
+
+const customConfig = {
+  // Your existing Metro configuration
+};
+
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig));
+```
+
+### Advanced Configuration
+
+If you're using additional Metro plugins or configurations:
+
+```javascript
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { withRozenite } = require('@rozenite/metro');
+const { withNxMetro } = require('@nx/react-native'); // Example with Nx
+
+const defaultConfig = getDefaultConfig(__dirname);
+
+const customConfig = {
+  // Your existing Metro configuration
+};
+
+module.exports = withRozenite(
+  withNxMetro(mergeConfig(defaultConfig, customConfig))
+);
+```
+
+## Auto-Discovery
+
+Once configured, Rozenite will automatically:
+
+- **Discover installed plugins** in your `node_modules`
+- **Enable all found plugins** without manual configuration
+- **Load plugin panels** into React Native DevTools
+- **Handle plugin communication** between DevTools and your React Native app
+
+### Plugin Discovery
+
+Rozenite automatically discovers plugins by looking for `rozenite.json` files in the `/dist` directory of packages. If a package contains this file, it's recognized as a Rozenite plugin.
+Rozenite searches for plugins by crawling the entire `node_modules` directory tree, starting from your project's `node_modules` and traversing up to the root of the file system. This means it will find plugins in:
+
+- Your project's `node_modules`
+- Parent directories' `node_modules` (if using workspaces or monorepos)
+- Global `node_modules` (if any)
+
+## Usage
+
+After configuration, start your Metro development server as usual:
+
+<PackageManagerTabs command="npx react-native start" />
+
+Rozenite will automatically load and enable all discovered plugins. You can verify this by checking the Metro server logs for plugin discovery messages.
+
+## Verification
+
+To verify that Rozenite is working correctly:
+
+1. **Check Metro logs** - You should see plugin discovery messages
+2. **Open React Native DevTools** - Your app should show additional panels from discovered plugins
