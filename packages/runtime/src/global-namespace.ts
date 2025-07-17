@@ -1,6 +1,7 @@
 declare global {
   var __ROZENITE__: {
     installedPlugins: string[];
+    developmentServer: boolean;
   };
 }
 

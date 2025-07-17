@@ -3,6 +3,7 @@ import path from 'node:path';
 import { logger } from './logger.js';
 import { getNodeModulesPaths } from './node-modules-paths.js';
 import { ROZENITE_MANIFEST } from './constants.js';
+import { RozeniteMetroConfig } from './config.js';
 
 export type InstalledPlugin = {
   name: string;
@@ -34,7 +35,9 @@ const isDirectoryOrSymlinkToDirectory = async (
   }
 };
 
-export const getInstalledPlugins = async (): Promise<InstalledPlugin[]> => {
+export const getInstalledPlugins = async (
+  options: RozeniteMetroConfig
+): Promise<InstalledPlugin[]> => {
   const nodeModulesPaths = getNodeModulesPaths();
   const plugins: InstalledPlugin[] = [];
 
@@ -98,6 +101,15 @@ export const getInstalledPlugins = async (): Promise<InstalledPlugin[]> => {
                 packagePath,
                 actualPackageName
               );
+
+              if (options.include && !options.include.includes(actualPackageName)) {
+                continue;
+              }
+
+              if (options.exclude && options.exclude.includes(actualPackageName)) {
+                continue;
+              }
+
               if (plugin) {
                 plugins.push(plugin);
               }
@@ -114,6 +126,15 @@ export const getInstalledPlugins = async (): Promise<InstalledPlugin[]> => {
           actualPackageName = packageName;
 
           const plugin = await tryExtractPlugin(packagePath, actualPackageName);
+
+          if (options.include && !options.include.includes(actualPackageName)) {
+            continue;
+          }
+
+          if (options.exclude && options.exclude.includes(actualPackageName)) {
+            continue;
+          }
+          
           if (plugin) {
             plugins.push(plugin);
           }

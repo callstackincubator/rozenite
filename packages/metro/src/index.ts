@@ -3,22 +3,23 @@ import { patchDevtoolsFrontendUrl } from './dev-tools-url-patch.js';
 import { getMiddleware } from './middleware.js';
 import { logger } from './logger.js';
 import { getInstalledPlugins } from './auto-discovery.js';
+import { RozeniteMetroConfig } from './config.js';
 
-export const withRozenite = async (
-  config: MetroConfig | Promise<MetroConfig>
-) => {
+export const withRozenite = async <T extends MetroConfig>(
+  config: T | Promise<T>,
+  options: RozeniteMetroConfig = {},
+): Promise<T> => {
   const resolvedConfig = await config;
-  const allInstalledPlugins = await getInstalledPlugins();
+  const allInstalledPlugins = await getInstalledPlugins(options);
 
   if (allInstalledPlugins.length === 0) {
     logger.info('No plugins found.');
-    return resolvedConfig;
+  } else {
+    logger.info(`Loaded ${allInstalledPlugins.length} plugin(s):`);
+    allInstalledPlugins.forEach((plugin) => {
+      logger.info(`  - ${plugin.name}`);
+    });
   }
-
-  logger.info(`Loaded ${allInstalledPlugins.length} plugin(s):`);
-  allInstalledPlugins.forEach((plugin) => {
-    logger.info(`  - ${plugin.name}`);
-  });
 
   patchDevtoolsFrontendUrl();
 

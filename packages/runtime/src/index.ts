@@ -1,3 +1,4 @@
+import { setupDevMode } from './dev-mode.js';
 import { getGlobalNamespace } from './global-namespace.js';
 import { loadPlugin } from './plugin-loader.js';
 
@@ -20,22 +21,27 @@ const waitForInitialization = async (): Promise<void> => {
 const main = async (): Promise<void> => {
   await waitForInitialization();
 
-  console.log('[Rozenite] Devtools framework loaded');
+  const plugins = getGlobalNamespace().installedPlugins;
 
-  const plugins = await getGlobalNamespace().installedPlugins;
-  console.log('[Rozenite] Found plugins:', plugins);
+  console.group('🚀 Rozenite DevTools Framework');
+  console.log('Devtools framework loaded');
+  console.log('Found plugins: ' + plugins.join(', '));
+  console.groupEnd();
 
   await Promise.all(
     plugins.map(async (plugin) => {
-      console.log('[Rozenite] Loading plugin:', plugin);
       await loadPlugin(plugin);
     })
   );
+
+  await setupDevMode();
 };
 
 void main().catch((error) => {
+  console.group('❌ Rozenite Error');
   console.error(
-    '[Rozenite] Initialization failed. See the following error for more details:',
+    'Initialization failed. See the following error for more details:',
     error
   );
+  console.groupEnd();
 });

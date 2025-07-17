@@ -1,4 +1,4 @@
-import { PluginInfo } from './prompt-for-plugin-info.js';
+import type { PluginInfo } from '../../types.js';
 import { step } from '../../utils/steps.js';
 import { renderTemplate } from '../../utils/templates.js';
 import { TEMPLATE_DIR } from '../../constants.js';

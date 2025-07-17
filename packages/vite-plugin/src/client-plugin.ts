@@ -5,6 +5,7 @@ import process from 'node:process';
 import ejs from 'ejs';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, RozeniteConfig } from './load-config.js';
+import { getPackageJSON } from './package-json.js';
 
 type PanelEntry = {
   name: string;
@@ -43,13 +44,12 @@ export const rozeniteClientPlugin = (): Plugin => {
         name,
         label: entry.name,
         sourceFile: path.resolve(projectRoot, entry.source),
-        htmlFile: name + '.html',
+        htmlFile: '/' + name + '.html',
       };
     });
   };
 
   const PANEL_TEMPLATE = path.join(TEMPLATES_DIR, 'panel.ejs');
-  const INDEX_TEMPLATE = path.join(TEMPLATES_DIR, 'index.ejs');
 
   const generatePanelHtmlContent = (panel: PanelEntry): string => {
     const template = fs.readFileSync(PANEL_TEMPLATE, 'utf-8');
@@ -58,19 +58,6 @@ export const rozeniteClientPlugin = (): Plugin => {
       panelName: panel.name,
       panelFile: relativePath,
     });
-  };
-
-  const generateIndexHtmlContent = (): string => {
-    const panelsDir = path.resolve(projectRoot, PANELS_DIR);
-    const panelFiles = fs
-      .readdirSync(panelsDir)
-      .filter((file) => /\.(ts|tsx)$/.test(file));
-    const panels = panelFiles.map((file) => ({
-      name: path.basename(file, path.extname(file)),
-      htmlFile: path.basename(file, path.extname(file)) + '.html',
-    }));
-    const template = fs.readFileSync(INDEX_TEMPLATE, 'utf-8');
-    return ejs.render(template, { panels });
   };
 
   return {
@@ -84,6 +71,10 @@ export const rozeniteClientPlugin = (): Plugin => {
         path.resolve(projectRoot, 'rozenite.config.ts')
       );
       const panels = getPanels();
+
+      config.server ??= {};
+      config.server.open = false;
+      config.server.port = 8888;
 
       config.build ??= {};
       config.build.rollupOptions ??= {};
@@ -115,23 +106,35 @@ export const rozeniteClientPlugin = (): Plugin => {
       return null;
     },
 
-    configureServer(server: ViteDevServer) {
+    async configureServer(server: ViteDevServer) {
       viteServer = server;
+      const packageJSON = await getPackageJSON(projectRoot);
 
       server.middlewares.use((req, res, next) => {
-        const panels = getPanels();
-        const url = req.url?.slice(1) || '';
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');  
 
-        if (url === '' || url === 'index.html') {
-          server
-            .transformIndexHtml(req.url || '/', generateIndexHtmlContent())
-            .then((html) => {
-              res.setHeader('Content-Type', 'text/html');
-              res.end(html);
-            })
-            .catch((err) => {
-              next(err);
-            });
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 200;
+          res.end();
+          return;
+        }
+
+        const panels = getPanels();
+        const url = req.url || '/';
+
+        if (url === '/rozenite.json') {
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({
+            name: packageJSON.name,
+            version: packageJSON.version,
+            description: packageJSON.description,
+            panels: panels.map((panel) => ({
+              name: panel.label,
+              source: panel.htmlFile,
+            })),
+          }, null, 2));
           return;
         }
 
@@ -173,13 +176,17 @@ export const rozeniteClientPlugin = (): Plugin => {
       });
     },
 
-    generateBundle() {
+    async generateBundle() {
       const panels = getPanels();
+      const packageJSON = await getPackageJSON(projectRoot);
 
       this.emitFile({
         type: 'asset',
         fileName: 'rozenite.json',
         source: JSON.stringify({
+          name: packageJSON.name,
+          version: packageJSON.version,
+          description: packageJSON.description,
           panels: panels.map((panel) => ({
             name: panel.label,
             source: panel.htmlFile,

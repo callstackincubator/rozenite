@@ -7,6 +7,7 @@ import { getPackageJSON } from './package-json.js';
 import { logger } from './utils/logger.js';
 import { generateCommand } from './commands/generate/generate-command.js';
 import { buildCommand } from './commands/build-command.js';
+import { devCommand } from './commands/dev-command.js';
 
 const packageJSON = getPackageJSON();
 
@@ -35,6 +36,17 @@ const main = async () => {
     .action(async (path) => {
       const targetDir = path ?? process.cwd();
       await buildCommand(targetDir);
+    });
+
+  program
+    .command('dev')
+    .alias('d')
+    .description('Start development server with watchers')
+    .arguments('[path]')
+    .usage(`[options] ${color.green('[path]')}`)
+    .action(async (path) => {
+      const targetDir = path ?? process.cwd();
+      await devCommand(targetDir);
     });
 
   program.parse(process.argv);
