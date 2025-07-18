@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { DevToolsPluginClient, getDevToolsPluginClient } from './client';
+import { RozeniteDevToolsClient, getRozeniteDevToolsClient } from './client';
 
-export type UseDevToolsPluginClientOptions<
+export type UseRozeniteDevToolsClientOptions<
   TEventMap extends Record<string, unknown> = Record<string, unknown>
 > = {
   pluginId: string;
@@ -9,23 +9,23 @@ export type UseDevToolsPluginClientOptions<
 };
 
 // TODO: Handle multiple hooks (should not kill the socket)
-export const useDevToolsPluginClient = <
+export const useRozeniteDevToolsClient = <
   TEventMap extends Record<string, unknown> = Record<string, unknown>
 >({
   pluginId,
-}: UseDevToolsPluginClientOptions<TEventMap>): DevToolsPluginClient<TEventMap> | null => {
-  const [client, setClient] = useState<DevToolsPluginClient<TEventMap> | null>(
+}: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsClient<TEventMap> | null => {
+  const [client, setClient] = useState<RozeniteDevToolsClient<TEventMap> | null>(
     null
   );
   const [error, setError] = useState<unknown | null>(null);
 
   useEffect(() => {
     let isMounted = true;
-    let client: DevToolsPluginClient<TEventMap> | null = null;
+    let client: RozeniteDevToolsClient<TEventMap> | null = null;
 
     const setup = async () => {
       try {
-        client = await getDevToolsPluginClient<TEventMap>(pluginId);
+        client = await getRozeniteDevToolsClient<TEventMap>(pluginId);
 
         if (isMounted) {
           setClient(client);
@@ -59,4 +59,4 @@ export const useDevToolsPluginClient = <
   }
 
   return client;
-};
+}; 

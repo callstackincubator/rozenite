@@ -5,12 +5,12 @@ import { Subscription } from './types';
 const clients = new Map<
   string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Needed for TypeScript to be happy :)
-  Promise<DevToolsPluginClient<any>> | DevToolsPluginClient<any>
+  Promise<RozeniteDevToolsClient<any>> | RozeniteDevToolsClient<any>
 >();
 
 type MessageListener = (payload: unknown) => void;
 
-export type DevToolsPluginClient<
+export type RozeniteDevToolsClient<
   TEventMap extends Record<string, unknown> = Record<string, unknown>
 > = {
   send: <TType extends keyof TEventMap>(
@@ -24,11 +24,11 @@ export type DevToolsPluginClient<
   close: () => void;
 };
 
-const createDevToolsPluginClient = async <
+const createRozeniteDevToolsClient = async <
   TEventMap extends Record<string, unknown> = Record<string, unknown>
 >(
   pluginId: string
-): Promise<DevToolsPluginClient<TEventMap>> => {
+): Promise<RozeniteDevToolsClient<TEventMap>> => {
   const channel = await getChannel();
   const listeners = new Map<string, Set<MessageListener>>();
 
@@ -61,7 +61,7 @@ const createDevToolsPluginClient = async <
 
   const subscription = channel.onMessage(handleMessage);
 
-  const client: DevToolsPluginClient<TEventMap> = {
+  const client: RozeniteDevToolsClient<TEventMap> = {
     send,
     onMessage: <TType extends keyof TEventMap>(
       type: TType,
@@ -86,20 +86,20 @@ const createDevToolsPluginClient = async <
   return client;
 };
 
-export const getDevToolsPluginClient = async <
+export const getRozeniteDevToolsClient = async <
   TEventMap extends Record<string, unknown> = Record<string, unknown>
 >(
   pluginId: string
-): Promise<DevToolsPluginClient<TEventMap>> => {
+): Promise<RozeniteDevToolsClient<TEventMap>> => {
   const existingClient = clients.get(pluginId);
 
   if (existingClient != null) {
     return existingClient as
-      | Promise<DevToolsPluginClient<TEventMap>>
-      | DevToolsPluginClient<TEventMap>;
+      | Promise<RozeniteDevToolsClient<TEventMap>>
+      | RozeniteDevToolsClient<TEventMap>;
   }
 
-  const clientPromise = createDevToolsPluginClient<TEventMap>(pluginId);
+  const clientPromise = createRozeniteDevToolsClient<TEventMap>(pluginId);
   clients.set(pluginId, clientPromise);
   const client = await clientPromise;
   clients.set(pluginId, client);
