@@ -163,8 +163,11 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     }
 
     const serializedMessage = JSON.stringify(message);
+    const escapedMessage = JSON.stringify(serializedMessage);
+
+    // Note: Double quote must be used in case we get a string with a nested JSON object.
     await runtimeModel.agent.invoke_evaluate({
-      expression: `${RUNTIME_GLOBAL}.sendMessage('${DOMAIN_NAME}', '${serializedMessage}')`,
+      expression: `${RUNTIME_GLOBAL}.sendMessage('${DOMAIN_NAME}', ${escapedMessage})`,
     });
   }
 

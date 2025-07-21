@@ -1,0 +1,31 @@
+{
+  "name": "@rozenite/tanstack-query-plugin",
+  "version": "1.0.0-alpha.1",
+  "description": "Tanstack Query for Rozenite.",
+  "type": "module",
+  "main": "./dist/react-native.cjs",
+  "module": "./dist/react-native.js",
+  "types": "./dist/react-native.d.ts",
+  "scripts": {
+    "build": "rozenite build",
+    "dev": "rozenite dev"
+  },
+  "dependencies": {
+    "@rozenite/plugin-bridge": "workspace:*",
+    "@tanstack/react-query": "^5",
+    "@tanstack/react-query-devtools": "^5.83.0"
+  },
+  "devDependencies": {
+    "@rozenite/vite-plugin": "workspace:*",
+    "rozenite": "workspace:*",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.0",
+    "react": "*",
+    "react-native": "*"
+  },
+  "peerDependencies": {
+    "react": ">= 17.0.0",
+    "react-native": ">= 0.74.0"
+  },
+  "license": "MIT"
+}
