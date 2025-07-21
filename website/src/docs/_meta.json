@@ -10,13 +10,8 @@
     "label": "Getting started"
   },
   {
-    "type": "file",
-    "name": "cli",
-    "label": "CLI"
-  },
-  {
-    "type": "file",
-    "name": "plugin-development",
-    "label": "Plugin Development"
+    "type": "dir",
+    "name": "plugins",
+    "label": "Plugins"
   }
 ]

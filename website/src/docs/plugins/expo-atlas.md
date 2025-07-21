@@ -1,0 +1,120 @@
+# Expo Atlas Plugin
+
+The Expo Atlas plugin integrates [Expo Atlas](https://github.com/expo/expo-atlas) directly into your React Native DevTools, providing powerful bundle analysis and optimization capabilities for your React Native applications.
+
+## What is Expo Atlas?
+
+Expo Atlas is a bundle analyzer and visualizer that helps you understand and optimize your React Native app's Metro bundle. It provides:
+
+- **Bundle Visualization**: Interactive view of your Metro bundle structure
+- **Module Analysis**: Detailed information about each module in your bundle
+- **Size Optimization**: Identify large dependencies and optimize bundle size
+- **Dependency Mapping**: Visualize module relationships and dependencies
+- **Performance Insights**: Understand how your bundle affects app performance
+
+## Installation
+
+Install the Expo Atlas plugin as a development dependency using your preferred package manager:
+
+```bash
+# Using npm
+npm install --save-dev @rozenite/expo-atlas-plugin
+
+# Using yarn
+yarn add --dev @rozenite/expo-atlas-plugin
+
+# Using pnpm
+pnpm add --save-dev @rozenite/expo-atlas-plugin
+```
+
+## Configuration
+
+### Metro Configuration
+
+The Expo Atlas plugin requires Metro configuration to work properly. Update your `metro.config.js` file:
+
+```javascript title="metro.config.js"
+const { withRozenite } = require('@rozenite/metro');
+const { withRozeniteExpoAtlasPlugin } = require('@rozenite/expo-atlas-plugin');
+
+const config = {
+  // Your existing Metro configuration
+};
+
+module.exports = withRozenite(
+  withRozeniteExpoAtlasPlugin(config),
+  {
+    // Your Rozenite configuration
+  }
+);
+```
+
+## Usage
+
+Once configured, the Expo Atlas plugin will automatically appear in your React Native DevTools sidebar as "Expo Atlas". Click on it to access:
+
+### Bundle Overview
+
+- **Bundle Size Analysis**: View total bundle size and breakdown by module
+- **Module Distribution**: See how your bundle is distributed across different file types
+- **Entry Points**: Identify main entry points and their dependencies
+
+### Module Details
+
+- **Individual Module Sizes**: Analyze the size contribution of each module
+- **Source Code Inspection**: View the actual source code of modules in your bundle
+- **Dependency Chains**: Trace how modules depend on each other
+
+### Optimization Insights
+
+- **Large Dependencies**: Identify modules that significantly impact bundle size
+- **Duplicate Code**: Find potential code duplication across modules
+- **Unused Code**: Detect potentially unused dependencies
+
+### Development vs Production
+
+- **Development Bundle**: Analyze your development bundle in real-time
+- **Production Bundle**: Export and analyze production bundles for optimization
+
+## Troubleshooting
+
+### Plugin Not Appearing
+
+If the Expo Atlas panel doesn't appear in DevTools:
+
+1. **Check Installation**: Ensure the plugin is properly installed
+2. **Verify Configuration**: Confirm Metro and Rozenite configuration
+3. **Restart DevTools**: Try refreshing the DevTools page
+4. **Check Console**: Look for any error messages in the browser console
+
+### Metro Configuration Issues
+
+If you encounter Metro configuration errors:
+
+1. **Clear Cache**: Run `npx react-native start --reset-cache`
+2. **Check Dependencies**: Ensure all required dependencies are installed
+3. **Verify Paths**: Confirm all import paths are correct
+
+### Performance Issues
+
+If you experience performance issues:
+
+1. **Bundle Size**: Large bundles may take longer to analyze
+2. **Metro Cache**: Clear Metro cache if bundle analysis seems incorrect
+
+## Contributing
+
+The Expo Atlas plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](./plugin-development.md) to learn how to contribute or create your own plugins.
+
+## Support
+
+If you encounter issues with the Expo Atlas plugin:
+
+1. **Check Documentation**: Review this guide for common solutions
+2. **Search Issues**: Look for similar issues in the repository
+3. **Create Issue**: Report bugs or request features
+4. **Community**: Reach out to the Rozenite community for help
+
+---
+
+**Next**: Learn about [Plugin Development](./plugin-development.md) to create your own plugins, or explore other [Available Plugins](./overview.md). 

@@ -8,31 +8,34 @@ hero:
       dark: /logo-dark.svg
     alt: Rozenite logo
   name: React Native DevTools Plugin Framework
-  tagline: Create, develop, and integrate custom plugins into React Native DevTools with ease
+  tagline: Build powerful debugging tools and custom panels for React Native DevTools with type-safe, isomorphic communication
   actions:
     - theme: brand
-      text: Learn more
-      link: /docs/getting-started/introduction
+      text: Get Started
+      link: /docs/getting-started
     - theme: alt
-      text: Quick start
-      link: /docs/getting-started/index
+      text: View on GitHub
+      link: https://github.com/callstackincubator/rozenite
+  badge:
+    text: Alpha
+    type: warning
 features:
-  - title: Powerful CLI
-    details: A comprehensive CLI for scaffolding, building, and managing React Native DevTools plugins. Get started in minutes with plugin generation and development workflows
-    icon: <img src="/arrow-bar-right.svg" />
-  - title: Metro Integration
-    details: Seamless integration with Metro bundler for automatic plugin discovery and loading. Your plugins are automatically detected and integrated into the DevTools environment
-    icon: <img src="/cloud.svg" />
-  - title: Isomorphic Communication
-    details: Built-in communication layer between DevTools frontend and your plugin backend. Connect to your app's runtime and exchange data effortlessly
-    icon: <img src="/github.svg" />
-  - title: Plugin System
-    details: Extensible architecture that allows you to create custom panels, tools, and functionality. Build powerful debugging and development tools tailored to your needs
-    icon: <img src="/radio-handheld.svg" />
-  - title: TypeScript Ready
-    details: First-class TypeScript support with comprehensive type definitions. Build type-safe plugins with excellent developer experience and IntelliSense
+  - title: Type-Safe Plugin Development
+    details: Full TypeScript support with comprehensive type definitions for event-based communication between DevTools and React Native. Build plugins with excellent developer experience and IntelliSense.
     icon: <img src="/edit-box.svg" />
-  - title: Community Driven
-    details: Share and discover plugins with the community. Contribute to the ecosystem and leverage plugins built by other developers
+  - title: Isomorphic Communication Bridge
+    details: Seamless communication layer between DevTools frontend and your React Native app runtime. Exchange data effortlessly with type-safe event handling and automatic connection management.
+    icon: <img src="/github.svg" />
+  - title: Metro Integration
+    details: Native Metro bundler integration with automatic plugin discovery and loading. Your plugins are automatically detected and integrated into the DevTools environment without manual configuration.
+    icon: <img src="/cloud.svg" />
+  - title: Powerful CLI
+    details: Comprehensive CLI for scaffolding, building, and managing React Native DevTools plugins. Generate complete plugin projects with TypeScript setup, Vite configuration, and development workflows.
+    icon: <img src="/arrow-bar-right.svg" />
+  - title: Hot Reload Development
+    details: Fast development workflow with Vite-powered hot reloading. See your plugin changes instantly in DevTools with automatic rebuilding and real-time feedback.
+    icon: <img src="/radio-handheld.svg" />
+  - title: Production Ready
+    details: Build optimized plugins for distribution with proper bundling, minification, and source maps. Ready for publishing to npm and sharing with the React Native community.
     icon: <img src="/notes.svg" />
 ---

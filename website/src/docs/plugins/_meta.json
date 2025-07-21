@@ -1,0 +1,17 @@
+[
+  {
+    "type": "file",
+    "name": "overview",
+    "label": "Overview"
+  },
+  {
+    "type": "file",
+    "name": "expo-atlas",
+    "label": "Expo Atlas"
+  },
+  {
+    "type": "file",
+    "name": "plugin-development",
+    "label": "Plugin Development"
+  }
+] 
