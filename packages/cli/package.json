@@ -7,7 +7,8 @@
     "rozenite": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "template"
   ],
   "keywords": [
     "react-native",
