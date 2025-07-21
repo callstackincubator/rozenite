@@ -1,11 +1,19 @@
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
-import { resolve } from 'node:path';
+import path, { resolve } from 'node:path';
+import dts from 'vite-plugin-dts';
 
 export default defineConfig({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/metro',
   base: './',
+  plugins: [
+    dts({
+      entryRoot: 'src',
+      tsconfigPath: path.join(__dirname, 'tsconfig.lib.json'),
+      rollupTypes: true,
+    }),
+  ],
   build: {
     ssr: true,
     lib: {
