@@ -132,7 +132,7 @@ export const rozeniteClientPlugin = (): Plugin => {
             description: packageJSON.description,
             panels: panels.map((panel) => ({
               name: panel.label,
-              source: panel.htmlFile,
+              source: '/' + panel.htmlFile,
             })),
           }, null, 2));
           return;
