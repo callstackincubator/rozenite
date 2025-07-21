@@ -4,7 +4,6 @@ import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
 import { defineConfig } from 'rspress/config';
 import pluginSitemap from 'rspress-plugin-sitemap';
-import vercelPluginAnalytics from 'rspress-plugin-vercel-analytics';
 
 export default defineConfig({
   root: path.join(__dirname, 'src'),
@@ -50,8 +49,6 @@ export default defineConfig({
   globalStyles: path.join(__dirname, 'theme/styles.css'),
   plugins: [
     pluginCallstackTheme(),
-    // @ts-expect-error outdated @rspress/shared declared as dependency
-    vercelPluginAnalytics(),
     pluginLlms({
       exclude: ({ page }) => page.routePath.includes('404'),
     }),
