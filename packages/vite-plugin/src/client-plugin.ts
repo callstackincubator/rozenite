@@ -44,7 +44,7 @@ export const rozeniteClientPlugin = (): Plugin => {
         name,
         label: entry.name,
         sourceFile: path.resolve(projectRoot, entry.source),
-        htmlFile: '/' + name + '.html',
+        htmlFile: name + '.html',
       };
     });
   };
@@ -138,7 +138,7 @@ export const rozeniteClientPlugin = (): Plugin => {
           return;
         }
 
-        const panel = panels.find((panel) => panel.htmlFile === url);
+        const panel = panels.find((panel) => '/' +panel.htmlFile === url);
 
         if (panel) {
           const htmlContent = generatePanelHtmlContent(panel);

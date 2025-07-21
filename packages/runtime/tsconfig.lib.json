@@ -11,7 +11,7 @@
     "lib": ["dom"],
     "jsx": "react-jsx",
     "paths": {
-      "/callstack/*": ["src/host/rn-devtools/rn-devtools-frontend-api.d.ts"]
+      "/rozenite/*": ["src/rn-devtools/rn-devtools-frontend-api.d.ts"]
     },
     "module": "esnext",
     "moduleResolution": "bundler"
