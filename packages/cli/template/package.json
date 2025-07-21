@@ -11,13 +11,13 @@
     "dev": "vite dev"
   },
   "dependencies": {
-    "@rozenite/plugin-bridge": "workspace:*"
+    "@rozenite/plugin-bridge": "1.0.0-alpha.0"
   },
   "devDependencies": {
     "vite": "^6.0.0",
-    "@rozenite/vite-plugin": "workspace:*",
+    "@rozenite/vite-plugin": "1.0.0-alpha.0",
     "typescript": "^5.7.3",
-    "rozenite": "workspace:*"
+    "rozenite": "1.0.0-alpha.0"
   },
   "peerDependencies": {
     "react": ">= 17.0.0",
