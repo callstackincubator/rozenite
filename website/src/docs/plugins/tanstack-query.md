@@ -1,0 +1,81 @@
+# TanStack Query Plugin
+
+The TanStack Query plugin integrates [TanStack Query DevTools](https://tanstack.com/query/latest/docs/react/devtools) directly into your React Native DevTools, providing powerful query monitoring, cache management, and debugging capabilities for your React Native applications.
+
+## What is TanStack Query?
+
+TanStack Query (formerly React Query) is a powerful data synchronization library for React and React Native that provides:
+
+- **Server State Management**: Efficiently manage, cache, and synchronize server state
+- **Automatic Background Updates**: Keep data fresh with automatic refetching
+- **Optimistic Updates**: Provide instant feedback with optimistic UI updates
+- **Error Handling**: Built-in error handling and retry mechanisms
+- **Caching**: Intelligent caching with configurable invalidation strategies
+- **DevTools**: Comprehensive debugging and monitoring tools
+
+## Installation
+
+Install the TanStack Query plugin as a development dependency using your preferred package manager:
+
+```bash
+# Using npm
+npm install --save-dev @rozenite/tanstack-query-plugin
+
+# Using yarn
+yarn add --dev @rozenite/tanstack-query-plugin
+
+# Using pnpm
+pnpm add --save-dev @rozenite/tanstack-query-plugin
+```
+
+## Configuration
+
+### Basic Setup
+
+The TanStack Query plugin requires minimal configuration. Simply integrate the DevTools hook into your React Native app:
+
+```typescript title="App.tsx"
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 3,
+    },
+  },
+});
+
+function App() {
+  // Enable DevTools in development
+  useTanStackQueryDevTools(queryClient);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* Your app components */}
+    </QueryClientProvider>
+  );
+}
+```
+
+## Usage
+
+Once configured, the TanStack Query plugin will automatically appear in your React Native DevTools sidebar as "TanStack Query".
+
+## Contributing
+
+The TanStack Query plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](./plugin-development.md) to learn how to contribute or create your own plugins.
+
+## Support
+
+If you encounter issues with the TanStack Query plugin:
+
+1. **Check Documentation**: Review this guide for common solutions
+2. **Search Issues**: Look for similar issues in the repository
+3. **Create Issue**: Report bugs or request features
+4. **Community**: Reach out to the Rozenite community for help
+
+---
+
+**Next**: Learn about [Plugin Development](./plugin-development.md) to create your own plugins, or explore other [Available Plugins](./overview.md). 

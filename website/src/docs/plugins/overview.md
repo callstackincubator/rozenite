@@ -24,6 +24,15 @@ Integrate Expo Atlas directly into your React Native DevTools for bundle analysi
 - **Size Optimization**: Identify large dependencies and optimize bundle size
 - **Dependency Mapping**: Visualize module relationships and dependencies
 
+### [TanStack Query](./tanstack-query.md)
+
+Integrate TanStack Query DevTools directly into your React Native DevTools for query monitoring and cache management. This plugin provides:
+
+- **Query Monitoring**: Real-time monitoring of all queries and mutations
+- **Cache Management**: Visual cache inspection and management tools
+- **Query Actions**: Refetch, invalidate, reset, and remove queries
+- **State Manipulation**: Trigger loading states and error conditions for testing
+
 ## Installing Plugins
 
 Plugins should be installed as development dependencies since they are only needed during development:
@@ -31,12 +40,15 @@ Plugins should be installed as development dependencies since they are only need
 ```bash
 # Using npm
 npm install --save-dev @rozenite/expo-atlas-plugin
+npm install --save-dev @rozenite/tanstack-query-plugin
 
 # Using yarn
 yarn add --dev @rozenite/expo-atlas-plugin
+yarn add --dev @rozenite/tanstack-query-plugin
 
 # Using pnpm
 pnpm add --save-dev @rozenite/expo-atlas-plugin
+pnpm add --save-dev @rozenite/tanstack-query-plugin
 ```
 
 ## Configuration
@@ -53,4 +65,4 @@ In addition to the plugins we maintain, the Rozenite community creates and maint
 
 ---
 
-**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md) or explore [Plugin Development](./plugin-development.md) to create your own plugins. 
+**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md) or [TanStack Query plugin](./tanstack-query.md), or explore [Plugin Development](./plugin-development.md) to create your own plugins. 

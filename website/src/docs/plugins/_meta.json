@@ -11,6 +11,11 @@
   },
   {
     "type": "file",
+    "name": "tanstack-query",
+    "label": "TanStack Query"
+  },
+  {
+    "type": "file",
     "name": "plugin-development",
     "label": "Plugin Development"
   }
