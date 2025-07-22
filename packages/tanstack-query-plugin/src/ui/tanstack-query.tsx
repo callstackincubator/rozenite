@@ -188,7 +188,7 @@ const Wrapped = () => {
   )
 }
 
-export default function TanstackQueryPanel() {
+export default function TanStackQueryPanel() {
   return (
     <QueryClientProvider client={queryClient}>
       <Wrapped />

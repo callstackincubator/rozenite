@@ -30,7 +30,7 @@ type DevToolsEventMap = {
   "DEVTOOLS_TO_DEVICE_INITIAL_DATA_REQUEST": unknown;
 }
 
-export const useTanstackQueryDevTools = (queryClient: QueryClient) => {
+export const useTanStackQueryDevTools = (queryClient: QueryClient) => {
   const client = useRozeniteDevToolsClient<DevToolsEventMap>({
     pluginId: '@rozenite/tanstack-query-plugin',
   })

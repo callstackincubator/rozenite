@@ -1,8 +1,8 @@
 
-export let useTanstackQueryDevTools: typeof import('./src/react-native/useTanstackQueryDevTools').useTanstackQueryDevTools;
+export let useTanStackQueryDevTools: typeof import('./src/react-native/useTanStackQueryDevTools').useTanStackQueryDevTools;
 
 if (process.env.NODE_ENV !== 'production') {
-  useTanstackQueryDevTools = require('./src/react-native/useTanstackQueryDevTools').useTanstackQueryDevTools;
+  useTanStackQueryDevTools = require('./src/react-native/useTanStackQueryDevTools').useTanStackQueryDevTools;
 } else {
-  useTanstackQueryDevTools = () => ({ isConnected: false });
+  useTanStackQueryDevTools = () => ({ isConnected: false });
 }

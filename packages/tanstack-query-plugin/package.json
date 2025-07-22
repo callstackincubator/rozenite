@@ -1,7 +1,7 @@
 {
   "name": "@rozenite/tanstack-query-plugin",
   "version": "1.0.0-alpha.1",
-  "description": "Tanstack Query for Rozenite.",
+  "description": "TanStack Query for Rozenite.",
   "type": "module",
   "main": "./dist/react-native.cjs",
   "module": "./dist/react-native.js",
