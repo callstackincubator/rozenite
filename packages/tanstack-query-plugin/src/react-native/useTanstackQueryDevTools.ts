@@ -1,5 +1,5 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import type { QueryCacheNotifyEvent, MutationCacheNotifyEvent, QueryClient, Query } from '@tanstack/react-query';
+import type { QueryCacheNotifyEvent, MutationCacheNotifyEvent, QueryClient, Query, Mutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 
 type DevToolsActionType =
@@ -26,12 +26,27 @@ type DevToolsEventMap = {
   "DEVTOOLS_TO_DEVICE": DevToolsEventDetail;
   "DEVICE_TO_DEVTOOLS": QueryCacheNotifyEvent | MutationCacheNotifyEvent;
   "DEVICE_TO_DEVTOOLS_ACK": { requestId: string; success: boolean };
+  "DEVICE_TO_DEVTOOLS_INITIAL_DATA": { queries: Query[]; mutations: Mutation[] };
+  "DEVTOOLS_TO_DEVICE_INITIAL_DATA_REQUEST": unknown;
 }
 
 export const useTanstackQueryDevTools = (queryClient: QueryClient) => {
   const client = useRozeniteDevToolsClient<DevToolsEventMap>({
     pluginId: '@rozenite/tanstack-query-plugin',
   })
+
+  useEffect(() => {
+    if (!client) return;
+
+    const subscription = client.onMessage("DEVTOOLS_TO_DEVICE_INITIAL_DATA_REQUEST", () => {
+      client.send("DEVICE_TO_DEVTOOLS_INITIAL_DATA", {
+        queries: queryClient.getQueryCache().getAll(),
+        mutations: queryClient.getMutationCache().getAll(),
+      });
+    });
+
+    return () => subscription.remove();
+  }, [client, queryClient]);
 
   // Track pending DevTools requests that are waiting for acknowledgment
   const pendingDevToolsRequests = useRef<Set<string>>(new Set());
@@ -101,7 +116,6 @@ export const useTanstackQueryDevTools = (queryClient: QueryClient) => {
         }
       }
       if (type === 'RESTORE_LOADING' && queryHash) {
-        console.log('RESTORE_LOADING', event);
         const query = getQuery(queryHash);
         if (query) {
           // Set state to idle/success (simulate fetch complete)

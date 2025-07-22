@@ -1,4 +1,4 @@
-import { QueryCacheNotifyEvent, MutationCacheNotifyEvent, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryCacheNotifyEvent, MutationCacheNotifyEvent, QueryClient, QueryClientProvider, Query, Mutation } from '@tanstack/react-query';
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useRef } from 'react';
@@ -18,6 +18,8 @@ type DevToolsEventMap = {
   "DEVTOOLS_TO_DEVICE": unknown;
   "DEVICE_TO_DEVTOOLS": QueryCacheNotifyEvent | MutationCacheNotifyEvent;
   "DEVICE_TO_DEVTOOLS_ACK": { requestId: string; success: boolean };
+  "DEVICE_TO_DEVTOOLS_INITIAL_DATA": { queries: Query[]; mutations: Mutation[] };
+  "DEVTOOLS_TO_DEVICE_INITIAL_DATA_REQUEST": unknown;
 }
 
 const Wrapped = () => {
@@ -27,6 +29,11 @@ const Wrapped = () => {
 
   // Track pending acknowledgments to prevent feedback loops
   const pendingAcknowledgment = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!client) return;
+    client.send("DEVTOOLS_TO_DEVICE_INITIAL_DATA_REQUEST", null);
+  }, [client]);
 
   useEffect(() => {
     if (!client) return;
@@ -139,9 +146,39 @@ const Wrapped = () => {
       }
     })
 
+    const initialDataSubscription = client.onMessage("DEVICE_TO_DEVTOOLS_INITIAL_DATA", (event) => {
+      // Clear existing data first
+      queryClient.clear();
+      queryClient.getMutationCache().clear();
+      
+      // Restore queries
+      const queryCache = queryClient.getQueryCache();
+      event.queries.forEach(query => {
+        queryCache.build(
+          queryClient,
+          {
+            queryKey: query.queryKey,
+            queryHash: query.queryHash,
+          },
+          query.state
+        );
+      });
+      
+      // Restore mutations
+      const mutationCache = queryClient.getMutationCache();
+      event.mutations.forEach(mutation => {
+        mutationCache.build(
+          queryClient,
+          mutation.options,
+          mutation.state
+        );
+      });
+    });
+
     return () => {
       subscription.remove();
       ackSubscription.remove();
+      initialDataSubscription.remove();
     };
   }, [client, queryClient])
 
