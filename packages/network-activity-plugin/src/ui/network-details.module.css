@@ -1,0 +1,57 @@
+.container {
+  padding: 16px;
+  height: 100%;
+  overflow: auto;
+}
+
+.card {
+  margin-bottom: 20px;
+}
+
+.cardTitle {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.cardTitleError {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #f44336;
+}
+
+.infoText {
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.infoRow {
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+
+.infoRowUrl {
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+
+.urlText {
+  cursor: help;
+  border-bottom: 1px dotted #666;
+}
+
+.headersContainer {
+  font-size: 12px;
+  font-family: monospace;
+  background-color: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.headerRow {
+  margin-bottom: 2px;
+  word-break: break-all;
+}
+
+.headerValue {
+  word-break: break-all;
+} 
