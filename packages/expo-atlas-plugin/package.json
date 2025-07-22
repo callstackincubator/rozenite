@@ -8,7 +8,7 @@
   "types": "./dist/react-native.d.ts",
   "scripts": {
     "build": "rozenite build",
-    "dev": "vite dev"
+    "dev": "rozenite dev"
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
