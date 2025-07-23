@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
+import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools/production';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { TanStackQueryPluginEventMap } from '../shared/messaging';
 import { useSyncInitialData } from './useSyncInitialData';
