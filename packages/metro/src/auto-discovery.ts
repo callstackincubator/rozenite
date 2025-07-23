@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import assert from 'node:assert';
 import { logger } from './logger.js';
 import { getNodeModulesPaths } from './node-modules-paths.js';
 import { ROZENITE_MANIFEST } from './constants.js';
@@ -35,9 +36,50 @@ const isDirectoryOrSymlinkToDirectory = async (
   }
 };
 
+const tryResolvePlugin = (maybePlugin: string): string | null => {
+  try {
+    const pluginPath = require.resolve(maybePlugin);
+    // lorem-ipsum/dist/index.js -> ../.. -> lorem-ipsum/
+    return path.resolve(pluginPath, '..', '..');
+  } catch {
+    return null;
+  }
+}
+
+const getIncludedPlugins = async (options: RozeniteMetroConfig): Promise<InstalledPlugin[]> => {
+  assert(options.include, 'include is required');
+
+  const plugins: InstalledPlugin[] = [];
+  const normalizedInclude = options.exclude ? options.include.filter((plugin) => !options.exclude?.includes(plugin)) : options.include;
+
+  for (const maybePlugin of normalizedInclude) {
+    const pluginPath = tryResolvePlugin(maybePlugin);
+
+    if (!pluginPath) {
+      throw new Error(`Could not resolve plugin ${maybePlugin}.`);
+    }
+
+    const plugin = await tryExtractPlugin(pluginPath, maybePlugin);
+    console.log('plugin', pluginPath, maybePlugin);
+
+    if (!plugin) {
+      throw new Error(`Plugin ${maybePlugin} is not a valid Rozenite plugin.`);
+    }
+
+    plugins.push(plugin);
+  }
+
+  return plugins;
+}
+
 export const getInstalledPlugins = async (
   options: RozeniteMetroConfig
 ): Promise<InstalledPlugin[]> => {
+  if (options.include) {
+    logger.info('Auto-discovery is disabled. Using only included plugins.');
+    return getIncludedPlugins(options);
+  }
+
   const nodeModulesPaths = getNodeModulesPaths();
   const plugins: InstalledPlugin[] = [];
 
@@ -102,10 +144,6 @@ export const getInstalledPlugins = async (
                 actualPackageName
               );
 
-              if (options.include && !options.include.includes(actualPackageName)) {
-                continue;
-              }
-
               if (options.exclude && options.exclude.includes(actualPackageName)) {
                 continue;
               }
@@ -126,10 +164,6 @@ export const getInstalledPlugins = async (
           actualPackageName = packageName;
 
           const plugin = await tryExtractPlugin(packagePath, actualPackageName);
-
-          if (options.include && !options.include.includes(actualPackageName)) {
-            continue;
-          }
 
           if (options.exclude && options.exclude.includes(actualPackageName)) {
             continue;
