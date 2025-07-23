@@ -171,6 +171,9 @@ importers:
       '@rozenite/expo-atlas-plugin':
         specifier: workspace:*
         version: link:../../packages/expo-atlas-plugin
+      '@rozenite/mmkv-plugin':
+        specifier: workspace:*
+        version: link:../../packages/mmkv-plugin
       '@rozenite/network-activity-plugin':
         specifier: workspace:*
         version: link:../../packages/network-activity-plugin
@@ -182,7 +185,7 @@ importers:
         version: link:../../packages/tanstack-query-plugin
       '@tanstack/react-query':
         specifier: ^5.81.5
-        version: 5.81.5(react@18.3.1)
+        version: 5.83.0(react@18.3.1)
       expo-atlas:
         specifier: ^0.4.0
         version: 0.4.0(expo@53.0.18(@babel/core@7.28.0)(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))
@@ -195,6 +198,9 @@ importers:
       react-native:
         specifier: '*'
         version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
+      react-native-mmkv:
+        specifier: ^3.3.0
+        version: 3.3.0(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       react-native-safe-area-context:
         specifier: ^5.5.2
         version: 5.5.2(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
@@ -320,6 +326,37 @@ importers:
         specifier: ^0.82.5
         version: 0.82.5
 
+  packages/mmkv-plugin:
+    dependencies:
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      nanoevents:
+        specifier: ^9.1.0
+        version: 9.1.0
+      react-native-mmkv:
+        specifier: '>= 3.3.0'
+        version: 3.3.0(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+    devDependencies:
+      '@rozenite/vite-plugin':
+        specifier: workspace:*
+        version: link:../vite-plugin
+      react:
+        specifier: '*'
+        version: 18.3.1
+      react-native:
+        specifier: '*'
+        version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
+      rozenite:
+        specifier: workspace:*
+        version: link:../cli
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.3.5(@types/node@20.19.8)(jiti@2.4.2)(lightningcss@1.27.0)(terser@5.43.1)(yaml@2.8.0)
+
   packages/network-activity-plugin:
     dependencies:
       '@floating-ui/react':
@@ -373,14 +410,14 @@ importers:
         version: link:../plugin-bridge
       '@tanstack/react-query':
         specifier: ^5.0.0
-        version: 5.81.5(react@18.3.1)
+        version: 5.83.0(react@18.3.1)
     devDependencies:
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
       '@tanstack/react-query-devtools':
         specifier: ^5.0.0
-        version: 5.83.0(@tanstack/react-query@5.81.5(react@18.3.1))(react@18.3.1)
+        version: 5.83.0(@tanstack/react-query@5.83.0(react@18.3.1))(react@18.3.1)
       react:
         specifier: '*'
         version: 18.3.1
@@ -3023,8 +3060,8 @@ packages:
   '@swc/types@0.1.23':
     resolution: {integrity: sha512-u1iIVZV9Q0jxY+yM2vw/hZGDNudsN85bBpTqzAQ9rzkxW9D+e3aEM4Han+ow518gSewkXgjmEK0BD79ZcNVgPw==}
 
-  '@tanstack/query-core@5.81.5':
-    resolution: {integrity: sha512-ZJOgCy/z2qpZXWaj/oxvodDx07XcQa9BF92c0oINjHkoqUPsmm3uG08HpTaviviZ/N9eP1f9CM7mKSEkIo7O1Q==}
+  '@tanstack/query-core@5.83.0':
+    resolution: {integrity: sha512-0M8dA+amXUkyz5cVUm/B+zSk3xkQAcuXuz5/Q/LveT4ots2rBpPTZOzd7yJa2Utsf8D2Upl5KyjhHRY+9lB/XA==}
 
   '@tanstack/query-devtools@5.81.2':
     resolution: {integrity: sha512-jCeJcDCwKfoyyBXjXe9+Lo8aTkavygHHsUHAlxQKKaDeyT0qyQNLKl7+UyqYH2dDF6UN/14873IPBHchcsU+Zg==}
@@ -3035,8 +3072,8 @@ packages:
       '@tanstack/react-query': ^5.83.0
       react: ^18 || ^19
 
-  '@tanstack/react-query@5.81.5':
-    resolution: {integrity: sha512-lOf2KqRRiYWpQT86eeeftAGnjuTR35myTP8MXyvHa81VlomoAWNEd8x5vkcAfQefu0qtYCvyqLropFZqgI2EQw==}
+  '@tanstack/react-query@5.83.0':
+    resolution: {integrity: sha512-/XGYhZ3foc5H0VM2jLSD/NyBRIOK4q9kfeml4+0x2DlL6xVuAcVEW+hTlTapAmejObg0i3eNqhkr2dT+eciwoQ==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -6535,6 +6572,10 @@ packages:
     resolution: {integrity: sha512-21t+ozMQDAL/UGgQVBbZ/xXvNO10++ZPuTmKRO8k9V3AClVRht49ahtDjfY8l1q6nSHOrE5ASfthzH3ol6R/hg==}
     engines: {node: '>=20.17'}
 
+  nanoevents@9.1.0:
+    resolution: {integrity: sha512-Jd0fILWG44a9luj8v5kED4WI+zfkkgwKyRQKItTtlPfEsh7Lznfi1kr8/iZ+XAIss4Qq5GqRB0qtWbaz9ceO/A==}
+    engines: {node: ^18.0.0 || >=20.0.0}
+
   nanoid@3.3.11:
     resolution: {integrity: sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -7064,6 +7105,12 @@ packages:
 
   react-native-is-edge-to-edge@1.2.1:
     resolution: {integrity: sha512-FLbPWl/MyYQWz+KwqOZsSyj2JmLKglHatd3xLZWskXOpRaio4LfEDEz8E/A6uD8QoTHW6Aobw1jbEwK7KMgR7Q==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
+  react-native-mmkv@3.3.0:
+    resolution: {integrity: sha512-2iPjIJ+IAODXN35wm53EN6nv+hR/0NXLLiLWOdPA/0gXDB2dYVrr6MqvoiFpxhLhdj0B8fkf5ARNVavJaSvuuQ==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -12280,19 +12327,19 @@ snapshots:
     dependencies:
       '@swc/counter': 0.1.3
 
-  '@tanstack/query-core@5.81.5': {}
+  '@tanstack/query-core@5.83.0': {}
 
   '@tanstack/query-devtools@5.81.2': {}
 
-  '@tanstack/react-query-devtools@5.83.0(@tanstack/react-query@5.81.5(react@18.3.1))(react@18.3.1)':
+  '@tanstack/react-query-devtools@5.83.0(@tanstack/react-query@5.83.0(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@tanstack/query-devtools': 5.81.2
-      '@tanstack/react-query': 5.81.5(react@18.3.1)
+      '@tanstack/react-query': 5.83.0(react@18.3.1)
       react: 18.3.1
 
-  '@tanstack/react-query@5.81.5(react@18.3.1)':
+  '@tanstack/react-query@5.83.0(react@18.3.1)':
     dependencies:
-      '@tanstack/query-core': 5.81.5
+      '@tanstack/query-core': 5.83.0
       react: 18.3.1
 
   '@tanstack/react-virtual@3.13.12(react-dom@19.1.0(react@18.3.1))(react@18.3.1)':
@@ -17090,6 +17137,8 @@ snapshots:
 
   nano-spawn@1.0.2: {}
 
+  nanoevents@9.1.0: {}
+
   nanoid@3.3.11: {}
 
   nanoid@5.1.5: {}
@@ -17647,6 +17696,11 @@ snapshots:
       react-native: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
 
   react-native-is-edge-to-edge@1.2.1(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-native: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
+
+  react-native-mmkv@3.3.0(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-native: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)

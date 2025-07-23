@@ -9,15 +9,19 @@
     "@react-navigation/native": "^7.1.14",
     "@react-navigation/native-stack": "^7.3.21",
     "@redux-devtools/remote": "^0.9.5",
+    "@rozenite/expo-atlas-plugin": "workspace:*",
+    "@rozenite/network-activity-plugin": "workspace:*",
+    "@rozenite/plugin-bridge": "workspace:*",
     "@rozenite/tanstack-query-plugin": "workspace:*",
+    "@rozenite/mmkv-plugin": "workspace:*",
     "@tanstack/react-query": "^5.81.5",
     "expo-atlas": "^0.4.0",
     "expo-atlas-without-expo": "^1.0.1",
-    "react-native": "*",
     "react": "*",
+    "react-native": "*",
+    "react-native-mmkv": "^3.3.0",
     "react-native-safe-area-context": "^5.5.2",
-    "react-native-screens": "^4.11.1",
-    "@rozenite/expo-atlas-plugin": "workspace:*"
+    "react-native-screens": "^4.11.1"
   },
   "devDependencies": {
     "@babel/runtime": "*",
