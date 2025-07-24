@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import * as path from 'path';
 
-export default defineConfig(() => ({
+export default defineConfig({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/packages/vite-plugin',
   plugins: [
@@ -29,4 +29,4 @@ export default defineConfig(() => ({
       external: [],
     },
   },
-}));
+});

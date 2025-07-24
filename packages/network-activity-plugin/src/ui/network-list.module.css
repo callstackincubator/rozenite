@@ -63,6 +63,12 @@
   min-width: 0;
 }
 
+.typeColumn {
+  width: 100px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
 .domainText {
   font-weight: bold;
   color: #333;

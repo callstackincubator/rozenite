@@ -48,6 +48,12 @@
   min-width: 0;
 }
 
+.headerType {
+  width: 100px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
 .headerTime {
   width: 80px;
   text-align: right;

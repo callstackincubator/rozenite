@@ -10,7 +10,7 @@ export default defineConfig({
     outDir: './dist',
     emptyOutDir: false,
     reportCompressedSize: false,
-    minify: true,
+    minify: false,
     sourcemap: false,
   },
   server: {

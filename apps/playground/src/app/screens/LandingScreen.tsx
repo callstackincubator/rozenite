@@ -35,6 +35,13 @@ export const LandingScreen = () => {
             >
               <Text style={styles.buttonText}>MMKV Plugin</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navigationButton}
+              onPress={() => navigation.navigate('NetworkTest' as never)}
+            >
+              <Text style={styles.buttonText}>Network Test</Text>
+            </TouchableOpacity>
           </View>
         </View>
 

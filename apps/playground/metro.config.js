@@ -22,6 +22,16 @@ const customConfig = {
     sourceExts: [...sourceExts, 'cjs', 'mjs', 'svg'],
     unstable_enablePackageExports: true,
   },
+  serializer: {
+    
+  },
+  transformer: {
+    getTransformOptions: async () => ({
+      transform: {
+        inlineRequires: false,
+      },
+    }),
+  },
   server: {},
 };
 
@@ -37,7 +47,8 @@ module.exports = withRozenite(
       // Specify folders to watch, in addition to Nx defaults (workspace libraries and node_modules)
       // watchFolders: ["../../packages/expo-atlas-plugin"],
     }
-  ), {
+  )),
+  {
     exclude: ["@rozenite/mmkv-plugin"]
-  })
+  }
 );

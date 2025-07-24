@@ -1,11 +1,14 @@
 import type { PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
-import { viteRequire } from 'vite-require';
 import reactNativeWeb from 'vite-plugin-react-native-web';
 import { rozeniteServerPlugin } from './server-plugin.js';
 import { rozeniteClientPlugin } from './client-plugin.js';
 import { rozeniteReactNativePlugin } from './react-native-plugin.js';
-import dtsPlugin from 'vite-plugin-dts';
+import maybeDtsPlugin from 'vite-plugin-dts';
+import requirePlugin from './require-plugin.js';
+
+// vite-plugin-dts exports differently in CJS and ESM
+const dtsPlugin = 'default' in maybeDtsPlugin ? maybeDtsPlugin.default as typeof maybeDtsPlugin : maybeDtsPlugin;
 
 export const rozenitePlugin = (): PluginOption[] => {
   const isServer = process.env.VITE_ROZENITE_TARGET === 'server';
@@ -16,7 +19,7 @@ export const rozenitePlugin = (): PluginOption[] => {
   } else if (isReactNative) {
     return [
       react(),
-      viteRequire(),
+      requirePlugin(),
       rozeniteReactNativePlugin(),
       dtsPlugin({ rollupTypes: true }),
     ];
