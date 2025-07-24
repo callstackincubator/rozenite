@@ -1,3 +1,5 @@
+import { PackageManagerTabs } from 'rspress/theme';
+
 # Official Plugins
 
 As the creators of Rozenite, we maintain several plugins that demonstrate the framework's capabilities and provide essential debugging tools for React Native development.
@@ -39,22 +41,11 @@ Monitor network requests in your React Native app with a comprehensive network i
 
 Plugins should be installed as development dependencies since they are only needed during development:
 
-```bash
-# Using npm
-npm install --save-dev @rozenite/expo-atlas-plugin
-npm install --save-dev @rozenite/tanstack-query-plugin
-npm install --save-dev @rozenite/network-activity-plugin
+<PackageManagerTabs command="npm install --save-dev @rozenite/expo-atlas-plugin" />
 
-# Using yarn
-yarn add --dev @rozenite/expo-atlas-plugin
-yarn add --dev @rozenite/tanstack-query-plugin
-yarn add --dev @rozenite/network-activity-plugin
+<PackageManagerTabs command="npm install --save-dev @rozenite/tanstack-query-plugin" />
 
-# Using pnpm
-pnpm add --save-dev @rozenite/expo-atlas-plugin
-pnpm add --save-dev @rozenite/tanstack-query-plugin
-pnpm add --save-dev @rozenite/network-activity-plugin
-```
+<PackageManagerTabs command="npm install --save-dev @rozenite/network-activity-plugin" />
 
 ## Configuration
 
