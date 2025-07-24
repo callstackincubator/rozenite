@@ -65,4 +65,4 @@ Like the project? ⚛️ [Join the team](https://callstack.com/careers/?utm_camp
 [prs-welcome-badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge
 [prs-welcome]: https://github.com/callstackincubator/rozenite/blob/main/CONTRIBUTING.md
 [chat-badge]: https://img.shields.io/discord/426714625279524876.svg?style=for-the-badge
-[chat]: https://discord.gg/Q4yr2rTWYF 
+[chat]: https://discord.gg/xgGt7KAjxv
