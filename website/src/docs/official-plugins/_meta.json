@@ -16,7 +16,7 @@
   },
   {
     "type": "file",
-    "name": "plugin-development",
-    "label": "Plugin Development"
+    "name": "network-activity",
+    "label": "Network Activity"
   }
 ] 

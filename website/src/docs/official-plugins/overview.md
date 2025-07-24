@@ -1,19 +1,12 @@
-# Plugins
+# Official Plugins
 
-Plugins are the way to add new panels and functionalities to React Native DevTools through Rozenite. They allow you to extend the DevTools with custom debugging tools, performance monitors, and development utilities.
+As the creators of Rozenite, we maintain several plugins that demonstrate the framework's capabilities and provide essential debugging tools for React Native development.
 
-## What are Plugins?
-
-Plugins are packages that integrate seamlessly with Rozenite to add custom panels and functionality to React Native DevTools. As the creators of Rozenite, we maintain a couple of plugins that demonstrate the framework's capabilities:
-
-- **Production Ready**: Tested and optimized for real-world use
-- **Type Safe**: Built with full TypeScript support
-- **Well Documented**: Comprehensive guides and examples
-- **Actively Maintained**: Regular updates and bug fixes
+:::info Rozenite is currently in beta.
+Our official plugins are also in beta and may not work in all possible use-cases. We're actively working to improve stability and compatibility. If you encounter any issues, please [report them](https://github.com/callstackincubator/rozenite/issues) or help us make it better by [contributing to the repository](https://github.com/callstackincubator/rozenite).
+:::
 
 ## Available Plugins
-
-As the creators of Rozenite, we maintain a couple of plugins to demonstrate the framework's capabilities:
 
 ### [Expo Atlas](./expo-atlas.md)
 
@@ -33,6 +26,15 @@ Integrate TanStack Query DevTools directly into your React Native DevTools for q
 - **Query Actions**: Refetch, invalidate, reset, and remove queries
 - **State Manipulation**: Trigger loading states and error conditions for testing
 
+### [Network Activity Inspector](./network-activity.md)
+
+Monitor network requests in your React Native app with a comprehensive network inspector similar to Chrome DevTools. This plugin provides:
+
+- **Real-time Network Monitoring**: Track all HTTP/HTTPS requests in real-time
+- **Request Details**: View request headers, method, URL, and timing information
+- **Response Inspection**: Examine response headers, status codes, and timing data
+- **Request History**: Maintain a searchable history of network activity
+
 ## Installing Plugins
 
 Plugins should be installed as development dependencies since they are only needed during development:
@@ -41,28 +43,31 @@ Plugins should be installed as development dependencies since they are only need
 # Using npm
 npm install --save-dev @rozenite/expo-atlas-plugin
 npm install --save-dev @rozenite/tanstack-query-plugin
+npm install --save-dev @rozenite/network-activity-plugin
 
 # Using yarn
 yarn add --dev @rozenite/expo-atlas-plugin
 yarn add --dev @rozenite/tanstack-query-plugin
+yarn add --dev @rozenite/network-activity-plugin
 
 # Using pnpm
 pnpm add --save-dev @rozenite/expo-atlas-plugin
 pnpm add --save-dev @rozenite/tanstack-query-plugin
+pnpm add --save-dev @rozenite/network-activity-plugin
 ```
 
 ## Configuration
 
 Each plugin has its own configuration requirements. See the individual plugin documentation for setup instructions.
 
-## Contributing
-
-Want to contribute to plugins or suggest new ones? Check out our [Plugin Development Guide](./plugin-development.md) to learn how to create plugins, or reach out to the community to discuss your ideas. We welcome contributions to both our maintained plugins and community plugins.
-
 ## Community Plugins
 
 In addition to the plugins we maintain, the Rozenite community creates and maintains many useful plugins. While these aren't officially supported, they can provide valuable functionality for specific use cases.
 
+## Contributing
+
+Want to contribute to plugins or suggest new ones? Check out our [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to create plugins, or reach out to the community to discuss your ideas. We welcome contributions to both our maintained plugins and community plugins.
+
 ---
 
-**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md) or [TanStack Query plugin](./tanstack-query.md), or explore [Plugin Development](./plugin-development.md) to create your own plugins. 
+**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md), [TanStack Query plugin](./tanstack-query.md), or [Network Activity Inspector](./network-activity.md). 

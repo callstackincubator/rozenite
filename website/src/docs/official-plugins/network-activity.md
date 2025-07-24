@@ -1,0 +1,99 @@
+# Network Activity Plugin
+
+The Network Activity plugin provides comprehensive network request monitoring for React Native applications, offering real-time network debugging capabilities similar to Chrome DevTools Network panel.
+
+## What is Network Activity Plugin?
+
+The Network Activity plugin is a powerful debugging tool that helps you monitor and analyze all network requests in your React Native application. It provides:
+
+- **Real-time Network Monitoring**: Track all HTTP/HTTPS requests as they happen
+- **Request Details**: View request headers, method, URL, and timing information
+- **Response Inspection**: Examine response headers, status codes, and timing data
+- **Performance Analysis**: Analyze request duration, connection timing, and performance metrics
+- **Request History**: Maintain a searchable history of network activity
+
+## Installation
+
+Install the Network Activity plugin as a development dependency using your preferred package manager:
+
+```bash
+# Using npm
+npm install --save-dev @rozenite/network-activity-plugin
+
+# Using yarn
+yarn add --dev @rozenite/network-activity-plugin
+
+# Using pnpm
+pnpm add --save-dev @rozenite/network-activity-plugin
+```
+
+## Configuration
+
+### React Native Integration
+
+Add the DevTools hook to your React Native app to enable network monitoring:
+
+```typescript title="App.tsx"
+import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
+
+function App() {
+  // Enable Network Activity DevTools in development
+  useNetworkActivityDevTools();
+
+  return (
+    <YourApp />
+  );
+}
+```
+
+### Metro Configuration
+
+The Network Activity plugin works with the standard Rozenite Metro configuration:
+
+```javascript title="metro.config.js"
+const { withRozenite } = require('@rozenite/metro');
+
+const config = {
+  // Your existing Metro configuration
+};
+
+module.exports = withRozenite(config, {
+  // Your Rozenite configuration
+});
+```
+
+## Usage
+
+Once configured, the Network Activity plugin will automatically appear in your React Native DevTools sidebar as "Network Activity". Click on it to access:
+
+### Network Request List
+
+- **Real-time Updates**: See network requests as they happen in your app
+- **Request Status**: View request status (pending, completed, failed)
+- **HTTP Methods**: Identify GET, POST, PUT, DELETE, and other HTTP methods
+- **Response Codes**: See HTTP status codes and their meanings
+- **Request Timing**: Monitor request duration and performance
+
+### Request Details
+
+- **Headers**: Inspect request and response headers
+- **Query Parameters**: View URL parameters and their values
+- **Request Body**: Examine POST/PUT request payloads
+- **Response Body**: View response content and structure
+
+## Contributing
+
+The Network Activity plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](./plugin-development.md) to learn how to contribute or create your own plugins.
+
+## Support
+
+If you encounter issues with the Network Activity plugin:
+
+1. **Check Documentation**: Review this guide for common solutions
+2. **Search Issues**: Look for similar issues in the repository
+3. **Create Issue**: Report bugs or request features
+4. **Community**: Reach out to the Rozenite community for help
+
+---
+
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md). 

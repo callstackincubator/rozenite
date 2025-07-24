@@ -2,7 +2,7 @@
 
 This guide will walk you through the complete process of creating a React Native DevTools plugin, from initial generation to building for production.
 
-> **Tip**: Before creating your own plugin, check out the [Available Plugins](./overview.md) to see if there's already a plugin that meets your needs!
+> **Tip**: Before creating your own plugin, check out the [Official Plugins](../official-plugins/overview.md) to see if there's already a plugin that meets your needs!
 
 ## Quick Start
 
@@ -320,5 +320,5 @@ The build creates a `dist/` directory with:
 ## Next Steps
 
 - Explore the [CLI documentation](../cli.md) for more command options
-- Check out [Available Plugins](./overview.md) to see available plugins
+- Check out [Official Plugins](../official-plugins/overview.md) to see available plugins
 - Join the community to share your plugins and get help 

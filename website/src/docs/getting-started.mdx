@@ -74,6 +74,81 @@ Rozenite searches for plugins by crawling the entire `node_modules` directory tr
 - Parent directories' `node_modules` (if using workspaces or monorepos)
 - Global `node_modules` (if any)
 
+By default, Rozenite will automatically discover and load all plugins found in your `node_modules`.
+
+### Plugin Filtering
+
+While Rozenite automatically discovers all plugins by default, you can control which plugins are loaded using the configuration options:
+
+#### Include Specific Plugins
+
+If you want to load only specific plugins, you can use the `include` option. When this option is provided, auto-discovery is disabled and only the listed plugins will be loaded:
+
+```javascript
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { withRozenite } = require('@rozenite/metro');
+
+const defaultConfig = getDefaultConfig(__dirname);
+
+const customConfig = {
+  // Your existing Metro configuration
+};
+
+module.exports = withRozenite(
+  mergeConfig(defaultConfig, customConfig),
+  {
+    include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin']
+  }
+);
+```
+
+#### Exclude Specific Plugins
+
+To prevent certain plugins from loading while keeping auto-discovery enabled, use the `exclude` option:
+
+```javascript
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { withRozenite } = require('@rozenite/metro');
+
+const defaultConfig = getDefaultConfig(__dirname);
+
+const customConfig = {
+  // Your existing Metro configuration
+};
+
+module.exports = withRozenite(
+  mergeConfig(defaultConfig, customConfig),
+  {
+    exclude: ['@rozenite/mmkv-plugin']
+  }
+);
+```
+
+#### Combining Include and Exclude
+
+You can also combine both options. When both are provided, the `exclude` list is applied to the `include` list:
+
+```javascript
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { withRozenite } = require('@rozenite/metro');
+
+const defaultConfig = getDefaultConfig(__dirname);
+
+const customConfig = {
+  // Your existing Metro configuration
+};
+
+module.exports = withRozenite(
+  mergeConfig(defaultConfig, customConfig),
+  {
+    include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin', '@rozenite/tanstack-query-plugin'],
+    exclude: ['@rozenite/mmkv-plugin'] // This will be filtered out from the include list
+  }
+);
+```
+
+**Note**: When using the `include` option, auto-discovery is completely disabled. Only the explicitly listed plugins will be loaded, and any plugins not in the list will be ignored, even if they are installed in your `node_modules`.
+
 ## Usage
 
 After configuration, start your Metro development server as usual:
@@ -88,3 +163,4 @@ To verify that Rozenite is working correctly:
 
 1. **Check Metro logs** - You should see plugin discovery messages
 2. **Open React Native DevTools** - Your app should show additional panels from discovered plugins
+3. **Check Chrome DevTools** - Open Chrome DevTools within the React Native DevTools window (DevTools inception!) and look for Rozenite logs in the console

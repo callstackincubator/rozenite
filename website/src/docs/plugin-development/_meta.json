@@ -1,0 +1,12 @@
+[
+  {
+    "type": "file",
+    "name": "overview",
+    "label": "Overview"
+  },
+  {
+    "type": "file",
+    "name": "plugin-development",
+    "label": "Plugin Development Guide"
+  }
+] 

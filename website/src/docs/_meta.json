@@ -11,7 +11,12 @@
   },
   {
     "type": "dir",
-    "name": "plugins",
-    "label": "Plugins"
+    "name": "plugin-development",
+    "label": "Plugin Development"
+  },
+  {
+    "type": "dir",
+    "name": "official-plugins",
+    "label": "Official Plugins"
   }
 ]

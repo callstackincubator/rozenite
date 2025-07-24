@@ -76,32 +76,6 @@ Once configured, the Expo Atlas plugin will automatically appear in your React N
 - **Development Bundle**: Analyze your development bundle in real-time
 - **Production Bundle**: Export and analyze production bundles for optimization
 
-## Troubleshooting
-
-### Plugin Not Appearing
-
-If the Expo Atlas panel doesn't appear in DevTools:
-
-1. **Check Installation**: Ensure the plugin is properly installed
-2. **Verify Configuration**: Confirm Metro and Rozenite configuration
-3. **Restart DevTools**: Try refreshing the DevTools page
-4. **Check Console**: Look for any error messages in the browser console
-
-### Metro Configuration Issues
-
-If you encounter Metro configuration errors:
-
-1. **Clear Cache**: Run `npx react-native start --reset-cache`
-2. **Check Dependencies**: Ensure all required dependencies are installed
-3. **Verify Paths**: Confirm all import paths are correct
-
-### Performance Issues
-
-If you experience performance issues:
-
-1. **Bundle Size**: Large bundles may take longer to analyze
-2. **Metro Cache**: Clear Metro cache if bundle analysis seems incorrect
-
 ## Contributing
 
 The Expo Atlas plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](./plugin-development.md) to learn how to contribute or create your own plugins.
@@ -117,4 +91,4 @@ If you encounter issues with the Expo Atlas plugin:
 
 ---
 
-**Next**: Learn about [Plugin Development](./plugin-development.md) to create your own plugins, or explore other [Available Plugins](./overview.md). 
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md). 

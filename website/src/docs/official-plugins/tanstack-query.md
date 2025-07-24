@@ -78,4 +78,4 @@ If you encounter issues with the TanStack Query plugin:
 
 ---
 
-**Next**: Learn about [Plugin Development](./plugin-development.md) to create your own plugins, or explore other [Available Plugins](./overview.md). 
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md). 
