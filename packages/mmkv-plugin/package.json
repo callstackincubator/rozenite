@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
+    "@tanstack/react-table": "^8.21.3",
     "nanoevents": "^9.1.0"
   },
   "devDependencies": {

@@ -1,13 +1,10 @@
 import { useRozeniteDevToolsClient } from "@rozenite/plugin-bridge";
 import { useEffect } from "react";
-import { MMKV } from "react-native-mmkv";
-import { MMKVEventMap } from "../shared/network";
-import { createNanoEvents } from "nanoevents";
+import { MMKVEventMap } from "../shared/messaging";
+import { getMMKVContainer } from "./mmkv-container";
+import { getMMKVEntry } from "./mmkv-entry";
 
-type NanoEventsMap<T extends MMKVEventMap = MMKVEventMap> = { [k in keyof T]: (event: T[k]) => void };
-const eventEmitter = createNanoEvents<NanoEventsMap>();
-const instances: string[] = [];
-const instanceMap = new Map<string, MMKV>();
+const mmkvContainer = getMMKVContainer();
 
 export const useMMKVDevTools = () => {
   const client = useRozeniteDevToolsClient<MMKVEventMap>({
@@ -15,40 +12,28 @@ export const useMMKVDevTools = () => {
   });
 
   useEffect(() => {
-    Object.defineProperty(MMKV.prototype, 'nativeInstance', {
-      get() {
-        return this._nativeInstance;
-      },
-      set(value) {
-        instances.push(this.id);
-        instanceMap.set(this.id, this);
-        this._nativeInstance = value;
+    if (!client) {
+      return;
+    }
+
+    const instanceCreatedSubscription = mmkvContainer.on('instance-created', () => {
+      client.send('host-instances', mmkvContainer.getInstanceIds());
+    });
+
+    const instanceUpdatedSubscription = mmkvContainer.on('value-changed', (instanceId, key) => {
+      const instance = mmkvContainer.getInstance(instanceId);
+
+      if (!instance) {
+        console.warn('MMKV instance not found:', instanceId);
+        return;
       }
-    });
-  }, []);
 
-  useEffect(() => {
-    if (!client) {
-      return;
-    }
-
-    return eventEmitter.on('add-instance', (event) => {
-      client.send('add-instance', event);
-    });
-  }, [client]);
-
-  useEffect(() => {
-    if (!client) {
-      return;
-    }
-
-    const subscription = client.onMessage('get-instances', () => {
-      console.log('get-instances', instances);
-      client.send('instances', instances);
+      client.send('host-entry-updated', { instanceId: instanceId, key, value: instance.getString(key) ?? '' });
     });
 
     return () => {
-      subscription.remove();
+      instanceCreatedSubscription();
+      instanceUpdatedSubscription();
     };
   }, [client]);
 
@@ -57,70 +42,44 @@ export const useMMKVDevTools = () => {
       return;
     }
 
-    const subscription = client.onMessage('get-entries', (event) => {
+
+    const getAllEntriesSubscription = client.onMessage('guest-get-entries', (event) => {
       const { instanceId } = event;
-      const instance = instanceMap.get(instanceId);
+      const instance = mmkvContainer.getInstance(instanceId);
       
       if (!instance) {
         console.warn('MMKV instance not found:', instanceId);
         return;
       }
+      
+      const entries = instance.getAllKeys().map((key) => getMMKVEntry(instance, key));
+      
+      client.send('host-entries', {
+        instanceId,
+        entries,
+      });
+    });
 
-      try {
-        const allKeys = instance.getAllKeys();
-        const entries = allKeys.map(key => {
-          let type: 'string' | 'number' | 'boolean' | 'buffer' = 'string';
-          let value: any = null;
+    const getInstancesSubscription = client.onMessage('guest-get-instances', () => {
+      client.send('host-instances', mmkvContainer.getInstanceIds());
+    });
 
-          // Try to get value with different types
-          if (instance.contains(key)) {
-            // Try string first
-            const stringValue = instance.getString(key);
-            if (stringValue !== undefined) {
-              type = 'string';
-              value = stringValue;
-            } else {
-              // Try number
-              const numberValue = instance.getNumber(key);
-              if (numberValue !== undefined) {
-                type = 'number';
-                value = numberValue;
-              } else {
-                // Try boolean
-                const booleanValue = instance.getBoolean(key);
-                if (booleanValue !== undefined) {
-                  type = 'boolean';
-                  value = booleanValue;
-                } else {
-                  // Try buffer
-                  const bufferValue = instance.getBuffer(key);
-                  if (bufferValue !== undefined) {
-                    type = 'buffer';
-                    value = 'Buffer'
-                  }
-                }
-              }
-            }
-          }
-
-          return {
-            key,
-            type,
-            value,
-          }
-        });
-
-        client.send('entries', {
-          instanceId,
-          entries
-        });
-      } catch (error) {
-        console.error('Error getting MMKV entries:', error);
+    const updateEntrySubscription = client.onMessage('guest-update-entry', (event) => {
+      const { instanceId, key, value } = event;
+      const instance = mmkvContainer.getInstance(instanceId);
+      
+      if (!instance) {
+        console.warn('MMKV instance not found:', instanceId);
+        return;
       }
+      
+      instance.set(key, value);
     });
 
     return () => {
-      subscription.remove();
+      getAllEntriesSubscription.remove();
+      getInstancesSubscription.remove();
+      updateEntrySubscription.remove();
     };
   }, [client]);
 

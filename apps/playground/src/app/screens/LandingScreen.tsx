@@ -29,14 +29,11 @@ export const LandingScreen = () => {
               <Text style={styles.buttonText}>Hello World</Text>
             </TouchableOpacity>
 
-            {/* Placeholder for future screens */}
             <TouchableOpacity
-              style={[styles.navigationButton, styles.disabledButton]}
-              disabled={true}
+              style={styles.navigationButton}
+              onPress={() => navigation.navigate('MMKVPlugin' as never)}
             >
-              <Text style={[styles.buttonText, styles.disabledButtonText]}>
-                Coming Soon...
-              </Text>
+              <Text style={styles.buttonText}>MMKV Plugin</Text>
             </TouchableOpacity>
           </View>
         </View>

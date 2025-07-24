@@ -1,6 +1,8 @@
 import { useRozeniteDevToolsClient } from "@rozenite/plugin-bridge";
 import { useEffect, useState } from "react";
-import { MMKVEventMap, MMKVEntry } from "../shared/network";
+import { MMKVEventMap } from "../shared/messaging";
+import { MMKVEntry, MMKVEntryValue } from "../shared/types";
+import { EditableTable } from "./editable-table";
 import "./panel.css";
 
 export default function MMKVPanel() {
@@ -19,14 +21,15 @@ export default function MMKVPanel() {
       return;
     }
 
-    client.send('get-instances', {});
-    
-    const subscription = client.onMessage('instances', (event) => {
+    const subscription = client.onMessage('host-instances', (event) => {
       setInstances(event);
       if (event.length > 0 && !selectedInstance) {
         setSelectedInstance(event[0]);
       }
     });
+
+    // Initial query for instances
+    client.send('guest-get-instances', {});
 
     return () => {
       subscription.remove();
@@ -38,18 +41,31 @@ export default function MMKVPanel() {
       return;
     }
 
-    setLoading(true);
-    client.send('get-entries', { instanceId: selectedInstance });
-    
-    const subscription = client.onMessage('entries', (event) => {
+    const entriesSubscription = client.onMessage('host-entries', (event) => {
       if (event.instanceId === selectedInstance) {
         setEntries(event.entries);
         setLoading(false);
       }
     });
 
+    const updateSubscription = client.onMessage('host-entry-updated', (event) => {
+      if (event.instanceId === selectedInstance) {
+        setEntries(prevEntries => 
+          prevEntries.map(entry => 
+            entry.key === event.key 
+              ? { ...entry, value: event.value } as MMKVEntry
+              : entry
+          )
+        );
+      }
+    });
+
+    setLoading(true);
+    client.send('guest-get-entries', { instanceId: selectedInstance });
+
     return () => {
-      subscription.remove();
+      entriesSubscription.remove();
+      updateSubscription.remove();
     };
   }, [client, selectedInstance]);
 
@@ -57,55 +73,22 @@ export default function MMKVPanel() {
     entry.key.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const formatValue = (entry: MMKVEntry) => {
-    switch (entry.type) {
-      case 'string':
-        return (
-          <span className="value-string">
-            "{entry.value as string}"
-          </span>
-        );
-      case 'number':
-        return (
-          <span className="value-number">
-            {entry.value as number}
-          </span>
-        );
-      case 'boolean':
-        return (
-          <span className={`value-boolean ${entry.value ? 'true' : 'false'}`}>
-            {entry.value ? 'true' : 'false'}
-          </span>
-        );
-      case 'buffer':
-        return (
-          <span className="value-buffer">
-            [Buffer: {(entry.value as string).substring(0, 20)}...]
-          </span>
-        );
-      default:
-        return <span className="value-unknown">{String(entry.value)}</span>;
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'string': return '#10b981';
-      case 'number': return '#3b82f6';
-      case 'boolean': return '#f59e0b';
-      case 'buffer': return '#8b5cf6';
-      default: return '#6b7280';
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'string': return '📝';
-      case 'number': return '🔢';
-      case 'boolean': return '✅';
-      case 'buffer': return '💾';
-      default: return '❓';
-    }
+  const handleValueChange = (key: string, newValue: MMKVEntryValue) => {
+    if (!client || !selectedInstance) return;
+    
+    client.send('guest-update-entry', {
+      instanceId: selectedInstance,
+      key,
+      value: newValue
+    });
+    
+    setEntries(prevEntries => 
+      prevEntries.map(entry => 
+        entry.key === key 
+          ? { ...entry, value: newValue } as MMKVEntry
+          : entry
+      )
+    );
   };
 
   return (
@@ -175,50 +158,18 @@ export default function MMKVPanel() {
 
             {/* Entries Table */}
             <div className="table-container">
-              {loading ? (
-                <div className="loading-state">
-                  <div className="loading-spinner"></div>
-                  <p>Loading entries...</p>
-                </div>
-              ) : filteredEntries.length === 0 ? (
+              {filteredEntries.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-icon">🔍</div>
                   <h3>No entries found</h3>
                   <p>{searchTerm ? 'Try adjusting your search terms' : 'This instance appears to be empty'}</p>
                 </div>
               ) : (
-                <div className="table-wrapper">
-                  <table className="entries-table">
-                    <thead>
-                      <tr>
-                        <th className="th-key">Key</th>
-                        <th className="th-type">Type</th>
-                        <th className="th-value">Value</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredEntries.map((entry) => (
-                        <tr key={entry.key} className="entry-row">
-                          <td className="entry-key">
-                            <code>{entry.key}</code>
-                          </td>
-                          <td className="entry-type">
-                            <span 
-                              className="type-badge"
-                              style={{ backgroundColor: getTypeColor(entry.type) }}
-                              title={`${getTypeIcon(entry.type)} ${entry.type}`}
-                            >
-                              {entry.type}
-                            </span>
-                          </td>
-                          <td className="entry-value">
-                            {formatValue(entry)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <EditableTable
+                  data={filteredEntries}
+                  onValueChange={handleValueChange}
+                  loading={loading}
+                />
               )}
             </div>
           </>

@@ -38,6 +38,6 @@ module.exports = withRozenite(
       // watchFolders: ["../../packages/expo-atlas-plugin"],
     }
   ), {
-    exclude: []
+    exclude: ["@rozenite/mmkv-plugin"]
   })
 );
