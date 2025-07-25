@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 declare module '/rozenite/ui/legacy/legacy.js' {
   export namespace View {
     export class SimpleView extends Widget.Widget {

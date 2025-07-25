@@ -47,14 +47,14 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@react-native/metro-config": "^0.80.1",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",
     "@types/serve-static": "^1.15.8",
     "metro-config": "^0.82.5"
   },
   "peerDependencies": {
-    "@react-native/debugger-frontend": "*"
+    "@react-native/debugger-frontend": "*",
+    "@react-native/dev-middleware": "*"
   },
   "engines": {
     "node": ">=22"

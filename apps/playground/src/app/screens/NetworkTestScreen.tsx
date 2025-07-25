@@ -7,12 +7,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Dimensions,
   TextInput,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-const { width } = Dimensions.get('window');
 
 // Real API service using JSONPlaceholder
 const api = {
@@ -191,7 +188,7 @@ const useCreatePostMutation = () => {
   
   return useMutation({
     mutationFn: api.createPost,
-    onSuccess: (newPost) => {
+    onSuccess: () => {
       // Invalidate and refetch posts query to show the new post
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       // Optionally, you could also update the cache directly
@@ -289,14 +286,14 @@ export const NetworkTestScreen: React.FC = () => {
     });
   };
 
-  const renderItem = ({ item }: { item: any }) => {
+  const renderItem = ({ item }: { item: User | Post | Todo }) => {
     switch (activeTab) {
-      case 'users': return <UserCard user={item} />;
-      case 'posts': return <PostCard post={item} />;
-      case 'todos': return <TodoCard todo={item} />;
-      case 'slow': return <UserCard user={item} />;
-      case 'unreliable': return <PostCard post={item} />;
-      default: return <UserCard user={item} />;
+      case 'users': return <UserCard user={item as User} />;
+      case 'posts': return <PostCard post={item as Post} />;
+      case 'todos': return <TodoCard todo={item as Todo} />;
+      case 'slow': return <UserCard user={item as User} />;
+      case 'unreliable': return <PostCard post={item as Post} />;
+      default: return <UserCard user={item as User} />;
     }
   };
 
@@ -320,7 +317,7 @@ export const NetworkTestScreen: React.FC = () => {
               styles.tab,
               activeTab === tab.key && styles.tabActive
             ]}
-            onPress={() => setActiveTab(tab.key as any)}
+            onPress={() => setActiveTab(tab.key as 'users' | 'posts' | 'todos' | 'slow' | 'unreliable' | 'create')}
           >
             <Text style={[
               styles.tabText,

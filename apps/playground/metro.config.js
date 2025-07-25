@@ -28,7 +28,7 @@ const customConfig = {
   transformer: {
     getTransformOptions: async () => ({
       transform: {
-        inlineRequires: false,
+        inlineRequires: true,
       },
     }),
   },
@@ -49,6 +49,6 @@ module.exports = withRozenite(
     }
   )),
   {
-    exclude: ["@rozenite/mmkv-plugin"]
+    exclude: ["@rozenite/network-activity-plugin"]
   }
 );

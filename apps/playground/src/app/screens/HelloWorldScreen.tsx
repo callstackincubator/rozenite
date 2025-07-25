@@ -91,7 +91,7 @@ export const HelloWorldScreen = () => {
       
       Alert.alert('Success', `User "${newUser.name}" created successfully!`);
     },
-    onError: (error) => {
+    onError: () => {
       Alert.alert('Error', 'Failed to create user. Please try again.');
     },
   });
