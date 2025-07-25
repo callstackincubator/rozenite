@@ -465,8 +465,8 @@ importers:
   website:
     dependencies:
       '@callstack/rspress-theme':
-        specifier: ^0.3.0
-        version: 0.3.0(react@19.1.0)(rspress@2.0.0-beta.21(@types/react@19.1.8)(acorn@8.15.0)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))
+        specifier: ^0.3.1
+        version: 0.3.1(react@19.1.0)(rspress@2.0.0-beta.21(@types/react@19.1.8)(acorn@8.15.0)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))
       '@rspress/plugin-llms':
         specifier: 2.0.0-beta.21
         version: 2.0.0-beta.21(rspress@2.0.0-beta.21(@types/react@19.1.8)(acorn@8.15.0)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))
@@ -1234,8 +1234,8 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
-  '@callstack/rspress-theme@0.3.0':
-    resolution: {integrity: sha512-s49tbcA2rblHtCcypvST54t/JkjQ3iF7kfr7PUvNsSpIYtka9Pe0r0GY11IBB+2DeZfflcwxEQBpSV/amgivGQ==}
+  '@callstack/rspress-theme@0.3.1':
+    resolution: {integrity: sha512-oBuZqVoNDisr+brNQNa+azPwSbBolN7DmC4T80BxPFYlBOsM4rLz3yZLbxJBL5pD/ujaez9BN/h/inBuZs2WfQ==}
     peerDependencies:
       react: ^19.0.0
       rspress: ^2.0.0-beta.21
@@ -9519,7 +9519,7 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@callstack/rspress-theme@0.3.0(react@19.1.0)(rspress@2.0.0-beta.21(@types/react@19.1.8)(acorn@8.15.0)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))':
+  '@callstack/rspress-theme@0.3.1(react@19.1.0)(rspress@2.0.0-beta.21(@types/react@19.1.8)(acorn@8.15.0)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))':
     dependencies:
       react: 19.1.0
       rspress: 2.0.0-beta.21(@types/react@19.1.8)(acorn@8.15.0)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17)))
