@@ -42,10 +42,6 @@
       }
     }
   },
-  "scripts": {
-    "build": "vite build",
-    "type-check": "tsc --noEmit"
-  },
   "dependencies": {
     "tslib": "^2.3.0"
   },

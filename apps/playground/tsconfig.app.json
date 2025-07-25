@@ -28,7 +28,19 @@
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
   "references": [
     {
+      "path": "../../packages/tanstack-query-plugin"
+    },
+    {
+      "path": "../../packages/network-activity-plugin"
+    },
+    {
+      "path": "../../packages/mmkv-plugin"
+    },
+    {
       "path": "../../packages/cli/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/expo-atlas-plugin"
     },
     {
       "path": "../../packages/metro/tsconfig.lib.json"

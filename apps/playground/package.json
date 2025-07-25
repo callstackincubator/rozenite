@@ -11,7 +11,6 @@
     "@rozenite/expo-atlas-plugin": "workspace:*",
     "@rozenite/mmkv-plugin": "workspace:*",
     "@rozenite/network-activity-plugin": "workspace:*",
-    "@rozenite/plugin-bridge": "workspace:*",
     "@rozenite/tanstack-query-plugin": "workspace:*",
     "@tanstack/react-query": "^5.81.5",
     "expo-atlas": "^0.4.0",

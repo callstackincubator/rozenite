@@ -30,10 +30,6 @@
       "require": "./dist/host.cjs"
     }
   },
-  "scripts": {
-    "clean": "rm -rf dist",
-    "build": "vite build"
-  },
   "dependencies": {
     "tslib": "^2.3.0"
   },

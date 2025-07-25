@@ -27,9 +27,6 @@
   },
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
-  "scripts": {
-    "build": "vite build"
-  },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
     "commander": "^14.0.0",

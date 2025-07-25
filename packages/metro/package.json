@@ -36,9 +36,6 @@
       "require": "./dist/index.cjs"
     }
   },
-  "scripts": {
-    "build": "vite build"
-  },
   "dependencies": {
     "@rozenite/runtime": "workspace:*",
     "ejs": "^3.1.10",

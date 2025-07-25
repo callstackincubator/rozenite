@@ -177,9 +177,6 @@ importers:
       '@rozenite/network-activity-plugin':
         specifier: workspace:*
         version: link:../../packages/network-activity-plugin
-      '@rozenite/plugin-bridge':
-        specifier: workspace:*
-        version: link:../../packages/plugin-bridge
       '@rozenite/tanstack-query-plugin':
         specifier: workspace:*
         version: link:../../packages/tanstack-query-plugin
