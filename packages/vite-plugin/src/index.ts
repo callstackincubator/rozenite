@@ -8,7 +8,10 @@ import maybeDtsPlugin from 'vite-plugin-dts';
 import requirePlugin from './require-plugin.js';
 
 // vite-plugin-dts exports differently in CJS and ESM
-const dtsPlugin = 'default' in maybeDtsPlugin ? maybeDtsPlugin.default as typeof maybeDtsPlugin : maybeDtsPlugin;
+const dtsPlugin =
+  'default' in maybeDtsPlugin
+    ? (maybeDtsPlugin.default as typeof maybeDtsPlugin)
+    : maybeDtsPlugin;
 
 export const rozenitePlugin = (): PluginOption[] => {
   const isServer = process.env.VITE_ROZENITE_TARGET === 'server';

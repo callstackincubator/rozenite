@@ -14,9 +14,8 @@ export const useRozeniteDevToolsClient = <
 >({
   pluginId,
 }: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsClient<TEventMap> | null => {
-  const [client, setClient] = useState<RozeniteDevToolsClient<TEventMap> | null>(
-    null
-  );
+  const [client, setClient] =
+    useState<RozeniteDevToolsClient<TEventMap> | null>(null);
   const [error, setError] = useState<unknown | null>(null);
 
   useEffect(() => {
@@ -59,4 +58,4 @@ export const useRozeniteDevToolsClient = <
   }
 
   return client;
-}; 
+};

@@ -13,9 +13,9 @@ export default function ExpoAtlasPanel() {
         const response = await fetch('/_expo/atlas', {
           method: 'HEAD',
           mode: 'cors',
-          credentials: 'omit'
+          credentials: 'omit',
         });
-        
+
         if (isMounted) {
           if (response.ok) {
             setIsLoading(false);
@@ -36,7 +36,7 @@ export default function ExpoAtlasPanel() {
     checkServerAvailability();
     return () => {
       isMounted = false;
-    }
+    };
   }, []);
 
   if (isLoading) {
@@ -56,15 +56,14 @@ export default function ExpoAtlasPanel() {
     return (
       <div className={styles.errorContainer}>
         <div className={styles.errorCard}>
-          <h3 className={styles.errorTitle}>
-            Something went wrong
-          </h3>
+          <h3 className={styles.errorTitle}>Something went wrong</h3>
           <p className={styles.errorMessage}>
-            Unable to load Expo Atlas. Please make sure you followed the setup guide in the Rozenite documentation.
+            Unable to load Expo Atlas. Please make sure you followed the setup
+            guide in the Rozenite documentation.
           </p>
-          <a 
-            href="https://rozenite.dev/docs/plugins/expo-atlas" 
-            target="_blank" 
+          <a
+            href="https://rozenite.dev/docs/plugins/expo-atlas"
+            target="_blank"
             rel="noopener noreferrer"
             className={styles.setupLink}
           >
@@ -76,8 +75,8 @@ export default function ExpoAtlasPanel() {
   }
 
   return (
-    <iframe 
-      style={{ width: '100%', height: '100%', border: 0 }} 
+    <iframe
+      style={{ width: '100%', height: '100%', border: 0 }}
       src="/_expo/atlas"
     />
   );

@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useRozeniteDevToolsClient } from "@rozenite/plugin-bridge";
-import { NetworkActivityEventMap, NetworkRequestId, NetworkResourceType } from '../types/client';
+import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import {
+  NetworkActivityEventMap,
+  NetworkRequestId,
+  NetworkResourceType,
+} from '../types/client';
 import { NetworkEntry } from '../types/network';
 import styles from './panel.module.css';
 import { NetworkToolbar } from './network-toolbar';
@@ -55,24 +59,31 @@ export default function NetworkActivityPanel() {
     pluginId: '@rozenite/network-activity-plugin',
   });
 
-  const [networkEntries, setNetworkEntries] = useState<Map<string, EnhancedNetworkEntry>>(new Map());
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [networkEntries, setNetworkEntries] = useState<
+    Map<string, EnhancedNetworkEntry>
+  >(new Map());
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
+    null
+  );
   const [isRecording, setIsRecording] = useState(true);
   const [containerHeight, setContainerHeight] = useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Convert Map to sorted array for rendering
   const sortedEntries = useMemo(() => {
-    return Array.from(networkEntries.values())
-      .sort((a, b) => b.startTime - a.startTime);
+    return Array.from(networkEntries.values()).sort(
+      (a, b) => b.startTime - a.startTime
+    );
   }, [networkEntries]);
 
-  const selectedEntry = selectedRequestId ? networkEntries.get(selectedRequestId) || null : null;
+  const selectedEntry = selectedRequestId
+    ? networkEntries.get(selectedRequestId) || null
+    : null;
 
   useEffect(() => {
     if (!client) {
       return;
-    };
+    }
 
     if (isRecording) {
       client.send('network-enable', {});
@@ -90,10 +101,10 @@ export default function NetworkActivityPanel() {
     // Subscribe to CDP Network events
     subscriptions.push(
       client.onMessage('Network.requestWillBeSent', (payload) => {
-        setNetworkEntries(prev => {
+        setNetworkEntries((prev) => {
           const newMap = new Map(prev);
           const existing = newMap.get(payload.requestId);
-          
+
           newMap.set(payload.requestId, {
             requestId: payload.requestId,
             loaderId: payload.loaderId,
@@ -117,8 +128,8 @@ export default function NetworkActivityPanel() {
               encodedDataLength: existing.encodedDataLength,
               dataLength: existing.dataLength,
               errorText: existing.errorText,
-              canceled: existing.canceled
-            })
+              canceled: existing.canceled,
+            }),
           });
           return newMap;
         });
@@ -127,7 +138,7 @@ export default function NetworkActivityPanel() {
 
     subscriptions.push(
       client.onMessage('Network.responseReceived', (payload) => {
-        setNetworkEntries(prev => {
+        setNetworkEntries((prev) => {
           const newMap = new Map(prev);
           const entry = newMap.get(payload.requestId);
           if (entry) {
@@ -144,7 +155,7 @@ export default function NetworkActivityPanel() {
 
     subscriptions.push(
       client.onMessage('Network.dataReceived', (payload) => {
-        setNetworkEntries(prev => {
+        setNetworkEntries((prev) => {
           const newMap = new Map(prev);
           const entry = newMap.get(payload.requestId);
           if (entry) {
@@ -161,13 +172,13 @@ export default function NetworkActivityPanel() {
 
     subscriptions.push(
       client.onMessage('Network.loadingFinished', (payload) => {
-        setNetworkEntries(prev => {
+        setNetworkEntries((prev) => {
           const newMap = new Map(prev);
           const entry = newMap.get(payload.requestId);
           if (entry) {
             const endTime = payload.timestamp;
             const duration = endTime - entry.startTime;
-            
+
             newMap.set(payload.requestId, {
               ...entry,
               status: 'finished',
@@ -183,13 +194,13 @@ export default function NetworkActivityPanel() {
 
     subscriptions.push(
       client.onMessage('Network.loadingFailed', (payload) => {
-        setNetworkEntries(prev => {
+        setNetworkEntries((prev) => {
           const newMap = new Map(prev);
           const entry = newMap.get(payload.requestId);
           if (entry) {
             const endTime = payload.timestamp;
             const duration = endTime - entry.startTime;
-            
+
             newMap.set(payload.requestId, {
               ...entry,
               status: 'failed',
@@ -206,7 +217,7 @@ export default function NetworkActivityPanel() {
 
     subscriptions.push(
       client.onMessage('Network.responseBodyReceived', (payload) => {
-        setNetworkEntries(prev => {
+        setNetworkEntries((prev) => {
           const newMap = new Map(prev);
           const entry = newMap.get(payload.requestId);
           if (entry) {
@@ -224,7 +235,7 @@ export default function NetworkActivityPanel() {
     );
 
     return () => {
-      subscriptions.forEach(sub => sub.remove());
+      subscriptions.forEach((sub) => sub.remove());
     };
   }, [client, isRecording]);
 
@@ -262,10 +273,7 @@ export default function NetworkActivityPanel() {
   }, []);
 
   return (
-    <div 
-      ref={containerRef}
-      className={styles.container}
-    >
+    <div ref={containerRef} className={styles.container}>
       {/* Toolbar */}
       <NetworkToolbar
         isRecording={isRecording}
@@ -288,20 +296,20 @@ export default function NetworkActivityPanel() {
             <div className={styles.headerSize}>Size</div>
           </PanelHeader>
 
-           <div className={styles.listContent}>
-             <NetworkList
-               entries={sortedEntries}
-               selectedRequestId={selectedRequestId}
-               onSelect={handleSelectRequest}
-               height={containerHeight}
-             />
-           </div>
+          <div className={styles.listContent}>
+            <NetworkList
+              entries={sortedEntries}
+              selectedRequestId={selectedRequestId}
+              onSelect={handleSelectRequest}
+              height={containerHeight}
+            />
+          </div>
         </div>
 
         {/* Details Panel */}
         <div className={styles.detailsContainer}>
-          <NetworkDetails 
-            entry={selectedEntry} 
+          <NetworkDetails
+            entry={selectedEntry}
             onRequestResponseBody={requestResponseBody}
           />
         </div>

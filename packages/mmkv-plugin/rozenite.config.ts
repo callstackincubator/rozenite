@@ -3,6 +3,6 @@ export default {
     {
       name: 'MMKV',
       source: './src/ui/panel.tsx',
-    }
+    },
   ],
 };

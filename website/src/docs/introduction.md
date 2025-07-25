@@ -29,9 +29,11 @@ Instead of building everything from scratch, you can now create plugins that int
 Rozenite isn't just another development tool—it's a complete ecosystem designed specifically for React Native DevTools plugins. Here's what sets it apart:
 
 ### Built for React Native
+
 Unlike generic plugin systems, Rozenite is built from the ground up for React Native. It understands how React Native apps work, how Metro bundler operates, and how DevTools communicates with your app.
 
 ### Developer-First Design
+
 We've focused on making plugin development as smooth as possible. The CLI guides you through every step, the build system handles the complex parts, and the communication layer just works.
 
 ## What We Believe

@@ -1,4 +1,11 @@
-import { NetworkRequestId, NetworkLoaderId, NetworkResourceType, NetworkRequest, NetworkResponse, NetworkInitiator } from "../types/client";
+import {
+  NetworkRequestId,
+  NetworkLoaderId,
+  NetworkResourceType,
+  NetworkRequest,
+  NetworkResponse,
+  NetworkInitiator,
+} from '../types/client';
 
 export type NetworkRequestMetadata = {
   id: NetworkRequestId;
@@ -22,79 +29,94 @@ export type NetworkRequestMetadata = {
   dataLength?: number;
 };
 
-export type NetworkRegistryEntry = { 
-    id: string; 
-    request: XMLHttpRequest; 
-    metadata: NetworkRequestMetadata;
-    sentAt: number 
-  };
-  
+export type NetworkRegistryEntry = {
+  id: string;
+  request: XMLHttpRequest;
+  metadata: NetworkRequestMetadata;
+  sentAt: number;
+};
 
 export type NetworkRequestRegistry = {
-    addEntry: (id: string, request: XMLHttpRequest, metadata: Partial<NetworkRequestMetadata>) => void;
-    getEntry: (id: string) => NetworkRegistryEntry | null;
-    updateEntry: (id: string, updates: Partial<NetworkRequestMetadata>) => void;
-    getAllEntries: () => Array<NetworkRegistryEntry>;
-    clear: () => void;
+  addEntry: (
+    id: string,
+    request: XMLHttpRequest,
+    metadata: Partial<NetworkRequestMetadata>
+  ) => void;
+  getEntry: (id: string) => NetworkRegistryEntry | null;
+  updateEntry: (id: string, updates: Partial<NetworkRequestMetadata>) => void;
+  getAllEntries: () => Array<NetworkRegistryEntry>;
+  clear: () => void;
 };
 
 const REQUEST_TTL = 1000 * 60 * 5; // 5 minutes
 
 export const getNetworkRequestsRegistry = (): NetworkRequestRegistry => {
-    const registry: Map<string, NetworkRegistryEntry> = new Map();
+  const registry: Map<string, NetworkRegistryEntry> = new Map();
 
-    const trimRegistry = (): void => {
-        const now = Date.now();
+  const trimRegistry = (): void => {
+    const now = Date.now();
 
-        registry.forEach((entry) => {
-            if (now - entry.sentAt < REQUEST_TTL) {
-                return;
-            }
+    registry.forEach((entry) => {
+      if (now - entry.sentAt < REQUEST_TTL) {
+        return;
+      }
 
-            registry.delete(entry.id);
-        });
+      registry.delete(entry.id);
+    });
+  };
+
+  const addEntry = (
+    id: string,
+    request: XMLHttpRequest,
+    metadata: Partial<NetworkRequestMetadata>
+  ) => {
+    trimRegistry();
+
+    const fullMetadata: NetworkRequestMetadata = {
+      id,
+      method: metadata.method || 'GET',
+      url: metadata.url || '',
+      headers: metadata.headers || {},
+      startTime: metadata.startTime || Date.now(),
+      status: metadata.status || 'pending',
+      ...metadata,
     };
 
-    const addEntry = (id: string, request: XMLHttpRequest, metadata: Partial<NetworkRequestMetadata>) => {
-        trimRegistry();
+    registry.set(id, {
+      id,
+      request,
+      metadata: fullMetadata,
+      sentAt: Date.now(),
+    });
+  };
 
-        const fullMetadata: NetworkRequestMetadata = {
-          id,
-          method: metadata.method || 'GET',
-          url: metadata.url || '',
-          headers: metadata.headers || {},
-          startTime: metadata.startTime || Date.now(),
-          status: metadata.status || 'pending',
-          ...metadata
-        };
+  const getEntry = (id: string) => {
+    return registry.get(id) ?? null;
+  };
 
-        registry.set(id, { id, request, metadata: fullMetadata, sentAt: Date.now() });
-    };
-
-    const getEntry = (id: string) => {
-        return registry.get(id) ?? null;;
-    };
-
-    const updateEntry = (id: string, updates: Partial<NetworkRequestMetadata>) => {
-        const entry = registry.get(id);
-        if (entry) {
-            entry.metadata = { ...entry.metadata, ...updates };
-        }
-    };
-
-    const getAllEntries = () => {
-        return Array.from(registry.values());
-    };
-
-    const clear = () => {
-        registry.clear();
+  const updateEntry = (
+    id: string,
+    updates: Partial<NetworkRequestMetadata>
+  ) => {
+    const entry = registry.get(id);
+    if (entry) {
+      entry.metadata = { ...entry.metadata, ...updates };
     }
+  };
 
-    return {
-        addEntry,
-        getEntry,
-        updateEntry,
-        getAllEntries,
-        clear,
+  const getAllEntries = () => {
+    return Array.from(registry.values());
+  };
+
+  const clear = () => {
+    registry.clear();
+  };
+
+  return {
+    addEntry,
+    getEntry,
+    updateEntry,
+    getAllEntries,
+    clear,
   };
 };

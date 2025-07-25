@@ -20,8 +20,15 @@ interface EditableTableProps {
 
 const columnHelper = createColumnHelper<MMKVEntry>();
 
-export function EditableTable({ data, onValueChange, loading = false }: EditableTableProps) {
-  const [editingCell, setEditingCell] = useState<{ rowIndex: number; columnId: string } | null>(null);
+export function EditableTable({
+  data,
+  onValueChange,
+  loading = false,
+}: EditableTableProps) {
+  const [editingCell, setEditingCell] = useState<{
+    rowIndex: number;
+    columnId: string;
+  } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -43,7 +50,7 @@ export function EditableTable({ data, onValueChange, loading = false }: Editable
           const type = getValue() as MMKVEntryType;
           return (
             <div className="cell-type">
-              <span 
+              <span
                 className="type-badge"
                 style={{ backgroundColor: getTypeColor(type) }}
                 title={`${getTypeIcon(type)} ${type}`}
@@ -59,7 +66,9 @@ export function EditableTable({ data, onValueChange, loading = false }: Editable
         cell: ({ getValue, row, column }) => {
           const value = getValue();
           const entry = row.original;
-          const isEditing = editingCell?.rowIndex === row.index && editingCell?.columnId === column.id;
+          const isEditing =
+            editingCell?.rowIndex === row.index &&
+            editingCell?.columnId === column.id;
 
           if (isEditing) {
             return (
@@ -86,7 +95,7 @@ export function EditableTable({ data, onValueChange, loading = false }: Editable
           }
 
           return (
-            <div 
+            <div
               className="cell-value"
               onClick={() => handleEdit(row.index, column.id, value)}
             >
@@ -126,10 +135,10 @@ export function EditableTable({ data, onValueChange, loading = false }: Editable
           case 'string':
             newValue = editValue;
             break;
-                  case 'number':
-          newValue = Number(editValue);
-          if (isNaN(newValue as number)) throw new Error('Invalid number');
-          break;
+          case 'number':
+            newValue = Number(editValue);
+            if (isNaN(newValue as number)) throw new Error('Invalid number');
+            break;
           case 'boolean':
             newValue = editValue.toLowerCase() === 'true';
             break;
@@ -139,7 +148,7 @@ export function EditableTable({ data, onValueChange, loading = false }: Editable
           default:
             newValue = editValue;
         }
-        
+
         onValueChange(key, newValue);
       } catch (error) {
         console.error('Invalid value:', error);
@@ -152,46 +161,51 @@ export function EditableTable({ data, onValueChange, loading = false }: Editable
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'string': return '#10b981';
-      case 'number': return '#3b82f6';
-      case 'boolean': return '#f59e0b';
-      case 'buffer': return '#8b5cf6';
-      default: return '#6b7280';
+      case 'string':
+        return '#10b981';
+      case 'number':
+        return '#3b82f6';
+      case 'boolean':
+        return '#f59e0b';
+      case 'buffer':
+        return '#8b5cf6';
+      default:
+        return '#6b7280';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'string': return '📝';
-      case 'number': return '🔢';
-      case 'boolean': return '✅';
-      case 'buffer': return '💾';
-      default: return '❓';
+      case 'string':
+        return '📝';
+      case 'number':
+        return '🔢';
+      case 'boolean':
+        return '✅';
+      case 'buffer':
+        return '💾';
+      default:
+        return '❓';
     }
   };
 
   const getInputType = (type: string) => {
     switch (type) {
-      case 'number': return 'number';
-      case 'boolean': return 'text'; // We'll handle boolean conversion manually
-      default: return 'text';
+      case 'number':
+        return 'number';
+      case 'boolean':
+        return 'text'; // We'll handle boolean conversion manually
+      default:
+        return 'text';
     }
   };
 
   const formatValue = (entry: MMKVEntry) => {
     switch (entry.type) {
       case 'string':
-        return (
-          <span className="value-string">
-            "{entry.value as string}"
-          </span>
-        );
+        return <span className="value-string">"{entry.value as string}"</span>;
       case 'number':
-        return (
-          <span className="value-number">
-            {entry.value as number}
-          </span>
-        );
+        return <span className="value-number">{entry.value as number}</span>;
       case 'boolean':
         return (
           <span className={`value-boolean ${entry.value ? 'true' : 'false'}`}>
@@ -222,12 +236,14 @@ export function EditableTable({ data, onValueChange, loading = false }: Editable
     <div className="editable-table-container">
       <table className="editable-table">
         <thead>
-          {table.getHeaderGroups().map(headerGroup => (
+          {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th 
-                  key={header.id} 
-                  className={`table-header ${header.column.getCanSort() ? 'sortable' : ''}`}
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  className={`table-header ${
+                    header.column.getCanSort() ? 'sortable' : ''
+                  }`}
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   <div className="header-content">
@@ -252,9 +268,9 @@ export function EditableTable({ data, onValueChange, loading = false }: Editable
           ))}
         </thead>
         <tbody>
-          {table.getRowModel().rows.map(row => (
+          {table.getRowModel().rows.map((row) => (
             <tr key={row.id} className="table-row">
-              {row.getVisibleCells().map(cell => (
+              {row.getVisibleCells().map((cell) => (
                 <td key={cell.id} className="table-cell">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
@@ -265,4 +281,4 @@ export function EditableTable({ data, onValueChange, loading = false }: Editable
       </table>
     </div>
   );
-} 
+}

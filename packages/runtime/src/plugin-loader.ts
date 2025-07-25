@@ -6,7 +6,7 @@ const getPluginUrl = (pluginId: string) => {
   url.search = '';
   url.pathname = '/rozenite/plugins/' + pluginId.replace('/', '_');
   return url.toString();
-}
+};
 
 export const loadPluginFromUrl = async (url: string): Promise<void> => {
   const manifest = await getManifest(url);
@@ -14,7 +14,7 @@ export const loadPluginFromUrl = async (url: string): Promise<void> => {
     const panelUrl = url + panel.source;
     createPanel(manifest.name, panel.name, panelUrl);
   });
-  
+
   console.groupCollapsed(`📦 Plugin: ${manifest.name}`);
   console.log('Version:', manifest.version);
   console.log('Description:', manifest.description);

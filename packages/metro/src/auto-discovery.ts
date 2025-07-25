@@ -44,13 +44,17 @@ const tryResolvePlugin = (maybePlugin: string): string | null => {
   } catch {
     return null;
   }
-}
+};
 
-const getIncludedPlugins = async (options: RozeniteMetroConfig): Promise<InstalledPlugin[]> => {
+const getIncludedPlugins = async (
+  options: RozeniteMetroConfig
+): Promise<InstalledPlugin[]> => {
   assert(options.include, 'include is required');
 
   const plugins: InstalledPlugin[] = [];
-  const normalizedInclude = options.exclude ? options.include.filter((plugin) => !options.exclude?.includes(plugin)) : options.include;
+  const normalizedInclude = options.exclude
+    ? options.include.filter((plugin) => !options.exclude?.includes(plugin))
+    : options.include;
 
   for (const maybePlugin of normalizedInclude) {
     const pluginPath = tryResolvePlugin(maybePlugin);
@@ -70,7 +74,7 @@ const getIncludedPlugins = async (options: RozeniteMetroConfig): Promise<Install
   }
 
   return plugins;
-}
+};
 
 export const getInstalledPlugins = async (
   options: RozeniteMetroConfig
@@ -144,7 +148,10 @@ export const getInstalledPlugins = async (
                 actualPackageName
               );
 
-              if (options.exclude && options.exclude.includes(actualPackageName)) {
+              if (
+                options.exclude &&
+                options.exclude.includes(actualPackageName)
+              ) {
                 continue;
               }
 
@@ -168,7 +175,7 @@ export const getInstalledPlugins = async (
           if (options.exclude && options.exclude.includes(actualPackageName)) {
             continue;
           }
-          
+
           if (plugin) {
             plugins.push(plugin);
           }

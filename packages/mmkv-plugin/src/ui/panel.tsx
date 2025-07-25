@@ -1,17 +1,17 @@
-import { useRozeniteDevToolsClient } from "@rozenite/plugin-bridge";
-import { useEffect, useState } from "react";
-import { MMKVEventMap } from "../shared/messaging";
-import { MMKVEntry, MMKVEntryValue } from "../shared/types";
-import { EditableTable } from "./editable-table";
-import "./panel.css";
+import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { useEffect, useState } from 'react';
+import { MMKVEventMap } from '../shared/messaging';
+import { MMKVEntry, MMKVEntryValue } from '../shared/types';
+import { EditableTable } from './editable-table';
+import './panel.css';
 
 export default function MMKVPanel() {
   const [instances, setInstances] = useState<string[]>([]);
   const [selectedInstance, setSelectedInstance] = useState<string | null>(null);
   const [entries, setEntries] = useState<MMKVEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  
+  const [searchTerm, setSearchTerm] = useState('');
+
   const client = useRozeniteDevToolsClient<MMKVEventMap>({
     pluginId: '@rozenite/mmkv-plugin',
   });
@@ -48,17 +48,20 @@ export default function MMKVPanel() {
       }
     });
 
-    const updateSubscription = client.onMessage('host-entry-updated', (event) => {
-      if (event.instanceId === selectedInstance) {
-        setEntries(prevEntries => 
-          prevEntries.map(entry => 
-            entry.key === event.key 
-              ? { ...entry, value: event.value } as MMKVEntry
-              : entry
-          )
-        );
+    const updateSubscription = client.onMessage(
+      'host-entry-updated',
+      (event) => {
+        if (event.instanceId === selectedInstance) {
+          setEntries((prevEntries) =>
+            prevEntries.map((entry) =>
+              entry.key === event.key
+                ? ({ ...entry, value: event.value } as MMKVEntry)
+                : entry
+            )
+          );
+        }
       }
-    });
+    );
 
     setLoading(true);
     client.send('guest-get-entries', { instanceId: selectedInstance });
@@ -69,24 +72,22 @@ export default function MMKVPanel() {
     };
   }, [client, selectedInstance]);
 
-  const filteredEntries = entries.filter(entry =>
+  const filteredEntries = entries.filter((entry) =>
     entry.key.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleValueChange = (key: string, newValue: MMKVEntryValue) => {
     if (!client || !selectedInstance) return;
-    
+
     client.send('guest-update-entry', {
       instanceId: selectedInstance,
       key,
-      value: newValue
+      value: newValue,
     });
-    
-    setEntries(prevEntries => 
-      prevEntries.map(entry => 
-        entry.key === key 
-          ? { ...entry, value: newValue } as MMKVEntry
-          : entry
+
+    setEntries((prevEntries) =>
+      prevEntries.map((entry) =>
+        entry.key === key ? ({ ...entry, value: newValue } as MMKVEntry) : entry
       )
     );
   };
@@ -101,7 +102,9 @@ export default function MMKVPanel() {
               <span className="title-icon">💾</span>
               MMKV Storage
             </h1>
-            <p className="header-subtitle">Inspect and manage your MMKV instances</p>
+            <p className="header-subtitle">
+              Inspect and manage your MMKV instances
+            </p>
           </div>
           <div className="header-right">
             <div className="instance-selector">
@@ -138,8 +141,18 @@ export default function MMKVPanel() {
             <div className="search-section">
               <div className="search-container">
                 <div className="search-input-wrapper">
-                  <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <svg
+                    className="search-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                   <input
                     type="text"
@@ -151,7 +164,9 @@ export default function MMKVPanel() {
                 </div>
                 <div className="stats-badge">
                   <span className="stats-count">{filteredEntries.length}</span>
-                  <span className="stats-label">of {entries.length} entries</span>
+                  <span className="stats-label">
+                    of {entries.length} entries
+                  </span>
                 </div>
               </div>
             </div>
@@ -162,7 +177,11 @@ export default function MMKVPanel() {
                 <div className="empty-state">
                   <div className="empty-icon">🔍</div>
                   <h3>No entries found</h3>
-                  <p>{searchTerm ? 'Try adjusting your search terms' : 'This instance appears to be empty'}</p>
+                  <p>
+                    {searchTerm
+                      ? 'Try adjusting your search terms'
+                      : 'This instance appears to be empty'}
+                  </p>
                 </div>
               ) : (
                 <EditableTable
@@ -177,7 +196,10 @@ export default function MMKVPanel() {
           <div className="welcome-state">
             <div className="welcome-icon">🚀</div>
             <h2>Welcome to MMKV Inspector</h2>
-            <p>Select an MMKV instance from the dropdown above to start exploring your data</p>
+            <p>
+              Select an MMKV instance from the dropdown above to start exploring
+              your data
+            </p>
           </div>
         )}
       </main>

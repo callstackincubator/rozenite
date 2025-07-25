@@ -1,4 +1,13 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, TextInput, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  TextInput,
+  Alert,
+} from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -25,12 +34,14 @@ interface CreateUserData {
 const fetchUsers = async (): Promise<User[]> => {
   // Add a random seed to make the response different each time
   const randomSeed = Math.random();
-  const response = await fetch(`https://jsonplaceholder.typicode.com/users?_seed=${randomSeed}`);
+  const response = await fetch(
+    `https://jsonplaceholder.typicode.com/users?_seed=${randomSeed}`
+  );
   if (!response.ok) {
     throw new Error('Failed to fetch users');
   }
   const users = await response.json();
-  
+
   // Shuffle the users array to make it random on each fetch
   return users.sort(() => Math.random() - 0.5);
 };
@@ -44,11 +55,11 @@ const createUser = async (userData: CreateUserData): Promise<User> => {
     },
     body: JSON.stringify(userData),
   });
-  
+
   if (!response.ok) {
     throw new Error('Failed to create user');
   }
-  
+
   return response.json();
 };
 
@@ -64,7 +75,12 @@ export const HelloWorldScreen = () => {
   });
 
   // TanStack Query to fetch users
-  const { data: users, isLoading, error, refetch } = useQuery({
+  const {
+    data: users,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['users'],
     queryFn: fetchUsers,
     staleTime: 1000 * 60 * 5,
@@ -78,7 +94,7 @@ export const HelloWorldScreen = () => {
     onSuccess: (newUser) => {
       // Invalidate and refetch users query to show the new user
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      
+
       // Reset form
       setFormData({
         name: '',
@@ -88,7 +104,7 @@ export const HelloWorldScreen = () => {
         website: '',
       });
       setShowForm(false);
-      
+
       Alert.alert('Success', `User "${newUser.name}" created successfully!`);
     },
     onError: () => {
@@ -102,7 +118,7 @@ export const HelloWorldScreen = () => {
       Alert.alert('Validation Error', 'Name and email are required');
       return;
     }
-    
+
     createUserMutation.mutate(formData);
   };
 
@@ -118,51 +134,61 @@ export const HelloWorldScreen = () => {
   const renderForm = () => (
     <View style={styles.formContainer}>
       <Text style={styles.formTitle}>Add New User</Text>
-      
+
       <TextInput
         style={styles.input}
         placeholder="Name"
         placeholderTextColor="#666"
         value={formData.name}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
+        onChangeText={(text) =>
+          setFormData((prev) => ({ ...prev, name: text }))
+        }
       />
-      
+
       <TextInput
         style={styles.input}
         placeholder="Username"
         placeholderTextColor="#666"
         value={formData.username}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, username: text }))}
+        onChangeText={(text) =>
+          setFormData((prev) => ({ ...prev, username: text }))
+        }
       />
-      
+
       <TextInput
         style={styles.input}
         placeholder="Email"
         placeholderTextColor="#666"
         value={formData.email}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+        onChangeText={(text) =>
+          setFormData((prev) => ({ ...prev, email: text }))
+        }
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      
+
       <TextInput
         style={styles.input}
         placeholder="Phone"
         placeholderTextColor="#666"
         value={formData.phone}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, phone: text }))}
+        onChangeText={(text) =>
+          setFormData((prev) => ({ ...prev, phone: text }))
+        }
         keyboardType="phone-pad"
       />
-      
+
       <TextInput
         style={styles.input}
         placeholder="Website"
         placeholderTextColor="#666"
         value={formData.website}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, website: text }))}
+        onChangeText={(text) =>
+          setFormData((prev) => ({ ...prev, website: text }))
+        }
         autoCapitalize="none"
       />
-      
+
       <View style={styles.formButtons}>
         <TouchableOpacity
           style={[styles.button, styles.cancelButton]}
@@ -170,7 +196,7 @@ export const HelloWorldScreen = () => {
         >
           <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.button, styles.createButton]}
           onPress={handleCreateUser}
@@ -190,17 +216,12 @@ export const HelloWorldScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>People Data</Text>
-        <Text style={styles.subtitle}>
-          Fetched with TanStack Query
-        </Text>
+        <Text style={styles.subtitle}>Fetched with TanStack Query</Text>
         <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => refetch()}
-          >
+          <TouchableOpacity style={styles.button} onPress={() => refetch()}>
             <Text style={styles.buttonText}>Refetch</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.button, styles.addButton]}
             onPress={() => setShowForm(!showForm)}
@@ -223,7 +244,10 @@ export const HelloWorldScreen = () => {
         ) : error ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>Error loading data</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => refetch()}
+            >
               <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
           </View>

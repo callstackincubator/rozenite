@@ -29,8 +29,8 @@ export const devCommand = async (targetDir: string) => {
     });
     processes.push(clientProcess);
 
-    await Promise.all(processes.map(p => p.nodeChildProcess));
-    
+    await Promise.all(processes.map((p) => p.nodeChildProcess));
+
     logger.info('Development servers are running... Press Ctrl+C to stop');
 
     await new Promise<void>((resolve) => {
@@ -40,11 +40,10 @@ export const devCommand = async (targetDir: string) => {
       };
       process.on('SIGINT', handleSigInt);
     });
-    
   } catch (error) {
     logger.error('Failed to start development servers:', error);
     throw error;
   }
 
   outro('Development environment stopped');
-}; 
+};

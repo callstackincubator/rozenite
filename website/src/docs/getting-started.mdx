@@ -94,12 +94,9 @@ const customConfig = {
   // Your existing Metro configuration
 };
 
-module.exports = withRozenite(
-  mergeConfig(defaultConfig, customConfig),
-  {
-    include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin']
-  }
-);
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin'],
+});
 ```
 
 #### Exclude Specific Plugins
@@ -116,12 +113,9 @@ const customConfig = {
   // Your existing Metro configuration
 };
 
-module.exports = withRozenite(
-  mergeConfig(defaultConfig, customConfig),
-  {
-    exclude: ['@rozenite/mmkv-plugin']
-  }
-);
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  exclude: ['@rozenite/mmkv-plugin'],
+});
 ```
 
 #### Combining Include and Exclude
@@ -138,13 +132,14 @@ const customConfig = {
   // Your existing Metro configuration
 };
 
-module.exports = withRozenite(
-  mergeConfig(defaultConfig, customConfig),
-  {
-    include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin', '@rozenite/tanstack-query-plugin'],
-    exclude: ['@rozenite/mmkv-plugin'] // This will be filtered out from the include list
-  }
-);
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  include: [
+    '@rozenite/mmkv-plugin',
+    '@rozenite/network-activity-plugin',
+    '@rozenite/tanstack-query-plugin',
+  ],
+  exclude: ['@rozenite/mmkv-plugin'], // This will be filtered out from the include list
+});
 ```
 
 **Note**: When using the `include` option, auto-discovery is completely disabled. Only the explicitly listed plugins will be loaded, and any plugins not in the list will be ignored, even if they are installed in your `node_modules`.

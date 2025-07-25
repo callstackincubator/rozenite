@@ -1,5 +1,12 @@
 // Network types for the simplified event structure - limited to XMLHttpRequest capturable properties
-import { NetworkRequestId, NetworkLoaderId, NetworkResourceType, NetworkRequest, NetworkResponse, NetworkInitiator } from './client';
+import {
+  NetworkRequestId,
+  NetworkLoaderId,
+  NetworkResourceType,
+  NetworkRequest,
+  NetworkResponse,
+  NetworkInitiator,
+} from './client';
 
 export type NetworkEntry = {
   requestId: NetworkRequestId;

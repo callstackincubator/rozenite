@@ -64,7 +64,10 @@ interface NetworkDetailsProps {
   onRequestResponseBody?: (requestId: string) => void;
 }
 
-export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequestResponseBody }) => {
+export const NetworkDetails: React.FC<NetworkDetailsProps> = ({
+  entry,
+  onRequestResponseBody,
+}) => {
   const [isSymbolicating, setIsSymbolicating] = useState(false);
   const [, forceUpdate] = useState({});
 
@@ -74,11 +77,13 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
     setIsSymbolicating(true);
     try {
       const stackData = {
-        stack: [{
-          column: entry.initiator.columnNumber || 0,
-          file: entry.initiator.url || '',
-          lineNumber: entry.initiator.lineNumber || 0,
-        }]
+        stack: [
+          {
+            column: entry.initiator.columnNumber || 0,
+            file: entry.initiator.url || '',
+            lineNumber: entry.initiator.lineNumber || 0,
+          },
+        ],
       };
 
       const response = await fetch(`${window.location.origin}/symbolicate`, {
@@ -91,7 +96,7 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
 
       if (response.ok) {
         const data: SymbolicationResponse = await response.json();
-        
+
         // Update the entry.initiator with symbolicated data
         if (data.stack && data.stack.length > 0) {
           const symbolicatedFrame = data.stack[0];
@@ -125,7 +130,7 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
         <h3 className={styles.cardTitle}>General</h3>
         <div className={styles.infoText}>
           <div className={styles.infoRowUrl}>
-            <strong>Request URL:</strong> 
+            <strong>Request URL:</strong>
             <Tooltip content={entry.url} showOnlyWhenTruncated>
               <span className={styles.urlText}>
                 {formatLongUrl(entry.url, 100)}
@@ -161,16 +166,19 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
               )}
               {entry.initiator.lineNumber && (
                 <div className={styles.infoRowSub}>
-                  <strong>Line:</strong> {entry.initiator.lineNumber}:{entry.initiator.columnNumber || 0}
+                  <strong>Line:</strong> {entry.initiator.lineNumber}:
+                  {entry.initiator.columnNumber || 0}
                 </div>
               )}
               <div className={styles.infoRowSub}>
-                <button 
+                <button
                   className={styles.symbolicateButton}
                   onClick={symbolicateCaller}
                   disabled={isSymbolicating}
                 >
-                  {isSymbolicating ? 'Symbolicating...' : 'Symbolicate initiator'}
+                  {isSymbolicating
+                    ? 'Symbolicating...'
+                    : 'Symbolicate initiator'}
                 </button>
               </div>
             </div>
@@ -185,11 +193,9 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
           <div className={styles.headersContainer}>
             {Object.entries(entry.response.headers).map(([key, value]) => (
               <div key={key} className={styles.headerRow}>
-                <strong>{key}:</strong> 
+                <strong>{key}:</strong>
                 <Tooltip content={value} showOnlyWhenTruncated>
-                  <span className={styles.headerValue}>
-                    {value}
-                  </span>
+                  <span className={styles.headerValue}>{value}</span>
                 </Tooltip>
               </div>
             ))}
@@ -203,11 +209,9 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
         <div className={styles.headersContainer}>
           {Object.entries(entry.headers).map(([key, value]) => (
             <div key={key} className={styles.headerRow}>
-              <strong>{key}:</strong> 
+              <strong>{key}:</strong>
               <Tooltip content={value} showOnlyWhenTruncated>
-                <span className={styles.headerValue}>
-                  {value}
-                </span>
+                <span className={styles.headerValue}>{value}</span>
               </Tooltip>
             </div>
           ))}
@@ -226,7 +230,8 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
             )}
             {entry.encodedDataLength && (
               <div className={styles.infoRow}>
-                <strong>Encoded Data Length:</strong> {formatFileSize(entry.encodedDataLength)}
+                <strong>Encoded Data Length:</strong>{' '}
+                {formatFileSize(entry.encodedDataLength)}
               </div>
             )}
             {entry.response?.mimeType && (
@@ -247,16 +252,19 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
               <strong>Duration:</strong> {formatDuration(entry.duration)}
             </div>
             <div className={styles.infoRow}>
-              <strong>Start Time:</strong> {new Date(entry.startTime).toLocaleTimeString()}
+              <strong>Start Time:</strong>{' '}
+              {new Date(entry.startTime).toLocaleTimeString()}
             </div>
             {entry.endTime && (
               <div className={styles.infoRow}>
-                <strong>End Time:</strong> {new Date(entry.endTime).toLocaleTimeString()}
+                <strong>End Time:</strong>{' '}
+                {new Date(entry.endTime).toLocaleTimeString()}
               </div>
             )}
             {entry.response?.responseTime && (
               <div className={styles.infoRow}>
-                <strong>Response Time:</strong> {new Date(entry.response.responseTime).toLocaleTimeString()}
+                <strong>Response Time:</strong>{' '}
+                {new Date(entry.response.responseTime).toLocaleTimeString()}
               </div>
             )}
           </div>
@@ -283,9 +291,7 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
         <Card className={styles.card}>
           <h3 className={styles.cardTitle}>Post Data</h3>
           <div className={styles.postDataContainer}>
-            <pre className={styles.postDataText}>
-              {entry.postData}
-            </pre>
+            <pre className={styles.postDataText}>{entry.postData}</pre>
           </div>
         </Card>
       )}
@@ -297,15 +303,14 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
           {entry.responseBody ? (
             <div className={styles.responseBodyContainer}>
               <pre className={styles.responseBodyText}>
-                {entry.responseBody.base64Encoded 
+                {entry.responseBody.base64Encoded
                   ? atob(entry.responseBody.body)
-                  : entry.responseBody.body
-                }
+                  : entry.responseBody.body}
               </pre>
             </div>
           ) : (
             <div className={styles.responseBodyContainer}>
-              <button 
+              <button
                 className={styles.loadResponseBodyButton}
                 onClick={() => onRequestResponseBody?.(entry.requestId)}
                 disabled={!onRequestResponseBody}
@@ -323,11 +328,13 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
           <h3 className={styles.cardTitle}>Request Details</h3>
           <div className={styles.infoText}>
             <div className={styles.infoRow}>
-              <strong>Has Post Data:</strong> {entry.request.hasPostData ? 'Yes' : 'No'}
+              <strong>Has Post Data:</strong>{' '}
+              {entry.request.hasPostData ? 'Yes' : 'No'}
             </div>
             {entry.request.postData && (
               <div className={styles.infoRow}>
-                <strong>Post Data Length:</strong> {entry.request.postData.length} characters
+                <strong>Post Data Length:</strong>{' '}
+                {entry.request.postData.length} characters
               </div>
             )}
           </div>
@@ -335,4 +342,4 @@ export const NetworkDetails: React.FC<NetworkDetailsProps> = ({ entry, onRequest
       )}
     </div>
   );
-}; 
+};

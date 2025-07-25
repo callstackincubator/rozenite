@@ -36,44 +36,44 @@ interface EditModalData {
 }
 
 const getMMKVEntry = (mmkv: MMKV, key: string): MMKVEntry => {
-    const numberValue = mmkv.getNumber(key);
-    if (numberValue !== undefined) {
-      return {
-        key,
-        type: 'number',
-        value: numberValue,
-      };
-    }
+  const numberValue = mmkv.getNumber(key);
+  if (numberValue !== undefined) {
+    return {
+      key,
+      type: 'number',
+      value: numberValue,
+    };
+  }
 
-    const stringValue = mmkv.getString(key);
-    if (stringValue !== undefined && stringValue !== '') {
-        return {
-            key,
-            type: 'string',
-            value: stringValue,
-        };
-    }
+  const stringValue = mmkv.getString(key);
+  if (stringValue !== undefined && stringValue !== '') {
+    return {
+      key,
+      type: 'string',
+      value: stringValue,
+    };
+  }
 
-    const booleanValue = mmkv.getBoolean(key);
-    if (booleanValue !== undefined) {
-      return {
-        key,
-        type: 'boolean',
-        value: booleanValue,
-      };
-    }
-  
-    const bufferValue = mmkv.getBuffer(key);
-    if (bufferValue !== undefined) {
-      return {
-        key,
-        type: 'buffer',
-        value: 'Binary data',
-      };
-    }
-    
-    throw new Error(`Unknown type for key: ${key}`);
-  };
+  const booleanValue = mmkv.getBoolean(key);
+  if (booleanValue !== undefined) {
+    return {
+      key,
+      type: 'boolean',
+      value: booleanValue,
+    };
+  }
+
+  const bufferValue = mmkv.getBuffer(key);
+  if (bufferValue !== undefined) {
+    return {
+      key,
+      type: 'buffer',
+      value: 'Binary data',
+    };
+  }
+
+  throw new Error(`Unknown type for key: ${key}`);
+};
 
 export const MMKVPluginScreen = () => {
   const [storages, setStorages] = useState<StorageData[]>([
@@ -81,7 +81,8 @@ export const MMKVPluginScreen = () => {
     { id: 'app-settings', name: 'App Settings', entries: [] },
     { id: 'cache-storage', name: 'Cache Storage', entries: [] },
   ]);
-  const [selectedStorage, setSelectedStorage] = useState<string>('user-storage');
+  const [selectedStorage, setSelectedStorage] =
+    useState<string>('user-storage');
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editData, setEditData] = useState<EditModalData>({
     storageId: '',
@@ -91,9 +92,8 @@ export const MMKVPluginScreen = () => {
     isNew: false,
   });
 
-
-   // Create MMKV instances with test data
-   useEffect(() => {
+  // Create MMKV instances with test data
+  useEffect(() => {
     // Create multiple MMKV instances with different data types
     const userStorage = new MMKV({ id: 'user-storage' });
     const appSettings = new MMKV({ id: 'app-settings' });
@@ -105,7 +105,10 @@ export const MMKVPluginScreen = () => {
     userStorage.set('age', 30);
     userStorage.set('isPremium', true);
     userStorage.set('lastLogin', Date.now());
-    userStorage.set('profile', JSON.stringify({ bio: 'Software Developer', location: 'San Francisco' }));
+    userStorage.set(
+      'profile',
+      JSON.stringify({ bio: 'Software Developer', location: 'San Francisco' })
+    );
 
     // Add test data to app settings
     appSettings.set('theme', 'dark');
@@ -118,8 +121,14 @@ export const MMKVPluginScreen = () => {
     appSettings.set('buffer', new ArrayBuffer(16));
 
     // Add test data to cache storage (including buffer)
-    cacheStorage.set('apiResponse', JSON.stringify({ data: 'cached response', timestamp: Date.now() }));
-    cacheStorage.set('userPreferences', JSON.stringify({ theme: 'dark', language: 'en' }));
+    cacheStorage.set(
+      'apiResponse',
+      JSON.stringify({ data: 'cached response', timestamp: Date.now() })
+    );
+    cacheStorage.set(
+      'userPreferences',
+      JSON.stringify({ theme: 'dark', language: 'en' })
+    );
     cacheStorage.set('timestamp', Date.now());
     cacheStorage.set('cacheSize', 1024);
     cacheStorage.set('lastSync', Date.now() - 3600000); // 1 hour ago
@@ -137,23 +146,25 @@ export const MMKVPluginScreen = () => {
     }
   };
 
-    // Get all entries from a storage - everything as string
+  // Get all entries from a storage - everything as string
   const getStorageEntries = (storageId: string): MMKVEntry[] => {
     const instance = getMMKVInstance(storageId);
     if (!instance) return [];
 
     const keys = instance.getAllKeys();
     return keys.map((key) => {
-        return getMMKVEntry(instance, key);
+      return getMMKVEntry(instance, key);
     });
   };
 
   // Refresh all storages
   const refreshStorages = () => {
-    setStorages(prev => prev.map(storage => ({
-      ...storage,
-      entries: getStorageEntries(storage.id),
-    })));
+    setStorages((prev) =>
+      prev.map((storage) => ({
+        ...storage,
+        entries: getStorageEntries(storage.id),
+      }))
+    );
   };
 
   // Load initial data
@@ -162,7 +173,12 @@ export const MMKVPluginScreen = () => {
   }, []);
 
   // Add new entry
-  const addEntry = (storageId: string, key: string, value: string, type: MMKVEntryType) => {
+  const addEntry = (
+    storageId: string,
+    key: string,
+    value: string,
+    type: MMKVEntryType
+  ) => {
     const instance = getMMKVInstance(storageId);
     if (!instance) {
       Alert.alert('Error', 'Failed to access storage');
@@ -171,7 +187,10 @@ export const MMKVPluginScreen = () => {
 
     // Validate key format (basic validation)
     if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
-      Alert.alert('Error', 'Key can only contain letters, numbers, underscores, and hyphens');
+      Alert.alert(
+        'Error',
+        'Key can only contain letters, numbers, underscores, and hyphens'
+      );
       return;
     }
 
@@ -183,7 +202,10 @@ export const MMKVPluginScreen = () => {
         case 'number': {
           const numValue = parseFloat(value);
           if (isNaN(numValue)) {
-            Alert.alert('Error', 'Invalid number value. Please enter a valid number.');
+            Alert.alert(
+              'Error',
+              'Invalid number value. Please enter a valid number.'
+            );
             return;
           }
           instance.set(key, numValue);
@@ -203,7 +225,7 @@ export const MMKVPluginScreen = () => {
           instance.set(key, value);
           break;
       }
-      
+
       refreshStorages();
       Alert.alert('Success', `Entry "${key}" added successfully`);
     } catch (error) {
@@ -213,7 +235,12 @@ export const MMKVPluginScreen = () => {
   };
 
   // Update existing entry
-  const updateEntry = (storageId: string, key: string, value: string, type: MMKVEntryType) => {
+  const updateEntry = (
+    storageId: string,
+    key: string,
+    value: string,
+    type: MMKVEntryType
+  ) => {
     const instance = getMMKVInstance(storageId);
     if (!instance) {
       Alert.alert('Error', 'Failed to access storage');
@@ -225,25 +252,21 @@ export const MMKVPluginScreen = () => {
 
   // Delete entry
   const deleteEntry = (storageId: string, key: string) => {
-    Alert.alert(
-      'Confirm Delete',
-      `Are you sure you want to delete "${key}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            const instance = getMMKVInstance(storageId);
-            if (instance) {
-              instance.delete(key);
-              refreshStorages();
-              Alert.alert('Success', 'Entry deleted successfully');
-            }
-          },
+    Alert.alert('Confirm Delete', `Are you sure you want to delete "${key}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          const instance = getMMKVInstance(storageId);
+          if (instance) {
+            instance.delete(key);
+            refreshStorages();
+            Alert.alert('Success', 'Entry deleted successfully');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // Open edit modal
@@ -261,33 +284,33 @@ export const MMKVPluginScreen = () => {
   // Validate form data
   const validateForm = (): string | null => {
     const trimmedKey = editData.key.trim();
-    
+
     if (!trimmedKey) {
       return 'Key cannot be empty';
     }
-    
+
     if (!/^[a-zA-Z0-9_-]+$/.test(trimmedKey)) {
       return 'Key can only contain letters, numbers, underscores, and hyphens';
     }
-    
+
     if (editData.isNew) {
       const instance = getMMKVInstance(editData.storageId);
       if (instance && instance.getAllKeys().includes(trimmedKey)) {
         return `Key "${trimmedKey}" already exists`;
       }
     }
-    
+
     if (editData.type === 'number' && isNaN(parseFloat(editData.value))) {
       return 'Please enter a valid number';
     }
-    
+
     if (editData.type === 'boolean') {
       const lowerValue = editData.value.toLowerCase();
       if (lowerValue !== 'true' && lowerValue !== 'false') {
         return 'Boolean value must be "true" or "false"';
       }
     }
-    
+
     return null;
   };
 
@@ -302,14 +325,19 @@ export const MMKVPluginScreen = () => {
     // Enhanced validation
     const trimmedKey = editData.key.trim();
     if (!trimmedKey) {
-        Alert.alert('Error', 'Key cannot be empty');
-        return;
+      Alert.alert('Error', 'Key cannot be empty');
+      return;
     }
-    
+
     if (editData.isNew) {
       addEntry(editData.storageId, trimmedKey, editData.value, editData.type);
     } else {
-      updateEntry(editData.storageId, trimmedKey, editData.value, editData.type);
+      updateEntry(
+        editData.storageId,
+        trimmedKey,
+        editData.value,
+        editData.type
+      );
     }
     setEditModalVisible(false);
   };
@@ -324,7 +352,9 @@ export const MMKVPluginScreen = () => {
         </View>
       </View>
       <Text style={styles.entryValue}>
-        {typeof item.value === 'object' ? JSON.stringify(item.value) : String(item.value)}
+        {typeof item.value === 'object'
+          ? JSON.stringify(item.value)
+          : String(item.value)}
       </Text>
       <View style={styles.entryActions}>
         <TouchableOpacity
@@ -353,32 +383,28 @@ export const MMKVPluginScreen = () => {
       ]}
       onPress={() => setSelectedStorage(storage.id)}
     >
-      <Text style={[
-        styles.storageTabText,
-        selectedStorage === storage.id && styles.selectedStorageTabText,
-      ]}>
+      <Text
+        style={[
+          styles.storageTabText,
+          selectedStorage === storage.id && styles.selectedStorageTabText,
+        ]}
+      >
         {storage.name}
       </Text>
-      <Text style={styles.storageCount}>
-        {storage.entries.length} entries
-      </Text>
+      <Text style={styles.storageCount}>{storage.entries.length} entries</Text>
     </TouchableOpacity>
   );
 
-  const currentStorage = storages.find(s => s.id === selectedStorage);
+  const currentStorage = storages.find((s) => s.id === selectedStorage);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>MMKV Storage Manager</Text>
-        <Text style={styles.subtitle}>
-          Manage your local storage instances
-        </Text>
+        <Text style={styles.subtitle}>Manage your local storage instances</Text>
       </View>
 
-      <View style={styles.storageTabs}>
-        {storages.map(renderStorageTab)}
-      </View>
+      <View style={styles.storageTabs}>{storages.map(renderStorageTab)}</View>
 
       <View style={styles.content}>
         <View style={styles.contentHeader}>
@@ -403,7 +429,9 @@ export const MMKVPluginScreen = () => {
 
         {currentStorage?.entries.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No entries in this storage</Text>
+            <Text style={styles.emptyStateText}>
+              No entries in this storage
+            </Text>
             <Text style={styles.emptyStateSubtext}>
               Tap "Add Entry" to create your first entry
             </Text>
@@ -432,23 +460,26 @@ export const MMKVPluginScreen = () => {
             <Text style={styles.modalTitle}>
               {editData.isNew ? 'Add New Entry' : 'Edit Entry'}
             </Text>
-            
+
             {editData.isNew && (
               <Text style={styles.modalSubtitle}>
-                Create a new key-value pair in {storages.find(s => s.id === editData.storageId)?.name}
+                Create a new key-value pair in{' '}
+                {storages.find((s) => s.id === editData.storageId)?.name}
               </Text>
             )}
-            
+
             <TextInput
               style={styles.modalInput}
               placeholder="Enter key (letters, numbers, _, -)"
               placeholderTextColor="#666"
               value={editData.key}
-              onChangeText={(text) => setEditData(prev => ({ ...prev, key: text }))}
+              onChangeText={(text) =>
+                setEditData((prev) => ({ ...prev, key: text }))
+              }
               autoCapitalize="none"
               autoCorrect={false}
             />
-            
+
             <View style={styles.typeSelector}>
               <Text style={styles.typeLabel}>Type:</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -459,36 +490,43 @@ export const MMKVPluginScreen = () => {
                       styles.typeOption,
                       editData.type === type && styles.selectedTypeOption,
                     ]}
-                    onPress={() => setEditData(prev => ({ ...prev, type }))}
+                    onPress={() => setEditData((prev) => ({ ...prev, type }))}
                   >
-                    <Text style={[
-                      styles.typeOptionText,
-                      editData.type === type && styles.selectedTypeOptionText,
-                    ]}>
+                    <Text
+                      style={[
+                        styles.typeOptionText,
+                        editData.type === type && styles.selectedTypeOptionText,
+                      ]}
+                    >
                       {type}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
             </View>
-            
+
             <TextInput
               style={[styles.modalInput, styles.modalTextArea]}
               placeholder={
-                editData.type === 'string' ? 'Enter text value' :
-                editData.type === 'number' ? 'Enter number (e.g., 42, 3.14)' :
-                editData.type === 'boolean' ? 'Enter true or false' :
-                'Enter value'
+                editData.type === 'string'
+                  ? 'Enter text value'
+                  : editData.type === 'number'
+                  ? 'Enter number (e.g., 42, 3.14)'
+                  : editData.type === 'boolean'
+                  ? 'Enter true or false'
+                  : 'Enter value'
               }
               placeholderTextColor="#666"
               value={editData.value}
-              onChangeText={(text) => setEditData(prev => ({ ...prev, value: text }))}
+              onChangeText={(text) =>
+                setEditData((prev) => ({ ...prev, value: text }))
+              }
               multiline={editData.type === 'string'}
               numberOfLines={editData.type === 'string' ? 4 : 1}
               keyboardType={editData.type === 'number' ? 'numeric' : 'default'}
               autoCapitalize={editData.type === 'string' ? 'sentences' : 'none'}
             />
-            
+
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -498,17 +536,21 @@ export const MMKVPluginScreen = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  styles.modalButton, 
+                  styles.modalButton,
                   styles.saveButton,
-                  (!editData.key.trim() || !editData.value.trim()) && styles.disabledButton
+                  (!editData.key.trim() || !editData.value.trim()) &&
+                    styles.disabledButton,
                 ]}
                 onPress={handleEditSave}
                 disabled={!editData.key.trim() || !editData.value.trim()}
               >
-                <Text style={[
-                  styles.modalButtonText,
-                  (!editData.key.trim() || !editData.value.trim()) && styles.disabledButtonText
-                ]}>
+                <Text
+                  style={[
+                    styles.modalButtonText,
+                    (!editData.key.trim() || !editData.value.trim()) &&
+                      styles.disabledButtonText,
+                  ]}
+                >
                   {editData.isNew ? 'Add Entry' : 'Save Changes'}
                 </Text>
               </TouchableOpacity>

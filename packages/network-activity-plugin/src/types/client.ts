@@ -1,5 +1,5 @@
-import { RozeniteDevToolsClient } from "@rozenite/plugin-bridge";
-import { NetworkEntry } from "./network";
+import { RozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { NetworkEntry } from './network';
 
 // CDP Network types based on Chrome DevTools Protocol - limited to XMLHttpRequest capturable properties
 export type NetworkRequestId = string;
@@ -32,16 +32,29 @@ export type NetworkInitiator = {
   columnNumber?: number;
 };
 
-export type NetworkResourceType = 
-  | 'Document' | 'Stylesheet' | 'Image' | 'Media' | 'Font' | 'Script' 
-  | 'XHR' | 'Fetch' | 'EventSource' | 'WebSocket' | 'Manifest' 
-  | 'Other' | 'Ping' | 'CSPViolationReport' | 'Preflight' | 'Subresource';
+export type NetworkResourceType =
+  | 'Document'
+  | 'Stylesheet'
+  | 'Image'
+  | 'Media'
+  | 'Font'
+  | 'Script'
+  | 'XHR'
+  | 'Fetch'
+  | 'EventSource'
+  | 'WebSocket'
+  | 'Manifest'
+  | 'Other'
+  | 'Ping'
+  | 'CSPViolationReport'
+  | 'Preflight'
+  | 'Subresource';
 
 export type NetworkActivityEventMap = {
   // Control events
   'network-enable': unknown;
   'network-disable': unknown;
-  
+
   // CDP Network events - limited to XMLHttpRequest capturable properties
   'Network.requestWillBeSent': {
     requestId: NetworkRequestId;
@@ -86,7 +99,7 @@ export type NetworkActivityEventMap = {
   'Network.getResponseBody': {
     requestId: NetworkRequestId;
   };
-  
+
   'Network.responseBodyReceived': {
     requestId: NetworkRequestId;
     body: string;
@@ -94,4 +107,5 @@ export type NetworkActivityEventMap = {
   };
 };
 
-export type NetworkActivityDevToolsClient = RozeniteDevToolsClient<NetworkActivityEventMap>;
+export type NetworkActivityDevToolsClient =
+  RozeniteDevToolsClient<NetworkActivityEventMap>;

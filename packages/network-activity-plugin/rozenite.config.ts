@@ -3,6 +3,6 @@ export default {
     {
       name: 'Network Activity',
       source: './src/ui/panel.tsx',
-    }
+    },
   ],
 };

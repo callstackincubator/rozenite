@@ -20,12 +20,18 @@ export const getStatusColor = (status: number): string => {
 
 export const getMethodColor = (method: string): string => {
   switch (method.toUpperCase()) {
-    case 'GET': return '#61affe';
-    case 'POST': return '#49cc90';
-    case 'PUT': return '#fca130';
-    case 'DELETE': return '#f93e3e';
-    case 'PATCH': return '#50e3c2';
-    default: return '#757575';
+    case 'GET':
+      return '#61affe';
+    case 'POST':
+      return '#49cc90';
+    case 'PUT':
+      return '#fca130';
+    case 'DELETE':
+      return '#f93e3e';
+    case 'PATCH':
+      return '#50e3c2';
+    default:
+      return '#757575';
   }
 };
 
@@ -61,29 +67,32 @@ export const truncateText = (text: string, maxLength: number): string => {
 
 export const formatLongUrl = (url: string, maxLength = 80): string => {
   if (url.length <= maxLength) return url;
-  
+
   try {
     const urlObj = new URL(url);
     const protocol = urlObj.protocol;
     const hostname = urlObj.hostname;
     const pathname = urlObj.pathname;
     const search = urlObj.search;
-    
+
     // Keep protocol and hostname, truncate path if needed
     const baseLength = protocol.length + hostname.length + 3; // +3 for "://"
     const remainingLength = maxLength - baseLength - 3; // -3 for "..."
-    
+
     if (remainingLength <= 0) {
       return `${protocol}//${hostname}...`;
     }
-    
+
     const fullPath = pathname + search;
     if (fullPath.length <= remainingLength) {
       return url;
     }
-    
-    return `${protocol}//${hostname}${fullPath.substring(0, remainingLength)}...`;
+
+    return `${protocol}//${hostname}${fullPath.substring(
+      0,
+      remainingLength
+    )}...`;
   } catch {
     return truncateText(url, maxLength);
   }
-}; 
+};

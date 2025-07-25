@@ -1,7 +1,13 @@
 import React from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { NetworkEntry } from '../types/network';
-import { getStatusColor, getMethodColor, formatDuration, formatFileSize, parseUrl } from './utils';
+import {
+  getStatusColor,
+  getMethodColor,
+  formatDuration,
+  formatFileSize,
+  parseUrl,
+} from './utils';
 import { Badge, Tooltip } from './components';
 import styles from './network-list.module.css';
 
@@ -67,7 +73,9 @@ const getResourceTypeColor = (type: string): string => {
   }
 };
 
-const getStatusDisplay = (entry: EnhancedNetworkEntry): { text: string; color: string } => {
+const getStatusDisplay = (
+  entry: EnhancedNetworkEntry
+): { text: string; color: string } => {
   if (entry.status === 'failed') {
     return { text: 'Failed', color: '#d32f2f' };
   }
@@ -105,12 +113,15 @@ export const NetworkList: React.FC<NetworkListProps> = ({
     overscan: 5,
   });
 
-  const NetworkListItem: React.FC<{ entry: EnhancedNetworkEntry; index: number }> = ({ entry, index }) => {
+  const NetworkListItem: React.FC<{
+    entry: EnhancedNetworkEntry;
+    index: number;
+  }> = ({ entry, index }) => {
     const method = entry.method;
     const url = entry.url;
     const { domain, path } = parseUrl(url);
     const resourceType = entry.type || 'Other';
-    
+
     // Get size information - prefer dataLength over encodedDataLength for display
     const displaySize = entry.dataLength || entry.encodedDataLength || 0;
     const statusDisplay = getStatusDisplay(entry);
@@ -123,47 +134,43 @@ export const NetworkList: React.FC<NetworkListProps> = ({
         onClick={() => onSelect(entry.requestId)}
       >
         <div className={styles.statusColumn}>
-          <Tooltip 
-            content={`Status: ${statusDisplay.text}`} 
+          <Tooltip
+            content={`Status: ${statusDisplay.text}`}
             showOnlyWhenTruncated
-            variant={statusDisplay.color === '#d32f2f' ? 'error' : statusDisplay.color === '#ff9800' ? 'warning' : 'info'}
+            variant={
+              statusDisplay.color === '#d32f2f'
+                ? 'error'
+                : statusDisplay.color === '#ff9800'
+                ? 'warning'
+                : 'info'
+            }
           >
-            <Badge color={statusDisplay.color}>
-              {statusDisplay.text}
-            </Badge>
+            <Badge color={statusDisplay.color}>{statusDisplay.text}</Badge>
           </Tooltip>
         </div>
         <div className={styles.methodColumn}>
-          <Tooltip 
-            content={`Method: ${method}`} 
+          <Tooltip
+            content={`Method: ${method}`}
             showOnlyWhenTruncated
             variant="info"
           >
-            <Badge color={getMethodColor(method)}>
-              {method}
-            </Badge>
+            <Badge color={getMethodColor(method)}>{method}</Badge>
           </Tooltip>
         </div>
         <div className={styles.urlColumn}>
           <Tooltip content={domain} showOnlyWhenTruncated>
-            <div className={styles.domainText}>
-              {domain}
-            </div>
+            <div className={styles.domainText}>{domain}</div>
           </Tooltip>
           <Tooltip content={path} showOnlyWhenTruncated>
-            <div className={styles.pathText}>
-              {path}
-            </div>
+            <div className={styles.pathText}>{path}</div>
           </Tooltip>
           <Tooltip content={url} showOnlyWhenTruncated>
-            <div className={styles.fullUrlText}>
-              {url}
-            </div>
+            <div className={styles.fullUrlText}>{url}</div>
           </Tooltip>
         </div>
         <div className={styles.typeColumn}>
-          <Tooltip 
-            content={`Resource Type: ${resourceType}`} 
+          <Tooltip
+            content={`Resource Type: ${resourceType}`}
             showOnlyWhenTruncated
             variant="info"
           >
@@ -173,14 +180,24 @@ export const NetworkList: React.FC<NetworkListProps> = ({
           </Tooltip>
         </div>
         <div className={styles.durationColumn}>
-          <Tooltip content={`Duration: ${entry.duration ? formatDuration(entry.duration) : 'Pending'}`} showOnlyWhenTruncated>
+          <Tooltip
+            content={`Duration: ${
+              entry.duration ? formatDuration(entry.duration) : 'Pending'
+            }`}
+            showOnlyWhenTruncated
+          >
             <span className={styles.columnText}>
               {entry.duration ? formatDuration(entry.duration) : '...'}
             </span>
           </Tooltip>
         </div>
         <div className={styles.sizeColumn}>
-          <Tooltip content={`Size: ${displaySize > 0 ? formatFileSize(displaySize) : 'Unknown'}`} showOnlyWhenTruncated>
+          <Tooltip
+            content={`Size: ${
+              displaySize > 0 ? formatFileSize(displaySize) : 'Unknown'
+            }`}
+            showOnlyWhenTruncated
+          >
             <span className={styles.columnText}>
               {displaySize > 0 ? formatFileSize(displaySize) : '...'}
             </span>
@@ -191,11 +208,7 @@ export const NetworkList: React.FC<NetworkListProps> = ({
   };
 
   return (
-    <div
-      ref={parentRef}
-      className={styles.networkList}
-      style={{ height }}
-    >
+    <div ref={parentRef} className={styles.networkList} style={{ height }}>
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
@@ -224,4 +237,4 @@ export const NetworkList: React.FC<NetworkListProps> = ({
       </div>
     </div>
   );
-}; 
+};

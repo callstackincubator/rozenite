@@ -28,11 +28,14 @@ const api = {
   },
 
   getPosts: async (): Promise<Post[]> => {
-    const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=10', {
-      headers: {
-        'X-Rozenite-Test': 'true',
-      },
-    });
+    const response = await fetch(
+      'https://jsonplaceholder.typicode.com/posts?_limit=10',
+      {
+        headers: {
+          'X-Rozenite-Test': 'true',
+        },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -42,11 +45,14 @@ const api = {
   },
 
   getTodos: async (): Promise<Todo[]> => {
-    const response = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=15', {
-      headers: {
-        'X-Rozenite-Test': 'true',
-      },
-    });
+    const response = await fetch(
+      'https://jsonplaceholder.typicode.com/todos?_limit=15',
+      {
+        headers: {
+          'X-Rozenite-Test': 'true',
+        },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -58,12 +64,15 @@ const api = {
   // Simulate a slow API call
   getSlowData: async (): Promise<User[]> => {
     // Add artificial delay to simulate slow network
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    const response = await fetch('https://jsonplaceholder.typicode.com/users?_limit=5', {
-      headers: {
-        'X-Rozenite-Test': 'true',
-      },
-    });
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    const response = await fetch(
+      'https://jsonplaceholder.typicode.com/users?_limit=5',
+      {
+        headers: {
+          'X-Rozenite-Test': 'true',
+        },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -78,16 +87,19 @@ const api = {
     if (Math.random() < 0.2) {
       throw new Error('Random API failure - please try again');
     }
-    const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=8', {
-      headers: {
-        'X-Rozenite-Test': 'true',
-      },
-    });
+    const response = await fetch(
+      'https://jsonplaceholder.typicode.com/posts?_limit=8',
+      {
+        headers: {
+          'X-Rozenite-Test': 'true',
+        },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return response.json();
   },
 
@@ -185,7 +197,7 @@ const useUnreliableDataQuery = () => {
 
 const useCreatePostMutation = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: api.createPost,
     onSuccess: () => {
@@ -222,19 +234,18 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => (
 const TodoCard: React.FC<{ todo: Todo }> = ({ todo }) => (
   <View style={styles.card}>
     <View style={styles.todoHeader}>
-      <Text style={[
-        styles.todoTitle,
-        todo.completed && styles.todoCompleted
-      ]}>
+      <Text style={[styles.todoTitle, todo.completed && styles.todoCompleted]}>
         {todo.title}
       </Text>
-      <View style={[
-        styles.todoStatus,
-        todo.completed ? styles.todoStatusCompleted : styles.todoStatusPending
-      ]}>
-        <Text style={styles.todoStatusText}>
-          {todo.completed ? '✓' : '○'}
-        </Text>
+      <View
+        style={[
+          styles.todoStatus,
+          todo.completed
+            ? styles.todoStatusCompleted
+            : styles.todoStatusPending,
+        ]}
+      >
+        <Text style={styles.todoStatusText}>{todo.completed ? '✓' : '○'}</Text>
       </View>
     </View>
     <Text style={styles.cardMeta}>User ID: {todo.userId}</Text>
@@ -242,10 +253,12 @@ const TodoCard: React.FC<{ todo: Todo }> = ({ todo }) => (
 );
 
 export const NetworkTestScreen: React.FC = () => {
-  const [activeTab, setActiveTab] = React.useState<'users' | 'posts' | 'todos' | 'slow' | 'unreliable' | 'create'>('users');
+  const [activeTab, setActiveTab] = React.useState<
+    'users' | 'posts' | 'todos' | 'slow' | 'unreliable' | 'create'
+  >('users');
   const [newPostTitle, setNewPostTitle] = React.useState('');
   const [newPostBody, setNewPostBody] = React.useState('');
-  
+
   const usersQuery = useUsersQuery();
   const postsQuery = usePostsQuery();
   const todosQuery = useTodosQuery();
@@ -255,12 +268,18 @@ export const NetworkTestScreen: React.FC = () => {
 
   const getActiveQuery = () => {
     switch (activeTab) {
-      case 'users': return usersQuery;
-      case 'posts': return postsQuery;
-      case 'todos': return todosQuery;
-      case 'slow': return slowQuery;
-      case 'unreliable': return unreliableQuery;
-      default: return usersQuery;
+      case 'users':
+        return usersQuery;
+      case 'posts':
+        return postsQuery;
+      case 'todos':
+        return todosQuery;
+      case 'slow':
+        return slowQuery;
+      case 'unreliable':
+        return unreliableQuery;
+      default:
+        return usersQuery;
     }
   };
 
@@ -272,28 +291,37 @@ export const NetworkTestScreen: React.FC = () => {
       return;
     }
 
-    createPostMutation.mutate({
-      title: newPostTitle,
-      body: newPostBody,
-      userId: 1, // Default user ID
-    }, {
-      onSuccess: () => {
-        setNewPostTitle('');
-        setNewPostBody('');
-        // Switch to posts tab to see the new post
-        setActiveTab('posts');
+    createPostMutation.mutate(
+      {
+        title: newPostTitle,
+        body: newPostBody,
+        userId: 1, // Default user ID
       },
-    });
+      {
+        onSuccess: () => {
+          setNewPostTitle('');
+          setNewPostBody('');
+          // Switch to posts tab to see the new post
+          setActiveTab('posts');
+        },
+      }
+    );
   };
 
   const renderItem = ({ item }: { item: User | Post | Todo }) => {
     switch (activeTab) {
-      case 'users': return <UserCard user={item as User} />;
-      case 'posts': return <PostCard post={item as Post} />;
-      case 'todos': return <TodoCard todo={item as Todo} />;
-      case 'slow': return <UserCard user={item as User} />;
-      case 'unreliable': return <PostCard post={item as Post} />;
-      default: return <UserCard user={item as User} />;
+      case 'users':
+        return <UserCard user={item as User} />;
+      case 'posts':
+        return <PostCard post={item as Post} />;
+      case 'todos':
+        return <TodoCard todo={item as Todo} />;
+      case 'slow':
+        return <UserCard user={item as User} />;
+      case 'unreliable':
+        return <PostCard post={item as Post} />;
+      default:
+        return <UserCard user={item as User} />;
     }
   };
 
@@ -301,7 +329,7 @@ export const NetworkTestScreen: React.FC = () => {
     <View style={styles.header}>
       <Text style={styles.title}>Network Test</Text>
       <Text style={styles.subtitle}>Testing TanStack Query with real APIs</Text>
-      
+
       <View style={styles.tabContainer}>
         {[
           { key: 'users', label: 'Users' },
@@ -313,29 +341,40 @@ export const NetworkTestScreen: React.FC = () => {
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
-            style={[
-              styles.tab,
-              activeTab === tab.key && styles.tabActive
-            ]}
-            onPress={() => setActiveTab(tab.key as 'users' | 'posts' | 'todos' | 'slow' | 'unreliable' | 'create')}
+            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            onPress={() =>
+              setActiveTab(
+                tab.key as
+                  | 'users'
+                  | 'posts'
+                  | 'todos'
+                  | 'slow'
+                  | 'unreliable'
+                  | 'create'
+              )
+            }
           >
-            <Text style={[
-              styles.tabText,
-              activeTab === tab.key && styles.tabTextActive
-            ]}>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === tab.key && styles.tabTextActive,
+              ]}
+            >
               {tab.label}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
-      
+
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Status</Text>
-          <Text style={[
-            styles.statValue,
-            { color: isLoading ? '#FFA500' : error ? '#FF4444' : '#4CAF50' }
-          ]}>
+          <Text
+            style={[
+              styles.statValue,
+              { color: isLoading ? '#FFA500' : error ? '#FF4444' : '#4CAF50' },
+            ]}
+          >
             {isLoading ? 'Loading...' : error ? 'Error' : 'Success'}
           </Text>
         </View>
@@ -352,7 +391,7 @@ export const NetworkTestScreen: React.FC = () => {
       {activeTab === 'create' ? (
         <View style={styles.createForm}>
           <Text style={styles.formTitle}>Create New Post</Text>
-          
+
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Title</Text>
             <TextInput
@@ -364,7 +403,7 @@ export const NetworkTestScreen: React.FC = () => {
               multiline
             />
           </View>
-          
+
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Body</Text>
             <TextInput
@@ -377,14 +416,21 @@ export const NetworkTestScreen: React.FC = () => {
               numberOfLines={4}
             />
           </View>
-          
+
           <TouchableOpacity
             style={[
               styles.createButton,
-              (!newPostTitle.trim() || !newPostBody.trim() || createPostMutation.isPending) && styles.createButtonDisabled
+              (!newPostTitle.trim() ||
+                !newPostBody.trim() ||
+                createPostMutation.isPending) &&
+                styles.createButtonDisabled,
             ]}
             onPress={handleCreatePost}
-            disabled={!newPostTitle.trim() || !newPostBody.trim() || createPostMutation.isPending}
+            disabled={
+              !newPostTitle.trim() ||
+              !newPostBody.trim() ||
+              createPostMutation.isPending
+            }
           >
             {createPostMutation.isPending ? (
               <ActivityIndicator size="small" color="#ffffff" />
@@ -392,22 +438,23 @@ export const NetworkTestScreen: React.FC = () => {
               <Text style={styles.createButtonText}>Create Post</Text>
             )}
           </TouchableOpacity>
-          
+
           {createPostMutation.isError && (
             <Text style={styles.errorText}>
               Error: {createPostMutation.error?.message}
             </Text>
           )}
-          
+
           {createPostMutation.isSuccess && (
-            <Text style={styles.successText}>
-              Post created successfully!
-            </Text>
+            <Text style={styles.successText}>Post created successfully!</Text>
           )}
         </View>
       ) : (
         <TouchableOpacity
-          style={[styles.refetchButton, isRefetching && styles.refetchButtonDisabled]}
+          style={[
+            styles.refetchButton,
+            isRefetching && styles.refetchButtonDisabled,
+          ]}
           onPress={() => refetch()}
           disabled={isRefetching}
         >
@@ -734,4 +781,4 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textAlign: 'center',
   },
-}); 
+});

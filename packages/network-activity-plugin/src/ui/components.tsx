@@ -33,14 +33,26 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   className,
 }) => {
-  const sizeClass = size === 'small' ? styles.buttonSmall : size === 'large' ? styles.buttonLarge : styles.buttonMedium;
-  const variantClass = styles[`button${variant.charAt(0).toUpperCase() + variant.slice(1)}` as keyof typeof styles];
+  const sizeClass =
+    size === 'small'
+      ? styles.buttonSmall
+      : size === 'large'
+      ? styles.buttonLarge
+      : styles.buttonMedium;
+  const variantClass =
+    styles[
+      `button${
+        variant.charAt(0).toUpperCase() + variant.slice(1)
+      }` as keyof typeof styles
+    ];
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${styles.button} ${sizeClass} ${variantClass} ${className || ''}`}
+      className={`${styles.button} ${sizeClass} ${variantClass} ${
+        className || ''
+      }`}
       style={style}
     >
       {children}
@@ -68,11 +80,12 @@ interface BadgeProps {
   style?: React.CSSProperties;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ children, color = '#007AFF', style }) => (
-  <span
-    className={styles.badge}
-    style={{ backgroundColor: color, ...style }}
-  >
+export const Badge: React.FC<BadgeProps> = ({
+  children,
+  color = '#007AFF',
+  style,
+}) => (
+  <span className={styles.badge} style={{ backgroundColor: color, ...style }}>
     {children}
   </span>
 );
@@ -95,7 +108,10 @@ interface PanelHeaderProps {
   style?: React.CSSProperties;
 }
 
-export const PanelHeader: React.FC<PanelHeaderProps> = ({ children, style }) => (
+export const PanelHeader: React.FC<PanelHeaderProps> = ({
+  children,
+  style,
+}) => (
   <div className={styles.panelHeader} style={style}>
     {children}
   </div>
@@ -120,10 +136,10 @@ interface LoadingSpinnerProps {
   style?: React.CSSProperties;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  size = 16, 
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  size = 16,
   color = '#007AFF',
-  style 
+  style,
 }) => (
   <div
     className={styles.loadingSpinner}
@@ -146,13 +162,13 @@ interface TooltipProps {
   variant?: 'default' | 'info' | 'warning' | 'error';
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ 
-  children, 
-  content, 
-  style, 
+export const Tooltip: React.FC<TooltipProps> = ({
+  children,
+  content,
+  style,
   showOnlyWhenTruncated = false,
   placement = 'top',
-  variant = 'default'
+  variant = 'default',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
@@ -173,7 +189,11 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const dismiss = useDismiss(context);
   const role = useRole(context, { role: 'tooltip' });
 
-  const { getReferenceProps, getFloatingProps } = useInteractions([hover, dismiss, role]);
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    hover,
+    dismiss,
+    role,
+  ]);
 
   React.useEffect(() => {
     if (showOnlyWhenTruncated && refs.reference.current) {
@@ -186,7 +206,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   const shouldShowTooltip = showOnlyWhenTruncated ? isTruncated : true;
 
-  const variantClass = styles[`tooltip${variant.charAt(0).toUpperCase() + variant.slice(1)}` as keyof typeof styles];
+  const variantClass =
+    styles[
+      `tooltip${
+        variant.charAt(0).toUpperCase() + variant.slice(1)
+      }` as keyof typeof styles
+    ];
 
   return (
     <>
@@ -198,8 +223,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
       >
         {children}
       </div>
-    
-        <FloatingPortal>
+
+      <FloatingPortal>
         {isOpen && (
           <div
             ref={refs.setFloating}
@@ -209,11 +234,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
           >
             {content}
           </div>
-           )}
-        </FloatingPortal>
-     
+        )}
+      </FloatingPortal>
     </>
   );
 };
-
- 

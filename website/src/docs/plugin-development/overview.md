@@ -71,4 +71,4 @@ Ready to create your first plugin? Check out the [Plugin Development Guide](./pl
 
 ## Contributing
 
-Want to contribute to the plugin ecosystem? We welcome contributions to both our maintained plugins and community plugins. Check out our [Plugin Development Guide](./plugin-development.md) to learn how to create plugins, or reach out to the community to discuss your ideas. 
+Want to contribute to the plugin ecosystem? We welcome contributions to both our maintained plugins and community plugins. Check out our [Plugin Development Guide](./plugin-development.md) to learn how to create plugins, or reach out to the community to discuss your ideas.

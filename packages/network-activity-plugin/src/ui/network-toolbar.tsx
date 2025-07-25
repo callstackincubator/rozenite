@@ -25,16 +25,10 @@ export const NetworkToolbar: React.FC<NetworkToolbarProps> = ({
       >
         {isRecording ? 'Stop' : 'Start'} Recording
       </Button>
-      <Button
-        onClick={onClear}
-        variant="secondary"
-        size="small"
-      >
+      <Button onClick={onClear} variant="secondary" size="small">
         Clear
       </Button>
-      <div className={styles.requestCount}>
-        {requestCount} requests
-      </div>
+      <div className={styles.requestCount}>{requestCount} requests</div>
     </Toolbar>
   );
-}; 
+};

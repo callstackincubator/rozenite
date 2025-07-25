@@ -112,8 +112,14 @@ export const rozeniteClientPlugin = (): Plugin => {
 
       server.middlewares.use((req, res, next) => {
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');  
+        res.setHeader(
+          'Access-Control-Allow-Methods',
+          'GET, POST, PUT, DELETE, OPTIONS'
+        );
+        res.setHeader(
+          'Access-Control-Allow-Headers',
+          'Content-Type, Authorization'
+        );
 
         if (req.method === 'OPTIONS') {
           res.statusCode = 200;
@@ -126,19 +132,25 @@ export const rozeniteClientPlugin = (): Plugin => {
 
         if (url === '/rozenite.json') {
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({
-            name: packageJSON.name,
-            version: packageJSON.version,
-            description: packageJSON.description,
-            panels: panels.map((panel) => ({
-              name: panel.label,
-              source: '/' + panel.htmlFile,
-            })),
-          }, null, 2));
+          res.end(
+            JSON.stringify(
+              {
+                name: packageJSON.name,
+                version: packageJSON.version,
+                description: packageJSON.description,
+                panels: panels.map((panel) => ({
+                  name: panel.label,
+                  source: '/' + panel.htmlFile,
+                })),
+              },
+              null,
+              2
+            )
+          );
           return;
         }
 
-        const panel = panels.find((panel) => '/' +panel.htmlFile === url);
+        const panel = panels.find((panel) => '/' + panel.htmlFile === url);
 
         if (panel) {
           const htmlContent = generatePanelHtmlContent(panel);
