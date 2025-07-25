@@ -8,6 +8,10 @@ Think of it as a complete toolkit that turns React Native DevTools into a platfo
 If you'd like to skip this intro and jump right in, head over to our [Quick start](/docs/getting-started/index) page to create your first plugin.
 :::
 
+## The Name
+
+Rozenite is named after a rare mineral discovered in 1960 on Ornak Mountain in the Western Tatra Mountains. The mineral was named after Polish mineralogist Zygmunt Rozen (1874–1936). We chose this name because it represents exploration and discovery—just like scientists exploring mountains to find new minerals, we're exploring new ways to extend React Native DevTools with custom debugging tools.
+
 ## Why We Built This
 
 At [Callstack](https://callstack.com/), we work with teams building React Native apps that drive business value. But as these apps grow, debugging becomes a bottleneck that slows down development and hurts user experience. Teams spend more time fighting fires than building features. One of the biggest problems we see is the lack of good tools for monitoring and debugging React Native apps.
