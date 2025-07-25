@@ -36,11 +36,11 @@ jobs:
       - name: Set shas
         uses: nrwl/nx-set-shas@826660b82addbef3abff5fa871492ebad618c9e1 # 
 
-      - name: Lint
-        run: pnpm nx affected -t lint
-
       - name: Build
         run: pnpm nx affected -t build
+
+      - name: Lint
+        run: pnpm nx affected -t lint
 
       - name: Test
         run: pnpm nx affected -t test
