@@ -19,8 +19,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-            filter: tree:0
-            fetch-depth: 0
+          filter: tree:0
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
@@ -38,10 +38,10 @@ jobs:
         uses: nrwl/nx-set-shas@826660b82addbef3abff5fa871492ebad618c9e1 # v.4.3.3
 
       - name: Build
-        run: pnpm nx affected -t build
+        run: pnpm nx run-many -t build
 
       - name: Lint
-        run: pnpm nx affected -t lint
+        run: pnpm nx run-many -t lint
 
       - name: Test
-        run: pnpm nx affected -t test
+        run: pnpm nx run-many -t test
