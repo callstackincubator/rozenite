@@ -27,6 +27,7 @@ rozenite generate my-plugin-name
 ```
 
 This creates:
+
 - Complete TypeScript project setup
 - Vite build configuration with Rozenite plugin
 - Sample DevTools panel
@@ -65,9 +66,9 @@ const client = useDevToolsPluginClient<EventMap>({
 });
 
 // Client methods
-client.send('event-name', payload);           // Send typed event
-client.onMessage('event-name', callback);     // Listen for typed event
-client.close();                               // Clean up connection
+client.send('event-name', payload); // Send typed event
+client.onMessage('event-name', callback); // Listen for typed event
+client.close(); // Clean up connection
 ```
 
 #### Type Safety Benefits
@@ -95,10 +96,10 @@ export default {
 
 ### Panel Configuration Options
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `name` | `string` | Display name in DevTools sidebar |
-| `source` | `string` | Path to your React component |
+| Property | Type     | Description                      |
+| -------- | -------- | -------------------------------- |
+| `name`   | `string` | Display name in DevTools sidebar |
+| `source` | `string` | Path to your React component     |
 
 ### Creating a Panel Component
 
@@ -141,7 +142,9 @@ export default function MyPanel() {
   const client = useDevToolsPluginClient<PluginEvents>({
     pluginId: 'my-user-panel',
   });
-  const [userData, setUserData] = useState<PluginEvents['user-data'] | null>(null);
+  const [userData, setUserData] = useState<PluginEvents['user-data'] | null>(
+    null
+  );
 
   useEffect(() => {
     if (!client) return;
@@ -167,8 +170,12 @@ export default function MyPanel() {
       <h2>User Data Panel</h2>
       {userData ? (
         <div>
-          <p><strong>Name:</strong> {userData.name}</p>
-          <p><strong>Email:</strong> {userData.email}</p>
+          <p>
+            <strong>Name:</strong> {userData.name}
+          </p>
+          <p>
+            <strong>Email:</strong> {userData.email}
+          </p>
         </div>
       ) : (
         <p>Loading user data...</p>
@@ -198,7 +205,9 @@ interface PluginEvents {
   };
 }
 
-export default function setupPlugin(client: DevToolsPluginClient<PluginEvents>) {
+export default function setupPlugin(
+  client: DevToolsPluginClient<PluginEvents>
+) {
   // Handle messages from DevTools panels with full type safety
   client.onMessage('request-user-data', (data) => {
     // Access React Native APIs
@@ -236,6 +245,7 @@ rozenite dev
 ```
 
 This starts a development server that:
+
 - Watches for file changes
 - Hot reloads your panels automatically
 - Provides real-time feedback during development
@@ -244,33 +254,15 @@ This starts a development server that:
 
 1. **Create or use a React Native playground project** that has Rozenite configured
 2. **Add your plugin to the playground's dependencies** (you can use `npm link`, `yarn link` or `pnpm link` for local development)
-3. **Configure Metro to exclude your plugin package and add watchFolders** in the playground's Metro config:
-
-```javascript title="metro.config.js"
-const { withRozenite } = require('@rozenite/metro');
-const path = require('path');
-
-const config = {
-  watchFolders: [
-    // Update this path to match your plugin's actual location
-    path.resolve(__dirname, '../my-awesome-plugin')
-  ]
-}
-
-module.exports = withRozenite(config, { 
-  exclude: ['my-awesome-plugin'],
-});
-```
-
-**Note**: Adjust the path in `watchFolders` to match the actual location of your plugin relative to your playground project.
 
 #### Step 3: Run Your React Native App
 
 ```shell title="Terminal"
 # In your playground project directory
-npx react-native start
+# Set ROZENITE_DEV_MODE to your plugin name to force load it in dev mode
+ROZENITE_DEV_MODE=my-awesome-plugin npx react-native start
 # Or if using Expo
-npx expo start
+ROZENITE_DEV_MODE=my-awesome-plugin npx expo start
 ```
 
 Then run the app on your device or simulator.
@@ -305,6 +297,7 @@ rozenite build
 ```
 
 This creates optimized bundles:
+
 - DevTools panels (minified and optimized)
 - React Native entry point (if `react-native.ts` exists)
 - Ready for distribution
@@ -312,6 +305,7 @@ This creates optimized bundles:
 ### Build Output
 
 The build creates a `dist/` directory with:
+
 - `*.js` - Individual DevTools panel files (one file per panel, names reflect your config)
 - `react-native.js` - React Native integration (if applicable)
 - `rozenite.json` - Plugin manifest with metadata and configuration
@@ -321,4 +315,4 @@ The build creates a `dist/` directory with:
 
 - Explore the [CLI documentation](../cli.md) for more command options
 - Check out [Official Plugins](../official-plugins/overview.md) to see available plugins
-- Join the community to share your plugins and get help 
+- Join the community to share your plugins and get help

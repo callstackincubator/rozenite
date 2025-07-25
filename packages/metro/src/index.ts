@@ -4,12 +4,16 @@ import { getMiddleware } from './middleware.js';
 import { logger } from './logger.js';
 import { getInstalledPlugins } from './auto-discovery.js';
 import { RozeniteMetroConfig } from './config.js';
+import { enableDevModeIfNeeded } from './dev-mode.js';
 
 export const withRozenite = async <T extends MetroConfig>(
   config: T | Promise<T>,
   options: RozeniteMetroConfig = {}
 ): Promise<T> => {
   const resolvedConfig = await config;
+
+  enableDevModeIfNeeded(options, resolvedConfig);
+
   const allInstalledPlugins = await getInstalledPlugins(options);
 
   if (allInstalledPlugins.length === 0) {
