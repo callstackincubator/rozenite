@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set shas
+        uses: nrwl/nx-set-shas@826660b82addbef3abff5fa871492ebad618c9e1 # 
+
+      - name: Lint
+        run: pnpm nx affected -t lint
+
+      - name: Build
+        run: pnpm nx affected -t build
+
+      - name: Test
+        run: pnpm nx affected -t test
