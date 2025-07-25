@@ -1,6 +1,6 @@
 import { NetworkActivityDevToolsClient } from "../types/client";
 import { getNetworkRequestsRegistry } from "./network-requests-registry";
-import { getXHRInterceptor } from "./xhr-interceptor";
+import { XHRInterceptor } from "./xhr-interceptor";
 
 const networkRequestsRegistry = getNetworkRequestsRegistry();
 
@@ -122,8 +122,6 @@ export type NetworkInspector = {
 };
 
 export const getNetworkInspector = (pluginClient: NetworkActivityDevToolsClient): NetworkInspector => {
-  const XHRInterceptor = getXHRInterceptor();
-
   const generateRequestId = (): string => {
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
