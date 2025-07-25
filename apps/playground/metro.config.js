@@ -22,9 +22,7 @@ const customConfig = {
     sourceExts: [...sourceExts, 'cjs', 'mjs', 'svg'],
     unstable_enablePackageExports: true,
   },
-  serializer: {
-    
-  },
+  serializer: {},
   transformer: {
     getTransformOptions: async () => ({
       transform: {
@@ -36,9 +34,8 @@ const customConfig = {
 };
 
 module.exports = withRozenite(
-  withRozeniteExpoAtlasPlugin(withNxMetro(
-    mergeConfig(defaultConfig, customConfig),
-    {
+  withRozeniteExpoAtlasPlugin(
+    withNxMetro(mergeConfig(defaultConfig, customConfig), {
       // Change this to true to see debugging info.
       // Useful if you have issues resolving modules
       debug: false,
@@ -46,9 +43,6 @@ module.exports = withRozenite(
       extensions: [],
       // Specify folders to watch, in addition to Nx defaults (workspace libraries and node_modules)
       // watchFolders: ["../../packages/expo-atlas-plugin"],
-    }
-  )),
-  {
-    exclude: ["@rozenite/network-activity-plugin"]
-  }
+    })
+  )
 );

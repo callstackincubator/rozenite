@@ -20,7 +20,8 @@
     "typescript": "^5.7.3",
     "vite": "^6.0.0",
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "@tanstack/react-query": "^5.0.0"
   },
   "peerDependencies": {
     "react": ">= 17.0.0",

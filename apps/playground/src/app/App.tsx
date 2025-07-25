@@ -15,24 +15,24 @@ const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Wrapper = () => {
-   useTanStackQueryDevTools();
-   useNetworkActivityDevTools();
-   useMMKVDevTools();
+  useTanStackQueryDevTools();
+  useNetworkActivityDevTools();
+  useMMKVDevTools();
 
-   return (
-     <Stack.Navigator
-       initialRouteName="Landing"
-       screenOptions={{
-         headerShown: false,
-         contentStyle: { backgroundColor: '#0a0a0a' },
-       }}
-     >
-       <Stack.Screen name="Landing" component={LandingScreen} />
-       <Stack.Screen name="HelloWorld" component={HelloWorldScreen} />
-       <Stack.Screen name="MMKVPlugin" component={MMKVPluginScreen} />
-       <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
-     </Stack.Navigator>
-   );
+  return (
+    <Stack.Navigator
+      initialRouteName="Landing"
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: '#0a0a0a' },
+      }}
+    >
+      <Stack.Screen name="Landing" component={LandingScreen} />
+      <Stack.Screen name="HelloWorld" component={HelloWorldScreen} />
+      <Stack.Screen name="MMKVPlugin" component={MMKVPluginScreen} />
+      <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
+    </Stack.Navigator>
+  );
 };
 
 export const App = () => {

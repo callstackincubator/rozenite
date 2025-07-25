@@ -7,7 +7,7 @@ import { RozeniteMetroConfig } from './config.js';
 
 export const withRozenite = async <T extends MetroConfig>(
   config: T | Promise<T>,
-  options: RozeniteMetroConfig = {},
+  options: RozeniteMetroConfig = {}
 ): Promise<T> => {
   const resolvedConfig = await config;
   const allInstalledPlugins = await getInstalledPlugins(options);

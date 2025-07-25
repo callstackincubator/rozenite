@@ -24,6 +24,9 @@
     },
     {
       "path": "../cli"
+    },
+    {
+      "path": "../vite-plugin"
     }
   ]
 }

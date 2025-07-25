@@ -2,7 +2,9 @@
   "name": "@rozenite/network-activity-plugin",
   "version": "1.0.0-alpha.0",
   "description": "Network Activity for Rozenite.",
-  "main": "./dist/react-native.js",
+  "type": "module",
+  "main": "./dist/react-native.cjs",
+  "module": "./dist/react-native.js",
   "types": "./dist/react-native.d.ts",
   "scripts": {
     "build": "rozenite build",

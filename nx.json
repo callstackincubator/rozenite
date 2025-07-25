@@ -63,5 +63,16 @@
         "syncDepsTargetName": "sync-deps"
       }
     }
-  ]
+  ],
+  "release": {
+    "versionPlans": true,
+    "projects": ["packages/*"],
+    "version": {
+      "preVersionCommand": "pnpm nx run-many -t build --projects=\"packages/*\""
+    },
+    "releaseTagPattern": "release/{version}",
+    "git": {
+      "commitMessage": "chore(release): {version}"
+    }
+  }
 }
