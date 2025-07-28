@@ -15,8 +15,8 @@ export default {
         'tanstack-query-plugin',
         'vite-plugin',
         'website',
+        '',
       ],
     ],
-    'scope-empty': [2, 'always'],
   },
 };
