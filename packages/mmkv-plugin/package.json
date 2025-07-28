@@ -12,22 +12,25 @@
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
-    "@tanstack/react-table": "^8.21.3",
     "nanoevents": "^9.1.0"
   },
   "devDependencies": {
-    "@rozenite/vite-plugin": "workspace:*",
-    "react": "*",
-    "react-native": "*",
-    "rozenite": "workspace:*",
-    "typescript": "^5.7.3",
     "vite": "^6.0.0",
-    "react-native-mmkv": "^3.3.0"
+    "@rozenite/vite-plugin": "workspace:*",
+    "typescript": "^5.7.3",
+    "rozenite": "workspace:*",
+    "react-native-web": "0.21.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.0",
+    "react-native": "0.76.0",
+    "@types/react": "~18.3.12",
+    "react-native-mmkv": "^3.3.0",
+    "@tanstack/react-table": "^8.21.3"
   },
   "peerDependencies": {
-    "react": ">= 17.0.0",
-    "react-native": ">= 0.74.0",
-    "react-native-mmkv": ">= 3.3.0"
+    "react": "*",
+    "react-native": "*",
+    "react-native-mmkv": "*"
   },
   "license": "MIT"
 }

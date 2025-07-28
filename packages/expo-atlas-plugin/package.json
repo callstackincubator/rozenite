@@ -17,16 +17,19 @@
     "expo-atlas-without-expo": "^1.0.1"
   },
   "devDependencies": {
+    "vite": "^6.0.0",
     "@rozenite/vite-plugin": "workspace:*",
-    "@types/connect": "^3.4.38",
-    "metro-config": "^0.82.5",
-    "rozenite": "workspace:*",
     "typescript": "^5.7.3",
-    "vite": "^6.0.0"
+    "rozenite": "workspace:*",
+    "react-native-web": "0.21.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.0",
+    "react-native": "0.76.0",
+    "@types/react": "~18.3.12"
   },
   "peerDependencies": {
-    "react": ">= 17.0.0",
-    "react-native": ">= 0.74.0"
+    "react": "*",
+    "react-native": "*"
   },
   "license": "MIT"
 }

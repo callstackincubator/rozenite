@@ -16,16 +16,19 @@
     "@floating-ui/react": "^0.26.0"
   },
   "devDependencies": {
-    "@rozenite/vite-plugin": "workspace:*",
-    "rozenite": "workspace:*",
-    "typescript": "^5.7.3",
     "vite": "^6.0.0",
-    "react": "*",
-    "react-native": "*"
+    "@rozenite/vite-plugin": "workspace:*",
+    "typescript": "^5.7.3",
+    "rozenite": "workspace:*",
+    "react-native-web": "0.21.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.0",
+    "react-native": "0.76.0",
+    "@types/react": "~18.3.12"
   },
   "peerDependencies": {
-    "react": ">= 17.0.0",
-    "react-native": ">= 0.74.0"
+    "react": "*",
+    "react-native": "*"
   },
   "license": "MIT"
 }
