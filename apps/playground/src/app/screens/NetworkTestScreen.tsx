@@ -17,6 +17,7 @@ const api = {
     const response = await fetch('https://jsonplaceholder.typicode.com/users', {
       headers: {
         'X-Rozenite-Test': 'true',
+        Cookie: 'test=test',
       },
     });
 

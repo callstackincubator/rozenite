@@ -1,14 +1,20 @@
-import { NetworkActivityDevToolsClient } from '../types/client';
+import { NetworkActivityDevToolsClient } from '../shared/client';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { XHRInterceptor } from './xhr-interceptor';
 
 const networkRequestsRegistry = getNetworkRequestsRegistry();
 
-const mimeTypeFromResponseType = (responseType: string): string | undefined => {
+const getContentType = (request: XMLHttpRequest): string => {
+  const responseHeaders = request.responseHeaders;
+  const responseType = request.responseType;
+
+  if (responseHeaders?.['content-type']) {
+    return responseHeaders['content-type'].split(';')[0].trim();
+  }
+
   switch (responseType) {
     case 'arraybuffer':
     case 'blob':
-    case 'base64':
       return 'application/octet-stream';
     case 'text':
     case '':
@@ -18,81 +24,45 @@ const mimeTypeFromResponseType = (responseType: string): string | undefined => {
     case 'document':
       return 'text/html';
   }
-
-  return undefined;
 };
 
-const parseHeaders = (headersString: string): Record<string, string> => {
-  const headers: Record<string, string> = {};
-  if (!headersString) return headers;
-
-  const lines = headersString.split('\r\n');
-  for (const line of lines) {
-    const colonIndex = line.indexOf(':');
-    if (colonIndex > 0) {
-      const key = line.substring(0, colonIndex).trim();
-      const value = line.substring(colonIndex + 1).trim();
-      headers[key] = value;
-    }
+const getResponseSize = (request: XMLHttpRequest): number => {
+  if (typeof request.response === 'object') {
+    return request.response.size;
   }
-  return headers;
+
+  return request.response.length || 0;
 };
 
 const getResponseBody = async (
   request: XMLHttpRequest
-): Promise<{ body: string; base64Encoded: boolean }> => {
-  try {
-    if (request.responseType === 'arraybuffer') {
-      const arrayBuffer = request.response as ArrayBuffer;
-      return {
-        body: btoa(String.fromCharCode(...new Uint8Array(arrayBuffer))),
-        base64Encoded: true,
-      };
-    }
+): Promise<string | null> => {
+  const responseType = request.responseType;
 
-    if (request.responseType === 'blob') {
-      const contentType = request.getResponseHeader('Content-Type') || '';
-
-      if (
-        contentType.startsWith('text/') ||
-        contentType.startsWith('application/json')
-      ) {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            resolve({
-              body: reader.result as string,
-              base64Encoded: false,
-            });
-          };
-          reader.readAsText(request.response);
-        });
-      }
-    }
-
-    if (request.responseType === 'text') {
-      return {
-        body: request.responseText || request.response || '',
-        base64Encoded: false,
-      };
-    }
-
-    return {
-      body: request.responseText || request.response || '',
-      base64Encoded: false,
-    };
-  } catch (error) {
-    return {
-      body: `[Error reading response: ${error}]`,
-      base64Encoded: false,
-    };
+  if (responseType === 'text') {
+    return request.responseText as string;
   }
-};
 
-const findRequestId = (request: XMLHttpRequest): string | null => {
-  const allRequests = networkRequestsRegistry.getAllEntries();
-  const entry = allRequests.find(({ request: req }) => req === request);
-  return entry?.id ?? null;
+  if (responseType === 'blob') {
+    // This may be a text blob.
+    const contentType = request.getResponseHeader('Content-Type') || '';
+
+    if (
+      contentType.startsWith('text/') ||
+      contentType.startsWith('application/json')
+    ) {
+      // It looks like a text blob, let's read it and forward it to the client.
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          resolve(reader.result as string);
+        };
+        reader.readAsText(request.response);
+      });
+    }
+  }
+
+  return null;
 };
 
 const getInitiatorFromStack = (): {
@@ -131,6 +101,8 @@ export type NetworkInspector = {
   dispose: () => void;
 };
 
+const READY_STATE_HEADERS_RECEIVED = 2;
+
 export const getNetworkInspector = (
   pluginClient: NetworkActivityDevToolsClient
 ): NetworkInspector => {
@@ -138,202 +110,86 @@ export const getNetworkInspector = (
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const generateLoaderId = (): string => {
-    return `loader_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const handleRequestSend = (data: string, request: XMLHttpRequest): void => {
+    const sendTime = Date.now();
+
+    const requestId = generateRequestId();
+    const initiator = getInitiatorFromStack();
+
+    networkRequestsRegistry.addEntry(requestId, request);
+
+    let ttfb = 0;
+
+    pluginClient.send('request-sent', {
+      requestId: requestId,
+      timestamp: sendTime / 1000,
+      request: {
+        url: request._url as string,
+        method: request._method as string,
+        headers: request._headers,
+        postData: data,
+      },
+      type: 'XHR',
+      initiator,
+    });
+
+    request.addEventListener('readystatechange', () => {
+      if (request.readyState === READY_STATE_HEADERS_RECEIVED) {
+        ttfb = Date.now() - sendTime;
+      }
+    });
+
+    request.addEventListener('load', () => {
+      pluginClient.send('response-received', {
+        requestId: requestId,
+        timestamp: Date.now() / 1000,
+        type: 'XHR',
+        response: {
+          url: request._url as string,
+          status: request.status,
+          statusText: request.statusText,
+          headers: request.responseHeaders as Record<string, string>,
+          contentType: getContentType(request),
+          size: getResponseSize(request),
+          responseTime: Date.now() / 1000,
+        },
+      });
+    });
+
+    request.addEventListener('loadend', () => {
+      pluginClient.send('request-completed', {
+        requestId: requestId,
+        timestamp: Date.now() / 1000,
+        duration: Date.now() - sendTime,
+        size: getResponseSize(request),
+        ttfb,
+      });
+    });
+
+    request.addEventListener('error', () => {
+      pluginClient.send('request-failed', {
+        requestId: requestId,
+        timestamp: Date.now() / 1000,
+        type: 'XHR',
+        error: 'Failed',
+        canceled: false,
+      });
+    });
+
+    request.addEventListener('abort', () => {
+      pluginClient.send('request-failed', {
+        requestId: requestId,
+        timestamp: Date.now() / 1000,
+        type: 'XHR',
+        error: 'Aborted',
+        canceled: true,
+      });
+    });
   };
 
   const enable = () => {
     XHRInterceptor.disableInterception();
-
-    XHRInterceptor.setOpenCallback(
-      (method: string, url: string, request: XMLHttpRequest) => {
-        const requestId = generateRequestId();
-        const loaderId = generateLoaderId();
-        const startTime = Date.now();
-        const initiator = getInitiatorFromStack();
-
-        // Store request in registry with metadata
-        networkRequestsRegistry.addEntry(requestId, request, {
-          id: requestId,
-          loaderId,
-          documentURL:
-            typeof document !== 'undefined' ? document.URL : undefined,
-          method,
-          url,
-          headers: request?._headers || {},
-          startTime,
-          status: 'pending',
-          type: 'XHR',
-          initiator,
-        });
-      }
-    );
-
-    XHRInterceptor.setSendCallback((data: string, request: XMLHttpRequest) => {
-      const requestId = findRequestId(request);
-      if (!requestId) return;
-
-      const entry = networkRequestsRegistry.getEntry(requestId);
-      if (!entry) return;
-
-      const metadata = entry.metadata;
-
-      // Update metadata with post data
-      networkRequestsRegistry.updateEntry(requestId, {
-        postData: data,
-        hasPostData: !!data,
-        headers: request?._headers || {},
-      });
-
-      // Send Network.requestWillBeSent event
-      pluginClient.send('Network.requestWillBeSent', {
-        requestId,
-        loaderId: metadata.loaderId || '',
-        documentURL: metadata.documentURL || '',
-        request: {
-          url: metadata.url,
-          method: metadata.method,
-          headers: metadata.headers,
-          postData: data,
-          hasPostData: !!data,
-        },
-        timestamp: metadata.startTime,
-        wallTime: metadata.startTime,
-        initiator: metadata.initiator || { type: 'other' },
-        type: metadata.type,
-      });
-    });
-
-    XHRInterceptor.setHeaderReceivedCallback(
-      (
-        responseContentType: string | void,
-        responseSize: number | void,
-        allHeaders: string,
-        request: XMLHttpRequest
-      ) => {
-        const requestId = findRequestId(request);
-        if (!requestId) return;
-
-        const entry = networkRequestsRegistry.getEntry(requestId);
-        if (!entry) return;
-
-        const metadata = entry.metadata;
-        const headers = parseHeaders(allHeaders);
-        const mimeType =
-          responseContentType ||
-          mimeTypeFromResponseType(request.responseType) ||
-          'text/plain';
-
-        // Update metadata with response info
-        networkRequestsRegistry.updateEntry(requestId, {
-          status: 'loading',
-          response: {
-            url: metadata.url,
-            status: request.status,
-            statusText: request.statusText,
-            headers,
-            mimeType,
-            encodedDataLength: responseSize || 0,
-            responseTime: Date.now(),
-          },
-        });
-
-        // Send Network.responseReceived event
-        pluginClient.send('Network.responseReceived', {
-          requestId,
-          loaderId: metadata.loaderId || '',
-          timestamp: Date.now(),
-          type: metadata.type || 'Other',
-          response: {
-            url: metadata.url,
-            status: request.status,
-            statusText: request.statusText,
-            headers,
-            mimeType,
-            encodedDataLength: responseSize || 0,
-            responseTime: Date.now(),
-          },
-        });
-      }
-    );
-
-    XHRInterceptor.setResponseCallback(
-      (
-        status: number,
-        timeout: number,
-        response: string,
-        responseURL: string,
-        responseType: string,
-        request: XMLHttpRequest
-      ) => {
-        const requestId = findRequestId(request);
-        if (!requestId) return;
-
-        const entry = networkRequestsRegistry.getEntry(requestId);
-        if (!entry) return;
-
-        const metadata = entry.metadata;
-        if (!metadata) return;
-
-        const endTime = Date.now();
-        const duration = endTime - metadata.startTime;
-        const dataLength = response ? response.length : 0;
-
-        // Update metadata with final data
-        networkRequestsRegistry.updateEntry(requestId, {
-          endTime,
-          duration,
-          dataLength,
-          encodedDataLength: dataLength,
-        });
-
-        // Check if request failed
-        if (status >= 400 || request.readyState === 0) {
-          const errorText = request.statusText || 'Request failed';
-          const canceled = request.readyState === 0;
-
-          // Update metadata
-          networkRequestsRegistry.updateEntry(requestId, {
-            status: 'failed',
-            errorText,
-            canceled,
-          });
-
-          // Send Network.loadingFailed event
-          pluginClient.send('Network.loadingFailed', {
-            requestId,
-            timestamp: endTime,
-            type: metadata.type || 'Other',
-            errorText,
-            canceled,
-          });
-        } else {
-          // Update metadata
-          networkRequestsRegistry.updateEntry(requestId, {
-            status: 'finished',
-            encodedDataLength: dataLength,
-          });
-
-          // Send Network.dataReceived event if there's data
-          if (dataLength > 0) {
-            pluginClient.send('Network.dataReceived', {
-              requestId,
-              timestamp: endTime,
-              dataLength,
-              encodedDataLength: dataLength,
-            });
-          }
-
-          // Send Network.loadingFinished event
-          pluginClient.send('Network.loadingFinished', {
-            requestId,
-            timestamp: endTime,
-            encodedDataLength: dataLength,
-          });
-        }
-      }
-    );
-
+    XHRInterceptor.setSendCallback(handleRequestSend);
     XHRInterceptor.enableInterception();
   };
 
@@ -355,22 +211,19 @@ export const getNetworkInspector = (
   });
 
   const handleBodySubscription = pluginClient.onMessage(
-    'Network.getResponseBody',
-    async (payload) => {
-      const requestId = payload.requestId;
-      const entry = networkRequestsRegistry.getEntry(requestId);
-      if (!entry) {
+    'get-response-body',
+    async ({ requestId }) => {
+      const request = networkRequestsRegistry.getEntry(requestId);
+
+      if (!request) {
         return;
       }
 
-      const { request } = entry;
-      const { body, base64Encoded } = await getResponseBody(request);
+      const body = await getResponseBody(request);
 
-      // Send Network.responseBodyReceived event
-      pluginClient.send('Network.responseBodyReceived', {
+      pluginClient.send('response-body', {
         requestId,
         body,
-        base64Encoded,
       });
     }
   );
