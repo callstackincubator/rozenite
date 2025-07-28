@@ -47,7 +47,13 @@
         "buildDepsTargetName": "build-deps",
         "watchDepsTargetName": "watch-deps"
       },
-      "exclude": ["packages/cli/template/**/*"]
+      "exclude": [
+        "packages/cli/template/**/*",
+        "packages/expo-atlas-plugin/**/*",
+        "packages/mmkv-plugin/**/*",
+        "packages/network-activity-plugin/**/*",
+        "packages/tanstack-query-plugin/**/*"
+      ]
     },
     {
       "plugin": "@nx/react-native/plugin",
