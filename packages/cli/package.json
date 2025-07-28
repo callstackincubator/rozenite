@@ -1,6 +1,6 @@
 {
   "name": "rozenite",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "description": "Command-line interface for creating and managing React Native DevTools plugins",
   "type": "module",
   "bin": {
