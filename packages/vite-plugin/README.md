@@ -1,4 +1,4 @@
-![rozenite-baner](https://github.com/user-attachments/assets/6d21839f-e624-4d8b-85a2-5f7ef1600b28)
+![rozenite-banner](https://www.rozenite.dev/rozenite-banner.jpg)
 
 ### A Vite plugin for developing React Native DevTools plugins with hot reload and development tools.
 

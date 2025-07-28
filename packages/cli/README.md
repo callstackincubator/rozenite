@@ -1,4 +1,4 @@
-![rozenite-baner](https://github.com/user-attachments/assets/6d21839f-e624-4d8b-85a2-5f7ef1600b28)
+![rozenite-banner](https://www.rozenite.dev/rozenite-banner.jpg)
 
 ### A command-line interface for creating and managing React Native DevTools plugins.
 
@@ -33,6 +33,7 @@ npx rozenite generate
 ```
 
 This will:
+
 - Create a new directory with the plugin name
 - Set up TypeScript configuration
 - Configure Vite build system
@@ -59,6 +60,7 @@ npx rozenite dev
 ```
 
 This starts:
+
 - Vite dev server for client panels
 - File watchers for React Native entry points
 - Hot reload for development
@@ -70,9 +72,11 @@ This starts:
 Generate a new React Native DevTools plugin.
 
 **Options:**
+
 - `[path]` - Target directory (defaults to current directory)
 
 **Examples:**
+
 ```bash
 # Generate in current directory
 rozenite generate
@@ -86,9 +90,11 @@ rozenite generate ./my-plugins/awesome-plugin
 Build a React Native DevTools plugin for production.
 
 **Options:**
+
 - `[path]` - Plugin directory (defaults to current directory)
 
 **Examples:**
+
 ```bash
 # Build current plugin
 rozenite build
@@ -102,9 +108,11 @@ rozenite build ./my-plugin
 Start development server with file watchers.
 
 **Options:**
+
 - `[path]` - Plugin directory (defaults to current directory)
 
 **Examples:**
+
 ```bash
 # Start dev server for current plugin
 rozenite dev

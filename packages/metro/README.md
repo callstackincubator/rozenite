@@ -1,4 +1,4 @@
-![rozenite-baner](https://github.com/user-attachments/assets/6d21839f-e624-4d8b-85a2-5f7ef1600b28)
+![rozenite-banner](https://www.rozenite.dev/rozenite-banner.jpg)
 
 ### A Metro bundler plugin for integrating React Native DevTools plugins into your development workflow.
 
@@ -65,12 +65,13 @@ The configuration object for the Metro plugin:
 
 ```typescript
 type RozeniteMetroConfig = {
-  include?: string[];  // Only load these specific plugins
-  exclude?: string[];  // Exclude these plugins from loading
-}
+  include?: string[]; // Only load these specific plugins
+  exclude?: string[]; // Exclude these plugins from loading
+};
 ```
 
 **Options:**
+
 - `include` - Array of package names to explicitly include (optional)
 - `exclude` - Array of package names to exclude from loading (optional)
 
