@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export const LandingScreen = () => {
   const navigation = useNavigation();
@@ -16,19 +16,13 @@ export const LandingScreen = () => {
     <View style={styles.container}>
       <View style={styles.backgroundGradient}>
         <View style={styles.content}>
-          <Text style={styles.mainTitle}>Native World</Text>
+          <Text style={styles.mainTitle}>Rozenite</Text>
           <Text style={styles.subtitle}>
-            DevTools don't need to be limited {'\n'}to JS world only.
+            React Native DevTools Plugin Framework{'\n'}
+            Playground for testing plugins in real-world scenarios
           </Text>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.navigationButton}
-              onPress={() => navigation.navigate('HelloWorld' as never)}
-            >
-              <Text style={styles.buttonText}>Hello World</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.navigationButton}
               onPress={() => navigation.navigate('MMKVPlugin' as never)}
@@ -40,15 +34,16 @@ export const LandingScreen = () => {
               style={styles.navigationButton}
               onPress={() => navigation.navigate('NetworkTest' as never)}
             >
-              <Text style={styles.buttonText}>Network Test</Text>
+              <Text style={styles.buttonText}>Network Activity</Text>
             </TouchableOpacity>
           </View>
+
+          <Text style={styles.description}>
+            Test and explore Rozenite plugins with type-safe, isomorphic
+            communication between DevTools and React Native
+          </Text>
         </View>
 
-        {/* Floating decorative elements */}
-        <View style={styles.floatingCircle1} />
-        <View style={styles.floatingCircle2} />
-        <View style={styles.floatingCircle3} />
         <View style={styles.bottomAccent} />
       </View>
     </View>
@@ -72,10 +67,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     zIndex: 10,
   },
+  logoContainer: {
+    marginBottom: 24,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoPath: {
+    width: 48,
+    height: 64,
+    backgroundColor: '#8232FF',
+    borderRadius: 2,
+    // Create the distinctive shape using border radius
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
+  },
   mainTitle: {
-    fontSize: 42,
+    fontSize: 48,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#8232FF',
     textAlign: 'center',
     marginBottom: 16,
     letterSpacing: 2,
@@ -83,25 +98,26 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 18,
-    color: '#a0a0a0',
+    color: '#ffffff',
     textAlign: 'center',
     lineHeight: 26,
     maxWidth: width * 0.9,
-    fontWeight: '400',
+    fontWeight: '500',
     marginBottom: 48,
   },
   buttonContainer: {
     width: '100%',
-    maxWidth: 280,
+    maxWidth: 320,
     gap: 16,
+    marginBottom: 32,
   },
   navigationButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#8232FF',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#007AFF',
+    shadowColor: '#8232FF',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -124,32 +140,13 @@ const styles = StyleSheet.create({
   disabledButtonText: {
     color: '#666666',
   },
-  floatingCircle1: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-    top: height * 0.2,
-    left: width * 0.1,
-  },
-  floatingCircle2: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
-    top: height * 0.7,
-    right: width * 0.15,
-  },
-  floatingCircle3: {
-    position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(52, 199, 89, 0.1)',
-    top: height * 0.3,
-    right: width * 0.2,
+  description: {
+    fontSize: 14,
+    color: '#a0a0a0',
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: width * 0.8,
+    fontWeight: '400',
   },
   bottomAccent: {
     position: 'absolute',
@@ -157,6 +154,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 4,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#8232FF',
   },
 });

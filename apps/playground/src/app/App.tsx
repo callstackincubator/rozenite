@@ -1,7 +1,6 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { HelloWorldScreen } from './screens/HelloWorldScreen';
 import { LandingScreen } from './screens/LandingScreen';
 import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
@@ -28,7 +27,6 @@ const Wrapper = () => {
       }}
     >
       <Stack.Screen name="Landing" component={LandingScreen} />
-      <Stack.Screen name="HelloWorld" component={HelloWorldScreen} />
       <Stack.Screen name="MMKVPlugin" component={MMKVPluginScreen} />
       <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
     </Stack.Navigator>
@@ -38,7 +36,7 @@ const Wrapper = () => {
 export const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
+      <SafeAreaProvider style={{ backgroundColor: '#0a0a0a' }}>
         <NavigationContainer>
           <Wrapper />
         </NavigationContainer>

@@ -179,7 +179,7 @@ importers:
         version: 7.1.14(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@react-navigation/native-stack':
         specifier: ^7.3.21
-        version: 7.3.21(@react-navigation/native@7.1.14(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-safe-area-context@5.5.2(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-screens@4.11.1(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+        version: 7.3.21(@react-navigation/native@7.1.14(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-safe-area-context@5.5.2(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-screens@4.4.0(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@rozenite/expo-atlas-plugin':
         specifier: workspace:*
         version: link:../../packages/expo-atlas-plugin
@@ -214,8 +214,8 @@ importers:
         specifier: ^5.5.2
         version: 5.5.2(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       react-native-screens:
-        specifier: ^4.11.1
-        version: 4.11.1(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+        specifier: ~4.4.0
+        version: 4.4.0(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
     devDependencies:
       '@babel/runtime':
         specifier: '*'
@@ -6868,12 +6868,6 @@ packages:
   react-lazy-with-preload@2.2.1:
     resolution: {integrity: sha512-ONSb8gizLE5jFpdHAclZ6EAAKuFX2JydnFXPPPjoUImZlLjGtKzyBS8SJgJq7CpLgsGKh9QCZdugJyEEOVC16Q==}
 
-  react-native-is-edge-to-edge@1.2.1:
-    resolution: {integrity: sha512-FLbPWl/MyYQWz+KwqOZsSyj2JmLKglHatd3xLZWskXOpRaio4LfEDEz8E/A6uD8QoTHW6Aobw1jbEwK7KMgR7Q==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-
   react-native-mmkv@3.3.0:
     resolution: {integrity: sha512-2iPjIJ+IAODXN35wm53EN6nv+hR/0NXLLiLWOdPA/0gXDB2dYVrr6MqvoiFpxhLhdj0B8fkf5ARNVavJaSvuuQ==}
     peerDependencies:
@@ -6886,8 +6880,8 @@ packages:
       react: '*'
       react-native: '*'
 
-  react-native-screens@4.11.1:
-    resolution: {integrity: sha512-F0zOzRVa3ptZfLpD0J8ROdo+y1fEPw+VBFq1MTY/iyDu08al7qFUO5hLMd+EYMda5VXGaTFCa8q7bOppUszhJw==}
+  react-native-screens@4.4.0:
+    resolution: {integrity: sha512-c7zc7Zwjty6/pGyuuvh9gK3YBYqHPOxrhXfG1lF4gHlojQSmIx2piNbNaV+Uykj+RDTmFXK0e/hA+fucw/Qozg==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -11021,14 +11015,14 @@ snapshots:
       use-latest-callback: 0.2.4(react@18.3.1)
       use-sync-external-store: 1.5.0(react@18.3.1)
 
-  '@react-navigation/native-stack@7.3.21(@react-navigation/native@7.1.14(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-safe-area-context@5.5.2(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-screens@4.11.1(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
+  '@react-navigation/native-stack@7.3.21(@react-navigation/native@7.1.14(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-safe-area-context@5.5.2(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-screens@4.4.0(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@react-navigation/elements': 2.5.2(@react-navigation/native@7.1.14(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-safe-area-context@5.5.2(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@react-navigation/native': 7.1.14(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-native: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
       react-native-safe-area-context: 5.5.2(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
-      react-native-screens: 4.11.1(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+      react-native-screens: 4.4.0(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       warn-once: 0.1.1
     transitivePeerDependencies:
       - '@react-native-masked-view/masked-view'
@@ -16879,11 +16873,6 @@ snapshots:
 
   react-lazy-with-preload@2.2.1: {}
 
-  react-native-is-edge-to-edge@1.2.1(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
-    dependencies:
-      react: 18.3.1
-      react-native: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
-
   react-native-mmkv@3.3.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
@@ -16899,12 +16888,11 @@ snapshots:
       react: 18.3.1
       react-native: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
 
-  react-native-screens@4.11.1(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
+  react-native-screens@4.4.0(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-freeze: 1.0.4(react@18.3.1)
       react-native: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
-      react-native-is-edge-to-edge: 1.2.1(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       warn-once: 0.1.1
 
   react-native-svg-transformer@1.5.1(react-native-svg@15.8.0(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli@15.0.1(typescript@5.8.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(typescript@5.8.3):
