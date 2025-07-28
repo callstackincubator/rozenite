@@ -38,13 +38,13 @@ jobs:
         uses: nrwl/nx-set-shas@826660b82addbef3abff5fa871492ebad618c9e1 # v.4.3.3
 
       - name: Typecheck
-        run: pnpm nx run-many -t typecheck
+        run: pnpm nx affected -t typecheck
 
       - name: Build
-        run: pnpm nx run-many -t build
+        run: pnpm nx affected -t build
 
       - name: Lint
-        run: pnpm nx run-many -t lint
+        run: pnpm nx affected -t lint
 
       - name: Test
-        run: pnpm nx run-many -t test
+        run: pnpm nx affected -t test
