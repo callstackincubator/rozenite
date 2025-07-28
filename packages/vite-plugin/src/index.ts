@@ -25,7 +25,7 @@ export const rozenitePlugin = (): PluginOption[] => {
       requirePlugin(),
       rozeniteReactNativePlugin(),
       dtsPlugin({ rollupTypes: true }),
-    ];
+    ] as PluginOption[];
   }
 
   return [
