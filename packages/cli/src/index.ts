@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { Command } from 'commander';
 import { color } from './utils/color.js';
 import { outro } from './utils/prompts.js';

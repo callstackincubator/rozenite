@@ -4,11 +4,12 @@
   "description": "Command-line interface for creating and managing React Native DevTools plugins",
   "type": "module",
   "bin": {
-    "rozenite": "./dist/index.js"
+    "rozenite": "./bin.js"
   },
   "files": [
     "dist",
-    "template"
+    "template",
+    "bin.js"
   ],
   "keywords": [
     "react-native",
