@@ -4,6 +4,7 @@ export type RootStackParamList = {
   Landing: undefined;
   MMKVPlugin: undefined;
   NetworkTest: undefined;
+  ReduxTest: undefined;
 };
 
 export type NavigationProp = NativeStackNavigationProp<RootStackParamList>;

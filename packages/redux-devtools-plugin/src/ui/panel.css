@@ -1,0 +1,9 @@
+.app {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: rgb(42, 47, 58);
+  margin: 0;
+  padding: 0;
+}

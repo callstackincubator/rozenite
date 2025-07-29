@@ -41,6 +41,9 @@
       "path": "../../packages/cli/tsconfig.lib.json"
     },
     {
+      "path": "../../packages/redux-devtools-plugin"
+    },
+    {
       "path": "../../packages/expo-atlas-plugin"
     },
     {

@@ -36,6 +36,13 @@ export const LandingScreen = () => {
             >
               <Text style={styles.buttonText}>Network Activity</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navigationButton}
+              onPress={() => navigation.navigate('ReduxTest' as never)}
+            >
+              <Text style={styles.buttonText}>Redux Test</Text>
+            </TouchableOpacity>
           </View>
 
           <Text style={styles.description}>

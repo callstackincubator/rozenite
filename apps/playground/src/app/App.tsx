@@ -4,11 +4,17 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LandingScreen } from './screens/LandingScreen';
 import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
+import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
 import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
 import { RootStackParamList } from './navigation/types';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import { Platform } from 'react-native';
+
+console.log(Platform);
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -29,19 +35,22 @@ const Wrapper = () => {
       <Stack.Screen name="Landing" component={LandingScreen} />
       <Stack.Screen name="MMKVPlugin" component={MMKVPluginScreen} />
       <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
+      <Stack.Screen name="ReduxTest" component={ReduxTestScreen} />
     </Stack.Navigator>
   );
 };
 
 export const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider style={{ backgroundColor: '#0a0a0a' }}>
-        <NavigationContainer>
-          <Wrapper />
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <Provider store={store}>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider style={{ backgroundColor: '#0a0a0a' }}>
+          <NavigationContainer>
+            <Wrapper />
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </Provider>
   );
 };
 

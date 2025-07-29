@@ -1,0 +1,55 @@
+{
+  "name": "@rozenite/redux-devtools-plugin",
+  "version": "1.0.0-alpha.5",
+  "description": "Redux DevTools for Rozenite.",
+  "type": "module",
+  "main": "./dist/react-native.cjs",
+  "module": "./dist/react-native.js",
+  "types": "./dist/react-native.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/react-native.d.ts",
+      "import": "./dist/react-native.js",
+      "require": "./dist/react-native.cjs"
+    },
+    "./metro": {
+      "types": "./dist/metro.d.ts",
+      "import": "./dist/metro.js",
+      "require": "./dist/metro.cjs"
+    }
+  },
+  "scripts": {
+    "build": "rozenite build",
+    "dev": "rozenite dev"
+  },
+  "dependencies": {
+    "@redux-devtools/remote": "^0.9.5",
+    "@rozenite/plugin-bridge": "workspace:*"
+  },
+  "devDependencies": {
+    "@redux-devtools/app": "^6.2.2",
+    "@redux-devtools/cli": "^4.0.3",
+    "@rozenite/vite-plugin": "workspace:*",
+    "@types/react": "~18.3.12",
+    "@types/styled-components": "^5.1.34",
+    "localforage": "^1.10.0",
+    "metro-config": "*",
+    "react": "18.3.1",
+    "react-dom": "18.3.0",
+    "react-native": "0.76.0",
+    "react-native-get-random-values": "^1.11.0",
+    "react-native-web": "0.21.0",
+    "react-redux": "^9.2.0",
+    "redux": "^5.0.1",
+    "redux-persist": "^6.0.0",
+    "rozenite": "workspace:*",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.0"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-get-random-values": "*"
+  },
+  "license": "MIT"
+}

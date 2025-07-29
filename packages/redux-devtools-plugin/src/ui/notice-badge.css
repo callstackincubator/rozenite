@@ -1,0 +1,70 @@
+.notice-badge {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto',
+    sans-serif;
+  background: rgb(42, 47, 58);
+  border: 1px solid rgb(60, 68, 79);
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgb(245, 245, 245);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.notice-badge-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  opacity: 0.8;
+}
+
+.notice-badge-content {
+  flex: 1;
+}
+
+.notice-badge-title {
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  font-size: 14px;
+}
+
+.notice-badge-text {
+  margin: 0 0 8px 0;
+  color: rgb(245, 245, 245);
+}
+
+.notice-badge-link {
+  color: #60a5fa;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+}
+
+.notice-badge-link:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+.notice-badge-link-icon {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .notice-badge {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .notice-badge-title {
+    font-size: 13px;
+  }
+}

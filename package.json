@@ -64,6 +64,7 @@
     "react-native": "~0.76.3"
   },
   "resolutions": {
-    "@microsoft/api-extractor": "7.48.1"
+    "@microsoft/api-extractor": "7.48.1",
+    "react-native": "0.76.0"
   }
 }

@@ -15,6 +15,7 @@ export default {
         'tanstack-query-plugin',
         'vite-plugin',
         'website',
+        'redux-devtools-plugin',
         '',
       ],
     ],
