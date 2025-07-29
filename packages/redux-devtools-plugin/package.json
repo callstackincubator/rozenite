@@ -24,11 +24,11 @@
   },
   "dependencies": {
     "@redux-devtools/remote": "^0.9.5",
-    "@rozenite/plugin-bridge": "workspace:*"
+    "@rozenite/plugin-bridge": "workspace:*",
+    "@redux-devtools/cli": "^4.0.3"
   },
   "devDependencies": {
     "@redux-devtools/app": "^6.2.2",
-    "@redux-devtools/cli": "^4.0.3",
     "@rozenite/vite-plugin": "workspace:*",
     "@types/react": "~18.3.12",
     "@types/styled-components": "^5.1.34",
