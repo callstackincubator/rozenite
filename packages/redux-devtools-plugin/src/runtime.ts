@@ -22,7 +22,7 @@ const getDeviceId = (): string => {
 export const rozeniteDevToolsEnhancer = (): StoreEnhancer => {
   return devToolsEnhancer({
     name: getDeviceId(),
-    hostname: 'localhost',
+    hostname: Platform.OS === 'android' ? '10.0.2.2' : 'localhost',
     port: REDUX_DEVTOOLS_PORT,
     secure: false,
     realtime: true,
