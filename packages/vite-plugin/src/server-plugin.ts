@@ -1,6 +1,6 @@
 import type { Plugin } from 'vite';
 import process from 'node:process';
-import { resolveFileWithExtensions } from './utils.js';
+import path from 'node:path';
 
 export const rozeniteServerPlugin = (): Plugin => {
   return {
@@ -8,21 +8,19 @@ export const rozeniteServerPlugin = (): Plugin => {
 
     config(config) {
       const projectRoot = config.root ?? process.cwd();
-      const backgroundFilePath = resolveFileWithExtensions(
-        projectRoot,
-        'background'
-      );
-
-      if (!backgroundFilePath) {
-        throw new Error('Background file not found');
-      }
 
       config.build ??= {};
-      config.build.rollupOptions ??= {};
-      config.build.rollupOptions.input = backgroundFilePath;
+      config.build.lib = {
+        entry: path.resolve(projectRoot, 'metro.ts'),
+        formats: ['es' as const, 'cjs' as const],
+        fileName: (format) => `metro.${format === 'es' ? 'js' : 'cjs'}`,
+      };
       config.build.ssr = true;
-      config.build.rollupOptions.output = {
-        format: 'cjs',
+      config.build.rollupOptions = {
+        output: {
+          exports: 'named',
+          interop: 'auto',
+        },
       };
     },
   };

@@ -18,7 +18,7 @@ export const rozenitePlugin = (): PluginOption[] => {
   const isReactNative = process.env.VITE_ROZENITE_TARGET === 'react-native';
 
   if (isServer) {
-    return [rozeniteServerPlugin()];
+    return [rozeniteServerPlugin()] as PluginOption[];
   } else if (isReactNative) {
     return [
       react(),
