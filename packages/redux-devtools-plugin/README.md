@@ -20,7 +20,8 @@ The Rozenite Redux DevTools Plugin provides Redux state inspection and debugging
 Install the Redux DevTools plugin and peer dependencies:
 
 ```bash
-npm install @rozenite/redux-devtools-plugin react-native-get-random-values
+npm install -D @rozenite/redux-devtools-plugin
+npm install react-native-get-random-values
 ```
 
 **Important**: After installing `react-native-get-random-values`, you need to import it at the very top of your entry file (usually `index.js` or `App.js`):
