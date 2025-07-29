@@ -16,6 +16,7 @@ export default {
         'vite-plugin',
         'website',
         'redux-devtools-plugin',
+        'playground',
         '',
       ],
     ],

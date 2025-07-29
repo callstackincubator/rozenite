@@ -12,9 +12,6 @@ import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
 import { RootStackParamList } from './navigation/types';
 import { Provider } from 'react-redux';
 import { store } from './store';
-import { Platform } from 'react-native';
-
-console.log(Platform);
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
