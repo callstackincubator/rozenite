@@ -18,5 +18,10 @@
     "type": "file",
     "name": "network-activity",
     "label": "Network Activity"
+  },
+  {
+    "type": "file",
+    "name": "redux-devtools",
+    "label": "Redux DevTools"
   }
-] 
+]

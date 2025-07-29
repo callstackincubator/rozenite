@@ -37,6 +37,15 @@ Monitor network requests in your React Native app with a comprehensive network i
 - **Response Inspection**: Examine response headers, status codes, and timing data
 - **Request History**: Maintain a searchable history of network activity
 
+### [Redux DevTools](./redux-devtools.md)
+
+Integrate Redux DevTools directly into your React Native DevTools for state inspection and debugging. This plugin provides:
+
+- **State Inspection**: View and explore your Redux store state in real-time
+- **Action History**: Track all dispatched actions with timestamps and payloads
+- **State Diff Viewing**: See exactly how each action changes your state
+- **Production Safety**: Automatically disabled in production builds
+
 ## Installing Plugins
 
 Plugins should be installed as development dependencies since they are only needed during development:
@@ -46,6 +55,8 @@ Plugins should be installed as development dependencies since they are only need
 <PackageManagerTabs command="install -D @rozenite/tanstack-query-plugin" />
 
 <PackageManagerTabs command="install -D @rozenite/network-activity-plugin" />
+
+<PackageManagerTabs command="install -D @rozenite/redux-devtools-plugin" />
 
 See the individual plugin documentation for complete installation instructions including hook setup.
 
@@ -63,4 +74,4 @@ Want to contribute to plugins or suggest new ones? Check out our [Plugin Develop
 
 ---
 
-**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md), [TanStack Query plugin](./tanstack-query.md), or [Network Activity Inspector](./network-activity.md).
+**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md), [TanStack Query plugin](./tanstack-query.md), [Network Activity Inspector](./network-activity.md), or [Redux DevTools plugin](./redux-devtools.md).
