@@ -436,6 +436,9 @@ importers:
 
   packages/redux-devtools-plugin:
     dependencies:
+      '@redux-devtools/cli':
+        specifier: ^4.0.3
+        version: 4.0.3(@babel/core@7.28.0)(@types/styled-components@5.1.34)(encoding@0.1.13)(react-redux@9.2.0(@types/react@18.3.23)(react@18.3.1)(redux@5.0.1))
       '@redux-devtools/remote':
         specifier: ^0.9.5
         version: 0.9.5(react-redux@9.2.0(@types/react@18.3.23)(react@18.3.1)(redux@5.0.1))(react@18.3.1)(redux@5.0.1)
@@ -446,9 +449,6 @@ importers:
       '@redux-devtools/app':
         specifier: ^6.2.2
         version: 6.2.2(@emotion/react@11.14.0(@types/react@18.3.23)(react@18.3.1))(@reduxjs/toolkit@2.8.2(react-redux@9.2.0(@types/react@18.3.23)(react@18.3.1)(redux@5.0.1))(react@18.3.1))(@types/react@18.3.23)(@types/styled-components@5.1.34)(react-dom@18.3.0(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.28.0)(react-dom@18.3.0(react@18.3.1))(react-is@19.1.0)(react@18.3.1))
-      '@redux-devtools/cli':
-        specifier: ^4.0.3
-        version: 4.0.3(@babel/core@7.28.0)(@types/styled-components@5.1.34)(encoding@0.1.13)(react-redux@9.2.0(@types/react@18.3.23)(react@18.3.1)(redux@5.0.1))
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
