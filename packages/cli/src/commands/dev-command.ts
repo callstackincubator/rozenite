@@ -7,6 +7,7 @@ export const devCommand = async (targetDir: string) => {
   intro('Rozenite');
 
   const hasReactNativeEntryPoint = await fileExists('react-native.ts');
+  const hasMetroEntryPoint = await fileExists('metro.ts');
 
   try {
     const processes: Subprocess[] = [];
@@ -19,6 +20,16 @@ export const devCommand = async (targetDir: string) => {
         },
       });
       processes.push(rnProcess);
+    }
+
+    if (hasMetroEntryPoint) {
+      const metroProcess = spawn('vite', ['build', '--watch'], {
+        cwd: targetDir,
+        env: {
+          VITE_ROZENITE_TARGET: 'server',
+        },
+      });
+      processes.push(metroProcess);
     }
 
     const clientProcess = spawn('vite', ['dev'], {
