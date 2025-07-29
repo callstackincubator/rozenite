@@ -9,7 +9,7 @@ export const buildCommand = async (targetDir: string) => {
   intro('Rozenite');
 
   const hasReactNativeEntryPoint = await fileExists('react-native.ts');
-  const hasMetroEntryPoint = await fileExists('background.ts');
+  const hasMetroEntryPoint = await fileExists('metro.ts');
 
   await step(
     {
