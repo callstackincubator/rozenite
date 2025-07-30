@@ -3,6 +3,9 @@
   "version": "1.0.0-alpha.5",
   "description": "Communication layer for React Native DevTools plugins across React Native and web environments",
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -25,21 +28,9 @@
   "license": "MIT",
   "exports": {
     ".": {
-      "types": {
-        "browser": "./dist/index.d.ts",
-        "react-native": "./dist/index.d.ts",
-        "default": "./dist/index.d.ts"
-      },
-      "import": {
-        "browser": "./dist/index.js",
-        "react-native": "./dist/index.js",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "browser": "./dist/index.cjs",
-        "react-native": "./dist/index.cjs",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "dependencies": {
