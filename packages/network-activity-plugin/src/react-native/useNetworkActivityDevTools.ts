@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { getNetworkInspector } from './network-inspector';
-import { NetworkActivityEventMap } from '../types/client';
+import { NetworkActivityEventMap } from '../shared/client';
 
 export const useNetworkActivityDevTools = () => {
   const client = useRozeniteDevToolsClient<NetworkActivityEventMap>({

@@ -11,24 +11,31 @@
     "dev": "rozenite dev"
   },
   "dependencies": {
-    "@rozenite/plugin-bridge": "workspace:*",
-    "@tanstack/react-virtual": "^3.0.0",
-    "@floating-ui/react": "^0.26.0"
+    "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
-    "vite": "^6.0.0",
+    "@radix-ui/react-scroll-area": "^1.2.9",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.12",
     "@rozenite/vite-plugin": "workspace:*",
-    "typescript": "^5.7.3",
-    "rozenite": "workspace:*",
-    "react-native-web": "0.21.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.0",
-    "react-native": "0.76.0",
-    "@types/react": "~18.3.12"
-  },
-  "peerDependencies": {
+    "@tanstack/react-table": "^8.21.3",
+    "autoprefixer": "^10.4.21",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "postcss": "^8.5.6",
     "react": "*",
-    "react-native": "*"
+    "react-json-tree": "^0.20.0",
+    "react-native": "*",
+    "rozenite": "workspace:*",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.0",
+    "@floating-ui/react": "^0.26.0",
+    "@tanstack/react-virtual": "^3.0.0",
+    "lucide-react": "^0.263.1"
   },
   "license": "MIT"
 }

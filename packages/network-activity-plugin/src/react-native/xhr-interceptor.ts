@@ -31,8 +31,8 @@ type XHRInterceptorRequestHeaderCallback = (
 ) => void;
 
 type XHRInterceptorHeaderReceivedCallback = (
-  responseContentType: string | void,
-  responseSize: number | void,
+  responseContentType: string | undefined,
+  responseSize: number | undefined,
   allHeaders: string,
   request: XMLHttpRequest
 ) => void;
