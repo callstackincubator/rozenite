@@ -11,10 +11,7 @@
     "dev": "rozenite dev"
   },
   "dependencies": {
-    "@floating-ui/react": "^0.26.0",
-    "@rozenite/plugin-bridge": "workspace:*",
-    "@tanstack/react-virtual": "^3.0.0",
-    "lucide-react": "^0.263.1"
+    "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
     "@radix-ui/react-scroll-area": "^1.2.9",
@@ -35,7 +32,10 @@
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.7.3",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "@floating-ui/react": "^0.26.0",
+    "@tanstack/react-virtual": "^3.0.0",
+    "lucide-react": "^0.263.1"
   },
   "license": "MIT"
 }

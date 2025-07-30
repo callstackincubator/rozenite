@@ -390,19 +390,13 @@ importers:
 
   packages/network-activity-plugin:
     dependencies:
-      '@floating-ui/react':
-        specifier: ^0.26.0
-        version: 0.26.28(react-dom@19.1.0(react@18.3.1))(react@18.3.1)
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
-      '@tanstack/react-virtual':
-        specifier: ^3.0.0
-        version: 3.13.12(react-dom@19.1.0(react@18.3.1))(react@18.3.1)
-      lucide-react:
-        specifier: ^0.263.1
-        version: 0.263.1(react@18.3.1)
     devDependencies:
+      '@floating-ui/react':
+        specifier: ^0.26.0
+        version: 0.26.28(react-dom@19.1.0(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-scroll-area':
         specifier: ^1.2.9
         version: 1.2.9(@types/react-dom@18.3.7(@types/react@19.1.8))(@types/react@19.1.8)(react-dom@19.1.0(react@18.3.1))(react@18.3.1)
@@ -421,6 +415,9 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.1.0(react@18.3.1))(react@18.3.1)
+      '@tanstack/react-virtual':
+        specifier: ^3.0.0
+        version: 3.13.12(react-dom@19.1.0(react@18.3.1))(react@18.3.1)
       autoprefixer:
         specifier: ^10.4.21
         version: 10.4.21(postcss@8.5.6)
@@ -430,6 +427,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      lucide-react:
+        specifier: ^0.263.1
+        version: 0.263.1(react@18.3.1)
       postcss:
         specifier: ^8.5.6
         version: 8.5.6
