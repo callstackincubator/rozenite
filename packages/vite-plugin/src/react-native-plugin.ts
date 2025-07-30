@@ -24,6 +24,11 @@ export const rozeniteReactNativePlugin = (): Plugin => {
         return !id.startsWith('.') && !path.isAbsolute(id);
       };
 
+      config.build.rollupOptions.output = {
+        exports: 'named',
+        interop: 'auto',
+      };
+
       delete config.build.rollupOptions.input;
     },
   };

@@ -5,6 +5,7 @@ import {
   hydrateQueryClient,
   applyQueryEvent,
   applyMutationEvent,
+  applyQueryObserverEvent,
 } from '../shared/hydrate';
 
 export const useHandleSyncMessages = (
@@ -20,7 +21,19 @@ export const useHandleSyncMessages = (
     const querySubscription = client.onMessage(
       'sync-query-event',
       ({ type, data }) => {
-        applyQueryEvent(queryClient, type, data);
+        if (type === 'added' || type === 'removed' || type === 'updated') {
+          applyQueryEvent(queryClient, type, data);
+          return;
+        }
+
+        if (
+          type === 'observerAdded' ||
+          type === 'observerRemoved' ||
+          type === 'observerOptionsUpdated'
+        ) {
+          applyQueryObserverEvent(queryClient, data);
+          return;
+        }
       }
     );
 

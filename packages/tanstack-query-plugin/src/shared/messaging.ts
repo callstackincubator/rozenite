@@ -4,6 +4,7 @@ import {
   SerializableQueryClient,
   SerializableQuery,
   SerializableMutation,
+  SerializableObserver,
 } from './types';
 
 export type TanStackQueryPluginEventMap = {
@@ -18,17 +19,18 @@ export type TanStackQueryPluginEventMap = {
   'sync-data': {
     data: SerializableQueryClient;
   };
-  'sync-query-event': {
-    type:
-      | 'added'
-      | 'updated'
-      | 'removed'
-      | 'observerAdded'
-      | 'observerRemoved'
-      | 'observerResultsUpdated'
-      | 'observerOptionsUpdated';
-    data: SerializableQuery;
-  };
+  'sync-query-event':
+    | {
+        type: 'added' | 'updated' | 'removed';
+        data: SerializableQuery;
+      }
+    | {
+        type: 'observerAdded' | 'observerRemoved' | 'observerOptionsUpdated';
+        data: {
+          queryHash: string;
+          observers: SerializableObserver[];
+        };
+      };
   'sync-mutation-event': {
     type:
       | 'added'

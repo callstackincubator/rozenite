@@ -6,13 +6,15 @@ import type {
   SerializableQueryClient,
 } from './types';
 
+export const dehydrateObservers = (query: Query): SerializableObserver[] => {
+  return query.observers.map((observer) => ({
+    queryHash: query.queryHash,
+    options: observer.options,
+  }));
+};
+
 export const dehydrateQuery = (query: Query): SerializableQuery => {
-  const dehydratedObservers: SerializableObserver[] = query.observers.map(
-    (observer) => ({
-      queryHash: query.queryHash,
-      options: observer.options,
-    })
-  );
+  const dehydratedObservers: SerializableObserver[] = dehydrateObservers(query);
 
   return {
     state: query.state,

@@ -5,7 +5,11 @@ import {
 } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { TanStackQueryPluginClient } from '../shared/messaging';
-import { dehydrateQuery, dehydrateMutation } from '../shared/dehydrate';
+import {
+  dehydrateQuery,
+  dehydrateMutation,
+  dehydrateObservers,
+} from '../shared/dehydrate';
 
 export const useSyncTanStackCache = (
   queryClient: QueryClient,
@@ -24,9 +28,28 @@ export const useSyncTanStackCache = (
 
       if ('query' in event) {
         const { query, type } = event;
-        const dehydratedQuery = dehydrateQuery(query);
-        client.send('sync-query-event', { type, data: dehydratedQuery });
-        return;
+
+        if (type === 'added' || type === 'removed' || type === 'updated') {
+          const dehydratedQuery = dehydrateQuery(query);
+          client.send('sync-query-event', { type, data: dehydratedQuery });
+          return;
+        }
+
+        if (
+          type === 'observerAdded' ||
+          type === 'observerRemoved' ||
+          type === 'observerOptionsUpdated'
+        ) {
+          const dehydratedObservers = dehydrateObservers(query);
+          client.send('sync-query-event', {
+            type,
+            data: {
+              queryHash: query.queryHash,
+              observers: dehydratedObservers,
+            },
+          });
+          return;
+        }
       }
 
       const { mutation, type } = event;

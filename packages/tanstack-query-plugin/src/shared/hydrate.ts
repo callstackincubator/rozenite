@@ -2,6 +2,7 @@ import {
   InfiniteQueryObserverOptions,
   MutationOptions,
   MutationState,
+  Query,
   QueryClient,
   QueryObserver,
   QueryObserverOptions,
@@ -11,10 +12,48 @@ import type {
   SerializableQuery,
   SerializableMutation,
   SerializableQueryClient,
+  SerializableObserver,
 } from './types';
 
 const mockQueryFn = () => {
   return Promise.resolve(null);
+};
+
+const hydrateObservers = (
+  client: QueryClient,
+  queryHash: string,
+  dehydratedObservers: SerializableObserver[]
+) => {
+  const query = client.getQueryCache().get(queryHash);
+
+  if (!query) {
+    return;
+  }
+
+  query.observers.forEach((observer) => {
+    query.removeObserver(observer);
+  });
+
+  dehydratedObservers.forEach((observerState) => {
+    const hydratedOptions: InfiniteQueryObserverOptions | QueryObserverOptions =
+      observerState.options;
+
+    if ('initialPageParam' in hydratedOptions) {
+      delete hydratedOptions.initialPageParam;
+    }
+
+    if ('behavior' in hydratedOptions) {
+      delete hydratedOptions.behavior;
+    }
+
+    hydratedOptions.queryFn = mockQueryFn;
+
+    const observer = new QueryObserver(
+      client,
+      hydratedOptions as QueryObserverOptions
+    );
+    query.addObserver(observer);
+  });
 };
 
 const hydrateMutation = (
@@ -82,30 +121,7 @@ const hydrateQuery = (
     );
   }
 
-  query.observers.forEach((observer) => {
-    query.removeObserver(observer);
-  });
-
-  observers.forEach((observerState) => {
-    const hydratedOptions: InfiniteQueryObserverOptions | QueryObserverOptions =
-      observerState.options;
-
-    if ('initialPageParam' in hydratedOptions) {
-      delete hydratedOptions.initialPageParam;
-    }
-
-    if ('behavior' in hydratedOptions) {
-      delete hydratedOptions.behavior;
-    }
-
-    hydratedOptions.queryFn = mockQueryFn;
-
-    const observer = new QueryObserver(
-      client,
-      hydratedOptions as QueryObserverOptions
-    );
-    query.addObserver(observer);
-  });
+  hydrateObservers(client, queryHash, observers);
 };
 
 export const hydrateQueryClient = (
@@ -137,12 +153,14 @@ export const applyQueryEvent = (
 
   switch (type) {
     case 'added':
-    case 'updated':
+    case 'updated': {
+      hydrateQuery(queryClient, data);
+      break;
+    }
     case 'observerAdded':
     case 'observerRemoved':
-    case 'observerResultsUpdated':
     case 'observerOptionsUpdated': {
-      hydrateQuery(queryClient, data);
+      hydrateObservers(queryClient, data.queryHash, data.observers);
       break;
     }
     case 'removed': {
@@ -189,4 +207,14 @@ export const applyMutationEvent = (
       break;
     }
   }
+};
+
+export const applyQueryObserverEvent = (
+  queryClient: QueryClient,
+  data: {
+    queryHash: string;
+    observers: SerializableObserver[];
+  }
+): void => {
+  hydrateObservers(queryClient, data.queryHash, data.observers);
 };
