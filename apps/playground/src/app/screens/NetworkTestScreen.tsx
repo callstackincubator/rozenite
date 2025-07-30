@@ -150,6 +150,13 @@ interface Todo {
 }
 
 const useUsersQuery = () => {
+  useQuery({
+    queryKey: ['users'],
+    queryFn: api.getUsers,
+    staleTime: 8 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+
   return useQuery({
     queryKey: ['users'],
     queryFn: api.getUsers,

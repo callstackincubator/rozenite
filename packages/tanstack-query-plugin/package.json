@@ -14,22 +14,22 @@
     "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
-    "vite": "^6.0.0",
     "@rozenite/vite-plugin": "workspace:*",
-    "typescript": "^5.7.3",
-    "rozenite": "workspace:*",
-    "react-native-web": "0.21.0",
+    "@tanstack/react-query": "^5.0.0",
+    "@tanstack/react-query-devtools": "^5.0.0",
+    "@types/react": "~18.3.12",
     "react": "18.3.1",
     "react-dom": "18.3.0",
     "react-native": "0.76.0",
-    "@types/react": "~18.3.12",
-    "@tanstack/react-query": "^5.0.0",
-    "@tanstack/react-query-devtools": "^5.0.0"
+    "react-native-web": "0.21.0",
+    "rozenite": "workspace:*",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.0"
   },
   "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
     "react": "*",
-    "react-native": "*",
-    "@tanstack/react-query": "^5.0.0"
+    "react-native": "*"
   },
   "license": "MIT"
 }

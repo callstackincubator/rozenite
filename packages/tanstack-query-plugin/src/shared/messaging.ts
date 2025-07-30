@@ -1,5 +1,10 @@
 import type { RozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { DevToolsActionType, SerializableQueryClient } from './types';
+import {
+  DevToolsActionType,
+  SerializableQueryClient,
+  SerializableQuery,
+  SerializableMutation,
+} from './types';
 
 export type TanStackQueryPluginEventMap = {
   'online-status-changed': {
@@ -12,6 +17,28 @@ export type TanStackQueryPluginEventMap = {
   'request-initial-data': unknown;
   'sync-data': {
     data: SerializableQueryClient;
+  };
+  'sync-query-event': {
+    type:
+      | 'added'
+      | 'updated'
+      | 'removed'
+      | 'observerAdded'
+      | 'observerRemoved'
+      | 'observerResultsUpdated'
+      | 'observerOptionsUpdated';
+    data: SerializableQuery;
+  };
+  'sync-mutation-event': {
+    type:
+      | 'added'
+      | 'updated'
+      | 'removed'
+      | 'observerAdded'
+      | 'observerRemoved'
+      | 'observerResultsUpdated'
+      | 'observerOptionsUpdated';
+    data: SerializableMutation;
   };
 };
 

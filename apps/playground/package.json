@@ -13,6 +13,9 @@
     "@rozenite/mmkv-plugin": "workspace:*",
     "@rozenite/network-activity-plugin": "workspace:*",
     "@rozenite/redux-devtools-plugin": "workspace:*",
+    "@rozenite/expo-atlas-plugin": "workspace:*",
+    "@rozenite/mmkv-plugin": "workspace:*",
+    "@rozenite/network-activity-plugin": "workspace:*",
     "@rozenite/tanstack-query-plugin": "workspace:*",
     "@tanstack/react-query": "^5.81.5",
     "expo-atlas": "^0.4.0",
@@ -23,7 +26,8 @@
     "react-native-mmkv": "^3.3.0",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "~4.4.0",
-    "react-redux": "^9.2.0"
+    "react-redux": "^9.2.0",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@babel/runtime": "*",

@@ -43,6 +43,13 @@ export const LandingScreen = () => {
             >
               <Text style={styles.buttonText}>Redux Test</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.configButton}
+              onPress={() => navigation.navigate('Config' as never)}
+            >
+              <Text style={styles.configButtonText}>⚙️ Settings</Text>
+            </TouchableOpacity>
           </View>
 
           <Text style={styles.description}>
@@ -146,6 +153,20 @@ const styles = StyleSheet.create({
   },
   disabledButtonText: {
     color: '#666666',
+  },
+  configButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#8232FF',
+  },
+  configButtonText: {
+    color: '#8232FF',
+    fontSize: 16,
+    fontWeight: '500',
   },
   description: {
     fontSize: 14,
