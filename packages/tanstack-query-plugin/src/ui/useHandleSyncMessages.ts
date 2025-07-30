@@ -20,9 +20,17 @@ export const useHandleSyncMessages = (
 
     const querySubscription = client.onMessage(
       'sync-query-event',
-      ({ type, data }) => {
-        if (type === 'added' || type === 'removed' || type === 'updated') {
+      (message) => {
+        const { type, data } = message;
+
+        if (type === 'added' || type === 'removed') {
           applyQueryEvent(queryClient, type, data);
+          return;
+        }
+
+        if (type === 'updated') {
+          const action = 'action' in message ? message.action : undefined;
+          applyQueryEvent(queryClient, type, data, action);
           return;
         }
 

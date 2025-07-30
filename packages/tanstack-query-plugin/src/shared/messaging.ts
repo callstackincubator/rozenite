@@ -5,6 +5,7 @@ import {
   SerializableQuery,
   SerializableMutation,
   SerializableObserver,
+  PartialQueryState,
 } from './types';
 
 export type TanStackQueryPluginEventMap = {
@@ -21,8 +22,13 @@ export type TanStackQueryPluginEventMap = {
   };
   'sync-query-event':
     | {
-        type: 'added' | 'updated' | 'removed';
+        type: 'added' | 'removed';
         data: SerializableQuery;
+      }
+    | {
+        type: 'updated';
+        action?: string; // Add action type for optimization
+        data: SerializableQuery | PartialQueryState; // Support both full and partial state
       }
     | {
         type: 'observerAdded' | 'observerRemoved' | 'observerOptionsUpdated';

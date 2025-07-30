@@ -512,6 +512,9 @@ importers:
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
+      fast-deep-equal:
+        specifier: ^3.1.3
+        version: 3.1.3
     devDependencies:
       '@rozenite/vite-plugin':
         specifier: workspace:*
@@ -3526,6 +3529,7 @@ packages:
     deprecated: |-
       DEPRECATED: This package is no longer maintained.
       Please use the built-in Jest matchers available in @testing-library/react-native v12.4+.
+
       See migration guide: https://callstack.github.io/react-native-testing-library/docs/migration/jest-matchers
     peerDependencies:
       react: '>=16.0.0'

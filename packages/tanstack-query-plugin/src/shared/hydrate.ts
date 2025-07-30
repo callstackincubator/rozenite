@@ -2,7 +2,6 @@ import {
   InfiniteQueryObserverOptions,
   MutationOptions,
   MutationState,
-  Query,
   QueryClient,
   QueryObserver,
   QueryObserverOptions,
@@ -13,6 +12,7 @@ import type {
   SerializableMutation,
   SerializableQueryClient,
   SerializableObserver,
+  PartialQueryState,
 } from './types';
 
 const mockQueryFn = () => {
@@ -147,20 +147,30 @@ export const applyQueryEvent = (
     | 'observerRemoved'
     | 'observerResultsUpdated'
     | 'observerOptionsUpdated',
-  data: SerializableQuery
+  data: SerializableQuery | PartialQueryState,
+  action?: string
 ): void => {
   const queryCache = queryClient.getQueryCache();
 
   switch (type) {
-    case 'added':
+    case 'added': {
+      hydrateQuery(queryClient, data as SerializableQuery);
+      break;
+    }
     case 'updated': {
-      hydrateQuery(queryClient, data);
+      if (action && 'state' in data && !('queryKey' in data)) {
+        // Handle action-based partial state update
+        applyPartialQueryState(queryClient, data as PartialQueryState);
+      } else {
+        // Handle full query update (backward compatibility)
+        hydrateQuery(queryClient, data as SerializableQuery);
+      }
       break;
     }
     case 'observerAdded':
     case 'observerRemoved':
     case 'observerOptionsUpdated': {
-      hydrateObservers(queryClient, data.queryHash, data.observers);
+      hydrateObservers(queryClient, data.queryHash, (data as any).observers);
       break;
     }
     case 'removed': {
@@ -170,6 +180,26 @@ export const applyQueryEvent = (
       }
       break;
     }
+  }
+};
+
+// New function to handle action-based partial state updates
+export const applyPartialQueryState = (
+  queryClient: QueryClient,
+  data: PartialQueryState
+): void => {
+  const queryCache = queryClient.getQueryCache();
+  const query = queryCache.get(data.queryHash);
+
+  if (!query) {
+    // Query doesn't exist, we need to create it with minimal data
+    // This is a fallback for when we receive a partial update for a non-existent query
+    return;
+  }
+
+  // Apply the partial state changes
+  if (data.state) {
+    query.setState(data.state);
   }
 };
 

@@ -14,6 +14,11 @@ export type SerializableQuery = {
   observers: SerializableObserver[];
 };
 
+export type PartialQueryState = {
+  queryHash: string;
+  state: Partial<QueryState>;
+};
+
 export type SerializableMutation = {
   mutationId: number;
   options: MutationOptions;
