@@ -14,6 +14,8 @@ export class PluginView
 
     this.#src = url;
 
+    this.setHideOnDetach();
+
     SDK.TargetManager.TargetManager.instance().observeModels(
       RozenitePluginModel,
       this
