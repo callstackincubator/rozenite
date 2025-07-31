@@ -20,7 +20,7 @@ Rozenite supports both Metro and Re.Pack bundlers. Choose the package that match
 
 <PackageManagerTabs command="install -D @rozenite/metro" />
 
-**For Re.Pack bundler (version 6+):**
+**For Re.Pack bundler:**
 
 <PackageManagerTabs command="install -D @rozenite/repack" />
 
@@ -34,7 +34,7 @@ To enable Rozenite's auto-discovery and plugin system with Metro, you need to mo
 
 Update your `metro.config.js` file:
 
-```javascript
+```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
 
@@ -51,7 +51,7 @@ module.exports = withRozenite(mergeConfig(defaultConfig, customConfig));
 
 If you're using additional Metro plugins or configurations:
 
-```javascript
+```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
 const { withNxMetro } = require('@nx/react-native'); // Example with Nx
@@ -73,9 +73,9 @@ To enable Rozenite's auto-discovery and plugin system with Re.Pack, you need to 
 
 #### Basic Configuration
 
-Update your `repack.config.mjs` file:
+Update your `rspack.config.mjs` file:
 
-```javascript
+```javascript title="rspack.config.mjs"
 import { withRozenite } from '@rozenite/repack';
 
 export default withRozenite({
@@ -87,7 +87,7 @@ export default withRozenite({
 
 Configure plugin discovery and filtering:
 
-```javascript
+```javascript title="rspack.config.mjs"
 import { withRozenite } from '@rozenite/repack';
 
 export default withRozenite(
@@ -129,8 +129,7 @@ While Rozenite automatically discovers all plugins by default, you can control w
 
 If you want to load only specific plugins, you can use the `include` option. When this option is provided, auto-discovery is disabled and only the listed plugins will be loaded:
 
-```javascript
-// Metro configuration
+```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
 
@@ -145,8 +144,7 @@ module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
 });
 ```
 
-```javascript
-// Re.Pack configuration
+```javascript title="rspack.config.mjs"
 import { withRozenite } from '@rozenite/repack';
 
 export default withRozenite(
@@ -163,8 +161,7 @@ export default withRozenite(
 
 To prevent certain plugins from loading while keeping auto-discovery enabled, use the `exclude` option:
 
-```javascript
-// Metro configuration
+```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
 
@@ -179,8 +176,7 @@ module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
 });
 ```
 
-```javascript
-// Re.Pack configuration
+```javascript title="rspack.config.mjs"
 import { withRozenite } from '@rozenite/repack';
 
 export default withRozenite(
@@ -197,8 +193,7 @@ export default withRozenite(
 
 You can also combine both options. When both are provided, the `exclude` list is applied to the `include` list:
 
-```javascript
-// Metro configuration
+```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
 
@@ -218,8 +213,7 @@ module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
 });
 ```
 
-```javascript
-// Re.Pack configuration
+```javascript title="rspack.config.mjs"
 import { withRozenite } from '@rozenite/repack';
 
 export default withRozenite(
