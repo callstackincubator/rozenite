@@ -285,16 +285,19 @@ importers:
       expo-atlas:
         specifier: ^0.4.0
         version: 0.4.0
-      expo-atlas-without-expo:
-        specifier: ^1.0.1
-        version: 1.0.1(expo-atlas@0.4.0)(metro@0.82.5)
     devDependencies:
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
+      '@types/connect':
+        specifier: ^3.4.38
+        version: 3.4.38
       '@types/react':
         specifier: ~18.3.12
         version: 18.3.23
+      metro-config:
+        specifier: ^0.82.5
+        version: 0.82.5
       react:
         specifier: 18.3.1
         version: 18.3.1

@@ -13,8 +13,7 @@
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
     "connect": "^3.7.0",
-    "expo-atlas": "^0.4.0",
-    "expo-atlas-without-expo": "^1.0.1"
+    "expo-atlas": "^0.4.0"
   },
   "devDependencies": {
     "vite": "^6.0.0",
@@ -25,7 +24,9 @@
     "react": "18.3.1",
     "react-dom": "18.3.0",
     "react-native": "0.76.0",
-    "@types/react": "~18.3.12"
+    "@types/react": "~18.3.12",
+    "metro-config": "^0.82.5",
+    "@types/connect": "^3.4.38"
   },
   "peerDependencies": {
     "react": "*",
