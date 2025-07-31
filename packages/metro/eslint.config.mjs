@@ -8,7 +8,7 @@ export default [
       '@nx/dependency-checks': [
         'error',
         {
-          ignoredDependencies: ['tslib'],
+          ignoredDependencies: ['tslib', '@react-native/metro-config'],
           ignoredFiles: [
             '{projectRoot}/eslint.config.{js,cjs,mjs,ts,cts,mts}',
             '{projectRoot}/vite.config.ts',
