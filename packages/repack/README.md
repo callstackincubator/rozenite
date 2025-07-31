@@ -38,6 +38,17 @@ export default withRozenite({
 });
 ```
 
+Or using the function style configuration:
+
+```javascript
+// repack.config.mjs
+import { withRozenite } from '@rozenite/repack';
+
+export default withRozenite((env) => ({
+  // Your existing Re.Pack configuration
+}));
+```
+
 ### With Custom Options
 
 Configure plugin discovery and filtering:
@@ -124,7 +135,7 @@ For a package to be recognized as a Rozenite plugin, it must:
 ## Requirements
 
 - Node.js >= 22
-- Re.Pack bundler (version 6+)
+- Re.Pack bundler
 - React Native project
 - Installed Rozenite plugins
 
