@@ -13,7 +13,7 @@
   "include": ["src/**/*.ts"],
   "references": [
     {
-      "path": "../middleware/tsconfig.lib.json"
+      "path": "../runtime/tsconfig.lib.json"
     }
   ]
 }

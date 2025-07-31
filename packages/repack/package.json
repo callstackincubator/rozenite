@@ -1,7 +1,7 @@
 {
-  "name": "@rozenite/metro",
+  "name": "@rozenite/repack",
   "version": "1.0.0-alpha.6",
-  "description": "Metro bundler plugin for Rozenite.",
+  "description": "Re.Pack bundler plugin for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -13,7 +13,7 @@
   "keywords": [
     "react-native",
     "devtools",
-    "metro",
+    "re.pack",
     "plugin",
     "bundler"
   ],
@@ -37,11 +37,14 @@
     }
   },
   "dependencies": {
-    "@rozenite/middleware": "workspace:*",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "@rozenite/middleware": "workspace:*"
+  },
+  "peerDependencies": {
+    "@callstack/repack": "^6.0.0-canary-20250729145326"
   },
   "devDependencies": {
-    "@react-native/metro-config": "~0.76.0"
+    "@callstack/repack": "^6.0.0-canary-20250729145326"
   },
   "engines": {
     "node": ">=22"

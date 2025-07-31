@@ -1,7 +1,7 @@
 {
-  "name": "@rozenite/metro",
+  "name": "@rozenite/middleware",
   "version": "1.0.0-alpha.6",
-  "description": "Metro bundler plugin for Rozenite.",
+  "description": "Middleware for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -13,7 +13,7 @@
   "keywords": [
     "react-native",
     "devtools",
-    "metro",
+    "middleware",
     "plugin",
     "bundler"
   ],
@@ -37,11 +37,18 @@
     }
   },
   "dependencies": {
-    "@rozenite/middleware": "workspace:*",
+    "@rozenite/runtime": "workspace:*",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "serve-static": "^2.2.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@react-native/metro-config": "~0.76.0"
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.3",
+    "@types/serve-static": "^1.15.8",
+    "@react-native/debugger-frontend": "~0.76.0",
+    "@react-native/dev-middleware": "~0.76.0"
   },
   "engines": {
     "node": ">=22"

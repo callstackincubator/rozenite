@@ -1,43 +1,33 @@
-import { type MetroConfig } from 'metro-config';
-import { patchDevtoolsFrontendUrl } from './dev-tools-url-patch.js';
-import { getMiddleware } from './middleware.js';
-import { logger } from './logger.js';
-import { getInstalledPlugins } from './auto-discovery.js';
-import { RozeniteMetroConfig } from './config.js';
-import { enableDevModeIfNeeded } from './dev-mode.js';
+import { type MetroConfig } from '@react-native/metro-config';
+import { initializeRozenite, type RozeniteConfig } from '@rozenite/middleware';
+
+export type RozeniteMetroConfig = Omit<RozeniteConfig, 'projectRoot'>;
 
 export const withRozenite = async <T extends MetroConfig>(
   config: T | Promise<T>,
   options: RozeniteMetroConfig = {}
 ): Promise<T> => {
   const resolvedConfig = await config;
-
-  enableDevModeIfNeeded(options, resolvedConfig);
-
-  const allInstalledPlugins = await getInstalledPlugins(options);
-
-  if (allInstalledPlugins.length === 0) {
-    logger.info('No plugins found.');
-  } else {
-    logger.info(`Loaded ${allInstalledPlugins.length} plugin(s):`);
-    allInstalledPlugins.forEach((plugin) => {
-      logger.info(`  - ${plugin.name}`);
-    });
-  }
-
-  patchDevtoolsFrontendUrl();
+  const { devModePackage, middleware: rozeniteMiddleware } = initializeRozenite(
+    {
+      projectRoot: resolvedConfig.projectRoot ?? process.cwd(),
+      ...options,
+    }
+  );
 
   return {
     ...resolvedConfig,
+    watchFolders: devModePackage
+      ? [...(resolvedConfig.watchFolders ?? []), devModePackage.path]
+      : resolvedConfig.watchFolders,
     server: {
       ...resolvedConfig.server,
       enhanceMiddleware: (metroMiddleware, server) => {
-        const customMiddleware = getMiddleware(allInstalledPlugins);
         const prevMiddleware =
           resolvedConfig.server?.enhanceMiddleware?.(metroMiddleware, server) ??
           metroMiddleware;
 
-        return customMiddleware.use(prevMiddleware);
+        return rozeniteMiddleware.use(prevMiddleware);
       },
     },
   } satisfies MetroConfig;

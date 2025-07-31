@@ -17,6 +17,8 @@ export default {
         'website',
         'redux-devtools-plugin',
         'playground',
+        'middleware',
+        'repack',
         '',
       ],
     ],

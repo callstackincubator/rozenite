@@ -1,31 +1,32 @@
-import fs from 'node:fs/promises';
+import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert';
+import { createRequire } from 'node:module';
 import { logger } from './logger.js';
 import { getNodeModulesPaths } from './node-modules-paths.js';
 import { ROZENITE_MANIFEST } from './constants.js';
-import { RozeniteMetroConfig } from './config.js';
+import { RozeniteConfig } from './config.js';
+
+const require = createRequire(import.meta.url);
 
 export type InstalledPlugin = {
   name: string;
   path: string;
 };
 
-const isDirectoryOrSymlinkToDirectory = async (
-  filePath: string
-): Promise<boolean> => {
+const isDirectoryOrSymlinkToDirectory = (filePath: string): boolean => {
   try {
-    await fs.access(filePath);
+    fs.accessSync(filePath);
   } catch {
     return false;
   }
 
   try {
-    const stats = await fs.lstat(filePath);
+    const stats = fs.lstatSync(filePath);
 
     if (stats.isSymbolicLink()) {
-      const realPath = await fs.realpath(filePath);
-      const realStats = await fs.stat(realPath);
+      const realPath = fs.realpathSync(filePath);
+      const realStats = fs.statSync(realPath);
       return realStats.isDirectory();
     } else {
       return stats.isDirectory();
@@ -36,9 +37,12 @@ const isDirectoryOrSymlinkToDirectory = async (
   }
 };
 
-const tryResolvePlugin = (maybePlugin: string): string | null => {
+const tryResolvePlugin = (
+  projectRoot: string,
+  maybePlugin: string
+): string | null => {
   try {
-    const pluginPath = require.resolve(maybePlugin);
+    const pluginPath = require.resolve(maybePlugin, { paths: [projectRoot] });
     // lorem-ipsum/dist/index.js -> ../.. -> lorem-ipsum/
     return path.resolve(pluginPath, '..', '..');
   } catch {
@@ -46,9 +50,7 @@ const tryResolvePlugin = (maybePlugin: string): string | null => {
   }
 };
 
-const getIncludedPlugins = async (
-  options: RozeniteMetroConfig
-): Promise<InstalledPlugin[]> => {
+const getIncludedPlugins = (options: RozeniteConfig): InstalledPlugin[] => {
   assert(options.include, 'include is required');
 
   const plugins: InstalledPlugin[] = [];
@@ -57,13 +59,13 @@ const getIncludedPlugins = async (
     : options.include;
 
   for (const maybePlugin of normalizedInclude) {
-    const pluginPath = tryResolvePlugin(maybePlugin);
+    const pluginPath = tryResolvePlugin(options.projectRoot, maybePlugin);
 
     if (!pluginPath) {
       throw new Error(`Could not resolve plugin ${maybePlugin}.`);
     }
 
-    const plugin = await tryExtractPlugin(pluginPath, maybePlugin);
+    const plugin = tryExtractPlugin(pluginPath, maybePlugin);
 
     if (!plugin) {
       throw new Error(`Plugin ${maybePlugin} is not a valid Rozenite plugin.`);
@@ -75,9 +77,9 @@ const getIncludedPlugins = async (
   return plugins;
 };
 
-export const getInstalledPlugins = async (
-  options: RozeniteMetroConfig
-): Promise<InstalledPlugin[]> => {
+export const getInstalledPlugins = (
+  options: RozeniteConfig
+): InstalledPlugin[] => {
   if (options.include) {
     logger.info('Auto-discovery is disabled. Using only included plugins.');
     return getIncludedPlugins(options);
@@ -88,21 +90,21 @@ export const getInstalledPlugins = async (
 
   for (const nodeModulesPath of nodeModulesPaths) {
     try {
-      await fs.access(nodeModulesPath);
+      fs.accessSync(nodeModulesPath);
     } catch {
       continue;
     }
 
     try {
-      const entries = await fs.readdir(nodeModulesPath, {
+      const entries = fs.readdirSync(nodeModulesPath, {
         withFileTypes: true,
       });
 
       for (const entry of entries) {
         if (
-          !(await isDirectoryOrSymlinkToDirectory(
+          !isDirectoryOrSymlinkToDirectory(
             path.join(nodeModulesPath, entry.name)
-          ))
+          )
         ) {
           continue;
         }
@@ -120,21 +122,21 @@ export const getInstalledPlugins = async (
           const scopePath = path.join(nodeModulesPath, packageName);
 
           try {
-            await fs.access(scopePath);
+            fs.accessSync(scopePath);
           } catch {
             continue;
           }
 
           try {
-            const scopedEntries = await fs.readdir(scopePath, {
+            const scopedEntries = fs.readdirSync(scopePath, {
               withFileTypes: true,
             });
 
             for (const scopedEntry of scopedEntries) {
               if (
-                !(await isDirectoryOrSymlinkToDirectory(
+                !isDirectoryOrSymlinkToDirectory(
                   path.join(scopePath, scopedEntry.name)
-                ))
+                )
               ) {
                 continue;
               }
@@ -142,10 +144,7 @@ export const getInstalledPlugins = async (
               packagePath = path.join(scopePath, scopedEntry.name);
               actualPackageName = `${packageName}/${scopedEntry.name}`;
 
-              const plugin = await tryExtractPlugin(
-                packagePath,
-                actualPackageName
-              );
+              const plugin = tryExtractPlugin(packagePath, actualPackageName);
 
               if (
                 options.exclude &&
@@ -169,7 +168,7 @@ export const getInstalledPlugins = async (
           packagePath = path.join(nodeModulesPath, packageName);
           actualPackageName = packageName;
 
-          const plugin = await tryExtractPlugin(packagePath, actualPackageName);
+          const plugin = tryExtractPlugin(packagePath, actualPackageName);
 
           if (options.exclude && options.exclude.includes(actualPackageName)) {
             continue;
@@ -192,14 +191,14 @@ export const getInstalledPlugins = async (
   return plugins;
 };
 
-const tryExtractPlugin = async (
+const tryExtractPlugin = (
   packagePath: string,
   packageName: string
-): Promise<InstalledPlugin | null> => {
+): InstalledPlugin | null => {
   const rozeniteConfigPath = path.join(packagePath, 'dist', ROZENITE_MANIFEST);
 
   try {
-    await fs.access(rozeniteConfigPath);
+    fs.accessSync(rozeniteConfigPath);
   } catch {
     return null;
   }

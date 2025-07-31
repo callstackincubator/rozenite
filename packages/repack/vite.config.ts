@@ -8,7 +8,7 @@ const dependencies = Object.keys(packageJson.dependencies || {});
 
 export default defineConfig({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/metro',
+  cacheDir: '../../node_modules/.vite/repack',
   base: './',
   plugins: [
     dts({

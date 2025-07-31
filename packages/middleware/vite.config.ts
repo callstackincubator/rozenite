@@ -2,13 +2,10 @@
 import { defineConfig } from 'vite';
 import path, { resolve } from 'node:path';
 import dts from 'vite-plugin-dts';
-import packageJson from './package.json' assert { type: 'json' };
-
-const dependencies = Object.keys(packageJson.dependencies || {});
 
 export default defineConfig({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/metro',
+  cacheDir: '../../node_modules/.vite/middleware',
   base: './',
   plugins: [
     dts({
@@ -22,9 +19,6 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es' as const, 'cjs' as const],
-    },
-    rollupOptions: {
-      external: dependencies,
     },
   },
   server: {

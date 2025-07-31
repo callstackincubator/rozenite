@@ -1,8 +1,12 @@
 import path from 'node:path';
+import { createRequire } from 'node:module';
+import { getDevMiddlewarePath } from './resolve.js';
 
-export const patchDevtoolsFrontendUrl = (): void => {
+const require = createRequire(import.meta.url);
+
+export const patchDevtoolsFrontendUrl = (projectRoot: string): void => {
   const getDevToolsFrontendUrlModulePath = path.dirname(
-    require.resolve('@react-native/dev-middleware')
+    getDevMiddlewarePath(projectRoot)
   );
   const getDevToolsFrontendUrlModule = require(path.join(
     getDevToolsFrontendUrlModulePath,
