@@ -22,7 +22,7 @@ export const createPanel = (pluginId: string, name: string, url: string) => {
       return;
     }
 
-    const panelView = getPluginView(panelId, name, url);
+    const panelView = getPluginView(pluginId, panelId, name, url);
 
     UI.InspectorView.InspectorView.instance().addPanel(panelView);
   } catch (err) {
