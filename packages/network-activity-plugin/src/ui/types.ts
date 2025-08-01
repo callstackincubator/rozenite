@@ -4,13 +4,14 @@ import {
   Response,
   Initiator,
   ResourceType,
+  HttpHeaders,
 } from '../shared/client';
 
 export type NetworkEntry = {
   requestId: RequestId;
   url: string;
   method: string;
-  headers: Record<string, string>;
+  headers: HttpHeaders;
   postData?: string;
   status: 'pending' | 'loading' | 'finished' | 'failed';
   startTime: number;
