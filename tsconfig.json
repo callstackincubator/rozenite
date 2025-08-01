@@ -20,6 +20,12 @@
     },
     {
       "path": "./packages/metro"
+    },
+    {
+      "path": "./packages/middleware"
+    },
+    {
+      "path": "./packages/repack"
     }
   ]
 }

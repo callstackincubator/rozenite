@@ -1,20 +1,21 @@
 {
-  "name": "@rozenite/plugin-bridge",
+  "name": "@rozenite/middleware",
   "version": "1.0.0-alpha.7",
-  "description": "Communication layer for React Native DevTools plugins across React Native and web environments",
+  "description": "Middleware for Rozenite.",
   "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "templates"
   ],
   "keywords": [
     "react-native",
     "devtools",
+    "middleware",
     "plugin",
-    "bridge",
-    "isomorphic"
+    "bundler"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
@@ -27,18 +28,27 @@
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
   "exports": {
+    "./package.json": "./package.json",
     ".": {
+      "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
   },
   "dependencies": {
+    "@rozenite/runtime": "workspace:*",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "serve-static": "^2.2.0",
     "tslib": "^2.3.0"
   },
-  "devDependencies": {},
-  "peerDependencies": {
-    "react": ">=17"
+  "devDependencies": {
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.3",
+    "@types/serve-static": "^1.15.8",
+    "@react-native/debugger-frontend": "~0.76.0",
+    "@react-native/dev-middleware": "~0.76.0"
   },
   "engines": {
     "node": ">=22"

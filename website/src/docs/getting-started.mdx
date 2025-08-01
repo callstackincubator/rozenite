@@ -8,22 +8,33 @@ If you're already familiar with JavaScript, React and React Native, then you'll 
 
 - [React Native documentation](https://reactnative.dev/)
 - [Metro bundler documentation](https://facebook.github.io/metro/)
+- [Re.Pack documentation](https://re-pack.dev/)
 
 ## Installation
 
-To add Rozenite to your existing React Native project, install the required packages:
+### Choose Your Bundler
+
+Rozenite supports both Metro and Re.Pack bundlers. Choose the package that matches your setup:
+
+**For Metro bundler (default React Native bundler):**
 
 <PackageManagerTabs command="install -D @rozenite/metro" />
 
-## Metro Configuration
+**For Re.Pack bundler:**
 
-To enable Rozenite's auto-discovery and plugin system, you need to modify your Metro configuration. Rozenite will automatically discover and enable all installed plugins.
+<PackageManagerTabs command="install -D @rozenite/repack" />
 
-### Basic Configuration
+## Configuration
+
+### Metro Configuration
+
+To enable Rozenite's auto-discovery and plugin system with Metro, you need to modify your Metro configuration. Rozenite will automatically discover and enable all installed plugins.
+
+#### Basic Configuration
 
 Update your `metro.config.js` file:
 
-```javascript
+```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
 
@@ -36,11 +47,11 @@ const customConfig = {
 module.exports = withRozenite(mergeConfig(defaultConfig, customConfig));
 ```
 
-### Advanced Configuration
+#### Advanced Configuration
 
 If you're using additional Metro plugins or configurations:
 
-```javascript
+```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
 const { withNxMetro } = require('@nx/react-native'); // Example with Nx
@@ -53,6 +64,40 @@ const customConfig = {
 
 module.exports = withRozenite(
   withNxMetro(mergeConfig(defaultConfig, customConfig))
+);
+```
+
+### Re.Pack Configuration
+
+To enable Rozenite's auto-discovery and plugin system with Re.Pack, you need to modify your Re.Pack configuration. Rozenite integrates seamlessly with Re.Pack's DevServer.
+
+#### Basic Configuration
+
+Update your `rspack.config.mjs` file:
+
+```javascript title="rspack.config.mjs"
+import { withRozenite } from '@rozenite/repack';
+
+export default withRozenite({
+  // Your existing Re.Pack configuration
+});
+```
+
+#### With Custom Options
+
+Configure plugin discovery and filtering:
+
+```javascript title="rspack.config.mjs"
+import { withRozenite } from '@rozenite/repack';
+
+export default withRozenite(
+  {
+    // Your existing Re.Pack configuration
+  },
+  {
+    include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin'],
+    exclude: ['unwanted-plugin'],
+  }
 );
 ```
 
@@ -84,7 +129,7 @@ While Rozenite automatically discovers all plugins by default, you can control w
 
 If you want to load only specific plugins, you can use the `include` option. When this option is provided, auto-discovery is disabled and only the listed plugins will be loaded:
 
-```javascript
+```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
 
@@ -99,11 +144,24 @@ module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
 });
 ```
 
+```javascript title="rspack.config.mjs"
+import { withRozenite } from '@rozenite/repack';
+
+export default withRozenite(
+  {
+    // Your existing Re.Pack configuration
+  },
+  {
+    include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin'],
+  }
+);
+```
+
 #### Exclude Specific Plugins
 
 To prevent certain plugins from loading while keeping auto-discovery enabled, use the `exclude` option:
 
-```javascript
+```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
 
@@ -118,11 +176,24 @@ module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
 });
 ```
 
+```javascript title="rspack.config.mjs"
+import { withRozenite } from '@rozenite/repack';
+
+export default withRozenite(
+  {
+    // Your existing Re.Pack configuration
+  },
+  {
+    exclude: ['@rozenite/mmkv-plugin'],
+  }
+);
+```
+
 #### Combining Include and Exclude
 
 You can also combine both options. When both are provided, the `exclude` list is applied to the `include` list:
 
-```javascript
+```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
 
@@ -142,20 +213,38 @@ module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
 });
 ```
 
+```javascript title="rspack.config.mjs"
+import { withRozenite } from '@rozenite/repack';
+
+export default withRozenite(
+  {
+    // Your existing Re.Pack configuration
+  },
+  {
+    include: [
+      '@rozenite/mmkv-plugin',
+      '@rozenite/network-activity-plugin',
+      '@rozenite/tanstack-query-plugin',
+    ],
+    exclude: ['@rozenite/mmkv-plugin'], // This will be filtered out from the include list
+  }
+);
+```
+
 **Note**: When using the `include` option, auto-discovery is completely disabled. Only the explicitly listed plugins will be loaded, and any plugins not in the list will be ignored, even if they are installed in your `node_modules`.
 
 ## Usage
 
-After configuration, start your Metro development server as usual:
+After configuration, start your development server as usual:
 
 <PackageManagerTabs command="start" />
 
-Rozenite will automatically load and enable all discovered plugins. You can verify this by checking the Metro server logs for plugin discovery messages.
+Rozenite will automatically load and enable all discovered plugins. You can verify this by checking your bundler server logs for plugin discovery messages.
 
 ## Verification
 
 To verify that Rozenite is working correctly:
 
-1. **Check Metro logs** - You should see plugin discovery messages
+1. **Check bundler logs** - You should see plugin discovery messages in Metro or Re.Pack server logs
 2. **Open React Native DevTools** - Your app should show additional panels from discovered plugins
 3. **Check Chrome DevTools** - Open Chrome DevTools within the React Native DevTools window (DevTools inception!) and look for Rozenite logs in the console

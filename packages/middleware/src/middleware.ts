@@ -6,6 +6,9 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { getEntryPointHTML } from './entry-point.js';
 import { InstalledPlugin } from './auto-discovery.js';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 
 export const getMiddleware = (
   installedPlugins: InstalledPlugin[]

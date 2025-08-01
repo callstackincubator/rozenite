@@ -1,20 +1,21 @@
 {
-  "name": "@rozenite/plugin-bridge",
+  "name": "@rozenite/repack",
   "version": "1.0.0-alpha.7",
-  "description": "Communication layer for React Native DevTools plugins across React Native and web environments",
+  "description": "Re.Pack bundler plugin for Rozenite.",
   "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "templates"
   ],
   "keywords": [
     "react-native",
     "devtools",
+    "re.pack",
     "plugin",
-    "bridge",
-    "isomorphic"
+    "bundler"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
@@ -27,18 +28,23 @@
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
   "exports": {
+    "./package.json": "./package.json",
     ".": {
+      "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
   },
   "dependencies": {
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "@rozenite/middleware": "workspace:*"
   },
-  "devDependencies": {},
   "peerDependencies": {
-    "react": ">=17"
+    "@callstack/repack": "^6.0.0-canary-20250729145326"
+  },
+  "devDependencies": {
+    "@callstack/repack": "^6.0.0-canary-20250729145326"
   },
   "engines": {
     "node": ">=22"
