@@ -10,8 +10,13 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 
+export type MiddlewareConfig = {
+  destroyOnDetachPlugins?: string[];
+};
+
 export const getMiddleware = (
-  installedPlugins: InstalledPlugin[]
+  installedPlugins: InstalledPlugin[],
+  destroyOnDetachPlugins: string[],
 ): Application => {
   const app = express();
   const frameworkPath = path.resolve(
@@ -52,7 +57,7 @@ export const getMiddleware = (
 
   app.get('/rn_fusebox.html', (_, res) => {
     res.setHeader('Content-Type', 'text/html');
-    res.send(getEntryPointHTML(installedPlugins.map((plugin) => plugin.name)));
+    res.send(getEntryPointHTML(installedPlugins.map((plugin) => plugin.name), destroyOnDetachPlugins));
   });
 
   app.get('/host.js', (_, res) => {
