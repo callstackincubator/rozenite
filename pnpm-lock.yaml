@@ -72,7 +72,7 @@ importers:
         version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       '@react-native/metro-config':
         specifier: ~0.76.3
-        version: 0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+        version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       '@swc-node/register':
         specifier: ~1.9.1
         version: 1.9.2(@swc/core@1.5.29(@swc/helpers@0.5.17))(@swc/types@0.1.23)(typescript@5.8.3)
@@ -331,7 +331,7 @@ importers:
     devDependencies:
       '@react-native/metro-config':
         specifier: ~0.76.0
-        version: 0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+        version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
 
   packages/middleware:
     dependencies:
@@ -655,12 +655,18 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0(react@19.1.0)(rspress@2.0.0-beta.21(@types/react@19.1.8)(acorn@8.15.0)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))
     devDependencies:
+      '@rspress/shared':
+        specifier: ^1.45.0
+        version: 1.45.0
       '@types/node':
         specifier: ^18.11.17
         version: 18.16.9
       '@types/react':
         specifier: ^19.1.8
         version: 19.1.8
+      p-throttle:
+        specifier: ^7.0.0
+        version: 7.0.0
 
 packages:
 
@@ -2858,6 +2864,8 @@ packages:
   '@react-native/babel-preset@0.76.0':
     resolution: {integrity: sha512-HgQt4MyuWLcnrIglXn7GNPPVwtzZ4ffX+SUisdhmPtJCHuP8AOU3HsgOKLhqVfEGWTBlE4kbWoTmmLU87IJaOw==}
     engines: {node: '>=18'}
+    peerDependencies:
+      '@babel/core': '*'
 
   '@react-native/babel-preset@0.76.9':
     resolution: {integrity: sha512-TbSeCplCM6WhL3hR2MjC/E1a9cRnMLz7i767T7mP90oWkklEjyPxWl+0GGoVGnJ8FC/jLUupg/HvREKjjif6lw==}
@@ -2909,10 +2917,14 @@ packages:
   '@react-native/metro-babel-transformer@0.76.0':
     resolution: {integrity: sha512-aq0MrjaOxDitSqQbttBcOt+5tjemCabhEX2gGthy8cNeZokBa2raoHQInDo9iBBN1ePKDCwKGypyC8zKA5dksQ==}
     engines: {node: '>=18'}
+    peerDependencies:
+      '@babel/core': '*'
 
   '@react-native/metro-babel-transformer@0.76.9':
     resolution: {integrity: sha512-HGq11347UHNiO/NvVbAO35hQCmH8YZRs7in7nVq7SL99pnpZK4WXwLdAXmSuwz5uYqOuwnKYDlpadz8fkE94Mg==}
     engines: {node: '>=18'}
+    peerDependencies:
+      '@babel/core': '*'
 
   '@react-native/metro-config@0.76.9':
     resolution: {integrity: sha512-LWsj7mUfujALUa+iGuEGzW4BqtuHa8zI3zS2T+uIjy2vI40+hRoP70iPOEiesNwVQTq/uSZELbe3HAo4WaX5gA==}
@@ -8413,6 +8425,10 @@ packages:
     resolution: {integrity: sha512-/bjOqmgETBYB5BoEeGVea8dmvHb2m9GLy1E9W43yeyfP6QQCZGFNa+XRceJEuDB6zqr+gKpIAmlLebMpykw/MQ==}
     engines: {node: '>=10'}
 
+  p-throttle@7.0.0:
+    resolution: {integrity: sha512-aio0v+S0QVkH1O+9x4dHtD4dgCExACcL+3EtNaGqC01GBudS9ijMuUsmN8OVScyV4OOp0jqdLShZFuSlbL/AsA==}
+    engines: {node: '>=18'}
+
   p-try@2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
@@ -13646,7 +13662,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/babel-preset@0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
+  '@react-native/babel-preset@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
     dependencies:
       '@babel/core': 7.28.0
       '@babel/plugin-proposal-export-default-from': 7.27.1(@babel/core@7.28.0)
@@ -13776,10 +13792,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@react-native/community-cli-plugin@0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)':
+  '@react-native/community-cli-plugin@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)':
     dependencies:
       '@react-native/dev-middleware': 0.76.0
-      '@react-native/metro-babel-transformer': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+      '@react-native/metro-babel-transformer': 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       chalk: 4.1.2
       execa: 5.1.1
       invariant: 2.2.4
@@ -13791,6 +13807,7 @@ snapshots:
     optionalDependencies:
       '@react-native-community/cli-server-api': 15.0.1
     transitivePeerDependencies:
+      - '@babel/core'
       - '@babel/preset-env'
       - bufferutil
       - encoding
@@ -13823,17 +13840,17 @@ snapshots:
 
   '@react-native/js-polyfills@0.76.9': {}
 
-  '@react-native/metro-babel-transformer@0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
+  '@react-native/metro-babel-transformer@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
     dependencies:
       '@babel/core': 7.28.0
-      '@react-native/babel-preset': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+      '@react-native/babel-preset': 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       hermes-parser: 0.23.1
       nullthrows: 1.1.1
     transitivePeerDependencies:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-babel-transformer@0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
+  '@react-native/metro-babel-transformer@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
     dependencies:
       '@babel/core': 7.28.0
       '@react-native/babel-preset': 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
@@ -13843,13 +13860,14 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
+  '@react-native/metro-config@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
     dependencies:
       '@react-native/js-polyfills': 0.76.9
-      '@react-native/metro-babel-transformer': 0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+      '@react-native/metro-babel-transformer': 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       metro-config: 0.81.5
       metro-runtime: 0.81.5
     transitivePeerDependencies:
+      - '@babel/core'
       - '@babel/preset-env'
       - supports-color
 
@@ -21254,6 +21272,8 @@ snapshots:
       aggregate-error: 3.1.0
     optional: true
 
+  p-throttle@7.0.0: {}
+
   p-try@2.2.0: {}
 
   package-json-from-dist@1.0.1: {}
@@ -21753,7 +21773,7 @@ snapshots:
       '@jest/create-cache-key-function': 29.7.0
       '@react-native/assets-registry': 0.76.0
       '@react-native/codegen': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))
-      '@react-native/community-cli-plugin': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)
+      '@react-native/community-cli-plugin': 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)
       '@react-native/gradle-plugin': 0.76.0
       '@react-native/js-polyfills': 0.76.0
       '@react-native/normalize-colors': 0.76.0
@@ -21805,7 +21825,7 @@ snapshots:
       '@jest/create-cache-key-function': 29.7.0
       '@react-native/assets-registry': 0.76.0
       '@react-native/codegen': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))
-      '@react-native/community-cli-plugin': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)
+      '@react-native/community-cli-plugin': 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)
       '@react-native/gradle-plugin': 0.76.0
       '@react-native/js-polyfills': 0.76.0
       '@react-native/normalize-colors': 0.76.0
@@ -21857,7 +21877,7 @@ snapshots:
       '@jest/create-cache-key-function': 29.7.0
       '@react-native/assets-registry': 0.76.0
       '@react-native/codegen': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))
-      '@react-native/community-cli-plugin': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)
+      '@react-native/community-cli-plugin': 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)
       '@react-native/gradle-plugin': 0.76.0
       '@react-native/js-polyfills': 0.76.0
       '@react-native/normalize-colors': 0.76.0
