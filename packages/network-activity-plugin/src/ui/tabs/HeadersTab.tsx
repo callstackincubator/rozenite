@@ -23,7 +23,7 @@ export const HeadersTab = ({
   getStatusColor,
 }: HeadersTabProps) => {
   return (
-    <ScrollArea className="h-full min-h-0">
+    <ScrollArea className="h-full w-full">
       <div className="p-4 space-y-4">
         <div>
           <h4 className="text-sm font-medium text-gray-300 mb-2">General</h4>

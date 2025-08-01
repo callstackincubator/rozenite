@@ -44,29 +44,31 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
   };
 
   return (
-    <ScrollArea className="h-full min-h-0 p-4">
-      {selectedRequest?.requestBody ? (
-        <div className="space-y-4">
-          <div>
-            <h4 className="text-sm font-medium text-gray-300 mb-2">
-              Request Body
-            </h4>
-            <div className="text-sm mb-2">
-              <span className="text-gray-400">Content-Type: </span>
-              <span className="text-blue-400">
-                {selectedRequest.requestBody.type}
-              </span>
+    <ScrollArea className="h-full w-full">
+      <div className="p-4">
+        {selectedRequest?.requestBody ? (
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-sm font-medium text-gray-300 mb-2">
+                Request Body
+              </h4>
+              <div className="text-sm mb-2">
+                <span className="text-gray-400">Content-Type: </span>
+                <span className="text-blue-400">
+                  {selectedRequest.requestBody.type}
+                </span>
+              </div>
             </div>
+            <div>{renderRequestBody()}</div>
           </div>
-          <div>{renderRequestBody()}</div>
-        </div>
-      ) : (
-        <div className="text-sm text-gray-400">
-          {selectedRequest?.method === 'GET'
-            ? "GET requests don't have a request body"
-            : 'No request body for this request'}
-        </div>
-      )}
+        ) : (
+          <div className="text-sm text-gray-400">
+            {selectedRequest?.method === 'GET'
+              ? "GET requests don't have a request body"
+              : 'No request body for this request'}
+          </div>
+        )}
+      </div>
     </ScrollArea>
   );
 };

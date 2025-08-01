@@ -311,11 +311,11 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
                   />
                 </TabsContent>
 
-                <TabsContent value="request" className="flex-1 m-0">
+                <TabsContent value="request" className="flex-1 m-0 overflow-hidden">
                   <RequestTab selectedRequest={selectedRequest} />
                 </TabsContent>
 
-                <TabsContent value="response" className="flex-1 m-0">
+                <TabsContent value="response" className="flex-1 m-0 overflow-hidden">
                   <ResponseTab
                     selectedRequest={selectedRequest}
                     onRequestResponseBody={(requestId) => {
@@ -326,14 +326,14 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
                   />
                 </TabsContent>
 
-                <TabsContent value="cookies" className="flex-1 m-0">
+                <TabsContent value="cookies" className="flex-1 m-0 overflow-hidden">
                   <CookiesTab
                     selectedRequest={selectedRequest}
                     networkEntries={networkEntries}
                   />
                 </TabsContent>
 
-                <TabsContent value="timing" className="flex-1 m-0">
+                <TabsContent value="timing" className="flex-1 m-0 overflow-hidden">
                   <TimingTab
                     selectedRequest={selectedRequest}
                     networkEntries={networkEntries}

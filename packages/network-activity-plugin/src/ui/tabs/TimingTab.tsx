@@ -40,8 +40,9 @@ export const TimingTab = ({
   };
 
   return (
-    <ScrollArea className="h-full p-4">
-      <div className="space-y-4">
+    <ScrollArea className="h-full w-full">
+      <div className="p-4">
+        <div className="space-y-4">
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Start Time</span>
@@ -65,6 +66,7 @@ export const TimingTab = ({
             <span className="text-gray-100">{formatTime(duration)}</span>
           </div>
         </div>
+      </div>
       </div>
     </ScrollArea>
   );
