@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { NetworkEntry } from '../types';
 import { RequestId } from '../../shared/client';
+import { getHttpHeaderValue } from '../utils/getHttpHeaderValue';
 
 type NetworkRequest = {
   id: string;
@@ -205,7 +206,7 @@ const processNetworkEntries = (
       startTime: formatStartTime(entry.startTime || 0),
       requestBody: entry.request?.postData
         ? {
-            type: entry.request.headers['content-type'] || 'text/plain',
+            type: getHttpHeaderValue(entry.request.headers, 'content-type') || 'text/plain',
             data: entry.request.postData,
           }
         : undefined,

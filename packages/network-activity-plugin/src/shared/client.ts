@@ -1,12 +1,14 @@
 import { RozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 
+export type HttpHeaders = Record<string, string>;
+
 export type RequestId = string;
 export type Timestamp = number;
 
 export type Request = {
   url: string;
   method: string;
-  headers: Record<string, string>;
+  headers: HttpHeaders;
   postData?: string;
 };
 
@@ -14,7 +16,7 @@ export type Response = {
   url: string;
   status: number;
   statusText: string;
-  headers: Record<string, string>;
+  headers: HttpHeaders;
   contentType: string;
   size: number;
   responseTime: Timestamp;

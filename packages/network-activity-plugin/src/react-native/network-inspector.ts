@@ -1,4 +1,5 @@
 import { NetworkActivityDevToolsClient } from '../shared/client';
+import { getHttpHeaderValue } from '../ui/utils/getHttpHeaderValue';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { XHRInterceptor } from './xhr-interceptor';
 
@@ -8,8 +9,10 @@ const getContentType = (request: XMLHttpRequest): string => {
   const responseHeaders = request.responseHeaders;
   const responseType = request.responseType;
 
-  if (responseHeaders?.['content-type']) {
-    return responseHeaders['content-type'].split(';')[0].trim();
+  const contentType = getHttpHeaderValue(responseHeaders || {}, 'content-type');
+
+  if (contentType) {
+    return contentType.split(';')[0].trim();
   }
 
   switch (responseType) {
@@ -148,7 +151,7 @@ export const getNetworkInspector = (
           url: request._url as string,
           status: request.status,
           statusText: request.statusText,
-          headers: request.responseHeaders as Record<string, string>,
+          headers: request.responseHeaders || {},
           contentType: getContentType(request),
           size: getResponseSize(request),
           responseTime: Date.now() / 1000,

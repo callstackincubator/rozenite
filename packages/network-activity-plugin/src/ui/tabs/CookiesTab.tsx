@@ -1,6 +1,7 @@
 import { ScrollArea } from '../components/ScrollArea';
 import { Badge } from '../components/Badge';
 import { NetworkEntry } from '../types';
+import { HttpHeaders } from '../../shared/client';
 
 type Cookie = {
   name: string;
@@ -71,7 +72,7 @@ const parseCookieString = (cookieString: string): Cookie[] => {
 };
 
 const extractCookiesFromHeaders = (
-  headers: Record<string, string>
+  headers: HttpHeaders
 ): {
   requestCookies: Cookie[];
   responseCookies: Cookie[];
