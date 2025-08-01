@@ -31,6 +31,7 @@ type NetworkRequest = {
     type: string;
     data: string | null;
   };
+  headers?: Record<string, string>;
 };
 
 type RequestListProps = {
@@ -204,6 +205,7 @@ const processNetworkEntries = (
       type: mapResourceType(entry.type || 'Other'),
       initiator: formatInitiator(entry.initiator),
       startTime: formatStartTime(entry.startTime || 0),
+      headers: entry.request?.headers,
       requestBody: entry.request?.postData
         ? {
             type: getHttpHeaderValue(entry.request.headers, 'content-type') || 'text/plain',

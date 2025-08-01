@@ -1,30 +1,20 @@
+import { CopyAsCurlButton } from '../components/CopyAsCurlButton';
+import { NetworkRequest } from '../components/RequestList';
 import { ScrollArea } from '../components/ScrollArea';
-import { NetworkEntry } from '../types';
 
 export type HeadersTabProps = {
-  selectedRequest: {
-    id: string;
-    domain: string;
-    path: string;
-    method: string;
-    status: number;
-    requestBody?: {
-      type: string;
-      data: string;
-    };
-  };
-  networkEntries: Map<string, NetworkEntry>;
+  selectedRequest: NetworkRequest;
   getStatusColor: (status: number) => string;
 };
 
 export const HeadersTab = ({
   selectedRequest,
-  networkEntries,
   getStatusColor,
 }: HeadersTabProps) => {
   return (
     <ScrollArea className="h-full min-h-0">
       <div className="p-4 space-y-4">
+        <CopyAsCurlButton selectedRequest={selectedRequest} />
         <div>
           <h4 className="text-sm font-medium text-gray-300 mb-2">General</h4>
           <div className="space-y-1 text-sm">
@@ -62,8 +52,7 @@ export const HeadersTab = ({
           </h4>
           <div className="space-y-1 text-sm font-mono">
             {(() => {
-              const entry = networkEntries.get(selectedRequest.id);
-              const responseHeaders = entry?.response?.headers;
+              const responseHeaders = selectedRequest.headers;
               if (responseHeaders && Object.keys(responseHeaders).length > 0) {
                 return Object.entries(responseHeaders).map(([key, value]) => (
                   <div key={key} className="flex">
@@ -90,8 +79,7 @@ export const HeadersTab = ({
           </h4>
           <div className="space-y-1 text-sm font-mono">
             {(() => {
-              const entry = networkEntries.get(selectedRequest.id);
-              const requestHeaders = entry?.request?.headers;
+              const requestHeaders = selectedRequest.headers;
               if (requestHeaders && Object.keys(requestHeaders).length > 0) {
                 return Object.entries(requestHeaders).map(([key, value]) => (
                   <div key={key} className="flex">

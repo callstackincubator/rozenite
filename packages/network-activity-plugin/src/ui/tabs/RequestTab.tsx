@@ -1,14 +1,10 @@
+import * as React from 'react';
 import { ScrollArea } from '../components/ScrollArea';
 import { JsonTree } from '../components/JsonTree';
+import { NetworkRequest } from '../components/RequestList';
 
 export type RequestTabProps = {
-  selectedRequest: {
-    method: string;
-    requestBody?: {
-      type: string;
-      data: string;
-    };
-  };
+  selectedRequest: NetworkRequest;
 };
 
 export const RequestTab = ({ selectedRequest }: RequestTabProps) => {

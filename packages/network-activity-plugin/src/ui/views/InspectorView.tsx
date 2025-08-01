@@ -306,7 +306,6 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
                 >
                   <HeadersTab
                     selectedRequest={selectedRequest}
-                    networkEntries={networkEntries}
                     getStatusColor={getStatusColor}
                   />
                 </TabsContent>
