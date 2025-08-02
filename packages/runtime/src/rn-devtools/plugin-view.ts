@@ -1,6 +1,7 @@
 import { RuntimeEvent, SDK, UI } from './rn-devtools-frontend.js';
 import { RozenitePluginModel } from './plugin-model.js';
 import { JSONValue } from './types.js';
+import { getGlobalNamespace } from '../global-namespace.js';
 
 export class PluginView
   extends UI.View.SimpleView
@@ -9,10 +10,19 @@ export class PluginView
   #model: RozenitePluginModel | null = null;
   #src: string;
 
-  constructor(panelId: string, name: string, url: string) {
+  constructor(pluginId: string, panelId: string, name: string, url: string) {
     super(name + ' 💎', true, panelId);
 
     this.#src = url;
+
+    const globalNamespace = getGlobalNamespace();
+    const destroyOnDetachPlugins = globalNamespace.destroyOnDetachPlugins;
+    
+    const shouldDestroy = destroyOnDetachPlugins.includes(pluginId);
+    
+    if (!shouldDestroy) {
+      this.setHideOnDetach();
+    }
 
     SDK.TargetManager.TargetManager.instance().observeModels(
       RozenitePluginModel,
@@ -151,6 +161,6 @@ export class PluginView
   }
 }
 
-export const getPluginView = (panelId: string, name: string, url: string) => {
-  return new PluginView(panelId, name, url);
+export const getPluginView = (pluginId: string, panelId: string, name: string, url: string) => {
+  return new PluginView(pluginId, panelId, name, url);
 };

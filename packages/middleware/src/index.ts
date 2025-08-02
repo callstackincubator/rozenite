@@ -36,7 +36,10 @@ export const initializeRozenite = (
   patchDevtoolsFrontendUrl(options.projectRoot);
 
   return {
-    middleware: getMiddleware(allInstalledPlugins),
+    middleware: getMiddleware(
+      allInstalledPlugins,
+      options.destroyOnDetachPlugins || [],
+    ),
     devModePackage,
   };
 };
