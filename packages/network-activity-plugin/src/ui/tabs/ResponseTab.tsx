@@ -133,8 +133,10 @@ export const ResponseTab = ({
   };
 
   return (
-    <ScrollArea className="h-full min-h-0 p-4">
-      {renderResponseBody()}
+    <ScrollArea className="h-full w-full">
+      <div className="p-4">
+        {renderResponseBody()}
+      </div>
     </ScrollArea>
   );
 };
