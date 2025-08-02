@@ -97,6 +97,7 @@ export default withRozenite(
   {
     include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin'],
     exclude: ['unwanted-plugin'],
+    destroyOnDetachPlugins: ['@rozenite/network-activity-plugin'],
   }
 );
 ```
@@ -232,6 +233,53 @@ export default withRozenite(
 ```
 
 **Note**: When using the `include` option, auto-discovery is completely disabled. Only the explicitly listed plugins will be loaded, and any plugins not in the list will be ignored, even if they are installed in your `node_modules`.
+
+## Plugin State Management
+
+By default, Rozenite preserves plugin UI state when switching between DevTools panels. This provides a smooth user experience where data doesn't get lost when navigating between different plugins. However, for plugins that consume significant memory or resources, you may want to destroy them when they're not active.
+
+### Configuring Plugin Destruction
+
+Use the `destroyOnDetachPlugins` option to specify which plugins should be destroyed when switching panels:
+
+```javascript title="metro.config.js"
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { withRozenite } = require('@rozenite/metro');
+
+const defaultConfig = getDefaultConfig(__dirname);
+
+const customConfig = {
+  // Your existing Metro configuration
+};
+
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  destroyOnDetachPlugins: [
+    '@rozenite/network-activity-plugin',
+    '@rozenite/tanstack-query-plugin',
+  ],
+});
+```
+
+```javascript title="rspack.config.mjs"
+import { withRozenite } from '@rozenite/repack';
+
+export default withRozenite(
+  {
+    // Your existing Re.Pack configuration
+  },
+  {
+    destroyOnDetachPlugins: [
+      '@rozenite/network-activity-plugin',
+      '@rozenite/tanstack-query-plugin',
+    ],
+  }
+);
+```
+
+Trade-offs when using this option:
+
+- **Lost state** - Plugin state is reset every time you switch to another panel
+- **Slower navigation** - Plugin needs to reinitialize when switching back
 
 ## Usage
 

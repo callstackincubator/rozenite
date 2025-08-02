@@ -64,6 +64,7 @@ export default withRozenite(
   {
     include: ['@my-org/my-plugin', 'another-plugin'],
     exclude: ['unwanted-plugin'],
+    destroyOnDetachPlugins: ['@rozenite/network-activity-plugin'],
   }
 );
 ```
@@ -78,6 +79,7 @@ The configuration object for the Re.Pack plugin:
 type RozeniteRepackConfig = {
   include?: string[]; // Only load these specific plugins
   exclude?: string[]; // Exclude these plugins from loading
+  destroyOnDetachPlugins?: string[]; // Plugins that should be destroyed when switching panels
 };
 ```
 
@@ -85,6 +87,7 @@ type RozeniteRepackConfig = {
 
 - `include` - Array of package names to explicitly include (optional)
 - `exclude` - Array of package names to exclude from loading (optional)
+- `destroyOnDetachPlugins` - Array of package names that should be destroyed when switching panels instead of maintaining their state (optional, by default all plugins persist their state)
 
 ## Plugin Discovery
 
