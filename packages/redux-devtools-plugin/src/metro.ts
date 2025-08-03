@@ -16,5 +16,3 @@ export const withRozeniteReduxDevTools = <
 
   return config;
 };
-
-export type Wololo = true;
