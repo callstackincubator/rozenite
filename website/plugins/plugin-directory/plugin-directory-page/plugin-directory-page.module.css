@@ -5,38 +5,25 @@
 }
 
 .container {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-  padding: 16px;
   max-width: 1200px;
   margin: 0 auto;
-  flex-grow: 1;
   width: 100%;
-  box-sizing: border-box;
-  align-items: stretch;
-  flex-grow: 0;
+  padding: 16px;
 }
 
-/* Responsive breakpoints */
-@media (min-width: 1024px) {
-  .container {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 28px;
-    padding: 24px;
-  }
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-@media (min-width: 1280px) {
-  .container {
-    gap: 32px;
-    padding: 32px;
-  }
+.ctaContainer > div::before {
+  display: none;
 }
 
 .footerContainer {
   margin-top: auto;
-  padding-top: 24px;
 }
 
 .footer {
@@ -47,28 +34,12 @@
   border-top: 1px solid var(--rp-c-divider-light);
 }
 
-@media (min-width: 768px) {
-  .footer {
-    padding: 32px 24px;
-  }
-
-  .footerContainer {
-    padding-top: 32px;
-  }
-}
-
 .pagination {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
   justify-content: center;
-}
-
-@media (max-width: 480px) {
-  .pagination {
-    gap: 4px;
-  }
 }
 
 .paginationButton {
@@ -88,13 +59,6 @@
   transition: all 0.2s ease;
   text-decoration: none;
   white-space: nowrap;
-}
-
-@media (min-width: 768px) {
-  .paginationButton {
-    min-width: 100px;
-    height: 40px;
-  }
 }
 
 .paginationButton:hover {
@@ -121,24 +85,12 @@
   font-size: 14px;
 }
 
-@media (min-width: 768px) {
-  .paginationInfo {
-    margin: 0 16px;
-  }
-}
-
 .pageNumbers {
   display: flex;
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
   justify-content: center;
-}
-
-@media (max-width: 480px) {
-  .pageNumbers {
-    gap: 2px;
-  }
 }
 
 .pageNumber {
@@ -158,15 +110,6 @@
   text-decoration: none;
 }
 
-@media (min-width: 768px) {
-  .pageNumber {
-    min-width: 32px;
-    height: 32px;
-    padding: 0 8px;
-    font-size: 14px;
-  }
-}
-
 .pageNumber:hover {
   background-color: var(--rp-c-bg-soft);
   border-color: var(--rp-c-brand);
@@ -177,4 +120,59 @@
   background-color: var(--rp-c-brand);
   border-color: var(--rp-c-brand);
   color: white;
+}
+
+/* Responsive breakpoints */
+@media (min-width: 768px) {
+  .footer {
+    padding: 32px 24px;
+  }
+
+  .paginationButton {
+    min-width: 100px;
+    height: 40px;
+  }
+
+  .paginationInfo {
+    margin: 0 16px;
+  }
+
+  .pageNumber {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 24px;
+  }
+
+  .list {
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    padding: 32px;
+  }
+
+  .list {
+    gap: 32px;
+    margin-bottom: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    gap: 8px;
+  }
+
+  .pageNumbers {
+    gap: 2px;
+  }
 }

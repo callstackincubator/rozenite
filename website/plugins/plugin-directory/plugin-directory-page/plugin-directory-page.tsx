@@ -1,5 +1,5 @@
 import { usePageData } from 'rspress/runtime';
-import { HomeFooter } from '@callstack/rspress-theme';
+import { HomeFooter, OutlineCTA } from '@callstack/rspress-theme';
 
 import { PluginCard } from '../plugin-card/plugin-card';
 import { PluginDirectoryPage } from '../types';
@@ -7,6 +7,7 @@ import styles from './plugin-directory-page.module.css';
 
 export const frontmatter = {
   pageType: 'custom',
+  sidebar: true,
 };
 
 const generatePageNumbers = (
@@ -115,10 +116,25 @@ export default function DirectoryPage() {
   return (
     <div className={styles.root}>
       <div className={styles.container}>
-        {page.data.map((plugin, index) => (
-          <PluginCard key={`${plugin.packageName}-${index}`} plugin={plugin} />
-        ))}
+        <div className={styles.list}>
+          {page.data.map((plugin, index) => (
+            <PluginCard
+              key={`${plugin.packageName}-${index}`}
+              plugin={plugin}
+            />
+          ))}
+        </div>
+
+        <div className={styles.ctaContainer}>
+          <OutlineCTA
+            headline="Want to add your own plugin?"
+            description="Open a pull request in our repository to contribute your plugin to this list."
+            buttonText="View Repository"
+            href="https://github.com/callstackincubator/rozenite"
+          />
+        </div>
       </div>
+
       <div className={styles.footerContainer}>
         <PaginationControls
           page={page.pageNumber}
