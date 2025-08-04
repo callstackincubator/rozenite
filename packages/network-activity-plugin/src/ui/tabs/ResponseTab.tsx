@@ -1,16 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { ScrollArea } from '../components/ScrollArea';
 import { JsonTree } from '../components/JsonTree';
+import { HttpNetworkEntry } from '../state/model';
 
 export type ResponseTabProps = {
-  selectedRequest: {
-    id: string;
-    type: string;
-    responseBody?: {
-      type: string;
-      data: string | null;
-    };
-  };
+  selectedRequest: HttpNetworkEntry;
   onRequestResponseBody: (requestId: string) => void;
 };
 
@@ -31,7 +25,9 @@ export const ResponseTab = ({
   }, [selectedRequest.id]);
 
   const renderResponseBody = () => {
-    if (!selectedRequest?.responseBody) {
+    const responseBody = selectedRequest.response?.body;
+
+    if (!responseBody) {
       return (
         <div className="text-sm text-gray-400">
           No response body available for this request
@@ -39,7 +35,7 @@ export const ResponseTab = ({
       );
     }
 
-    const { type, data } = selectedRequest.responseBody;
+    const { type, data } = responseBody;
 
     // Handle null data
     if (data === null) {

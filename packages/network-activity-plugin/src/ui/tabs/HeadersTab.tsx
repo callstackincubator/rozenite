@@ -1,27 +1,17 @@
+import { useMemo } from 'react';
 import { ScrollArea } from '../components/ScrollArea';
-import { NetworkEntry } from '../types';
+import { HttpNetworkEntry } from '../state/model';
+import { getStatusColor } from '../utils/getStatusColor';
 
 export type HeadersTabProps = {
-  selectedRequest: {
-    id: string;
-    domain: string;
-    path: string;
-    method: string;
-    status: number;
-    requestBody?: {
-      type: string;
-      data: string;
-    };
-  };
-  networkEntries: Map<string, NetworkEntry>;
-  getStatusColor: (status: number) => string;
+  selectedRequest: HttpNetworkEntry;
 };
 
-export const HeadersTab = ({
-  selectedRequest,
-  networkEntries,
-  getStatusColor,
-}: HeadersTabProps) => {
+export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
+  const url = useMemo(() => {
+    return new URL(selectedRequest.request.url);
+  }, [selectedRequest.request.url]);
+
   return (
     <ScrollArea className="h-full w-full">
       <div className="p-4 space-y-4">
@@ -31,25 +21,29 @@ export const HeadersTab = ({
             <div className="flex">
               <span className="w-32 text-gray-400">Request URL:</span>
               <span className="text-blue-400">
-                {selectedRequest.domain}
-                {selectedRequest.path}
+                {url.hostname}
+                {url.pathname}
               </span>
             </div>
             <div className="flex">
               <span className="w-32 text-gray-400">Request Method:</span>
-              <span>{selectedRequest.method}</span>
+              <span>{selectedRequest.request.method}</span>
             </div>
             <div className="flex">
               <span className="w-32 text-gray-400">Status Code:</span>
-              <span className={getStatusColor(selectedRequest.status)}>
-                {selectedRequest.status}
+              <span
+                className={getStatusColor(
+                  selectedRequest.response?.status ?? 0
+                )}
+              >
+                {selectedRequest.response?.status ?? 'Pending'}
               </span>
             </div>
-            {selectedRequest.requestBody && (
+            {selectedRequest.request.body && (
               <div className="flex">
                 <span className="w-32 text-gray-400">Content-Type:</span>
                 <span className="text-blue-400">
-                  {selectedRequest.requestBody.type}
+                  {selectedRequest.request.body.type}
                 </span>
               </div>
             )}
@@ -62,8 +56,7 @@ export const HeadersTab = ({
           </h4>
           <div className="space-y-1 text-sm font-mono">
             {(() => {
-              const entry = networkEntries.get(selectedRequest.id);
-              const responseHeaders = entry?.response?.headers;
+              const responseHeaders = selectedRequest.response?.headers;
               if (responseHeaders && Object.keys(responseHeaders).length > 0) {
                 return Object.entries(responseHeaders).map(([key, value]) => (
                   <div key={key} className="flex">
@@ -90,8 +83,7 @@ export const HeadersTab = ({
           </h4>
           <div className="space-y-1 text-sm font-mono">
             {(() => {
-              const entry = networkEntries.get(selectedRequest.id);
-              const requestHeaders = entry?.request?.headers;
+              const requestHeaders = selectedRequest.request.headers;
               if (requestHeaders && Object.keys(requestHeaders).length > 0) {
                 return Object.entries(requestHeaders).map(([key, value]) => (
                   <div key={key} className="flex">

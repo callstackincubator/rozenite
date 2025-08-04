@@ -1,7 +1,7 @@
 import { ScrollArea } from '../components/ScrollArea';
 import { Badge } from '../components/Badge';
-import { NetworkEntry } from '../types';
 import { HttpHeaders } from '../../shared/client';
+import { HttpNetworkEntry } from '../state/model';
 
 type Cookie = {
   name: string;
@@ -16,10 +16,7 @@ type Cookie = {
 };
 
 export type CookiesTabProps = {
-  selectedRequest: {
-    id: string;
-  };
-  networkEntries: Map<string, NetworkEntry>;
+  selectedRequest: HttpNetworkEntry;
 };
 
 const parseCookieString = (cookieString: string): Cookie[] => {
@@ -96,197 +93,186 @@ const extractCookiesFromHeaders = (
   return { requestCookies, responseCookies };
 };
 
-export const CookiesTab = ({
-  selectedRequest,
-  networkEntries,
-}: CookiesTabProps) => {
+export const CookiesTab = ({ selectedRequest }: CookiesTabProps) => {
   return (
     <ScrollArea className="h-full w-full">
       <div className="p-4">
         {(() => {
-        const entry = networkEntries.get(selectedRequest.id);
-        if (!entry) {
+          // Extract cookies from request and response headers separately
+          const requestHeaders = selectedRequest.request?.headers || {};
+          const responseHeaders = selectedRequest.response?.headers || {};
+
+          const { requestCookies } = extractCookiesFromHeaders(requestHeaders);
+          const { responseCookies } =
+            extractCookiesFromHeaders(responseHeaders);
+
+          const hasRequestCookies = requestCookies.length > 0;
+          const hasResponseCookies = responseCookies.length > 0;
+
+          if (!hasRequestCookies && !hasResponseCookies) {
+            return (
+              <div className="text-sm text-gray-400">
+                No cookies for this request
+              </div>
+            );
+          }
+
           return (
-            <div className="text-sm text-gray-400">
-              No request data available
-            </div>
-          );
-        }
-
-        // Extract cookies from request and response headers separately
-        const requestHeaders = entry.request?.headers || {};
-        const responseHeaders = entry.response?.headers || {};
-
-        const { requestCookies } = extractCookiesFromHeaders(requestHeaders);
-        const { responseCookies } = extractCookiesFromHeaders(responseHeaders);
-
-        const hasRequestCookies = requestCookies.length > 0;
-        const hasResponseCookies = responseCookies.length > 0;
-
-        if (!hasRequestCookies && !hasResponseCookies) {
-          return (
-            <div className="text-sm text-gray-400">
-              No cookies for this request
-            </div>
-          );
-        }
-
-        return (
-          <div className="space-y-6">
-            {/* Request Cookies */}
-            {hasRequestCookies && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-300 mb-3">
-                  Request Cookies ({requestCookies.length})
-                </h4>
-                <div className="space-y-2">
-                  {requestCookies.map((cookie, index) => (
-                    <div
-                      key={`request-${index}`}
-                      className="bg-gray-800 border border-gray-700 rounded p-3"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-blue-400">
-                          {cookie.name}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {cookie.secure && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs text-yellow-400 border-yellow-400"
-                            >
-                              Secure
-                            </Badge>
+            <div className="space-y-6">
+              {/* Request Cookies */}
+              {hasRequestCookies && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-300 mb-3">
+                    Request Cookies ({requestCookies.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {requestCookies.map((cookie, index) => (
+                      <div
+                        key={`request-${index}`}
+                        className="bg-gray-800 border border-gray-700 rounded p-3"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-blue-400">
+                            {cookie.name}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            {cookie.secure && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs text-yellow-400 border-yellow-400"
+                              >
+                                Secure
+                              </Badge>
+                            )}
+                            {cookie.httpOnly && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs text-purple-400 border-purple-400"
+                              >
+                                HttpOnly
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-300 mb-2">
+                          {cookie.value}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-xs text-gray-400">
+                          {cookie.domain && (
+                            <div>
+                              <span className="font-medium">Domain:</span>{' '}
+                              {cookie.domain}
+                            </div>
                           )}
-                          {cookie.httpOnly && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs text-purple-400 border-purple-400"
-                            >
-                              HttpOnly
-                            </Badge>
+                          {cookie.path && (
+                            <div>
+                              <span className="font-medium">Path:</span>{' '}
+                              {cookie.path}
+                            </div>
+                          )}
+                          {cookie.expires && (
+                            <div>
+                              <span className="font-medium">Expires:</span>{' '}
+                              {cookie.expires}
+                            </div>
+                          )}
+                          {cookie.maxAge && (
+                            <div>
+                              <span className="font-medium">Max-Age:</span>{' '}
+                              {cookie.maxAge}
+                            </div>
+                          )}
+                          {cookie.sameSite && (
+                            <div>
+                              <span className="font-medium">SameSite:</span>{' '}
+                              {cookie.sameSite}
+                            </div>
                           )}
                         </div>
                       </div>
-                      <div className="text-sm text-gray-300 mb-2">
-                        {cookie.value}
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-xs text-gray-400">
-                        {cookie.domain && (
-                          <div>
-                            <span className="font-medium">Domain:</span>{' '}
-                            {cookie.domain}
-                          </div>
-                        )}
-                        {cookie.path && (
-                          <div>
-                            <span className="font-medium">Path:</span>{' '}
-                            {cookie.path}
-                          </div>
-                        )}
-                        {cookie.expires && (
-                          <div>
-                            <span className="font-medium">Expires:</span>{' '}
-                            {cookie.expires}
-                          </div>
-                        )}
-                        {cookie.maxAge && (
-                          <div>
-                            <span className="font-medium">Max-Age:</span>{' '}
-                            {cookie.maxAge}
-                          </div>
-                        )}
-                        {cookie.sameSite && (
-                          <div>
-                            <span className="font-medium">SameSite:</span>{' '}
-                            {cookie.sameSite}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Response Cookies */}
-            {hasResponseCookies && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-300 mb-3">
-                  Response Cookies ({responseCookies.length})
-                </h4>
-                <div className="space-y-2">
-                  {responseCookies.map((cookie, index) => (
-                    <div
-                      key={`response-${index}`}
-                      className="bg-gray-800 border border-gray-700 rounded p-3"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-green-400">
-                          {cookie.name}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {cookie.secure && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs text-yellow-400 border-yellow-400"
-                            >
-                              Secure
-                            </Badge>
+              {/* Response Cookies */}
+              {hasResponseCookies && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-300 mb-3">
+                    Response Cookies ({responseCookies.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {responseCookies.map((cookie, index) => (
+                      <div
+                        key={`response-${index}`}
+                        className="bg-gray-800 border border-gray-700 rounded p-3"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-green-400">
+                            {cookie.name}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            {cookie.secure && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs text-yellow-400 border-yellow-400"
+                              >
+                                Secure
+                              </Badge>
+                            )}
+                            {cookie.httpOnly && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs text-purple-400 border-purple-400"
+                              >
+                                HttpOnly
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-300 mb-2">
+                          {cookie.value}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-xs text-gray-400">
+                          {cookie.domain && (
+                            <div>
+                              <span className="font-medium">Domain:</span>{' '}
+                              {cookie.domain}
+                            </div>
                           )}
-                          {cookie.httpOnly && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs text-purple-400 border-purple-400"
-                            >
-                              HttpOnly
-                            </Badge>
+                          {cookie.path && (
+                            <div>
+                              <span className="font-medium">Path:</span>{' '}
+                              {cookie.path}
+                            </div>
+                          )}
+                          {cookie.expires && (
+                            <div>
+                              <span className="font-medium">Expires:</span>{' '}
+                              {cookie.expires}
+                            </div>
+                          )}
+                          {cookie.maxAge && (
+                            <div>
+                              <span className="font-medium">Max-Age:</span>{' '}
+                              {cookie.maxAge}
+                            </div>
+                          )}
+                          {cookie.sameSite && (
+                            <div>
+                              <span className="font-medium">SameSite:</span>{' '}
+                              {cookie.sameSite}
+                            </div>
                           )}
                         </div>
                       </div>
-                      <div className="text-sm text-gray-300 mb-2">
-                        {cookie.value}
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-xs text-gray-400">
-                        {cookie.domain && (
-                          <div>
-                            <span className="font-medium">Domain:</span>{' '}
-                            {cookie.domain}
-                          </div>
-                        )}
-                        {cookie.path && (
-                          <div>
-                            <span className="font-medium">Path:</span>{' '}
-                            {cookie.path}
-                          </div>
-                        )}
-                        {cookie.expires && (
-                          <div>
-                            <span className="font-medium">Expires:</span>{' '}
-                            {cookie.expires}
-                          </div>
-                        )}
-                        {cookie.maxAge && (
-                          <div>
-                            <span className="font-medium">Max-Age:</span>{' '}
-                            {cookie.maxAge}
-                          </div>
-                        )}
-                        {cookie.sameSite && (
-                          <div>
-                            <span className="font-medium">SameSite:</span>{' '}
-                            {cookie.sameSite}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        );
-      })()}
+              )}
+            </div>
+          );
+        })()}
       </div>
     </ScrollArea>
   );

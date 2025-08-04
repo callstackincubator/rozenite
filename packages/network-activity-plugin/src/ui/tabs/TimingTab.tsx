@@ -1,32 +1,17 @@
 import { ScrollArea } from '../components/ScrollArea';
-import { NetworkRequest } from '../components/RequestList';
-import { NetworkEntry } from '../types';
+import { HttpNetworkEntry } from '../state/model';
 
 export type TimingTabProps = {
-  selectedRequest: NetworkRequest | null;
-  networkEntries: Map<string, NetworkEntry>;
+  selectedRequest: HttpNetworkEntry;
 };
 
-export const TimingTab = ({
-  selectedRequest,
-  networkEntries,
-}: TimingTabProps) => {
-  const networkEntry = selectedRequest
-    ? networkEntries.get(selectedRequest.id)
+export const TimingTab = ({ selectedRequest }: TimingTabProps) => {
+  const startTime = selectedRequest.timestamp || 0;
+  const endTime = selectedRequest.duration
+    ? selectedRequest.timestamp + selectedRequest.duration
     : null;
-
-  if (!selectedRequest || !networkEntry) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        Select a request to view timing information
-      </div>
-    );
-  }
-
-  const startTime = networkEntry.startTime || 0;
-  const endTime = networkEntry.endTime || 0;
-  const ttfb = networkEntry.ttfb || 0;
-  const duration = networkEntry.duration || 0;
+  const ttfb = selectedRequest.ttfb || 0;
+  const duration = selectedRequest.duration || 0;
 
   const formatTime = (time: number): string => {
     if (time < 1) {

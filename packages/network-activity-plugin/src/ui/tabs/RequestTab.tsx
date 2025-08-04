@@ -1,21 +1,16 @@
 import { ScrollArea } from '../components/ScrollArea';
 import { JsonTree } from '../components/JsonTree';
+import { HttpNetworkEntry } from '../state/model';
+import { assert } from '../utils/assert';
 
 export type RequestTabProps = {
-  selectedRequest: {
-    method: string;
-    requestBody?: {
-      type: string;
-      data: string;
-    };
-  };
+  selectedRequest: HttpNetworkEntry;
 };
 
 export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
   const renderRequestBody = () => {
-    if (!selectedRequest?.requestBody) return null;
-
-    const { type, data } = selectedRequest.requestBody;
+    assert(!!selectedRequest.request.body, 'Request body is required');
+    const { type, data } = selectedRequest.request.body;
 
     if (type === 'application/json') {
       try {
@@ -46,7 +41,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
   return (
     <ScrollArea className="h-full w-full">
       <div className="p-4">
-        {selectedRequest?.requestBody ? (
+        {selectedRequest.request.body ? (
           <div className="space-y-4">
             <div>
               <h4 className="text-sm font-medium text-gray-300 mb-2">
@@ -55,7 +50,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
               <div className="text-sm mb-2">
                 <span className="text-gray-400">Content-Type: </span>
                 <span className="text-blue-400">
-                  {selectedRequest.requestBody.type}
+                  {selectedRequest.request.body.type}
                 </span>
               </div>
             </div>
@@ -63,7 +58,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
           </div>
         ) : (
           <div className="text-sm text-gray-400">
-            {selectedRequest?.method === 'GET'
+            {selectedRequest.request.method === 'GET'
               ? "GET requests don't have a request body"
               : 'No request body for this request'}
           </div>
