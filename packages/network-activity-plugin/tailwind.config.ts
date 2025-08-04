@@ -7,6 +7,9 @@ const config: Config = {
   content: ['./src/ui/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
+      translate: {
+        '0.75': '0.1875rem',
+      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
