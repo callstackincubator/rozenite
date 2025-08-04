@@ -1,54 +1,11 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import pThrottle from 'p-throttle';
-import { extractPackageNameFromNpmUrl } from './clients/npm-client';
-import { getBasicPackageInfo } from './clients/npm-client';
-import {
-  getRepositoryFromUrl,
-  getRepositoryStars,
-} from './clients/github-client';
+import { getRepository } from './repository/repository-factory';
 import { PluginDirectoryReference, RozenitePluginEntry } from './types';
-
-const throttle = pThrottle({
-  limit: 16,
-  interval: 1000,
-});
-
-const getPlugin = throttle(
-  async (plugin: PluginDirectoryReference): Promise<RozenitePluginEntry> => {
-    const githubRepository = getRepositoryFromUrl(plugin.githubUrl);
-    const npmPackageName = extractPackageNameFromNpmUrl(plugin.npmUrl);
-
-    if (!githubRepository || !npmPackageName) {
-      throw new Error(
-        `Invalid URLs for plugin: GitHub URL "${plugin.githubUrl}" or NPM URL "${plugin.npmUrl}"`
-      );
-    }
-
-    try {
-      const [stars, npmPackage] = await Promise.all([
-        getRepositoryStars(githubRepository),
-        getBasicPackageInfo(npmPackageName),
-      ]);
-
-      return {
-        packageName: npmPackage.name,
-        version: npmPackage.version,
-        githubUrl: plugin.githubUrl,
-        npmUrl: plugin.npmUrl,
-        description: npmPackage.description,
-        stars,
-        isOfficial: npmPackage.name.startsWith('@rozenite/'),
-      };
-    } catch (error) {
-      throw new Error(
-        `Failed to fetch data for plugin ${npmPackageName}: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`
-      );
-    }
-  }
-);
+import {
+  getPackageNamesFromReferences,
+  extractPackageNameFromNpmUrl,
+} from './utils';
 
 export const getPluginReferences = async (): Promise<
   PluginDirectoryReference[]
@@ -75,8 +32,26 @@ export const getPlugins = async (
   references: PluginDirectoryReference[]
 ): Promise<RozenitePluginEntry[]> => {
   try {
-    const plugins = await Promise.all(references.map(getPlugin));
-    return plugins;
+    const repository = await getRepository();
+    const packageNames = getPackageNamesFromReferences(references);
+
+    const cachedPlugins = await repository.getPlugins(packageNames);
+    const cachedPackageNames = new Set(cachedPlugins.map((p) => p.packageName));
+
+    const pluginsToFetch = references.filter((ref) => {
+      const packageName = extractPackageNameFromNpmUrl(ref.npmUrl);
+      return packageName && !cachedPackageNames.has(packageName);
+    });
+
+    const fetchedPlugins = await Promise.all(
+      pluginsToFetch.map((ref) => repository.getPluginWithFallback(ref))
+    );
+
+    const allPlugins = [...cachedPlugins, ...fetchedPlugins];
+
+    await repository.cleanupExpired();
+
+    return allPlugins;
   } catch (error) {
     throw new Error(
       `Failed to fetch plugins data: ${
