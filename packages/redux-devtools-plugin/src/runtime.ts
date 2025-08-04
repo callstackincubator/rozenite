@@ -1,5 +1,6 @@
 import { devToolsEnhancer } from '@redux-devtools/remote';
 import { Platform } from 'react-native';
+import getDevServer from 'react-native/Libraries/Core/Devtools/getDevServer';
 import { REDUX_DEVTOOLS_PORT } from './constants';
 
 // @ts-expect-error - Symbol.asyncIterator is not defined in the global scope, but required by the redux-devtools/remote package.
@@ -19,10 +20,15 @@ const getDeviceId = (): string => {
   throw new Error('Unsupported platform');
 };
 
+const getHostname = (): string => {
+  const devServer = getDevServer();
+  return devServer.url.split('://')[1].split(':')[0];
+};
+
 export const rozeniteDevToolsEnhancer = (): StoreEnhancer => {
   return devToolsEnhancer({
     name: getDeviceId(),
-    hostname: Platform.OS === 'android' ? '10.0.2.2' : 'localhost',
+    hostname: getHostname(),
     port: REDUX_DEVTOOLS_PORT,
     secure: false,
     realtime: true,
