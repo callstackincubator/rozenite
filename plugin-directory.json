@@ -18,5 +18,9 @@
   {
     "npmUrl": "https://www.npmjs.com/package/@rozenite/expo-atlas-plugin",
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/expo-atlas-plugin"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/rozenite-preview",
+    "githubUrl": "https://github.com/matinzd/rozenite-preview"
   }
 ]
