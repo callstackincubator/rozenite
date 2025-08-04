@@ -37,12 +37,18 @@ export const getPlugins = async (
 
     const cachedPlugins = await repository.getPlugins(packageNames);
     const cachedPackageNames = new Set(cachedPlugins.map((p) => p.packageName));
+    console.log(
+      `Found ${cachedPlugins.length} of ${packageNames.length} plugins in cache`
+    );
 
     const pluginsToFetch = references.filter((ref) => {
       const packageName = extractPackageNameFromNpmUrl(ref.npmUrl);
       return packageName && !cachedPackageNames.has(packageName);
     });
 
+    console.log(
+      `Fetching missing ${pluginsToFetch.length} of ${packageNames.length} plugins`
+    );
     const fetchedPlugins = await Promise.all(
       pluginsToFetch.map((ref) => repository.getPluginWithFallback(ref))
     );
