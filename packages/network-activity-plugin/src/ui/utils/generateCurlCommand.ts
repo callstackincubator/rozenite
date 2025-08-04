@@ -1,86 +1,86 @@
+import { ReactNativeFormData, RequestPostData } from '../../shared/client';
 import { escapeShellArg } from './escapeShellArg';
+import { getHttpHeaderValue } from './getHttpHeaderValue';
 
 const BASE_TAB_INDENT = 2; // Number of spaces for indentation
+
+function stringifyData(postData: RequestPostData): string {
+  try {
+    const jsonString = JSON.stringify(typeof postData === 'string' ? JSON.parse(postData) : postData, null, BASE_TAB_INDENT * 4);
+
+    return jsonString.replace(/([}\]])$/, '$1'.padStart(BASE_TAB_INDENT * 2));
+  } catch {
+    return String(postData);
+  }
+}
+
+function detectPostDataType(postData: RequestPostData) {
+  if (postData === null || postData === undefined) return 'empty';
+  
+  if (typeof postData === 'object' && '_parts' in postData && Array.isArray(postData._parts)) {
+    return 'formdata';
+  }
+
+  return 'unknown';
+}
 
 // Adds a curl parameter with proper indentation
 function addCurlParam(curlParts: string[], flag: string, value: string): void {
   curlParts.push(`${flag.padStart(BASE_TAB_INDENT + flag.length)} ${value}`);
 }
 
-// Adds HTTP method to curl command parts
-function addMethodToCurl(curlParts: string[], method: string): void {
-  if (method && method.toUpperCase() !== 'GET') {
+function addHttpMethodToCurl(curlParts: string[], method: string): void {
+  if (method && isPostRequest(method)) {
     addCurlParam(curlParts, '-X', method.toUpperCase());
   }
 }
 
-// Adds headers to curl command parts
 function addHeadersToCurl(curlParts: string[], headers: Record<string, string>): void {
   Object.entries(headers).forEach(([key, value]) => {
-    if (key && value) {
-      addCurlParam(curlParts, '-H', escapeShellArg(`${key}: ${value}`));
-    }
+    addCurlParam(curlParts, '-H', escapeShellArg(`${key}: ${value}`));
   });
 }
 
-// Determines if method should include request body
-function shouldIncludeBody(method: string): boolean {
-  return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase());
+function isPostRequest(method: string): boolean {
+  return method.toLowerCase() !== 'get';
 }
 
-// Gets content type from headers (case-insensitive)
-function getContentType(headers: Record<string, string>): string {
-  return headers['content-type'] || headers['Content-Type'] || '';
-}
+function addBodyToCurl(curlParts: string[], postData: RequestPostData, headers: Record<string, string>): void {
+  const contentType = getHttpHeaderValue(headers, 'content-type');
+  const dataType = detectPostDataType(postData);
 
-// Formats JSON data with proper indentation
-function formatJsonData(postData: string): string {
-  try {
-    const jsonString = JSON.stringify(JSON.parse(postData), null, BASE_TAB_INDENT * 4);
-    
-    return jsonString.replace(/}$/, '}'.padStart(BASE_TAB_INDENT * 4 - 1));
-  } catch {
-    return postData;
+  console.log(postData, contentType, dataType, typeof postData);
+
+  if (dataType === 'empty') {
+    return;
   }
-}
 
-// Adds request body to curl command parts
-function addBodyToCurl(curlParts: string[], postData: string, headers: Record<string, string>): void {
-  const contentType = getContentType(headers);
-  
-  if (contentType.includes('application/json')) {
-    const formattedJson = formatJsonData(postData);
-    
-    addCurlParam(curlParts, '-d', escapeShellArg(formattedJson));
+  // Special case for React Native FormData
+  if (dataType === 'formdata' && contentType?.includes('multipart/form-data')) {
+    const formParts = (postData as ReactNativeFormData)._parts.map(([key, value]) => `${key}=${value}`);
+
+    formParts.forEach(part => addCurlParam(curlParts, '--form', escapeShellArg(part)));
 
     return;
   }
-  
-  if (contentType.includes('application/x-www-form-urlencoded')) {
-    addCurlParam(curlParts, '-d', escapeShellArg(postData));
-    
-    return;
-  }
-  
-  // For other content types, use --data-raw
-  addCurlParam(curlParts, '--data-raw', escapeShellArg(postData));
+
+  addCurlParam(curlParts, '--data-raw', escapeShellArg(stringifyData(postData)));
 }
 
-// Generates a cURL command from network request data
 export function generateCurlCommand(request: {
   method: string;
   url: string;
   headers?: Record<string, string>;
-  postData?: string;
+  postData?: RequestPostData;
 }): string {
   const { method, url, headers = {}, postData } = request;
   
   const curlParts: string[] = [`curl ${escapeShellArg(url)}`];
   
-  addMethodToCurl(curlParts, method);
+  addHttpMethodToCurl(curlParts, method);
   addHeadersToCurl(curlParts, headers);
   
-  if (postData && shouldIncludeBody(method)) {
+  if (postData && isPostRequest(method)) {
     addBodyToCurl(curlParts, postData, headers);
   }
   

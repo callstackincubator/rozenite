@@ -17,7 +17,7 @@ export const CopyAsCurlButton = ({ selectedRequest }: CopyAsCurlButtonProps) => 
     const curlCommand = generateCurlCommand({
       method: selectedRequest.method,
       url: `${selectedRequest.domain}${selectedRequest.path}`,
-      headers: selectedRequest.headers,
+      headers: selectedRequest.requestHeaders,
       postData: selectedRequest.requestBody?.data,
     });
 

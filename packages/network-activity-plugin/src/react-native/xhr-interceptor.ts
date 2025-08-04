@@ -1,5 +1,7 @@
 /* eslint-disable prefer-rest-params */
 
+import { RequestPostData } from "../shared/client";
+
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
@@ -20,7 +22,7 @@ type XHRInterceptorOpenCallback = (
 ) => void;
 
 type XHRInterceptorSendCallback = (
-  data: string,
+  data: RequestPostData,
   request: XMLHttpRequest
 ) => void;
 
@@ -136,7 +138,7 @@ export const XHRInterceptor = {
     // register listeners to intercept the response, and invoke the callbacks.
     // $FlowFixMe[cannot-write]
     // $FlowFixMe[missing-this-annot]
-    XMLHttpRequest.prototype.send = function (data: string) {
+    XMLHttpRequest.prototype.send = function (data: RequestPostData) {
       if (sendCallback) {
         sendCallback(data, this);
       }

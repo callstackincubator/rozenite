@@ -15,7 +15,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
 
     if (type === 'application/json') {
       try {
-        const jsonData = JSON.parse(data);
+        const jsonData = JSON.parse(data as string);
         return (
           <div className="bg-gray-800 p-3 rounded border border-gray-700">
             <JsonTree data={jsonData} />
@@ -25,7 +25,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
         // Fallback to pre tag if JSON parsing fails
         return (
           <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
-            {data}
+            {String(data)}
           </pre>
         );
       }
@@ -34,7 +34,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
     // For non-JSON content types, use the existing pre tag
     return (
       <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
-        {data}
+        {String(data)}
       </pre>
     );
   };

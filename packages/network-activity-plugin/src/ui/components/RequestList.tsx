@@ -8,7 +8,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { NetworkEntry } from '../types';
-import { RequestId } from '../../shared/client';
+import { RequestPostData, RequestId } from '../../shared/client';
 import { getHttpHeaderValue } from '../utils/getHttpHeaderValue';
 
 type NetworkRequest = {
@@ -25,13 +25,14 @@ type NetworkRequest = {
   startTime: string;
   requestBody?: {
     type: string;
-    data: string;
+    data: RequestPostData;
   };
   responseBody?: {
     type: string;
     data: string | null;
   };
-  headers?: Record<string, string>;
+  requestHeaders?: Record<string, string>;
+  responseHeaders?: Record<string, string>;
 };
 
 type RequestListProps = {
@@ -205,7 +206,8 @@ const processNetworkEntries = (
       type: mapResourceType(entry.type || 'Other'),
       initiator: formatInitiator(entry.initiator),
       startTime: formatStartTime(entry.startTime || 0),
-      headers: entry.request?.headers,
+      requestHeaders: entry.request?.headers,
+      responseHeaders: entry.response?.headers,
       requestBody: entry.request?.postData
         ? {
             type: getHttpHeaderValue(entry.request.headers, 'content-type') || 'text/plain',

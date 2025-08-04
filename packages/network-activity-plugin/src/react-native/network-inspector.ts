@@ -1,4 +1,4 @@
-import { NetworkActivityDevToolsClient } from '../shared/client';
+import { NetworkActivityDevToolsClient, RequestPostData } from '../shared/client';
 import { getHttpHeaderValue } from '../ui/utils/getHttpHeaderValue';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { XHRInterceptor } from './xhr-interceptor';
@@ -113,7 +113,7 @@ export const getNetworkInspector = (
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const handleRequestSend = (data: string, request: XMLHttpRequest): void => {
+  const handleRequestSend = (data: RequestPostData, request: XMLHttpRequest): void => {
     const sendTime = Date.now();
 
     const requestId = generateRequestId();

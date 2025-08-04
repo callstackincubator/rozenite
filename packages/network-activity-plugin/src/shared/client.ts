@@ -5,11 +5,19 @@ export type HttpHeaders = Record<string, string>;
 export type RequestId = string;
 export type Timestamp = number;
 
+export type ReactNativeFormData = { _parts: [string, string | number | boolean | null][] };
+
+export type RequestPostData = 
+  | string
+  | object // Usually it is FormData in specific react-native format, but let's accept any object
+  | null 
+  | undefined;
+
 export type Request = {
   url: string;
   method: string;
   headers: HttpHeaders;
-  postData?: string;
+  postData?: RequestPostData;
 };
 
 export type Response = {

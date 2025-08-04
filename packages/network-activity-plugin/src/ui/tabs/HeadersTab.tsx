@@ -52,7 +52,7 @@ export const HeadersTab = ({
           </h4>
           <div className="space-y-1 text-sm font-mono">
             {(() => {
-              const responseHeaders = selectedRequest.headers;
+              const responseHeaders = selectedRequest.responseHeaders;
               if (responseHeaders && Object.keys(responseHeaders).length > 0) {
                 return Object.entries(responseHeaders).map(([key, value]) => (
                   <div key={key} className="flex">
@@ -79,7 +79,7 @@ export const HeadersTab = ({
           </h4>
           <div className="space-y-1 text-sm font-mono">
             {(() => {
-              const requestHeaders = selectedRequest.headers;
+              const requestHeaders = selectedRequest.requestHeaders;
               if (requestHeaders && Object.keys(requestHeaders).length > 0) {
                 return Object.entries(requestHeaders).map(([key, value]) => (
                   <div key={key} className="flex">
