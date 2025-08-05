@@ -49,7 +49,12 @@ export const getWebSocketInspector = (): WebSocketInspector => {
 
       webSocketInterceptor.setCloseCallback(
         (code: number | null, reason: string | null, socketId: number) => {
-          const url = socketUrlMap.get(socketId) || '';
+          const url = socketUrlMap.get(socketId);
+
+          if (!url) {
+            return;
+          }
+
           const event: WebSocketEvent = {
             type: 'websocket-close',
             url,
@@ -65,7 +70,12 @@ export const getWebSocketInspector = (): WebSocketInspector => {
 
       webSocketInterceptor.setOnMessageCallback(
         (data: string, socketId: number) => {
-          const url = socketUrlMap.get(socketId) || '';
+          const url = socketUrlMap.get(socketId);
+
+          if (!url) {
+            return;
+          }
+
           const event: WebSocketEvent = {
             type: 'websocket-message-received',
             url,
@@ -80,7 +90,12 @@ export const getWebSocketInspector = (): WebSocketInspector => {
 
       webSocketInterceptor.setOnErrorCallback(
         (error: string, socketId: number) => {
-          const url = socketUrlMap.get(socketId) || '';
+          const url = socketUrlMap.get(socketId);
+
+          if (!url) {
+            return;
+          }
+
           const event: WebSocketEvent = {
             type: 'websocket-error',
             url,
@@ -93,7 +108,12 @@ export const getWebSocketInspector = (): WebSocketInspector => {
       );
 
       webSocketInterceptor.setSendCallback((data: string, socketId: number) => {
-        const url = socketUrlMap.get(socketId) || '';
+        const url = socketUrlMap.get(socketId);
+
+        if (!url) {
+          return;
+        }
+
         const event: WebSocketEvent = {
           type: 'websocket-message-sent',
           url,
@@ -106,7 +126,12 @@ export const getWebSocketInspector = (): WebSocketInspector => {
       });
 
       webSocketInterceptor.setOnOpenCallback((socketId: number) => {
-        const url = socketUrlMap.get(socketId) || '';
+        const url = socketUrlMap.get(socketId);
+
+        if (!url) {
+          return;
+        }
+
         const event: WebSocketEvent = {
           type: 'websocket-open',
           url,
@@ -118,7 +143,12 @@ export const getWebSocketInspector = (): WebSocketInspector => {
 
       webSocketInterceptor.setOnCloseCallback(
         (error: { code: number; reason?: string }, socketId: number) => {
-          const url = socketUrlMap.get(socketId) || '';
+          const url = socketUrlMap.get(socketId);
+
+          if (!url) {
+            return;
+          }
+
           const event: WebSocketEvent = {
             type: 'websocket-close',
             url,

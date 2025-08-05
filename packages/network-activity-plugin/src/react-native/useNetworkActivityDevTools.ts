@@ -45,7 +45,14 @@ export const useNetworkActivityDevTools = () => {
       });
     });
 
-    websocketInspector.enable();
+    client.onMessage('network-enable', () => {
+      websocketInspector.enable();
+    });
+
+    client.onMessage('network-disable', () => {
+      websocketInspector.disable();
+    });
+
     return () => {
       // Subscriptions will be disposed by the inspector
       websocketInspector.dispose();

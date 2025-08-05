@@ -31,7 +31,6 @@
     "proxy-memoize": "^3.0.1",
     "react": "*",
     "react-json-tree": "^0.20.0",
-    "react-native": "*",
     "rozenite": "workspace:*",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.17",

@@ -129,7 +129,7 @@ export const getWebSocketInterceptor = (): WebSocketInterceptor => {
    * @see https://github.com/facebook/react-native/commit/d2adb976abebcb0f38750903d98fbb5a3f50924b
    */
 
-  if (Platform.constants.reactNativeVersion.major >= 0.79) {
+  if (Platform.constants.reactNativeVersion.minor >= 79) {
     return WebSocketInterceptor as WebSocketInterceptor;
   } else {
     const WebSocketInterceptorPreRN079 =
