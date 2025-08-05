@@ -14,7 +14,7 @@ export const logger = {
   },
 
   debug: (message: string, ...args: unknown[]) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.ROZENITE_DEBUG === 'true') {
       console.log(`${PREFIX} [DEBUG] ${message}`, ...args);
     }
   },
