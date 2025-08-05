@@ -7,7 +7,7 @@ export const getRepository = async (): Promise<PluginRepository> => {
     return repository;
   }
 
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && process.env.USE_DATABASE) {
     repository = import('./neon-repository').then(
       ({ PostgresPluginRepository }) => new PostgresPluginRepository()
     );
