@@ -5,6 +5,7 @@ import { logger } from './logger.js';
 import { getInstalledPlugins } from './auto-discovery.js';
 import type { RozeniteConfig } from './config.js';
 import { getDevModePackage } from './dev-mode.js';
+import { verifyReactNativeVersion } from './verify-react-native-version.js';
 
 export type RozeniteMiddleware = Application;
 export type RozeniteInstance = {
@@ -15,6 +16,8 @@ export type RozeniteInstance = {
 export const initializeRozenite = (
   options: RozeniteConfig
 ): RozeniteInstance => {
+  verifyReactNativeVersion(options.projectRoot);
+
   const devModePackage = getDevModePackage(options.projectRoot);
 
   if (devModePackage) {
@@ -38,7 +41,7 @@ export const initializeRozenite = (
   return {
     middleware: getMiddleware(
       allInstalledPlugins,
-      options.destroyOnDetachPlugins || [],
+      options.destroyOnDetachPlugins || []
     ),
     devModePackage,
   };

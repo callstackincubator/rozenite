@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 
-const getReactNativePackagePath = (projectRoot: string): string => {
+export const getReactNativePackagePath = (projectRoot: string): string => {
   const input = require.resolve('react-native', { paths: [projectRoot] });
   return path.dirname(input);
 };
