@@ -2,18 +2,16 @@ import { getGlobalNamespace } from '../global-namespace.js';
 import { UI } from './rn-devtools-frontend.js';
 
 const WELCOME_VIEW_ID = 'rozenite-welcome';
+const ROZENITE_WELCOME_URL = 'https://rozenite.dev/welcome';
 
 class RozeniteWelcomeView extends UI.View.SimpleView {
   constructor() {
-    super('Welcome to Rozenite 💎', true, WELCOME_VIEW_ID);
+    super('Rozenite 💎', true, WELCOME_VIEW_ID);
 
     const { installedPlugins } = getGlobalNamespace();
     const hasInstalledPlugins = installedPlugins.length > 0;
 
-    const url = new URL(
-      'http://localhost:3000/welcome',
-      window.location.origin
-    );
+    const url = new URL(ROZENITE_WELCOME_URL, window.location.origin);
     url.searchParams.set(
       'withPluginsInstalled',
       hasInstalledPlugins.toString()
