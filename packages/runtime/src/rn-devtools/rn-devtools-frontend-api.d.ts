@@ -1,6 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 declare module '/rozenite/ui/legacy/legacy.js' {
+  export interface TabbedPaneTab {
+    id: string;
+  }
+
+  export interface TabbedPane {
+    tabsById: Map<string, TabbedPaneTab>;
+    insertBefore(tab: TabbedPaneTab, before: number): void;
+    selectTab(tabId: string): void;
+  }
+
   export namespace View {
     export class SimpleView extends Widget.Widget {
       contentElement: HTMLElement;
@@ -43,6 +53,7 @@ declare module '/rozenite/ui/legacy/legacy.js' {
       static instance(): InspectorView;
       addPanel(panel: View.SimpleView): void;
       hasPanel(panelName: string): boolean;
+      tabbedPane: TabbedPane;
     }
   }
 }
