@@ -8,10 +8,6 @@
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/network-activity-plugin"
   },
   {
-    "npmUrl": "https://www.npmjs.com/package/@rozenite/mmkv-plugin",
-    "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/mmkv-plugin"
-  },
-  {
     "npmUrl": "https://www.npmjs.com/package/@rozenite/tanstack-query-plugin",
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/tanstack-query-plugin"
   },
