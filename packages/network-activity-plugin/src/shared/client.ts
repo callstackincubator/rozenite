@@ -1,5 +1,6 @@
 import { RozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { WebSocketEventMap } from './websocket-events';
+import { SSEEventMap } from './sse-events';
 
 export type HttpHeaders = Record<string, string>;
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
@@ -78,7 +79,8 @@ export type NetworkActivityEventMap = {
     requestId: RequestId;
     body: string | null;
   };
-} & WebSocketEventMap;
+} & WebSocketEventMap &
+  SSEEventMap;
 
 export type NetworkActivityDevToolsClient =
   RozeniteDevToolsClient<NetworkActivityEventMap>;
