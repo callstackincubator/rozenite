@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { ScrollArea } from '../components/ScrollArea';
-import { HttpNetworkEntry } from '../state/model';
+import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
 import { getStatusColor } from '../utils/getStatusColor';
 
 export type HeadersTabProps = {
-  selectedRequest: HttpNetworkEntry;
+  selectedRequest: HttpNetworkEntry | SSENetworkEntry;
 };
 
 export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {

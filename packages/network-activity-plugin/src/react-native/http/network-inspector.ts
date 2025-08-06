@@ -118,6 +118,8 @@ export const getNetworkInspector = (
     const sendTime = Date.now();
 
     const requestId = generateRequestId();
+    request._rozeniteRequestId = requestId;
+
     const initiator = getInitiatorFromStack();
 
     networkRequestsRegistry.addEntry(requestId, request);

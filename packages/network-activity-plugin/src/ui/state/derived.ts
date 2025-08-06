@@ -4,6 +4,7 @@ import {
   ProcessedRequest,
   HttpNetworkEntry,
   WebSocketNetworkEntry,
+  SSENetworkEntry,
 } from './model';
 
 export const getProcessedRequests = memoize((state: NetworkActivityState) => {
@@ -34,6 +35,18 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
         timestamp: wsEntry.timestamp,
         duration: wsEntry.duration,
         method: 'WS',
+        httpStatus: 0,
+      });
+    } else if (entry.type === 'sse') {
+      const sseEntry = entry as SSENetworkEntry;
+      requests.push({
+        id: sseEntry.id,
+        type: 'sse',
+        name: sseEntry.request.url,
+        status: sseEntry.status,
+        timestamp: sseEntry.timestamp,
+        duration: sseEntry.duration,
+        method: 'SSE',
         httpStatus: 0,
       });
     }
@@ -79,6 +92,18 @@ export const getRequestSummary = (
         timestamp: wsEntry.timestamp,
         duration: wsEntry.duration,
         method: 'WS',
+        httpStatus: 0,
+      };
+    } else if (entry.type === 'sse') {
+      const sseEntry = entry as SSENetworkEntry;
+      return {
+        id: sseEntry.id,
+        type: 'sse',
+        name: sseEntry.request.url,
+        status: sseEntry.status,
+        timestamp: sseEntry.timestamp,
+        duration: sseEntry.duration,
+        method: 'SSE',
         httpStatus: 0,
       };
     }
