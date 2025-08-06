@@ -52,7 +52,6 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
         url: data.request.url,
         method: data.request.method,
         headers: data.request.headers,
-        postData: data.request.postData,
         status: 'pending',
         startTime: data.timestamp,
         type: data.type,

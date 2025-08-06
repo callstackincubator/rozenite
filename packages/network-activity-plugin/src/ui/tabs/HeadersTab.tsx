@@ -11,10 +11,14 @@ export const HeadersTab = ({
   selectedRequest,
   getStatusColor,
 }: HeadersTabProps) => {
+  const requestBodyType = selectedRequest.requestBody?.data?.type;
+
+  const isCopyAsCurlEnabled = requestBodyType !== 'binary';
+
   return (
     <ScrollArea className="h-full min-h-0">
       <div className="p-4 space-y-4">
-        <CopyAsCurlButton selectedRequest={selectedRequest} />
+        {isCopyAsCurlEnabled && <CopyAsCurlButton selectedRequest={selectedRequest} />}
         <div>
           <h4 className="text-sm font-medium text-gray-300 mb-2">General</h4>
           <div className="space-y-1 text-sm">
@@ -39,7 +43,7 @@ export const HeadersTab = ({
               <div className="flex">
                 <span className="w-32 text-gray-400">Content-Type:</span>
                 <span className="text-blue-400">
-                  {selectedRequest.requestBody.type}
+                  {selectedRequest.requestBody.contentType}
                 </span>
               </div>
             )}

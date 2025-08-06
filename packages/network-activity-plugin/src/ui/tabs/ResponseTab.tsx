@@ -1,16 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { ScrollArea } from '../components/ScrollArea';
 import { JsonTree } from '../components/JsonTree';
+import { NetworkRequest } from '../components/RequestList';
 
 export type ResponseTabProps = {
-  selectedRequest: {
-    id: string;
-    type: string;
-    responseBody?: {
-      type: string;
-      data: string | null;
-    };
-  };
+  selectedRequest: NetworkRequest;
   onRequestResponseBody: (requestId: string) => void;
 };
 
@@ -39,7 +33,7 @@ export const ResponseTab = ({
       );
     }
 
-    const { type, data } = selectedRequest.responseBody;
+    const { contentType, data } = selectedRequest.responseBody;
 
     // Handle null data
     if (data === null) {
@@ -51,14 +45,14 @@ export const ResponseTab = ({
     }
 
     // Handle JSON content
-    if (type === 'application/json') {
+    if (contentType === 'application/json') {
       try {
         const jsonData = JSON.parse(data);
         return (
           <div className="space-y-4">
             <div className="text-sm mb-2">
               <span className="text-gray-400">Content-Type: </span>
-              <span className="text-blue-400">{type}</span>
+              <span className="text-blue-400">{contentType}</span>
             </div>
             <div className="bg-gray-800 p-3 rounded border border-gray-700">
               <JsonTree data={jsonData} />
@@ -71,7 +65,7 @@ export const ResponseTab = ({
           <div className="space-y-4">
             <div className="text-sm mb-2">
               <span className="text-gray-400">Content-Type: </span>
-              <span className="text-blue-400">{type}</span>
+              <span className="text-blue-400">{contentType}</span>
             </div>
             <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
               {data}
@@ -85,12 +79,12 @@ export const ResponseTab = ({
     }
 
     // Handle HTML content
-    if (type === 'text/html') {
+    if (contentType === 'text/html') {
       return (
         <div className="space-y-4">
           <div className="text-sm mb-2">
             <span className="text-gray-400">Content-Type: </span>
-            <span className="text-blue-400">{type}</span>
+            <span className="text-blue-400">{contentType}</span>
           </div>
           <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
             {data}
@@ -101,15 +95,15 @@ export const ResponseTab = ({
 
     // Handle other text content types
     if (
-      type.startsWith('text/') ||
-      type === 'application/xml' ||
-      type === 'application/javascript'
+      contentType.startsWith('text/') ||
+      contentType === 'application/xml' ||
+      contentType === 'application/javascript'
     ) {
       return (
         <div className="space-y-4">
           <div className="text-sm mb-2">
             <span className="text-gray-400">Content-Type: </span>
-            <span className="text-blue-400">{type}</span>
+            <span className="text-blue-400">{contentType}</span>
           </div>
           <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
             {data}
@@ -123,7 +117,7 @@ export const ResponseTab = ({
       <div className="space-y-4">
         <div className="text-sm mb-2">
           <span className="text-gray-400">Content-Type: </span>
-          <span className="text-blue-400">{type}</span>
+          <span className="text-blue-400">{contentType}</span>
         </div>
         <div className="text-sm text-gray-400">
           Binary content not shown - {data.length} bytes

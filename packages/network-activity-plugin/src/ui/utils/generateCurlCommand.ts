@@ -1,27 +1,20 @@
-import { ReactNativeFormData, RequestPostData } from '../../shared/client';
+import { RequestPostData } from '../../shared/client';
 import { escapeShellArg } from './escapeShellArg';
-import { getHttpHeaderValue } from './getHttpHeaderValue';
 
 const BASE_TAB_INDENT = 2; // Number of spaces for indentation
 
-function stringifyData(postData: RequestPostData): string {
+function stringifyData(postData: unknown): string {
   try {
-    const jsonString = JSON.stringify(typeof postData === 'string' ? JSON.parse(postData) : postData, null, BASE_TAB_INDENT * 4);
+    const jsonString = JSON.stringify(
+      typeof postData === 'string' ? JSON.parse(postData) : postData,
+      null,
+      BASE_TAB_INDENT * 4
+    );
 
     return jsonString.replace(/([}\]])$/, '$1'.padStart(BASE_TAB_INDENT * 2));
   } catch {
     return String(postData);
   }
-}
-
-function detectPostDataType(postData: RequestPostData) {
-  if (postData === null || postData === undefined) return 'empty';
-  
-  if (typeof postData === 'object' && '_parts' in postData && Array.isArray(postData._parts)) {
-    return 'formdata';
-  }
-
-  return 'unknown';
 }
 
 // Adds a curl parameter with proper indentation
@@ -30,7 +23,7 @@ function addCurlParam(curlParts: string[], flag: string, value: string): void {
 }
 
 function addHttpMethodToCurl(curlParts: string[], method: string): void {
-  if (method && isPostRequest(method)) {
+  if (method && hasRequestBody(method)) {
     addCurlParam(curlParts, '-X', method.toUpperCase());
   }
 }
@@ -41,30 +34,28 @@ function addHeadersToCurl(curlParts: string[], headers: Record<string, string>):
   });
 }
 
-function isPostRequest(method: string): boolean {
-  return method.toLowerCase() !== 'get';
+function hasRequestBody(method: string): boolean {
+  const methodsWithBody = ['POST', 'PUT', 'PATCH', 'DELETE'];
+
+  return methodsWithBody.includes(method.toUpperCase());
 }
 
-function addBodyToCurl(curlParts: string[], postData: RequestPostData, headers: Record<string, string>): void {
-  const contentType = getHttpHeaderValue(headers, 'content-type');
-  const dataType = detectPostDataType(postData);
-
-  console.log(postData, contentType, dataType, typeof postData);
-
-  if (dataType === 'empty') {
+function addBodyToCurl(curlParts: string[], postData: RequestPostData): void {
+  if (!postData) {
     return;
   }
 
-  // Special case for React Native FormData
-  if (dataType === 'formdata' && contentType?.includes('multipart/form-data')) {
-    const formParts = (postData as ReactNativeFormData)._parts.map(([key, value]) => `${key}=${value}`);
+  const { type, value } = postData;
+
+  if (type === 'form-data') {
+    const formParts = Object.entries(value).map(([key, value]) => `${key}=${stringifyData(value)}`);
 
     formParts.forEach(part => addCurlParam(curlParts, '--form', escapeShellArg(part)));
 
     return;
   }
 
-  addCurlParam(curlParts, '--data-raw', escapeShellArg(stringifyData(postData)));
+  addCurlParam(curlParts, '--data-raw', escapeShellArg(stringifyData(value)));
 }
 
 export function generateCurlCommand(request: {
@@ -80,8 +71,8 @@ export function generateCurlCommand(request: {
   addHttpMethodToCurl(curlParts, method);
   addHeadersToCurl(curlParts, headers);
   
-  if (postData && isPostRequest(method)) {
-    addBodyToCurl(curlParts, postData, headers);
+  if (postData && hasRequestBody(method)) {
+    addBodyToCurl(curlParts, postData);
   }
   
   return curlParts.join(' \\\n');

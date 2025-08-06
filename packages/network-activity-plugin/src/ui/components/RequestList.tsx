@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { NetworkEntry } from '../types';
 import { RequestPostData, RequestId } from '../../shared/client';
-import { getHttpHeaderValue } from '../utils/getHttpHeaderValue';
+import { getHttpHeaderValue } from '../../utils/getHttpHeaderValue';
 
 type NetworkRequest = {
   id: string;
@@ -24,11 +24,11 @@ type NetworkRequest = {
   initiator: string;
   startTime: string;
   requestBody?: {
-    type: string;
+    contentType: string;
     data: RequestPostData;
   };
   responseBody?: {
-    type: string;
+    contentType: string;
     data: string | null;
   };
   requestHeaders?: Record<string, string>;
@@ -210,13 +210,13 @@ const processNetworkEntries = (
       responseHeaders: entry.response?.headers,
       requestBody: entry.request?.postData
         ? {
-            type: getHttpHeaderValue(entry.request.headers, 'content-type') || 'text/plain',
-            data: entry.request.postData,
+            contentType: getHttpHeaderValue(entry.request.headers, 'content-type') || 'text/plain',
+            data: entry.request?.postData,
           }
         : undefined,
       responseBody: entry.responseBody
         ? {
-            type: entry.response?.contentType || 'application/octet-stream',
+            contentType: entry.response?.contentType || 'application/octet-stream',
             data: entry.responseBody.body,
           }
         : undefined,

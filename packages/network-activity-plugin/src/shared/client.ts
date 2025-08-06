@@ -5,13 +5,23 @@ export type HttpHeaders = Record<string, string>;
 export type RequestId = string;
 export type Timestamp = number;
 
-export type ReactNativeFormData = { _parts: [string, string | number | boolean | null][] };
-
-export type RequestPostData = 
+export type XHRPostData = 
   | string
-  | object // Usually it is FormData in specific react-native format, but let's accept any object
+  | Blob
+  | FormData
+  | ArrayBuffer
+  | ArrayBufferView
+  | unknown
   | null 
   | undefined;
+
+export type RequestPostData = 
+  | { type: 'text', value: string }
+  | { type: 'form-data', value: Record<string, unknown> }
+  | { 
+      type: 'binary', 
+      value: { size: number; type?: string; name?: string; } 
+    };
 
 export type Request = {
   url: string;

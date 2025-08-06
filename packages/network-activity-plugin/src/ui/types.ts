@@ -5,7 +5,6 @@ import {
   Initiator,
   ResourceType,
   HttpHeaders,
-  RequestPostData,
 } from '../shared/client';
 
 export type NetworkEntry = {
@@ -13,7 +12,6 @@ export type NetworkEntry = {
   url: string;
   method: string;
   headers: HttpHeaders;
-  postData?: RequestPostData;
   status: 'pending' | 'loading' | 'finished' | 'failed';
   startTime: number;
   endTime?: number;
