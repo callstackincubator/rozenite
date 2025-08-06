@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/vite-plugin",
-  "version": "1.0.0-alpha.7",
+  "version": "1.0.0-alpha.8",
   "description": "Vite plugin for developing React Native DevTools plugins with hot reload and development tools",
   "type": "module",
   "main": "./dist/index.cjs",

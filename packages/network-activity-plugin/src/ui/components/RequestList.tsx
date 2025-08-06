@@ -1,42 +1,33 @@
-import * as React from 'react';
+import { useMemo, useState } from 'react';
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
+  SortingFn,
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { NetworkEntry } from '../types';
+import { ProcessedRequest } from '../state/model';
 import { RequestId } from '../../shared/client';
-import { getHttpHeaderValue } from '../utils/getHttpHeaderValue';
+import {
+  useNetworkActivityActions,
+  useProcessedRequests,
+  useSelectedRequestId,
+} from '../state/hooks';
+import { getStatusColor } from '../utils/getStatusColor';
 
 type NetworkRequest = {
-  id: string;
+  id: RequestId;
   name: string;
-  status: number;
+  status: string | number;
   method: string;
   domain: string;
   path: string;
   size: string;
   time: string;
   type: string;
-  initiator: string;
   startTime: string;
-  requestBody?: {
-    type: string;
-    data: string;
-  };
-  responseBody?: {
-    type: string;
-    data: string | null;
-  };
-};
-
-type RequestListProps = {
-  networkEntries: Map<RequestId, NetworkEntry>;
-  selectedRequestId: RequestId | null;
-  onRequestSelect: (requestId: RequestId) => void;
 };
 
 const formatSize = (bytes: number): string => {
@@ -89,64 +80,7 @@ const generateName = (url: string): string => {
   }
 };
 
-const formatInitiator = (initiator: any): string => {
-  if (!initiator) return 'Other';
-  if (initiator.type === 'script' && initiator.url) {
-    try {
-      const url = new URL(initiator.url);
-      const filename = url.pathname.split('/').pop() || url.hostname;
-      const line = initiator.lineNumber ? `:${initiator.lineNumber}` : '';
-      return `${filename}${line}`;
-    } catch {
-      return 'Script';
-    }
-  }
-  return initiator.type || 'Other';
-};
-
-const mapResourceType = (type: string): string => {
-  const typeMap: Record<string, string> = {
-    Document: 'document',
-    Stylesheet: 'stylesheet',
-    Image: 'img',
-    Media: 'media',
-    Font: 'font',
-    Script: 'script',
-    XHR: 'xhr',
-    Fetch: 'xhr',
-    EventSource: 'eventsource',
-    WebSocket: 'websocket',
-    Manifest: 'manifest',
-    Other: 'other',
-    Ping: 'ping',
-    CSPViolationReport: 'csp',
-    Preflight: 'preflight',
-    Subresource: 'subresource',
-  };
-  return typeMap[type] || 'other';
-};
-
-const getTypeColor = (type: string) => {
-  const colors: Record<string, string> = {
-    document: 'bg-blue-600',
-    script: 'bg-yellow-600',
-    stylesheet: 'bg-purple-600',
-    xhr: 'bg-green-600',
-    img: 'bg-pink-600',
-    font: 'bg-orange-600',
-  };
-  return colors[type] || 'bg-gray-600';
-};
-
-const getStatusColor = (status: number) => {
-  if (status >= 200 && status < 300) return 'text-green-400';
-  if (status >= 300 && status < 400) return 'text-yellow-400';
-  if (status >= 400) return 'text-red-400';
-  return 'text-gray-400';
-};
-
-// Custom sorting functions
-const sortSize = (rowA: any, rowB: any, columnId: string) => {
+const sortSize: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
   const a = rowA.getValue(columnId) as string;
   const b = rowB.getValue(columnId) as string;
 
@@ -168,7 +102,7 @@ const sortSize = (rowA: any, rowB: any, columnId: string) => {
   return getNumericValue(a) - getNumericValue(b);
 };
 
-const sortTime = (rowA: any, rowB: any, columnId: string) => {
+const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
   const a = rowA.getValue(columnId) as string;
   const b = rowB.getValue(columnId) as string;
 
@@ -184,38 +118,24 @@ const sortTime = (rowA: any, rowB: any, columnId: string) => {
   return getNumericValue(a) - getNumericValue(b);
 };
 
-// Convert NetworkEntry to NetworkRequest for UI display
-const processNetworkEntries = (
-  networkEntries: Map<RequestId, NetworkEntry>
+const processNetworkRequests = (
+  processedRequests: ProcessedRequest[]
 ): NetworkRequest[] => {
-  return Array.from(networkEntries.values()).map((entry): NetworkRequest => {
-    const { domain, path } = extractDomainAndPath(entry.url);
-    const duration = entry.duration || 0;
+  return processedRequests.map((request): NetworkRequest => {
+    const { domain, path } = extractDomainAndPath(request.name);
+    const duration = request.duration || 0;
 
     return {
-      id: entry.requestId,
-      name: generateName(entry.url),
-      status: entry.response?.status || 0,
-      method: entry.request?.method || 'GET',
+      id: request.id,
+      name: generateName(request.name),
+      status: request.httpStatus || request.status,
+      method: request.method,
       domain,
       path,
-      size: formatSize(entry.size || 0),
+      size: formatSize(request.size || 0),
       time: formatDuration(duration),
-      type: mapResourceType(entry.type || 'Other'),
-      initiator: formatInitiator(entry.initiator),
-      startTime: formatStartTime(entry.startTime || 0),
-      requestBody: entry.request?.postData
-        ? {
-            type: getHttpHeaderValue(entry.request.headers, 'content-type') || 'text/plain',
-            data: entry.request.postData,
-          }
-        : undefined,
-      responseBody: entry.responseBody
-        ? {
-            type: entry.response?.contentType || 'application/octet-stream',
-            data: entry.responseBody.body,
-          }
-        : undefined,
+      type: request.type,
+      startTime: formatStartTime(request.timestamp),
     };
   });
 };
@@ -274,16 +194,15 @@ const columns = [
   }),
 ];
 
-export const RequestList: React.FC<RequestListProps> = ({
-  networkEntries,
-  selectedRequestId,
-  onRequestSelect,
-}) => {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+export const RequestList = () => {
+  const actions = useNetworkActivityActions();
+  const processedRequests = useProcessedRequests();
+  const selectedRequestId = useSelectedRequestId();
+  const [sorting, setSorting] = useState<SortingState>([]);
 
-  const requests = React.useMemo(() => {
-    return processNetworkEntries(networkEntries);
-  }, [networkEntries]);
+  const requests = useMemo(() => {
+    return processNetworkRequests(processedRequests);
+  }, [processedRequests]);
 
   const table = useReactTable({
     data: requests,
@@ -295,6 +214,10 @@ export const RequestList: React.FC<RequestListProps> = ({
       sorting,
     },
   });
+
+  const onRequestSelect = (requestId: RequestId): void => {
+    actions.setSelectedRequest(requestId);
+  };
 
   return (
     <div className="flex-1 overflow-auto">
@@ -367,11 +290,5 @@ export {
   formatStartTime,
   extractDomainAndPath,
   generateName,
-  formatInitiator,
-  mapResourceType,
-  getTypeColor,
-  getStatusColor,
-  processNetworkEntries,
+  processNetworkRequests,
 };
-
-export type { NetworkRequest };

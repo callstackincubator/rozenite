@@ -1,5 +1,5 @@
-import { NetworkActivityDevToolsClient } from '../shared/client';
-import { getHttpHeaderValue } from '../ui/utils/getHttpHeaderValue';
+import { HttpMethod, NetworkActivityDevToolsClient } from '../../shared/client';
+import { getHttpHeaderValue } from '../../ui/utils/getHttpHeaderValue';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { XHRInterceptor } from './xhr-interceptor';
 
@@ -42,7 +42,8 @@ const getResponseBody = async (
 ): Promise<string | null> => {
   const responseType = request.responseType;
 
-  if (responseType === 'text') {
+  // Response type is empty in certain cases, like when using axios.
+  if (responseType === '' || responseType === 'text') {
     return request.responseText as string;
   }
 
@@ -125,10 +126,10 @@ export const getNetworkInspector = (
 
     pluginClient.send('request-sent', {
       requestId: requestId,
-      timestamp: sendTime / 1000,
+      timestamp: sendTime,
       request: {
         url: request._url as string,
-        method: request._method as string,
+        method: request._method as HttpMethod,
         headers: request._headers,
         postData: data,
       },
@@ -145,7 +146,7 @@ export const getNetworkInspector = (
     request.addEventListener('load', () => {
       pluginClient.send('response-received', {
         requestId: requestId,
-        timestamp: Date.now() / 1000,
+        timestamp: Date.now(),
         type: 'XHR',
         response: {
           url: request._url as string,
@@ -154,7 +155,7 @@ export const getNetworkInspector = (
           headers: request.responseHeaders || {},
           contentType: getContentType(request),
           size: getResponseSize(request),
-          responseTime: Date.now() / 1000,
+          responseTime: Date.now(),
         },
       });
     });
@@ -162,7 +163,7 @@ export const getNetworkInspector = (
     request.addEventListener('loadend', () => {
       pluginClient.send('request-completed', {
         requestId: requestId,
-        timestamp: Date.now() / 1000,
+        timestamp: Date.now(),
         duration: Date.now() - sendTime,
         size: getResponseSize(request),
         ttfb,
@@ -172,7 +173,7 @@ export const getNetworkInspector = (
     request.addEventListener('error', () => {
       pluginClient.send('request-failed', {
         requestId: requestId,
-        timestamp: Date.now() / 1000,
+        timestamp: Date.now(),
         type: 'XHR',
         error: 'Failed',
         canceled: false,
@@ -182,7 +183,7 @@ export const getNetworkInspector = (
     request.addEventListener('abort', () => {
       pluginClient.send('request-failed', {
         requestId: requestId,
-        timestamp: Date.now() / 1000,
+        timestamp: Date.now(),
         type: 'XHR',
         error: 'Aborted',
         canceled: true,

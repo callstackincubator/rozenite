@@ -4,6 +4,7 @@ import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginOpenGraph } from 'rsbuild-plugin-open-graph';
 import { defineConfig } from 'rspress/config';
 import pluginSitemap from 'rspress-plugin-sitemap';
+import { pluginDirectoryPlugin } from './plugins/plugin-directory';
 
 export default defineConfig({
   root: path.join(__dirname, 'src'),
@@ -58,5 +59,6 @@ export default defineConfig({
     }),
     // @ts-expect-error outdated @rspress/shared declared as dependency
     pluginSitemap({ domain: 'https://rozenite.dev' }),
+    pluginDirectoryPlugin(),
   ],
 });

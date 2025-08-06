@@ -1,0 +1,178 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 16px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ctaContainer > div::before {
+  display: none;
+}
+
+.footerContainer {
+  margin-top: auto;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px;
+  border-top: 1px solid var(--rp-c-divider-light);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.paginationButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 8px;
+  background-color: var(--rp-c-bg);
+  color: var(--rp-c-text-1);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.paginationButton:hover {
+  background-color: var(--rp-c-bg-soft);
+  border-color: var(--rp-c-brand);
+  color: var(--rp-c-brand);
+}
+
+.paginationButton.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--rp-c-bg-soft);
+}
+
+.paginationButton.active {
+  background-color: var(--rp-c-brand);
+  border-color: var(--rp-c-brand);
+  color: white;
+}
+
+.paginationInfo {
+  margin: 0 8px;
+  color: var(--rp-c-text-2);
+  font-size: 14px;
+}
+
+.pageNumbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pageNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 6px;
+  background-color: var(--rp-c-bg);
+  color: var(--rp-c-text-1);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.pageNumber:hover {
+  background-color: var(--rp-c-bg-soft);
+  border-color: var(--rp-c-brand);
+  color: var(--rp-c-brand);
+}
+
+.pageNumber.active {
+  background-color: var(--rp-c-brand);
+  border-color: var(--rp-c-brand);
+  color: white;
+}
+
+/* Responsive breakpoints */
+@media (min-width: 768px) {
+  .footer {
+    padding: 32px 24px;
+  }
+
+  .paginationButton {
+    min-width: 100px;
+    height: 40px;
+  }
+
+  .paginationInfo {
+    margin: 0 16px;
+  }
+
+  .pageNumber {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 24px;
+  }
+
+  .list {
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    padding: 32px;
+  }
+
+  .list {
+    gap: 32px;
+    margin-bottom: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    gap: 8px;
+  }
+
+  .pageNumbers {
+    gap: 2px;
+  }
+}

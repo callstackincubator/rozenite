@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -260,7 +261,7 @@ const TodoCard: React.FC<{ todo: Todo }> = ({ todo }) => (
   </View>
 );
 
-export const NetworkTestScreen: React.FC = () => {
+const HTTPTestComponent: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<
     'users' | 'posts' | 'todos' | 'slow' | 'unreliable' | 'create'
   >('users');
@@ -335,7 +336,7 @@ export const NetworkTestScreen: React.FC = () => {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <Text style={styles.title}>Network Test</Text>
+      <Text style={styles.title}>HTTP Test</Text>
       <Text style={styles.subtitle}>Testing TanStack Query with real APIs</Text>
 
       <View style={styles.tabContainer}>
@@ -514,6 +515,321 @@ export const NetworkTestScreen: React.FC = () => {
         }
         showsVerticalScrollIndicator={false}
       />
+    </View>
+  );
+};
+
+const WEBSOCKET_CONFIG = {
+  URL: 'wss://echo.websocket.org',
+  MESSAGE_INTERVAL: 5000,
+  DEFAULT_MESSAGE: 'hello world',
+  MAX_MESSAGES_DISPLAY: 10,
+} as const;
+
+const useWebSocket = (
+  url: string,
+  messageIntervalMs = WEBSOCKET_CONFIG.MESSAGE_INTERVAL
+) => {
+  const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
+  const [isConnected, setIsConnected] = React.useState(false);
+  const [messages, setMessages] = React.useState<string[]>([]);
+  const [dataType, setDataType] = React.useState<'text' | 'binary' | 'json'>(
+    'text'
+  );
+  const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const addMessage = React.useCallback((message: string) => {
+    setMessages((prev) => [...prev, message]);
+  }, []);
+
+  const clearMessages = React.useCallback(() => {
+    setMessages([]);
+  }, []);
+
+  const sendMessage = React.useCallback(
+    (ws: WebSocket, message: string, type: 'text' | 'binary' | 'json') => {
+      if (ws.readyState === WebSocket.OPEN) {
+        if (type === 'binary') {
+          const encoder = new TextEncoder();
+          const binaryData = encoder.encode(message);
+          ws.send(binaryData);
+          addMessage(`Sent binary: ${message}`);
+        } else if (type === 'json') {
+          const jsonData = JSON.stringify({ message, timestamp: Date.now() });
+          ws.send(jsonData);
+          addMessage(`Sent JSON: ${jsonData}`);
+        } else {
+          ws.send(message);
+          addMessage(`Sent text: ${message}`);
+        }
+      }
+    },
+    [addMessage]
+  );
+
+  const startMessageInterval = React.useCallback(
+    (ws: WebSocket) => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      intervalRef.current = setInterval(() => {
+        sendMessage(ws, WEBSOCKET_CONFIG.DEFAULT_MESSAGE, dataType);
+      }, messageIntervalMs);
+    },
+    [sendMessage, dataType, messageIntervalMs]
+  );
+
+  const stopMessageInterval = React.useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const connect = React.useCallback(() => {
+    try {
+      const ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        setIsConnected(true);
+        addMessage('Connected to WebSocket server');
+        startMessageInterval(ws);
+      };
+
+      ws.onmessage = (event) => {
+        if (event.data instanceof ArrayBuffer) {
+          addMessage(
+            `Received binary: ${String(Array.from(new Uint8Array(event.data)))}`
+          );
+        } else {
+          addMessage(`Received: ${event.data}`);
+        }
+      };
+
+      ws.onerror = (error) => {
+        addMessage(`Error: ${error}`);
+      };
+
+      ws.onclose = () => {
+        setIsConnected(false);
+        addMessage('Disconnected from WebSocket server');
+        stopMessageInterval();
+      };
+
+      setWebsocket(ws);
+    } catch (error) {
+      addMessage(`Connection error: ${error}`);
+    }
+  }, [url, addMessage, startMessageInterval, stopMessageInterval]);
+
+  const disconnect = React.useCallback(() => {
+    if (websocket) {
+      websocket.close();
+      setWebsocket(null);
+    }
+    stopMessageInterval();
+  }, [websocket, stopMessageInterval]);
+
+  const toggleConnection = React.useCallback(() => {
+    if (isConnected) {
+      disconnect();
+    } else {
+      connect();
+    }
+  }, [isConnected, connect, disconnect]);
+
+  // Update message interval when data type changes
+  React.useEffect(() => {
+    if (isConnected && websocket) {
+      startMessageInterval(websocket);
+    }
+  }, [dataType, isConnected, websocket, startMessageInterval]);
+
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      stopMessageInterval();
+      if (websocket) {
+        websocket.close();
+      }
+    };
+  }, [stopMessageInterval, websocket]);
+
+  return {
+    isConnected,
+    messages,
+    dataType,
+    setDataType,
+    toggleConnection,
+    clearMessages,
+  };
+};
+
+const WebSocketTestComponent: React.FC = () => {
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const {
+    isConnected,
+    messages,
+    dataType,
+    setDataType,
+    toggleConnection,
+    clearMessages,
+  } = useWebSocket(WEBSOCKET_CONFIG.URL, WEBSOCKET_CONFIG.MESSAGE_INTERVAL);
+
+  // Auto-scroll to bottom when messages change
+  React.useEffect(() => {
+    if (scrollViewRef.current && messages.length > 0) {
+      // Use a longer delay to ensure content is rendered
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 150);
+    }
+  }, [messages]);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>WebSocket Test</Text>
+        <Text style={styles.subtitle}>
+          Testing WebSocket connection to echo.websocket.org
+        </Text>
+      </View>
+
+      <View style={styles.websocketContainer}>
+        <View style={styles.websocketControls}>
+          <TouchableOpacity
+            style={[
+              styles.websocketButton,
+              isConnected
+                ? styles.websocketButtonDisconnect
+                : styles.websocketButtonConnect,
+            ]}
+            onPress={toggleConnection}
+          >
+            <Text style={styles.websocketButtonText}>
+              {isConnected ? 'Disconnect' : 'Connect'}
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.dataTypeContainer}>
+            <Text style={styles.dataTypeLabel}>Data Type:</Text>
+            <View style={styles.dataTypeButtons}>
+              {(['text', 'binary', 'json'] as const).map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.dataTypeButton,
+                    dataType === type && styles.dataTypeButtonActive,
+                  ]}
+                  onPress={() => setDataType(type)}
+                >
+                  <Text
+                    style={[
+                      styles.dataTypeButtonText,
+                      dataType === type && styles.dataTypeButtonTextActive,
+                    ]}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.connectionStatus}>
+          <Text style={styles.statusLabel}>Status:</Text>
+          <Text
+            style={[
+              styles.statusValue,
+              { color: isConnected ? '#4CAF50' : '#FF4444' },
+            ]}
+          >
+            {isConnected ? 'Connected' : 'Disconnected'}
+          </Text>
+        </View>
+
+        <View style={styles.messagesContainer}>
+          <Text style={styles.messagesTitle}>Messages ({messages.length})</Text>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesList}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={true}
+          >
+            {messages.length === 0 ? (
+              <Text style={styles.noMessages}>No messages yet</Text>
+            ) : (
+              messages
+                .slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY)
+                .map((message, index) => (
+                  <Text key={`${message}-${index}`} style={styles.messageText}>
+                    {message}
+                  </Text>
+                ))
+            )}
+          </ScrollView>
+        </View>
+
+        <TouchableOpacity
+          style={styles.clearMessagesButton}
+          onPress={clearMessages}
+        >
+          <Text style={styles.clearMessagesButtonText}>Clear Messages</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export const NetworkTestScreen: React.FC = () => {
+  const [activeTest, setActiveTest] = React.useState<'http' | 'websocket'>(
+    'http'
+  );
+
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <Text style={styles.title}>Network Test</Text>
+      <Text style={styles.subtitle}>
+        Testing HTTP and WebSocket connections
+      </Text>
+
+      <View style={styles.mainTabContainer}>
+        {[
+          { key: 'http', label: 'HTTP Test' },
+          { key: 'websocket', label: 'WebSocket Test' },
+        ].map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[
+              styles.mainTab,
+              activeTest === tab.key && styles.mainTabActive,
+            ]}
+            onPress={() => setActiveTest(tab.key as 'http' | 'websocket')}
+          >
+            <Text
+              style={[
+                styles.mainTabText,
+                activeTest === tab.key && styles.mainTabTextActive,
+              ]}
+            >
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      {renderHeader()}
+      {activeTest === 'http' ? (
+        <HTTPTestComponent />
+      ) : (
+        <WebSocketTestComponent />
+      )}
     </View>
   );
 };
@@ -788,5 +1104,172 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 12,
     textAlign: 'center',
+  },
+  websocketContainer: {
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  websocketHeader: {
+    marginBottom: 16,
+  },
+  websocketTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  websocketSubtitle: {
+    fontSize: 14,
+    color: '#a0a0a0',
+  },
+  websocketControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 16,
+  },
+  websocketButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  websocketButtonConnect: {
+    backgroundColor: '#007AFF',
+  },
+  websocketButtonDisconnect: {
+    backgroundColor: '#FF4444',
+  },
+  websocketButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  dataTypeContainer: {
+    marginBottom: 16,
+    flexGrow: 1,
+  },
+  dataTypeLabel: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  dataTypeButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  dataTypeButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#333333',
+    alignItems: 'center',
+    backgroundColor: '#2a2a2a',
+  },
+  dataTypeButtonActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  dataTypeButtonText: {
+    fontSize: 12,
+    color: '#a0a0a0',
+    fontWeight: '500',
+  },
+  dataTypeButtonTextActive: {
+    color: '#ffffff',
+  },
+  connectionStatus: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  statusLabel: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  statusValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4CAF50',
+  },
+  messagesContainer: {
+    marginBottom: 16,
+  },
+  messagesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  messagesList: {
+    height: 150, // Fixed height for scrolling
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  messagesContent: {
+    padding: 10,
+  },
+  messageText: {
+    fontSize: 14,
+    color: '#ffffff',
+    marginBottom: 4,
+    flexWrap: 'wrap',
+    flexShrink: 1,
+  },
+  noMessages: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+  },
+  clearMessagesButton: {
+    backgroundColor: '#FF4444',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  clearMessagesButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  mainTabContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 4,
+  },
+  mainTab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  mainTabActive: {
+    backgroundColor: '#007AFF',
+  },
+  mainTabText: {
+    fontSize: 14,
+    color: '#a0a0a0',
+    fontWeight: '500',
+  },
+  mainTabTextActive: {
+    color: '#ffffff',
   },
 });

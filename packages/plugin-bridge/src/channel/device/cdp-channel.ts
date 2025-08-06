@@ -94,13 +94,21 @@ const getCdpDomainProxy = async (): Promise<Channel> => {
       getDomain().sendMessage(message);
     },
     onMessage(listener: CdpMessageListener) {
-      eventListeners.add(listener);
-      getDomain().onMessage.addEventListener(listener);
+      // Promises creating in listeners behave in weird way when not wrapped in setTimeout.
+      // This is probably the same case as with the domain initialization.
+      const delayedListener = (message: unknown) => {
+        setTimeout(() => {
+          listener(message);
+        });
+      };
+
+      eventListeners.add(delayedListener);
+      getDomain().onMessage.addEventListener(delayedListener);
 
       return {
         remove: () => {
-          eventListeners.delete(listener);
-          getDomain().onMessage.removeEventListener(listener);
+          eventListeners.delete(delayedListener);
+          getDomain().onMessage.removeEventListener(delayedListener);
         },
       };
     },
