@@ -1,9 +1,9 @@
 /**
  * Utility function to get the name of a blob. Handles both the direct name property and the data object.
- * 
+ *
  * ```
  * // node_modules/react-native/Libraries/Blob/Blob.js
- * 
+ *
  * export type BlobData = {
  *   blobId: string,
  *   offset: number,
@@ -22,7 +22,7 @@
  *
  *   return this._data;
  * }
- * 
+ *
  * get size(): number {
  *   return this.data.size;
  * }

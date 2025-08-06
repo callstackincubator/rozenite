@@ -2,23 +2,27 @@ import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { Copy, Check } from 'lucide-react';
 import { Button } from './Button';
 import { generateCurlCommand } from '../utils/generateCurlCommand';
-import { NetworkRequest } from './RequestList';
+import { HttpNetworkEntry } from '../state/model';
 
 export type CopyAsCurlButtonProps = {
-  selectedRequest?: NetworkRequest;
+  selectedRequest?: HttpNetworkEntry;
 };
 
-export const CopyAsCurlButton = ({ selectedRequest }: CopyAsCurlButtonProps) => {
+export const CopyAsCurlButton = ({
+  selectedRequest,
+}: CopyAsCurlButtonProps) => {
   const { isCopied, copy } = useCopyToClipboard();
 
   const handleCopyCurl = () => {
     if (!selectedRequest) return;
-    
+
+    const { method, url, headers, body } = selectedRequest.request;
+
     const curlCommand = generateCurlCommand({
-      method: selectedRequest.method,
-      url: `${selectedRequest.domain}${selectedRequest.path}`,
-      headers: selectedRequest.requestHeaders,
-      postData: selectedRequest.requestBody?.data,
+      method,
+      url,
+      headers,
+      postData: body?.data,
     });
 
     copy(curlCommand);

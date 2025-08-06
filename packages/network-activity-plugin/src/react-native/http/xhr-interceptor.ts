@@ -1,6 +1,6 @@
 /* eslint-disable prefer-rest-params */
 
-import { XHRPostData } from "../shared/client";
+import { XHRPostData } from '../../shared/client';
 
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.

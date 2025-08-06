@@ -4,4 +4,4 @@ export function safeStringify(data: unknown): string {
   } catch (error) {
     return String(data);
   }
-};
+}

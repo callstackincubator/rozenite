@@ -3,5 +3,10 @@
     "text": "Docs",
     "link": "/docs/introduction",
     "activeMatch": "^/docs/"
+  },
+  {
+    "text": "Plugin Directory",
+    "link": "/plugin-directory",
+    "activeMatch": "^/plugin-directory"
   }
 ]

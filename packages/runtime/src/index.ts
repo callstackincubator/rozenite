@@ -1,6 +1,7 @@
 import { setupDevMode } from './dev-mode.js';
 import { getGlobalNamespace } from './global-namespace.js';
 import { loadPlugin } from './plugin-loader.js';
+import { addWelcomeView } from './rn-devtools/rozenite-welcome-view.js';
 
 const waitForInitialization = async (): Promise<void> => {
   return new Promise((resolve) => {
@@ -27,6 +28,8 @@ const main = async (): Promise<void> => {
   console.log('Devtools framework loaded');
   console.log('Found plugins: ' + plugins.join(', '));
   console.groupEnd();
+
+  addWelcomeView();
 
   await Promise.all(
     plugins.map(async (plugin) => {

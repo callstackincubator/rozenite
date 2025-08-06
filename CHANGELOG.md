@@ -1,3 +1,20 @@
+## 1.0.0-alpha.8 (2025-08-05)
+
+### 🩹 Fixes
+
+- **@rozenite/network-activity-plugin:** # fix(network-activity-plugin): properly extract response content type ([](https://github.com/callstackincubator/rozenite/commit/))
+
+  Fixed the extraction of the response content type from headers. The issue was that headers are case-insensitive, and servers can send them in any format.
+- **@rozenite/network-activity-plugin:** # fix(network-activity-plugin): make scrolling work in response tab ([](https://github.com/callstackincubator/rozenite/commit/))
+
+  This pull request fixes the issue of scrolling not working in the response tab.
+- **@rozenite/redux-devtools-plugin:** # feat(redux-devtools-plugin): support remote connections ([](https://github.com/callstackincubator/rozenite/commit/))
+
+  This pull request enables Rozenite's Redux DevTools plugin to work with remote devices. Until now, it could only connect to local emulators, as the hostname was hardcoded to the loopback interface. From now on, the plugin will inherit the hostname of the dev server, making it possible to connect to Redux DevTools from remote devices.
+- **@rozenite/runtime:** # feat(runtime): persist panel state on detach ([](https://github.com/callstackincubator/rozenite/commit/))
+
+  Custom panels are now persisted, so the user can switch tools without losing progress in the previous one. In case of any performance issues, the user can opt out of this mechanism, forcing the plugin to close on blur.
+
 ## 1.0.0-alpha.7 (2025-07-31)
 
 ### 🩹 Fixes

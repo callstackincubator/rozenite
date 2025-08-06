@@ -2,12 +2,22 @@ import { getCdpChannel } from './device/cdp-channel';
 import { getPanelChannel } from './browser/panel-channel';
 import { Channel } from './types';
 
-export const getChannel = async (): Promise<Channel> => {
-  const isPanel = '__ROZENITE_PANEL__' in window;
+let channel: Promise<Channel> | Channel | null = null;
 
-  if (isPanel) {
-    return getPanelChannel();
+export const getChannel = async (): Promise<Channel> => {
+  // Channel can be safely reused, because it's not scoped to the plugin.
+
+  if (channel) {
+    return channel;
   }
 
-  return getCdpChannel();
+  const isPanel = '__ROZENITE_PANEL__' in window;
+  channel = isPanel ? getPanelChannel() : getCdpChannel();
+
+  // Replace promise with channel when it's ready.
+  channel.then((instance) => {
+    channel = instance;
+  });
+
+  return channel;
 };

@@ -28,7 +28,10 @@ function addHttpMethodToCurl(curlParts: string[], method: string): void {
   }
 }
 
-function addHeadersToCurl(curlParts: string[], headers: Record<string, string>): void {
+function addHeadersToCurl(
+  curlParts: string[],
+  headers: Record<string, string>
+): void {
   Object.entries(headers).forEach(([key, value]) => {
     addCurlParam(curlParts, '-H', escapeShellArg(`${key}: ${value}`));
   });
@@ -48,9 +51,13 @@ function addBodyToCurl(curlParts: string[], postData: RequestPostData): void {
   const { type, value } = postData;
 
   if (type === 'form-data') {
-    const formParts = Object.entries(value).map(([key, value]) => `${key}=${stringifyData(value)}`);
+    const formParts = Object.entries(value).map(
+      ([key, value]) => `${key}=${stringifyData(value)}`
+    );
 
-    formParts.forEach(part => addCurlParam(curlParts, '--form', escapeShellArg(part)));
+    formParts.forEach((part) =>
+      addCurlParam(curlParts, '--form', escapeShellArg(part))
+    );
 
     return;
   }
@@ -65,15 +72,15 @@ export function generateCurlCommand(request: {
   postData?: RequestPostData;
 }): string {
   const { method, url, headers = {}, postData } = request;
-  
+
   const curlParts: string[] = [`curl ${escapeShellArg(url)}`];
-  
+
   addHttpMethodToCurl(curlParts, method);
   addHeadersToCurl(curlParts, headers);
-  
+
   if (postData && hasRequestBody(method)) {
     addBodyToCurl(curlParts, postData);
   }
-  
+
   return curlParts.join(' \\\n');
 }

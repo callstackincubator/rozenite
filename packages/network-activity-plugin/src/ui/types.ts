@@ -12,6 +12,10 @@ export type NetworkEntry = {
   url: string;
   method: string;
   headers: HttpHeaders;
+  body?: {
+    type: string;
+    data: string;
+  };
   status: 'pending' | 'loading' | 'finished' | 'failed';
   startTime: number;
   endTime?: number;
