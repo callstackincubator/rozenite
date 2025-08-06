@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { getNetworkInspector } from './network-inspector';
+import { getNetworkInspector } from './http/network-inspector';
 import { NetworkActivityEventMap } from '../shared/client';
 import { getWebSocketInspector } from './websocket/websocket-inspector';
 import { WebSocketEventMap } from '../shared/websocket-events';

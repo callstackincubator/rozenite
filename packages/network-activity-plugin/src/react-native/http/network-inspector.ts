@@ -1,5 +1,5 @@
-import { HttpMethod, NetworkActivityDevToolsClient } from '../shared/client';
-import { getHttpHeaderValue } from '../ui/utils/getHttpHeaderValue';
+import { HttpMethod, NetworkActivityDevToolsClient } from '../../shared/client';
+import { getHttpHeaderValue } from '../../ui/utils/getHttpHeaderValue';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { XHRInterceptor } from './xhr-interceptor';
 
