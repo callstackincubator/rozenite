@@ -35,7 +35,7 @@ export const JsonTree = ({
       shouldExpandNodeInitially={shouldExpandNodeInitially}
       // For objects and arrays
       getItemString={(_type, data, itemType, itemString) => (
-        <JsonTreeCopyableItem getCopyableValue={() => JSON.stringify(data)}>
+        <JsonTreeCopyableItem getCopyableValue={() => JSON.stringify(data, null, 2)}>
           <>{itemType} {itemString}</>
         </JsonTreeCopyableItem>
       )}
