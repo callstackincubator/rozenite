@@ -1,5 +1,6 @@
 import { type MetroConfig } from '@react-native/metro-config';
 import { initializeRozenite, type RozeniteConfig } from '@rozenite/middleware';
+import path from 'node:path';
 
 export type RozeniteMetroConfig = Omit<RozeniteConfig, 'projectRoot'>;
 
@@ -31,10 +32,15 @@ export const withRozenite = async <T extends MetroConfig>(
             }),
 
             // Rozenite package should use the same versions of React and React Native as the app.
-            react: require.resolve('react', { paths: [projectRoot] }),
-            'react-native': require.resolve('react-native', {
-              paths: [projectRoot],
-            }),
+            // Using dirname as sometimes developers use deep imports for react-native.
+            react: path.dirname(
+              require.resolve('react', { paths: [projectRoot] })
+            ),
+            'react-native': path.dirname(
+              require.resolve('react-native', {
+                paths: [projectRoot],
+              })
+            ),
           }
         : resolvedConfig.resolver?.extraNodeModules,
     },
