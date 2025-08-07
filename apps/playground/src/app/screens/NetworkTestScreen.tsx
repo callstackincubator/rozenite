@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import EventSource from 'react-native-sse';
 
 // Real API service using JSONPlaceholder
 const api = {
@@ -539,7 +540,9 @@ const useWebSocket = (
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const addMessage = React.useCallback((message: string) => {
-    setMessages((prev) => [...prev, message]);
+    setMessages((prev) =>
+      [...prev, message].slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY)
+    );
   }, []);
 
   const clearMessages = React.useCallback(() => {
@@ -783,22 +786,207 @@ const WebSocketTestComponent: React.FC = () => {
   );
 };
 
-export const NetworkTestScreen: React.FC = () => {
-  const [activeTest, setActiveTest] = React.useState<'http' | 'websocket'>(
-    'http'
+const SSE_CONFIG = {
+  URL: 'https://stream.wikimedia.org/v2/stream/recentchange',
+  MAX_MESSAGES_DISPLAY: 15,
+} as const;
+
+const useSSE = (url: string) => {
+  const [eventSource, setEventSource] = React.useState<EventSource | null>(
+    null
   );
+  const [isConnected, setIsConnected] = React.useState(false);
+  const [messages, setMessages] = React.useState<string[]>([]);
+  const [eventCount, setEventCount] = React.useState(0);
+
+  const addMessage = React.useCallback((message: string) => {
+    setMessages((prev) =>
+      [...prev, message].slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY)
+    );
+    setEventCount((prev) => prev + 1);
+  }, []);
+
+  const clearMessages = React.useCallback(() => {
+    setMessages([]);
+    setEventCount(0);
+  }, []);
+
+  const connect = React.useCallback(() => {
+    try {
+      const es = new EventSource(url);
+
+      es.addEventListener('open', () => {
+        setIsConnected(true);
+        addMessage('Connected to SSE stream');
+      });
+
+      es.addEventListener('message', (event) => {
+        try {
+          const data = JSON.parse(event.data || '{}');
+          const summary = `[${new Date().toLocaleTimeString()}] ${
+            data.user || 'Anonymous'
+          } edited ${data.title || 'Unknown page'} (${data.type || 'unknown'})`;
+          addMessage(summary);
+        } catch {
+          addMessage(`Raw message: ${event.data}`);
+        }
+      });
+
+      es.addEventListener('error', (error) => {
+        addMessage(`SSE Error: ${error}`);
+        setIsConnected(false);
+      });
+
+      setEventSource(es);
+    } catch (error) {
+      addMessage(`Connection error: ${error}`);
+    }
+  }, [url, addMessage]);
+
+  const disconnect = React.useCallback(() => {
+    if (eventSource) {
+      eventSource.close();
+      setEventSource(null);
+      setIsConnected(false);
+    }
+  }, [eventSource]);
+
+  const toggleConnection = React.useCallback(() => {
+    if (isConnected) {
+      disconnect();
+    } else {
+      connect();
+    }
+  }, [isConnected, connect, disconnect]);
+
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, [eventSource]);
+
+  return {
+    isConnected,
+    messages,
+    eventCount,
+    toggleConnection,
+    clearMessages,
+  };
+};
+
+const SSETestComponent: React.FC = () => {
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const { isConnected, messages, eventCount, toggleConnection, clearMessages } =
+    useSSE(SSE_CONFIG.URL);
+
+  // Auto-scroll to bottom when messages change
+  React.useEffect(() => {
+    if (scrollViewRef.current && messages.length > 0) {
+      // Use a longer delay to ensure content is rendered
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 150);
+    }
+  }, [messages]);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>SSE Test</Text>
+        <Text style={styles.subtitle}>
+          Testing Server-Sent Events connection to Wikimedia Recent Changes
+        </Text>
+      </View>
+
+      <View style={styles.websocketContainer}>
+        <View style={styles.websocketControls}>
+          <TouchableOpacity
+            style={[
+              styles.websocketButton,
+              isConnected
+                ? styles.websocketButtonDisconnect
+                : styles.websocketButtonConnect,
+            ]}
+            onPress={toggleConnection}
+          >
+            <Text style={styles.websocketButtonText}>
+              {isConnected ? 'Disconnect' : 'Connect'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.connectionStatus}>
+          <Text style={styles.statusLabel}>Status:</Text>
+          <Text
+            style={[
+              styles.statusValue,
+              { color: isConnected ? '#4CAF50' : '#FF4444' },
+            ]}
+          >
+            {isConnected ? 'Connected' : 'Disconnected'}
+          </Text>
+        </View>
+
+        <View style={styles.connectionStatus}>
+          <Text style={styles.statusLabel}>Events Received:</Text>
+          <Text style={styles.statusValue}>{eventCount}</Text>
+        </View>
+
+        <View style={styles.messagesContainer}>
+          <Text style={styles.messagesTitle}>
+            Recent Changes ({messages.length})
+          </Text>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesList}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={true}
+          >
+            {messages.length === 0 ? (
+              <Text style={styles.noMessages}>No events yet</Text>
+            ) : (
+              messages
+                .slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY)
+                .map((message, index) => (
+                  <Text key={`${message}-${index}`} style={styles.messageText}>
+                    {message}
+                  </Text>
+                ))
+            )}
+          </ScrollView>
+        </View>
+
+        <TouchableOpacity
+          style={styles.clearMessagesButton}
+          onPress={clearMessages}
+        >
+          <Text style={styles.clearMessagesButtonText}>Clear Events</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export const NetworkTestScreen: React.FC = () => {
+  const [activeTest, setActiveTest] = React.useState<
+    'http' | 'websocket' | 'sse'
+  >('http');
 
   const renderHeader = () => (
     <View style={styles.header}>
       <Text style={styles.title}>Network Test</Text>
       <Text style={styles.subtitle}>
-        Testing HTTP and WebSocket connections
+        Testing HTTP, WebSocket, and SSE connections
       </Text>
 
       <View style={styles.mainTabContainer}>
         {[
           { key: 'http', label: 'HTTP Test' },
           { key: 'websocket', label: 'WebSocket Test' },
+          { key: 'sse', label: 'SSE Test' },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -806,7 +994,9 @@ export const NetworkTestScreen: React.FC = () => {
               styles.mainTab,
               activeTest === tab.key && styles.mainTabActive,
             ]}
-            onPress={() => setActiveTest(tab.key as 'http' | 'websocket')}
+            onPress={() =>
+              setActiveTest(tab.key as 'http' | 'websocket' | 'sse')
+            }
           >
             <Text
               style={[
@@ -827,8 +1017,10 @@ export const NetworkTestScreen: React.FC = () => {
       {renderHeader()}
       {activeTest === 'http' ? (
         <HTTPTestComponent />
-      ) : (
+      ) : activeTest === 'websocket' ? (
         <WebSocketTestComponent />
+      ) : (
+        <SSETestComponent />
       )}
     </View>
   );

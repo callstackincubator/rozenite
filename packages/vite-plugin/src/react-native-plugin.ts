@@ -12,7 +12,6 @@ export const rozeniteReactNativePlugin = (): Plugin => {
 
       config.build.lib = {
         entry: path.resolve(projectRoot, 'react-native.ts'),
-        formats: ['es' as const, 'cjs' as const],
         fileName: (format) => `react-native.${format === 'es' ? 'js' : 'cjs'}`,
       };
 
@@ -24,10 +23,22 @@ export const rozeniteReactNativePlugin = (): Plugin => {
         return !id.startsWith('.') && !path.isAbsolute(id);
       };
 
-      config.build.rollupOptions.output = {
-        exports: 'named',
-        interop: 'auto',
-      };
+      config.build.rollupOptions.output = [
+        {
+          format: 'es',
+          exports: 'named',
+          interop: 'auto',
+          chunkFileNames: '[name].js',
+          ...(config.build.rollupOptions.output ?? {}),
+        },
+        {
+          format: 'cjs',
+          exports: 'named',
+          interop: 'auto',
+          chunkFileNames: '[name].cjs',
+          ...(config.build.rollupOptions.output ?? {}),
+        },
+      ];
 
       delete config.build.rollupOptions.input;
     },

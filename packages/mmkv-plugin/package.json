@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/mmkv-plugin",
-  "version": "1.0.0-alpha.8",
+  "version": "1.0.0-alpha.9",
   "description": "MMKV for Rozenite.",
   "type": "module",
   "main": "./dist/react-native.cjs",

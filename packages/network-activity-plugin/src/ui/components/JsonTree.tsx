@@ -1,4 +1,5 @@
 import { JSONTree } from 'react-json-tree';
+import { JsonTreeCopyableItem } from './JsonTreeCopyableItem';
 
 export type JsonTreeProps = {
   data: unknown;
@@ -32,6 +33,18 @@ export const JsonTree = ({
       }}
       invertTheme={false}
       shouldExpandNodeInitially={shouldExpandNodeInitially}
+      // For objects and arrays
+      getItemString={(_type, data, itemType, itemString) => (
+        <JsonTreeCopyableItem getCopyableValue={() => JSON.stringify(data, null, 2)}>
+          <>{itemType} {itemString}</>
+        </JsonTreeCopyableItem>
+      )}
+      // For primitives
+      valueRenderer={(valueAsString, value) => (
+        <JsonTreeCopyableItem getCopyableValue={() => String(value)} className="ml-2">
+          {String(valueAsString)}
+        </JsonTreeCopyableItem>
+      )}
     />
   );
 };

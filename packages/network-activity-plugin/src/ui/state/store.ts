@@ -9,12 +9,15 @@ import {
   HttpNetworkEntry,
   WebSocketNetworkEntry,
   WebSocketMessage,
+  SSENetworkEntry,
+  SSEMessage,
 } from './model';
 import { getHttpHeaderValue } from '../utils/getHttpHeaderValue';
 import { getId } from '../utils/getId';
 import { assert } from '../utils/assert';
 
 const MAX_WEBSOCKET_MESSAGES_PER_CONNECTION = 32;
+const MAX_SSE_MESSAGES_PER_CONNECTION = 32;
 
 export interface NetworkActivityState {
   // State
@@ -377,6 +380,96 @@ export const createNetworkActivityStore = () =>
           });
           break;
         }
+
+        case 'sse-open': {
+          const eventData = data as NetworkActivityEventMap['sse-open'];
+          set((state) => {
+            const entry = state.networkEntries.get(eventData.requestId);
+            if (!entry || entry.type !== 'http') return state;
+
+            // Transform the existing HTTP entry to SSE
+            const httpEntry = entry as HttpNetworkEntry;
+            const sseEntry: SSENetworkEntry = {
+              ...httpEntry,
+              type: 'sse', // Change type from 'http' to 'sse'
+              status: 'open', // Update status
+              messages: [], // Add SSE-specific field
+              response: eventData.response,
+            };
+
+            const newEntries = new Map(state.networkEntries);
+            newEntries.set(eventData.requestId, sseEntry);
+            return { networkEntries: newEntries };
+          });
+          break;
+        }
+
+        case 'sse-message': {
+          const eventData = data as NetworkActivityEventMap['sse-message'];
+          set((state) => {
+            const entry = state.networkEntries.get(eventData.requestId);
+            if (!entry || entry.type !== 'sse') return state;
+
+            const sseEntry = entry as SSENetworkEntry;
+            const newMessage: SSEMessage = {
+              id: getId(`${eventData.requestId}-message`),
+              data: eventData.data,
+              timestamp: eventData.timestamp,
+            };
+
+            const updatedEntry: SSENetworkEntry = {
+              ...sseEntry,
+              messages: [...sseEntry.messages, newMessage].slice(
+                -MAX_SSE_MESSAGES_PER_CONNECTION
+              ),
+            };
+
+            const newEntries = new Map(state.networkEntries);
+            newEntries.set(eventData.requestId, updatedEntry);
+            return { networkEntries: newEntries };
+          });
+          break;
+        }
+
+        case 'sse-error': {
+          const eventData = data as NetworkActivityEventMap['sse-error'];
+          set((state) => {
+            const entry = state.networkEntries.get(eventData.requestId);
+            if (!entry || entry.type !== 'sse') return state;
+
+            const sseEntry = entry as SSENetworkEntry;
+            const updatedEntry: SSENetworkEntry = {
+              ...sseEntry,
+              status: 'error',
+              error: eventData.error.message,
+            };
+
+            const newEntries = new Map(state.networkEntries);
+            newEntries.set(eventData.requestId, updatedEntry);
+            return { networkEntries: newEntries };
+          });
+          break;
+        }
+
+        case 'sse-close': {
+          const eventData = data as NetworkActivityEventMap['sse-close'];
+          set((state) => {
+            const entry = state.networkEntries.get(eventData.requestId);
+            if (!entry || entry.type !== 'sse') return state;
+
+            const sseEntry = entry as SSENetworkEntry;
+            const updatedEntry: SSENetworkEntry = {
+              ...sseEntry,
+              status: 'closed',
+              duration: eventData.timestamp - sseEntry.timestamp,
+            };
+
+            const newEntries = new Map(state.networkEntries);
+            newEntries.set(eventData.requestId, updatedEntry);
+            return { networkEntries: newEntries };
+          });
+          break;
+        }
       }
     },
 
@@ -422,6 +515,16 @@ export const createNetworkActivityStore = () =>
           ),
           client.onMessage('websocket-connection-status-changed', (data) =>
             handleEvent('websocket-connection-status-changed', data)
+          ),
+          client.onMessage('sse-open', (data) => handleEvent('sse-open', data)),
+          client.onMessage('sse-message', (data) =>
+            handleEvent('sse-message', data)
+          ),
+          client.onMessage('sse-error', (data) =>
+            handleEvent('sse-error', data)
+          ),
+          client.onMessage('sse-close', (data) =>
+            handleEvent('sse-close', data)
           ),
         ];
 

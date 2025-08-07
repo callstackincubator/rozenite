@@ -1,33 +1,9 @@
 import { HttpMethod, NetworkActivityDevToolsClient } from '../../shared/client';
-import { getHttpHeaderValue } from '../../ui/utils/getHttpHeaderValue';
+import { getContentType } from '../utils';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { XHRInterceptor } from './xhr-interceptor';
 
 const networkRequestsRegistry = getNetworkRequestsRegistry();
-
-const getContentType = (request: XMLHttpRequest): string => {
-  const responseHeaders = request.responseHeaders;
-  const responseType = request.responseType;
-
-  const contentType = getHttpHeaderValue(responseHeaders || {}, 'content-type');
-
-  if (contentType) {
-    return contentType.split(';')[0].trim();
-  }
-
-  switch (responseType) {
-    case 'arraybuffer':
-    case 'blob':
-      return 'application/octet-stream';
-    case 'text':
-    case '':
-      return 'text/plain';
-    case 'json':
-      return 'application/json';
-    case 'document':
-      return 'text/html';
-  }
-};
 
 const getResponseSize = (request: XMLHttpRequest): number => {
   if (typeof request.response === 'object') {
@@ -118,6 +94,8 @@ export const getNetworkInspector = (
     const sendTime = Date.now();
 
     const requestId = generateRequestId();
+    request._rozeniteRequestId = requestId;
+
     const initiator = getInitiatorFromStack();
 
     networkRequestsRegistry.addEntry(requestId, request);

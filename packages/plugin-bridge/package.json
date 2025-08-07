@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/plugin-bridge",
-  "version": "1.0.0-alpha.8",
+  "version": "1.0.0-alpha.9",
   "description": "Communication layer for React Native DevTools plugins across React Native and web environments",
   "type": "module",
   "main": "./dist/index.cjs",

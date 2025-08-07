@@ -59,10 +59,11 @@ const extractDomainAndPath = (
   url: string
 ): { domain: string; path: string } => {
   try {
-    const urlObj = new URL(url);
+    const { hostname, pathname, search, hash, port } = new URL(url);
+
     return {
-      domain: urlObj.hostname,
-      path: urlObj.pathname + urlObj.search + urlObj.hash,
+      domain: `${hostname}${port ? `:${port}` : ''}`,
+      path: `${pathname}${search}${hash}`,
     };
   } catch {
     return { domain: 'unknown', path: url };
