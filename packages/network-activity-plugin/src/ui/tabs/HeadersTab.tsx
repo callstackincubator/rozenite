@@ -9,7 +9,9 @@ export type HeadersTabProps = {
 
 export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
   const url = useMemo(() => {
-    return new URL(selectedRequest.request.url);
+    const { hostname, port, pathname } = new URL(selectedRequest.request.url);
+
+    return `${hostname}${port ? `:${port}` : ''}${pathname}`;
   }, [selectedRequest.request.url]);
 
   return (
@@ -21,8 +23,7 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
             <div className="flex">
               <span className="w-32 text-gray-400">Request URL:</span>
               <span className="text-blue-400">
-                {url.hostname}
-                {url.pathname}
+                {url}
               </span>
             </div>
             <div className="flex">
