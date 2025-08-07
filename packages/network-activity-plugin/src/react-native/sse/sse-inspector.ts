@@ -2,6 +2,7 @@ import { createNanoEvents } from 'nanoevents';
 import { SSEInterceptor } from './sse-interceptor';
 import { EventSourceWithInternals } from './types';
 import { SSEEvent, SSEEventMap } from '../../shared/sse-events';
+import { getContentType } from '../utils';
 
 type NanoEventsMap = {
   [K in keyof SSEEventMap]: (data: SSEEventMap[K]) => void;
@@ -38,11 +39,21 @@ export const getSSEInspector = (): SSEInspector => {
       SSEInterceptor.setOpenEventCallback((_, eventSource) => {
         const sseEventSource = eventSource as EventSourceWithInternals;
         const requestId = getRequestId(sseEventSource);
+        const sseXhr = sseEventSource._xhr as XMLHttpRequest;
 
         const event: SSEEvent = {
           type: 'sse-open',
           requestId,
           timestamp: Date.now(),
+          response: {
+            url: sseXhr._url as string,
+            status: sseXhr.status,
+            statusText: sseXhr.statusText,
+            headers: sseXhr.responseHeaders || {},
+            contentType: getContentType(sseXhr),
+            size: 0,
+            responseTime: Date.now(),
+          },
         };
         eventEmitter.emit('sse-open', event);
       });

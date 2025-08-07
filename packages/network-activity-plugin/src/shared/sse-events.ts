@@ -1,3 +1,5 @@
+import type { Response } from './client';
+
 export type SSEConnectionStatus = 'connecting' | 'open' | 'closed';
 export type SSERequestId = string;
 
@@ -5,6 +7,7 @@ export type SSEOpenEvent = {
   type: 'sse-open';
   requestId: SSERequestId;
   timestamp: number;
+  response: Response;
 };
 
 export type SSEMessageEvent = {

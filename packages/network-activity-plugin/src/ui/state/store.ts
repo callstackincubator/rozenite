@@ -394,6 +394,7 @@ export const createNetworkActivityStore = () =>
               type: 'sse', // Change type from 'http' to 'sse'
               status: 'open', // Update status
               messages: [], // Add SSE-specific field
+              response: eventData.response,
             };
 
             const newEntries = new Map(state.networkEntries);
