@@ -134,7 +134,6 @@ const api = {
       method: 'POST',
       headers: {
         'X-Rozenite-Test': 'true',
-        'Content-Type': 'multipart/form-data',
       },
       body: formData,
     });
