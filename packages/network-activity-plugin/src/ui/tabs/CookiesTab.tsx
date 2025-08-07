@@ -1,7 +1,7 @@
 import { ScrollArea } from '../components/ScrollArea';
 import { Badge } from '../components/Badge';
 import { HttpHeaders } from '../../shared/client';
-import { HttpNetworkEntry } from '../state/model';
+import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
 
 type Cookie = {
   name: string;
@@ -16,7 +16,7 @@ type Cookie = {
 };
 
 export type CookiesTabProps = {
-  selectedRequest: HttpNetworkEntry;
+  selectedRequest: HttpNetworkEntry | SSENetworkEntry;
 };
 
 const parseCookieString = (cookieString: string): Cookie[] => {

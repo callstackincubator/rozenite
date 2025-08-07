@@ -5,7 +5,7 @@ export type Timestamp = number;
 export type SocketId = number;
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 
-export type NetworkEntryType = 'http' | 'websocket';
+export type NetworkEntryType = 'http' | 'websocket' | 'sse';
 
 /* HTTP */
 export type HttpRequestData = {
@@ -55,6 +55,30 @@ export type HttpNetworkEntry = {
   resourceType?: ResourceType;
 };
 
+/* SSE */
+export type SSEMessage = {
+  id: string;
+  data: string;
+  timestamp: Timestamp;
+};
+
+export type SSEStatus = 'connecting' | 'open' | 'closed' | 'error';
+
+export type SSENetworkEntry = {
+  id: RequestId;
+  type: 'sse';
+  timestamp: Timestamp;
+  duration?: number;
+
+  request: HttpRequest;
+  response?: HttpResponse;
+  status: SSEStatus;
+  messages: SSEMessage[];
+  error?: string;
+  initiator?: Initiator;
+  resourceType?: ResourceType;
+};
+
 /* WebSocket */
 export type WebSocketConnection = {
   url: string;
@@ -92,16 +116,19 @@ export type WebSocketNetworkEntry = {
 };
 
 /* Shared */
-export type NetworkEntry = HttpNetworkEntry | WebSocketNetworkEntry;
+export type NetworkEntry =
+  | HttpNetworkEntry
+  | WebSocketNetworkEntry
+  | SSENetworkEntry;
 
 export type ProcessedRequest = {
   id: RequestId;
   type: NetworkEntryType;
   name: string;
-  status: HttpStatus | WebSocketStatus;
+  status: HttpStatus | WebSocketStatus | SSEStatus;
   timestamp: Timestamp;
   duration?: number;
   size?: number;
-  method: HttpMethod | 'WS';
+  method: HttpMethod | 'WS' | 'SSE';
   httpStatus?: number;
 };

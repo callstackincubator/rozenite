@@ -226,6 +226,9 @@ importers:
       react-native-screens:
         specifier: ~4.4.0
         version: 4.4.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+      react-native-sse:
+        specifier: ^1.2.1
+        version: 1.2.1
       react-redux:
         specifier: ^9.2.0
         version: 9.2.0(@types/react@18.3.23)(react@18.3.1)(redux@5.0.1)
@@ -473,6 +476,9 @@ importers:
       react-json-tree:
         specifier: ^0.20.0
         version: 0.20.0(@types/react@19.1.9)(react@18.3.1)
+      react-native-sse:
+        specifier: ^1.2.1
+        version: 1.2.1
       rozenite:
         specifier: workspace:*
         version: link:../cli
@@ -8914,6 +8920,9 @@ packages:
     peerDependencies:
       react: '*'
       react-native: 0.76.0
+
+  react-native-sse@1.2.1:
+    resolution: {integrity: sha512-zejanlScF+IB9tYnbdry0MT34qjBXbiV/E72qGz33W/tX1bx8MXsbB4lxiuPETc9v/008vYZ60yjIstW22VlVg==}
 
   react-native-svg-transformer@1.5.1:
     resolution: {integrity: sha512-dFvBNR8A9VPum9KCfh+LE49YiJEF8zUSnEFciKQroR/bEOhlPoZA0SuQ0qNk7m2iZl2w59FYjdRe0pMHWMDl0Q==}
@@ -21797,6 +21806,8 @@ snapshots:
       react-freeze: 1.0.4(react@18.3.1)
       react-native: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
       warn-once: 0.1.1
+
+  react-native-sse@1.2.1: {}
 
   react-native-svg-transformer@1.5.1(react-native-svg@15.8.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(typescript@5.8.3):
     dependencies:

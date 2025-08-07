@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { ScrollArea } from '../components/ScrollArea';
 import { JsonTree } from '../components/JsonTree';
-import { HttpNetworkEntry } from '../state/model';
+import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
 import { assert } from '../utils/assert';
 
 export type RequestTabProps = {
-  selectedRequest: HttpNetworkEntry;
+  selectedRequest: HttpNetworkEntry | SSENetworkEntry;
 };
 
 const requestDataContainerClasses =

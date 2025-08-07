@@ -9,6 +9,7 @@ declare type BlobData = {
 
 declare global {
   interface XMLHttpRequest {
+    _rozeniteRequestId: string;
     _requestId?: number;
     _subscriptions: Array<EventSubscription>;
     _aborted: boolean;

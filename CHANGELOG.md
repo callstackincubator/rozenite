@@ -1,3 +1,23 @@
+## 1.0.0-alpha.9 (2025-08-07)
+
+### 🩹 Fixes
+
+- **@rozenite/metro:** When packages are linked outside a workspace, Metro fails to resolve them, even if their paths are included in watchFolders. These packages must be handled in a specific way to ensure their inclusion in the bundle. ([#40](https://github.com/callstackincubator/rozenite/pull/40))
+- **@rozenite/middleware:** Added React Native version verification to prevent Rozenite from starting on unsupported versions, improving user experience by providing clear feedback when the tool doesn't load in older React Native DevTools. Enhanced logging capabilities through the introduction of ROZENITE_DEBUG environment variable, enabling additional logging for dependency resolution processes. ([#31](https://github.com/callstackincubator/rozenite/pull/31))
+- **@rozenite/network-activity-plugin:** Introduced WebSocket debugging capabilities with message interception. Supports real-time inspection of text, JSON, and binary WebSocket messages with a detailed message log for step-by-step debugging and analysis. ([#35](https://github.com/callstackincubator/rozenite/pull/35))
+- **@rozenite/network-activity-plugin:** The response body should now be correctly displayed for Axios clients. For unknown reasons, the responseType property is empty when the request is made with Axios. It is now handled as type 'text'. ([#39](https://github.com/callstackincubator/rozenite/pull/39))
+- **@rozenite/network-activity-plugin:** Server-side events are now supported in the Network Activity plugin. As long as you have react-native-sse installed in your project, the plugin will detect the connection and intercept all events, displaying them in the DevTools UI. A small change has been made to the @rozenite/vite-plugin, allowing the use of the manualChunks property when building the React Native bundle. ([#45](https://github.com/callstackincubator/rozenite/pull/45))
+- **@rozenite/network-activity-plugin:** The port is now displayed after the hostname in the URLs. This clarifies the addresses of services running on non-standard ports and eliminates ambiguities when analyzing network activity. ([#43](https://github.com/callstackincubator/rozenite/pull/43))
+- **@rozenite/network-activity-plugin:** This pull request adds the ability to copy subtrees and primitive values in JsonTree component. ([#42](https://github.com/callstackincubator/rozenite/pull/42))
+- **@rozenite/plugin-bridge:** This pull request fixes an issue where promises started in message handlers were significantly delayed, sometimes by nearly 10 seconds. The exact cause is unknown, but I suspect it’s related to them originating from the 'execute code' action on the DevTools side. A similar issue was previously observed during domain initialization. The same fix has been applied, and it appears to be working correctly now. ([#38](https://github.com/callstackincubator/rozenite/pull/38))
+- **@rozenite/runtime:** Introduce a welcome screen as the default view for users. This enhancement provides clear visual confirmation that Rozenite has loaded successfully. ([#30](https://github.com/callstackincubator/rozenite/pull/30))
+- **@rozenite/vite-plugin:** Server-side events are now supported in the Network Activity plugin. As long as you have react-native-sse installed in your project, the plugin will detect the connection and intercept all events, displaying them in the DevTools UI. A small change has been made to the @rozenite/vite-plugin, allowing the use of the manualChunks property when building the React Native bundle. ([#45](https://github.com/callstackincubator/rozenite/pull/45))
+
+### ❤️ Thank You
+
+- Nepein Andrey @NepeinAV
+- Szymon Chmal
+
 ## 1.0.0-alpha.8 (2025-08-05)
 
 ### 🩹 Fixes

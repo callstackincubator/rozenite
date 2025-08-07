@@ -1,4 +1,3 @@
-import { getHttpHeaderValue } from '../../utils/getHttpHeaderValue';
 import { safeStringify } from '../../utils/safeStringify';
 import {
   HttpMethod,
@@ -6,6 +5,7 @@ import {
   RequestPostData,
   XHRPostData,
 } from '../../shared/client';
+import { getContentType } from '../utils';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { getBlobName } from '../utils/getBlobName';
 import { getFormDataEntries } from '../utils/getFormDataEntries';
@@ -50,30 +50,6 @@ function getRequestBody(body: XHRPostData): RequestPostData {
     value: safeStringify(body),
   };
 }
-
-const getContentType = (request: XMLHttpRequest): string => {
-  const responseHeaders = request.responseHeaders;
-  const responseType = request.responseType;
-
-  const contentType = getHttpHeaderValue(responseHeaders || {}, 'content-type');
-
-  if (contentType) {
-    return contentType.split(';')[0].trim();
-  }
-
-  switch (responseType) {
-    case 'arraybuffer':
-    case 'blob':
-      return 'application/octet-stream';
-    case 'text':
-    case '':
-      return 'text/plain';
-    case 'json':
-      return 'application/json';
-    case 'document':
-      return 'text/html';
-  }
-};
 
 const getResponseSize = (request: XMLHttpRequest): number => {
   if (typeof request.response === 'object') {
@@ -167,6 +143,8 @@ export const getNetworkInspector = (
     const sendTime = Date.now();
 
     const requestId = generateRequestId();
+    request._rozeniteRequestId = requestId;
+
     const initiator = getInitiatorFromStack();
 
     networkRequestsRegistry.addEntry(requestId, request);

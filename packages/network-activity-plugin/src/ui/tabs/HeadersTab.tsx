@@ -1,16 +1,18 @@
 import { useMemo } from 'react';
 import { ScrollArea } from '../components/ScrollArea';
-import { HttpNetworkEntry } from '../state/model';
+import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
 import { getStatusColor } from '../utils/getStatusColor';
 import { CopyAsCurlButton } from '../components/CopyAsCurlButton';
 
 export type HeadersTabProps = {
-  selectedRequest: HttpNetworkEntry;
+  selectedRequest: HttpNetworkEntry | SSENetworkEntry;
 };
 
 export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
   const url = useMemo(() => {
-    return new URL(selectedRequest.request.url);
+    const { hostname, port, pathname } = new URL(selectedRequest.request.url);
+
+    return `${hostname}${port ? `:${port}` : ''}${pathname}`;
   }, [selectedRequest.request.url]);
 
   const isCopyAsCurlEnabled =
@@ -28,8 +30,7 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
             <div className="flex">
               <span className="w-32 text-gray-400">Request URL:</span>
               <span className="text-blue-400">
-                {url.hostname}
-                {url.pathname}
+                {url}
               </span>
             </div>
             <div className="flex">

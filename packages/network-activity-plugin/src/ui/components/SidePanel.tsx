@@ -15,6 +15,7 @@ import {
 import { NetworkEntry as OldNetworkEntry } from '../types';
 import { getStatusColor } from '../utils/getStatusColor';
 import { MessagesTab } from '../tabs/MessagesTab';
+import { SSEMessagesTab } from '../tabs/SSEMessagesTab';
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
@@ -26,6 +27,7 @@ const getTypeColor = (type: string) => {
     font: 'bg-orange-600',
     http: 'bg-green-600',
     websocket: 'bg-blue-600',
+    sse: 'bg-purple-600',
   };
   return colors[type] || 'bg-gray-600';
 };
@@ -97,18 +99,23 @@ export const SidePanel = () => {
   const httpDetails = selectedRequest.type === 'http' ? selectedRequest : null;
   const wsDetails =
     selectedRequest.type === 'websocket' ? selectedRequest : null;
+  const sseDetails = selectedRequest.type === 'sse' ? selectedRequest : null;
 
   // Extract name from the request
   const requestName =
     selectedRequest.type === 'http'
       ? httpDetails?.request?.url || 'Unknown'
-      : wsDetails?.connection?.url || 'Unknown';
+      : selectedRequest.type === 'websocket'
+      ? wsDetails?.connection?.url || 'Unknown'
+      : sseDetails?.request?.url || 'Unknown';
 
   // Extract status from the request
   const requestStatus =
     selectedRequest.type === 'http'
       ? httpDetails?.response?.status || httpDetails?.status || 'pending'
-      : wsDetails?.status || 'unknown';
+      : selectedRequest.type === 'websocket'
+      ? wsDetails?.status || 'unknown'
+      : sseDetails?.status || 'unknown';
 
   // Create legacy network entry for tab components
   const legacyEntry = createLegacyNetworkEntry(
@@ -154,6 +161,31 @@ export const SidePanel = () => {
             className="data-[state=active]:bg-gray-700"
           >
             Timing
+          </TabsTrigger>
+        </>
+      );
+    }
+
+    if (sseDetails) {
+      return (
+        <>
+          <TabsTrigger
+            value="headers"
+            className="data-[state=active]:bg-gray-700"
+          >
+            Headers
+          </TabsTrigger>
+          <TabsTrigger
+            value="request"
+            className="data-[state=active]:bg-gray-700"
+          >
+            Request
+          </TabsTrigger>
+          <TabsTrigger
+            value="messages"
+            className="data-[state=active]:bg-gray-700"
+          >
+            Messages
           </TabsTrigger>
         </>
       );
@@ -217,6 +249,28 @@ export const SidePanel = () => {
       );
     }
 
+    if (sseDetails) {
+      return (
+        <>
+          <TabsContent value="headers" className="flex-1 m-0 overflow-hidden">
+            <HeadersTab selectedRequest={sseDetails} />
+          </TabsContent>
+
+          <TabsContent value="request" className="flex-1 m-0 overflow-hidden">
+            <RequestTab selectedRequest={sseDetails} />
+          </TabsContent>
+
+          <TabsContent value="messages" className="flex-1 m-0 overflow-hidden">
+            <SSEMessagesTab selectedRequest={sseDetails} />
+          </TabsContent>
+
+          <TabsContent value="cookies" className="flex-1 m-0 overflow-hidden">
+            <CookiesTab selectedRequest={sseDetails} />
+          </TabsContent>
+        </>
+      );
+    }
+
     throw new Error('Invalid request type');
   };
 
@@ -253,7 +307,7 @@ export const SidePanel = () => {
         <Tabs
           key={selectedRequest.id}
           defaultValue={
-            selectedRequest.type === 'http' ? 'headers' : 'messages'
+            selectedRequest.type === 'websocket' ? 'messages' : 'headers'
           }
           className="h-full flex flex-col"
         >
