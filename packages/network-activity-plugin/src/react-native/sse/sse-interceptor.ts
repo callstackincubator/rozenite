@@ -1,4 +1,4 @@
-import EventSource from 'react-native-sse';
+import type EventSource from 'react-native-sse';
 import type {
   MessageEvent,
   ErrorEvent,
@@ -8,6 +8,7 @@ import type {
   ExceptionEvent,
 } from 'react-native-sse';
 import { EventSourceWithInternals } from './types';
+import { getEventSource } from './event-source';
 
 export type SSEInterceptorConnectCallback = (
   url: string,
@@ -42,8 +43,10 @@ let closeCallback: SSEInterceptorCloseCallback | null;
 
 let isInterceptorEnabled = false;
 
+const eventSourceClass = getEventSource();
+
 // Store original EventSource open method
-const originalOpen = EventSource.prototype.open;
+const originalOpen = eventSourceClass.prototype.open;
 
 /**
  * A network interceptor which monkey-patches EventSource open method
@@ -96,7 +99,9 @@ export const SSEInterceptor = {
     }
 
     // Override EventSource open method to intercept SSE connections
-    EventSource.prototype.open = function (this: EventSourceWithInternals) {
+    eventSourceClass.prototype.open = function (
+      this: EventSourceWithInternals
+    ) {
       // Invoke connect callback
       if (connectCallback) {
         connectCallback(this.url, this);
@@ -145,7 +150,7 @@ export const SSEInterceptor = {
     isInterceptorEnabled = false;
 
     // Restore original open method
-    EventSource.prototype.open = originalOpen;
+    eventSourceClass.prototype.open = originalOpen;
 
     // Clear callbacks
     connectCallback = null;
