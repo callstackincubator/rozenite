@@ -32,7 +32,7 @@ const api = {
 
   getPosts: async (): Promise<Post[]> => {
     const response = await fetch(
-      'https://jsonplaceholder.typicode.com/posts?_limit=10',
+      'https://jsonplaceholder.typicode.com/posts?_limit=10&userId=1&sort=desc',
       {
         headers: {
           'X-Rozenite-Test': 'true',
@@ -108,7 +108,7 @@ const api = {
 
   // Create a new post
   createPost: async (postData: Omit<Post, 'id'>): Promise<Post> => {
-    const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts?someParam=value', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -505,7 +505,7 @@ const HTTPTestComponent: React.FC = () => {
         data={data}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={renderHeader()}
         contentContainerStyle={styles.listContainer}
         refreshControl={
           <RefreshControl

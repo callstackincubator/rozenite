@@ -37,10 +37,7 @@ export const KeyValueGrid = ({
       {items.map((item, index) => (
         <Fragment key={index}>
           <span
-            className={cn(
-              'text-gray-400 wrap-anywhere',
-              item.keyClassName
-            )}
+            className={cn('text-gray-400 wrap-anywhere', item.keyClassName)}
           >
             {item.key}
           </span>
