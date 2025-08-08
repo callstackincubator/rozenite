@@ -6,6 +6,10 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .wrap-anywhere {
+    overflow-wrap: anywhere;
+  }
 }
 
 @layer base {

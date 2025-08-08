@@ -278,16 +278,18 @@ export const SidePanel = () => {
     <div className="w-1/2 flex flex-col bg-gray-900">
       {/* Side Panel Header */}
       <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <div
-            className={`w-3 h-3 rounded-full ${getTypeColor(
+            className={`w-3 h-3 rounded-full flex-shrink-0 ${getTypeColor(
               selectedRequest.type
             )}`}
           ></div>
-          <span className="font-medium">{requestName}</span>
+          <span className="font-medium truncate">{requestName}</span>
           <Badge
             variant="outline"
-            className={`${getStatusColor(requestStatus)} border-current`}
+            className={`${getStatusColor(
+              requestStatus
+            )} border-current flex-shrink-0`}
           >
             {requestStatus}
           </Badge>
@@ -296,7 +298,7 @@ export const SidePanel = () => {
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="h-6 w-6 p-0 text-gray-400 hover:text-blue-400"
+          className="h-6 w-6 p-0 text-gray-400 hover:text-blue-400 flex-shrink-0 ml-2"
         >
           <X className="h-4 w-4" />
         </Button>
