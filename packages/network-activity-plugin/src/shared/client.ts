@@ -8,11 +8,31 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 export type RequestId = string;
 export type Timestamp = number;
 
+export type XHRPostData =
+  | string
+  | Blob
+  | FormData
+  | ArrayBuffer
+  | ArrayBufferView
+  | unknown
+  | null
+  | undefined;
+
+export type RequestPostData =
+  | { type: 'text'; value: string }
+  | { type: 'form-data'; value: Record<string, unknown> }
+  | {
+      type: 'binary';
+      value: { size: number; type?: string; name?: string };
+    }
+  | null
+  | undefined;
+
 export type Request = {
   url: string;
   method: HttpMethod;
   headers: HttpHeaders;
-  postData?: string;
+  postData?: RequestPostData;
 };
 
 export type Response = {

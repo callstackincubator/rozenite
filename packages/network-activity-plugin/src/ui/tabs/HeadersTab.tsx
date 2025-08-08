@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { ScrollArea } from '../components/ScrollArea';
 import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
 import { getStatusColor } from '../utils/getStatusColor';
+import { CopyAsCurlButton } from '../components/CopyAsCurlButton';
 
 export type HeadersTabProps = {
   selectedRequest: HttpNetworkEntry | SSENetworkEntry;
@@ -14,9 +15,15 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
     return `${hostname}${port ? `:${port}` : ''}${pathname}`;
   }, [selectedRequest.request.url]);
 
+  const isCopyAsCurlEnabled =
+    selectedRequest.request.body?.data.type !== 'binary';
+
   return (
     <ScrollArea className="h-full w-full">
       <div className="p-4 space-y-4">
+        {isCopyAsCurlEnabled && (
+          <CopyAsCurlButton selectedRequest={selectedRequest} />
+        )}
         <div>
           <h4 className="text-sm font-medium text-gray-300 mb-2">General</h4>
           <div className="space-y-1 text-sm">

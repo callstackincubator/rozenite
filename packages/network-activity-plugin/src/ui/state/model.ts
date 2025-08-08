@@ -1,4 +1,4 @@
-import { Initiator, ResourceType } from '../../shared/client';
+import { Initiator, ResourceType, RequestPostData } from '../../shared/client';
 
 export type RequestId = string;
 export type Timestamp = number;
@@ -8,7 +8,12 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 export type NetworkEntryType = 'http' | 'websocket' | 'sse';
 
 /* HTTP */
-export type HttpData = {
+export type HttpRequestData = {
+  type: string;
+  data: NonNullable<RequestPostData>;
+};
+
+export type HttpResponseData = {
   type: string;
   data: string;
 };
@@ -17,7 +22,7 @@ export type HttpRequest = {
   url: string;
   method: HttpMethod;
   headers: Record<string, string>;
-  body?: HttpData;
+  body?: HttpRequestData;
 };
 
 export type HttpResponse = {
@@ -28,7 +33,7 @@ export type HttpResponse = {
   contentType: string;
   size: number;
   responseTime: Timestamp;
-  body?: HttpData;
+  body?: HttpResponseData;
 };
 
 export type HttpStatus = 'pending' | 'loading' | 'finished' | 'failed';

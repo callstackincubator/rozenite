@@ -1,4 +1,4 @@
-import { getHttpHeaderValue } from '../ui/utils/getHttpHeaderValue';
+import { getContentTypeMime } from '../utils/getContentTypeMimeType';
 
 type UnionToIntersection<U> = (
   U extends unknown ? (k: U) => void : never
@@ -22,10 +22,10 @@ export const getContentType = (request: XMLHttpRequest): string => {
   const responseHeaders = request.responseHeaders;
   const responseType = request.responseType;
 
-  const contentType = getHttpHeaderValue(responseHeaders || {}, 'content-type');
+  const contentType = getContentTypeMime(responseHeaders || {});
 
   if (contentType) {
-    return contentType.split(';')[0].trim();
+    return contentType;
   }
 
   switch (responseType) {

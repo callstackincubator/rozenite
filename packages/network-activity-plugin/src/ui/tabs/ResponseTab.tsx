@@ -130,9 +130,7 @@ export const ResponseTab = ({
 
   return (
     <ScrollArea className="h-full w-full">
-      <div className="p-4">
-        {renderResponseBody()}
-      </div>
+      <div className="p-4">{renderResponseBody()}</div>
     </ScrollArea>
   );
 };

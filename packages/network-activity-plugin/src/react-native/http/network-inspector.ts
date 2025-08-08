@@ -1,9 +1,55 @@
-import { HttpMethod, NetworkActivityDevToolsClient } from '../../shared/client';
+import { safeStringify } from '../../utils/safeStringify';
+import {
+  HttpMethod,
+  NetworkActivityDevToolsClient,
+  RequestPostData,
+  XHRPostData,
+} from '../../shared/client';
 import { getContentType } from '../utils';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
+import { getBlobName } from '../utils/getBlobName';
+import { getFormDataEntries } from '../utils/getFormDataEntries';
 import { XHRInterceptor } from './xhr-interceptor';
 
 const networkRequestsRegistry = getNetworkRequestsRegistry();
+
+function getRequestBody(body: XHRPostData): RequestPostData {
+  if (body === null || body === undefined) {
+    return body;
+  }
+
+  if (body instanceof Blob) {
+    return {
+      type: 'binary',
+      value: {
+        size: body.size,
+        type: body.type,
+        name: getBlobName(body),
+      },
+    };
+  }
+
+  if (body instanceof ArrayBuffer || ArrayBuffer.isView(body)) {
+    return {
+      type: 'binary',
+      value: {
+        size: body.byteLength,
+      },
+    };
+  }
+
+  if (body instanceof FormData) {
+    return {
+      type: 'form-data',
+      value: Object.fromEntries(getFormDataEntries(body)),
+    };
+  }
+
+  return {
+    type: 'text',
+    value: safeStringify(body),
+  };
+}
 
 const getResponseSize = (request: XMLHttpRequest): number => {
   if (typeof request.response === 'object') {
@@ -90,7 +136,10 @@ export const getNetworkInspector = (
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const handleRequestSend = (data: string, request: XMLHttpRequest): void => {
+  const handleRequestSend = (
+    data: XHRPostData,
+    request: XMLHttpRequest
+  ): void => {
     const sendTime = Date.now();
 
     const requestId = generateRequestId();
@@ -109,7 +158,7 @@ export const getNetworkInspector = (
         url: request._url as string,
         method: request._method as HttpMethod,
         headers: request._headers,
-        postData: data,
+        postData: getRequestBody(data),
       },
       type: 'XHR',
       initiator,

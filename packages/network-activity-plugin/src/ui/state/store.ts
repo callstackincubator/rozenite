@@ -12,9 +12,10 @@ import {
   SSENetworkEntry,
   SSEMessage,
 } from './model';
-import { getHttpHeaderValue } from '../utils/getHttpHeaderValue';
 import { getId } from '../utils/getId';
 import { assert } from '../utils/assert';
+import { getContentTypeMime } from '../../utils/getContentTypeMimeType';
+import { applyReactNativeRequestHeadersLogic } from '../../utils/applyReactNativeRequestHeadersLogic';
 
 const MAX_WEBSOCKET_MESSAGES_PER_CONNECTION = 32;
 const MAX_SSE_MESSAGES_PER_CONNECTION = 32;
@@ -85,6 +86,14 @@ export const createNetworkActivityStore = () =>
         case 'request-sent': {
           const eventData = data as NetworkActivityEventMap['request-sent'];
           set((state) => {
+            const headersWithContentType = applyReactNativeRequestHeadersLogic(
+              eventData.request.headers,
+              eventData.request.postData
+            );
+
+            const requestContentType =
+              getContentTypeMime(headersWithContentType) || 'text/plain';
+
             const entry: HttpNetworkEntry = {
               id: eventData.requestId,
               type: 'http',
@@ -92,14 +101,10 @@ export const createNetworkActivityStore = () =>
               request: {
                 url: eventData.request.url,
                 method: eventData.request.method,
-                headers: eventData.request.headers,
+                headers: headersWithContentType,
                 body: eventData.request.postData
                   ? {
-                      type:
-                        getHttpHeaderValue(
-                          eventData.request.headers,
-                          'content-type'
-                        )?.split(';')[0] || 'text/plain',
+                      type: requestContentType,
                       data: eventData.request.postData,
                     }
                   : undefined,
@@ -195,10 +200,9 @@ export const createNetworkActivityStore = () =>
                     body: eventData.body
                       ? {
                           type:
-                            getHttpHeaderValue(
-                              httpEntry.response?.headers ?? {},
-                              'content-type'
-                            )?.split(';')[0] || 'text/plain',
+                            getContentTypeMime(
+                              httpEntry.response?.headers ?? {}
+                            ) || 'text/plain',
                           data: eventData.body,
                         }
                       : undefined,

@@ -123,6 +123,28 @@ const api = {
 
     return response.json();
   },
+
+  // Create a new post with FormData
+  createPostWithFormData: async (postData: Omit<Post, 'id'>): Promise<Post> => {
+    const formData = new FormData();
+    formData.append('title', postData.title);
+    formData.append('body', postData.body);
+    formData.append('userId', postData.userId.toString());
+
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+      method: 'POST',
+      headers: {
+        'X-Rozenite-Test': 'true',
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  },
 };
 
 interface User {
@@ -209,7 +231,9 @@ const useCreatePostMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: api.createPost,
+    mutationFn: ({ postData, useFormData }: { postData: Omit<Post, 'id'>; useFormData: boolean }) => {
+      return useFormData ? api.createPostWithFormData(postData) : api.createPost(postData);
+    },
     onSuccess: () => {
       // Invalidate and refetch posts query to show the new post
       queryClient.invalidateQueries({ queryKey: ['posts'] });
@@ -268,6 +292,7 @@ const HTTPTestComponent: React.FC = () => {
   >('users');
   const [newPostTitle, setNewPostTitle] = React.useState('');
   const [newPostBody, setNewPostBody] = React.useState('');
+  const [useFormData, setUseFormData] = React.useState(false);
 
   const usersQuery = useUsersQuery();
   const postsQuery = usePostsQuery();
@@ -303,9 +328,12 @@ const HTTPTestComponent: React.FC = () => {
 
     createPostMutation.mutate(
       {
-        title: newPostTitle,
-        body: newPostBody,
-        userId: 1, // Default user ID
+        postData: {
+          title: newPostTitle,
+          body: newPostBody,
+          userId: 1, // Default user ID
+        },
+        useFormData,
       },
       {
         onSuccess: () => {
@@ -427,6 +455,18 @@ const HTTPTestComponent: React.FC = () => {
             />
           </View>
 
+          <View style={styles.checkboxContainer}>
+            <TouchableOpacity
+              style={styles.checkbox}
+              onPress={() => setUseFormData(!useFormData)}
+            >
+              <View style={[styles.checkboxBox, useFormData && styles.checkboxBoxChecked]}>
+                {useFormData && <Text style={styles.checkboxCheckmark}>✓</Text>}
+              </View>
+              <Text style={styles.checkboxLabel}>Use FormData</Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity
             style={[
               styles.createButton,
@@ -505,7 +545,7 @@ const HTTPTestComponent: React.FC = () => {
         data={data}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={renderHeader()}
         contentContainerStyle={styles.listContainer}
         refreshControl={
           <RefreshControl
@@ -1296,6 +1336,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 12,
     textAlign: 'center',
+  },
+  checkboxContainer: {
+    marginBottom: 16,
+  },
+  checkbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxBox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#666666',
+    borderRadius: 4,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxBoxChecked: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  checkboxCheckmark: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    color: '#ffffff',
+    fontSize: 16,
   },
   websocketContainer: {
     marginTop: 20,
