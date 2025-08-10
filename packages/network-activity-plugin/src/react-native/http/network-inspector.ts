@@ -6,6 +6,11 @@ import { XHRInterceptor } from './xhr-interceptor';
 const networkRequestsRegistry = getNetworkRequestsRegistry();
 
 const getResponseSize = (request: XMLHttpRequest): number => {
+  // Handle a case of 204 where no-content was sent.
+  if (request.response === null) {
+    return 0;
+  }
+
   if (typeof request.response === 'object') {
     return request.response.size;
   }
