@@ -6,6 +6,8 @@ import type {
   CloseEvent,
   TimeoutEvent,
   ExceptionEvent,
+  EventSourceEvent,
+  CustomEvent,
 } from 'react-native-sse';
 import { EventSourceWithInternals } from './types';
 import { getEventSource } from './event-source';
@@ -16,7 +18,7 @@ export type SSEInterceptorConnectCallback = (
 ) => void;
 
 export type SSEInterceptorMessageCallback = (
-  event: MessageEvent,
+  event: MessageEvent | CustomEvent<string>,
   request: EventSource
 ) => void;
 
@@ -45,8 +47,12 @@ let isInterceptorEnabled = false;
 
 const eventSourceClass = getEventSource();
 
-// Store original EventSource open method
+// Store original EventSource methods
 const originalOpen = eventSourceClass.prototype.open;
+const originalDispatch = eventSourceClass.prototype.dispatch;
+
+// Built-in SSE event types that we don't want to capture as messages
+const BUILT_IN_EVENT_TYPES = new Set(['open', 'error', 'close', 'done']);
 
 /**
  * A network interceptor which monkey-patches EventSource open method
@@ -114,12 +120,6 @@ export const SSEInterceptor = {
         }
       });
 
-      this.addEventListener('message', (event: MessageEvent) => {
-        if (messageCallback) {
-          messageCallback(event, this);
-        }
-      });
-
       this.addEventListener(
         'error',
         (event: ErrorEvent | TimeoutEvent | ExceptionEvent) => {
@@ -139,6 +139,21 @@ export const SSEInterceptor = {
       return originalOpen.call(this);
     };
 
+    eventSourceClass.prototype.dispatch = function (
+      this: EventSourceWithInternals,
+      eventType: string,
+      data: EventSourceEvent<string>
+    ) {
+      if (!BUILT_IN_EVENT_TYPES.has(eventType)) {
+        if (messageCallback) {
+          messageCallback(data, this);
+        }
+      }
+
+      // Call original open method
+      return originalDispatch.call(this, eventType, data);
+    };
+
     isInterceptorEnabled = true;
   },
 
@@ -151,6 +166,9 @@ export const SSEInterceptor = {
 
     // Restore original open method
     eventSourceClass.prototype.open = originalOpen;
+
+    // Restore original dispatch method
+    eventSourceClass.prototype.dispatch = originalDispatch;
 
     // Clear callbacks
     connectCallback = null;

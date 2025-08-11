@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { ScrollArea } from '../components/ScrollArea';
 import { JsonTree } from '../components/JsonTree';
 import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
@@ -43,17 +44,23 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
     }
 
     const { type, data } = requestBody;
+    const { type: dataType, value } = data;
 
-    let bodyContent: ReactNode = data;
+    let bodyContent: ReactNode = null;
 
-    if (type === 'application/json') {
+    if (dataType === 'text') {
       try {
-        const jsonData = JSON.parse(data);
+        const jsonData = JSON.parse(value);
 
         bodyContent = <JsonTree data={jsonData} />;
       } catch {
-        // show raw data if JSON parsing fails
+        bodyContent = value;
       }
+    }
+
+    // Show JSON tree as a temporary solution for form-data and binary types
+    if (dataType === 'form-data' || dataType === 'binary') {
+      bodyContent = <JsonTree data={value} />
     }
 
     return (
@@ -68,7 +75,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
               },
             ]}
           />
-          <CodeBlock>{bodyContent}</CodeBlock>
+          {bodyContent && <CodeBlock>{bodyContent}</CodeBlock>}
         </div>
       </Section>
     );

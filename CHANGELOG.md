@@ -1,3 +1,13 @@
+## 1.0.0-alpha.10 (2025-08-08)
+
+### 🩹 Fixes
+
+- **@rozenite/middleware:** Enhanced project type detection heuristics for React Native CLI vs Expo projects. For cases where automatic detection fails, you can now explicitly specify the project type using the 'projectType' option to override Rozenite's detection. ([d7131ec](https://github.com/callstackincubator/rozenite/commit/d7131ec))
+
+### ❤️ Thank You
+
+- Szymon Chmal @V3RON
+
 ## 1.0.0-alpha.9 (2025-08-07)
 
 ### 🩹 Fixes

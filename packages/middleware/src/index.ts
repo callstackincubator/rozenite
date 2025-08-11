@@ -6,7 +6,7 @@ import { getInstalledPlugins } from './auto-discovery.js';
 import type { RozeniteConfig } from './config.js';
 import { getDevModePackage } from './dev-mode.js';
 import { verifyReactNativeVersion } from './verify-react-native-version.js';
-import { getDevMiddlewarePath, getReactNativePackagePath } from './resolve.js';
+import { getReactNativePackagePath } from './resolve.js';
 
 export type RozeniteMiddleware = Application;
 export type RozeniteInstance = {
@@ -24,11 +24,6 @@ export const initializeRozenite = (
     logger.debug(`Resolution root: ${options.projectRoot}`);
     logger.debug(
       `Resolved react-native to: ${getReactNativePackagePath(
-        options.projectRoot
-      )}`
-    );
-    logger.debug(
-      `Resolved @react-native/dev-middleware to: ${getDevMiddlewarePath(
         options.projectRoot
       )}`
     );
@@ -52,7 +47,7 @@ export const initializeRozenite = (
     });
   }
 
-  patchDevtoolsFrontendUrl(options.projectRoot);
+  patchDevtoolsFrontendUrl(options);
 
   return {
     middleware: getMiddleware(

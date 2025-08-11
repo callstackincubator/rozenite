@@ -55,13 +55,13 @@ Panels are React components that appear in the DevTools interface. They're defin
 
 ### Type-Safe Plugin Development
 
-Rozenite provides full TypeScript support for plugin development. The `DevToolsPluginClient` uses an event-based API with full type safety:
+Rozenite provides full TypeScript support for plugin development. The `RozeniteDevToolsClient` uses an event-based API with full type safety:
 
 #### Client API
 
 ```typescript
 // Hook usage
-const client = useDevToolsPluginClient<EventMap>({
+const client = useRozeniteDevToolsClient<EventMap>({
   pluginId: 'your-plugin-id',
 });
 
@@ -120,11 +120,11 @@ export default function MyPanel() {
 
 ### Using the Plugin Bridge
 
-Connect your panel to React Native using the plugin bridge. The `DevToolsPluginClient` provides full TypeScript support for type-safe communication:
+Connect your panel to React Native using the plugin bridge. The `RozeniteDevToolsClient` provides full TypeScript support for type-safe communication:
 
 ```typescript title="src/my-panel.tsx"
 import React, { useEffect, useState } from 'react';
-import { useDevToolsPluginClient } from '@rozenite/plugin-bridge';
+import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 
 // Define type-safe event map
 interface PluginEvents {
@@ -139,7 +139,7 @@ interface PluginEvents {
 }
 
 export default function MyPanel() {
-  const client = useDevToolsPluginClient<PluginEvents>({
+  const client = useRozeniteDevToolsClient<PluginEvents>({
     pluginId: 'my-user-panel',
   });
   const [userData, setUserData] = useState<PluginEvents['user-data'] | null>(
