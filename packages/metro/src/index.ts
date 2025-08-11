@@ -1,15 +1,33 @@
 import { type MetroConfig } from '@react-native/metro-config';
 import { initializeRozenite, type RozeniteConfig } from '@rozenite/middleware';
 import path from 'node:path';
+import { isBundling } from './is-bundling.js';
 
-export type RozeniteMetroConfig = Omit<RozeniteConfig, 'projectRoot'>;
+export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<
+  RozeniteConfig,
+  'projectRoot'
+> & {
+  /**
+   * Certain Rozenite plugins require Metro to be configured in a specific way.
+   * This option allows you to modify the Metro config in a way that is safe to do when bundling.
+   */
+  enhanceMetroConfig?: (
+    config: TMetroConfig
+  ) => Promise<TMetroConfig> | TMetroConfig;
+};
 
 export const withRozenite = async <T extends MetroConfig>(
   config: T | Promise<T>,
-  options: RozeniteMetroConfig = {}
+  options: RozeniteMetroConfig<T> = {}
 ): Promise<T> => {
   const resolvedConfig = await config;
   const projectRoot = resolvedConfig.projectRoot ?? process.cwd();
+
+  if (isBundling(projectRoot)) {
+    console.info('[Rozenite] Skipping initialization for bundling');
+    return resolvedConfig;
+  }
+
   const { devModePackage, middleware: rozeniteMiddleware } = initializeRozenite(
     {
       projectRoot,
@@ -17,7 +35,7 @@ export const withRozenite = async <T extends MetroConfig>(
     }
   );
 
-  return {
+  const rozeniteMetroConfig = {
     ...resolvedConfig,
     watchFolders: devModePackage
       ? [...(resolvedConfig.watchFolders ?? []), devModePackage.path]
@@ -55,4 +73,13 @@ export const withRozenite = async <T extends MetroConfig>(
       },
     },
   } satisfies MetroConfig;
+
+  if (options.enhanceMetroConfig) {
+    const enhancedConfig = await options.enhanceMetroConfig(
+      rozeniteMetroConfig
+    );
+    return enhancedConfig;
+  }
+
+  return rozeniteMetroConfig;
 };
