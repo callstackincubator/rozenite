@@ -11,20 +11,33 @@ export const isBundling = (projectRoot: string): boolean => {
     'react-native'
   );
 
-  if (
-    expoBinRelativePath &&
-    executablePath.endsWith(expoBinRelativePath) &&
-    command === 'export'
-  ) {
-    return true;
+  // Check for Expo bundling
+  if (command === 'export') {
+    // Check direct binary path
+    if (expoBinRelativePath && executablePath.endsWith(expoBinRelativePath)) {
+      return true;
+    }
+
+    // Check node_modules/.bin alias
+    if (executablePath.endsWith('node_modules/.bin/expo')) {
+      return true;
+    }
   }
 
-  if (
-    reactNativeBinRelativePath &&
-    executablePath.endsWith(reactNativeBinRelativePath) &&
-    command === 'bundle'
-  ) {
-    return true;
+  // Check for React Native bundling
+  if (command === 'bundle') {
+    // Check direct binary path
+    if (
+      reactNativeBinRelativePath &&
+      executablePath.endsWith(reactNativeBinRelativePath)
+    ) {
+      return true;
+    }
+
+    // Check node_modules/.bin alias
+    if (executablePath.endsWith('node_modules/.bin/react-native')) {
+      return true;
+    }
   }
 
   return false;
