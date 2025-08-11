@@ -15,9 +15,14 @@ export const getChannel = async (): Promise<Channel> => {
   channel = isPanel ? getPanelChannel() : getCdpChannel();
 
   // Replace promise with channel when it's ready.
-  channel.then((instance) => {
-    channel = instance;
-  });
+  channel
+    .then((instance) => {
+      channel = instance;
+    })
+    .catch(() => {
+      // Silently handle rejections to prevent uncaught promise rejections
+      // The error will still be propagated to the caller through the returned promise
+    });
 
   return channel;
 };

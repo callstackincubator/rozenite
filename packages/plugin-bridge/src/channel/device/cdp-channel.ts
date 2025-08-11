@@ -1,4 +1,6 @@
+import { isWeb } from '../../web.js';
 import { Channel } from '../types.js';
+import { UnsupportedPlatformError } from '../../errors.js';
 
 export type CdpMessageListener = (message: unknown) => void;
 
@@ -117,5 +119,9 @@ const getCdpDomainProxy = async (): Promise<Channel> => {
 };
 
 export const getCdpChannel = async (): Promise<Channel> => {
+  if (isWeb()) {
+    throw new UnsupportedPlatformError('web');
+  }
+
   return getCdpDomainProxy();
 };
