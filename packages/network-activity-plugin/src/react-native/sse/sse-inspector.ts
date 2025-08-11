@@ -110,6 +110,7 @@ export const getSSEInspector = (): SSEInspector => {
     },
     isEnabled: () => SSEInterceptor.isInterceptorEnabled(),
     dispose: () => {
+      SSEInterceptor.disableInterception();
       eventEmitter.events = {};
     },
     on: <TEventType extends keyof SSEEventMap>(
