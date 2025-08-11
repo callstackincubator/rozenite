@@ -1,6 +1,8 @@
 import { getChannel } from './channel/factory.js';
 import { getDevToolsMessage } from './message';
 import { Subscription } from './types';
+import { isWeb } from './web.js';
+import { UnsupportedPlatformError } from './errors.js';
 
 const clients = new Map<
   string,
@@ -91,6 +93,10 @@ export const getRozeniteDevToolsClient = async <
 >(
   pluginId: string
 ): Promise<RozeniteDevToolsClient<TEventMap>> => {
+  if (isWeb()) {
+    throw new UnsupportedPlatformError('web');
+  }
+
   const existingClient = clients.get(pluginId);
 
   if (existingClient != null) {
