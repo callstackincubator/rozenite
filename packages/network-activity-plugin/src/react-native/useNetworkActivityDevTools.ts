@@ -7,8 +7,15 @@ import { WebSocketEventMap } from '../shared/websocket-events';
 import { UnionToTuple } from './utils';
 import { getSSEInspector } from './sse/sse-inspector';
 import { SSEEventMap } from '../shared/sse-events';
+import {
+  DEFAULT_CONFIG,
+  NetworkActivityDevToolsConfig,
+  validateConfig,
+} from './config';
 
-export const useNetworkActivityDevTools = () => {
+export const useNetworkActivityDevTools = (
+  config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG
+) => {
   const client = useRozeniteDevToolsClient<NetworkActivityEventMap>({
     pluginId: '@rozenite/network-activity-plugin',
   });
@@ -18,15 +25,26 @@ export const useNetworkActivityDevTools = () => {
       return;
     }
 
+  validateConfig(config);
+
+  const isHttpInspectorEnabled = config.inspectors?.http ?? true;
+  const isWebSocketInspectorEnabled = config.inspectors?.websocket ?? true;
+  const isSSEInspectorEnabled = config.inspectors?.sse ?? true;
+
+  useEffect(() => {
+    if (!client || !isHttpInspectorEnabled) {
+      return;
+    }
+
     const networkInspector = getNetworkInspector(client);
 
     return () => {
       networkInspector.dispose();
     };
-  }, [client]);
+  }, [client, isHttpInspectorEnabled]);
 
   useEffect(() => {
-    if (!client) {
+    if (!client || !isWebSocketInspectorEnabled) {
       return;
     }
 
@@ -59,10 +77,10 @@ export const useNetworkActivityDevTools = () => {
       // Subscriptions will be disposed by the inspector
       websocketInspector.dispose();
     };
-  }, [client]);
+  }, [client, isWebSocketInspectorEnabled]);
 
   useEffect(() => {
-    if (!client) {
+    if (!client || !isSSEInspectorEnabled) {
       return;
     }
 
@@ -92,7 +110,7 @@ export const useNetworkActivityDevTools = () => {
       // Subscriptions will be disposed by the inspector
       sseInspector.dispose();
     };
-  }, [client]);
+  }, [client, isSSEInspectorEnabled]);
 
   return client;
 };
