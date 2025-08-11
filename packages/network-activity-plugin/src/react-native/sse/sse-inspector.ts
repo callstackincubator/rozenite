@@ -66,7 +66,10 @@ export const getSSEInspector = (): SSEInspector => {
           type: 'sse-message',
           requestId,
           timestamp: Date.now(),
-          data: messageEvent.data || '',
+          payload: {
+            type: messageEvent.type,
+            data: messageEvent.data || '',
+          },
         };
         eventEmitter.emit('sse-message', event);
       });

@@ -14,7 +14,10 @@ export type SSEMessageEvent = {
   type: 'sse-message';
   requestId: SSERequestId;
   timestamp: number;
-  data: string;
+  payload: {
+    type: string;
+    data: string;
+  };
 };
 
 export type SSEErrorEvent = {

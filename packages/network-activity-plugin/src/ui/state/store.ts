@@ -413,7 +413,8 @@ export const createNetworkActivityStore = () =>
             const sseEntry = entry as SSENetworkEntry;
             const newMessage: SSEMessage = {
               id: getId(`${eventData.requestId}-message`),
-              data: eventData.data,
+              type: eventData.payload.type,
+              data: eventData.payload.data,
               timestamp: eventData.timestamp,
             };
 

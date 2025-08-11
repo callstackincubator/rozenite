@@ -53,6 +53,7 @@ export type HttpNetworkEntry = {
 /* SSE */
 export type SSEMessage = {
   id: string;
+  type: string;
   data: string;
   timestamp: Timestamp;
 };
