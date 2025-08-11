@@ -1,4 +1,4 @@
-import { HttpHeaders } from "../../shared/client";
+import { HttpHeaders } from '../shared/client';
 
 // Utility to get header value case-insensitively
 export function getHttpHeaderValue(headers: HttpHeaders, name: string) {
@@ -9,6 +9,6 @@ export function getHttpHeaderValue(headers: HttpHeaders, name: string) {
       return headers[key];
     }
   }
-  
+
   return undefined;
 }

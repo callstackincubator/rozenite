@@ -12,12 +12,15 @@ export const getChannel = async (): Promise<Channel> => {
   }
 
   const isPanel = '__ROZENITE_PANEL__' in window;
-  channel = isPanel ? getPanelChannel() : getCdpChannel();
+  const channelPromise = isPanel ? getPanelChannel() : getCdpChannel();
 
-  // Replace promise with channel when it's ready.
-  channel.then((instance) => {
+  try {
+    const instance = await channelPromise;
     channel = instance;
-  });
-
-  return channel;
+    return instance;
+  } catch (error) {
+    // Clear the cached promise on error so subsequent calls can retry
+    channel = null;
+    throw error;
+  }
 };

@@ -58,10 +58,18 @@ export default store;
 Wrap your Metro configuration with `withRozeniteReduxDevTools`:
 
 ```javascript title="metro.config.js"
-import { withRozeniteReduxDevTools } from '@rozenite/redux-devtools-plugin/metro';
+const { withRozenite } = require('@rozenite/metro');
+const {
+  withRozeniteReduxDevTools,
+} = require('@rozenite/redux-devtools-plugin/metro');
 
-export default withRozeniteReduxDevTools({
-  // your existing metro config
+const config = {
+  // Your existing Metro configuration
+};
+
+module.exports = withRozenite(config, {
+  // Your Rozenite configuration
+  enhanceMetroConfig: (config) => withRozeniteReduxDevTools(config),
 });
 ```
 

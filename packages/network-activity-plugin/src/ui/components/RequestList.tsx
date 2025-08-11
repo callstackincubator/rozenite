@@ -16,6 +16,7 @@ import {
   useSelectedRequestId,
 } from '../state/hooks';
 import { getStatusColor } from '../utils/getStatusColor';
+import { FilterState } from './FilterBar';
 
 type NetworkRequest = {
   id: RequestId;
@@ -195,15 +196,45 @@ const columns = [
   }),
 ];
 
-export const RequestList = () => {
+export type RequestListProps = {
+  filter: FilterState;
+};
+
+export const RequestList = ({ filter }: RequestListProps) => {
   const actions = useNetworkActivityActions();
   const processedRequests = useProcessedRequests();
   const selectedRequestId = useSelectedRequestId();
   const [sorting, setSorting] = useState<SortingState>([]);
 
+  // Filter requests based on current filter state
+  const filteredRequests = useMemo(() => {
+    return processedRequests.filter((request) => {
+      // Type filter
+      if (!filter.types.has(request.type)) {
+        return false;
+      }
+
+      // Text filter
+      if (filter.text) {
+        const searchText = filter.text.toLowerCase();
+        const searchableFields = [
+          request.name,
+          request.method,
+          request.status.toString(),
+        ]
+          .join(' ')
+          .toLowerCase();
+
+        return searchableFields.includes(searchText);
+      }
+
+      return true;
+    });
+  }, [processedRequests, filter]);
+
   const requests = useMemo(() => {
-    return processNetworkRequests(processedRequests);
-  }, [processedRequests]);
+    return processNetworkRequests(filteredRequests);
+  }, [filteredRequests]);
 
   const table = useReactTable({
     data: requests,

@@ -4,6 +4,7 @@ import { Section } from '../components/Section';
 import { KeyValueGrid, KeyValueItem } from '../components/KeyValueGrid';
 import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
 import { getStatusColor } from '../utils/getStatusColor';
+import { CopyAsCurlButton } from '../components/CopyAsCurlButton';
 
 export type HeadersTabProps = {
   selectedRequest: HttpNetworkEntry | SSENetworkEntry;
@@ -63,9 +64,15 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
     }));
   }, [selectedRequest.request.headers]);
 
+  const isCopyAsCurlEnabled =
+    selectedRequest.request.body?.data.type !== 'binary';
+
   return (
     <ScrollArea className="h-full w-full">
       <div className="p-4 space-y-4">
+        {isCopyAsCurlEnabled && (
+          <CopyAsCurlButton selectedRequest={selectedRequest} />
+        )}
         <Section title="General">
           <KeyValueGrid items={generalItems} />
         </Section>

@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { ScrollArea } from '../components/ScrollArea';
 import { JsonTree } from '../components/JsonTree';
 import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
@@ -7,35 +8,47 @@ export type RequestTabProps = {
   selectedRequest: HttpNetworkEntry | SSENetworkEntry;
 };
 
-export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
-  const renderRequestBody = () => {
-    assert(!!selectedRequest.request.body, 'Request body is required');
-    const { type, data } = selectedRequest.request.body;
+const requestDataContainerClasses =
+  'bg-gray-800 p-3 rounded border border-gray-700';
 
-    if (type === 'application/json') {
+export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
+  const requestBody = selectedRequest.request.body;
+
+  const renderRequestBody = () => {
+    assert(!!requestBody, 'Request body is required');
+
+    const { type, value } = requestBody.data;
+
+    if (type === 'text') {
       try {
-        const jsonData = JSON.parse(data);
+        const jsonData = JSON.parse(value);
         return (
-          <div className="bg-gray-800 p-3 rounded border border-gray-700">
+          <div className={requestDataContainerClasses}>
             <JsonTree data={jsonData} />
           </div>
         );
       } catch {
         // Fallback to pre tag if JSON parsing fails
         return (
-          <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
-            {data}
+          <pre
+            className={`text-sm font-mono text-gray-300 whitespace-pre-wrap overflow-x-auto ${requestDataContainerClasses}`}
+          >
+            {value}
           </pre>
         );
       }
     }
 
-    // For non-JSON content types, use the existing pre tag
-    return (
-      <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
-        {data}
-      </pre>
-    );
+    // Show JSON tree as a temporary solution for form-data and binary types
+    if (type === 'form-data' || type === 'binary') {
+      return (
+        <div className={requestDataContainerClasses}>
+          <JsonTree data={value} />
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (

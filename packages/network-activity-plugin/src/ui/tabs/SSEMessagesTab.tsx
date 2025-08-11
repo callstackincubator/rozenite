@@ -15,29 +15,63 @@ export type SSEMessagesTabProps = {
 
 interface SSEMessageRow {
   id: string;
+  type: string;
   data: string;
   timestamp: number;
 }
 
 const columnHelper = createColumnHelper<SSEMessageRow>();
 
+const formatPreviewData = (data: string) => {
+  return (
+    <span className="max-w-xs truncate text-gray-400">
+      {data.substring(0, 100) + (data.length > 100 ? '...' : '')}
+    </span>
+  );
+};
+
+const formatTimestamp = (timestamp: number) => {
+  const date = new Date(timestamp);
+  const timeString = date.toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
+  return `${timeString}.${milliseconds}`;
+};
+
+const columns = [
+  columnHelper.accessor('timestamp', {
+    header: 'Timestamp',
+    cell: ({ getValue }) => (
+      <div className="text-gray-400">{formatTimestamp(getValue())}</div>
+    ),
+    size: 120,
+  }),
+  columnHelper.accessor('type', {
+    header: 'Type',
+    cell: ({ getValue }) => (
+      <div className="text-purple-400 font-medium">{getValue()}</div>
+    ),
+    size: 100,
+  }),
+  columnHelper.accessor('data', {
+    header: 'Data',
+    cell: ({ getValue }) => {
+      const data = getValue();
+      return formatPreviewData(data);
+    },
+    size: 300,
+  }),
+];
+
 export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
   // Capture the selected message, so when it gets removed (message limit), it's still displayed
   const [selectedMessage, setSelectedMessage] = useState<SSEMessageRow | null>(
     null
   );
-
-  const formatTimestamp = (timestamp: number) => {
-    const date = new Date(timestamp);
-    const timeString = date.toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-    const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
-    return `${timeString}.${milliseconds}`;
-  };
 
   const formatData = (data: string) => {
     if (typeof data === 'string') {
@@ -65,37 +99,12 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
     return selectedRequest.messages.map(
       (message): SSEMessageRow => ({
         id: message.id,
+        type: message.type,
         data: message.data,
         timestamp: message.timestamp,
       })
     );
   }, [selectedRequest.messages]);
-
-  const formatPreviewData = (data: string) => {
-    return (
-      <span className="max-w-xs truncate text-gray-400">
-        {data.substring(0, 100) + (data.length > 100 ? '...' : '')}
-      </span>
-    );
-  };
-
-  const columns = [
-    columnHelper.accessor('data', {
-      header: 'Data',
-      cell: ({ getValue }) => {
-        const data = getValue();
-        return formatPreviewData(data);
-      },
-      size: 300,
-    }),
-    columnHelper.accessor('timestamp', {
-      header: 'Timestamp',
-      cell: ({ getValue }) => (
-        <div className="text-gray-400">{formatTimestamp(getValue())}</div>
-      ),
-      size: 120,
-    }),
-  ];
 
   const table = useReactTable({
     data: tableData,
@@ -189,7 +198,9 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-400">Type: </span>
-                  <span className="text-purple-400">SSE</span>
+                  <span className="text-purple-400">
+                    {selectedMessage.type}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-400">Timestamp: </span>

@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/redux-devtools-plugin",
-  "version": "1.0.0-alpha.9",
+  "version": "1.0.0-alpha.10",
   "description": "Redux DevTools for Rozenite.",
   "type": "module",
   "main": "./dist/react-native.cjs",
