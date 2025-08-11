@@ -30,8 +30,9 @@ const config = {
   // Your existing Metro configuration
 };
 
-module.exports = withRozenite(withRozeniteExpoAtlasPlugin(config), {
+module.exports = withRozenite(config, {
   // Your Rozenite configuration
+  enhanceMetroConfig: (config) => withRozeniteExpoAtlasPlugin(config),
 });
 ```
 
