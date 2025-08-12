@@ -1,5 +1,5 @@
 import { HttpHeaders, RequestPostData } from '../shared/client';
-import { getHttpHeaderValue } from './getHttpHeaderValue';
+import { getHttpHeader } from './getHttpHeader';
 import { inferContentTypeFromPostData } from './inferContentTypeFromPostData';
 
 /**
@@ -12,7 +12,7 @@ export function applyReactNativeRequestHeadersLogic(
   headers: HttpHeaders,
   postData?: RequestPostData
 ): HttpHeaders {
-  const existingContentType = getHttpHeaderValue(headers, 'content-type');
+  const existingContentType = getHttpHeader(headers, 'content-type');
   
   if (existingContentType) {
     return headers;
