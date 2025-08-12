@@ -1,6 +1,11 @@
 export let rozeniteDevToolsEnhancer: typeof import('./src/runtime').rozeniteDevToolsEnhancer;
 
-if (process.env.NODE_ENV !== 'production') {
+const isWeb =
+  typeof window !== 'undefined' && window.navigator.product !== 'ReactNative';
+const isDev = process.env.NODE_ENV !== 'production';
+const isServer = typeof window === 'undefined';
+
+if (isDev && !isWeb && !isServer) {
   rozeniteDevToolsEnhancer = require('./src/runtime').rozeniteDevToolsEnhancer;
 } else {
   rozeniteDevToolsEnhancer =

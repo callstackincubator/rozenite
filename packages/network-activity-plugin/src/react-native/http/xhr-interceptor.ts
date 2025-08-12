@@ -11,6 +11,7 @@ import { XHRPostData } from '../../shared/client';
  * Source: https://github.com/facebook/react-native/blob/2c683c5787dd03ac15d2aad45dcc53650529ee7f/packages/react-native/src/private/devsupport/devmenu/elementinspector/XHRInterceptor.js
  */
 
+const XMLHttpRequest = global.XMLHttpRequest || window.XMLHttpRequest;
 const originalXHROpen = XMLHttpRequest.prototype.open;
 const originalXHRSend = XMLHttpRequest.prototype.send;
 const originalXHRSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
