@@ -5,10 +5,29 @@ declare module '/rozenite/ui/legacy/legacy.js' {
     id: string;
   }
 
+  export interface TabbedPaneEventDataMap {
+    TabSelected: {
+      data: {
+        prevTabId: string;
+        tabId: string;
+      };
+    };
+  }
+
+  type TabbedPaneEventKeys = keyof TabbedPaneEventDataMap;
+
   export interface TabbedPane {
     tabsById: Map<string, TabbedPaneTab>;
     insertBefore(tab: TabbedPaneTab, before: number): void;
     selectTab(tabId: string): void;
+    addEventListener<T extends TabbedPaneEventKeys>(
+      event: T,
+      listener: (data: TabbedPaneEventDataMap[T]) => void
+    ): void;
+    removeEventListener(
+      event: TabbedPaneEventKeys,
+      listener: (data: any) => void
+    ): void;
   }
 
   export namespace View {
