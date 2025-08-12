@@ -19,6 +19,7 @@ export default {
         'playground',
         'middleware',
         'repack',
+        'performance-monitor-plugin',
         '',
       ],
     ],

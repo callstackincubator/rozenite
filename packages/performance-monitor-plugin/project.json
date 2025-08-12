@@ -1,0 +1,12 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@rozenite/performance-monitor-plugin",
+  "targets": {
+    "build": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["{projectRoot}/src/**/*"],
+      "outputs": ["{projectRoot}/dist"]
+    }
+  }
+}
