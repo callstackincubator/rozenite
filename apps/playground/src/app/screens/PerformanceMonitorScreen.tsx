@@ -55,7 +55,15 @@ export const PerformanceMonitorScreen = () => {
       performance.mark(endMark);
 
       // Create measure between the two marks
-      performance.measure(measureName, startMark, endMark);
+      performance.measure(measureName, {
+        start: startMark,
+        end: endMark,
+        detail: {
+          lorem: 'ipsum',
+          foo: 'bar',
+          baz: [1, 2, 3],
+        },
+      });
 
       Alert.alert(
         'Performance Measure Fired',

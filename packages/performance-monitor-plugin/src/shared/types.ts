@@ -1,23 +1,29 @@
 import type { RozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 
-export type SerializedPerformanceMeasure = {
+export interface SerializedPerformanceEntry {
+  entryType: 'mark' | 'measure' | 'metric';
   name: string;
   startTime: number;
   duration: number;
-  category: string;
-};
+}
 
-export type SerializedPerformanceMark = {
-  name: string;
-  startTime: number;
-};
+export interface SerializedPerformanceMeasure
+  extends SerializedPerformanceEntry {
+  entryType: 'measure';
+  detail?: unknown;
+}
 
-export type SerializedPerformanceMetric = {
-  name: string;
-  startTime: number;
+export interface SerializedPerformanceMark extends SerializedPerformanceEntry {
+  entryType: 'mark';
+  detail?: unknown;
+}
+
+export interface SerializedPerformanceMetric
+  extends SerializedPerformanceEntry {
+  entryType: 'metric';
   value: string | number;
-  unit?: string;
-};
+  detail?: unknown;
+}
 
 export type PerformanceMonitorEventMap = {
   setEnabled: {

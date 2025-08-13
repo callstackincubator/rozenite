@@ -1,7 +1,6 @@
 import performance, {
   EntryType,
   PerformanceEntry,
-  PerformanceMetric,
   PerformanceObserver,
 } from 'react-native-performance';
 import type {
@@ -10,15 +9,12 @@ import type {
   SerializedPerformanceMeasure,
   SerializedPerformanceMetric,
 } from '../shared/types';
+import { toDateTimestamp } from './helpers';
 import {
-  subtractDownloadDuration,
-  getNativeMarkMap,
-  calculateNativeMeasures,
-  calculateNativeMarks,
-  calculateNativeMetrics,
-  getResourceName,
-  toDateTimestamp,
-} from './helpers';
+  assertPerformanceMark,
+  assertPerformanceMeasure,
+  assertPerformanceMetric,
+} from './asserts';
 
 type PerformanceObserverOptions = { type: EntryType; buffered?: boolean };
 
@@ -87,51 +83,38 @@ export const getPerformanceMonitor = (
 
     addObserver(
       (list) => {
-        const entries = subtractDownloadDuration(list.getEntries());
-        const entryMap = getNativeMarkMap(entries);
-        const measures = calculateNativeMeasures(entries, entryMap);
-        if (measures.length !== 0) {
-          appendMeasures(measures);
-        }
-        const marks = calculateNativeMarks(entries);
-        if (marks.length !== 0) {
-          appendMarks(marks);
-        }
-        const metrics = calculateNativeMetrics(entries, entryMap);
-        if (metrics.length !== 0) {
-          setMetrics(metrics);
-        }
-      },
-      {
-        type: 'react-native-mark',
-        buffered: true,
-      }
-    );
-    addObserver(
-      (list) => {
-        appendMeasures(
-          list.getEntries().map((entry) => ({
-            name: getResourceName(entry.name),
-            startTime: toDateTimestamp(origin, entry.startTime),
-            duration: entry.duration,
-            category: 'Network',
-          }))
-        );
-      },
-      {
-        type: 'resource',
-        buffered: true,
-      }
-    );
-    addObserver(
-      (list) => {
-        appendMeasures(
-          list.getEntries().map((entry) => ({
+        const marks = list.getEntries().map((entry) => {
+          assertPerformanceMark(entry);
+
+          return {
             name: entry.name,
             startTime: toDateTimestamp(origin, entry.startTime),
             duration: entry.duration,
-            category: 'App',
-          }))
+            entryType: 'mark' as const,
+          };
+        });
+
+        appendMarks(marks);
+      },
+      {
+        type: 'mark',
+        buffered: true,
+      }
+    );
+    addObserver(
+      (list) => {
+        appendMeasures(
+          list.getEntries().map((entry) => {
+            assertPerformanceMeasure(entry);
+
+            return {
+              name: entry.name,
+              startTime: toDateTimestamp(origin, entry.startTime),
+              duration: entry.duration,
+              entryType: 'measure' as const,
+              detail: entry.detail,
+            };
+          })
         );
       },
       {
@@ -142,12 +125,18 @@ export const getPerformanceMonitor = (
     addObserver(
       (list) => {
         setMetrics(
-          list.getEntries().map((entry) => ({
-            name: entry.name,
-            startTime: toDateTimestamp(origin, entry.startTime),
-            value: (entry as PerformanceMetric).value,
-            unit: entry.name === 'bundleSize' ? 'bytes' : undefined,
-          }))
+          list.getEntries().map((entry) => {
+            assertPerformanceMetric(entry);
+
+            return {
+              name: entry.name,
+              startTime: toDateTimestamp(origin, entry.startTime),
+              duration: entry.duration,
+              entryType: 'metric' as const,
+              value: entry.value,
+              detail: entry.detail,
+            };
+          })
         );
       },
       {
@@ -160,9 +149,13 @@ export const getPerformanceMonitor = (
     observers.forEach((observer) => {
       observer.disconnect();
     });
+    performance.clearMarks();
+    performance.clearMeasures();
+    performance.clearMetrics();
     observers = [];
     isObserving = false;
     sessionStartedAt = 0;
+    origin = 0;
   };
   const isEnabled = (): boolean => isObserving;
   const dispose = (): void => {
