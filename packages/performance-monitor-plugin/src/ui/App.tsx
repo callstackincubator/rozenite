@@ -170,62 +170,76 @@ export default function PerformanceMonitorPanel() {
 
   return (
     <Theme appearance="dark" accentColor="blue" radius="medium">
-      <ScrollArea style={{ height: '100vh' }}>
-        <Container size="4" style={{ padding: '20px' }}>
-          {/* Header */}
-          <Box mb="4">
-            <Heading size="6" mb="2">
-              Performance Monitor
-            </Heading>
-            <Flex gap="4" align="center">
-              <SessionDuration
-                isActive={isSessionActive}
-                sessionStartedAt={session.sessionStartedAt}
-              />
-            </Flex>
-          </Box>
-
-          {/* Toolbar */}
-          <Flex gap="3" align="center" mb="4">
-            <Button
-              onClick={handleStartSession}
-              disabled={isSessionActive}
-              color="green"
-            >
-              Start Session
-            </Button>
-            <Button
-              onClick={handleStopSession}
-              disabled={!isSessionActive}
-              color="red"
-            >
-              Stop Session
-            </Button>
-            <ExportModal
-              measures={session.measures}
-              metrics={session.metrics}
-              marks={session.marks}
+      <Box
+        p="4"
+        height="100vh"
+        style={{ display: 'flex', flexDirection: 'column' }}
+      >
+        {/* Header */}
+        <Box mb="4" style={{ flexShrink: 0 }}>
+          <Heading size="6" mb="2">
+            Performance Monitor
+          </Heading>
+          <Flex gap="4" align="center">
+            <SessionDuration
+              isActive={isSessionActive}
               sessionStartedAt={session.sessionStartedAt}
-              clockShift={session.clockShift}
             />
-            <Flex gap="2" align="center" ml="auto">
-              <Box
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: isSessionActive ? '#10b981' : '#ef4444',
-                }}
-              />
-              <Text size="2" color="gray">
-                {isSessionActive ? 'Session Active' : 'Session Inactive'}
-              </Text>
-            </Flex>
           </Flex>
+        </Box>
 
-          {/* Tabs */}
-          <Tabs.Root defaultValue="measures">
-            <Tabs.List>
+        {/* Toolbar */}
+        <Flex gap="3" align="center" mb="4" style={{ flexShrink: 0 }}>
+          <Button
+            onClick={handleStartSession}
+            disabled={isSessionActive}
+            color="green"
+          >
+            Start Session
+          </Button>
+          <Button
+            onClick={handleStopSession}
+            disabled={!isSessionActive}
+            color="red"
+          >
+            Stop Session
+          </Button>
+          <ExportModal
+            measures={session.measures}
+            metrics={session.metrics}
+            marks={session.marks}
+            sessionStartedAt={session.sessionStartedAt}
+            clockShift={session.clockShift}
+          />
+          <Flex gap="2" align="center" ml="auto">
+            <Box
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: isSessionActive ? '#10b981' : '#ef4444',
+              }}
+            />
+            <Text size="2" color="gray">
+              {isSessionActive ? 'Session Active' : 'Session Inactive'}
+            </Text>
+          </Flex>
+        </Flex>
+
+        {/* Tabs */}
+        <Box
+          style={{
+            flex: '1',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+          }}
+        >
+          <Tabs.Root
+            defaultValue="measures"
+            style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+          >
+            <Tabs.List style={{ flexShrink: 0 }}>
               <Tabs.Trigger value="measures">
                 Measures ({session.measures.length})
               </Tabs.Trigger>
@@ -237,22 +251,44 @@ export default function PerformanceMonitorPanel() {
               </Tabs.Trigger>
             </Tabs.List>
 
-            <Box pt="4">
-              <Tabs.Content value="measures">
+            <Box
+              style={{
+                flexGrow: '1',
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0,
+              }}
+            >
+              <Tabs.Content
+                value="measures"
+                style={{
+                  display: 'contents',
+                }}
+              >
                 <MeasuresTable
                   measures={session.measures}
                   onRowClick={handleMeasureClick}
                 />
               </Tabs.Content>
 
-              <Tabs.Content value="metrics">
+              <Tabs.Content
+                value="metrics"
+                style={{
+                  display: 'contents',
+                }}
+              >
                 <MetricsTable
                   metrics={session.metrics}
                   onRowClick={handleMetricClick}
                 />
               </Tabs.Content>
 
-              <Tabs.Content value="marks">
+              <Tabs.Content
+                value="marks"
+                style={{
+                  display: 'contents',
+                }}
+              >
                 <MarksTable
                   marks={session.marks}
                   onRowClick={handleMarkClick}
@@ -260,8 +296,8 @@ export default function PerformanceMonitorPanel() {
               </Tabs.Content>
             </Box>
           </Tabs.Root>
-        </Container>
-      </ScrollArea>
+        </Box>
+      </Box>
 
       <DetailsSidebar
         selectedItem={selectedItem}

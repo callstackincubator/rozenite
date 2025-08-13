@@ -7,7 +7,7 @@ import {
   SortingState,
   ColumnDef,
 } from '@tanstack/react-table';
-import { Table, Text, Flex } from '@radix-ui/themes';
+import { Table, Text, Flex, Box } from '@radix-ui/themes';
 import { SerializedPerformanceMark } from '../../shared/types';
 
 export type MarksTableProps = {
@@ -55,23 +55,35 @@ export const MarksTable = ({ marks, onRowClick }: MarksTableProps) => {
 
   if (marks.length === 0) {
     return (
-      <Text
-        size="3"
-        color="gray"
-        style={{ textAlign: 'center', padding: '0 20px', fontStyle: 'italic' }}
-      >
-        No marks recorded
-      </Text>
+      <Box pt="3" pl="3">
+        <Text size="2" color="gray">
+          No marks recorded
+        </Text>
+      </Box>
     );
   }
 
   return (
-    <Table.Root>
-      <Table.Header>
+    <Table.Root style={{ overflow: 'auto' }}>
+      <Table.Header
+        style={{
+          flexShrink: 0,
+          position: 'sticky',
+          top: 0,
+          backgroundColor: 'hsl(0 0% 3.9%)',
+          zIndex: 1,
+        }}
+      >
         {table.getHeaderGroups().map((headerGroup) => (
           <Table.Row key={headerGroup.id}>
             {headerGroup.headers.map((header) => (
-              <Table.ColumnHeaderCell key={header.id}>
+              <Table.ColumnHeaderCell
+                key={header.id}
+                onClick={header.column.getToggleSortingHandler()}
+                style={{
+                  cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                }}
+              >
                 <Flex align="center" gap="2">
                   {flexRender(
                     header.column.columnDef.header,
@@ -80,9 +92,9 @@ export const MarksTable = ({ marks, onRowClick }: MarksTableProps) => {
                   {header.column.getCanSort() && (
                     <Text size="1" color="gray">
                       {{
-                        asc: '↑',
-                        desc: '↓',
-                      }[header.column.getIsSorted() as string] ?? '↕'}
+                        asc: '⬆️',
+                        desc: '⬇️',
+                      }[header.column.getIsSorted() as string] ?? '↕️'}
                     </Text>
                   )}
                 </Flex>
@@ -91,12 +103,16 @@ export const MarksTable = ({ marks, onRowClick }: MarksTableProps) => {
           </Table.Row>
         ))}
       </Table.Header>
-      <Table.Body>
+      <Table.Body style={{ flex: '1', overflow: 'auto' }}>
         {table.getRowModel().rows.map((row) => (
           <Table.Row
             key={row.id}
             onClick={() => onRowClick?.(row.original)}
-            style={{ cursor: onRowClick ? 'pointer' : 'default' }}
+            style={{
+              cursor: onRowClick ? 'pointer' : 'default',
+              transition: 'background-color 0.15s ease',
+            }}
+            className="table-row-hover"
           >
             {row.getVisibleCells().map((cell) => (
               <Table.Cell key={cell.id}>
