@@ -27,6 +27,7 @@ import { MetricsTable } from './components/MetricsTable';
 import { MarksTable } from './components/MarksTable';
 import { DetailsSidebar } from './components/DetailsSidebar';
 import { SessionDuration } from './components/SessionDuration';
+import { ExportModal } from './components/ExportModal';
 
 type PerformanceMonitorSession = {
   sessionStartedAt: number;
@@ -200,6 +201,13 @@ export default function PerformanceMonitorPanel() {
             >
               Stop Session
             </Button>
+            <ExportModal
+              measures={session.measures}
+              metrics={session.metrics}
+              marks={session.marks}
+              sessionStartedAt={session.sessionStartedAt}
+              clockShift={session.clockShift}
+            />
             <Flex gap="2" align="center" ml="auto">
               <Box
                 style={{
