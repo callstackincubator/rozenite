@@ -7,18 +7,17 @@ import {
   SerializedPerformanceMeasure,
   SerializedPerformanceMark,
   SerializedPerformanceMetric,
+  SerializedPerformanceEntry,
 } from '../shared/types';
 import { useEffect, useState } from 'react';
 import {
   Theme,
   Tabs,
   Button,
-  Container,
   Heading,
   Text,
   Flex,
   Box,
-  ScrollArea,
 } from '@radix-ui/themes';
 import '@radix-ui/themes/styles.css';
 import './App.css';
@@ -49,21 +48,8 @@ export default function PerformanceMonitorPanel() {
     metrics: [],
   });
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<
-    | {
-        type: 'measure';
-        data: SerializedPerformanceMeasure;
-      }
-    | {
-        type: 'metric';
-        data: SerializedPerformanceMetric;
-      }
-    | {
-        type: 'mark';
-        data: SerializedPerformanceMark;
-      }
-    | null
-  >(null);
+  const [selectedItem, setSelectedItem] =
+    useState<SerializedPerformanceEntry | null>(null);
 
   useEffect(() => {
     if (!client) {
@@ -152,16 +138,8 @@ export default function PerformanceMonitorPanel() {
     }
   };
 
-  const handleMeasureClick = (measure: SerializedPerformanceMeasure) => {
-    setSelectedItem({ type: 'measure', data: measure });
-  };
-
-  const handleMetricClick = (metric: SerializedPerformanceMetric) => {
-    setSelectedItem({ type: 'metric', data: metric });
-  };
-
-  const handleMarkClick = (mark: SerializedPerformanceMark) => {
-    setSelectedItem({ type: 'mark', data: mark });
+  const handleEntryClick = (entry: SerializedPerformanceEntry) => {
+    setSelectedItem(entry);
   };
 
   const handleCloseSidebar = () => {
@@ -267,7 +245,7 @@ export default function PerformanceMonitorPanel() {
               >
                 <MeasuresTable
                   measures={session.measures}
-                  onRowClick={handleMeasureClick}
+                  onRowClick={handleEntryClick}
                 />
               </Tabs.Content>
 
@@ -279,7 +257,7 @@ export default function PerformanceMonitorPanel() {
               >
                 <MetricsTable
                   metrics={session.metrics}
-                  onRowClick={handleMetricClick}
+                  onRowClick={handleEntryClick}
                 />
               </Tabs.Content>
 
@@ -291,7 +269,7 @@ export default function PerformanceMonitorPanel() {
               >
                 <MarksTable
                   marks={session.marks}
-                  onRowClick={handleMarkClick}
+                  onRowClick={handleEntryClick}
                 />
               </Tabs.Content>
             </Box>

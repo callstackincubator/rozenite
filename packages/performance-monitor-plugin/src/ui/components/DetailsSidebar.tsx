@@ -3,20 +3,10 @@ import { Cross2Icon } from '@radix-ui/react-icons';
 import { MeasureDetails } from './MeasureDetails';
 import { MetricDetails } from './MetricDetails';
 import { MarkDetails } from './MarkDetails';
-import {
-  SerializedPerformanceMeasure,
-  SerializedPerformanceMetric,
-  SerializedPerformanceMark,
-} from '../../shared/types';
-
-export type SelectedItem =
-  | { type: 'measure'; data: SerializedPerformanceMeasure }
-  | { type: 'metric'; data: SerializedPerformanceMetric }
-  | { type: 'mark'; data: SerializedPerformanceMark }
-  | null;
+import { SerializedPerformanceEntry } from '../../shared/types';
 
 export type DetailsSidebarProps = {
-  selectedItem: SelectedItem;
+  selectedItem: SerializedPerformanceEntry | null;
   onClose: () => void;
 };
 
@@ -27,13 +17,13 @@ export const DetailsSidebar = ({
   const renderDetails = () => {
     if (!selectedItem) return null;
 
-    switch (selectedItem.type) {
+    switch (selectedItem.entryType) {
       case 'measure':
-        return <MeasureDetails measure={selectedItem.data} />;
+        return <MeasureDetails measure={selectedItem} />;
       case 'metric':
-        return <MetricDetails metric={selectedItem.data} />;
+        return <MetricDetails metric={selectedItem} />;
       case 'mark':
-        return <MarkDetails mark={selectedItem.data} />;
+        return <MarkDetails mark={selectedItem} />;
       default:
         return null;
     }
