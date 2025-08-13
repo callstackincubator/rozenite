@@ -341,9 +341,6 @@ importers:
       '@rozenite/runtime':
         specifier: workspace:*
         version: link:../runtime
-      ejs:
-        specifier: ^3.1.10
-        version: 3.1.10
       express:
         specifier: ^5.1.0
         version: 5.1.0
@@ -357,9 +354,6 @@ importers:
         specifier: ^2.3.0
         version: 2.8.1
     devDependencies:
-      '@react-native/debugger-frontend':
-        specifier: ~0.76.0
-        version: 0.76.0
       '@react-native/dev-middleware':
         specifier: ~0.76.0
         version: 0.76.0

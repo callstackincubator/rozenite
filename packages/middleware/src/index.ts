@@ -51,6 +51,7 @@ export const initializeRozenite = (
 
   return {
     middleware: getMiddleware(
+      options,
       allInstalledPlugins,
       options.destroyOnDetachPlugins || []
     ),

@@ -1,12 +1,13 @@
-import debuggerFrontend from '@react-native/debugger-frontend';
 import serveStatic from 'serve-static';
 import express, { Application } from 'express';
 import assert from 'node:assert';
 import path from 'node:path';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import { getEntryPointHTML } from './entry-point.js';
 import { InstalledPlugin } from './auto-discovery.js';
-import { createRequire } from 'node:module';
+import { getReactNativeDebuggerFrontendPath } from './resolve.js';
+import { RozeniteConfig } from './config.js';
 
 const require = createRequire(import.meta.url);
 
@@ -15,10 +16,13 @@ export type MiddlewareConfig = {
 };
 
 export const getMiddleware = (
+  options: RozeniteConfig,
   installedPlugins: InstalledPlugin[],
-  destroyOnDetachPlugins: string[],
+  destroyOnDetachPlugins: string[]
 ): Application => {
   const app = express();
+  const debuggerFrontend = require(getReactNativeDebuggerFrontendPath(options));
+
   const frameworkPath = path.resolve(
     require.resolve('@rozenite/runtime'),
     '..'
@@ -57,7 +61,13 @@ export const getMiddleware = (
 
   app.get('/rn_fusebox.html', (_, res) => {
     res.setHeader('Content-Type', 'text/html');
-    res.send(getEntryPointHTML(installedPlugins.map((plugin) => plugin.name), destroyOnDetachPlugins));
+    res.send(
+      getEntryPointHTML(
+        debuggerFrontend,
+        installedPlugins.map((plugin) => plugin.name),
+        destroyOnDetachPlugins
+      )
+    );
   });
 
   app.get('/host.js', (_, res) => {

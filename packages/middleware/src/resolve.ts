@@ -132,3 +132,13 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
 
   return getDevMiddlewarePathFromReactNative(options.projectRoot);
 };
+
+export const getReactNativeDebuggerFrontendPath = (
+  options: RozeniteConfig
+): string => {
+  const devMiddlewarePath = getDevMiddlewarePath(options);
+
+  return require.resolve('@react-native/debugger-frontend', {
+    paths: [devMiddlewarePath],
+  });
+};
