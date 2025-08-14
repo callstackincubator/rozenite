@@ -11,3 +11,7 @@ export const downloadFile = async (data: unknown, filename: string) => {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
+
+export const formatTime = (timestamp: number): string => {
+  return new Date(timestamp).toLocaleTimeString();
+};
