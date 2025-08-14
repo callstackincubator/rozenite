@@ -9,12 +9,11 @@ The Rozenite Performance Monitor Plugin offers comprehensive real-time monitorin
 ## Features
 
 - **Real-time Performance Monitoring**: Live tracking of performance marks, measures, and metrics
-- **Interactive Timeline**: Visual timeline showing performance events chronologically
 - **Session Management**: Start/stop monitoring sessions with real-time duration tracking
-- **Performance Measures**: Track custom performance measurements with categories (App, Network)
+- **Performance Measures**: Track custom performance measurements with details
 - **Performance Marks**: Monitor key performance milestones and events
-- **Performance Metrics**: Real-time metrics like bundle size and other performance indicators
-- **Resource Monitoring**: Track network resource loading times
+- **Performance Metrics**: Real-time metrics with values and details
+- **Data Export**: Export performance data for analysis
 - **Bidirectional Communication**: Real-time sync between device and DevTools
 - **Production Safety**: Automatically disabled in production builds
 
@@ -88,7 +87,7 @@ performance.mark('data-loaded');
 performance.measure('app-initialization', 'app-start', 'data-loaded');
 
 // Add custom metrics
-performance.metric('bundleSize', 1024000); // in bytes
+performance.metric('custom-metric', 42, { detail: 'Additional info' });
 ```
 
 ## Performance Data Types
@@ -102,16 +101,15 @@ performance.metric('bundleSize', 1024000); // in bytes
 ### Performance Measures
 
 - **Purpose**: Measure duration between two marks or specific time periods
-- **Categories**:
-  - **App**: Custom application performance measurements
-  - **Network**: Resource loading times (automatically tracked)
+- **Details**: Can include additional context information
 - **Example**: `performance.measure('login-duration', 'login-start', 'login-end')`
 
 ### Performance Metrics
 
 - **Purpose**: Track specific performance indicators
-- **Examples**: Bundle size, memory usage, frame rates
-- **Units**: Automatically detected (bytes, milliseconds, etc.)
+- **Values**: Can be strings or numbers
+- **Details**: Can include additional context information
+- **Example**: `performance.metric('memory-usage', 1024, { unit: 'MB' })`
 
 ## Made with ❤️ at Callstack
 

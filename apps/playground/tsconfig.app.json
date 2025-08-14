@@ -32,6 +32,9 @@
       "path": "../../packages/tanstack-query-plugin"
     },
     {
+      "path": "../../packages/performance-monitor-plugin"
+    },
+    {
       "path": "../../packages/network-activity-plugin"
     },
     {

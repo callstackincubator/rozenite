@@ -53,7 +53,8 @@
         "packages/mmkv-plugin/**/*",
         "packages/network-activity-plugin/**/*",
         "packages/tanstack-query-plugin/**/*",
-        "packages/redux-devtools-plugin/**/*"
+        "packages/redux-devtools-plugin/**/*",
+        "packages/performance-monitor-plugin/**/*"
       ]
     },
     {
