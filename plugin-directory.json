@@ -18,5 +18,9 @@
   {
     "npmUrl": "https://www.npmjs.com/package/rozenite-preview",
     "githubUrl": "https://github.com/matinzd/rozenite-preview"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/@rozenite/performance-monitor-plugin",
+    "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/performance-monitor-plugin"
   }
 ]

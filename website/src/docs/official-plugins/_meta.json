@@ -23,5 +23,10 @@
     "type": "file",
     "name": "redux-devtools",
     "label": "Redux DevTools"
+  },
+  {
+    "type": "file",
+    "name": "performance-monitor",
+    "label": "Performance Monitor"
   }
 ]

@@ -1,0 +1,102 @@
+import { PackageManagerTabs } from 'rspress/theme';
+
+# Performance Monitor Plugin
+
+The Performance Monitor plugin provides comprehensive real-time performance monitoring and metrics visualization for React Native applications, helping you identify bottlenecks and optimize your app's performance. It's based on the `react-native-performance` library, so any marks, measures, or metrics you emit using that library will automatically appear in the DevTools interface.
+
+## What is Performance Monitor Plugin?
+
+The Performance Monitor plugin is a powerful debugging tool that helps you monitor and analyze performance metrics in your React Native application. It provides:
+
+- **Real-time Performance Monitoring**: Live tracking of performance marks, measures, and metrics
+- **Session Management**: Start/stop monitoring sessions with real-time duration tracking
+- **Performance Measures**: Track custom performance measurements with details
+- **Performance Marks**: Monitor key performance milestones and events
+- **Performance Metrics**: Real-time metrics with values and details
+- **Data Export**: Export performance data for analysis
+- **Production Safety**: Automatically disabled in production builds
+
+## Installation
+
+Install the Performance Monitor plugin and its peer dependencies:
+
+<PackageManagerTabs command="install -D @rozenite/performance-monitor-plugin react-native-performance" />
+
+Add the DevTools hook to your React Native app to enable performance monitoring:
+
+```typescript title="App.tsx"
+import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
+
+function App() {
+  // Enable Performance Monitor DevTools in development
+  usePerformanceMonitorDevTools();
+
+  return <YourApp />;
+}
+```
+
+## Usage
+
+Once configured, the Performance Monitor plugin will automatically appear in your React Native DevTools sidebar as "Performance Monitor". Click on it to access:
+
+### Performance Monitoring
+
+The plugin is based on the `react-native-performance` library and works with React Native's Performance API. Any marks, measures, or metrics you emit using the `react-native-performance` library will automatically appear in the DevTools interface. You can add custom performance marks and measures:
+
+```typescript
+import performance from 'react-native-performance';
+
+// Add performance marks
+performance.mark('app-start');
+performance.mark('data-loaded');
+
+// Measure performance between marks
+performance.measure('app-initialization', 'app-start', 'data-loaded');
+
+// Add custom metrics
+performance.metric('custom-metric', 42, { detail: 'Additional info' });
+```
+
+### Performance Data Types
+
+#### Performance Marks
+
+- **Purpose**: Mark specific points in time for performance analysis
+- **Use Cases**: App startup, data loading, user interactions
+- **Example**: `performance.mark('user-login-complete')`
+
+#### Performance Measures
+
+- **Purpose**: Measure duration between two marks or specific time periods
+- **Details**: Can include additional context information
+- **Example**: `performance.measure('login-duration', 'login-start', 'login-end')`
+
+#### Performance Metrics
+
+- **Purpose**: Track specific performance indicators
+- **Values**: Can be strings or numbers
+- **Details**: Can include additional context information
+- **Example**: `performance.metric('memory-usage', 1024, { unit: 'MB' })`
+
+### Session Management
+
+- **Start/Stop Monitoring**: Control when performance monitoring is active
+- **Real-time Duration**: Track how long monitoring sessions run
+- **Data Export**: Export performance data for external analysis
+
+## Contributing
+
+The Performance Monitor plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
+
+## Support
+
+If you encounter issues with the Performance Monitor plugin:
+
+1. **Check Documentation**: Review this guide for common solutions
+2. **Search Issues**: Look for similar issues in the repository
+3. **Create Issue**: Report bugs or request features
+4. **Community**: Reach out to the Rozenite community for help
+
+---
+
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md).

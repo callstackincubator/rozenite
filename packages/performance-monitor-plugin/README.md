@@ -4,7 +4,7 @@
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
-The Rozenite Performance Monitor Plugin offers comprehensive real-time monitoring of React Native performance metrics within your DevTools environment. It tracks performance marks, measures, and metrics to help you identify bottlenecks and optimize your app's performance.
+The Rozenite Performance Monitor Plugin offers comprehensive real-time monitoring of React Native performance metrics within your DevTools environment. It's based on the `react-native-performance` library and tracks performance marks, measures, and metrics to help you identify bottlenecks and optimize your app's performance. Any marks, measures, or metrics you emit using the `react-native-performance` library will automatically appear in the DevTools interface.
 
 ## Features
 
@@ -14,15 +14,14 @@ The Rozenite Performance Monitor Plugin offers comprehensive real-time monitorin
 - **Performance Marks**: Monitor key performance milestones and events
 - **Performance Metrics**: Real-time metrics with values and details
 - **Data Export**: Export performance data for analysis
-- **Bidirectional Communication**: Real-time sync between device and DevTools
 - **Production Safety**: Automatically disabled in production builds
 
 ## Installation
 
-Install the Performance Monitor plugin as a dependency:
+Install the Performance Monitor plugin and its peer dependencies:
 
 ```bash
-npm install @rozenite/performance-monitor-plugin
+npm install @rozenite/performance-monitor-plugin react-native-performance
 ```
 
 ## Quick Start
@@ -30,7 +29,7 @@ npm install @rozenite/performance-monitor-plugin
 ### 1. Install the Plugin
 
 ```bash
-npm install @rozenite/performance-monitor-plugin
+npm install @rozenite/performance-monitor-plugin react-native-performance
 ```
 
 ### 2. Integrate with Your React Native App
@@ -74,7 +73,7 @@ function App() {
 
 ### Using Performance API
 
-The plugin works with React Native's Performance API. You can add custom performance marks and measures:
+The plugin is based on the `react-native-performance` library and works with React Native's Performance API. Any marks, measures, or metrics you emit using the `react-native-performance` library will automatically appear in the DevTools interface. You can add custom performance marks and measures:
 
 ```typescript
 import performance from 'react-native-performance';
