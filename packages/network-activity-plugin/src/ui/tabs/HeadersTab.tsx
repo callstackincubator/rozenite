@@ -5,10 +5,27 @@ import { KeyValueGrid, KeyValueItem } from '../components/KeyValueGrid';
 import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
 import { getStatusColor } from '../utils/getStatusColor';
 import { CopyAsCurlButton } from '../components/CopyAsCurlButton';
+import { HttpHeaders } from '../../shared/client';
 
 export type HeadersTabProps = {
   selectedRequest: HttpNetworkEntry | SSENetworkEntry;
 };
+
+function getHeadersItems(headers?: HttpHeaders): KeyValueItem[] {
+  if (!headers) return [];
+
+  return Object.entries(headers).reduce<KeyValueItem[]>((acc, [key, value]) => {
+    if (Array.isArray(value)) {
+      acc.push(
+        ...value.map((item) => ({ key: key.toLowerCase(), value: item }))
+      );
+    } else {
+      acc.push({ key: key.toLowerCase(), value: value });
+    }
+
+    return acc;
+  }, []);
+}
 
 export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
   const requestBody = selectedRequest.request.body;
@@ -42,27 +59,15 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
     [selectedRequest]
   );
 
-  const responseHeadersItems: KeyValueItem[] = useMemo(() => {
-    const headers = selectedRequest.response?.headers;
+  const responseHeadersItems = useMemo(
+    () => getHeadersItems(selectedRequest.response?.headers),
+    [selectedRequest]
+  );
 
-    if (!headers) return [];
-
-    return Object.entries(headers).map(([key, value]) => ({
-      key: key.toLowerCase(),
-      value,
-    }));
-  }, [selectedRequest.response?.headers]);
-
-  const requestHeadersItems: KeyValueItem[] = useMemo(() => {
-    const headers = selectedRequest.request.headers;
-
-    if (!headers) return [];
-
-    return Object.entries(headers).map(([key, value]) => ({
-      key: key.toLowerCase(),
-      value,
-    }));
-  }, [selectedRequest.request.headers]);
+  const requestHeadersItems = useMemo(
+    () => getHeadersItems(selectedRequest.request.headers),
+    [selectedRequest]
+  );
 
   const isCopyAsCurlEnabled =
     selectedRequest.request.body?.data.type !== 'binary';

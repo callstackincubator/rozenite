@@ -1,4 +1,4 @@
-import { Initiator, ResourceType, RequestPostData } from '../../shared/client';
+import { Initiator, ResourceType, HttpHeaders, RequestPostData } from '../../shared/client';
 
 export type RequestId = string;
 export type Timestamp = number;
@@ -21,7 +21,7 @@ export type HttpResponseData = {
 export type HttpRequest = {
   url: string;
   method: HttpMethod;
-  headers: Record<string, string>;
+  headers: HttpHeaders;
   body?: HttpRequestData;
 };
 
@@ -29,7 +29,7 @@ export type HttpResponse = {
   url: string;
   status: number;
   statusText: string;
-  headers: Record<string, string>;
+  headers: HttpHeaders;
   contentType: string;
   size: number;
   responseTime: Timestamp;

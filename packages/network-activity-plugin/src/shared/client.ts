@@ -2,7 +2,9 @@ import { RozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { WebSocketEventMap } from './websocket-events';
 import { SSEEventMap } from './sse-events';
 
-export type HttpHeaders = Record<string, string>;
+export type HttpHeaders = Record<string, string | string[]>;
+export type XHRHeaders = NonNullable<XMLHttpRequest['responseHeaders']>;
+
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 
 export type RequestId = string;
@@ -27,6 +29,18 @@ export type RequestPostData =
     }
   | null
   | undefined;
+
+export type Cookie = {
+  name: string;
+  value: string;
+  domain?: string;
+  path?: string;
+  expires?: string;
+  maxAge?: string;
+  secure?: boolean;
+  httpOnly?: boolean;
+  sameSite?: string;
+};
 
 export type Request = {
   url: string;
