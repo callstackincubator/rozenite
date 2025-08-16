@@ -73,6 +73,7 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
         {isCopyAsCurlEnabled && (
           <CopyAsCurlButton selectedRequest={selectedRequest} />
         )}
+
         <Section title="General">
           <KeyValueGrid items={generalItems} />
         </Section>

@@ -184,13 +184,17 @@ const columns = [
   }),
   columnHelper.accessor('size', {
     header: 'Size',
-    cell: ({ getValue }) => <div className="text-gray-300">{getValue()}</div>,
+    cell: ({ getValue }) => (
+      <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>
+    ),
     size: 80,
     sortingFn: sortSize,
   }),
   columnHelper.accessor('time', {
     header: 'Time',
-    cell: ({ getValue }) => <div className="text-gray-300">{getValue()}</div>,
+    cell: ({ getValue }) => (
+      <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>
+    ),
     size: 80,
     sortingFn: sortTime,
   }),
