@@ -10,6 +10,7 @@ import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { getBlobName } from '../utils/getBlobName';
 import { getFormDataEntries } from '../utils/getFormDataEntries';
 import { XHRInterceptor } from './xhr-interceptor';
+import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
 
 const networkRequestsRegistry = getNetworkRequestsRegistry();
 
@@ -51,17 +52,35 @@ function getRequestBody(body: XHRPostData): RequestPostData {
   };
 }
 
-const getResponseSize = (request: XMLHttpRequest): number => {
-  // Handle a case of 204 where no-content was sent.
-  if (request.response === null) {
+const getResponseSize = (request: XMLHttpRequest): number | null => {
+  try {
+    const { responseType, response } = request;
+
+    // Handle a case of 204 where no-content was sent.
+    if (response === null) {
+      return 0;
+    }
+
+    if (responseType === '' || responseType === 'text') {
+      return getStringSizeInBytes(request.responseText);
+    }
+
+    if (responseType === 'json') {
+      return getStringSizeInBytes(safeStringify(response));
+    }
+
+    if (responseType === 'blob') {
+      return response.size;
+    }
+
+    if (responseType === 'arraybuffer') {
+      return response.byteLength;
+    }
+
     return 0;
+  } catch {
+    return null;
   }
-
-  if (typeof request.response === 'object') {
-    return request.response.size;
-  }
-
-  return request.response.length || 0;
 };
 
 const getResponseBody = async (
@@ -91,6 +110,10 @@ const getResponseBody = async (
         reader.readAsText(request.response);
       });
     }
+  }
+
+  if (responseType === 'json') {
+    return safeStringify(request.response);
   }
 
   return null;

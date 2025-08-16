@@ -129,7 +129,7 @@ export type ProcessedRequest = {
   status: HttpStatus | WebSocketStatus | SSEStatus;
   timestamp: Timestamp;
   duration?: number;
-  size?: number;
+  size: number | null;
   method: HttpMethod | 'WS' | 'SSE';
   httpStatus?: number;
 };

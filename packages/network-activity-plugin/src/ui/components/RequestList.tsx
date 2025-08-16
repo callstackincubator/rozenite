@@ -17,6 +17,7 @@ import {
 } from '../state/hooks';
 import { getStatusColor } from '../utils/getStatusColor';
 import { FilterState } from './FilterBar';
+import { isNumber } from '../../utils/isNumber';
 
 type NetworkRequest = {
   id: RequestId;
@@ -134,7 +135,7 @@ const processNetworkRequests = (
       method: request.method,
       domain,
       path,
-      size: formatSize(request.size || 0),
+      size: isNumber(request.size) ? formatSize(request.size) : '—',
       time: formatDuration(duration),
       type: request.type,
       startTime: formatStartTime(request.timestamp),
