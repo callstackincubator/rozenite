@@ -5,39 +5,38 @@ export type SectionProps = {
   title: string;
   children: React.ReactNode;
   collapsible?: boolean;
-  childClassName?: string;
 };
 
 export const Section = ({
   title,
   children,
   collapsible = true,
-  childClassName,
 }: SectionProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const toggleExpanded = () => {
-    if (collapsible) {
-      setIsCollapsed(!isCollapsed);
-    }
+  const isChildrenVisible = !collapsible || !isCollapsed;
+
+  const handleCollapseSection = () => {
+    setIsCollapsed((prevState) => !prevState);
   };
+
+  const headerClassName = `flex items-center w-full text-left text-sm text-gray-300 mb-2 ${
+    collapsible ? 'hover:text-white' : 'cursor-default'
+  }`;
 
   return (
     <div>
       <button
-        onClick={toggleExpanded}
-        className={`flex items-center w-full text-left text-sm text-gray-300 mb-2 ${
-          collapsible ? 'hover:text-white' : 'cursor-default'
-        }`}
+        onClick={collapsible ? handleCollapseSection : undefined}
+        className={headerClassName}
+        tabIndex={collapsible ? 0 : -1}
       >
         {collapsible && (
           <span className={cn('mr-2', { 'rotate-90': !isCollapsed })}>▶</span>
         )}
         <span className="font-medium">{title}</span>
       </button>
-      {(!collapsible || !isCollapsed) && (
-        <div className={childClassName}>{children}</div>
-      )}
+      {isChildrenVisible && children}
     </div>
   );
 };

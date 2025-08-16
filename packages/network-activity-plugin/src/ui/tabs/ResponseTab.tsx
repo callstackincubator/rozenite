@@ -13,8 +13,8 @@ export type ResponseTabProps = {
 
 const renderResponseBodySection = (children: React.ReactNode) => {
   return (
-    <Section title="Response Body" collapsible={false} childClassName="space-y-4">
-      {children}
+    <Section title="Response Body" collapsible={false}>
+      <div className="space-y-4">{children}</div>
     </Section>
   );
 };
