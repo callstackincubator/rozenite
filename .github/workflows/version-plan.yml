@@ -102,8 +102,6 @@ jobs:
               '   pnpm nx release plan',
               '   ```',
               '',
-              `   _(You can also pass specific projects: \`pnpm nx release plan --projects=${projects}\`)`,
-              '',
               '2. When prompted, choose the appropriate **version bump** (patch / minor / major / prerelease).',
               '3. Write a **single-paragraph description** of the change.',
               '   - This text will be shown in the changelog.',
