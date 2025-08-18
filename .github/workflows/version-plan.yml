@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  issues: write
+  pull-requests: write
 
 jobs:
   check-version-plan:
@@ -57,10 +57,11 @@ jobs:
       - name: Comment on PR if missing version plan
         if: steps.plancheck.outputs.result == 'failure' && github.event.pull_request.head.repo.fork == false
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        env:
+          AFFECTED_PROJECTS: ${{ steps.affected.outputs.projects }}
         with:
-          projects: ${{ steps.affected.outputs.projects }}
           script: |
-            const projects = core.getInput('projects') || '';
+            const projects = process.env.AFFECTED_PROJECTS || '';
             const projectList = projects 
               ? projects.split(',').map(p => `- ${p}`).join('\n') 
               : '_(no specific projects detected)_';
