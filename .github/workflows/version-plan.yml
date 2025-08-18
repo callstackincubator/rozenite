@@ -66,6 +66,23 @@ jobs:
               ? projects.split(',').map(p => `- ${p}`).join('\n') 
               : '_(no specific projects detected)_';
 
+            // Check if we already commented about version plan
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('version plan')
+            );
+
+            if (botComment) {
+              console.log('Version plan comment already exists, skipping...');
+              return;
+            }
+
             const body = [
               `👋 Hey @${context.actor}, thanks for your contribution!`,
               '',
@@ -82,10 +99,10 @@ jobs:
               '### 👉 What to do',
               '1. Run the following command locally to create a version plan:',
               '   ```bash',
-              '   npx nx release plan',
+              '   pnpm nx release plan',
               '   ```',
               '',
-              `   _(You can also pass specific projects: \`npx nx release plan --projects=${projects}\`)`,
+              `   _(You can also pass specific projects: \`pnpm nx release plan --projects=${projects}\`)`,
               '',
               '2. When prompted, choose the appropriate **version bump** (patch / minor / major / prerelease).',
               '3. Write a **single-paragraph description** of the change.',
@@ -147,6 +164,23 @@ jobs:
 
             const completedRun = await findCompletedRun();
             if (!completedRun || completedRun.conclusion !== 'failure') {
+              return;
+            }
+
+            // Check if we already commented about version plan
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+            });
+
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('version plan')
+            );
+
+            if (botComment) {
+              console.log('Version plan comment already exists, skipping...');
               return;
             }
 
