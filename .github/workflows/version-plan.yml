@@ -51,7 +51,7 @@ jobs:
         id: affected
         run: |
           set -euo pipefail
-          projects=$(pnpm exec nx print-affected --type=lib --select=projects)
+          projects=$(pnpm exec nx show projects --affected --projects "packages/*")
           echo "projects=$projects" >> $GITHUB_OUTPUT
 
       - name: Comment on PR if missing version plan
