@@ -1,0 +1,177 @@
+name: Version Plan Check
+
+on:
+  pull_request:
+  pull_request_target:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-version-plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 18
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies (no lifecycle scripts)
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Run version plan check
+        id: plancheck
+        run: |
+          set -euo pipefail
+          if pnpm exec nx release plan:check; then
+            echo "result=success" >> $GITHUB_OUTPUT
+          else
+            echo "result=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Detect affected projects
+        if: steps.plancheck.outputs.result == 'failure'
+        id: affected
+        run: |
+          set -euo pipefail
+          projects=$(pnpm exec nx print-affected --type=lib --select=projects)
+          echo "projects=$projects" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR if missing version plan
+        if: steps.plancheck.outputs.result == 'failure' && github.event.pull_request.head.repo.fork == false
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          projects: ${{ steps.affected.outputs.projects }}
+          script: |
+            const projects = core.getInput('projects') || '';
+            const projectList = projects 
+              ? projects.split(',').map(p => `- ${p}`).join('\n') 
+              : '_(no specific projects detected)_';
+
+            const body = [
+              `👋 Hey @${context.actor}, thanks for your contribution!`,
+              '',
+              'It looks like this PR changes code but doesn\'t include a **version plan**.',
+              'Version plans are required so we can properly bump package versions and generate changelogs.',
+              '',
+              '---',
+              '',
+              '### 🔍 Affected projects',
+              projectList,
+              '',
+              '---',
+              '',
+              '### 👉 What to do',
+              '1. Run the following command locally to create a version plan:',
+              '   ```bash',
+              '   npx nx release plan',
+              '   ```',
+              '',
+              `   _(You can also pass specific projects: \`npx nx release plan --projects=${projects}\`)`,
+              '',
+              '2. When prompted, choose the appropriate **version bump** (patch / minor / major / prerelease).',
+              '3. Write a **single-paragraph description** of the change.',
+              '   - This text will be shown in the changelog.',
+              '   - Keep it clear and concise, describing what changed and why.',
+              '4. Commit the generated file(s) under `.nx/version-plans/` and push to this branch.',
+              '   - ✅ It\'s okay to create **multiple version plans** if your PR includes unrelated changes.',
+              '',
+              '---',
+              '',
+              '⚡ Once you do that, this check will pass automatically. Thanks for keeping our releases tidy!'
+            ].join('\n');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
+      - name: Fail job if missing version plan
+        if: steps.plancheck.outputs.result == 'failure'
+        run: exit 1
+
+  comment-on-fork:
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true
+    permissions:
+      contents: read
+      issues: write
+      actions: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment when PR check failed (fork-safe)
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const headSha = pr.head.sha;
+
+            // Poll for the PR workflow run to complete (max ~5 minutes)
+            async function findCompletedRun() {
+              for (let i = 0; i < 20; i++) { // 20 * 15s = 300s
+                const runsResp = await github.rest.actions.listWorkflowRunsForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  event: 'pull_request',
+                  per_page: 50
+                });
+                const targetRun = runsResp.data.workflow_runs.find(run =>
+                  run.name === 'Version Plan Check' && run.head_sha === headSha
+                );
+                if (targetRun && targetRun.status === 'completed') {
+                  return targetRun;
+                }
+                await new Promise(r => setTimeout(r, 15000));
+              }
+              return null;
+            }
+
+            const completedRun = await findCompletedRun();
+            if (!completedRun || completedRun.conclusion !== 'failure') {
+              return;
+            }
+
+            const body = [
+              `👋 Hey @${context.actor}, thanks for your contribution!`,
+              '',
+              'It looks like this PR changes code but doesn\'t include a **version plan**.',
+              'Version plans are required so we can properly bump package versions and generate changelogs.',
+              '',
+              '---',
+              '',
+              '### 👉 What to do',
+              '1. Run the following command locally to create a version plan:',
+              '   ```bash',
+              '   pnpm nx release plan',
+              '   ```',
+              '',
+              '2. Choose the appropriate version bump (patch / minor / major / prerelease).',
+              '3. Write a single-paragraph description of the change.',
+              '4. Commit the generated file(s) under `.nx/version-plans/` and push to this branch.',
+              '',
+              '---',
+              '',
+              '⚡ Once you do that, this check will pass automatically. Thanks for keeping our releases tidy!'
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body
+            });
