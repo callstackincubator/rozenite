@@ -2,7 +2,10 @@ import { setupDevMode } from './dev-mode.js';
 import { getGlobalNamespace } from './global-namespace.js';
 import { loadPlugin } from './plugin-loader.js';
 import { addWelcomeView } from './rn-devtools/rozenite-welcome-view.js';
-import { SelectedPanelTracker } from './rn-devtools/selected-panel-tracker.js';
+import {
+  trackPanelSelection,
+  switchToSelectedPanel,
+} from './rn-devtools/selected-panel-tracker.js';
 
 const waitForInitialization = async (): Promise<void> => {
   return new Promise((resolve) => {
@@ -38,7 +41,8 @@ const main = async (): Promise<void> => {
     })
   );
 
-  SelectedPanelTracker.instance().startTracking();
+  trackPanelSelection();
+  switchToSelectedPanel();
 
   await setupDevMode();
 };

@@ -1,161 +1,82 @@
-import { UI, SDK } from './rn-devtools-frontend.js';
+import { UI } from './rn-devtools-frontend.js';
 
-export class SelectedPanelTracker
-  implements
-    SDK.TargetManager
-      .SDKModelObserver<SDK.ReactNativeApplicationModel.ReactNativeApplicationModel>
-{
-  static #instance: SelectedPanelTracker | null = null;
-
-  #isLastSelectedPanelRestored = false;
-  #isTrackingEnabled = false;
-  #reactNativeMetadata: UI.Protocol.ReactNativeApplication.MetadataUpdatedEvent | null =
-    null;
-
-  static instance(): SelectedPanelTracker {
-    if (!SelectedPanelTracker.#instance) {
-      SelectedPanelTracker.#instance = new SelectedPanelTracker();
-    }
-
-    return SelectedPanelTracker.#instance;
-  }
-
-  startTracking() {
-    if (this.#isTrackingEnabled) {
-      return;
-    }
-
-    try {
-      SDK.TargetManager.TargetManager.instance().observeModels(
-        SDK.ReactNativeApplicationModel.ReactNativeApplicationModel,
-        this
-      );
-
-      const tabbedPane = UI.InspectorView.InspectorView.instance().tabbedPane;
-      tabbedPane.addEventListener('TabSelected', this.#handleTabSelected);
-
-      this.#isTrackingEnabled = true;
-    } catch (error) {
-      console.error('Could not start tracking selected panels:', error);
-    }
-  }
-
-  stopTracking() {
-    if (!this.#isTrackingEnabled) {
-      return;
-    }
-
-    try {
-      const tabbedPane = UI.InspectorView.InspectorView.instance().tabbedPane;
-      tabbedPane.removeEventListener('TabSelected', this.#handleTabSelected);
-
-      this.#isTrackingEnabled = false;
-    } catch (error) {
-      console.warn('Could not stop tracking selected panels:', error);
-    }
-  }
-
-  modelAdded(
-    model: SDK.ReactNativeApplicationModel.ReactNativeApplicationModel
-  ) {
-    if (this.#isLastSelectedPanelRestored) {
-      return;
-    }
-
-    model.ensureEnabled();
-
-    if (model.metadataCached) {
-      this.#handleMetadataUpdated({ data: model.metadataCached });
-    } else {
-      model.addEventListener(
-        'MetadataUpdated',
-        this.#handleMetadataUpdated,
-        this
-      );
-    }
-  }
-
-  modelRemoved(
-    model: SDK.ReactNativeApplicationModel.ReactNativeApplicationModel
-  ) {
-    model.removeEventListener(
-      'MetadataUpdated',
-      this.#handleMetadataUpdated,
-      this
+/**
+ * Inspector device ID is combination of the app's bundle ID and the device's unique ID.
+ * 
+ * See:
+ * https://github.com/facebook/react-native/blob/c7591d9b40babc8c4a57a03adee158bde3b10a06/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/devsupport/DevServerHelper.kt#L102-L124
+ * https://github.com/facebook/react-native/blob/c7591d9b40babc8c4a57a03adee158bde3b10a06/packages/react-native/React/DevSupport/RCTInspectorDevServerHelper.mm#L77-L99
+ */
+const extractInspectorDeviceIdFromUrl = () => {
+  try {
+    const match = decodeURIComponent(window.location.href).match(
+      /[?&]device=([^&]+)/
     );
+
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+};
+
+const getScopedStorageKey = () => {
+  const inspectorDeviceId = extractInspectorDeviceIdFromUrl();
+
+  if (!inspectorDeviceId) {
+    throw new Error('Device ID not found');
   }
 
-  #activateLastSelectedPanel() {
-    try {
-      if (this.#isLastSelectedPanelRestored) {
-        return;
-      }
+  return `rozenite::selected-panel::${inspectorDeviceId}`;
+};
 
-      const lastPanelId = this.#getSelectedPanelId();
+const saveSelectedPanelId = (panelId: string) => {
+  try {
+    const storageKey = getScopedStorageKey();
 
-      if (!lastPanelId) {
-        return;
-      }
-
-      UI.InspectorView.InspectorView.instance().tabbedPane.selectTab(
-        lastPanelId
-      );
-    } catch (error) {
-      console.warn('Could not restore last selected panel:', error);
-    }
+    localStorage.setItem(storageKey, panelId);
+  } catch (error) {
+    console.warn('Could not save selected panel:', error);
   }
+};
 
-  #handleMetadataUpdated(
-    event: UI.Common.EventTarget.EventTargetEvent<UI.Protocol.ReactNativeApplication.MetadataUpdatedEvent>
-  ) {
-    this.#reactNativeMetadata = event.data;
-
-    this.#activateLastSelectedPanel();
-
-    this.#isLastSelectedPanelRestored = true;
-  }
-
-  #getConnectionId() {
-    if (!this.#reactNativeMetadata) {
-      throw new Error('React Native metadata is not available');
-    }
-
-    const { appIdentifier, deviceName } = this.#reactNativeMetadata;
-
-    return [appIdentifier, deviceName].filter(Boolean).join('::');
-  }
-
-  #handleTabSelected = (
-    event: UI.Common.EventTarget.EventTargetEvent<
-      UI.TabbedPaneEventTypes['TabSelected']
-    >
-  ) => {
-    const panelId = event.data.tabId;
-
-    if (panelId) {
-      this.#saveSelectedPanelId(panelId);
-    }
-  };
-
-  #getScopedStorageKey(): string {
-    const appId = this.#getConnectionId();
-
-    return `rozenite::selected-panel::${appId}`;
-  }
-
-  #saveSelectedPanelId(panelId: string): void {
-    try {
-      const storageKey = this.#getScopedStorageKey();
-
-      localStorage.setItem(storageKey, panelId);
-    } catch (error) {
-      console.warn('Could not save selected panel:', error);
-    }
-  }
-
-  #getSelectedPanelId(): string | null {
-    const storageKey = this.#getScopedStorageKey();
+const getSelectedPanelId = () => {
+  try {
+    const storageKey = getScopedStorageKey();
 
     return localStorage.getItem(storageKey);
+  } catch (error) {
+    console.warn('Could not get selected panel:', error);
+
+    return null;
   }
-}
+};
+
+export const switchToSelectedPanel = () => {
+  const lastPanelId = getSelectedPanelId();
+
+  if (!lastPanelId) {
+    return;
+  }
+
+  try {
+    UI.InspectorView.InspectorView.instance().tabbedPane.selectTab(lastPanelId);
+  } catch (error) {
+    console.warn('Could not restore last selected panel:', error);
+  }
+};
+
+export const trackPanelSelection = () => {
+  try {
+    const tabbedPane = UI.InspectorView.InspectorView.instance().tabbedPane;
+
+    tabbedPane.addEventListener('TabSelected', (event) => {
+      const panelId = event.data.tabId;
+
+      if (panelId) {
+        saveSelectedPanelId(panelId);
+      }
+    });
+  } catch (error) {
+    console.error('Could not initialize tab selected tracking:', error);
+  }
+};
