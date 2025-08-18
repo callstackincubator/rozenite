@@ -3,8 +3,6 @@ import { initializeRozenite, type RozeniteConfig } from '@rozenite/middleware';
 import path from 'node:path';
 import { isBundling } from './is-bundling.js';
 
-// Fake change
-
 export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<
   RozeniteConfig,
   'projectRoot'
