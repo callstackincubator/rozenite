@@ -47,7 +47,7 @@ export const ResponseTab = ({
     }
 
     // Handle JSON content
-    if (type === 'application/json') {
+    if (type.startsWith('application/json')) {
       try {
         const jsonData = JSON.parse(data);
         return (
