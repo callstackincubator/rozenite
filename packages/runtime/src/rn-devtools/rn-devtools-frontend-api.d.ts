@@ -5,10 +5,33 @@ declare module '/rozenite/ui/legacy/legacy.js' {
     id: string;
   }
 
+  export interface TabbedPaneEventData {
+    prevTabId?: string;
+    tabId: string;
+  }
+
+  export interface TabbedPaneEventTypes {
+    TabInvoked: TabbedPaneEventData;
+    TabSelected: TabbedPaneEventData;
+    TabClosed: TabbedPaneEventData;
+    TabOrderChanged: TabbedPaneEventData;
+  }
+
   export interface TabbedPane {
     tabsById: Map<string, TabbedPaneTab>;
     insertBefore(tab: TabbedPaneTab, before: number): void;
     selectTab(tabId: string): void;
+    hasTab(tabId: string): boolean;
+    addEventListener<T extends keyof TabbedPaneEventTypes>(
+      event: T,
+      listener: (
+        data: Common.EventTarget.EventTargetEvent<TabbedPaneEventTypes[T]>
+      ) => void
+    ): void;
+    removeEventListener(
+      event: keyof TabbedPaneEventTypes,
+      listener: (data: any) => void
+    ): void;
   }
 
   export namespace View {
@@ -190,6 +213,30 @@ declare module '/rozenite/models/react_native/react_native.js' {
       };
     }
   }
+
+  export namespace ReactNativeApplicationModel {
+    export interface EventTypes {
+      MetadataUpdated: Protocol.ReactNativeApplication.MetadataUpdatedEvent;
+    }
+
+    export class ReactNativeApplicationModel extends SDKModel.SDKModel {
+      ensureEnabled(): void;
+      metadataCached?: MetadataUpdatedEvent;
+      addEventListener<T extends keyof EventTypes>(
+        event: T,
+        callback: (
+          event: Common.EventTarget.EventTargetEvent<EventTypes[T]>
+        ) => void,
+        thisArg: unknown
+      ): void;
+      removeEventListener(
+        event: keyof EventTypes,
+        callback: (event: any) => void,
+        thisArg: unknown
+      ): void;
+    }
+  }
+
   export namespace ReactDevToolsBindingsModel {
     export class ReactDevToolsBindingsModel {
       initializeDomain(domain: string): Promise<void>;
@@ -259,13 +306,36 @@ declare module '/rozenite/core/sdk/sdk.js' {
 
     export class TargetManager {
       static instance(): TargetManager;
-      observeModels(
+      observeModels<T>(
         model: typeof SDKModel.SDKModel<T>,
         observer: SDKModelObserver<T>
       ): void;
       primaryPageTarget(): {
         model<T>(model: typeof SDKModel.SDKModel<T>): T | null;
       };
+    }
+  }
+
+  namespace Common {
+    namespace EventTarget {
+      interface EventTargetEvent<T> {
+        data: T;
+      }
+    }
+  }
+
+  namespace Protocol {
+    namespace ReactNativeApplication {
+      interface MetadataUpdatedEvent {
+        appDisplayName?: string;
+        appIdentifier?: string;
+        deviceName?: string;
+        platform?: string;
+        reactNativeVersion?: string;
+        integrationName: string;
+        unstable_isProfilingBuild?: boolean;
+        unstable_networkInspectionEnabled?: boolean;
+      }
     }
   }
 }

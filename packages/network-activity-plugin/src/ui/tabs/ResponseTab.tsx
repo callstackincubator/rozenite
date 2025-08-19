@@ -2,10 +2,21 @@ import { useEffect, useRef } from 'react';
 import { ScrollArea } from '../components/ScrollArea';
 import { JsonTree } from '../components/JsonTree';
 import { HttpNetworkEntry } from '../state/model';
+import { Section } from '../components/Section';
+import { KeyValueGrid } from '../components/KeyValueGrid';
+import { CodeBlock } from '../components/CodeBlock';
 
 export type ResponseTabProps = {
   selectedRequest: HttpNetworkEntry;
   onRequestResponseBody: (requestId: string) => void;
+};
+
+const renderResponseBodySection = (children: React.ReactNode) => {
+  return (
+    <Section title="Response Body" collapsible={false}>
+      <div className="space-y-4">{children}</div>
+    </Section>
+  );
 };
 
 export const ResponseTab = ({
@@ -24,10 +35,10 @@ export const ResponseTab = ({
     }
   }, [selectedRequest.id]);
 
-  const renderResponseBody = () => {
-    const responseBody = selectedRequest.response?.body;
+  const responseBody = selectedRequest.response?.body;
 
-    if (!responseBody) {
+  const renderResponseBody = () => {
+    if (!responseBody || responseBody.data === null) {
       return (
         <div className="text-sm text-gray-400">
           No response body available for this request
@@ -37,94 +48,68 @@ export const ResponseTab = ({
 
     const { type, data } = responseBody;
 
-    // Handle null data
-    if (data === null) {
-      return (
-        <div className="text-sm text-gray-400">
-          No response body available for this request
-        </div>
-      );
-    }
+    const contentTypeGrid = (
+      <KeyValueGrid
+        items={[
+          {
+            key: 'Content-Type',
+            value: type,
+            valueClassName: 'text-blue-400',
+          },
+        ]}
+      />
+    );
 
-    // Handle JSON content
     if (type === 'application/json') {
+      let bodyContent;
+
       try {
         const jsonData = JSON.parse(data);
-        return (
-          <div className="space-y-4">
-            <div className="text-sm mb-2">
-              <span className="text-gray-400">Content-Type: </span>
-              <span className="text-blue-400">{type}</span>
-            </div>
-            <div className="bg-gray-800 p-3 rounded border border-gray-700">
-              <JsonTree data={jsonData} />
-            </div>
-          </div>
+
+        bodyContent = (
+          <CodeBlock>
+            <JsonTree data={jsonData} />
+          </CodeBlock>
         );
       } catch {
-        // Fallback to pre tag if JSON parsing fails
-        return (
-          <div className="space-y-4">
-            <div className="text-sm mb-2">
-              <span className="text-gray-400">Content-Type: </span>
-              <span className="text-blue-400">{type}</span>
-            </div>
-            <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
-              {data}
-            </pre>
-            <div className="text-xs text-gray-500">
+        bodyContent = (
+          <>
+            <CodeBlock>{data}</CodeBlock>
+            <div className="text-xs text-gray-500 mt-1">
               ⚠️ Failed to parse as JSON, showing as raw text
             </div>
-          </div>
+          </>
         );
       }
-    }
 
-    // Handle HTML content
-    if (type === 'text/html') {
-      return (
-        <div className="space-y-4">
-          <div className="text-sm mb-2">
-            <span className="text-gray-400">Content-Type: </span>
-            <span className="text-blue-400">{type}</span>
-          </div>
-          <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
-            {data}
-          </pre>
-        </div>
+      return renderResponseBodySection(
+        <>
+          {contentTypeGrid}
+          {bodyContent}
+        </>
       );
     }
 
-    // Handle other text content types
     if (
       type.startsWith('text/') ||
       type === 'application/xml' ||
       type === 'application/javascript'
     ) {
-      return (
-        <div className="space-y-4">
-          <div className="text-sm mb-2">
-            <span className="text-gray-400">Content-Type: </span>
-            <span className="text-blue-400">{type}</span>
-          </div>
-          <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
-            {data}
-          </pre>
-        </div>
+      return renderResponseBodySection(
+        <>
+          {contentTypeGrid}
+          <CodeBlock>{data}</CodeBlock>
+        </>
       );
     }
 
-    // Handle other content types
-    return (
-      <div className="space-y-4">
-        <div className="text-sm mb-2">
-          <span className="text-gray-400">Content-Type: </span>
-          <span className="text-blue-400">{type}</span>
-        </div>
+    return renderResponseBodySection(
+      <>
+        {contentTypeGrid}
         <div className="text-sm text-gray-400">
           Binary content not shown - {data.length} bytes
         </div>
-      </div>
+      </>
     );
   };
 

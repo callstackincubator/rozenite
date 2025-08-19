@@ -11,6 +11,7 @@ import { getBlobName } from '../utils/getBlobName';
 import { getFormDataEntries } from '../utils/getFormDataEntries';
 import { XHRInterceptor } from './xhr-interceptor';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
+import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
 
 const networkRequestsRegistry = getNetworkRequestsRegistry();
 
@@ -207,7 +208,9 @@ export const getNetworkInspector = (
           url: request._url as string,
           status: request.status,
           statusText: request.statusText,
-          headers: request.responseHeaders || {},
+          headers: applyReactNativeResponseHeadersLogic(
+            request.responseHeaders || {}
+          ),
           contentType: getContentType(request),
           size: getResponseSize(request),
           responseTime: Date.now(),
