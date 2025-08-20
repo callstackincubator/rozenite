@@ -16,7 +16,7 @@ const processHeaders = (requestHeaders: HttpHeaders | undefined) => {
 
   Object.entries(requestHeaders).forEach(([name, value]) => {
     // Filter out HTTP/2 pseudo-headers
-    if (!name.includes(':')) {
+    if (!name.startsWith(':')) {
       headers[name] = getHttpHeaderValueAsString(value);
     }
   });
