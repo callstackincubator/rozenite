@@ -60,7 +60,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
 
     // Show JSON tree as a temporary solution for form-data and binary types
     if (dataType === 'form-data' || dataType === 'binary') {
-      bodyContent = <JsonTree data={value} />
+      bodyContent = <JsonTree data={value} />;
     }
 
     return (
