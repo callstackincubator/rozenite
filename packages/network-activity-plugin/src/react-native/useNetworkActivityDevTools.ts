@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { getNetworkInspector } from './http/network-inspector';
 import { NetworkActivityEventMap } from '../shared/client';
@@ -16,6 +16,7 @@ import {
 export const useNetworkActivityDevTools = (
   config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG
 ) => {
+  const isRecordingEnabledRef = useRef(false);
   const client = useRozeniteDevToolsClient<NetworkActivityEventMap>({
     pluginId: '@rozenite/network-activity-plugin',
   });
@@ -32,12 +33,37 @@ export const useNetworkActivityDevTools = (
     validateConfig(config);
   }, [config]);
 
+  /** Persist the recording state across hot reloads */
+  useEffect(() => {
+    if (!client) {
+      return;
+    }
+
+    const subscriptions = [
+      client.onMessage('network-enable', () => {
+        isRecordingEnabledRef.current = true;
+      }),
+      client.onMessage('network-disable', () => {
+        isRecordingEnabledRef.current = false;
+      }),
+    ];
+
+    return () => {
+      subscriptions.forEach((subscription) => subscription.remove());
+    };
+  }, [client]);
+
   useEffect(() => {
     if (!client || !isHttpInspectorEnabled) {
       return;
     }
 
     const networkInspector = getNetworkInspector(client);
+
+    // If recording was previously enabled, enable the inspector (hot reload)
+    if (isRecordingEnabledRef.current) {
+      networkInspector.enable();
+    }
 
     return () => {
       networkInspector.dispose();
@@ -74,6 +100,11 @@ export const useNetworkActivityDevTools = (
       websocketInspector.disable();
     });
 
+    // If recording was previously enabled, enable the inspector (hot reload)
+    if (isRecordingEnabledRef.current) {
+      websocketInspector.enable();
+    }
+
     return () => {
       // Subscriptions will be disposed by the inspector
       websocketInspector.dispose();
@@ -106,6 +137,11 @@ export const useNetworkActivityDevTools = (
     client.onMessage('network-disable', () => {
       sseInspector.disable();
     });
+
+    // If recording was previously enabled, enable the inspector (hot reload)
+    if (isRecordingEnabledRef.current) {
+      sseInspector.enable();
+    }
 
     return () => {
       // Subscriptions will be disposed by the inspector
