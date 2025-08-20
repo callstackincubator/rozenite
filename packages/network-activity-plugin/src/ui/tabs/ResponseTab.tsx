@@ -81,7 +81,7 @@ export const ResponseTab = ({
     }
 
     // Handle HTML content
-    if (type === 'text/html') {
+    if (type.startsWith('text/html')) {
       return (
         <div className="space-y-4">
           <div className="text-sm mb-2">
@@ -98,8 +98,8 @@ export const ResponseTab = ({
     // Handle other text content types
     if (
       type.startsWith('text/') ||
-      type === 'application/xml' ||
-      type === 'application/javascript'
+      type.startsWith('application/xml') ||
+      type.startsWith('application/javascript')
     ) {
       return (
         <div className="space-y-4">
