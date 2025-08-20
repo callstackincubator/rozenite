@@ -17,6 +17,7 @@ import {
 } from '../state/hooks';
 import { getStatusColor } from '../utils/getStatusColor';
 import { FilterState } from './FilterBar';
+import { isNumber } from '../../utils/isNumber';
 
 type NetworkRequest = {
   id: RequestId;
@@ -134,7 +135,7 @@ const processNetworkRequests = (
       method: request.method,
       domain,
       path,
-      size: formatSize(request.size || 0),
+      size: isNumber(request.size) ? formatSize(request.size) : '—',
       time: formatDuration(duration),
       type: request.type,
       startTime: formatStartTime(request.timestamp),
@@ -184,13 +185,17 @@ const columns = [
   }),
   columnHelper.accessor('size', {
     header: 'Size',
-    cell: ({ getValue }) => <div className="text-gray-300">{getValue()}</div>,
+    cell: ({ getValue }) => (
+      <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>
+    ),
     size: 80,
     sortingFn: sortSize,
   }),
   columnHelper.accessor('time', {
     header: 'Time',
-    cell: ({ getValue }) => <div className="text-gray-300">{getValue()}</div>,
+    cell: ({ getValue }) => (
+      <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>
+    ),
     size: 80,
     sortingFn: sortTime,
   }),

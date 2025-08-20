@@ -35,13 +35,20 @@ export const JsonTree = ({
       shouldExpandNodeInitially={shouldExpandNodeInitially}
       // For objects and arrays
       getItemString={(_type, data, itemType, itemString) => (
-        <JsonTreeCopyableItem getCopyableValue={() => JSON.stringify(data, null, 2)}>
-          <>{itemType} {itemString}</>
+        <JsonTreeCopyableItem
+          getCopyableValue={() => JSON.stringify(data, null, 2)}
+        >
+          <>
+            {itemType} {itemString}
+          </>
         </JsonTreeCopyableItem>
       )}
       // For primitives
       valueRenderer={(valueAsString, value) => (
-        <JsonTreeCopyableItem getCopyableValue={() => String(value)} className="ml-2">
+        <JsonTreeCopyableItem
+          getCopyableValue={() => String(value)}
+          className="ml-2"
+        >
           {String(valueAsString)}
         </JsonTreeCopyableItem>
       )}
