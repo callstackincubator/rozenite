@@ -11,15 +11,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './DropdownMenu';
+import { checkRequestBodyBinary } from '../utils/checkRequestBodyBinary';
+
+type NetworkEntry = HttpNetworkEntry | SSENetworkEntry;
 
 type CopyDropdownProps = {
-  selectedRequest: HttpNetworkEntry | SSENetworkEntry;
+  selectedRequest: NetworkEntry;
 };
 
 type CopyOption = {
   id: string;
   label: string;
-  generate: (request: HttpNetworkEntry | SSENetworkEntry) => string;
+  generate: (request: NetworkEntry) => string;
+  isEnabled: (request: NetworkEntry) => boolean;
 };
 
 const copyOptions: CopyOption[] = [
@@ -27,18 +31,19 @@ const copyOptions: CopyOption[] = [
     id: 'fetch',
     label: 'fetch',
     generate: generateFetchCall,
+    isEnabled: (request) => !checkRequestBodyBinary(request),
   },
   {
     id: 'curl',
     label: 'cURL',
     generate: generateCurlCommand,
+    isEnabled: (request) =>
+      !checkRequestBodyBinary(request) || request.type === 'sse',
   },
 ];
 
 export const CopyRequestDropdown = ({ selectedRequest }: CopyDropdownProps) => {
   const { isCopied, copy } = useCopyToClipboard();
-
-  const isCopyEnabled = selectedRequest.request.body?.data.type !== 'binary';
 
   const handleCopy = useCallback(
     async (option: CopyOption) => {
@@ -55,7 +60,11 @@ export const CopyRequestDropdown = ({ selectedRequest }: CopyDropdownProps) => {
     [selectedRequest, copy]
   );
 
-  if (!isCopyEnabled) {
+  const filteredCopyOptions = copyOptions.filter((option) =>
+    option.isEnabled(selectedRequest)
+  );
+
+  if (filteredCopyOptions.length === 0) {
     return null;
   }
 
@@ -69,16 +78,15 @@ export const CopyRequestDropdown = ({ selectedRequest }: CopyDropdownProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        {copyOptions.map((option) => {
+        {filteredCopyOptions.map((option) => {
           return (
-            <div key={option.id}>
-              <DropdownMenuItem
-                onClick={() => handleCopy(option)}
-                className="cursor-pointer"
-              >
-                {option.label}
-              </DropdownMenuItem>
-            </div>
+            <DropdownMenuItem
+              onClick={() => handleCopy(option)}
+              className="cursor-pointer"
+              key={option.id}
+            >
+              {option.label}
+            </DropdownMenuItem>
           );
         })}
       </DropdownMenuContent>
