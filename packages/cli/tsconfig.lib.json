@@ -11,5 +11,9 @@
     "resolveJsonModule": true
   },
   "include": ["src/**/*.ts"],
-  "references": []
+  "references": [
+    {
+      "path": "../tools/tsconfig.lib.json"
+    }
+  ]
 }

@@ -18,12 +18,5 @@
   },
   "include": ["src/**/*", "react-native.ts", "rozenite.config.ts"],
   "exclude": ["node_modules", "dist", "build"],
-  "references": [
-    {
-      "path": "../plugin-bridge"
-    },
-    {
-      "path": "../vite-plugin"
-    }
-  ]
+  "references": []
 }

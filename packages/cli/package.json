@@ -29,7 +29,13 @@
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
   "dependencies": {
+    "@babel/core": "^7.14.5",
+    "@babel/generator": "^7.28.3",
+    "@babel/parser": "^7.28.3",
+    "@babel/traverse": "^7.28.3",
+    "@babel/types": "^7.28.2",
     "@clack/prompts": "^0.11.0",
+    "@rozenite/tools": "workspace:*",
     "commander": "^14.0.0",
     "ejs": "^3.1.10",
     "is-unicode-supported": "^2.1.0",
@@ -38,6 +44,9 @@
     "validate-npm-package-name": "^6.0.1"
   },
   "devDependencies": {
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__generator": "^7.6.8",
+    "@types/babel__traverse": "^7.20.6",
     "@types/ejs": "^3.1.5",
     "@types/validate-npm-package-name": "^4.0.2"
   },

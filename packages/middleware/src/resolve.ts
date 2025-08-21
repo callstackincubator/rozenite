@@ -1,28 +1,10 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import fs from 'node:fs';
+import { getProjectType } from '@rozenite/tools';
 import { logger } from './logger.js';
 import { RozeniteConfig } from './config.js';
 
 const require = createRequire(import.meta.url);
-
-const doesProjectLookLikeExpo = (projectRoot: string): boolean => {
-  if (process.env.EXPO_DEV_SERVER_ORIGIN) {
-    return true;
-  }
-
-  const appJsonPath = path.join(projectRoot, 'app.json');
-
-  if (fs.existsSync(appJsonPath)) {
-    const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
-
-    if (appJson.expo) {
-      return true;
-    }
-  }
-
-  return false;
-};
 
 export const getReactNativePackagePath = (projectRoot: string): string => {
   const input = require.resolve('react-native', { paths: [projectRoot] });
@@ -108,7 +90,9 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
     throw new Error(`Unknown project type: ${options.projectType}.`);
   }
 
-  if (doesProjectLookLikeExpo(options.projectRoot)) {
+  const projectType = getProjectType(options.projectRoot);
+
+  if (projectType === 'expo') {
     logger.debug(
       'Guessing that this is an Expo project, resolving @react-native/dev-middleware from Expo package.'
     );

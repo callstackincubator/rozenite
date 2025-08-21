@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@rozenite/runtime": "workspace:*",
+    "@rozenite/tools": "workspace:*",
     "express": "^5.1.0",
     "semver": "^7.7.2",
     "serve-static": "^2.2.0",

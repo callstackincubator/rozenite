@@ -23,9 +23,6 @@
       "path": "../plugin-bridge"
     },
     {
-      "path": "../cli"
-    },
-    {
       "path": "../vite-plugin"
     }
   ]
