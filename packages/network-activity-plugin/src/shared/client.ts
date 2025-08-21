@@ -20,13 +20,29 @@ export type XHRPostData =
   | null
   | undefined;
 
+export type RequestTextPostData = {
+  type: 'text';
+  value: string;
+};
+
+export type RequestBinaryPostData = {
+  type: 'binary';
+  value: {
+    size: number;
+    type?: string;
+    name?: string;
+  };
+};
+
+export type RequestFormDataPostData = {
+  type: 'form-data';
+  value: Record<string, RequestTextPostData | RequestBinaryPostData>;
+};
+
 export type RequestPostData =
-  | { type: 'text'; value: string }
-  | { type: 'form-data'; value: Record<string, unknown> }
-  | {
-      type: 'binary';
-      value: { size: number; type?: string; name?: string };
-    }
+  | RequestTextPostData
+  | RequestFormDataPostData
+  | RequestBinaryPostData
   | null
   | undefined;
 

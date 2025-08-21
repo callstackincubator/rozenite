@@ -1,21 +1,81 @@
 import * as React from 'react';
 import { ScrollArea } from '../components/ScrollArea';
 import { JsonTree } from '../components/JsonTree';
-import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
-import { KeyValueGrid } from '../components/KeyValueGrid';
+import {
+  HttpNetworkEntry,
+  HttpRequestData,
+  SSENetworkEntry,
+} from '../state/model';
+import { KeyValueGrid, KeyValueItem } from '../components/KeyValueGrid';
 import { Section } from '../components/Section';
 import { CodeBlock } from '../components/CodeBlock';
 import { ReactNode, useMemo } from 'react';
+import { RequestBinaryPostData } from '../../shared/client';
 
 export type RequestTabProps = {
   selectedRequest: HttpNetworkEntry | SSENetworkEntry;
+};
+
+const getFormDataBinaryEntries = (
+  key: string,
+  value: RequestBinaryPostData['value']
+): KeyValueItem[] => {
+  return [
+    {
+      key,
+      value: <span className="text-blue-400">[binary]</span>,
+    },
+    ...getBinaryEntries(value).map((item) => ({
+      ...item,
+      key: `  └─  ${item.key}`,
+      keyClassName: 'whitespace-pre',
+    })),
+  ];
+};
+
+const getBinaryEntries = (
+  value: RequestBinaryPostData['value']
+): KeyValueItem[] => {
+  const { size, type, name } = value;
+
+  const items: KeyValueItem[] = [];
+
+  if (name) {
+    items.push({ key: 'Name', value: name });
+  }
+
+  if (type) {
+    items.push({ key: 'Type', value: type });
+  }
+
+  items.push({ key: 'Size', value: `${size} bytes` });
+
+  return items;
+};
+
+const getRequestBodySectionTitle = (body: HttpRequestData) => {
+  const baseTitle = 'Request Body';
+
+  switch (body.data.type) {
+    case 'form-data':
+      return `${baseTitle} (FormData)`;
+
+    case 'binary':
+      return `${baseTitle} (Binary)`;
+
+    default:
+      return baseTitle;
+  }
 };
 
 export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
   const queryParams = useMemo(() => {
     const { searchParams } = new URL(selectedRequest.request.url);
 
-    return Array.from(searchParams.entries());
+    return Array.from(searchParams.entries()).map(([key, value]) => ({
+      key,
+      value,
+    }));
   }, [selectedRequest.request.url]);
 
   const requestBody = selectedRequest.request.body;
@@ -25,12 +85,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
     if (hasQueryParams) {
       return (
         <Section title={`Query Parameters (${queryParams.length})`}>
-          <KeyValueGrid
-            items={queryParams.map(([key, value]) => ({
-              key,
-              value,
-            }))}
-          />
+          <KeyValueGrid items={queryParams} />
         </Section>
       );
     }
@@ -43,7 +98,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
       return null;
     }
 
-    const { type, data } = requestBody;
+    const { data } = requestBody;
     const { type: dataType, value } = data;
 
     let bodyContent: ReactNode = null;
@@ -52,31 +107,37 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
       try {
         const jsonData = JSON.parse(value);
 
-        bodyContent = <JsonTree data={jsonData} />;
+        bodyContent = (
+          <CodeBlock>
+            <JsonTree data={jsonData} />
+          </CodeBlock>
+        );
       } catch {
-        bodyContent = value;
+        bodyContent = <CodeBlock>{value}</CodeBlock>;
       }
     }
 
-    // Show JSON tree as a temporary solution for form-data and binary types
-    if (dataType === 'form-data' || dataType === 'binary') {
-      bodyContent = <JsonTree data={value} />
+    if (dataType === 'form-data') {
+      const formDataItems = Object.entries(value).flatMap(
+        ([key, { value, type }]) => {
+          if (type === 'binary') {
+            return getFormDataBinaryEntries(key, value);
+          }
+
+          return [{ key, value }];
+        }
+      );
+
+      bodyContent = <KeyValueGrid items={formDataItems} />;
+    }
+
+    if (dataType === 'binary') {
+      bodyContent = <KeyValueGrid items={getBinaryEntries(value)} />;
     }
 
     return (
-      <Section title="Request Body">
-        <div className="space-y-4">
-          <KeyValueGrid
-            items={[
-              {
-                key: 'Content-Type',
-                value: type,
-                valueClassName: 'text-blue-400',
-              },
-            ]}
-          />
-          {bodyContent && <CodeBlock>{bodyContent}</CodeBlock>}
-        </div>
+      <Section title={getRequestBodySectionTitle(requestBody)}>
+        {bodyContent}
       </Section>
     );
   };

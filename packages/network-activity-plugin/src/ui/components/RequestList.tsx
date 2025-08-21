@@ -17,7 +17,7 @@ import {
 } from '../state/hooks';
 import { getStatusColor } from '../utils/getStatusColor';
 import { FilterState } from './FilterBar';
-import { isNumber } from '../../utils/isNumber';
+import { isNumber } from '../../utils/typeChecks';
 
 type NetworkRequest = {
   id: RequestId;

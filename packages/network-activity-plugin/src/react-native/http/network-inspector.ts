@@ -3,6 +3,9 @@ import {
   HttpMethod,
   NetworkActivityDevToolsClient,
   RequestPostData,
+  RequestTextPostData,
+  RequestBinaryPostData,
+  RequestFormDataPostData,
   XHRPostData,
 } from '../../shared/client';
 import { getContentType } from '../utils';
@@ -12,46 +15,75 @@ import { getFormDataEntries } from '../utils/getFormDataEntries';
 import { XHRInterceptor } from './xhr-interceptor';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
 import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
+import {
+  isBlob,
+  isArrayBuffer,
+  isFormData,
+  isNullOrUndefined,
+} from '../../utils/typeChecks';
 
 const networkRequestsRegistry = getNetworkRequestsRegistry();
 
-function getRequestBody(body: XHRPostData): RequestPostData {
-  if (body === null || body === undefined) {
+const getBinaryPostData = (body: Blob): RequestBinaryPostData => ({
+  type: 'binary',
+  value: {
+    size: body.size,
+    type: body.type,
+    name: getBlobName(body),
+  },
+});
+
+const getArrayBufferPostData = (
+  body: ArrayBuffer | ArrayBufferView
+): RequestBinaryPostData => ({
+  type: 'binary',
+  value: {
+    size: body.byteLength,
+  },
+});
+
+const getTextPostData = (body: unknown): RequestTextPostData => ({
+  type: 'text',
+  value: safeStringify(body),
+});
+
+const getFormDataPostData = (body: FormData): RequestFormDataPostData => ({
+  type: 'form-data',
+  value: getFormDataEntries(body).reduce<RequestFormDataPostData['value']>(
+    (acc, [key, value]) => {
+      if (isBlob(value)) {
+        acc[key] = getBinaryPostData(value);
+      } else if (isArrayBuffer(value)) {
+        acc[key] = getArrayBufferPostData(value);
+      } else {
+        acc[key] = getTextPostData(value);
+      }
+
+      return acc;
+    },
+    {}
+  ),
+});
+
+const getRequestBody = (body: XHRPostData): RequestPostData => {
+  if (isNullOrUndefined(body)) {
     return body;
   }
 
-  if (body instanceof Blob) {
-    return {
-      type: 'binary',
-      value: {
-        size: body.size,
-        type: body.type,
-        name: getBlobName(body),
-      },
-    };
+  if (isBlob(body)) {
+    return getBinaryPostData(body);
   }
 
-  if (body instanceof ArrayBuffer || ArrayBuffer.isView(body)) {
-    return {
-      type: 'binary',
-      value: {
-        size: body.byteLength,
-      },
-    };
+  if (isArrayBuffer(body)) {
+    return getArrayBufferPostData(body);
   }
 
-  if (body instanceof FormData) {
-    return {
-      type: 'form-data',
-      value: Object.fromEntries(getFormDataEntries(body)),
-    };
+  if (isFormData(body)) {
+    return getFormDataPostData(body);
   }
 
-  return {
-    type: 'text',
-    value: safeStringify(body),
-  };
-}
+  return getTextPostData(body);
+};
 
 const getResponseSize = (request: XMLHttpRequest): number | null => {
   try {
