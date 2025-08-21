@@ -35,9 +35,10 @@ export const initCommand = async (projectRoot: string) => {
   intro('Rozenite');
   const projectType = getProjectType(projectRoot);
   let bundlerType = safeGetBundlerType(projectRoot);
+  const isClean = await isGitRepositoryClean(projectRoot);
 
   // Check if project has uncommitted changes
-  if (!isGitRepositoryClean(projectRoot)) {
+  if (!isClean) {
     await promptConfirm({
       message: 'Your project has uncommitted changes. Continue?',
     });
