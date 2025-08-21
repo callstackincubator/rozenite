@@ -1,3 +1,5 @@
+import { RozeniteLogLevel } from './logger.js';
+
 export type RozeniteProjectType = 'expo' | 'react-native-cli';
 
 export type RozeniteConfig = {
@@ -17,4 +19,10 @@ export type RozeniteConfig = {
    * Useful if built-in heuristics fail to detect the project type.
    */
   projectType?: RozeniteProjectType;
+
+  /**
+   * The log level to use.
+   * @default 'info'
+   */
+  logLevel?: RozeniteLogLevel;
 };

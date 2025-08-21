@@ -24,7 +24,6 @@ export const withRozenite = async <T extends MetroConfig>(
   const projectRoot = resolvedConfig.projectRoot ?? process.cwd();
 
   if (isBundling(projectRoot)) {
-    console.info('[Rozenite] Skipping initialization for bundling');
     return resolvedConfig;
   }
 
