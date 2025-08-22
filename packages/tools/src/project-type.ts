@@ -25,12 +25,6 @@ const isExpoProject = (projectRoot: string): boolean => {
   }
 };
 
-const isReactNativeProject = (projectRoot: string): boolean => {
-  const packageJsonPath = path.join(projectRoot, 'package.json');
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  return packageJson.devDependencies?.['@react-native-community/cli'] ?? false;
-};
-
 const isSourceFilePresent = (
   projectRoot: string,
   fileName: string
@@ -63,11 +57,8 @@ export const getProjectType = (projectRoot: string): ProjectType => {
     return 'expo';
   }
 
-  if (isReactNativeProject(projectRoot)) {
-    return 'react-native-cli';
-  }
-
-  throw new UnknownProjectType(projectRoot);
+  // We fallback to React Native CLI if we can't determine the project type.
+  return 'react-native-cli';
 };
 
 export const getBundlerType = (projectRoot: string): BundlerType => {
