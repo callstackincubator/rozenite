@@ -1,9 +1,10 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { MMKVEventMap } from '../shared/messaging';
 import { MMKVEntry, MMKVEntryValue } from '../shared/types';
 import { EditableTable } from './editable-table';
+import { AddEntryDialog } from './add-entry-dialog';
 import './globals.css';
 
 export default function MMKVPanel() {
@@ -14,6 +15,7 @@ export default function MMKVPanel() {
   const [entries, setEntries] = useState<MMKVEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const client = useRozeniteDevToolsClient<MMKVEventMap>({
     pluginId: '@rozenite/mmkv-plugin',
@@ -217,6 +219,30 @@ export default function MMKVPanel() {
     });
   };
 
+  const handleAddEntry = (newEntry: MMKVEntry) => {
+    if (!client || !selectedInstance) return;
+
+    // Send to device
+    client.send('set-entry', {
+      type: 'set-entry',
+      id: selectedInstance,
+      entry: newEntry,
+    });
+
+    // Optimistically update local state
+    setEntries((prevEntries) => [...prevEntries, newEntry]);
+
+    // Update the instances map as well
+    setInstances((prevInstances) => {
+      const newInstances = new Map(prevInstances);
+      const instanceEntries = newInstances.get(selectedInstance);
+      if (instanceEntries) {
+        newInstances.set(selectedInstance, [...instanceEntries, newEntry]);
+      }
+      return newInstances;
+    });
+  };
+
   return (
     <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
       {/* Toolbar */}
@@ -254,6 +280,15 @@ export default function MMKVPanel() {
 
       {/* Search and Filter Bar */}
       <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
+        <button
+          onClick={() => setShowAddDialog(true)}
+          disabled={!selectedInstance}
+          className="flex items-center gap-1 px-3 h-8 text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+          title="Add new entry"
+        >
+          <Plus className="h-3 w-3" />
+          Add Entry
+        </button>
         <div className="flex-1">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -309,6 +344,13 @@ export default function MMKVPanel() {
           </div>
         )}
       </main>
+
+      <AddEntryDialog
+        isOpen={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onAddEntry={handleAddEntry}
+        existingKeys={entries.map((entry) => entry.key)}
+      />
     </div>
   );
 }

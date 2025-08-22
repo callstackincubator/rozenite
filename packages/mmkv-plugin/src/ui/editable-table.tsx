@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,41 +9,33 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { Trash2, Loader2 } from 'lucide-react';
+import { Trash2, Loader2, Edit3 } from 'lucide-react';
 import { MMKVEntry, MMKVEntryType, MMKVEntryValue } from '../shared/types';
+import { EditEntryDialog } from './edit-entry-dialog';
+import { ConfirmDialog } from './confirm-dialog';
 
-interface EditableTableProps {
+export type EditableTableProps = {
   data: MMKVEntry[];
   onValueChange?: (key: string, newValue: MMKVEntryValue) => void;
   onDeleteEntry?: (key: string) => void;
   loading?: boolean;
-}
+};
 
 const columnHelper = createColumnHelper<MMKVEntry>();
 
-export function EditableTable({
+export const EditableTable = ({
   data,
   onValueChange,
   onDeleteEntry,
   loading = false,
-}: EditableTableProps) {
-  const [editingCell, setEditingCell] = useState<{
-    rowIndex: number;
-    columnId: string;
-  } | null>(null);
-  const [editValue, setEditValue] = useState<string>('');
+}: EditableTableProps) => {
+  const [editingEntry, setEditingEntry] = useState<MMKVEntry | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const cursorPositionRef = useRef<number>(0);
-
-  // Preserve cursor position on re-renders
-  useEffect(() => {
-    if (inputRef.current && editingCell) {
-      const input = inputRef.current;
-      const position = Math.min(cursorPositionRef.current, input.value.length);
-      input.setSelectionRange(position, position);
-    }
-  }, [editValue, editingCell]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    entryKey: string;
+  }>({ isOpen: false, entryKey: '' });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns = useMemo<ColumnDef<MMKVEntry, any>[]>(
@@ -76,51 +68,19 @@ export function EditableTable({
       }),
       columnHelper.accessor('value', {
         header: 'Value',
-        cell: ({ getValue, row, column }) => {
-          const value = getValue();
+        cell: ({ row }) => {
           const entry = row.original;
-          const isEditing =
-            editingCell?.rowIndex === row.index &&
-            editingCell?.columnId === column.id;
-
-          if (isEditing) {
-            return (
-              <div className="flex-1">
-                <input
-                  ref={inputRef}
-                  type={getInputType(entry.type)}
-                  value={editValue}
-                  onChange={(e) => {
-                    cursorPositionRef.current = e.target.selectionStart || 0;
-                    setEditValue(e.target.value);
-                  }}
-                  onSelect={(e) => {
-                    cursorPositionRef.current =
-                      e.currentTarget.selectionStart || 0;
-                  }}
-                  onBlur={() => handleSave(row.original.key)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSave(row.original.key);
-                    } else if (e.key === 'Escape') {
-                      setEditingCell(null);
-                    }
-                  }}
-                  autoFocus
-                  className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label={`Edit value for ${row.original.key}`}
-                  placeholder="Enter new value"
-                />
-              </div>
-            );
-          }
-
           return (
-            <div
-              className="cursor-pointer hover:bg-gray-800 p-1 rounded transition-colors"
-              onClick={() => handleEdit(row.index, column.id, value)}
-            >
-              {formatValue(entry)}
+            <div className="flex items-center justify-between group">
+              <div className="flex-1">{formatValue(entry)}</div>
+              <button
+                onClick={() => handleEdit(entry)}
+                className="opacity-0 group-hover:opacity-100 ml-2 p-1 text-gray-400 hover:text-blue-400 hover:bg-gray-800 rounded transition-all"
+                title="Edit value"
+                aria-label={`Edit value for ${entry.key}`}
+              >
+                <Edit3 className="h-3 w-3" />
+              </button>
             </div>
           );
         },
@@ -143,7 +103,7 @@ export function EditableTable({
         ),
       }),
     ],
-    [editingCell, editValue, onDeleteEntry]
+    [onDeleteEntry]
   );
 
   const table = useReactTable({
@@ -158,80 +118,35 @@ export function EditableTable({
     getSortedRowModel: getSortedRowModel(),
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleEdit = (rowIndex: number, columnId: string, value: any) => {
-    setEditingCell({ rowIndex, columnId });
-
-    // Handle different value types for editing
-    let valueToEdit: string;
-    if (Array.isArray(value)) {
-      // For buffer values, show as JSON
-      valueToEdit = JSON.stringify(value);
-    } else {
-      valueToEdit = String(value);
-    }
-
-    setEditValue(valueToEdit);
-    // Reset cursor position to end of value when starting edit
-    cursorPositionRef.current = valueToEdit.length;
+  const handleEdit = (entry: MMKVEntry) => {
+    setEditingEntry(entry);
+    setShowEditDialog(true);
   };
 
-  const handleSave = (key: string) => {
-    if (onValueChange && editingCell) {
-      const entry = data[editingCell.rowIndex];
-      let newValue: MMKVEntryValue;
-
-      try {
-        switch (entry.type) {
-          case 'string':
-            newValue = editValue;
-            break;
-          case 'number':
-            newValue = Number(editValue);
-            if (isNaN(newValue as number)) throw new Error('Invalid number');
-            break;
-          case 'boolean':
-            newValue = editValue.toLowerCase() === 'true';
-            break;
-          case 'buffer':
-            // For buffer, parse as JSON array of numbers
-            try {
-              newValue = JSON.parse(editValue);
-              if (
-                !Array.isArray(newValue) ||
-                !newValue.every((v) => typeof v === 'number')
-              ) {
-                throw new Error('Buffer must be an array of numbers');
-              }
-            } catch {
-              throw new Error(
-                'Invalid buffer format. Use JSON array like [1,2,3]'
-              );
-            }
-            break;
-          default:
-            newValue = editValue;
-        }
-
-        onValueChange(key, newValue);
-      } catch (error) {
-        console.error('Invalid value:', error);
-        // Reset to original value on error
-        setEditValue(String(entry.value));
-      }
+  const handleEditEntry = (key: string, newValue: MMKVEntryValue) => {
+    if (onValueChange) {
+      onValueChange(key, newValue);
     }
-    setEditingCell(null);
+    setEditingEntry(null);
+    setShowEditDialog(false);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditingEntry(null);
+    setShowEditDialog(false);
   };
 
   const handleDelete = (key: string) => {
     if (onDeleteEntry) {
-      const confirmed = window.confirm(
-        `Are you sure you want to delete the entry "${key}"?`
-      );
-      if (confirmed) {
-        onDeleteEntry(key);
-      }
+      setDeleteConfirm({ isOpen: true, entryKey: key });
     }
+  };
+
+  const confirmDelete = () => {
+    if (onDeleteEntry && deleteConfirm.entryKey) {
+      onDeleteEntry(deleteConfirm.entryKey);
+    }
+    setDeleteConfirm({ isOpen: false, entryKey: '' });
   };
 
   const getTypeColorClass = (type: string) => {
@@ -261,17 +176,6 @@ export function EditableTable({
         return '💾';
       default:
         return '❓';
-    }
-  };
-
-  const getInputType = (type: string) => {
-    switch (type) {
-      case 'number':
-        return 'number';
-      case 'boolean':
-        return 'text'; // We'll handle boolean conversion manually
-      default:
-        return 'text';
     }
   };
 
@@ -377,6 +281,23 @@ export function EditableTable({
           ))}
         </tbody>
       </table>
+
+      <EditEntryDialog
+        isOpen={showEditDialog}
+        onClose={handleCloseEditDialog}
+        onEditEntry={handleEditEntry}
+        entry={editingEntry}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, entryKey: '' })}
+        onConfirm={confirmDelete}
+        title="Delete Entry"
+        message={`Are you sure you want to delete the entry "${deleteConfirm.entryKey}"?`}
+        type="confirm"
+        confirmText="Delete"
+      />
     </div>
   );
-}
+};
