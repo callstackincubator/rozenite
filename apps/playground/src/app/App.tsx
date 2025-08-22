@@ -23,7 +23,10 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Wrapper = () => {
   useTanStackQueryDevTools(queryClient);
   useNetworkActivityDevTools();
-  useMMKVDevTools({ storages: mmkvStorages });
+  useMMKVDevTools({
+    storages: mmkvStorages,
+    blacklist: /user-storage:sensitiveToken/,
+  });
   usePerformanceMonitorDevTools();
 
   return (

@@ -17,6 +17,7 @@ The MMKV plugin is a powerful debugging tool that helps you inspect and manage M
 - **Visual Data Representation**: Color-coded type indicators and formatted value display
 - **Data Management**: Add, edit, and delete entries directly from the DevTools interface
 - **Type-aware Editing**: Input validation based on data types when editing entries
+- **Blacklist Filtering**: Filter out sensitive data or large binary blobs using regex patterns
 
 ## Installation
 
@@ -64,36 +65,37 @@ Once configured, the MMKV plugin will automatically appear in your React Native 
   - **Boolean**: True/false values
   - **Buffer**: Binary data representation
 - **Search Functionality**: Filter entries by key name for quick access
+- **Blacklist Filtering**: Hide sensitive or large data using RegExp patterns
 - **Data Editing**: Modify existing values with type validation
 - **Entry Management**: Add new entries or delete existing ones
 
 ## Configuration
 
-### Organizing Storage Instances
+### Blacklist Filtering
 
-For better organization, you can manage your MMKV instances in a separate file:
+The MMKV plugin supports filtering out specific properties using RegExp patterns. This is useful for hiding sensitive data or large binary blobs that might slow down the DevTools.
 
-```typescript title="storages.ts"
-import { MMKV } from 'react-native-mmkv';
-
-export const userStorage = new MMKV({ id: 'user-storage' });
-export const appSettings = new MMKV({ id: 'app-settings' });
-export const cacheStorage = new MMKV({ id: 'cache-storage' });
-
-// Export array for DevTools
-export const allStorages = [userStorage, appSettings, cacheStorage];
-```
+The blacklist RegExp is matched against `{storageId}:{key}` format:
 
 ```typescript title="App.tsx"
-import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
-import { allStorages } from './storages';
-
 function App() {
-  useMMKVDevTools({ storages: allStorages });
+  useMMKVDevTools({
+    storages: [userStorage, appSettings, cacheStorage],
+    // Hide sensitive tokens, large binary data, and temporary cache entries
+    blacklist: /.*:(token|password|secret)|cache-storage:.*Binary.*|.*:temp.*/,
+  });
 
   return <YourApp />;
 }
 ```
+
+This example filters out:
+
+- Any key containing "token", "password", or "secret" across all storages
+- Keys ending with "Binary" in the cache-storage instance
+- Any key containing "temp" in any storage instance
+
+You can combine multiple patterns using the `|` operator to create comprehensive filtering rules that hide sensitive data while keeping your DevTools interface clean and performant.
 
 ### Important Notes
 

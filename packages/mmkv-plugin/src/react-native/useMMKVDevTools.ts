@@ -5,10 +5,22 @@ import { MMKVEventMap } from '../shared/messaging';
 import { getMMKVView } from './mmkv-view';
 
 export type MMKVDevToolsOptions = {
+  /**
+   * The MMKV instances to monitor.
+   */
   storages: MMKV[];
+
+  /**
+   * Optional RegExp to blacklist properties from being shown in DevTools.
+   * The pattern is matched against storageId:key format.
+   */
+  blacklist?: RegExp;
 };
 
-export const useMMKVDevTools = ({ storages }: MMKVDevToolsOptions) => {
+export const useMMKVDevTools = ({
+  storages,
+  blacklist,
+}: MMKVDevToolsOptions) => {
   const client = useRozeniteDevToolsClient<MMKVEventMap>({
     pluginId: '@rozenite/mmkv-plugin',
   });
@@ -18,7 +30,7 @@ export const useMMKVDevTools = ({ storages }: MMKVDevToolsOptions) => {
       return;
     }
 
-    const views = storages.map(getMMKVView);
+    const views = storages.map((storage) => getMMKVView(storage, blacklist));
 
     views.forEach((view) => {
       client.send('snapshot', {
@@ -101,7 +113,7 @@ export const useMMKVDevTools = ({ storages }: MMKVDevToolsOptions) => {
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
     };
-  }, [client, storages]);
+  }, [client, storages, blacklist]);
 
   return client;
 };

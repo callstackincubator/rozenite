@@ -11,7 +11,17 @@ export type MMKVView = {
   onChange: (callback: (key: string) => void) => { remove: () => void };
 };
 
-export const getMMKVView = (mmkv: MMKV): MMKVView => {
+export const getMMKVView = (mmkv: MMKV, blacklist?: RegExp): MMKVView => {
+  const storageId = mmkv['id'];
+
+  // Helper function to check if a key should be blacklisted
+  const isBlacklisted = (key: string): boolean => {
+    if (!blacklist) return false;
+
+    const fullKey = `${storageId}:${key}`;
+    return blacklist.test(fullKey);
+  };
+
   const mmkvView: MMKVView = {
     set: (key, value) => {
       if (Array.isArray(value)) {
@@ -23,6 +33,11 @@ export const getMMKVView = (mmkv: MMKV): MMKVView => {
       mmkv.set(key, value);
     },
     get: (key: string) => {
+      // Check if key is blacklisted
+      if (isBlacklisted(key)) {
+        return undefined;
+      }
+
       // We are going to go through each type, one by one.
       // Ordering is important here!
       const stringValue = mmkv.getString(key);
@@ -75,15 +90,18 @@ export const getMMKVView = (mmkv: MMKV): MMKVView => {
     },
     delete: (key: string) => mmkv.delete(key),
     getAllEntries: () => {
-      return mmkv.getAllKeys().map((key) => {
-        const entry = mmkvView.get(key);
-        if (!entry) {
-          throw new Error(`Failed to get entry for key: ${key}`);
-        }
-        return entry;
-      });
+      return mmkv
+        .getAllKeys()
+        .filter((key) => !isBlacklisted(key))
+        .map((key) => {
+          const entry = mmkvView.get(key);
+          if (!entry) {
+            throw new Error(`Failed to get entry for key: ${key}`);
+          }
+          return entry;
+        });
     },
-    getId: () => mmkv['id'],
+    getId: () => storageId,
     onChange: (callback) => mmkv.addOnValueChangedListener(callback),
   };
 

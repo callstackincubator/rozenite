@@ -47,6 +47,10 @@ export const initializeMMKVStorages = () => {
   cacheStorage.set('cacheSize', 1024);
   cacheStorage.set('lastSync', Date.now() - 3600000); // 1 hour ago
 
+  // Add sensitive data in user storage
+  userStorage.set('sensitiveToken', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
+  userStorage.set('tempUserData', 'some temporary user data');
+
   console.log('MMKV test instances created with sample data');
 };
 

@@ -15,6 +15,7 @@ The Rozenite MMKV Plugin provides real-time storage inspection, data visualizati
 - **Data Type Detection**: Automatically detects and displays different data types (string, number, boolean, buffer)
 - **Search & Filter**: Quickly find specific keys with real-time search functionality
 - **Visual Data Representation**: Color-coded type indicators and formatted value display
+- **Blacklist Filtering**: Filter out sensitive data or large binary blobs using regex patterns
 
 ## Installation
 
@@ -62,27 +63,15 @@ function App() {
 }
 ```
 
-**Alternative approach - organizing storages in a separate file:**
+**With blacklist filtering:**
 
 ```typescript
-// storages.ts
-import { MMKV } from 'react-native-mmkv';
-
-export const userStorage = new MMKV({ id: 'user-storage' });
-export const appSettings = new MMKV({ id: 'app-settings' });
-export const cacheStorage = new MMKV({ id: 'cache-storage' });
-
-// Export array for DevTools
-export const allStorages = [userStorage, appSettings, cacheStorage];
-```
-
-```typescript
-// App.tsx
-import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
-import { allStorages } from './storages';
-
 function App() {
-  useMMKVDevTools({ storages: allStorages });
+  // Enable MMKV DevTools with RegExp blacklist for sensitive/large data
+  useMMKVDevTools({
+    storages: [userStorage, appSettings, cacheStorage],
+    blacklist: /cache-storage:.*Binary.*|user-storage:sensitiveToken|.*:temp.*/,
+  });
 
   return <YourApp />;
 }
@@ -93,6 +82,33 @@ function App() {
 Start your development server and open React Native DevTools. You'll find the "MMKV Storage" panel in the DevTools interface.
 
 **Important Note:** You must explicitly provide all MMKV instances you want to inspect to the `useMMKVDevTools` hook. The plugin cannot automatically detect MMKV instances - only the storages you pass in the `storages` array will be available in the DevTools interface.
+
+## Blacklist Filtering
+
+The MMKV plugin supports filtering out specific properties using regex patterns. This is useful for:
+
+- **Performance**: Hide large binary blobs that slow down DevTools
+- **Security**: Filter sensitive data like tokens, passwords, or personal information
+- **Development**: Hide temporary or debug data
+
+### Blacklist Pattern Format
+
+The blacklist parameter accepts a JavaScript RegExp object matched against `{storageId}:{key}` format:
+
+```typescript
+useMMKVDevTools({
+  storages: [userStorage, cacheStorage],
+  blacklist: /cache-storage:.*Binary.*|user-storage:sensitiveToken|.*:temp.*/,
+});
+```
+
+This RegExp will hide:
+
+- Any key containing "Binary" in cache-storage (`cache-storage:.*Binary.*`)
+- The exact key "sensitiveToken" in user-storage (`user-storage:sensitiveToken`)
+- Any key containing "temp" in any storage (`.*:temp.*`)
+
+The `|` character is the regex OR operator to combine multiple patterns.
 
 ## Usage
 
