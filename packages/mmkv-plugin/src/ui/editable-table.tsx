@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,12 +9,13 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
+import { Trash2, Loader2 } from 'lucide-react';
 import { MMKVEntry, MMKVEntryType, MMKVEntryValue } from '../shared/types';
-import './editable-table.css';
 
 interface EditableTableProps {
   data: MMKVEntry[];
   onValueChange?: (key: string, newValue: MMKVEntryValue) => void;
+  onDeleteEntry?: (key: string) => void;
   loading?: boolean;
 }
 
@@ -23,6 +24,7 @@ const columnHelper = createColumnHelper<MMKVEntry>();
 export function EditableTable({
   data,
   onValueChange,
+  onDeleteEntry,
   loading = false,
 }: EditableTableProps) {
   const [editingCell, setEditingCell] = useState<{
@@ -31,16 +33,26 @@ export function EditableTable({
   } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const [sorting, setSorting] = useState<SortingState>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const cursorPositionRef = useRef<number>(0);
 
+  // Preserve cursor position on re-renders
+  useEffect(() => {
+    if (inputRef.current && editingCell) {
+      const input = inputRef.current;
+      const position = Math.min(cursorPositionRef.current, input.value.length);
+      input.setSelectionRange(position, position);
+    }
+  }, [editValue, editingCell]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns = useMemo<ColumnDef<MMKVEntry, any>[]>(
     () => [
       columnHelper.accessor('key', {
         header: 'Key',
         enableSorting: true,
         cell: ({ getValue }) => (
-          <div className="cell-key">
-            <code>{getValue()}</code>
-          </div>
+          <div className="text-gray-300 font-mono text-sm">{getValue()}</div>
         ),
       }),
       columnHelper.accessor('type', {
@@ -49,10 +61,11 @@ export function EditableTable({
         cell: ({ getValue }) => {
           const type = getValue() as MMKVEntryType;
           return (
-            <div className="cell-type">
+            <div className="flex items-center">
               <span
-                className="type-badge"
-                style={{ backgroundColor: getTypeColor(type) }}
+                className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
+                  type
+                )}`}
                 title={`${getTypeIcon(type)} ${type}`}
               >
                 {type}
@@ -72,11 +85,19 @@ export function EditableTable({
 
           if (isEditing) {
             return (
-              <div className="cell-editing">
+              <div className="flex-1">
                 <input
+                  ref={inputRef}
                   type={getInputType(entry.type)}
                   value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
+                  onChange={(e) => {
+                    cursorPositionRef.current = e.target.selectionStart || 0;
+                    setEditValue(e.target.value);
+                  }}
+                  onSelect={(e) => {
+                    cursorPositionRef.current =
+                      e.currentTarget.selectionStart || 0;
+                  }}
                   onBlur={() => handleSave(row.original.key)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -86,7 +107,7 @@ export function EditableTable({
                     }
                   }}
                   autoFocus
-                  className="edit-input"
+                  className="w-full px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   aria-label={`Edit value for ${row.original.key}`}
                   placeholder="Enter new value"
                 />
@@ -96,7 +117,7 @@ export function EditableTable({
 
           return (
             <div
-              className="cell-value"
+              className="cursor-pointer hover:bg-gray-800 p-1 rounded transition-colors"
               onClick={() => handleEdit(row.index, column.id, value)}
             >
               {formatValue(entry)}
@@ -104,8 +125,25 @@ export function EditableTable({
           );
         },
       }),
+      columnHelper.display({
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleDelete(row.original.key)}
+              disabled={!onDeleteEntry}
+              className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Delete entry"
+              aria-label={`Delete entry ${row.original.key}`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ),
+      }),
     ],
-    [editingCell, editValue]
+    [editingCell, editValue, onDeleteEntry]
   );
 
   const table = useReactTable({
@@ -120,9 +158,22 @@ export function EditableTable({
     getSortedRowModel: getSortedRowModel(),
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEdit = (rowIndex: number, columnId: string, value: any) => {
     setEditingCell({ rowIndex, columnId });
-    setEditValue(String(value));
+
+    // Handle different value types for editing
+    let valueToEdit: string;
+    if (Array.isArray(value)) {
+      // For buffer values, show as JSON
+      valueToEdit = JSON.stringify(value);
+    } else {
+      valueToEdit = String(value);
+    }
+
+    setEditValue(valueToEdit);
+    // Reset cursor position to end of value when starting edit
+    cursorPositionRef.current = valueToEdit.length;
   };
 
   const handleSave = (key: string) => {
@@ -143,7 +194,20 @@ export function EditableTable({
             newValue = editValue.toLowerCase() === 'true';
             break;
           case 'buffer':
-            newValue = editValue;
+            // For buffer, parse as JSON array of numbers
+            try {
+              newValue = JSON.parse(editValue);
+              if (
+                !Array.isArray(newValue) ||
+                !newValue.every((v) => typeof v === 'number')
+              ) {
+                throw new Error('Buffer must be an array of numbers');
+              }
+            } catch {
+              throw new Error(
+                'Invalid buffer format. Use JSON array like [1,2,3]'
+              );
+            }
             break;
           default:
             newValue = editValue;
@@ -159,18 +223,29 @@ export function EditableTable({
     setEditingCell(null);
   };
 
-  const getTypeColor = (type: string) => {
+  const handleDelete = (key: string) => {
+    if (onDeleteEntry) {
+      const confirmed = window.confirm(
+        `Are you sure you want to delete the entry "${key}"?`
+      );
+      if (confirmed) {
+        onDeleteEntry(key);
+      }
+    }
+  };
+
+  const getTypeColorClass = (type: string) => {
     switch (type) {
       case 'string':
-        return '#10b981';
+        return 'bg-green-600';
       case 'number':
-        return '#3b82f6';
+        return 'bg-blue-600';
       case 'boolean':
-        return '#f59e0b';
+        return 'bg-yellow-600';
       case 'buffer':
-        return '#8b5cf6';
+        return 'bg-purple-600';
       default:
-        return '#6b7280';
+        return 'bg-gray-600';
     }
   };
 
@@ -203,50 +278,70 @@ export function EditableTable({
   const formatValue = (entry: MMKVEntry) => {
     switch (entry.type) {
       case 'string':
-        return <span className="value-string">"{entry.value as string}"</span>;
+        return (
+          <span className="text-green-300 font-mono">
+            "{entry.value as string}"
+          </span>
+        );
       case 'number':
-        return <span className="value-number">{entry.value as number}</span>;
+        return (
+          <span className="text-blue-300 font-mono">
+            {entry.value as number}
+          </span>
+        );
       case 'boolean':
         return (
-          <span className={`value-boolean ${entry.value ? 'true' : 'false'}`}>
+          <span
+            className={`font-mono ${
+              entry.value ? 'text-green-400' : 'text-red-400'
+            }`}
+          >
             {entry.value ? 'true' : 'false'}
           </span>
         );
-      case 'buffer':
+      case 'buffer': {
+        const bufferArray = entry.value as number[];
+        const displayValue =
+          bufferArray.length > 5
+            ? `[${bufferArray.slice(0, 5).join(', ')}, ...${
+                bufferArray.length - 5
+              } more]`
+            : `[${bufferArray.join(', ')}]`;
         return (
-          <span className="value-buffer">
-            [Buffer: {(entry.value as string).substring(0, 20)}...]
-          </span>
+          <span className="text-purple-300 font-mono">{displayValue}</span>
         );
+      }
       default:
-        return <span className="value-unknown">Unknown</span>;
+        return <span className="text-gray-400">Unknown</span>;
     }
   };
 
   if (loading) {
     return (
-      <div className="table-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading entries...</p>
+      <div className="flex flex-col items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 text-blue-400 animate-spin mb-4" />
+        <p className="text-gray-400">Loading entries...</p>
       </div>
     );
   }
 
   return (
-    <div className="editable-table-container">
-      <table className="editable-table">
-        <thead>
+    <div className="flex-1 overflow-auto">
+      <table className="w-full">
+        <thead className="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className={`table-header ${
-                    header.column.getCanSort() ? 'sortable' : ''
+                  className={`text-left text-xs font-medium text-gray-400 px-3 py-2 ${
+                    header.column.getCanSort()
+                      ? 'cursor-pointer select-none hover:bg-gray-700'
+                      : ''
                   }`}
                   onClick={header.column.getToggleSortingHandler()}
                 >
-                  <div className="header-content">
+                  <div className="flex items-center gap-1">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -254,11 +349,11 @@ export function EditableTable({
                           header.getContext()
                         )}
                     {header.column.getCanSort() && (
-                      <span className="sort-indicator">
+                      <span className="text-gray-500">
                         {{
-                          asc: ' 🔼',
-                          desc: ' 🔽',
-                        }[header.column.getIsSorted() as string] ?? ' ↕️'}
+                          asc: '↑',
+                          desc: '↓',
+                        }[header.column.getIsSorted() as string] ?? '↕'}
                       </span>
                     )}
                   </div>
@@ -269,9 +364,12 @@ export function EditableTable({
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="table-row">
+            <tr
+              key={row.id}
+              className="text-sm hover:bg-gray-800 border-b border-gray-800"
+            >
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="table-cell">
+                <td key={cell.id} className="px-3 py-2">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

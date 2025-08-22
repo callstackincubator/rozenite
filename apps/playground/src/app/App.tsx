@@ -15,6 +15,7 @@ import { RootStackParamList } from './navigation/types';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
+import { mmkvStorages } from './mmkv-storages';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -22,7 +23,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Wrapper = () => {
   useTanStackQueryDevTools(queryClient);
   useNetworkActivityDevTools();
-  useMMKVDevTools();
+  useMMKVDevTools({ storages: mmkvStorages });
   usePerformanceMonitorDevTools();
 
   return (

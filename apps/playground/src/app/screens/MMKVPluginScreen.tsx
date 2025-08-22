@@ -11,6 +11,12 @@ import {
   Modal,
 } from 'react-native';
 import { MMKV } from 'react-native-mmkv';
+import {
+  initializeMMKVStorages,
+  userStorage,
+  appSettings,
+  cacheStorage,
+} from '../mmkv-storages';
 
 type MMKVEntryType = 'string' | 'number' | 'boolean' | 'buffer';
 
@@ -35,22 +41,49 @@ interface EditModalData {
   isNew: boolean;
 }
 
+const looksLikeGarbled = (str: string): boolean => {
+  // 1. Check for replacement character (�)
+  if (str.includes('\uFFFD')) return true;
+
+  // 2. Check for unusual control characters
+  // eslint-disable-next-line no-control-regex
+  const controlChars = /[\u0000-\u001F\u007F-\u009F]/;
+  if (controlChars.test(str)) return true;
+
+  // 3. Optionally, check if most chars are non-printable
+  const printableRatio =
+    [...str].filter((c) => c >= ' ' && c <= '~').length / str.length;
+  if (printableRatio < 0.7) return true; // mostly non-printable → probably binary
+
+  return false; // seems like valid string
+};
+
 const getMMKVEntry = (mmkv: MMKV, key: string): MMKVEntry => {
+  const stringValue = mmkv.getString(key);
+
+  if (stringValue !== undefined && stringValue.length > 0) {
+    if (looksLikeGarbled(stringValue)) {
+      // This is most-likely a buffer as it contains non-printable characters
+      return {
+        key,
+        type: 'buffer',
+        value: Array.from(new TextEncoder().encode(stringValue)),
+      };
+    }
+
+    return {
+      key,
+      type: 'string',
+      value: stringValue,
+    };
+  }
+
   const numberValue = mmkv.getNumber(key);
   if (numberValue !== undefined) {
     return {
       key,
       type: 'number',
       value: numberValue,
-    };
-  }
-
-  const stringValue = mmkv.getString(key);
-  if (stringValue !== undefined && stringValue !== '') {
-    return {
-      key,
-      type: 'string',
-      value: stringValue,
     };
   }
 
@@ -68,12 +101,19 @@ const getMMKVEntry = (mmkv: MMKV, key: string): MMKVEntry => {
     return {
       key,
       type: 'buffer',
-      value: 'Binary data',
+      value: Array.from(new Uint8Array(bufferValue)),
     };
   }
 
   throw new Error(`Unknown type for key: ${key}`);
 };
+
+// Map storage IDs to their instances for easier access
+const storageInstances = {
+  'user-storage': userStorage,
+  'app-settings': appSettings,
+  'cache-storage': cacheStorage,
+} as const;
 
 export const MMKVPluginScreen = () => {
   const [storages, setStorages] = useState<StorageData[]>([
@@ -92,69 +132,32 @@ export const MMKVPluginScreen = () => {
     isNew: false,
   });
 
-  // Create MMKV instances with test data
+  // Initialize MMKV instances with test data
   useEffect(() => {
-    // Create multiple MMKV instances with different data types
-    const userStorage = new MMKV({ id: 'user-storage' });
-    const appSettings = new MMKV({ id: 'app-settings' });
-    const cacheStorage = new MMKV({ id: 'cache-storage' });
-
-    // Add test data to user storage
-    userStorage.set('username', 'john_doe');
-    userStorage.set('email', 'john@example.com');
-    userStorage.set('age', 30);
-    userStorage.set('isPremium', true);
-    userStorage.set('lastLogin', Date.now());
-    userStorage.set(
-      'profile',
-      JSON.stringify({ bio: 'Software Developer', location: 'San Francisco' })
-    );
-
-    // Add test data to app settings
-    appSettings.set('theme', 'dark');
-    appSettings.set('language', 'en');
-    appSettings.set('notifications', true);
-    appSettings.set('autoSave', false);
-    appSettings.set('version', '1.0.0');
-    appSettings.set('debugMode', false);
-    appSettings.set('maxCacheSize', 100);
-    appSettings.set('buffer', new ArrayBuffer(16));
-
-    // Add test data to cache storage (including buffer)
-    cacheStorage.set(
-      'apiResponse',
-      JSON.stringify({ data: 'cached response', timestamp: Date.now() })
-    );
-    cacheStorage.set(
-      'userPreferences',
-      JSON.stringify({ theme: 'dark', language: 'en' })
-    );
-    cacheStorage.set('timestamp', Date.now());
-    cacheStorage.set('cacheSize', 1024);
-    cacheStorage.set('lastSync', Date.now() - 3600000); // 1 hour ago
-
-    console.log('MMKV test instances created with sample data');
+    initializeMMKVStorages();
   }, []);
 
-  // Get MMKV instance by ID
-  const getMMKVInstance = (id: string): MMKV | null => {
-    try {
-      return new MMKV({ id });
-    } catch (error) {
-      console.error(`Failed to get MMKV instance for ${id}:`, error);
-      return null;
-    }
-  };
-
-  // Get all entries from a storage - everything as string
+  // Get all entries from a storage using the actual instance
   const getStorageEntries = (storageId: string): MMKVEntry[] => {
-    const instance = getMMKVInstance(storageId);
+    const instance =
+      storageInstances[storageId as keyof typeof storageInstances];
     if (!instance) return [];
 
     const keys = instance.getAllKeys();
     return keys.map((key) => {
       return getMMKVEntry(instance, key);
     });
+  };
+
+  // Update entries for a specific storage
+  const updateStorageEntries = (storageId: string) => {
+    setStorages((prev) =>
+      prev.map((storage) =>
+        storage.id === storageId
+          ? { ...storage, entries: getStorageEntries(storageId) }
+          : storage
+      )
+    );
   };
 
   // Refresh all storages
@@ -172,6 +175,27 @@ export const MMKVPluginScreen = () => {
     refreshStorages();
   }, []);
 
+  // Set up observers for each MMKV storage instance
+  useEffect(() => {
+    const listeners: Array<{ remove: () => void }> = [];
+
+    // Set up listeners for each storage instance
+    Object.entries(storageInstances).forEach(([storageId, instance]) => {
+      const listener = instance.addOnValueChangedListener((changedKey) => {
+        console.log(`MMKV ${storageId} changed - key: ${changedKey}`);
+        // Update the cached entries for this specific storage
+        updateStorageEntries(storageId);
+      });
+
+      listeners.push(listener);
+    });
+
+    // Cleanup function to remove all listeners
+    return () => {
+      listeners.forEach((listener) => listener.remove());
+    };
+  }, []);
+
   // Add new entry
   const addEntry = (
     storageId: string,
@@ -179,7 +203,8 @@ export const MMKVPluginScreen = () => {
     value: string,
     type: MMKVEntryType
   ) => {
-    const instance = getMMKVInstance(storageId);
+    const instance =
+      storageInstances[storageId as keyof typeof storageInstances];
     if (!instance) {
       Alert.alert('Error', 'Failed to access storage');
       return;
@@ -221,12 +246,24 @@ export const MMKVPluginScreen = () => {
           instance.set(key, boolValue);
           break;
         }
-        case 'buffer':
-          instance.set(key, value);
+        case 'buffer': {
+          let blob: ArrayBuffer;
+
+          try {
+            blob = new Uint8Array(JSON.parse(value)).buffer;
+          } catch {
+            Alert.alert(
+              'Error',
+              'Invalid buffer value. Please enter a valid buffer.'
+            );
+            return;
+          }
+
+          instance.set(key, blob);
           break;
+        }
       }
 
-      refreshStorages();
       Alert.alert('Success', `Entry "${key}" added successfully`);
     } catch (error) {
       console.error('Error adding entry:', error);
@@ -241,7 +278,8 @@ export const MMKVPluginScreen = () => {
     value: string,
     type: MMKVEntryType
   ) => {
-    const instance = getMMKVInstance(storageId);
+    const instance =
+      storageInstances[storageId as keyof typeof storageInstances];
     if (!instance) {
       Alert.alert('Error', 'Failed to access storage');
       return;
@@ -258,10 +296,10 @@ export const MMKVPluginScreen = () => {
         text: 'Delete',
         style: 'destructive',
         onPress: () => {
-          const instance = getMMKVInstance(storageId);
+          const instance =
+            storageInstances[storageId as keyof typeof storageInstances];
           if (instance) {
             instance.delete(key);
-            refreshStorages();
             Alert.alert('Success', 'Entry deleted successfully');
           }
         },
@@ -274,7 +312,11 @@ export const MMKVPluginScreen = () => {
     setEditData({
       storageId,
       key: entry?.key || '',
-      value: entry ? String(entry.value) : '',
+      value: entry
+        ? Array.isArray(entry.value)
+          ? JSON.stringify(entry.value)
+          : String(entry.value)
+        : '',
       type: entry?.type || 'string',
       isNew: !entry,
     });
@@ -294,7 +336,8 @@ export const MMKVPluginScreen = () => {
     }
 
     if (editData.isNew) {
-      const instance = getMMKVInstance(editData.storageId);
+      const instance =
+        storageInstances[editData.storageId as keyof typeof storageInstances];
       if (instance && instance.getAllKeys().includes(trimmedKey)) {
         return `Key "${trimmedKey}" already exists`;
       }
@@ -483,25 +526,28 @@ export const MMKVPluginScreen = () => {
             <View style={styles.typeSelector}>
               <Text style={styles.typeLabel}>Type:</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {(['string', 'number', 'boolean'] as const).map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[
-                      styles.typeOption,
-                      editData.type === type && styles.selectedTypeOption,
-                    ]}
-                    onPress={() => setEditData((prev) => ({ ...prev, type }))}
-                  >
-                    <Text
+                {(['string', 'number', 'boolean', 'buffer'] as const).map(
+                  (type) => (
+                    <TouchableOpacity
+                      key={type}
                       style={[
-                        styles.typeOptionText,
-                        editData.type === type && styles.selectedTypeOptionText,
+                        styles.typeOption,
+                        editData.type === type && styles.selectedTypeOption,
                       ]}
+                      onPress={() => setEditData((prev) => ({ ...prev, type }))}
                     >
-                      {type}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.typeOptionText,
+                          editData.type === type &&
+                            styles.selectedTypeOptionText,
+                        ]}
+                      >
+                        {type}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                )}
               </ScrollView>
             </View>
 
