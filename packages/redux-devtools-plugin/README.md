@@ -4,9 +4,9 @@
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
-![Redux DevTools Plugin](https://rozenite.dev/redux-devtools-plugin.png)
-
 The Rozenite Redux DevTools Plugin provides Redux state inspection and debugging capabilities within your React Native DevTools environment. It offers a partial Redux DevTools experience, including state inspection and action history (time travel and action dispatch are currently unavailable in remote mode).
+
+![Redux DevTools Plugin](https://rozenite.dev/redux-devtools-plugin.png)
 
 ## Features
 

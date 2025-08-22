@@ -4,9 +4,9 @@
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
-![Expo Atlas Plugin](https://rozenite.dev/expo-atlas-plugin.png)
-
 The Rozenite Expo Atlas Plugin seamlessly integrates Expo Atlas into your React Native DevTools environment. It provides a dedicated panel for accessing Expo Atlas features, including asset management, dependency analysis, and project insights, all within the familiar DevTools interface.
+
+![Expo Atlas Plugin](https://rozenite.dev/expo-atlas-plugin.png)
 
 ## Features
 
