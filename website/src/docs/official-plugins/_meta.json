@@ -28,5 +28,10 @@
     "type": "file",
     "name": "performance-monitor",
     "label": "Performance Monitor"
+  },
+  {
+    "type": "file",
+    "name": "mmkv",
+    "label": "MMKV"
   }
 ]
