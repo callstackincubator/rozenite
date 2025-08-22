@@ -1,3 +1,5 @@
+import path from 'node:path';
+import fs from 'node:fs';
 import { spawn } from './spawn.js';
 
 const getPackageManager = (): string => {
@@ -57,4 +59,12 @@ export const isPackageInstalled = async (
   const process = await spawn(packageManager, args, { cwd: projectRoot });
   const output = process.output;
   return output.includes(packageName);
+};
+
+export const isProject = (projectRoot: string): boolean => {
+  const packageJsonPath = path.join(projectRoot, 'package.json');
+  return (
+    fs.existsSync(packageJsonPath) &&
+    fs.readFileSync(packageJsonPath, 'utf8').includes('react-native')
+  );
 };

@@ -8,11 +8,13 @@ import { intro, outro, promptConfirm } from '../utils/prompts.js';
 import {
   getExecForPackageManager,
   installDevDependency,
+  isProject,
 } from '../utils/packages.js';
 import { spawn } from '../utils/spawn.js';
 import { wrapConfigFile } from '../utils/config-wrapper.js';
 import { step } from '../utils/steps.js';
 import { isGitRepositoryClean } from '../utils/git.js';
+import { logger } from '../utils/logger.js';
 
 const safeGetBundlerType = (projectRoot: string): BundlerType | null => {
   try {
@@ -32,6 +34,12 @@ const formatBundlerType = (bundlerType: BundlerType): string => {
 
 export const initCommand = async (projectRoot: string) => {
   intro('Rozenite');
+
+  if (!isProject(projectRoot)) {
+    logger.error("I couldn't find a React Native project in this directory.");
+    return;
+  }
+
   const projectType = getProjectType(projectRoot);
   let bundlerType = safeGetBundlerType(projectRoot);
   const isClean = await isGitRepositoryClean(projectRoot);
