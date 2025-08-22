@@ -14,6 +14,10 @@ The Network Activity plugin is a powerful debugging tool that helps you monitor 
 - **Performance Analysis**: Analyze request duration, connection timing, and performance metrics
 - **Request History**: Maintain a searchable history of network activity
 
+:::warning JavaScript Thread Only
+The Network Activity plugin will only capture network traffic coming from the JavaScript thread. Connections made by native code (such as native networking libraries or direct platform HTTP calls) won't be displayed in the inspector.
+:::
+
 ## Installation
 
 Install the Network Activity plugin as a development dependency using your preferred package manager:
@@ -51,6 +55,35 @@ Once configured, the Network Activity plugin will automatically appear in your R
 - **Query Parameters**: View URL parameters and their values
 - **Request Body**: Examine POST/PUT request payloads
 - **Response Body**: View response content and structure
+
+## Configuration
+
+### Ignoring Certain Types of Traffic
+
+Sometimes you don't want certain types of traffic like WebSockets or server-side events to show up in the inspector for convenience or because of the performance penalty. You can disable them with the configuration property:
+
+```typescript title="App.tsx"
+import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
+
+function App() {
+  // Configure which network traffic types to monitor
+  useNetworkActivityDevTools({
+    inspectors: {
+      http: true, // Monitor HTTP/HTTPS requests
+      websocket: false, // Disable WebSocket monitoring
+      sse: false, // Disable Server-Sent Events monitoring
+    },
+  });
+
+  return <YourApp />;
+}
+```
+
+#### Available Inspector Types
+
+- **`http`**: Monitor HTTP/HTTPS requests (fetch, XMLHttpRequest)
+- **`websocket`**: Monitor WebSocket connections and messages
+- **`sse`**: Monitor Server-Sent Events (requires `http` to be enabled)
 
 ## Contributing
 
