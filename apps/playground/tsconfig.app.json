@@ -41,6 +41,9 @@
       "path": "../../packages/mmkv-plugin"
     },
     {
+      "path": "../../packages/cli/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/redux-devtools-plugin"
     },
     {
