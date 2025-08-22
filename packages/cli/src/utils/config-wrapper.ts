@@ -3,10 +3,19 @@ import path from 'node:path';
 
 export type BundlerType = 'metro' | 'repack';
 
-const CONFIG_FILES = {
-  metro: 'metro.config.js',
-  repack: 'repack.config.js',
+const CONFIG_BASE_NAMES = {
+  metro: 'metro.config',
+  repack: 'rspack.config',
 } as const;
+
+const MODULE_EXTENSIONS = [
+  '.js',
+  '.mjs',
+  '.cjs',
+  '.ts',
+  '.cts',
+  '.mts',
+] as const;
 
 const WRAPPER_IMPORTS = {
   metro: {
@@ -18,6 +27,49 @@ const WRAPPER_IMPORTS = {
     importName: 'withRozenite',
   },
 } as const;
+
+/**
+ * Finds the actual config file with any supported extension
+ */
+const findConfigFile = async (
+  projectRoot: string,
+  bundlerType: BundlerType
+): Promise<{ filePath: string; extension: string } | null> => {
+  const baseName = CONFIG_BASE_NAMES[bundlerType];
+
+  for (const extension of MODULE_EXTENSIONS) {
+    const filePath = path.join(projectRoot, baseName + extension);
+    try {
+      await fs.access(filePath);
+      return { filePath, extension };
+    } catch {
+      // File doesn't exist, continue to next extension
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Determines module system based on file extension
+ */
+const getModuleSystemFromExtension = (
+  extension: string
+): 'esm' | 'commonjs' | null => {
+  switch (extension) {
+    case '.mjs':
+    case '.mts':
+      return 'esm';
+    case '.cjs':
+    case '.cts':
+      return 'commonjs';
+    case '.js':
+    case '.ts':
+      return null; // Need to analyze content
+    default:
+      return null;
+  }
+};
 
 /**
  * Helper function to detect quote style used in the code
@@ -34,8 +86,21 @@ const detectQuoteStyle = (sourceCode: string): 'single' | 'double' => {
 
 /**
  * Helper function to determine if code uses ESM or CommonJS style for imports
+ * Now prioritizes file extension over content analysis
  */
-const determineImportStyle = (sourceCode: string): 'esm' | 'commonjs' => {
+const determineImportStyle = (
+  sourceCode: string,
+  extension?: string
+): 'esm' | 'commonjs' => {
+  // First check if extension gives us a definitive answer
+  if (extension) {
+    const extensionBasedStyle = getModuleSystemFromExtension(extension);
+    if (extensionBasedStyle) {
+      return extensionBasedStyle;
+    }
+  }
+
+  // Fall back to content analysis for .js and .ts files
   const hasEsmImports = /import\s+.*from\s+['"]/.test(sourceCode);
   const hasCommonJsRequires = /require\s*\(/.test(sourceCode);
   const hasModuleExports = /module\.exports\s*=/.test(sourceCode);
@@ -102,17 +167,19 @@ export const wrapConfigFile = async (
   projectRoot: string,
   bundlerType: BundlerType
 ): Promise<void> => {
-  const configFile = CONFIG_FILES[bundlerType];
-  const configPath = path.join(projectRoot, configFile);
+  // Find the actual config file with any supported extension
+  const configFileInfo = await findConfigFile(projectRoot, bundlerType);
 
-  // Check if config file exists
-  try {
-    await fs.access(configPath);
-  } catch {
+  if (!configFileInfo) {
+    const baseName = CONFIG_BASE_NAMES[bundlerType];
     throw new Error(
-      `Configuration file ${configFile} not found in ${projectRoot}`
+      `Configuration file ${baseName}.{${MODULE_EXTENSIONS.join(
+        ','
+      )}} not found in ${projectRoot}`
     );
   }
+
+  const { filePath: configPath, extension } = configFileInfo;
 
   // Read the config file
   let sourceCode = await fs.readFile(configPath, 'utf8');
@@ -134,7 +201,7 @@ export const wrapConfigFile = async (
   }
 
   // Determine module style and quote preference
-  const importStyle = determineImportStyle(sourceCode);
+  const importStyle = determineImportStyle(sourceCode, extension);
   const quoteStyle = detectQuoteStyle(sourceCode);
   const quote = quoteStyle === 'single' ? "'" : '"';
 
@@ -235,10 +302,19 @@ export const wrapConfigFile = async (
 
 /**
  * Gets the expected configuration file path for a bundler type
+ * Returns the first found config file or the default .js version if none exist
  */
-export const getConfigFilePath = (
+export const getConfigFilePath = async (
   projectRoot: string,
   bundlerType: BundlerType
-): string => {
-  return path.join(projectRoot, CONFIG_FILES[bundlerType]);
+): Promise<string> => {
+  const configFileInfo = await findConfigFile(projectRoot, bundlerType);
+
+  if (configFileInfo) {
+    return configFileInfo.filePath;
+  }
+
+  // If no config file found, return default .js path
+  const baseName = CONFIG_BASE_NAMES[bundlerType];
+  return path.join(projectRoot, baseName + '.js');
 };

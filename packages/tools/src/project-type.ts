@@ -3,14 +3,26 @@ import fs from 'node:fs';
 
 const MODULE_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts', '.cts', '.mts'];
 const METRO_CONFIG_FILE = 'metro.config.js';
-const REPACK_CONFIG_FILE = 'repack.config.js';
+const REPACK_CONFIG_FILE = 'rspack.config.js';
 
 export type ProjectType = 'react-native-cli' | 'expo';
 export type BundlerType = 'metro' | 'repack';
 
 const isExpoProject = (projectRoot: string): boolean => {
   const appJsonPath = path.join(projectRoot, 'app.json');
-  return fs.existsSync(appJsonPath);
+
+  if (!fs.existsSync(appJsonPath)) {
+    return false;
+  }
+
+  try {
+    const appJsonContent = fs.readFileSync(appJsonPath, 'utf8');
+    const appJson = JSON.parse(appJsonContent);
+    return typeof appJson === 'object' && appJson !== null && 'expo' in appJson;
+  } catch {
+    // If we can't parse the JSON, it's not a valid Expo project
+    return false;
+  }
 };
 
 const isReactNativeProject = (projectRoot: string): boolean => {

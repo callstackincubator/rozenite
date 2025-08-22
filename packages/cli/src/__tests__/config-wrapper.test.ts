@@ -180,10 +180,11 @@ describe('wrapConfigFile', () => {
   // Helper function to create a config file with given content
   const createConfigFile = async (
     bundlerType: BundlerType,
-    content: string
+    content: string,
+    extension = '.js'
   ) => {
-    const filename =
-      bundlerType === 'metro' ? 'metro.config.js' : 'repack.config.js';
+    const baseName = bundlerType === 'metro' ? 'metro.config' : 'rspack.config';
+    const filename = baseName + extension;
     const configPath = path.join(tempDir, filename);
     await fs.writeFile(configPath, content, 'utf8');
     return configPath;
@@ -775,16 +776,161 @@ module.exports = withRozenite(
     });
   });
 
+  describe('file extension detection', () => {
+    it('should handle .mjs files with ESM syntax', async () => {
+      const esmConfig = `export default {
+  transformer: {
+    getTransformOptions: async () => ({
+      transform: {
+        experimentalImportSupport: false,
+        inlineRequires: true,
+      },
+    }),
+  },
+};`;
+
+      const configPath = await createConfigFile('metro', esmConfig, '.mjs');
+
+      await wrapConfigFile(tempDir, 'metro');
+
+      const wrappedContent = await fs.readFile(configPath, 'utf8');
+
+      expect(wrappedContent).toContain(
+        "import { withRozenite } from '@rozenite/metro';"
+      );
+      expect(wrappedContent).toContain('export default withRozenite({');
+      expect(validateJavaScript(wrappedContent)).toBe(true);
+    });
+
+    it('should handle .cjs files with CommonJS syntax', async () => {
+      const cjsConfig = `module.exports = {
+  transformer: {
+    getTransformOptions: async () => ({
+      transform: {
+        experimentalImportSupport: false,
+        inlineRequires: true,
+      },
+    }),
+  },
+};`;
+
+      const configPath = await createConfigFile('metro', cjsConfig, '.cjs');
+
+      await wrapConfigFile(tempDir, 'metro');
+
+      const wrappedContent = await fs.readFile(configPath, 'utf8');
+
+      expect(wrappedContent).toContain(
+        "const { withRozenite } = require('@rozenite/metro');"
+      );
+      expect(wrappedContent).toContain('module.exports = withRozenite({');
+      expect(validateJavaScript(wrappedContent)).toBe(true);
+    });
+
+    it('should handle .mjs files with mixed content but force ESM', async () => {
+      // Even if content looks like CommonJS, .mjs should force ESM
+      const mixedConfig = `// This looks like CommonJS but file is .mjs
+const something = require('something');
+
+export default {
+  transformer: {
+    getTransformOptions: async () => ({
+      transform: {
+        inlineRequires: true,
+      },
+    }),
+  },
+};`;
+
+      const configPath = await createConfigFile('metro', mixedConfig, '.mjs');
+
+      await wrapConfigFile(tempDir, 'metro');
+
+      const wrappedContent = await fs.readFile(configPath, 'utf8');
+
+      expect(wrappedContent).toContain(
+        "import { withRozenite } from '@rozenite/metro';"
+      );
+      expect(wrappedContent).toContain('export default withRozenite({');
+      expect(validateJavaScript(wrappedContent)).toBe(true);
+    });
+
+    it('should handle .cjs files with mixed content but force CommonJS', async () => {
+      // Even if content looks like ESM, .cjs should force CommonJS
+      const mixedConfig = `// This looks like ESM but file is .cjs
+import something from 'something';
+
+module.exports = {
+  transformer: {
+    getTransformOptions: async () => ({
+      transform: {
+        inlineRequires: true,
+      },
+    }),
+  },
+};`;
+
+      const configPath = await createConfigFile('metro', mixedConfig, '.cjs');
+
+      await wrapConfigFile(tempDir, 'metro');
+
+      const wrappedContent = await fs.readFile(configPath, 'utf8');
+
+      expect(wrappedContent).toContain(
+        "const { withRozenite } = require('@rozenite/metro');"
+      );
+      expect(wrappedContent).toContain('module.exports = withRozenite({');
+      expect(validateJavaScript(wrappedContent)).toBe(true);
+    });
+
+    it('should find config files with different extensions', async () => {
+      // Test that it finds .mjs when .js doesn't exist
+      const esmConfig = `export default {
+  transformer: {},
+};`;
+
+      await createConfigFile('metro', esmConfig, '.mjs');
+
+      // Should not throw error
+      await expect(wrapConfigFile(tempDir, 'metro')).resolves.not.toThrow();
+    });
+
+    it('should handle repack .mjs files', async () => {
+      const repackEsmConfig = `export default {
+  entry: './src/index.js',
+  output: {
+    path: process.cwd() + '/dist',
+  },
+};`;
+
+      const configPath = await createConfigFile(
+        'repack',
+        repackEsmConfig,
+        '.mjs'
+      );
+
+      await wrapConfigFile(tempDir, 'repack');
+
+      const wrappedContent = await fs.readFile(configPath, 'utf8');
+
+      expect(wrappedContent).toContain(
+        "import { withRozenite } from '@rozenite/repack';"
+      );
+      expect(wrappedContent).toContain('export default withRozenite({');
+      expect(validateJavaScript(wrappedContent)).toBe(true);
+    });
+  });
+
   describe('error handling', () => {
     it('should throw error when config file does not exist', async () => {
       await expect(wrapConfigFile(tempDir, 'metro')).rejects.toThrow(
-        'Configuration file metro.config.js not found'
+        'Configuration file metro.config.{.js,.mjs,.cjs,.ts,.cts,.mts} not found'
       );
     });
 
     it('should throw error when repack config file does not exist', async () => {
       await expect(wrapConfigFile(tempDir, 'repack')).rejects.toThrow(
-        'Configuration file repack.config.js not found'
+        'Configuration file rspack.config.{.js,.mjs,.cjs,.ts,.cts,.mts} not found'
       );
     });
   });

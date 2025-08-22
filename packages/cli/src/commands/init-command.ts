@@ -8,7 +8,6 @@ import { intro, outro, promptConfirm } from '../utils/prompts.js';
 import {
   getExecForPackageManager,
   installDevDependency,
-  isPackageInstalled,
 } from '../utils/packages.js';
 import { spawn } from '../utils/spawn.js';
 import { wrapConfigFile } from '../utils/config-wrapper.js';
@@ -67,7 +66,7 @@ export const initCommand = async (projectRoot: string) => {
 
   if (bundlerType === null) {
     throw new Error(
-      'Could not determine bundler type. Please ensure you have a metro.config.js or repack.config.js file.'
+      'Could not determine bundler type. Please ensure you have a metro.config.js or rspack.config.js file.'
     );
   }
 
@@ -82,12 +81,6 @@ export const initCommand = async (projectRoot: string) => {
       error: `Failed to install ${packageName}`,
     },
     async () => {
-      const isInstalled = await isPackageInstalled(projectRoot, packageName);
-
-      if (isInstalled) {
-        return;
-      }
-
       await installDevDependency(projectRoot, packageName);
     }
   );
