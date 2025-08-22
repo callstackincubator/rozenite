@@ -68,8 +68,7 @@ The CLI handles all the common plugin development tasks:
 - `rozenite generate` - Create a new plugin project
 - `rozenite dev` - Start development server with hot reloading
 - `rozenite build` - Build your plugin for production
-
-For a complete list of commands, visit the [CLI page](/docs/cli/index).
+- `rozenite init` - Initialize Rozenite in your React Native project
 
 ## What You Can Build
 
