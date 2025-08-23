@@ -6,6 +6,11 @@
   },
   {
     "type": "file",
+    "name": "async-storage",
+    "label": "Async Storage"
+  },
+  {
+    "type": "file",
     "name": "expo-atlas",
     "label": "Expo Atlas"
   },

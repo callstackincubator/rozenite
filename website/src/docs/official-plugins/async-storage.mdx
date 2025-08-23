@@ -1,0 +1,97 @@
+import { PackageManagerTabs } from 'rspress/theme';
+
+# Async Storage Plugin
+
+The Async Storage plugin for Rozenite provides comprehensive inspection and management capabilities for [React Native's AsyncStorage](https://github.com/react-native-async-storage/async-storage) within the DevTools environment.
+
+![AsyncStorage plugin screenshot](/async-storage-plugin.jpg)
+
+## Features
+
+- **Real-time Storage Inspection**: View all AsyncStorage entries and their contents in real-time
+- **Data Type Detection**: Automatically detects and displays different data types (string, number, boolean, object, array)
+- **Search & Filter**: Quickly find specific keys or values with real-time search functionality
+- **Data Management**: Add, edit, and delete entries directly from the DevTools interface
+- **Visual Data Representation**: Color-coded type indicators and formatted value display
+
+## Installation
+
+1. Install the AsyncStorage plugin as a development dependency:
+
+<PackageManagerTabs command="install -D @rozenite/async-storage-plugin" />
+
+2. Install the AsyncStorage library if you haven't already:
+
+<PackageManagerTabs command="install @react-native-async-storage/async-storage" />
+
+## Setup
+
+Add the DevTools hook to your React Native app's entry point:
+
+```tsx
+// App.tsx
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAsyncStorageDevTools } from '@rozenite/async-storage-plugin';
+
+function App() {
+  // Enable AsyncStorage DevTools in development
+  useAsyncStorageDevTools(AsyncStorage);
+  
+  return <YourApp />;
+}
+```
+
+## Usage
+
+The AsyncStorage plugin automatically connects to your app's AsyncStorage instance and provides the following capabilities:
+
+### Storage Inspection
+
+View all stored keys with their types and values in a well-organized table format. The plugin automatically detects different data types:
+- Strings (green)
+- Numbers (blue)
+- Booleans (yellow/red)
+- Objects (purple)
+- Arrays (pink)
+
+### Search and Filter
+
+Filter entries by key or value using the search box. This allows you to quickly find specific data in large storage collections.
+
+### Data Management
+
+- **Add Entries**: Add new key-value pairs to AsyncStorage
+- **Edit Entries**: Modify existing values directly from the UI
+- **Delete Entries**: Remove specific entries from AsyncStorage
+- **Clear All**: Wipe all AsyncStorage data (with confirmation prompt)
+
+### Real-time Updates
+
+The plugin monitors your AsyncStorage for changes and updates the UI in real-time. This is useful for debugging and understanding how your app interacts with stored data.
+
+## How It Works
+
+The AsyncStorage plugin works by:
+
+1. Intercepting all AsyncStorage operations (get, set, remove, clear)
+2. Creating a bridge between your app and the DevTools panel
+3. Providing UI tools to visualize and manipulate the stored data
+4. Automatically detecting and formatting different data types
+
+## Best Practices
+
+- Use the plugin only in development mode, as it adds some overhead to AsyncStorage operations
+- Be cautious when editing sensitive data like authentication tokens
+- Use the "Clear All" function carefully as it cannot be undone
+
+## Troubleshooting
+
+If the plugin is not working as expected:
+
+1. Ensure you've called `useAsyncStorageDevTools(AsyncStorage)` in your app
+2. Check that you're using the official AsyncStorage package
+3. Restart your development server and the DevTools
+
+## Contributing
+
+If you'd like to improve the AsyncStorage plugin, please check our [contributing guidelines](https://github.com/callstackincubator/rozenite/blob/main/CONTRIBUTING.md).

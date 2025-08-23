@@ -10,6 +10,15 @@ Our official plugins are also in beta and may not work in all possible use-cases
 
 ## Available Plugins
 
+### [Async Storage](./async-storage.md)
+
+Inspect and manage AsyncStorage data in your React Native app with a comprehensive storage inspector. This plugin provides:
+
+- **Real-time Storage Inspection**: View all AsyncStorage entries and their contents in real-time
+- **Data Type Detection**: Automatically detects and displays different data types (string, number, boolean, object, array)
+- **Search & Filter**: Quickly find specific keys or values with real-time search functionality
+- **Data Management**: Add, edit, and delete entries directly from the DevTools interface
+
 ### [Expo Atlas](./expo-atlas.md)
 
 Integrate Expo Atlas directly into your React Native DevTools for bundle analysis and optimization. This plugin provides:
@@ -62,6 +71,8 @@ Monitor performance metrics in your React Native app with comprehensive real-tim
 
 Plugins should be installed as development dependencies since they are only needed during development:
 
+<PackageManagerTabs command="install -D @rozenite/async-storage-plugin" />
+
 <PackageManagerTabs command="install -D @rozenite/expo-atlas-plugin" />
 
 <PackageManagerTabs command="install -D @rozenite/tanstack-query-plugin" />
@@ -88,4 +99,4 @@ Want to contribute to plugins or suggest new ones? Check out our [Plugin Develop
 
 ---
 
-**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md), [TanStack Query plugin](./tanstack-query.md), [Network Activity Inspector](./network-activity.md), [Redux DevTools plugin](./redux-devtools.md), or [Performance Monitor plugin](./performance-monitor.md).
+**Next**: Learn about the [Async Storage plugin](./async-storage.md), [Expo Atlas plugin](./expo-atlas.md), [TanStack Query plugin](./tanstack-query.md), [Network Activity Inspector](./network-activity.md), [Redux DevTools plugin](./redux-devtools.md), or [Performance Monitor plugin](./performance-monitor.md).
