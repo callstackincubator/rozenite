@@ -21,6 +21,7 @@ export default {
         'repack',
         'performance-monitor-plugin',
         'async-storage-plugin',
+        ''
       ],
     ],
   },
