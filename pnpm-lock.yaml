@@ -172,6 +172,9 @@ importers:
 
   apps/playground:
     dependencies:
+      '@react-native-async-storage/async-storage':
+        specifier: ^2.2.0
+        version: 2.2.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))
       '@react-navigation/elements':
         specifier: ^2.5.2
         version: 2.5.2(@react-navigation/native@7.1.14(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-safe-area-context@5.5.2(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
@@ -184,6 +187,9 @@ importers:
       '@reduxjs/toolkit':
         specifier: ^2.8.2
         version: 2.8.2(react-redux@9.2.0(@types/react@18.3.23)(react@18.3.1)(redux@5.0.1))(react@18.3.1)
+      '@rozenite/async-storage-plugin':
+        specifier: workspace:*
+        version: link:../../packages/async-storage-plugin
       '@rozenite/expo-atlas-plugin':
         specifier: workspace:*
         version: link:../../packages/expo-atlas-plugin
@@ -251,6 +257,46 @@ importers:
       rozenite:
         specifier: workspace:*
         version: link:../../packages/cli
+
+  packages/async-storage-plugin:
+    dependencies:
+      '@rozenite/plugin-bridge':
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3(react@18.3.1)
+      nanoevents:
+        specifier: ^9.1.0
+        version: 9.1.0
+    devDependencies:
+      '@react-native-async-storage/async-storage':
+        specifier: ^2.2.0
+        version: 2.2.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))
+      '@rozenite/vite-plugin':
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3(@types/node@22.17.0)(rollup@4.44.1)(typescript@5.8.3)(vite@6.3.5(@types/node@22.17.0)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0))
+      '@types/react':
+        specifier: ~18.3.12
+        version: 18.3.23
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.0
+        version: 18.3.0(react@18.3.1)
+      react-native:
+        specifier: 0.76.0
+        version: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
+      react-native-web:
+        specifier: 0.21.0
+        version: 0.21.0(encoding@0.1.13)(react-dom@18.3.0(react@18.3.1))(react@18.3.1)
+      rozenite:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.3.5(@types/node@22.17.0)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0)
 
   packages/cli:
     dependencies:
@@ -3442,6 +3488,11 @@ packages:
       '@types/react-dom':
         optional: true
 
+  '@react-native-async-storage/async-storage@2.2.0':
+    resolution: {integrity: sha512-gvRvjR5JAaUZF8tv2Kcq/Gbt3JHwbKFYfmb445rhOj6NUMx3qPLixmDx5pZAyb9at1bYvJ4/eTUipU5aki45xw==}
+    peerDependencies:
+      react-native: 0.76.0
+
   '@react-native-community/cli-clean@15.0.1':
     resolution: {integrity: sha512-flGTfT005UZvW2LAXVowZ/7ri22oiiZE4pPgMvc8klRxO5uofKIRuohgiHybHtiCo/HNqIz45JmZJvuFrhc4Ow==}
 
@@ -3887,6 +3938,18 @@ packages:
     resolution: {integrity: sha512-J8o22LuF0kTe7m+8PvW9wk3/bRq5+mRo5Dqo6+vXb7otCm3TPhYOJqOaQtGU9YMWQSL3krMnoOxMr0+9E6F3Ug==}
     cpu: [x64]
     os: [win32]
+
+  '@rozenite/plugin-bridge@1.0.0-alpha.3':
+    resolution: {integrity: sha512-TpY/pGfCyuGbzCa3+Ug9IcXeCWmTl/vvjcN1XfPrSpV3JdIskOP92xVAa/7HWz/FresBU+3JRwLoJPARMsgjEA==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      react: '>=17'
+
+  '@rozenite/vite-plugin@1.0.0-alpha.3':
+    resolution: {integrity: sha512-Q4vEkYnfz+ErxEsY3orxsHZLW6rJSndxOuz968mQIfPOxcIGdJtMof/EWtN8cdtWm06CvU/per+uqJRg/rIP2w==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      vite: ^6.0.0
 
   '@rsbuild/core@1.3.22':
     resolution: {integrity: sha512-FGB7m8Tn/uiOhvqk0lw+NRMyD+VYJ+eBqVfpn0X11spkJDiPWn8UkMRvfzCX4XFcNZwRKYuuKJaZK1DNU8UG+w==}
@@ -7494,6 +7557,10 @@ packages:
     resolution: {integrity: sha512-drqDG3cbczxxEJRoOXcOjtdp1J/lyp1mNn0xaznRs8+muBhgQcrnbspox5X5fOw0HnMnbfDzvnEMEtqDEJEo8w==}
     engines: {node: '>=8'}
 
+  is-plain-obj@2.1.0:
+    resolution: {integrity: sha512-YWnfyRwxL/+SsrWYfOpUtz5b3YD+nyfkHvjbcanzk8zgyO4ASD67uVMRt8k5bM4lLMDnXfriRhOpemw+NfT1eA==}
+    engines: {node: '>=8'}
+
   is-plain-obj@4.1.0:
     resolution: {integrity: sha512-+Pgi+vMuUNkJyExiMBt5IlFoMyKnr5zhJ4Uspz58WOhBF5QoIZkFyNHIbBAtHwzVAgk5RtndVNsDRN61/mmDqg==}
     engines: {node: '>=12'}
@@ -8271,6 +8338,10 @@ packages:
   merge-descriptors@2.0.0:
     resolution: {integrity: sha512-Snk314V5ayFLhp3fkUREub6WtjBfPdCPY1Ln8/8munuLuiYhsABgBVWsozAG+MWMbVEvcdcpbi9R7ww22l9Q3g==}
     engines: {node: '>=18'}
+
+  merge-options@3.0.4:
+    resolution: {integrity: sha512-2Sug1+knBjkaMsMgf1ctR1Ujx+Ayku4EdJN4Z+C2+JzoeF7A3OZ9KM2GY0CpQS51NR61LTurMJrRKPhSs3ZRTQ==}
+    engines: {node: '>=10'}
 
   merge-stream@2.0.0:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
@@ -9929,6 +10000,11 @@ packages:
   router@2.2.0:
     resolution: {integrity: sha512-nLTrUKm2UyiL7rlhapu/Zl45FwNgkZGaCpZbIHajDYgwlJCOzLSk+cIPAnsEqV955GjILJnKbdQC1nVPz+gAYQ==}
     engines: {node: '>= 18'}
+
+  rozenite@1.0.0-alpha.3:
+    resolution: {integrity: sha512-h7T04XdijRSr3RPA3/hDuSQrWfT/8kqWhf2dfRCIYuNZZ2GFgk9nc4X72Tc2lgC6So+7nl7RpwjjOvBjwjuMgw==}
+    engines: {node: '>=22'}
+    hasBin: true
 
   rrweb-cssom@0.6.0:
     resolution: {integrity: sha512-APM0Gt1KoXBz0iIkkdB/kfvGOwC4UuJFeG/c+yV7wSc7q96cG/kJ0HiYCnzivD9SB53cLV1MlHFNfOuPaadYSw==}
@@ -15083,6 +15159,11 @@ snapshots:
       '@types/react': 18.3.23
       '@types/react-dom': 18.3.7(@types/react@18.3.23)
 
+  '@react-native-async-storage/async-storage@2.2.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))':
+    dependencies:
+      merge-options: 3.0.4
+      react-native: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
+
   '@react-native-community/cli-clean@15.0.1':
     dependencies:
       '@react-native-community/cli-tools': 15.0.1
@@ -16083,6 +16164,24 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.44.1':
     optional: true
+
+  '@rozenite/plugin-bridge@1.0.0-alpha.3(react@18.3.1)':
+    dependencies:
+      react: 18.3.1
+      tslib: 2.8.1
+
+  '@rozenite/vite-plugin@1.0.0-alpha.3(@types/node@22.17.0)(rollup@4.44.1)(typescript@5.8.3)(vite@6.3.5(@types/node@22.17.0)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0))':
+    dependencies:
+      '@vitejs/plugin-react': 4.6.0(vite@6.3.5(@types/node@22.17.0)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0))
+      ejs: 3.1.10
+      vite: 6.3.5(@types/node@22.17.0)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0)
+      vite-plugin-dts: 4.5.4(@types/node@22.17.0)(rollup@4.44.1)(typescript@5.8.3)(vite@6.3.5(@types/node@22.17.0)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0))
+      vite-plugin-react-native-web: 2.1.1
+    transitivePeerDependencies:
+      - '@types/node'
+      - rollup
+      - supports-color
+      - typescript
 
   '@rsbuild/core@1.3.22':
     dependencies:
@@ -20289,6 +20388,8 @@ snapshots:
 
   is-obj@2.0.0: {}
 
+  is-plain-obj@2.1.0: {}
+
   is-plain-obj@4.1.0: {}
 
   is-plain-object@2.0.4:
@@ -21452,6 +21553,10 @@ snapshots:
   merge-descriptors@1.0.3: {}
 
   merge-descriptors@2.0.0: {}
+
+  merge-options@3.0.4:
+    dependencies:
+      is-plain-obj: 2.1.0
 
   merge-stream@2.0.0: {}
 
@@ -23996,6 +24101,16 @@ snapshots:
       path-to-regexp: 8.2.0
     transitivePeerDependencies:
       - supports-color
+
+  rozenite@1.0.0-alpha.3:
+    dependencies:
+      '@clack/prompts': 0.11.0
+      commander: 14.0.0
+      ejs: 3.1.10
+      is-unicode-supported: 2.1.0
+      nano-spawn: 1.0.2
+      picocolors: 1.1.1
+      validate-npm-package-name: 6.0.1
 
   rrweb-cssom@0.6.0: {}
 

@@ -6,11 +6,14 @@ import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
 import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
+import { AsyncStoragePluginScreen } from './screens/AsyncStoragePluginScreen';
 import { ConfigScreen } from './screens/ConfigScreen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
 import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
+import { useAsyncStorageDevTools } from '@rozenite/async-storage-plugin';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from './navigation/types';
 import { Provider } from 'react-redux';
 import { store } from './store';
@@ -23,6 +26,7 @@ const Wrapper = () => {
   useTanStackQueryDevTools(queryClient);
   useNetworkActivityDevTools();
   useMMKVDevTools();
+  useAsyncStorageDevTools(AsyncStorage);
   usePerformanceMonitorDevTools();
 
   return (
@@ -41,6 +45,7 @@ const Wrapper = () => {
         name="PerformanceMonitor"
         component={PerformanceMonitorScreen}
       />
+      <Stack.Screen name="AsyncStorage" component={AsyncStoragePluginScreen} />
       <Stack.Screen
         name="Config"
         component={ConfigScreen}

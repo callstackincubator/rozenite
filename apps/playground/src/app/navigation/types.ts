@@ -6,6 +6,7 @@ export type RootStackParamList = {
   NetworkTest: undefined;
   ReduxTest: undefined;
   PerformanceMonitor: undefined;
+  AsyncStorage: undefined;
   Config: undefined;
 };
 
