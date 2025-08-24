@@ -9,6 +9,7 @@
     "@react-navigation/native": "^7.1.14",
     "@react-navigation/native-stack": "^7.3.21",
     "@reduxjs/toolkit": "^2.8.2",
+    "@rozenite/design-plugin": "workspace:*",
     "@rozenite/expo-atlas-plugin": "workspace:*",
     "@rozenite/mmkv-plugin": "workspace:*",
     "@rozenite/network-activity-plugin": "workspace:*",
@@ -26,6 +27,7 @@
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "~4.4.0",
     "react-native-sse": "^1.2.1",
+    "react-native-svg": "~15.8.0",
     "react-redux": "^9.2.0",
     "zustand": "^5.0.6"
   },

@@ -72,7 +72,7 @@ importers:
         version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       '@react-native/metro-config':
         specifier: ~0.76.3
-        version: 0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+        version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       '@swc-node/register':
         specifier: ~1.9.1
         version: 1.9.2(@swc/core@1.5.29(@swc/helpers@0.5.17))(@swc/types@0.1.23)(typescript@5.8.3)
@@ -184,6 +184,9 @@ importers:
       '@reduxjs/toolkit':
         specifier: ^2.8.2
         version: 2.8.2(react-redux@9.2.0(@types/react@18.3.23)(react@18.3.1)(redux@5.0.1))(react@18.3.1)
+      '@rozenite/design-plugin':
+        specifier: workspace:*
+        version: link:../../packages/design-plugin
       '@rozenite/expo-atlas-plugin':
         specifier: workspace:*
         version: link:../../packages/expo-atlas-plugin
@@ -235,6 +238,9 @@ importers:
       react-native-sse:
         specifier: ^1.2.1
         version: 1.2.1
+      react-native-svg:
+        specifier: ~15.8.0
+        version: 15.8.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       react-redux:
         specifier: ^9.2.0
         version: 9.2.0(@types/react@18.3.23)(react@18.3.1)(redux@5.0.1)
@@ -282,6 +288,43 @@ importers:
       '@types/validate-npm-package-name':
         specifier: ^4.0.2
         version: 4.0.2
+
+  packages/design-plugin:
+    dependencies:
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+    devDependencies:
+      '@rozenite/vite-plugin':
+        specifier: workspace:*
+        version: link:../vite-plugin
+      '@types/react':
+        specifier: ~18.3.12
+        version: 18.3.23
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.0
+        version: 18.3.0(react@18.3.1)
+      react-native:
+        specifier: 0.76.0
+        version: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
+      react-native-svg:
+        specifier: ~15.8.0
+        version: 15.8.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+      react-native-web:
+        specifier: 0.21.0
+        version: 0.21.0(encoding@0.1.13)(react-dom@18.3.0(react@18.3.1))(react@18.3.1)
+      rozenite:
+        specifier: workspace:*
+        version: link:../cli
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.3.5(@types/node@22.17.0)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0)
 
   packages/expo-atlas-plugin:
     dependencies:
@@ -340,7 +383,7 @@ importers:
     devDependencies:
       '@react-native/metro-config':
         specifier: ~0.76.0
-        version: 0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+        version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
 
   packages/middleware:
     dependencies:
@@ -3550,6 +3593,8 @@ packages:
   '@react-native/metro-babel-transformer@0.76.9':
     resolution: {integrity: sha512-HGq11347UHNiO/NvVbAO35hQCmH8YZRs7in7nVq7SL99pnpZK4WXwLdAXmSuwz5uYqOuwnKYDlpadz8fkE94Mg==}
     engines: {node: '>=18'}
+    peerDependencies:
+      '@babel/core': '*'
 
   '@react-native/metro-config@0.76.9':
     resolution: {integrity: sha512-LWsj7mUfujALUa+iGuEGzW4BqtuHa8zI3zS2T+uIjy2vI40+hRoP70iPOEiesNwVQTq/uSZELbe3HAo4WaX5gA==}
@@ -15417,7 +15462,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-babel-transformer@0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
+  '@react-native/metro-babel-transformer@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
     dependencies:
       '@babel/core': 7.28.0
       '@react-native/babel-preset': 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
@@ -15427,13 +15472,14 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
+  '@react-native/metro-config@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
     dependencies:
       '@react-native/js-polyfills': 0.76.9
-      '@react-native/metro-babel-transformer': 0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+      '@react-native/metro-babel-transformer': 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       metro-config: 0.81.5
       metro-runtime: 0.81.5
     transitivePeerDependencies:
+      - '@babel/core'
       - '@babel/preset-env'
       - bufferutil
       - supports-color

@@ -1,0 +1,34 @@
+{
+  "name": "@rozenite/design-plugin",
+  "version": "1.0.0-alpha.11",
+  "description": "",
+  "type": "module",
+  "main": "./dist/react-native.cjs",
+  "module": "./dist/react-native.js",
+  "types": "./dist/react-native.d.ts",
+  "scripts": {
+    "build": "rozenite build",
+    "dev": "rozenite dev"
+  },
+  "dependencies": {
+    "@rozenite/plugin-bridge": "workspace:*"
+  },
+  "devDependencies": {
+    "@rozenite/vite-plugin": "workspace:*",
+    "@types/react": "~18.3.12",
+    "react": "18.3.1",
+    "react-dom": "18.3.0",
+    "react-native": "0.76.0",
+    "react-native-svg": "~15.8.0",
+    "react-native-web": "0.21.0",
+    "rozenite": "workspace:*",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.0"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-svg": "*"
+  },
+  "license": "MIT"
+}

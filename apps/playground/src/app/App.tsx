@@ -15,6 +15,7 @@ import { RootStackParamList } from './navigation/types';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
+import { RozeniteDesignDevTools } from '@rozenite/design-plugin';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -55,7 +56,9 @@ const Wrapper = () => {
 
 export const App = () => {
   return (
-    <Provider store={store}>
+    <>
+    <RozeniteDesignDevTools />
+      <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider style={{ backgroundColor: '#0a0a0a' }}>
           <NavigationContainer>
@@ -64,6 +67,7 @@ export const App = () => {
         </SafeAreaProvider>
       </QueryClientProvider>
     </Provider>
+    </>
   );
 };
 
