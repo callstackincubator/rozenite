@@ -20,8 +20,9 @@ export default {
         'middleware',
         'repack',
         'performance-monitor-plugin',
+        'tools',
         'async-storage-plugin',
-        ''
+        '',
       ],
     ],
   },

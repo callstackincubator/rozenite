@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/metro",
-  "version": "1.0.0-alpha.11",
+  "version": "1.0.0-alpha.12",
   "description": "Metro bundler plugin for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",

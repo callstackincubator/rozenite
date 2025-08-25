@@ -1,24 +1,34 @@
-import { MMKVEntry, MMKVEntryValue } from './types';
+import { MMKVEntry } from './types';
+
+export type MMKVSnapshotEvent = {
+  type: 'snapshot';
+  id: string;
+  entries: MMKVEntry[];
+};
+
+export type MMKVSetEntryEvent = {
+  type: 'set-entry';
+  id: string;
+  entry: MMKVEntry;
+};
+
+export type MMKVDeleteEntryEvent = {
+  type: 'delete-entry';
+  id: string;
+  key: string;
+};
+
+export type MMKVGetSnapshotEvent = {
+  type: 'get-snapshot';
+  id: string | 'all';
+};
+
+export type MMKVEvent =
+  | MMKVSnapshotEvent
+  | MMKVSetEntryEvent
+  | MMKVDeleteEntryEvent
+  | MMKVGetSnapshotEvent;
 
 export type MMKVEventMap = {
-  'host-entry-updated': {
-    instanceId: string;
-    key: string;
-    value: MMKVEntryValue;
-  };
-  'host-instances': string[];
-  'host-entries': {
-    instanceId: string;
-    entries: MMKVEntry[];
-  };
-
-  'guest-get-instances': unknown;
-  'guest-get-entries': {
-    instanceId: string;
-  };
-  'guest-update-entry': {
-    instanceId: string;
-    key: string;
-    value: MMKVEntryValue;
-  };
+  [K in MMKVEvent['type']]: Extract<MMKVEvent, { type: K }>;
 };

@@ -1,0 +1,140 @@
+import { PackageManagerTabs } from 'rspress/theme';
+
+# MMKV Plugin
+
+![](/mmkv-plugin.png)
+
+The MMKV plugin provides comprehensive storage inspection and management for React Native applications using MMKV, offering real-time data visualization and editing capabilities directly within your DevTools environment.
+
+## What is MMKV Plugin?
+
+The MMKV plugin is a powerful debugging tool that helps you inspect and manage MMKV storage instances in your React Native application. It provides:
+
+- **Real-time Storage Inspection**: View all MMKV instances and their contents in real-time
+- **Multi-Instance Support**: Manage and inspect multiple MMKV instances simultaneously
+- **Data Type Detection**: Automatically detects and displays different data types (string, number, boolean, buffer)
+- **Search & Filter**: Quickly find specific keys with real-time search functionality
+- **Visual Data Representation**: Color-coded type indicators and formatted value display
+- **Data Management**: Add, edit, and delete entries directly from the DevTools interface
+- **Type-aware Editing**: Input validation based on data types when editing entries
+- **Blacklist Filtering**: Filter out sensitive data or large binary blobs using regex patterns
+
+## Installation
+
+Install the MMKV plugin and its peer dependencies:
+
+<PackageManagerTabs command="install -D @rozenite/mmkv-plugin react-native-mmkv" />
+
+Add the DevTools hook to your React Native app to enable MMKV storage inspection:
+
+```typescript title="App.tsx"
+import { MMKV } from 'react-native-mmkv';
+import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
+
+// Create your MMKV instances
+const userStorage = new MMKV({ id: 'user-storage' });
+const appSettings = new MMKV({ id: 'app-settings' });
+const cacheStorage = new MMKV({ id: 'cache-storage' });
+
+function App() {
+  // Enable MMKV DevTools with your storage instances
+  useMMKVDevTools({
+    storages: [userStorage, appSettings, cacheStorage],
+  });
+
+  return <YourApp />;
+}
+```
+
+## Usage
+
+Once configured, the MMKV plugin will automatically appear in your React Native DevTools sidebar as "MMKV Storage". Click on it to access:
+
+### Storage Instance Management
+
+- **Instance Selection**: Choose which MMKV instance to inspect from a dropdown
+- **Multi-Instance View**: Switch between different storage instances easily
+- **Real-time Updates**: See changes to your MMKV storage as they happen
+
+### Data Inspection and Management
+
+- **Key-Value Display**: View all stored keys with their types and values
+- **Type Indicators**: Visual indicators for different data types:
+  - **String**: Text values with proper formatting
+  - **Number**: Numeric values (integers and floats)
+  - **Boolean**: True/false values
+  - **Buffer**: Binary data representation
+- **Search Functionality**: Filter entries by key name for quick access
+- **Blacklist Filtering**: Hide sensitive or large data using RegExp patterns
+- **Data Editing**: Modify existing values with type validation
+- **Entry Management**: Add new entries or delete existing ones
+
+## Configuration
+
+### Blacklist Filtering
+
+The MMKV plugin supports filtering out specific properties using RegExp patterns. This is useful for hiding sensitive data or large binary blobs that might slow down the DevTools.
+
+The blacklist RegExp is matched against `{storageId}:{key}` format:
+
+```typescript title="App.tsx"
+function App() {
+  useMMKVDevTools({
+    storages: [userStorage, appSettings, cacheStorage],
+    // Hide sensitive tokens, large binary data, and temporary cache entries
+    blacklist: /.*:(token|password|secret)|cache-storage:.*Binary.*|.*:temp.*/,
+  });
+
+  return <YourApp />;
+}
+```
+
+This example filters out:
+
+- Any key containing "token", "password", or "secret" across all storages
+- Keys ending with "Binary" in the cache-storage instance
+- Any key containing "temp" in any storage instance
+
+You can combine multiple patterns using the `|` operator to create comprehensive filtering rules that hide sensitive data while keeping your DevTools interface clean and performant.
+
+### Important Notes
+
+:::warning Explicit Storage Registration
+You must explicitly provide all MMKV instances you want to inspect to the `useMMKVDevTools` hook. The plugin cannot automatically detect MMKV instances - only the storages you pass in the `storages` array will be available in the DevTools interface.
+:::
+
+:::info Development Only
+The MMKV plugin is automatically disabled in production builds for security and performance reasons.
+:::
+
+## Best Practices
+
+### Storage Organization
+
+- **Use Descriptive IDs**: Give your MMKV instances meaningful identifiers
+- **Separate Concerns**: Use different instances for different data types (user data, settings, cache)
+- **Consistent Naming**: Follow a naming convention for your storage instances
+
+### Development Workflow
+
+- **Monitor Storage Changes**: Use the real-time updates to debug storage-related issues
+- **Test Data Persistence**: Verify that data is stored and retrieved correctly
+- **Debug State Issues**: Inspect storage contents when debugging app state problems
+
+## Contributing
+
+The MMKV plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
+
+## Support
+
+If you encounter issues with the MMKV plugin:
+
+1. **Check Documentation**: Review this guide for common solutions
+2. **Verify Setup**: Ensure `react-native-mmkv` is properly installed and configured
+3. **Search Issues**: Look for similar issues in the repository
+4. **Create Issue**: Report bugs or request features
+5. **Community**: Reach out to the Rozenite community for help
+
+---
+
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md).

@@ -60,7 +60,7 @@ export const ResponseTab = ({
       />
     );
 
-    if (type === 'application/json') {
+    if (type.startsWith('application/json')) {
       let bodyContent;
 
       try {
@@ -92,8 +92,8 @@ export const ResponseTab = ({
 
     if (
       type.startsWith('text/') ||
-      type === 'application/xml' ||
-      type === 'application/javascript'
+      type.startsWith('application/xml') ||
+      type.startsWith('application/javascript')
     ) {
       return renderResponseBodySection(
         <>
