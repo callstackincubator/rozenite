@@ -8,34 +8,34 @@ hero:
       dark: /logo-dark.svg
     alt: Rozenite logo
   name: React Native DevTools Plugin Framework
-  tagline: Build powerful debugging tools and custom panels for React Native DevTools with type-safe, isomorphic communication
+  tagline: Plug-and-play DevTools panels for React Native. Install, enable, and start debugging in minutes.
   actions:
     - theme: brand
       text: Get Started
       link: /docs/getting-started
     - theme: alt
-      text: View on GitHub
-      link: https://github.com/callstackincubator/rozenite
+      text: Browse Plugins
+      link: /plugin-directory
   badge:
     text: Alpha
     type: warning
 features:
-  - title: Type-Safe Plugin Development
-    details: Full TypeScript support with comprehensive type definitions for event-based communication between DevTools and React Native. Build plugins with excellent developer experience and IntelliSense.
-    icon: <img src="/edit-box.svg" />
-  - title: Rapid DevTools Integration
-    details: Add your own custom debugging tools to the familiar React Native DevTools interface in minutes. Leverage the existing DevTools UI and infrastructure to create powerful debugging panels without building from scratch.
-    icon: <img src="/sliders-2.svg" />
-  - title: Metro Integration
-    details: Native Metro bundler integration with automatic plugin discovery and loading. Your plugins are automatically detected and integrated into the DevTools environment with zero configuration required, unless a plugin needs additional information.
-    icon: <img src="/add-grid.svg" />
-  - title: Powerful CLI
-    details: Comprehensive CLI for scaffolding, building, and managing React Native DevTools plugins. Generate complete plugin projects with TypeScript setup, Vite configuration, and development workflows.
-    icon: <img src="/arrow-bar-right.svg" />
-  - title: Hot Reload Development
-    details: Fast development workflow with Vite-powered hot reloading. See your plugin changes instantly in DevTools with automatic rebuilding and real-time feedback.
-    icon: <img src="/repeat.svg" />
-  - title: Production Ready
-    details: Build optimized plugins for distribution with proper bundling and minification. Ready for publishing to npm and sharing with the React Native community.
-    icon: <img src="/notes.svg" />
+  - title: Plug-and-Play Panels
+    details: Install plugins and they auto‑appear in DevTools — start debugging in minutes.
+    icon: <img src="/icons/power.svg" />
+  - title: Unified DevTools Experience
+    details: All panels live inside React Native DevTools — no extra windows, servers, or browser tabs.
+    icon: <img src="/icons/frame-check.svg" />
+  - title: Real-Time Debugging
+    details: Live updates for network requests, storage and performance as you use your app.
+    icon: <img src="/icons/radio-signal.svg" />
+  - title: Works With Your Setup
+    details: Compatible with Expo and bare React Native projects. Supports Metro and Re.Pack based workflows.
+    icon: <img src="/icons/device-phone.svg" />
+  - title: Production-Safe Controls
+    details: Plugins are automatically disabled in production builds — no plugin code ships to your users.
+    icon: <img src="/icons/lock.svg" />
+  - title: Easy to Build Your Own
+    details: When you're ready to extend, create custom panels with type-safe, isomorphic APIs and great DX.
+    icon: <img src="/icons/edit-box.svg" />
 ---
