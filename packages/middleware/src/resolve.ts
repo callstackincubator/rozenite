@@ -90,7 +90,9 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
     throw new Error(`Unknown project type: ${options.projectType}.`);
   }
 
-  const projectType = getProjectType(options.projectRoot);
+  // This env var is set by Expo when running the dev server
+  const hasExpoEnv = !!process.env.EXPO_DEV_SERVER_ORIGIN;
+  const projectType = hasExpoEnv ? 'expo' : getProjectType(options.projectRoot);
 
   if (projectType === 'expo') {
     logger.debug(
