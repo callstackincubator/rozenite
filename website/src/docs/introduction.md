@@ -1,18 +1,16 @@
 # Introduction
 
-Rozenite helps you build custom tools for React Native DevTools. It gives you everything you need to create plugins that make debugging your React Native apps easier and more powerful.
+Rozenite adds plug-and-play debugging panels to React Native DevTools. Install official plugins, open DevTools, and start debugging in minutes — no extra windows or servers.
 
-Think of it as a complete toolkit that turns React Native DevTools into a platform you can extend with your own debugging tools. Whether you need to track network requests, monitor app performance, or debug specific business logic, Rozenite makes it simple to build and integrate custom plugins.
+![](/rozenite-loaded.png)
 
-:::info Want to try it now?
-If you'd like to skip this intro and jump right in, head over to our [Quick start](/docs/getting-started/index) page to create your first plugin.
+It also gives teams a safe, scalable way to standardize debugging across projects. Plugins auto‑discover and load during development, are easy to configure, and are automatically disabled in production builds so no plugin code ships to your users.
+
+:::info Try it now
+Skip ahead to the [Getting Started guide](/docs/getting-started) or browse the [Plugin Directory](/plugin-directory).
 :::
 
-## The Name
-
-Rozenite is named after a rare mineral discovered in 1960 on Ornak Mountain in the Western Tatra Mountains. The mineral was named after Polish mineralogist Zygmunt Rozen (1874–1936). We chose this name because it represents exploration and discovery—just like scientists exploring mountains to find new minerals, we're exploring new ways to extend React Native DevTools with custom debugging tools.
-
-## Why We Built This
+## Why we built this
 
 At [Callstack](https://callstack.com/), we work with teams building React Native apps that drive business value. But as these apps grow, debugging becomes a bottleneck that slows down development and hurts user experience. Teams spend more time fighting fires than building features. One of the biggest problems we see is the lack of good tools for monitoring and debugging React Native apps.
 
@@ -24,64 +22,19 @@ This forces teams to build their own debugging solutions from scratch. They wast
 
 Instead of building everything from scratch, you can now create plugins that integrate seamlessly with React Native DevTools. You get a proven communication layer, a solid build system, and all the infrastructure you need. This means you can focus on building the insights that matter to your team, not reinventing the wheel.
 
-## What Makes Rozenite Special
-
-Rozenite isn't just another development tool—it's a complete ecosystem designed specifically for React Native DevTools plugins. Here's what sets it apart:
-
-### Built for React Native
-
-Unlike generic plugin systems, Rozenite is built from the ground up for React Native. It understands how React Native apps work, how Metro bundler operates, and how DevTools communicates with your app.
-
-### Developer-First Design
-
-We've focused on making plugin development as smooth as possible. The CLI guides you through every step, the build system handles the complex parts, and the communication layer just works.
-
-## What We Believe
-
-We built Rozenite with one goal: to help developers who need custom DevTools features. These projects need to be flexible, easy to build, and work smoothly with existing workflows. That's why we focus on:
-
-- **Modular design**—build plugins you can easily share and use in any React Native project
-- **Great developer experience**—excellent tools for building, testing, and debugging your plugins
-- **Easy communication**—seamless connection between DevTools and your React Native app
-- **Metro integration**—works perfectly with Metro bundler, React Native's build system
-
-## The CLI
-
-We built a CLI from the ground up to make plugin development smooth and fast. Most developers can create their first plugin in under 10 minutes.
-
-The CLI uses a flexible configuration system that lets you customize your plugin's capabilities through templates, build settings, and development tools. It handles all the boilerplate code so you can focus on building your plugin's core functionality.
-
-:::info Developer Experience
-We focus on making our CLI the main way to interact with Rozenite. In the future, you'll be able to use it through VS Code extensions, AI assistants, or custom development environments.
+:::note Fun fact
+Rozenite is a rare mineral first described in 1960 on Ornak Mountain in the Western Tatras. Named after Polish mineralogist Zygmunt Rozen, it symbolizes exploration and discovery — the same spirit behind extending DevTools with new capabilities.
 :::
 
-### What It Does
+## Who it’s for
 
-The CLI handles all the common plugin development tasks:
+- **Developers who want built‑in tooling**: add network, performance, storage and state panels without building anything.
+- **Teams that need custom insights**: create tailored panels for your product, internal observability, or business logic.
 
-- **Project Generation** - Creating new plugins from customizable templates
-- **Hot Reloading** - Providing fast development feedback with live reloading features
-- **Production Builds** - Building and bundling plugins optimized for production use
+## Build your own
 
-### Main Commands
+Rozenite includes a type‑safe, batteries‑included development experience for creating custom plugins when you need to go beyond the official ones. Start with the [Plugin Development overview](/docs/plugin-development/overview) when you're ready.
 
-- `rozenite generate` - Create a new plugin project
-- `rozenite dev` - Start development server with hot reloading
-- `rozenite build` - Build your plugin for production
-- `rozenite init` - Initialize Rozenite in your React Native project
+## Next steps
 
-## What You Can Build
-
-With Rozenite, you can create plugins for:
-
-- **Performance monitoring** - Track app performance, memory usage, and render times
-- **Network debugging** - Monitor API calls, request/response data, and network errors
-- **State management** - Inspect Redux, Zustand, or custom state stores
-- **Custom debugging** - Build tools specific to your app's business logic
-- **Integration tools** - Connect DevTools to your existing monitoring systems
-
-## Getting Started
-
-Ready to build your first plugin? Check out our [Quick Start guide](/docs/getting-started/index) to get up and running in minutes.
-
-For more advanced usage, explore our [Plugin Development guide](/docs/guides/plugin-development) and [API documentation](/docs/api).
+Ready to try it? Start with the [Getting Started guide](/docs/getting-started) or explore the [Plugin Directory](/plugin-directory). When you need something custom, see the [Plugin Development overview](/docs/plugin-development/overview).
