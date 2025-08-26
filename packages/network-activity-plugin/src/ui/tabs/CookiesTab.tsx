@@ -43,9 +43,7 @@ export const CookiesTab = ({ selectedRequest }: CookiesTabProps) => {
       <div className="p-4">
         <div className="space-y-6">
           {hasRequestCookies && (
-            <Section
-              title={`Request Cookies (${requestCookies.length})`}
-            >
+            <Section title={`Request Cookies (${requestCookies.length})`}>
               <div className="space-y-2">
                 {requestCookies.map((cookie, index) => (
                   <CookieCard
@@ -59,9 +57,7 @@ export const CookiesTab = ({ selectedRequest }: CookiesTabProps) => {
           )}
 
           {hasResponseCookies && (
-            <Section
-              title={`Response Cookies (${responseCookies.length})`}
-            >
+            <Section title={`Response Cookies (${responseCookies.length})`}>
               <div className="space-y-2">
                 {responseCookies.map((cookie, index) => (
                   <CookieCard

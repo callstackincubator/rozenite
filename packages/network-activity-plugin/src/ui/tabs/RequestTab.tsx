@@ -10,7 +10,10 @@ import { KeyValueGrid, KeyValueItem } from '../components/KeyValueGrid';
 import { Section } from '../components/Section';
 import { CodeBlock } from '../components/CodeBlock';
 import { ReactNode, useMemo } from 'react';
-import { RequestBinaryPostData } from '../../shared/client';
+import {
+  RequestBinaryPostData,
+  RequestFormDataPostData,
+} from '../../shared/client';
 
 export type RequestTabProps = {
   selectedRequest: HttpNetworkEntry | SSENetworkEntry;
@@ -52,6 +55,15 @@ const getBinaryEntries = (
 
   return items;
 };
+
+const getFormDataEntries = (value: RequestFormDataPostData['value']) =>
+  Object.entries(value).flatMap(([key, { value, type }]) => {
+    if (type === 'binary') {
+      return getFormDataBinaryEntries(key, value);
+    }
+
+    return [{ key, value }];
+  });
 
 const getRequestBodySectionTitle = (body: HttpRequestData) => {
   const baseTitle = 'Request Body';
@@ -118,17 +130,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
     }
 
     if (dataType === 'form-data') {
-      const formDataItems = Object.entries(value).flatMap(
-        ([key, { value, type }]) => {
-          if (type === 'binary') {
-            return getFormDataBinaryEntries(key, value);
-          }
-
-          return [{ key, value }];
-        }
-      );
-
-      bodyContent = <KeyValueGrid items={formDataItems} />;
+      bodyContent = <KeyValueGrid items={getFormDataEntries(value)} />;
     }
 
     if (dataType === 'binary') {

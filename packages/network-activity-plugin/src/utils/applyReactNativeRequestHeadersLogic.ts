@@ -13,7 +13,7 @@ export function applyReactNativeRequestHeadersLogic(
   postData?: RequestPostData
 ): HttpHeaders {
   const existingContentType = getHttpHeader(headers, 'content-type');
-  
+
   if (existingContentType) {
     return headers;
   }

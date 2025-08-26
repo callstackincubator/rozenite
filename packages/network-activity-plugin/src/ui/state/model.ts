@@ -1,4 +1,9 @@
-import { Initiator, ResourceType, HttpHeaders, RequestPostData } from '../../shared/client';
+import {
+  Initiator,
+  ResourceType,
+  HttpHeaders,
+  RequestPostData,
+} from '../../shared/client';
 
 export type RequestId = string;
 export type Timestamp = number;
