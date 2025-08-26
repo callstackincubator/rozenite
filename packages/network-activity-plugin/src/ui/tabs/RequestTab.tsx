@@ -1,69 +1,17 @@
-import * as React from 'react';
 import { ScrollArea } from '../components/ScrollArea';
-import { JsonTree } from '../components/JsonTree';
 import {
   HttpNetworkEntry,
   HttpRequestData,
   SSENetworkEntry,
 } from '../state/model';
-import { KeyValueGrid, KeyValueItem } from '../components/KeyValueGrid';
+import { KeyValueGrid } from '../components/KeyValueGrid';
 import { Section } from '../components/Section';
-import { CodeBlock } from '../components/CodeBlock';
-import { ReactNode, useMemo } from 'react';
-import {
-  RequestBinaryPostData,
-  RequestFormDataPostData,
-} from '../../shared/client';
+import { useMemo } from 'react';
+import { RequestBody } from '../components/RequestBody';
 
 export type RequestTabProps = {
   selectedRequest: HttpNetworkEntry | SSENetworkEntry;
 };
-
-const getFormDataBinaryEntries = (
-  key: string,
-  value: RequestBinaryPostData['value']
-): KeyValueItem[] => {
-  return [
-    {
-      key,
-      value: <span className="text-blue-400">[binary]</span>,
-    },
-    ...getBinaryEntries(value).map((item) => ({
-      ...item,
-      key: `  └─  ${item.key}`,
-      keyClassName: 'whitespace-pre',
-    })),
-  ];
-};
-
-const getBinaryEntries = (
-  value: RequestBinaryPostData['value']
-): KeyValueItem[] => {
-  const { size, type, name } = value;
-
-  const items: KeyValueItem[] = [];
-
-  if (name) {
-    items.push({ key: 'Name', value: name });
-  }
-
-  if (type) {
-    items.push({ key: 'Type', value: type });
-  }
-
-  items.push({ key: 'Size', value: `${size} bytes` });
-
-  return items;
-};
-
-const getFormDataEntries = (value: RequestFormDataPostData['value']) =>
-  Object.entries(value).flatMap(([key, { value, type }]) => {
-    if (type === 'binary') {
-      return getFormDataBinaryEntries(key, value);
-    }
-
-    return [{ key, value }];
-  });
 
 const getRequestBodySectionTitle = (body: HttpRequestData) => {
   const baseTitle = 'Request Body';
@@ -94,15 +42,15 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
   const hasQueryParams = queryParams.length > 0;
 
   const renderQueryParams = () => {
-    if (hasQueryParams) {
-      return (
-        <Section title={`Query Parameters (${queryParams.length})`}>
-          <KeyValueGrid items={queryParams} />
-        </Section>
-      );
+    if (!hasQueryParams) {
+      return null;
     }
 
-    return null;
+    return (
+      <Section title={`Query Parameters (${queryParams.length})`}>
+        <KeyValueGrid items={queryParams} />
+      </Section>
+    );
   };
 
   const renderRequestBody = () => {
@@ -110,36 +58,9 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
       return null;
     }
 
-    const { data } = requestBody;
-    const { type: dataType, value } = data;
-
-    let bodyContent: ReactNode = null;
-
-    if (dataType === 'text') {
-      try {
-        const jsonData = JSON.parse(value);
-
-        bodyContent = (
-          <CodeBlock>
-            <JsonTree data={jsonData} />
-          </CodeBlock>
-        );
-      } catch {
-        bodyContent = <CodeBlock>{value}</CodeBlock>;
-      }
-    }
-
-    if (dataType === 'form-data') {
-      bodyContent = <KeyValueGrid items={getFormDataEntries(value)} />;
-    }
-
-    if (dataType === 'binary') {
-      bodyContent = <KeyValueGrid items={getBinaryEntries(value)} />;
-    }
-
     return (
       <Section title={getRequestBodySectionTitle(requestBody)}>
-        {bodyContent}
+        <RequestBody data={requestBody.data} />
       </Section>
     );
   };

@@ -4,7 +4,7 @@ import { cn } from '../utils/cn';
 export type CodeBlockProps = HTMLProps<HTMLPreElement>;
 
 const codeBlockClassNames =
-  'text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto wrap-anywhere';
+  'text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere';
 
 export const CodeBlock = ({
   children,
