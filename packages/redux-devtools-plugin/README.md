@@ -39,6 +39,25 @@ For more detailed setup instructions, please refer to the [react-native-get-rand
 
 Add the Redux DevTools enhancer to your Redux store:
 
+#### For Redux Toolkit (Recommended)
+
+```typescript
+// store.ts
+import { configureStore } from '@reduxjs/toolkit';
+import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin';
+import rootReducer from './reducers';
+
+const store = configureStore({
+  reducer: rootReducer,
+  enhancers: (getDefaultEnhancers) =>
+    getDefaultEnhancers().concat(rozeniteDevToolsEnhancer()),
+});
+
+export default store;
+```
+
+#### For Classic Redux
+
 ```typescript
 // store.ts
 import { createStore, applyMiddleware } from 'redux';
