@@ -1,5 +1,5 @@
-import path from 'node:path';
 import fs from 'node:fs';
+import path from 'node:path';
 
 const MODULE_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts', '.cts', '.mts'];
 const METRO_CONFIG_FILE = 'metro.config.js';
@@ -61,14 +61,26 @@ export const getProjectType = (projectRoot: string): ProjectType => {
   return 'react-native-cli';
 };
 
-export const getBundlerType = (projectRoot: string): BundlerType => {
+export const getAvailableBundlerTypes = (projectRoot: string): BundlerType[] => {
+  const bundlers: BundlerType[] = [];
+
   if (isSourceFilePresent(projectRoot, METRO_CONFIG_FILE)) {
-    return 'metro';
+    bundlers.push('metro');
   }
 
   if (isSourceFilePresent(projectRoot, REPACK_CONFIG_FILE)) {
-    return 'repack';
+    bundlers.push('repack');
   }
 
-  throw new UnknownBundlerType(projectRoot);
+  return bundlers;
+}
+
+export const getBundlerType = (projectRoot: string): BundlerType => {
+  const [bundlerType] = getAvailableBundlerTypes(projectRoot);
+
+  if (!bundlerType) {
+    throw new UnknownBundlerType(projectRoot);
+  }
+
+  return bundlerType;
 };
