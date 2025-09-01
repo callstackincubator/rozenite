@@ -16,11 +16,35 @@ export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<
   ) => Promise<TMetroConfig> | TMetroConfig;
 };
 
-export const withRozenite = async <T extends MetroConfig>(
+export function withRozenite<T extends MetroConfig>(
+  config: () => Promise<T>,
+  options: RozeniteMetroConfig<T>
+): Promise<T>
+export function withRozenite<T extends MetroConfig>(
+  config: () => T,
+  options: RozeniteMetroConfig<T>
+): T
+export function withRozenite<T extends MetroConfig>(
+  config: Promise<T>,
+  options: RozeniteMetroConfig<T>
+): Promise<T>
+export function withRozenite<T extends MetroConfig>(
+  config: T,
+  options: RozeniteMetroConfig<T>
+): T
+export function withRozenite<T extends MetroConfig>(
   config: T | Promise<T>,
   options: RozeniteMetroConfig<T> = {}
-): Promise<T> => {
-  const resolvedConfig = await config;
+): Promise<T> | T {
+  if (typeof config === 'function') {
+    config = config()
+  }
+
+  if (config instanceof Promise) {
+    return config.then(config => withRozenite(config, options))
+  }
+
+  const resolvedConfig = config;
   const projectRoot = resolvedConfig.projectRoot ?? process.cwd();
 
   if (isBundling(projectRoot)) {
