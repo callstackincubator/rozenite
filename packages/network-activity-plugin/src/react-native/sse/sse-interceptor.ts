@@ -8,6 +8,7 @@ import type {
   ExceptionEvent,
   EventSourceEvent,
   CustomEvent,
+  EventType,
 } from 'react-native-sse';
 import { EventSourceWithInternals } from './types';
 import { getEventSource } from './event-source';
@@ -49,7 +50,6 @@ const eventSourceClass = getEventSource();
 
 // Store original EventSource methods
 const originalOpen = eventSourceClass.prototype.open;
-const originalDispatch = eventSourceClass.prototype.dispatch;
 
 // Built-in SSE event types that we don't want to capture as messages
 const BUILT_IN_EVENT_TYPES = new Set(['open', 'error', 'close', 'done']);
@@ -135,23 +135,24 @@ export const SSEInterceptor = {
         }
       });
 
+      const originalDispatch = this.dispatch;
+      this.dispatch = function <T extends EventType<never>>(
+        this: EventSourceWithInternals,
+        eventType: T,
+        data: EventSourceEvent<T>
+      ) {
+        if (!BUILT_IN_EVENT_TYPES.has(eventType)) {
+          if (messageCallback) {
+            messageCallback(data as MessageEvent | CustomEvent<T>, this);
+          }
+        }
+
+        // Call original open method
+        return originalDispatch.call(this, eventType, data);
+      };
+
       // Call original open method
       return originalOpen.call(this);
-    };
-
-    eventSourceClass.prototype.dispatch = function (
-      this: EventSourceWithInternals,
-      eventType: string,
-      data: EventSourceEvent<string>
-    ) {
-      if (!BUILT_IN_EVENT_TYPES.has(eventType)) {
-        if (messageCallback) {
-          messageCallback(data, this);
-        }
-      }
-
-      // Call original open method
-      return originalDispatch.call(this, eventType, data);
     };
 
     isInterceptorEnabled = true;
@@ -166,9 +167,6 @@ export const SSEInterceptor = {
 
     // Restore original open method
     eventSourceClass.prototype.open = originalOpen;
-
-    // Restore original dispatch method
-    eventSourceClass.prototype.dispatch = originalDispatch;
 
     // Clear callbacks
     connectCallback = null;
