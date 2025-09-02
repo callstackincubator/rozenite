@@ -2,7 +2,7 @@ import {
   getProjectType,
   type BundlerType
 } from '@rozenite/tools';
-import { getAvailableBundlerTypes } from 'node_modules/@rozenite/tools/src/project-type.js';
+import { getAvailableBundlerTypes } from '@rozenite/tools';
 import { wrapConfigFile } from '../utils/config-wrapper.js';
 import { isGitRepositoryClean } from '../utils/git.js';
 import { logger } from '../utils/logger.js';
