@@ -38,6 +38,10 @@ export const isBundling = (projectRoot: string): boolean => {
     if (executablePath.endsWith('node_modules/.bin/react-native')) {
       return true;
     }
+
+    if (reactNativeBinRelativePath && executablePath.endsWith('scripts/bundle.js')) {
+      return true;
+    }
   }
 
   return false;
