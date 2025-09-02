@@ -1,6 +1,6 @@
 export {
   getProjectType,
-  getBundlerType,
+  getAvailableBundlerTypes,
   type ProjectType,
   type BundlerType,
   UnknownProjectType,

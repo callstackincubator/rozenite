@@ -74,13 +74,3 @@ export const getAvailableBundlerTypes = (projectRoot: string): BundlerType[] => 
 
   return bundlers;
 }
-
-export const getBundlerType = (projectRoot: string): BundlerType => {
-  const [bundlerType] = getAvailableBundlerTypes(projectRoot);
-
-  if (!bundlerType) {
-    throw new UnknownBundlerType(projectRoot);
-  }
-
-  return bundlerType;
-};
