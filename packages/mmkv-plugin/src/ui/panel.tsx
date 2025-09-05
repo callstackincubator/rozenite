@@ -307,11 +307,11 @@ export default function MMKVPanel() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex flex-1 min-h-0 overflow-auto">
         {selectedInstance ? (
-          <div className="flex-1 overflow-hidden">
+          <>
             {filteredEntries.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="flex flex-col items-center justify-center h-full text-center w-full">
                 <div className="text-4xl mb-4">🔍</div>
                 <h3 className="text-lg font-semibold text-gray-200 mb-2">
                   No entries found
@@ -330,9 +330,9 @@ export default function MMKVPanel() {
                 loading={loading}
               />
             )}
-          </div>
+          </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center">
+          <div className="flex flex-col items-center justify-center h-full text-center w-full">
             <div className="text-4xl mb-4">🚀</div>
             <h2 className="text-xl font-semibold text-gray-200 mb-2">
               Welcome to MMKV Inspector
