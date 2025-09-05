@@ -230,8 +230,8 @@ export const EditableTable = ({
   }
 
   return (
-    <div className="flex-1 overflow-auto">
-      <table className="w-full">
+    <>
+      <table className="w-full self-start">
         <thead className="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -298,6 +298,6 @@ export const EditableTable = ({
         type="confirm"
         confirmText="Delete"
       />
-    </div>
+    </>
   );
 };
