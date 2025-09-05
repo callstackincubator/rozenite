@@ -37,14 +37,17 @@
     }
   },
   "dependencies": {
+    "@rozenite/middleware": "workspace:*",
     "tslib": "^2.3.0",
-    "@rozenite/middleware": "workspace:*"
+    "@rozenite/tools": "workspace:*",
+    "semver": "^7.7.2"
   },
   "peerDependencies": {
-    "@callstack/repack": "^6.0.0-canary-20250729145326"
+    "@callstack/repack": "^5.2"
   },
   "devDependencies": {
-    "@callstack/repack": "^6.0.0-canary-20250729145326"
+    "@callstack/repack": "^5.2",
+    "@types/semver": "^7.7.0"
   },
   "engines": {
     "node": ">=22"

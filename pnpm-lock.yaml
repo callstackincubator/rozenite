@@ -664,13 +664,22 @@ importers:
       '@rozenite/middleware':
         specifier: workspace:*
         version: link:../middleware
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
+      semver:
+        specifier: ^7.7.2
+        version: 7.7.2
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
     devDependencies:
       '@callstack/repack':
-        specifier: ^6.0.0-canary-20250729145326
-        version: 6.0.0-canary-20250729145326(@babel/core@7.28.0)(@module-federation/enhanced@0.16.0(@rspack/core@1.4.8(@swc/helpers@0.5.17))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.8.3)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))(@rspack/core@1.4.8(@swc/helpers@0.5.17))(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@19.1.1))(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17)))
+        specifier: ^5.2
+        version: 5.2.0(@babel/core@7.28.0)(@module-federation/enhanced@0.16.0(@rspack/core@1.4.8(@swc/helpers@0.5.17))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.8.3)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))(@rspack/core@1.4.8(@swc/helpers@0.5.17))(@swc/core@1.5.29(@swc/helpers@0.5.17))(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@19.1.1))(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17)))
+      '@types/semver':
+        specifier: ^7.7.0
+        version: 7.7.0
 
   packages/runtime:
     dependencies:
@@ -1635,12 +1644,12 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
-  '@callstack/repack-dev-server@6.0.0-canary-20250729145326':
-    resolution: {integrity: sha512-bZH+SDGKXBBF0Xyj8Bm/UEMo8aCc/VMeMrShQsQW/j9yIWImTbrE8HDfosoeQWElV32tPf4GQj+11rMLB+xHVQ==}
+  '@callstack/repack-dev-server@5.2.0':
+    resolution: {integrity: sha512-1LTESWdvTIy+8XtmmhsQd7zoca0gObXRfltquIRawZLol7L5JnbdV4jq36cPpKoXPNnv28lPSFA/+PLRG7kmmQ==}
     engines: {node: '>=18'}
 
-  '@callstack/repack@6.0.0-canary-20250729145326':
-    resolution: {integrity: sha512-e/FVfhGILMo0lDgZ1/Ma0C4zBeYyRwmbxZ5pmDKU5TCBmFwZxOhFfFGBu6I/4+0u7UXfXTGrlKwfAuenHpK0Zw==}
+  '@callstack/repack@5.2.0':
+    resolution: {integrity: sha512-OoAky6LejpbOpcVjH/WldAmmaixyZgT3sGC3TjWpPm/HBriIn7rODyUXquBSVQZCoBNVBaqlUbxZpzvWcfgWMQ==}
     engines: {node: '>=18'}
     peerDependencies:
       '@module-federation/enhanced': '>=0.6.10'
@@ -12447,7 +12456,7 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@callstack/repack-dev-server@6.0.0-canary-20250729145326':
+  '@callstack/repack-dev-server@5.2.0':
     dependencies:
       '@babel/code-frame': 7.27.1
       '@fastify/middie': 8.3.3
@@ -12466,9 +12475,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@callstack/repack@6.0.0-canary-20250729145326(@babel/core@7.28.0)(@module-federation/enhanced@0.16.0(@rspack/core@1.4.8(@swc/helpers@0.5.17))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.8.3)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))(@rspack/core@1.4.8(@swc/helpers@0.5.17))(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@19.1.1))(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17)))':
+  '@callstack/repack@5.2.0(@babel/core@7.28.0)(@module-federation/enhanced@0.16.0(@rspack/core@1.4.8(@swc/helpers@0.5.17))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.8.3)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))(@rspack/core@1.4.8(@swc/helpers@0.5.17))(@swc/core@1.5.29(@swc/helpers@0.5.17))(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@19.1.1))(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17)))':
     dependencies:
-      '@callstack/repack-dev-server': 6.0.0-canary-20250729145326
+      '@callstack/repack-dev-server': 5.2.0
       '@discoveryjs/json-ext': 0.5.7
       '@rspack/plugin-react-refresh': 1.0.0(react-refresh@0.14.2)
       babel-loader: 9.2.1(@babel/core@7.28.0)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17)))
@@ -12488,8 +12497,10 @@ snapshots:
       react-native: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@19.1.1)
       react-refresh: 0.14.2
       schema-utils: 4.3.2
+      semver: 7.7.2
       shallowequal: 1.1.0
       tapable: 2.2.2
+      terser-webpack-plugin: 5.3.14(@swc/core@1.5.29(@swc/helpers@0.5.17))(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17)))
       throttleit: 2.1.0
       webpack-merge: 6.0.1
     optionalDependencies:
@@ -12498,8 +12509,11 @@ snapshots:
       webpack: 5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))
     transitivePeerDependencies:
       - '@babel/core'
+      - '@swc/core'
       - bufferutil
+      - esbuild
       - supports-color
+      - uglify-js
       - utf-8-validate
 
   '@callstack/rspress-theme@0.3.1(react@19.1.1)(rspress@2.0.0-beta.21(@types/react@19.1.9)(acorn@8.15.0)(webpack@5.99.9(@swc/core@1.5.29(@swc/helpers@0.5.17))))':
