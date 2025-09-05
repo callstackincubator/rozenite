@@ -40,10 +40,7 @@ export const isBundling = (projectRoot: string): boolean => {
     }
 
     // Check Xcode's bundle.js script
-    if (
-      reactNativeBinRelativePath &&
-      reactNativeBinRelativePath.endsWith('scripts/bundle.js')
-    ) {
+    if (executablePath.endsWith('scripts/bundle.js')) {
       return true;
     }
   }
