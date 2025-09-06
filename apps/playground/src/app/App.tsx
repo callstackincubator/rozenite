@@ -62,6 +62,20 @@ const Wrapper = () => {
   );
 };
 
+const linking = {
+  prefixes: ['playground://'],
+  config: {
+    screens: {
+      Landing: '',
+      MMKVPlugin: 'mmkv',
+      NetworkTest: 'network',
+      ReduxTest: 'redux',
+      PerformanceMonitor: 'performance',
+      Config: 'config',
+    },
+  },
+};
+
 export const App = () => {
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
@@ -73,7 +87,7 @@ export const App = () => {
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider style={{ backgroundColor: '#0a0a0a' }}>
-          <NavigationContainer ref={navigationRef}>
+          <NavigationContainer ref={navigationRef} linking={linking}>
             <Wrapper />
           </NavigationContainer>
         </SafeAreaProvider>

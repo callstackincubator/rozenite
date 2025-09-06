@@ -6,6 +6,7 @@ import {
 } from '@rozenite/plugin-bridge';
 import { useReactNavigationEvents } from './useReactNavigationEvents';
 import { ReactNavigationPluginEventMap } from '../shared';
+import { Linking } from 'react-native';
 
 export type ReactNavigationDevToolsConfig<
   TNavigationContainerRef extends NavigationContainerRef<any> = NavigationContainerRef<any>
@@ -44,6 +45,13 @@ export const useReactNavigationDevTools = ({
       }),
       client.onMessage('reset-root', (message) => {
         ref.current?.resetRoot(message.state);
+      }),
+      client.onMessage('open-link', (message) => {
+        try {
+          Linking.openURL(message.href);
+        } catch {
+          // We don't care about errors here
+        }
       })
     );
 

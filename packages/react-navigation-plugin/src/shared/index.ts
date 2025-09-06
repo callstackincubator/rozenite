@@ -22,6 +22,11 @@ export type ReactNavigationPluginResetRootMessage = {
   state: NavigationState | undefined;
 };
 
+export type ReactNavigationPluginOpenLinkMessage = {
+  type: 'open-link';
+  href: string;
+};
+
 export type { NavigationAction, NavigationState };
 
 export type ReactNavigationPluginEventMap = {
@@ -29,6 +34,7 @@ export type ReactNavigationPluginEventMap = {
   'reset-root': ReactNavigationPluginResetRootMessage;
   'initial-state': ReactNavigationPluginInitialStateMessage;
   action: ReactNavigationPluginActionMessage;
+  'open-link': ReactNavigationPluginOpenLinkMessage;
 };
 
 export type ReactNavigationPluginClient =

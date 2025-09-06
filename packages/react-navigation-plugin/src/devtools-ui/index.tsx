@@ -1,13 +1,10 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useState } from 'react';
-import {
-  NavigationAction,
-  NavigationState,
-  ReactNavigationPluginEventMap,
-} from '../shared';
-import { ActionSidebar } from './components/ActionSidebar';
-import { ActionDetailPanel } from './components/ActionDetailPanel';
+import { ReactNavigationPluginEventMap } from '../shared';
 import { ActionWithState } from './components/ActionList';
+import { Tabs, Tab } from './components/Tabs';
+import { ActionTimeline } from './components/ActionTimeline';
+import { LinkingTester } from './components/LinkingTester';
 
 import './globals.css';
 
@@ -16,6 +13,7 @@ export default function ReactNavigationPanel() {
   const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(
     null
   );
+  const [activeTabId, setActiveTabId] = useState('timeline');
 
   const client = useRozeniteDevToolsClient<ReactNavigationPluginEventMap>({
     pluginId: '@rozenite/react-navigation-plugin',
@@ -63,28 +61,40 @@ export default function ReactNavigationPanel() {
     }
   };
 
-  const selectedEntry =
-    selectedActionIndex !== null ? actionHistory[selectedActionIndex] : null;
+  const onLinkOpen = (url: string) => {
+    client?.send('open-link', {
+      type: 'open-link',
+      href: url,
+    });
+  };
+
+  const tabs: Tab[] = [
+    {
+      id: 'timeline',
+      label: 'Action Timeline',
+      content: (
+        <ActionTimeline
+          actionHistory={actionHistory}
+          selectedActionIndex={selectedActionIndex}
+          onActionSelect={setSelectedActionIndex}
+          onGoToAction={onGoToAction}
+        />
+      ),
+    },
+    {
+      id: 'linking',
+      label: 'Link Tester',
+      content: <LinkingTester onLinkOpen={onLinkOpen} />,
+    },
+  ];
 
   return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex">
-      <ActionSidebar
-        actionHistory={actionHistory}
-        selectedActionIndex={selectedActionIndex}
-        onActionSelect={setSelectedActionIndex}
-        onGoToAction={onGoToAction}
+    <div className="h-screen bg-gray-900 text-gray-100">
+      <Tabs
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onTabChange={setActiveTabId}
       />
-
-      {selectedEntry ? (
-        <ActionDetailPanel
-          action={selectedEntry.action}
-          state={selectedEntry.state}
-        />
-      ) : (
-        <div className="flex-1 flex items-center justify-center text-gray-400 bg-gray-900">
-          Select an action from the timeline to view its details
-        </div>
-      )}
     </div>
   );
 }
