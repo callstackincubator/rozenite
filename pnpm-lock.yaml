@@ -72,7 +72,7 @@ importers:
         version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       '@react-native/metro-config':
         specifier: ~0.76.3
-        version: 0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+        version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       '@swc-node/register':
         specifier: ~1.9.1
         version: 1.9.2(@swc/core@1.5.29(@swc/helpers@0.5.17))(@swc/types@0.1.23)(typescript@5.8.3)
@@ -196,6 +196,9 @@ importers:
       '@rozenite/performance-monitor-plugin':
         specifier: workspace:*
         version: link:../../packages/performance-monitor-plugin
+      '@rozenite/react-navigation-plugin':
+        specifier: workspace:*
+        version: link:../../packages/react-navigation-plugin
       '@rozenite/redux-devtools-plugin':
         specifier: workspace:*
         version: link:../../packages/redux-devtools-plugin
@@ -343,7 +346,7 @@ importers:
     devDependencies:
       '@react-native/metro-config':
         specifier: ~0.76.0
-        version: 0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+        version: 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
 
   packages/middleware:
     dependencies:
@@ -594,6 +597,58 @@ importers:
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
+
+  packages/react-navigation-plugin:
+    dependencies:
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      fast-deep-equal:
+        specifier: ^3.1.3
+        version: 3.1.3
+    devDependencies:
+      '@react-navigation/core':
+        specifier: ^7.12.1
+        version: 7.12.1(react@18.3.1)
+      '@rozenite/vite-plugin':
+        specifier: workspace:*
+        version: link:../vite-plugin
+      '@types/react':
+        specifier: ~18.3.23
+        version: 18.3.23
+      '@types/react-dom':
+        specifier: ~18.3.1
+        version: 18.3.7(@types/react@18.3.23)
+      autoprefixer:
+        specifier: ^10.4.21
+        version: 10.4.21(postcss@8.5.6)
+      postcss:
+        specifier: ^8.5.6
+        version: 8.5.6
+      react:
+        specifier: '*'
+        version: 18.3.1
+      react-json-tree:
+        specifier: ^0.20.0
+        version: 0.20.0(@types/react@18.3.23)(react@18.3.1)
+      rozenite:
+        specifier: workspace:*
+        version: link:../cli
+      tailwind-merge:
+        specifier: ^3.3.1
+        version: 3.3.1
+      tailwindcss:
+        specifier: ^3.4.17
+        version: 3.4.17
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.17)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.3.5(@types/node@22.17.0)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0)
 
   packages/redux-devtools-plugin:
     dependencies:
@@ -3542,6 +3597,8 @@ packages:
   '@react-native/babel-preset@0.76.0':
     resolution: {integrity: sha512-HgQt4MyuWLcnrIglXn7GNPPVwtzZ4ffX+SUisdhmPtJCHuP8AOU3HsgOKLhqVfEGWTBlE4kbWoTmmLU87IJaOw==}
     engines: {node: '>=18'}
+    peerDependencies:
+      '@babel/core': '*'
 
   '@react-native/babel-preset@0.76.9':
     resolution: {integrity: sha512-TbSeCplCM6WhL3hR2MjC/E1a9cRnMLz7i767T7mP90oWkklEjyPxWl+0GGoVGnJ8FC/jLUupg/HvREKjjif6lw==}
@@ -3593,10 +3650,14 @@ packages:
   '@react-native/metro-babel-transformer@0.76.0':
     resolution: {integrity: sha512-aq0MrjaOxDitSqQbttBcOt+5tjemCabhEX2gGthy8cNeZokBa2raoHQInDo9iBBN1ePKDCwKGypyC8zKA5dksQ==}
     engines: {node: '>=18'}
+    peerDependencies:
+      '@babel/core': '*'
 
   '@react-native/metro-babel-transformer@0.76.9':
     resolution: {integrity: sha512-HGq11347UHNiO/NvVbAO35hQCmH8YZRs7in7nVq7SL99pnpZK4WXwLdAXmSuwz5uYqOuwnKYDlpadz8fkE94Mg==}
     engines: {node: '>=18'}
+    peerDependencies:
+      '@babel/core': '*'
 
   '@react-native/metro-config@0.76.9':
     resolution: {integrity: sha512-LWsj7mUfujALUa+iGuEGzW4BqtuHa8zI3zS2T+uIjy2vI40+hRoP70iPOEiesNwVQTq/uSZELbe3HAo4WaX5gA==}
@@ -3621,6 +3682,11 @@ packages:
 
   '@react-navigation/core@7.12.1':
     resolution: {integrity: sha512-ir6s25CDkReufi0vQhSIAe+AAHHJN9zTgGlS6iDS1yqbwgl2MiBAZzpaOL1T5llYujie2jF/bODeLz2j4k80zw==}
+    peerDependencies:
+      react: '>= 18.2.0'
+
+  '@react-navigation/core@7.12.4':
+    resolution: {integrity: sha512-xLFho76FA7v500XID5z/8YfGTvjQPw7/fXsq4BIrVSqetNe/o/v+KAocEw4ots6kyv3XvSTyiWKh2g3pN6xZ9Q==}
     peerDependencies:
       react: '>= 18.2.0'
 
@@ -3651,8 +3717,8 @@ packages:
       react: '>= 18.2.0'
       react-native: 0.76.0
 
-  '@react-navigation/routers@7.4.1':
-    resolution: {integrity: sha512-42mZrMzQ0LfKxUb5OHIurYrPYyRsXFLolucILrvm21f0O40Sw0Ufh1bnn/jRqnxZZu7wvpUGIGYM8nS9zVE1Aw==}
+  '@react-navigation/routers@7.5.1':
+    resolution: {integrity: sha512-pxipMW/iEBSUrjxz2cDD7fNwkqR4xoi0E/PcfTQGCcdJwLoaxzab5kSadBLj1MTJyT0YRrOXL9umHpXtp+Dv4w==}
 
   '@redux-devtools/app-core@1.1.2':
     resolution: {integrity: sha512-Yjxq/Ef5ovxKN0wy+/SxdDh4NM8gxOma72pTP1NexR2XPwaVk+u85WlxoAq2XaJEYkgb7qD0nB/DvWXCVO2cHQ==}
@@ -15306,7 +15372,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/babel-preset@0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
+  '@react-native/babel-preset@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
     dependencies:
       '@babel/core': 7.28.0
       '@babel/plugin-proposal-export-default-from': 7.27.1(@babel/core@7.28.0)
@@ -15436,10 +15502,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@react-native/community-cli-plugin@0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)':
+  '@react-native/community-cli-plugin@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)':
     dependencies:
       '@react-native/dev-middleware': 0.76.0
-      '@react-native/metro-babel-transformer': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+      '@react-native/metro-babel-transformer': 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       chalk: 4.1.2
       execa: 5.1.1
       invariant: 2.2.4
@@ -15451,6 +15517,7 @@ snapshots:
     optionalDependencies:
       '@react-native-community/cli-server-api': 15.0.1
     transitivePeerDependencies:
+      - '@babel/core'
       - '@babel/preset-env'
       - bufferutil
       - encoding
@@ -15483,17 +15550,17 @@ snapshots:
 
   '@react-native/js-polyfills@0.76.9': {}
 
-  '@react-native/metro-babel-transformer@0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
+  '@react-native/metro-babel-transformer@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
     dependencies:
       '@babel/core': 7.28.0
-      '@react-native/babel-preset': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+      '@react-native/babel-preset': 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       hermes-parser: 0.23.1
       nullthrows: 1.1.1
     transitivePeerDependencies:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-babel-transformer@0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
+  '@react-native/metro-babel-transformer@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
     dependencies:
       '@babel/core': 7.28.0
       '@react-native/babel-preset': 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
@@ -15503,17 +15570,16 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
+  '@react-native/metro-config@0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))':
     dependencies:
       '@react-native/js-polyfills': 0.76.9
-      '@react-native/metro-babel-transformer': 0.76.9(@babel/preset-env@7.28.0(@babel/core@7.28.0))
+      '@react-native/metro-babel-transformer': 0.76.9(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))
       metro-config: 0.81.5
       metro-runtime: 0.81.5
     transitivePeerDependencies:
+      - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -15539,7 +15605,18 @@ snapshots:
 
   '@react-navigation/core@7.12.1(react@18.3.1)':
     dependencies:
-      '@react-navigation/routers': 7.4.1
+      '@react-navigation/routers': 7.5.1
+      escape-string-regexp: 4.0.0
+      nanoid: 3.3.11
+      query-string: 7.1.3
+      react: 18.3.1
+      react-is: 19.1.0
+      use-latest-callback: 0.2.4(react@18.3.1)
+      use-sync-external-store: 1.5.0(react@18.3.1)
+
+  '@react-navigation/core@7.12.4(react@18.3.1)':
+    dependencies:
+      '@react-navigation/routers': 7.5.1
       escape-string-regexp: 4.0.0
       nanoid: 3.3.11
       query-string: 7.1.3
@@ -15572,7 +15649,7 @@ snapshots:
 
   '@react-navigation/native@7.1.14(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@react-navigation/core': 7.12.1(react@18.3.1)
+      '@react-navigation/core': 7.12.4(react@18.3.1)
       escape-string-regexp: 4.0.0
       fast-deep-equal: 3.1.3
       nanoid: 3.3.11
@@ -15580,7 +15657,7 @@ snapshots:
       react-native: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
       use-latest-callback: 0.2.4(react@18.3.1)
 
-  '@react-navigation/routers@7.4.1':
+  '@react-navigation/routers@7.5.1':
     dependencies:
       nanoid: 3.3.11
 
@@ -23509,7 +23586,7 @@ snapshots:
       '@jest/create-cache-key-function': 29.7.0
       '@react-native/assets-registry': 0.76.0
       '@react-native/codegen': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))
-      '@react-native/community-cli-plugin': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)
+      '@react-native/community-cli-plugin': 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)
       '@react-native/gradle-plugin': 0.76.0
       '@react-native/js-polyfills': 0.76.0
       '@react-native/normalize-colors': 0.76.0
@@ -23561,7 +23638,7 @@ snapshots:
       '@jest/create-cache-key-function': 29.7.0
       '@react-native/assets-registry': 0.76.0
       '@react-native/codegen': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))
-      '@react-native/community-cli-plugin': 0.76.0(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)
+      '@react-native/community-cli-plugin': 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.0(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(encoding@0.1.13)
       '@react-native/gradle-plugin': 0.76.0
       '@react-native/js-polyfills': 0.76.0
       '@react-native/normalize-colors': 0.76.0

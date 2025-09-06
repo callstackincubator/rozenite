@@ -1,5 +1,8 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  NavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LandingScreen } from './screens/LandingScreen';
 import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
@@ -16,6 +19,8 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { mmkvStorages } from './mmkv-storages';
+import { useRef } from 'react';
+import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -58,11 +63,17 @@ const Wrapper = () => {
 };
 
 export const App = () => {
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
+
+  useReactNavigationDevTools({
+    ref: navigationRef,
+  });
+
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider style={{ backgroundColor: '#0a0a0a' }}>
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef}>
             <Wrapper />
           </NavigationContainer>
         </SafeAreaProvider>
