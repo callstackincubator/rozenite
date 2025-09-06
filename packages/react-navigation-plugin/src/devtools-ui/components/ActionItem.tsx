@@ -33,7 +33,9 @@ export const ActionItem = ({
   const actionName =
     !!action.payload &&
     'name' in action.payload &&
-    typeof action.payload.name === 'string';
+    typeof action.payload.name === 'string'
+      ? action.payload.name
+      : undefined;
 
   return (
     <div
