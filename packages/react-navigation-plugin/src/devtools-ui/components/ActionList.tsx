@@ -31,7 +31,6 @@ export const ActionList = ({
             <ActionItem
               key={index}
               action={entry.action}
-              state={entry.state}
               index={index}
               isSelected={selectedActionIndex === index}
               onSelect={() => onActionSelect(index)}

@@ -18,6 +18,7 @@ const getActionTypeColor = (type: string): string => {
     RESET: 'text-yellow-600',
     SET_PARAMS: 'text-cyan-400',
     SNAPSHOT: 'text-gray-400',
+    '@@UNKNOWN': 'text-gray-400',
   };
   return colors[type] || 'text-gray-400';
 };
@@ -29,6 +30,11 @@ export const ActionItem = ({
   onSelect,
   onGoToAction,
 }: ActionItemProps) => {
+  const actionName =
+    !!action.payload &&
+    'name' in action.payload &&
+    typeof action.payload.name === 'string';
+
   return (
     <div
       className={`m-1 p-3 rounded cursor-pointer transition-all duration-200 border ${
@@ -58,10 +64,8 @@ export const ActionItem = ({
         </button>
       </div>
 
-      {action.payload && 'name' in action.payload && (
-        <div className="text-xs text-gray-300">
-          → {(action.payload as any).name}
-        </div>
+      {actionName && (
+        <div className="text-xs text-gray-300">→ {actionName}</div>
       )}
     </div>
   );
