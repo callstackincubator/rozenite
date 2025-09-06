@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@rozenite/network-activity-plugin",
+  "name": "@rozenite/react-navigation-plugin",
   "targets": {
     "build": {
       "cache": true,
