@@ -51,6 +51,9 @@
     },
     {
       "path": "../../packages/metro/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/async-storage-plugin"
     }
   ]
 }
