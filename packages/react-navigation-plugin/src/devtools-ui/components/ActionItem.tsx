@@ -2,7 +2,6 @@ import { NavigationAction, NavigationState } from '../../shared';
 
 export type ActionItemProps = {
   action: NavigationAction;
-  state: NavigationState | undefined;
   index: number;
   isSelected: boolean;
   onSelect: () => void;
@@ -18,13 +17,13 @@ const getActionTypeColor = (type: string): string => {
     REPLACE: 'text-purple-400',
     RESET: 'text-yellow-600',
     SET_PARAMS: 'text-cyan-400',
+    SNAPSHOT: 'text-gray-400',
   };
   return colors[type] || 'text-gray-400';
 };
 
 export const ActionItem = ({
   action,
-  state,
   index,
   isSelected,
   onSelect,
