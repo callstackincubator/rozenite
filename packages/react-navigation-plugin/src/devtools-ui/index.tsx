@@ -26,7 +26,7 @@ export default function ReactNavigationPanel() {
 
     const subscriptions = [
       client.onMessage('initial-state', ({ state }) => {
-        setActionHistory([{ action: { type: 'Snapshot' }, state }]);
+        setActionHistory([{ action: { type: 'SNAPSHOT' }, state }]);
         setSelectedActionIndex(null);
       }),
       client.onMessage('action', ({ action, state }) => {
