@@ -7,6 +7,7 @@ export type ActionTimelineProps = {
   selectedActionIndex: number | null;
   onActionSelect: (index: number) => void;
   onGoToAction: (index: number) => void;
+  onClearActions: () => void;
 };
 
 export const ActionTimeline = ({
@@ -14,6 +15,7 @@ export const ActionTimeline = ({
   selectedActionIndex,
   onActionSelect,
   onGoToAction,
+  onClearActions,
 }: ActionTimelineProps) => {
   const selectedEntry =
     selectedActionIndex !== null ? actionHistory[selectedActionIndex] : null;
@@ -25,6 +27,7 @@ export const ActionTimeline = ({
         selectedActionIndex={selectedActionIndex}
         onActionSelect={onActionSelect}
         onGoToAction={onGoToAction}
+        onClearActions={onClearActions}
       />
 
       {selectedEntry ? (

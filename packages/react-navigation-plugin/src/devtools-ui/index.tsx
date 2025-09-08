@@ -61,6 +61,17 @@ export default function ReactNavigationPanel() {
     }
   };
 
+  const onClearActions = () => {
+    // Clear the action history
+    setActionHistory([]);
+    setSelectedActionIndex(null);
+
+    // Request initial state again
+    client?.send('init', {
+      type: 'init',
+    });
+  };
+
   const onLinkOpen = (url: string) => {
     client?.send('open-link', {
       type: 'open-link',
@@ -78,6 +89,7 @@ export default function ReactNavigationPanel() {
           selectedActionIndex={selectedActionIndex}
           onActionSelect={setSelectedActionIndex}
           onGoToAction={onGoToAction}
+          onClearActions={onClearActions}
         />
       ),
     },
