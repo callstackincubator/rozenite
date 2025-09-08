@@ -21,6 +21,8 @@ import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plu
 import { mmkvStorages } from './mmkv-storages';
 import { useRef } from 'react';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+import { BottomTabNavigator } from './navigation/BottomTabNavigator';
+import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -58,6 +60,17 @@ const Wrapper = () => {
           headerShown: false,
         }}
       />
+      <Stack.Screen name="BottomTabs" component={BottomTabNavigator} />
+      <Stack.Screen
+        name="ParameterDisplay"
+        component={ParameterDisplayScreen}
+        options={{
+          headerShown: true,
+          headerStyle: { backgroundColor: '#1a1a1a' },
+          headerTintColor: '#8232FF',
+          headerTitle: 'Parameter Display',
+        }}
+      />
     </Stack.Navigator>
   );
 };
@@ -72,6 +85,7 @@ const linking = {
       ReduxTest: 'redux',
       PerformanceMonitor: 'performance',
       Config: 'config',
+      BottomTabs: 'tabs',
     },
   },
 };
