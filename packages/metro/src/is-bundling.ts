@@ -11,6 +11,23 @@ export const isBundling = (projectRoot: string): boolean => {
     'react-native'
   );
 
+  // Special case: no exports
+  const expoEasBinRelativePath = 'eas-cli/bin/run';
+
+  // Check for Expo EAS bundling
+  if (command === 'build') {
+    if (
+      expoEasBinRelativePath &&
+      executablePath.endsWith(expoEasBinRelativePath)
+    ) {
+      return true;
+    }
+
+    if (executablePath.endsWith('node_modules/.bin/eas')) {
+      return true;
+    }
+  }
+
   // Check for Expo bundling
   if (command === 'export') {
     // Check direct binary path
