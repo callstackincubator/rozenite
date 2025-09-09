@@ -1,4 +1,3 @@
-import { NavigationAction, NavigationState } from '../../shared';
 import { ActionList, ActionWithState } from './ActionList';
 
 export type ActionSidebarProps = {

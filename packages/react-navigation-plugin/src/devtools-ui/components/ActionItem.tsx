@@ -1,4 +1,4 @@
-import { NavigationAction, NavigationState } from '../../shared';
+import { NavigationAction } from '../../shared';
 
 export type ActionItemProps = {
   action: NavigationAction;

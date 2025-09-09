@@ -39,7 +39,6 @@ export function useReactNavigationEvents(
         // Ignore any errors from the last promise
       })
       .then(async () => {
-        // eslint-disable-next-line promise/always-return
         if (data.stack) {
           let stack: string | undefined;
           // TODO: Symbolicate the stack again

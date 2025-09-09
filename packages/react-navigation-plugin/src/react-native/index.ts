@@ -37,7 +37,7 @@ export const useReactNavigationDevTools = ({
     const subscriptions: Subscription[] = [];
 
     subscriptions.push(
-      client.onMessage('init', (message) => {
+      client.onMessage('init', () => {
         client.send('initial-state', {
           type: 'initial-state',
           state: ref.current?.getRootState(),
