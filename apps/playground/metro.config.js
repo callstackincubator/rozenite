@@ -47,6 +47,7 @@ module.exports = withRozenite(
     // watchFolders: ["../../packages/expo-atlas-plugin"],
   }),
   {
+    enabled: true,
     enhanceMetroConfig: (config) =>
       withRozeniteExpoAtlasPlugin(withRozeniteReduxDevTools(config)),
   }

@@ -1,5 +1,6 @@
 import { type MetroConfig } from '@react-native/metro-config';
 import { initializeRozenite, type RozeniteConfig } from '@rozenite/middleware';
+import { logger } from '@rozenite/tools';
 import path from 'node:path';
 import { isBundling } from './is-bundling.js';
 
@@ -7,6 +8,12 @@ export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<
   RozeniteConfig,
   'projectRoot'
 > & {
+  /**
+   * Whether to enable Rozenite.
+   * If false, Rozenite will not be initialized and the config will be returned as is.
+   * @default false
+   */
+  enabled?: boolean;
   /**
    * Certain Rozenite plugins require Metro to be configured in a specific way.
    * This option allows you to modify the Metro config in a way that is safe to do when bundling.
@@ -23,7 +30,21 @@ export const withRozenite = async <T extends MetroConfig>(
   const resolvedConfig = await config;
   const projectRoot = resolvedConfig.projectRoot ?? process.cwd();
 
-  if (isBundling(projectRoot)) {
+  if (options.enabled === undefined) {
+    logger.info(
+      'Rozenite will no longer be enabled by default in the next version.'
+    );
+    logger.info(
+      'To continue using Rozenite, please set `enabled` in the options.'
+    );
+    logger.info('Remember to make it conditional to avoid bundling issues.');
+
+    if (isBundling(projectRoot)) {
+      return resolvedConfig;
+    }
+  }
+
+  if (options.enabled === false) {
     return resolvedConfig;
   }
 
