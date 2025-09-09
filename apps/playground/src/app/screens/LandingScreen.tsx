@@ -52,6 +52,13 @@ export const LandingScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
+              style={styles.navigationButton}
+              onPress={() => navigation.navigate('AsyncStorage' as never)}
+            >
+              <Text style={styles.buttonText}>AsyncStorage</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={styles.configButton}
               onPress={() => navigation.navigate('Config' as never)}
             >
