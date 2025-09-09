@@ -58,6 +58,17 @@ Monitor performance metrics in your React Native app with comprehensive real-tim
 - **Data Export**: Export performance data for analysis
 - **Production Safety**: Automatically disabled in production builds
 
+### [MMKV](./mmkv.md)
+
+Inspect and manage MMKV storage instances in your React Native app with comprehensive storage debugging capabilities. This plugin provides:
+
+- **Real-time Storage Inspection**: View all MMKV instances and their contents in real-time
+- **Multi-Instance Support**: Manage and inspect multiple MMKV instances simultaneously
+- **Data Type Detection**: Automatically detects and displays different data types (string, number, boolean, buffer)
+- **Search & Filter**: Quickly find specific keys with real-time search functionality
+- **Visual Data Representation**: Color-coded type indicators and formatted value display
+- **Data Management**: Add, edit, and delete entries directly from the DevTools interface
+
 ## Installing Plugins
 
 Plugins should be installed as development dependencies since they are only needed during development:
@@ -71,6 +82,8 @@ Plugins should be installed as development dependencies since they are only need
 <PackageManagerTabs command="install -D @rozenite/redux-devtools-plugin" />
 
 <PackageManagerTabs command="install -D @rozenite/performance-monitor-plugin" />
+
+<PackageManagerTabs command="install -D @rozenite/mmkv-plugin" />
 
 See the individual plugin documentation for complete installation instructions including hook setup.
 
@@ -88,4 +101,4 @@ Want to contribute to plugins or suggest new ones? Check out our [Plugin Develop
 
 ---
 
-**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md), [TanStack Query plugin](./tanstack-query.md), [Network Activity Inspector](./network-activity.md), [Redux DevTools plugin](./redux-devtools.md), or [Performance Monitor plugin](./performance-monitor.md).
+**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md), [TanStack Query plugin](./tanstack-query.md), [Network Activity Inspector](./network-activity.md), [Redux DevTools plugin](./redux-devtools.md), [Performance Monitor plugin](./performance-monitor.md), or [MMKV plugin](./mmkv.md).

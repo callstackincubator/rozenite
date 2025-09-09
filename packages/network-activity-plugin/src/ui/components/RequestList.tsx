@@ -154,8 +154,13 @@ const columns = [
   }),
   columnHelper.accessor('name', {
     header: 'Name',
-    cell: ({ getValue }) => (
-      <div className="flex-1 min-w-0 truncate">{getValue()}</div>
+    cell: ({ row, getValue }) => (
+      <div 
+        className="flex-1 min-w-0 truncate"
+        title={row.original.path}
+      >
+        {getValue()}
+      </div>
     ),
     sortingFn: 'alphanumeric',
   }),

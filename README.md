@@ -1,18 +1,29 @@
 ![rozenite-banner](https://www.rozenite.dev/rozenite-banner.jpg)
 
-### A comprehensive toolkit for creating, developing, and integrating custom plugins into React Native DevTools.
+### React Native DevTools Plugin Framework
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
-Rozenite is a complete ecosystem for extending React Native DevTools with custom functionality. It provides everything needed to build, develop, and integrate plugins - from CLI scaffolding tools to Metro bundler integration, isomorphic communication layers, and a robust framework for plugin orchestration.
+Rozenite brings plug-and-play panels to React Native DevTools. Install plugins, enable them, and start debugging in minutes — no extra windows, servers, or tabs. Works with Expo and bare React Native, across Metro and Re.Pack.
+
+![Plugin slideshow](https://rozenite.dev/plugin-slideshow.webp)
+
+## Features
+
+- **Plug-and-Play Panels**: Install plugins and they auto-appear in DevTools — start debugging in minutes.
+- **Unified DevTools Experience**: All panels live inside React Native DevTools — no extra windows, servers, or browser tabs.
+- **Real-Time Debugging**: Live updates for network requests, storage and performance as you use your app.
+- **Works With Your Setup**: Compatible with Expo and bare React Native projects. Supports Metro and Re.Pack based workflows.
+- **Production-Safe Controls**: Plugins are automatically disabled in production builds — no plugin code ships to your users.
+- **Easy to Build Your Own**: When you need something custom, create your own panel with type-safe, isomorphic APIs and great DX.
 
 ## Documentation
 
 The documentation is available at [rozenite.dev](https://rozenite.dev). You can also use the following links to jump to specific topics:
 
 - [Quick Start](https://rozenite.dev/docs/getting-started)
-- [About Rozenite](https://rozenite.dev/docs/introduction)
-- [Plugin Development](https://rozenite.dev/docs/plugin-development/plugin-development)
+- [Plugin Directory](https://rozenite.dev/plugin-directory)
+- [Plugin Development](https://rozenite.dev/docs/plugin-development/overview)
 
 ## Made with ❤️ at Callstack
 

@@ -6,6 +6,8 @@
 
 The Rozenite TanStack Query Plugin provides a seamless integration of TanStack Query DevTools into your React Native DevTools environment. It offers real-time query monitoring, cache management, and debugging capabilities, all within the familiar DevTools interface.
 
+![TanStack Query Plugin](https://rozenite.dev/tanstack-query-plugin.png)
+
 ## Features
 
 - **Query Monitoring**: Real-time monitoring of all queries and mutations

@@ -4,6 +4,7 @@ import {
   RepackRspackConfigAsyncFn,
   type RepackRspackConfigExport,
 } from '@callstack/repack';
+import { assertSupportedRePackVersion } from './version-check.js';
 
 const patchConfig = (
   config: RepackRspackConfig,
@@ -29,6 +30,8 @@ export const withRozenite = (
   config: RepackRspackConfigExport,
   rozeniteConfig: RozeniteRePackConfig = {}
 ): RepackRspackConfigAsyncFn => {
+  assertSupportedRePackVersion(process.cwd());
+
   return async (env) => {
     let resolvedConfig: RepackRspackConfig;
 

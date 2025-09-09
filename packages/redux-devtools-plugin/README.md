@@ -6,6 +6,8 @@
 
 The Rozenite Redux DevTools Plugin provides Redux state inspection and debugging capabilities within your React Native DevTools environment. It offers a partial Redux DevTools experience, including state inspection and action history (time travel and action dispatch are currently unavailable in remote mode).
 
+![Redux DevTools Plugin](https://rozenite.dev/redux-devtools-plugin.png)
+
 ## Features
 
 - **Redux State Inspection**: View and explore your Redux store state in real-time
@@ -36,6 +38,25 @@ For more detailed setup instructions, please refer to the [react-native-get-rand
 ### 2. Set up the Store Enhancer
 
 Add the Redux DevTools enhancer to your Redux store:
+
+#### For Redux Toolkit (Recommended)
+
+```typescript
+// store.ts
+import { configureStore } from '@reduxjs/toolkit';
+import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin';
+import rootReducer from './reducers';
+
+const store = configureStore({
+  reducer: rootReducer,
+  enhancers: (getDefaultEnhancers) =>
+    getDefaultEnhancers().concat(rozeniteDevToolsEnhancer()),
+});
+
+export default store;
+```
+
+#### For Classic Redux
 
 ```typescript
 // store.ts

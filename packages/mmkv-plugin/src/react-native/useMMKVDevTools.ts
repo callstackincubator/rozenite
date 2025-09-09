@@ -1,12 +1,26 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect } from 'react';
+import type { MMKV } from 'react-native-mmkv';
 import { MMKVEventMap } from '../shared/messaging';
-import { getMMKVContainer } from './mmkv-container';
-import { getMMKVEntry } from './mmkv-entry';
+import { getMMKVView } from './mmkv-view';
 
-const mmkvContainer = getMMKVContainer();
+export type MMKVDevToolsOptions = {
+  /**
+   * The MMKV instances to monitor.
+   */
+  storages: MMKV[];
 
-export const useMMKVDevTools = () => {
+  /**
+   * Optional RegExp to blacklist properties from being shown in DevTools.
+   * The pattern is matched against storageId:key format.
+   */
+  blacklist?: RegExp;
+};
+
+export const useMMKVDevTools = ({
+  storages,
+  blacklist,
+}: MMKVDevToolsOptions) => {
   const client = useRozeniteDevToolsClient<MMKVEventMap>({
     pluginId: '@rozenite/mmkv-plugin',
   });
@@ -16,92 +30,90 @@ export const useMMKVDevTools = () => {
       return;
     }
 
-    const instanceCreatedSubscription = mmkvContainer.on(
-      'instance-created',
-      () => {
-        client.send('host-instances', mmkvContainer.getInstanceIds());
-      }
-    );
+    const views = storages.map((storage) => getMMKVView(storage, blacklist));
 
-    const instanceUpdatedSubscription = mmkvContainer.on(
-      'value-changed',
-      (instanceId, key) => {
-        const instance = mmkvContainer.getInstance(instanceId);
+    views.forEach((view) => {
+      client.send('snapshot', {
+        type: 'snapshot',
+        id: view.getId(),
+        entries: view.getAllEntries(),
+      });
+    });
 
-        if (!instance) {
-          console.warn('MMKV instance not found:', instanceId);
+    const subscriptions = [
+      ...views.map((view) => {
+        return view.onChange((key) => {
+          const entry = view.get(key);
+
+          if (!entry) {
+            client.send('delete-entry', {
+              type: 'delete-entry',
+              id: view.getId(),
+              key,
+            });
+
+            return;
+          }
+
+          client.send('set-entry', {
+            type: 'set-entry',
+            id: view.getId(),
+            entry,
+          });
+        });
+      }),
+      client.onMessage('set-entry', ({ id, entry }) => {
+        const view = views.find((view) => view.getId() === id);
+
+        if (!view) {
+          console.warn('MMKV view not found:', entry.key);
           return;
         }
 
-        client.send('host-entry-updated', {
-          instanceId: instanceId,
-          key,
-          value: instance.getString(key) ?? '',
+        view.set(entry.key, entry.value);
+      }),
+      client.onMessage('delete-entry', ({ id, key }) => {
+        const view = views.find((view) => view.getId() === id);
+
+        if (!view) {
+          console.warn('MMKV view not found:', key);
+          return;
+        }
+
+        view.delete(key);
+      }),
+      client.onMessage('get-snapshot', ({ id }) => {
+        if (id === 'all') {
+          views.forEach((view) => {
+            client.send('snapshot', {
+              type: 'snapshot',
+              id: view.getId(),
+              entries: view.getAllEntries(),
+            });
+          });
+
+          return;
+        }
+
+        const view = views.find((view) => view.getId() === id);
+
+        if (!view) {
+          console.warn('MMKV view not found:', id);
+          return;
+        }
+
+        client.send('snapshot', {
+          type: 'snapshot',
+          id: view.getId(),
+          entries: view.getAllEntries(),
         });
-      }
-    );
+      }),
+    ];
 
     return () => {
-      instanceCreatedSubscription();
-      instanceUpdatedSubscription();
+      subscriptions.forEach((subscription) => subscription.remove());
     };
-  }, [client]);
-
-  useEffect(() => {
-    if (!client) {
-      return;
-    }
-
-    const getAllEntriesSubscription = client.onMessage(
-      'guest-get-entries',
-      (event) => {
-        const { instanceId } = event;
-        const instance = mmkvContainer.getInstance(instanceId);
-
-        if (!instance) {
-          console.warn('MMKV instance not found:', instanceId);
-          return;
-        }
-
-        const entries = instance
-          .getAllKeys()
-          .map((key) => getMMKVEntry(instance, key));
-
-        client.send('host-entries', {
-          instanceId,
-          entries,
-        });
-      }
-    );
-
-    const getInstancesSubscription = client.onMessage(
-      'guest-get-instances',
-      () => {
-        client.send('host-instances', mmkvContainer.getInstanceIds());
-      }
-    );
-
-    const updateEntrySubscription = client.onMessage(
-      'guest-update-entry',
-      (event) => {
-        const { instanceId, key, value } = event;
-        const instance = mmkvContainer.getInstance(instanceId);
-
-        if (!instance) {
-          console.warn('MMKV instance not found:', instanceId);
-          return;
-        }
-
-        instance.set(key, value);
-      }
-    );
-
-    return () => {
-      getAllEntriesSubscription.remove();
-      getInstancesSubscription.remove();
-      updateEntrySubscription.remove();
-    };
-  }, [client]);
+  }, [client, storages, blacklist]);
 
   return client;
 };

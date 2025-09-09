@@ -1,3 +1,30 @@
+## 1.0.0-alpha.12 (2025-08-25)
+
+### 🩹 Fixes
+
+- **@rozenite/metro:** It's now possible to set the log level of the internal Rozenite logger, which will propagate to all official plugins and be applied whenever it is possible to set the logging level for third-party libraries. ([#77](https://github.com/callstackincubator/rozenite/pull/77))
+- **@rozenite/middleware:** It's now possible to set the log level of the internal Rozenite logger, which will propagate to all official plugins and be applied whenever it is possible to set the logging level for third-party libraries. ([#77](https://github.com/callstackincubator/rozenite/pull/77))
+- **@rozenite/mmkv-plugin:** MMKV plugin is now ready to be publicly available. It was updated to support all types of data, including binary blobs. You can also blacklist certain properties, if they for example, contain sensitive data or are huge and may harm performance. ([#80](https://github.com/callstackincubator/rozenite/pull/80))
+- **@rozenite/network-activity-plugin:** Enhanced request inspection in Network Activity Plugin by displaying query parameters in a section within the Request tab. ([#58](https://github.com/callstackincubator/rozenite/pull/58))
+- **@rozenite/network-activity-plugin:** Rewrites the cookie parser to properly handle React Native specific header logic and adds support for displaying multiple header values when they are arrays. The cookie parser now correctly parses Set-Cookie headers according to React Native's networking behavior, while the Headers tab can now display multiple values for headers that contain array data, improving the debugging experience for network requests with complex header structures. ([#61](https://github.com/callstackincubator/rozenite/pull/61))
+- **@rozenite/network-activity-plugin:** Enhanced network activity plugin to properly handle JSON response types for both size calculation and body extraction. Added accurate UTF-8 byte measurements for all text-based responses. ([#69](https://github.com/callstackincubator/rozenite/pull/69))
+- **@rozenite/network-activity-plugin:** You can now disable specific types of inspectors to ignore certain traffic. For example, if you don't want to monitor WebSockets, you can simply turn off the WebSocket inspector. ([#73](https://github.com/callstackincubator/rozenite/pull/73))
+- **@rozenite/network-activity-plugin:** You can now view the full request path by hovering over the 'Name' cell. ([#80](https://github.com/callstackincubator/rozenite/pull/80))
+- **@rozenite/network-activity-plugin:** This change addresses an issue where network responses with malformed or complex Content-Type headers (e.g., "application/json,text/plain,_/_" or "application/json; charset=utf-8") were not correctly identified as JSON. Previously, the system relied on an exact match for "application/json", leading to these responses being incorrectly displayed as binary content. ([#72](https://github.com/callstackincubator/rozenite/pull/72))
+
+  By updating the content type checks to use `.startsWith('application/json')` and similar for other types, the plugin can now correctly parse and display JSON content. This change improves the debugging experience for real-world applications that may send non-standard Content-Type headers, bringing the behavior in line with other robust network logging tools like Chrome's network inspector.
+- **@rozenite/plugin-bridge:** The useRozeniteDevToolsClient hook is reinitialized during the hot reload of the host component, and a new client should be created at that point. However, due to the persistent client cache, the previous client was reused instead. The issue arose because the useEffect cleanup function disposes of the client. When the same client was reused, no messages were received. ([#73](https://github.com/callstackincubator/rozenite/pull/73))
+- **@rozenite/redux-devtools-plugin:** It's now possible to set the log level of the internal Rozenite logger, which will propagate to all official plugins and be applied whenever it is possible to set the logging level for third-party libraries. ([#77](https://github.com/callstackincubator/rozenite/pull/77))
+- **@rozenite/repack:** It's now possible to set the log level of the internal Rozenite logger, which will propagate to all official plugins and be applied whenever it is possible to set the logging level for third-party libraries. ([#77](https://github.com/callstackincubator/rozenite/pull/77))
+- **@rozenite/runtime:** Implements saving the currently selected panel in DevTools to automatically switch to the panel when opening DevTools again. ([#60](https://github.com/callstackincubator/rozenite/pull/60))
+- **rozenite:** The new 'init' command can now be used to bootstrap an existing project by installing the correct package according to the bundler used and making the necessary modifications to the configuration. ([#76](https://github.com/callstackincubator/rozenite/pull/76))
+
+### ❤️ Thank You
+
+- Aliff Azfar @aliffazfar
+- Nepein Andrey @NepeinAV
+- Szymon Chmal
+
 ## 1.0.0-alpha.11 (2025-08-14)
 
 ### 🩹 Fixes

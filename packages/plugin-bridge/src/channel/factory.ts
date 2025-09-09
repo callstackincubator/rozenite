@@ -13,6 +13,7 @@ export const getChannel = async (): Promise<Channel> => {
 
   const isPanel = '__ROZENITE_PANEL__' in window;
   const channelPromise = isPanel ? getPanelChannel() : getCdpChannel();
+  channel = channelPromise;
 
   try {
     const instance = await channelPromise;

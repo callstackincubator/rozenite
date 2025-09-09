@@ -11,6 +11,8 @@ export const withRozeniteReduxDevTools = <
     setupWebSocketRelay({
       hostname: 'localhost',
       port: REDUX_DEVTOOLS_PORT,
+      // This environment variable is set by Rozenite middleware.
+      logLevel: process.env.ROZENITE_LOG_LEVEL,
     });
   });
 

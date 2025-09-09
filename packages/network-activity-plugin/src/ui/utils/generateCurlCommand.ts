@@ -1,4 +1,5 @@
-import { RequestPostData } from '../../shared/client';
+import { HttpHeaders, RequestPostData } from '../../shared/client';
+import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
 import { escapeShellArg } from './escapeShellArg';
 
 const BASE_TAB_INDENT = 2; // Number of spaces for indentation
@@ -28,10 +29,7 @@ function addHttpMethodToCurl(curlParts: string[], method: string): void {
   }
 }
 
-function addHeadersToCurl(
-  curlParts: string[],
-  headers: Record<string, string>
-): void {
+function addHeadersToCurl(curlParts: string[], headers: HttpHeaders): void {
   Object.entries(headers).forEach(([key, value]) => {
     addCurlParam(curlParts, '-H', escapeShellArg(`${key}: ${value}`));
   });
@@ -65,13 +63,12 @@ function addBodyToCurl(curlParts: string[], postData: RequestPostData): void {
   addCurlParam(curlParts, '--data-raw', escapeShellArg(stringifyData(value)));
 }
 
-export function generateCurlCommand(request: {
-  method: string;
-  url: string;
-  headers?: Record<string, string>;
-  postData?: RequestPostData;
-}): string {
-  const { method, url, headers = {}, postData } = request;
+export function generateCurlCommand(
+  request: HttpNetworkEntry | SSENetworkEntry
+) {
+  const { method, url, headers = {}, body } = request.request;
+
+  const postData = body?.data;
 
   const curlParts: string[] = [`curl ${escapeShellArg(url)}`];
 

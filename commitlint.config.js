@@ -20,6 +20,7 @@ export default {
         'middleware',
         'repack',
         'performance-monitor-plugin',
+        'tools',
         '',
       ],
     ],

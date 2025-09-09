@@ -2,12 +2,6 @@ import { getChannel } from './channel/factory.js';
 import { getDevToolsMessage } from './message';
 import { Subscription } from './types';
 
-const clients = new Map<
-  string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Needed for TypeScript to be happy :)
-  Promise<RozeniteDevToolsClient<any>> | RozeniteDevToolsClient<any>
->();
-
 type MessageListener = (payload: unknown) => void;
 
 export type RozeniteDevToolsClient<
@@ -91,18 +85,5 @@ export const getRozeniteDevToolsClient = async <
 >(
   pluginId: string
 ): Promise<RozeniteDevToolsClient<TEventMap>> => {
-  const existingClient = clients.get(pluginId);
-
-  if (existingClient != null) {
-    return existingClient as
-      | Promise<RozeniteDevToolsClient<TEventMap>>
-      | RozeniteDevToolsClient<TEventMap>;
-  }
-
-  const clientPromise = createRozeniteDevToolsClient<TEventMap>(pluginId);
-  clients.set(pluginId, clientPromise);
-  const client = await clientPromise;
-  clients.set(pluginId, client);
-
-  return client;
+  return createRozeniteDevToolsClient<TEventMap>(pluginId);
 };

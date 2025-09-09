@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/middleware",
-  "version": "1.0.0-alpha.11",
+  "version": "1.0.0-alpha.12",
   "description": "Middleware for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",
@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@rozenite/runtime": "workspace:*",
+    "@rozenite/tools": "workspace:*",
     "express": "^5.1.0",
     "semver": "^7.7.2",
     "serve-static": "^2.2.0",

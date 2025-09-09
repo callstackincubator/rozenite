@@ -12,7 +12,31 @@ If you're already familiar with JavaScript, React and React Native, then you'll 
 
 ## Installation
 
-### Choose Your Bundler
+### Automatic Installation (Recommended)
+
+The easiest way to get started is with the `rozenite init` command. This command will automatically install the necessary packages and make the required configuration changes for your project.
+
+<PackageManagerTabs
+  command={{
+    npm: 'npx rozenite@latest init',
+    yarn: 'yarn dlx rozenite@latest init',
+    pnpm: 'pnpm dlx rozenite@latest init',
+    bun: 'bunx rozenite@latest init',
+  }}
+/>
+
+This command will:
+
+- Detect your bundler (Metro or Re.Pack)
+- Install the appropriate Rozenite package
+- Modify your bundler configuration automatically
+- Set up plugin auto-discovery
+
+If the automatic installation fails or you prefer to configure manually, follow the manual installation steps below.
+
+### Manual Installation
+
+#### Choose Your Bundler
 
 Rozenite supports both Metro and Re.Pack bundlers. Choose the package that matches your setup:
 
@@ -30,7 +54,7 @@ Rozenite supports both Metro and Re.Pack bundlers. Choose the package that match
 
 To enable Rozenite's auto-discovery and plugin system with Metro, you need to modify your Metro configuration. Rozenite will automatically discover and enable all installed plugins.
 
-#### Basic Configuration
+##### Basic Configuration
 
 Update your `metro.config.js` file:
 
@@ -47,7 +71,7 @@ const customConfig = {
 module.exports = withRozenite(mergeConfig(defaultConfig, customConfig));
 ```
 
-#### Advanced Configuration
+##### Advanced Configuration
 
 If you're using additional Metro plugins or configurations:
 

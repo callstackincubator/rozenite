@@ -6,6 +6,8 @@
 
 The Rozenite Performance Monitor Plugin offers comprehensive real-time monitoring of React Native performance metrics within your DevTools environment. It's based on the `react-native-performance` library and tracks performance marks, measures, and metrics to help you identify bottlenecks and optimize your app's performance. Any marks, measures, or metrics you emit using the `react-native-performance` library will automatically appear in the DevTools interface.
 
+![Performance Monitor Plugin](https://rozenite.dev/performance-monitor-plugin.png)
+
 ## Features
 
 - **Real-time Performance Monitoring**: Live tracking of performance marks, measures, and metrics

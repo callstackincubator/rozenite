@@ -6,6 +6,8 @@
 
 The Rozenite Network Activity Plugin provides real-time network request monitoring, detailed request/response inspection within your React Native DevTools environment. It offers comprehensive network debugging capabilities similar to browser DevTools Network panel.
 
+![Network Activity Plugin](https://rozenite.dev/network-activity-plugin.png)
+
 ## Features
 
 - **Real-time Network Monitoring**: Track all HTTP/HTTPS requests in real-time
