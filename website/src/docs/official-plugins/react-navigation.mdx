@@ -1,0 +1,68 @@
+import { PackageManagerTabs } from 'rspress/theme';
+
+# React Navigation Plugin
+
+![](/react-navigation-plugin.png)
+
+The React Navigation plugin provides comprehensive navigation debugging and inspection for React Navigation v7, offering real-time action monitoring, state inspection, and deep linking testing directly within your React Native DevTools environment.
+
+## What is React Navigation Plugin?
+
+The React Navigation plugin is a powerful debugging tool that helps you inspect and debug navigation in your React Native application. It provides:
+
+- **Action Timeline**: Track all navigation actions in real-time with detailed history
+- **State Inspection**: View and analyze navigation state at any point in time
+- **Time Travel Debugging**: Jump back to any previous navigation state
+- **Deep Link Testing**: Test and validate deep links directly from DevTools
+- **State Reset**: Reset navigation state to any previous point in the timeline
+- **Real-time Updates**: See navigation changes as they happen in your app
+
+## Installation
+
+Install the React Navigation plugin as a development dependency:
+
+<PackageManagerTabs command="install -D @rozenite/react-navigation-plugin" />
+
+Add the DevTools hook to your React Native app to enable navigation debugging:
+
+```typescript title="App.tsx"
+import React, { useRef } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+
+function App() {
+  const navigationRef = useRef(null);
+
+  // Enable React Navigation DevTools in development
+  useReactNavigationDevTools({ ref: navigationRef });
+
+  return (
+    <NavigationContainer ref={navigationRef}>
+      <YourAppNavigator />
+    </NavigationContainer>
+  );
+}
+```
+
+## Usage
+
+Once configured, the React Navigation plugin will automatically appear in your React Native DevTools sidebar as "React Navigation". Click on it to access two main features:
+
+## Contributing
+
+The React Navigation plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
+
+## Support
+
+If you encounter issues with the React Navigation plugin:
+
+1. **Check Documentation**: Review this guide for common solutions
+2. **Verify Setup**: Ensure React Navigation v7 is properly installed and configured
+3. **Check Ref**: Verify that you're passing the NavigationContainer ref correctly
+4. **Search Issues**: Look for similar issues in the repository
+5. **Create Issue**: Report bugs or request features
+6. **Community**: Reach out to the Rozenite community for help
+
+---
+
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md).

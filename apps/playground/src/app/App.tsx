@@ -1,5 +1,8 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  NavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LandingScreen } from './screens/LandingScreen';
 import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
@@ -16,6 +19,10 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { mmkvStorages } from './mmkv-storages';
+import { useRef } from 'react';
+import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+import { BottomTabNavigator } from './navigation/BottomTabNavigator';
+import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 
 const queryClient = new QueryClient();
@@ -55,16 +62,48 @@ const Wrapper = () => {
           headerShown: false,
         }}
       />
+      <Stack.Screen name="BottomTabs" component={BottomTabNavigator} />
+      <Stack.Screen
+        name="ParameterDisplay"
+        component={ParameterDisplayScreen}
+        options={{
+          headerShown: true,
+          headerStyle: { backgroundColor: '#1a1a1a' },
+          headerTintColor: '#8232FF',
+          headerTitle: 'Parameter Display',
+        }}
+      />
     </Stack.Navigator>
   );
 };
 
+const linking = {
+  prefixes: ['playground://'],
+  config: {
+    screens: {
+      Landing: '',
+      MMKVPlugin: 'mmkv',
+      NetworkTest: 'network',
+      ReduxTest: 'redux',
+      PerformanceMonitor: 'performance',
+      Config: 'config',
+      BottomTabs: 'tabs',
+    },
+  },
+};
+
 export const App = () => {
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
+
+  useReactNavigationDevTools({
+    ref: navigationRef,
+  });
+
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider style={{ backgroundColor: '#0a0a0a' }}>
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef} linking={linking}>
             <Wrapper />
           </NavigationContainer>
         </SafeAreaProvider>

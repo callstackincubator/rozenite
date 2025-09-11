@@ -16,6 +16,11 @@
   },
   {
     "type": "file",
+    "name": "react-navigation",
+    "label": "React Navigation"
+  },
+  {
+    "type": "file",
     "name": "network-activity",
     "label": "Network Activity"
   },
