@@ -22,13 +22,14 @@ export type SSEInspector = {
 export const getSSEInspector = (): SSEInspector => {
   const eventEmitter = createNanoEvents<NanoEventsMap>();
 
-  const getRequestId = (eventSource: EventSourceWithInternals): string => {
+  const getRequestId = (
+    eventSource: EventSourceWithInternals
+  ): string | null => {
     const requestId = eventSource._xhr?._rozeniteRequestId;
 
     if (!requestId) {
-      throw new Error(
-        'No request ID found for EventSource. This should never happen!'
-      );
+      // It means that the EventSource was created before the inspector was enabled.
+      return null;
     }
 
     return requestId;
@@ -39,6 +40,11 @@ export const getSSEInspector = (): SSEInspector => {
       SSEInterceptor.setOpenEventCallback((_, eventSource) => {
         const sseEventSource = eventSource as EventSourceWithInternals;
         const requestId = getRequestId(sseEventSource);
+
+        if (!requestId) {
+          return;
+        }
+
         const sseXhr = sseEventSource._xhr as XMLHttpRequest;
 
         const event: SSEEvent = {
@@ -62,6 +68,10 @@ export const getSSEInspector = (): SSEInspector => {
         const sseEventSource = eventSource as EventSourceWithInternals;
         const requestId = getRequestId(sseEventSource);
 
+        if (!requestId) {
+          return;
+        }
+
         const event: SSEEvent = {
           type: 'sse-message',
           requestId,
@@ -77,6 +87,10 @@ export const getSSEInspector = (): SSEInspector => {
       SSEInterceptor.setErrorCallback((errorEvent, eventSource) => {
         const sseEventSource = eventSource as EventSourceWithInternals;
         const requestId = getRequestId(sseEventSource);
+
+        if (!requestId) {
+          return;
+        }
 
         const event: SSEEvent = {
           type: 'sse-error',
@@ -94,6 +108,10 @@ export const getSSEInspector = (): SSEInspector => {
       SSEInterceptor.setCloseCallback((_, eventSource) => {
         const sseEventSource = eventSource as EventSourceWithInternals;
         const requestId = getRequestId(sseEventSource);
+
+        if (!requestId) {
+          return;
+        }
 
         const event: SSEEvent = {
           type: 'sse-close',
