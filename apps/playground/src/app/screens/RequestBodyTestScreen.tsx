@@ -12,10 +12,11 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '../navigation/types';
 
-// API service for testing different request body types using httpbin.org (mirrors request data)
+const MIRROR_API = 'https://httpbun.com/post';
+
 const requestBodyApi = {
   testStringBody: async (data: string): Promise<any> => {
-    const response = await fetch('https://httpbin.org/post', {
+    const response = await fetch(MIRROR_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain',
@@ -32,7 +33,7 @@ const requestBodyApi = {
   },
 
   testJsonBody: async (data: any): Promise<any> => {
-    const response = await fetch('https://httpbin.org/post', {
+    const response = await fetch(MIRROR_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -54,7 +55,7 @@ const requestBodyApi = {
       formData.append(key, value);
     });
 
-    const response = await fetch('https://httpbin.org/post', {
+    const response = await fetch(MIRROR_API, {
       method: 'POST',
       headers: {
         'X-Rozenite-Test': 'true',
@@ -70,7 +71,7 @@ const requestBodyApi = {
   },
 
   testBinaryBody: async (data: Uint8Array): Promise<any> => {
-    const response = await fetch('https://httpbin.org/post', {
+    const response = await fetch(MIRROR_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream',
@@ -208,7 +209,7 @@ export const RequestBodyTestScreen: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.title}>Request Body Test</Text>
         <Text style={styles.subtitle}>
-          Test different request body types using httpbin.org
+          Test different request body types using {MIRROR_API}
         </Text>
       </View>
 
