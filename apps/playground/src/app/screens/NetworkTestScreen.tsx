@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import EventSource from 'react-native-sse';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { RootStackParamList } from '../navigation/types';
 
 // Real API service using JSONPlaceholder
 const api = {
@@ -108,14 +110,17 @@ const api = {
 
   // Create a new post
   createPost: async (postData: Omit<Post, 'id'>): Promise<Post> => {
-    const response = await fetch('https://jsonplaceholder.typicode.com/posts?someParam=value', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Rozenite-Test': 'true',
-      },
-      body: JSON.stringify(postData),
-    });
+    const response = await fetch(
+      'https://jsonplaceholder.typicode.com/posts?someParam=value',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Rozenite-Test': 'true',
+        },
+        body: JSON.stringify(postData),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -231,8 +236,16 @@ const useCreatePostMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ postData, useFormData }: { postData: Omit<Post, 'id'>; useFormData: boolean }) => {
-      return useFormData ? api.createPostWithFormData(postData) : api.createPost(postData);
+    mutationFn: ({
+      postData,
+      useFormData,
+    }: {
+      postData: Omit<Post, 'id'>;
+      useFormData: boolean;
+    }) => {
+      return useFormData
+        ? api.createPostWithFormData(postData)
+        : api.createPost(postData);
     },
     onSuccess: () => {
       // Invalidate and refetch posts query to show the new post
@@ -404,28 +417,6 @@ const HTTPTestComponent: React.FC = () => {
         ))}
       </View>
 
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Status</Text>
-          <Text
-            style={[
-              styles.statValue,
-              { color: isLoading ? '#FFA500' : error ? '#FF4444' : '#4CAF50' },
-            ]}
-          >
-            {isLoading ? 'Loading...' : error ? 'Error' : 'Success'}
-          </Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Count</Text>
-          <Text style={styles.statValue}>{data?.length || 0}</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>API</Text>
-          <Text style={styles.statValue}>{activeTab}</Text>
-        </View>
-      </View>
-
       {activeTab === 'create' ? (
         <View style={styles.createForm}>
           <Text style={styles.formTitle}>Create New Post</Text>
@@ -460,7 +451,12 @@ const HTTPTestComponent: React.FC = () => {
               style={styles.checkbox}
               onPress={() => setUseFormData(!useFormData)}
             >
-              <View style={[styles.checkboxBox, useFormData && styles.checkboxBoxChecked]}>
+              <View
+                style={[
+                  styles.checkboxBox,
+                  useFormData && styles.checkboxBoxChecked,
+                ]}
+              >
                 {useFormData && <Text style={styles.checkboxCheckmark}>✓</Text>}
               </View>
               <Text style={styles.checkboxLabel}>Use FormData</Text>
@@ -1011,8 +1007,9 @@ const SSETestComponent: React.FC = () => {
 };
 
 export const NetworkTestScreen: React.FC = () => {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [activeTest, setActiveTest] = React.useState<
-    'http' | 'websocket' | 'sse'
+    'http' | 'websocket' | 'sse' | 'request-body'
   >('http');
 
   const renderHeader = () => (
@@ -1021,6 +1018,13 @@ export const NetworkTestScreen: React.FC = () => {
       <Text style={styles.subtitle}>
         Testing HTTP, WebSocket, and SSE connections
       </Text>
+
+      <TouchableOpacity
+        style={styles.refetchButton}
+        onPress={() => navigation.navigate('RequestBodyTest')}
+      >
+        <Text style={styles.refetchButtonText}>Request Body Test</Text>
+      </TouchableOpacity>
 
       <View style={styles.mainTabContainer}>
         {[
@@ -1117,7 +1121,6 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingTop: 40,
   },
   title: {
     fontSize: 28,
@@ -1153,24 +1156,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   tabTextActive: {
-    color: '#ffffff',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    gap: 15,
-  },
-  statItem: {
-    flex: 1,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666666',
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: '600',
     color: '#ffffff',
   },
   refetchButton: {
@@ -1511,7 +1496,7 @@ const styles = StyleSheet.create({
   },
   mainTabContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginTop: 12,
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
     padding: 4,
@@ -1533,5 +1518,73 @@ const styles = StyleSheet.create({
   },
   mainTabTextActive: {
     color: '#ffffff',
+  },
+  formDataRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  formDataKey: {
+    flex: 1,
+    minHeight: 40,
+  },
+  formDataValue: {
+    flex: 2,
+    minHeight: 40,
+  },
+  removeFieldButton: {
+    backgroundColor: '#FF4444',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeFieldButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  addFieldButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  addFieldButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  responseContainer: {
+    marginTop: 16,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 16,
+  },
+  responseTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 12,
+  },
+  responseScrollView: {
+    maxHeight: 300,
+    backgroundColor: '#0a0a0a',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  responseText: {
+    fontSize: 12,
+    color: '#a0a0a0',
+    fontFamily: 'monospace',
+    padding: 12,
+    lineHeight: 16,
   },
 });

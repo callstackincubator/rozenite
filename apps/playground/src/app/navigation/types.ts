@@ -4,6 +4,7 @@ export type RootStackParamList = {
   Landing: undefined;
   MMKVPlugin: undefined;
   NetworkTest: undefined;
+  RequestBodyTest: undefined;
   ReduxTest: undefined;
   PerformanceMonitor: undefined;
   Config: undefined;
