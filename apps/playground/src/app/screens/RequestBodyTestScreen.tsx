@@ -136,33 +136,37 @@ export const RequestBodyTestScreen: React.FC = () => {
     setRequestBodyResponse(null); // Clear previous response
 
     switch (requestBodyType) {
-      case 'string':
+      case 'string': {
         requestBodyMutations.stringTest.mutate(stringBodyData, {
           onSuccess: (data) => setRequestBodyResponse(data),
         });
         break;
-      case 'json':
+      }
+      case 'json': {
         try {
           const parsedJson = JSON.parse(jsonBodyData);
           requestBodyMutations.jsonTest.mutate(parsedJson, {
             onSuccess: (data) => setRequestBodyResponse(data),
           });
-        } catch (error) {
+        } catch {
           setRequestBodyResponse({ error: 'Invalid JSON format' });
         }
         break;
-      case 'formdata':
+      }
+      case 'formdata': {
         requestBodyMutations.formDataTest.mutate(formDataFields, {
           onSuccess: (data) => setRequestBodyResponse(data),
         });
         break;
-      case 'binary':
+      }
+      case 'binary': {
         const encoder = new TextEncoder();
         const binaryArray = encoder.encode(binaryData);
         requestBodyMutations.binaryTest.mutate(binaryArray, {
           onSuccess: (data) => setRequestBodyResponse(data),
         });
         break;
+      }
     }
   };
 
