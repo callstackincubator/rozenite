@@ -1,7 +1,6 @@
 import { initializeRozenite, RozeniteConfig } from '@rozenite/middleware';
 import {
   RepackRspackConfig,
-  RepackRspackConfigAsyncFn,
   type RepackRspackConfigExport,
 } from '@callstack/repack';
 import { assertSupportedRePackVersion } from './version-check.js';
@@ -24,20 +23,30 @@ const patchConfig = (
   };
 };
 
-export type RozeniteRePackConfig = Omit<RozeniteConfig, 'projectRoot'>;
+export type RozeniteRePackConfig = {
+  /**
+   * Whether to enable Rozenite.
+   * If false, Rozenite will not be initialized and the config will be returned as is.
+   * @default false
+   */
+  enabled?: boolean;
+} & Omit<RozeniteConfig, 'projectRoot'>;
 
 export const withRozenite = (
   config: RepackRspackConfigExport,
   rozeniteConfig: RozeniteRePackConfig = {}
-): RepackRspackConfigAsyncFn => {
+): RepackRspackConfigExport => {
   assertSupportedRePackVersion(process.cwd());
+
+  if (!rozeniteConfig.enabled) {
+    return config;
+  }
 
   return async (env) => {
     let resolvedConfig: RepackRspackConfig;
 
     if (typeof config === 'function') {
-      // TODO: This needs to be fixed in Re.Pack
-      resolvedConfig = (await config(env)) as RepackRspackConfig;
+      resolvedConfig = await config(env);
     } else {
       resolvedConfig = config;
     }
