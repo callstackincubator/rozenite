@@ -252,7 +252,7 @@ export const wrapConfigFile = async (
       const exportContent = exportDefaultObjectMatch[2];
       sourceCode = sourceCode.replace(
         exportDefaultObjectMatch[0],
-        `${exportDefaultObjectMatch[1]}${importName}(${exportContent});`
+        `${exportDefaultObjectMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`
       );
     } else {
       // Pattern 2: export default someFunction()
@@ -262,7 +262,7 @@ export const wrapConfigFile = async (
         const exportContent = exportDefaultCallMatch[2];
         sourceCode = sourceCode.replace(
           exportDefaultCallMatch[0],
-          `${exportDefaultCallMatch[1]}${importName}(${exportContent});`
+          `${exportDefaultCallMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`
         );
       } else {
         // Pattern 3: module.exports = { ... }
@@ -275,7 +275,7 @@ export const wrapConfigFile = async (
           const exportContent = moduleExportsObjectMatch[2];
           sourceCode = sourceCode.replace(
             moduleExportsObjectMatch[0],
-            `${moduleExportsObjectMatch[1]}${importName}(${exportContent});`
+            `${moduleExportsObjectMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`
           );
         } else {
           // Pattern 4: module.exports = someFunction()
@@ -288,7 +288,7 @@ export const wrapConfigFile = async (
             const exportContent = moduleExportsCallMatch[2];
             sourceCode = sourceCode.replace(
               moduleExportsCallMatch[0],
-              `${moduleExportsCallMatch[1]}${importName}(${exportContent});`
+              `${moduleExportsCallMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`
             );
           }
         }
