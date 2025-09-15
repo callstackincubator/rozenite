@@ -50,9 +50,34 @@ Rozenite supports both Metro and Re.Pack bundlers. Choose the package that match
 
 ## Configuration
 
+Rozenite integrates with your bundler configuration (Metro or Re.Pack) and requires explicit enablement through the `enabled` property. This section covers how to configure Rozenite for both bundlers.
+
+:::warning Manual Enablement Required
+Rozenite is disabled by default and must be explicitly enabled by providing the `enabled` configuration property in your bundler config. Without this property, Rozenite will not load any plugins or provide debugging functionality.
+:::
+
 ### Metro Configuration
 
-To enable Rozenite's auto-discovery and plugin system with Metro, you need to modify your Metro configuration. Rozenite will automatically discover and enable all installed plugins.
+To enable Rozenite's auto-discovery and plugin system with Metro, you need to modify your Metro configuration and **explicitly set the `enabled` property**. Rozenite will automatically discover and enable all installed plugins when enabled.
+
+**Important**: You must manually set the `enabled` property to `true` (or a condition that evaluates to `true`) for Rozenite to work. This ensures Rozenite only runs when you want it to.
+
+The most common pattern is to derive this from an environment variable:
+
+```bash
+# Enable Rozenite in development
+WITH_ROZENITE=true npm start
+
+# Or disable it
+WITH_ROZENITE=false npm start
+```
+
+This approach provides several benefits:
+
+- **Production Safety**: Rozenite is automatically disabled in production builds
+- **Team Flexibility**: Different team members can enable/disable Rozenite as needed
+- **CI/CD Control**: Build systems can control when Rozenite is active
+- **Performance**: Disable Rozenite when not needed to reduce overhead
 
 ##### Basic Configuration
 
@@ -68,7 +93,9 @@ const customConfig = {
   // Your existing Metro configuration
 };
 
-module.exports = withRozenite(mergeConfig(defaultConfig, customConfig));
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  enabled: process.env.WITH_ROZENITE === 'true', // Required: Rozenite is disabled by default
+});
 ```
 
 ##### Advanced Configuration
@@ -87,13 +114,18 @@ const customConfig = {
 };
 
 module.exports = withRozenite(
-  withNxMetro(mergeConfig(defaultConfig, customConfig))
+  withNxMetro(mergeConfig(defaultConfig, customConfig)),
+  {
+    enabled: process.env.WITH_ROZENITE === 'true',
+  }
 );
 ```
 
 ### Re.Pack Configuration
 
 To enable Rozenite's auto-discovery and plugin system with Re.Pack, you need to modify your Re.Pack configuration. Rozenite integrates seamlessly with Re.Pack's DevServer.
+
+**Important**: Just like with Metro, you must manually set the `enabled` property to `true` (or a condition that evaluates to `true`) for Rozenite to work. This ensures Rozenite only runs when you want it to.
 
 #### Basic Configuration
 
@@ -102,9 +134,14 @@ Update your `rspack.config.mjs` file:
 ```javascript title="rspack.config.mjs"
 import { withRozenite } from '@rozenite/repack';
 
-export default withRozenite({
-  // Your existing Re.Pack configuration
-});
+export default withRozenite(
+  {
+    // Your existing Re.Pack configuration
+  },
+  {
+    enabled: process.env.WITH_ROZENITE === 'true', // Required: Rozenite is disabled by default
+  }
+);
 ```
 
 #### With Custom Options
@@ -119,6 +156,7 @@ export default withRozenite(
     // Your existing Re.Pack configuration
   },
   {
+    enabled: process.env.WITH_ROZENITE === 'true',
     include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin'],
     exclude: ['unwanted-plugin'],
     destroyOnDetachPlugins: ['@rozenite/network-activity-plugin'],
@@ -165,6 +203,7 @@ const customConfig = {
 };
 
 module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  enabled: process.env.WITH_ROZENITE === 'true',
   include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin'],
 });
 ```
@@ -177,6 +216,7 @@ export default withRozenite(
     // Your existing Re.Pack configuration
   },
   {
+    enabled: process.env.WITH_ROZENITE === 'true',
     include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin'],
   }
 );
@@ -197,6 +237,7 @@ const customConfig = {
 };
 
 module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  enabled: process.env.WITH_ROZENITE === 'true',
   exclude: ['@rozenite/mmkv-plugin'],
 });
 ```
@@ -209,6 +250,7 @@ export default withRozenite(
     // Your existing Re.Pack configuration
   },
   {
+    enabled: process.env.WITH_ROZENITE === 'true',
     exclude: ['@rozenite/mmkv-plugin'],
   }
 );
@@ -229,6 +271,7 @@ const customConfig = {
 };
 
 module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  enabled: process.env.WITH_ROZENITE === 'true',
   include: [
     '@rozenite/mmkv-plugin',
     '@rozenite/network-activity-plugin',
@@ -246,6 +289,7 @@ export default withRozenite(
     // Your existing Re.Pack configuration
   },
   {
+    enabled: process.env.WITH_ROZENITE === 'true',
     include: [
       '@rozenite/mmkv-plugin',
       '@rozenite/network-activity-plugin',
@@ -277,6 +321,7 @@ const customConfig = {
 };
 
 module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  enabled: process.env.WITH_ROZENITE === 'true',
   destroyOnDetachPlugins: [
     '@rozenite/network-activity-plugin',
     '@rozenite/tanstack-query-plugin',
@@ -292,6 +337,7 @@ export default withRozenite(
     // Your existing Re.Pack configuration
   },
   {
+    enabled: process.env.WITH_ROZENITE === 'true',
     destroyOnDetachPlugins: [
       '@rozenite/network-activity-plugin',
       '@rozenite/tanstack-query-plugin',
