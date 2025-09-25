@@ -73,17 +73,46 @@ const store = createStore(
 export default store;
 ```
 
-### 3. Configure Metro
+### 3. Configure Your Bundler
 
-Wrap your Metro configuration with `withRozeniteReduxDevTools`:
+#### For Metro
+
+Use `enhanceMetroConfig` with `withRozeniteReduxDevTools`:
 
 ```typescript
 // metro.config.js
+import { withRozenite } from '@rozenite/metro';
 import { withRozeniteReduxDevTools } from '@rozenite/redux-devtools-plugin/metro';
 
-export default withRozeniteReduxDevTools({
-  // your existing metro config
-});
+export default withRozenite(
+  {
+    // Your existing Metro configuration
+  },
+  {
+    enabled: process.env.WITH_ROZENITE === 'true',
+    enhanceMetroConfig: (config) => withRozeniteReduxDevTools(config),
+  }
+);
+```
+
+#### For Re.Pack
+
+Use `enhanceRePackConfig` with `withRozeniteReduxDevTools`:
+
+```typescript
+// rspack.config.mjs
+import { withRozenite } from '@rozenite/repack';
+import { withRozeniteReduxDevTools } from '@rozenite/redux-devtools-plugin/metro';
+
+export default withRozenite(
+  {
+    // Your existing Re.Pack configuration
+  },
+  {
+    enabled: process.env.WITH_ROZENITE === 'true',
+    enhanceRePackConfig: (config) => withRozeniteReduxDevTools(config),
+  }
+);
 ```
 
 This setup enables the WebSocket relay that allows the Redux DevTools to communicate with your React Native app.
