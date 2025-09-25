@@ -1,6 +1,6 @@
 import { initializeRozenite, RozeniteConfig } from '@rozenite/middleware';
 import {
-  RepackRspackConfig,
+  type RepackRspackConfig,
   type RepackRspackConfigExport,
 } from '@callstack/repack';
 import { assertSupportedRePackVersion } from './version-check.js';
@@ -30,6 +30,13 @@ export type RozeniteRePackConfig = {
    * @default false
    */
   enabled?: boolean;
+  /**
+   * Certain Rozenite plugins require Re.Pack to be configured in a specific way.
+   * This option allows you to modify the Re.Pack config in a way that is safe to do when bundling.
+   */
+  enhanceRePackConfig?: (
+    config: RepackRspackConfig
+  ) => Promise<RepackRspackConfig> | RepackRspackConfig;
 } & Omit<RozeniteConfig, 'projectRoot'>;
 
 export const withRozenite = (
@@ -51,9 +58,18 @@ export const withRozenite = (
       resolvedConfig = config;
     }
 
-    return patchConfig(resolvedConfig, {
+    const patchedConfig = patchConfig(resolvedConfig, {
       projectRoot: env.context ?? process.cwd(),
       ...rozeniteConfig,
     });
+
+    if (rozeniteConfig.enhanceRePackConfig) {
+      const enhancedConfig = await rozeniteConfig.enhanceRePackConfig(
+        patchedConfig
+      );
+      return enhancedConfig;
+    }
+
+    return patchedConfig;
   };
 };
