@@ -1,9 +1,6 @@
-import type { ConfigT as MetroConfig } from 'metro-config';
 import { REDUX_DEVTOOLS_PORT } from './constants';
 
-export const withRozeniteReduxDevTools = <
-  T extends MetroConfig | Promise<MetroConfig>
->(
+export const withRozeniteReduxDevTools = <T>(
   config: T
 ): T => {
   // This is ESM only, so we need to import it dynamically in case of CJS
