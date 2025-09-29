@@ -45,6 +45,6 @@
     "@react-native/metro-config": "~0.76.0"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   }
 }

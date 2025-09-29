@@ -51,6 +51,6 @@
     "@types/serve-static": "^1.15.8"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   }
 }

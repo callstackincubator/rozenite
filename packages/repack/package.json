@@ -50,6 +50,6 @@
     "@types/semver": "^7.7.0"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   }
 }
