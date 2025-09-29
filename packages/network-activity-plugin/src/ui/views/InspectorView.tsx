@@ -8,6 +8,7 @@ import {
   useNetworkActivityClientManagement,
   useHasSelectedRequest,
   useNetworkActivityActions,
+  useOverrides,
 } from '../state/hooks';
 
 export type InspectorViewProps = {
@@ -18,6 +19,7 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
   const actions = useNetworkActivityActions();
   const clientManagement = useNetworkActivityClientManagement();
   const hasSelectedRequest = useHasSelectedRequest();
+  const overrides = useOverrides();
   const [filter, setFilter] = useState<FilterState>({
     text: '',
     types: new Set(['http', 'websocket', 'sse']),
@@ -30,6 +32,10 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
 
     clientManagement.setupClient(client);
     actions.setRecording(true);
+
+    client.send('set-overrides', {
+      overrides: Array.from(overrides.entries()),
+    });
 
     return () => {
       actions.setRecording(false);

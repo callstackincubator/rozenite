@@ -84,6 +84,12 @@ export type Initiator = {
 
 export type ResourceType = 'XHR' | 'Fetch' | 'Other';
 
+export type RequestOverride = {
+  status?: number;
+  headers?: HttpHeaders;
+  body?: string;
+};
+
 export type NetworkActivityEventMap = {
   // Control events
   'network-enable': unknown;
@@ -128,6 +134,10 @@ export type NetworkActivityEventMap = {
   'response-body': {
     requestId: RequestId;
     body: string | null;
+  };
+
+  'set-overrides': {
+    overrides: [string, RequestOverride][];
   };
 } & WebSocketEventMap &
   SSEEventMap;

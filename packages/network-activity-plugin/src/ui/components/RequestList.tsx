@@ -155,10 +155,7 @@ const columns = [
   columnHelper.accessor('name', {
     header: 'Name',
     cell: ({ row, getValue }) => (
-      <div 
-        className="flex-1 min-w-0 truncate"
-        title={row.original.path}
-      >
+      <div className="flex-1 min-w-0 truncate" title={row.original.path}>
         {getValue()}
       </div>
     ),

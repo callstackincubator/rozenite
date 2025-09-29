@@ -21,8 +21,10 @@ import {
   isFormData,
   isNullOrUndefined,
 } from '../../utils/typeChecks';
+import { getOverridesRegistry } from './overrides-registry';
 
 const networkRequestsRegistry = getNetworkRequestsRegistry();
+const overridesRegistry = getOverridesRegistry();
 
 const getBinaryPostData = (body: Blob): RequestBinaryPostData => ({
   type: 'binary',
@@ -281,9 +283,37 @@ export const getNetworkInspector = (
     });
   };
 
+  const handleRequestOverride = (request: XMLHttpRequest): void => {
+    const override = overridesRegistry.getOverrideForUrl(request.responseURL);
+
+    if (!override) {
+      return;
+    }
+
+    if (override.body !== undefined) {
+      Object.defineProperty(request, 'responseType', {
+        writable: true,
+      });
+      Object.defineProperty(request, 'response', {
+        writable: true,
+      });
+      Object.defineProperty(request, 'responseText', {
+        writable: true,
+      });
+
+      request.responseType = 'json';
+
+      // @ts-expect-error - Mocking response
+      request.response = override.body;
+      // @ts-expect-error - Mocking responseText
+      request.responseText = override.body;
+    }
+  };
+
   const enable = () => {
     XHRInterceptor.disableInterception();
     XHRInterceptor.setSendCallback(handleRequestSend);
+    XHRInterceptor.setOverrideCallback(handleRequestOverride);
     XHRInterceptor.enableInterception();
   };
 

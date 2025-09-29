@@ -49,11 +49,14 @@ type XHRInterceptorResponseCallback = (
   request: XMLHttpRequest
 ) => void;
 
+type XHRInterceptorOverrideCallback = (request: XMLHttpRequest) => void;
+
 let openCallback: XHRInterceptorOpenCallback | null;
 let sendCallback: XHRInterceptorSendCallback | null;
 let requestHeaderCallback: XHRInterceptorRequestHeaderCallback | null;
 let headerReceivedCallback: XHRInterceptorHeaderReceivedCallback | null;
 let responseCallback: XHRInterceptorResponseCallback | null;
+let overrideCallback: XHRInterceptorOverrideCallback | null;
 
 let isInterceptorEnabled = false;
 
@@ -98,6 +101,13 @@ export const XHRInterceptor = {
    */
   setRequestHeaderCallback(callback: XHRInterceptorRequestHeaderCallback) {
     requestHeaderCallback = callback;
+  },
+
+  /**
+   * Invoked before XMLHttpRequest.send(...) is called.
+   */
+  setOverrideCallback(callback: XHRInterceptorOverrideCallback) {
+    overrideCallback = callback;
   },
 
   isInterceptorEnabled(): boolean {
@@ -181,6 +191,10 @@ export const XHRInterceptor = {
                   this
                 );
               }
+
+              if (overrideCallback) {
+                overrideCallback(this);
+              }
             }
           },
           false
@@ -210,5 +224,6 @@ export const XHRInterceptor = {
     sendCallback = null;
     headerReceivedCallback = null;
     requestHeaderCallback = null;
+    overrideCallback = null;
   },
 };
