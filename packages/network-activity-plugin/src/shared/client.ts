@@ -86,7 +86,6 @@ export type ResourceType = 'XHR' | 'Fetch' | 'Other';
 
 export type RequestOverride = {
   status?: number;
-  headers?: HttpHeaders;
   body?: string;
 };
 

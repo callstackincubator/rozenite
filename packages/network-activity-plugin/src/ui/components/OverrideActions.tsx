@@ -1,9 +1,10 @@
 import { Check, CircleSlash2, Pencil } from 'lucide-react';
 import { Button } from './Button';
+import { RequestOverride } from '../../shared/client';
 
 export type OverrideActionsProps = {
-  currentData: string | null;
-  initialData: string | null;
+  currentData: RequestOverride | undefined;
+  initialData: RequestOverride | undefined;
   onOverride: () => void;
   onSaveOverride: () => void;
   onClear: () => void;
@@ -16,9 +17,11 @@ export const OverrideActions = ({
   onSaveOverride,
   onClear,
 }: OverrideActionsProps) => {
-  const hasChanges = currentData !== initialData;
+  const hasChanges =
+    currentData?.body !== initialData?.body ||
+    currentData?.status !== initialData?.status;
 
-  const hasOverride = initialData !== null;
+  const hasOverride = initialData !== undefined;
 
   const AddOverrideAction = (
     <Button

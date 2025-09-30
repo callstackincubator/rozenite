@@ -8,6 +8,7 @@ import { CodeBlock } from '../components/CodeBlock';
 import { useNetworkActivityActions, useOverrides } from '../state/hooks';
 import { OverrideActions } from '../components/OverrideActions';
 import { CodeEditor } from '../components/CodeEditor';
+import { RequestOverride } from '../../shared/client';
 
 export type ResponseTabProps = {
   selectedRequest: HttpNetworkEntry;
@@ -37,11 +38,18 @@ export const ResponseTab = ({
   const onRequestResponseBodyRef = useRef(onRequestResponseBody);
   const actions = useNetworkActivityActions();
   const overrides = useOverrides();
-  const [savedOverride, setSavedOverride] = useState<string | null>(() => {
+  const [savedOverride, setSavedOverride] = useState<
+    RequestOverride | undefined
+  >(() => {
     const override = overrides.get(selectedRequest.request.url);
-    return override?.body ?? null;
+    return override;
   });
-  const [editedData, setEditedData] = useState<string | null>(savedOverride);
+  const [editedBody, setEditedBody] = useState<string | undefined>(
+    savedOverride?.body
+  );
+  const [editedStatus, setEditedStatus] = useState<number | undefined>(
+    savedOverride?.status
+  );
   const responseEditorRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
@@ -57,18 +65,20 @@ export const ResponseTab = ({
   const responseBody = selectedRequest.response?.body;
 
   const saveOverride = () => {
-    if (editedData === null) return;
+    if (editedBody === undefined || editedStatus === undefined) return;
 
-    const newOverrideData = editedData;
+    const newOverrideData = {
+      body: editedBody,
+      status: editedStatus,
+    };
+
     setSavedOverride(newOverrideData);
-    actions.addOverride(selectedRequest.request.url, {
-      body: newOverrideData,
-    });
+    actions.addOverride(selectedRequest.request.url, newOverrideData);
   };
 
   const clearOverride = () => {
-    setSavedOverride(null);
-    setEditedData(null);
+    setSavedOverride(undefined);
+    setEditedBody(undefined);
     actions.clearOverride(selectedRequest.request.url);
   };
 
@@ -82,6 +92,7 @@ export const ResponseTab = ({
     }
 
     const { type, data } = responseBody;
+    const statusCode = selectedRequest.response?.status;
 
     const contentTypeGrid = (
       <KeyValueGrid
@@ -97,25 +108,40 @@ export const ResponseTab = ({
 
     const overrideActions = (
       <OverrideActions
-        currentData={editedData}
+        currentData={{ body: editedBody, status: editedStatus }}
         initialData={savedOverride}
         onOverride={() => {
-          setSavedOverride(data);
-          setEditedData(data);
+          setSavedOverride({ body: data, status: statusCode });
+          setEditedBody(data);
+          setEditedStatus(statusCode);
         }}
         onSaveOverride={saveOverride}
         onClear={clearOverride}
       />
     );
 
-    if (savedOverride !== null) {
+    if (savedOverride !== undefined) {
       return (
         <RenderResponseBodySection action={overrideActions}>
           {contentTypeGrid}
+
+          <div className="grid grid-cols-[minmax(7rem,25%)_minmax(3rem,1fr)] gap-x-2 gap-y-2 text-sm">
+            <span className={'text-gray-400 wrap-anywhere'}>Status Code</span>
+            <input
+              type="number"
+              value={editedStatus}
+              onInput={(e) => {
+                const target = e.target as HTMLInputElement;
+                setEditedStatus(parseInt(target.value));
+              }}
+              className="max-w-24 font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-1 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere ring-offset-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </div>
+
           <CodeEditor
-            data={savedOverride}
+            data={savedOverride?.body}
             ref={responseEditorRef}
-            onInput={(e) => setEditedData(e.currentTarget.innerText)}
+            onInput={(e) => setEditedBody(e.currentTarget.innerText)}
           />
         </RenderResponseBodySection>
       );

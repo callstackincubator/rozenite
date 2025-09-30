@@ -294,6 +294,9 @@ export const getNetworkInspector = (
       Object.defineProperty(request, 'responseType', {
         writable: true,
       });
+      Object.defineProperty(request, 'status', {
+        writable: true,
+      });
       Object.defineProperty(request, 'response', {
         writable: true,
       });
@@ -302,7 +305,8 @@ export const getNetworkInspector = (
       });
 
       request.responseType = 'json';
-
+      // @ts-expect-error - Mocking status
+      request.status = override.status;
       // @ts-expect-error - Mocking response
       request.response = override.body;
       // @ts-expect-error - Mocking responseText

@@ -1,8 +1,7 @@
 import { forwardRef } from 'react';
-import { cn } from '../utils/cn';
 
 export type CodeEditorProps = {
-  data: string | null;
+  data: string | undefined;
   onInput?: (event: React.FormEvent<HTMLPreElement>) => void;
 };
 
