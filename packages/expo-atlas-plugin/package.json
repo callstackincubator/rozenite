@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/expo-atlas-plugin",
-  "version": "1.0.0-alpha.14",
+  "version": "1.0.0-alpha.15",
   "description": "Expo Atlas for Rozenite.",
   "type": "module",
   "main": "./dist/react-native.cjs",

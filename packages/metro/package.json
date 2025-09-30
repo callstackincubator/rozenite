@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/metro",
-  "version": "1.0.0-alpha.14",
+  "version": "1.0.0-alpha.15",
   "description": "Metro bundler plugin for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",
@@ -45,6 +45,6 @@
     "@react-native/metro-config": "~0.76.0"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   }
 }

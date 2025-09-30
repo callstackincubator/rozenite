@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/middleware",
-  "version": "1.0.0-alpha.14",
+  "version": "1.0.0-alpha.15",
   "description": "Middleware for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",
@@ -51,6 +51,6 @@
     "@types/serve-static": "^1.15.8"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   }
 }

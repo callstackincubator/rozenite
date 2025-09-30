@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/vite-plugin",
-  "version": "1.0.0-alpha.14",
+  "version": "1.0.0-alpha.15",
   "description": "Vite plugin for developing React Native DevTools plugins with hot reload and development tools",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -48,6 +48,6 @@
     "@types/ejs": "^3.1.5"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   }
 }

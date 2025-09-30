@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/repack",
-  "version": "1.0.0-alpha.14",
+  "version": "1.0.0-alpha.15",
   "description": "Re.Pack bundler plugin for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",
@@ -50,6 +50,6 @@
     "@types/semver": "^7.7.0"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   }
 }

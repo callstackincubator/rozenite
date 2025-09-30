@@ -1,3 +1,14 @@
+## 1.0.0-alpha.15 (2025-09-29)
+
+### 🩹 Fixes
+
+- The minimal Node.js version has been downgraded from 22 to 20. This change will allow more projects to benefit from Rozenite without sacrificing any existing features. ([#114](https://github.com/callstackincubator/rozenite/pull/114))
+- **@rozenite/metro:** Metro 0.83.2 no longer supports configs as Promises, so Rozenite must provide a workaround by returning an async function instead of a Promise. This change restores the ability to bundle JavaScript when using React Native 0.81. ([#113](https://github.com/callstackincubator/rozenite/pull/113))
+
+### ❤️ Thank You
+
+- Szymon Chmal
+
 ## 1.0.0-alpha.14 (2025-09-15)
 
 ### 🩹 Fixes
