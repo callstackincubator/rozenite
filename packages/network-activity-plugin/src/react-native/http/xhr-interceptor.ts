@@ -153,6 +153,9 @@ export const XHRInterceptor = {
       if (sendCallback) {
         sendCallback(data, this);
       }
+      if (overrideCallback) {
+        overrideCallback(this);
+      }
       if (this.addEventListener) {
         this.addEventListener(
           'readystatechange',
@@ -190,10 +193,6 @@ export const XHRInterceptor = {
                   this.responseType,
                   this
                 );
-              }
-
-              if (overrideCallback) {
-                overrideCallback(this);
               }
             }
           },
