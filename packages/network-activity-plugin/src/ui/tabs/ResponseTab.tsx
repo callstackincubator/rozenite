@@ -5,10 +5,11 @@ import { HttpNetworkEntry } from '../state/model';
 import { Section } from '../components/Section';
 import { KeyValueGrid } from '../components/KeyValueGrid';
 import { CodeBlock } from '../components/CodeBlock';
-import { useNetworkActivityActions, useOverrides } from '../state/hooks';
-import { OverrideActions } from '../components/OverrideActions';
-import { CodeEditor } from '../components/CodeEditor';
+import { useOverrides } from '../state/hooks';
 import { RequestOverride } from '../../shared/client';
+import { OverrideResponse } from '../components/OverrideResponse';
+import { Button } from '../components/Button';
+import { Pencil } from 'lucide-react';
 
 export type ResponseTabProps = {
   selectedRequest: HttpNetworkEntry;
@@ -36,21 +37,13 @@ export const ResponseTab = ({
   onRequestResponseBody,
 }: ResponseTabProps) => {
   const onRequestResponseBodyRef = useRef(onRequestResponseBody);
-  const actions = useNetworkActivityActions();
   const overrides = useOverrides();
-  const [savedOverride, setSavedOverride] = useState<
+  const [initialOverride, setInitialOverride] = useState<
     RequestOverride | undefined
   >(() => {
     const override = overrides.get(selectedRequest.request.url);
     return override;
   });
-  const [editedBody, setEditedBody] = useState<string | undefined>(
-    savedOverride?.body
-  );
-  const [editedStatus, setEditedStatus] = useState<number | undefined>(
-    savedOverride?.status
-  );
-  const responseEditorRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
     onRequestResponseBodyRef.current = onRequestResponseBody;
@@ -63,24 +56,6 @@ export const ResponseTab = ({
   }, [selectedRequest.id]);
 
   const responseBody = selectedRequest.response?.body;
-
-  const saveOverride = () => {
-    if (editedBody === undefined && editedStatus === undefined) return;
-
-    const newOverrideData = {
-      body: editedBody,
-      status: editedStatus,
-    };
-
-    setSavedOverride(newOverrideData);
-    actions.addOverride(selectedRequest.request.url, newOverrideData);
-  };
-
-  const clearOverride = () => {
-    setSavedOverride(undefined);
-    setEditedBody(undefined);
-    actions.clearOverride(selectedRequest.request.url);
-  };
 
   const renderResponseBody = () => {
     if (!responseBody || responseBody.data === null) {
@@ -106,44 +81,30 @@ export const ResponseTab = ({
       />
     );
 
-    const overrideActions = (
-      <OverrideActions
-        currentData={{ body: editedBody, status: editedStatus }}
-        initialData={savedOverride}
-        onOverride={() => {
-          setSavedOverride({ body: data, status: statusCode });
-          setEditedBody(data);
-          setEditedStatus(statusCode);
-        }}
-        onSaveOverride={saveOverride}
-        onClear={clearOverride}
-      />
+    const overrideAction = (
+      <Button
+        variant="ghost"
+        size="xs"
+        className="text-violet-300 hover:text-violet-300"
+        onClick={() =>
+          setInitialOverride({
+            body: data,
+            status: statusCode,
+          })
+        }
+      >
+        <Pencil className="h-2 w-2" />
+        Override
+      </Button>
     );
 
-    if (savedOverride !== undefined) {
+    if (initialOverride !== undefined) {
       return (
-        <RenderResponseBodySection action={overrideActions}>
-          {contentTypeGrid}
-
-          <div className="grid grid-cols-[minmax(7rem,25%)_minmax(3rem,1fr)] gap-x-2 gap-y-2 text-sm">
-            <span className={'text-gray-400 wrap-anywhere'}>Status Code</span>
-            <input
-              type="number"
-              value={editedStatus}
-              onInput={(e) => {
-                const target = e.target as HTMLInputElement;
-                setEditedStatus(parseInt(target.value));
-              }}
-              className="max-w-24 font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-1 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere ring-offset-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
-
-          <CodeEditor
-            data={savedOverride?.body}
-            ref={responseEditorRef}
-            onInput={(e) => setEditedBody(e.currentTarget.innerText)}
-          />
-        </RenderResponseBodySection>
+        <OverrideResponse
+          selectedRequest={selectedRequest}
+          initialOverride={initialOverride}
+          onClear={() => setInitialOverride(undefined)}
+        />
       );
     }
 
@@ -170,7 +131,7 @@ export const ResponseTab = ({
       }
 
       return (
-        <RenderResponseBodySection action={overrideActions}>
+        <RenderResponseBodySection action={overrideAction}>
           {contentTypeGrid}
           {bodyContent}
         </RenderResponseBodySection>
@@ -183,7 +144,7 @@ export const ResponseTab = ({
       type.startsWith('application/javascript')
     ) {
       return (
-        <RenderResponseBodySection action={overrideActions}>
+        <RenderResponseBodySection action={overrideAction}>
           {contentTypeGrid}
           <CodeBlock>{data}</CodeBlock>
         </RenderResponseBodySection>
