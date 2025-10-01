@@ -22,6 +22,8 @@ import { applyReactNativeRequestHeadersLogic } from '../../utils/applyReactNativ
 const MAX_WEBSOCKET_MESSAGES_PER_CONNECTION = 32;
 const MAX_SSE_MESSAGES_PER_CONNECTION = 32;
 
+const STORE_VERSION = 1;
+
 export interface NetworkActivityState {
   // State
   isRecording: boolean;
@@ -615,6 +617,7 @@ export const createNetworkActivityStore = () =>
       }),
       {
         name: 'rozenite-network-activity-storage',
+        version: STORE_VERSION,
         storage: createJSONStorage(() => localStorage, {
           replacer: (key, value) => {
             if (value instanceof Map) {
