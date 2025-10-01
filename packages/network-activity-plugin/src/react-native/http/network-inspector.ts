@@ -284,34 +284,50 @@ export const getNetworkInspector = (
   };
 
   const handleRequestOverride = (request: XMLHttpRequest): void => {
-    const override = overridesRegistry.getOverrideForUrl(request.responseURL);
+    const override = overridesRegistry.getOverrideForUrl(
+      request._url as string
+    );
 
     if (!override) {
       return;
     }
 
-    if (override.body !== undefined) {
-      Object.defineProperty(request, 'responseType', {
-        writable: true,
-      });
-      Object.defineProperty(request, 'status', {
-        writable: true,
-      });
-      Object.defineProperty(request, 'response', {
-        writable: true,
-      });
-      Object.defineProperty(request, 'responseText', {
-        writable: true,
-      });
+    request.addEventListener('readystatechange', () => {
+      if (override.body !== undefined) {
+        Object.defineProperty(request, 'responseType', {
+          writable: true,
+        });
 
-      request.responseType = 'json';
-      // @ts-expect-error - Mocking status
-      request.status = override.status;
-      // @ts-expect-error - Mocking response
-      request.response = override.body;
-      // @ts-expect-error - Mocking responseText
-      request.responseText = override.body;
-    }
+        Object.defineProperty(request, 'response', {
+          writable: true,
+        });
+        Object.defineProperty(request, 'responseText', {
+          writable: true,
+        });
+
+        const contentType = getContentType(request);
+
+        if (contentType === 'application/json') {
+          request.responseType = 'json';
+        } else if (contentType === 'text/plain') {
+          request.responseType = 'text';
+        }
+
+        // @ts-expect-error - Mocking response
+        request.response = override.body;
+        // @ts-expect-error - Mocking responseText
+        request.responseText = override.body;
+      }
+
+      if (override.status !== undefined) {
+        Object.defineProperty(request, 'status', {
+          writable: true,
+        });
+
+        // @ts-expect-error - Mocking status
+        request.status = override.status;
+      }
+    });
   };
 
   const enable = () => {
