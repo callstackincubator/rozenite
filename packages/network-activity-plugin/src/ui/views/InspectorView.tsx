@@ -41,7 +41,7 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
       actions.setRecording(false);
       clientManagement.cleanupClient();
     };
-  }, [client, clientManagement, actions]);
+  }, [client, clientManagement, actions, overrides]);
 
   return (
     <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">

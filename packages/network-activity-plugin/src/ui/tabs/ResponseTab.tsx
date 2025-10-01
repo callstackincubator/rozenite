@@ -65,7 +65,7 @@ export const ResponseTab = ({
   const responseBody = selectedRequest.response?.body;
 
   const saveOverride = () => {
-    if (editedBody === undefined || editedStatus === undefined) return;
+    if (editedBody === undefined && editedStatus === undefined) return;
 
     const newOverrideData = {
       body: editedBody,

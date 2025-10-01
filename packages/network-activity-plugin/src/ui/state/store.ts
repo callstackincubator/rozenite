@@ -111,13 +111,6 @@ export const createNetworkActivityStore = () =>
             });
             set({ overrides: newOverrides });
           },
-          cleaaAllOverrides: () => {
-            const { _client } = get();
-            assert(!!_client, 'Client is not set');
-
-            _client.send('set-overrides', { overrides: [] });
-            set({ overrides: new Map() });
-          },
         },
         // Event handling
         handleEvent: <K extends keyof NetworkActivityEventMap>(
