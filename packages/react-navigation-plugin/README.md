@@ -35,6 +35,8 @@ npm install @rozenite/react-navigation-plugin
 
 ### 2. Integrate with Your App
 
+#### With react-navigation
+
 Add the DevTools hook to your React Native app with a reference to your NavigationContainer:
 
 ```typescript
@@ -54,6 +56,25 @@ function App() {
       <YourAppNavigator />
     </NavigationContainer>
   );
+}
+```
+
+#### With expo-router
+
+Add the DevTools hook to your root \_layout file with a reference to your NavigationContainer:
+
+```typescript
+// _layout.tsx
+import { Stack, useNavigationContainerRef } from 'expo-router';
+import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+
+function App() {
+  const navigationRef = useNavigationContainerRef();
+
+  // Enable React Navigation DevTools in development
+  useReactNavigationDevTools({ ref: navigationRef });
+
+  return <Stack />;
 }
 ```
 

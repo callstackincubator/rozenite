@@ -25,6 +25,8 @@ Install the React Navigation plugin as a development dependency:
 
 Add the DevTools hook to your React Native app to enable navigation debugging:
 
+### With react-navigation
+
 ```typescript title="App.tsx"
 import React, { useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
@@ -41,6 +43,22 @@ function App() {
       <YourAppNavigator />
     </NavigationContainer>
   );
+}
+```
+
+### With expo-router
+
+```typescript title="_layout.tsx"
+import { Stack, useNavigationContainerRef } from 'expo-router';
+import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+
+function App() {
+  const navigationRef = useNavigationContainerRef();
+
+  // Enable React Navigation DevTools in development
+  useReactNavigationDevTools({ ref: navigationRef });
+
+  return <Stack />;
 }
 ```
 
