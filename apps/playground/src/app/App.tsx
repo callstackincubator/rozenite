@@ -1,29 +1,30 @@
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NavigationContainer,
   NavigationContainerRef,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
+import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
+import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
+import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Provider } from 'react-redux';
+import { mmkvStorages } from './mmkv-storages';
+import { BottomTabNavigator } from './navigation/BottomTabNavigator';
+import { SuccessiveScreensNavigator } from './navigation/SuccessiveScreensNavigator';
+import { RootStackParamList } from './navigation/types';
+import { ConfigScreen } from './screens/ConfigScreen';
 import { LandingScreen } from './screens/LandingScreen';
 import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
-import { ReduxTestScreen } from './screens/ReduxTestScreen';
-import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
-import { ConfigScreen } from './screens/ConfigScreen';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
-import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
-import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
-import { RootStackParamList } from './navigation/types';
-import { Provider } from 'react-redux';
-import { store } from './store';
-import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
-import { mmkvStorages } from './mmkv-storages';
-import { useRef } from 'react';
-import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
-import { BottomTabNavigator } from './navigation/BottomTabNavigator';
 import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
+import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
+import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
+import { store } from './store';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -73,6 +74,10 @@ const Wrapper = () => {
           headerTitle: 'Parameter Display',
         }}
       />
+      <Stack.Screen
+        name="SuccessiveScreensStack"
+        component={SuccessiveScreensNavigator}
+      />
     </Stack.Navigator>
   );
 };
@@ -88,6 +93,12 @@ const linking = {
       PerformanceMonitor: 'performance',
       Config: 'config',
       BottomTabs: 'tabs',
+      SuccessiveScreensStack: {
+        path: 'successive',
+        screens: {
+          SuccessiveScreens: '',
+        },
+      },
     },
   },
 };
