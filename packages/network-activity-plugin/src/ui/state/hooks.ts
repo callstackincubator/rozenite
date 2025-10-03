@@ -42,3 +42,7 @@ export const useWebSocketMessages = (requestId: string) => {
     (state) => state.websocketMessages.get(requestId) || []
   );
 };
+
+export const useOverrides = () => {
+  return useNetworkActivityStore((state) => state.overrides);
+};

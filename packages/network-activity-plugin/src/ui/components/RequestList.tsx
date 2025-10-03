@@ -9,9 +9,10 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { ProcessedRequest } from '../state/model';
-import { RequestId } from '../../shared/client';
+import { RequestId, RequestOverride } from '../../shared/client';
 import {
   useNetworkActivityActions,
+  useOverrides,
   useProcessedRequests,
   useSelectedRequestId,
 } from '../state/hooks';
@@ -30,6 +31,7 @@ type NetworkRequest = {
   time: string;
   type: string;
   startTime: string;
+  hasOverride: boolean;
 };
 
 const formatSize = (bytes: number): string => {
@@ -122,11 +124,13 @@ const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
 };
 
 const processNetworkRequests = (
-  processedRequests: ProcessedRequest[]
+  processedRequests: ProcessedRequest[],
+  overrides: Map<string, RequestOverride>
 ): NetworkRequest[] => {
   return processedRequests.map((request): NetworkRequest => {
     const { domain, path } = extractDomainAndPath(request.name);
     const duration = request.duration || 0;
+    const hasOverride = overrides.has(request.name);
 
     return {
       id: request.id,
@@ -139,6 +143,7 @@ const processNetworkRequests = (
       time: formatDuration(duration),
       type: request.type,
       startTime: formatStartTime(request.timestamp),
+      hasOverride: hasOverride,
     };
   });
 };
@@ -155,11 +160,12 @@ const columns = [
   columnHelper.accessor('name', {
     header: 'Name',
     cell: ({ row, getValue }) => (
-      <div 
-        className="flex-1 min-w-0 truncate"
-        title={row.original.path}
-      >
+      <div className="flex-1 min-w-0 truncate" title={row.original.path}>
         {getValue()}
+
+        {row.original.hasOverride && (
+          <span className="w-2 h-2 rounded-full bg-violet-300 ms-2 inline-block"></span>
+        )}
       </div>
     ),
     sortingFn: 'alphanumeric',
@@ -215,6 +221,7 @@ export const RequestList = ({ filter }: RequestListProps) => {
   const processedRequests = useProcessedRequests();
   const selectedRequestId = useSelectedRequestId();
   const [sorting, setSorting] = useState<SortingState>([]);
+  const overrides = useOverrides();
 
   // Filter requests based on current filter state
   const filteredRequests = useMemo(() => {
@@ -243,8 +250,8 @@ export const RequestList = ({ filter }: RequestListProps) => {
   }, [processedRequests, filter]);
 
   const requests = useMemo(() => {
-    return processNetworkRequests(filteredRequests);
-  }, [filteredRequests]);
+    return processNetworkRequests(filteredRequests, overrides);
+  }, [filteredRequests, overrides]);
 
   const table = useReactTable({
     data: requests,
