@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import { colorList } from './src/devtools-ui/components/NavigationTree/navigationTreeColors';
 
 const config: Config = {
   darkMode: ['class'],
@@ -90,5 +91,13 @@ const config: Config = {
     },
   },
   plugins: [require('tailwindcss-animate')],
+  safelist: [
+    ...colorList.flatMap((color) => [
+      `text-${color}-600`,
+      `border-${color}-600`,
+      `bg-${color}-600`,
+      `hover:bg-${color}-600`,
+    ]),
+  ],
 };
 export default config;
