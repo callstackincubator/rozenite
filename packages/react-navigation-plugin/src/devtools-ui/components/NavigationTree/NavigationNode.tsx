@@ -115,11 +115,25 @@ export const NodeContainer = ({
   children: ReactNode;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  const handleMouseOver = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setIsHovered(true);
+    e.stopPropagation();
+  };
+
+  const handleMouseOut = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setIsHovered(false);
+    e.stopPropagation();
+  };
+
   return (
     <button
-      className={`items-stretch flex flex-col rounded-sm cursor-pointer bg-transparent border-2 border-solid p-1 text-center border-${color}-600 ${
+      className={`items-stretch flex flex-col rounded-sm cursor-pointer border-2 border-solid p-1 text-center border-${color}-600 ${
         isClosed ? '' : 'border-t-0 rounded-t-none'
-      } hover:bg-${color}-600 hover:bg-opacity-30`}
+      } ${isHovered ? `bg-${color}-600 bg-opacity-30` : 'bg-transparent'}`}
+      onMouseOver={handleMouseOver}
+      onMouseOut={handleMouseOut}
       onClick={onClick}
     >
       {children}
