@@ -17,7 +17,7 @@ export const Leaf = ({
           : 'px-1'
       }`}
     >
-      <div
+      <button
         className={`p-2 text-center rounded-sm bg-${color}-600`}
         onClick={(e) => {
           e.stopPropagation();
@@ -27,7 +27,7 @@ export const Leaf = ({
           {title}
         </span>
         {subtitle ? <span className="text-gray-100">{subtitle}</span> : null}
-      </div>
+      </button>
     </div>
   );
 };

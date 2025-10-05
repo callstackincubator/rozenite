@@ -113,17 +113,17 @@ export const NodeContainer = ({
   color: string;
   isClosed?: boolean;
   children: ReactNode;
-  onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
   return (
-    <div
+    <button
       className={`items-stretch flex flex-col rounded-sm cursor-pointer bg-transparent border-2 border-solid p-1 text-center border-${color}-600 ${
         isClosed ? '' : 'border-t-0 rounded-t-none'
       } hover:bg-${color}-600 hover:bg-opacity-30`}
       onClick={onClick}
     >
       {children}
-    </div>
+    </button>
   );
 };
 
