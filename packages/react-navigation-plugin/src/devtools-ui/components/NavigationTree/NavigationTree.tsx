@@ -2,11 +2,11 @@ import { ActionWithState } from '../ActionList';
 import { NavigationNode } from './NavigationNode';
 import { generateColor } from './navigationTreeColors';
 
-type Props = {
+export type NavigationTreeProps = {
   actionHistory: ActionWithState[];
 };
 
-export function NavigationTree({ actionHistory }: Props) {
+export function NavigationTree({ actionHistory }: NavigationTreeProps) {
   const states = actionHistory
     .map((action) => action.state)
     .filter((state) => state !== undefined);
