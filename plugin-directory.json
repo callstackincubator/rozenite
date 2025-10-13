@@ -26,5 +26,9 @@
   {
     "npmUrl": "https://www.npmjs.com/package/@rozenite/mmkv-plugin",
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/mmkv-plugin"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/@ilteoood/zorro",
+    "githubUrl": "https://github.com/ilteoood/zorro"
   }
 ]
