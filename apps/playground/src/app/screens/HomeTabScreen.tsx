@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { NavigationProp } from '../navigation/types';
 
 export const HomeTabScreen = () => {
@@ -16,6 +15,10 @@ export const HomeTabScreen = () => {
     });
   };
 
+  const handleNavigateToSuccessiveScreens = () => {
+    navigation.navigate('SuccessiveScreensStack');
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Home Tab</Text>
@@ -26,6 +29,13 @@ export const HomeTabScreen = () => {
         onPress={handleNavigateToParameter}
       >
         <Text style={styles.buttonText}>Show Parameter Screen</Text>
+      </TouchableOpacity>
+      <View style={styles.spacer} />
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleNavigateToSuccessiveScreens}
+      >
+        <Text style={styles.buttonText}>Go to successive screens</Text>
       </TouchableOpacity>
     </View>
   );
@@ -49,6 +59,9 @@ const styles = StyleSheet.create({
     color: 'white',
     opacity: 0.8,
     marginBottom: 32,
+  },
+  spacer: {
+    height: 16,
   },
   button: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',

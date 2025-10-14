@@ -15,6 +15,7 @@ export type RootStackParamList = {
     color: string;
     source: string;
   };
+  SuccessiveScreensStack: undefined;
 };
 
 export type BottomTabParamList = {
