@@ -5,12 +5,14 @@ export type SectionProps = {
   title: string;
   children: React.ReactNode;
   collapsible?: boolean;
+  action?: React.ReactNode;
 };
 
 export const Section = ({
   title,
   children,
   collapsible = true,
+  action,
 }: SectionProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -34,7 +36,9 @@ export const Section = ({
         {collapsible && (
           <span className={cn('mr-2', { 'rotate-90': !isCollapsed })}>▶</span>
         )}
-        <span className="font-medium">{title}</span>
+        <span className="font-medium me-auto">{title}</span>
+
+        {action}
       </button>
       {isChildrenVisible && children}
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { getNetworkInspector } from './http/network-inspector';
+import { getOverridesRegistry } from './http/overrides-registry';
 import { NetworkActivityEventMap } from '../shared/client';
 import { getWebSocketInspector } from './websocket/websocket-inspector';
 import { WebSocketEventMap } from '../shared/websocket-events';
@@ -12,6 +13,8 @@ import {
   NetworkActivityDevToolsConfig,
   validateConfig,
 } from './config';
+
+const overridesRegistry = getOverridesRegistry();
 
 export const useNetworkActivityDevTools = (
   config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG
@@ -45,6 +48,9 @@ export const useNetworkActivityDevTools = (
       }),
       client.onMessage('network-disable', () => {
         isRecordingEnabledRef.current = false;
+      }),
+      client.onMessage('set-overrides', (data) => {
+        overridesRegistry.setOverrides(data.overrides);
       }),
     ];
 
