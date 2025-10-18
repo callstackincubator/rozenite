@@ -110,7 +110,7 @@ When using an emulator, everything is automatic, but when running on a physical 
 adb reverse tcp:8765 tcp:8765
 ```
 
-When running under Hermes, some could potentially hit an undefined `asyncIterator` and not see the log `connected to remotedev-server`, and not see the physical device in the inspector's selector.
+When running under Hermes, some could potentially hit an undefined `asyncIterator`, not see the log `connected to remotedev-server`, and not see the physical device in the inspector's selector.
 Try the workaround of this [issue](https://github.com/reduxjs/redux-devtools/issues/1382#issuecomment-2093584916).
 
 ## Contributing
