@@ -78,11 +78,23 @@ const generateName = (url: string): string => {
   try {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;
-    const filename = pathname.split('/').pop();
-    return filename || pathname || urlObj.hostname;
+    return pathname || urlObj.hostname;
   } catch {
     return url;
   }
+};
+
+const truncateWithMiddleEllipsis = (text: string, maxLength = 100): string => {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  
+  const ellipsis = '...';
+  const charsToShow = maxLength - ellipsis.length;
+  const frontChars = Math.ceil(charsToShow / 2);
+  const backChars = Math.floor(charsToShow / 2);
+  
+  return text.substring(0, frontChars) + ellipsis + text.substring(text.length - backChars);
 };
 
 const sortSize: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
