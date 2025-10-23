@@ -15,6 +15,7 @@ import {
   useOverrides,
   useProcessedRequests,
   useSelectedRequestId,
+  useClientUISettings,
 } from '../state/hooks';
 import { getStatusColor } from '../utils/getStatusColor';
 import { FilterState } from './FilterBar';
@@ -74,27 +75,20 @@ const extractDomainAndPath = (
   }
 };
 
-const generateName = (url: string): string => {
+const generateName = (url: string, showUrlAsName = false): string => {
   try {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;
-    return pathname || urlObj.hostname;
+    
+    if (showUrlAsName) {
+      return pathname || urlObj.hostname;
+    }
+    
+    const filename = pathname.split('/').pop();
+    return filename || pathname || urlObj.hostname;
   } catch {
     return url;
   }
-};
-
-const truncateWithMiddleEllipsis = (text: string, maxLength = 100): string => {
-  if (text.length <= maxLength) {
-    return text;
-  }
-  
-  const ellipsis = '...';
-  const charsToShow = maxLength - ellipsis.length;
-  const frontChars = Math.ceil(charsToShow / 2);
-  const backChars = Math.floor(charsToShow / 2);
-  
-  return text.substring(0, frontChars) + ellipsis + text.substring(text.length - backChars);
 };
 
 const sortSize: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
@@ -137,7 +131,8 @@ const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
 
 const processNetworkRequests = (
   processedRequests: ProcessedRequest[],
-  overrides: Map<string, RequestOverride>
+  overrides: Map<string, RequestOverride>,
+  showUrlAsName = false
 ): NetworkRequest[] => {
   return processedRequests.map((request): NetworkRequest => {
     const { domain, path } = extractDomainAndPath(request.name);
@@ -146,7 +141,7 @@ const processNetworkRequests = (
 
     return {
       id: request.id,
-      name: generateName(request.name),
+      name: generateName(request.name, showUrlAsName),
       status: request.httpStatus || request.status,
       method: request.method,
       domain,
@@ -234,6 +229,7 @@ export const RequestList = ({ filter }: RequestListProps) => {
   const selectedRequestId = useSelectedRequestId();
   const [sorting, setSorting] = useState<SortingState>([]);
   const overrides = useOverrides();
+  const clientUISettings = useClientUISettings();
 
   // Filter requests based on current filter state
   const filteredRequests = useMemo(() => {
@@ -262,8 +258,8 @@ export const RequestList = ({ filter }: RequestListProps) => {
   }, [processedRequests, filter]);
 
   const requests = useMemo(() => {
-    return processNetworkRequests(filteredRequests, overrides);
-  }, [filteredRequests, overrides]);
+    return processNetworkRequests(filteredRequests, overrides, clientUISettings?.showUrlAsName);
+  }, [filteredRequests, overrides, clientUISettings?.showUrlAsName]);
 
   const table = useReactTable({
     data: requests,
