@@ -2,10 +2,11 @@ import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useState } from 'react';
 import { ReactNavigationPluginEventMap } from '../shared';
 import { ActionWithState } from './components/ActionList';
-import { Tabs, Tab } from './components/Tabs';
 import { ActionTimeline } from './components/ActionTimeline';
 import { LinkingTester } from './components/LinkingTester';
+import { Tab, Tabs } from './components/Tabs';
 
+import { NavigationTree } from './components/NavigationTree/NavigationTree';
 import './globals.css';
 
 export default function ReactNavigationPanel() {
@@ -97,6 +98,11 @@ export default function ReactNavigationPanel() {
       id: 'linking',
       label: 'Link Tester',
       content: <LinkingTester onLinkOpen={onLinkOpen} />,
+    },
+    {
+      id: 'tree',
+      label: 'Navigation Tree',
+      content: <NavigationTree actionHistory={actionHistory} />,
     },
   ];
 
