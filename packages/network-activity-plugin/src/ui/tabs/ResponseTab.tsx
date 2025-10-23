@@ -1,19 +1,32 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollArea } from '../components/ScrollArea';
 import { JsonTree } from '../components/JsonTree';
 import { HttpNetworkEntry } from '../state/model';
 import { Section } from '../components/Section';
 import { KeyValueGrid } from '../components/KeyValueGrid';
 import { CodeBlock } from '../components/CodeBlock';
+import { useOverrides } from '../state/hooks';
+import { RequestOverride } from '../../shared/client';
+import { OverrideResponse } from '../components/OverrideResponse';
+import { Button } from '../components/Button';
+import { Pencil } from 'lucide-react';
 
 export type ResponseTabProps = {
   selectedRequest: HttpNetworkEntry;
   onRequestResponseBody: (requestId: string) => void;
 };
 
-const renderResponseBodySection = (children: React.ReactNode) => {
+type ResponseBodySectionProps = {
+  action?: React.ReactNode;
+  children: React.ReactNode;
+};
+
+const RenderResponseBodySection = ({
+  children,
+  action,
+}: ResponseBodySectionProps) => {
   return (
-    <Section title="Response Body" collapsible={false}>
+    <Section title="Response Body" collapsible={false} action={action}>
       <div className="space-y-4">{children}</div>
     </Section>
   );
@@ -24,6 +37,13 @@ export const ResponseTab = ({
   onRequestResponseBody,
 }: ResponseTabProps) => {
   const onRequestResponseBodyRef = useRef(onRequestResponseBody);
+  const overrides = useOverrides();
+  const [initialOverride, setInitialOverride] = useState<
+    RequestOverride | undefined
+  >(() => {
+    const override = overrides.get(selectedRequest.request.url);
+    return override;
+  });
 
   useEffect(() => {
     onRequestResponseBodyRef.current = onRequestResponseBody;
@@ -47,6 +67,7 @@ export const ResponseTab = ({
     }
 
     const { type, data } = responseBody;
+    const statusCode = selectedRequest.response?.status;
 
     const contentTypeGrid = (
       <KeyValueGrid
@@ -59,6 +80,33 @@ export const ResponseTab = ({
         ]}
       />
     );
+
+    const overrideAction = (
+      <Button
+        variant="ghost"
+        size="xs"
+        className="text-violet-300 hover:text-violet-300"
+        onClick={() =>
+          setInitialOverride({
+            body: data,
+            status: statusCode,
+          })
+        }
+      >
+        <Pencil className="h-2 w-2" />
+        Override
+      </Button>
+    );
+
+    if (initialOverride !== undefined) {
+      return (
+        <OverrideResponse
+          selectedRequest={selectedRequest}
+          initialOverride={initialOverride}
+          onClear={() => setInitialOverride(undefined)}
+        />
+      );
+    }
 
     if (type.startsWith('application/json')) {
       let bodyContent;
@@ -82,11 +130,11 @@ export const ResponseTab = ({
         );
       }
 
-      return renderResponseBodySection(
-        <>
+      return (
+        <RenderResponseBodySection action={overrideAction}>
           {contentTypeGrid}
           {bodyContent}
-        </>
+        </RenderResponseBodySection>
       );
     }
 
@@ -95,21 +143,21 @@ export const ResponseTab = ({
       type.startsWith('application/xml') ||
       type.startsWith('application/javascript')
     ) {
-      return renderResponseBodySection(
-        <>
+      return (
+        <RenderResponseBodySection action={overrideAction}>
           {contentTypeGrid}
           <CodeBlock>{data}</CodeBlock>
-        </>
+        </RenderResponseBodySection>
       );
     }
 
-    return renderResponseBodySection(
-      <>
+    return (
+      <RenderResponseBodySection>
         {contentTypeGrid}
         <div className="text-sm text-gray-400">
           Binary content not shown - {data.length} bytes
         </div>
-      </>
+      </RenderResponseBodySection>
     );
   };
 

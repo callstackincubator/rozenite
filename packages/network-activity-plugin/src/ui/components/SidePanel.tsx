@@ -10,6 +10,7 @@ import { X } from 'lucide-react';
 import {
   useNetworkActivityActions,
   useNetworkActivityStore,
+  useOverrides,
   useSelectedRequest,
 } from '../state/hooks';
 import { NetworkEntry as OldNetworkEntry } from '../types';
@@ -85,6 +86,7 @@ export const SidePanel = () => {
   const actions = useNetworkActivityActions();
   const selectedRequest = useSelectedRequest();
   const client = useNetworkActivityStore((state) => state._client);
+  const overrides = useOverrides();
 
   const onClose = (): void => {
     actions.setSelectedRequest(null);
@@ -128,6 +130,9 @@ export const SidePanel = () => {
     legacyNetworkEntries.set(legacyEntry.requestId, legacyEntry);
   }
 
+  const override = legacyEntry !== null ? overrides.get(legacyEntry.url) : null;
+  const hasResponseOverride = override && override.body ? true : false;
+
   const getTabsListTriggers = () => {
     if (httpDetails) {
       return (
@@ -149,6 +154,9 @@ export const SidePanel = () => {
             className="data-[state=active]:bg-gray-700"
           >
             Response
+            {hasResponseOverride && (
+              <span className="w-2 h-2 rounded-full bg-violet-300 ms-2 inline-block"></span>
+            )}
           </TabsTrigger>
           <TabsTrigger
             value="cookies"

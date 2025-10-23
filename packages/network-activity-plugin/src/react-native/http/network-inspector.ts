@@ -21,8 +21,10 @@ import {
   isFormData,
   isNullOrUndefined,
 } from '../../utils/typeChecks';
+import { getOverridesRegistry } from './overrides-registry';
 
 const networkRequestsRegistry = getNetworkRequestsRegistry();
+const overridesRegistry = getOverridesRegistry();
 
 const getBinaryPostData = (body: Blob): RequestBinaryPostData => ({
   type: 'binary',
@@ -281,9 +283,57 @@ export const getNetworkInspector = (
     });
   };
 
+  const handleRequestOverride = (request: XMLHttpRequest): void => {
+    const override = overridesRegistry.getOverrideForUrl(
+      request._url as string
+    );
+
+    if (!override) {
+      return;
+    }
+
+    request.addEventListener('readystatechange', () => {
+      if (override.body !== undefined) {
+        Object.defineProperty(request, 'responseType', {
+          writable: true,
+        });
+
+        Object.defineProperty(request, 'response', {
+          writable: true,
+        });
+        Object.defineProperty(request, 'responseText', {
+          writable: true,
+        });
+
+        const contentType = getContentType(request);
+
+        if (contentType === 'application/json') {
+          request.responseType = 'json';
+        } else if (contentType === 'text/plain') {
+          request.responseType = 'text';
+        }
+
+        // @ts-expect-error - Mocking response
+        request.response = override.body;
+        // @ts-expect-error - Mocking responseText
+        request.responseText = override.body;
+      }
+
+      if (override.status !== undefined) {
+        Object.defineProperty(request, 'status', {
+          writable: true,
+        });
+
+        // @ts-expect-error - Mocking status
+        request.status = override.status;
+      }
+    });
+  };
+
   const enable = () => {
     XHRInterceptor.disableInterception();
     XHRInterceptor.setSendCallback(handleRequestSend);
+    XHRInterceptor.setOverrideCallback(handleRequestOverride);
     XHRInterceptor.enableInterception();
   };
 
