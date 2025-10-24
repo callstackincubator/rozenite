@@ -1,10 +1,10 @@
+// @ts-expect-error - Symbol.asyncIterator is not defined in the global scope, but required by the redux-devtools/remote package (needs to be before the import).
+Symbol.asyncIterator ??= Symbol.for('Symbol.asyncIterator');
+
 import { devToolsEnhancer } from '@redux-devtools/remote';
 import { Platform } from 'react-native';
 import getDevServer from 'react-native/Libraries/Core/Devtools/getDevServer';
 import { REDUX_DEVTOOLS_PORT } from './constants';
-
-// @ts-expect-error - Symbol.asyncIterator is not defined in the global scope, but required by the redux-devtools/remote package.
-Symbol.asyncIterator ??= Symbol.for('Symbol.asyncIterator');
 
 type StoreEnhancer = ReturnType<typeof devToolsEnhancer>;
 
