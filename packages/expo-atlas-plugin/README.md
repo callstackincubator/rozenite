@@ -43,7 +43,7 @@ import { withRozeniteExpoAtlasPlugin } from '@rozenite/expo-atlas-plugin';
 export default withRozenite(
   withRozeniteExpoAtlasPlugin({
     // Your existing Metro configuration
-  })
+  }),
 );
 ```
 

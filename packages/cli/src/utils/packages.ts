@@ -35,7 +35,7 @@ export const getExecForPackageManager = (): string => {
 };
 
 export const installDependencies = async (
-  projectRoot: string
+  projectRoot: string,
 ): Promise<void> => {
   const packageManager = getPackageManager();
   await spawn(packageManager, ['install'], { cwd: projectRoot });
@@ -43,7 +43,7 @@ export const installDependencies = async (
 
 export const installDevDependency = async (
   projectRoot: string,
-  packageName: string
+  packageName: string,
 ): Promise<void> => {
   const packageManager = getPackageManager();
   const args = ['add', '-D', packageName];
@@ -52,7 +52,7 @@ export const installDevDependency = async (
 
 export const isPackageInstalled = async (
   projectRoot: string,
-  packageName: string
+  packageName: string,
 ): Promise<boolean> => {
   const packageManager = getPackageManager();
   const args = ['list', '--depth=0', '--json'];

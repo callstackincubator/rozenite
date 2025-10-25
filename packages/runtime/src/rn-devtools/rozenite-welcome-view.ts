@@ -14,7 +14,7 @@ class RozeniteWelcomeView extends UI.View.SimpleView {
     const url = new URL(ROZENITE_WELCOME_URL, window.location.origin);
     url.searchParams.set(
       'withPluginsInstalled',
-      hasInstalledPlugins.toString()
+      hasInstalledPlugins.toString(),
     );
 
     const iframe = document.createElement('iframe');
@@ -32,7 +32,7 @@ export const addWelcomeView = (): void => {
 
   const panelViewTab =
     UI.InspectorView.InspectorView.instance().tabbedPane.tabsById.get(
-      WELCOME_VIEW_ID
+      WELCOME_VIEW_ID,
     );
 
   if (!panelViewTab) {
@@ -41,9 +41,9 @@ export const addWelcomeView = (): void => {
 
   UI.InspectorView.InspectorView.instance().tabbedPane.insertBefore(
     panelViewTab,
-    0
+    0,
   );
   UI.InspectorView.InspectorView.instance().tabbedPane.selectTab(
-    panelViewTab.id
+    panelViewTab.id,
   );
 };

@@ -15,7 +15,7 @@ export const getPanelChannel = async (): Promise<Channel> => {
     send: (message: unknown) => {
       window.parent.postMessage(
         { type: 'rozenite-message', payload: message },
-        '*'
+        '*',
       );
     },
     onMessage: (listener: (message: unknown) => void) => {

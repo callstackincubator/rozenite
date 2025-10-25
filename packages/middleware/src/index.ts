@@ -15,12 +15,12 @@ export type RozeniteInstance = {
 };
 
 export const initializeRozenite = (
-  options: RozeniteConfig
+  options: RozeniteConfig,
 ): RozeniteInstance => {
   options.logLevel =
     process.env.ROZENITE_DEBUG === 'true'
       ? 'debug'
-      : options.logLevel ?? 'info';
+      : (options.logLevel ?? 'info');
   logger.setLevel(options.logLevel);
 
   verifyReactNativeVersion(options.projectRoot);
@@ -29,8 +29,8 @@ export const initializeRozenite = (
   logger.debug(`Resolution root: ${options.projectRoot}`);
   logger.debug(
     `Resolved react-native to: ${getReactNativePackagePath(
-      options.projectRoot
-    )}`
+      options.projectRoot,
+    )}`,
   );
 
   const devModePackage = getDevModePackage(options.projectRoot);
@@ -57,7 +57,7 @@ export const initializeRozenite = (
     middleware: getMiddleware(
       options,
       allInstalledPlugins,
-      options.destroyOnDetachPlugins || []
+      options.destroyOnDetachPlugins || [],
     ),
     devModePackage,
   };

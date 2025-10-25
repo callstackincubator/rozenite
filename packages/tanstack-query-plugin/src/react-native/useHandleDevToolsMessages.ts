@@ -4,7 +4,7 @@ import { TanStackQueryPluginClient } from '../shared/messaging';
 
 export const useHandleDevToolsMessages = (
   queryClient: QueryClient,
-  client: TanStackQueryPluginClient | null
+  client: TanStackQueryPluginClient | null,
 ) => {
   useEffect(() => {
     if (!client) {
@@ -109,7 +109,7 @@ export const useHandleDevToolsMessages = (
             console.warn(`Unknown devtools action: ${type}`);
           }
         }
-      }
+      },
     );
 
     return () => {

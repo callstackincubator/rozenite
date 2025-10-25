@@ -40,12 +40,12 @@ export const pluginDirectoryPlugin = (): RspressPlugin => {
       const endIndex = startIndex + PLUGINS_PER_PAGE;
       const allPluginsReferences = await getPluginsReferences();
       const totalPages = Math.ceil(
-        allPluginsReferences.length / PLUGINS_PER_PAGE
+        allPluginsReferences.length / PLUGINS_PER_PAGE,
       );
 
       try {
         const data = await getPlugins(
-          allPluginsReferences.slice(startIndex, endIndex)
+          allPluginsReferences.slice(startIndex, endIndex),
         );
 
         pageData.pluginDirectoryPage = {
@@ -66,14 +66,14 @@ export const pluginDirectoryPlugin = (): RspressPlugin => {
       const allPluginsReferences = await getPluginsReferences();
       const pages = [];
       const totalPages = Math.ceil(
-        allPluginsReferences.length / PLUGINS_PER_PAGE
+        allPluginsReferences.length / PLUGINS_PER_PAGE,
       );
 
       pages.push({
         routePath: '/plugin-directory',
         filepath: path.join(
           __dirname,
-          `plugin-directory-page/plugin-directory-page.tsx`
+          `plugin-directory-page/plugin-directory-page.tsx`,
         ),
       });
 
@@ -82,7 +82,7 @@ export const pluginDirectoryPlugin = (): RspressPlugin => {
           routePath: `/plugin-directory/${page}`,
           filepath: path.join(
             __dirname,
-            `plugin-directory-page/plugin-directory-page.tsx`
+            `plugin-directory-page/plugin-directory-page.tsx`,
           ),
         });
       }

@@ -24,10 +24,10 @@ export const OverrideResponse = ({
     RequestOverride | undefined
   >(initialOverride);
   const [editedBody, setEditedBody] = useState<string | undefined>(
-    initialOverride?.body
+    initialOverride?.body,
   );
   const [editedStatus, setEditedStatus] = useState<number | undefined>(
-    initialOverride?.status
+    initialOverride?.status,
   );
   const responseEditorRef = useRef<HTMLPreElement>(null);
   const responseBody = selectedRequest.response?.body;

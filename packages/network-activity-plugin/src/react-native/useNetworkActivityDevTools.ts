@@ -17,7 +17,7 @@ import {
 const overridesRegistry = getOverridesRegistry();
 
 export const useNetworkActivityDevTools = (
-  config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG
+  config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG,
 ) => {
   const isRecordingEnabledRef = useRef(false);
   const client = useRozeniteDevToolsClient<NetworkActivityEventMap>({

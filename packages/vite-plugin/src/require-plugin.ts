@@ -80,7 +80,7 @@ export default function requirePlugin(): Plugin {
 
   const transformRequireToChunkReferences = (
     code: string,
-    format: string
+    format: string,
   ): string => {
     return code.replace(REQUIRE_REGEX, (match, moduleName) => {
       const chunkName = moduleToChunkMap.get(moduleName.trim());
@@ -124,7 +124,7 @@ export default function requirePlugin(): Plugin {
         assert(Array.isArray(options.input), 'input must be an array');
         assert(
           options.input.length === 1,
-          'input must be an array with one entry'
+          'input must be an array with one entry',
         );
 
         input = options.input[0];
@@ -187,7 +187,7 @@ export default function requirePlugin(): Plugin {
 
         const transformedCode = transformRequireToChunkReferences(
           code,
-          options.format
+          options.format,
         );
 
         return {

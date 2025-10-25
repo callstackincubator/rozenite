@@ -5,7 +5,7 @@ import type {
 } from 'react-native-performance';
 
 export function assertPerformanceMark(
-  entry: PerformanceEntry
+  entry: PerformanceEntry,
 ): asserts entry is PerformanceMark {
   if (entry.entryType !== 'mark') {
     throw new Error('Entry is not a PerformanceMark');
@@ -13,7 +13,7 @@ export function assertPerformanceMark(
 }
 
 export function assertPerformanceMeasure(
-  entry: PerformanceEntry
+  entry: PerformanceEntry,
 ): asserts entry is PerformanceMeasure {
   if (entry.entryType !== 'measure') {
     throw new Error('Entry is not a PerformanceMeasure');
@@ -21,7 +21,7 @@ export function assertPerformanceMeasure(
 }
 
 export function assertPerformanceMetric(
-  entry: PerformanceEntry
+  entry: PerformanceEntry,
 ): asserts entry is PerformanceMetric {
   if (entry.entryType !== 'metric') {
     throw new Error('Entry is not a PerformanceMetric');

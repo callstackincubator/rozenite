@@ -60,7 +60,7 @@ const formatStartTime = (startTime: number): string => {
 };
 
 const extractDomainAndPath = (
-  url: string
+  url: string,
 ): { domain: string; path: string } => {
   try {
     const { hostname, pathname, search, hash, port } = new URL(url);
@@ -125,7 +125,7 @@ const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
 
 const processNetworkRequests = (
   processedRequests: ProcessedRequest[],
-  overrides: Map<string, RequestOverride>
+  overrides: Map<string, RequestOverride>,
 ): NetworkRequest[] => {
   return processedRequests.map((request): NetworkRequest => {
     const { domain, path } = extractDomainAndPath(request.name);
@@ -290,7 +290,7 @@ export const RequestList = ({ filter }: RequestListProps) => {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                     {header.column.getCanSort() && (
                       <span className="text-gray-500">

@@ -15,7 +15,7 @@ export type SSEInspector = {
   dispose: () => void;
   on: <TEventType extends keyof SSEEventMap>(
     event: TEventType,
-    callback: (data: SSEEventMap[TEventType]) => void
+    callback: (data: SSEEventMap[TEventType]) => void,
   ) => () => void;
 };
 
@@ -23,7 +23,7 @@ export const getSSEInspector = (): SSEInspector => {
   const eventEmitter = createNanoEvents<NanoEventsMap>();
 
   const getRequestId = (
-    eventSource: EventSourceWithInternals
+    eventSource: EventSourceWithInternals,
   ): string | null => {
     const requestId = eventSource._xhr?._rozeniteRequestId;
 
@@ -133,7 +133,7 @@ export const getSSEInspector = (): SSEInspector => {
     },
     on: <TEventType extends keyof SSEEventMap>(
       event: TEventType,
-      callback: (data: SSEEventMap[TEventType]) => void
+      callback: (data: SSEEventMap[TEventType]) => void,
     ) => eventEmitter.on(event, callback as NanoEventsMap[TEventType]),
   };
 };

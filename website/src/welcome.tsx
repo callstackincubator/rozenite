@@ -12,7 +12,7 @@ export default function Welcome() {
   useEffect(() => {
     const withPluginsInstalled =
       new URLSearchParams(window.location.search).get(
-        'withPluginsInstalled'
+        'withPluginsInstalled',
       ) === 'true';
     setWithPluginsInstalled(withPluginsInstalled);
   }, []);

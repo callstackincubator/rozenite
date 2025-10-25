@@ -51,7 +51,7 @@ const getDevMiddlewarePathFromReactNative = (projectRoot: string): string => {
 
   const reactNativeCommunityCliPluginPath = require.resolve(
     '@react-native/community-cli-plugin',
-    { paths: [reactNativePackagePath] }
+    { paths: [reactNativePackagePath] },
   );
 
   return require.resolve('@react-native/dev-middleware', {
@@ -63,16 +63,16 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
   if (options.projectType) {
     if (options.projectType === 'expo') {
       logger.debug(
-        'User declared this is an Expo project, resolving @react-native/dev-middleware from Expo package.'
+        'User declared this is an Expo project, resolving @react-native/dev-middleware from Expo package.',
       );
 
       const expoDevMiddlewarePath = getDevMiddlewarePathFromExpo(
-        options.projectRoot
+        options.projectRoot,
       );
 
       if (!expoDevMiddlewarePath) {
         throw new Error(
-          "User declared this is an Expo project, but @react-native/dev-middleware was not found. Either this is not an Expo project or it's a bug in Rozenite."
+          "User declared this is an Expo project, but @react-native/dev-middleware was not found. Either this is not an Expo project or it's a bug in Rozenite.",
         );
       }
 
@@ -81,7 +81,7 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
 
     if (options.projectType === 'react-native-cli') {
       logger.debug(
-        'User declared this is a React Native project, resolving @react-native/dev-middleware from React Native package.'
+        'User declared this is a React Native project, resolving @react-native/dev-middleware from React Native package.',
       );
 
       return getDevMiddlewarePathFromReactNative(options.projectRoot);
@@ -96,16 +96,16 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
 
   if (projectType === 'expo') {
     logger.debug(
-      'Guessing that this is an Expo project, resolving @react-native/dev-middleware from Expo package.'
+      'Guessing that this is an Expo project, resolving @react-native/dev-middleware from Expo package.',
     );
 
     const expoDevMiddlewarePath = getDevMiddlewarePathFromExpo(
-      options.projectRoot
+      options.projectRoot,
     );
 
     if (!expoDevMiddlewarePath) {
       throw new Error(
-        "I guessed that this is an Expo project, but @react-native/dev-middleware was not found. That's unexpected and you should report this as a bug in Rozenite's issue tracker."
+        "I guessed that this is an Expo project, but @react-native/dev-middleware was not found. That's unexpected and you should report this as a bug in Rozenite's issue tracker.",
       );
     }
 
@@ -113,14 +113,14 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
   }
 
   logger.debug(
-    'This is most likely not an Expo project, resolving @react-native/dev-middleware from React Native package.'
+    'This is most likely not an Expo project, resolving @react-native/dev-middleware from React Native package.',
   );
 
   return getDevMiddlewarePathFromReactNative(options.projectRoot);
 };
 
 export const getReactNativeDebuggerFrontendPath = (
-  options: RozeniteConfig
+  options: RozeniteConfig,
 ): string => {
   const devMiddlewarePath = getDevMiddlewarePath(options);
 

@@ -48,7 +48,7 @@ export interface NetworkActivityState {
   // Event handling
   handleEvent: <K extends keyof NetworkActivityEventMap>(
     eventType: K,
-    data: NetworkActivityEventMap[K]
+    data: NetworkActivityEventMap[K],
   ) => void;
 
   // Client management
@@ -77,7 +77,7 @@ export const createNetworkActivityStore = () =>
 
             _client.send(
               isRecording ? 'network-enable' : 'network-disable',
-              {}
+              {},
             );
             set({ isRecording });
           },
@@ -117,7 +117,7 @@ export const createNetworkActivityStore = () =>
         // Event handling
         handleEvent: <K extends keyof NetworkActivityEventMap>(
           eventType: K,
-          data: NetworkActivityEventMap[K]
+          data: NetworkActivityEventMap[K],
         ) => {
           switch (eventType) {
             case 'request-sent': {
@@ -126,7 +126,7 @@ export const createNetworkActivityStore = () =>
                 const headersWithContentType =
                   applyReactNativeRequestHeadersLogic(
                     eventData.request.headers,
-                    eventData.request.postData
+                    eventData.request.postData,
                   );
 
                 const requestContentType =
@@ -241,7 +241,7 @@ export const createNetworkActivityStore = () =>
                           ? {
                               type:
                                 getContentTypeMime(
-                                  httpEntry.response?.headers ?? {}
+                                  httpEntry.response?.headers ?? {},
                                 ) || 'text/plain',
                               data: eventData.body,
                             }
@@ -293,7 +293,7 @@ export const createNetworkActivityStore = () =>
                 data as NetworkActivityEventMap['websocket-open'];
               set((state) => {
                 const entry = state.networkEntries.get(
-                  `ws-${eventData.socketId}`
+                  `ws-${eventData.socketId}`,
                 );
                 if (!entry || entry.type !== 'websocket') return state;
 
@@ -315,7 +315,7 @@ export const createNetworkActivityStore = () =>
                 data as NetworkActivityEventMap['websocket-close'];
               set((state) => {
                 const entry = state.networkEntries.get(
-                  `ws-${eventData.socketId}`
+                  `ws-${eventData.socketId}`,
                 );
                 if (!entry || entry.type !== 'websocket') return state;
 
@@ -355,8 +355,8 @@ export const createNetworkActivityStore = () =>
                 newMessages.set(
                   socketId,
                   [...currentMessages, message].slice(
-                    -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION
-                  )
+                    -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION,
+                  ),
                 );
 
                 return { websocketMessages: newMessages };
@@ -384,8 +384,8 @@ export const createNetworkActivityStore = () =>
                 newMessages.set(
                   socketId,
                   [...currentMessages, message].slice(
-                    -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION
-                  )
+                    -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION,
+                  ),
                 );
 
                 return { websocketMessages: newMessages };
@@ -398,7 +398,7 @@ export const createNetworkActivityStore = () =>
                 data as NetworkActivityEventMap['websocket-error'];
               set((state) => {
                 const entry = state.networkEntries.get(
-                  `ws-${eventData.socketId}`
+                  `ws-${eventData.socketId}`,
                 );
                 if (!entry || entry.type !== 'websocket') return state;
 
@@ -421,7 +421,7 @@ export const createNetworkActivityStore = () =>
                 data as NetworkActivityEventMap['websocket-connection-status-changed'];
               set((state) => {
                 const entry = state.networkEntries.get(
-                  `ws-${eventData.socketId}`
+                  `ws-${eventData.socketId}`,
                 );
                 if (!entry || entry.type !== 'websocket') return state;
 
@@ -478,7 +478,7 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: SSENetworkEntry = {
                   ...sseEntry,
                   messages: [...sseEntry.messages, newMessage].slice(
-                    -MAX_SSE_MESSAGES_PER_CONNECTION
+                    -MAX_SSE_MESSAGES_PER_CONNECTION,
                   ),
                 };
 
@@ -539,52 +539,52 @@ export const createNetworkActivityStore = () =>
             // Subscribe to all events using the unified handler
             const unsubscribeFunctions = [
               client.onMessage('request-sent', (data) =>
-                handleEvent('request-sent', data)
+                handleEvent('request-sent', data),
               ),
               client.onMessage('response-received', (data) =>
-                handleEvent('response-received', data)
+                handleEvent('response-received', data),
               ),
               client.onMessage('request-completed', (data) =>
-                handleEvent('request-completed', data)
+                handleEvent('request-completed', data),
               ),
               client.onMessage('request-failed', (data) =>
-                handleEvent('request-failed', data)
+                handleEvent('request-failed', data),
               ),
               client.onMessage('response-body', (data) =>
-                handleEvent('response-body', data)
+                handleEvent('response-body', data),
               ),
               client.onMessage('websocket-connect', (data) =>
-                handleEvent('websocket-connect', data)
+                handleEvent('websocket-connect', data),
               ),
               client.onMessage('websocket-open', (data) =>
-                handleEvent('websocket-open', data)
+                handleEvent('websocket-open', data),
               ),
               client.onMessage('websocket-close', (data) =>
-                handleEvent('websocket-close', data)
+                handleEvent('websocket-close', data),
               ),
               client.onMessage('websocket-message-sent', (data) =>
-                handleEvent('websocket-message-sent', data)
+                handleEvent('websocket-message-sent', data),
               ),
               client.onMessage('websocket-message-received', (data) =>
-                handleEvent('websocket-message-received', data)
+                handleEvent('websocket-message-received', data),
               ),
               client.onMessage('websocket-error', (data) =>
-                handleEvent('websocket-error', data)
+                handleEvent('websocket-error', data),
               ),
               client.onMessage('websocket-connection-status-changed', (data) =>
-                handleEvent('websocket-connection-status-changed', data)
+                handleEvent('websocket-connection-status-changed', data),
               ),
               client.onMessage('sse-open', (data) =>
-                handleEvent('sse-open', data)
+                handleEvent('sse-open', data),
               ),
               client.onMessage('sse-message', (data) =>
-                handleEvent('sse-message', data)
+                handleEvent('sse-message', data),
               ),
               client.onMessage('sse-error', (data) =>
-                handleEvent('sse-error', data)
+                handleEvent('sse-error', data),
               ),
               client.onMessage('sse-close', (data) =>
-                handleEvent('sse-close', data)
+                handleEvent('sse-close', data),
               ),
             ];
 
@@ -600,7 +600,7 @@ export const createNetworkActivityStore = () =>
 
             if (_unsubscribeFunctions) {
               _unsubscribeFunctions.forEach(
-                (unsubscribe: { remove: () => void }) => unsubscribe.remove()
+                (unsubscribe: { remove: () => void }) => unsubscribe.remove(),
               );
             }
 
@@ -640,8 +640,8 @@ export const createNetworkActivityStore = () =>
           },
         }),
         partialize: (state) => ({ overrides: state.overrides }), // Persist only the overrides
-      }
-    )
+      },
+    ),
   );
 
 export const store = createNetworkActivityStore();

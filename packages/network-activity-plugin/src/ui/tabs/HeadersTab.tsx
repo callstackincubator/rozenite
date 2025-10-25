@@ -17,7 +17,7 @@ function getHeadersItems(headers?: HttpHeaders): KeyValueItem[] {
   return Object.entries(headers).reduce<KeyValueItem[]>((acc, [key, value]) => {
     if (Array.isArray(value)) {
       acc.push(
-        ...value.map((item) => ({ key: key.toLowerCase(), value: item }))
+        ...value.map((item) => ({ key: key.toLowerCase(), value: item })),
       );
     } else {
       acc.push({ key: key.toLowerCase(), value: value });
@@ -56,17 +56,17 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
           ]
         : []),
     ],
-    [selectedRequest]
+    [selectedRequest],
   );
 
   const responseHeadersItems = useMemo(
     () => getHeadersItems(selectedRequest.response?.headers),
-    [selectedRequest]
+    [selectedRequest],
   );
 
   const requestHeadersItems = useMemo(
     () => getHeadersItems(selectedRequest.request.headers),
-    [selectedRequest]
+    [selectedRequest],
   );
 
   return (

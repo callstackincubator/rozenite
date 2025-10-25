@@ -27,7 +27,7 @@ export const PerformanceMonitorScreen = () => {
       'Performance Metric Fired',
       `Metric "${metric.name}" with value ${metric.value}${
         metric.detail?.unit ? ` ${metric.detail.unit}` : ''
-      } has been created.`
+      } has been created.`,
     );
   };
 
@@ -37,7 +37,7 @@ export const PerformanceMonitorScreen = () => {
 
     Alert.alert(
       'Performance Mark Fired',
-      `Mark "${markName}" has been created at ${new Date().toLocaleTimeString()}.`
+      `Mark "${markName}" has been created at ${new Date().toLocaleTimeString()}.`,
     );
   };
 
@@ -67,13 +67,13 @@ export const PerformanceMonitorScreen = () => {
 
       Alert.alert(
         'Performance Measure Fired',
-        `Measure "${measureName}" has been created between "${startMark}" and "${endMark}".`
+        `Measure "${measureName}" has been created between "${startMark}" and "${endMark}".`,
       );
     }, 100);
 
     Alert.alert(
       'Performance Measure Started',
-      `Started measure "${measureName}". End mark will be created in 100ms.`
+      `Started measure "${measureName}". End mark will be created in 100ms.`,
     );
   };
 
@@ -94,7 +94,7 @@ export const PerformanceMonitorScreen = () => {
       performance.measure(
         `processing-time-${scenarioId}`,
         startMark,
-        processMark
+        processMark,
       );
 
       // Simulate more work
@@ -107,14 +107,14 @@ export const PerformanceMonitorScreen = () => {
 
         Alert.alert(
           'Complex Performance Scenario',
-          `Scenario ${scenarioId} completed with multiple marks and measures.`
+          `Scenario ${scenarioId} completed with multiple marks and measures.`,
         );
       }, 200);
     }, 150);
 
     Alert.alert(
       'Complex Scenario Started',
-      `Performance scenario ${scenarioId} started. This will create multiple marks and measures.`
+      `Performance scenario ${scenarioId} started. This will create multiple marks and measures.`,
     );
   };
 

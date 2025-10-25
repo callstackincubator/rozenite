@@ -3,7 +3,7 @@ import path from 'node:path';
 
 export const resolveFileWithExtensions = (
   directory: string,
-  baseName: string
+  baseName: string,
 ): string | null => {
   const extensions = ['.tsx', '.ts', '.jsx', '.js'];
 

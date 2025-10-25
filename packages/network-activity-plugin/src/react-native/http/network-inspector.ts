@@ -36,7 +36,7 @@ const getBinaryPostData = (body: Blob): RequestBinaryPostData => ({
 });
 
 const getArrayBufferPostData = (
-  body: ArrayBuffer | ArrayBufferView
+  body: ArrayBuffer | ArrayBufferView,
 ): RequestBinaryPostData => ({
   type: 'binary',
   value: {
@@ -63,7 +63,7 @@ const getFormDataPostData = (body: FormData): RequestFormDataPostData => ({
 
       return acc;
     },
-    {}
+    {},
   ),
 });
 
@@ -119,7 +119,7 @@ const getResponseSize = (request: XMLHttpRequest): number | null => {
 };
 
 const getResponseBody = async (
-  request: XMLHttpRequest
+  request: XMLHttpRequest,
 ): Promise<string | null> => {
   const responseType = request.responseType;
 
@@ -193,7 +193,7 @@ export type NetworkInspector = {
 const READY_STATE_HEADERS_RECEIVED = 2;
 
 export const getNetworkInspector = (
-  pluginClient: NetworkActivityDevToolsClient
+  pluginClient: NetworkActivityDevToolsClient,
 ): NetworkInspector => {
   const generateRequestId = (): string => {
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -201,7 +201,7 @@ export const getNetworkInspector = (
 
   const handleRequestSend = (
     data: XHRPostData,
-    request: XMLHttpRequest
+    request: XMLHttpRequest,
   ): void => {
     const sendTime = Date.now();
 
@@ -243,7 +243,7 @@ export const getNetworkInspector = (
           status: request.status,
           statusText: request.statusText,
           headers: applyReactNativeResponseHeadersLogic(
-            request.responseHeaders || {}
+            request.responseHeaders || {},
           ),
           contentType: getContentType(request),
           size: getResponseSize(request),
@@ -285,7 +285,7 @@ export const getNetworkInspector = (
 
   const handleRequestOverride = (request: XMLHttpRequest): void => {
     const override = overridesRegistry.getOverrideForUrl(
-      request._url as string
+      request._url as string,
     );
 
     if (!override) {
@@ -369,7 +369,7 @@ export const getNetworkInspector = (
         requestId,
         body,
       });
-    }
+    },
   );
 
   const dispose = () => {

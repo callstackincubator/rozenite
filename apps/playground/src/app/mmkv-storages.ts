@@ -18,7 +18,7 @@ export const initializeMMKVStorages = () => {
   userStorage.set('lastLogin', Date.now());
   userStorage.set(
     'profile',
-    JSON.stringify({ bio: 'Software Developer', location: 'San Francisco' })
+    JSON.stringify({ bio: 'Software Developer', location: 'San Francisco' }),
   );
 
   // Add test data to app settings
@@ -31,17 +31,17 @@ export const initializeMMKVStorages = () => {
   appSettings.set('maxCacheSize', 100);
   appSettings.set(
     'buffer',
-    new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).buffer
+    new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).buffer,
   );
 
   // Add test data to cache storage (including buffer)
   cacheStorage.set(
     'apiResponse',
-    JSON.stringify({ data: 'cached response', timestamp: Date.now() })
+    JSON.stringify({ data: 'cached response', timestamp: Date.now() }),
   );
   cacheStorage.set(
     'userPreferences',
-    JSON.stringify({ theme: 'dark', language: 'en' })
+    JSON.stringify({ theme: 'dark', language: 'en' }),
   );
   cacheStorage.set('timestamp', Date.now());
   cacheStorage.set('cacheSize', 1024);

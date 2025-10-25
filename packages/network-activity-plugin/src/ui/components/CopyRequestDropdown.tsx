@@ -57,11 +57,11 @@ export const CopyRequestDropdown = ({ selectedRequest }: CopyDropdownProps) => {
         console.error(`Failed to copy ${option.label}:`, error);
       }
     },
-    [selectedRequest, copy]
+    [selectedRequest, copy],
   );
 
   const filteredCopyOptions = copyOptions.filter((option) =>
-    option.isEnabled(selectedRequest)
+    option.isEnabled(selectedRequest),
   );
 
   if (filteredCopyOptions.length === 0) {
