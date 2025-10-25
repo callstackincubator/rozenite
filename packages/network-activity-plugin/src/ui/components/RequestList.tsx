@@ -75,16 +75,12 @@ const extractDomainAndPath = (
   }
 };
 
-const generateName = (url: string, showUrlAsName = false): string => {
+const generateName = (url: string, showEntirePathName = false): string => {
   try {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;
+    const filename = showEntirePathName ? undefined : pathname.split('/').pop();
     
-    if (showUrlAsName) {
-      return pathname || urlObj.hostname;
-    }
-    
-    const filename = pathname.split('/').pop();
     return filename || pathname || urlObj.hostname;
   } catch {
     return url;
@@ -132,7 +128,7 @@ const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
 const processNetworkRequests = (
   processedRequests: ProcessedRequest[],
   overrides: Map<string, RequestOverride>,
-  showUrlAsName = false
+  showEntirePathAsName = false
 ): NetworkRequest[] => {
   return processedRequests.map((request): NetworkRequest => {
     const { domain, path } = extractDomainAndPath(request.name);
@@ -141,7 +137,7 @@ const processNetworkRequests = (
 
     return {
       id: request.id,
-      name: generateName(request.name, showUrlAsName),
+      name: generateName(request.name, showEntirePathAsName),
       status: request.httpStatus || request.status,
       method: request.method,
       domain,
