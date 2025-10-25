@@ -26,7 +26,8 @@ export const useNetworkActivityDevTools = (
 
   const isHttpInspectorEnabled = config.inspectors?.http ?? true;
   const isWebSocketInspectorEnabled = config.inspectors?.websocket ?? true;
-  const isSSEInspectorEnabled = config.inspectors?.sse ?? true;
+  const isSSEInspectorEnabled = config.inspectors?.sse ?? true; 
+  const showUrlAsName = config.clientUISettings?.showUrlAsName;
 
   useEffect(() => {
     if (!client) {
@@ -45,7 +46,9 @@ export const useNetworkActivityDevTools = (
 
     const sendClientUISettings = () => {
       client.send('client-ui-settings', {
-        settings: config.clientUISettings || DEFAULT_CONFIG.clientUISettings,
+        settings: {
+          showUrlAsName: showUrlAsName ?? DEFAULT_CONFIG.clientUISettings?.showUrlAsName,
+        },
       });
     }
 
@@ -71,7 +74,7 @@ export const useNetworkActivityDevTools = (
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
     };
-  }, [client, config.clientUISettings]);
+  }, [client, showUrlAsName]);
 
   useEffect(() => {
     if (!client || !isHttpInspectorEnabled) {
