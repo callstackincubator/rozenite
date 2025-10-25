@@ -89,10 +89,20 @@ export type RequestOverride = {
   body?: string;
 };
 
+export type NetworkActivityClientUISettings = {
+  showUrlAsName?: boolean;
+};
+
 export type NetworkActivityEventMap = {
   // Control events
   'network-enable': unknown;
   'network-disable': unknown;
+
+  // Client UI settings events
+  'get-client-ui-settings': unknown;
+  'client-ui-settings': {
+    settings?: NetworkActivityClientUISettings;
+  };
 
   // Network request events
   'request-sent': {

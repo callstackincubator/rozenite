@@ -5,6 +5,7 @@ import {
   NetworkActivityEventMap,
   RequestOverride,
   RequestId,
+  NetworkActivityClientUISettings,
 } from '../../shared/client';
 import {
   NetworkEntry,
@@ -31,6 +32,7 @@ export interface NetworkActivityState {
   networkEntries: Map<RequestId, NetworkEntry>;
   websocketMessages: Map<RequestId, WebSocketMessage[]>;
   overrides: Map<string, RequestOverride>;
+  clientUISettings: NetworkActivityClientUISettings | null;
 
   // Internal state (not exposed in interface)
   _unsubscribeFunctions?: Array<{ remove: () => void }>;
@@ -68,6 +70,7 @@ export const createNetworkActivityStore = () =>
         networkEntries: new Map(),
         websocketMessages: new Map(),
         overrides: new Map(),
+        clientUISettings: null,
 
         // Actions
         actions: {
@@ -120,6 +123,12 @@ export const createNetworkActivityStore = () =>
           data: NetworkActivityEventMap[K]
         ) => {
           switch (eventType) {
+            case 'client-ui-settings': {
+              const eventData = data as NetworkActivityEventMap['client-ui-settings'];
+              set({ clientUISettings: eventData.settings || null });
+              break;
+            }
+
             case 'request-sent': {
               const eventData = data as NetworkActivityEventMap['request-sent'];
               set((state) => {
@@ -170,7 +179,10 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: HttpNetworkEntry = {
                   ...httpEntry,
                   status: 'loading',
-                  response: eventData.response,
+                  response: {
+                    ...eventData.response,
+                    size: eventData.response.size ?? 0,
+                  },
                 };
 
                 const newEntries = new Map(state.networkEntries);
@@ -192,7 +204,7 @@ export const createNetworkActivityStore = () =>
                   ...httpEntry,
                   status: 'finished',
                   duration: eventData.duration,
-                  size: eventData.size,
+                  size: eventData.size ?? undefined,
                   ttfb: eventData.ttfb,
                 };
 
@@ -451,7 +463,10 @@ export const createNetworkActivityStore = () =>
                   type: 'sse', // Change type from 'http' to 'sse'
                   status: 'open', // Update status
                   messages: [], // Add SSE-specific field
-                  response: eventData.response,
+                  response: {
+                    ...eventData.response,
+                    size: eventData.response.size ?? 0,
+                  },
                 };
 
                 const newEntries = new Map(state.networkEntries);
@@ -538,6 +553,9 @@ export const createNetworkActivityStore = () =>
 
             // Subscribe to all events using the unified handler
             const unsubscribeFunctions = [
+              client.onMessage('client-ui-settings', (data) =>
+                handleEvent('client-ui-settings', data)
+              ),
               client.onMessage('request-sent', (data) =>
                 handleEvent('request-sent', data)
               ),
@@ -593,6 +611,9 @@ export const createNetworkActivityStore = () =>
               _unsubscribeFunctions: unsubscribeFunctions,
               _client: client,
             });
+
+            // Request client UI settings from React Native side
+            client.send('get-client-ui-settings', {});
           },
 
           cleanupClient: () => {
@@ -632,6 +653,7 @@ export const createNetworkActivityStore = () =>
             if (
               typeof value === 'object' &&
               value !== null &&
+              '_type' in value &&
               value._type === 'map'
             ) {
               return new Map(value.value);

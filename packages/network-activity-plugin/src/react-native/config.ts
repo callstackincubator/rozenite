@@ -9,6 +9,13 @@ export type NetworkActivityDevToolsConfig = {
   inspectors?: {
     [key in InspectorType]?: boolean;
   };
+  clientUISettings?: {
+    /**
+     * If true, display the entire relative URL as the request name in the UI instead of only the last path segment.
+     * @default false
+     */
+    showUrlAsName?: boolean;
+  };
 };
 
 export const DEFAULT_CONFIG: NetworkActivityDevToolsConfig = {
@@ -17,6 +24,9 @@ export const DEFAULT_CONFIG: NetworkActivityDevToolsConfig = {
     websocket: true,
     sse: true,
   },
+  clientUISettings: {
+    showUrlAsName: false,
+  }
 };
 
 export const validateConfig = (config: NetworkActivityDevToolsConfig): void => {

@@ -46,3 +46,7 @@ export const useWebSocketMessages = (requestId: string) => {
 export const useOverrides = () => {
   return useNetworkActivityStore((state) => state.overrides);
 };
+
+export const useClientUISettings = () => {
+  return useNetworkActivityStore((state) => state.clientUISettings);
+};
