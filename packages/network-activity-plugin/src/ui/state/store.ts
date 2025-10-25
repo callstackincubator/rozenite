@@ -25,11 +25,6 @@ const MAX_SSE_MESSAGES_PER_CONNECTION = 32;
 
 const STORE_VERSION = 1;
 
-type SerializedMap = {
-  _type: 'map';
-  value: [string, unknown][];
-};
-
 export interface NetworkActivityState {
   // State
   isRecording: boolean;
@@ -659,9 +654,9 @@ export const createNetworkActivityStore = () =>
               typeof value === 'object' &&
               value !== null &&
               '_type' in value &&
-              (value as SerializedMap)._type === 'map'
+              value._type === 'map'
             ) {
-              return new Map((value as SerializedMap).value);
+              return new Map(value.value);
             }
             return value;
           },

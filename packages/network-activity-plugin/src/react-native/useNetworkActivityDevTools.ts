@@ -53,14 +53,12 @@ export const useNetworkActivityDevTools = (
         overridesRegistry.setOverrides(data.overrides);
       }),
       client.onMessage('get-client-ui-settings', () => {
-        // Send the current client UI settings to the DevTools panel
         client.send('client-ui-settings', {
           settings: config.clientUISettings || DEFAULT_CONFIG.clientUISettings,
         });
       }),
     ];
 
-    // Send initial client UI settings when client connects
     client.send('client-ui-settings', {
       settings: config.clientUISettings || DEFAULT_CONFIG.clientUISettings,
     });
