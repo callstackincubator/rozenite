@@ -42,6 +42,13 @@ export const useNetworkActivityDevTools = (
       return;
     }
 
+
+    const sendClientUISettings = () => {
+      client.send('client-ui-settings', {
+        settings: config.clientUISettings || DEFAULT_CONFIG.clientUISettings,
+      });
+    }
+
     const subscriptions = [
       client.onMessage('network-enable', () => {
         isRecordingEnabledRef.current = true;
@@ -52,16 +59,14 @@ export const useNetworkActivityDevTools = (
       client.onMessage('set-overrides', (data) => {
         overridesRegistry.setOverrides(data.overrides);
       }),
+      
       client.onMessage('get-client-ui-settings', () => {
-        client.send('client-ui-settings', {
-          settings: config.clientUISettings || DEFAULT_CONFIG.clientUISettings,
-        });
+        sendClientUISettings();
       }),
     ];
 
-    client.send('client-ui-settings', {
-      settings: config.clientUISettings || DEFAULT_CONFIG.clientUISettings,
-    });
+    // Send initial or changed values live
+    sendClientUISettings();
 
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
