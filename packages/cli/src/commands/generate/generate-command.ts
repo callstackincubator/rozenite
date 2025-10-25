@@ -20,7 +20,7 @@ export const generateCommand = async (targetDir: string) => {
   if (projectExists) {
     logger.error(`Directory ${projectRoot} already exists`);
     logger.info(
-      'Please choose a different name or remove the existing directory'
+      'Please choose a different name or remove the existing directory',
     );
     process.exit(1);
   }

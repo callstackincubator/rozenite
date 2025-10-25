@@ -25,9 +25,9 @@ export class ReduxDevTools extends Component {
             hostname: 'localhost',
             port: REDUX_DEVTOOLS_PORT,
             secure: false,
-          })
+          }),
         );
-      }
+      },
     );
     this.store = store;
     this.persistor = persistor;

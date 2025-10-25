@@ -6,7 +6,7 @@ import type { PluginInfo } from '../types.js';
 const renderTemplateFile = async (
   src: string,
   dest: string,
-  pluginInfo: PluginInfo
+  pluginInfo: PluginInfo,
 ): Promise<void> => {
   let content = await fs.readFile(src, 'utf8');
   content = ejs.render(content, pluginInfo);
@@ -30,7 +30,7 @@ const renderTemplateFile = async (
 export const renderTemplate = async (
   src: string,
   dest: string,
-  pluginInfo: PluginInfo
+  pluginInfo: PluginInfo,
 ): Promise<void> => {
   const entries = await fs.readdir(src, { withFileTypes: true });
 

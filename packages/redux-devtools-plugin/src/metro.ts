@@ -2,9 +2,9 @@ import type { ConfigT as MetroConfig } from 'metro-config';
 import { REDUX_DEVTOOLS_PORT } from './constants';
 
 export const withRozeniteReduxDevTools = <
-  T extends MetroConfig | Promise<MetroConfig>
+  T extends MetroConfig | Promise<MetroConfig>,
 >(
-  config: T
+  config: T,
 ): T => {
   // This is ESM only, so we need to import it dynamically in case of CJS
   import('@redux-devtools/cli').then(({ default: setupWebSocketRelay }) => {

@@ -22,7 +22,7 @@ export const buildCommand = async (targetDir: string) => {
         recursive: true,
         force: true,
       });
-    }
+    },
   );
 
   await step(
@@ -35,7 +35,7 @@ export const buildCommand = async (targetDir: string) => {
       await spawn('vite', ['build'], {
         cwd: targetDir,
       });
-    }
+    },
   );
 
   if (hasMetroEntryPoint) {
@@ -52,7 +52,7 @@ export const buildCommand = async (targetDir: string) => {
             VITE_ROZENITE_TARGET: 'server',
           },
         });
-      }
+      },
     );
   }
 
@@ -70,7 +70,7 @@ export const buildCommand = async (targetDir: string) => {
             VITE_ROZENITE_TARGET: 'react-native',
           },
         });
-      }
+      },
     );
   }
 

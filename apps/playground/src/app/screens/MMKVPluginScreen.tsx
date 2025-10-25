@@ -155,8 +155,8 @@ export const MMKVPluginScreen = () => {
       prev.map((storage) =>
         storage.id === storageId
           ? { ...storage, entries: getStorageEntries(storageId) }
-          : storage
-      )
+          : storage,
+      ),
     );
   };
 
@@ -166,7 +166,7 @@ export const MMKVPluginScreen = () => {
       prev.map((storage) => ({
         ...storage,
         entries: getStorageEntries(storage.id),
-      }))
+      })),
     );
   };
 
@@ -201,7 +201,7 @@ export const MMKVPluginScreen = () => {
     storageId: string,
     key: string,
     value: string,
-    type: MMKVEntryType
+    type: MMKVEntryType,
   ) => {
     const instance =
       storageInstances[storageId as keyof typeof storageInstances];
@@ -214,7 +214,7 @@ export const MMKVPluginScreen = () => {
     if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
       Alert.alert(
         'Error',
-        'Key can only contain letters, numbers, underscores, and hyphens'
+        'Key can only contain letters, numbers, underscores, and hyphens',
       );
       return;
     }
@@ -229,7 +229,7 @@ export const MMKVPluginScreen = () => {
           if (isNaN(numValue)) {
             Alert.alert(
               'Error',
-              'Invalid number value. Please enter a valid number.'
+              'Invalid number value. Please enter a valid number.',
             );
             return;
           }
@@ -254,7 +254,7 @@ export const MMKVPluginScreen = () => {
           } catch {
             Alert.alert(
               'Error',
-              'Invalid buffer value. Please enter a valid buffer.'
+              'Invalid buffer value. Please enter a valid buffer.',
             );
             return;
           }
@@ -276,7 +276,7 @@ export const MMKVPluginScreen = () => {
     storageId: string,
     key: string,
     value: string,
-    type: MMKVEntryType
+    type: MMKVEntryType,
   ) => {
     const instance =
       storageInstances[storageId as keyof typeof storageInstances];
@@ -379,7 +379,7 @@ export const MMKVPluginScreen = () => {
         editData.storageId,
         trimmedKey,
         editData.value,
-        editData.type
+        editData.type,
       );
     }
     setEditModalVisible(false);
@@ -546,7 +546,7 @@ export const MMKVPluginScreen = () => {
                         {type}
                       </Text>
                     </TouchableOpacity>
-                  )
+                  ),
                 )}
               </ScrollView>
             </View>
@@ -557,10 +557,10 @@ export const MMKVPluginScreen = () => {
                 editData.type === 'string'
                   ? 'Enter text value'
                   : editData.type === 'number'
-                  ? 'Enter number (e.g., 42, 3.14)'
-                  : editData.type === 'boolean'
-                  ? 'Enter true or false'
-                  : 'Enter value'
+                    ? 'Enter number (e.g., 42, 3.14)'
+                    : editData.type === 'boolean'
+                      ? 'Enter true or false'
+                      : 'Enter value'
               }
               placeholderTextColor="#666"
               value={editData.value}

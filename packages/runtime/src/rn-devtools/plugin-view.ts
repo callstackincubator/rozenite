@@ -17,16 +17,16 @@ export class PluginView
 
     const globalNamespace = getGlobalNamespace();
     const destroyOnDetachPlugins = globalNamespace.destroyOnDetachPlugins;
-    
+
     const shouldDestroy = destroyOnDetachPlugins.includes(pluginId);
-    
+
     if (!shouldDestroy) {
       this.setHideOnDetach();
     }
 
     SDK.TargetManager.TargetManager.instance().observeModels(
       RozenitePluginModel,
-      this
+      this,
     );
 
     this.#renderLoader();
@@ -38,12 +38,12 @@ export class PluginView
     model.addEventListener(
       'InitializationCompleted',
       this.#handleInitializationCompleted,
-      this
+      this,
     );
     model.addEventListener(
       'InitializationFailed',
       this.#handleInitializationFailed,
-      this
+      this,
     );
     model.addEventListener('Destroyed', this.#handleBackendDestroyed, this);
 
@@ -61,12 +61,12 @@ export class PluginView
     model.removeEventListener(
       'InitializationCompleted',
       this.#handleInitializationCompleted,
-      this
+      this,
     );
     model.removeEventListener(
       'InitializationFailed',
       this.#handleInitializationFailed,
-      this
+      this,
     );
     model.removeEventListener('Destroyed', this.#handleBackendDestroyed, this);
   }
@@ -120,7 +120,7 @@ export class PluginView
     const loaderContainer = document.createElement('div');
     loaderContainer.setAttribute(
       'style',
-      'display: flex; flex: 1; justify-content: center; align-items: center'
+      'display: flex; flex: 1; justify-content: center; align-items: center',
     );
 
     const loader = document.createElement('span');
@@ -136,7 +136,7 @@ export class PluginView
     const errorContainer = document.createElement('div');
     errorContainer.setAttribute(
       'style',
-      'display: flex; flex: 1; flex-direction: column; justify-content: center; align-items: center'
+      'display: flex; flex: 1; flex-direction: column; justify-content: center; align-items: center',
     );
 
     const errorIconView = document.createElement('div');
@@ -161,6 +161,11 @@ export class PluginView
   }
 }
 
-export const getPluginView = (pluginId: string, panelId: string, name: string, url: string) => {
+export const getPluginView = (
+  pluginId: string,
+  panelId: string,
+  name: string,
+  url: string,
+) => {
   return new PluginView(pluginId, panelId, name, url);
 };

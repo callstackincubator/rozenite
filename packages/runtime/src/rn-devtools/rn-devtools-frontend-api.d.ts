@@ -25,12 +25,12 @@ declare module '/rozenite/ui/legacy/legacy.js' {
     addEventListener<T extends keyof TabbedPaneEventTypes>(
       event: T,
       listener: (
-        data: Common.EventTarget.EventTargetEvent<TabbedPaneEventTypes[T]>
-      ) => void
+        data: Common.EventTarget.EventTargetEvent<TabbedPaneEventTypes[T]>,
+      ) => void,
     ): void;
     removeEventListener(
       event: keyof TabbedPaneEventTypes,
-      listener: (data: any) => void
+      listener: (data: any) => void,
     ): void;
   }
 
@@ -195,12 +195,12 @@ declare module '/rozenite/models/react_native/react_native.js' {
       addEventListener<T>(
         event: string,
         callback: (message: RuntimeEvent<T>) => void,
-        thisArg: unknown
+        thisArg: unknown,
       ): void;
       removeEventListener<T>(
         event: string,
         callback: (message: RuntimeEvent<T>) => void,
-        thisArg: unknown
+        thisArg: unknown,
       ): void;
       agent: {
         invoke_evaluate: (params: {
@@ -225,14 +225,14 @@ declare module '/rozenite/models/react_native/react_native.js' {
       addEventListener<T extends keyof EventTypes>(
         event: T,
         callback: (
-          event: Common.EventTarget.EventTargetEvent<EventTypes[T]>
+          event: Common.EventTarget.EventTargetEvent<EventTypes[T]>,
         ) => void,
-        thisArg: unknown
+        thisArg: unknown,
       ): void;
       removeEventListener(
         event: keyof EventTypes,
         callback: (event: any) => void,
-        thisArg: unknown
+        thisArg: unknown,
       ): void;
     }
   }
@@ -242,22 +242,22 @@ declare module '/rozenite/models/react_native/react_native.js' {
       initializeDomain(domain: string): Promise<void>;
       subscribeToDomainMessages(
         domain: string,
-        callback: (message: unknown) => void
+        callback: (message: unknown) => void,
       ): void;
       sendMessage(domain: string, message: unknown): Promise<void>;
       unsubscribeFromDomainMessages(
         domain: string,
-        callback: (message: unknown) => void
+        callback: (message: unknown) => void,
       ): void;
       addEventListener(
         event: string,
         callback: (message: unknown) => void,
-        thisArg: unknown
+        thisArg: unknown,
       ): void;
       removeEventListener(
         event: string,
         callback: (message: unknown) => void,
-        thisArg: unknown
+        thisArg: unknown,
       ): void;
       enable(): Promise<void>;
       isEnabled(): boolean;
@@ -273,7 +273,7 @@ declare module '/rozenite/core/sdk/sdk.js' {
         options: {
           capabilities: Target.Capability;
           autostart: boolean;
-        }
+        },
       ): void;
       constructor(target: Target.Target);
       dispose(): void;
@@ -282,12 +282,12 @@ declare module '/rozenite/core/sdk/sdk.js' {
       addEventListener<T>(
         event: string,
         callback: (message: RuntimeEvent<T>) => void,
-        thisArg: unknown
+        thisArg: unknown,
       ): void;
       removeEventListener<T>(
         event: string,
         callback: (message: RuntimeEvent<T>) => void,
-        thisArg: unknown
+        thisArg: unknown,
       ): void;
     }
   }
@@ -308,7 +308,7 @@ declare module '/rozenite/core/sdk/sdk.js' {
       static instance(): TargetManager;
       observeModels<T>(
         model: typeof SDKModel.SDKModel<T>,
-        observer: SDKModelObserver<T>
+        observer: SDKModelObserver<T>,
       ): void;
       primaryPageTarget(): {
         model<T>(model: typeof SDKModel.SDKModel<T>): T | null;

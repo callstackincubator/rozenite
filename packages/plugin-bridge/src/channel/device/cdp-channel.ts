@@ -33,7 +33,7 @@ const waitForDomain = (): Promise<CdpDomain> => {
     const handler = (domain: CdpDomain) => {
       if (domain.name === DOMAIN_NAME) {
         global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.removeEventListener(
-          handler
+          handler,
         );
 
         // This is on purpose. Without setTimeout the promise will be never resolved.
@@ -43,7 +43,7 @@ const waitForDomain = (): Promise<CdpDomain> => {
     };
 
     global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.addEventListener(
-      handler
+      handler,
     );
   });
 };
@@ -82,12 +82,12 @@ const getCdpDomainProxy = async (): Promise<Channel> => {
   };
 
   global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.addEventListener(
-    reinitHandler
+    reinitHandler,
   );
 
   const close = () => {
     global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.removeEventListener(
-      reinitHandler
+      reinitHandler,
     );
   };
 

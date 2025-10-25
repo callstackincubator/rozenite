@@ -39,7 +39,7 @@ const isDirectoryOrSymlinkToDirectory = (filePath: string): boolean => {
 
 const tryResolvePlugin = (
   projectRoot: string,
-  maybePlugin: string
+  maybePlugin: string,
 ): string | null => {
   try {
     const pluginPath = require.resolve(maybePlugin, { paths: [projectRoot] });
@@ -78,7 +78,7 @@ const getIncludedPlugins = (options: RozeniteConfig): InstalledPlugin[] => {
 };
 
 export const getInstalledPlugins = (
-  options: RozeniteConfig
+  options: RozeniteConfig,
 ): InstalledPlugin[] => {
   if (options.include) {
     logger.info('Auto-discovery is disabled. Using only included plugins.');
@@ -103,7 +103,7 @@ export const getInstalledPlugins = (
       for (const entry of entries) {
         if (
           !isDirectoryOrSymlinkToDirectory(
-            path.join(nodeModulesPath, entry.name)
+            path.join(nodeModulesPath, entry.name),
           )
         ) {
           continue;
@@ -135,7 +135,7 @@ export const getInstalledPlugins = (
             for (const scopedEntry of scopedEntries) {
               if (
                 !isDirectoryOrSymlinkToDirectory(
-                  path.join(scopePath, scopedEntry.name)
+                  path.join(scopePath, scopedEntry.name),
                 )
               ) {
                 continue;
@@ -160,7 +160,7 @@ export const getInstalledPlugins = (
           } catch (error) {
             logger.warn(
               `Warning: Could not read scope directory ${scopePath}:`,
-              error
+              error,
             );
             continue;
           }
@@ -182,7 +182,7 @@ export const getInstalledPlugins = (
     } catch (error) {
       logger.warn(
         `Warning: Could not read node_modules directory ${nodeModulesPath}:`,
-        error
+        error,
       );
       continue;
     }
@@ -193,7 +193,7 @@ export const getInstalledPlugins = (
 
 const tryExtractPlugin = (
   packagePath: string,
-  packageName: string
+  packageName: string,
 ): InstalledPlugin | null => {
   const rozeniteConfigPath = path.join(packagePath, 'dist', ROZENITE_MANIFEST);
 

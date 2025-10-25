@@ -6,7 +6,7 @@ const createSerializer = () => {
     entryPoint: unknown,
     prepend: unknown,
     graph: unknown,
-    bundleOptions: unknown
+    bundleOptions: unknown,
   ) => bundleToString(baseJSBundle(entryPoint, prepend, graph, bundleOptions));
 };
 
@@ -20,7 +20,7 @@ export const getBaseSerializer = () => {
       error.code === 'MODULE_NOT_FOUND'
     ) {
       throw new Error(
-        'Cannot find required internals of Metro. Please make sure you have installed the correct version of Metro.'
+        'Cannot find required internals of Metro. Please make sure you have installed the correct version of Metro.',
       );
     }
 

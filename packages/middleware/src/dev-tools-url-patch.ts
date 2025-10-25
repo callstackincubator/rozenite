@@ -7,24 +7,26 @@ const require = createRequire(import.meta.url);
 
 export const patchDevtoolsFrontendUrl = (options: RozeniteConfig): void => {
   const getDevToolsFrontendUrlModulePath = path.dirname(
-    getDevMiddlewarePath(options)
+    getDevMiddlewarePath(options),
   );
-  const getDevToolsFrontendUrlModule = require(path.join(
-    getDevToolsFrontendUrlModulePath,
-    '/utils/getDevToolsFrontendUrl'
-  ));
+  const getDevToolsFrontendUrlModule = require(
+    path.join(
+      getDevToolsFrontendUrlModulePath,
+      '/utils/getDevToolsFrontendUrl',
+    ),
+  );
   const getDevToolsFrontendUrl = getDevToolsFrontendUrlModule.default;
   getDevToolsFrontendUrlModule.default = (
     experiments: unknown,
     webSocketDebuggerUrl: string,
     devServerUrl: string,
-    options: unknown
+    options: unknown,
   ) => {
     const originalUrl = getDevToolsFrontendUrl(
       experiments,
       webSocketDebuggerUrl,
       devServerUrl,
-      options
+      options,
     );
     return originalUrl.replace('/debugger-frontend/', '/rozenite/');
   };

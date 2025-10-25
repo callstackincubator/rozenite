@@ -81,7 +81,7 @@ export const EditEntryDialog = ({
             }
           } catch {
             throw new Error(
-              'Invalid buffer format. Use JSON array like [1,2,3]'
+              'Invalid buffer format. Use JSON array like [1,2,3]',
             );
           }
           break;
@@ -201,7 +201,7 @@ export const EditEntryDialog = ({
             <div className="flex items-center">
               <span
                 className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
-                  entry.type
+                  entry.type,
                 )}`}
               >
                 {entry.type}

@@ -65,7 +65,7 @@ export default withRozenite(
     include: ['@my-org/my-plugin', 'another-plugin'],
     exclude: ['unwanted-plugin'],
     destroyOnDetachPlugins: ['@rozenite/network-activity-plugin'],
-  }
+  },
 );
 ```
 

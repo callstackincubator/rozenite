@@ -17,7 +17,7 @@ export function extractPackageNameFromNpmUrl(npmUrl: string): string | null {
 }
 
 export function getPackageNamesFromReferences(
-  references: Array<{ npmUrl: string }>
+  references: Array<{ npmUrl: string }>,
 ): string[] {
   return references
     .map((ref) => extractPackageNameFromNpmUrl(ref.npmUrl))

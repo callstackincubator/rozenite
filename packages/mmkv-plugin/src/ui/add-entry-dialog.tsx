@@ -208,10 +208,10 @@ export const AddEntryDialog = ({
                   newEntryType === 'string'
                     ? 'Enter string value'
                     : newEntryType === 'number'
-                    ? 'Enter number value'
-                    : newEntryType === 'buffer'
-                    ? 'Enter array as JSON, e.g., [1, 2, 3]'
-                    : 'Enter value'
+                      ? 'Enter number value'
+                      : newEntryType === 'buffer'
+                        ? 'Enter array as JSON, e.g., [1, 2, 3]'
+                        : 'Enter value'
                 }
                 className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />

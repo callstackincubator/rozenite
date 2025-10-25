@@ -12,7 +12,7 @@ export const frontmatter = {
 
 const generatePageNumbers = (
   currentPage: number,
-  totalPages: number
+  totalPages: number,
 ): (number | string)[] => {
   const pages: (number | string)[] = [];
   const maxVisiblePages = 5;

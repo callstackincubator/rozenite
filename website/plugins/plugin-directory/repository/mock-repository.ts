@@ -78,7 +78,7 @@ export class MockPluginRepository implements PluginRepository {
   }
 
   async refreshPlugin(
-    plugin: PluginDirectoryReference
+    plugin: PluginDirectoryReference,
   ): Promise<RozenitePluginEntry> {
     // Extract package name from npm URL
     const packageName = extractPackageNameFromNpmUrl(plugin.npmUrl);
@@ -98,7 +98,7 @@ export class MockPluginRepository implements PluginRepository {
   }
 
   async getPluginWithFallback(
-    plugin: PluginDirectoryReference
+    plugin: PluginDirectoryReference,
   ): Promise<RozenitePluginEntry> {
     const packageName = extractPackageNameFromNpmUrl(plugin.npmUrl);
 

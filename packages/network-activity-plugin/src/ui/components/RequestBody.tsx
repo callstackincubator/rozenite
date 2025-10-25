@@ -13,7 +13,7 @@ type RequestBodyProps = {
 
 const getFormDataBinaryEntries = (
   key: string,
-  value: RequestBinaryPostData['value']
+  value: RequestBinaryPostData['value'],
 ): KeyValueItem[] => {
   return [
     {
@@ -29,7 +29,7 @@ const getFormDataBinaryEntries = (
 };
 
 const getBinaryEntries = (
-  value: RequestBinaryPostData['value']
+  value: RequestBinaryPostData['value'],
 ): KeyValueItem[] => {
   const { size, type, name } = value;
 

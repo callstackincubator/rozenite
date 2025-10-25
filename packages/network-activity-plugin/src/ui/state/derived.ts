@@ -62,7 +62,7 @@ export const getSelectedRequest = memoize((state: NetworkActivityState) => {
 });
 
 export const getRequestSummary = (
-  requestId: string
+  requestId: string,
 ): ((state: NetworkActivityState) => ProcessedRequest | null) =>
   memoize((state: NetworkActivityState) => {
     const { networkEntries } = state;

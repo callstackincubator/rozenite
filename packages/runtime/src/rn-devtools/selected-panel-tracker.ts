@@ -2,7 +2,7 @@ import { UI } from './rn-devtools-frontend.js';
 
 /**
  * Inspector device ID is combination of the app's bundle ID and the device's unique ID.
- * 
+ *
  * See:
  * https://github.com/facebook/react-native/blob/c7591d9b40babc8c4a57a03adee158bde3b10a06/packages/react-native/ReactAndroid/src/main/java/com/facebook/react/devsupport/DevServerHelper.kt#L102-L124
  * https://github.com/facebook/react-native/blob/c7591d9b40babc8c4a57a03adee158bde3b10a06/packages/react-native/React/DevSupport/RCTInspectorDevServerHelper.mm#L77-L99
@@ -10,7 +10,7 @@ import { UI } from './rn-devtools-frontend.js';
 const extractInspectorDeviceIdFromUrl = () => {
   try {
     const match = decodeURIComponent(window.location.href).match(
-      /[?&]device=([^&]+)/
+      /[?&]device=([^&]+)/,
     );
 
     return match ? match[1] : null;
