@@ -61,7 +61,7 @@ const formatStartTime = (startTime: number): string => {
 };
 
 const extractDomainAndPath = (
-  url: string
+  url: string,
 ): { domain: string; path: string } => {
   try {
     const { hostname, pathname, search, hash, port } = new URL(url);
@@ -80,7 +80,7 @@ const generateName = (url: string, showEntirePathName = false): string => {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;
     const filename = showEntirePathName ? undefined : pathname.split('/').pop();
-    
+
     return filename || pathname || urlObj.hostname;
   } catch {
     return url;
@@ -128,7 +128,7 @@ const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
 const processNetworkRequests = (
   processedRequests: ProcessedRequest[],
   overrides: Map<string, RequestOverride>,
-  showEntirePathAsName = false
+  showEntirePathAsName = false,
 ): NetworkRequest[] => {
   return processedRequests.map((request): NetworkRequest => {
     const { domain, path } = extractDomainAndPath(request.name);
@@ -262,7 +262,11 @@ export const RequestList = ({ filter }: RequestListProps) => {
   }, [processedRequests, filter]);
 
   const requests = useMemo(() => {
-    return processNetworkRequests(filteredRequests, overrides, clientUISettings?.showUrlAsName);
+    return processNetworkRequests(
+      filteredRequests,
+      overrides,
+      clientUISettings?.showUrlAsName,
+    );
   }, [filteredRequests, overrides, clientUISettings?.showUrlAsName]);
 
   const table = useReactTable({
@@ -302,7 +306,7 @@ export const RequestList = ({ filter }: RequestListProps) => {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                     {header.column.getCanSort() && (
                       <span className="text-gray-500">
