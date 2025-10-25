@@ -9,7 +9,7 @@ import './globals.css';
 
 export default function MMKVPanel() {
   const [instances, setInstances] = useState<Map<string, MMKVEntry[]>>(
-    new Map()
+    new Map(),
   );
   const [selectedInstance, setSelectedInstance] = useState<string | null>(null);
   const [entries, setEntries] = useState<MMKVEntry[]>([]);
@@ -50,12 +50,12 @@ export default function MMKVPanel() {
       if (event.id === selectedInstance) {
         setEntries((prevEntries) => {
           const existingIndex = prevEntries.findIndex(
-            (entry) => entry.key === event.entry.key
+            (entry) => entry.key === event.entry.key,
           );
           if (existingIndex >= 0) {
             // Update existing entry
             return prevEntries.map((entry) =>
-              entry.key === event.entry.key ? event.entry : entry
+              entry.key === event.entry.key ? event.entry : entry,
             );
           } else {
             // Add new entry
@@ -70,12 +70,12 @@ export default function MMKVPanel() {
         const instanceEntries = newInstances.get(event.id);
         if (instanceEntries) {
           const existingIndex = instanceEntries.findIndex(
-            (entry) => entry.key === event.entry.key
+            (entry) => entry.key === event.entry.key,
           );
           if (existingIndex >= 0) {
             // Update existing entry
             const updatedEntries = instanceEntries.map((entry) =>
-              entry.key === event.entry.key ? event.entry : entry
+              entry.key === event.entry.key ? event.entry : entry,
             );
             newInstances.set(event.id, updatedEntries);
           } else {
@@ -92,7 +92,7 @@ export default function MMKVPanel() {
       (event) => {
         if (event.id === selectedInstance) {
           setEntries((prevEntries) =>
-            prevEntries.filter((entry) => entry.key !== event.key)
+            prevEntries.filter((entry) => entry.key !== event.key),
           );
         }
 
@@ -102,13 +102,13 @@ export default function MMKVPanel() {
           const instanceEntries = newInstances.get(event.id);
           if (instanceEntries) {
             const updatedEntries = instanceEntries.filter(
-              (entry) => entry.key !== event.key
+              (entry) => entry.key !== event.key,
             );
             newInstances.set(event.id, updatedEntries);
           }
           return newInstances;
         });
-      }
+      },
     );
 
     // Request initial snapshots for all instances
@@ -144,7 +144,7 @@ export default function MMKVPanel() {
   }, [client, selectedInstance, instances]);
 
   const filteredEntries = entries.filter((entry) =>
-    entry.key.toLowerCase().includes(searchTerm.toLowerCase())
+    entry.key.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleValueChange = (key: string, newValue: MMKVEntryValue) => {
@@ -174,7 +174,7 @@ export default function MMKVPanel() {
 
     // Optimistically update local state
     setEntries((prevEntries) =>
-      prevEntries.map((entry) => (entry.key === key ? updatedEntry : entry))
+      prevEntries.map((entry) => (entry.key === key ? updatedEntry : entry)),
     );
 
     // Update the instances map as well
@@ -183,7 +183,7 @@ export default function MMKVPanel() {
       const instanceEntries = newInstances.get(selectedInstance);
       if (instanceEntries) {
         const updatedEntries = instanceEntries.map((entry) =>
-          entry.key === key ? updatedEntry : entry
+          entry.key === key ? updatedEntry : entry,
         );
         newInstances.set(selectedInstance, updatedEntries);
       }
@@ -202,7 +202,7 @@ export default function MMKVPanel() {
 
     // Optimistically update local state
     setEntries((prevEntries) =>
-      prevEntries.filter((entry) => entry.key !== key)
+      prevEntries.filter((entry) => entry.key !== key),
     );
 
     // Update the instances map as well
@@ -211,7 +211,7 @@ export default function MMKVPanel() {
       const instanceEntries = newInstances.get(selectedInstance);
       if (instanceEntries) {
         const updatedEntries = instanceEntries.filter(
-          (entry) => entry.key !== key
+          (entry) => entry.key !== key,
         );
         newInstances.set(selectedInstance, updatedEntries);
       }

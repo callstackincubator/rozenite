@@ -3,7 +3,7 @@ import { RozeniteDevToolsClient, getRozeniteDevToolsClient } from './client';
 import { UnsupportedPlatformError } from './errors';
 
 export type UseRozeniteDevToolsClientOptions<
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
 > = {
   pluginId: string;
   eventMap?: TEventMap;
@@ -11,7 +11,7 @@ export type UseRozeniteDevToolsClientOptions<
 
 // TODO: Handle multiple hooks (should not kill the socket)
 export const useRozeniteDevToolsClient = <
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
 >({
   pluginId,
 }: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsClient<TEventMap> | null => {
@@ -35,7 +35,7 @@ export const useRozeniteDevToolsClient = <
           // We don't want to show an error for unsupported platforms.
           // It's expected that the client will be null.
           console.warn(
-            `[Rozenite, ${pluginId}] Unsupported platform, skipping setup.`
+            `[Rozenite, ${pluginId}] Unsupported platform, skipping setup.`,
           );
           return;
         }

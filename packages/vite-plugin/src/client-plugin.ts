@@ -18,7 +18,7 @@ const TEMPLATES_DIR = path.resolve(
   fileURLToPath(import.meta.url),
   '..',
   '..',
-  'templates'
+  'templates',
 );
 
 const PANELS_DIR = './panels';
@@ -68,7 +68,7 @@ export const rozeniteClientPlugin = (): Plugin => {
       }
 
       rozeniteConfig = await loadConfig(
-        path.resolve(projectRoot, 'rozenite.config.ts')
+        path.resolve(projectRoot, 'rozenite.config.ts'),
       );
       const panels = getPanels();
 
@@ -81,7 +81,7 @@ export const rozeniteClientPlugin = (): Plugin => {
       config.build.rollupOptions.input = {
         ...(config.build.rollupOptions.input as Record<string, string>),
         ...Object.fromEntries(
-          panels.map((panel) => [panel.name, panel.htmlFile])
+          panels.map((panel) => [panel.name, panel.htmlFile]),
         ),
       };
     },
@@ -114,11 +114,11 @@ export const rozeniteClientPlugin = (): Plugin => {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader(
           'Access-Control-Allow-Methods',
-          'GET, POST, PUT, DELETE, OPTIONS'
+          'GET, POST, PUT, DELETE, OPTIONS',
         );
         res.setHeader(
           'Access-Control-Allow-Headers',
-          'Content-Type, Authorization'
+          'Content-Type, Authorization',
         );
 
         if (req.method === 'OPTIONS') {
@@ -144,8 +144,8 @@ export const rozeniteClientPlugin = (): Plugin => {
                 })),
               },
               null,
-              2
-            )
+              2,
+            ),
           );
           return;
         }

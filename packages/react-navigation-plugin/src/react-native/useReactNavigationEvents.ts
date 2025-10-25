@@ -16,7 +16,7 @@ export type ActionDataEvent = {
 // This is a copy of useDevToolsBase from the @react-navigation/devtools package
 export function useReactNavigationEvents(
   ref: React.RefObject<NavigationContainerRef<any> | null>,
-  callback: (result: ActionDataEvent) => void
+  callback: (result: ActionDataEvent) => void,
 ) {
   const lastStateRef = useRef<NavigationState | undefined>(undefined);
   const lastActionRef = useRef<
@@ -136,7 +136,7 @@ export function useReactNavigationEvents(
         ref.current.resetRoot(state);
       }
     },
-    [ref]
+    [ref],
   );
 
   return { resetRoot };

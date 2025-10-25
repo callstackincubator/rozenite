@@ -22,7 +22,7 @@ const mockQueryFn = () => {
 const hydrateObservers = (
   client: QueryClient,
   queryHash: string,
-  dehydratedObservers: SerializableObserver[]
+  dehydratedObservers: SerializableObserver[],
 ) => {
   const query = client.getQueryCache().get(queryHash);
 
@@ -50,7 +50,7 @@ const hydrateObservers = (
 
     const observer = new QueryObserver(
       client,
-      hydratedOptions as QueryObserverOptions
+      hydratedOptions as QueryObserverOptions,
     );
     query.addObserver(observer);
   });
@@ -58,7 +58,7 @@ const hydrateObservers = (
 
 const hydrateMutation = (
   client: QueryClient,
-  dehydratedMutation: SerializableMutation
+  dehydratedMutation: SerializableMutation,
 ) => {
   const mutationCache = client.getMutationCache();
   const { options, state } = dehydratedMutation;
@@ -79,7 +79,7 @@ const hydrateMutation = (
 
 const hydrateQuery = (
   client: QueryClient,
-  dehydratedQuery: SerializableQuery
+  dehydratedQuery: SerializableQuery,
 ) => {
   const queryCache = client.getQueryCache();
   const { queryKey, state, queryHash, observers } = dehydratedQuery;
@@ -117,7 +117,7 @@ const hydrateQuery = (
       {
         ...hydratedState,
         data,
-      }
+      },
     );
   }
 
@@ -126,11 +126,11 @@ const hydrateQuery = (
 
 export const hydrateQueryClient = (
   client: QueryClient,
-  dehydratedState: SerializableQueryClient
+  dehydratedState: SerializableQueryClient,
 ): void => {
   // Hydrate mutations
   dehydratedState.mutations.forEach((mutation) =>
-    hydrateMutation(client, mutation)
+    hydrateMutation(client, mutation),
   );
 
   // Hydrate queries
@@ -148,7 +148,7 @@ export const applyQueryEvent = (
     | 'observerResultsUpdated'
     | 'observerOptionsUpdated',
   data: SerializableQuery | PartialQueryState,
-  action?: string
+  action?: string,
 ): void => {
   const queryCache = queryClient.getQueryCache();
 
@@ -186,7 +186,7 @@ export const applyQueryEvent = (
 // New function to handle action-based partial state updates
 export const applyPartialQueryState = (
   queryClient: QueryClient,
-  data: PartialQueryState
+  data: PartialQueryState,
 ): void => {
   const queryCache = queryClient.getQueryCache();
   const query = queryCache.get(data.queryHash);
@@ -213,7 +213,7 @@ export const applyMutationEvent = (
     | 'observerRemoved'
     | 'observerResultsUpdated'
     | 'observerOptionsUpdated',
-  data: SerializableMutation
+  data: SerializableMutation,
 ): void => {
   const mutationCache = queryClient.getMutationCache();
 
@@ -244,7 +244,7 @@ export const applyQueryObserverEvent = (
   data: {
     queryHash: string;
     observers: SerializableObserver[];
-  }
+  },
 ): void => {
   hydrateObservers(queryClient, data.queryHash, data.observers);
 };

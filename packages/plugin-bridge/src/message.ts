@@ -5,7 +5,7 @@ export type DevToolsPluginMessage = {
 };
 
 export const getDevToolsMessage = (
-  message: unknown
+  message: unknown,
 ): DevToolsPluginMessage | null => {
   if (
     typeof message !== 'object' ||

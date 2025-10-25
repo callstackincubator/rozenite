@@ -14,27 +14,27 @@ import { getEventSource } from './event-source';
 
 export type SSEInterceptorConnectCallback = (
   url: string,
-  request: EventSource
+  request: EventSource,
 ) => void;
 
 export type SSEInterceptorMessageCallback = (
   event: MessageEvent | CustomEvent<string>,
-  request: EventSource
+  request: EventSource,
 ) => void;
 
 export type SSEInterceptorErrorCallback = (
   error: ErrorEvent | TimeoutEvent | ExceptionEvent,
-  request: EventSource
+  request: EventSource,
 ) => void;
 
 export type SSEInterceptorOpenEventCallback = (
   event: OpenEvent,
-  request: EventSource
+  request: EventSource,
 ) => void;
 
 export type SSEInterceptorCloseCallback = (
   event: CloseEvent,
-  request: EventSource
+  request: EventSource,
 ) => void;
 
 let connectCallback: SSEInterceptorConnectCallback | null;
@@ -106,7 +106,7 @@ export const SSEInterceptor = {
 
     // Override EventSource open method to intercept SSE connections
     eventSourceClass.prototype.open = function (
-      this: EventSourceWithInternals
+      this: EventSourceWithInternals,
     ) {
       // Invoke connect callback
       if (connectCallback) {
@@ -126,7 +126,7 @@ export const SSEInterceptor = {
           if (errorCallback) {
             errorCallback(event, this);
           }
-        }
+        },
       );
 
       this.addEventListener('close', (event: CloseEvent) => {
@@ -142,7 +142,7 @@ export const SSEInterceptor = {
     eventSourceClass.prototype.dispatch = function (
       this: EventSourceWithInternals,
       eventType: string,
-      data: EventSourceEvent<string>
+      data: EventSourceEvent<string>,
     ) {
       if (!BUILT_IN_EVENT_TYPES.has(eventType)) {
         if (messageCallback) {

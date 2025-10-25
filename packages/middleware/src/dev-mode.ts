@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
 export const getDevModePackage = (
-  projectRoot: string
+  projectRoot: string,
 ): { name: string; path: string } | null => {
   const packageName = process.env.ROZENITE_DEV_MODE;
 
@@ -13,7 +13,7 @@ export const getDevModePackage = (
   }
 
   const packagePath = path.dirname(
-    require.resolve(packageName, { paths: [projectRoot] })
+    require.resolve(packageName, { paths: [projectRoot] }),
   );
 
   return {

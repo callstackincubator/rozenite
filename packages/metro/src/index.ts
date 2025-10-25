@@ -19,24 +19,24 @@ export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<
    * This option allows you to modify the Metro config in a way that is safe to do when bundling.
    */
   enhanceMetroConfig?: (
-    config: TMetroConfig
+    config: TMetroConfig,
   ) => Promise<TMetroConfig> | TMetroConfig;
 };
 
 export const withRozenite = <T extends MetroConfig>(
   config: T | Promise<T>,
-  options: RozeniteMetroConfig<T> = {}
-): () => Promise<T> => {
+  options: RozeniteMetroConfig<T> = {},
+): (() => Promise<T>) => {
   return async () => {
     const resolvedConfig = await config;
     const projectRoot = resolvedConfig.projectRoot ?? process.cwd();
 
     if (options.enabled === undefined) {
       logger.info(
-        'Rozenite will no longer be enabled by default in the next version.'
+        'Rozenite will no longer be enabled by default in the next version.',
       );
       logger.info(
-        'To continue using Rozenite, please set `enabled` in the options.'
+        'To continue using Rozenite, please set `enabled` in the options.',
       );
       logger.info('Remember to make it conditional to avoid bundling issues.');
 
@@ -49,12 +49,11 @@ export const withRozenite = <T extends MetroConfig>(
       return resolvedConfig;
     }
 
-    const { devModePackage, middleware: rozeniteMiddleware } = initializeRozenite(
-      {
+    const { devModePackage, middleware: rozeniteMiddleware } =
+      initializeRozenite({
         projectRoot,
         ...options,
-      }
-    );
+      });
 
     const rozeniteMetroConfig = {
       ...resolvedConfig,
@@ -73,12 +72,12 @@ export const withRozenite = <T extends MetroConfig>(
               // Rozenite package should use the same versions of React and React Native as the app.
               // Using dirname as sometimes developers use deep imports for react-native.
               react: path.dirname(
-                require.resolve('react', { paths: [projectRoot] })
+                require.resolve('react', { paths: [projectRoot] }),
               ),
               'react-native': path.dirname(
                 require.resolve('react-native', {
                   paths: [projectRoot],
-                })
+                }),
               ),
             }
           : resolvedConfig.resolver?.extraNodeModules,
@@ -87,7 +86,8 @@ export const withRozenite = <T extends MetroConfig>(
           // This is currently the only module that we need to mock, but it may change in the future.
           if (
             platform === 'web' &&
-            moduleName === 'react-native/Libraries/WebSocket/WebSocketInterceptor'
+            moduleName ===
+              'react-native/Libraries/WebSocket/WebSocketInterceptor'
           ) {
             return {
               type: 'empty',
@@ -98,7 +98,7 @@ export const withRozenite = <T extends MetroConfig>(
             resolvedConfig.resolver?.resolveRequest?.(
               context,
               moduleName,
-              platform
+              platform,
             ) ?? context.resolveRequest(context, moduleName, platform)
           );
         },
@@ -107,8 +107,10 @@ export const withRozenite = <T extends MetroConfig>(
         ...resolvedConfig.server,
         enhanceMiddleware: (metroMiddleware, server) => {
           const prevMiddleware =
-            resolvedConfig.server?.enhanceMiddleware?.(metroMiddleware, server) ??
-            metroMiddleware;
+            resolvedConfig.server?.enhanceMiddleware?.(
+              metroMiddleware,
+              server,
+            ) ?? metroMiddleware;
 
           return rozeniteMiddleware.use(prevMiddleware);
         },
@@ -116,12 +118,11 @@ export const withRozenite = <T extends MetroConfig>(
     } satisfies MetroConfig;
 
     if (options.enhanceMetroConfig) {
-      const enhancedConfig = await options.enhanceMetroConfig(
-        rozeniteMetroConfig
-      );
+      const enhancedConfig =
+        await options.enhanceMetroConfig(rozeniteMetroConfig);
       return enhancedConfig;
     }
 
     return rozeniteMetroConfig;
-  }
+  };
 };

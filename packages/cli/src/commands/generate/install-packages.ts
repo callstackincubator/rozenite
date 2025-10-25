@@ -10,6 +10,6 @@ export const installPackages = async (projectRoot: string): Promise<void> => {
     },
     async () => {
       await installDependencies(projectRoot);
-    }
+    },
   );
 };

@@ -6,11 +6,10 @@ type UnionToIntersection<U> = (
   ? I
   : never;
 
-type LastOf<T> = UnionToIntersection<
-  T extends unknown ? () => T : never
-> extends () => infer R
-  ? R
-  : never;
+type LastOf<T> =
+  UnionToIntersection<T extends unknown ? () => T : never> extends () => infer R
+    ? R
+    : never;
 
 type Push<T extends unknown[], V> = [...T, V];
 

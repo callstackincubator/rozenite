@@ -9,7 +9,8 @@ import { ReactNavigationPluginEventMap } from '../shared';
 import { Linking } from 'react-native';
 
 export type ReactNavigationDevToolsConfig<
-  TNavigationContainerRef extends NavigationContainerRef<any> = NavigationContainerRef<any>
+  TNavigationContainerRef extends
+    NavigationContainerRef<any> = NavigationContainerRef<any>,
 > = {
   ref: React.RefObject<TNavigationContainerRef | null>;
 };
@@ -52,7 +53,7 @@ export const useReactNavigationDevTools = ({
         } catch {
           // We don't care about errors here
         }
-      })
+      }),
     );
 
     return () => {

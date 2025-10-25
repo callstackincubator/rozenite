@@ -50,5 +50,5 @@ module.exports = withRozenite(
     enabled: true,
     enhanceMetroConfig: (config) =>
       withRozeniteExpoAtlasPlugin(withRozeniteReduxDevTools(config)),
-  }
+  },
 );

@@ -9,7 +9,7 @@ import { inferContentTypeFromPostData } from './inferContentTypeFromPostData';
  */
 export function applyReactNativeRequestHeadersLogic(
   headers: HttpHeaders,
-  postData?: RequestPostData
+  postData?: RequestPostData,
 ): HttpHeaders {
   const existingContentType = getHttpHeader(headers, 'content-type');
 

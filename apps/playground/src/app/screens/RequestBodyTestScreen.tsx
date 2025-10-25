@@ -112,10 +112,10 @@ export const RequestBodyTestScreen: React.FC = () => {
     'string' | 'json' | 'formdata' | 'binary'
   >('string');
   const [stringBodyData, setStringBodyData] = React.useState(
-    'Hello, this is a test string!'
+    'Hello, this is a test string!',
   );
   const [jsonBodyData, setJsonBodyData] = React.useState(
-    '{\n  "message": "Hello World",\n  "timestamp": "2024-01-01T00:00:00Z",\n  "user": {\n    "id": 123,\n    "name": "Test User"\n  }\n}'
+    '{\n  "message": "Hello World",\n  "timestamp": "2024-01-01T00:00:00Z",\n  "user": {\n    "id": 123,\n    "name": "Test User"\n  }\n}',
   );
   const [formDataFields, setFormDataFields] = React.useState<
     Record<string, string>
@@ -125,7 +125,7 @@ export const RequestBodyTestScreen: React.FC = () => {
     message: 'This is a form data test',
   });
   const [binaryData, setBinaryData] = React.useState(
-    'Binary test data - this will be converted to Uint8Array'
+    'Binary test data - this will be converted to Uint8Array',
   );
   const [requestBodyResponse, setRequestBodyResponse] =
     React.useState<any>(null);

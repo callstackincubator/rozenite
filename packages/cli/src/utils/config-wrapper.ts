@@ -33,7 +33,7 @@ const WRAPPER_IMPORTS = {
  */
 const findConfigFile = async (
   projectRoot: string,
-  bundlerType: BundlerType
+  bundlerType: BundlerType,
 ): Promise<{ filePath: string; extension: string } | null> => {
   const baseName = CONFIG_BASE_NAMES[bundlerType];
 
@@ -54,7 +54,7 @@ const findConfigFile = async (
  * Determines module system based on file extension
  */
 const getModuleSystemFromExtension = (
-  extension: string
+  extension: string,
 ): 'esm' | 'commonjs' | null => {
   switch (extension) {
     case '.mjs':
@@ -90,7 +90,7 @@ const detectQuoteStyle = (sourceCode: string): 'single' | 'double' => {
  */
 const determineImportStyle = (
   sourceCode: string,
-  extension?: string
+  extension?: string,
 ): 'esm' | 'commonjs' => {
   // First check if extension gives us a definitive answer
   if (extension) {
@@ -165,7 +165,7 @@ const findFirstImportLine = (lines: string[]): number => {
  */
 export const wrapConfigFile = async (
   projectRoot: string,
-  bundlerType: BundlerType
+  bundlerType: BundlerType,
 ): Promise<void> => {
   // Find the actual config file with any supported extension
   const configFileInfo = await findConfigFile(projectRoot, bundlerType);
@@ -174,8 +174,8 @@ export const wrapConfigFile = async (
     const baseName = CONFIG_BASE_NAMES[bundlerType];
     throw new Error(
       `Configuration file ${baseName}.{${MODULE_EXTENSIONS.join(
-        ','
-      )}} not found in ${projectRoot}`
+        ',',
+      )}} not found in ${projectRoot}`,
     );
   }
 
@@ -252,7 +252,7 @@ export const wrapConfigFile = async (
       const exportContent = exportDefaultObjectMatch[2];
       sourceCode = sourceCode.replace(
         exportDefaultObjectMatch[0],
-        `${exportDefaultObjectMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`
+        `${exportDefaultObjectMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`,
       );
     } else {
       // Pattern 2: export default someFunction()
@@ -262,33 +262,33 @@ export const wrapConfigFile = async (
         const exportContent = exportDefaultCallMatch[2];
         sourceCode = sourceCode.replace(
           exportDefaultCallMatch[0],
-          `${exportDefaultCallMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`
+          `${exportDefaultCallMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`,
         );
       } else {
         // Pattern 3: module.exports = { ... }
         const moduleExportsObjectRegex =
           /(module\.exports\s*=\s*)(\{[\s\S]*?\});?\s*$/m;
         const moduleExportsObjectMatch = sourceCode.match(
-          moduleExportsObjectRegex
+          moduleExportsObjectRegex,
         );
         if (moduleExportsObjectMatch) {
           const exportContent = moduleExportsObjectMatch[2];
           sourceCode = sourceCode.replace(
             moduleExportsObjectMatch[0],
-            `${moduleExportsObjectMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`
+            `${moduleExportsObjectMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`,
           );
         } else {
           // Pattern 4: module.exports = someFunction()
           const moduleExportsCallRegex =
             /(module\.exports\s*=\s*)([^;]+);?\s*$/m;
           const moduleExportsCallMatch = sourceCode.match(
-            moduleExportsCallRegex
+            moduleExportsCallRegex,
           );
           if (moduleExportsCallMatch) {
             const exportContent = moduleExportsCallMatch[2];
             sourceCode = sourceCode.replace(
               moduleExportsCallMatch[0],
-              `${moduleExportsCallMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`
+              `${moduleExportsCallMatch[1]}${importName}(${exportContent}, { enabled: process.env.WITH_ROZENITE === 'true' });`,
             );
           }
         }
@@ -306,7 +306,7 @@ export const wrapConfigFile = async (
  */
 export const getConfigFilePath = async (
   projectRoot: string,
-  bundlerType: BundlerType
+  bundlerType: BundlerType,
 ): Promise<string> => {
   const configFileInfo = await findConfigFile(projectRoot, bundlerType);
 

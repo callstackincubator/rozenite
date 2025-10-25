@@ -39,7 +39,7 @@ const api = {
         headers: {
           'X-Rozenite-Test': 'true',
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -56,7 +56,7 @@ const api = {
         headers: {
           'X-Rozenite-Test': 'true',
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -76,7 +76,7 @@ const api = {
         headers: {
           'X-Rozenite-Test': 'true',
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -98,7 +98,7 @@ const api = {
         headers: {
           'X-Rozenite-Test': 'true',
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -119,7 +119,7 @@ const api = {
           'X-Rozenite-Test': 'true',
         },
         body: JSON.stringify(postData),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -355,7 +355,7 @@ const HTTPTestComponent: React.FC = () => {
           // Switch to posts tab to see the new post
           setActiveTab('posts');
         },
-      }
+      },
     );
   };
 
@@ -401,7 +401,7 @@ const HTTPTestComponent: React.FC = () => {
                   | 'todos'
                   | 'slow'
                   | 'unreliable'
-                  | 'create'
+                  | 'create',
               )
             }
           >
@@ -565,19 +565,19 @@ const WEBSOCKET_CONFIG = {
 
 const useWebSocket = (
   url: string,
-  messageIntervalMs = WEBSOCKET_CONFIG.MESSAGE_INTERVAL
+  messageIntervalMs = WEBSOCKET_CONFIG.MESSAGE_INTERVAL,
 ) => {
   const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = React.useState(false);
   const [messages, setMessages] = React.useState<string[]>([]);
   const [dataType, setDataType] = React.useState<'text' | 'binary' | 'json'>(
-    'text'
+    'text',
   );
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const addMessage = React.useCallback((message: string) => {
     setMessages((prev) =>
-      [...prev, message].slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY)
+      [...prev, message].slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY),
     );
   }, []);
 
@@ -603,7 +603,7 @@ const useWebSocket = (
         }
       }
     },
-    [addMessage]
+    [addMessage],
   );
 
   const startMessageInterval = React.useCallback(
@@ -616,7 +616,7 @@ const useWebSocket = (
         sendMessage(ws, WEBSOCKET_CONFIG.DEFAULT_MESSAGE, dataType);
       }, messageIntervalMs);
     },
-    [sendMessage, dataType, messageIntervalMs]
+    [sendMessage, dataType, messageIntervalMs],
   );
 
   const stopMessageInterval = React.useCallback(() => {
@@ -639,7 +639,7 @@ const useWebSocket = (
       ws.onmessage = (event) => {
         if (event.data instanceof ArrayBuffer) {
           addMessage(
-            `Received binary: ${String(Array.from(new Uint8Array(event.data)))}`
+            `Received binary: ${String(Array.from(new Uint8Array(event.data)))}`,
           );
         } else {
           addMessage(`Received: ${event.data}`);
@@ -829,7 +829,7 @@ const SSE_CONFIG = {
 
 const useSSE = (url: string) => {
   const [eventSource, setEventSource] = React.useState<EventSource | null>(
-    null
+    null,
   );
   const [isConnected, setIsConnected] = React.useState(false);
   const [messages, setMessages] = React.useState<string[]>([]);
@@ -837,7 +837,7 @@ const useSSE = (url: string) => {
 
   const addMessage = React.useCallback((message: string) => {
     setMessages((prev) =>
-      [...prev, message].slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY)
+      [...prev, message].slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY),
     );
     setEventCount((prev) => prev + 1);
   }, []);

@@ -27,7 +27,7 @@ type PerformanceObserverEntryList = {
 
 type PerformanceObserverCallback = (
   list: PerformanceObserverEntryList,
-  observer: PerformanceObserver
+  observer: PerformanceObserver,
 ) => void;
 
 export type PerformanceMonitor = {
@@ -38,7 +38,7 @@ export type PerformanceMonitor = {
 };
 
 export const getPerformanceMonitor = (
-  client: PerformanceMonitorDevToolsClient
+  client: PerformanceMonitorDevToolsClient,
 ): PerformanceMonitor => {
   let observers: PerformanceObserver[] = [];
   let sessionStartedAt = 0;
@@ -47,7 +47,7 @@ export const getPerformanceMonitor = (
 
   const addObserver = (
     callback: PerformanceObserverCallback,
-    options: PerformanceObserverOptions
+    options: PerformanceObserverOptions,
   ) => {
     const observer = new PerformanceObserver(callback);
     observer.observe(options);
@@ -99,7 +99,7 @@ export const getPerformanceMonitor = (
       {
         type: 'mark',
         buffered: true,
-      }
+      },
     );
     addObserver(
       (list) => {
@@ -114,13 +114,13 @@ export const getPerformanceMonitor = (
               entryType: 'measure' as const,
               detail: entry.detail,
             };
-          })
+          }),
         );
       },
       {
         type: 'measure',
         buffered: true,
-      }
+      },
     );
     addObserver(
       (list) => {
@@ -136,13 +136,13 @@ export const getPerformanceMonitor = (
               value: entry.value,
               detail: entry.detail,
             };
-          })
+          }),
         );
       },
       {
         type: 'metric',
         buffered: true,
-      }
+      },
     );
   };
   const disable = (): void => {

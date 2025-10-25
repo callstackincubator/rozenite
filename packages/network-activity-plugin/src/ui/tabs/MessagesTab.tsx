@@ -28,7 +28,7 @@ const columnHelper = createColumnHelper<WebSocketMessageRow>();
 export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
   const websocketMessages = useWebSocketMessages(selectedRequest.id);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
-    null
+    null,
   );
 
   const selectedMessage = useMemo(() => {
@@ -92,13 +92,13 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
         data: message.data,
         messageType: message.messageType,
         timestamp: message.timestamp,
-      })
+      }),
     );
   }, [websocketMessages]);
 
   const formatPreviewData = (
     data: string,
-    messageType: WebSocketMessageType
+    messageType: WebSocketMessageType,
   ) => {
     if (messageType === 'binary') {
       return <span className="text-gray-400">Binary message</span>;
@@ -119,7 +119,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
         return (
           <span
             className={`flex items-center gap-1 ${getMessageTypeColor(
-              direction
+              direction,
             )}`}
           >
             <span className="text-xs">{getMessageTypeIcon(direction)}</span>
@@ -184,7 +184,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </div>
                     </th>
@@ -209,7 +209,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </td>
                   ))}
@@ -263,7 +263,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
                 <div className="mt-2 max-h-96 overflow-y-auto">
                   {formatData(
                     selectedMessage.data,
-                    selectedMessage.messageType
+                    selectedMessage.messageType,
                   )}
                 </div>
               </div>

@@ -90,7 +90,7 @@ export const parseCookieHeader = (cookieString: string): Cookie[] => {
 };
 
 export const parseRequestCookiesFromHeaders = (
-  headers: HttpHeaders
+  headers: HttpHeaders,
 ): Cookie[] => {
   const cookieHeader = getHttpHeader(headers, 'cookie');
 
@@ -108,7 +108,7 @@ export const parseRequestCookiesFromHeaders = (
 };
 
 export const parseResponseCookiesFromHeaders = (
-  headers: HttpHeaders
+  headers: HttpHeaders,
 ): Cookie[] => {
   const setCookieHeader = getHttpHeader(headers, 'set-cookie');
 

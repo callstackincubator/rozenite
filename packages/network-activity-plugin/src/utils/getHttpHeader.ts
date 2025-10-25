@@ -3,7 +3,7 @@ import { HttpHeaders, XHRHeaders } from '../shared/client';
 // Utility to get header value and actual key case-insensitively
 export function getHttpHeader<T extends HttpHeaders | XHRHeaders>(
   headers: T,
-  name: string
+  name: string,
 ) {
   const lowerName = name.toLowerCase();
 

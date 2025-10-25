@@ -38,7 +38,7 @@ const main = async (): Promise<void> => {
   await Promise.all(
     plugins.map(async (plugin) => {
       await loadPlugin(plugin);
-    })
+    }),
   );
 
   trackPanelSelection();
@@ -51,7 +51,7 @@ void main().catch((error) => {
   console.group('❌ Rozenite Error');
   console.error(
     'Initialization failed. See the following error for more details:',
-    error
+    error,
   );
   console.groupEnd();
 });

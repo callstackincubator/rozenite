@@ -10,7 +10,7 @@ export const note = (message?: string, title?: string) =>
   clack.note(message, title);
 
 export const promptText = async (
-  options: clack.TextOptions
+  options: clack.TextOptions,
 ): Promise<string> => {
   const result = await clack.text(options);
   if (clack.isCancel(result)) {
@@ -21,7 +21,7 @@ export const promptText = async (
 };
 
 export const promptPassword = async (
-  options: clack.PasswordOptions
+  options: clack.PasswordOptions,
 ): Promise<string> => {
   const result = await clack.password(options);
   if (clack.isCancel(result)) {
@@ -32,7 +32,7 @@ export const promptPassword = async (
 };
 
 export const promptSelect = async <T>(
-  options: clack.SelectOptions<T>
+  options: clack.SelectOptions<T>,
 ): Promise<T> => {
   // If there is only one option, return it immediately
   if (options.options.length === 1) {
@@ -54,7 +54,7 @@ type ConfirmOptions = {
 };
 
 export const promptConfirm = async (
-  options: ConfirmOptions
+  options: ConfirmOptions,
 ): Promise<boolean> => {
   const result = await clack.select({
     message: options.message,
@@ -72,7 +72,7 @@ export const promptConfirm = async (
 };
 
 export const promptMultiselect = async <T>(
-  options: clack.MultiSelectOptions<T>
+  options: clack.MultiSelectOptions<T>,
 ): Promise<T[]> => {
   const result = await clack.multiselect<T>(options);
   if (clack.isCancel(result)) {
@@ -84,7 +84,7 @@ export const promptMultiselect = async <T>(
 
 export const promptGroup = async <T>(
   prompts: clack.PromptGroup<T>,
-  options?: clack.PromptGroupOptions<T> | undefined
+  options?: clack.PromptGroupOptions<T> | undefined,
 ): Promise<T> => {
   const result = await clack.group(prompts, options);
   if (clack.isCancel(result)) {
@@ -121,7 +121,7 @@ export const spinner = (options?: clack.SpinnerOptions) => {
 };
 
 export const formatStartMessage = (
-  text: string | undefined
+  text: string | undefined,
 ): string | undefined => {
   if (text === undefined) {
     return undefined;

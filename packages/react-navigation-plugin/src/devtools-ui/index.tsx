@@ -12,7 +12,7 @@ import './globals.css';
 export default function ReactNavigationPanel() {
   const [actionHistory, setActionHistory] = useState<ActionWithState[]>([]);
   const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(
-    null
+    null,
   );
   const [activeTabId, setActiveTabId] = useState('timeline');
 

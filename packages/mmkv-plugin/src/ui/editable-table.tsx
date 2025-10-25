@@ -56,7 +56,7 @@ export const EditableTable = ({
             <div className="flex items-center">
               <span
                 className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
-                  type
+                  type,
                 )}`}
                 title={`${getTypeIcon(type)} ${type}`}
               >
@@ -103,7 +103,7 @@ export const EditableTable = ({
         ),
       }),
     ],
-    [onDeleteEntry]
+    [onDeleteEntry],
   );
 
   const table = useReactTable({
@@ -250,7 +250,7 @@ export const EditableTable = ({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                     {header.column.getCanSort() && (
                       <span className="text-gray-500">
