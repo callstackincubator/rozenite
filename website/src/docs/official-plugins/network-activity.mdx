@@ -41,6 +41,13 @@ function App() {
 }
 ```
 
+To capture network requests happenning before your React Native app initialization, add this to your entrypoint:
+```typescript title="index.js"
+import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin/react-native';
+
+withOnBootNetworkActivityRecording();
+```
+
 ## Usage
 
 Once configured, the Network Activity plugin will automatically appear in your React Native DevTools sidebar as "Network Activity". Click on it to access:

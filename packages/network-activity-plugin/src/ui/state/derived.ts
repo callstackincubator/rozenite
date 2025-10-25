@@ -21,7 +21,7 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
         status: httpEntry.status,
         timestamp: httpEntry.timestamp,
         duration: httpEntry.duration,
-        size: httpEntry.size,
+        size: httpEntry.size ?? null,
         method: httpEntry.request.method,
         httpStatus: httpEntry.response?.status,
         progress: httpEntry.progress,
@@ -35,6 +35,7 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
         status: wsEntry.status,
         timestamp: wsEntry.timestamp,
         duration: wsEntry.duration,
+        size: null,
         method: 'WS',
         httpStatus: 0,
       });
@@ -47,6 +48,7 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
         status: sseEntry.status,
         timestamp: sseEntry.timestamp,
         duration: sseEntry.duration,
+        size: null,
         method: 'SSE',
         httpStatus: 0,
       });
@@ -63,7 +65,7 @@ export const getSelectedRequest = memoize((state: NetworkActivityState) => {
 });
 
 export const getRequestSummary = (
-  requestId: string
+  requestId: string,
 ): ((state: NetworkActivityState) => ProcessedRequest | null) =>
   memoize((state: NetworkActivityState) => {
     const { networkEntries } = state;
@@ -79,7 +81,7 @@ export const getRequestSummary = (
         status: httpEntry.status,
         timestamp: httpEntry.timestamp,
         duration: httpEntry.duration,
-        size: httpEntry.size,
+        size: httpEntry.size ?? null,
         method: httpEntry.request.method,
         httpStatus: httpEntry.response?.status || 0,
         progress: httpEntry.progress,
@@ -93,6 +95,7 @@ export const getRequestSummary = (
         status: wsEntry.status,
         timestamp: wsEntry.timestamp,
         duration: wsEntry.duration,
+        size: null,
         method: 'WS',
         httpStatus: 0,
       };
@@ -105,6 +108,7 @@ export const getRequestSummary = (
         status: sseEntry.status,
         timestamp: sseEntry.timestamp,
         duration: sseEntry.duration,
+        size: null,
         method: 'SSE',
         httpStatus: 0,
       };

@@ -50,6 +50,15 @@ function App() {
 }
 ```
 
+Optional: To capture network requests before your React Native app initialization, add this to your entrypoint:
+
+```ts
+// index.js
+import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin/react-native';
+
+withOnBootNetworkActivityRecording();
+```
+
 ### 3. Access DevTools
 
 Start your development server and open React Native DevTools. You'll find the "Network Activity" panel in the DevTools interface.

@@ -65,7 +65,7 @@ export const createNetworkActivityStore = () =>
     persist(
       (set, get) => ({
         // Initial state
-        isRecording: false,
+        isRecording: true,
         selectedRequestId: null,
         networkEntries: new Map(),
         websocketMessages: new Map(),
@@ -684,9 +684,10 @@ export const createNetworkActivityStore = () =>
               typeof value === 'object' &&
               value !== null &&
               '_type' in value &&
-              value._type === 'map'
+              value._type === 'map' &&
+              'value' in value
             ) {
-              return new Map(value.value);
+              return new Map(value.value as [string, RequestOverride][]);
             }
             return value;
           },
