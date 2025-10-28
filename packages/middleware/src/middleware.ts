@@ -1,4 +1,3 @@
-import serveStatic from 'serve-static';
 import express, { Application } from 'express';
 import assert from 'node:assert';
 import path from 'node:path';
@@ -8,6 +7,7 @@ import { getEntryPointHTML } from './entry-point.js';
 import { InstalledPlugin } from './auto-discovery.js';
 import { getReactNativeDebuggerFrontendPath } from './resolve.js';
 import { RozeniteConfig } from './config.js';
+import { logger } from './logger.js';
 
 const require = createRequire(import.meta.url);
 
@@ -28,8 +28,13 @@ export const getMiddleware = (
     '..'
   );
 
+  logger.debug(`Debugger frontend path: ${debuggerFrontend}`);
+  logger.debug(`Framework path: ${frameworkPath}`);
+
   app.use((req, _, next) => {
     assert(req.url, 'req.url is required');
+
+    logger.debug(`Incoming request: ${req.url}`);
 
     if (req.url.includes('/rozenite')) {
       req.url = req.url.replace('/rozenite', '');
@@ -51,7 +56,7 @@ export const getMiddleware = (
 
     const pluginPath = path.join(plugin.path, 'dist');
     req.url = req.url.replace('plugins/' + pluginName.replace('/', '_'), '');
-    serveStatic(pluginPath)(req, res, next);
+    express.static(pluginPath)(req, res, next);
   });
 
   app.get('/embedder-static/embedderScript.js', (_, res) => {
@@ -75,9 +80,7 @@ export const getMiddleware = (
     res.end(fs.readFileSync(path.join(frameworkPath, 'host.js'), 'utf8'));
   });
 
-  app.get('/*others', (req, res, next) => {
-    serveStatic(path.join(debuggerFrontend))(req, res, next);
-  });
+  app.use(express.static(debuggerFrontend));
 
   return app;
 };

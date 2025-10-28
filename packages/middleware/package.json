@@ -40,15 +40,13 @@
     "@rozenite/tools": "workspace:*",
     "express": "^5.1.0",
     "semver": "^7.7.2",
-    "serve-static": "^2.2.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@react-native/dev-middleware": "~0.76.0",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",
-    "@types/semver": "^7.7.0",
-    "@types/serve-static": "^1.15.8"
+    "@types/semver": "^7.7.0"
   },
   "engines": {
     "node": ">=20"
