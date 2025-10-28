@@ -8,7 +8,7 @@
     "lint": "pnpm nx run-many -t lint --projects='packages/*'",
     "format": "prettier --check .",
     "format:fix": "prettier --check . --write",
-    "check": "pnpm tsc && pnpm lint && pnpm format"
+    "check": "pnpm typecheck && pnpm lint && pnpm format"
   },
   "private": true,
   "devDependencies": {
