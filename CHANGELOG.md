@@ -1,3 +1,15 @@
+## 1.0.0-alpha.16 (2025-10-28)
+
+### 🩹 Fixes
+
+- **@rozenite/network-activity-plugin:** In this version, we're introducing the ability to override and mock network responses, inspired by Chrome DevTools. This feature enables developers to modify response bodies and statuses to observe how their applications react, without making any backend changes. It's a practical way to prototype, test, and validate fixes or enhancements while waiting on backend or third-party updates, helping you maintain momentum and streamline your development workflow. ([#116](https://github.com/callstackincubator/rozenite/pull/116))
+- **@rozenite/react-navigation-plugin:** This version introduces a new Navigation Tree tab to enhance state visualization in the developer tools. Instead of relying on raw JSON data, the navigation state will now be displayed as an interactive stack of screens, navigators, and tab navigators, allowing clearer insight into navigation flows and history. Developers can view how navigation states evolve over time, distinguish between screens and navigators through color coding, and identify the currently selected screen within tab navigators. ([#119](https://github.com/callstackincubator/rozenite/pull/119))
+
+### ❤️ Thank You
+
+- Ian Luan @IanLuan
+- Thomas Renaud @thomasrebam
+
 ## 1.0.0-alpha.15 (2025-09-29)
 
 ### 🩹 Fixes
