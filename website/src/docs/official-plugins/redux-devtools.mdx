@@ -103,21 +103,12 @@ Once configured, the Redux DevTools plugin will automatically appear in your Rea
 The Redux DevTools plugin currently displays Redux stores from all connected devices at once. When multiple devices are connected, be sure to select the correct store in the instance selector to inspect the Redux store for the specific device.
 :::
 
-### Physical Devices & Hermes
+### Physical Devices
 
 When using an emulator, everything is automatic, but when running on a physical device, adb reverse is required on port 8765.
 ```sh
 adb reverse tcp:8765 tcp:8765
 ```
-
-When running under Hermes, if you App component initialization is delayed for example with `require()`, we could potentially hit an undefined `asyncIterator`, not see the log `connected to remotedev-server`, and not see the physical device in the inspector's selector.
-
-Importing Rozenite in your `index.js`
-```
-import '@rozenite/redux-devtools-plugin/dist/runtime.cjs'
-```
-
-Else try the workaround of this [issue](https://github.com/reduxjs/redux-devtools/issues/1382#issuecomment-2093584916).
 
 ## Contributing
 
