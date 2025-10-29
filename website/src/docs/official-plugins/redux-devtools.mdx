@@ -105,7 +105,8 @@ The Redux DevTools plugin currently displays Redux stores from all connected dev
 
 ### Physical Devices
 
-When using an emulator, everything is automatic, but when running on a physical device, adb reverse is required on port 8765.
+Redux DevTools work out of the box with Android emulators, but when using a physical device, you need to tunnel an additional port using the adb reverse command.
+
 ```sh
 adb reverse tcp:8765 tcp:8765
 ```
