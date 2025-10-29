@@ -15,6 +15,7 @@ import {
   useOverrides,
   useProcessedRequests,
   useSelectedRequestId,
+  useClientUISettings,
 } from '../state/hooks';
 import { getStatusColor } from '../utils/getStatusColor';
 import { FilterState } from './FilterBar';
@@ -74,11 +75,12 @@ const extractDomainAndPath = (
   }
 };
 
-const generateName = (url: string): string => {
+const generateName = (url: string, showEntirePathName = false): string => {
   try {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;
-    const filename = pathname.split('/').pop();
+    const filename = showEntirePathName ? undefined : pathname.split('/').pop();
+    
     return filename || pathname || urlObj.hostname;
   } catch {
     return url;
@@ -125,7 +127,8 @@ const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
 
 const processNetworkRequests = (
   processedRequests: ProcessedRequest[],
-  overrides: Map<string, RequestOverride>
+  overrides: Map<string, RequestOverride>,
+  showEntirePathAsName = false
 ): NetworkRequest[] => {
   return processedRequests.map((request): NetworkRequest => {
     const { domain, path } = extractDomainAndPath(request.name);
@@ -134,7 +137,7 @@ const processNetworkRequests = (
 
     return {
       id: request.id,
-      name: generateName(request.name),
+      name: generateName(request.name, showEntirePathAsName),
       status: request.httpStatus || request.status,
       method: request.method,
       domain,
@@ -222,6 +225,7 @@ export const RequestList = ({ filter }: RequestListProps) => {
   const selectedRequestId = useSelectedRequestId();
   const [sorting, setSorting] = useState<SortingState>([]);
   const overrides = useOverrides();
+  const clientUISettings = useClientUISettings();
 
   // Filter requests based on current filter state
   const filteredRequests = useMemo(() => {
@@ -250,8 +254,8 @@ export const RequestList = ({ filter }: RequestListProps) => {
   }, [processedRequests, filter]);
 
   const requests = useMemo(() => {
-    return processNetworkRequests(filteredRequests, overrides);
-  }, [filteredRequests, overrides]);
+    return processNetworkRequests(filteredRequests, overrides, clientUISettings?.showUrlAsName);
+  }, [filteredRequests, overrides, clientUISettings?.showUrlAsName]);
 
   const table = useReactTable({
     data: requests,
