@@ -103,6 +103,14 @@ Once configured, the Redux DevTools plugin will automatically appear in your Rea
 The Redux DevTools plugin currently displays Redux stores from all connected devices at once. When multiple devices are connected, be sure to select the correct store in the instance selector to inspect the Redux store for the specific device.
 :::
 
+### Physical Devices
+
+Redux DevTools work out of the box with Android emulators, but when using a physical device, you need to tunnel an additional port using the adb reverse command.
+
+```sh
+adb reverse tcp:8765 tcp:8765
+```
+
 ## Contributing
 
 The Redux DevTools plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
