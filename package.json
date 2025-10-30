@@ -7,8 +7,8 @@
     "typecheck": "pnpm nx run-many -t typecheck --projects='packages/*'",
     "lint": "pnpm nx run-many -t lint --projects='packages/*'",
     "format": "prettier --check .",
-    "format:fix": "prettier --check . --write",
-    "check": "pnpm typecheck && pnpm lint && pnpm format"
+    "format:fix": "prettier . --write",
+    "checks": "pnpm typecheck && pnpm lint && pnpm format"
   },
   "private": true,
   "devDependencies": {
