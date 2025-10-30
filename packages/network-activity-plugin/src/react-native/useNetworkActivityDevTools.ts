@@ -26,7 +26,7 @@ export const useNetworkActivityDevTools = (
 
   const isHttpInspectorEnabled = config.inspectors?.http ?? true;
   const isWebSocketInspectorEnabled = config.inspectors?.websocket ?? true;
-  const isSSEInspectorEnabled = config.inspectors?.sse ?? true; 
+  const isSSEInspectorEnabled = config.inspectors?.sse ?? true;
   const showUrlAsName = config.clientUISettings?.showUrlAsName;
 
   useEffect(() => {
@@ -43,14 +43,14 @@ export const useNetworkActivityDevTools = (
       return;
     }
 
-
     const sendClientUISettings = () => {
       client.send('client-ui-settings', {
         settings: {
-          showUrlAsName: showUrlAsName ?? DEFAULT_CONFIG.clientUISettings?.showUrlAsName,
+          showUrlAsName:
+            showUrlAsName ?? DEFAULT_CONFIG.clientUISettings?.showUrlAsName,
         },
       });
-    }
+    };
 
     const subscriptions = [
       client.onMessage('network-enable', () => {
@@ -62,7 +62,7 @@ export const useNetworkActivityDevTools = (
       client.onMessage('set-overrides', (data) => {
         overridesRegistry.setOverrides(data.overrides);
       }),
-      
+
       client.onMessage('get-client-ui-settings', () => {
         sendClientUISettings();
       }),

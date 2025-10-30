@@ -124,7 +124,8 @@ export const createNetworkActivityStore = () =>
         ) => {
           switch (eventType) {
             case 'client-ui-settings': {
-              const eventData = data as NetworkActivityEventMap['client-ui-settings'];
+              const eventData =
+                data as NetworkActivityEventMap['client-ui-settings'];
               set({ clientUISettings: eventData.settings || null });
               break;
             }
@@ -554,7 +555,7 @@ export const createNetworkActivityStore = () =>
             // Subscribe to all events using the unified handler
             const unsubscribeFunctions = [
               client.onMessage('client-ui-settings', (data) =>
-                handleEvent('client-ui-settings', data)
+                handleEvent('client-ui-settings', data),
               ),
               client.onMessage('request-sent', (data) =>
                 handleEvent('request-sent', data),

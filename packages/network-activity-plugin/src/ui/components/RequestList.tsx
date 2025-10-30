@@ -80,7 +80,7 @@ const generateName = (url: string, showEntirePathName = false): string => {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;
     const filename = showEntirePathName ? undefined : pathname.split('/').pop();
-    
+
     return filename || pathname || urlObj.hostname;
   } catch {
     return url;
@@ -128,7 +128,7 @@ const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
 const processNetworkRequests = (
   processedRequests: ProcessedRequest[],
   overrides: Map<string, RequestOverride>,
-  showEntirePathAsName = false
+  showEntirePathAsName = false,
 ): NetworkRequest[] => {
   return processedRequests.map((request): NetworkRequest => {
     const { domain, path } = extractDomainAndPath(request.name);
@@ -254,7 +254,11 @@ export const RequestList = ({ filter }: RequestListProps) => {
   }, [processedRequests, filter]);
 
   const requests = useMemo(() => {
-    return processNetworkRequests(filteredRequests, overrides, clientUISettings?.showUrlAsName);
+    return processNetworkRequests(
+      filteredRequests,
+      overrides,
+      clientUISettings?.showUrlAsName,
+    );
   }, [filteredRequests, overrides, clientUISettings?.showUrlAsName]);
 
   const table = useReactTable({
