@@ -70,7 +70,7 @@ export default function PerformanceMonitorPanel() {
           metrics: [],
         });
         setIsSessionActive(true);
-      })
+      }),
     );
 
     subscriptions.push(
@@ -85,7 +85,7 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
     );
 
     subscriptions.push(
@@ -100,7 +100,7 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
     );
 
     subscriptions.push(
@@ -115,7 +115,7 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
     );
 
     return () => {

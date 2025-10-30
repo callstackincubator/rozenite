@@ -4,7 +4,7 @@ import type { ConfigT as MetroConfig } from 'metro-config';
 import { getBaseSerializer } from './base-serializer';
 
 export const withRozeniteExpoAtlasPlugin = async (
-  config: MetroConfig | Promise<MetroConfig>
+  config: MetroConfig | Promise<MetroConfig>,
 ): Promise<MetroConfig> => {
   const metroConfig = await config;
 

@@ -7,7 +7,7 @@ export type SpawnOptions = Options;
 export const spawn = (
   file: string,
   args?: readonly string[],
-  options?: SpawnOptions
+  options?: SpawnOptions,
 ): Subprocess => {
   const defaultStream = logger.isVerbose() ? 'inherit' : 'pipe';
   const defaultOptions: Options = {

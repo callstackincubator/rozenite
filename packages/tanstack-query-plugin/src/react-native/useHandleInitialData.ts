@@ -5,7 +5,7 @@ import { dehydrateQueryClient } from '../shared/dehydrate';
 
 export const useHandleInitialData = (
   queryClient: QueryClient,
-  client: TanStackQueryPluginClient | null
+  client: TanStackQueryPluginClient | null,
 ) => {
   useEffect(() => {
     if (!client) {

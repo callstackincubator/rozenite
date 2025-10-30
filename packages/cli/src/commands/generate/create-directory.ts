@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import { step } from '../../utils/steps.js';
 
 export const createProjectDirectory = async (
-  projectRoot: string
+  projectRoot: string,
 ): Promise<void> => {
   await step(
     {
@@ -12,6 +12,6 @@ export const createProjectDirectory = async (
     },
     async () => {
       await fs.mkdir(projectRoot, { recursive: true });
-    }
+    },
   );
 };

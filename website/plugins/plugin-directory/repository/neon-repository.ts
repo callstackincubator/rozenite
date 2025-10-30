@@ -41,7 +41,7 @@ export class PostgresPluginRepository implements PluginRepository {
     } catch (error) {
       console.error(
         `Failed to get plugin ${packageName} from database:`,
-        error
+        error,
       );
       return null;
     }
@@ -77,14 +77,14 @@ export class PostgresPluginRepository implements PluginRepository {
   }
 
   async refreshPlugin(
-    plugin: PluginDirectoryReference
+    plugin: PluginDirectoryReference,
   ): Promise<RozenitePluginEntry> {
     const githubRepository = getRepositoryFromUrl(plugin.githubUrl);
     const npmPackageName = extractPackageNameFromNpmUrl(plugin.npmUrl);
 
     if (!githubRepository || !npmPackageName) {
       throw new Error(
-        `Invalid URLs for plugin: GitHub URL "${plugin.githubUrl}" or NPM URL "${plugin.npmUrl}"`
+        `Invalid URLs for plugin: GitHub URL "${plugin.githubUrl}" or NPM URL "${plugin.npmUrl}"`,
       );
     }
 
@@ -111,7 +111,7 @@ export class PostgresPluginRepository implements PluginRepository {
       throw new Error(
         `Failed to fetch data for plugin ${npmPackageName}: ${
           error instanceof Error ? error.message : 'Unknown error'
-        }`
+        }`,
       );
     }
   }
@@ -173,7 +173,7 @@ export class PostgresPluginRepository implements PluginRepository {
   }
 
   async getPluginWithFallback(
-    plugin: PluginDirectoryReference
+    plugin: PluginDirectoryReference,
   ): Promise<RozenitePluginEntry> {
     const npmPackageName = extractPackageNameFromNpmUrl(plugin.npmUrl);
 

@@ -8,7 +8,7 @@ export type StepOptions = {
 
 export const step = async (
   { start, stop, error }: StepOptions,
-  fn: () => Promise<void>
+  fn: () => Promise<void>,
 ) => {
   const step = spinner();
   step.start(start);

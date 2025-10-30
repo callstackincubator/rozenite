@@ -27,7 +27,7 @@ const isExpoProject = (projectRoot: string): boolean => {
 
 const isSourceFilePresent = (
   projectRoot: string,
-  fileName: string
+  fileName: string,
 ): boolean => {
   const name = fileName.split('.').slice(0, -1).join('.');
 
@@ -61,7 +61,9 @@ export const getProjectType = (projectRoot: string): ProjectType => {
   return 'react-native-cli';
 };
 
-export const getAvailableBundlerTypes = (projectRoot: string): BundlerType[] => {
+export const getAvailableBundlerTypes = (
+  projectRoot: string,
+): BundlerType[] => {
   const bundlers: BundlerType[] = [];
 
   if (isSourceFilePresent(projectRoot, METRO_CONFIG_FILE)) {
@@ -73,4 +75,4 @@ export const getAvailableBundlerTypes = (projectRoot: string): BundlerType[] => 
   }
 
   return bundlers;
-}
+};

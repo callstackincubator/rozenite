@@ -67,7 +67,7 @@ import rootReducer from './reducers';
 const store = createStore(
   rootReducer,
   applyMiddleware(/* your middleware */),
-  rozeniteDevToolsEnhancer()
+  rozeniteDevToolsEnhancer(),
 );
 
 export default store;

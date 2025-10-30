@@ -6,6 +6,6 @@ export const isInteractive = ({ stream = process.stdout } = {}) => {
     stream &&
       stream.isTTY &&
       process.env['TERM'] !== 'dumb' &&
-      !('CI' in process.env)
+      !('CI' in process.env),
   );
 };

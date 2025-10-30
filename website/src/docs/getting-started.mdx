@@ -117,7 +117,7 @@ module.exports = withRozenite(
   withNxMetro(mergeConfig(defaultConfig, customConfig)),
   {
     enabled: process.env.WITH_ROZENITE === 'true',
-  }
+  },
 );
 ```
 
@@ -140,7 +140,7 @@ export default withRozenite(
   },
   {
     enabled: process.env.WITH_ROZENITE === 'true', // Required: Rozenite is disabled by default
-  }
+  },
 );
 ```
 
@@ -160,7 +160,7 @@ export default withRozenite(
     include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin'],
     exclude: ['unwanted-plugin'],
     destroyOnDetachPlugins: ['@rozenite/network-activity-plugin'],
-  }
+  },
 );
 ```
 
@@ -218,7 +218,7 @@ export default withRozenite(
   {
     enabled: process.env.WITH_ROZENITE === 'true',
     include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin'],
-  }
+  },
 );
 ```
 
@@ -252,7 +252,7 @@ export default withRozenite(
   {
     enabled: process.env.WITH_ROZENITE === 'true',
     exclude: ['@rozenite/mmkv-plugin'],
-  }
+  },
 );
 ```
 
@@ -296,7 +296,7 @@ export default withRozenite(
       '@rozenite/tanstack-query-plugin',
     ],
     exclude: ['@rozenite/mmkv-plugin'], // This will be filtered out from the include list
-  }
+  },
 );
 ```
 
@@ -342,7 +342,7 @@ export default withRozenite(
       '@rozenite/network-activity-plugin',
       '@rozenite/tanstack-query-plugin',
     ],
-  }
+  },
 );
 ```
 

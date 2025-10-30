@@ -66,7 +66,7 @@ main().catch((error) => {
   logger.error('Command failed');
   logger.error('Error details:', error);
   outro(
-    `If you think this is a bug, please report it at ${packageJSON.bugs.url}`
+    `If you think this is a bug, please report it at ${packageJSON.bugs.url}`,
   );
   process.exit(1);
 });

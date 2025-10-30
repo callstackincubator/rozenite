@@ -21,7 +21,7 @@ export const verifyReactNativeVersion = (projectRoot: string): void => {
   logger.error(
     `React Native DevTools requires React Native ${REQUIRED_REACT_NATIVE_VERSION} or higher.\n` +
       `   Current version: ${reactNativeVersion}\n` +
-      `   Please upgrade your React Native version to continue using Rozenite.`
+      `   Please upgrade your React Native version to continue using Rozenite.`,
   );
   process.exit(1);
 };

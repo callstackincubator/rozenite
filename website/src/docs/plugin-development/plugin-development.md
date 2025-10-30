@@ -206,7 +206,7 @@ interface PluginEvents {
 }
 
 export default function setupPlugin(
-  client: DevToolsPluginClient<PluginEvents>
+  client: DevToolsPluginClient<PluginEvents>,
 ) {
   // Handle messages from DevTools panels with full type safety
   client.onMessage('request-user-data', (data) => {

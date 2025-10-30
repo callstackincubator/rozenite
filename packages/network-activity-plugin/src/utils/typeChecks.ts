@@ -1,7 +1,7 @@
 export const isBlob = (value: unknown): value is Blob => value instanceof Blob;
 
 export const isArrayBuffer = (
-  value: unknown
+  value: unknown,
 ): value is ArrayBuffer | ArrayBufferView =>
   value instanceof ArrayBuffer || ArrayBuffer.isView(value);
 
