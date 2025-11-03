@@ -73,6 +73,26 @@ const store = createStore(
 export default store;
 ```
 
+#### For Rematch
+
+If you're using Rematch, follow the [Rematch documentation](https://rematchjs.org/docs/guides/devtools/) and use `composeWithRozeniteDevTools` as the `devtoolComposer`:
+
+```typescript title="store.ts"
+import { init } from '@rematch/core';
+import { composeWithRozeniteDevTools } from '@rozenite/redux-devtools-plugin';
+
+export const store = init({
+  models: {
+    // your models
+  },
+  redux: {
+    devtoolComposer: composeWithRozeniteDevTools(),
+  },
+});
+
+export default store;
+```
+
 ### Adjust Metro configuration
 
 Wrap your Metro configuration with `withRozeniteReduxDevTools`:
