@@ -313,6 +313,5 @@ The build creates a `dist/` directory with:
 
 ## Next Steps
 
-- Explore the [CLI documentation](../cli.md) for more command options
 - Check out [Official Plugins](../official-plugins/overview.md) to see available plugins
 - Join the community to share your plugins and get help
