@@ -1,12 +1,16 @@
 import { Platform } from 'react-native';
 import getDevServer from 'react-native/Libraries/Core/Devtools/getDevServer';
 import { REDUX_DEVTOOLS_PORT } from './constants';
-import type { devToolsEnhancer } from '@redux-devtools/remote';
+import type {
+  devToolsEnhancer,
+  composeWithDevTools,
+} from '@redux-devtools/remote';
 
 // @ts-expect-error - Symbol.asyncIterator is not defined in the global scope, but required by the redux-devtools/remote package.
 Symbol.asyncIterator ??= Symbol.for('Symbol.asyncIterator');
 
 type StoreEnhancer = ReturnType<typeof devToolsEnhancer>;
+type ComposeWithDevTools = ReturnType<typeof composeWithDevTools>;
 
 const getDeviceId = (): string => {
   if (Platform.OS === 'android') {
@@ -23,6 +27,16 @@ const getDeviceId = (): string => {
 const getHostname = (): string => {
   const devServer = getDevServer();
   return devServer.url.split('://')[1].split(':')[0];
+};
+
+export const composeWithRozeniteDevTools = (): ComposeWithDevTools => {
+  return require('@redux-devtools/remote').composeWithDevTools({
+    name: getDeviceId(),
+    hostname: getHostname(),
+    port: REDUX_DEVTOOLS_PORT,
+    secure: false,
+    realtime: true,
+  });
 };
 
 export const rozeniteDevToolsEnhancer = (): StoreEnhancer => {
