@@ -1,4 +1,4 @@
-import { usePageData } from 'rspress/runtime';
+import { usePageData } from '@rspress/core/runtime';
 import { HomeFooter, OutlineCTA } from '@callstack/rspress-theme';
 
 import { PluginCard } from '../plugin-card/plugin-card';
