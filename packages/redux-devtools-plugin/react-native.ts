@@ -11,7 +11,8 @@ if (isDev && !isWeb && !isServer) {
   composeWithRozeniteDevTools =
     require('./src/runtime').composeWithRozeniteDevTools;
 } else {
-  const noop =
+  // Noop enhancer: returns an enhancer that passes through createStore unchanged
+  const noopEnhancer =
     () =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (createStore: (...args: any[]) => any) =>
@@ -19,6 +20,27 @@ if (isDev && !isWeb && !isServer) {
     (...args: any[]) =>
       createStore(...args);
 
-  rozeniteDevToolsEnhancer = noop;
-  composeWithRozeniteDevTools = noop;
+  // Noop composer: returns a compose function (which composes enhancers)
+  const noopComposer = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (...enhancers: any[]) => {
+      if (enhancers.length === 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (createStore: (...args: any[]) => any) => createStore;
+      }
+      if (enhancers.length === 1) {
+        return enhancers[0];
+      }
+      // Compose enhancers from right to left (Redux's compose behavior)
+      return enhancers.reduceRight(
+        (composed, enhancer) =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (createStore: (...args: any[]) => any) =>
+            composed(enhancer(createStore))
+      );
+    };
+  };
+
+  rozeniteDevToolsEnhancer = noopEnhancer;
+  composeWithRozeniteDevTools = noopComposer;
 }
