@@ -36,7 +36,7 @@ if (isDev && !isWeb && !isServer) {
         (composed, enhancer) =>
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (createStore: (...args: any[]) => any) =>
-            composed(enhancer(createStore))
+            enhancer(composed(createStore))
       );
     };
   };
