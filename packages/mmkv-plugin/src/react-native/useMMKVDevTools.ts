@@ -1,14 +1,15 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect } from 'react';
-import type { MMKV } from 'react-native-mmkv';
 import { MMKVEventMap } from '../shared/messaging';
 import { getMMKVView } from './mmkv-view';
+import { normalizeStoragesConfigProperty } from './utils';
+import type { MMKV } from 'react-native-mmkv';
 
 export type MMKVDevToolsOptions = {
   /**
    * The MMKV instances to monitor.
    */
-  storages: MMKV[];
+  storages: MMKV[] | Record<string, MMKV>;
 
   /**
    * Optional RegExp to blacklist properties from being shown in DevTools.
@@ -30,7 +31,10 @@ export const useMMKVDevTools = ({
       return;
     }
 
-    const views = storages.map((storage) => getMMKVView(storage, blacklist));
+    const normalizedStorages = normalizeStoragesConfigProperty(storages);
+    const views = Object.entries(normalizedStorages).map(([id, storage]) =>
+      getMMKVView(id, storage, blacklist)
+    );
 
     views.forEach((view) => {
       client.send('snapshot', {
@@ -66,7 +70,9 @@ export const useMMKVDevTools = ({
         const view = views.find((view) => view.getId() === id);
 
         if (!view) {
-          console.warn('MMKV view not found:', entry.key);
+          console.warn(
+            `[Rozenite] MMKV DevTools: View not found for entry key "${entry.key}"`
+          );
           return;
         }
 
@@ -76,7 +82,9 @@ export const useMMKVDevTools = ({
         const view = views.find((view) => view.getId() === id);
 
         if (!view) {
-          console.warn('MMKV view not found:', key);
+          console.warn(
+            `[Rozenite] MMKV DevTools: View not found for key "${key}"`
+          );
           return;
         }
 
@@ -98,7 +106,9 @@ export const useMMKVDevTools = ({
         const view = views.find((view) => view.getId() === id);
 
         if (!view) {
-          console.warn('MMKV view not found:', id);
+          console.warn(
+            `[Rozenite] MMKV DevTools: View not found for storage ID "${id}"`
+          );
           return;
         }
 

@@ -1,6 +1,7 @@
-import { MMKV } from 'react-native-mmkv';
+import type { MMKV } from './utils';
 import { MMKVEntry, MMKVEntryValue } from '../shared/types';
 import { looksLikeGarbled } from './is-garbled';
+import { getMMKVAdapter } from './mmkv-adapter';
 
 export type MMKVView = {
   set: (key: string, value: MMKVEntryValue) => void;
@@ -11,8 +12,12 @@ export type MMKVView = {
   onChange: (callback: (key: string) => void) => { remove: () => void };
 };
 
-export const getMMKVView = (mmkv: MMKV, blacklist?: RegExp): MMKVView => {
-  const storageId = mmkv['id'];
+export const getMMKVView = (
+  storageId: string,
+  storage: MMKV,
+  blacklist?: RegExp
+): MMKVView => {
+  const mmkv = getMMKVAdapter(storage);
 
   // Helper function to check if a key should be blacklisted
   const isBlacklisted = (key: string): boolean => {

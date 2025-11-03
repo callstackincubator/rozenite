@@ -424,6 +424,15 @@ importers:
       react-native-mmkv:
         specifier: ^3.3.0
         version: 3.3.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+      react-native-mmkv-v3:
+        specifier: npm:react-native-mmkv@^3.0.0
+        version: react-native-mmkv@3.3.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+      react-native-mmkv-v4:
+        specifier: npm:react-native-mmkv@^4.0.0
+        version: react-native-mmkv@4.0.0(react-native-nitro-modules@0.31.4(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+      react-native-nitro-modules:
+        specifier: '*'
+        version: 0.31.4(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       react-native-web:
         specifier: 0.21.0
         version: 0.21.0(encoding@0.1.13)(react-dom@18.3.0(react@18.3.1))(react@18.3.1)
@@ -7824,6 +7833,7 @@ packages:
   keygrip@1.1.0:
     resolution: {integrity: sha512-iYSchDJ+liQ8iwbSI2QqsQOvqv58eJCEanyJPJi+Khyu8smkcKSFUCbPwzFcL7YVtZ6eONjqRX/38caJ7QjRAQ==}
     engines: {node: '>= 0.6'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
@@ -9421,6 +9431,19 @@ packages:
 
   react-native-mmkv@3.3.0:
     resolution: {integrity: sha512-2iPjIJ+IAODXN35wm53EN6nv+hR/0NXLLiLWOdPA/0gXDB2dYVrr6MqvoiFpxhLhdj0B8fkf5ARNVavJaSvuuQ==}
+    peerDependencies:
+      react: '*'
+      react-native: 0.76.0
+
+  react-native-mmkv@4.0.0:
+    resolution: {integrity: sha512-Osoy8as2ZLzO1TTsKxc4tX14Qk19qRVMWnS4ZVBwxie9Re5cjt7rqlpDkJczK3H/y3z70EQ6rmKI/cNMCLGAYQ==}
+    peerDependencies:
+      react: '*'
+      react-native: 0.76.0
+      react-native-nitro-modules: '*'
+
+  react-native-nitro-modules@0.31.4:
+    resolution: {integrity: sha512-VIOD4lDMivexP6cqG6V3TyhAAGbnAVcBCv2LxWYHN5rQmRHgJHQ3fT2d/zbNChP5Be0ajR9QYF1xXEDDxbQT3w==}
     peerDependencies:
       react: '*'
       react-native: 0.76.0
@@ -22980,6 +23003,17 @@ snapshots:
       react-native: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
 
   react-native-mmkv@3.3.0(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-native: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
+
+  react-native-mmkv@4.0.0(react-native-nitro-modules@0.31.4(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-native: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
+      react-native-nitro-modules: 0.31.4(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+
+  react-native-nitro-modules@0.31.4(react-native@0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-native: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)

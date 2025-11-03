@@ -6,7 +6,11 @@ export const appSettings = new MMKV({ id: 'app-settings' });
 export const cacheStorage = new MMKV({ id: 'cache-storage' });
 
 // Array of all storages for dev tools
-export const mmkvStorages = [userStorage, appSettings, cacheStorage];
+export const mmkvStorages = {
+  'user-storage': userStorage,
+  'app-settings': appSettings,
+  'cache-storage': cacheStorage,
+};
 
 // Initialize storage instances with test data
 export const initializeMMKVStorages = () => {

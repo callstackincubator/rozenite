@@ -39,7 +39,11 @@ const cacheStorage = new MMKV({ id: 'cache-storage' });
 function App() {
   // Enable MMKV DevTools with your storage instances
   useMMKVDevTools({
-    storages: [userStorage, appSettings, cacheStorage],
+    storages: {
+      'user-storage': userStorage,
+      'app-settings': appSettings,
+      'cache-storage': cacheStorage,
+    },
   });
 
   return <YourApp />;
@@ -80,7 +84,11 @@ The blacklist RegExp is matched against `{storageId}:{key}` format:
 ```typescript title="App.tsx"
 function App() {
   useMMKVDevTools({
-    storages: [userStorage, appSettings, cacheStorage],
+    storages: {
+      'user-storage': userStorage,
+      'app-settings': appSettings,
+      'cache-storage': cacheStorage,
+    },
     // Hide sensitive tokens, large binary data, and temporary cache entries
     blacklist: /.*:(token|password|secret)|cache-storage:.*Binary.*|.*:temp.*/,
   });
@@ -100,7 +108,7 @@ You can combine multiple patterns using the `|` operator to create comprehensive
 ### Important Notes
 
 :::warning Explicit Storage Registration
-You must explicitly provide all MMKV instances you want to inspect to the `useMMKVDevTools` hook. The plugin cannot automatically detect MMKV instances - only the storages you pass in the `storages` array will be available in the DevTools interface.
+You must explicitly provide all MMKV instances you want to inspect to the `useMMKVDevTools` hook. The plugin cannot automatically detect MMKV instances - only the storages you pass in the `storages` record will be available in the DevTools interface.
 :::
 
 :::info Development Only
