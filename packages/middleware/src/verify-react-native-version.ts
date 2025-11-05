@@ -13,7 +13,9 @@ export const verifyReactNativeVersion = (projectRoot: string): void => {
   const reactNativeVersion = packageJson.version;
 
   if (
-    semver.satisfies(reactNativeVersion, `>=${REQUIRED_REACT_NATIVE_VERSION}`)
+    semver.satisfies(reactNativeVersion, `>=${REQUIRED_REACT_NATIVE_VERSION}`, {
+      includePrerelease: true,
+    })
   ) {
     return;
   }
