@@ -1,7 +1,7 @@
 import { withCallstackPreset } from '@callstack/rspress-preset';
 import { pluginDirectoryPlugin } from './plugins/plugin-directory';
 
-const EDIT_ROOT_URL = `https://github.com/callstackincubator/rozenite/tree/main/website`;
+const EDIT_ROOT_URL = `https://github.com/callstackincubator/rozenite/tree/main/website/src`;
 
 export default withCallstackPreset(
   {
