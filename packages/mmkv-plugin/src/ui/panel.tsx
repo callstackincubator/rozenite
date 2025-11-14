@@ -5,6 +5,8 @@ import { MMKVEventMap } from '../shared/messaging';
 import { MMKVEntry, MMKVEntryValue } from '../shared/types';
 import { EditableTable } from './editable-table';
 import { AddEntryDialog } from './add-entry-dialog';
+import { EntryDetailDialog } from './entry-detail-dialog';
+import { EditEntryDialog } from './edit-entry-dialog';
 import './globals.css';
 
 export default function MMKVPanel() {
@@ -16,6 +18,10 @@ export default function MMKVPanel() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<MMKVEntry | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<MMKVEntry | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const client = useRozeniteDevToolsClient<MMKVEventMap>({
     pluginId: '@rozenite/mmkv-plugin',
@@ -327,6 +333,10 @@ export default function MMKVPanel() {
                 data={filteredEntries}
                 onValueChange={handleValueChange}
                 onDeleteEntry={handleDeleteEntry}
+                onRowClick={(entry) => {
+                  setSelectedEntry(entry);
+                  setShowDetailDialog(true);
+                }}
                 loading={loading}
               />
             )}
@@ -350,6 +360,34 @@ export default function MMKVPanel() {
         onClose={() => setShowAddDialog(false)}
         onAddEntry={handleAddEntry}
         existingKeys={entries.map((entry) => entry.key)}
+      />
+
+      <EntryDetailDialog
+        isOpen={showDetailDialog}
+        onClose={() => {
+          setShowDetailDialog(false);
+          setSelectedEntry(null);
+        }}
+        onEdit={(entry) => {
+          setShowDetailDialog(false);
+          setEditingEntry(entry);
+          setShowEditDialog(true);
+        }}
+        entry={selectedEntry}
+      />
+
+      <EditEntryDialog
+        isOpen={showEditDialog}
+        onClose={() => {
+          setShowEditDialog(false);
+          setEditingEntry(null);
+        }}
+        onEditEntry={(key, newValue) => {
+          handleValueChange(key, newValue);
+          setShowEditDialog(false);
+          setEditingEntry(null);
+        }}
+        entry={editingEntry}
       />
     </div>
   );

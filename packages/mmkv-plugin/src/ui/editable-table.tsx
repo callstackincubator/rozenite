@@ -18,6 +18,7 @@ export type EditableTableProps = {
   data: MMKVEntry[];
   onValueChange?: (key: string, newValue: MMKVEntryValue) => void;
   onDeleteEntry?: (key: string) => void;
+  onRowClick?: (entry: MMKVEntry) => void;
   loading?: boolean;
 };
 
@@ -27,6 +28,7 @@ export const EditableTable = ({
   data,
   onValueChange,
   onDeleteEntry,
+  onRowClick,
   loading = false,
 }: EditableTableProps) => {
   const [editingEntry, setEditingEntry] = useState<MMKVEntry | null>(null);
@@ -270,7 +272,24 @@ export const EditableTable = ({
           {table.getRowModel().rows.map((row) => (
             <tr
               key={row.id}
-              className="text-sm hover:bg-gray-800 border-b border-gray-800"
+              className={`text-sm hover:bg-gray-800 border-b border-gray-800 ${
+                onRowClick ? 'cursor-pointer' : ''
+              }`}
+              onClick={(e) => {
+                // Don't trigger row click if clicking on buttons or interactive elements
+                const target = e.target as HTMLElement;
+                if (
+                  target.tagName === 'BUTTON' ||
+                  target.closest('button') ||
+                  target.tagName === 'INPUT' ||
+                  target.closest('input')
+                ) {
+                  return;
+                }
+                if (onRowClick) {
+                  onRowClick(row.original);
+                }
+              }}
             >
               {row.getVisibleCells().map((cell) => (
                 <td key={cell.id} className="px-3 py-2">

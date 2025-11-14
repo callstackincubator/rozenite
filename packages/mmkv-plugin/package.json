@@ -31,6 +31,7 @@
     "autoprefixer": "^10.4.21",
     "tailwindcss-animate": "^1.0.7",
     "lucide-react": "^0.263.1",
+    "react-json-tree": "^0.20.0",
     "react-native-mmkv-v3": "npm:react-native-mmkv@^3.0.0",
     "react-native-mmkv-v4": "npm:react-native-mmkv@^4.0.0",
     "react-native-nitro-modules": "*"
