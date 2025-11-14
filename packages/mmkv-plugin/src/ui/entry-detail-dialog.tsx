@@ -1,4 +1,4 @@
-import { X, Info } from 'lucide-react';
+import { X, Info, Edit3 } from 'lucide-react';
 import { JSONTree } from 'react-json-tree';
 import { MMKVEntry } from '../shared/types';
 import { useMemo } from 'react';
@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 export type EntryDetailDialogProps = {
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: (entry: MMKVEntry) => void;
   entry: MMKVEntry | null;
 };
 
@@ -89,6 +90,7 @@ const formatValue = (entry: MMKVEntry) => {
 export const EntryDetailDialog = ({
   isOpen,
   onClose,
+  onEdit,
   entry,
 }: EntryDetailDialogProps) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -181,6 +183,19 @@ export const EntryDetailDialog = ({
 
         {/* Dialog Actions */}
         <div className="flex items-center justify-end gap-2 mt-6">
+          {onEdit && (
+            <button
+              onClick={() => {
+                if (entry && onEdit) {
+                  onEdit(entry);
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+            >
+              <Edit3 className="h-4 w-4" />
+              Edit
+            </button>
+          )}
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"

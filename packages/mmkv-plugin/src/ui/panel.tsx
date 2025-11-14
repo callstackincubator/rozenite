@@ -6,6 +6,7 @@ import { MMKVEntry, MMKVEntryValue } from '../shared/types';
 import { EditableTable } from './editable-table';
 import { AddEntryDialog } from './add-entry-dialog';
 import { EntryDetailDialog } from './entry-detail-dialog';
+import { EditEntryDialog } from './edit-entry-dialog';
 import './globals.css';
 
 export default function MMKVPanel() {
@@ -19,6 +20,8 @@ export default function MMKVPanel() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<MMKVEntry | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<MMKVEntry | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const client = useRozeniteDevToolsClient<MMKVEventMap>({
     pluginId: '@rozenite/mmkv-plugin',
@@ -365,7 +368,26 @@ export default function MMKVPanel() {
           setShowDetailDialog(false);
           setSelectedEntry(null);
         }}
+        onEdit={(entry) => {
+          setShowDetailDialog(false);
+          setEditingEntry(entry);
+          setShowEditDialog(true);
+        }}
         entry={selectedEntry}
+      />
+
+      <EditEntryDialog
+        isOpen={showEditDialog}
+        onClose={() => {
+          setShowEditDialog(false);
+          setEditingEntry(null);
+        }}
+        onEditEntry={(key, newValue) => {
+          handleValueChange(key, newValue);
+          setShowEditDialog(false);
+          setEditingEntry(null);
+        }}
+        entry={editingEntry}
       />
     </div>
   );
