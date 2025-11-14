@@ -1,6 +1,7 @@
 import { X, Info } from 'lucide-react';
 import { JSONTree } from 'react-json-tree';
 import { MMKVEntry } from '../shared/types';
+import { useMemo } from 'react';
 
 export type EntryDetailDialogProps = {
   isOpen: boolean;
@@ -27,25 +28,12 @@ const jsonTreeTheme = {
   base0F: '#f97316', // text-orange-500
 };
 
-const isJsonString = (value: string): boolean => {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    return false;
+const jsonSafeParse = (value: string): unknown | null => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
   }
-
-  const trimmed = value.trim();
-  if (
-    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-    (trimmed.startsWith('[') && trimmed.endsWith(']'))
-  ) {
-    try {
-      JSON.parse(value);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  return false;
 };
 
 const getTypeColorClass = (type: string) => {
@@ -113,16 +101,10 @@ export const EntryDetailDialog = ({
 
   const isStringValue = entry.type === 'string';
   const stringValue = entry.value as string;
-  const isJson = isStringValue && isJsonString(stringValue);
-  let parsedJson: unknown = null;
-
-  if (isJson) {
-    try {
-      parsedJson = JSON.parse(stringValue);
-    } catch {
-      // Should not happen since we already checked, but handle gracefully
-    }
-  }
+  const jsonValue = useMemo(
+    () => isStringValue && jsonSafeParse(stringValue),
+    [isStringValue, stringValue]
+  );
 
   return (
     <div
@@ -183,9 +165,9 @@ export const EntryDetailDialog = ({
               Value
             </label>
             <div className="max-h-96 overflow-auto bg-gray-700 border border-gray-600 rounded p-3">
-              {isJson && parsedJson !== null ? (
+              {jsonValue ? (
                 <JSONTree
-                  data={parsedJson}
+                  data={jsonValue}
                   theme={jsonTreeTheme}
                   invertTheme={false}
                   shouldExpandNodeInitially={(keyPath) => keyPath.length <= 2}
