@@ -1,3 +1,20 @@
+# 1.0.0 (2025-11-14)
+
+### 🚀 Features
+
+- **@rozenite/middleware:** Include prerelease versions in the React Native version compatibility check. ([#136](https://github.com/callstackincubator/rozenite/pull/136))
+- **@rozenite/mmkv-plugin:** Introduce the necessary updates to support react-native-mmkv v4. Both v3 and v4 are now supported, though a minor change is required in userland code: switching from a storage array to a record, since IDs are no longer accessible. ([#133](https://github.com/callstackincubator/rozenite/pull/133))
+- **@rozenite/mmkv-plugin:** You can now view detailed previews of values, including an interactive JSON preview when the stored string is valid JSON. ([#142](https://github.com/callstackincubator/rozenite/pull/142))
+- **@rozenite/network-activity-plugin:** Users can now adjust how paths are reported in the DevTools UI, choosing between the Chrome-like last-segment style and the full path. ([#129](https://github.com/callstackincubator/rozenite/pull/129))
+- **@rozenite/redux-devtools-plugin:** Fixed a race condition that occurred in certain scenarios by inlining the require call to the redux-devtools/remote package. ([#127](https://github.com/callstackincubator/rozenite/pull/127))
+- **@rozenite/redux-devtools-plugin:** Expose an additional composeWithRozeniteDevTools function, which should be used with certain libraries, such as Rematch, to correctly support their async actions. ([#135](https://github.com/callstackincubator/rozenite/pull/135))
+
+### ❤️ Thank You
+
+- Andrei Xavier de Oliveira Calazans @AndreiCalazans
+- David Prevost @dprevost-LMI
+- Szymon Chmal
+
 ## 1.0.0-alpha.16 (2025-10-28)
 
 ### 🩹 Fixes
@@ -68,6 +85,7 @@
 - **@rozenite/network-activity-plugin:** This change addresses an issue where network responses with malformed or complex Content-Type headers (e.g., "application/json,text/plain,_/_" or "application/json; charset=utf-8") were not correctly identified as JSON. Previously, the system relied on an exact match for "application/json", leading to these responses being incorrectly displayed as binary content. ([#72](https://github.com/callstackincubator/rozenite/pull/72))
 
   By updating the content type checks to use `.startsWith('application/json')` and similar for other types, the plugin can now correctly parse and display JSON content. This change improves the debugging experience for real-world applications that may send non-standard Content-Type headers, bringing the behavior in line with other robust network logging tools like Chrome's network inspector.
+
 - **@rozenite/plugin-bridge:** The useRozeniteDevToolsClient hook is reinitialized during the hot reload of the host component, and a new client should be created at that point. However, due to the persistent client cache, the previous client was reused instead. The issue arose because the useEffect cleanup function disposes of the client. When the same client was reused, no messages were received. ([#73](https://github.com/callstackincubator/rozenite/pull/73))
 - **@rozenite/redux-devtools-plugin:** It's now possible to set the log level of the internal Rozenite logger, which will propagate to all official plugins and be applied whenever it is possible to set the logging level for third-party libraries. ([#77](https://github.com/callstackincubator/rozenite/pull/77))
 - **@rozenite/repack:** It's now possible to set the log level of the internal Rozenite logger, which will propagate to all official plugins and be applied whenever it is possible to set the logging level for third-party libraries. ([#77](https://github.com/callstackincubator/rozenite/pull/77))
@@ -143,12 +161,15 @@
 - **@rozenite/network-activity-plugin:** # fix(network-activity-plugin): properly extract response content type ([](https://github.com/callstackincubator/rozenite/commit/))
 
   Fixed the extraction of the response content type from headers. The issue was that headers are case-insensitive, and servers can send them in any format.
+
 - **@rozenite/network-activity-plugin:** # fix(network-activity-plugin): make scrolling work in response tab ([](https://github.com/callstackincubator/rozenite/commit/))
 
   This pull request fixes the issue of scrolling not working in the response tab.
+
 - **@rozenite/redux-devtools-plugin:** # feat(redux-devtools-plugin): support remote connections ([](https://github.com/callstackincubator/rozenite/commit/))
 
   This pull request enables Rozenite's Redux DevTools plugin to work with remote devices. Until now, it could only connect to local emulators, as the hostname was hardcoded to the loopback interface. From now on, the plugin will inherit the hostname of the dev server, making it possible to connect to Redux DevTools from remote devices.
+
 - **@rozenite/runtime:** # feat(runtime): persist panel state on detach ([](https://github.com/callstackincubator/rozenite/commit/))
 
   Custom panels are now persisted, so the user can switch tools without losing progress in the previous one. In case of any performance issues, the user can opt out of this mechanism, forcing the plugin to close on blur.
@@ -160,14 +181,20 @@
 - ### @rozenite/repack ([#12](https://github.com/callstackincubator/rozenite/pull/12))
 
   - Added support for Re.Pack, bringing full compatibility, including all capabilities available in Metro.
+
   ### @rozenite/middleware
+
   - Introduced the Rozenite Middleware, the core runtime for integrating custom DevTools plugins in React Native environments.
   - Enables automatic plugin discovery, seamless development server integration, and robust infrastructure for plugin communication and UI rendering.
+
   ### @rozenite/metro
+
   - Refactored to use @rozenite/middleware as the foundational layer for improved modularity and plugin support.
+
 - ### @rozenite/redux-devtools-plugin ([#13](https://github.com/callstackincubator/rozenite/pull/13))
 
   - Fixed compatibility issue with @redux-devtools/cli when running in CommonJS environments
+
 - ### @rozenite/expo-atlas-plugin ([#14](https://github.com/callstackincubator/rozenite/pull/14))
 
   - Fixes an issue where Metro would crash due to a corrupted Expo Atlas file
@@ -183,21 +210,34 @@
 - ## Packages ([#5](https://github.com/callstackincubator/rozenite/pull/5))
 
   ### @rozenite/redux-devtools-plugin
+
   The Rozenite Redux DevTools Plugin provides Redux state inspection and debugging capabilities within your React Native DevTools environment. It offers a partial Redux DevTools experience, including state inspection and action history (time travel and action dispatch are currently unavailable in remote mode).
+
   ### @rozenite/vite-plugin
+
   - Bring back support for 'metro.ts' entry files
   - Improved chunk splitting for 'react-native.ts' entry files
   - Types should be now generated for all entry points
   - Improved support for CJS/ESM packages
+
   ### @rozenite/network-activity-plugin
+
   - An all-new UI designed to improve the developer experience
+
   ### rozenite
+
   - Bring back support for 'metro.ts' entry files
+
   ### @rozenite/tanstack-query-plugin
+
   - Improved performance by limiting the amount of data serialized for each cache event
+
   ### @rozenite/plugin-bridge
+
   - Improved module resolution compatibility for environments without package.json exports support, including Metro bundler configurations that don't enable unstable_enablePackageExports
+
   ## Migration Guide
+
   - No migration required for existing packages
   - New Redux DevTools functionality is opt-in through the new plugin
 
