@@ -1,3 +1,29 @@
+# 1.0.0 (2025-11-14)
+
+### 🚀 Features
+
+- ⚠️  **@rozenite/middleware:** Include prerelease versions in the React Native version compatibility check. ([#136](https://github.com/callstackincubator/rozenite/pull/136))
+- ⚠️  **@rozenite/mmkv-plugin:** Introduce the necessary updates to support react-native-mmkv v4. Both v3 and v4 are now supported, though a minor change is required in userland code: switching from a storage array to a record, since IDs are no longer accessible. ([#133](https://github.com/callstackincubator/rozenite/pull/133))
+- ⚠️  **@rozenite/mmkv-plugin:** You can now view detailed previews of values, including an interactive JSON preview when the stored string is valid JSON. ([#142](https://github.com/callstackincubator/rozenite/pull/142))
+- ⚠️  **@rozenite/network-activity-plugin:** Users can now adjust how paths are reported in the DevTools UI, choosing between the Chrome-like last-segment style and the full path. ([#129](https://github.com/callstackincubator/rozenite/pull/129))
+- ⚠️  **@rozenite/redux-devtools-plugin:** Fixed a race condition that occurred in certain scenarios by inlining the require call to the redux-devtools/remote package. ([#127](https://github.com/callstackincubator/rozenite/pull/127))
+- ⚠️  **@rozenite/redux-devtools-plugin:** Expose an additional composeWithRozeniteDevTools function, which should be used with certain libraries, such as Rematch, to correctly support their async actions. ([#135](https://github.com/callstackincubator/rozenite/pull/135))
+
+### ⚠️  Breaking Changes
+
+- ⚠️  **@rozenite/mmkv-plugin:** You can now view detailed previews of values, including an interactive JSON preview when the stored string is valid JSON. ([#142](https://github.com/callstackincubator/rozenite/pull/142))
+- ⚠️  **@rozenite/middleware:** Include prerelease versions in the React Native version compatibility check. ([#136](https://github.com/callstackincubator/rozenite/pull/136))
+- ⚠️  **@rozenite/redux-devtools-plugin:** Expose an additional composeWithRozeniteDevTools function, which should be used with certain libraries, such as Rematch, to correctly support their async actions. ([#135](https://github.com/callstackincubator/rozenite/pull/135))
+- ⚠️  **@rozenite/mmkv-plugin:** Introduce the necessary updates to support react-native-mmkv v4. Both v3 and v4 are now supported, though a minor change is required in userland code: switching from a storage array to a record, since IDs are no longer accessible. ([#133](https://github.com/callstackincubator/rozenite/pull/133))
+- ⚠️  **@rozenite/network-activity-plugin:** Users can now adjust how paths are reported in the DevTools UI, choosing between the Chrome-like last-segment style and the full path. ([#129](https://github.com/callstackincubator/rozenite/pull/129))
+- ⚠️  **@rozenite/redux-devtools-plugin:** Fixed a race condition that occurred in certain scenarios by inlining the require call to the redux-devtools/remote package. ([#127](https://github.com/callstackincubator/rozenite/pull/127))
+
+### ❤️ Thank You
+
+- Andrei Xavier de Oliveira Calazans @AndreiCalazans
+- David Prevost @dprevost-LMI
+- Szymon Chmal
+
 ## 1.0.0-alpha.16 (2025-10-28)
 
 ### 🩹 Fixes
