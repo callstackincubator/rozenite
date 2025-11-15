@@ -12,7 +12,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
-import { mmkvStorages } from './mmkv-storages';
 import { BottomTabNavigator } from './navigation/BottomTabNavigator';
 import { SuccessiveScreensNavigator } from './navigation/SuccessiveScreensNavigator';
 import { RootStackParamList } from './navigation/types';
@@ -38,10 +37,6 @@ const Wrapper = () => {
       }
     }
   );
-  useMMKVDevTools({
-    storages: mmkvStorages,
-    blacklist: /user-storage:sensitiveToken/,
-  });
   usePerformanceMonitorDevTools();
 
   return (
