@@ -13,7 +13,6 @@ import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { getBlobName } from '../utils/getBlobName';
 import { getFormDataEntries } from '../utils/getFormDataEntries';
 import { getQueuedInterceptor } from './queued-xhr-interceptor';
-import { getQueuedClientWrapper } from './queued-client-wrapper';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
 import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
 import {
@@ -196,10 +195,6 @@ const READY_STATE_HEADERS_RECEIVED = 2;
 export const getNetworkInspector = (
   pluginClient: NetworkActivityDevToolsClient
 ): NetworkInspector => {
-  // Use queued client wrapper to ensure all messages are captured
-  const queuedClient = getQueuedClientWrapper();
-  queuedClient.setClient(pluginClient);
-  
   const generateRequestId = (): string => {
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
@@ -219,7 +214,7 @@ export const getNetworkInspector = (
 
     let ttfb = 0;
 
-    queuedClient.send('request-sent', {
+    pluginClient.send('request-sent', {
       requestId: requestId,
       timestamp: sendTime,
       request: {
@@ -239,7 +234,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('load', () => {
-      queuedClient.send('response-received', {
+      pluginClient.send('response-received', {
         requestId: requestId,
         timestamp: Date.now(),
         type: 'XHR',
@@ -258,7 +253,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('loadend', () => {
-      queuedClient.send('request-completed', {
+      pluginClient.send('request-completed', {
         requestId: requestId,
         timestamp: Date.now(),
         duration: Date.now() - sendTime,
@@ -268,7 +263,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('error', () => {
-      queuedClient.send('request-failed', {
+      pluginClient.send('request-failed', {
         requestId: requestId,
         timestamp: Date.now(),
         type: 'XHR',
@@ -278,7 +273,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('abort', () => {
-      queuedClient.send('request-failed', {
+      pluginClient.send('request-failed', {
         requestId: requestId,
         timestamp: Date.now(),
         type: 'XHR',
@@ -368,7 +363,7 @@ export const getNetworkInspector = (
 
       const body = await getResponseBody(request);
 
-      queuedClient.send('response-body', {
+      pluginClient.send('response-body', {
         requestId,
         body,
       });
