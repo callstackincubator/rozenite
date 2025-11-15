@@ -12,7 +12,8 @@ import { getContentType } from '../utils';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { getBlobName } from '../utils/getBlobName';
 import { getFormDataEntries } from '../utils/getFormDataEntries';
-import { XHRInterceptor } from './xhr-interceptor';
+import { getQueuedXHRInterceptor } from './queued-xhr-interceptor';
+import { getQueuedClientWrapper } from './queued-client-wrapper';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
 import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
 import {
@@ -195,6 +196,10 @@ const READY_STATE_HEADERS_RECEIVED = 2;
 export const getNetworkInspector = (
   pluginClient: NetworkActivityDevToolsClient
 ): NetworkInspector => {
+  // Use queued client wrapper to ensure all messages are captured
+  const queuedClient = getQueuedClientWrapper();
+  queuedClient.setClient(pluginClient);
+  
   const generateRequestId = (): string => {
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
@@ -214,7 +219,7 @@ export const getNetworkInspector = (
 
     let ttfb = 0;
 
-    pluginClient.send('request-sent', {
+    queuedClient.send('request-sent', {
       requestId: requestId,
       timestamp: sendTime,
       request: {
@@ -234,7 +239,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('load', () => {
-      pluginClient.send('response-received', {
+      queuedClient.send('response-received', {
         requestId: requestId,
         timestamp: Date.now(),
         type: 'XHR',
@@ -253,7 +258,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('loadend', () => {
-      pluginClient.send('request-completed', {
+      queuedClient.send('request-completed', {
         requestId: requestId,
         timestamp: Date.now(),
         duration: Date.now() - sendTime,
@@ -263,7 +268,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('error', () => {
-      pluginClient.send('request-failed', {
+      queuedClient.send('request-failed', {
         requestId: requestId,
         timestamp: Date.now(),
         type: 'XHR',
@@ -273,7 +278,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('abort', () => {
-      pluginClient.send('request-failed', {
+      queuedClient.send('request-failed', {
         requestId: requestId,
         timestamp: Date.now(),
         type: 'XHR',
@@ -331,19 +336,24 @@ export const getNetworkInspector = (
   };
 
   const enable = () => {
-    XHRInterceptor.disableInterception();
-    XHRInterceptor.setSendCallback(handleRequestSend);
-    XHRInterceptor.setOverrideCallback(handleRequestOverride);
-    XHRInterceptor.enableInterception();
+    const queuedInterceptor = getQueuedXHRInterceptor();
+    
+    // Set callbacks on the queued interceptor
+    // This will also flush any queued requests from boot
+    queuedInterceptor.setCallbacks(handleRequestSend, handleRequestOverride);
   };
 
   const disable = () => {
-    XHRInterceptor.disableInterception();
+    const queuedInterceptor = getQueuedXHRInterceptor();
+    
+    // Stop consuming but keep the interceptor enabled for queuing
+    queuedInterceptor.stopConsuming();
     networkRequestsRegistry.clear();
   };
 
   const isEnabled = () => {
-    return XHRInterceptor.isInterceptorEnabled();
+    const queuedInterceptor = getQueuedXHRInterceptor();
+    return queuedInterceptor.isEnabled();
   };
 
   const enableSubscription = pluginClient.onMessage('network-enable', () => {
@@ -365,7 +375,7 @@ export const getNetworkInspector = (
 
       const body = await getResponseBody(request);
 
-      pluginClient.send('response-body', {
+      queuedClient.send('response-body', {
         requestId,
         body,
       });

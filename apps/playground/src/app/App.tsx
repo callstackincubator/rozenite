@@ -105,11 +105,22 @@ const linking = {
 };
 
 export const App = () => {
+  
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   useReactNavigationDevTools({
     ref: navigationRef,
   });
+
+
+  console.log('🔵 [App] Calling useNetworkActivityDevTools()');
+  useNetworkActivityDevTools(
+    {
+      clientUISettings: {
+        showUrlAsName: true,
+      }
+    }
+  );
 
   return (
     <Provider store={store}>
