@@ -9,6 +9,7 @@ import { api } from './app/utils/network-activity/api';
 withOnBootNetworkActivityRecording();
 
 // Make a fetch request during boot to test network inspector queuing
+console.log('Starting boot-time network requests...');
 api.getUsers()
 api.createPost({
   title: 'Hello World',
@@ -23,5 +24,10 @@ api.createPostWithFormData({
 })
 api.getUnreliableData()
 api.get404()
-api.post404()
+api.post404().finally(() => {
+ console.log('Boot-time network requests completed.');
+});
+console.log('Boot-time network requests initiated.');
+
+
 AppRegistry.registerComponent('Playground', () => App);

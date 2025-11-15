@@ -316,7 +316,6 @@ export type NetworkInspector = {
 export const getNetworkInspector = (
   pluginClient: NetworkActivityDevToolsClient
 ): NetworkInspector => {
-  // Use queued client wrapper to handle client readiness
   const queuedClient = getQueuedClientWrapper();
   queuedClient.setClient(pluginClient);
 
@@ -325,7 +324,6 @@ export const getNetworkInspector = (
     request: XMLHttpRequest
   ): void => {
     const initiator = getInitiatorFromStack();
-    // Use shared tracking function with proper initiator
     setupRequestTracking(queuedClient, data, request, initiator);
   };
 
@@ -378,13 +376,11 @@ export const getNetworkInspector = (
 
   const enable = () => {
     if (queuedClient.isBootInterceptionEnabled()) {
-      // Boot interception already set up the XHR interceptor
-      // Now flush the queued messages since DevTools is ready
+      queuedClient.enableClient();
       queuedClient.flushQueue();
       return;
     }
     
-    // Normal case: set up interception now
     XHRInterceptor.disableInterception();
     XHRInterceptor.setSendCallback(handleRequestSend);
     XHRInterceptor.setOverrideCallback(handleRequestOverride);

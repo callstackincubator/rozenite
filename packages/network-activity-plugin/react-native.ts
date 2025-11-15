@@ -7,7 +7,6 @@ const isDev = process.env.NODE_ENV !== 'production';
 const isServer = typeof window === 'undefined';
 
 if (isDev && !isWeb && !isServer) {
-  // Eagerly load network inspector to enable boot-time interception
   withOnBootNetworkActivityRecording = require('./src/react-native/http/network-inspector').withOnBootNetworkActivityRecording;
   
   useNetworkActivityDevTools =

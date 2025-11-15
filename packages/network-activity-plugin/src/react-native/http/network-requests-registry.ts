@@ -12,7 +12,6 @@ export type NetworkRequestRegistry = {
 
 const REQUEST_TTL = 1000 * 60 * 5; // 5 minutes
 
-// Store registry globally to survive hot reloads and module re-evaluation
 declare global {
   var __rozeniteNetworkRequestsRegistry: Map<string, NetworkRegistryEntry> | undefined;
 }

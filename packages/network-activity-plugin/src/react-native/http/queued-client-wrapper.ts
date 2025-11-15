@@ -13,22 +13,23 @@ export class QueuedClientWrapper {
   private messageQueue: QueuedMessage[] = [];
   private actualClient: NetworkActivityDevToolsClient | null = null;
   private maxQueueSize = 200;
-  private bootInterceptionEnabled = false;
+  private enqueueMessages = false;
+  
 
   public setClient(client: NetworkActivityDevToolsClient): void {
     this.actualClient = client;
   }
 
   public enableBootInterception(): void {
-    this.bootInterceptionEnabled = true;
+    this.enqueueMessages = true;
   }
 
-  public disableBootInterception(): void {
-    this.bootInterceptionEnabled = false;
+  public enableClient(): void {
+    this.enqueueMessages = false;
   }
 
   public isBootInterceptionEnabled(): boolean {
-    return this.bootInterceptionEnabled;
+    return this.enqueueMessages;
   }
 
   /**
@@ -38,7 +39,7 @@ export class QueuedClientWrapper {
     type: K,
     data: NetworkActivityEventMap[K]
   ): void {
-    if (this.actualClient) {
+    if (!this.enqueueMessages && this.actualClient) {
       // Client available, send directly
       this.actualClient.send(type, data);
     } else {
