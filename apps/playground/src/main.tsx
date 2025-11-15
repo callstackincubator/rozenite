@@ -21,9 +21,7 @@ const getUsers = async (): Promise<unknown> => {
   return response.json();
 }
 
-console.log('Fetching users for testing network inspector...');
-getUsers().finally(() => {
-  console.log('Fetch users request completed.');
-});
+// Make a fetch request during boot to test network inspector queuing
+getUsers();
 
 AppRegistry.registerComponent('Playground', () => App);

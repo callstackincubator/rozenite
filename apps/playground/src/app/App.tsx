@@ -112,16 +112,6 @@ export const App = () => {
     ref: navigationRef,
   });
 
-
-  console.log('🔵 [App] Calling useNetworkActivityDevTools()');
-  useNetworkActivityDevTools(
-    {
-      clientUISettings: {
-        showUrlAsName: true,
-      }
-    }
-  );
-
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>

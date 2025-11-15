@@ -9,7 +9,6 @@ const isServer = typeof window === 'undefined';
 if (isDev && !isWeb && !isServer) {
   // Eagerly load the queued interceptor to start capturing requests from app boot
   const queuedInterceptorModule = require('./src/react-native/http/queued-xhr-interceptor');
-  console.log('[react-native.ts] Loaded queued-xhr-interceptor module');
   getQueuedXHRInterceptor = queuedInterceptorModule.getQueuedXHRInterceptor;
   
   useNetworkActivityDevTools =

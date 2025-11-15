@@ -23,7 +23,6 @@ class QueuedXHRInterceptor {
   private maxQueueSize = 100; // Prevent memory issues
 
   constructor() {
-    console.log('[QueuedXHRInterceptor] Initialized');
     // Auto-enable on boot to capture early requests
     this.enableQueueing();
   }
@@ -32,7 +31,6 @@ class QueuedXHRInterceptor {
    * Enable the interceptor in queuing mode
    */
   private enableQueueing(): void {
-    console.log('[QueuedXHRInterceptor] Enabling queuing mode');
     XHRInterceptor.disableInterception();
     
     // Set up queuing callbacks
@@ -64,7 +62,6 @@ class QueuedXHRInterceptor {
    * Add an event to the queue
    */
   private enqueueEvent(event: QueuedEvent): void {
-    console.log('[QueuedXHRInterceptor] Enqueueing event', event.request._url);
     // Prevent unbounded queue growth
     if (this.eventQueue.length >= this.maxQueueSize) {
       // Remove oldest event (FIFO)
@@ -96,7 +93,6 @@ class QueuedXHRInterceptor {
    * Flush all queued events to the consumer
    */
   private flushQueue(): void {
-    console.log(`[QueuedXHRInterceptor] Flushing ${this.eventQueue.length} event queue(s)`);
     if (!this.sendCallback) {
       return;
     }
@@ -126,7 +122,6 @@ class QueuedXHRInterceptor {
    * Clear the queue without processing
    */
   public clearQueue(): void {
-    console.log('[QueuedXHRInterceptor] Clearing event queue');
     this.eventQueue = [];
   }
 
@@ -134,7 +129,6 @@ class QueuedXHRInterceptor {
    * Stop consuming and go back to queuing mode
    */
   public stopConsuming(): void {
-    console.log('[QueuedXHRInterceptor] Stopping consumption');
     this.isConsuming = false;
     this.sendCallback = null;
     this.overrideCallback = null;
@@ -144,7 +138,6 @@ class QueuedXHRInterceptor {
    * Completely disable the interceptor
    */
   public disable(): void {
-    console.log('[QueuedXHRInterceptor] Disabling interceptor');
     this.stopConsuming();
     this.clearQueue();
     XHRInterceptor.disableInterception();
@@ -166,10 +159,7 @@ declare global {
 // Get or create singleton instance - persists across hot reloads via global
 const getInstance = (): QueuedXHRInterceptor => {
   if (!global.__rozeniteQueuedXHRInterceptor) {
-    console.log('[QueuedXHRInterceptor] Creating new singleton instance');
     global.__rozeniteQueuedXHRInterceptor = new QueuedXHRInterceptor();
-  } else {
-    console.log('[QueuedXHRInterceptor] Reusing existing singleton instance');
   }
   return global.__rozeniteQueuedXHRInterceptor;
 };

@@ -19,14 +19,10 @@ const overridesRegistry = getOverridesRegistry();
 export const useNetworkActivityDevTools = (
   config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG
 ) => {
-  console.log('🟢 [useNetworkActivityDevTools] ============ HOOK CALLED ============');
-  console.log('[useNetworkActivityDevTools] Initializing with config:', config);
   const isRecordingEnabledRef = useRef(false);
   const client = useRozeniteDevToolsClient<NetworkActivityEventMap>({
     pluginId: '@rozenite/network-activity-plugin',
   });
-
-  console.log('[useNetworkActivityDevTools] Client status:', client ? 'AVAILABLE ✅' : 'NOT AVAILABLE ❌');
 
   const isHttpInspectorEnabled = config.inspectors?.http ?? true;
   const isWebSocketInspectorEnabled = config.inspectors?.websocket ?? true;
@@ -81,23 +77,17 @@ export const useNetworkActivityDevTools = (
   }, [client, showUrlAsName]);
 
   useEffect(() => {
-    console.log('[useNetworkActivityDevTools] HTTP Inspector effect - client:', client ? 'EXISTS ✅' : 'NULL ❌', 'enabled:', isHttpInspectorEnabled);
-    
     if (!client || !isHttpInspectorEnabled) {
-      console.log('[useNetworkActivityDevTools] ⏳ Waiting for DevTools connection... (client or http inspector not ready)');
       return;
     }
 
-    console.log('🚀🚀🚀 [useNetworkActivityDevTools] CLIENT CONNECTED! Creating network inspector');
     const networkInspector = getNetworkInspector(client);
 
     // Don't auto-enable here - wait for 'network-enable' message from DevTools panel
     // The panel sends this message when it's ready to receive events
     // The enable() call will then flush any queued boot requests
-    console.log('✅ [useNetworkActivityDevTools] Network inspector created, waiting for panel to send network-enable');
 
     return () => {
-      console.log('[useNetworkActivityDevTools] Disposing network inspector');
       networkInspector.dispose();
     };
   }, [client, isHttpInspectorEnabled]);

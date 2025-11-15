@@ -14,14 +14,13 @@ export class QueuedClientWrapper {
   private maxQueueSize = 200;
 
   constructor() {
-    console.log('[QueuedClientWrapper] Initialized');
+    // Initialized
   }
 
   /**
    * Set the actual client and flush the queue
    */
   public setClient(client: NetworkActivityDevToolsClient): void {
-    console.log('[QueuedClientWrapper] Client connected, flushing queue');
     this.actualClient = client;
     this.flushQueue();
   }
@@ -35,11 +34,9 @@ export class QueuedClientWrapper {
   ): void {
     if (this.actualClient) {
       // Client available, send directly
-      console.log(`[QueuedClientWrapper] Sending ${type} directly (client available)`);
       this.actualClient.send(type, data);
     } else {
       // Queue the message
-      console.log(`[QueuedClientWrapper] Queuing ${type} (client not available)`);
       this.enqueueMessage({ type, data });
     }
   }
@@ -49,12 +46,10 @@ export class QueuedClientWrapper {
    */
   private enqueueMessage(message: QueuedMessage): void {
     if (this.messageQueue.length >= this.maxQueueSize) {
-      console.warn('[QueuedClientWrapper] Queue full, dropping oldest message');
       this.messageQueue.shift();
     }
     
     this.messageQueue.push(message);
-    console.log(`[QueuedClientWrapper] Queued ${message.type}, queue size: ${this.messageQueue.length}`);
   }
 
   /**
@@ -64,8 +59,6 @@ export class QueuedClientWrapper {
     if (!this.actualClient) {
       return;
     }
-
-    console.log(`[QueuedClientWrapper] Flushing ${this.messageQueue.length} queued messages`);
     
     while (this.messageQueue.length > 0) {
       const message = this.messageQueue.shift();
@@ -98,10 +91,7 @@ declare global {
 
 export const getQueuedClientWrapper = (): QueuedClientWrapper => {
   if (!global.__rozeniteQueuedClientWrapper) {
-    console.log('[QueuedClientWrapper] Creating new singleton');
     global.__rozeniteQueuedClientWrapper = new QueuedClientWrapper();
-  } else {
-    console.log('[QueuedClientWrapper] Reusing existing singleton');
   }
   return global.__rozeniteQueuedClientWrapper;
 };
