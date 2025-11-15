@@ -12,7 +12,7 @@ import { getContentType } from '../utils';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { getBlobName } from '../utils/getBlobName';
 import { getFormDataEntries } from '../utils/getFormDataEntries';
-import { getQueuedXHRInterceptor } from './queued-xhr-interceptor';
+import { getQueuedInterceptor } from './queued-xhr-interceptor';
 import { getQueuedClientWrapper } from './queued-client-wrapper';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
 import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
@@ -335,25 +335,18 @@ export const getNetworkInspector = (
     });
   };
 
-  const enable = () => {
-    const queuedInterceptor = getQueuedXHRInterceptor();
-    
-    // Set callbacks on the queued interceptor
-    // This will also flush any queued requests from boot
-    queuedInterceptor.setCallbacks(handleRequestSend, handleRequestOverride);
-  };
+  const enable = () => {   
+    getQueuedInterceptor().consumeQueuedRequests(handleRequestSend, handleRequestOverride);
+  };  
 
   const disable = () => {
-    const queuedInterceptor = getQueuedXHRInterceptor();
-    
     // Stop consuming but keep the interceptor enabled for queuing
-    queuedInterceptor.stopConsuming();
+    getQueuedInterceptor().stopConsuming();
     networkRequestsRegistry.clear();
   };
 
   const isEnabled = () => {
-    const queuedInterceptor = getQueuedXHRInterceptor();
-    return queuedInterceptor.isEnabled();
+    return getQueuedInterceptor().isEnabled();
   };
 
   const enableSubscription = pluginClient.onMessage('network-enable', () => {

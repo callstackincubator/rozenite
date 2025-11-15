@@ -71,10 +71,10 @@ class QueuedXHRInterceptor {
   }
 
   /**
-   * Set the callbacks that will consume the events
-   * This also flushes the queue of any pending events
+   * Consume queued requests and flush any pending events from boot.
+   * This connects the inspector callbacks and replays all queued boot-time requests.
    */
-  public setCallbacks(
+  public consumeQueuedRequests(
     sendCallback: (data: XHRPostData, request: XMLHttpRequest) => void,
     overrideCallback: (request: XMLHttpRequest) => void
   ): void {
@@ -167,7 +167,7 @@ const getInstance = (config: OnBootRecordingOptions = {}): QueuedXHRInterceptor 
   return global.__rozeniteQueuedXHRInterceptor;
 };
 
-export const getQueuedXHRInterceptor = (): QueuedXHRInterceptor => {
+export const getQueuedInterceptor = (): QueuedXHRInterceptor => {
   return getInstance();
 };
 
