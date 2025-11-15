@@ -20,9 +20,8 @@ class QueuedXHRInterceptor {
   private sendCallback: ((data: XHRPostData, request: XMLHttpRequest) => void) | null = null;
   private overrideCallback: ((request: XMLHttpRequest) => void) | null = null;
   private isConsuming = false;
-  private maxQueueSize = 100; // Prevent memory issues
 
-  constructor() {
+  constructor(private maxQueueSize = 100) {
     // Auto-enable on boot to capture early requests
     this.enableQueueing();
   }
@@ -156,17 +155,22 @@ declare global {
   var __rozeniteQueuedXHRInterceptor: QueuedXHRInterceptor | undefined;
 }
 
-// Get or create singleton instance - persists across hot reloads via global
-const getInstance = (): QueuedXHRInterceptor => {
+export type OnBootRecordingOptions = {
+  maxQueueSize?: number;
+}
+
+const getInstance = (config: OnBootRecordingOptions = {}): QueuedXHRInterceptor => {
   if (!global.__rozeniteQueuedXHRInterceptor) {
-    global.__rozeniteQueuedXHRInterceptor = new QueuedXHRInterceptor();
-  }
+    // Using global to persist across hot reloads (different from full reload using `r`)
+    global.__rozeniteQueuedXHRInterceptor = new QueuedXHRInterceptor(config.maxQueueSize);
+  } 
   return global.__rozeniteQueuedXHRInterceptor;
 };
 
-// Eagerly create the instance on module load
-const instance = getInstance();
-
 export const getQueuedXHRInterceptor = (): QueuedXHRInterceptor => {
-  return instance;
+  return getInstance();
 };
+
+export const withOnBootNetworkActivityRecording = (config: OnBootRecordingOptions = {}): void => {
+  getInstance(config);
+}

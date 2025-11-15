@@ -3,11 +3,14 @@ import App from './app/App';
 
 import 'react-native-get-random-values';
 
-// Import the queued interceptor early to start capturing requests from boot
-import '@rozenite/network-activity-plugin/react-native';
+import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin/react-native';
 import { api } from './app/utils/network-activity/api';
 
+withOnBootNetworkActivityRecording();
+
 // Make a fetch request during boot to test network inspector queuing
-api.getUsers();
+api.getUsers().then(() => {
+  console.log('Fetched users during app boot');
+});
 
 AppRegistry.registerComponent('Playground', () => App);
