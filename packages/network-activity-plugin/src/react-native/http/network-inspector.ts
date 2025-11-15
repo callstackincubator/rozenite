@@ -27,6 +27,95 @@ import { getOverridesRegistry } from './overrides-registry';
 const networkRequestsRegistry = getNetworkRequestsRegistry();
 const overridesRegistry = getOverridesRegistry();
 
+const READY_STATE_HEADERS_RECEIVED = 2;
+
+/**
+ * Shared function to set up request tracking for an XHR request.
+ * Used by both boot-time interception and normal runtime interception.
+ */
+const setupRequestTracking = (
+  queuedClient: ReturnType<typeof getQueuedClientWrapper>,
+  data: XHRPostData,
+  request: XMLHttpRequest,
+  initiator: { type: string; url?: string; lineNumber?: number; columnNumber?: number }
+): void => {
+  const sendTime = Date.now();
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  request._rozeniteRequestId = requestId;
+  networkRequestsRegistry.addEntry(requestId, request);
+  
+  let ttfb = 0;
+  
+  queuedClient.send('request-sent', {
+    requestId: requestId,
+    timestamp: sendTime,
+    request: {
+      url: request._url as string,
+      method: request._method as HttpMethod,
+      headers: request._headers,
+      postData: getRequestBody(data),
+    },
+    type: 'XHR',
+    initiator,
+  });
+  
+  request.addEventListener('readystatechange', () => {
+    if (request.readyState === READY_STATE_HEADERS_RECEIVED) {
+      ttfb = Date.now() - sendTime;
+    }
+  });
+  
+  request.addEventListener('load', () => {
+    queuedClient.send('response-received', {
+      requestId: requestId,
+      timestamp: Date.now(),
+      type: 'XHR',
+      response: {
+        url: request._url as string,
+        status: request.status,
+        statusText: request.statusText,
+        headers: applyReactNativeResponseHeadersLogic(
+          request.responseHeaders || {}
+        ),
+        contentType: getContentType(request),
+        size: getResponseSize(request),
+        responseTime: Date.now(),
+      },
+    });
+  });
+  
+  request.addEventListener('loadend', () => {
+    queuedClient.send('request-completed', {
+      requestId: requestId,
+      timestamp: Date.now(),
+      duration: Date.now() - sendTime,
+      size: getResponseSize(request),
+      ttfb,
+    });
+  });
+  
+  request.addEventListener('error', () => {
+    queuedClient.send('request-failed', {
+      requestId: requestId,
+      timestamp: Date.now(),
+      type: 'XHR',
+      error: 'Failed',
+      canceled: false,
+    });
+  });
+  
+  request.addEventListener('abort', () => {
+    queuedClient.send('request-failed', {
+      requestId: requestId,
+      timestamp: Date.now(),
+      type: 'XHR',
+      error: 'Aborted',
+      canceled: true,
+    });
+  });
+};
+
 /**
  * Enable XHR interception early (before React mounts) to capture boot-time requests.
  * The queued client wrapper will queue all messages until the DevTools client is ready.
@@ -39,88 +128,14 @@ export const enableBootTimeInterception = (): void => {
     return; // Already enabled
   }
   
-  queuedClient.setBootInterceptionEnabled(true);
+  queuedClient.enableBootInterception();
   
   // Enable XHR interception immediately
   XHRInterceptor.disableInterception();
   
   XHRInterceptor.setSendCallback((data: XHRPostData, request: XMLHttpRequest) => {
-    const sendTime = Date.now();
-    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    request._rozeniteRequestId = requestId;
-    networkRequestsRegistry.addEntry(requestId, request);
-    
-    let ttfb = 0;
-    
-    // All these messages will be queued until the client is ready
-    queuedClient.send('request-sent', {
-      requestId: requestId,
-      timestamp: sendTime,
-      request: {
-        url: request._url as string,
-        method: request._method as HttpMethod,
-        headers: request._headers,
-        postData: data ? { type: 'text', value: String(data) } : undefined,
-      },
-      type: 'XHR',
-      initiator: { type: 'other' },
-    });
-    
-    request.addEventListener('readystatechange', () => {
-      if (request.readyState === 2) { // HEADERS_RECEIVED
-        ttfb = Date.now() - sendTime;
-      }
-    });
-    
-    request.addEventListener('load', () => {
-      queuedClient.send('response-received', {
-        requestId: requestId,
-        timestamp: Date.now(),
-        type: 'XHR',
-        response: {
-          url: request._url as string,
-          status: request.status,
-          statusText: request.statusText,
-          headers: applyReactNativeResponseHeadersLogic(
-            request.responseHeaders || {}
-          ),
-          contentType: getContentType(request),
-          size: getResponseSize(request),
-          responseTime: Date.now(),
-        },
-      });
-    });
-    
-    request.addEventListener('loadend', () => {
-      queuedClient.send('request-completed', {
-        requestId: requestId,
-        timestamp: Date.now(),
-        duration: Date.now() - sendTime,
-        size: getResponseSize(request),
-        ttfb,
-      });
-    });
-    
-    request.addEventListener('error', () => {
-      queuedClient.send('request-failed', {
-        requestId: requestId,
-        timestamp: Date.now(),
-        type: 'XHR',
-        error: 'Failed',
-        canceled: false,
-      });
-    });
-    
-    request.addEventListener('abort', () => {
-      queuedClient.send('request-failed', {
-        requestId: requestId,
-        timestamp: Date.now(),
-        type: 'XHR',
-        error: 'Aborted',
-        canceled: true,
-      });
-    });
+    // Use shared tracking function with basic initiator
+    setupRequestTracking(queuedClient, data, request, { type: 'other' });
   });
   
   XHRInterceptor.enableInterception();
@@ -298,8 +313,6 @@ export type NetworkInspector = {
   dispose: () => void;
 };
 
-const READY_STATE_HEADERS_RECEIVED = 2;
-
 export const getNetworkInspector = (
   pluginClient: NetworkActivityDevToolsClient
 ): NetworkInspector => {
@@ -307,92 +320,13 @@ export const getNetworkInspector = (
   const queuedClient = getQueuedClientWrapper();
   queuedClient.setClient(pluginClient);
 
-  const generateRequestId = (): string => {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  };
-
   const handleRequestSend = (
     data: XHRPostData,
     request: XMLHttpRequest
   ): void => {
-    const sendTime = Date.now();
-
-    const requestId = generateRequestId();
-    request._rozeniteRequestId = requestId;
-
     const initiator = getInitiatorFromStack();
-
-    networkRequestsRegistry.addEntry(requestId, request);
-
-    let ttfb = 0;
-
-    queuedClient.send('request-sent', {
-      requestId: requestId,
-      timestamp: sendTime,
-      request: {
-        url: request._url as string,
-        method: request._method as HttpMethod,
-        headers: request._headers,
-        postData: getRequestBody(data),
-      },
-      type: 'XHR',
-      initiator,
-    });
-
-    request.addEventListener('readystatechange', () => {
-      if (request.readyState === READY_STATE_HEADERS_RECEIVED) {
-        ttfb = Date.now() - sendTime;
-      }
-    });
-
-    request.addEventListener('load', () => {
-      queuedClient.send('response-received', {
-        requestId: requestId,
-        timestamp: Date.now(),
-        type: 'XHR',
-        response: {
-          url: request._url as string,
-          status: request.status,
-          statusText: request.statusText,
-          headers: applyReactNativeResponseHeadersLogic(
-            request.responseHeaders || {}
-          ),
-          contentType: getContentType(request),
-          size: getResponseSize(request),
-          responseTime: Date.now(),
-        },
-      });
-    });
-
-    request.addEventListener('loadend', () => {
-      queuedClient.send('request-completed', {
-        requestId: requestId,
-        timestamp: Date.now(),
-        duration: Date.now() - sendTime,
-        size: getResponseSize(request),
-        ttfb,
-      });
-    });
-
-    request.addEventListener('error', () => {
-      queuedClient.send('request-failed', {
-        requestId: requestId,
-        timestamp: Date.now(),
-        type: 'XHR',
-        error: 'Failed',
-        canceled: false,
-      });
-    });
-
-    request.addEventListener('abort', () => {
-      queuedClient.send('request-failed', {
-        requestId: requestId,
-        timestamp: Date.now(),
-        type: 'XHR',
-        error: 'Aborted',
-        canceled: true,
-      });
-    });
+    // Use shared tracking function with proper initiator
+    setupRequestTracking(queuedClient, data, request, initiator);
   };
 
   const handleRequestOverride = (request: XMLHttpRequest): void => {

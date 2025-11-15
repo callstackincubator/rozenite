@@ -19,8 +19,12 @@ export class QueuedClientWrapper {
     this.actualClient = client;
   }
 
-  public setBootInterceptionEnabled(enabled: boolean): void {
-    this.bootInterceptionEnabled = enabled;
+  public enableBootInterception(): void {
+    this.bootInterceptionEnabled = true;
+  }
+
+  public disableBootInterception(): void {
+    this.bootInterceptionEnabled = false;
   }
 
   public isBootInterceptionEnabled(): boolean {
