@@ -16,6 +16,12 @@ api.createPost({
   userId: 1,
 })
 api.getSlowData()
-
-
+api.createPostWithFormData({
+  title: 'Hello World',
+  body: 'This is a test post created during app boot.',
+  userId: 1,
+})
+api.getUnreliableData()
+api.get404()
+api.post404()
 AppRegistry.registerComponent('Playground', () => App);

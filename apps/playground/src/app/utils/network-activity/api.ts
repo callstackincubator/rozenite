@@ -1,7 +1,3 @@
-/**
- * Shared API utilities for the playground app
- */
-
 export interface User {
   id: number;
   name: string;
@@ -29,14 +25,7 @@ export interface Todo {
   userId: number;
 }
 
-/**
- * Real API service using JSONPlaceholder
- */
 export const api = {
-  /**
-   * Fetches users from JSONPlaceholder API
-   * Used for testing network inspector during app boot
-   */
   getUsers: async (): Promise<User[]> => {
     const response = await fetch('https://jsonplaceholder.typicode.com/users', {
       headers: {
@@ -52,9 +41,6 @@ export const api = {
     return response.json();
   },
 
-  /**
-   * Fetches posts from JSONPlaceholder API
-   */
   getPosts: async (): Promise<Post[]> => {
     const response = await fetch(
       'https://jsonplaceholder.typicode.com/posts?_limit=10&userId=1&sort=desc',
@@ -72,9 +58,6 @@ export const api = {
     return response.json();
   },
 
-  /**
-   * Fetches todos from JSONPlaceholder API
-   */
   getTodos: async (): Promise<Todo[]> => {
     const response = await fetch(
       'https://jsonplaceholder.typicode.com/todos?_limit=15',
@@ -92,9 +75,6 @@ export const api = {
     return response.json();
   },
 
-  /**
-   * Simulates a slow API call
-   */
   getSlowData: async (): Promise<User[]> => {
     // Add artificial delay to simulate slow network
     await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -114,9 +94,6 @@ export const api = {
     return response.json();
   },
 
-  /**
-   * Simulates an API that sometimes fails
-   */
   getUnreliableData: async (): Promise<Post[]> => {
     // 20% chance of failure
     if (Math.random() < 0.2) {
@@ -138,9 +115,38 @@ export const api = {
     return response.json();
   },
 
-  /**
-   * Creates a new post with JSON body
-   */
+  get404: async (): Promise<Post[]> => {
+    const response = await fetch(
+      'https://www.google.com/test',
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }    
+
+    return response.json();
+  },  
+
+  post404: async (): Promise<unknown> => {
+    const response = await fetch(
+      'https://www.google.com/test',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Rozenite-Test': 'true',
+        },
+        body: JSON.stringify({ test: 'data' }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }, 
+
   createPost: async (postData: Omit<Post, 'id'>): Promise<Post> => {
     const response = await fetch(
       'https://jsonplaceholder.typicode.com/posts?someParam=value',
@@ -161,9 +167,6 @@ export const api = {
     return response.json();
   },
 
-  /**
-   * Creates a new post with FormData
-   */
   createPostWithFormData: async (postData: Omit<Post, 'id'>): Promise<Post> => {
     const formData = new FormData();
     formData.append('title', postData.title);

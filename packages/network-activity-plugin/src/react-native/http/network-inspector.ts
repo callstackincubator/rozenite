@@ -380,7 +380,7 @@ export const getNetworkInspector = (
     if (queuedClient.isBootInterceptionEnabled()) {
       // Boot interception already set up the XHR interceptor
       // Now flush the queued messages since DevTools is ready
-      queuedClient.flush();
+      queuedClient.flushQueue();
       return;
     }
     

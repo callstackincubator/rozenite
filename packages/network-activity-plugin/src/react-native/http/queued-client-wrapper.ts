@@ -31,10 +31,6 @@ export class QueuedClientWrapper {
     return this.bootInterceptionEnabled;
   }
 
-  public flush(): void {
-    this.flushQueue();
-  }
-
   /**
    * Send a message (queued if client not available)
    */
@@ -59,7 +55,7 @@ export class QueuedClientWrapper {
     this.messageQueue.push(message);
   }
 
-  private flushQueue(): void {
+  public flushQueue(): void {
     if (!this.actualClient) {
       return;
     }
