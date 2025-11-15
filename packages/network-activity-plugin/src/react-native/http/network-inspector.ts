@@ -12,7 +12,8 @@ import { getContentType } from '../utils';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { getBlobName } from '../utils/getBlobName';
 import { getFormDataEntries } from '../utils/getFormDataEntries';
-import { getQueuedInterceptor } from './queued-xhr-interceptor';
+import { getQueuedClientWrapper } from './queued-client-wrapper';
+import { XHRInterceptor } from './xhr-interceptor';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
 import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
 import {
@@ -25,6 +26,135 @@ import { getOverridesRegistry } from './overrides-registry';
 
 const networkRequestsRegistry = getNetworkRequestsRegistry();
 const overridesRegistry = getOverridesRegistry();
+
+// Global flag to enable boot-time interception (survives hot reloads)
+declare global {
+  var __rozeniteBootInterceptionEnabled: boolean | undefined;
+}
+
+const isBootInterceptionEnabled = (): boolean => {
+  return global.__rozeniteBootInterceptionEnabled === true;
+};
+
+const setBootInterceptionEnabled = (enabled: boolean): void => {
+  global.__rozeniteBootInterceptionEnabled = enabled;
+};
+
+/**
+ * Enable XHR interception early (before React mounts) to capture boot-time requests.
+ * The queued client wrapper will queue all messages until the DevTools client is ready.
+ */
+export const enableBootTimeInterception = (): void => {
+  console.log('[NetworkInspector] enableBootTimeInterception called');
+  if (isBootInterceptionEnabled()) {
+    console.log('[NetworkInspector] Boot interception already enabled, skipping');
+    return; // Already enabled
+  }
+  
+  setBootInterceptionEnabled(true);
+  console.log('[NetworkInspector] Boot interception enabled');
+  
+  // Get the queued client wrapper (it will queue messages until client is set)
+  const queuedClient = getQueuedClientWrapper();
+  console.log('[NetworkInspector] Got queued client wrapper');
+  
+  // Enable XHR interception immediately
+  XHRInterceptor.disableInterception();
+  console.log('[NetworkInspector] Setting up XHR interceptor callbacks');
+  
+  XHRInterceptor.setSendCallback((data: XHRPostData, request: XMLHttpRequest) => {
+    console.log('[NetworkInspector] Boot-time XHR intercepted:', request._url);
+    const sendTime = Date.now();
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    request._rozeniteRequestId = requestId;
+    networkRequestsRegistry.addEntry(requestId, request);
+    
+    let ttfb = 0;
+    
+    // All these messages will be queued until the client is ready
+    console.log('[NetworkInspector] Sending request-sent to queue');
+    queuedClient.send('request-sent', {
+      requestId: requestId,
+      timestamp: sendTime,
+      request: {
+        url: request._url as string,
+        method: request._method as HttpMethod,
+        headers: request._headers,
+        postData: data ? { type: 'text', value: String(data) } : undefined,
+      },
+      type: 'XHR',
+      initiator: { type: 'other' },
+    });
+    
+    request.addEventListener('readystatechange', () => {
+      if (request.readyState === 2) { // HEADERS_RECEIVED
+        ttfb = Date.now() - sendTime;
+      }
+    });
+    
+    request.addEventListener('load', () => {
+      queuedClient.send('response-received', {
+        requestId: requestId,
+        timestamp: Date.now(),
+        type: 'XHR',
+        response: {
+          url: request._url as string,
+          status: request.status,
+          statusText: request.statusText,
+          headers: applyReactNativeResponseHeadersLogic(
+            request.responseHeaders || {}
+          ),
+          contentType: getContentType(request),
+          size: getResponseSize(request),
+          responseTime: Date.now(),
+        },
+      });
+    });
+    
+    request.addEventListener('loadend', () => {
+      queuedClient.send('request-completed', {
+        requestId: requestId,
+        timestamp: Date.now(),
+        duration: Date.now() - sendTime,
+        size: getResponseSize(request),
+        ttfb,
+      });
+    });
+    
+    request.addEventListener('error', () => {
+      queuedClient.send('request-failed', {
+        requestId: requestId,
+        timestamp: Date.now(),
+        type: 'XHR',
+        error: 'Failed',
+        canceled: false,
+      });
+    });
+    
+    request.addEventListener('abort', () => {
+      queuedClient.send('request-failed', {
+        requestId: requestId,
+        timestamp: Date.now(),
+        type: 'XHR',
+        error: 'Aborted',
+        canceled: true,
+      });
+    });
+  });
+  
+  XHRInterceptor.enableInterception();
+  console.log('[NetworkInspector] XHR interception enabled for boot-time requests');
+};
+
+/**
+ * Convenience function for enabling boot-time recording.
+ * Called from main.tsx before the app starts.
+ */
+export const withOnBootNetworkActivityRecording = (): void => {
+  console.log('[NetworkInspector] withOnBootNetworkActivityRecording called');
+  enableBootTimeInterception();
+};
 
 const getBinaryPostData = (body: Blob): RequestBinaryPostData => ({
   type: 'binary',
@@ -195,6 +325,12 @@ const READY_STATE_HEADERS_RECEIVED = 2;
 export const getNetworkInspector = (
   pluginClient: NetworkActivityDevToolsClient
 ): NetworkInspector => {
+  console.log('[NetworkInspector] getNetworkInspector called');
+  // Use queued client wrapper to handle client readiness
+  const queuedClient = getQueuedClientWrapper();
+  console.log('[NetworkInspector] Setting client on queued wrapper, queue size:', queuedClient.getQueueSize());
+  queuedClient.setClient(pluginClient);
+
   const generateRequestId = (): string => {
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
@@ -214,7 +350,7 @@ export const getNetworkInspector = (
 
     let ttfb = 0;
 
-    pluginClient.send('request-sent', {
+    queuedClient.send('request-sent', {
       requestId: requestId,
       timestamp: sendTime,
       request: {
@@ -234,7 +370,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('load', () => {
-      pluginClient.send('response-received', {
+      queuedClient.send('response-received', {
         requestId: requestId,
         timestamp: Date.now(),
         type: 'XHR',
@@ -253,7 +389,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('loadend', () => {
-      pluginClient.send('request-completed', {
+      queuedClient.send('request-completed', {
         requestId: requestId,
         timestamp: Date.now(),
         duration: Date.now() - sendTime,
@@ -263,7 +399,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('error', () => {
-      pluginClient.send('request-failed', {
+      queuedClient.send('request-failed', {
         requestId: requestId,
         timestamp: Date.now(),
         type: 'XHR',
@@ -273,7 +409,7 @@ export const getNetworkInspector = (
     });
 
     request.addEventListener('abort', () => {
-      pluginClient.send('request-failed', {
+      queuedClient.send('request-failed', {
         requestId: requestId,
         timestamp: Date.now(),
         type: 'XHR',
@@ -330,18 +466,32 @@ export const getNetworkInspector = (
     });
   };
 
-  const enable = () => {   
-    getQueuedInterceptor().consumeQueuedRequests(handleRequestSend, handleRequestOverride);
-  };  
+  const enable = () => {
+    console.log('[NetworkInspector] enable() called, isBootInterceptionEnabled:', isBootInterceptionEnabled());
+    if (isBootInterceptionEnabled()) {
+      // Boot interception already set up the XHR interceptor
+      // Now flush the queued messages since DevTools is ready
+      console.log('[NetworkInspector] Flushing queued messages, queue size:', queuedClient.getQueueSize());
+      queuedClient.flush();
+      console.log('[NetworkInspector] Queue flushed');
+      return;
+    }
+    
+    // Normal case: set up interception now
+    console.log('[NetworkInspector] Setting up XHR interception (normal mode)');
+    XHRInterceptor.disableInterception();
+    XHRInterceptor.setSendCallback(handleRequestSend);
+    XHRInterceptor.setOverrideCallback(handleRequestOverride);
+    XHRInterceptor.enableInterception();
+  };
 
   const disable = () => {
-    // Stop consuming but keep the interceptor enabled for queuing
-    getQueuedInterceptor().stopConsuming();
+    XHRInterceptor.disableInterception();
     networkRequestsRegistry.clear();
   };
 
   const isEnabled = () => {
-    return getQueuedInterceptor().isEnabled();
+    return XHRInterceptor.isInterceptorEnabled();
   };
 
   const enableSubscription = pluginClient.onMessage('network-enable', () => {

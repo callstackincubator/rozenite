@@ -9,8 +9,13 @@ import { api } from './app/utils/network-activity/api';
 withOnBootNetworkActivityRecording();
 
 // Make a fetch request during boot to test network inspector queuing
-api.getUsers().then(() => {
-  console.log('Fetched users during app boot');
-});
+api.getUsers()
+api.createPost({
+  title: 'Hello World',
+  body: 'This is a test post created during app boot.',
+  userId: 1,
+})
+api.getSlowData()
+
 
 AppRegistry.registerComponent('Playground', () => App);
