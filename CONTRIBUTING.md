@@ -7,7 +7,7 @@ We want this community to be friendly and respectful to each other. Please read 
 ## Requirements
 
 - Node 20+
-- pnpm 9.15.3+
+- pnpm 10.22.0+
 
 ## Our Development Process
 
@@ -19,7 +19,14 @@ All development is done directly on GitHub, and all work is public.
 
 1. Fork the repo and create your branch from default branch (usually `main`) (a guide on [how to fork a repository](https://help.github.com/articles/fork-a-repo/)).
 2. Run `pnpm install` to install & set up the development environment.
-3. Do the changes you want and test them out in the playground app (`apps/playground`) before sending a pull request.
+3. Do the changes you want and test
+4. Build plugins with `pnpm build`
+5. Test them out with `pnpm start` in the playground app (`apps/playground`) before sending a pull request.
+
+<br>
+
+> WARNING<br>
+> If you encounter sqlite3 native binding errors, workaround it by removing `withRozeniteReduxDevTools()` in `apps/playground/metro.config.js`
 
 ### Commit message convention
 
