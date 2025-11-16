@@ -186,7 +186,6 @@ const getInitiatorFromStack = (): {
 };
 
 /**
- * Shared function to handle request overrides.
  * Applies override body and status to XMLHttpRequest objects.
  */
 export const setupRequestOverride = (
@@ -223,10 +222,6 @@ export const setupRequestOverride = (
   });
 };
 
-/**
- * Shared function to set up request tracking for an XHR request.
- * Used by both boot-time interception and normal runtime interception.
- */
 export const setupRequestTracking = (
   queuedClient: QueuedClientWrapper,
   networkRequestsRegistry: NetworkRequestRegistry,
@@ -253,6 +248,23 @@ export const setupRequestTracking = (
     },
     type: 'XHR',
     initiator,
+  });
+  
+  request.addEventListener('loadstart', () => {
+    queuedClient.send('request-loadstart', {
+      requestId: requestId,
+      timestamp: Date.now(),
+    });
+  });
+  
+  request.addEventListener('progress', (event) => {
+    queuedClient.send('request-progress', {
+      requestId: requestId,
+      timestamp: Date.now(),
+      loaded: event.loaded,
+      total: event.total,
+      lengthComputable: event.lengthComputable,
+    });
   });
   
   request.addEventListener('readystatechange', () => {
@@ -307,6 +319,16 @@ export const setupRequestTracking = (
       type: 'XHR',
       error: 'Aborted',
       canceled: true,
+    });
+  });
+  
+  request.addEventListener('timeout', () => {
+    queuedClient.send('request-failed', {
+      requestId: requestId,
+      timestamp: Date.now(),
+      type: 'XHR',
+      error: 'Timeout',
+      canceled: false,
     });
   });
 };
