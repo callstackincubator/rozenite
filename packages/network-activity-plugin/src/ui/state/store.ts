@@ -65,7 +65,7 @@ export const createNetworkActivityStore = () =>
     persist(
       (set, get) => ({
         // Initial state
-        isRecording: false,
+        isRecording: true,
         selectedRequestId: null,
         networkEntries: new Map(),
         websocketMessages: new Map(),
