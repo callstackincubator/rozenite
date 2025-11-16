@@ -19,9 +19,9 @@ All development is done directly on GitHub, and all work is public.
 
 1. Fork the repo and create your branch from default branch (usually `main`) (a guide on [how to fork a repository](https://help.github.com/articles/fork-a-repo/)).
 2. Run `pnpm install` to install & set up the development environment.
-3. Do the changes you want and test
+3. Do the changes you want
 4. Build plugins with `pnpm build`
-5. Test them out with `pnpm start` in the playground app (`apps/playground`) before sending a pull request.
+5. Test them out with `pnpm start` that uses the playground app (`app/playground`) before sending a pull request.
 
 <br>
 
