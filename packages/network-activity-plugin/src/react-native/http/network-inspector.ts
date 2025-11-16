@@ -23,11 +23,19 @@ const setupXHRInterceptor = (queuedClient: ReturnType<typeof getQueuedClientWrap
   XHRInterceptor.enableInterception();
 };
 
+export type BootRecordingOptions = {
+  /**
+   * Maximum number of messages to queue before DevTools connects.
+   * @default 200
+   */
+  maxQueueSize?: number;
+};
+
 /**
  * Enable XHR interception early to capture boot-time requests.
  */
-const enableBootTimeInterception = (): void => {
-  const queuedClient = getQueuedClientWrapper();
+const enableBootTimeInterception = (options?: BootRecordingOptions): void => {
+  const queuedClient = getQueuedClientWrapper(options);
   
   if (queuedClient.isBootInterceptionEnabled()) {
     return;
@@ -38,8 +46,8 @@ const enableBootTimeInterception = (): void => {
 };
 
 
-export const withOnBootNetworkActivityRecording = (): void => {
-  enableBootTimeInterception();
+export const withOnBootNetworkActivityRecording = (options?: BootRecordingOptions): void => {
+  enableBootTimeInterception(options);
 };
 
 export type NetworkInspector = {

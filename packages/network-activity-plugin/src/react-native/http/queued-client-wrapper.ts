@@ -20,6 +20,10 @@ export class QueuedClientWrapper {
     this.actualClient = client;
   }
 
+  public setMaxQueueSize(size: number): void {
+    this.maxQueueSize = size;
+  }
+
   public enableBootInterception(): void {
     this.enqueueMessages = true;
   }
@@ -40,10 +44,8 @@ export class QueuedClientWrapper {
     data: NetworkActivityEventMap[K]
   ): void {
     if (!this.enqueueMessages && this.actualClient) {
-      // Client available, send directly
       this.actualClient.send(type, data);
     } else {
-      // Queue the message
       this.enqueueMessage({ type, data });
     }
   }
@@ -64,21 +66,28 @@ export class QueuedClientWrapper {
     while (this.messageQueue.length > 0) {
       const message = this.messageQueue.shift();
       if (message) {
-        // Type assertion is safe here because we're just forwarding the queued message
         this.actualClient.send(message.type, message.data);
       }
     }
   }
 }
 
-// Global singleton
 declare global {
   var __rozeniteQueuedClientWrapper: QueuedClientWrapper | undefined;
 }
 
-export const getQueuedClientWrapper = (): QueuedClientWrapper => {
+export type QueuedClientOptions = {
+  maxQueueSize?: number;
+};
+
+export const getQueuedClientWrapper = (options?: QueuedClientOptions): QueuedClientWrapper => {
   if (!global.__rozeniteQueuedClientWrapper) {
     global.__rozeniteQueuedClientWrapper = new QueuedClientWrapper();
   }
+  
+  if (options?.maxQueueSize !== undefined) {
+    global.__rozeniteQueuedClientWrapper.setMaxQueueSize(options.maxQueueSize);
+  }
+  
   return global.__rozeniteQueuedClientWrapper;
 };
