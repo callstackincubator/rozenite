@@ -33,6 +33,8 @@
     "@react-native-community/cli-platform-android": "~15.0.1",
     "@react-native-community/cli-platform-ios": "~15.0.1",
     "@react-native/babel-preset": "~0.76.3",
+    "@react-native/codegen": "~0.82.1",
+    "@react-native/gradle-plugin": "0.76.0",
     "@react-native/metro-config": "~0.76.3",
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
@@ -67,7 +69,7 @@
     "vite-plugin-dts": "~4.5.0",
     "vitest": "^3.0.0"
   },
-  "packageManager": "pnpm@9.15.3",
+  "packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c",
   "dependencies": {
     "react": "~18.3.1",
     "react-dom": "~18.3.1",
