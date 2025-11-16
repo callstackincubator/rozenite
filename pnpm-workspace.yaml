@@ -1,5 +1,31 @@
 packages:
-  - 'packages/*'
-  - 'libs/*'
-  - 'apps/*'
-  - 'website'
+  - packages/*
+  - libs/*
+  - apps/*
+  - website
+
+catalog: {}
+
+catalogs: {}
+
+onlyBuiltDependencies:
+  - '@apollo/protobufjs'
+  - '@swc/core'
+  - core-js
+  - electron
+  - esbuild
+  - nx
+  - react-native-mmkv
+  - react-native-nitro-modules
+  - sqlite3
+
+overrides: {}
+
+patchedDependencies: {}
+
+autoInstallPeers: false
+publicHoistPattern:
+  - '@react-native/*'
+  - '@react-native-community/*'
+  - react-native
+strictPeerDependencies: false
