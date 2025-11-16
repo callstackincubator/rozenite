@@ -13,5 +13,5 @@ if (isDev && !isWeb && !isServer) {
     require('./src/react-native/useNetworkActivityDevTools').useNetworkActivityDevTools;
 } else {
   useNetworkActivityDevTools = () => null;
-  withOnBootNetworkActivityRecording = () => void 0;
+  withOnBootNetworkActivityRecording = () => null;
 }
