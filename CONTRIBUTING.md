@@ -7,7 +7,7 @@ We want this community to be friendly and respectful to each other. Please read 
 ## Requirements
 
 - Node 20+
-- pnpm 10.22.0+
+- pnpm 9.15.3+
 
 ## Our Development Process
 
@@ -26,7 +26,7 @@ All development is done directly on GitHub, and all work is public.
 <br>
 
 > WARNING<br>
-> If you encounter sqlite3 native binding errors, workaround it by removing `withRozeniteReduxDevTools()` in `apps/playground/metro.config.js`
+> Under pnpm 10+, if you encounter sqlite3 native binding errors, workaround it by removing `withRozeniteReduxDevTools()` in `apps/playground/metro.config.js`
 
 ### Commit message convention
 
