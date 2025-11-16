@@ -6,7 +6,7 @@ import 'react-native-get-random-values';
 import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin/react-native';
 import { api } from './app/utils/network-activity/api';
 
-withOnBootNetworkActivityRecording();
+// withOnBootNetworkActivityRecording();
 
 // Make a fetch request during boot to test network inspector queuing
 console.log('Starting boot-time network requests...');

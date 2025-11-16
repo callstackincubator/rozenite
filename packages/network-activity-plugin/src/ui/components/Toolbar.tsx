@@ -25,6 +25,7 @@ export const Toolbar = () => {
             ? 'text-gray-400 hover:text-blue-400'
             : 'text-red-400 hover:text-red-300'
         }`}
+        title={isRecording ? 'Stop recording' : 'Start recording'}
       >
         {isRecording ? (
           <Square className="h-4 w-4" />
