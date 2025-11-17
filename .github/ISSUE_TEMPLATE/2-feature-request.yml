@@ -1,6 +1,6 @@
 name: "\U0001F5E3 Feature request"
 description: Propose a new feature to be added to Rozenite
-labels: [status:new, type:feature]
+type: feature
 body:
   - type: markdown
     attributes:
