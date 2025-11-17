@@ -33,7 +33,7 @@
     "@react-native-community/cli-platform-android": "~15.0.1",
     "@react-native-community/cli-platform-ios": "~15.0.1",
     "@react-native/babel-preset": "~0.76.3",
-    "@react-native/codegen": "~0.82.1",
+    "@react-native/codegen": "0.76.0",
     "@react-native/gradle-plugin": "0.76.0",
     "@react-native/metro-config": "~0.76.3",
     "@swc-node/register": "~1.9.1",
