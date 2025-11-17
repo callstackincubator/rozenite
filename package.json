@@ -4,11 +4,12 @@
   "license": "MIT",
   "scripts": {
     "prepare": "husky",
-    "typecheck": "pnpm nx run-many -t typecheck --projects='packages/*'",
-    "lint": "pnpm nx run-many -t lint --projects='packages/*'",
-    "format": "prettier --check .",
-    "format:fix": "prettier . --write",
-    "checks": "pnpm typecheck && pnpm lint && pnpm format"
+    "build:all": "nx run-many -t build",
+    "typecheck:all": "nx run-many -t typecheck",
+    "lint:all": "nx run-many -t lint",
+    "format:all": "prettier --check .",
+    "format:all:fix": "prettier . --write",
+    "checks:all": "pnpm typecheck:all && pnpm lint:all && pnpm format:all"
   },
   "private": true,
   "devDependencies": {
