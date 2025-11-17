@@ -9,7 +9,11 @@
     "lint:all": "nx run-many -t lint",
     "format:all": "prettier --check .",
     "format:all:fix": "prettier . --write",
-    "checks:all": "pnpm typecheck:all && pnpm lint:all && pnpm format:all"
+    "checks:all": "pnpm typecheck:all && pnpm lint:all && pnpm format:all",
+    "release:plan": "nx release plan",
+    "start:playground": "nx run playground:start",
+    "start:playground:android": "nx run playground:run-android",
+    "start:playground:ios": "nx run playground:run-ios"
   },
   "private": true,
   "devDependencies": {
