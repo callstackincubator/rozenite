@@ -1,5 +1,14 @@
 # Add files here to ignore them from prettier formatting
-/dist
-/coverage
+**/dist
+**/coverage
 /.nx/cache
 /.nx/workspace-data
+/pnpm-lock.yaml
+
+# Markdown files (documentation)
+**/*.md
+
+# Playground (native code)
+
+apps/playground/android
+apps/playground/ios
