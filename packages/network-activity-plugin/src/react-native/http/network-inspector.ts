@@ -227,6 +227,16 @@ export const getNetworkInspector = (
       initiator,
     });
 
+    request.addEventListener('progress', (event) => {
+      pluginClient.send('request-progress', {
+        requestId: requestId,
+        timestamp: Date.now(),
+        loaded: event.loaded,
+        total: event.total,
+        lengthComputable: event.lengthComputable,
+      });
+    });
+
     request.addEventListener('readystatechange', () => {
       if (request.readyState === READY_STATE_HEADERS_RECEIVED) {
         ttfb = Date.now() - sendTime;
@@ -279,6 +289,16 @@ export const getNetworkInspector = (
         type: 'XHR',
         error: 'Aborted',
         canceled: true,
+      });
+    });
+
+    request.addEventListener('timeout', () => {
+      pluginClient.send('request-failed', {
+        requestId: requestId,
+        timestamp: Date.now(),
+        type: 'XHR',
+        error: 'Timeout',
+        canceled: false,
       });
     });
   };

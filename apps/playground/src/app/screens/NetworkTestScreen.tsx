@@ -150,6 +150,30 @@ const api = {
 
     return response.json();
   },
+
+  // Download a large file to test progress events
+  getLargeFile: async (): Promise<ArrayBuffer> => {
+    // This fetches a ~5MB GeoJSON file from GitHub (country boundaries)
+    // Add cache busting to force a fresh download every time
+    const cacheBuster = Date.now();
+    const response = await fetch(
+      `https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson?cb=${cacheBuster}`,
+      {
+        headers: {
+          'X-Rozenite-Test': 'large-download',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.arrayBuffer();
+  },
 };
 
 interface User {
@@ -180,13 +204,6 @@ interface Todo {
 }
 
 const useUsersQuery = () => {
-  useQuery({
-    queryKey: ['users'],
-    queryFn: api.getUsers,
-    staleTime: 8 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-  });
-
   return useQuery({
     queryKey: ['users'],
     queryFn: api.getUsers,
@@ -229,6 +246,16 @@ const useUnreliableDataQuery = () => {
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 2 * 60 * 1000, // 2 minutes
     retry: 3, // Retry up to 3 times
+  });
+};
+
+const useLargeFileQuery = () => {
+  return useQuery({
+    queryKey: ['large-file'],
+    queryFn: api.getLargeFile,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    enabled: false, // Don't auto-fetch, only on manual trigger
   });
 };
 
@@ -301,7 +328,7 @@ const TodoCard: React.FC<{ todo: Todo }> = ({ todo }) => (
 
 const HTTPTestComponent: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<
-    'users' | 'posts' | 'todos' | 'slow' | 'unreliable' | 'create'
+    'users' | 'posts' | 'todos' | 'slow' | 'unreliable' | 'create' | 'large'
   >('users');
   const [newPostTitle, setNewPostTitle] = React.useState('');
   const [newPostBody, setNewPostBody] = React.useState('');
@@ -312,6 +339,7 @@ const HTTPTestComponent: React.FC = () => {
   const todosQuery = useTodosQuery();
   const slowQuery = useSlowDataQuery();
   const unreliableQuery = useUnreliableDataQuery();
+  const largeFileQuery = useLargeFileQuery();
   const createPostMutation = useCreatePostMutation();
 
   const getActiveQuery = () => {
@@ -389,6 +417,7 @@ const HTTPTestComponent: React.FC = () => {
           { key: 'slow', label: 'Slow' },
           { key: 'unreliable', label: 'Unreliable' },
           { key: 'create', label: 'Create' },
+          { key: 'large', label: 'Large File' },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -402,6 +431,7 @@ const HTTPTestComponent: React.FC = () => {
                   | 'slow'
                   | 'unreliable'
                   | 'create'
+                  | 'large'
               )
             }
           >
@@ -495,6 +525,43 @@ const HTTPTestComponent: React.FC = () => {
             <Text style={styles.successText}>Post created successfully!</Text>
           )}
         </View>
+      ) : activeTab === 'large' ? (
+        <View style={styles.largeFileContainer}>
+          <Text style={styles.largeFileTitle}>Large File Download Test</Text>
+          <Text style={styles.largeFileDescription}>
+            Download a ~5MB GeoJSON file to test progress events.
+            Watch the Network Activity DevTools for progress percentage.
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.downloadButton,
+              largeFileQuery.isFetching && styles.downloadButtonDisabled,
+            ]}
+            onPress={() => largeFileQuery.refetch()}
+            disabled={largeFileQuery.isFetching}
+          >
+            {largeFileQuery.isFetching ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.downloadButtonText}>Download Large File</Text>
+            )}
+          </TouchableOpacity>
+
+          {largeFileQuery.isError && (
+            <Text style={styles.errorText}>
+              Error: {largeFileQuery.error?.message}
+            </Text>
+          )}
+
+          {largeFileQuery.isSuccess && largeFileQuery.data && (
+            <View style={styles.successContainer}>
+              <Text style={styles.successText}>Download complete!</Text>
+              <Text style={styles.fileSizeText}>
+                Size: {largeFileQuery.data.byteLength.toLocaleString()} bytes
+              </Text>
+            </View>
+          )}
+        </View>
       ) : (
         <TouchableOpacity
           style={[
@@ -513,6 +580,20 @@ const HTTPTestComponent: React.FC = () => {
       )}
     </View>
   );
+
+  // For large file tab, don't show loading/error states from list queries
+  if (activeTab === 'large') {
+    return (
+      <View style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderHeader()}
+        </ScrollView>
+      </View>
+    );
+  }
 
   if (isLoading && !data) {
     return (
@@ -1135,17 +1216,19 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     marginBottom: 20,
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
     padding: 4,
+    gap: 4,
   },
   tab: {
-    flex: 1,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
     alignItems: 'center',
+    minWidth: '22%',
   },
   tabActive: {
     backgroundColor: '#007AFF',
@@ -1320,6 +1403,51 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
     fontSize: 14,
     marginTop: 12,
+    textAlign: 'center',
+  },
+  largeFileContainer: {
+    marginTop: 20,
+  },
+  largeFileTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 12,
+  },
+  largeFileDescription: {
+    fontSize: 14,
+    color: '#a0a0a0',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  downloadButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  downloadButtonDisabled: {
+    backgroundColor: '#666666',
+  },
+  downloadButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  successContainer: {
+    marginTop: 12,
+    padding: 16,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  fileSizeText: {
+    fontSize: 14,
+    color: '#a0a0a0',
+    marginTop: 4,
     textAlign: 'center',
   },
   checkboxContainer: {

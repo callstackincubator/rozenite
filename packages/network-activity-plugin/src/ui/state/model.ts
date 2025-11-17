@@ -58,6 +58,11 @@ export type HttpNetworkEntry = {
   size?: number;
   initiator?: Initiator;
   resourceType?: ResourceType;
+  progress?: {
+    loaded: number;
+    total: number;
+    lengthComputable: boolean;
+  };
 };
 
 /* SSE */
@@ -137,4 +142,9 @@ export type ProcessedRequest = {
   size: number | null;
   method: HttpMethod | 'WS' | 'SSE';
   httpStatus?: number;
+  progress?: {
+    loaded: number;
+    total: number;
+    lengthComputable: boolean;
+  };
 };

@@ -136,6 +136,14 @@ export type NetworkActivityEventMap = {
     canceled: boolean;
   };
 
+  'request-progress': {
+    requestId: RequestId;
+    timestamp: Timestamp;
+    loaded: number;
+    total: number;
+    lengthComputable: boolean;
+  };
+
   'get-response-body': {
     requestId: RequestId;
   };
