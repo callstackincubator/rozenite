@@ -9,7 +9,8 @@
     "lint:all": "nx run-many -t lint",
     "format:all": "prettier --check .",
     "format:all:fix": "prettier . --write",
-    "checks:all": "pnpm typecheck:all && pnpm lint:all && pnpm format:all"
+    "checks:all": "pnpm typecheck:all && pnpm lint:all && pnpm format:all",
+    "release:plan": "nx release plan"
   },
   "private": true,
   "devDependencies": {

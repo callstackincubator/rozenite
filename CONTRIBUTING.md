@@ -1,90 +1,57 @@
 # Contributing to Rozenite
 
-## Code of Conduct
+## Before you start any work
 
-We want this community to be friendly and respectful to each other. Please read [the full text](./CODE_OF_CONDUCT.md) so that you can understand what actions will and will not be tolerated.
+Please open an issue before starting to work on a new feature or a fix for a bug you encountered. This will prevent you from wasting your time on a feature that's not going to be merged, because for instance it's out of scope. If there is an existing issue present for the matter you want to work on, make sure to post a comment saying you are going to work on it. This will make sure there will be only one person working on a given issue.
 
-## Requirements
+## Development process
 
-- Node 20+
-- pnpm 9.15.3+
-
-## Our Development Process
-
-All development is done directly on GitHub, and all work is public.
-
-### Development workflow
+All development is done directly on GitHub, and all work is public. Contributors send pull requests which go through the review process.
 
 > **Working on your first pull request?** You can learn how from this _free_ series: [How to Contribute to an Open Source Project on GitHub](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github).
 
 1. Fork the repo and create your branch from default branch (usually `main`) (a guide on [how to fork a repository](https://help.github.com/articles/fork-a-repo/)).
 2. Run `pnpm install` to install & set up the development environment.
-3. Do the changes you want and test them out in the playground app (`apps/playground`) before sending a pull request.
+3. Run `pnpm build:all` to build all packages.
+4. Do the changes you want and test them out in the playground app (`apps/playground`) before sending a pull request.
 
-### Commit message convention
+This repository uses Nx to maintain the monorepository. I strongly advise you to briefly go through the [Nx documentation](https://nx.dev/docs/getting-started/intro) to make sure you understand the basic rules of working with this technology.
 
-We follow the [conventional commits specification](https://www.conventionalcommits.org/en) for our commit messages:
+### Testing your changes
 
-- `fix`: bug fixes, e.g. fix plugin loading issue.
-- `feat`: new features, e.g. add new CLI command.
-- `refactor`: code refactor, e.g. new folder structure for plugins.
-- `docs`: changes into documentation, e.g. add usage example for MMKV plugin.
-- `test`: adding or updating tests, e.g. unit, snapshot testing.
-- `chore`: tooling changes, e.g. change nx config.
-- `BREAKING CHANGE`: for changes that break existing usage, e.g. change API of a plugin.
+You'll find a playground app in the 'apps' directory. You can use it to easily test your changes, without the need to link the project to your custom app living outside of the monorepository. See [README.md](/apps/playground/README.md) file for additional details on the app itself.
 
-**Scopes:**
+You should also run the following checks before opening a pull request:
 
-- `cli`, `metro`, `plugin-bridge`, `runtime`, `vite-plugin`
-- `expo-atlas-plugin`, `mmkv-plugin`, `network-activity-plugin`, `tanstack-query-plugin`
-- `website`, `playground`
+1. linting via `pnpm lint:all`
+2. formatting via `pnpm format:all`
+3. typechecking via `pnpm typecheck:all`
 
-### Version Management
+All checks are also run in CI, but by running them locally you can quickly fix any outstanding issues.
 
-When making changes that affect public APIs, behavior, or logic, you need to create a version plan file. You can do this by running:
+### Creating a pull request
 
-```bash
-pnpm nx release plan
-```
+When you are ready to have your changes incorporated into the main codebase, open a pull request.
 
-This will guide you through creating a version plan file in the `.nx/version-plans/` directory that specifies which projects should receive version bumps and what type of bump they should receive.
+This repository follows [the Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/#summary). Please follow this pattern in your pull requests. Keep in mind your commits will be squashed before merging and the title will be used as a commit title, so the pull request title should match this convention. Generally, if you cannot describe your changes by a single type of commit (your pull request not only adds a new feature, but also refactors another one), consider splitting your pull request into two. As for scopes, use package name, for instance `feat(redux-devtools): add some new feature`.
 
-For more details, see the [Nx Release Version Plans documentation](https://nx.dev/recipes/nx-release/file-based-versioning-version-plans).
+Make sure to keep an eye out for any necessary updates to the documentation. If you add a new feature, you'll probably need to mention it in the documentation and describe what it is and how to use it. It's less common for fixes, but sometimes needed as well.
 
-### Linting and tests
-
-We use `typescript` for type checking, `eslint` for linting, `prettier` for formatting, and `jest`/`vitest` for testing. You should run the following commands before sending a pull request:
-
-- `pnpm nx run-many -t typecheck --projects="packages/*"`: type-check files with `tsc`.
-- `pnpm nx run-many -t lint --projects="packages/*"`: lint files with `eslint`.
-- `pnpm nx run-many -t test --projects="packages/*"`: run unit tests with `jest`/`vitest`.
-- `pnpm prettier --check .`: check code formatting.
-
-### Sending a pull request
-
-- Prefer small pull requests focused on one change.
-- Verify that `typescript`, `eslint`, `prettier` and all tests are passing.
-- Verify all in-code documentation is correct (it will be used to generate API documentation).
-- Ensure version plans exist for changes that affect public APIs (this will be checked in CI).
-- Follow the pull request template when opening a pull request.
-
-### Version Plan Validation
+This project uses GitHub Actions to run validation checks on your pull requests. Keep an eye out for any failures and fix them promptly.
 
 Before submitting a pull request, you can check if your changes require version plans:
 
 ```bash
-pnpm nx release plan:check
+pnpm release:plan
 ```
 
 This command analyzes your changes and ensures that appropriate version plan files exist for projects that have been modified. CI will run this check automatically and fail if version plans are missing for relevant changes.
 
-### Running the example
+## Release process
 
-The example PlaygroundApp uses React Native Community CLI so make sure you have your [environment setup to build native apps](https://reactnative.dev/docs/environment-setup).
+Currently, releases are published by maintainers when they determine it's time to do so. Usually, there is at least one release per week as long as there are changes waiting to be published.
 
-You can then use Xcode/Android Studio/Gradle to build application or run `pnpm nx start playground` and `pnpm nx run-ios playground`/`pnpm nx run-android playground` to start development server and run applications in development mode.
-
-### Working on plugins
+## Working on plugins
 
 When developing plugins, you can test them in the playground app using development mode. This allows you to load your local plugin without building and publishing it.
 
@@ -100,27 +67,21 @@ When developing plugins, you can test them in the playground app using developme
    ```bash
    ROZENITE_DEV_MODE=my-plugin-name pnpm nx start playground
    ```
-3. **Test your plugin**: Your plugin will be loaded in development mode and you can test it in the DevTools interface
+3. **Test your plugin**: Your plugin will be loaded in development mode and you can test it in the DevTools interface.
 
 For more detailed information about plugin development, see the [Plugin Development Guide](https://rozenite.dev/docs/plugin-development/plugin-development).
 
-### Working on documentation
+## Working on documentation
 
-The documentation is a part of the website, which is stored in `website` directory and uses `rspress` - an SSG framework that leverages `rspack`. To start working on the docs, either run `pnpm run dev` from inside of the `website` directory.
+The documentation is a part of the website, which is stored in the `website` directory and uses `rspress` - an SSG framework that leverages `rspack`. To start working on the docs, run `pnpm run dev` from inside the `website` directory.
 
-## Reporting issues
-
-You can report issues on our [bug tracker](https://github.com/callstackincubator/rozenite/issues). Please follow the issue template when opening an issue.
-
-## Need Help?
-
-### Getting Help
+## If you need help
 
 - **Discord**: Join our [Discord community](https://discord.gg/xgGt7KAjxv)
 - **Issues**: Create an issue on GitHub for bugs or feature requests
 - **Email**: Contact us at [hello@callstack.com](mailto:hello@callstack.com)
 
-### Resources
+## Resources
 
 - [Documentation](https://rozenite.dev)
 - [Plugin Development Guide](https://rozenite.dev/docs/guides/plugin-development)
@@ -128,7 +89,3 @@ You can report issues on our [bug tracker](https://github.com/callstackincubator
 ## License
 
 By contributing to Rozenite, you agree that your contributions will be licensed under its **MIT** license.
-
----
-
-**Made with ❤️ at [Callstack](https://callstack.com)**
