@@ -177,7 +177,6 @@ export const createNetworkActivityStore = () =>
                   return state;
                 }
 
-                // Update the entry with progress information
                 const httpEntry = entry as HttpNetworkEntry;
                 const updatedEntry: HttpNetworkEntry = {
                   ...httpEntry,

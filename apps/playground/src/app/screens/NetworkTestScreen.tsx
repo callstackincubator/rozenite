@@ -151,10 +151,7 @@ const api = {
     return response.json();
   },
 
-  // Download a large file to test progress events
   getLargeFile: async (): Promise<ArrayBuffer> => {
-    // This fetches a ~5MB GeoJSON file from GitHub (country boundaries)
-    // Add cache busting to force a fresh download every time
     const cacheBuster = Date.now();
     const response = await fetch(
       `https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson?cb=${cacheBuster}`,
@@ -530,7 +527,7 @@ const HTTPTestComponent: React.FC = () => {
           <Text style={styles.largeFileTitle}>Large File Download Test</Text>
           <Text style={styles.largeFileDescription}>
             Download a ~5MB GeoJSON file to test progress events.
-            Watch the Network Activity DevTools for progress percentage.
+            Watch the Network Activity DevTools for progress percentage paired with Android simulator cell signal strenght lowered.
           </Text>
           <TouchableOpacity
             style={[
@@ -581,7 +578,6 @@ const HTTPTestComponent: React.FC = () => {
     </View>
   );
 
-  // For large file tab, don't show loading/error states from list queries
   if (activeTab === 'large') {
     return (
       <View style={styles.container}>

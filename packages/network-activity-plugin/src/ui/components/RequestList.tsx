@@ -135,7 +135,6 @@ const processNetworkRequests = (
     const duration = request.duration || 0;
     const hasOverride = overrides.has(request.name);
 
-    // Show progress percentage if loading and progress data available
     let statusDisplay: string | number = request.httpStatus || request.status;
     if (request.status === 'loading' && request.progress?.lengthComputable) {
       const percentage = Math.round(
