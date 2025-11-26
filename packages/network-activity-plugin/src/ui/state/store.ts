@@ -168,6 +168,33 @@ export const createNetworkActivityStore = () =>
               break;
             }
 
+            case 'request-progress': {
+              const eventData =
+                data as NetworkActivityEventMap['request-progress'];
+              set((state) => {
+                const entry = state.networkEntries.get(eventData.requestId);
+                if (!entry || entry.type !== 'http') {
+                  return state;
+                }
+
+                const httpEntry = entry as HttpNetworkEntry;
+                const updatedEntry: HttpNetworkEntry = {
+                  ...httpEntry,
+                  status: 'loading',
+                  progress: {
+                    loaded: eventData.loaded,
+                    total: eventData.total,
+                    lengthComputable: eventData.lengthComputable,
+                  },
+                };
+
+                const newEntries = new Map(state.networkEntries);
+                newEntries.set(eventData.requestId, updatedEntry);
+                return { networkEntries: newEntries };
+              });
+              break;
+            }
+
             case 'response-received': {
               const eventData =
                 data as NetworkActivityEventMap['response-received'];
@@ -558,6 +585,9 @@ export const createNetworkActivityStore = () =>
               ),
               client.onMessage('request-sent', (data) =>
                 handleEvent('request-sent', data)
+              ),
+              client.onMessage('request-progress', (data) =>
+                handleEvent('request-progress', data)
               ),
               client.onMessage('response-received', (data) =>
                 handleEvent('response-received', data)

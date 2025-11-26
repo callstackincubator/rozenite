@@ -24,6 +24,7 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
         size: httpEntry.size,
         method: httpEntry.request.method,
         httpStatus: httpEntry.response?.status,
+        progress: httpEntry.progress,
       });
     } else if (entry.type === 'websocket') {
       const wsEntry = entry as WebSocketNetworkEntry;
@@ -81,6 +82,7 @@ export const getRequestSummary = (
         size: httpEntry.size,
         method: httpEntry.request.method,
         httpStatus: httpEntry.response?.status || 0,
+        progress: httpEntry.progress,
       };
     } else if (entry.type === 'websocket') {
       const wsEntry = entry as WebSocketNetworkEntry;

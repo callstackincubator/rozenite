@@ -135,10 +135,18 @@ const processNetworkRequests = (
     const duration = request.duration || 0;
     const hasOverride = overrides.has(request.name);
 
+    let statusDisplay: string | number = request.httpStatus || request.status;
+    if (request.status === 'loading' && request.progress?.lengthComputable) {
+      const percentage = Math.round(
+        (request.progress.loaded / request.progress.total) * 100,
+      );
+      statusDisplay = `${percentage}%`;
+    }
+
     return {
       id: request.id,
       name: generateName(request.name, showEntirePathAsName),
-      status: request.httpStatus || request.status,
+      status: statusDisplay,
       method: request.method,
       domain,
       path,
