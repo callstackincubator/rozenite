@@ -41,7 +41,8 @@ npm install @rozenite/mmkv-plugin react-native-mmkv
 
 ### 2. Integrate with Your App
 
-Add the DevTools hook to your React Native app and provide your MMKV instances:
+#### For MMKV < 4.0.0
+Add the DevTools hook to your React Native app and provide your MMKV instances as array:
 
 ```typescript
 // App.tsx
@@ -57,6 +58,29 @@ function App() {
   // Enable MMKV DevTools with your storage instances
   useMMKVDevTools({
     storages: [userStorage, appSettings, cacheStorage],
+  });
+
+  return <YourApp />;
+}
+```
+
+#### For MMKV >= 4.0.0
+Add the DevTools hook to your React Native app and provide your MMKV instances as object:
+
+```typescript
+// App.tsx
+import { createMMKV } from 'react-native-mmkv'
+import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
+
+// Create your MMKV instances
+const userStorage = createMMKV({ id: 'user-storage' });
+const appSettings = createMMKV({ id: 'app-settings' });
+const cacheStorage = createMMKV({ id: 'cache-storage' });
+
+function App() {
+  // Enable MMKV DevTools with your storage instances
+  useMMKVDevTools({
+    storages: {userStorage, appSettings, cacheStorage},
   });
 
   return <YourApp />;
