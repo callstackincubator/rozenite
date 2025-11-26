@@ -22,13 +22,13 @@ export const Toolbar = () => {
         onClick={onToggleRecording}
         className={`h-8 w-8 p-0 ${
           isRecording
-            ? 'text-gray-400 hover:text-blue-400'
-            : 'text-red-400 hover:text-red-300'
+            ? 'text-red-400 hover:text-red-300'
+            : 'text-gray-400 hover:text-blue-400'
         }`}
         title={isRecording ? 'Stop recording' : 'Start recording'}
       >
         {isRecording ? (
-          <Square className="h-4 w-4" />
+          <Square className="h-4 w-4 fill-current" />
         ) : (
           <Circle className="h-4 w-4 fill-current" />
         )}
