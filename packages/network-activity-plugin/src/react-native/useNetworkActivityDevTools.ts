@@ -83,7 +83,7 @@ export const useNetworkActivityDevTools = (
 
     const networkInspector = getNetworkInspector(client);
 
-    // If recording was previously enabled, enable the inspector (hot reload)
+    // On boot, it's enabled by the DevTools with `network-enable`, on hot-reload it is below.
     if (isRecordingEnabledRef.current) {
       networkInspector.enable();
     }
