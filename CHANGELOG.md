@@ -1,3 +1,14 @@
+## 1.1.0 (2025-12-01)
+
+### 🚀 Features
+
+- **@rozenite/network-activity-plugin:** You can now see the percentage progress of a request in the Status column. Additionally, whenever a timeout occurs, it will be considered a failure. ([#147](https://github.com/callstackincubator/rozenite/pull/147))
+- **@rozenite/network-activity-plugin:** The appearance of the record button was updated to more clearly indicate whether network traffic is being recorded. ([#153](https://github.com/callstackincubator/rozenite/pull/153))
+
+### ❤️ Thank You
+
+- David Prevost @dprevost-LMI
+
 # 1.0.0 (2025-11-14)
 
 ### 🚀 Features
