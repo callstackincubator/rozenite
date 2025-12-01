@@ -25,11 +25,12 @@ export const Toolbar = () => {
             ? 'text-red-400 hover:text-red-300'
             : 'text-gray-400 hover:text-blue-400'
         }`}
+        title={isRecording ? 'Stop recording' : 'Start recording'}
       >
         {isRecording ? (
-          <Circle className="h-4 w-4 fill-current" />
+          <Square className="h-4 w-4 fill-current" />
         ) : (
-          <Square className="h-4 w-4" />
+          <Circle className="h-4 w-4 fill-current" />
         )}
       </Button>
       <Button
