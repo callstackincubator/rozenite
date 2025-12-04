@@ -12,7 +12,7 @@ export default function Welcome() {
   useEffect(() => {
     const withPluginsInstalled =
       new URLSearchParams(window.location.search).get(
-        'withPluginsInstalled'
+        'withPluginsInstalled',
       ) === 'true';
     setWithPluginsInstalled(withPluginsInstalled);
   }, []);
@@ -47,6 +47,9 @@ export default function Welcome() {
           <div className={styles.actions}>
             <Button href="/docs/getting-started">Documentation</Button>
             <Button href="/plugin-directory">Plugin directory</Button>
+            <Button href="https://forms.gle/vUCVUmnZ883sfzoS8">
+              Want to shape the future of Rozenite? Share your feedback!
+            </Button>
           </div>
         </div>
       </div>
