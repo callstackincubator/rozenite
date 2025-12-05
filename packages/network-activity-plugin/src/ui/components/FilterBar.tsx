@@ -1,6 +1,6 @@
 import { Input } from './Input';
 import { Button } from './Button';
-import { X, Filter, ChevronDown } from 'lucide-react';
+import { X, Filter, ChevronDown, Regex } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -10,6 +10,7 @@ import {
 
 export type FilterState = {
   text: string;
+  isRegexEnabled: boolean;
   types: Set<'http' | 'websocket' | 'sse'>;
 };
 
@@ -18,9 +19,20 @@ type FilterBarProps = {
   onFilterChange: (filter: FilterState) => void;
 };
 
+const getFilterButtonClass = (isActive: boolean) =>
+  `h-8 px-3 text-xs transition-all ${
+    isActive
+      ? 'bg-blue-600/20 border border-blue-500/50 text-blue-300 hover:bg-blue-600/30'
+      : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700 border border-transparent'
+  }`;
+
 export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
   const handleTextChange = (text: string) => {
     onFilterChange({ ...filter, text });
+  };
+
+  const toggleRegex = () => {
+    onFilterChange({ ...filter, isRegexEnabled: !filter.isRegexEnabled });
   };
 
   const toggleType = (type: 'http' | 'websocket' | 'sse') => {
@@ -36,6 +48,7 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
   const clearFilters = () => {
     onFilterChange({
       text: '',
+      isRegexEnabled: false,
       types: new Set(['http', 'websocket', 'sse']),
     });
   };
@@ -66,17 +79,23 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
         />
       </div>
 
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleRegex}
+        className={getFilterButtonClass(filter.isRegexEnabled)}
+        title="Toggle regex"
+      >
+        <Regex className="h-3 w-3" />
+      </Button>
+
       {/* Request Type Filters Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="sm"
-            className={`h-8 px-3 text-xs transition-all ${
-              isTypeFilterActive
-                ? 'bg-blue-600/20 border border-blue-500/50 text-blue-300 hover:bg-blue-600/30'
-                : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'
-            }`}
+            className={getFilterButtonClass(isTypeFilterActive)}
           >
             <Filter className="h-3 w-3 mr-1" />
             Types

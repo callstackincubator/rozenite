@@ -22,6 +22,7 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
   const overrides = useOverrides();
   const [filter, setFilter] = useState<FilterState>({
     text: '',
+    isRegexEnabled: false,
     types: new Set(['http', 'websocket', 'sse']),
   });
 

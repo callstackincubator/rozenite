@@ -61,7 +61,7 @@ const formatStartTime = (startTime: number): string => {
 };
 
 const extractDomainAndPath = (
-  url: string
+  url: string,
 ): { domain: string; path: string } => {
   try {
     const { hostname, pathname, search, hash, port } = new URL(url);
@@ -80,7 +80,7 @@ const generateName = (url: string, showEntirePathName = false): string => {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;
     const filename = showEntirePathName ? undefined : pathname.split('/').pop();
-    
+
     return filename || pathname || urlObj.hostname;
   } catch {
     return url;
@@ -128,7 +128,7 @@ const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
 const processNetworkRequests = (
   processedRequests: ProcessedRequest[],
   overrides: Map<string, RequestOverride>,
-  showEntirePathAsName = false
+  showEntirePathAsName = false,
 ): NetworkRequest[] => {
   return processedRequests.map((request): NetworkRequest => {
     const { domain, path } = extractDomainAndPath(request.name);
@@ -223,6 +223,14 @@ const columns = [
   }),
 ];
 
+const createRegExp = (pattern: string): RegExp | null => {
+  try {
+    return new RegExp(pattern, 'i');
+  } catch {
+    return null;
+  }
+};
+
 export type RequestListProps = {
   filter: FilterState;
 };
@@ -235,6 +243,24 @@ export const RequestList = ({ filter }: RequestListProps) => {
   const overrides = useOverrides();
   const clientUISettings = useClientUISettings();
 
+  const filterTextMatchPredicate = useMemo(() => {
+    const text = filter.text.toLowerCase();
+
+    if (!text) {
+      return () => true;
+    }
+
+    if (filter.isRegexEnabled) {
+      const regex = createRegExp(text);
+
+      if (regex) {
+        return (value: string) => regex.test(value);
+      }
+    }
+
+    return (value: string) => value.toLowerCase().includes(text.toLowerCase());
+  }, [filter.text, filter.isRegexEnabled]);
+
   // Filter requests based on current filter state
   const filteredRequests = useMemo(() => {
     return processedRequests.filter((request) => {
@@ -245,24 +271,25 @@ export const RequestList = ({ filter }: RequestListProps) => {
 
       // Text filter
       if (filter.text) {
-        const searchText = filter.text.toLowerCase();
         const searchableFields = [
           request.name,
           request.method,
           request.status.toString(),
-        ]
-          .join(' ')
-          .toLowerCase();
+        ].join(' ');
 
-        return searchableFields.includes(searchText);
+        return filterTextMatchPredicate(searchableFields);
       }
 
       return true;
     });
-  }, [processedRequests, filter]);
+  }, [processedRequests, filter, filterTextMatchPredicate]);
 
   const requests = useMemo(() => {
-    return processNetworkRequests(filteredRequests, overrides, clientUISettings?.showUrlAsName);
+    return processNetworkRequests(
+      filteredRequests,
+      overrides,
+      clientUISettings?.showUrlAsName,
+    );
   }, [filteredRequests, overrides, clientUISettings?.showUrlAsName]);
 
   const table = useReactTable({
@@ -302,7 +329,7 @@ export const RequestList = ({ filter }: RequestListProps) => {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                     {header.column.getCanSort() && (
                       <span className="text-gray-500">
