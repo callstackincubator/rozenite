@@ -115,33 +115,6 @@ export const api = {
     return response.json();
   },
 
-  get404: async (): Promise<Post[]> => {
-    const response = await fetch('https://www.google.com/test');
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
-  },
-
-  post404: async (): Promise<unknown> => {
-    const response = await fetch('https://www.google.com/test', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Rozenite-Test': 'true',
-      },
-      body: JSON.stringify({ test: 'data' }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
-  },
-
   createPost: async (postData: Omit<Post, 'id'>): Promise<Post> => {
     const response = await fetch(
       'https://jsonplaceholder.typicode.com/posts?someParam=value',
