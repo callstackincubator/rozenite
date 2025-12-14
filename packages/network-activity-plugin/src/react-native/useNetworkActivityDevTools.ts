@@ -1,18 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { getNetworkInspector } from './http/network-inspector';
 import { getOverridesRegistry } from './http/overrides-registry';
 import { NetworkActivityEventMap } from '../shared/client';
-import { getWebSocketInspector } from './websocket/websocket-inspector';
-import { WebSocketEventMap } from '../shared/websocket-events';
-import { UnionToTuple } from './utils';
-import { getSSEInspector } from './sse/sse-inspector';
-import { SSEEventMap } from '../shared/sse-events';
 import {
   DEFAULT_CONFIG,
   NetworkActivityDevToolsConfig,
   validateConfig,
 } from './config';
+import { getHTTPInspectorInstance } from './http/http-setup';
+import { getWebSocketInspectorInstance } from './websocket/websocket-setup';
+import { getSSEInspectorInstance } from './sse/sse-setup';
+import { getNetworkActivityEventsListener } from './withOnBootNetworkActivityRecording';
+import { getResponseBody } from './http/http-utils';
 
 const overridesRegistry = getOverridesRegistry();
 
@@ -28,6 +27,9 @@ export const useNetworkActivityDevTools = (
   const isWebSocketInspectorEnabled = config.inspectors?.websocket ?? true;
   const isSSEInspectorEnabled = config.inspectors?.sse ?? true; 
   const showUrlAsName = config.clientUISettings?.showUrlAsName;
+  
+  // Get the singleton events listener instance once
+  const eventsListener = getNetworkActivityEventsListener();
 
   useEffect(() => {
     if (!client) {
@@ -43,7 +45,6 @@ export const useNetworkActivityDevTools = (
       return;
     }
 
-
     const sendClientUISettings = () => {
       client.send('client-ui-settings', {
         settings: {
@@ -55,6 +56,9 @@ export const useNetworkActivityDevTools = (
     const subscriptions = [
       client.onMessage('network-enable', () => {
         isRecordingEnabledRef.current = true;
+        // Connect the events listener to send events through the DevTools client
+        // This also automatically flushes any queued messages
+        eventsListener.connect((type, data) => client.send(type, data));
       }),
       client.onMessage('network-disable', () => {
         isRecordingEnabledRef.current = false;
@@ -81,15 +85,40 @@ export const useNetworkActivityDevTools = (
       return;
     }
 
-    const networkInspector = getNetworkInspector(client);
+    const httpInspector = getHTTPInspectorInstance(eventsListener);
+    const networkRequestsRegistry = httpInspector.getNetworkRequestsRegistry();
 
-    // On boot, it's enabled by the DevTools with `network-enable`, on hot-reload it is below.
+    const subscriptions = [
+      client.onMessage('network-enable', () => {
+        httpInspector.enable();
+      }),
+      client.onMessage('network-disable', () => {
+        httpInspector.disable();
+      }),
+      client.onMessage('get-response-body', async ({ requestId }) => {
+        const request = networkRequestsRegistry.getEntry(requestId);
+
+        if (!request) {
+          return;
+        }
+
+        const body = await getResponseBody(request);
+
+        client.send('response-body', {
+          requestId,
+          body,
+        });
+      }),
+    ];
+
+    // If recording was previously enabled, enable the inspector (hot reload)
     if (isRecordingEnabledRef.current) {
-      networkInspector.enable();
+      httpInspector.enable();
     }
 
     return () => {
-      networkInspector.dispose();
+      subscriptions.forEach((subscription) => subscription.remove());
+      httpInspector.dispose();
     };
   }, [client, isHttpInspectorEnabled]);
 
@@ -98,30 +127,16 @@ export const useNetworkActivityDevTools = (
       return;
     }
 
-    const eventsToForward: UnionToTuple<keyof WebSocketEventMap> = [
-      'websocket-connect',
-      'websocket-open',
-      'websocket-close',
-      'websocket-message-sent',
-      'websocket-message-received',
-      'websocket-error',
-      'websocket-connection-status-changed',
+    const websocketInspector = getWebSocketInspectorInstance(eventsListener);
+
+    const subscriptions = [
+      client.onMessage('network-enable', () => {
+        websocketInspector.enable();
+      }),
+      client.onMessage('network-disable', () => {
+        websocketInspector.disable();
+      }),
     ];
-    const websocketInspector = getWebSocketInspector();
-
-    eventsToForward.forEach((event) => {
-      websocketInspector.on(event, (event) => {
-        client.send(event.type, event);
-      });
-    });
-
-    client.onMessage('network-enable', () => {
-      websocketInspector.enable();
-    });
-
-    client.onMessage('network-disable', () => {
-      websocketInspector.disable();
-    });
 
     // If recording was previously enabled, enable the inspector (hot reload)
     if (isRecordingEnabledRef.current) {
@@ -129,7 +144,7 @@ export const useNetworkActivityDevTools = (
     }
 
     return () => {
-      // Subscriptions will be disposed by the inspector
+      subscriptions.forEach((subscription) => subscription.remove());
       websocketInspector.dispose();
     };
   }, [client, isWebSocketInspectorEnabled]);
@@ -139,27 +154,16 @@ export const useNetworkActivityDevTools = (
       return;
     }
 
-    const eventsToForward: UnionToTuple<keyof SSEEventMap> = [
-      'sse-open',
-      'sse-message',
-      'sse-error',
-      'sse-close',
+    const sseInspector = getSSEInspectorInstance(eventsListener);
+
+    const subscriptions = [
+      client.onMessage('network-enable', () => {
+        sseInspector.enable();
+      }),
+      client.onMessage('network-disable', () => {
+        sseInspector.disable();
+      }),
     ];
-    const sseInspector = getSSEInspector();
-
-    eventsToForward.forEach((event) => {
-      sseInspector.on(event, (event) => {
-        client.send(event.type, event);
-      });
-    });
-
-    client.onMessage('network-enable', () => {
-      sseInspector.enable();
-    });
-
-    client.onMessage('network-disable', () => {
-      sseInspector.disable();
-    });
 
     // If recording was previously enabled, enable the inspector (hot reload)
     if (isRecordingEnabledRef.current) {
@@ -167,7 +171,7 @@ export const useNetworkActivityDevTools = (
     }
 
     return () => {
-      // Subscriptions will be disposed by the inspector
+      subscriptions.forEach((subscription) => subscription.remove());
       sseInspector.dispose();
     };
   }, [client, isSSEInspectorEnabled]);

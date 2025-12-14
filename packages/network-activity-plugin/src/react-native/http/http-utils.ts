@@ -1,5 +1,4 @@
 import {
-  HttpMethod,
   XHRPostData,
   RequestPostData,
   RequestTextPostData,
@@ -8,7 +7,6 @@ import {
 } from '../../shared/client';
 import { safeStringify } from '../../utils/safeStringify';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
-import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
 import {
   isBlob,
   isArrayBuffer,
@@ -18,15 +16,11 @@ import {
 import { getContentType } from '../utils';
 import { getBlobName } from '../utils/getBlobName';
 import { getFormDataEntries } from '../utils/getFormDataEntries';
-import type { NetworkRequestRegistry } from './network-requests-registry';
 import type { OverridesRegistry } from './overrides-registry';
-import type { QueuedClientWrapper } from './queued-client-wrapper';
 
 /**
- * Define how a single network request is tracked.
+ * Utility functions for tracking HTTP requests
  */
-
-const READY_STATE_HEADERS_RECEIVED = 2;
 
 const getBinaryPostData = (body: Blob): RequestBinaryPostData => ({
   type: 'binary',
@@ -69,7 +63,7 @@ const getFormDataPostData = (body: FormData): RequestFormDataPostData => ({
   ),
 });
 
-const getRequestBody = (body: XHRPostData): RequestPostData => {
+export const getRequestBody = (body: XHRPostData): RequestPostData => {
   if (isNullOrUndefined(body)) {
     return body;
   }
@@ -89,7 +83,7 @@ const getRequestBody = (body: XHRPostData): RequestPostData => {
   return getTextPostData(body);
 };
 
-const getResponseSize = (request: XMLHttpRequest): number | null => {
+export const getResponseSize = (request: XMLHttpRequest): number | null => {
   try {
     const { responseType, response } = request;
 
@@ -156,7 +150,7 @@ export const getResponseBody = async (
   return null;
 };
 
-const getInitiatorFromStack = (): {
+export const getInitiatorFromStack = (): {
   type: string;
   url?: string;
   lineNumber?: number;
@@ -219,89 +213,5 @@ export const setupRequestOverride = (
       // @ts-expect-error - Mocking status
       request.status = override.status;
     }
-  });
-};
-
-export const setupRequestTracking = (
-  queuedClient: QueuedClientWrapper,
-  networkRequestsRegistry: NetworkRequestRegistry,
-  data: XHRPostData,
-  request: XMLHttpRequest,
-): void => {
-  const initiator = getInitiatorFromStack();
-  const sendTime = Date.now();
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-
-  request._rozeniteRequestId = requestId;
-  networkRequestsRegistry.addEntry(requestId, request);
-
-  let ttfb = 0;
-
-  queuedClient.send('request-sent', {
-    requestId: requestId,
-    timestamp: sendTime,
-    request: {
-      url: request._url as string,
-      method: request._method as HttpMethod,
-      headers: request._headers,
-      postData: getRequestBody(data),
-    },
-    type: 'XHR',
-    initiator,
-  });
-
-  request.addEventListener('readystatechange', () => {
-    if (request.readyState === READY_STATE_HEADERS_RECEIVED) {
-      ttfb = Date.now() - sendTime;
-    }
-  });
-
-  request.addEventListener('load', () => {
-    queuedClient.send('response-received', {
-      requestId: requestId,
-      timestamp: Date.now(),
-      type: 'XHR',
-      response: {
-        url: request._url as string,
-        status: request.status,
-        statusText: request.statusText,
-        headers: applyReactNativeResponseHeadersLogic(
-          request.responseHeaders || {},
-        ),
-        contentType: getContentType(request),
-        size: getResponseSize(request),
-        responseTime: Date.now(),
-      },
-    });
-  });
-
-  request.addEventListener('loadend', () => {
-    queuedClient.send('request-completed', {
-      requestId: requestId,
-      timestamp: Date.now(),
-      duration: Date.now() - sendTime,
-      size: getResponseSize(request),
-      ttfb,
-    });
-  });
-
-  request.addEventListener('error', () => {
-    queuedClient.send('request-failed', {
-      requestId: requestId,
-      timestamp: Date.now(),
-      type: 'XHR',
-      error: 'Failed',
-      canceled: false,
-    });
-  });
-
-  request.addEventListener('abort', () => {
-    queuedClient.send('request-failed', {
-      requestId: requestId,
-      timestamp: Date.now(),
-      type: 'XHR',
-      error: 'Aborted',
-      canceled: true,
-    });
   });
 };
