@@ -12,10 +12,11 @@ let httpInspector: ReturnType<typeof getHTTPInspector> | null = null;
  * Setup HTTP inspector to forward events to the provided events listener
  */
 export const setupHTTPInspector = (
-  eventsListener: EventsListener<NetworkActivityEventMap>
-): void => {
+  eventsListener: EventsListener<NetworkActivityEventMap>,
+  enable = false
+): HTTPInspectorInstance => {
   if (httpInspector) {
-    return; // Already set up
+    return httpInspector; // Already set up
   }
 
   httpInspector = getHTTPInspector();
@@ -40,6 +41,13 @@ export const setupHTTPInspector = (
       });
     }
   });
+
+  // Enable inspector if requested
+  if (enable && httpInspector) {
+    httpInspector.enable();
+  }
+
+  return httpInspector;
 };
 
 export type HTTPInspectorInstance = ReturnType<typeof getHTTPInspector>;
@@ -50,9 +58,5 @@ export type HTTPInspectorInstance = ReturnType<typeof getHTTPInspector>;
 export const getHTTPInspectorInstance = (
   eventsListener: EventsListener<NetworkActivityEventMap>
 ): HTTPInspectorInstance => {
-  setupHTTPInspector(eventsListener);
-  
-  // At this point, httpInspector is guaranteed to be non-null
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return httpInspector!;
+  return setupHTTPInspector(eventsListener);
 };

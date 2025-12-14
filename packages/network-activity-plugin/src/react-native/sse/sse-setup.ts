@@ -5,14 +5,17 @@ import type { NetworkActivityEventMap } from '../../shared/client';
 
 let sseInspector: ReturnType<typeof getSSEInspector> | null = null;
 
+export type SSEInspectorInstance = ReturnType<typeof getSSEInspector>;
+
 /**
  * Setup SSE inspector to forward events to the provided events listener
  */
 export const setupSSEInspector = (
-  eventsListener: EventsListener<NetworkActivityEventMap>
-): void => {
+  eventsListener: EventsListener<NetworkActivityEventMap>,
+  enable = false
+): SSEInspectorInstance => {
   if (sseInspector) {
-    return; // Already set up
+    return sseInspector;
   }
 
   sseInspector = getSSEInspector();
@@ -32,6 +35,13 @@ export const setupSSEInspector = (
       });
     }
   });
+
+  // Enable inspector if requested
+  if (enable && sseInspector) {
+    sseInspector.enable();
+  }
+
+  return sseInspector;
 };
 
 /**
@@ -40,9 +50,5 @@ export const setupSSEInspector = (
 export const getSSEInspectorInstance = (
   eventsListener: EventsListener<NetworkActivityEventMap>
 ) => {
-  setupSSEInspector(eventsListener);
-  
-  // At this point, sseInspector is guaranteed to be non-null
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return sseInspector!;
+  return setupSSEInspector(eventsListener);
 };

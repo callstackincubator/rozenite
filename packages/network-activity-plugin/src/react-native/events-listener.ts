@@ -13,13 +13,12 @@ type SendFunction<TEventMap extends Record<string, unknown>> = <
 /**
  * Generic events listener that queues messages until a send function is registered.
  * This allows capturing events before the DevTools client connects and so be boot compliant.
- * Can be used for HTTP, WebSocket, SSE, or any other event type.
  */
 export class EventsListener<TEventMap extends Record<string, unknown>> {
   private messageQueue: QueuedMessage<TEventMap>[] = [];
   private sendFunction: SendFunction<TEventMap> | null = null;
   private maxQueueSize = 200;
-  private isQueuing = true; // Start in queuing mode by default
+  private isQueuing = false;
 
   public setMaxQueueSize(size: number): void {
     this.maxQueueSize = size;
@@ -41,9 +40,6 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
     this.flushQueue();
   }
 
-  /**
-   * Check if events listener is in queuing mode
-   */
   public isInQueueMode(): boolean {
     return this.isQueuing;
   }
@@ -75,11 +71,7 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
     while (this.messageQueue.length > 0) {
       const message = this.messageQueue.shift();
       if (message) {
-        // Safe to cast because message came from the same event map
-        this.sendFunction(
-          message.type as keyof TEventMap & string,
-          message.data as TEventMap[keyof TEventMap],
-        );
+        this.sendFunction(message.type, message.data);
       }
     }
   }

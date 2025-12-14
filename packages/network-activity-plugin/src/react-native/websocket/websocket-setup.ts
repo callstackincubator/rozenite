@@ -5,14 +5,17 @@ import type { NetworkActivityEventMap } from '../../shared/client';
 
 let websocketInspector: ReturnType<typeof getWebSocketInspector> | null = null;
 
+export type WebSocketInspectorInstance = ReturnType<typeof getWebSocketInspector>;
+
 /**
  * Setup WebSocket inspector to forward events to the provided events listener
  */
 export const setupWebSocketInspector = (
-  eventsListener: EventsListener<NetworkActivityEventMap>
-): void => {
+  eventsListener: EventsListener<NetworkActivityEventMap>,
+  enable = false
+): WebSocketInspectorInstance => {
   if (websocketInspector) {
-    return; // Already set up
+    return websocketInspector; // Already set up
   }
 
   websocketInspector = getWebSocketInspector();
@@ -35,6 +38,13 @@ export const setupWebSocketInspector = (
       });
     }
   });
+
+  // Enable inspector if requested
+  if (enable && websocketInspector) {
+    websocketInspector.enable();
+  }
+
+  return websocketInspector;
 };
 
 /**
@@ -43,9 +53,5 @@ export const setupWebSocketInspector = (
 export const getWebSocketInspectorInstance = (
   eventsListener: EventsListener<NetworkActivityEventMap>
 ) => {
-  setupWebSocketInspector(eventsListener);
-  
-  // At this point, websocketInspector is guaranteed to be non-null
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return websocketInspector!;
+  return setupWebSocketInspector(eventsListener);
 };

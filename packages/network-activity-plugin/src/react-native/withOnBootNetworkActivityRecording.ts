@@ -1,32 +1,23 @@
 import { NetworkActivityEventMap } from '../shared/client';
 import { createEventsListener, EventsListenerOptions } from './events-listener';
-import { setupHTTPInspector, getHTTPInspectorInstance } from './http/http-setup';
-import { setupWebSocketInspector, getWebSocketInspectorInstance } from './websocket/websocket-setup';
-import { setupSSEInspector, getSSEInspectorInstance } from './sse/sse-setup';
+import { setupHTTPInspector } from './http/http-setup';
+import { setupWebSocketInspector } from './websocket/websocket-setup';
+import { setupSSEInspector } from './sse/sse-setup';
+import type { NetworkInspectorConfig } from './config';
 
 // Singleton events listener instance for Network Activity events (HTTP, WebSocket, SSE)
 const eventsListener = createEventsListener<NetworkActivityEventMap>();
 
-// Boot recording configuration
 let bootRecordingEnabled = false;
-let bootRecordingOptions: BootRecordingOptions = {};
 
-export type BootRecordingOptions = EventsListenerOptions & {
+export type BootRecordingOptions = NetworkInspectorConfig & EventsListenerOptions & {
   /**
-   * Enable HTTP network activity recording
+   * Enable queuing of events during boot before DevTools connects.
+   * When true, network activity is captured and queued until DevTools is ready.
+   * When false, nothing is queued and inspectors are not even set up.
    * @default true
    */
-  http?: boolean;
-  /**
-   * Enable WebSocket activity recording
-   * @default true
-   */
-  websocket?: boolean;
-  /**
-   * Enable SSE (Server-Sent Events) activity recording
-   * @default true
-   */
-  sse?: boolean;
+  enableBootRecording?: boolean;
 };
 
 /**
@@ -49,50 +40,32 @@ export type BootRecordingOptions = EventsListenerOptions & {
 export const withOnBootNetworkActivityRecording = (
   options?: BootRecordingOptions,
 ): void => {
-  bootRecordingEnabled = true;
-  bootRecordingOptions = {
-    maxQueueSize: options?.maxQueueSize ?? 200,
-    http: options?.http ?? true,
-    websocket: options?.websocket ?? true,
-    sse: options?.sse ?? true,
-  };
+  bootRecordingEnabled = options?.enableBootRecording ?? true;
+  const maxQueueSize = options?.maxQueueSize ?? 200;
+  const inspectors = {
+      http: true,
+      websocket: true,
+      sse: true,
+      ...options?.inspectors,
+    };
 
-  // Enable queuing mode on the events listener
-  eventsListener.setMaxQueueSize(bootRecordingOptions.maxQueueSize ?? 200);
-  eventsListener.enableQueuing();
+  eventsListener.setMaxQueueSize(maxQueueSize);
 
-  // Initialize and enable inspectors based on options
-  if (bootRecordingOptions.http !== false) {
-    setupHTTPInspector(eventsListener);
-    // Enable the inspector to start capturing boot-time HTTP requests
-    const httpInspector = getHTTPInspectorInstance(eventsListener);
-    httpInspector.enable();
-  }
-  if (bootRecordingOptions.websocket !== false) {
-    setupWebSocketInspector(eventsListener);
-    // Enable the inspector to start capturing boot-time WebSocket connections
-    const websocketInspector = getWebSocketInspectorInstance(eventsListener);
-    websocketInspector.enable();
-  }
-  if (bootRecordingOptions.sse !== false) {
-    setupSSEInspector(eventsListener);
-    // Enable the inspector to start capturing boot-time SSE connections
-    const sseInspector = getSSEInspectorInstance(eventsListener);
-    sseInspector.enable();
+  // Enable queuing if boot recording is requested
+  if (bootRecordingEnabled) {
+    eventsListener.enableQueuing();
+  
+    if (inspectors?.http) {
+        setupHTTPInspector(eventsListener, true);
+    }
+    if (inspectors?.websocket) {
+        setupWebSocketInspector(eventsListener, true);
+    }
+    if (inspectors?.sse) {
+        setupSSEInspector(eventsListener, true);
+    }
   }
 };
-
-/**
- * Check if boot recording is enabled
- * @internal
- */
-export const isBootRecordingEnabled = () => bootRecordingEnabled;
-
-/**
- * Get boot recording options
- * @internal
- */
-export const getBootRecordingOptions = () => bootRecordingOptions;
 
 /**
  * Get the shared events listener instance
