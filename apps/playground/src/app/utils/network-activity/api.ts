@@ -182,4 +182,25 @@ export const api = {
 
     return response.json();
   },
+
+  getLargeFile: async (): Promise<ArrayBuffer> => {
+    const cacheBuster = Date.now();
+    const response = await fetch(
+      `https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson?cb=${cacheBuster}`,
+      {
+        headers: {
+          'X-Rozenite-Test': 'large-download',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.arrayBuffer();
+  },
 };

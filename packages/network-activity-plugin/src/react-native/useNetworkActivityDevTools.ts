@@ -13,7 +13,6 @@ import { getSSEInspectorInstance } from './sse/sse-setup';
 import { withOnBootNetworkActivityRecording } from './withOnBootNetworkActivityRecording';
 import { getResponseBody } from './http/http-utils';
 
-// Enable boot recording by default when this module is imported and get the events listener
 const eventsListener = withOnBootNetworkActivityRecording();
 
 const overridesRegistry = getOverridesRegistry();
