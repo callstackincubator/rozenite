@@ -10,8 +10,11 @@ import {
 import { getHTTPInspectorInstance } from './http/http-setup';
 import { getWebSocketInspectorInstance } from './websocket/websocket-setup';
 import { getSSEInspectorInstance } from './sse/sse-setup';
-import { getNetworkActivityEventsListener } from './withOnBootNetworkActivityRecording';
+import { withOnBootNetworkActivityRecording } from './withOnBootNetworkActivityRecording';
 import { getResponseBody } from './http/http-utils';
+
+// Enable boot recording by default when this module is imported and get the events listener
+const eventsListener = withOnBootNetworkActivityRecording();
 
 const overridesRegistry = getOverridesRegistry();
 
@@ -27,9 +30,6 @@ export const useNetworkActivityDevTools = (
   const isWebSocketInspectorEnabled = config.inspectors?.websocket ?? true;
   const isSSEInspectorEnabled = config.inspectors?.sse ?? true; 
   const showUrlAsName = config.clientUISettings?.showUrlAsName;
-  
-  // Get the singleton events listener instance once
-  const eventsListener = getNetworkActivityEventsListener();
 
   useEffect(() => {
     if (!client) {

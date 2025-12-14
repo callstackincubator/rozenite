@@ -8,6 +8,7 @@ import type { NetworkInspectorConfig } from './config';
 // Singleton events listener instance for Network Activity events (HTTP, WebSocket, SSE)
 const eventsListener = createEventsListener<NetworkActivityEventMap>();
 
+let isInitialized = false;
 let bootRecordingEnabled = false;
 
 export type BootRecordingOptions = NetworkInspectorConfig & EventsListenerOptions & {
@@ -29,7 +30,7 @@ export type BootRecordingOptions = NetworkInspectorConfig & EventsListenerOption
  * import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
  * 
  * // At app entry point, before any network requests
- * withOnBootNetworkActivityRecording();
+ * const eventsListener = withOnBootNetworkActivityRecording();
  * 
  * function App() {
  *   useNetworkActivityDevTools();
@@ -39,7 +40,13 @@ export type BootRecordingOptions = NetworkInspectorConfig & EventsListenerOption
  */
 export const withOnBootNetworkActivityRecording = (
   options?: BootRecordingOptions,
-): void => {
+) => {
+  // If already initialized, return the existing eventsListener (idempotent)
+  if (isInitialized) {
+    return eventsListener;
+  }
+
+  isInitialized = true;
   bootRecordingEnabled = options?.enableBootRecording ?? true;
   const maxQueueSize = options?.maxQueueSize ?? 200;
   const inspectors = {
@@ -65,10 +72,6 @@ export const withOnBootNetworkActivityRecording = (
         setupSSEInspector(eventsListener, true);
     }
   }
-};
 
-/**
- * Get the shared events listener instance
- * @internal
- */
-export const getNetworkActivityEventsListener = () => eventsListener;
+  return eventsListener;
+};
