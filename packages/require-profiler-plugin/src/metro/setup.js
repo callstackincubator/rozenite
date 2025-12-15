@@ -5,9 +5,6 @@ global.__timings = [];
 // Shared across all SYSTRACE versions
 const requireStack = [];
 
-// Marker to identify our instrumented SYSTRACE
-const INSTRUMENTED_MARKER = "__METRO_REQUIRE_INSTRUMENTED__";
-
 /**
  * Creates an instrumented SYSTRACE object that records require timings.
  * @param {Object|null} originalSystrace - The original SYSTRACE to wrap, or null for a stub
@@ -19,15 +16,15 @@ const createInstrumentedSystrace = (originalSystrace) => {
 
   const instrumented = {
     // Mark this as our instrumented version
-    [INSTRUMENTED_MARKER]: true,
+    __METRO_REQUIRE_INSTRUMENTED__: true,
 
     beginEvent: function (eventName, args) {
       // Check if this is a require event (prefix used by Metro)
       if (
-        typeof eventName === "string" &&
-        eventName.startsWith("JS_require_")
+        typeof eventName === 'string' &&
+        eventName.startsWith('JS_require_')
       ) {
-        const moduleIdentifier = eventName.slice("JS_require_".length);
+        const moduleIdentifier = eventName.slice('JS_require_'.length);
         requireStack.push({
           moduleIdentifier,
           startTime: Date.now(),
@@ -68,11 +65,11 @@ const createInstrumentedSystrace = (originalSystrace) => {
 };
 
 global.__patchSystrace = () => {
-  const systraceKey = (global.__METRO_GLOBAL_PREFIX__ || "") + "__SYSTRACE";
+  const systraceKey = (global.__METRO_GLOBAL_PREFIX__ || '') + '__SYSTRACE';
   const currentSystrace = global[systraceKey];
 
   // If SYSTRACE exists and is already our instrumented version, nothing to do
-  if (currentSystrace && currentSystrace[INSTRUMENTED_MARKER]) {
+  if (currentSystrace && currentSystrace.__METRO_REQUIRE_INSTRUMENTED__) {
     return;
   }
 
@@ -104,7 +101,7 @@ const getRequireTimings = () => {
   const timingsByVerboseName = new Map();
 
   for (const timing of timings) {
-    if (typeof timing.moduleId === "number") {
+    if (typeof timing.moduleId === 'number') {
       timingsByModuleId.set(timing.moduleId, timing.time);
     } else {
       // It's a verboseName (string path)
@@ -123,7 +120,7 @@ const getRequireTimings = () => {
    */
   const getFileName = (path) => {
     if (!path) return String(path);
-    const parts = path.split("/");
+    const parts = path.split('/');
     return parts[parts.length - 1];
   };
 

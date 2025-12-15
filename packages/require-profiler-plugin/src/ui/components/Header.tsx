@@ -1,5 +1,6 @@
 export type HeaderProps = {
   onRefresh: () => void;
+  onFetchDataAgain: () => void;
   onToggleSidebar: () => void;
   showSidebar: boolean;
   loading: boolean;
@@ -8,6 +9,7 @@ export type HeaderProps = {
 
 export const Header = ({
   onRefresh,
+  onFetchDataAgain,
   onToggleSidebar,
   showSidebar,
   loading,
@@ -17,10 +19,30 @@ export const Header = ({
     <header className="header">
       <div className="header-left">
         <div className="logo">
-          <span className="logo-text">Metro Require Profiler</span>
+          <span className="logo-text">Require Profiler</span>
         </div>
       </div>
       <div className="header-right">
+        <button
+          className="btn btn-icon"
+          onClick={onFetchDataAgain}
+          title="Fetch data again"
+          disabled={loading || !clientAvailable}
+          aria-label="Fetch data again"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7,10 12,15 17,10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </button>
         <button
           className="btn btn-icon"
           onClick={onRefresh}
