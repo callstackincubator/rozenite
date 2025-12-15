@@ -1,0 +1,474 @@
+/* React DevTools-inspired theme for Metro Flame Graph */
+
+:root {
+  /* React DevTools color palette */
+  --color-background: #242424;
+  --color-background-hover: #2a2a2a;
+  --color-background-secondary: #1a1a1a;
+  --color-border: #3d3d3d;
+  --color-text: #e6e6e6;
+  --color-text-secondary: #8a8a8a;
+  --color-text-muted: #6e6e6e;
+
+  /* Accent colors from React DevTools */
+  --color-accent: #61dafb;
+  --color-accent-hover: #7de3fc;
+
+  /* Flame graph colors - inspired by React DevTools profiler */
+  --color-flame-hot: #ff6b6b;
+  --color-flame-warm: #ffa726;
+  --color-flame-neutral: #42a5f5;
+  --color-flame-cool: #66bb6a;
+
+  /* UI elements */
+  --header-height: 48px;
+  --sidebar-width: 320px;
+  --border-radius: 4px;
+  --transition-speed: 150ms;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  overflow: hidden;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-height);
+  padding: 0 16px;
+  background-color: var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-icon {
+  width: 24px;
+  height: 24px;
+  fill: var(--color-accent);
+}
+
+.logo-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.2px;
+}
+
+.logo-badge {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-accent);
+  background-color: rgba(97, 218, 251, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+}
+
+.btn:hover {
+  color: var(--color-text);
+  background-color: var(--color-background-hover);
+  border-color: var(--color-text-secondary);
+}
+
+.btn-primary {
+  color: var(--color-background);
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.btn-primary:hover {
+  color: var(--color-background);
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.btn-icon {
+  padding: 6px;
+  min-width: 28px;
+  justify-content: center;
+}
+
+/* Main content area */
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Flame graph container */
+.flame-graph-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--color-background);
+}
+
+.flame-graph-wrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Fix white background from flame graph SVG */
+.flame-graph-wrapper svg {
+  background-color: var(--color-background) !important;
+}
+
+.flame-graph-wrapper > * {
+  background-color: var(--color-background) !important;
+}
+
+/* Fix scrollbar corner (where horizontal and vertical scrollbars meet) */
+.flame-graph-wrapper::-webkit-scrollbar-corner {
+  background: var(--color-background);
+}
+
+/* Info bar */
+.info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 12px;
+}
+
+.info-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+}
+
+.info-item-value {
+  color: var(--color-text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.info-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--color-background-secondary);
+  border-left: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sidebar-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Fix scrollbar corner in sidebar */
+.sidebar-content::-webkit-scrollbar-corner {
+  background: var(--color-background-secondary);
+}
+
+/* Fix scrollbar corners globally */
+*::-webkit-scrollbar-corner {
+  background: var(--color-background);
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+
+.detail-value {
+  font-size: 13px;
+  color: var(--color-text);
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.detail-value-large {
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+.detail-value-path {
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 12px;
+  padding: 8px;
+  background-color: var(--color-background);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 24px;
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-text {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Loading state */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 24px;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-state p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Spinning animation for refresh button */
+.btn-icon svg.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Tooltip customization */
+.flame-graph-wrapper [role='tooltip'] {
+  background-color: var(--color-background-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--border-radius) !important;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background-color: var(--color-background-secondary);
+  border-top: 1px solid var(--color-border);
+  font-size: 11px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-label {
+  color: var(--color-text-secondary);
+}
+
+/* Keyboard shortcuts hint */
+.shortcuts-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.kbd {
+  display: inline-block;
+  padding: 2px 5px;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 10px;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  margin: 0 2px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Search input */
+.search-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  transition: border-color var(--transition-speed) ease;
+}
+
+.search-input:focus-within {
+  border-color: var(--color-accent);
+}
+
+.search-input input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.search-input input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.search-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--color-text-muted);
+}
