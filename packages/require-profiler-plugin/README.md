@@ -1,18 +1,18 @@
 ![rozenite-banner](https://www.rozenite.dev/rozenite-banner.jpg)
 
-### A Rozenite plugin that instruments require() calls to profile module initialization times in React Native applications.
+### A Rozenite plugin that instruments require() calls to profile initial app loading performance in React Native applications.
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
-The Rozenite Require Profiler Plugin instruments `require()` calls in your React Native app to track module initialization times. It helps you identify which modules take the longest to initialize and which are great candidates for lazy evaluation later in the app lifetime.
+The Rozenite Require Profiler Plugin instruments `require()` calls during your React Native app's initial loading to track module initialization times. It helps you identify which modules impact app startup performance and optimize your initial bundle loading.
 
 ## Features
 
-- **Module Initialization Profiling**: Automatically instruments all `require()` calls to track initialization times
+- **Initial App Loading Profiling**: Automatically instruments `require()` calls during app startup to track initialization times
 - **Flame Graph Visualization**: Interactive flame graph showing the module dependency tree with timing information
-- **Performance Insights**: Identify slow-loading modules that impact app startup time
-- **Lazy Loading Candidates**: Discover modules that are good candidates for lazy evaluation
-- **Dependency Analysis**: Visualize the complete module dependency graph with timing data
+- **Startup Performance Insights**: Identify slow-loading modules that impact Time to Interactive (TTI)
+- **Bundle Optimization Candidates**: Discover modules that are good candidates for code splitting or lazy loading
+- **Dependency Analysis**: Visualize the complete module dependency graph loaded during initial app startup
 - **Real-time Metrics**: View total initialization time, module count, and per-module evaluation times
 
 ## Installation
@@ -93,37 +93,42 @@ Once configured, the plugin automatically instruments all `require()` calls in y
 
 ## Use Cases
 
-### Identifying Slow Modules
+### Identifying Slow Startup Modules
 
-The flame graph makes it easy to spot modules that take a long time to initialize. Look for:
-- **Red modules** (>70% of max time) - These are your slowest modules
+The flame graph makes it easy to spot modules that take a long time to initialize during app startup. Look for:
+- **Red modules** (>70% of max time) - These are your slowest modules impacting startup
 - **Wide modules** - Modules that take up a lot of horizontal space in the graph
-- **Deep dependency chains** - Modules that load many dependencies
+- **Deep dependency chains** - Modules that load many dependencies during initial load
 
-### Finding Lazy Loading Candidates
+### Finding Bundle Optimization Candidates
 
-Modules that are good candidates for lazy loading typically:
-- Take significant time to initialize (>100ms)
-- Are not needed immediately at app startup
+Modules that are good candidates for optimization typically:
+- Take significant time to initialize (>100ms) during startup
+- Are not needed immediately for the initial app experience
 - Have many dependencies that could be deferred
 
-Use the profiler to identify these modules and consider converting them to lazy-loaded imports:
+Use the profiler to identify these modules and consider optimization strategies:
 
 ```typescript
-// Instead of:
+// Instead of loading heavy modules at startup:
 import HeavyModule from './HeavyModule';
 
-// Consider:
+// Consider lazy loading or code splitting:
 const HeavyModule = lazy(() => import('./HeavyModule'));
+
+// Or move to conditional/dynamic imports:
+if (condition) {
+  const HeavyModule = await import('./HeavyModule');
+}
 ```
 
-### Optimizing App Startup
+### Optimizing App Startup Performance
 
 By identifying and optimizing slow-loading modules, you can:
-- Reduce initial bundle size
-- Improve Time to Interactive (TTI)
-- Defer non-critical module initialization
-- Optimize dependency chains
+- Reduce initial bundle size and loading time
+- Improve Time to Interactive (TTI) metrics
+- Prioritize critical modules for immediate loading
+- Optimize dependency chains for faster startup
 
 ## Made with ❤️ at Callstack
 
