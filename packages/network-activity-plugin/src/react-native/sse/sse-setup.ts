@@ -43,12 +43,3 @@ export const setupSSEInspector = (
 
   return sseInspector;
 };
-
-/**
- * Get or create the SSE inspector instance (does not enable it)
- */
-export const getSSEInspectorInstance = (
-  eventsListener: EventsListener<NetworkActivityEventMap>
-) => {
-  return setupSSEInspector(eventsListener);
-};

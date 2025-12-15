@@ -48,10 +48,10 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
    * Send a message (queued if not connected, sent directly if connected)
    */
   public send<K extends keyof TEventMap>(type: K, data: TEventMap[K]): void {
-    if (!this.isQueuing && this.sendFunction) {
-      this.sendFunction(type, data);
-    } else {
+    if(this.isQueuing) {
       this.enqueueMessage({ type, data });
+    } else if (this.sendFunction) {
+      this.sendFunction(type, data);
     }
   }
 

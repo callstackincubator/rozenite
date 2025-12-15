@@ -5,10 +5,15 @@ import { setupWebSocketInspector } from './websocket/websocket-setup';
 import { setupSSEInspector } from './sse/sse-setup';
 import type { NetworkInspectorConfig } from './config';
 
-// Singleton events listener instance for Network Activity events (HTTP, WebSocket, SSE)
-const eventsListener = createEventsListener<NetworkActivityEventMap>();
+type InspectorsConfig = {
+    eventsListener: ReturnType<typeof createEventsListener<NetworkActivityEventMap>>;
+    httpInspector: ReturnType<typeof setupHTTPInspector>;
+    webSocketInspector: ReturnType<typeof setupWebSocketInspector>;
+    sseInspector: ReturnType<typeof setupSSEInspector>;
+}
 
-let isInitialized = false;
+let inspectorsConfig: InspectorsConfig;
+
 let bootRecordingEnabled = false;
 
 export type BootRecordingOptions = NetworkInspectorConfig & EventsListenerOptions & {
@@ -22,31 +27,16 @@ export type BootRecordingOptions = NetworkInspectorConfig & EventsListenerOption
 };
 
 /**
- * Enable network activity recording during app boot, before DevTools connects.
- * Call this at the root of your app to capture early network requests.
  * 
- * @example
- * ```tsx
- * import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
- * 
- * // At app entry point, before any network requests
- * const eventsListener = withOnBootNetworkActivityRecording();
- * 
- * function App() {
- *   useNetworkActivityDevTools();
- *   // ...
- * }
- * ```
+ * @internal
  */
-export const withOnBootNetworkActivityRecording = (
+export const createDefaultInspectorsConfig = (
   options?: BootRecordingOptions,
 ) => {
-  // If already initialized, return the existing eventsListener (idempotent)
-  if (isInitialized) {
-    return eventsListener;
+  if(inspectorsConfig) {
+    return inspectorsConfig;
   }
-
-  isInitialized = true;
+    
   bootRecordingEnabled = options?.enableBootRecording ?? true;
   const maxQueueSize = options?.maxQueueSize ?? 200;
   const inspectors = {
@@ -56,22 +46,44 @@ export const withOnBootNetworkActivityRecording = (
       ...options?.inspectors,
     };
 
+  const eventsListener = createEventsListener<NetworkActivityEventMap>();
   eventsListener.setMaxQueueSize(maxQueueSize);
 
-  // Enable queuing if boot recording is requested
+  const httpInspector = setupHTTPInspector(eventsListener, bootRecordingEnabled && inspectors.http);
+  const webSocketInspector = setupWebSocketInspector(eventsListener, bootRecordingEnabled && inspectors.websocket);
+  const sseInspector = setupSSEInspector(eventsListener, bootRecordingEnabled && inspectors.sse);
+
   if (bootRecordingEnabled) {
-    eventsListener.enableQueuing();
-  
-    if (inspectors?.http) {
-        setupHTTPInspector(eventsListener, true);
-    }
-    if (inspectors?.websocket) {
-        setupWebSocketInspector(eventsListener, true);
-    }
-    if (inspectors?.sse) {
-        setupSSEInspector(eventsListener, true);
-    }
+    eventsListener.enableQueuing();  
   }
 
-  return eventsListener;
+  inspectorsConfig = {
+    eventsListener,
+    httpInspector,
+    webSocketInspector,
+    sseInspector,
+  };
+
+  return inspectorsConfig;
 };
+
+/**
+ * Enable network activity recording during app boot, before DevTools connects.
+ * Call this at the root of your app to capture early network requests.
+ * 
+ * @example
+ * ```tsx
+ * import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
+ * 
+ * // At app entry point, before any network requests
+ * withOnBootNetworkActivityRecording();
+ * 
+ * function App() {
+ *   useNetworkActivityDevTools();
+ *   // ...
+ * }
+ * ```
+ */
+export const withOnBootNetworkActivityRecording = (options?: BootRecordingOptions) => {
+  createDefaultInspectorsConfig(options);
+}

@@ -7,6 +7,7 @@ import type { NetworkActivityEventMap } from '../../shared/client';
 
 const overridesRegistry = getOverridesRegistry();
 let httpInspector: ReturnType<typeof getHTTPInspector> | null = null;
+export type HTTPInspectorInstance = ReturnType<typeof getHTTPInspector>;
 
 /**
  * Setup HTTP inspector to forward events to the provided events listener
@@ -50,13 +51,4 @@ export const setupHTTPInspector = (
   return httpInspector;
 };
 
-export type HTTPInspectorInstance = ReturnType<typeof getHTTPInspector>;
 
-/**
- * Get or create the HTTP inspector instance (does not enable it)
- */
-export const getHTTPInspectorInstance = (
-  eventsListener: EventsListener<NetworkActivityEventMap>
-): HTTPInspectorInstance => {
-  return setupHTTPInspector(eventsListener);
-};

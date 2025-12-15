@@ -46,12 +46,3 @@ export const setupWebSocketInspector = (
 
   return websocketInspector;
 };
-
-/**
- * Get or create the WebSocket inspector instance (does not enable it)
- */
-export const getWebSocketInspectorInstance = (
-  eventsListener: EventsListener<NetworkActivityEventMap>
-) => {
-  return setupWebSocketInspector(eventsListener);
-};

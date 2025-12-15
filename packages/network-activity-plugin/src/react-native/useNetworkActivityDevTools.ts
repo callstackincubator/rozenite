@@ -7,14 +7,10 @@ import {
   NetworkActivityDevToolsConfig,
   validateConfig,
 } from './config';
-import { getHTTPInspectorInstance } from './http/http-setup';
-import { getWebSocketInspectorInstance } from './websocket/websocket-setup';
-import { getSSEInspectorInstance } from './sse/sse-setup';
-import { withOnBootNetworkActivityRecording } from './withOnBootNetworkActivityRecording';
+import { createDefaultInspectorsConfig } from './withOnBootNetworkActivityRecording';
 import { getResponseBody } from './http/http-utils';
 
-const eventsListener = withOnBootNetworkActivityRecording();
-
+const inspectorsConfig = createDefaultInspectorsConfig();
 const overridesRegistry = getOverridesRegistry();
 
 export const useNetworkActivityDevTools = (
@@ -29,6 +25,9 @@ export const useNetworkActivityDevTools = (
   const isWebSocketInspectorEnabled = config.inspectors?.websocket ?? true;
   const isSSEInspectorEnabled = config.inspectors?.sse ?? true; 
   const showUrlAsName = config.clientUISettings?.showUrlAsName;
+
+
+  const { eventsListener, httpInspector, webSocketInspector, sseInspector } = inspectorsConfig;
 
   useEffect(() => {
     if (!client) {
@@ -84,7 +83,6 @@ export const useNetworkActivityDevTools = (
       return;
     }
 
-    const httpInspector = getHTTPInspectorInstance(eventsListener);
     const networkRequestsRegistry = httpInspector.getNetworkRequestsRegistry();
 
     const subscriptions = [
@@ -126,25 +124,23 @@ export const useNetworkActivityDevTools = (
       return;
     }
 
-    const websocketInspector = getWebSocketInspectorInstance(eventsListener);
-
     const subscriptions = [
       client.onMessage('network-enable', () => {
-        websocketInspector.enable();
+        webSocketInspector.enable();
       }),
       client.onMessage('network-disable', () => {
-        websocketInspector.disable();
+        webSocketInspector.disable();
       }),
     ];
 
     // If recording was previously enabled, enable the inspector (hot reload)
     if (isRecordingEnabledRef.current) {
-      websocketInspector.enable();
+      webSocketInspector.enable();
     }
 
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
-      websocketInspector.dispose();
+      webSocketInspector.dispose();
     };
   }, [client, isWebSocketInspectorEnabled]);
 
@@ -152,8 +148,6 @@ export const useNetworkActivityDevTools = (
     if (!client || !isSSEInspectorEnabled) {
       return;
     }
-
-    const sseInspector = getSSEInspectorInstance(eventsListener);
 
     const subscriptions = [
       client.onMessage('network-enable', () => {

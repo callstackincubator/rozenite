@@ -11,11 +11,8 @@ const isDev = process.env.NODE_ENV !== 'production';
 const isServer = typeof window === 'undefined';
 
 if (isDev && !isWeb && !isServer) {
-  withOnBootNetworkActivityRecording =
-    require('./src/react-native/withOnBootNetworkActivityRecording').withOnBootNetworkActivityRecording;
-
-  useNetworkActivityDevTools =
-    require('./src/react-native/useNetworkActivityDevTools').useNetworkActivityDevTools;
+  useNetworkActivityDevTools = require('./src/react-native/useNetworkActivityDevTools').useNetworkActivityDevTools;
+  withOnBootNetworkActivityRecording = require('./src/react-native/withOnBootNetworkActivityRecording').withOnBootNetworkActivityRecording;
 } else {
   useNetworkActivityDevTools = () => null;
   withOnBootNetworkActivityRecording = () => null;
