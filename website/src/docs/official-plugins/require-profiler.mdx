@@ -1,0 +1,165 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Require Profiler Plugin
+
+![](/require-profiler-plugin.png)
+
+The Require Profiler plugin instruments `require()` calls in your React Native app to track module initialization times, helping you identify which modules take the longest to initialize and which are great candidates for lazy evaluation.
+
+## What is Require Profiler Plugin?
+
+The Require Profiler plugin is a performance analysis tool that helps you understand and optimize your app's module loading performance by providing:
+
+- **Module Initialization Profiling**: Automatically instruments all `require()` calls to track initialization times
+- **Flame Graph Visualization**: Interactive flame graph showing the module dependency tree with timing information
+- **Performance Insights**: Identify slow-loading modules that impact app startup time
+- **Lazy Loading Candidates**: Discover modules that are good candidates for lazy evaluation
+- **Dependency Analysis**: Visualize the complete module dependency graph with timing data
+- **Real-time Metrics**: View total initialization time, module count, and per-module evaluation times
+
+## Installation
+
+Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
+
+Install the Require Profiler plugin as a development dependency using your preferred package manager:
+
+<PackageManagerTabs command="install -D @rozenite/require-profiler-plugin" />
+
+## Configuration
+
+### Metro Configuration
+
+Add the require profiler instrumentation to your Metro configuration using the `enhanceMetroConfig` option in `withRozenite`:
+
+```javascript title="metro.config.js"
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { withRozenite } = require('@rozenite/metro');
+const {
+  withRozeniteRequireProfiler,
+} = require('@rozenite/require-profiler-plugin/metro');
+
+const defaultConfig = getDefaultConfig(__dirname);
+
+module.exports = withRozenite(
+  mergeConfig(defaultConfig, {
+    // Your existing Metro configuration
+  }),
+  {
+    enabled: process.env.WITH_ROZENITE === 'true',
+    enhanceMetroConfig: (config) => withRozeniteRequireProfiler(config),
+  },
+);
+```
+
+### React Native Integration
+
+Add the DevTools hook to your React Native app:
+
+```typescript title="App.tsx"
+import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
+
+function App() {
+  // Enable Require Profiler DevTools
+  useRequireProfilerDevTools();
+
+  return <YourApp />;
+}
+```
+
+## Usage
+
+Once configured, the Require Profiler plugin will automatically appear in your React Native DevTools sidebar as "Metro Require Profiler". Click on it to access:
+
+### Flame Graph Visualization
+
+- **Interactive Visualization**: Navigate through your module dependency tree
+- **Color-coded Timing**: Red modules indicate slow initialization (>70% of max time), blue modules indicate fast initialization
+- **Zoom and Focus**: Click any module to zoom into specific parts of the dependency tree
+- **Module Details**: Hover over modules to see basic information, click for detailed sidebar view
+
+### Module Details Panel
+
+When you click on a module in the flame graph, the sidebar shows:
+
+- **Evaluation Time**: How long the module took to initialize
+- **Module Path**: Full file path and name
+- **Dependencies Count**: Number of direct dependencies
+- **Parent Modules**: Which modules imported this module
+
+### Performance Metrics
+
+The header bar displays key performance indicators:
+
+- **Total Initialization Time**: Sum of all module initialization times
+- **Module Count**: Total number of modules loaded
+- **Entry Point**: The main module that started the loading chain
+
+## Analyzing Performance
+
+### Identifying Slow Modules
+
+The flame graph makes it easy to spot modules that take a long time to initialize. Look for:
+
+- **Red modules** (>70% of max time): These are your slowest modules
+- **Wide modules**: Modules that take up a lot of horizontal space in the graph
+- **Deep dependency chains**: Modules that load many dependencies recursively
+
+### Finding Lazy Loading Candidates
+
+Modules that are good candidates for lazy loading typically:
+
+- Take significant time to initialize (>100ms)
+- Are not needed immediately at app startup
+- Have many dependencies that could be deferred
+
+### Optimizing App Startup
+
+By identifying and optimizing slow-loading modules, you can:
+
+- **Reduce Initial Bundle Impact**: Move heavy modules to lazy loading
+- **Improve Time to Interactive**: Defer non-critical module initialization
+- **Optimize Dependency Chains**: Break up large dependency trees
+- **Better Code Splitting**: Identify natural boundaries for dynamic imports
+
+## Use Cases
+
+### Performance Optimization
+
+```typescript
+// Instead of:
+import HeavyModule from './HeavyModule';
+
+// Consider lazy loading:
+const HeavyModule = lazy(() => import('./HeavyModule'));
+```
+
+### Bundle Analysis
+
+Use the profiler to understand which parts of your codebase contribute most to startup time, helping you make informed decisions about:
+
+- Which libraries to lazy load
+- Which components to code-split
+- Which utilities to defer until needed
+
+### Development Workflow
+
+- **Quick Feedback**: See immediate impact of code changes on module loading
+- **Regression Detection**: Catch performance regressions in module initialization
+- **Optimization Prioritization**: Focus optimization efforts on the slowest modules
+
+## Contributing
+
+The Require Profiler plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
+
+## Support
+
+If you encounter issues with the Require Profiler plugin:
+
+1. **Check Documentation**: Review this guide for common solutions
+2. **Search Issues**: Look for similar issues in the repository
+3. **Create Issue**: Report bugs or request features
+4. **Community**: Reach out to the Rozenite community for help
+
+---
+
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md).

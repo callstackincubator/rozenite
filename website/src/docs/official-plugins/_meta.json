@@ -38,5 +38,10 @@
     "type": "file",
     "name": "mmkv",
     "label": "MMKV"
+  },
+  {
+    "type": "file",
+    "name": "require-profiler",
+    "label": "Require Profiler"
   }
 ]
