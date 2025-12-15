@@ -1,7 +1,6 @@
 const { withNxMetro } = require('@nx/react-native');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
-const { withRozeniteExpoAtlasPlugin } = require('@rozenite/expo-atlas-plugin');
 const {
   withRozeniteReduxDevTools,
 } = require('@rozenite/redux-devtools-plugin/metro');

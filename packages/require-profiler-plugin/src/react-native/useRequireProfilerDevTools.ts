@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { RequireProfilerEventMap } from '../shared/messaging';
+import { RequireProfilerEventMap } from '../shared';
+import { getRequireTimings } from './timings';
+import { DevSettings } from 'react-native';
 
 export const useRequireProfilerDevTools = () => {
   const client = useRozeniteDevToolsClient<RequireProfilerEventMap>({
@@ -12,35 +14,30 @@ export const useRequireProfilerDevTools = () => {
       return;
     }
 
-    // Listen for data requests
-    const subscription = client.onMessage('request-data', () => {
-      // Check if the global function is available
-      if (
-        typeof global !== 'undefined' &&
-        typeof (global as any).getRequireTimings === 'function'
-      ) {
-        try {
-          // Call the function stored in global context
-          const data = (global as any).getRequireTimings();
+    // Listen for reload and profile requests
+    const reloadSubscription = client.onMessage('reload-and-profile', () => {
+      // Reload the React Native app to start fresh profiling
+      DevSettings.reload();
+    });
 
-          // Send the data back to the UI
-          client.send('data-response', {
-            type: 'data-response',
-            data,
-          });
-        } catch (error) {
-          console.error(
-            '[Rozenite] Require Profiler: Error getting require timings',
-            error,
-          );
-          // Send null on error
-          client.send('data-response', {
-            type: 'data-response',
-            data: null,
-          });
-        }
-      } else {
-        // Function not available, send null
+    // Listen for data requests
+    const dataSubscription = client.onMessage('request-data', () => {
+      try {
+        // Call the function stored in global context
+        const data = getRequireTimings();
+
+        // Send the data back to the UI
+        client.send('data-response', {
+          type: 'data-response',
+          data,
+        });
+      } catch (error) {
+        console.error(
+          '[Rozenite] Require Profiler: Error getting require timings',
+          error,
+        );
+
+        // Send null on error
         client.send('data-response', {
           type: 'data-response',
           data: null,
@@ -49,7 +46,8 @@ export const useRequireProfilerDevTools = () => {
     });
 
     return () => {
-      subscription.remove();
+      reloadSubscription.remove();
+      dataSubscription.remove();
     };
   }, [client]);
 

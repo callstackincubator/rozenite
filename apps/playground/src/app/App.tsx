@@ -25,24 +25,24 @@ import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
 import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { store } from './store';
+import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Wrapper = () => {
   useTanStackQueryDevTools(queryClient);
-  useNetworkActivityDevTools(
-    {
-      clientUISettings: {
-        showUrlAsName: true,
-      }
-    }
-  );
+  useNetworkActivityDevTools({
+    clientUISettings: {
+      showUrlAsName: true,
+    },
+  });
   useMMKVDevTools({
     storages: mmkvStorages,
     blacklist: /user-storage:sensitiveToken/,
   });
   usePerformanceMonitorDevTools();
+  useRequireProfilerDevTools();
 
   return (
     <Stack.Navigator

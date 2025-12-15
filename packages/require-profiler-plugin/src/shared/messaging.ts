@@ -1,29 +1,16 @@
-// Flame graph node structure compatible with react-flame-graph
-export type RequireProfilerFlameGraphNode = {
-  name: string;
-  value: number;
-  tooltip?: string;
-  backgroundColor?: string;
-  color?: string;
-  children?: RequireProfilerFlameGraphNode[];
-};
+import { RequireTimingNode } from './types';
 
-export type RequireProfilerRequestDataEvent = {
-  type: 'request-data';
-};
+export type RequireProfilerRequestDataEvent = Record<string, unknown>;
+
+export type RequireProfilerReloadAndProfileEvent = Record<string, unknown>;
 
 export type RequireProfilerDataResponseEvent = {
   type: 'data-response';
-  data: RequireProfilerFlameGraphNode | null;
+  data: RequireTimingNode | null;
 };
 
-export type RequireProfilerEvent =
-  | RequireProfilerRequestDataEvent
-  | RequireProfilerDataResponseEvent;
-
 export type RequireProfilerEventMap = {
-  [K in RequireProfilerEvent['type']]: Extract<
-    RequireProfilerEvent,
-    { type: K }
-  >;
+  'request-data': RequireProfilerRequestDataEvent;
+  'reload-and-profile': RequireProfilerReloadAndProfileEvent;
+  'data-response': RequireProfilerDataResponseEvent;
 };
