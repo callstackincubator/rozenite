@@ -34,7 +34,7 @@ const customConfig = {
   transformer: {
     getTransformOptions: async () => ({
       transform: {
-        inlineRequires: true,
+        inlineRequires: false,
       },
     }),
   },

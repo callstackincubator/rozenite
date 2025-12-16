@@ -1,7 +1,11 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { FlameGraph, RawData } from 'react-flame-graph';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { RequireProfilerEventMap, RequireTimingNode } from '../shared';
+import {
+  RequireProfilerEventMap,
+  RequireChainMeta,
+  RequireChainData,
+} from '../shared';
 import {
   transformToFlameGraphData,
   calculateStats,
@@ -23,8 +27,13 @@ const App = () => {
   const [selectedNode, setSelectedNode] = useState<RawData | null>(null);
   const [showSidebar, setShowSidebar] = useState(() => window.innerWidth > 768);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [flameGraphData, setFlameGraphData] =
-    useState<RequireTimingNode | null>(null);
+  const [chainsList, setChainsList] = useState<RequireChainMeta[]>([]);
+  const [currentChainIndex, setCurrentChainIndex] = useState(0);
+  const [currentChainData, setCurrentChainData] =
+    useState<RequireChainData | null>(null);
+  const [chainDataCache, setChainDataCache] = useState<
+    Map<number, RequireChainData>
+  >(new Map());
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,34 +55,103 @@ const App = () => {
     pluginId: '@rozenite/require-profiler-plugin',
   });
 
-  // Request data on mount and when client becomes available
+  // Request chains list on mount and when client becomes available
   useEffect(() => {
     if (!client) {
       return;
     }
 
-    // Request initial data
-    client.send('request-data', {});
+    // Request chains list
+    client.send('request-chains-list', {});
     setLoading(true);
 
-    // Listen for data responses
-    const subscription = client.onMessage('data-response', (event) => {
-      setFlameGraphData(event.data);
-      setLoading(false);
+    // Listen for chains list responses
+    const chainsListSubscription = client.onMessage(
+      'chains-list-response',
+      (event) => {
+        setChainsList(event.chains);
+        setLoading(false);
+
+        // If we have chains, request the first one directly
+        if (event.chains.length > 0) {
+          setCurrentChainIndex(0);
+          setLoading(true);
+          client.send('request-chain-data', { chainIndex: 0 });
+        }
+      },
+    );
+
+    // Listen for chain data responses
+    const chainDataSubscription = client.onMessage(
+      'chain-data-response',
+      (event) => {
+        if (event.data) {
+          setChainDataCache(
+            (prev) => new Map(prev.set(event.data.index, event.data)),
+          );
+          setCurrentChainData(event.data);
+        }
+        setLoading(false);
+      },
+    );
+
+    // Listen for new chain notifications (lazy requires)
+    const newChainSubscription = client.onMessage('new-chain', (event) => {
+      setChainsList((prev) => [...prev, event.chain]);
     });
 
     return () => {
-      subscription.remove();
+      chainsListSubscription.remove();
+      chainDataSubscription.remove();
+      newChainSubscription.remove();
     };
   }, [client]);
+
+  const loadChainData = useCallback(
+    (chainIndex: number) => {
+      // Check cache first
+      const cachedData = chainDataCache.get(chainIndex);
+      if (cachedData) {
+        setCurrentChainData(cachedData);
+        return;
+      }
+
+      // Request from client
+      if (client) {
+        setLoading(true);
+        client.send('request-chain-data', { chainIndex });
+      }
+    },
+    [client, chainDataCache],
+  );
 
   const handleRefresh = useCallback(() => {
     if (!client) {
       return;
     }
     setLoading(true);
+    setChainsList([]);
+    setCurrentChainIndex(0);
+    setCurrentChainData(null);
+    setChainDataCache(new Map());
     client.send('reload-and-profile', {});
   }, [client]);
+
+  const handlePrevChain = useCallback(() => {
+    if (currentChainIndex > 0) {
+      const newIndex = currentChainIndex - 1;
+      setCurrentChainIndex(newIndex);
+      loadChainData(newIndex);
+    }
+  }, [currentChainIndex, loadChainData]);
+
+  const handleNextChain = useCallback(() => {
+    if (currentChainIndex < chainsList.length - 1) {
+      const newIndex = currentChainIndex + 1;
+      setCurrentChainIndex(newIndex);
+      loadChainData(newIndex);
+    }
+  }, [currentChainIndex, chainsList.length, loadChainData]);
 
   const handleToggleSidebar = useCallback(() => {
     setShowSidebar((prev) => !prev);
@@ -88,8 +166,8 @@ const App = () => {
 
   // Transform RequireTimingNode to RawData format
   const transformedData = useMemo(() => {
-    return transformToFlameGraphData(flameGraphData);
-  }, [flameGraphData]);
+    return transformToFlameGraphData(currentChainData?.tree || null);
+  }, [currentChainData]);
 
   const stats = useMemo(() => {
     if (!transformedData) {
@@ -173,12 +251,16 @@ const App = () => {
         showSidebar={showSidebar}
         loading={loading}
         clientAvailable={!!client}
+        currentChainIndex={currentChainIndex}
+        totalChains={chainsList.length}
+        onPrevChain={handlePrevChain}
+        onNextChain={handleNextChain}
       />
 
       <InfoBar
         totalTime={stats.totalTime}
         totalModules={stats.totalModules}
-        entryName={transformedData?.name}
+        entryName={currentChainData?.rootModuleName || transformedData?.name}
       />
 
       <div className="main-content">
@@ -187,7 +269,13 @@ const App = () => {
             {loading ? (
               <LoadingState />
             ) : !transformedData || !coloredData ? (
-              <EmptyState message="No data available. Click refresh to load require profiler data." />
+              <EmptyState
+                message={
+                  chainsList.length === 0
+                    ? 'No require chains available. Click refresh to load require profiler data.'
+                    : 'No data available for this chain.'
+                }
+              />
             ) : (
               dimensions.width > 0 &&
               dimensions.height > 0 && (

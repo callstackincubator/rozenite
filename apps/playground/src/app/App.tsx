@@ -24,6 +24,7 @@ import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
 import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
 import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
+import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
 import { store } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 
@@ -62,6 +63,10 @@ const Wrapper = () => {
         component={PerformanceMonitorScreen}
       />
       <Stack.Screen
+        name="RequireProfilerTest"
+        component={RequireProfilerTestScreen}
+      />
+      <Stack.Screen
         name="Config"
         component={ConfigScreen}
         options={{
@@ -97,6 +102,7 @@ const linking = {
       NetworkTest: 'network',
       ReduxTest: 'redux',
       PerformanceMonitor: 'performance',
+      RequireProfilerTest: 'require-profiler-test',
       Config: 'config',
       BottomTabs: 'tabs',
       SuccessiveScreensStack: {

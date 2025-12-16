@@ -1,3 +1,5 @@
+import 'react-native-get-random-values';
+
 import { configureStore } from '@reduxjs/toolkit';
 import counterReducer from './store/counterSlice';
 import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin';

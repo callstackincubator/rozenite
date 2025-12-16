@@ -1,19 +1,25 @@
 export type HeaderProps = {
   onRefresh: () => void;
-  onFetchDataAgain: () => void;
   onToggleSidebar: () => void;
   showSidebar: boolean;
   loading: boolean;
   clientAvailable: boolean;
+  currentChainIndex?: number;
+  totalChains?: number;
+  onPrevChain?: () => void;
+  onNextChain?: () => void;
 };
 
 export const Header = ({
   onRefresh,
-  onFetchDataAgain,
   onToggleSidebar,
   showSidebar,
   loading,
   clientAvailable,
+  currentChainIndex,
+  totalChains,
+  onPrevChain,
+  onNextChain,
 }: HeaderProps) => {
   return (
     <header className="header">
@@ -23,26 +29,51 @@ export const Header = ({
         </div>
       </div>
       <div className="header-right">
-        <button
-          className="btn btn-icon"
-          onClick={onFetchDataAgain}
-          title="Fetch data again"
-          disabled={loading || !clientAvailable}
-          aria-label="Fetch data again"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7,10 12,15 17,10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-        </button>
+        {totalChains !== undefined && totalChains > 0 && (
+          <div className="chain-nav">
+            <button
+              className="btn btn-icon"
+              onClick={onPrevChain}
+              title="Previous chain"
+              disabled={loading || (currentChainIndex ?? 0) === 0}
+              aria-label="Previous chain"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <span className="chain-counter">
+              {(currentChainIndex ?? 0) + 1}/{totalChains}
+            </span>
+            <button
+              className="btn btn-icon"
+              onClick={onNextChain}
+              title="Next chain"
+              disabled={
+                loading || (currentChainIndex ?? 0) === (totalChains ?? 0) - 1
+              }
+              aria-label="Next chain"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+        )}
         <button
           className="btn btn-icon"
           onClick={onRefresh}

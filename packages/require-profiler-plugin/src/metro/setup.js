@@ -1,9 +1,26 @@
-// Initialize timings array
-global.__timings = [];
+// Initialize require chains tracking
+global.__requireChains = []; // Array of completed chains (raw timing data)
+global.__currentChain = null; // Currently active chain with depth tracking
+global.__requireChainListeners = []; // Array of callbacks to notify when a chain completes
 
 // Stack to track nested requires (since endEvent doesn't receive the event name)
 // Shared across all SYSTRACE versions
 const requireStack = [];
+
+/**
+ * Subscribe to chain completion events
+ * @param {Function} callback - Called with chain metadata when a chain completes
+ * @returns {Function} - Unsubscribe function
+ */
+global.__onRequireChainComplete = function (callback) {
+  global.__requireChainListeners.push(callback);
+  return function () {
+    var index = global.__requireChainListeners.indexOf(callback);
+    if (index > -1) {
+      global.__requireChainListeners.splice(index, 1);
+    }
+  };
+};
 
 /**
  * Creates an instrumented SYSTRACE object that records require timings.
@@ -25,9 +42,30 @@ const createInstrumentedSystrace = (originalSystrace) => {
         eventName.startsWith('JS_require_')
       ) {
         const moduleIdentifier = eventName.slice('JS_require_'.length);
+        const startTime = Date.now();
+
+        // Check if this is the start of a new require chain
+        if (!global.__currentChain) {
+          // Get root module name from the modules registry
+          const modules = global.__r?.getModules();
+          const module = modules?.get(parseInt(moduleIdentifier, 10));
+          const rootModuleName = module?.verboseName || moduleIdentifier;
+
+          // Start a new require chain
+          global.__currentChain = {
+            rootModuleId: parseInt(moduleIdentifier, 10) || moduleIdentifier,
+            rootModuleName,
+            depth: 1,
+            timings: [],
+          };
+        } else {
+          // Increment depth for nested require
+          global.__currentChain.depth++;
+        }
+
         requireStack.push({
           moduleIdentifier,
-          startTime: Date.now(),
+          startTime,
         });
       }
 
@@ -39,7 +77,7 @@ const createInstrumentedSystrace = (originalSystrace) => {
 
     endEvent: function (args) {
       // Pop the most recent require event from the stack
-      if (requireStack.length > 0) {
+      if (requireStack.length > 0 && global.__currentChain) {
         const { moduleIdentifier, startTime } = requireStack.pop();
         const endTime = Date.now();
         const duration = endTime - startTime;
@@ -48,10 +86,40 @@ const createInstrumentedSystrace = (originalSystrace) => {
         // Try to parse as number first
         const moduleId = parseInt(moduleIdentifier, 10);
 
-        global.__timings.push({
+        // Add timing to current chain
+        global.__currentChain.timings.push({
           moduleId: isNaN(moduleId) ? moduleIdentifier : moduleId,
           time: duration,
         });
+
+        // Decrement depth and check if chain is complete
+        global.__currentChain.depth--;
+
+        if (global.__currentChain.depth === 0) {
+          // Chain is complete, store it and reset
+          var completedChain = {
+            index: global.__requireChains.length,
+            rootModuleId: global.__currentChain.rootModuleId,
+            rootModuleName: global.__currentChain.rootModuleName,
+            timings: global.__currentChain.timings,
+          };
+          global.__requireChains.push(completedChain);
+          global.__currentChain = null;
+
+          // Notify listeners about the new chain
+          var listeners = global.__requireChainListeners;
+          for (var i = 0; i < listeners.length; i++) {
+            try {
+              listeners[i]({
+                index: completedChain.index,
+                rootModuleId: completedChain.rootModuleId,
+                rootModuleName: completedChain.rootModuleName,
+              });
+            } catch (e) {
+              // Ignore listener errors
+            }
+          }
+        }
       }
 
       // Call original if it exists
@@ -82,18 +150,34 @@ global.__patchSystrace = () => {
 };
 
 /**
- * Builds a flame graph tree structure of the require flow.
+ * Returns a list of all completed require chains (metadata only).
+ * This is lightweight and doesn't build the tree structures.
+ *
+ * @returns {Array} Array of chain metadata objects
+ */
+const getRequireChainsList = () => {
+  return global.__requireChains.map((chain) => ({
+    index: chain.index,
+    rootModuleId: chain.rootModuleId,
+    rootModuleName: chain.rootModuleName,
+  }));
+};
+
+/**
+ * Builds a flame graph tree structure for a specific require chain.
  * Compatible with react-flame-graph format.
  *
- * @returns {Object} Tree structure with:
- *   - name: module name (filename)
- *   - value: total time (self + all descendants)
- *   - tooltip: full module path
- *   - children: array of child nodes (dependencies)
+ * @param {number} chainIndex - The index of the chain to build
+ * @returns {Object|null} Tree structure for the chain or null if not found
  */
-const getRequireTimings = () => {
+const getRequireChainData = (chainIndex) => {
+  const chain = global.__requireChains[chainIndex];
+  if (!chain) {
+    return null;
+  }
+
   const modules = global.__r.getModules();
-  const timings = global.__timings || [];
+  const timings = chain.timings;
 
   // Create maps of timings for quick lookup
   // We need both: by numeric moduleId and by verboseName (path string)
@@ -172,9 +256,29 @@ const getRequireTimings = () => {
     };
   };
 
-  // Start from entry point (module 0)
-  return buildTree(0);
+  // Start from the root module of this chain
+  // rootModuleId could be a number or string (verboseName)
+  let rootId = chain.rootModuleId;
+  if (typeof rootId === 'string') {
+    // Try to find the module by verboseName
+    // Use forEach instead of entries() for older JS compatibility
+    modules.forEach(function (mod, id) {
+      if (mod.verboseName === rootId) {
+        rootId = id;
+      }
+    });
+  }
+
+  const tree = buildTree(rootId);
+
+  return {
+    index: chain.index,
+    rootModuleId: chain.rootModuleId,
+    rootModuleName: chain.rootModuleName,
+    tree,
+  };
 };
 
 // Export for use
-global.getRequireTimings = getRequireTimings;
+global.getRequireChainsList = getRequireChainsList;
+global.getRequireChainData = getRequireChainData;

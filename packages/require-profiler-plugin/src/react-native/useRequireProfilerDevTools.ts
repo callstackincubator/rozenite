@@ -1,7 +1,11 @@
 import { useEffect } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { RequireProfilerEventMap } from '../shared';
-import { getRequireTimings } from './timings';
+import {
+  getRequireChainsList,
+  getRequireChainData,
+  onRequireChainComplete,
+} from './timings';
 import { DevSettings } from 'react-native';
 
 export const useRequireProfilerDevTools = () => {
@@ -20,34 +24,50 @@ export const useRequireProfilerDevTools = () => {
       DevSettings.reload();
     });
 
-    // Listen for data requests
-    const dataSubscription = client.onMessage('request-data', () => {
-      try {
-        // Call the function stored in global context
-        const data = getRequireTimings();
+    // Listen for chains list requests
+    const chainsListSubscription = client.onMessage(
+      'request-chains-list',
+      () => {
+        try {
+          const chains = getRequireChainsList();
+          client.send('chains-list-response', { chains });
+        } catch (error) {
+          console.error(
+            '[Rozenite] Require Profiler: Error getting require chains list',
+            error,
+          );
+          client.send('chains-list-response', { chains: [] });
+        }
+      },
+    );
 
-        // Send the data back to the UI
-        client.send('data-response', {
-          type: 'data-response',
-          data,
-        });
-      } catch (error) {
-        console.error(
-          '[Rozenite] Require Profiler: Error getting require timings',
-          error,
-        );
+    // Listen for chain data requests
+    const chainDataSubscription = client.onMessage(
+      'request-chain-data',
+      (event) => {
+        try {
+          const data = getRequireChainData(event.chainIndex);
+          client.send('chain-data-response', { data });
+        } catch (error) {
+          console.error(
+            '[Rozenite] Require Profiler: Error getting require chain data',
+            error,
+          );
+          client.send('chain-data-response', { data: null });
+        }
+      },
+    );
 
-        // Send null on error
-        client.send('data-response', {
-          type: 'data-response',
-          data: null,
-        });
-      }
+    // Subscribe to new chain completion events
+    const unsubscribeChainComplete = onRequireChainComplete((chain) => {
+      client.send('new-chain', { chain });
     });
 
     return () => {
       reloadSubscription.remove();
-      dataSubscription.remove();
+      chainsListSubscription.remove();
+      chainDataSubscription.remove();
+      unsubscribeChainComplete();
     };
   }, [client]);
 

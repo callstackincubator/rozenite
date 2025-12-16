@@ -110,6 +110,20 @@ body {
   gap: 8px;
 }
 
+.chain-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+}
+
+.chain-counter {
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 32px;
+  text-align: center;
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
