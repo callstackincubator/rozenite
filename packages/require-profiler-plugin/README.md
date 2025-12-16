@@ -6,6 +6,8 @@
 
 The Rozenite Require Profiler Plugin instruments `require()` calls during your React Native app's initial loading to track module initialization times. It helps you identify which modules impact app startup performance and optimize your initial bundle loading.
 
+![Require Profiler Plugin](https://rozenite.dev/require-profiler-plugin.png)
+
 ## Features
 
 - **Initial App Loading Profiling**: Automatically instruments `require()` calls during app startup to track initialization times
