@@ -1,18 +1,14 @@
 import { NetworkActivityEventMap } from '../shared/client';
 import { createEventsListener, EventsListenerOptions } from './events-listener';
-import { setupHTTPInspector } from './http/http-setup';
-import { setupWebSocketInspector } from './websocket/websocket-setup';
-import { setupSSEInspector } from './sse/sse-setup';
+import { getNetworkInspector, NetworkInspector } from './network-inspector';
 import type { NetworkInspectorConfig } from './config';
 
-type InspectorsConfig = {
+type InspectorsConfiguration = {
     eventsListener: ReturnType<typeof createEventsListener<NetworkActivityEventMap>>;
-    httpInspector: ReturnType<typeof setupHTTPInspector>;
-    webSocketInspector: ReturnType<typeof setupWebSocketInspector>;
-    sseInspector: ReturnType<typeof setupSSEInspector>;
+    networkInspector: NetworkInspector;
 }
 
-let inspectorsConfig: InspectorsConfig;
+let inspectorsConfig: InspectorsConfiguration;
 
 let bootRecordingEnabled = false;
 
@@ -30,7 +26,7 @@ export type BootRecordingOptions = NetworkInspectorConfig & EventsListenerOption
  * 
  * @internal
  */
-export const createDefaultInspectorsConfig = (
+export const createNetworkInspectorsConfiguration = (
   options?: BootRecordingOptions,
 ) => {
   if(inspectorsConfig) {
@@ -49,19 +45,17 @@ export const createDefaultInspectorsConfig = (
   const eventsListener = createEventsListener<NetworkActivityEventMap>();
   eventsListener.setMaxQueueSize(maxQueueSize);
 
-  const httpInspector = setupHTTPInspector(eventsListener, bootRecordingEnabled && inspectors.http);
-  const webSocketInspector = setupWebSocketInspector(eventsListener, bootRecordingEnabled && inspectors.websocket);
-  const sseInspector = setupSSEInspector(eventsListener, bootRecordingEnabled && inspectors.sse);
+  const networkInspector = getNetworkInspector();
+  networkInspector.setup(eventsListener);
 
   if (bootRecordingEnabled) {
-    eventsListener.enableQueuing();  
+    eventsListener.enableQueuing();
+    networkInspector.enable(inspectors);
   }
 
   inspectorsConfig = {
     eventsListener,
-    httpInspector,
-    webSocketInspector,
-    sseInspector,
+    networkInspector,
   };
 
   return inspectorsConfig;
@@ -85,5 +79,5 @@ export const createDefaultInspectorsConfig = (
  * ```
  */
 export const withOnBootNetworkActivityRecording = (options?: BootRecordingOptions) => {
-  createDefaultInspectorsConfig(options);
+  createNetworkInspectorsConfiguration(options);
 }

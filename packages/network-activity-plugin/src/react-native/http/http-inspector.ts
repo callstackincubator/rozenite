@@ -1,31 +1,29 @@
-import { createNanoEvents } from 'nanoevents';  
+import { createNanoEvents } from 'nanoevents';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { XHRInterceptor } from './xhr-interceptor';
-import { getRequestBody, getResponseSize, getInitiatorFromStack } from './http-utils';
+import { getRequestBody, getResponseSize, getInitiatorFromStack, setupRequestOverride } from './http-utils';
 import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
 import { getContentType } from '../utils';
-import type { NetworkActivityEventMap, HttpMethod } from '../../shared/client';
+import { getOverridesRegistry } from './overrides-registry';
+import type { HttpEventMap, HttpMethod } from '../../shared/http-events';
+import type { Inspector } from '../inspector';
 
 // HTTP-specific event map for the inspector
-type HttpEventMap = Pick<
-  NetworkActivityEventMap,
-  'request-sent' | 'response-received' | 'request-completed' | 'request-failed'
->;
+export type { HttpEventMap };
+
+export const HTTP_EVENTS: (keyof HttpEventMap)[] = [
+  'request-sent',
+  'response-received',
+  'request-completed',
+  'request-failed',
+];
 
 type NanoEventsMap = {
   [K in keyof HttpEventMap]: (data: HttpEventMap[K]) => void;
 };
 
-export type HTTPInspector = {
-  enable: () => void;
-  disable: () => void;
-  isEnabled: () => boolean;
-  dispose: () => void;
+export type HTTPInspector = Inspector<HttpEventMap> & {
   getNetworkRequestsRegistry: () => ReturnType<typeof getNetworkRequestsRegistry>;
-  on: <TEventType extends keyof HttpEventMap>(
-    event: TEventType,
-    callback: (data: HttpEventMap[TEventType]) => void
-  ) => () => void;
 };
 
 const READY_STATE_HEADERS_RECEIVED = 2;
@@ -34,12 +32,17 @@ export const getHTTPInspector = (): HTTPInspector => {
   const eventEmitter = createNanoEvents<NanoEventsMap>();
   const networkRequestsRegistry = getNetworkRequestsRegistry();
 
+  const overridesRegistry = getOverridesRegistry();
+  XHRInterceptor.setOverrideCallback((request) =>
+    setupRequestOverride(overridesRegistry, request)
+  );
+  
   return {
     enable: () => {
       if (XHRInterceptor.isInterceptorEnabled()) return;
 
       XHRInterceptor.disableInterception();
-      
+
       XHRInterceptor.setSendCallback((data, request) => {
         const initiator = getInitiatorFromStack();
         const sendTime = Date.now();
@@ -138,10 +141,9 @@ export const getHTTPInspector = (): HTTPInspector => {
 
     getNetworkRequestsRegistry: () => networkRequestsRegistry,
 
-    on: <TEventType extends keyof HttpEventMap>(event: TEventType, callback: (data: HttpEventMap[TEventType]) => void) => {
-      // Cast to work around TypeScript intersection type limitations with nanoevents
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return eventEmitter.on(event as any, callback as any);
-    },
+    on: <TEventType extends keyof HttpEventMap>(
+      event: TEventType,
+      callback: (data: HttpEventMap[TEventType]) => void
+    ) => eventEmitter.on(event, callback as NanoEventsMap[TEventType]),
   };
 };

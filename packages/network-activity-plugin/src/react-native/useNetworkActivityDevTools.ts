@@ -7,10 +7,10 @@ import {
   NetworkActivityDevToolsConfig,
   validateConfig,
 } from './config';
-import { createDefaultInspectorsConfig } from './withOnBootNetworkActivityRecording';
+import { createNetworkInspectorsConfiguration } from './withOnBootNetworkActivityRecording';
 import { getResponseBody } from './http/http-utils';
 
-const inspectorsConfig = createDefaultInspectorsConfig();
+const inspectorsConfig = createNetworkInspectorsConfiguration();
 const overridesRegistry = getOverridesRegistry();
 
 export const useNetworkActivityDevTools = (
@@ -23,11 +23,10 @@ export const useNetworkActivityDevTools = (
 
   const isHttpInspectorEnabled = config.inspectors?.http ?? true;
   const isWebSocketInspectorEnabled = config.inspectors?.websocket ?? true;
-  const isSSEInspectorEnabled = config.inspectors?.sse ?? true; 
+  const isSSEInspectorEnabled = config.inspectors?.sse ?? true;
   const showUrlAsName = config.clientUISettings?.showUrlAsName;
 
-
-  const { eventsListener, httpInspector, webSocketInspector, sseInspector } = inspectorsConfig;
+  const { eventsListener, networkInspector } = inspectorsConfig;
 
   useEffect(() => {
     if (!client) {
@@ -46,17 +45,19 @@ export const useNetworkActivityDevTools = (
     const sendClientUISettings = () => {
       client.send('client-ui-settings', {
         settings: {
-          showUrlAsName: showUrlAsName ?? DEFAULT_CONFIG.clientUISettings?.showUrlAsName,
+          showUrlAsName:
+            showUrlAsName ?? DEFAULT_CONFIG.clientUISettings?.showUrlAsName,
         },
       });
-    }
+    };
 
     const subscriptions = [
       client.onMessage('network-enable', () => {
         isRecordingEnabledRef.current = true;
+
         // Connect the events listener to send events through the DevTools client
         // This also automatically flushes any queued messages
-        eventsListener.connect((type, data) => client.send(type, data));
+        eventsListener.connect(client.send);
       }),
       client.onMessage('network-disable', () => {
         isRecordingEnabledRef.current = false;
@@ -64,7 +65,7 @@ export const useNetworkActivityDevTools = (
       client.onMessage('set-overrides', (data) => {
         overridesRegistry.setOverrides(data.overrides);
       }),
-      
+
       client.onMessage('get-client-ui-settings', () => {
         sendClientUISettings();
       }),
@@ -83,14 +84,15 @@ export const useNetworkActivityDevTools = (
       return;
     }
 
-    const networkRequestsRegistry = httpInspector.getNetworkRequestsRegistry();
+    const networkRequestsRegistry =
+      networkInspector.http.getNetworkRequestsRegistry();
 
     const subscriptions = [
       client.onMessage('network-enable', () => {
-        httpInspector.enable();
+        networkInspector.http.enable();
       }),
       client.onMessage('network-disable', () => {
-        httpInspector.disable();
+        networkInspector.http.disable();
       }),
       client.onMessage('get-response-body', async ({ requestId }) => {
         const request = networkRequestsRegistry.getEntry(requestId);
@@ -110,12 +112,12 @@ export const useNetworkActivityDevTools = (
 
     // If recording was previously enabled, enable the inspector (hot reload)
     if (isRecordingEnabledRef.current) {
-      httpInspector.enable();
+      networkInspector.http.enable();
     }
 
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
-      httpInspector.dispose();
+      networkInspector.http.dispose();
     };
   }, [client, isHttpInspectorEnabled]);
 
@@ -126,21 +128,21 @@ export const useNetworkActivityDevTools = (
 
     const subscriptions = [
       client.onMessage('network-enable', () => {
-        webSocketInspector.enable();
+        networkInspector.websocket.enable();
       }),
       client.onMessage('network-disable', () => {
-        webSocketInspector.disable();
+        networkInspector.websocket.disable();
       }),
     ];
 
     // If recording was previously enabled, enable the inspector (hot reload)
     if (isRecordingEnabledRef.current) {
-      webSocketInspector.enable();
+      networkInspector.websocket.enable();
     }
 
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
-      webSocketInspector.dispose();
+      networkInspector.websocket.dispose();
     };
   }, [client, isWebSocketInspectorEnabled]);
 
@@ -151,21 +153,21 @@ export const useNetworkActivityDevTools = (
 
     const subscriptions = [
       client.onMessage('network-enable', () => {
-        sseInspector.enable();
+        networkInspector.sse.enable();
       }),
       client.onMessage('network-disable', () => {
-        sseInspector.disable();
+        networkInspector.sse.disable();
       }),
     ];
 
     // If recording was previously enabled, enable the inspector (hot reload)
     if (isRecordingEnabledRef.current) {
-      sseInspector.enable();
+      networkInspector.sse.enable();
     }
 
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
-      sseInspector.dispose();
+      networkInspector.sse.dispose();
     };
   }, [client, isSSEInspectorEnabled]);
 
