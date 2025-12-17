@@ -34,10 +34,13 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
   /**
    * Connect the actual send function and automatically flush queued messages
    */
-  public connect(sendFn: SendFunction<TEventMap>): void {
+  public connect(
+    sendFn: SendFunction<TEventMap>,
+    filterFn?: (message: QueuedMessage<TEventMap>) => boolean
+  ): void {
     this.sendFunction = sendFn;
     this.isQueuing = false;
-    this.flushQueue();
+    this.flushQueue(filterFn);
   }
 
   public isInQueueMode(): boolean {
@@ -48,7 +51,7 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
    * Send a message (queued if not connected, sent directly if connected)
    */
   public send<K extends keyof TEventMap>(type: K, data: TEventMap[K]): void {
-    if(this.isQueuing) {
+    if (this.isQueuing) {
       this.enqueueMessage({ type, data });
     } else if (this.sendFunction) {
       this.sendFunction(type, data);
@@ -63,7 +66,9 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
     this.messageQueue.push(message);
   }
 
-  private flushQueue(): void {
+  private flushQueue(
+    filterFn?: (message: QueuedMessage<TEventMap>) => boolean
+  ): void {
     if (!this.sendFunction) {
       return;
     }
@@ -71,6 +76,9 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
     while (this.messageQueue.length > 0) {
       const message = this.messageQueue.shift();
       if (message) {
+        if (filterFn && !filterFn(message)) {
+          continue;
+        }
         this.sendFunction(message.type, message.data);
       }
     }

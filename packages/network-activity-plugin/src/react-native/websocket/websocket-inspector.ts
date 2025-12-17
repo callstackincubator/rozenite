@@ -22,6 +22,12 @@ export const WEBSOCKET_EVENTS: (keyof WebSocketEventMap)[] = [
   'websocket-connection-status-changed',
 ];
 
+export const isWebSocketEvent = (
+  type: string
+): type is keyof WebSocketEventMap => {
+  return (WEBSOCKET_EVENTS as readonly string[]).includes(type);
+};
+
 export const getWebSocketInspector = (): WebSocketInspector => {
   const eventEmitter = createNanoEvents<NanoEventsMap>();
   const socketUrlMap = new Map<number, string>();

@@ -2,6 +2,9 @@ import { useEffect, useRef } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { getOverridesRegistry } from './http/overrides-registry';
 import { NetworkActivityEventMap } from '../shared/client';
+import { isHttpEvent } from './http/http-inspector';
+import { isWebSocketEvent } from './websocket/websocket-inspector';
+import { isSSEEvent } from './sse/sse-inspector';
 import {
   DEFAULT_CONFIG,
   NetworkActivityDevToolsConfig,
@@ -57,7 +60,21 @@ export const useNetworkActivityDevTools = (
 
         // Connect the events listener to send events through the DevTools client
         // This also automatically flushes any queued messages
-        eventsListener.connect(client.send);
+        eventsListener.connect(client.send, (message) => {
+
+          // The below allow filtering out events based on the configuration passed to the hook
+          const type = message.type;
+          if (isHttpEvent(type)) {
+            return isHttpInspectorEnabled;
+          }
+          if (isWebSocketEvent(type)) {
+            return isWebSocketInspectorEnabled;
+          }
+          if (isSSEEvent(type)) {
+            return isSSEInspectorEnabled;
+          }
+          return true;
+        });
       }),
       client.onMessage('network-disable', () => {
         isRecordingEnabledRef.current = false;
@@ -77,7 +94,13 @@ export const useNetworkActivityDevTools = (
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
     };
-  }, [client, showUrlAsName]);
+  }, [
+    client,
+    showUrlAsName,
+    isHttpInspectorEnabled,
+    isWebSocketInspectorEnabled,
+    isSSEInspectorEnabled,
+  ]);
 
   useEffect(() => {
     if (!client || !isHttpInspectorEnabled) {

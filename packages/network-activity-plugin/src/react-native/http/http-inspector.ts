@@ -18,6 +18,10 @@ export const HTTP_EVENTS: (keyof HttpEventMap)[] = [
   'request-failed',
 ];
 
+export const isHttpEvent = (type: string): type is keyof HttpEventMap => {
+  return (HTTP_EVENTS as readonly string[]).includes(type);
+};
+
 type NanoEventsMap = {
   [K in keyof HttpEventMap]: (data: HttpEventMap[K]) => void;
 };

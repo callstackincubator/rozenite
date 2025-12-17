@@ -18,6 +18,10 @@ export const SSE_EVENTS: (keyof SSEEventMap)[] = [
   'sse-close',
 ];
 
+export const isSSEEvent = (type: string): type is keyof SSEEventMap => {
+  return (SSE_EVENTS as readonly string[]).includes(type);
+};
+
 export const getSSEInspector = (): SSEInspector => {
   const eventEmitter = createNanoEvents<NanoEventsMap>();
 
