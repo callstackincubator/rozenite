@@ -16,6 +16,7 @@ export const HTTP_EVENTS: (keyof HttpEventMap)[] = [
   'response-received',
   'request-completed',
   'request-failed',
+  'request-progress',
 ];
 
 export const isHttpEvent = (type: string): type is keyof HttpEventMap => {
@@ -76,6 +77,16 @@ export const getHTTPInspector = (): HTTPInspector => {
           }
         });
 
+        request.addEventListener('progress', (event) => {
+          eventEmitter.emit('request-progress', {
+            requestId: requestId,
+            timestamp: Date.now(),
+            loaded: event.loaded,
+            total: event.total,
+            lengthComputable: event.lengthComputable,
+          });
+        });
+
         request.addEventListener('load', () => {
           eventEmitter.emit('response-received', {
             requestId: requestId,
@@ -122,6 +133,16 @@ export const getHTTPInspector = (): HTTPInspector => {
             type: 'XHR',
             error: 'Aborted',
             canceled: true,
+          });
+        });
+
+        request.addEventListener('timeout', () => {
+          eventEmitter.emit('request-failed', {
+            requestId: requestId,
+            timestamp: Date.now(),
+            type: 'XHR',
+            error: 'Timeout',
+            canceled: false,
           });
         });
       });

@@ -159,7 +159,7 @@ export const api = {
   getLargeFile: async (): Promise<ArrayBuffer> => {
     const cacheBuster = Date.now();
     const response = await fetch(
-      `https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson?cb=${cacheBuster}`,
+      `https://proof.ovh.net/files/10Mb.dat?cb=${cacheBuster}`,
       {
         headers: {
           'X-Rozenite-Test': 'large-download',
