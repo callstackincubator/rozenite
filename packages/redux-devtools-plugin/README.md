@@ -73,6 +73,14 @@ const store = createStore(
 export default store;
 ```
 
+##### Configuration Options
+
+To see more actions in the Redux DevTools, increase the `maxAge` option:
+
+```ts
+rozeniteDevToolsEnhancer({ maxAge: 150 }) // Default is 50
+```
+
 ### 3. Configure Metro
 
 Wrap your Metro configuration with `withRozeniteReduxDevTools`:

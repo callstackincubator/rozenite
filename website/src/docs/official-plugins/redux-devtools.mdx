@@ -133,6 +133,14 @@ Redux DevTools work out of the box with Android emulators, but when using a phys
 adb reverse tcp:8765 tcp:8765
 ```
 
+#### Configuration Options
+
+To see more actions in the Redux DevTools, increase the `maxAge` option:
+
+```ts
+rozeniteDevToolsEnhancer({ maxAge: 150 }) // Default is 50
+```
+
 ## Contributing
 
 The Redux DevTools plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
