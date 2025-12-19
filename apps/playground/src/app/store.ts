@@ -9,7 +9,11 @@ export const store = configureStore({
     counter: counterReducer,
   },
   enhancers: (getDefaultEnhancers) =>
-    getDefaultEnhancers().concat(rozeniteDevToolsEnhancer()),
+    getDefaultEnhancers().concat(
+      rozeniteDevToolsEnhancer({
+        maxAge: 150
+      })
+    ),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -23,6 +23,9 @@ export const useHandleDevToolsMessages = (
 
         switch (type) {
           case 'TRIGGER_ERROR': {
+            // Code from React Query External Sync:
+            // https://github.com/LovesWorking/react-query-external-sync/blob/main/src/react-query-external-sync/useSyncQueriesExternal.ts#L717
+
             const __previousQueryOptions = activeQuery.options;
             const error = new Error('Unknown error from devtools');
 
@@ -42,6 +45,9 @@ export const useHandleDevToolsMessages = (
             break;
           }
           case 'TRIGGER_LOADING': {
+            // Code from React Query External Sync:
+            // https://github.com/LovesWorking/react-query-external-sync/blob/main/src/react-query-external-sync/useSyncQueriesExternal.ts#L742
+
             if (!activeQuery) return;
             const __previousQueryOptions = activeQuery.options;
             // Trigger a fetch in order to trigger suspense as well.
@@ -66,6 +72,9 @@ export const useHandleDevToolsMessages = (
             break;
           }
           case 'RESTORE_LOADING': {
+            // Code from React Query External Sync:
+            // https://github.com/LovesWorking/tanstack-query-dev-tools-expo-plugin/blob/main/src/useSyncQueries.ts#L176
+
             const previousState = activeQuery.state;
             const previousOptions = activeQuery.state.fetchMeta
               ? (

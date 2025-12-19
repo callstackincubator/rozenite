@@ -12,6 +12,20 @@ Symbol.asyncIterator ??= Symbol.for('Symbol.asyncIterator');
 type StoreEnhancer = ReturnType<typeof devToolsEnhancer>;
 type ComposeWithDevTools = ReturnType<typeof composeWithDevTools>;
 
+/**
+ * Options for configuring Rozenite Redux DevTools
+ */
+export interface RozeniteDevToolsOptions {
+  /**
+   * Maximum number of actions to be stored in the history tree.
+   * The oldest actions are removed once maxAge is reached.
+   * This is critical for performance.
+   * 
+   * @default 50
+   */
+  maxAge?: number;
+}
+
 const getDeviceId = (): string => {
   if (Platform.OS === 'android') {
     return `${Platform.constants.Manufacturer} ${Platform.constants.Model}`;
@@ -29,22 +43,28 @@ const getHostname = (): string => {
   return devServer.url.split('://')[1].split(':')[0];
 };
 
-export const composeWithRozeniteDevTools = (): ComposeWithDevTools => {
+export const composeWithRozeniteDevTools = (
+  options: RozeniteDevToolsOptions = {}
+): ComposeWithDevTools => {
   return require('@redux-devtools/remote').composeWithDevTools({
     name: getDeviceId(),
     hostname: getHostname(),
     port: REDUX_DEVTOOLS_PORT,
     secure: false,
     realtime: true,
+    maxAge: options.maxAge ?? 50,
   });
 };
 
-export const rozeniteDevToolsEnhancer = (): StoreEnhancer => {
+export const rozeniteDevToolsEnhancer = (
+  options: RozeniteDevToolsOptions = {}
+): StoreEnhancer => {
   return require('@redux-devtools/remote').devToolsEnhancer({
     name: getDeviceId(),
     hostname: getHostname(),
     port: REDUX_DEVTOOLS_PORT,
     secure: false,
     realtime: true,
+    maxAge: options.maxAge ?? 50,
   });
 };
