@@ -1,3 +1,5 @@
+export type { RozeniteDevToolsOptions } from './src/runtime';
+
 export let rozeniteDevToolsEnhancer: typeof import('./src/runtime').rozeniteDevToolsEnhancer;
 export let composeWithRozeniteDevTools: typeof import('./src/runtime').composeWithRozeniteDevTools;
 
@@ -13,7 +15,8 @@ if (isDev && !isWeb && !isServer) {
 } else {
   // Noop enhancer: returns an enhancer that passes through createStore unchanged
   const noopEnhancer =
-    () =>
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (options?: any) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (createStore: (...args: any[]) => any) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,7 +24,8 @@ if (isDev && !isWeb && !isServer) {
       createStore(...args);
 
   // Noop composer: returns a compose function (which composes enhancers)
-  const noopComposer = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const noopComposer = (options?: any) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (...enhancers: any[]) => {
       if (enhancers.length === 0) {
