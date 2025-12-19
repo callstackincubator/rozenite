@@ -11,6 +11,7 @@ import {
   calculateStats,
   findMaxValue,
   applyColors,
+  ensureMinimumValues,
 } from './transformations';
 import {
   Header,
@@ -184,11 +185,16 @@ const App = () => {
   }, [transformedData]);
 
   const coloredData = useMemo(() => {
-    if (!transformedData || maxValue === 0) {
+    if (!transformedData) {
       return null;
     }
-    return applyColors(transformedData, maxValue);
-  }, [transformedData, maxValue]);
+    // If all times are 0, ensure minimum values so nodes are visible
+    const dataToColor =
+      stats.totalTime === 0
+        ? ensureMinimumValues(transformedData)
+        : transformedData;
+    return applyColors(dataToColor, maxValue);
+  }, [transformedData, maxValue, stats.totalTime]);
 
   // Update dimensions when container size changes
   useEffect(() => {

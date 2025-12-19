@@ -1,10 +1,10 @@
 // Initialize require chains tracking
-global.__requireChains = []; // Array of completed chains (raw timing data)
-global.__currentChain = null; // Currently active chain with depth tracking
+global.__requireChains = []; // Array of completed chains (with tree structure)
+global.__currentChain = null; // Currently active chain
 global.__requireChainListeners = []; // Array of callbacks to notify when a chain completes
 
-// Stack to track nested requires (since endEvent doesn't receive the event name)
-// Shared across all SYSTRACE versions
+// Stack to track nested requires and build tree structure
+// Each entry contains: { node, startTime }
 const requireStack = [];
 
 /**
@@ -15,7 +15,8 @@ const requireStack = [];
 global.__onRequireChainComplete = function (callback) {
   global.__requireChainListeners.push(callback);
   return function () {
-    var index = global.__requireChainListeners.indexOf(callback);
+    const index = global.__requireChainListeners.indexOf(callback);
+
     if (index > -1) {
       global.__requireChainListeners.splice(index, 1);
     }
@@ -24,6 +25,7 @@ global.__onRequireChainComplete = function (callback) {
 
 /**
  * Creates an instrumented SYSTRACE object that records require timings.
+ * Builds tree structure directly from timing events.
  * @param {Object|null} originalSystrace - The original SYSTRACE to wrap, or null for a stub
  * @returns {Object} - Instrumented SYSTRACE object
  */
@@ -43,6 +45,15 @@ const createInstrumentedSystrace = (originalSystrace) => {
       ) {
         const moduleIdentifier = eventName.slice('JS_require_'.length);
         const startTime = Date.now();
+        const moduleId = parseInt(moduleIdentifier, 10);
+
+        // Create a new tree node for this require
+        const node = {
+          moduleId: isNaN(moduleId) ? moduleIdentifier : moduleId,
+          children: [],
+          selfTime: 0, // Will be calculated in endEvent
+          value: 0, // Total time (self + children), calculated in endEvent
+        };
 
         // Check if this is the start of a new require chain
         if (!global.__currentChain) {
@@ -51,20 +62,22 @@ const createInstrumentedSystrace = (originalSystrace) => {
           const module = modules?.get(parseInt(moduleIdentifier, 10));
           const rootModuleName = module?.verboseName || moduleIdentifier;
 
-          // Start a new require chain
+          // Start a new require chain with the root node
           global.__currentChain = {
-            rootModuleId: parseInt(moduleIdentifier, 10) || moduleIdentifier,
+            rootModuleId: node.moduleId,
             rootModuleName,
-            depth: 1,
-            timings: [],
+            rootNode: node,
           };
         } else {
-          // Increment depth for nested require
-          global.__currentChain.depth++;
+          // Add this node as a child of the current parent (top of stack)
+          const parent = requireStack[requireStack.length - 1];
+          if (parent) {
+            parent.node.children.push(node);
+          }
         }
 
         requireStack.push({
-          moduleIdentifier,
+          node,
           startTime,
         });
       }
@@ -78,37 +91,33 @@ const createInstrumentedSystrace = (originalSystrace) => {
     endEvent: function (args) {
       // Pop the most recent require event from the stack
       if (requireStack.length > 0 && global.__currentChain) {
-        const { moduleIdentifier, startTime } = requireStack.pop();
+        const { node, startTime } = requireStack.pop();
         const endTime = Date.now();
-        const duration = endTime - startTime;
+        const totalTime = endTime - startTime;
 
-        // moduleIdentifier could be a number (moduleId) or string (verboseName)
-        // Try to parse as number first
-        const moduleId = parseInt(moduleIdentifier, 10);
+        // Calculate self time (total time minus children's time)
+        const childrenTime = node.children.reduce(
+          (sum, child) => sum + child.value,
+          0,
+        );
+        node.selfTime = totalTime - childrenTime;
+        node.value = totalTime;
 
-        // Add timing to current chain
-        global.__currentChain.timings.push({
-          moduleId: isNaN(moduleId) ? moduleIdentifier : moduleId,
-          time: duration,
-        });
-
-        // Decrement depth and check if chain is complete
-        global.__currentChain.depth--;
-
-        if (global.__currentChain.depth === 0) {
+        // Check if chain is complete (stack is empty)
+        if (requireStack.length === 0) {
           // Chain is complete, store it and reset
-          var completedChain = {
+          const completedChain = {
             index: global.__requireChains.length,
             rootModuleId: global.__currentChain.rootModuleId,
             rootModuleName: global.__currentChain.rootModuleName,
-            timings: global.__currentChain.timings,
+            rootNode: global.__currentChain.rootNode,
           };
           global.__requireChains.push(completedChain);
           global.__currentChain = null;
 
           // Notify listeners about the new chain
-          var listeners = global.__requireChainListeners;
-          for (var i = 0; i < listeners.length; i++) {
+          const listeners = global.__requireChainListeners;
+          for (let i = 0; i < listeners.length; i++) {
             try {
               listeners[i]({
                 index: completedChain.index,
@@ -164,7 +173,8 @@ const getRequireChainsList = () => {
 };
 
 /**
- * Builds a flame graph tree structure for a specific require chain.
+ * Transforms the pre-built tree into flame graph format.
+ * Uses getModules() only to get display names (verboseName).
  * Compatible with react-flame-graph format.
  *
  * @param {number} chainIndex - The index of the chain to build
@@ -176,26 +186,8 @@ const getRequireChainData = (chainIndex) => {
     return null;
   }
 
-  const modules = global.__r.getModules();
-  const timings = chain.timings;
-
-  // Create maps of timings for quick lookup
-  // We need both: by numeric moduleId and by verboseName (path string)
-  const timingsByModuleId = new Map();
-  const timingsByVerboseName = new Map();
-
-  for (const timing of timings) {
-    if (typeof timing.moduleId === 'number') {
-      timingsByModuleId.set(timing.moduleId, timing.time);
-    } else {
-      // It's a verboseName (string path)
-      timingsByVerboseName.set(timing.moduleId, timing.time);
-    }
-  }
-
-  // Set to track modules that have been added to the tree
-  // Each module should only appear once (under its first requirer)
-  const addedToTree = new Set();
+  // Get modules registry for display names only
+  const modules = global.__r?.getModules();
 
   /**
    * Extracts the filename from a full path
@@ -209,67 +201,45 @@ const getRequireChainData = (chainIndex) => {
   };
 
   /**
-   * Recursively builds the tree starting from a given module
-   * @param {number} moduleId - The module ID to start from
-   * @returns {Object|null} - The tree node or null if already processed/not found
+   * Gets display info for a module from the registry
+   * @param {number|string} moduleId - The module ID
+   * @returns {{ name: string, tooltip: string }}
    */
-  const buildTree = (moduleId) => {
-    // Each module should only appear once in the tree
-    if (addedToTree.has(moduleId)) {
-      return null;
-    }
-    addedToTree.add(moduleId);
-
-    const module = modules.get(moduleId);
-    if (!module) {
-      return null;
-    }
-
-    // Look up timing by moduleId first, then by verboseName
-    const selfTime =
-      timingsByModuleId.get(moduleId) ??
-      timingsByVerboseName.get(module.verboseName) ??
-      0;
-    const children = [];
-
-    // Process dependencies from the dependencyMap
-    if (module.dependencyMap && Array.isArray(module.dependencyMap)) {
-      for (const depId of module.dependencyMap) {
-        const childNode = buildTree(depId);
-        if (childNode) {
-          children.push(childNode);
-        }
+  const getModuleDisplayInfo = (moduleId) => {
+    if (modules && typeof moduleId === 'number') {
+      const module = modules.get(moduleId);
+      if (module && module.verboseName) {
+        return {
+          name: getFileName(module.verboseName),
+          tooltip: module.verboseName,
+        };
       }
     }
-
-    // Value = self time + sum of all children's values (which already include their descendants)
-    const childrenValue = children.reduce((sum, child) => sum + child.value, 0);
-    const value = selfTime + childrenValue;
-
-    const fullPath = module.verboseName || String(moduleId);
-
+    // Fallback: moduleId might be a string (verboseName) or module not found
+    const idStr = String(moduleId);
     return {
-      name: getFileName(fullPath),
-      value,
-      tooltip: fullPath,
-      children,
+      name: getFileName(idStr),
+      tooltip: idStr,
     };
   };
 
-  // Start from the root module of this chain
-  // rootModuleId could be a number or string (verboseName)
-  let rootId = chain.rootModuleId;
-  if (typeof rootId === 'string') {
-    // Try to find the module by verboseName
-    // Use forEach instead of entries() for older JS compatibility
-    modules.forEach(function (mod, id) {
-      if (mod.verboseName === rootId) {
-        rootId = id;
-      }
-    });
-  }
+  /**
+   * Recursively transforms a timing node to flame graph format
+   * @param {Object} node - The timing node from recording
+   * @returns {Object} - Flame graph compatible node
+   */
+  const transformNode = (node) => {
+    const displayInfo = getModuleDisplayInfo(node.moduleId);
 
-  const tree = buildTree(rootId);
+    return {
+      name: displayInfo.name,
+      value: node.value,
+      tooltip: displayInfo.tooltip,
+      children: node.children.map(transformNode),
+    };
+  };
+
+  const tree = chain.rootNode ? transformNode(chain.rootNode) : null;
 
   return {
     index: chain.index,

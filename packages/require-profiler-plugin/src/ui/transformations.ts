@@ -71,6 +71,23 @@ export const findMaxValue = (node: RawData): number => {
   return max;
 };
 
+// Ensure minimum visibility for flame graph nodes when all times are 0
+// Each node gets at least 1 unit of width so the structure is visible
+export const ensureMinimumValues = (node: RawData): RawData => {
+  const children = node.children?.map(ensureMinimumValues);
+
+  // Calculate minimum value: 1 for self + sum of children's values
+  const childrenValue =
+    children?.reduce((sum, child) => sum + child.value, 0) ?? 0;
+  const minValue = 1 + childrenValue;
+
+  return {
+    ...node,
+    value: Math.max(node.value, minValue),
+    children,
+  };
+};
+
 // Apply colors to flame graph data based on self-time
 export const applyColors = (node: RawData, maxValue: number): RawData => {
   const selfTime = getSelfTime(node);
