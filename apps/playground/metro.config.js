@@ -1,5 +1,6 @@
 const { withNxMetro } = require('@nx/react-native');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { composeMetroConfigTransformers } = require('@rozenite/tools');
 const { withRozenite } = require('@rozenite/metro');
 const {
   withRozeniteReduxDevTools,
@@ -51,9 +52,10 @@ module.exports = withRozenite(
   }),
   {
     enabled: true,
-    enhanceMetroConfig: (config) =>
-      withRozeniteExpoAtlasPlugin(
-        withRozeniteRequireProfiler(withRozeniteReduxDevTools(config)),
-      ),
+    enhanceMetroConfig: composeMetroConfigTransformers(
+      withRozeniteExpoAtlasPlugin,
+      withRozeniteRequireProfiler,
+      withRozeniteReduxDevTools,
+    ),
   },
 );

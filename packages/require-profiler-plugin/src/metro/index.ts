@@ -1,5 +1,6 @@
 import type { ConfigT as MetroConfig } from 'metro-config';
 import { createRequire } from 'node:module';
+import { createMetroConfigTransformer } from '@rozenite/tools';
 
 const require = createRequire(import.meta.url);
 
@@ -18,30 +19,27 @@ const require = createRequire(import.meta.url);
 /**
  * Wraps an existing Metro config to enable require profiling instrumentation.
  * This adds timing instrumentation to track module require() calls.
- *
- * @param config - The Metro config to wrap
- * @returns The wrapped Metro config with profiling enabled
  */
-export const withRozeniteRequireProfiler = <T extends MetroConfig>(
-  config: T,
-): T => {
-  const existingGetPolyfills = config.serializer?.getPolyfills ?? (() => []);
-  const existingGetRunModuleStatement =
-    config.serializer?.getRunModuleStatement ??
-    ((moduleId: string | number) => `__r(${JSON.stringify(moduleId)});`);
+export const withRozeniteRequireProfiler = createMetroConfigTransformer(
+  (config: MetroConfig): MetroConfig => {
+    const existingGetPolyfills = config.serializer?.getPolyfills ?? (() => []);
+    const existingGetRunModuleStatement =
+      config.serializer?.getRunModuleStatement ??
+      ((moduleId: string | number) => `__r(${JSON.stringify(moduleId)});`);
 
-  return {
-    ...config,
-    serializer: {
-      ...config.serializer,
-      getPolyfills: (...opts) => [
-        ...existingGetPolyfills(...opts),
-        require.resolve('./setup'),
-      ],
-      getRunModuleStatement: (...opts) => {
-        const statement = existingGetRunModuleStatement(...opts);
-        return `__patchSystrace();${statement}`;
+    return {
+      ...config,
+      serializer: {
+        ...config.serializer,
+        getPolyfills: (...opts) => [
+          ...existingGetPolyfills(...opts),
+          require.resolve('./setup'),
+        ],
+        getRunModuleStatement: (...opts) => {
+          const statement = existingGetRunModuleStatement(...opts);
+          return `__patchSystrace();${statement}`;
+        },
       },
-    },
-  };
-};
+    };
+  },
+);
