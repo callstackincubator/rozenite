@@ -4,16 +4,16 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 
 ![](/require-profiler-plugin.png)
 
-The Require Profiler plugin instruments `require()` calls during your React Native app's initial loading to track module initialization times, helping you identify which modules impact startup performance and optimize your initial bundle loading.
+The Require Profiler plugin instruments `require()` calls during your React Native app's initial loading to track module initialization times, helping you identify which modules impact startup performance and optimize lazy evaluation through inlined require calls.
 
 ## What is Require Profiler Plugin?
 
-The Require Profiler plugin is a performance analysis tool that helps you understand and optimize your app's initial loading performance by providing:
+The Require Profiler plugin is a performance analysis tool that helps you understand and optimize your app's initial loading performance in React Native by providing:
 
 - **Initial App Loading Profiling**: Automatically instruments `require()` calls during app startup to track initialization times
 - **Flame Graph Visualization**: Interactive flame graph showing the module dependency tree with timing information
 - **Startup Performance Insights**: Identify slow-loading modules that impact Time to Interactive (TTI)
-- **Bundle Optimization Candidates**: Discover modules that are good candidates for code splitting or lazy loading
+- **Conditional Require Optimization**: Discover modules that are good candidates for deferred loading via conditional require calls
 - **Dependency Analysis**: Visualize the complete module dependency graph loaded during initial app startup
 - **Real-time Metrics**: View total initialization time, module count, and per-module evaluation times
 
@@ -94,6 +94,20 @@ The header bar displays key performance indicators:
 - **Module Count**: Total number of modules loaded
 - **Entry Point**: The main module that started the loading chain
 
+### Filtering Options
+
+The Require Profiler provides filtering capabilities to help you focus on the most impactful performance issues:
+
+#### Minimum Duration Filter
+
+- **Skip chains shorter than (ms)**: Hide require chains with total duration below a specified threshold
+- **Purpose**: Filter out fast-loading modules to focus analysis on slow-loading chains that significantly impact startup performance
+- **Usage**: Access via the options button (⚙️) in the header bar
+- **Default**: 0ms (no filtering)
+- **Recommendation**: Start with 100ms to identify modules taking significant time during startup
+
+When filtering is active, only require chains meeting the duration threshold are displayed in the flame graph, allowing you to prioritize optimization efforts on the slowest-loading parts of your app.
+
 ## Analyzing Performance
 
 ### Identifying Slow Startup Modules
@@ -104,22 +118,22 @@ The flame graph makes it easy to spot modules that take a long time to initializ
 - **Wide modules**: Modules that take up a lot of horizontal space in the graph
 - **Deep dependency chains**: Modules that load many dependencies during initial load
 
-### Finding Bundle Optimization Candidates
+### Finding Conditional Require Candidates
 
-Modules that are good candidates for optimization typically:
+Modules that are good candidates for lazy evaluation typically:
 
 - Take significant time to initialize (>100ms) during startup
 - Are not needed immediately for the initial app experience
-- Have many dependencies that could be deferred
+- Have many dependencies that could be deferred via conditional require calls
 
 ### Optimizing App Startup Performance
 
 By identifying and optimizing slow-loading modules, you can:
 
-- **Reduce Initial Bundle Size**: Move heavy modules to lazy loading or code splitting
+- **Defer Heavy Modules**: Move non-critical modules to conditional require calls
 - **Improve Time to Interactive**: Prioritize critical modules and defer non-critical ones
 - **Optimize Dependency Chains**: Break up large dependency trees for faster startup
-- **Better Code Splitting**: Identify natural boundaries for dynamic imports
+- **Strategic Conditional Loading**: Identify natural boundaries for deferred module loading
 
 ## Use Cases
 
@@ -127,30 +141,36 @@ By identifying and optimizing slow-loading modules, you can:
 
 ```typescript
 // Instead of loading heavy modules at startup:
-import HeavyModule from './HeavyModule';
+const HeavyModule = require('./HeavyModule');
 
-// Consider lazy loading or code splitting:
-const HeavyModule = lazy(() => import('./HeavyModule'));
-
-// Or use conditional/dynamic imports:
+// Consider lazy evaluation via conditional require calls:
+let HeavyModule;
 if (condition) {
-  const HeavyModule = await import('./HeavyModule');
+  HeavyModule = require('./HeavyModule');
 }
+
+// Or defer loading until needed:
+const loadHeavyModule = () => {
+  if (!HeavyModule) {
+    HeavyModule = require('./HeavyModule');
+  }
+  return HeavyModule;
+};
 ```
 
 ### Initial Bundle Analysis
 
 Use the profiler to understand which parts of your codebase contribute most to initial loading time, helping you make informed decisions about:
 
-- Which libraries to lazy load or conditionally import
-- Which components to code-split for better startup performance
-- Which utilities to defer until needed after initial load
+- Which modules to defer via conditional require calls
+- Which components to load lazily for better startup performance
+- Which utilities to load on-demand after initial app launch
 
 ### Development Workflow
 
-- **Quick Feedback**: See immediate impact of code changes on initial app loading
+- **Quick Feedback**: See immediate impact of require call changes on initial app loading
 - **Regression Detection**: Catch performance regressions in module initialization during startup
-- **Optimization Prioritization**: Focus optimization efforts on the slowest startup modules
+- **Optimization Prioritization**: Focus optimization efforts on the slowest startup modules using duration filtering
 
 ## Contributing
 
