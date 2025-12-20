@@ -1,5 +1,5 @@
 export let useNetworkActivityDevTools: typeof import('./src/react-native/useNetworkActivityDevTools').useNetworkActivityDevTools;
-export let withOnBootNetworkActivityRecording: typeof import('./src/react-native/withOnBootNetworkActivityRecording').withOnBootNetworkActivityRecording | (() => null);
+export let withOnBootNetworkActivityRecording: typeof import('./src/react-native/withOnBootNetworkActivityRecording').withOnBootNetworkActivityRecording;
 
 // Export types for user-facing configuration
 export type { NetworkActivityDevToolsConfig } from './src/react-native/config';
@@ -15,5 +15,5 @@ if (isDev && !isWeb && !isServer) {
   withOnBootNetworkActivityRecording = require('./src/react-native/withOnBootNetworkActivityRecording').withOnBootNetworkActivityRecording;
 } else {
   useNetworkActivityDevTools = () => null;
-  withOnBootNetworkActivityRecording = () => null;
+  withOnBootNetworkActivityRecording = (options: any) => null;
 }
