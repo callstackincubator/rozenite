@@ -7,9 +7,7 @@ const {
 const {
   withRozeniteRequireProfiler,
 } = require('@rozenite/require-profiler-plugin/metro');
-const {
-  withRozeniteExpoAtlasPlugin,
-} = require('@rozenite/expo-atlas-plugin/metro');
+const { withRozeniteExpoAtlasPlugin } = require('@rozenite/expo-atlas-plugin');
 
 const defaultConfig = getDefaultConfig(__dirname);
 const { assetExts, sourceExts } = defaultConfig.resolver;
@@ -54,8 +52,8 @@ module.exports = withRozenite(
   {
     enabled: true,
     enhanceMetroConfig: (config) =>
-      withRozeniteRequireProfiler(
-        withRozeniteExpoAtlasPlugin(withRozeniteReduxDevTools(config)),
+      withRozeniteExpoAtlasPlugin(
+        withRozeniteRequireProfiler(withRozeniteReduxDevTools(config)),
       ),
   },
 );
