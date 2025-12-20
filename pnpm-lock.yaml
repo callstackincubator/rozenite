@@ -682,6 +682,9 @@ importers:
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
     devDependencies:
       '@redux-devtools/app':
         specifier: ^6.2.2
@@ -762,6 +765,9 @@ importers:
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       nanoevents:
         specifier: ^9.1.0
         version: 9.1.0
@@ -869,6 +875,9 @@ importers:
 
   packages/tools:
     devDependencies:
+      metro-config:
+        specifier: '*'
+        version: 0.82.5
       typescript:
         specifier: ^5.7.3
         version: 5.8.3

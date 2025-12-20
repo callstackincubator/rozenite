@@ -47,16 +47,19 @@
       "path": "../../packages/cli/tsconfig.lib.json"
     },
     {
+      "path": "../../packages/expo-atlas-plugin"
+    },
+    {
       "path": "../../packages/require-profiler-plugin"
     },
     {
       "path": "../../packages/redux-devtools-plugin"
     },
     {
-      "path": "../../packages/expo-atlas-plugin"
+      "path": "../../packages/metro/tsconfig.lib.json"
     },
     {
-      "path": "../../packages/metro/tsconfig.lib.json"
+      "path": "../../packages/tools/tsconfig.lib.json"
     }
   ]
 }

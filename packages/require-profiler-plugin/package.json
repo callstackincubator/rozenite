@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/tools": "workspace:*",
     "nanoevents": "^9.1.0"
   },
   "devDependencies": {

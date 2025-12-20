@@ -7,6 +7,9 @@ export default defineConfig({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/tools',
   base: './',
+  test: {
+    environment: 'node',
+  },
   plugins: [
     dts({
       entryRoot: 'src',

@@ -25,7 +25,8 @@
   "dependencies": {
     "@redux-devtools/remote": "^0.9.5",
     "@rozenite/plugin-bridge": "workspace:*",
-    "@redux-devtools/cli": "^4.0.3"
+    "@redux-devtools/cli": "^4.0.3",
+    "@rozenite/tools": "workspace:*"
   },
   "devDependencies": {
     "@redux-devtools/app": "^6.2.2",
