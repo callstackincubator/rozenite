@@ -30,11 +30,14 @@ export const onRequireChainComplete = (
     typeof (global as Record<string, unknown>).__onRequireChainComplete !==
       'function'
   ) {
-    // Return no-op unsubscribe if not available
-    return () => {};
+    return () => {
+      // Return no-op unsubscribe if not available
+    };
   }
 
-  return (global as Record<string, unknown>).__onRequireChainComplete(
-    callback,
-  ) as () => void;
+  return (
+    global.__onRequireChainComplete as (
+      callback: (chain: RequireChainMeta) => void,
+    ) => () => void
+  )(callback) as () => void;
 };

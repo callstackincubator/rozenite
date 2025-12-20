@@ -124,7 +124,7 @@ const createInstrumentedSystrace = (originalSystrace) => {
                 rootModuleId: completedChain.rootModuleId,
                 rootModuleName: completedChain.rootModuleName,
               });
-            } catch (e) {
+            } catch {
               // Ignore listener errors
             }
           }

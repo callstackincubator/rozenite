@@ -1,4 +1,3 @@
-import { RawData } from 'react-flame-graph';
 import { formatTime } from '../transformations';
 
 export type InfoBarProps = {
