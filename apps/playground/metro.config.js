@@ -1,10 +1,15 @@
 const { withNxMetro } = require('@nx/react-native');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
-const { withRozeniteExpoAtlasPlugin } = require('@rozenite/expo-atlas-plugin');
 const {
   withRozeniteReduxDevTools,
 } = require('@rozenite/redux-devtools-plugin/metro');
+const {
+  withRozeniteRequireProfiler,
+} = require('@rozenite/require-profiler-plugin/metro');
+const {
+  withRozeniteExpoAtlasPlugin,
+} = require('@rozenite/expo-atlas-plugin/metro');
 
 const defaultConfig = getDefaultConfig(__dirname);
 const { assetExts, sourceExts } = defaultConfig.resolver;
@@ -29,7 +34,7 @@ const customConfig = {
   transformer: {
     getTransformOptions: async () => ({
       transform: {
-        inlineRequires: true,
+        inlineRequires: false,
       },
     }),
   },
@@ -49,6 +54,8 @@ module.exports = withRozenite(
   {
     enabled: true,
     enhanceMetroConfig: (config) =>
-      withRozeniteExpoAtlasPlugin(withRozeniteReduxDevTools(config)),
-  }
+      withRozeniteRequireProfiler(
+        withRozeniteExpoAtlasPlugin(withRozeniteReduxDevTools(config)),
+      ),
+  },
 );

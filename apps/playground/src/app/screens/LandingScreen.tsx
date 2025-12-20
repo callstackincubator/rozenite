@@ -53,6 +53,15 @@ export const LandingScreen = () => {
 
             <TouchableOpacity
               style={styles.navigationButton}
+              onPress={() =>
+                navigation.navigate('RequireProfilerTest' as never)
+              }
+            >
+              <Text style={styles.buttonText}>Require Profiler Test</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navigationButton}
               onPress={() => navigation.navigate('BottomTabs' as never)}
             >
               <Text style={styles.buttonText}>React Navigation</Text>

@@ -22,6 +22,7 @@ export default {
         'performance-monitor-plugin',
         'tools',
         'react-navigation-plugin',
+        'require-profiler-plugin',
         '',
       ],
     ],

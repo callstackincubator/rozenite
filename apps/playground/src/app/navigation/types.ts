@@ -7,6 +7,7 @@ export type RootStackParamList = {
   RequestBodyTest: undefined;
   ReduxTest: undefined;
   PerformanceMonitor: undefined;
+  RequireProfilerTest: undefined;
   Config: undefined;
   BottomTabs: undefined;
   ParameterDisplay: {

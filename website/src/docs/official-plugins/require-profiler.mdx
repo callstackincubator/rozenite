@@ -1,0 +1,190 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Require Profiler Plugin
+
+![](/require-profiler-plugin.png)
+
+The Require Profiler plugin instruments `require()` calls during your React Native app's initial loading to track module initialization times, helping you identify which modules impact startup performance and optimize lazy evaluation through inlined require calls.
+
+## What is Require Profiler Plugin?
+
+The Require Profiler plugin is a performance analysis tool that helps you understand and optimize your app's initial loading performance in React Native by providing:
+
+- **Initial App Loading Profiling**: Automatically instruments `require()` calls during app startup to track initialization times
+- **Flame Graph Visualization**: Interactive flame graph showing the module dependency tree with timing information
+- **Startup Performance Insights**: Identify slow-loading modules that impact Time to Interactive (TTI)
+- **Conditional Require Optimization**: Discover modules that are good candidates for deferred loading via conditional require calls
+- **Dependency Analysis**: Visualize the complete module dependency graph loaded during initial app startup
+- **Real-time Metrics**: View total initialization time, module count, and per-module evaluation times
+
+## Installation
+
+Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
+
+Install the Require Profiler plugin as a development dependency using your preferred package manager:
+
+<PackageManagerTabs command="install -D @rozenite/require-profiler-plugin" />
+
+## Configuration
+
+### Metro Configuration
+
+Add the require profiler instrumentation to your Metro configuration using the `enhanceMetroConfig` option in `withRozenite`:
+
+```javascript title="metro.config.js"
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { withRozenite } = require('@rozenite/metro');
+const {
+  withRozeniteRequireProfiler,
+} = require('@rozenite/require-profiler-plugin/metro');
+
+const defaultConfig = getDefaultConfig(__dirname);
+
+module.exports = withRozenite(
+  mergeConfig(defaultConfig, {
+    // Your existing Metro configuration
+  }),
+  {
+    enabled: process.env.WITH_ROZENITE === 'true',
+    enhanceMetroConfig: (config) => withRozeniteRequireProfiler(config),
+  },
+);
+```
+
+### React Native Integration
+
+Add the DevTools hook to your React Native app:
+
+```typescript title="App.tsx"
+import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
+
+function App() {
+  // Enable Require Profiler DevTools
+  useRequireProfilerDevTools();
+
+  return <YourApp />;
+}
+```
+
+## Usage
+
+Once configured, the Require Profiler plugin will automatically appear in your React Native DevTools sidebar as "Metro Require Profiler". Click on it to access:
+
+### Flame Graph Visualization
+
+- **Interactive Visualization**: Navigate through your module dependency tree
+- **Color-coded Timing**: Red modules indicate slow initialization (>70% of max time), blue modules indicate fast initialization
+- **Zoom and Focus**: Click any module to zoom into specific parts of the dependency tree
+- **Module Details**: Hover over modules to see basic information, click for detailed sidebar view
+
+### Module Details Panel
+
+When you click on a module in the flame graph, the sidebar shows:
+
+- **Evaluation Time**: How long the module took to initialize
+- **Module Path**: Full file path and name
+- **Dependencies Count**: Number of direct dependencies
+- **Parent Modules**: Which modules imported this module
+
+### Performance Metrics
+
+The header bar displays key performance indicators:
+
+- **Total Initialization Time**: Sum of all module initialization times
+- **Module Count**: Total number of modules loaded
+- **Entry Point**: The main module that started the loading chain
+
+### Filtering Options
+
+The Require Profiler provides filtering capabilities to help you focus on the most impactful performance issues:
+
+#### Minimum Duration Filter
+
+- **Skip chains shorter than (ms)**: Hide require chains with total duration below a specified threshold
+- **Purpose**: Filter out fast-loading modules to focus analysis on slow-loading chains that significantly impact startup performance
+- **Usage**: Access via the options button (⚙️) in the header bar
+- **Default**: 0ms (no filtering)
+- **Recommendation**: Start with 100ms to identify modules taking significant time during startup
+
+When filtering is active, only require chains meeting the duration threshold are displayed in the flame graph, allowing you to prioritize optimization efforts on the slowest-loading parts of your app.
+
+## Analyzing Performance
+
+### Identifying Slow Startup Modules
+
+The flame graph makes it easy to spot modules that take a long time to initialize during app startup. Look for:
+
+- **Red modules** (>70% of max time): These are your slowest modules impacting startup
+- **Wide modules**: Modules that take up a lot of horizontal space in the graph
+- **Deep dependency chains**: Modules that load many dependencies during initial load
+
+### Finding Conditional Require Candidates
+
+Modules that are good candidates for lazy evaluation typically:
+
+- Take significant time to initialize (>100ms) during startup
+- Are not needed immediately for the initial app experience
+- Have many dependencies that could be deferred via conditional require calls
+
+### Optimizing App Startup Performance
+
+By identifying and optimizing slow-loading modules, you can:
+
+- **Defer Heavy Modules**: Move non-critical modules to conditional require calls
+- **Improve Time to Interactive**: Prioritize critical modules and defer non-critical ones
+- **Optimize Dependency Chains**: Break up large dependency trees for faster startup
+- **Strategic Conditional Loading**: Identify natural boundaries for deferred module loading
+
+## Use Cases
+
+### Startup Performance Optimization
+
+```typescript
+// Instead of loading heavy modules at startup:
+const HeavyModule = require('./HeavyModule');
+
+// Consider lazy evaluation via conditional require calls:
+let HeavyModule;
+if (condition) {
+  HeavyModule = require('./HeavyModule');
+}
+
+// Or defer loading until needed:
+const loadHeavyModule = () => {
+  if (!HeavyModule) {
+    HeavyModule = require('./HeavyModule');
+  }
+  return HeavyModule;
+};
+```
+
+### Initial Bundle Analysis
+
+Use the profiler to understand which parts of your codebase contribute most to initial loading time, helping you make informed decisions about:
+
+- Which modules to defer via conditional require calls
+- Which components to load lazily for better startup performance
+- Which utilities to load on-demand after initial app launch
+
+### Development Workflow
+
+- **Quick Feedback**: See immediate impact of require call changes on initial app loading
+- **Regression Detection**: Catch performance regressions in module initialization during startup
+- **Optimization Prioritization**: Focus optimization efforts on the slowest startup modules using duration filtering
+
+## Contributing
+
+The Require Profiler plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
+
+## Support
+
+If you encounter issues with the Require Profiler plugin:
+
+1. **Check Documentation**: Review this guide for common solutions
+2. **Search Issues**: Look for similar issues in the repository
+3. **Create Issue**: Report bugs or request features
+4. **Community**: Reach out to the Rozenite community for help
+
+---
+
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md).
