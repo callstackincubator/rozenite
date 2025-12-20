@@ -652,3 +652,130 @@ body {
 .main-content {
   min-height: 0;
 }
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  background-color: var(--color-background-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  margin: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  animation: modal-appear 150ms ease-out;
+}
+
+@keyframes modal-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.modal-close {
+  color: var(--color-text-secondary);
+}
+
+.modal-close:hover {
+  color: var(--color-text);
+}
+
+.modal-content {
+  padding: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Option group styles */
+.option-group {
+  margin-bottom: 16px;
+}
+
+.option-group:last-child {
+  margin-bottom: 0;
+}
+
+.option-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.option-description {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.option-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  transition: border-color var(--transition-speed) ease;
+}
+
+.option-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.option-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Remove spinner for number inputs in webkit browsers */
+.option-input[type='number']::-webkit-inner-spin-button,
+.option-input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.option-input[type='number'] {
+  -moz-appearance: textfield;
+}

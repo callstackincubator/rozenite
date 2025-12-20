@@ -20,9 +20,15 @@ import {
   LoadingState,
   EmptyState,
   Sidebar,
+  OptionsModal,
+  ProfilerOptions,
 } from './components';
 
 import './styles.css';
+
+const DEFAULT_OPTIONS: ProfilerOptions = {
+  minChainDurationMs: 0,
+};
 
 const App = () => {
   const [selectedNode, setSelectedNode] = useState<RawData | null>(null);
@@ -36,6 +42,8 @@ const App = () => {
     Map<number, RequireChainData>
   >(new Map());
   const [loading, setLoading] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [options, setOptions] = useState<ProfilerOptions>(DEFAULT_OPTIONS);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Auto-hide sidebar on small screens (only on resize)
@@ -138,25 +146,114 @@ const App = () => {
     client.send('reload-and-profile', {});
   }, [client]);
 
-  const handlePrevChain = useCallback(() => {
-    if (currentChainIndex > 0) {
-      const newIndex = currentChainIndex - 1;
-      setCurrentChainIndex(newIndex);
-      loadChainData(newIndex);
-    }
-  }, [currentChainIndex, loadChainData]);
-
-  const handleNextChain = useCallback(() => {
-    if (currentChainIndex < chainsList.length - 1) {
-      const newIndex = currentChainIndex + 1;
-      setCurrentChainIndex(newIndex);
-      loadChainData(newIndex);
-    }
-  }, [currentChainIndex, chainsList.length, loadChainData]);
-
   const handleToggleSidebar = useCallback(() => {
     setShowSidebar((prev) => !prev);
   }, []);
+
+  const handleOpenOptions = useCallback(() => {
+    setShowOptionsModal(true);
+  }, []);
+
+  const handleCloseOptions = useCallback(() => {
+    setShowOptionsModal(false);
+  }, []);
+
+  const handleOptionsChange = useCallback(
+    (newOptions: ProfilerOptions) => {
+      setOptions(newOptions);
+
+      const noFilter = newOptions.minChainDurationMs <= 0;
+
+      // Determine which chains pass the new filter
+      const validChainIndices = chainsList
+        .map((_, index) => index)
+        .filter((index) => {
+          if (noFilter) {
+            // No filter - all chains are valid
+            return true;
+          }
+
+          // Filter active - only include cached chains that meet the threshold
+          const cachedData = chainDataCache.get(index);
+          return (
+            cachedData && cachedData.tree.value >= newOptions.minChainDurationMs
+          );
+        });
+
+      // Check if current chain is still valid under new filter
+      const currentChainStillValid =
+        validChainIndices.includes(currentChainIndex);
+
+      if (currentChainStillValid) {
+        // Current chain passes the filter, ensure it's loaded/restored
+        loadChainData(currentChainIndex);
+      } else if (validChainIndices.length > 0) {
+        // Current chain doesn't pass filter, navigate to first valid chain
+        const firstValidIndex = validChainIndices[0];
+        setCurrentChainIndex(firstValidIndex);
+        loadChainData(firstValidIndex);
+      } else {
+        // No valid chains available
+        setCurrentChainData(null);
+      }
+    },
+    [chainsList, chainDataCache, currentChainIndex, loadChainData],
+  );
+
+  // Filter chains based on minimum duration threshold
+  // When filter is active, only include chains that have been loaded AND pass the threshold
+  // When filter is not active (0), include all chains
+  const filteredChainIndices = useMemo(() => {
+    if (options.minChainDurationMs <= 0) {
+      // No filter - show all chains
+      return chainsList.map((_, index) => index);
+    }
+
+    // Filter active - only include chains that are cached AND pass the duration threshold
+    return chainsList
+      .map((_, index) => index)
+      .filter((index) => {
+        const cachedData = chainDataCache.get(index);
+        // Only include if cached and passes filter
+        if (!cachedData) {
+          return false;
+        }
+        return cachedData.tree.value >= options.minChainDurationMs;
+      });
+  }, [chainsList, chainDataCache, options.minChainDurationMs]);
+
+  // Find the current position in filtered list
+  const currentFilteredPosition = useMemo(() => {
+    return filteredChainIndices.indexOf(currentChainIndex);
+  }, [filteredChainIndices, currentChainIndex]);
+
+  // Check if current chain passes the filter
+  const currentChainPassesFilter = useMemo(() => {
+    if (options.minChainDurationMs <= 0) {
+      return true;
+    }
+    const cachedData = chainDataCache.get(currentChainIndex);
+    if (!cachedData) {
+      return true; // Not loaded yet, assume it passes
+    }
+    return cachedData.tree.value >= options.minChainDurationMs;
+  }, [currentChainIndex, chainDataCache, options.minChainDurationMs]);
+
+  const handlePrevChain = useCallback(() => {
+    if (currentFilteredPosition > 0) {
+      const newIndex = filteredChainIndices[currentFilteredPosition - 1];
+      setCurrentChainIndex(newIndex);
+      loadChainData(newIndex);
+    }
+  }, [currentFilteredPosition, filteredChainIndices, loadChainData]);
+
+  const handleNextChain = useCallback(() => {
+    if (currentFilteredPosition < filteredChainIndices.length - 1) {
+      const newIndex = filteredChainIndices[currentFilteredPosition + 1];
+      setCurrentChainIndex(newIndex);
+      loadChainData(newIndex);
+    }
+  }, [currentFilteredPosition, filteredChainIndices, loadChainData]);
 
   // Auto-show sidebar when node is selected on small screens
   useEffect(() => {
@@ -254,13 +351,23 @@ const App = () => {
       <Header
         onRefresh={handleRefresh}
         onToggleSidebar={handleToggleSidebar}
+        onOpenOptions={handleOpenOptions}
         showSidebar={showSidebar}
         loading={loading}
         clientAvailable={!!client}
-        currentChainIndex={currentChainIndex}
-        totalChains={chainsList.length}
+        currentChainIndex={
+          currentFilteredPosition >= 0 ? currentFilteredPosition : 0
+        }
+        totalChains={filteredChainIndices.length}
         onPrevChain={handlePrevChain}
         onNextChain={handleNextChain}
+      />
+
+      <OptionsModal
+        isOpen={showOptionsModal}
+        onClose={handleCloseOptions}
+        options={options}
+        onOptionsChange={handleOptionsChange}
       />
 
       <InfoBar
@@ -274,12 +381,18 @@ const App = () => {
           <div className="flame-graph-wrapper" ref={containerRef}>
             {loading ? (
               <LoadingState />
-            ) : !transformedData || !coloredData ? (
+            ) : !transformedData ||
+              !coloredData ||
+              !currentChainPassesFilter ||
+              filteredChainIndices.length === 0 ? (
               <EmptyState
                 message={
                   chainsList.length === 0
                     ? 'No require chains available. Click refresh to load require profiler data.'
-                    : 'No data available for this chain.'
+                    : filteredChainIndices.length === 0 &&
+                        options.minChainDurationMs > 0
+                      ? `No chains found with duration ≥ ${options.minChainDurationMs}ms. Try lowering the threshold in options.`
+                      : 'No data available for this chain.'
                 }
               />
             ) : (
