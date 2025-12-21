@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { getOverridesRegistry } from './http/overrides-registry';
 import { NetworkActivityEventMap } from '../shared/client';
 import { isHttpEvent } from './http/http-inspector';
 import { isWebSocketEvent } from './websocket/websocket-inspector';
@@ -11,10 +10,11 @@ import {
   validateConfig,
 } from './config';
 import { createNetworkInspectorsConfiguration } from './withOnBootNetworkActivityRecording';
-import { getResponseBody } from './http/http-utils';
+import { useHttpInspector } from './useHttpInspector';
+import { useWebSocketInspector } from './useWebSocketInspector';
+import { useSSEInspector } from './useSSEInspector';
 
 const inspectorsConfig = createNetworkInspectorsConfiguration();
-const overridesRegistry = getOverridesRegistry();
 
 export const useNetworkActivityDevTools = (
   config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG
@@ -39,7 +39,6 @@ export const useNetworkActivityDevTools = (
     validateConfig(config);
   }, [config]);
 
-  /** Persist the recording state across hot reloads */
   useEffect(() => {
     if (!client) {
       return;
@@ -79,10 +78,6 @@ export const useNetworkActivityDevTools = (
       client.onMessage('network-disable', () => {
         isRecordingEnabledRef.current = false;
       }),
-      client.onMessage('set-overrides', (data) => {
-        overridesRegistry.setOverrides(data.overrides);
-      }),
-
       client.onMessage('get-client-ui-settings', () => {
         sendClientUISettings();
       }),
@@ -102,97 +97,26 @@ export const useNetworkActivityDevTools = (
     isSSEInspectorEnabled,
   ]);
 
-  useEffect(() => {
-    if (!client || !isHttpInspectorEnabled) {
-      return;
-    }
+  useHttpInspector(
+    client,
+    networkInspector.http,
+    isHttpInspectorEnabled,
+    isRecordingEnabledRef.current
+  );
 
-    const networkRequestsRegistry =
-      networkInspector.http.getNetworkRequestsRegistry();
+  useWebSocketInspector(
+    client,
+    networkInspector.websocket,
+    isWebSocketInspectorEnabled,
+    isRecordingEnabledRef.current
+  );
 
-    const subscriptions = [
-      client.onMessage('network-enable', () => {
-        networkInspector.http.enable();
-      }),
-      client.onMessage('network-disable', () => {
-        networkInspector.http.disable();
-      }),
-      client.onMessage('get-response-body', async ({ requestId }) => {
-        const request = networkRequestsRegistry.getEntry(requestId);
-
-        if (!request) {
-          return;
-        }
-
-        const body = await getResponseBody(request);
-
-        client.send('response-body', {
-          requestId,
-          body,
-        });
-      }),
-    ];
-
-    // If recording was previously enabled, enable the inspector (hot reload)
-    if (isRecordingEnabledRef.current) {
-      networkInspector.http.enable();
-    }
-
-    return () => {
-      subscriptions.forEach((subscription) => subscription.remove());
-      networkInspector.http.dispose();
-    };
-  }, [client, isHttpInspectorEnabled]);
-
-  useEffect(() => {
-    if (!client || !isWebSocketInspectorEnabled) {
-      return;
-    }
-
-    const subscriptions = [
-      client.onMessage('network-enable', () => {
-        networkInspector.websocket.enable();
-      }),
-      client.onMessage('network-disable', () => {
-        networkInspector.websocket.disable();
-      }),
-    ];
-
-    // If recording was previously enabled, enable the inspector (hot reload)
-    if (isRecordingEnabledRef.current) {
-      networkInspector.websocket.enable();
-    }
-
-    return () => {
-      subscriptions.forEach((subscription) => subscription.remove());
-      networkInspector.websocket.dispose();
-    };
-  }, [client, isWebSocketInspectorEnabled]);
-
-  useEffect(() => {
-    if (!client || !isSSEInspectorEnabled) {
-      return;
-    }
-
-    const subscriptions = [
-      client.onMessage('network-enable', () => {
-        networkInspector.sse.enable();
-      }),
-      client.onMessage('network-disable', () => {
-        networkInspector.sse.disable();
-      }),
-    ];
-
-    // If recording was previously enabled, enable the inspector (hot reload)
-    if (isRecordingEnabledRef.current) {
-      networkInspector.sse.enable();
-    }
-
-    return () => {
-      subscriptions.forEach((subscription) => subscription.remove());
-      networkInspector.sse.dispose();
-    };
-  }, [client, isSSEInspectorEnabled]);
+  useSSEInspector(
+    client,
+    networkInspector.sse,
+    isSSEInspectorEnabled,
+    isRecordingEnabledRef.current
+  );
 
   return client;
 };
