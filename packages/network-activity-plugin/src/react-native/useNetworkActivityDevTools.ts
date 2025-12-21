@@ -9,7 +9,7 @@ import {
   NetworkActivityDevToolsConfig,
   validateConfig,
 } from './config';
-import { createNetworkInspectorsConfiguration } from './withOnBootNetworkActivityRecording';
+import { createNetworkInspectorsConfiguration } from './boot-recording';
 import { useHttpInspector } from './useHttpInspector';
 import { useWebSocketInspector } from './useWebSocketInspector';
 import { useSSEInspector } from './useSSEInspector';
@@ -17,7 +17,7 @@ import { useSSEInspector } from './useSSEInspector';
 const inspectorsConfig = createNetworkInspectorsConfiguration();
 
 export const useNetworkActivityDevTools = (
-  config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG
+  config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG,
 ) => {
   const isRecordingEnabledRef = useRef(false);
   const client = useRozeniteDevToolsClient<NetworkActivityEventMap>({
@@ -60,7 +60,6 @@ export const useNetworkActivityDevTools = (
         // Connect the events listener to send events through the DevTools client
         // This also automatically flushes any queued messages
         eventsListener.connect(client.send, (message) => {
-
           // The below allow filtering out events based on the configuration passed to the hook
           const type = message.type;
           if (isHttpEvent(type)) {
@@ -101,21 +100,21 @@ export const useNetworkActivityDevTools = (
     client,
     networkInspector.http,
     isHttpInspectorEnabled,
-    isRecordingEnabledRef.current
+    isRecordingEnabledRef.current,
   );
 
   useWebSocketInspector(
     client,
     networkInspector.websocket,
     isWebSocketInspectorEnabled,
-    isRecordingEnabledRef.current
+    isRecordingEnabledRef.current,
   );
 
   useSSEInspector(
     client,
     networkInspector.sse,
     isSSEInspectorEnabled,
-    isRecordingEnabledRef.current
+    isRecordingEnabledRef.current,
   );
 
   return client;
