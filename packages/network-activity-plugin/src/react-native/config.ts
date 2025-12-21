@@ -1,14 +1,19 @@
 export type InspectorType = 'http' | 'websocket' | 'sse';
 
-export type NetworkActivityDevToolsConfig = {
+export type InspectorsConfig = {
+  [key in InspectorType]?: boolean;
+};
+
+export type NetworkInspectorConfig = {
   /**
    * Specifies which network inspectors are enabled.
    * Set to `false` to disable monitoring for a specific type of network traffic.
    * @default { http: true, websocket: true, sse: true }
    */
-  inspectors?: {
-    [key in InspectorType]?: boolean;
-  };
+  inspectors?: InspectorsConfig;
+};
+
+export type NetworkActivityDevToolsConfig = NetworkInspectorConfig & {
   clientUISettings?: {
     /**
      * If true, display the entire relative URL as the request name in the UI instead of only the last path segment.

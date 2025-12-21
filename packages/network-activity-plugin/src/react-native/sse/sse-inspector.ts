@@ -3,20 +3,23 @@ import { SSEInterceptor } from './sse-interceptor';
 import { EventSourceWithInternals } from './types';
 import { SSEEvent, SSEEventMap } from '../../shared/sse-events';
 import { getContentType } from '../utils';
+import type { Inspector } from '../inspector';
 
 type NanoEventsMap = {
   [K in keyof SSEEventMap]: (data: SSEEventMap[K]) => void;
 };
 
-export type SSEInspector = {
-  enable: () => void;
-  disable: () => void;
-  isEnabled: () => boolean;
-  dispose: () => void;
-  on: <TEventType extends keyof SSEEventMap>(
-    event: TEventType,
-    callback: (data: SSEEventMap[TEventType]) => void
-  ) => () => void;
+export type SSEInspector = Inspector<SSEEventMap>;
+
+export const SSE_EVENTS: (keyof SSEEventMap)[] = [
+  'sse-open',
+  'sse-message',
+  'sse-error',
+  'sse-close',
+];
+
+export const isSSEEvent = (type: string): type is keyof SSEEventMap => {
+  return (SSE_EVENTS as readonly string[]).includes(type);
 };
 
 export const getSSEInspector = (): SSEInspector => {
@@ -129,7 +132,6 @@ export const getSSEInspector = (): SSEInspector => {
     isEnabled: () => SSEInterceptor.isInterceptorEnabled(),
     dispose: () => {
       SSEInterceptor.disableInterception();
-      eventEmitter.events = {};
     },
     on: <TEventType extends keyof SSEEventMap>(
       event: TEventType,

@@ -4,20 +4,28 @@ import {
   WebSocketEvent,
   WebSocketEventMap,
 } from '../../shared/websocket-events';
+import type { Inspector } from '../inspector';
 
 type NanoEventsMap = {
   [K in keyof WebSocketEventMap]: (data: WebSocketEventMap[K]) => void;
 };
 
-export type WebSocketInspector = {
-  enable: () => void;
-  disable: () => void;
-  isEnabled: () => boolean;
-  dispose: () => void;
-  on: <TEventType extends keyof WebSocketEventMap>(
-    event: TEventType,
-    callback: (data: WebSocketEventMap[TEventType]) => void
-  ) => () => void;
+export type WebSocketInspector = Inspector<WebSocketEventMap>;
+
+export const WEBSOCKET_EVENTS: (keyof WebSocketEventMap)[] = [
+  'websocket-connect',
+  'websocket-open',
+  'websocket-close',
+  'websocket-message-sent',
+  'websocket-message-received',
+  'websocket-error',
+  'websocket-connection-status-changed',
+];
+
+export const isWebSocketEvent = (
+  type: string
+): type is keyof WebSocketEventMap => {
+  return (WEBSOCKET_EVENTS as readonly string[]).includes(type);
 };
 
 export const getWebSocketInspector = (): WebSocketInspector => {
@@ -169,7 +177,7 @@ export const getWebSocketInspector = (): WebSocketInspector => {
     },
     isEnabled: () => webSocketInterceptor.isInterceptorEnabled(),
     dispose: () => {
-      eventEmitter.events = {};
+      webSocketInterceptor.disableInterception();
       socketUrlMap.clear();
     },
     on: <TEventType extends keyof WebSocketEventMap>(
