@@ -127,7 +127,7 @@ import React, { useEffect, useState } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 
 // Define type-safe event map
-interface PluginEvents {
+type PluginEvents = {
   'user-data': {
     id: string;
     name: string;
@@ -136,7 +136,7 @@ interface PluginEvents {
   'request-user-data': {
     type: 'userInfo';
   };
-}
+};
 
 export default function MyPanel() {
   const client = useRozeniteDevToolsClient<PluginEvents>({
@@ -185,6 +185,104 @@ export default function MyPanel() {
 }
 ```
 
+### RPC Bridge
+
+For more complex interactions, Rozenite provides a symmetrical bi-directional RPC bridge. This allows you to call methods on the other side as if they were local asynchronous functions.
+
+#### 1. Define Protocols
+
+First, define the interfaces for both the App and DevTools sides. These should be shared between your App and DevTools code.
+
+```typescript
+// protocols.ts
+export type AppProtocol = {
+  getAppVersion(): Promise<string>;
+  logMessage(msg: string): Promise<void>;
+};
+
+export type DevToolsProtocol = {
+  refresh(): Promise<void>;
+  showNotification(text: string): Promise<boolean>;
+};
+```
+
+#### 2. Initialize in App (React Native)
+
+In your `react-native.ts`, set up the bridge and implement the `AppProtocol`.
+
+```typescript title="react-native.ts"
+import { createRozeniteRPCBridge, DevToolsPluginClient } from '@rozenite/plugin-bridge';
+import { AppProtocol, DevToolsProtocol } from './protocols';
+
+export default function setupPlugin(client: DevToolsPluginClient) {
+  // Implement local handlers for AppProtocol
+  const localHandlers: AppProtocol = {
+    async getAppVersion() {
+      return '1.0.0';
+    },
+    async logMessage(msg) {
+      console.log('App Log:', msg);
+    }
+  };
+
+  // Create Bridge
+  const devTools = createRozeniteRPCBridge<AppProtocol, DevToolsProtocol>(
+    {
+      send: (msg) => client.send('rpc', msg),
+      onMessage: (listener) => client.onMessage('rpc', listener),
+    },
+    localHandlers
+  );
+
+  // You can now call methods on the DevTools side
+  // devTools.showNotification('App connected!');
+}
+```
+
+#### 3. Initialize in DevTools (Panel)
+
+In your panel component, set up the bridge and implement the `DevToolsProtocol`.
+
+```typescript title="src/my-panel.tsx"
+import React, { useEffect } from 'react';
+import { createRozeniteRPCBridge, useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { AppProtocol, DevToolsProtocol } from './protocols';
+
+export default function MyPanel() {
+  const client = useRozeniteDevToolsClient({ pluginId: 'my-plugin' });
+  
+  useEffect(() => {
+    if (!client) return;
+
+    // Implement local handlers for DevToolsProtocol
+    const localHandlers: DevToolsProtocol = {
+      async refresh() {
+        console.log('Refreshing...');
+      },
+      async showNotification(text) {
+        alert(text);
+        return true;
+      }
+    };
+
+    // Create Bridge
+    const app = createRozeniteRPCBridge<DevToolsProtocol, AppProtocol>(
+      {
+        send: (msg) => client.send('rpc', msg),
+        onMessage: (listener) => client.onMessage('rpc', listener),
+      },
+      localHandlers
+    );
+
+    // Call remote method on App
+    app.getAppVersion().then(version => console.log('App Version:', version));
+
+  }, [client]);
+
+  return <div>My Panel</div>;
+}
+```
+
 ## Step 4: React Native Integration
 
 Add React Native functionality by creating a `react-native.ts` file. You can use React Native APIs and libraries to enhance your plugin:
@@ -194,7 +292,7 @@ import { DevToolsPluginClient } from '@rozenite/plugin-bridge';
 import { Platform, Dimensions } from 'react-native';
 
 // Use the same type-safe event map
-interface PluginEvents {
+type PluginEvents = {
   'user-data': {
     id: string;
     name: string;
@@ -203,7 +301,7 @@ interface PluginEvents {
   'request-user-data': {
     type: 'userInfo';
   };
-}
+};
 
 export default function setupPlugin(
   client: DevToolsPluginClient<PluginEvents>

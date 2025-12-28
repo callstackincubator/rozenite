@@ -101,3 +101,98 @@ Like the project? ⚛️ [Join the team](https://callstack.com/careers/?utm_camp
 [prs-welcome]: https://github.com/callstackincubator/rozenite/blob/main/CONTRIBUTING.md
 [chat-badge]: https://img.shields.io/discord/426714625279524876.svg?style=for-the-badge
 [chat]: https://discord.gg/xgGt7KAjxv
+
+## RPC Bridge
+
+The `createRozeniteRPCBridge` function allows you to set up a symmetrical bi-directional RPC bridge between the App and the DevTools.
+
+### Usage
+
+1. **Define Protocols**
+
+```typescript
+// Shared types
+export type AppProtocol = {
+  getAppVersion(): Promise<string>;
+  logMessage(msg: string): Promise<void>;
+};
+
+export type DevToolsProtocol = {
+  refresh(): Promise<void>;
+  showNotification(text: string): Promise<boolean>;
+};
+```
+
+2. **Initialize in App**
+
+```typescript
+import { createRozeniteRPCBridge, getRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { AppProtocol, DevToolsProtocol } from './protocols';
+
+async function setupAppBridge() {
+  const client = await getRozeniteDevToolsClient('my-plugin');
+  
+  // Implement local handlers
+  const localHandlers: AppProtocol = {
+    async getAppVersion() {
+      return '1.0.0';
+    },
+    async logMessage(msg) {
+      console.log('App Log:', msg);
+    }
+  };
+
+  // Create Bridge
+  const devTools = createRozeniteRPCBridge<AppProtocol, DevToolsProtocol>(
+    {
+      send: (msg) => client.send('rpc', msg),
+      onMessage: (listener) => client.onMessage('rpc', listener),
+    },
+    localHandlers
+  );
+
+  // Call remote method
+  await devTools.showNotification('App connected!');
+}
+```
+
+3. **Initialize in DevTools**
+
+```typescript
+import { useEffect } from 'react';
+import { createRozeniteRPCBridge, useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { AppProtocol, DevToolsProtocol } from './protocols';
+
+function MyPlugin() {
+  const client = useRozeniteDevToolsClient({ pluginId: 'my-plugin' });
+  
+  useEffect(() => {
+    if (!client) return;
+
+    const localHandlers: DevToolsProtocol = {
+      async refresh() {
+        console.log('Refreshing...');
+      },
+      async showNotification(text) {
+        alert(text);
+        return true;
+      }
+    };
+
+    const app = createRozeniteRPCBridge<DevToolsProtocol, AppProtocol>(
+      {
+        send: (msg) => client.send('rpc', msg),
+        onMessage: (listener) => client.onMessage('rpc', listener),
+      },
+      localHandlers
+    );
+
+    // Call remote method
+    app.getAppVersion().then(version => console.log('App Version:', version));
+
+  }, [client]);
+
+  return <div>My Plugin</div>;
+}
+```
+
