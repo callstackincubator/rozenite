@@ -12,6 +12,10 @@ export default defineConfig({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/communication',
   base: './',
+  test: {
+    globals: true,
+    environment: 'node',
+  },
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
