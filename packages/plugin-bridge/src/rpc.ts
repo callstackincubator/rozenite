@@ -30,6 +30,16 @@ export type RPCResponseError = {
 
 export type RPCResponse = RPCResponseSuccess | RPCResponseError;
 
+export type RPCBridgeOptions = {
+  /**
+   * Timeout in milliseconds for RPC requests.
+   * If a response is not received within this time, the promise will be rejected.
+   * Set to 0 to disable timeout.
+   * @default 60000 (60 seconds)
+   */
+  timeout?: number;
+};
+
 type PendingPromise = {
   resolve: (value: unknown) => void;
   reject: (reason?: unknown) => void;
@@ -88,13 +98,16 @@ function isRPCResponse(message: any): message is RPCResponse {
  * 
  * @param transport - The transport layer to send/receive messages.
  * @param localHandlers - The implementation of the local methods exposed to the other side.
+ * @param options - Configuration options.
  * @returns A Proxy object representing the remote interface.
  */
 export function createRozeniteRPCBridge<LocalHandlers extends object, RemoteInterface extends object>(
   transport: Transport,
-  localHandlers: LocalHandlers
+  localHandlers: LocalHandlers,
+  options?: RPCBridgeOptions
 ): RemoteInterface {
   const pendingPromises = new Map<string, PendingPromise>();
+  const timeoutMs = options?.timeout ?? 60000;
 
   // Message Handler
   transport.onMessage((message: unknown) => {
@@ -172,7 +185,28 @@ export function createRozeniteRPCBridge<LocalHandlers extends object, RemoteInte
         return (...args: unknown[]) => {
           return new Promise((resolve, reject) => {
             const id = generateId();
-            pendingPromises.set(id, { resolve, reject });
+            
+            let timer: ReturnType<typeof setTimeout> | undefined;
+
+            if (timeoutMs > 0) {
+              timer = setTimeout(() => {
+                if (pendingPromises.has(id)) {
+                  pendingPromises.delete(id);
+                  reject(new Error(`RPC Timeout: Request ${prop} timed out after ${timeoutMs}ms`));
+                }
+              }, timeoutMs);
+            }
+
+            pendingPromises.set(id, { 
+              resolve: (val) => {
+                if (timer) clearTimeout(timer);
+                resolve(val);
+              }, 
+              reject: (err) => {
+                if (timer) clearTimeout(timer);
+                reject(err);
+              }
+            });
 
             const request: RPCRequest = {
               jsonrpc: '2.0',

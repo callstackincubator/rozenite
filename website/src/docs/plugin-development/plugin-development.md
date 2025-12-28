@@ -231,7 +231,8 @@ export default function setupPlugin(client: DevToolsPluginClient) {
       send: (msg) => client.send('rpc', msg),
       onMessage: (listener) => client.onMessage('rpc', listener),
     },
-    localHandlers
+    localHandlers,
+    { timeout: 30000 } // Optional: Timeout in ms (default: 60000)
   );
 
   // You can now call methods on the DevTools side

@@ -159,4 +159,26 @@ describe('createRozeniteRPCBridge', () => {
     expect(localHandlers.ping).not.toHaveBeenCalled();
     expect(transport.send).not.toHaveBeenCalled();
   });
+
+  it('should timeout if no response is received', async () => {
+    const transport = createMockTransport();
+    const localHandlers = {};
+
+    vi.useFakeTimers();
+
+    const bridge = createRozeniteRPCBridge<typeof localHandlers, Remote>(
+      transport as unknown as RozeniteRPCTransport,
+      localHandlers,
+      { timeout: 1000 }
+    );
+
+    const promise = bridge.multiply(1, 2);
+
+    // Fast-forward time
+    vi.advanceTimersByTime(1001);
+
+    await expect(promise).rejects.toThrow('RPC Timeout: Request multiply timed out after 1000ms');
+
+    vi.useRealTimers();
+  });
 });

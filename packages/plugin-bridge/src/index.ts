@@ -6,3 +6,4 @@ export { getRozeniteDevToolsClient } from './client';
 export { UnsupportedPlatformError } from './errors';
 export { createRozeniteRPCBridge } from './rpc';
 export type { Transport as RozeniteRPCTransport } from './rpc';
+export type { RPCBridgeOptions } from './rpc';
