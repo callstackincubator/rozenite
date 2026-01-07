@@ -9,7 +9,6 @@ export type UseRozeniteDevToolsClientOptions<
 > = {
   pluginId: string;
   readyMode?: 'auto' | 'manual';  // default: 'auto'
-  waitForReady?: boolean;         // default: true
   eventMap?: TEventMap;
 };
 
@@ -24,7 +23,6 @@ export const useRozeniteDevToolsClientInternal = <
 >({
   pluginId,
   readyMode = 'auto',
-  waitForReady = true,
   channel,
   isLeader,
 }: UseRozeniteDevToolsClientInternalOptions<TEventMap>): RozeniteDevToolsClient<TEventMap> | null => {
@@ -46,23 +44,23 @@ export const useRozeniteDevToolsClientInternal = <
         });
 
         if (isMounted) {
-          if (waitForReady) {
-            // Wait for handshake to complete
-            const readyPromise = new Promise<void>((resolve) => {
-              if (client && client.isReady()) {
+          // Always wait for handshake to complete before exposing client
+          const readyPromise = new Promise<void>((resolve) => {
+            if (client && client.isReady()) {
+              resolve();
+            } else if (client) {
+              const subscription = client.onReady(() => {
+                subscription.remove();
                 resolve();
-              } else if (client) {
-                const subscription = client.onReady(() => {
-                  subscription.remove();
-                  resolve();
-                });
-              }
-            });
+              });
+            }
+          });
 
-            await readyPromise;
+          await readyPromise;
+
+          if (isMounted) {
+            setClient(client);
           }
-
-          setClient(client);
         }
       } catch (error) {
         if (error instanceof UnsupportedPlatformError) {
@@ -97,7 +95,7 @@ export const useRozeniteDevToolsClientInternal = <
       isMounted = false;
       teardown();
     };
-  }, [pluginId, readyMode, waitForReady, channel, isLeader]);
+  }, [pluginId, readyMode, channel, isLeader]);
 
   if (error != null) {
     throw error;

@@ -35,7 +35,6 @@ export type RozeniteDevToolsClient<
 export type RozeniteClientConfig = {
   pluginId: string;
   readyMode: 'auto' | 'manual';
-  waitForReady?: boolean;
   // Optional transport layer for testing
   channel?: Channel;
   isLeader?: boolean;
