@@ -55,7 +55,7 @@ function serializeError(error: unknown) {
         name: error.name,
         // Copy other properties
         ...Object.getOwnPropertyNames(error).reduce((acc, key) => {
-            // @ts-ignore
+            // @ts-expect-error - error is an instance of Error
             acc[key] = error[key];
             return acc;
         }, {} as Record<string, unknown>)
@@ -114,7 +114,7 @@ export function createRozeniteRPCBridge<LocalHandlers extends object, RemoteInte
     if (isRPCRequest(message)) {
       // It's a request: Execute local handler
       const { id, method, params } = message;
-      // @ts-ignore
+      // @ts-expect-error - method is a string
       const handler = localHandlers[method];
 
       if (typeof handler === 'function') {

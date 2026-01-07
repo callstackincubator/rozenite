@@ -4,7 +4,10 @@ import type { RozeniteRPCTransport } from './index';
 
 describe('createRozeniteRPCBridge', () => {
   const createMockTransport = () => {
-    let listener: (message: unknown) => void = () => {};
+    let listener: (message: unknown) => void = () => {
+      // Empty listener to avoid warnings
+    };
+    
     return {
       send: vi.fn(),
       onMessage: vi.fn((l) => {
