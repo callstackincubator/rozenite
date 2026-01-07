@@ -6,4 +6,4 @@ export { getRozeniteDevToolsClient } from './client';
 export { UnsupportedPlatformError } from './errors';
 
 // v2 API (buffered, with handshake)
-export * as v2 from './v2/index.js';
+export * as unstable from './v2/index.js';
