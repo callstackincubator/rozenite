@@ -54,7 +54,7 @@ Optional: To capture network requests before your React Native app initializatio
 
 ```ts
 // index.js
-import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin/react-native';
+import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
 
 withOnBootNetworkActivityRecording();
 ```
