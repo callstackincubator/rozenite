@@ -46,66 +46,73 @@ type PendingPromise = {
 };
 
 // Error serialization helper
-function serializeError(error: unknown) {
+const serializeError = (error: unknown) => {
   if (error instanceof Error) {
     return {
       message: error.message,
-      data: { 
-        stack: error.stack, 
+      data: {
+        stack: error.stack,
         name: error.name,
         // Copy other properties
         ...Object.getOwnPropertyNames(error).reduce((acc, key) => {
-            // @ts-expect-error - error is an instance of Error
-            acc[key] = error[key];
-            return acc;
-        }, {} as Record<string, unknown>)
+          acc[key] = (error as any)[key];
+          return acc;
+        }, {} as Record<string, unknown>),
       },
     };
   }
   return {
     message: String(error),
   };
-}
+};
 
 // Simple ID generator
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
-function isRPCRequest(message: any): message is RPCRequest {
+const generateId = (): string => {
   return (
-    typeof message === 'object' &&
-    message !== null &&
-    message.jsonrpc === '2.0' &&
-    typeof message.method === 'string' &&
-    typeof message.id === 'string' &&
-    Array.isArray(message.params)
+    Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15)
   );
-}
+};
 
-function isRPCResponse(message: any): message is RPCResponse {
+const isRPCRequest = (message: unknown): message is RPCRequest => {
+  const msg = message as any;
   return (
-    typeof message === 'object' &&
-    message !== null &&
-    message.jsonrpc === '2.0' &&
-    typeof message.id === 'string' &&
-    ('result' in message || 'error' in message)
+    typeof msg === 'object' &&
+    msg !== null &&
+    msg.jsonrpc === '2.0' &&
+    typeof msg.method === 'string' &&
+    typeof msg.id === 'string' &&
+    Array.isArray(msg.params)
   );
-}
+};
+
+const isRPCResponse = (message: unknown): message is RPCResponse => {
+  const msg = message as any;
+  return (
+    typeof msg === 'object' &&
+    msg !== null &&
+    msg.jsonrpc === '2.0' &&
+    typeof msg.id === 'string' &&
+    ('result' in msg || 'error' in msg)
+  );
+};
 
 /**
  * Creates a Symmetrical Bi-Directional RPC Bridge.
- * 
+ *
  * @param transport - The transport layer to send/receive messages.
  * @param localHandlers - The implementation of the local methods exposed to the other side.
  * @param options - Configuration options.
  * @returns A Proxy object representing the remote interface.
  */
-export function createRozeniteRPCBridge<LocalHandlers extends object, RemoteInterface extends object>(
+export const createRozeniteRPCBridge = <
+  LocalHandlers extends object,
+  RemoteInterface extends object
+>(
   transport: Transport,
   localHandlers: LocalHandlers,
   options?: RPCBridgeOptions
-): RemoteInterface {
+): RemoteInterface => {
   const pendingPromises = new Map<string, PendingPromise>();
   const timeoutMs = options?.timeout ?? 60000;
 
@@ -114,8 +121,7 @@ export function createRozeniteRPCBridge<LocalHandlers extends object, RemoteInte
     if (isRPCRequest(message)) {
       // It's a request: Execute local handler
       const { id, method, params } = message;
-      // @ts-expect-error - method is a string
-      const handler = localHandlers[method];
+      const handler = (localHandlers as any)[method];
 
       if (typeof handler === 'function') {
         try {
@@ -139,12 +145,12 @@ export function createRozeniteRPCBridge<LocalHandlers extends object, RemoteInte
               transport.send(response);
             });
         } catch (err) {
-           const response: RPCResponseError = {
-             jsonrpc: '2.0',
-             id,
-             error: serializeError(err),
-           };
-           transport.send(response);
+          const response: RPCResponseError = {
+            jsonrpc: '2.0',
+            id,
+            error: serializeError(err),
+          };
+          transport.send(response);
         }
       } else {
         // Method not found
@@ -162,13 +168,13 @@ export function createRozeniteRPCBridge<LocalHandlers extends object, RemoteInte
       if (pending) {
         pendingPromises.delete(id);
         if ('error' in message && message.error) {
-           // Reconstruct error
-           const errData = (message as RPCResponseError).error;
-           const error = new Error(errData.message);
-           if (errData.data && typeof errData.data === 'object') {
-             Object.assign(error, errData.data);
-           }
-           pending.reject(error);
+          // Reconstruct error
+          const errData = (message as RPCResponseError).error;
+          const error = new Error(errData.message);
+          if (errData.data && typeof errData.data === 'object') {
+            Object.assign(error, errData.data);
+          }
+          pending.reject(error);
         } else {
           pending.resolve((message as RPCResponseSuccess).result);
         }
@@ -185,27 +191,31 @@ export function createRozeniteRPCBridge<LocalHandlers extends object, RemoteInte
         return (...args: unknown[]) => {
           return new Promise((resolve, reject) => {
             const id = generateId();
-            
+
             let timer: ReturnType<typeof setTimeout> | undefined;
 
             if (timeoutMs > 0) {
               timer = setTimeout(() => {
                 if (pendingPromises.has(id)) {
                   pendingPromises.delete(id);
-                  reject(new Error(`RPC Timeout: Request ${prop} timed out after ${timeoutMs}ms`));
+                  reject(
+                    new Error(
+                      `RPC Timeout: Request ${prop} timed out after ${timeoutMs}ms`
+                    )
+                  );
                 }
               }, timeoutMs);
             }
 
-            pendingPromises.set(id, { 
+            pendingPromises.set(id, {
               resolve: (val) => {
                 if (timer) clearTimeout(timer);
                 resolve(val);
-              }, 
+              },
               reject: (err) => {
                 if (timer) clearTimeout(timer);
                 reject(err);
-              }
+              },
             });
 
             const request: RPCRequest = {
@@ -222,4 +232,4 @@ export function createRozeniteRPCBridge<LocalHandlers extends object, RemoteInte
       return Reflect.get(target, prop);
     },
   });
-}
+};
