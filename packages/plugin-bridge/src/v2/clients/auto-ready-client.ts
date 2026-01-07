@@ -14,6 +14,15 @@ export type AutoReadyClient<
   TEventMap extends Record<string, unknown> = Record<string, unknown>
 > = RozeniteDevToolsAutoClient<TEventMap>;
 
+/**
+ * Creates an auto-ready client that automatically signals readiness after initialization.
+ * This ensures the handshake starts immediately without requiring user interaction.
+ * 
+ * The client will:
+ * 1. Initialize the base client and handshake layer
+ * 2. Automatically signal ready on the next tick
+ * 3. Allow both parties to complete the handshake even if listeners aren't added yet
+ */
 export const createAutoReadyClient = <
   TEventMap extends Record<string, unknown> = Record<string, unknown>
 >(
@@ -28,6 +37,14 @@ export const createAutoReadyClient = <
 
   const initialize = async (): Promise<void> => {
     await state.baseClient.initialize();
+    
+    // In auto-ready mode, signal ready automatically after initialization
+    if (!state.hasSignaledReady) {
+      state.hasSignaledReady = true;
+      setTimeout(() => {
+        state.baseClient.handshake.signalReady();
+      }, 0);
+    }
   };
 
   const send = <TType extends keyof TEventMap>(
@@ -41,17 +58,7 @@ export const createAutoReadyClient = <
     type: TType,
     listener: (payload: TEventMap[TType]) => void
   ): Subscription => {
-    const subscription = state.baseClient.onMessage(type, listener);
-
-    // Signal ready on next tick when first listener is added
-    if (!state.hasSignaledReady) {
-      state.hasSignaledReady = true;
-      setTimeout(() => {
-        state.baseClient.handshake.signalReady();
-      }, 0);
-    }
-
-    return subscription;
+    return state.baseClient.onMessage(type, listener);
   };
 
   const onReady = (callback: () => void): Subscription => {

@@ -82,26 +82,43 @@ export const createHandshakeLayer = (
   const handleHandshakeMessage = (message: HandshakeMessage): void => {
     switch (message.type) {
       case HANDSHAKE_INIT:
-        if (!state.isLeader && state.state === HandshakeState.NOT_STARTED) {
+        if (!state.isLeader) {
+          // Follower should always respond to INIT, even if already connected
+          // This handles the case where the leader (DevTools UI) reloads
+          
+          // Reset state and clear any queued messages if we were previously ready
+          if (state.state === HandshakeState.READY) {
+            state.outgoingMessageQueue = [];
+            state.incomingMessageQueue = [];
+          }
+          
           sendHandshakeMessage(HANDSHAKE_ACK);
           state.state = HandshakeState.WAITING_FOR_COMPLETE;
         }
         break;
 
       case HANDSHAKE_ACK:
-        if (state.isLeader && state.state === HandshakeState.WAITING_FOR_ACK) {
-          sendHandshakeMessage(HANDSHAKE_COMPLETE);
-          state.state = HandshakeState.READY;
-          flushMessageQueues();
-          notifyReady();
+        if (state.isLeader) {
+          if (state.state === HandshakeState.WAITING_FOR_ACK) {
+            sendHandshakeMessage(HANDSHAKE_COMPLETE);
+            state.state = HandshakeState.READY;
+            flushMessageQueues();
+            notifyReady();
+          } else if (state.state === HandshakeState.READY) {
+            // Leader was already READY, but follower restarted
+            // Just send COMPLETE again to help follower catch up
+            sendHandshakeMessage(HANDSHAKE_COMPLETE);
+          }
         }
         break;
 
       case HANDSHAKE_COMPLETE:
-        if (!state.isLeader && state.state === HandshakeState.WAITING_FOR_COMPLETE) {
-          state.state = HandshakeState.READY;
-          flushMessageQueues();
-          notifyReady();
+        if (!state.isLeader) {
+          if (state.state === HandshakeState.WAITING_FOR_COMPLETE) {
+            state.state = HandshakeState.READY;
+            flushMessageQueues();
+            notifyReady();
+          }
         }
         break;
     }
@@ -165,20 +182,23 @@ export const createHandshakeLayer = (
   };
 
   const signalReady = (): void => {
-    if (state.state !== HandshakeState.NOT_STARTED) {
-      // Already in progress or ready
+    if (state.state !== HandshakeState.NOT_STARTED && state.state !== HandshakeState.READY) {
+      // Already in progress (WAITING_FOR_ACK or WAITING_FOR_COMPLETE)
       return;
     }
 
     if (state.isLeader) {
       // DevTools UI initiates
+      if (state.state === HandshakeState.READY) {
+        // Clear queues and reset state for fresh handshake
+        state.outgoingMessageQueue = [];
+        state.incomingMessageQueue = [];
+      }
+      
       sendHandshakeMessage(HANDSHAKE_INIT);
       state.state = HandshakeState.WAITING_FOR_ACK;
-    } else {
-      // Device responds to init
-      // This should be called after receiving HANDSHAKE_INIT
-      // but we handle that in handleHandshakeMessage
     }
+    // Follower waits for INIT from leader (handled in handleHandshakeMessage)
   };
 
   const onReady = (callback: () => void): Subscription => {

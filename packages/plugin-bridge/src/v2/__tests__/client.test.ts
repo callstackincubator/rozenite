@@ -589,4 +589,102 @@ describe('Plugin Bridge v2 - Client', () => {
       panelClient.close();
     });
   });
+
+  describe('Re-initialization', () => {
+    it('should handle DevTools UI reload while device is still connected', async () => {
+      const [panelChannel, deviceChannel] = createMockChannelPair();
+
+      // Create and initialize device client
+      const deviceClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        readyMode: 'auto',
+        channel: deviceChannel,
+        isLeader: false,
+      });
+
+      // Create first panel client and complete handshake
+      const panelClient1 = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        readyMode: 'auto',
+        channel: panelChannel,
+        isLeader: true,
+      });
+
+      // Wait for both to be ready
+      await new Promise<void>((resolve) => {
+        let deviceReady = false;
+        let panelReady = false;
+        
+        const checkBothReady = () => {
+          if (deviceReady && panelReady) {
+            resolve();
+          }
+        };
+        
+        if (deviceClient.isReady()) {
+          deviceReady = true;
+        } else {
+          deviceClient.onReady(() => {
+            deviceReady = true;
+            checkBothReady();
+          });
+        }
+        
+        if (panelClient1.isReady()) {
+          panelReady = true;
+        } else {
+          panelClient1.onReady(() => {
+            panelReady = true;
+            checkBothReady();
+          });
+        }
+        
+        checkBothReady();
+      });
+
+      expect(deviceClient.isReady()).toBe(true);
+      expect(panelClient1.isReady()).toBe(true);
+
+      // Close the first panel client (simulating DevTools UI close)
+      panelClient1.close();
+
+      // Create a new panel client (simulating DevTools UI reload)
+      // Use the same panelChannel to simulate reconnection
+      const panelClient2 = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        readyMode: 'auto',
+        channel: panelChannel,
+        isLeader: true,
+      });
+
+      // Wait for handshake to complete with the new panel client
+      await new Promise<void>((resolve) => {
+        if (panelClient2.isReady()) {
+          resolve();
+        } else {
+          panelClient2.onReady(() => resolve());
+        }
+      });
+
+      // Both should be ready now
+      expect(panelClient2.isReady()).toBe(true);
+      expect(deviceClient.isReady()).toBe(true);
+
+      // Test that messages flow correctly
+      const messages: Array<{ message: string }> = [];
+      panelClient2.onMessage('test-event', (payload: { message: string }) => {
+        messages.push(payload);
+      });
+
+      deviceClient.send('test-event', { message: 'after reload' });
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(messages).toHaveLength(1);
+      expect(messages[0]).toEqual({ message: 'after reload' });
+
+      deviceClient.close();
+      panelClient2.close();
+    });
+  });
 });
