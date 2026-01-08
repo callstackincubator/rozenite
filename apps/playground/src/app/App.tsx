@@ -27,6 +27,7 @@ import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
 import { store } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
+import { RozeniteOverlay } from '@rozenite/overlay-plugin';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -129,6 +130,7 @@ export const App = () => {
           <NavigationContainer ref={navigationRef} linking={linking}>
             <Wrapper />
           </NavigationContainer>
+          <RozeniteOverlay />
         </SafeAreaProvider>
       </QueryClientProvider>
     </Provider>
