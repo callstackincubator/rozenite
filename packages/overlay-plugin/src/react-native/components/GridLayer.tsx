@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { GridConfig } from '../../shared/types';
 
-export const GridLayer: React.FC<{ config: GridConfig }> = ({ config }) => {
+export const GridLayer: React.FC<{ config: GridConfig }> = memo(({ config }) => {
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
 
   if (!config.enabled) {
@@ -55,7 +55,7 @@ export const GridLayer: React.FC<{ config: GridConfig }> = ({ config }) => {
       })}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   gridLine: {

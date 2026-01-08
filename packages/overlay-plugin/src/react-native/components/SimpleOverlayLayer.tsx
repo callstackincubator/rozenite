@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet, Image, useWindowDimensions } from 'react-native';
 import { ImageConfig } from '../../shared/types';
 
-export const SimpleOverlayLayer: React.FC<{ config: ImageConfig }> = ({
+export const SimpleOverlayLayer: React.FC<{ config: ImageConfig }> = memo(({
   config,
 }) => {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
@@ -26,7 +26,7 @@ export const SimpleOverlayLayer: React.FC<{ config: ImageConfig }> = ({
       />
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   overlayImage: {

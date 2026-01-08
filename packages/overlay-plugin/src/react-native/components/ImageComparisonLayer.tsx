@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { ImageConfig } from '../../shared/types';
 import { SimpleOverlayLayer } from './SimpleOverlayLayer';
 import { SliderOverlayLayer } from './SliderOverlayLayer';
 
-export const ImageComparisonLayer: React.FC<{ config: ImageConfig }> = ({
+export const ImageComparisonLayer: React.FC<{ config: ImageConfig }> = memo(({
   config,
 }) => {
   if (!config.enabled || !config.uri) {
@@ -15,4 +15,4 @@ export const ImageComparisonLayer: React.FC<{ config: ImageConfig }> = ({
   }
 
   return <SliderOverlayLayer config={config} />;
-};
+});

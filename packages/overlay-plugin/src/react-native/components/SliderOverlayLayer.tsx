@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { ImageConfig } from '../../shared/types';
 
-export const SliderOverlayLayer: React.FC<{ config: ImageConfig }> = ({
+export const SliderOverlayLayer: React.FC<{ config: ImageConfig }> = memo(({
   config,
 }) => {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
