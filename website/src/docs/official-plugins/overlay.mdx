@@ -1,0 +1,105 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Overlay Plugin
+
+The Overlay plugin provides visual debugging overlays for React Native applications, including customizable grids and image comparison tools to help with UI alignment and visual testing.
+
+## What is Overlay Plugin?
+
+The Overlay plugin is a powerful debugging tool that helps you visualize and debug UI elements in your React Native application. It provides:
+
+- **Grid Overlay**: Display customizable grids over your app for pixel-perfect alignment and spacing verification
+- **Image Overlay**: Overlay images on your app for visual comparison and design validation
+- **Image Comparison**: Side-by-side image comparison with adjustable slider for A/B testing
+- **Real-time Configuration**: Adjust overlay settings in real-time through the DevTools interface
+- **Non-intrusive Design**: Overlays don't interfere with app interaction (pointerEvents: 'none')
+
+## Installation
+
+Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
+
+Install the Overlay plugin as a development dependency:
+
+<PackageManagerTabs command="install -D @rozenite/overlay-plugin" />
+
+Add the DevTools hook to your React Native app to enable overlay functionality:
+
+```typescript title="App.tsx"
+import { RozeniteOverlay } from '@rozenite/overlay-plugin';
+
+function App() {
+  return (
+    <>
+      <YourApp />
+      {/* Add the overlay component at the root level */}
+      <RozeniteOverlay />
+    </>
+  );
+}
+```
+
+## Usage
+
+Once configured, the Overlay plugin will automatically appear in your React Native DevTools sidebar as "Overlay". Click on it to access the overlay controls:
+
+### Grid Overlay
+
+The grid overlay helps you verify spacing, alignment, and layout consistency:
+
+- **Enable/Disable**: Toggle grid visibility on and off
+- **Grid Size**: Adjust grid cell size (in pixels) from 4px to 100px
+- **Color**: Choose grid line color using a color picker
+- **Opacity**: Control grid transparency from 0.1 to 1.0
+
+### Image Overlay
+
+The image overlay allows you to superimpose reference images over your app:
+
+- **Enable/Disable**: Toggle image overlay visibility
+- **Image URL**: Enter the URL of the image to overlay
+- **Overlay Mode**: Choose between simple overlay or slider comparison
+- **Resize Mode**: Select how the image fits (cover, contain, stretch, center)
+- **Opacity**: Adjust image transparency
+
+### Image Comparison Mode
+
+When using slider mode, you get an interactive comparison tool:
+
+- **Side-by-Side View**: Compare your app with a reference image
+- **Adjustable Slider**: Drag to reveal different portions of each image
+- **Real-time Adjustment**: Change slider position while the app is running
+
+### Default Settings
+
+- **Grid**: Disabled by default, 8px size, red color (#FF0000), 70% opacity
+- **Image**: Disabled by default, 70% opacity, overlay mode, contain resize mode
+
+All settings are controlled through the DevTools panel and persist during your development session.
+
+### Important Notes
+
+:::warning Overlay Positioning
+The `RozeniteOverlay` component should be placed at the root level of your app, after all other content, to ensure overlays appear on top of your entire application.
+:::
+
+:::info Development Only
+The Overlay plugin components are automatically disabled in production builds. The overlay will not render in release builds of your app.
+:::
+
+## Contributing
+
+The Overlay plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
+
+## Support
+
+If you encounter issues with the Overlay plugin:
+
+1. **Check Documentation**: Review this guide for common solutions
+2. **Verify Setup**: Ensure the `RozeniteOverlay` component is properly placed in your app hierarchy
+3. **Search Issues**: Look for similar issues in the repository
+4. **Create Issue**: Report bugs or request features
+5. **Community**: Reach out to the Rozenite community for help
+
+---
+
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md).
