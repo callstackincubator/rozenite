@@ -3,6 +3,9 @@ export type GridConfig = {
   size: number;
   color: string;
   opacity: number;
+  majorEvery: number;
+  minorLineWidth: number;
+  majorLineWidth: number;
 };
 
 export type ImageOverlayMode = 'overlay' | 'slider';

@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { ImageConfig, ImageResizeMode, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../shared';
 import { Image as ImageIcon, Upload, X, Clipboard } from 'lucide-react';
+import { useThrottledCallback } from '../hooks/useThrottledCallback';
 
 export type ImageSettingsProps = {
   config: ImageConfig;
@@ -11,7 +12,6 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localOpacity, setLocalOpacity] = useState(config.opacity);
   const [isPasteSupported] = useState(() => navigator.clipboard && 'read' in navigator.clipboard);
-  const opacityTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     setLocalOpacity(config.opacity);
@@ -21,16 +21,13 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
     onConfigChange({ ...config, ...changes });
   };
 
+  const commitChange = useThrottledCallback((changes: Partial<ImageConfig>) => {
+    handleChange(changes);
+  }, 50);
+
   const handleOpacityChange = (value: number) => {
     setLocalOpacity(value);
-    
-    if (opacityTimeoutRef.current) {
-      clearTimeout(opacityTimeoutRef.current);
-    }
-
-    opacityTimeoutRef.current = setTimeout(() => {
-      handleChange({ opacity: value });
-    }, 50);
+    commitChange({ opacity: value });
   };
 
   const processFile = (file: File | Blob) => {

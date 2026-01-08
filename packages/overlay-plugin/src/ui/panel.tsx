@@ -11,6 +11,9 @@ export default function OverlayPanel() {
     size: 8,
     color: '#FF0000',
     opacity: 0.5,
+    majorEvery: 0,
+    minorLineWidth: 1,
+    majorLineWidth: 2,
   });
   const [imageConfig, setImageConfig] = useState<ImageConfig>({
     enabled: false,

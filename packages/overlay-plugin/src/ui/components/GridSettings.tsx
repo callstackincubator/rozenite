@@ -1,6 +1,7 @@
-import { useRef, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { GridConfig } from '../../shared/types';
 import { Grid } from 'lucide-react';
+import { useThrottledCallback } from '../hooks/useThrottledCallback';
 
 export type GridSettingsProps = {
   config: GridConfig;
@@ -9,7 +10,6 @@ export type GridSettingsProps = {
 
 export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
   const [localOpacity, setLocalOpacity] = useState(config.opacity);
-  const opacityTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     setLocalOpacity(config.opacity);
@@ -19,16 +19,13 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
     onConfigChange({ ...config, ...changes });
   };
 
+  const commitChange = useThrottledCallback((changes: Partial<GridConfig>) => {
+    handleChange(changes);
+  }, 50);
+
   const handleOpacityChange = (value: number) => {
     setLocalOpacity(value);
-    
-    if (opacityTimeoutRef.current) {
-      clearTimeout(opacityTimeoutRef.current);
-    }
-
-    opacityTimeoutRef.current = setTimeout(() => {
-      handleChange({ opacity: value });
-    }, 50);
+    commitChange({ opacity: value });
   };
 
   return (
@@ -60,6 +57,59 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
               onChange={(e) => handleChange({ size: Number(e.target.value) })}
               className="input-range"
             />
+          </div>
+
+          <div className="control-group">
+            <label className="control-label">
+              Major grid every {config.majorEvery > 0 ? `${config.majorEvery} cells` : 'Off'}
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="20"
+              step="1"
+              value={config.majorEvery}
+              onChange={(e) => handleChange({ majorEvery: Number(e.target.value) })}
+              className="input-range"
+            />
+          </div>
+
+          <div className="control-group">
+            <label className="control-label">Line weights</label>
+            <div className="control-row" style={{ gap: '12px' }}>
+              <div style={{ flex: 1 }}>
+                <label
+                  className="control-label"
+                  style={{ fontSize: '11px', marginBottom: '4px', color: 'var(--color-text-secondary)' }}
+                >
+                  Minor ({config.minorLineWidth}px)
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={config.minorLineWidth}
+                  onChange={(e) => handleChange({ minorLineWidth: Number(e.target.value) })}
+                  className="input-range"
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label
+                  className="control-label"
+                  style={{ fontSize: '11px', marginBottom: '4px', color: 'var(--color-text-secondary)' }}
+                >
+                  Major ({config.majorLineWidth}px)
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={config.majorLineWidth}
+                  onChange={(e) => handleChange({ majorLineWidth: Number(e.target.value) })}
+                  className="input-range"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="control-group">
