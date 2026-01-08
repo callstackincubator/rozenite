@@ -202,6 +202,9 @@ importers:
       '@rozenite/network-activity-plugin':
         specifier: workspace:*
         version: link:../../packages/network-activity-plugin
+      '@rozenite/overlay-plugin':
+        specifier: workspace:*
+        version: link:../../packages/overlay-plugin
       '@rozenite/performance-monitor-plugin':
         specifier: workspace:*
         version: link:../../packages/performance-monitor-plugin
@@ -554,6 +557,55 @@ importers:
       zustand:
         specifier: ^5.0.6
         version: 5.0.6(@types/react@18.3.23)(immer@10.1.1)(react@18.3.1)(use-sync-external-store@1.5.0(react@18.3.1))
+
+  packages/overlay-plugin:
+    dependencies:
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+    devDependencies:
+      '@rozenite/vite-plugin':
+        specifier: workspace:*
+        version: link:../vite-plugin
+      '@types/react':
+        specifier: ~18.3.12
+        version: 18.3.23
+      autoprefixer:
+        specifier: ^10.4.21
+        version: 10.4.21(postcss@8.5.6)
+      lucide-react:
+        specifier: ^0.263.1
+        version: 0.263.1(react@18.3.1)
+      postcss:
+        specifier: ^8.5.6
+        version: 8.5.6
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.0
+        version: 18.3.0(react@18.3.1)
+      react-native:
+        specifier: 0.76.0
+        version: 0.76.0(@babel/core@7.28.0)(@babel/preset-env@7.28.3(@babel/core@7.28.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
+      react-native-web:
+        specifier: 0.21.0
+        version: 0.21.0(encoding@0.1.13)(react-dom@18.3.0(react@18.3.1))(react@18.3.1)
+      rozenite:
+        specifier: workspace:*
+        version: link:../cli
+      tailwindcss:
+        specifier: ^3.4.17
+        version: 3.4.17
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.17)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.3.5(@types/node@22.17.0)(jiti@2.6.1)(terser@5.43.1)(yaml@2.8.1)
 
   packages/performance-monitor-plugin:
     dependencies:
@@ -6385,9 +6437,6 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-  electron-to-chromium@1.5.178:
-    resolution: {integrity: sha512-wObbz/ar3Bc6e4X5vf0iO8xTN8YAjN/tgiAOJLr7yjYFtP9wAjq8Mb5h0yn6kResir+VYx2DXBj9NNobs0ETSA==}
-
   electron-to-chromium@1.5.234:
     resolution: {integrity: sha512-RXfEp2x+VRYn8jbKfQlRImzoJU01kyDvVPBmG39eU2iuRVhuS6vQNocB8J0/8GrIMLnPzgz4eW6WiRnJkTuNWg==}
 
@@ -8843,9 +8892,6 @@ packages:
   node-modules-regexp@1.0.0:
     resolution: {integrity: sha512-JMaRS9L4wSRIR+6PTVEikTrq/lMGEZR43a48ETeilY0Q0iMwVnccMFrUM1k+tNzmYuIU0Vh710bCUqHX+/+ctQ==}
     engines: {node: '>=0.10.0'}
-
-  node-releases@2.0.19:
-    resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
 
   node-releases@2.0.23:
     resolution: {integrity: sha512-cCmFDMSm26S6tQSDpBCg/NR8NENrVPhAJSf+XbxBG4rPFaaonlEoE9wHQmun+cls499TQGSb7ZyPBRlzgKfpeg==}
@@ -16021,7 +16067,7 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.8
       estree-walker: 2.0.2
-      picomatch: 4.0.2
+      picomatch: 4.0.3
     optionalDependencies:
       rollup: 4.44.1
 
@@ -17883,8 +17929,8 @@ snapshots:
   browserslist@4.25.1:
     dependencies:
       caniuse-lite: 1.0.30001750
-      electron-to-chromium: 1.5.178
-      node-releases: 2.0.19
+      electron-to-chromium: 1.5.234
+      node-releases: 2.0.23
       update-browserslist-db: 1.1.3(browserslist@4.25.1)
 
   browserslist@4.26.3:
@@ -18794,8 +18840,6 @@ snapshots:
   ejs@3.1.10:
     dependencies:
       jake: 10.9.2
-
-  electron-to-chromium@1.5.178: {}
 
   electron-to-chromium@1.5.234: {}
 
@@ -22321,8 +22365,6 @@ snapshots:
 
   node-modules-regexp@1.0.0: {}
 
-  node-releases@2.0.19: {}
-
   node-releases@2.0.23: {}
 
   node-schedule@2.1.1:
@@ -24879,11 +24921,11 @@ snapshots:
   vite@6.3.5(@types/node@18.16.9)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.1):
     dependencies:
       esbuild: 0.25.5
-      fdir: 6.4.6(picomatch@4.0.2)
-      picomatch: 4.0.2
+      fdir: 6.5.0(picomatch@4.0.3)
+      picomatch: 4.0.3
       postcss: 8.5.6
       rollup: 4.44.1
-      tinyglobby: 0.2.14
+      tinyglobby: 0.2.15
     optionalDependencies:
       '@types/node': 18.16.9
       fsevents: 2.3.3
@@ -24894,11 +24936,11 @@ snapshots:
   vite@6.3.5(@types/node@22.17.0)(jiti@2.6.1)(terser@5.43.1)(yaml@2.8.1):
     dependencies:
       esbuild: 0.25.5
-      fdir: 6.4.6(picomatch@4.0.2)
-      picomatch: 4.0.2
+      fdir: 6.5.0(picomatch@4.0.3)
+      picomatch: 4.0.3
       postcss: 8.5.6
       rollup: 4.44.1
-      tinyglobby: 0.2.14
+      tinyglobby: 0.2.15
     optionalDependencies:
       '@types/node': 22.17.0
       fsevents: 2.3.3

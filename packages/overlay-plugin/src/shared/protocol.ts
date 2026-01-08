@@ -1,35 +1,23 @@
 import { GridConfig, ImageConfig } from './types';
 
-/**
- * Protocol exposed by the App (React Native) side.
- * These methods can be called from the DevTools side.
- */
-export type OverlayAppProtocol = {
+export type OverlayPluginEventMap = {
   /**
-   * Set the grid configuration.
-   * @param config - The grid configuration
+   * Command to set the grid configuration.
    */
-  setGridConfig(config: GridConfig): Promise<void>;
+  'set-grid-config': { config: GridConfig };
 
   /**
-   * Set the image overlay configuration.
-   * @param config - The image configuration
+   * Command to set the image overlay configuration.
    */
-  setImageConfig(config: ImageConfig): Promise<void>;
+  'set-image-config': { config: ImageConfig };
 
   /**
-   * Get the current overlay state.
-   * @returns The current overlay state
+   * Command to request the current overlay state.
    */
-  getOverlayState(): Promise<{ grid: GridConfig; image: ImageConfig }>;
+  'request-overlay-state': Record<string, never>;
+
+  /**
+   * Event containing the current overlay state.
+   */
+  'overlay-state': { grid: GridConfig; image: ImageConfig };
 };
-
-/**
- * Protocol exposed by the DevTools side.
- * These methods can be called from the App (React Native) side.
- * Currently empty, but can be extended in the future.
- */
-export type OverlayDevToolsProtocol = {
-  // Future: Could add methods like refresh(), showNotification(), etc.
-};
-
