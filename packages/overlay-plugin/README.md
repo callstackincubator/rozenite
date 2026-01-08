@@ -6,6 +6,8 @@
 
 The Rozenite Overlay Plugin provides customizable grid overlays and image comparison tools within your React Native DevTools environment. Perfect for design implementation, layout debugging, and visual comparison during development.
 
+This plugin was inspired by [RocketSim](https://www.rocketsim.app/) - an enhanced iOS simulator.
+
 ![Overlay Plugin](https://rozenite.dev/overlay-plugin.png)
 
 ## Features
