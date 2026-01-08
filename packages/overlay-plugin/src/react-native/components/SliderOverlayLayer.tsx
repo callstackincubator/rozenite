@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -88,7 +88,7 @@ export const SliderOverlayLayer: React.FC<{ config: ImageConfig }> = memo(({
       </Animated.View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   imageContainer: {

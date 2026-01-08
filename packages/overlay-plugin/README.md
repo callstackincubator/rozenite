@@ -22,10 +22,10 @@ This plugin was inspired by [RocketSim](https://www.rocketsim.app/) - an enhance
 
 ## Installation
 
-Install the Overlay plugin as a dependency:
+Install the Overlay plugin and its peer dependency `react-native-svg`:
 
 ```bash
-npm install @rozenite/overlay-plugin
+npm install @rozenite/overlay-plugin react-native-svg
 ```
 
 ## Quick Start
@@ -33,22 +33,24 @@ npm install @rozenite/overlay-plugin
 ### 1. Install the Plugin
 
 ```bash
-npm install @rozenite/overlay-plugin
+npm install @rozenite/overlay-plugin react-native-svg
 ```
 
 ### 2. Integrate with Your App
 
-Add the DevTools hook to your React Native app:
+Add the `RozeniteOverlay` component to your React Native app:
 
 ```typescript
 // App.tsx
-import { useOverlayDevTools } from '@rozenite/overlay-plugin';
+import { RozeniteOverlay } from '@rozenite/overlay-plugin';
 
 function App() {
-  // Enable Overlay DevTools in development
-  useOverlayDevTools();
-
-  return <YourApp />;
+  return (
+    <>
+      <YourApp />
+      <RozeniteOverlay />
+    </>
+  );
 }
 ```
 

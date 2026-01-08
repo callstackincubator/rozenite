@@ -22,6 +22,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.0",
     "react-native": "0.76.0",
+    "react-native-svg": "~15.8.0",
     "react-native-web": "0.21.0",
     "rozenite": "workspace:*",
     "tailwindcss": "^3.4.17",
@@ -31,8 +32,8 @@
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "react-native-svg": "*"
   },
   "license": "MIT"
 }
-
