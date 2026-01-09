@@ -1,55 +1,66 @@
 import { useEffect, useState } from 'react';
-import { createClient } from './clients/index.js';
-import { RozeniteDevToolsClient, RozeniteClientConfig } from './clients/types.js';
+import { createClient } from './client/index.js';
+import { RozeniteDevToolsClient, RozeniteClientConfig } from './client/types.js';
+import { TypedBufferConfig } from './connection/types.js';
 import { UnsupportedPlatformError } from '../errors.js';
 
-// Public API - user-facing options
-export type UseRozeniteDevToolsClientOptions<
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
-> = {
+/**
+ * Options for the useRozeniteDevToolsClient hook.
+ */
+export type UseRozeniteDevToolsClientOptions = {
+  /**
+   * Unique identifier for the plugin.
+   */
   pluginId: string;
-  readyMode?: 'auto' | 'manual';  // default: 'auto'
-  eventMap?: TEventMap;
+
+  /**
+   * Optional: configuration for message buffering.
+   */
+  buffer?: TypedBufferConfig;
 };
 
-// Internal API - includes transport layer options for testing
-export type UseRozeniteDevToolsClientInternalOptions<
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
-> = UseRozeniteDevToolsClientOptions<TEventMap> & Pick<RozeniteClientConfig, 'channel' | 'isLeader'>;
+/**
+ * Internal API - includes transport layer options for testing.
+ */
+export type UseRozeniteDevToolsClientInternalOptions = UseRozeniteDevToolsClientOptions &
+  Pick<RozeniteClientConfig, 'channel' | 'isLeader'>;
 
-// Internal hook - accepts transport layer options for testing
+/**
+ * Internal hook - accepts transport layer options for testing.
+ * 
+ * @internal
+ */
 export const useRozeniteDevToolsClientInternal = <
   TEventMap extends Record<string, unknown> = Record<string, unknown>
 >({
   pluginId,
-  readyMode = 'auto',
+  buffer,
   channel,
   isLeader,
-}: UseRozeniteDevToolsClientInternalOptions<TEventMap>): RozeniteDevToolsClient<TEventMap> | null => {
-  const [client, setClient] =
-    useState<RozeniteDevToolsClient<TEventMap> | null>(null);
+}: UseRozeniteDevToolsClientInternalOptions): RozeniteDevToolsClient<TEventMap> | null => {
+  const [client, setClient] = useState<RozeniteDevToolsClient<TEventMap> | null>(null);
   const [error, setError] = useState<unknown | null>(null);
 
   useEffect(() => {
     let isMounted = true;
-    let client: RozeniteDevToolsClient<TEventMap> | null = null;
+    let clientInstance: RozeniteDevToolsClient<TEventMap> | null = null;
 
     const setup = async () => {
       try {
-        client = await createClient<TEventMap>({
+        clientInstance = await createClient<TEventMap>({
           pluginId,
-          readyMode,
+          buffer,
           channel,
           isLeader,
         });
 
         if (isMounted) {
-          // Always wait for handshake to complete before exposing client
+          // Wait for handshake to complete before exposing client
           const readyPromise = new Promise<void>((resolve) => {
-            if (client && client.isReady()) {
+            if (clientInstance && clientInstance.isReady()) {
               resolve();
-            } else if (client) {
-              const subscription = client.onReady(() => {
+            } else if (clientInstance) {
+              const subscription = clientInstance.onReady(() => {
                 subscription.remove();
                 resolve();
               });
@@ -59,43 +70,43 @@ export const useRozeniteDevToolsClientInternal = <
           await readyPromise;
 
           if (isMounted) {
-            setClient(client);
+            setClient(clientInstance);
           }
         }
-      } catch (error) {
-        if (error instanceof UnsupportedPlatformError) {
-          // We don't want to show an error for unsupported platforms.
-          // It's expected that the client will be null.
+      } catch (err) {
+        if (err instanceof UnsupportedPlatformError) {
+          // Expected on unsupported platforms - don't show error
           console.warn(
             `[Rozenite, ${pluginId}] Unsupported platform, skipping setup.`
           );
           return;
         }
 
-        console.error('Error setting up client', error);
+        console.error('[Rozenite] Error setting up client:', err);
 
         if (isMounted) {
-          setError(error);
+          setError(err);
         }
       }
     };
 
-    const teardown = async () => {
+    const teardown = () => {
       try {
-        if (client != null) {
-          client.close();
+        if (clientInstance != null) {
+          clientInstance.close();
         }
       } catch {
-        // We don't care about errors when tearing down
+        // Ignore errors during teardown
       }
     };
 
     setup();
+
     return () => {
       isMounted = false;
       teardown();
     };
-  }, [pluginId, readyMode, channel, isLeader]);
+  }, [pluginId, buffer, channel, isLeader]);
 
   if (error != null) {
     throw error;
@@ -104,11 +115,53 @@ export const useRozeniteDevToolsClientInternal = <
   return client;
 };
 
-// Public API hook - calls internal hook with defaults
+/**
+ * React hook to create and manage a Rozenite DevTools client.
+ * 
+ * Returns null until the connection is ready.
+ * 
+ * Messages are automatically buffered per-type and replayed when handlers
+ * are registered, ensuring no messages are lost regardless of registration timing.
+ * 
+ * @example
+ * ```tsx
+ * type MyEvents = {
+ *   'user-action': { action: string };
+ *   'state-update': { state: object };
+ * };
+ * 
+ * const MyComponent = () => {
+ *   const client = useRozeniteDevToolsClient<MyEvents>({
+ *     pluginId: 'my-plugin',
+ *   });
+ * 
+ *   useEffect(() => {
+ *     if (!client) return;
+ * 
+ *     // Handler receives all buffered 'state-update' messages + future ones
+ *     const sub = client.onMessage('state-update', (message) => {
+ *       console.log('State:', message.data, 'sent at:', message.timestamp);
+ *     });
+ * 
+ *     return () => sub.remove();
+ *   }, [client]);
+ * 
+ *   const handleClick = () => {
+ *     client?.send('user-action', { action: 'click' });
+ *   };
+ * 
+ *   return (
+ *     <button onClick={handleClick}>
+ *       {client ? 'Connected' : 'Connecting...'}
+ *     </button>
+ *   );
+ * };
+ * ```
+ */
 export const useRozeniteDevToolsClient = <
   TEventMap extends Record<string, unknown> = Record<string, unknown>
 >(
-  options: UseRozeniteDevToolsClientOptions<TEventMap>
+  options: UseRozeniteDevToolsClientOptions
 ): RozeniteDevToolsClient<TEventMap> | null => {
   return useRozeniteDevToolsClientInternal(options);
 };

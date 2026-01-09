@@ -1,16 +1,23 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createClient } from '../clients/factory.js';
-import { RozeniteDevToolsManualClient } from '../clients/types.js';
-import { MockChannel, createMockChannelPair } from '../test-utils/mock-channel.js';
+import { createClient } from '../client/factory.js';
+import { RozeniteDevToolsClient } from '../client/types.js';
+import { UserMessage } from '../connection/types.js';
+import {
+  createMockChannelPair,
+  wait,
+  waitForBothReady,
+  MockChannel,
+} from '../test-utils/index.js';
 
 type TestEventMap = {
   'test-event': { message: string };
   'another-event': { count: number };
   'ping': { id: number };
   'pong': { id: number };
+  'batch': { index: number };
 };
 
-describe('Plugin Bridge v2 - Client', () => {
+describe('Plugin Bridge v2 - Client E2E Tests', () => {
   let deviceChannel: MockChannel;
   let panelChannel: MockChannel;
 
@@ -18,39 +25,21 @@ describe('Plugin Bridge v2 - Client', () => {
     [deviceChannel, panelChannel] = createMockChannelPair();
   });
 
-  describe('Auto-ready mode', () => {
-    it('should complete handshake when first listener is added', async () => {
+  describe('Basic messaging', () => {
+    it('should complete handshake automatically', async () => {
       const deviceClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'auto',
         channel: deviceChannel,
         isLeader: false,
       });
 
       const panelClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'auto',
         channel: panelChannel,
         isLeader: true,
       });
 
-      expect(deviceClient.isReady()).toBe(false);
-      expect(panelClient.isReady()).toBe(false);
-
-      const deviceReadyPromise = new Promise<void>((resolve) => {
-        deviceClient.onReady(resolve);
-      });
-
-      const panelReadyPromise = new Promise<void>((resolve) => {
-        panelClient.onReady(resolve);
-      });
-
-      // Add listeners to trigger auto-ready
-      deviceClient.onMessage('test-event', () => {});
-      panelClient.onMessage('test-event', () => {});
-
-      // Wait for handshake to complete
-      await Promise.all([deviceReadyPromise, panelReadyPromise]);
+      await waitForBothReady(deviceClient, panelClient);
 
       expect(deviceClient.isReady()).toBe(true);
       expect(panelClient.isReady()).toBe(true);
@@ -59,94 +48,46 @@ describe('Plugin Bridge v2 - Client', () => {
       panelClient.close();
     });
 
-    it('should send and receive messages after handshake', async () => {
+    it('should send and receive messages with timestamp and data', async () => {
       const deviceClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'auto',
         channel: deviceChannel,
         isLeader: false,
       });
 
       const panelClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'auto',
         channel: panelChannel,
         isLeader: true,
       });
 
-      const deviceMessages: Array<{ message: string }> = [];
-      const panelMessages: Array<{ message: string }> = [];
+      const deviceMessages: UserMessage<{ message: string }>[] = [];
+      const panelMessages: UserMessage<{ message: string }>[] = [];
 
-      deviceClient.onMessage('test-event', (payload) => {
-        deviceMessages.push(payload);
+      deviceClient.onMessage('test-event', (msg) => {
+        deviceMessages.push(msg);
       });
 
-      panelClient.onMessage('test-event', (payload) => {
-        panelMessages.push(payload);
+      panelClient.onMessage('test-event', (msg) => {
+        panelMessages.push(msg);
       });
 
-      // Wait for handshake
-      await new Promise<void>((resolve) => {
-        let readyCount = 0;
-        const checkReady = () => {
-          readyCount++;
-          if (readyCount === 2) resolve();
-        };
-        deviceClient.onReady(checkReady);
-        panelClient.onReady(checkReady);
-      });
+      await waitForBothReady(deviceClient, panelClient);
 
+      const beforeSend = Date.now();
       panelClient.send('test-event', { message: 'from panel' });
       deviceClient.send('test-event', { message: 'from device' });
 
-      // Wait for messages to be delivered
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wait(50);
 
       expect(deviceMessages).toHaveLength(1);
-      expect(deviceMessages[0]).toEqual({ message: 'from panel' });
+      expect(deviceMessages[0].data).toEqual({ message: 'from panel' });
+      expect(deviceMessages[0].timestamp).toBeGreaterThanOrEqual(beforeSend);
+      expect(deviceMessages[0].type).toBe('test-event');
 
       expect(panelMessages).toHaveLength(1);
-      expect(panelMessages[0]).toEqual({ message: 'from device' });
-
-      deviceClient.close();
-      panelClient.close();
-    });
-
-    it('should queue messages sent before handshake completes', async () => {
-      const deviceClient = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'auto',
-        channel: deviceChannel,
-        isLeader: false,
-      });
-
-      const panelClient = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'auto',
-        channel: panelChannel,
-        isLeader: true,
-      });
-
-      const receivedMessages: Array<{ message: string }> = [];
-
-      // Send messages before handshake
-      panelClient.send('test-event', { message: 'early message 1' });
-      panelClient.send('test-event', { message: 'early message 2' });
-
-      // Add listener to trigger handshake
-      deviceClient.onMessage('test-event', (payload) => {
-        receivedMessages.push(payload);
-      });
-
-      panelClient.onMessage('test-event', () => {});
-
-      // Wait for handshake and message delivery
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      // Queued messages should be delivered
-      expect(receivedMessages).toHaveLength(2);
-      expect(receivedMessages[0]).toEqual({ message: 'early message 1' });
-      expect(receivedMessages[1]).toEqual({ message: 'early message 2' });
+      expect(panelMessages[0].data).toEqual({ message: 'from device' });
+      expect(panelMessages[0].timestamp).toBeGreaterThanOrEqual(beforeSend);
 
       deviceClient.close();
       panelClient.close();
@@ -155,212 +96,167 @@ describe('Plugin Bridge v2 - Client', () => {
     it('should filter messages by type', async () => {
       const deviceClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'auto',
         channel: deviceChannel,
         isLeader: false,
       });
 
       const panelClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'auto',
         channel: panelChannel,
         isLeader: true,
       });
 
-      const testEvents: Array<{ message: string }> = [];
-      const anotherEvents: Array<{ count: number }> = [];
+      const testEvents: UserMessage[] = [];
+      const anotherEvents: UserMessage[] = [];
 
-      deviceClient.onMessage('test-event', (payload) => {
-        testEvents.push(payload);
-      });
-
-      deviceClient.onMessage('another-event', (payload) => {
-        anotherEvents.push(payload);
-      });
-
+      deviceClient.onMessage('test-event', (msg) => testEvents.push(msg));
+      deviceClient.onMessage('another-event', (msg) => anotherEvents.push(msg));
       panelClient.onMessage('test-event', () => {});
 
-      // Wait for handshake
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await waitForBothReady(deviceClient, panelClient);
 
       panelClient.send('test-event', { message: 'hello' });
       panelClient.send('another-event', { count: 42 });
       panelClient.send('test-event', { message: 'world' });
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wait(50);
 
       expect(testEvents).toHaveLength(2);
-      expect(testEvents[0]).toEqual({ message: 'hello' });
-      expect(testEvents[1]).toEqual({ message: 'world' });
+      expect(testEvents[0].data).toEqual({ message: 'hello' });
+      expect(testEvents[1].data).toEqual({ message: 'world' });
 
       expect(anotherEvents).toHaveLength(1);
-      expect(anotherEvents[0]).toEqual({ count: 42 });
-
-      deviceClient.close();
-      panelClient.close();
-    });
-
-    it('should handle multiple listeners for the same event type', async () => {
-      const deviceClient = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'auto',
-        channel: deviceChannel,
-        isLeader: false,
-      });
-
-      const panelClient = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'auto',
-        channel: panelChannel,
-        isLeader: true,
-      });
-
-      const listener1Messages: Array<{ message: string }> = [];
-      const listener2Messages: Array<{ message: string }> = [];
-
-      deviceClient.onMessage('test-event', (payload) => {
-        listener1Messages.push(payload);
-      });
-
-      deviceClient.onMessage('test-event', (payload) => {
-        listener2Messages.push(payload);
-      });
-
-      panelClient.onMessage('test-event', () => {});
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      panelClient.send('test-event', { message: 'broadcast' });
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(listener1Messages).toHaveLength(1);
-      expect(listener1Messages[0]).toEqual({ message: 'broadcast' });
-
-      expect(listener2Messages).toHaveLength(1);
-      expect(listener2Messages[0]).toEqual({ message: 'broadcast' });
-
-      deviceClient.close();
-      panelClient.close();
-    });
-
-    it('should handle listener removal', async () => {
-      const deviceClient = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'auto',
-        channel: deviceChannel,
-        isLeader: false,
-      });
-
-      const panelClient = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'auto',
-        channel: panelChannel,
-        isLeader: true,
-      });
-
-      const messages: Array<{ message: string }> = [];
-
-      const subscription = deviceClient.onMessage('test-event', (payload) => {
-        messages.push(payload);
-      });
-
-      panelClient.onMessage('test-event', () => {});
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      panelClient.send('test-event', { message: 'first' });
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      subscription.remove();
-
-      panelClient.send('test-event', { message: 'second' });
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(messages).toHaveLength(1);
-      expect(messages[0]).toEqual({ message: 'first' });
+      expect(anotherEvents[0].data).toEqual({ count: 42 });
 
       deviceClient.close();
       panelClient.close();
     });
   });
 
-  describe('Manual-ready mode', () => {
-    it('should not start handshake until makeReady is called', async () => {
+  describe('Per-type buffering and replay', () => {
+    it('should buffer messages until handler is registered', async () => {
       const deviceClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'manual',
         channel: deviceChannel,
         isLeader: false,
-      }) as RozeniteDevToolsManualClient<TestEventMap>;
+      });
 
       const panelClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'manual',
         channel: panelChannel,
         isLeader: true,
-      }) as RozeniteDevToolsManualClient<TestEventMap>;
+      });
 
-      // Add listeners
-      deviceClient.onMessage('test-event', () => {});
+      // Panel registers handler to trigger handshake on that side
       panelClient.onMessage('test-event', () => {});
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await waitForBothReady(deviceClient, panelClient);
 
-      // Should not be ready yet
-      expect(deviceClient.isReady()).toBe(false);
-      expect(panelClient.isReady()).toBe(false);
+      // Send messages BEFORE device registers handler
+      panelClient.send('test-event', { message: 'early 1' });
+      panelClient.send('test-event', { message: 'early 2' });
 
-      // Call makeReady
-      deviceClient.makeReady();
-      panelClient.makeReady();
+      await wait(50);
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      // Now register handler - should get replay
+      const receivedMessages: UserMessage<{ message: string }>[] = [];
+      deviceClient.onMessage('test-event', (msg) => {
+        receivedMessages.push(msg);
+      });
 
-      expect(deviceClient.isReady()).toBe(true);
-      expect(panelClient.isReady()).toBe(true);
+      await wait(50);
+
+      expect(receivedMessages).toHaveLength(2);
+      expect(receivedMessages[0].data).toEqual({ message: 'early 1' });
+      expect(receivedMessages[1].data).toEqual({ message: 'early 2' });
 
       deviceClient.close();
       panelClient.close();
     });
 
-    it('should queue messages until makeReady is called', async () => {
+    it('should replay only to first handler, not subsequent ones', async () => {
       const deviceClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'manual',
         channel: deviceChannel,
         isLeader: false,
-      }) as RozeniteDevToolsManualClient<TestEventMap>;
+      });
 
       const panelClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'manual',
         channel: panelChannel,
         isLeader: true,
-      }) as RozeniteDevToolsManualClient<TestEventMap>;
-
-      const messages: Array<{ message: string }> = [];
-
-      deviceClient.onMessage('test-event', (payload: { message: string }) => {
-        messages.push(payload);
       });
 
       panelClient.onMessage('test-event', () => {});
+      await waitForBothReady(deviceClient, panelClient);
 
-      // Send before ready
-      panelClient.send('test-event', { message: 'queued' });
+      // Send before any device handler
+      panelClient.send('test-event', { message: 'buffered' });
+      await wait(50);
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      expect(messages).toHaveLength(0);
+      const handler1Messages: UserMessage[] = [];
+      const handler2Messages: UserMessage[] = [];
 
-      // Make ready
-      deviceClient.makeReady();
-      panelClient.makeReady();
+      // First handler gets replay
+      deviceClient.onMessage('test-event', (msg) => handler1Messages.push(msg));
+      await wait(50);
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      // Second handler does NOT get replay
+      deviceClient.onMessage('test-event', (msg) => handler2Messages.push(msg));
+      await wait(50);
 
-      expect(messages).toHaveLength(1);
-      expect(messages[0]).toEqual({ message: 'queued' });
+      expect(handler1Messages).toHaveLength(1);
+      expect(handler2Messages).toHaveLength(0);
+
+      // New message goes to both
+      panelClient.send('test-event', { message: 'new' });
+      await wait(50);
+
+      expect(handler1Messages).toHaveLength(2);
+      expect(handler2Messages).toHaveLength(1);
+
+      deviceClient.close();
+      panelClient.close();
+    });
+
+    it('should buffer different message types independently', async () => {
+      const deviceClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: deviceChannel,
+        isLeader: false,
+      });
+
+      const panelClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: panelChannel,
+        isLeader: true,
+      });
+
+      panelClient.onMessage('test-event', () => {});
+      panelClient.onMessage('another-event', () => {});
+      await waitForBothReady(deviceClient, panelClient);
+
+      // Send different types before device handlers
+      panelClient.send('test-event', { message: 'test msg' });
+      panelClient.send('another-event', { count: 42 });
+      await wait(50);
+
+      const testMessages: UserMessage[] = [];
+      const anotherMessages: UserMessage[] = [];
+
+      // Register test-event handler - should only replay test-event
+      deviceClient.onMessage('test-event', (msg) => testMessages.push(msg));
+      await wait(50);
+
+      expect(testMessages).toHaveLength(1);
+      expect(anotherMessages).toHaveLength(0);
+
+      // Register another-event handler - should only replay another-event
+      deviceClient.onMessage('another-event', (msg) => anotherMessages.push(msg));
+      await wait(50);
+
+      expect(testMessages).toHaveLength(1);
+      expect(anotherMessages).toHaveLength(1);
 
       deviceClient.close();
       panelClient.close();
@@ -371,7 +267,6 @@ describe('Plugin Bridge v2 - Client', () => {
     it('should follow INIT -> ACK -> COMPLETE sequence', async () => {
       const handshakeSequence: string[] = [];
 
-      // Spy on channel send to track handshake messages
       const originalDeviceSend = deviceChannel.send.bind(deviceChannel);
       const originalPanelSend = panelChannel.send.bind(panelChannel);
 
@@ -391,22 +286,17 @@ describe('Plugin Bridge v2 - Client', () => {
 
       const deviceClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'auto',
         channel: deviceChannel,
         isLeader: false,
       });
 
       const panelClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'auto',
         channel: panelChannel,
         isLeader: true,
       });
 
-      deviceClient.onMessage('test-event', () => {});
-      panelClient.onMessage('test-event', () => {});
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await waitForBothReady(deviceClient, panelClient);
 
       expect(handshakeSequence).toEqual([
         'panel:__HANDSHAKE_INIT__',
@@ -419,107 +309,321 @@ describe('Plugin Bridge v2 - Client', () => {
     });
 
     it('should isolate messages by pluginId', async () => {
-      const plugin1DeviceClient = await createClient<TestEventMap>({
+      const plugin1Device = await createClient<TestEventMap>({
         pluginId: 'plugin-1',
-        readyMode: 'auto',
         channel: deviceChannel,
         isLeader: false,
       });
 
-      const plugin1PanelClient = await createClient<TestEventMap>({
+      const plugin1Panel = await createClient<TestEventMap>({
         pluginId: 'plugin-1',
-        readyMode: 'auto',
         channel: panelChannel,
         isLeader: true,
       });
 
-      const plugin2DeviceClient = await createClient<TestEventMap>({
+      const plugin2Device = await createClient<TestEventMap>({
         pluginId: 'plugin-2',
-        readyMode: 'auto',
         channel: deviceChannel,
         isLeader: false,
       });
 
-      const plugin2PanelClient = await createClient<TestEventMap>({
+      const plugin2Panel = await createClient<TestEventMap>({
         pluginId: 'plugin-2',
-        readyMode: 'auto',
         channel: panelChannel,
         isLeader: true,
       });
 
-      const plugin1Messages: Array<{ message: string }> = [];
-      const plugin2Messages: Array<{ message: string }> = [];
+      const plugin1Messages: UserMessage[] = [];
+      const plugin2Messages: UserMessage[] = [];
 
-      plugin1DeviceClient.onMessage('test-event', (payload) => {
-        plugin1Messages.push(payload);
-      });
+      plugin1Device.onMessage('test-event', (msg) => plugin1Messages.push(msg));
+      plugin2Device.onMessage('test-event', (msg) => plugin2Messages.push(msg));
+      plugin1Panel.onMessage('test-event', () => {});
+      plugin2Panel.onMessage('test-event', () => {});
 
-      plugin1PanelClient.onMessage('test-event', () => {});
+      await waitForBothReady(plugin1Device, plugin1Panel);
+      await waitForBothReady(plugin2Device, plugin2Panel);
 
-      plugin2DeviceClient.onMessage('test-event', (payload) => {
-        plugin2Messages.push(payload);
-      });
+      plugin1Panel.send('test-event', { message: 'for plugin 1' });
+      plugin2Panel.send('test-event', { message: 'for plugin 2' });
 
-      plugin2PanelClient.onMessage('test-event', () => {});
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      plugin1PanelClient.send('test-event', { message: 'for plugin 1' });
-      plugin2PanelClient.send('test-event', { message: 'for plugin 2' });
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wait(50);
 
       expect(plugin1Messages).toHaveLength(1);
-      expect(plugin1Messages[0]).toEqual({ message: 'for plugin 1' });
+      expect(plugin1Messages[0].data).toEqual({ message: 'for plugin 1' });
 
       expect(plugin2Messages).toHaveLength(1);
-      expect(plugin2Messages[0]).toEqual({ message: 'for plugin 2' });
+      expect(plugin2Messages[0].data).toEqual({ message: 'for plugin 2' });
 
-      plugin1DeviceClient.close();
-      plugin1PanelClient.close();
-      plugin2DeviceClient.close();
-      plugin2PanelClient.close();
+      plugin1Device.close();
+      plugin1Panel.close();
+      plugin2Device.close();
+      plugin2Panel.close();
+    });
+  });
+
+  describe('Reconnection', () => {
+    it('should handle DevTools UI reload', async () => {
+      const [panelChannel, deviceChannel] = createMockChannelPair();
+
+      const deviceClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: deviceChannel,
+        isLeader: false,
+      });
+
+      const panelClient1 = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: panelChannel,
+        isLeader: true,
+      });
+
+      panelClient1.onMessage('test-event', () => {});
+      deviceClient.onMessage('test-event', () => {});
+
+      await waitForBothReady(deviceClient, panelClient1);
+
+      // Close first panel (simulate reload)
+      panelClient1.close();
+
+      // New panel connects
+      const panelClient2 = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: panelChannel,
+        isLeader: true,
+      });
+
+      const messages: UserMessage[] = [];
+      panelClient2.onMessage('test-event', (msg) => messages.push(msg));
+
+      await waitForBothReady(deviceClient, panelClient2);
+
+      deviceClient.send('test-event', { message: 'after reload' });
+      await wait(50);
+
+      expect(messages).toHaveLength(1);
+      expect(messages[0].data).toEqual({ message: 'after reload' });
+
+      deviceClient.close();
+      panelClient2.close();
+    });
+  });
+
+  describe('High-volume messaging', () => {
+    it('should handle large batches of messages', async () => {
+      const deviceClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: deviceChannel,
+        isLeader: false,
+      });
+
+      const panelClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: panelChannel,
+        isLeader: true,
+      });
+
+      panelClient.onMessage('batch', () => {});
+
+      await waitForBothReady(deviceClient, panelClient);
+
+      const MESSAGE_COUNT = 100;
+      const receivedMessages: UserMessage<{ index: number }>[] = [];
+
+      deviceClient.onMessage('batch', (msg) => receivedMessages.push(msg));
+
+      for (let i = 0; i < MESSAGE_COUNT; i++) {
+        panelClient.send('batch', { index: i });
+      }
+
+      await wait(200);
+
+      expect(receivedMessages).toHaveLength(MESSAGE_COUNT);
+
+      // Verify order is preserved
+      for (let i = 0; i < MESSAGE_COUNT; i++) {
+        expect(receivedMessages[i].data.index).toBe(i);
+      }
+
+      deviceClient.close();
+      panelClient.close();
+    });
+
+    it('should respect buffer limits', async () => {
+      const deviceClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: deviceChannel,
+        isLeader: false,
+        buffer: { maxPerType: 10 },
+      });
+
+      const panelClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: panelChannel,
+        isLeader: true,
+      });
+
+      panelClient.onMessage('batch', () => {});
+      await waitForBothReady(deviceClient, panelClient);
+
+      // Send 50 messages before handler is registered on device
+      for (let i = 0; i < 50; i++) {
+        panelClient.send('batch', { index: i });
+      }
+
+      await wait(100);
+
+      // Now register handler
+      const receivedMessages: UserMessage<{ index: number }>[] = [];
+      deviceClient.onMessage('batch', (msg) => receivedMessages.push(msg));
+
+      await wait(50);
+
+      // Should only have last 10 (maxPerType)
+      expect(receivedMessages.length).toBeLessThanOrEqual(10);
+
+      deviceClient.close();
+      panelClient.close();
+    });
+  });
+
+  describe('Bidirectional communication', () => {
+    it('should support ping-pong pattern', async () => {
+      const deviceClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: deviceChannel,
+        isLeader: false,
+      });
+
+      const panelClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: panelChannel,
+        isLeader: true,
+      });
+
+      // Device responds to ping with pong
+      deviceClient.onMessage('ping', (msg) => {
+        deviceClient.send('pong', { id: msg.data.id });
+      });
+
+      panelClient.onMessage('ping', () => {});
+
+      await waitForBothReady(deviceClient, panelClient);
+
+      const pongReceived = new Promise<number>((resolve) => {
+        panelClient.onMessage('pong', (msg) => resolve(msg.data.id));
+      });
+
+      panelClient.send('ping', { id: 42 });
+
+      const result = await pongReceived;
+      expect(result).toBe(42);
+
+      deviceClient.close();
+      panelClient.close();
+    });
+  });
+
+  describe('Handler management', () => {
+    it('should handle multiple handlers for the same type', async () => {
+      const deviceClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: deviceChannel,
+        isLeader: false,
+      });
+
+      const panelClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: panelChannel,
+        isLeader: true,
+      });
+
+      const handler1Messages: UserMessage[] = [];
+      const handler2Messages: UserMessage[] = [];
+
+      deviceClient.onMessage('test-event', (msg) => handler1Messages.push(msg));
+      deviceClient.onMessage('test-event', (msg) => handler2Messages.push(msg));
+      panelClient.onMessage('test-event', () => {});
+
+      await waitForBothReady(deviceClient, panelClient);
+
+      panelClient.send('test-event', { message: 'broadcast' });
+      await wait(50);
+
+      expect(handler1Messages).toHaveLength(1);
+      expect(handler2Messages).toHaveLength(1);
+
+      deviceClient.close();
+      panelClient.close();
+    });
+
+    it('should handle listener removal', async () => {
+      const deviceClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: deviceChannel,
+        isLeader: false,
+      });
+
+      const panelClient = await createClient<TestEventMap>({
+        pluginId: 'test-plugin',
+        channel: panelChannel,
+        isLeader: true,
+      });
+
+      const messages: UserMessage[] = [];
+
+      const subscription = deviceClient.onMessage('test-event', (msg) => {
+        messages.push(msg);
+      });
+
+      panelClient.onMessage('test-event', () => {});
+
+      await waitForBothReady(deviceClient, panelClient);
+
+      panelClient.send('test-event', { message: 'first' });
+      await wait(50);
+
+      subscription.remove();
+
+      panelClient.send('test-event', { message: 'second' });
+      await wait(50);
+
+      expect(messages).toHaveLength(1);
+
+      deviceClient.close();
+      panelClient.close();
     });
   });
 
   describe('Edge cases', () => {
-    it('should handle close during handshake', async () => {
+    it('should handle close gracefully', async () => {
       const deviceClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'manual',
         channel: deviceChannel,
         isLeader: false,
-      }) as RozeniteDevToolsManualClient<TestEventMap>;
+      });
 
       const panelClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'manual',
         channel: panelChannel,
         isLeader: true,
-      }) as RozeniteDevToolsManualClient<TestEventMap>;
+      });
 
-      deviceClient.makeReady();
-      panelClient.makeReady();
-
-      // Close before handshake completes
       deviceClient.close();
       panelClient.close();
 
-      // Should not throw
       expect(deviceClient.isReady()).toBe(false);
     });
 
     it('should handle onReady callback when already ready', async () => {
       const deviceClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'auto',
         channel: deviceChannel,
         isLeader: false,
       });
 
       const panelClient = await createClient<TestEventMap>({
         pluginId: 'test-plugin',
-        readyMode: 'auto',
         channel: panelChannel,
         isLeader: true,
       });
@@ -527,164 +631,17 @@ describe('Plugin Bridge v2 - Client', () => {
       deviceClient.onMessage('test-event', () => {});
       panelClient.onMessage('test-event', () => {});
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await waitForBothReady(deviceClient, panelClient);
 
-      expect(deviceClient.isReady()).toBe(true);
-
-      // Add onReady callback after already ready
       const readyCallback = vi.fn();
       deviceClient.onReady(readyCallback);
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await wait(20);
 
       expect(readyCallback).toHaveBeenCalledTimes(1);
 
       deviceClient.close();
       panelClient.close();
-    });
-
-    it('should handle sending multiple message types before handshake', async () => {
-      const deviceClient = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'manual',
-        channel: deviceChannel,
-        isLeader: false,
-      }) as RozeniteDevToolsManualClient<TestEventMap>;
-
-      const panelClient = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'manual',
-        channel: panelChannel,
-        isLeader: true,
-      }) as RozeniteDevToolsManualClient<TestEventMap>;
-
-      const testEvents: Array<{ message: string }> = [];
-      const anotherEvents: Array<{ count: number }> = [];
-
-      deviceClient.onMessage('test-event', (payload: { message: string }) => testEvents.push(payload));
-      deviceClient.onMessage('another-event', (payload: { count: number }) => anotherEvents.push(payload));
-      panelClient.onMessage('test-event', () => {});
-
-      // Send before ready
-      panelClient.send('test-event', { message: 'msg1' });
-      panelClient.send('another-event', { count: 1 });
-      panelClient.send('test-event', { message: 'msg2' });
-      panelClient.send('another-event', { count: 2 });
-
-      // Make ready
-      deviceClient.makeReady();
-      panelClient.makeReady();
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(testEvents).toHaveLength(2);
-      expect(testEvents[0]).toEqual({ message: 'msg1' });
-      expect(testEvents[1]).toEqual({ message: 'msg2' });
-
-      expect(anotherEvents).toHaveLength(2);
-      expect(anotherEvents[0]).toEqual({ count: 1 });
-      expect(anotherEvents[1]).toEqual({ count: 2 });
-
-      deviceClient.close();
-      panelClient.close();
-    });
-  });
-
-  describe('Re-initialization', () => {
-    it('should handle DevTools UI reload while device is still connected', async () => {
-      const [panelChannel, deviceChannel] = createMockChannelPair();
-
-      // Create and initialize device client
-      const deviceClient = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'auto',
-        channel: deviceChannel,
-        isLeader: false,
-      });
-
-      // Create first panel client and complete handshake
-      const panelClient1 = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'auto',
-        channel: panelChannel,
-        isLeader: true,
-      });
-
-      // Wait for both to be ready
-      await new Promise<void>((resolve) => {
-        let deviceReady = false;
-        let panelReady = false;
-        
-        const checkBothReady = () => {
-          if (deviceReady && panelReady) {
-            resolve();
-          }
-        };
-        
-        if (deviceClient.isReady()) {
-          deviceReady = true;
-        } else {
-          deviceClient.onReady(() => {
-            deviceReady = true;
-            checkBothReady();
-          });
-        }
-        
-        if (panelClient1.isReady()) {
-          panelReady = true;
-        } else {
-          panelClient1.onReady(() => {
-            panelReady = true;
-            checkBothReady();
-          });
-        }
-        
-        checkBothReady();
-      });
-
-      expect(deviceClient.isReady()).toBe(true);
-      expect(panelClient1.isReady()).toBe(true);
-
-      // Close the first panel client (simulating DevTools UI close)
-      panelClient1.close();
-
-      // Create a new panel client (simulating DevTools UI reload)
-      // Use the same panelChannel to simulate reconnection
-      const panelClient2 = await createClient<TestEventMap>({
-        pluginId: 'test-plugin',
-        readyMode: 'auto',
-        channel: panelChannel,
-        isLeader: true,
-      });
-
-      // Wait for handshake to complete with the new panel client
-      await new Promise<void>((resolve) => {
-        if (panelClient2.isReady()) {
-          resolve();
-        } else {
-          panelClient2.onReady(() => resolve());
-        }
-      });
-
-      // Both should be ready now
-      expect(panelClient2.isReady()).toBe(true);
-      expect(deviceClient.isReady()).toBe(true);
-
-      // Test that messages flow correctly
-      const messages: Array<{ message: string }> = [];
-      panelClient2.onMessage('test-event', (payload: { message: string }) => {
-        messages.push(payload);
-      });
-
-      deviceClient.send('test-event', { message: 'after reload' });
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(messages).toHaveLength(1);
-      expect(messages[0]).toEqual({ message: 'after reload' });
-
-      deviceClient.close();
-      panelClient2.close();
     });
   });
 });
