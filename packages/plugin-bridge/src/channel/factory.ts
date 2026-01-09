@@ -25,3 +25,8 @@ export const getChannel = async (): Promise<Channel> => {
     throw error;
   }
 };
+
+export const isLeader = (): boolean => {
+  // DevTools UI (panel) is the leader and initiates handshake
+  return '__ROZENITE_PANEL__' in window;
+};
