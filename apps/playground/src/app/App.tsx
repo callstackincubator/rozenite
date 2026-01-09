@@ -27,7 +27,10 @@ import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
 import { store } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
+import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
+
+withOnBootNetworkActivityRecording();
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();

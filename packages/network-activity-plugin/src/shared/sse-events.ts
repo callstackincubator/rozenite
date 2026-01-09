@@ -1,4 +1,4 @@
-import type { Response } from './client';
+import type { Response } from './http-events';
 
 export type SSEConnectionStatus = 'connecting' | 'open' | 'closed';
 export type SSERequestId = string;
