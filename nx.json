@@ -56,7 +56,8 @@
         "packages/redux-devtools-plugin/**/*",
         "packages/performance-monitor-plugin/**/*",
         "packages/react-navigation-plugin/**/*",
-        "packages/require-profiler-plugin/**/*"
+        "packages/require-profiler-plugin/**/*",
+        "packages/overlay-plugin/**/*"
       ]
     },
     {

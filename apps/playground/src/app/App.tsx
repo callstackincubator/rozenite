@@ -28,6 +28,7 @@ import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
 import { store } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
+import { RozeniteOverlay } from '@rozenite/overlay-plugin';
 
 withOnBootNetworkActivityRecording();
 
@@ -132,6 +133,7 @@ export const App = () => {
           <NavigationContainer ref={navigationRef} linking={linking}>
             <Wrapper />
           </NavigationContainer>
+          <RozeniteOverlay />
         </SafeAreaProvider>
       </QueryClientProvider>
     </Provider>

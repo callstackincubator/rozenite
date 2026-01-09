@@ -26,6 +26,11 @@
   },
   {
     "type": "file",
+    "name": "overlay",
+    "label": "Overlay"
+  },
+  {
+    "type": "file",
     "name": "redux-devtools",
     "label": "Redux DevTools"
   },

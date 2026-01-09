@@ -23,6 +23,7 @@ export default {
         'tools',
         'react-navigation-plugin',
         'require-profiler-plugin',
+        'overlay-plugin',
         '',
       ],
     ],
