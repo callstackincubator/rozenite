@@ -62,6 +62,7 @@ my-plugin/
 
 - **React Native API Access**: Leverage React Native APIs and libraries
 - **Type Safety**: Full TypeScript support with compile-time checking
+- **Shared Storage**: Synchronized key-value store shared between App and DevTools
 - **Hot Reloading**: See changes instantly during development
 - **Production Builds**: Optimized builds for distribution
 

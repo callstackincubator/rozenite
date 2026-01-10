@@ -8,5 +8,10 @@
     "type": "file",
     "name": "plugin-development",
     "label": "Plugin Development Guide"
+  },
+  {
+    "type": "file",
+    "name": "shared-storage",
+    "label": "Shared Storage"
   }
-] 
+]

@@ -227,7 +227,13 @@ export default function setupPlugin(
 }
 ```
 
-## Step 5: Local Development Workflow
+## Step 5: Shared Storage (Optional)
+
+If your plugin needs to persist settings or share a synchronized state between the app and the DevTools panels, you can use Rozenite's **Shared Storage**.
+
+Check out the [Shared Storage Guide](./shared-storage.md) to learn how to implement synchronous, persisted state for your plugin.
+
+## Step 6: Local Development Workflow
 
 ### Complete Development Setup
 
