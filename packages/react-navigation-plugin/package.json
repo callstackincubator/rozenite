@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/react-navigation-plugin",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "React Navigation for Rozenite.",
   "type": "module",
   "main": "./dist/react-native.cjs",

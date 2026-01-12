@@ -1,3 +1,24 @@
+## 1.2.0 (2026-01-12)
+
+### 🚀 Features
+
+- **@rozenite/expo-atlas-plugin:** Unified Metro config mutators system where the order of mutators no longer matters. Transformers can now be composed in any sequence while preserving type safety across different Metro config export patterns. ([#162](https://github.com/callstackincubator/rozenite/pull/162))
+- **@rozenite/network-activity-plugin:** Add boot recording feature to capture network activity during app initialization, before DevTools connects. Call `withOnBootNetworkActivityRecording()` at your app entry point to enable queuing of network requests made during boot; these requests are displayed once DevTools is ready. ([#143](https://github.com/callstackincubator/rozenite/pull/143))
+- **@rozenite/overlay-plugin:** Introduces the Overlay Plugin, featuring customizable grid overlays and interactive image comparison tools to enhance design implementation and layout debugging in React Native DevTools. ([#167](https://github.com/callstackincubator/rozenite/pull/167))
+- **@rozenite/redux-devtools-plugin:** Add maxAge option to Redux DevTools plugin to configure action history size. This allows developers to control the maximum number of actions retained in DevTools; older actions are automatically removed once the limit is reached (default: 50). ([#159](https://github.com/callstackincubator/rozenite/pull/159))
+- **@rozenite/redux-devtools-plugin:** Unified Metro config mutators system where the order of mutators no longer matters. Transformers can now be composed in any sequence while preserving type safety across different Metro config export patterns. ([#162](https://github.com/callstackincubator/rozenite/pull/162))
+- **@rozenite/require-profiler-plugin:** Unified Metro config mutators system where the order of mutators no longer matters. Transformers can now be composed in any sequence while preserving type safety across different Metro config export patterns. ([#162](https://github.com/callstackincubator/rozenite/pull/162))
+- **@rozenite/tools:** Unified Metro config mutators system where the order of mutators no longer matters. Transformers can now be composed in any sequence while preserving type safety across different Metro config export patterns. ([#162](https://github.com/callstackincubator/rozenite/pull/162))
+
+### 🩹 Fixes
+
+- Fixed incorrect duration display in performance measurements, ensuring durations are properly formatted as milliseconds or seconds based on their actual values. ([#168](https://github.com/callstackincubator/rozenite/pull/168))
+
+### ❤️ Thank You
+
+- David Prevost @dprevost-LMI
+- Szymon Chmal
+
 ## 1.1.0 (2025-12-01)
 
 ### 🚀 Features
