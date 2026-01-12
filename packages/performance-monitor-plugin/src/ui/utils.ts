@@ -15,3 +15,10 @@ export const downloadFile = async (data: unknown, filename: string) => {
 export const formatTime = (timestamp: number): string => {
   return new Date(timestamp).toLocaleTimeString();
 };
+
+export const formatDuration = (duration: number) => {
+  if (duration >= 1000) {
+    return `${(duration / 1000).toFixed(2)}s`;
+  }
+  return `${duration.toFixed(2)}ms`;
+};
