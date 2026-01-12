@@ -1,23 +1,13 @@
 import { Box, Text, Heading, Separator, Flex } from '@radix-ui/themes';
 import { SerializedPerformanceMeasure } from '../../shared/types';
 import { DetailsDisplay } from './DetailsDisplay';
+import { formatTime, formatDuration } from '../utils';
 
 export type MeasureDetailsProps = {
   measure: SerializedPerformanceMeasure;
 };
 
 export const MeasureDetails = ({ measure }: MeasureDetailsProps) => {
-  const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString();
-  };
-
-  const formatDuration = (duration: number) => {
-    if (duration < 1) {
-      return `${(duration * 1000).toFixed(2)}ms`;
-    }
-    return `${duration.toFixed(2)}s`;
-  };
-
   const endTime = measure.startTime + measure.duration;
 
   return (

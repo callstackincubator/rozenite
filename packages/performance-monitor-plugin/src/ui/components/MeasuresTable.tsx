@@ -1,20 +1,12 @@
-import React from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { Text } from '@radix-ui/themes';
 import { SerializedPerformanceMeasure } from '../../shared/types';
 import { DataTable } from './DataTable';
-import { formatTime } from '../utils';
+import { formatTime, formatDuration } from '../utils';
 
 export type MeasuresTableProps = {
   measures: SerializedPerformanceMeasure[];
   onRowClick?: (measure: SerializedPerformanceMeasure) => void;
-};
-
-const formatDuration = (duration: number) => {
-  if (duration < 1) {
-    return `${(duration * 1000).toFixed(2)}ms`;
-  }
-  return `${duration.toFixed(2)}s`;
 };
 
 const columns: ColumnDef<SerializedPerformanceMeasure>[] = [
