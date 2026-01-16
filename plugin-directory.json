@@ -34,5 +34,9 @@
   {
     "npmUrl": "https://www.npmjs.com/package/@ilteoood/zorro",
     "githubUrl": "https://github.com/ilteoood/zorro"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/@react-native-nitro-geolocation/rozenite-plugin",
+    "githubUrl": "https://github.com/jingjing2222/react-native-nitro-geolocation/tree/main/packages/rozenite-devtools-plugin"
   }
 ]
