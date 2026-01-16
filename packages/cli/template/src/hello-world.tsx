@@ -1,8 +1,8 @@
-import { Text, View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { Text, View, StyleSheet, ScrollView } from 'react-native';
 
 export default function HelloWorldPanel() {
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -55,7 +55,7 @@ export default function HelloWorldPanel() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
