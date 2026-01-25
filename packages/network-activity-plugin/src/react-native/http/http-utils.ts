@@ -45,23 +45,30 @@ const getTextPostData = (body: unknown): RequestTextPostData => ({
   value: safeStringify(body),
 });
 
-const getFormDataPostData = (body: FormData): RequestFormDataPostData => ({
-  type: 'form-data',
-  value: getFormDataEntries(body).reduce<RequestFormDataPostData['value']>(
-    (acc, [key, value]) => {
-      if (isBlob(value)) {
-        acc[key] = getBinaryPostData(value);
-      } else if (isArrayBuffer(value)) {
-        acc[key] = getArrayBufferPostData(value);
-      } else {
-        acc[key] = getTextPostData(value);
-      }
+const getFormDataPostData = (body: FormData): RequestFormDataPostData => {
+  const entries = getFormDataEntries(body);
+  const entriesArray = (
+    Array.isArray(entries) ? entries : Array.from(entries || [])
+  ) as Array<[string, unknown]>;
 
-      return acc;
-    },
-    {},
-  ),
-});
+  return {
+    type: 'form-data',
+    value: entriesArray.reduce<RequestFormDataPostData['value']>(
+      (acc, [key, value]) => {
+        if (isBlob(value)) {
+          acc[key] = getBinaryPostData(value);
+        } else if (isArrayBuffer(value)) {
+          acc[key] = getArrayBufferPostData(value);
+        } else {
+          acc[key] = getTextPostData(value);
+        }
+
+        return acc;
+      },
+      {},
+    ),
+  };
+};
 
 export const getRequestBody = (body: XHRPostData): RequestPostData => {
   if (isNullOrUndefined(body)) {
