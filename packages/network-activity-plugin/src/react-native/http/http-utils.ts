@@ -47,20 +47,19 @@ const getTextPostData = (body: unknown): RequestTextPostData => ({
 
 const getFormDataPostData = (body: FormData): RequestFormDataPostData => ({
   type: 'form-data',
-  value: getFormDataEntries(body).reduce<RequestFormDataPostData['value']>(
-    (acc, [key, value]) => {
-      if (isBlob(value)) {
-        acc[key] = getBinaryPostData(value);
-      } else if (isArrayBuffer(value)) {
-        acc[key] = getArrayBufferPostData(value);
-      } else {
-        acc[key] = getTextPostData(value);
-      }
+  value: Array.from(getFormDataEntries(body)).reduce<
+    RequestFormDataPostData['value']
+  >((acc, [key, value]) => {
+    if (isBlob(value)) {
+      acc[key] = getBinaryPostData(value);
+    } else if (isArrayBuffer(value)) {
+      acc[key] = getArrayBufferPostData(value);
+    } else {
+      acc[key] = getTextPostData(value);
+    }
 
-      return acc;
-    },
-    {},
-  ),
+    return acc;
+  }, {}),
 });
 
 export const getRequestBody = (body: XHRPostData): RequestPostData => {
