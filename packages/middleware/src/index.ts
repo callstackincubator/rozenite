@@ -53,6 +53,10 @@ export const initializeRozenite = (
 
   patchDevtoolsFrontendUrl(options);
 
+  if (options.enableMCP) {
+    logger.info('MCP server enabled - will initialize on first request');
+  }
+
   return {
     middleware: getMiddleware(
       options,

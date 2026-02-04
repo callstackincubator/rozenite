@@ -1,20 +1,24 @@
 {
-  "name": "@rozenite/middleware",
-  "version": "1.3.0",
-  "description": "Middleware for Rozenite.",
+  "name": "@rozenite/mcp-server",
+  "version": "1.2.0",
+  "description": "MCP server for Rozenite - exposes React Native tools to LLMs",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "rozenite-mcp": "./bin/rozenite-mcp.js"
+  },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "keywords": [
     "react-native",
     "devtools",
-    "middleware",
-    "plugin",
-    "bundler"
+    "mcp",
+    "model-context-protocol",
+    "llm"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
@@ -26,34 +30,25 @@
   },
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
+  "scripts": {
+    "build": "tsc -b tsconfig.lib.json",
+    "clean": "rm -rf dist"
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "require": "./dist/index.js"
     }
   },
-  "scripts": {
-    "build": "vite build",
-    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
-    "lint": "eslint ."
-  },
   "dependencies": {
-    "@rozenite/mcp-server": "workspace:*",
-    "@rozenite/runtime": "workspace:*",
-    "@rozenite/tools": "workspace:*",
-    "express": "^5.1.0",
-    "semver": "^7.7.2",
     "tslib": "^2.3.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@react-native/dev-middleware": "~0.76.0",
-    "@types/ejs": "^3.1.5",
-    "@types/express": "^5.0.3",
-    "@types/semver": "^7.7.0",
+    "@modelcontextprotocol/sdk": "^1.25.3",
     "@types/ws": "^8.5.13"
   },
   "engines": {

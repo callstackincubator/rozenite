@@ -4,10 +4,7 @@
   "include": [],
   "references": [
     {
-      "path": "../runtime"
-    },
-    {
-      "path": "../mcp-server"
+      "path": "../plugin-bridge"
     },
     {
       "path": "./tsconfig.lib.json"

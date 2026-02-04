@@ -17,6 +17,9 @@
     },
     {
       "path": "../runtime/tsconfig.lib.json"
+    },
+    {
+      "path": "../mcp-server/tsconfig.lib.json"
     }
   ]
 }

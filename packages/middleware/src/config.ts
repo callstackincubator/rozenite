@@ -24,4 +24,11 @@ export type RozeniteConfig = {
    * @default 'info'
    */
   logLevel?: RozeniteLogLevel;
+
+  /**
+   * Enable MCP (Model Context Protocol) server for LLM integration.
+   * When enabled, tools can be registered from React Native and called by LLMs.
+   * @default false
+   */
+  enableMCP?: boolean;
 };

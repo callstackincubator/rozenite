@@ -26,6 +26,12 @@
     },
     {
       "path": "./packages/repack"
+    },
+    {
+      "path": "./packages/mcp-bridge"
+    },
+    {
+      "path": "./packages/mcp-server"
     }
   ]
 }
