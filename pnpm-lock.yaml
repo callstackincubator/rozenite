@@ -137,6 +137,9 @@ importers:
       '@reduxjs/toolkit':
         specifier: ^2.8.2
         version: 2.8.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.0)(redux@5.0.1))(react@19.2.0)
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../../packages/agent-bridge
       '@rozenite/controls-plugin':
         specifier: workspace:*
         version: link:../../packages/controls-plugin
@@ -310,6 +313,24 @@ importers:
         specifier: ~5.9.2
         version: 5.9.3
 
+  packages/agent-bridge:
+    dependencies:
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+
+  packages/agent-shared:
+    dependencies:
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+
   packages/chrome-extension:
     dependencies:
       tslib:
@@ -358,6 +379,9 @@ importers:
       validate-npm-package-name:
         specifier: ^6.0.1
         version: 6.0.1
+      ws:
+        specifier: ^8.18.3
+        version: 8.18.3
     devDependencies:
       '@types/ejs':
         specifier: ^3.1.5
@@ -365,9 +389,15 @@ importers:
       '@types/validate-npm-package-name':
         specifier: ^4.0.2
         version: 4.0.2
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
 
   packages/controls-plugin:
     dependencies:
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../agent-bridge
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -378,6 +408,9 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.14
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.1.11(@types/react@19.2.14)
       autoprefixer:
         specifier: ^10.4.21
         version: 10.4.21(postcss@8.5.6)
@@ -522,6 +555,9 @@ importers:
 
   packages/mmkv-plugin:
     dependencies:
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../agent-bridge
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -820,6 +856,9 @@ importers:
 
   packages/react-navigation-plugin:
     dependencies:
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../agent-bridge
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -1055,6 +1094,9 @@ importers:
 
   packages/storage-plugin:
     dependencies:
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../agent-bridge
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -4595,6 +4637,9 @@ packages:
   '@types/validate-npm-package-name@4.0.2':
     resolution: {integrity: sha512-lrpDziQipxCEeK5kWxvljWYhUvOiB2A9izZd9B2AFarYAkqZshb4lPbRs7zKEic6eGtH8V/2qJW+dPp9OtF6bw==}
 
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
 
@@ -5902,6 +5947,15 @@ packages:
 
   debug@4.4.1:
     resolution: {integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+
+  debug@4.4.3:
+    resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
     engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
@@ -11020,7 +11074,7 @@ snapshots:
       '@babel/core': 7.28.0
       '@babel/helper-compilation-targets': 7.27.2
       '@babel/helper-plugin-utils': 7.28.6
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.3
       lodash.debounce: 4.0.8
       resolve: 1.22.10
     transitivePeerDependencies:
@@ -11596,7 +11650,7 @@ snapshots:
 
   '@babel/template@7.27.2':
     dependencies:
-      '@babel/code-frame': 7.27.1
+      '@babel/code-frame': 7.29.0
       '@babel/parser': 7.28.4
       '@babel/types': 7.28.4
 
@@ -11608,13 +11662,13 @@ snapshots:
 
   '@babel/traverse@7.28.3':
     dependencies:
-      '@babel/code-frame': 7.27.1
-      '@babel/generator': 7.28.3
+      '@babel/code-frame': 7.29.0
+      '@babel/generator': 7.29.1
       '@babel/helper-globals': 7.28.0
       '@babel/parser': 7.28.4
       '@babel/template': 7.27.2
       '@babel/types': 7.28.4
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -12576,9 +12630,9 @@ snapshots:
 
   '@expo/metro-config@55.0.5(expo@55.0.0-preview.10)':
     dependencies:
-      '@babel/code-frame': 7.27.1
+      '@babel/code-frame': 7.29.0
       '@babel/core': 7.28.0
-      '@babel/generator': 7.28.3
+      '@babel/generator': 7.29.1
       '@expo/config': 55.0.4
       '@expo/env': 2.1.0
       '@expo/json-file': 10.0.12
@@ -12586,7 +12640,7 @@ snapshots:
       '@expo/spawn-async': 1.7.2
       browserslist: 4.26.3
       chalk: 4.1.2
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.3
       getenv: 2.0.0
       glob: 13.0.2
       hermes-parser: 0.29.1
@@ -15499,6 +15553,10 @@ snapshots:
 
   '@types/validate-npm-package-name@4.0.2': {}
 
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 18.16.9
+
   '@types/yargs-parser@21.0.3': {}
 
   '@types/yargs@15.0.19':
@@ -15571,7 +15629,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.46.0(typescript@5.8.3)
       '@typescript-eslint/types': 8.46.0
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.3
       typescript: 5.8.3
     transitivePeerDependencies:
       - supports-color
@@ -15580,7 +15638,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.46.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.46.0
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.3
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
@@ -15947,7 +16005,7 @@ snapshots:
 
   agent-base@6.0.2:
     dependencies:
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -17084,6 +17142,10 @@ snapshots:
       ms: 2.1.3
     optionalDependencies:
       supports-color: 5.5.0
+
+  debug@4.4.3:
+    dependencies:
+      ms: 2.1.3
 
   decimal.js@10.6.0: {}
 
@@ -18301,9 +18363,9 @@ snapshots:
       pirates: 3.0.2
       vlq: 0.2.3
 
-  follow-redirects@1.15.9(debug@4.4.1):
+  follow-redirects@1.15.9(debug@4.4.3):
     optionalDependencies:
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.3
 
   fontfaceobserver@2.3.0: {}
 
@@ -18704,18 +18766,18 @@ snapshots:
   http-proxy-middleware@3.0.5:
     dependencies:
       '@types/http-proxy': 1.17.16
-      debug: 4.4.1(supports-color@5.5.0)
-      http-proxy: 1.18.1(debug@4.4.1)
+      debug: 4.4.3
+      http-proxy: 1.18.1(debug@4.4.3)
       is-glob: 4.0.3
       is-plain-object: 5.0.0
       micromatch: 4.0.8
     transitivePeerDependencies:
       - supports-color
 
-  http-proxy@1.18.1(debug@4.4.1):
+  http-proxy@1.18.1(debug@4.4.3):
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.9(debug@4.4.1)
+      follow-redirects: 1.15.9(debug@4.4.3)
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -18730,7 +18792,7 @@ snapshots:
   https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.3
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -19936,7 +19998,7 @@ snapshots:
 
   metro-file-map@0.82.5:
     dependencies:
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.3
       fb-watchman: 2.0.2
       flow-enums-runtime: 0.0.6
       graceful-fs: 4.2.11
@@ -20096,7 +20158,7 @@ snapshots:
   metro-transform-plugins@0.82.5:
     dependencies:
       '@babel/core': 7.28.0
-      '@babel/generator': 7.28.3
+      '@babel/generator': 7.29.1
       '@babel/template': 7.27.2
       '@babel/traverse': 7.29.0(supports-color@5.5.0)
       flow-enums-runtime: 0.0.6
@@ -20138,7 +20200,7 @@ snapshots:
   metro-transform-worker@0.82.5:
     dependencies:
       '@babel/core': 7.28.0
-      '@babel/generator': 7.28.3
+      '@babel/generator': 7.29.1
       '@babel/parser': 7.28.4
       '@babel/types': 7.28.4
       flow-enums-runtime: 0.0.6
@@ -20177,9 +20239,9 @@ snapshots:
 
   metro@0.81.5:
     dependencies:
-      '@babel/code-frame': 7.27.1
+      '@babel/code-frame': 7.29.0
       '@babel/core': 7.28.0
-      '@babel/generator': 7.28.3
+      '@babel/generator': 7.29.1
       '@babel/parser': 7.28.4
       '@babel/template': 7.27.2
       '@babel/traverse': 7.29.0(supports-color@5.5.0)
@@ -20561,7 +20623,7 @@ snapshots:
   micromark@4.0.2:
     dependencies:
       '@types/debug': 4.1.12
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.3
       decode-named-character-reference: 1.2.0
       devlop: 1.1.0
       micromark-core-commonmark: 2.0.3

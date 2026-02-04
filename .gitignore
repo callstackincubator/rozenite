@@ -125,3 +125,4 @@ yarn-error.log
 
 # Expo
 .expo/
+.rozenite/

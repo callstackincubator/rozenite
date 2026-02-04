@@ -10,7 +10,7 @@
     "types": ["node", "vite/client"],
     "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "references": [
     {
       "path": "../tools/tsconfig.lib.json"

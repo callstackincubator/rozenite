@@ -1,0 +1,134 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Making your plugin agent-enabled
+
+Rozenite plugins can expose **agent tools** so coding agents (CLI, Cursor, Codex) can inspect and control your plugin’s domain via Rozenite for Agents. Tools are grouped under a domain that matches your plugin’s ID, and agents discover them the same way they use built-in domains like `console` or `network`.
+
+This page describes what you need to expose tools from your plugin package.
+
+## Prerequisites
+
+- You have a Rozenite plugin with a **React Native side** (code that runs inside the app). See [Plugin Development](/docs/plugin-development/overview) if you are new to plugins.
+- Your plugin is already integrated so its React Native entry runs when the app is in development.
+
+## Add the agent bridge dependency
+
+In your plugin package, install `@rozenite/agent-bridge`:
+
+<PackageManagerTabs command="install @rozenite/agent-bridge" />
+
+The bridge provides the same message protocol and tool lifecycle as in-app tools, but registers tools under your **plugin ID** instead of the `app` domain.
+
+## Use the plugin agent tool hook
+
+From your plugin’s React Native code, call `useRozenitePluginAgentTool` with:
+
+- **pluginId** – Your plugin’s public ID (e.g. `@rozenite/react-navigation-plugin`). This becomes the **domain** agents use to list and call your tools.
+- **tool** – An `AgentTool`: `name`, `description`, and `inputSchema` (JSON Schema–style).
+- **handler** – A function that receives the tool’s arguments and returns a serializable result (or throws).
+
+Each tool is qualified as `{pluginId}.{tool.name}`. The hook registers the tool when the component mounts and unregisters it on unmount.
+
+### Example: echo tool
+
+```tsx
+import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+
+const PLUGIN_ID = '@my-org/my-rozenite-plugin';
+
+const echoTool: AgentTool = {
+  name: 'echo',
+  description: 'Return the provided value.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      value: { type: 'string' },
+    },
+    required: ['value'],
+  },
+};
+
+export function MyPluginAgentTools() {
+  useRozenitePluginAgentTool({
+    pluginId: PLUGIN_ID,
+    tool: echoTool,
+    handler: ({ value }: { value: string }) => ({ value }),
+  });
+
+  return null;
+}
+```
+
+Mount `MyPluginAgentTools` from your plugin’s React Native entry (e.g. next to your DevTools panel registration) so it runs when the app is connected. Agents will see a domain equal to `PLUGIN_ID` and a tool named `echo` (qualified as `@my-org/my-rozenite-plugin.echo`).
+
+### Example: plugin-specific tool
+
+The React Navigation plugin exposes tools such as `get-root-state`, `navigate`, and `go-back`. Each is defined as an `AgentTool` and registered with `useRozenitePluginAgentTool` using `pluginId: '@rozenite/react-navigation-plugin'`. The handler calls into the plugin’s refs and callbacks (e.g. navigation ref, state getters). For example:
+
+```tsx
+useRozenitePluginAgentTool({
+  pluginId: '@rozenite/react-navigation-plugin',
+  tool: getRootStateTool,
+  handler: () => {
+    const state = getCurrentState();
+    return { state, hasState: !!state };
+  },
+});
+```
+
+Other official plugins that expose agent tools include:
+
+- **@rozenite/mmkv-plugin** – MMKV storage inspection and mutation
+- **@rozenite/storage-plugin** – Generic storage adapter inspection and mutation
+- **@rozenite/controls-plugin** – Controls inspection and interaction
+
+You can mirror this pattern: define one or more `AgentTool` objects, then register each with `useRozenitePluginAgentTool` in a component that is mounted when your plugin is active.
+
+## Tool shape and lifecycle
+
+- **pluginId**: Must match the plugin ID you use in Rozenite.
+- **name**: Use kebab-case. The full tool name seen by agents is `{pluginId}.{name}`.
+- **description** and **inputSchema**: Same as for [in-app tools](/docs/agent/adding-tools-to-your-application). Good descriptions and schema help agents call your tools correctly.
+- **handler**: Can be async. Return serializable data; on throw, the bridge sends an error result to the agent.
+
+Tools are registered when the component that calls `useRozenitePluginAgentTool` mounts, and unregistered when it unmounts. If your plugin’s UI or logic is conditional, keep the agent tools in a component that stays mounted whenever the plugin is “active” so the domain and tools remain visible to agents.
+
+## Optional: enable/disable
+
+You can conditionally register tools with the `enabled` option:
+
+```tsx
+useRozenitePluginAgentTool({
+  pluginId: PLUGIN_ID,
+  tool: echoTool,
+  handler: ({ value }) => ({ value }),
+  enabled: isPluginReady,
+});
+```
+
+When `enabled` is false, the tool is not registered and will not appear under your plugin’s domain.
+
+## How agents see your plugin tools
+
+Agents discover domains and tools at runtime:
+
+```bash
+rozenite agent domains --session <sessionId> --json
+rozenite agent @my-org/my-rozenite-plugin tools --session <sessionId> --json
+rozenite agent @my-org/my-rozenite-plugin call --tool echo --args '{"value":"hello"}' --session <sessionId> --json
+```
+
+The domain slug is derived from your `pluginId`. Document your plugin’s agent tools (names, arguments, and return shapes) so agent users know what they can call.
+
+## Summary
+
+1. Add **@rozenite/agent-bridge** to your plugin.
+2. In your plugin’s React Native code, call **useRozenitePluginAgentTool** with a stable **pluginId**, a **tool** (name, description, inputSchema), and a **handler**.
+3. Mount the component that registers these tools so it runs when the plugin is active.
+4. Agents will see your plugin as a domain and can list and call your tools via `rozenite agent <pluginId> tools|call ...`.
+
+## Next steps
+
+- [Adding tools to your application](/docs/agent/adding-tools-to-your-application) – expose app-owned tools under the `app` domain.
+- [Rozenite for Agents](/docs/agent/overview) – how agents use domains and tools.
+- [Plugin Development](/docs/plugin-development/overview) for general plugin structure and React Native integration.

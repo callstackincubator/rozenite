@@ -1,0 +1,45 @@
+{
+  "name": "@rozenite/agent-shared",
+  "version": "1.2.0",
+  "description": "Shared types and utilities for Rozenite agent packages",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "react-native",
+    "devtools",
+    "agent"
+  ],
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -b tsconfig.lib.json",
+    "clean": "rm -rf dist"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20"
+  }
+}
