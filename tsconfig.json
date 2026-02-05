@@ -28,6 +28,9 @@
       "path": "./packages/repack"
     },
     {
+      "path": "./packages/mcp-shared"
+    },
+    {
       "path": "./packages/mcp-bridge"
     },
     {

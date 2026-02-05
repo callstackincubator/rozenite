@@ -10,17 +10,10 @@
     "composite": true,
     "emitDeclarationOnly": false,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"],
     "lib": ["ES2022"],
-    "esModuleInterop": true,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2022"
   },
-  "include": ["src/**/*.ts"],
-  "references": [
-    {
-      "path": "../mcp-shared/tsconfig.lib.json"
-    }
-  ]
+  "include": ["src/**/*.ts"]
 }

@@ -1,14 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import type {
-  MCPTool,
-  RegisterToolMessage,
-  UnregisterToolMessage,
-  ToolCallMessage,
-  ToolResultMessage,
+import {
+  MCP_PLUGIN_ID,
+  type MCPTool,
+  type RegisterToolMessage,
+  type UnregisterToolMessage,
+  type ToolCallMessage,
+  type ToolResultMessage,
 } from './types.js';
-
-const MCP_PLUGIN_ID = 'rozenite-mcp';
 
 type MCPEventMap = {
   'register-tool': RegisterToolMessage['payload'];

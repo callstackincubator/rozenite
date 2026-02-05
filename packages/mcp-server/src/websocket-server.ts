@@ -1,5 +1,5 @@
 import WebSocket, { WebSocketServer } from 'ws';
-import { Server as HttpServer } from 'http';
+import { IncomingMessage, Server as HttpServer } from 'http';
 import { MCPMessageHandler } from './handler.js';
 import type { MCPTool } from './types.js';
 
@@ -7,6 +7,7 @@ export interface MCPWebSocketServerOptions {
   server?: HttpServer;
   noServer?: boolean;
   path?: string;
+  disableOriginCheck?: boolean;
 }
 
 interface CustomToolCall {
@@ -30,6 +31,75 @@ interface CustomToolResult {
 
 type CustomMessage = CustomToolCall | CustomToolsList | CustomToolResult;
 
+const LOCALHOST_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
+
+function getHostnameFromHostHeader(host?: string): string | null {
+  if (!host) {
+    return null;
+  }
+
+  const trimmed = host.trim().toLowerCase();
+  if (trimmed.startsWith('[')) {
+    const endIndex = trimmed.indexOf(']');
+    if (endIndex !== -1) {
+      return trimmed.slice(1, endIndex);
+    }
+  }
+
+  const colonIndex = trimmed.indexOf(':');
+  if (colonIndex !== -1) {
+    return trimmed.slice(0, colonIndex);
+  }
+
+  return trimmed;
+}
+
+function isLocalhostHostname(hostname: string | null): boolean {
+  return !!hostname && LOCALHOST_HOSTNAMES.has(hostname);
+}
+
+function isLocalOrigin(origin?: string): boolean {
+  if (!origin) {
+    return true;
+  }
+
+  try {
+    const url = new URL(origin);
+    return isLocalhostHostname(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+function normalizeRemoteAddress(address?: string): string | null {
+  if (!address) {
+    return null;
+  }
+
+  const trimmed = address.toLowerCase();
+  if (trimmed.startsWith('::ffff:')) {
+    return trimmed.slice('::ffff:'.length);
+  }
+
+  return trimmed;
+}
+
+function isLocalRemoteAddress(address?: string): boolean {
+  const normalized = normalizeRemoteAddress(address);
+  return !!normalized && (normalized === '127.0.0.1' || normalized === '::1');
+}
+
+function isLocalRequest(info: { origin?: string; req: IncomingMessage }): boolean {
+  const hostname = getHostnameFromHostHeader(info.req.headers.host);
+  const remoteAddress = info.req.socket.remoteAddress;
+
+  return (
+    isLocalhostHostname(hostname) &&
+    isLocalOrigin(info.origin) &&
+    isLocalRemoteAddress(remoteAddress)
+  );
+}
+
 export class MCPWebSocketServer {
   private wss: WebSocketServer;
   private handler: MCPMessageHandler;
@@ -42,6 +112,17 @@ export class MCPWebSocketServer {
       server: options.server,
       noServer: options.noServer,
       path: options.noServer ? undefined : options.path || '/rozenite-mcp',
+      verifyClient: options.disableOriginCheck
+        ? undefined
+        : (info, done) => {
+            const allowed = isLocalRequest(info);
+            if (!allowed) {
+              done(false, 403, 'Forbidden');
+              return;
+            }
+
+            done(true);
+          },
     });
 
     this.wss.on('connection', (ws) => {

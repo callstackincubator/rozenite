@@ -1,24 +1,19 @@
 {
-  "name": "@rozenite/mcp-server",
+  "name": "@rozenite/mcp-shared",
   "version": "1.2.0",
-  "description": "MCP server for Rozenite - exposes React Native tools to LLMs",
+  "description": "Shared types and utilities for Rozenite MCP packages",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "rozenite-mcp": "./bin/rozenite-mcp.js"
-  },
   "files": [
-    "dist",
-    "bin"
+    "dist"
   ],
   "keywords": [
     "react-native",
     "devtools",
     "mcp",
-    "model-context-protocol",
-    "llm"
+    "model-context-protocol"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
@@ -35,23 +30,16 @@
     "clean": "rm -rf dist"
   },
   "exports": {
-    "./package.json": "./package.json",
     ".": {
-      "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
     }
   },
   "dependencies": {
-    "@rozenite/mcp-shared": "workspace:*",
-    "tslib": "^2.3.0",
-    "ws": "^8.18.0"
+    "tslib": "^2.3.0"
   },
-  "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
-    "@types/ws": "^8.5.13"
-  },
+  "devDependencies": {},
   "engines": {
     "node": ">=20"
   }

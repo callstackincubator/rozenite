@@ -1,22 +1,14 @@
-export interface JSONSchema7 {
-  type?: string | string[];
-  properties?: Record<string, JSONSchema7>;
-  items?: JSONSchema7 | JSONSchema7[];
-  required?: string[];
-  enum?: unknown[];
-  const?: unknown;
-  description?: string;
-  title?: string;
-  default?: unknown;
-  examples?: unknown[];
-  [key: string]: unknown;
-}
+import type { MCPTool } from '@rozenite/mcp-shared';
 
-export interface MCPTool {
-  name: string;
-  description: string;
-  inputSchema: JSONSchema7;
-}
+export type {
+  JSONSchema7,
+  MCPTool,
+  DevToolsPluginMessage,
+  RegisterToolPayload,
+  UnregisterToolPayload,
+  ToolCallPayload,
+  ToolResultPayload,
+} from '@rozenite/mcp-shared';
 
 export interface DeviceInfo {
   id: string;
@@ -27,30 +19,3 @@ export interface RegisteredTool {
   tool: MCPTool;
   deviceId: string;
 }
-
-export type DevToolsPluginMessage = {
-  pluginId: string;
-  type: string;
-  payload: unknown;
-};
-
-export type RegisterToolPayload = {
-  tools: MCPTool[];
-};
-
-export type UnregisterToolPayload = {
-  toolNames: string[];
-};
-
-export type ToolCallPayload = {
-  callId: string;
-  toolName: string;
-  arguments: unknown;
-};
-
-export type ToolResultPayload = {
-  callId: string;
-  success: boolean;
-  result?: unknown;
-  error?: string;
-};

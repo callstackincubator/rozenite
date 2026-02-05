@@ -420,6 +420,9 @@ importers:
 
   packages/mcp-bridge:
     dependencies:
+      '@rozenite/mcp-shared':
+        specifier: workspace:*
+        version: link:../mcp-shared
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -429,6 +432,9 @@ importers:
 
   packages/mcp-server:
     dependencies:
+      '@rozenite/mcp-shared':
+        specifier: workspace:*
+        version: link:../mcp-shared
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -442,6 +448,12 @@ importers:
       '@types/ws':
         specifier: ^8.5.13
         version: 8.18.1
+
+  packages/mcp-shared:
+    dependencies:
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
 
   packages/metro:
     dependencies:

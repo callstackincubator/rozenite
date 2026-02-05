@@ -6,8 +6,7 @@ import type {
   ToolCallPayload,
   ToolResultPayload,
 } from './types.js';
-
-const MCP_PLUGIN_ID = 'rozenite-mcp';
+import { MCP_PLUGIN_ID } from '@rozenite/mcp-shared';
 
 export interface DeviceSender {
   sendMessage(message: unknown): void;
@@ -21,6 +20,7 @@ export class MCPMessageHandler {
     {
       resolve: (result: unknown) => void;
       reject: (error: Error) => void;
+      timeoutId: NodeJS.Timeout;
     }
   > = new Map();
   private listeners: Set<() => void> = new Set();
@@ -82,6 +82,7 @@ export class MCPMessageHandler {
 
         if (pending) {
           this.pendingCalls.delete(payload.callId);
+          clearTimeout(pending.timeoutId);
 
           if (payload.success) {
             pending.resolve(payload.result);
@@ -147,15 +148,16 @@ export class MCPMessageHandler {
 
     // Wait for the response
     return new Promise((resolve, reject) => {
-      this.pendingCalls.set(callId, { resolve, reject });
-
       // Timeout after 30 seconds
-      setTimeout(() => {
-        if (this.pendingCalls.has(callId)) {
+      const timeoutId = setTimeout(() => {
+        const pending = this.pendingCalls.get(callId);
+        if (pending) {
           this.pendingCalls.delete(callId);
-          reject(new Error('Tool call timeout'));
+          pending.reject(new Error('Tool call timeout'));
         }
       }, 30000);
+
+      this.pendingCalls.set(callId, { resolve, reject, timeoutId });
     });
   }
 }

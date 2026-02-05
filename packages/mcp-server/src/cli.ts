@@ -106,6 +106,13 @@ async function main() {
     { resolve: (value: unknown) => void; reject: (reason?: unknown) => void }
   >();
 
+  const rejectPendingCalls = (reason: Error) => {
+    for (const [id, pending] of pendingCalls.entries()) {
+      pendingCalls.delete(id);
+      pending.reject(reason);
+    }
+  };
+
   // Set up ListToolsRequestSchema handler to return current tools
   server.server.setRequestHandler(ListToolsRequestSchema, async () => {
     return { tools: registry.tools };
@@ -216,6 +223,7 @@ async function main() {
 
     ws.on('close', () => {
       console.error(`[rozenite-mcp] WebSocket closed, reconnecting...`);
+      rejectPendingCalls(new Error('WebSocket disconnected'));
       reconnectTimer = setTimeout(() => {
         connect();
       }, 1000);

@@ -4,6 +4,9 @@
   "include": [],
   "references": [
     {
+      "path": "../mcp-shared"
+    },
+    {
       "path": "../plugin-bridge"
     },
     {

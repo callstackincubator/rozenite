@@ -4,9 +4,6 @@
   "include": [],
   "references": [
     {
-      "path": "../mcp-shared"
-    },
-    {
       "path": "./tsconfig.lib.json"
     }
   ]

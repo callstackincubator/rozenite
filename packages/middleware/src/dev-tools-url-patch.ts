@@ -18,6 +18,19 @@ export const patchDevMiddleware = (options: RozeniteConfig): void => {
       const originalCustomHandler =
         args[0].unstable_customInspectorMessageHandler;
 
+      const previousEventReporter = args[0].unstable_eventReporter;
+      args[0].unstable_eventReporter = {
+        logEvent: (...args: unknown[]) => {
+          if (args[0] && typeof args[0] === 'object' && 'type' in args[0] && args[0].type !== 'debugger_command') {
+            console.log('unstable_eventReporter', JSON.stringify(args, null, 2));
+          }
+
+          if (previousEventReporter) {
+            return previousEventReporter.logEvent(...args);
+          }
+        }
+      }
+
       args[0].unstable_customInspectorMessageHandler = (connection: any) => {
         console.log('unstable_customInspectorMessageHandler');
         const mcpHandler = getMCPHandler();
