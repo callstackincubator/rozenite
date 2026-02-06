@@ -12,7 +12,7 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "noEmit": true
   },
-  "files": ["../../node_modules/@nx/react-native/typings/svg.d.ts"],
+  "files": ["src/types/svg.d.ts"],
   "exclude": [
     "out-tsc",
     "dist",

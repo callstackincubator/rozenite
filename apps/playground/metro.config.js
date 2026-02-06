@@ -1,4 +1,5 @@
-const { withNxMetro } = require('@nx/react-native');
+const path = require('node:path');
+const { makeMetroConfig } = require('@rnx-kit/metro-config');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { composeMetroConfigTransformers } = require('@rozenite/tools');
 const { withRozenite } = require('@rozenite/metro');
@@ -38,28 +39,19 @@ const customConfig = {
   server: {},
 };
 
-module.exports = composeMetroConfigTransformers(
-  [
-    withNxMetro,
-    {
-      // Change this to true to see debugging info.
-      // Useful if you have issues resolving modules
-      debug: false,
-      // all the file extensions used for imports other than 'ts', 'tsx', 'js', 'jsx', 'json'
-      extensions: [],
-      // Specify folders to watch, in addition to Nx defaults (workspace libraries and node_modules)
-      // watchFolders: ["../../packages/expo-atlas-plugin"],
-    },
-  ],
-  [
-    withRozenite,
-    {
-      enabled: true,
-      enhanceMetroConfig: composeMetroConfigTransformers(
-        withRozeniteExpoAtlasPlugin,
-        withRozeniteRequireProfiler,
-        withRozeniteReduxDevTools,
-      ),
-    },
-  ],
-)(mergeConfig(defaultConfig, customConfig));
+const baseConfig = makeMetroConfig(mergeConfig(defaultConfig, customConfig), {
+  projectRoot: __dirname,
+  workspaceRoot: path.resolve(__dirname, '../..'),
+});
+
+module.exports = composeMetroConfigTransformers([
+  withRozenite,
+  {
+    enabled: true,
+    enhanceMetroConfig: composeMetroConfigTransformers(
+      withRozeniteExpoAtlasPlugin,
+      withRozeniteRequireProfiler,
+      withRozeniteReduxDevTools,
+    ),
+  },
+])(baseConfig);

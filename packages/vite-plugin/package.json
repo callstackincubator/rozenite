@@ -35,6 +35,11 @@
       "default": "./dist/index.cjs"
     }
   },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint ."
+  },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "ejs": "^3.1.9",

@@ -33,6 +33,11 @@
       "require": "./dist/index.cjs"
     }
   },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint ."
+  },
   "dependencies": {
     "tslib": "^2.3.0"
   },

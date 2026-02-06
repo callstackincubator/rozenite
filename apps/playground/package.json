@@ -2,7 +2,11 @@
   "name": "@rozenite/playground",
   "version": "0.0.1",
   "scripts": {
-    "start": "react-native start"
+    "start": "react-native start",
+    "ios": "react-native run-ios",
+    "android": "react-native run-android",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.4.7",
@@ -22,8 +26,9 @@
     "@tanstack/react-query": "^5.81.5",
     "expo-atlas": "^0.4.0",
     "expo-atlas-without-expo": "^1.0.1",
-    "react": "*",
-    "react-native": "*",
+    "react": "~18.3.1",
+    "react-dom": "~18.3.1",
+    "react-native": "0.76.0",
     "react-native-get-random-values": "^1.11.0",
     "react-native-mmkv": "^3.3.0",
     "react-native-performance": "5.1.4",
@@ -31,12 +36,28 @@
     "react-native-screens": "~4.4.0",
     "react-native-sse": "^1.2.1",
     "react-native-svg": "~15.8.0",
+    "react-native-svg-web": "~1.0.9",
     "react-redux": "^9.2.0",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@babel/runtime": "*",
+    "@rnx-kit/metro-config": "^2.2.3",
+    "@react-native-community/cli": "~15.0.1",
+    "@react-native-community/cli-platform-android": "~15.0.1",
+    "@react-native-community/cli-platform-ios": "~15.0.1",
+    "@react-native/babel-preset": "~0.76.3",
+    "@react-native/codegen": "0.76.0",
+    "@react-native/gradle-plugin": "0.76.0",
+    "@react-native/metro-config": "~0.76.3",
     "@rozenite/metro": "workspace:*",
+    "@testing-library/jest-native": "~5.4.3",
+    "@testing-library/react-native": "~12.9.0",
+    "@types/react": "~18.3.23",
+    "@types/react-dom": "~18.3.1",
+    "jest-react-native": "18.0.0",
+    "react-native-svg-transformer": "~1.5.0",
+    "react-test-renderer": "~18.3.1",
     "rozenite": "workspace:*"
   },
   "private": true

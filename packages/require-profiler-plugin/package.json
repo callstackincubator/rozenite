@@ -20,7 +20,9 @@
   },
   "scripts": {
     "build": "rozenite build",
-    "dev": "rozenite dev"
+    "dev": "rozenite dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",

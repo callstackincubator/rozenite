@@ -6,6 +6,11 @@
   "bin": {
     "rozenite": "./bin.js"
   },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint ."
+  },
   "files": [
     "dist",
     "template",

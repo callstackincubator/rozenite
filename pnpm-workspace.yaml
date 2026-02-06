@@ -14,7 +14,6 @@ onlyBuiltDependencies:
   - core-js
   - electron
   - esbuild
-  - nx
   - react-native-mmkv
   - react-native-nitro-modules
   - sqlite3
