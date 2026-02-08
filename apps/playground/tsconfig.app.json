@@ -29,6 +29,9 @@
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
   "references": [
     {
+      "path": "../../packages/file-system-plugin"
+    },
+    {
       "path": "../../packages/overlay-plugin"
     },
     {

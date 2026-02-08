@@ -62,6 +62,13 @@ export const LandingScreen = () => {
 
             <TouchableOpacity
               style={styles.navigationButton}
+              onPress={() => navigation.navigate('FileSystemTest' as never)}
+            >
+              <Text style={styles.buttonText}>File System</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navigationButton}
               onPress={() => navigation.navigate('BottomTabs' as never)}
             >
               <Text style={styles.buttonText}>React Navigation</Text>

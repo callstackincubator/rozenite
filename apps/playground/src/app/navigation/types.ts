@@ -8,6 +8,7 @@ export type RootStackParamList = {
   ReduxTest: undefined;
   PerformanceMonitor: undefined;
   RequireProfilerTest: undefined;
+  FileSystemTest: undefined;
   Config: undefined;
   BottomTabs: undefined;
   ParameterDisplay: {
