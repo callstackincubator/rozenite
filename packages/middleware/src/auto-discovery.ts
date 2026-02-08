@@ -6,6 +6,7 @@ import { logger } from './logger.js';
 import { getNodeModulesPaths } from './node-modules-paths.js';
 import { ROZENITE_MANIFEST } from './constants.js';
 import { RozeniteConfig } from './config.js';
+import { isPnP, resolvePackagePathFromVirtualPath } from './pnp.js';
 
 const require = createRequire(import.meta.url);
 
@@ -85,8 +86,62 @@ export const getInstalledPlugins = (
     return getIncludedPlugins(options);
   }
 
-  const nodeModulesPaths = getNodeModulesPaths();
+  return isPnP() ? getInstalledPluginsFromPnP(options) : getInstalledPluginsFromNodeModules(options);
+};
+
+const getInstalledPluginsFromPnP = (options: RozeniteConfig): InstalledPlugin[] => {
   const plugins: InstalledPlugin[] = [];
+  const packageJsonPath = path.join(options.projectRoot, 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+  const dependencies = [
+    ...Object.keys(packageJson.dependencies || {}),
+    ...Object.keys(packageJson.devDependencies || {}),
+  ];
+
+  for (const dependency of dependencies) {
+    let packagePath: string;
+    let actualPackageName: string;
+
+    try {
+      let resolvedPackagePath: string;
+
+      try {
+        // First try to resolve the `<packageName>/package.json` path.
+        resolvedPackagePath = require.resolve(path.join(dependency, 'package.json'), { paths: [options.projectRoot] });
+      } catch {
+        // If the path to the package.json is not found, try to resolve the entry point.
+        resolvedPackagePath = require.resolve(dependency, { paths: [options.projectRoot] });
+      }
+
+      const resolvedVirtualPath = resolvePackagePathFromVirtualPath(resolvedPackagePath);
+
+      packagePath = resolvedVirtualPath.basePath;
+      actualPackageName = resolvedVirtualPath.packageName;
+    } catch {
+      continue;
+    }
+
+    if (
+      options.exclude &&
+      options.exclude.includes(actualPackageName)
+    ) {
+      continue;
+    }
+
+    const plugin = tryExtractPlugin(packagePath, actualPackageName);
+
+    if (plugin) {
+      plugins.push(plugin);
+    }
+  }
+
+  return plugins;
+}
+
+const getInstalledPluginsFromNodeModules = (options: RozeniteConfig): InstalledPlugin[] => {
+  const plugins: InstalledPlugin[] = [];
+  const nodeModulesPaths = getNodeModulesPaths();
 
   for (const nodeModulesPath of nodeModulesPaths) {
     try {
@@ -168,11 +223,11 @@ export const getInstalledPlugins = (
           packagePath = path.join(nodeModulesPath, packageName);
           actualPackageName = packageName;
 
-          const plugin = tryExtractPlugin(packagePath, actualPackageName);
-
           if (options.exclude && options.exclude.includes(actualPackageName)) {
             continue;
           }
+
+          const plugin = tryExtractPlugin(packagePath, actualPackageName);
 
           if (plugin) {
             plugins.push(plugin);
