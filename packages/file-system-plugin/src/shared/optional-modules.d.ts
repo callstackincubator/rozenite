@@ -1,4 +1,4 @@
-declare module "expo-file-system" {
+declare module 'expo-file-system' {
   export type FileInfo = {
     exists: boolean;
     isDirectory?: boolean;
@@ -14,15 +14,15 @@ declare module "expo-file-system" {
   export function readDirectoryAsync(uri: string): Promise<string[]>;
   export function getInfoAsync(
     uri: string,
-    options?: { size?: boolean; md5?: boolean }
+    options?: { size?: boolean; md5?: boolean },
   ): Promise<FileInfo>;
   export function readAsStringAsync(
     uri: string,
-    options?: { encoding?: "base64" | "utf8" }
+    options?: { encoding?: 'base64' | 'utf8' },
   ): Promise<string>;
 }
 
-declare module "react-native-fs" {
+declare module 'react-native-fs' {
   export type ReadDirItem = {
     name: string;
     path: string;
@@ -47,10 +47,13 @@ declare module "react-native-fs" {
   }>;
   export function readFile(
     path: string,
-    encoding: "base64" | "utf8"
+    encoding: 'base64' | 'utf8',
   ): Promise<string>;
 }
 
-declare module "@birdofpreyru/react-native-fs" {
-  export * from "react-native-fs";
+declare module '@birdofpreyru/react-native-fs' {
+  export * from 'react-native-fs';
+}
+declare module '@dr.pogodin/react-native-fs' {
+  export * from 'react-native-fs';
 }
