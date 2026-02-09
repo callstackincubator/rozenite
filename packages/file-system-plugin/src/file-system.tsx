@@ -264,7 +264,6 @@ export default function FileSystemPanel() {
     if (!client) return;
     if (!currentPath) return;
     loadDir(currentPath);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, currentPath]);
 
   // Handle RN app ready/reconnect - re-fetch data when RN side (re)initializes

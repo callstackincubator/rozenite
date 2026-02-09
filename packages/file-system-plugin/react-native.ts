@@ -9,10 +9,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import {
-  useRozeniteDevToolsClient,
-  type RozeniteDevToolsClient,
-} from '@rozenite/plugin-bridge';
+import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import type {
   FileSystemEventMap,
   FileSystemProvider,
@@ -44,13 +41,12 @@ type ProviderImpl = {
 
 export type UseFileSystemDevToolsOptions = {
   /**
-   * Pass Expo FileSystem module from the app (recommended, MMKV-style).
-   * This avoids any Metro/module-resolution edge cases inside the plugin bundle.
+   * Pass Expo FileSystem module from the host app.
    */
   expoFileSystem?: any;
   /**
-   * Pass RNFS module from the app (recommended for bare RN).
-   * Supports `react-native-fs` or `@birdofpreyru/react-native-fs` (same surface).
+   * Pass RNFS module from the host app.
+   * Supports `react-native-fs` or `@dr.pogodin/react-native-fs` (same surface).
    */
   rnfs?: any;
 };
@@ -58,7 +54,6 @@ export type UseFileSystemDevToolsOptions = {
 async function detectProvider(
   options?: UseFileSystemDevToolsOptions,
 ): Promise<ProviderImpl | null> {
-  // MMKV-style: rely on explicit modules passed from the app.
   if (!options?.expoFileSystem && !options?.rnfs) return null;
 
   if (options?.expoFileSystem) {
@@ -177,7 +172,7 @@ async function detectProvider(
     return expo;
   }
 
-  const RNFS = options!.rnfs;
+  const RNFS = options.rnfs;
   const rnfs: ProviderImpl = {
     provider: 'rnfs',
     async getRoots() {
@@ -280,7 +275,7 @@ function resolveExpoChildPath(dirUri: string, item: string): string {
 function basename(pathOrUri: string): string {
   if (!pathOrUri) return '';
   // Strip query/hash for safety
-  const clean = pathOrUri.split('?')[0]!.split('#')[0]!;
+  const clean = pathOrUri.split('?')[0].split('#')[0];
   const noTrailing = clean.endsWith('/') ? clean.slice(0, -1) : clean;
   const idx = noTrailing.lastIndexOf('/');
   return idx >= 0 ? noTrailing.slice(idx + 1) : noTrailing;
@@ -297,7 +292,7 @@ async function mapWithConcurrency<TInput, TOutput>(
   const runners = new Array(Math.max(1, concurrency)).fill(0).map(async () => {
     while (idx < items.length) {
       const current = idx++;
-      results[current] = await worker(items[current]!);
+      results[current] = await worker(items[current]);
     }
   });
 
@@ -523,6 +518,3 @@ export const useFileSystemDevTools = (
     };
   }, [client]);
 };
-
-// Backwards-compatible with the Rozenite template naming
-export const useDevTools = useFileSystemDevTools;
