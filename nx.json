@@ -57,7 +57,8 @@
         "packages/performance-monitor-plugin/**/*",
         "packages/react-navigation-plugin/**/*",
         "packages/require-profiler-plugin/**/*",
-        "packages/overlay-plugin/**/*"
+        "packages/overlay-plugin/**/*",
+        "packages/file-system-plugin/**/*"
       ]
     },
     {

@@ -4,17 +4,26 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
 export const LandingScreen = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
-      <View style={styles.backgroundGradient}>
+      <ScrollView
+        style={styles.backgroundGradient}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
         <View style={styles.content}>
           <Text style={styles.mainTitle}>Rozenite</Text>
           <Text style={styles.subtitle}>
@@ -62,6 +71,13 @@ export const LandingScreen = () => {
 
             <TouchableOpacity
               style={styles.navigationButton}
+              onPress={() => navigation.navigate('FileSystemTest' as never)}
+            >
+              <Text style={styles.buttonText}>File System</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navigationButton}
               onPress={() => navigation.navigate('BottomTabs' as never)}
             >
               <Text style={styles.buttonText}>React Navigation</Text>
@@ -80,9 +96,8 @@ export const LandingScreen = () => {
             communication between DevTools and React Native
           </Text>
         </View>
-
-        <View style={styles.bottomAccent} />
-      </View>
+      </ScrollView>
+      <View style={styles.bottomAccent} />
     </View>
   );
 };
@@ -94,9 +109,11 @@ const styles = StyleSheet.create({
   backgroundGradient: {
     flex: 1,
     backgroundColor: '#0a0a0a',
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
   },
   content: {
     alignItems: 'center',
