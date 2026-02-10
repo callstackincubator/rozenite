@@ -19,18 +19,21 @@
   "devDependencies": {
     "@react-navigation/core": "^7.12.1",
     "@rozenite/vite-plugin": "workspace:*",
-    "@types/react": "~18.3.23",
+    "@types/react": "~19.1.10",
     "@types/react-dom": "~18.3.1",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
-    "react": "*",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-json-tree": "^0.20.0",
+    "react-native": "0.81.5",
+    "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.7.3",
-    "vite": "^6.0.0"
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1"
   },
   "peerDependencies": {
     "@react-navigation/core": "^7.12.1"
