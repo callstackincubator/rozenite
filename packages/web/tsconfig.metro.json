@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.lib.json",
+  "compilerOptions": {
+    "composite": false,
+    "emitDeclarationOnly": true,
+    "outDir": "dist/metro",
+    "tsBuildInfoFile": "dist/metro/tsconfig.metro.tsbuildinfo"
+  },
+  "include": ["src/metro/**/*.ts", "metro.ts", "globals.d.ts"],
+  "exclude": ["src/react-native"]
+}

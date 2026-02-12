@@ -1,0 +1,41 @@
+{
+  "name": "@rozenite/web",
+  "version": "1.2.0",
+  "description": "Rozenite for Web",
+  "type": "module",
+  "module": "./dist/react-native/index.js",
+  "types": "./dist/react-native/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/react-native/index.ts",
+      "types": "./dist/react-native/index.d.ts",
+      "import": "./dist/react-native/index.js"
+    },
+    "./metro": {
+      "development": "./metro.ts",
+      "types": "./dist/metro/metro.d.ts",
+      "import": "./dist/metro/metro.js",
+      "require": "./dist/metro/metro.cjs"
+    }
+  },
+  "scripts": {
+    "build": "pnpm run build:metro && pnpm run build:react-native",
+    "build:metro": "vite build --config vite.config.ts",
+    "build:react-native": "tsc -p tsconfig.react-native.json",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@rozenite/middleware": "workspace:*",
+    "@rozenite/tools": "workspace:*",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@react-native/metro-config": "~0.76.0",
+    "vite-plugin-dts": "~4.5.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

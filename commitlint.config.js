@@ -25,6 +25,7 @@ export default {
         'require-profiler-plugin',
         'overlay-plugin',
         'chrome-extension',
+        'web',
         '',
       ],
     ],
