@@ -37,7 +37,7 @@ export const withRozeniteRequireProfiler = createMetroConfigTransformer(
         ],
         getRunModuleStatement: (...opts) => {
           const statement = existingGetRunModuleStatement(...opts);
-          return `__patchSystrace();${statement}`;
+          return `typeof __patchSystrace === "function" && __patchSystrace();${statement}`;
         },
       },
     };
