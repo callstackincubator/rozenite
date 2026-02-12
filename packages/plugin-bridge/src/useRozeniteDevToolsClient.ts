@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RozeniteDevToolsClient, getRozeniteDevToolsClient } from './client';
-import { UnsupportedPlatformError } from './errors';
+import { MissingRozeniteForWebError, UnsupportedPlatformError } from './errors';
 
 export type UseRozeniteDevToolsClientOptions<
   TEventMap extends Record<string, unknown> = Record<string, unknown>
@@ -31,6 +31,14 @@ export const useRozeniteDevToolsClient = <
           setClient(client);
         }
       } catch (error) {
+        if (error instanceof MissingRozeniteForWebError) {
+          // On web without Rozenite, the client is expected to be null.
+          console.warn(
+            `[Rozenite, ${pluginId}] Rozenite for web is not configured. A separate integration is required for web. Consult Rozenite docs for details.`
+          );
+          return;
+        }
+
         if (error instanceof UnsupportedPlatformError) {
           // We don't want to show an error for unsupported platforms.
           // It's expected that the client will be null.
@@ -40,7 +48,7 @@ export const useRozeniteDevToolsClient = <
           return;
         }
 
-        console.error('Error setting up client', error);
+        console.error(`[Rozenite, ${pluginId}] Error setting up client.`, error);
 
         if (isMounted) {
           setError(error);

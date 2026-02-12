@@ -3,26 +3,29 @@
   "version": "1.2.0",
   "description": "Rozenite for Web",
   "type": "module",
-  "module": "./dist/react-native/index.js",
-  "types": "./dist/react-native/index.d.ts",
+  "main": "./dist/cjs/react-native/index.js",
+  "module": "./dist/esm/react-native/index.js",
+  "types": "./dist/types/react-native/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "development": "./src/react-native/index.ts",
-      "types": "./dist/react-native/index.d.ts",
-      "import": "./dist/react-native/index.js"
+      "types": "./dist/types/react-native/index.d.ts",
+      "import": "./dist/esm/react-native/index.js",
+      "require": "./dist/cjs/react-native/index.js"
     },
     "./metro": {
-      "development": "./metro.ts",
-      "types": "./dist/metro/metro.d.ts",
-      "import": "./dist/metro/metro.js",
-      "require": "./dist/metro/metro.cjs"
+      "development": "./src/metro/index.ts",
+      "types": "./dist/types/metro/index.d.ts",
+      "import": "./dist/esm/metro/index.js",
+      "require": "./dist/cjs/metro/index.js"
     }
   },
   "scripts": {
-    "build": "pnpm run build:metro && pnpm run build:react-native",
-    "build:metro": "vite build --config vite.config.ts",
-    "build:react-native": "tsc -p tsconfig.react-native.json",
+    "build": "pnpm run build:esm & pnpm run build:cjs & pnpm run build:types & wait",
+    "build:esm": "tsc -p tsconfig.metro.json && tsc -p tsconfig.react-native.json",
+    "build:cjs": "tsc -p tsconfig.metro.cjs.json && tsc -p tsconfig.react-native.cjs.json && cp scripts/cjs-package.json dist/cjs/package.json",
+    "build:types": "tsc -p tsconfig.metro.types.json && tsc -p tsconfig.react-native.types.json",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "lint": "eslint ."
   },
@@ -32,8 +35,7 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@react-native/metro-config": "~0.76.0",
-    "vite-plugin-dts": "~4.5.0"
+    "@react-native/metro-config": "~0.76.0"
   },
   "engines": {
     "node": ">=20"

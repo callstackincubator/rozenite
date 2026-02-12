@@ -4,10 +4,10 @@
     "composite": false,
     "declaration": true,
     "declarationMap": true,
-    "emitDeclarationOnly": false,
+    "emitDeclarationOnly": true,
     "rootDir": "src",
-    "outDir": "dist/esm",
-    "tsBuildInfoFile": "dist/esm/tsconfig.react-native.tsbuildinfo"
+    "outDir": "dist/types",
+    "tsBuildInfoFile": "dist/types/tsconfig.react-native.tsbuildinfo"
   },
   "include": ["src/react-native/**/*.ts"],
   "exclude": ["node_modules", "src/metro"],

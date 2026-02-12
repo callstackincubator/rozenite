@@ -3,7 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "rootDir": ".",
-    "types": ["node", "vite/client"]
+    "types": ["node"]
   },
   "include": ["src/**/*.ts", "metro.ts", "globals.d.ts"],
   "references": [

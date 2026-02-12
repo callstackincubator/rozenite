@@ -9,7 +9,7 @@ declare global {
 	};
 }
 
-import reactNativePackage from 'react-native/package.json' with { type: 'json' };
+const reactNativePackage = require('react-native/package.json') as { version: string };
 
 export const defineRozeniteGlobal = () => {
 	globalThis.__ROZENITE_WEB__ = {

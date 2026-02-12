@@ -7,7 +7,7 @@ const injectConfig = (config: MetroConfig): MetroConfig => {
 		serializer: {
 			...config.serializer,
 			getModulesRunBeforeMainModule: (...args) => [
-				'@rozenite/web',
+				require.resolve('../react-native/index.js'),
 				...(config.serializer?.getModulesRunBeforeMainModule?.(...args) ?? []),
 			]
 		},
@@ -20,7 +20,7 @@ const injectConfig = (config: MetroConfig): MetroConfig => {
 					if (moduleName.includes('ReactNativeFeatureFlags')) {
 						return {
 							type: 'sourceFile',
-							filePath: require.resolve('./ReactNativeFeatureFlags.js'),
+							filePath: require.resolve('./ReactNativeFeatureFlags'),
 						}
 					}
 				}

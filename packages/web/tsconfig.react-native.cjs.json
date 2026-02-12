@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.cjs.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/cjs/tsconfig.react-native.tsbuildinfo"
+  },
+  "include": ["src/react-native/**/*.ts"],
+  "exclude": ["node_modules", "src/metro"],
+  "files": ["globals.d.ts"]
+}

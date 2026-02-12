@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2022"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "isolatedModules": true,
+    "importHelpers": true,
+    "declaration": false,
+    "declarationMap": false,
+    "baseUrl": ".",
+    "outDir": "dist/cjs",
+    "types": ["node"]
+  },
+  "references": [
+    { "path": "../tools/tsconfig.lib.json" },
+    { "path": "../middleware/tsconfig.lib.json" }
+  ]
+}

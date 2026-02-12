@@ -161,6 +161,9 @@ importers:
       '@rozenite/tanstack-query-plugin':
         specifier: workspace:*
         version: link:../../packages/tanstack-query-plugin
+      '@rozenite/web':
+        specifier: workspace:*
+        version: link:../../packages/web
       '@tanstack/react-query':
         specifier: ^5.81.5
         version: 5.83.0(react@19.2.0)
@@ -1090,9 +1093,6 @@ importers:
       '@react-native/metro-config':
         specifier: ~0.76.0
         version: 0.76.9
-      vite-plugin-dts:
-        specifier: ~4.5.0
-        version: 4.5.4(@types/node@22.17.0)(rollup@4.44.1)(typescript@5.8.3)(vite@7.3.1(@types/node@22.17.0)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
 
   website:
     dependencies:
@@ -15231,7 +15231,7 @@ snapshots:
       react-native: 0.83.1(@babel/core@7.28.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0)
       react-native-safe-area-context: 5.6.2(react-native@0.83.1(@babel/core@7.28.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       use-latest-callback: 0.2.4(react@19.2.0)
-      use-sync-external-store: 1.5.0(react@19.2.0)
+      use-sync-external-store: 1.6.0(react@19.2.0)
 
   '@react-navigation/native-stack@7.10.1(@react-navigation/native@7.1.28(react-native@0.83.1(@babel/core@7.28.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-safe-area-context@5.6.2(react-native@0.83.1(@babel/core@7.28.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-screens@4.22.0(react-native@0.83.1(@babel/core@7.28.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.1(@babel/core@7.28.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
     dependencies:

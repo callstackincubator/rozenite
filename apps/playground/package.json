@@ -29,6 +29,7 @@
     "@rozenite/redux-devtools-plugin": "workspace:*",
     "@rozenite/require-profiler-plugin": "workspace:*",
     "@rozenite/tanstack-query-plugin": "workspace:*",
+    "@rozenite/web": "workspace:*",
     "@tanstack/react-query": "^5.81.5",
     "expo": "^55.0.0-preview.10",
     "expo-constants": "~55.0.4",
