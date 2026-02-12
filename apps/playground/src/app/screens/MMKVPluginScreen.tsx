@@ -476,7 +476,7 @@ export const MMKVPluginScreen = () => {
               No entries in this storage
             </Text>
             <Text style={styles.emptyStateSubtext}>
-              Tap "Add Entry" to create your first entry
+              Tap &quot;Add Entry&quot; to create your first entry
             </Text>
           </View>
         ) : (
