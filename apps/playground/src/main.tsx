@@ -10,4 +10,4 @@ api.createPost({
   userId: 1,
 });
 
-AppRegistry.registerComponent('Playground', () => App);
+AppRegistry.registerComponent('main', () => App);

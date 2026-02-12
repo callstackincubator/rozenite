@@ -10,7 +10,7 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
-import { MMKV } from 'react-native-mmkv';
+import type { MMKV } from 'react-native-mmkv';
 import {
   initializeMMKVStorages,
   userStorage,
@@ -299,7 +299,7 @@ export const MMKVPluginScreen = () => {
           const instance =
             storageInstances[storageId as keyof typeof storageInstances];
           if (instance) {
-            instance.delete(key);
+            instance.remove(key);
             Alert.alert('Success', 'Entry deleted successfully');
           }
         },

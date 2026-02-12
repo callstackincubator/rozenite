@@ -1,6 +1,5 @@
-const path = require('node:path');
-const { makeMetroConfig } = require('@rnx-kit/metro-config');
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+// Learn more https://docs.expo.io/guides/customizing-metro
+const { getDefaultConfig } = require('expo/metro-config');
 const { composeMetroConfigTransformers } = require('@rozenite/tools');
 const { withRozenite } = require('@rozenite/metro');
 const {
@@ -9,49 +8,28 @@ const {
 const {
   withRozeniteRequireProfiler,
 } = require('@rozenite/require-profiler-plugin/metro');
-const { withRozeniteExpoAtlasPlugin } = require('@rozenite/expo-atlas-plugin');
+const path = require('node:path');
 
-const defaultConfig = getDefaultConfig(__dirname);
-const { assetExts, sourceExts } = defaultConfig.resolver;
+const config = getDefaultConfig(__dirname);
 
-/**
- * Metro configuration
- * https://reactnative.dev/docs/metro
- *
- * @type {import('metro-config').MetroConfig}
- */
-const customConfig = {
-  cacheVersion: '@rozenite/playground',
-  transformer: {
-    babelTransformerPath: require.resolve('react-native-svg-transformer'),
-    getTransformOptions: async () => ({
-      transform: {
-        inlineRequires: false,
-      },
-    }),
-  },
-  resolver: {
-    assetExts: assetExts.filter((ext) => ext !== 'svg'),
-    sourceExts: [...sourceExts, 'cjs', 'mjs', 'svg'],
-    unstable_enablePackageExports: true,
-  },
-  serializer: {},
-  server: {},
-};
+const projectRoot = __dirname;
+const workspaceRoot = path.resolve(projectRoot, '../..');
 
-const baseConfig = makeMetroConfig(mergeConfig(defaultConfig, customConfig), {
-  projectRoot: __dirname,
-  workspaceRoot: path.resolve(__dirname, '../..'),
-});
+config.watchFolders = [...config.watchFolders, workspaceRoot];
+config.resolver.nodeModulesPaths = [
+  ...config.resolver.nodeModulesPaths,
+  path.resolve(projectRoot, 'node_modules'),
+  path.resolve(workspaceRoot, 'node_modules'),
+];
 
 module.exports = composeMetroConfigTransformers([
   withRozenite,
   {
+    projectType: 'expo',
     enabled: true,
     enhanceMetroConfig: composeMetroConfigTransformers(
-      withRozeniteExpoAtlasPlugin,
       withRozeniteRequireProfiler,
-      withRozeniteReduxDevTools,
+      withRozeniteReduxDevTools
     ),
   },
-])(baseConfig);
+])(config);

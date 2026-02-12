@@ -1,4 +1,43 @@
 {
-  "name": "Playground",
-  "displayName": "Playground"
+  "expo": {
+    "name": "Rozenite",
+    "slug": "rozenite-playground",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "rozenite",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.callstackcincubator.rozenite",
+      "icon": "./assets/images/app.icon"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#201F24",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.callstackcincubator.rozenite"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#201F24"
+        }
+      ]
+    ],
+    "experiments": {
+      "reactCompiler": true
+    }
+  }
 }
