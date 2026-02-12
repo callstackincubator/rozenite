@@ -24,6 +24,7 @@ export default {
         'react-navigation-plugin',
         'require-profiler-plugin',
         'overlay-plugin',
+        'chrome-extension',
         '',
       ],
     ],
