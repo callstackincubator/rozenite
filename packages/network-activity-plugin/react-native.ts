@@ -17,5 +17,6 @@ if (isDev && !isWeb && !isServer) {
     require('./src/react-native/boot-recording').withOnBootNetworkActivityRecording;
 } else {
   useNetworkActivityDevTools = () => null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   withOnBootNetworkActivityRecording = (options: any) => null;
 }

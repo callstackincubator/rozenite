@@ -3,14 +3,8 @@
   "files": [],
   "include": [],
   "references": [
-    {
-      "path": "../../packages/cli"
-    },
-    {
-      "path": "../../packages/metro"
-    },
-    {
-      "path": "./tsconfig.app.json"
-    }
+    { "path": "../../packages/cli" },
+    { "path": "../../packages/metro" },
+    { "path": "./tsconfig.app.json" }
   ]
 }

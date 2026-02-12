@@ -35,6 +35,11 @@
       "default": "./dist/index.cjs"
     }
   },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint ."
+  },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "ejs": "^3.1.9",
@@ -42,7 +47,7 @@
     "vite-plugin-react-native-web": "^2.1.1"
   },
   "peerDependencies": {
-    "vite": "^6.0.0"
+    "vite": "catalog:"
   },
   "devDependencies": {
     "@types/ejs": "^3.1.5"

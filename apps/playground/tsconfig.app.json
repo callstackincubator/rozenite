@@ -1,68 +1,48 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
     "outDir": "dist",
-    "types": ["node"],
     "rootDir": "src",
+    "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "jsx": "react-jsx",
     "module": "esnext",
     "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"],
+    "types": ["node"],
     "noUnusedLocals": false,
-    "lib": ["dom"],
-    "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
-    "noEmit": true
+    "resolveJsonModule": true,
+    "allowJs": true
   },
-  "files": ["../../node_modules/@nx/react-native/typings/svg.d.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.jsx",
+    "app/**/*.ts",
+    "app/**/*.tsx"
+  ],
   "exclude": [
     "out-tsc",
     "dist",
-    "src/**/*.test.ts",
-    "src/**/*.spec.ts",
-    "src/**/*.test.tsx",
-    "src/**/*.spec.tsx",
-    "src/**/*.test.js",
-    "src/**/*.spec.js",
-    "src/**/*.test.jsx",
-    "src/**/*.spec.jsx",
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.test.tsx",
+    "**/*.spec.tsx",
+    "**/*.test.js",
+    "**/*.spec.js",
+    "**/*.test.jsx",
+    "**/*.spec.jsx",
     "src/test-setup.ts"
   ],
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
   "references": [
-    {
-      "path": "../../packages/overlay-plugin"
-    },
-    {
-      "path": "../../packages/tanstack-query-plugin"
-    },
-    {
-      "path": "../../packages/react-navigation-plugin"
-    },
-    {
-      "path": "../../packages/performance-monitor-plugin"
-    },
-    {
-      "path": "../../packages/network-activity-plugin"
-    },
-    {
-      "path": "../../packages/mmkv-plugin"
-    },
-    {
-      "path": "../../packages/cli/tsconfig.lib.json"
-    },
-    {
-      "path": "../../packages/expo-atlas-plugin"
-    },
-    {
-      "path": "../../packages/require-profiler-plugin"
-    },
-    {
-      "path": "../../packages/redux-devtools-plugin"
-    },
-    {
-      "path": "../../packages/metro/tsconfig.lib.json"
-    },
-    {
-      "path": "../../packages/tools/tsconfig.lib.json"
-    }
+    { "path": "../../packages/cli/tsconfig.lib.json" },
+    { "path": "../../packages/metro/tsconfig.lib.json" },
+    { "path": "../../packages/tools/tsconfig.lib.json" }
   ]
 }

@@ -4,18 +4,7 @@ export default [
   ...baseConfig,
   {
     files: ['**/*.json'],
-    rules: {
-      '@nx/dependency-checks': [
-        'error',
-        {
-          ignoredDependencies: ['tslib'],
-          ignoredFiles: [
-            '{projectRoot}/eslint.config.{js,cjs,mjs,ts,cts,mts}',
-            '{projectRoot}/vite.config.ts',
-          ],
-        },
-      ],
-    },
+    rules: {},
     languageOptions: {
       parser: await import('jsonc-eslint-parser'),
     },

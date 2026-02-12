@@ -8,27 +8,29 @@
   "types": "./dist/react-native.d.ts",
   "scripts": {
     "build": "rozenite build",
-    "dev": "rozenite dev"
+    "dev": "rozenite dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
     "@rozenite/vite-plugin": "workspace:*",
-    "@types/react": "~18.3.12",
+    "@types/react": "catalog:",
     "autoprefixer": "^10.4.21",
     "lucide-react": "^0.263.1",
     "postcss": "^8.5.6",
-    "react": "18.3.1",
-    "react-dom": "18.3.0",
-    "react-native": "0.76.0",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-native": "catalog:",
     "react-native-svg": "~15.8.0",
-    "react-native-web": "0.21.0",
+    "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.7.3",
-    "vite": "^6.0.0"
+    "typescript": "~5.9.3",
+    "vite": "catalog:"
   },
   "peerDependencies": {
     "react": "*",

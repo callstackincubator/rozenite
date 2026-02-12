@@ -1,5 +1,5 @@
-const { withNxMetro } = require('@nx/react-native');
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+// Learn more https://docs.expo.io/guides/customizing-metro
+const { getDefaultConfig } = require('expo/metro-config');
 const { composeMetroConfigTransformers } = require('@rozenite/tools');
 const { withRozenite } = require('@rozenite/metro');
 const {
@@ -8,58 +8,28 @@ const {
 const {
   withRozeniteRequireProfiler,
 } = require('@rozenite/require-profiler-plugin/metro');
-const { withRozeniteExpoAtlasPlugin } = require('@rozenite/expo-atlas-plugin');
+const path = require('node:path');
 
-const defaultConfig = getDefaultConfig(__dirname);
-const { assetExts, sourceExts } = defaultConfig.resolver;
+const config = getDefaultConfig(__dirname);
 
-/**
- * Metro configuration
- * https://reactnative.dev/docs/metro
- *
- * @type {import('metro-config').MetroConfig}
- */
-const customConfig = {
-  cacheVersion: '@rozenite/playground',
-  transformer: {
-    babelTransformerPath: require.resolve('react-native-svg-transformer'),
-    getTransformOptions: async () => ({
-      transform: {
-        inlineRequires: false,
-      },
-    }),
+const projectRoot = __dirname;
+const workspaceRoot = path.resolve(projectRoot, '../..');
+
+config.watchFolders = [...config.watchFolders, workspaceRoot];
+config.resolver.nodeModulesPaths = [
+  ...config.resolver.nodeModulesPaths,
+  path.resolve(projectRoot, 'node_modules'),
+  path.resolve(workspaceRoot, 'node_modules'),
+];
+
+module.exports = composeMetroConfigTransformers([
+  withRozenite,
+  {
+    projectType: 'expo',
+    enabled: true,
+    enhanceMetroConfig: composeMetroConfigTransformers(
+      withRozeniteRequireProfiler,
+      withRozeniteReduxDevTools
+    ),
   },
-  resolver: {
-    assetExts: assetExts.filter((ext) => ext !== 'svg'),
-    sourceExts: [...sourceExts, 'cjs', 'mjs', 'svg'],
-    unstable_enablePackageExports: true,
-  },
-  serializer: {},
-  server: {},
-};
-
-module.exports = composeMetroConfigTransformers(
-  [
-    withNxMetro,
-    {
-      // Change this to true to see debugging info.
-      // Useful if you have issues resolving modules
-      debug: false,
-      // all the file extensions used for imports other than 'ts', 'tsx', 'js', 'jsx', 'json'
-      extensions: [],
-      // Specify folders to watch, in addition to Nx defaults (workspace libraries and node_modules)
-      // watchFolders: ["../../packages/expo-atlas-plugin"],
-    },
-  ],
-  [
-    withRozenite,
-    {
-      enabled: true,
-      enhanceMetroConfig: composeMetroConfigTransformers(
-        withRozeniteExpoAtlasPlugin,
-        withRozeniteRequireProfiler,
-        withRozeniteReduxDevTools,
-      ),
-    },
-  ],
-)(mergeConfig(defaultConfig, customConfig));
+])(config);

@@ -13,10 +13,15 @@
       "require": "./dist/index.cjs"
     }
   },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint ."
+  },
   "devDependencies": {
     "metro-config": "*",
     "typescript": "^5.7.3",
-    "vite": "^6.0.0"
+    "vite": "catalog:"
   },
   "license": "MIT"
 }

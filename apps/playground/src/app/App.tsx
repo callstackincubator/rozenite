@@ -43,6 +43,7 @@ const Wrapper = () => {
     },
   });
   useMMKVDevTools({
+    // @ts-expect-error - This is fine as in production MMKV plugin will pick up installed version automatically.
     storages: mmkvStorages,
     blacklist: /user-storage:sensitiveToken/,
   });
@@ -123,7 +124,7 @@ export const App = () => {
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   useReactNavigationDevTools({
-    ref: navigationRef,
+    ref: navigationRef as any,
   });
 
   return (

@@ -17,11 +17,11 @@ if (isDev && !isWeb && !isServer) {
   const noopEnhancer =
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (options?: any) =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (createStore: (...args: any[]) => any) =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (...args: any[]) =>
-      createStore(...args);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (createStore: (...args: any[]) => any) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (...args: any[]) =>
+          createStore(...args);
 
   // Noop composer: returns a compose function (which composes enhancers)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

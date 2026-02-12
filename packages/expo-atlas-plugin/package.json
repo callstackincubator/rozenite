@@ -8,7 +8,9 @@
   "types": "./dist/react-native.d.ts",
   "scripts": {
     "build": "rozenite build",
-    "dev": "rozenite dev"
+    "dev": "rozenite dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
@@ -16,17 +18,22 @@
     "expo-atlas": "^0.4.0"
   },
   "devDependencies": {
-    "vite": "^6.0.0",
     "@rozenite/vite-plugin": "workspace:*",
-    "typescript": "^5.7.3",
-    "rozenite": "workspace:*",
-    "react-native-web": "0.21.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.0",
-    "react-native": "0.76.0",
-    "@types/react": "~18.3.12",
+    "@types/react": "catalog:",
+    "autoprefixer": "^10.4.21",
     "metro-config": "^0.82.5",
-    "@types/connect": "^3.4.38"
+    "postcss": "^8.5.6",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-native": "catalog:",
+    "react-native-web": "^0.21.2",
+    "rozenite": "workspace:*",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "~5.9.3",
+    "vite": "catalog:",
+    "@types/connect": "^3.4.38",
+    "@rozenite/tools": "workspace:*"
   },
   "peerDependencies": {
     "react": "*",

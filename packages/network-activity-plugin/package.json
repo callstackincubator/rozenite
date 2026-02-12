@@ -8,7 +8,9 @@
   "types": "./dist/react-native.d.ts",
   "scripts": {
     "build": "rozenite build",
-    "dev": "rozenite dev"
+    "dev": "rozenite dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
@@ -16,32 +18,35 @@
   },
   "devDependencies": {
     "@floating-ui/react": "^0.26.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@radix-ui/react-scroll-area": "^1.2.9",
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.12",
-    "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.0.0",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.263.1",
     "postcss": "^8.5.6",
     "proxy-memoize": "^3.0.1",
-    "react": "*",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "react-json-tree": "^0.20.0",
+    "react-native": "catalog:",
     "react-native-sse": "^1.2.1",
+    "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.7.3",
-    "vite": "^6.0.0",
-    "zustand": "^5.0.6",
-    "@types/react": "~18.3.23",
-    "@types/react-dom": "~18.3.1"
+    "typescript": "~5.9.3",
+    "vite": "catalog:",
+    "zustand": "^5.0.6"
   },
   "peerDependencies": {
     "react-native-sse": "*"

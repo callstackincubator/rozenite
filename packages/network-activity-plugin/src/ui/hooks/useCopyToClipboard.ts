@@ -5,10 +5,14 @@ import { copyToClipboard } from '../utils/copyToClipboard';
 export function useCopyToClipboard() {
   const [isCopied, setIsCopied] = useState(false);
 
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
 
   useEffect(() => {
-    return () => clearTimeout(timeoutRef.current);
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    }
   }, []);
 
   const copy = useCallback(async (value: string) => {
@@ -17,7 +21,9 @@ export function useCopyToClipboard() {
 
       setIsCopied(true);
 
-      clearTimeout(timeoutRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       timeoutRef.current = setTimeout(() => setIsCopied(false), 1000);
     } catch (error) {
       console.error('Failed to copy:', error);

@@ -35,6 +35,11 @@
       "require": "./dist/index.cjs"
     }
   },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint ."
+  },
   "dependencies": {
     "@rozenite/runtime": "workspace:*",
     "@rozenite/tools": "workspace:*",

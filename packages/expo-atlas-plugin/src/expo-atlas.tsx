@@ -25,7 +25,7 @@ export default function ExpoAtlasPanel() {
             setHasError(true);
           }
         }
-      } catch (error) {
+      } catch {
         if (isMounted) {
           setIsLoading(false);
           setHasError(true);

@@ -20,7 +20,9 @@
   },
   "scripts": {
     "build": "rozenite build",
-    "dev": "rozenite dev"
+    "dev": "rozenite dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@redux-devtools/remote": "^0.9.5",
@@ -31,21 +33,26 @@
   "devDependencies": {
     "@redux-devtools/app": "^6.2.2",
     "@rozenite/vite-plugin": "workspace:*",
-    "@types/react": "~18.3.12",
+    "@types/react": "catalog:",
     "@types/styled-components": "^5.1.34",
+    "autoprefixer": "^10.4.21",
     "localforage": "^1.10.0",
     "metro-config": "*",
-    "react": "18.3.1",
-    "react-dom": "18.3.0",
-    "react-native": "0.76.0",
+    "postcss": "^8.5.6",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-native": "catalog:",
     "react-native-get-random-values": "^1.11.0",
-    "react-native-web": "0.21.0",
+    "react-native-web": "^0.21.2",
     "react-redux": "^9.2.0",
     "redux": "^5.0.1",
     "redux-persist": "^6.0.0",
     "rozenite": "workspace:*",
-    "typescript": "^5.7.3",
-    "vite": "^6.0.0"
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "~5.9.3",
+    "vite": "catalog:",
+    "styled-components": "^5.3.11"
   },
   "peerDependencies": {
     "react": "*",

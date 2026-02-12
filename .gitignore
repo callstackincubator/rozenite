@@ -42,6 +42,7 @@ Thumbs.db
 .nx/workspace-data
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+.turbo
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
