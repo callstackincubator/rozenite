@@ -32,7 +32,8 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "~5.9.3",
     "vite": "catalog:",
-    "@types/connect": "^3.4.38"
+    "@types/connect": "^3.4.38",
+    "@rozenite/tools": "workspace:*"
   },
   "peerDependencies": {
     "react": "*",

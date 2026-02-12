@@ -338,6 +338,9 @@ importers:
         specifier: ^0.4.0
         version: 0.4.0(expo@55.0.0-preview.10)
     devDependencies:
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
