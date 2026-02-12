@@ -45,7 +45,7 @@
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "~5.9.3",
-    "vite": "^7.3.1",
+    "vite": "catalog:",
     "zustand": "^5.0.6"
   },
   "peerDependencies": {
