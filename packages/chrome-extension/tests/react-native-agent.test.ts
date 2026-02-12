@@ -1,6 +1,7 @@
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { createReactNativeAgent } from '../src/react-native-agent.js';
+import { setNavigatorMock } from './navigator-mock.js';
 
 const noopLogger = { info: () => { }, warn: () => { }, error: () => { } };
 
@@ -11,9 +12,15 @@ const createMockPageManager = (pages: { id: string; reactNativeMetadata?: Record
 };
 
 describe('ReactNativeAgent', () => {
+	let restoreNavigator: () => void;
+
 	beforeEach(() => {
 		(globalThis as { logger?: unknown }).logger = noopLogger;
-		globalThis.navigator = { userAgent: 'Chrome/120' } as Navigator;
+		restoreNavigator = setNavigatorMock({ userAgent: 'Chrome/120' });
+	});
+
+	afterEach(() => {
+		restoreNavigator();
 	});
 
 	it('shouldHandle returns true for ReactNativeApplication methods', () => {
