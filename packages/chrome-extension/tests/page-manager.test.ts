@@ -5,25 +5,25 @@ import { createPageManager } from '../src/page-manager.js';
 const noopLogger = { info: () => { }, warn: () => { }, error: () => { } };
 
 const createChromeStub = () => {
-	let scriptingResult = { appDisplayName: 'Test', reactNativeVersion: '0.0.0' };
-	let debuggerTargets = [];
-	let tabData = {};
+	let scriptingResult: unknown = { appDisplayName: 'Test', reactNativeVersion: '0.0.0' };
+	let debuggerTargets: { id: string; tabId: number }[] = [];
+	const tabData: Record<number, unknown> = {};
 
 	return {
 		configure: {
-			setScriptingResult(result) {
+			setScriptingResult(result: unknown) {
 				scriptingResult = result;
 			},
-			setDebuggerTargets(targets) {
+			setDebuggerTargets(targets: { id: string; tabId: number }[]) {
 				debuggerTargets = targets;
 			},
-			setTabData(tabId, data) {
+			setTabData(tabId: number, data: unknown) {
 				tabData[tabId] = data;
 			},
 		},
 		tabs: {
-			async get(tabId) {
-				return tabData[tabId] ?? { title: 'Untitled' };
+			async get(tabId: number) {
+				return (tabData[tabId] as { title: string }) ?? { title: 'Untitled' };
 			},
 		},
 		scripting: {
@@ -40,12 +40,12 @@ const createChromeStub = () => {
 };
 
 describe('PageManager', () => {
-	let chromeStub;
+	let chromeStub: ReturnType<typeof createChromeStub>;
 
 	beforeEach(() => {
-		globalThis.logger = noopLogger;
+		(globalThis as { logger?: unknown }).logger = noopLogger;
 		chromeStub = createChromeStub();
-		globalThis.chrome = chromeStub;
+		(globalThis as { chrome?: unknown }).chrome = chromeStub;
 	});
 
 	describe('isInspectableUrl', () => {
@@ -55,7 +55,7 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'Test' });
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
@@ -69,7 +69,7 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'Test' });
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'https://localhost:8081/', frameId: 0 });
@@ -83,7 +83,7 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'Test' });
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://127.0.0.1:3000/', frameId: 0 });
@@ -97,7 +97,7 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'Test' });
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'https://127.0.0.1:3000/', frameId: 0 });
@@ -108,7 +108,7 @@ describe('PageManager', () => {
 		it('rejects chrome:// URLs', async () => {
 			const pm = createPageManager('');
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'chrome://extensions/', frameId: 0 });
@@ -119,7 +119,7 @@ describe('PageManager', () => {
 		it('rejects https://example.com URLs', async () => {
 			const pm = createPageManager('');
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'https://example.com/', frameId: 0 });
@@ -130,10 +130,10 @@ describe('PageManager', () => {
 		it('rejects null URL', async () => {
 			const pm = createPageManager('');
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
-			await pm.onNavigationCompleted({ tabId: 1, url: null, frameId: 0 });
+			await pm.onNavigationCompleted({ tabId: 1, url: null as unknown as string, frameId: 0 });
 
 			assert.strictEqual(addedEvents.length, 0);
 		});
@@ -141,10 +141,10 @@ describe('PageManager', () => {
 		it('rejects undefined URL', async () => {
 			const pm = createPageManager('');
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
-			await pm.onNavigationCompleted({ tabId: 1, url: undefined, frameId: 0 });
+			await pm.onNavigationCompleted({ tabId: 1, url: undefined as unknown as string, frameId: 0 });
 
 			assert.strictEqual(addedEvents.length, 0);
 		});
@@ -152,7 +152,7 @@ describe('PageManager', () => {
 		it('rejects empty string URL', async () => {
 			const pm = createPageManager('');
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: '', frameId: 0 });
@@ -167,7 +167,7 @@ describe('PageManager', () => {
 			chromeStub.configure.setScriptingResult({ appDisplayName: 'Test', reactNativeVersion: '0.0.0' });
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 1 });
@@ -181,8 +181,8 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'Test' });
 
-			const addedEvents = [];
-			const removedEvents = [];
+			const addedEvents: unknown[] = [];
+			const removedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 			pm.on('removed', (page) => removedEvents.push(page));
 
@@ -199,15 +199,14 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'Test' });
 
-			const addedEvents = [];
-			const removedEvents = [];
+			const addedEvents: unknown[] = [];
+			const removedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 			pm.on('removed', (page) => removedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
 			assert.strictEqual(addedEvents.length, 1);
 
-			// Now Rozenite is gone
 			chromeStub.configure.setScriptingResult(null);
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
 			assert.strictEqual(removedEvents.length, 1);
@@ -219,8 +218,8 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-123', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'My Page' });
 
-			const addedEvents = [];
-			pm.on('added', (page) => addedEvents.push(page));
+			const addedEvents: { id: string; tabId: number; title: string; origin: string; app: string; reactNativeMetadata: unknown; capabilities: unknown }[] = [];
+			pm.on('added', (page) => addedEvents.push(page as typeof addedEvents[0]));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/test', frameId: 0 });
 
@@ -246,24 +245,22 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'Title 1' });
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
 			assert.strictEqual(addedEvents.length, 1);
 
-			// Update with new metadata
 			chromeStub.configure.setScriptingResult({ appDisplayName: 'App2', reactNativeVersion: '0.74.0' });
 			chromeStub.configure.setTabData(1, { title: 'Title 2' });
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/other', frameId: 0 });
 
-			// Should not emit another 'added' for same origin
 			assert.strictEqual(addedEvents.length, 1);
 
 			const pages = pm.getAll();
 			assert.strictEqual(pages.length, 1);
 			assert.strictEqual(pages[0].title, 'React Native Web (Unknown Browser)');
-			assert.strictEqual(pages[0].reactNativeMetadata.appDisplayName, 'App2');
+			assert.strictEqual(pages[0].reactNativeMetadata?.appDisplayName, 'App2');
 		});
 
 		it('emits removed and added when origin changes', async () => {
@@ -272,16 +269,15 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'Test' });
 
-			const addedEvents = [];
-			const removedEvents = [];
-			pm.on('added', (page) => addedEvents.push(page));
-			pm.on('removed', (page) => removedEvents.push(page));
+			const addedEvents: { origin: string }[] = [];
+			const removedEvents: { origin: string }[] = [];
+			pm.on('added', (page) => addedEvents.push(page as { origin: string }));
+			pm.on('removed', (page) => removedEvents.push(page as { origin: string }));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
 			assert.strictEqual(addedEvents.length, 1);
 			assert.strictEqual(addedEvents[0].origin, 'localhost:8081');
 
-			// Navigate to different origin
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:3000/', frameId: 0 });
 
 			assert.strictEqual(removedEvents.length, 1);
@@ -298,10 +294,9 @@ describe('PageManager', () => {
 				throw new Error('Failed to get targets');
 			};
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
-			// Should not throw
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
 
 			assert.strictEqual(addedEvents.length, 0);
@@ -310,10 +305,10 @@ describe('PageManager', () => {
 		it('does not add page when target not found', async () => {
 			const pm = createPageManager('');
 			chromeStub.configure.setScriptingResult({ appDisplayName: 'Test', reactNativeVersion: '0.0.0' });
-			chromeStub.configure.setDebuggerTargets([]); // No targets
+			chromeStub.configure.setDebuggerTargets([]);
 			chromeStub.configure.setTabData(1, { title: 'Test' });
 
-			const addedEvents = [];
+			const addedEvents: unknown[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
@@ -329,10 +324,10 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'Test' });
 
-			const addedEvents = [];
-			const removedEvents = [];
+			const addedEvents: unknown[] = [];
+			const removedEvents: { tabId: number }[] = [];
 			pm.on('added', (page) => addedEvents.push(page));
-			pm.on('removed', (page) => removedEvents.push(page));
+			pm.on('removed', (page) => removedEvents.push(page as { tabId: number }));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
 			assert.strictEqual(addedEvents.length, 1);
@@ -347,10 +342,10 @@ describe('PageManager', () => {
 		it('does nothing when removing non-existent tab', () => {
 			const pm = createPageManager('');
 
-			const removedEvents = [];
+			const removedEvents: unknown[] = [];
 			pm.on('removed', (page) => removedEvents.push(page));
 
-			pm.onTabRemoved(999); // Non-existent tab
+			pm.onTabRemoved(999);
 
 			assert.strictEqual(removedEvents.length, 0);
 		});
@@ -430,8 +425,8 @@ describe('PageManager', () => {
 			chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 			chromeStub.configure.setTabData(1, { title: 'Test' });
 
-			const removedEvents = [];
-			pm.on('removed', (page) => removedEvents.push(page));
+			const removedEvents: { id: string }[] = [];
+			pm.on('removed', (page) => removedEvents.push(page as { id: string }));
 
 			await pm.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
 
@@ -445,7 +440,7 @@ describe('PageManager', () => {
 		it('does nothing when removing non-existent page ID', () => {
 			const pm = createPageManager('');
 
-			const removedEvents = [];
+			const removedEvents: unknown[] = [];
 			pm.on('removed', (page) => removedEvents.push(page));
 
 			pm.remove('nonexistent');

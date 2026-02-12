@@ -1,13 +1,9 @@
-/**
- * Get the current browser name and version from the user agent.
- * @returns {string} Human-readable browser identifier (e.g. "Chrome 120", "Firefox 121", "Safari 17")
- */
-export const getDeviceName = () => {
+export function getDeviceName(): string {
 	if (typeof navigator === 'undefined' || !navigator.userAgent) {
 		return 'Unknown Browser';
 	}
 	const ua = navigator.userAgent;
-	let match;
+	let match: RegExpMatchArray | null;
 	// Order matters: check for more specific browsers first
 	if (ua.includes('Edg/')) {
 		match = ua.match(/Edg\/(\d+)/);
@@ -34,4 +30,4 @@ export const getDeviceName = () => {
 	if (ua.includes('Firefox')) return 'Firefox';
 	if (ua.includes('Safari')) return 'Safari';
 	return 'Unknown Browser';
-};
+}

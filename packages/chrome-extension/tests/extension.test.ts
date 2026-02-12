@@ -6,14 +6,13 @@ import { createCDPClient } from '../src/cdp-client.js';
 import { createPageManager } from '../src/page-manager.js';
 import { createReactNativeAgent } from '../src/react-native-agent.js';
 import { getDeviceName } from '../src/device-utils.js';
-import { logger } from '../src/logger.js';
 import { FakeWebSocket, createChromeStub } from './stubs.js';
 
 const noopLogger = { info: () => { }, warn: () => { }, error: () => { } };
 
-const createExtensionWithStubs = (chromeStub) => {
-	globalThis.WebSocket = FakeWebSocket;
-	globalThis.chrome = chromeStub;
+const createExtensionWithStubs = (chromeStub: ReturnType<typeof createChromeStub>) => {
+	globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+	(globalThis as { chrome?: unknown }).chrome = chromeStub;
 
 	return createExtension({
 		createConnection,
@@ -26,24 +25,37 @@ const createExtensionWithStubs = (chromeStub) => {
 	});
 };
 
-const simulatePageAdded = async (ext, tabId, url, targetId = `target-${tabId}`) => {
-	globalThis.chrome.configure.setDebuggerTargets([{ id: targetId, tabId }]);
-	globalThis.chrome.configure.setTabData(tabId, { title: 'Test' });
+const simulatePageAdded = async (
+	ext: ReturnType<typeof createExtensionWithStubs>,
+	tabId: number,
+	url: string,
+	targetId = `target-${tabId}`
+) => {
+	; (globalThis as { chrome?: ReturnType<typeof createChromeStub> }).chrome!.configure.setDebuggerTargets([
+		{ id: targetId, tabId },
+	]);
+	; (globalThis as { chrome?: ReturnType<typeof createChromeStub> }).chrome!.configure.setTabData(tabId, {
+		title: 'Test',
+	});
 	await ext.pageManager.onNavigationCompleted({ tabId, url, frameId: 0 });
 };
 
-const wireChromeListeners = (ext) => {
-	globalThis.chrome.webNavigation.onCompleted.addListener((...args) => ext.pageManager.onNavigationCompleted(...args));
-	globalThis.chrome.tabs.onRemoved.addListener((tabId) => ext.pageManager.onTabRemoved(tabId));
+const wireChromeListeners = (ext: ReturnType<typeof createExtensionWithStubs>) => {
+	; (globalThis as { chrome?: ReturnType<typeof createChromeStub> }).chrome!.webNavigation.onCompleted.addListener(
+		(...args: unknown[]) => ext.pageManager.onNavigationCompleted(args[0] as Parameters<typeof ext.pageManager.onNavigationCompleted>[0])
+	);
+	; (globalThis as { chrome?: ReturnType<typeof createChromeStub> }).chrome!.tabs.onRemoved.addListener(
+		(tabId: number) => ext.pageManager.onTabRemoved(tabId)
+	);
 };
 
-const simulateTabRemoved = (tabId) => {
-	const listeners = globalThis.chrome.getListeners();
+const simulateTabRemoved = (tabId: number) => {
+	const listeners = (globalThis as { chrome?: ReturnType<typeof createChromeStub> }).chrome!.getListeners();
 	listeners.tabsOnRemoved?.(tabId);
 };
 
 describe('Extension integration', () => {
-	let chromeStub;
+	let chromeStub: ReturnType<typeof createChromeStub>;
 
 	beforeEach(() => {
 		FakeWebSocket.reset();
@@ -52,8 +64,8 @@ describe('Extension integration', () => {
 	});
 
 	afterEach(() => {
-		delete globalThis.WebSocket;
-		delete globalThis.chrome;
+		delete (globalThis as { WebSocket?: unknown }).WebSocket;
+		delete (globalThis as { chrome?: unknown }).chrome;
 	});
 
 	it('no socket before page added', () => {
@@ -79,16 +91,12 @@ describe('Extension integration', () => {
 			{ id: 'target-2', tabId: 2 },
 		]);
 
-		globalThis.chrome.configure.setTabData(1, { title: 'Test' });
-		globalThis.chrome.configure.setTabData(2, { title: 'Test 2' });
+		chromeStub.configure.setTabData(1, { title: 'Test' });
+		chromeStub.configure.setTabData(2, { title: 'Test 2' });
 		await ext.pageManager.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
 		await ext.pageManager.onNavigationCompleted({ tabId: 2, url: 'http://localhost:8081/other', frameId: 0 });
 
-		assert.strictEqual(
-			FakeWebSocket.instances.length,
-			1,
-			'Same origin should reuse single WebSocket'
-		);
+		assert.strictEqual(FakeWebSocket.instances.length, 1, 'Same origin should reuse single WebSocket');
 	});
 
 	it('different origin gets its own socket', async () => {
@@ -119,8 +127,8 @@ describe('Extension integration', () => {
 
 		simulateTabRemoved(1);
 
-		assert.ok(ws8081._closed, 'WebSocket for 8081 should be closed');
-		assert.ok(!ws3000._closed, 'WebSocket for 3000 should remain open');
+		assert.ok(ws8081!._closed, 'WebSocket for 8081 should be closed');
+		assert.ok(!ws3000!._closed, 'WebSocket for 3000 should remain open');
 	});
 
 	it('socket survives partial removal', async () => {
@@ -131,8 +139,8 @@ describe('Extension integration', () => {
 			{ id: 'target-2', tabId: 2 },
 		]);
 
-		globalThis.chrome.configure.setTabData(1, { title: 'Test' });
-		globalThis.chrome.configure.setTabData(2, { title: 'Test 2' });
+		chromeStub.configure.setTabData(1, { title: 'Test' });
+		chromeStub.configure.setTabData(2, { title: 'Test 2' });
 		await ext.pageManager.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
 		await ext.pageManager.onNavigationCompleted({ tabId: 2, url: 'http://localhost:8081/other', frameId: 0 });
 

@@ -6,7 +6,7 @@ describe('EventEmitter', () => {
 	it('calls listener when event is emitted', () => {
 		const emitter = createEventEmitter();
 		let called = false;
-		let receivedArg;
+		let receivedArg: unknown;
 
 		emitter.on('test', (arg) => {
 			called = true;
@@ -21,7 +21,7 @@ describe('EventEmitter', () => {
 
 	it('calls multiple listeners for the same event', () => {
 		const emitter = createEventEmitter();
-		const calls = [];
+		const calls: string[] = [];
 
 		emitter.on('test', () => calls.push('first'));
 		emitter.on('test', () => calls.push('second'));
@@ -34,7 +34,7 @@ describe('EventEmitter', () => {
 
 	it('passes multiple arguments to listeners', () => {
 		const emitter = createEventEmitter();
-		let args;
+		let args: unknown[];
 
 		emitter.on('test', (...received) => {
 			args = received;
@@ -42,12 +42,11 @@ describe('EventEmitter', () => {
 
 		emitter.emit('test', 1, 'two', { three: 3 });
 
-		assert.deepStrictEqual(args, [1, 'two', { three: 3 }]);
+		assert.deepStrictEqual(args!, [1, 'two', { three: 3 }]);
 	});
 
 	it('does nothing when emitting event with no listeners', () => {
 		const emitter = createEventEmitter();
-		// Should not throw
 		emitter.emit('nonexistent');
 		assert.ok(true);
 	});
@@ -71,7 +70,6 @@ describe('EventEmitter', () => {
 
 	it('off does nothing for non-existent event', () => {
 		const emitter = createEventEmitter();
-		// Should not throw
 		emitter.off('nonexistent', () => { });
 		assert.ok(true);
 	});
@@ -79,14 +77,13 @@ describe('EventEmitter', () => {
 	it('off does nothing for non-existent listener', () => {
 		const emitter = createEventEmitter();
 		emitter.on('test', () => { });
-		// Should not throw
 		emitter.off('test', () => { });
 		assert.ok(true);
 	});
 
 	it('removes only the specified listener', () => {
 		const emitter = createEventEmitter();
-		const calls = [];
+		const calls: string[] = [];
 
 		const listener1 = () => calls.push('1');
 		const listener2 = () => calls.push('2');
@@ -102,7 +99,7 @@ describe('EventEmitter', () => {
 
 	it('supports multiple events independently', () => {
 		const emitter = createEventEmitter();
-		const events = [];
+		const events: string[] = [];
 
 		emitter.on('event1', () => events.push('e1'));
 		emitter.on('event2', () => events.push('e2'));

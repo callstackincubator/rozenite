@@ -6,20 +6,19 @@ import { createChromeStub } from './stubs.js';
 const noopLogger = { info: () => { }, warn: () => { }, error: () => { } };
 
 describe('BrowserId', () => {
-	let chromeStub;
-	let randomUUIDMock;
+	let chromeStub: ReturnType<typeof createChromeStub>;
+	let randomUUIDMock: ReturnType<typeof mock.fn>;
 
 	beforeEach(() => {
 		chromeStub = createChromeStub();
-		globalThis.chrome = chromeStub;
+		globalThis.chrome = chromeStub as unknown as typeof chrome;
 		globalThis.logger = noopLogger;
-		// Mock the global crypto.randomUUID (Web Crypto API, used in browser/service worker)
 		randomUUIDMock = mock.method(globalThis.crypto, 'randomUUID');
 	});
 
 	afterEach(() => {
-		delete globalThis.chrome;
-		delete globalThis.logger;
+		delete (globalThis as { chrome?: unknown }).chrome;
+		delete (globalThis as { logger?: unknown }).logger;
 		randomUUIDMock.mock.restore();
 	});
 
@@ -38,7 +37,6 @@ describe('BrowserId', () => {
 		const browserId = createBrowserId();
 		await browserId.getId();
 
-		// Verify it was persisted
 		const stored = await chrome.storage.local.get('browserId');
 		assert.strictEqual(stored.browserId, 'stored-uuid-5678');
 	});

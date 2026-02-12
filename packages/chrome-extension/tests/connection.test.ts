@@ -8,13 +8,13 @@ const noopLogger = { info: () => { }, warn: () => { }, error: () => { } };
 describe('Connection', () => {
 	beforeEach(() => {
 		FakeWebSocket.reset();
-		globalThis.WebSocket = FakeWebSocket;
-		globalThis.logger = noopLogger;
+		globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+		(globalThis as { logger?: unknown }).logger = noopLogger;
 	});
 
 	afterEach(() => {
-		delete globalThis.WebSocket;
-		delete globalThis.logger;
+		delete (globalThis as { WebSocket?: unknown }).WebSocket;
+		delete (globalThis as { logger?: unknown }).logger;
 	});
 
 	it('constructs WebSocket URL correctly', () => {
@@ -23,7 +23,7 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test Device',
 			app: 'TestApp',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
 		connection.connect();
@@ -32,7 +32,6 @@ describe('Connection', () => {
 		const ws = FakeWebSocket.instances[0];
 		assert.ok(ws.url.includes('ws://localhost:8081/inspector/device'));
 		assert.ok(ws.url.includes('device=chrome'), 'URL should contain device parameter');
-		// Note: encodeURIComponent in actual URL construction depends on browser implementation
 		assert.ok(ws.url.includes('name=') && ws.url.includes('Test'));
 		assert.ok(ws.url.includes('app=TestApp'));
 		assert.ok(ws.url.includes('profiling=false'));
@@ -44,7 +43,7 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
 		let opened = false;
@@ -65,7 +64,7 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
 		let closed = false;
@@ -86,10 +85,10 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
-		let error;
+		let error: unknown;
 		connection.on('error', (err) => {
 			error = err;
 		});
@@ -108,10 +107,10 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
-		let receivedPayload;
+		let receivedPayload: unknown;
 		connection.on('getPages', (payload) => {
 			receivedPayload = payload;
 		});
@@ -129,12 +128,16 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
-		const events = [];
-		connection.on('connect', (payload) => events.push({ type: 'connect', payload }));
-		connection.on('disconnect', (payload) => events.push({ type: 'disconnect', payload }));
+		const events: { type: string; payload: { pageId: string } }[] = [];
+		connection.on('connect', (payload) =>
+			events.push({ type: 'connect', payload: payload as { pageId: string } })
+		);
+		connection.on('disconnect', (payload) =>
+			events.push({ type: 'disconnect', payload: payload as { pageId: string } })
+		);
 
 		connection.connect();
 		const ws = FakeWebSocket.instances[0];
@@ -154,7 +157,7 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
 		let called = false;
@@ -175,13 +178,12 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
 		connection.connect();
 		const ws = FakeWebSocket.instances[0];
 
-		// Should not throw
 		ws.simulateMessage('not valid json{{{');
 		assert.ok(true);
 	});
@@ -192,7 +194,7 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
 		connection.connect();
@@ -213,7 +215,7 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
 		connection.connect();
@@ -231,7 +233,7 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
 		connection.connect();
@@ -248,7 +250,7 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
 		connection.connect();
@@ -264,7 +266,7 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
 		connection.connect();
@@ -280,10 +282,9 @@ describe('Connection', () => {
 			deviceId: 'chrome',
 			deviceName: 'Test',
 			app: '',
-			profiling: 'false'
+			profiling: 'false',
 		});
 
-		// Don't call connect()
 		assert.strictEqual(connection.isConnected(), false);
 	});
 });

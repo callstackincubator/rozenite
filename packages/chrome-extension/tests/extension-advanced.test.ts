@@ -10,9 +10,9 @@ import { FakeWebSocket, createChromeStub } from './stubs.js';
 
 const noopLogger = { info: () => { }, warn: () => { }, error: () => { } };
 
-const createExtensionWithStubs = (chromeStub) => {
-	globalThis.WebSocket = FakeWebSocket;
-	globalThis.chrome = chromeStub;
+const createExtensionWithStubs = (chromeStub: ReturnType<typeof createChromeStub>) => {
+	globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+	(globalThis as { chrome?: unknown }).chrome = chromeStub;
 
 	return createExtension({
 		createConnection,
@@ -25,14 +25,38 @@ const createExtensionWithStubs = (chromeStub) => {
 	});
 };
 
-const simulatePageAdded = async (ext, tabId, url, targetId = `target-${tabId}`) => {
-	globalThis.chrome.configure.setDebuggerTargets([{ id: targetId, tabId }]);
-	globalThis.chrome.configure.setTabData(tabId, { title: 'Test' });
+const simulatePageAdded = async (
+	ext: ReturnType<typeof createExtensionWithStubs>,
+	tabId: number,
+	url: string,
+	targetId = `target-${tabId}`
+) => {
+	; (globalThis as { chrome?: ReturnType<typeof createChromeStub> }).chrome!.configure.setDebuggerTargets([
+		{ id: targetId, tabId },
+	]);
+	; (globalThis as { chrome?: ReturnType<typeof createChromeStub> }).chrome!.configure.setTabData(tabId, {
+		title: 'Test',
+	});
+	await ext.pageManager.onNavigationCompleted({ tabId, url, frameId: 0 });
+};
+
+const simulatePageRefresh = async (
+	ext: ReturnType<typeof createExtensionWithStubs>,
+	tabId: number,
+	url: string,
+	targetId = `target-${tabId}`
+) => {
+	; (globalThis as { chrome?: ReturnType<typeof createChromeStub> }).chrome!.configure.setDebuggerTargets([
+		{ id: targetId, tabId },
+	]);
+	; (globalThis as { chrome?: ReturnType<typeof createChromeStub> }).chrome!.configure.setTabData(tabId, {
+		title: 'Test',
+	});
 	await ext.pageManager.onNavigationCompleted({ tabId, url, frameId: 0 });
 };
 
 describe('Extension message-driven flows', () => {
-	let chromeStub;
+	let chromeStub: ReturnType<typeof createChromeStub>;
 
 	beforeEach(() => {
 		FakeWebSocket.reset();
@@ -41,8 +65,8 @@ describe('Extension message-driven flows', () => {
 	});
 
 	afterEach(() => {
-		delete globalThis.WebSocket;
-		delete globalThis.chrome;
+		delete (globalThis as { WebSocket?: unknown }).WebSocket;
+		delete (globalThis as { chrome?: unknown }).chrome;
 	});
 
 	it('handles getPages message from server', async () => {
@@ -52,7 +76,6 @@ describe('Extension message-driven flows', () => {
 		const ws = FakeWebSocket.instances[0];
 		ws.simulateMessage({ event: 'getPages', payload: {} });
 
-		// Should send pages list
 		assert.ok(ws._sent.length > 0);
 		const lastMessage = JSON.parse(ws._sent[ws._sent.length - 1]);
 		assert.strictEqual(lastMessage.event, 'getPages');
@@ -63,8 +86,8 @@ describe('Extension message-driven flows', () => {
 		const ext = createExtensionWithStubs(chromeStub);
 		await simulatePageAdded(ext, 1, 'http://localhost:8081/', 'page-123');
 
-		const attachCalls = [];
-		chromeStub.debugger.attach = (target, version) => {
+		const attachCalls: { target: unknown; version?: string }[] = [];
+		chromeStub.debugger.attach = (target: unknown, version?: string) => {
 			attachCalls.push({ target, version });
 		};
 
@@ -79,8 +102,8 @@ describe('Extension message-driven flows', () => {
 		const ext = createExtensionWithStubs(chromeStub);
 		await simulatePageAdded(ext, 1, 'http://localhost:8081/', 'page-123');
 
-		const detachCalls = [];
-		chromeStub.debugger.detach = (target) => {
+		const detachCalls: { target: unknown }[] = [];
+		chromeStub.debugger.detach = (target: unknown) => {
 			detachCalls.push({ target });
 		};
 
@@ -95,18 +118,28 @@ describe('Extension message-driven flows', () => {
 		const ext = createExtensionWithStubs(chromeStub);
 		await simulatePageAdded(ext, 1, 'http://localhost:8081/', 'page-123');
 
-		const sendCommandCalls = [];
-		chromeStub.debugger.sendCommand = async (target, method, params) => {
+		const sendCommandCalls: { target: unknown; method: string; params?: unknown }[] = [];
+		chromeStub.debugger.sendCommand = async (
+			target: unknown,
+			method: string,
+			params?: unknown
+		) => {
 			sendCommandCalls.push({ target, method, params });
 			return { value: 42 };
 		};
 
 		const ws = FakeWebSocket.instances[0];
-		const command = JSON.stringify({ id: 1, method: 'Runtime.evaluate', params: { expression: '1+1' } });
-		ws.simulateMessage({ event: 'wrappedEvent', payload: { pageId: 'page-123', wrappedEvent: command } });
+		const command = JSON.stringify({
+			id: 1,
+			method: 'Runtime.evaluate',
+			params: { expression: '1+1' },
+		});
+		ws.simulateMessage({
+			event: 'wrappedEvent',
+			payload: { pageId: 'page-123', wrappedEvent: command },
+		});
 
-		// Wait a tick for async handling
-		await new Promise(resolve => setTimeout(resolve, 0));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 
 		assert.strictEqual(sendCommandCalls.length, 1);
 		assert.strictEqual(sendCommandCalls[0].method, 'Runtime.evaluate');
@@ -122,20 +155,20 @@ describe('Extension message-driven flows', () => {
 		const command = JSON.stringify({ id: 1, method: 'ReactNativeApplication.enable' });
 		ws.simulateMessage({ event: 'wrappedEvent', payload: { pageId: 'page-123', wrappedEvent: command } });
 
-		// Wait for async handling
-		await new Promise(resolve => setTimeout(resolve, 0));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 
-		// Should send response without hitting Chrome debugger
 		assert.ok(ws._sent.length > initialSentCount, 'Response should be sent');
 
-		const responses = ws._sent.slice(initialSentCount).map(msg => JSON.parse(msg));
-		const wrappedResponses = responses.filter(r => r.event === 'wrappedEvent');
+		const responses = ws._sent.slice(initialSentCount).map((msg) => JSON.parse(msg));
+		const wrappedResponses = responses.filter(
+			(r: { event: string }) => r.event === 'wrappedEvent'
+		);
 		assert.ok(wrappedResponses.length > 0, 'Should have wrapped event responses');
 	});
 });
 
 describe('Extension edge cases', () => {
-	let chromeStub;
+	let chromeStub: ReturnType<typeof createChromeStub>;
 
 	beforeEach(() => {
 		FakeWebSocket.reset();
@@ -144,8 +177,8 @@ describe('Extension edge cases', () => {
 	});
 
 	afterEach(() => {
-		delete globalThis.WebSocket;
-		delete globalThis.chrome;
+		delete (globalThis as { WebSocket?: unknown }).WebSocket;
+		delete (globalThis as { chrome?: unknown }).chrome;
 	});
 
 	it('recreates socket after all pages removed and new page added', async () => {
@@ -155,11 +188,9 @@ describe('Extension edge cases', () => {
 		assert.strictEqual(FakeWebSocket.instances.length, 1);
 		const firstWs = FakeWebSocket.instances[0];
 
-		// Remove the page
 		ext.pageManager.onTabRemoved(1);
 		assert.strictEqual(firstWs._closed, true);
 
-		// Add a new page
 		await simulatePageAdded(ext, 2, 'http://localhost:8081/');
 
 		assert.strictEqual(FakeWebSocket.instances.length, 2, 'New WebSocket should be created');
@@ -173,27 +204,27 @@ describe('Extension edge cases', () => {
 		chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 
 		chromeStub.configure.setTabData(1, { title: 'Test' });
-		await ext.pageManager.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
+		await ext.pageManager.onNavigationCompleted({
+			tabId: 1,
+			url: 'http://localhost:8081/',
+			frameId: 0,
+		});
 		assert.strictEqual(FakeWebSocket.instances.length, 1);
 
-		// Navigate to different origin - this changes the page's origin in-place
-		await ext.pageManager.onNavigationCompleted({ tabId: 1, url: 'http://localhost:3000/', frameId: 0 });
+		await ext.pageManager.onNavigationCompleted({
+			tabId: 1,
+			url: 'http://localhost:3000/',
+			frameId: 0,
+		});
 
-		// Should have 2 WebSockets created (one for each origin)
 		assert.strictEqual(FakeWebSocket.instances.length, 2);
 
-		const ws8081 = FakeWebSocket.instances.find(ws => ws.url.includes('8081'));
-		const ws3000 = FakeWebSocket.instances.find(ws => ws.url.includes('3000'));
+		const ws8081 = FakeWebSocket.instances.find((ws) => ws.url.includes('8081'));
+		const ws3000 = FakeWebSocket.instances.find((ws) => ws.url.includes('3000'));
 
 		assert.ok(ws8081, 'Socket for 8081 should exist');
 		assert.ok(ws3000, 'Socket for 3000 should exist');
-
-		// Note: Due to event timing, the old socket doesn't close immediately when a page changes origin
-		// The removed event is emitted while the page still exists in the array (before replacement),
-		// so hasPagesForOrigin returns true and the socket stays open. This is a minor leak that would
-		// be cleaned up if the page is actually closed later.
-		// For now, just verify the new socket is open
-		assert.strictEqual(ws3000._closed, false, 'New socket should be open');
+		assert.strictEqual(ws3000!._closed, false, 'New socket should be open');
 	});
 
 	it('handles tab navigating to non-inspectable URL', async () => {
@@ -201,11 +232,18 @@ describe('Extension edge cases', () => {
 		chromeStub.configure.setDebuggerTargets([{ id: 'target-1', tabId: 1 }]);
 
 		chromeStub.configure.setTabData(1, { title: 'Test' });
-		await ext.pageManager.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/', frameId: 0 });
+		await ext.pageManager.onNavigationCompleted({
+			tabId: 1,
+			url: 'http://localhost:8081/',
+			frameId: 0,
+		});
 		const ws = FakeWebSocket.instances[0];
 
-		// Navigate to non-inspectable URL
-		await ext.pageManager.onNavigationCompleted({ tabId: 1, url: 'https://example.com/', frameId: 0 });
+		await ext.pageManager.onNavigationCompleted({
+			tabId: 1,
+			url: 'https://example.com/',
+			frameId: 0,
+		});
 
 		assert.strictEqual(ws._closed, true);
 		assert.strictEqual(ext.groups.size, 0, 'Connection group should be removed');
@@ -213,8 +251,6 @@ describe('Extension edge cases', () => {
 
 	it('removeGroup does nothing for non-existent origin', () => {
 		const ext = createExtensionWithStubs(chromeStub);
-
-		// Should not throw
 		ext.removeGroup('nonexistent:9999');
 		assert.ok(true);
 	});
@@ -242,17 +278,32 @@ describe('Extension edge cases', () => {
 		chromeStub.configure.setTabData(2, { title: 'B' });
 		chromeStub.configure.setTabData(3, { title: 'C' });
 
-		// Add multiple tabs without awaiting
 		const promises = [
-			ext.pageManager.onNavigationCompleted({ tabId: 1, url: 'http://localhost:8081/a', frameId: 0 }),
-			ext.pageManager.onNavigationCompleted({ tabId: 2, url: 'http://localhost:8081/b', frameId: 0 }),
-			ext.pageManager.onNavigationCompleted({ tabId: 3, url: 'http://localhost:8081/c', frameId: 0 }),
+			ext.pageManager.onNavigationCompleted({
+				tabId: 1,
+				url: 'http://localhost:8081/a',
+				frameId: 0,
+			}),
+			ext.pageManager.onNavigationCompleted({
+				tabId: 2,
+				url: 'http://localhost:8081/b',
+				frameId: 0,
+			}),
+			ext.pageManager.onNavigationCompleted({
+				tabId: 3,
+				url: 'http://localhost:8081/c',
+				frameId: 0,
+			}),
 		];
 
 		await Promise.all(promises);
 
 		assert.strictEqual(FakeWebSocket.instances.length, 1, 'Should only create one socket');
-		assert.strictEqual(ext.pageManager.getByOrigin('localhost:8081').length, 3, 'All pages should be tracked');
+		assert.strictEqual(
+			ext.pageManager.getByOrigin('localhost:8081').length,
+			3,
+			'All pages should be tracked'
+		);
 	});
 
 	it('maintains separate groups for different origins', async () => {
@@ -274,13 +325,13 @@ describe('Extension edge cases', () => {
 		await simulatePageAdded(ext, 1, 'http://localhost:8081/');
 		await simulatePageAdded(ext, 2, 'http://localhost:3000/');
 
-		const ws8081 = FakeWebSocket.instances.find(ws => ws.url.includes('8081'));
-		const ws3000 = FakeWebSocket.instances.find(ws => ws.url.includes('3000'));
+		const ws8081 = FakeWebSocket.instances.find((ws) => ws.url.includes('8081'));
+		const ws3000 = FakeWebSocket.instances.find((ws) => ws.url.includes('3000'));
 
 		ext.pageManager.onTabRemoved(1);
 
-		assert.strictEqual(ws8081._closed, true);
-		assert.strictEqual(ws3000._closed, false);
+		assert.strictEqual(ws8081!._closed, true);
+		assert.strictEqual(ws3000!._closed, false);
 		assert.strictEqual(ext.groups.size, 1);
 		assert.ok(!ext.groups.has('localhost:8081'));
 		assert.ok(ext.groups.has('localhost:3000'));
@@ -288,7 +339,7 @@ describe('Extension edge cases', () => {
 });
 
 describe('WebSocket reconnection heartbeat', () => {
-	let chromeStub;
+	let chromeStub: ReturnType<typeof createChromeStub>;
 
 	beforeEach(() => {
 		FakeWebSocket.reset();
@@ -298,15 +349,9 @@ describe('WebSocket reconnection heartbeat', () => {
 	});
 
 	afterEach(() => {
-		delete globalThis.WebSocket;
-		delete globalThis.chrome;
+		delete (globalThis as { WebSocket?: unknown }).WebSocket;
+		delete (globalThis as { chrome?: unknown }).chrome;
 	});
-
-	const simulatePageRefresh = async (ext, tabId, url, targetId = `target-${tabId}`) => {
-		globalThis.chrome.configure.setDebuggerTargets([{ id: targetId, tabId }]);
-		globalThis.chrome.configure.setTabData(tabId, { title: 'Test' });
-		await ext.pageManager.onNavigationCompleted({ tabId, url, frameId: 0 });
-	};
 
 	it('reconnects when page refreshed after Metro restart', async () => {
 		const ext = createExtensionWithStubs(chromeStub);
@@ -315,13 +360,15 @@ describe('WebSocket reconnection heartbeat', () => {
 		assert.strictEqual(FakeWebSocket.instances.length, 1);
 		const firstWs = FakeWebSocket.instances[0];
 
-		// Simulate Metro restart - connection dies
 		firstWs.close();
 
-		// User refreshes the page
 		await simulatePageRefresh(ext, 1, 'http://localhost:8081/', 'target-1');
 
-		assert.strictEqual(FakeWebSocket.instances.length, 2, 'New WebSocket should be created on refresh');
+		assert.strictEqual(
+			FakeWebSocket.instances.length,
+			2,
+			'New WebSocket should be created on refresh'
+		);
 		const secondWs = FakeWebSocket.instances[1];
 		assert.strictEqual(secondWs._closed, false, 'New WebSocket should be open');
 	});
@@ -332,10 +379,13 @@ describe('WebSocket reconnection heartbeat', () => {
 
 		assert.strictEqual(FakeWebSocket.instances.length, 1);
 
-		// User refreshes the page - connection still alive
 		await simulatePageRefresh(ext, 1, 'http://localhost:8081/', 'target-1');
 
-		assert.strictEqual(FakeWebSocket.instances.length, 1, 'Should not create duplicate socket when connection is alive');
+		assert.strictEqual(
+			FakeWebSocket.instances.length,
+			1,
+			'Should not create duplicate socket when connection is alive'
+		);
 	});
 
 	it('gracefully handles failed reconnection and retries on next refresh', async () => {
@@ -345,19 +395,15 @@ describe('WebSocket reconnection heartbeat', () => {
 		const firstWs = FakeWebSocket.instances[0];
 		firstWs.close();
 
-		// First refresh - simulate Metro still down (reconnection fails)
 		FakeWebSocket.simulateConnectFailureForNext = true;
 		await simulatePageRefresh(ext, 1, 'http://localhost:8081/', 'target-1');
 
-		// Group should still exist, one new WebSocket created (but failed)
 		assert.strictEqual(ext.groups.size, 1);
 		assert.strictEqual(FakeWebSocket.instances.length, 2);
 
-		// Second refresh - Metro is back up
 		FakeWebSocket.simulateConnectFailureForNext = false;
 		await simulatePageRefresh(ext, 1, 'http://localhost:8081/', 'target-1');
 
-		// Should create another WebSocket and succeed
 		assert.strictEqual(FakeWebSocket.instances.length, 3);
 		const thirdWs = FakeWebSocket.instances[2];
 		assert.strictEqual(thirdWs._closed, false, 'Third WebSocket should be open');

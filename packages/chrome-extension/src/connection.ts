@@ -4,21 +4,33 @@ import { logger } from './logger.js';
 const WS_PROTOCOL = 'ws://';
 const WS_PATH = '/inspector/device';
 
-/**
- * Manages WebSocket connection to the debugger server.
- * Emits typed events for incoming messages: 'getPages', 'connect', 'disconnect', 'wrappedEvent'.
- * Also emits 'open', 'close', 'error' for connection state changes.
- *
- * @param {Object} config - Connection configuration
- * @param {string} config.host - Host and port (e.g., 'localhost:8081')
- * @param {string} config.deviceId - Device identifier
- * @param {string} config.deviceName - Human-readable device name
- * @param {string} config.app - Application identifier
- * @param {string} config.profiling - Profiling flag ('true' or 'false')
- */
-export const createConnection = ({ host, deviceId, deviceName, app, profiling }) => {
+export type ConnectionConfig = {
+	host: string;
+	deviceId: string;
+	deviceName: string;
+	app: string;
+	profiling: string;
+}
+
+export type Connection = {
+	connect: () => void;
+	send: (event: string, payload?: unknown) => void;
+	close: () => void;
+	isConnected: () => boolean;
+	on: (event: string, fn: (...args: unknown[]) => void) => void;
+	off: (event: string, fn: (...args: unknown[]) => void) => void;
+	emit: (event: string, ...args: unknown[]) => void;
+}
+
+export const createConnection = ({
+	host,
+	deviceId,
+	deviceName,
+	app,
+	profiling,
+}: ConnectionConfig): Connection => {
 	const emitter = createEventEmitter();
-	let ws;
+	let ws: WebSocket | undefined;
 
 	const connect = () => {
 		const url = `${WS_PROTOCOL}${host}${WS_PATH}?device=${deviceId}&name=${deviceName}&app=${app}&profiling=${profiling}`;
@@ -43,9 +55,8 @@ export const createConnection = ({ host, deviceId, deviceName, app, profiling })
 
 		ws.addEventListener('message', (event) => {
 			try {
-				const data = JSON.parse(event.data);
+				const data = JSON.parse(event.data) as { event?: string; payload?: unknown };
 
-				// Emit typed event with payload
 				if (data.event) {
 					emitter.emit(data.event, data.payload);
 				}
@@ -55,13 +66,8 @@ export const createConnection = ({ host, deviceId, deviceName, app, profiling })
 		});
 	};
 
-	/**
-	 * Send a message through the WebSocket.
-	 * @param {string} event - Event name
-	 * @param {any} payload - Event payload
-	 */
-	const send = (event, payload) => {
-		if (ws.readyState === WebSocket.OPEN) {
+	const send = (event: string, payload?: unknown) => {
+		if (ws?.readyState === WebSocket.OPEN) {
 			const message = JSON.stringify({ event, payload });
 			ws.send(message);
 		} else {
@@ -69,19 +75,12 @@ export const createConnection = ({ host, deviceId, deviceName, app, profiling })
 		}
 	};
 
-	/**
-	 * Close the WebSocket connection.
-	 */
 	const close = () => {
 		if (ws) {
 			ws.close();
 		}
 	};
 
-	/**
-	 * Check if the WebSocket connection is currently open.
-	 * @returns {boolean}
-	 */
 	const isConnected = () => ws != null && ws.readyState === WebSocket.OPEN;
 
 	return {
