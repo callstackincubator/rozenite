@@ -1,0 +1,80 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Rozenite for Web
+
+:::warning Experimental
+Rozenite for Web is an experimental feature. The API and behavior may change in future releases.
+:::
+
+Rozenite for Web lets you use React Native DevTools (RNDT) to debug React Native web applications, for example in Expo apps. Web browsers appear as debug targets in Metro alongside iOS and Android devices.
+
+This integration requires two parts: the Rozenite Chrome extension (installed in your browser) and the `@rozenite/web` package (configured in your app).
+
+**Browser support:** Chromium-based browsers only — Chrome, Brave, Arc, Opera, and others.
+
+## Prerequisites
+
+- React Native project with web support (e.g., Expo)
+- Metro bundler
+
+## Chrome extension setup
+
+1. Install the Rozenite extension from the Chrome Web Store.
+2. The extension acts as a bridge between your browser tab and RNDT.
+3. It discovers Rozenite-enabled localhost tabs automatically.
+
+## @rozenite/web package setup
+
+### Installation
+
+<PackageManagerTabs command="install -D @rozenite/web" />
+
+### Metro configuration
+
+Add `withRozeniteWeb` to the `enhanceMetroConfig` chain inside `withRozenite`:
+
+```javascript
+const { withRozeniteWeb } = require('@rozenite/web/metro');
+
+// Inside withRozenite options:
+enhanceMetroConfig: composeMetroConfigTransformers(
+  withRozeniteRequireProfiler,
+  withRozeniteReduxDevTools,
+  withRozeniteWeb,  // Add this
+),
+```
+
+### Entry point
+
+Add `require('@rozenite/web')` in your app entry point (e.g., `main.tsx`) or in the root `_layout` file when using Expo Router.
+
+## Plugin support
+
+**Supported plugins:**
+
+- TanStack Query
+- React Navigation
+- Overlay
+
+**Unsupported plugins** (still shown in the UI but will not work correctly):
+
+- Redux DevTools
+- Network Activity
+- Require Profiler
+- MMKV
+
+This behavior may change in future releases.
+
+If you developed a custom plugin to expose internals of your app to developers via Rozenite, it will work just fine in Rozenite for Web as long as you are not reaching to modules that are only present on mobile.
+
+## Making plugins compatible with Rozenite for Web
+
+If you maintain a plugin and want it to work on web:
+
+1. **Verify your plugin does not rely on native modules** — native modules are missing on web and will cause runtime errors.
+2. **If your plugin is native-free or has a different implementation for web**, update its `react-native.ts` entrypoint by removing the `isWeb` check. Plugins that exclude web via `if (isDev && !isWeb && !isServer)` will not load on web; removing the `!isWeb` condition enables them.
+
+## Troubleshooting
+
+- Ensure Metro is running and the extension is installed.
+- Ensure the app is served from localhost (e.g., port 8081).
