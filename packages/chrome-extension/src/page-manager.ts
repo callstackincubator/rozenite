@@ -1,6 +1,12 @@
 import { createEventEmitter } from './event-emitter.js';
 import { logger } from './logger.js';
 import { getDeviceName } from './device-utils.js';
+import {
+	checkForUpdates,
+	STORAGE_KEY_DISMISSED,
+	DISMISS_DURATION_MS,
+} from './update-checker.js';
+import { injectUpdateBanner } from './update-banner.js';
 
 const INSPECTABLE_URL_PREFIXES = [
 	'http://localhost:',
@@ -104,6 +110,28 @@ export const createPageManager = (app: string): PageManager => {
 		}
 
 		logger.info('Rozenite-enabled tab found:', url);
+
+		try {
+			const update = await checkForUpdates();
+			if (update.hasUpdate) {
+				logger.info('Injecting update banner for tab', tabId, 'v' + update.latestVersion);
+				const logoUrl = chrome.runtime.getURL('icons/icon48.png');
+				await chrome.scripting.executeScript({
+					target: { tabId },
+					world: 'ISOLATED',
+					func: injectUpdateBanner,
+					args: [
+						update.latestVersion!,
+						update.releasesUrl!,
+						logoUrl,
+						STORAGE_KEY_DISMISSED,
+						DISMISS_DURATION_MS,
+					],
+				});
+			}
+		} catch (updateError) {
+			logger.warn('Update check failed:', updateError);
+		}
 
 		try {
 			const targets = await chrome.debugger.getTargets();

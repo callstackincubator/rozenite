@@ -117,6 +117,10 @@ export type ChromeStub = {
 		) => Promise<unknown>;
 		onEvent: { addListener: (fn: (...args: unknown[]) => void) => void };
 	};
+	runtime: {
+		getManifest: () => { version: string };
+		getURL: (path: string) => string;
+	};
 	getListeners: () => {
 		webNavigationOnCompleted: ((...args: unknown[]) => void) | null;
 		tabsOnRemoved: ((tabId: number) => void) | null;
@@ -203,6 +207,11 @@ export const createChromeStub = (): ChromeStub => {
 					listeners.debuggerOnEvent = fn;
 				},
 			},
+		},
+
+		runtime: {
+			getManifest: () => ({ version: '1.0.0' }),
+			getURL: (path: string) => `chrome-extension://test-id/${path}`,
 		},
 
 		getListeners: () => listeners,
