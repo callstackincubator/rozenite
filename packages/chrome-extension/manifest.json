@@ -26,5 +26,6 @@
       "resources": ["icons/icon48.png"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "homepage_url": "https://rozenite.dev"
 }
