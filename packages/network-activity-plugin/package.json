@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/network-activity-plugin",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Network Activity for Rozenite.",
   "type": "module",
   "main": "./dist/react-native.cjs",

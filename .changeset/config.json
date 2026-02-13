@@ -1,5 +1,11 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.0.4/schema.json",
   "baseBranch": "main",
-  "access": "public"
+  "access": "public",
+  "fixed": [["@rozenite/*", "rozenite"]],
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "callstackincubator/rozenite" }
+  ],
+  "ignore": ["@rozenite/playground", "@rozenite/docs"]
 }
