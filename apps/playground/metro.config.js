@@ -8,6 +8,9 @@ const {
 const {
   withRozeniteRequireProfiler,
 } = require('@rozenite/require-profiler-plugin/metro');
+const {
+  withRozeniteWeb,
+} = require('@rozenite/web/metro');
 const path = require('node:path');
 
 const config = getDefaultConfig(__dirname);
@@ -29,7 +32,8 @@ module.exports = composeMetroConfigTransformers([
     enabled: true,
     enhanceMetroConfig: composeMetroConfigTransformers(
       withRozeniteRequireProfiler,
-      withRozeniteReduxDevTools
+      withRozeniteReduxDevTools,
+      withRozeniteWeb,
     ),
   },
 ])(config);
