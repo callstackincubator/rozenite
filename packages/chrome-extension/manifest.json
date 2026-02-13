@@ -1,7 +1,7 @@
 {
   "name": "Rozenite",
   "description": "React Native DevTools for Web",
-  "version": "1.0",
+  "version": "1.0.0",
   "manifest_version": 3,
   "icons": {
     "16": "icons/icon16.png",
@@ -18,6 +18,14 @@
     "http://localhost:8081/*",
     "https://localhost:8081/*",
     "http://127.0.0.1:8081/*",
-    "https://127.0.0.1:8081/*"
-  ]
+    "https://127.0.0.1:8081/*",
+    "https://raw.githubusercontent.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/icon48.png"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "homepage_url": "https://rozenite.dev"
 }
