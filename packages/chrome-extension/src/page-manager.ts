@@ -69,7 +69,7 @@ export const createPageManager = (app: string): PageManager => {
 			});
 			return results[0].result as RozeniteMetadata | null;
 		} catch (error) {
-			logger.warn('Failed to read Rozenite metadata for tab', tabId);
+			logger.warn('Failed to read Rozenite metadata for tab', tabId, error);
 			return null;
 		}
 	};
