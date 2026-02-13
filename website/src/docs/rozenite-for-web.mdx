@@ -19,9 +19,21 @@ This integration requires two parts: the Rozenite Chrome extension (installed in
 
 ## Chrome extension setup
 
-1. Install the Rozenite extension from the Chrome Web Store.
-2. The extension acts as a bridge between your browser tab and RNDT.
-3. It discovers Rozenite-enabled localhost tabs automatically.
+:::tip
+We are working on publishing this extension to the Chrome Web Store for easier installation. In the meantime, you can install it from GitHub releases.
+:::
+
+The Rozenite Chrome extension can be downloaded from the [GitHub releases](https://github.com/callstackincubator/rozenite/releases). Download the `.crx` file for the latest release.
+
+### Installation
+
+1. Download the `.crx` file from the [releases page](https://github.com/callstackincubator/rozenite/releases).
+2. Open Chrome and go to `chrome://extensions`.
+3. Enable **Developer mode** (toggle in the top-right corner).
+4. Drag the `.crx` file onto the extensions page and confirm when prompted. If drag-and-drop does not work, rename the file to `.zip`, extract it, then click **Load unpacked** and select the extracted folder (the one containing `manifest.json`).
+5. The extension acts as a bridge between your browser tab and RNDT and discovers Rozenite-enabled localhost tabs automatically.
+
+For more details on loading extensions, see the [Chrome extension loading guide](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-an-unpacked-extension).
 
 ## @rozenite/web package setup
 
