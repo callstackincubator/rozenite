@@ -94,10 +94,10 @@ const getInstalledPluginsFromPnP = (options: RozeniteConfig): InstalledPlugin[] 
   const packageJsonPath = path.join(options.projectRoot, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
-  const dependencies = [
+  const dependencies = Array.from(new Set([
     ...Object.keys(packageJson.dependencies || {}),
     ...Object.keys(packageJson.devDependencies || {}),
-  ];
+  ]));
 
   for (const dependency of dependencies) {
     let packagePath: string;
