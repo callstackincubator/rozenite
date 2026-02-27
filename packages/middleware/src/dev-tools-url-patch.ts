@@ -1,13 +1,157 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import { createRequire } from 'node:module';
-import { getDevMiddlewarePath } from './resolve.js';
+import { getDevMiddlewarePath, getReactNativePackagePath } from './resolve.js';
 import { RozeniteConfig } from './index.js';
-import { getMCPHandler, getMCPWebSocketServer } from './mcp-integration.js';
+import { getMCPHandler } from './mcp-integration.js';
+import { logger } from './logger.js';
+import type { DevToolsPluginMessage } from './mcp/types.js';
 
 const require = createRequire(import.meta.url);
 
+type RecordValue = Record<string, unknown>;
+
+type InspectorHandler = {
+  handleDeviceMessage?: (message: unknown) => unknown;
+  handleDebuggerMessage?: (message: unknown) => unknown;
+};
+
+type Connection = {
+  device: {
+    id: string;
+    name: string;
+    sendMessage: (message: unknown) => void;
+  };
+};
+
+type BindingPayload = {
+  domain: string;
+  message?: unknown;
+};
+
+type MCPHandlerLike = {
+  handleDeviceMessage: (deviceId: string, message: DevToolsPluginMessage) => void;
+};
+
+const getRecord = (value: unknown): RecordValue | null => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as RecordValue;
+  }
+  return null;
+};
+
+const getString = (value: unknown): string | undefined => {
+  return typeof value === 'string' ? value : undefined;
+};
+
+const getPayloadBytes = (value: unknown): number | undefined => {
+  try {
+    return Buffer.byteLength(JSON.stringify(value), 'utf8');
+  } catch {
+    return undefined;
+  }
+};
+
+const getMCPMetadata = (message: unknown): {
+  type?: string;
+  toolName?: string;
+  callId?: string;
+  bytes?: number;
+} => {
+  const record = getRecord(message);
+  const payload = getRecord(record?.payload);
+
+  return {
+    type: getString(record?.type),
+    toolName: getString(payload?.toolName),
+    callId: getString(payload?.callId),
+    bytes: getPayloadBytes(message),
+  };
+};
+
+const logMCPMessageMetadata = (direction: 'node_to_device' | 'device_to_node', message: unknown) => {
+  const meta = getMCPMetadata(message);
+  const parts = [
+    `direction=${direction}`,
+    `type=${meta.type ?? 'unknown'}`,
+    `tool=${meta.toolName ?? 'n/a'}`,
+    `callId=${meta.callId ?? 'n/a'}`,
+    `bytes=${meta.bytes ?? 'n/a'}`,
+  ];
+  logger.debug(`MCP message ${parts.join(' ')}`);
+};
+
+const getReactNativeVersion = (projectRoot: string): string | undefined => {
+  try {
+    const reactNativePath = getReactNativePackagePath(projectRoot);
+    const packageJsonPath = path.join(reactNativePath, 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
+      version?: unknown;
+    };
+
+    return typeof packageJson.version === 'string' ? packageJson.version : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+export const parseRozeniteBindingPayload = (message: unknown): BindingPayload | null => {
+  const record = getRecord(message);
+  if (!record || record.method !== 'Runtime.bindingCalled') {
+    return null;
+  }
+
+  const params = getRecord(record.params);
+  const rawPayload = getString(params?.payload);
+  if (!rawPayload) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(rawPayload);
+    const payload = getRecord(parsed);
+    const domain = getString(payload?.domain);
+    if (!domain) {
+      return null;
+    }
+
+    return {
+      domain,
+      message: payload?.message,
+    };
+  } catch {
+    return null;
+  }
+};
+
+export const composeInspectorHandlers = (
+  mcpHandler: MCPHandlerLike,
+  deviceId: string,
+  originalHandler: InspectorHandler | undefined,
+): InspectorHandler => {
+  return {
+    handleDeviceMessage: (message: unknown) => {
+      const bindingPayload = parseRozeniteBindingPayload(message);
+      if (bindingPayload?.domain === 'rozenite') {
+        logMCPMessageMetadata('device_to_node', bindingPayload.message);
+        mcpHandler.handleDeviceMessage(
+          deviceId,
+          bindingPayload.message as DevToolsPluginMessage,
+        );
+        return true;
+      }
+
+      return originalHandler?.handleDeviceMessage?.(message);
+    },
+    handleDebuggerMessage: (message: unknown) => {
+      return originalHandler?.handleDebuggerMessage?.(message);
+    },
+  };
+};
+
 export const patchDevMiddleware = (options: RozeniteConfig): void => {
   const devMiddlewareModulePath = path.dirname(getDevMiddlewarePath(options));
+  const reactNativeVersion = getReactNativeVersion(options.projectRoot);
   const createDevMiddlewareModule = require(
     path.join(devMiddlewareModulePath, '/createDevMiddleware'),
   );
@@ -16,77 +160,55 @@ export const patchDevMiddleware = (options: RozeniteConfig): void => {
   createDevMiddlewareModule.default = (...args: any[]) => {
     if (options.enableMCP && args[0]) {
       const originalCustomHandler =
-        args[0].unstable_customInspectorMessageHandler;
+        args[0].unstable_customInspectorMessageHandler as
+          | ((connection: Connection) => InspectorHandler | undefined)
+          | undefined;
 
       const previousEventReporter = args[0].unstable_eventReporter;
       args[0].unstable_eventReporter = {
-        logEvent: (...args: unknown[]) => {
-          if (args[0] && typeof args[0] === 'object' && 'type' in args[0] && args[0].type !== 'debugger_command') {
-            console.log('unstable_eventReporter', JSON.stringify(args, null, 2));
+        logEvent: (...eventArgs: unknown[]) => {
+          const event = getRecord(eventArgs[0]);
+
+          if (
+            event?.type === 'debugger_connection_closed' &&
+            typeof event.deviceId === 'string'
+          ) {
+            const mcpHandler = getMCPHandler();
+            mcpHandler.disconnectDevice(event.deviceId);
           }
 
           if (previousEventReporter) {
-            return previousEventReporter.logEvent(...args);
+            return previousEventReporter.logEvent(...eventArgs);
           }
-        }
-      }
+        },
+      };
 
-      args[0].unstable_customInspectorMessageHandler = (connection: any) => {
-        console.log('unstable_customInspectorMessageHandler');
+      args[0].unstable_customInspectorMessageHandler = (connection: Connection) => {
         const mcpHandler = getMCPHandler();
+        const originalHandler = originalCustomHandler?.(connection);
+        const deviceId = connection.device.id;
+        const deviceName = connection.device.name;
 
-        if (mcpHandler) {
-          const deviceId = connection.device.id;
-          const deviceName = connection.device.name;
+        mcpHandler.connectDevice(deviceId, deviceName, {
+          sendMessage: (message: unknown) => {
+            logMCPMessageMetadata('node_to_device', message);
+            connection.device.sendMessage({
+              id: Math.floor(Math.random() * 100000),
+              method: 'Runtime.evaluate',
+              params: {
+                expression: `__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.sendMessage('rozenite', ${JSON.stringify(JSON.stringify(message))})`,
+              },
+            });
+          },
+        }, {
+          reactNativeVersion,
+        });
 
-          // Register device with MCP handler
-          mcpHandler.connectDevice(deviceId, deviceName, {
-            sendMessage: (message: any) => {
-              console.log('Node.js -> Device', JSON.stringify(message, null, 2));
-              connection.device.sendMessage({
-                "id": Math.floor(Math.random() * 100000),
-                "method": "Runtime.evaluate",
-                "params": {
-                  "expression": `__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.sendMessage('rozenite', ${JSON.stringify(JSON.stringify(message))})`
-                }
-              });
-            },
-          });
-
-          // Return a handler that intercepts Rozenite messages
-          return {
-            handleDeviceMessage: (message: any) => {
-              if (message.method === 'Runtime.bindingCalled') {
-                const payload = JSON.parse(message.params.payload);
-
-                if (payload.domain === 'rozenite') {
-                  console.log('Device -> Node.js', JSON.stringify(payload.message, null, 2));
-                  mcpHandler.handleDeviceMessage(deviceId, payload.message);
-                  return true;
-                }
-              }
-
-              return undefined;
-            },
-            handleDebuggerMessage: (msg) => {
-              return undefined;
-            },
-          };
-
-          // TODO: Reuse existing handler
-        }
-
-        return originalCustomHandler
-          ? originalCustomHandler(connection)
-          : undefined;
+        return composeInspectorHandlers(mcpHandler, deviceId, originalHandler);
       };
     }
 
     const result = createDevMiddleware(...args);
-
-    if (options.enableMCP) {
-      result.websocketEndpoints['/rozenite-mcp'] = getMCPWebSocketServer();
-    }
 
     return result;
   };

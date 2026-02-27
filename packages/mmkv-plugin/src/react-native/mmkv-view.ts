@@ -7,6 +7,7 @@ export type MMKVView = {
   set: (key: string, value: MMKVEntryValue) => void;
   get: (key: string) => MMKVEntry | undefined;
   delete: (key: string) => void;
+  getAllKeys: () => string[];
   getAllEntries: () => MMKVEntry[];
   getId: () => string;
   onChange: (callback: (key: string) => void) => { remove: () => void };
@@ -94,11 +95,11 @@ export const getMMKVView = (
       return undefined;
     },
     delete: (key: string) => mmkv.delete(key),
+    getAllKeys: () => {
+      return mmkv.getAllKeys().filter((key) => !isBlacklisted(key));
+    },
     getAllEntries: () => {
-      return mmkv
-        .getAllKeys()
-        .filter((key) => !isBlacklisted(key))
-        .map((key) => {
+      return mmkvView.getAllKeys().map((key) => {
           const entry = mmkvView.get(key);
           if (!entry) {
             throw new Error(`Failed to get entry for key: ${key}`);

@@ -8,6 +8,8 @@ import { InstalledPlugin } from './auto-discovery.js';
 import { getReactNativeDebuggerFrontendPath } from './resolve.js';
 import { RozeniteConfig } from './config.js';
 import { logger } from './logger.js';
+import { getMCPHandler } from './mcp-integration.js';
+import { createMCPRouter } from './mcp/http-router.js';
 
 const require = createRequire(import.meta.url);
 
@@ -36,7 +38,7 @@ export const getMiddleware = (
 
     logger.debug(`Incoming request: ${req.url}`);
 
-    if (req.url.includes('/rozenite')) {
+    if (req.url === '/rozenite' || req.url.startsWith('/rozenite/')) {
       req.url = req.url.replace('/rozenite', '');
     }
 
@@ -79,6 +81,10 @@ export const getMiddleware = (
     res.setHeader('Content-Type', 'application/javascript');
     res.end(fs.readFileSync(path.join(frameworkPath, 'host.js'), 'utf8'));
   });
+
+  if (options.enableMCP) {
+    app.use('/rozenite-mcp/v1', createMCPRouter(getMCPHandler()));
+  }
 
   app.use(express.static(debuggerFrontend));
 

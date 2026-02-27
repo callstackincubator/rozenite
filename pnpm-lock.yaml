@@ -349,6 +349,9 @@ importers:
       validate-npm-package-name:
         specifier: ^6.0.1
         version: 6.0.1
+      ws:
+        specifier: ^8.18.3
+        version: 8.18.3
     devDependencies:
       '@types/ejs':
         specifier: ^3.1.5
@@ -356,6 +359,9 @@ importers:
       '@types/validate-npm-package-name':
         specifier: ^4.0.2
         version: 4.0.2
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
 
   packages/expo-atlas-plugin:
     dependencies:
@@ -430,25 +436,6 @@ importers:
         specifier: ^2.3.0
         version: 2.8.1
 
-  packages/mcp-server:
-    dependencies:
-      '@rozenite/mcp-shared':
-        specifier: workspace:*
-        version: link:../mcp-shared
-      tslib:
-        specifier: ^2.3.0
-        version: 2.8.1
-      ws:
-        specifier: ^8.18.0
-        version: 8.18.3
-    devDependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.25.3
-        version: 1.26.0
-      '@types/ws':
-        specifier: ^8.5.13
-        version: 8.18.1
-
   packages/mcp-shared:
     dependencies:
       tslib:
@@ -473,9 +460,6 @@ importers:
 
   packages/middleware:
     dependencies:
-      '@rozenite/mcp-server':
-        specifier: workspace:*
-        version: link:../mcp-server
       '@rozenite/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -513,6 +497,9 @@ importers:
 
   packages/mmkv-plugin:
     dependencies:
+      '@rozenite/mcp-bridge':
+        specifier: workspace:*
+        version: link:../mcp-bridge
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge

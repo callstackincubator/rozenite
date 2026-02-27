@@ -1,7 +1,8 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { MMKVEventMap } from '../shared/messaging';
 import { getMMKVView } from './mmkv-view';
+import { useMMKVMCPTools } from './useMMKVMCPTools';
 import { normalizeStoragesConfigProperty } from './utils';
 import type { MMKV } from 'react-native-mmkv';
 
@@ -22,6 +23,21 @@ export const useMMKVDevTools = ({
   storages,
   blacklist,
 }: MMKVDevToolsOptions) => {
+  const normalizedStorages = useMemo(
+    () => normalizeStoragesConfigProperty(storages as any),
+    [storages]
+  );
+
+  const views = useMemo(
+    () =>
+      Object.entries(normalizedStorages).map(([id, storage]) =>
+        getMMKVView(id, storage, blacklist)
+      ),
+    [normalizedStorages, blacklist]
+  );
+
+  useMMKVMCPTools(views);
+
   const client = useRozeniteDevToolsClient<MMKVEventMap>({
     pluginId: '@rozenite/mmkv-plugin',
   });
@@ -30,11 +46,6 @@ export const useMMKVDevTools = ({
     if (!client) {
       return;
     }
-
-    const normalizedStorages = normalizeStoragesConfigProperty(storages as any);
-    const views = Object.entries(normalizedStorages).map(([id, storage]) =>
-      getMMKVView(id, storage, blacklist)
-    );
 
     views.forEach((view) => {
       client.send('snapshot', {
@@ -67,7 +78,7 @@ export const useMMKVDevTools = ({
         });
       }),
       client.onMessage('set-entry', ({ id, entry }) => {
-        const view = views.find((view) => view.getId() === id);
+        const view = views.find((item) => item.getId() === id);
 
         if (!view) {
           console.warn(
@@ -79,12 +90,10 @@ export const useMMKVDevTools = ({
         view.set(entry.key, entry.value);
       }),
       client.onMessage('delete-entry', ({ id, key }) => {
-        const view = views.find((view) => view.getId() === id);
+        const view = views.find((item) => item.getId() === id);
 
         if (!view) {
-          console.warn(
-            `[Rozenite] MMKV DevTools: View not found for key "${key}"`
-          );
+          console.warn(`[Rozenite] MMKV DevTools: View not found for key "${key}"`);
           return;
         }
 
@@ -103,7 +112,7 @@ export const useMMKVDevTools = ({
           return;
         }
 
-        const view = views.find((view) => view.getId() === id);
+        const view = views.find((item) => item.getId() === id);
 
         if (!view) {
           console.warn(
@@ -123,7 +132,7 @@ export const useMMKVDevTools = ({
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
     };
-  }, [client, storages, blacklist]);
+  }, [client, views]);
 
   return client;
 };

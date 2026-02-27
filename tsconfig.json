@@ -32,9 +32,6 @@
     },
     {
       "path": "./packages/mcp-bridge"
-    },
-    {
-      "path": "./packages/mcp-server"
     }
   ]
 }

@@ -22,10 +22,30 @@ export interface UseRozeniteMCPToolOptions<TInput = unknown, TOutput = unknown> 
   enabled?: boolean;
 }
 
-export function useRozeniteMCPTool<TInput = unknown, TOutput = unknown>(
+export interface UseRozenitePluginMCPToolOptions<TInput = unknown, TOutput = unknown>
+  extends UseRozeniteMCPToolOptions<TInput, TOutput> {
+  pluginId: string;
+}
+
+export interface UseRozeniteInAppMCPToolOptions<TInput = unknown, TOutput = unknown>
+  extends UseRozeniteMCPToolOptions<TInput, TOutput> {
+  domain?: string;
+}
+
+const getQualifiedToolName = (domain: string, toolName: string): string => {
+  return `${domain.trim()}.${toolName.trim()}`;
+};
+
+function useRozeniteDomainMCPTool<TInput = unknown, TOutput = unknown>(
+  domain: string,
   options: UseRozeniteMCPToolOptions<TInput, TOutput>
 ): void {
   const { tool, handler, enabled = true } = options;
+  const toolName = getQualifiedToolName(domain, tool.name);
+  const qualifiedTool = {
+    ...tool,
+    name: toolName,
+  } satisfies MCPTool;
   const client = useRozeniteDevToolsClient<MCPEventMap>({
     pluginId: MCP_PLUGIN_ID,
   });
@@ -40,14 +60,14 @@ export function useRozeniteMCPTool<TInput = unknown, TOutput = unknown>(
 
     // Register the tool
     client.send('register-tool', {
-      tools: [tool],
+      tools: [qualifiedTool],
     });
 
     // Listen for tool calls
     const subscription = client.onMessage('tool-call', async (payload) => {
       console.log('Tool call', JSON.stringify(payload, null, 2));
       // Only handle calls for this tool
-      if (payload.toolName !== tool.name) {
+      if (payload.toolName !== toolName) {
         return;
       }
 
@@ -75,9 +95,23 @@ export function useRozeniteMCPTool<TInput = unknown, TOutput = unknown>(
     return () => {
       // Unregister the tool on unmount
       client.send('unregister-tool', {
-        toolNames: [tool.name],
+        toolNames: [toolName],
       });
       subscription.remove();
     };
-  }, [client, enabled, tool]);
+  }, [client, enabled, tool, toolName]);
+}
+
+export function useRozenitePluginMCPTool<TInput = unknown, TOutput = unknown>(
+  options: UseRozenitePluginMCPToolOptions<TInput, TOutput>
+): void {
+  const { pluginId, ...toolOptions } = options;
+  useRozeniteDomainMCPTool(pluginId, toolOptions);
+}
+
+export function useRozeniteInAppMCPTool<TInput = unknown, TOutput = unknown>(
+  options: UseRozeniteInAppMCPToolOptions<TInput, TOutput>
+): void {
+  const { domain = 'app', ...toolOptions } = options;
+  useRozeniteDomainMCPTool(domain, toolOptions);
 }

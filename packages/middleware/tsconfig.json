@@ -7,9 +7,6 @@
       "path": "../runtime"
     },
     {
-      "path": "../mcp-server"
-    },
-    {
       "path": "./tsconfig.lib.json"
     }
   ]
