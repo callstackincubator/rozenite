@@ -21,8 +21,10 @@ describe('dev tools MCP inspector handler composition', () => {
 
   it('handles rozenite binding messages without requiring original handler', () => {
     const handleDeviceMessage = vi.fn();
+    const captureConsoleMessage = vi.fn();
+    const captureReactDevToolsMessage = vi.fn();
     const composed = composeInspectorHandlers(
-      { handleDeviceMessage },
+      { handleDeviceMessage, captureConsoleMessage, captureReactDevToolsMessage },
       'device-1',
       undefined,
     );
@@ -49,10 +51,12 @@ describe('dev tools MCP inspector handler composition', () => {
 
   it('delegates non-rozenite messages to the original device handler', () => {
     const handleDeviceMessage = vi.fn();
+    const captureConsoleMessage = vi.fn();
+    const captureReactDevToolsMessage = vi.fn();
     const originalHandleDeviceMessage = vi.fn().mockReturnValue('delegated');
 
     const composed = composeInspectorHandlers(
-      { handleDeviceMessage },
+      { handleDeviceMessage, captureConsoleMessage, captureReactDevToolsMessage },
       'device-1',
       { handleDeviceMessage: originalHandleDeviceMessage },
     );
@@ -70,10 +74,12 @@ describe('dev tools MCP inspector handler composition', () => {
 
   it('delegates debugger messages to the original handler', () => {
     const handleDeviceMessage = vi.fn();
+    const captureConsoleMessage = vi.fn();
+    const captureReactDevToolsMessage = vi.fn();
     const originalHandleDebuggerMessage = vi.fn().mockReturnValue('debugger-result');
 
     const composed = composeInspectorHandlers(
-      { handleDeviceMessage },
+      { handleDeviceMessage, captureConsoleMessage, captureReactDevToolsMessage },
       'device-1',
       { handleDebuggerMessage: originalHandleDebuggerMessage },
     );
@@ -88,8 +94,10 @@ describe('dev tools MCP inspector handler composition', () => {
     logger.setLevel('debug');
     const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
     const handleDeviceMessage = vi.fn();
+    const captureConsoleMessage = vi.fn();
+    const captureReactDevToolsMessage = vi.fn();
     const composed = composeInspectorHandlers(
-      { handleDeviceMessage },
+      { handleDeviceMessage, captureConsoleMessage, captureReactDevToolsMessage },
       'device-1',
       undefined,
     );
@@ -113,6 +121,32 @@ describe('dev tools MCP inspector handler composition', () => {
     expect(emittedLogs).toContain('tool=secret-tool');
     expect(emittedLogs).toContain('callId=abc');
     expect(emittedLogs).not.toContain('"secret":"sensitive"');
+  });
+
+  it('captures react-devtools domain messages for local ingestion', () => {
+    const handleDeviceMessage = vi.fn();
+    const captureConsoleMessage = vi.fn();
+    const captureReactDevToolsMessage = vi.fn();
+    const originalHandleDeviceMessage = vi.fn().mockReturnValue('delegated');
+
+    const composed = composeInspectorHandlers(
+      { handleDeviceMessage, captureConsoleMessage, captureReactDevToolsMessage },
+      'device-react',
+      { handleDeviceMessage: originalHandleDeviceMessage },
+    );
+
+    const reactDevToolsMessage = createBindingMessage({
+      domain: 'react-devtools',
+      message: { event: 'tree-sync', payload: { roots: [], nodes: [] } },
+    });
+
+    const result = composed.handleDeviceMessage?.(reactDevToolsMessage);
+
+    expect(result).toBe('delegated');
+    expect(captureReactDevToolsMessage).toHaveBeenCalledWith(
+      'device-react',
+      { event: 'tree-sync', payload: { roots: [], nodes: [] } },
+    );
   });
 });
 

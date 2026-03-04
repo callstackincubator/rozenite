@@ -68,6 +68,13 @@ export const LandingScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
+              style={styles.navigationButton}
+              onPress={() => navigation.navigate('PerfProblem' as never)}
+            >
+              <Text style={styles.buttonText}>Perf Problem</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={styles.configButton}
               onPress={() => navigation.navigate('Config' as never)}
             >

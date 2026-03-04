@@ -19,6 +19,10 @@ export const HomeTabScreen = () => {
     navigation.navigate('SuccessiveScreensStack');
   };
 
+  const handleNavigateToPerfProblem = () => {
+    navigation.navigate('PerfProblem');
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Home Tab</Text>
@@ -36,6 +40,13 @@ export const HomeTabScreen = () => {
         onPress={handleNavigateToSuccessiveScreens}
       >
         <Text style={styles.buttonText}>Go to successive screens</Text>
+      </TouchableOpacity>
+      <View style={styles.spacer} />
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleNavigateToPerfProblem}
+      >
+        <Text style={styles.buttonText}>Open perf problem screen</Text>
       </TouchableOpacity>
     </View>
   );

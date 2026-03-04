@@ -8,7 +8,7 @@ description: Skill giving access to React Native Devtools and Rozenite plugins t
 ## Workflow
 1. Discover available domains with the Rozenite CLI (`--json`).
 2. Load only one domain guide at a time.
-3. Execute domain commands using `rozenite mcp <domain> <action> ... --json` (short aliases also work).
+3. Execute domain commands using the exact shape `rozenite mcp <domain> <action> ... --json`.
 4. Prefer `--limit 20` and cursor pagination for list commands.
 
 ## Rules
@@ -23,15 +23,15 @@ description: Skill giving access to React Native Devtools and Rozenite plugins t
 - For `@rozenite/react-navigation-plugin`, prefer high-level tools (`navigate`, `go-back`) before low-level tools (`dispatch-action`, `reset-root`).
 
 ## Command Shape (Required)
-- Valid: `rozenite mcp <domain> tools -j` (alias: `list-tools`)
-- Valid: `rozenite mcp <domain> schema -t <name> -j` (alias: `get-tool-schema`)
-- Valid: `rozenite mcp <domain> call -t <name> -a '<json>' -j` (alias: `call-tool`)
+- Valid: `rozenite mcp <domain> list-tools --json`
+- Valid: `rozenite mcp <domain> get-tool-schema --tool <name> --json`
+- Valid: `rozenite mcp <domain> call-tool --tool <name> --args '<json>' --json`
 - Invalid: `rozenite mcp list-tools --json` (missing `<domain>`)
 
 ## Domains
 - `console`: CDP-style console/log inspection tools with paged reads.
 - `network`: network-related inspection tools.
-- `react`: React Native Devtools tree, inspected data, and profiling tools.
+- `react`: React Native Devtools tree and component inspection tools.
 - Dynamic plugin domains: discovered at runtime from `list-domains`.
 
 Read domain-specific guidance from:

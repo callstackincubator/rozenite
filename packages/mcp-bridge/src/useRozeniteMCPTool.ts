@@ -65,7 +65,6 @@ function useRozeniteDomainMCPTool<TInput = unknown, TOutput = unknown>(
 
     // Listen for tool calls
     const subscription = client.onMessage('tool-call', async (payload) => {
-      console.log('Tool call', JSON.stringify(payload, null, 2));
       // Only handle calls for this tool
       if (payload.toolName !== toolName) {
         return;

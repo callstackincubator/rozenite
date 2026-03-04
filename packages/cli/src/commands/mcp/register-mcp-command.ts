@@ -2,9 +2,9 @@ import { Command } from 'commander';
 import { DEFAULT_METRO_HOST, DEFAULT_METRO_PORT, STATIC_DOMAINS } from './constants.js';
 import { createHttpMCPClient, type HttpMCPClient } from './http-client.js';
 import {
-  inferPluginId,
   inferToolShortName,
   buildRuntimePluginDomains,
+  getDomainToolsByDefinition,
   resolveDomainToken,
 } from './domain-utils.js';
 import { getMetroTargets, resolveTargetDeviceId } from './metro.js';
@@ -16,13 +16,27 @@ import {
   parseLimit,
   projectRows,
 } from './output-shaping.js';
+import {
+  callToolWithOptionalPagination,
+  resolveAutoPaginationConfig,
+} from './tool-pagination.js';
 
 const REMOVED_ROZENITE_DOMAIN_HINT =
-  'The `rozenite mcp rozenite ...` command path was removed. Use `rozenite mcp <plugin-domain> ...`; run `rozenite mcp list-domains --json`.';
+  'The `rozenite mcp rozenite ...` path was removed. Use `rozenite mcp <domain> ...`; run `rozenite mcp domains -j`.';
 const PLUGIN_DOMAIN_GUIDE_MAX_TOOLS = 20;
-const DOMAIN_ACTIONS = ['list-tools', 'get-tool-schema', 'call-tool'] as const;
 
-type DomainAction = (typeof DOMAIN_ACTIONS)[number];
+const DOMAIN_ACTION_ALIASES = {
+  'list-tools': 'list-tools',
+  tools: 'list-tools',
+  'get-tool-schema': 'get-tool-schema',
+  schema: 'get-tool-schema',
+  'call-tool': 'call-tool',
+  call: 'call-tool',
+} as const;
+
+const DOMAIN_ACTION_HINT = 'list-tools|tools, get-tool-schema|schema, call-tool|call';
+
+type DomainAction = 'list-tools' | 'get-tool-schema' | 'call-tool';
 
 type CommonOptions = {
   host: string;
@@ -45,6 +59,8 @@ type DynamicDomainCommandOptions = CommonOptions & {
   fields?: string;
   limit?: string;
   cursor?: string;
+  pages?: string;
+  maxItems?: string;
   verbose?: boolean;
 };
 
@@ -109,17 +125,13 @@ const withClient = async <T>(
   }
 };
 
-const getPluginTools = (tools: MCPTool[], plugin: string): MCPTool[] => {
-  return tools.filter((tool) => inferPluginId(tool.name) === plugin);
-};
-
-const resolvePluginTool = (
-  pluginTools: MCPTool[],
-  plugin: string,
+const resolveDomainTool = (
+  domainTools: MCPTool[],
+  domainLabel: string,
   toolName: string,
 ): MCPTool => {
-  const exactMatch = pluginTools.find((tool) => tool.name === toolName);
-  const shortMatches = pluginTools.filter(
+  const exactMatch = domainTools.find((tool) => tool.name === toolName);
+  const shortMatches = domainTools.filter(
     (tool) => inferToolShortName(tool.name) === toolName,
   );
 
@@ -128,12 +140,12 @@ const resolvePluginTool = (
     if (shortMatches.length > 1) {
       const fullNames = formatLimitedList(shortMatches.map((tool) => tool.name));
       throw new Error(
-        `Ambiguous tool name "${toolName}" for plugin "${plugin}". Matching full names: ${fullNames}.`,
+        `Ambiguous tool "${toolName}" for domain "${domainLabel}". Matches: ${fullNames}.`,
       );
     }
-    const available = formatLimitedList(pluginTools.map((tool) => tool.name));
+    const available = formatLimitedList(domainTools.map((tool) => tool.name));
     throw new Error(
-      `Tool "${toolName}" not found for plugin "${plugin}". Available tools: ${available || 'none'}. Run \`rozenite mcp list-domains --limit 20 --json\`, then \`rozenite mcp <pluginDomain> list-tools --limit 20 --json\`, and finally \`rozenite mcp <pluginDomain> get-tool-schema --tool <name> --json\`.`,
+      `Tool "${toolName}" not found for domain "${domainLabel}". Available: ${available || 'none'}. Hint: rozenite mcp ${domainLabel} tools -j`,
     );
   }
 
@@ -181,7 +193,7 @@ const formatUnknownDomainError = (
     : '';
 
   return new Error(
-    `Unknown domain "${token}".${suggestionsText} Run \`rozenite mcp list-domains --limit 20 --json\` to see available domains.`,
+    `Unknown domain "${token}".${suggestionsText} Run \`rozenite mcp domains -j\` to list available domains.`,
   );
 };
 
@@ -195,65 +207,67 @@ const formatLimitedList = (items: string[]): string => {
 };
 
 const toDomainAction = (value: string): DomainAction | null => {
-  if (DOMAIN_ACTIONS.includes(value as DomainAction)) {
-    return value as DomainAction;
-  }
-
-  return null;
+  const normalized = value.trim().toLowerCase();
+  return (DOMAIN_ACTION_ALIASES as Record<string, DomainAction>)[normalized] || null;
 };
 
-const generatePluginDomainGuide = (
+const resolveDomainContext = async (
+  client: HttpMCPClient,
+  domainToken: string,
+): Promise<{ resolvedDomain: DomainDefinition; domainTools: MCPTool[] }> => {
+  const tools = await client.getTools();
+  const runtimeDomains = buildRuntimePluginDomains(tools);
+  const knownDomains = [...STATIC_DOMAINS, ...runtimeDomains];
+  const resolvedDomain = resolveDomainToken(domainToken, knownDomains);
+
+  if (!resolvedDomain) {
+    throw formatUnknownDomainError(domainToken, knownDomains);
+  }
+
+  return {
+    resolvedDomain,
+    domainTools: getDomainToolsByDefinition(tools, resolvedDomain),
+  };
+};
+
+const generateDomainGuide = (
   domain: DomainDefinition,
-  pluginTools: MCPTool[],
+  domainTools: MCPTool[],
 ): string => {
-  const visibleTools = pluginTools.slice(0, PLUGIN_DOMAIN_GUIDE_MAX_TOOLS);
-  const truncated = pluginTools.length > visibleTools.length;
+  const visibleTools = domainTools.slice(0, PLUGIN_DOMAIN_GUIDE_MAX_TOOLS);
+  const truncated = domainTools.length > visibleTools.length;
 
   const lines: string[] = [
-    `# Plugin Domain: ${domain.id}`,
+    `# Domain: ${domain.id}`,
     '',
-    'Use this domain for runtime plugin tools discovered from the connected device.',
+    domain.kind === 'plugin'
+      ? 'Runtime plugin tools discovered from the connected device.'
+      : 'Built-in MCP tools discovered from the connected device.',
     '',
-    '## Domain Metadata',
-    `- Domain token: \`${domain.id}\``,
-    `- Plugin ID: \`${domain.pluginId || 'unknown'}\``,
+    '## Metadata',
+    `- Token: \`${domain.id}\``,
+    `- Kind: \`${domain.kind}\``,
+    ...(domain.pluginId ? [`- Plugin ID: \`${domain.pluginId}\``] : []),
     '',
-    '## Command Surface',
-    `- \`rozenite mcp ${domain.id} list-tools --limit 20 --json [--deviceId <id>]\``,
-    `- \`rozenite mcp ${domain.id} get-tool-schema --tool <name> --json [--deviceId <id>]\``,
-    `- \`rozenite mcp ${domain.id} call-tool --tool <name> --args '<json>' --json [--deviceId <id>]\``,
+    '## Commands',
+    `- \`rozenite mcp ${domain.id} tools -n 20 -j [--deviceId <id>]\``,
+    `- \`rozenite mcp ${domain.id} schema -t <name> -j [--deviceId <id>]\``,
+    `- \`rozenite mcp ${domain.id} call -t <name> -a '<json>' -j [--deviceId <id>] [-p <n>] [-m <n>]\``,
     '',
-    '## Tool Naming Guidance',
-    '- `--tool` accepts a full name or short name.',
-    '- If a short name is ambiguous, use the full tool name.',
-    '- Prefer `get-tool-schema` before first invocation.',
-    '',
-    '## Available Tools',
+    '## Tools',
   ];
 
   if (visibleTools.length === 0) {
-    lines.push('- No tools are currently available for this plugin domain.');
+    lines.push('- No tools are currently available for this domain.');
   } else {
     for (const tool of visibleTools) {
-      lines.push(
-        `- \`${tool.name}\` (short: \`${inferToolShortName(tool.name)}\`)`,
-      );
+      lines.push(`- \`${tool.name}\` (short: \`${inferToolShortName(tool.name)}\`)`);
     }
   }
 
   if (truncated) {
-    lines.push(
-      `- Output truncated to ${PLUGIN_DOMAIN_GUIDE_MAX_TOOLS} tools (total: ${pluginTools.length}).`,
-    );
+    lines.push(`- Truncated to ${PLUGIN_DOMAIN_GUIDE_MAX_TOOLS} of ${domainTools.length} tools.`);
   }
-
-  lines.push('');
-  lines.push('## Example');
-  lines.push(`1. \`rozenite mcp ${domain.id} list-tools --limit 20 --json\``);
-  lines.push(`2. \`rozenite mcp ${domain.id} get-tool-schema --tool <name> --json\``);
-  lines.push(
-    `3. \`rozenite mcp ${domain.id} call-tool --tool <name> --args '{}' --json\``,
-  );
 
   return lines.join('\n');
 };
@@ -261,15 +275,17 @@ const generatePluginDomainGuide = (
 const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
   mcpCommand
     .command('* [action] [rest...]')
-    .description('Dynamic plugin domain commands')
-    .option('--tool <name>', 'Tool name or short tool name')
-    .option('--args <json>', 'Tool arguments as JSON object', '{}')
-    .option('--fields <csv>', `Fields to include (${TOOL_LIST_FIELDS.join(', ')})`)
-    .option('--verbose', 'Include all supported fields')
-    .option('--limit <n>', 'Page size (default 20, max 100)')
-    .option('--cursor <token>', 'Opaque cursor from previous page')
-    .option('--json', 'Output JSON')
-    .option('--deviceId <id>', 'Target Metro device ID')
+    .description('Domain commands')
+    .option('-t, --tool <name>', 'Tool name or short tool name')
+    .option('-a, --args <json>', 'Tool arguments as JSON object', '{}')
+    .option('-f, --fields <csv>', `Fields to include (${TOOL_LIST_FIELDS.join(', ')})`)
+    .option('-v, --verbose', 'Include all supported fields')
+    .option('-n, --limit <n>', 'Page size (default 20, max 100)')
+    .option('-c, --cursor <token>', 'Opaque cursor from previous page')
+    .option('-p, --pages <n>', 'Auto-follow paged tool responses for up to N pages')
+    .option('-m, --max-items <n>', 'Auto-pagination item cap (requires --pages)')
+    .option('-j, --json', 'Output JSON')
+    .option('-d, --deviceId <id>', 'Target Metro device ID')
     .action(async (
       domainToken: string,
       actionToken?: string | string[],
@@ -287,24 +303,22 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
       }
 
       if (!actionTokenString) {
-        const isActionInDomainPosition = DOMAIN_ACTIONS.includes(
-          domainToken as DomainAction,
-        );
-        if (isActionInDomainPosition) {
+        const actionInDomainPosition = toDomainAction(domainToken);
+        if (actionInDomainPosition) {
           throw new Error(
-            `Missing domain before action "${domainToken}". Use \`rozenite mcp <domain> ${domainToken} --json\`. Discover domains with \`rozenite mcp list-domains --json\`.`,
+            `Missing domain before action "${domainToken}". Use: rozenite mcp <domain> ${domainToken} -j`,
           );
         }
 
         throw new Error(
-          `Missing action for domain "${domainToken}". Expected one of: ${DOMAIN_ACTIONS.join(', ')}. Use \`rozenite mcp ${domainToken} <action> --json\`.`,
+          `Missing action for domain "${domainToken}". Expected: ${DOMAIN_ACTION_HINT}.`,
         );
       }
 
       const action = actionTokenString ? toDomainAction(actionTokenString) : null;
       if (!action) {
         throw new Error(
-          `Unknown domain action "${actionTokenString}". Expected one of: ${DOMAIN_ACTIONS.join(', ')}`,
+          `Unknown domain action "${actionTokenString}". Expected: ${DOMAIN_ACTION_HINT}.`,
         );
       }
 
@@ -312,15 +326,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
       const options = getConnectionOptions(activeCommand);
 
       const result = await withClient(options, async (client, selectedDeviceId) => {
-        const tools = await client.getTools();
-        const runtimeDomains = buildRuntimePluginDomains(tools);
-
-        const resolvedDomain = resolveDomainToken(domainToken, runtimeDomains);
-        if (!resolvedDomain || !resolvedDomain.pluginId) {
-          throw formatUnknownDomainError(domainToken, [...STATIC_DOMAINS, ...runtimeDomains]);
-        }
-
-        const pluginTools = getPluginTools(tools, resolvedDomain.pluginId);
+        const { resolvedDomain, domainTools } = await resolveDomainContext(client, domainToken);
 
         if (action === 'list-tools') {
           const fields = parseFields(
@@ -330,7 +336,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
             !!dynamicOptions.verbose,
           );
           const limit = parseLimit(dynamicOptions.limit);
-          const rows = pluginTools
+          const rows = domainTools
             .map<ToolListRow>((tool) => ({
               name: tool.name,
               shortName: inferToolShortName(tool.name),
@@ -340,7 +346,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
           const projected = projectRows(rows, fields);
           const paged = paginateRows(projected, {
             kind: 'tools',
-            scope: `plugin:${resolvedDomain.pluginId}`,
+            scope: `domain:${resolvedDomain.id}`,
             limit,
             cursor: dynamicOptions.cursor,
           });
@@ -348,27 +354,23 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
           return {
             domain: resolvedDomain.id,
             selectedDeviceId,
-            pluginId: resolvedDomain.pluginId,
+            ...(resolvedDomain.pluginId ? { pluginId: resolvedDomain.pluginId } : {}),
             items: paged.items,
             page: paged.page,
           };
         }
 
         if (!dynamicOptions.tool) {
-          throw new Error('--tool is required for get-tool-schema and call-tool');
+          throw new Error('--tool is required for schema/get-tool-schema and call/call-tool');
         }
 
-        const selectedTool = resolvePluginTool(
-          pluginTools,
-          resolvedDomain.pluginId,
-          dynamicOptions.tool,
-        );
+        const selectedTool = resolveDomainTool(domainTools, resolvedDomain.id, dynamicOptions.tool);
 
         if (action === 'get-tool-schema') {
           return {
             domain: resolvedDomain.id,
             selectedDeviceId,
-            pluginId: resolvedDomain.pluginId,
+            ...(resolvedDomain.pluginId ? { pluginId: resolvedDomain.pluginId } : {}),
             tool: {
               name: selectedTool.name,
               shortName: inferToolShortName(selectedTool.name),
@@ -379,16 +381,22 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
         }
 
         const parsedArgs = parseJsonArgs(dynamicOptions.args);
+        const autoPagination = resolveAutoPaginationConfig(dynamicOptions);
         const payload = {
           ...(parsedArgs as Record<string, unknown>),
           ...(dynamicOptions.deviceId ? { deviceId: selectedDeviceId } : {}),
         };
-        const toolResult = await client.callTool(selectedTool.name, payload);
+        const toolResult = await callToolWithOptionalPagination(
+          client,
+          selectedTool.name,
+          payload,
+          autoPagination,
+        );
 
         return {
           domain: resolvedDomain.id,
           selectedDeviceId,
-          pluginId: resolvedDomain.pluginId,
+          ...(resolvedDomain.pluginId ? { pluginId: resolvedDomain.pluginId } : {}),
           tool: {
             name: selectedTool.name,
             shortName: inferToolShortName(selectedTool.name),
@@ -412,7 +420,7 @@ export const registerMCPCommand = (program: Command): void => {
   mcpCommand
     .command('targets')
     .description('List connected devices from MCP backend')
-    .option('--json', 'Output JSON')
+    .option('-j, --json', 'Output JSON')
     .action(async (_args, command: Command) => {
       const options = getConnectionOptions(command);
       const targets = await getMetroTargets(options.host, options.port);
@@ -437,13 +445,14 @@ export const registerMCPCommand = (program: Command): void => {
 
   mcpCommand
     .command('list-domains')
-    .description('List available runtime plugin domains')
-    .option('--fields <csv>', `Fields to include (${DOMAIN_LIST_FIELDS.join(', ')})`)
-    .option('--verbose', 'Include all supported fields')
-    .option('--limit <n>', 'Page size (default 20, max 100)')
-    .option('--cursor <token>', 'Opaque cursor from previous page')
-    .option('--json', 'Output JSON')
-    .option('--deviceId <id>', 'Target Metro device ID')
+    .alias('domains')
+    .description('List available static and plugin domains')
+    .option('-f, --fields <csv>', `Fields to include (${DOMAIN_LIST_FIELDS.join(', ')})`)
+    .option('-v, --verbose', 'Include all supported fields')
+    .option('-n, --limit <n>', 'Page size (default 20, max 100)')
+    .option('-c, --cursor <token>', 'Opaque cursor from previous page')
+    .option('-j, --json', 'Output JSON')
+    .option('-d, --deviceId <id>', 'Target Metro device ID')
     .action(async (_args: ListDomainsOptions, command: Command) => {
       const options = getConnectionOptions(command);
       const listOptions = command.optsWithGlobals<ListDomainsOptions>();
@@ -488,10 +497,11 @@ export const registerMCPCommand = (program: Command): void => {
 
   mcpCommand
     .command('load-domain')
+    .alias('domain')
     .description('Load runtime-generated domain usage guide')
     .argument('<domain>', 'Domain name')
-    .option('--json', 'Output JSON')
-    .option('--deviceId <id>', 'Target Metro device ID')
+    .option('-j, --json', 'Output JSON')
+    .option('-d, --deviceId <id>', 'Target Metro device ID')
     .action(async (domainToken: string, command?: Command) => {
       const activeCommand = command as Command;
       const normalizedDomain = domainToken.trim();
@@ -501,21 +511,13 @@ export const registerMCPCommand = (program: Command): void => {
 
       const options = getConnectionOptions(activeCommand);
       const result = await withClient(options, async (client, selectedDeviceId) => {
-        const tools = await client.getTools();
-        const runtimeDomains = buildRuntimePluginDomains(tools);
-        const resolvedDomain = resolveDomainToken(normalizedDomain, runtimeDomains);
-
-        if (!resolvedDomain || !resolvedDomain.pluginId) {
-          throw formatUnknownDomainError(normalizedDomain, [...STATIC_DOMAINS, ...runtimeDomains]);
-        }
-
-        const pluginTools = getPluginTools(tools, resolvedDomain.pluginId);
-        const content = generatePluginDomainGuide(resolvedDomain, pluginTools);
+        const { resolvedDomain, domainTools } = await resolveDomainContext(client, normalizedDomain);
+        const content = generateDomainGuide(resolvedDomain, domainTools);
 
         return {
           domain: resolvedDomain.id,
           kind: resolvedDomain.kind,
-          pluginId: resolvedDomain.pluginId,
+          ...(resolvedDomain.pluginId ? { pluginId: resolvedDomain.pluginId } : {}),
           selectedDeviceId,
           content,
         };

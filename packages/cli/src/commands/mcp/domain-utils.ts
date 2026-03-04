@@ -1,11 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { MCPTool } from './types.js';
 import type { DomainDefinition } from './types.js';
-
-const DOMAIN_KEYWORDS = {
-  network: ['network', 'http', 'request', 'response'],
-  react: ['react', 'component', 'props', 'tree'],
-};
+import { STATIC_DOMAIN_TOOL_PREFIXES } from './constants.js';
 
 const splitByDelimiters = (value: string): string[] => {
   return value
@@ -14,34 +10,9 @@ const splitByDelimiters = (value: string): string[] => {
     .filter(Boolean);
 };
 
-const lowerIncludesAny = (value: string, needles: string[]): boolean => {
-  return needles.some((needle) => value.includes(needle));
-};
-
 const getScopedPlugin = (name: string): string | null => {
   const scoped = name.match(/^(@[^/]+\/[^/:.#]+)/);
   return scoped?.[1] ?? null;
-};
-
-export const inferDomain = (tool: MCPTool): 'network' | 'react' | 'plugin' => {
-  const name = tool.name.toLowerCase();
-  const description = tool.description.toLowerCase();
-
-  if (
-    lowerIncludesAny(name, DOMAIN_KEYWORDS.network) ||
-    lowerIncludesAny(description, DOMAIN_KEYWORDS.network)
-  ) {
-    return 'network';
-  }
-
-  if (
-    lowerIncludesAny(name, DOMAIN_KEYWORDS.react) ||
-    lowerIncludesAny(description, DOMAIN_KEYWORDS.react)
-  ) {
-    return 'react';
-  }
-
-  return 'plugin';
 };
 
 export const inferPluginId = (toolName: string): string => {
@@ -67,11 +38,24 @@ export const inferToolShortName = (toolName: string): string => {
   return segments[segments.length - 1];
 };
 
-export const getDomainTools = (
+export const getStaticDomainPrefix = (domainId: string): string | undefined => {
+  return STATIC_DOMAIN_TOOL_PREFIXES[domainId];
+};
+
+export const getDomainToolsByDefinition = (
   tools: MCPTool[],
-  domain: 'network' | 'react',
+  domain: DomainDefinition,
 ): MCPTool[] => {
-  return tools.filter((tool) => inferDomain(tool) === domain);
+  if (domain.kind === 'plugin' && domain.pluginId) {
+    return tools.filter((tool) => inferPluginId(tool.name) === domain.pluginId);
+  }
+
+  const staticPrefix = getStaticDomainPrefix(domain.id);
+  if (!staticPrefix) {
+    return [];
+  }
+
+  return tools.filter((tool) => tool.name.startsWith(staticPrefix));
 };
 
 export const encodePluginDomainSlug = (pluginId: string): string => {
@@ -91,9 +75,19 @@ const getCollisionHash = (pluginId: string): string => {
 };
 
 export const buildRuntimePluginDomains = (tools: MCPTool[]): DomainDefinition[] => {
+  const staticPrefixes = new Set(Object.values(STATIC_DOMAIN_TOOL_PREFIXES));
   const pluginIds = Array.from(
     new Set(
-      tools.map((tool) => inferPluginId(tool.name)),
+      tools
+        .filter((tool) => {
+          for (const prefix of staticPrefixes) {
+            if (tool.name.startsWith(prefix)) {
+              return false;
+            }
+          }
+          return true;
+        })
+        .map((tool) => inferPluginId(tool.name)),
     ),
   ).sort();
 

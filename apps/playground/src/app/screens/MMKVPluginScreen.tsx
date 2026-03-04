@@ -11,7 +11,6 @@ import {
   Modal,
 } from 'react-native';
 import type { MMKV } from 'react-native-mmkv';
-import { useRozeniteMCPTool } from '@rozenite/mcp-bridge';
 import {
   initializeMMKVStorages,
   userStorage,
@@ -440,90 +439,6 @@ export const MMKVPluginScreen = () => {
   );
 
   const currentStorage = storages.find((s) => s.id === selectedStorage);
-
-  useRozeniteMCPTool({
-    tool: {
-      name: 'list_mmkv_keys',
-      description: 'List all keys in all MMKV storages',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          lorem: { type: 'string', description: 'Lorem ipsum' },
-        },
-        required: ['lorem'],
-      },
-    },
-    handler: () => {
-      const result: Record<string, string[]> = {};
-      Object.entries(storageInstances).forEach(([id, instance]) => {
-        result[id] = instance.getAllKeys();
-      });
-      return result;
-    },
-  });
-
-  useRozeniteMCPTool({
-    tool: {
-      name: 'read_mmkv_value',
-      description: 'Read a value from a specific MMKV storage',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          storageId: { type: 'string', description: 'The ID of the storage' },
-          key: { type: 'string', description: 'The key to read' },
-          lorem: { type: 'string', description: 'Lorem ipsum' },
-        },
-        required: ['storageId', 'key', 'lorem'],
-      },
-    },
-    handler: ({ storageId, key }: { storageId: string; key: string }) => {
-      const instance =
-        storageInstances[storageId as keyof typeof storageInstances];
-      if (!instance) {
-        throw new Error(`Storage ${storageId} not found`);
-      }
-      return getMMKVEntry(instance, key);
-    },
-  });
-
-  useRozeniteMCPTool({
-    tool: {
-      name: 'set_mmkv_value',
-      description: 'Set a value in a specific MMKV storage',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          storageId: { type: 'string', description: 'The ID of the storage' },
-          key: { type: 'string', description: 'The key to set' },
-          value: {
-            type: 'string',
-            description: 'The value to set (stringified for non-string types)',
-          },
-          type: {
-            type: 'string',
-            enum: ['string', 'number', 'boolean', 'buffer'],
-            description: 'The type of the value',
-          },
-          lorem: { type: 'string', description: 'Lorem ipsum' },
-        },
-        required: ['storageId', 'key', 'value', 'type', 'lorem'],
-      },
-    },
-    handler: ({
-      storageId,
-      key,
-      value,
-      type,
-    }: {
-      storageId: string;
-      key: string;
-      value: string;
-      type: MMKVEntryType;
-    }) => {
-      addEntry(storageId, key, value, type);
-      return { success: true };
-    },
-  });
 
   return (
     <View style={styles.container}>

@@ -82,6 +82,23 @@ function App() {
 
 Start your development server and open React Native DevTools. You'll find the "React Navigation" panel in the DevTools interface.
 
+## MCP Tools (LLM Integration)
+
+When this plugin is active, it registers MCP tools under the `@rozenite/react-navigation-plugin` domain. This lets LLMs inspect current navigation state and interact with navigation just like the DevTools panel.
+
+Available tools:
+
+- `navigate`: high-level route navigation by route name with optional params.
+- `go-back`: high-level back navigation (`count` defaults to `1`).
+- `get-root-state`: returns `{ state, hasState }`.
+- `get-focused-route`: returns focused route details (`routePath`, `focusedRoute`, `navigatorPath`, `params`).
+- `list-actions`: returns paginated action history (`offset`, `limit`, `total`, `items`).
+- `reset-root`: resets navigation state to a provided snapshot.
+- `open-link`: opens a deep link URL.
+- `dispatch-action`: low-level arbitrary React Navigation action dispatch (for example `NAVIGATE` or `JUMP_TO`).
+
+The action history used for MCP reads is an in-memory rolling buffer (newest first) capped at 100 entries.
+
 ## Made with ❤️ at Callstack
 
 `rozenite` is an open source project and will always remain free to use. If you think it's cool, please star it 🌟.

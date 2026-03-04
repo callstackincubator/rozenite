@@ -17,6 +17,7 @@ export type RootStackParamList = {
     source: string;
   };
   SuccessiveScreensStack: undefined;
+  PerfProblem: undefined;
 };
 
 export type BottomTabParamList = {

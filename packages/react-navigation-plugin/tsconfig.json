@@ -20,6 +20,9 @@
   "exclude": ["node_modules", "dist", "build"],
   "references": [
     {
+      "path": "../mcp-bridge"
+    },
+    {
       "path": "../plugin-bridge"
     },
     {

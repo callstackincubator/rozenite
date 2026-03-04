@@ -6,8 +6,11 @@ import { RozeniteConfig } from './index.js';
 import { getMCPHandler } from './mcp-integration.js';
 import { logger } from './logger.js';
 import type { DevToolsPluginMessage } from './mcp/types.js';
+import { extractConsoleMessage } from './mcp/console/extract.js';
+import type { ConsoleMessageInput } from './mcp/console/types.js';
 
 const require = createRequire(import.meta.url);
+let nextRuntimeEvaluateMessageId = 1;
 
 type RecordValue = Record<string, unknown>;
 
@@ -31,6 +34,8 @@ type BindingPayload = {
 
 type MCPHandlerLike = {
   handleDeviceMessage: (deviceId: string, message: DevToolsPluginMessage) => void;
+  captureConsoleMessage: (deviceId: string, message: ConsoleMessageInput) => void;
+  captureReactDevToolsMessage: (deviceId: string, message: unknown) => void | Promise<void>;
 };
 
 const getRecord = (value: unknown): RecordValue | null => {
@@ -131,6 +136,11 @@ export const composeInspectorHandlers = (
 ): InspectorHandler => {
   return {
     handleDeviceMessage: (message: unknown) => {
+      const consoleMessage = extractConsoleMessage(message);
+      if (consoleMessage) {
+        mcpHandler.captureConsoleMessage(deviceId, consoleMessage);
+      }
+
       const bindingPayload = parseRozeniteBindingPayload(message);
       if (bindingPayload?.domain === 'rozenite') {
         logMCPMessageMetadata('device_to_node', bindingPayload.message);
@@ -139,6 +149,9 @@ export const composeInspectorHandlers = (
           bindingPayload.message as DevToolsPluginMessage,
         );
         return true;
+      }
+      if (bindingPayload?.domain === 'react-devtools') {
+        void mcpHandler.captureReactDevToolsMessage(deviceId, bindingPayload.message);
       }
 
       return originalHandler?.handleDeviceMessage?.(message);
@@ -161,8 +174,8 @@ export const patchDevMiddleware = (options: RozeniteConfig): void => {
     if (options.enableMCP && args[0]) {
       const originalCustomHandler =
         args[0].unstable_customInspectorMessageHandler as
-          | ((connection: Connection) => InspectorHandler | undefined)
-          | undefined;
+        | ((connection: Connection) => InspectorHandler | undefined)
+        | undefined;
 
       const previousEventReporter = args[0].unstable_eventReporter;
       args[0].unstable_eventReporter = {
@@ -188,17 +201,23 @@ export const patchDevMiddleware = (options: RozeniteConfig): void => {
         const originalHandler = originalCustomHandler?.(connection);
         const deviceId = connection.device.id;
         const deviceName = connection.device.name;
+        const sendDomainMessage = (domain: string, message: unknown): void => {
+          connection.device.sendMessage({
+            id: nextRuntimeEvaluateMessageId++,
+            method: 'Runtime.evaluate',
+            params: {
+              expression: `__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.sendMessage(${JSON.stringify(domain)}, ${JSON.stringify(JSON.stringify(message))})`,
+            },
+          });
+        };
 
         mcpHandler.connectDevice(deviceId, deviceName, {
           sendMessage: (message: unknown) => {
             logMCPMessageMetadata('node_to_device', message);
-            connection.device.sendMessage({
-              id: Math.floor(Math.random() * 100000),
-              method: 'Runtime.evaluate',
-              params: {
-                expression: `__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.sendMessage('rozenite', ${JSON.stringify(JSON.stringify(message))})`,
-              },
-            });
+            sendDomainMessage('rozenite', message);
+          },
+          sendReactDevToolsMessage: (message: { event: string; payload: unknown }) => {
+            sendDomainMessage('react-devtools', message);
           },
         }, {
           reactNativeVersion,

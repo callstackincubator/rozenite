@@ -65,4 +65,14 @@ describe('MCP domain utils', () => {
       'Runtime tools exposed by plugin "@rozenite/mmkv-plugin".',
     );
   });
+
+  it('does not create plugin domains for static Console.* tools', () => {
+    const domains = buildRuntimePluginDomains([
+      tool('Console.getMessages'),
+      tool('app.echo'),
+    ]);
+
+    expect(domains.some((domain) => domain.pluginId === 'Console')).toBe(false);
+    expect(domains.some((domain) => domain.pluginId === 'app')).toBe(true);
+  });
 });

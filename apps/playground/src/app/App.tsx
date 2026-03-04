@@ -4,7 +4,6 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
-import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
@@ -22,26 +21,20 @@ import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
 import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
 import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
+import { PerfProblemScreen } from './screens/PerfProblemScreen';
 import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
 import { store } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
-import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
-
-withOnBootNetworkActivityRecording();
+import { useMCPPlaygroundTools } from './useMCPPlaygroundTools';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Wrapper = () => {
   useTanStackQueryDevTools(queryClient);
-  useNetworkActivityDevTools({
-    clientUISettings: {
-      showUrlAsName: true,
-    },
-  });
   useMMKVDevTools({
     // @ts-expect-error - This is fine as in production MMKV plugin will pick up installed version automatically.
     storages: mmkvStorages,
@@ -49,6 +42,7 @@ const Wrapper = () => {
   });
   usePerformanceMonitorDevTools();
   useRequireProfilerDevTools();
+  useMCPPlaygroundTools();
 
   return (
     <Stack.Navigator
@@ -94,6 +88,7 @@ const Wrapper = () => {
         name="SuccessiveScreensStack"
         component={SuccessiveScreensNavigator}
       />
+      <Stack.Screen name="PerfProblem" component={PerfProblemScreen} />
     </Stack.Navigator>
   );
 };
@@ -110,6 +105,7 @@ const linking = {
       RequireProfilerTest: 'require-profiler-test',
       Config: 'config',
       BottomTabs: 'tabs',
+      PerfProblem: 'perf-problem',
       SuccessiveScreensStack: {
         path: 'successive',
         screens: {
