@@ -29,9 +29,19 @@ const jsonTreeTheme = {
   base0F: '#f97316', // text-orange-500
 };
 
-const jsonSafeParse = (value: string): unknown | null => {
+const jsonSafeParse = (value: string): Record<string, unknown> | unknown[] | null => {
   try {
-    return JSON.parse(value);
+    const parsed = JSON.parse(value) as unknown;
+
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, unknown>;
+    }
+
+    return null;
   } catch {
     return null;
   }
