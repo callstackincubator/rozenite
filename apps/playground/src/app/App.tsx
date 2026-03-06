@@ -25,7 +25,7 @@ import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
 import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
-import { store } from './store';
+import { primaryStore } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
@@ -128,7 +128,7 @@ export const App = () => {
   });
 
   return (
-    <Provider store={store}>
+    <Provider store={primaryStore}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider style={{ backgroundColor: '#0a0a0a' }}>
           <NavigationContainer ref={navigationRef} linking={linking}>
