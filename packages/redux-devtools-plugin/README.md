@@ -4,7 +4,7 @@
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
-The Rozenite Redux DevTools Plugin provides Redux state inspection and debugging capabilities within your React Native DevTools environment. It offers a partial Redux DevTools experience, including state inspection and action history (time travel and action dispatch are currently unavailable in remote mode).
+The Rozenite Redux DevTools Plugin provides Redux state inspection and debugging capabilities within your React Native DevTools environment, including action dispatch and time-travel controls.
 
 ![Redux DevTools Plugin](https://rozenite.dev/redux-devtools-plugin.png)
 
@@ -19,21 +19,11 @@ The Rozenite Redux DevTools Plugin provides Redux state inspection and debugging
 
 ### 1. Install the Plugin
 
-Install the Redux DevTools plugin and peer dependencies:
+Install the Redux DevTools plugin:
 
 ```bash
 npm install -D @rozenite/redux-devtools-plugin
-npm install react-native-get-random-values
 ```
-
-**Important**: After installing `react-native-get-random-values`, you need to import it at the very top of your entry file (usually `index.js` or `App.js`):
-
-```javascript
-import 'react-native-get-random-values';
-// ... rest of your imports
-```
-
-For more detailed setup instructions, please refer to the [react-native-get-random-values documentation](https://github.com/LinusU/react-native-get-random-values).
 
 ### 2. Set up the Store Enhancer
 
@@ -75,28 +65,20 @@ export default store;
 
 ##### Configuration Options
 
-To see more actions in the Redux DevTools, increase the `maxAge` option:
+To distinguish multiple stores, set a custom `name` per store:
+
+```ts
+const appStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'app-store' });
+const sessionStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'session-store' });
+```
+
+To see more actions in the Redux DevTools, increase `maxAge`:
 
 ```ts
 rozeniteDevToolsEnhancer({ maxAge: 150 }) // Default is 50
 ```
 
-### 3. Configure Metro
-
-Wrap your Metro configuration with `withRozeniteReduxDevTools`:
-
-```typescript
-// metro.config.js
-import { withRozeniteReduxDevTools } from '@rozenite/redux-devtools-plugin/metro';
-
-export default withRozeniteReduxDevTools({
-  // your existing metro config
-});
-```
-
-This setup enables the WebSocket relay that allows the Redux DevTools to communicate with your React Native app.
-
-### 4. Access DevTools
+### 3. Access DevTools
 
 Start your development server and open React Native DevTools. You'll find the "Redux DevTools" panel in the DevTools interface.
 
