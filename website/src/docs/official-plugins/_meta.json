@@ -46,6 +46,11 @@
   },
   {
     "type": "file",
+    "name": "storage",
+    "label": "Storage"
+  },
+  {
+    "type": "file",
     "name": "require-profiler",
     "label": "Require Profiler"
   }
