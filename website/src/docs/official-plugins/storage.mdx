@@ -1,0 +1,122 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Storage Plugin
+
+The Storage plugin provides a generic storage inspector for React Native DevTools. It supports multiple adapters and multiple storages per adapter, so you can inspect MMKV, AsyncStorage, and SecureStore in one panel.
+
+## Installation
+
+Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
+
+Install the plugin:
+
+<PackageManagerTabs command="install -D @rozenite/storage-plugin" />
+
+Install adapter peer dependencies for the storages you use:
+
+<PackageManagerTabs command="install -D react-native-mmkv @react-native-async-storage/async-storage expo-secure-store" />
+
+## Base Setup
+
+```ts title="App.tsx"
+import {
+  createAsyncStorageAdapter,
+  createExpoSecureStorageAdapter,
+  createMMKVStorageAdapter,
+  useRozeniteStoragePlugin,
+} from '@rozenite/storage-plugin';
+
+const storages = [
+  createMMKVStorageAdapter({
+    storages: {
+      user: userStorage,
+      cache: cacheStorage,
+    },
+  }),
+  createAsyncStorageAdapter({
+    storage: AsyncStorage,
+  }),
+  createExpoSecureStorageAdapter({
+    storage: SecureStore,
+    keys: ['token', 'session'],
+  }),
+];
+
+function App() {
+  useRozeniteStoragePlugin({ storages });
+  return <YourApp />;
+}
+```
+
+## Adapter: MMKV
+
+```ts title="App.tsx"
+createMMKVStorageAdapter({
+  adapterId: 'mmkv',
+  adapterName: 'MMKV',
+  storages: {
+    'user-storage': userStorage,
+    'settings-storage': settingsStorage,
+  },
+  blacklist: {
+    'user-storage': /token|secret|password/,
+  },
+});
+```
+
+### Limitations
+
+- MMKV v4 arrays are not supported because storage IDs are not readable from instances; pass a record (`{ id: instance }`) instead.
+- Buffer support depends on MMKV runtime behavior and value decoding heuristics.
+
+## Adapter: AsyncStorage
+
+```ts title="App.tsx"
+// v2 style
+createAsyncStorageAdapter({
+  storage: AsyncStorage,
+});
+
+// v3 style (instance-based)
+createAsyncStorageAdapter({
+  storages: {
+    auth: authStorageInstance,
+    cache: {
+      storage: cacheStorageInstance,
+      name: 'Cache Instance',
+      blacklist: /debug|temp/,
+    },
+  },
+});
+```
+
+## Adapter: Expo SecureStore
+
+```ts title="App.tsx"
+createExpoSecureStorageAdapter({
+  storage: SecureStore,
+  keys: async () => ['token', 'session', 'refreshToken'],
+  storageName: 'Auth Secure Storage',
+});
+```
+
+### Limitations
+
+- SecureStore does not provide key enumeration; you must provide known keys via `keys`.
+
+## Per-Storage Blacklist
+
+Blacklist is configured per storage and matched against the key in that storage.
+
+```ts title="App.tsx"
+createAsyncStorageAdapter({
+  storages: {
+    cache: {
+      storage: cacheStorageInstance,
+      blacklist: /temp|debug|internal/,
+    },
+  },
+});
+```
+
+**Next**: See [MMKV](./mmkv.md), [Network Activity](./network-activity.md), and [Plugin Development](../plugin-development/plugin-development.md).
