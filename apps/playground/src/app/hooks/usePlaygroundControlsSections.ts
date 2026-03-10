@@ -4,10 +4,16 @@ import { useControlsPluginStore } from '../stores/controlsPluginStore';
 
 export const usePlaygroundControlsSections = () => {
   const counter = useControlsPluginStore((state) => state.counter);
+  const selectedEnvironment = useControlsPluginStore(
+    (state) => state.selectedEnvironment
+  );
   const status = useControlsPluginStore((state) => state.status);
   const lastActionAt = useControlsPluginStore((state) => state.lastActionAt);
   const notes = useControlsPluginStore((state) => state.notes);
   const featureFlags = useControlsPluginStore((state) => state.featureFlags);
+  const selectEnvironment = useControlsPluginStore(
+    (state) => state.selectEnvironment
+  );
   const toggleFlag = useControlsPluginStore((state) => state.toggleFlag);
   const incrementCounter = useControlsPluginStore((state) => state.incrementCounter);
   const markSynced = useControlsPluginStore((state) => state.markSynced);
@@ -41,6 +47,12 @@ export const usePlaygroundControlsSections = () => {
                 title: 'Status',
                 value: status,
               },
+              {
+                id: 'environment',
+                type: 'text' as const,
+                title: 'Environment',
+                value: selectedEnvironment,
+              },
             ]
           : [
               {
@@ -54,6 +66,12 @@ export const usePlaygroundControlsSections = () => {
                 type: 'text' as const,
                 title: 'Counter',
                 value: String(counter),
+              },
+              {
+                id: 'environment',
+                type: 'text' as const,
+                title: 'Environment',
+                value: selectedEnvironment,
               },
               {
                 id: 'last-action',
@@ -91,6 +109,22 @@ export const usePlaygroundControlsSections = () => {
             value: featureFlags.reverseDiagnostics,
             description: 'Reorders the diagnostics section to prove full snapshot replacement.',
             onToggle: (nextValue: boolean) => toggleFlag('reverseDiagnostics', nextValue),
+          },
+          {
+            id: 'environment-selector',
+            type: 'select' as const,
+            title: 'Environment',
+            value: selectedEnvironment,
+            description: 'Choose the backend target directly from DevTools.',
+            options: [
+              { label: 'Local', value: 'local' },
+              { label: 'Staging', value: 'staging' },
+              { label: 'Production', value: 'production' },
+            ],
+            onSelect: (nextValue: string) =>
+              selectEnvironment(
+                nextValue as 'local' | 'staging' | 'production'
+              ),
           },
         ],
       }),
@@ -141,6 +175,8 @@ export const usePlaygroundControlsSections = () => {
       markSynced,
       notes.length,
       resetDemo,
+      selectEnvironment,
+      selectedEnvironment,
       status,
       toggleFlag,
     ]

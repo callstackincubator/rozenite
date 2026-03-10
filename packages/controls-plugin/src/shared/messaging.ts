@@ -13,8 +13,8 @@ export type ControlsInvokeActionEvent = {
   type: 'invoke-action';
   sectionId: string;
   itemId: string;
-  action: 'toggle' | 'press';
-  value?: boolean;
+  action: 'toggle' | 'press' | 'select';
+  value?: boolean | string;
 };
 
 export type ControlsEvent =

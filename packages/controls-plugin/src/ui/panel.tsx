@@ -63,6 +63,39 @@ const ButtonRow = ({
   );
 };
 
+const SelectRow = ({
+  sectionId,
+  item,
+  onSelect,
+}: {
+  sectionId: string;
+  item: Extract<ControlsItemSnapshot, { type: 'select' }>;
+  onSelect: (sectionId: string, itemId: string, value: string) => void;
+}) => {
+  return (
+    <div className="flex items-start justify-between gap-4 py-3">
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-gray-100">{item.title}</div>
+        {item.description ? (
+          <div className="mt-1 text-xs text-gray-400">{item.description}</div>
+        ) : null}
+      </div>
+      <select
+        className="min-w-[160px] rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-xs text-gray-200 outline-none transition focus:border-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+        value={item.value}
+        disabled={item.disabled}
+        onChange={(event) => onSelect(sectionId, item.id, event.target.value)}
+      >
+        {item.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
 const TextRow = ({
   item,
 }: {
@@ -88,11 +121,13 @@ const renderItem = ({
   item,
   onToggle,
   onPress,
+  onSelect,
 }: {
   sectionId: string;
   item: ControlsItemSnapshot;
   onToggle: (sectionId: string, itemId: string, value: boolean) => void;
   onPress: (sectionId: string, itemId: string) => void;
+  onSelect: (sectionId: string, itemId: string, value: string) => void;
 }) => {
   if (item.type === 'text') {
     return <TextRow item={item} />;
@@ -100,6 +135,10 @@ const renderItem = ({
 
   if (item.type === 'toggle') {
     return <ToggleRow sectionId={sectionId} item={item} onToggle={onToggle} />;
+  }
+
+  if (item.type === 'select') {
+    return <SelectRow sectionId={sectionId} item={item} onSelect={onSelect} />;
   }
 
   return <ButtonRow sectionId={sectionId} item={item} onPress={onPress} />;
@@ -162,6 +201,20 @@ export default function ControlsPanel() {
     });
   };
 
+  const handleSelect = (sectionId: string, itemId: string, value: string) => {
+    if (!client) {
+      return;
+    }
+
+    client.send('invoke-action', {
+      type: 'invoke-action',
+      sectionId,
+      itemId,
+      action: 'select',
+      value,
+    });
+  };
+
   return (
     <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
       <div className="flex items-center gap-2 border-b border-gray-700 bg-gray-800 p-2">
@@ -208,6 +261,7 @@ export default function ControlsPanel() {
                       item,
                       onToggle: handleToggle,
                       onPress: handlePress,
+                      onSelect: handleSelect,
                     })}
                   </div>
                 ))}

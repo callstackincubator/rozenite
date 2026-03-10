@@ -71,6 +71,18 @@ export const useRozeniteControlsPlugin = ({
           return;
         }
 
+        if (action === 'select') {
+          if (entry.type !== 'select' || typeof value !== 'string') {
+            console.warn(
+              `[Rozenite] Controls Plugin: Invalid select action payload for ${sectionId}/${itemId}.`
+            );
+            return;
+          }
+
+          await entry.onSelect(value);
+          return;
+        }
+
         if (entry.type !== 'button') {
           console.warn(
             `[Rozenite] Controls Plugin: Invalid press action payload for ${sectionId}/${itemId}.`

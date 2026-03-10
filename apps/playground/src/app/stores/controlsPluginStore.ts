@@ -8,10 +8,14 @@ type FeatureFlags = {
 
 type ControlsPluginState = {
   counter: number;
+  selectedEnvironment: 'local' | 'staging' | 'production';
   status: 'idle' | 'armed' | 'synced';
   lastActionAt: string | null;
   notes: string[];
   featureFlags: FeatureFlags;
+  selectEnvironment: (
+    environment: ControlsPluginState['selectedEnvironment']
+  ) => void;
   toggleFlag: (flag: keyof FeatureFlags, nextValue: boolean) => void;
   incrementCounter: () => void;
   markSynced: () => void;
@@ -29,10 +33,16 @@ const initialFeatureFlags: FeatureFlags = {
 
 export const useControlsPluginStore = create<ControlsPluginState>((set) => ({
   counter: 0,
+  selectedEnvironment: 'local',
   status: 'idle',
   lastActionAt: null,
   notes: [],
   featureFlags: initialFeatureFlags,
+  selectEnvironment: (selectedEnvironment) =>
+    set(() => ({
+      selectedEnvironment,
+      lastActionAt: formatTimestamp(new Date()),
+    })),
   toggleFlag: (flag, nextValue) =>
     set((state) => ({
       featureFlags: {
@@ -64,6 +74,7 @@ export const useControlsPluginStore = create<ControlsPluginState>((set) => ({
   resetDemo: () =>
     set(() => ({
       counter: 0,
+      selectedEnvironment: 'local',
       status: 'idle',
       lastActionAt: formatTimestamp(new Date()),
       notes: [],

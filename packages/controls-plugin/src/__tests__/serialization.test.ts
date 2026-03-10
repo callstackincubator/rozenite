@@ -28,6 +28,17 @@ describe('controls serialization', () => {
             title: 'Reset',
             onPress: vi.fn(),
           },
+          {
+            id: 'environment',
+            type: 'select',
+            title: 'Environment',
+            value: 'staging',
+            options: [
+              { label: 'Local', value: 'local' },
+              { label: 'Staging', value: 'staging' },
+            ],
+            onSelect: vi.fn(),
+          },
         ],
       }),
     ];
@@ -60,6 +71,18 @@ describe('controls serialization', () => {
             description: undefined,
             disabled: undefined,
           },
+          {
+            id: 'environment',
+            type: 'select',
+            title: 'Environment',
+            value: 'staging',
+            options: [
+              { label: 'Local', value: 'local' },
+              { label: 'Staging', value: 'staging' },
+            ],
+            description: undefined,
+            disabled: undefined,
+          },
         ],
       },
     ]);
@@ -68,6 +91,7 @@ describe('controls serialization', () => {
   it('builds an action registry for interactive items', async () => {
     const onToggle = vi.fn();
     const onPress = vi.fn();
+    const onSelect = vi.fn();
 
     const sections = [
       createSection({
@@ -87,6 +111,17 @@ describe('controls serialization', () => {
             title: 'Refresh',
             onPress,
           },
+          {
+            id: 'environment',
+            type: 'select',
+            title: 'Environment',
+            value: 'local',
+            options: [
+              { label: 'Local', value: 'local' },
+              { label: 'Staging', value: 'staging' },
+            ],
+            onSelect,
+          },
         ],
       }),
     ];
@@ -95,9 +130,13 @@ describe('controls serialization', () => {
 
     const toggleEntry = registry.get(getActionRegistryKey('controls', 'flag'));
     const buttonEntry = registry.get(getActionRegistryKey('controls', 'refresh'));
+    const selectEntry = registry.get(
+      getActionRegistryKey('controls', 'environment')
+    );
 
     expect(toggleEntry?.type).toBe('toggle');
     expect(buttonEntry?.type).toBe('button');
+    expect(selectEntry?.type).toBe('select');
 
     if (toggleEntry?.type === 'toggle') {
       await toggleEntry.onToggle(true);
@@ -107,7 +146,12 @@ describe('controls serialization', () => {
       await buttonEntry.onPress();
     }
 
+    if (selectEntry?.type === 'select') {
+      await selectEntry.onSelect('staging');
+    }
+
     expect(onToggle).toHaveBeenCalledWith(true);
     expect(onPress).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith('staging');
   });
 });

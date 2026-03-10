@@ -6,10 +6,16 @@ import { useControlsPluginStore } from '../stores/controlsPluginStore';
 export const ControlsPluginScreen = () => {
   const insets = useSafeAreaInsets();
   const counter = useControlsPluginStore((state) => state.counter);
+  const selectedEnvironment = useControlsPluginStore(
+    (state) => state.selectedEnvironment
+  );
   const status = useControlsPluginStore((state) => state.status);
   const lastActionAt = useControlsPluginStore((state) => state.lastActionAt);
   const notes = useControlsPluginStore((state) => state.notes);
   const featureFlags = useControlsPluginStore((state) => state.featureFlags);
+  const selectEnvironment = useControlsPluginStore(
+    (state) => state.selectEnvironment
+  );
   const toggleFlag = useControlsPluginStore((state) => state.toggleFlag);
   const incrementCounter = useControlsPluginStore((state) => state.incrementCounter);
   const markSynced = useControlsPluginStore((state) => state.markSynced);
@@ -20,9 +26,10 @@ export const ControlsPluginScreen = () => {
     () => [
       ['Status', status],
       ['Counter', String(counter)],
+      ['Environment', selectedEnvironment],
       ['Last action', lastActionAt ?? 'No actions yet'],
     ],
-    [counter, lastActionAt, status]
+    [counter, lastActionAt, selectedEnvironment, status]
   );
 
   return (
@@ -74,6 +81,25 @@ export const ControlsPluginScreen = () => {
             />
           </View>
         ))}
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Environment</Text>
+        <Text style={styles.helperText}>
+          Change it here or from the DevTools select control.
+        </Text>
+        <View style={styles.buttonRow}>
+          {(['local', 'staging', 'production'] as const).map((environment) => (
+            <DemoButton
+              key={environment}
+              label={environment}
+              onPress={() => selectEnvironment(environment)}
+              variant={
+                selectedEnvironment === environment ? 'primary' : 'secondary'
+              }
+            />
+          ))}
+        </View>
       </View>
 
       <View style={styles.card}>

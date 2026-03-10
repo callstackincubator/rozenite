@@ -2,6 +2,8 @@ export {
   createSection,
   type ControlsButtonItem,
   type ControlsItem,
+  type ControlsSelectItem,
+  type ControlsSelectOption,
   type ControlsSection,
   type ControlsTextItem,
   type ControlsToggleItem,

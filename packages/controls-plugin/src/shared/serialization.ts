@@ -2,6 +2,7 @@ import type {
   ControlsButtonItem,
   ControlsItem,
   ControlsItemSnapshot,
+  ControlsSelectItem,
   ControlsSection,
   ControlsSectionSnapshot,
   ControlsToggleItem,
@@ -15,6 +16,10 @@ export type ActionRegistryEntry =
   | {
       type: 'button';
       onPress: ControlsButtonItem['onPress'];
+    }
+  | {
+      type: 'select';
+      onSelect: ControlsSelectItem['onSelect'];
     };
 
 const toSnapshotItem = (item: ControlsItem): ControlsItemSnapshot => {
@@ -27,7 +32,12 @@ const toSnapshotItem = (item: ControlsItem): ControlsItemSnapshot => {
     return snapshot;
   }
 
-  const { onPress: _onPress, ...snapshot } = item;
+  if (item.type === 'button') {
+    const { onPress: _onPress, ...snapshot } = item;
+    return snapshot;
+  }
+
+  const { onSelect: _onSelect, ...snapshot } = item;
   return snapshot;
 };
 
@@ -59,6 +69,13 @@ export const buildActionRegistry = (sections: ControlsSection[]) => {
         registry.set(key, {
           type: 'button',
           onPress: item.onPress,
+        });
+      }
+
+      if (item.type === 'select') {
+        registry.set(key, {
+          type: 'select',
+          onSelect: item.onSelect,
         });
       }
     });
