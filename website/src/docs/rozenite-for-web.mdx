@@ -14,8 +14,14 @@ This integration requires two parts: the Rozenite Chrome extension (installed in
 
 ## Prerequisites
 
-- React Native project with web support (e.g., Expo)
-- Metro bundler
+- React Native project with web support
+- Metro bundler for mobile and React Native DevTools middleware
+- Chromium-based browser with the Rozenite extension installed
+
+Rozenite for Web supports two development setups:
+
+- **Metro-only web**: Metro bundles both mobile and web
+- **Split Metro + Webpack**: Metro bundles mobile and hosts React Native DevTools middleware, while Webpack bundles and serves the web app
 
 ## Chrome extension setup
 
@@ -41,7 +47,7 @@ For more details on loading extensions, see the [Chrome extension loading guide]
 
 <PackageManagerTabs command="install -D @rozenite/web" />
 
-### Metro configuration
+### Metro-only web configuration
 
 Add `withRozeniteWeb` to the `enhanceMetroConfig` chain inside `withRozenite`:
 
@@ -58,6 +64,46 @@ enhanceMetroConfig: composeMetroConfigTransformers(
 ### Entry point
 
 Add `require('@rozenite/web')` in your app entry point (e.g., `main.tsx`) or in the root `_layout` file when using Expo Router.
+
+### Split Metro + Webpack configuration
+
+When Metro bundles mobile and Webpack bundles web, keep Metro running with Rozenite enabled and proxy the React Native dev-middleware endpoints through Webpack.
+
+```javascript
+const { withRozeniteWeb } = require('@rozenite/web/webpack');
+
+module.exports = withRozeniteWeb(
+  {
+    // your existing webpack config
+  },
+  {
+    metroUrl: 'http://localhost:8081',
+  }
+);
+```
+
+The Webpack helper will:
+
+- proxy `/inspector/device` and `/inspector/debug` with websocket support
+- proxy `/open-debugger`, `/debugger-frontend`, `/json`, `/json/list`, and `/json/version`
+- prepend `@rozenite/web` to supported Webpack entry shapes by default
+- replace `ReactNativeFeatureFlags` imports with a web-safe shim
+
+If you prefer manual runtime wiring, disable entry injection and keep `require('@rozenite/web')` in your app entry point:
+
+```javascript
+const { withRozeniteWeb } = require('@rozenite/web/webpack');
+
+module.exports = withRozeniteWeb(
+  {
+    // your existing webpack config
+  },
+  {
+    metroUrl: 'http://localhost:8081',
+    injectEntry: false,
+  }
+);
+```
 
 ## Plugin support
 
@@ -88,4 +134,5 @@ If you maintain a plugin and want it to work on web:
 ## Troubleshooting
 
 - Ensure Metro is running and the extension is installed.
-- Ensure the app is served from localhost (e.g., port 8081).
+- Ensure the app is served from localhost or 127.0.0.1.
+- In split Metro + Webpack setups, ensure Webpack proxies the React Native dev-middleware endpoints to Metro.
