@@ -1,5 +1,6 @@
 import type {
   ControlsButtonItem,
+  ControlsInputItem,
   ControlsItem,
   ControlsItemSnapshot,
   ControlsMutableItemBase,
@@ -24,6 +25,11 @@ export type ActionRegistryEntry =
       type: 'select';
       validate?: ControlsSelectItem['validate'];
       onUpdate: ControlsSelectItem['onUpdate'];
+    }
+  | {
+      type: 'input';
+      validate?: ControlsInputItem['validate'];
+      onUpdate: ControlsInputItem['onUpdate'];
     };
 
 const validateValue = <TValue>(
@@ -43,17 +49,49 @@ const toSnapshotItem = (item: ControlsItem): ControlsItemSnapshot => {
   }
 
   if (item.type === 'toggle') {
-    const { validate: _validate, onUpdate: _onUpdate, ...snapshot } = item;
-    return snapshot;
+    return {
+      id: item.id,
+      type: item.type,
+      title: item.title,
+      value: item.value,
+      description: item.description,
+      disabled: item.disabled,
+    };
   }
 
   if (item.type === 'button') {
-    const { onPress: _onPress, ...snapshot } = item;
-    return snapshot;
+    return {
+      id: item.id,
+      type: item.type,
+      title: item.title,
+      actionLabel: item.actionLabel,
+      description: item.description,
+      disabled: item.disabled,
+    };
   }
 
-  const { validate: _validate, onUpdate: _onUpdate, ...snapshot } = item;
-  return snapshot;
+  if (item.type === 'select') {
+    return {
+      id: item.id,
+      type: item.type,
+      title: item.title,
+      value: item.value,
+      options: item.options,
+      description: item.description,
+      disabled: item.disabled,
+    };
+  }
+
+  return {
+    id: item.id,
+    type: item.type,
+    title: item.title,
+    value: item.value,
+    placeholder: item.placeholder,
+    applyLabel: item.applyLabel,
+    description: item.description,
+    disabled: item.disabled,
+  };
 };
 
 export const serializeSections = (
@@ -91,6 +129,14 @@ export const buildActionRegistry = (sections: ControlsSection[]) => {
       if (item.type === 'select') {
         registry.set(key, {
           type: 'select',
+          validate: item.validate,
+          onUpdate: item.onUpdate,
+        });
+      }
+
+      if (item.type === 'input') {
+        registry.set(key, {
+          type: 'input',
           validate: item.validate,
           onUpdate: item.onUpdate,
         });

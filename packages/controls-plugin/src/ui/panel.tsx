@@ -1,6 +1,6 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   ControlsEventMap,
   ControlsSnapshotEvent,
@@ -150,20 +150,72 @@ const TextRow = ({
   );
 };
 
+const InputRow = ({
+  sectionId,
+  item,
+  uiState,
+  draftValue,
+  onDraftChange,
+  onApply,
+}: {
+  sectionId: string;
+  item: Extract<ControlsItemSnapshot, { type: 'input' }>;
+  uiState?: ItemUiState;
+  draftValue: string;
+  onDraftChange: (sectionId: string, itemId: string, value: string) => void;
+  onApply: (sectionId: string, itemId: string) => void;
+}) => {
+  const isChanged = draftValue !== item.value;
+
+  return (
+    <RowShell
+      title={item.title}
+      description={item.description}
+      errorMessage={uiState?.message}
+    >
+      <div className="flex min-w-[240px] items-center gap-2">
+        <input
+          className="flex-1 rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-xs text-gray-200 outline-none transition focus:border-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+          type="text"
+          value={draftValue}
+          placeholder={item.placeholder}
+          disabled={item.disabled || uiState?.pending}
+          onChange={(event) =>
+            onDraftChange(sectionId, item.id, event.target.value)
+          }
+        />
+        <button
+          className="rounded-md border border-violet-500/60 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-100 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:border-gray-700 disabled:bg-gray-800 disabled:text-gray-500"
+          disabled={!isChanged || item.disabled || uiState?.pending}
+          onClick={() => onApply(sectionId, item.id)}
+        >
+          {uiState?.pending ? 'Applying...' : item.applyLabel ?? 'Apply'}
+        </button>
+      </div>
+    </RowShell>
+  );
+};
+
 const renderItem = ({
   sectionId,
   item,
   uiState,
+  inputDraft,
   onToggle,
   onPress,
   onSelect,
+  onInputDraftChange,
+  onInputApply,
 }: {
   sectionId: string;
   item: ControlsItemSnapshot;
   uiState?: ItemUiState;
+  inputDraft?: string;
   onToggle: (sectionId: string, itemId: string, value: boolean) => void;
   onPress: (sectionId: string, itemId: string) => void;
   onSelect: (sectionId: string, itemId: string, value: string) => void;
+  onInputDraftChange: (sectionId: string, itemId: string, value: string) => void;
+  onInputApply: (sectionId: string, itemId: string) => void;
 }) => {
   if (item.type === 'text') {
     return <TextRow item={item} />;
@@ -191,6 +243,19 @@ const renderItem = ({
     );
   }
 
+  if (item.type === 'input') {
+    return (
+      <InputRow
+        sectionId={sectionId}
+        item={item}
+        uiState={uiState}
+        draftValue={inputDraft ?? item.value}
+        onDraftChange={onInputDraftChange}
+        onApply={onInputApply}
+      />
+    );
+  }
+
   return (
     <ButtonRow
       sectionId={sectionId}
@@ -205,6 +270,8 @@ export default function ControlsPanel() {
   const [sections, setSections] = useState<ControlsSectionSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
   const [itemUiState, setItemUiState] = useState<Map<string, ItemUiState>>(new Map());
+  const [inputDrafts, setInputDrafts] = useState<Map<string, string>>(new Map());
+  const committedInputValuesRef = useRef<Map<string, string>>(new Map());
 
   const client = useRozeniteDevToolsClient<ControlsEventMap>({
     pluginId: '@rozenite/controls-plugin',
@@ -220,6 +287,40 @@ export default function ControlsPanel() {
       (event: ControlsSnapshotEvent) => {
         setSections(event.sections);
         setLoading(false);
+
+        const nextCommittedValues = new Map<string, string>();
+        event.sections.forEach((section) => {
+          section.items.forEach((item) => {
+            if (item.type === 'input') {
+              nextCommittedValues.set(getItemKey(section.id, item.id), item.value);
+            }
+          });
+        });
+
+        setInputDrafts((previous) => {
+          const next = new Map(previous);
+
+          next.forEach((_value, key) => {
+            if (!nextCommittedValues.has(key)) {
+              next.delete(key);
+            }
+          });
+
+          nextCommittedValues.forEach((committedValue, key) => {
+            const previousCommitted = committedInputValuesRef.current.get(key);
+            const previousDraft = previous.get(key);
+            const isDirty =
+              previousDraft !== undefined && previousDraft !== previousCommitted;
+
+            if (!isDirty || previousDraft === committedValue) {
+              next.set(key, committedValue);
+            }
+          });
+
+          return next;
+        });
+
+        committedInputValuesRef.current = nextCommittedValues;
       }
     );
     const updateResultSubscription = client.onMessage(
@@ -299,6 +400,43 @@ export default function ControlsPanel() {
     sendUpdateRequest(sectionId, itemId, value);
   };
 
+  const handleInputDraftChange = (
+    sectionId: string,
+    itemId: string,
+    value: string
+  ) => {
+    const key = getItemKey(sectionId, itemId);
+
+    setInputDrafts((previous) => {
+      const next = new Map(previous);
+      next.set(key, value);
+      return next;
+    });
+
+    setItemUiState((previous) => {
+      const next = new Map(previous);
+      const current = next.get(key);
+      if (current?.message) {
+        next.set(key, {
+          ...current,
+          message: undefined,
+        });
+      }
+      return next;
+    });
+  };
+
+  const handleInputApply = (sectionId: string, itemId: string) => {
+    const key = getItemKey(sectionId, itemId);
+    const draftValue = inputDrafts.get(key);
+
+    if (draftValue === undefined) {
+      return;
+    }
+
+    sendUpdateRequest(sectionId, itemId, draftValue);
+  };
+
   return (
     <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
       <div className="flex items-center gap-2 border-b border-gray-700 bg-gray-800 p-2">
@@ -344,9 +482,12 @@ export default function ControlsPanel() {
                       sectionId: section.id,
                       item,
                       uiState: itemUiState.get(getItemKey(section.id, item.id)),
+                      inputDraft: inputDrafts.get(getItemKey(section.id, item.id)),
                       onToggle: handleToggle,
                       onPress: handlePress,
                       onSelect: handleSelect,
+                      onInputDraftChange: handleInputDraftChange,
+                      onInputApply: handleInputApply,
                     })}
                   </div>
                 ))}

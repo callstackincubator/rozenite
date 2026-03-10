@@ -4,6 +4,7 @@ import { useControlsPluginStore } from '../stores/controlsPluginStore';
 
 export const usePlaygroundControlsSections = () => {
   const counter = useControlsPluginStore((state) => state.counter);
+  const releaseLabel = useControlsPluginStore((state) => state.releaseLabel);
   const selectedEnvironment = useControlsPluginStore(
     (state) => state.selectedEnvironment
   );
@@ -11,6 +12,9 @@ export const usePlaygroundControlsSections = () => {
   const lastActionAt = useControlsPluginStore((state) => state.lastActionAt);
   const notes = useControlsPluginStore((state) => state.notes);
   const featureFlags = useControlsPluginStore((state) => state.featureFlags);
+  const updateReleaseLabel = useControlsPluginStore(
+    (state) => state.updateReleaseLabel
+  );
   const selectEnvironment = useControlsPluginStore(
     (state) => state.selectEnvironment
   );
@@ -53,6 +57,12 @@ export const usePlaygroundControlsSections = () => {
                 title: 'Environment',
                 value: selectedEnvironment,
               },
+              {
+                id: 'release-label',
+                type: 'text' as const,
+                title: 'Release Label',
+                value: releaseLabel,
+              },
             ]
           : [
               {
@@ -72,6 +82,12 @@ export const usePlaygroundControlsSections = () => {
                 type: 'text' as const,
                 title: 'Environment',
                 value: selectedEnvironment,
+              },
+              {
+                id: 'release-label',
+                type: 'text' as const,
+                title: 'Release Label',
+                value: releaseLabel,
               },
               {
                 id: 'last-action',
@@ -158,6 +174,29 @@ export const usePlaygroundControlsSections = () => {
                 nextValue as 'local' | 'staging' | 'production'
               ),
           },
+          {
+            id: 'release-label-input',
+            type: 'input' as const,
+            title: 'Release Label',
+            value: releaseLabel,
+            placeholder: 'build-001',
+            applyLabel: 'Apply',
+            description:
+              'Apply is enabled only after editing. Labels must be at least 3 characters and contain no spaces.',
+            validate: (nextValue: string) =>
+              nextValue.trim().length < 3
+                ? {
+                    valid: false,
+                    message: 'Release label must be at least 3 characters.',
+                  }
+                : nextValue.includes(' ')
+                  ? {
+                      valid: false,
+                      message: 'Release label cannot contain spaces.',
+                    }
+                  : { valid: true },
+            onUpdate: (nextValue: string) => updateReleaseLabel(nextValue),
+          },
         ],
       }),
       createSection({
@@ -206,11 +245,13 @@ export const usePlaygroundControlsSections = () => {
       lastActionAt,
       markSynced,
       notes.length,
+      releaseLabel,
       resetDemo,
       selectEnvironment,
       selectedEnvironment,
       status,
       toggleFlag,
+      updateReleaseLabel,
     ]
   );
 };

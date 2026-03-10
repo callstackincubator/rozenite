@@ -110,7 +110,7 @@ export const useRozeniteControlsPlugin = ({
             sectionId,
             itemId,
             status: 'error',
-            message: 'Invalid select value.',
+            message: `Invalid ${entry.type} value.`,
           });
           return;
         }
@@ -157,6 +157,13 @@ export const useRozeniteControlsPlugin = ({
       itemId,
       action,
     }: ControlsInvokeActionEvent) => {
+      if (action !== 'press') {
+        console.warn(
+          `[Rozenite] Controls Plugin: Unsupported action "${action}" for ${sectionId}/${itemId}.`
+        );
+        return;
+      }
+
       const key = getActionRegistryKey(sectionId, itemId);
       const entry = actionRegistryRef.current.get(key);
 

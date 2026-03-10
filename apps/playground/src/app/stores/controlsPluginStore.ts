@@ -8,11 +8,13 @@ type FeatureFlags = {
 
 type ControlsPluginState = {
   counter: number;
+  releaseLabel: string;
   selectedEnvironment: 'local' | 'staging' | 'production';
   status: 'idle' | 'armed' | 'synced';
   lastActionAt: string | null;
   notes: string[];
   featureFlags: FeatureFlags;
+  updateReleaseLabel: (releaseLabel: string) => void;
   selectEnvironment: (
     environment: ControlsPluginState['selectedEnvironment']
   ) => void;
@@ -33,11 +35,17 @@ const initialFeatureFlags: FeatureFlags = {
 
 export const useControlsPluginStore = create<ControlsPluginState>((set) => ({
   counter: 0,
+  releaseLabel: 'build-001',
   selectedEnvironment: 'local',
   status: 'idle',
   lastActionAt: null,
   notes: [],
   featureFlags: initialFeatureFlags,
+  updateReleaseLabel: (releaseLabel) =>
+    set(() => ({
+      releaseLabel,
+      lastActionAt: formatTimestamp(new Date()),
+    })),
   selectEnvironment: (selectedEnvironment) =>
     set(() => ({
       selectedEnvironment,
@@ -74,6 +82,7 @@ export const useControlsPluginStore = create<ControlsPluginState>((set) => ({
   resetDemo: () =>
     set(() => ({
       counter: 0,
+      releaseLabel: 'build-001',
       selectedEnvironment: 'local',
       status: 'idle',
       lastActionAt: formatTimestamp(new Date()),

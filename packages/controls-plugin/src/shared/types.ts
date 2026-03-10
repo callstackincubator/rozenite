@@ -44,11 +44,18 @@ export type ControlsSelectItem = ControlsMutableItemBase<string> & {
   options: ControlsSelectOption[];
 };
 
+export type ControlsInputItem = ControlsMutableItemBase<string> & {
+  type: 'input';
+  placeholder?: string;
+  applyLabel?: string;
+};
+
 export type ControlsItem =
   | ControlsTextItem
   | ControlsToggleItem
   | ControlsButtonItem
-  | ControlsSelectItem;
+  | ControlsSelectItem
+  | ControlsInputItem;
 
 export type ControlsSection = {
   id: string;
@@ -71,11 +78,17 @@ export type ControlsSelectItemSnapshot = Omit<
   'validate' | 'onUpdate'
 >;
 
+export type ControlsInputItemSnapshot = Omit<
+  ControlsInputItem,
+  'validate' | 'onUpdate'
+>;
+
 export type ControlsItemSnapshot =
   | ControlsTextItemSnapshot
   | ControlsToggleItemSnapshot
   | ControlsButtonItemSnapshot
-  | ControlsSelectItemSnapshot;
+  | ControlsSelectItemSnapshot
+  | ControlsInputItemSnapshot;
 
 export type ControlsSectionSnapshot = Omit<ControlsSection, 'items'> & {
   items: ControlsItemSnapshot[];

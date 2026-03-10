@@ -41,6 +41,16 @@ describe('controls serialization', () => {
             validate: vi.fn(() => ({ valid: true as const })),
             onUpdate: vi.fn(),
           },
+          {
+            id: 'release-label',
+            type: 'input',
+            title: 'Release Label',
+            value: 'build-001',
+            placeholder: 'build-001',
+            applyLabel: 'Apply',
+            validate: vi.fn(() => ({ valid: true as const })),
+            onUpdate: vi.fn(),
+          },
         ],
       }),
     ];
@@ -85,6 +95,16 @@ describe('controls serialization', () => {
             description: undefined,
             disabled: undefined,
           },
+          {
+            id: 'release-label',
+            type: 'input',
+            title: 'Release Label',
+            value: 'build-001',
+            placeholder: 'build-001',
+            applyLabel: 'Apply',
+            description: undefined,
+            disabled: undefined,
+          },
         ],
       },
     ]);
@@ -94,8 +114,10 @@ describe('controls serialization', () => {
     const onUpdateToggle = vi.fn();
     const onPress = vi.fn();
     const onUpdateSelect = vi.fn();
+    const onUpdateInput = vi.fn();
     const validateToggle = vi.fn(() => ({ valid: true as const }));
     const validateSelect = vi.fn(() => ({ valid: true as const }));
+    const validateInput = vi.fn(() => ({ valid: true as const }));
 
     const sections = [
       createSection({
@@ -128,6 +150,16 @@ describe('controls serialization', () => {
             validate: validateSelect,
             onUpdate: onUpdateSelect,
           },
+          {
+            id: 'release-label',
+            type: 'input',
+            title: 'Release Label',
+            value: 'build-001',
+            placeholder: 'build-001',
+            applyLabel: 'Apply',
+            validate: validateInput,
+            onUpdate: onUpdateInput,
+          },
         ],
       }),
     ];
@@ -139,10 +171,14 @@ describe('controls serialization', () => {
     const selectEntry = registry.get(
       getActionRegistryKey('controls', 'environment')
     );
+    const inputEntry = registry.get(
+      getActionRegistryKey('controls', 'release-label')
+    );
 
     expect(toggleEntry?.type).toBe('toggle');
     expect(buttonEntry?.type).toBe('button');
     expect(selectEntry?.type).toBe('select');
+    expect(inputEntry?.type).toBe('input');
 
     if (toggleEntry?.type === 'toggle') {
       expect(toggleEntry.validate?.(true)).toEqual({ valid: true });
@@ -158,10 +194,17 @@ describe('controls serialization', () => {
       await selectEntry.onUpdate('staging');
     }
 
+    if (inputEntry?.type === 'input') {
+      expect(inputEntry.validate?.('build-002')).toEqual({ valid: true });
+      await inputEntry.onUpdate('build-002');
+    }
+
     expect(validateToggle).toHaveBeenCalledWith(true);
     expect(onUpdateToggle).toHaveBeenCalledWith(true);
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(validateSelect).toHaveBeenCalledWith('staging');
     expect(onUpdateSelect).toHaveBeenCalledWith('staging');
+    expect(validateInput).toHaveBeenCalledWith('build-002');
+    expect(onUpdateInput).toHaveBeenCalledWith('build-002');
   });
 });

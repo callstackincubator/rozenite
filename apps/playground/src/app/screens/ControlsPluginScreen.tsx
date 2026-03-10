@@ -1,11 +1,20 @@
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useControlsPluginStore } from '../stores/controlsPluginStore';
 
 export const ControlsPluginScreen = () => {
   const insets = useSafeAreaInsets();
   const counter = useControlsPluginStore((state) => state.counter);
+  const releaseLabel = useControlsPluginStore((state) => state.releaseLabel);
   const selectedEnvironment = useControlsPluginStore(
     (state) => state.selectedEnvironment
   );
@@ -13,6 +22,9 @@ export const ControlsPluginScreen = () => {
   const lastActionAt = useControlsPluginStore((state) => state.lastActionAt);
   const notes = useControlsPluginStore((state) => state.notes);
   const featureFlags = useControlsPluginStore((state) => state.featureFlags);
+  const updateReleaseLabel = useControlsPluginStore(
+    (state) => state.updateReleaseLabel
+  );
   const selectEnvironment = useControlsPluginStore(
     (state) => state.selectEnvironment
   );
@@ -27,9 +39,10 @@ export const ControlsPluginScreen = () => {
       ['Status', status],
       ['Counter', String(counter)],
       ['Environment', selectedEnvironment],
+      ['Release label', releaseLabel],
       ['Last action', lastActionAt ?? 'No actions yet'],
     ],
-    [counter, lastActionAt, selectedEnvironment, status]
+    [counter, lastActionAt, releaseLabel, selectedEnvironment, status]
   );
 
   return (
@@ -100,6 +113,22 @@ export const ControlsPluginScreen = () => {
             />
           ))}
         </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Release Label</Text>
+        <Text style={styles.helperText}>
+          Edit it here or from the DevTools input control.
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={releaseLabel}
+          onChangeText={updateReleaseLabel}
+          placeholder="build-001"
+          placeholderTextColor="#6b7280"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
       </View>
 
       <View style={styles.card}>
@@ -233,6 +262,16 @@ const styles = StyleSheet.create({
   },
   secondaryButtonLabel: {
     color: '#d1d5db',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#374151',
+    backgroundColor: '#030712',
+    borderRadius: 12,
+    color: '#ffffff',
+    fontSize: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   note: {
     color: '#d1d5db',
