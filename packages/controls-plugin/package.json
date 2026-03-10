@@ -1,0 +1,38 @@
+{
+  "name": "@rozenite/controls-plugin",
+  "version": "0.0.0",
+  "description": "Device-owned controls for Rozenite.",
+  "type": "module",
+  "main": "./dist/react-native.cjs",
+  "module": "./dist/react-native.js",
+  "types": "./dist/react-native.d.ts",
+  "scripts": {
+    "build": "rozenite build",
+    "dev": "rozenite dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@rozenite/plugin-bridge": "workspace:*"
+  },
+  "devDependencies": {
+    "@rozenite/vite-plugin": "workspace:*",
+    "@types/react": "catalog:",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-native": "catalog:",
+    "react-native-web": "^0.21.2",
+    "rozenite": "workspace:*",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "~5.9.3",
+    "vite": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "license": "MIT"
+}

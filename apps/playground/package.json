@@ -24,6 +24,7 @@
     "@rozenite/metro": "workspace:*",
     "@rozenite/mmkv-plugin": "workspace:*",
     "@rozenite/network-activity-plugin": "workspace:*",
+    "@rozenite/controls-plugin": "workspace:*",
     "@rozenite/overlay-plugin": "workspace:*",
     "@rozenite/performance-monitor-plugin": "workspace:*",
     "@rozenite/react-navigation-plugin": "workspace:*",
