@@ -92,7 +92,7 @@ export const usePlaygroundControlsSections = () => {
             title: 'Verbose Logging',
             value: featureFlags.verboseLogging,
             description: 'Changes status to armed when enabled.',
-            onToggle: (nextValue: boolean) => toggleFlag('verboseLogging', nextValue),
+            onUpdate: (nextValue: boolean) => toggleFlag('verboseLogging', nextValue),
           },
           {
             id: 'mock-latency',
@@ -100,7 +100,15 @@ export const usePlaygroundControlsSections = () => {
             title: 'Mock Latency',
             value: featureFlags.mockLatency,
             description: 'Pure state toggle for validating round-trips.',
-            onToggle: (nextValue: boolean) => toggleFlag('mockLatency', nextValue),
+            validate: (nextValue: boolean) =>
+              status === 'synced' && nextValue
+                ? {
+                    valid: false,
+                    message:
+                      'Disable synced status before enabling mock latency.',
+                  }
+                : { valid: true },
+            onUpdate: (nextValue: boolean) => toggleFlag('mockLatency', nextValue),
           },
           {
             id: 'reverse-diagnostics',
@@ -108,7 +116,23 @@ export const usePlaygroundControlsSections = () => {
             title: 'Reverse Diagnostics',
             value: featureFlags.reverseDiagnostics,
             description: 'Reorders the diagnostics section to prove full snapshot replacement.',
-            onToggle: (nextValue: boolean) => toggleFlag('reverseDiagnostics', nextValue),
+            onUpdate: (nextValue: boolean) => toggleFlag('reverseDiagnostics', nextValue),
+          },
+          {
+            id: 'blocked-toggle',
+            type: 'toggle' as const,
+            title: 'Blocked Toggle',
+            value: false,
+            description:
+              'This toggle is intentionally rejected to make validation errors easy to test.',
+            validate: (nextValue: boolean) =>
+              nextValue
+                ? {
+                    valid: false,
+                    message: 'This demo toggle cannot be enabled.',
+                  }
+                : { valid: true },
+            onUpdate: () => undefined,
           },
           {
             id: 'environment-selector',
@@ -121,7 +145,15 @@ export const usePlaygroundControlsSections = () => {
               { label: 'Staging', value: 'staging' },
               { label: 'Production', value: 'production' },
             ],
-            onSelect: (nextValue: string) =>
+            validate: (nextValue: string) =>
+              counter > 0 && nextValue === 'production'
+                ? {
+                    valid: false,
+                    message:
+                      'Reset the counter before switching to production.',
+                  }
+                : { valid: true },
+            onUpdate: (nextValue: string) =>
               selectEnvironment(
                 nextValue as 'local' | 'staging' | 'production'
               ),

@@ -2,16 +2,19 @@ import type {
   ControlsButtonItem,
   ControlsItem,
   ControlsItemSnapshot,
+  ControlsMutableItemBase,
   ControlsSelectItem,
   ControlsSection,
   ControlsSectionSnapshot,
   ControlsToggleItem,
+  ControlsValidationResult,
 } from './types';
 
 export type ActionRegistryEntry =
   | {
       type: 'toggle';
-      onToggle: ControlsToggleItem['onToggle'];
+      validate?: ControlsToggleItem['validate'];
+      onUpdate: ControlsToggleItem['onUpdate'];
     }
   | {
       type: 'button';
@@ -19,8 +22,20 @@ export type ActionRegistryEntry =
     }
   | {
       type: 'select';
-      onSelect: ControlsSelectItem['onSelect'];
+      validate?: ControlsSelectItem['validate'];
+      onUpdate: ControlsSelectItem['onUpdate'];
     };
+
+const validateValue = <TValue>(
+  validate: ControlsMutableItemBase<TValue>['validate'],
+  value: TValue
+): ControlsValidationResult => {
+  if (!validate) {
+    return { valid: true };
+  }
+
+  return validate(value);
+};
 
 const toSnapshotItem = (item: ControlsItem): ControlsItemSnapshot => {
   if (item.type === 'text') {
@@ -28,7 +43,7 @@ const toSnapshotItem = (item: ControlsItem): ControlsItemSnapshot => {
   }
 
   if (item.type === 'toggle') {
-    const { onToggle: _onToggle, ...snapshot } = item;
+    const { validate: _validate, onUpdate: _onUpdate, ...snapshot } = item;
     return snapshot;
   }
 
@@ -37,7 +52,7 @@ const toSnapshotItem = (item: ControlsItem): ControlsItemSnapshot => {
     return snapshot;
   }
 
-  const { onSelect: _onSelect, ...snapshot } = item;
+  const { validate: _validate, onUpdate: _onUpdate, ...snapshot } = item;
   return snapshot;
 };
 
@@ -61,7 +76,8 @@ export const buildActionRegistry = (sections: ControlsSection[]) => {
       if (item.type === 'toggle') {
         registry.set(key, {
           type: 'toggle',
-          onToggle: item.onToggle,
+          validate: item.validate,
+          onUpdate: item.onUpdate,
         });
       }
 
@@ -75,7 +91,8 @@ export const buildActionRegistry = (sections: ControlsSection[]) => {
       if (item.type === 'select') {
         registry.set(key, {
           type: 'select',
-          onSelect: item.onSelect,
+          validate: item.validate,
+          onUpdate: item.onUpdate,
         });
       }
     });
@@ -86,3 +103,5 @@ export const buildActionRegistry = (sections: ControlsSection[]) => {
 
 export const getActionRegistryKey = (sectionId: string, itemId: string) =>
   `${sectionId}:${itemId}`;
+
+export { validateValue };

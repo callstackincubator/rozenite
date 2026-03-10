@@ -6,14 +6,22 @@ export type ControlsTextItem = {
   description?: string;
 };
 
-export type ControlsToggleItem = {
+export type ControlsValidationResult =
+  | { valid: true }
+  | { valid: false; message: string };
+
+export type ControlsMutableItemBase<TValue> = {
   id: string;
-  type: 'toggle';
   title: string;
-  value: boolean;
+  value: TValue;
   description?: string;
   disabled?: boolean;
-  onToggle: (nextValue: boolean) => void | Promise<void>;
+  validate?: (nextValue: TValue) => ControlsValidationResult;
+  onUpdate: (nextValue: TValue) => void | Promise<void>;
+};
+
+export type ControlsToggleItem = ControlsMutableItemBase<boolean> & {
+  type: 'toggle';
 };
 
 export type ControlsButtonItem = {
@@ -31,15 +39,9 @@ export type ControlsSelectOption = {
   value: string;
 };
 
-export type ControlsSelectItem = {
-  id: string;
+export type ControlsSelectItem = ControlsMutableItemBase<string> & {
   type: 'select';
-  title: string;
-  value: string;
   options: ControlsSelectOption[];
-  description?: string;
-  disabled?: boolean;
-  onSelect: (nextValue: string) => void | Promise<void>;
 };
 
 export type ControlsItem =
@@ -57,11 +59,17 @@ export type ControlsSection = {
 
 export type ControlsTextItemSnapshot = Omit<ControlsTextItem, never>;
 
-export type ControlsToggleItemSnapshot = Omit<ControlsToggleItem, 'onToggle'>;
+export type ControlsToggleItemSnapshot = Omit<
+  ControlsToggleItem,
+  'validate' | 'onUpdate'
+>;
 
 export type ControlsButtonItemSnapshot = Omit<ControlsButtonItem, 'onPress'>;
 
-export type ControlsSelectItemSnapshot = Omit<ControlsSelectItem, 'onSelect'>;
+export type ControlsSelectItemSnapshot = Omit<
+  ControlsSelectItem,
+  'validate' | 'onUpdate'
+>;
 
 export type ControlsItemSnapshot =
   | ControlsTextItemSnapshot

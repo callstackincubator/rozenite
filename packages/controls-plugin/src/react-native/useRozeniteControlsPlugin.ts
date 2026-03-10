@@ -3,12 +3,14 @@ import { useEffect, useMemo, useRef } from 'react';
 import type {
   ControlsEventMap,
   ControlsInvokeActionEvent,
+  ControlsUpdateRequestEvent,
 } from '../shared/messaging';
 import type { RozeniteControlsPluginOptions } from '../shared/types';
 import {
   buildActionRegistry,
   getActionRegistryKey,
   serializeSections,
+  validateValue,
 } from '../shared/serialization';
 
 export const useRozeniteControlsPlugin = ({
@@ -42,11 +44,118 @@ export const useRozeniteControlsPlugin = ({
       return;
     }
 
+    const handleUpdateRequest = async ({
+      requestId,
+      sectionId,
+      itemId,
+      value,
+    }: ControlsUpdateRequestEvent) => {
+      const key = getActionRegistryKey(sectionId, itemId);
+      const entry = actionRegistryRef.current.get(key);
+
+      if (!entry || entry.type === 'button') {
+        client.send('update-result', {
+          type: 'update-result',
+          requestId,
+          sectionId,
+          itemId,
+          status: 'error',
+          message: 'Update target not found.',
+        });
+        return;
+      }
+
+      try {
+        if (entry.type === 'toggle') {
+          if (typeof value !== 'boolean') {
+            client.send('update-result', {
+              type: 'update-result',
+              requestId,
+              sectionId,
+              itemId,
+              status: 'error',
+              message: 'Invalid toggle value.',
+            });
+            return;
+          }
+
+          const result = validateValue(entry.validate, value);
+          if (!result.valid) {
+            client.send('update-result', {
+              type: 'update-result',
+              requestId,
+              sectionId,
+              itemId,
+              status: 'error',
+              message: result.message,
+            });
+            return;
+          }
+
+          await entry.onUpdate(value);
+          client.send('update-result', {
+            type: 'update-result',
+            requestId,
+            sectionId,
+            itemId,
+            status: 'ok',
+          });
+          return;
+        }
+
+        if (typeof value !== 'string') {
+          client.send('update-result', {
+            type: 'update-result',
+            requestId,
+            sectionId,
+            itemId,
+            status: 'error',
+            message: 'Invalid select value.',
+          });
+          return;
+        }
+
+        const result = validateValue(entry.validate, value);
+        if (!result.valid) {
+          client.send('update-result', {
+            type: 'update-result',
+            requestId,
+            sectionId,
+            itemId,
+            status: 'error',
+            message: result.message,
+          });
+          return;
+        }
+
+        await entry.onUpdate(value);
+        client.send('update-result', {
+          type: 'update-result',
+          requestId,
+          sectionId,
+          itemId,
+          status: 'ok',
+        });
+      } catch (error) {
+        console.warn(
+          `[Rozenite] Controls Plugin: Update failed for ${sectionId}/${itemId}.`,
+          error
+        );
+        client.send('update-result', {
+          type: 'update-result',
+          requestId,
+          sectionId,
+          itemId,
+          status: 'error',
+          message: 'Update failed on the device.',
+        });
+      }
+    };
+
     const handleInvokeAction = async ({
       sectionId,
       itemId,
       action,
-      value,
     }: ControlsInvokeActionEvent) => {
       const key = getActionRegistryKey(sectionId, itemId);
       const entry = actionRegistryRef.current.get(key);
@@ -59,30 +168,6 @@ export const useRozeniteControlsPlugin = ({
       }
 
       try {
-        if (action === 'toggle') {
-          if (entry.type !== 'toggle' || typeof value !== 'boolean') {
-            console.warn(
-              `[Rozenite] Controls Plugin: Invalid toggle action payload for ${sectionId}/${itemId}.`
-            );
-            return;
-          }
-
-          await entry.onToggle(value);
-          return;
-        }
-
-        if (action === 'select') {
-          if (entry.type !== 'select' || typeof value !== 'string') {
-            console.warn(
-              `[Rozenite] Controls Plugin: Invalid select action payload for ${sectionId}/${itemId}.`
-            );
-            return;
-          }
-
-          await entry.onSelect(value);
-          return;
-        }
-
         if (entry.type !== 'button') {
           console.warn(
             `[Rozenite] Controls Plugin: Invalid press action payload for ${sectionId}/${itemId}.`
@@ -105,6 +190,9 @@ export const useRozeniteControlsPlugin = ({
           type: 'snapshot',
           sections: snapshot,
         });
+      }),
+      client.onMessage('update-request', (event: ControlsUpdateRequestEvent) => {
+        void handleUpdateRequest(event);
       }),
       client.onMessage('invoke-action', (event: ControlsInvokeActionEvent) => {
         void handleInvokeAction(event);

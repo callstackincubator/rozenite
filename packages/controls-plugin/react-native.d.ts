@@ -7,6 +7,7 @@ export {
   type ControlsSection,
   type ControlsTextItem,
   type ControlsToggleItem,
+  type ControlsValidationResult,
   type RozeniteControlsPluginOptions,
 } from './src/shared/types';
 

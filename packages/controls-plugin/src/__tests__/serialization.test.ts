@@ -20,7 +20,8 @@ describe('controls serialization', () => {
             type: 'toggle',
             title: 'Enabled',
             value: true,
-            onToggle: vi.fn(),
+            validate: vi.fn(() => ({ valid: true as const })),
+            onUpdate: vi.fn(),
           },
           {
             id: 'reset',
@@ -37,7 +38,8 @@ describe('controls serialization', () => {
               { label: 'Local', value: 'local' },
               { label: 'Staging', value: 'staging' },
             ],
-            onSelect: vi.fn(),
+            validate: vi.fn(() => ({ valid: true as const })),
+            onUpdate: vi.fn(),
           },
         ],
       }),
@@ -89,9 +91,11 @@ describe('controls serialization', () => {
   });
 
   it('builds an action registry for interactive items', async () => {
-    const onToggle = vi.fn();
+    const onUpdateToggle = vi.fn();
     const onPress = vi.fn();
-    const onSelect = vi.fn();
+    const onUpdateSelect = vi.fn();
+    const validateToggle = vi.fn(() => ({ valid: true as const }));
+    const validateSelect = vi.fn(() => ({ valid: true as const }));
 
     const sections = [
       createSection({
@@ -103,7 +107,8 @@ describe('controls serialization', () => {
             type: 'toggle',
             title: 'Flag',
             value: false,
-            onToggle,
+            validate: validateToggle,
+            onUpdate: onUpdateToggle,
           },
           {
             id: 'refresh',
@@ -120,7 +125,8 @@ describe('controls serialization', () => {
               { label: 'Local', value: 'local' },
               { label: 'Staging', value: 'staging' },
             ],
-            onSelect,
+            validate: validateSelect,
+            onUpdate: onUpdateSelect,
           },
         ],
       }),
@@ -139,7 +145,8 @@ describe('controls serialization', () => {
     expect(selectEntry?.type).toBe('select');
 
     if (toggleEntry?.type === 'toggle') {
-      await toggleEntry.onToggle(true);
+      expect(toggleEntry.validate?.(true)).toEqual({ valid: true });
+      await toggleEntry.onUpdate(true);
     }
 
     if (buttonEntry?.type === 'button') {
@@ -147,11 +154,14 @@ describe('controls serialization', () => {
     }
 
     if (selectEntry?.type === 'select') {
-      await selectEntry.onSelect('staging');
+      expect(selectEntry.validate?.('staging')).toEqual({ valid: true });
+      await selectEntry.onUpdate('staging');
     }
 
-    expect(onToggle).toHaveBeenCalledWith(true);
+    expect(validateToggle).toHaveBeenCalledWith(true);
+    expect(onUpdateToggle).toHaveBeenCalledWith(true);
     expect(onPress).toHaveBeenCalledTimes(1);
-    expect(onSelect).toHaveBeenCalledWith('staging');
+    expect(validateSelect).toHaveBeenCalledWith('staging');
+    expect(onUpdateSelect).toHaveBeenCalledWith('staging');
   });
 });

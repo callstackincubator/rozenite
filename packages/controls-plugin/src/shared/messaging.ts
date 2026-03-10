@@ -9,17 +9,35 @@ export type ControlsGetSnapshotEvent = {
   type: 'get-snapshot';
 };
 
+export type ControlsUpdateRequestEvent = {
+  type: 'update-request';
+  requestId: string;
+  sectionId: string;
+  itemId: string;
+  value: boolean | string;
+};
+
+export type ControlsUpdateResultEvent = {
+  type: 'update-result';
+  requestId: string;
+  sectionId: string;
+  itemId: string;
+  status: 'ok' | 'error';
+  message?: string;
+};
+
 export type ControlsInvokeActionEvent = {
   type: 'invoke-action';
   sectionId: string;
   itemId: string;
-  action: 'toggle' | 'press' | 'select';
-  value?: boolean | string;
+  action: 'press';
 };
 
 export type ControlsEvent =
   | ControlsSnapshotEvent
   | ControlsGetSnapshotEvent
+  | ControlsUpdateRequestEvent
+  | ControlsUpdateResultEvent
   | ControlsInvokeActionEvent;
 
 export type ControlsEventMap = {
