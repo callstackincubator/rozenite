@@ -8,6 +8,8 @@ import { logger } from './logger.js';
 import type { DevToolsPluginMessage } from './mcp/types.js';
 import { extractConsoleMessage } from './mcp/console/extract.js';
 import type { ConsoleMessageInput } from './mcp/console/types.js';
+export { parseRozeniteBindingPayload } from './mcp/bindings.js';
+import { parseRozeniteBindingPayload } from './mcp/bindings.js';
 
 const require = createRequire(import.meta.url);
 let nextRuntimeEvaluateMessageId = 1;
@@ -25,11 +27,6 @@ type Connection = {
     name: string;
     sendMessage: (message: unknown) => void;
   };
-};
-
-type BindingPayload = {
-  domain: string;
-  message?: unknown;
 };
 
 type MCPHandlerLike = {
@@ -97,35 +94,6 @@ const getReactNativeVersion = (projectRoot: string): string | undefined => {
     return typeof packageJson.version === 'string' ? packageJson.version : undefined;
   } catch {
     return undefined;
-  }
-};
-
-export const parseRozeniteBindingPayload = (message: unknown): BindingPayload | null => {
-  const record = getRecord(message);
-  if (!record || record.method !== 'Runtime.bindingCalled') {
-    return null;
-  }
-
-  const params = getRecord(record.params);
-  const rawPayload = getString(params?.payload);
-  if (!rawPayload) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(rawPayload);
-    const payload = getRecord(parsed);
-    const domain = getString(payload?.domain);
-    if (!domain) {
-      return null;
-    }
-
-    return {
-      domain,
-      message: payload?.message,
-    };
-  } catch {
-    return null;
   }
 };
 

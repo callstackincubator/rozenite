@@ -1,4 +1,6 @@
-import type { HttpMCPClient } from './http-client.js';
+type ToolCaller = {
+  callTool: (name: string, args: unknown) => Promise<unknown>;
+};
 
 type PagedResponse = {
   items: unknown[];
@@ -75,7 +77,7 @@ const normalizeArgs = (args: unknown): Record<string, unknown> => {
 };
 
 export const callToolWithOptionalPagination = async (
-  client: HttpMCPClient,
+  client: ToolCaller,
   toolName: string,
   args: unknown,
   config: { pagesLimit?: number; maxItems?: number },

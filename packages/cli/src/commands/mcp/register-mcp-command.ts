@@ -1,13 +1,11 @@
 import { Command } from 'commander';
 import { DEFAULT_METRO_HOST, DEFAULT_METRO_PORT, STATIC_DOMAINS } from './constants.js';
-import { createHttpMCPClient, type HttpMCPClient } from './http-client.js';
 import {
   inferToolShortName,
   buildRuntimePluginDomains,
   getDomainToolsByDefinition,
   resolveDomainToken,
 } from './domain-utils.js';
-import { getMetroTargets, resolveTargetDeviceId } from './metro.js';
 import { printOutput } from './output.js';
 import type { MCPTool, DomainDefinition } from './types.js';
 import {
@@ -20,6 +18,7 @@ import {
   callToolWithOptionalPagination,
   resolveAutoPaginationConfig,
 } from './tool-pagination.js';
+import { callDaemon, callRunningDaemon } from './daemon-client.js';
 
 const REMOVED_ROZENITE_DOMAIN_HINT =
   'The `rozenite mcp rozenite ...` path was removed. Use `rozenite mcp <domain> ...`; run `rozenite mcp domains -j`.';
@@ -43,7 +42,7 @@ type CommonOptions = {
   port: number;
   json?: boolean;
   pretty?: boolean;
-  deviceId?: string;
+  session?: string;
 };
 
 type ListDomainsOptions = CommonOptions & {
@@ -62,6 +61,11 @@ type DynamicDomainCommandOptions = CommonOptions & {
   pages?: string;
   maxItems?: string;
   verbose?: boolean;
+  session?: string;
+};
+
+type SessionCommandOptions = CommonOptions & {
+  deviceId?: string;
 };
 
 type ToolListRow = {
@@ -90,8 +94,25 @@ const getConnectionOptions = (cmd: Command): CommonOptions => {
     port: Number(options.port ?? DEFAULT_METRO_PORT),
     json: options.json ?? false,
     pretty: options.pretty ?? false,
-    deviceId: options.deviceId,
+    session: options.session,
   };
+};
+
+const getSessionId = (cmd: Command): string => {
+  const options = cmd.optsWithGlobals<CommonOptions>();
+  if (!options.session) {
+    throw new Error('Missing required --session <id>. Create one with `rozenite mcp session create -j`.');
+  }
+  return options.session;
+};
+
+const getActionCommand = (args: unknown[]): Command => {
+  const candidate = args[args.length - 1];
+  if (!(candidate instanceof Command)) {
+    throw new Error('Failed to resolve CLI command context');
+  }
+
+  return candidate;
 };
 
 const parseJsonArgs = (rawArgs?: string): unknown => {
@@ -103,25 +124,6 @@ const parseJsonArgs = (rawArgs?: string): unknown => {
     return JSON.parse(rawArgs);
   } catch {
     throw new Error('--args must be valid JSON');
-  }
-};
-
-const withClient = async <T>(
-  options: CommonOptions,
-  handler: (client: HttpMCPClient, selectedDeviceId: string) => Promise<T>,
-): Promise<T> => {
-  const { deviceId } = await resolveTargetDeviceId(
-    options.host,
-    options.port,
-    options.deviceId,
-  );
-
-  const client = createHttpMCPClient(options.host, options.port);
-  try {
-    await client.connect();
-    return await handler(client, deviceId);
-  } finally {
-    client.close();
   }
 };
 
@@ -212,10 +214,11 @@ const toDomainAction = (value: string): DomainAction | null => {
 };
 
 const resolveDomainContext = async (
-  client: HttpMCPClient,
+  workspace: string,
+  sessionId: string,
   domainToken: string,
 ): Promise<{ resolvedDomain: DomainDefinition; domainTools: MCPTool[] }> => {
-  const tools = await client.getTools();
+  const tools = (await callDaemon(workspace, 'session.tools', { sessionId })).tools;
   const runtimeDomains = buildRuntimePluginDomains(tools);
   const knownDomains = [...STATIC_DOMAINS, ...runtimeDomains];
   const resolvedDomain = resolveDomainToken(domainToken, knownDomains);
@@ -250,9 +253,9 @@ const generateDomainGuide = (
     ...(domain.pluginId ? [`- Plugin ID: \`${domain.pluginId}\``] : []),
     '',
     '## Commands',
-    `- \`rozenite mcp ${domain.id} tools -n 20 -j [--deviceId <id>]\``,
-    `- \`rozenite mcp ${domain.id} schema -t <name> -j [--deviceId <id>]\``,
-    `- \`rozenite mcp ${domain.id} call -t <name> -a '<json>' -j [--deviceId <id>] [-p <n>] [-m <n>]\``,
+    `- \`rozenite mcp ${domain.id} tools -n 20 -j --session <id>\``,
+    `- \`rozenite mcp ${domain.id} schema -t <name> -j --session <id>\``,
+    `- \`rozenite mcp ${domain.id} call -t <name> -a '<json>' -j --session <id> [-p <n>] [-m <n>]\``,
     '',
     '## Tools',
   ];
@@ -285,7 +288,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
     .option('-p, --pages <n>', 'Auto-follow paged tool responses for up to N pages')
     .option('-m, --max-items <n>', 'Auto-pagination item cap (requires --pages)')
     .option('-j, --json', 'Output JSON')
-    .option('-d, --deviceId <id>', 'Target Metro device ID')
+    .requiredOption('-s, --session <id>', 'Target MCP session ID')
     .action(async (
       domainToken: string,
       actionToken?: string | string[],
@@ -324,9 +327,15 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
 
       const dynamicOptions = activeCommand.optsWithGlobals<DynamicDomainCommandOptions>();
       const options = getConnectionOptions(activeCommand);
+      const sessionId = getSessionId(activeCommand);
+      const workspace = process.cwd();
 
-      const result = await withClient(options, async (client, selectedDeviceId) => {
-        const { resolvedDomain, domainTools } = await resolveDomainContext(client, domainToken);
+      const result = await (async () => {
+        const { resolvedDomain, domainTools } = await resolveDomainContext(
+          workspace,
+          sessionId,
+          domainToken,
+        );
 
         if (action === 'list-tools') {
           const fields = parseFields(
@@ -353,7 +362,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
 
           return {
             domain: resolvedDomain.id,
-            selectedDeviceId,
+            sessionId,
             ...(resolvedDomain.pluginId ? { pluginId: resolvedDomain.pluginId } : {}),
             items: paged.items,
             page: paged.page,
@@ -369,7 +378,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
         if (action === 'get-tool-schema') {
           return {
             domain: resolvedDomain.id,
-            selectedDeviceId,
+            sessionId,
             ...(resolvedDomain.pluginId ? { pluginId: resolvedDomain.pluginId } : {}),
             tool: {
               name: selectedTool.name,
@@ -382,12 +391,16 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
 
         const parsedArgs = parseJsonArgs(dynamicOptions.args);
         const autoPagination = resolveAutoPaginationConfig(dynamicOptions);
-        const payload = {
-          ...(parsedArgs as Record<string, unknown>),
-          ...(dynamicOptions.deviceId ? { deviceId: selectedDeviceId } : {}),
-        };
+        const payload = parsedArgs as Record<string, unknown>;
         const toolResult = await callToolWithOptionalPagination(
-          client,
+          {
+            callTool: async (name: string, args: unknown) =>
+              (await callDaemon(workspace, 'session.call-tool', {
+                sessionId,
+                toolName: name,
+                args,
+              })).result,
+          },
           selectedTool.name,
           payload,
           autoPagination,
@@ -395,7 +408,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
 
         return {
           domain: resolvedDomain.id,
-          selectedDeviceId,
+          sessionId,
           ...(resolvedDomain.pluginId ? { pluginId: resolvedDomain.pluginId } : {}),
           tool: {
             name: selectedTool.name,
@@ -403,7 +416,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
           },
           result: toolResult,
         };
-      });
+      })();
 
       printOutput(result, !!options.json, !!options.pretty);
     });
@@ -419,20 +432,24 @@ export const registerMCPCommand = (program: Command): void => {
 
   mcpCommand
     .command('targets')
-    .description('List connected devices from MCP backend')
+    .description('List connected devices from Metro inspector')
     .option('-j, --json', 'Output JSON')
-    .action(async (_args, command: Command) => {
+    .action(async (...args: unknown[]) => {
+      const command = getActionCommand(args);
       const options = getConnectionOptions(command);
-      const targets = await getMetroTargets(options.host, options.port);
+      const targets = (
+        await callDaemon(process.cwd(), 'metro.targets', {
+          host: options.host,
+          port: options.port,
+        })
+      ).targets;
       const conciseTargets = targets.map((target) => ({
         id: target.id,
         name: target.name,
-        reactNativeVersion: target.reactNativeVersion,
-        app: target.app,
-        platform: target.platform,
-        runtime: target.runtime,
-        type: target.type,
         description: target.description,
+        app: target.appId,
+        pageId: target.pageId,
+        title: target.title,
       }));
 
       const payload = {
@@ -444,6 +461,81 @@ export const registerMCPCommand = (program: Command): void => {
     });
 
   mcpCommand
+    .command('kill')
+    .description('Stop all MCP sessions and shut down the local daemon')
+    .option('-j, --json', 'Output JSON')
+    .action(async (...args: unknown[]) => {
+      const command = getActionCommand(args);
+      const options = getConnectionOptions(command);
+      const result = await callRunningDaemon(process.cwd(), 'daemon.shutdown', undefined);
+
+      printOutput(
+        result ?? { stopped: true, stoppedSessions: 0, alreadyStopped: true },
+        !!options.json,
+        !!options.pretty,
+      );
+    });
+
+  const sessionCommand = mcpCommand
+    .command('session')
+    .description('Manage long-lived MCP sessions')
+    .option('--host <host>', 'Metro host', DEFAULT_METRO_HOST)
+    .option('--port <port>', 'Metro port', String(DEFAULT_METRO_PORT))
+    .option('--pretty', 'Pretty-print JSON output when --json is used');
+
+  sessionCommand
+    .command('create')
+    .description('Create a new MCP session and start the daemon if needed')
+    .option('-d, --deviceId <id>', 'Target Metro device ID')
+    .option('-j, --json', 'Output JSON')
+    .action(async (...args: unknown[]) => {
+      const command = getActionCommand(args);
+      const options = getConnectionOptions(command);
+      const sessionOptions = command.optsWithGlobals<SessionCommandOptions>();
+      const result = await callDaemon(process.cwd(), 'session.create', {
+        host: options.host,
+        port: options.port,
+        deviceId: sessionOptions.deviceId,
+      });
+      printOutput(result, !!options.json, !!options.pretty);
+    });
+
+  sessionCommand
+    .command('list')
+    .description('List running MCP sessions')
+    .option('-j, --json', 'Output JSON')
+    .action(async (...args: unknown[]) => {
+      const command = getActionCommand(args);
+      const options = getConnectionOptions(command);
+      const result = await callDaemon(process.cwd(), 'session.list', undefined);
+      printOutput(result, !!options.json, !!options.pretty);
+    });
+
+  sessionCommand
+    .command('show')
+    .description('Show one MCP session')
+    .argument('<sessionId>', 'Session ID')
+    .option('-j, --json', 'Output JSON')
+    .action(async (sessionId: string, ...args: unknown[]) => {
+      const command = getActionCommand(args);
+      const options = getConnectionOptions(command);
+      const result = await callDaemon(process.cwd(), 'session.show', { sessionId });
+      printOutput(result, !!options.json, !!options.pretty);
+    });
+
+  sessionCommand
+    .command('stop')
+    .description('Stop one MCP session')
+    .argument('<sessionId>', 'Session ID')
+    .option('-j, --json', 'Output JSON')
+    .action(async (sessionId: string, ...args: unknown[]) => {
+      const command = getActionCommand(args);
+      const options = getConnectionOptions(command);
+      const result = await callDaemon(process.cwd(), 'session.stop', { sessionId });
+      printOutput(result, !!options.json, !!options.pretty);
+    });
+
+  mcpCommand
     .command('list-domains')
     .alias('domains')
     .description('List available static and plugin domains')
@@ -452,7 +544,7 @@ export const registerMCPCommand = (program: Command): void => {
     .option('-n, --limit <n>', 'Page size (default 20, max 100)')
     .option('-c, --cursor <token>', 'Opaque cursor from previous page')
     .option('-j, --json', 'Output JSON')
-    .option('-d, --deviceId <id>', 'Target Metro device ID')
+    .requiredOption('-s, --session <id>', 'Target MCP session ID')
     .action(async (_args: ListDomainsOptions, command: Command) => {
       const options = getConnectionOptions(command);
       const listOptions = command.optsWithGlobals<ListDomainsOptions>();
@@ -463,9 +555,10 @@ export const registerMCPCommand = (program: Command): void => {
         !!listOptions.verbose,
       );
       const limit = parseLimit(listOptions.limit);
+      const sessionId = getSessionId(command);
 
-      const result = await withClient(options, async (client, selectedDeviceId) => {
-        const tools = await client.getTools();
+      const result = await (async () => {
+        const tools = (await callDaemon(process.cwd(), 'session.tools', { sessionId })).tools;
         const runtimeDomains = buildRuntimePluginDomains(tools);
         const domains = [...STATIC_DOMAINS, ...runtimeDomains]
           .map<DomainListRow>((domain) => ({
@@ -485,12 +578,12 @@ export const registerMCPCommand = (program: Command): void => {
         });
 
         return {
-          selectedDeviceId,
+          sessionId,
           count: domains.length,
           items: paged.items,
           page: paged.page,
         };
-      });
+      })();
 
       printOutput(result, !!options.json, !!options.pretty);
     });
@@ -501,7 +594,7 @@ export const registerMCPCommand = (program: Command): void => {
     .description('Load runtime-generated domain usage guide')
     .argument('<domain>', 'Domain name')
     .option('-j, --json', 'Output JSON')
-    .option('-d, --deviceId <id>', 'Target Metro device ID')
+    .requiredOption('-s, --session <id>', 'Target MCP session ID')
     .action(async (domainToken: string, command?: Command) => {
       const activeCommand = command as Command;
       const normalizedDomain = domainToken.trim();
@@ -510,20 +603,45 @@ export const registerMCPCommand = (program: Command): void => {
       }
 
       const options = getConnectionOptions(activeCommand);
-      const result = await withClient(options, async (client, selectedDeviceId) => {
-        const { resolvedDomain, domainTools } = await resolveDomainContext(client, normalizedDomain);
+      const sessionId = getSessionId(activeCommand);
+      const result = await (async () => {
+        const { resolvedDomain, domainTools } = await resolveDomainContext(
+          process.cwd(),
+          sessionId,
+          normalizedDomain,
+        );
         const content = generateDomainGuide(resolvedDomain, domainTools);
 
         return {
           domain: resolvedDomain.id,
           kind: resolvedDomain.kind,
           ...(resolvedDomain.pluginId ? { pluginId: resolvedDomain.pluginId } : {}),
-          selectedDeviceId,
+          sessionId,
           content,
         };
-      });
+      })();
 
       printOutput(result, !!options.json, !!options.pretty);
+    });
+
+  mcpCommand
+    .command('daemon')
+    .description('Internal MCP daemon entrypoint')
+    .requiredOption('--workspace <path>', 'Workspace path')
+    .requiredOption('--socket <path>', 'Unix socket or named pipe path')
+    .requiredOption('--metadata <path>', 'Daemon metadata file path')
+    .action(async (_args: unknown, command: Command) => {
+      const { runMCPDaemonServer } = await import('./daemon-server.js');
+      const options = command.optsWithGlobals<{
+        workspace: string;
+        socket: string;
+        metadata: string;
+      }>();
+      await runMCPDaemonServer({
+        workspace: options.workspace,
+        socketPath: options.socket,
+        metadataPath: options.metadata,
+      });
     });
 
   registerDynamicPluginDomainDispatcher(mcpCommand);

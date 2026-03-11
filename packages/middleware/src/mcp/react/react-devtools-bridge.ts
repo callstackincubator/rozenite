@@ -84,10 +84,11 @@ export const createReactDevToolsBridge = async (options?: {
         case 'renderer':
         case 'rendererAttached': {
           const payload = getRecord(message.payload);
-          if (Number.isInteger(payload?.id)) {
-            rendererIds.add(Number(payload.id));
+          const rendererId = payload?.id;
+          if (Number.isInteger(rendererId)) {
+            rendererIds.add(Number(rendererId));
+            profilingStore.registerRenderer(Number(rendererId));
           }
-          profilingStore.registerRenderer(payload?.id);
           return null;
         }
 

@@ -68,3 +68,4 @@ export const initializeRozenite = (
 };
 
 export type { RozeniteConfig };
+export * as mcp from './mcp/index.js';

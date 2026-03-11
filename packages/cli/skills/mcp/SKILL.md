@@ -6,14 +6,16 @@ description: Skill giving access to React Native Devtools and Rozenite plugins t
 # Rozenite Skill
 
 ## Workflow
-1. Discover available domains with the Rozenite CLI (`--json`).
-2. Load only one domain guide at a time.
-3. Execute domain commands using `rozenite mcp <domain> <action> ... --json` (short aliases also work).
-4. Prefer `--limit 20` and cursor pagination for list commands.
+1. Ensure there is an MCP session. Start with `rozenite mcp session list --json`, then create one with `rozenite mcp session create --json` when needed.
+2. Discover available domains with the Rozenite CLI for that session (`rozenite mcp domains --session <id> --json`).
+3. Load only one domain guide at a time.
+4. Execute domain commands using `rozenite mcp <domain> <action> ... --session <id> --json` (short aliases also work).
+5. Prefer `--limit 20` and cursor pagination for list commands.
 
 ## Rules
-- Do not pass `--deviceId` unless the user explicitly asks for a specific device.
-- If a specific device is required, first list available targets, then pass the same `--deviceId <id>` on every relevant command in that sequence.
+- MCP commands require an explicit `--session <id>`.
+- The CLI is short-lived; the daemon and session carry runtime state across commands.
+- If a specific device is required, first list available targets, then create a session pinned to that device with `rozenite mcp session create --deviceId <id> --json`.
 - Use the smallest command that answers the current question.
 - Avoid broad capability dumps unless needed.
 - Treat plugin availability as runtime state, not static documentation.
@@ -23,15 +25,14 @@ description: Skill giving access to React Native Devtools and Rozenite plugins t
 - For `@rozenite/react-navigation-plugin`, prefer high-level tools (`navigate`, `go-back`) before low-level tools (`dispatch-action`, `reset-root`).
 
 ## Command Shape (Required)
-- Valid: `rozenite mcp <domain> tools -j` (alias: `list-tools`)
-- Valid: `rozenite mcp <domain> schema -t <name> -j` (alias: `get-tool-schema`)
-- Valid: `rozenite mcp <domain> call -t <name> -a '<json>' -j` (alias: `call-tool`)
+- Valid: `rozenite mcp session create -j`
+- Valid: `rozenite mcp <domain> tools -j --session <id>` (alias: `list-tools`)
+- Valid: `rozenite mcp <domain> schema -t <name> -j --session <id>` (alias: `get-tool-schema`)
+- Valid: `rozenite mcp <domain> call -t <name> -a '<json>' -j --session <id>` (alias: `call-tool`)
 - Invalid: `rozenite mcp list-tools --json` (missing `<domain>`)
 
 ## Domains
 - `console`: CDP-style console/log inspection tools with paged reads.
-- `network`: network-related inspection tools.
-- `react`: React Native Devtools tree, inspected data, and profiling tools.
 - Dynamic plugin domains: discovered at runtime from `list-domains`.
 
 Read domain-specific guidance from:

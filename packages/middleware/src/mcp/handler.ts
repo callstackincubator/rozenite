@@ -324,6 +324,7 @@ export interface DeviceSender {
 }
 
 type PendingCall = {
+  deviceId: string;
   resolve: (result: unknown) => void;
   reject: (error: Error) => void;
   timeoutId: NodeJS.Timeout;
@@ -506,6 +507,16 @@ export const createMCPMessageHandler = (options?: {
   };
 
   const disconnectDevice = (deviceId: string): void => {
+    for (const [callId, pending] of pendingCalls.entries()) {
+      if (pending.deviceId !== deviceId) {
+        continue;
+      }
+
+      pendingCalls.delete(callId);
+      clearTimeout(pending.timeoutId);
+      pending.reject(new Error(`Device "${deviceId}" disconnected`));
+    }
+
     registry.unregisterDevice(deviceId);
     consoleLogStore.unregisterDevice(deviceId);
     reactTreeStore.unregisterDevice(deviceId);
@@ -630,7 +641,7 @@ export const createMCPMessageHandler = (options?: {
         }
       }, 30000);
 
-      pendingCalls.set(callId, { resolve, reject, timeoutId });
+      pendingCalls.set(callId, { deviceId: targetDeviceId, resolve, reject, timeoutId });
     });
 
     try {
