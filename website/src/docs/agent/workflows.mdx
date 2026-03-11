@@ -1,0 +1,65 @@
+# Common Workflows
+
+These are common tasks a coding agent performs with Rozenite for Agents while interacting with React Native DevTools and Rozenite plugins.
+
+## Read logs
+
+```bash
+rozenite agent console call --tool enable --args '{}' --session <sessionId> --json
+rozenite agent console call --tool getMessages --args '{"limit":20}' --session <sessionId> --json
+```
+
+Use this when the agent needs recent app logs while investigating a failure.
+
+## Record network traffic
+
+```bash
+rozenite agent network call --tool startRecording --args '{}' --session <sessionId> --json
+```
+
+After the relevant action happens in the app, inspect what was captured:
+
+```bash
+rozenite agent network call --tool listRequests --args '{"limit":20}' --session <sessionId> --json
+```
+
+To inspect one request in more detail:
+
+```bash
+rozenite agent network call --tool getRequestDetails --args '{"requestId":"<requestId>"}' --session <sessionId> --json
+```
+
+## Profile a React interaction
+
+```bash
+rozenite agent react call --tool startProfiling --args '{"shouldRestart":false}' --session <sessionId> --json
+```
+
+After the relevant interaction happens in the app, stop profiling:
+
+```bash
+rozenite agent react call --tool stopProfiling --args '{}' --session <sessionId> --json
+```
+
+This is a good starting point when the agent is investigating slow renders or comparing two user flows.
+
+## Use plugin tools
+
+First list domains:
+
+```bash
+rozenite agent domains --session <sessionId> --json
+```
+
+If an installed plugin exposes agent tools, it appears as its own domain. The agent can use it the same way as the built-in domains:
+
+```bash
+rozenite agent <pluginDomain> tools --session <sessionId> --json
+rozenite agent <pluginDomain> call --tool <toolName> --args '{}' --session <sessionId> --json
+```
+
+## Next Steps
+
+- Go back to the [Rozenite for Agents overview](/docs/agent/overview).
+- Return to the [Getting Started guide](/docs/getting-started) to install Rozenite in your app.
+- Browse the [Plugin Directory](/plugin-directory) to find plugins that add more DevTools panels and agent domains.

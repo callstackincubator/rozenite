@@ -15,23 +15,23 @@ import { createReactDevToolsBridge } from './react/react-devtools-bridge.js';
 import type { ReactDevToolsBridgeMessage } from './react/types.js';
 
 const CONSOLE_TOOL_NAMES = {
-  enable: 'Console.enable',
-  disable: 'Console.disable',
-  getMessages: 'Console.getMessages',
-  clearMessages: 'Console.clearMessages',
+  enable: 'enable',
+  disable: 'disable',
+  getMessages: 'getMessages',
+  clearMessages: 'clearMessages',
 } as const;
 
 const REACT_TOOL_NAMES = {
-  searchNodes: 'React.searchNodes',
-  getNode: 'React.getNode',
-  getChildren: 'React.getChildren',
-  getProps: 'React.getProps',
-  getState: 'React.getState',
-  getHooks: 'React.getHooks',
-  startProfiling: 'React.startProfiling',
-  isProfilingStarted: 'React.isProfilingStarted',
-  stopProfiling: 'React.stopProfiling',
-  getRenderData: 'React.getRenderData',
+  searchNodes: 'searchNodes',
+  getNode: 'getNode',
+  getChildren: 'getChildren',
+  getProps: 'getProps',
+  getState: 'getState',
+  getHooks: 'getHooks',
+  startProfiling: 'startProfiling',
+  isProfilingStarted: 'isProfilingStarted',
+  stopProfiling: 'stopProfiling',
+  getRenderData: 'getRenderData',
 } as const;
 
 const CONSOLE_TOOLS: AgentTool[] = [

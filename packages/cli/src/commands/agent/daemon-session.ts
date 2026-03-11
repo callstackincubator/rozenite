@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import { agent } from '@rozenite/middleware';
 import type { MetroTarget, SessionInfo, SessionStatus } from './daemon-protocol.js';
+import type { DaemonLogger } from './daemon-logger.js';
 import { resolveMetroTarget } from './metro-discovery.js';
 import {
   createMemoryDomainService,
@@ -20,7 +21,6 @@ type AgentMessageHandler = agent.AgentMessageHandler;
 
 const RUNTIME_GLOBAL = '__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__';
 const BOOTSTRAP_DELAY_MS = 500;
-const RECONNECT_DELAY_MS = 1000;
 
 type PendingCommand = {
   resolve: (value: Record<string, unknown>) => void;
@@ -51,9 +51,18 @@ export const createDaemonSession = (
   host: string,
   port: number,
   requestedDeviceId?: string,
+  onTerminated?: (sessionId: string) => void,
+  logger?: DaemonLogger,
 ) => {
   const handler = createAgentMessageHandler();
   const createdAt = Date.now();
+  const sessionLogger = logger?.child({
+    component: 'agent-session',
+    sessionId: id,
+    host,
+    port,
+    requestedDeviceId: requestedDeviceId || null,
+  });
 
   let lastActivityAt = createdAt;
   let connectedAt: number | undefined;
@@ -64,7 +73,6 @@ export const createDaemonSession = (
   let stopped = false;
   let nextCommandId = 1;
   let bootstrapTimer: NodeJS.Timeout | null = null;
-  let reconnectTimer: NodeJS.Timeout | null = null;
   let bindingName: string | null = null;
   let bootstrapped = false;
 
@@ -118,6 +126,9 @@ export const createDaemonSession = (
     params?: Record<string, unknown>,
   ): Promise<Record<string, unknown>> => {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
+      sessionLogger?.warn('Rejected CDP command because websocket is not connected', {
+        method,
+      });
       throw new Error('CDP websocket is not connected');
     }
 
@@ -127,12 +138,21 @@ export const createDaemonSession = (
 
     return await new Promise((resolve, reject) => {
       pendingCommands.set(commandId, { resolve, reject });
+      sessionLogger?.debug('Sending CDP command', {
+        commandId,
+        method,
+      });
       ws!.send(payload, (error) => {
         if (!error) {
           return;
         }
 
         pendingCommands.delete(commandId);
+        sessionLogger?.error('Failed to send CDP command', {
+          commandId,
+          method,
+          error,
+        });
         reject(error);
       });
     });
@@ -165,35 +185,14 @@ export const createDaemonSession = (
     bootstrapTimer = null;
   };
 
-  const clearReconnectTimer = (): void => {
-    if (!reconnectTimer) {
-      return;
-    }
-
-    clearTimeout(reconnectTimer);
-    reconnectTimer = null;
-  };
-
   const scheduleBootstrap = (): void => {
     clearBootstrapTimer();
+    sessionLogger?.debug('Scheduling runtime bootstrap', {
+      delayMs: BOOTSTRAP_DELAY_MS,
+    });
     bootstrapTimer = setTimeout(() => {
       void bootstrap();
     }, BOOTSTRAP_DELAY_MS);
-  };
-
-  const scheduleReconnect = (): void => {
-    if (reconnectTimer || stopped) {
-      return;
-    }
-
-    reconnectTimer = setTimeout(() => {
-      reconnectTimer = null;
-      void connect().catch((error: Error) => {
-        lastError = error.message;
-        status = 'disconnected';
-        scheduleReconnect();
-      });
-    }, RECONNECT_DELAY_MS);
   };
 
   const sendDomainMessage = async (domain: string, message: unknown): Promise<void> => {
@@ -206,10 +205,17 @@ export const createDaemonSession = (
 
   const bootstrap = async (): Promise<void> => {
     if (stopped || !ws || ws.readyState !== WebSocket.OPEN || bootstrapped) {
+      sessionLogger?.debug('Skipped runtime bootstrap', {
+        stopped,
+        hasSocket: Boolean(ws),
+        readyState: ws?.readyState ?? null,
+        bootstrapped,
+      });
       return;
     }
 
     try {
+      sessionLogger?.info('Starting runtime bootstrap');
       const bindingResponse = await sendCommand('Runtime.evaluate', {
         expression: `typeof ${RUNTIME_GLOBAL} !== "undefined" && typeof ${RUNTIME_GLOBAL}.BINDING_NAME === "string" ? ${RUNTIME_GLOBAL}.BINDING_NAME : null`,
       });
@@ -235,13 +241,24 @@ export const createDaemonSession = (
       bootstrapped = true;
       lastError = undefined;
       touch();
+      sessionLogger?.info('Runtime bootstrap completed', {
+        bindingName,
+      });
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
+      sessionLogger?.warn('Runtime bootstrap failed; retrying', {
+        error,
+      });
       scheduleBootstrap();
     }
   };
 
   const handleSocketClosed = (): void => {
+    sessionLogger?.warn('CDP websocket closed', {
+      targetId: target?.id || null,
+      pendingCommandCount: pendingCommands.size,
+      wasStopped: stopped,
+    });
     bindingName = null;
     bootstrapped = false;
     connectedAt = undefined;
@@ -264,8 +281,14 @@ export const createDaemonSession = (
       return;
     }
 
-    status = 'disconnected';
-    scheduleReconnect();
+    stopped = true;
+    clearBootstrapTimer();
+    status = 'stopped';
+
+    void Promise.all(localServices.map((service) => service.dispose())).finally(() => {
+      sessionLogger?.info('Session terminated after websocket close');
+      onTerminated?.(id);
+    });
   };
 
   const handleSocketMessage = (rawMessage: string): void => {
@@ -275,6 +298,7 @@ export const createDaemonSession = (
     try {
       message = JSON.parse(rawMessage) as Record<string, unknown>;
     } catch {
+      sessionLogger?.warn('Received non-JSON CDP payload');
       return;
     }
 
@@ -286,10 +310,17 @@ export const createDaemonSession = (
 
       pendingCommands.delete(message.id);
       if (message.error) {
+        sessionLogger?.warn('CDP command failed', {
+          commandId: message.id,
+          error: message.error,
+        });
         pending.reject(new Error(JSON.stringify(message.error)));
         return;
       }
 
+      sessionLogger?.debug('CDP command completed', {
+        commandId: message.id,
+      });
       pending.resolve(message);
       return;
     }
@@ -328,12 +359,23 @@ export const createDaemonSession = (
 
   const connect = async (): Promise<void> => {
     status = 'connecting';
+    sessionLogger?.info('Resolving Metro target');
     target = await resolveMetroTarget(host, port, requestedDeviceId);
+    sessionLogger?.info('Resolved Metro target', {
+      targetId: target.id,
+      targetName: target.name,
+      pageId: target.pageId,
+      appId: target.appId,
+      webSocketDebuggerUrl: target.webSocketDebuggerUrl,
+    });
 
     await new Promise<void>((resolve, reject) => {
       const socket = new WebSocket(target!.webSocketDebuggerUrl);
       let settled = false;
       ws = socket;
+      sessionLogger?.info('Opening CDP websocket', {
+        webSocketDebuggerUrl: target!.webSocketDebuggerUrl,
+      });
 
       socket.once('open', () => {
         settled = true;
@@ -341,6 +383,9 @@ export const createDaemonSession = (
         connectedAt = Date.now();
         lastError = undefined;
         touch();
+        sessionLogger?.info('CDP websocket opened', {
+          connectedAt,
+        });
         handler.connectDevice(
           target!.id,
           target!.name,
@@ -353,7 +398,12 @@ export const createDaemonSession = (
             },
           },
         );
-        void sendCommand('Runtime.enable');
+        void sendCommand('Runtime.enable').catch((error: Error) => {
+          lastError = error.message;
+          sessionLogger?.warn('Runtime.enable failed', {
+            error,
+          });
+        });
         scheduleBootstrap();
         resolve();
       });
@@ -364,6 +414,10 @@ export const createDaemonSession = (
 
       socket.once('error', (error) => {
         lastError = error.message;
+        sessionLogger?.error('CDP websocket emitted error', {
+          error,
+          settled,
+        });
         if (!settled) {
           reject(error);
         }
@@ -372,6 +426,7 @@ export const createDaemonSession = (
       socket.once('close', () => {
         handleSocketClosed();
         if (!settled) {
+          sessionLogger?.error('CDP websocket closed before session initialization');
           reject(new Error('CDP websocket closed before session initialization'));
         }
       });
@@ -407,29 +462,43 @@ export const createDaemonSession = (
 
   const callTool = async (toolName: string, args: unknown): Promise<unknown> => {
     if (!target) {
+      sessionLogger?.warn('Rejected tool call because session is not connected', {
+        toolName,
+      });
       throw new Error(`Session "${id}" is not connected to a device`);
     }
 
     touch();
+    sessionLogger?.info('Calling agent tool', {
+      toolName,
+    });
 
     for (const service of localServices) {
       const result = await service.callTool(toolName, args);
       if (result !== undefined) {
+        sessionLogger?.info('Agent tool completed via local service', {
+          toolName,
+        });
         return result;
       }
     }
 
-    return await handler.callTool(toolName, args);
+    const result = await handler.callTool(toolName, args);
+    sessionLogger?.info('Agent tool completed via device handler', {
+      toolName,
+    });
+    return result;
   };
 
   const start = async (): Promise<void> => {
+    sessionLogger?.info('Starting session');
     await connect();
   };
 
   const stop = async (): Promise<void> => {
     stopped = true;
     clearBootstrapTimer();
-    clearReconnectTimer();
+    sessionLogger?.info('Stopping session');
 
     for (const service of localServices) {
       await service.dispose();
@@ -443,6 +512,7 @@ export const createDaemonSession = (
       handler.disconnectDevice(target.id);
     }
     status = 'stopped';
+    sessionLogger?.info('Session stopped');
   };
 
   return {

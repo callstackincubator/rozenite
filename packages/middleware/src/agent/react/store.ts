@@ -21,12 +21,12 @@ import { createReactDevToolsBridge, type ReactDevToolsBridge } from './react-dev
 
 const DEFAULT_SEARCH_LIMIT = 20;
 const MAX_SEARCH_LIMIT = 100;
-const SEARCH_TOOL_NAME = 'React.searchNodes';
-const GET_CHILDREN_TOOL_NAME = 'React.getChildren';
-const GET_PROPS_TOOL_NAME = 'React.getProps';
-const GET_STATE_TOOL_NAME = 'React.getState';
-const GET_HOOKS_TOOL_NAME = 'React.getHooks';
-const GET_RENDER_DATA_TOOL_NAME = 'React.getRenderData';
+const SEARCH_TOOL_NAME = 'searchNodes';
+const GET_CHILDREN_TOOL_NAME = 'getChildren';
+const GET_PROPS_TOOL_NAME = 'getProps';
+const GET_STATE_TOOL_NAME = 'getState';
+const GET_HOOKS_TOOL_NAME = 'getHooks';
+const GET_RENDER_DATA_TOOL_NAME = 'getRenderData';
 const INSPECT_WAIT_TIMEOUT_MS = 2000;
 const DEFAULT_STOP_PROFILING_WAIT_MS = 3000;
 const MAX_STOP_PROFILING_WAIT_MS = 10000;

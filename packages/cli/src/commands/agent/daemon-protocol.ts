@@ -1,7 +1,7 @@
 import type { DaemonTransportKind } from './daemon-paths.js';
 import type { AgentTool } from './types.js';
 
-export type SessionStatus = 'connecting' | 'connected' | 'disconnected' | 'stopped';
+export type SessionStatus = 'connecting' | 'connected' | 'stopped';
 
 export type SessionInfo = {
   id: string;

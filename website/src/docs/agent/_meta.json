@@ -1,0 +1,22 @@
+[
+  {
+    "type": "file",
+    "name": "overview",
+    "label": "Overview"
+  },
+  {
+    "type": "file",
+    "name": "quick-start",
+    "label": "Quick Start"
+  },
+  {
+    "type": "file",
+    "name": "skills",
+    "label": "Agent Skills"
+  },
+  {
+    "type": "file",
+    "name": "workflows",
+    "label": "Common Workflows"
+  }
+]

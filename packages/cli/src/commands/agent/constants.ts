@@ -36,12 +36,22 @@ export const STATIC_DOMAINS: DomainDefinition[] = [
   },
 ];
 
-export const STATIC_DOMAIN_TOOL_PREFIXES: Record<string, string> = {
-  console: 'Console.',
-  react: 'React.',
-};
+export const STATIC_DOMAIN_TOOL_PREFIXES: Record<string, string> = {};
 
 export const STATIC_DOMAIN_TOOL_NAMES: Record<string, string[]> = {
+  console: ['enable', 'disable', 'clearMessages', 'getMessages'],
+  react: [
+    'searchNodes',
+    'getNode',
+    'getChildren',
+    'getProps',
+    'getState',
+    'getHooks',
+    'startProfiling',
+    'isProfilingStarted',
+    'stopProfiling',
+    'getRenderData',
+  ],
   performance: ['startTrace', 'stopTrace'],
   memory: ['takeHeapSnapshot', 'startSampling', 'stopSampling'],
   network: [

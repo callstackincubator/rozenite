@@ -1,0 +1,74 @@
+# Quick Start
+
+Rozenite for Agents is session-based. A session is the agent's connection to one running app target.
+
+This is the core flow a coding agent follows when it needs to inspect a React Native app through Rozenite. The commands below are the underlying protocol the agent uses, not the primary human-facing interface.
+
+## 1. Find a target
+
+```bash
+rozenite agent targets --json
+```
+
+This lists the available devices and simulators the agent can inspect.
+
+## 2. Create or reuse a session
+
+```bash
+rozenite agent session create --deviceId <id> --json
+```
+
+If you only have one connected target, `--deviceId` is usually optional. If there are multiple targets, the agent should select the correct one explicitly.
+
+## 3. Discover available domains
+
+```bash
+rozenite agent domains --session <sessionId> --json
+```
+
+Domains group tools by area, such as `console`, `network`, `react`, `performance`, and `memory`. Installed plugins can expose additional domains at runtime.
+
+## 4. Use the relevant domain
+
+```bash
+rozenite agent console tools --session <sessionId> --json
+```
+
+Once the agent knows which domain it needs, it can call a tool from that domain:
+
+```bash
+rozenite agent console call --tool getMessages --args '{"limit":20}' --session <sessionId> --json
+```
+
+## Session management reference
+
+List running sessions:
+
+```bash
+rozenite agent session list --json
+```
+
+Stop one session:
+
+```bash
+rozenite agent session stop <sessionId> --json
+```
+
+Stop all sessions and shut down the agent process:
+
+```bash
+rozenite agent kill --json
+```
+
+## Tips for coding agents
+
+- Prefer `--json` so results are structured and easy to parse.
+- Reuse an existing session when the agent keeps working against the same app target.
+- Create a new session when the task moves to a different device or simulator.
+- Discover domains first when plugin-provided tooling may be involved.
+- Treat this CLI as the transport for agent workflows into React Native DevTools and Rozenite plugins.
+
+## Next Steps
+
+- Install the [`rozenite-agent` skill](/docs/agent/skills) if you want a coding agent to follow this workflow automatically.
+- Go to [Common Workflows](/docs/agent/workflows) for common debugging tasks that agents perform with Rozenite.

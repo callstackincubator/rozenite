@@ -1,0 +1,39 @@
+# Rozenite for Agents
+
+Rozenite for Agents is the agent-facing way to interact with React Native DevTools and Rozenite plugins. It gives coding agents a reliable interface for inspecting a running React Native app through Rozenite, including logs, network activity, React profiling data, and plugin-specific tooling.
+
+## What Coding Agents Use It For
+
+- Read app logs while debugging a failure
+- Capture and inspect network requests during a user flow
+- Run React profiling when investigating slow renders
+- Use tools exposed by installed Rozenite plugins
+- Work against the connected app target without inventing custom instrumentation
+
+## Before You Start
+
+Make sure:
+
+- your app is running in development mode
+- Metro is running
+- at least one React Native target is connected
+
+If you have more than one simulator, emulator, or device connected, you will need to choose which one to inspect.
+
+Rozenite for Agents is designed for AI and coding agents first. The underlying CLI can be called directly, but the intended use is for an agent to drive it while debugging or implementing changes in a React Native app.
+
+## How Agents Usually Work With It
+
+The typical flow is:
+
+1. Connect to a running app target by creating or reusing a session.
+2. Discover which Rozenite domains are available for that target.
+3. Use the relevant domain to inspect the app state or collect debugging data.
+
+If you want to give a coding agent this workflow directly, install the [`rozenite-agent` skill](/docs/agent/skills).
+
+## Next Steps
+
+- Continue with [Quick Start](/docs/agent/quick-start) for the core agent flow.
+- Install the [`rozenite-agent` skill](/docs/agent/skills) if you want Codex or another coding agent to use Rozenite effectively.
+- Explore [Common Workflows](/docs/agent/workflows) for the main debugging tasks agents perform with Rozenite.

@@ -32,7 +32,7 @@ describe('agent tool pagination helper', () => {
 
     const result = await callToolWithOptionalPagination(
       client,
-      'Console.getMessages',
+      'getMessages',
       { limit: 1 },
       { pagesLimit: 2 },
     ) as {

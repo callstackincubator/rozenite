@@ -193,7 +193,7 @@ export const createConsoleLogStore = (capacity = DEFAULT_CONSOLE_BUFFER_CAPACITY
     });
 
     const paged = paginateSource(source, {
-      tool: 'Console.getMessages',
+      tool: 'getMessages',
       deviceId,
       request: {
         limit: request.limit,

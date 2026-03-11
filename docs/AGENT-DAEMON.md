@@ -106,19 +106,18 @@ The difference is where the live device connection sits:
 - before: Metro middleware owned the device connection and served agent tools over HTTP
 - now: the daemon owns the device connection and exposes agent tools over local IPC
 
-## Reconnection Model
+## Session Termination Model
 
-Sessions are expected to survive transient connection loss.
+Sessions are expected to end when the websocket connection dies.
 
 When a websocket closes:
 
-- the session is marked disconnected
+- the session is marked stopped
 - pending tool calls are rejected
-- reconnect is scheduled
-- on reconnect, the session re-runs the runtime bootstrap flow
-- runtime-visible tool state is rebuilt from the live device
+- local session services are disposed
+- the daemon removes the session from its active session registry
 
-The session identity remains stable during reconnects.
+Users must create a new session after Metro or React Native DevTools comes back.
 
 ## Persistence Model
 

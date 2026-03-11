@@ -30,7 +30,7 @@ describe('agent pagination', () => {
     };
 
     const first = paginateSource(source, {
-      tool: 'Console.getMessages',
+      tool: 'getMessages',
       deviceId: 'device-1',
       request: {
         limit: 2,
@@ -42,7 +42,7 @@ describe('agent pagination', () => {
     expect(first.page.hasMore).toBe(true);
 
     const second = paginateSource(source, {
-      tool: 'Console.getMessages',
+      tool: 'getMessages',
       deviceId: 'device-1',
       request: {
         limit: 2,
@@ -75,7 +75,7 @@ describe('agent pagination', () => {
 
     const staleCursor = encodeCursor({
       v: 1,
-      tool: 'Console.getMessages',
+      tool: 'getMessages',
       deviceId: 'device-1',
       position: 1,
       filtersHash: hashFilters({}),
@@ -83,7 +83,7 @@ describe('agent pagination', () => {
     });
 
     const result = paginateSource(source, {
-      tool: 'Console.getMessages',
+      tool: 'getMessages',
       deviceId: 'device-1',
       request: {
         cursor: staleCursor,

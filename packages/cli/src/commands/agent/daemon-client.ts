@@ -11,6 +11,7 @@ import type {
   RPCResponseMap,
   DaemonInfo,
 } from './daemon-protocol.js';
+import { createAgentDaemonLogger } from './daemon-logger.js';
 import {
   getAgentDaemonTransport,
   type DaemonTransport,
@@ -108,6 +109,13 @@ const getCLIEntrypoint = (): string => {
 
 const spawnDaemon = async (workspace: string): Promise<void> => {
   const transport = getAgentDaemonTransport(workspace);
+  const logger = createAgentDaemonLogger(workspace, {
+    component: 'agent-daemon-bootstrap',
+  });
+  logger.info('Spawning daemon process', {
+    transportKind: transport.kind,
+    transportAddress: transport.address,
+  });
 
   const child = spawn(
     process.execPath,
@@ -127,6 +135,9 @@ const spawnDaemon = async (workspace: string): Promise<void> => {
   child.unref();
 
   await waitForDaemonTransport(transport, START_TIMEOUT_MS);
+  logger.info('Daemon process reported ready', {
+    pid: child.pid || null,
+  });
 };
 
 const getRunningDaemonTransport = async (workspace: string): Promise<DaemonTransport | null> => {
@@ -157,6 +168,9 @@ const getRunningDaemonTransport = async (workspace: string): Promise<DaemonTrans
 export const ensureAgentDaemonRunning = async (workspace: string): Promise<DaemonTransport> => {
   const transport = getAgentDaemonTransport(workspace);
   const metadata = readMetadata(workspace);
+  const logger = createAgentDaemonLogger(workspace, {
+    component: 'agent-daemon-bootstrap',
+  });
 
   if (
     metadata &&
@@ -166,11 +180,20 @@ export const ensureAgentDaemonRunning = async (workspace: string): Promise<Daemo
   ) {
     try {
       await waitForDaemonTransport(transport, CONNECT_TIMEOUT_MS);
+      logger.debug('Using existing daemon process', {
+        pid: metadata.pid,
+      });
       return transport;
     } catch {
+      logger.warn('Existing daemon metadata was stale; deleting state', {
+        pid: metadata.pid,
+      });
       deleteStaleState(workspace, transport);
     }
   } else if (metadata) {
+    logger.warn('Deleting mismatched daemon metadata before restart', {
+      pid: metadata.pid,
+    });
     deleteStaleState(workspace, transport);
   }
 

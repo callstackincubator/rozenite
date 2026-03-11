@@ -6,6 +6,7 @@ import path from 'node:path';
 const STATE_DIRNAME = '.rozenite';
 const SOCKET_FILENAME = 'agent-daemon.sock';
 const METADATA_FILENAME = 'agent-daemon.json';
+const LOG_FILENAME = 'agent-daemon.log';
 
 export type DaemonTransportKind = 'unix-socket' | 'windows-pipe';
 
@@ -32,6 +33,10 @@ export const getAgentWorkspaceStateDir = (workspace: string): string => {
 
 export const getAgentDaemonMetadataPath = (workspace: string): string => {
   return path.join(getAgentWorkspaceStateDir(workspace), METADATA_FILENAME);
+};
+
+export const getAgentDaemonLogPath = (workspace: string): string => {
+  return path.join(getAgentWorkspaceStateDir(workspace), LOG_FILENAME);
 };
 
 export const getAgentDaemonTransport = (

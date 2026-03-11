@@ -7,6 +7,7 @@ import type {
   RPCResponseEnvelope,
   RPCResponseMap,
 } from './daemon-protocol.js';
+import { createAgentDaemonLogger } from './daemon-logger.js';
 import { getAgentDaemonTransport, type DaemonTransport } from './daemon-paths.js';
 import { createDaemonSession, type DaemonSession } from './daemon-session.js';
 import { getMetroTargets } from './metro-discovery.js';
@@ -24,6 +25,11 @@ const createSessionId = (): string => {
 
 export const createAgentDaemonServer = (options: DaemonOptions) => {
   const transport = options.transport || getAgentDaemonTransport(options.workspace);
+  const logger = createAgentDaemonLogger(options.workspace, {
+    component: 'agent-daemon',
+    transportKind: transport.kind,
+    transportAddress: transport.address,
+  });
   const startedAt = Date.now();
   const sessions = new Map<string, DaemonSession>();
   let shutdownRequested = false;
@@ -72,6 +78,9 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
 
   const shutdown = async (): Promise<number> => {
     const stoppedSessions = sessions.size;
+    logger.info('Shutting down daemon', {
+      stoppedSessions,
+    });
     for (const session of sessions.values()) {
       await session.stop();
     }
@@ -81,12 +90,19 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
   };
 
   const handle = async (request: RPCRequestEnvelope): Promise<unknown> => {
+    logger.info('Handling daemon RPC request', {
+      requestId: request.id,
+      method: request.method,
+    });
     switch (request.method) {
       case 'daemon.health':
         return getInfo();
       case 'daemon.shutdown': {
         const stoppedSessions = sessions.size;
         shutdownRequested = true;
+        logger.info('Daemon shutdown requested', {
+          stoppedSessions,
+        });
         return {
           stopped: true,
           stoppedSessions,
@@ -94,33 +110,65 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
       }
       case 'metro.targets': {
         const { host, port } = request.params as RPCRequestMap['metro.targets'];
+        logger.info('Listing Metro targets', {
+          host,
+          port,
+        });
         return {
           targets: await getMetroTargets(host, port),
         } satisfies RPCResponseMap['metro.targets'];
       }
       case 'session.create': {
         const { host, port, deviceId } = request.params as RPCRequestMap['session.create'];
+        const sessionId = createSessionId();
+        logger.info('Creating session', {
+          sessionId,
+          host,
+          port,
+          deviceId: deviceId || null,
+        });
         const session = createDaemonSession(
-          createSessionId(),
+          sessionId,
           host,
           port,
           deviceId,
+          (sessionId) => {
+            sessions.delete(sessionId);
+            writeMetadataSafely();
+            logger.warn('Session removed after termination', {
+              sessionId,
+            });
+          },
+          logger,
         );
         await session.start();
         sessions.set(session.id, session);
         writeMetadataSafely();
+        logger.info('Session created', {
+          sessionId: session.id,
+          status: session.getInfo().status,
+        });
         return { session: session.getInfo() } satisfies RPCResponseMap['session.create'];
       }
       case 'session.list':
+        logger.debug('Listing sessions', {
+          sessionCount: sessions.size,
+        });
         return {
           sessions: Array.from(sessions.values()).map((session) => session.getInfo()),
         } satisfies RPCResponseMap['session.list'];
       case 'session.show': {
         const { sessionId } = request.params as RPCRequestMap['session.show'];
+        logger.debug('Showing session', {
+          sessionId,
+        });
         return { session: getSession(sessionId).getInfo() } satisfies RPCResponseMap['session.show'];
       }
       case 'session.stop': {
         const { sessionId } = request.params as RPCRequestMap['session.stop'];
+        logger.info('Stopping session via RPC', {
+          sessionId,
+        });
         const session = getSession(sessionId);
         await session.stop();
         sessions.delete(sessionId);
@@ -129,10 +177,18 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
       }
       case 'session.tools': {
         const { sessionId } = request.params as RPCRequestMap['session.tools'];
+        logger.debug('Listing session tools', {
+          sessionId,
+        });
         return { tools: getSession(sessionId).getTools() } satisfies RPCResponseMap['session.tools'];
       }
       case 'session.call-tool': {
         const { sessionId, toolName, args } = request.params as RPCRequestMap['session.call-tool'];
+        logger.info('Calling session tool via RPC', {
+          sessionId,
+          toolName,
+          hasArgs: args !== undefined,
+        });
         return {
           result: await getSession(sessionId).callTool(toolName, args),
         } satisfies RPCResponseMap['session.call-tool'];
@@ -147,6 +203,7 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
     try {
       request = JSON.parse(line) as RPCRequestEnvelope;
     } catch {
+      logger.warn('Received invalid daemon request payload');
       socket.write(`${JSON.stringify({
         id: 'invalid',
         ok: false,
@@ -158,6 +215,10 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
 
     try {
       const result = await handle(request);
+      logger.debug('Daemon RPC request succeeded', {
+        requestId: request.id,
+        method: request.method,
+      });
       socket.write(
         `${JSON.stringify({
           id: request.id,
@@ -166,6 +227,11 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
         } as RPCResponseEnvelope)}\n`,
       );
     } catch (error) {
+      logger.error('Daemon RPC request failed', {
+        requestId: request.id,
+        method: request.method,
+        error,
+      });
       socket.write(
         `${JSON.stringify({
           id: request.id,
@@ -191,6 +257,9 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
       server.once('error', reject);
       server.listen(transport.address, () => {
         writeMetadata();
+        logger.info('Daemon transport is listening', {
+          logPath: logger.getLogPath(),
+        });
         resolve();
       });
     });
@@ -198,10 +267,15 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
 
   const listen = async (): Promise<void> => {
     removeDaemonStateArtifacts();
+    logger.info('Starting daemon server', {
+      startedAt,
+      logPath: logger.getLogPath(),
+    });
 
     const server = net.createServer((socket) => {
       let buffer = '';
       socket.setEncoding('utf8');
+      logger.debug('Accepted daemon transport connection');
 
       socket.on('data', (chunk) => {
         buffer += chunk;
@@ -220,6 +294,7 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
     await listenOnDaemonTransport(server);
 
     const shutdownAndExit = async () => {
+      logger.info('Received shutdown signal');
       await shutdown();
       server.close();
     };
@@ -229,6 +304,16 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
     });
     process.on('SIGTERM', () => {
       void shutdownAndExit().finally(() => process.exit(0));
+    });
+    process.on('uncaughtException', (error) => {
+      logger.error('Unhandled exception in daemon process', {
+        error,
+      });
+    });
+    process.on('unhandledRejection', (reason) => {
+      logger.error('Unhandled rejection in daemon process', {
+        reason,
+      });
     });
   };
 

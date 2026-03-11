@@ -68,16 +68,16 @@ describe('Agent domain utils', () => {
 
   it('does not create plugin domains for static built-in tools', () => {
     const domains = buildRuntimePluginDomains([
-      tool('Console.getMessages'),
-      tool('React.getNode'),
+      tool('getMessages'),
+      tool('getNode'),
       tool('startTrace'),
       tool('takeHeapSnapshot'),
       tool('startRecording'),
       tool('app.echo'),
     ]);
 
-    expect(domains.some((domain) => domain.pluginId === 'Console')).toBe(false);
-    expect(domains.some((domain) => domain.pluginId === 'React')).toBe(false);
+    expect(domains.some((domain) => domain.pluginId === 'getMessages')).toBe(false);
+    expect(domains.some((domain) => domain.pluginId === 'getNode')).toBe(false);
     expect(domains.some((domain) => domain.pluginId === 'startTrace')).toBe(false);
     expect(domains.some((domain) => domain.pluginId === 'takeHeapSnapshot')).toBe(false);
     expect(domains.some((domain) => domain.pluginId === 'startRecording')).toBe(false);

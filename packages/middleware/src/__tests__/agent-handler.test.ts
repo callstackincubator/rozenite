@@ -235,7 +235,7 @@ describe('AgentMessageHandler', () => {
     });
   });
 
-  it('exposes paged Console.getMessages results from captured messages', async () => {
+  it('exposes paged getMessages results from captured messages', async () => {
     const handler = createAgentMessageHandler();
     const sendMessage = vi.fn();
 
@@ -253,7 +253,7 @@ describe('AgentMessageHandler', () => {
       timestamp: 2000,
     });
 
-    const firstPage = await handler.callTool('Console.getMessages', { limit: 1 }) as {
+    const firstPage = await handler.callTool('getMessages', { limit: 1 }) as {
       items: Array<{ text: string }>;
       page: { hasMore: boolean; nextCursor?: string };
     };
@@ -262,7 +262,7 @@ describe('AgentMessageHandler', () => {
     expect(firstPage.items[0].text).toBe('second');
     expect(firstPage.page.hasMore).toBe(true);
 
-    const secondPage = await handler.callTool('Console.getMessages', {
+    const secondPage = await handler.callTool('getMessages', {
       limit: 1,
       cursor: firstPage.page.nextCursor,
     }) as {
@@ -290,7 +290,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    const firstPage = await handler.callTool('React.searchNodes', {
+    const firstPage = await handler.callTool('searchNodes', {
       query: 'search',
       limit: 1,
     }) as {
@@ -305,7 +305,7 @@ describe('AgentMessageHandler', () => {
     expect(firstPage.page.hasMore).toBe(true);
     expect(firstPage.page.nextCursor).toBeTruthy();
 
-    const secondPage = await handler.callTool('React.searchNodes', {
+    const secondPage = await handler.callTool('searchNodes', {
       query: 'search',
       limit: 1,
       cursor: firstPage.page.nextCursor,
@@ -339,7 +339,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    const scoped = await handler.callTool('React.searchNodes', {
+    const scoped = await handler.callTool('searchNodes', {
       query: 'cart',
       match: 'name-or-key',
       rootId: 10,
@@ -348,7 +348,7 @@ describe('AgentMessageHandler', () => {
     expect(scoped.items.map((item) => item.nodeId)).toEqual([11]);
   });
 
-  it('validates query and cursor context for React.searchNodes', async () => {
+  it('validates query and cursor context for searchNodes', async () => {
     const handler = createHandlerWithReactBridge();
     const sendMessage = vi.fn();
 
@@ -365,18 +365,18 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    await expect(handler.callTool('React.searchNodes', { query: '   ' })).rejects.toThrow(
+    await expect(handler.callTool('searchNodes', { query: '   ' })).rejects.toThrow(
       '"query" must be a non-empty string',
     );
 
-    const firstPage = await handler.callTool('React.searchNodes', {
+    const firstPage = await handler.callTool('searchNodes', {
       query: 'a',
       limit: 1,
     }) as {
       page: { nextCursor?: string };
     };
 
-    await expect(handler.callTool('React.searchNodes', {
+    await expect(handler.callTool('searchNodes', {
       query: 'root',
       cursor: firstPage.page.nextCursor,
     })).rejects.toThrow('Cursor does not match this request context');
@@ -395,7 +395,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    await expect(handler.callTool('React.searchNodes', {
+    await expect(handler.callTool('searchNodes', {
       query: 'root',
       rootId: 999,
     })).rejects.toThrow('Node "999" no longer exists in the current React tree.');
@@ -417,7 +417,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    const result = await handler.callTool('React.searchNodes', {
+    const result = await handler.callTool('searchNodes', {
       query: 'leaf',
     }) as {
       items: Array<{ nodeId: number }>;
@@ -439,7 +439,7 @@ describe('AgentMessageHandler', () => {
       ], ['Leaf']),
     });
 
-    const result = await handler.callTool('React.searchNodes', {
+    const result = await handler.callTool('searchNodes', {
       query: 'leaf',
     }) as {
       items: Array<{ nodeId: number }>;
@@ -471,11 +471,11 @@ describe('AgentMessageHandler', () => {
     handler.connectDevice('device-b', 'Device B', { sendMessage: vi.fn() });
 
     const tools = handler.getTools();
-    const searchTool = tools.find((tool) => tool.name === 'React.searchNodes');
-    const startProfilingTool = tools.find((tool) => tool.name === 'React.startProfiling');
-    const profilingStatusTool = tools.find((tool) => tool.name === 'React.isProfilingStarted');
-    const stopProfilingTool = tools.find((tool) => tool.name === 'React.stopProfiling');
-    const renderDataTool = tools.find((tool) => tool.name === 'React.getRenderData');
+    const searchTool = tools.find((tool) => tool.name === 'searchNodes');
+    const startProfilingTool = tools.find((tool) => tool.name === 'startProfiling');
+    const profilingStatusTool = tools.find((tool) => tool.name === 'isProfilingStarted');
+    const stopProfilingTool = tools.find((tool) => tool.name === 'stopProfiling');
+    const renderDataTool = tools.find((tool) => tool.name === 'getRenderData');
 
     expect(searchTool).toBeTruthy();
     expect(searchTool?.inputSchema.properties?.deviceId).toBeTruthy();
@@ -487,7 +487,7 @@ describe('AgentMessageHandler', () => {
     expect(renderDataTool?.inputSchema.required).toEqual(expect.arrayContaining(['deviceId', 'rootId', 'commitIndex']));
   });
 
-  it('returns node summary with React.getNode', async () => {
+  it('returns node summary with getNode', async () => {
     const handler = createHandlerWithReactBridge();
     handler.connectDevice('device-react-7', 'Device React 7', { sendMessage: vi.fn() });
 
@@ -502,7 +502,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    const result = await handler.callTool('React.getNode', { nodeId: 2 }) as {
+    const result = await handler.callTool('getNode', { nodeId: 2 }) as {
       nodeId: number;
       displayName: string;
       parentId?: number;
@@ -515,7 +515,7 @@ describe('AgentMessageHandler', () => {
     });
   });
 
-  it('returns paginated children with React.getChildren', async () => {
+  it('returns paginated children with getChildren', async () => {
     const handler = createHandlerWithReactBridge();
     handler.connectDevice('device-react-8', 'Device React 8', { sendMessage: vi.fn() });
 
@@ -531,7 +531,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    const first = await handler.callTool('React.getChildren', {
+    const first = await handler.callTool('getChildren', {
       nodeId: 10,
       limit: 1,
     }) as {
@@ -542,7 +542,7 @@ describe('AgentMessageHandler', () => {
     expect(first.items.map((item) => item.nodeId)).toEqual([11]);
     expect(first.page.hasMore).toBe(true);
 
-    const second = await handler.callTool('React.getChildren', {
+    const second = await handler.callTool('getChildren', {
       nodeId: 10,
       limit: 1,
       cursor: first.page.nextCursor,
@@ -599,7 +599,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    const propsPage = await handler.callTool('React.getProps', {
+    const propsPage = await handler.callTool('getProps', {
       nodeId: 21,
       limit: 1,
     }) as {
@@ -609,14 +609,14 @@ describe('AgentMessageHandler', () => {
     expect(propsPage.items).toHaveLength(1);
     expect(propsPage.page.hasMore).toBe(true);
 
-    const statePage = await handler.callTool('React.getState', {
+    const statePage = await handler.callTool('getState', {
       nodeId: 21,
     }) as {
       items: Array<{ name: string; value: unknown }>;
     };
     expect(statePage.items.map((item) => item.name).sort()).toEqual(['loading', 'step']);
 
-    const hooksPage = await handler.callTool('React.getHooks', {
+    const hooksPage = await handler.callTool('getHooks', {
       nodeId: 21,
     }) as {
       items: Array<{ name: string; value: unknown }>;
@@ -628,7 +628,7 @@ describe('AgentMessageHandler', () => {
       '1 (Memo)',
     ]);
 
-    const nestedHooks = await handler.callTool('React.getHooks', {
+    const nestedHooks = await handler.callTool('getHooks', {
       nodeId: 21,
       path: [0, 'subHooks'],
     }) as {
@@ -639,7 +639,7 @@ describe('AgentMessageHandler', () => {
       '1 (Params)',
     ]);
 
-    const nestedHookLeaf = await handler.callTool('React.getHooks', {
+    const nestedHookLeaf = await handler.callTool('getHooks', {
       nodeId: 21,
       path: [0, 'subHooks', 0],
     }) as {
@@ -647,7 +647,7 @@ describe('AgentMessageHandler', () => {
     };
     expect(nestedHookLeaf.items).toEqual([{ name: 'value (Route)', value: 'Home' }]);
 
-    await expect(handler.callTool('React.getHooks', {
+    await expect(handler.callTool('getHooks', {
       nodeId: 21,
       path: ['doesNotExist'],
     })).rejects.toThrow('expects an object');
@@ -682,7 +682,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    const first = await handler.callTool('React.getProps', { nodeId: 21 }) as {
+    const first = await handler.callTool('getProps', { nodeId: 21 }) as {
       items: Array<{ name: string; value: unknown }>;
     };
     expect(first.items).toEqual([{ name: 'title', value: 'before-sync' }]);
@@ -698,7 +698,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    const pending = handler.callTool('React.getProps', { nodeId: 21 });
+    const pending = handler.callTool('getProps', { nodeId: 21 });
     const pendingExpectation = expect(pending).rejects.toThrow(
       'No props snapshot available for node "21". React DevTools did not return inspected data for this node.',
     );
@@ -745,7 +745,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    const props = await handler.callTool('React.getProps', { nodeId: 30 }) as {
+    const props = await handler.callTool('getProps', { nodeId: 30 }) as {
       items: Array<{ name: string; value: unknown }>;
     };
 
@@ -755,7 +755,7 @@ describe('AgentMessageHandler', () => {
       value: 'from-backend',
     });
 
-    const hooks = await handler.callTool('React.getHooks', { nodeId: 30 }) as {
+    const hooks = await handler.callTool('getHooks', { nodeId: 30 }) as {
       items: Array<{ name: string }>;
     };
     expect(hooks.items.map((item) => item.name)).toEqual(['0 (State)']);
@@ -776,7 +776,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    await expect(handler.callTool('React.getHooks', { nodeId: 30 })).rejects.toThrow(
+    await expect(handler.callTool('getHooks', { nodeId: 30 })).rejects.toThrow(
       'React DevTools did not return inspected data for this node.',
     );
   });
@@ -785,7 +785,7 @@ describe('AgentMessageHandler', () => {
     const handler = createHandlerWithReactBridge();
     handler.connectDevice('device-react-prof-1', 'Device React Profiler 1', { sendMessage: vi.fn() });
 
-    const startResult = await handler.callTool('React.startProfiling', {}) as {
+    const startResult = await handler.callTool('startProfiling', {}) as {
       ok: boolean;
       status: { isProfilingStarted: boolean; isProcessingData: boolean };
     };
@@ -793,7 +793,7 @@ describe('AgentMessageHandler', () => {
     expect(startResult.status.isProfilingStarted).toBe(true);
     expect(startResult.status.isProcessingData).toBe(false);
 
-    const statusResult = await handler.callTool('React.isProfilingStarted', {}) as {
+    const statusResult = await handler.callTool('isProfilingStarted', {}) as {
       isProfilingStarted: boolean;
       isProcessingData: boolean;
       hasProfilingData: boolean;
@@ -817,7 +817,7 @@ describe('AgentMessageHandler', () => {
       sendReactDevToolsMessage,
     });
 
-    const result = await handler.callTool('React.startProfiling', {
+    const result = await handler.callTool('startProfiling', {
       shouldRestart: true,
     }) as {
       ok: boolean;
@@ -840,7 +840,7 @@ describe('AgentMessageHandler', () => {
     });
     handler.connectDevice('device-react-prof-3', 'Device React Profiler 3', { sendMessage: vi.fn() });
 
-    await expect(handler.callTool('React.startProfiling', {
+    await expect(handler.callTool('startProfiling', {
       shouldRestart: true,
     })).rejects.toThrow('Reload-and-profile is not supported');
   });
@@ -880,7 +880,7 @@ describe('AgentMessageHandler', () => {
     });
     handler.connectDevice('device-react-prof-4', 'Device React Profiler 4', { sendMessage: vi.fn() });
 
-    const result = await handler.callTool('React.stopProfiling', {
+    const result = await handler.callTool('stopProfiling', {
       slowRenderThresholdMs: 16,
     }) as {
       session: { roots: number[]; totalCommits: number; totalRenderDurationMs: number };
@@ -919,7 +919,7 @@ describe('AgentMessageHandler', () => {
     });
     handler.connectDevice('device-react-prof-5', 'Device React Profiler 5', { sendMessage: vi.fn() });
 
-    const resultPromise = handler.callTool('React.stopProfiling', {
+    const resultPromise = handler.callTool('stopProfiling', {
       waitForDataMs: 5,
     }) as Promise<{ partial?: boolean; isProcessingData?: boolean }>;
     await vi.runAllTimersAsync();
@@ -975,7 +975,7 @@ describe('AgentMessageHandler', () => {
       },
     });
 
-    const first = await handler.callTool('React.getRenderData', {
+    const first = await handler.callTool('getRenderData', {
       rootId: 5,
       commitIndex: 0,
       limit: 1,
@@ -1002,7 +1002,7 @@ describe('AgentMessageHandler', () => {
     });
     expect(first.page.hasMore).toBe(true);
 
-    const second = await handler.callTool('React.getRenderData', {
+    const second = await handler.callTool('getRenderData', {
       rootId: 5,
       commitIndex: 0,
       limit: 1,
@@ -1015,7 +1015,7 @@ describe('AgentMessageHandler', () => {
     expect(second.items[0].fiberId).toBe(102);
     expect(second.page.hasMore).toBe(false);
 
-    await expect(handler.callTool('React.getRenderData', {
+    await expect(handler.callTool('getRenderData', {
       rootId: 5,
       commitIndex: 0,
       sort: 'name-asc',
