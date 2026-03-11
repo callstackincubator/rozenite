@@ -1,49 +1,94 @@
-import { Component } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Provider } from 'react-redux';
-import { Store } from 'redux';
+import type { Store } from 'redux';
 import { Persistor } from 'redux-persist';
 import { PersistGate } from 'redux-persist/integration/react';
 import {
   App,
-  StoreState,
-  StoreAction,
-  saveSocketSettings,
-} from '@redux-devtools/app';
-import configureStore from './store';
-import { REDUX_DEVTOOLS_PORT } from '../constants';
+  UPDATE_STATE,
+  showNotification,
+  type Request,
+} from '@redux-devtools/app-core';
+import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import configureStore, {
+  setReduxDevToolsCommandSender,
+  type ReduxDevToolsStoreAction,
+  type ReduxDevToolsStoreState,
+} from './store';
+import type {
+  ReduxDevToolsBridgeEventMap,
+  ReduxDevToolsRuntimeMessage,
+} from '../shared/protocol';
 
-export class ReduxDevTools extends Component {
-  store?: Store<StoreState, StoreAction>;
-  persistor?: Persistor;
+type StoreBundle = {
+  store: Store<ReduxDevToolsStoreState, ReduxDevToolsStoreAction>;
+  persistor: Persistor;
+};
 
-  UNSAFE_componentWillMount() {
-    const { store, persistor } = configureStore(
-      (store: Store<StoreState, StoreAction>) => {
-        store.dispatch(
-          saveSocketSettings({
-            type: 'custom',
-            hostname: 'localhost',
-            port: REDUX_DEVTOOLS_PORT,
-            secure: false,
-          })
-        );
-      }
-    );
-    this.store = store;
-    this.persistor = persistor;
+const handleRuntimeMessage = (
+  store: Store<ReduxDevToolsStoreState, ReduxDevToolsStoreAction>,
+  message: ReduxDevToolsRuntimeMessage
+) => {
+  switch (message.type) {
+    case 'state-update': {
+      store.dispatch({
+        type: UPDATE_STATE,
+        request: message.request as unknown as Request,
+        id: message.connectionId,
+      } as ReduxDevToolsStoreAction);
+      return;
+    }
+    case 'error': {
+      store.dispatch(showNotification(message.message) as ReduxDevToolsStoreAction);
+      return;
+    }
+    default:
+      return;
   }
+};
 
-  render() {
-    if (!this.store || !this.persistor) {
-      return null;
+export const ReduxDevTools = () => {
+  const client = useRozeniteDevToolsClient<ReduxDevToolsBridgeEventMap>({
+    pluginId: '@rozenite/redux-devtools-plugin',
+  });
+
+  const bundle = useMemo<StoreBundle>(() => {
+    return configureStore(() => {
+      // no-op
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!client) {
+      setReduxDevToolsCommandSender(null);
+      return;
     }
 
-    return (
-      <Provider store={this.store}>
-        <PersistGate loading={null} persistor={this.persistor}>
-          <App />
-        </PersistGate>
-      </Provider>
+    setReduxDevToolsCommandSender((command) => {
+      client.send('panel-command', command);
+    });
+
+    const subscription = client.onMessage(
+      'runtime-message',
+      (message: ReduxDevToolsRuntimeMessage) => {
+      handleRuntimeMessage(bundle.store, message);
+      }
     );
-  }
-}
+
+    client.send('panel-command', { type: 'start' });
+    client.send('panel-command', { type: 'request-state' });
+
+    return () => {
+      subscription.remove();
+      setReduxDevToolsCommandSender(null);
+    };
+  }, [bundle.store, client]);
+
+  return (
+    <Provider store={bundle.store}>
+      <PersistGate loading={null} persistor={bundle.persistor}>
+        <App />
+      </PersistGate>
+    </Provider>
+  );
+};

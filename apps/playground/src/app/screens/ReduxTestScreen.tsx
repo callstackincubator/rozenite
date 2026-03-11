@@ -5,16 +5,53 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store';
-import { increment, decrement, reset } from '../store/counterSlice';
+import { Provider, useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '../navigation/types';
+import { decrement, increment, reset } from '../store/counterSlice';
+import { primaryStore, secondaryStore, RootState } from '../store';
+
+type CounterCardProps = {
+  title: string;
+};
+
+const CounterCard = ({ title }: CounterCardProps) => {
+  const dispatch = useDispatch();
+  const count = useSelector((state: RootState) => state.counter.value);
+
+  return (
+    <View style={styles.counterCard}>
+      <Text style={styles.counterTitle}>{title}</Text>
+      <Text style={styles.counterValue}>{count}</Text>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.button, styles.decrementButton]}
+          onPress={() => dispatch(decrement())}
+        >
+          <Text style={styles.buttonText}>-</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.incrementButton]}
+          onPress={() => dispatch(increment())}
+        >
+          <Text style={styles.buttonText}>+</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.resetButton]}
+          onPress={() => dispatch(reset())}
+        >
+          <Text style={styles.buttonText}>Reset</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
 export const ReduxTestScreen = () => {
   const navigation = useNavigation<NavigationProp>();
-  const dispatch = useDispatch();
-  const count = useSelector((state: RootState) => state.counter.value);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -25,44 +62,24 @@ export const ReduxTestScreen = () => {
         >
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Redux Counter Test</Text>
+        <Text style={styles.title}>Redux Multi-Store Test</Text>
       </View>
 
       <View style={styles.content}>
-        <View style={styles.counterContainer}>
-          <Text style={styles.counterLabel}>Counter Value:</Text>
-          <Text style={styles.counterValue}>{count}</Text>
-        </View>
+        <Provider store={primaryStore}>
+          <CounterCard title="Primary Store Counter" />
+        </Provider>
 
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.decrementButton]}
-            onPress={() => dispatch(decrement())}
-          >
-            <Text style={styles.buttonText}>-</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.incrementButton]}
-            onPress={() => dispatch(increment())}
-          >
-            <Text style={styles.buttonText}>+</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.button, styles.resetButton]}
-          onPress={() => dispatch(reset())}
-        >
-          <Text style={styles.buttonText}>Reset</Text>
-        </TouchableOpacity>
+        <Provider store={secondaryStore}>
+          <CounterCard title="Secondary Store Counter" />
+        </Provider>
 
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
-            This counter uses Redux for state management.
+            This screen uses two independent Redux stores.
           </Text>
           <Text style={styles.infoText}>
-            Open the Redux DevTools to see the state changes in real-time.
+            Open Redux DevTools and switch instances to inspect each store.
           </Text>
         </View>
       </View>
@@ -98,33 +115,39 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     paddingHorizontal: 20,
+    gap: 16,
   },
-  counterContainer: {
+  counterCard: {
+    backgroundColor: '#141414',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2b2b2b',
+    paddingVertical: 18,
+    paddingHorizontal: 16,
     alignItems: 'center',
-    marginBottom: 40,
   },
-  counterLabel: {
+  counterTitle: {
     color: '#ccc',
-    fontSize: 16,
+    fontSize: 14,
     marginBottom: 10,
   },
   counterValue: {
     color: '#fff',
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: 'bold',
+    marginBottom: 12,
   },
   buttonContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
+    alignItems: 'center',
   },
   button: {
-    paddingHorizontal: 30,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 8,
-    marginHorizontal: 10,
-    minWidth: 60,
+    marginHorizontal: 6,
+    minWidth: 56,
     alignItems: 'center',
   },
   decrementButton: {
@@ -135,21 +158,20 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     backgroundColor: '#FF9500',
-    paddingHorizontal: 40,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   infoContainer: {
-    marginTop: 40,
-    paddingHorizontal: 20,
+    marginTop: 8,
+    paddingHorizontal: 10,
   },
   infoText: {
     color: '#999',
-    fontSize: 14,
+    fontSize: 13,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
 });

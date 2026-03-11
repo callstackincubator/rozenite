@@ -32,6 +32,13 @@ export const LandingScreen = () => {
 
             <TouchableOpacity
               style={styles.navigationButton}
+              onPress={() => navigation.navigate('StoragePlugin' as never)}
+            >
+              <Text style={styles.buttonText}>Storage Plugin</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navigationButton}
               onPress={() => navigation.navigate('NetworkTest' as never)}
             >
               <Text style={styles.buttonText}>Network Activity</Text>

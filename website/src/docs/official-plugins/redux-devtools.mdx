@@ -14,30 +14,15 @@ Redux DevTools is a powerful debugging tool for Redux applications that provides
 - **Action History**: Track all dispatched actions with timestamps and payloads
 - **State Diff Viewing**: See exactly how each action changes your state
 
-:::tip Coming Soon
-Time travel debugging and action dispatch features will be added in future releases. These features require additional development to work properly in the remote DevTools environment.
-:::
-
 ## Installation
 
 Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
 
 ### Install dependencies
 
-Install the Redux DevTools plugin and its peer dependencies as development dependencies:
+Install the Redux DevTools plugin as a development dependency:
 
 <PackageManagerTabs command="install -D @rozenite/redux-devtools-plugin" />
-
-<PackageManagerTabs command="install react-native-get-random-values" />
-
-**Important**: After installing `react-native-get-random-values`, you need to import it at the very top of your entry file (usually `index.js` or `App.js`):
-
-```javascript title="index.js"
-import 'react-native-get-random-values';
-// ... rest of your imports
-```
-
-For more detailed setup instructions, please refer to the [react-native-get-random-values documentation](https://github.com/LinusU/react-native-get-random-values).
 
 ### Instrument Redux store
 
@@ -95,47 +80,20 @@ export const store = init({
 export default store;
 ```
 
-### Adjust Metro configuration
-
-Wrap your Metro configuration with `withRozeniteReduxDevTools`:
-
-```javascript title="metro.config.js"
-const { withRozenite } = require('@rozenite/metro');
-const {
-  withRozeniteReduxDevTools,
-} = require('@rozenite/redux-devtools-plugin/metro');
-
-const config = {
-  // Your existing Metro configuration
-};
-
-module.exports = withRozenite(config, {
-  // Your Rozenite configuration
-  enhanceMetroConfig: (config) => withRozeniteReduxDevTools(config),
-});
-```
-
-This setup enables the WebSocket relay that allows the Redux DevTools to communicate with your React Native app.
-
 ## Usage
 
 Once configured, the Redux DevTools plugin will automatically appear in your React Native DevTools sidebar as "Redux DevTools".
 
-:::warning Device Scope
-The Redux DevTools plugin currently displays Redux stores from all connected devices at once. When multiple devices are connected, be sure to select the correct store in the instance selector to inspect the Redux store for the specific device.
-:::
-
-### Physical Devices
-
-Redux DevTools work out of the box with Android emulators, but when using a physical device, you need to tunnel an additional port using the adb reverse command.
-
-```sh
-adb reverse tcp:8765 tcp:8765
-```
-
 #### Configuration Options
 
-To see more actions in the Redux DevTools, increase the `maxAge` option:
+To distinguish multiple stores, set a custom `name` per store:
+
+```ts
+const appStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'app-store' });
+const sessionStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'session-store' });
+```
+
+To see more actions in Redux DevTools, increase `maxAge`:
 
 ```ts
 rozeniteDevToolsEnhancer({ maxAge: 150 }) // Default is 50

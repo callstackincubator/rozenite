@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+import { useRozeniteStoragePlugin } from '@rozenite/storage-plugin';
 import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRef } from 'react';
@@ -25,7 +26,9 @@ import { PerfProblemScreen } from './screens/PerfProblemScreen';
 import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
-import { store } from './store';
+import { StoragePluginScreen } from './screens/StoragePluginScreen';
+import { storagePluginAdapters } from './storage-plugin-adapters';
+import { primaryStore } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
 import { useMCPPlaygroundTools } from './useMCPPlaygroundTools';
@@ -39,6 +42,9 @@ const Wrapper = () => {
     // @ts-expect-error - This is fine as in production MMKV plugin will pick up installed version automatically.
     storages: mmkvStorages,
     blacklist: /user-storage:sensitiveToken/,
+  });
+  useRozeniteStoragePlugin({
+    storages: storagePluginAdapters,
   });
   usePerformanceMonitorDevTools();
   useRequireProfilerDevTools();
@@ -54,6 +60,7 @@ const Wrapper = () => {
     >
       <Stack.Screen name="Landing" component={LandingScreen} />
       <Stack.Screen name="MMKVPlugin" component={MMKVPluginScreen} />
+      <Stack.Screen name="StoragePlugin" component={StoragePluginScreen} />
       <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
       <Stack.Screen name="RequestBodyTest" component={RequestBodyTestScreen} />
       <Stack.Screen name="ReduxTest" component={ReduxTestScreen} />
@@ -99,6 +106,7 @@ const linking = {
     screens: {
       Landing: '',
       MMKVPlugin: 'mmkv',
+      StoragePlugin: 'storage',
       NetworkTest: 'network',
       ReduxTest: 'redux',
       PerformanceMonitor: 'performance',
@@ -124,7 +132,7 @@ export const App = () => {
   });
 
   return (
-    <Provider store={store}>
+    <Provider store={primaryStore}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider style={{ backgroundColor: '#0a0a0a' }}>
           <NavigationContainer ref={navigationRef} linking={linking}>
