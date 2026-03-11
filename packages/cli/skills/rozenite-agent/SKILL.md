@@ -1,6 +1,6 @@
 ---
-name: rozenite
-description: Skill giving access to React Native Devtools and Rozenite plugins through progressive domain discovery and JSON-first commands.
+name: rozenite-agent
+description: Skill giving access to React Native Devtools and Rozenite plugins.
 ---
 
 # Rozenite Skill
