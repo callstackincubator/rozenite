@@ -3,13 +3,13 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { getDevMiddlewarePath, getReactNativePackagePath } from './resolve.js';
 import { RozeniteConfig } from './index.js';
-import { getMCPHandler } from './mcp-integration.js';
+import { getAgentHandler } from './agent-integration.js';
 import { logger } from './logger.js';
-import type { DevToolsPluginMessage } from './mcp/types.js';
-import { extractConsoleMessage } from './mcp/console/extract.js';
-import type { ConsoleMessageInput } from './mcp/console/types.js';
-export { parseRozeniteBindingPayload } from './mcp/bindings.js';
-import { parseRozeniteBindingPayload } from './mcp/bindings.js';
+import type { DevToolsPluginMessage } from './agent/types.js';
+import { extractConsoleMessage } from './agent/console/extract.js';
+import type { ConsoleMessageInput } from './agent/console/types.js';
+export { parseRozeniteBindingPayload } from './agent/bindings.js';
+import { parseRozeniteBindingPayload } from './agent/bindings.js';
 
 const require = createRequire(import.meta.url);
 let nextRuntimeEvaluateMessageId = 1;
@@ -29,7 +29,7 @@ type Connection = {
   };
 };
 
-type MCPHandlerLike = {
+type AgentHandlerLike = {
   handleDeviceMessage: (deviceId: string, message: DevToolsPluginMessage) => void;
   captureConsoleMessage: (deviceId: string, message: ConsoleMessageInput) => void;
   captureReactDevToolsMessage: (deviceId: string, message: unknown) => void | Promise<void>;
@@ -54,7 +54,7 @@ const getPayloadBytes = (value: unknown): number | undefined => {
   }
 };
 
-const getMCPMetadata = (message: unknown): {
+const getAgentMetadata = (message: unknown): {
   type?: string;
   toolName?: string;
   callId?: string;
@@ -71,8 +71,8 @@ const getMCPMetadata = (message: unknown): {
   };
 };
 
-const logMCPMessageMetadata = (direction: 'node_to_device' | 'device_to_node', message: unknown) => {
-  const meta = getMCPMetadata(message);
+const logAgentMessageMetadata = (direction: 'node_to_device' | 'device_to_node', message: unknown) => {
+  const meta = getAgentMetadata(message);
   const parts = [
     `direction=${direction}`,
     `type=${meta.type ?? 'unknown'}`,
@@ -80,7 +80,7 @@ const logMCPMessageMetadata = (direction: 'node_to_device' | 'device_to_node', m
     `callId=${meta.callId ?? 'n/a'}`,
     `bytes=${meta.bytes ?? 'n/a'}`,
   ];
-  logger.debug(`MCP message ${parts.join(' ')}`);
+  logger.debug(`Agent message ${parts.join(' ')}`);
 };
 
 const getReactNativeVersion = (projectRoot: string): string | undefined => {
@@ -98,7 +98,7 @@ const getReactNativeVersion = (projectRoot: string): string | undefined => {
 };
 
 export const composeInspectorHandlers = (
-  mcpHandler: MCPHandlerLike,
+  agentHandler: AgentHandlerLike,
   deviceId: string,
   originalHandler: InspectorHandler | undefined,
 ): InspectorHandler => {
@@ -106,20 +106,20 @@ export const composeInspectorHandlers = (
     handleDeviceMessage: (message: unknown) => {
       const consoleMessage = extractConsoleMessage(message);
       if (consoleMessage) {
-        mcpHandler.captureConsoleMessage(deviceId, consoleMessage);
+        agentHandler.captureConsoleMessage(deviceId, consoleMessage);
       }
 
       const bindingPayload = parseRozeniteBindingPayload(message);
       if (bindingPayload?.domain === 'rozenite') {
-        logMCPMessageMetadata('device_to_node', bindingPayload.message);
-        mcpHandler.handleDeviceMessage(
+        logAgentMessageMetadata('device_to_node', bindingPayload.message);
+        agentHandler.handleDeviceMessage(
           deviceId,
           bindingPayload.message as DevToolsPluginMessage,
         );
         return true;
       }
       if (bindingPayload?.domain === 'react-devtools') {
-        void mcpHandler.captureReactDevToolsMessage(deviceId, bindingPayload.message);
+        void agentHandler.captureReactDevToolsMessage(deviceId, bindingPayload.message);
       }
 
       return originalHandler?.handleDeviceMessage?.(message);
@@ -139,7 +139,7 @@ export const patchDevMiddleware = (options: RozeniteConfig): void => {
 
   const createDevMiddleware = createDevMiddlewareModule.default;
   createDevMiddlewareModule.default = (...args: any[]) => {
-    if (options.enableMCP && args[0]) {
+    if (options.enableAgentTools && args[0]) {
       const originalCustomHandler =
         args[0].unstable_customInspectorMessageHandler as
         | ((connection: Connection) => InspectorHandler | undefined)
@@ -154,8 +154,8 @@ export const patchDevMiddleware = (options: RozeniteConfig): void => {
             event?.type === 'debugger_connection_closed' &&
             typeof event.deviceId === 'string'
           ) {
-            const mcpHandler = getMCPHandler();
-            mcpHandler.disconnectDevice(event.deviceId);
+            const agentHandler = getAgentHandler();
+            agentHandler.disconnectDevice(event.deviceId);
           }
 
           if (previousEventReporter) {
@@ -165,7 +165,7 @@ export const patchDevMiddleware = (options: RozeniteConfig): void => {
       };
 
       args[0].unstable_customInspectorMessageHandler = (connection: Connection) => {
-        const mcpHandler = getMCPHandler();
+        const agentHandler = getAgentHandler();
         const originalHandler = originalCustomHandler?.(connection);
         const deviceId = connection.device.id;
         const deviceName = connection.device.name;
@@ -179,9 +179,9 @@ export const patchDevMiddleware = (options: RozeniteConfig): void => {
           });
         };
 
-        mcpHandler.connectDevice(deviceId, deviceName, {
+        agentHandler.connectDevice(deviceId, deviceName, {
           sendMessage: (message: unknown) => {
-            logMCPMessageMetadata('node_to_device', message);
+            logAgentMessageMetadata('node_to_device', message);
             sendDomainMessage('rozenite', message);
           },
           sendReactDevToolsMessage: (message: { event: string; payload: unknown }) => {
@@ -191,7 +191,7 @@ export const patchDevMiddleware = (options: RozeniteConfig): void => {
           reactNativeVersion,
         });
 
-        return composeInspectorHandlers(mcpHandler, deviceId, originalHandler);
+        return composeInspectorHandlers(agentHandler, deviceId, originalHandler);
       };
     }
 

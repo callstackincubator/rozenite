@@ -35,6 +35,6 @@ module.exports = composeMetroConfigTransformers([
       withRozeniteReduxDevTools,
       withRozeniteWeb,
     ),
-    enableMCP: true,
+    enableAgentTools: true,
   },
 ])(config);

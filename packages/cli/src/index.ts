@@ -7,7 +7,7 @@ import { generateCommand } from './commands/generate/generate-command.js';
 import { buildCommand } from './commands/build-command.js';
 import { devCommand } from './commands/dev-command.js';
 import { initCommand } from './commands/init-command.js';
-import { registerMCPCommand } from './commands/mcp/register-mcp-command.js';
+import { registerAgentCommand } from './commands/agent/register-agent-command.js';
 
 const packageJSON = getPackageJSON();
 
@@ -79,7 +79,7 @@ const main = async () => {
       await initCommand(targetDir);
     });
 
-  registerMCPCommand(program);
+  registerAgentCommand(program);
 
   await program.parseAsync(process.argv);
 };

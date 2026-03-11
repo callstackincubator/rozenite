@@ -4,7 +4,7 @@ import {
   parseRozeniteBindingPayload,
 } from '../dev-tools-url-patch.js';
 import { logger } from '../logger.js';
-import type { DevToolsPluginMessage } from '../mcp/types.js';
+import type { DevToolsPluginMessage } from '../agent/types.js';
 
 const createBindingMessage = (payload: unknown) => ({
   method: 'Runtime.bindingCalled',
@@ -13,7 +13,7 @@ const createBindingMessage = (payload: unknown) => ({
   },
 });
 
-describe('dev tools MCP inspector handler composition', () => {
+describe('dev tools Agent inspector handler composition', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     logger.setLevel('info');
@@ -33,7 +33,7 @@ describe('dev tools MCP inspector handler composition', () => {
       createBindingMessage({
         domain: 'rozenite',
         message: {
-          pluginId: 'rozenite-mcp',
+          pluginId: 'rozenite-agent',
           type: 'tool-result',
           payload: { callId: '123', success: true },
         } satisfies DevToolsPluginMessage,
@@ -43,7 +43,7 @@ describe('dev tools MCP inspector handler composition', () => {
     expect(result).toBe(true);
     expect(handleDeviceMessage).toHaveBeenCalledTimes(1);
     expect(handleDeviceMessage).toHaveBeenCalledWith('device-1', {
-      pluginId: 'rozenite-mcp',
+      pluginId: 'rozenite-agent',
       type: 'tool-result',
       payload: { callId: '123', success: true },
     });
@@ -106,7 +106,7 @@ describe('dev tools MCP inspector handler composition', () => {
       createBindingMessage({
         domain: 'rozenite',
         message: {
-          pluginId: 'rozenite-mcp',
+          pluginId: 'rozenite-agent',
           type: 'tool-call',
           payload: { toolName: 'secret-tool', callId: 'abc', secret: 'sensitive' },
         },

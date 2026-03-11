@@ -82,9 +82,9 @@ function App() {
 
 Start your development server and open React Native DevTools. You'll find the "React Navigation" panel in the DevTools interface.
 
-## MCP Tools (LLM Integration)
+## Agent Tools (LLM Integration)
 
-When this plugin is active, it registers MCP tools under the `@rozenite/react-navigation-plugin` domain. This lets LLMs inspect current navigation state and interact with navigation just like the DevTools panel.
+When this plugin is active, it registers agent tools under the `@rozenite/react-navigation-plugin` domain. This lets LLMs inspect current navigation state and interact with navigation just like the DevTools panel.
 
 Available tools:
 
@@ -97,7 +97,7 @@ Available tools:
 - `open-link`: opens a deep link URL.
 - `dispatch-action`: low-level arbitrary React Navigation action dispatch (for example `NAVIGATE` or `JUMP_TO`).
 
-The action history used for MCP reads is an in-memory rolling buffer (newest first) capped at 100 entries.
+The action history used for agent tool reads is an in-memory rolling buffer (newest first) capped at 100 entries.
 
 ## Made with ❤️ at Callstack
 

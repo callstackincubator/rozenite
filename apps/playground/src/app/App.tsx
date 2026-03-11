@@ -31,7 +31,7 @@ import { storagePluginAdapters } from './storage-plugin-adapters';
 import { primaryStore } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
-import { useMCPPlaygroundTools } from './useMCPPlaygroundTools';
+import { useAgentPlaygroundTools } from './useAgentPlaygroundTools';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -48,7 +48,7 @@ const Wrapper = () => {
   });
   usePerformanceMonitorDevTools();
   useRequireProfilerDevTools();
-  useMCPPlaygroundTools();
+  useAgentPlaygroundTools();
 
   return (
     <Stack.Navigator

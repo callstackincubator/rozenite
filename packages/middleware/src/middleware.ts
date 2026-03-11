@@ -8,8 +8,8 @@ import { InstalledPlugin } from './auto-discovery.js';
 import { getReactNativeDebuggerFrontendPath } from './resolve.js';
 import { RozeniteConfig } from './config.js';
 import { logger } from './logger.js';
-import { getMCPHandler } from './mcp-integration.js';
-import { createMCPRouter } from './mcp/http-router.js';
+import { getAgentHandler } from './agent-integration.js';
+import { createAgentRouter } from './agent/http-router.js';
 
 const require = createRequire(import.meta.url);
 
@@ -82,8 +82,8 @@ export const getMiddleware = (
     res.end(fs.readFileSync(path.join(frameworkPath, 'host.js'), 'utf8'));
   });
 
-  if (options.enableMCP) {
-    app.use('/rozenite-mcp/v1', createMCPRouter(getMCPHandler()));
+  if (options.enableAgentTools) {
+    app.use('/rozenite-agent/v1', createAgentRouter(getAgentHandler()));
   }
 
   app.use(express.static(debuggerFrontend));

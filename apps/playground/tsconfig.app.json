@@ -43,7 +43,7 @@
   "references": [
     { "path": "../../packages/cli/tsconfig.lib.json" },
     { "path": "../../packages/expo-atlas-plugin" },
-    { "path": "../../packages/mcp-bridge/tsconfig.lib.json" },
+    { "path": "../../packages/agent-bridge/tsconfig.lib.json" },
     { "path": "../../packages/metro/tsconfig.lib.json" },
     { "path": "../../packages/mmkv-plugin" },
     { "path": "../../packages/network-activity-plugin" },

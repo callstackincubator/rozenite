@@ -53,8 +53,8 @@ export const initializeRozenite = (
 
   patchDevtoolsFrontendUrl(options);
 
-  if (options.enableMCP) {
-    logger.info('MCP server enabled - will initialize on first request');
+  if (options.enableAgentTools) {
+    logger.info('Agent tools enabled - will initialize on first request');
   }
 
   return {
@@ -68,4 +68,4 @@ export const initializeRozenite = (
 };
 
 export type { RozeniteConfig };
-export * as mcp from './mcp/index.js';
+export * as agent from './agent/index.js';

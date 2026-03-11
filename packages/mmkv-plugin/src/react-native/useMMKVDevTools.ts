@@ -2,7 +2,7 @@ import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo } from 'react';
 import { MMKVEventMap } from '../shared/messaging';
 import { getMMKVView } from './mmkv-view';
-import { useMMKVMCPTools } from './useMMKVMCPTools';
+import { useMMKVAgentTools } from './useMMKVAgentTools';
 import { normalizeStoragesConfigProperty } from './utils';
 import type { MMKV } from 'react-native-mmkv';
 
@@ -36,7 +36,7 @@ export const useMMKVDevTools = ({
     [normalizedStorages, blacklist]
   );
 
-  useMMKVMCPTools(views);
+  useMMKVAgentTools(views);
 
   const client = useRozeniteDevToolsClient<MMKVEventMap>({
     pluginId: '@rozenite/mmkv-plugin',

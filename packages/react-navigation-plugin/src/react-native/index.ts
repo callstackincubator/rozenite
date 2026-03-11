@@ -10,8 +10,8 @@ import { ReactNavigationPluginEventMap } from '../shared';
 import { Linking } from 'react-native';
 import {
   NavigationActionHistoryEntry,
-  useReactNavigationMCPTools,
-} from './useReactNavigationMCPTools';
+  useReactNavigationAgentTools,
+} from './useReactNavigationAgentTools';
 
 export type ReactNavigationDevToolsConfig<
   TNavigationContainerRef extends NavigationContainerRef<any> = NavigationContainerRef<any>
@@ -109,7 +109,7 @@ export const useReactNavigationDevTools = ({
     [ref]
   );
 
-  useReactNavigationMCPTools({
+  useReactNavigationAgentTools({
     ref,
     getCurrentState,
     getActionHistory,

@@ -137,12 +137,12 @@ importers:
       '@reduxjs/toolkit':
         specifier: ^2.8.2
         version: 2.8.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.0)(redux@5.0.1))(react@19.2.0)
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../../packages/agent-bridge
       '@rozenite/expo-atlas-plugin':
         specifier: workspace:*
         version: link:../../packages/expo-atlas-plugin
-      '@rozenite/mcp-bridge':
-        specifier: workspace:*
-        version: link:../../packages/mcp-bridge
       '@rozenite/metro':
         specifier: workspace:*
         version: link:../../packages/metro
@@ -310,6 +310,24 @@ importers:
         specifier: ~5.9.2
         version: 5.9.3
 
+  packages/agent-bridge:
+    dependencies:
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+
+  packages/agent-shared:
+    dependencies:
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+
   packages/chrome-extension:
     dependencies:
       tslib:
@@ -436,24 +454,6 @@ importers:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@22.17.0)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
 
-  packages/mcp-bridge:
-    dependencies:
-      '@rozenite/mcp-shared':
-        specifier: workspace:*
-        version: link:../mcp-shared
-      '@rozenite/plugin-bridge':
-        specifier: workspace:*
-        version: link:../plugin-bridge
-      tslib:
-        specifier: ^2.3.0
-        version: 2.8.1
-
-  packages/mcp-shared:
-    dependencies:
-      tslib:
-        specifier: ^2.3.0
-        version: 2.8.1
-
   packages/metro:
     dependencies:
       '@rozenite/middleware':
@@ -503,9 +503,9 @@ importers:
 
   packages/mmkv-plugin:
     dependencies:
-      '@rozenite/mcp-bridge':
+      '@rozenite/agent-bridge':
         specifier: workspace:*
-        version: link:../mcp-bridge
+        version: link:../agent-bridge
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -804,9 +804,9 @@ importers:
 
   packages/react-navigation-plugin:
     dependencies:
-      '@rozenite/mcp-bridge':
+      '@rozenite/agent-bridge':
         specifier: workspace:*
-        version: link:../mcp-bridge
+        version: link:../agent-bridge
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge

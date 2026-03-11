@@ -28,10 +28,10 @@
       "path": "./packages/repack"
     },
     {
-      "path": "./packages/mcp-shared"
+      "path": "./packages/agent-shared"
     },
     {
-      "path": "./packages/mcp-bridge"
+      "path": "./packages/agent-bridge"
     }
   ]
 }

@@ -1,0 +1,51 @@
+{
+  "name": "@rozenite/agent-bridge",
+  "version": "1.2.0",
+  "description": "React hook API for registering agent tools in React Native",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "react-native",
+    "devtools",
+    "agent",
+    "react-hook"
+  ],
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -b tsconfig.lib.json",
+    "clean": "rm -rf dist"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@rozenite/agent-shared": "workspace:*",
+    "@rozenite/plugin-bridge": "workspace:*",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {},
+  "peerDependencies": {
+    "react": ">=17"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
