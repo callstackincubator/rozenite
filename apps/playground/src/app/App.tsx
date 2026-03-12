@@ -3,6 +3,7 @@ import {
   NavigationContainerRef,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
 import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
@@ -13,11 +14,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
+import { usePlaygroundControlsSections } from './hooks/usePlaygroundControlsSections';
 import { mmkvStorages } from './mmkv-storages';
 import { BottomTabNavigator } from './navigation/BottomTabNavigator';
 import { SuccessiveScreensNavigator } from './navigation/SuccessiveScreensNavigator';
 import { RootStackParamList } from './navigation/types';
 import { ConfigScreen } from './screens/ConfigScreen';
+import { ControlsPluginScreen } from './screens/ControlsPluginScreen';
 import { LandingScreen } from './screens/LandingScreen';
 import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
@@ -39,7 +42,12 @@ const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Wrapper = () => {
+  const controlsSections = usePlaygroundControlsSections();
+
   useTanStackQueryDevTools(queryClient);
+  useRozeniteControlsPlugin({
+    sections: controlsSections,
+  });
   useNetworkActivityDevTools({
     clientUISettings: {
       showUrlAsName: true,
@@ -65,6 +73,7 @@ const Wrapper = () => {
       }}
     >
       <Stack.Screen name="Landing" component={LandingScreen} />
+      <Stack.Screen name="ControlsPlugin" component={ControlsPluginScreen} />
       <Stack.Screen name="MMKVPlugin" component={MMKVPluginScreen} />
       <Stack.Screen name="StoragePlugin" component={StoragePluginScreen} />
       <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
@@ -110,6 +119,7 @@ const linking = {
   config: {
     screens: {
       Landing: '',
+      ControlsPlugin: 'controls',
       MMKVPlugin: 'mmkv',
       StoragePlugin: 'storage',
       NetworkTest: 'network',

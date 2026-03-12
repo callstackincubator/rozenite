@@ -27,6 +27,7 @@ export default {
         'chrome-extension',
         'web',
         'storage-plugin',
+        'controls-plugin',
         ''
       ],
     ],
