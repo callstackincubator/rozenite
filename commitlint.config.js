@@ -26,7 +26,9 @@ export default {
         'overlay-plugin',
         'chrome-extension',
         'web',
-        '',
+        'storage-plugin',
+        'controls-plugin',
+        ''
       ],
     ],
   },

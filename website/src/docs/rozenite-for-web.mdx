@@ -51,7 +51,6 @@ const { withRozeniteWeb } = require('@rozenite/web/metro');
 // Inside withRozenite options:
 enhanceMetroConfig: composeMetroConfigTransformers(
   withRozeniteRequireProfiler,
-  withRozeniteReduxDevTools,
   withRozeniteWeb,  // Add this
 ),
 ```
