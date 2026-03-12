@@ -8,6 +8,11 @@
 
 The **Rozenite Chrome extension** is required for the integration to work correctly — install it in your browser to connect to your React Native web app.
 
+For bundler integration:
+
+- use `@rozenite/web/metro` when Metro also bundles the web app
+- use `@rozenite/web/webpack` when Metro bundles mobile and Webpack Dev Server bundles web
+
 
 ## Documentation
 
