@@ -1,7 +1,7 @@
 {
   "name": "@rozenite/controls-plugin",
-  "version": "0.0.0",
-  "description": "Device-owned controls for Rozenite.",
+  "version": "1.4.0",
+  "description": "A Rozenite plugin for exposing app-defined controls directly in React Native DevTools.",
   "type": "module",
   "main": "./dist/react-native.cjs",
   "module": "./dist/react-native.js",

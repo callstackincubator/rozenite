@@ -51,6 +51,11 @@
   },
   {
     "type": "file",
+    "name": "controls",
+    "label": "Controls"
+  },
+  {
+    "type": "file",
     "name": "require-profiler",
     "label": "Require Profiler"
   }

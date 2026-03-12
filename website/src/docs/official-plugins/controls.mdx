@@ -1,0 +1,160 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Controls Plugin
+
+![](/controls-plugin.png)
+
+The Controls plugin lets you expose app-defined runtime controls inside React Native DevTools. Instead of adding temporary debug screens or hidden menus, you can give your team a dedicated panel for toggles, pickers, inputs, actions, and read-only status values.
+
+## What is Controls Plugin?
+
+The Controls plugin is a lightweight way to build a custom DevTools surface for your app. It provides:
+
+- **Read-only Status Fields**: Show current runtime values such as environment, build label, counters, or sync state
+- **Toggles**: Turn feature flags and boolean options on or off from DevTools
+- **Select Menus**: Switch between predefined options such as local, staging, and production
+- **Text Inputs**: Update text-based settings without changing in-app UI
+- **Action Buttons**: Trigger one-off actions such as reset, sync, refetch, or checkpoint creation
+
+## Installation
+
+Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
+
+Install the Controls plugin as a development dependency:
+
+<PackageManagerTabs command="install -D @rozenite/controls-plugin" />
+
+## Base Setup
+
+```ts title="App.tsx"
+import { createSection, useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
+import { useMemo, useState } from 'react';
+
+function App() {
+  const [verboseLogging, setVerboseLogging] = useState(false);
+  const [environment, setEnvironment] = useState('local');
+  const [releaseLabel, setReleaseLabel] = useState('build-001');
+
+  const sections = useMemo(
+    () => [
+      createSection({
+        id: 'runtime-status',
+        title: 'Runtime Status',
+        items: [
+          {
+            id: 'environment-label',
+            type: 'text',
+            title: 'Environment',
+            value: environment,
+          },
+          {
+            id: 'verbose-logging',
+            type: 'toggle',
+            title: 'Verbose Logging',
+            value: verboseLogging,
+            onUpdate: setVerboseLogging,
+          },
+          {
+            id: 'environment-selector',
+            type: 'select',
+            title: 'Environment',
+            value: environment,
+            options: [
+              { label: 'Local', value: 'local' },
+              { label: 'Staging', value: 'staging' },
+              { label: 'Production', value: 'production' },
+            ],
+            onUpdate: setEnvironment,
+          },
+          {
+            id: 'release-label',
+            type: 'input',
+            title: 'Release Label',
+            value: releaseLabel,
+            placeholder: 'build-001',
+            applyLabel: 'Apply',
+            onUpdate: setReleaseLabel,
+          },
+          {
+            id: 'reset-session',
+            type: 'button',
+            title: 'Reset Session',
+            actionLabel: 'Reset',
+            onPress: () => {
+              setVerboseLogging(false);
+              setEnvironment('local');
+              setReleaseLabel('build-001');
+            },
+          },
+        ],
+      }),
+    ],
+    [environment, releaseLabel, verboseLogging]
+  );
+
+  useRozeniteControlsPlugin({ sections });
+
+  return <YourApp />;
+}
+```
+
+## Usage
+
+Once configured, the Controls plugin appears in your React Native DevTools sidebar as `Controls`.
+
+Use it when you want to:
+
+- flip feature flags without building dedicated debug UI
+- change runtime targets such as environment or API variant
+- submit text values like labels, tokens, or test identifiers
+- trigger app actions directly from DevTools
+- keep read-only status values visible while testing flows
+
+## Control Types
+
+### Text
+
+Use `text` items for values you want to observe but not edit, such as status, counters, or last action timestamps.
+
+### Toggle
+
+Use `toggle` items for boolean settings such as feature flags, logging switches, and debug modes.
+
+### Select
+
+Use `select` items when the user must choose from a fixed list of options.
+
+### Input
+
+Use `input` items for text-based values. This is useful for release labels, test IDs, user identifiers, or other string settings you want to edit from DevTools.
+
+### Button
+
+Use `button` items for single actions. Good examples are reset, sync, refresh, retry, and seed actions.
+
+## Organizing Sections
+
+Sections help keep the panel understandable:
+
+- Put diagnostics and editable controls in separate sections.
+- Prefer short titles so the panel stays easy to scan.
+- Add descriptions when a control has side effects or temporary constraints.
+- Keep section and item IDs stable across reloads.
+
+## Validation and Availability
+
+You can shape the user experience without exposing implementation details in the panel:
+
+- Use `validate` to reject invalid values with a clear message.
+- Use `disabled` when a control should stay visible but unavailable.
+- Use `applyLabel` on text inputs when a custom action label reads better than the default.
+
+## Common Uses
+
+- feature flag management during manual testing
+- switching between local, staging, and production services
+- resetting temporary app state
+- triggering checkpoints for demos or QA flows
+- exposing internal diagnostics without adding a screen to the app
+
+**Next**: Explore other [Official Plugins](./overview.md) or learn how to build your own in the [Plugin Development guide](../plugin-development/plugin-development.md).
