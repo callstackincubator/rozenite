@@ -7,8 +7,32 @@ import { generateCommand } from './commands/generate/generate-command.js';
 import { buildCommand } from './commands/build-command.js';
 import { devCommand } from './commands/dev-command.js';
 import { initCommand } from './commands/init-command.js';
+import { registerAgentCommand } from './commands/agent/register-agent-command.js';
+import { getErrorMessage } from './commands/agent/error-message.js';
 
 const packageJSON = getPackageJSON();
+
+const isJsonMode = (argv: string[]): boolean => {
+  return argv.includes('--json');
+};
+
+const isAgentMode = (argv: string[]): boolean => {
+  return argv.includes('agent');
+};
+
+const isPrettyJsonMode = (argv: string[]): boolean => {
+  return argv.includes('--pretty');
+};
+
+const writeJsonError = (error: unknown, pretty: boolean): void => {
+  const payload = {
+    error: {
+      message: getErrorMessage(error),
+    },
+  };
+
+  process.stdout.write(`${JSON.stringify(payload, null, pretty ? 2 : 0)}\n`);
+};
 
 const main = async () => {
   const program = new Command(packageJSON.name)
@@ -59,10 +83,17 @@ const main = async () => {
       await initCommand(targetDir);
     });
 
-  program.parse(process.argv);
+  registerAgentCommand(program);
+
+  await program.parseAsync(process.argv);
 };
 
 main().catch((error) => {
+  if (isJsonMode(process.argv) || isAgentMode(process.argv)) {
+    writeJsonError(error, isPrettyJsonMode(process.argv));
+    process.exit(1);
+  }
+
   logger.error('Command failed');
   logger.error('Error details:', error);
   outro(

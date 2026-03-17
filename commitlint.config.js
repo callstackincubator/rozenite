@@ -28,6 +28,8 @@ export default {
         'web',
         'storage-plugin',
         'controls-plugin',
+        'agent-bridge',
+        'agent-shared',
         ''
       ],
     ],

@@ -46,6 +46,7 @@
   ],
   "references": [
     { "path": "../../packages/cli/tsconfig.lib.json" },
+    { "path": "../../packages/agent-bridge/tsconfig.lib.json" },
     { "path": "../../packages/metro/tsconfig.lib.json" },
     { "path": "../../packages/tools/tsconfig.lib.json" }
   ]

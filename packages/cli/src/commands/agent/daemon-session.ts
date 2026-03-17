@@ -1,0 +1,634 @@
+import WebSocket from 'ws';
+import type { MetroTarget, SessionInfo, SessionStatus } from './daemon-protocol.js';
+import type { DaemonLogger } from './daemon-logger.js';
+import { resolveMetroTarget } from './metro-discovery.js';
+import { createAgentMessageHandler } from './runtime/handler.js';
+import { extractConsoleMessage } from './runtime/console/extract.js';
+import { parseRozeniteBindingPayload } from './runtime/bindings.js';
+import type { DevToolsPluginMessage } from './runtime/types.js';
+import {
+  createMemoryDomainService,
+  createNetworkDomainService,
+  createPerformanceDomainService,
+  createReactDomainService,
+  type LocalAgentToolService,
+} from './local-domains.js';
+
+type AgentMessageHandler = ReturnType<typeof createAgentMessageHandler>;
+
+const RUNTIME_GLOBAL = '__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__';
+const MAIN_EXECUTION_CONTEXT_NAME = 'main';
+const BOOTSTRAP_DELAY_MS = 500;
+const DISPATCHER_INIT_MAX_ATTEMPTS = 20;
+const DISPATCHER_INIT_RETRY_MS = 250;
+
+type PendingCommand = {
+  resolve: (value: Record<string, unknown>) => void;
+  reject: (error: Error) => void;
+};
+
+type CDPEvaluateResponse = {
+  result?: {
+    value?: unknown;
+  };
+  exceptionDetails?: {
+    text?: string;
+  };
+};
+
+export type DaemonSession = ReturnType<typeof createDaemonSession>;
+
+const getToolCount = (
+  target: MetroTarget | undefined,
+  handler: AgentMessageHandler,
+  services: LocalAgentToolService[],
+): number => {
+  if (!target) {
+    return 0;
+  }
+
+  const localToolCount = services.reduce(
+    (count, service) => count + service.getTools().length,
+    0,
+  );
+
+  return handler.getTools(target.id).length + localToolCount;
+};
+
+export const createDaemonSession = (
+  id: string,
+  host: string,
+  port: number,
+  requestedDeviceId?: string,
+  onTerminated?: (sessionId: string) => void,
+  logger?: DaemonLogger,
+) => {
+  const handler = createAgentMessageHandler();
+  const createdAt = Date.now();
+  const sessionLogger = logger?.child({
+    component: 'agent-session',
+    sessionId: id,
+    host,
+    port,
+    requestedDeviceId: requestedDeviceId || null,
+  });
+
+  let lastActivityAt = createdAt;
+  let connectedAt: number | undefined;
+  let lastError: string | undefined;
+  let status: SessionStatus = 'connecting';
+  let target: MetroTarget | undefined;
+  let ws: WebSocket | null = null;
+  let stopped = false;
+  let nextCommandId = 1;
+  let bootstrapTimer: NodeJS.Timeout | null = null;
+  let bindingName: string | null = null;
+  let bootstrapped = false;
+
+  const pendingCommands = new Map<number, PendingCommand>();
+  const cdpEventListeners = new Map<string, Set<(params: Record<string, unknown>) => void | Promise<void>>>();
+
+  const getSessionInfoFields = () => ({
+    sessionId: id,
+    pageId: target?.pageId || 'unknown',
+    deviceId: target?.id || requestedDeviceId || 'unknown',
+  });
+
+  const subscribeToCDPEvent = (
+    method: string,
+    listener: (params: Record<string, unknown>) => void | Promise<void>,
+  ): (() => void) => {
+    const listeners = cdpEventListeners.get(method) || new Set();
+    listeners.add(listener);
+    cdpEventListeners.set(method, listeners);
+
+    return () => {
+      const current = cdpEventListeners.get(method);
+      if (!current) {
+        return;
+      }
+
+      current.delete(listener);
+      if (current.size === 0) {
+        cdpEventListeners.delete(method);
+      }
+    };
+  };
+
+  const touch = (): void => {
+    lastActivityAt = Date.now();
+  };
+
+  const emitCDPEvent = (method: string, params: Record<string, unknown>): void => {
+    sessionLogger?.debug('Emitting CDP event', {
+      method,
+      params,
+    });
+
+    const listeners = cdpEventListeners.get(method);
+    if (!listeners) {
+      return;
+    }
+
+    for (const listener of listeners) {
+      void listener(params);
+    }
+  };
+
+  const sendCommand = async (
+    method: string,
+    params?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      sessionLogger?.warn('Rejected CDP command because websocket is not connected', {
+        method,
+      });
+      throw new Error('CDP websocket is not connected');
+    }
+
+    const commandId = nextCommandId++;
+    const payload = JSON.stringify({ id: commandId, method, params });
+    touch();
+
+    sessionLogger?.debug('Sending CDP command', {
+      commandId,
+      method,
+      params,
+    });
+
+    return await new Promise((resolve, reject) => {
+      pendingCommands.set(commandId, { resolve, reject });
+      sessionLogger?.debug('Sending CDP command', {
+        commandId,
+        method,
+      });
+      ws!.send(payload, (error) => {
+        if (!error) {
+          return;
+        }
+
+        pendingCommands.delete(commandId);
+        sessionLogger?.error('Failed to send CDP command', {
+          commandId,
+          method,
+          error,
+        });
+        reject(error);
+      });
+    });
+  };
+
+  const localServices: LocalAgentToolService[] = [
+    createReactDomainService({
+      sessionId: id,
+      sendReactDevToolsMessage: (message) => {
+        void sendDomainMessage('react-devtools', message);
+      },
+    }),
+    createPerformanceDomainService({
+      getSessionInfo: getSessionInfoFields,
+      sendCommand,
+      subscribeToCDPEvent,
+    }),
+    createMemoryDomainService({
+      getSessionInfo: getSessionInfoFields,
+      sendCommand,
+      subscribeToCDPEvent,
+    }),
+    createNetworkDomainService({
+      getSessionInfo: getSessionInfoFields,
+      sendCommand,
+      subscribeToCDPEvent,
+    }),
+  ];
+
+  const clearBootstrapTimer = (): void => {
+    if (!bootstrapTimer) {
+      return;
+    }
+
+    clearTimeout(bootstrapTimer);
+    bootstrapTimer = null;
+  };
+
+  const scheduleBootstrap = (): void => {
+    clearBootstrapTimer();
+    sessionLogger?.debug('Scheduling runtime bootstrap', {
+      delayMs: BOOTSTRAP_DELAY_MS,
+    });
+    bootstrapTimer = setTimeout(() => {
+      void bootstrap();
+    }, BOOTSTRAP_DELAY_MS);
+  };
+
+  const sendDomainMessage = async (domain: string, message: unknown): Promise<void> => {
+    const serializedMessage = JSON.stringify(message);
+    const escapedMessage = JSON.stringify(serializedMessage);
+    await sendCommand('Runtime.evaluate', {
+      expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify(domain)}, ${escapedMessage})`,
+    });
+  };
+
+  const evaluateRuntime = async (
+    expression: string,
+    returnByValue = false,
+  ): Promise<CDPEvaluateResponse> => {
+    return await sendCommand('Runtime.evaluate', {
+      expression,
+      ...(returnByValue ? { returnByValue } : {}),
+    });
+  };
+
+  const waitForFuseboxDispatcherToBeInitialized = async (attempt = 1): Promise<void> => {
+    if (attempt >= DISPATCHER_INIT_MAX_ATTEMPTS) {
+      throw new Error('Failed to wait for initialization: it took too long');
+    }
+
+    const response = await evaluateRuntime(
+      `globalThis.${RUNTIME_GLOBAL} != undefined`,
+      true,
+    );
+
+    if (response.exceptionDetails) {
+      throw new Error(
+        'Failed to wait for React DevTools dispatcher initialization: '
+        + response.exceptionDetails.text,
+      );
+    }
+
+    if (response.result?.value === false) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, DISPATCHER_INIT_RETRY_MS);
+      });
+      return waitForFuseboxDispatcherToBeInitialized(attempt + 1);
+    }
+  };
+
+  const getBindingName = async (): Promise<string> => {
+    const response = await evaluateRuntime(`${RUNTIME_GLOBAL}.BINDING_NAME`);
+
+    if (response.exceptionDetails) {
+      throw new Error(
+        'Failed to get binding name for Agent daemon on a global: '
+        + response.exceptionDetails.text,
+      );
+    }
+
+    const bindingValue = response.result?.value;
+    if (bindingValue === null || bindingValue === undefined) {
+      throw new Error(
+        'Failed to get binding name for Agent daemon on a global: returned value is '
+        + String(bindingValue),
+      );
+    }
+
+    if (bindingValue === '') {
+      throw new Error(
+        'Failed to get binding name for ReactDevToolsBindingsModel on a global: returned value is an empty string',
+      );
+    }
+
+    if (typeof bindingValue !== 'string') {
+      throw new Error('Failed to get binding name for Agent daemon on a global: returned value is not a string');
+    }
+
+    return bindingValue;
+  };
+
+  const bootstrap = async (): Promise<void> => {
+    if (stopped || !ws || ws.readyState !== WebSocket.OPEN || bootstrapped) {
+      sessionLogger?.debug('Skipped runtime bootstrap', {
+        stopped,
+        hasSocket: Boolean(ws),
+        readyState: ws?.readyState ?? null,
+        bootstrapped,
+      });
+      return;
+    }
+
+    try {
+      sessionLogger?.info('Starting runtime bootstrap');
+      await waitForFuseboxDispatcherToBeInitialized();
+      const bindingValue = await getBindingName();
+
+      if (bindingName !== bindingValue) {
+        await sendCommand('Runtime.addBinding', { name: bindingValue });
+        bindingName = bindingValue;
+      }
+
+      await sendCommand('Runtime.evaluate', {
+        expression: `void ${RUNTIME_GLOBAL}.initializeDomain("rozenite")`,
+      });
+      await sendCommand('Runtime.evaluate', {
+        expression: `void ${RUNTIME_GLOBAL}.initializeDomain("react-devtools")`,
+      });
+
+      bootstrapped = true;
+      lastError = undefined;
+      touch();
+      sessionLogger?.info('Runtime bootstrap completed', {
+        bindingName,
+      });
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+      sessionLogger?.warn('Runtime bootstrap failed; retrying', {
+        error,
+      });
+      scheduleBootstrap();
+    }
+  };
+
+  const handleSocketClosed = (): void => {
+    sessionLogger?.warn('CDP websocket closed', {
+      targetId: target?.id || null,
+      pendingCommandCount: pendingCommands.size,
+      wasStopped: stopped,
+    });
+    bindingName = null;
+    bootstrapped = false;
+    connectedAt = undefined;
+
+    if (target) {
+      handler.disconnectDevice(target.id);
+    }
+
+    for (const service of localServices) {
+      service.onDisconnected();
+    }
+
+    for (const [commandId, pending] of pendingCommands.entries()) {
+      pendingCommands.delete(commandId);
+      pending.reject(new Error('CDP connection closed'));
+    }
+
+    if (stopped) {
+      status = 'stopped';
+      return;
+    }
+
+    stopped = true;
+    clearBootstrapTimer();
+    status = 'stopped';
+
+    void Promise.all(localServices.map((service) => service.dispose())).finally(() => {
+      sessionLogger?.info('Session terminated after websocket close');
+      onTerminated?.(id);
+    });
+  };
+
+  const handleSocketMessage = (rawMessage: string): void => {
+    touch();
+
+    let message: Record<string, unknown>;
+    try {
+      message = JSON.parse(rawMessage) as Record<string, unknown>;
+    } catch {
+      sessionLogger?.warn('Received non-JSON CDP payload');
+      return;
+    }
+
+    if (typeof message.id === 'number') {
+      const pending = pendingCommands.get(message.id);
+      if (!pending) {
+        return;
+      }
+
+      pendingCommands.delete(message.id);
+      if (message.error) {
+        sessionLogger?.warn('CDP command failed', {
+          commandId: message.id,
+          error: message.error,
+        });
+        pending.reject(new Error(JSON.stringify(message.error)));
+        return;
+      }
+
+      sessionLogger?.debug('CDP command completed', {
+        commandId: message.id,
+      });
+      pending.resolve(
+        (message.result && typeof message.result === 'object' && !Array.isArray(message.result))
+          ? message.result as Record<string, unknown>
+          : {},
+      );
+      return;
+    }
+
+    if (typeof message.method === 'string') {
+      emitCDPEvent(
+        message.method,
+        (message.params as Record<string, unknown> | undefined) || {},
+      );
+    }
+
+    if (
+      message.method === 'Runtime.executionContextCreated'
+      && (message.params as { context?: { name?: string } } | undefined)?.context?.name
+      === MAIN_EXECUTION_CONTEXT_NAME
+    ) {
+      bootstrapped = false;
+      scheduleBootstrap();
+    }
+
+    if (message.method === 'Runtime.executionContextsCleared') {
+      bootstrapped = false;
+      scheduleBootstrap();
+    }
+
+    const consoleMessage = extractConsoleMessage(message);
+    if (consoleMessage && target) {
+      handler.captureConsoleMessage(target.id, consoleMessage);
+    }
+
+    const bindingPayload = parseRozeniteBindingPayload(message);
+    if (!bindingPayload || !target) {
+      return;
+    }
+
+    if (bindingPayload.domain === 'rozenite') {
+      handler.handleDeviceMessage(target.id, bindingPayload.message as DevToolsPluginMessage);
+    } else if (bindingPayload.domain === 'react-devtools') {
+      for (const service of localServices) {
+        if (service.captureReactDevToolsMessage) {
+          void service.captureReactDevToolsMessage(bindingPayload.message);
+        }
+      }
+    }
+  };
+
+  const connect = async (): Promise<void> => {
+    status = 'connecting';
+    sessionLogger?.info('Resolving Metro target');
+    target = await resolveMetroTarget(host, port, requestedDeviceId);
+    sessionLogger?.info('Resolved Metro target', {
+      targetId: target.id,
+      targetName: target.name,
+      pageId: target.pageId,
+      appId: target.appId,
+      webSocketDebuggerUrl: target.webSocketDebuggerUrl,
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      const socket = new WebSocket(target!.webSocketDebuggerUrl);
+      let settled = false;
+      ws = socket;
+      sessionLogger?.info('Opening CDP websocket', {
+        webSocketDebuggerUrl: target!.webSocketDebuggerUrl,
+      });
+
+      socket.once('open', () => {
+        settled = true;
+        status = 'connected';
+        connectedAt = Date.now();
+        lastError = undefined;
+        touch();
+        sessionLogger?.info('CDP websocket opened', {
+          connectedAt,
+        });
+        handler.connectDevice(
+          target!.id,
+          target!.name,
+          {
+            sendMessage: (message: unknown) => {
+              void sendDomainMessage('rozenite', message);
+            },
+          },
+        );
+
+        void (async () => {
+          try {
+            sessionLogger?.info('Starting React Native Fusebox handshake');
+            await sendCommand('ReactNativeApplication.enable');
+            sessionLogger?.info('React Native Fusebox handshake completed');
+
+            await sendCommand('Runtime.enable');
+            scheduleBootstrap();
+            resolve();
+          } catch (error) {
+            lastError = error instanceof Error ? error.message : String(error);
+            sessionLogger?.error('React Native Fusebox handshake failed', {
+              error,
+            });
+            clearBootstrapTimer();
+            ws?.close();
+            reject(error instanceof Error ? error : new Error(String(error)));
+          }
+        })();
+      });
+
+      socket.on('message', (rawMessage: unknown) => {
+        handleSocketMessage(String(rawMessage));
+      });
+
+      socket.once('error', (error: unknown) => {
+        lastError = error instanceof Error ? error.message : String(error);
+        sessionLogger?.error('CDP websocket emitted error', {
+          error,
+          settled,
+        });
+        if (!settled) {
+          reject(error);
+        }
+      });
+
+      socket.once('close', () => {
+        handleSocketClosed();
+        if (!settled) {
+          sessionLogger?.error('CDP websocket closed before session initialization');
+          reject(new Error('CDP websocket closed before session initialization'));
+        }
+      });
+    });
+  };
+
+  const getInfo = (): SessionInfo => ({
+    id,
+    host,
+    port,
+    deviceId: target?.id || requestedDeviceId || 'unknown',
+    deviceName: target?.name || 'Unknown',
+    appId: target?.appId || 'Unknown',
+    pageId: target?.pageId || 'unknown',
+    status,
+    createdAt,
+    lastActivityAt,
+    ...(connectedAt ? { connectedAt } : {}),
+    ...(lastError ? { lastError } : {}),
+    toolCount: getToolCount(target, handler, localServices),
+  });
+
+  const getTools = () => {
+    if (!target) {
+      return [];
+    }
+
+    return [
+      ...handler.getTools(target.id),
+      ...localServices.flatMap((service) => service.getTools()),
+    ];
+  };
+
+  const callTool = async (toolName: string, args: unknown): Promise<unknown> => {
+    if (!target) {
+      sessionLogger?.warn('Rejected tool call because session is not connected', {
+        toolName,
+      });
+      throw new Error(`Session "${id}" is not connected to a device`);
+    }
+
+    touch();
+    sessionLogger?.info('Calling agent tool', {
+      toolName,
+    });
+
+    for (const service of localServices) {
+      const result = await service.callTool(toolName, args);
+      if (result !== undefined) {
+        sessionLogger?.info('Agent tool completed via local service', {
+          toolName,
+        });
+        return result;
+      }
+    }
+
+    const result = await handler.callTool(toolName, args);
+    sessionLogger?.info('Agent tool completed via device handler', {
+      toolName,
+    });
+    return result;
+  };
+
+  const start = async (): Promise<void> => {
+    sessionLogger?.info('Starting session');
+    await connect();
+  };
+
+  const stop = async (): Promise<void> => {
+    stopped = true;
+    clearBootstrapTimer();
+    sessionLogger?.info('Stopping session');
+
+    for (const service of localServices) {
+      await service.dispose();
+    }
+
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
+    if (target) {
+      handler.disconnectDevice(target.id);
+    }
+    status = 'stopped';
+    sessionLogger?.info('Session stopped');
+  };
+
+  return {
+    id,
+    start,
+    stop,
+    getInfo,
+    getTools,
+    callTool,
+  };
+};

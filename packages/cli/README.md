@@ -13,6 +13,7 @@ The Rozenite CLI is the primary tool for scaffolding, building, and developing R
 - **Build System**: Compile plugins for different targets
 - **Development Server**: Hot-reload development environment with file watchers
 - **Template System**: Pre-configured templates with TypeScript, Vite, and Rozenite integration
+- **Rozenite for Agents**: Agent-facing CLI for inspecting running apps, discovering domains, and calling tools via `rozenite agent`
 
 ## Installation
 

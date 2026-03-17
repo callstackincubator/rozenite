@@ -26,6 +26,12 @@
     },
     {
       "path": "./packages/repack"
+    },
+    {
+      "path": "./packages/agent-shared"
+    },
+    {
+      "path": "./packages/agent-bridge"
     }
   ]
 }
