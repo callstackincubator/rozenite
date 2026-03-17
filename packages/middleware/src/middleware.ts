@@ -18,14 +18,14 @@ export type MiddlewareConfig = {
 export const getMiddleware = (
   options: RozeniteConfig,
   installedPlugins: InstalledPlugin[],
-  destroyOnDetachPlugins: string[]
+  destroyOnDetachPlugins: string[],
 ): Application => {
   const app = express();
   const debuggerFrontend = require(getReactNativeDebuggerFrontendPath(options));
 
   const frameworkPath = path.resolve(
     require.resolve('@rozenite/runtime'),
-    '..'
+    '..',
   );
 
   logger.debug(`Debugger frontend path: ${debuggerFrontend}`);
@@ -36,7 +36,7 @@ export const getMiddleware = (
 
     logger.debug(`Incoming request: ${req.url}`);
 
-    if (req.url.includes('/rozenite')) {
+    if (req.url === '/rozenite' || req.url.startsWith('/rozenite/')) {
       req.url = req.url.replace('/rozenite', '');
     }
 
@@ -46,7 +46,7 @@ export const getMiddleware = (
   app.get('/plugins/:plugin/*others', (req, res, next) => {
     const pluginName = req.params.plugin.replace('_', '/');
     const plugin = installedPlugins.find(
-      (plugin) => plugin.name === pluginName
+      (plugin) => plugin.name === pluginName,
     );
 
     if (!plugin) {
@@ -70,8 +70,8 @@ export const getMiddleware = (
       getEntryPointHTML(
         debuggerFrontend,
         installedPlugins.map((plugin) => plugin.name),
-        destroyOnDetachPlugins
-      )
+        destroyOnDetachPlugins,
+      ),
     );
   });
 

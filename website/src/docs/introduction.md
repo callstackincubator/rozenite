@@ -29,6 +29,7 @@ Rozenite is a rare mineral first described in 1960 on Ornak Mountain in the West
 ## Who it’s for
 
 - **Developers who want built‑in tooling**: add network, performance, storage and state panels without building anything.
+- **Teams using coding agents**: let agents inspect logs, network activity, and React profiling data through Rozenite for Agents.
 - **Teams that need custom insights**: create tailored panels for your product, internal observability, or business logic.
 
 ## Build your own
@@ -37,4 +38,4 @@ Rozenite includes a type‑safe, batteries‑included development experience for
 
 ## Next steps
 
-Ready to try it? Start with the [Getting Started guide](/docs/getting-started) or explore the [Plugin Directory](/plugin-directory). When you need something custom, see the [Plugin Development overview](/docs/plugin-development/overview).
+Ready to try it? Start with the [Getting Started guide](/docs/getting-started), explore the [Rozenite for Agents overview](/docs/agent/overview), or browse the [Plugin Directory](/plugin-directory). When you need something custom, see the [Plugin Development overview](/docs/plugin-development/overview).

@@ -22,6 +22,7 @@
     "@reduxjs/toolkit": "^2.8.2",
     "@rozenite/expo-atlas-plugin": "workspace:*",
     "@rozenite/metro": "workspace:*",
+    "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/mmkv-plugin": "workspace:*",
     "@rozenite/network-activity-plugin": "workspace:*",
     "@rozenite/controls-plugin": "workspace:*",

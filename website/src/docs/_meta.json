@@ -2,6 +2,7 @@
   { "type": "file", "name": "introduction", "label": "Introduction" },
   { "type": "file", "name": "prior-art", "label": "Prior Art" },
   { "type": "file", "name": "getting-started", "label": "Getting started" },
+  { "type": "dir", "name": "agent", "label": "Rozenite for Agents" },
   { "type": "file", "name": "rozenite-for-web", "label": "Rozenite for Web" },
   {
     "type": "dir",

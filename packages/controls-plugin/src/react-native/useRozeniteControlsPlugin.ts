@@ -12,6 +12,7 @@ import {
   serializeSections,
   validateValue,
 } from '../shared/serialization';
+import { useControlsAgentTools } from './useControlsAgentTools';
 
 export const useRozeniteControlsPlugin = ({
   sections,
@@ -19,6 +20,8 @@ export const useRozeniteControlsPlugin = ({
   const client = useRozeniteDevToolsClient<ControlsEventMap>({
     pluginId: '@rozenite/controls-plugin',
   });
+
+  useControlsAgentTools(sections);
 
   const snapshot = useMemo(() => serializeSections(sections), [sections]);
   const actionRegistry = useMemo(() => buildActionRegistry(sections), [sections]);
