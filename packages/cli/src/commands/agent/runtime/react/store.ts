@@ -596,13 +596,9 @@ export const createReactTreeStore = (
     return ensureBridge(state).then((bridge) => {
       while (state.pendingMessages.length > 0) {
         const next = state.pendingMessages.shift()!;
-        try {
-          const syncPayload = bridge.ingest(next);
-          if (syncPayload) {
-            syncTree(deviceId, syncPayload);
-          }
-        } catch (error) {
-          throw error;
+        const syncPayload = bridge.ingest(next);
+        if (syncPayload) {
+          syncTree(deviceId, syncPayload);
         }
       }
     });

@@ -16,9 +16,7 @@ const createInitialOperationsPayload = (): number[] => {
 describe('react domain profiling', () => {
   it('collects profiling data after runtime stop confirmation', async () => {
     const sent: Array<{ event: string; payload: unknown }> = [];
-    let service!: ReturnType<typeof createReactDomainService>;
-
-    service = createReactDomainService({
+    const service = createReactDomainService({
       sessionId: 'session-1',
       sendReactDevToolsMessage: (message) => {
         const typedMessage = message as { event: string; payload: Record<string, unknown> | undefined };
@@ -167,9 +165,7 @@ describe('react domain profiling', () => {
   });
 
   it('returns a partial result when no profiling payload arrives before timeout', async () => {
-    let service!: ReturnType<typeof createReactDomainService>;
-
-    service = createReactDomainService({
+    const service = createReactDomainService({
       sessionId: 'session-1',
       sendReactDevToolsMessage: (message) => {
         const typedMessage = message as { event: string };
@@ -225,9 +221,7 @@ describe('react domain profiling', () => {
   });
 
   it('marks the session partial when different renderers report the same root id', async () => {
-    let service!: ReturnType<typeof createReactDomainService>;
-
-    service = createReactDomainService({
+    const service = createReactDomainService({
       sessionId: 'session-1',
       sendReactDevToolsMessage: (message) => {
         const typedMessage = message as { event: string; payload: Record<string, unknown> | undefined };

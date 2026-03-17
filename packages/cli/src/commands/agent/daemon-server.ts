@@ -58,17 +58,23 @@ export const createAgentDaemonServer = (options: DaemonOptions) => {
     try {
       writeMetadata();
       touchRegisteredDaemon(getInfo());
-    } catch {}
+    } catch {
+      // Best-effort metadata persistence should not crash the daemon.
+    }
   };
 
   const removeDaemonStateArtifacts = (): void => {
     try {
       fs.rmSync(transport.metadataPath, { force: true });
-    } catch {}
+    } catch {
+      // Ignore cleanup failures when removing daemon metadata.
+    }
     if (transport.kind === 'unix-socket') {
       try {
         fs.rmSync(transport.address, { force: true });
-      } catch {}
+      } catch {
+        // Ignore cleanup failures when removing daemon sockets.
+      }
     }
   };
 

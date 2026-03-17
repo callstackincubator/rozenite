@@ -1619,7 +1619,9 @@ export const createNetworkDomainService = (deps: {
       if (state.enabled) {
         try {
           await deps.sendCommand('Network.disable');
-        } catch {}
+        } catch {
+          // Ignore transport failures during teardown.
+        }
       }
       state.isRecording = false;
       state.enabled = false;

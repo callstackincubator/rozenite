@@ -11,7 +11,7 @@ vi.mock('node:http', () => ({
 
 describe('agent metro discovery', () => {
   it('wraps Metro connection failures with a clear message', async () => {
-    mocks.requestImpl.mockImplementation((_url: URL, _options: unknown, _callback: unknown) => {
+    mocks.requestImpl.mockImplementation(() => {
       const req = new EventEmitter() as EventEmitter & { end: () => void; once: typeof EventEmitter.prototype.once };
       req.end = () => {
         req.emit('error', new AggregateError([

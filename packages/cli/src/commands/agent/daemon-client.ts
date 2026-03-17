@@ -57,11 +57,15 @@ export const deleteStaleState = (
 ): void => {
   try {
     fs.rmSync(transport.metadataPath, { force: true });
-  } catch {}
+  } catch {
+    // Ignore cleanup failures when removing stale daemon metadata.
+  }
   if (transport.kind === 'unix-socket') {
     try {
       fs.rmSync(transport.address, { force: true });
-    } catch {}
+    } catch {
+      // Ignore cleanup failures when removing stale daemon sockets.
+    }
   }
 };
 
