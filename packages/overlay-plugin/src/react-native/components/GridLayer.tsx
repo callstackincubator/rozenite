@@ -75,9 +75,3 @@ export const GridLayer: React.FC<{ config: GridConfig }> = memo(({ config }) => 
     </View>
   );
 });
-
-const styles = StyleSheet.create({
-  gridLine: {
-    position: 'absolute',
-  },
-});

@@ -343,7 +343,7 @@ const HTTPTestComponent: React.FC = () => {
           <Text style={styles.largeFileTitle}>Large File Download Test</Text>
           <Text style={styles.largeFileDescription}>
             Download a ~5MB GeoJSON file to test progress events. 
-            Watch the Network Activity DevTools for progress percentage. Lower the emulator's signal strength for slower downloads to observe progress updates.
+            Watch the Network Activity DevTools for progress percentage. Lower the emulator&apos;s signal strength for slower downloads to observe progress updates.
           </Text>
           <TouchableOpacity
             style={[

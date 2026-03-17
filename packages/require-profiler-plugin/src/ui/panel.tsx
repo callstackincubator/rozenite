@@ -94,11 +94,12 @@ const App = () => {
     const chainDataSubscription = client.onMessage(
       'chain-data-response',
       (event) => {
-        if (event.data) {
+        const data = event.data;
+        if (data) {
           setChainDataCache(
-            (prev) => new Map(prev.set(event.data.index, event.data)),
+            (prev) => new Map(prev.set(data.index, data)),
           );
-          setCurrentChainData(event.data);
+          setCurrentChainData(data);
         }
         setLoading(false);
       },

@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/runtime",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Rozenite runtime for React Native DevTools.",
   "type": "module",
   "files": [
@@ -29,6 +29,11 @@
       "import": "./dist/host.js",
       "require": "./dist/host.cjs"
     }
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "tslib": "^2.3.0"

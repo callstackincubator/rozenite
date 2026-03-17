@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.lib.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
+    "rootDir": "src",
+    "outDir": "dist/esm",
+    "tsBuildInfoFile": "dist/esm/tsconfig.react-native.tsbuildinfo"
+  },
+  "include": ["src/react-native/**/*.ts"],
+  "exclude": ["node_modules", "src/metro"],
+  "files": ["globals.d.ts"]
+}

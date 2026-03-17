@@ -8,12 +8,24 @@
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/network-activity-plugin"
   },
   {
+    "npmUrl": "https://www.npmjs.com/package/@rozenite/react-navigation-plugin",
+    "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/react-navigation-plugin"
+  },
+  {
     "npmUrl": "https://www.npmjs.com/package/@rozenite/tanstack-query-plugin",
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/tanstack-query-plugin"
   },
   {
     "npmUrl": "https://www.npmjs.com/package/@rozenite/expo-atlas-plugin",
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/expo-atlas-plugin"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/@rozenite/overlay-plugin",
+    "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/overlay-plugin"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/@rozenite/controls-plugin",
+    "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/controls-plugin"
   },
   {
     "npmUrl": "https://www.npmjs.com/package/rozenite-preview",
@@ -28,6 +40,10 @@
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/mmkv-plugin"
   },
   {
+    "npmUrl": "https://www.npmjs.com/package/@rozenite/storage-plugin",
+    "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/storage-plugin"
+  },
+  {
     "npmUrl": "https://www.npmjs.com/package/@rozenite/require-profiler-plugin",
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/require-profiler-plugin"
   },
@@ -38,5 +54,13 @@
   {
     "npmUrl": "https://www.npmjs.com/package/@react-native-nitro-geolocation/rozenite-plugin",
     "githubUrl": "https://github.com/jingjing2222/react-native-nitro-geolocation/tree/main/packages/rozenite-devtools-plugin"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/rozenite-graphql-client-devtool",
+    "githubUrl": "https://github.com/CodeByRahulSaini/rozenite-graphql-client-devtool"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/rozenite-assets-viewer",
+    "githubUrl": "https://github.com/CodeByRahulSaini/rozenite-assets-viewer"
   }
 ]

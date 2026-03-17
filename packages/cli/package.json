@@ -1,10 +1,15 @@
 {
   "name": "rozenite",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Command-line interface for creating and managing React Native DevTools plugins",
   "type": "module",
   "bin": {
     "rozenite": "./bin.js"
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint ."
   },
   "files": [
     "dist",

@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "metro.ts", "globals.d.ts"],
+  "references": [
+    { "path": "../tools/tsconfig.lib.json" },
+    { "path": "../middleware/tsconfig.lib.json" }
+  ]
+}

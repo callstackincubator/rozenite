@@ -4,9 +4,13 @@ packages:
   - apps/*
   - website
 
-catalog: {}
-
-catalogs: {}
+catalog:
+  react: "19.2.0"
+  react-dom: "19.2.0"
+  "@types/react": "~19.2.2"
+  "@types/react-dom": "~19.1.7"
+  react-native: "0.83.1"
+  vite: "^7.3.1"
 
 onlyBuiltDependencies:
   - '@apollo/protobufjs'
@@ -14,18 +18,6 @@ onlyBuiltDependencies:
   - core-js
   - electron
   - esbuild
-  - nx
   - react-native-mmkv
   - react-native-nitro-modules
   - sqlite3
-
-overrides: {}
-
-patchedDependencies: {}
-
-autoInstallPeers: false
-publicHoistPattern:
-  - '@react-native/*'
-  - '@react-native-community/*'
-  - react-native
-strictPeerDependencies: false

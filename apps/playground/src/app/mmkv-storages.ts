@@ -1,9 +1,9 @@
-import { MMKV } from 'react-native-mmkv';
+import { createMMKV, type MMKV } from 'react-native-mmkv';
 
 // Create MMKV instances with different storage IDs
-export const userStorage = new MMKV({ id: 'user-storage' });
-export const appSettings = new MMKV({ id: 'app-settings' });
-export const cacheStorage = new MMKV({ id: 'cache-storage' });
+export const userStorage = createMMKV({ id: 'user-storage' });
+export const appSettings = createMMKV({ id: 'app-settings' });
+export const cacheStorage = createMMKV({ id: 'cache-storage' });
 
 // Array of all storages for dev tools
 export const mmkvStorages = {
@@ -61,7 +61,7 @@ export const initializeMMKVStorages = () => {
 // Helper function to get MMKV instance by ID
 export const getMMKVInstance = (id: string): MMKV | null => {
   try {
-    return new MMKV({ id });
+    return createMMKV({ id });
   } catch (error) {
     console.error(`Failed to get MMKV instance for ${id}:`, error);
     return null;

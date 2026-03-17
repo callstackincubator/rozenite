@@ -41,17 +41,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Set shas
-        uses: nrwl/nx-set-shas@826660b82addbef3abff5fa871492ebad618c9e1 # v.4.3.3
+      - name: Fetch base branch
+        if: github.event_name == 'pull_request'
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
 
-      - name: Typecheck
-        run: pnpm nx affected -t typecheck
-
-      - name: Build
-        run: pnpm nx affected -t build
-
-      - name: Lint
-        run: pnpm nx affected -t lint
-
-      - name: Test
-        run: pnpm nx affected -t test
+      - name: Validate
+        env:
+          TURBO_SCM_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.event.pull_request.base.ref) || 'HEAD~1' }}
+        run: pnpm turbo run typecheck build lint test --affected

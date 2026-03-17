@@ -77,7 +77,7 @@ const requestBodyApi = {
         'Content-Type': 'application/octet-stream',
         'X-Rozenite-Test': 'true',
       },
-      body: data,
+      body: data as unknown as BodyInit,
     });
 
     if (!response.ok) {

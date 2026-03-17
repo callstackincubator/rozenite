@@ -15,7 +15,7 @@ All development is done directly on GitHub, and all work is public. Contributors
 3. Run `pnpm build:all` to build all packages.
 4. Do the changes you want and test them out in the playground app (`apps/playground`) before sending a pull request.
 
-This repository uses Nx to maintain the monorepository. I strongly advise you to briefly go through the [Nx documentation](https://nx.dev/docs/getting-started/intro) to make sure you understand the basic rules of working with this technology.
+This repository uses Turborepo to maintain the monorepository and Changesets for version plans.
 
 ### Testing your changes
 
@@ -65,7 +65,7 @@ When developing plugins, you can test them in the playground app using developme
    ```
 2. **Set development mode**: Set the `ROZENITE_DEV_MODE` environment variable to your plugin name:
    ```bash
-   ROZENITE_DEV_MODE=my-plugin-name pnpm nx start playground
+   ROZENITE_DEV_MODE=my-plugin-name pnpm start:playground
    ```
 3. **Test your plugin**: Your plugin will be loaded in development mode and you can test it in the DevTools interface.
 

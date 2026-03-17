@@ -1,27 +1,12 @@
 [
-  {
-    "type": "file",
-    "name": "introduction",
-    "label": "Introduction"
-  },
-  {
-    "type": "file",
-    "name": "prior-art",
-    "label": "Prior Art"
-  },
-  {
-    "type": "file",
-    "name": "getting-started",
-    "label": "Getting started"
-  },
+  { "type": "file", "name": "introduction", "label": "Introduction" },
+  { "type": "file", "name": "prior-art", "label": "Prior Art" },
+  { "type": "file", "name": "getting-started", "label": "Getting started" },
+  { "type": "file", "name": "rozenite-for-web", "label": "Rozenite for Web" },
   {
     "type": "dir",
     "name": "plugin-development",
     "label": "Plugin Development"
   },
-  {
-    "type": "dir",
-    "name": "official-plugins",
-    "label": "Official Plugins"
-  }
+  { "type": "dir", "name": "official-plugins", "label": "Official Plugins" }
 ]

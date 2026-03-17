@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/middleware",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Middleware for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",
@@ -34,6 +34,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@rozenite/runtime": "workspace:*",

@@ -31,7 +31,7 @@ export const useMMKVDevTools = ({
       return;
     }
 
-    const normalizedStorages = normalizeStoragesConfigProperty(storages);
+    const normalizedStorages = normalizeStoragesConfigProperty(storages as any);
     const views = Object.entries(normalizedStorages).map(([id, storage]) =>
       getMMKVView(id, storage, blacklist)
     );
