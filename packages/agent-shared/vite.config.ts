@@ -5,7 +5,7 @@ import dts from 'vite-plugin-dts';
 
 export default defineConfig({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/agent-bridge',
+  cacheDir: '../../node_modules/.vite/agent-shared',
   base: './',
   plugins: [
     dts({
@@ -19,9 +19,6 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es' as const, 'cjs' as const],
-    },
-    rollupOptions: {
-      external: ['react', '@rozenite/plugin-bridge'],
     },
   },
   server: {

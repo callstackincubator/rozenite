@@ -5,17 +5,12 @@
     "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
-    "declaration": true,
-    "declarationMap": true,
-    "composite": true,
-    "emitDeclarationOnly": false,
+    "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     "lib": ["dom", "ES2022"],
     "jsx": "react-jsx",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "target": "ES2022"
+    "esModuleInterop": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "references": [
