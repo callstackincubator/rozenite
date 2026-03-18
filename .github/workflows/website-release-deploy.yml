@@ -42,7 +42,7 @@ jobs:
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build project artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: pnpm run build
 
       - name: Deploy prebuilt artifacts to production
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
