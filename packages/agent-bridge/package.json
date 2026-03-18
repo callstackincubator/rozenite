@@ -3,7 +3,7 @@
   "version": "1.5.0",
   "description": "React hook API for registering agent tools in React Native",
   "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
@@ -26,14 +26,17 @@
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
   "scripts": {
-    "build": "tsc -b tsconfig.lib.json",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "clean": "rm -rf dist"
   },
   "exports": {
+    "./package.json": "./package.json",
     ".": {
+      "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "require": "./dist/index.cjs"
     }
   },
   "dependencies": {
