@@ -1,5 +1,12 @@
 # @rozenite/network-activity-plugin
 
+## 1.5.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/plugin-bridge@1.5.0
+
 ## 1.4.0
 
 ### Patch Changes

@@ -1,4 +1,4 @@
-# @rozenite/mmkv-plugin
+# @rozenite/controls-plugin
 
 ## 1.5.0
 
@@ -11,17 +11,3 @@
 - Updated dependencies [[`5ae53a4`](https://github.com/callstackincubator/rozenite/commit/5ae53a4b509adbd8536ea24812f7ca523a95b625)]:
   - @rozenite/agent-bridge@1.5.0
   - @rozenite/plugin-bridge@1.5.0
-
-## 1.4.0
-
-### Patch Changes
-
-- Updated dependencies []:
-  - @rozenite/plugin-bridge@1.4.0
-
-## 1.3.0
-
-### Patch Changes
-
-- Updated dependencies []:
-  - @rozenite/plugin-bridge@1.3.0

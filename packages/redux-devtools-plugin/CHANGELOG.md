@@ -1,5 +1,13 @@
 # @rozenite/redux-devtools-plugin
 
+## 1.5.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/plugin-bridge@1.5.0
+  - @rozenite/tools@1.5.0
+
 ## 1.4.0
 
 ### Minor Changes
