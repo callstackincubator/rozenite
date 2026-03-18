@@ -1,5 +1,13 @@
 # @rozenite/web
 
+## 1.5.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/middleware@1.5.1
+  - @rozenite/tools@1.5.1
+
 ## 1.5.0
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @rozenite/agent-bridge
 
+## 1.5.1
+
+### Patch Changes
+
+- Fixed missing artifacts (CJS) for the agents packages.
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@1.5.1
+  - @rozenite/plugin-bridge@1.5.1
+
 ## 1.5.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @rozenite/agent-shared
 
+## 1.5.1
+
+### Patch Changes
+
+- Fixed missing artifacts (CJS) for the agents packages.
+
 ## 1.5.0
 
 ### Minor Changes

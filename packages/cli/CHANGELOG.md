@@ -1,5 +1,12 @@
 # rozenite
 
+## 1.5.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/tools@1.5.1
+
 ## 1.5.0
 
 ### Minor Changes
