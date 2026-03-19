@@ -39,6 +39,10 @@ The typical flow is:
 
 Built-in domains include `console`, `network`, `react`, `performance`, and `memory`.
 
+:::info Network domain requires React Native 0.83+
+The `network` domain relies on the `Network.enable` CDP command, which is only available on **React Native 0.83 and above**. On earlier versions, the network domain will not work. The `@rozenite/network-activity-plugin` provides a UI-based network inspector for all versions, but it does not currently expose agent-compatible tools.
+:::
+
 Runtime domains can also come from installed Rozenite plugins. At the moment, the documented agent-capable plugin domains include:
 
 - `@rozenite/react-navigation-plugin`

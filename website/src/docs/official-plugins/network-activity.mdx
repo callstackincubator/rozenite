@@ -20,6 +20,10 @@ The Network Activity plugin is a powerful debugging tool that helps you monitor 
 The Network Activity plugin will only capture network traffic coming from the JavaScript thread. Connections made by native code (such as native networking libraries or direct platform HTTP calls) won't be displayed in the inspector.
 :::
 
+:::info Not agent-compatible
+This plugin provides a network inspector for the React Native DevTools UI. It does not currently expose agent-compatible tools and cannot be used with `rozenite agent`. If you need network inspection through the agent interface, use the built-in `network` domain — which requires **React Native 0.83 or later**.
+:::
+
 ## Installation
 
 Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin
