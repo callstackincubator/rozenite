@@ -101,6 +101,9 @@ type NetworkRequestRecord = {
   failureText?: string;
   blockedReason?: string;
   corsErrorStatus?: unknown;
+  // Plugin-captured fields (populated via @rozenite/network-activity-plugin binding events)
+  pluginPostData?: string;
+  pluginResponseBody?: string | null;
 };
 
 type NetworkRecordingState = {
@@ -115,6 +118,7 @@ type NetworkRecordingState = {
   generation: number;
   unsubscribers: Array<() => void>;
   enabled: boolean;
+  usingPlugin: boolean;
 };
 
 type NetworkBodyResult = {
@@ -149,6 +153,10 @@ const DEFAULT_RN_DEVTOOLS_TRACE_CATEGORIES = [
   'rail',
   'disabled-by-default-v8.cpu_profiler',
 ] as const;
+
+export type PluginMessageListener = (type: string, payload: unknown) => void;
+export type SubscribeToPluginMessages = (pluginId: string, listener: PluginMessageListener) => () => void;
+export type SendPluginMessage = (pluginId: string, type: string, payload: unknown) => Promise<void>;
 
 export type LocalAgentToolService = {
   getTools: () => AgentTool[];
@@ -1053,6 +1061,8 @@ export const createNetworkDomainService = (deps: {
   getSessionInfo: SessionInfoReader;
   sendCommand: CDPCommandSender;
   subscribeToCDPEvent: SubscribeToCDPEvent;
+  sendPluginMessage?: SendPluginMessage;
+  subscribeToPluginMessages?: SubscribeToPluginMessages;
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
@@ -1150,7 +1160,15 @@ export const createNetworkDomainService = (deps: {
     generation: 0,
     unsubscribers: [],
     enabled: false,
+    usingPlugin: false,
   };
+
+  type PendingBodyRequest = {
+    resolve: (body: string | null) => void;
+    reject: (err: Error) => void;
+    timeoutId: NodeJS.Timeout;
+  };
+  const pendingBodyRequests = new Map<string, PendingBodyRequest>();
 
   const resetCapture = () => {
     state.requestOrder = [];
@@ -1362,20 +1380,153 @@ export const createNetworkDomainService = (deps: {
     );
   };
 
+  const captureNetworkPluginMessage = (type: string, payload: unknown): void => {
+    const data = payload as Record<string, unknown>;
+
+    switch (type) {
+      case 'request-sent': {
+        if (!state.isRecording) return;
+        const requestId = getString(data.requestId);
+        if (!requestId) return;
+        const record = ensureRecord(requestId);
+        const request = getOptionalRecord(data.request);
+
+        record.url = getString(request?.url) || record.url;
+        record.method = getString(request?.method) || record.method;
+        record.type = getString(data.type) || record.type;
+        record.startTimeMs = typeof data.timestamp === 'number' ? data.timestamp : record.startTimeMs;
+        record.wallTimeMs = typeof data.timestamp === 'number' ? data.timestamp : record.wallTimeMs;
+        record.initiator = (data.initiator as Record<string, unknown>) ?? record.initiator;
+
+        const postData = getOptionalRecord(request?.postData);
+        const hasPostData = postData != null;
+        record.request = {
+          url: getString(request?.url),
+          method: getString(request?.method),
+          headers: getOptionalRecord(request?.headers),
+          hasPostData,
+        };
+
+        if (postData && getString(postData.type) === 'text') {
+          record.pluginPostData = getString(postData.value) || undefined;
+        }
+        break;
+      }
+
+      case 'response-received': {
+        if (!state.isRecording) return;
+        const requestId = getString(data.requestId);
+        if (!requestId) return;
+        const record = ensureRecord(requestId);
+        const response = getOptionalRecord(data.response);
+
+        record.type = getString(data.type) || record.type;
+        record.status = typeof response?.status === 'number' ? response.status : record.status;
+        record.statusText = getString(response?.statusText) || record.statusText;
+        record.mimeType = getString(response?.contentType) || record.mimeType;
+        record.encodedDataLength = typeof response?.size === 'number' ? response.size : record.encodedDataLength;
+        record.response = {
+          url: getString(response?.url),
+          status: typeof response?.status === 'number' ? response.status : undefined,
+          statusText: getString(response?.statusText),
+          headers: getOptionalRecord(response?.headers),
+          mimeType: getString(response?.contentType),
+          encodedDataLength: typeof response?.size === 'number' ? response.size : undefined,
+        };
+        break;
+      }
+
+      case 'request-completed': {
+        if (!state.isRecording) return;
+        const requestId = getString(data.requestId);
+        if (!requestId) return;
+        const record = ensureRecord(requestId);
+
+        record.loadingFinished = true;
+        record.loadingFailed = false;
+        record.endTimeMs = typeof data.timestamp === 'number' ? data.timestamp : record.endTimeMs;
+        if (typeof data.size === 'number') {
+          record.encodedDataLength = data.size;
+          record.transferSize = data.size;
+        }
+        updateTiming(record);
+        break;
+      }
+
+      case 'request-failed': {
+        if (!state.isRecording) return;
+        const requestId = getString(data.requestId);
+        if (!requestId) return;
+        const record = ensureRecord(requestId);
+
+        record.loadingFinished = false;
+        record.loadingFailed = true;
+        record.endTimeMs = typeof data.timestamp === 'number' ? data.timestamp : record.endTimeMs;
+        record.failureText = getString(data.error) || record.failureText;
+        updateTiming(record);
+        break;
+      }
+
+      case 'response-body': {
+        const requestId = getString(data.requestId);
+        if (!requestId) return;
+
+        const body = typeof data.body === 'string' ? data.body : null;
+        const record = state.requests.get(requestId);
+        if (record) {
+          record.pluginResponseBody = body;
+        }
+
+        const pending = pendingBodyRequests.get(requestId);
+        if (pending) {
+          pendingBodyRequests.delete(requestId);
+          clearTimeout(pending.timeoutId);
+          pending.resolve(body);
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+  };
+
+  const unsubscribeFromPlugin = deps.subscribeToPluginMessages?.(
+    '@rozenite/network-activity-plugin',
+    captureNetworkPluginMessage,
+  );
+
   const startRecording = async () => {
     if (state.isRecording) {
       throw new Error('Network recording is already active for this session');
     }
 
     resetCapture();
+
     if (!state.enabled) {
-      await deps.sendCommand('Network.enable');
-      state.enabled = true;
+      try {
+        await deps.sendCommand('Network.enable');
+        state.enabled = true;
+        state.usingPlugin = false;
+      } catch {
+        // CDP Network.enable not supported (e.g. Hermes) — fall back to plugin
+        if (!deps.sendPluginMessage) {
+          throw new Error(
+            'Network recording is not supported: CDP Network.enable failed and no plugin fallback is available.',
+          );
+        }
+        await deps.sendPluginMessage('@rozenite/network-activity-plugin', 'network-enable', {});
+        state.usingPlugin = true;
+        state.enabled = true;
+      }
+    }
+
+    if (!state.usingPlugin) {
+      subscribeRecordingEvents();
     }
 
     state.isRecording = true;
     state.startedAt = Date.now();
-    subscribeRecordingEvents();
 
     return {
       started: true,
@@ -1386,6 +1537,11 @@ export const createNetworkDomainService = (deps: {
   const stopRecording = async () => {
     if (!state.isRecording) {
       throw new Error('No active network recording for this session');
+    }
+
+    if (state.usingPlugin && deps.sendPluginMessage) {
+      await deps.sendPluginMessage('@rozenite/network-activity-plugin', 'network-disable', {});
+      state.usingPlugin = false;
     }
 
     clearSubscriptions();
@@ -1475,6 +1631,16 @@ export const createNetworkDomainService = (deps: {
     }
 
     const record = getRecordById(requestId);
+
+    if (record.pluginPostData !== undefined) {
+      return {
+        requestId,
+        available: true,
+        body: record.pluginPostData,
+        base64Encoded: false,
+      };
+    }
+
     if (!record.request?.hasPostData) {
       return {
         requestId,
@@ -1531,6 +1697,29 @@ export const createNetworkDomainService = (deps: {
         available: false,
         reason: 'Response body is unavailable until the request finishes loading.',
       };
+    }
+
+    if (state.usingPlugin && deps.sendPluginMessage) {
+      if (record.pluginResponseBody !== undefined) {
+        if (record.pluginResponseBody === null) {
+          return { requestId, available: false, reason: 'The target returned no response body for this request.' };
+        }
+        return { requestId, available: true, body: record.pluginResponseBody, base64Encoded: false, mimeType: record.response?.mimeType || record.mimeType };
+      }
+
+      const body = await new Promise<string | null>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          pendingBodyRequests.delete(requestId);
+          reject(new Error('Timed out waiting for response body from plugin'));
+        }, 10000);
+        pendingBodyRequests.set(requestId, { resolve, reject, timeoutId });
+        void deps.sendPluginMessage!('@rozenite/network-activity-plugin', 'get-response-body', { requestId });
+      });
+
+      if (body === null) {
+        return { requestId, available: false, reason: 'The target returned no response body for this request.' };
+      }
+      return { requestId, available: true, body, base64Encoded: false, mimeType: record.response?.mimeType || record.mimeType };
     }
 
     try {
@@ -1612,11 +1801,19 @@ export const createNetworkDomainService = (deps: {
     onDisconnected: () => {
       clearSubscriptions();
       state.isRecording = false;
+      state.usingPlugin = false;
       state.enabled = false;
     },
     dispose: async () => {
+      unsubscribeFromPlugin?.();
       clearSubscriptions();
-      if (state.enabled) {
+      if (state.usingPlugin && deps.sendPluginMessage) {
+        try {
+          await deps.sendPluginMessage('@rozenite/network-activity-plugin', 'network-disable', {});
+        } catch {
+          // Ignore transport failures during teardown.
+        }
+      } else if (state.enabled) {
         try {
           await deps.sendCommand('Network.disable');
         } catch {
@@ -1624,6 +1821,7 @@ export const createNetworkDomainService = (deps: {
         }
       }
       state.isRecording = false;
+      state.usingPlugin = false;
       state.enabled = false;
     },
   };

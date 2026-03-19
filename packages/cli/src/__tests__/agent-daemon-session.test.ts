@@ -434,4 +434,51 @@ describe('agent daemon session', () => {
       expect(onTerminated).toHaveBeenCalledWith('session-1');
     });
   });
+
+  it('routes rozenite binding payloads to handleDeviceMessage for non-subscriber plugins', async () => {
+    mocks.resolveMetroTarget.mockResolvedValue({
+      id: 'device-1',
+      name: 'iPhone',
+      appId: 'app.test',
+      pageId: 'page-1',
+      title: 'title',
+      description: 'description',
+      webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug',
+    });
+    mocks.parseRozeniteBindingPayload.mockReturnValue({
+      domain: 'rozenite',
+      message: {
+        pluginId: '@rozenite/react-navigation-plugin',
+        type: 'register-tool',
+        payload: { tools: [] },
+      },
+    } as never);
+
+    const session = createDaemonSession('session-1', '127.0.0.1', 8081);
+    const startPromise = session.start();
+    await vi.waitFor(() => expect(mocks.sockets).toHaveLength(1));
+
+    mocks.sockets[0].emit('open');
+    await vi.waitFor(() => {
+      expect(mocks.sentCommands.map((c) => c.method)).toEqual(['ReactNativeApplication.enable']);
+    });
+    respondToCommand(mocks.sockets[0], 'ReactNativeApplication.enable');
+    await vi.waitFor(() => {
+      expect(mocks.sentCommands.map((c) => c.method)).toContain('Runtime.enable');
+    });
+    respondToCommand(mocks.sockets[0], 'Runtime.enable');
+    await startPromise;
+
+    // Emit binding message — handleSocketMessage is synchronous
+    mocks.sockets[0].emit('message', JSON.stringify({
+      method: 'Runtime.bindingCalled',
+      params: { payload: '{}' },
+    }));
+
+    const handler = mocks.createAgentMessageHandler.mock.results[0]?.value;
+    expect(handler.handleDeviceMessage).toHaveBeenCalledWith(
+      'device-1',
+      expect.objectContaining({ pluginId: '@rozenite/react-navigation-plugin' }),
+    );
+  });
 });

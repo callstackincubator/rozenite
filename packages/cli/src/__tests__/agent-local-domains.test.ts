@@ -575,4 +575,200 @@ describe('agent local domains', () => {
     }) as { items: Array<{ name: string; value: unknown }> };
     expect(props.items).toEqual([{ name: 'title', value: 'Hello' }]);
   });
+
+  it('falls back to plugin when Network.enable is unsupported and captures plugin events', async () => {
+    const events = createEventHub();
+    const pluginMessages: Array<{ pluginId: string; type: string; payload: unknown }> = [];
+    const pluginListeners = new Map<string, Array<(type: string, payload: unknown) => void>>();
+
+    const service = createNetworkDomainService({
+      getSessionInfo: () => ({ sessionId: 'session-1', deviceId: 'device-1', pageId: 'page-1' }),
+      subscribeToCDPEvent: events.subscribe,
+      sendCommand: async (method) => {
+        if (method === 'Network.enable') {
+          throw new Error("Unsupported method 'Network.enable'");
+        }
+        throw new Error(`Unexpected command ${method}`);
+      },
+      sendPluginMessage: async (pluginId, type, payload) => {
+        pluginMessages.push({ pluginId, type, payload });
+      },
+      subscribeToPluginMessages: (pluginId, listener) => {
+        const listeners = pluginListeners.get(pluginId) ?? [];
+        listeners.push(listener);
+        pluginListeners.set(pluginId, listeners);
+        return () => {};
+      },
+    });
+
+    await service.callTool('startRecording', {});
+
+    expect(pluginMessages).toEqual([
+      { pluginId: '@rozenite/network-activity-plugin', type: 'network-enable', payload: {} },
+    ]);
+
+    const emit = (type: string, payload: unknown) => {
+      for (const listener of pluginListeners.get('@rozenite/network-activity-plugin') ?? []) {
+        listener(type, payload);
+      }
+    };
+
+    emit('request-sent', {
+      requestId: 'req-1',
+      type: 'XHR',
+      timestamp: 1000,
+      initiator: { type: 'script' },
+      request: {
+        url: 'https://example.com/api/data',
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        postData: { type: 'text', value: '{"key":"value"}' },
+      },
+    });
+
+    emit('response-received', {
+      requestId: 'req-1',
+      type: 'XHR',
+      response: {
+        url: 'https://example.com/api/data',
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        contentType: 'application/json',
+        size: 42,
+      },
+    });
+
+    emit('request-completed', {
+      requestId: 'req-1',
+      timestamp: 1300,
+      duration: 300,
+      size: 42,
+      ttfb: 100,
+    });
+
+    const list = await service.callTool('listRequests', {}) as {
+      items: Array<Record<string, unknown>>;
+    };
+
+    expect(list.items).toHaveLength(1);
+    expect(list.items[0]).toMatchObject({
+      requestId: 'req-1',
+      method: 'POST',
+      url: 'https://example.com/api/data',
+      status: 200,
+      outcome: 'success',
+      type: 'XHR',
+    });
+
+    const requestBody = await service.callTool('getRequestBody', { requestId: 'req-1' }) as Record<string, unknown>;
+    expect(requestBody).toMatchObject({
+      available: true,
+      body: '{"key":"value"}',
+    });
+
+    const responseBodyPromise = service.callTool('getResponseBody', { requestId: 'req-1' });
+    expect(pluginMessages.at(-1)).toMatchObject({
+      pluginId: '@rozenite/network-activity-plugin',
+      type: 'get-response-body',
+      payload: { requestId: 'req-1' },
+    });
+
+    emit('response-body', { requestId: 'req-1', body: '{"result":true}' });
+
+    const responseBody = await responseBodyPromise as Record<string, unknown>;
+    expect(responseBody).toMatchObject({
+      available: true,
+      body: '{"result":true}',
+      mimeType: 'application/json',
+    });
+
+    pluginMessages.length = 0;
+    await service.callTool('stopRecording', {});
+    expect(pluginMessages).toEqual([
+      { pluginId: '@rozenite/network-activity-plugin', type: 'network-disable', payload: {} },
+    ]);
+  });
+
+  it('captures plugin request-failed events', async () => {
+    const events = createEventHub();
+    const pluginListeners = new Map<string, Array<(type: string, payload: unknown) => void>>();
+
+    const service = createNetworkDomainService({
+      getSessionInfo: () => ({ sessionId: 'session-1', deviceId: 'device-1', pageId: 'page-1' }),
+      subscribeToCDPEvent: events.subscribe,
+      sendCommand: async (method) => {
+        if (method === 'Network.enable') {
+          throw new Error("Unsupported method 'Network.enable'");
+        }
+        throw new Error(`Unexpected command ${method}`);
+      },
+      sendPluginMessage: async () => {},
+      subscribeToPluginMessages: (pluginId, listener) => {
+        const listeners = pluginListeners.get(pluginId) ?? [];
+        listeners.push(listener);
+        pluginListeners.set(pluginId, listeners);
+        return () => {};
+      },
+    });
+
+    await service.callTool('startRecording', {});
+
+    const emit = (type: string, payload: unknown) => {
+      for (const listener of pluginListeners.get('@rozenite/network-activity-plugin') ?? []) {
+        listener(type, payload);
+      }
+    };
+
+    emit('request-sent', {
+      requestId: 'req-fail',
+      type: 'Fetch',
+      timestamp: 2000,
+      initiator: { type: 'script' },
+      request: { url: 'https://example.com/fail', method: 'GET', headers: {} },
+    });
+    emit('request-failed', {
+      requestId: 'req-fail',
+      timestamp: 2500,
+      type: 'Fetch',
+      error: 'Network timeout',
+      canceled: false,
+    });
+
+    const list = await service.callTool('listRequests', {}) as {
+      items: Array<Record<string, unknown>>;
+    };
+
+    expect(list.items).toHaveLength(1);
+    expect(list.items[0]).toMatchObject({
+      requestId: 'req-fail',
+      outcome: 'failed',
+    });
+  });
+
+  it('sends network-disable via plugin on dispose when using plugin path', async () => {
+    const events = createEventHub();
+    const pluginMessages: Array<{ type: string }> = [];
+
+    const service = createNetworkDomainService({
+      getSessionInfo: () => ({ sessionId: 'session-1', deviceId: 'device-1', pageId: 'page-1' }),
+      subscribeToCDPEvent: events.subscribe,
+      sendCommand: async (method) => {
+        if (method === 'Network.enable') {
+          throw new Error("Unsupported method 'Network.enable'");
+        }
+        throw new Error(`Unexpected command ${method}`);
+      },
+      sendPluginMessage: async (_pluginId, type) => {
+        pluginMessages.push({ type });
+      },
+      subscribeToPluginMessages: (_pluginId, _listener) => () => {},
+    });
+
+    await service.callTool('startRecording', {});
+    pluginMessages.length = 0;
+
+    await service.dispose();
+    expect(pluginMessages).toEqual([{ type: 'network-disable' }]);
+  });
 });

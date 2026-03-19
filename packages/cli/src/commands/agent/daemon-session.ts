@@ -12,6 +12,7 @@ import {
   createPerformanceDomainService,
   createReactDomainService,
   type LocalAgentToolService,
+  type PluginMessageListener,
 } from './local-domains.js';
 
 type AgentMessageHandler = ReturnType<typeof createAgentMessageHandler>;
@@ -87,6 +88,26 @@ export const createDaemonSession = (
 
   const pendingCommands = new Map<number, PendingCommand>();
   const cdpEventListeners = new Map<string, Set<(params: Record<string, unknown>) => void | Promise<void>>>();
+  const pluginMessageListeners = new Map<string, Set<PluginMessageListener>>();
+
+  const subscribeToPluginMessages = (pluginId: string, listener: PluginMessageListener): (() => void) => {
+    const listeners = pluginMessageListeners.get(pluginId) ?? new Set();
+    listeners.add(listener);
+    pluginMessageListeners.set(pluginId, listeners);
+    return () => {
+      const current = pluginMessageListeners.get(pluginId);
+      if (!current) {
+        return;
+      }
+      current.delete(listener);
+      if (current.size === 0) {
+        pluginMessageListeners.delete(pluginId);
+      }
+    };
+  };
+
+  const sendPluginMessage = (pluginId: string, type: string, payload: unknown): Promise<void> =>
+    sendDomainMessage('rozenite', { pluginId, type, payload });
 
   const getSessionInfoFields = () => ({
     sessionId: id,
@@ -199,6 +220,8 @@ export const createDaemonSession = (
       getSessionInfo: getSessionInfoFields,
       sendCommand,
       subscribeToCDPEvent,
+      sendPluginMessage,
+      subscribeToPluginMessages,
     }),
   ];
 
@@ -446,7 +469,14 @@ export const createDaemonSession = (
     }
 
     if (bindingPayload.domain === 'rozenite') {
-      handler.handleDeviceMessage(target.id, bindingPayload.message as DevToolsPluginMessage);
+      const msg = bindingPayload.message as DevToolsPluginMessage;
+      const subscribers = pluginMessageListeners.get(msg.pluginId);
+      if (subscribers) {
+        for (const listener of subscribers) {
+          listener(msg.type, msg.payload);
+        }
+      }
+      handler.handleDeviceMessage(target.id, msg);
     } else if (bindingPayload.domain === 'react-devtools') {
       for (const service of localServices) {
         if (service.captureReactDevToolsMessage) {
