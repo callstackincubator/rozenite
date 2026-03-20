@@ -244,9 +244,7 @@ export const FileSystemTestScreen = () => {
           onPress={handleSave}
           disabled={loading}
         >
-          <Text
-            style={styles.actionBtnText}
-          >
+          <Text style={styles.actionBtnText}>
             {loading ? 'Saving...' : 'Save React Logo'}
           </Text>
         </TouchableOpacity>
@@ -274,9 +272,7 @@ export const FileSystemTestScreen = () => {
       {/* File list */}
       <View style={styles.listSection}>
         <View style={styles.listHeader}>
-          <Text style={styles.listTitle}>
-            PNG Files ({savedFiles.length})
-          </Text>
+          <Text style={styles.listTitle}>PNG Files ({savedFiles.length})</Text>
           <TouchableOpacity style={styles.refreshBtn} onPress={refreshFiles}>
             <Text style={styles.refreshBtnText}>Refresh</Text>
           </TouchableOpacity>
@@ -286,7 +282,8 @@ export const FileSystemTestScreen = () => {
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>No PNG files found</Text>
             <Text style={styles.emptyStateSubtext}>
-              Tap "Save React Logo" to write a file to the selected directory
+              Tap &quot;Save React Logo&quot; to write a file to the selected
+              directory
             </Text>
           </View>
         ) : (
