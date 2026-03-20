@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/chrome-extension",
-  "version": "1.4.0",
+  "version": "1.5.1",
   "description": "Rozenite for Web",
   "type": "module",
   "private": true,

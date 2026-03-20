@@ -1,0 +1,138 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Adding tools to your application
+
+You can expose custom agent tools directly from your React Native app. These tools appear under the **app** domain so coding agents (e.g. CLI, Cursor, Codex) can discover and call them via Rozenite for Agents.
+
+Use this when you want agents to perform app-specific actions—for example, triggering a debug flow, returning build metadata, or driving in-app behavior during automated testing.
+
+## Prerequisites
+
+- Rozenite is installed and configured in your app (see [Getting started](/docs/getting-started)).
+- Your app runs in development mode with at least one connected target so the agent bridge can communicate with the Rozenite devtools.
+
+## Install the agent bridge
+
+Install `@rozenite/agent-bridge` as a dependency:
+
+<PackageManagerTabs command="install @rozenite/agent-bridge" />
+
+The bridge provides React hooks that register tools with the Rozenite agent plugin, handle incoming tool calls, and send results back to the agent.
+
+## Define and register a tool
+
+Each tool has:
+
+- **name** – Unique identifier (agents will see it as `app.<name>`).
+- **description** – Short explanation for the agent.
+- **inputSchema** – JSON Schema–style object describing the tool’s arguments.
+- **handler** – Function that receives the parsed arguments and returns a result (or throws).
+
+Use the `useRozeniteInAppAgentTool` hook inside a component that is mounted when your app is active. The tool is registered on mount and unregistered on unmount.
+
+### Example: build info tool
+
+```tsx
+import { useRozeniteInAppAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+
+const buildInfoTool: AgentTool = {
+  name: 'get-build-info',
+  description: 'Return app build metadata.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      includeNative: {
+        type: 'boolean',
+        description: 'Include native build info if available.',
+      },
+    },
+  },
+};
+
+function AppAgentTools() {
+  useRozeniteInAppAgentTool({
+    tool: buildInfoTool,
+    handler: (args) => {
+      return {
+        version: '1.0.0',
+        environment: __DEV__ ? 'development' : 'production',
+        includeNative: args?.includeNative ?? false,
+      };
+    },
+  });
+
+  return null;
+}
+```
+
+Mount `AppAgentTools` (or your equivalent) somewhere in your app tree—for example next to your root navigator or DevTools setup—so the tool is available whenever the app is connected.
+
+### Example: alert tool
+
+```tsx
+import { Alert } from 'react-native';
+import { useRozeniteInAppAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+
+const showAlertTool: AgentTool = {
+  name: 'show-alert',
+  description: 'Show a native alert in the app.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string', description: 'Alert title.' },
+      message: { type: 'string', description: 'Alert body text.' },
+    },
+  },
+};
+
+function AppAgentTools() {
+  useRozeniteInAppAgentTool({
+    tool: showAlertTool,
+    handler: ({ title, message }) => {
+      Alert.alert(title ?? 'Agent', message ?? '');
+      return { ok: true };
+    },
+  });
+
+  return null;
+}
+```
+
+## Tool shape and behavior
+
+- **Name**: Use kebab-case (e.g. `get-build-info`). The qualified name seen by agents is `app.<name>`.
+- **inputSchema**: Follows a JSON Schema–like shape (`type`, `properties`, `required`, etc.). Agents use this to build valid arguments and understand optional vs required fields.
+- **handler**: Can be async. Return a serializable value (objects, arrays, primitives). On throw, the bridge sends an error result to the agent.
+
+You can register multiple tools by calling `useRozeniteInAppAgentTool` multiple times (e.g. one call per tool) in the same or different components.
+
+## How agents see your tools
+
+Agents discover app tools like any other domain:
+
+```bash
+rozenite agent domains --session <sessionId> --json
+rozenite agent app tools --session <sessionId> --json
+rozenite agent app call --tool get-build-info --args '{}' --session <sessionId> --json
+```
+
+The **app** domain is created when at least one in-app tool is registered. When all such tools are unregistered (e.g. components unmount), the domain may no longer appear.
+
+## Optional: enable/disable
+
+You can gate registration with the `enabled` option:
+
+```tsx
+useRozeniteInAppAgentTool({
+  tool: buildInfoTool,
+  handler: () => ({ version: '1.0.0' }),
+  enabled: __DEV__,
+});
+```
+
+When `enabled` is false, the tool is not registered and will not appear under the app domain.
+
+## Next steps
+
+- [Making your plugin agent-enabled](/docs/agent/making-your-plugin-agent-enabled) – expose tools from your Rozenite plugin to agents.
+- Go back to the [Rozenite for Agents](/docs/agent/overview) overview.

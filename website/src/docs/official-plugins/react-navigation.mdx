@@ -68,6 +68,23 @@ function App() {
 
 Once configured, the React Navigation plugin will automatically appear in your React Native DevTools sidebar as "React Navigation". Click on it to access two main features:
 
+## Agent Integration
+
+This plugin also exposes Agent tools under the `@rozenite/react-navigation-plugin` domain for LLM workflows.
+
+- `navigate` (high-level)
+- `go-back` (high-level)
+- `get-root-state`
+- `get-focused-route`
+- `list-actions`
+- `reset-root` (low-level)
+- `open-link`
+- `dispatch-action` (low-level)
+
+Use `navigate` and `go-back` first for routine movement across stacks/tabs. Use `dispatch-action` and `reset-root` only when high-level tools are insufficient.
+
+These tools allow read access to the current navigation state and recent action timeline (rolling in-memory history), plus mutation actions for navigation control and deep linking.
+
 ## Contributing
 
 The React Navigation plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.

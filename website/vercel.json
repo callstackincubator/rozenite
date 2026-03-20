@@ -1,10 +1,13 @@
 {
-    "$schema": "https://openapi.vercel.sh/vercel.json",
-    "buildCommand": "pnpm build",
-    "cleanUrls": true,
-    "framework": null,
-    "installCommand": "pnpm install",
-    "rewrites": [{ "source": "/(.*)", "destination": "/404.html" }],
-    "outputDirectory": "build",
-    "trailingSlash": false
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm build",
+  "cleanUrls": true,
+  "framework": null,
+  "installCommand": "pnpm install",
+  "rewrites": [{ "source": "/(.*)", "destination": "/404.html" }],
+  "outputDirectory": "build",
+  "trailingSlash": false,
+  "git": {
+    "deploymentEnabled": false
   }
+}

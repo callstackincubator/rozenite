@@ -5,7 +5,6 @@ import {
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
-import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 import { useRozeniteStoragePlugin } from '@rozenite/storage-plugin';
@@ -26,6 +25,7 @@ import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
 import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
 import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
+import { PerfProblemScreen } from './screens/PerfProblemScreen';
 import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
@@ -34,12 +34,11 @@ import { StoragePluginScreen } from './screens/StoragePluginScreen';
 import { storagePluginAdapters } from './storage-plugin-adapters';
 import { primaryStore } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
-import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
+import { useAgentPlaygroundTools } from './useAgentPlaygroundTools';
+import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 import { useFileSystemDevTools } from '@rozenite/file-system-plugin';
 import * as RNFS from '@dr.pogodin/react-native-fs';
-
-withOnBootNetworkActivityRecording();
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -66,6 +65,7 @@ const Wrapper = () => {
   });
   usePerformanceMonitorDevTools();
   useRequireProfilerDevTools();
+  useAgentPlaygroundTools();
   useFileSystemDevTools({ rnfs: RNFS });
 
   return (
@@ -115,6 +115,7 @@ const Wrapper = () => {
         name="SuccessiveScreensStack"
         component={SuccessiveScreensNavigator}
       />
+      <Stack.Screen name="PerfProblem" component={PerfProblemScreen} />
     </Stack.Navigator>
   );
 };
@@ -134,6 +135,7 @@ const linking = {
       FileSystemTest: 'file-system-test',
       Config: 'config',
       BottomTabs: 'tabs',
+      PerfProblem: 'perf-problem',
       SuccessiveScreensStack: {
         path: 'successive',
         screens: {

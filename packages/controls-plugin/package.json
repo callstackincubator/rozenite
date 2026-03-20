@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/controls-plugin",
-  "version": "1.4.0",
+  "version": "1.5.1",
   "description": "A Rozenite plugin for exposing app-defined controls directly in React Native DevTools.",
   "type": "module",
   "main": "./dist/react-native.cjs",
@@ -13,11 +13,13 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
     "@rozenite/vite-plugin": "workspace:*",
     "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "react": "catalog:",

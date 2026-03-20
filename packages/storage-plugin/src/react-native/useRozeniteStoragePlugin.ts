@@ -8,6 +8,7 @@ import type {
 } from '../shared/messaging';
 import type { StorageAdapter } from '../shared/types';
 import { createStorageViews } from './storage-view';
+import { useStorageAgentTools } from './useStorageAgentTools';
 
 export type RozeniteStoragePluginOptions = {
   storages: StorageAdapter[];
@@ -17,6 +18,8 @@ export const useRozeniteStoragePlugin = ({
   storages,
 }: RozeniteStoragePluginOptions) => {
   const views = useMemo(() => createStorageViews(storages), [storages]);
+
+  useStorageAgentTools(views);
 
   const client = useRozeniteDevToolsClient<StorageEventMap>({
     pluginId: '@rozenite/storage-plugin',

@@ -24,6 +24,7 @@
     "@rozenite/expo-atlas-plugin": "workspace:*",
     "@rozenite/file-system-plugin": "workspace:*",
     "@rozenite/metro": "workspace:*",
+    "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/mmkv-plugin": "workspace:*",
     "@rozenite/network-activity-plugin": "workspace:*",
     "@rozenite/controls-plugin": "workspace:*",
