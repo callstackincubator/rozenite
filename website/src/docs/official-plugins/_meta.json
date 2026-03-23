@@ -51,6 +51,11 @@
   },
   {
     "type": "file",
+    "name": "file-system",
+    "label": "File System"
+  },
+  {
+    "type": "file",
     "name": "controls",
     "label": "Controls"
   },

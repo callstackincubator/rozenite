@@ -1,7 +1,7 @@
 {
   "name": "@rozenite/file-system-plugin",
   "version": "1.0.0",
-  "description": "File system plugin for Rozenite.",
+  "description": "A Rozenite plugin for browsing app files and previewing file contents in React Native DevTools.",
   "type": "module",
   "main": "./dist/react-native.cjs",
   "module": "./dist/react-native.js",

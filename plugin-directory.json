@@ -44,6 +44,10 @@
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/storage-plugin"
   },
   {
+    "npmUrl": "https://www.npmjs.com/package/@rozenite/file-system-plugin",
+    "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/file-system-plugin"
+  },
+  {
     "npmUrl": "https://www.npmjs.com/package/@rozenite/require-profiler-plugin",
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/require-profiler-plugin"
   },
