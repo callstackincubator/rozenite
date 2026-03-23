@@ -929,6 +929,9 @@ importers:
       '@redux-devtools/utils':
         specifier: ^3.1.1
         version: 3.1.1(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.0)(redux@5.0.1))(react@19.2.0)(redux@5.0.1)
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../agent-bridge
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge

@@ -13,6 +13,7 @@ Redux DevTools is a powerful debugging tool for Redux applications that provides
 - **State Inspection**: View and explore your Redux store state in real-time
 - **Action History**: Track all dispatched actions with timestamps and payloads
 - **State Diff Viewing**: See exactly how each action changes your state
+- **Agent Tools**: Let coding agents inspect stores and drive safe Redux DevTools history actions
 
 ## Installation
 
@@ -83,6 +84,44 @@ export default store;
 ## Usage
 
 Once configured, the Redux DevTools plugin will automatically appear in your React Native DevTools sidebar as "Redux DevTools".
+
+## Agent Integration
+
+This plugin can also expose agent tools under the `@rozenite/redux-devtools-plugin` domain.
+
+This is a separate manual integration step. Instrumenting the Redux store with `rozeniteDevToolsEnhancer` or `composeWithRozeniteDevTools` does not automatically register agent tools.
+
+If you want agent access, mount the hook once near your app root by hand:
+
+```tsx title="App.tsx"
+import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
+
+function App() {
+  useReduxDevToolsAgentTools();
+
+  return <YourApp />;
+}
+```
+
+Without this hook, the Redux DevTools panel still works, but the Redux plugin domain will not be available through `rozenite agent`.
+
+Available tools:
+
+- `list-stores`
+- `get-store-state`
+- `list-actions`
+- `get-action-details`
+- `dispatch-action`
+- `jump-to-action`
+- `toggle-action`
+- `reset-history`
+- `rollback-state`
+- `commit-current-state`
+- `sweep-skipped-actions`
+- `set-recording-paused`
+- `set-locked`
+
+The agent API intentionally exposes curated store and history operations rather than raw eval-based Redux DevTools commands.
 
 #### Configuration Options
 

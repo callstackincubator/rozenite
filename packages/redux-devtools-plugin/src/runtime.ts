@@ -17,6 +17,7 @@ import {
   sendRuntimeMessage,
   subscribeToPanelCommands,
 } from './runtime-bridge';
+import { registerReduxDevToolsStore } from './redux-devtools-registry';
 import type {
   ReduxDevToolsPanelCommand,
   ReduxDevToolsRequest,
@@ -56,6 +57,7 @@ type RuntimeController = {
 };
 
 type StoreSentinel = {
+  instanceId: string;
   unsubscribeCommandHandler: () => void;
 };
 
@@ -326,9 +328,18 @@ const createRuntimeController = (
               handlePanelCommand
             );
             storeWithSentinel[STORE_SENTINEL] = {
+              instanceId: appInstanceId,
               unsubscribeCommandHandler: unsubscribeCommandHandler,
             };
           }
+
+          registerReduxDevToolsStore({
+            instanceId: appInstanceId,
+            name: instanceName,
+            maxAge,
+            getStore: () => store,
+            getLiftedState: () => getLiftedStateRaw(),
+          });
 
           store.subscribe(() => {
             handleChange();

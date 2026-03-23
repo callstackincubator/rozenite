@@ -7,6 +7,7 @@ import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
 import { useRozeniteStoragePlugin } from '@rozenite/storage-plugin';
 import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -60,6 +61,7 @@ const Wrapper = () => {
   useRozeniteStoragePlugin({
     storages: storagePluginAdapters,
   });
+  useReduxDevToolsAgentTools();
   usePerformanceMonitorDevTools();
   useRequireProfilerDevTools();
   useAgentPlaygroundTools();
