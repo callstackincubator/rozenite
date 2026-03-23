@@ -1,5 +1,18 @@
 # @rozenite/redux-devtools-plugin
 
+## 1.6.0
+
+### Minor Changes
+
+- [#200](https://github.com/callstackincubator/rozenite/pull/200) [`68e8463`](https://github.com/callstackincubator/rozenite/commit/68e8463a162a477347c9dfc48a0c3357a09f6dfe) Thanks [@V3RON](https://github.com/V3RON)! - Add agent tools for inspecting Redux state, action history, and safe store controls.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.6.0
+  - @rozenite/plugin-bridge@1.6.0
+  - @rozenite/tools@1.6.0
+
 ## 1.5.1
 
 ### Patch Changes

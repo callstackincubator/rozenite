@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/overlay-plugin",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "Grid and image overlay plugin for Rozenite.",
   "type": "module",
   "main": "./dist/react-native.cjs",

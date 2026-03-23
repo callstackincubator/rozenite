@@ -1,5 +1,13 @@
 # @rozenite/middleware
 
+## 1.6.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/runtime@1.6.0
+  - @rozenite/tools@1.6.0
+
 ## 1.5.1
 
 ### Patch Changes
