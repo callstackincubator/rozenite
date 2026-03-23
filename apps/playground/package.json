@@ -13,6 +13,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@dr.pogodin/react-native-fs": "^2.36.2",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^3.0.1",
     "@react-navigation/bottom-tabs": "^7.4.7",
@@ -21,6 +22,7 @@
     "@react-navigation/native-stack": "^7.3.21",
     "@reduxjs/toolkit": "^2.8.2",
     "@rozenite/expo-atlas-plugin": "workspace:*",
+    "@rozenite/file-system-plugin": "workspace:*",
     "@rozenite/metro": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/mmkv-plugin": "workspace:*",

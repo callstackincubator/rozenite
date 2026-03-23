@@ -30,6 +30,7 @@ import { PerfProblemScreen } from './screens/PerfProblemScreen';
 import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
+import { FileSystemTestScreen } from './screens/FileSystemTestScreen';
 import { StoragePluginScreen } from './screens/StoragePluginScreen';
 import { storagePluginAdapters } from './storage-plugin-adapters';
 import { primaryStore } from './store';
@@ -37,6 +38,8 @@ import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
 import { useAgentPlaygroundTools } from './useAgentPlaygroundTools';
 import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
+import { useFileSystemDevTools } from '@rozenite/file-system-plugin';
+import * as RNFS from '@dr.pogodin/react-native-fs';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -65,6 +68,7 @@ const Wrapper = () => {
   usePerformanceMonitorDevTools();
   useRequireProfilerDevTools();
   useAgentPlaygroundTools();
+  useFileSystemDevTools({ rnfs: RNFS });
 
   return (
     <Stack.Navigator
@@ -89,6 +93,7 @@ const Wrapper = () => {
         name="RequireProfilerTest"
         component={RequireProfilerTestScreen}
       />
+      <Stack.Screen name="FileSystemTest" component={FileSystemTestScreen} />
       <Stack.Screen
         name="Config"
         component={ConfigScreen}
@@ -129,6 +134,7 @@ const linking = {
       ReduxTest: 'redux',
       PerformanceMonitor: 'performance',
       RequireProfilerTest: 'require-profiler-test',
+      FileSystemTest: 'file-system-test',
       Config: 'config',
       BottomTabs: 'tabs',
       PerfProblem: 'perf-problem',

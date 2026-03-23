@@ -30,7 +30,8 @@ export default {
         'controls-plugin',
         'agent-bridge',
         'agent-shared',
-        ''
+        'file-system-plugin',
+        '',
       ],
     ],
   },

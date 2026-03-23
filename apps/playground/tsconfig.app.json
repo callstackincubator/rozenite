@@ -14,7 +14,9 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@rozenite/controls-plugin": ["../../packages/controls-plugin/react-native.d.ts"]
+      "@rozenite/controls-plugin": [
+        "../../packages/controls-plugin/react-native.d.ts"
+      ]
     },
     "lib": ["dom", "es2022"],
     "types": ["node"],

@@ -7,11 +7,13 @@ import {
   Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
 export const LandingScreen = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
@@ -65,7 +67,9 @@ export const LandingScreen = () => {
 
               <TouchableOpacity
                 style={styles.navigationButton}
-                onPress={() => navigation.navigate('PerformanceMonitor' as never)}
+                onPress={() =>
+                  navigation.navigate('PerformanceMonitor' as never)
+                }
               >
                 <Text style={styles.buttonText}>Performance Monitor</Text>
               </TouchableOpacity>
@@ -77,6 +81,13 @@ export const LandingScreen = () => {
                 }
               >
                 <Text style={styles.buttonText}>Require Profiler Test</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.navigationButton}
+                onPress={() => navigation.navigate('FileSystemTest' as never)}
+              >
+                <Text style={styles.buttonText}>File System</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
