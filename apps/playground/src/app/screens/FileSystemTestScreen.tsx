@@ -26,7 +26,7 @@ interface SavedFile {
 }
 
 function getSaveLocations(): SaveLocation[] {
-  const locations: SaveLocation[] = [
+  return [
     {
       id: 'rnfs.DocumentDirectoryPath',
       label: 'Document Directory',
@@ -42,14 +42,14 @@ function getSaveLocations(): SaveLocation[] {
       label: 'Temporary Directory',
       path: RNFS.TemporaryDirectoryPath,
     },
-    {
-      id: 'rnfs.LibraryDirectoryPath',
-      label: 'Library Directory',
-      path: RNFS.LibraryDirectoryPath,
-    },
-  ];
-
-  return locations;
+    RNFS.LibraryDirectoryPath
+      ? {
+          id: 'rnfs.LibraryDirectoryPath',
+          label: 'Library Directory',
+          path: RNFS.LibraryDirectoryPath,
+        }
+      : null,
+  ].filter((location): location is SaveLocation => location !== null);
 }
 
 export const FileSystemTestScreen = () => {
