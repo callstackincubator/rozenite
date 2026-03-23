@@ -10,6 +10,7 @@ import {
   validateConfig,
 } from './config';
 import { createNetworkInspectorsConfiguration } from './boot-recording';
+import { useNetworkActivityAgentTools } from './agent/use-network-activity-agent-tools';
 import { useHttpInspector } from './useHttpInspector';
 import { useWebSocketInspector } from './useWebSocketInspector';
 import { useSSEInspector } from './useSSEInspector';
@@ -30,6 +31,16 @@ export const useNetworkActivityDevTools = (
   const showUrlAsName = config.clientUISettings?.showUrlAsName;
 
   const { eventsListener, networkInspector } = inspectorsConfig;
+
+  useNetworkActivityAgentTools({
+    client,
+    networkInspector,
+    enabledInspectors: {
+      http: isHttpInspectorEnabled,
+      websocket: isWebSocketInspectorEnabled,
+      sse: isSSEInspectorEnabled,
+    },
+  });
 
   useEffect(() => {
     if (!client) {

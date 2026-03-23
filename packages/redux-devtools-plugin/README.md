@@ -13,6 +13,7 @@ The Rozenite Redux DevTools Plugin provides Redux state inspection and debugging
 - **Redux State Inspection**: View and explore your Redux store state in real-time
 - **Action History**: Track all dispatched actions with timestamps and payloads
 - **State Diff Viewing**: See exactly how each action changes your state
+- **Agent Tools**: Expose Redux state inspection and curated history-control tools to coding agents
 - **Production Safety**: Automatically disabled in production builds
 
 ## Installation
@@ -81,6 +82,44 @@ rozeniteDevToolsEnhancer({ maxAge: 150 }) // Default is 50
 ### 3. Access DevTools
 
 Start your development server and open React Native DevTools. You'll find the "Redux DevTools" panel in the DevTools interface.
+
+## Agent Tools (LLM Integration)
+
+Agent support is a separate manual integration step. Adding the store enhancer is not enough by itself.
+
+If you want agents to use Redux DevTools, you must mount the hook once near your app root by hand:
+
+```tsx
+import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
+
+function App() {
+  useReduxDevToolsAgentTools();
+
+  return <YourApp />;
+}
+```
+
+This manually registers tools under the `@rozenite/redux-devtools-plugin` domain.
+
+Without this hook, the Redux DevTools panel will still work in DevTools, but the Redux domain will not appear for agents.
+
+Available tools:
+
+- `list-stores`
+- `get-store-state`
+- `list-actions`
+- `get-action-details`
+- `dispatch-action`
+- `jump-to-action`
+- `toggle-action`
+- `reset-history`
+- `rollback-state`
+- `commit-current-state`
+- `sweep-skipped-actions`
+- `set-recording-paused`
+- `set-locked`
+
+The public agent surface intentionally excludes raw eval-based action execution and raw lifted-state import.
 
 ## Made with ❤️ at Callstack
 

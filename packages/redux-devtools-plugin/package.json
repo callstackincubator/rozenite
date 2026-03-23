@@ -27,6 +27,7 @@
   "dependencies": {
     "@redux-devtools/instrument": "^2.2.0",
     "@redux-devtools/utils": "^3.1.1",
+    "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
     "jsan": "^3.1.14",
     "@rozenite/tools": "workspace:*"
