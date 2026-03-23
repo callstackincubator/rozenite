@@ -2,6 +2,8 @@
 
 ### A Rozenite plugin that provides comprehensive network activity monitoring for React Native applications.
 
+For agents, this plugin is the fallback network domain when the built-in `network` domain is unavailable, such as on older React Native versions. Agents should prefer the built-in `network` domain first, and switch to `@rozenite/network-activity-plugin` only if `network` is missing or fails to initialize.
+
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
 The Rozenite Network Activity Plugin provides real-time network request monitoring, detailed request/response inspection within your React Native DevTools environment. It offers comprehensive network debugging capabilities similar to browser DevTools Network panel.
