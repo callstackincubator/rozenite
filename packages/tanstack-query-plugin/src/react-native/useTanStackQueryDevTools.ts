@@ -5,6 +5,7 @@ import { useSyncOnlineStatus } from '../shared/useSyncOnlineStatus';
 import { useHandleDevToolsMessages } from './useHandleDevToolsMessages';
 import { useSyncTanStackCache } from './useSyncTanStackCache';
 import { useHandleInitialData } from './useHandleInitialData';
+import { useTanStackQueryAgentTools } from './agent/useTanStackQueryAgentTools';
 
 export const useTanStackQueryDevTools = (queryClient: QueryClient) => {
   const client = useRozeniteDevToolsClient<TanStackQueryPluginEventMap>({
@@ -18,4 +19,6 @@ export const useTanStackQueryDevTools = (queryClient: QueryClient) => {
   useSyncTanStackCache(queryClient, client);
 
   useHandleInitialData(queryClient, client);
+
+  useTanStackQueryAgentTools(queryClient);
 };

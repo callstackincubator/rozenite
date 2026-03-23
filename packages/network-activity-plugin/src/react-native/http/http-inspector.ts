@@ -152,7 +152,6 @@ export const getHTTPInspector = (): HTTPInspector => {
 
     disable: () => {
       XHRInterceptor.disableInterception();
-      networkRequestsRegistry.clear();
     },
 
     isEnabled: () => {

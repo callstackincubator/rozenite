@@ -2,6 +2,7 @@ export type { RozeniteDevToolsOptions } from './src/runtime';
 
 export let rozeniteDevToolsEnhancer: typeof import('./src/runtime').rozeniteDevToolsEnhancer;
 export let composeWithRozeniteDevTools: typeof import('./src/runtime').composeWithRozeniteDevTools;
+export let useReduxDevToolsAgentTools: typeof import('./src/useReduxDevToolsAgentTools').useReduxDevToolsAgentTools;
 
 const isDev = process.env.NODE_ENV !== 'production';
 const isServer = typeof window === 'undefined';
@@ -10,6 +11,8 @@ if (isDev && !isServer) {
   rozeniteDevToolsEnhancer = require('./src/runtime').rozeniteDevToolsEnhancer;
   composeWithRozeniteDevTools =
     require('./src/runtime').composeWithRozeniteDevTools;
+  useReduxDevToolsAgentTools =
+    require('./src/useReduxDevToolsAgentTools').useReduxDevToolsAgentTools;
 } else {
   // Noop enhancer: returns an enhancer that passes through createStore unchanged
   const noopEnhancer =
@@ -40,4 +43,7 @@ if (isDev && !isServer) {
 
   rozeniteDevToolsEnhancer = noopEnhancer as any;
   composeWithRozeniteDevTools = noopComposer as any;
+  useReduxDevToolsAgentTools = (() => {
+    // no-op in production/server environments
+  }) as any;
 }
