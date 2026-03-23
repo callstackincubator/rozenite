@@ -1,8 +1,27 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
 # Agent Skills
 
 If you use Codex or another coding agent that supports the Vercel `skills` CLI, you can install the `rozenite-agent` skill so the agent can use Rozenite for Agents efficiently.
 
 The skill is the easiest way to make a coding agent effective with Rozenite. It gives the agent the expected Rozenite workflow so it can interact with React Native DevTools and Rozenite plugins without fumbling CLI usage or plugin domains.
+
+The skill complements the `rozenite` CLI, it does not replace it. Your project still needs access to the `rozenite` package because the agent ultimately talks to the app through commands such as `rozenite agent session list` and `rozenite agent domains`.
+
+Install the CLI in your project first if it is not there already:
+
+<PackageManagerTabs command="install -D rozenite" />
+
+Or run it on demand with:
+
+<PackageManagerTabs
+  command={{
+    npm: 'npx rozenite@latest agent session list',
+    yarn: 'yarn dlx rozenite@latest agent session list',
+    pnpm: 'pnpm dlx rozenite@latest agent session list',
+    bun: 'bunx rozenite@latest agent session list',
+  }}
+/>
 
 ## Install with the Vercel `skills` CLI
 
