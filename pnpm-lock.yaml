@@ -1173,6 +1173,9 @@ importers:
 
   packages/tanstack-query-plugin:
     dependencies:
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../agent-bridge
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge

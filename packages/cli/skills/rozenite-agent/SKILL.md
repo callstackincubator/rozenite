@@ -62,5 +62,6 @@ Always start from `rozenite agent domains --session <id>` to see `description`, 
 - `domains/performance.md`
 - `domains/react-navigation.md`
 - `domains/mmkv.md`
+- `domains/tanstack-query.md`
 - `domains/redux-devtools.md`
 - `domains/network-activity.md`
