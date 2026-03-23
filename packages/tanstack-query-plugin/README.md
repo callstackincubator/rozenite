@@ -17,6 +17,7 @@ This plugin was inspired by the excellent work of Austin Johnson and his [react-
 - **Query Actions**: Refetch, invalidate, reset, and remove queries
 - **State Manipulation**: Trigger loading states and error conditions for testing
 - **Mutation Tracking**: Monitor mutation states and progress
+- **Agent Tools**: Expose query and mutation inspection plus cache-management tools to coding agents
 - **Bidirectional Communication**: Real-time sync between device and DevTools
 - **Production Safety**: Automatically disabled in production builds
 
@@ -63,6 +64,27 @@ function App() {
 
 Start your development server and open React Native DevTools. You'll find the "TanStack Query" panel in the DevTools interface.
 
+## Agent Tools (LLM Integration)
+
+When `useTanStackQueryDevTools(queryClient)` is mounted in development, the plugin also registers agent tools under the `@rozenite/tanstack-query-plugin` domain.
+
+Available tools:
+
+- `get-cache-summary`
+- `get-online-status`
+- `set-online-status`
+- `list-queries`
+- `get-query-details`
+- `refetch-query`
+- `set-query-loading`
+- `set-query-error`
+- `invalidate-query`
+- `reset-query`
+- `remove-query`
+- `clear-query-cache`
+- `list-mutations`
+- `get-mutation-details`
+- `clear-mutation-cache`
 ## Usage
 
 ### Basic Integration
