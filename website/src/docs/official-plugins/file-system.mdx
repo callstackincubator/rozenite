@@ -96,6 +96,20 @@ File previews are size-limited to keep DevTools responsive. Very large files may
 - Text previews fall back to a binary hex-style dump when UTF-8 decoding fails.
 - Expo and RNFS expose slightly different root directories depending on platform and runtime environment.
 
+## Agent Tools (LLM Integration)
+
+When this plugin is active, it registers agent tools under the `@rozenite/file-system-plugin` domain.
+
+Available tools:
+
+- `list-roots`
+- `list-entries`
+- `read-entry`
+- `read-text-file`
+- `read-image-file`
+
+This makes the plugin usable from Rozenite for Agents workflows in Codex, Cursor, and other coding agents that speak to the `rozenite agent` CLI.
+
 ## Contributing
 
 The File System plugin is open source and welcomes contributions. Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.

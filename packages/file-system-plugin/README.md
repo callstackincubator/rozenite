@@ -85,6 +85,18 @@ Start your development server and open React Native DevTools. You’ll find the 
 - File previews are limited to avoid loading very large files into DevTools.
 - Binary files are shown as a hex-style dump when text decoding is not possible.
 
+## Agent Tools (LLM Integration)
+
+When this plugin is active, it registers agent tools under the `@rozenite/file-system-plugin` domain. This lets coding agents inspect the app-accessible filesystem through Rozenite for Agents.
+
+Available tools:
+
+- `list-roots`: returns the active provider and the available root directories.
+- `list-entries`: lists directory entries with pagination, without returning file contents.
+- `read-entry`: returns metadata for a file or directory path.
+- `read-text-file`: returns a text preview for a file, with binary fallback when decoding fails.
+- `read-image-file`: returns an image preview as a data URI.
+
 ## Made with ❤️ at Callstack
 
 `rozenite` is an open source project and will always remain free to use. If you think it's cool, please star it 🌟.
