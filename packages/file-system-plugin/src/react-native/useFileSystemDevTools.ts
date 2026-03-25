@@ -3,7 +3,7 @@ import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import type { FileSystemEventMap } from '../shared/protocol';
 import { PLUGIN_ID } from '../shared/protocol';
 import {
-  detectProvider,
+  resolveFileSystemAdapter,
   safeError,
   type UseFileSystemDevToolsOptions,
 } from './fileSystemProvider';
@@ -30,7 +30,7 @@ export const useFileSystemDevTools = (
     subsRef.current.push(
       client.onMessage('fs:get-roots', async ({ requestId }) => {
         try {
-          const provider = await detectProvider(options);
+          const provider = await resolveFileSystemAdapter(options);
           if (!provider) {
             client.send('fs:get-roots:result', {
               requestId,
@@ -62,7 +62,7 @@ export const useFileSystemDevTools = (
     subsRef.current.push(
       client.onMessage('fs:list', async ({ requestId, path }) => {
         try {
-          const provider = await detectProvider(options);
+          const provider = await resolveFileSystemAdapter(options);
           if (!provider) {
             client.send('fs:list:result', {
               requestId,
@@ -83,7 +83,7 @@ export const useFileSystemDevTools = (
             entries,
           });
         } catch (e) {
-          const provider = await detectProvider(options);
+          const provider = await resolveFileSystemAdapter(options);
           client.send('fs:list:result', {
             requestId,
             provider: provider?.provider ?? 'none',
@@ -100,7 +100,7 @@ export const useFileSystemDevTools = (
         'fs:read-image',
         async ({ requestId, path, maxBytes }) => {
           try {
-            const provider = await detectProvider(options);
+            const provider = await resolveFileSystemAdapter(options);
             if (!provider) {
               client.send('fs:read-image:result', {
                 requestId,
@@ -124,7 +124,7 @@ export const useFileSystemDevTools = (
               dataUri: `data:${mime};base64,${base64}`,
             });
           } catch (e) {
-            const provider = await detectProvider(options);
+            const provider = await resolveFileSystemAdapter(options);
             client.send('fs:read-image:result', {
               requestId,
               provider: provider?.provider ?? 'none',
@@ -141,7 +141,7 @@ export const useFileSystemDevTools = (
         'fs:read-file',
         async ({ requestId, path, maxBytes }) => {
           try {
-            const provider = await detectProvider(options);
+            const provider = await resolveFileSystemAdapter(options);
             if (!provider) {
               client.send('fs:read-file:result', {
                 requestId,
@@ -165,7 +165,7 @@ export const useFileSystemDevTools = (
               content,
             });
           } catch (e) {
-            const provider = await detectProvider(options);
+            const provider = await resolveFileSystemAdapter(options);
             client.send('fs:read-file:result', {
               requestId,
               provider: provider?.provider ?? 'none',

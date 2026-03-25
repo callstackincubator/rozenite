@@ -1,7 +1,10 @@
 import { useCallback } from 'react';
 import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
-import type { ProviderImpl, UseFileSystemDevToolsOptions } from './fileSystemProvider';
-import { detectProvider } from './fileSystemProvider';
+import type {
+  FileSystemAdapter,
+  UseFileSystemDevToolsOptions,
+} from './fileSystemProvider';
+import { resolveFileSystemAdapter } from './fileSystemProvider';
 
 type PathInput = {
   path: string;
@@ -117,8 +120,8 @@ export const fileSystemAgentTools = [
 ] as const;
 
 const getProviderOrThrow = async (
-  resolveProvider: () => Promise<ProviderImpl | null>,
-): Promise<ProviderImpl> => {
+  resolveProvider: () => Promise<FileSystemAdapter | null>,
+): Promise<FileSystemAdapter> => {
   const provider = await resolveProvider();
   if (!provider) {
     throw new Error(
@@ -129,7 +132,7 @@ const getProviderOrThrow = async (
 };
 
 export const createFileSystemAgentHandlers = (
-  resolveProvider: () => Promise<ProviderImpl | null>,
+  resolveProvider: () => Promise<FileSystemAdapter | null>,
 ) => ({
   listRoots: async () => {
     const provider = await resolveProvider();
@@ -214,8 +217,8 @@ export const useFileSystemAgentTools = (
   options?: UseFileSystemDevToolsOptions,
 ) => {
   const resolveProvider = useCallback(
-    () => detectProvider(options),
-    [options?.expoFileSystem, options?.rnfs],
+    () => resolveFileSystemAdapter(options),
+    [options?.adapter, options?.expoFileSystem, options?.rnfs],
   );
 
   const handlers = createFileSystemAgentHandlers(resolveProvider);
