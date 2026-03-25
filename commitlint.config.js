@@ -31,7 +31,8 @@ export default {
         'agent-bridge',
         'agent-shared',
         'file-system-plugin',
-        '',
+        'sqlite-plugin',
+        ''
       ],
     ],
   },

@@ -1,0 +1,128 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# SQLite Plugin
+
+The SQLite plugin provides a query-first database inspector for React Native DevTools. It works with registered SQLite adapters, ships with an `expo-sqlite` adapter out of the box, and derives tables, schema details, and browse views entirely through SQL and `PRAGMA` queries.
+
+## Installation
+
+Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
+
+Install the plugin:
+
+<PackageManagerTabs command="install -D @rozenite/sqlite-plugin" />
+
+Install the adapter peer dependency if you use Expo SQLite:
+
+<PackageManagerTabs command="install -D expo-sqlite" />
+
+## Base Setup
+
+```ts title="App.tsx"
+import * as SQLite from 'expo-sqlite';
+import {
+  createExpoSqliteAdapter,
+  useRozeniteSqlitePlugin,
+} from '@rozenite/sqlite-plugin';
+
+const appDb = SQLite.openDatabaseSync('app.db');
+const analyticsDb = SQLite.openDatabaseSync('analytics.db');
+
+const adapters = [
+  createExpoSqliteAdapter({
+    databases: {
+      app: {
+        name: 'app.db',
+        database: appDb,
+      },
+      analytics: {
+        name: 'analytics.db',
+        database: analyticsDb,
+      },
+    },
+  }),
+];
+
+function App() {
+  useRozeniteSqlitePlugin({ adapters });
+  return <YourApp />;
+}
+```
+
+## What the panel provides
+
+- Browse registered databases, tables, and views.
+- Inspect columns, defaults, primary keys, indexes, and foreign keys.
+- Run SQL scripts and inspect normalized metadata for each executed statement.
+- Preview result cells with structured JSON and blob-like payload support.
+
+## Adapter: Expo SQLite
+
+```ts title="App.tsx"
+createExpoSqliteAdapter({
+  adapterId: 'expo-sqlite',
+  adapterName: 'Expo SQLite',
+  databases: {
+    app: {
+      name: 'app.db',
+      database: SQLite.openDatabaseSync('app.db'),
+    },
+    cache: {
+      name: 'cache.db',
+      database: SQLite.openDatabaseSync('cache.db'),
+    },
+  },
+});
+```
+
+### Notes
+
+- The display name is shown in the UI, while the plugin generates an internal opaque ID for bridge traffic.
+- The SQL editor executes statements in order, stops on the first error, and preserves explicit `BEGIN`, `COMMIT`, and `ROLLBACK` statements.
+- Custom adapters receive the full ordered statement array for scripts. To preserve per-statement failure details, throw an error enriched with `completedResults` and `failedStatementIndex`.
+- Schema and browse features are implemented with SQL and `PRAGMA`, so custom adapters only need to normalize statement execution.
+
+## Custom adapters
+
+You can support any sqlite-like runtime by creating a generic adapter with an `executeStatements()` function per database:
+
+```ts title="App.tsx"
+import { createSqliteAdapter } from '@rozenite/sqlite-plugin';
+
+const adapters = [
+  createSqliteAdapter({
+    adapterName: 'Custom SQLite Driver',
+    databases: {
+      main: {
+        name: 'main.db',
+        executeStatements: async (statements) => {
+          const results = [];
+
+          for (const statement of statements) {
+            const result = await driver.execute(
+              statement.sql,
+              statement.params,
+            );
+
+            results.push({
+              rows: result.rows,
+              columns: result.columns,
+              metadata: {
+                statementType: result.statementType,
+                rowCount: result.rows.length,
+                changes: result.changes,
+                lastInsertRowId: result.lastInsertRowId,
+                durationMs: result.durationMs,
+              },
+            });
+          }
+
+          return results;
+        },
+      },
+    },
+  }),
+];
+```
+
+**Next**: See [Storage](./storage.md), [File System](./file-system.md), and [Plugin Development](../plugin-development/plugin-development.md).
