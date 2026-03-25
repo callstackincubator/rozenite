@@ -99,7 +99,7 @@ export type StorageView = {
   get: (key: string) => Promise<StorageEntry | undefined>;
   set: (entry: StorageEntry) => Promise<void>;
   delete: (key: string) => Promise<void>;
-  getAllKeys: () => Promise<string[]>;
+  getAllKeys: () => Promise<readonly string[]>;
   getAllEntries: () => Promise<StorageEntry[]>;
   watch: (callbacks: {
     onSet: (entry: StorageEntry) => void;
