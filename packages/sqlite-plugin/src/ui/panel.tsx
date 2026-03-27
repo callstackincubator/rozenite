@@ -19,11 +19,13 @@ import {
   FileCode2,
   FolderTree,
   KeyRound,
+  Pencil,
   Play,
   RefreshCw,
   Search,
   Table2,
   TerminalSquare,
+  Trash2,
   Wand2,
   X,
 } from 'lucide-react';
@@ -62,7 +64,9 @@ import {
   type SqliteSchema,
 } from './sqlite-introspection';
 import { QueryResultTable } from './query-result-table';
+import { SqliteRowDeleteModal } from './sqlite-row-delete-modal';
 import { SqliteDataTable } from './sqlite-data-table';
+import { SqliteRowEditModal } from './sqlite-row-edit-modal';
 import { SqlEditor, type SqlEditorHandle } from './sql-editor';
 import {
   buildSqlCompletionSchema,
@@ -78,6 +82,16 @@ import {
   syncSqlEditorColumnCacheDatabase,
 } from './sql-editor-utils';
 import { useSqliteRequests } from './use-sqlite-requests';
+import {
+  SQLITE_HIDDEN_ROWID_COLUMN_ID,
+  SQLITE_ROW_ACTIONS_COLUMN_ID,
+  buildRowDeleteMutation,
+  buildRowUpdateMutation,
+  getEditableColumns,
+  getPrimaryKeyColumns,
+  getRowMutationDescriptor,
+  type SqliteRowMutationDescriptor,
+} from './sqlite-row-mutations';
 import {
   SQLITE_ROW_NUMBER_COLUMN_ID,
   areColumnOrdersEqual,
@@ -131,6 +145,11 @@ type ExplorerState = {
   error: string | null;
   loaded: boolean;
 };
+
+type ActiveRowMutationState = {
+  row: Record<string, unknown>;
+  rowIndex: number;
+} | null;
 
 const DEFAULT_QUERY =
   'SELECT name, type FROM sqlite_schema ORDER BY type, name';
@@ -400,6 +419,8 @@ export default function SqlitePanel() {
   const [tableColumnOrderById, setTableColumnOrderById] = useState<
     Record<string, string[]>
   >({});
+  const [editingRow, setEditingRow] = useState<ActiveRowMutationState>(null);
+  const [deletingRow, setDeletingRow] = useState<ActiveRowMutationState>(null);
 
   const [objectSearch, setObjectSearch] = useState('');
   const [dataSearch, setDataSearch] = useState('');
@@ -495,12 +516,16 @@ export default function SqlitePanel() {
     }
 
     const term = dataSearch.trim().toLowerCase();
+    const searchableColumns = browseResult.columns.filter(
+      (column) => column !== SQLITE_HIDDEN_ROWID_COLUMN_ID,
+    );
+
     if (!term) {
       return browseResult.rows;
     }
 
     return browseResult.rows.filter((row) =>
-      browseResult.columns.some((column) =>
+      searchableColumns.some((column) =>
         String(row[column] ?? '')
           .toLowerCase()
           .includes(term),
@@ -538,8 +563,25 @@ export default function SqlitePanel() {
     entityRowCount == null || entityRowCount === 0
       ? 0
       : Math.ceil(entityRowCount / browsePageSize);
-  const primaryKeyColumns = structureState.columns.filter(
-    (column) => column.primaryKeyOrder > 0,
+  const primaryKeyColumns = useMemo(
+    () => getPrimaryKeyColumns(structureState.columns),
+    [structureState.columns],
+  );
+  const editableColumns = useMemo(
+    () => getEditableColumns(structureState.columns),
+    [structureState.columns],
+  );
+  const rowMutationDescriptor = useMemo<SqliteRowMutationDescriptor | null>(
+    () => getRowMutationDescriptor(selectedEntity, structureState.columns),
+    [selectedEntity, structureState.columns],
+  );
+  const canMutateRows = rowMutationDescriptor != null;
+  const visibleBrowseColumnIds = useMemo(
+    () =>
+      (filteredBrowseResult?.columns ?? []).filter(
+        (column) => column !== SQLITE_HIDDEN_ROWID_COLUMN_ID,
+      ),
+    [filteredBrowseResult?.columns],
   );
 
   const structureColumnRows = useMemo<StructureColumnRow[]>(
@@ -723,9 +765,10 @@ export default function SqlitePanel() {
   const dataColumnIds = useMemo(
     () => [
       SQLITE_ROW_NUMBER_COLUMN_ID,
-      ...(filteredBrowseResult?.columns ?? []),
+      ...visibleBrowseColumnIds,
+      ...(canMutateRows ? [SQLITE_ROW_ACTIONS_COLUMN_ID] : []),
     ],
-    [filteredBrowseResult?.columns],
+    [canMutateRows, visibleBrowseColumnIds],
   );
   const structureColumnsColumnIds = useMemo(
     () => structureColumnsTableColumns.map((column) => column.id as string),
@@ -908,6 +951,9 @@ export default function SqlitePanel() {
             selectedEntity.name,
             browsePageSize,
             browseOffset,
+            rowMutationDescriptor?.mode === 'rowid'
+              ? rowMutationDescriptor.rowIdIdentifier
+              : null,
           ),
         }),
         requestQuery({
@@ -950,6 +996,7 @@ export default function SqlitePanel() {
     browseOffset,
     browsePageSize,
     requestQuery,
+    rowMutationDescriptor,
     selectedDatabaseId,
     selectedEntity,
   ]);
@@ -1087,6 +1134,66 @@ export default function SqlitePanel() {
       await Promise.all([loadBrowse(), loadStructure()]);
     }
   }, [loadBrowse, loadStructure, refreshExplorerData, selectedEntity]);
+
+  const handleSaveRow = useCallback(
+    async (nextValues: Record<string, unknown>) => {
+      if (!selectedDatabaseId || !selectedEntity || !editingRow || !rowMutationDescriptor) {
+        throw new Error('The selected row is no longer available.');
+      }
+
+      const mutation = buildRowUpdateMutation({
+        entity: selectedEntity,
+        columns: structureState.columns,
+        row: editingRow.row,
+        descriptor: rowMutationDescriptor,
+        nextValues,
+      });
+
+      await requestQuery({
+        databaseId: selectedDatabaseId,
+        sql: mutation.sql,
+        params: mutation.params,
+      });
+      await loadBrowse();
+      setEditingRow(null);
+    },
+    [
+      editingRow,
+      loadBrowse,
+      requestQuery,
+      rowMutationDescriptor,
+      selectedDatabaseId,
+      selectedEntity,
+      structureState.columns,
+    ],
+  );
+
+  const handleDeleteRow = useCallback(async () => {
+    if (!selectedDatabaseId || !selectedEntity || !deletingRow || !rowMutationDescriptor) {
+      throw new Error('The selected row is no longer available.');
+    }
+
+    const mutation = buildRowDeleteMutation({
+      entity: selectedEntity,
+      row: deletingRow.row,
+      descriptor: rowMutationDescriptor,
+    });
+
+    await requestQuery({
+      databaseId: selectedDatabaseId,
+      sql: mutation.sql,
+      params: mutation.params,
+    });
+    await loadBrowse();
+    setDeletingRow(null);
+  }, [
+    deletingRow,
+    loadBrowse,
+    requestQuery,
+    rowMutationDescriptor,
+    selectedDatabaseId,
+    selectedEntity,
+  ]);
 
   const getActiveStatement = useCallback(() => {
     const cursorPosition =
@@ -1531,6 +1638,8 @@ export default function SqlitePanel() {
       setBrowseOffset(0);
       setBrowseResult(null);
       setEntityRowCount(null);
+      setEditingRow(null);
+      setDeletingRow(null);
       setStructureState({
         columns: [],
         foreignKeys: [],
@@ -1540,6 +1649,8 @@ export default function SqlitePanel() {
     }
 
     setBrowseOffset(0);
+    setEditingRow(null);
+    setDeletingRow(null);
     void loadStructure();
   }, [loadStructure, selectedEntityKey]);
 
@@ -1886,6 +1997,58 @@ export default function SqlitePanel() {
     </div>
   );
 
+  const dataRowActions = canMutateRows
+    ? {
+        columnId: SQLITE_ROW_ACTIONS_COLUMN_ID,
+        header: 'Actions',
+        cell: (row: Record<string, unknown>, rowIndex: number) => {
+          const rowNumber = browseOffset + rowIndex + 1;
+
+          return (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className={secondaryIconButtonClassName}
+                disabled={editableColumns.length === 0}
+                aria-label={`Edit row ${rowNumber}`}
+                title={
+                  editableColumns.length === 0
+                    ? 'No editable columns'
+                    : `Edit row ${rowNumber}`
+                }
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setDeletingRow(null);
+                  setEditingRow({
+                    row,
+                    rowIndex,
+                  });
+                }}
+              >
+                <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                className={secondaryIconButtonClassName}
+                aria-label={`Delete row ${rowNumber}`}
+                title={`Delete row ${rowNumber}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setEditingRow(null);
+                  setDeletingRow({
+                    row,
+                    rowIndex,
+                  });
+                }}
+              >
+                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          );
+        },
+      }
+    : undefined;
+
   const dataPane = !selectedDatabase ? (
     renderEmptyState(
       'Select A Database',
@@ -1986,6 +2149,8 @@ export default function SqlitePanel() {
           }
           rowNumberOffset={browseOffset}
           columnMeta={structureColumnMeta}
+          hiddenColumnIds={[SQLITE_HIDDEN_ROWID_COLUMN_ID]}
+          rowActions={dataRowActions}
         />
       </div>
 
@@ -2619,6 +2784,24 @@ export default function SqlitePanel() {
             </div>
           </section>
         </main>
+
+        <SqliteRowEditModal
+          isOpen={!!editingRow && !!selectedEntity}
+          rowNumber={browseOffset + (editingRow?.rowIndex ?? 0) + 1}
+          entityName={selectedEntity?.name ?? 'row'}
+          row={editingRow?.row ?? null}
+          columns={structureState.columns}
+          onClose={() => setEditingRow(null)}
+          onSave={handleSaveRow}
+        />
+
+        <SqliteRowDeleteModal
+          isOpen={!!deletingRow && !!selectedEntity}
+          rowNumber={browseOffset + (deletingRow?.rowIndex ?? 0) + 1}
+          entityName={selectedEntity?.name ?? 'row'}
+          onClose={() => setDeletingRow(null)}
+          onDelete={handleDeleteRow}
+        />
       </div>
     </div>
   );

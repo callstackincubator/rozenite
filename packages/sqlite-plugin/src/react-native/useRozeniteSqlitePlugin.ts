@@ -1,5 +1,6 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo, useRef } from 'react';
+import { formatSqliteError } from '../shared/bridge-values';
 import { PLUGIN_ID, type SqliteEventMap } from '../shared/protocol';
 import { normalizeSingleStatementSql, splitSqlStatements } from '../shared/sql';
 import type {
@@ -14,8 +15,7 @@ export type RozeniteSqlitePluginOptions = {
   adapters: SqliteAdapter[];
 };
 
-const safeError = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
+const safeError = (error: unknown) => formatSqliteError(error);
 
 const isExecuteStatementsError = (
   error: unknown,

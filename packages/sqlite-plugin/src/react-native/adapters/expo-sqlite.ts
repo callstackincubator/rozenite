@@ -3,6 +3,7 @@ import {
   normalizeSingleStatementSql,
   statementReturnsRows,
 } from '../../shared/sql';
+import { decodeSqliteBridgeValue, formatSqliteError } from '../../shared/bridge-values';
 import type {
   SqliteAdapter,
   SqliteExecuteStatementsError,
@@ -48,8 +49,7 @@ const now = () =>
     ? performance.now()
     : Date.now();
 
-const safeError = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
+const safeError = (error: unknown) => formatSqliteError(error);
 
 const createExecuteStatementsError = (
   message: string,
@@ -111,12 +111,14 @@ const executeSingleStatement = async (
   const normalizedSql = normalizeSingleStatementSql(sql);
   const statementType = classifySqlStatement(normalizedSql);
   const startedAt = now();
+  const decodedParams =
+    params === undefined ? undefined : decodeSqliteBridgeValue(params);
 
   if (statementReturnsRows(statementType)) {
     const rows = normalizeRows(
-      params === undefined
+      decodedParams === undefined
         ? await database.getAllAsync(normalizedSql)
-        : await database.getAllAsync(normalizedSql, params),
+        : await database.getAllAsync(normalizedSql, decodedParams),
     );
     const durationMs = now() - startedAt;
 
@@ -134,9 +136,9 @@ const executeSingleStatement = async (
   }
 
   const result =
-    params === undefined
+    decodedParams === undefined
       ? await database.runAsync(normalizedSql)
-      : await database.runAsync(normalizedSql, params);
+      : await database.runAsync(normalizedSql, decodedParams);
   const durationMs = now() - startedAt;
 
   return {

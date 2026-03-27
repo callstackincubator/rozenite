@@ -1,5 +1,9 @@
-import { useMemo, useState } from 'react';
-import type { ColumnDef, OnChangeFn } from '@tanstack/react-table';
+import { useMemo, useState, type ReactNode } from 'react';
+import type {
+  CellContext,
+  ColumnDef,
+  OnChangeFn,
+} from '@tanstack/react-table';
 import type { SqliteQueryResult } from '../shared/types';
 import { formatDuration, formatNumber } from './utils';
 import {
@@ -31,6 +35,12 @@ type QueryResultTableProps = {
       isForeignKey?: boolean;
     }
   >;
+  hiddenColumnIds?: string[];
+  rowActions?: {
+    columnId: string;
+    header: string;
+    cell: (row: Record<string, unknown>, rowIndex: number) => ReactNode;
+  };
 };
 
 type DrawerPayload = {
@@ -73,44 +83,69 @@ export const QueryResultTable = ({
   scrollContainerClassName,
   rowNumberOffset = 0,
   columnMeta,
+  hiddenColumnIds = [],
+  rowActions,
 }: QueryResultTableProps) => {
   const [drawerPayload, setDrawerPayload] = useState<DrawerPayload>(null);
 
   const columns = useMemo(() => result?.columns ?? [], [result]);
   const rows = result?.rows ?? [];
   const metadata = result?.metadata ?? null;
+  const visibleColumns = useMemo(
+    () => columns.filter((column) => !hiddenColumnIds.includes(column)),
+    [columns, hiddenColumnIds],
+  );
 
   const handleInspectRow = (row: Record<string, unknown>, rowIndex: number) => {
     setDrawerPayload({
       title: `Row ${rowNumberOffset + rowIndex + 1}`,
-      value: row,
+      value: Object.fromEntries(
+        visibleColumns.map((column) => [column, row[column]]),
+      ),
     });
   };
 
   const tableColumns = useMemo<ColumnDef<Record<string, unknown>, unknown>[]>(
     () =>
-      columns.map((column) => ({
-        id: column,
-        header: () => (
-          <span title={getColumnHeaderTitle(column, columnMeta?.[column])}>
-            {column}
-          </span>
-        ),
-        accessorFn: (row) => row[column],
-        cell: ({ row }) => {
-          const value = row.original[column];
+      [
+        ...visibleColumns.map((column) => ({
+          id: column,
+          header: () => (
+            <span title={getColumnHeaderTitle(column, columnMeta?.[column])}>
+              {column}
+            </span>
+          ),
+          accessorFn: (row: Record<string, unknown>) => row[column],
+          cell: ({
+            row,
+          }: CellContext<Record<string, unknown>, unknown>) => {
+            const value = row.original[column];
 
-          return (
-            <div className="sqlite-cell-value">
-              <span className="sqlite-cell-preview">
-                {getValuePreview(value)}
-              </span>
-              <span className="sqlite-cell-kind">{getValueKind(value)}</span>
-            </div>
-          );
-        },
-      })),
-    [columnMeta, columns],
+            return (
+              <div className="sqlite-cell-value">
+                <span className="sqlite-cell-preview">
+                  {getValuePreview(value)}
+                </span>
+                <span className="sqlite-cell-kind">{getValueKind(value)}</span>
+              </div>
+            );
+          },
+        })),
+        ...(rowActions
+          ? [
+              {
+                id: rowActions.columnId,
+                header: rowActions.header,
+                enableResizing: false,
+                size: 112,
+                minSize: 112,
+                maxSize: 140,
+                cell: ({ row }) => rowActions.cell(row.original, row.index),
+              } satisfies ColumnDef<Record<string, unknown>, unknown>,
+            ]
+          : []),
+      ],
+    [columnMeta, rowActions, visibleColumns],
   );
 
   return (

@@ -50,6 +50,10 @@ export const stringifyValue = (value: unknown) => {
     return 'null';
   }
 
+  if (value === undefined) {
+    return 'undefined';
+  }
+
   if (typeof value === 'string') {
     return value;
   }

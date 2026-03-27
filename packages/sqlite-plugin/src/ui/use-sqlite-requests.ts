@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { RozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { encodeSqliteBridgeValue } from '../shared/bridge-values';
 import type { SqliteEventMap } from '../shared/protocol';
 import type {
   SqliteDatabaseInfo,
@@ -130,7 +131,10 @@ export const useSqliteRequests = (
         requestId,
         databaseId: input.databaseId,
         sql: input.sql,
-        params: input.params,
+        params:
+          input.params === undefined
+            ? undefined
+            : (encodeSqliteBridgeValue(input.params) as SqliteQueryParams),
       });
 
       const response = await withTimeout(
