@@ -104,7 +104,10 @@ export const SqliteRowEditModal = ({
       }
     },
   });
-  const primaryKeyColumns = useMemo(() => getPrimaryKeyColumns(columns), [columns]);
+  const primaryKeyColumns = useMemo(
+    () => getPrimaryKeyColumns(columns),
+    [columns],
+  );
   const editableColumns = useMemo(() => getEditableColumns(columns), [columns]);
   const [drafts, setDrafts] = useState<Record<string, EditableFieldDraft>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -131,7 +134,9 @@ export const SqliteRowEditModal = ({
   }, [editableColumns, isOpen, row]);
 
   const handleKindChange = (columnName: string, kind: EditableValueKind) => {
-    const column = editableColumns.find((candidate) => candidate.name === columnName);
+    const column = editableColumns.find(
+      (candidate) => candidate.name === columnName,
+    );
 
     setDrafts((current) => ({
       ...current,
@@ -144,14 +149,18 @@ export const SqliteRowEditModal = ({
               ? '[]'
               : kind === 'json'
                 ? '{}'
-            : kind === 'null'
-              ? ''
-              : kind === 'number' && current[columnName]?.rawValue === 'true'
-                ? '1'
-                : kind === 'number' && current[columnName]?.rawValue === 'false'
-                  ? '0'
-                  : current[columnName]?.rawValue ??
-                    (column ? createFieldDraft(column, null).rawValue : ''),
+                : kind === 'null'
+                  ? ''
+                  : kind === 'number' &&
+                      current[columnName]?.rawValue === 'true'
+                    ? '1'
+                    : kind === 'number' &&
+                        current[columnName]?.rawValue === 'false'
+                      ? '0'
+                      : (current[columnName]?.rawValue ??
+                        (column
+                          ? createFieldDraft(column, null).rawValue
+                          : '')),
       },
     }));
   };
@@ -177,7 +186,9 @@ export const SqliteRowEditModal = ({
       await onSave(nextValues);
       onClose();
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : String(nextError));
+      setError(
+        nextError instanceof Error ? nextError.message : String(nextError),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -217,7 +228,8 @@ export const SqliteRowEditModal = ({
                         Row Identifier
                       </h3>
                       <p className="mt-1 text-xs text-slate-400">
-                        Primary-key fields are shown for reference and cannot be edited.
+                        Primary-key fields are shown for reference and cannot be
+                        edited.
                       </p>
                     </div>
                     <div className="grid gap-3 md:grid-cols-2">
@@ -235,7 +247,9 @@ export const SqliteRowEditModal = ({
                                 {column.type || 'value'}
                               </p>
                             </div>
-                            <span className="sqlite-chip sqlite-chip-static">PK</span>
+                            <span className="sqlite-chip sqlite-chip-static">
+                              PK
+                            </span>
                           </div>
                           <p className="mt-3 break-all font-mono text-sm text-slate-200">
                             {getValuePreview(row?.[column.name])}
@@ -255,20 +269,22 @@ export const SqliteRowEditModal = ({
                       Editable Values
                     </h3>
                     <p className="mt-1 text-xs text-slate-400">
-                      Update any non-primary-key column and save to write the row back
-                      to SQLite.
+                      Update any non-primary-key column and save to write the
+                      row back to SQLite.
                     </p>
                   </div>
 
                   {editableColumns.length === 0 ? (
                     <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm text-slate-300">
-                      This row does not expose editable, non-primary-key columns.
+                      This row does not expose editable, non-primary-key
+                      columns.
                     </div>
                   ) : (
                     <div className="space-y-4">
                       {editableColumns.map((column) => {
                         const draft =
-                          drafts[column.name] ?? createFieldDraft(column, row?.[column.name]);
+                          drafts[column.name] ??
+                          createFieldDraft(column, row?.[column.name]);
                         const compatibleKinds = getCompatibleValueKinds(
                           column,
                           row?.[column.name],
@@ -277,7 +293,8 @@ export const SqliteRowEditModal = ({
                         const shouldUseTextArea =
                           draft.kind === 'blob-ish' ||
                           draft.kind === 'json' ||
-                          (draft.kind === 'text' && draft.rawValue.includes('\n'));
+                          (draft.kind === 'text' &&
+                            draft.rawValue.includes('\n'));
 
                         return (
                           <div
@@ -330,7 +347,9 @@ export const SqliteRowEditModal = ({
                                                 : 'Text'}
                                       </option>
                                     ))}
-                                    {allowNull ? <option value="null">NULL</option> : null}
+                                    {allowNull ? (
+                                      <option value="null">NULL</option>
+                                    ) : null}
                                   </select>
                                 </div>
                               ) : (
@@ -409,7 +428,8 @@ export const SqliteRowEditModal = ({
                             </div>
 
                             <p className="mt-2 text-xs text-slate-500">
-                              Current value: {getValuePreview(row?.[column.name])} (
+                              Current value:{' '}
+                              {getValuePreview(row?.[column.name])} (
                               {getValueKind(row?.[column.name])}) · Compatible:{' '}
                               {compatibleKinds
                                 .map((kind) =>

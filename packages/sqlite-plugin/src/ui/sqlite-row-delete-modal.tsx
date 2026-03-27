@@ -50,7 +50,9 @@ export const SqliteRowDeleteModal = ({
       await onDelete();
       onClose();
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : String(nextError));
+      setError(
+        nextError instanceof Error ? nextError.message : String(nextError),
+      );
     } finally {
       setDeleting(false);
     }
@@ -74,7 +76,9 @@ export const SqliteRowDeleteModal = ({
                   <AlertTriangle aria-hidden="true" className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white">Delete Row {rowNumber}</h2>
+                  <h2 className="text-lg font-semibold text-white">
+                    Delete Row {rowNumber}
+                  </h2>
                   <p className="mt-1 text-sm text-slate-400">{entityName}</p>
                 </div>
               </div>

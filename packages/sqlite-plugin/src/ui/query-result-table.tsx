@@ -1,9 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import type {
-  CellContext,
-  ColumnDef,
-  OnChangeFn,
-} from '@tanstack/react-table';
+import type { CellContext, ColumnDef, OnChangeFn } from '@tanstack/react-table';
 import type { SqliteQueryResult } from '../shared/types';
 import { formatDuration, formatNumber } from './utils';
 import {
@@ -106,45 +102,42 @@ export const QueryResultTable = ({
   };
 
   const tableColumns = useMemo<ColumnDef<Record<string, unknown>, unknown>[]>(
-    () =>
-      [
-        ...visibleColumns.map((column) => ({
-          id: column,
-          header: () => (
-            <span title={getColumnHeaderTitle(column, columnMeta?.[column])}>
-              {column}
-            </span>
-          ),
-          accessorFn: (row: Record<string, unknown>) => row[column],
-          cell: ({
-            row,
-          }: CellContext<Record<string, unknown>, unknown>) => {
-            const value = row.original[column];
+    () => [
+      ...visibleColumns.map((column) => ({
+        id: column,
+        header: () => (
+          <span title={getColumnHeaderTitle(column, columnMeta?.[column])}>
+            {column}
+          </span>
+        ),
+        accessorFn: (row: Record<string, unknown>) => row[column],
+        cell: ({ row }: CellContext<Record<string, unknown>, unknown>) => {
+          const value = row.original[column];
 
-            return (
-              <div className="sqlite-cell-value">
-                <span className="sqlite-cell-preview">
-                  {getValuePreview(value)}
-                </span>
-                <span className="sqlite-cell-kind">{getValueKind(value)}</span>
-              </div>
-            );
-          },
-        })),
-        ...(rowActions
-          ? [
-              {
-                id: rowActions.columnId,
-                header: rowActions.header,
-                enableResizing: false,
-                size: 112,
-                minSize: 112,
-                maxSize: 140,
-                cell: ({ row }) => rowActions.cell(row.original, row.index),
-              } satisfies ColumnDef<Record<string, unknown>, unknown>,
-            ]
-          : []),
-      ],
+          return (
+            <div className="sqlite-cell-value">
+              <span className="sqlite-cell-preview">
+                {getValuePreview(value)}
+              </span>
+              <span className="sqlite-cell-kind">{getValueKind(value)}</span>
+            </div>
+          );
+        },
+      })),
+      ...(rowActions
+        ? [
+            {
+              id: rowActions.columnId,
+              header: rowActions.header,
+              enableResizing: false,
+              size: 112,
+              minSize: 112,
+              maxSize: 140,
+              cell: ({ row }) => rowActions.cell(row.original, row.index),
+            } satisfies ColumnDef<Record<string, unknown>, unknown>,
+          ]
+        : []),
+    ],
     [columnMeta, rowActions, visibleColumns],
   );
 

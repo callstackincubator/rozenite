@@ -106,10 +106,7 @@ import {
   formatNumber,
   slugifyFileName,
 } from './utils';
-import {
-  getResultSummary,
-  getScriptResultSummary,
-} from './value-utils';
+import { getResultSummary, getScriptResultSummary } from './value-utils';
 import './globals.css';
 
 type ActiveTab = 'query' | 'data' | 'structure';
@@ -1137,7 +1134,12 @@ export default function SqlitePanel() {
 
   const handleSaveRow = useCallback(
     async (nextValues: Record<string, unknown>) => {
-      if (!selectedDatabaseId || !selectedEntity || !editingRow || !rowMutationDescriptor) {
+      if (
+        !selectedDatabaseId ||
+        !selectedEntity ||
+        !editingRow ||
+        !rowMutationDescriptor
+      ) {
         throw new Error('The selected row is no longer available.');
       }
 
@@ -1169,7 +1171,12 @@ export default function SqlitePanel() {
   );
 
   const handleDeleteRow = useCallback(async () => {
-    if (!selectedDatabaseId || !selectedEntity || !deletingRow || !rowMutationDescriptor) {
+    if (
+      !selectedDatabaseId ||
+      !selectedEntity ||
+      !deletingRow ||
+      !rowMutationDescriptor
+    ) {
       throw new Error('The selected row is no longer available.');
     }
 

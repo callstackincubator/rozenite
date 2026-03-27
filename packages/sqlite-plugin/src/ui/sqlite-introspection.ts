@@ -87,9 +87,7 @@ export const buildBrowseEntitySql = (
   rowIdIdentifier?: string | null,
 ) =>
   `SELECT ${
-    rowIdIdentifier
-      ? `${rowIdIdentifier} AS "__sqlite-hidden-rowid__", `
-      : ''
+    rowIdIdentifier ? `${rowIdIdentifier} AS "__sqlite-hidden-rowid__", ` : ''
   }* FROM ${buildQualifiedEntityName(schemaName, entityName)} LIMIT ${Math.max(1, Math.floor(limit))} OFFSET ${Math.max(0, Math.floor(offset))}`;
 
 export const buildEntityCountSql = (schemaName: string, entityName: string) =>

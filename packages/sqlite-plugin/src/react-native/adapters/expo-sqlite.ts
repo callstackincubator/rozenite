@@ -3,7 +3,10 @@ import {
   normalizeSingleStatementSql,
   statementReturnsRows,
 } from '../../shared/sql';
-import { decodeSqliteBridgeValue, formatSqliteError } from '../../shared/bridge-values';
+import {
+  decodeSqliteBridgeValue,
+  formatSqliteError,
+} from '../../shared/bridge-values';
 import type {
   SqliteAdapter,
   SqliteExecuteStatementsError,

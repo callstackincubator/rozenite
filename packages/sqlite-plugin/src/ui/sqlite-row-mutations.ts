@@ -7,8 +7,7 @@ export const SQLITE_ROW_ACTIONS_COLUMN_ID = '__sqlite-row-actions__';
 
 const SQLITE_ROWID_IDENTIFIERS = ['rowid', '_rowid_', 'oid'] as const;
 
-export type SqliteRowIdIdentifier =
-  (typeof SQLITE_ROWID_IDENTIFIERS)[number];
+export type SqliteRowIdIdentifier = (typeof SQLITE_ROWID_IDENTIFIERS)[number];
 
 export type SqliteEditableValueKind =
   | 'text'
@@ -58,7 +57,9 @@ export const getPrimaryKeyColumns = (columns: SqliteColumnInfo[]) =>
     .sort((left, right) => left.primaryKeyOrder - right.primaryKeyOrder);
 
 export const getEditableColumns = (columns: SqliteColumnInfo[]) =>
-  columns.filter((column) => column.primaryKeyOrder === 0 && column.hidden === 0);
+  columns.filter(
+    (column) => column.primaryKeyOrder === 0 && column.hidden === 0,
+  );
 
 const getNormalizedColumnType = (column: SqliteColumnInfo) =>
   column.type.trim().toLowerCase();
@@ -75,7 +76,9 @@ const inferValueKindFromRuntimeValue = (
   }
 
   if (Array.isArray(value)) {
-    return value.every((item) => typeof item === 'number') ? 'blob-ish' : 'json';
+    return value.every((item) => typeof item === 'number')
+      ? 'blob-ish'
+      : 'json';
   }
 
   if (value && typeof value === 'object') {
@@ -179,7 +182,9 @@ const buildWhereClause = (
   descriptor: SqliteRowMutationDescriptor,
 ) => {
   if (descriptor.mode === 'primary-key') {
-    const params = descriptor.primaryKeyColumns.map((column) => row[column.name]);
+    const params = descriptor.primaryKeyColumns.map(
+      (column) => row[column.name],
+    );
     const clause = descriptor.primaryKeyColumns
       .map((column) => `${quoteSqlIdentifier(column.name)} = ?`)
       .join(' AND ');
