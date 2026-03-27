@@ -42,6 +42,23 @@ const joinClassNames = (
   ...classNames: Array<string | false | null | undefined>
 ) => classNames.filter(Boolean).join(' ');
 
+const getColumnHeaderTitle = (
+  column: string,
+  meta?: {
+    type?: string | null;
+    isPrimaryKey?: boolean;
+    isForeignKey?: boolean;
+  },
+) => {
+  const details = [
+    meta?.type,
+    meta?.isPrimaryKey ? 'PK' : null,
+    !meta?.isPrimaryKey && meta?.isForeignKey ? 'FK' : null,
+  ].filter(Boolean);
+
+  return details.length > 0 ? `${column} (${details.join(', ')})` : column;
+};
+
 export const QueryResultTable = ({
   tableId,
   result,
@@ -75,19 +92,9 @@ export const QueryResultTable = ({
       columns.map((column) => ({
         id: column,
         header: () => (
-          <div className="sqlite-results-heading">
-            <span>{column}</span>
-            {columnMeta?.[column]?.type ? (
-              <span className="sqlite-results-heading-meta">
-                {columnMeta[column]?.type}
-                {columnMeta[column]?.isPrimaryKey ? ' PK' : ''}
-                {!columnMeta[column]?.isPrimaryKey &&
-                columnMeta[column]?.isForeignKey
-                  ? ' FK'
-                  : ''}
-              </span>
-            ) : null}
-          </div>
+          <span title={getColumnHeaderTitle(column, columnMeta?.[column])}>
+            {column}
+          </span>
         ),
         accessorFn: (row) => row[column],
         cell: ({ row }) => {
@@ -142,9 +149,9 @@ export const QueryResultTable = ({
         loading={loading}
         emptyTitle={emptyTitle}
         emptyDescription={emptyDescription}
-        shellClassName={joinClassNames(tableClassName, shellClassName)}
+        shellClassName={shellClassName}
         scrollContainerClassName={scrollContainerClassName}
-        tableClassName="sqlite-results-table"
+        tableClassName={tableClassName}
         showRowNumbers
         rowNumberOffset={rowNumberOffset}
         onRowClick={handleInspectRow}

@@ -93,7 +93,6 @@ import {
   slugifyFileName,
 } from './utils';
 import {
-  getMetadataBadgeClassName,
   getResultSummary,
   getScriptResultSummary,
 } from './value-utils';
@@ -220,6 +219,22 @@ const getDefaultSelectedQueryStatementIndex = (
 const getStatementQueryResult = (
   statement: SqliteScriptStatementResult | null,
 ) => statement?.execution?.result ?? null;
+
+const getStatementSelectorLabel = (
+  statement: SqliteScriptStatementResult,
+  maxLength = 72,
+) => {
+  const normalizedSql = statement.input.sql
+    .replace(/\s+/g, ' ')
+    .replace(/;\s*$/, '')
+    .trim();
+
+  if (normalizedSql.length <= maxLength) {
+    return `${formatNumber(statement.index + 1)}. ${normalizedSql}`;
+  }
+
+  return `${formatNumber(statement.index + 1)}. ${normalizedSql.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+};
 
 const isMutatingStatement = (result: SqliteQueryResult) =>
   !(
@@ -614,10 +629,7 @@ export default function SqlitePanel() {
     [selectedQueryStatement],
   );
 
-  const queryExecutionSummary = useMemo(
-    () => getScriptResultSummary(queryExecution),
-    [queryExecution],
-  );
+  const selectedQueryStatementValue = selectedQueryStatement?.index ?? '';
 
   const queryTableId = useMemo(
     () =>
@@ -1528,9 +1540,16 @@ export default function SqlitePanel() {
     }
 
     setBrowseOffset(0);
-    void loadBrowse();
     void loadStructure();
-  }, [loadBrowse, loadStructure, selectedEntityKey]);
+  }, [loadStructure, selectedEntityKey]);
+
+  useEffect(() => {
+    if (!selectedEntityKey) {
+      return;
+    }
+
+    void loadBrowse();
+  }, [loadBrowse, selectedEntityKey]);
 
   useEffect(() => {
     setQueryColumnCache((current) =>
@@ -1732,20 +1751,40 @@ export default function SqlitePanel() {
       />
 
       <section className="sqlite-query-results-pane">
-        <div className="sqlite-results-header">
-          <div className="sqlite-toolbar-actions">
-            {queryExecutionSummary ? (
-              <span className="sqlite-helper-text">
-                {queryExecutionSummary}
-              </span>
-            ) : (
+        <div className="sqlite-results-header sqlite-query-results-header">
+          <div className="sqlite-toolbar-actions sqlite-query-results-header-main">
+            {!queryExecution ? (
               <span className="sqlite-helper-text">
                 Run SQL to inspect per-statement results.
               </span>
-            )}
+            ) : null}
+
+            {queryExecution && queryExecution.statements.length > 1 ? (
+              <div className="sqlite-query-statement-switcher">
+                <select
+                  id="sqlite-query-statement-select"
+                  aria-label="Selected query statement result"
+                  name="queryStatementResult"
+                  autoComplete="off"
+                  className="sqlite-select"
+                  value={selectedQueryStatementValue}
+                  onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                    setSelectedQueryStatementIndex(Number(event.target.value));
+                  }}
+                >
+                  {queryExecution.statements.map((statement) => {
+                    return (
+                      <option key={statement.index} value={statement.index}>
+                        {getStatementSelectorLabel(statement)}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            ) : null}
           </div>
 
-          <div className="sqlite-toolbar-actions ml-auto">
+          <div className="sqlite-toolbar-actions ml-auto sqlite-query-results-header-actions">
             <div className="sqlite-field sqlite-field-inline">
               <label htmlFor="sqlite-query-limit">Row Limit</label>
               <select
@@ -1816,63 +1855,6 @@ export default function SqlitePanel() {
           </div>
         ) : null}
 
-        {queryExecution?.statements.length ? (
-          <div className="sqlite-script-history">
-            {queryExecution.statements.map((statement) => {
-              const result = getStatementQueryResult(statement);
-              const isActive =
-                statement.index ===
-                (selectedQueryStatement?.index ??
-                  getDefaultSelectedQueryStatementIndex(queryExecution));
-
-              return (
-                <button
-                  key={statement.index}
-                  type="button"
-                  className={joinClassNames(
-                    'sqlite-script-history-item',
-                    isActive && 'is-active',
-                    statement.error && 'is-error',
-                  )}
-                  onClick={() =>
-                    setSelectedQueryStatementIndex(statement.index)
-                  }
-                >
-                  <span className="sqlite-script-history-index">
-                    {formatNumber(statement.index + 1)}
-                  </span>
-                  <div className="sqlite-script-history-copy">
-                    <div className="sqlite-script-history-line">
-                      <span className="sqlite-script-history-sql">
-                        {statement.input.sql}
-                      </span>
-                      <span
-                        className={joinClassNames(
-                          'sqlite-badge',
-                          statement.error
-                            ? 'sqlite-badge-warning'
-                            : result
-                              ? getMetadataBadgeClassName(result.metadata)
-                              : 'sqlite-badge-neutral',
-                        )}
-                      >
-                        {statement.error
-                          ? 'error'
-                          : (result?.metadata.statementType ?? 'statement')}
-                      </span>
-                    </div>
-                    <p className="sqlite-helper-text">
-                      {statement.error ??
-                        getResultSummary(result) ??
-                        'Statement completed.'}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-
         <div className="sqlite-results-panel">
           <QueryResultTable
             tableId={queryTableId}
@@ -1888,8 +1870,8 @@ export default function SqlitePanel() {
             }
             loading={queryLoading}
             showMetadata={false}
-            tableClassName="h-full min-h-0"
-            scrollContainerClassName="h-full min-h-[220px]"
+            shellClassName="h-full min-h-0"
+            scrollContainerClassName="min-h-0 sqlite-results-scroll-flush"
             emptyTitle={
               selectedQueryStatement?.error ? 'Statement Failed' : 'No Results'
             }
@@ -1980,7 +1962,7 @@ export default function SqlitePanel() {
         </div>
       ) : null}
 
-      <div className="sqlite-results-panel min-h-[360px] flex-1">
+      <div className="sqlite-results-panel flex-1">
         <QueryResultTable
           tableId={dataTableId}
           result={filteredBrowseResult}
@@ -1992,8 +1974,8 @@ export default function SqlitePanel() {
           }
           loading={browseLoading}
           showMetadata={false}
-          tableClassName="h-full min-h-0"
-          scrollContainerClassName="h-full min-h-[260px]"
+          shellClassName="h-full min-h-0"
+          scrollContainerClassName="min-h-0 sqlite-results-scroll-flush"
           emptyTitle={
             selectedEntity ? 'No Rows On This Page' : 'No Table Selected'
           }
@@ -2145,7 +2127,13 @@ export default function SqlitePanel() {
         </div>
       ) : null}
 
-      <div className="sqlite-structure-panel">
+      <div
+        className={joinClassNames(
+          'sqlite-structure-panel',
+          (structureSection === 'columns' || structureSection === 'indexes') &&
+            'sqlite-structure-panel-flush',
+        )}
+      >
         {structureSection === 'columns' ? (
           <SqliteDataTable
             tableId={structureColumnsTableId}
@@ -2162,7 +2150,7 @@ export default function SqlitePanel() {
             loading={structureLoading}
             emptyTitle="No Columns Found"
             emptyDescription="This table or view does not expose columns."
-            shellClassName="sqlite-metadata-table-wrap"
+            shellClassName="sqlite-metadata-table-wrap sqlite-metadata-table-wrap-flush"
             scrollContainerClassName="p-0"
             tableClassName="sqlite-metadata-table"
           />
@@ -2253,7 +2241,7 @@ export default function SqlitePanel() {
             loading={structureLoading}
             emptyTitle="No Indexes Defined"
             emptyDescription="This table or view does not define indexes."
-            shellClassName="sqlite-metadata-table-wrap"
+            shellClassName="sqlite-metadata-table-wrap sqlite-metadata-table-wrap-flush"
             scrollContainerClassName="p-0"
             tableClassName="sqlite-metadata-table"
           />
@@ -2276,6 +2264,9 @@ export default function SqlitePanel() {
           <section className="sqlite-sidebar-panel">
             <header className="sqlite-sidebar-header">
               <div className="sqlite-toolbar-actions">
+                <h1 className="sqlite-section-title">Databases</h1>
+              </div>
+              <div className="sqlite-toolbar-actions">
                 <button
                   type="button"
                   className={iconButtonClassName}
@@ -2292,7 +2283,6 @@ export default function SqlitePanel() {
                     )}
                   />
                 </button>
-                <h1 className="sqlite-section-title">Databases</h1>
               </div>
             </header>
 

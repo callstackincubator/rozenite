@@ -3,6 +3,8 @@ import { createExpoSqliteAdapter } from '@rozenite/sqlite-plugin';
 
 const appDatabase = SQLite.openDatabaseSync('rozenite-app.db');
 const analyticsDatabase = SQLite.openDatabaseSync('rozenite-analytics.db');
+const testingDatabase = SQLite.openDatabaseSync('rozenite-testing.db');
+const TESTING_ROWS_COUNT = 500;
 
 const initializeAppDatabase = () => {
   appDatabase.execSync(`
@@ -135,8 +137,67 @@ const initializeAnalyticsDatabase = () => {
   }
 };
 
+const buildTestingRowsSeedSql = () => {
+  const categories = ['alpha', 'beta', 'gamma', 'delta'];
+  const statuses = ['queued', 'running', 'done', 'failed'];
+
+  const values = Array.from({ length: TESTING_ROWS_COUNT }, (_, index) => {
+    const rowNumber = index + 1;
+    const category = categories[index % categories.length];
+    const status = statuses[index % statuses.length];
+    const score = ((rowNumber * 17) % 1000) + 0.25;
+    const createdAt = new Date(
+      Date.UTC(2026, 2, (index % 28) + 1, 8 + (index % 9), (index * 7) % 60),
+    ).toISOString();
+    const notes = `Seed row ${rowNumber} for SQLite plugin testing`;
+
+    return `(${rowNumber}, 'Record ${rowNumber}', '${category}', '${status}', ${score.toFixed(2)}, '${createdAt}', '${notes}')`;
+  }).join(',\n        ');
+
+  return `
+    DELETE FROM test_rows;
+    INSERT INTO test_rows (
+      id,
+      label,
+      category,
+      status,
+      score,
+      created_at,
+      notes
+    ) VALUES
+        ${values};
+  `;
+};
+
+const initializeTestingDatabase = () => {
+  testingDatabase.execSync(`
+    PRAGMA journal_mode = WAL;
+    CREATE TABLE IF NOT EXISTS test_rows (
+      id INTEGER PRIMARY KEY NOT NULL,
+      label TEXT NOT NULL,
+      category TEXT NOT NULL,
+      status TEXT NOT NULL,
+      score REAL NOT NULL,
+      created_at TEXT NOT NULL,
+      notes TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_test_rows_category ON test_rows(category);
+    CREATE INDEX IF NOT EXISTS idx_test_rows_status ON test_rows(status);
+  `);
+
+  const testRowCount =
+    testingDatabase.getFirstSync<{ count: number }>(
+      'SELECT COUNT(*) AS count FROM test_rows',
+    )?.count ?? 0;
+
+  if (testRowCount !== TESTING_ROWS_COUNT) {
+    testingDatabase.execSync(buildTestingRowsSeedSql());
+  }
+};
+
 initializeAppDatabase();
 initializeAnalyticsDatabase();
+initializeTestingDatabase();
 
 export const sqlitePluginAdapters = [
   createExpoSqliteAdapter({
@@ -150,6 +211,10 @@ export const sqlitePluginAdapters = [
       analytics: {
         name: 'rozenite-analytics.db',
         database: analyticsDatabase,
+      },
+      testing: {
+        name: 'rozenite-testing.db',
+        database: testingDatabase,
       },
     },
   }),
