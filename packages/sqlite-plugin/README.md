@@ -4,6 +4,8 @@
 
 The SQLite Plugin provides a query-first inspector for registered SQLite databases. It ships with an `expo-sqlite` adapter and supports custom adapters for any SQLite-like library that can execute ordered SQL statements and return normalized metadata for each statement.
 
+![SQLite Plugin](https://rozenite.dev/sqlite-plugin.png)
+
 ## Installation
 
 ```bash
