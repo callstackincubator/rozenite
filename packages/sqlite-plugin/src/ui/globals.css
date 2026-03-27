@@ -1038,9 +1038,36 @@
   .sqlite-results-table,
   .sqlite-metadata-table {
     width: 100%;
+    display: grid;
     border-collapse: separate;
     border-spacing: 0;
     table-layout: fixed;
+  }
+
+  .sqlite-results-table thead,
+  .sqlite-metadata-table thead,
+  .sqlite-results-table tbody,
+  .sqlite-metadata-table tbody {
+    display: grid;
+  }
+
+  .sqlite-results-table tbody,
+  .sqlite-metadata-table tbody {
+    position: relative;
+  }
+
+  .sqlite-table-row-shell,
+  .sqlite-results-table tbody tr,
+  .sqlite-metadata-table tbody tr {
+    display: flex;
+    width: 100%;
+  }
+
+  .sqlite-results-table tbody tr,
+  .sqlite-metadata-table tbody tr {
+    position: absolute;
+    top: 0;
+    left: 0;
   }
 
   .sqlite-results-table thead th,
@@ -1057,6 +1084,7 @@
     line-height: 1.2;
     padding: 0.55rem 0.65rem;
     border-bottom: 1px solid var(--sqlite-line);
+    display: flex;
   }
 
   .sqlite-results-table tbody td,
@@ -1066,6 +1094,8 @@
     vertical-align: top;
     line-height: 1.35;
     color: rgba(240, 246, 251, 0.92);
+    display: flex;
+    align-items: flex-start;
   }
 
   .sqlite-results-table tbody tr:hover td,

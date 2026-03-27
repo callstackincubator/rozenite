@@ -8,8 +8,10 @@ import {
   type OnChangeFn,
   type RowData,
 } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   useMemo,
+  useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
@@ -122,6 +124,7 @@ export const SqliteDataTable = <TData extends RowData>({
   getRowAriaLabel,
 }: SqliteDataTableProps<TData>) => {
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+  const scrollElementRef = useRef<HTMLDivElement | null>(null);
 
   const rowNumberColumn = useMemo<ColumnDef<TData, unknown>>(
     () => ({
@@ -164,6 +167,20 @@ export const SqliteDataTable = <TData extends RowData>({
 
   const loadingColumns =
     loadingColumnCount ?? columns.length + (showRowNumbers ? 1 : 0);
+  const tableRows = table.getRowModel().rows;
+  const rowVirtualizer = useVirtualizer({
+    count: tableRows.length,
+    getScrollElement: () => scrollElementRef.current,
+    estimateSize: () => 36,
+    overscan: 10,
+    getItemKey: (index) => tableRows[index]?.id ?? index,
+    measureElement:
+      typeof window !== 'undefined' &&
+      !window.navigator.userAgent.includes('Firefox')
+        ? (element) => element?.getBoundingClientRect().height ?? 0
+        : undefined,
+  });
+  const virtualRows = rowVirtualizer.getVirtualItems();
 
   const handleRowKeyDown = (
     event: ReactKeyboardEvent<HTMLTableRowElement>,
@@ -185,45 +202,66 @@ export const SqliteDataTable = <TData extends RowData>({
     >
       <thead>
         {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id}>
+          <tr key={headerGroup.id} className="sqlite-table-row-shell">
             {headerGroup.headers.map((header) => (
               <SortableColumnHeader key={header.id} header={header} />
             ))}
           </tr>
         ))}
       </thead>
-      <tbody>
-        {table.getRowModel().rows.map((row) => (
-          <tr
-            key={row.id}
-            className={joinClassNames(onRowClick && 'sqlite-results-row')}
-            role={onRowClick ? 'button' : undefined}
-            tabIndex={onRowClick ? 0 : undefined}
-            aria-label={
-              onRowClick
-                ? (getRowAriaLabel?.(row.original, row.index) ??
-                  `Inspect row ${row.index + 1}`)
-                : undefined
-            }
-            onClick={() => onRowClick?.(row.original, row.index)}
-            onKeyDown={(event) =>
-              handleRowKeyDown(event, row.original, row.index)
-            }
-          >
-            {row.getVisibleCells().map((cell) => (
-              <td
-                key={cell.id}
-                className={joinClassNames(
-                  cell.column.id === SQLITE_ROW_NUMBER_COLUMN_ID &&
-                    'sqlite-results-row-number',
-                )}
-                style={{ width: cell.column.getSize() }}
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            ))}
-          </tr>
-        ))}
+      <tbody
+        style={{
+          height: rowVirtualizer.getTotalSize(),
+        }}
+      >
+        {virtualRows.map((virtualRow) => {
+          const row = tableRows[virtualRow.index];
+
+          if (!row) {
+            return null;
+          }
+
+          return (
+            <tr
+              key={row.id}
+              ref={(node) => {
+                if (node) {
+                  rowVirtualizer.measureElement(node);
+                }
+              }}
+              data-index={virtualRow.index}
+              className={joinClassNames(onRowClick && 'sqlite-results-row')}
+              role={onRowClick ? 'button' : undefined}
+              tabIndex={onRowClick ? 0 : undefined}
+              aria-label={
+                onRowClick
+                  ? (getRowAriaLabel?.(row.original, row.index) ??
+                    `Inspect row ${row.index + 1}`)
+                  : undefined
+              }
+              onClick={() => onRowClick?.(row.original, row.index)}
+              onKeyDown={(event) =>
+                handleRowKeyDown(event, row.original, row.index)
+              }
+              style={{
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <td
+                  key={cell.id}
+                  className={joinClassNames(
+                    cell.column.id === SQLITE_ROW_NUMBER_COLUMN_ID &&
+                      'sqlite-results-row-number',
+                  )}
+                  style={{ width: cell.column.getSize() }}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
@@ -234,6 +272,7 @@ export const SqliteDataTable = <TData extends RowData>({
       data-table-id={tableId}
     >
       <div
+        ref={scrollElementRef}
         className={joinClassNames(
           'sqlite-results-scroll',
           scrollContainerClassName,

@@ -32,6 +32,7 @@
     "@rozenite/vite-plugin": "workspace:*",
     "@tailwindcss/postcss": "^4.2.2",
     "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.0.0",
     "@types/react": "catalog:",
     "autoprefixer": "^10.4.21",
     "expo-sqlite": "^55.0.11",
