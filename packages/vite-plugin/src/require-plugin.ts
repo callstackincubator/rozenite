@@ -7,8 +7,7 @@ const REQUIRE_REGEX = /require\s*\(\s*['"`]([^'"`]+)['"`]\s*\)/g;
 const IMPORT_PREFIX = '__import_';
 
 interface ModuleInfo {
-  fileName: string;
-  resolvedId: string;
+  referenceId: string;
 }
 
 interface TransformResult {
@@ -22,15 +21,10 @@ export default function requirePlugin(): Plugin {
   let inputName = '';
   let isDevMode = false;
 
-  const moduleToChunkMap = new Map<string, string>();
   const moduleInfoMap = new Map<string, ModuleInfo>();
 
   const extractModuleName = (filePath: string): string => {
     return path.basename(filePath).replace(/\.[^/.]+$/, '');
-  };
-
-  const getFileExtension = (format: string): string => {
-    return format === 'es' ? '.js' : '.cjs';
   };
 
   const findRequireStatements = (code: string): Set<string> => {
@@ -80,15 +74,17 @@ export default function requirePlugin(): Plugin {
 
   const transformRequireToChunkReferences = (
     code: string,
-    format: string
+    getFileName: (referenceId: string) => string,
   ): string => {
     return code.replace(REQUIRE_REGEX, (match, moduleName) => {
-      const chunkName = moduleToChunkMap.get(moduleName.trim());
-      if (chunkName) {
-        const extension = getFileExtension(format);
-        return `require('./${chunkName}${extension}')`;
-      }
-      return match;
+      const moduleInfo = moduleInfoMap.get(moduleName.trim());
+      if (!moduleInfo) return match;
+
+      const outFileName = getFileName(moduleInfo.referenceId);
+      const relPath = outFileName.startsWith('.')
+        ? outFileName
+        : `./${outFileName}`;
+      return `require('${relPath}')`;
     });
   };
 
@@ -140,23 +136,19 @@ export default function requirePlugin(): Plugin {
             const resolved = await this.resolve(req, input);
 
             if (resolved) {
-              const fileName = extractModuleName(resolved.id);
-
               // Add to watch files for hot reload
               this.addWatchFile(resolved.id);
 
               // Emit as separate chunk
-              this.emitFile({
+              const referenceId = this.emitFile({
                 type: 'chunk',
                 id: resolved.id,
-                fileName,
+                name: extractModuleName(resolved.id),
               });
 
               // Store mappings
-              moduleToChunkMap.set(req, fileName);
               moduleInfoMap.set(req, {
-                fileName,
-                resolvedId: resolved.id,
+                referenceId,
               });
             } else {
               console.warn(`Could not resolve module: ${req}`);
@@ -171,15 +163,8 @@ export default function requirePlugin(): Plugin {
       }
     },
 
-    renderChunk(code, chunk, options) {
+    renderChunk(code, chunk) {
       try {
-        const additionalChunkNames = Array.from(moduleToChunkMap.values());
-
-        // Add file extension for additional chunks
-        if (additionalChunkNames.includes(chunk.fileName)) {
-          chunk.fileName = chunk.fileName + getFileExtension(options.format);
-        }
-
         // Only transform the main input chunk
         if (chunk.name !== inputName) {
           return null;
@@ -187,7 +172,7 @@ export default function requirePlugin(): Plugin {
 
         const transformedCode = transformRequireToChunkReferences(
           code,
-          options.format
+          (referenceId) => this.getFileName(referenceId),
         );
 
         return {
