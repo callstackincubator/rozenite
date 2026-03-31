@@ -24,7 +24,7 @@ export type SyncStorage = {
 
 export type AsyncStorage = {
   kind: 'async';
-  getAllKeys: () => Promise<string[]>;
+  getAllKeys: () => Promise<readonly string[]>;
   get: (key: string) => Promise<StorageEntry | undefined>;
   set: (entry: StorageEntry) => Promise<void>;
   delete: (key: string) => Promise<void>;

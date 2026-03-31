@@ -39,6 +39,7 @@ import { primaryStore } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
 import { useAgentPlaygroundTools } from './useAgentPlaygroundTools';
+import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 import { useFileSystemDevTools } from '@rozenite/file-system-plugin';
 import * as RNFS from '@dr.pogodin/react-native-fs';
 
@@ -51,6 +52,11 @@ const Wrapper = () => {
   useTanStackQueryDevTools(queryClient);
   useRozeniteControlsPlugin({
     sections: controlsSections,
+  });
+  useNetworkActivityDevTools({
+    clientUISettings: {
+      showUrlAsName: true,
+    },
   });
   useMMKVDevTools({
     // @ts-expect-error - This is fine as in production MMKV plugin will pick up installed version automatically.
