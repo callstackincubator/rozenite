@@ -28,6 +28,7 @@ type PluginTargets = {
   hasMetroEntryPoint: boolean;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const BUILDER_MANAGED_FIELDS = ['main', 'module', 'types', 'exports'] as const;
 
 const buildPackageContract = (
