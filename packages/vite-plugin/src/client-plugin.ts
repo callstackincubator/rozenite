@@ -18,10 +18,11 @@ const TEMPLATES_DIR = path.resolve(
   fileURLToPath(import.meta.url),
   '..',
   '..',
-  'templates'
+  'templates',
 );
 
 const PANELS_DIR = './panels';
+const DEVTOOLS_DIR = 'devtools';
 
 export const rozeniteClientPlugin = (): Plugin => {
   let projectRoot = process.cwd();
@@ -44,7 +45,7 @@ export const rozeniteClientPlugin = (): Plugin => {
         name,
         label: entry.name,
         sourceFile: path.resolve(projectRoot, entry.source),
-        htmlFile: name + '.html',
+        htmlFile: `${name}.html`,
       };
     });
   };
@@ -68,7 +69,7 @@ export const rozeniteClientPlugin = (): Plugin => {
       }
 
       rozeniteConfig = await loadConfig(
-        path.resolve(projectRoot, 'rozenite.config.ts')
+        path.resolve(projectRoot, 'rozenite.config.ts'),
       );
       const panels = getPanels();
 
@@ -81,13 +82,24 @@ export const rozeniteClientPlugin = (): Plugin => {
       config.build.rollupOptions.input = {
         ...(config.build.rollupOptions.input as Record<string, string>),
         ...Object.fromEntries(
-          panels.map((panel) => [panel.name, panel.htmlFile])
+          panels.map((panel) => [
+            panel.name,
+            `${DEVTOOLS_DIR}/${panel.htmlFile}`,
+          ]),
         ),
+      };
+      config.build.rollupOptions.output = {
+        assetFileNames: `${DEVTOOLS_DIR}/assets/[name]-[hash][extname]`,
+        chunkFileNames: `${DEVTOOLS_DIR}/assets/[name]-[hash].js`,
+        entryFileNames: `${DEVTOOLS_DIR}/assets/[name]-[hash].js`,
+        ...(config.build.rollupOptions.output ?? {}),
       };
     },
 
     resolveId(id) {
-      const isPanel = getPanels().some((panel) => panel.htmlFile === id);
+      const isPanel = getPanels().some(
+        (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
+      );
 
       if (isPanel) {
         return id;
@@ -97,7 +109,9 @@ export const rozeniteClientPlugin = (): Plugin => {
     },
 
     load(id) {
-      const panel = getPanels().find((panel) => panel.htmlFile === id);
+      const panel = getPanels().find(
+        (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
+      );
 
       if (panel) {
         return generatePanelHtmlContent(panel);
@@ -114,11 +128,11 @@ export const rozeniteClientPlugin = (): Plugin => {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader(
           'Access-Control-Allow-Methods',
-          'GET, POST, PUT, DELETE, OPTIONS'
+          'GET, POST, PUT, DELETE, OPTIONS',
         );
         res.setHeader(
           'Access-Control-Allow-Headers',
-          'Content-Type, Authorization'
+          'Content-Type, Authorization',
         );
 
         if (req.method === 'OPTIONS') {
@@ -140,17 +154,19 @@ export const rozeniteClientPlugin = (): Plugin => {
                 description: packageJSON.description,
                 panels: panels.map((panel) => ({
                   name: panel.label,
-                  source: '/' + panel.htmlFile,
+                  source: `/${DEVTOOLS_DIR}/` + panel.htmlFile,
                 })),
               },
               null,
-              2
-            )
+              2,
+            ),
           );
           return;
         }
 
-        const panel = panels.find((panel) => '/' + panel.htmlFile === url);
+        const panel = panels.find(
+          (panel) => `/${DEVTOOLS_DIR}/` + panel.htmlFile === url,
+        );
 
         if (panel) {
           const htmlContent = generatePanelHtmlContent(panel);
@@ -201,7 +217,7 @@ export const rozeniteClientPlugin = (): Plugin => {
           description: packageJSON.description,
           panels: panels.map((panel) => ({
             name: panel.label,
-            source: '/' + panel.htmlFile,
+            source: `/${DEVTOOLS_DIR}/` + panel.htmlFile,
           })),
         }),
       });

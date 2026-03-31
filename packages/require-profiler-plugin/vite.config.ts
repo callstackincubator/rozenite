@@ -21,7 +21,7 @@ export default defineConfig({
           writeBundle() {
             fs.cpSync(
               path.resolve(__dirname, 'src/metro/setup.js'),
-              path.resolve(__dirname, 'dist/setup.js'),
+              path.resolve(__dirname, 'dist/metro/setup.js'),
             );
           },
         },
