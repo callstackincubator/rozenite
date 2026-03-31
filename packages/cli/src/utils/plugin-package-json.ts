@@ -16,11 +16,13 @@ type PackageExportsEntry = {
   require: string;
 };
 
+type PackageExports = Record<string, string | PackageExportsEntry>;
+
 type PluginPackageContract = {
   main: string;
   module: string;
   types: string;
-  exports: Record<string, string | PackageExportsEntry>;
+  exports: PackageExports;
 };
 
 type PluginTargets = {
@@ -65,6 +67,35 @@ const buildPackageContract = (
 
 const isEqual = (left: unknown, right: unknown): boolean => {
   return JSON.stringify(left) === JSON.stringify(right);
+};
+
+const isPackageExports = (value: unknown): value is PackageExports => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  return true;
+};
+
+const mergeManagedExports = (
+  existingExports: unknown,
+  contract: PluginPackageContract,
+  targets: PluginTargets,
+): PackageExports => {
+  const mergedExports = isPackageExports(existingExports)
+    ? { ...existingExports }
+    : {};
+
+  mergedExports['.'] = contract.exports['.'];
+  mergedExports['./package.json'] = contract.exports['./package.json'];
+
+  if (targets.hasMetroEntryPoint) {
+    mergedExports['./metro'] = contract.exports['./metro'];
+  } else {
+    delete mergedExports['./metro'];
+  }
+
+  return mergedExports;
 };
 
 const formatPackageJSON = (value: PackageJSON): string => {
@@ -118,10 +149,27 @@ export const syncPluginPackageJSON = async (
     }
   };
 
-  updateField('main', contract?.main);
-  updateField('module', contract?.module);
-  updateField('types', contract?.types);
-  updateField('exports', contract?.exports);
+  if (contract) {
+    updateField('main', contract.main);
+    updateField('module', contract.module);
+    updateField('types', contract.types);
+
+    const mergedExports = mergeManagedExports(
+      updatedPackageJson.exports,
+      contract,
+      targets,
+    );
+
+    updateField('exports', mergedExports);
+  } else if (
+    updatedPackageJson.exports !== undefined &&
+    isPackageExports(updatedPackageJson.exports) &&
+    './metro' in updatedPackageJson.exports
+  ) {
+    const nextExports = { ...updatedPackageJson.exports };
+    delete nextExports['./metro'];
+    updateField('exports', nextExports);
+  }
 
   if (updatedFields.length > 0) {
     await fs.writeFile(packageJsonPath, formatPackageJSON(updatedPackageJson));
