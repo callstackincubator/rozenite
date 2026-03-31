@@ -31,7 +31,7 @@ a Install one supported filesystem provider in your app:
 
 ## Usage
 
-### With the adapter API
+### With Expo FileSystem
 
 ```ts title="App.tsx"
 import * as FileSystem from 'expo-file-system';
@@ -43,21 +43,6 @@ import {
 function App() {
   useFileSystemDevTools({
     adapter: createExpoFileSystemAdapter(FileSystem),
-  });
-
-  return <YourApp />;
-}
-```
-
-### With Expo FileSystem
-
-```ts title="App.tsx"
-import * as FileSystem from 'expo-file-system';
-import { useFileSystemDevTools } from '@rozenite/file-system-plugin';
-
-function App() {
-  useFileSystemDevTools({
-    expoFileSystem: FileSystem,
   });
 
   return <YourApp />;
@@ -80,15 +65,6 @@ function App() {
 
   return <YourApp />;
 }
-```
-
-### Legacy shorthand still works
-
-```ts title="App.tsx"
-import * as FileSystemLegacy from 'expo-file-system/legacy';
-
-useFileSystemDevTools({ expoFileSystem: FileSystemLegacy });
-useFileSystemDevTools({ rnfs: RNFS });
 ```
 
 Once configured, the plugin appears in React Native DevTools as "File System".
@@ -116,15 +92,15 @@ When available, the plugin exposes these roots:
 ## Notes
 
 :::warning Provider Required
-The plugin does not auto-detect a filesystem library. Pass either `adapter`, `{ expoFileSystem: FileSystem }`, or `{ rnfs: RNFS }` to `useFileSystemDevTools()`.
+The plugin does not auto-detect a filesystem library. Pass `adapter` to `useFileSystemDevTools()`.
 :::
 
 :::info Preview Limits
 File previews are size-limited to keep DevTools responsive. Very large files may fail to preview, and very large Expo directories are truncated in the listing UI.
 :::
 
-- `adapter` takes precedence over the legacy `expoFileSystem` and `rnfs` options.
 - `createExpoFileSystemAdapter` supports both the modern `expo-file-system` API and `expo-file-system/legacy`.
+- `createRNFSAdapter` wraps `react-native-fs` and `@dr.pogodin/react-native-fs`.
 - Text previews fall back to a binary hex-style dump when UTF-8 decoding fails.
 - Expo and RNFS expose slightly different root directories depending on platform and runtime environment.
 

@@ -37,7 +37,7 @@ export const useFileSystemDevTools = (
               provider: 'none',
               roots: [],
               error:
-                'No filesystem provider detected. Pass `{ expoFileSystem: FileSystem }` (Expo) or `{ rnfs: RNFS }` (bare RN) to `useFileSystemDevTools()`.',
+                'No filesystem provider detected. Pass `adapter: createExpoFileSystemAdapter(FileSystem)` or `adapter: createRNFSAdapter(RNFS)` to `useFileSystemDevTools()`.',
             });
             return;
           }
@@ -70,7 +70,7 @@ export const useFileSystemDevTools = (
               path,
               entries: [],
               error:
-                'No filesystem provider detected. Pass `{ expoFileSystem: FileSystem }` (Expo) or `{ rnfs: RNFS }` (bare RN) to `useFileSystemDevTools()`.',
+                'No filesystem provider detected. Pass `adapter: createExpoFileSystemAdapter(FileSystem)` or `adapter: createRNFSAdapter(RNFS)` to `useFileSystemDevTools()`.',
             });
             return;
           }
@@ -107,7 +107,7 @@ export const useFileSystemDevTools = (
                 provider: 'none',
                 path,
                 error:
-                  'No filesystem provider detected. Pass `{ expoFileSystem: FileSystem }` (Expo) or `{ rnfs: RNFS }` (bare RN) to `useFileSystemDevTools()`.',
+                  'No filesystem provider detected. Pass `adapter: createExpoFileSystemAdapter(FileSystem)` or `adapter: createRNFSAdapter(RNFS)` to `useFileSystemDevTools()`.',
               });
               return;
             }
@@ -148,7 +148,7 @@ export const useFileSystemDevTools = (
                 provider: 'none',
                 path,
                 error:
-                  'No filesystem provider detected. Pass `{ expoFileSystem: FileSystem }` (Expo) or `{ rnfs: RNFS }` (bare RN) to `useFileSystemDevTools()`.',
+                  'No filesystem provider detected. Pass `adapter: createExpoFileSystemAdapter(FileSystem)` or `adapter: createRNFSAdapter(RNFS)` to `useFileSystemDevTools()`.',
               });
               return;
             }

@@ -1,9 +1,5 @@
 import type { FileSystemProvider, FsEntry } from '../shared/protocol';
-import {
-  joinPath,
-  mimeTypeFromName,
-  normalizeDirPath,
-} from '../shared/path';
+import { joinPath, mimeTypeFromName, normalizeDirPath } from '../shared/path';
 
 export type ExpoFileSystemLike = any;
 export type RNFSLike = any;
@@ -47,6 +43,11 @@ export type ProviderImpl = FileSystemAdapter;
 export type CreateExpoFileSystemAdapterOptions = ExpoFileSystemLike;
 
 export type CreateRNFSAdapterOptions = RNFSLike;
+
+const warnedLegacyOptions = new Set<'expoFileSystem' | 'rnfs'>();
+
+const LEGACY_OPTION_WARNING =
+  '[Rozenite][file-system-plugin] `expoFileSystem` and `rnfs` options are deprecated. Use `adapter: createExpoFileSystemAdapter(...)` or `adapter: createRNFSAdapter(...)` instead.';
 
 export function createExpoFileSystemAdapter(
   fileSystem: CreateExpoFileSystemAdapterOptions,
@@ -208,7 +209,9 @@ function createExpoModernFileSystemAdapter(
       ? new FileSystem.Directory(rawPath)
       : new FileSystem.File(rawPath);
     const info = await target.info();
-    const normalizedPath = isDirectory ? normalizeDirPath(target.uri) : target.uri;
+    const normalizedPath = isDirectory
+      ? normalizeDirPath(target.uri)
+      : target.uri;
 
     return {
       name: target.name ?? basename(rawPath),
@@ -312,7 +315,8 @@ function createExpoModernFileSystemAdapter(
 
       const file = new FileSystem.File(path);
       const base64 = await file.base64();
-      const mime = file.type || mimeTypeFromName(path) || 'application/octet-stream';
+      const mime =
+        file.type || mimeTypeFromName(path) || 'application/octet-stream';
       return { mime, base64 };
     },
     async readTextFile(path, maxBytes) {
@@ -400,7 +404,7 @@ export function createRNFSAdapter(
         name: basename(path),
         path: isDirectory ? normalizeDirPath(normalizedPath) : normalizedPath,
         isDirectory,
-        size: isDirectory ? null : stat.size ?? null,
+        size: isDirectory ? null : (stat.size ?? null),
         modifiedAtMs: stat.mtime ? new Date(stat.mtime).getTime() : null,
         mimeTypeHint: mimeTypeFromName(normalizedPath),
       };
@@ -445,10 +449,12 @@ export async function resolveFileSystemAdapter(
   }
 
   if (options?.expoFileSystem) {
+    warnOnLegacyOption('expoFileSystem');
     return createExpoFileSystemAdapter(options.expoFileSystem);
   }
 
   if (options?.rnfs) {
+    warnOnLegacyOption('rnfs');
     return createRNFSAdapter(options.rnfs);
   }
 
@@ -459,6 +465,15 @@ export async function detectProvider(
   options?: UseFileSystemDevToolsOptions,
 ): Promise<FileSystemAdapter | null> {
   return resolveFileSystemAdapter(options);
+}
+
+function warnOnLegacyOption(option: 'expoFileSystem' | 'rnfs') {
+  if (warnedLegacyOptions.has(option)) return;
+  warnedLegacyOptions.add(option);
+
+  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+    console.warn(LEGACY_OPTION_WARNING);
+  }
 }
 
 function isExpoModernFileSystem(fileSystem: ExpoFileSystemLike): boolean {

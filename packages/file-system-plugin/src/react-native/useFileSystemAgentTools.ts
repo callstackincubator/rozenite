@@ -1,5 +1,8 @@
 import { useCallback } from 'react';
-import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+import {
+  useRozenitePluginAgentTool,
+  type AgentTool,
+} from '@rozenite/agent-bridge';
 import type {
   FileSystemAdapter,
   UseFileSystemDevToolsOptions,
@@ -64,7 +67,8 @@ export const readEntryTool: AgentTool = {
     properties: {
       path: {
         type: 'string',
-        description: 'Absolute or provider-root-qualified file or directory path.',
+        description:
+          'Absolute or provider-root-qualified file or directory path.',
       },
     },
     required: ['path'],
@@ -125,7 +129,7 @@ const getProviderOrThrow = async (
   const provider = await resolveProvider();
   if (!provider) {
     throw new Error(
-      'No filesystem provider detected. Pass `{ expoFileSystem: FileSystem }` (Expo) or `{ rnfs: RNFS }` (bare RN) to `useFileSystemDevTools()`.',
+      'No filesystem provider detected. Pass `adapter: createExpoFileSystemAdapter(FileSystem)` or `adapter: createRNFSAdapter(RNFS)` to `useFileSystemDevTools()`.',
     );
   }
   return provider;
