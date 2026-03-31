@@ -47,11 +47,14 @@ npm install @rozenite/file-system-plugin
 
 ```typescript
 import * as FileSystem from 'expo-file-system';
-import { useFileSystemDevTools } from '@rozenite/file-system-plugin';
+import {
+  createExpoFileSystemAdapter,
+  useFileSystemDevTools,
+} from '@rozenite/file-system-plugin';
 
 function App() {
   useFileSystemDevTools({
-    expoFileSystem: FileSystem,
+    adapter: createExpoFileSystemAdapter(FileSystem),
   });
 
   return <YourApp />;
@@ -62,11 +65,14 @@ function App() {
 
 ```typescript
 import RNFS from '@dr.pogodin/react-native-fs';
-import { useFileSystemDevTools } from '@rozenite/file-system-plugin';
+import {
+  createRNFSAdapter,
+  useFileSystemDevTools,
+} from '@rozenite/file-system-plugin';
 
 function App() {
   useFileSystemDevTools({
-    rnfs: RNFS,
+    adapter: createRNFSAdapter(RNFS),
   });
 
   return <YourApp />;
@@ -79,7 +85,9 @@ Start your development server and open React Native DevTools. You’ll find the 
 
 ## Notes
 
-- Pass exactly one provider object to `useFileSystemDevTools`.
+- Pass exactly one filesystem adapter to `useFileSystemDevTools`.
+- `createExpoFileSystemAdapter` supports both the modern `expo-file-system` API and `expo-file-system/legacy`.
+- `createRNFSAdapter` wraps `react-native-fs` and `@dr.pogodin/react-native-fs`.
 - Expo roots are discovered from `documentDirectory`, `cacheDirectory`, and `bundleDirectory` when available.
 - RNFS roots include document, caches, temporary, library, and bundle paths when available.
 - File previews are limited to avoid loading very large files into DevTools.

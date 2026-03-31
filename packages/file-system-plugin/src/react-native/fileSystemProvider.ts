@@ -1,20 +1,23 @@
 import type { FileSystemProvider, FsEntry } from '../shared/protocol';
-import {
-  joinPath,
-  mimeTypeFromName,
-  normalizeDirPath,
-} from '../shared/path';
+import { joinPath, mimeTypeFromName, normalizeDirPath } from '../shared/path';
+
+export type ExpoFileSystemLike = any;
+export type RNFSLike = any;
 
 export type UseFileSystemDevToolsOptions = {
   /**
+   * Pass a normalized filesystem adapter.
+   */
+  adapter?: FileSystemAdapter;
+  /**
    * Pass Expo FileSystem module from the host app.
    */
-  expoFileSystem?: any;
+  expoFileSystem?: ExpoFileSystemLike;
   /**
    * Pass RNFS module from the host app.
    * Supports `react-native-fs` or `@dr.pogodin/react-native-fs` (same surface).
    */
-  rnfs?: any;
+  rnfs?: RNFSLike;
 };
 
 export type FileSystemRoot = {
@@ -23,7 +26,7 @@ export type FileSystemRoot = {
   path: string;
 };
 
-export type ProviderImpl = {
+export type FileSystemAdapter = {
   provider: Exclude<FileSystemProvider, 'none'>;
   getRoots: () => Promise<FileSystemRoot[]>;
   listDir: (path: string) => Promise<FsEntry[]>;
@@ -35,141 +38,311 @@ export type ProviderImpl = {
   readTextFile: (path: string, maxBytes: number) => Promise<string>;
 };
 
-export async function detectProvider(
-  options?: UseFileSystemDevToolsOptions,
-): Promise<ProviderImpl | null> {
-  if (!options?.expoFileSystem && !options?.rnfs) return null;
+export type ProviderImpl = FileSystemAdapter;
 
-  if (options?.expoFileSystem) {
-    const FileSystem =
-      options.expoFileSystem?.default ?? options.expoFileSystem;
+export type CreateExpoFileSystemAdapterOptions = ExpoFileSystemLike;
 
-    const buildEntry = async (rawPath: string): Promise<FsEntry> => {
-      const info = await FileSystem.getInfoAsync(rawPath, { size: true });
+export type CreateRNFSAdapterOptions = RNFSLike;
 
-      if (!info.exists) {
-        throw new Error(`Path "${rawPath}" does not exist.`);
+const warnedLegacyOptions = new Set<'expoFileSystem' | 'rnfs'>();
+
+const LEGACY_OPTION_WARNING =
+  '[Rozenite][file-system-plugin] `expoFileSystem` and `rnfs` options are deprecated. Use `adapter: createExpoFileSystemAdapter(...)` or `adapter: createRNFSAdapter(...)` instead.';
+
+export function createExpoFileSystemAdapter(
+  fileSystem: CreateExpoFileSystemAdapterOptions,
+): FileSystemAdapter {
+  if (isExpoModernFileSystem(fileSystem)) {
+    return createExpoModernFileSystemAdapter(fileSystem);
+  }
+
+  if (isExpoLegacyFileSystem(fileSystem)) {
+    return createExpoLegacyFileSystemAdapter(fileSystem);
+  }
+
+  throw new Error(
+    'Unsupported Expo FileSystem module. Pass `expo-file-system` (modern), `expo-file-system/legacy`, or a custom adapter.',
+  );
+}
+
+function createExpoLegacyFileSystemAdapter(
+  fileSystem: ExpoFileSystemLike,
+): FileSystemAdapter {
+  const FileSystem = fileSystem?.default ?? fileSystem;
+
+  const buildEntry = async (rawPath: string): Promise<FsEntry> => {
+    const info = await FileSystem.getInfoAsync(rawPath, { size: true });
+
+    if (!info.exists) {
+      throw new Error(`Path "${rawPath}" does not exist.`);
+    }
+
+    const isDirectory = Boolean(info.isDirectory);
+    const normalizedPath = isDirectory ? normalizeDirPath(rawPath) : rawPath;
+
+    return {
+      name: basename(rawPath),
+      path: normalizedPath,
+      isDirectory,
+      size: info.size ?? null,
+      modifiedAtMs:
+        typeof info.modificationTime === 'number'
+          ? info.modificationTime * 1000
+          : null,
+      mimeTypeHint: mimeTypeFromName(rawPath),
+    };
+  };
+
+  return {
+    provider: 'expo',
+    async getRoots() {
+      const roots: FileSystemRoot[] = [];
+      if (FileSystem.documentDirectory) {
+        roots.push({
+          id: 'expo.documentDirectory',
+          label: 'Document Directory',
+          path: normalizeDirPath(FileSystem.documentDirectory),
+        });
+      }
+      if (FileSystem.cacheDirectory) {
+        roots.push({
+          id: 'expo.cacheDirectory',
+          label: 'Cache Directory',
+          path: normalizeDirPath(FileSystem.cacheDirectory),
+        });
+      }
+      if (FileSystem.bundleDirectory) {
+        roots.push({
+          id: 'expo.bundleDirectory',
+          label: 'Bundle Directory',
+          path: normalizeDirPath(FileSystem.bundleDirectory),
+        });
+      }
+      return roots;
+    },
+    async listDir(path) {
+      const dir = normalizeDirPath(path);
+      const rawItems: string[] = await FileSystem.readDirectoryAsync(dir);
+
+      const MAX_ENTRIES = 400;
+      const CONCURRENCY = 12;
+      const limited = rawItems.slice(0, MAX_ENTRIES);
+
+      const entries = await mapWithConcurrency(
+        limited,
+        CONCURRENCY,
+        async (raw: string) => {
+          const child = resolveExpoChildPath(dir, raw);
+          return buildEntry(child);
+        },
+      );
+
+      if (rawItems.length > MAX_ENTRIES) {
+        entries.push({
+          name: `… (${rawItems.length - MAX_ENTRIES} more not shown)`,
+          path: joinPath(dir, `__ROZENITE_TRUNCATED__${Date.now()}`),
+          isDirectory: false,
+          size: null,
+          modifiedAtMs: null,
+          mimeTypeHint: null,
+        });
       }
 
-      const isDirectory = Boolean(info.isDirectory);
-      const normalizedPath = isDirectory ? normalizeDirPath(rawPath) : rawPath;
+      entries.sort((a, b) => {
+        if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
 
-      return {
-        name: basename(rawPath),
-        path: normalizedPath,
-        isDirectory,
-        size: info.size ?? null,
-        modifiedAtMs:
-          typeof info.modificationTime === 'number'
-            ? info.modificationTime * 1000
-            : null,
-        mimeTypeHint: mimeTypeFromName(rawPath),
-      };
-    };
-
-    const expo: ProviderImpl = {
-      provider: 'expo',
-      async getRoots() {
-        const roots: FileSystemRoot[] = [];
-        if (FileSystem.documentDirectory) {
-          roots.push({
-            id: 'expo.documentDirectory',
-            label: 'Document Directory',
-            path: normalizeDirPath(FileSystem.documentDirectory),
-          });
-        }
-        if (FileSystem.cacheDirectory) {
-          roots.push({
-            id: 'expo.cacheDirectory',
-            label: 'Cache Directory',
-            path: normalizeDirPath(FileSystem.cacheDirectory),
-          });
-        }
-        if (FileSystem.bundleDirectory) {
-          roots.push({
-            id: 'expo.bundleDirectory',
-            label: 'Bundle Directory',
-            path: normalizeDirPath(FileSystem.bundleDirectory),
-          });
-        }
-        return roots;
-      },
-      async listDir(path) {
-        const dir = normalizeDirPath(path);
-        const rawItems: string[] = await FileSystem.readDirectoryAsync(dir);
-
-        const MAX_ENTRIES = 400;
-        const CONCURRENCY = 12;
-        const limited = rawItems.slice(0, MAX_ENTRIES);
-
-        const entries = await mapWithConcurrency(
-          limited,
-          CONCURRENCY,
-          async (raw: string) => {
-            const child = resolveExpoChildPath(dir, raw);
-            return buildEntry(child);
-          },
+      return entries;
+    },
+    async statPath(path) {
+      return buildEntry(path);
+    },
+    async readImageBase64(path, maxBytes) {
+      const info = await FileSystem.getInfoAsync(path, { size: true });
+      const size = info.size ?? 0;
+      if (maxBytes > 0 && size > maxBytes) {
+        throw new Error(
+          `File is too large for preview (${size} bytes, limit ${maxBytes})`,
         );
-
-        if (rawItems.length > MAX_ENTRIES) {
-          entries.push({
-            name: `… (${rawItems.length - MAX_ENTRIES} more not shown)`,
-            path: joinPath(dir, `__ROZENITE_TRUNCATED__${Date.now()}`),
-            isDirectory: false,
-            size: null,
-            modifiedAtMs: null,
-            mimeTypeHint: null,
-          });
-        }
-
-        entries.sort((a, b) => {
-          if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
-          return a.name.localeCompare(b.name);
-        });
-
-        return entries;
-      },
-      async statPath(path) {
-        return buildEntry(path);
-      },
-      async readImageBase64(path, maxBytes) {
-        const info = await FileSystem.getInfoAsync(path, { size: true });
-        const size = info.size ?? 0;
-        if (maxBytes > 0 && size > maxBytes) {
-          throw new Error(
-            `File is too large for preview (${size} bytes, limit ${maxBytes})`,
-          );
-        }
+      }
+      const base64 = await FileSystem.readAsStringAsync(path, {
+        encoding: 'base64',
+      });
+      const mime = mimeTypeFromName(path) ?? 'application/octet-stream';
+      return { mime, base64 };
+    },
+    async readTextFile(path, maxBytes) {
+      const info = await FileSystem.getInfoAsync(path, { size: true });
+      const size = info.size ?? 0;
+      if (maxBytes > 0 && size > maxBytes) {
+        throw new Error(
+          `File is too large for preview (${size} bytes, limit ${maxBytes})`,
+        );
+      }
+      try {
+        return await FileSystem.readAsStringAsync(path, { encoding: 'utf8' });
+      } catch {
         const base64 = await FileSystem.readAsStringAsync(path, {
           encoding: 'base64',
         });
-        const mime = mimeTypeFromName(path) ?? 'application/octet-stream';
-        return { mime, base64 };
-      },
-      async readTextFile(path, maxBytes) {
-        const info = await FileSystem.getInfoAsync(path, { size: true });
-        const size = info.size ?? 0;
-        if (maxBytes > 0 && size > maxBytes) {
-          throw new Error(
-            `File is too large for preview (${size} bytes, limit ${maxBytes})`,
-          );
-        }
-        try {
-          return await FileSystem.readAsStringAsync(path, { encoding: 'utf8' });
-        } catch {
-          const base64 = await FileSystem.readAsStringAsync(path, {
-            encoding: 'base64',
-          });
-          return `[Binary file - ${size} bytes]\n\n` + formatBase64AsHex(base64);
-        }
-      },
+        return `[Binary file - ${size} bytes]\n\n` + formatBase64AsHex(base64);
+      }
+    },
+  };
+}
+
+function createExpoModernFileSystemAdapter(
+  fileSystem: ExpoFileSystemLike,
+): FileSystemAdapter {
+  const FileSystem = fileSystem?.default ?? fileSystem;
+
+  const buildEntry = async (rawPath: string): Promise<FsEntry> => {
+    const pathInfo = await FileSystem.Paths.info(rawPath);
+
+    if (!pathInfo?.exists) {
+      throw new Error(`Path "${rawPath}" does not exist.`);
+    }
+
+    const isDirectory = Boolean(pathInfo.isDirectory);
+    const target = isDirectory
+      ? new FileSystem.Directory(rawPath)
+      : new FileSystem.File(rawPath);
+    const info = await target.info();
+    const normalizedPath = isDirectory
+      ? normalizeDirPath(target.uri)
+      : target.uri;
+
+    return {
+      name: target.name ?? basename(rawPath),
+      path: normalizedPath,
+      isDirectory,
+      size:
+        typeof info?.size === 'number'
+          ? info.size
+          : typeof target?.size === 'number'
+            ? target.size
+            : null,
+      modifiedAtMs:
+        typeof info?.modificationTime === 'number'
+          ? info.modificationTime
+          : typeof target?.modificationTime === 'number'
+            ? target.modificationTime
+            : null,
+      mimeTypeHint: isDirectory
+        ? null
+        : target.type || mimeTypeFromName(normalizedPath),
     };
+  };
 
-    return expo;
-  }
+  const getRootUri = (candidate: any) => {
+    if (!candidate?.uri) return null;
+    return normalizeDirPath(candidate.uri);
+  };
 
-  const RNFS = options.rnfs;
-  const rnfs: ProviderImpl = {
+  return {
+    provider: 'expo',
+    async getRoots() {
+      const roots: FileSystemRoot[] = [];
+      const documentPath = getRootUri(FileSystem.Paths?.document);
+      const cachePath = getRootUri(FileSystem.Paths?.cache);
+      const bundlePath = getRootUri(FileSystem.Paths?.bundle);
+
+      if (documentPath) {
+        roots.push({
+          id: 'expo.documentDirectory',
+          label: 'Document Directory',
+          path: documentPath,
+        });
+      }
+      if (cachePath) {
+        roots.push({
+          id: 'expo.cacheDirectory',
+          label: 'Cache Directory',
+          path: cachePath,
+        });
+      }
+      if (bundlePath) {
+        roots.push({
+          id: 'expo.bundleDirectory',
+          label: 'Bundle Directory',
+          path: bundlePath,
+        });
+      }
+
+      return roots;
+    },
+    async listDir(path) {
+      const dir = normalizeDirPath(path);
+      const directory = new FileSystem.Directory(dir);
+      const rawItems = await directory.list();
+
+      const MAX_ENTRIES = 400;
+      const limited = rawItems.slice(0, MAX_ENTRIES);
+      const entries = await Promise.all(
+        limited.map(async (item: any) => buildEntry(item.uri)),
+      );
+
+      if (rawItems.length > MAX_ENTRIES) {
+        entries.push({
+          name: `… (${rawItems.length - MAX_ENTRIES} more not shown)`,
+          path: joinPath(dir, `__ROZENITE_TRUNCATED__${Date.now()}`),
+          isDirectory: false,
+          size: null,
+          modifiedAtMs: null,
+          mimeTypeHint: null,
+        });
+      }
+
+      entries.sort((a, b) => {
+        if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      return entries;
+    },
+    async statPath(path) {
+      return buildEntry(path);
+    },
+    async readImageBase64(path, maxBytes) {
+      const entry = await buildEntry(path);
+      const size = entry.size ?? 0;
+      if (maxBytes > 0 && size > maxBytes) {
+        throw new Error(
+          `File is too large for preview (${size} bytes, limit ${maxBytes})`,
+        );
+      }
+
+      const file = new FileSystem.File(path);
+      const base64 = await file.base64();
+      const mime =
+        file.type || mimeTypeFromName(path) || 'application/octet-stream';
+      return { mime, base64 };
+    },
+    async readTextFile(path, maxBytes) {
+      const entry = await buildEntry(path);
+      const size = entry.size ?? 0;
+      if (maxBytes > 0 && size > maxBytes) {
+        throw new Error(
+          `File is too large for preview (${size} bytes, limit ${maxBytes})`,
+        );
+      }
+
+      const file = new FileSystem.File(path);
+      try {
+        return await file.text();
+      } catch {
+        const base64 = await file.base64();
+        return `[Binary file - ${size} bytes]\n\n` + formatBase64AsHex(base64);
+      }
+    },
+  };
+}
+
+export function createRNFSAdapter(
+  RNFS: CreateRNFSAdapterOptions,
+): FileSystemAdapter {
+  return {
     provider: 'rnfs',
     async getRoots() {
       const roots: FileSystemRoot[] = [];
@@ -231,7 +404,7 @@ export async function detectProvider(
         name: basename(path),
         path: isDirectory ? normalizeDirPath(normalizedPath) : normalizedPath,
         isDirectory,
-        size: isDirectory ? null : stat.size ?? null,
+        size: isDirectory ? null : (stat.size ?? null),
         modifiedAtMs: stat.mtime ? new Date(stat.mtime).getTime() : null,
         mimeTypeHint: mimeTypeFromName(normalizedPath),
       };
@@ -266,7 +439,62 @@ export async function detectProvider(
       }
     },
   };
-  return rnfs;
+}
+
+export async function resolveFileSystemAdapter(
+  options?: UseFileSystemDevToolsOptions,
+): Promise<FileSystemAdapter | null> {
+  if (options?.adapter) {
+    return options.adapter;
+  }
+
+  if (options?.expoFileSystem) {
+    warnOnLegacyOption('expoFileSystem');
+    return createExpoFileSystemAdapter(options.expoFileSystem);
+  }
+
+  if (options?.rnfs) {
+    warnOnLegacyOption('rnfs');
+    return createRNFSAdapter(options.rnfs);
+  }
+
+  return null;
+}
+
+export async function detectProvider(
+  options?: UseFileSystemDevToolsOptions,
+): Promise<FileSystemAdapter | null> {
+  return resolveFileSystemAdapter(options);
+}
+
+function warnOnLegacyOption(option: 'expoFileSystem' | 'rnfs') {
+  if (warnedLegacyOptions.has(option)) return;
+  warnedLegacyOptions.add(option);
+
+  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+    console.warn(LEGACY_OPTION_WARNING);
+  }
+}
+
+function isExpoModernFileSystem(fileSystem: ExpoFileSystemLike): boolean {
+  const candidate = fileSystem?.default ?? fileSystem;
+  return Boolean(
+    candidate &&
+      typeof candidate.File === 'function' &&
+      typeof candidate.Directory === 'function' &&
+      candidate.Paths &&
+      typeof candidate.Paths.info === 'function',
+  );
+}
+
+function isExpoLegacyFileSystem(fileSystem: ExpoFileSystemLike): boolean {
+  const candidate = fileSystem?.default ?? fileSystem;
+  return Boolean(
+    candidate &&
+      typeof candidate.getInfoAsync === 'function' &&
+      typeof candidate.readDirectoryAsync === 'function' &&
+      typeof candidate.readAsStringAsync === 'function',
+  );
 }
 
 export function safeError(err: unknown): string {

@@ -1,7 +1,13 @@
 import { useCallback } from 'react';
-import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
-import type { ProviderImpl, UseFileSystemDevToolsOptions } from './fileSystemProvider';
-import { detectProvider } from './fileSystemProvider';
+import {
+  useRozenitePluginAgentTool,
+  type AgentTool,
+} from '@rozenite/agent-bridge';
+import type {
+  FileSystemAdapter,
+  UseFileSystemDevToolsOptions,
+} from './fileSystemProvider';
+import { resolveFileSystemAdapter } from './fileSystemProvider';
 
 type PathInput = {
   path: string;
@@ -61,7 +67,8 @@ export const readEntryTool: AgentTool = {
     properties: {
       path: {
         type: 'string',
-        description: 'Absolute or provider-root-qualified file or directory path.',
+        description:
+          'Absolute or provider-root-qualified file or directory path.',
       },
     },
     required: ['path'],
@@ -117,19 +124,19 @@ export const fileSystemAgentTools = [
 ] as const;
 
 const getProviderOrThrow = async (
-  resolveProvider: () => Promise<ProviderImpl | null>,
-): Promise<ProviderImpl> => {
+  resolveProvider: () => Promise<FileSystemAdapter | null>,
+): Promise<FileSystemAdapter> => {
   const provider = await resolveProvider();
   if (!provider) {
     throw new Error(
-      'No filesystem provider detected. Pass `{ expoFileSystem: FileSystem }` (Expo) or `{ rnfs: RNFS }` (bare RN) to `useFileSystemDevTools()`.',
+      'No filesystem provider detected. Pass `adapter: createExpoFileSystemAdapter(FileSystem)` or `adapter: createRNFSAdapter(RNFS)` to `useFileSystemDevTools()`.',
     );
   }
   return provider;
 };
 
 export const createFileSystemAgentHandlers = (
-  resolveProvider: () => Promise<ProviderImpl | null>,
+  resolveProvider: () => Promise<FileSystemAdapter | null>,
 ) => ({
   listRoots: async () => {
     const provider = await resolveProvider();
@@ -214,8 +221,8 @@ export const useFileSystemAgentTools = (
   options?: UseFileSystemDevToolsOptions,
 ) => {
   const resolveProvider = useCallback(
-    () => detectProvider(options),
-    [options?.expoFileSystem, options?.rnfs],
+    () => resolveFileSystemAdapter(options),
+    [options?.adapter, options?.expoFileSystem, options?.rnfs],
   );
 
   const handlers = createFileSystemAgentHandlers(resolveProvider);

@@ -32,7 +32,7 @@ export default {
         'agent-shared',
         'file-system-plugin',
         'sqlite-plugin',
-        ''
+        '',
       ],
     ],
   },
