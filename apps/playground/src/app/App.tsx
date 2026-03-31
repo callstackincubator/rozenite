@@ -9,6 +9,7 @@ import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plu
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
 import { useRozeniteStoragePlugin } from '@rozenite/storage-plugin';
+import { useRozeniteSqlitePlugin } from '@rozenite/sqlite-plugin';
 import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRef } from 'react';
@@ -33,15 +34,13 @@ import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
 import { FileSystemTestScreen } from './screens/FileSystemTestScreen';
 import { StoragePluginScreen } from './screens/StoragePluginScreen';
 import { storagePluginAdapters } from './storage-plugin-adapters';
+import { sqlitePluginAdapters } from './sqlite-plugin-databases';
 import { primaryStore } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
 import { useAgentPlaygroundTools } from './useAgentPlaygroundTools';
 import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
-import {
-  createRNFSAdapter,
-  useFileSystemDevTools,
-} from '@rozenite/file-system-plugin';
+import { useFileSystemDevTools } from '@rozenite/file-system-plugin';
 import * as RNFS from '@dr.pogodin/react-native-fs';
 
 const queryClient = new QueryClient();
@@ -67,13 +66,14 @@ const Wrapper = () => {
   useRozeniteStoragePlugin({
     storages: storagePluginAdapters,
   });
+  useRozeniteSqlitePlugin({
+    adapters: sqlitePluginAdapters,
+  });
   useReduxDevToolsAgentTools();
   usePerformanceMonitorDevTools();
   useRequireProfilerDevTools();
   useAgentPlaygroundTools();
-  useFileSystemDevTools({
-    adapter: createRNFSAdapter(RNFS),
-  });
+  useFileSystemDevTools({ rnfs: RNFS });
 
   return (
     <Stack.Navigator

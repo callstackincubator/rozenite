@@ -51,6 +51,11 @@
   },
   {
     "type": "file",
+    "name": "sqlite",
+    "label": "SQLite"
+  },
+  {
+    "type": "file",
     "name": "file-system",
     "label": "File System"
   },
