@@ -44,6 +44,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@microsoft/api-extractor": "^7.50.1",
     "@vitejs/plugin-react": "^4.3.4",
     "ejs": "^3.1.9",
     "vite-plugin-dts": "~4.5.0",

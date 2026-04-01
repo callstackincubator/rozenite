@@ -2,14 +2,22 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { step } from '../utils/steps.js';
 import { spawn } from '../utils/spawn.js';
-import { fileExists } from '../utils/files.js';
 import { intro, outro } from '../utils/prompts.js';
+import { logger } from '../utils/logger.js';
+import { syncPluginPackageJSON } from '../utils/plugin-package-json.js';
 
 export const buildCommand = async (targetDir: string) => {
   intro('Rozenite');
 
-  const hasReactNativeEntryPoint = await fileExists('react-native.ts');
-  const hasMetroEntryPoint = await fileExists('metro.ts');
+  const { updatedFields, targets } = await syncPluginPackageJSON(targetDir);
+
+  if (updatedFields.length > 0) {
+    logger.warn(
+      `Updated package.json builder-managed fields: ${updatedFields.join(', ')}`,
+    );
+  }
+
+  const { hasReactNativeEntryPoint, hasMetroEntryPoint } = targets;
 
   await step(
     {
@@ -22,7 +30,7 @@ export const buildCommand = async (targetDir: string) => {
         recursive: true,
         force: true,
       });
-    }
+    },
   );
 
   await step(
@@ -35,7 +43,7 @@ export const buildCommand = async (targetDir: string) => {
       await spawn('vite', ['build'], {
         cwd: targetDir,
       });
-    }
+    },
   );
 
   if (hasMetroEntryPoint) {
@@ -52,7 +60,7 @@ export const buildCommand = async (targetDir: string) => {
             VITE_ROZENITE_TARGET: 'server',
           },
         });
-      }
+      },
     );
   }
 
@@ -70,7 +78,7 @@ export const buildCommand = async (targetDir: string) => {
             VITE_ROZENITE_TARGET: 'react-native',
           },
         });
-      }
+      },
     );
   }
 

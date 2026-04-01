@@ -3,9 +3,9 @@
   "version": "1.6.0",
   "description": "A Rozenite plugin for browsing app files and previewing file contents in React Native DevTools.",
   "type": "module",
-  "main": "./dist/react-native.cjs",
-  "module": "./dist/react-native.js",
-  "types": "./dist/react-native.d.ts",
+  "main": "./dist/react-native/index.cjs",
+  "module": "./dist/react-native/index.js",
+  "types": "./dist/react-native/index.d.ts",
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
     "url": "https://github.com/callstackincubator/rozenite/issues"
@@ -47,6 +47,14 @@
     "react-native": "*"
   },
   "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/react-native/index.d.ts",
+      "import": "./dist/react-native/index.js",
+      "require": "./dist/react-native/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
   "publishConfig": {
     "access": "public"
   }
