@@ -1,37 +1,38 @@
 # Releasing
 
-## Stable releases
+## Workflow
 
-Stable releases run from `main` via `.github/workflows/release.yml`.
-
-1. Merge changesets into `main`.
-2. The release workflow runs on every push to `main`.
-3. `changesets/action` creates or updates the release PR while unpublished changesets exist.
-4. After the release PR is merged, the same workflow publishes released packages to npm with the default `latest` dist-tag.
-
-The workflow runs:
-
-```sh
-pnpm release:check
-pnpm release:publish
-```
-
-`release:publish` reruns validation, builds publishable packages, and then calls `changeset publish`.
-
-## Prereleases
-
-Prereleases run manually with `.github/workflows/prerelease.yml`.
+All releases run manually via `.github/workflows/release.yml` using `workflow_dispatch`.
 
 Inputs:
 
-1. `mode`: `rc` or `canary`
+1. `mode`: `stable`, `rc`, or `canary`
 2. `ref`: required git ref to check out
 
 The workflow installs dependencies and runs:
 
 ```sh
-pnpm release:prerelease
+pnpm release:run
 ```
+
+Trusted publishing should point every public package at the single workflow filename `release.yml`.
+
+## Stable releases
+
+Stable releases run manually from `main`.
+
+1. Merge changesets into `main`.
+2. Run the release workflow with `mode=stable` and `ref=main`.
+3. The release runner calls `changeset version`.
+4. The runner refreshes `pnpm-lock.yaml`.
+5. The runner commits version and changelog changes to `main`.
+6. The runner runs validation and build steps.
+7. The runner publishes packages to npm with the default `latest` dist-tag.
+8. The runner creates one annotated monorepo tag like `v1.7.0` and pushes it.
+
+## Prereleases
+
+Prereleases also run manually with `.github/workflows/release.yml`.
 
 ### RC releases
 
@@ -43,25 +44,29 @@ First `rc` run on a release branch:
 
 1. `changeset pre enter rc`
 2. `changeset version`
-3. commit versioned files to the release branch
-4. push the release branch
-5. `pnpm release:check`
-6. `pnpm release:build`
-7. `changeset publish`
+3. refresh `pnpm-lock.yaml`
+4. commit versioned files to the release branch
+5. run `pnpm release:check`
+6. run `pnpm release:build`
+7. publish to npm under `rc`
+8. push the release branch
+9. create one annotated monorepo tag like `v1.7.0-rc.0` and push it
 
 Subsequent `rc` runs:
 
 1. add more changesets on the same release branch
 2. rerun the prerelease workflow in `rc` mode
 3. `changeset version`
-4. commit and push updated prerelease state
-5. publish to the `rc` dist-tag
+4. refresh `pnpm-lock.yaml`
+5. commit and publish updated prerelease state
+6. push the branch and the new monorepo tag
 
 Exit `rc` mode manually on the release branch when ready:
 
 ```sh
 pnpm changeset pre exit
 pnpm changeset version
+pnpm install --lockfile-only
 git add .changeset packages package.json pnpm-lock.yaml CHANGELOG.md
 git commit -m "Exit prerelease mode"
 git push
@@ -76,9 +81,10 @@ Use `canary` mode for snapshot releases from any chosen ref.
 The workflow:
 
 1. runs `changeset version --snapshot canary`
-2. runs `pnpm release:check`
-3. runs `pnpm release:build`
-4. runs `changeset publish --tag canary --no-git-tag`
+2. refreshes `pnpm-lock.yaml`
+3. runs `pnpm release:check`
+4. runs `pnpm release:build`
+5. runs `changeset publish --tag canary --no-git-tag`
 
 Snapshot version changes are not committed or pushed.
 
@@ -127,8 +133,7 @@ For each package on npm:
 2. Add a GitHub Actions trusted publisher.
 3. Set org/user to `callstackincubator`.
 4. Set repo to `rozenite`.
-5. Add workflow `release.yml` for stable releases.
-6. Add workflow `prerelease.yml` for prereleases.
+5. Add workflow `release.yml`.
 
 Notes:
 
@@ -136,6 +141,28 @@ Notes:
 2. GitHub-hosted runners are required.
 3. Provenance should be automatic for public packages from this public repository.
 4. After verification, token-based publish access can be restricted or disabled.
+
+## Trusted publishing workflow input
+
+When configuring npm trusted publishing, use the single workflow filename `release.yml`.
+
+All releases run through `workflow_dispatch` with:
+
+```text
+mode=stable | rc | canary
+ref=<git ref>
+```
+
+## Git tags
+
+Changesets package-level git tags are disabled during publish.
+
+Instead, the release runner creates one annotated monorepo tag per stable or rc release:
+
+1. stable: `v<version>`
+2. rc: `v<version>` where `<version>` includes the rc suffix
+
+Canary releases do not create git tags.
 
 ## Scripts
 
@@ -145,8 +172,8 @@ Root release scripts:
 {
   "release:check": "pnpm turbo run typecheck build lint test",
   "release:build": "pnpm build:all",
-  "release:publish": "pnpm release:check && pnpm release:build && changeset publish",
-  "release:prerelease": "node scripts/release/prerelease.mjs"
+  "release:publish": "changeset publish --no-git-tag",
+  "release:run": "node scripts/release/release.mjs"
 }
 ```
 

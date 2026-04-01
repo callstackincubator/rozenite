@@ -13,8 +13,8 @@
     "release:plan": "changeset status",
     "release:check": "pnpm turbo run typecheck build lint test",
     "release:build": "pnpm build:all",
-    "release:publish": "pnpm release:check && pnpm release:build && changeset publish",
-    "release:prerelease": "node scripts/release/prerelease.mjs",
+    "release:publish": "changeset publish --no-git-tag",
+    "release:run": "node scripts/release/release.mjs",
     "start:playground": "pnpm --filter @rozenite/playground start",
     "start:playground:android": "pnpm --filter @rozenite/playground android",
     "start:playground:ios": "pnpm --filter @rozenite/playground ios"

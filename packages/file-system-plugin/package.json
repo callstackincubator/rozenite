@@ -6,6 +6,14 @@
   "main": "./dist/react-native.cjs",
   "module": "./dist/react-native.js",
   "types": "./dist/react-native.d.ts",
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
   "scripts": {
     "build": "rozenite build",
     "dev": "rozenite dev",
