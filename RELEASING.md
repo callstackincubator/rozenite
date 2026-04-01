@@ -37,9 +37,9 @@ Prereleases also run manually with `.github/workflows/release.yml`.
 
 ### RC releases
 
-Use `release/<minor>` or `release/<version>` branches, for example `release/1.7` or `release/2.0`.
+Use `release/v<version>` branches, for example `release/v1.7` or `release/v2.0.0`.
 
-`rc` mode is intentionally restricted to `release/*` branches and will fail on `main`.
+`rc` mode is intentionally restricted to `release/v<version>` branches and will fail on `main`.
 
 First `rc` run on a release branch:
 
