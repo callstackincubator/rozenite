@@ -1,0 +1,39 @@
+{
+  "mode": "pre",
+  "tag": "rc",
+  "initialVersions": {
+    "@rozenite/playground": "0.0.1",
+    "@rozenite/agent-bridge": "1.6.0",
+    "@rozenite/agent-shared": "1.6.0",
+    "@rozenite/chrome-extension": "1.6.0",
+    "rozenite": "1.6.0",
+    "@rozenite/controls-plugin": "1.6.0",
+    "@rozenite/expo-atlas-plugin": "1.6.0",
+    "@rozenite/file-system-plugin": "1.6.0",
+    "@rozenite/metro": "1.6.0",
+    "@rozenite/middleware": "1.6.0",
+    "@rozenite/mmkv-plugin": "1.6.0",
+    "@rozenite/network-activity-plugin": "1.6.0",
+    "@rozenite/overlay-plugin": "1.6.0",
+    "@rozenite/performance-monitor-plugin": "1.6.0",
+    "@rozenite/plugin-bridge": "1.6.0",
+    "@rozenite/react-navigation-plugin": "1.6.0",
+    "@rozenite/redux-devtools-plugin": "1.6.0",
+    "@rozenite/repack": "1.6.0",
+    "@rozenite/require-profiler-plugin": "1.6.0",
+    "@rozenite/runtime": "1.6.0",
+    "@rozenite/sqlite-plugin": "1.6.0",
+    "@rozenite/storage-plugin": "1.6.0",
+    "@rozenite/tanstack-query-plugin": "1.6.0",
+    "@rozenite/tools": "1.6.0",
+    "@rozenite/vite-plugin": "1.6.0",
+    "@rozenite/web": "1.6.0",
+    "@rozenite/docs": "1.0.9"
+  },
+  "changesets": [
+    "fair-days-rush",
+    "fix-vite-plugin-require-bundling",
+    "rare-fans-punch",
+    "tall-beans-double"
+  ]
+}
