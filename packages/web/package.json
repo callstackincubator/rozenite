@@ -29,6 +29,9 @@
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "lint": "eslint ."
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@rozenite/middleware": "workspace:*",
     "@rozenite/tools": "workspace:*",

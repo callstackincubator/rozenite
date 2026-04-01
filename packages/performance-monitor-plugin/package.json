@@ -43,5 +43,8 @@
     "react-native": "*",
     "react-native-performance": "*"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -59,5 +59,8 @@
     "react": "*",
     "react-native": "*"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }
