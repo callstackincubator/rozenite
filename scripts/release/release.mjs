@@ -167,10 +167,10 @@ function runStableRelease() {
   run('pnpm', ['changeset', 'version']);
   updateLockfile();
   commitVersionChanges('Version packages for stable release');
+  pushBranch();
   run('pnpm', ['release:check']);
   run('pnpm', ['release:build']);
   run('pnpm', ['release:publish']);
-  pushBranch();
   createAndPushTag(readVersion());
 }
 
@@ -193,10 +193,10 @@ function runRcRelease() {
   run('pnpm', ['changeset', 'version']);
   updateLockfile();
   commitVersionChanges('Version packages for rc release');
+  pushBranch();
   run('pnpm', ['release:check']);
   run('pnpm', ['release:build']);
   run('pnpm', ['release:publish']);
-  pushBranch();
   createAndPushTag(readVersion());
 }
 

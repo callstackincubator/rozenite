@@ -31,6 +31,7 @@ jobs:
     env:
       RELEASE_MODE: ${{ github.event.inputs.mode }}
       RELEASE_REF: ${{ github.event.inputs.ref }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GIT_AUTHOR_NAME: github-actions[bot]
       GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
       GIT_COMMITTER_NAME: github-actions[bot]

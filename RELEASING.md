@@ -26,9 +26,10 @@ Stable releases run manually from `main`.
 3. The release runner calls `changeset version`.
 4. The runner refreshes `pnpm-lock.yaml`.
 5. The runner commits version and changelog changes to `main`.
-6. The runner runs validation and build steps.
-7. The runner publishes packages to npm with the default `latest` dist-tag.
-8. The runner creates one annotated monorepo tag like `v1.7.0` and pushes it.
+6. The runner pushes the release commit to `main`.
+7. The runner runs validation and build steps.
+8. The runner publishes packages to npm with the default `latest` dist-tag.
+9. The runner creates one annotated monorepo tag like `v1.7.0` and pushes it.
 
 ## Prereleases
 
@@ -46,10 +47,10 @@ First `rc` run on a release branch:
 2. `changeset version`
 3. refresh `pnpm-lock.yaml`
 4. commit versioned files to the release branch
-5. run `pnpm release:check`
-6. run `pnpm release:build`
-7. publish to npm under `rc`
-8. push the release branch
+5. push the release branch
+6. run `pnpm release:check`
+7. run `pnpm release:build`
+8. publish to npm under `rc`
 9. create one annotated monorepo tag like `v1.7.0-rc.0` and push it
 
 Subsequent `rc` runs:
@@ -58,8 +59,8 @@ Subsequent `rc` runs:
 2. rerun the prerelease workflow in `rc` mode
 3. `changeset version`
 4. refresh `pnpm-lock.yaml`
-5. commit and publish updated prerelease state
-6. push the branch and the new monorepo tag
+5. commit and push updated prerelease state
+6. publish and push the new monorepo tag
 
 Exit `rc` mode manually on the release branch when ready:
 
