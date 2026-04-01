@@ -1,13 +1,20 @@
 import { spawn, Subprocess } from '../utils/spawn.js';
-import { fileExists } from '../utils/files.js';
 import { intro, outro } from '../utils/prompts.js';
 import { logger } from '../utils/logger.js';
+import { syncPluginPackageJSON } from '../utils/plugin-package-json.js';
 
 export const devCommand = async (targetDir: string) => {
   intro('Rozenite');
 
-  const hasReactNativeEntryPoint = await fileExists('react-native.ts');
-  const hasMetroEntryPoint = await fileExists('metro.ts');
+  const { updatedFields, targets } = await syncPluginPackageJSON(targetDir);
+
+  if (updatedFields.length > 0) {
+    logger.warn(
+      `Updated package.json builder-managed fields: ${updatedFields.join(', ')}`,
+    );
+  }
+
+  const { hasReactNativeEntryPoint, hasMetroEntryPoint } = targets;
 
   try {
     const processes: Subprocess[] = [];

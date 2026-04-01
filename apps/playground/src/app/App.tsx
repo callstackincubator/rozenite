@@ -59,7 +59,6 @@ const Wrapper = () => {
     },
   });
   useMMKVDevTools({
-    // @ts-expect-error - This is fine as in production MMKV plugin will pick up installed version automatically.
     storages: mmkvStorages,
     blacklist: /user-storage:sensitiveToken/,
   });

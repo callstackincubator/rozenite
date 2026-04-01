@@ -13,15 +13,24 @@ export const rozeniteServerPlugin = (): Plugin => {
       config.build.lib = {
         entry: path.resolve(projectRoot, 'metro.ts'),
         formats: ['es' as const, 'cjs' as const],
-        fileName: (format) => `metro.${format === 'es' ? 'js' : 'cjs'}`,
+        fileName: (format) => `metro/index.${format === 'es' ? 'js' : 'cjs'}`,
       };
       config.build.ssr = true;
-      config.build.rollupOptions = {
-        output: {
+      config.build.rollupOptions ??= {};
+      config.build.rollupOptions.output = [
+        {
+          format: 'es',
+          entryFileNames: 'metro/index.js',
           exports: 'named',
           interop: 'auto',
         },
-      };
+        {
+          format: 'cjs',
+          entryFileNames: 'metro/index.cjs',
+          exports: 'named',
+          interop: 'auto',
+        },
+      ];
     },
   };
 };
