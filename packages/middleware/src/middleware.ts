@@ -8,6 +8,8 @@ import { InstalledPlugin } from './auto-discovery.js';
 import { getReactNativeDebuggerFrontendPath } from './resolve.js';
 import { RozeniteConfig } from './config.js';
 import { logger } from './logger.js';
+import type { AgentSessionManager } from './agent/index.js';
+import { createAgentRoutes } from './agent/index.js';
 
 const require = createRequire(import.meta.url);
 
@@ -15,10 +17,23 @@ export type MiddlewareConfig = {
   destroyOnDetachPlugins?: string[];
 };
 
+export const getNormalizedRequestUrl = (url: string): string => {
+  if (url === '/rozenite' || url.startsWith('/rozenite/')) {
+    if (url === '/rozenite/agent' || url.startsWith('/rozenite/agent/')) {
+      return url;
+    }
+
+    return url.replace('/rozenite', '');
+  }
+
+  return url;
+};
+
 export const getMiddleware = (
   options: RozeniteConfig,
   installedPlugins: InstalledPlugin[],
   destroyOnDetachPlugins: string[],
+  agentSessionManager: AgentSessionManager,
 ): Application => {
   const app = express();
   const debuggerFrontend = require(getReactNativeDebuggerFrontendPath(options));
@@ -36,9 +51,7 @@ export const getMiddleware = (
 
     logger.debug(`Incoming request: ${req.url}`);
 
-    if (req.url === '/rozenite' || req.url.startsWith('/rozenite/')) {
-      req.url = req.url.replace('/rozenite', '');
-    }
+    req.url = getNormalizedRequestUrl(req.url);
 
     next();
   });
@@ -79,6 +92,8 @@ export const getMiddleware = (
     res.setHeader('Content-Type', 'application/javascript');
     res.end(fs.readFileSync(path.join(frameworkPath, 'host.js'), 'utf8'));
   });
+
+  app.use(createAgentRoutes(agentSessionManager));
 
   app.use(express.static(debuggerFrontend));
 

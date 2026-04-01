@@ -7,20 +7,22 @@ import type { RozeniteConfig } from './config.js';
 import { getDevModePackage } from './dev-mode.js';
 import { verifyReactNativeVersion } from './verify-react-native-version.js';
 import { getReactNativePackagePath } from './resolve.js';
+import { createAgentSessionManager } from './agent/index.js';
 
 export type RozeniteMiddleware = Application;
 export type RozeniteInstance = {
   middleware: RozeniteMiddleware;
   devModePackage: { name: string; path: string } | null;
+  dispose: () => Promise<void>;
 };
 
 export const initializeRozenite = (
-  options: RozeniteConfig
+  options: RozeniteConfig,
 ): RozeniteInstance => {
   options.logLevel =
     process.env.ROZENITE_DEBUG === 'true'
       ? 'debug'
-      : options.logLevel ?? 'info';
+      : (options.logLevel ?? 'info');
   logger.setLevel(options.logLevel);
 
   verifyReactNativeVersion(options.projectRoot);
@@ -29,8 +31,8 @@ export const initializeRozenite = (
   logger.debug(`Resolution root: ${options.projectRoot}`);
   logger.debug(
     `Resolved react-native to: ${getReactNativePackagePath(
-      options.projectRoot
-    )}`
+      options.projectRoot,
+    )}`,
   );
 
   const devModePackage = getDevModePackage(options.projectRoot);
@@ -41,6 +43,9 @@ export const initializeRozenite = (
   }
 
   const allInstalledPlugins = getInstalledPlugins(options);
+  const agentSessionManager = createAgentSessionManager({
+    projectRoot: options.projectRoot,
+  });
 
   if (allInstalledPlugins.length === 0) {
     logger.info('No plugins found.');
@@ -57,9 +62,13 @@ export const initializeRozenite = (
     middleware: getMiddleware(
       options,
       allInstalledPlugins,
-      options.destroyOnDetachPlugins || []
+      options.destroyOnDetachPlugins || [],
+      agentSessionManager,
     ),
     devModePackage,
+    dispose: async () => {
+      await agentSessionManager.dispose();
+    },
   };
 };
 

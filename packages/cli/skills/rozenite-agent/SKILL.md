@@ -7,11 +7,13 @@ description: Skill giving access to React Native Devtools and Rozenite plugins.
 
 ## Ground Truths
 - Agent work is session-scoped. Reuse one active session across related commands.
+- Sessions are keyed by Metro `deviceId`; `session create` creates or reuses the session for that device.
 - Always check for an existing session first: `rozenite agent session list`
 - Create a session only when needed: `rozenite agent session create`
 - Pin to a specific device only when explicitly requested:
   1. `rozenite agent targets`
   2. `rozenite agent session create --deviceId <id>`
+- If multiple devices are connected, `session create` requires `--deviceId`.
 - Pass `--session <id>` on every domain command.
 - Always list domains before acting so you have the up-to-date view for the current session:
   `rozenite agent domains --session <id>`
@@ -26,6 +28,10 @@ description: Skill giving access to React Native Devtools and Rozenite plugins.
 
 ## Commands
 - `rozenite agent session create`
+- `rozenite agent session list`
+- `rozenite agent session show <sessionId>`
+- `rozenite agent session stop <sessionId>`
+- `rozenite agent targets`
 - `rozenite agent <domain> tools --session <id>`
 - `rozenite agent <domain> schema -t <name> --session <id>`
 - `rozenite agent <domain> call -t <name> -a '<json>' --session <id>`
@@ -34,8 +40,8 @@ description: Skill giving access to React Native Devtools and Rozenite plugins.
 - `console`: Read, filter, paginate console messages; clear log buffer.
 - `network`: Record HTTP/HTTPS traffic; list requests, inspect details/bodies, analyze timing.
 - `react`: Search and traverse component tree; read props, state, hooks; record render timelines (profiling).
-- `performance`: Start/stop trace, export to file (file-backed).
-- `memory`: Heap snapshots and allocation sampling; file-backed exports.
+- `performance`: Start/stop trace; artifacts are written under `.rozenite/agent/sessions/<deviceId>/traces`.
+- `memory`: Heap snapshots and allocation sampling; artifacts are written under `.rozenite/agent/sessions/<deviceId>/memory` or `profiles`.
 
 ## Dynamic Domains
 - Additional domains can appear at runtime when Rozenite plugins are installed in the app.

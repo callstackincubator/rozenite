@@ -1,25 +1,31 @@
-import type { JSONSchema7, AgentTool } from './types.js';
-import { createArtifactFileWriter } from './artifact-file.js';
+import type { JSONSchema7, AgentTool } from '@rozenite/agent-shared';
 import { createReactTreeStore } from './runtime/react/store.js';
-import {
-  DEFAULT_PAGE_LIMIT,
-  MAX_PAGE_LIMIT,
-  paginateRows,
-} from './output-shaping.js';
+import type { ArtifactBucket, ArtifactFileWriter } from './artifacts.js';
 
 type CDPCommandSender = (
   method: string,
   params?: Record<string, unknown>,
 ) => Promise<Record<string, unknown>>;
 
-type CDPEventListener = (params: Record<string, unknown>) => void | Promise<void>;
-type SubscribeToCDPEvent = (method: string, listener: CDPEventListener) => () => void;
+type CDPEventListener = (
+  params: Record<string, unknown>,
+) => void | Promise<void>;
+type SubscribeToCDPEvent = (
+  method: string,
+  listener: CDPEventListener,
+) => () => void;
 
 type SessionInfoReader = () => {
   sessionId: string;
   pageId: string;
   deviceId: string;
 };
+
+type ArtifactWriterFactory = (
+  bucket: ArtifactBucket,
+  extension: string,
+  nameHint?: string,
+) => Promise<ArtifactFileWriter>;
 
 type TraceState = {
   startedAt: number;
@@ -158,11 +164,14 @@ export type LocalAgentToolService = {
   dispose: () => Promise<void>;
 };
 
-const FILE_PATH_SCHEMA: JSONSchema7 = {
+const NAME_HINT_SCHEMA: JSONSchema7 = {
   type: 'string',
-  description: 'Destination file path on the local machine.',
+  description:
+    'Optional file naming hint used for the Metro-managed artifact filename.',
 };
 
+const DEFAULT_DOMAIN_PAGE_LIMIT = 20;
+const MAX_DOMAIN_PAGE_LIMIT = 100;
 const NETWORK_BUFFER_CAPACITY = 500;
 
 const getRecord = (value: unknown): Record<string, unknown> => {
@@ -182,12 +191,16 @@ const getOptionalStringArray = (value: unknown): string[] | undefined => {
     return undefined;
   }
 
-  const items = value.filter((item): item is string => typeof item === 'string');
+  const items = value.filter(
+    (item): item is string => typeof item === 'string',
+  );
   return items.length > 0 ? items : undefined;
 };
 
 const getOptionalNumber = (value: unknown): number | undefined => {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : undefined;
 };
 
 const getOptionalBoolean = (value: unknown): boolean | undefined => {
@@ -202,7 +215,9 @@ const getOptionalPositiveInteger = (value: unknown): number | undefined => {
   return value;
 };
 
-const getOptionalRecord = (value: unknown): Record<string, unknown> | undefined => {
+const getOptionalRecord = (
+  value: unknown,
+): Record<string, unknown> | undefined => {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     return value as Record<string, unknown>;
   }
@@ -232,14 +247,93 @@ const isTextLikeMimeType = (mimeType: string | undefined): boolean => {
     return false;
   }
 
-  return normalized.startsWith('text/')
-    || normalized === 'application/json'
-    || normalized === 'application/javascript'
-    || normalized === 'application/xml'
-    || normalized === 'application/x-www-form-urlencoded'
-    || normalized === 'application/graphql'
-    || normalized.endsWith('+json')
-    || normalized.endsWith('+xml');
+  return (
+    normalized.startsWith('text/') ||
+    normalized === 'application/json' ||
+    normalized === 'application/javascript' ||
+    normalized === 'application/xml' ||
+    normalized === 'application/x-www-form-urlencoded' ||
+    normalized === 'application/graphql' ||
+    normalized.endsWith('+json') ||
+    normalized.endsWith('+xml')
+  );
+};
+
+const paginateRows = <T>(
+  rows: T[],
+  options: {
+    scope: string;
+    limit: number;
+    cursor?: string;
+  },
+): {
+  items: T[];
+  page: {
+    limit: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  };
+} => {
+  let startIndex = 0;
+  if (options.cursor) {
+    try {
+      const decoded = JSON.parse(
+        Buffer.from(options.cursor, 'base64url').toString('utf8'),
+      ) as { v: 1; scope: string; index: number };
+      if (
+        decoded.v !== 1 ||
+        decoded.scope !== options.scope ||
+        !Number.isInteger(decoded.index) ||
+        decoded.index < 0
+      ) {
+        throw new Error('Invalid cursor payload');
+      }
+      startIndex = decoded.index;
+    } catch {
+      throw new Error(
+        'Invalid "cursor". Run the command again without cursor to restart pagination.',
+      );
+    }
+  }
+
+  const endIndex = Math.min(startIndex + options.limit, rows.length);
+  const items = rows.slice(startIndex, endIndex);
+  const hasMore = endIndex < rows.length;
+  const nextCursor = hasMore
+    ? Buffer.from(
+        JSON.stringify({ v: 1, scope: options.scope, index: endIndex }),
+        'utf8',
+      ).toString('base64url')
+    : undefined;
+
+  return {
+    items,
+    page: {
+      limit: options.limit,
+      hasMore,
+      ...(nextCursor ? { nextCursor } : {}),
+    },
+  };
+};
+
+const createArtifactMetadata = (
+  artifact: {
+    path: string;
+    relativePath: string;
+    bytes: number;
+    bucket: ArtifactBucket;
+    fileName: string;
+  },
+  type: 'trace' | 'sampling-profile' | 'heap-snapshot',
+) => {
+  return {
+    type,
+    path: artifact.path,
+    relativePath: artifact.relativePath,
+    bytes: artifact.bytes,
+    bucket: artifact.bucket,
+    fileName: artifact.fileName,
+  };
 };
 
 const createNetworkSummary = (record: NetworkRequestRecord) => ({
@@ -252,7 +346,8 @@ const createNetworkSummary = (record: NetworkRequestRecord) => ({
   endTimeMs: record.endTimeMs ?? null,
   durationMs: record.durationMs ?? null,
   transferSize: record.transferSize ?? null,
-  encodedDataLength: record.encodedDataLength ?? record.response?.encodedDataLength ?? null,
+  encodedDataLength:
+    record.encodedDataLength ?? record.response?.encodedDataLength ?? null,
   outcome: record.loadingFailed
     ? 'failed'
     : record.loadingFinished
@@ -282,7 +377,9 @@ const createNetworkStatus = (
   },
 });
 
-const getCDPCommandResult = (value: Record<string, unknown>): Record<string, unknown> => {
+const getCDPCommandResult = (
+  value: Record<string, unknown>,
+): Record<string, unknown> => {
   return getOptionalRecord(value.result) || value;
 };
 
@@ -310,29 +407,27 @@ const createCDPEventWaiter = (
 const createTraceResult = (
   sessionInfo: ReturnType<SessionInfoReader>,
   startedAt: number,
-  artifact: { path: string; bytes: number },
-): {
-  artifact: { type: 'trace'; path: string; bytes: number };
-  session: { id: string; deviceId: string; pageId: string };
-  timing: { startedAt: number; finishedAt: number; durationMs: number };
-} => {
+  artifact: {
+    path: string;
+    relativePath: string;
+    bytes: number;
+    bucket: ArtifactBucket;
+    fileName: string;
+  },
+) => {
   const finishedAt = Date.now();
   return {
-  artifact: {
-    type: 'trace',
-    path: artifact.path,
-    bytes: artifact.bytes,
-  },
-  session: {
-    id: sessionInfo.sessionId,
-    deviceId: sessionInfo.deviceId,
-    pageId: sessionInfo.pageId,
-  },
-  timing: {
-    startedAt,
-    finishedAt,
-    durationMs: finishedAt - startedAt,
-  },
+    artifact: createArtifactMetadata(artifact, 'trace'),
+    session: {
+      id: sessionInfo.sessionId,
+      deviceId: sessionInfo.deviceId,
+      pageId: sessionInfo.pageId,
+    },
+    timing: {
+      startedAt,
+      finishedAt,
+      durationMs: finishedAt - startedAt,
+    },
   };
 };
 
@@ -378,29 +473,27 @@ const createProfileResult = (
   type: 'sampling-profile' | 'heap-snapshot',
   sessionInfo: ReturnType<SessionInfoReader>,
   startedAt: number,
-  artifact: { path: string; bytes: number },
-): {
-  artifact: { type: 'sampling-profile' | 'heap-snapshot'; path: string; bytes: number };
-  session: { id: string; deviceId: string; pageId: string };
-  timing: { startedAt: number; finishedAt: number; durationMs: number };
-} => {
+  artifact: {
+    path: string;
+    relativePath: string;
+    bytes: number;
+    bucket: ArtifactBucket;
+    fileName: string;
+  },
+) => {
   const finishedAt = Date.now();
   return {
-  artifact: {
-    type,
-    path: artifact.path,
-    bytes: artifact.bytes,
-  },
-  session: {
-    id: sessionInfo.sessionId,
-    deviceId: sessionInfo.deviceId,
-    pageId: sessionInfo.pageId,
-  },
-  timing: {
-    startedAt,
-    finishedAt,
-    durationMs: finishedAt - startedAt,
-  },
+    artifact: createArtifactMetadata(artifact, type),
+    session: {
+      id: sessionInfo.sessionId,
+      deviceId: sessionInfo.deviceId,
+      pageId: sessionInfo.pageId,
+    },
+    timing: {
+      startedAt,
+      finishedAt,
+      durationMs: finishedAt - startedAt,
+    },
   };
 };
 
@@ -408,11 +501,13 @@ export const createPerformanceDomainService = (deps: {
   getSessionInfo: SessionInfoReader;
   sendCommand: CDPCommandSender;
   subscribeToCDPEvent: SubscribeToCDPEvent;
+  createArtifactWriter: ArtifactWriterFactory;
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
       name: 'startTrace',
-      description: 'Start a CDP performance trace for the current session target.',
+      description:
+        'Start a CDP performance trace for the current session target.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -423,20 +518,21 @@ export const createPerformanceDomainService = (deps: {
           },
           options: {
             type: 'string',
-            description: 'Optional trace options string. Passed to Tracing.start.',
+            description:
+              'Optional trace options string. Passed to Tracing.start.',
           },
         },
       },
     },
     {
       name: 'stopTrace',
-      description: 'Stop the active trace and write the result to filePath.',
+      description:
+        'Stop the active trace and write the result to a Metro-managed artifact path.',
       inputSchema: {
         type: 'object',
         properties: {
-          filePath: FILE_PATH_SCHEMA,
+          nameHint: NAME_HINT_SCHEMA,
         },
-        required: ['filePath'],
       },
     },
   ];
@@ -449,8 +545,9 @@ export const createPerformanceDomainService = (deps: {
     }
 
     const input = getRecord(args);
-    const categories = getOptionalStringArray(input.categories)
-      || [...DEFAULT_RN_DEVTOOLS_TRACE_CATEGORIES];
+    const categories = getOptionalStringArray(input.categories) || [
+      ...DEFAULT_RN_DEVTOOLS_TRACE_CATEGORIES,
+    ];
     const options = getString(input.options);
 
     await deps.sendCommand('Tracing.start', {
@@ -479,13 +576,12 @@ export const createPerformanceDomainService = (deps: {
     }
 
     const input = getRecord(args);
-    const filePath = getString(input.filePath);
-    if (!filePath) {
-      throw new Error('"filePath" is required');
-    }
-
     const startedAt = traceState.startedAt;
-    const writer = await createArtifactFileWriter(filePath);
+    const writer = await deps.createArtifactWriter(
+      'traces',
+      'json',
+      getString(input.nameHint),
+    );
     let pendingWrites = Promise.resolve();
     let wroteHeader = false;
     let isFirstEvent = true;
@@ -530,7 +626,9 @@ export const createPerformanceDomainService = (deps: {
       if (!wroteHeader) {
         await writer.write('{"traceEvents":[');
       }
-      await writer.write(`],"metadata":${JSON.stringify(createTraceMetadata(startedAt, traceWindow))}}`);
+      await writer.write(
+        `],"metadata":${JSON.stringify(createTraceMetadata(startedAt, traceWindow))}}`,
+      );
       const artifact = await writer.finalize();
       return createTraceResult(deps.getSessionInfo(), startedAt, artifact);
     } catch (error) {
@@ -547,10 +645,10 @@ export const createPerformanceDomainService = (deps: {
     getTools: () => tools,
     callTool: async (toolName, args) => {
       if (toolName === 'startTrace') {
-        return await startTrace(args);
+        return startTrace(args);
       }
       if (toolName === 'stopTrace') {
-        return await stopTrace(args);
+        return stopTrace(args);
       }
       return undefined;
     },
@@ -565,7 +663,10 @@ export const createPerformanceDomainService = (deps: {
 
 export const createReactDomainService = (deps: {
   sessionId: string;
-  sendReactDevToolsMessage: (message: { event: string; payload: unknown }) => void;
+  sendReactDevToolsMessage: (message: {
+    event: string;
+    payload: unknown;
+  }) => void;
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
@@ -584,7 +685,7 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'getChildren',
-      description: 'Get a node\'s direct children with cursor-based pagination.',
+      description: "Get a node's direct children with cursor-based pagination.",
       inputSchema: {
         type: 'object',
         properties: {
@@ -606,7 +707,8 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'getProps',
-      description: 'Get inspected props for a node with cursor-based pagination.',
+      description:
+        'Get inspected props for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -628,7 +730,8 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'getState',
-      description: 'Get inspected state for a node with cursor-based pagination.',
+      description:
+        'Get inspected state for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -650,7 +753,8 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'getHooks',
-      description: 'Get inspected hooks for a node with cursor-based pagination.',
+      description:
+        'Get inspected hooks for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -661,10 +765,7 @@ export const createReactDomainService = (deps: {
           path: {
             type: 'array',
             items: {
-              oneOf: [
-                { type: 'string' },
-                { type: 'integer' },
-              ],
+              oneOf: [{ type: 'string' }, { type: 'integer' }],
             },
             description: 'Optional path into hooks tree, e.g. [0, "subHooks"].',
           },
@@ -713,20 +814,23 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'startProfiling',
-      description: 'Start React profiling or request reload-and-profile when supported.',
+      description:
+        'Start React profiling or request reload-and-profile when supported.',
       inputSchema: {
         type: 'object',
         properties: {
           shouldRestart: {
             type: 'boolean',
-            description: 'If true, requests reload-and-profile instead of starting immediately.',
+            description:
+              'If true, requests reload-and-profile instead of starting immediately.',
           },
         },
       },
     },
     {
       name: 'isProfilingStarted',
-      description: 'Get current React profiling status and recorded data availability.',
+      description:
+        'Get current React profiling status and recorded data availability.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -734,24 +838,28 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'stopProfiling',
-      description: 'Stop React profiling and return a compact summary of the captured session.',
+      description:
+        'Stop React profiling and return a compact summary of the captured session.',
       inputSchema: {
         type: 'object',
         properties: {
           waitForDataMs: {
             type: 'number',
-            description: 'Max wait for backend profiling data processing. Default 3000ms, max 10000ms.',
+            description:
+              'Max wait for backend profiling data processing. Default 3000ms, max 10000ms.',
           },
           slowRenderThresholdMs: {
             type: 'number',
-            description: 'Threshold used to classify slow commits. Default 16ms.',
+            description:
+              'Threshold used to classify slow commits. Default 16ms.',
           },
         },
       },
     },
     {
       name: 'getRenderData',
-      description: 'Get a paged summary of a single React commit by rootId and commitIndex.',
+      description:
+        'Get a paged summary of a single React commit by rootId and commitIndex.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -778,7 +886,8 @@ export const createReactDomainService = (deps: {
           },
           slowRenderThresholdMs: {
             type: 'number',
-            description: 'Threshold used to classify slow fibers. Default 16ms.',
+            description:
+              'Threshold used to classify slow fibers. Default 16ms.',
           },
         },
         required: ['rootId', 'commitIndex'],
@@ -801,21 +910,21 @@ export const createReactDomainService = (deps: {
         case 'getChildren':
           return store.getChildren(sessionDeviceId, args);
         case 'getProps':
-          return await store.getProps(sessionDeviceId, args);
+          return store.getProps(sessionDeviceId, args);
         case 'getState':
-          return await store.getState(sessionDeviceId, args);
+          return store.getState(sessionDeviceId, args);
         case 'getHooks':
-          return await store.getHooks(sessionDeviceId, args);
+          return store.getHooks(sessionDeviceId, args);
         case 'searchNodes':
           return store.searchNodes(sessionDeviceId, args);
         case 'startProfiling':
-          return await store.startProfiling(sessionDeviceId, args);
+          return store.startProfiling(sessionDeviceId, args);
         case 'isProfilingStarted':
-          return await store.isProfilingStarted(sessionDeviceId);
+          return store.isProfilingStarted(sessionDeviceId);
         case 'stopProfiling':
-          return await store.stopProfiling(sessionDeviceId, args);
+          return store.stopProfiling(sessionDeviceId, args);
         case 'getRenderData':
-          return await store.getRenderData(sessionDeviceId, args);
+          return store.getRenderData(sessionDeviceId, args);
         default:
           return undefined;
       }
@@ -836,22 +945,24 @@ export const createMemoryDomainService = (deps: {
   getSessionInfo: SessionInfoReader;
   sendCommand: CDPCommandSender;
   subscribeToCDPEvent: SubscribeToCDPEvent;
+  createArtifactWriter: ArtifactWriterFactory;
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
       name: 'takeHeapSnapshot',
-      description: 'Capture a heap snapshot and write it to filePath.',
+      description:
+        'Capture a heap snapshot and write it to a Metro-managed artifact path.',
       inputSchema: {
         type: 'object',
         properties: {
-          filePath: FILE_PATH_SCHEMA,
+          nameHint: NAME_HINT_SCHEMA,
         },
-        required: ['filePath'],
       },
     },
     {
       name: 'startSampling',
-      description: 'Start heap allocation sampling for the current session target.',
+      description:
+        'Start heap allocation sampling for the current session target.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -872,13 +983,13 @@ export const createMemoryDomainService = (deps: {
     },
     {
       name: 'stopSampling',
-      description: 'Stop heap allocation sampling and write the profile to filePath.',
+      description:
+        'Stop heap allocation sampling and write the profile to a Metro-managed artifact path.',
       inputSchema: {
         type: 'object',
         properties: {
-          filePath: FILE_PATH_SCHEMA,
+          nameHint: NAME_HINT_SCHEMA,
         },
-        required: ['filePath'],
       },
     },
   ];
@@ -888,26 +999,30 @@ export const createMemoryDomainService = (deps: {
 
   const takeHeapSnapshot = async (args: unknown) => {
     if (heapSnapshotInProgress) {
-      throw new Error('A heap snapshot is already in progress for this session');
+      throw new Error(
+        'A heap snapshot is already in progress for this session',
+      );
     }
 
     const input = getRecord(args);
-    const filePath = getString(input.filePath);
-    if (!filePath) {
-      throw new Error('"filePath" is required');
-    }
-
     const startedAt = Date.now();
-    const writer = await createArtifactFileWriter(filePath);
+    const writer = await deps.createArtifactWriter(
+      'memory',
+      'heapsnapshot',
+      getString(input.nameHint),
+    );
     heapSnapshotInProgress = true;
 
     let reportCompleted = false;
+    let pendingChunkWrites = Promise.resolve();
     const chunkUnsubscribe = deps.subscribeToCDPEvent(
       'HeapProfiler.addHeapSnapshotChunk',
-      async (params) => {
+      (params) => {
         const chunk = getString(params.chunk);
         if (chunk) {
-          await writer.write(chunk);
+          pendingChunkWrites = pendingChunkWrites.then(() =>
+            writer.write(chunk),
+          );
         }
       },
     );
@@ -932,6 +1047,7 @@ export const createMemoryDomainService = (deps: {
       if (!reportCompleted) {
         await progressPromise;
       }
+      await pendingChunkWrites;
 
       const artifact = await writer.finalize();
       return createProfileResult(
@@ -998,13 +1114,12 @@ export const createMemoryDomainService = (deps: {
     }
 
     const input = getRecord(args);
-    const filePath = getString(input.filePath);
-    if (!filePath) {
-      throw new Error('"filePath" is required');
-    }
-
     const startedAt = samplingState.startedAt;
-    const writer = await createArtifactFileWriter(filePath);
+    const writer = await deps.createArtifactWriter(
+      'profiles',
+      'heapprofile',
+      getString(input.nameHint),
+    );
 
     try {
       const result = await deps.sendCommand('HeapProfiler.stopSampling');
@@ -1028,13 +1143,13 @@ export const createMemoryDomainService = (deps: {
     getTools: () => tools,
     callTool: async (toolName, args) => {
       if (toolName === 'takeHeapSnapshot') {
-        return await takeHeapSnapshot(args);
+        return takeHeapSnapshot(args);
       }
       if (toolName === 'startSampling') {
-        return await startSampling(args);
+        return startSampling(args);
       }
       if (toolName === 'stopSampling') {
-        return await stopSampling(args);
+        return stopSampling(args);
       }
       return undefined;
     },
@@ -1057,7 +1172,8 @@ export const createNetworkDomainService = (deps: {
   const tools: AgentTool[] = [
     {
       name: 'startRecording',
-      description: 'Start recording raw CDP network activity for the current session target.',
+      description:
+        'Start recording raw CDP network activity for the current session target.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -1065,7 +1181,8 @@ export const createNetworkDomainService = (deps: {
     },
     {
       name: 'stopRecording',
-      description: 'Stop recording network activity without clearing the captured request buffer.',
+      description:
+        'Stop recording network activity without clearing the captured request buffer.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -1073,7 +1190,8 @@ export const createNetworkDomainService = (deps: {
     },
     {
       name: 'getRecordingStatus',
-      description: 'Return network recording state and buffer metadata for the current session.',
+      description:
+        'Return network recording state and buffer metadata for the current session.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -1081,24 +1199,27 @@ export const createNetworkDomainService = (deps: {
     },
     {
       name: 'listRequests',
-      description: 'List captured network request summaries with cursor pagination.',
+      description:
+        'List captured network request summaries with cursor pagination.',
       inputSchema: {
         type: 'object',
         properties: {
           limit: {
             type: 'number',
-            description: `Maximum number of requests to return. Defaults to ${DEFAULT_PAGE_LIMIT}, max ${MAX_PAGE_LIMIT}.`,
+            description: `Maximum number of requests to return. Defaults to ${DEFAULT_DOMAIN_PAGE_LIMIT}, max ${MAX_DOMAIN_PAGE_LIMIT}.`,
           },
           cursor: {
             type: 'string',
-            description: 'Opaque pagination cursor from a previous listRequests call.',
+            description:
+              'Opaque pagination cursor from a previous listRequests call.',
           },
         },
       },
     },
     {
       name: 'getRequestDetails',
-      description: 'Return detailed metadata for a captured network request without bodies.',
+      description:
+        'Return detailed metadata for a captured network request without bodies.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1112,7 +1233,8 @@ export const createNetworkDomainService = (deps: {
     },
     {
       name: 'getRequestBody',
-      description: 'Fetch the request body for a captured network request when supported by the target.',
+      description:
+        'Fetch the request body for a captured network request when supported by the target.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1126,7 +1248,8 @@ export const createNetworkDomainService = (deps: {
     },
     {
       name: 'getResponseBody',
-      description: 'Fetch the response body for a captured network request when supported by the target.',
+      description:
+        'Fetch the response body for a captured network request when supported by the target.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1233,19 +1356,28 @@ export const createNetworkDomainService = (deps: {
           const redirectChain = record.redirectChain || [];
           redirectChain.push({
             url: getString(redirectResponse.url),
-            status: typeof redirectResponse.status === 'number' ? redirectResponse.status : undefined,
+            status:
+              typeof redirectResponse.status === 'number'
+                ? redirectResponse.status
+                : undefined,
             statusText: getString(redirectResponse.statusText),
           });
           record.redirectChain = redirectChain;
         }
 
-        record.url = getString(request?.url) || getString(params.documentURL) || record.url;
+        record.url =
+          getString(request?.url) ||
+          getString(params.documentURL) ||
+          record.url;
         record.method = getString(request?.method) || record.method;
         record.type = getString(params.type) || record.type;
-        record.startTimeMs = toMilliseconds(params.timestamp) ?? record.startTimeMs;
-        record.wallTimeMs = toMilliseconds(params.wallTime) ?? record.wallTimeMs;
+        record.startTimeMs =
+          toMilliseconds(params.timestamp) ?? record.startTimeMs;
+        record.wallTimeMs =
+          toMilliseconds(params.wallTime) ?? record.wallTimeMs;
         record.initiator = params.initiator ?? record.initiator;
-        record.priority = getString(request?.initialPriority) || record.priority;
+        record.priority =
+          getString(request?.initialPriority) || record.priority;
         record.request = {
           url: getString(request?.url),
           method: getString(request?.method),
@@ -1254,22 +1386,32 @@ export const createNetworkDomainService = (deps: {
           initialPriority: getString(request?.initialPriority),
           referrerPolicy: getString(request?.referrerPolicy),
           isSameSite: getOptionalBoolean(request?.isSameSite),
-          postDataEntries: Array.isArray(request?.postDataEntries) ? request?.postDataEntries : undefined,
-          hasPostData: request ? Boolean(request.hasPostData) : record.request?.hasPostData,
+          postDataEntries: Array.isArray(request?.postDataEntries)
+            ? request?.postDataEntries
+            : undefined,
+          hasPostData: request
+            ? Boolean(request.hasPostData)
+            : record.request?.hasPostData,
         };
       }),
-      deps.subscribeToCDPEvent('Network.requestWillBeSentExtraInfo', (params) => {
-        const requestId = getString(params.requestId);
-        if (!requestId) {
-          return;
-        }
+      deps.subscribeToCDPEvent(
+        'Network.requestWillBeSentExtraInfo',
+        (params) => {
+          const requestId = getString(params.requestId);
+          if (!requestId) {
+            return;
+          }
 
-        const record = ensureRecord(requestId);
-        record.requestHeadersExtra = getOptionalRecord(params.headers) || record.requestHeadersExtra;
-        record.requestAssociatedCookies = Array.isArray(params.associatedCookies)
-          ? params.associatedCookies
-          : record.requestAssociatedCookies;
-      }),
+          const record = ensureRecord(requestId);
+          record.requestHeadersExtra =
+            getOptionalRecord(params.headers) || record.requestHeadersExtra;
+          record.requestAssociatedCookies = Array.isArray(
+            params.associatedCookies,
+          )
+            ? params.associatedCookies
+            : record.requestAssociatedCookies;
+        },
+      ),
       deps.subscribeToCDPEvent('Network.responseReceived', (params) => {
         const requestId = getString(params.requestId);
         if (!requestId) {
@@ -1280,19 +1422,33 @@ export const createNetworkDomainService = (deps: {
         const response = getOptionalRecord(params.response);
 
         record.type = getString(params.type) || record.type;
-        record.status = typeof response?.status === 'number' ? response.status : record.status;
-        record.statusText = getString(response?.statusText) || record.statusText;
+        record.status =
+          typeof response?.status === 'number'
+            ? response.status
+            : record.status;
+        record.statusText =
+          getString(response?.statusText) || record.statusText;
         record.mimeType = getString(response?.mimeType) || record.mimeType;
         record.protocol = getString(response?.protocol) || record.protocol;
-        record.remoteIPAddress = getString(response?.remoteIPAddress) || record.remoteIPAddress;
-        record.remotePort = getOptionalNumber(response?.remotePort) || record.remotePort;
-        record.fromDiskCache = getOptionalBoolean(response?.fromDiskCache) ?? record.fromDiskCache;
-        record.fromMemoryCache = getOptionalBoolean(response?.fromMemoryCache) ?? record.fromMemoryCache;
-        record.fromPrefetchCache = getOptionalBoolean(response?.fromPrefetchCache) ?? record.fromPrefetchCache;
-        record.encodedDataLength = getOptionalNumber(response?.encodedDataLength) ?? record.encodedDataLength;
+        record.remoteIPAddress =
+          getString(response?.remoteIPAddress) || record.remoteIPAddress;
+        record.remotePort =
+          getOptionalNumber(response?.remotePort) || record.remotePort;
+        record.fromDiskCache =
+          getOptionalBoolean(response?.fromDiskCache) ?? record.fromDiskCache;
+        record.fromMemoryCache =
+          getOptionalBoolean(response?.fromMemoryCache) ??
+          record.fromMemoryCache;
+        record.fromPrefetchCache =
+          getOptionalBoolean(response?.fromPrefetchCache) ??
+          record.fromPrefetchCache;
+        record.encodedDataLength =
+          getOptionalNumber(response?.encodedDataLength) ??
+          record.encodedDataLength;
         record.response = {
           url: getString(response?.url),
-          status: typeof response?.status === 'number' ? response.status : undefined,
+          status:
+            typeof response?.status === 'number' ? response.status : undefined,
           statusText: getString(response?.statusText),
           headers: getOptionalRecord(response?.headers),
           mimeType: getString(response?.mimeType),
@@ -1309,18 +1465,22 @@ export const createNetworkDomainService = (deps: {
           cacheStorageCacheName: getString(response?.cacheStorageCacheName),
         };
       }),
-      deps.subscribeToCDPEvent('Network.responseReceivedExtraInfo', (params) => {
-        const requestId = getString(params.requestId);
-        if (!requestId) {
-          return;
-        }
+      deps.subscribeToCDPEvent(
+        'Network.responseReceivedExtraInfo',
+        (params) => {
+          const requestId = getString(params.requestId);
+          if (!requestId) {
+            return;
+          }
 
-        const record = ensureRecord(requestId);
-        record.responseHeadersExtra = getOptionalRecord(params.headers) || record.responseHeadersExtra;
-        record.responseBlockedCookies = Array.isArray(params.blockedCookies)
-          ? params.blockedCookies
-          : record.responseBlockedCookies;
-      }),
+          const record = ensureRecord(requestId);
+          record.responseHeadersExtra =
+            getOptionalRecord(params.headers) || record.responseHeadersExtra;
+          record.responseBlockedCookies = Array.isArray(params.blockedCookies)
+            ? params.blockedCookies
+            : record.responseBlockedCookies;
+        },
+      ),
       deps.subscribeToCDPEvent('Network.requestServedFromCache', (params) => {
         const requestId = getString(params.requestId);
         if (!requestId) {
@@ -1340,8 +1500,11 @@ export const createNetworkDomainService = (deps: {
         record.loadingFinished = true;
         record.loadingFailed = false;
         record.endTimeMs = toMilliseconds(params.timestamp) ?? record.endTimeMs;
-        record.encodedDataLength = getOptionalNumber(params.encodedDataLength) ?? record.encodedDataLength;
-        record.transferSize = getOptionalNumber(params.encodedDataLength) ?? record.transferSize;
+        record.encodedDataLength =
+          getOptionalNumber(params.encodedDataLength) ??
+          record.encodedDataLength;
+        record.transferSize =
+          getOptionalNumber(params.encodedDataLength) ?? record.transferSize;
         updateTiming(record);
       }),
       deps.subscribeToCDPEvent('Network.loadingFailed', (params) => {
@@ -1355,8 +1518,10 @@ export const createNetworkDomainService = (deps: {
         record.loadingFailed = true;
         record.endTimeMs = toMilliseconds(params.timestamp) ?? record.endTimeMs;
         record.failureText = getString(params.errorText) || record.failureText;
-        record.blockedReason = getString(params.blockedReason) || record.blockedReason;
-        record.corsErrorStatus = params.corsErrorStatus ?? record.corsErrorStatus;
+        record.blockedReason =
+          getString(params.blockedReason) || record.blockedReason;
+        record.corsErrorStatus =
+          params.corsErrorStatus ?? record.corsErrorStatus;
         updateTiming(record);
       }),
     );
@@ -1405,8 +1570,8 @@ export const createNetworkDomainService = (deps: {
   const listRequests = async (args: unknown) => {
     const input = getRecord(args);
     const limit = Math.min(
-      getOptionalPositiveInteger(input.limit) ?? DEFAULT_PAGE_LIMIT,
-      MAX_PAGE_LIMIT,
+      getOptionalPositiveInteger(input.limit) ?? DEFAULT_DOMAIN_PAGE_LIMIT,
+      MAX_DOMAIN_PAGE_LIMIT,
     );
     const cursor = getString(input.cursor);
     const rows = state.requestOrder
@@ -1415,7 +1580,6 @@ export const createNetworkDomainService = (deps: {
       .reverse()
       .map(createNetworkSummary);
     const page = paginateRows(rows, {
-      kind: 'tools',
       scope: `network:requests:${state.generation}`,
       limit,
       cursor,
@@ -1484,7 +1648,9 @@ export const createNetworkDomainService = (deps: {
     }
 
     try {
-      const response = await deps.sendCommand('Network.getRequestPostData', { requestId });
+      const response = await deps.sendCommand('Network.getRequestPostData', {
+        requestId,
+      });
       const result = getCDPCommandResult(response);
       const body = getString(result.postData);
       if (!body) {
@@ -1529,12 +1695,15 @@ export const createNetworkDomainService = (deps: {
       return {
         requestId,
         available: false,
-        reason: 'Response body is unavailable until the request finishes loading.',
+        reason:
+          'Response body is unavailable until the request finishes loading.',
       };
     }
 
     try {
-      const response = await deps.sendCommand('Network.getResponseBody', { requestId });
+      const response = await deps.sendCommand('Network.getResponseBody', {
+        requestId,
+      });
       const result = getCDPCommandResult(response);
       const body = getString(result.body);
       const base64Encoded = getOptionalBoolean(result.base64Encoded) ?? false;
@@ -1587,25 +1756,25 @@ export const createNetworkDomainService = (deps: {
     getTools: () => tools,
     callTool: async (toolName, args) => {
       if (toolName === 'startRecording') {
-        return await startRecording();
+        return startRecording();
       }
       if (toolName === 'stopRecording') {
-        return await stopRecording();
+        return stopRecording();
       }
       if (toolName === 'getRecordingStatus') {
-        return await getRecordingStatus();
+        return getRecordingStatus();
       }
       if (toolName === 'listRequests') {
-        return await listRequests(args);
+        return listRequests(args);
       }
       if (toolName === 'getRequestDetails') {
-        return await getRequestDetails(args);
+        return getRequestDetails(args);
       }
       if (toolName === 'getRequestBody') {
-        return await getRequestBody(args);
+        return getRequestBody(args);
       }
       if (toolName === 'getResponseBody') {
-        return await getResponseBody(args);
+        return getResponseBody(args);
       }
       return undefined;
     },
