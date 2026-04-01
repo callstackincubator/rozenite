@@ -6,6 +6,14 @@
   "main": "./dist/react-native/index.cjs",
   "module": "./dist/react-native/index.js",
   "types": "./dist/react-native/index.d.ts",
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
   "scripts": {
     "build": "rozenite build",
     "dev": "rozenite dev",
@@ -65,5 +73,8 @@
       "require": "./dist/react-native/index.cjs"
     },
     "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

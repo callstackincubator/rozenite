@@ -6,6 +6,14 @@
   "main": "./dist/cjs/react-native/index.js",
   "module": "./dist/esm/react-native/index.js",
   "types": "./dist/types/react-native/index.d.ts",
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -28,6 +36,9 @@
     "build:types": "tsc -p tsconfig.metro.types.json && tsc -p tsconfig.react-native.types.json",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "lint": "eslint ."
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@rozenite/middleware": "workspace:*",
