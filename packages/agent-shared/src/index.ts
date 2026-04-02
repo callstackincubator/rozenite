@@ -164,6 +164,10 @@ export type ToolResultPayload = {
   error?: string;
 };
 
+export type AgentSessionReadyPayload = {
+  sessionId?: string;
+};
+
 export type RegisterToolMessage = {
   type: 'register-tool';
   payload: RegisterToolPayload;
@@ -184,8 +188,14 @@ export type ToolResultMessage = {
   payload: ToolResultPayload;
 };
 
+export type AgentSessionReadyMessage = {
+  type: 'agent-session-ready';
+  payload: AgentSessionReadyPayload;
+};
+
 export type AgentMessage =
   | RegisterToolMessage
   | UnregisterToolMessage
   | ToolCallMessage
-  | ToolResultMessage;
+  | ToolResultMessage
+  | AgentSessionReadyMessage;

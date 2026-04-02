@@ -1,6 +1,8 @@
 import WebSocket from 'ws';
+import { AGENT_PLUGIN_ID } from '@rozenite/agent-shared';
 import type {
   AgentSessionInfo,
+  AgentSessionReadyMessage,
   AgentSessionStatus,
   MetroTarget,
 } from '@rozenite/agent-shared';
@@ -16,6 +18,7 @@ import {
   createReactDomainService,
   type LocalAgentToolService,
 } from './local-domains.js';
+import { logger } from '../logger.js';
 
 type AgentMessageHandler = ReturnType<typeof createAgentMessageHandler>;
 
@@ -79,6 +82,7 @@ export const createAgentSession = (options: {
   let bindingName: string | null = null;
   let bootstrapped = false;
   let terminationNotified = false;
+  let disconnectLogged = false;
 
   const pendingCommands = new Map<number, PendingCommand>();
   const cdpEventListeners = new Map<
@@ -217,6 +221,39 @@ export const createAgentSession = (options: {
     });
   };
 
+  const sendAgentSessionReady = async (): Promise<void> => {
+    const message: AgentSessionReadyMessage = {
+      type: 'agent-session-ready',
+      payload: {
+        sessionId: options.target.id,
+      },
+    };
+
+    await sendDomainMessage('rozenite', {
+      pluginId: AGENT_PLUGIN_ID,
+      type: message.type,
+      payload: message.payload,
+    });
+  };
+
+  const logConnected = (): void => {
+    logger.info(
+      `Rozenite for Agents connected to device ${options.target.name} (${options.target.id}).`,
+    );
+    disconnectLogged = false;
+  };
+
+  const logDisconnected = (): void => {
+    if (disconnectLogged || connectedAt === undefined) {
+      return;
+    }
+
+    logger.info(
+      `Rozenite for Agents disconnected from device ${options.target.name} (${options.target.id}).`,
+    );
+    disconnectLogged = true;
+  };
+
   const evaluateRuntime = async (
     expression: string,
     returnByValue = false,
@@ -304,6 +341,7 @@ export const createAgentSession = (options: {
       await sendCommand('Runtime.evaluate', {
         expression: `void ${RUNTIME_GLOBAL}.initializeDomain("rozenite")`,
       });
+      await sendAgentSessionReady();
       await sendCommand('Runtime.evaluate', {
         expression: `void ${RUNTIME_GLOBAL}.initializeDomain("react-devtools")`,
       });
@@ -322,6 +360,7 @@ export const createAgentSession = (options: {
   };
 
   const handleSocketClosed = (): void => {
+    logDisconnected();
     bindingName = null;
     bootstrapped = false;
     connectedAt = undefined;
@@ -414,6 +453,7 @@ export const createAgentSession = (options: {
       return;
     }
 
+    logger.debug('Received Rozenite binding payload.', bindingPayload);
     if (bindingPayload.domain === 'rozenite') {
       handler.handleDeviceMessage(
         options.target.id,
@@ -447,6 +487,7 @@ export const createAgentSession = (options: {
             void sendDomainMessage('rozenite', message);
           },
         });
+        logConnected();
 
         void (async () => {
           try {
@@ -543,6 +584,7 @@ export const createAgentSession = (options: {
     stopped = true;
     clearBootstrapTimer();
     await disposeServices();
+    logDisconnected();
 
     if (ws) {
       const socket = ws;
