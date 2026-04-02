@@ -33,6 +33,12 @@ type PendingCommand = {
   reject: (error: Error) => void;
 };
 
+type StartReadiness = {
+  promise: Promise<void>;
+  resolve: () => void;
+  reject: (error: Error) => void;
+};
+
 type CDPEvaluateResponse = {
   result?: {
     value?: unknown;
@@ -83,6 +89,7 @@ export const createAgentSession = (options: {
   let bootstrapped = false;
   let terminationNotified = false;
   let disconnectLogged = false;
+  let startReadiness: StartReadiness | null = null;
 
   const pendingCommands = new Map<number, PendingCommand>();
   const cdpEventListeners = new Map<
@@ -127,6 +134,37 @@ export const createAgentSession = (options: {
 
   const touch = (): void => {
     lastActivityAt = Date.now();
+  };
+
+  const createStartReadiness = (): Promise<void> => {
+    let resolve!: () => void;
+    let reject!: (error: Error) => void;
+    const promise = new Promise<void>((resolvePromise, rejectPromise) => {
+      resolve = () => {
+        startReadiness = null;
+        resolvePromise();
+      };
+      reject = (error: Error) => {
+        startReadiness = null;
+        rejectPromise(error);
+      };
+    });
+
+    startReadiness = {
+      promise,
+      resolve,
+      reject,
+    };
+
+    return promise;
+  };
+
+  const resolveStartReadiness = (): void => {
+    startReadiness?.resolve();
+  };
+
+  const rejectStartReadiness = (error: Error): void => {
+    startReadiness?.reject(error);
   };
 
   const emitCDPEvent = (
@@ -349,6 +387,7 @@ export const createAgentSession = (options: {
       bootstrapped = true;
       lastError = undefined;
       touch();
+      resolveStartReadiness();
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
       scheduleBootstrap();
@@ -364,6 +403,9 @@ export const createAgentSession = (options: {
     bindingName = null;
     bootstrapped = false;
     connectedAt = undefined;
+    rejectStartReadiness(
+      new Error('CDP connection closed before bootstrap completed'),
+    );
 
     handler.disconnectDevice(options.target.id);
 
@@ -496,10 +538,18 @@ export const createAgentSession = (options: {
             scheduleBootstrap();
             resolve();
           } catch (error) {
-            lastError = error instanceof Error ? error.message : String(error);
+            const startupError =
+              socket.readyState === WebSocket.CLOSED && !bootstrapped
+                ? new Error('CDP connection closed before bootstrap completed')
+                : error instanceof Error
+                  ? error
+                  : new Error(String(error));
+
+            lastError = startupError.message;
             clearBootstrapTimer();
+            rejectStartReadiness(startupError);
             ws?.close();
-            reject(error instanceof Error ? error : new Error(String(error)));
+            reject(startupError);
           }
         })();
       });
@@ -572,7 +622,19 @@ export const createAgentSession = (options: {
   };
 
   const start = async (): Promise<void> => {
-    await connect();
+    const readinessPromise = createStartReadiness();
+    void readinessPromise.catch(() => undefined);
+
+    try {
+      await connect();
+    } catch (error) {
+      rejectStartReadiness(
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      throw error;
+    }
+
+    await readinessPromise;
   };
 
   const stop = async (): Promise<void> => {
@@ -583,6 +645,9 @@ export const createAgentSession = (options: {
 
     stopped = true;
     clearBootstrapTimer();
+    rejectStartReadiness(
+      new Error('Agent session stopped before bootstrap completed'),
+    );
     await disposeServices();
     logDisconnected();
 

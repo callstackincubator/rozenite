@@ -52,7 +52,19 @@ vi.mock('../agent/session.js', () => ({
 describe('agent session manager', () => {
   afterEach(() => {
     vi.clearAllMocks();
+    mocks.start.mockReset();
+    mocks.start.mockResolvedValue(undefined);
   });
+
+  const target = {
+    id: 'device-1',
+    name: 'Phone',
+    appId: 'app.test',
+    pageId: 'page-1',
+    title: 'App',
+    description: 'desc',
+    webSocketDebuggerUrl: 'ws://localhost:8081/debug',
+  };
 
   it('exposes shared route constants', () => {
     expect(AGENT_INFO_ROUTE).toBe('/rozenite/agent/info');
@@ -93,15 +105,7 @@ describe('agent session manager', () => {
   });
 
   it('creates and reuses the same session per device', async () => {
-    mocks.resolveMetroTarget.mockResolvedValue({
-      id: 'device-1',
-      name: 'Phone',
-      appId: 'app.test',
-      pageId: 'page-1',
-      title: 'App',
-      description: 'desc',
-      webSocketDebuggerUrl: 'ws://localhost:8081/debug',
-    });
+    mocks.resolveMetroTarget.mockResolvedValue(target);
     mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
 
     const manager = createAgentSessionManager({ projectRoot: '/app' });
@@ -118,15 +122,7 @@ describe('agent session manager', () => {
   });
 
   it('stops and removes sessions', async () => {
-    mocks.resolveMetroTarget.mockResolvedValue({
-      id: 'device-1',
-      name: 'Phone',
-      appId: 'app.test',
-      pageId: 'page-1',
-      title: 'App',
-      description: 'desc',
-      webSocketDebuggerUrl: 'ws://localhost:8081/debug',
-    });
+    mocks.resolveMetroTarget.mockResolvedValue(target);
     mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
 
     const manager = createAgentSessionManager({ projectRoot: '/app' });
@@ -139,15 +135,7 @@ describe('agent session manager', () => {
   });
 
   it('lists and calls tools via the session instance', async () => {
-    mocks.resolveMetroTarget.mockResolvedValue({
-      id: 'device-1',
-      name: 'Phone',
-      appId: 'app.test',
-      pageId: 'page-1',
-      title: 'App',
-      description: 'desc',
-      webSocketDebuggerUrl: 'ws://localhost:8081/debug',
-    });
+    mocks.resolveMetroTarget.mockResolvedValue(target);
     mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
     mocks.getTools.mockReturnValue([{ name: 'startTrace' }]);
     mocks.callTool.mockResolvedValue({ ok: true });
@@ -161,6 +149,47 @@ describe('agent session manager', () => {
     await expect(
       manager.callSessionTool('device-1', 'startTrace', {}),
     ).resolves.toEqual({ ok: true });
+  });
+
+  it('waits for session startup before resolving createSession', async () => {
+    mocks.resolveMetroTarget.mockResolvedValue(target);
+    mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
+
+    let resolveStart: (() => void) | undefined;
+    mocks.start.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveStart = resolve;
+        }),
+    );
+
+    const manager = createAgentSessionManager({ projectRoot: '/app' });
+    const createPromise = manager.createSession({ deviceId: 'device-1' });
+    const onResolved = vi.fn();
+    createPromise.then(onResolved);
+
+    await Promise.resolve();
+    expect(onResolved).not.toHaveBeenCalled();
+    expect(manager.listSessions()).toEqual([]);
+
+    resolveStart?.();
+
+    await expect(createPromise).resolves.toEqual({
+      id: 'device-1',
+      deviceName: 'Phone',
+    });
+  });
+
+  it('lists the session after createSession resolves', async () => {
+    mocks.resolveMetroTarget.mockResolvedValue(target);
+    const sessionInfo = { id: 'device-1', deviceName: 'Phone' };
+    mocks.getInfo.mockReturnValue(sessionInfo);
+
+    const manager = createAgentSessionManager({ projectRoot: '/app' });
+
+    await manager.createSession({ deviceId: 'device-1' });
+
+    expect(manager.listSessions()).toEqual([sessionInfo]);
   });
 
   it('syncs host and port overrides', () => {

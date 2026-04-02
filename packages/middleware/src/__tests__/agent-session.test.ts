@@ -234,7 +234,7 @@ const flushMicrotasks = async () => {
   await Promise.resolve();
 };
 
-const startSession = async () => {
+const createStartedSession = () => {
   const session = createAgentSession({
     projectRoot: '/app',
     host: 'localhost',
@@ -244,17 +244,22 @@ const startSession = async () => {
 
   const startPromise = session.start();
   const socket = mocks.wsInstances[0];
-  socket.open();
-  await startPromise;
 
-  return { session, socket };
+  return { session, socket, startPromise };
+};
+
+const startSession = async () => {
+  const started = createStartedSession();
+  started.socket.open();
+  await vi.advanceTimersByTimeAsync(500);
+  await flushMicrotasks();
+  await started.startPromise;
+
+  return { session: started.session, socket: started.socket };
 };
 
 const bootstrapSession = async () => {
-  const started = await startSession();
-  await vi.advanceTimersByTimeAsync(500);
-  await flushMicrotasks();
-  return started;
+  return await startSession();
 };
 
 const getExpressions = (): string[] => {
@@ -271,6 +276,46 @@ describe('agent session', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('does not resolve start before the bootstrap delay elapses', async () => {
+    const { socket, startPromise } = createStartedSession();
+    const onResolved = vi.fn();
+    startPromise.then(onResolved);
+
+    socket.open();
+    await flushMicrotasks();
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(499);
+    await flushMicrotasks();
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    await flushMicrotasks();
+    await startPromise;
+
+    expect(onResolved).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves start after bootstrap completes', async () => {
+    const { startPromise, socket } = createStartedSession();
+    const onResolved = vi.fn();
+    startPromise.then(onResolved);
+
+    socket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    expect(onResolved).toHaveBeenCalledTimes(1);
+    await expect(startPromise).resolves.toBeUndefined();
+
+    const expressions = getExpressions();
+    expect(
+      expressions.some((expression) =>
+        expression.includes('initializeDomain("react-devtools")'),
+      ),
+    ).toBe(true);
   });
 
   it('emits agent-session-ready after rozenite domain initialization', async () => {
@@ -348,5 +393,19 @@ describe('agent session', () => {
     expect(mocks.loggerInfo).toHaveBeenCalledWith(
       'Rozenite for Agents disconnected from device iPhone 16 (device-1).',
     );
+  });
+
+  it('rejects startup if the websocket closes before bootstrap completes', async () => {
+    const { socket, startPromise } = createStartedSession();
+
+    socket.open();
+    await flushMicrotasks();
+
+    const rejection = expect(startPromise).rejects.toThrow(
+      'CDP connection closed before bootstrap completed',
+    );
+
+    socket.close();
+    await rejection;
   });
 });
