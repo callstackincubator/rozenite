@@ -3,10 +3,12 @@
 A Rozenite plugin for Redux state inspection and curated history control in React Native DevTools. It exposes store discovery, current state reads, action-history inspection, normal Redux action dispatch, and safe Redux DevTools history operations such as jump, toggle, reset, rollback, commit, sweep, pause, and lock.
 
 ## Domain
+
 - Plugin ID: `@rozenite/redux-devtools-plugin`
-- Domain token: discovered at runtime via `rozenite agent domains --session <sessionId>`
+- Domain token: `at-rozenite__redux-devtools-plugin`
 
 ## Tools
+
 - `list-stores` -> `{}`
 - `get-store-state` -> `{}` | `{"instanceId":"<instanceId>"}`
 - `list-actions` -> `{}` | `{"instanceId":"<instanceId>"}` | `{"instanceId":"<instanceId>","offset":0,"limit":50}`
@@ -22,6 +24,7 @@ A Rozenite plugin for Redux state inspection and curated history control in Reac
 - `set-locked` -> `{"locked":true}` | `{"instanceId":"<instanceId>","locked":false}`
 
 ## Minimal Flow
+
 Read:
 `list-stores` -> `get-store-state` or `list-actions` -> `get-action-details`.
 
