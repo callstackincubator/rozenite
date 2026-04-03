@@ -1,8 +1,7 @@
-# React Domain
-
-Search and traverse the React component tree, read props, state, and hooks for any node, and record render timelines (start/stop profiling, then fetch commit data) for performance analysis.
+Search and traverse the React component tree, read props, state, and hooks for any node, and record render timelines for performance analysis by starting and stopping profiling, then fetching commit data.
 
 ## Tools
+
 - `searchNodes` -> `{"query":"<query>"}` | `{"query":"<query>","cursor":"<cursor>"}` | `{"query":"<query>","limit":20}`
 - `getNode` -> `{"nodeId":123}`
 - `getChildren` -> `{"nodeId":123}` | `{"nodeId":123,"cursor":"<cursor>"}` | `{"nodeId":123,"limit":20}`
@@ -14,9 +13,10 @@ Search and traverse the React component tree, read props, state, and hooks for a
 - `stopProfiling` -> `{}` | `{"waitForDataMs":3000}` | `{"slowRenderThresholdMs":16}`
 - `getRenderData` -> `{"rootId":1,"commitIndex":0}` | `{"rootId":1,"commitIndex":0,"cursor":"<cursor>"}` | `{"rootId":1,"commitIndex":0,"limit":20}`
 
-## Minimal Flow
-Searching and inspecting:
+## Flow
+
+Search and inspect:
 `searchNodes` -> `getNode` / `getChildren` -> `getProps` / `getState` / `getHooks`.
 
-Profiling:
+Profile:
 `startProfiling` -> reproduce interaction -> `stopProfiling` -> `getRenderData`.
