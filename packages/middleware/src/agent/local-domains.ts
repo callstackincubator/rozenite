@@ -355,15 +355,7 @@ const createNetworkSummary = (record: NetworkRequestRecord) => ({
       : 'in-flight',
 });
 
-const createNetworkStatus = (
-  sessionInfo: ReturnType<SessionInfoReader>,
-  state: NetworkRecordingState,
-) => ({
-  session: {
-    id: sessionInfo.sessionId,
-    deviceId: sessionInfo.deviceId,
-    pageId: sessionInfo.pageId,
-  },
+const createNetworkStatus = (state: NetworkRecordingState) => ({
   recording: {
     isRecording: state.isRecording,
     startedAt: state.startedAt ?? null,
@@ -405,7 +397,6 @@ const createCDPEventWaiter = (
 };
 
 const createTraceResult = (
-  sessionInfo: ReturnType<SessionInfoReader>,
   startedAt: number,
   artifact: {
     path: string;
@@ -418,11 +409,6 @@ const createTraceResult = (
   const finishedAt = Date.now();
   return {
     artifact: createArtifactMetadata(artifact, 'trace'),
-    session: {
-      id: sessionInfo.sessionId,
-      deviceId: sessionInfo.deviceId,
-      pageId: sessionInfo.pageId,
-    },
     timing: {
       startedAt,
       finishedAt,
@@ -471,7 +457,6 @@ const createTraceMetadata = (
 
 const createProfileResult = (
   type: 'sampling-profile' | 'heap-snapshot',
-  sessionInfo: ReturnType<SessionInfoReader>,
   startedAt: number,
   artifact: {
     path: string;
@@ -484,11 +469,6 @@ const createProfileResult = (
   const finishedAt = Date.now();
   return {
     artifact: createArtifactMetadata(artifact, type),
-    session: {
-      id: sessionInfo.sessionId,
-      deviceId: sessionInfo.deviceId,
-      pageId: sessionInfo.pageId,
-    },
     timing: {
       startedAt,
       finishedAt,
@@ -565,7 +545,6 @@ export const createPerformanceDomainService = (deps: {
 
     return {
       started: true,
-      session: deps.getSessionInfo(),
       trace: traceState,
     };
   };
@@ -630,7 +609,7 @@ export const createPerformanceDomainService = (deps: {
         `],"metadata":${JSON.stringify(createTraceMetadata(startedAt, traceWindow))}}`,
       );
       const artifact = await writer.finalize();
-      return createTraceResult(deps.getSessionInfo(), startedAt, artifact);
+      return createTraceResult(startedAt, artifact);
     } catch (error) {
       await writer.abort();
       throw error;
@@ -1050,12 +1029,7 @@ export const createMemoryDomainService = (deps: {
       await pendingChunkWrites;
 
       const artifact = await writer.finalize();
-      return createProfileResult(
-        'heap-snapshot',
-        deps.getSessionInfo(),
-        startedAt,
-        artifact,
-      );
+      return createProfileResult('heap-snapshot', startedAt, artifact);
     } catch (error) {
       await writer.abort();
       throw error;
@@ -1103,7 +1077,6 @@ export const createMemoryDomainService = (deps: {
 
     return {
       started: true,
-      session: deps.getSessionInfo(),
       sampling: samplingState,
     };
   };
@@ -1125,12 +1098,7 @@ export const createMemoryDomainService = (deps: {
       const result = await deps.sendCommand('HeapProfiler.stopSampling');
       await writer.write(JSON.stringify(result.profile ?? {}, null, 2));
       const artifact = await writer.finalize();
-      return createProfileResult(
-        'sampling-profile',
-        deps.getSessionInfo(),
-        startedAt,
-        artifact,
-      );
+      return createProfileResult('sampling-profile', startedAt, artifact);
     } catch (error) {
       await writer.abort();
       throw error;
@@ -1544,7 +1512,7 @@ export const createNetworkDomainService = (deps: {
 
     return {
       started: true,
-      ...createNetworkStatus(deps.getSessionInfo(), state),
+      ...createNetworkStatus(state),
     };
   };
 
@@ -1559,12 +1527,12 @@ export const createNetworkDomainService = (deps: {
 
     return {
       stopped: true,
-      ...createNetworkStatus(deps.getSessionInfo(), state),
+      ...createNetworkStatus(state),
     };
   };
 
   const getRecordingStatus = async () => {
-    return createNetworkStatus(deps.getSessionInfo(), state);
+    return createNetworkStatus(state);
   };
 
   const listRequests = async (args: unknown) => {
@@ -1586,7 +1554,7 @@ export const createNetworkDomainService = (deps: {
     });
 
     return {
-      ...createNetworkStatus(deps.getSessionInfo(), state),
+      ...createNetworkStatus(state),
       items: page.items,
       page: page.page,
     };
@@ -1602,7 +1570,7 @@ export const createNetworkDomainService = (deps: {
     const record = getRecordById(requestId);
 
     return {
-      ...createNetworkStatus(deps.getSessionInfo(), state),
+      ...createNetworkStatus(state),
       request: {
         requestId: record.requestId,
         method: record.method || record.request?.method || null,

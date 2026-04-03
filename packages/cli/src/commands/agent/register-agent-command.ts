@@ -87,6 +87,13 @@ type DomainListRow = {
   description: string;
 };
 
+type AgentSessionOutput = {
+  id: string;
+  deviceId: string;
+  deviceName: string;
+  status: string;
+};
+
 const TOOL_LIST_FIELDS = ['name', 'shortName', 'description'] as const;
 const TOOL_LIST_DEFAULT_FIELDS = ['name', 'shortName'] as const;
 const DOMAIN_LIST_FIELDS = [
@@ -96,7 +103,16 @@ const DOMAIN_LIST_FIELDS = [
   'slug',
   'description',
 ] as const;
-const DOMAIN_LIST_DEFAULT_FIELDS = ['id', 'kind', 'pluginId', 'slug'] as const;
+const DOMAIN_LIST_DEFAULT_FIELDS = ['id', 'kind'] as const;
+
+const projectSessionOutput = (
+  session: Record<string, unknown>,
+): AgentSessionOutput => ({
+  id: String(session.id ?? ''),
+  deviceId: String(session.deviceId ?? ''),
+  deviceName: String(session.deviceName ?? ''),
+  status: String(session.status ?? ''),
+});
 
 const getConnectionOptions = (cmd: Command): CommonOptions => {
   const options = cmd.optsWithGlobals<CommonOptions>();
@@ -386,7 +402,6 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
               return {
                 name: selectedTool.name,
                 shortName: inferToolShortName(selectedTool.name),
-                description: selectedTool.description,
                 inputSchema: selectedTool.inputSchema,
               };
             }
@@ -441,10 +456,6 @@ export const registerAgentCommand = (program: Command): void => {
         const conciseTargets = targets.map((target: MetroTarget) => ({
           id: target.id,
           name: target.name,
-          description: target.description,
-          app: target.appId,
-          pageId: target.pageId,
-          title: target.title,
         }));
 
         const payload = {
@@ -475,7 +486,11 @@ export const registerAgentCommand = (program: Command): void => {
         const result = await createAgentHttpClient(options).createSession({
           deviceId: sessionOptions.deviceId,
         });
-        printOutput(result.session, true, !!options.pretty);
+        printOutput(
+          projectSessionOutput(result.session),
+          true,
+          !!options.pretty,
+        );
       });
     });
 
@@ -487,7 +502,11 @@ export const registerAgentCommand = (program: Command): void => {
       await runAgentAction(command, async () => {
         const options = getConnectionOptions(command);
         const result = await createAgentHttpClient(options).listSessions();
-        printOutput(result.sessions, true, !!options.pretty);
+        printOutput(
+          result.sessions.map((session) => projectSessionOutput(session)),
+          true,
+          !!options.pretty,
+        );
       });
     });
 
@@ -501,7 +520,11 @@ export const registerAgentCommand = (program: Command): void => {
         const options = getConnectionOptions(command);
         const result =
           await createAgentHttpClient(options).getSession(sessionId);
-        printOutput(result.session, true, !!options.pretty);
+        printOutput(
+          projectSessionOutput(result.session),
+          true,
+          !!options.pretty,
+        );
       });
     });
 

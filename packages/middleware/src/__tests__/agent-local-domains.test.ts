@@ -115,9 +115,10 @@ describe('memory domain service', () => {
         path: '/tmp/snapshot.heapsnapshot',
         bucket: 'memory',
       },
-      session: {
-        id: 'device-1',
-        deviceId: 'device-1',
+      timing: {
+        startedAt: expect.any(Number),
+        finishedAt: expect.any(Number),
+        durationMs: expect.any(Number),
       },
     });
 

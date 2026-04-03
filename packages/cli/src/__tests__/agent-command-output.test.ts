@@ -57,7 +57,7 @@ describe('agent command output', () => {
     });
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"items":[{"id":"device-1","name":"iPhone","description":"app","app":"app.test","pageId":"page-1","title":"title"}]}\n',
+      '{"items":[{"id":"device-1","name":"iPhone"}]}\n',
     );
     expect(mocks.createAgentHttpClient).toHaveBeenCalledWith({
       host: 'localhost',
@@ -94,11 +94,11 @@ describe('agent command output', () => {
     });
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"items":[{"id":"device-1","name":"iPhone","description":"app","app":"app.test","pageId":"page-1","title":"title"}]}\n',
+      '{"items":[{"id":"device-1","name":"iPhone"}]}\n',
     );
   });
 
-  it('prints the raw session for session create', async () => {
+  it('prints the slim session for session create', async () => {
     setupClient();
     mocks.client.createSession.mockResolvedValue({
       session: {
@@ -112,6 +112,8 @@ describe('agent command output', () => {
         status: 'connected',
         createdAt: 1,
         lastActivityAt: 2,
+        connectedAt: 3,
+        lastError: 'none',
         toolCount: 3,
       },
     });
@@ -128,7 +130,7 @@ describe('agent command output', () => {
     });
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"id":"device-1","host":"localhost","port":8081,"deviceId":"device-1","deviceName":"iPhone","appId":"app.test","pageId":"page-1","status":"connected","createdAt":1,"lastActivityAt":2,"toolCount":3}\n',
+      '{"id":"device-1","deviceId":"device-1","deviceName":"iPhone","status":"connected"}\n',
     );
   });
 
@@ -146,6 +148,8 @@ describe('agent command output', () => {
         status: 'connected',
         createdAt: 1,
         lastActivityAt: 2,
+        connectedAt: 3,
+        lastError: 'none',
         toolCount: 3,
       },
     });
@@ -165,7 +169,7 @@ describe('agent command output', () => {
     );
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"id":"device-1","host":"localhost","port":8081,"deviceId":"device-1","deviceName":"iPhone","appId":"app.test","pageId":"page-1","status":"connected","createdAt":1,"lastActivityAt":2,"toolCount":3}\n',
+      '{"id":"device-1","deviceId":"device-1","deviceName":"iPhone","status":"connected"}\n',
     );
   });
 
@@ -196,7 +200,7 @@ describe('agent command output', () => {
     );
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"items":[{"id":"app","kind":"plugin","pluginId":"app","slug":"app"},{"id":"console","kind":"static"},{"id":"memory","kind":"static"},{"id":"network","kind":"static"},{"id":"performance","kind":"static"},{"id":"react","kind":"static"}],"page":{"limit":20,"hasMore":false}}\n',
+      '{"items":[{"id":"app","kind":"plugin"},{"id":"console","kind":"static"},{"id":"memory","kind":"static"},{"id":"network","kind":"static"},{"id":"performance","kind":"static"},{"id":"react","kind":"static"}],"page":{"limit":20,"hasMore":false}}\n',
     );
   });
 
@@ -265,7 +269,7 @@ describe('agent command output', () => {
     );
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"name":"app.echo","shortName":"echo","description":"Echo","inputSchema":{"type":"object","properties":{"value":{"type":"string"}}}}\n',
+      '{"name":"app.echo","shortName":"echo","inputSchema":{"type":"object","properties":{"value":{"type":"string"}}}}\n',
     );
   });
 
