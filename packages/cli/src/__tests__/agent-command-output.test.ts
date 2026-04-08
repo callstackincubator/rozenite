@@ -129,8 +129,12 @@ describe('agent command output', () => {
       from: 'node',
     });
 
+    expect(mocks.client.createSession).toHaveBeenCalledWith({
+      deviceId: undefined,
+      cliVersion: '1.6.0',
+    });
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"id":"device-1","deviceId":"device-1","deviceName":"iPhone","status":"connected"}\n',
+      '{"id":"device-1","deviceName":"iPhone","status":"connected"}\n',
     );
   });
 
@@ -169,7 +173,45 @@ describe('agent command output', () => {
     );
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"id":"device-1","deviceId":"device-1","deviceName":"iPhone","status":"connected"}\n',
+      '{"id":"device-1","deviceName":"iPhone","status":"connected"}\n',
+    );
+  });
+
+  it('prints a human-readable version warning only when incompatible', async () => {
+    setupClient();
+    mocks.client.createSession.mockResolvedValue({
+      session: {
+        id: 'device-1',
+        host: 'localhost',
+        port: 8081,
+        deviceId: 'device-1',
+        deviceName: 'iPhone',
+        appId: 'app.test',
+        pageId: 'page-1',
+        status: 'connected',
+        createdAt: 1,
+        lastActivityAt: 2,
+        connectedAt: 3,
+        lastError: 'none',
+        toolCount: 3,
+      },
+      versionCheck:
+        'Connected Rozenite agent uses version 1.5.0, but Metro is running version 1.6.0. Integration may not work correctly.',
+    });
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(['node', 'test', 'agent', 'session', 'create'], {
+      from: 'node',
+    });
+
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"id":"device-1","deviceName":"iPhone","status":"connected","versionCheck":"Connected Rozenite agent uses version 1.5.0, but Metro is running version 1.6.0. Integration may not work correctly."}\n',
     );
   });
 

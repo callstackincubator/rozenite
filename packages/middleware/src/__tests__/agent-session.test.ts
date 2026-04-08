@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => {
     params?: Record<string, unknown>;
   }> = [];
   const loggerInfo = vi.fn();
+  const loggerWarn = vi.fn();
   const loggerDebug = vi.fn();
   const handler = {
     connectDevice: vi.fn(),
@@ -146,6 +147,7 @@ const mocks = vi.hoisted(() => {
   return {
     commandLog,
     loggerInfo,
+    loggerWarn,
     loggerDebug,
     MockWebSocket,
     handler,
@@ -163,6 +165,7 @@ const mocks = vi.hoisted(() => {
     reset: () => {
       commandLog.length = 0;
       loggerInfo.mockReset();
+      loggerWarn.mockReset();
       loggerDebug.mockReset();
       handler.connectDevice.mockReset();
       handler.disconnectDevice.mockReset();
@@ -213,6 +216,7 @@ vi.mock('../agent/runtime/bindings.js', () => ({
 vi.mock('../logger.js', () => ({
   logger: {
     info: mocks.loggerInfo,
+    warn: mocks.loggerWarn,
     debug: mocks.loggerDebug,
   },
 }));
@@ -234,12 +238,18 @@ const flushMicrotasks = async () => {
   await Promise.resolve();
 };
 
-const createStartedSession = () => {
+const createStartedSession = (
+  overrides?: Partial<{
+    cliVersion: string;
+    metroVersion: string;
+  }>,
+) => {
   const session = createAgentSession({
     projectRoot: '/app',
     host: 'localhost',
     port: 8081,
     target: TARGET,
+    ...overrides,
   });
 
   const startPromise = session.start();
@@ -248,8 +258,13 @@ const createStartedSession = () => {
   return { session, socket, startPromise };
 };
 
-const startSession = async () => {
-  const started = createStartedSession();
+const startSession = async (
+  overrides?: Partial<{
+    cliVersion: string;
+    metroVersion: string;
+  }>,
+) => {
+  const started = createStartedSession(overrides);
   started.socket.open();
   await vi.advanceTimersByTimeAsync(500);
   await flushMicrotasks();
@@ -372,6 +387,20 @@ describe('agent session', () => {
     expect(mocks.loggerInfo).toHaveBeenCalledWith(
       'Rozenite for Agents connected to device iPhone 16 (device-1).',
     );
+  });
+
+  it('warns when the connected CLI version differs from Metro', async () => {
+    await startSession({ cliVersion: '1.5.0', metroVersion: '1.6.0' });
+
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      'Connected Rozenite agent uses version 1.5.0, but Metro is running version 1.6.0. Integration may not work correctly.',
+    );
+  });
+
+  it('does not warn when the connected CLI version matches Metro', async () => {
+    await startSession({ cliVersion: '1.6.0', metroVersion: '1.6.0' });
+
+    expect(mocks.loggerWarn).not.toHaveBeenCalled();
   });
 
   it('logs when the session is stopped', async () => {
