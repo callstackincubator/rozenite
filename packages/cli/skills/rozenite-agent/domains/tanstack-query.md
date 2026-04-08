@@ -3,10 +3,12 @@
 A Rozenite plugin for inspecting and managing TanStack Query caches in React Native DevTools. Use it to inspect query and mutation state, paginate large caches, refetch or invalidate specific queries, and clear caches when needed.
 
 ## Domain
+
 - Plugin ID: `@rozenite/tanstack-query-plugin`
-- Domain token: discovered at runtime via `rozenite agent domains --session <sessionId>`
+- Domain token: `at-rozenite__tanstack-query-plugin`
 
 ## Tools
+
 - `get-cache-summary` -> `{}`
 - `get-online-status` -> `{}`
 - `set-online-status` -> `{"online":false}`
@@ -24,6 +26,7 @@ A Rozenite plugin for inspecting and managing TanStack Query caches in React Nat
 - `clear-mutation-cache` -> `{}`
 
 ## Minimal Flow
+
 Inspection:
 `get-cache-summary` or `get-online-status` -> `list-queries` / `list-mutations` -> `get-query-details` / `get-mutation-details`.
 

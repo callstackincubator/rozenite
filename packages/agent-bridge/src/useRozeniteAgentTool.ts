@@ -3,6 +3,7 @@ import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
   AGENT_PLUGIN_ID,
   type AgentTool,
+  type AgentSessionReadyMessage,
   type RegisterToolMessage,
   type UnregisterToolMessage,
   type ToolCallMessage,
@@ -10,24 +11,33 @@ import {
 } from './types.js';
 
 type AgentEventMap = {
+  'agent-session-ready': AgentSessionReadyMessage['payload'];
   'register-tool': RegisterToolMessage['payload'];
   'unregister-tool': UnregisterToolMessage['payload'];
   'tool-call': ToolCallMessage['payload'];
   'tool-result': ToolResultMessage['payload'];
 };
 
-export interface UseRozeniteAgentToolOptions<TInput = unknown, TOutput = unknown> {
+export interface UseRozeniteAgentToolOptions<
+  TInput = unknown,
+  TOutput = unknown,
+> {
   tool: AgentTool;
   handler: (args: TInput) => Promise<TOutput> | TOutput;
   enabled?: boolean;
 }
 
-export interface UseRozenitePluginAgentToolOptions<TInput = unknown, TOutput = unknown>
-  extends UseRozeniteAgentToolOptions<TInput, TOutput> {
+export interface UseRozenitePluginAgentToolOptions<
+  TInput = unknown,
+  TOutput = unknown,
+> extends UseRozeniteAgentToolOptions<TInput, TOutput> {
   pluginId: string;
 }
 
-export type UseRozeniteInAppAgentToolOptions<TInput = unknown, TOutput = unknown> = UseRozeniteAgentToolOptions<TInput, TOutput>;
+export type UseRozeniteInAppAgentToolOptions<
+  TInput = unknown,
+  TOutput = unknown,
+> = UseRozeniteAgentToolOptions<TInput, TOutput>;
 
 const APP_DOMAIN = 'app';
 
@@ -37,7 +47,7 @@ const getQualifiedToolName = (domain: string, toolName: string): string => {
 
 function useRozeniteDomainAgentTool<TInput = unknown, TOutput = unknown>(
   domain: string,
-  options: UseRozeniteAgentToolOptions<TInput, TOutput>
+  options: UseRozeniteAgentToolOptions<TInput, TOutput>,
 ): void {
   const { tool, handler, enabled = true } = options;
   const toolName = getQualifiedToolName(domain, tool.name);
@@ -53,49 +63,66 @@ function useRozeniteDomainAgentTool<TInput = unknown, TOutput = unknown>(
   handlerRef.current = handler;
 
   useEffect(() => {
-    if (!client || !enabled) {
+    if (!client) {
       return;
     }
 
-    // Register the tool
-    client.send('register-tool', {
-      tools: [qualifiedTool],
-    });
-
-    // Listen for tool calls
-    const subscription = client.onMessage('tool-call', async (payload) => {
-      // Only handle calls for this tool
-      if (payload.toolName !== toolName) {
+    const registerTool = (): void => {
+      if (!enabled) {
         return;
       }
 
-      try {
-        const result = await handlerRef.current(payload.arguments as TInput);
+      client.send('register-tool', {
+        tools: [qualifiedTool],
+      });
+    };
 
-        const response: ToolResultMessage['payload'] = {
-          callId: payload.callId,
-          success: true,
-          result,
-        };
+    const toolCallSubscription = client.onMessage(
+      'tool-call',
+      async (payload) => {
+        if (payload.toolName !== toolName) {
+          return;
+        }
 
-        client.send('tool-result', response);
-      } catch (error) {
-        const response: ToolResultMessage['payload'] = {
-          callId: payload.callId,
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-        };
+        try {
+          const result = await handlerRef.current(payload.arguments as TInput);
 
-        client.send('tool-result', response);
-      }
-    });
+          const response: ToolResultMessage['payload'] = {
+            callId: payload.callId,
+            success: true,
+            result,
+          };
+
+          client.send('tool-result', response);
+        } catch (error) {
+          const response: ToolResultMessage['payload'] = {
+            callId: payload.callId,
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
+
+          client.send('tool-result', response);
+        }
+      },
+    );
+
+    const sessionReadySubscription = client.onMessage(
+      'agent-session-ready',
+      () => {
+        registerTool();
+      },
+    );
+
+    registerTool();
 
     return () => {
-      // Unregister the tool on unmount
-      client.send('unregister-tool', {
-        toolNames: [toolName],
-      });
-      subscription.remove();
+      if (enabled) {
+        client.send('unregister-tool', {
+          toolNames: [toolName],
+        });
+      }
+      sessionReadySubscription.remove();
+      toolCallSubscription.remove();
     };
   }, [client, enabled, tool, toolName]);
 }
@@ -112,7 +139,7 @@ function useRozeniteDomainAgentTool<TInput = unknown, TOutput = unknown>(
  * @param options - Configuration: `tool` (AgentTool), `handler`, optional `enabled`, and `pluginId`.
  */
 export function useRozenitePluginAgentTool<TInput = unknown, TOutput = unknown>(
-  options: UseRozenitePluginAgentToolOptions<TInput, TOutput>
+  options: UseRozenitePluginAgentToolOptions<TInput, TOutput>,
 ): void {
   const { pluginId, ...toolOptions } = options;
   useRozeniteDomainAgentTool(pluginId, toolOptions);
@@ -130,7 +157,7 @@ export function useRozenitePluginAgentTool<TInput = unknown, TOutput = unknown>(
  * @param options - Configuration: `tool` (AgentTool), `handler`, and optional `enabled`.
  */
 export function useRozeniteInAppAgentTool<TInput = unknown, TOutput = unknown>(
-  options: UseRozeniteInAppAgentToolOptions<TInput, TOutput>
+  options: UseRozeniteInAppAgentToolOptions<TInput, TOutput>,
 ): void {
   const { ...toolOptions } = options;
   useRozeniteDomainAgentTool(APP_DOMAIN, toolOptions);

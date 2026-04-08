@@ -1,7 +1,8 @@
+import { DEFAULT_AGENT_HOST, DEFAULT_AGENT_PORT } from '@rozenite/agent-shared';
 import type { DomainDefinition } from './types.js';
 
-export const DEFAULT_METRO_HOST = 'localhost';
-export const DEFAULT_METRO_PORT = 8081;
+export const DEFAULT_METRO_HOST = DEFAULT_AGENT_HOST;
+export const DEFAULT_METRO_PORT = DEFAULT_AGENT_PORT;
 
 export const STATIC_DOMAINS: DomainDefinition[] = [
   {
@@ -19,19 +20,22 @@ export const STATIC_DOMAINS: DomainDefinition[] = [
   {
     id: 'performance',
     kind: 'static',
-    description: 'CDP performance tracing tools with file-backed exports.',
+    description:
+      'CDP performance tracing tools with Metro-managed artifact exports.',
     actions: ['list-tools', 'get-tool-schema', 'call-tool'],
   },
   {
     id: 'memory',
     kind: 'static',
-    description: 'CDP memory inspection and heap profiling tools with file-backed exports.',
+    description:
+      'CDP memory inspection and heap profiling tools with Metro-managed artifact exports.',
     actions: ['list-tools', 'get-tool-schema', 'call-tool'],
   },
   {
     id: 'network',
     kind: 'static',
-    description: 'Raw CDP network recording tools with paginated request browsing.',
+    description:
+      'Raw CDP network recording tools with paginated request browsing.',
     actions: ['list-tools', 'get-tool-schema', 'call-tool'],
   },
 ];

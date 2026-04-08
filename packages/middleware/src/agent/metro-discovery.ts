@@ -1,5 +1,5 @@
 import { request as httpRequest } from 'node:http';
-import type { MetroTarget } from './daemon-protocol.js';
+import type { MetroTarget } from '@rozenite/agent-shared';
 
 type JsonPageDescription = {
   id: string;
@@ -16,7 +16,25 @@ type JsonPageDescription = {
   };
 };
 
-const requestJson = async <T>(host: string, port: number, pathname: string): Promise<T> => {
+const getErrorDetails = (error: unknown): string | null => {
+  if (!error) {
+    return null;
+  }
+
+  if (error instanceof AggregateError && error.errors.length > 0) {
+    return error.errors
+      .map((entry) => (entry instanceof Error ? entry.message : String(entry)))
+      .join('; ');
+  }
+
+  return error instanceof Error ? error.message : String(error);
+};
+
+const requestJson = async <T>(
+  host: string,
+  port: number,
+  pathname: string,
+): Promise<T> => {
   const url = new URL(`http://${host}:${port}${pathname}`);
 
   return await new Promise<T>((resolve, reject) => {
@@ -28,7 +46,7 @@ const requestJson = async <T>(host: string, port: number, pathname: string): Pro
       });
       res.on('end', () => {
         if ((res.statusCode || 0) >= 400) {
-          reject();
+          reject(new Error(`Metro responded with status ${res.statusCode}`));
           return;
         }
         try {
@@ -40,8 +58,11 @@ const requestJson = async <T>(host: string, port: number, pathname: string): Pro
     });
     req.once('error', reject);
     req.end();
-  }).catch(() => {
-    throw new Error(`Unable to reach Metro at http://${host}:${port}. Make sure Metro is running and reachable, then try again.`);
+  }).catch((error) => {
+    const details = getErrorDetails(error);
+    throw new Error(
+      `Unable to reach Metro at http://${host}:${port}. Make sure Metro is running and reachable, then try again.${details ? ` Details: ${details}` : ''}`,
+    );
   });
 };
 
@@ -60,7 +81,11 @@ export const getMetroTargets = async (
   host: string,
   port: number,
 ): Promise<MetroTarget[]> => {
-  const pages = await requestJson<JsonPageDescription[]>(host, port, '/json/list');
+  const pages = await requestJson<JsonPageDescription[]>(
+    host,
+    port,
+    '/json/list',
+  );
   const byDevice = new Map<string, JsonPageDescription[]>();
 
   for (const page of pages) {
@@ -99,7 +124,7 @@ export const resolveMetroTarget = async (
 
   if (targets.length === 0) {
     throw new Error(
-      `No connected device is available. Open React Native DevTools for a device and try again.`,
+      'No connected device is available. Open React Native DevTools for a device and try again.',
     );
   }
 
@@ -107,7 +132,9 @@ export const resolveMetroTarget = async (
     const selected = targets.find((target) => target.id === requestedDeviceId);
     if (!selected) {
       const validIds = targets.map((target) => target.id).join(', ');
-      throw new Error(`Unknown deviceId "${requestedDeviceId}". Valid device IDs: ${validIds}`);
+      throw new Error(
+        `Unknown deviceId "${requestedDeviceId}". Valid device IDs: ${validIds}`,
+      );
     }
     return selected;
   }
