@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/web",
-  "version": "1.7.0-rc.0",
+  "version": "1.7.0-rc.1",
   "description": "Rozenite for Web",
   "type": "module",
   "main": "./dist/cjs/react-native/index.js",

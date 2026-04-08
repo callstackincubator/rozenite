@@ -1,5 +1,13 @@
 # @rozenite/tanstack-query-plugin
 
+## 1.7.0-rc.1
+
+### Patch Changes
+
+- Updated dependencies [[`525a35b`](https://github.com/callstackincubator/rozenite/commit/525a35b3afe0b7989b69d591d8db19b99ad0b812)]:
+  - @rozenite/agent-bridge@1.7.0-rc.1
+  - @rozenite/plugin-bridge@1.7.0-rc.1
+
 ## 1.7.0-rc.0
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/performance-monitor-plugin",
-  "version": "1.7.0-rc.0",
+  "version": "1.7.0-rc.1",
   "description": "Performance Monitor for Rozenite.",
   "type": "module",
   "main": "./dist/react-native/index.cjs",

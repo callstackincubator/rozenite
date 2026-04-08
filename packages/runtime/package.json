@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/runtime",
-  "version": "1.7.0-rc.0",
+  "version": "1.7.0-rc.1",
   "description": "Rozenite runtime for React Native DevTools.",
   "type": "module",
   "files": [

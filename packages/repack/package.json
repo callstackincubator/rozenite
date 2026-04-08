@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/repack",
-  "version": "1.7.0-rc.0",
+  "version": "1.7.0-rc.1",
   "description": "Re.Pack bundler plugin for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",

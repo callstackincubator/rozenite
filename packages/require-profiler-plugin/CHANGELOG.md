@@ -1,5 +1,13 @@
 # @rozenite/require-profiler-plugin
 
+## 1.7.0-rc.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/plugin-bridge@1.7.0-rc.1
+  - @rozenite/tools@1.7.0-rc.1
+
 ## 1.7.0-rc.0
 
 ### Patch Changes
