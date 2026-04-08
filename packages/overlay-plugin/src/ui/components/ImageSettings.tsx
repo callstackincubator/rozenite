@@ -1,7 +1,24 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, type ChangeEvent } from 'react';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Label,
+  RadioGroup,
+  Slider,
+  SliderFill,
+  SliderOutput,
+  SliderThumb,
+  SliderTrack,
+  Switch,
+  SwitchControl,
+  SwitchThumb,
+} from '@heroui/react';
 import { ImageConfig, ImageResizeMode, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../shared';
 import { Image as ImageIcon, Upload, X, Clipboard } from 'lucide-react';
 import { useThrottledCallback } from '../hooks/useThrottledCallback';
+import { RadioItem } from './RadioItem';
 
 export type ImageSettingsProps = {
   config: ImageConfig;
@@ -50,7 +67,7 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
     reader.readAsDataURL(file);
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     processFile(file);
@@ -82,61 +99,102 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
     }
   };
 
-  return (
-    <div className="settings-section">
-      <div className="section-header">
-        <div className="section-title">
-          <ImageIcon size={18} />
-          <span>Image verlay</span>
-        </div>
-        <label className="toggle-switch">
-          <input
-            type="checkbox"
-            checked={config.enabled}
-            onChange={(e) => handleChange({ enabled: e.target.checked })}
-          />
-          <span className="toggle-slider"></span>
-        </label>
-      </div>
+  const readSliderValue = (value: number | number[]) =>
+    Array.isArray(value) ? value[0] ?? 0 : value;
 
-      <div className="section-content">
-        <div className="control-group">
-          <label className="control-label">Overlay Image</label>
+  return (
+    <Card className="border border-white/10 bg-[var(--overlay-surface)] shadow-2xl shadow-black/20 backdrop-blur-xl">
+      <CardHeader className="flex flex-row items-start justify-between gap-4 px-5 pb-3 pt-5">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-white">
+            <ImageIcon size={18} />
+            <span className="text-base font-semibold tracking-tight">Image overlay</span>
+          </div>
+          <p className="m-0 text-sm text-white/55">
+            Compare against a reference image with overlay or slider mode.
+          </p>
+        </div>
+        <Switch
+          aria-label="Toggle image overlay"
+          isSelected={config.enabled}
+          onChange={(enabled: boolean) => handleChange({ enabled })}
+        >
+          <SwitchControl>
+            <SwitchThumb />
+          </SwitchControl>
+        </Switch>
+      </CardHeader>
+
+      <CardContent className="gap-6 px-5 pb-5 pt-2">
+        <div className="space-y-3">
+          <div>
+            <p className="m-0 text-sm font-medium text-white">Overlay image</p>
+            <p className="m-0 mt-1 text-xs text-white/45">
+              PNG, JPG, or pasted clipboard image up to {MAX_IMAGE_SIZE_MB}MB.
+            </p>
+          </div>
           {!config.uri ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="space-y-3">
               <div
-                className="file-upload-area"
+                className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-white/15 bg-white/[0.03] px-6 py-10 text-center"
                 onClick={() => fileInputRef.current?.click()}
-                style={{ cursor: 'pointer' }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
               >
-                <Upload size={32} color="var(--color-text-muted)" />
-                <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>
-                  Click to upload reference image
-                </span>
-                <span style={{ color: 'var(--color-text-muted)', fontSize: '11px' }}>
-                  Max size: {MAX_IMAGE_SIZE_MB}MB
-                </span>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--overlay-line)] bg-[var(--overlay-accent-soft)] text-[var(--overlay-accent)]">
+                  <Upload size={24} />
+                </div>
+                <div className="space-y-1">
+                  <p className="m-0 text-sm font-medium text-white">
+                    Click to upload a reference image
+                  </p>
+                  <p className="m-0 text-xs text-white/45">
+                    Max size: {MAX_IMAGE_SIZE_MB}MB
+                  </p>
+                </div>
+                <Button
+                  variant="secondary"
+                  onPress={() => fileInputRef.current?.click()}
+                >
+                  <Upload size={16} />
+                  Choose file
+                </Button>
               </div>
               {isPasteSupported && (
-                <button
-                  className="btn"
-                  onClick={handlePaste}
-                  style={{ justifyContent: 'center', width: '100%' }}
+                <Button
+                  variant="outline"
+                  onPress={handlePaste}
+                  className="w-full border-white/15 bg-white/[0.02] text-white"
                 >
-                  <Clipboard size={14} />
+                  <Clipboard size={16} />
                   Paste from Clipboard
-                </button>
+                </Button>
               )}
             </div>
           ) : (
-            <div className="control-group">
-              <div className="control-row" style={{ justifyContent: 'flex-end' }}>
-                <button className="btn btn-danger" onClick={handleRemoveImage}>
-                  <X size={14} />
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <Button
+                  variant="danger-soft"
+                  onPress={handleRemoveImage}
+                >
+                  <X size={16} />
                   Remove
-                </button>
+                </Button>
               </div>
-              <img src={config.uri} alt="Overlay preview" className="file-preview" />
+              <div className="overflow-hidden rounded-3xl border border-white/10 bg-black/70">
+                <img
+                  src={config.uri}
+                  alt="Overlay preview"
+                  className="block h-64 w-full object-contain bg-[linear-gradient(45deg,#0a1824_25%,transparent_25%),linear-gradient(-45deg,#0a1824_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#0a1824_75%),linear-gradient(-45deg,transparent_75%,#0a1824_75%)] bg-[length:20px_20px] bg-[position:0_0,0_10px,10px_-10px,-10px_0]"
+                />
+              </div>
             </div>
           )}
           <input
@@ -150,75 +208,69 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
 
         {config.enabled && config.uri && (
           <>
-            <div className="control-group">
-              <label className="control-label">Mode</label>
-              <div className="control-row">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-text)', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    name="mode"
-                    value="overlay"
-                    checked={config.mode === 'overlay'}
-                    onChange={() => handleChange({ mode: 'overlay' })}
-                  />
-                  Simple overlay
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-text)', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    name="mode"
-                    value="slider"
-                    checked={config.mode === 'slider'}
-                    onChange={() => handleChange({ mode: 'slider' })}
-                  />
-                  Slider comparison
-                </label>
-              </div>
-            </div>
-
-            <div className="control-group">
-              <label className="control-label">Resize Mode</label>
-              <select
-                value={config.resizeMode}
-                onChange={(e) => handleChange({ resizeMode: e.target.value as ImageResizeMode })}
-                className="input-control"
-                style={{ width: '100%' }}
+            <div className="flex flex-wrap items-center gap-3">
+              <Label className="text-sm font-medium text-white">Mode</Label>
+              <RadioGroup
+                aria-label="Image comparison mode"
+                className="inline-flex flex-row items-center gap-[0.35rem] rounded-[0.85rem] border border-[var(--overlay-line)] bg-white/[0.03] p-[0.2rem]"
+                orientation="horizontal"
+                value={config.mode}
+                onChange={(mode: string) =>
+                  handleChange({ mode: mode as ImageConfig['mode'] })
+                }
               >
-                <option value="contain">Contain</option>
-                <option value="cover">Cover</option>
-                <option value="stretch">Stretch</option>
-                <option value="center">Center</option>
-              </select>
+                <RadioItem value="overlay" label="Simple overlay" />
+                <RadioItem value="slider" label="Slider comparison" />
+              </RadioGroup>
             </div>
 
-            <div className="control-group">
-              <label className="control-label">
-                Opacity ({Math.round(localOpacity * 100)}%)
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={localOpacity}
-                onChange={(e) => handleOpacityChange(Number(e.target.value))}
-                className="input-range"
-              />
-              {config.mode === 'slider' && (
-                <p
-                  style={{
-                    fontSize: '11px',
-                    color: 'var(--color-text-muted)',
-                    marginTop: '4px',
-                  }}
-                >
-                  Drag the divider handle on your device to compare.
-                </p>
-              )}
+            <div className="flex flex-wrap items-center gap-3">
+              <Label className="text-sm font-medium text-white">Resize mode</Label>
+              <RadioGroup
+                aria-label="Image resize mode"
+                className="inline-flex flex-row flex-wrap items-center gap-[0.35rem] rounded-[0.85rem] border border-[var(--overlay-line)] bg-white/[0.03] p-[0.2rem]"
+                orientation="horizontal"
+                value={config.resizeMode}
+                onChange={(resizeMode: string) =>
+                  handleChange({ resizeMode: resizeMode as ImageResizeMode })
+                }
+              >
+                <RadioItem value="contain" label="Contain" />
+                <RadioItem value="cover" label="Cover" />
+                <RadioItem value="stretch" label="Stretch" />
+                <RadioItem value="center" label="Center" />
+              </RadioGroup>
             </div>
+
+            <Slider
+              aria-label="Image opacity"
+              minValue={0}
+              maxValue={1}
+              step={0.01}
+              value={localOpacity}
+              onChange={(value: number | number[]) =>
+                handleOpacityChange(readSliderValue(value))
+              }
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-medium text-white">Opacity</span>
+                <SliderOutput className="text-sm text-white/55">
+                  {Math.round(localOpacity * 100)}%
+                </SliderOutput>
+              </div>
+              <SliderTrack>
+                <SliderFill />
+                <SliderThumb />
+              </SliderTrack>
+            </Slider>
+            {config.mode === 'slider' && (
+              <p className="m-0 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-white/55">
+                Drag the divider handle on your device to compare the reference image.
+              </p>
+            )}
           </>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

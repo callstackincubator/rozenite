@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { OverlayPluginEventMap } from '../shared';
-import { GridConfig, ImageConfig } from '../shared/types';
+import { Card, CardContent } from '@heroui/react';
+import { OverlayPluginEventMap, GridConfig, ImageConfig } from '../shared';
 import { Header, GridSettings, ImageSettings } from './components';
-import './styles.css';
+import './globals.css';
 
 export default function OverlayPanel() {
   const [gridConfig, setGridConfig] = useState<GridConfig>({
@@ -64,23 +64,24 @@ export default function OverlayPanel() {
 
   if (loading) {
     return (
-      <div className="app-container">
+      <div className="h-full overflow-y-auto p-4 text-white">
         <Header />
-        <div className="main-content" style={{ alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
-        </div>
+        <Card className="mx-auto mt-6 max-w-2xl border border-white/10 bg-white/5 shadow-2xl shadow-black/20 backdrop-blur-xl">
+          <CardContent className="items-center justify-center py-16 text-sm text-white/70">
+            Loading overlay state...
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="app-container">
+    <div className="h-full overflow-y-auto p-4 text-white">
       <Header />
-      <div className="main-content">
+      <div className="mx-auto mt-6 grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <GridSettings config={gridConfig} onConfigChange={updateGridConfig} />
         <ImageSettings config={imageConfig} onConfigChange={updateImageConfig} />
       </div>
     </div>
   );
 }
-
