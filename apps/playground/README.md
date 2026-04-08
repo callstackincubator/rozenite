@@ -20,8 +20,16 @@ From this directory (`apps/playground`):
 - `pnpm ios` – run on iOS
 - `pnpm android` – run on Android
 - `pnpm web` – run in web browser
+- `pnpm web:webpack` – run the minimal webpack + React Native Web smoke test
+- `pnpm web:webpack:build` – build the webpack web bundle into `dist/`
 
 ## Development
 
 - `pnpm typecheck` – run TypeScript checks
 - `pnpm lint` – run ESLint
+
+## Webpack smoke test
+
+The webpack path is intentionally small and web-only. It reuses `src/main.tsx`,
+lets webpack resolve `App.web.tsx`, and avoids the native-only Rozenite
+playground integrations that are currently imported by `src/app/App.tsx`.
