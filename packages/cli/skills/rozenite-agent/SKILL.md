@@ -16,6 +16,7 @@ description: Skill giving access to React Native Devtools and Rozenite plugins.
 - If `session create` fails because multiple devices are connected, run `$ROZENITE agent targets`, choose the right `id`, then retry with `--deviceId <id>`.
 - Treat `$ROZENITE agent targets` as the source of truth for available targets. If the expected target is missing, ask the user to run the app on a device.
 - Pass `--session <id>` on every domain command.
+- Treat the Rozenite session ID as a public runtime identifier, not a secret, credential, or token.
 - Use this skill and its `domains/*.md` references as the source of truth for workflow, tool choice, and tool arguments.
 - If this skill or a domain reference already identifies the expected domain, try it directly. If a reference already lists the exact tool and arguments you need, call it directly.
 - Discover domains from the live session with `$ROZENITE agent domains --session <id>` only if a domain call fails, the expected domain is unclear, or you need to confirm what is currently registered.
