@@ -191,19 +191,9 @@ function runRcRelease() {
 
   ensureRemoteBranch();
   run('git', ['fetch', remote, branch]);
-
-  if (!hasPrereleaseState()) {
-    run('pnpm', ['changeset', 'pre', 'enter', 'rc']);
-  }
-
-  run('pnpm', ['changeset', 'version']);
-  updateLockfile();
-  commitVersionChanges();
-  pushBranch();
   run('pnpm', ['release:check']);
   run('pnpm', ['release:build']);
   run('pnpm', ['release:publish']);
-  createAndPushTag(readVersion());
 }
 
 function runCanaryRelease() {
