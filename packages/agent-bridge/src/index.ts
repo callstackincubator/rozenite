@@ -11,6 +11,8 @@ export type {
   JSONSchema7,
   AgentTool,
   AgentMessage,
+  AgentSessionReadyPayload,
+  AgentSessionReadyMessage,
   RegisterToolMessage,
   UnregisterToolMessage,
   ToolCallMessage,

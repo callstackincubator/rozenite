@@ -368,6 +368,9 @@ importers:
       '@clack/prompts':
         specifier: ^0.11.0
         version: 0.11.0
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
       '@rozenite/tools':
         specifier: workspace:*
         version: link:../tools
@@ -589,6 +592,9 @@ importers:
 
   packages/middleware:
     dependencies:
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
       '@rozenite/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -604,6 +610,9 @@ importers:
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
+      ws:
+        specifier: ^8.18.3
+        version: 8.18.3
     devDependencies:
       '@react-native/dev-middleware':
         specifier: ~0.76.0
@@ -619,7 +628,7 @@ importers:
         version: 7.7.0
       vitest:
         specifier: ^4.0.18
-        version: 4.1.0(@types/node@22.17.0)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.6.1)(jsdom@22.1.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+        version: 4.1.0(@types/node@22.17.0)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@22.1.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
 
   packages/mmkv-plugin:
     dependencies:
@@ -20782,7 +20791,7 @@ snapshots:
   expo-sqlite@55.0.11(expo@55.0.0-preview.10)(react-native@0.83.1(@babel/core@7.28.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
     dependencies:
       await-lock: 2.2.2
-      expo: 55.0.0-preview.10(@babel/core@7.28.0)(@expo/dom-webview@55.0.3)(@expo/metro-runtime@55.0.5)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.1(@babel/core@7.28.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+      expo: 55.0.0-preview.10(@babel/core@7.28.0)(@expo/dom-webview@55.0.3)(@expo/metro-runtime@55.0.5)(expo-router@55.0.0-preview.7)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.1(@babel/core@7.28.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       react: 19.2.0
       react-native: 0.83.1(@babel/core@7.28.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0)
 
@@ -26516,7 +26525,7 @@ snapshots:
       - tsx
       - yaml
 
-  vitest@4.1.0(@types/node@22.17.0)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.6.1)(jsdom@22.1.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1):
+  vitest@4.1.0(@types/node@22.17.0)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@22.1.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1):
     dependencies:
       '@vitest/expect': 4.1.0
       '@vitest/mocker': 4.1.0(vite@7.3.1(@types/node@22.17.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))

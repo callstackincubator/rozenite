@@ -1,12 +1,12 @@
-# Network Domain
-
-Record HTTP/HTTPS traffic, then list requests, inspect request/response details and bodies, and analyze timing—similar to the browser DevTools Network panel.
+Record HTTP/HTTPS traffic, then list requests, inspect request and response details and bodies, and analyze timing, similar to the browser DevTools Network panel.
 
 ## Precedence
-- Prefer this built-in `network` domain whenever it is available.
-- If `network` is missing from `rozenite agent domains --session <sessionId>`, or it fails to initialize/use for the current app, fall back to the `@rozenite/network-activity-plugin` domain instead.
+
+- Prefer this built-in `network` domain when available.
+- If `network` is missing from `rozenite agent domains --session <sessionId>` or fails to initialize or work for the current app, fall back to `@rozenite/network-activity-plugin`.
 
 ## Tools
+
 - `startRecording` -> `{}`
 - `stopRecording` -> `{}`
 - `getRecordingStatus` -> `{}`
@@ -15,5 +15,6 @@ Record HTTP/HTTPS traffic, then list requests, inspect request/response details 
 - `getRequestBody` -> `{"requestId":"<requestId>"}`
 - `getResponseBody` -> `{"requestId":"<requestId>"}`
 
-## Minimal Flow
+## Flow
+
 `startRecording` -> reproduce traffic -> `listRequests` -> `getRequestDetails` -> optional body fetch.

@@ -1,14 +1,16 @@
-# Memory Domain
-
-Capture one-off heap snapshots or run allocation sampling over a reproduction. Exports are file-backed (e.g. `.heapsnapshot`, `.heapprofile`) for offline analysis.
+Capture one-off heap snapshots or run allocation sampling over a reproduction. Metro writes artifacts under `.rozenite/agent/sessions/<deviceId>/memory` and `.rozenite/agent/sessions/<deviceId>/profiles` for offline analysis.
 
 ## Tools
-- `takeHeapSnapshot` -> `{"filePath":"<path>.heapsnapshot"}`
-- `startSampling` -> `{}`
-- `stopSampling` -> `{"filePath":"<path>.heapprofile"}`
 
-## Minimal Flow
+- `takeHeapSnapshot` -> `{}` | `{"nameHint":"before-login"}`
+- `startSampling` -> `{}`
+- `stopSampling` -> `{}` | `{"nameHint":"home-screen"}`
+
+## Flow
+
 `takeHeapSnapshot` for one-shot heap capture.
 
 Sampling:
 `startSampling` -> reproduce issue -> `stopSampling`.
+
+Returned artifact metadata includes the Metro-managed absolute and relative paths.
