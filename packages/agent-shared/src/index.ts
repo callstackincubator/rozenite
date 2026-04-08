@@ -106,10 +106,12 @@ export type GetAgentTargetsResponse = {
 
 export type CreateAgentSessionRequest = {
   deviceId?: string;
+  cliVersion?: string;
 };
 
 export type CreateAgentSessionResponse = {
   session: AgentSessionInfo;
+  versionCheck?: string;
 };
 
 export type ListAgentSessionsResponse = {

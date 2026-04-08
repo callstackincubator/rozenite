@@ -1,5 +1,3 @@
-import { PackageManagerTabs } from '@rspress/core/theme';
-
 # Rozenite for Agents
 
 Rozenite for Agents is the agent-facing way to interact with React Native DevTools and Rozenite plugins. It gives coding agents a reliable interface for inspecting a running React Native app through Rozenite, including logs, network activity, React profiling data, and plugin-specific tooling.
@@ -23,33 +21,16 @@ This functionality is experimental and may not work in all cases. If you run int
 
 Make sure:
 
-- the `rozenite` CLI is available in the project
+- Rozenite is installed and configured for the app
 - your app is running in development mode
 - Metro is running
 - at least one React Native target is connected
 
 If you have more than one simulator, emulator, or device connected, you will need to choose which one to inspect.
 
-## Install the CLI
+Rozenite for Agents requires a project with Rozenite already installed and configured. The agent skill teaches your coding agent how to use that setup effectively.
 
-Rozenite for Agents depends on the `rozenite` CLI. The agent skill teaches your coding agent how to use the CLI effectively, but it does not install the CLI for you.
-
-Install `rozenite` in the project:
-
-<PackageManagerTabs command="install -D rozenite" />
-
-If you prefer, you can also invoke the latest CLI without adding it to your dependencies:
-
-<PackageManagerTabs
-  command={{
-    npm: 'npx rozenite@latest agent session list',
-    yarn: 'yarn dlx rozenite@latest agent session list',
-    pnpm: 'pnpm dlx rozenite@latest agent session list',
-    bun: 'bunx rozenite@latest agent session list',
-  }}
-/>
-
-Rozenite for Agents is designed for AI and coding agents first. The underlying CLI can be called directly, but the intended use is for an agent to drive it while debugging or implementing changes in a React Native app.
+Rozenite for Agents is designed for AI and coding agents first. The underlying CLI can be called directly with `npx rozenite`, but the intended use is for an agent to drive it while debugging or implementing changes in a React Native app.
 
 :::warning React Native DevTools will disconnect
 Rozenite for Agents acts as a debugger connection to the running app. Because of a current React Native limitation, starting an agent session will disconnect React Native DevTools if it is already attached.

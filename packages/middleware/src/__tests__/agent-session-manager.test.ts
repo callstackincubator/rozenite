@@ -112,13 +112,58 @@ describe('agent session manager', () => {
 
     await expect(
       manager.createSession({ deviceId: 'device-1' }),
-    ).resolves.toEqual({ id: 'device-1', deviceName: 'Phone' });
+    ).resolves.toEqual({
+      session: { id: 'device-1', deviceName: 'Phone' },
+    });
     await expect(
       manager.createSession({ deviceId: 'device-1' }),
-    ).resolves.toEqual({ id: 'device-1', deviceName: 'Phone' });
+    ).resolves.toEqual({
+      session: { id: 'device-1', deviceName: 'Phone' },
+    });
 
     expect(mocks.createAgentSession).toHaveBeenCalledTimes(1);
     expect(mocks.start).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes CLI and Metro versions into a new session', async () => {
+    mocks.resolveMetroTarget.mockResolvedValue(target);
+    mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
+
+    const manager = createAgentSessionManager({
+      projectRoot: '/app',
+      metroVersion: '1.6.0',
+    });
+
+    await manager.createSession({
+      deviceId: 'device-1',
+      cliVersion: '1.5.0',
+    });
+
+    expect(mocks.createAgentSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target,
+        cliVersion: '1.5.0',
+        metroVersion: '1.6.0',
+      }),
+    );
+  });
+
+  it('returns a version warning only when CLI and Metro differ', async () => {
+    mocks.resolveMetroTarget.mockResolvedValue(target);
+    mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
+
+    const manager = createAgentSessionManager({
+      projectRoot: '/app',
+      metroVersion: '1.6.0',
+    });
+
+    await expect(
+      manager.createSession({ deviceId: 'device-1', cliVersion: '1.5.0' }),
+    ).resolves.toEqual({
+      session: { id: 'device-1', deviceName: 'Phone' },
+      versionCheck:
+        'Connected Rozenite agent uses version 1.5.0, but Metro is running version 1.6.0. Integration may not work correctly.',
+    });
   });
 
   it('stops and removes sessions', async () => {
@@ -175,8 +220,10 @@ describe('agent session manager', () => {
     resolveStart?.();
 
     await expect(createPromise).resolves.toEqual({
-      id: 'device-1',
-      deviceName: 'Phone',
+      session: {
+        id: 'device-1',
+        deviceName: 'Phone',
+      },
     });
   });
 
