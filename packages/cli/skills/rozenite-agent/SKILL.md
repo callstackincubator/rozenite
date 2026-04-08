@@ -5,8 +5,8 @@ description: Skill giving access to React Native Devtools and Rozenite plugins.
 
 ## CLI
 
-- Use `npx rozenite` for Rozenite commands.
-- Run `npx rozenite` from the app root where Metro is started for the target app. In monorepos, this is usually the app package root, not the repository root.
+- Use `pnpm -w run rozenite` for Rozenite commands.
+- Run `pnpm -w run rozenite` from the repository root.
 
 ## Rules
 
@@ -42,7 +42,7 @@ description: Skill giving access to React Native Devtools and Rozenite plugins.
 
 ## Flow
 
-1. Set `ROZENITE="npx rozenite"`.
+1. Set `ROZENITE="pnpm -w run rozenite"`.
 2. Run Rozenite commands one at a time.
 3. Use `$ROZENITE agent targets` as the source of truth for available targets when device selection matters. If the expected target is missing, ask the user to run the app on a device.
 4. Run `$ROZENITE agent session create`.
