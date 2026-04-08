@@ -68,6 +68,8 @@ export const createAgentSession = (options: {
   host: string;
   port: number;
   target: MetroTarget;
+  cliVersion?: string;
+  metroVersion?: string;
   onTerminated?: (sessionId: string) => void;
 }) => {
   const handler = createAgentMessageHandler();
@@ -278,6 +280,15 @@ export const createAgentSession = (options: {
     logger.info(
       `Rozenite for Agents connected to device ${options.target.name} (${options.target.id}).`,
     );
+    if (
+      options.cliVersion &&
+      options.metroVersion &&
+      options.cliVersion !== options.metroVersion
+    ) {
+      logger.warn(
+        `Connected Rozenite agent uses version ${options.cliVersion}, but Metro is running version ${options.metroVersion}. Integration may not work correctly.`,
+      );
+    }
     disconnectLogged = false;
   };
 

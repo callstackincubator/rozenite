@@ -4,6 +4,7 @@
   "license": "MIT",
   "scripts": {
     "prepare": "husky",
+    "rozenite": "node packages/cli/bin.js",
     "build:all": "turbo run build",
     "typecheck:all": "turbo run typecheck",
     "lint:all": "turbo run lint",

@@ -24,6 +24,7 @@ import {
 } from './tool-pagination.js';
 import { createAgentHttpClient } from './http-client.js';
 import { getErrorMessage } from './error-message.js';
+import { getPackageJSON } from '../../package-json.js';
 
 const REMOVED_ROZENITE_DOMAIN_HINT =
   'The `rozenite agent rozenite ...` path was removed. Use `rozenite agent <domain> ...`; run `rozenite agent domains -j`.';
@@ -89,9 +90,9 @@ type DomainListRow = {
 
 type AgentSessionOutput = {
   id: string;
-  deviceId: string;
   deviceName: string;
   status: string;
+  versionCheck?: string;
 };
 
 const TOOL_LIST_FIELDS = ['name', 'shortName', 'description'] as const;
@@ -107,11 +108,16 @@ const DOMAIN_LIST_DEFAULT_FIELDS = ['id', 'kind'] as const;
 
 const projectSessionOutput = (
   session: Record<string, unknown>,
+  versionCheck?: unknown,
 ): AgentSessionOutput => ({
   id: String(session.id ?? ''),
-  deviceId: String(session.deviceId ?? ''),
   deviceName: String(session.deviceName ?? ''),
   status: String(session.status ?? ''),
+  ...(versionCheck
+    ? {
+        versionCheck: String(versionCheck),
+      }
+    : {}),
 });
 
 const getConnectionOptions = (cmd: Command): CommonOptions => {
@@ -485,9 +491,10 @@ export const registerAgentCommand = (program: Command): void => {
         const sessionOptions = command.optsWithGlobals<SessionCommandOptions>();
         const result = await createAgentHttpClient(options).createSession({
           deviceId: sessionOptions.deviceId,
+          cliVersion: getPackageJSON().version,
         });
         printOutput(
-          projectSessionOutput(result.session),
+          projectSessionOutput(result.session, result.versionCheck),
           true,
           !!options.pretty,
         );

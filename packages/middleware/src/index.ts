@@ -2,6 +2,7 @@ import { type Application } from 'express';
 import { patchDevtoolsFrontendUrl } from './dev-tools-url-patch.js';
 import { getMiddleware } from './middleware.js';
 import { logger } from './logger.js';
+import { getPackageJSON } from './package-json.js';
 import { getInstalledPlugins } from './auto-discovery.js';
 import type { RozeniteConfig } from './config.js';
 import { getDevModePackage } from './dev-mode.js';
@@ -45,6 +46,7 @@ export const initializeRozenite = (
   const allInstalledPlugins = getInstalledPlugins(options);
   const agentSessionManager = createAgentSessionManager({
     projectRoot: options.projectRoot,
+    metroVersion: getPackageJSON().version,
   });
 
   if (allInstalledPlugins.length === 0) {

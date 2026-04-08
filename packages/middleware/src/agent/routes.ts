@@ -111,12 +111,15 @@ export const createAgentRoutes = (manager: AgentSessionManager): Router => {
     syncEndpoint(manager, req);
     try {
       const body = getBodyRecord(req);
-      const session = await manager.createSession({
+      const result = await manager.createSession({
         ...(typeof body.deviceId === 'string'
           ? { deviceId: body.deviceId }
           : {}),
+        ...(typeof body.cliVersion === 'string'
+          ? { cliVersion: body.cliVersion }
+          : {}),
       } satisfies CreateAgentSessionRequest);
-      sendResult<CreateAgentSessionResponse>(res, { session });
+      sendResult<CreateAgentSessionResponse>(res, result);
     } catch (error) {
       sendError(res, error);
     }

@@ -15,7 +15,9 @@ export const createAgentSessionManager = (options: {
   projectRoot: string;
   host?: string;
   port?: number;
+  metroVersion?: string;
 }) => {
+  const metroVersion = options.metroVersion;
   const sessions = new Map<string, AgentSession>();
   let currentHost = options.host ?? DEFAULT_AGENT_HOST;
   let currentPort = options.port ?? DEFAULT_AGENT_PORT;
@@ -48,7 +50,14 @@ export const createAgentSessionManager = (options: {
 
   const createSession = async (
     request: CreateAgentSessionRequest = {},
-  ): Promise<AgentSessionInfo> => {
+  ): Promise<{
+    session: AgentSessionInfo;
+    versionCheck?: string;
+  }> => {
+    const versionCheck =
+      request.cliVersion && metroVersion && request.cliVersion !== metroVersion
+        ? `Connected Rozenite agent uses version ${request.cliVersion}, but Metro is running version ${metroVersion}. Integration may not work correctly.`
+        : undefined;
     const target = await resolveMetroTarget(
       currentHost,
       currentPort,
@@ -56,7 +65,10 @@ export const createAgentSessionManager = (options: {
     );
     const existing = sessions.get(target.id);
     if (existing) {
-      return existing.getInfo();
+      return {
+        session: existing.getInfo(),
+        versionCheck,
+      };
     }
 
     const session = createAgentSession({
@@ -64,6 +76,8 @@ export const createAgentSessionManager = (options: {
       host: currentHost,
       port: currentPort,
       target,
+      cliVersion: request.cliVersion,
+      metroVersion,
       onTerminated: (sessionId) => {
         const current = sessions.get(sessionId);
         if (current === session) {
@@ -75,7 +89,10 @@ export const createAgentSessionManager = (options: {
     try {
       await session.start();
       sessions.set(target.id, session);
-      return session.getInfo();
+      return {
+        session: session.getInfo(),
+        versionCheck,
+      };
     } catch (error) {
       sessions.delete(target.id);
       try {
