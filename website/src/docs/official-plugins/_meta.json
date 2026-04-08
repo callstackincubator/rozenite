@@ -51,6 +51,21 @@
   },
   {
     "type": "file",
+    "name": "sqlite",
+    "label": "SQLite"
+  },
+  {
+    "type": "file",
+    "name": "file-system",
+    "label": "File System"
+  },
+  {
+    "type": "file",
+    "name": "controls",
+    "label": "Controls"
+  },
+  {
+    "type": "file",
     "name": "require-profiler",
     "label": "Require Profiler"
   }

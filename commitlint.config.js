@@ -27,6 +27,11 @@ export default {
         'chrome-extension',
         'web',
         'storage-plugin',
+        'controls-plugin',
+        'agent-bridge',
+        'agent-shared',
+        'file-system-plugin',
+        'sqlite-plugin',
         ''
       ],
     ],

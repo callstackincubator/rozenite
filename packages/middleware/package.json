@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/middleware",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Middleware for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",
@@ -26,6 +26,9 @@
   },
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -38,16 +41,20 @@
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest --run"
   },
   "dependencies": {
+    "@rozenite/agent-shared": "workspace:*",
     "@rozenite/runtime": "workspace:*",
     "@rozenite/tools": "workspace:*",
     "express": "^5.1.0",
     "semver": "^7.7.2",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
+    "vitest": "^4.0.18",
     "@react-native/dev-middleware": "~0.76.0",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",

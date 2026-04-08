@@ -125,3 +125,7 @@ yarn-error.log
 
 # Expo
 .expo/
+.rozenite/
+
+# Vercel
+.vercel

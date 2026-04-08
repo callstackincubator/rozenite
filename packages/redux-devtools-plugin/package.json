@@ -1,21 +1,30 @@
 {
   "name": "@rozenite/redux-devtools-plugin",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Redux DevTools for Rozenite.",
   "type": "module",
-  "main": "./dist/react-native.cjs",
-  "module": "./dist/react-native.js",
-  "types": "./dist/react-native.d.ts",
+  "main": "./dist/react-native/index.cjs",
+  "module": "./dist/react-native/index.js",
+  "types": "./dist/react-native/index.d.ts",
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
   "exports": {
     ".": {
-      "types": "./dist/react-native.d.ts",
-      "import": "./dist/react-native.js",
-      "require": "./dist/react-native.cjs"
+      "types": "./dist/react-native/index.d.ts",
+      "import": "./dist/react-native/index.js",
+      "require": "./dist/react-native/index.cjs"
     },
+    "./package.json": "./package.json",
     "./metro": {
-      "types": "./dist/metro.d.ts",
-      "import": "./dist/metro.js",
-      "require": "./dist/metro.cjs"
+      "types": "./dist/metro/index.d.ts",
+      "import": "./dist/metro/index.js",
+      "require": "./dist/metro/index.cjs"
     }
   },
   "scripts": {
@@ -27,6 +36,7 @@
   "dependencies": {
     "@redux-devtools/instrument": "^2.2.0",
     "@redux-devtools/utils": "^3.1.1",
+    "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
     "jsan": "^3.1.14",
     "@rozenite/tools": "workspace:*"
@@ -58,5 +68,8 @@
     "react": "*",
     "react-native": "*"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

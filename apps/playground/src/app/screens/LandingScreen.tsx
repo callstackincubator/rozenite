@@ -1,4 +1,5 @@
 import {
+  ScrollView,
   View,
   Text,
   StyleSheet,
@@ -6,87 +7,110 @@ import {
   Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
 export const LandingScreen = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
       <View style={styles.backgroundGradient}>
-        <View style={styles.content}>
-          <Text style={styles.mainTitle}>Rozenite</Text>
-          <Text style={styles.subtitle}>
-            React Native DevTools Plugin Framework{'\n'}
-            Playground for testing plugins in real-world scenarios
-          </Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <Text style={styles.mainTitle}>Rozenite</Text>
+            <Text style={styles.subtitle}>
+              React Native DevTools Plugin Framework{'\n'}
+              Playground for testing plugins in real-world scenarios
+            </Text>
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.navigationButton}
-              onPress={() => navigation.navigate('MMKVPlugin' as never)}
-            >
-              <Text style={styles.buttonText}>MMKV Plugin</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.navigationButton}
+                onPress={() => navigation.navigate('ControlsPlugin' as never)}
+              >
+                <Text style={styles.buttonText}>Controls Plugin</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.navigationButton}
-              onPress={() => navigation.navigate('StoragePlugin' as never)}
-            >
-              <Text style={styles.buttonText}>Storage Plugin</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.navigationButton}
+                onPress={() => navigation.navigate('MMKVPlugin' as never)}
+              >
+                <Text style={styles.buttonText}>MMKV Plugin</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.navigationButton}
-              onPress={() => navigation.navigate('NetworkTest' as never)}
-            >
-              <Text style={styles.buttonText}>Network Activity</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.navigationButton}
+                onPress={() => navigation.navigate('StoragePlugin' as never)}
+              >
+                <Text style={styles.buttonText}>Storage Plugin</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.navigationButton}
-              onPress={() => navigation.navigate('ReduxTest' as never)}
-            >
-              <Text style={styles.buttonText}>Redux Test</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.navigationButton}
+                onPress={() => navigation.navigate('NetworkTest' as never)}
+              >
+                <Text style={styles.buttonText}>Network Activity</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.navigationButton}
-              onPress={() => navigation.navigate('PerformanceMonitor' as never)}
-            >
-              <Text style={styles.buttonText}>Performance Monitor</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.navigationButton}
+                onPress={() => navigation.navigate('ReduxTest' as never)}
+              >
+                <Text style={styles.buttonText}>Redux Test</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.navigationButton}
-              onPress={() =>
-                navigation.navigate('RequireProfilerTest' as never)
-              }
-            >
-              <Text style={styles.buttonText}>Require Profiler Test</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.navigationButton}
+                onPress={() =>
+                  navigation.navigate('PerformanceMonitor' as never)
+                }
+              >
+                <Text style={styles.buttonText}>Performance Monitor</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.navigationButton}
-              onPress={() => navigation.navigate('BottomTabs' as never)}
-            >
-              <Text style={styles.buttonText}>React Navigation</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.navigationButton}
+                onPress={() =>
+                  navigation.navigate('RequireProfilerTest' as never)
+                }
+              >
+                <Text style={styles.buttonText}>Require Profiler Test</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.configButton}
-              onPress={() => navigation.navigate('Config' as never)}
-            >
-              <Text style={styles.configButtonText}>⚙️ Settings</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.navigationButton}
+                onPress={() => navigation.navigate('FileSystemTest' as never)}
+              >
+                <Text style={styles.buttonText}>File System</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.navigationButton}
+                onPress={() => navigation.navigate('BottomTabs' as never)}
+              >
+                <Text style={styles.buttonText}>React Navigation</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.configButton}
+                onPress={() => navigation.navigate('Config' as never)}
+              >
+                <Text style={styles.configButtonText}>⚙️ Settings</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.description}>
+              Test and explore Rozenite plugins with type-safe, isomorphic
+              communication between DevTools and React Native
+            </Text>
           </View>
-
-          <Text style={styles.description}>
-            Test and explore Rozenite plugins with type-safe, isomorphic
-            communication between DevTools and React Native
-          </Text>
-        </View>
+        </ScrollView>
 
         <View style={styles.bottomAccent} />
       </View>
@@ -101,9 +125,13 @@ const styles = StyleSheet.create({
   backgroundGradient: {
     flex: 1,
     backgroundColor: '#0a0a0a',
+    position: 'relative',
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
+    paddingVertical: 40,
   },
   content: {
     alignItems: 'center',

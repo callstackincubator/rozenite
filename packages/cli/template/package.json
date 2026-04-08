@@ -3,9 +3,6 @@
   "version": "0.0.1",
   "description": "<%- description %>",
   "type": "module",
-  "main": "./dist/react-native.cjs",
-  "module": "./dist/react-native.js",
-  "types": "./dist/react-native.d.ts",
   "scripts": {
     "build": "rozenite build",
     "dev": "rozenite dev"

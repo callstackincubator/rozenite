@@ -72,6 +72,6 @@ createAsyncStorageAdapter({
 ## Notes
 
 - Unsupported value types are disabled in UI create/edit flows.
-- Type support is enforced in UI, runtime and MCP tools.
+- Type support is enforced in UI, runtime and Agent tools.
 - Storages without subscriptions automatically use internal polling updates.
 - Per-storage blacklists are supported through adapter configuration.

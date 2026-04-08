@@ -78,6 +78,24 @@ Inspect multiple storage backends from one panel using adapters for MMKV, AsyncS
 - **Per-Storage Blacklist**: Hide sensitive or noisy keys per storage instance
 - **Async + Sync Coverage**: Works with both sync (MMKV) and async (AsyncStorage/SecureStore) APIs
 
+### [File System](./file-system.md)
+
+Browse app-accessible directories and preview file contents directly in DevTools. This plugin provides:
+
+- **Runtime File Explorer**: Inspect document, cache, temp, library, and bundle directories
+- **Provider Flexibility**: Works with Expo FileSystem or RNFS-compatible libraries
+- **Inline Previews**: Open text and image files without leaving DevTools
+- **Binary Inspection**: Fall back to a readable hex-style preview for non-text files
+
+### [Controls](./controls.md)
+
+Expose app-defined controls directly in React Native DevTools so your team can inspect state, change flags, update text values, choose predefined options, and trigger actions from one panel. This plugin provides:
+
+- **Custom Runtime Panels**: Organize controls into sections that match your app workflows
+- **Read + Write Controls**: Combine status fields, toggles, selects, inputs, and buttons
+- **Validation Feedback**: Prevent invalid changes and show clear errors in DevTools
+- **No Extra Debug Screens**: Keep temporary controls out of your in-app UI
+
 ## Installing Plugins
 
 Plugins should be installed as development dependencies since they are only needed during development:
@@ -96,6 +114,10 @@ Plugins should be installed as development dependencies since they are only need
 
 <PackageManagerTabs command="install -D @rozenite/storage-plugin" />
 
+<PackageManagerTabs command="install -D @rozenite/file-system-plugin" />
+
+<PackageManagerTabs command="install -D @rozenite/controls-plugin" />
+
 See the individual plugin documentation for complete installation instructions including hook setup.
 
 ## Configuration
@@ -112,4 +134,4 @@ Want to contribute to plugins or suggest new ones? Check out our [Plugin Develop
 
 ---
 
-**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md), [TanStack Query plugin](./tanstack-query.md), [Network Activity Inspector](./network-activity.md), [Redux DevTools plugin](./redux-devtools.md), [Performance Monitor plugin](./performance-monitor.md), [MMKV plugin](./mmkv.md), or [Storage plugin](./storage.md).
+**Next**: Learn about the [Expo Atlas plugin](./expo-atlas.md), [TanStack Query plugin](./tanstack-query.md), [Network Activity Inspector](./network-activity.md), [Redux DevTools plugin](./redux-devtools.md), [Performance Monitor plugin](./performance-monitor.md), [MMKV plugin](./mmkv.md), [Storage plugin](./storage.md), [File System plugin](./file-system.md), or [Controls plugin](./controls.md).

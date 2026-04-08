@@ -2,6 +2,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type RootStackParamList = {
   Landing: undefined;
+  ControlsPlugin: undefined;
   MMKVPlugin: undefined;
   StoragePlugin: undefined;
   NetworkTest: undefined;
@@ -9,6 +10,7 @@ export type RootStackParamList = {
   ReduxTest: undefined;
   PerformanceMonitor: undefined;
   RequireProfilerTest: undefined;
+  FileSystemTest: undefined;
   Config: undefined;
   BottomTabs: undefined;
   ParameterDisplay: {
@@ -18,6 +20,7 @@ export type RootStackParamList = {
     source: string;
   };
   SuccessiveScreensStack: undefined;
+  PerfProblem: undefined;
 };
 
 export type BottomTabParamList = {

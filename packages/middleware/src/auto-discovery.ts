@@ -3,7 +3,6 @@ import path from 'node:path';
 import assert from 'node:assert';
 import { createRequire } from 'node:module';
 import { logger } from './logger.js';
-import { getNodeModulesPaths } from './node-modules-paths.js';
 import { ROZENITE_MANIFEST } from './constants.js';
 import { RozeniteConfig } from './config.js';
 
@@ -14,26 +13,46 @@ export type InstalledPlugin = {
   path: string;
 };
 
-const isDirectoryOrSymlinkToDirectory = (filePath: string): boolean => {
+const readPackageJsonName = (packagePath: string): string | null => {
   try {
-    fs.accessSync(filePath);
+    const packageJsonPath = path.join(packagePath, 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    return typeof packageJson.name === 'string' ? packageJson.name : null;
   } catch {
-    return false;
+    return null;
   }
+};
 
-  try {
-    const stats = fs.lstatSync(filePath);
+export const findPackageRoot = (
+  packageName: string,
+  resolvedPath: string
+): string | null => {
+  let currentPath = path.dirname(resolvedPath);
 
-    if (stats.isSymbolicLink()) {
-      const realPath = fs.realpathSync(filePath);
-      const realStats = fs.statSync(realPath);
-      return realStats.isDirectory();
-    } else {
-      return stats.isDirectory();
+  while (true) {
+    if (readPackageJsonName(currentPath) === packageName) {
+      return currentPath;
     }
-  } catch (error) {
-    logger.warn(`Warning: Could not access ${filePath}:`, error);
-    return false;
+
+    const parentPath = path.dirname(currentPath);
+
+    if (parentPath === currentPath) {
+      return null;
+    }
+
+    currentPath = parentPath;
+  }
+};
+
+const resolvePackageRoot = (
+  projectRoot: string,
+  packageName: string
+): string | null => {
+  try {
+    const resolvedPath = require.resolve(packageName, { paths: [projectRoot] });
+    return findPackageRoot(packageName, resolvedPath);
+  } catch {
+    return null;
   }
 };
 
@@ -41,13 +60,7 @@ const tryResolvePlugin = (
   projectRoot: string,
   maybePlugin: string
 ): string | null => {
-  try {
-    const pluginPath = require.resolve(maybePlugin, { paths: [projectRoot] });
-    // lorem-ipsum/dist/index.js -> ../.. -> lorem-ipsum/
-    return path.resolve(pluginPath, '..', '..');
-  } catch {
-    return null;
-  }
+  return resolvePackageRoot(projectRoot, maybePlugin);
 };
 
 const getIncludedPlugins = (options: RozeniteConfig): InstalledPlugin[] => {
@@ -85,106 +98,36 @@ export const getInstalledPlugins = (
     return getIncludedPlugins(options);
   }
 
-  const nodeModulesPaths = getNodeModulesPaths();
-  const plugins: InstalledPlugin[] = [];
+  return getInstalledPluginsFromDependencies(options);
+};
 
-  for (const nodeModulesPath of nodeModulesPaths) {
-    try {
-      fs.accessSync(nodeModulesPath);
-    } catch {
+const getInstalledPluginsFromDependencies = (
+  options: RozeniteConfig
+): InstalledPlugin[] => {
+  const plugins: InstalledPlugin[] = [];
+  const packageJsonPath = path.join(options.projectRoot, 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+  const dependencies = Array.from(new Set([
+    ...Object.keys(packageJson.dependencies || {}),
+    ...Object.keys(packageJson.devDependencies || {}),
+  ]));
+
+  for (const dependency of dependencies) {
+    if (options.exclude?.includes(dependency)) {
       continue;
     }
 
-    try {
-      const entries = fs.readdirSync(nodeModulesPath, {
-        withFileTypes: true,
-      });
+    const packagePath = resolvePackageRoot(options.projectRoot, dependency);
 
-      for (const entry of entries) {
-        if (
-          !isDirectoryOrSymlinkToDirectory(
-            path.join(nodeModulesPath, entry.name)
-          )
-        ) {
-          continue;
-        }
-
-        const packageName = entry.name;
-
-        if (packageName.startsWith('.')) {
-          continue;
-        }
-
-        let packagePath: string;
-        let actualPackageName: string;
-
-        if (packageName.startsWith('@')) {
-          const scopePath = path.join(nodeModulesPath, packageName);
-
-          try {
-            fs.accessSync(scopePath);
-          } catch {
-            continue;
-          }
-
-          try {
-            const scopedEntries = fs.readdirSync(scopePath, {
-              withFileTypes: true,
-            });
-
-            for (const scopedEntry of scopedEntries) {
-              if (
-                !isDirectoryOrSymlinkToDirectory(
-                  path.join(scopePath, scopedEntry.name)
-                )
-              ) {
-                continue;
-              }
-
-              packagePath = path.join(scopePath, scopedEntry.name);
-              actualPackageName = `${packageName}/${scopedEntry.name}`;
-
-              const plugin = tryExtractPlugin(packagePath, actualPackageName);
-
-              if (
-                options.exclude &&
-                options.exclude.includes(actualPackageName)
-              ) {
-                continue;
-              }
-
-              if (plugin) {
-                plugins.push(plugin);
-              }
-            }
-          } catch (error) {
-            logger.warn(
-              `Warning: Could not read scope directory ${scopePath}:`,
-              error
-            );
-            continue;
-          }
-        } else {
-          packagePath = path.join(nodeModulesPath, packageName);
-          actualPackageName = packageName;
-
-          const plugin = tryExtractPlugin(packagePath, actualPackageName);
-
-          if (options.exclude && options.exclude.includes(actualPackageName)) {
-            continue;
-          }
-
-          if (plugin) {
-            plugins.push(plugin);
-          }
-        }
-      }
-    } catch (error) {
-      logger.warn(
-        `Warning: Could not read node_modules directory ${nodeModulesPath}:`,
-        error
-      );
+    if (!packagePath) {
       continue;
+    }
+
+    const plugin = tryExtractPlugin(packagePath, dependency);
+
+    if (plugin) {
+      plugins.push(plugin);
     }
   }
 

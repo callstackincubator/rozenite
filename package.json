@@ -4,6 +4,7 @@
   "license": "MIT",
   "scripts": {
     "prepare": "husky",
+    "rozenite": "node packages/cli/bin.js",
     "build:all": "turbo run build",
     "typecheck:all": "turbo run typecheck",
     "lint:all": "turbo run lint",
@@ -11,6 +12,10 @@
     "format:all:fix": "prettier . --write",
     "checks:all": "pnpm typecheck:all && pnpm lint:all && pnpm format:all",
     "release:plan": "changeset status",
+    "release:check": "pnpm turbo run typecheck build lint test",
+    "release:build": "pnpm build:all",
+    "release:publish": "changeset publish --no-git-tag",
+    "release:run": "node scripts/release/release.mjs",
     "start:playground": "pnpm --filter @rozenite/playground start",
     "start:playground:android": "pnpm --filter @rozenite/playground android",
     "start:playground:ios": "pnpm --filter @rozenite/playground ios"
@@ -46,6 +51,11 @@
     "vitest": "^3.0.0"
   },
   "packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c",
+  "pnpm": {
+    "overrides": {
+      "vite": "catalog:"
+    }
+  },
   "resolutions": {
     "@microsoft/api-extractor": "7.48.1"
   }

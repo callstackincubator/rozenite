@@ -1,11 +1,19 @@
 {
   "name": "@rozenite/expo-atlas-plugin",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Expo Atlas for Rozenite.",
   "type": "module",
-  "main": "./dist/react-native.cjs",
-  "module": "./dist/react-native.js",
-  "types": "./dist/react-native.d.ts",
+  "main": "./dist/react-native/index.cjs",
+  "module": "./dist/react-native/index.js",
+  "types": "./dist/react-native/index.d.ts",
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
   "scripts": {
     "build": "rozenite build",
     "dev": "rozenite dev",
@@ -39,5 +47,16 @@
     "react": "*",
     "react-native": "*"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/react-native/index.d.ts",
+      "import": "./dist/react-native/index.js",
+      "require": "./dist/react-native/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

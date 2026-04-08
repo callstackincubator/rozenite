@@ -1,11 +1,19 @@
 {
   "name": "@rozenite/tools",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Tools for Rozenite.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -23,5 +31,8 @@
     "typescript": "^5.7.3",
     "vite": "catalog:"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

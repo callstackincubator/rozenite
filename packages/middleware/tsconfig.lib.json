@@ -8,10 +8,14 @@
     "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["node", "vite/client"],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
   "include": ["src/**/*.ts"],
   "references": [
+    {
+      "path": "../agent-shared/tsconfig.lib.json"
+    },
     {
       "path": "../tools/tsconfig.lib.json"
     },

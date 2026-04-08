@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Release mode to run
+        required: true
+        type: choice
+        options:
+          - stable
+          - rc
+          - canary
+      ref:
+        description: Git ref to checkout
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release-${{ github.event.inputs.mode }}-${{ github.event.inputs.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Run release
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_MODE: ${{ github.event.inputs.mode }}
+      RELEASE_REF: ${{ github.event.inputs.ref }}
+      GIT_AUTHOR_NAME: actions-bot
+      GIT_AUTHOR_EMAIL: actions-bot@users.noreply.github.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.inputs.ref }}
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "$GIT_AUTHOR_NAME"
+          git config user.email "$GIT_AUTHOR_EMAIL"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run release
+        run: pnpm release:run

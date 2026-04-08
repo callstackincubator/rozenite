@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/runtime",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Rozenite runtime for React Native DevTools.",
   "type": "module",
   "files": [
@@ -23,6 +23,9 @@
   },
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/host.d.ts",

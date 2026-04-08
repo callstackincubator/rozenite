@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/repack",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Re.Pack bundler plugin for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,6 +27,9 @@
   },
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {

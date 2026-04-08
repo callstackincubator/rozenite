@@ -24,4 +24,5 @@ export type RozeniteConfig = {
    * @default 'info'
    */
   logLevel?: RozeniteLogLevel;
+
 };

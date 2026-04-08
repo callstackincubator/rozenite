@@ -1,0 +1,61 @@
+{
+  "name": "@rozenite/file-system-plugin",
+  "version": "1.6.0",
+  "description": "A Rozenite plugin for browsing app files and previewing file contents in React Native DevTools.",
+  "type": "module",
+  "main": "./dist/react-native/index.cjs",
+  "module": "./dist/react-native/index.js",
+  "types": "./dist/react-native/index.d.ts",
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "scripts": {
+    "build": "rozenite build",
+    "dev": "rozenite dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@rozenite/agent-bridge": "workspace:*",
+    "@rozenite/plugin-bridge": "workspace:*"
+  },
+  "devDependencies": {
+    "@rozenite/vite-plugin": "workspace:*",
+    "@types/react": "~18.3.12",
+    "autoprefixer": "^10.4.21",
+    "lucide-react": "^0.263.1",
+    "postcss": "^8.5.6",
+    "react": "18.3.1",
+    "react-dom": "18.3.0",
+    "react-native": "0.76.0",
+    "react-native-web": "0.21.0",
+    "rozenite": "workspace:*",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/react-native/index.d.ts",
+      "import": "./dist/react-native/index.js",
+      "require": "./dist/react-native/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

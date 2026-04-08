@@ -3,58 +3,76 @@ import {
   NavigationContainerRef,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
-import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
 import { useRozeniteStoragePlugin } from '@rozenite/storage-plugin';
+import { useRozeniteSqlitePlugin } from '@rozenite/sqlite-plugin';
 import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
+import { usePlaygroundControlsSections } from './hooks/usePlaygroundControlsSections';
 import { mmkvStorages } from './mmkv-storages';
 import { BottomTabNavigator } from './navigation/BottomTabNavigator';
 import { SuccessiveScreensNavigator } from './navigation/SuccessiveScreensNavigator';
 import { RootStackParamList } from './navigation/types';
 import { ConfigScreen } from './screens/ConfigScreen';
+import { ControlsPluginScreen } from './screens/ControlsPluginScreen';
 import { LandingScreen } from './screens/LandingScreen';
 import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
 import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
 import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
+import { PerfProblemScreen } from './screens/PerfProblemScreen';
 import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
+import { FileSystemTestScreen } from './screens/FileSystemTestScreen';
 import { StoragePluginScreen } from './screens/StoragePluginScreen';
 import { storagePluginAdapters } from './storage-plugin-adapters';
+import { sqlitePluginAdapters } from './sqlite-plugin-databases';
 import { primaryStore } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
-import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
-
-withOnBootNetworkActivityRecording();
+import { useAgentPlaygroundTools } from './useAgentPlaygroundTools';
+import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
+import { useFileSystemDevTools } from '@rozenite/file-system-plugin';
+import * as RNFS from '@dr.pogodin/react-native-fs';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Wrapper = () => {
+  const controlsSections = usePlaygroundControlsSections();
+
   useTanStackQueryDevTools(queryClient);
+  useRozeniteControlsPlugin({
+    sections: controlsSections,
+  });
   useNetworkActivityDevTools({
     clientUISettings: {
       showUrlAsName: true,
     },
   });
   useMMKVDevTools({
-    // @ts-expect-error - This is fine as in production MMKV plugin will pick up installed version automatically.
     storages: mmkvStorages,
     blacklist: /user-storage:sensitiveToken/,
   });
   useRozeniteStoragePlugin({
     storages: storagePluginAdapters,
   });
+  useRozeniteSqlitePlugin({
+    adapters: sqlitePluginAdapters,
+  });
+  useReduxDevToolsAgentTools();
   usePerformanceMonitorDevTools();
   useRequireProfilerDevTools();
+  useAgentPlaygroundTools();
+  useFileSystemDevTools({ rnfs: RNFS });
 
   return (
     <Stack.Navigator
@@ -65,6 +83,7 @@ const Wrapper = () => {
       }}
     >
       <Stack.Screen name="Landing" component={LandingScreen} />
+      <Stack.Screen name="ControlsPlugin" component={ControlsPluginScreen} />
       <Stack.Screen name="MMKVPlugin" component={MMKVPluginScreen} />
       <Stack.Screen name="StoragePlugin" component={StoragePluginScreen} />
       <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
@@ -78,6 +97,7 @@ const Wrapper = () => {
         name="RequireProfilerTest"
         component={RequireProfilerTestScreen}
       />
+      <Stack.Screen name="FileSystemTest" component={FileSystemTestScreen} />
       <Stack.Screen
         name="Config"
         component={ConfigScreen}
@@ -101,6 +121,7 @@ const Wrapper = () => {
         name="SuccessiveScreensStack"
         component={SuccessiveScreensNavigator}
       />
+      <Stack.Screen name="PerfProblem" component={PerfProblemScreen} />
     </Stack.Navigator>
   );
 };
@@ -110,14 +131,17 @@ const linking = {
   config: {
     screens: {
       Landing: '',
+      ControlsPlugin: 'controls',
       MMKVPlugin: 'mmkv',
       StoragePlugin: 'storage',
       NetworkTest: 'network',
       ReduxTest: 'redux',
       PerformanceMonitor: 'performance',
       RequireProfilerTest: 'require-profiler-test',
+      FileSystemTest: 'file-system-test',
       Config: 'config',
       BottomTabs: 'tabs',
+      PerfProblem: 'perf-problem',
       SuccessiveScreensStack: {
         path: 'successive',
         screens: {

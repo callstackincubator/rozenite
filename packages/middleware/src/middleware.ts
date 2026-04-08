@@ -8,6 +8,8 @@ import { InstalledPlugin } from './auto-discovery.js';
 import { getReactNativeDebuggerFrontendPath } from './resolve.js';
 import { RozeniteConfig } from './config.js';
 import { logger } from './logger.js';
+import type { AgentSessionManager } from './agent/index.js';
+import { createAgentRoutes } from './agent/index.js';
 
 const require = createRequire(import.meta.url);
 
@@ -15,17 +17,30 @@ export type MiddlewareConfig = {
   destroyOnDetachPlugins?: string[];
 };
 
+export const getNormalizedRequestUrl = (url: string): string => {
+  if (url === '/rozenite' || url.startsWith('/rozenite/')) {
+    if (url === '/rozenite/agent' || url.startsWith('/rozenite/agent/')) {
+      return url;
+    }
+
+    return url.replace('/rozenite', '');
+  }
+
+  return url;
+};
+
 export const getMiddleware = (
   options: RozeniteConfig,
   installedPlugins: InstalledPlugin[],
-  destroyOnDetachPlugins: string[]
+  destroyOnDetachPlugins: string[],
+  agentSessionManager: AgentSessionManager,
 ): Application => {
   const app = express();
   const debuggerFrontend = require(getReactNativeDebuggerFrontendPath(options));
 
   const frameworkPath = path.resolve(
     require.resolve('@rozenite/runtime'),
-    '..'
+    '..',
   );
 
   logger.debug(`Debugger frontend path: ${debuggerFrontend}`);
@@ -36,9 +51,7 @@ export const getMiddleware = (
 
     logger.debug(`Incoming request: ${req.url}`);
 
-    if (req.url.includes('/rozenite')) {
-      req.url = req.url.replace('/rozenite', '');
-    }
+    req.url = getNormalizedRequestUrl(req.url);
 
     next();
   });
@@ -46,7 +59,7 @@ export const getMiddleware = (
   app.get('/plugins/:plugin/*others', (req, res, next) => {
     const pluginName = req.params.plugin.replace('_', '/');
     const plugin = installedPlugins.find(
-      (plugin) => plugin.name === pluginName
+      (plugin) => plugin.name === pluginName,
     );
 
     if (!plugin) {
@@ -70,8 +83,8 @@ export const getMiddleware = (
       getEntryPointHTML(
         debuggerFrontend,
         installedPlugins.map((plugin) => plugin.name),
-        destroyOnDetachPlugins
-      )
+        destroyOnDetachPlugins,
+      ),
     );
   });
 
@@ -79,6 +92,8 @@ export const getMiddleware = (
     res.setHeader('Content-Type', 'application/javascript');
     res.end(fs.readFileSync(path.join(frameworkPath, 'host.js'), 'utf8'));
   });
+
+  app.use(createAgentRoutes(agentSessionManager));
 
   app.use(express.static(debuggerFrontend));
 

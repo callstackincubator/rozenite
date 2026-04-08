@@ -1,9 +1,3 @@
-export {
-  createAsyncStorageAdapter,
-  createExpoAsyncStorageAdapter,
-  createExpoSecureStorageAdapter,
-  createMMKVStorageAdapter,
-} from './src/react-native/adapters';
 export type {
   AsyncStorageInstanceConfig,
   AsyncStorageLike,
@@ -25,6 +19,10 @@ export type {
   SyncStorage,
 } from './src/shared/types';
 
+export let createAsyncStorageAdapter: typeof import('./src/react-native/adapters').createAsyncStorageAdapter;
+export let createExpoAsyncStorageAdapter: typeof import('./src/react-native/adapters').createExpoAsyncStorageAdapter;
+export let createExpoSecureStorageAdapter: typeof import('./src/react-native/adapters').createExpoSecureStorageAdapter;
+export let createMMKVStorageAdapter: typeof import('./src/react-native/adapters').createMMKVStorageAdapter;
 export let useRozeniteStoragePlugin: typeof import('./src/react-native/useRozeniteStoragePlugin').useRozeniteStoragePlugin;
 
 const isWeb =
@@ -33,8 +31,47 @@ const isDev = process.env.NODE_ENV !== 'production';
 const isServer = typeof window === 'undefined';
 
 if (isDev && !isWeb && !isServer) {
+  createAsyncStorageAdapter =
+    require('./src/react-native/adapters').createAsyncStorageAdapter;
+  createExpoAsyncStorageAdapter =
+    require('./src/react-native/adapters').createExpoAsyncStorageAdapter;
+  createExpoSecureStorageAdapter =
+    require('./src/react-native/adapters').createExpoSecureStorageAdapter;
+  createMMKVStorageAdapter =
+    require('./src/react-native/adapters').createMMKVStorageAdapter;
   useRozeniteStoragePlugin =
     require('./src/react-native/useRozeniteStoragePlugin').useRozeniteStoragePlugin;
 } else {
+  const createNoopStorageAdapter = (
+    options: { adapterId?: string; adapterName?: string } | undefined,
+    defaultId: string,
+    defaultName: string
+  ) => ({
+    id: options?.adapterId ?? defaultId,
+    name: options?.adapterName ?? defaultName,
+    storages: [],
+  });
+
+  createAsyncStorageAdapter = ((
+    options: { adapterId?: string; adapterName?: string }
+  ) =>
+    createNoopStorageAdapter(
+      options,
+      'async-storage',
+      'AsyncStorage'
+    )) as typeof createAsyncStorageAdapter;
+  createExpoAsyncStorageAdapter = createAsyncStorageAdapter;
+  createExpoSecureStorageAdapter = ((options: {
+    adapterId?: string;
+    adapterName?: string;
+  }) =>
+    createNoopStorageAdapter(
+      options,
+      'expo-secure-store',
+      'Expo SecureStore'
+    )) as typeof createExpoSecureStorageAdapter;
+  createMMKVStorageAdapter = ((
+    options: { adapterId?: string; adapterName?: string }
+  ) => createNoopStorageAdapter(options, 'mmkv', 'MMKV')) as typeof createMMKVStorageAdapter;
   useRozeniteStoragePlugin = () => null;
 }

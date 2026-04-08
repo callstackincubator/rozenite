@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/vite-plugin",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Vite plugin for developing React Native DevTools plugins with hot reload and development tools",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -26,6 +26,9 @@
   },
   "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -41,6 +44,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@microsoft/api-extractor": "^7.50.1",
     "@vitejs/plugin-react": "^4.3.4",
     "ejs": "^3.1.9",
     "vite-plugin-dts": "~4.5.0",
