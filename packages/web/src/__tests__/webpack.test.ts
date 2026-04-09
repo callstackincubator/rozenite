@@ -41,6 +41,16 @@ describe('withRozeniteWeb (webpack)', () => {
     expect(result.devServer?.proxy).toEqual([]);
   });
 
+  it('does not mutate entry configuration', () => {
+    const config = createWebpackConfig({
+      entry: './src/index.tsx',
+    });
+
+    const result = withRozeniteWeb(config) as WebpackConfig;
+
+    expect(result.entry).toBe('./src/index.tsx');
+  });
+
   it('preserves existing devServer options without prepending proxy entries', () => {
     const originalHistoryFallback = { index: '/index.html' };
     const originalProxy = [
@@ -336,59 +346,6 @@ describe('withRozeniteWeb (webpack)', () => {
     });
   });
 
-  it('injects @rozenite/web into string entries', () => {
-    const result = withRozeniteWeb(
-      createWebpackConfig({
-        entry: './src/index.tsx',
-      }),
-    ) as WebpackConfig;
-
-    expect(result.entry).toEqual(['@rozenite/web', './src/index.tsx']);
-  });
-
-  it('injects @rozenite/web into object entries with import arrays', () => {
-    const result = withRozeniteWeb(
-      createWebpackConfig({
-        entry: {
-          app: {
-            import: ['./src/index.tsx'],
-            filename: 'app.js',
-          },
-        },
-      }),
-    ) as WebpackConfig;
-
-    expect(result.entry).toEqual({
-      app: {
-        import: ['@rozenite/web', './src/index.tsx'],
-        filename: 'app.js',
-      },
-    });
-  });
-
-  it('does not duplicate @rozenite/web when already present in the entry', () => {
-    const result = withRozeniteWeb(
-      createWebpackConfig({
-        entry: ['@rozenite/web', './src/index.tsx'],
-      }),
-    ) as WebpackConfig;
-
-    expect(result.entry).toEqual(['@rozenite/web', './src/index.tsx']);
-  });
-
-  it('can skip entry injection', () => {
-    const result = withRozeniteWeb(
-      createWebpackConfig({
-        entry: './src/index.tsx',
-      }),
-      {
-        injectEntry: false,
-      },
-    ) as WebpackConfig;
-
-    expect(result.entry).toBe('./src/index.tsx');
-  });
-
   it('adds a plugin that rewrites ReactNativeFeatureFlags imports', () => {
     const result = withRozeniteWeb(createWebpackConfig()) as WebpackConfig;
 
@@ -439,7 +396,7 @@ describe('withRozeniteWeb (webpack)', () => {
     ).apply(compilerMock);
   });
 
-  it('returns production configs unchanged', () => {
+  it('keeps production configs free of dev-server integration', () => {
     const config = createWebpackConfig({
       mode: 'production',
       devServer: {
@@ -466,7 +423,7 @@ describe('withRozeniteWeb (webpack)', () => {
 
     const result = await resultFactory({}, { mode: 'development' });
 
-    expect(result.entry).toEqual(['@rozenite/web', './src/index.tsx']);
+    expect(result.entry).toEqual('./src/index.tsx');
     expect(result.devServer?.proxy).toBeDefined();
   });
 });

@@ -17,25 +17,21 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "development": "./src/react-native/index.ts",
       "types": "./dist/types/react-native/index.d.ts",
       "import": "./dist/esm/react-native/index.js",
       "require": "./dist/cjs/react-native/index.js"
     },
     "./webpack": {
-      "development": "./src/webpack/index.ts",
       "types": "./dist/types/webpack/index.d.ts",
       "import": "./dist/esm/webpack/index.js",
       "require": "./dist/cjs/webpack/index.js"
     },
     "./ReactNativeFeatureFlags": {
-      "development": "./src/metro/ReactNativeFeatureFlags.ts",
       "types": "./dist/types/metro/ReactNativeFeatureFlags.d.ts",
       "import": "./dist/esm/metro/ReactNativeFeatureFlags.js",
       "require": "./dist/cjs/metro/ReactNativeFeatureFlags.js"
     },
     "./metro": {
-      "development": "./src/metro/index.ts",
       "types": "./dist/types/metro/index.d.ts",
       "import": "./dist/esm/metro/index.js",
       "require": "./dist/cjs/metro/index.js"

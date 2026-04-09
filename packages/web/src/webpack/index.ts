@@ -29,7 +29,6 @@ const resolveReactNativeFeatureFlagsReplacement = () => {
   throw new Error('Unable to resolve Rozenite ReactNativeFeatureFlags shim');
 };
 
-const ROZENITE_WEB_ENTRY = '@rozenite/web';
 const REACT_NATIVE_FEATURE_FLAGS_REPLACEMENT =
   resolveReactNativeFeatureFlagsReplacement();
 
@@ -168,10 +167,6 @@ export type WebpackConfigExport =
       argv?: WebpackConfigFactoryArgs,
     ) => WebpackConfig | Promise<WebpackConfig>);
 
-export type RozeniteWebpackOptions = {
-  injectEntry?: boolean;
-};
-
 type WebpackCompiler = {
   hooks: {
     normalModuleFactory: {
@@ -216,51 +211,6 @@ class RozeniteWebpackPlugin {
     );
   }
 }
-
-const injectRozeniteImport = (value: string | string[]): string | string[] => {
-  if (typeof value === 'string') {
-    return value === ROZENITE_WEB_ENTRY ? value : [ROZENITE_WEB_ENTRY, value];
-  }
-
-  return value.includes(ROZENITE_WEB_ENTRY)
-    ? value
-    : [ROZENITE_WEB_ENTRY, ...value];
-};
-
-const injectRozeniteEntry = (value: WebpackEntryValue): WebpackEntryValue => {
-  if (typeof value === 'string' || Array.isArray(value)) {
-    return injectRozeniteImport(value);
-  }
-
-  if (value.import == null) {
-    return value;
-  }
-
-  return {
-    ...value,
-    import: injectRozeniteImport(value.import),
-  };
-};
-
-const patchEntry = (
-  entry: WebpackConfig['entry'],
-  injectEntry: boolean,
-): WebpackConfig['entry'] => {
-  if (!injectEntry || entry == null) {
-    return entry;
-  }
-
-  if (typeof entry === 'string' || Array.isArray(entry) || 'import' in entry) {
-    return injectRozeniteEntry(entry);
-  }
-
-  return Object.fromEntries(
-    Object.entries(entry).map(([key, value]) => [
-      key,
-      injectRozeniteEntry(value as WebpackEntryValue),
-    ]),
-  );
-};
 
 const getDevServerUrl = (
   devServer: WebpackDevServerRuntime | undefined,
@@ -591,20 +541,26 @@ const mergeSetupMiddlewares = (
 const hasRozeniteWebpackPlugin = (plugins: unknown[] | undefined) =>
   plugins?.some((plugin) => plugin instanceof RozeniteWebpackPlugin) ?? false;
 
-const patchConfig = (
-  config: WebpackConfig,
-  argvMode: WebpackMode | undefined,
-  options: RozeniteWebpackOptions,
-): WebpackConfig => {
-  const resolvedMode = argvMode ?? config.mode;
-
-  if (resolvedMode === 'production') {
-    return config;
-  }
-
+const patchCompatibilityConfig = (config: WebpackConfig): WebpackConfig => {
   return {
     ...config,
-    entry: patchEntry(config.entry, options.injectEntry ?? true),
+    plugins: hasRozeniteWebpackPlugin(config.plugins)
+      ? config.plugins
+      : [...(config.plugins ?? []), new RozeniteWebpackPlugin()],
+  };
+};
+
+const shouldPatchDevServer = (
+  config: WebpackConfig,
+  argvMode: WebpackMode | undefined,
+): boolean => {
+  const resolvedMode = argvMode ?? config.mode;
+  return resolvedMode !== 'production';
+};
+
+const patchDevelopmentConfig = (config: WebpackConfig): WebpackConfig => {
+  return {
+    ...config,
     devServer: {
       ...config.devServer,
       proxy: config.devServer?.proxy ?? [],
@@ -616,26 +572,38 @@ const patchConfig = (
         config.devServer?.onListening?.(devServer);
       },
     },
-    plugins: hasRozeniteWebpackPlugin(config.plugins)
-      ? config.plugins
-      : [...(config.plugins ?? []), new RozeniteWebpackPlugin()],
   };
+};
+
+const patchConfig = (
+  config: WebpackConfig,
+  argvMode: WebpackMode | undefined,
+): WebpackConfig => {
+  const resolvedMode = argvMode ?? config.mode;
+  if (resolvedMode === 'production') {
+    return config;
+  }
+
+  const compatibilityConfig = patchCompatibilityConfig(config);
+
+  return shouldPatchDevServer(compatibilityConfig, argvMode)
+    ? patchDevelopmentConfig(compatibilityConfig)
+    : compatibilityConfig;
 };
 
 export const withRozeniteWeb = (
   config: WebpackConfigExport,
-  options: RozeniteWebpackOptions = {},
 ): WebpackConfigExport => {
   if (typeof config === 'function') {
     return async (env, argv) =>
-      patchConfig(await config(env, argv), argv?.mode, options);
+      patchConfig(await config(env, argv), argv?.mode);
   }
 
   if (config instanceof Promise) {
     return config.then((resolvedConfig) =>
-      patchConfig(resolvedConfig, resolvedConfig.mode, options),
+      patchConfig(resolvedConfig, resolvedConfig.mode),
     );
   }
 
-  return patchConfig(config, config.mode, options);
+  return patchConfig(config, config.mode);
 };
