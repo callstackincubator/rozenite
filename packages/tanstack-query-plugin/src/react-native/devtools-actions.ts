@@ -7,6 +7,9 @@ type QueryScopedActionInput = {
     'CLEAR_MUTATION_CACHE' | 'CLEAR_QUERY_CACHE'
   >;
   queryHash: string;
+  metadata?: {
+    data?: unknown;
+  };
 };
 
 type CacheScopedActionInput = {
@@ -33,7 +36,7 @@ const getActiveQuery = (queryClient: QueryClient, queryHash?: string) => {
 
 export const applyTanStackQueryDevtoolsAction = async (
   queryClient: QueryClient,
-  input: TanStackQueryDevtoolsActionInput
+  input: TanStackQueryDevtoolsActionInput,
 ) => {
   switch (input.type) {
     case 'CLEAR_QUERY_CACHE': {
@@ -49,8 +52,9 @@ export const applyTanStackQueryDevtoolsAction = async (
     }
 
     case 'CLEAR_MUTATION_CACHE': {
-      const mutationCountBefore =
-        queryClient.getMutationCache().getAll().length;
+      const mutationCountBefore = queryClient
+        .getMutationCache()
+        .getAll().length;
       queryClient.getMutationCache().clear();
       return {
         applied: true,
@@ -58,6 +62,16 @@ export const applyTanStackQueryDevtoolsAction = async (
         cleared: true,
         mutationCountBefore,
         mutationCountAfter: queryClient.getMutationCache().getAll().length,
+      };
+    }
+
+    case 'SET_QUERY_DATA': {
+      const activeQuery = getActiveQuery(queryClient, input.queryHash);
+      queryClient.setQueryData(activeQuery.queryKey, input.metadata?.data);
+      return {
+        applied: true,
+        action: input.type,
+        queryHash: activeQuery.queryHash,
       };
     }
 

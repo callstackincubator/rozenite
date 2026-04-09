@@ -37,6 +37,7 @@ export type SerializableQueryClient = {
 
 export type DevToolsActionType =
   | 'REFETCH'
+  | 'SET_QUERY_DATA'
   | 'INVALIDATE'
   | 'RESET'
   | 'REMOVE'
