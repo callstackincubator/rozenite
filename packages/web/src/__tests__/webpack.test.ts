@@ -35,8 +35,18 @@ const createWebpackConfig = (
 });
 
 describe('withRozeniteWeb (webpack)', () => {
+  it('is a noop by default', () => {
+    const config = createWebpackConfig();
+
+    const result = withRozeniteWeb(config) as WebpackConfig;
+
+    expect(result).toBe(config);
+  });
+
   it('does not inject dev-middleware endpoint proxies', () => {
-    const result = withRozeniteWeb(createWebpackConfig()) as WebpackConfig;
+    const result = withRozeniteWeb(createWebpackConfig(), {
+      enabled: true,
+    }) as WebpackConfig;
 
     expect(result.devServer?.proxy).toEqual([]);
   });
@@ -46,7 +56,9 @@ describe('withRozeniteWeb (webpack)', () => {
       entry: './src/index.tsx',
     });
 
-    const result = withRozeniteWeb(config) as WebpackConfig;
+    const result = withRozeniteWeb(config, {
+      enabled: true,
+    }) as WebpackConfig;
 
     expect(result.entry).toBe('./src/index.tsx');
   });
@@ -64,6 +76,9 @@ describe('withRozeniteWeb (webpack)', () => {
           proxy: originalProxy,
         },
       }),
+      {
+        enabled: true,
+      },
     ) as WebpackConfig;
 
     expect(result.devServer?.historyApiFallback).toBe(originalHistoryFallback);
@@ -84,6 +99,9 @@ describe('withRozeniteWeb (webpack)', () => {
           setupMiddlewares,
         },
       }),
+      {
+        enabled: true,
+      },
     ) as WebpackConfig;
 
     const returnedMiddlewares = result.devServer?.setupMiddlewares?.(
@@ -134,6 +152,9 @@ describe('withRozeniteWeb (webpack)', () => {
             onListening,
           },
         }),
+        {
+          enabled: true,
+        },
       ) as WebpackConfig;
 
       const devServer = {
@@ -170,7 +191,9 @@ describe('withRozeniteWeb (webpack)', () => {
     });
 
     try {
-      const result = withRozeniteWeb(createWebpackConfig()) as WebpackConfig;
+      const result = withRozeniteWeb(createWebpackConfig(), {
+        enabled: true,
+      }) as WebpackConfig;
 
       result.devServer?.onListening?.({
         options: {
@@ -238,7 +261,9 @@ describe('withRozeniteWeb (webpack)', () => {
     });
 
     try {
-      const result = withRozeniteWeb(createWebpackConfig()) as WebpackConfig;
+      const result = withRozeniteWeb(createWebpackConfig(), {
+        enabled: true,
+      }) as WebpackConfig;
 
       result.devServer?.onListening?.({
         options: {
@@ -298,7 +323,9 @@ describe('withRozeniteWeb (webpack)', () => {
     });
 
     try {
-      const result = withRozeniteWeb(createWebpackConfig()) as WebpackConfig;
+      const result = withRozeniteWeb(createWebpackConfig(), {
+        enabled: true,
+      }) as WebpackConfig;
 
       result.devServer?.onListening?.({
         options: {
@@ -336,6 +363,9 @@ describe('withRozeniteWeb (webpack)', () => {
           },
         },
       }),
+      {
+        enabled: true,
+      },
     ) as WebpackConfig;
 
     expect(result.devServer?.proxy).toEqual({
@@ -347,7 +377,9 @@ describe('withRozeniteWeb (webpack)', () => {
   });
 
   it('adds a plugin that rewrites ReactNativeFeatureFlags imports', () => {
-    const result = withRozeniteWeb(createWebpackConfig()) as WebpackConfig;
+    const result = withRozeniteWeb(createWebpackConfig(), {
+      enabled: true,
+    }) as WebpackConfig;
 
     const compilerMock = {
       hooks: {
@@ -405,7 +437,9 @@ describe('withRozeniteWeb (webpack)', () => {
       plugins: [{ name: 'existing-plugin' }],
     });
 
-    const result = withRozeniteWeb(config) as WebpackConfig;
+    const result = withRozeniteWeb(config, {
+      enabled: true,
+    }) as WebpackConfig;
 
     expect(result).not.toBe(config);
     expect(result.devServer).toBe(config.devServer);
@@ -417,15 +451,16 @@ describe('withRozeniteWeb (webpack)', () => {
     ]);
   });
 
-  it('can skip webpack dev-server integration explicitly', () => {
-    const config = createWebpackConfig();
+  it('keeps production configs unchanged when disabled explicitly', () => {
+    const config = createWebpackConfig({
+      mode: 'production',
+    });
 
     const result = withRozeniteWeb(config, {
-      devServer: false,
+      enabled: false,
     }) as WebpackConfig;
 
-    expect(result.devServer).toBeUndefined();
-    expect(result.plugins).toHaveLength(1);
+    expect(result).toBe(config);
   });
 
   it('supports async webpack config factories', async () => {
@@ -438,6 +473,22 @@ describe('withRozeniteWeb (webpack)', () => {
       WebpackConfigExport,
       WebpackConfig | Promise<WebpackConfig>
     >;
+
+    const result = await resultFactory({}, { mode: 'development' });
+
+    expect(result.entry).toEqual('./src/index.tsx');
+    expect(result.devServer).toBeUndefined();
+  });
+
+  it('supports async webpack config factories when enabled', async () => {
+    const configFactory: WebpackConfigExport = async (_env, argv) => ({
+      mode: argv?.mode,
+      entry: './src/index.tsx',
+    });
+
+    const resultFactory = withRozeniteWeb(configFactory, {
+      enabled: true,
+    }) as Exclude<WebpackConfigExport, WebpackConfig | Promise<WebpackConfig>>;
 
     const result = await resultFactory({}, { mode: 'development' });
 

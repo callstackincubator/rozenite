@@ -168,7 +168,7 @@ export type WebpackConfigExport =
     ) => WebpackConfig | Promise<WebpackConfig>);
 
 export type RozeniteWebpackOptions = {
-  devServer?: boolean;
+  enabled?: boolean;
 };
 
 type WebpackCompiler = {
@@ -559,7 +559,7 @@ const shouldPatchDevServer = (
   argvMode: WebpackMode | undefined,
   options: RozeniteWebpackOptions,
 ): boolean => {
-  if (options.devServer === false) {
+  if (options.enabled !== true) {
     return false;
   }
 
@@ -589,6 +589,10 @@ const patchConfig = (
   argvMode: WebpackMode | undefined,
   options: RozeniteWebpackOptions,
 ): WebpackConfig => {
+  if (options.enabled !== true) {
+    return config;
+  }
+
   const compatibilityConfig = patchCompatibilityConfig(config);
 
   return shouldPatchDevServer(compatibilityConfig, argvMode, options)

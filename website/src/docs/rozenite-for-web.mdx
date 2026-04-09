@@ -73,9 +73,14 @@ Wrap your Webpack config with `withRozeniteWeb`:
 ```javascript
 const { withRozeniteWeb } = require('@rozenite/web/webpack');
 
-module.exports = withRozeniteWeb({
-  // your existing webpack config
-});
+module.exports = withRozeniteWeb(
+  {
+    // your existing webpack config
+  },
+  {
+    enabled: process.env.NODE_ENV !== 'production',
+  },
+);
 ```
 
 ### Web entry point
