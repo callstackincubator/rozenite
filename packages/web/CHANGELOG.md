@@ -1,5 +1,17 @@
 # @rozenite/web
 
+## 1.7.0
+
+### Minor Changes
+
+- [#186](https://github.com/callstackincubator/rozenite/pull/186) [`ae437b3`](https://github.com/callstackincubator/rozenite/commit/ae437b38bcebc1829230f54775cdef9747794096) Thanks [@V3RON](https://github.com/V3RON)! - Add support for Rozenite for Web in projects that use Metro for mobile and Webpack Dev Server for web, with updated setup guidance for the split bundler workflow.
+
+### Patch Changes
+
+- Updated dependencies [[`a826e35`](https://github.com/callstackincubator/rozenite/commit/a826e35ffadcf79b9d2f1bb033666d3b27d40752)]:
+  - @rozenite/middleware@1.7.0
+  - @rozenite/tools@1.7.0
+
 ## 1.6.0
 
 ### Patch Changes

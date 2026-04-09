@@ -1,5 +1,15 @@
 # @rozenite/storage-plugin
 
+## 1.7.0
+
+### Patch Changes
+
+- [`1e4dbf9`](https://github.com/callstackincubator/rozenite/commit/1e4dbf9ee4e2efe82fff515523965c938a1e5d38) Thanks [@V3RON](https://github.com/V3RON)! - Fix the storage plugin so its React Native entry is stripped from production builds correctly, and tighten the storage adapter types to align the async storage adapter with the shared plugin API.
+
+- Updated dependencies [[`a826e35`](https://github.com/callstackincubator/rozenite/commit/a826e35ffadcf79b9d2f1bb033666d3b27d40752)]:
+  - @rozenite/agent-bridge@1.7.0
+  - @rozenite/plugin-bridge@1.7.0
+
 ## 1.6.0
 
 ### Patch Changes

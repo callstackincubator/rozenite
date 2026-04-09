@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/sqlite-plugin",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "SQLite inspector for Rozenite.",
   "type": "module",
   "main": "./dist/react-native/index.cjs",

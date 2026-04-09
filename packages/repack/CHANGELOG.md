@@ -1,5 +1,13 @@
 # @rozenite/repack
 
+## 1.7.0
+
+### Patch Changes
+
+- Updated dependencies [[`a826e35`](https://github.com/callstackincubator/rozenite/commit/a826e35ffadcf79b9d2f1bb033666d3b27d40752)]:
+  - @rozenite/middleware@1.7.0
+  - @rozenite/tools@1.7.0
+
 ## 1.6.0
 
 ### Patch Changes
