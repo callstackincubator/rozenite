@@ -6,40 +6,37 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 Rozenite for Web is an experimental feature. The API and behavior may change in future releases.
 :::
 
-Rozenite for Web lets you use React Native DevTools (RNDT) to debug React Native web applications, for example in Expo apps. Web browsers appear as debug targets in Metro alongside iOS and Android devices.
+Rozenite for Web lets you debug your React Native web app from React Native DevTools.
 
-This integration requires two parts: the Rozenite Chrome extension (installed in your browser) and the `@rozenite/web` package (configured in your app).
+To use it, you need:
 
-**Browser support:** Chromium-based browsers only — Chrome, Brave, Arc, Opera, and others.
+- the Rozenite browser extension
+- the `@rozenite/web` package in your app
+
+**Browser support:** Chromium-based browsers only.
 
 ## Prerequisites
 
-- React Native project with web support
-- Metro bundler for mobile and React Native DevTools middleware
-- Chromium-based browser with the Rozenite extension installed
+- A React Native project with web support
+- A Chromium-based browser with the Rozenite extension installed
 
-Rozenite for Web supports two development setups:
+Rozenite for Web supports these setups:
 
 - **Metro-only web**: Metro bundles both mobile and web
-- **Split Metro + Webpack**: Metro bundles mobile and hosts React Native DevTools middleware, while Webpack bundles and serves the web app
+- **Webpack for web**: Webpack Dev Server bundles and serves the web app
 
 ## Chrome extension setup
 
-:::tip
-We are working on publishing this extension to the Chrome Web Store for easier installation. In the meantime, you can install it from GitHub releases.
-:::
-
-The Rozenite Chrome extension can be downloaded from the [GitHub releases](https://github.com/callstackincubator/rozenite/releases). Download the `.crx` file for the latest release.
+Download the latest extension from the [GitHub releases](https://github.com/callstackincubator/rozenite/releases).
 
 ### Installation
 
-1. Download the `.crx` file from the [releases page](https://github.com/callstackincubator/rozenite/releases).
+1. Download the latest extension from the [releases page](https://github.com/callstackincubator/rozenite/releases).
 2. Open Chrome and go to `chrome://extensions`.
 3. Enable **Developer mode** (toggle in the top-right corner).
-4. Drag the `.crx` file onto the extensions page and confirm when prompted. If drag-and-drop does not work, rename the file to `.zip`, extract it, then click **Load unpacked** and select the extracted folder (the one containing `manifest.json`).
-5. The extension acts as a bridge between your browser tab and RNDT and discovers Rozenite-enabled localhost tabs automatically.
+4. Install the extension.
 
-For more details on loading extensions, see the [Chrome extension loading guide](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-an-unpacked-extension).
+If you need help with manual installation, see the [Chrome extension loading guide](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-an-unpacked-extension).
 
 ## @rozenite/web package setup
 
@@ -49,90 +46,49 @@ For more details on loading extensions, see the [Chrome extension loading guide]
 
 ### Metro-only web configuration
 
-Add `withRozeniteWeb` to the `enhanceMetroConfig` chain inside `withRozenite`:
+Wrap your Metro config with `withRozeniteWeb`:
 
 ```javascript
+const { getDefaultConfig } = require('expo/metro-config');
 const { withRozeniteWeb } = require('@rozenite/web/metro');
 
-// Inside withRozenite options:
-enhanceMetroConfig: composeMetroConfigTransformers(
-  withRozeniteRequireProfiler,
-  withRozeniteWeb,  // Add this
-),
+const config = getDefaultConfig(__dirname);
+
+module.exports = withRozeniteWeb(config);
 ```
 
 ### Entry point
 
-Add `require('@rozenite/web')` in your app entry point (e.g., `main.tsx`) or in the root `_layout` file when using Expo Router.
+Add `require('@rozenite/web')` to your web entry point.
 
-### Split Metro + Webpack configuration
+Common places:
 
-When Metro bundles mobile and Webpack bundles web, keep Metro running with Rozenite enabled and proxy the React Native dev-middleware endpoints through Webpack.
+- `main.tsx`
+- Expo Router root `_layout.tsx`
 
-```javascript
-const { withRozeniteWeb } = require('@rozenite/web/webpack');
+### Webpack configuration
 
-module.exports = withRozeniteWeb(
-  {
-    // your existing webpack config
-  },
-  {
-    metroUrl: 'http://localhost:8081',
-  }
-);
-```
-
-The Webpack helper will:
-
-- proxy `/inspector/device` and `/inspector/debug` with websocket support
-- proxy `/open-debugger`, `/debugger-frontend`, `/json`, `/json/list`, and `/json/version`
-- prepend `@rozenite/web` to supported Webpack entry shapes by default
-- replace `ReactNativeFeatureFlags` imports with a web-safe shim
-
-If you prefer manual runtime wiring, disable entry injection and keep `require('@rozenite/web')` in your app entry point:
+Wrap your Webpack config with `withRozeniteWeb`:
 
 ```javascript
 const { withRozeniteWeb } = require('@rozenite/web/webpack');
 
-module.exports = withRozeniteWeb(
-  {
-    // your existing webpack config
-  },
-  {
-    metroUrl: 'http://localhost:8081',
-    injectEntry: false,
-  }
-);
+module.exports = withRozeniteWeb({
+  // your existing webpack config
+});
 ```
 
-## Plugin support
+## How to use it
 
-**Supported plugins:**
-
-- TanStack Query
-- React Navigation
-- Overlay
-
-**Unsupported plugins** (still shown in the UI but will not work correctly):
-
-- Redux DevTools
-- Network Activity
-- Require Profiler
-- MMKV
-
-This behavior may change in future releases.
-
-If you developed a custom plugin to expose internals of your app to developers via Rozenite, it will work just fine in Rozenite for Web as long as you are not reaching to modules that are only present on mobile.
-
-## Making plugins compatible with Rozenite for Web
-
-If you maintain a plugin and want it to work on web:
-
-1. **Verify your plugin does not rely on native modules** — native modules are missing on web and will cause runtime errors.
-2. **If your plugin is native-free or has a different implementation for web**, update its `react-native.ts` entrypoint by removing the `isWeb` check. Plugins that exclude web via `if (isDev && !isWeb && !isServer)` will not load on web; removing the `!isWeb` condition enables them.
+1. Start your app in development mode.
+2. Open the web app in a Chromium-based browser.
+3. Press `j` in the terminal running your app.
+4. New debugging targets should now be available.
+5. Select the browser tab you want to debug.
 
 ## Troubleshooting
 
-- Ensure Metro is running and the extension is installed.
-- Ensure the app is served from localhost or 127.0.0.1.
-- In split Metro + Webpack setups, ensure Webpack proxies the React Native dev-middleware endpoints to Metro.
+- Make sure the extension is installed and enabled.
+- Make sure your app is running on `localhost`.
+- If you use Metro-only web, make sure `withRozeniteWeb` is added to Metro and `require('@rozenite/web')` is loaded in your web entry.
+- If you use Webpack, make sure your config is wrapped with `withRozeniteWeb`.
