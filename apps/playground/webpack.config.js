@@ -16,11 +16,6 @@ const localReactNativeDirectory = path.resolve(
   appDirectory,
   'node_modules/react-native',
 );
-const rozeniteWebSourceDirectory = path.resolve(
-  workspaceRoot,
-  'packages/web/src',
-);
-
 const htmlTemplate = ({ htmlWebpackPlugin }) => `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -50,7 +45,6 @@ const babelLoaderConfiguration = {
   include: [
     entryFile,
     srcDirectory,
-    rozeniteWebSourceDirectory,
     reactNativeDirectory,
     localReactNativeDirectory,
   ],
