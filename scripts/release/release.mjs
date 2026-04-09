@@ -25,6 +25,10 @@ function normalizeRef(ref) {
   return ref.replace(/^refs\/heads\//, '').trim();
 }
 
+function isReleaseBranch(ref) {
+  return /^release\/v\d+\.\d+(?:\.\d+)?$/.test(ref);
+}
+
 function run(command, args, options = {}) {
   execFileSync(command, args, {
     stdio: 'inherit',
@@ -92,7 +96,7 @@ function updateLockfile() {
   run('pnpm', ['install', '--lockfile-only']);
 }
 
-function commitVersionChanges(message) {
+function commitVersionChanges() {
   run('git', [
     'add',
     '.changeset',
@@ -108,7 +112,7 @@ function commitVersionChanges(message) {
     fail('no release files were staged for commit');
   }
 
-  run('git', ['commit', '-m', message]);
+  run('git', ['commit', '-m', `chore: release v${readVersion()}`]);
 }
 
 function pushBranch() {
@@ -166,7 +170,7 @@ function runStableRelease() {
 
   run('pnpm', ['changeset', 'version']);
   updateLockfile();
-  commitVersionChanges('Version packages for stable release');
+  commitVersionChanges();
   pushBranch();
   run('pnpm', ['release:check']);
   run('pnpm', ['release:build']);
@@ -179,8 +183,10 @@ function runRcRelease() {
     fail(`rc releases must not run from ${stableBranch}`);
   }
 
-  if (!branch.startsWith('release/')) {
-    fail(`rc releases must run from a release/* branch, received ${branch}`);
+  if (!isReleaseBranch(branch)) {
+    fail(
+      `rc releases must run from a release/v<version> branch, received ${branch}`,
+    );
   }
 
   ensureRemoteBranch();
@@ -192,7 +198,7 @@ function runRcRelease() {
 
   run('pnpm', ['changeset', 'version']);
   updateLockfile();
-  commitVersionChanges('Version packages for rc release');
+  commitVersionChanges();
   pushBranch();
   run('pnpm', ['release:check']);
   run('pnpm', ['release:build']);

@@ -11,17 +11,13 @@ on:
           - stable
           - rc
           - canary
-      ref:
-        description: Git ref to checkout
-        required: true
-        type: string
 
 permissions:
   contents: write
   id-token: write
 
 concurrency:
-  group: release-${{ github.event.inputs.mode }}-${{ github.event.inputs.ref }}
+  group: release-${{ github.event.inputs.mode }}-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -30,14 +26,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_MODE: ${{ github.event.inputs.mode }}
-      RELEASE_REF: ${{ github.event.inputs.ref }}
+      RELEASE_REF: ${{ github.ref_name }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GIT_AUTHOR_NAME: actions-bot
       GIT_AUTHOR_EMAIL: actions-bot@users.noreply.github.com
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event.inputs.ref }}
           fetch-depth: 0
 
       - name: Configure git identity
