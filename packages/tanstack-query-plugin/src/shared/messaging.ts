@@ -15,6 +15,9 @@ export type TanStackQueryPluginEventMap = {
   'devtools-action': {
     type: DevToolsActionType;
     queryHash: string;
+    metadata?: {
+      data?: unknown;
+    };
   };
   'request-initial-data': unknown;
   'sync-data': {
