@@ -29,7 +29,6 @@ const resolveReactNativeFeatureFlagsReplacement = () => {
   throw new Error('Unable to resolve Rozenite ReactNativeFeatureFlags shim');
 };
 
-const ROZENITE_WEB_ENTRY = '@rozenite/web';
 const REACT_NATIVE_FEATURE_FLAGS_REPLACEMENT =
   resolveReactNativeFeatureFlagsReplacement();
 
@@ -169,7 +168,7 @@ export type WebpackConfigExport =
     ) => WebpackConfig | Promise<WebpackConfig>);
 
 export type RozeniteWebpackOptions = {
-  injectEntry?: boolean;
+  devServer?: boolean;
 };
 
 type WebpackCompiler = {
@@ -216,51 +215,6 @@ class RozeniteWebpackPlugin {
     );
   }
 }
-
-const injectRozeniteImport = (value: string | string[]): string | string[] => {
-  if (typeof value === 'string') {
-    return value === ROZENITE_WEB_ENTRY ? value : [ROZENITE_WEB_ENTRY, value];
-  }
-
-  return value.includes(ROZENITE_WEB_ENTRY)
-    ? value
-    : [ROZENITE_WEB_ENTRY, ...value];
-};
-
-const injectRozeniteEntry = (value: WebpackEntryValue): WebpackEntryValue => {
-  if (typeof value === 'string' || Array.isArray(value)) {
-    return injectRozeniteImport(value);
-  }
-
-  if (value.import == null) {
-    return value;
-  }
-
-  return {
-    ...value,
-    import: injectRozeniteImport(value.import),
-  };
-};
-
-const patchEntry = (
-  entry: WebpackConfig['entry'],
-  injectEntry: boolean,
-): WebpackConfig['entry'] => {
-  if (!injectEntry || entry == null) {
-    return entry;
-  }
-
-  if (typeof entry === 'string' || Array.isArray(entry) || 'import' in entry) {
-    return injectRozeniteEntry(entry);
-  }
-
-  return Object.fromEntries(
-    Object.entries(entry).map(([key, value]) => [
-      key,
-      injectRozeniteEntry(value as WebpackEntryValue),
-    ]),
-  );
-};
 
 const getDevServerUrl = (
   devServer: WebpackDevServerRuntime | undefined,
@@ -591,20 +545,31 @@ const mergeSetupMiddlewares = (
 const hasRozeniteWebpackPlugin = (plugins: unknown[] | undefined) =>
   plugins?.some((plugin) => plugin instanceof RozeniteWebpackPlugin) ?? false;
 
-const patchConfig = (
+const patchCompatibilityConfig = (config: WebpackConfig): WebpackConfig => {
+  return {
+    ...config,
+    plugins: hasRozeniteWebpackPlugin(config.plugins)
+      ? config.plugins
+      : [...(config.plugins ?? []), new RozeniteWebpackPlugin()],
+  };
+};
+
+const shouldPatchDevServer = (
   config: WebpackConfig,
   argvMode: WebpackMode | undefined,
   options: RozeniteWebpackOptions,
-): WebpackConfig => {
-  const resolvedMode = argvMode ?? config.mode;
-
-  if (resolvedMode === 'production') {
-    return config;
+): boolean => {
+  if (options.devServer === false) {
+    return false;
   }
 
+  const resolvedMode = argvMode ?? config.mode;
+  return resolvedMode !== 'production';
+};
+
+const patchDevelopmentConfig = (config: WebpackConfig): WebpackConfig => {
   return {
     ...config,
-    entry: patchEntry(config.entry, options.injectEntry ?? true),
     devServer: {
       ...config.devServer,
       proxy: config.devServer?.proxy ?? [],
@@ -616,10 +581,19 @@ const patchConfig = (
         config.devServer?.onListening?.(devServer);
       },
     },
-    plugins: hasRozeniteWebpackPlugin(config.plugins)
-      ? config.plugins
-      : [...(config.plugins ?? []), new RozeniteWebpackPlugin()],
   };
+};
+
+const patchConfig = (
+  config: WebpackConfig,
+  argvMode: WebpackMode | undefined,
+  options: RozeniteWebpackOptions,
+): WebpackConfig => {
+  const compatibilityConfig = patchCompatibilityConfig(config);
+
+  return shouldPatchDevServer(compatibilityConfig, argvMode, options)
+    ? patchDevelopmentConfig(compatibilityConfig)
+    : compatibilityConfig;
 };
 
 export const withRozeniteWeb = (
