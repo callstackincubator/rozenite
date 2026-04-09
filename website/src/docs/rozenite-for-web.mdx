@@ -61,6 +61,12 @@ module.exports = withRozeniteWeb(config);
 
 Add `require('@rozenite/web')` to your web entry point.
 
+The package gates its runtime setup internally, so you do not need to wrap the import with `__DEV__` yourself.
+
+```javascript
+require('@rozenite/web');
+```
+
 Common places:
 
 - `main.tsx`
@@ -73,23 +79,14 @@ Wrap your Webpack config with `withRozeniteWeb`:
 ```javascript
 const { withRozeniteWeb } = require('@rozenite/web/webpack');
 
-module.exports = withRozeniteWeb(
-  {
-    // your existing webpack config
-  },
-  {
-    enabled: process.env.NODE_ENV !== 'production',
-  },
-);
+module.exports = withRozeniteWeb({
+  // your existing webpack config
+});
 ```
 
 ### Web entry point
 
-Add `require('@rozenite/web')` to your web entry point when using Webpack too.
-
-```javascript
-require('@rozenite/web');
-```
+Use the same entry pattern when using Webpack too.
 
 ## How to use it
 

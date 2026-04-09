@@ -167,10 +167,6 @@ export type WebpackConfigExport =
       argv?: WebpackConfigFactoryArgs,
     ) => WebpackConfig | Promise<WebpackConfig>);
 
-export type RozeniteWebpackOptions = {
-  enabled?: boolean;
-};
-
 type WebpackCompiler = {
   hooks: {
     normalModuleFactory: {
@@ -557,12 +553,7 @@ const patchCompatibilityConfig = (config: WebpackConfig): WebpackConfig => {
 const shouldPatchDevServer = (
   config: WebpackConfig,
   argvMode: WebpackMode | undefined,
-  options: RozeniteWebpackOptions,
 ): boolean => {
-  if (options.enabled !== true) {
-    return false;
-  }
-
   const resolvedMode = argvMode ?? config.mode;
   return resolvedMode !== 'production';
 };
@@ -587,33 +578,32 @@ const patchDevelopmentConfig = (config: WebpackConfig): WebpackConfig => {
 const patchConfig = (
   config: WebpackConfig,
   argvMode: WebpackMode | undefined,
-  options: RozeniteWebpackOptions,
 ): WebpackConfig => {
-  if (options.enabled !== true) {
+  const resolvedMode = argvMode ?? config.mode;
+  if (resolvedMode === 'production') {
     return config;
   }
 
   const compatibilityConfig = patchCompatibilityConfig(config);
 
-  return shouldPatchDevServer(compatibilityConfig, argvMode, options)
+  return shouldPatchDevServer(compatibilityConfig, argvMode)
     ? patchDevelopmentConfig(compatibilityConfig)
     : compatibilityConfig;
 };
 
 export const withRozeniteWeb = (
   config: WebpackConfigExport,
-  options: RozeniteWebpackOptions = {},
 ): WebpackConfigExport => {
   if (typeof config === 'function') {
     return async (env, argv) =>
-      patchConfig(await config(env, argv), argv?.mode, options);
+      patchConfig(await config(env, argv), argv?.mode);
   }
 
   if (config instanceof Promise) {
     return config.then((resolvedConfig) =>
-      patchConfig(resolvedConfig, resolvedConfig.mode, options),
+      patchConfig(resolvedConfig, resolvedConfig.mode),
     );
   }
 
-  return patchConfig(config, config.mode, options);
+  return patchConfig(config, config.mode);
 };
