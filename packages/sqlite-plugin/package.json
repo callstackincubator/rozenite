@@ -75,6 +75,11 @@
       "import": "./dist/react-native/index.js",
       "require": "./dist/react-native/index.cjs"
     },
+    "./internals": {
+      "types": "./dist/react-native/internals.d.ts",
+      "import": "./dist/react-native/internals.js",
+      "require": "./dist/react-native/internals.cjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
