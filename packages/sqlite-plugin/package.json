@@ -22,6 +22,7 @@
     "test": "vitest --run"
   },
   "dependencies": {
+    "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {

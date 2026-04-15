@@ -58,6 +58,15 @@ function App() {
 - Run SQL scripts and inspect normalized metadata for each executed statement.
 - Preview result cells with structured JSON and blob-like payload support.
 
+## Agent Integration
+
+This plugin exposes agent tools under the `@rozenite/sqlite-plugin` domain for LLM workflows. No additional setup is required — tools are registered automatically when `useRozeniteSqlitePlugin` is called.
+
+- `list-databases` — list all registered databases with their adapter info
+- `execute-sql` — execute one or more semicolon-separated SQL statements against a database; returns per-statement rows, columns, and metadata, with `failedStatementIndex` pointing to the first failure in a batch
+
+Use `list-databases` first to discover available database IDs, then pass the ID to `execute-sql`. A single `execute-sql` call handles everything: reads, writes, DDL, PRAGMAs, and multi-statement scripts.
+
 ## Adapter: Expo SQLite
 
 ```ts title="App.tsx"

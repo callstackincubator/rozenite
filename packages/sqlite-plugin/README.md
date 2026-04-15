@@ -52,6 +52,10 @@ function App() {
 }
 ```
 
+## Web (React Native for Web)
+
+With [Rozenite for Web](https://rozenite.dev/docs/rozenite-for-web), this plugin runs in the browser in development when `expo-sqlite` is set up for web. Follow Expo’s **Web setup** for `expo-sqlite` (WASM support in Metro, and COEP/COOP or related headers for `SharedArrayBuffer` where required). Web support in Expo is documented as alpha; see the [Expo SQLite docs](https://docs.expo.dev/versions/latest/sdk/sqlite/).
+
 ## Custom adapters
 
 You can support any SQLite-like library by normalizing its statement execution API:

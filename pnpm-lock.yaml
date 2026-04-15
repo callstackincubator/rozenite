@@ -652,7 +652,7 @@ importers:
         version: 7.7.0
       vitest:
         specifier: ^4.0.18
-        version: 4.1.0(@types/node@22.17.0)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.6.1)(jsdom@22.1.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+        version: 4.1.0(@types/node@22.17.0)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@22.1.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
 
   packages/mmkv-plugin:
     dependencies:
@@ -1201,6 +1201,9 @@ importers:
 
   packages/sqlite-plugin:
     dependencies:
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../agent-bridge
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -20032,7 +20035,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.14
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@18.16.9)(@vitest/ui@3.2.4)(jiti@2.4.2)(jsdom@22.1.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@22.17.0)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@22.1.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
 
   '@vitest/utils@3.2.4':
     dependencies:
@@ -28431,7 +28434,7 @@ snapshots:
       - tsx
       - yaml
 
-  vitest@4.1.0(@types/node@22.17.0)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.6.1)(jsdom@22.1.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1):
+  vitest@4.1.0(@types/node@22.17.0)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@22.1.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1):
     dependencies:
       '@vitest/expect': 4.1.0
       '@vitest/mocker': 4.1.0(vite@7.3.1(@types/node@22.17.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
