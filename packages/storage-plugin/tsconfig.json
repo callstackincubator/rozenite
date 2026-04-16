@@ -13,6 +13,8 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
+      "@rozenite/agent-bridge": ["../agent-bridge/src/index.ts"],
+      "@rozenite/agent-shared": ["../agent-shared/src/index.ts"],
       "@rozenite/plugin-bridge": ["../plugin-bridge/src/index.ts"]
     },
     "resolveJsonModule": true,
@@ -20,7 +22,7 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*", "react-native.ts", "rozenite.config.ts"],
+  "include": ["src/**/*", "react-native.ts", "sdk.ts", "rozenite.config.ts"],
   "exclude": ["node_modules", "dist", "build"],
   "references": [
     {

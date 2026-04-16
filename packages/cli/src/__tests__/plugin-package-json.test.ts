@@ -45,6 +45,12 @@ describe('syncPluginPackageJSON', () => {
           import: './dist/metro.js',
           require: './dist/metro.cjs',
         },
+        './sdk': {
+          development: './sdk.ts',
+          types: './dist/sdk.d.ts',
+          import: './dist/sdk.js',
+          require: './dist/sdk.cjs',
+        },
         './custom': './src/custom.ts',
       },
     });
@@ -54,6 +60,7 @@ describe('syncPluginPackageJSON', () => {
       'export {}\n',
     );
     await fs.writeFile(path.join(projectRoot, 'metro.ts'), 'export {}\n');
+    await fs.writeFile(path.join(projectRoot, 'sdk.ts'), 'export {}\n');
 
     const result = await syncPluginPackageJSON(projectRoot);
     const packageJson = JSON.parse(
@@ -80,6 +87,12 @@ describe('syncPluginPackageJSON', () => {
         import: './dist/metro/index.js',
         require: './dist/metro/index.cjs',
       },
+      './sdk': {
+        development: './sdk.ts',
+        types: './dist/sdk/index.d.ts',
+        import: './dist/sdk/index.js',
+        require: './dist/sdk/index.cjs',
+      },
       './custom': './src/custom.ts',
       './package.json': './package.json',
     });
@@ -105,6 +118,12 @@ describe('syncPluginPackageJSON', () => {
           import: './dist/metro/index.js',
           require: './dist/metro/index.cjs',
         },
+        './sdk': {
+          development: './sdk.ts',
+          types: './dist/sdk/index.d.ts',
+          import: './dist/sdk/index.js',
+          require: './dist/sdk/index.cjs',
+        },
         './custom': './src/custom.ts',
       },
     });
@@ -125,6 +144,51 @@ describe('syncPluginPackageJSON', () => {
         types: './dist/react-native/index.d.ts',
         import: './dist/react-native/index.js',
         require: './dist/react-native/index.cjs',
+      },
+      './custom': './src/custom.ts',
+      './package.json': './package.json',
+    });
+  });
+
+  it('adds the managed sdk export when sdk.ts exists', async () => {
+    const projectRoot = await createTempDir();
+
+    await writeJson(path.join(projectRoot, 'package.json'), {
+      name: 'demo-plugin',
+      type: 'module',
+      exports: {
+        './custom': './src/custom.ts',
+      },
+    });
+
+    await fs.writeFile(
+      path.join(projectRoot, 'react-native.ts'),
+      'export {}\n',
+    );
+    await fs.writeFile(path.join(projectRoot, 'sdk.ts'), 'export {}\n');
+
+    const result = await syncPluginPackageJSON(projectRoot);
+    const packageJson = JSON.parse(
+      await fs.readFile(path.join(projectRoot, 'package.json'), 'utf8'),
+    );
+
+    expect(result.updatedFields).toEqual([
+      'main',
+      'module',
+      'types',
+      'exports',
+    ]);
+    expect(packageJson.exports).toEqual({
+      '.': {
+        types: './dist/react-native/index.d.ts',
+        import: './dist/react-native/index.js',
+        require: './dist/react-native/index.cjs',
+      },
+      './sdk': {
+        development: './sdk.ts',
+        types: './dist/sdk/index.d.ts',
+        import: './dist/sdk/index.js',
+        require: './dist/sdk/index.cjs',
       },
       './custom': './src/custom.ts',
       './package.json': './package.json',

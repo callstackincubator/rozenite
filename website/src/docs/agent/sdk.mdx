@@ -1,0 +1,237 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Agent SDK
+
+`@rozenite/agent-sdk` is the programmatic version of `rozenite agent` for Node.js and TypeScript scripts. Use it when you want to write a script, automation, or agent runtime that talks to a running app through Rozenite directly from code.
+
+:::tip
+For most debugging workflows, start with the `rozenite agent` CLI and the [`rozenite-agent` skill](/docs/agent/skills). Reach for the SDK when you want code instead of shell commands, and install `rozenite-agent-sdk` if you want your coding agent to follow that SDK-first workflow directly.
+:::
+
+:::warning Experimental
+Rozenite for Agents is experimental and may change. If you run into a bug, please [open an issue](https://github.com/callstackincubator/rozenite/issues).
+:::
+
+## Before you start
+
+Make sure:
+
+- Node.js 20 or newer
+- your app is running in development mode
+- Metro is running and reachable
+- at least one React Native target is connected
+
+## Install
+
+Install the SDK as a dependency:
+
+<PackageManagerTabs command="install @rozenite/agent-sdk" />
+
+## The happy path
+
+Most scripts use the same flow:
+
+1. Create a client with `createAgentClient()`.
+2. Open a short-lived session with `client.withSession(...)`.
+3. Inspect the available domains and tools.
+4. Call the tool you need.
+
+## Your first script
+
+Start with a script that opens a session and lists the domains currently available on the device:
+
+```ts title="agent-sdk-first-script.ts"
+import { createAgentClient } from '@rozenite/agent-sdk';
+
+async function inspectApp() {
+  const client = createAgentClient();
+
+  return client.withSession(async (session) => {
+    const domains = await session.domains.list();
+
+    return {
+      sessionId: session.id,
+      domains: domains.map((domain) => domain.id),
+    };
+  });
+}
+
+inspectApp().then(console.log).catch(console.error);
+```
+
+`withSession(...)` opens the session and closes it automatically when your callback finishes.
+
+The next step is to inspect one domain more closely and then call one of its tools.
+
+## Inspecting domains and tools
+
+Inside a session, you can use these helpers:
+
+- `session.domains.list()` to see which domains are available on the connected app
+- `session.tools.list({ domain })` to see the tools inside one domain
+- `session.tools.getSchema({ domain, tool })` to inspect a tool's input schema before calling it
+
+For example, you can inspect the `network` domain like this:
+
+```ts title="agent-sdk-inspect-tools.ts"
+import { createAgentClient } from '@rozenite/agent-sdk';
+
+async function inspectNetworkTools() {
+  const client = createAgentClient();
+
+  return client.withSession(async (session) => {
+    const tools = await session.tools.list({ domain: 'network' });
+    const schema = await session.tools.getSchema({
+      domain: 'network',
+      tool: 'listRequests',
+    });
+
+    return {
+      toolNames: tools.map((tool) => tool.shortName),
+      listRequestsInput: schema.inputSchema,
+    };
+  });
+}
+```
+
+Once you know what you want to call, use `session.tools.call(...)`.
+
+## Calling tools
+
+There are two common ways to call a tool.
+
+### Call by name
+
+Use this form when you already know the domain and tool name, or when you just looked them up with `session.tools.list(...)`.
+
+If you want a typed result, pass type arguments to `session.tools.call(...)`.
+
+```ts title="agent-sdk-call-by-name.ts"
+const requests = await session.tools.call<
+  { limit: number },
+  { items: Array<{ id: string }> }
+>({
+  domain: 'network',
+  tool: 'listRequests',
+  args: { limit: 20 },
+});
+```
+
+If you do not pass type arguments, the result is `unknown`.
+
+### Typed calls with plugin SDKs
+
+Some official plugins publish ready-made typed tool descriptors under `./sdk`. Use those when you want the plugin package to provide the tool name, argument type, and result type for you.
+
+```ts title="agent-sdk-typed-call.ts"
+import { createAgentClient } from '@rozenite/agent-sdk';
+import { storageTools } from '@rozenite/storage-plugin/sdk';
+
+async function readUsernameFromStorage() {
+  const client = createAgentClient();
+
+  return client.withSession(async (session) => {
+    const result = await session.tools.call(storageTools.readEntry, {
+      adapterId: 'mmkv',
+      storageId: 'user-storage',
+      key: 'username',
+    });
+
+    return result;
+  });
+}
+```
+
+:::tip
+If a plugin only mounts after you navigate to one of its screens, do that first and then refresh the session view with `session.domains.list()` or `session.tools.list(...)` before calling its tools.
+:::
+
+## Pagination
+
+Some tools return paged results. When you want the SDK to keep following cursors for you and merge the pages into one result, pass `autoPaginate` to `session.tools.call(...)`.
+
+```ts title="agent-sdk-pagination.ts"
+const requests = await session.tools.call<
+  { limit: number },
+  { items: Array<{ id: string }> }
+>({
+  domain: 'network',
+  tool: 'listRequests',
+  args: { limit: 50 },
+  autoPaginate: { pagesLimit: 3 },
+});
+```
+
+Use `pagesLimit` to control how many pages the SDK should follow. If you also want to cap the merged result size, add `maxItems`.
+
+## Choosing a target
+
+If only one target is connected, `withSession(...)` is usually enough.
+
+If more than one target is connected, list them first and pass `deviceId` when opening the session:
+
+```ts title="agent-sdk-target-selection.ts"
+import { createAgentClient } from '@rozenite/agent-sdk';
+
+async function inspectSpecificDevice() {
+  const client = createAgentClient();
+  const targets = await client.targets.list();
+
+  return client.withSession({ deviceId: targets[0].id }, async (session) => {
+    return {
+      sessionId: session.id,
+      deviceId: session.info.deviceId,
+    };
+  });
+}
+```
+
+## Managing sessions
+
+- Use `withSession(...)` for short scripts and one-off tasks. It handles setup and cleanup for you.
+- Use `openSession()` when the session needs to stay open across multiple independent steps or function boundaries.
+- Use `attachSession(sessionId)` when you need to reconnect to an already-existing session instead of creating a new one.
+
+When you do need manual control, remember to stop the session yourself:
+
+```ts title="agent-sdk-manual-session.ts"
+import { createAgentClient } from '@rozenite/agent-sdk';
+
+async function inspectRozeniteManually() {
+  const client = createAgentClient();
+  const session = await client.openSession();
+
+  try {
+    const domains = await session.domains.list();
+
+    return {
+      session: session.info,
+      domains,
+    };
+  } finally {
+    await session.stop();
+  }
+}
+```
+
+If you already have a `sessionId`, you can reconnect like this:
+
+```ts title="agent-sdk-attach-session.ts"
+import { createAgentClient } from '@rozenite/agent-sdk';
+
+async function reconnectToSession(sessionId: string) {
+  const client = createAgentClient();
+  const session = await client.attachSession(sessionId);
+
+  return {
+    sessionId: session.id,
+    deviceId: session.info.deviceId,
+  };
+}
+```
+
+## Next steps
+
+- [Rozenite for Agents](/docs/agent/overview) – how agents use domains and tools
+- [Adding tools to your application](/docs/agent/adding-tools-to-your-application) – expose app-owned tools under the `app` domain
+- [Plugin Development](/docs/plugin-development/overview) – general plugin structure and React Native integration

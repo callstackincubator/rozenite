@@ -1,130 +1,11 @@
 import { useCallback } from 'react';
-import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+import {
+  STORAGE_AGENT_PLUGIN_ID,
+  storageToolDefinitions,
+} from '../shared/agent-tools';
 import type { StorageEntry, StorageEntryType, StorageEntryValue } from '../shared/types';
 import type { StorageView } from './storage-view';
-
-type StorageInput = { adapterId?: string; storageId?: string };
-type KeyInput = StorageInput & { key: string };
-type SetInput = StorageInput & {
-  key: string;
-  type: StorageEntryType;
-  value: unknown;
-};
-type ListEntriesInput = StorageInput & {
-  offset?: number;
-  limit?: number;
-};
-
-const toolPrefix = '@rozenite/storage-plugin';
-const sharedStorageProperties = {
-  adapterId: {
-    type: 'string',
-    description:
-      'Storage adapter ID. Required when multiple adapters are configured.',
-  },
-  storageId: {
-    type: 'string',
-    description:
-      'Storage node ID within the adapter. Required when multiple storages are configured.',
-  },
-} as const;
-
-const listStoragesTool: AgentTool = {
-  name: 'list-storages',
-  description:
-    'List all storage adapters and their storage nodes currently available on the device, including supported entry types and entry counts.',
-  inputSchema: { type: 'object', properties: {} },
-};
-
-const listEntriesTool: AgentTool = {
-  name: 'list-entries',
-  description:
-    'List keys in a storage. This call intentionally does not return entry values to keep responses token-efficient.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...sharedStorageProperties,
-      offset: {
-        type: 'number',
-        description: 'Pagination offset. Defaults to 0.',
-      },
-      limit: {
-        type: 'number',
-        description: 'Pagination size. Defaults to 100.',
-      },
-    },
-  },
-};
-
-const readEntryTool: AgentTool = {
-  name: 'read-entry',
-  description: 'Read a single storage entry value by key.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...sharedStorageProperties,
-      key: { type: 'string', description: 'Entry key.' },
-    },
-    required: ['key'],
-  },
-};
-
-const createEntryTool: AgentTool = {
-  name: 'create-entry',
-  description: 'Create a new storage entry. Fails if the key already exists.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...sharedStorageProperties,
-      key: { type: 'string', description: 'Entry key.' },
-      type: {
-        type: 'string',
-        enum: ['string', 'number', 'boolean', 'buffer'],
-        description:
-          'Entry value type. Must be one of the supported types for the target storage (see list-storages).',
-      },
-      value: {
-        description: 'Entry value matching the provided type.',
-      },
-    },
-    required: ['key', 'type', 'value'],
-  },
-};
-
-const editEntryTool: AgentTool = {
-  name: 'edit-entry',
-  description: 'Edit an existing storage entry. Fails if the key does not exist.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...sharedStorageProperties,
-      key: { type: 'string', description: 'Entry key.' },
-      type: {
-        type: 'string',
-        enum: ['string', 'number', 'boolean', 'buffer'],
-        description:
-          'Entry value type. Must be one of the supported types for the target storage (see list-storages).',
-      },
-      value: {
-        description: 'Entry value matching the provided type.',
-      },
-    },
-    required: ['key', 'type', 'value'],
-  },
-};
-
-const removeEntryTool: AgentTool = {
-  name: 'remove-entry',
-  description: 'Remove a storage entry by key.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...sharedStorageProperties,
-      key: { type: 'string', description: 'Entry key.' },
-    },
-    required: ['key'],
-  },
-};
 
 const parseValueForType = (
   type: StorageEntryType,
@@ -202,8 +83,8 @@ export const useStorageAgentTools = (views: StorageView[]) => {
   );
 
   useRozenitePluginAgentTool({
-    pluginId: toolPrefix,
-    tool: listStoragesTool,
+    pluginId: STORAGE_AGENT_PLUGIN_ID,
+    tool: storageToolDefinitions.listStorages,
     handler: async () => ({
       storages: await Promise.all(
         views.map(async (view) => ({
@@ -218,9 +99,9 @@ export const useStorageAgentTools = (views: StorageView[]) => {
     }),
   });
 
-  useRozenitePluginAgentTool<ListEntriesInput>({
-    pluginId: toolPrefix,
-    tool: listEntriesTool,
+  useRozenitePluginAgentTool({
+    pluginId: STORAGE_AGENT_PLUGIN_ID,
+    tool: storageToolDefinitions.listEntries,
     handler: async ({ adapterId, storageId, offset = 0, limit = 100 }) => {
       const view = resolveStorage(adapterId, storageId);
       const allKeys = await view.getAllKeys();
@@ -239,12 +120,9 @@ export const useStorageAgentTools = (views: StorageView[]) => {
     },
   });
 
-  useRozenitePluginAgentTool<
-    KeyInput,
-    { adapterId: string; storageId: string; entry: StorageEntry }
-  >({
-    pluginId: toolPrefix,
-    tool: readEntryTool,
+  useRozenitePluginAgentTool({
+    pluginId: STORAGE_AGENT_PLUGIN_ID,
+    tool: storageToolDefinitions.readEntry,
     handler: async ({ adapterId, storageId, key }) => {
       const view = resolveStorage(adapterId, storageId);
       const entry = await view.get(key);
@@ -263,9 +141,9 @@ export const useStorageAgentTools = (views: StorageView[]) => {
     },
   });
 
-  useRozenitePluginAgentTool<SetInput>({
-    pluginId: toolPrefix,
-    tool: createEntryTool,
+  useRozenitePluginAgentTool({
+    pluginId: STORAGE_AGENT_PLUGIN_ID,
+    tool: storageToolDefinitions.createEntry,
     handler: async ({ adapterId, storageId, key, type, value }) => {
       const view = resolveStorage(adapterId, storageId);
       const existing = await view.get(key);
@@ -282,15 +160,15 @@ export const useStorageAgentTools = (views: StorageView[]) => {
       return {
         adapterId: view.target.adapterId,
         storageId: view.target.storageId,
-        created: true,
+        created: true as const,
         key,
       };
     },
   });
 
-  useRozenitePluginAgentTool<SetInput>({
-    pluginId: toolPrefix,
-    tool: editEntryTool,
+  useRozenitePluginAgentTool({
+    pluginId: STORAGE_AGENT_PLUGIN_ID,
+    tool: storageToolDefinitions.editEntry,
     handler: async ({ adapterId, storageId, key, type, value }) => {
       const view = resolveStorage(adapterId, storageId);
       const existing = await view.get(key);
@@ -307,15 +185,15 @@ export const useStorageAgentTools = (views: StorageView[]) => {
       return {
         adapterId: view.target.adapterId,
         storageId: view.target.storageId,
-        edited: true,
+        edited: true as const,
         key,
       };
     },
   });
 
-  useRozenitePluginAgentTool<KeyInput>({
-    pluginId: toolPrefix,
-    tool: removeEntryTool,
+  useRozenitePluginAgentTool({
+    pluginId: STORAGE_AGENT_PLUGIN_ID,
+    tool: storageToolDefinitions.removeEntry,
     handler: async ({ adapterId, storageId, key }) => {
       const view = resolveStorage(adapterId, storageId);
       const existed = !!(await view.get(key));
