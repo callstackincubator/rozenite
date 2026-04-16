@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rozenite Agent SDK"
+  short_description: "code-first Rozenite agent workflows"
+  default_prompt: "Use $rozenite-agent-sdk to build a small Node or TypeScript script that works with Rozenite through @rozenite/agent-sdk."

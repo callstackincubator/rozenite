@@ -3,25 +3,20 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@rozenite/agent-shared": ["../agent-shared/src/index.ts"]
+      "@rozenite/agent-shared": ["../agent-shared/src/index.ts"],
+      "@rozenite/storage-plugin/sdk": ["../storage-plugin/dist/sdk/index.d.ts"]
     },
     "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node", "vite/client"],
-    "lib": ["dom", "ES2022"],
-    "jsx": "react-jsx",
-    "esModuleInterop": true
+    "types": ["node", "vite/client"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts"],
   "references": [
     {
       "path": "../agent-shared/tsconfig.lib.json"
-    },
-    {
-      "path": "../plugin-bridge/tsconfig.lib.json"
     }
   ]
 }

@@ -9,9 +9,7 @@ import {
   getAgentSessionRoute,
   getAgentSessionToolsRoute,
   type AgentResponseEnvelope,
-  type CallAgentSessionToolRequest,
   type CallAgentSessionToolResponse,
-  type CreateAgentSessionRequest,
   type CreateAgentSessionResponse,
   type DeleteAgentSessionResponse,
   type GetAgentInfoResponse,
@@ -20,8 +18,9 @@ import {
   type GetAgentTargetsResponse,
   type ListAgentSessionsResponse,
 } from '@rozenite/agent-shared';
+import type { AgentClientOptions, AgentTransport } from './types.js';
 
-type AgentHttpClient = ReturnType<typeof createAgentHttpClient>;
+export type { AgentClientOptions, AgentTransport } from './types.js';
 
 const getErrorDetails = (error: unknown): string | null => {
   if (!error) {
@@ -98,6 +97,7 @@ const requestJson = async <TResult>(input: {
               reject(new Error(parsed.error.message));
               return;
             }
+
             resolve(parsed.result);
           } catch (error) {
             if ((res.statusCode ?? 500) >= 400) {
@@ -114,20 +114,22 @@ const requestJson = async <TResult>(input: {
         });
       },
     );
+
     req.once('error', (error) => {
       reject(createMetroConnectionError(input.host, input.port, error));
     });
+
     if (payload) {
       req.write(payload);
     }
+
     req.end();
   });
 };
 
-export const createAgentHttpClient = (options?: {
-  host?: string;
-  port?: number;
-}) => {
+export const createAgentTransport = (
+  options?: AgentClientOptions,
+): AgentTransport => {
   const host = options?.host ?? DEFAULT_AGENT_HOST;
   const port = options?.port ?? DEFAULT_AGENT_PORT;
 
@@ -150,7 +152,7 @@ export const createAgentHttpClient = (options?: {
         pathname: AGENT_TARGETS_ROUTE,
       });
     },
-    createSession: async (body: CreateAgentSessionRequest) => {
+    createSession: async (body) => {
       return await requestJson<CreateAgentSessionResponse>({
         host,
         port,
@@ -167,7 +169,7 @@ export const createAgentHttpClient = (options?: {
         pathname: AGENT_SESSIONS_ROUTE,
       });
     },
-    getSession: async (sessionId: string) => {
+    getSession: async (sessionId) => {
       return await requestJson<GetAgentSessionResponse>({
         host,
         port,
@@ -175,7 +177,7 @@ export const createAgentHttpClient = (options?: {
         pathname: getAgentSessionRoute(sessionId),
       });
     },
-    stopSession: async (sessionId: string) => {
+    stopSession: async (sessionId) => {
       return await requestJson<DeleteAgentSessionResponse>({
         host,
         port,
@@ -183,7 +185,7 @@ export const createAgentHttpClient = (options?: {
         pathname: getAgentSessionRoute(sessionId),
       });
     },
-    getSessionTools: async (sessionId: string) => {
+    getSessionTools: async (sessionId) => {
       return await requestJson<GetAgentSessionToolsResponse>({
         host,
         port,
@@ -191,10 +193,7 @@ export const createAgentHttpClient = (options?: {
         pathname: getAgentSessionToolsRoute(sessionId),
       });
     },
-    callSessionTool: async (
-      sessionId: string,
-      body: CallAgentSessionToolRequest,
-    ) => {
+    callSessionTool: async (sessionId, body) => {
       return await requestJson<CallAgentSessionToolResponse>({
         host,
         port,
@@ -205,5 +204,3 @@ export const createAgentHttpClient = (options?: {
     },
   };
 };
-
-export type { AgentHttpClient };

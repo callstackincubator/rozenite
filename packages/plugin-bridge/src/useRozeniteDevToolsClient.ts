@@ -9,6 +9,16 @@ export type UseRozeniteDevToolsClientOptions<
   eventMap?: TEventMap;
 };
 
+type PluginLifecycleEventMap = {
+  'plugin-mounted': {
+    pluginId: string;
+  };
+};
+
+const isPanelClient = (): boolean => {
+  return '__ROZENITE_PANEL__' in globalThis;
+};
+
 // TODO: Handle multiple hooks (should not kill the socket)
 export const useRozeniteDevToolsClient = <
   TEventMap extends Record<string, unknown> = Record<string, unknown>
@@ -75,6 +85,24 @@ export const useRozeniteDevToolsClient = <
   if (error != null) {
     throw error;
   }
+
+  useEffect(() => {
+    if (!client || isPanelClient()) {
+      return;
+    }
+
+    const lifecycleClient =
+      client as unknown as RozeniteDevToolsClient<PluginLifecycleEventMap>;
+    const timer = setTimeout(() => {
+      lifecycleClient.send('plugin-mounted', {
+        pluginId,
+      });
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [client, pluginId]);
 
   return client;
 };

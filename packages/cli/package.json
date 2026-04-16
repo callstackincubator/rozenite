@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
+    "@rozenite/agent-sdk": "workspace:*",
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/tools": "workspace:*",
     "commander": "^14.0.0",

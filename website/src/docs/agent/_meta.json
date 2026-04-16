@@ -18,5 +18,10 @@
     "type": "file",
     "name": "making-your-plugin-agent-enabled",
     "label": "Making your plugin agent-enabled"
+  },
+  {
+    "type": "file",
+    "name": "sdk",
+    "label": "Agent SDK"
   }
 ]

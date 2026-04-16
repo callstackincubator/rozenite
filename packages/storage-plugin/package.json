@@ -18,9 +18,11 @@
     "build": "rozenite build",
     "dev": "rozenite dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest --run"
   },
   "dependencies": {
+    "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*"
   },
@@ -70,6 +72,12 @@
       "types": "./dist/react-native/index.d.ts",
       "import": "./dist/react-native/index.js",
       "require": "./dist/react-native/index.cjs"
+    },
+    "./sdk": {
+      "development": "./sdk.ts",
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js",
+      "require": "./dist/sdk/index.cjs"
     },
     "./package.json": "./package.json"
   },

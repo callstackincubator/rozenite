@@ -1,5 +1,6 @@
 import { Alert } from 'react-native';
-import { useRozeniteInAppAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+import { useRozeniteInAppAgentTool } from '@rozenite/agent-bridge';
+import { defineAgentToolContract } from '@rozenite/agent-shared';
 
 type ShowAlertInput = {
   title?: string;
@@ -11,7 +12,7 @@ type RandomNumberInput = {
   max?: number;
 };
 
-const showAlertTool: AgentTool = {
+const showAlertTool = defineAgentToolContract<ShowAlertInput, { ok: true }>({
   name: 'show-alert',
   description: 'Show a native alert in the playground app.',
   inputSchema: {
@@ -27,9 +28,12 @@ const showAlertTool: AgentTool = {
       },
     },
   },
-};
+});
 
-const randomNumberTool: AgentTool = {
+const randomNumberTool = defineAgentToolContract<
+  RandomNumberInput,
+  { min: number; max: number; value: number }
+>({
   name: 'random-number',
   description: 'Return a random number in the optional [min, max] range.',
   inputSchema: {
@@ -45,9 +49,12 @@ const randomNumberTool: AgentTool = {
       },
     },
   },
-};
+});
 
-const echoPayloadTool: AgentTool = {
+const echoPayloadTool = defineAgentToolContract<
+  { payload?: unknown },
+  { echoed: unknown }
+>({
   name: 'echo-payload',
   description: 'Echo back payload for quick tool call smoke tests.',
   inputSchema: {
@@ -58,21 +65,21 @@ const echoPayloadTool: AgentTool = {
       },
     },
   },
-};
+});
 
 export const useAgentPlaygroundTools = () => {
-  useRozeniteInAppAgentTool<ShowAlertInput>({
+  useRozeniteInAppAgentTool({
     tool: showAlertTool,
     handler: ({ title, message }) => {
       Alert.alert(title || 'Agent Playground', message || 'Alert from Agent tool.');
 
       return {
-        ok: true,
+        ok: true as const,
       };
     },
   });
 
-  useRozeniteInAppAgentTool<RandomNumberInput>({
+  useRozeniteInAppAgentTool({
     tool: randomNumberTool,
     handler: ({ min = 0, max = 100 }) => {
       const safeMin = Number.isFinite(min) ? min : 0;
@@ -89,7 +96,7 @@ export const useAgentPlaygroundTools = () => {
     },
   });
 
-  useRozeniteInAppAgentTool<{ payload?: unknown }>({
+  useRozeniteInAppAgentTool({
     tool: echoPayloadTool,
     handler: ({ payload }) => {
       return {

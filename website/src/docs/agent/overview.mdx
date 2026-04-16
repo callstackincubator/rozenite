@@ -2,7 +2,7 @@
 
 Rozenite for Agents is the agent-facing way to interact with React Native DevTools and Rozenite plugins. It gives coding agents a reliable interface for inspecting a running React Native app through Rozenite, including logs, network activity, React profiling data, and plugin-specific tooling.
 
-Under the hood, this interface is exposed through the `rozenite agent` CLI. Coding agents typically use `rozenite agent` to discover connected targets, create or reuse sessions, list available domains, inspect tool schemas, and call domain tools with structured JSON arguments.
+You can access this workflow through the `rozenite agent` CLI or, if you need direct programmatic access, through [`@rozenite/agent-sdk`](/docs/agent/sdk). For most users, the CLI is still the recommended starting point.
 
 :::warning Experimental
 This functionality is experimental and may not work in all cases. If you run into a bug, please [open an issue](https://github.com/callstackincubator/rozenite/issues).
@@ -28,7 +28,7 @@ Make sure:
 
 If you have more than one simulator, emulator, or device connected, you will need to choose which one to inspect.
 
-Rozenite for Agents requires a project with Rozenite already installed and configured. The agent skill teaches your coding agent how to use that setup effectively.
+Rozenite for Agents requires a project with Rozenite already installed and configured. The agent skills teach your coding agent how to use that setup effectively.
 
 Rozenite for Agents is designed for AI and coding agents first. The underlying CLI can be called directly with `npx rozenite`, but the intended use is for an agent to drive it while debugging or implementing changes in a React Native app.
 
@@ -59,10 +59,11 @@ Runtime domains can also come from installed Rozenite plugins. At the moment, th
 
 Apps can also expose in-app custom tools. These are runtime tools registered directly by the app instead of by a separate Rozenite plugin package.
 
-If you want to give a coding agent this workflow directly, install the [`rozenite-agent` skill](/docs/agent/skills).
+If you want to give a coding agent this workflow directly, install the [`rozenite-agent` skill](/docs/agent/skills) for CLI workflows or `rozenite-agent-sdk` for SDK-driven scripts and automations.
 
 ## Next steps
 
-- Install the [Agent Skills](/docs/agent/skills) (`rozenite-agent` skill) if you want Codex or another coding agent to use Rozenite effectively.
+- Install the [Agent Skills](/docs/agent/skills) (`rozenite-agent` for CLI workflows, `rozenite-agent-sdk` for code-first SDK workflows) if you want Codex or another coding agent to use Rozenite effectively.
 - [Adding tools to your application](/docs/agent/adding-tools-to-your-application) – expose custom tools from your app for agents to call.
 - [Making your plugin agent-enabled](/docs/agent/making-your-plugin-agent-enabled) – expose tools from your Rozenite plugin to agents.
+- [Agent SDK](/docs/agent/sdk) – build custom tooling or automation on top of the agent workflow.
