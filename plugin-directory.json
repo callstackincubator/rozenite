@@ -70,5 +70,9 @@
   {
     "npmUrl": "https://www.npmjs.com/package/rozenite-assets-viewer",
     "githubUrl": "https://github.com/CodeByRahulSaini/rozenite-assets-viewer"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/rozenite-growthbook-plugin",
+    "githubUrl": "https://github.com/valeriobelli/rozenite-growthbook-plugin"
   }
 ]
