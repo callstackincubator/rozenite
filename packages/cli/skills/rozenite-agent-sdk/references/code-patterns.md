@@ -21,6 +21,25 @@ const result = await client.withSession(async (session) => {
 
 Use this for most scripts. `withSession(...)` opens the session, runs your work, and closes the session automatically.
 
+## Typed Plugin Call
+
+```ts
+import { createAgentClient } from '@rozenite/agent-sdk';
+import { storageTools } from '@rozenite/storage-plugin/sdk';
+
+const client = createAgentClient();
+
+const result = await client.withSession(async (session) => {
+  return await session.tools.call(storageTools.readEntry, {
+    adapterId: 'mmkv',
+    storageId: 'user-storage',
+    key: 'username',
+  });
+});
+```
+
+Prefer typed descriptors like this when a plugin exports them from `./sdk` and the current package can actually resolve that dependency.
+
 ## Inspecting Domains And Tools
 
 ```ts
@@ -46,7 +65,7 @@ const result = await client.withSession(async (session) => {
 
 Use this when you need to see what a domain exposes before you decide which tool to call.
 
-## Call by Name
+## Call by Name Fallback
 
 ```ts
 import { createAgentClient } from '@rozenite/agent-sdk';
@@ -65,7 +84,7 @@ const requests = await client.withSession(async (session) => {
 });
 ```
 
-Use this when you already know the domain and tool name, or when you just discovered them with `session.tools.list(...)`.
+Use this when the package does not expose a matching descriptor, or when you already know the domain and tool name.
 
 ## Discover Then Call by Name
 
@@ -94,25 +113,6 @@ const storages = await client.withSession(async (session) => {
 
 When you discover tools at runtime, use the returned `shortName` exactly as-is. Do not guess camelCase or other aliases.
 
-## Typed Plugin Call
-
-```ts
-import { createAgentClient } from '@rozenite/agent-sdk';
-import { storageTools } from '@rozenite/storage-plugin/sdk';
-
-const client = createAgentClient();
-
-const result = await client.withSession(async (session) => {
-  return await session.tools.call(storageTools.readEntry, {
-    adapterId: 'mmkv',
-    storageId: 'user-storage',
-    key: 'username',
-  });
-});
-```
-
-Prefer typed descriptors like this when a plugin exports them from `./sdk` and the current package can actually resolve that dependency.
-
 ## Pagination
 
 ```ts
@@ -135,16 +135,16 @@ const requests = await client.withSession(async (session) => {
 
 Use this when a tool returns paged results and you want the SDK to follow cursors and merge pages for you.
 
-## Target Selection
+## Target Handoff
 
 ```ts
 import { createAgentClient } from '@rozenite/agent-sdk';
 
 const client = createAgentClient();
-const targets = await client.targets.list();
+const deviceId = 'device-id-from-rozenite-agent';
 
 const result = await client.withSession(
-  { deviceId: targets[0].id },
+  { deviceId },
   async (session) => {
     return {
       sessionId: session.id,
@@ -154,9 +154,9 @@ const result = await client.withSession(
 );
 ```
 
-Use this when more than one simulator, emulator, or device may be connected.
+When more than one simulator, emulator, or device may be connected, use the `rozenite-agent` skill to enumerate and choose the live target first. Then pass the chosen `deviceId` into the SDK flow instead of duplicating target-discovery logic here.
 
-## Manual Session Lifecycle
+## Advanced: Manual Session Lifecycle
 
 ```ts
 import { createAgentClient } from '@rozenite/agent-sdk';
@@ -172,9 +172,9 @@ try {
 }
 ```
 
-Use this only when the session must survive across separate steps or function boundaries.
+Use this only when the session must survive across separate steps or function boundaries. Prefer `withSession(...)` for everything else.
 
-## Attach Existing Session
+## Advanced: Attach Existing Session
 
 ```ts
 import { createAgentClient } from '@rozenite/agent-sdk';
@@ -185,7 +185,7 @@ const session = await client.attachSession('session-1');
 const result = await session.domains.list();
 ```
 
-Use this when another step already created a session and you need to reconnect to it by `sessionId`.
+Use this when another step already created a session and you need to reconnect to it by `sessionId`. Prefer `withSession(...)` when you can keep the whole task in one callback.
 
 ## Lazy Plugin Refresh
 
