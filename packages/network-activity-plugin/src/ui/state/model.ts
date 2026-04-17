@@ -3,11 +3,12 @@ import {
   ResourceType,
   HttpHeaders,
   RequestPostData,
+  NetworkEventSource,
 } from '../../shared/client';
 
 export type RequestId = string;
 export type Timestamp = number;
-export type SocketId = number;
+export type SocketId = string;
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 
 export type NetworkEntryType = 'http' | 'websocket' | 'sse';
@@ -47,6 +48,7 @@ export type HttpNetworkEntry = {
   id: RequestId;
   type: 'http';
   timestamp: Timestamp;
+  source?: NetworkEventSource;
   duration?: number;
 
   request: HttpRequest;
@@ -79,6 +81,7 @@ export type SSENetworkEntry = {
   id: RequestId;
   type: 'sse';
   timestamp: Timestamp;
+  source?: NetworkEventSource;
   duration?: number;
 
   request: HttpRequest;
@@ -117,6 +120,7 @@ export type WebSocketNetworkEntry = {
   id: RequestId;
   type: 'websocket';
   timestamp: Timestamp;
+  source?: NetworkEventSource;
   duration?: number;
 
   connection: WebSocketConnection;
@@ -135,6 +139,7 @@ export type NetworkEntry =
 export type ProcessedRequest = {
   id: RequestId;
   type: NetworkEntryType;
+  source?: NetworkEventSource;
   name: string;
   status: HttpStatus | WebSocketStatus | SSEStatus;
   timestamp: Timestamp;

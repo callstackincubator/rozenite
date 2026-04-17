@@ -15,9 +15,10 @@ The Network Activity plugin is a powerful debugging tool that helps you monitor 
 - **Response Inspection**: Examine response headers, status codes, and timing data
 - **Performance Analysis**: Analyze request duration, connection timing, and performance metrics
 - **Request History**: Maintain a searchable history of network activity
+- **Nitro Support**: Merge `react-native-nitro-fetch` HTTP and WebSocket traffic into the same inspector when available
 
 :::warning JavaScript Thread Only
-The Network Activity plugin will only capture network traffic coming from the JavaScript thread. Connections made by native code (such as native networking libraries or direct platform HTTP calls) won't be displayed in the inspector.
+Built-in React Native inspectors only capture traffic coming from the JavaScript thread. If your app uses `react-native-nitro-fetch`, Rozenite also listens to nitro's inspector events and displays that traffic in the same panel. Other native networking stacks still won't appear automatically.
 :::
 
 ## Installation
@@ -27,6 +28,12 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 Install the Network Activity plugin as a development dependency using your preferred package manager:
 
 <PackageManagerTabs command="install -D @rozenite/network-activity-plugin" />
+
+If your app uses nitro networking, install `react-native-nitro-fetch` as well:
+
+```bash
+npm install react-native-nitro-fetch
+```
 
 Add the DevTools hook to your React Native app to enable network monitoring:
 
@@ -41,7 +48,8 @@ function App() {
 }
 ```
 
-To capture network requests happenning before your React Native app initialization, add this to your entrypoint:
+To capture network requests happening before your React Native app initialization, add this to your entrypoint:
+
 ```typescript title="index.js"
 import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
 
@@ -59,6 +67,7 @@ Once configured, the Network Activity plugin will automatically appear in your R
 - **HTTP Methods**: Identify GET, POST, PUT, DELETE, and other HTTP methods
 - **Response Codes**: See HTTP status codes and their meanings
 - **Request Timing**: Monitor request duration and performance
+- **Source Badges**: Distinguish built-in React Native traffic from nitro traffic with `Built-in` and `Nitro` badges
 
 ### Request Details
 
@@ -66,6 +75,18 @@ Once configured, the Network Activity plugin will automatically appear in your R
 - **Query Parameters**: View URL parameters and their values
 - **Request Body**: Examine POST/PUT request payloads
 - **Response Body**: View response content and structure
+- **Source Metadata**: See whether an entry came from the built-in inspector or the nitro inspector
+
+## Nitro Behavior
+
+When `react-native-nitro-fetch` is installed, the plugin automatically subscribes to nitro's network inspector.
+
+- Nitro HTTP entries appear in the same request list as built-in requests
+- Nitro WebSocket entries use their original string IDs, so they line up naturally with message history
+- Nitro HTTP response bodies can be requested from the UI and from agent tools
+- HTTP response overrides are intentionally unavailable for nitro entries
+
+Nitro's inspector reports HTTP entries as snapshots, so Rozenite reconstructs the familiar request lifecycle from those updates. In practice that means nitro traffic appears in the same panel, but the underlying capture path is different from the built-in XHR interceptor.
 
 ## Configuration
 

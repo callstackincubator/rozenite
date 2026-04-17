@@ -17,7 +17,7 @@ function getHeadersItems(headers?: HttpHeaders): KeyValueItem[] {
   return Object.entries(headers).reduce<KeyValueItem[]>((acc, [key, value]) => {
     if (Array.isArray(value)) {
       acc.push(
-        ...value.map((item) => ({ key: key.toLowerCase(), value: item }))
+        ...value.map((item) => ({ key: key.toLowerCase(), value: item })),
       );
     } else {
       acc.push({ key: key.toLowerCase(), value: value });
@@ -29,6 +29,12 @@ function getHeadersItems(headers?: HttpHeaders): KeyValueItem[] {
 
 export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
   const requestBody = selectedRequest.request.body;
+  const sourceLabel =
+    selectedRequest.source === 'nitro'
+      ? 'Nitro'
+      : selectedRequest.source === 'builtin'
+        ? 'Built-in'
+        : null;
 
   const generalItems: KeyValueItem[] = useMemo(
     () => [
@@ -55,18 +61,26 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
             },
           ]
         : []),
+      ...(sourceLabel
+        ? [
+            {
+              key: 'Source',
+              value: sourceLabel,
+            },
+          ]
+        : []),
     ],
-    [selectedRequest]
+    [requestBody, selectedRequest, sourceLabel],
   );
 
   const responseHeadersItems = useMemo(
     () => getHeadersItems(selectedRequest.response?.headers),
-    [selectedRequest]
+    [selectedRequest],
   );
 
   const requestHeadersItems = useMemo(
     () => getHeadersItems(selectedRequest.request.headers),
-    [selectedRequest]
+    [selectedRequest],
   );
 
   return (

@@ -40,7 +40,12 @@ describe('network activity agent state', () => {
       timestamp: 100,
       request: createRequest(),
       type: 'XHR',
-      initiator: { type: 'script', url: 'App.tsx', lineNumber: 12, columnNumber: 4 },
+      initiator: {
+        type: 'script',
+        url: 'App.tsx',
+        lineNumber: 12,
+        columnNumber: 4,
+      },
     });
     state.onResponseReceived({
       requestId: 'req-1',
@@ -126,7 +131,7 @@ describe('network activity agent state', () => {
     state.onWebSocketConnect({
       type: 'websocket-connect',
       url: 'wss://example.com/socket',
-      socketId: 7,
+      socketId: '7',
       timestamp: 100,
       protocols: ['chat'],
       options: [],
@@ -134,13 +139,13 @@ describe('network activity agent state', () => {
     state.onWebSocketOpen({
       type: 'websocket-open',
       url: 'wss://example.com/socket',
-      socketId: 7,
+      socketId: '7',
       timestamp: 110,
     });
     state.onWebSocketMessageSent({
       type: 'websocket-message-sent',
       url: 'wss://example.com/socket',
-      socketId: 7,
+      socketId: '7',
       timestamp: 120,
       data: 'ping',
       messageType: 'text',
@@ -148,7 +153,7 @@ describe('network activity agent state', () => {
     state.onWebSocketMessageReceived({
       type: 'websocket-message-received',
       url: 'wss://example.com/socket',
-      socketId: 7,
+      socketId: '7',
       timestamp: 121,
       data: 'pong',
       messageType: 'text',
@@ -244,7 +249,9 @@ describe('network activity agent state', () => {
     state.startRecording();
 
     expect(() =>
-      state.listRequests({ limit: 1, cursor: firstPage.page.nextCursor })
-    ).toThrow('Cursor does not match the requested listing. Run the command again.');
+      state.listRequests({ limit: 1, cursor: firstPage.page.nextCursor }),
+    ).toThrow(
+      'Cursor does not match the requested listing. Run the command again.',
+    );
   });
 });

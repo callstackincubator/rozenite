@@ -10,6 +10,16 @@ The Rozenite Network Activity Plugin provides real-time network request monitori
 
 ![Network Activity Plugin](https://rozenite.dev/network-activity-plugin.png)
 
+## Nitro Support
+
+The plugin now integrates with `react-native-nitro-fetch` when it is installed in your app.
+
+- Nitro HTTP traffic is shown in the same Network Activity panel as built-in React Native requests
+- Nitro WebSocket traffic is supported through the nitro network inspector event stream
+- Requests are labeled with a source badge in the list and details view: `Built-in` or `Nitro`
+- Response body lookup works for both built-in and nitro HTTP entries
+- HTTP response overrides remain built-in only and are disabled for nitro entries
+
 ## Features
 
 - **Real-time Network Monitoring**: Track all HTTP/HTTPS requests in real-time
@@ -17,6 +27,7 @@ The Rozenite Network Activity Plugin provides real-time network request monitori
 - **Response Inspection**: Examine response headers, status codes, and timing data
 - **Performance Analysis**: Analyze request duration, connection timing, and performance metrics
 - **Request History**: Maintain a searchable history of network activity
+- **Nitro Integration**: Merge `react-native-nitro-fetch` traffic into the same inspector when available
 - **Chrome DevTools Protocol**: Built on CDP for accurate network event capture
 - **Production Safety**: Automatically disabled in production builds
 
@@ -26,6 +37,12 @@ Install the Network Activity plugin as a dependency:
 
 ```bash
 npm install @rozenite/network-activity-plugin
+```
+
+Optional nitro integration:
+
+```bash
+npm install react-native-nitro-fetch
 ```
 
 ## Quick Start
@@ -64,6 +81,13 @@ withOnBootNetworkActivityRecording();
 ### 3. Access DevTools
 
 Start your development server and open React Native DevTools. You'll find the "Network Activity" panel in the DevTools interface.
+
+## Notes and Limitations
+
+- Built-in React Native inspectors still only capture traffic coming from the JavaScript thread
+- When `react-native-nitro-fetch` is installed, the plugin also listens to nitro's network inspector and shows that traffic in the same panel
+- Native traffic from other networking stacks that do not expose compatible inspector events will not appear automatically
+- Nitro HTTP entries support response body inspection, but response overriding is not available for them
 
 ## Made with ❤️ at Callstack
 

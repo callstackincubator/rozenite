@@ -13,6 +13,7 @@ import { Pencil } from 'lucide-react';
 
 export type ResponseTabProps = {
   selectedRequest: HttpNetworkEntry;
+  supportsOverrides?: boolean;
   onRequestResponseBody: (requestId: string) => void;
 };
 
@@ -34,6 +35,7 @@ const RenderResponseBodySection = ({
 
 export const ResponseTab = ({
   selectedRequest,
+  supportsOverrides = true,
   onRequestResponseBody,
 }: ResponseTabProps) => {
   const onRequestResponseBodyRef = useRef(onRequestResponseBody);
@@ -81,7 +83,7 @@ export const ResponseTab = ({
       />
     );
 
-    const overrideAction = (
+    const overrideAction = supportsOverrides ? (
       <Button
         variant="ghost"
         size="xs"
@@ -96,9 +98,9 @@ export const ResponseTab = ({
         <Pencil className="h-2 w-2" />
         Override
       </Button>
-    );
+    ) : null;
 
-    if (initialOverride !== undefined) {
+    if (supportsOverrides && initialOverride !== undefined) {
       return (
         <OverrideResponse
           selectedRequest={selectedRequest}

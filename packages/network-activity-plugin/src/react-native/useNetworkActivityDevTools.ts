@@ -109,7 +109,7 @@ export const useNetworkActivityDevTools = (
 
   useHttpInspector(
     client,
-    networkInspector.http,
+    networkInspector,
     isHttpInspectorEnabled,
     isRecordingEnabledRef.current,
   );
