@@ -1,4 +1,8 @@
-import { initializeRozenite, RozeniteConfig } from '@rozenite/middleware';
+import {
+  createScopedMiddleware,
+  initializeRozenite,
+  RozeniteConfig,
+} from '@rozenite/middleware';
 import {
   RepackRspackConfig,
   type RepackRspackConfigExport,
@@ -7,7 +11,7 @@ import { assertSupportedRePackVersion } from './version-check.js';
 
 const patchConfig = (
   config: RepackRspackConfig,
-  rozeniteConfig: RozeniteConfig
+  rozeniteConfig: RozeniteConfig,
 ): RepackRspackConfig => {
   return {
     ...config,
@@ -16,7 +20,9 @@ const patchConfig = (
       setupMiddlewares: (middlewares) => {
         const { middleware: rozeniteMiddleware } =
           initializeRozenite(rozeniteConfig);
-        middlewares.unshift(rozeniteMiddleware);
+        middlewares.unshift(
+          createScopedMiddleware('/rozenite', rozeniteMiddleware),
+        );
         return middlewares;
       },
     },
@@ -34,7 +40,7 @@ export type RozeniteRePackConfig = {
 
 export const withRozenite = (
   config: RepackRspackConfigExport,
-  rozeniteConfig: RozeniteRePackConfig = {}
+  rozeniteConfig: RozeniteRePackConfig = {},
 ): RepackRspackConfigExport => {
   assertSupportedRePackVersion(process.cwd());
 

@@ -4,6 +4,7 @@ import { getMiddleware } from './middleware.js';
 import { logger } from './logger.js';
 import { getPackageJSON } from './package-json.js';
 import { getInstalledPlugins } from './auto-discovery.js';
+import { createScopedMiddleware } from './scoped-middleware.js';
 import type { RozeniteConfig } from './config.js';
 import { getDevModePackage } from './dev-mode.js';
 import { verifyReactNativeVersion } from './verify-react-native-version.js';
@@ -16,6 +17,13 @@ export type RozeniteInstance = {
   devModePackage: { name: string; path: string } | null;
   dispose: () => Promise<void>;
 };
+
+export { createScopedMiddleware };
+export type {
+  MiddlewareHandler,
+  MiddlewareNext,
+  MiddlewareRequest,
+} from './scoped-middleware.js';
 
 export const initializeRozenite = (
   options: RozeniteConfig,
