@@ -1,3 +1,5 @@
+import type { AgentCallToolAutoPaginationOptions } from './types.js';
+
 type ToolCaller = {
   callTool: (name: string, args: unknown) => Promise<unknown>;
 };
@@ -13,22 +15,27 @@ type PagedResponse = {
   [key: string]: unknown;
 };
 
-export type ToolAutoPaginationOptions = {
-  pages?: string;
-  maxItems?: string;
+const isPositiveInteger = (value: unknown): value is number => {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
 };
 
-const parsePositiveIntOption = (raw: string | undefined, optionName: string): number | undefined => {
-  if (!raw) {
-    return undefined;
+const validateAutoPagination = (
+  options: AgentCallToolAutoPaginationOptions,
+): void => {
+  if (
+    options.pagesLimit !== undefined &&
+    !isPositiveInteger(options.pagesLimit)
+  ) {
+    throw new Error('autoPaginate.pagesLimit must be a positive integer');
   }
 
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 1) {
-    throw new Error(`${optionName} must be a positive integer`);
+  if (options.maxItems !== undefined && !isPositiveInteger(options.maxItems)) {
+    throw new Error('autoPaginate.maxItems must be a positive integer');
   }
 
-  return parsed;
+  if (options.maxItems !== undefined && options.pagesLimit === undefined) {
+    throw new Error('autoPaginate.maxItems requires autoPaginate.pagesLimit');
+  }
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
@@ -52,22 +59,6 @@ const isPagedResponse = (value: unknown): value is PagedResponse => {
   return typeof page.hasMore === 'boolean' && typeof page.limit === 'number';
 };
 
-export const resolveAutoPaginationConfig = (options: ToolAutoPaginationOptions): {
-  pagesLimit?: number;
-  maxItems?: number;
-} => {
-  const pagesLimit = parsePositiveIntOption(options.pages, '--pages');
-  const maxItems = parsePositiveIntOption(options.maxItems, '--max-items');
-  if (maxItems !== undefined && pagesLimit === undefined) {
-    throw new Error('--max-items requires --pages');
-  }
-
-  return {
-    ...(pagesLimit ? { pagesLimit } : {}),
-    ...(maxItems ? { maxItems } : {}),
-  };
-};
-
 const normalizeArgs = (args: unknown): Record<string, unknown> => {
   if (!isRecord(args)) {
     return {};
@@ -76,15 +67,24 @@ const normalizeArgs = (args: unknown): Record<string, unknown> => {
   return { ...args };
 };
 
+const getTrimmedItems = (
+  items: unknown[],
+  maxItems: number | undefined,
+): unknown[] => {
+  return maxItems === undefined ? [...items] : items.slice(0, maxItems);
+};
+
 export const callToolWithOptionalPagination = async (
   client: ToolCaller,
   toolName: string,
   args: unknown,
-  config: { pagesLimit?: number; maxItems?: number },
+  config: AgentCallToolAutoPaginationOptions,
 ): Promise<unknown> => {
-  const initial = await client.callTool(toolName, args);
+  validateAutoPagination(config);
 
-  const shouldAutoPaginate = config.pagesLimit !== undefined || config.maxItems !== undefined;
+  const initial = await client.callTool(toolName, args);
+  const shouldAutoPaginate =
+    config.pagesLimit !== undefined || config.maxItems !== undefined;
   if (!shouldAutoPaginate || !isPagedResponse(initial)) {
     return initial;
   }
@@ -96,15 +96,15 @@ export const callToolWithOptionalPagination = async (
   let cursor = initial.page.nextCursor;
   const merged: PagedResponse = {
     ...initial,
-    items: [...initial.items],
+    items: getTrimmedItems(initial.items, maxItems),
     page: { ...initial.page },
   };
 
   while (
-    cursor
-    && merged.page.hasMore
-    && pageCount < pagesLimit
-    && (maxItems === undefined || merged.items.length < maxItems)
+    cursor &&
+    merged.page.hasMore &&
+    pageCount < pagesLimit &&
+    (maxItems === undefined || merged.items.length < maxItems)
   ) {
     const nextArgs = {
       ...normalizeArgs(args),
@@ -116,16 +116,30 @@ export const callToolWithOptionalPagination = async (
       break;
     }
 
-    const remaining = maxItems === undefined
-      ? next.items.length
-      : Math.max(0, maxItems - merged.items.length);
+    if (next.page.reset) {
+      merged.items = getTrimmedItems(next.items, maxItems);
+      merged.page = { ...next.page };
+      cursor = next.page.nextCursor;
+      pageCount += 1;
+
+      if (maxItems !== undefined && merged.items.length >= maxItems) {
+        break;
+      }
+
+      continue;
+    }
+
+    const remaining =
+      maxItems === undefined
+        ? next.items.length
+        : Math.max(0, maxItems - merged.items.length);
+
     merged.items.push(...next.items.slice(0, remaining));
     merged.page = { ...next.page };
     cursor = next.page.nextCursor;
     pageCount += 1;
 
     if (maxItems !== undefined && merged.items.length >= maxItems) {
-      merged.page.hasMore = true;
       break;
     }
   }

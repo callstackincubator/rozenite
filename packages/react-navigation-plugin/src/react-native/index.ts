@@ -8,8 +8,11 @@ import {
 import { useReactNavigationEvents } from './useReactNavigationEvents';
 import { ReactNavigationPluginEventMap } from '../shared';
 import { Linking } from 'react-native';
-import {
+import type {
   NavigationActionHistoryEntry,
+  ReactNavigationNavigateArgs,
+} from '../shared/agent-tools';
+import {
   useReactNavigationAgentTools,
 } from './useReactNavigationAgentTools';
 
@@ -55,12 +58,7 @@ export const useReactNavigationDevTools = ({
       params,
       path,
       merge,
-    }: {
-      name: string;
-      params?: Record<string, unknown>;
-      path?: string;
-      merge?: boolean;
-    }) => {
+    }: ReactNavigationNavigateArgs) => {
       if (!ref.current) {
         throw new Error('Navigation ref is not ready.');
       }

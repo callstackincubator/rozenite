@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ActionCreators } from '@redux-devtools/instrument';
+import { reduxDevToolsToolDefinitions } from '../shared/agent-tools';
 import {
   buildStoreSummary,
   commitReduxCurrentStateResult,
@@ -94,6 +95,29 @@ afterEach(() => {
 });
 
 describe('redux devtools agent helpers', () => {
+  it('keeps shared tool definitions aligned with the Redux agent surface', () => {
+    expect(
+      Object.values(reduxDevToolsToolDefinitions).map((tool) => tool.name),
+    ).toEqual([
+      'list-stores',
+      'get-store-state',
+      'list-actions',
+      'get-action-details',
+      'dispatch-action',
+      'jump-to-action',
+      'toggle-action',
+      'reset-history',
+      'rollback-state',
+      'commit-current-state',
+      'sweep-skipped-actions',
+      'set-recording-paused',
+      'set-locked',
+    ]);
+    expect(
+      reduxDevToolsToolDefinitions.getActionDetails.inputSchema.required,
+    ).toEqual(['actionId']);
+  });
+
   it('lists stores with derived status', () => {
     registerStore({
       liftedState: createLiftedState({

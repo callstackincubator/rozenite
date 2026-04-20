@@ -6,14 +6,21 @@ import {
   ExtractorLogLevel,
 } from '@microsoft/api-extractor';
 
-type Target = 'react-native' | 'metro';
+type Target = 'react-native' | 'metro' | 'sdk';
 
 export const bundleTargetDeclarations = async (
   projectRoot: string,
   target: Target,
 ) => {
   const targetRoot = path.join(projectRoot, 'dist', target);
-  const entryPath = path.join(targetRoot, 'index.d.ts');
+  const publicEntryPath = path.join(targetRoot, 'index.d.ts');
+  const bundleEntryPath =
+    target === 'sdk' ? path.join(targetRoot, `${target}.d.ts`) : publicEntryPath;
+  const entryPath =
+    (await fs
+      .access(bundleEntryPath)
+      .then(() => bundleEntryPath)
+      .catch(() => publicEntryPath));
   const tempOutputPath = path.join(targetRoot, 'index.public.d.ts');
   const srcDeclarationsPath = path.join(targetRoot, 'src');
   const configObjectFullPath = path.join(projectRoot, 'api-extractor.json');
@@ -73,7 +80,10 @@ export const bundleTargetDeclarations = async (
     throw new Error(`Failed to bundle ${target} declaration files.`);
   }
 
+  if (entryPath !== publicEntryPath) {
+    await fs.rm(publicEntryPath, { force: true });
+  }
   await fs.rm(entryPath, { force: true });
-  await fs.rename(tempOutputPath, entryPath);
+  await fs.rename(tempOutputPath, publicEntryPath);
   await fs.rm(srcDeclarationsPath, { recursive: true, force: true });
 };
