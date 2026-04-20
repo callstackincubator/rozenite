@@ -25,6 +25,12 @@
       "types": "./dist/metro/index.d.ts",
       "import": "./dist/metro/index.js",
       "require": "./dist/metro/index.cjs"
+    },
+    "./sdk": {
+      "development": "./sdk.ts",
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js",
+      "require": "./dist/sdk/index.cjs"
     }
   },
   "scripts": {
@@ -36,6 +42,7 @@
   "dependencies": {
     "@redux-devtools/instrument": "^2.2.0",
     "@redux-devtools/utils": "^3.1.1",
+    "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
     "jsan": "^3.1.14",

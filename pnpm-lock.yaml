@@ -457,6 +457,9 @@ importers:
       '@rozenite/agent-bridge':
         specifier: workspace:*
         version: link:../agent-bridge
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -570,6 +573,9 @@ importers:
       '@rozenite/agent-bridge':
         specifier: workspace:*
         version: link:../agent-bridge
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -681,6 +687,9 @@ importers:
       '@rozenite/agent-bridge':
         specifier: workspace:*
         version: link:../agent-bridge
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -754,6 +763,9 @@ importers:
       '@rozenite/agent-bridge':
         specifier: workspace:*
         version: link:../agent-bridge
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -985,6 +997,9 @@ importers:
       '@rozenite/agent-bridge':
         specifier: workspace:*
         version: link:../agent-bridge
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -1055,6 +1070,9 @@ importers:
       '@rozenite/agent-bridge':
         specifier: workspace:*
         version: link:../agent-bridge
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
@@ -1402,6 +1420,9 @@ importers:
       '@rozenite/agent-bridge':
         specifier: workspace:*
         version: link:../agent-bridge
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge

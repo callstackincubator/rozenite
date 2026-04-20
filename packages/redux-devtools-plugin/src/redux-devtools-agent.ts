@@ -1,246 +1,49 @@
 import { ActionCreators } from '@redux-devtools/instrument';
 import type { Action } from 'redux';
 import { parse, stringify } from 'jsan';
-import type { AgentTool } from '@rozenite/agent-bridge';
 import {
   getReduxDevToolsStore,
   listReduxDevToolsStores,
   type ReduxDevToolsLiftedState,
   type ReduxDevToolsStoreRegistration,
 } from './redux-devtools-registry';
+import {
+  REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
+  reduxDevToolsToolDefinitions,
+  type ReduxDevToolsActionInput as ActionInput,
+  type ReduxDevToolsApplyStoreActionResult,
+  type ReduxDevToolsDispatchActionInput as DispatchActionInput,
+  type ReduxDevToolsDispatchActionResult,
+  type ReduxDevToolsGetActionDetailsResult,
+  type ReduxDevToolsGetStoreStateResult,
+  type ReduxDevToolsListActionsResult,
+  type ReduxDevToolsListStoresResult,
+  type ReduxDevToolsPaginatedStoreInput as PaginatedStoreInput,
+  type ReduxDevToolsSetLockedInput,
+  type ReduxDevToolsSetRecordingPausedInput,
+  type ReduxDevToolsStoreInput as StoreInput,
+  type ReduxDevToolsStoreSummary,
+} from './shared/agent-tools';
 
 type AnyAction = Action<string> & Record<string, unknown>;
-
-type StoreInput = {
-  instanceId?: string;
-};
-
-type PaginatedStoreInput = StoreInput & {
-  offset?: number;
-  limit?: number;
-};
-
-type ActionInput = {
-  instanceId?: string;
-  actionId: number;
-};
-
-type DispatchActionInput = {
-  instanceId?: string;
-  action: unknown;
-};
-
-type BooleanStateInput = {
-  instanceId?: string;
-  locked?: boolean;
-  paused?: boolean;
-};
-
-const pluginId = '@rozenite/redux-devtools-plugin';
 const DEFAULT_PAGE_LIMIT = 50;
-
-export const listStoresTool: AgentTool = {
-  name: 'list-stores',
-  description:
-    'List all Redux DevTools store instances currently registered on the device.',
-  inputSchema: {
-    type: 'object',
-    properties: {},
-  },
-};
-
-export const getStoreStateTool: AgentTool = {
-  name: 'get-store-state',
-  description:
-    'Return the current Redux store state together with lifted Redux DevTools metadata.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      instanceId: {
-        type: 'string',
-        description: 'Redux DevTools instance ID. Optional when only one store is registered.',
-      },
-    },
-  },
-};
-
-export const listActionsTool: AgentTool = {
-  name: 'list-actions',
-  description:
-    'List Redux action history for a store in newest-first order using pagination.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      instanceId: {
-        type: 'string',
-        description: 'Redux DevTools instance ID. Optional when only one store is registered.',
-      },
-      offset: {
-        type: 'number',
-        description: 'Pagination offset. Defaults to 0.',
-      },
-      limit: {
-        type: 'number',
-        description: 'Pagination size. Defaults to 50.',
-      },
-    },
-  },
-};
-
-export const getActionDetailsTool: AgentTool = {
-  name: 'get-action-details',
-  description:
-    'Return the lifted action payload, computed state, and metadata for a Redux action history entry.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      instanceId: {
-        type: 'string',
-        description: 'Redux DevTools instance ID. Optional when only one store is registered.',
-      },
-      actionId: {
-        type: 'number',
-        description: 'Redux DevTools action ID to inspect.',
-      },
-    },
-    required: ['actionId'],
-  },
-};
-
-export const dispatchActionTool: AgentTool = {
-  name: 'dispatch-action',
-  description:
-    'Dispatch a plain serializable Redux action through the real store dispatch path.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      instanceId: {
-        type: 'string',
-        description: 'Redux DevTools instance ID. Optional when only one store is registered.',
-      },
-      action: {
-        type: 'object',
-        description: 'Plain serializable Redux action object with a string type.',
-      },
-    },
-    required: ['action'],
-  },
-};
-
-export const jumpToActionTool: AgentTool = {
-  name: 'jump-to-action',
-  description: 'Jump Redux DevTools to a specific action in history.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      instanceId: {
-        type: 'string',
-        description: 'Redux DevTools instance ID. Optional when only one store is registered.',
-      },
-      actionId: {
-        type: 'number',
-        description: 'Redux DevTools action ID to jump to.',
-      },
-    },
-    required: ['actionId'],
-  },
-};
-
-export const toggleActionTool: AgentTool = {
-  name: 'toggle-action',
-  description: 'Toggle whether a Redux DevTools action is skipped in history recomputation.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      instanceId: {
-        type: 'string',
-        description: 'Redux DevTools instance ID. Optional when only one store is registered.',
-      },
-      actionId: {
-        type: 'number',
-        description: 'Redux DevTools action ID to toggle.',
-      },
-    },
-    required: ['actionId'],
-  },
-};
-
-const storeOnlyProperties = {
-  instanceId: {
-    type: 'string',
-    description: 'Redux DevTools instance ID. Optional when only one store is registered.',
-  },
-} as const;
-
-export const resetHistoryTool: AgentTool = {
-  name: 'reset-history',
-  description: 'Reset Redux DevTools history for the selected store.',
-  inputSchema: {
-    type: 'object',
-    properties: storeOnlyProperties,
-  },
-};
-
-export const rollbackStateTool: AgentTool = {
-  name: 'rollback-state',
-  description:
-    'Rollback Redux DevTools state for the selected store to the last committed snapshot.',
-  inputSchema: {
-    type: 'object',
-    properties: storeOnlyProperties,
-  },
-};
-
-export const commitCurrentStateTool: AgentTool = {
-  name: 'commit-current-state',
-  description:
-    'Commit the current Redux DevTools state and clear prior history for the selected store.',
-  inputSchema: {
-    type: 'object',
-    properties: storeOnlyProperties,
-  },
-};
-
-export const sweepSkippedActionsTool: AgentTool = {
-  name: 'sweep-skipped-actions',
-  description: 'Remove skipped Redux DevTools actions from history for the selected store.',
-  inputSchema: {
-    type: 'object',
-    properties: storeOnlyProperties,
-  },
-};
-
-export const setRecordingPausedTool: AgentTool = {
-  name: 'set-recording-paused',
-  description: 'Pause or resume Redux DevTools action recording for the selected store.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...storeOnlyProperties,
-      paused: {
-        type: 'boolean',
-        description: 'Whether Redux DevTools recording should be paused.',
-      },
-    },
-    required: ['paused'],
-  },
-};
-
-export const setLockedTool: AgentTool = {
-  name: 'set-locked',
-  description: 'Lock or unlock Redux DevTools changes for the selected store.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...storeOnlyProperties,
-      locked: {
-        type: 'boolean',
-        description: 'Whether Redux DevTools should lock state changes.',
-      },
-    },
-    required: ['locked'],
-  },
-};
+export const listStoresTool = reduxDevToolsToolDefinitions.listStores;
+export const getStoreStateTool = reduxDevToolsToolDefinitions.getStoreState;
+export const listActionsTool = reduxDevToolsToolDefinitions.listActions;
+export const getActionDetailsTool =
+  reduxDevToolsToolDefinitions.getActionDetails;
+export const dispatchActionTool = reduxDevToolsToolDefinitions.dispatchAction;
+export const jumpToActionTool = reduxDevToolsToolDefinitions.jumpToAction;
+export const toggleActionTool = reduxDevToolsToolDefinitions.toggleAction;
+export const resetHistoryTool = reduxDevToolsToolDefinitions.resetHistory;
+export const rollbackStateTool = reduxDevToolsToolDefinitions.rollbackState;
+export const commitCurrentStateTool =
+  reduxDevToolsToolDefinitions.commitCurrentState;
+export const sweepSkippedActionsTool =
+  reduxDevToolsToolDefinitions.sweepSkippedActions;
+export const setRecordingPausedTool =
+  reduxDevToolsToolDefinitions.setRecordingPaused;
+export const setLockedTool = reduxDevToolsToolDefinitions.setLocked;
 
 const serializeForAgent = <T>(value: T): T => {
   return parse(stringify(value)) as T;
@@ -296,7 +99,9 @@ const getKnownActionIds = (liftedState: ReduxDevToolsLiftedState) => {
   return liftedState.stagedActionIds.filter((actionId) => actionId !== 0);
 };
 
-export const buildStoreSummary = (store: ReduxDevToolsStoreRegistration) => {
+export const buildStoreSummary = (
+  store: ReduxDevToolsStoreRegistration
+): ReduxDevToolsStoreSummary => {
   const liftedState = store.getLiftedState();
 
   return {
@@ -409,13 +214,16 @@ export const parseSerializableReduxAction = (action: unknown): AnyAction => {
   return action as AnyAction;
 };
 
-export const listReduxDevToolsStoresResult = () => {
+export const listReduxDevToolsStoresResult =
+  (): ReduxDevToolsListStoresResult => {
   return {
     stores: listReduxDevToolsStores().map(buildStoreSummary),
   };
 };
 
-export const getReduxStoreStateResult = ({ instanceId }: StoreInput) => {
+export const getReduxStoreStateResult = ({
+  instanceId,
+}: StoreInput): ReduxDevToolsGetStoreStateResult => {
   const { store, enhancedStore, liftedState } = getStoreAndLiftedState(instanceId);
   const currentActionId =
     liftedState.stagedActionIds[liftedState.currentStateIndex] ?? null;
@@ -435,7 +243,7 @@ export const listReduxActionsResult = ({
   instanceId,
   offset = 0,
   limit = DEFAULT_PAGE_LIMIT,
-}: PaginatedStoreInput) => {
+}: PaginatedStoreInput): ReduxDevToolsListActionsResult => {
   const { store, liftedState } = getStoreAndLiftedState(instanceId);
   const actionIds = getVisibleActionIds(liftedState);
   const safeOffset = Math.max(0, Math.floor(offset));
@@ -451,7 +259,10 @@ export const listReduxActionsResult = ({
   };
 };
 
-export const getReduxActionDetailsResult = ({ instanceId, actionId }: ActionInput) => {
+export const getReduxActionDetailsResult = ({
+  instanceId,
+  actionId,
+}: ActionInput): ReduxDevToolsGetActionDetailsResult => {
   const { store, liftedState } = getStoreAndLiftedState(instanceId);
   assertKnownAction(store, liftedState, actionId);
 
@@ -468,7 +279,10 @@ export const getReduxActionDetailsResult = ({ instanceId, actionId }: ActionInpu
   };
 };
 
-export const dispatchReduxActionResult = ({ instanceId, action }: DispatchActionInput) => {
+export const dispatchReduxActionResult = ({
+  instanceId,
+  action,
+}: DispatchActionInput): ReduxDevToolsDispatchActionResult => {
   const { store, enhancedStore } = getStoreAndLiftedState(instanceId);
   const parsedAction = parseSerializableReduxAction(action);
   enhancedStore.dispatch(parsedAction);
@@ -484,7 +298,7 @@ const runLiftedStoreAction = (
   instanceId: string | undefined,
   actionId: number | undefined,
   createAction: () => unknown
-) => {
+): ReduxDevToolsApplyStoreActionResult => {
   const { store, enhancedStore, liftedState } = getStoreAndLiftedState(instanceId);
 
   if (typeof actionId === 'number') {
@@ -530,7 +344,7 @@ export const sweepReduxSkippedActionsResult = ({ instanceId }: StoreInput) => {
 export const setReduxRecordingPausedResult = ({
   instanceId,
   paused,
-}: StoreInput & Required<Pick<BooleanStateInput, 'paused'>>) => {
+}: ReduxDevToolsSetRecordingPausedInput) => {
   return runLiftedStoreAction(instanceId, undefined, () =>
     ActionCreators.pauseRecording(paused)
   );
@@ -539,32 +353,12 @@ export const setReduxRecordingPausedResult = ({
 export const setReduxLockedResult = ({
   instanceId,
   locked,
-}: StoreInput & Required<Pick<BooleanStateInput, 'locked'>>) => {
+}: ReduxDevToolsSetLockedInput) => {
   return runLiftedStoreAction(instanceId, undefined, () =>
     ActionCreators.lockChanges(locked)
   );
 };
 
-export const REDUX_DEVTOOLS_AGENT_TOOLS: AgentTool[] = [
-  listStoresTool,
-  getStoreStateTool,
-  listActionsTool,
-  getActionDetailsTool,
-  dispatchActionTool,
-  jumpToActionTool,
-  toggleActionTool,
-  resetHistoryTool,
-  rollbackStateTool,
-  commitCurrentStateTool,
-  sweepSkippedActionsTool,
-  setRecordingPausedTool,
-  setLockedTool,
-];
-
-export {
-  pluginId as REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
-  type ActionInput as ReduxDevToolsActionInput,
-  type DispatchActionInput as ReduxDevToolsDispatchActionInput,
-  type PaginatedStoreInput as ReduxDevToolsPaginatedStoreInput,
-  type StoreInput as ReduxDevToolsStoreInput,
-};
+export const REDUX_DEVTOOLS_AGENT_TOOLS = Object.values(
+  reduxDevToolsToolDefinitions,
+);

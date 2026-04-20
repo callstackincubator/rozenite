@@ -4,43 +4,15 @@ import type {
   NavigationState,
   Route,
 } from '@react-navigation/core';
-import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+import {
+  REACT_NAVIGATION_AGENT_PLUGIN_ID,
+  reactNavigationToolDefinitions,
+  type NavigationActionHistoryEntry,
+  type ReactNavigationNavigateArgs,
+} from '../shared/agent-tools';
 
-export type NavigationActionHistoryEntry = {
-  id: number;
-  timestamp: number;
-  action: NavigationAction;
-  state: NavigationState | undefined;
-  stack: string | undefined;
-};
-
-type ListActionsInput = {
-  offset?: number;
-  limit?: number;
-};
-
-type ResetRootInput = {
-  state: NavigationState;
-};
-
-type OpenLinkInput = {
-  href: string;
-};
-
-type NavigateInput = {
-  name: string;
-  params?: Record<string, unknown>;
-  path?: string;
-  merge?: boolean;
-};
-
-type GoBackInput = {
-  count?: number;
-};
-
-type DispatchActionInput = {
-  action: NavigationAction;
-};
+export type { NavigationActionHistoryEntry } from '../shared/agent-tools';
 
 type UseReactNavigationAgentToolsConfig<
   TNavigationContainerRef extends NavigationContainerRef<any> = NavigationContainerRef<any>
@@ -50,133 +22,9 @@ type UseReactNavigationAgentToolsConfig<
   getActionHistory: () => NavigationActionHistoryEntry[];
   resetRoot: (state: NavigationState) => void;
   openLink: (href: string) => Promise<void>;
-  navigate: (input: NavigateInput) => void;
+  navigate: (input: ReactNavigationNavigateArgs) => void;
   goBack: (count: number) => number;
   dispatchAction: (action: NavigationAction) => void;
-};
-
-const pluginId = '@rozenite/react-navigation-plugin';
-
-const getRootStateTool: AgentTool = {
-  name: 'get-root-state',
-  description: 'Get the current React Navigation root state.',
-  inputSchema: {
-    type: 'object',
-    properties: {},
-  },
-};
-
-const getFocusedRouteTool: AgentTool = {
-  name: 'get-focused-route',
-  description: 'Get the currently focused route and route path.',
-  inputSchema: {
-    type: 'object',
-    properties: {},
-  },
-};
-
-const listActionsTool: AgentTool = {
-  name: 'list-actions',
-  description: 'List recorded navigation actions with states using pagination.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      offset: {
-        type: 'number',
-        description: 'Pagination offset. Defaults to 0.',
-      },
-      limit: {
-        type: 'number',
-        description: 'Pagination size. Defaults to 100. Maximum 100.',
-      },
-    },
-  },
-};
-
-const resetRootTool: AgentTool = {
-  name: 'reset-root',
-  description: 'Reset navigation root state to provided state snapshot.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      state: {
-        type: 'object',
-        description: 'Navigation state to reset to.',
-      },
-    },
-    required: ['state'],
-  },
-};
-
-const openLinkTool: AgentTool = {
-  name: 'open-link',
-  description: 'Open a deep link URL using React Native Linking.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      href: {
-        type: 'string',
-        description: 'Deep link URL to open.',
-      },
-    },
-    required: ['href'],
-  },
-};
-
-const navigateTool: AgentTool = {
-  name: 'navigate',
-  description: 'Navigate to a route by name with optional params.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      name: {
-        type: 'string',
-        description: 'Target route name.',
-      },
-      params: {
-        description: 'Optional route params.',
-      },
-      path: {
-        type: 'string',
-        description: 'Optional path for deep-link style navigation.',
-      },
-      merge: {
-        type: 'boolean',
-        description: 'Whether to merge params on existing route.',
-      },
-    },
-    required: ['name'],
-  },
-};
-
-const goBackTool: AgentTool = {
-  name: 'go-back',
-  description: 'Go back in navigation history.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      count: {
-        type: 'number',
-        description: 'How many steps to go back. Defaults to 1.',
-      },
-    },
-  },
-};
-
-const dispatchActionTool: AgentTool = {
-  name: 'dispatch-action',
-  description:
-    'Dispatch an arbitrary React Navigation action (e.g. NAVIGATE, JUMP_TO).',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      action: {
-        type: 'object',
-        description: 'React Navigation action object to dispatch.',
-      },
-    },
-    required: ['action'],
-  },
 };
 
 const getCurrentRouteDetails = (state: NavigationState | undefined) => {
@@ -238,8 +86,8 @@ export const useReactNavigationAgentTools = <
   dispatchAction,
 }: UseReactNavigationAgentToolsConfig<TNavigationContainerRef>) => {
   useRozenitePluginAgentTool({
-    pluginId,
-    tool: getRootStateTool,
+    pluginId: REACT_NAVIGATION_AGENT_PLUGIN_ID,
+    tool: reactNavigationToolDefinitions.getRootState,
     handler: () => {
       const state = getCurrentState();
       return {
@@ -250,16 +98,16 @@ export const useReactNavigationAgentTools = <
   });
 
   useRozenitePluginAgentTool({
-    pluginId,
-    tool: getFocusedRouteTool,
+    pluginId: REACT_NAVIGATION_AGENT_PLUGIN_ID,
+    tool: reactNavigationToolDefinitions.getFocusedRoute,
     handler: () => {
       return getCurrentRouteDetails(getCurrentState());
     },
   });
 
-  useRozenitePluginAgentTool<ListActionsInput>({
-    pluginId,
-    tool: listActionsTool,
+  useRozenitePluginAgentTool({
+    pluginId: REACT_NAVIGATION_AGENT_PLUGIN_ID,
+    tool: reactNavigationToolDefinitions.listActions,
     handler: ({ offset = 0, limit = 100 }) => {
       const history = getActionHistory();
       const safeOffset = Math.max(0, Math.floor(offset));
@@ -274,9 +122,9 @@ export const useReactNavigationAgentTools = <
     },
   });
 
-  useRozenitePluginAgentTool<ResetRootInput>({
-    pluginId,
-    tool: resetRootTool,
+  useRozenitePluginAgentTool({
+    pluginId: REACT_NAVIGATION_AGENT_PLUGIN_ID,
+    tool: reactNavigationToolDefinitions.resetRoot,
     handler: ({ state }) => {
       if (!state || typeof state !== 'object') {
         throw new Error('A valid navigation state is required.');
@@ -288,14 +136,14 @@ export const useReactNavigationAgentTools = <
 
       resetRoot(state);
       return {
-        applied: true,
+        applied: true as const,
       };
     },
   });
 
-  useRozenitePluginAgentTool<OpenLinkInput>({
-    pluginId,
-    tool: openLinkTool,
+  useRozenitePluginAgentTool({
+    pluginId: REACT_NAVIGATION_AGENT_PLUGIN_ID,
+    tool: reactNavigationToolDefinitions.openLink,
     handler: async ({ href }) => {
       if (typeof href !== 'string' || href.trim().length === 0) {
         throw new Error('A non-empty href string is required.');
@@ -303,15 +151,15 @@ export const useReactNavigationAgentTools = <
 
       await openLink(href);
       return {
-        opened: true,
+        opened: true as const,
         href,
       };
     },
   });
 
-  useRozenitePluginAgentTool<NavigateInput>({
-    pluginId,
-    tool: navigateTool,
+  useRozenitePluginAgentTool({
+    pluginId: REACT_NAVIGATION_AGENT_PLUGIN_ID,
+    tool: reactNavigationToolDefinitions.navigate,
     handler: ({ name, params, path, merge }) => {
       if (typeof name !== 'string' || name.trim().length === 0) {
         throw new Error('A non-empty route name is required.');
@@ -336,15 +184,15 @@ export const useReactNavigationAgentTools = <
       });
 
       return {
-        applied: true,
+        applied: true as const,
         name,
       };
     },
   });
 
-  useRozenitePluginAgentTool<GoBackInput>({
-    pluginId,
-    tool: goBackTool,
+  useRozenitePluginAgentTool({
+    pluginId: REACT_NAVIGATION_AGENT_PLUGIN_ID,
+    tool: reactNavigationToolDefinitions.goBack,
     handler: ({ count = 1 }) => {
       if (!Number.isFinite(count)) {
         throw new Error('count must be a finite number.');
@@ -364,9 +212,9 @@ export const useReactNavigationAgentTools = <
     },
   });
 
-  useRozenitePluginAgentTool<DispatchActionInput>({
-    pluginId,
-    tool: dispatchActionTool,
+  useRozenitePluginAgentTool({
+    pluginId: REACT_NAVIGATION_AGENT_PLUGIN_ID,
+    tool: reactNavigationToolDefinitions.dispatchAction,
     handler: ({ action }) => {
       if (!action || typeof action !== 'object') {
         throw new Error('A valid navigation action object is required.');
@@ -382,7 +230,7 @@ export const useReactNavigationAgentTools = <
 
       dispatchAction(action);
       return {
-        applied: true,
+        applied: true as const,
         type: action.type,
       };
     },

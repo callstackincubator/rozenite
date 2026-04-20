@@ -94,6 +94,109 @@ You can mirror this pattern: define one or more `AgentTool` objects, then regist
 
 Tools are registered when the component that calls `useRozenitePluginAgentTool` mounts, and unregistered when it unmounts. If your plugin’s UI or logic is conditional, keep the agent tools in a component that stays mounted whenever the plugin is “active” so the domain and tools remain visible to agents.
 
+## Optional: publish typed SDK descriptors
+
+Your plugin does **not** need this to be agent-enabled. Agents can already
+discover and call your tools through the plugin domain. Publishing `./sdk` is a
+TypeScript convenience for users of
+[`@rozenite/agent-sdk`](/docs/agent/sdk), so they can write:
+
+```ts
+await session.tools.call(myPluginTools.echo, { value: 'hello' });
+```
+
+instead of manually spelling out the plugin domain and tool name.
+
+The pattern used by Rozenite's official plugins is:
+
+1. Put the **public tool contract** in a non-React module such as `src/shared/agent-tools.ts`.
+2. Define each tool with `defineAgentToolContract<TArgs, TResult>(...)` from `@rozenite/agent-shared`.
+3. Reuse those shared definitions both in your React Native registration hook and in `sdk.ts`.
+4. In `sdk.ts`, call `defineAgentToolDescriptors(pluginId, toolDefinitions)` and export the resulting descriptor object.
+
+That split keeps one source of truth for:
+
+- the plugin ID
+- tool names and descriptions
+- input schemas
+- public argument/result types
+
+### 1. Define shared tool contracts
+
+```ts
+import {
+  defineAgentToolContract,
+  type AgentToolContract,
+} from '@rozenite/agent-shared';
+
+export const MY_PLUGIN_ID = '@my-org/my-rozenite-plugin';
+
+export type EchoArgs = {
+  value: string;
+};
+
+export type EchoResult = {
+  value: string;
+};
+
+export const myToolDefinitions = {
+  echo: defineAgentToolContract<EchoArgs, EchoResult>({
+    name: 'echo',
+    description: 'Return the provided value.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        value: { type: 'string' },
+      },
+      required: ['value'],
+    },
+  }),
+} as const satisfies Record<string, AgentToolContract<unknown, unknown>>;
+```
+
+### 2. Reuse the same contracts at runtime
+
+```tsx
+import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+import { MY_PLUGIN_ID, myToolDefinitions } from '../shared/agent-tools';
+
+export function MyPluginAgentTools() {
+  useRozenitePluginAgentTool({
+    pluginId: MY_PLUGIN_ID,
+    tool: myToolDefinitions.echo,
+    handler: ({ value }) => ({ value }),
+  });
+
+  return null;
+}
+```
+
+### 3. Publish typed descriptors from `sdk.ts`
+
+```ts
+import { defineAgentToolDescriptors } from '@rozenite/agent-shared';
+import { MY_PLUGIN_ID, myToolDefinitions } from './src/shared/agent-tools.js';
+
+export { MY_PLUGIN_ID, myToolDefinitions };
+
+export const myPluginTools = defineAgentToolDescriptors(
+  MY_PLUGIN_ID,
+  myToolDefinitions,
+);
+
+export type { EchoArgs, EchoResult } from './src/shared/agent-tools.js';
+```
+
+Recommended conventions:
+
+- Use `undefined` for tools that take no arguments, so SDK users can write `session.tools.call(myPluginTools.ping)` without passing `{}`.
+- Export any shared value/model types referenced by your public results from `sdk.ts`, not just the descriptor object.
+- Keep the tool `name`, `description`, and `inputSchema` in the shared contract module so your runtime registration and published SDK surface cannot drift.
+
+:::tip
+You do not need to hand-maintain the `./sdk` export in `package.json`. If your plugin has `sdk.ts`, `rozenite build` will detect it and publish the `./sdk` subpath automatically.
+:::
+
 ## Optional: enable/disable
 
 You can conditionally register tools with the `enabled` option:

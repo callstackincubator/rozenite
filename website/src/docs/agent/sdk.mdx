@@ -121,7 +121,18 @@ If you do not pass type arguments, the result is `unknown`.
 
 ### Typed calls with plugin SDKs
 
-Some official plugins publish ready-made typed tool descriptors under `./sdk`. Use those when you want the plugin package to provide the tool name, argument type, and result type for you.
+Official agent-enabled plugins publish ready-made typed tool descriptors under `./sdk`. Use those when you want the plugin package to provide the tool name, argument type, and result type for you.
+
+Today that includes:
+
+- `@rozenite/controls-plugin/sdk`
+- `@rozenite/file-system-plugin/sdk`
+- `@rozenite/mmkv-plugin/sdk`
+- `@rozenite/network-activity-plugin/sdk`
+- `@rozenite/react-navigation-plugin/sdk`
+- `@rozenite/redux-devtools-plugin/sdk`
+- `@rozenite/storage-plugin/sdk`
+- `@rozenite/tanstack-query-plugin/sdk`
 
 ```ts title="agent-sdk-typed-call.ts"
 import { createAgentClient } from '@rozenite/agent-sdk';
@@ -141,6 +152,10 @@ async function readUsernameFromStorage() {
   });
 }
 ```
+
+:::tip
+Prefer the built-in `network` domain when it is available. Reach for `@rozenite/network-activity-plugin/sdk` when you need the typed fallback plugin surface on apps where the built-in `network` domain is missing or unavailable.
+:::
 
 :::tip
 If a plugin only mounts after you navigate to one of its screens, do that first and then refresh the session view with `session.domains.list()` or `session.tools.list(...)` before calling its tools.

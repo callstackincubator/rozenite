@@ -1,10 +1,6 @@
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
 import {
   commitCurrentStateTool,
-  type ReduxDevToolsActionInput,
-  type ReduxDevToolsDispatchActionInput,
-  type ReduxDevToolsPaginatedStoreInput,
-  type ReduxDevToolsStoreInput,
   dispatchActionTool,
   getActionDetailsTool,
   getReduxActionDetailsResult,
@@ -16,7 +12,6 @@ import {
   listReduxActionsResult,
   listReduxDevToolsStoresResult,
   listStoresTool,
-  REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
   resetHistoryTool,
   resetReduxHistoryResult,
   rollbackReduxStateResult,
@@ -32,6 +27,7 @@ import {
   dispatchReduxActionResult,
   commitReduxCurrentStateResult,
 } from './redux-devtools-agent';
+import { REDUX_DEVTOOLS_AGENT_PLUGIN_ID } from './shared/agent-tools';
 
 export const useReduxDevToolsAgentTools = () => {
   useRozenitePluginAgentTool({
@@ -40,77 +36,73 @@ export const useReduxDevToolsAgentTools = () => {
     handler: () => listReduxDevToolsStoresResult(),
   });
 
-  useRozenitePluginAgentTool<ReduxDevToolsStoreInput>({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: getStoreStateTool,
     handler: (input) => getReduxStoreStateResult(input),
   });
 
-  useRozenitePluginAgentTool<ReduxDevToolsPaginatedStoreInput>({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: listActionsTool,
     handler: (input) => listReduxActionsResult(input),
   });
 
-  useRozenitePluginAgentTool<ReduxDevToolsActionInput>({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: getActionDetailsTool,
     handler: (input) => getReduxActionDetailsResult(input),
   });
 
-  useRozenitePluginAgentTool<ReduxDevToolsDispatchActionInput>({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: dispatchActionTool,
     handler: (input) => dispatchReduxActionResult(input),
   });
 
-  useRozenitePluginAgentTool<ReduxDevToolsActionInput>({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: jumpToActionTool,
     handler: (input) => jumpToReduxActionResult(input),
   });
 
-  useRozenitePluginAgentTool<ReduxDevToolsActionInput>({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: toggleActionTool,
     handler: (input) => toggleReduxActionResult(input),
   });
 
-  useRozenitePluginAgentTool<ReduxDevToolsStoreInput>({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: resetHistoryTool,
     handler: (input) => resetReduxHistoryResult(input),
   });
 
-  useRozenitePluginAgentTool<ReduxDevToolsStoreInput>({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: rollbackStateTool,
     handler: (input) => rollbackReduxStateResult(input),
   });
 
-  useRozenitePluginAgentTool<ReduxDevToolsStoreInput>({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: commitCurrentStateTool,
     handler: (input) => commitReduxCurrentStateResult(input),
   });
 
-  useRozenitePluginAgentTool<ReduxDevToolsStoreInput>({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: sweepSkippedActionsTool,
     handler: (input) => sweepReduxSkippedActionsResult(input),
   });
 
-  useRozenitePluginAgentTool<
-    ReduxDevToolsStoreInput & { paused: boolean }
-  >({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: setRecordingPausedTool,
     handler: (input) => setReduxRecordingPausedResult(input),
   });
 
-  useRozenitePluginAgentTool<
-    ReduxDevToolsStoreInput & { locked: boolean }
-  >({
+  useRozenitePluginAgentTool({
     pluginId: REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
     tool: setLockedTool,
     handler: (input) => setReduxLockedResult(input),

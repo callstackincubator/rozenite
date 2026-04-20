@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
+import {
+  FILE_SYSTEM_AGENT_PLUGIN_ID,
+  fileSystemToolDefinitions,
+} from '../shared/agent-tools';
 import type { FsEntry } from '../shared/protocol';
 import type { ProviderImpl } from '../react-native/fileSystemProvider';
 import {
   createFileSystemAgentHandlers,
-  FILE_SYSTEM_AGENT_PLUGIN_ID,
   fileSystemAgentTools,
 } from '../react-native/useFileSystemAgentTools';
 
@@ -44,7 +47,7 @@ const createProvider = (
 describe('file system agent tools', () => {
   it('uses the public plugin ID and exposes the expected tool names', () => {
     expect(FILE_SYSTEM_AGENT_PLUGIN_ID).toBe('@rozenite/file-system-plugin');
-    expect(fileSystemAgentTools.map((tool) => tool.name)).toEqual([
+    expect(Object.values(fileSystemToolDefinitions).map((tool) => tool.name)).toEqual([
       'list-roots',
       'list-entries',
       'read-entry',
@@ -54,23 +57,19 @@ describe('file system agent tools', () => {
   });
 
   it('declares required schema fields for path-based tools', () => {
-    const listEntries = fileSystemAgentTools.find(
-      (tool) => tool.name === 'list-entries',
-    );
-    const readEntry = fileSystemAgentTools.find(
-      (tool) => tool.name === 'read-entry',
-    );
-    const readTextFile = fileSystemAgentTools.find(
-      (tool) => tool.name === 'read-text-file',
-    );
-    const readImageFile = fileSystemAgentTools.find(
-      (tool) => tool.name === 'read-image-file',
-    );
-
-    expect(listEntries?.inputSchema.required).toEqual(['path']);
-    expect(readEntry?.inputSchema.required).toEqual(['path']);
-    expect(readTextFile?.inputSchema.required).toEqual(['path']);
-    expect(readImageFile?.inputSchema.required).toEqual(['path']);
+    expect(fileSystemToolDefinitions.listEntries.inputSchema.required).toEqual([
+      'path',
+    ]);
+    expect(fileSystemToolDefinitions.readEntry.inputSchema.required).toEqual([
+      'path',
+    ]);
+    expect(fileSystemToolDefinitions.readTextFile.inputSchema.required).toEqual([
+      'path',
+    ]);
+    expect(fileSystemToolDefinitions.readImageFile.inputSchema.required).toEqual([
+      'path',
+    ]);
+    expect(fileSystemAgentTools).toEqual(Object.values(fileSystemToolDefinitions));
   });
 });
 
