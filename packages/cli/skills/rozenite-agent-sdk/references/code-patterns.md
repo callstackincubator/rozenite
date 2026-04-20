@@ -38,7 +38,18 @@ const result = await client.withSession(async (session) => {
 });
 ```
 
-Prefer typed descriptors like this when a plugin exports them from `./sdk` and the current package can actually resolve that dependency.
+Prefer typed descriptors like this when an official plugin exports them from `./sdk` and the current package can actually resolve that dependency.
+
+Official agent-enabled plugin SDK entrypoints include:
+
+- `@rozenite/controls-plugin/sdk`
+- `@rozenite/file-system-plugin/sdk`
+- `@rozenite/mmkv-plugin/sdk`
+- `@rozenite/network-activity-plugin/sdk`
+- `@rozenite/react-navigation-plugin/sdk`
+- `@rozenite/redux-devtools-plugin/sdk`
+- `@rozenite/storage-plugin/sdk`
+- `@rozenite/tanstack-query-plugin/sdk`
 
 ## Inspecting Domains And Tools
 
@@ -134,6 +145,23 @@ const requests = await client.withSession(async (session) => {
 ```
 
 Use this when a tool returns paged results and you want the SDK to follow cursors and merge pages for you.
+
+## Typed Plugin Fallback Network Call
+
+```ts
+import { createAgentClient } from '@rozenite/agent-sdk';
+import { networkActivityTools } from '@rozenite/network-activity-plugin/sdk';
+
+const client = createAgentClient();
+
+const requests = await client.withSession(async (session) => {
+  return await session.tools.call(networkActivityTools.listRequests, {
+    limit: 20,
+  });
+});
+```
+
+Use this when the built-in `network` domain is unavailable and the app exposes the network activity plugin instead.
 
 ## Target Handoff
 

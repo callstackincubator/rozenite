@@ -4,8 +4,11 @@ import type { NetworkActivityDevToolsClient } from '../../shared/client';
 import type { NetworkInspector } from '../network-inspector';
 import {
   getNetworkActivityAgentState,
-  type NetworkActivityAgentBodyResult,
 } from './state';
+import {
+  NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
+  type NetworkActivityGetResponseBodyResult,
+} from '../../shared/agent-tools';
 import {
   getRecordingStatusTool,
   getRealtimeConnectionDetailsTool,
@@ -17,17 +20,6 @@ import {
   startRecordingTool,
   stopRecordingTool,
 } from './tools';
-
-const pluginId = '@rozenite/network-activity-plugin';
-
-type PaginationInput = {
-  limit?: number;
-  cursor?: string;
-};
-
-type RequestIdInput = {
-  requestId: string;
-};
 
 type AgentToolsConfig = {
   client: NetworkActivityDevToolsClient | null;
@@ -150,64 +142,60 @@ export const useNetworkActivityAgentTools = ({
   }, [client, enabledInspectors, state]);
 
   useRozenitePluginAgentTool({
-    pluginId,
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: startRecordingTool,
     handler: () => {
       networkInspector.http.getNetworkRequestsRegistry().clear();
       const result = state.startRecording({ enabledInspectors });
       networkInspector.enable(enabledInspectors);
       return {
-        started: true,
+        started: true as const,
         ...result,
       };
     },
   });
 
   useRozenitePluginAgentTool({
-    pluginId,
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: stopRecordingTool,
     handler: () => {
       const result = state.stopRecording();
       networkInspector.disable();
       return {
-        stopped: true,
+        stopped: true as const,
         ...result,
       };
     },
   });
 
   useRozenitePluginAgentTool({
-    pluginId,
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getRecordingStatusTool,
     handler: () => state.getStatus(),
   });
 
-  useRozenitePluginAgentTool<PaginationInput>({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: listRequestsTool,
     handler: (input = {}) => state.listRequests(input),
   });
 
-  useRozenitePluginAgentTool<RequestIdInput>({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getRequestDetailsTool,
-    handler: ({ requestId }: RequestIdInput) =>
-      state.getRequestDetails(requestId),
+    handler: ({ requestId }) => state.getRequestDetails(requestId),
   });
 
-  useRozenitePluginAgentTool<RequestIdInput>({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getRequestBodyTool,
-    handler: ({ requestId }: RequestIdInput) => state.getRequestBody(requestId),
+    handler: ({ requestId }) => state.getRequestBody(requestId),
   });
 
-  useRozenitePluginAgentTool<
-    RequestIdInput,
-    Promise<NetworkActivityAgentBodyResult>
-  >({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getResponseBodyTool,
-    handler: async ({ requestId }: RequestIdInput) => {
+    handler: async ({ requestId }): Promise<NetworkActivityGetResponseBodyResult> => {
       const record = state.getHttpRecord(requestId);
       if (!record) {
         throw new Error(`Unknown request "${requestId}"`);
@@ -251,16 +239,15 @@ export const useNetworkActivityAgentTools = ({
     },
   });
 
-  useRozenitePluginAgentTool<PaginationInput>({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: listRealtimeConnectionsTool,
     handler: (input = {}) => state.listRealtimeConnections(input),
   });
 
-  useRozenitePluginAgentTool<RequestIdInput>({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getRealtimeConnectionDetailsTool,
-    handler: ({ requestId }: RequestIdInput) =>
-      state.getRealtimeConnectionDetails(requestId),
+    handler: ({ requestId }) => state.getRealtimeConnectionDetails(requestId),
   });
 };

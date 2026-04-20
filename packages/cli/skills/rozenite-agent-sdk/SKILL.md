@@ -15,10 +15,10 @@ Read `references/code-patterns.md` for copy-pastable examples.
 - Default flow: `createAgentClient()` -> `client.withSession(...)` -> inspect or call tools -> exit.
 - Use `session.domains.list()` as the source of truth for live built-in and runtime domains.
 - Use `session.tools.list({ domain })` and `session.tools.getSchema({ domain, tool })` only when you need live inspection or argument confirmation.
-- Prefer typed plugin SDK descriptors from package `./sdk` exports and call tools as `session.tools.call(descriptor, args)`.
+- Prefer typed plugin SDK descriptors from any available official plugin `./sdk` export and call tools as `session.tools.call(descriptor, args)`.
 - Fall back to `session.tools.call({ domain, tool, args })` only when no matching `./sdk` descriptor is available or the tool is discovered dynamically at runtime.
 - When you discover tools through `session.tools.list({ domain })`, treat the returned `shortName` as the canonical tool name to pass back into a later call-by-name invocation. Do not invent camelCase aliases or normalize tool names yourself.
-- Prefer stable SDK domain identifiers such as built-in domain IDs (`network`, `react`, `memory`) and plugin IDs (`@rozenite/storage-plugin`) over CLI-only live domain tokens like `at-rozenite__storage-plugin`.
+- Prefer stable SDK domain identifiers such as built-in domain IDs (`network`, `react`, `memory`) and plugin IDs (`@rozenite/storage-plugin`, `@rozenite/tanstack-query-plugin`) over CLI-only live domain tokens like `at-rozenite__storage-plugin`.
 - If paged results should be merged automatically, use `autoPaginate`.
 - If a plugin only mounts after navigation, navigate first, then refresh the live view with `session.domains.list()` or `session.tools.list(...)` before calling the plugin tool.
 - For advanced session control with `client.openSession()` or `client.attachSession(sessionId)`, see the reference patterns.

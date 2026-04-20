@@ -9,8 +9,8 @@ import { applyTanStackQueryDevtoolsAction } from '../../devtools-actions';
 import {
   createTanStackQueryAgentController,
   serializeForAgent,
-  TANSTACK_QUERY_AGENT_TOOLS,
 } from '../tanstack-query-agent';
+import { tanstackQueryToolDefinitions } from '../../../shared/agent-tools';
 
 const createQueryClient = () =>
   new QueryClient({
@@ -87,7 +87,9 @@ afterEach(() => {
 
 describe('tanstack query agent controller', () => {
   it('exposes the expected tool names', () => {
-    expect(TANSTACK_QUERY_AGENT_TOOLS.map((tool) => tool.name)).toEqual([
+    expect(
+      Object.values(tanstackQueryToolDefinitions).map((tool) => tool.name),
+    ).toEqual([
       'get-cache-summary',
       'get-online-status',
       'set-online-status',
@@ -103,6 +105,10 @@ describe('tanstack query agent controller', () => {
       'list-mutations',
       'get-mutation-details',
       'clear-mutation-cache',
+    ]);
+    expect(tanstackQueryToolDefinitions.setQueryLoading.inputSchema.required).toEqual([
+      'queryHash',
+      'enabled',
     ]);
   });
 

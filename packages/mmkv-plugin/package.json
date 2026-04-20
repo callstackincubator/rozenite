@@ -21,6 +21,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
     "nanoevents": "^9.1.0"
@@ -59,7 +60,13 @@
       "import": "./dist/react-native/index.js",
       "require": "./dist/react-native/index.cjs"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./sdk": {
+      "development": "./sdk.ts",
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js",
+      "require": "./dist/sdk/index.cjs"
+    }
   },
   "publishConfig": {
     "access": "public"

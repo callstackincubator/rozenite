@@ -50,12 +50,16 @@ Built-in domains include `console`, `network`, `react`, `performance`, and `memo
 
 Runtime domains can also come from installed Rozenite plugins. At the moment, the documented agent-capable plugin domains include:
 
-- `@rozenite/react-navigation-plugin`
-- `@rozenite/mmkv-plugin`
-- `@rozenite/storage-plugin`
 - `@rozenite/controls-plugin`
 - `@rozenite/file-system-plugin`
+- `@rozenite/react-navigation-plugin`
+- `@rozenite/mmkv-plugin`
+- `@rozenite/network-activity-plugin`
 - `@rozenite/redux-devtools-plugin`
+- `@rozenite/storage-plugin`
+- `@rozenite/tanstack-query-plugin`
+
+Prefer the built-in `network` domain first when it is available. `@rozenite/network-activity-plugin` is the documented fallback plugin domain for apps where the built-in network domain is unavailable.
 
 Apps can also expose in-app custom tools. These are runtime tools registered directly by the app instead of by a separate Rozenite plugin package.
 

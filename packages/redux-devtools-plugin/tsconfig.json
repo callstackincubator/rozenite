@@ -11,12 +11,15 @@
     "noFallthroughCasesInSwitch": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "paths": {
+      "@rozenite/agent-shared": ["../agent-shared/src/index.ts"]
+    },
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*", "react-native.ts", "metro.ts"],
+  "include": ["src/**/*", "react-native.ts", "sdk.ts", "metro.ts"],
   "exclude": ["node_modules", "dist", "build"],
   "references": [
     {

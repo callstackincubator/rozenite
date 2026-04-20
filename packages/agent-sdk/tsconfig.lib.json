@@ -4,7 +4,14 @@
     "baseUrl": ".",
     "paths": {
       "@rozenite/agent-shared": ["../agent-shared/src/index.ts"],
-      "@rozenite/storage-plugin/sdk": ["../storage-plugin/dist/sdk/index.d.ts"]
+      "@rozenite/controls-plugin/sdk": ["../controls-plugin/dist/sdk/index.d.ts"],
+      "@rozenite/file-system-plugin/sdk": ["../file-system-plugin/dist/sdk/index.d.ts"],
+      "@rozenite/mmkv-plugin/sdk": ["../mmkv-plugin/dist/sdk/index.d.ts"],
+      "@rozenite/network-activity-plugin/sdk": ["../network-activity-plugin/dist/sdk/index.d.ts"],
+      "@rozenite/react-navigation-plugin/sdk": ["../react-navigation-plugin/dist/sdk/index.d.ts"],
+      "@rozenite/redux-devtools-plugin/sdk": ["../redux-devtools-plugin/dist/sdk/index.d.ts"],
+      "@rozenite/storage-plugin/sdk": ["../storage-plugin/dist/sdk/index.d.ts"],
+      "@rozenite/tanstack-query-plugin/sdk": ["../tanstack-query-plugin/dist/sdk/index.d.ts"]
     },
     "rootDir": "src",
     "outDir": "dist",

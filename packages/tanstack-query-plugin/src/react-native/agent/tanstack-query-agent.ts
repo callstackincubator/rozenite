@@ -1,5 +1,4 @@
 import type {
-  AgentTool,
   JSONSchema7,
 } from '@rozenite/agent-bridge';
 import type {
@@ -13,46 +12,28 @@ import type {
 } from '@tanstack/react-query';
 import { onlineManager } from '@tanstack/react-query';
 import { applyTanStackQueryDevtoolsAction } from '../devtools-actions';
+import {
+  TANSTACK_QUERY_AGENT_PLUGIN_ID,
+  tanstackQueryToolDefinitions,
+  type TanStackQueryAgentMutationIdInput as MutationIdInput,
+  type TanStackQueryAgentOnlineStatusInput as OnlineStatusInput,
+  type TanStackQueryAgentPaginationInput as PaginationInput,
+  type TanStackQueryAgentQueryHashInput as QueryHashInput,
+  type TanStackQueryAgentQueryToggleInput as QueryToggleInput,
+  type TanStackQueryAgentSafeValue as AgentSafeValue,
+  type TanStackQueryMutationOptionsSummary,
+  type TanStackQueryObserverOptionsSummary,
+} from '../../shared/agent-tools';
 
-const pluginId = '@rozenite/tanstack-query-plugin';
 const DEFAULT_PAGE_LIMIT = 20;
 const MAX_PAGE_LIMIT = 100;
 
 type CursorKind = 'queries' | 'mutations';
 
-type PaginationInput = {
-  limit?: number;
-  cursor?: string;
-};
-
-type QueryHashInput = {
-  queryHash: string;
-};
-
-type QueryToggleInput = QueryHashInput & {
-  enabled: boolean;
-};
-
-type MutationIdInput = {
-  mutationId: number;
-};
-
-type OnlineStatusInput = {
-  online: boolean;
-};
-
 type CursorState = {
   queriesGeneration: number;
   mutationsGeneration: number;
 };
-
-type AgentSafeValue =
-  | null
-  | boolean
-  | number
-  | string
-  | AgentSafeValue[]
-  | { [key: string]: AgentSafeValue };
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   return (
@@ -212,202 +193,30 @@ const paginate = <T>(
   };
 };
 
-const queryActionProperties = {
-  queryHash: {
-    type: 'string',
-    description: 'TanStack Query queryHash identifying the query.',
-  },
-} satisfies Record<string, JSONSchema7>;
-
-const mutationActionProperties = {
-  mutationId: {
-    type: 'number',
-    description: 'TanStack Query mutationId identifying the mutation.',
-  },
-} satisfies Record<string, JSONSchema7>;
-
-const paginationProperties = {
-  limit: {
-    type: 'number',
-    description: 'Maximum number of items to return. Defaults to 20. Maximum 100.',
-  },
-  cursor: {
-    type: 'string',
-    description: 'Opaque pagination cursor from a previous list call.',
-  },
-} satisfies Record<string, JSONSchema7>;
-
-const emptyInputSchema: JSONSchema7 = {
-  type: 'object',
-  properties: {},
-};
-
-export const getCacheSummaryTool: AgentTool = {
-  name: 'get-cache-summary',
-  description:
-    'Return aggregate TanStack Query cache health and count information.',
-  inputSchema: emptyInputSchema,
-};
-
-export const getOnlineStatusTool: AgentTool = {
-  name: 'get-online-status',
-  description: 'Return the current TanStack Query onlineManager status.',
-  inputSchema: emptyInputSchema,
-};
-
-export const setOnlineStatusTool: AgentTool = {
-  name: 'set-online-status',
-  description:
-    'Set the TanStack Query onlineManager status for testing offline/online behavior.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      online: {
-        type: 'boolean',
-        description: 'Whether the TanStack Query onlineManager should be online.',
-      },
-    },
-    required: ['online'],
-  },
-};
-
-export const listQueriesTool: AgentTool = {
-  name: 'list-queries',
-  description:
-    'List TanStack Query query summaries using cursor pagination.',
-  inputSchema: {
-    type: 'object',
-    properties: paginationProperties,
-  },
-};
-
-export const getQueryDetailsTool: AgentTool = {
-  name: 'get-query-details',
-  description:
-    'Return a JSON-safe TanStack Query query snapshot and observer summary.',
-  inputSchema: {
-    type: 'object',
-    properties: queryActionProperties,
-    required: ['queryHash'],
-  },
-};
-
-export const refetchQueryTool: AgentTool = {
-  name: 'refetch-query',
-  description: 'Refetch a TanStack Query query by queryHash.',
-  inputSchema: {
-    type: 'object',
-    properties: queryActionProperties,
-    required: ['queryHash'],
-  },
-};
-
-export const setQueryLoadingTool: AgentTool = {
-  name: 'set-query-loading',
-  description:
-    'Enable or disable TanStack Query loading-state simulation for a query by queryHash.',
-  inputSchema: {
-    type: 'object',
-    properties: queryActionProperties,
-    required: ['queryHash', 'enabled'],
-  },
-};
-
-export const setQueryErrorTool: AgentTool = {
-  name: 'set-query-error',
-  description:
-    'Enable or disable TanStack Query error-state simulation for a query by queryHash.',
-  inputSchema: {
-    type: 'object',
-    properties: queryActionProperties,
-    required: ['queryHash', 'enabled'],
-  },
-};
-
-export const invalidateQueryTool: AgentTool = {
-  name: 'invalidate-query',
-  description: 'Invalidate a TanStack Query query by queryHash.',
-  inputSchema: {
-    type: 'object',
-    properties: queryActionProperties,
-    required: ['queryHash'],
-  },
-};
-
-export const resetQueryTool: AgentTool = {
-  name: 'reset-query',
-  description: 'Reset a TanStack Query query by queryHash.',
-  inputSchema: {
-    type: 'object',
-    properties: queryActionProperties,
-    required: ['queryHash'],
-  },
-};
-
-export const removeQueryTool: AgentTool = {
-  name: 'remove-query',
-  description: 'Remove a TanStack Query query from the cache by queryHash.',
-  inputSchema: {
-    type: 'object',
-    properties: queryActionProperties,
-    required: ['queryHash'],
-  },
-};
-
-export const clearQueryCacheTool: AgentTool = {
-  name: 'clear-query-cache',
-  description: 'Clear the full TanStack Query query cache.',
-  inputSchema: emptyInputSchema,
-};
-
-export const listMutationsTool: AgentTool = {
-  name: 'list-mutations',
-  description:
-    'List TanStack Query mutation summaries using cursor pagination.',
-  inputSchema: {
-    type: 'object',
-    properties: paginationProperties,
-  },
-};
-
-export const getMutationDetailsTool: AgentTool = {
-  name: 'get-mutation-details',
-  description:
-    'Return a JSON-safe TanStack Query mutation snapshot for a mutationId.',
-  inputSchema: {
-    type: 'object',
-    properties: mutationActionProperties,
-    required: ['mutationId'],
-  },
-};
-
-export const clearMutationCacheTool: AgentTool = {
-  name: 'clear-mutation-cache',
-  description: 'Clear the full TanStack Query mutation cache.',
-  inputSchema: emptyInputSchema,
-};
-
-export const TANSTACK_QUERY_AGENT_TOOLS: AgentTool[] = [
-  getCacheSummaryTool,
-  getOnlineStatusTool,
-  setOnlineStatusTool,
-  listQueriesTool,
-  getQueryDetailsTool,
-  refetchQueryTool,
-  setQueryLoadingTool,
-  setQueryErrorTool,
-  invalidateQueryTool,
-  resetQueryTool,
-  removeQueryTool,
-  clearQueryCacheTool,
-  listMutationsTool,
-  getMutationDetailsTool,
-  clearMutationCacheTool,
-];
+export const getCacheSummaryTool = tanstackQueryToolDefinitions.getCacheSummary;
+export const getOnlineStatusTool = tanstackQueryToolDefinitions.getOnlineStatus;
+export const setOnlineStatusTool = tanstackQueryToolDefinitions.setOnlineStatus;
+export const listQueriesTool = tanstackQueryToolDefinitions.listQueries;
+export const getQueryDetailsTool = tanstackQueryToolDefinitions.getQueryDetails;
+export const refetchQueryTool = tanstackQueryToolDefinitions.refetchQuery;
+export const setQueryLoadingTool = tanstackQueryToolDefinitions.setQueryLoading;
+export const setQueryErrorTool = tanstackQueryToolDefinitions.setQueryError;
+export const invalidateQueryTool = tanstackQueryToolDefinitions.invalidateQuery;
+export const resetQueryTool = tanstackQueryToolDefinitions.resetQuery;
+export const removeQueryTool = tanstackQueryToolDefinitions.removeQuery;
+export const clearQueryCacheTool = tanstackQueryToolDefinitions.clearQueryCache;
+export const listMutationsTool = tanstackQueryToolDefinitions.listMutations;
+export const getMutationDetailsTool =
+  tanstackQueryToolDefinitions.getMutationDetails;
+export const clearMutationCacheTool =
+  tanstackQueryToolDefinitions.clearMutationCache;
+export const TANSTACK_QUERY_AGENT_TOOLS = Object.values(
+  tanstackQueryToolDefinitions,
+);
 
 const pickObserverOptionsSummary = (
   options: Record<string, unknown> | undefined
-) => {
+): TanStackQueryObserverOptionsSummary | null => {
   if (!options) {
     return null;
   }
@@ -434,7 +243,7 @@ const pickObserverOptionsSummary = (
 
 const pickMutationOptionsSummary = (
   options: MutationObserverOptions<unknown, Error, unknown, unknown>
-) => {
+): TanStackQueryMutationOptionsSummary => {
   return {
     mutationKey: serializeForAgent(options.mutationKey),
     networkMode: serializeForAgent(options.networkMode),
@@ -741,10 +550,3 @@ export const createTanStackQueryAgentController = (queryClient: QueryClient) => 
 export type TanStackQueryAgentController = ReturnType<
   typeof createTanStackQueryAgentController
 >;
-
-export type TanStackQueryAgentPaginationInput = PaginationInput;
-export type TanStackQueryAgentQueryHashInput = QueryHashInput;
-export type TanStackQueryAgentQueryToggleInput = QueryToggleInput;
-export type TanStackQueryAgentMutationIdInput = MutationIdInput;
-export type TanStackQueryAgentOnlineStatusInput = OnlineStatusInput;
-export const TANSTACK_QUERY_AGENT_PLUGIN_ID = pluginId;
