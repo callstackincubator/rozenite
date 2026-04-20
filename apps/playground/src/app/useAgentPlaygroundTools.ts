@@ -1,6 +1,8 @@
 import { Alert } from 'react-native';
-import { useRozeniteInAppAgentTool } from '@rozenite/agent-bridge';
-import { defineAgentToolContract } from '@rozenite/agent-shared';
+import {
+  useRozeniteInAppAgentTool,
+  type AgentTool,
+} from '@rozenite/agent-bridge';
 
 type ShowAlertInput = {
   title?: string;
@@ -12,7 +14,7 @@ type RandomNumberInput = {
   max?: number;
 };
 
-const showAlertTool = defineAgentToolContract<ShowAlertInput, { ok: true }>({
+const showAlertTool: AgentTool = {
   name: 'show-alert',
   description: 'Show a native alert in the playground app.',
   inputSchema: {
@@ -28,12 +30,9 @@ const showAlertTool = defineAgentToolContract<ShowAlertInput, { ok: true }>({
       },
     },
   },
-});
+};
 
-const randomNumberTool = defineAgentToolContract<
-  RandomNumberInput,
-  { min: number; max: number; value: number }
->({
+const randomNumberTool: AgentTool = {
   name: 'random-number',
   description: 'Return a random number in the optional [min, max] range.',
   inputSchema: {
@@ -49,12 +48,9 @@ const randomNumberTool = defineAgentToolContract<
       },
     },
   },
-});
+};
 
-const echoPayloadTool = defineAgentToolContract<
-  { payload?: unknown },
-  { echoed: unknown }
->({
+const echoPayloadTool: AgentTool = {
   name: 'echo-payload',
   description: 'Echo back payload for quick tool call smoke tests.',
   inputSchema: {
@@ -65,21 +61,24 @@ const echoPayloadTool = defineAgentToolContract<
       },
     },
   },
-});
+};
 
 export const useAgentPlaygroundTools = () => {
-  useRozeniteInAppAgentTool({
+  useRozeniteInAppAgentTool<ShowAlertInput>({
     tool: showAlertTool,
     handler: ({ title, message }) => {
-      Alert.alert(title || 'Agent Playground', message || 'Alert from Agent tool.');
+      Alert.alert(
+        title || 'Agent Playground',
+        message || 'Alert from Agent tool.',
+      );
 
       return {
-        ok: true as const,
+        ok: true,
       };
     },
   });
 
-  useRozeniteInAppAgentTool({
+  useRozeniteInAppAgentTool<RandomNumberInput>({
     tool: randomNumberTool,
     handler: ({ min = 0, max = 100 }) => {
       const safeMin = Number.isFinite(min) ? min : 0;
@@ -96,7 +95,7 @@ export const useAgentPlaygroundTools = () => {
     },
   });
 
-  useRozeniteInAppAgentTool({
+  useRozeniteInAppAgentTool<{ payload?: unknown }>({
     tool: echoPayloadTool,
     handler: ({ payload }) => {
       return {

@@ -14,6 +14,8 @@ import {
   type ToolResultMessage,
 } from './types.js';
 
+type MaybePromise<T> = Promise<T> | T;
+
 type AgentEventMap = {
   'agent-session-ready': AgentSessionReadyMessage['payload'];
   'register-tool': RegisterToolMessage['payload'];
@@ -22,29 +24,66 @@ type AgentEventMap = {
   'tool-result': ToolResultMessage['payload'];
 };
 
-export interface UseRozeniteAgentToolOptions<
+interface UseRozeniteAgentToolRuntimeOptions {
+  tool: AgentTool;
+  handler: (args: unknown) => MaybePromise<unknown>;
+  enabled?: boolean;
+}
+
+export interface UseRozeniteTypedAgentToolOptions<
   TTool extends AgentTool = AgentTool,
 > {
   tool: TTool;
   handler: (
     args: InferAgentToolArgs<TTool>,
-  ) => Promise<InferAgentToolResult<TTool>> | InferAgentToolResult<TTool>;
+  ) => MaybePromise<InferAgentToolResult<TTool>>;
   enabled?: boolean;
 }
 
-export type UseRozenitePluginAgentToolWithPluginIdOptions<
+export interface UseRozenitePlainAgentToolOptions<
+  TArgs = unknown,
+  TResult = unknown,
+> {
+  tool: AgentTool;
+  handler: (args: TArgs) => MaybePromise<TResult>;
+  enabled?: boolean;
+}
+
+export type UseRozeniteAgentToolOptions<
+  TToolOrArgs = AgentTool,
+  TResult = unknown,
+> = TToolOrArgs extends AgentTool
+  ? UseRozeniteTypedAgentToolOptions<TToolOrArgs>
+  : UseRozenitePlainAgentToolOptions<TToolOrArgs, TResult>;
+
+type UseRozenitePluginAgentToolRuntimeOptions = {
+  pluginId: string;
+} & UseRozeniteAgentToolRuntimeOptions;
+
+export type UseRozeniteTypedPluginAgentToolWithPluginIdOptions<
   TTool extends AgentTool = AgentTool,
 > = {
   pluginId: string;
-} & UseRozeniteAgentToolOptions<TTool>;
+} & UseRozeniteTypedAgentToolOptions<TTool>;
+
+export type UseRozenitePlainPluginAgentToolOptions<
+  TArgs = unknown,
+  TResult = unknown,
+> = {
+  pluginId: string;
+} & UseRozenitePlainAgentToolOptions<TArgs, TResult>;
 
 export type UseRozenitePluginAgentToolOptions<
-  TTool extends AgentTool = AgentTool,
-> = UseRozenitePluginAgentToolWithPluginIdOptions<TTool>;
+  TToolOrArgs = AgentTool,
+  TResult = unknown,
+> = TToolOrArgs extends AgentTool
+  ? UseRozeniteTypedPluginAgentToolWithPluginIdOptions<TToolOrArgs>
+  : UseRozenitePlainPluginAgentToolOptions<TToolOrArgs, TResult>;
 
 export type UseRozeniteInAppAgentToolOptions<
-  TTool extends AgentTool = AgentTool,
-> = UseRozeniteAgentToolOptions<TTool>;
+  TToolOrArgs = AgentTool,
+  TResult = unknown,
+> = UseRozeniteAgentToolOptions<TToolOrArgs, TResult>;
 
 const APP_DOMAIN = 'app';
 
@@ -52,9 +91,9 @@ const getQualifiedToolName = (domain: string, toolName: string): string => {
   return `${domain.trim()}.${toolName.trim()}`;
 };
 
-function useRozeniteDomainAgentTool<TTool extends AgentTool = AgentTool>(
+function useRozeniteDomainAgentTool(
   domain: string,
-  options: UseRozeniteAgentToolOptions<TTool>,
+  options: UseRozeniteAgentToolRuntimeOptions,
 ): void {
   const { tool, handler, enabled = true } = options;
   const toolName = getQualifiedToolName(domain, tool.name);
@@ -92,9 +131,7 @@ function useRozeniteDomainAgentTool<TTool extends AgentTool = AgentTool>(
         }
 
         try {
-          const result = await handlerRef.current(
-            payload.arguments as InferAgentToolArgs<TTool>,
-          );
+          const result = await handlerRef.current(payload.arguments);
 
           const response: ToolResultMessage['payload'] = {
             callId: payload.callId,
@@ -144,15 +181,19 @@ function useRozeniteDomainAgentTool<TTool extends AgentTool = AgentTool>(
  * component mounts (and `enabled` is true) and unregistered on unmount.
  *
  * When `tool` is a typed contract object, handler input/output types are inferred
- * from the tool definition. Plain `AgentTool` objects continue to work and fall
- * back to `unknown`.
+ * from the tool definition. Plain `AgentTool` objects can either fall back to
+ * `unknown` or provide explicit handler generics, e.g. `useRozenitePluginAgentTool<MyArgs>`.
  *
  * @param options - Configuration using `pluginId`, `tool`, `handler`, and optional `enabled`.
  */
-export function useRozenitePluginAgentTool<TTool extends AgentTool = AgentTool>(
-  options: UseRozenitePluginAgentToolOptions<TTool>,
+export function useRozenitePluginAgentTool<
+  TToolOrArgs = AgentTool,
+  TResult = unknown,
+>(
+  options: UseRozenitePluginAgentToolOptions<TToolOrArgs, TResult>,
 ): void {
-  const { pluginId, ...toolOptions } = options;
+  const { pluginId, ...toolOptions } =
+    options as UseRozenitePluginAgentToolRuntimeOptions;
   useRozeniteDomainAgentTool(pluginId, toolOptions);
 }
 
@@ -163,11 +204,21 @@ export function useRozenitePluginAgentTool<TTool extends AgentTool = AgentTool>(
  * The tool is qualified as `app.{tool.name}`. It is registered when the component
  * mounts (and `enabled` is true) and unregistered on unmount.
  *
- * @param options - Configuration: `tool` (AgentTool), `handler`, and optional `enabled`.
+ * When `tool` is a typed contract object, handler input/output types are inferred
+ * from the tool definition. Plain `AgentTool` objects can either fall back to
+ * `unknown` or provide explicit handler generics, e.g. `useRozeniteInAppAgentTool<MyArgs>`.
+ *
+ * @param options - Configuration: `tool`, `handler`, and optional `enabled`.
  */
-export function useRozeniteInAppAgentTool<TTool extends AgentTool = AgentTool>(
-  options: UseRozeniteInAppAgentToolOptions<TTool>,
+export function useRozeniteInAppAgentTool<
+  TToolOrArgs = AgentTool,
+  TResult = unknown,
+>(
+  options: UseRozeniteInAppAgentToolOptions<TToolOrArgs, TResult>,
 ): void {
   const { ...toolOptions } = options;
-  useRozeniteDomainAgentTool(APP_DOMAIN, toolOptions);
+  useRozeniteDomainAgentTool(
+    APP_DOMAIN,
+    toolOptions as UseRozeniteAgentToolRuntimeOptions,
+  );
 }
