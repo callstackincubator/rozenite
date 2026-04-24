@@ -1,5 +1,15 @@
-import { useMemo, useState } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Button,
+  Description,
+  Input,
+  Label,
+  ListBox,
+  Modal,
+  Select,
+  TextField,
+} from '@rozenite/ui';
+import { Plus } from 'lucide-react';
 import type {
   StorageEntry,
   StorageEntryType,
@@ -14,50 +24,80 @@ const TYPE_OPTIONS: Array<{ value: StorageEntryType; label: string }> = [
   { value: 'buffer', label: 'Buffer (Array)' },
 ];
 
-export type AddEntryDialogProps = {
+type DialogState = {
   isOpen: boolean;
-  onClose: () => void;
+  title: string;
+  message: string;
+  type: 'confirm' | 'alert';
+  onConfirm?: () => void;
+};
+
+const EMPTY_DIALOG_STATE: DialogState = {
+  isOpen: false,
+  title: '',
+  message: '',
+  type: 'alert',
+};
+
+export type AddEntryDialogProps = {
   onAddEntry: (entry: StorageEntry) => void;
   existingKeys: string[];
   supportedTypes: StorageEntryType[];
+  isDisabled?: boolean;
 };
 
 export const AddEntryDialog = ({
-  isOpen,
-  onClose,
   onAddEntry,
   existingKeys,
   supportedTypes,
+  isDisabled = false,
 }: AddEntryDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [newEntryKey, setNewEntryKey] = useState('');
   const [newEntryType, setNewEntryType] = useState<StorageEntryType>('string');
   const [newEntryValue, setNewEntryValue] = useState('');
-  const [confirmDialog, setConfirmDialog] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    type: 'confirm' | 'alert';
-    onConfirm?: () => void;
-  }>({ isOpen: false, title: '', message: '', type: 'alert' });
+  const [confirmDialog, setConfirmDialog] =
+    useState<DialogState>(EMPTY_DIALOG_STATE);
 
   const enabledTypes = useMemo(
     () => TYPE_OPTIONS.filter((option) => supportedTypes.includes(option.value)),
-    [supportedTypes]
+    [supportedTypes],
   );
-
   const firstSupportedType = enabledTypes[0]?.value;
-
   const selectedTypeSupported = supportedTypes.includes(newEntryType);
+
+  useEffect(() => {
+    if (isOpen && !selectedTypeSupported && firstSupportedType) {
+      setNewEntryType(firstSupportedType);
+    }
+  }, [firstSupportedType, isOpen, selectedTypeSupported]);
+
+  useEffect(() => {
+    if (isDisabled && isOpen) {
+      setNewEntryKey('');
+      setNewEntryType(firstSupportedType ?? 'string');
+      setNewEntryValue('');
+      setConfirmDialog(EMPTY_DIALOG_STATE);
+      setIsOpen(false);
+    }
+  }, [firstSupportedType, isDisabled, isOpen]);
 
   const resetForm = () => {
     setNewEntryKey('');
     setNewEntryType(firstSupportedType ?? 'string');
     setNewEntryValue('');
-    onClose();
+    setConfirmDialog(EMPTY_DIALOG_STATE);
+  };
+
+  const closeDialog = () => {
+    resetForm();
+    setIsOpen(false);
   };
 
   const handleAddEntry = () => {
-    if (!newEntryKey.trim()) return;
+    if (!newEntryKey.trim()) {
+      return;
+    }
 
     if (!selectedTypeSupported) {
       setConfirmDialog({
@@ -133,178 +173,196 @@ export const AddEntryDialog = ({
     }
 
     onAddEntry(entry);
-
-    resetForm();
+    closeDialog();
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      resetForm();
-      return;
-    }
-
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && newEntryKey.trim() && newEntryValue.trim()) {
       handleAddEntry();
     }
   };
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={resetForm}
-    >
-      <div
-        className="bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4"
-        onClick={(event) => event.stopPropagation()}
-        onKeyDown={handleKeyDown}
+    <>
+      <Button isDisabled={isDisabled} onPress={() => setIsOpen(true)}>
+        <Plus className="h-3 w-3" />
+        Add Entry
+      </Button>
+
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={(nextOpen) => {
+          setIsOpen(nextOpen);
+          if (!nextOpen) {
+            resetForm();
+          }
+        }}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-100">Add New Entry</h2>
-          <button
-            onClick={resetForm}
-            className="p-1 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded transition-colors"
-            title="Close dialog"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        <Modal.Backdrop variant="blur">
+          <Modal.Container placement="center">
+            <Modal.Dialog aria-label="Add New Entry">
+              <Modal.CloseTrigger />
+              <Modal.Header>
+                <Modal.Heading>Add New Entry</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="flex flex-col gap-4 p-6">
+                <TextField className="w-full" name="new-entry-key" type="text">
+                  <Label>Key</Label>
+                  <Input
+                    autoFocus
+                    onChange={(event) => setNewEntryKey(event.target.value)}
+                    onKeyDown={handleInputKeyDown}
+                    placeholder="Enter key name"
+                    value={newEntryKey}
+                    variant="secondary"
+                  />
+                </TextField>
 
-        <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="new-entry-key"
-              className="block text-sm font-medium text-gray-200 mb-1"
-            >
-              Key
-            </label>
-            <input
-              id="new-entry-key"
-              type="text"
-              value={newEntryKey}
-              onChange={(event) => setNewEntryKey(event.target.value)}
-              placeholder="Enter key name"
-              className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoFocus
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="new-entry-type"
-              className="block text-sm font-medium text-gray-200 mb-1"
-            >
-              Type
-            </label>
-            <select
-              id="new-entry-type"
-              value={newEntryType}
-              onChange={(event) => {
-                setNewEntryType(event.target.value as StorageEntryType);
-                setNewEntryValue('');
-              }}
-              className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {TYPE_OPTIONS.map((option) => {
-                const isSupported = supportedTypes.includes(option.value);
-                return (
-                  <option
-                    key={option.value}
-                    value={option.value}
-                    disabled={!isSupported}
-                    title={
-                      isSupported ? option.label : 'Not supported by this storage'
-                    }
+                <div className="flex flex-col gap-2">
+                  <Label>Type</Label>
+                  <Select
+                    className="w-full"
+                    onChange={(key) => {
+                      setNewEntryType(
+                        (key == null ? '' : String(key)) as StorageEntryType,
+                      );
+                      setNewEntryValue('');
+                    }}
+                    value={newEntryType || null}
+                    variant="secondary"
                   >
-                    {option.label}
-                    {!isSupported ? ' (Not supported)' : ''}
-                  </option>
-                );
-              })}
-            </select>
-            {!selectedTypeSupported && (
-              <p className="text-xs text-amber-400 mt-1">
-                Selected type is not supported by this storage.
-              </p>
-            )}
-          </div>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox aria-label="Entry type">
+                        {TYPE_OPTIONS.map((option) => {
+                          const isSupported = supportedTypes.includes(
+                            option.value,
+                          );
 
-          <div>
-            <label
-              htmlFor="new-entry-value"
-              className="block text-sm font-medium text-gray-200 mb-1"
-            >
-              Value
-            </label>
-            {newEntryType === 'boolean' ? (
-              <select
-                id="new-entry-value"
-                value={newEntryValue}
-                onChange={(event) => setNewEntryValue(event.target.value)}
-                className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select value</option>
-                <option value="true">true</option>
-                <option value="false">false</option>
-              </select>
-            ) : (
-              <input
-                id="new-entry-value"
-                type={newEntryType === 'number' ? 'number' : 'text'}
-                value={newEntryValue}
-                onChange={(event) => setNewEntryValue(event.target.value)}
-                placeholder={
-                  newEntryType === 'string'
-                    ? 'Enter string value'
-                    : newEntryType === 'number'
-                    ? 'Enter number value'
-                    : newEntryType === 'buffer'
-                    ? 'Enter array as JSON, e.g., [1, 2, 3]'
-                    : 'Enter value'
-                }
-                className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            )}
-            {newEntryType === 'buffer' && (
-              <p className="text-xs text-gray-400 mt-1">
-                Enter as JSON array of numbers, e.g., [1, 2, 3, 255]
-              </p>
-            )}
-          </div>
-        </div>
+                          return (
+                            <ListBox.Item
+                              id={option.value}
+                              isDisabled={!isSupported}
+                              key={option.value}
+                              textValue={option.label}
+                            >
+                              {isSupported
+                                ? option.label
+                                : `${option.label} (Not supported)`}
+                            </ListBox.Item>
+                          );
+                        })}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                  {!selectedTypeSupported ? (
+                    <Description className="text-xs text-warning">
+                      Selected type is not supported by this storage.
+                    </Description>
+                  ) : null}
+                </div>
 
-        <div className="flex items-center justify-end gap-2 mt-6">
-          <button
-            onClick={resetForm}
-            className="px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleAddEntry}
-            disabled={!newEntryKey.trim() || !newEntryValue.trim() || !selectedTypeSupported}
-            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
-          >
-            Add Entry
-          </button>
-        </div>
-      </div>
+                {newEntryType === 'boolean' ? (
+                  <div className="flex flex-col gap-2">
+                    <Label>Value</Label>
+                    <Select
+                      className="w-full"
+                      onChange={(key) =>
+                        setNewEntryValue(key == null ? '' : String(key))
+                      }
+                      placeholder="Select value"
+                      value={newEntryValue || null}
+                      variant="secondary"
+                    >
+                      <Select.Trigger>
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox aria-label="Entry value">
+                          <ListBox.Item id="true" key="true" textValue="true">
+                            true
+                          </ListBox.Item>
+                          <ListBox.Item
+                            id="false"
+                            key="false"
+                            textValue="false"
+                          >
+                            false
+                          </ListBox.Item>
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                  </div>
+                ) : (
+                  <TextField
+                    className="w-full"
+                    name="new-entry-value"
+                    type={newEntryType === 'number' ? 'number' : 'text'}
+                  >
+                    <Label>Value</Label>
+                    <Input
+                      onChange={(event) => setNewEntryValue(event.target.value)}
+                      onKeyDown={handleInputKeyDown}
+                      placeholder={
+                        newEntryType === 'string'
+                          ? 'Enter string value'
+                          : newEntryType === 'number'
+                            ? 'Enter number value'
+                            : newEntryType === 'buffer'
+                              ? 'Enter array as JSON, e.g., [1, 2, 3]'
+                              : 'Enter value'
+                      }
+                      value={newEntryValue}
+                      variant="secondary"
+                    />
+                    {newEntryType === 'buffer' ? (
+                      <Description className="text-xs text-muted">
+                        Enter as JSON array of numbers, e.g., [1, 2, 3, 255]
+                      </Description>
+                    ) : null}
+                  </TextField>
+                )}
+              </Modal.Body>
+              <Modal.Footer className="flex justify-end gap-2">
+                <Button onPress={closeDialog} variant="secondary">
+                  Cancel
+                </Button>
+                <Button
+                  isDisabled={
+                    !newEntryKey.trim() ||
+                    !newEntryValue.trim() ||
+                    !selectedTypeSupported
+                  }
+                  onPress={handleAddEntry}
+                  variant="primary"
+                >
+                  Add Entry
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
 
       <ConfirmDialog
+        confirmText="OK"
         isOpen={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog((previous) => ({ ...previous, isOpen: false }))}
+        message={confirmDialog.message}
+        onClose={() =>
+          setConfirmDialog((previous) => ({ ...previous, isOpen: false }))
+        }
         onConfirm={() => {
           if (confirmDialog.onConfirm) {
             confirmDialog.onConfirm();
           }
         }}
         title={confirmDialog.title}
-        message={confirmDialog.message}
         type={confirmDialog.type}
       />
-    </div>
+    </>
   );
 };

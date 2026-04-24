@@ -1,4 +1,5 @@
-import { X, AlertTriangle, Info } from 'lucide-react';
+import { AlertDialog, Button } from '@rozenite/ui';
+import { AlertTriangle, Info } from 'lucide-react';
 
 export type ConfirmDialogProps = {
   isOpen: boolean;
@@ -21,80 +22,60 @@ export const ConfirmDialog = ({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
 }: ConfirmDialogProps) => {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onClose();
-    } else if (e.key === 'Enter') {
-      onConfirm();
-    }
-  };
-
-  const handleConfirm = () => {
-    onConfirm();
-    onClose();
-  };
-
-  const handleCancel = () => {
-    onClose();
-  };
-
-  if (!isOpen) return null;
+  const isConfirm = type === 'confirm';
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={handleCancel}
+    <AlertDialog
+      isOpen={isOpen}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onClose();
+        }
+      }}
     >
-      <div
-        className="bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
+      <AlertDialog.Backdrop
+        className="bg-overlay/70 backdrop-blur-sm"
+        variant="opaque"
       >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            {type === 'confirm' ? (
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
-            ) : (
-              <Info className="h-5 w-5 text-blue-500" />
-            )}
-            <h2 className="text-lg font-semibold text-gray-100">{title}</h2>
-          </div>
-          <button
-            onClick={handleCancel}
-            className="p-1 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded transition-colors"
-            title="Close dialog"
+        <AlertDialog.Container className="w-full max-w-md" placement="center">
+          <AlertDialog.Dialog
+            aria-label={title}
+            className="border border-border/70 bg-surface text-foreground shadow-2xl"
           >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="mb-6">
-          <p className="text-sm text-gray-300 leading-relaxed">{message}</p>
-        </div>
-
-        {/* Dialog Actions */}
-        <div className="flex items-center justify-end gap-2">
-          {type === 'confirm' && (
-            <button
-              onClick={handleCancel}
-              className="px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
-            >
-              {cancelText}
-            </button>
-          )}
-          <button
-            onClick={handleConfirm}
-            className={`px-4 py-2 text-sm text-white rounded transition-colors ${
-              type === 'confirm'
-                ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-            autoFocus
-          >
-            {type === 'alert' ? 'OK' : confirmText}
-          </button>
-        </div>
-      </div>
-    </div>
+            <AlertDialog.Header className="flex items-center gap-3 border-b border-border/70 px-5 py-4">
+              <AlertDialog.Icon status={isConfirm ? 'danger' : 'default'}>
+                {isConfirm ? (
+                  <AlertTriangle className="size-5" />
+                ) : (
+                  <Info className="size-5" />
+                )}
+              </AlertDialog.Icon>
+              <AlertDialog.Heading className="text-base font-semibold text-foreground">
+                {title}
+              </AlertDialog.Heading>
+            </AlertDialog.Header>
+            <AlertDialog.Body className="px-5 py-4 text-sm leading-6 text-muted">
+              {message}
+            </AlertDialog.Body>
+            <AlertDialog.Footer className="flex justify-end gap-2 border-t border-border/70 px-5 py-4">
+              {isConfirm ? (
+                <Button onPress={onClose} variant="secondary">
+                  {cancelText}
+                </Button>
+              ) : null}
+              <Button
+                onPress={() => {
+                  onConfirm();
+                  onClose();
+                }}
+                variant={isConfirm ? 'danger' : 'primary'}
+              >
+                {isConfirm ? confirmText : 'OK'}
+              </Button>
+            </AlertDialog.Footer>
+          </AlertDialog.Dialog>
+        </AlertDialog.Container>
+      </AlertDialog.Backdrop>
+    </AlertDialog>
   );
 };

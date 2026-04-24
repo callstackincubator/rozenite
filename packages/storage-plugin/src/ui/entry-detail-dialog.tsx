@@ -1,220 +1,173 @@
-import { X, Info, Edit3 } from 'lucide-react';
-import { JSONTree } from 'react-json-tree';
-import { StorageEntry } from '../shared/types';
 import { useMemo } from 'react';
+import {
+  Button,
+  Chip,
+  Description,
+  JsonInspector,
+  Label,
+  Modal,
+  parseJsonForInspection,
+  Surface,
+} from '@rozenite/ui';
+import { Edit3, Info } from 'lucide-react';
+import type { StorageEntry, StorageEntryType } from '../shared/types';
 
 export type EntryDetailDialogProps = {
-  isOpen: boolean;
   onClose: () => void;
   onEdit?: (entry: StorageEntry) => void;
   entry: StorageEntry | null;
 };
 
-const jsonTreeTheme = {
-  base00: 'transparent',
-  base01: '#374151', // bg-gray-700
-  base02: '#4b5563', // bg-gray-600
-  base03: '#6b7280', // text-gray-500
-  base04: '#9ca3af', // text-gray-400
-  base05: '#d1d5db', // text-gray-300
-  base06: '#e5e7eb', // text-gray-200
-  base07: '#f9fafb', // text-gray-100
-  base08: '#ef4444', // text-red-500
-  base09: '#f59e0b', // text-yellow-500
-  base0A: '#10b981', // text-green-500
-  base0B: '#3b82f6', // text-blue-500
-  base0C: '#06b6d4', // text-cyan-500
-  base0D: '#8b5cf6', // text-purple-500
-  base0E: '#ec4899', // text-pink-500
-  base0F: '#f97316', // text-orange-500
-};
-
-const jsonSafeParse = (value: string): Record<string, unknown> | unknown[] | null => {
-  try {
-    const parsed = JSON.parse(value) as unknown;
-
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-
-    if (parsed && typeof parsed === 'object') {
-      return parsed as Record<string, unknown>;
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-};
-
-const getTypeColorClass = (type: string) => {
-  switch (type) {
-    case 'string':
-      return 'bg-green-600';
-    case 'number':
-      return 'bg-blue-600';
-    case 'boolean':
-      return 'bg-yellow-600';
-    case 'buffer':
-      return 'bg-purple-600';
-    default:
-      return 'bg-gray-600';
-  }
+const typeColorMap: Record<
+  StorageEntryType,
+  'success' | 'warning' | 'accent' | 'default'
+> = {
+  string: 'success',
+  number: 'default',
+  boolean: 'warning',
+  buffer: 'accent',
 };
 
 const formatValue = (entry: StorageEntry) => {
-  switch (entry.type) {
-    case 'string':
-      return (
-        <span className="text-green-300 font-mono break-all">
-          "{entry.value as string}"
-        </span>
-      );
-    case 'number':
-      return (
-        <span className="text-blue-300 font-mono">{entry.value as number}</span>
-      );
-    case 'boolean':
-      return (
-        <span
-          className={`font-mono ${
-            entry.value ? 'text-green-400' : 'text-red-400'
-          }`}
-        >
-          {entry.value ? 'true' : 'false'}
-        </span>
-      );
-    case 'buffer': {
-      const bufferArray = entry.value as number[];
-      return (
-        <span className="text-purple-300 font-mono">
-          [{bufferArray.join(', ')}]
-        </span>
-      );
-    }
-    default:
-      return <span className="text-gray-400">Unknown</span>;
+  if (entry.type === 'string') {
+    return (
+      <span className="break-all font-mono text-sm text-success">
+        "{entry.value}"
+      </span>
+    );
   }
+
+  if (entry.type === 'number') {
+    return (
+      <span className="font-mono text-sm text-foreground">{entry.value}</span>
+    );
+  }
+
+  if (entry.type === 'boolean') {
+    return (
+      <span
+        className={`font-mono text-sm ${
+          entry.value ? 'text-success' : 'text-danger'
+        }`}
+      >
+        {entry.value ? 'true' : 'false'}
+      </span>
+    );
+  }
+
+  return (
+    <span className="font-mono text-sm text-accent">
+      [{entry.value.join(', ')}]
+    </span>
+  );
 };
 
 export const EntryDetailDialog = ({
-  isOpen,
   onClose,
   onEdit,
   entry,
 }: EntryDetailDialogProps) => {
   const isStringValue = entry?.type === 'string';
-  const stringValue = isStringValue ? (entry.value as string) : '';
-  const jsonValue = useMemo(
-    () => (isStringValue ? jsonSafeParse(stringValue) : null),
-    [isStringValue, stringValue]
+  const stringValue = isStringValue ? entry.value : '';
+  const jsonParseResult = useMemo(
+    () =>
+      isStringValue
+        ? parseJsonForInspection(stringValue, 'object-or-array')
+        : { ok: false as const, value: null },
+    [isStringValue, stringValue],
   );
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onClose();
-    }
-  };
-
-  if (!isOpen || !entry) return null;
-
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={onClose}
+    <Modal
+      isOpen={entry !== null}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onClose();
+        }
+      }}
     >
-      <div
-        className="bg-gray-800 rounded-lg p-6 w-[90vw] max-w-2xl max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Info className="h-5 w-5 text-blue-400" />
-            <h2 className="text-lg font-semibold text-gray-100">
-              Entry Details
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded transition-colors"
-            title="Close dialog"
+      <Modal.Backdrop variant="blur">
+        <Modal.Container className="w-full max-w-2xl" placement="center">
+          <Modal.Dialog
+            className="flex max-h-[90vh] flex-col"
+            aria-label="Entry Details"
           >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Icon className="bg-info/15 text-info">
+                <Info className="size-5" />
+              </Modal.Icon>
+              <Modal.Heading>Entry Details</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-6">
+              {entry ? (
+                <>
+                  <div className="flex flex-col gap-2">
+                    <Label>Key</Label>
+                    <Surface
+                      className="rounded-lg border border-border/70 bg-surface-secondary px-3 py-2 font-mono text-sm text-foreground break-all"
+                      variant="secondary"
+                    >
+                      {entry.key}
+                    </Surface>
+                  </div>
 
-        <div className="space-y-4 flex-1 overflow-auto">
-          {/* Key Display */}
-          <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1">
-              Key
-            </label>
-            <div className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 font-mono break-all">
-              {entry.key}
-            </div>
-          </div>
+                  <div className="flex flex-col gap-2">
+                    <Label>Type</Label>
+                    <Chip
+                      className="w-fit"
+                      color={typeColorMap[entry.type]}
+                      size="sm"
+                      variant="soft"
+                    >
+                      {entry.type}
+                    </Chip>
+                  </div>
 
-          {/* Type Display */}
-          <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1">
-              Type
-            </label>
-            <div className="flex items-center">
-              <span
-                className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
-                  entry.type
-                )}`}
-              >
-                {entry.type}
-              </span>
-            </div>
-          </div>
-
-          {/* Value Display */}
-          <div className="flex-1 min-h-0 flex flex-col">
-            <label className="block text-sm font-medium text-gray-200 mb-1">
-              Value
-            </label>
-            <div className="max-h-96 overflow-auto bg-gray-700 border border-gray-600 rounded p-3">
-              {jsonValue ? (
-                <JSONTree
-                  data={jsonValue}
-                  theme={jsonTreeTheme}
-                  invertTheme={false}
-                  shouldExpandNodeInitially={(keyPath) => keyPath.length <= 2}
-                />
-              ) : (
-                <div className="text-sm">{formatValue(entry)}</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Dialog Actions */}
-        <div className="flex items-center justify-end gap-2 mt-6">
-          {onEdit && (
-            <button
-              onClick={() => {
-                if (entry && onEdit) {
-                  onEdit(entry);
-                }
-              }}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
-            >
-              <Edit3 className="h-4 w-4" />
-              Edit
-            </button>
-          )}
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-            autoFocus
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+                  <div className="flex min-h-0 flex-1 flex-col gap-2">
+                    <Label>Value</Label>
+                    <Surface
+                      className="max-h-96 overflow-auto rounded-lg border border-border/70 bg-surface-secondary p-3"
+                      variant="secondary"
+                    >
+                      {jsonParseResult.ok ? (
+                        <JsonInspector
+                          copyable
+                          data={jsonParseResult.value}
+                          shouldExpandNodeInitially={(keyPath) =>
+                            keyPath.length <= 2
+                          }
+                          theme="dark"
+                        />
+                      ) : (
+                        <div className="min-h-4 text-sm">
+                          {formatValue(entry)}
+                        </div>
+                      )}
+                    </Surface>
+                    {entry.type === 'string' && jsonParseResult.ok ? (
+                      <Description className="text-xs text-muted">
+                        Displaying parsed JSON from the stored string value.
+                      </Description>
+                    ) : null}
+                  </div>
+                </>
+              ) : null}
+            </Modal.Body>
+            <Modal.Footer className="flex justify-end gap-2">
+              {entry && onEdit ? (
+                <Button onPress={() => onEdit(entry)} variant="secondary">
+                  <Edit3 className="size-4" />
+                  Edit
+                </Button>
+              ) : null}
+              <Button onPress={onClose} variant="primary">
+                Close
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </Modal>
   );
 };

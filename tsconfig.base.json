@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "composite": true,
+    "paths": {
+      "@rozenite/ui": ["packages/ui/src/index.ts"],
+      "@rozenite/ui/*": ["packages/ui/*"]
+    },
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "importHelpers": true,

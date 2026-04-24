@@ -1,6 +1,6 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { ListBox, Select, SearchField } from '@rozenite/ui';
 import type {
   StorageDeleteEntryEvent,
   StorageEventMap,
@@ -28,7 +28,9 @@ type StorageSnapshotState = {
   entries: StorageEntry[];
 };
 
-const getEntryTypeFromValue = (value: StorageEntryValue): StorageEntry['type'] => {
+const getEntryTypeFromValue = (
+  value: StorageEntryValue,
+): StorageEntry['type'] => {
   if (typeof value === 'string') {
     return 'string';
   }
@@ -46,18 +48,15 @@ const getEntryTypeFromValue = (value: StorageEntryValue): StorageEntry['type'] =
 
 export default function StoragePanel() {
   const [snapshots, setSnapshots] = useState<Map<string, StorageSnapshotState>>(
-    new Map()
+    new Map(),
   );
-  const [selectedStorageViewId, setSelectedStorageViewId] = useState<string | null>(
-    null
-  );
+  const [selectedStorageViewId, setSelectedStorageViewId] = useState<
+    string | null
+  >(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<StorageEntry | null>(null);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [editingEntry, setEditingEntry] = useState<StorageEntry | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const client = useRozeniteDevToolsClient<StorageEventMap>({
     pluginId: '@rozenite/storage-plugin',
@@ -71,61 +70,61 @@ export default function StoragePanel() {
     const snapshotSubscription = client.onMessage(
       'snapshot',
       (event: StorageSnapshotEvent) => {
-      const viewId = getStorageViewId(event.target);
-      setSnapshots((previous) => {
-        const next = new Map(previous);
-        next.set(viewId, {
-          target: event.target,
-          adapterName: event.adapterName,
-          storageName: event.storageName,
-          capabilities: event.capabilities,
-          entries: event.entries,
+        const viewId = getStorageViewId(event.target);
+        setSnapshots((previous) => {
+          const next = new Map(previous);
+          next.set(viewId, {
+            target: event.target,
+            adapterName: event.adapterName,
+            storageName: event.storageName,
+            capabilities: event.capabilities,
+            entries: event.entries,
+          });
+
+          if (previous.size === 0 && !selectedStorageViewId) {
+            setSelectedStorageViewId(viewId);
+          }
+
+          return next;
         });
 
-        if (previous.size === 0 && !selectedStorageViewId) {
-          setSelectedStorageViewId(viewId);
+        if (viewId === selectedStorageViewId) {
+          setLoading(false);
         }
-
-        return next;
-      });
-
-      if (viewId === selectedStorageViewId) {
-        setLoading(false);
-      }
-      }
+      },
     );
 
     const setEntrySubscription = client.onMessage(
       'set-entry',
       (event: StorageSetEntryEvent) => {
-      const viewId = getStorageViewId(event.target);
-      setSnapshots((previous) => {
-        const next = new Map(previous);
-        const current = next.get(viewId);
+        const viewId = getStorageViewId(event.target);
+        setSnapshots((previous) => {
+          const next = new Map(previous);
+          const current = next.get(viewId);
 
-        if (!current) {
-          return previous;
-        }
+          if (!current) {
+            return previous;
+          }
 
-        const existingIndex = current.entries.findIndex(
-          (entry) => entry.key === event.entry.key
-        );
+          const existingIndex = current.entries.findIndex(
+            (entry) => entry.key === event.entry.key,
+          );
 
-        const entries =
-          existingIndex >= 0
-            ? current.entries.map((entry) =>
-                entry.key === event.entry.key ? event.entry : entry
-              )
-            : [...current.entries, event.entry];
+          const entries =
+            existingIndex >= 0
+              ? current.entries.map((entry) =>
+                  entry.key === event.entry.key ? event.entry : entry,
+                )
+              : [...current.entries, event.entry];
 
-        next.set(viewId, {
-          ...current,
-          entries,
+          next.set(viewId, {
+            ...current,
+            entries,
+          });
+
+          return next;
         });
-
-        return next;
-      });
-      }
+      },
     );
 
     const deleteEntrySubscription = client.onMessage(
@@ -148,7 +147,7 @@ export default function StoragePanel() {
 
           return next;
         });
-      }
+      },
     );
 
     client.send('get-snapshot', {
@@ -178,7 +177,7 @@ export default function StoragePanel() {
     const separatorIndex = selectedStorageViewId.indexOf(':');
     if (separatorIndex < 0) {
       console.warn(
-        `[Rozenite] Storage Plugin: Invalid storage view id "${selectedStorageViewId}".`
+        `[Rozenite] Storage Plugin: Invalid storage view id "${selectedStorageViewId}".`,
       );
       setLoading(false);
       return;
@@ -198,7 +197,7 @@ export default function StoragePanel() {
   }, [client, selectedStorageViewId, snapshots]);
 
   const selectedStorage = selectedStorageViewId
-    ? snapshots.get(selectedStorageViewId) ?? null
+    ? (snapshots.get(selectedStorageViewId) ?? null)
     : null;
 
   const entries = selectedStorage?.entries ?? [];
@@ -206,15 +205,15 @@ export default function StoragePanel() {
   const filteredEntries = useMemo(
     () =>
       entries.filter((entry) =>
-        entry.key.toLowerCase().includes(searchTerm.toLowerCase())
+        entry.key.toLowerCase().includes(searchTerm.toLowerCase()),
       ),
-    [entries, searchTerm]
+    [entries, searchTerm],
   );
 
   const supportedTypes = selectedStorage?.capabilities.supportedTypes ?? [];
 
   const updateEntriesForSelectedStorage = (
-    mutate: (entries: StorageEntry[]) => StorageEntry[]
+    mutate: (entries: StorageEntry[]) => StorageEntry[],
   ) => {
     if (!selectedStorageViewId) {
       return;
@@ -266,7 +265,7 @@ export default function StoragePanel() {
     });
 
     updateEntriesForSelectedStorage((currentEntries) =>
-      currentEntries.map((entry) => (entry.key === key ? updatedEntry : entry))
+      currentEntries.map((entry) => (entry.key === key ? updatedEntry : entry)),
     );
   };
 
@@ -282,7 +281,7 @@ export default function StoragePanel() {
     });
 
     updateEntriesForSelectedStorage((currentEntries) =>
-      currentEntries.filter((entry) => entry.key !== key)
+      currentEntries.filter((entry) => entry.key !== key),
     );
   };
 
@@ -297,7 +296,10 @@ export default function StoragePanel() {
       entry,
     });
 
-    updateEntriesForSelectedStorage((currentEntries) => [...currentEntries, entry]);
+    updateEntriesForSelectedStorage((currentEntries) => [
+      ...currentEntries,
+      entry,
+    ]);
   };
 
   const storageOptions = [...snapshots.entries()].map(([viewId, snapshot]) => ({
@@ -306,132 +308,114 @@ export default function StoragePanel() {
   }));
 
   return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
-      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
+    <div
+      data-theme="dark"
+      className="dark h-screen bg-background text-foreground flex flex-col"
+    >
+      <div className="flex items-center gap-2 p-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-200">Storage</span>
+          <span className="text-sm font-medium text-default-foreground">
+            Storage
+          </span>
         </div>
         <div className="flex-1" />
-        <div className="flex items-center gap-2">
-          <label htmlFor="storage-select" className="text-xs text-gray-400">
-            Storage:
-          </label>
-          <select
-            id="storage-select"
-            value={selectedStorageViewId ?? ''}
-            onChange={(event) => setSelectedStorageViewId(event.target.value)}
-            disabled={snapshots.size === 0}
-            className="h-8 px-2 text-xs bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {snapshots.size === 0 ? (
-              <option>No storages found</option>
-            ) : (
-              storageOptions.map((option) => (
-                <option key={option.viewId} value={option.viewId}>
+        <Select
+          placeholder="Select storage"
+          value={selectedStorageViewId ?? ''}
+          onChange={(value) =>
+            setSelectedStorageViewId(
+              typeof value === 'string'
+                ? value
+                : value == null
+                  ? null
+                  : String(value),
+            )
+          }
+          isDisabled={snapshots.size === 0}
+        >
+          <Select.Trigger>
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {storageOptions.map((option) => (
+                <ListBox.Item
+                  key={option.viewId}
+                  id={option.viewId}
+                  textValue={option.label}
+                >
                   {option.label}
-                </option>
-              ))
-            )}
-          </select>
-        </div>
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
       </div>
 
-      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
-        <button
-          onClick={() => setShowAddDialog(true)}
-          disabled={!selectedStorage}
-          className="flex items-center gap-1 px-3 h-8 text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
-          title="Add new entry"
-        >
-          <Plus className="h-3 w-3" />
-          Add Entry
-        </button>
+      <div className="flex items-center gap-2 p-2">
+        <AddEntryDialog
+          isDisabled={!selectedStorage}
+          onAddEntry={handleAddEntry}
+          existingKeys={entries.map((entry) => entry.key)}
+          supportedTypes={supportedTypes}
+        />
         <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search keys..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="h-8 w-full pl-8 pr-3 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          <SearchField
+            name="search"
+            fullWidth
+            value={searchTerm}
+            onChange={setSearchTerm}
+          >
+            <SearchField.Group>
+              <SearchField.SearchIcon />
+              <SearchField.Input placeholder="Search keys..." />
+              <SearchField.ClearButton />
+            </SearchField.Group>
+          </SearchField>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-default-foreground">
           {filteredEntries.length} of {entries.length} entries
         </div>
       </div>
 
       <main className="flex flex-1 min-h-0 overflow-auto">
         {selectedStorage ? (
-          filteredEntries.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center w-full">
-              <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                No entries found
-              </h3>
-              <p className="text-gray-400 text-sm">
-                {searchTerm
-                  ? 'Try adjusting your search terms'
-                  : 'This storage appears to be empty'}
-              </p>
-            </div>
-          ) : (
-            <EditableTable
-              data={filteredEntries}
-              supportedTypes={supportedTypes}
-              onValueChange={handleValueChange}
-              onDeleteEntry={handleDeleteEntry}
-              onRowClick={(entry) => {
-                setSelectedEntry(entry);
-                setShowDetailDialog(true);
-              }}
-              loading={loading}
-            />
-          )
+          <EditableTable
+            data={filteredEntries}
+            loading={loading}
+            onDeleteEntry={handleDeleteEntry}
+            onRowClick={setSelectedEntry}
+            onValueChange={handleValueChange}
+            searchTerm={searchTerm}
+            supportedTypes={supportedTypes}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center w-full">
-            <h2 className="text-xl font-semibold text-gray-200 mb-2">
+            <h2 className="text-xl font-semibold text-default-foreground mb-2">
               Welcome to Storage Inspector
             </h2>
-            <p className="text-gray-400 text-sm">
+            <p className="text-default-foreground text-sm">
               Select a storage from the dropdown above to inspect data
             </p>
           </div>
         )}
       </main>
 
-      <AddEntryDialog
-        isOpen={showAddDialog}
-        onClose={() => setShowAddDialog(false)}
-        onAddEntry={handleAddEntry}
-        existingKeys={entries.map((entry) => entry.key)}
-        supportedTypes={supportedTypes}
-      />
-
       <EntryDetailDialog
-        isOpen={showDetailDialog}
-        onClose={() => {
-          setShowDetailDialog(false);
-          setSelectedEntry(null);
-        }}
+        onClose={() => setSelectedEntry(null)}
         onEdit={(entry) => {
-          setShowDetailDialog(false);
+          setSelectedEntry(null);
           setEditingEntry(entry);
-          setShowEditDialog(true);
         }}
         entry={selectedEntry}
       />
 
       <EditEntryDialog
-        isOpen={showEditDialog}
-        onClose={() => {
-          setShowEditDialog(false);
-          setEditingEntry(null);
-        }}
+        onClose={() => setEditingEntry(null)}
         onEditEntry={(key, newValue) => {
           handleValueChange(key, newValue);
-          setShowEditDialog(false);
           setEditingEntry(null);
         }}
         supportedTypes={supportedTypes}

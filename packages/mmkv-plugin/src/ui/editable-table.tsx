@@ -1,18 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  flexRender,
   createColumnHelper,
-  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
   type SortingState,
+  useReactTable,
 } from '@tanstack/react-table';
-import { Trash2, Loader2, Edit3 } from 'lucide-react';
-import { MMKVEntry, MMKVEntryType, MMKVEntryValue } from '../shared/types';
-import { EditEntryDialog } from './edit-entry-dialog';
+import { Button, Chip, Table } from '@rozenite/ui';
+import { ChevronUp, Edit3, Inbox, Loader2, Trash2 } from 'lucide-react';
+import type { MMKVEntry, MMKVEntryType, MMKVEntryValue } from '../shared/types';
 import { ConfirmDialog } from './confirm-dialog';
+import { EditEntryDialog } from './edit-entry-dialog';
 
 export type EditableTableProps = {
   data: MMKVEntry[];
@@ -20,9 +20,68 @@ export type EditableTableProps = {
   onDeleteEntry?: (key: string) => void;
   onRowClick?: (entry: MMKVEntry) => void;
   loading?: boolean;
+  searchTerm?: string;
+};
+
+const typeColorMap: Record<
+  MMKVEntryType,
+  'success' | 'danger' | 'warning' | 'accent' | 'default'
+> = {
+  string: 'success',
+  number: 'default',
+  boolean: 'warning',
+  buffer: 'accent',
 };
 
 const columnHelper = createColumnHelper<MMKVEntry>();
+type TableSortDescriptor = NonNullable<
+  ComponentProps<typeof Table.Content>['sortDescriptor']
+>;
+
+function toSortDescriptor(
+  sorting: SortingState,
+): TableSortDescriptor | undefined {
+  const firstSort = sorting[0];
+
+  if (!firstSort) {
+    return undefined;
+  }
+
+  return {
+    column: firstSort.id,
+    direction: firstSort.desc ? 'descending' : 'ascending',
+  };
+}
+
+function toSortingState(descriptor: TableSortDescriptor): SortingState {
+  return [
+    {
+      desc: descriptor.direction === 'descending',
+      id: String(descriptor.column),
+    },
+  ];
+}
+
+function SortableColumnHeader({
+  children,
+  sortDirection,
+}: {
+  children: ReactNode;
+  sortDirection?: 'ascending' | 'descending';
+}) {
+  return (
+    <span className="flex items-center justify-between gap-2">
+      <span>{children}</span>
+      {sortDirection ? (
+        <ChevronUp
+          className={`size-3 shrink-0 transition-transform duration-100 ease-out ${
+            sortDirection === 'descending' ? 'rotate-180' : ''
+          }`}
+        />
+      ) : null}
+    </span>
+  );
+}
 
 export const EditableTable = ({
   data,
@@ -30,112 +89,103 @@ export const EditableTable = ({
   onDeleteEntry,
   onRowClick,
   loading = false,
+  searchTerm = '',
 }: EditableTableProps) => {
   const [editingEntry, setEditingEntry] = useState<MMKVEntry | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
     entryKey: string;
   }>({ isOpen: false, entryKey: '' });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns = useMemo<ColumnDef<MMKVEntry, any>[]>(
+  const columns = useMemo(
     () => [
       columnHelper.accessor('key', {
         header: 'Key',
         enableSorting: true,
         cell: ({ getValue }) => (
-          <div className="text-gray-300 font-mono text-sm">{getValue()}</div>
+          <span className="font-mono text-sm text-foreground">
+            {getValue()}
+          </span>
         ),
       }),
       columnHelper.accessor('type', {
         header: 'Type',
         enableSorting: true,
-        cell: ({ getValue }) => {
-          const type = getValue() as MMKVEntryType;
+        cell: (info) => {
+          const type = info.getValue() as MMKVEntryType;
+
           return (
-            <div className="flex items-center">
-              <span
-                className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
-                  type
-                )}`}
-                title={`${getTypeIcon(type)} ${type}`}
-              >
-                {type}
-              </span>
-            </div>
+            <Chip color={typeColorMap[type]} size="sm" variant="soft">
+              {type}
+            </Chip>
           );
         },
       }),
       columnHelper.accessor('value', {
         header: 'Value',
-        cell: ({ row }) => {
-          const entry = row.original;
-          return (
-            <div className="flex items-center justify-between group">
-              <div className="flex-1">{formatValue(entry)}</div>
-              <button
-                onClick={() => handleEdit(entry)}
-                className="opacity-0 group-hover:opacity-100 ml-2 p-1 text-gray-400 hover:text-blue-400 hover:bg-gray-800 rounded transition-all"
-                title="Edit value"
-                aria-label={`Edit value for ${entry.key}`}
-              >
-                <Edit3 className="h-3 w-3" />
-              </button>
-            </div>
-          );
-        },
+        cell: ({ row }) => (
+          <div className="min-w-0">{formatValue(row.original)}</div>
+        ),
       }),
       columnHelper.display({
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleDelete(row.original.key)}
-              disabled={!onDeleteEntry}
-              className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Delete entry"
-              aria-label={`Delete entry ${row.original.key}`}
+          <div className="flex items-center gap-1">
+            <Button
+              aria-label={`Edit value for ${row.original.key}`}
+              isDisabled={!onValueChange}
+              isIconOnly
+              onClick={(event) => event.stopPropagation()}
+              onPress={() => handleEdit(row.original)}
+              size="sm"
+              variant="ghost"
             >
-              <Trash2 className="h-4 w-4" />
-            </button>
+              <Edit3 className="size-4 text-muted" />
+            </Button>
+            <Button
+              aria-label={`Delete entry ${row.original.key}`}
+              isDisabled={!onDeleteEntry}
+              isIconOnly
+              onClick={(event) => event.stopPropagation()}
+              onPress={() => handleDelete(row.original.key)}
+              size="sm"
+              variant="ghost"
+            >
+              <Trash2 className="size-4 text-danger" />
+            </Button>
           </div>
         ),
       }),
     ],
-    [onDeleteEntry]
+    [onDeleteEntry, onValueChange],
   );
 
   const table = useReactTable({
     data,
     columns,
-    state: {
-      sorting,
-    },
+    state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+  const sortDescriptor = useMemo(() => toSortDescriptor(sorting), [sorting]);
 
   const handleEdit = (entry: MMKVEntry) => {
     setEditingEntry(entry);
-    setShowEditDialog(true);
   };
 
   const handleEditEntry = (key: string, newValue: MMKVEntryValue) => {
     if (onValueChange) {
       onValueChange(key, newValue);
     }
+
     setEditingEntry(null);
-    setShowEditDialog(false);
   };
 
   const handleCloseEditDialog = () => {
     setEditingEntry(null);
-    setShowEditDialog(false);
   };
 
   const handleDelete = (key: string) => {
@@ -148,161 +198,114 @@ export const EditableTable = ({
     if (onDeleteEntry && deleteConfirm.entryKey) {
       onDeleteEntry(deleteConfirm.entryKey);
     }
+
     setDeleteConfirm({ isOpen: false, entryKey: '' });
-  };
-
-  const getTypeColorClass = (type: string) => {
-    switch (type) {
-      case 'string':
-        return 'bg-green-600';
-      case 'number':
-        return 'bg-blue-600';
-      case 'boolean':
-        return 'bg-yellow-600';
-      case 'buffer':
-        return 'bg-purple-600';
-      default:
-        return 'bg-gray-600';
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'string':
-        return '📝';
-      case 'number':
-        return '🔢';
-      case 'boolean':
-        return '✅';
-      case 'buffer':
-        return '💾';
-      default:
-        return '❓';
-    }
-  };
-
-  const formatValue = (entry: MMKVEntry) => {
-    switch (entry.type) {
-      case 'string':
-        return (
-          <span className="text-green-300 font-mono">
-            "{entry.value as string}"
-          </span>
-        );
-      case 'number':
-        return (
-          <span className="text-blue-300 font-mono">
-            {entry.value as number}
-          </span>
-        );
-      case 'boolean':
-        return (
-          <span
-            className={`font-mono ${
-              entry.value ? 'text-green-400' : 'text-red-400'
-            }`}
-          >
-            {entry.value ? 'true' : 'false'}
-          </span>
-        );
-      case 'buffer': {
-        const bufferArray = entry.value as number[];
-        const displayValue =
-          bufferArray.length > 5
-            ? `[${bufferArray.slice(0, 5).join(', ')}, ...${
-                bufferArray.length - 5
-              } more]`
-            : `[${bufferArray.join(', ')}]`;
-        return (
-          <span className="text-purple-300 font-mono">{displayValue}</span>
-        );
-      }
-      default:
-        return <span className="text-gray-400">Unknown</span>;
-    }
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <Loader2 className="h-8 w-8 text-blue-400 animate-spin mb-4" />
-        <p className="text-gray-400">Loading entries...</p>
+      <div className="flex min-h-48 w-full flex-col items-center justify-center gap-3 rounded-xl border border-border/70 bg-surface px-4 py-8 text-center text-sm text-muted shadow-sm">
+        <Loader2 className="size-8 animate-spin text-accent" />
+        <p>Loading entries...</p>
       </div>
     );
   }
 
   return (
     <>
-      <table className="w-full self-start">
-        <thead className="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
+      <Table
+        className="w-full border border-border/70 bg-surface shadow-sm"
+        variant="secondary"
+      >
+        <Table.ScrollContainer className="w-full">
+          <Table.Content
+            aria-label="MMKV entries"
+            className="min-w-full"
+            onSortChange={(descriptor) =>
+              setSorting(toSortingState(descriptor))
+            }
+            sortDescriptor={sortDescriptor}
+          >
+            <Table.Header>
+              {table.getHeaderGroups()[0]?.headers.map((header) => (
+                <Table.Column
                   key={header.id}
-                  className={`text-left text-xs font-medium text-gray-400 px-3 py-2 ${
-                    header.column.getCanSort()
-                      ? 'cursor-pointer select-none hover:bg-gray-700'
-                      : ''
-                  }`}
-                  onClick={header.column.getToggleSortingHandler()}
+                  allowsSorting={header.column.getCanSort()}
+                  id={header.id}
+                  isRowHeader={header.id === 'key'}
                 >
-                  <div className="flex items-center gap-1">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
+                  {({ sortDirection }) =>
+                    header.column.getCanSort() ? (
+                      <SortableColumnHeader sortDirection={sortDirection}>
+                        {flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
-                    {header.column.getCanSort() && (
-                      <span className="text-gray-500">
-                        {{
-                          asc: '↑',
-                          desc: '↓',
-                        }[header.column.getIsSorted() as string] ?? '↕'}
-                      </span>
-                    )}
-                  </div>
-                </th>
+                      </SortableColumnHeader>
+                    ) : (
+                      flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )
+                    )
+                  }
+                </Table.Column>
               ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr
-              key={row.id}
-              className={`text-sm hover:bg-gray-800 border-b border-gray-800 ${
-                onRowClick ? 'cursor-pointer' : ''
-              }`}
-              onClick={(e) => {
-                // Don't trigger row click if clicking on buttons or interactive elements
-                const target = e.target as HTMLElement;
-                if (
-                  target.tagName === 'BUTTON' ||
-                  target.closest('button') ||
-                  target.tagName === 'INPUT' ||
-                  target.closest('input')
-                ) {
-                  return;
-                }
-                if (onRowClick) {
-                  onRowClick(row.original);
-                }
-              }}
+            </Table.Header>
+            <Table.Body
+              renderEmptyState={() => (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-4 px-4 py-10 text-center">
+                  <Inbox className="size-6 text-muted" />
+                  <span className="text-sm text-muted">
+                    {searchTerm
+                      ? 'No results found'
+                      : 'This instance appears to be empty'}
+                  </span>
+                </div>
+              )}
             >
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-3 py-2">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
+              {table.getRowModel().rows.map((row) => (
+                <Table.Row
+                  key={row.original.key}
+                  className={`transition-colors hover:bg-surface-secondary/70 ${
+                    onRowClick ? 'cursor-pointer' : ''
+                  }`}
+                  id={row.original.key}
+                  onClick={(event) => {
+                    const target = event.target as HTMLElement;
+                    if (
+                      target.tagName === 'BUTTON' ||
+                      target.closest('button') ||
+                      target.tagName === 'INPUT' ||
+                      target.closest('input')
+                    ) {
+                      return;
+                    }
+
+                    onRowClick?.(row.original);
+                  }}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <Table.Cell
+                      key={cell.id}
+                      className={
+                        cell.column.id === 'value' ? 'min-w-0' : undefined
+                      }
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </Table.Cell>
+                  ))}
+                </Table.Row>
               ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            </Table.Body>
+          </Table.Content>
+        </Table.ScrollContainer>
+      </Table>
 
       <EditEntryDialog
-        isOpen={showEditDialog}
         onClose={handleCloseEditDialog}
         onEditEntry={handleEditEntry}
         entry={editingEntry}
@@ -319,4 +322,39 @@ export const EditableTable = ({
       />
     </>
   );
+};
+
+const formatValue = (entry: MMKVEntry) => {
+  if (entry.type === 'string') {
+    return (
+      <span className="font-mono text-sm text-success">"{entry.value}"</span>
+    );
+  }
+
+  if (entry.type === 'number') {
+    return (
+      <span className="font-mono text-sm text-foreground">{entry.value}</span>
+    );
+  }
+
+  if (entry.type === 'boolean') {
+    return (
+      <span
+        className={`font-mono text-sm ${
+          entry.value ? 'text-success' : 'text-danger'
+        }`}
+      >
+        {entry.value ? 'true' : 'false'}
+      </span>
+    );
+  }
+
+  const displayValue =
+    entry.value.length > 5
+      ? `[${entry.value.slice(0, 5).join(', ')}, ...${
+          entry.value.length - 5
+        } more]`
+      : `[${entry.value.join(', ')}]`;
+
+  return <span className="font-mono text-sm text-accent">{displayValue}</span>;
 };
