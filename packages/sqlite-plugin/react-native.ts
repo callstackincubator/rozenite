@@ -19,6 +19,16 @@ export type {
   ExpoSqliteLike,
 } from './src/react-native/adapters/expo-sqlite';
 
+/** Shared SQL + bridge helpers for custom adapters (e.g. non-Expo SQLite drivers). */
+export type { SqlStatementSegment } from './src/shared/sql';
+export {
+  classifySqlStatement,
+  normalizeSingleStatementSql,
+  splitSqlStatements,
+  statementReturnsRows,
+} from './src/shared/sql';
+export { decodeSqliteBridgeValue, formatSqliteError } from './src/shared/bridge-values';
+
 type CreateSqliteAdapter =
   typeof import('./src/react-native/adapters').createSqliteAdapter;
 type CreateExpoSqliteAdapter =
