@@ -99,6 +99,12 @@ export const useNetworkActivityDevTools = (
       }),
     ];
 
+    // Inform the DevTools UI of the current recording state so it can detect
+    // and resolve desynchronization (e.g. after an app reload)
+    client.send('recording-state', {
+      isRecording: isRecordingEnabledRef.current,
+    });
+
     // Send initial or changed values live
     sendClientUISettings();
 
