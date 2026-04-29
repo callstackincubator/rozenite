@@ -123,6 +123,16 @@ export const createNetworkActivityStore = () =>
           data: NetworkActivityEventMap[K]
         ) => {
           switch (eventType) {
+            case 'recording-state': {
+              const eventData =
+                data as NetworkActivityEventMap['recording-state'];
+              const { isRecording, _client } = get();
+              if (_client && isRecording !== eventData.isRecording) {
+                _client.send(isRecording ? 'network-enable' : 'network-disable', {});
+              }
+              break;
+            }
+
             case 'client-ui-settings': {
               const eventData = data as NetworkActivityEventMap['client-ui-settings'];
               set({ clientUISettings: eventData.settings || null });
@@ -580,6 +590,9 @@ export const createNetworkActivityStore = () =>
 
             // Subscribe to all events using the unified handler
             const unsubscribeFunctions = [
+              client.onMessage('recording-state', (data) =>
+                handleEvent('recording-state', data)
+              ),
               client.onMessage('client-ui-settings', (data) =>
                 handleEvent('client-ui-settings', data)
               ),
