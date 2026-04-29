@@ -572,14 +572,14 @@ const HTTPTestComponent: React.FC = () => {
 };
 
 const WEBSOCKET_CONFIG = {
-  URL: 'wss://echo.websocket.events',
+  URL: 'wss://echo.websocket.org',
   MESSAGE_INTERVAL: 5000,
   DEFAULT_MESSAGE: 'hello world',
   MAX_MESSAGES_DISPLAY: 10,
 } as const;
 
 const NITRO_WEBSOCKET_CONFIG = {
-  URL: 'wss://echo.websocket.events',
+  URL: 'wss://echo.websocket.org',
   DEFAULT_MESSAGE: 'hello from nitro websocket',
   MAX_MESSAGES_DISPLAY: 12,
 } as const;
