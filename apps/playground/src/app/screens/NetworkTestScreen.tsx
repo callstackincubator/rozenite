@@ -13,8 +13,17 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import EventSource from 'react-native-sse';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
+import {
+  NitroWebSocket,
+  type WebSocketCloseEvent as NitroWebSocketCloseEvent,
+  type WebSocketMessageEvent as NitroWebSocketMessageEvent,
+} from 'react-native-nitro-websockets';
 import { RootStackParamList } from '../navigation/types';
 import { api, User, Post, Todo } from '../utils/network-activity/api';
+import {
+  nitroApi,
+  type NitroDemoResult,
+} from '../utils/network-activity/nitro';
 
 const useUsersQuery = () => {
   return useQuery({
@@ -139,6 +148,117 @@ const TodoCard: React.FC<{ todo: Todo }> = ({ todo }) => (
   </View>
 );
 
+const NitroHTTPTestComponent: React.FC = () => {
+  const [isRunning, setIsRunning] = React.useState(false);
+  const [result, setResult] = React.useState<NitroDemoResult | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const runNitroAction = React.useCallback(
+    async (action: () => Promise<NitroDemoResult>) => {
+      setIsRunning(true);
+      setError(null);
+
+      try {
+        const nextResult = await action();
+        setResult(nextResult);
+      } catch (actionError) {
+        setResult(null);
+        setError(
+          actionError instanceof Error
+            ? actionError.message
+            : String(actionError),
+        );
+      } finally {
+        setIsRunning(false);
+      }
+    },
+    [],
+  );
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Nitro HTTP Test</Text>
+        <Text style={styles.cardBody}>
+          Runs requests through `react-native-nitro-fetch`. Watch the Network
+          Activity panel for `Nitro` source badges.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runNitroAction(nitroApi.getUsers)}
+          >
+            <Text style={styles.nitroButtonText}>Nitro GET</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runNitroAction(nitroApi.createPost)}
+          >
+            <Text style={styles.nitroButtonText}>Nitro POST</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runNitroAction(nitroApi.prefetchUuid)}
+          >
+            <Text style={styles.nitroButtonText}>Prefetch</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              styles.nitroButtonDanger,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runNitroAction(nitroApi.abortSlowRequest)}
+          >
+            <Text style={styles.nitroButtonText}>Abort</Text>
+          </TouchableOpacity>
+        </View>
+
+        {isRunning && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Running Nitro request...</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {result && (
+          <View style={styles.responseContainer}>
+            <Text style={styles.responseTitle}>{result.title}</Text>
+            <Text style={styles.cardMeta}>
+              Status: {result.status} {result.statusText}
+            </Text>
+            {result.extra ? (
+              <Text style={styles.nitroExtraText}>{result.extra}</Text>
+            ) : null}
+            <ScrollView style={styles.responseScrollView} nestedScrollEnabled>
+              <Text style={styles.responseText}>{result.body}</Text>
+            </ScrollView>
+          </View>
+        )}
+      </View>
+    </ScrollView>
+  );
+};
+
 const HTTPTestComponent: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<
     'users' | 'posts' | 'todos' | 'slow' | 'unreliable' | 'create' | 'large'
@@ -196,7 +316,7 @@ const HTTPTestComponent: React.FC = () => {
           // Switch to posts tab to see the new post
           setActiveTab('posts');
         },
-      }
+      },
     );
   };
 
@@ -244,7 +364,7 @@ const HTTPTestComponent: React.FC = () => {
                   | 'slow'
                   | 'unreliable'
                   | 'create'
-                  | 'large'
+                  | 'large',
               )
             }
           >
@@ -342,8 +462,10 @@ const HTTPTestComponent: React.FC = () => {
         <View style={styles.largeFileContainer}>
           <Text style={styles.largeFileTitle}>Large File Download Test</Text>
           <Text style={styles.largeFileDescription}>
-            Download a ~5MB GeoJSON file to test progress events. 
-            Watch the Network Activity DevTools for progress percentage. Lower the emulator&apos;s signal strength for slower downloads to observe progress updates.
+            Download a ~5MB GeoJSON file to test progress events. Watch the
+            Network Activity DevTools for progress percentage. Lower the
+            emulator&apos;s signal strength for slower downloads to observe
+            progress updates.
           </Text>
           <TouchableOpacity
             style={[
@@ -456,21 +578,27 @@ const WEBSOCKET_CONFIG = {
   MAX_MESSAGES_DISPLAY: 10,
 } as const;
 
+const NITRO_WEBSOCKET_CONFIG = {
+  URL: 'wss://echo.websocket.org',
+  DEFAULT_MESSAGE: 'hello from nitro websocket',
+  MAX_MESSAGES_DISPLAY: 12,
+} as const;
+
 const useWebSocket = (
   url: string,
-  messageIntervalMs = WEBSOCKET_CONFIG.MESSAGE_INTERVAL
+  messageIntervalMs = WEBSOCKET_CONFIG.MESSAGE_INTERVAL,
 ) => {
   const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = React.useState(false);
   const [messages, setMessages] = React.useState<string[]>([]);
   const [dataType, setDataType] = React.useState<'text' | 'binary' | 'json'>(
-    'text'
+    'text',
   );
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const addMessage = React.useCallback((message: string) => {
     setMessages((prev) =>
-      [...prev, message].slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY)
+      [...prev, message].slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY),
     );
   }, []);
 
@@ -496,7 +624,7 @@ const useWebSocket = (
         }
       }
     },
-    [addMessage]
+    [addMessage],
   );
 
   const startMessageInterval = React.useCallback(
@@ -509,7 +637,7 @@ const useWebSocket = (
         sendMessage(ws, WEBSOCKET_CONFIG.DEFAULT_MESSAGE, dataType);
       }, messageIntervalMs);
     },
-    [sendMessage, dataType, messageIntervalMs]
+    [sendMessage, dataType, messageIntervalMs],
   );
 
   const stopMessageInterval = React.useCallback(() => {
@@ -532,7 +660,7 @@ const useWebSocket = (
       ws.onmessage = (event) => {
         if (event.data instanceof ArrayBuffer) {
           addMessage(
-            `Received binary: ${String(Array.from(new Uint8Array(event.data)))}`
+            `Received binary: ${String(Array.from(new Uint8Array(event.data)))}`,
           );
         } else {
           addMessage(`Received: ${event.data}`);
@@ -715,6 +843,216 @@ const WebSocketTestComponent: React.FC = () => {
   );
 };
 
+const NitroWebSocketTestComponent: React.FC = () => {
+  const socketRef = React.useRef<NitroWebSocket | null>(null);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const [isConnected, setIsConnected] = React.useState(false);
+  const [isConnecting, setIsConnecting] = React.useState(false);
+  const [messages, setMessages] = React.useState<string[]>([]);
+  const [message, setMessage] = React.useState<string>(
+    NITRO_WEBSOCKET_CONFIG.DEFAULT_MESSAGE,
+  );
+
+  const addMessage = React.useCallback((nextMessage: string) => {
+    setMessages((prev) =>
+      [...prev, nextMessage].slice(
+        -NITRO_WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY,
+      ),
+    );
+  }, []);
+
+  const connect = React.useCallback(() => {
+    if (socketRef.current || isConnecting) {
+      return;
+    }
+
+    setIsConnecting(true);
+    addMessage(`Connecting to ${NITRO_WEBSOCKET_CONFIG.URL}`);
+
+    try {
+      const socket = new NitroWebSocket(NITRO_WEBSOCKET_CONFIG.URL);
+      socketRef.current = socket;
+
+      socket.onopen = () => {
+        setIsConnected(true);
+        setIsConnecting(false);
+        addMessage('Nitro socket connected');
+      };
+
+      socket.onmessage = (event: NitroWebSocketMessageEvent) => {
+        if (event.isBinary && event.binaryData) {
+          addMessage(`Received binary (${event.binaryData.byteLength} bytes)`);
+          return;
+        }
+
+        addMessage(`Received: ${event.data}`);
+      };
+
+      socket.onerror = (error: string) => {
+        addMessage(`Nitro error: ${error}`);
+        setIsConnected(false);
+        setIsConnecting(false);
+        socketRef.current = null;
+      };
+
+      socket.onclose = (event: NitroWebSocketCloseEvent) => {
+        addMessage(
+          `Nitro socket closed (${event.code}${event.reason ? `: ${event.reason}` : ''})`,
+        );
+        setIsConnected(false);
+        setIsConnecting(false);
+        socketRef.current = null;
+      };
+    } catch (error) {
+      addMessage(`Connection error: ${String(error)}`);
+      setIsConnecting(false);
+      socketRef.current = null;
+    }
+  }, [addMessage, isConnecting]);
+
+  const disconnect = React.useCallback(() => {
+    socketRef.current?.close(1000, 'playground disconnect');
+  }, []);
+
+  const send = React.useCallback(() => {
+    const socket = socketRef.current;
+    const trimmed = message.trim();
+    if (!socket || !trimmed || !isConnected) {
+      return;
+    }
+
+    socket.send(trimmed);
+    addMessage(`Sent: ${trimmed}`);
+  }, [addMessage, isConnected, message]);
+
+  const clearMessages = React.useCallback(() => {
+    setMessages([]);
+  }, []);
+
+  React.useEffect(() => {
+    if (scrollViewRef.current && messages.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 150);
+    }
+  }, [messages]);
+
+  React.useEffect(() => {
+    return () => {
+      socketRef.current?.close(1000, 'screen unmount');
+      socketRef.current = null;
+    };
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Nitro WebSocket Test</Text>
+        <Text style={styles.subtitle}>
+          Testing Nitro WebSocket traffic with a dedicated `Nitro` source in
+          Network Activity
+        </Text>
+      </View>
+
+      <View style={styles.websocketContainer}>
+        <View style={styles.websocketControls}>
+          <TouchableOpacity
+            style={[
+              styles.websocketButton,
+              isConnected
+                ? styles.websocketButtonDisconnect
+                : styles.nitroWebSocketButton,
+            ]}
+            onPress={isConnected ? disconnect : connect}
+            disabled={isConnecting}
+          >
+            {isConnecting ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.websocketButtonText}>
+                {isConnected ? 'Disconnect' : 'Connect'}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.dataTypeContainer}>
+            <Text style={styles.dataTypeLabel}>Source:</Text>
+            <View style={styles.nitroSourcePill}>
+              <Text style={styles.nitroSourcePillText}>Nitro WebSocket</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.connectionStatus}>
+          <Text style={styles.statusLabel}>Status:</Text>
+          <Text
+            style={[
+              styles.statusValue,
+              { color: isConnected ? '#4CAF50' : '#c084fc' },
+            ]}
+          >
+            {isConnected
+              ? 'Connected'
+              : isConnecting
+                ? 'Connecting'
+                : 'Disconnected'}
+          </Text>
+        </View>
+
+        <View style={styles.nitroInputRow}>
+          <TextInput
+            style={[styles.textInput, styles.nitroMessageInput]}
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Type a Nitro WebSocket message..."
+            placeholderTextColor="#666666"
+            editable={isConnected}
+          />
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              !isConnected && styles.sendButtonDisabled,
+            ]}
+            onPress={send}
+            disabled={!isConnected}
+          >
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.messagesContainer}>
+          <Text style={styles.messagesTitle}>Messages ({messages.length})</Text>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesList}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator
+          >
+            {messages.length === 0 ? (
+              <Text style={styles.noMessages}>
+                No Nitro WebSocket messages yet
+              </Text>
+            ) : (
+              messages.map((entry, index) => (
+                <Text key={`${entry}-${index}`} style={styles.messageText}>
+                  {entry}
+                </Text>
+              ))
+            )}
+          </ScrollView>
+        </View>
+
+        <TouchableOpacity
+          style={styles.clearMessagesButton}
+          onPress={clearMessages}
+        >
+          <Text style={styles.clearMessagesButtonText}>Clear Messages</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 const SSE_CONFIG = {
   URL: 'https://stream.wikimedia.org/v2/stream/recentchange',
   MAX_MESSAGES_DISPLAY: 15,
@@ -722,7 +1060,7 @@ const SSE_CONFIG = {
 
 const useSSE = (url: string) => {
   const [eventSource, setEventSource] = React.useState<EventSource | null>(
-    null
+    null,
   );
   const [isConnected, setIsConnected] = React.useState(false);
   const [messages, setMessages] = React.useState<string[]>([]);
@@ -730,7 +1068,7 @@ const useSSE = (url: string) => {
 
   const addMessage = React.useCallback((message: string) => {
     setMessages((prev) =>
-      [...prev, message].slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY)
+      [...prev, message].slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY),
     );
     setEventCount((prev) => prev + 1);
   }, []);
@@ -902,14 +1240,15 @@ const SSETestComponent: React.FC = () => {
 export const NetworkTestScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [activeTest, setActiveTest] = React.useState<
-    'http' | 'websocket' | 'sse' | 'request-body'
+    'http' | 'nitro' | 'websocket' | 'nitro-websocket' | 'sse' | 'request-body'
   >('http');
 
   const renderHeader = () => (
     <View style={styles.header}>
       <Text style={styles.title}>Network Test</Text>
       <Text style={styles.subtitle}>
-        Testing HTTP, WebSocket, and SSE connections
+        Testing built-in HTTP, Nitro HTTP, built-in WebSocket, Nitro WebSocket,
+        and SSE connections
       </Text>
 
       <TouchableOpacity
@@ -922,7 +1261,9 @@ export const NetworkTestScreen: React.FC = () => {
       <View style={styles.mainTabContainer}>
         {[
           { key: 'http', label: 'HTTP Test' },
+          { key: 'nitro', label: 'Nitro HTTP' },
           { key: 'websocket', label: 'WebSocket Test' },
+          { key: 'nitro-websocket', label: 'Nitro WS' },
           { key: 'sse', label: 'SSE Test' },
         ].map((tab) => (
           <TouchableOpacity
@@ -932,7 +1273,14 @@ export const NetworkTestScreen: React.FC = () => {
               activeTest === tab.key && styles.mainTabActive,
             ]}
             onPress={() =>
-              setActiveTest(tab.key as 'http' | 'websocket' | 'sse')
+              setActiveTest(
+                tab.key as
+                  | 'http'
+                  | 'nitro'
+                  | 'websocket'
+                  | 'nitro-websocket'
+                  | 'sse',
+              )
             }
           >
             <Text
@@ -954,8 +1302,12 @@ export const NetworkTestScreen: React.FC = () => {
       {renderHeader()}
       {activeTest === 'http' ? (
         <HTTPTestComponent />
+      ) : activeTest === 'nitro' ? (
+        <NitroHTTPTestComponent />
       ) : activeTest === 'websocket' ? (
         <WebSocketTestComponent />
+      ) : activeTest === 'nitro-websocket' ? (
+        <NitroWebSocketTestComponent />
       ) : (
         <SSETestComponent />
       )}
@@ -1440,13 +1792,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
     padding: 4,
+    flexWrap: 'wrap',
+    gap: 4,
   },
   mainTab: {
-    flex: 1,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
     alignItems: 'center',
+    minWidth: '24%',
   },
   mainTabActive: {
     backgroundColor: '#007AFF',
@@ -1458,6 +1812,84 @@ const styles = StyleSheet.create({
   },
   mainTabTextActive: {
     color: '#ffffff',
+  },
+  nitroButtonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 8,
+  },
+  nitroButton: {
+    backgroundColor: '#8b5cf6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    minWidth: '46%',
+  },
+  nitroButtonDanger: {
+    backgroundColor: '#d946ef',
+  },
+  nitroWebSocketButton: {
+    backgroundColor: '#8b5cf6',
+  },
+  nitroButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  nitroStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+  },
+  nitroStatusText: {
+    color: '#ffffff',
+    fontSize: 14,
+  },
+  nitroExtraText: {
+    color: '#c4b5fd',
+    fontSize: 13,
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  nitroSourcePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#2e1065',
+    borderColor: '#8b5cf6',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  nitroSourcePillText: {
+    color: '#e9d5ff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  nitroInputRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  nitroMessageInput: {
+    flex: 1,
+  },
+  sendButton: {
+    backgroundColor: '#8b5cf6',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#4b5563',
+  },
+  sendButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   formDataRow: {
     flexDirection: 'row',

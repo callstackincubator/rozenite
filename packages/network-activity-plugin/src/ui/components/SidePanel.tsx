@@ -37,7 +37,7 @@ const getTypeColor = (type: string) => {
 const createLegacyNetworkEntry = (
   selectedRequest: any,
   httpDetails: any,
-  wsDetails: any
+  wsDetails: any,
 ): OldNetworkEntry | null => {
   if (selectedRequest.type === 'http' && httpDetails) {
     return {
@@ -108,22 +108,22 @@ export const SidePanel = () => {
     selectedRequest.type === 'http'
       ? httpDetails?.request?.url || 'Unknown'
       : selectedRequest.type === 'websocket'
-      ? wsDetails?.connection?.url || 'Unknown'
-      : sseDetails?.request?.url || 'Unknown';
+        ? wsDetails?.connection?.url || 'Unknown'
+        : sseDetails?.request?.url || 'Unknown';
 
   // Extract status from the request
   const requestStatus =
     selectedRequest.type === 'http'
       ? httpDetails?.response?.status || httpDetails?.status || 'pending'
       : selectedRequest.type === 'websocket'
-      ? wsDetails?.status || 'unknown'
-      : sseDetails?.status || 'unknown';
+        ? wsDetails?.status || 'unknown'
+        : sseDetails?.status || 'unknown';
 
   // Create legacy network entry for tab components
   const legacyEntry = createLegacyNetworkEntry(
     selectedRequest,
     httpDetails,
-    wsDetails
+    wsDetails,
   );
   const legacyNetworkEntries = new Map<string, OldNetworkEntry>();
   if (legacyEntry) {
@@ -131,7 +131,9 @@ export const SidePanel = () => {
   }
 
   const override = legacyEntry !== null ? overrides.get(legacyEntry.url) : null;
-  const hasResponseOverride = override && override.body ? true : false;
+  const supportsOverrides = httpDetails?.source !== 'nitro';
+  const hasResponseOverride =
+    supportsOverrides && override && override.body ? true : false;
 
   const getTabsListTriggers = () => {
     if (httpDetails) {
@@ -226,6 +228,7 @@ export const SidePanel = () => {
           <TabsContent value="response" className="flex-1 m-0 overflow-hidden">
             <ResponseTab
               selectedRequest={httpDetails}
+              supportsOverrides={supportsOverrides}
               onRequestResponseBody={(requestId) => {
                 if (client) {
                   client.send('get-response-body', {
@@ -289,14 +292,14 @@ export const SidePanel = () => {
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div
             className={`w-3 h-3 rounded-full flex-shrink-0 ${getTypeColor(
-              selectedRequest.type
+              selectedRequest.type,
             )}`}
           ></div>
           <span className="font-medium truncate">{requestName}</span>
           <Badge
             variant="outline"
             className={`${getStatusColor(
-              requestStatus
+              requestStatus,
             )} border-current flex-shrink-0`}
           >
             {requestStatus}

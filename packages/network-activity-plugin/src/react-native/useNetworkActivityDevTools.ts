@@ -67,6 +67,11 @@ export const useNetworkActivityDevTools = (
     const subscriptions = [
       client.onMessage('network-enable', () => {
         isRecordingEnabledRef.current = true;
+        networkInspector.enable({
+          http: isHttpInspectorEnabled,
+          websocket: isWebSocketInspectorEnabled,
+          sse: isSSEInspectorEnabled,
+        });
 
         // Connect the events listener to send events through the DevTools client
         // This also automatically flushes any queued messages
@@ -87,6 +92,7 @@ export const useNetworkActivityDevTools = (
       }),
       client.onMessage('network-disable', () => {
         isRecordingEnabledRef.current = false;
+        networkInspector.disable();
       }),
       client.onMessage('get-client-ui-settings', () => {
         sendClientUISettings();
@@ -109,7 +115,7 @@ export const useNetworkActivityDevTools = (
 
   useHttpInspector(
     client,
-    networkInspector.http,
+    networkInspector,
     isHttpInspectorEnabled,
     isRecordingEnabledRef.current,
   );

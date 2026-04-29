@@ -20,6 +20,7 @@ import {
 import { getStatusColor } from '../utils/getStatusColor';
 import { FilterState } from './FilterBar';
 import { isNumber } from '../../utils/typeChecks';
+import type { NetworkEventSource } from '../../shared/client';
 
 type NetworkRequest = {
   id: RequestId;
@@ -31,8 +32,21 @@ type NetworkRequest = {
   size: string;
   time: string;
   type: string;
+  source?: NetworkEventSource;
   startTime: string;
   hasOverride: boolean;
+};
+
+const getSourceLabel = (source?: NetworkEventSource) => {
+  if (source === 'nitro') {
+    return 'Nitro';
+  }
+
+  if (source === 'builtin') {
+    return 'Built-in';
+  }
+
+  return null;
 };
 
 const formatSize = (bytes: number): string => {
@@ -153,6 +167,7 @@ const processNetworkRequests = (
       size: isNumber(request.size) ? formatSize(request.size) : '—',
       time: formatDuration(duration),
       type: request.type,
+      source: request.source,
       startTime: formatStartTime(request.timestamp),
       hasOverride: hasOverride,
     };
@@ -176,6 +191,12 @@ const columns = [
 
         {row.original.hasOverride && (
           <span className="w-2 h-2 rounded-full bg-violet-300 ms-2 inline-block"></span>
+        )}
+
+        {getSourceLabel(row.original.source) && (
+          <span className="ml-2 rounded border border-gray-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-400">
+            {getSourceLabel(row.original.source)}
+          </span>
         )}
       </div>
     ),

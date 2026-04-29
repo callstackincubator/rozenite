@@ -5,6 +5,7 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 
 export type RequestId = string;
 export type Timestamp = number;
+export type NetworkEventSource = 'builtin' | 'nitro';
 
 export type XHRPostData =
   | string
@@ -92,6 +93,7 @@ export type HttpEventMap = {
     timestamp: Timestamp;
     initiator: Initiator;
     type: ResourceType;
+    source?: NetworkEventSource;
   };
 
   'response-received': {
@@ -99,6 +101,7 @@ export type HttpEventMap = {
     timestamp: Timestamp;
     type: ResourceType;
     response: Response;
+    source?: NetworkEventSource;
   };
 
   'request-completed': {
@@ -107,6 +110,7 @@ export type HttpEventMap = {
     duration: number;
     size: number | null;
     ttfb: number;
+    source?: NetworkEventSource;
   };
 
   'request-failed': {
@@ -115,6 +119,7 @@ export type HttpEventMap = {
     type: ResourceType;
     error: string;
     canceled: boolean;
+    source?: NetworkEventSource;
   };
 
   'request-progress': {
@@ -123,6 +128,7 @@ export type HttpEventMap = {
     loaded: number;
     total: number;
     lengthComputable: boolean;
+    source?: NetworkEventSource;
   };
 
   'get-response-body': {
