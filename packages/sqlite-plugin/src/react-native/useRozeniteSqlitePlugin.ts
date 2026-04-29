@@ -10,6 +10,7 @@ import type {
   SqliteStatementInput,
 } from '../shared/types';
 import { createSqliteDatabaseViews } from './sqlite-view';
+import { useSqliteAgentTools } from './useSqliteAgentTools';
 
 export type RozeniteSqlitePluginOptions = {
   adapters: SqliteAdapter[];
@@ -27,6 +28,8 @@ export const useRozeniteSqlitePlugin = ({
   adapters,
 }: RozeniteSqlitePluginOptions) => {
   const views = useMemo(() => createSqliteDatabaseViews(adapters), [adapters]);
+
+  useSqliteAgentTools(views);
   const client = useRozeniteDevToolsClient<SqliteEventMap>({
     pluginId: PLUGIN_ID,
   });

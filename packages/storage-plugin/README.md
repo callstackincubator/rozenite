@@ -69,6 +69,12 @@ createAsyncStorageAdapter({
 
 `createExpoAsyncStorageAdapter` is still exported as a backward-compatible alias.
 
+## Web (React Native for Web)
+
+When you use [Rozenite for Web](https://rozenite.dev/docs/rozenite-for-web) in development, this plugin loads in the browser like on native. **AsyncStorage** and **Expo SecureStore** adapters work on web when the underlying libraries do.
+
+**MMKV** is not available in typical web bundles. In development on web, `createMMKVStorageAdapter` returns an adapter with **empty `storages`** (same behavior as production builds), so you can keep shared setup code without importing `react-native-mmkv` in the web bundle.
+
 ## Notes
 
 - Unsupported value types are disabled in UI create/edit flows.
