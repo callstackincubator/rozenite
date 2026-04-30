@@ -11,6 +11,12 @@
     "noFallthroughCasesInSwitch": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@rozenite/plugin-bridge": ["../plugin-bridge/src/index.ts"],
+      "@rozenite/ui": ["../ui/src/index.ts"],
+      "@rozenite/ui/*": ["../ui/*"]
+    },
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,

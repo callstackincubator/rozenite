@@ -1,6 +1,12 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo, useState } from 'react';
-import { ListBox, SearchField, Select } from '@rozenite/ui';
+import {
+  ListBox,
+  PluginHeader,
+  PluginTheme,
+  SearchField,
+  Select,
+} from '@rozenite/ui';
 import type {
   MMKVDeleteEntryEvent,
   MMKVEventMap,
@@ -243,51 +249,53 @@ export default function MMKVPanel() {
   const instanceOptions = [...instances.keys()];
 
   return (
-    <div
-      data-theme="dark"
-      className="dark h-screen bg-background text-foreground flex flex-col"
+    <PluginTheme
+      defaultTheme="dark"
+      storageKey="@rozenite/mmkv-plugin.theme"
+      className="flex h-screen flex-col bg-background text-foreground"
     >
-      <div className="flex items-center gap-2 p-2">
-        <span className="text-sm font-medium text-default-foreground">
-          MMKV Storage
-        </span>
-        <div className="flex-1" />
-        <Select
-          placeholder="Select instance"
-          value={selectedInstance ?? ''}
-          onChange={(value) =>
-            setSelectedInstance(
-              typeof value === 'string'
-                ? value
-                : value == null
-                  ? null
-                  : String(value),
-            )
-          }
-          isDisabled={instances.size === 0}
-        >
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              {instanceOptions.map((instanceId) => (
-                <ListBox.Item
-                  key={instanceId}
-                  id={instanceId}
-                  textValue={instanceId}
-                >
-                  {instanceId}
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-              ))}
-            </ListBox>
-          </Select.Popover>
-        </Select>
-      </div>
+      <PluginHeader
+        title="MMKV Storage"
+        actions={
+          <div className="w-56 max-w-[44vw] min-w-40">
+            <Select
+              placeholder="Select instance"
+              value={selectedInstance ?? ''}
+              onChange={(value) =>
+                setSelectedInstance(
+                  typeof value === 'string'
+                    ? value
+                    : value == null
+                      ? null
+                      : String(value),
+                )
+              }
+              isDisabled={instances.size === 0}
+            >
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {instanceOptions.map((instanceId) => (
+                    <ListBox.Item
+                      key={instanceId}
+                      id={instanceId}
+                      textValue={instanceId}
+                    >
+                      {instanceId}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
+          </div>
+        }
+      />
 
-      <div className="flex items-center gap-2 p-2">
+      <div className="flex items-center gap-2 px-3 pb-3 pt-3">
         <AddEntryDialog
           isDisabled={!selectedInstance}
           onAddEntry={handleAddEntry}
@@ -351,6 +359,6 @@ export default function MMKVPanel() {
         }}
         entry={editingEntry}
       />
-    </div>
+    </PluginTheme>
   );
 }

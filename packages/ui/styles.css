@@ -23,6 +23,7 @@
 .default,
 [data-theme='light'],
 [data-theme='default'] {
+  color-scheme: light;
   --accent: oklch(55.59% 0.2717 292.75);
   --accent-foreground: oklch(99.11% 0 0);
   --background: oklch(97.02% 0.0011 292.75);
@@ -39,7 +40,10 @@
   --muted: oklch(55.17% 0.0022 292.75);
   --overlay: oklch(100% 0.0003 292.75);
   --overlay-foreground: oklch(21.03% 0.0011 292.75);
-  --scrollbar: oklch(87.1% 0.0011 292.75);
+  --scrollbar: oklch(84.5% 0.0011 292.75);
+  --scrollbar-track: oklch(95.24% 0.0009 292.75);
+  --scrollbar-thumb-hover: oklch(76% 0.0011 292.75);
+  --scrollbar-thumb-active: oklch(68% 0.0011 292.75);
   --segment: oklch(100% 0.0011 292.75);
   --segment-foreground: oklch(21.03% 0.0011 292.75);
   --separator: oklch(92% 0.0011 292.75);
@@ -80,7 +84,10 @@
   --muted: oklch(70.5% 0.0022 292.75);
   --overlay: oklch(21.03% 0.0022 292.75);
   --overlay-foreground: oklch(99.11% 0.0011 292.75);
-  --scrollbar: oklch(70.5% 0.0011 292.75);
+  --scrollbar: oklch(39.64% 0.0011 292.75);
+  --scrollbar-track: oklch(21.03% 0.0022 292.75);
+  --scrollbar-thumb-hover: oklch(47% 0.0011 292.75);
+  --scrollbar-thumb-active: oklch(55% 0.0011 292.75);
   --segment: oklch(39.64% 0.0011 292.75);
   --segment-foreground: oklch(99.11% 0.0011 292.75);
   --separator: oklch(25% 0.0011 292.75);
@@ -94,4 +101,49 @@
   --surface-tertiary-foreground: oklch(99.11% 0.0011 292.75);
   --warning: oklch(82.03% 0.1391 81.01);
   --warning-foreground: oklch(21.03% 0.0059 81.01);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .wrap-anywhere {
+    overflow-wrap: anywhere;
+  }
+}
+
+@layer base {
+  * {
+    scrollbar-color: var(--scrollbar) var(--scrollbar-track);
+    scrollbar-width: thin;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar);
+    border-radius: 4px;
+    border: 1px solid var(--scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--scrollbar-thumb-active);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track);
+  }
 }

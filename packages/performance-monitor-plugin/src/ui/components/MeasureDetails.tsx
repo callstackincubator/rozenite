@@ -1,7 +1,6 @@
-import { Box, Text, Heading, Separator, Flex } from '@radix-ui/themes';
-import { SerializedPerformanceMeasure } from '../../shared/types';
-import { DetailsDisplay } from './DetailsDisplay';
-import { formatTime, formatDuration } from '../utils';
+import type { SerializedPerformanceMeasure } from '../../shared/types';
+import { formatDuration, formatTime } from '../utils';
+import { DetailField, DetailsCard, DetailsDisplay } from './DetailsDisplay';
 
 export type MeasureDetailsProps = {
   measure: SerializedPerformanceMeasure;
@@ -11,54 +10,32 @@ export const MeasureDetails = ({ measure }: MeasureDetailsProps) => {
   const endTime = measure.startTime + measure.duration;
 
   return (
-    <Box>
-      <Heading size="5" mb="4">
-        Measure Details
-      </Heading>
-
-      <Box mb="4">
-        <Flex align="center" gap="3">
-          <Text size="2" color="gray" style={{ minWidth: '80px' }}>
-            Name:
-          </Text>
-          <Text weight="medium" size="3">
-            {measure.name}
-          </Text>
-        </Flex>
-      </Box>
-
-      <Box mb="4">
-        <Flex align="center" gap="3">
-          <Text size="2" color="gray" style={{ minWidth: '80px' }}>
-            Duration:
-          </Text>
-          <Text color="blue" weight="medium" size="3">
+    <div className="flex flex-col gap-4">
+      <DetailsCard
+        description="Timing information captured for this performance measure."
+        title="Overview"
+      >
+        <DetailField label="Name">
+          <span className="font-medium text-foreground">{measure.name}</span>
+        </DetailField>
+        <DetailField label="Duration">
+          <span className="font-medium text-accent">
             {formatDuration(measure.duration)}
-          </Text>
-        </Flex>
-      </Box>
-
-      <Box mb="4">
-        <Flex align="center" gap="3">
-          <Text size="2" color="gray" style={{ minWidth: '80px' }}>
-            Start Time:
-          </Text>
-          <Text size="3">{formatTime(measure.startTime)}</Text>
-        </Flex>
-      </Box>
-
-      <Box mb="4">
-        <Flex align="center" gap="3">
-          <Text size="2" color="gray" style={{ minWidth: '80px' }}>
-            End Time:
-          </Text>
-          <Text size="3">{formatTime(endTime)}</Text>
-        </Flex>
-      </Box>
-
-      <Separator size="4" my="4" />
+          </span>
+        </DetailField>
+        <DetailField label="Start Time">
+          <span className="tabular-nums text-foreground">
+            {formatTime(measure.startTime)}
+          </span>
+        </DetailField>
+        <DetailField label="End Time">
+          <span className="tabular-nums text-foreground">
+            {formatTime(endTime)}
+          </span>
+        </DetailField>
+      </DetailsCard>
 
       <DetailsDisplay details={measure.detail} />
-    </Box>
+    </div>
   );
 };

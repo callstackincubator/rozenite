@@ -1,22 +1,29 @@
-import { ScrollArea, Box, Button, Flex } from '@radix-ui/themes';
-import { Cross2Icon } from '@radix-ui/react-icons';
+import { Drawer } from '@rozenite/ui';
+import type { SerializedPerformanceEntry } from '../../shared/types';
+import { MarkDetails } from './MarkDetails';
 import { MeasureDetails } from './MeasureDetails';
 import { MetricDetails } from './MetricDetails';
-import { MarkDetails } from './MarkDetails';
-import { SerializedPerformanceEntry } from '../../shared/types';
 
 export type DetailsSidebarProps = {
   selectedItem: SerializedPerformanceEntry | null;
   onClose: () => void;
 };
 
+const entryTypeLabel: Record<SerializedPerformanceEntry['entryType'], string> = {
+  mark: 'Mark details',
+  measure: 'Measure details',
+  metric: 'Metric details',
+};
+
 export const DetailsSidebar = ({
   selectedItem,
   onClose,
 }: DetailsSidebarProps) => {
-  const renderDetails = () => {
-    if (!selectedItem) return null;
+  if (!selectedItem) {
+    return null;
+  }
 
+  const renderDetails = () => {
     switch (selectedItem.entryType) {
       case 'measure':
         return <MeasureDetails measure={selectedItem} />;
@@ -29,59 +36,39 @@ export const DetailsSidebar = ({
     }
   };
 
-  if (!selectedItem) {
-    return null;
-  }
-
   return (
-    <>
-      {/* Backdrop */}
-      <Box
-        position="fixed"
-        top="0"
-        left="0"
-        right="0"
-        bottom="0"
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 999,
-        }}
-        onClick={onClose}
-      />
+    <Drawer
+      isOpen
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          onClose();
+        }
+      }}
+    >
+      <Drawer.Backdrop variant="blur">
+        <Drawer.Content className="w-full max-w-2xl" placement="right">
+          <Drawer.Dialog
+            aria-label={entryTypeLabel[selectedItem.entryType]}
+            className="flex h-full flex-col overflow-hidden"
+          >
+            <Drawer.Header className="flex items-start justify-between gap-3 border-b border-border/70 px-5 py-4">
+              <div className="min-w-0">
+                <Drawer.Heading className="truncate">
+                  {selectedItem.name}
+                </Drawer.Heading>
+                <p className="mt-1 text-xs text-muted">
+                  {entryTypeLabel[selectedItem.entryType]}
+                </p>
+              </div>
+              <Drawer.CloseTrigger aria-label="Close details panel" />
+            </Drawer.Header>
 
-      {/* Sidebar */}
-      <Box
-        position="fixed"
-        top="0"
-        right="0"
-        minWidth="400px"
-        maxWidth="50vw"
-        height="100vh"
-        style={{
-          backgroundColor: '#1a1a1a',
-          borderLeft: '1px solid #333333',
-          zIndex: 1000,
-          boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.3)',
-        }}
-      >
-        <Flex p="4" direction="column" height="100vh">
-          <Flex justify="between" align="center" mb="4">
-            <Box />
-            <Button
-              variant="ghost"
-              size="2"
-              onClick={onClose}
-              style={{ padding: '4px' }}
-            >
-              <Cross2Icon width="16" height="16" />
-            </Button>
-          </Flex>
-
-          <ScrollArea style={{ flex: 1 }}>
-            <Box pr="4">{renderDetails()}</Box>
-          </ScrollArea>
-        </Flex>
-      </Box>
-    </>
+            <Drawer.Body className="min-h-0 flex-1 overflow-auto p-5">
+              {renderDetails()}
+            </Drawer.Body>
+          </Drawer.Dialog>
+        </Drawer.Content>
+      </Drawer.Backdrop>
+    </Drawer>
   );
 };

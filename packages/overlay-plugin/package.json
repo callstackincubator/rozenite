@@ -21,9 +21,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@rozenite/plugin-bridge": "workspace:*"
+    "@heroui/react": "^3.0.1",
+    "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/ui": "workspace:*"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
     "@rozenite/vite-plugin": "workspace:*",
     "@types/react": "catalog:",
     "autoprefixer": "^10.4.21",
@@ -35,7 +38,8 @@
     "react-native-svg": "~15.8.0",
     "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
-    "tailwindcss": "^3.4.17",
+    "tailwind-variants": "^2.0.0",
+    "tailwindcss": "^4.2.2",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "~5.9.3",
     "vite": "catalog:"

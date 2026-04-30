@@ -1,32 +1,29 @@
 import {
   useRozeniteDevToolsClient,
-  Subscription,
+  type Subscription,
 } from '@rozenite/plugin-bridge';
-import {
-  PerformanceMonitorEventMap,
-  SerializedPerformanceMeasure,
-  SerializedPerformanceMark,
-  SerializedPerformanceMetric,
-  SerializedPerformanceEntry,
-} from '../shared/types';
 import { useEffect, useState } from 'react';
 import {
-  Theme,
-  Tabs,
   Button,
-  Heading,
-  Text,
-  Flex,
-  Box,
-} from '@radix-ui/themes';
-import '@radix-ui/themes/styles.css';
-import './App.css';
+  Chip,
+  PluginHeader,
+  PluginTheme,
+  Tabs,
+} from '@rozenite/ui';
+import type {
+  PerformanceMonitorEventMap,
+  SerializedPerformanceEntry,
+  SerializedPerformanceMark,
+  SerializedPerformanceMeasure,
+  SerializedPerformanceMetric,
+} from '../shared/types';
+import { DetailsSidebar } from './components/DetailsSidebar';
+import { ExportModal } from './components/ExportModal';
+import { MarksTable } from './components/MarksTable';
 import { MeasuresTable } from './components/MeasuresTable';
 import { MetricsTable } from './components/MetricsTable';
-import { MarksTable } from './components/MarksTable';
-import { DetailsSidebar } from './components/DetailsSidebar';
 import { SessionDuration } from './components/SessionDuration';
-import { ExportModal } from './components/ExportModal';
+import './globals.css';
 
 type PerformanceMonitorSession = {
   sessionStartedAt: number;
@@ -36,10 +33,13 @@ type PerformanceMonitorSession = {
   metrics: SerializedPerformanceMetric[];
 };
 
+type ActiveTabId = 'measures' | 'metrics' | 'marks';
+
 export default function PerformanceMonitorPanel() {
   const client = useRozeniteDevToolsClient<PerformanceMonitorEventMap>({
     pluginId: '@rozenite/performance-monitor-plugin',
   });
+  const [activeTabId, setActiveTabId] = useState<ActiveTabId>('measures');
   const [session, setSession] = useState<PerformanceMonitorSession>({
     sessionStartedAt: 0,
     clockShift: 0,
@@ -63,14 +63,14 @@ export default function PerformanceMonitorPanel() {
         const receivedAt = Date.now();
         setSession({
           sessionStartedAt: receivedAt,
-          // It's likely that there is a small clock shift between the device and the DevTools.
           clockShift: receivedAt - sessionStartedAt,
           measures: [],
           marks: [],
           metrics: [],
         });
+        setSelectedItem(null);
         setIsSessionActive(true);
-      })
+      }),
     );
 
     subscriptions.push(
@@ -85,7 +85,7 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
     );
 
     subscriptions.push(
@@ -100,7 +100,7 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
     );
 
     subscriptions.push(
@@ -115,7 +115,7 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
     );
 
     return () => {
@@ -138,149 +138,110 @@ export default function PerformanceMonitorPanel() {
     }
   };
 
-  const handleEntryClick = (entry: SerializedPerformanceEntry) => {
-    setSelectedItem(entry);
-  };
-
-  const handleCloseSidebar = () => {
-    setSelectedItem(null);
-  };
-
   return (
-    <Theme appearance="dark" accentColor="blue" radius="medium">
-      <Box
-        p="4"
-        height="100vh"
-        style={{ display: 'flex', flexDirection: 'column' }}
-      >
-        {/* Header */}
-        <Box mb="4" style={{ flexShrink: 0 }}>
-          <Heading size="6" mb="2">
-            Performance Monitor
-          </Heading>
-          <Flex gap="4" align="center">
+    <PluginTheme
+      className="flex h-screen flex-col bg-background text-foreground"
+      defaultTheme="dark"
+      storageKey="@rozenite/performance-monitor-plugin.theme"
+    >
+      <PluginHeader
+        subtitle="Track measures, marks, and metrics captured by react-native-performance."
+        title="Performance Monitor"
+        actions={
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <SessionDuration
               isActive={isSessionActive}
               sessionStartedAt={session.sessionStartedAt}
             />
-          </Flex>
-        </Box>
-
-        {/* Toolbar */}
-        <Flex gap="3" align="center" mb="4" style={{ flexShrink: 0 }}>
-          <Button
-            onClick={handleStartSession}
-            disabled={isSessionActive}
-            color="green"
-          >
-            Start Session
-          </Button>
-          <Button
-            onClick={handleStopSession}
-            disabled={!isSessionActive}
-            color="red"
-          >
-            Stop Session
-          </Button>
-          <ExportModal
-            measures={session.measures}
-            metrics={session.metrics}
-            marks={session.marks}
-            sessionStartedAt={session.sessionStartedAt}
-            clockShift={session.clockShift}
-          />
-          <Flex gap="2" align="center" ml="auto">
-            <Box
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: isSessionActive ? '#10b981' : '#ef4444',
-              }}
-            />
-            <Text size="2" color="gray">
-              {isSessionActive ? 'Session Active' : 'Session Inactive'}
-            </Text>
-          </Flex>
-        </Flex>
-
-        {/* Tabs */}
-        <Box
-          style={{
-            flex: '1',
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: 0,
-          }}
-        >
-          <Tabs.Root
-            defaultValue="measures"
-            style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-          >
-            <Tabs.List style={{ flexShrink: 0 }}>
-              <Tabs.Trigger value="measures">
-                Measures ({session.measures.length})
-              </Tabs.Trigger>
-              <Tabs.Trigger value="metrics">
-                Metrics ({session.metrics.length})
-              </Tabs.Trigger>
-              <Tabs.Trigger value="marks">
-                Marks ({session.marks.length})
-              </Tabs.Trigger>
-            </Tabs.List>
-
-            <Box
-              style={{
-                flexGrow: '1',
-                display: 'flex',
-                flexDirection: 'column',
-                minHeight: 0,
-              }}
+            <Chip
+              color={isSessionActive ? 'success' : 'default'}
+              size="sm"
+              variant="soft"
             >
-              <Tabs.Content
-                value="measures"
-                style={{
-                  display: 'contents',
-                }}
-              >
-                <MeasuresTable
-                  measures={session.measures}
-                  onRowClick={handleEntryClick}
-                />
-              </Tabs.Content>
+              {isSessionActive ? 'Session Active' : 'Session Inactive'}
+            </Chip>
+            <Button
+              isDisabled={!client || isSessionActive}
+              onPress={handleStartSession}
+              size="sm"
+            >
+              Start Session
+            </Button>
+            <Button
+              isDisabled={!client || !isSessionActive}
+              onPress={handleStopSession}
+              size="sm"
+              variant="danger"
+            >
+              Stop Session
+            </Button>
+            <ExportModal
+              clockShift={session.clockShift}
+              marks={session.marks}
+              measures={session.measures}
+              metrics={session.metrics}
+              sessionStartedAt={session.sessionStartedAt}
+            />
+          </div>
+        }
+      />
 
-              <Tabs.Content
-                value="metrics"
-                style={{
-                  display: 'contents',
-                }}
-              >
-                <MetricsTable
-                  metrics={session.metrics}
-                  onRowClick={handleEntryClick}
-                />
-              </Tabs.Content>
+      <Tabs.Root
+        className="flex min-h-0 flex-1 flex-col"
+        selectedKey={activeTabId}
+        onSelectionChange={(key) => {
+          setActiveTabId(String(key) as ActiveTabId);
+        }}
+      >
+        <Tabs.ListContainer className="overflow-x-auto px-3">
+          <Tabs.List
+            aria-label="Performance monitor views"
+            className="w-fit min-w-max justify-start"
+          >
+            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="measures">
+              Measures ({session.measures.length})
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="metrics">
+              Metrics ({session.metrics.length})
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="marks">
+              Marks ({session.marks.length})
+              <Tabs.Indicator />
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs.ListContainer>
 
-              <Tabs.Content
-                value="marks"
-                style={{
-                  display: 'contents',
-                }}
-              >
-                <MarksTable
-                  marks={session.marks}
-                  onRowClick={handleEntryClick}
-                />
-              </Tabs.Content>
-            </Box>
-          </Tabs.Root>
-        </Box>
-      </Box>
+        <Tabs.Panel
+          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          id="measures"
+        >
+          <MeasuresTable
+            measures={session.measures}
+            onRowClick={setSelectedItem}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel
+          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          id="metrics"
+        >
+          <MetricsTable metrics={session.metrics} onRowClick={setSelectedItem} />
+        </Tabs.Panel>
+
+        <Tabs.Panel
+          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          id="marks"
+        >
+          <MarksTable marks={session.marks} onRowClick={setSelectedItem} />
+        </Tabs.Panel>
+      </Tabs.Root>
 
       <DetailsSidebar
+        onClose={() => setSelectedItem(null)}
         selectedItem={selectedItem}
-        onClose={handleCloseSidebar}
       />
-    </Theme>
+    </PluginTheme>
   );
 }

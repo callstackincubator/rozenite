@@ -1,4 +1,5 @@
-import { NavigationAction } from '../../shared';
+import { Button, Chip, Surface } from '@rozenite/ui';
+import type { NavigationAction } from '../../shared';
 
 export type ActionItemProps = {
   action: NavigationAction;
@@ -8,19 +9,24 @@ export type ActionItemProps = {
   onGoToAction: () => void;
 };
 
-const getActionTypeColor = (type: string): string => {
-  const colors: { [key: string]: string } = {
-    NAVIGATE: 'text-green-400',
-    GO_BACK: 'text-orange-400',
-    PUSH: 'text-blue-400',
-    POP: 'text-red-400',
-    REPLACE: 'text-purple-400',
-    RESET: 'text-yellow-600',
-    SET_PARAMS: 'text-cyan-400',
-    SNAPSHOT: 'text-gray-400',
-    '@@UNKNOWN': 'text-gray-400',
+const getActionTypeColor = (
+  type: string
+): 'success' | 'warning' | 'accent' | 'danger' | 'default' => {
+  const colors: Record<
+    string,
+    'success' | 'warning' | 'accent' | 'danger' | 'default'
+  > = {
+    NAVIGATE: 'success',
+    GO_BACK: 'warning',
+    PUSH: 'accent',
+    POP: 'danger',
+    REPLACE: 'accent',
+    RESET: 'warning',
+    SET_PARAMS: 'default',
+    SNAPSHOT: 'default',
+    '@@UNKNOWN': 'default',
   };
-  return colors[type] || 'text-gray-400';
+  return colors[type] || 'default';
 };
 
 export const ActionItem = ({
@@ -39,36 +45,63 @@ export const ActionItem = ({
 
   return (
     <div
-      className={`m-1 p-3 rounded cursor-pointer transition-all duration-200 border ${
+      className={`cursor-pointer rounded-lg transition-colors ${
         isSelected
-          ? 'bg-blue-900/30 border-blue-500'
-          : 'bg-gray-800 border-gray-700 hover:bg-gray-700'
+          ? 'ring-1 ring-accent/25'
+          : ''
       }`}
       onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+      role="button"
+      tabIndex={0}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span
-            className={`font-bold text-sm ${getActionTypeColor(action.type)}`}
-          >
-            {action.type}
-          </span>
-          <span className="text-xs text-gray-500">#{index}</span>
-        </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onGoToAction();
-          }}
-          className="px-2 py-1 text-xs border border-blue-500 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer rounded transition-colors duration-200"
-        >
-          Go to
-        </button>
-      </div>
+      <Surface
+        className={`border px-3 py-3 transition-colors ${
+          isSelected
+            ? 'border-accent/60 bg-accent/10'
+            : 'border-border/70 bg-surface-secondary hover:bg-surface-tertiary'
+        }`}
+        variant="secondary"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <Chip
+                color={getActionTypeColor(action.type)}
+                size="sm"
+                variant="soft"
+              >
+                {action.type}
+              </Chip>
+              <span className="text-xs text-muted">#{index}</span>
+            </div>
 
-      {actionName && (
-        <div className="text-xs text-gray-300">→ {actionName}</div>
-      )}
+            {actionName ? (
+              <div className="mt-2 truncate text-sm text-foreground">
+                {actionName}
+              </div>
+            ) : (
+              <div className="mt-2 text-xs text-muted">
+                No route name attached to this action.
+              </div>
+            )}
+          </div>
+
+          <div
+            className="shrink-0"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Button onPress={onGoToAction} size="sm" variant="secondary">
+              Go to
+            </Button>
+          </div>
+        </div>
+      </Surface>
     </div>
   );
 };

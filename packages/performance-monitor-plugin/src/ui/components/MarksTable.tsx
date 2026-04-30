@@ -1,9 +1,7 @@
-import React from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { Text } from '@radix-ui/themes';
-import { SerializedPerformanceMark } from '../../shared/types';
-import { DataTable } from './DataTable';
+import type { ColumnDef } from '@tanstack/react-table';
+import type { SerializedPerformanceMark } from '../../shared/types';
 import { formatTime } from '../utils';
+import { DataTable } from './DataTable';
 
 export type MarksTableProps = {
   marks: SerializedPerformanceMark[];
@@ -14,29 +12,32 @@ const columns: ColumnDef<SerializedPerformanceMark>[] = [
   {
     accessorKey: 'name',
     header: 'Name',
-    cell: ({ row }) => <Text weight="medium">{row.getValue('name')}</Text>,
+    cell: ({ row }) => (
+      <span className="font-medium text-foreground">
+        {String(row.getValue('name'))}
+      </span>
+    ),
   },
   {
     accessorKey: 'startTime',
-    header: 'Recorded at',
-    cell: ({ row }) => {
-      const startTime = row.getValue('startTime') as number;
-      return (
-        <Text size="2" color="gray">
-          {formatTime(startTime)}
-        </Text>
-      );
-    },
+    header: 'Recorded At',
+    cell: ({ row }) => (
+      <span className="tabular-nums text-sm text-muted">
+        {formatTime(row.getValue('startTime') as number)}
+      </span>
+    ),
   },
 ];
 
 export const MarksTable = ({ marks, onRowClick }: MarksTableProps) => {
   return (
     <DataTable
-      data={marks}
+      ariaLabel="Performance marks"
       columns={columns}
-      onRowClick={onRowClick}
+      data={marks}
       emptyMessage="No marks recorded"
+      getRowTextValue={(mark) => mark.name}
+      onRowClick={onRowClick}
     />
   );
 };

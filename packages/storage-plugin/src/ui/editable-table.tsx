@@ -231,6 +231,12 @@ export const EditableTable = ({
           <Table.Content
             aria-label="Storage entries"
             className="min-w-full"
+            onRowAction={(key) => {
+              const entry = data.find((item) => item.key === String(key));
+              if (entry) {
+                onRowClick?.(entry);
+              }
+            }}
             onSortChange={(descriptor) =>
               setSorting(toSortingState(descriptor))
             }
@@ -281,19 +287,7 @@ export const EditableTable = ({
                     onRowClick ? 'cursor-pointer' : ''
                   }`}
                   id={row.original.key}
-                  onClick={(event) => {
-                    const target = event.target as HTMLElement;
-                    if (
-                      target.tagName === 'BUTTON' ||
-                      target.closest('button') ||
-                      target.tagName === 'INPUT' ||
-                      target.closest('input')
-                    ) {
-                      return;
-                    }
-
-                    onRowClick?.(row.original);
-                  }}
+                  textValue={row.original.key}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <Table.Cell
