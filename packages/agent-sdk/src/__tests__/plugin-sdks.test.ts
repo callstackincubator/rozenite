@@ -35,14 +35,16 @@ type DescriptorCallTuple<
   TDescriptor extends AgentToolDescriptor<unknown, unknown>,
 > = [InferAgentToolArgs<TDescriptor>] extends [undefined]
   ? [args?: InferAgentToolArgs<TDescriptor>]
-  : {} extends InferAgentToolArgs<TDescriptor>
+  : Record<string, never> extends InferAgentToolArgs<TDescriptor>
     ? [args?: InferAgentToolArgs<TDescriptor>]
     : [args: InferAgentToolArgs<TDescriptor>];
 
 const typedCall = <TDescriptor extends AgentToolDescriptor<unknown, unknown>>(
-  _descriptor: TDescriptor,
-  ..._args: DescriptorCallTuple<TDescriptor>
+  descriptor: TDescriptor,
+  ...args: DescriptorCallTuple<TDescriptor>
 ): InferAgentToolResult<TDescriptor> => {
+  void descriptor;
+  void args;
   return undefined as InferAgentToolResult<TDescriptor>;
 };
 

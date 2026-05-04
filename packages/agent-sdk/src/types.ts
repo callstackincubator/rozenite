@@ -63,7 +63,7 @@ type AgentDescriptorCallTuple<
 > =
   [InferAgentToolArgs<TDescriptor>] extends [undefined]
     ? [args?: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions]
-    : {} extends InferAgentToolArgs<TDescriptor>
+    : Record<string, never> extends InferAgentToolArgs<TDescriptor>
       ? [args?: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions]
       : [args: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions];
 
