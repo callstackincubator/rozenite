@@ -9,6 +9,22 @@
       "dependsOn": ["^build", "^typecheck", "build"],
       "outputs": []
     },
+    "@rozenite/agent-sdk#typecheck": {
+      "dependsOn": [
+        "^build",
+        "^typecheck",
+        "build",
+        "@rozenite/controls-plugin#build",
+        "@rozenite/file-system-plugin#build",
+        "@rozenite/mmkv-plugin#build",
+        "@rozenite/network-activity-plugin#build",
+        "@rozenite/react-navigation-plugin#build",
+        "@rozenite/redux-devtools-plugin#build",
+        "@rozenite/storage-plugin#build",
+        "@rozenite/tanstack-query-plugin#build"
+      ],
+      "outputs": []
+    },
     "lint": {
       "dependsOn": ["^build", "build"],
       "outputs": []
