@@ -21,6 +21,9 @@ export default defineConfig({
       formats: ['es' as const, 'cjs' as const],
     },
   },
+  test: {
+    passWithNoTests: true,
+  },
   server: {
     port: 3000,
     open: true,

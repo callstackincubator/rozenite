@@ -7,6 +7,7 @@ export default defineConfig({
   root: __dirname,
   plugins: [rozenitePlugin()],
   test: {
+    passWithNoTests: true,
     alias: {
       '@rozenite/agent-shared': resolve(__dirname, '../agent-shared/src/index.ts'),
     },

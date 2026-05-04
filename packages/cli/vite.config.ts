@@ -37,4 +37,7 @@ export default defineConfig(() => ({
       external: [],
     },
   },
+  test: {
+    passWithNoTests: true,
+  },
 }));

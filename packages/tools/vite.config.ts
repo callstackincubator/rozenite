@@ -8,6 +8,7 @@ export default defineConfig({
   cacheDir: '../../node_modules/.vite/tools',
   base: './',
   test: {
+    passWithNoTests: true,
     environment: 'node',
   },
   plugins: [

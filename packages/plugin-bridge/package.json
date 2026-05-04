@@ -40,7 +40,7 @@
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest --run"
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "tslib": "^2.3.0"

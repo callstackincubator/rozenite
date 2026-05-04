@@ -19,7 +19,7 @@
     "dev": "rozenite dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest --run"
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",

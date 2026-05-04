@@ -60,6 +60,9 @@ export default defineConfig({
       external: ['@rozenite/agent-shared'],
     },
   },
+  test: {
+    passWithNoTests: true,
+  },
   server: {
     port: 3000,
     open: true,
