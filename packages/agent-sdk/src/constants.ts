@@ -1,8 +1,4 @@
-import { DEFAULT_AGENT_HOST, DEFAULT_AGENT_PORT } from '@rozenite/agent-shared';
 import type { DomainDefinition } from './types.js';
-
-export const DEFAULT_METRO_HOST = DEFAULT_AGENT_HOST;
-export const DEFAULT_METRO_PORT = DEFAULT_AGENT_PORT;
 
 export const STATIC_DOMAINS: DomainDefinition[] = [
   {

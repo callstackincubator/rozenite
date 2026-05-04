@@ -267,6 +267,7 @@ const startSession = async (
   const started = createStartedSession(overrides);
   started.socket.open();
   await vi.advanceTimersByTimeAsync(500);
+  await vi.advanceTimersByTimeAsync(50);
   await flushMicrotasks();
   await started.startPromise;
 
@@ -281,6 +282,35 @@ const getExpressions = (): string[] => {
   return mocks.commandLog
     .filter((command) => command.method === 'Runtime.evaluate')
     .map((command) => String(command.params?.expression ?? ''));
+};
+
+const emitRozeniteBindingPayload = async (
+  socket: InstanceType<typeof mocks.MockWebSocket>,
+  message: Record<string, unknown>,
+) => {
+  mocks.parseRozeniteBindingPayload.mockImplementation(
+    (((rawMessage: Record<string, unknown>) =>
+      (rawMessage.bindingPayload as
+        | {
+            domain: string;
+            message: Record<string, unknown>;
+          }
+        | undefined) ?? null) as unknown) as () => null,
+  );
+
+  socket.emit(
+    'message',
+    JSON.stringify({
+      bindingPayload: {
+        domain: 'rozenite',
+        message,
+      },
+    }),
+  );
+  await flushMicrotasks();
+
+  mocks.parseRozeniteBindingPayload.mockReset();
+  mocks.parseRozeniteBindingPayload.mockReturnValue(null);
 };
 
 describe('agent session', () => {
@@ -308,18 +338,31 @@ describe('agent session', () => {
 
     await vi.advanceTimersByTimeAsync(1);
     await flushMicrotasks();
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(50);
+    await flushMicrotasks();
     await startPromise;
 
     expect(onResolved).toHaveBeenCalledTimes(1);
   });
 
-  it('resolves start after bootstrap completes', async () => {
+  it('resolves start after bootstrap and plugin readiness settles', async () => {
     const { startPromise, socket } = createStartedSession();
     const onResolved = vi.fn();
     startPromise.then(onResolved);
 
     socket.open();
     await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(49);
+    await flushMicrotasks();
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
     await flushMicrotasks();
 
     expect(onResolved).toHaveBeenCalledTimes(1);
@@ -331,6 +374,63 @@ describe('agent session', () => {
         expression.includes('initializeDomain("react-devtools")'),
       ),
     ).toBe(true);
+  });
+
+  it('extends plugin readiness wait when activity arrives', async () => {
+    const { startPromise, socket } = createStartedSession();
+    const onResolved = vi.fn();
+    startPromise.then(onResolved);
+
+    socket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(49);
+    await flushMicrotasks();
+
+    await emitRozeniteBindingPayload(socket, {
+      pluginId: '@rozenite/storage-plugin',
+      type: 'plugin-mounted',
+      payload: {
+        pluginId: '@rozenite/storage-plugin',
+      },
+    });
+
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(49);
+    await flushMicrotasks();
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    await flushMicrotasks();
+    await expect(startPromise).resolves.toBeUndefined();
+  });
+
+  it('resolves start after the bounded plugin readiness timeout', async () => {
+    const { startPromise, socket } = createStartedSession();
+    const onResolved = vi.fn();
+    startPromise.then(onResolved);
+
+    socket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    for (let elapsed = 0; elapsed < 245; elapsed += 49) {
+      await vi.advanceTimersByTimeAsync(49);
+      await flushMicrotasks();
+      await emitRozeniteBindingPayload(socket, {
+        pluginId: '@rozenite/storage-plugin',
+        type: 'plugin-mounted',
+        payload: {
+          pluginId: '@rozenite/storage-plugin',
+        },
+      });
+      expect(onResolved).not.toHaveBeenCalled();
+    }
+
+    await vi.advanceTimersByTimeAsync(5);
+    await flushMicrotasks();
+    await expect(startPromise).resolves.toBeUndefined();
   });
 
   it('emits agent-session-ready after rozenite domain initialization', async () => {

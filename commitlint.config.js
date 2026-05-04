@@ -30,9 +30,10 @@ export default {
         'controls-plugin',
         'agent-bridge',
         'agent-shared',
+        'agent-sdk',
         'file-system-plugin',
         'sqlite-plugin',
-        ''
+        '',
       ],
     ],
   },

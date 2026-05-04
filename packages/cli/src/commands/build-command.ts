@@ -17,7 +17,8 @@ export const buildCommand = async (targetDir: string) => {
     );
   }
 
-  const { hasReactNativeEntryPoint, hasMetroEntryPoint } = targets;
+  const { hasReactNativeEntryPoint, hasMetroEntryPoint, hasSdkEntryPoint } =
+    targets;
 
   await step(
     {
@@ -76,6 +77,24 @@ export const buildCommand = async (targetDir: string) => {
           cwd: targetDir,
           env: {
             VITE_ROZENITE_TARGET: 'react-native',
+          },
+        });
+      },
+    );
+  }
+
+  if (hasSdkEntryPoint) {
+    await step(
+      {
+        start: 'Building SDK entry point',
+        stop: 'SDK entry point built',
+        error: 'Failed to build SDK entry point',
+      },
+      async () => {
+        await spawn('vite', ['build'], {
+          cwd: targetDir,
+          env: {
+            VITE_ROZENITE_TARGET: 'sdk',
           },
         });
       },

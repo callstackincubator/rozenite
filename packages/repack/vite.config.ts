@@ -27,6 +27,9 @@ export default defineConfig({
       external: dependencies,
     },
   },
+  test: {
+    passWithNoTests: true,
+  },
   server: {
     port: 3000,
     open: true,

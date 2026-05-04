@@ -2,9 +2,21 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  vi,
+} from 'vitest';
+import { defineAgentToolContract } from '@rozenite/agent-shared';
 import type { AgentTool } from './types.js';
-import { useRozeniteInAppAgentTool } from './useRozeniteAgentTool.js';
+import {
+  type UseRozeniteInAppAgentToolOptions,
+  useRozeniteInAppAgentTool,
+} from './useRozeniteAgentTool.js';
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
@@ -104,6 +116,39 @@ describe('useRozeniteAgentTool', () => {
   afterEach(() => {
     document.body.innerHTML = '';
     delete globalThis.IS_REACT_ACT_ENVIRONMENT;
+  });
+
+  it('supports typed contracts and explicit handler generics for plain tools', () => {
+    const typedTool = defineAgentToolContract<
+      { message: string },
+      { echoed: string }
+    >({
+      ...TOOL,
+      name: 'typed-tool',
+    });
+    const typedOptions: UseRozeniteInAppAgentToolOptions<typeof typedTool> = {
+      tool: typedTool,
+      handler: ({ message }) => ({
+        echoed: message,
+      }),
+    };
+    const plainOptions: UseRozeniteInAppAgentToolOptions<
+      { min?: number; max?: number },
+      { value: number }
+    > = {
+      tool: TOOL,
+      handler: ({ min = 0, max = 100 }) => ({
+        value: min + max,
+      }),
+    };
+
+    expectTypeOf(typedOptions.handler).parameter(0).toEqualTypeOf<{
+      message: string;
+    }>();
+    expectTypeOf(plainOptions.handler).parameter(0).toEqualTypeOf<{
+      min?: number;
+      max?: number;
+    }>();
   });
 
   it('registers initially after listeners are attached', async () => {

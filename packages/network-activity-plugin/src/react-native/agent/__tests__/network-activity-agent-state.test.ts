@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createNetworkActivityAgentState } from '../state';
-import { NETWORK_ACTIVITY_AGENT_TOOLS } from '../tools';
+import { networkActivityToolDefinitions } from '../../../shared/agent-tools';
 import type { Request } from '../../../shared/client';
 
 const createRequest = (overrides?: Partial<Request>): Request => ({
@@ -18,7 +18,9 @@ const createRequest = (overrides?: Partial<Request>): Request => ({
 
 describe('network activity agent state', () => {
   it('exposes the expected fallback and realtime tool names', () => {
-    expect(NETWORK_ACTIVITY_AGENT_TOOLS.map((tool) => tool.name)).toEqual([
+    expect(
+      Object.values(networkActivityToolDefinitions).map((tool) => tool.name),
+    ).toEqual([
       'startRecording',
       'stopRecording',
       'getRecordingStatus',
@@ -29,6 +31,9 @@ describe('network activity agent state', () => {
       'listRealtimeConnections',
       'getRealtimeConnectionDetails',
     ]);
+    expect(
+      networkActivityToolDefinitions.getRequestDetails.inputSchema.required,
+    ).toEqual(['requestId']);
   });
 
   it('tracks HTTP requests with parity-oriented list/detail/body results', () => {

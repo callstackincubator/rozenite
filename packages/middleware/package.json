@@ -42,7 +42,7 @@
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest --run"
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",

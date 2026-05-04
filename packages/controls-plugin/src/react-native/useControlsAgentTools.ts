@@ -1,68 +1,9 @@
-import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+import {
+  CONTROLS_AGENT_PLUGIN_ID,
+  controlsToolDefinitions,
+} from '../shared/agent-tools';
 import type { ControlsSection } from '../shared/types';
-
-type SectionItemInput = {
-  sectionId: string;
-  itemId: string;
-};
-
-type SetValueInput = SectionItemInput & {
-  value: boolean | string;
-};
-
-const pluginId = '@rozenite/controls-plugin';
-
-const listSectionsTool: AgentTool = {
-  name: 'list-sections',
-  description:
-    'List all controls sections with their item IDs, types, and titles. Does not include values — call get-item for that.',
-  inputSchema: { type: 'object', properties: {} },
-};
-
-const getItemTool: AgentTool = {
-  name: 'get-item',
-  description:
-    'Get full details of a single controls item including its current value. For select items this includes available options.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      sectionId: { type: 'string', description: 'Section ID.' },
-      itemId: { type: 'string', description: 'Item ID.' },
-    },
-    required: ['sectionId', 'itemId'],
-  },
-};
-
-const setValueTool: AgentTool = {
-  name: 'set-value',
-  description:
-    'Update the value of a toggle, select, or input item. Runs the validate callback when present. Fails for text (read-only) and button items.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      sectionId: { type: 'string', description: 'Section ID.' },
-      itemId: { type: 'string', description: 'Item ID.' },
-      value: {
-        description:
-          'New value. Boolean for toggle items, string for select/input items.',
-      },
-    },
-    required: ['sectionId', 'itemId', 'value'],
-  },
-};
-
-const pressButtonTool: AgentTool = {
-  name: 'press-button',
-  description: "Trigger a button item's action. Fails if the item is not a button or is disabled.",
-  inputSchema: {
-    type: 'object',
-    properties: {
-      sectionId: { type: 'string', description: 'Section ID.' },
-      itemId: { type: 'string', description: 'Item ID.' },
-    },
-    required: ['sectionId', 'itemId'],
-  },
-};
 
 const resolveItem = (
   sections: ControlsSection[],
@@ -92,8 +33,8 @@ const resolveItem = (
 
 export const useControlsAgentTools = (sections: ControlsSection[]) => {
   useRozenitePluginAgentTool({
-    pluginId,
-    tool: listSectionsTool,
+    pluginId: CONTROLS_AGENT_PLUGIN_ID,
+    tool: controlsToolDefinitions.listSections,
     handler: () => ({
       sections: sections.map((section) => ({
         id: section.id,
@@ -109,9 +50,9 @@ export const useControlsAgentTools = (sections: ControlsSection[]) => {
     }),
   });
 
-  useRozenitePluginAgentTool<SectionItemInput>({
-    pluginId,
-    tool: getItemTool,
+  useRozenitePluginAgentTool({
+    pluginId: CONTROLS_AGENT_PLUGIN_ID,
+    tool: controlsToolDefinitions.getItem,
     handler: ({ sectionId, itemId }) => {
       const { item } = resolveItem(sections, sectionId, itemId);
 
@@ -187,9 +128,9 @@ export const useControlsAgentTools = (sections: ControlsSection[]) => {
     },
   });
 
-  useRozenitePluginAgentTool<SetValueInput>({
-    pluginId,
-    tool: setValueTool,
+  useRozenitePluginAgentTool({
+    pluginId: CONTROLS_AGENT_PLUGIN_ID,
+    tool: controlsToolDefinitions.setValue,
     handler: async ({ sectionId, itemId, value }) => {
       const { item } = resolveItem(sections, sectionId, itemId);
 
@@ -224,7 +165,7 @@ export const useControlsAgentTools = (sections: ControlsSection[]) => {
         }
 
         await item.onUpdate(value);
-        return { applied: true, sectionId, itemId };
+        return { applied: true as const, sectionId, itemId };
       }
 
       if (typeof value !== 'string') {
@@ -250,13 +191,13 @@ export const useControlsAgentTools = (sections: ControlsSection[]) => {
       }
 
       await item.onUpdate(value);
-      return { applied: true, sectionId, itemId };
+      return { applied: true as const, sectionId, itemId };
     },
   });
 
-  useRozenitePluginAgentTool<SectionItemInput>({
-    pluginId,
-    tool: pressButtonTool,
+  useRozenitePluginAgentTool({
+    pluginId: CONTROLS_AGENT_PLUGIN_ID,
+    tool: controlsToolDefinitions.pressButton,
     handler: async ({ sectionId, itemId }) => {
       const { item } = resolveItem(sections, sectionId, itemId);
 
@@ -271,7 +212,7 @@ export const useControlsAgentTools = (sections: ControlsSection[]) => {
       }
 
       await item.onPress();
-      return { pressed: true, sectionId, itemId };
+      return { pressed: true as const, sectionId, itemId };
     },
   });
 };

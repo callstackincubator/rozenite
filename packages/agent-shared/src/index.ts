@@ -43,6 +43,79 @@ export interface AgentTool {
   inputSchema: JSONSchema7;
 }
 
+type AgentToolTypeCarrier<TArgs = unknown, TResult = unknown> = {
+  /**
+   * Keep these phantom fields string-keyed so separately emitted .d.ts files
+   * remain structurally compatible across packages.
+   */
+  readonly __rozeniteAgentToolArgs__?: TArgs;
+  readonly __rozeniteAgentToolResult__?: TResult;
+};
+
+export interface AgentToolContract<TArgs = unknown, TResult = unknown>
+  extends AgentTool,
+    AgentToolTypeCarrier<TArgs, TResult> {}
+
+type AgentToolDescriptorShape = {
+  domain: string;
+  name: string;
+  description: string;
+  inputSchema: JSONSchema7;
+};
+
+export interface AgentToolDescriptor<TArgs = unknown, TResult = unknown>
+  extends AgentToolDescriptorShape,
+    AgentToolTypeCarrier<TArgs, TResult> {}
+
+export type InferAgentToolArgs<TTool> =
+  TTool extends AgentToolTypeCarrier<infer TArgs, unknown> ? TArgs : unknown;
+
+export type InferAgentToolResult<TTool> =
+  TTool extends AgentToolTypeCarrier<unknown, infer TResult>
+    ? TResult
+    : unknown;
+
+export const defineAgentToolContract = <TArgs, TResult>(
+  tool: AgentTool,
+): AgentToolContract<TArgs, TResult> => {
+  return tool as AgentToolContract<TArgs, TResult>;
+};
+
+export const defineAgentToolDescriptor = <TArgs, TResult>(
+  descriptor: AgentToolDescriptorShape,
+): AgentToolDescriptor<TArgs, TResult> => {
+  return descriptor as AgentToolDescriptor<TArgs, TResult>;
+};
+
+export const defineAgentToolDescriptors = <
+  TTools extends Record<string, AgentToolContract<unknown, unknown>>,
+>(
+  domain: string,
+  tools: TTools,
+): {
+  [K in keyof TTools]: AgentToolDescriptor<
+    InferAgentToolArgs<TTools[K]>,
+    InferAgentToolResult<TTools[K]>
+  >;
+} => {
+  return Object.fromEntries(
+    Object.entries(tools).map(([key, tool]) => [
+      key,
+      defineAgentToolDescriptor({
+        domain,
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+      }),
+    ]),
+  ) as {
+    [K in keyof TTools]: AgentToolDescriptor<
+      InferAgentToolArgs<TTools[K]>,
+      InferAgentToolResult<TTools[K]>
+    >;
+  };
+};
+
 export type AgentSessionStatus = 'connecting' | 'connected' | 'stopped';
 
 export type MetroTarget = {

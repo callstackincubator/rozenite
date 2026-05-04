@@ -1,5 +1,8 @@
 import { Alert } from 'react-native';
-import { useRozeniteInAppAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+import {
+  useRozeniteInAppAgentTool,
+  type AgentTool,
+} from '@rozenite/agent-bridge';
 
 type ShowAlertInput = {
   title?: string;
@@ -64,7 +67,10 @@ export const useAgentPlaygroundTools = () => {
   useRozeniteInAppAgentTool<ShowAlertInput>({
     tool: showAlertTool,
     handler: ({ title, message }) => {
-      Alert.alert(title || 'Agent Playground', message || 'Alert from Agent tool.');
+      Alert.alert(
+        title || 'Agent Playground',
+        message || 'Alert from Agent tool.',
+      );
 
       return {
         ok: true,

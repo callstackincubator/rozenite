@@ -27,6 +27,8 @@ const MAIN_EXECUTION_CONTEXT_NAME = 'main';
 const BOOTSTRAP_DELAY_MS = 500;
 const DISPATCHER_INIT_MAX_ATTEMPTS = 20;
 const DISPATCHER_INIT_RETRY_MS = 250;
+const PLUGIN_READINESS_QUIET_WINDOW_MS = 50;
+const PLUGIN_READINESS_MAX_WAIT_MS = 250;
 
 type PendingCommand = {
   resolve: (value: Record<string, unknown>) => void;
@@ -37,6 +39,11 @@ type StartReadiness = {
   promise: Promise<void>;
   resolve: () => void;
   reject: (error: Error) => void;
+};
+
+type PluginReadiness = {
+  quietTimer: NodeJS.Timeout | null;
+  timeoutTimer: NodeJS.Timeout | null;
 };
 
 type CDPEvaluateResponse = {
@@ -92,6 +99,7 @@ export const createAgentSession = (options: {
   let terminationNotified = false;
   let disconnectLogged = false;
   let startReadiness: StartReadiness | null = null;
+  let pluginReadiness: PluginReadiness | null = null;
 
   const pendingCommands = new Map<number, PendingCommand>();
   const cdpEventListeners = new Map<
@@ -138,15 +146,33 @@ export const createAgentSession = (options: {
     lastActivityAt = Date.now();
   };
 
+  const clearPluginReadiness = (): void => {
+    if (!pluginReadiness) {
+      return;
+    }
+
+    if (pluginReadiness.quietTimer) {
+      clearTimeout(pluginReadiness.quietTimer);
+    }
+
+    if (pluginReadiness.timeoutTimer) {
+      clearTimeout(pluginReadiness.timeoutTimer);
+    }
+
+    pluginReadiness = null;
+  };
+
   const createStartReadiness = (): Promise<void> => {
     let resolve!: () => void;
     let reject!: (error: Error) => void;
     const promise = new Promise<void>((resolvePromise, rejectPromise) => {
       resolve = () => {
+        clearPluginReadiness();
         startReadiness = null;
         resolvePromise();
       };
       reject = (error: Error) => {
+        clearPluginReadiness();
         startReadiness = null;
         rejectPromise(error);
       };
@@ -167,6 +193,43 @@ export const createAgentSession = (options: {
 
   const rejectStartReadiness = (error: Error): void => {
     startReadiness?.reject(error);
+  };
+
+  const schedulePluginReadinessQuietTimer = (): void => {
+    if (!pluginReadiness) {
+      return;
+    }
+
+    if (pluginReadiness.quietTimer) {
+      clearTimeout(pluginReadiness.quietTimer);
+    }
+
+    pluginReadiness.quietTimer = setTimeout(() => {
+      resolveStartReadiness();
+    }, PLUGIN_READINESS_QUIET_WINDOW_MS);
+  };
+
+  const beginPluginReadinessWait = (): void => {
+    if (!startReadiness) {
+      return;
+    }
+
+    clearPluginReadiness();
+    pluginReadiness = {
+      quietTimer: null,
+      timeoutTimer: setTimeout(() => {
+        resolveStartReadiness();
+      }, PLUGIN_READINESS_MAX_WAIT_MS),
+    };
+    schedulePluginReadinessQuietTimer();
+  };
+
+  const notePluginReadinessActivity = (): void => {
+    if (!pluginReadiness) {
+      return;
+    }
+
+    schedulePluginReadinessQuietTimer();
   };
 
   const emitCDPEvent = (
@@ -398,7 +461,7 @@ export const createAgentSession = (options: {
       bootstrapped = true;
       lastError = undefined;
       touch();
-      resolveStartReadiness();
+      beginPluginReadinessWait();
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
       scheduleBootstrap();
@@ -430,6 +493,7 @@ export const createAgentSession = (options: {
     }
 
     clearBootstrapTimer();
+    clearPluginReadiness();
     status = 'stopped';
 
     if (stopped) {
@@ -508,9 +572,24 @@ export const createAgentSession = (options: {
 
     logger.debug('Received Rozenite binding payload.', bindingPayload);
     if (bindingPayload.domain === 'rozenite') {
+      if (
+        !bindingPayload.message ||
+        typeof bindingPayload.message !== 'object'
+      ) {
+        return;
+      }
+
+      const devToolsMessage = bindingPayload.message as DevToolsPluginMessage;
+      if (
+        devToolsMessage.type === 'plugin-mounted' ||
+        devToolsMessage.type === 'register-tool'
+      ) {
+        notePluginReadinessActivity();
+      }
+
       handler.handleDeviceMessage(
         options.target.id,
-        bindingPayload.message as DevToolsPluginMessage,
+        devToolsMessage,
       );
     } else if (bindingPayload.domain === 'react-devtools') {
       for (const service of localServices) {
@@ -656,6 +735,7 @@ export const createAgentSession = (options: {
 
     stopped = true;
     clearBootstrapTimer();
+    clearPluginReadiness();
     rejectStartReadiness(
       new Error('Agent session stopped before bootstrap completed'),
     );
