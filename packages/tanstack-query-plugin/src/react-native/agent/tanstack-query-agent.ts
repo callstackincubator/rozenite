@@ -1,7 +1,4 @@
 import type {
-  JSONSchema7,
-} from '@rozenite/agent-bridge';
-import type {
   Mutation,
   MutationCacheNotifyEvent,
   MutationObserverOptions,
@@ -13,7 +10,6 @@ import type {
 import { onlineManager } from '@tanstack/react-query';
 import { applyTanStackQueryDevtoolsAction } from '../devtools-actions';
 import {
-  TANSTACK_QUERY_AGENT_PLUGIN_ID,
   tanstackQueryToolDefinitions,
   type TanStackQueryAgentMutationIdInput as MutationIdInput,
   type TanStackQueryAgentOnlineStatusInput as OnlineStatusInput,

@@ -8,7 +8,6 @@ import {
   type ReduxDevToolsStoreRegistration,
 } from './redux-devtools-registry';
 import {
-  REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
   reduxDevToolsToolDefinitions,
   type ReduxDevToolsActionInput as ActionInput,
   type ReduxDevToolsApplyStoreActionResult,
