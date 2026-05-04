@@ -1,5 +1,17 @@
 # @rozenite/vite-plugin
 
+## 1.8.0
+
+### Minor Changes
+
+- [#222](https://github.com/callstackincubator/rozenite/pull/222) [`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a) Thanks [@manapard](https://github.com/manapard)! - Add plugin `./sdk` entrypoints for typed agent tool descriptors backed by the
+  same tool contracts used at runtime.
+
+  The storage plugin now ships `@rozenite/storage-plugin/sdk` with typed
+  `storageTools` descriptors and shared tool contract exports, and the Rozenite
+  build pipeline now bundles per-target SDK declarations so plugin SDK entrypoints
+  publish clean `dist/sdk/index.d.ts` files.
+
 ## 1.7.0
 
 ### Patch Changes

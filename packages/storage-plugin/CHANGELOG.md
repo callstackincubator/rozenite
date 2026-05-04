@@ -1,5 +1,26 @@
 # @rozenite/storage-plugin
 
+## 1.8.0
+
+### Minor Changes
+
+- [#222](https://github.com/callstackincubator/rozenite/pull/222) [`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a) Thanks [@manapard](https://github.com/manapard)! - Add plugin `./sdk` entrypoints for typed agent tool descriptors backed by the
+  same tool contracts used at runtime.
+
+  The storage plugin now ships `@rozenite/storage-plugin/sdk` with typed
+  `storageTools` descriptors and shared tool contract exports, and the Rozenite
+  build pipeline now bundles per-target SDK declarations so plugin SDK entrypoints
+  publish clean `dist/sdk/index.d.ts` files.
+
+- [#228](https://github.com/callstackincubator/rozenite/pull/228) [`0b373c7`](https://github.com/callstackincubator/rozenite/commit/0b373c7e1b3ebf0a80f87f0a7871d55dcf300992) Thanks [@V3RON](https://github.com/V3RON)! - The Storage plugin now runs in **development on web** (React Native for Web) when using Rozenite for Web. AsyncStorage and Expo SecureStore adapters work as on native; **MMKV** stays unavailable in the browser, so the MMKV adapter resolves to an **empty inspector** (same as production) without loading `react-native-mmkv` in your web bundle.
+
+### Patch Changes
+
+- Updated dependencies [[`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a), [`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a)]:
+  - @rozenite/agent-bridge@1.8.0
+  - @rozenite/agent-shared@1.8.0
+  - @rozenite/plugin-bridge@1.8.0
+
 ## 1.7.0
 
 ### Patch Changes

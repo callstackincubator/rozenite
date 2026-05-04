@@ -1,5 +1,13 @@
 # @rozenite/metro
 
+## 1.8.0
+
+### Patch Changes
+
+- Updated dependencies [[`e1e5bd7`](https://github.com/callstackincubator/rozenite/commit/e1e5bd721032d3ddd0b7f16c26466f76d4c846a1), [`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a)]:
+  - @rozenite/middleware@1.8.0
+  - @rozenite/tools@1.8.0
+
 ## 1.7.0
 
 ### Patch Changes

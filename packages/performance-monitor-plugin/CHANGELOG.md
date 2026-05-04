@@ -1,5 +1,12 @@
 # @rozenite/performance-monitor-plugin
 
+## 1.8.0
+
+### Patch Changes
+
+- Updated dependencies [[`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a)]:
+  - @rozenite/plugin-bridge@1.8.0
+
 ## 1.7.0
 
 ### Patch Changes

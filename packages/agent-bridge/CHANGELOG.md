@@ -1,5 +1,24 @@
 # @rozenite/agent-bridge
 
+## 1.8.0
+
+### Minor Changes
+
+- [#222](https://github.com/callstackincubator/rozenite/pull/222) [`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a) Thanks [@manapard](https://github.com/manapard)! - Add typed agent tool contracts and descriptors that can be shared across runtime
+  tool registration and SDK-facing plugin exports.
+
+  `@rozenite/agent-shared` now exposes `defineAgentToolContract(...)`,
+  `defineAgentToolDescriptor(...)`, and `defineAgentToolDescriptors(...)`, while
+  `@rozenite/agent-bridge` can infer handler input and result types from typed
+  tool contracts passed to `useRozeniteInAppAgentTool(...)` and
+  `useRozenitePluginAgentTool(...)`.
+
+### Patch Changes
+
+- Updated dependencies [[`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a), [`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a)]:
+  - @rozenite/agent-shared@1.8.0
+  - @rozenite/plugin-bridge@1.8.0
+
 ## 1.7.0
 
 ### Minor Changes
