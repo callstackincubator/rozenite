@@ -1,5 +1,14 @@
 # rozenite
 
+## 1.8.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-sdk@1.8.1
+  - @rozenite/agent-shared@1.8.1
+  - @rozenite/tools@1.8.1
+
 ## 1.8.0
 
 ### Minor Changes

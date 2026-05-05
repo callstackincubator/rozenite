@@ -1,5 +1,14 @@
 # @rozenite/file-system-plugin
 
+## 1.8.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.8.1
+  - @rozenite/agent-shared@1.8.1
+  - @rozenite/plugin-bridge@1.8.1
+
 ## 1.8.0
 
 ### Minor Changes

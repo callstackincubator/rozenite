@@ -1,5 +1,16 @@
 # @rozenite/middleware
 
+## 1.8.1
+
+### Patch Changes
+
+- [#236](https://github.com/callstackincubator/rozenite/pull/236) [`3ad44bb`](https://github.com/callstackincubator/rozenite/commit/3ad44bb39b0ebca67dc233729f94ddc4467514cb) Thanks [@V3RON](https://github.com/V3RON)! - Fix scoped Rozenite middleware so agent setup requests still resolve after the
+  outer `/rozenite` prefix is stripped by Metro integrations.
+- Updated dependencies []:
+  - @rozenite/agent-shared@1.8.1
+  - @rozenite/runtime@1.8.1
+  - @rozenite/tools@1.8.1
+
 ## 1.8.0
 
 ### Patch Changes
