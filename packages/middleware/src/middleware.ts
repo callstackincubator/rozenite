@@ -18,6 +18,10 @@ export type MiddlewareConfig = {
 };
 
 export const getNormalizedRequestUrl = (url: string): string => {
+  if (url === '/agent' || url.startsWith('/agent/')) {
+    return `/rozenite${url}`;
+  }
+
   if (url === '/rozenite' || url.startsWith('/rozenite/')) {
     if (url === '/rozenite/agent' || url.startsWith('/rozenite/agent/')) {
       return url;
