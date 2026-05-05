@@ -73,6 +73,15 @@ const runRequest = async (
 };
 
 describe('middleware request normalization', () => {
+  it('restores stripped agent routes for scoped integrations', () => {
+    expect(getNormalizedRequestUrl('/agent/targets')).toBe(
+      '/rozenite/agent/targets',
+    );
+    expect(getNormalizedRequestUrl('/agent/sessions/device-1')).toBe(
+      '/rozenite/agent/sessions/device-1',
+    );
+  });
+
   it('preserves agent routes under /rozenite', () => {
     expect(getNormalizedRequestUrl('/rozenite/agent/targets')).toBe(
       '/rozenite/agent/targets',
@@ -93,6 +102,27 @@ describe('middleware request normalization', () => {
 });
 
 describe('scoped middleware', () => {
+  it('keeps agent setup working when the outer prefix is stripped first', async () => {
+    const middleware = createScopedMiddleware('/rozenite', (req, res, next) => {
+      if (
+        req.url &&
+        getNormalizedRequestUrl(req.url) === '/rozenite/agent/targets'
+      ) {
+        res.end('agent targets');
+        return;
+      }
+
+      next();
+    });
+
+    const response = await runRequest(middleware, '/rozenite/agent/targets');
+
+    expect(response).toEqual({
+      status: 200,
+      body: 'agent targets',
+    });
+  });
+
   it('delegates only requests within the configured prefix', async () => {
     const handler = vi.fn<MiddlewareHandler>((req, res) => {
       res.end(req.url);
