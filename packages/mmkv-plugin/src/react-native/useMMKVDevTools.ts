@@ -4,7 +4,7 @@ import { MMKVEventMap } from '../shared/messaging';
 import { getMMKVView } from './mmkv-view';
 import { useMMKVAgentTools } from './useMMKVAgentTools';
 import { normalizeStoragesConfigProperty } from './utils';
-import type { MMKV } from 'react-native-mmkv';
+import type { MMKV } from './utils';
 
 export type MMKVDevToolsOptions = {
   /**
