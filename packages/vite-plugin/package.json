@@ -40,6 +40,7 @@
   },
   "scripts": {
     "build": "vite build",
+    "test": "vitest run",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "lint": "eslint ."
   },

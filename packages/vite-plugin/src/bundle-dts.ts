@@ -8,6 +8,35 @@ import {
 
 type Target = 'react-native' | 'metro' | 'sdk';
 
+export const normalizeRolledUpDeclarations = (content: string) => {
+  const valueDeclarationNames = new Set<string>();
+
+  content.replace(
+    /^\s*declare\s+(?:const|let|var|function)\s+([A-Za-z_$][\w$]*)\b/gm,
+    (_, name: string) => {
+      valueDeclarationNames.add(name);
+      return _;
+    },
+  );
+
+  const normalizeTypeReference = (name: string) =>
+    valueDeclarationNames.has(name) ? `typeof ${name}` : name;
+
+  return content
+    .replace(
+      /^(\s*(?:export\s+)?declare\s+(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*:\s*)([A-Za-z_$][\w$]*)(\s*;)$/gm,
+      (_, prefix: string, name: string, suffix: string) => {
+        return `${prefix}${normalizeTypeReference(name)}${suffix}`;
+      },
+    )
+    .replace(
+      /^(\s*(?:export\s+)?declare\s+type\s+[A-Za-z_$][\w$]*\s*=\s*)([A-Za-z_$][\w$]*)(\s*;)$/gm,
+      (_, prefix: string, name: string, suffix: string) => {
+        return `${prefix}${normalizeTypeReference(name)}${suffix}`;
+      },
+    );
+};
+
 export const bundleTargetDeclarations = async (
   projectRoot: string,
   target: Target,
@@ -85,5 +114,12 @@ export const bundleTargetDeclarations = async (
   }
   await fs.rm(entryPath, { force: true });
   await fs.rename(tempOutputPath, publicEntryPath);
+  const bundledContent = await fs.readFile(publicEntryPath, 'utf8');
+  const normalizedContent = normalizeRolledUpDeclarations(bundledContent);
+
+  if (normalizedContent !== bundledContent) {
+    await fs.writeFile(publicEntryPath, normalizedContent);
+  }
+
   await fs.rm(srcDeclarationsPath, { recursive: true, force: true });
 };
