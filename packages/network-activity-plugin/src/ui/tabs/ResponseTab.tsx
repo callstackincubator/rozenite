@@ -10,6 +10,7 @@ import { RequestOverride } from '../../shared/client';
 import { OverrideResponse } from '../components/OverrideResponse';
 import { Button } from '../components/Button';
 import { Pencil } from 'lucide-react';
+import { isJsonContentType } from '../../utils/getContentTypeMimeType';
 
 export type ResponseTabProps = {
   selectedRequest: HttpNetworkEntry;
@@ -110,7 +111,7 @@ export const ResponseTab = ({
       );
     }
 
-    if (type.startsWith('application/json')) {
+    if (isJsonContentType(type)) {
       let bodyContent;
 
       try {
