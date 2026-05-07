@@ -39,13 +39,6 @@ export const LandingScreen = () => {
 
               <TouchableOpacity
                 style={styles.navigationButton}
-                onPress={() => navigation.navigate('MMKVPlugin' as never)}
-              >
-                <Text style={styles.buttonText}>MMKV Plugin</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.navigationButton}
                 onPress={() => navigation.navigate('StoragePlugin' as never)}
               >
                 <Text style={styles.buttonText}>Storage Plugin</Text>
