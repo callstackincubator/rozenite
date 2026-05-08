@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import process from 'node:process';
 import ejs from 'ejs';
 import { fileURLToPath } from 'node:url';
+import { transformWithEsbuild } from 'vite';
 import { loadConfig, RozeniteConfig } from './load-config.js';
 import { getPackageJSON } from './package-json.js';
 
@@ -12,6 +13,22 @@ type PanelEntry = {
   label: string;
   sourceFile: string;
   htmlFile: string;
+};
+
+type ManifestPanelEntry = {
+  name: string;
+  source: string;
+};
+
+type DevHostPanelEntry = {
+  label: string;
+  source: string;
+};
+
+type DevHostState = {
+  packageName: string;
+  packageDescription: string;
+  panels: DevHostPanelEntry[];
 };
 
 const TEMPLATES_DIR = path.resolve(
@@ -23,6 +40,9 @@ const TEMPLATES_DIR = path.resolve(
 
 const PANELS_DIR = './panels';
 const DEVTOOLS_DIR = 'devtools';
+const DEV_HOST_ROUTE = '/';
+const VIRTUAL_DEV_HOST_ID = 'virtual:rozenite-dev-host';
+const RESOLVED_VIRTUAL_DEV_HOST_ID = `\0${VIRTUAL_DEV_HOST_ID}`;
 
 export const rozeniteClientPlugin = (): Plugin => {
   let projectRoot = process.cwd();
@@ -51,6 +71,22 @@ export const rozeniteClientPlugin = (): Plugin => {
   };
 
   const PANEL_TEMPLATE = path.join(TEMPLATES_DIR, 'panel.ejs');
+  const DEV_HOST_TEMPLATE = path.join(TEMPLATES_DIR, 'dev-host.ejs');
+  const DEV_HOST_APP_TEMPLATE = path.join(TEMPLATES_DIR, 'dev-host.tsx');
+
+  const getManifestPanels = (): ManifestPanelEntry[] => {
+    return getPanels().map((panel) => ({
+      name: panel.label,
+      source: `/${DEVTOOLS_DIR}/` + panel.htmlFile,
+    }));
+  };
+
+  const getDevHostPanels = (): DevHostPanelEntry[] => {
+    return getPanels().map((panel) => ({
+      label: panel.label,
+      source: `/${DEVTOOLS_DIR}/` + panel.htmlFile,
+    }));
+  };
 
   const generatePanelHtmlContent = (panel: PanelEntry): string => {
     const template = fs.readFileSync(PANEL_TEMPLATE, 'utf-8');
@@ -58,6 +94,27 @@ export const rozeniteClientPlugin = (): Plugin => {
     return ejs.render(template, {
       panelName: panel.name,
       panelFile: relativePath,
+    });
+  };
+
+  const getDevHostState = async (): Promise<DevHostState> => {
+    const packageJSON = await getPackageJSON(projectRoot);
+
+    return {
+      packageName: packageJSON.name,
+      packageDescription: packageJSON.description,
+      panels: getDevHostPanels(),
+    };
+  };
+
+  const generateDevHostHtmlContent = async (): Promise<string> => {
+    const template = await fs.promises.readFile(DEV_HOST_TEMPLATE, 'utf-8');
+    const state = await getDevHostState();
+
+    return ejs.render(template, {
+      virtualDevHostId: VIRTUAL_DEV_HOST_ID,
+      pageTitle: state.packageName,
+      serializedState: JSON.stringify(state),
     });
   };
 
@@ -74,7 +131,10 @@ export const rozeniteClientPlugin = (): Plugin => {
       const panels = getPanels();
 
       config.server ??= {};
-      config.server.open = false;
+      config.server.open =
+        config.server.open === true
+          ? DEV_HOST_ROUTE
+          : (config.server.open ?? DEV_HOST_ROUTE);
       config.server.port = 8888;
 
       config.build ??= {};
@@ -97,6 +157,10 @@ export const rozeniteClientPlugin = (): Plugin => {
     },
 
     resolveId(id) {
+      if (id === VIRTUAL_DEV_HOST_ID) {
+        return RESOLVED_VIRTUAL_DEV_HOST_ID;
+      }
+
       const isPanel = getPanels().some(
         (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
       );
@@ -108,7 +172,18 @@ export const rozeniteClientPlugin = (): Plugin => {
       return null;
     },
 
-    load(id) {
+    async load(id) {
+      if (id === RESOLVED_VIRTUAL_DEV_HOST_ID) {
+        const source = await fs.promises.readFile(DEV_HOST_APP_TEMPLATE, 'utf-8');
+        const result = await transformWithEsbuild(source, 'dev-host.tsx', {
+          loader: 'tsx',
+          target: 'esnext',
+          jsx: 'automatic',
+        });
+
+        return result.code;
+      }
+
       const panel = getPanels().find(
         (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
       );
@@ -142,7 +217,21 @@ export const rozeniteClientPlugin = (): Plugin => {
         }
 
         const panels = getPanels();
-        const url = req.url || '/';
+        const requestUrl = req.url || '/';
+        const url = new URL(requestUrl, 'http://localhost').pathname;
+
+        if (url === DEV_HOST_ROUTE) {
+          generateDevHostHtmlContent()
+            .then((htmlContent) => server.transformIndexHtml(requestUrl, htmlContent))
+            .then((html) => {
+              res.setHeader('Content-Type', 'text/html');
+              res.end(html);
+            })
+            .catch((err) => {
+              next(err);
+            });
+          return;
+        }
 
         if (url === '/rozenite.json') {
           res.setHeader('Content-Type', 'application/json');
@@ -152,10 +241,7 @@ export const rozeniteClientPlugin = (): Plugin => {
                 name: packageJSON.name,
                 version: packageJSON.version,
                 description: packageJSON.description,
-                panels: panels.map((panel) => ({
-                  name: panel.label,
-                  source: `/${DEVTOOLS_DIR}/` + panel.htmlFile,
-                })),
+                panels: getManifestPanels(),
               },
               null,
               2,
@@ -172,7 +258,7 @@ export const rozeniteClientPlugin = (): Plugin => {
           const htmlContent = generatePanelHtmlContent(panel);
 
           server
-            .transformIndexHtml(req.url || '/', htmlContent)
+            .transformIndexHtml(requestUrl, htmlContent)
             .then((html) => {
               res.setHeader('Content-Type', 'text/html');
               res.end(html);
@@ -205,7 +291,6 @@ export const rozeniteClientPlugin = (): Plugin => {
     },
 
     async generateBundle() {
-      const panels = getPanels();
       const packageJSON = await getPackageJSON(projectRoot);
 
       this.emitFile({
@@ -215,10 +300,7 @@ export const rozeniteClientPlugin = (): Plugin => {
           name: packageJSON.name,
           version: packageJSON.version,
           description: packageJSON.description,
-          panels: panels.map((panel) => ({
-            name: panel.label,
-            source: `/${DEVTOOLS_DIR}/` + panel.htmlFile,
-          })),
+          panels: getManifestPanels(),
         }),
       });
     },
