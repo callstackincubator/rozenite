@@ -32,6 +32,7 @@ const storages = [
       user: userStorage,
       cache: cacheStorage,
     },
+    blacklist: /user:token|cache:.*Binary.*/,
   }),
   createAsyncStorageAdapter({
     storage: AsyncStorage,
@@ -44,6 +45,27 @@ const storages = [
 
 useRozeniteStoragePlugin({ storages });
 ```
+
+### MMKV v3 and v4
+
+`createMMKVStorageAdapter` supports both:
+
+```ts
+// v3 style: array or named storages
+createMMKVStorageAdapter({
+  storages: [userStorage, cacheStorage],
+});
+
+// v4 style: named storages only
+createMMKVStorageAdapter({
+  storages: {
+    user: userStorage,
+    cache: cacheStorage,
+  },
+});
+```
+
+MMKV v4 requires a record of storage IDs because the storage instance no longer exposes an `id` that the plugin can derive from an array item.
 
 ### AsyncStorage v2 and v3
 

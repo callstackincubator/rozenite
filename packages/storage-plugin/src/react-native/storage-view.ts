@@ -34,6 +34,10 @@ const toSnapshotMap = (entries: StorageEntry[]) => {
 };
 
 const shouldFilterKey = (storage: StorageNode, key: string) => {
+  if (storage.shouldFilterKey?.(key)) {
+    return true;
+  }
+
   if (!storage.blacklist) {
     return false;
   }

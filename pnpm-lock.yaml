@@ -156,9 +156,6 @@ importers:
       '@rozenite/metro':
         specifier: workspace:*
         version: link:../../packages/metro
-      '@rozenite/mmkv-plugin':
-        specifier: workspace:*
-        version: link:../../packages/mmkv-plugin
       '@rozenite/network-activity-plugin':
         specifier: workspace:*
         version: link:../../packages/network-activity-plugin
