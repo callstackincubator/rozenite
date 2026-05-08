@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import process from 'node:process';
 import ejs from 'ejs';
 import { fileURLToPath } from 'node:url';
-import { transformWithEsbuild } from 'vite';
+import { normalizePath } from 'vite';
 import { loadConfig, RozeniteConfig } from './load-config.js';
 import { getPackageJSON } from './package-json.js';
 
@@ -38,11 +38,20 @@ const TEMPLATES_DIR = path.resolve(
   'templates',
 );
 
+const PACKAGE_DIR = path.resolve(
+  fileURLToPath(import.meta.url),
+  '..',
+  '..',
+);
+
+const DEV_HOST_DIR = path.join(PACKAGE_DIR, 'src', 'dev-host');
+const DEV_HOST_HTML_TEMPLATE = path.join(DEV_HOST_DIR, 'dev-host.html');
+const DEV_HOST_ENTRY_FILE = path.join(DEV_HOST_DIR, 'index.tsx');
+
 const PANELS_DIR = './panels';
 const DEVTOOLS_DIR = 'devtools';
 const DEV_HOST_ROUTE = '/';
-const VIRTUAL_DEV_HOST_ID = 'virtual:rozenite-dev-host';
-const RESOLVED_VIRTUAL_DEV_HOST_ID = `\0${VIRTUAL_DEV_HOST_ID}`;
+const DEV_HOST_STATE_ELEMENT_ID = '__rozenite-dev-host__';
 
 export const rozeniteClientPlugin = (): Plugin => {
   let projectRoot = process.cwd();
@@ -71,8 +80,6 @@ export const rozeniteClientPlugin = (): Plugin => {
   };
 
   const PANEL_TEMPLATE = path.join(TEMPLATES_DIR, 'panel.ejs');
-  const DEV_HOST_TEMPLATE = path.join(TEMPLATES_DIR, 'dev-host.ejs');
-  const DEV_HOST_APP_TEMPLATE = path.join(TEMPLATES_DIR, 'dev-host.tsx');
 
   const getManifestPanels = (): ManifestPanelEntry[] => {
     return getPanels().map((panel) => ({
@@ -107,15 +114,8 @@ export const rozeniteClientPlugin = (): Plugin => {
     };
   };
 
-  const generateDevHostHtmlContent = async (): Promise<string> => {
-    const template = await fs.promises.readFile(DEV_HOST_TEMPLATE, 'utf-8');
-    const state = await getDevHostState();
-
-    return ejs.render(template, {
-      virtualDevHostId: VIRTUAL_DEV_HOST_ID,
-      pageTitle: state.packageName,
-      serializedState: JSON.stringify(state),
-    });
+  const serializeDevHostState = (state: DevHostState): string => {
+    return JSON.stringify(state).replace(/</g, '\\u003c');
   };
 
   return {
@@ -157,10 +157,6 @@ export const rozeniteClientPlugin = (): Plugin => {
     },
 
     resolveId(id) {
-      if (id === VIRTUAL_DEV_HOST_ID) {
-        return RESOLVED_VIRTUAL_DEV_HOST_ID;
-      }
-
       const isPanel = getPanels().some(
         (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
       );
@@ -172,18 +168,7 @@ export const rozeniteClientPlugin = (): Plugin => {
       return null;
     },
 
-    async load(id) {
-      if (id === RESOLVED_VIRTUAL_DEV_HOST_ID) {
-        const source = await fs.promises.readFile(DEV_HOST_APP_TEMPLATE, 'utf-8');
-        const result = await transformWithEsbuild(source, 'dev-host.tsx', {
-          loader: 'tsx',
-          target: 'esnext',
-          jsx: 'automatic',
-        });
-
-        return result.code;
-      }
-
+    load(id) {
       const panel = getPanels().find(
         (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
       );
@@ -193,6 +178,36 @@ export const rozeniteClientPlugin = (): Plugin => {
       }
 
       return null;
+    },
+
+    async transformIndexHtml(_html, context) {
+      const pathname = context?.path ?? DEV_HOST_ROUTE;
+
+      if (pathname !== DEV_HOST_ROUTE) {
+        return;
+      }
+
+      const state = await getDevHostState();
+
+      return [
+        {
+          tag: 'script',
+          attrs: {
+            id: DEV_HOST_STATE_ELEMENT_ID,
+            type: 'application/json',
+          },
+          children: serializeDevHostState(state),
+          injectTo: 'body',
+        },
+        {
+          tag: 'script',
+          attrs: {
+            type: 'module',
+            src: `/@fs${normalizePath(DEV_HOST_ENTRY_FILE)}`,
+          },
+          injectTo: 'body',
+        },
+      ];
     },
 
     async configureServer(server: ViteDevServer) {
@@ -221,7 +236,8 @@ export const rozeniteClientPlugin = (): Plugin => {
         const url = new URL(requestUrl, 'http://localhost').pathname;
 
         if (url === DEV_HOST_ROUTE) {
-          generateDevHostHtmlContent()
+          fs.promises
+            .readFile(DEV_HOST_HTML_TEMPLATE, 'utf-8')
             .then((htmlContent) => server.transformIndexHtml(requestUrl, htmlContent))
             .then((html) => {
               res.setHeader('Content-Type', 'text/html');
