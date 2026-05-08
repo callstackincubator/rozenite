@@ -76,6 +76,11 @@
       "import": "./dist/react-native/index.js",
       "require": "./dist/react-native/index.cjs"
     },
+    "./adapter-helpers": {
+      "types": "./dist/react-native/adapter-helpers.d.ts",
+      "import": "./dist/react-native/adapter-helpers.js",
+      "require": "./dist/react-native/adapter-helpers.cjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
