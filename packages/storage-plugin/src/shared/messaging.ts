@@ -1,11 +1,17 @@
 import type { StorageCapabilities, StorageEntry, StorageTarget } from './types';
 
+export type SerializedBlacklist = {
+  source: string;
+  flags: string;
+};
+
 export type StorageSnapshotEvent = {
   type: 'snapshot';
   target: StorageTarget;
   adapterName: string;
   storageName: string;
   capabilities: StorageCapabilities;
+  blacklist?: SerializedBlacklist;
   entries: StorageEntry[];
 };
 

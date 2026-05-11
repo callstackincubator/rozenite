@@ -46,6 +46,9 @@ export const useRozeniteStoragePlugin = ({
             adapterName: view.adapterName,
             storageName: view.storageName,
             capabilities: view.capabilities,
+            blacklist: view.blacklist
+              ? { source: view.blacklist.source, flags: view.blacklist.flags }
+              : undefined,
             entries,
           });
         } catch (error) {
