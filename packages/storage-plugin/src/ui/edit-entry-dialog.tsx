@@ -5,6 +5,7 @@ import type {
   StorageEntryType,
   StorageEntryValue,
 } from '../shared/types';
+import { BinaryValueEditor } from './binary-value-editor';
 import { ConfirmDialog } from './confirm-dialog';
 
 export type EditEntryDialogProps = {
@@ -23,6 +24,7 @@ export const EditEntryDialog = ({
   supportedTypes,
 }: EditEntryDialogProps) => {
   const [editValue, setEditValue] = useState('');
+  const [pendingBytes, setPendingBytes] = useState<number[] | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -33,17 +35,24 @@ export const EditEntryDialog = ({
 
   useEffect(() => {
     if (entry && isOpen) {
-      setEditValue(Array.isArray(entry.value) ? JSON.stringify(entry.value) : String(entry.value));
+      if (entry.type === 'buffer') {
+        setPendingBytes(entry.value);
+        setEditValue('');
+      } else {
+        setEditValue(String(entry.value));
+        setPendingBytes(null);
+      }
     }
   }, [entry, isOpen]);
 
   const isTypeSupported = useMemo(
     () => !!entry && supportedTypes.includes(entry.type),
-    [entry, supportedTypes]
+    [entry, supportedTypes],
   );
 
   const resetForm = () => {
     setEditValue('');
+    setPendingBytes(null);
     onClose();
   };
 
@@ -57,6 +66,15 @@ export const EditEntryDialog = ({
         message: 'This storage does not support the current entry type.',
         type: 'alert',
       });
+      return;
+    }
+
+    if (entry.type === 'buffer') {
+      if (pendingBytes === null) {
+        return;
+      }
+      onEditEntry(entry.key, pendingBytes);
+      resetForm();
       return;
     }
 
@@ -78,12 +96,6 @@ export const EditEntryDialog = ({
             throw new Error('Boolean value must be "true" or "false"');
           }
           newValue = editValue === 'true';
-          break;
-        case 'buffer':
-          newValue = JSON.parse(editValue);
-          if (!Array.isArray(newValue) || !newValue.every((v) => typeof v === 'number')) {
-            throw new Error('Buffer must be an array of numbers');
-          }
           break;
         default:
           throw new Error('Invalid type');
@@ -107,7 +119,11 @@ export const EditEntryDialog = ({
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape') {
       resetForm();
-    } else if (event.key === 'Enter' && editValue.trim()) {
+    } else if (
+      event.key === 'Enter' &&
+      entry?.type !== 'buffer' &&
+      editValue.trim()
+    ) {
       handleEditEntry();
     }
   };
@@ -162,7 +178,7 @@ export const EditEntryDialog = ({
       onClick={resetForm}
     >
       <div
-        className="bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4"
+        className="bg-gray-800 rounded-lg p-6 w-[32rem] max-w-full mx-4"
         onClick={(event) => event.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
@@ -182,19 +198,25 @@ export const EditEntryDialog = ({
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1">Key</label>
+            <label className="block text-sm font-medium text-gray-200 mb-1">
+              Key
+            </label>
             <div className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 font-mono">
               {entry.key}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Key cannot be changed during editing</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Key cannot be changed during editing
+            </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1">Type</label>
+            <label className="block text-sm font-medium text-gray-200 mb-1">
+              Type
+            </label>
             <div className="flex items-center">
               <span
                 className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
-                  entry.type
+                  entry.type,
                 )}`}
               >
                 {entry.type}
@@ -205,7 +227,9 @@ export const EditEntryDialog = ({
                 This storage does not support {entry.type} values.
               </p>
             ) : (
-              <p className="text-xs text-gray-400 mt-1">Type cannot be changed during editing</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Type cannot be changed during editing
+              </p>
             )}
           </div>
 
@@ -216,7 +240,12 @@ export const EditEntryDialog = ({
             >
               Value
             </label>
-            {entry.type === 'boolean' ? (
+            {entry.type === 'buffer' ? (
+              <BinaryValueEditor
+                initialBytes={entry.value}
+                onChange={setPendingBytes}
+              />
+            ) : entry.type === 'boolean' ? (
               <select
                 id="edit-entry-value"
                 value={editValue}
@@ -238,11 +267,6 @@ export const EditEntryDialog = ({
                 autoFocus
               />
             )}
-            {entry.type === 'buffer' && (
-              <p className="text-xs text-gray-400 mt-1">
-                Enter as JSON array of numbers, e.g., [1, 2, 3, 255]
-              </p>
-            )}
           </div>
         </div>
 
@@ -255,7 +279,12 @@ export const EditEntryDialog = ({
           </button>
           <button
             onClick={handleEditEntry}
-            disabled={!editValue.trim() || !isTypeSupported}
+            disabled={
+              !isTypeSupported ||
+              (entry.type === 'buffer'
+                ? pendingBytes === null
+                : !editValue.trim())
+            }
             className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
           >
             Save Changes
@@ -265,7 +294,9 @@ export const EditEntryDialog = ({
 
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog((previous) => ({ ...previous, isOpen: false }))}
+        onClose={() =>
+          setConfirmDialog((previous) => ({ ...previous, isOpen: false }))
+        }
         onConfirm={() => {
           if (confirmDialog.onConfirm) {
             confirmDialog.onConfirm();

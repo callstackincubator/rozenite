@@ -5,6 +5,7 @@ import type {
   StorageEntryType,
   StorageEntryValue,
 } from '../shared/types';
+import { BinaryValueEditor } from './binary-value-editor';
 import { ConfirmDialog } from './confirm-dialog';
 
 const TYPE_OPTIONS: Array<{ value: StorageEntryType; label: string }> = [
@@ -32,6 +33,7 @@ export const AddEntryDialog = ({
   const [newEntryKey, setNewEntryKey] = useState('');
   const [newEntryType, setNewEntryType] = useState<StorageEntryType>('string');
   const [newEntryValue, setNewEntryValue] = useState('');
+  const [pendingBytes, setPendingBytes] = useState<number[] | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -41,8 +43,9 @@ export const AddEntryDialog = ({
   }>({ isOpen: false, title: '', message: '', type: 'alert' });
 
   const enabledTypes = useMemo(
-    () => TYPE_OPTIONS.filter((option) => supportedTypes.includes(option.value)),
-    [supportedTypes]
+    () =>
+      TYPE_OPTIONS.filter((option) => supportedTypes.includes(option.value)),
+    [supportedTypes],
   );
 
   const firstSupportedType = enabledTypes[0]?.value;
@@ -53,6 +56,7 @@ export const AddEntryDialog = ({
     setNewEntryKey('');
     setNewEntryType(firstSupportedType ?? 'string');
     setNewEntryValue('');
+    setPendingBytes(null);
     onClose();
   };
 
@@ -79,6 +83,19 @@ export const AddEntryDialog = ({
       return;
     }
 
+    if (newEntryType === 'buffer') {
+      if (pendingBytes === null) {
+        return;
+      }
+      onAddEntry({
+        key: newEntryKey,
+        type: 'buffer',
+        value: pendingBytes,
+      });
+      resetForm();
+      return;
+    }
+
     let parsedValue: StorageEntryValue;
     try {
       switch (newEntryType) {
@@ -97,15 +114,6 @@ export const AddEntryDialog = ({
           }
           parsedValue = newEntryValue === 'true';
           break;
-        case 'buffer':
-          parsedValue = JSON.parse(newEntryValue);
-          if (
-            !Array.isArray(parsedValue) ||
-            !parsedValue.every((value) => typeof value === 'number')
-          ) {
-            throw new Error('Buffer must be an array of numbers');
-          }
-          break;
         default:
           throw new Error('Invalid type');
       }
@@ -123,13 +131,23 @@ export const AddEntryDialog = ({
 
     let entry: StorageEntry;
     if (newEntryType === 'string') {
-      entry = { key: newEntryKey, type: 'string', value: parsedValue as string };
+      entry = {
+        key: newEntryKey,
+        type: 'string',
+        value: parsedValue as string,
+      };
     } else if (newEntryType === 'number') {
-      entry = { key: newEntryKey, type: 'number', value: parsedValue as number };
-    } else if (newEntryType === 'boolean') {
-      entry = { key: newEntryKey, type: 'boolean', value: parsedValue as boolean };
+      entry = {
+        key: newEntryKey,
+        type: 'number',
+        value: parsedValue as number,
+      };
     } else {
-      entry = { key: newEntryKey, type: 'buffer', value: parsedValue as number[] };
+      entry = {
+        key: newEntryKey,
+        type: 'boolean',
+        value: parsedValue as boolean,
+      };
     }
 
     onAddEntry(entry);
@@ -143,7 +161,12 @@ export const AddEntryDialog = ({
       return;
     }
 
-    if (event.key === 'Enter' && newEntryKey.trim() && newEntryValue.trim()) {
+    if (
+      event.key === 'Enter' &&
+      newEntryKey.trim() &&
+      newEntryType !== 'buffer' &&
+      newEntryValue.trim()
+    ) {
       handleAddEntry();
     }
   };
@@ -158,7 +181,7 @@ export const AddEntryDialog = ({
       onClick={resetForm}
     >
       <div
-        className="bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4"
+        className="bg-gray-800 rounded-lg p-6 w-[32rem] max-w-full mx-4"
         onClick={(event) => event.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
@@ -216,7 +239,9 @@ export const AddEntryDialog = ({
                     value={option.value}
                     disabled={!isSupported}
                     title={
-                      isSupported ? option.label : 'Not supported by this storage'
+                      isSupported
+                        ? option.label
+                        : 'Not supported by this storage'
                     }
                   >
                     {option.label}
@@ -239,7 +264,9 @@ export const AddEntryDialog = ({
             >
               Value
             </label>
-            {newEntryType === 'boolean' ? (
+            {newEntryType === 'buffer' ? (
+              <BinaryValueEditor onChange={setPendingBytes} />
+            ) : newEntryType === 'boolean' ? (
               <select
                 id="new-entry-value"
                 value={newEntryValue}
@@ -259,19 +286,10 @@ export const AddEntryDialog = ({
                 placeholder={
                   newEntryType === 'string'
                     ? 'Enter string value'
-                    : newEntryType === 'number'
-                    ? 'Enter number value'
-                    : newEntryType === 'buffer'
-                    ? 'Enter array as JSON, e.g., [1, 2, 3]'
-                    : 'Enter value'
+                    : 'Enter number value'
                 }
                 className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            )}
-            {newEntryType === 'buffer' && (
-              <p className="text-xs text-gray-400 mt-1">
-                Enter as JSON array of numbers, e.g., [1, 2, 3, 255]
-              </p>
             )}
           </div>
         </div>
@@ -285,7 +303,13 @@ export const AddEntryDialog = ({
           </button>
           <button
             onClick={handleAddEntry}
-            disabled={!newEntryKey.trim() || !newEntryValue.trim() || !selectedTypeSupported}
+            disabled={
+              !newEntryKey.trim() ||
+              !selectedTypeSupported ||
+              (newEntryType === 'buffer'
+                ? pendingBytes === null
+                : !newEntryValue.trim())
+            }
             className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
           >
             Add Entry
@@ -295,7 +319,9 @@ export const AddEntryDialog = ({
 
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog((previous) => ({ ...previous, isOpen: false }))}
+        onClose={() =>
+          setConfirmDialog((previous) => ({ ...previous, isOpen: false }))
+        }
         onConfirm={() => {
           if (confirmDialog.onConfirm) {
             confirmDialog.onConfirm();
