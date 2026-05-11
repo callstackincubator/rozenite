@@ -102,11 +102,11 @@ function FormStateBar({ formState }: { formState: FormSnapshot['formState'] }) {
 
 // --- Table rows ---
 
-const COL_FIELD = 'px-3 py-1.5 text-gray-200 font-mono text-xs align-top';
-const COL_TYPE  = 'px-3 py-1.5 text-gray-400 font-mono text-xs w-20 align-top';
-const COL_VALUE = 'px-3 py-1.5 text-gray-300 font-mono text-xs align-top max-w-[220px]';
-const COL_STATE = 'px-3 py-1.5 w-28 align-top';
-const COL_ERROR = 'px-3 py-1.5 align-top';
+const COL_FIELD = 'px-3 py-1.5 text-gray-200 font-mono text-xs align-middle';
+const COL_TYPE  = 'px-3 py-1.5 text-gray-400 font-mono text-xs w-20 align-middle';
+const COL_VALUE = 'px-3 py-1.5 text-gray-300 font-mono text-xs align-middle max-w-[220px]';
+const COL_STATE = 'px-3 py-1.5 w-28 align-middle';
+const COL_ERROR = 'px-3 py-1.5 align-middle';
 
 function FieldRow({
   name,
@@ -135,10 +135,10 @@ function FieldRow({
         <span className="break-all">{formatValue(value)}</span>
       </td>
       <td className={COL_STATE}>
-        <div className="flex items-center gap-1 flex-wrap">
+        <span className="inline-flex gap-1 flex-wrap">
           <Badge label="dirty"   active={!!dirty}   color="bg-yellow-800 text-yellow-200" />
           <Badge label="touched" active={!!touched} color="bg-blue-900 text-blue-200" />
-        </div>
+        </span>
       </td>
       <td className={COL_ERROR}>
         <ErrorCell error={error} />
