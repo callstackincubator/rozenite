@@ -24,15 +24,21 @@ function Badge({
   );
 }
 
-function ErrorBadge({ error }: { error?: FieldError }) {
+function ErrorCell({ error }: { error?: FieldError }) {
   if (!error?.type && !error?.message) return null;
   return (
-    <span
-      className="px-1.5 py-0.5 text-xs rounded font-medium bg-red-900 text-red-200 truncate max-w-[200px]"
-      title={error.message}
-    >
-      {error.message || error.type}
-    </span>
+    <div className="flex flex-col gap-0.5">
+      {error.type && (
+        <span className="px-1.5 py-0.5 text-xs rounded font-medium bg-red-900 text-red-200 w-fit">
+          {error.type}
+        </span>
+      )}
+      {error.message && (
+        <span className="text-xs text-red-300 truncate max-w-[200px]" title={error.message}>
+          {error.message}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -51,6 +57,7 @@ function FormStateBar({ formState }: { formState: FormSnapshot['formState'] }) {
     { label: 'dirty', active: formState.isDirty, color: 'bg-yellow-800 text-yellow-200' },
     { label: 'submitting', active: formState.isSubmitting, color: 'bg-blue-800 text-blue-200' },
     { label: 'submitted', active: formState.isSubmitted, color: 'bg-purple-800 text-purple-200' },
+    { label: 'submitSuccessful', active: formState.isSubmitSuccessful, color: 'bg-green-900 text-green-200' },
     { label: 'validating', active: formState.isValidating, color: 'bg-orange-800 text-orange-200' },
   ];
 
@@ -97,9 +104,11 @@ function FieldTable({
     <table className="w-full text-sm border-collapse">
       <thead className="sticky top-0 bg-gray-800 z-10">
         <tr className="text-left text-xs text-gray-400 uppercase tracking-wider">
-          <th className="px-3 py-2 font-medium border-b border-gray-700 w-1/3">Field</th>
+          <th className="px-3 py-2 font-medium border-b border-gray-700">Field</th>
+          <th className="px-3 py-2 font-medium border-b border-gray-700 w-20">Type</th>
           <th className="px-3 py-2 font-medium border-b border-gray-700">Value</th>
-          <th className="px-3 py-2 font-medium border-b border-gray-700 w-40">State</th>
+          <th className="px-3 py-2 font-medium border-b border-gray-700 w-28">State</th>
+          <th className="px-3 py-2 font-medium border-b border-gray-700">Error</th>
         </tr>
       </thead>
       <tbody>
@@ -108,17 +117,21 @@ function FieldTable({
           const error = snapshot.formState.errors[name];
           const dirty = snapshot.formState.dirtyFields[name];
           const touched = snapshot.formState.touchedFields[name];
+          const type = snapshot.formState.nativeFields[name];
 
           return (
             <tr
               key={name}
               className="border-b border-gray-700 hover:bg-gray-750 transition-colors"
             >
-              <td className="px-3 py-2 text-gray-200 font-mono text-xs truncate max-w-[200px]" title={name}>
+              <td className="px-3 py-2 text-gray-200 font-mono text-xs truncate max-w-[160px]" title={name}>
                 {name}
               </td>
+              <td className="px-3 py-2 text-gray-400 font-mono text-xs">
+                {type ?? <span className="text-gray-600">—</span>}
+              </td>
               <td className="px-3 py-2 text-gray-300 font-mono text-xs">
-                <span className="truncate block max-w-[300px]" title={formatValue(value)}>
+                <span className="truncate block max-w-[200px]" title={formatValue(value)}>
                   {formatValue(value)}
                 </span>
               </td>
@@ -126,8 +139,10 @@ function FieldTable({
                 <div className="flex items-center gap-1 flex-wrap">
                   <Badge label="dirty" active={!!dirty} color="bg-yellow-800 text-yellow-200" />
                   <Badge label="touched" active={!!touched} color="bg-blue-900 text-blue-200" />
-                  <ErrorBadge error={error} />
                 </div>
+              </td>
+              <td className="px-3 py-2">
+                <ErrorCell error={error} />
               </td>
             </tr>
           );
