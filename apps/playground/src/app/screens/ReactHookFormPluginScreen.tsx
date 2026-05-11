@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type ProfileFormValues = {
   firstName: string;
@@ -271,9 +272,16 @@ function LoginForm() {
 
 export function ReactHookFormPluginScreen() {
   const [activeForm, setActiveForm] = useState<'profile' | 'login'>('profile');
+  const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + 20, paddingBottom: Math.max(insets.bottom, 40) },
+      ]}
+    >
       <Text style={styles.screenTitle}>React Hook Form Plugin</Text>
       <Text style={styles.screenSubtitle}>
         Open the DevTools panel to inspect form state in real time
@@ -310,7 +318,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 40,
   },
   screenTitle: {
     fontSize: 24,
