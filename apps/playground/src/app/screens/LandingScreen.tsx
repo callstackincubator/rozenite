@@ -39,16 +39,16 @@ export const LandingScreen = () => {
 
               <TouchableOpacity
                 style={styles.navigationButton}
-                onPress={() => navigation.navigate('MMKVPlugin' as never)}
+                onPress={() => navigation.navigate('StoragePlugin' as never)}
               >
-                <Text style={styles.buttonText}>MMKV Plugin</Text>
+                <Text style={styles.buttonText}>Storage Plugin</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.navigationButton}
-                onPress={() => navigation.navigate('StoragePlugin' as never)}
+                onPress={() => navigation.navigate('ReactHookFormPlugin' as never)}
               >
-                <Text style={styles.buttonText}>Storage Plugin</Text>
+                <Text style={styles.buttonText}>React Hook Form</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

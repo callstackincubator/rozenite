@@ -32,6 +32,7 @@ const storages = [
       user: userStorage,
       cache: cacheStorage,
     },
+    blacklist: /user:token|cache:.*Binary.*/,
   }),
   createAsyncStorageAdapter({
     storage: AsyncStorage,
@@ -44,6 +45,27 @@ const storages = [
 
 useRozeniteStoragePlugin({ storages });
 ```
+
+### MMKV v3 and v4
+
+`createMMKVStorageAdapter` supports both:
+
+```ts
+// v3 style: array or named storages
+createMMKVStorageAdapter({
+  storages: [userStorage, cacheStorage],
+});
+
+// v4 style: named storages only
+createMMKVStorageAdapter({
+  storages: {
+    user: userStorage,
+    cache: cacheStorage,
+  },
+});
+```
+
+MMKV v4 requires a record of storage IDs because the storage instance no longer exposes an `id` that the plugin can derive from an array item.
 
 ### AsyncStorage v2 and v3
 
@@ -81,3 +103,4 @@ When you use [Rozenite for Web](https://rozenite.dev/docs/rozenite-for-web) in d
 - Type support is enforced in UI, runtime and Agent tools.
 - Storages without subscriptions automatically use internal polling updates.
 - Per-storage blacklists are supported through adapter configuration.
+- Storage snapshots can be exported to and imported from a versioned JSON file from the panel. See the [storage plugin docs](https://www.rozenite.dev/docs/official-plugins/storage) for the schema and behavior.

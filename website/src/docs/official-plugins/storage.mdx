@@ -125,4 +125,69 @@ createAsyncStorageAdapter({
 });
 ```
 
+## Import / Export
+
+The panel can export the currently selected storage to a JSON snapshot and import a snapshot back. Use this to reproduce bugs from a captured state, share state between teammates, or seed known test scenarios without writing one-off app code.
+
+### Behavior
+
+- **Scope**: Import and Export always operate on the **currently selected storage** only. Importing into a different storage requires switching the dropdown first; the file's metadata is never used to redirect the target.
+- **Upsert**: Import overwrites existing keys and creates missing ones. Keys not present in the file are left untouched. There is no "replace all" mode.
+- **Validate before write**: The file is fully parsed and validated before any entries are applied. If validation fails, nothing is written and the error points at the offending path (for example, `entries[3].value`).
+- **Stop on first error**: If a write fails mid-import (rare — most failures are caught up-front), the import stops and reports which key failed. Already-written entries stay; rerunning import is safe because writes are idempotent.
+- **Skipped keys**: Keys matching the target storage's `blacklist` are skipped during write. The preview shows the count and the keys before you apply.
+- **Live updates**: As entries are written, the table updates row by row.
+
+### JSON snapshot schema
+
+Exports use a stable, versioned format:
+
+```json title="rozenite-storage-mmkv-user-20260511-104643.json"
+{
+  "version": 1,
+  "plugin": "@rozenite/storage-plugin",
+  "createdAt": "2026-05-11T10:46:43.000Z",
+  "storage": {
+    "adapterId": "mmkv",
+    "storageId": "user",
+    "adapterName": "MMKV",
+    "storageName": "user",
+    "capabilities": {
+      "supportedTypes": ["string", "number", "boolean", "buffer"]
+    }
+  },
+  "entries": [
+    { "key": "token", "type": "string", "value": "abc" },
+    { "key": "launchCount", "type": "number", "value": 3 },
+    { "key": "seenOnboarding", "type": "boolean", "value": true },
+    { "key": "blob", "type": "buffer", "value": [1, 2, 255] }
+  ]
+}
+```
+
+Fields:
+
+- `version` (number, required) — load-bearing. The current build accepts `1` only.
+- `plugin` (string, required) — informational. Always `@rozenite/storage-plugin` for files this plugin produces.
+- `createdAt` (string, required) — ISO-8601 timestamp of the export. Informational.
+- `storage` (object, required) — describes the source storage. Used for the preview's "imported from" label and the metadata-mismatch warning when the target storage differs. **Never used to redirect the import.**
+- `entries` (array, required) — typed entry list. Each entry has `key` (string), `type` (`"string" | "number" | "boolean" | "buffer"`), and `value` matching the type. Buffer values are `number[]` of integers in `0–255`. Empty arrays are allowed (a no-op import).
+- Unknown top-level fields are ignored for forward compatibility.
+
+### Cross-adapter compatibility
+
+The schema is portable across adapters, but each adapter only stores types it supports:
+
+| Adapter          | string | number | boolean | buffer |
+| ---------------- | :----: | :----: | :-----: | :----: |
+| MMKV             |   ✓    |   ✓    |    ✓    |   ✓    |
+| AsyncStorage     |   ✓    |   ✓    |    ✓    |   —    |
+| Expo SecureStore |   ✓    |   —    |    —    |   —    |
+
+If a file contains an entry whose `type` is not supported by the selected target, the preview disables **Apply** and lists the offending keys. Remove them from the file (or import into a more capable storage) and retry.
+
+### Versioning
+
+The current build accepts `version: 1` snapshots. Any other value is rejected with a clear error. Future schema bumps will either be backward-compatible additions or documented as breaking — but `version !== 1` is never silently coerced.
+
 **Next**: See [MMKV](./mmkv.md), [Network Activity](./network-activity.md), and [Plugin Development](../plugin-development/plugin-development.md).

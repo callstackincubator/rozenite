@@ -4,7 +4,6 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
-import { useMMKVDevTools } from '@rozenite/mmkv-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
@@ -16,14 +15,12 @@ import { useRef } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { usePlaygroundControlsSections } from './hooks/usePlaygroundControlsSections';
-import { mmkvStorages } from './mmkv-storages';
 import { BottomTabNavigator } from './navigation/BottomTabNavigator';
 import { SuccessiveScreensNavigator } from './navigation/SuccessiveScreensNavigator';
 import { RootStackParamList } from './navigation/types';
 import { ConfigScreen } from './screens/ConfigScreen';
 import { ControlsPluginScreen } from './screens/ControlsPluginScreen';
 import { LandingScreen } from './screens/LandingScreen';
-import { MMKVPluginScreen } from './screens/MMKVPluginScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
 import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
 import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
@@ -32,6 +29,7 @@ import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
 import { FileSystemTestScreen } from './screens/FileSystemTestScreen';
+import { ReactHookFormPluginScreen } from './screens/ReactHookFormPluginScreen';
 import { StoragePluginScreen } from './screens/StoragePluginScreen';
 import { storagePluginAdapters } from './storage-plugin-adapters';
 import { sqlitePluginAdapters } from './sqlite-plugin-databases';
@@ -58,10 +56,6 @@ const Wrapper = () => {
       showUrlAsName: true,
     },
   });
-  useMMKVDevTools({
-    storages: mmkvStorages,
-    blacklist: /user-storage:sensitiveToken/,
-  });
   useRozeniteStoragePlugin({
     storages: storagePluginAdapters,
   });
@@ -84,7 +78,7 @@ const Wrapper = () => {
     >
       <Stack.Screen name="Landing" component={LandingScreen} />
       <Stack.Screen name="ControlsPlugin" component={ControlsPluginScreen} />
-      <Stack.Screen name="MMKVPlugin" component={MMKVPluginScreen} />
+      <Stack.Screen name="ReactHookFormPlugin" component={ReactHookFormPluginScreen} />
       <Stack.Screen name="StoragePlugin" component={StoragePluginScreen} />
       <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
       <Stack.Screen name="RequestBodyTest" component={RequestBodyTestScreen} />
@@ -132,7 +126,6 @@ const linking = {
     screens: {
       Landing: '',
       ControlsPlugin: 'controls',
-      MMKVPlugin: 'mmkv',
       StoragePlugin: 'storage',
       NetworkTest: 'network',
       ReduxTest: 'redux',

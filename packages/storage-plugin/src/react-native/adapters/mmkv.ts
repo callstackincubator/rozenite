@@ -148,6 +148,20 @@ const getStorageBlacklist = (
   return config[storageId];
 };
 
+const createStorageBlacklistMatcher = (
+  config: MMKVBlacklistConfig | undefined,
+  storageId: string
+) => {
+  if (!(config instanceof RegExp)) {
+    return undefined;
+  }
+
+  return (key: string) => {
+    config.lastIndex = 0;
+    return config.test(`${storageId}:${key}`);
+  };
+};
+
 export const createMMKVStorageAdapter = ({
   adapterId = 'mmkv',
   adapterName = 'MMKV',
@@ -164,6 +178,7 @@ export const createMMKVStorageAdapter = ({
         id: storageId,
         name: storageId,
         blacklist: getStorageBlacklist(blacklist, storageId),
+        shouldFilterKey: createStorageBlacklistMatcher(blacklist, storageId),
         capabilities: {
           supportedTypes: DEFAULT_SUPPORTED_TYPES,
         },

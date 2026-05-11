@@ -7,6 +7,7 @@ import {
 } from '../../shared/client';
 import { safeStringify } from '../../utils/safeStringify';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
+import { isJsonContentType } from '../../utils/getContentTypeMimeType';
 import {
   isBlob,
   isArrayBuffer,
@@ -129,7 +130,7 @@ export const getResponseBody = async (
 
     if (
       contentType.startsWith('text/') ||
-      contentType.startsWith('application/json')
+      isJsonContentType(contentType)
     ) {
       // It looks like a text blob, let's read it and forward it to the client.
       return new Promise((resolve) => {
@@ -195,7 +196,7 @@ export const setupRequestOverride = (
       Object.defineProperty(request, 'responseText', { writable: true });
 
       const contentType = getContentType(request);
-      if (contentType === 'application/json') {
+      if (isJsonContentType(contentType)) {
         request.responseType = 'json';
       } else if (contentType === 'text/plain') {
         request.responseType = 'text';

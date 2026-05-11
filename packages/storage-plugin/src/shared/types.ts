@@ -37,6 +37,7 @@ export type StorageNode = {
   storage: SyncStorage | AsyncStorage;
   capabilities: StorageCapabilities;
   blacklist?: RegExp;
+  shouldFilterKey?: (key: string) => boolean;
 };
 
 export type StorageAdapter = {
