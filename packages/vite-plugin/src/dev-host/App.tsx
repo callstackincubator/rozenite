@@ -113,7 +113,7 @@ export const App = ({ packageName, packageDescription, panels }: DevHostState) =
   };
 
   const appendMessage = (input: Omit<MessageEntry, 'id' | 'date'>) => {
-    const nextEntry = createMessageEntry(input, messages.length);
+    const nextEntry = createMessageEntry(input);
 
     setMessages((current) => [nextEntry, ...current]);
     setSelectedMessageId(nextEntry.id);

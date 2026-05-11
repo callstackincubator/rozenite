@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { normalizePath } from 'vite';
 import { loadConfig, RozeniteConfig } from './load-config.js';
 import { getPackageJSON } from './package-json.js';
+import { DEV_HOST_STATE_ELEMENT_ID } from './dev-host/constants.js';
 
 type PanelEntry = {
   name: string;
@@ -51,7 +52,6 @@ const DEV_HOST_ENTRY_FILE = path.join(DEV_HOST_DIR, 'index.tsx');
 const PANELS_DIR = './panels';
 const DEVTOOLS_DIR = 'devtools';
 const DEV_HOST_ROUTE = '/';
-const DEV_HOST_STATE_ELEMENT_ID = '__rozenite-dev-host__';
 
 export const rozeniteClientPlugin = (): Plugin => {
   let projectRoot = process.cwd();
@@ -135,6 +135,7 @@ export const rozeniteClientPlugin = (): Plugin => {
         config.server.open === true
           ? DEV_HOST_ROUTE
           : (config.server.open ?? DEV_HOST_ROUTE);
+      // Keep in sync with `DEV_SERVER_URL` in packages/runtime/src/dev-mode.ts
       config.server.port = 8888;
 
       config.build ??= {};

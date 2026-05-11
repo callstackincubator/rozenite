@@ -73,10 +73,9 @@ export const getInitialPanel = (panels: DevHostPanelEntry[]) => {
 
 export const createMessageEntry = (
   input: Omit<MessageEntry, 'id' | 'date'>,
-  index: number,
 ): MessageEntry => {
   return {
-    id: `${Date.now()}-${index}`,
+    id: crypto.randomUUID(),
     date: new Date().toISOString(),
     ...input,
   };

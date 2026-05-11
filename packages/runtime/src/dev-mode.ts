@@ -1,6 +1,7 @@
 import { getManifest } from './manifest';
 import { loadPluginFromUrl } from './plugin-loader';
 
+/** Must match `config.server.port` in `packages/vite-plugin` (`rozeniteClientPlugin`). */
 const DEV_SERVER_URL = 'http://localhost:8888';
 
 const isDevServerAvailable = async (): Promise<boolean> => {
