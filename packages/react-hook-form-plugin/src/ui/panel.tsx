@@ -10,10 +10,6 @@ const PLUGIN_ID = '@rozenite/react-hook-form-plugin';
 // React's useId() generates ids like ":r0:", ":r1a:", etc.
 const REACT_AUTO_ID = /^:r[0-9a-z]+:$/;
 
-function getFormLabel(id: string): string {
-  return REACT_AUTO_ID.test(id) ? 'Form' : id;
-}
-
 // --- Field grouping ---
 
 type RootField = { kind: 'field'; name: string };

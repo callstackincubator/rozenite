@@ -41,7 +41,6 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
       ...formStatus
     } = proxyToObject(formState as unknown as Record<string, unknown>);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const flatFieldNames = [...(control as unknown as { _names: { mount: Set<string> } })._names.mount];
 
     const formValues = nestToFlat<unknown>(flatFieldNames, nestedFormValues as object, '');
@@ -62,7 +61,6 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
 
     const nativeFields = flatFieldNames.reduce(
       (prev, name) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const field = get(
           (control as unknown as { _fields: Record<string, unknown> })._fields,
           name
