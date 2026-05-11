@@ -20,6 +20,11 @@ type ProfileFormValues = {
   age: string;
   bio: string;
   newsletter: boolean;
+  address: {
+    street: string;
+    city: string;
+    zip: string;
+  };
 };
 
 type LoginFormValues = {
@@ -36,6 +41,11 @@ function ProfileForm() {
       age: '',
       bio: '',
       newsletter: false,
+      address: {
+        street: '',
+        city: '',
+        zip: '',
+      },
     },
     mode: 'onChange',
   });
@@ -166,6 +176,78 @@ function ProfileForm() {
           </View>
         )}
       />
+
+      <Text style={styles.sectionLabel}>Address</Text>
+
+      <Controller
+        control={control}
+        name="address.street"
+        rules={{ required: 'Street is required' }}
+        render={({ field, fieldState }) => (
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Street *</Text>
+            <TextInput
+              style={[styles.input, fieldState.error && styles.inputError]}
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              placeholder="123 Main St"
+              placeholderTextColor="#666"
+            />
+            {fieldState.error && (
+              <Text style={styles.errorText}>{fieldState.error.message}</Text>
+            )}
+          </View>
+        )}
+      />
+
+      <View style={styles.row}>
+        <Controller
+          control={control}
+          name="address.city"
+          rules={{ required: 'City is required' }}
+          render={({ field, fieldState }) => (
+            <View style={[styles.fieldContainer, styles.flex]}>
+              <Text style={styles.label}>City *</Text>
+              <TextInput
+                style={[styles.input, fieldState.error && styles.inputError]}
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="New York"
+                placeholderTextColor="#666"
+              />
+              {fieldState.error && (
+                <Text style={styles.errorText}>{fieldState.error.message}</Text>
+              )}
+            </View>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="address.zip"
+          rules={{ pattern: { value: /^\d{5}$/, message: '5 digits' } }}
+          render={({ field, fieldState }) => (
+            <View style={[styles.fieldContainer, styles.zipField]}>
+              <Text style={styles.label}>ZIP</Text>
+              <TextInput
+                style={[styles.input, fieldState.error && styles.inputError]}
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="10001"
+                placeholderTextColor="#666"
+                keyboardType="numeric"
+                maxLength={5}
+              />
+              {fieldState.error && (
+                <Text style={styles.errorText}>{fieldState.error.message}</Text>
+              )}
+            </View>
+          )}
+        />
+      </View>
 
       <Controller
         control={control}
@@ -400,6 +482,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  sectionLabel: {
+    color: '#8232FF',
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  flex: {
+    flex: 1,
+  },
+  zipField: {
+    width: 90,
   },
   buttonRow: {
     flexDirection: 'row',
