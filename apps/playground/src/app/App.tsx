@@ -29,6 +29,7 @@ import { ReduxTestScreen } from './screens/ReduxTestScreen';
 import { RequestBodyTestScreen } from './screens/RequestBodyTestScreen';
 import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
 import { FileSystemTestScreen } from './screens/FileSystemTestScreen';
+import { ReactHookFormPluginScreen } from './screens/ReactHookFormPluginScreen';
 import { StoragePluginScreen } from './screens/StoragePluginScreen';
 import { storagePluginAdapters } from './storage-plugin-adapters';
 import { sqlitePluginAdapters } from './sqlite-plugin-databases';
@@ -77,6 +78,7 @@ const Wrapper = () => {
     >
       <Stack.Screen name="Landing" component={LandingScreen} />
       <Stack.Screen name="ControlsPlugin" component={ControlsPluginScreen} />
+      <Stack.Screen name="ReactHookFormPlugin" component={ReactHookFormPluginScreen} />
       <Stack.Screen name="StoragePlugin" component={StoragePluginScreen} />
       <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
       <Stack.Screen name="RequestBodyTest" component={RequestBodyTestScreen} />

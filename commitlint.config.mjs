@@ -33,6 +33,7 @@ export default {
         'agent-sdk',
         'file-system-plugin',
         'sqlite-plugin',
+        'rhf-plugin',
         '',
       ],
     ],

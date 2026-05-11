@@ -177,6 +177,9 @@ importers:
       '@rozenite/require-profiler-plugin':
         specifier: workspace:*
         version: link:../../packages/require-profiler-plugin
+      '@rozenite/rhf-plugin':
+        specifier: workspace:*
+        version: link:../../packages/rhf-plugin
       '@rozenite/sqlite-plugin':
         specifier: workspace:*
         version: link:../../packages/sqlite-plugin
@@ -240,6 +243,9 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.0(react@19.2.0)
+      react-hook-form:
+        specifier: ^7.54.2
+        version: 7.75.0(react@19.2.0)
       react-native:
         specifier: 'catalog:'
         version: 0.83.1(@babel/core@7.29.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0)
@@ -1217,6 +1223,67 @@ importers:
       react-json-tree:
         specifier: ^0.20.0
         version: 0.20.0(@types/react@19.2.14)(react@19.2.0)
+      react-native:
+        specifier: 'catalog:'
+        version: 0.83.1(@babel/core@7.29.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0)
+      react-native-web:
+        specifier: ^0.21.2
+        version: 0.21.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      rozenite:
+        specifier: workspace:*
+        version: link:../cli
+      tailwindcss:
+        specifier: ^3.4.17
+        version: 3.4.17
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.17)
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.1(@types/node@22.17.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+
+  packages/rhf-plugin:
+    dependencies:
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      fast-deep-equal:
+        specifier: ^3.1.3
+        version: 3.1.3
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
+    devDependencies:
+      '@rozenite/vite-plugin':
+        specifier: workspace:*
+        version: link:../vite-plugin
+      '@types/lodash':
+        specifier: ^4.17.0
+        version: 4.17.20
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+      autoprefixer:
+        specifier: ^10.4.21
+        version: 10.4.21(postcss@8.5.6)
+      lucide-react:
+        specifier: ^0.263.1
+        version: 0.263.1(react@19.2.0)
+      postcss:
+        specifier: ^8.5.6
+        version: 8.5.6
+      react:
+        specifier: 'catalog:'
+        version: 19.2.0
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.0(react@19.2.0)
+      react-hook-form:
+        specifier: ^7.33.1
+        version: 7.75.0(react@19.2.0)
       react-native:
         specifier: 'catalog:'
         version: 0.83.1(@babel/core@7.29.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0)
@@ -5615,6 +5682,7 @@ packages:
 
   '@testing-library/react-native@12.9.0':
     resolution: {integrity: sha512-wIn/lB1FjV2N4Q7i9PWVRck3Ehwq5pkhAef5X5/bmQ78J/NoOsGbVY2/DG5Y9Lxw+RfE+GvSEh/fe5Tz6sKSvw==}
+    deprecated: React Native Testing Library v12 is no longer maintained. Please upgrade to v13 or v14.
     peerDependencies:
       jest: '>=28.0.0'
       react: '>=16.8.0'
@@ -6037,6 +6105,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@unhead/react@2.1.4':
     resolution: {integrity: sha512-3DzMi5nJkUyLVfQF/q78smCvcSy84TTYgTwXVz5s3AjUcLyHro5Z7bLWriwk1dn5+YRfEsec8aPkLCMi5VjMZg==}
@@ -11091,6 +11160,12 @@ packages:
     engines: {node: '>=10'}
     peerDependencies:
       react: '>=17.0.0'
+
+  react-hook-form@7.75.0:
+    resolution: {integrity: sha512-Ovv94H+0p3sJ7B9B5QxPuCP1u8V/cHuVGyH55cSwodYDtoJwK+fqk3vjfIgSX59I2U/bU4z0nRJ9HMLpNiWEmw==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18 || ^19
 
   react-icons@5.5.0:
     resolution: {integrity: sha512-MEFcXdkP3dLo8uumGI5xN3lDFNsRtrjbOEKDLD7yv76v4wpnEq2Lt2qeHaQOr34I/wPN3s3+N08WkQ+CW37Xiw==}
@@ -26537,6 +26612,10 @@ snapshots:
       react-window: 1.8.11(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
   react-freeze@1.0.4(react@19.2.0):
+    dependencies:
+      react: 19.2.0
+
+  react-hook-form@7.75.0(react@19.2.0):
     dependencies:
       react: 19.2.0
 
