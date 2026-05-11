@@ -1,7 +1,7 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo, useState } from 'react';
 import { Search, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
-import type { RHFEventMap, RHFUnmountEvent, RHFUpdateEvent } from '../shared/messaging';
+import type { RHFEventMap, RHFInitEvent, RHFUnmountEvent, RHFUpdateEvent } from '../shared/messaging';
 import type { FieldError, FormSnapshot } from '../shared/types';
 import './globals.css';
 
@@ -292,6 +292,8 @@ export default function ReactHookFormPanel() {
 
   useEffect(() => {
     if (!client) return;
+
+    client.send('init', { type: 'init' } satisfies RHFInitEvent);
 
     const updateSub = client.onMessage('update', (event: RHFUpdateEvent) => {
       const { snapshot } = event;

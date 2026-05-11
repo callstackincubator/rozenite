@@ -1,5 +1,5 @@
 import get from 'lodash/get';
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { Control, FieldValues } from 'react-hook-form';
 import { useFormState, useWatch } from 'react-hook-form';
 import equal from 'fast-deep-equal';
@@ -28,6 +28,7 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
   const client = useRozeniteDevToolsClient<RHFEventMap>({ pluginId: PLUGIN_ID });
 
   const previousSnapshotRef = useRef<FormSnapshot | null>(null);
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     if (!client) {
@@ -65,7 +66,11 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
           (control as unknown as { _fields: Record<string, unknown> })._fields,
           name
         ) as { _f?: { ref?: { type?: string } } } | undefined;
-        prev[name] = field?._f?.ref?.type;
+        // ref.type works for DOM inputs (web/RNW); for native RN components there
+        // is no type property, so fall back to the JS type of the current value.
+        const domType = field?._f?.ref?.type;
+        const value = formValues[name];
+        prev[name] = domType ?? (value != null && value !== '' ? typeof value : undefined);
         return prev;
       },
       {} as Record<string, string | undefined>
@@ -109,4 +114,17 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
       client.send('unmount', { type: 'unmount', id });
     };
   }, [client, id]);
+
+  useEffect(() => {
+    if (!client) {
+      return;
+    }
+    const sub = client.onMessage('init', () => {
+      previousSnapshotRef.current = null;
+      forceUpdate((n) => n + 1);
+    });
+    return () => {
+      sub.remove();
+    };
+  }, [client]);
 };
