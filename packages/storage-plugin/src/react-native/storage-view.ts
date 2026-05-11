@@ -49,14 +49,14 @@ const shouldFilterKey = (storage: StorageNode, key: string) => {
 const checkTypeSupport = (
   capabilities: StorageCapabilities,
   type: StorageEntryType,
-  target: StorageTarget
+  target: StorageTarget,
 ) => {
   if (supportsType(capabilities, type)) {
     return;
   }
 
   throw new Error(
-    `Type "${type}" is not supported by storage "${target.storageId}" in adapter "${target.adapterId}".`
+    `Type "${type}" is not supported by storage "${target.storageId}" in adapter "${target.adapterId}".`,
   );
 };
 
@@ -100,6 +100,7 @@ export type StorageView = {
   adapterName: string;
   storageName: string;
   capabilities: StorageCapabilities;
+  blacklist?: RegExp;
   get: (key: string) => Promise<StorageEntry | undefined>;
   set: (entry: StorageEntry) => Promise<void>;
   delete: (key: string) => Promise<void>;
@@ -112,7 +113,7 @@ export type StorageView = {
 };
 
 const buildSnapshotMap = async (
-  getAllEntries: () => Promise<StorageEntry[]>
+  getAllEntries: () => Promise<StorageEntry[]>,
 ): Promise<StorageSnapshotMap> => {
   const entries = await getAllEntries();
   return toSnapshotMap(entries);
@@ -124,7 +125,7 @@ const diffSnapshots = (
   handlers: {
     onSet: (entry: StorageEntry) => void;
     onDelete: (key: string) => void;
-  }
+  },
 ) => {
   next.forEach((nextEntry, key) => {
     const previousEntry = previous.get(key);
@@ -151,7 +152,7 @@ const createPollingSubscription = async (
   handlers: {
     onSet: (entry: StorageEntry) => void;
     onDelete: (key: string) => void;
-  }
+  },
 ): Promise<StorageSubscription> => {
   let previousSnapshot = await buildSnapshotMap(getAllEntries);
 
@@ -174,7 +175,7 @@ const createPollingSubscription = async (
 
 export const createStorageView = (
   adapter: StorageAdapter,
-  storageNode: StorageNode
+  storageNode: StorageNode,
 ): StorageView => {
   const storage = storageNode.storage;
   const target: StorageTarget = {
@@ -195,7 +196,7 @@ export const createStorageView = (
     const visibleEntries = await Promise.all(
       keys
         .filter((key) => !shouldFilterKey(storageNode, key))
-        .map((key) => getEntry(storage, key))
+        .map((key) => getEntry(storage, key)),
     );
 
     return visibleEntries.filter((entry): entry is StorageEntry => !!entry);
@@ -207,6 +208,7 @@ export const createStorageView = (
     adapterName: adapter.name,
     storageName: storageNode.name,
     capabilities: storageNode.capabilities,
+    blacklist: storageNode.blacklist,
     get,
     set: async (entry) => {
       checkTypeSupport(storageNode.capabilities, entry.type, target);
@@ -245,5 +247,7 @@ export const createStorageView = (
 
 export const createStorageViews = (storages: StorageAdapter[]) =>
   storages.flatMap((adapter) =>
-    adapter.storages.map((storageNode) => createStorageView(adapter, storageNode))
+    adapter.storages.map((storageNode) =>
+      createStorageView(adapter, storageNode),
+    ),
   );

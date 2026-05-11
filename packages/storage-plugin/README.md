@@ -103,3 +103,4 @@ When you use [Rozenite for Web](https://rozenite.dev/docs/rozenite-for-web) in d
 - Type support is enforced in UI, runtime and Agent tools.
 - Storages without subscriptions automatically use internal polling updates.
 - Per-storage blacklists are supported through adapter configuration.
+- Storage snapshots can be exported to and imported from a versioned JSON file from the panel. See the [storage plugin docs](https://www.rozenite.dev/docs/official-plugins/storage) for the schema and behavior.
