@@ -1,5 +1,12 @@
 # @rozenite/agent-sdk
 
+## 1.9.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@1.9.0
+
 ## 1.8.1
 
 ### Patch Changes

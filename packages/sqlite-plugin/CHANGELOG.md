@@ -1,5 +1,17 @@
 # @rozenite/sqlite-plugin
 
+## 1.9.0
+
+### Minor Changes
+
+- [#259](https://github.com/callstackincubator/rozenite/pull/259) [`6fd13c0`](https://github.com/callstackincubator/rozenite/commit/6fd13c04108b5a49d0526223b0680b03a0bb6276) Thanks [@V3RON](https://github.com/V3RON)! - `classifySqlStatement`, `normalizeSingleStatementSql`, `splitSqlStatements`, `statementReturnsRows`, `decodeSqliteBridgeValue`, and `formatSqliteError` are now exported from `@rozenite/sqlite-plugin`. These are the building blocks you need when writing a custom SQLite adapter — to parse and classify SQL before execution, and to decode values coming back over the native bridge.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.9.0
+  - @rozenite/plugin-bridge@1.9.0
+
 ## 1.8.1
 
 ### Patch Changes

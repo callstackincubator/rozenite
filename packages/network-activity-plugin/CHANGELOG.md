@@ -1,5 +1,18 @@
 # @rozenite/network-activity-plugin
 
+## 1.9.0
+
+### Patch Changes
+
+- [#240](https://github.com/callstackincubator/rozenite/pull/240) [`0e2a4db`](https://github.com/callstackincubator/rozenite/commit/0e2a4db7943f004b7f52422fbe23b679829e5b57) Thanks [@V3RON](https://github.com/V3RON)! - Rozenite now treats `application/*+json` responses as JSON in Network Activity, so vendor-specific JSON payloads render correctly instead of falling back to plain text.
+
+- [#260](https://github.com/callstackincubator/rozenite/pull/260) [`9cea370`](https://github.com/callstackincubator/rozenite/commit/9cea370c441595eba266f800901656370bb608f8) Thanks [@V3RON](https://github.com/V3RON)! - Fix `react-native-nitro-fetch` not being resolved correctly in Metro by isolating the optional dependency import into its own bundle chunk. This ensures the network inspector works reliably even when `react-native-nitro-fetch` is not installed.
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.9.0
+  - @rozenite/agent-shared@1.9.0
+  - @rozenite/plugin-bridge@1.9.0
+
 ## 1.8.1
 
 ### Patch Changes

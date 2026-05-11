@@ -1,5 +1,11 @@
 # @rozenite/vite-plugin
 
+## 1.9.0
+
+### Minor Changes
+
+- [#254](https://github.com/callstackincubator/rozenite/pull/254) [`7709b30`](https://github.com/callstackincubator/rozenite/commit/7709b30ff013c1366a355b7be86053e6f58ce4ad) Thanks [@V3RON](https://github.com/V3RON)! - Add an in-browser dev test host for Rozenite plugins. You can exercise your plugin without wiring up a playground app: the host shows a message log and lets you dispatch messages to the plugin panel, similar to DevTools messaging during development.
+
 ## 1.8.1
 
 ## 1.8.0

@@ -1,5 +1,24 @@
 # @rozenite/storage-plugin
 
+## 1.9.0
+
+### Minor Changes
+
+- [#246](https://github.com/callstackincubator/rozenite/pull/246) [`3957bfc`](https://github.com/callstackincubator/rozenite/commit/3957bfc4978116a69bd642e93ae0b9cc5caad4f9) Thanks [@V3RON](https://github.com/V3RON)! - Use `@rozenite/storage-plugin` for MMKV instead of `@rozenite/mmkv-plugin`.
+
+  The storage plugin now supports MMKV v3 and v4 and lets you blacklist keys across storages with one pattern.
+
+- [#261](https://github.com/callstackincubator/rozenite/pull/261) [`328dba7`](https://github.com/callstackincubator/rozenite/commit/328dba7c347a99eec5a82cb2592690d66f30a451) Thanks [@burczu](https://github.com/burczu)! - Add storage-level JSON import/export to the storage plugin.
+
+  You can now export the currently selected storage to a versioned JSON snapshot and import a snapshot back as an upsert. Import validates the file before writing and rejects entries whose types are not supported by the target storage. See the storage plugin docs for the schema and behavior.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.9.0
+  - @rozenite/agent-shared@1.9.0
+  - @rozenite/plugin-bridge@1.9.0
+
 ## 1.8.1
 
 ### Patch Changes

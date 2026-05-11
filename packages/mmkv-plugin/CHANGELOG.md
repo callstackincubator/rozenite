@@ -1,5 +1,18 @@
 # @rozenite/mmkv-plugin
 
+## 1.9.0
+
+### Patch Changes
+
+- [#246](https://github.com/callstackincubator/rozenite/pull/246) [`3957bfc`](https://github.com/callstackincubator/rozenite/commit/3957bfc4978116a69bd642e93ae0b9cc5caad4f9) Thanks [@V3RON](https://github.com/V3RON)! - Use `@rozenite/storage-plugin` for MMKV instead of `@rozenite/mmkv-plugin`.
+
+  The storage plugin now supports MMKV v3 and v4 and lets you blacklist keys across storages with one pattern.
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.9.0
+  - @rozenite/agent-shared@1.9.0
+  - @rozenite/plugin-bridge@1.9.0
+
 ## 1.8.1
 
 ### Patch Changes
