@@ -10,7 +10,7 @@ export type FormSnapshot = {
     errors: Record<string, FieldError>;
     dirtyFields: Record<string, boolean>;
     touchedFields: Record<string, boolean>;
-    nativeFields: Record<string, boolean>;
+    nativeFields: Record<string, string | undefined>;
     submitCount: number;
     isSubmitted: boolean;
     isSubmitting: boolean;

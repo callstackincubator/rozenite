@@ -66,11 +66,11 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
         const field = get(
           (control as unknown as { _fields: Record<string, unknown> })._fields,
           name
-        ) as { _f?: { ref?: { type?: boolean } } } | undefined;
-        prev[name] = field?._f?.ref?.type as boolean;
+        ) as { _f?: { ref?: { type?: string } } } | undefined;
+        prev[name] = field?._f?.ref?.type;
         return prev;
       },
-      {} as Record<string, boolean>
+      {} as Record<string, string | undefined>
     );
 
     const snapshot: FormSnapshot = {
@@ -102,4 +102,13 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
       snapshot,
     });
   });
+
+  useEffect(() => {
+    if (!client) {
+      return;
+    }
+    return () => {
+      client.send('unmount', { type: 'unmount', id });
+    };
+  }, [client, id]);
 };
