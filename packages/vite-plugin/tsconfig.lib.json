@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "jsx": "react-jsx",
+    "lib": ["es2022", "dom", "dom.iterable"],
     "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
@@ -9,6 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["node", "vite/client"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
   "references": []
 }

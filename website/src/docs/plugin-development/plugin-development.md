@@ -248,26 +248,39 @@ This starts a development server that:
 
 - Watches for file changes
 - Hot reloads your panels automatically
+- Opens the **Rozenite dev host** in your browser (see below)
 - Provides real-time feedback during development
 
-#### Step 2: Link to React Native Playground
+#### Step 2: Develop panels in the browser (no playground app)
 
-1. **Create or use a React Native playground project** that has Rozenite configured
-2. **Add your plugin to the playground's dependencies** (you can use `npm link`, `yarn link` or `pnpm link` for local development)
+`rozenite dev` uses [`@rozenite/vite-plugin`](https://www.npmjs.com/package/@rozenite/vite-plugin) to serve a **dev host** at the root of the dev server (by default **http://localhost:8888/**). You can iterate on DevTools panels **without** running a separate playground app:
 
-#### Step 3: Run Your React Native App
+- **Panel preview** — Every entry in `rozenite.config.ts` appears as a tab. The selected panel loads inside an iframe, similar to how it is embedded in React Native DevTools.
+- **Message log** — Outbound messages from your panel (the same `rozenite-message` envelope the plugin bridge uses when talking to the parent) are listed with timestamps so you can see what the panel emitted.
+- **Dispatch message** — Send a command `type` and JSON `payload` into the iframe as if DevTools had sent it. The host fills in `pluginId` from your package **`name`** in `package.json`. That value must match the `pluginId` you pass to `useRozeniteDevToolsClient` / `getRozeniteDevToolsClient`; otherwise your handlers will not run.
+
+The dev server port is aligned with Rozenite **runtime dev mode**: when you set `ROZENITE_DEV_MODE` to your plugin package name, the app loads the plugin from **http://localhost:8888**, so one `rozenite dev` process can serve both the in-browser host and the in-app plugin bundle.
+
+Use this flow for rapid UI work and bridge message shapes. To exercise **`react-native.ts`** and native integration, continue with a real app (next steps).
+
+#### Step 3: Link to a React Native app (optional, for native side)
+
+1. **Create or use a React Native project** that has Rozenite configured (for example the repository playground app).
+2. **Add your plugin to the app's dependencies** (you can use `npm link`, `yarn link`, or `pnpm link` for local development).
+
+#### Step 4: Run your React Native app
 
 ```shell title="Terminal"
 # In your playground project directory
-# Set ROZENITE_DEV_MODE to your plugin name to force load it in dev mode
-ROZENITE_DEV_MODE=my-awesome-plugin npx react-native start
+# Set ROZENITE_DEV_MODE to your plugin package name (from package.json) to load it in dev mode
+ROZENITE_DEV_MODE=@scope/my-awesome-plugin npx react-native start
 # Or if using Expo
-ROZENITE_DEV_MODE=my-awesome-plugin npx expo start
+ROZENITE_DEV_MODE=@scope/my-awesome-plugin npx expo start
 ```
 
 Then run the app on your device or simulator.
 
-#### Step 4: Open DevTools
+#### Step 5: Open DevTools
 
 1. Open React Native DevTools in your browser
 2. Your plugin panels should appear in the sidebar automatically
