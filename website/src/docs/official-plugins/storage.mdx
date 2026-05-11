@@ -110,6 +110,88 @@ createExpoSecureStorageAdapter({
 
 - SecureStore does not provide key enumeration; you must provide known keys via `keys`.
 
+## Binary entries (`buffer` type)
+
+Storages that support binary values — MMKV with its `getBuffer/set(ArrayBuffer)` APIs today — render and edit those values through a hex-first UI. The internal protocol is unchanged: a `buffer` is still a `number[]` of byte values; the new UI is purely a presentation and editing layer on top.
+
+### Table view
+
+Buffer entries render as a short hex preview plus the total byte length:
+
+```text
+89 50 4E 47 0D 0A 1A 0A … 128 B
+```
+
+The first 8 bytes are shown. Smaller buffers omit the ellipsis.
+
+### Detail dialog
+
+Opening a `buffer` entry shows a standard hexdump with offsets, grouped hex bytes, and an ASCII column. The total byte length is shown above the dump.
+
+```text
+00000000  89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52  |.PNG........IHDR|
+00000010  00 00 00 20 00 00 00 20  08 06 00 00 00 73 7A 7A  |... ... .....szz|
+```
+
+ASCII bytes in the range `0x20–0x7E` render as themselves; everything else (control bytes, tabs, newlines, high bytes) renders as `.`.
+
+### Add / Edit dialogs
+
+The buffer editor opens in **Hex** mode by default. **Base64** is available as a secondary mode for copy/paste workflows. Bytes are the source of truth: switching modes converts the current input in place, or clears the editor if the input was incomplete.
+
+#### Hex mode
+
+A CodeMirror editor renders bytes in a canonical grouped-hex layout:
+
+```text
+89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52
+00 00 00 20 00 00 00 20  08 06 00 00 00 73 7A 7A
+```
+
+Rules:
+
+- 16 bytes per line; single spaces between bytes; an extra space between bytes 8 and 9.
+- Bytes are uppercase. Whitespace is not significant.
+- Typing leaves the surrounding text alone — single-byte edits do not reflow the document.
+- **Pasted content is normalized immediately.** The parser accepts:
+  - raw continuous hex (`deadbeef`)
+  - grouped hex with whitespace (`DE AD BE EF`)
+  - multiline grouped hex
+  - hexdump rows pasted from external tools — leading offsets and trailing `|ascii|` columns are stripped automatically
+  - optional `0x` prefixes per token
+- Incomplete intermediate input (e.g. a trailing single nibble) is allowed in the editor; save remains disabled until the value is valid.
+
+#### Base64 mode
+
+A plain editor accepting multiline base64. Surrounding and internal whitespace is trimmed before decoding.
+
+#### Validation messages
+
+Below the editor:
+
+- byte count
+- ASCII preview of the current bytes
+- the active error, if any
+
+Errors mirror what the parser surfaces:
+
+- `Enter at least one byte.`
+- `Hex input contains invalid characters.`
+- `Hex input must contain complete bytes.`
+- `Base64 input is invalid.`
+
+Save is disabled while the input is invalid.
+
+### Cross-adapter compatibility
+
+| Adapter          | Supports `buffer` |
+| ---------------- | :---------------: |
+| MMKV             |         ✓         |
+| AsyncStorage     |         —         |
+| Expo SecureStore |         —         |
+
+The dropdown's `Buffer (Array)` option is disabled in the Add Entry dialog for string-only storages.
+
 ## Per-Storage Blacklist
 
 Blacklist is configured per storage and matched against the key in that storage.
