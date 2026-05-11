@@ -1,5 +1,5 @@
 {
-  "name": "@rozenite/react-hook-form-plugin",
+  "name": "@rozenite/rhf-plugin",
   "version": "1.8.1",
   "description": "React Hook Form Inspector for Rozenite.",
   "type": "module",

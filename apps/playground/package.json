@@ -33,7 +33,7 @@
     "@rozenite/overlay-plugin": "workspace:*",
     "@rozenite/performance-monitor-plugin": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
-    "@rozenite/react-hook-form-plugin": "workspace:*",
+    "@rozenite/rhf-plugin": "workspace:*",
     "@rozenite/react-navigation-plugin": "workspace:*",
     "@rozenite/redux-devtools-plugin": "workspace:*",
     "@rozenite/require-profiler-plugin": "workspace:*",

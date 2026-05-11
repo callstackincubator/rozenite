@@ -1,4 +1,4 @@
-import { useRozeniteRHFPlugin } from '@rozenite/react-hook-form-plugin';
+import { useRozeniteRHFPlugin } from '@rozenite/rhf-plugin';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {

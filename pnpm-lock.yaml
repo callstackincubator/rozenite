@@ -168,9 +168,6 @@ importers:
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../../packages/plugin-bridge
-      '@rozenite/react-hook-form-plugin':
-        specifier: workspace:*
-        version: link:../../packages/react-hook-form-plugin
       '@rozenite/react-navigation-plugin':
         specifier: workspace:*
         version: link:../../packages/react-navigation-plugin
@@ -180,6 +177,9 @@ importers:
       '@rozenite/require-profiler-plugin':
         specifier: workspace:*
         version: link:../../packages/require-profiler-plugin
+      '@rozenite/rhf-plugin':
+        specifier: workspace:*
+        version: link:../../packages/rhf-plugin
       '@rozenite/sqlite-plugin':
         specifier: workspace:*
         version: link:../../packages/sqlite-plugin
@@ -1004,67 +1004,6 @@ importers:
         specifier: ^2.3.0
         version: 2.8.1
 
-  packages/react-hook-form-plugin:
-    dependencies:
-      '@rozenite/plugin-bridge':
-        specifier: workspace:*
-        version: link:../plugin-bridge
-      fast-deep-equal:
-        specifier: ^3.1.3
-        version: 3.1.3
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
-    devDependencies:
-      '@rozenite/vite-plugin':
-        specifier: workspace:*
-        version: link:../vite-plugin
-      '@types/lodash':
-        specifier: ^4.17.0
-        version: 4.17.20
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.2.14
-      autoprefixer:
-        specifier: ^10.4.21
-        version: 10.4.21(postcss@8.5.6)
-      lucide-react:
-        specifier: ^0.263.1
-        version: 0.263.1(react@19.2.0)
-      postcss:
-        specifier: ^8.5.6
-        version: 8.5.6
-      react:
-        specifier: 'catalog:'
-        version: 19.2.0
-      react-dom:
-        specifier: 'catalog:'
-        version: 19.2.0(react@19.2.0)
-      react-hook-form:
-        specifier: ^7.33.1
-        version: 7.75.0(react@19.2.0)
-      react-native:
-        specifier: 'catalog:'
-        version: 0.83.1(@babel/core@7.29.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0)
-      react-native-web:
-        specifier: ^0.21.2
-        version: 0.21.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      rozenite:
-        specifier: workspace:*
-        version: link:../cli
-      tailwindcss:
-        specifier: ^3.4.17
-        version: 3.4.17
-      tailwindcss-animate:
-        specifier: ^1.0.7
-        version: 1.0.7(tailwindcss@3.4.17)
-      typescript:
-        specifier: ~5.9.3
-        version: 5.9.3
-      vite:
-        specifier: ^7.3.1
-        version: 7.3.1(@types/node@22.17.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
-
   packages/react-navigation-plugin:
     dependencies:
       '@rozenite/agent-bridge':
@@ -1284,6 +1223,67 @@ importers:
       react-json-tree:
         specifier: ^0.20.0
         version: 0.20.0(@types/react@19.2.14)(react@19.2.0)
+      react-native:
+        specifier: 'catalog:'
+        version: 0.83.1(@babel/core@7.29.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0)
+      react-native-web:
+        specifier: ^0.21.2
+        version: 0.21.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      rozenite:
+        specifier: workspace:*
+        version: link:../cli
+      tailwindcss:
+        specifier: ^3.4.17
+        version: 3.4.17
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.17)
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.1(@types/node@22.17.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+
+  packages/rhf-plugin:
+    dependencies:
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      fast-deep-equal:
+        specifier: ^3.1.3
+        version: 3.1.3
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
+    devDependencies:
+      '@rozenite/vite-plugin':
+        specifier: workspace:*
+        version: link:../vite-plugin
+      '@types/lodash':
+        specifier: ^4.17.0
+        version: 4.17.20
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+      autoprefixer:
+        specifier: ^10.4.21
+        version: 10.4.21(postcss@8.5.6)
+      lucide-react:
+        specifier: ^0.263.1
+        version: 0.263.1(react@19.2.0)
+      postcss:
+        specifier: ^8.5.6
+        version: 8.5.6
+      react:
+        specifier: 'catalog:'
+        version: 19.2.0
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.0(react@19.2.0)
+      react-hook-form:
+        specifier: ^7.33.1
+        version: 7.75.0(react@19.2.0)
       react-native:
         specifier: 'catalog:'
         version: 0.83.1(@babel/core@7.29.0)(@react-native/metro-config@0.76.9)(@types/react@19.2.14)(react@19.2.0)

@@ -5,7 +5,7 @@ import type { RHFEventMap, RHFUnmountEvent, RHFUpdateEvent } from '../shared/mes
 import type { FieldError, FormSnapshot } from '../shared/types';
 import './globals.css';
 
-const PLUGIN_ID = '@rozenite/react-hook-form-plugin';
+const PLUGIN_ID = '@rozenite/rhf-plugin';
 
 // React's useId() generates ids like ":r0:", ":r1a:", etc.
 const REACT_AUTO_ID = /^:r[0-9a-z]+:$/;

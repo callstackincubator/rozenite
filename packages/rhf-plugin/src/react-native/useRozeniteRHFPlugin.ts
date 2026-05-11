@@ -8,7 +8,7 @@ import type { RHFEventMap } from '../shared/messaging';
 import type { FieldError, FormSnapshot } from '../shared/types';
 import { nestToFlat, proxyToObject } from './utils';
 
-const PLUGIN_ID = '@rozenite/react-hook-form-plugin';
+const PLUGIN_ID = '@rozenite/rhf-plugin';
 
 export type UseRozeniteRHFPluginOptions<T extends FieldValues> = {
   control: Control<T>;
