@@ -214,7 +214,7 @@ function FieldTable({ snapshot, searchTerm }: { snapshot: FormSnapshot; searchTe
   }
 
   return (
-    <table className="w-full text-sm border-collapse">
+    <table className="w-full text-sm border-collapse self-start h-auto">
       <thead className="sticky top-0 bg-gray-800 z-10">
         <tr className="text-left text-xs text-gray-400 uppercase tracking-wider">
           <th className="px-3 py-2 font-medium border-b border-gray-700">Field</th>
