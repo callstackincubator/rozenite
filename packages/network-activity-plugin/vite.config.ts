@@ -27,6 +27,10 @@ export default defineConfig({
             return 'event-source';
           }
 
+          if (id.includes('get-nitro-module.ts')) {
+            return 'get-nitro-module';
+          }
+
           return undefined;
         },
       },

@@ -7,6 +7,7 @@ import type {
 } from '../../shared/client';
 import type { WebSocketEventMap } from '../../shared/websocket-events';
 import type { Inspector } from '../inspector';
+import { getNitroModule as loadNitroModule } from './get-nitro-module';
 
 type NitroHttpHeader = {
   key: string;
@@ -62,7 +63,7 @@ type NitroWebSocketEntry = {
 
 type NitroInspectorEntry = NitroHttpEntry | NitroWebSocketEntry;
 
-type NitroModule = {
+export type NitroModule = {
   NetworkInspector: {
     enable: () => void;
     disable: () => void;
@@ -106,14 +107,6 @@ export const NITRO_NETWORK_EVENTS: (keyof NitroNetworkEventMap)[] = [
   'websocket-message-received',
   'websocket-error',
 ];
-
-const loadNitroModule = (): NitroModule | null => {
-  try {
-    return require('react-native-nitro-fetch') as NitroModule;
-  } catch {
-    return null;
-  }
-};
 
 const timestampOrigin =
   typeof performance !== 'undefined' &&
