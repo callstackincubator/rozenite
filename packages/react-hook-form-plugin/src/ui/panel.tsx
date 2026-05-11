@@ -102,11 +102,11 @@ function FormStateBar({ formState }: { formState: FormSnapshot['formState'] }) {
 
 // --- Table rows ---
 
-const COL_FIELD = 'px-3 py-2 text-gray-200 font-mono text-xs';
-const COL_TYPE  = 'px-3 py-2 text-gray-400 font-mono text-xs w-20';
-const COL_VALUE = 'px-3 py-2 text-gray-300 font-mono text-xs';
-const COL_STATE = 'px-3 py-2 w-28';
-const COL_ERROR = 'px-3 py-2';
+const COL_FIELD = 'px-3 py-1.5 text-gray-200 font-mono text-xs align-top';
+const COL_TYPE  = 'px-3 py-1.5 text-gray-400 font-mono text-xs w-20 align-top';
+const COL_VALUE = 'px-3 py-1.5 text-gray-300 font-mono text-xs align-top max-w-[220px]';
+const COL_STATE = 'px-3 py-1.5 w-28 align-top';
+const COL_ERROR = 'px-3 py-1.5 align-top';
 
 function FieldRow({
   name,
@@ -126,18 +126,13 @@ function FieldRow({
   return (
     <tr className="border-b border-gray-700 hover:bg-gray-800/50 transition-colors">
       <td className={COL_FIELD}>
-        <span
-          className={`truncate block max-w-[180px] ${indent ? 'pl-4 text-gray-400' : ''}`}
-          title={name}
-        >
+        <span className={indent ? 'pl-4 text-gray-400' : ''}>
           {indent ? name.slice(name.indexOf('.') + 1) : name}
         </span>
       </td>
       <td className={COL_TYPE}>{type ?? <span className="text-gray-600">—</span>}</td>
       <td className={COL_VALUE}>
-        <span className="truncate block max-w-[200px]" title={formatValue(value)}>
-          {formatValue(value)}
-        </span>
+        <span className="break-all">{formatValue(value)}</span>
       </td>
       <td className={COL_STATE}>
         <div className="flex items-center gap-1 flex-wrap">
@@ -247,9 +242,9 @@ function FieldTable({ snapshot, searchTerm }: { snapshot: FormSnapshot; searchTe
   );
 }
 
-// --- Form selector tabs ---
+// --- Form selector ---
 
-function FormTabs({
+function FormSelector({
   options,
   selectedId,
   staleIds,
@@ -260,31 +255,31 @@ function FormTabs({
   staleIds: Set<string>;
   onSelect: (id: string) => void;
 }) {
+  const selectedIsStale = selectedId ? staleIds.has(selectedId) : false;
+
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
-      {options.map((opt) => {
-        const stale    = staleIds.has(opt.id);
-        const selected = opt.id === selectedId;
-        return (
-          <button
-            key={opt.id}
-            onClick={() => onSelect(opt.id)}
-            className={[
-              'flex items-center gap-1.5 px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors',
-              selected
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600',
-              stale ? 'opacity-60' : '',
-            ].join(' ')}
-          >
-            {stale && <span className="text-yellow-400">●</span>}
-            <span>{opt.label}</span>
-            <span className={selected ? 'text-blue-200' : 'text-gray-500'}>
-              ({opt.fieldCount})
-            </span>
-          </button>
-        );
-      })}
+    <div className="flex items-center gap-2">
+      <label htmlFor="form-select" className="text-xs text-gray-400 shrink-0">
+        Form:
+      </label>
+      <select
+        id="form-select"
+        value={selectedId ?? ''}
+        onChange={(e) => onSelect(e.target.value)}
+        className="h-7 px-2 text-xs bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        {options.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.label} ({opt.fieldCount} fields)
+            {staleIds.has(opt.id) ? ' — disconnected' : ''}
+          </option>
+        ))}
+      </select>
+      {selectedIsStale && (
+        <span className="text-xs text-yellow-400 flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" /> disconnected
+        </span>
+      )}
     </div>
   );
 }
@@ -333,7 +328,6 @@ export default function ReactHookFormPanel() {
   }, [client]);
 
   const selectedSnapshot = selectedFormId ? snapshots.get(selectedFormId) ?? null : null;
-  const isStale          = selectedFormId ? staleIds.has(selectedFormId) : false;
 
   const formOptions = useMemo(
     () =>
@@ -350,8 +344,9 @@ export default function ReactHookFormPanel() {
       {/* Header */}
       <div className="flex items-center gap-3 px-3 py-2 border-b border-gray-700 bg-gray-800">
         <span className="text-sm font-semibold text-gray-100 shrink-0">React Hook Form</span>
+        <div className="flex-1" />
         {formOptions.length > 0 && (
-          <FormTabs
+          <FormSelector
             options={formOptions}
             selectedId={selectedFormId}
             staleIds={staleIds}
@@ -364,14 +359,6 @@ export default function ReactHookFormPanel() {
       {selectedSnapshot && (
         <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700 bg-gray-800">
           <FormStateBar formState={selectedSnapshot.formState} />
-        </div>
-      )}
-
-      {/* Stale banner */}
-      {isStale && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-yellow-900/40 border-b border-yellow-700/50 text-yellow-300 text-xs">
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          Form has unmounted — showing last known state.
         </div>
       )}
 
