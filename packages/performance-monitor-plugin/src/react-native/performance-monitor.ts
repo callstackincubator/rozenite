@@ -8,14 +8,24 @@ import type {
   SerializedPerformanceMark,
   SerializedPerformanceMeasure,
   SerializedPerformanceMetric,
+  SerializedPerformanceReactNativeMark,
+  SerializedPerformanceResource,
 } from '../shared/types';
 import { toDateTimestamp } from './helpers';
 import {
   assertPerformanceMark,
   assertPerformanceMeasure,
   assertPerformanceMetric,
+  assertPerformanceReactNativeMark,
+  assertPerformanceResource,
 } from './asserts';
-import { serializeMark, serializeMeasure, serializeMetric } from './serialize';
+import {
+  serializeMark,
+  serializeMeasure,
+  serializeMetric,
+  serializeReactNativeMark,
+  serializeResource,
+} from './serialize';
 
 type PerformanceObserverOptions = { type: EntryType; buffered?: boolean };
 
@@ -82,6 +92,20 @@ export const getPerformanceMonitor = (
       });
     };
 
+    const appendReactNativeMarks = (
+      reactNativeMarks: SerializedPerformanceReactNativeMark[],
+    ) => {
+      client.send('appendReactNativeMarks', {
+        reactNativeMarks,
+      });
+    };
+
+    const appendResources = (resources: SerializedPerformanceResource[]) => {
+      client.send('appendResources', {
+        resources,
+      });
+    };
+
     addObserver(
       (list) => {
         appendMarks(
@@ -121,6 +145,37 @@ export const getPerformanceMonitor = (
       },
       {
         type: 'metric',
+        buffered: true,
+      },
+    );
+    // react-native-marks fire during native startup, before the user
+    // clicks "Start Session" — buffered:true is load-bearing so the
+    // PerformanceObserver flushes entries emitted before subscription.
+    addObserver(
+      (list) => {
+        appendReactNativeMarks(
+          list.getEntries().map((entry) => {
+            assertPerformanceReactNativeMark(entry);
+            return serializeReactNativeMark(entry, origin);
+          }),
+        );
+      },
+      {
+        type: 'react-native-mark',
+        buffered: true,
+      },
+    );
+    addObserver(
+      (list) => {
+        appendResources(
+          list.getEntries().map((entry) => {
+            assertPerformanceResource(entry);
+            return serializeResource(entry, origin);
+          }),
+        );
+      },
+      {
+        type: 'resource',
         buffered: true,
       },
     );
