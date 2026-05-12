@@ -10,11 +10,19 @@ vi.mock('react-native-performance', () => ({
   default: { timeOrigin: 0 },
 }));
 
-import { serializeMark, serializeMeasure, serializeMetric } from '../serialize';
+import {
+  serializeMark,
+  serializeMeasure,
+  serializeMetric,
+  serializeReactNativeMark,
+  serializeResource,
+} from '../serialize';
 import type {
   PerformanceMark,
   PerformanceMeasure,
   PerformanceMetric,
+  PerformanceReactNativeMark,
+  PerformanceResourceTiming,
 } from 'react-native-performance';
 
 const ORIGIN = 1_700_000_000_000;
@@ -105,5 +113,117 @@ describe('serializeMetric', () => {
     } as PerformanceMetric;
 
     expect(serializeMetric(entry, ORIGIN).value).toBe('active');
+  });
+});
+
+describe('serializeReactNativeMark', () => {
+  it('copies name, duration, entryType, detail, and translates startTime', () => {
+    const detail = { phase: 'native-launch' };
+    const entry = {
+      name: 'nativeLaunchStart',
+      entryType: 'react-native-mark',
+      startTime: 7,
+      duration: 0,
+      detail,
+    } as PerformanceReactNativeMark;
+
+    expect(serializeReactNativeMark(entry, ORIGIN)).toEqual({
+      name: 'nativeLaunchStart',
+      startTime: ORIGIN + 7,
+      duration: 0,
+      entryType: 'react-native-mark',
+      detail,
+    });
+  });
+
+  it('passes detail=undefined through unchanged', () => {
+    const entry = {
+      name: 'runJSBundleStart',
+      entryType: 'react-native-mark',
+      startTime: 100,
+      duration: 0,
+    } as PerformanceReactNativeMark;
+
+    expect(serializeReactNativeMark(entry, ORIGIN).detail).toBeUndefined();
+  });
+});
+
+describe('serializeResource', () => {
+  // Build a fully-populated resource entry. The serializer is mostly a
+  // mechanical field copy of ~20 fields; this fixture pins every one
+  // down so a typo in any field name fails the test immediately.
+  const buildEntry = (): PerformanceResourceTiming =>
+    ({
+      name: 'https://example.com/api/users',
+      entryType: 'resource',
+      startTime: 50,
+      duration: 250,
+      initiatorType: 'fetch',
+      transferSize: 1024,
+      encodedBodySize: 800,
+      decodedBodySize: 1500,
+      fetchStart: 55,
+      requestStart: 60,
+      responseStart: 200,
+      responseEnd: 300,
+      connectStart: 70,
+      connectEnd: 90,
+      domainLookupStart: 60,
+      domainLookupEnd: 65,
+      redirectStart: 50,
+      redirectEnd: 55,
+      secureConnectionStart: 80,
+      workerStart: 0,
+      serverTiming: [10, 20, 30],
+      workerTiming: [1, 2],
+    }) as PerformanceResourceTiming;
+
+  it('copies every ResourceTiming field with startTime translated by origin', () => {
+    expect(serializeResource(buildEntry(), ORIGIN)).toEqual({
+      name: 'https://example.com/api/users',
+      startTime: ORIGIN + 50,
+      duration: 250,
+      entryType: 'resource',
+      initiatorType: 'fetch',
+      transferSize: 1024,
+      encodedBodySize: 800,
+      decodedBodySize: 1500,
+      fetchStart: 55,
+      requestStart: 60,
+      responseStart: 200,
+      responseEnd: 300,
+      connectStart: 70,
+      connectEnd: 90,
+      domainLookupStart: 60,
+      domainLookupEnd: 65,
+      redirectStart: 50,
+      redirectEnd: 55,
+      secureConnectionStart: 80,
+      workerStart: 0,
+      serverTiming: [10, 20, 30],
+      workerTiming: [1, 2],
+    });
+  });
+
+  it('does not clock-shift sub-phase timing fields', () => {
+    // Only startTime is translated; the sub-phase fields are passed
+    // through unchanged, since they are relative timings that the UI
+    // does not shift.
+    const result = serializeResource(buildEntry(), ORIGIN);
+    expect(result.fetchStart).toBe(55);
+    expect(result.responseEnd).toBe(300);
+    expect(result.startTime).toBe(ORIGIN + 50);
+  });
+
+  it('passes optional initiatorType and secureConnectionStart through when undefined', () => {
+    const entry = {
+      ...buildEntry(),
+      initiatorType: undefined,
+      secureConnectionStart: undefined,
+    } as PerformanceResourceTiming;
+
+    const result = serializeResource(entry, ORIGIN);
+    expect(result.initiatorType).toBeUndefined();
+    expect(result.secureConnectionStart).toBeUndefined();
   });
 });
