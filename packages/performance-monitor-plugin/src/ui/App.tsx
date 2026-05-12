@@ -226,6 +226,8 @@ export default function PerformanceMonitorPanel() {
             measures={session.measures}
             metrics={session.metrics}
             marks={session.marks}
+            reactNativeMarks={session.reactNativeMarks}
+            resources={session.resources}
             sessionStartedAt={session.sessionStartedAt}
             clockShift={session.clockShift}
           />
