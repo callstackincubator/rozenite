@@ -7,6 +7,8 @@ import {
   SerializedPerformanceMeasure,
   SerializedPerformanceMark,
   SerializedPerformanceMetric,
+  SerializedPerformanceReactNativeMark,
+  SerializedPerformanceResource,
   SerializedPerformanceEntry,
 } from '../shared/types';
 import { useEffect, useState } from 'react';
@@ -24,6 +26,8 @@ import './App.css';
 import { MeasuresTable } from './components/MeasuresTable';
 import { MetricsTable } from './components/MetricsTable';
 import { MarksTable } from './components/MarksTable';
+import { ReactNativeMarksTable } from './components/ReactNativeMarksTable';
+import { ResourcesTable } from './components/ResourcesTable';
 import { DetailsSidebar } from './components/DetailsSidebar';
 import { SessionDuration } from './components/SessionDuration';
 import { ExportModal } from './components/ExportModal';
@@ -34,6 +38,8 @@ type PerformanceMonitorSession = {
   measures: SerializedPerformanceMeasure[];
   marks: SerializedPerformanceMark[];
   metrics: SerializedPerformanceMetric[];
+  reactNativeMarks: SerializedPerformanceReactNativeMark[];
+  resources: SerializedPerformanceResource[];
 };
 
 export default function PerformanceMonitorPanel() {
@@ -46,6 +52,8 @@ export default function PerformanceMonitorPanel() {
     measures: [],
     marks: [],
     metrics: [],
+    reactNativeMarks: [],
+    resources: [],
   });
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [selectedItem, setSelectedItem] =
@@ -68,9 +76,11 @@ export default function PerformanceMonitorPanel() {
           measures: [],
           marks: [],
           metrics: [],
+          reactNativeMarks: [],
+          resources: [],
         });
         setIsSessionActive(true);
-      })
+      }),
     );
 
     subscriptions.push(
@@ -85,7 +95,7 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
     );
 
     subscriptions.push(
@@ -100,7 +110,7 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
     );
 
     subscriptions.push(
@@ -115,7 +125,37 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
+    );
+
+    subscriptions.push(
+      client.onMessage('appendReactNativeMarks', ({ reactNativeMarks }) => {
+        setSession((oldSession) => ({
+          ...oldSession,
+          reactNativeMarks: [
+            ...oldSession.reactNativeMarks,
+            ...reactNativeMarks.map((mark) => ({
+              ...mark,
+              startTime: mark.startTime + oldSession.clockShift,
+            })),
+          ],
+        }));
+      }),
+    );
+
+    subscriptions.push(
+      client.onMessage('appendResources', ({ resources }) => {
+        setSession((oldSession) => ({
+          ...oldSession,
+          resources: [
+            ...oldSession.resources,
+            ...resources.map((resource) => ({
+              ...resource,
+              startTime: resource.startTime + oldSession.clockShift,
+            })),
+          ],
+        }));
+      }),
     );
 
     return () => {
@@ -227,6 +267,12 @@ export default function PerformanceMonitorPanel() {
               <Tabs.Trigger value="marks">
                 Marks ({session.marks.length})
               </Tabs.Trigger>
+              <Tabs.Trigger value="reactNativeMarks">
+                React Native Marks ({session.reactNativeMarks.length})
+              </Tabs.Trigger>
+              <Tabs.Trigger value="resources">
+                Resources ({session.resources.length})
+              </Tabs.Trigger>
             </Tabs.List>
 
             <Box
@@ -269,6 +315,30 @@ export default function PerformanceMonitorPanel() {
               >
                 <MarksTable
                   marks={session.marks}
+                  onRowClick={handleEntryClick}
+                />
+              </Tabs.Content>
+
+              <Tabs.Content
+                value="reactNativeMarks"
+                style={{
+                  display: 'contents',
+                }}
+              >
+                <ReactNativeMarksTable
+                  reactNativeMarks={session.reactNativeMarks}
+                  onRowClick={handleEntryClick}
+                />
+              </Tabs.Content>
+
+              <Tabs.Content
+                value="resources"
+                style={{
+                  display: 'contents',
+                }}
+              >
+                <ResourcesTable
+                  resources={session.resources}
                   onRowClick={handleEntryClick}
                 />
               </Tabs.Content>
