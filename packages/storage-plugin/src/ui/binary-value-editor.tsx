@@ -156,8 +156,9 @@ export const BinaryValueEditor = ({
       <div className="flex flex-col gap-1 text-xs">
         <div className="text-gray-400">{byteCount} bytes</div>
         {asciiPreview && (
-          <div className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-gray-300">
-            {asciiPreview}
+          <div className="overflow-hidden text-ellipsis whitespace-nowrap text-gray-400">
+            ASCII:{' '}
+            <span className="font-mono text-gray-300">{asciiPreview}</span>
           </div>
         )}
         {state.error && <div className="text-red-400">{state.error}</div>}

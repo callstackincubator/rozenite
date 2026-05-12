@@ -109,9 +109,9 @@ describe('createMMKVStorageAdapter', () => {
   it('rejects MMKV v4 storages passed as an array', () => {
     const storage = createFakeMMKVV4();
 
-    expect(() => createMMKVStorageAdapter({ storages: [storage as any] })).toThrow(
-      /MMKV arrays are not supported for v4 storages/
-    );
+    expect(() =>
+      createMMKVStorageAdapter({ storages: [storage as any] }),
+    ).toThrow(/MMKV arrays are not supported for v4 storages/);
   });
 
   it('applies global blacklist patterns against storageId:key', async () => {
@@ -129,13 +129,175 @@ describe('createMMKVStorageAdapter', () => {
     });
 
     const views = createStorageViews([adapter]);
-    const userView = views.find((view) => view.target.storageId === 'user-storage');
-    const cacheView = views.find((view) => view.target.storageId === 'cache-storage');
+    const userView = views.find(
+      (view) => view.target.storageId === 'user-storage',
+    );
+    const cacheView = views.find(
+      (view) => view.target.storageId === 'cache-storage',
+    );
 
     expect(userView).toBeDefined();
     expect(cacheView).toBeDefined();
 
     await expect(userView?.getAllKeys()).resolves.toEqual(['visible']);
     await expect(cacheView?.getAllKeys()).resolves.toEqual(['persisted']);
+  });
+});
+
+// MMKV in production stores raw bytes per key without a type tag, so
+// getString and getBuffer both return data for any stored value. This
+// fake reflects that ambiguity so we can exercise the type-override
+// fallback in mmkv.ts.
+const createAmbiguousFakeMMKVV4 = () => {
+  type Stored =
+    | { kind: 'string'; value: string }
+    | { kind: 'number'; value: number }
+    | { kind: 'boolean'; value: boolean }
+    | { kind: 'buffer'; bytes: Uint8Array };
+
+  const values = new Map<string, Stored>();
+
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  const encoder = new TextEncoder();
+
+  return {
+    set: vi.fn(
+      (key: string, value: string | number | boolean | ArrayBuffer) => {
+        if (typeof value === 'string') {
+          values.set(key, { kind: 'string', value });
+        } else if (typeof value === 'number') {
+          values.set(key, { kind: 'number', value });
+        } else if (typeof value === 'boolean') {
+          values.set(key, { kind: 'boolean', value });
+        } else {
+          values.set(key, {
+            kind: 'buffer',
+            bytes: new Uint8Array(value),
+          });
+        }
+      },
+    ),
+    getString: vi.fn((key: string) => {
+      const stored = values.get(key);
+      if (!stored) return undefined;
+      if (stored.kind === 'string') return stored.value;
+      if (stored.kind === 'buffer') return decoder.decode(stored.bytes);
+      return undefined;
+    }),
+    getNumber: vi.fn((key: string) => {
+      const stored = values.get(key);
+      return stored?.kind === 'number' ? stored.value : undefined;
+    }),
+    getBoolean: vi.fn((key: string) => {
+      const stored = values.get(key);
+      return stored?.kind === 'boolean' ? stored.value : undefined;
+    }),
+    getBuffer: vi.fn((key: string) => {
+      const stored = values.get(key);
+      if (!stored) return undefined;
+      if (stored.kind === 'buffer') return stored.bytes.buffer;
+      if (stored.kind === 'string') return encoder.encode(stored.value).buffer;
+      return undefined;
+    }),
+    remove: vi.fn((key: string) => {
+      values.delete(key);
+    }),
+    getAllKeys: vi.fn(() => [...values.keys()]),
+    addOnValueChangedListener: vi.fn(() => ({ remove: vi.fn() })),
+  };
+};
+
+describe('createMMKVStorageAdapter type override (round-trip)', () => {
+  it('returns a buffer after setting a buffer whose bytes are valid ASCII', async () => {
+    const storage = createAmbiguousFakeMMKVV4();
+    const adapter = createMMKVStorageAdapter({
+      storages: { 'user-storage': storage as any },
+    });
+    const [view] = createStorageViews([adapter]);
+
+    // 0x68 0x65 0x6c 0x6c 0x6f = "hello" in ASCII — the regression case.
+    await view.set({
+      key: 'token',
+      type: 'buffer',
+      value: [0x68, 0x65, 0x6c, 0x6c, 0x6f],
+    });
+
+    await expect(view.get('token')).resolves.toEqual({
+      key: 'token',
+      type: 'buffer',
+      value: [0x68, 0x65, 0x6c, 0x6c, 0x6f],
+    });
+  });
+
+  it('returns a string after setting a string at a key previously set as a buffer', async () => {
+    const storage = createAmbiguousFakeMMKVV4();
+    const adapter = createMMKVStorageAdapter({
+      storages: { 'user-storage': storage as any },
+    });
+    const [view] = createStorageViews([adapter]);
+
+    await view.set({
+      key: 'flip',
+      type: 'buffer',
+      value: [0x68, 0x65, 0x6c, 0x6c, 0x6f],
+    });
+    await view.set({
+      key: 'flip',
+      type: 'string',
+      value: 'world',
+    });
+
+    await expect(view.get('flip')).resolves.toEqual({
+      key: 'flip',
+      type: 'string',
+      value: 'world',
+    });
+  });
+
+  it('drops the type override when the key is deleted', async () => {
+    const storage = createAmbiguousFakeMMKVV4();
+    const adapter = createMMKVStorageAdapter({
+      storages: { 'user-storage': storage as any },
+    });
+    const [view] = createStorageViews([adapter]);
+
+    await view.set({
+      key: 'temp',
+      type: 'buffer',
+      value: [0x68, 0x69],
+    });
+    await view.delete('temp');
+
+    await expect(view.get('temp')).resolves.toBeUndefined();
+    // After deletion, the override is dropped — a subsequent ambiguous
+    // write from outside the plugin would fall back to the heuristic.
+    storage.set('temp', 'hello');
+    await expect(view.get('temp')).resolves.toEqual({
+      key: 'temp',
+      type: 'string',
+      value: 'hello',
+    });
+  });
+
+  it('falls through to the heuristic when no override exists (cold-start limitation)', async () => {
+    const storage = createAmbiguousFakeMMKVV4();
+    // Simulate an app-side buffer write the plugin never observed.
+    storage.set(
+      'preexisting',
+      new Uint8Array([0x68, 0x65, 0x6c, 0x6c, 0x6f]).buffer,
+    );
+
+    const adapter = createMMKVStorageAdapter({
+      storages: { 'user-storage': storage as any },
+    });
+    const [view] = createStorageViews([adapter]);
+
+    // Documented limitation: without an override, a buffer that decodes to
+    // valid printable ASCII is classified as a string by the heuristic.
+    await expect(view.get('preexisting')).resolves.toEqual({
+      key: 'preexisting',
+      type: 'string',
+      value: 'hello',
+    });
   });
 });

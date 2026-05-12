@@ -1,6 +1,11 @@
 import type { MMKV as MMKVV3 } from 'react-native-mmkv-v3';
 import type { MMKV as MMKVV4 } from 'react-native-mmkv-v4';
-import type { StorageAdapter, StorageEntry, StorageNode } from '../../shared/types';
+import type {
+  StorageAdapter,
+  StorageEntry,
+  StorageEntryType,
+  StorageNode,
+} from '../../shared/types';
 import { DEFAULT_SUPPORTED_TYPES } from '../../shared/types';
 import { looksLikeGarbled } from '../is-garbled';
 
@@ -36,12 +41,12 @@ const normalizeStorages = (storages: MMKV[] | Record<string, MMKV>) => {
 
     if (isAnyStorageV4) {
       throw new Error(
-        '[Rozenite] Storage Plugin: MMKV arrays are not supported for v4 storages. Pass a record of storage IDs and MMKV instances.'
+        '[Rozenite] Storage Plugin: MMKV arrays are not supported for v4 storages. Pass a record of storage IDs and MMKV instances.',
       );
     }
 
     return Object.fromEntries(
-      (storages as MMKVV3[]).map((storage) => [storage['id'], storage])
+      (storages as MMKVV3[]).map((storage) => [storage['id'], storage]),
     );
   }
 
@@ -71,11 +76,63 @@ const getMMKVAdapter = (mmkv: MMKV): MMKVAdapter => {
     getBuffer: (key) => mmkv.getBuffer(key) as ArrayBuffer | undefined,
     delete: (key) => mmkv.delete(key),
     getAllKeys: () => mmkv.getAllKeys(),
-    addOnValueChangedListener: (callback) => mmkv.addOnValueChangedListener(callback),
+    addOnValueChangedListener: (callback) =>
+      mmkv.addOnValueChangedListener(callback),
   };
 };
 
-const getEntry = (adapter: MMKVAdapter, key: string): StorageEntry | undefined => {
+// Per-storage map of "known" types for keys we have observed via set().
+// MMKV stores raw bytes without a type tag: once a buffer is written,
+// getString() on the same key happily decodes those bytes as UTF-8.
+// For buffers that happen to be valid printable ASCII (e.g. "hello")
+// the heuristic below cannot tell buffer from string. This map lets us
+// honor the type the plugin (or the app, on first observation) intended
+// for the round-trip case (edit → save → re-read).
+type TypeOverrideMap = Map<string, StorageEntryType>;
+
+const readWithType = (
+  adapter: MMKVAdapter,
+  key: string,
+  type: StorageEntryType,
+): StorageEntry | undefined => {
+  switch (type) {
+    case 'string': {
+      const value = adapter.getString(key);
+      return value !== undefined ? { key, type: 'string', value } : undefined;
+    }
+    case 'number': {
+      const value = adapter.getNumber(key);
+      return value !== undefined ? { key, type: 'number', value } : undefined;
+    }
+    case 'boolean': {
+      const value = adapter.getBoolean(key);
+      return value !== undefined ? { key, type: 'boolean', value } : undefined;
+    }
+    case 'buffer': {
+      const value = adapter.getBuffer(key);
+      return value !== undefined
+        ? { key, type: 'buffer', value: Array.from(new Uint8Array(value)) }
+        : undefined;
+    }
+  }
+};
+
+const getEntry = (
+  adapter: MMKVAdapter,
+  key: string,
+  typeOverrides: TypeOverrideMap,
+): StorageEntry | undefined => {
+  const override = typeOverrides.get(key);
+  if (override) {
+    const entry = readWithType(adapter, key, override);
+    if (entry) {
+      return entry;
+    }
+    // The key was deleted (or the typed getter no longer resolves) — drop
+    // the stale override and fall through to the heuristic.
+    typeOverrides.delete(key);
+  }
+
   const stringValue = adapter.getString(key);
 
   if (stringValue !== undefined && stringValue.length > 0) {
@@ -124,18 +181,31 @@ const getEntry = (adapter: MMKVAdapter, key: string): StorageEntry | undefined =
   return undefined;
 };
 
-const setEntry = (adapter: MMKVAdapter, entry: StorageEntry) => {
+const setEntry = (
+  adapter: MMKVAdapter,
+  entry: StorageEntry,
+  typeOverrides: TypeOverrideMap,
+) => {
   if (entry.type === 'buffer') {
     adapter.set(entry.key, new Uint8Array(entry.value).buffer);
-    return;
+  } else {
+    adapter.set(entry.key, entry.value);
   }
+  typeOverrides.set(entry.key, entry.type);
+};
 
-  adapter.set(entry.key, entry.value);
+const deleteKey = (
+  adapter: MMKVAdapter,
+  key: string,
+  typeOverrides: TypeOverrideMap,
+) => {
+  adapter.delete(key);
+  typeOverrides.delete(key);
 };
 
 const getStorageBlacklist = (
   config: MMKVBlacklistConfig | undefined,
-  storageId: string
+  storageId: string,
 ) => {
   if (!config) {
     return undefined;
@@ -150,7 +220,7 @@ const getStorageBlacklist = (
 
 const createStorageBlacklistMatcher = (
   config: MMKVBlacklistConfig | undefined,
-  storageId: string
+  storageId: string,
 ) => {
   if (!(config instanceof RegExp)) {
     return undefined;
@@ -168,11 +238,15 @@ export const createMMKVStorageAdapter = ({
   storages,
   blacklist,
 }: CreateMMKVStorageAdapterOptions): StorageAdapter => {
-  const normalizedStorages = normalizeStorages(storages) as Record<string, MMKV>;
+  const normalizedStorages = normalizeStorages(storages) as Record<
+    string,
+    MMKV
+  >;
 
   const storageNodes: StorageNode[] = Object.entries(normalizedStorages).map(
     ([storageId, storage]) => {
       const mmkv = getMMKVAdapter(storage);
+      const typeOverrides: TypeOverrideMap = new Map();
 
       return {
         id: storageId,
@@ -185,13 +259,13 @@ export const createMMKVStorageAdapter = ({
         storage: {
           kind: 'sync',
           getAllKeys: () => mmkv.getAllKeys(),
-          get: (key) => getEntry(mmkv, key),
-          set: (entry) => setEntry(mmkv, entry),
-          delete: (key) => mmkv.delete(key),
+          get: (key) => getEntry(mmkv, key, typeOverrides),
+          set: (entry) => setEntry(mmkv, entry, typeOverrides),
+          delete: (key) => deleteKey(mmkv, key, typeOverrides),
           subscribe: (callback) => mmkv.addOnValueChangedListener(callback),
         },
       };
-    }
+    },
   );
 
   return {
