@@ -128,7 +128,10 @@ export const createNetworkActivityStore = () =>
                 data as NetworkActivityEventMap['recording-state'];
               const { isRecording, _client } = get();
               if (_client && isRecording !== eventData.isRecording) {
-                _client.send(isRecording ? 'network-enable' : 'network-disable', {});
+                _client.send(
+                  isRecording ? 'network-enable' : 'network-disable',
+                  {},
+                );
               }
               break;
             }
@@ -198,6 +201,28 @@ export const createNetworkActivityStore = () =>
                     total: eventData.total,
                     lengthComputable: eventData.lengthComputable,
                   },
+                };
+
+                const newEntries = new Map(state.networkEntries);
+                newEntries.set(eventData.requestId, updatedEntry);
+                return { networkEntries: newEntries };
+              });
+              break;
+            }
+
+            case 'request-initiator-updated': {
+              const eventData =
+                data as NetworkActivityEventMap['request-initiator-updated'];
+              set((state) => {
+                const entry = state.networkEntries.get(eventData.requestId);
+
+                if (!entry || (entry.type !== 'http' && entry.type !== 'sse')) {
+                  return {};
+                }
+
+                const updatedEntry = {
+                  ...entry,
+                  initiator: eventData.initiator,
                 };
 
                 const newEntries = new Map(state.networkEntries);
@@ -594,7 +619,7 @@ export const createNetworkActivityStore = () =>
             // Subscribe to all events using the unified handler
             const unsubscribeFunctions = [
               client.onMessage('recording-state', (data) =>
-                handleEvent('recording-state', data)
+                handleEvent('recording-state', data),
               ),
               client.onMessage('client-ui-settings', (data) =>
                 handleEvent('client-ui-settings', data),
@@ -604,6 +629,9 @@ export const createNetworkActivityStore = () =>
               ),
               client.onMessage('request-progress', (data) =>
                 handleEvent('request-progress', data),
+              ),
+              client.onMessage('request-initiator-updated', (data) =>
+                handleEvent('request-initiator-updated', data),
               ),
               client.onMessage('response-received', (data) =>
                 handleEvent('response-received', data),

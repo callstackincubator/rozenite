@@ -21,6 +21,7 @@ import { getStatusColor } from '../utils/getStatusColor';
 import { FilterState } from './FilterBar';
 import { isNumber } from '../../utils/typeChecks';
 import type { NetworkEventSource } from '../../shared/client';
+import { getInitiatorLabel } from '../utils/initiator';
 
 type NetworkRequest = {
   id: RequestId;
@@ -33,6 +34,7 @@ type NetworkRequest = {
   time: string;
   type: string;
   source?: NetworkEventSource;
+  initiator: string;
   startTime: string;
   hasOverride: boolean;
 };
@@ -168,6 +170,7 @@ const processNetworkRequests = (
       time: formatDuration(duration),
       type: request.type,
       source: request.source,
+      initiator: getInitiatorLabel(request.initiator) ?? 'Unknown',
       startTime: formatStartTime(request.timestamp),
       hasOverride: hasOverride,
     };
@@ -226,6 +229,16 @@ const columns = [
     size: 128,
     sortingFn: 'alphanumeric',
   }),
+  columnHelper.accessor('initiator', {
+    header: 'Initiator',
+    cell: ({ getValue }) => (
+      <div className="text-gray-300 truncate" title={getValue()}>
+        {getValue()}
+      </div>
+    ),
+    size: 160,
+    sortingFn: 'alphanumeric',
+  }),
   columnHelper.accessor('size', {
     header: 'Size',
     cell: ({ getValue }) => (
@@ -271,6 +284,8 @@ export const RequestList = ({ filter }: RequestListProps) => {
           request.name,
           request.method,
           request.status.toString(),
+          request.initiator?.functionName,
+          getInitiatorLabel(request.initiator),
         ]
           .join(' ')
           .toLowerCase();

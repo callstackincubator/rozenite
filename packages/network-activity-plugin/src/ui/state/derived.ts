@@ -18,6 +18,7 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
         id: httpEntry.id,
         type: 'http',
         source: httpEntry.source,
+        initiator: httpEntry.initiator,
         name: httpEntry.request.url,
         status: httpEntry.status,
         timestamp: httpEntry.timestamp,
@@ -46,6 +47,7 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
       requests.push({
         id: sseEntry.id,
         type: 'sse',
+        initiator: sseEntry.initiator,
         name: sseEntry.request.url,
         status: sseEntry.status,
         timestamp: sseEntry.timestamp,
@@ -80,6 +82,7 @@ export const getRequestSummary = (
         id: httpEntry.id,
         type: 'http',
         source: httpEntry.source,
+        initiator: httpEntry.initiator,
         name: httpEntry.request.url,
         status: httpEntry.status,
         timestamp: httpEntry.timestamp,
@@ -108,6 +111,7 @@ export const getRequestSummary = (
       return {
         id: sseEntry.id,
         type: 'sse',
+        initiator: sseEntry.initiator,
         name: sseEntry.request.url,
         status: sseEntry.status,
         timestamp: sseEntry.timestamp,

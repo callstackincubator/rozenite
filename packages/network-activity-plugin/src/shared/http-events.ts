@@ -72,11 +72,39 @@ export type Response = {
   responseTime: Timestamp;
 };
 
-export type Initiator = {
-  type: string;
+export type InitiatorStackFrame = {
+  functionName?: string;
   url?: string;
   lineNumber?: number;
   columnNumber?: number;
+  generatedUrl?: string;
+  generatedLineNumber?: number;
+  generatedColumnNumber?: number;
+  isCollapsed?: boolean;
+};
+
+export type InitiatorCodeFrame = {
+  content: string;
+  fileName: string;
+  location?: {
+    row: number;
+    column: number;
+  } | null;
+};
+
+export type Initiator = {
+  type: string;
+  symbolicationStatus?: 'pending' | 'complete' | 'failed' | 'unavailable';
+  symbolicationError?: string;
+  functionName?: string;
+  url?: string;
+  lineNumber?: number;
+  columnNumber?: number;
+  generatedUrl?: string;
+  generatedLineNumber?: number;
+  generatedColumnNumber?: number;
+  codeFrame?: InitiatorCodeFrame | null;
+  stack?: InitiatorStackFrame[];
 };
 
 export type ResourceType = 'XHR' | 'Fetch' | 'Other';
@@ -93,6 +121,13 @@ export type HttpEventMap = {
     timestamp: Timestamp;
     initiator: Initiator;
     type: ResourceType;
+    source?: NetworkEventSource;
+  };
+
+  'request-initiator-updated': {
+    requestId: RequestId;
+    timestamp: Timestamp;
+    initiator: Initiator;
     source?: NetworkEventSource;
   };
 

@@ -1,10 +1,13 @@
-import {
+import type {
   XHRPostData,
   RequestPostData,
   RequestTextPostData,
   RequestBinaryPostData,
   RequestFormDataPostData,
+  Initiator,
+  InitiatorStackFrame,
 } from '../../shared/client';
+import symbolicateStackTrace from 'react-native/Libraries/Core/Devtools/symbolicateStackTrace';
 import { safeStringify } from '../../utils/safeStringify';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
 import {
@@ -149,26 +152,270 @@ export const getResponseBody = async (
   return null;
 };
 
-export const getInitiatorFromStack = (): {
-  type: string;
-  url?: string;
-  lineNumber?: number;
-  columnNumber?: number;
-} => {
+const STACK_PREVIEW_FRAME_LIMIT = 8;
+
+const INTERNAL_STACK_PATTERNS = [
+  'getInitiatorFromStack',
+  'http-utils',
+  'http-inspector',
+  'xhr-interceptor',
+  'XHRInterceptor',
+  'XMLHttpRequest',
+  '@rozenite/network-activity-plugin',
+  '/network-activity-plugin/',
+];
+
+const LOW_VALUE_SYMBOLICATED_FRAME_PATTERNS = [
+  'InternalBytecode.js',
+  '/node_modules/',
+  'node_modules/',
+  'react-native/Libraries/',
+  '@react-native/',
+  '@babel/runtime/',
+  'metro-runtime/',
+  'promise/setimmediate/',
+  ...INTERNAL_STACK_PATTERNS,
+];
+
+type ReactNativeStackFrame = {
+  methodName: string;
+  file: string | null | undefined;
+  lineNumber: number | null | undefined;
+  column: number | null | undefined;
+  collapse?: boolean;
+};
+
+type SymbolicatedStackTrace = {
+  stack: ReadonlyArray<ReactNativeStackFrame>;
+  codeFrame?: Initiator['codeFrame'];
+};
+
+export const shouldIgnoreNetworkActivityRequest = (url: string) => {
+  try {
+    return new URL(url).pathname === '/symbolicate';
+  } catch {
+    return url.includes('/symbolicate');
+  }
+};
+
+const parseStackLocation = (
+  location: string,
+): Pick<InitiatorStackFrame, 'url' | 'lineNumber' | 'columnNumber'> | null => {
+  const match = location.match(/^(.*):(\d+):(\d+)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    url: match[1],
+    lineNumber: Number.parseInt(match[2], 10),
+    columnNumber: Number.parseInt(match[3], 10),
+  };
+};
+
+const normalizeFunctionName = (functionName?: string) => {
+  const trimmedFunctionName = functionName?.trim();
+
+  return trimmedFunctionName &&
+    trimmedFunctionName !== '<anonymous>' &&
+    trimmedFunctionName !== 'anonymous' &&
+    trimmedFunctionName !== '<unknown>'
+    ? trimmedFunctionName
+    : undefined;
+};
+
+const parseStackFrame = (line: string): InitiatorStackFrame | null => {
+  const trimmedLine = line.trim();
+
+  if (!trimmedLine) {
+    return null;
+  }
+
+  let functionName: string | undefined;
+  let location: string | undefined;
+
+  const v8FunctionFrame = trimmedLine.match(/^at\s+(.*?)\s+\((.*)\)$/);
+  if (v8FunctionFrame) {
+    functionName = v8FunctionFrame[1];
+    location = v8FunctionFrame[2];
+  } else {
+    const v8LocationFrame = trimmedLine.match(/^at\s+(.*)$/);
+    const jscFrame = trimmedLine.match(/^(.*?)@(.*)$/);
+
+    if (v8LocationFrame) {
+      location = v8LocationFrame[1];
+    } else if (jscFrame) {
+      functionName = jscFrame[1];
+      location = jscFrame[2];
+    }
+  }
+
+  if (!location) {
+    return null;
+  }
+
+  const parsedLocation = parseStackLocation(location);
+  if (!parsedLocation) {
+    return null;
+  }
+
+  return {
+    functionName: normalizeFunctionName(functionName),
+    ...parsedLocation,
+  };
+};
+
+const isInternalStackFrame = (frame: InitiatorStackFrame) => {
+  const searchableFrame = [frame.functionName, frame.url, frame.generatedUrl]
+    .filter(Boolean)
+    .join(' ');
+
+  return INTERNAL_STACK_PATTERNS.some((pattern) =>
+    searchableFrame.includes(pattern),
+  );
+};
+
+const toGeneratedStackFrame = (
+  frame: InitiatorStackFrame,
+): InitiatorStackFrame => ({
+  functionName: frame.functionName,
+  generatedUrl: frame.url,
+  generatedLineNumber: frame.lineNumber,
+  generatedColumnNumber: frame.columnNumber,
+});
+
+const getGeneratedFrameLocation = (frame: InitiatorStackFrame) => ({
+  url: frame.generatedUrl ?? frame.url,
+  lineNumber: frame.generatedLineNumber ?? frame.lineNumber,
+  columnNumber: frame.generatedColumnNumber ?? frame.columnNumber,
+});
+
+const isGeneratedBundleUrl = (url: string) =>
+  /[^/]+\.bundle(?:[/?#]|$)/.test(url);
+
+const getComparableSourcePath = (url?: string) =>
+  url?.split(/[?#]/)[0].replace(/^file:\/\//, '');
+
+const getCodeFrameForSourceFrame = (
+  codeFrame: Initiator['codeFrame'] | undefined,
+  sourceFrame: InitiatorStackFrame | undefined,
+) => {
+  const codeFramePath = getComparableSourcePath(codeFrame?.fileName);
+  const sourcePath = getComparableSourcePath(sourceFrame?.url);
+
+  if (!codeFrame || !codeFramePath || !sourcePath) {
+    return null;
+  }
+
+  return codeFramePath.endsWith(sourcePath) ||
+    sourcePath.endsWith(codeFramePath)
+    ? codeFrame
+    : null;
+};
+
+const canSymbolicateStack = (stack?: InitiatorStackFrame[]) =>
+  stack?.some((frame) =>
+    getGeneratedFrameLocation(frame).url?.startsWith('http'),
+  ) ?? false;
+
+const isUsefulSymbolicatedFrame = (frame: InitiatorStackFrame) => {
+  if (!frame.url || frame.isCollapsed) {
+    return false;
+  }
+
+  const searchableFrame = [frame.functionName, frame.url].join(' ');
+
+  return !LOW_VALUE_SYMBOLICATED_FRAME_PATTERNS.some((pattern) =>
+    searchableFrame.includes(pattern),
+  );
+};
+
+const toReactNativeStackFrame = (
+  frame: InitiatorStackFrame,
+): ReactNativeStackFrame | null => {
+  const generatedLocation = getGeneratedFrameLocation(frame);
+
+  if (!generatedLocation.url) {
+    return null;
+  }
+
+  return {
+    methodName: frame.functionName ?? '<anonymous>',
+    file: generatedLocation.url,
+    lineNumber: generatedLocation.lineNumber,
+    column: generatedLocation.columnNumber,
+  };
+};
+
+const fromSymbolicatedStackFrame = (
+  frame: ReactNativeStackFrame,
+  generatedFrame: InitiatorStackFrame,
+): InitiatorStackFrame => {
+  const generatedLocation = getGeneratedFrameLocation(generatedFrame);
+  const sourceUrl =
+    frame.file &&
+    frame.file !== generatedLocation.url &&
+    !isGeneratedBundleUrl(frame.file)
+      ? frame.file
+      : undefined;
+
+  return {
+    functionName:
+      normalizeFunctionName(frame.methodName) ?? generatedFrame.functionName,
+    url: sourceUrl,
+    lineNumber: sourceUrl ? (frame.lineNumber ?? undefined) : undefined,
+    columnNumber: sourceUrl ? (frame.column ?? undefined) : undefined,
+    generatedUrl: generatedLocation.url,
+    generatedLineNumber: generatedLocation.lineNumber,
+    generatedColumnNumber: generatedLocation.columnNumber,
+    isCollapsed: frame.collapse,
+  };
+};
+
+export const getInitiatorFromStack = (): Initiator => {
   try {
     const stack = new Error().stack;
     if (!stack) {
       return { type: 'other' };
     }
 
-    const line = stack.split('\n')[9];
-    const match = line.match(/at\s+(.+?)\s+\((.+?):(\d+):(\d+)\)/);
-    if (match) {
+    const parsedFrames = stack
+      .split('\n')
+      .map(parseStackFrame)
+      .filter((frame): frame is InitiatorStackFrame => frame !== null);
+
+    const stackPreview = parsedFrames
+      .filter((frame) => !isInternalStackFrame(frame))
+      .slice(0, STACK_PREVIEW_FRAME_LIMIT);
+    const initiatorFrame = stackPreview[0];
+    const generatedStackPreview = stackPreview.map(toGeneratedStackFrame);
+
+    if (initiatorFrame?.url) {
       return {
         type: 'script',
-        url: match[2],
-        lineNumber: parseInt(match[3]),
-        columnNumber: parseInt(match[4]),
+        functionName: initiatorFrame.functionName,
+        generatedUrl: initiatorFrame.url,
+        generatedLineNumber: initiatorFrame.lineNumber,
+        generatedColumnNumber: initiatorFrame.columnNumber,
+        stack: generatedStackPreview,
+        symbolicationStatus: canSymbolicateStack(generatedStackPreview)
+          ? 'pending'
+          : 'unavailable',
+      };
+    }
+
+    if (parsedFrames.length > 0) {
+      const fallbackStack = parsedFrames
+        .slice(0, STACK_PREVIEW_FRAME_LIMIT)
+        .map(toGeneratedStackFrame);
+
+      return {
+        type: 'other',
+        stack: fallbackStack,
+        symbolicationStatus: canSymbolicateStack(fallbackStack)
+          ? 'pending'
+          : 'unavailable',
       };
     }
   } catch {
@@ -176,6 +423,66 @@ export const getInitiatorFromStack = (): {
   }
 
   return { type: 'other' };
+};
+
+export const symbolicateInitiator = async (
+  initiator: Initiator,
+): Promise<Initiator | null> => {
+  if (!canSymbolicateStack(initiator.stack)) {
+    return null;
+  }
+
+  const generatedStackFrames =
+    initiator.stack
+      ?.map(toReactNativeStackFrame)
+      .filter((frame): frame is ReactNativeStackFrame => frame !== null) ?? [];
+
+  if (generatedStackFrames.length === 0) {
+    return null;
+  }
+
+  try {
+    const symbolicatedStackTrace = (await symbolicateStackTrace(
+      generatedStackFrames,
+    )) as SymbolicatedStackTrace;
+
+    const symbolicatedStack = symbolicatedStackTrace.stack.map((frame, index) =>
+      fromSymbolicatedStackFrame(frame, initiator.stack?.[index] ?? {}),
+    );
+    const sourceFrame =
+      symbolicatedStack.find(isUsefulSymbolicatedFrame) ??
+      symbolicatedStack.find((frame) => frame.url && !frame.isCollapsed) ??
+      symbolicatedStack[0];
+    const hasSourceMappedFrame = symbolicatedStack.some((frame) => frame.url);
+
+    return {
+      ...initiator,
+      type: sourceFrame?.url ? 'script' : initiator.type,
+      functionName: sourceFrame?.functionName,
+      url: sourceFrame?.url,
+      lineNumber: sourceFrame?.lineNumber,
+      columnNumber: sourceFrame?.columnNumber,
+      generatedUrl: sourceFrame?.generatedUrl ?? initiator.generatedUrl,
+      generatedLineNumber:
+        sourceFrame?.generatedLineNumber ?? initiator.generatedLineNumber,
+      generatedColumnNumber:
+        sourceFrame?.generatedColumnNumber ?? initiator.generatedColumnNumber,
+      stack: symbolicatedStack,
+      codeFrame: getCodeFrameForSourceFrame(
+        symbolicatedStackTrace.codeFrame,
+        sourceFrame,
+      ),
+      symbolicationStatus: hasSourceMappedFrame ? 'complete' : 'unavailable',
+      symbolicationError: undefined,
+    };
+  } catch (error) {
+    return {
+      ...initiator,
+      symbolicationStatus: 'failed',
+      symbolicationError:
+        error instanceof Error ? error.message : 'Unable to symbolicate stack',
+    };
+  }
 };
 
 /**
