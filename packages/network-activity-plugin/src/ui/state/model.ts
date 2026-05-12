@@ -151,6 +151,7 @@ export type ProcessedRequest = {
   size: number | null;
   method: HttpMethod | 'WS' | 'SSE';
   httpStatus?: number;
+  contentType?: string;
   progress?: {
     loaded: number;
     total: number;
