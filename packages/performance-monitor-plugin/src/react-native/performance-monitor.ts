@@ -15,6 +15,7 @@ import {
   assertPerformanceMeasure,
   assertPerformanceMetric,
 } from './asserts';
+import { serializeMark, serializeMeasure, serializeMetric } from './serialize';
 
 type PerformanceObserverOptions = { type: EntryType; buffered?: boolean };
 
@@ -27,7 +28,7 @@ type PerformanceObserverEntryList = {
 
 type PerformanceObserverCallback = (
   list: PerformanceObserverEntryList,
-  observer: PerformanceObserver
+  observer: PerformanceObserver,
 ) => void;
 
 export type PerformanceMonitor = {
@@ -38,7 +39,7 @@ export type PerformanceMonitor = {
 };
 
 export const getPerformanceMonitor = (
-  client: PerformanceMonitorDevToolsClient
+  client: PerformanceMonitorDevToolsClient,
 ): PerformanceMonitor => {
   let observers: PerformanceObserver[] = [];
   let sessionStartedAt = 0;
@@ -47,7 +48,7 @@ export const getPerformanceMonitor = (
 
   const addObserver = (
     callback: PerformanceObserverCallback,
-    options: PerformanceObserverOptions
+    options: PerformanceObserverOptions,
   ) => {
     const observer = new PerformanceObserver(callback);
     observer.observe(options);
@@ -83,66 +84,45 @@ export const getPerformanceMonitor = (
 
     addObserver(
       (list) => {
-        const marks = list.getEntries().map((entry) => {
-          assertPerformanceMark(entry);
-
-          return {
-            name: entry.name,
-            startTime: toDateTimestamp(origin, entry.startTime),
-            duration: entry.duration,
-            entryType: 'mark' as const,
-          };
-        });
-
-        appendMarks(marks);
+        appendMarks(
+          list.getEntries().map((entry) => {
+            assertPerformanceMark(entry);
+            return serializeMark(entry, origin);
+          }),
+        );
       },
       {
         type: 'mark',
         buffered: true,
-      }
+      },
     );
     addObserver(
       (list) => {
         appendMeasures(
           list.getEntries().map((entry) => {
             assertPerformanceMeasure(entry);
-
-            return {
-              name: entry.name,
-              startTime: toDateTimestamp(origin, entry.startTime),
-              duration: entry.duration,
-              entryType: 'measure' as const,
-              detail: entry.detail,
-            };
-          })
+            return serializeMeasure(entry, origin);
+          }),
         );
       },
       {
         type: 'measure',
         buffered: true,
-      }
+      },
     );
     addObserver(
       (list) => {
         setMetrics(
           list.getEntries().map((entry) => {
             assertPerformanceMetric(entry);
-
-            return {
-              name: entry.name,
-              startTime: toDateTimestamp(origin, entry.startTime),
-              duration: entry.duration,
-              entryType: 'metric' as const,
-              value: entry.value,
-              detail: entry.detail,
-            };
-          })
+            return serializeMetric(entry, origin);
+          }),
         );
       },
       {
         type: 'metric',
         buffered: true,
-      }
+      },
     );
   };
   const disable = (): void => {
