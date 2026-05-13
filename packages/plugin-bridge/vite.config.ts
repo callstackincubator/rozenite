@@ -1,12 +1,14 @@
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import path, { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 
 export default defineConfig({
   plugins: [
     dts({
-      tsconfigPath: './tsconfig.lib.json',
+      entryRoot: 'src',
+      tsconfigPath: path.join(__dirname, 'tsconfig.lib.json'),
+      rollupTypes: true,
     }),
   ],
   root: __dirname,
@@ -14,8 +16,10 @@ export default defineConfig({
   base: './',
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
-      fileName: 'index',
+      entry: {
+        index: resolve(__dirname, 'src/index.ts'),
+        testing: resolve(__dirname, 'src/testing.ts'),
+      },
       formats: ['es', 'cjs'],
     },
     rollupOptions: {

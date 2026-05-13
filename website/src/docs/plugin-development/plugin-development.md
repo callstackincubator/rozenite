@@ -301,6 +301,8 @@ Your development workflow supports automatic hot reloading:
 3. Add new panels - remember to restart DevTools with `Ctrl+R`
 4. Test communication between your panels and React Native code
 
+For automated coverage, use [`@rozenite/plugin-bridge/testing`](./testing.md). It lets you keep `useRozeniteDevToolsClient` in place while controlling when the client is disconnected, connected, and receiving messages.
+
 ## Step 6: Building for Production
 
 Build your plugin for distribution:

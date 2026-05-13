@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
 
-import { act } from 'react';
+import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  createRozeniteTestHarness,
+  RozeniteDevToolsTestProvider,
+} from './testing.js';
 import { useRozeniteDevToolsClient } from './useRozeniteDevToolsClient.js';
 
 declare global {
@@ -47,7 +51,21 @@ function TestComponent() {
   return null;
 }
 
-const renderHook = async (): Promise<{
+function ObservedComponent({
+  onClientChange,
+}: {
+  onClientChange: (client: ReturnType<typeof useRozeniteDevToolsClient>) => void;
+}) {
+  const client = useRozeniteDevToolsClient({
+    pluginId: '@rozenite/storage-plugin',
+  });
+
+  onClientChange(client);
+
+  return null;
+}
+
+const renderHook = async (element: ReactNode = <TestComponent />): Promise<{
   root: Root;
   container: HTMLDivElement;
 }> => {
@@ -56,7 +74,7 @@ const renderHook = async (): Promise<{
   const root = createRoot(container);
 
   await act(async () => {
-    root.render(<TestComponent />);
+    root.render(element);
   });
 
   await act(async () => {
@@ -116,6 +134,54 @@ describe('useRozeniteDevToolsClient', () => {
     });
 
     expect(mocks.send).not.toHaveBeenCalled();
+
+    await unmountHook(root, container);
+  });
+
+  it('uses the test harness when wrapped in the test provider', async () => {
+    const harness = createRozeniteTestHarness<{
+      'plugin-mounted': { pluginId: string };
+      init: { ready: boolean };
+    }>();
+    const seenClients: Array<ReturnType<typeof useRozeniteDevToolsClient>> = [];
+
+    const { root, container } = await renderHook(
+      <RozeniteDevToolsTestProvider harness={harness}>
+        <ObservedComponent
+          onClientChange={(client) => {
+            seenClients.push(client);
+          }}
+        />
+      </RozeniteDevToolsTestProvider>,
+    );
+
+    expect(mocks.getRozeniteDevToolsClient).not.toHaveBeenCalled();
+    expect(seenClients.at(-1)).toBeNull();
+    expect(harness.isConnected('@rozenite/storage-plugin')).toBe(false);
+
+    await act(async () => {
+      harness.connect('@rozenite/storage-plugin');
+    });
+
+    expect(seenClients.at(-1)).not.toBeNull();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(harness.getSent('@rozenite/storage-plugin')).toContainEqual({
+      pluginId: '@rozenite/storage-plugin',
+      type: 'plugin-mounted',
+      payload: {
+        pluginId: '@rozenite/storage-plugin',
+      },
+    });
+
+    await act(async () => {
+      harness.disconnect('@rozenite/storage-plugin');
+    });
+
+    expect(seenClients.at(-1)).toBeNull();
 
     await unmountHook(root, container);
   });

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { RozeniteDevToolsClient, getRozeniteDevToolsClient } from './client';
+import { RozeniteDevToolsClientContext } from './client-context';
 import { MissingRozeniteForWebError, UnsupportedPlatformError } from './errors';
 
 export type UseRozeniteDevToolsClientOptions<
@@ -25,11 +26,32 @@ export const useRozeniteDevToolsClient = <
 >({
   pluginId,
 }: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsClient<TEventMap> | null => {
+  const testClientRegistry = useContext(RozeniteDevToolsClientContext);
+  const [testClient, setTestClient] = useState<RozeniteDevToolsClient<TEventMap> | null>(
+    () => (testClientRegistry?.getClient(pluginId) as RozeniteDevToolsClient<TEventMap> | null) ?? null,
+  );
   const [client, setClient] =
     useState<RozeniteDevToolsClient<TEventMap> | null>(null);
   const [error, setError] = useState<unknown | null>(null);
 
   useEffect(() => {
+    if (!testClientRegistry) {
+      setTestClient(null);
+      return;
+    }
+
+    setTestClient(testClientRegistry.getClient(pluginId) as RozeniteDevToolsClient<TEventMap> | null);
+
+    return testClientRegistry.subscribe(() => {
+      setTestClient(testClientRegistry.getClient(pluginId) as RozeniteDevToolsClient<TEventMap> | null);
+    });
+  }, [pluginId, testClientRegistry]);
+
+  useEffect(() => {
+    if (testClientRegistry) {
+      return;
+    }
+
     let isMounted = true;
     let client: RozeniteDevToolsClient<TEventMap> | null = null;
 
@@ -80,19 +102,21 @@ export const useRozeniteDevToolsClient = <
       isMounted = false;
       teardown();
     };
-  }, [pluginId]);
+  }, [pluginId, testClientRegistry]);
 
   if (error != null) {
     throw error;
   }
 
+  const resolvedClient = testClientRegistry ? testClient : client;
+
   useEffect(() => {
-    if (!client || isPanelClient()) {
+    if (!resolvedClient || isPanelClient()) {
       return;
     }
 
     const lifecycleClient =
-      client as unknown as RozeniteDevToolsClient<PluginLifecycleEventMap>;
+      resolvedClient as unknown as RozeniteDevToolsClient<PluginLifecycleEventMap>;
     const timer = setTimeout(() => {
       lifecycleClient.send('plugin-mounted', {
         pluginId,
@@ -102,7 +126,7 @@ export const useRozeniteDevToolsClient = <
     return () => {
       clearTimeout(timer);
     };
-  }, [client, pluginId]);
+  }, [pluginId, resolvedClient]);
 
-  return client;
+  return resolvedClient;
 };
