@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createRozeniteTestHarness,
   RozeniteDevToolsTestProvider,
-} from './testing.js';
+} from './index.js';
 import { useRozeniteDevToolsClient } from './useRozeniteDevToolsClient.js';
 
 declare global {

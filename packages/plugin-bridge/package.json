@@ -36,12 +36,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    },
-    "./testing": {
-      "development": "./src/testing.ts",
-      "types": "./dist/testing.d.ts",
-      "import": "./dist/testing.js",
-      "require": "./dist/testing.cjs"
     }
   },
   "scripts": {
