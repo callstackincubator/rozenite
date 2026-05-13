@@ -31,6 +31,7 @@ import { ResourcesTable } from './components/ResourcesTable';
 import { DetailsSidebar } from './components/DetailsSidebar';
 import { SessionDuration } from './components/SessionDuration';
 import { ExportModal } from './components/ExportModal';
+import { deriveStartupPhases } from './derive-startup-phases';
 
 type PerformanceMonitorSession = {
   sessionStartedAt: number;
@@ -186,6 +187,13 @@ export default function PerformanceMonitorPanel() {
     setSelectedItem(null);
   };
 
+  // Derived measures live only in the UI: paired Start/End RN marks
+  // are shown alongside user-created measures so the Measures tab
+  // reflects startup phases without forcing manual subtraction. The
+  // export still emits raw session data (see ExportModal below).
+  const startupPhases = deriveStartupPhases(session.reactNativeMarks);
+  const allMeasures = [...startupPhases, ...session.measures];
+
   return (
     <Theme appearance="dark" accentColor="blue" radius="medium">
       <Box
@@ -261,7 +269,7 @@ export default function PerformanceMonitorPanel() {
           >
             <Tabs.List style={{ flexShrink: 0 }}>
               <Tabs.Trigger value="measures">
-                Measures ({session.measures.length})
+                Measures ({allMeasures.length})
               </Tabs.Trigger>
               <Tabs.Trigger value="metrics">
                 Metrics ({session.metrics.length})
@@ -292,7 +300,7 @@ export default function PerformanceMonitorPanel() {
                 }}
               >
                 <MeasuresTable
-                  measures={session.measures}
+                  measures={allMeasures}
                   onRowClick={handleEntryClick}
                 />
               </Tabs.Content>
