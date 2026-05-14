@@ -1,6 +1,6 @@
 import { Input } from './Input';
 import { Button } from './Button';
-import { X, Filter, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { X, Filter, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -105,6 +105,12 @@ const getAdvancedFilterCount = (advanced: AdvancedFilterState) => {
   ].filter(Boolean).length;
 };
 
+const getActiveFilterCount = (filter: FilterState) => {
+  const typeFilterCount = filter.types.size < REQUEST_TYPES.length ? 1 : 0;
+
+  return typeFilterCount + getAdvancedFilterCount(filter.advanced);
+};
+
 const FilterField = ({
   label,
   value,
@@ -178,12 +184,9 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
     onFilterChange(createDefaultFilter());
   };
 
-  const advancedFilterCount = getAdvancedFilterCount(filter.advanced);
+  const activeFilterCount = getActiveFilterCount(filter);
   const hasActiveFilters =
-    filter.text !== '' ||
-    filter.types.size < REQUEST_TYPES.length ||
-    advancedFilterCount > 0;
-  const isTypeFilterActive = filter.types.size < REQUEST_TYPES.length;
+    filter.text !== '' || activeFilterCount > 0;
 
   return (
     <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
@@ -202,18 +205,24 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
             variant="ghost"
             size="sm"
             className={`h-8 px-3 text-xs transition-all ${
-              isTypeFilterActive
+              activeFilterCount > 0
                 ? 'bg-blue-600/20 border border-blue-500/50 text-blue-300 hover:bg-blue-600/30'
                 : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'
             }`}
           >
             <Filter className="h-3 w-3 mr-1" />
-            Types
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="rounded bg-blue-500/30 px-1 text-[10px] text-blue-100">
+                {activeFilterCount}
+              </span>
+            )}
             <ChevronDown className="h-3 w-3 ml-1" />
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent sideOffset={5} className="space-y-1">
+        <DropdownMenuContent sideOffset={5} className="w-80 space-y-1">
+          <DropdownMenuLabel>Request Type</DropdownMenuLabel>
           {REQUEST_TYPES.map((type) => (
             <DropdownMenuCheckboxItem
               key={type}
@@ -223,32 +232,8 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
               {getTypeLabel(type)}
             </DropdownMenuCheckboxItem>
           ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 px-3 text-xs transition-all ${
-              advancedFilterCount > 0
-                ? 'bg-blue-600/20 border border-blue-500/50 text-blue-300 hover:bg-blue-600/30'
-                : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'
-            }`}
-          >
-            <SlidersHorizontal className="h-3 w-3 mr-1" />
-            Advanced
-            {advancedFilterCount > 0 && (
-              <span className="rounded bg-blue-500/30 px-1 text-[10px] text-blue-100">
-                {advancedFilterCount}
-              </span>
-            )}
-            <ChevronDown className="h-3 w-3 ml-1" />
-          </Button>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent sideOffset={5} className="w-80 space-y-1">
+          <DropdownMenuSeparator />
           <DropdownMenuLabel>Method</DropdownMenuLabel>
           <div className="grid grid-cols-2">
             {HTTP_METHODS.map((method) => (
