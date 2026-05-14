@@ -7,6 +7,7 @@ import {
   FilterBar,
   FilterState,
 } from '../components/FilterBar';
+import { NetworkTimeline } from '../components/NetworkTimeline';
 import { NetworkActivityDevToolsClient } from '../../shared/client';
 import {
   useNetworkActivityClientManagement,
@@ -58,6 +59,7 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
             hasSelectedRequest ? 'w-1/2' : 'w-full'
           } border-r border-gray-700 overflow-hidden`}
         >
+          <NetworkTimeline filter={filter} />
           <RequestList filter={filter} />
         </div>
 

@@ -27,6 +27,7 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
         method: httpEntry.request.method,
         httpStatus: httpEntry.response?.status,
         contentType: httpEntry.response?.contentType,
+        ttfb: httpEntry.ttfb,
         progress: httpEntry.progress,
       });
     } else if (entry.type === 'websocket') {
@@ -95,6 +96,7 @@ export const getRequestSummary = (
         method: httpEntry.request.method,
         httpStatus: httpEntry.response?.status || 0,
         contentType: httpEntry.response?.contentType,
+        ttfb: httpEntry.ttfb,
         progress: httpEntry.progress,
       };
     } else if (entry.type === 'websocket') {
