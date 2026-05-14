@@ -13,14 +13,23 @@ export const downloadFile = async (data: unknown, filename: string) => {
 };
 
 export const formatTime = (timestamp: number): string => {
-  return new Date(timestamp).toLocaleTimeString();
+  const d = new Date(timestamp);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  const ms = String(d.getMilliseconds()).padStart(3, '0');
+  return `${hh}:${mm}:${ss}.${ms}`;
 };
 
 export const formatDuration = (duration: number) => {
-  if (duration >= 1000) {
-    return `${(duration / 1000).toFixed(2)}s`;
+  if (duration > 0 && duration < 1) {
+    return '<1ms';
   }
-  return `${duration.toFixed(2)}ms`;
+  const rounded = Math.round(duration);
+  if (rounded >= 1000) {
+    return `${(rounded / 1000).toFixed(3)}s`;
+  }
+  return `${rounded}ms`;
 };
 
 export const formatBytes = (bytes: number) => {

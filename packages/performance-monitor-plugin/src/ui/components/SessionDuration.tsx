@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Text } from '@radix-ui/themes';
+import { formatTime } from '../utils';
 
 export type SessionDurationProps = {
   isActive: boolean;
@@ -24,10 +25,6 @@ export const SessionDuration = ({
 
     return () => clearInterval(interval);
   }, [isActive]);
-
-  const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString();
-  };
 
   const formatDuration = (duration: number) => {
     return `${Math.round(duration)}s`;

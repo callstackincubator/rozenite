@@ -1,16 +1,13 @@
 import { Box, Text, Heading, Separator, Flex } from '@radix-ui/themes';
 import { SerializedPerformanceMark } from '../../shared/types';
 import { DetailsDisplay } from './DetailsDisplay';
+import { formatTime } from '../utils';
 
 export type MarkDetailsProps = {
   mark: SerializedPerformanceMark;
 };
 
 export const MarkDetails = ({ mark }: MarkDetailsProps) => {
-  const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString();
-  };
-
   return (
     <Box>
       <Heading size="5" mb="4">
