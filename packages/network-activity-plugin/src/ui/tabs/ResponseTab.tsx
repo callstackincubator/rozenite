@@ -84,6 +84,22 @@ export const ResponseTab = ({
       />
     );
 
+    // Binary variants — placeholder until the renderer registry lands.
+    // The capture side does not yet produce these (next commit wires it
+    // up for image/*), but the wire format already permits them.
+    if (typeof data !== 'string') {
+      return (
+        <RenderResponseBodySection>
+          {contentTypeGrid}
+          <div className="text-sm text-gray-400">
+            {data.kind === 'binary-too-large'
+              ? `Response too large for preview (${data.size} bytes)`
+              : 'Binary content not shown'}
+          </div>
+        </RenderResponseBodySection>
+      );
+    }
+
     const overrideAction = supportsOverrides ? (
       <Button
         variant="ghost"
