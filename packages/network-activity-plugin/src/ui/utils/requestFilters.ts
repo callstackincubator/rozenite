@@ -1,4 +1,4 @@
-import type { FilterState } from '../components/FilterBar';
+import type { FilterState } from '../state/filter';
 import type { ProcessedRequest } from '../state/model';
 import type { HttpMethod } from '../../shared/client';
 
@@ -25,7 +25,7 @@ const matchesStatusFilter = (
     return true;
   }
 
-  if (!statusCode) {
+  if (statusCode === undefined) {
     return false;
   }
 
@@ -95,7 +95,8 @@ export const matchesRequestFilter = (
 
   if (
     filter.advanced.methods.size > 0 &&
-    (!isHttpMethod(request.method) || !filter.advanced.methods.has(request.method))
+    (!isHttpMethod(request.method) ||
+      !filter.advanced.methods.has(request.method))
   ) {
     return false;
   }
@@ -167,12 +168,14 @@ export const matchesRequestFilter = (
     request.name,
     request.method,
     request.status,
+    request.httpStatus,
     request.source,
     request.type,
     request.contentType,
     domain,
     path,
   ]
+    .filter((value) => value !== undefined && value !== null)
     .join(' ')
     .toLowerCase();
 

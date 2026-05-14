@@ -4,190 +4,47 @@ import type { RequestId } from '../../shared/client';
 import type { ProcessedRequest } from '../state/model';
 import {
   useNetworkActivityActions,
-  useOverrides,
-  useProcessedRequests,
   useSelectedRequestId,
 } from '../state/hooks';
-import { matchesRequestFilter } from '../utils/requestFilters';
-import type { FilterState } from './FilterBar';
+import {
+  formatTimelineOffset,
+  getTimelineBarTopOffset,
+  getTimelineModel,
+  getTimelineTrackTop,
+  isRequestActive,
+  TIMELINE_LAYOUT,
+} from '../utils/timelineModel';
+import type { TimelineRow, TimelineTick } from '../utils/timelineModel';
 
-const MIN_VISIBLE_BAR_PERCENT = 0.65;
-const MIN_RANGE_MS = 1000;
-const LIVE_REFRESH_MS = 1000;
-const CHART_LANE_COUNT = 8;
-const CHART_LANE_HEIGHT = 3;
-const CHART_LANE_GAP = 4;
-const CHART_RULER_HEIGHT = 28;
-const CHART_LANE_TOP = 44;
-const TICK_TARGET_COUNT = 7;
-const NICE_TICK_STEPS = [
-  50, 100, 250, 500, 1000, 2000, 5000, 10000, 15000, 30000, 60000, 120000,
-  300000,
+const REQUEST_TIMELINE_COLORS = {
+  error: 'bg-red-400',
+  http: 'bg-sky-400',
+  websocket: 'bg-emerald-400',
+  sse: 'bg-amber-400',
+  httpTtfb: 'bg-lime-400',
+} as const;
+
+const LEGEND_ITEMS = [
+  { label: 'HTTP', className: REQUEST_TIMELINE_COLORS.http },
+  { label: 'WebSocket', className: REQUEST_TIMELINE_COLORS.websocket },
+  { label: 'SSE', className: REQUEST_TIMELINE_COLORS.sse },
+  { label: 'TTFB', className: REQUEST_TIMELINE_COLORS.httpTtfb },
+  { label: 'Error', className: REQUEST_TIMELINE_COLORS.error },
 ];
-
-type TimelineRequest = {
-  request: ProcessedRequest;
-  startTime: number;
-  endTime: number;
-  offsetPercent: number;
-  widthPercent: number;
-  duration: number;
-  ttfbPercent: number;
-  receivePercent: number;
-  isActive: boolean;
-  lane: number;
-};
-
-type TimelineTick = {
-  label: string;
-  offsetPercent: number;
-};
-
-const activeStatuses = new Set(['pending', 'loading', 'connecting', 'open']);
-
-const isActiveRequest = (request: ProcessedRequest) => {
-  return activeStatuses.has(request.status);
-};
 
 const getPrimaryBarClassName = (request: ProcessedRequest) => {
   if (request.status === 'failed' || request.status === 'error') {
-    return 'bg-red-400';
+    return REQUEST_TIMELINE_COLORS.error;
   }
 
   switch (request.type) {
     case 'websocket':
-      return 'bg-emerald-400';
+      return REQUEST_TIMELINE_COLORS.websocket;
     case 'sse':
-      return 'bg-amber-400';
+      return REQUEST_TIMELINE_COLORS.sse;
     case 'http':
-      return 'bg-sky-400';
+      return REQUEST_TIMELINE_COLORS.http;
   }
-};
-
-const formatOffset = (milliseconds: number) => {
-  if (milliseconds < 1000) {
-    return `${Math.round(milliseconds)} ms`;
-  }
-
-  if (milliseconds < 60000) {
-    return `${(milliseconds / 1000).toFixed(milliseconds < 10000 ? 1 : 0)} s`;
-  }
-
-  const minutes = Math.floor(milliseconds / 60000);
-  const seconds = Math.round((milliseconds % 60000) / 1000);
-  return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
-};
-
-const getRequestEndTime = (request: ProcessedRequest, now: number) => {
-  if (typeof request.duration === 'number') {
-    return request.timestamp + Math.max(request.duration, 0);
-  }
-
-  if (isActiveRequest(request)) {
-    return Math.max(now, request.timestamp);
-  }
-
-  return request.timestamp;
-};
-
-const getTimelineTicks = (rangeDuration: number): TimelineTick[] => {
-  const targetStep = rangeDuration / TICK_TARGET_COUNT;
-  const step =
-    NICE_TICK_STEPS.find((candidate) => candidate >= targetStep) ??
-    NICE_TICK_STEPS[NICE_TICK_STEPS.length - 1];
-  const ticks: TimelineTick[] = [];
-
-  for (let value = 0; value <= rangeDuration; value += step) {
-    ticks.push({
-      label: formatOffset(value),
-      offsetPercent: (value / rangeDuration) * 100,
-    });
-  }
-
-  if (
-    ticks.length === 0 ||
-    ticks[ticks.length - 1].offsetPercent < 100 - Number.EPSILON
-  ) {
-    ticks.push({
-      label: formatOffset(rangeDuration),
-      offsetPercent: 100,
-    });
-  }
-
-  return ticks;
-};
-
-const getTimelineRequests = (requests: ProcessedRequest[], now: number) => {
-  if (requests.length === 0) {
-    return {
-      rows: [],
-      rangeStart: 0,
-      rangeDuration: MIN_RANGE_MS,
-    };
-  }
-
-  const bounds = requests.reduce(
-    (result, request) => {
-      const endTime = getRequestEndTime(request, now);
-
-      return {
-        start: Math.min(result.start, request.timestamp),
-        end: Math.max(result.end, endTime),
-      };
-    },
-    {
-      start: Number.POSITIVE_INFINITY,
-      end: Number.NEGATIVE_INFINITY,
-    },
-  );
-
-  const rawRangeDuration = Math.max(bounds.end - bounds.start, MIN_RANGE_MS);
-  const rangePadding = Math.max(rawRangeDuration * 0.025, 25);
-  const rangeStart = bounds.start - rangePadding;
-  const rangeDuration = rawRangeDuration + rangePadding * 2;
-  const laneEndTimes = Array.from({ length: CHART_LANE_COUNT }, () => 0);
-
-  const rows = [...requests]
-    .sort((a, b) => a.timestamp - b.timestamp)
-    .map((request): TimelineRequest => {
-      const startTime = request.timestamp;
-      const endTime = getRequestEndTime(request, now);
-      const duration = Math.max(endTime - startTime, 0);
-      const rawOffsetPercent = ((startTime - rangeStart) / rangeDuration) * 100;
-      const offsetPercent = Math.min(Math.max(rawOffsetPercent, 0), 99.35);
-      const rawWidthPercent = (duration / rangeDuration) * 100;
-      const widthPercent = Math.min(
-        Math.max(rawWidthPercent, MIN_VISIBLE_BAR_PERCENT),
-        100 - offsetPercent,
-      );
-      const ttfb = Math.min(Math.max(request.ttfb ?? 0, 0), duration);
-      const ttfbPercent = duration === 0 ? 0 : (ttfb / duration) * 100;
-      const receivePercent = Math.max(100 - ttfbPercent, 0);
-      const availableLane = laneEndTimes.findIndex(
-        (laneEndTime) => laneEndTime <= startTime,
-      );
-      const lane = availableLane === -1 ? 0 : availableLane;
-      laneEndTimes[lane] = endTime;
-
-      return {
-        request,
-        startTime,
-        endTime,
-        offsetPercent,
-        widthPercent,
-        duration,
-        ttfbPercent,
-        receivePercent,
-        isActive: isActiveRequest(request),
-        lane,
-      };
-    });
-
-  return {
-    rows,
-    rangeStart,
-    rangeDuration,
-  };
 };
 
 const getStyle = (
@@ -212,12 +69,30 @@ const GridLines = ({ ticks }: { ticks: TimelineTick[] }) => {
   );
 };
 
+const getTickLabelStyle = (tick: TimelineTick): CSSProperties => {
+  if (tick.offsetPercent === 0) {
+    return {
+      left: 4,
+    };
+  }
+
+  if (tick.offsetPercent === 100) {
+    return {
+      right: 4,
+    };
+  }
+
+  return {
+    left: `${tick.offsetPercent}%`,
+  };
+};
+
 const TimelineTrack = ({
   row,
   isSelected,
   onSelect,
 }: {
-  row: TimelineRequest;
+  row: TimelineRow;
   isSelected: boolean;
   onSelect: (requestId: RequestId) => void;
 }) => {
@@ -226,65 +101,88 @@ const TimelineTrack = ({
     row.request.type === 'http' &&
     row.ttfbPercent > 0 &&
     row.receivePercent > 0;
-  const top = CHART_LANE_TOP + row.lane * (CHART_LANE_HEIGHT + CHART_LANE_GAP);
+  const trackTop = getTimelineTrackTop(row.lane);
+  const barTop = getTimelineBarTopOffset();
   const positionStyle = {
     ...getStyle(row.offsetPercent, row.widthPercent),
-    top,
+    top: trackTop,
   };
   const durationLabel = row.isActive
-    ? `${formatOffset(row.duration)}+`
-    : formatOffset(row.duration);
+    ? `${formatTimelineOffset(row.duration)}+`
+    : formatTimelineOffset(row.duration);
+  const label = `${row.request.method} ${row.request.name} - ${durationLabel}`;
 
   return (
     <button
       type="button"
-      title={`${row.request.method} ${row.request.name} - ${durationLabel}`}
-      className={`absolute h-[3px] overflow-hidden rounded-sm text-left transition-opacity hover:opacity-80 ${
+      aria-label={label}
+      title={label}
+      className={`absolute rounded-sm text-left transition-opacity hover:opacity-80 ${
         row.isActive ? 'animate-pulse' : ''
       } ${
         isSelected ? 'outline outline-1 outline-offset-1 outline-blue-300' : ''
       }`}
-      style={positionStyle}
+      style={{
+        ...positionStyle,
+        height: TIMELINE_LAYOUT.laneHitTargetHeightPx,
+      }}
       onClick={() => onSelect(row.request.id)}
     >
       {isSplitHttpBar ? (
-        <div className="flex h-full w-full">
+        <div
+          className="absolute flex w-full overflow-hidden rounded-sm"
+          style={{
+            top: barTop,
+            height: TIMELINE_LAYOUT.laneHeightPx,
+          }}
+        >
           <div
-            className="h-full bg-lime-400"
+            className={`h-full ${REQUEST_TIMELINE_COLORS.httpTtfb}`}
             style={{ width: `${row.ttfbPercent}%` }}
           />
           <div
-            className="h-full bg-sky-400"
+            className={`h-full ${REQUEST_TIMELINE_COLORS.http}`}
             style={{ width: `${row.receivePercent}%` }}
           />
         </div>
       ) : (
-        <div className={`h-full w-full ${primaryBarClassName}`} />
+        <div
+          className={`absolute w-full rounded-sm ${primaryBarClassName}`}
+          style={{
+            top: barTop,
+            height: TIMELINE_LAYOUT.laneHeightPx,
+          }}
+        />
       )}
     </button>
   );
 };
 
-export type NetworkTimelineProps = {
-  filter: FilterState;
+const TimelineLegend = () => {
+  return (
+    <div className="mb-2 flex items-center justify-between gap-2 text-xs text-gray-400">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        {LEGEND_ITEMS.map((item) => (
+          <div key={item.label} className="flex items-center gap-1.5">
+            <span className={`h-2 w-2 rounded-sm ${item.className}`} />
+            <span>{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
-export const NetworkTimeline = ({ filter }: NetworkTimelineProps) => {
+export type NetworkTimelineProps = {
+  requests: ProcessedRequest[];
+};
+
+export const NetworkTimeline = ({ requests }: NetworkTimelineProps) => {
   const actions = useNetworkActivityActions();
-  const processedRequests = useProcessedRequests();
   const selectedRequestId = useSelectedRequestId();
-  const overrides = useOverrides();
   const [now, setNow] = useState(() => Date.now());
 
-  const filteredRequests = useMemo(() => {
-    return processedRequests.filter((request) =>
-      matchesRequestFilter(request, filter, {
-        hasOverride: overrides.has(request.name),
-      }),
-    );
-  }, [processedRequests, filter, overrides]);
-
-  const hasActiveRequests = filteredRequests.some(isActiveRequest);
+  const hasActiveRequests = requests.some(isRequestActive);
 
   useEffect(() => {
     if (!hasActiveRequests) {
@@ -293,18 +191,14 @@ export const NetworkTimeline = ({ filter }: NetworkTimelineProps) => {
 
     const interval = window.setInterval(() => {
       setNow(Date.now());
-    }, LIVE_REFRESH_MS);
+    }, TIMELINE_LAYOUT.liveRefreshMs);
 
     return () => window.clearInterval(interval);
   }, [hasActiveRequests]);
 
   const timeline = useMemo(() => {
-    return getTimelineRequests(filteredRequests, now);
-  }, [filteredRequests, now]);
-
-  const ticks = useMemo(() => {
-    return getTimelineTicks(timeline.rangeDuration);
-  }, [timeline.rangeDuration]);
+    return getTimelineModel(requests, now);
+  }, [requests, now]);
 
   const onRequestSelect = (requestId: RequestId) => {
     actions.setSelectedRequest(requestId);
@@ -312,24 +206,28 @@ export const NetworkTimeline = ({ filter }: NetworkTimelineProps) => {
 
   return (
     <div className="border-b border-gray-700 bg-gray-900 p-2">
-      {filteredRequests.length === 0 ? (
+      <TimelineLegend />
+      {requests.length === 0 ? (
         <div className="flex h-24 items-center justify-center border border-dashed border-gray-700 bg-gray-950 text-sm text-gray-500">
           No requests match the current filters
         </div>
       ) : (
-        <div className="relative h-32 overflow-hidden border border-gray-800 bg-gray-950">
-          <GridLines ticks={ticks} />
+        <div
+          className="relative overflow-hidden border border-gray-800 bg-gray-950"
+          style={{ height: timeline.chartHeight }}
+        >
+          <GridLines ticks={timeline.ticks} />
 
           <div
             className="pointer-events-none absolute inset-x-0 border-b border-gray-800"
-            style={{ top: CHART_RULER_HEIGHT }}
+            style={{ top: TIMELINE_LAYOUT.rulerHeightPx }}
           />
 
-          {ticks.map((tick) => (
+          {timeline.ticks.map((tick) => (
             <div
-              key={tick.label}
-              className="absolute top-1 whitespace-nowrap pl-1 tabular-nums text-xs text-gray-200"
-              style={{ left: `${tick.offsetPercent}%` }}
+              key={`${tick.label}-${tick.offsetPercent}`}
+              className="absolute top-1 whitespace-nowrap tabular-nums text-xs text-gray-200"
+              style={getTickLabelStyle(tick)}
             >
               {tick.label}
             </div>
@@ -343,6 +241,13 @@ export const NetworkTimeline = ({ filter }: NetworkTimelineProps) => {
               onSelect={onRequestSelect}
             />
           ))}
+
+          {timeline.hiddenRequestCount > 0 && (
+            <div className="absolute bottom-2 right-2 rounded border border-gray-700 bg-gray-900/95 px-2 py-1 text-xs text-gray-400">
+              Showing latest {timeline.rows.length} of{' '}
+              {timeline.totalRequestCount}
+            </div>
+          )}
         </div>
       )}
     </div>

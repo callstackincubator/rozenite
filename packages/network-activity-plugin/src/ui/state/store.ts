@@ -26,6 +26,10 @@ const MAX_SSE_MESSAGES_PER_CONNECTION = 32;
 
 const STORE_VERSION = 1;
 
+const getElapsedDuration = (endTimestamp: number, startTimestamp: number) => {
+  return Math.max(endTimestamp - startTimestamp, 0);
+};
+
 export interface NetworkActivityState {
   // State
   isRecording: boolean;
@@ -302,6 +306,10 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: HttpNetworkEntry = {
                   ...httpEntry,
                   status: 'failed',
+                  duration: getElapsedDuration(
+                    eventData.timestamp,
+                    httpEntry.timestamp,
+                  ),
                   error: eventData.error,
                 };
 
@@ -414,7 +422,10 @@ export const createNetworkActivityStore = () =>
                   status: 'closed',
                   closeCode: eventData.code,
                   closeReason: eventData.reason,
-                  duration: eventData.timestamp - wsEntry.timestamp,
+                  duration: getElapsedDuration(
+                    eventData.timestamp,
+                    wsEntry.timestamp,
+                  ),
                 };
 
                 const newEntries = new Map(state.networkEntries);
@@ -495,6 +506,10 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: WebSocketNetworkEntry = {
                   ...wsEntry,
                   status: 'error',
+                  duration: getElapsedDuration(
+                    eventData.timestamp,
+                    wsEntry.timestamp,
+                  ),
                   error: eventData.error,
                 };
 
@@ -591,6 +606,10 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: SSENetworkEntry = {
                   ...sseEntry,
                   status: 'error',
+                  duration: getElapsedDuration(
+                    eventData.timestamp,
+                    sseEntry.timestamp,
+                  ),
                   error: eventData.error.message,
                 };
 
@@ -611,7 +630,10 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: SSENetworkEntry = {
                   ...sseEntry,
                   status: 'closed',
-                  duration: eventData.timestamp - sseEntry.timestamp,
+                  duration: getElapsedDuration(
+                    eventData.timestamp,
+                    sseEntry.timestamp,
+                  ),
                 };
 
                 const newEntries = new Map(state.networkEntries);

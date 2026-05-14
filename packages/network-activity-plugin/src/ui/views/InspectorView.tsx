@@ -1,12 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Toolbar } from '../components/Toolbar';
 import { RequestList } from '../components/RequestList';
 import { SidePanel } from '../components/SidePanel';
-import {
-  createDefaultFilter,
-  FilterBar,
-  FilterState,
-} from '../components/FilterBar';
+import { FilterBar } from '../components/FilterBar';
 import { NetworkTimeline } from '../components/NetworkTimeline';
 import { NetworkActivityDevToolsClient } from '../../shared/client';
 import {
@@ -14,7 +10,11 @@ import {
   useHasSelectedRequest,
   useNetworkActivityActions,
   useOverrides,
+  useProcessedRequests,
 } from '../state/hooks';
+import { createDefaultFilter } from '../state/filter';
+import type { FilterState } from '../state/filter';
+import { matchesRequestFilter } from '../utils/requestFilters';
 
 export type InspectorViewProps = {
   client: NetworkActivityDevToolsClient;
@@ -25,9 +25,18 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
   const clientManagement = useNetworkActivityClientManagement();
   const hasSelectedRequest = useHasSelectedRequest();
   const overrides = useOverrides();
+  const processedRequests = useProcessedRequests();
   const [filter, setFilter] = useState<FilterState>(() =>
     createDefaultFilter(),
   );
+
+  const filteredRequests = useMemo(() => {
+    return processedRequests.filter((request) =>
+      matchesRequestFilter(request, filter, {
+        hasOverride: overrides.has(request.name),
+      }),
+    );
+  }, [processedRequests, filter, overrides]);
 
   useEffect(() => {
     if (!client) {
@@ -53,14 +62,13 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
       <FilterBar filter={filter} onFilterChange={setFilter} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Request List */}
         <div
           className={`flex flex-col ${
             hasSelectedRequest ? 'w-1/2' : 'w-full'
           } border-r border-gray-700 overflow-hidden`}
         >
-          <NetworkTimeline filter={filter} />
-          <RequestList filter={filter} />
+          <NetworkTimeline requests={filteredRequests} />
+          <RequestList requests={filteredRequests} />
         </div>
 
         {hasSelectedRequest && <SidePanel />}
