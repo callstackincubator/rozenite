@@ -7,6 +7,8 @@ import {
   SerializedPerformanceMeasure,
   SerializedPerformanceMark,
   SerializedPerformanceMetric,
+  SerializedPerformanceReactNativeMark,
+  SerializedPerformanceResource,
   SerializedPerformanceEntry,
 } from '../shared/types';
 import { useEffect, useState } from 'react';
@@ -24,9 +26,12 @@ import './App.css';
 import { MeasuresTable } from './components/MeasuresTable';
 import { MetricsTable } from './components/MetricsTable';
 import { MarksTable } from './components/MarksTable';
+import { ReactNativeMarksTable } from './components/ReactNativeMarksTable';
+import { ResourcesTable } from './components/ResourcesTable';
 import { DetailsSidebar } from './components/DetailsSidebar';
 import { SessionDuration } from './components/SessionDuration';
 import { ExportModal } from './components/ExportModal';
+import { deriveStartupPhases } from './derive-startup-phases';
 
 type PerformanceMonitorSession = {
   sessionStartedAt: number;
@@ -34,6 +39,8 @@ type PerformanceMonitorSession = {
   measures: SerializedPerformanceMeasure[];
   marks: SerializedPerformanceMark[];
   metrics: SerializedPerformanceMetric[];
+  reactNativeMarks: SerializedPerformanceReactNativeMark[];
+  resources: SerializedPerformanceResource[];
 };
 
 export default function PerformanceMonitorPanel() {
@@ -46,6 +53,8 @@ export default function PerformanceMonitorPanel() {
     measures: [],
     marks: [],
     metrics: [],
+    reactNativeMarks: [],
+    resources: [],
   });
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [selectedItem, setSelectedItem] =
@@ -68,9 +77,11 @@ export default function PerformanceMonitorPanel() {
           measures: [],
           marks: [],
           metrics: [],
+          reactNativeMarks: [],
+          resources: [],
         });
         setIsSessionActive(true);
-      })
+      }),
     );
 
     subscriptions.push(
@@ -85,7 +96,7 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
     );
 
     subscriptions.push(
@@ -100,7 +111,7 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
     );
 
     subscriptions.push(
@@ -115,7 +126,37 @@ export default function PerformanceMonitorPanel() {
             })),
           ],
         }));
-      })
+      }),
+    );
+
+    subscriptions.push(
+      client.onMessage('appendReactNativeMarks', ({ reactNativeMarks }) => {
+        setSession((oldSession) => ({
+          ...oldSession,
+          reactNativeMarks: [
+            ...oldSession.reactNativeMarks,
+            ...reactNativeMarks.map((mark) => ({
+              ...mark,
+              startTime: mark.startTime + oldSession.clockShift,
+            })),
+          ],
+        }));
+      }),
+    );
+
+    subscriptions.push(
+      client.onMessage('appendResources', ({ resources }) => {
+        setSession((oldSession) => ({
+          ...oldSession,
+          resources: [
+            ...oldSession.resources,
+            ...resources.map((resource) => ({
+              ...resource,
+              startTime: resource.startTime + oldSession.clockShift,
+            })),
+          ],
+        }));
+      }),
     );
 
     return () => {
@@ -145,6 +186,13 @@ export default function PerformanceMonitorPanel() {
   const handleCloseSidebar = () => {
     setSelectedItem(null);
   };
+
+  // Derived measures live only in the UI: paired Start/End RN marks
+  // are shown alongside user-created measures so the Measures tab
+  // reflects startup phases without forcing manual subtraction. The
+  // export still emits raw session data (see ExportModal below).
+  const startupPhases = deriveStartupPhases(session.reactNativeMarks);
+  const allMeasures = [...startupPhases, ...session.measures];
 
   return (
     <Theme appearance="dark" accentColor="blue" radius="medium">
@@ -186,6 +234,8 @@ export default function PerformanceMonitorPanel() {
             measures={session.measures}
             metrics={session.metrics}
             marks={session.marks}
+            reactNativeMarks={session.reactNativeMarks}
+            resources={session.resources}
             sessionStartedAt={session.sessionStartedAt}
             clockShift={session.clockShift}
           />
@@ -219,13 +269,19 @@ export default function PerformanceMonitorPanel() {
           >
             <Tabs.List style={{ flexShrink: 0 }}>
               <Tabs.Trigger value="measures">
-                Measures ({session.measures.length})
+                Measures ({allMeasures.length})
               </Tabs.Trigger>
               <Tabs.Trigger value="metrics">
                 Metrics ({session.metrics.length})
               </Tabs.Trigger>
               <Tabs.Trigger value="marks">
                 Marks ({session.marks.length})
+              </Tabs.Trigger>
+              <Tabs.Trigger value="reactNativeMarks">
+                React Native Marks ({session.reactNativeMarks.length})
+              </Tabs.Trigger>
+              <Tabs.Trigger value="resources">
+                Resources ({session.resources.length})
               </Tabs.Trigger>
             </Tabs.List>
 
@@ -244,7 +300,7 @@ export default function PerformanceMonitorPanel() {
                 }}
               >
                 <MeasuresTable
-                  measures={session.measures}
+                  measures={allMeasures}
                   onRowClick={handleEntryClick}
                 />
               </Tabs.Content>
@@ -269,6 +325,30 @@ export default function PerformanceMonitorPanel() {
               >
                 <MarksTable
                   marks={session.marks}
+                  onRowClick={handleEntryClick}
+                />
+              </Tabs.Content>
+
+              <Tabs.Content
+                value="reactNativeMarks"
+                style={{
+                  display: 'contents',
+                }}
+              >
+                <ReactNativeMarksTable
+                  reactNativeMarks={session.reactNativeMarks}
+                  onRowClick={handleEntryClick}
+                />
+              </Tabs.Content>
+
+              <Tabs.Content
+                value="resources"
+                style={{
+                  display: 'contents',
+                }}
+              >
+                <ResourcesTable
+                  resources={session.resources}
                   onRowClick={handleEntryClick}
                 />
               </Tabs.Content>

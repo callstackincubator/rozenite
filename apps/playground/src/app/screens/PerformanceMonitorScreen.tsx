@@ -1,17 +1,30 @@
+import { useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  ScrollView,
   Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '../navigation/types';
-import performance from 'react-native-performance';
+import performance, {
+  setResourceLoggingEnabled,
+} from 'react-native-performance';
+
+const NETWORK_TEST_URL = 'https://jsonplaceholder.typicode.com/posts/1';
 
 export const PerformanceMonitorScreen = () => {
   const navigation = useNavigation<NavigationProp>();
+
+  // Install the resource logger so any fetch from this screen produces
+  // a PerformanceResourceTiming entry the panel can show in the
+  // Resources tab.
+  useEffect(() => {
+    setResourceLoggingEnabled(true);
+  }, []);
 
   const firePerformanceMetric = () => {
     // Create a custom performance metric
@@ -27,7 +40,7 @@ export const PerformanceMonitorScreen = () => {
       'Performance Metric Fired',
       `Metric "${metric.name}" with value ${metric.value}${
         metric.detail?.unit ? ` ${metric.detail.unit}` : ''
-      } has been created.`
+      } has been created.`,
     );
   };
 
@@ -37,7 +50,7 @@ export const PerformanceMonitorScreen = () => {
 
     Alert.alert(
       'Performance Mark Fired',
-      `Mark "${markName}" has been created at ${new Date().toLocaleTimeString()}.`
+      `Mark "${markName}" has been created at ${new Date().toLocaleTimeString()}.`,
     );
   };
 
@@ -67,14 +80,30 @@ export const PerformanceMonitorScreen = () => {
 
       Alert.alert(
         'Performance Measure Fired',
-        `Measure "${measureName}" has been created between "${startMark}" and "${endMark}".`
+        `Measure "${measureName}" has been created between "${startMark}" and "${endMark}".`,
       );
     }, 100);
 
     Alert.alert(
       'Performance Measure Started',
-      `Started measure "${measureName}". End mark will be created in 100ms.`
+      `Started measure "${measureName}". End mark will be created in 100ms.`,
     );
+  };
+
+  const fireNetworkRequest = async () => {
+    try {
+      const response = await fetch(NETWORK_TEST_URL);
+      await response.text();
+      Alert.alert(
+        'Network Request Completed',
+        `GET ${NETWORK_TEST_URL} (${response.status}). A resource timing entry was logged.`,
+      );
+    } catch (error) {
+      Alert.alert(
+        'Network Request Failed',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+    }
   };
 
   const fireComplexPerformanceScenario = () => {
@@ -86,6 +115,13 @@ export const PerformanceMonitorScreen = () => {
     // Start the scenario
     performance.mark(startMark);
 
+    // Kick off a network request in parallel so the scenario also
+    // exercises the Resources tab. Errors are swallowed — the marks
+    // and measures still complete regardless.
+    void fetch(NETWORK_TEST_URL)
+      .then((response) => response.text())
+      .catch(() => undefined);
+
     // Simulate processing
     setTimeout(() => {
       performance.mark(processMark);
@@ -94,7 +130,7 @@ export const PerformanceMonitorScreen = () => {
       performance.measure(
         `processing-time-${scenarioId}`,
         startMark,
-        processMark
+        processMark,
       );
 
       // Simulate more work
@@ -107,14 +143,14 @@ export const PerformanceMonitorScreen = () => {
 
         Alert.alert(
           'Complex Performance Scenario',
-          `Scenario ${scenarioId} completed with multiple marks and measures.`
+          `Scenario ${scenarioId} completed with multiple marks, measures, and a network request.`,
         );
       }, 200);
     }, 150);
 
     Alert.alert(
       'Complex Scenario Started',
-      `Performance scenario ${scenarioId} started. This will create multiple marks and measures.`
+      `Performance scenario ${scenarioId} started. This will create multiple marks, measures, and a network request.`,
     );
   };
 
@@ -130,7 +166,10 @@ export const PerformanceMonitorScreen = () => {
         <Text style={styles.title}>Performance Monitor</Text>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentInner}
+      >
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
             Use these buttons to generate performance data that will be captured
@@ -174,12 +213,22 @@ export const PerformanceMonitorScreen = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
+            style={[styles.button, styles.resourceButton]}
+            onPress={fireNetworkRequest}
+          >
+            <Text style={styles.buttonText}>Fire Network Request</Text>
+            <Text style={styles.buttonSubtext}>
+              Performs a fetch that logs a resource timing entry
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.button, styles.scenarioButton]}
             onPress={fireComplexPerformanceScenario}
           >
             <Text style={styles.buttonText}>Complex Performance Scenario</Text>
             <Text style={styles.buttonSubtext}>
-              Creates multiple marks and measures
+              Marks, measures, and a network request together
             </Text>
           </TouchableOpacity>
         </View>
@@ -197,11 +246,19 @@ export const PerformanceMonitorScreen = () => {
             between them
           </Text>
           <Text style={styles.instructionsText}>
-            • Complex Scenario: Creates multiple marks and measures to simulate
-            real-world usage
+            • Network Request: Performs a fetch which logs a resource timing
+            entry on the Resources tab
+          </Text>
+          <Text style={styles.instructionsText}>
+            • Complex Scenario: Marks, measures, and a network request together
+          </Text>
+          <Text style={styles.instructionsText}>
+            • React Native Marks (nativeLaunchStart, runJSBundleStart, ...) are
+            emitted by the native runtime during app startup. They appear
+            automatically when you start a session — no button needed.
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -233,8 +290,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentInner: {
     paddingHorizontal: 20,
     paddingTop: 20,
+    paddingBottom: 40,
   },
   infoContainer: {
     marginBottom: 30,
@@ -270,6 +330,9 @@ const styles = StyleSheet.create({
   },
   measureButton: {
     borderColor: '#FF9500',
+  },
+  resourceButton: {
+    borderColor: '#00B4D8',
   },
   scenarioButton: {
     borderColor: '#8232FF',

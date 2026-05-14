@@ -3,6 +3,8 @@ import { Cross2Icon } from '@radix-ui/react-icons';
 import { MeasureDetails } from './MeasureDetails';
 import { MetricDetails } from './MetricDetails';
 import { MarkDetails } from './MarkDetails';
+import { ReactNativeMarkDetails } from './ReactNativeMarkDetails';
+import { ResourceDetails } from './ResourceDetails';
 import { SerializedPerformanceEntry } from '../../shared/types';
 
 export type DetailsSidebarProps = {
@@ -24,6 +26,10 @@ export const DetailsSidebar = ({
         return <MetricDetails metric={selectedItem} />;
       case 'mark':
         return <MarkDetails mark={selectedItem} />;
+      case 'react-native-mark':
+        return <ReactNativeMarkDetails mark={selectedItem} />;
+      case 'resource':
+        return <ResourceDetails resource={selectedItem} />;
       default:
         return null;
     }

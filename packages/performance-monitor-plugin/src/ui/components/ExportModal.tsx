@@ -12,6 +12,8 @@ import {
   SerializedPerformanceMeasure,
   SerializedPerformanceMark,
   SerializedPerformanceMetric,
+  SerializedPerformanceReactNativeMark,
+  SerializedPerformanceResource,
 } from '../../shared/types';
 import { downloadFile } from '../utils';
 
@@ -19,6 +21,8 @@ export type ExportModalProps = {
   measures: SerializedPerformanceMeasure[];
   metrics: SerializedPerformanceMetric[];
   marks: SerializedPerformanceMark[];
+  reactNativeMarks: SerializedPerformanceReactNativeMark[];
+  resources: SerializedPerformanceResource[];
   sessionStartedAt: number;
   clockShift: number;
 };
@@ -27,6 +31,8 @@ type ExportOptions = {
   measures: boolean;
   metrics: boolean;
   marks: boolean;
+  reactNativeMarks: boolean;
+  resources: boolean;
 };
 
 type AlertMessage = {
@@ -83,18 +89,33 @@ const DataTypeCard = ({
   );
 };
 
+const ALL_OPTIONS_ON: ExportOptions = {
+  measures: true,
+  metrics: true,
+  marks: true,
+  reactNativeMarks: true,
+  resources: true,
+};
+
+const ALL_OPTIONS_OFF: ExportOptions = {
+  measures: false,
+  metrics: false,
+  marks: false,
+  reactNativeMarks: false,
+  resources: false,
+};
+
 export function ExportModal({
   measures,
   metrics,
   marks,
+  reactNativeMarks,
+  resources,
   sessionStartedAt,
   clockShift,
 }: ExportModalProps) {
-  const [exportOptions, setExportOptions] = useState<ExportOptions>({
-    measures: true,
-    metrics: true,
-    marks: true,
-  });
+  const [exportOptions, setExportOptions] =
+    useState<ExportOptions>(ALL_OPTIONS_ON);
   const [isOpen, setIsOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState<AlertMessage>(null);
 
@@ -108,6 +129,8 @@ export function ExportModal({
           totalMeasures: measures.length,
           totalMetrics: metrics.length,
           totalMarks: marks.length,
+          totalReactNativeMarks: reactNativeMarks.length,
+          totalResources: resources.length,
         },
       };
 
@@ -119,6 +142,12 @@ export function ExportModal({
       }
       if (exportOptions.marks) {
         exportData.marks = marks;
+      }
+      if (exportOptions.reactNativeMarks) {
+        exportData.reactNativeMarks = reactNativeMarks;
+      }
+      if (exportOptions.resources) {
+        exportData.resources = resources;
       }
 
       await downloadFile(exportData, 'performance-data.json');
@@ -135,23 +164,17 @@ export function ExportModal({
     }
   };
 
-  const handleSelectAll = () => {
-    setExportOptions({
-      measures: true,
-      metrics: true,
-      marks: true,
-    });
-  };
+  const handleSelectAll = () => setExportOptions(ALL_OPTIONS_ON);
+  const handleSelectNone = () => setExportOptions(ALL_OPTIONS_OFF);
 
-  const handleSelectNone = () => {
-    setExportOptions({
-      measures: false,
-      metrics: false,
-      marks: false,
-    });
-  };
+  const hasData =
+    measures.length > 0 ||
+    metrics.length > 0 ||
+    marks.length > 0 ||
+    reactNativeMarks.length > 0 ||
+    resources.length > 0;
 
-  const hasData = measures.length > 0 || metrics.length > 0 || marks.length > 0;
+  const noneSelected = Object.values(exportOptions).every((v) => !v);
 
   const clearAlert = () => {
     setAlertMessage(null);
@@ -243,6 +266,30 @@ export function ExportModal({
                 }))
               }
             />
+
+            <DataTypeCard
+              title="React Native Marks"
+              count={reactNativeMarks.length}
+              checked={exportOptions.reactNativeMarks}
+              onToggle={() =>
+                setExportOptions((prev) => ({
+                  ...prev,
+                  reactNativeMarks: !prev.reactNativeMarks,
+                }))
+              }
+            />
+
+            <DataTypeCard
+              title="Resources"
+              count={resources.length}
+              checked={exportOptions.resources}
+              onToggle={() =>
+                setExportOptions((prev) => ({
+                  ...prev,
+                  resources: !prev.resources,
+                }))
+              }
+            />
           </Flex>
         </Box>
 
@@ -261,14 +308,7 @@ export function ExportModal({
           <Button variant="outline" onClick={() => setIsOpen(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleExport}
-            disabled={
-              !exportOptions.measures &&
-              !exportOptions.metrics &&
-              !exportOptions.marks
-            }
-          >
+          <Button onClick={handleExport} disabled={noneSelected}>
             Export Data
           </Button>
         </Flex>

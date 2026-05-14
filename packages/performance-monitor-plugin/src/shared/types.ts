@@ -22,10 +22,43 @@ export type SerializedPerformanceMetric = SharedPerformanceEntryProperties & {
   detail?: unknown;
 };
 
+export type SerializedPerformanceReactNativeMark =
+  SharedPerformanceEntryProperties & {
+    entryType: 'react-native-mark';
+    detail?: unknown;
+  };
+
+// PerformanceResourceTiming carries ~14 timing-phase fields plus size
+// fields. We serialize all of them so the DetailsSidebar can render
+// everything; the table view picks a small subset.
+export type SerializedPerformanceResource = SharedPerformanceEntryProperties & {
+  entryType: 'resource';
+  initiatorType?: string;
+  transferSize: number;
+  encodedBodySize: number;
+  decodedBodySize: number;
+  fetchStart: number;
+  requestStart: number;
+  responseStart: number;
+  responseEnd: number;
+  connectStart: number;
+  connectEnd: number;
+  domainLookupStart: number;
+  domainLookupEnd: number;
+  redirectStart: number;
+  redirectEnd: number;
+  secureConnectionStart?: number;
+  workerStart: number;
+  serverTiming: number[];
+  workerTiming: number[];
+};
+
 export type SerializedPerformanceEntry =
   | SerializedPerformanceMeasure
   | SerializedPerformanceMark
-  | SerializedPerformanceMetric;
+  | SerializedPerformanceMetric
+  | SerializedPerformanceReactNativeMark
+  | SerializedPerformanceResource;
 
 export type PerformanceMonitorEventMap = {
   setEnabled: {
@@ -43,6 +76,12 @@ export type PerformanceMonitorEventMap = {
   };
   setMetrics: {
     metrics: SerializedPerformanceMetric[];
+  };
+  appendReactNativeMarks: {
+    reactNativeMarks: SerializedPerformanceReactNativeMark[];
+  };
+  appendResources: {
+    resources: SerializedPerformanceResource[];
   };
 };
 

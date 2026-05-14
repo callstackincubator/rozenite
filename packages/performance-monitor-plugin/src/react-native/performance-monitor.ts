@@ -8,13 +8,24 @@ import type {
   SerializedPerformanceMark,
   SerializedPerformanceMeasure,
   SerializedPerformanceMetric,
+  SerializedPerformanceReactNativeMark,
+  SerializedPerformanceResource,
 } from '../shared/types';
 import { toDateTimestamp } from './helpers';
 import {
   assertPerformanceMark,
   assertPerformanceMeasure,
   assertPerformanceMetric,
+  assertPerformanceReactNativeMark,
+  assertPerformanceResource,
 } from './asserts';
+import {
+  serializeMark,
+  serializeMeasure,
+  serializeMetric,
+  serializeReactNativeMark,
+  serializeResource,
+} from './serialize';
 
 type PerformanceObserverOptions = { type: EntryType; buffered?: boolean };
 
@@ -27,7 +38,7 @@ type PerformanceObserverEntryList = {
 
 type PerformanceObserverCallback = (
   list: PerformanceObserverEntryList,
-  observer: PerformanceObserver
+  observer: PerformanceObserver,
 ) => void;
 
 export type PerformanceMonitor = {
@@ -38,7 +49,7 @@ export type PerformanceMonitor = {
 };
 
 export const getPerformanceMonitor = (
-  client: PerformanceMonitorDevToolsClient
+  client: PerformanceMonitorDevToolsClient,
 ): PerformanceMonitor => {
   let observers: PerformanceObserver[] = [];
   let sessionStartedAt = 0;
@@ -47,7 +58,7 @@ export const getPerformanceMonitor = (
 
   const addObserver = (
     callback: PerformanceObserverCallback,
-    options: PerformanceObserverOptions
+    options: PerformanceObserverOptions,
   ) => {
     const observer = new PerformanceObserver(callback);
     observer.observe(options);
@@ -81,68 +92,92 @@ export const getPerformanceMonitor = (
       });
     };
 
+    const appendReactNativeMarks = (
+      reactNativeMarks: SerializedPerformanceReactNativeMark[],
+    ) => {
+      client.send('appendReactNativeMarks', {
+        reactNativeMarks,
+      });
+    };
+
+    const appendResources = (resources: SerializedPerformanceResource[]) => {
+      client.send('appendResources', {
+        resources,
+      });
+    };
+
     addObserver(
       (list) => {
-        const marks = list.getEntries().map((entry) => {
-          assertPerformanceMark(entry);
-
-          return {
-            name: entry.name,
-            startTime: toDateTimestamp(origin, entry.startTime),
-            duration: entry.duration,
-            entryType: 'mark' as const,
-          };
-        });
-
-        appendMarks(marks);
+        appendMarks(
+          list.getEntries().map((entry) => {
+            assertPerformanceMark(entry);
+            return serializeMark(entry, origin);
+          }),
+        );
       },
       {
         type: 'mark',
         buffered: true,
-      }
+      },
     );
     addObserver(
       (list) => {
         appendMeasures(
           list.getEntries().map((entry) => {
             assertPerformanceMeasure(entry);
-
-            return {
-              name: entry.name,
-              startTime: toDateTimestamp(origin, entry.startTime),
-              duration: entry.duration,
-              entryType: 'measure' as const,
-              detail: entry.detail,
-            };
-          })
+            return serializeMeasure(entry, origin);
+          }),
         );
       },
       {
         type: 'measure',
         buffered: true,
-      }
+      },
     );
     addObserver(
       (list) => {
         setMetrics(
           list.getEntries().map((entry) => {
             assertPerformanceMetric(entry);
-
-            return {
-              name: entry.name,
-              startTime: toDateTimestamp(origin, entry.startTime),
-              duration: entry.duration,
-              entryType: 'metric' as const,
-              value: entry.value,
-              detail: entry.detail,
-            };
-          })
+            return serializeMetric(entry, origin);
+          }),
         );
       },
       {
         type: 'metric',
         buffered: true,
-      }
+      },
+    );
+    // react-native-marks fire during native startup, before the user
+    // clicks "Start Session" — buffered:true is load-bearing so the
+    // PerformanceObserver flushes entries emitted before subscription.
+    addObserver(
+      (list) => {
+        appendReactNativeMarks(
+          list.getEntries().map((entry) => {
+            assertPerformanceReactNativeMark(entry);
+            return serializeReactNativeMark(entry, origin);
+          }),
+        );
+      },
+      {
+        type: 'react-native-mark',
+        buffered: true,
+      },
+    );
+    addObserver(
+      (list) => {
+        appendResources(
+          list.getEntries().map((entry) => {
+            assertPerformanceResource(entry);
+            return serializeResource(entry, origin);
+          }),
+        );
+      },
+      {
+        type: 'resource',
+        buffered: true,
+      },
     );
   };
   const disable = (): void => {

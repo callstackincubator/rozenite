@@ -1,5 +1,5 @@
 import { ColumnDef } from '@tanstack/react-table';
-import { Text } from '@radix-ui/themes';
+import { Text, Badge, Flex } from '@radix-ui/themes';
 import { SerializedPerformanceMeasure } from '../../shared/types';
 import { DataTable } from './DataTable';
 import { formatTime, formatDuration } from '../utils';
@@ -13,7 +13,16 @@ const columns: ColumnDef<SerializedPerformanceMeasure>[] = [
   {
     accessorKey: 'name',
     header: 'Name',
-    cell: ({ row }) => <Text weight="medium">{row.getValue('name')}</Text>,
+    cell: ({ row }) => (
+      <Flex align="center" gap="2">
+        <Text weight="medium">{row.getValue('name')}</Text>
+        {'derivedFromReactNativeMark' in row.original && (
+          <Badge size="1" color="gray" variant="soft">
+            RN
+          </Badge>
+        )}
+      </Flex>
+    ),
   },
   {
     accessorKey: 'duration',

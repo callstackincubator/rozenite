@@ -16,6 +16,14 @@ export const MeasureDetails = ({ measure }: MeasureDetailsProps) => {
         Measure Details
       </Heading>
 
+      {'derivedFromReactNativeMark' in measure && (
+        <Box mb="4">
+          <Text size="2" color="gray">
+            Derived from paired react-native-mark Start/End entries.
+          </Text>
+        </Box>
+      )}
+
       <Box mb="4">
         <Flex align="center" gap="3">
           <Text size="2" color="gray" style={{ minWidth: '80px' }}>
