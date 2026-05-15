@@ -18,12 +18,20 @@ import {
 export type ResponseTabProps = {
   selectedRequest: HttpNetworkEntry;
   supportsOverrides?: boolean;
+  // Sticky Preview/Raw preference is owned by the parent (SidePanel)
+  // so it survives the `<Tabs key={selectedRequest.id}>` remount that
+  // happens on every request switch. Renderers without the requested
+  // view fall back to their own `defaultView`.
+  preferredView: ResponseView;
+  onPreferredViewChange: (view: ResponseView) => void;
   onRequestResponseBody: (requestId: string) => void;
 };
 
 export const ResponseTab = ({
   selectedRequest,
   supportsOverrides = true,
+  preferredView,
+  onPreferredViewChange,
   onRequestResponseBody,
 }: ResponseTabProps) => {
   const onRequestResponseBodyRef = useRef(onRequestResponseBody);
@@ -31,11 +39,6 @@ export const ResponseTab = ({
   const [initialOverride, setInitialOverride] = useState<
     RequestOverride | undefined
   >(() => overrides.get(selectedRequest.request.url));
-  // Sticky preference: a user who flips to Raw on one response stays
-  // on Raw for the rest of the panel session, when the active renderer
-  // supports it. Renderers without Raw (e.g. JSON tree) fall back to
-  // their own default.
-  const [preferredView, setPreferredView] = useState<ResponseView>('preview');
 
   useEffect(() => {
     onRequestResponseBodyRef.current = onRequestResponseBody;
@@ -112,7 +115,7 @@ export const ResponseTab = ({
         <ViewToggle
           views={renderer.views}
           value={activeView}
-          onChange={setPreferredView}
+          onChange={onPreferredViewChange}
         />
       ) : null;
 
