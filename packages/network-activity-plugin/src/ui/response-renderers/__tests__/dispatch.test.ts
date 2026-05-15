@@ -26,6 +26,16 @@ describe('findRenderer', () => {
     expect(findRenderer('image/jpeg', body).id).toBe('image');
   });
 
+  it('routes non-image binary bodies to the binary renderer', () => {
+    const body: ResponseBody = { kind: 'binary', base64: 'AQID' };
+    expect(findRenderer('application/pdf', body).id).toBe('binary');
+    expect(findRenderer('application/octet-stream', body).id).toBe('binary');
+    expect(findRenderer('font/woff2', body).id).toBe('binary');
+    expect(findRenderer('audio/mpeg', body).id).toBe('binary');
+    expect(findRenderer('video/mp4', body).id).toBe('binary');
+    expect(findRenderer('application/zip', body).id).toBe('binary');
+  });
+
   it('routes JSON content-types to the json renderer', () => {
     expect(findRenderer('application/json', '{}').id).toBe('json');
     expect(findRenderer('application/json; charset=utf-8', '{}').id).toBe(
@@ -62,9 +72,11 @@ describe('findRenderer', () => {
   it('places more specific matchers ahead of more general ones in the array', () => {
     const ids = renderers.map((r) => r.id);
     // svg must precede image; binary-too-large must precede image;
+    // image must precede binary (both claim body.kind === 'binary');
     // empty must precede everything; unknown is the last entry.
     expect(ids.indexOf('svg')).toBeLessThan(ids.indexOf('image'));
     expect(ids.indexOf('binary-too-large')).toBeLessThan(ids.indexOf('image'));
+    expect(ids.indexOf('image')).toBeLessThan(ids.indexOf('binary'));
     expect(ids.indexOf('empty')).toBe(0);
     expect(ids.indexOf('unknown')).toBe(ids.length - 1);
   });

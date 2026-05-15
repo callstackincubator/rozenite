@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { ReactElement } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { imageRenderer } from '../image';
@@ -25,6 +25,19 @@ const renderImage = (
   );
 
 describe('imageRenderer', () => {
+  beforeEach(() => {
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(() => 'blob:fake-url'),
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(),
+    });
+  });
+
   it('declares both preview and raw views with preview as default', () => {
     expect(imageRenderer.views).toEqual(['preview', 'raw']);
     expect(imageRenderer.defaultView).toBe('preview');
@@ -46,11 +59,15 @@ describe('imageRenderer', () => {
     expect(img).toHaveAttribute('src', 'data:image/jpeg;base64,AQID');
   });
 
-  it('renders a metadata card (no <img>) in raw view', () => {
+  it('renders metadata card + hex view (no <img>) in raw view', () => {
     renderImage('raw', 'AQID');
     expect(screen.queryByRole('img')).toBeNull();
-    expect(screen.getByText('Content-Type')).toBeInTheDocument();
-    expect(screen.getByText('image/png')).toBeInTheDocument();
+    // Metadata card: size + filename derived from URL.
     expect(screen.getByText('Size')).toBeInTheDocument();
+    expect(screen.getByText('3 bytes')).toBeInTheDocument();
+    expect(screen.getByText('cat.png')).toBeInTheDocument();
+    // HexView surfaces the bytes.
+    expect(screen.getByText('00000000')).toBeInTheDocument();
+    expect(screen.getByText('01 02 03')).toBeInTheDocument();
   });
 });

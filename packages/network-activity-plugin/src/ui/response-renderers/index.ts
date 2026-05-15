@@ -1,3 +1,4 @@
+import { binaryRenderer } from './binary';
 import { binaryTooLargeRenderer } from './binary-too-large';
 import { emptyRenderer } from './empty';
 import { imageRenderer } from './image';
@@ -20,13 +21,16 @@ export type {
 // SVG must match before generic image/* (SVG bodies are strings, but
 // the image renderer wouldn't claim them either; keeping SVG first is
 // belt-and-suspenders). Binary-too-large precedes any binary handler.
-// text-fallback catches every remaining string body; unknown is the
-// defensive last-resort.
+// imageRenderer must precede binaryRenderer — both claim
+// `body.kind === 'binary'`, but image scopes itself to `image/*` and
+// binary takes everything else. text-fallback catches every remaining
+// string body; unknown is the defensive last-resort.
 export const renderers: ResponseRenderer[] = [
   emptyRenderer,
   binaryTooLargeRenderer,
   svgRenderer,
   imageRenderer,
+  binaryRenderer,
   jsonRenderer,
   textFallbackRenderer,
   unknownRenderer,
