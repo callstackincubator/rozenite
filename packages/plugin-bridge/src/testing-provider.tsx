@@ -77,7 +77,7 @@ const createClient = <TEventMap extends Record<string, unknown>>(
     emit: <TType extends keyof TEventMap>(type: TType, payload: TEventMap[TType]) => {
       if (closed) {
         throw new Error(
-          `[Rozenite test harness] Cannot emit \"${String(type)}\" for disconnected plugin \"${pluginId}\".`,
+          `[Rozenite test harness] Cannot emit "${String(type)}" for disconnected plugin "${pluginId}".`,
         );
       }
 
@@ -150,7 +150,7 @@ export const createRozeniteTestHarness = <
       const entry = emitters.get(pluginId);
       if (!entry) {
         throw new Error(
-          `[Rozenite test harness] Plugin \"${pluginId}\" is not connected. Call connect() before emit().`,
+          `[Rozenite test harness] Plugin "${pluginId}" is not connected. Call connect() before emit().`,
         );
       }
 
