@@ -225,7 +225,7 @@ const filterNetworkRequests = (
   const maxDuration = parseThreshold(filter.advanced.maxDuration);
 
   return requests.filter((request) => {
-    if (!filter.types.has(request.type)) {
+    if (filter.types.size > 0 && !filter.types.has(request.type)) {
       return false;
     }
 

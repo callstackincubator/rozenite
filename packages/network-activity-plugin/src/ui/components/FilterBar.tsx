@@ -51,7 +51,7 @@ const SOURCES: NetworkEventSource[] = ['builtin', 'nitro'];
 
 export const createDefaultFilter = (): FilterState => ({
   text: '',
-  types: new Set(REQUEST_TYPES),
+  types: new Set(),
   advanced: {
     methods: new Set(),
     sources: new Set(),
@@ -106,7 +106,7 @@ const getAdvancedFilterCount = (advanced: AdvancedFilterState) => {
 };
 
 const getActiveFilterCount = (filter: FilterState) => {
-  const typeFilterCount = filter.types.size < REQUEST_TYPES.length ? 1 : 0;
+  const typeFilterCount = filter.types.size > 0 ? 1 : 0;
 
   return typeFilterCount + getAdvancedFilterCount(filter.advanced);
 };
