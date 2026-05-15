@@ -85,7 +85,8 @@ The response body view adapts to the format of each captured response and expose
 - **SVG** (`image/svg+xml`) renders inline in the Preview tab and shows the source XML in the Raw tab — SVG is text on the wire, not bytes, so there is no hex view for it.
 - **Non-image binary** (`application/pdf`, `application/zip`, `audio/*`, `video/*`, `font/*`, `application/octet-stream`, ...) shows the same metadata card + hex viewer pair. There is no Preview for these formats — the hex view _is_ the inspection surface, and the Preview / Raw toggle is hidden.
 - **JSON** renders as a collapsible tree with copy affordances on every key and value.
-- **Text and other source formats** (`text/*`, `application/xml`, `application/javascript`, ...) render as raw monospace text.
+- **HTML** (`text/html`) renders inside a sandboxed iframe in the Preview tab — scripts are blocked and external subresources (images, stylesheets, fonts) are disallowed via Content-Security-Policy, so the preview cannot make outbound requests on behalf of the captured response. The Raw tab shows the HTML source. For 4xx/5xx responses, a status banner appears above the preview.
+- **Text and other source formats** (`text/plain`, `text/css`, `application/xml`, `application/javascript`, ...) render as raw monospace text.
 - **Empty or oversized responses** show a clear placeholder. Binary responses above an in-capture 5 MB cap surface as "Response too large for preview" instead of crossing the bridge; the Download button is disabled for those entries with a tooltip explaining the cap.
 
 The Preview / Raw toggle remembers your choice across requests in a panel session — once you toggle to Raw, subsequent responses whose renderer supports Raw stay on Raw. Formats with only one meaningful view hide the toggle entirely.
