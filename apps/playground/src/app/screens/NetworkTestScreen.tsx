@@ -375,6 +375,109 @@ const BinaryResponseTestComponent: React.FC = () => {
   );
 };
 
+type HtmlTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const HTML_TEST_CASES: HtmlTestCase[] = [
+  {
+    label: 'Classic HTML',
+    url: 'https://httpbin.org/html',
+    hint: '200 OK, real HTML body (Moby Dick excerpt) — exercises iframe preview + source view',
+  },
+  {
+    label: 'Minimal HTML',
+    url: 'https://example.com/',
+    hint: '200 OK well-known minimal HTML with inline <style> — verifies CSP allows inline styles',
+  },
+  {
+    label: '404 HTML',
+    url: 'https://httpbin.org/nonexistent-rozenite-test-route',
+    hint: '404 with text/html body — triggers the status banner above the preview',
+  },
+];
+
+const HtmlResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchHtml = React.useCallback(async (testCase: HtmlTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const text = await response.text();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${
+          response.headers.get('content-type') ?? 'unknown'
+        } • ${text.length.toLocaleString()} chars`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>HTML Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers HTML responses to exercise the Network Activity panel&apos;s
+          HTML viewer. Tap a button, then open the captured request in DevTools
+          — Preview tab shows the page rendered inside a sandboxed iframe (no
+          scripts, no external subresources), Raw tab shows the HTML source. The
+          404 demo also surfaces a status banner above the preview.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {HTML_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchHtml(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {HTML_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
 const NitroHTTPTestComponent: React.FC = () => {
   const [isRunning, setIsRunning] = React.useState(false);
   const [result, setResult] = React.useState<NitroDemoResult | null>(null);
@@ -1474,6 +1577,7 @@ export const NetworkTestScreen: React.FC = () => {
     | 'sse'
     | 'images'
     | 'binary'
+    | 'html'
     | 'request-body'
   >('http');
 
@@ -1501,6 +1605,7 @@ export const NetworkTestScreen: React.FC = () => {
           { key: 'sse', label: 'SSE Test' },
           { key: 'images', label: 'Images' },
           { key: 'binary', label: 'Binary' },
+          { key: 'html', label: 'HTML' },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -1517,7 +1622,8 @@ export const NetworkTestScreen: React.FC = () => {
                   | 'nitro-websocket'
                   | 'sse'
                   | 'images'
-                  | 'binary',
+                  | 'binary'
+                  | 'html',
               )
             }
           >
@@ -1550,6 +1656,8 @@ export const NetworkTestScreen: React.FC = () => {
         <ImageResponseTestComponent />
       ) : activeTest === 'binary' ? (
         <BinaryResponseTestComponent />
+      ) : activeTest === 'html' ? (
+        <HtmlResponseTestComponent />
       ) : (
         <SSETestComponent />
       )}
