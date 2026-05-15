@@ -16,10 +16,7 @@ export default defineConfig({
   base: './',
   build: {
     lib: {
-      entry: {
-        index: resolve(__dirname, 'src/index.ts'),
-        testing: resolve(__dirname, 'src/testing.ts'),
-      },
+      entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es', 'cjs'],
     },
     rollupOptions: {
