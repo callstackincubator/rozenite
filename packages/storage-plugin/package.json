@@ -27,6 +27,9 @@
     "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.40.0",
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "@types/react": "catalog:",

@@ -1,16 +1,13 @@
 import { Box, Text, Heading, Separator, Flex } from '@radix-ui/themes';
 import { SerializedPerformanceMetric } from '../../shared/types';
 import { DetailsDisplay } from './DetailsDisplay';
+import { formatTime } from '../utils';
 
 export type MetricDetailsProps = {
   metric: SerializedPerformanceMetric;
 };
 
 export const MetricDetails = ({ metric }: MetricDetailsProps) => {
-  const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString();
-  };
-
   return (
     <Box>
       <Heading size="5" mb="4">

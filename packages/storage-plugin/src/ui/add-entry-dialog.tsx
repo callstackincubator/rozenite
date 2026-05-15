@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import type {
   StorageEntry,
@@ -6,13 +6,8 @@ import type {
   StorageEntryValue,
 } from '../shared/types';
 import { ConfirmDialog } from './confirm-dialog';
-
-const TYPE_OPTIONS: Array<{ value: StorageEntryType; label: string }> = [
-  { value: 'string', label: 'String' },
-  { value: 'number', label: 'Number' },
-  { value: 'boolean', label: 'Boolean' },
-  { value: 'buffer', label: 'Buffer (Array)' },
-];
+import { TypedValueEditor } from './typed-value-editor';
+import { defaultValueForType } from './type-conversion';
 
 export type AddEntryDialogProps = {
   isOpen: boolean;
@@ -22,6 +17,23 @@ export type AddEntryDialogProps = {
   supportedTypes: StorageEntryType[];
 };
 
+const buildEntry = (
+  key: string,
+  type: StorageEntryType,
+  value: StorageEntryValue,
+): StorageEntry => {
+  switch (type) {
+    case 'string':
+      return { key, type: 'string', value: value as string };
+    case 'number':
+      return { key, type: 'number', value: value as number };
+    case 'boolean':
+      return { key, type: 'boolean', value: value as boolean };
+    case 'buffer':
+      return { key, type: 'buffer', value: value as number[] };
+  }
+};
+
 export const AddEntryDialog = ({
   isOpen,
   onClose,
@@ -29,42 +41,48 @@ export const AddEntryDialog = ({
   existingKeys,
   supportedTypes,
 }: AddEntryDialogProps) => {
+  const initialType: StorageEntryType = supportedTypes.includes('string')
+    ? 'string'
+    : (supportedTypes[0] ?? 'string');
+
   const [newEntryKey, setNewEntryKey] = useState('');
-  const [newEntryType, setNewEntryType] = useState<StorageEntryType>('string');
-  const [newEntryValue, setNewEntryValue] = useState('');
+  const [currentType, setCurrentType] = useState<StorageEntryType>(initialType);
+  const [currentValue, setCurrentValue] = useState<StorageEntryValue | null>(
+    defaultValueForType(initialType),
+  );
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
     message: string;
-    type: 'confirm' | 'alert';
-    onConfirm?: () => void;
-  }>({ isOpen: false, title: '', message: '', type: 'alert' });
+  }>({ isOpen: false, title: '', message: '' });
 
-  const enabledTypes = useMemo(
-    () => TYPE_OPTIONS.filter((option) => supportedTypes.includes(option.value)),
-    [supportedTypes]
-  );
+  // Reset state every time the dialog opens, so a previous session's
+  // type / value doesn't bleed in.
+  useEffect(() => {
+    if (isOpen) {
+      setNewEntryKey('');
+      setCurrentType(initialType);
+      setCurrentValue(defaultValueForType(initialType));
+    }
+  }, [isOpen, initialType]);
 
-  const firstSupportedType = enabledTypes[0]?.value;
+  const isCurrentTypeSupported = supportedTypes.includes(currentType);
 
-  const selectedTypeSupported = supportedTypes.includes(newEntryType);
-
-  const resetForm = () => {
+  const resetAndClose = () => {
     setNewEntryKey('');
-    setNewEntryType(firstSupportedType ?? 'string');
-    setNewEntryValue('');
+    setCurrentType(initialType);
+    setCurrentValue(defaultValueForType(initialType));
     onClose();
   };
 
-  const handleAddEntry = () => {
-    if (!newEntryKey.trim()) return;
+  const handleAdd = () => {
+    if (!newEntryKey.trim() || currentValue === null) return;
 
-    if (!selectedTypeSupported) {
+    if (!isCurrentTypeSupported) {
       setConfirmDialog({
         isOpen: true,
         title: 'Unsupported Type',
         message: 'Selected type is not supported by this storage.',
-        type: 'alert',
       });
       return;
     }
@@ -74,77 +92,25 @@ export const AddEntryDialog = ({
         isOpen: true,
         title: 'Key Already Exists',
         message: 'An entry with this key already exists.',
-        type: 'alert',
       });
       return;
     }
 
-    let parsedValue: StorageEntryValue;
-    try {
-      switch (newEntryType) {
-        case 'string':
-          parsedValue = newEntryValue;
-          break;
-        case 'number':
-          parsedValue = Number(newEntryValue);
-          if (Number.isNaN(parsedValue)) {
-            throw new Error('Invalid number');
-          }
-          break;
-        case 'boolean':
-          if (newEntryValue !== 'true' && newEntryValue !== 'false') {
-            throw new Error('Boolean value must be true or false');
-          }
-          parsedValue = newEntryValue === 'true';
-          break;
-        case 'buffer':
-          parsedValue = JSON.parse(newEntryValue);
-          if (
-            !Array.isArray(parsedValue) ||
-            !parsedValue.every((value) => typeof value === 'number')
-          ) {
-            throw new Error('Buffer must be an array of numbers');
-          }
-          break;
-        default:
-          throw new Error('Invalid type');
-      }
-    } catch (error) {
-      setConfirmDialog({
-        isOpen: true,
-        title: 'Invalid Value',
-        message: `Invalid value for ${newEntryType}: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-        type: 'alert',
-      });
-      return;
-    }
-
-    let entry: StorageEntry;
-    if (newEntryType === 'string') {
-      entry = { key: newEntryKey, type: 'string', value: parsedValue as string };
-    } else if (newEntryType === 'number') {
-      entry = { key: newEntryKey, type: 'number', value: parsedValue as number };
-    } else if (newEntryType === 'boolean') {
-      entry = { key: newEntryKey, type: 'boolean', value: parsedValue as boolean };
-    } else {
-      entry = { key: newEntryKey, type: 'buffer', value: parsedValue as number[] };
-    }
-
-    onAddEntry(entry);
-
-    resetForm();
+    onAddEntry(buildEntry(newEntryKey, currentType, currentValue));
+    resetAndClose();
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape') {
-      resetForm();
+      resetAndClose();
       return;
     }
-
-    if (event.key === 'Enter' && newEntryKey.trim() && newEntryValue.trim()) {
-      handleAddEntry();
+    if (
+      event.key === 'Enter' &&
+      newEntryKey.trim() &&
+      currentType !== 'buffer'
+    ) {
+      handleAdd();
     }
   };
 
@@ -152,20 +118,25 @@ export const AddEntryDialog = ({
     return null;
   }
 
+  // Unsavable when no key, no supported type, or when the value is
+  // null — the hex editor signals invalid / empty hex via null.
+  const isAddDisabled =
+    !newEntryKey.trim() || !isCurrentTypeSupported || currentValue === null;
+
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={resetForm}
+      onClick={resetAndClose}
     >
       <div
-        className="bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4"
+        className="bg-gray-800 rounded-lg p-6 w-[32rem] max-w-full mx-4"
         onClick={(event) => event.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-100">Add New Entry</h2>
           <button
-            onClick={resetForm}
+            onClick={resetAndClose}
             className="p-1 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded transition-colors"
             title="Close dialog"
           >
@@ -194,83 +165,24 @@ export const AddEntryDialog = ({
 
           <div>
             <label
-              htmlFor="new-entry-type"
-              className="block text-sm font-medium text-gray-200 mb-1"
-            >
-              Type
-            </label>
-            <select
-              id="new-entry-type"
-              value={newEntryType}
-              onChange={(event) => {
-                setNewEntryType(event.target.value as StorageEntryType);
-                setNewEntryValue('');
-              }}
-              className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {TYPE_OPTIONS.map((option) => {
-                const isSupported = supportedTypes.includes(option.value);
-                return (
-                  <option
-                    key={option.value}
-                    value={option.value}
-                    disabled={!isSupported}
-                    title={
-                      isSupported ? option.label : 'Not supported by this storage'
-                    }
-                  >
-                    {option.label}
-                    {!isSupported ? ' (Not supported)' : ''}
-                  </option>
-                );
-              })}
-            </select>
-            {!selectedTypeSupported && (
-              <p className="text-xs text-amber-400 mt-1">
-                Selected type is not supported by this storage.
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
               htmlFor="new-entry-value"
               className="block text-sm font-medium text-gray-200 mb-1"
             >
               Value
             </label>
-            {newEntryType === 'boolean' ? (
-              <select
-                id="new-entry-value"
-                value={newEntryValue}
-                onChange={(event) => setNewEntryValue(event.target.value)}
-                className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select value</option>
-                <option value="true">true</option>
-                <option value="false">false</option>
-              </select>
-            ) : (
-              <input
-                id="new-entry-value"
-                type={newEntryType === 'number' ? 'number' : 'text'}
-                value={newEntryValue}
-                onChange={(event) => setNewEntryValue(event.target.value)}
-                placeholder={
-                  newEntryType === 'string'
-                    ? 'Enter string value'
-                    : newEntryType === 'number'
-                    ? 'Enter number value'
-                    : newEntryType === 'buffer'
-                    ? 'Enter array as JSON, e.g., [1, 2, 3]'
-                    : 'Enter value'
-                }
-                className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            )}
-            {newEntryType === 'buffer' && (
-              <p className="text-xs text-gray-400 mt-1">
-                Enter as JSON array of numbers, e.g., [1, 2, 3, 255]
+            <TypedValueEditor
+              supportedTypes={supportedTypes}
+              type={currentType}
+              value={currentValue}
+              onChange={(nextType, nextValue) => {
+                setCurrentType(nextType);
+                setCurrentValue(nextValue);
+              }}
+              inputId="new-entry-value"
+            />
+            {!isCurrentTypeSupported && (
+              <p className="text-xs text-amber-400 mt-1">
+                Selected type is not supported by this storage.
               </p>
             )}
           </div>
@@ -278,14 +190,14 @@ export const AddEntryDialog = ({
 
         <div className="flex items-center justify-end gap-2 mt-6">
           <button
-            onClick={resetForm}
+            onClick={resetAndClose}
             className="px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
           >
             Cancel
           </button>
           <button
-            onClick={handleAddEntry}
-            disabled={!newEntryKey.trim() || !newEntryValue.trim() || !selectedTypeSupported}
+            onClick={handleAdd}
+            disabled={isAddDisabled}
             className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
           >
             Add Entry
@@ -295,15 +207,13 @@ export const AddEntryDialog = ({
 
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog((previous) => ({ ...previous, isOpen: false }))}
-        onConfirm={() => {
-          if (confirmDialog.onConfirm) {
-            confirmDialog.onConfirm();
-          }
-        }}
+        onClose={() =>
+          setConfirmDialog((previous) => ({ ...previous, isOpen: false }))
+        }
+        onConfirm={() => {}}
         title={confirmDialog.title}
         message={confirmDialog.message}
-        type={confirmDialog.type}
+        type="alert"
       />
     </div>
   );

@@ -15,6 +15,7 @@ import type {
   StorageEntryType,
   StorageEntryValue,
 } from '../shared/types';
+import { compactBufferPreview } from './binary';
 import { ConfirmDialog } from './confirm-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
 
@@ -64,7 +65,7 @@ export const EditableTable = ({
             <div className="flex items-center">
               <span
                 className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
-                  type
+                  type,
                 )}`}
               >
                 {type}
@@ -110,7 +111,7 @@ export const EditableTable = ({
         ),
       }),
     ],
-    [onDeleteEntry]
+    [onDeleteEntry],
   );
 
   const table = useReactTable({
@@ -186,7 +187,7 @@ export const EditableTable = ({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                     {header.column.getCanSort() && (
                       <span className="text-gray-500">
@@ -283,16 +284,17 @@ const formatValue = (entry: StorageEntry) => {
 
   if (entry.type === 'boolean') {
     return (
-      <span className={`font-mono ${entry.value ? 'text-green-400' : 'text-red-400'}`}>
+      <span
+        className={`font-mono ${entry.value ? 'text-green-400' : 'text-red-400'}`}
+      >
         {entry.value ? 'true' : 'false'}
       </span>
     );
   }
 
-  const displayValue =
-    entry.value.length > 5
-      ? `[${entry.value.slice(0, 5).join(', ')}, ...${entry.value.length - 5} more]`
-      : `[${entry.value.join(', ')}]`;
-
-  return <span className="text-purple-300 font-mono">{displayValue}</span>;
+  return (
+    <span className="text-purple-300 font-mono">
+      {compactBufferPreview(entry.value)}
+    </span>
+  );
 };
