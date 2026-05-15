@@ -19,6 +19,7 @@ import { getId } from '../utils/getId';
 import { assert } from '../utils/assert';
 import { getContentTypeMime } from '../../utils/getContentTypeMimeType';
 import { applyReactNativeRequestHeadersLogic } from '../../utils/applyReactNativeRequestHeadersLogic';
+import { symbolicateInitiator } from '../utils/symbolication';
 
 const MAX_WEBSOCKET_MESSAGES_PER_CONNECTION = 32;
 const MAX_SSE_MESSAGES_PER_CONNECTION = 32;
@@ -180,6 +181,39 @@ export const createNetworkActivityStore = () =>
                 newEntries.set(eventData.requestId, entry);
                 return { networkEntries: newEntries };
               });
+
+              if (eventData.initiator.symbolicationStatus === 'pending') {
+                void symbolicateInitiator(eventData.initiator).then(
+                  (symbolicatedInitiator) => {
+                    if (!symbolicatedInitiator) {
+                      return;
+                    }
+
+                    set((state) => {
+                      const entry = state.networkEntries.get(
+                        eventData.requestId,
+                      );
+
+                      if (
+                        !entry ||
+                        (entry.type !== 'http' && entry.type !== 'sse') ||
+                        entry.initiator?.symbolicationStatus !== 'pending'
+                      ) {
+                        return {};
+                      }
+
+                      const updatedEntry = {
+                        ...entry,
+                        initiator: symbolicatedInitiator,
+                      };
+
+                      const newEntries = new Map(state.networkEntries);
+                      newEntries.set(eventData.requestId, updatedEntry);
+                      return { networkEntries: newEntries };
+                    });
+                  },
+                );
+              }
               break;
             }
 
@@ -201,28 +235,6 @@ export const createNetworkActivityStore = () =>
                     total: eventData.total,
                     lengthComputable: eventData.lengthComputable,
                   },
-                };
-
-                const newEntries = new Map(state.networkEntries);
-                newEntries.set(eventData.requestId, updatedEntry);
-                return { networkEntries: newEntries };
-              });
-              break;
-            }
-
-            case 'request-initiator-updated': {
-              const eventData =
-                data as NetworkActivityEventMap['request-initiator-updated'];
-              set((state) => {
-                const entry = state.networkEntries.get(eventData.requestId);
-
-                if (!entry || (entry.type !== 'http' && entry.type !== 'sse')) {
-                  return {};
-                }
-
-                const updatedEntry = {
-                  ...entry,
-                  initiator: eventData.initiator,
                 };
 
                 const newEntries = new Map(state.networkEntries);
@@ -629,9 +641,6 @@ export const createNetworkActivityStore = () =>
               ),
               client.onMessage('request-progress', (data) =>
                 handleEvent('request-progress', data),
-              ),
-              client.onMessage('request-initiator-updated', (data) =>
-                handleEvent('request-initiator-updated', data),
               ),
               client.onMessage('response-received', (data) =>
                 handleEvent('response-received', data),

@@ -124,13 +124,6 @@ export type HttpEventMap = {
     source?: NetworkEventSource;
   };
 
-  'request-initiator-updated': {
-    requestId: RequestId;
-    timestamp: Timestamp;
-    initiator: Initiator;
-    source?: NetworkEventSource;
-  };
-
   'response-received': {
     requestId: RequestId;
     timestamp: Timestamp;

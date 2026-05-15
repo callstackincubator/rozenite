@@ -41,9 +41,6 @@ export const useNetworkActivityAgentTools = ({
       networkInspector.http.on('request-sent', (event) =>
         state.onRequestSent(event),
       ),
-      networkInspector.http.on('request-initiator-updated', (event) =>
-        state.onRequestInitiatorUpdated(event),
-      ),
       networkInspector.http.on('request-progress', (event) =>
         state.onRequestProgress(event),
       ),

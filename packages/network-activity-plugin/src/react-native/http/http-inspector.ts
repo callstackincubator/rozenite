@@ -5,8 +5,6 @@ import {
   getRequestBody,
   getResponseSize,
   getInitiatorFromStack,
-  symbolicateInitiator,
-  shouldIgnoreNetworkActivityRequest,
   setupRequestOverride,
 } from './http-utils';
 import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
@@ -20,7 +18,6 @@ export type { HttpEventMap };
 
 export const HTTP_EVENTS: (keyof HttpEventMap)[] = [
   'request-sent',
-  'request-initiator-updated',
   'response-received',
   'request-completed',
   'request-failed',
@@ -59,10 +56,6 @@ export const getHTTPInspector = (): HTTPInspector => {
       XHRInterceptor.disableInterception();
 
       XHRInterceptor.setSendCallback((data, request) => {
-        if (shouldIgnoreNetworkActivityRequest(request._url as string)) {
-          return;
-        }
-
         const initiator = getInitiatorFromStack();
         const sendTime = Date.now();
         const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -85,21 +78,6 @@ export const getHTTPInspector = (): HTTPInspector => {
           initiator,
           source: 'builtin',
         });
-
-        if (initiator.symbolicationStatus === 'pending') {
-          symbolicateInitiator(initiator).then((symbolicatedInitiator) => {
-            if (!symbolicatedInitiator) {
-              return;
-            }
-
-            eventEmitter.emit('request-initiator-updated', {
-              requestId,
-              timestamp: Date.now(),
-              initiator: symbolicatedInitiator,
-              source: 'builtin',
-            });
-          });
-        }
 
         request.addEventListener('readystatechange', () => {
           if (request.readyState === READY_STATE_HEADERS_RECEIVED) {

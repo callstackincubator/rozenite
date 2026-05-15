@@ -583,24 +583,6 @@ export const createNetworkActivityAgentState = () => {
       record.progress = undefined;
     },
 
-    onRequestInitiatorUpdated(
-      event: HttpEventMap['request-initiator-updated'],
-    ) {
-      if (!state.isRecording) {
-        return;
-      }
-
-      const record = state.httpRecords.get(event.requestId);
-      if (record) {
-        record.initiator = event.initiator;
-      }
-
-      const realtimeRecord = state.realtimeRecords.get(event.requestId);
-      if (realtimeRecord?.kind === 'sse') {
-        realtimeRecord.initiator = event.initiator;
-      }
-    },
-
     onRequestProgress(event: HttpEventMap['request-progress']) {
       if (!state.isRecording) {
         return;

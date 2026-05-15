@@ -7,7 +7,6 @@ import type {
   Initiator,
   InitiatorStackFrame,
 } from '../../shared/client';
-import symbolicateStackTrace from 'react-native/Libraries/Core/Devtools/symbolicateStackTrace';
 import { safeStringify } from '../../utils/safeStringify';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
 import {
@@ -153,50 +152,7 @@ export const getResponseBody = async (
 };
 
 const STACK_PREVIEW_FRAME_LIMIT = 8;
-
-const INTERNAL_STACK_PATTERNS = [
-  'getInitiatorFromStack',
-  'http-utils',
-  'http-inspector',
-  'xhr-interceptor',
-  'XHRInterceptor',
-  'XMLHttpRequest',
-  '@rozenite/network-activity-plugin',
-  '/network-activity-plugin/',
-];
-
-const LOW_VALUE_SYMBOLICATED_FRAME_PATTERNS = [
-  'InternalBytecode.js',
-  '/node_modules/',
-  'node_modules/',
-  'react-native/Libraries/',
-  '@react-native/',
-  '@babel/runtime/',
-  'metro-runtime/',
-  'promise/setimmediate/',
-  ...INTERNAL_STACK_PATTERNS,
-];
-
-type ReactNativeStackFrame = {
-  methodName: string;
-  file: string | null | undefined;
-  lineNumber: number | null | undefined;
-  column: number | null | undefined;
-  collapse?: boolean;
-};
-
-type SymbolicatedStackTrace = {
-  stack: ReadonlyArray<ReactNativeStackFrame>;
-  codeFrame?: Initiator['codeFrame'];
-};
-
-export const shouldIgnoreNetworkActivityRequest = (url: string) => {
-  try {
-    return new URL(url).pathname === '/symbolicate';
-  } catch {
-    return url.includes('/symbolicate');
-  }
-};
+const INITIATOR_STACK_FRAME_OFFSET = 3;
 
 const parseStackLocation = (
   location: string,
@@ -266,16 +222,6 @@ const parseStackFrame = (line: string): InitiatorStackFrame | null => {
   };
 };
 
-const isInternalStackFrame = (frame: InitiatorStackFrame) => {
-  const searchableFrame = [frame.functionName, frame.url, frame.generatedUrl]
-    .filter(Boolean)
-    .join(' ');
-
-  return INTERNAL_STACK_PATTERNS.some((pattern) =>
-    searchableFrame.includes(pattern),
-  );
-};
-
 const toGeneratedStackFrame = (
   frame: InitiatorStackFrame,
 ): InitiatorStackFrame => ({
@@ -291,86 +237,20 @@ const getGeneratedFrameLocation = (frame: InitiatorStackFrame) => ({
   columnNumber: frame.generatedColumnNumber ?? frame.columnNumber,
 });
 
-const isGeneratedBundleUrl = (url: string) =>
-  /[^/]+\.bundle(?:[/?#]|$)/.test(url);
-
-const getComparableSourcePath = (url?: string) =>
-  url?.split(/[?#]/)[0].replace(/^file:\/\//, '');
-
-const getCodeFrameForSourceFrame = (
-  codeFrame: Initiator['codeFrame'] | undefined,
-  sourceFrame: InitiatorStackFrame | undefined,
-) => {
-  const codeFramePath = getComparableSourcePath(codeFrame?.fileName);
-  const sourcePath = getComparableSourcePath(sourceFrame?.url);
-
-  if (!codeFrame || !codeFramePath || !sourcePath) {
-    return null;
-  }
-
-  return codeFramePath.endsWith(sourcePath) ||
-    sourcePath.endsWith(codeFramePath)
-    ? codeFrame
-    : null;
-};
-
 const canSymbolicateStack = (stack?: InitiatorStackFrame[]) =>
   stack?.some((frame) =>
     getGeneratedFrameLocation(frame).url?.startsWith('http'),
   ) ?? false;
 
-const isUsefulSymbolicatedFrame = (frame: InitiatorStackFrame) => {
-  if (!frame.url || frame.isCollapsed) {
-    return false;
-  }
+const getStackPreview = (frames: InitiatorStackFrame[]) => {
+  // The first frames are this helper, the HTTP inspector callback and the XHR
+  // wrapper. The caller starts after that fixed interception boundary.
+  const callerFrames = frames.slice(INITIATOR_STACK_FRAME_OFFSET);
 
-  const searchableFrame = [frame.functionName, frame.url].join(' ');
-
-  return !LOW_VALUE_SYMBOLICATED_FRAME_PATTERNS.some((pattern) =>
-    searchableFrame.includes(pattern),
+  return (callerFrames.length > 0 ? callerFrames : frames).slice(
+    0,
+    STACK_PREVIEW_FRAME_LIMIT,
   );
-};
-
-const toReactNativeStackFrame = (
-  frame: InitiatorStackFrame,
-): ReactNativeStackFrame | null => {
-  const generatedLocation = getGeneratedFrameLocation(frame);
-
-  if (!generatedLocation.url) {
-    return null;
-  }
-
-  return {
-    methodName: frame.functionName ?? '<anonymous>',
-    file: generatedLocation.url,
-    lineNumber: generatedLocation.lineNumber,
-    column: generatedLocation.columnNumber,
-  };
-};
-
-const fromSymbolicatedStackFrame = (
-  frame: ReactNativeStackFrame,
-  generatedFrame: InitiatorStackFrame,
-): InitiatorStackFrame => {
-  const generatedLocation = getGeneratedFrameLocation(generatedFrame);
-  const sourceUrl =
-    frame.file &&
-    frame.file !== generatedLocation.url &&
-    !isGeneratedBundleUrl(frame.file)
-      ? frame.file
-      : undefined;
-
-  return {
-    functionName:
-      normalizeFunctionName(frame.methodName) ?? generatedFrame.functionName,
-    url: sourceUrl,
-    lineNumber: sourceUrl ? (frame.lineNumber ?? undefined) : undefined,
-    columnNumber: sourceUrl ? (frame.column ?? undefined) : undefined,
-    generatedUrl: generatedLocation.url,
-    generatedLineNumber: generatedLocation.lineNumber,
-    generatedColumnNumber: generatedLocation.columnNumber,
-    isCollapsed: frame.collapse,
-  };
 };
 
 export const getInitiatorFromStack = (): Initiator => {
@@ -385,9 +265,7 @@ export const getInitiatorFromStack = (): Initiator => {
       .map(parseStackFrame)
       .filter((frame): frame is InitiatorStackFrame => frame !== null);
 
-    const stackPreview = parsedFrames
-      .filter((frame) => !isInternalStackFrame(frame))
-      .slice(0, STACK_PREVIEW_FRAME_LIMIT);
+    const stackPreview = getStackPreview(parsedFrames);
     const initiatorFrame = stackPreview[0];
     const generatedStackPreview = stackPreview.map(toGeneratedStackFrame);
 
@@ -406,9 +284,7 @@ export const getInitiatorFromStack = (): Initiator => {
     }
 
     if (parsedFrames.length > 0) {
-      const fallbackStack = parsedFrames
-        .slice(0, STACK_PREVIEW_FRAME_LIMIT)
-        .map(toGeneratedStackFrame);
+      const fallbackStack = stackPreview.map(toGeneratedStackFrame);
 
       return {
         type: 'other',
@@ -423,66 +299,6 @@ export const getInitiatorFromStack = (): Initiator => {
   }
 
   return { type: 'other' };
-};
-
-export const symbolicateInitiator = async (
-  initiator: Initiator,
-): Promise<Initiator | null> => {
-  if (!canSymbolicateStack(initiator.stack)) {
-    return null;
-  }
-
-  const generatedStackFrames =
-    initiator.stack
-      ?.map(toReactNativeStackFrame)
-      .filter((frame): frame is ReactNativeStackFrame => frame !== null) ?? [];
-
-  if (generatedStackFrames.length === 0) {
-    return null;
-  }
-
-  try {
-    const symbolicatedStackTrace = (await symbolicateStackTrace(
-      generatedStackFrames,
-    )) as SymbolicatedStackTrace;
-
-    const symbolicatedStack = symbolicatedStackTrace.stack.map((frame, index) =>
-      fromSymbolicatedStackFrame(frame, initiator.stack?.[index] ?? {}),
-    );
-    const sourceFrame =
-      symbolicatedStack.find(isUsefulSymbolicatedFrame) ??
-      symbolicatedStack.find((frame) => frame.url && !frame.isCollapsed) ??
-      symbolicatedStack[0];
-    const hasSourceMappedFrame = symbolicatedStack.some((frame) => frame.url);
-
-    return {
-      ...initiator,
-      type: sourceFrame?.url ? 'script' : initiator.type,
-      functionName: sourceFrame?.functionName,
-      url: sourceFrame?.url,
-      lineNumber: sourceFrame?.lineNumber,
-      columnNumber: sourceFrame?.columnNumber,
-      generatedUrl: sourceFrame?.generatedUrl ?? initiator.generatedUrl,
-      generatedLineNumber:
-        sourceFrame?.generatedLineNumber ?? initiator.generatedLineNumber,
-      generatedColumnNumber:
-        sourceFrame?.generatedColumnNumber ?? initiator.generatedColumnNumber,
-      stack: symbolicatedStack,
-      codeFrame: getCodeFrameForSourceFrame(
-        symbolicatedStackTrace.codeFrame,
-        sourceFrame,
-      ),
-      symbolicationStatus: hasSourceMappedFrame ? 'complete' : 'unavailable',
-      symbolicationError: undefined,
-    };
-  } catch (error) {
-    return {
-      ...initiator,
-      symbolicationStatus: 'failed',
-      symbolicationError:
-        error instanceof Error ? error.message : 'Unable to symbolicate stack',
-    };
-  }
 };
 
 /**
