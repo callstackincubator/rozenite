@@ -4,7 +4,7 @@ import type { NetworkActivityState } from './store';
 import { getProcessedRequests, getSelectedRequest } from './derived';
 
 export const useNetworkActivityStore = <T>(
-  selector: (state: NetworkActivityState) => T
+  selector: (state: NetworkActivityState) => T,
 ): T => {
   return useStore(store, selector);
 };
@@ -29,6 +29,14 @@ export const useIsRecording = () => {
   return useNetworkActivityStore((state) => state.isRecording);
 };
 
+export const useNetworkEntries = () => {
+  return useNetworkActivityStore((state) => state.networkEntries);
+};
+
+export const useWebSocketMessagesMap = () => {
+  return useNetworkActivityStore((state) => state.websocketMessages);
+};
+
 export const useNetworkActivityActions = () => {
   return useNetworkActivityStore((state) => state.actions);
 };
@@ -39,7 +47,7 @@ export const useNetworkActivityClientManagement = () => {
 
 export const useWebSocketMessages = (requestId: string) => {
   return useNetworkActivityStore(
-    (state) => state.websocketMessages.get(requestId) || []
+    (state) => state.websocketMessages.get(requestId) || [],
   );
 };
 
