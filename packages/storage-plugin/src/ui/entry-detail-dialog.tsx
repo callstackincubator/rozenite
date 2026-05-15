@@ -2,6 +2,7 @@ import { X, Info, Edit3 } from 'lucide-react';
 import { JSONTree } from 'react-json-tree';
 import { StorageEntry } from '../shared/types';
 import { useMemo } from 'react';
+import { bytesToHexdump } from './binary';
 
 export type EntryDetailDialogProps = {
   isOpen: boolean;
@@ -29,7 +30,9 @@ const jsonTreeTheme = {
   base0F: '#f97316', // text-orange-500
 };
 
-const jsonSafeParse = (value: string): Record<string, unknown> | unknown[] | null => {
+const jsonSafeParse = (
+  value: string,
+): Record<string, unknown> | unknown[] | null => {
   try {
     const parsed = JSON.parse(value) as unknown;
 
@@ -87,9 +90,14 @@ const formatValue = (entry: StorageEntry) => {
     case 'buffer': {
       const bufferArray = entry.value as number[];
       return (
-        <span className="text-purple-300 font-mono">
-          [{bufferArray.join(', ')}]
-        </span>
+        <div className="space-y-2">
+          <div className="text-xs text-gray-400">
+            {bufferArray.length} {bufferArray.length === 1 ? 'byte' : 'bytes'}
+          </div>
+          <pre className="text-purple-200 font-mono text-xs whitespace-pre overflow-auto leading-snug">
+            {bytesToHexdump(bufferArray)}
+          </pre>
+        </div>
       );
     }
     default:
@@ -107,7 +115,7 @@ export const EntryDetailDialog = ({
   const stringValue = isStringValue ? (entry.value as string) : '';
   const jsonValue = useMemo(
     () => (isStringValue ? jsonSafeParse(stringValue) : null),
-    [isStringValue, stringValue]
+    [isStringValue, stringValue],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -163,7 +171,7 @@ export const EntryDetailDialog = ({
             <div className="flex items-center">
               <span
                 className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
-                  entry.type
+                  entry.type,
                 )}`}
               >
                 {entry.type}
