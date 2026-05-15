@@ -1,6 +1,7 @@
 import { binaryRenderer } from './binary';
 import { binaryTooLargeRenderer } from './binary-too-large';
 import { emptyRenderer } from './empty';
+import { htmlRenderer } from './html';
 import { imageRenderer } from './image';
 import { jsonRenderer } from './json';
 import { svgRenderer } from './svg';
@@ -32,6 +33,7 @@ export const renderers: ResponseRenderer[] = [
   imageRenderer,
   binaryRenderer,
   jsonRenderer,
+  htmlRenderer,
   textFallbackRenderer,
   unknownRenderer,
 ];
