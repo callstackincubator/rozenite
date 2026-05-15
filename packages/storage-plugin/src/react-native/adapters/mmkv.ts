@@ -3,11 +3,9 @@ import type { MMKV as MMKVV4 } from 'react-native-mmkv-v4';
 import type {
   StorageAdapter,
   StorageEntry,
-  StorageEntryType,
   StorageNode,
 } from '../../shared/types';
 import { DEFAULT_SUPPORTED_TYPES } from '../../shared/types';
-import { looksLikeGarbled } from '../is-garbled';
 
 type MMKV = MMKVV3 | MMKVV4;
 
@@ -81,92 +79,30 @@ const getMMKVAdapter = (mmkv: MMKV): MMKVAdapter => {
   };
 };
 
-// Per-storage map of "known" types for keys we have observed via set().
-// MMKV stores raw bytes without a type tag: once a buffer is written,
-// getString() on the same key happily decodes those bytes as UTF-8.
-// For buffers that happen to be valid printable ASCII (e.g. "hello")
-// the heuristic below cannot tell buffer from string. This map lets us
-// honor the type the plugin (or the app, on first observation) intended
-// for the round-trip case (edit → save → re-read).
-type TypeOverrideMap = Map<string, StorageEntryType>;
-
-const readWithType = (
-  adapter: MMKVAdapter,
-  key: string,
-  type: StorageEntryType,
-): StorageEntry | undefined => {
-  switch (type) {
-    case 'string': {
-      const value = adapter.getString(key);
-      return value !== undefined ? { key, type: 'string', value } : undefined;
-    }
-    case 'number': {
-      const value = adapter.getNumber(key);
-      return value !== undefined ? { key, type: 'number', value } : undefined;
-    }
-    case 'boolean': {
-      const value = adapter.getBoolean(key);
-      return value !== undefined ? { key, type: 'boolean', value } : undefined;
-    }
-    case 'buffer': {
-      const value = adapter.getBuffer(key);
-      return value !== undefined
-        ? { key, type: 'buffer', value: Array.from(new Uint8Array(value)) }
-        : undefined;
-    }
-  }
-};
-
+// MMKV stores raw bytes per key without a type tag, so the typed getters
+// have to be tried in priority order. String wins first because the
+// majority of stored values are strings; entries whose bytes happen to
+// decode as valid UTF-8 will surface as `string` even when the app
+// wrote them via setBuffer. Users disambiguate at edit time by picking
+// the Hex editor — the editor switcher is the single source of truth
+// for "what type is this," not any plugin-side cache.
 const getEntry = (
   adapter: MMKVAdapter,
   key: string,
-  typeOverrides: TypeOverrideMap,
 ): StorageEntry | undefined => {
-  const override = typeOverrides.get(key);
-  if (override) {
-    const entry = readWithType(adapter, key, override);
-    if (entry) {
-      return entry;
-    }
-    // The key was deleted (or the typed getter no longer resolves) — drop
-    // the stale override and fall through to the heuristic.
-    typeOverrides.delete(key);
-  }
-
   const stringValue = adapter.getString(key);
-
-  if (stringValue !== undefined && stringValue.length > 0) {
-    if (looksLikeGarbled(stringValue)) {
-      return {
-        key,
-        type: 'buffer',
-        value: Array.from(new TextEncoder().encode(stringValue)),
-      };
-    }
-
-    return {
-      key,
-      type: 'string',
-      value: stringValue,
-    };
+  if (stringValue !== undefined) {
+    return { key, type: 'string', value: stringValue };
   }
 
   const numberValue = adapter.getNumber(key);
   if (numberValue !== undefined) {
-    return {
-      key,
-      type: 'number',
-      value: numberValue,
-    };
+    return { key, type: 'number', value: numberValue };
   }
 
   const booleanValue = adapter.getBoolean(key);
   if (booleanValue !== undefined) {
-    return {
-      key,
-      type: 'boolean',
-      value: booleanValue,
-    };
+    return { key, type: 'boolean', value: booleanValue };
   }
 
   const bufferValue = adapter.getBuffer(key);
@@ -181,26 +117,12 @@ const getEntry = (
   return undefined;
 };
 
-const setEntry = (
-  adapter: MMKVAdapter,
-  entry: StorageEntry,
-  typeOverrides: TypeOverrideMap,
-) => {
+const setEntry = (adapter: MMKVAdapter, entry: StorageEntry) => {
   if (entry.type === 'buffer') {
     adapter.set(entry.key, new Uint8Array(entry.value).buffer);
   } else {
     adapter.set(entry.key, entry.value);
   }
-  typeOverrides.set(entry.key, entry.type);
-};
-
-const deleteKey = (
-  adapter: MMKVAdapter,
-  key: string,
-  typeOverrides: TypeOverrideMap,
-) => {
-  adapter.delete(key);
-  typeOverrides.delete(key);
 };
 
 const getStorageBlacklist = (
@@ -246,7 +168,6 @@ export const createMMKVStorageAdapter = ({
   const storageNodes: StorageNode[] = Object.entries(normalizedStorages).map(
     ([storageId, storage]) => {
       const mmkv = getMMKVAdapter(storage);
-      const typeOverrides: TypeOverrideMap = new Map();
 
       return {
         id: storageId,
@@ -259,9 +180,9 @@ export const createMMKVStorageAdapter = ({
         storage: {
           kind: 'sync',
           getAllKeys: () => mmkv.getAllKeys(),
-          get: (key) => getEntry(mmkv, key, typeOverrides),
-          set: (entry) => setEntry(mmkv, entry, typeOverrides),
-          delete: (key) => deleteKey(mmkv, key, typeOverrides),
+          get: (key) => getEntry(mmkv, key),
+          set: (entry) => setEntry(mmkv, entry),
+          delete: (key) => mmkv.delete(key),
           subscribe: (callback) => mmkv.addOnValueChangedListener(callback),
         },
       };
