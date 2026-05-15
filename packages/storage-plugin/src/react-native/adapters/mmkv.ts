@@ -79,20 +79,41 @@ const getMMKVAdapter = (mmkv: MMKV): MMKVAdapter => {
   };
 };
 
-// MMKV stores raw bytes per key without a type tag, so the typed getters
-// have to be tried in priority order. String wins first because the
-// majority of stored values are strings; entries whose bytes happen to
-// decode as valid UTF-8 will surface as `string` even when the app
-// wrote them via setBuffer. Users disambiguate at edit time by picking
-// the Hex editor — the editor switcher is the single source of truth
-// for "what type is this," not any plugin-side cache.
+// MMKV's typed getters can disagree on the same key — on some platforms
+// `getString` lenient-decodes invalid-UTF-8 buffer bytes to `""`, and
+// `getNumber` reinterprets 8-byte buffers as IEEE 754 doubles without
+// honoring the original `setBuffer` write. `getBuffer` is more reliably
+// strict (only returns for keys actually written via `setBuffer`), so
+// we consult it ahead of the numeric getters to break ties in favour of
+// the bytes that are actually on disk.
+//
+//   1. Non-empty string — the common case. Buffer bytes that happen to
+//      be valid UTF-8 surface here too (documented trade-off); users
+//      disambiguate at edit time via the Hex editor.
+//   2. Non-empty buffer — catches `setBuffer` payloads regardless of
+//      byte count and regardless of whether the other typed getters
+//      also return spurious values.
+//   3. Number, then boolean — for keys actually written via `setNumber`
+//      / `setBoolean`. `getBuffer` will have returned `undefined` for
+//      those keys, so the chain falls through.
+//   4. Empty string — intentional `setString(key, "")` lands here once
+//      we've ruled out a non-empty buffer payload at the same key.
 const getEntry = (
   adapter: MMKVAdapter,
   key: string,
 ): StorageEntry | undefined => {
   const stringValue = adapter.getString(key);
-  if (stringValue !== undefined) {
+  if (stringValue !== undefined && stringValue.length > 0) {
     return { key, type: 'string', value: stringValue };
+  }
+
+  const bufferValue = adapter.getBuffer(key);
+  if (bufferValue !== undefined && bufferValue.byteLength > 0) {
+    return {
+      key,
+      type: 'buffer',
+      value: Array.from(new Uint8Array(bufferValue)),
+    };
   }
 
   const numberValue = adapter.getNumber(key);
@@ -105,13 +126,8 @@ const getEntry = (
     return { key, type: 'boolean', value: booleanValue };
   }
 
-  const bufferValue = adapter.getBuffer(key);
-  if (bufferValue !== undefined) {
-    return {
-      key,
-      type: 'buffer',
-      value: Array.from(new Uint8Array(bufferValue)),
-    };
+  if (stringValue !== undefined) {
+    return { key, type: 'string', value: stringValue };
   }
 
   return undefined;

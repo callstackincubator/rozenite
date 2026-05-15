@@ -150,7 +150,20 @@ describe('createMMKVStorageAdapter', () => {
 // fake mirrors that behaviour: getString attempts a strict UTF-8 decode
 // and returns undefined when the bytes are not valid UTF-8, exposing
 // the read priority chain that the adapter relies on.
-const createAmbiguousFakeMMKVV4 = () => {
+//
+// `lenientGetString`, when true, returns `""` instead of `undefined`
+// on a failed UTF-8 decode — matching real MMKV builds on certain
+// platforms (notably iOS NSString conversion). The adapter has to
+// handle that case by falling through to getBuffer.
+//
+// `lenientGetNumber`, when true, reinterprets 8-byte buffer payloads
+// as IEEE 754 doubles (instead of returning undefined). Some MMKV
+// builds expose this behavior — without the buffer-before-number
+// priority, the adapter would misreport such buffers as numbers.
+const createAmbiguousFakeMMKVV4 = ({
+  lenientGetString = false,
+  lenientGetNumber = false,
+}: { lenientGetString?: boolean; lenientGetNumber?: boolean } = {}) => {
   type Stored =
     | { kind: 'string'; value: string }
     | { kind: 'number'; value: number }
@@ -184,14 +197,22 @@ const createAmbiguousFakeMMKVV4 = () => {
         try {
           return new TextDecoder('utf-8', { fatal: true }).decode(stored.bytes);
         } catch {
-          return undefined;
+          return lenientGetString ? '' : undefined;
         }
       }
       return undefined;
     }),
     getNumber: vi.fn((key: string) => {
       const stored = values.get(key);
-      return stored?.kind === 'number' ? stored.value : undefined;
+      if (stored?.kind === 'number') return stored.value;
+      if (
+        lenientGetNumber &&
+        stored?.kind === 'buffer' &&
+        stored.bytes.byteLength === 8
+      ) {
+        return new DataView(stored.bytes.buffer).getFloat64(0, true);
+      }
+      return undefined;
     }),
     getBoolean: vi.fn((key: string) => {
       const stored = values.get(key);
@@ -324,5 +345,92 @@ describe('createMMKVStorageAdapter read priority', () => {
     await view.delete('temp');
 
     await expect(view.get('temp')).resolves.toBeUndefined();
+  });
+});
+
+describe('createMMKVStorageAdapter read priority — lenient getString platforms', () => {
+  // Real MMKV on some platforms returns `""` for invalid UTF-8 bytes
+  // rather than `undefined`. Without the empty-string carve-out in the
+  // priority chain, the adapter would misreport such buffers as empty
+  // strings and the bytes would appear lost from the panel's POV.
+  it('falls through to getBuffer when getString returns an empty string', async () => {
+    const storage = createAmbiguousFakeMMKVV4({ lenientGetString: true });
+    const adapter = createMMKVStorageAdapter({
+      storages: { 'user-storage': storage as any },
+    });
+    const [view] = createStorageViews([adapter]);
+
+    // PNG magic bytes — first byte (0x89) is an invalid UTF-8 lead.
+    await view.set({
+      key: 'png-magic',
+      type: 'buffer',
+      value: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+    });
+
+    await expect(view.get('png-magic')).resolves.toEqual({
+      key: 'png-magic',
+      type: 'buffer',
+      value: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+    });
+  });
+
+  it('preserves an intentional empty string when no buffer is present', async () => {
+    const storage = createAmbiguousFakeMMKVV4({ lenientGetString: true });
+    const adapter = createMMKVStorageAdapter({
+      storages: { 'user-storage': storage as any },
+    });
+    const [view] = createStorageViews([adapter]);
+
+    await view.set({ key: 'blank', type: 'string', value: '' });
+
+    await expect(view.get('blank')).resolves.toEqual({
+      key: 'blank',
+      type: 'string',
+      value: '',
+    });
+  });
+
+  it('keeps an 8-byte buffer as buffer when getNumber lenient-decodes it as a double', async () => {
+    // Some MMKV builds reinterpret 8-byte setBuffer payloads as IEEE
+    // 754 doubles via getNumber. The priority chain has to consult
+    // getBuffer before getNumber so the bytes that are actually on
+    // disk win — otherwise PNG-magic-shaped buffers would be reported
+    // as some arbitrary number.
+    const storage = createAmbiguousFakeMMKVV4({
+      lenientGetString: true,
+      lenientGetNumber: true,
+    });
+    const adapter = createMMKVStorageAdapter({
+      storages: { 'user-storage': storage as any },
+    });
+    const [view] = createStorageViews([adapter]);
+
+    const pngMagic = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+    await view.set({ key: 'png-magic', type: 'buffer', value: pngMagic });
+
+    await expect(view.get('png-magic')).resolves.toEqual({
+      key: 'png-magic',
+      type: 'buffer',
+      value: pngMagic,
+    });
+  });
+
+  it('reports an empty buffer as buffer (matching its setBuffer write)', async () => {
+    const storage = createAmbiguousFakeMMKVV4({ lenientGetString: true });
+    const adapter = createMMKVStorageAdapter({
+      storages: { 'user-storage': storage as any },
+    });
+    const [view] = createStorageViews([adapter]);
+
+    // 0xFF is invalid UTF-8 — getString returns "" under lenient decode.
+    // The bytes are still present via getBuffer; we want the buffer
+    // reading to win since byteLength > 0.
+    await view.set({ key: 'invalid', type: 'buffer', value: [0xff] });
+
+    await expect(view.get('invalid')).resolves.toEqual({
+      key: 'invalid',
+      type: 'buffer',
+      value: [0xff],
+    });
   });
 });
