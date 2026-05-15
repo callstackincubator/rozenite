@@ -7,9 +7,9 @@ Rozenite plugin tests should cover two different loops:
 
 Use both. Automated tests keep message flows stable. The dev host helps you iterate on panels and payload shapes quickly.
 
-## Automated Tests With `@rozenite/plugin-bridge/testing`
+## Automated Tests With `@rozenite/plugin-bridge`
 
-`@rozenite/plugin-bridge/testing` provides a harness and a provider for testing code that uses `useRozeniteDevToolsClient`.
+`@rozenite/plugin-bridge` provides a harness and a provider for testing code that uses `useRozeniteDevToolsClient`.
 
 - The harness starts **disconnected**, so your tests can cover the real `client === null` state before DevTools connects.
 - When you call `connect(pluginId)`, the production hook receives a test client instead of creating the real bridge client.
@@ -21,7 +21,7 @@ import { render } from '@testing-library/react';
 import {
   createRozeniteTestHarness,
   RozeniteDevToolsTestProvider,
-} from '@rozenite/plugin-bridge/testing';
+} from '@rozenite/plugin-bridge';
 import { MyPanel } from './panel';
 
 type PluginEvents = {
