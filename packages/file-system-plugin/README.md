@@ -13,6 +13,7 @@ The Rozenite File System Plugin provides an in-app file explorer for React Nativ
 - **Text Preview**: Open text files directly in DevTools for quick inspection
 - **Image Preview**: Preview image files inline without leaving the DevTools panel
 - **Binary Fallback Preview**: Non-text files fall back to a hex-style preview for debugging
+- **File Transfer**: Opt-in single-file import and export workflows for moving raw files in and out of app-accessible directories
 - **Large Directory Handling**: Expo directory reads are capped to keep very large folders responsive
 
 ## Installation
@@ -55,6 +56,10 @@ import {
 function App() {
   useFileSystemDevTools({
     adapter: createExpoFileSystemAdapter(FileSystem),
+    fileTransfer: {
+      import: true,
+      export: true,
+    },
   });
 
   return <YourApp />;
@@ -73,6 +78,10 @@ import {
 function App() {
   useFileSystemDevTools({
     adapter: createRNFSAdapter(RNFS),
+    fileTransfer: {
+      import: true,
+      export: true,
+    },
   });
 
   return <YourApp />;
@@ -92,6 +101,8 @@ Start your development server and open React Native DevTools. You’ll find the 
 - RNFS roots include document, caches, temporary, library, and bundle paths when available.
 - File previews are limited to avoid loading very large files into DevTools.
 - Binary files are shown as a hex-style dump when text decoding is not possible.
+- File import and export are disabled by default. Enable them explicitly with `fileTransfer.import` and `fileTransfer.export`.
+- File transfer supports single files only. Import targets the currently viewed directory and asks before overwriting an existing file.
 
 ## Agent Tools (LLM Integration)
 

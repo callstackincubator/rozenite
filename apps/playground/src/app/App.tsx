@@ -66,7 +66,13 @@ const Wrapper = () => {
   usePerformanceMonitorDevTools();
   useRequireProfilerDevTools();
   useAgentPlaygroundTools();
-  useFileSystemDevTools({ rnfs: RNFS });
+  useFileSystemDevTools({
+    rnfs: RNFS,
+    fileTransfer: {
+      import: true,
+      export: true,
+    },
+  });
 
   return (
     <Stack.Navigator
