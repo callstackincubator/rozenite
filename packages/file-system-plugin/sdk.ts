@@ -31,6 +31,7 @@ export type {
 
 export type {
   FileSystemProvider,
+  FileSystemTransferCapabilities,
   FsEntry,
   FsRoots,
 } from './src/shared/protocol.js';

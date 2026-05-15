@@ -1,4 +1,8 @@
-import type { FileSystemProvider, FsEntry } from '../shared/protocol';
+import type {
+  FileSystemProvider,
+  FileSystemTransferCapabilities,
+  FsEntry,
+} from '../shared/protocol';
 import { joinPath, mimeTypeFromName, normalizeDirPath } from '../shared/path';
 
 export type ExpoFileSystemLike = any;
@@ -18,6 +22,12 @@ export type UseFileSystemDevToolsOptions = {
    * Supports `react-native-fs` or `@dr.pogodin/react-native-fs` (same surface).
    */
   rnfs?: RNFSLike;
+  /**
+   * Enables raw file import/export transfer features.
+   *
+   * Both directions are disabled by default.
+   */
+  fileTransfer?: Partial<FileSystemTransferCapabilities>;
 };
 
 export type FileSystemRoot = {
@@ -36,6 +46,14 @@ export type FileSystemAdapter = {
     maxBytes: number,
   ) => Promise<{ mime: string; base64: string }>;
   readTextFile: (path: string, maxBytes: number) => Promise<string>;
+  readFileBase64?: (path: string) => Promise<{
+    fileName: string;
+    mime: string;
+    size: number | null;
+    base64: string;
+  }>;
+  writeFileBase64?: (path: string, base64: string) => Promise<FsEntry>;
+  pathExists?: (path: string) => Promise<boolean>;
 };
 
 export type ProviderImpl = FileSystemAdapter;
@@ -48,6 +66,25 @@ const warnedLegacyOptions = new Set<'expoFileSystem' | 'rnfs'>();
 
 const LEGACY_OPTION_WARNING =
   '[Rozenite][file-system-plugin] `expoFileSystem` and `rnfs` options are deprecated. Use `adapter: createExpoFileSystemAdapter(...)` or `adapter: createRNFSAdapter(...)` instead.';
+
+export const DEFAULT_FILE_TRANSFER_CAPABILITIES: FileSystemTransferCapabilities =
+  {
+    import: false,
+    export: false,
+  };
+
+export function resolveFileTransferCapabilities(
+  options?: UseFileSystemDevToolsOptions,
+): FileSystemTransferCapabilities {
+  return {
+    import:
+      options?.fileTransfer?.import ??
+      DEFAULT_FILE_TRANSFER_CAPABILITIES.import,
+    export:
+      options?.fileTransfer?.export ??
+      DEFAULT_FILE_TRANSFER_CAPABILITIES.export,
+  };
+}
 
 export function createExpoFileSystemAdapter(
   fileSystem: CreateExpoFileSystemAdapterOptions,
@@ -188,6 +225,31 @@ function createExpoLegacyFileSystemAdapter(
         });
         return `[Binary file - ${size} bytes]\n\n` + formatBase64AsHex(base64);
       }
+    },
+    async readFileBase64(path) {
+      const entry = await buildEntry(path);
+      if (entry.isDirectory) {
+        throw new Error(`Path "${entry.path}" is a directory, not a file.`);
+      }
+      const base64 = await FileSystem.readAsStringAsync(entry.path, {
+        encoding: 'base64',
+      });
+      return {
+        fileName: entry.name,
+        mime: entry.mimeTypeHint ?? 'application/octet-stream',
+        size: entry.size ?? null,
+        base64,
+      };
+    },
+    async writeFileBase64(path, base64) {
+      await FileSystem.writeAsStringAsync(path, base64, {
+        encoding: 'base64',
+      });
+      return buildEntry(path);
+    },
+    async pathExists(path) {
+      const info = await FileSystem.getInfoAsync(path, { size: true });
+      return Boolean(info.exists);
     },
   };
 }
@@ -336,12 +398,50 @@ function createExpoModernFileSystemAdapter(
         return `[Binary file - ${size} bytes]\n\n` + formatBase64AsHex(base64);
       }
     },
+    async readFileBase64(path) {
+      const entry = await buildEntry(path);
+      if (entry.isDirectory) {
+        throw new Error(`Path "${entry.path}" is a directory, not a file.`);
+      }
+      const file = new FileSystem.File(entry.path);
+      const base64 = await file.base64();
+      return {
+        fileName: entry.name,
+        mime: entry.mimeTypeHint ?? 'application/octet-stream',
+        size: entry.size ?? null,
+        base64,
+      };
+    },
+    async writeFileBase64(path, base64) {
+      const file = new FileSystem.File(path);
+      await file.write(base64ToBytes(base64));
+      return buildEntry(file.uri ?? path);
+    },
+    async pathExists(path) {
+      const pathInfo = await FileSystem.Paths.info(path);
+      return Boolean(pathInfo?.exists);
+    },
   };
 }
 
 export function createRNFSAdapter(
   RNFS: CreateRNFSAdapterOptions,
 ): FileSystemAdapter {
+  const buildEntry = async (path: string): Promise<FsEntry> => {
+    const normalizedPath = normalizeRnfsPath(path);
+    const stat = await RNFS.stat(normalizedPath);
+    const isDirectory = isRnfsDirectory(stat);
+
+    return {
+      name: basename(path),
+      path: isDirectory ? normalizeDirPath(normalizedPath) : normalizedPath,
+      isDirectory,
+      size: isDirectory ? null : (stat.size ?? null),
+      modifiedAtMs: stat.mtime ? new Date(stat.mtime).getTime() : null,
+      mimeTypeHint: mimeTypeFromName(normalizedPath),
+    };
+  };
+
   return {
     provider: 'rnfs',
     async getRoots() {
@@ -396,18 +496,7 @@ export function createRNFSAdapter(
       return entries;
     },
     async statPath(path) {
-      const normalizedPath = normalizeRnfsPath(path);
-      const stat = await RNFS.stat(normalizedPath);
-      const isDirectory = isRnfsDirectory(stat);
-
-      return {
-        name: basename(path),
-        path: isDirectory ? normalizeDirPath(normalizedPath) : normalizedPath,
-        isDirectory,
-        size: isDirectory ? null : (stat.size ?? null),
-        modifiedAtMs: stat.mtime ? new Date(stat.mtime).getTime() : null,
-        mimeTypeHint: mimeTypeFromName(normalizedPath),
-      };
+      return buildEntry(path);
     },
     async readImageBase64(path, maxBytes) {
       const normalizedPath = normalizeRnfsPath(path);
@@ -436,6 +525,36 @@ export function createRNFSAdapter(
       } catch {
         const base64 = await RNFS.readFile(normalizedPath, 'base64');
         return `[Binary file - ${size} bytes]\n\n` + formatBase64AsHex(base64);
+      }
+    },
+    async readFileBase64(path) {
+      const entry = await buildEntry(path);
+      if (entry.isDirectory) {
+        throw new Error(`Path "${entry.path}" is a directory, not a file.`);
+      }
+      const base64 = await RNFS.readFile(entry.path, 'base64');
+      return {
+        fileName: entry.name,
+        mime: entry.mimeTypeHint ?? 'application/octet-stream',
+        size: entry.size ?? null,
+        base64,
+      };
+    },
+    async writeFileBase64(path, base64) {
+      const normalizedPath = normalizeRnfsPath(path);
+      await RNFS.writeFile(normalizedPath, base64, 'base64');
+      return buildEntry(normalizedPath);
+    },
+    async pathExists(path) {
+      const normalizedPath = normalizeRnfsPath(path);
+      if (typeof RNFS.exists === 'function') {
+        return Boolean(await RNFS.exists(normalizedPath));
+      }
+      try {
+        await RNFS.stat(normalizedPath);
+        return true;
+      } catch {
+        return false;
       }
     },
   };
@@ -576,6 +695,26 @@ function formatBase64AsHex(base64: string): string {
   }
 
   return lines.join('\n');
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const clean = base64.replace(/[\s=]/g, '');
+  const bytes: number[] = [];
+
+  for (let i = 0; i < clean.length; i += 4) {
+    const a = chars.indexOf(clean[i] || 'A');
+    const b = chars.indexOf(clean[i + 1] || 'A');
+    const c = chars.indexOf(clean[i + 2] || 'A');
+    const d = chars.indexOf(clean[i + 3] || 'A');
+
+    bytes.push((a << 2) | (b >> 4));
+    if (i + 2 < clean.length) bytes.push(((b & 15) << 4) | (c >> 2));
+    if (i + 3 < clean.length) bytes.push(((c & 3) << 6) | d);
+  }
+
+  return Uint8Array.from(bytes);
 }
 
 function normalizeRnfsPath(path: string): string {

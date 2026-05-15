@@ -26,6 +26,21 @@ const createNoopFileSystemAdapter = (
     base64: '',
   }),
   readTextFile: async () => '',
+  readFileBase64: async () => ({
+    fileName: '',
+    mime: 'application/octet-stream',
+    size: null,
+    base64: '',
+  }),
+  writeFileBase64: async (path: string): Promise<FsEntry> => ({
+    name: path,
+    path,
+    isDirectory: false,
+    size: null,
+    modifiedAtMs: null,
+    mimeTypeHint: null,
+  }),
+  pathExists: async () => false,
 });
 
 export let createExpoFileSystemAdapter: typeof import('./src/react-native/fileSystemProvider').createExpoFileSystemAdapter;

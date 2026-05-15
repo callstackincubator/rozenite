@@ -3,6 +3,7 @@ import type { FsEntry } from '../shared/protocol';
 import {
   createExpoFileSystemAdapter,
   createRNFSAdapter,
+  resolveFileTransferCapabilities,
   resolveFileSystemAdapter,
   type ExpoFileSystemLike,
   type FileSystemAdapter,
@@ -41,6 +42,15 @@ const createExpoFileSystem = (): ExpoFileSystemLike => ({
       };
     }
 
+    if (path === 'file:///documents/import.bin') {
+      return {
+        exists: true,
+        isDirectory: false,
+        size: 4,
+        modificationTime: 103,
+      };
+    }
+
     return {
       exists: true,
       isDirectory: true,
@@ -62,6 +72,7 @@ const createExpoFileSystem = (): ExpoFileSystemLike => ({
       return 'AAECAw==';
     },
   ),
+  writeAsStringAsync: vi.fn(async () => {}),
 });
 
 const createExpoModernFileSystem = (): ExpoFileSystemLike => {
@@ -75,6 +86,10 @@ const createExpoModernFileSystem = (): ExpoFileSystemLike => {
     }
 
     if (path === 'file:///documents/binary.bin') {
+      return { exists: true, isDirectory: false };
+    }
+
+    if (path === 'file:///documents/import.bin') {
       return { exists: true, isDirectory: false };
     }
 
@@ -131,6 +146,7 @@ const createExpoModernFileSystem = (): ExpoFileSystemLike => {
     async base64() {
       return this.uri.endsWith('.txt') ? 'aGVsbG8=' : 'AAECAw==';
     }
+    async write() {}
   }
 
   return {
@@ -188,6 +204,8 @@ const createRNFS = (): RNFSLike => ({
 
     return 'hello';
   }),
+  writeFile: vi.fn(async () => {}),
+  exists: vi.fn(async (path: string) => path === '/documents/hello.txt'),
 });
 
 const createCustomAdapter = (): FileSystemAdapter => ({
@@ -260,6 +278,26 @@ describe('resolveFileSystemAdapter', () => {
   });
 });
 
+describe('resolveFileTransferCapabilities', () => {
+  it('disables file transfer by default', () => {
+    expect(resolveFileTransferCapabilities()).toEqual({
+      import: false,
+      export: false,
+    });
+  });
+
+  it('enables each transfer direction explicitly', () => {
+    expect(
+      resolveFileTransferCapabilities({
+        fileTransfer: { import: true, export: true },
+      }),
+    ).toEqual({
+      import: true,
+      export: true,
+    });
+  });
+});
+
 describe('createExpoFileSystemAdapter', () => {
   it('returns expo roots and normalizes file metadata', async () => {
     const adapter = createExpoFileSystemAdapter(createExpoFileSystem());
@@ -310,6 +348,34 @@ describe('createExpoFileSystemAdapter', () => {
     ).rejects.toThrow('File is too large for preview');
   });
 
+  it('reads and writes raw files as base64', async () => {
+    const fileSystem = createExpoFileSystem();
+    const adapter = createExpoFileSystemAdapter(fileSystem);
+
+    await expect(
+      adapter.readFileBase64?.('file:///documents/binary.bin'),
+    ).resolves.toEqual({
+      fileName: 'binary.bin',
+      mime: 'application/octet-stream',
+      size: 4,
+      base64: 'AAECAw==',
+    });
+
+    await expect(
+      adapter.writeFileBase64?.('file:///documents/import.bin', 'AAECAw=='),
+    ).resolves.toMatchObject({
+      name: 'import.bin',
+      path: 'file:///documents/import.bin',
+      isDirectory: false,
+    });
+
+    expect(fileSystem.writeAsStringAsync).toHaveBeenCalledWith(
+      'file:///documents/import.bin',
+      'AAECAw==',
+      { encoding: 'base64' },
+    );
+  });
+
   it('supports the modern Expo FileSystem API', async () => {
     const adapter = createExpoFileSystemAdapter(createExpoModernFileSystem());
 
@@ -338,6 +404,19 @@ describe('createExpoFileSystemAdapter', () => {
     await expect(
       adapter.readTextFile('file:///documents/binary.bin', 10),
     ).resolves.toContain('[Binary file - 4 bytes]');
+  });
+
+  it('writes raw files through the modern Expo File API', async () => {
+    const expoFileSystem = createExpoModernFileSystem();
+    const adapter = createExpoFileSystemAdapter(expoFileSystem);
+
+    await expect(
+      adapter.writeFileBase64?.('file:///documents/import.bin', 'AAECAw=='),
+    ).resolves.toMatchObject({
+      name: 'import.bin',
+      path: 'file:///documents/import.bin',
+      isDirectory: false,
+    });
   });
 });
 
@@ -399,5 +478,33 @@ describe('createRNFSAdapter', () => {
     await expect(
       adapter.readImageBase64('/documents/hello.txt', 1),
     ).rejects.toThrow('File is too large for preview');
+  });
+
+  it('reads and writes raw files as base64', async () => {
+    const rnfs = createRNFS();
+    const adapter = createRNFSAdapter(rnfs);
+
+    await expect(adapter.readFileBase64?.('/documents/binary.bin')).resolves.toEqual(
+      {
+        fileName: 'binary.bin',
+        mime: 'application/octet-stream',
+        size: 4,
+        base64: 'AAECAw==',
+      },
+    );
+
+    await expect(
+      adapter.writeFileBase64?.('/documents/import.bin', 'AAECAw=='),
+    ).resolves.toMatchObject({
+      name: 'import.bin',
+      path: '/documents/import.bin',
+      isDirectory: false,
+    });
+
+    expect(rnfs.writeFile).toHaveBeenCalledWith(
+      '/documents/import.bin',
+      'AAECAw==',
+      'base64',
+    );
   });
 });
