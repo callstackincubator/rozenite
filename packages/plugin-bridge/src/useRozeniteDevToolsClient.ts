@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
-import { RozeniteDevToolsClient, getRozeniteDevToolsClient } from './client';
-import { MissingRozeniteForWebError, UnsupportedPlatformError } from './errors';
+import { useContext, useEffect } from 'react';
+import type { RozeniteDevToolsClient } from './client';
+import { RozeniteDevToolsClientContext } from './client-context';
+import { useRozeniteDevToolsClientForProduction } from './useRozeniteDevToolsClientForProduction';
+import { useRozeniteDevToolsClientForTesting } from './useRozeniteDevToolsClientForTesting';
 
 export type UseRozeniteDevToolsClientOptions<
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
 > = {
   pluginId: string;
   eventMap?: TEventMap;
@@ -21,78 +23,23 @@ const isPanelClient = (): boolean => {
 
 // TODO: Handle multiple hooks (should not kill the socket)
 export const useRozeniteDevToolsClient = <
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
 >({
   pluginId,
 }: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsClient<TEventMap> | null => {
-  const [client, setClient] =
-    useState<RozeniteDevToolsClient<TEventMap> | null>(null);
-  const [error, setError] = useState<unknown | null>(null);
+  const registry = useContext(RozeniteDevToolsClientContext);
+  const testClient = useRozeniteDevToolsClientForTesting<TEventMap>(pluginId);
+  const productionClient = useRozeniteDevToolsClientForProduction<TEventMap>(pluginId);
+
+  const resolvedClient = registry ? testClient : productionClient;
 
   useEffect(() => {
-    let isMounted = true;
-    let client: RozeniteDevToolsClient<TEventMap> | null = null;
-
-    const setup = async () => {
-      try {
-        client = await getRozeniteDevToolsClient<TEventMap>(pluginId);
-
-        if (isMounted) {
-          setClient(client);
-        }
-      } catch (error) {
-        if (error instanceof MissingRozeniteForWebError) {
-          // On web without Rozenite, the client is expected to be null.
-          console.warn(
-            `[Rozenite, ${pluginId}] Rozenite for web is not configured. A separate integration is required for web. Consult Rozenite docs for details.`
-          );
-          return;
-        }
-
-        if (error instanceof UnsupportedPlatformError) {
-          // We don't want to show an error for unsupported platforms.
-          // It's expected that the client will be null.
-          console.warn(
-            `[Rozenite, ${pluginId}] Unsupported platform, skipping setup.`
-          );
-          return;
-        }
-
-        console.error(`[Rozenite, ${pluginId}] Error setting up client.`, error);
-
-        if (isMounted) {
-          setError(error);
-        }
-      }
-    };
-    const teardown = async () => {
-      try {
-        if (client != null) {
-          client.close();
-        }
-      } catch {
-        // We don't care about errors when tearing down
-      }
-    };
-
-    setup();
-    return () => {
-      isMounted = false;
-      teardown();
-    };
-  }, [pluginId]);
-
-  if (error != null) {
-    throw error;
-  }
-
-  useEffect(() => {
-    if (!client || isPanelClient()) {
+    if (!resolvedClient || isPanelClient()) {
       return;
     }
 
     const lifecycleClient =
-      client as unknown as RozeniteDevToolsClient<PluginLifecycleEventMap>;
+      resolvedClient as unknown as RozeniteDevToolsClient<PluginLifecycleEventMap>;
     const timer = setTimeout(() => {
       lifecycleClient.send('plugin-mounted', {
         pluginId,
@@ -102,7 +49,7 @@ export const useRozeniteDevToolsClient = <
     return () => {
       clearTimeout(timer);
     };
-  }, [client, pluginId]);
+  }, [pluginId, resolvedClient]);
 
-  return client;
+  return resolvedClient;
 };
