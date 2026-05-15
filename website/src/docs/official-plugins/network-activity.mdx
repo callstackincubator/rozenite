@@ -81,12 +81,22 @@ Once configured, the Network Activity plugin will automatically appear in your R
 
 The response body view adapts to the format of each captured response and exposes a Preview / Raw sub-tab when both views are useful:
 
-- **Images** (`image/png`, `image/jpeg`, `image/gif`, `image/webp`, `image/svg+xml`, ...) render inline in the Preview tab via a data URL. The Raw tab shows a metadata card with Content-Type and decoded size; for SVG specifically, the Raw tab shows the source XML.
+- **Images** (`image/png`, `image/jpeg`, `image/gif`, `image/webp`, ...) render inline in the Preview tab via a data URL. The Raw tab shows a **metadata card** (decoded size, `Content-Length` header when present, derived filename, Download button) and a **hex viewer** with offset / hex / ASCII columns.
+- **SVG** (`image/svg+xml`) renders inline in the Preview tab and shows the source XML in the Raw tab — SVG is text on the wire, not bytes, so there is no hex view for it.
+- **Non-image binary** (`application/pdf`, `application/zip`, `audio/*`, `video/*`, `font/*`, `application/octet-stream`, ...) shows the same metadata card + hex viewer pair. There is no Preview for these formats — the hex view _is_ the inspection surface, and the Preview / Raw toggle is hidden.
 - **JSON** renders as a collapsible tree with copy affordances on every key and value.
 - **Text and other source formats** (`text/*`, `application/xml`, `application/javascript`, ...) render as raw monospace text.
-- **Empty or oversized responses** show a clear placeholder. Image responses above an in-capture 5 MB cap surface as "Response too large for preview" instead of crossing the bridge.
+- **Empty or oversized responses** show a clear placeholder. Binary responses above an in-capture 5 MB cap surface as "Response too large for preview" instead of crossing the bridge; the Download button is disabled for those entries with a tooltip explaining the cap.
 
 The Preview / Raw toggle remembers your choice across requests in a panel session — once you toggle to Raw, subsequent responses whose renderer supports Raw stay on Raw. Formats with only one meaningful view hide the toggle entirely.
+
+#### Downloading bytes
+
+Every binary response (image, PDF, font, audio, ...) ships with a Download button on its metadata card. The filename is derived in three tiers:
+
+1. `Content-Disposition` header's `filename` parameter (RFC 5987 `filename*` is preferred when both forms are present).
+2. The last path segment of the response URL.
+3. `response.<ext>` where the extension comes from a small content-type → extension map (e.g. `application/pdf` → `.pdf`, `font/woff2` → `.woff2`); unknown content-types fall back to `.bin`.
 
 ## Nitro Behavior
 
