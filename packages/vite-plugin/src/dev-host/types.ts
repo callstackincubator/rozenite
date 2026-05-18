@@ -3,6 +3,12 @@ export type DevHostPanelEntry = {
   source: string;
 };
 
+export type DevHostTemplateEntry = {
+  label: string;
+  type: string;
+  payload: unknown;
+};
+
 export type DevHostState = {
   packageName: string;
   packageDescription: string;

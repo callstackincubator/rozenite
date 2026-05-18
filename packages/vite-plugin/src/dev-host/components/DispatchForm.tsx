@@ -1,13 +1,16 @@
 import type { FormEvent } from 'react';
+import type { DevHostTemplateEntry } from '../types.js';
 import { ClearIcon, SendIcon } from './icons.js';
 import { ScrollArea } from './ui/ScrollArea.js';
 
 type DispatchFormProps = {
   commandType: string;
   commandPayload: string;
+  templates: DevHostTemplateEntry[];
   canDispatch: boolean;
   onCommandTypeChange: (value: string) => void;
   onCommandPayloadChange: (value: string) => void;
+  onApplyTemplate: (template: DevHostTemplateEntry) => void;
   onReset: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
@@ -15,9 +18,11 @@ type DispatchFormProps = {
 export const DispatchForm = ({
   commandType,
   commandPayload,
+  templates,
   canDispatch,
   onCommandTypeChange,
   onCommandPayloadChange,
+  onApplyTemplate,
   onReset,
   onSubmit,
 }: DispatchFormProps) => {
@@ -30,6 +35,24 @@ export const DispatchForm = ({
 
         <ScrollArea className="rz-sidebar-scroll">
           <form className="rz-command-form" onSubmit={onSubmit}>
+            {templates.length > 0 ? (
+              <div className="rz-field">
+                <div className="rz-label">Templates</div>
+                <div className="rz-template-list">
+                  {templates.map((template, index) => (
+                    <button
+                      key={`${template.label}-${index}`}
+                      type="button"
+                      className="rz-template-button"
+                      onClick={() => onApplyTemplate(template)}
+                    >
+                      {template.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="rz-field">
               <label className="rz-label" htmlFor="command-type">
                 Command

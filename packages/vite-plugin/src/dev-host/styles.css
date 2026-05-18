@@ -541,6 +541,33 @@ select {
   gap: 6px;
 }
 
+.rz-template-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rz-template-button {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.86);
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.rz-template-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.rz-template-button:focus-visible {
+  outline: 2px solid rgba(130, 50, 255, 0.95);
+  outline-offset: 1px;
+}
+
 .rz-label {
   color: rgba(255, 255, 255, 0.6);
   font-size: 12px;

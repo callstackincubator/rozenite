@@ -7,8 +7,19 @@ export type PanelEntry = {
   source: string;
 };
 
+export type DevTemplateEntry = {
+  label: string;
+  type: string;
+  payload: unknown;
+};
+
+export type DevConfig = {
+  templates?: DevTemplateEntry[];
+};
+
 export type RozeniteConfig = {
   panels: PanelEntry[];
+  dev?: DevConfig;
 };
 
 export const loadConfig = async (

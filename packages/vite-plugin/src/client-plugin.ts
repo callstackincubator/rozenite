@@ -8,6 +8,11 @@ import { normalizePath } from 'vite';
 import { loadConfig, RozeniteConfig } from './load-config.js';
 import { getPackageJSON } from './package-json.js';
 import { DEV_HOST_STATE_ELEMENT_ID } from './dev-host/constants.js';
+import {
+  getRozeniteConfigPath,
+  loadRozeniteDevConfigModule,
+  resolveRozeniteDevConfigModuleId,
+} from './dev-config-module.js';
 
 type PanelEntry = {
   name: string;
@@ -125,9 +130,7 @@ export const rozeniteClientPlugin = (): Plugin => {
         projectRoot = config.root;
       }
 
-      rozeniteConfig = await loadConfig(
-        path.resolve(projectRoot, 'rozenite.config.ts'),
-      );
+      rozeniteConfig = await loadConfig(getRozeniteConfigPath(projectRoot));
       const panels = getPanels();
 
       config.server ??= {};
@@ -158,6 +161,12 @@ export const rozeniteClientPlugin = (): Plugin => {
     },
 
     resolveId(id) {
+      const devConfigModuleId = resolveRozeniteDevConfigModuleId(id);
+
+      if (devConfigModuleId) {
+        return devConfigModuleId;
+      }
+
       const isPanel = getPanels().some(
         (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
       );
@@ -170,6 +179,12 @@ export const rozeniteClientPlugin = (): Plugin => {
     },
 
     load(id) {
+      const devConfigModule = loadRozeniteDevConfigModule(id, projectRoot);
+
+      if (devConfigModule) {
+        return devConfigModule;
+      }
+
       const panel = getPanels().find(
         (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
       );

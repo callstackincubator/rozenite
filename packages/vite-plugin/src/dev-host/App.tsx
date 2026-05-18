@@ -19,11 +19,18 @@ import {
 import type {
   DevHostPanelEntry,
   DevHostState,
+  DevHostTemplateEntry,
   MessageEntry,
   ResizeHandleId,
   ResizeSession,
 } from './types.js';
-import { clamp, createMessageEntry, getInitialPanel, isPluginMessage } from './utils.js';
+import {
+  clamp,
+  createMessageEntry,
+  formatPayloadForCommandInput,
+  getInitialPanel,
+  isPluginMessage,
+} from './utils.js';
 import { DispatchForm } from './components/DispatchForm.js';
 import {
   MessageDetailsPane,
@@ -35,11 +42,15 @@ import { ResizeHandle } from './components/ResizeHandle.js';
 
 type CSSVariables = CSSProperties & Record<`--${string}`, string>;
 
+type AppProps = DevHostState & {
+  templates: DevHostTemplateEntry[];
+};
+
 const getViewportMatch = () => {
   return window.matchMedia('(max-width: 960px)').matches;
 };
 
-export const App = ({ packageName, packageDescription, panels }: DevHostState) => {
+export const App = ({ packageName, packageDescription, panels, templates }: AppProps) => {
   const [activePanel, setActivePanel] = useState<DevHostPanelEntry | null>(() => {
     return getInitialPanel(panels);
   });
@@ -205,6 +216,11 @@ export const App = ({ packageName, packageDescription, panels }: DevHostState) =
   const resetForm = () => {
     setCommandType('');
     setCommandPayload('');
+  };
+
+  const applyTemplate = (template: DevHostTemplateEntry) => {
+    setCommandType(template.type);
+    setCommandPayload(formatPayloadForCommandInput(template.payload));
   };
 
   const clearMessages = () => {
@@ -390,9 +406,11 @@ export const App = ({ packageName, packageDescription, panels }: DevHostState) =
           <DispatchForm
             commandType={commandType}
             commandPayload={commandPayload}
+            templates={templates}
             canDispatch={canDispatch}
             onCommandTypeChange={setCommandType}
             onCommandPayloadChange={setCommandPayload}
+            onApplyTemplate={applyTemplate}
             onReset={resetForm}
             onSubmit={handleDispatch}
           />
