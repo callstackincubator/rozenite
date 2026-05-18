@@ -8,8 +8,7 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "templates",
-    "src/dev-host"
+    "templates"
   ],
   "keywords": [
     "react-native",
@@ -40,21 +39,15 @@
     }
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && vite build --config src/dev-host/vite.config.mts",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "lint": "eslint ."
   },
   "dependencies": {
     "@microsoft/api-extractor": "^7.50.1",
-    "@radix-ui/react-scroll-area": "^1.2.9",
-    "@radix-ui/react-tabs": "^1.1.12",
     "@vitejs/plugin-react": "^4.3.4",
-    "baseui": "^16.1.1",
     "ejs": "^3.1.9",
-    "react-json-tree": "^0.20.0",
-    "styletron-engine-monolithic": "^1.0.0",
-    "styletron-react": "^6.1.1",
     "vite-plugin-dts": "~4.5.0",
     "vite-plugin-react-native-web": "^2.1.1"
   },
@@ -64,11 +57,17 @@
     "vite": "catalog:"
   },
   "devDependencies": {
+    "@radix-ui/react-scroll-area": "^1.2.9",
+    "@radix-ui/react-tabs": "^1.1.12",
     "@types/ejs": "^3.1.5",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "baseui": "^16.1.1",
+    "react-json-tree": "^0.20.0",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "styletron-engine-monolithic": "^1.0.0",
+    "styletron-react": "^6.1.1"
   },
   "engines": {
     "node": ">=20"

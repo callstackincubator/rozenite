@@ -1,5 +1,5 @@
-import rozeniteConfig from 'virtual:rozenite-dev-config';
 import type { DevFlowEntry, DevPresetEntry } from '../load-config.js';
+import { DEV_HOST_CONFIG_GLOBAL_KEY } from './constants.js';
 import type { DevHostFlowEntry, DevHostPresetEntry } from './types.js';
 
 type DevHostPresetSource = Omit<DevPresetEntry, 'name'> & {
@@ -16,6 +16,16 @@ const getEntryDisplayName = (value: unknown, fallback: string) => {
   }
 
   return fallback;
+};
+
+const getDevHostConfig = () => {
+  const value = (window as unknown as Record<string, unknown>)[DEV_HOST_CONFIG_GLOBAL_KEY];
+
+  if (typeof value !== 'object' || value === null) {
+    return {} as { presets?: unknown; flows?: unknown };
+  }
+
+  return value as { presets?: unknown; flows?: unknown };
 };
 
 const isDevHostPresetSource = (value: unknown): value is DevHostPresetSource => {
@@ -71,7 +81,7 @@ const toDevHostFlowEntry = (value: unknown): DevHostFlowEntry | null => {
 };
 
 export const getDevHostPresets = (): DevHostPresetEntry[] => {
-  const presets = rozeniteConfig.dev?.presets;
+  const presets = getDevHostConfig().presets;
 
   if (!Array.isArray(presets)) {
     return [];
@@ -84,7 +94,7 @@ export const getDevHostPresets = (): DevHostPresetEntry[] => {
 };
 
 export const getDevHostFlows = (): DevHostFlowEntry[] => {
-  const flows = rozeniteConfig.dev?.flows;
+  const flows = getDevHostConfig().flows;
 
   if (!Array.isArray(flows)) {
     return [];
