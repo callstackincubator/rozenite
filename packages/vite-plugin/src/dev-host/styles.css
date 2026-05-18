@@ -536,6 +536,28 @@ select {
   min-height: 100%;
 }
 
+.rz-action-tabs {
+  min-height: 100%;
+}
+
+.rz-action-tabs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rz-action-tab-panel {
+  min-height: 0;
+}
+
+.rz-action-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100%;
+}
+
 .rz-field {
   display: grid;
   gap: 6px;
@@ -545,6 +567,35 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.rz-preset-menu {
+  position: relative;
+}
+
+.rz-preset-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.rz-preset-icon-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.rz-baseui-preset-menu {
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 24px));
 }
 
 .rz-template-button {
@@ -566,6 +617,170 @@ select {
 .rz-template-button:focus-visible {
   outline: 2px solid rgba(130, 50, 255, 0.95);
   outline-offset: 1px;
+}
+
+.rz-template-button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.rz-template-button[data-active='true'] {
+  background: rgba(130, 50, 255, 0.18);
+  border-color: rgba(130, 50, 255, 0.5);
+  color: #ffffff;
+}
+
+.rz-flow-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.rz-flow-list {
+  display: grid;
+  gap: 8px;
+}
+
+.rz-flow-list-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.88);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rz-flow-list-button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.rz-flow-list-button:focus-visible {
+  outline: 2px solid rgba(130, 50, 255, 0.95);
+  outline-offset: 1px;
+}
+
+.rz-flow-list-button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.rz-flow-list-button[data-active='true'] {
+  background: rgba(130, 50, 255, 0.14);
+  border-color: rgba(130, 50, 255, 0.45);
+}
+
+.rz-flow-list-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.rz-flow-list-badge,
+.rz-flow-state-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(130, 50, 255, 0.16);
+  color: #c9a9ff;
+  font-size: 10px;
+  line-height: 1;
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-transform: uppercase;
+}
+
+.rz-flow-list-action {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+  line-height: 1.4;
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-transform: uppercase;
+}
+
+.rz-flow-empty-state {
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.rz-flow-runs {
+  display: grid;
+  gap: 12px;
+}
+
+.rz-flow-state {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.rz-flow-state[data-status='running'] {
+  border-color: rgba(130, 50, 255, 0.45);
+}
+
+.rz-flow-state[data-status='failed'] {
+  border-color: rgba(255, 120, 120, 0.4);
+}
+
+.rz-flow-state-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rz-flow-state-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.rz-flow-state-status {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  line-height: 1.4;
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-transform: uppercase;
+}
+
+.rz-flow-state-error,
+.rz-flow-state-result {
+  margin: 0;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px 12px;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.rz-flow-state-error {
+  color: #ffb4b4;
+}
+
+.rz-flow-stop-button {
+  flex-shrink: 0;
 }
 
 .rz-label {

@@ -46,12 +46,15 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@microsoft/api-extractor": "^7.50.1",
     "@radix-ui/react-scroll-area": "^1.2.9",
     "@radix-ui/react-tabs": "^1.1.12",
-    "@microsoft/api-extractor": "^7.50.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "baseui": "^16.1.1",
     "ejs": "^3.1.9",
     "react-json-tree": "^0.20.0",
+    "styletron-engine-monolithic": "^1.0.0",
+    "styletron-react": "^6.1.1",
     "vite-plugin-dts": "~4.5.0",
     "vite-plugin-react-native-web": "^2.1.1"
   },

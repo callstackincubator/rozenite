@@ -1,17 +1,21 @@
 import rozeniteConfig from 'virtual:rozenite-dev-config';
-import type { DevTemplateEntry } from '../load-config.js';
-import type { DevHostTemplateEntry } from './types.js';
+import type { DevFlowEntry, DevTemplateEntry } from '../load-config.js';
+import type { DevHostFlowEntry, DevHostTemplateEntry } from './types.js';
 
 type DevHostTemplateSource = Omit<DevTemplateEntry, 'name'> & {
   name?: string;
 };
 
-const getTemplateDisplayName = (value: unknown) => {
+type DevHostFlowSource = Omit<DevFlowEntry, 'name'> & {
+  name?: string;
+};
+
+const getEntryDisplayName = (value: unknown, fallback: string) => {
   if (typeof value === 'string' && value.trim()) {
     return value.trim();
   }
 
-  return 'Untitled template';
+  return fallback;
 };
 
 const isDevHostTemplateSource = (value: unknown): value is DevHostTemplateSource => {
@@ -25,18 +29,44 @@ const isDevHostTemplateSource = (value: unknown): value is DevHostTemplateSource
   );
 };
 
+const isDevHostFlowSource = (value: unknown): value is DevHostFlowSource => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (!('name' in value) || typeof value.name === 'string') &&
+    (!('autoRun' in value) || typeof value.autoRun === 'boolean') &&
+    'run' in value &&
+    typeof value.run === 'function'
+  );
+};
+
 const toDevHostTemplateEntry = (value: unknown): DevHostTemplateEntry | null => {
   if (!isDevHostTemplateSource(value)) {
     return null;
   }
 
-  const displayName = getTemplateDisplayName(value.name);
+  const displayName = getEntryDisplayName(value.name, 'Untitled template');
 
   return {
     name: displayName,
     displayName,
     type: value.type,
     payload: value.payload,
+  };
+};
+
+const toDevHostFlowEntry = (value: unknown): DevHostFlowEntry | null => {
+  if (!isDevHostFlowSource(value)) {
+    return null;
+  }
+
+  const displayName = getEntryDisplayName(value.name, 'Untitled flow');
+
+  return {
+    name: displayName,
+    displayName,
+    autoRun: value.autoRun ?? false,
+    run: value.run,
   };
 };
 
@@ -49,6 +79,19 @@ export const getDevHostTemplates = (): DevHostTemplateEntry[] => {
 
   return templates.flatMap((template) => {
     const entry = toDevHostTemplateEntry(template);
+    return entry ? [entry] : [];
+  });
+};
+
+export const getDevHostFlows = (): DevHostFlowEntry[] => {
+  const flows = rozeniteConfig.dev?.flows;
+
+  if (!Array.isArray(flows)) {
+    return [];
+  }
+
+  return flows.flatMap((flow) => {
+    const entry = toDevHostFlowEntry(flow);
     return entry ? [entry] : [];
   });
 };

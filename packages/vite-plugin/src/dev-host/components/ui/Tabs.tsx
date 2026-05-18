@@ -8,6 +8,8 @@ import { cn } from '../../utils.js';
 
 export const Tabs = TabsPrimitive.Root;
 
+export const TabsContent = TabsPrimitive.Content;
+
 export const TabsList = forwardRef<
   ElementRef<typeof TabsPrimitive.List>,
   ComponentPropsWithoutRef<typeof TabsPrimitive.List>

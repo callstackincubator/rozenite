@@ -1,9 +1,14 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BaseProvider, DarkTheme } from 'baseui';
+import { Client as Styletron } from 'styletron-engine-monolithic';
+import { Provider as StyletronProvider } from 'styletron-react';
 import { App } from './App.js';
-import { getDevHostTemplates } from './config.js';
+import { getDevHostFlows, getDevHostTemplates } from './config.js';
 import './styles.css';
 import { readDevHostState } from './utils.js';
+
+const styletron = new Styletron();
 
 const rootElement = document.getElementById('root');
 
@@ -12,10 +17,15 @@ if (!rootElement) {
 }
 
 const state = readDevHostState();
+const flows = getDevHostFlows();
 const templates = getDevHostTemplates();
 
 createRoot(rootElement).render(
   <StrictMode>
-    <App {...state} templates={templates} />
+    <StyletronProvider value={styletron}>
+      <BaseProvider theme={DarkTheme}>
+        <App {...state} flows={flows} templates={templates} />
+      </BaseProvider>
+    </StyletronProvider>
   </StrictMode>,
 );

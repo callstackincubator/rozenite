@@ -17,6 +17,7 @@ import {
   SPLITTER_SIZE,
 } from './constants.js';
 import type {
+  DevHostFlowEntry,
   DevHostPanelEntry,
   DevHostState,
   DevHostTemplateEntry,
@@ -24,6 +25,7 @@ import type {
   ResizeHandleId,
   ResizeSession,
 } from './types.js';
+import { useFlowRunner } from './flow-runtime.js';
 import {
   clamp,
   createMessageEntry,
@@ -43,6 +45,7 @@ import { ResizeHandle } from './components/ResizeHandle.js';
 type CSSVariables = CSSProperties & Record<`--${string}`, string>;
 
 type AppProps = DevHostState & {
+  flows: DevHostFlowEntry[];
   templates: DevHostTemplateEntry[];
 };
 
@@ -50,7 +53,7 @@ const getViewportMatch = () => {
   return window.matchMedia('(max-width: 960px)').matches;
 };
 
-export const App = ({ packageName, packageDescription, panels, templates }: AppProps) => {
+export const App = ({ packageName, packageDescription, panels, flows, templates }: AppProps) => {
   const [activePanel, setActivePanel] = useState<DevHostPanelEntry | null>(() => {
     return getInitialPanel(panels);
   });
@@ -64,11 +67,31 @@ export const App = ({ packageName, packageDescription, panels, templates }: AppP
   const [detailsWidth, setDetailsWidth] = useState(DETAILS_PANEL_WIDTH);
   const [activeResizeHandle, setActiveResizeHandle] = useState<ResizeHandleId | null>(null);
   const [isNarrowViewport, setIsNarrowViewport] = useState(getViewportMatch);
+  const [iframeLoadNonce, setIframeLoadNonce] = useState(0);
   const workspaceRef = useRef<HTMLElement | null>(null);
   const logWorkspaceRef = useRef<HTMLDivElement | null>(null);
   const devtoolsRef = useRef<HTMLElement | null>(null);
   const resizeSessionRef = useRef<ResizeSession | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const lastAutoRunLoadRef = useRef(0);
+  const { flowRuns, runFlow, stopFlow, hasRunningFlow, registerMessage, resetMessages } = useFlowRunner({
+    sendMessage: (type, payload) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          pluginId: packageName,
+          type,
+          payload,
+        },
+        '*',
+      );
+
+      appendMessage({
+        direction: 'in',
+        type,
+        payload,
+      });
+    },
+  });
 
   const activeSource = activePanel?.source ?? '';
   const activeLabel = activePanel?.label ?? '';
@@ -95,6 +118,24 @@ export const App = ({ packageName, packageDescription, panels, templates }: AppP
   useEffect(() => {
     document.title = `${packageName} Dev Host`;
   }, [packageName]);
+
+  useEffect(() => {
+    if (iframeLoadNonce === 0) {
+      return;
+    }
+
+    if (lastAutoRunLoadRef.current === iframeLoadNonce) {
+      return;
+    }
+
+    lastAutoRunLoadRef.current = iframeLoadNonce;
+
+    flows.forEach((flow) => {
+      if (flow.autoRun) {
+        runFlow(flow, { autoRun: true });
+      }
+    });
+  }, [flows, iframeLoadNonce, runFlow]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 960px)');
@@ -126,6 +167,7 @@ export const App = ({ packageName, packageDescription, panels, templates }: AppP
   const appendMessage = (input: Omit<MessageEntry, 'id' | 'date'>) => {
     const nextEntry = createMessageEntry(input);
 
+    registerMessage(nextEntry);
     setMessages((current) => [nextEntry, ...current]);
     setSelectedMessageId(nextEntry.id);
     setIsDetailsOpen(true);
@@ -224,6 +266,7 @@ export const App = ({ packageName, packageDescription, panels, templates }: AppP
   };
 
   const clearMessages = () => {
+    resetMessages();
     setMessages([]);
     setSelectedMessageId(null);
     setIsDetailsOpen(false);
@@ -294,20 +337,9 @@ export const App = ({ packageName, packageDescription, panels, templates }: AppP
       return;
     }
 
-    iframeRef.current?.contentWindow?.postMessage(
-      {
-        pluginId: packageName,
-        type,
-        payload,
-      },
-      '*',
-    );
+    iframeRef.current?.contentWindow?.postMessage({ pluginId: packageName, type, payload }, '*');
 
-    appendMessage({
-      direction: 'in',
-      type,
-      payload,
-    });
+    appendMessage({ direction: 'in', type, payload });
 
     resetForm();
   };
@@ -329,14 +361,15 @@ export const App = ({ packageName, packageDescription, panels, templates }: AppP
           {emptyState ? (
             <div className="rz-empty-state">No panels were defined in rozenite.config.ts.</div>
           ) : (
-            <iframe
-              key={activeSource}
-              ref={iframeRef}
-              title={activeLabel || 'Rozenite panel preview'}
-              src={activeSource}
-              className="rz-iframe"
-              data-resizing={activeResizeHandle === 'devtools-height'}
-            />
+              <iframe
+                key={activeSource}
+                ref={iframeRef}
+                title={activeLabel || 'Rozenite panel preview'}
+                src={activeSource}
+                className="rz-iframe"
+                data-resizing={activeResizeHandle === 'devtools-height'}
+                onLoad={() => setIframeLoadNonce((value) => value + 1)}
+              />
           )}
         </section>
 
@@ -406,8 +439,13 @@ export const App = ({ packageName, packageDescription, panels, templates }: AppP
           <DispatchForm
             commandType={commandType}
             commandPayload={commandPayload}
+            flows={flows}
+            flowRuns={flowRuns}
+            hasRunningFlow={hasRunningFlow}
             templates={templates}
             canDispatch={canDispatch}
+            onRunFlow={runFlow}
+            onStopFlow={stopFlow}
             onCommandTypeChange={setCommandType}
             onCommandPayloadChange={setCommandPayload}
             onApplyTemplate={applyTemplate}
