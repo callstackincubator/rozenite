@@ -2,15 +2,13 @@ import { useEffect, useRef } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import type { FileSystemEventMap } from '../shared/protocol';
 import { PLUGIN_ID } from '../shared/protocol';
-import { joinPath, normalizeDirPath } from '../shared/path';
 import {
   resolveFileSystemAdapter,
   resolveFileTransferCapabilities,
   safeError,
-  type FileSystemAdapter,
-  type FileSystemRoot,
   type UseFileSystemDevToolsOptions,
 } from './fileSystemProvider';
+import { exportFileTransfer, importFileTransfer } from './fileTransfer';
 import { useFileSystemAgentTools } from './useFileSystemAgentTools';
 
 export type { UseFileSystemDevToolsOptions } from './fileSystemProvider';
@@ -211,28 +209,11 @@ export const useFileSystemDevTools = (
             return;
           }
 
-          if (!provider.readFileBase64) {
-            client.send('fs:export-file:result', {
-              requestId,
-              provider: provider.provider,
-              path,
-              error: 'The active filesystem adapter does not support export.',
-            });
-            return;
-          }
-
-          const roots = await provider.getRoots();
-          assertInsideRoots(path, roots);
-          const entry = await provider.statPath(path);
-          if (entry.isDirectory) {
-            throw new Error(`Path "${entry.path}" is a directory, not a file.`);
-          }
-
-          const file = await provider.readFileBase64(entry.path);
+          const file = await exportFileTransfer(provider, path);
           client.send('fs:export-file:result', {
             requestId,
-            provider: provider.provider,
-            path: entry.path,
+            provider: file.provider,
+            path: file.path,
             fileName: file.fileName,
             mime: file.mime,
             size: file.size,
@@ -278,52 +259,30 @@ export const useFileSystemDevTools = (
               return;
             }
 
-            if (!provider.writeFileBase64) {
+            const result = await importFileTransfer(provider, {
+              directoryPath,
+              fileName,
+              base64,
+              overwrite,
+            });
+
+            if (result.overwriteRequired) {
               client.send('fs:import-file:result', {
                 requestId,
-                provider: provider.provider,
-                directoryPath,
-                error: 'The active filesystem adapter does not support import.',
-              });
-              return;
-            }
-
-            assertSafeFileName(fileName);
-            const roots = await provider.getRoots();
-            const normalizedDirectoryPath = normalizeDirPath(directoryPath);
-            assertInsideRoots(normalizedDirectoryPath, roots);
-
-            const directory = await provider.statPath(normalizedDirectoryPath);
-            if (!directory.isDirectory) {
-              throw new Error(
-                `Path "${directory.path}" is not a directory.`,
-              );
-            }
-
-            const destinationPath = joinPath(directory.path, fileName);
-            assertInsideRoots(destinationPath, roots);
-
-            if (!overwrite && (await pathExists(provider, destinationPath))) {
-              client.send('fs:import-file:result', {
-                requestId,
-                provider: provider.provider,
-                directoryPath: directory.path,
-                path: destinationPath,
+                provider: result.provider,
+                directoryPath: result.directoryPath,
+                path: result.path,
                 overwriteRequired: true,
               });
               return;
             }
 
-            const entry = await provider.writeFileBase64(
-              destinationPath,
-              base64,
-            );
             client.send('fs:import-file:result', {
               requestId,
-              provider: provider.provider,
-              directoryPath: directory.path,
-              path: entry.path,
-              entry,
+              provider: result.provider,
+              directoryPath: result.directoryPath,
+              path: result.path,
+              entry: result.entry,
             });
           } catch (e) {
             const provider = await resolveFileSystemAdapter(options);
@@ -344,53 +303,3 @@ export const useFileSystemDevTools = (
     };
   }, [client, fileTransfer.export, fileTransfer.import, options]);
 };
-
-async function pathExists(
-  provider: FileSystemAdapter,
-  path: string,
-): Promise<boolean> {
-  if (provider.pathExists) {
-    return provider.pathExists(path);
-  }
-
-  try {
-    await provider.statPath(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function assertInsideRoots(path: string, roots: FileSystemRoot[]): void {
-  if (hasTraversalSegment(path)) {
-    throw new Error('Path must not contain traversal segments.');
-  }
-
-  const isInside = roots.some((root) => {
-    const rootPath = normalizeDirPath(root.path);
-    return path === rootPath || path.startsWith(rootPath);
-  });
-
-  if (!isInside) {
-    throw new Error('Path is outside the configured filesystem roots.');
-  }
-}
-
-function hasTraversalSegment(path: string): boolean {
-  return path
-    .replace(/^file:\/\//, '')
-    .split('/')
-    .some((segment) => segment === '..');
-}
-
-function assertSafeFileName(fileName: string): void {
-  if (
-    !fileName ||
-    fileName === '.' ||
-    fileName === '..' ||
-    fileName.includes('/') ||
-    fileName.includes('\\')
-  ) {
-    throw new Error('Imported file name must be a single file name.');
-  }
-}
