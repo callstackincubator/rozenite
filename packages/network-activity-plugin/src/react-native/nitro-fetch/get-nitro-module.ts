@@ -1,9 +1,13 @@
 import type { NitroModule } from './nitro-network-inspector';
 
-export const getNitroModule = (): NitroModule | null => {
+const nitroModule = (() => {
   try {
     return require('react-native-nitro-fetch') as NitroModule;
   } catch {
     return null;
   }
+})();
+
+export const getNitroModule = (): NitroModule | null => {
+  return nitroModule;
 };
