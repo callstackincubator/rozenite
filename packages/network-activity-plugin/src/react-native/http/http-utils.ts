@@ -10,7 +10,10 @@ import type {
 } from '../../shared/client';
 import { safeStringify } from '../../utils/safeStringify';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
-import { isJsonContentType } from '../../utils/getContentTypeMimeType';
+import {
+  isJsonContentType,
+  isXmlContentType,
+} from '../../utils/getContentTypeMimeType';
 import {
   isBlob,
   isArrayBuffer,
@@ -169,13 +172,14 @@ export const getResponseBody = async (
   if (responseType === 'blob') {
     const contentType = request.getResponseHeader('Content-Type') || '';
 
-    // Text-friendly content-types — return as string so the panel's
-    // text / JSON / SVG renderers can preview them directly. SVG is
-    // image/svg+xml on the wire but its payload is XML text.
+    // Text-shaped content stays on the text path so the panel can
+    // show source in the Raw view without base64 round-tripping. XML
+    // composite types (application/xml, atom+xml, soap+xml, ...) and
+    // image/svg+xml are all covered by isXmlContentType per RFC 7303.
     if (
       contentType.startsWith('text/') ||
       isJsonContentType(contentType) ||
-      contentType.startsWith('image/svg+xml')
+      isXmlContentType(contentType)
     ) {
       return readBlobAsText(request.response);
     }
