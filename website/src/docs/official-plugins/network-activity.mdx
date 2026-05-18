@@ -74,8 +74,19 @@ Once configured, the Network Activity plugin will automatically appear in your R
 - **Headers**: Inspect request and response headers
 - **Query Parameters**: View URL parameters and their values
 - **Request Body**: Examine POST/PUT request payloads
-- **Response Body**: View response content and structure
+- **Response Body**: View response content and structure (see [Response Viewing](#response-viewing) below)
 - **Source Metadata**: See whether an entry came from the built-in inspector or the nitro inspector
+
+### Response Viewing
+
+The response body view adapts to the format of each captured response and exposes a Preview / Raw sub-tab when both views are useful:
+
+- **Images** (`image/png`, `image/jpeg`, `image/gif`, `image/webp`, `image/svg+xml`, ...) render inline in the Preview tab via a data URL. The Raw tab shows a metadata card with Content-Type and decoded size; for SVG specifically, the Raw tab shows the source XML.
+- **JSON** renders as a collapsible tree with copy affordances on every key and value.
+- **Text and other source formats** (`text/*`, `application/xml`, `application/javascript`, ...) render as raw monospace text.
+- **Empty or oversized responses** show a clear placeholder. Image responses above an in-capture 5 MB cap surface as "Response too large for preview" instead of crossing the bridge.
+
+The Preview / Raw toggle remembers your choice across requests in a panel session — once you toggle to Raw, subsequent responses whose renderer supports Raw stay on Raw. Formats with only one meaningful view hide the toggle entirely.
 
 ## Nitro Behavior
 

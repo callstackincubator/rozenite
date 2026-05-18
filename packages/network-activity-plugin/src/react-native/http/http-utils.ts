@@ -4,6 +4,7 @@ import type {
   RequestTextPostData,
   RequestBinaryPostData,
   RequestFormDataPostData,
+  ResponseBody,
   Initiator,
   InitiatorStackFrame,
 } from '../../shared/client';
@@ -116,9 +117,33 @@ export const getResponseSize = (request: XMLHttpRequest): number | null => {
   }
 };
 
+// Cap on binary capture. Above this, we ship a 'binary-too-large' variant
+// with just the size — no bytes cross the bridge. 5MB comfortably covers
+// debug-relevant images while keeping the bridge from choking on outliers.
+export const BINARY_CAPTURE_SIZE_CAP = 5 * 1024 * 1024;
+
+const readBlobAsText = (blob: Blob): Promise<string> =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.readAsText(blob);
+  });
+
+const readBlobAsBase64 = (blob: Blob): Promise<string> =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // FileReader.readAsDataURL returns "data:<mime>;base64,<payload>".
+      // We only want the base64 payload.
+      const dataUrl = reader.result as string;
+      resolve(dataUrl.substring(dataUrl.indexOf(',') + 1));
+    };
+    reader.readAsDataURL(blob);
+  });
+
 export const getResponseBody = async (
   request: XMLHttpRequest,
-): Promise<string | null> => {
+): Promise<ResponseBody> => {
   const responseType = request.responseType;
 
   // Response type is empty in certain cases, like when using axios.
@@ -127,21 +152,25 @@ export const getResponseBody = async (
   }
 
   if (responseType === 'blob') {
-    // This may be a text blob.
     const contentType = request.getResponseHeader('Content-Type') || '';
 
+    // SVG is image/svg+xml but it's text content — keep it on the text
+    // path so the panel can show source in the Raw view without base64
+    // round-tripping.
     if (
       contentType.startsWith('text/') ||
-      isJsonContentType(contentType)
+      isJsonContentType(contentType) ||
+      contentType.startsWith('image/svg+xml')
     ) {
-      // It looks like a text blob, let's read it and forward it to the client.
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          resolve(reader.result as string);
-        };
-        reader.readAsText(request.response);
-      });
+      return readBlobAsText(request.response);
+    }
+
+    if (contentType.startsWith('image/')) {
+      const blob = request.response as Blob;
+      if (blob.size > BINARY_CAPTURE_SIZE_CAP) {
+        return { kind: 'binary-too-large', size: blob.size };
+      }
+      return { kind: 'binary', base64: await readBlobAsBase64(blob) };
     }
   }
 

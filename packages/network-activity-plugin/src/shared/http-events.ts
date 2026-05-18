@@ -1,6 +1,17 @@
 export type HttpHeaders = Record<string, string | string[]>;
 export type XHRHeaders = NonNullable<XMLHttpRequest['responseHeaders']>;
 
+// Discriminated union for response bodies on the bridge.
+//   string → text body (today's path)
+//   { kind: 'binary' } → base64-encoded binary payload (e.g. images)
+//   { kind: 'binary-too-large' } → response exceeded the in-capture size cap; bytes not shipped
+//   null → body could not be read at all
+export type ResponseBody =
+  | string
+  | { kind: 'binary'; base64: string }
+  | { kind: 'binary-too-large'; size: number }
+  | null;
+
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 
 export type RequestId = string;
@@ -165,7 +176,7 @@ export type HttpEventMap = {
 
   'response-body': {
     requestId: RequestId;
-    body: string | null;
+    body: ResponseBody;
   };
 
   'set-overrides': {
