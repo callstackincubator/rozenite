@@ -4,7 +4,8 @@ export type DevHostPanelEntry = {
 };
 
 export type DevHostTemplateEntry = {
-  label: string;
+  name: string;
+  displayName: string;
   type: string;
   payload: unknown;
 };

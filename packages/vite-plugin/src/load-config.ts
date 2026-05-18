@@ -8,7 +8,7 @@ export type PanelEntry = {
 };
 
 export type DevTemplateEntry = {
-  label: string;
+  name: string;
   type: string;
   payload: unknown;
 };

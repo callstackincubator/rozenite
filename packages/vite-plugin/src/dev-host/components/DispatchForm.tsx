@@ -41,12 +41,13 @@ export const DispatchForm = ({
                 <div className="rz-template-list">
                   {templates.map((template, index) => (
                     <button
-                      key={`${template.label}-${index}`}
+                      key={`${template.name}-${template.type}-${index}`}
                       type="button"
                       className="rz-template-button"
                       onClick={() => onApplyTemplate(template)}
+                      title={`Apply ${template.displayName}`}
                     >
-                      {template.label}
+                      {template.displayName}
                     </button>
                   ))}
                 </div>
