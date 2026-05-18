@@ -15,13 +15,15 @@ vi.mock('react-virtuoso', () => ({
   Virtuoso: ({
     totalCount,
     itemContent,
+    className,
   }: {
     totalCount: number;
     itemContent: (index: number) => React.ReactNode;
+    className?: string;
   }) =>
     React.createElement(
       'div',
-      { 'data-testid': 'virtuoso-mock' },
+      { 'data-testid': 'virtuoso-mock', className },
       ...Array.from({ length: totalCount }, (_, i) =>
         React.createElement('div', { key: i }, itemContent(i)),
       ),
