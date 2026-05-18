@@ -150,7 +150,7 @@ export const TabsList = ({ children }: TabsListProps) => {
   return <>{children}</>;
 };
 
-export const TabsTrigger = (_props: TabsTriggerProps) => {
+export const TabsTrigger: (_props: TabsTriggerProps) => null = () => {
   return null;
 };
 
