@@ -71,6 +71,10 @@ const Wrapper = () => {
     fileTransfer: {
       import: true,
       export: true,
+      agent: {
+        import: true,
+        export: true,
+      },
     },
   });
 

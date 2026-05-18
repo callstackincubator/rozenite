@@ -102,7 +102,24 @@ Start your development server and open React Native DevTools. You’ll find the 
 - File previews are limited to avoid loading very large files into DevTools.
 - Binary files are shown as a hex-style dump when text decoding is not possible.
 - File import and export are disabled by default. Enable them explicitly with `fileTransfer.import` and `fileTransfer.export`.
+- Agent-triggered file transfer is disabled separately. Enable it explicitly with `fileTransfer.agent.import` and `fileTransfer.agent.export`.
 - File transfer supports single files only. Import targets the currently viewed directory and asks before overwriting an existing file.
+
+To enable agent-triggered file transfer, opt in separately:
+
+```typescript
+useFileSystemDevTools({
+  adapter: createRNFSAdapter(RNFS),
+  fileTransfer: {
+    import: true,
+    export: true,
+    agent: {
+      import: true,
+      export: true,
+    },
+  },
+});
+```
 
 ## Agent Tools (LLM Integration)
 
@@ -115,6 +132,8 @@ Available tools:
 - `read-entry`: returns metadata for a file or directory path.
 - `read-text-file`: returns a text preview for a file, with binary fallback when decoding fails.
 - `read-image-file`: returns an image preview as a data URI.
+- `export-file`: opt-in agent transfer tool that returns exact base64 file contents for a file under a visible root.
+- `import-file`: opt-in agent transfer tool that writes exact base64 file contents into an existing visible directory, with overwrite preflight.
 
 ## Made with ❤️ at Callstack
 
