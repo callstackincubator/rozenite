@@ -5,7 +5,7 @@ export type DevHostPanelEntry = {
   source: string;
 };
 
-export type DevHostTemplateEntry = {
+export type DevHostPresetEntry = {
   name: string;
   displayName: string;
   type: string;

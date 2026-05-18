@@ -1,8 +1,8 @@
 import rozeniteConfig from 'virtual:rozenite-dev-config';
-import type { DevFlowEntry, DevTemplateEntry } from '../load-config.js';
-import type { DevHostFlowEntry, DevHostTemplateEntry } from './types.js';
+import type { DevFlowEntry, DevPresetEntry } from '../load-config.js';
+import type { DevHostFlowEntry, DevHostPresetEntry } from './types.js';
 
-type DevHostTemplateSource = Omit<DevTemplateEntry, 'name'> & {
+type DevHostPresetSource = Omit<DevPresetEntry, 'name'> & {
   name?: string;
 };
 
@@ -18,7 +18,7 @@ const getEntryDisplayName = (value: unknown, fallback: string) => {
   return fallback;
 };
 
-const isDevHostTemplateSource = (value: unknown): value is DevHostTemplateSource => {
+const isDevHostPresetSource = (value: unknown): value is DevHostPresetSource => {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -40,12 +40,12 @@ const isDevHostFlowSource = (value: unknown): value is DevHostFlowSource => {
   );
 };
 
-const toDevHostTemplateEntry = (value: unknown): DevHostTemplateEntry | null => {
-  if (!isDevHostTemplateSource(value)) {
+const toDevHostPresetEntry = (value: unknown): DevHostPresetEntry | null => {
+  if (!isDevHostPresetSource(value)) {
     return null;
   }
 
-  const displayName = getEntryDisplayName(value.name, 'Untitled template');
+  const displayName = getEntryDisplayName(value.name, 'Untitled preset');
 
   return {
     name: displayName,
@@ -70,15 +70,15 @@ const toDevHostFlowEntry = (value: unknown): DevHostFlowEntry | null => {
   };
 };
 
-export const getDevHostTemplates = (): DevHostTemplateEntry[] => {
-  const templates = rozeniteConfig.dev?.templates;
+export const getDevHostPresets = (): DevHostPresetEntry[] => {
+  const presets = rozeniteConfig.dev?.presets;
 
-  if (!Array.isArray(templates)) {
+  if (!Array.isArray(presets)) {
     return [];
   }
 
-  return templates.flatMap((template) => {
-    const entry = toDevHostTemplateEntry(template);
+  return presets.flatMap((preset) => {
+    const entry = toDevHostPresetEntry(preset);
     return entry ? [entry] : [];
   });
 };

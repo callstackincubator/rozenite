@@ -7,7 +7,7 @@ export type PanelEntry = {
   source: string;
 };
 
-export type DevTemplateEntry = {
+export type DevPresetEntry = {
   name: string;
   type: string;
   payload: unknown;
@@ -57,7 +57,7 @@ export type DevFlowEntry = {
 };
 
 export type DevConfig = {
-  templates?: DevTemplateEntry[];
+  presets?: DevPresetEntry[];
   flows?: DevFlowEntry[];
 };
 

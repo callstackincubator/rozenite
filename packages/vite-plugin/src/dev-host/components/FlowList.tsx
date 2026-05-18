@@ -1,5 +1,6 @@
 import { formatPayloadForCommandInput } from '../utils.js';
 import type { DevHostFlowEntry, DevHostFlowRunState } from '../types.js';
+import { Button } from './ui/Button.js';
 
 type FlowListProps = {
   flows: DevHostFlowEntry[];
@@ -46,20 +47,40 @@ export const FlowList = ({ flows, flowRuns, hasRunningFlow, onRunFlow, onStopFlo
             const isActive = hasRunningFlow(flow.name);
 
             return (
-              <button
+              <Button
                 key={`${flow.name}-${index}`}
                 type="button"
-                className="rz-flow-list-button"
                 onClick={() => onRunFlow(flow)}
-                data-active={isActive}
+                variant="default"
+                isSelected={isActive}
                 title={`Run ${flow.displayName}`}
+                overrides={{
+                  BaseButton: {
+                    style: {
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      width: '100%',
+                      borderRadius: '8px',
+                      backgroundColor: isActive ? 'rgba(130, 50, 255, 0.14)' : 'rgba(255, 255, 255, 0.03)',
+                      borderColor: isActive ? 'rgba(130, 50, 255, 0.45)' : 'rgba(255, 255, 255, 0.08)',
+                      color: 'rgba(255, 255, 255, 0.88)',
+                      paddingTop: '10px',
+                      paddingRight: '12px',
+                      paddingBottom: '10px',
+                      paddingLeft: '12px',
+                      textAlign: 'left',
+                    },
+                  },
+                }}
               >
                 <span className="rz-flow-list-name">
                   {flow.displayName}
                   {flow.autoRun ? <span className="rz-flow-list-badge">Auto</span> : null}
                 </span>
                 <span className="rz-flow-list-action">{isActive ? 'Running' : 'Run'}</span>
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -82,13 +103,20 @@ export const FlowList = ({ flows, flowRuns, hasRunningFlow, onRunFlow, onStopFlo
                     </div>
 
                     {isRunning ? (
-                      <button
+                      <Button
                         type="button"
-                        className="rz-template-button rz-flow-stop-button"
+                        variant="pill"
                         onClick={() => onStopFlow(flowRun.id)}
+                        overrides={{
+                          BaseButton: {
+                            style: {
+                              flexShrink: 0,
+                            },
+                          },
+                        }}
                       >
                         Stop
-                      </button>
+                      </Button>
                     ) : null}
                   </div>
 

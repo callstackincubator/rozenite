@@ -64,6 +64,7 @@ my-plugin/
 - **Type Safety**: Full TypeScript support with compile-time checking
 - **Hot Reloading**: See changes instantly during development
 - **In-browser dev host**: `rozenite dev` opens a small test shell where you can preview panels, read the message log, and dispatch commands—without wiring up a playground app first (see the [Plugin Development guide](./plugin-development.md#step-5-local-development-workflow))
+- **Dev host presets and flows**: Define reusable commands and scripted dev routines in `rozenite.config.ts` to speed up local panel development
 - **Production Builds**: Optimized builds for distribution
 
 ## Getting Started

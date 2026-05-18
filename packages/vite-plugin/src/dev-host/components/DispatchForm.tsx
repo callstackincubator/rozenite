@@ -1,16 +1,13 @@
 import { useState, type FormEvent } from 'react';
-import { StatefulMenu } from 'baseui/menu/index.js';
-import { StatefulPopover, TRIGGER_TYPE } from 'baseui/popover/index.js';
-import type { DevHostFlowEntry, DevHostFlowRunState, DevHostTemplateEntry } from '../types.js';
+import type { DevHostFlowEntry, DevHostFlowRunState, DevHostPresetEntry } from '../types.js';
 import { ClearIcon, PresetsIcon, SendIcon } from './icons.js';
 import { FlowList } from './FlowList.js';
+import { DropdownMenu, type DropdownMenuItem } from './ui/DropdownMenu.js';
+import { IconButton } from './ui/IconButton.js';
+import { Input } from './ui/Input.js';
 import { ScrollArea } from './ui/ScrollArea.js';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs.js';
-
-type PresetMenuItem = {
-  label: string;
-  template: DevHostTemplateEntry;
-};
+import { Textarea } from './ui/Textarea.js';
+import { ToggleGroup } from './ui/ToggleGroup.js';
 
 type DispatchFormProps = {
   commandType: string;
@@ -18,13 +15,13 @@ type DispatchFormProps = {
   flows: DevHostFlowEntry[];
   flowRuns: DevHostFlowRunState[];
   hasRunningFlow: (flowName: string) => boolean;
-  templates: DevHostTemplateEntry[];
+  presets: DevHostPresetEntry[];
   canDispatch: boolean;
   onRunFlow: (flow: DevHostFlowEntry) => void;
   onStopFlow: (runId: string) => void;
   onCommandTypeChange: (value: string) => void;
   onCommandPayloadChange: (value: string) => void;
-  onApplyTemplate: (template: DevHostTemplateEntry) => void;
+  onApplyPreset: (preset: DevHostPresetEntry) => void;
   onReset: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
@@ -35,21 +32,42 @@ export const DispatchForm = ({
   flows,
   flowRuns,
   hasRunningFlow,
-  templates,
+  presets,
   canDispatch,
   onRunFlow,
   onStopFlow,
   onCommandTypeChange,
   onCommandPayloadChange,
-  onApplyTemplate,
+  onApplyPreset,
   onReset,
   onSubmit,
 }: DispatchFormProps) => {
   const [activeTab, setActiveTab] = useState<'dispatch' | 'flows'>('dispatch');
-  const presetItems: PresetMenuItem[] = templates.map((template) => ({
-    label: template.displayName,
-    template,
+  const presetItems: DropdownMenuItem<DevHostPresetEntry>[] = presets.map((preset) => ({
+    id: preset.displayName,
+    label: preset.displayName,
+    item: preset,
   }));
+  const presetButton = (
+    <IconButton
+      type="button"
+      variant="default"
+      aria-label={presets.length > 0 ? 'Open presets' : 'No presets available'}
+      title={presets.length > 0 ? 'Presets' : 'No presets available'}
+      disabled={presets.length === 0}
+      overrides={{
+        BaseButton: {
+          style: {
+            borderRadius: '6px',
+            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+            color: 'rgba(255, 255, 255, 0.88)',
+          },
+        },
+      }}
+    >
+      <PresetsIcon />
+    </IconButton>
+  );
 
   return (
     <div className="rz-pane">
@@ -59,100 +77,34 @@ export const DispatchForm = ({
         </div>
 
         <ScrollArea className="rz-sidebar-scroll">
-          <Tabs className="rz-action-tabs" value={activeTab} onValueChange={(value) => setActiveTab(value as 'dispatch' | 'flows')}>
-            <div className="rz-command-form">
-              <div className="rz-action-tabs-header">
-                <TabsList aria-label="Action modes">
-                  <TabsTrigger value="dispatch">Dispatch</TabsTrigger>
-                  <TabsTrigger value="flows" disabled={flows.length === 0}>
-                    Flows
-                  </TabsTrigger>
-                </TabsList>
+          <div className="rz-action-tabs rz-command-form">
+            <div className="rz-action-tabs-header">
+              <ToggleGroup
+                aria-label="Action modes"
+                value={activeTab}
+                onChange={(value) => setActiveTab(value as 'dispatch' | 'flows')}
+                options={[
+                  { key: 'dispatch', label: 'Dispatch' },
+                  { key: 'flows', label: 'Flows' },
+                ]}
+              />
 
-                {templates.length > 0 && activeTab === 'dispatch' ? (
-                  <StatefulPopover
-                    triggerType={TRIGGER_TYPE.click}
-                    placement="bottomRight"
-                    accessibilityType="menu"
-                    dismissOnClickOutside
-                    dismissOnEsc
-                    focusLock={false}
-                    autoFocus={false}
-                    showArrow={false}
-                    content={({ close }: { close: () => void }) => (
-                      <div className="rz-baseui-preset-menu">
-                        <StatefulMenu
-                          items={presetItems}
-                          onItemSelect={({ item }: { item: PresetMenuItem }) => {
-                            onApplyTemplate(item.template);
-                            close();
-                          }}
-                          overrides={{
-                            List: {
-                              style: {
-                                backgroundColor: '#111111',
-                                color: '#ffffff',
-                                borderRadius: '8px',
-                                minWidth: '220px',
-                                maxWidth: 'min(320px, calc(100vw - 24px))',
-                                paddingTop: '6px',
-                                paddingBottom: '6px',
-                                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
-                              },
-                            },
-                            Option: {
-                              props: {
-                                getItemLabel: (item: PresetMenuItem) => item.label,
-                              },
-                              style: ({ $isHighlighted }: { $isHighlighted?: boolean }) => ({
-                                backgroundColor: $isHighlighted ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                                color: '#ffffff',
-                                fontSize: '13px',
-                                lineHeight: '1.4',
-                                paddingTop: '8px',
-                                paddingRight: '10px',
-                                paddingBottom: '8px',
-                                paddingLeft: '10px',
-                              }),
-                            },
-                          }}
-                        />
-                      </div>
-                    )}
-                    overrides={{
-                      Body: {
-                        style: {
-                          zIndex: 20,
-                        },
-                      },
-                      Inner: {
-                        style: {
-                          backgroundColor: 'transparent',
-                        },
-                      },
-                    }}
-                  >
-                    <button
-                      type="button"
-                      className="rz-preset-icon-button"
-                      aria-label="Open presets"
-                      title="Presets"
-                    >
-                      <PresetsIcon />
-                    </button>
-                  </StatefulPopover>
-                ) : null}
-              </div>
+              {activeTab === 'dispatch'
+                ? presets.length > 0
+                  ? <DropdownMenu items={presetItems} onSelect={onApplyPreset}>{presetButton}</DropdownMenu>
+                  : presetButton
+                : null}
+            </div>
 
-              <TabsContent value="dispatch" className="rz-action-tab-panel">
+            {activeTab === 'dispatch' ? (
+              <div className="rz-action-tab-panel">
                 <form className="rz-action-form" onSubmit={onSubmit}>
                   <div className="rz-field">
                     <label className="rz-label" htmlFor="command-type">
                       Command
                     </label>
-                    <input
+                    <Input
                       id="command-type"
-                      className="rz-input"
                       value={commandType}
                       onChange={(event) => onCommandTypeChange(event.currentTarget.value)}
                       placeholder="get-snapshot"
@@ -164,9 +116,8 @@ export const DispatchForm = ({
                     <label className="rz-label" htmlFor="command-payload">
                       Payload
                     </label>
-                    <textarea
+                    <Textarea
                       id="command-payload"
-                      className="rz-textarea"
                       value={commandPayload}
                       onChange={(event) => onCommandPayloadChange(event.currentTarget.value)}
                       placeholder='{"example": true}'
@@ -175,30 +126,32 @@ export const DispatchForm = ({
                   </div>
 
                   <div className="rz-button-row">
-                    <button
+                    <IconButton
                       type="button"
-                      className="rz-sidebar-close"
+                      variant="default"
                       aria-label="Reset dispatcher"
                       title="Reset dispatcher"
                       onClick={onReset}
                     >
                       <ClearIcon />
-                    </button>
+                    </IconButton>
 
-                    <button
+                    <IconButton
                       type="submit"
-                      className="rz-sidebar-close rz-sidebar-action-primary"
+                      variant="primary"
                       aria-label="Dispatch message"
                       title="Dispatch message"
                       disabled={!canDispatch}
                     >
                       <SendIcon />
-                    </button>
+                    </IconButton>
                   </div>
                 </form>
-              </TabsContent>
+              </div>
+            ) : null}
 
-              <TabsContent value="flows" className="rz-action-tab-panel">
+            {activeTab === 'flows' ? (
+              <div className="rz-action-tab-panel">
                 <FlowList
                   flows={flows}
                   flowRuns={flowRuns}
@@ -206,9 +159,9 @@ export const DispatchForm = ({
                   onRunFlow={onRunFlow}
                   onStopFlow={onStopFlow}
                 />
-              </TabsContent>
-            </div>
-          </Tabs>
+              </div>
+            ) : null}
+          </div>
         </ScrollArea>
       </div>
     </div>

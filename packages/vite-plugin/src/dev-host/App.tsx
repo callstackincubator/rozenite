@@ -19,8 +19,8 @@ import {
 import type {
   DevHostFlowEntry,
   DevHostPanelEntry,
+  DevHostPresetEntry,
   DevHostState,
-  DevHostTemplateEntry,
   MessageEntry,
   ResizeHandleId,
   ResizeSession,
@@ -46,14 +46,14 @@ type CSSVariables = CSSProperties & Record<`--${string}`, string>;
 
 type AppProps = DevHostState & {
   flows: DevHostFlowEntry[];
-  templates: DevHostTemplateEntry[];
+  presets: DevHostPresetEntry[];
 };
 
 const getViewportMatch = () => {
   return window.matchMedia('(max-width: 960px)').matches;
 };
 
-export const App = ({ packageName, packageDescription, panels, flows, templates }: AppProps) => {
+export const App = ({ packageName, packageDescription, panels, flows, presets }: AppProps) => {
   const [activePanel, setActivePanel] = useState<DevHostPanelEntry | null>(() => {
     return getInitialPanel(panels);
   });
@@ -260,9 +260,9 @@ export const App = ({ packageName, packageDescription, panels, flows, templates 
     setCommandPayload('');
   };
 
-  const applyTemplate = (template: DevHostTemplateEntry) => {
-    setCommandType(template.type);
-    setCommandPayload(formatPayloadForCommandInput(template.payload));
+  const applyPreset = (preset: DevHostPresetEntry) => {
+    setCommandType(preset.type);
+    setCommandPayload(formatPayloadForCommandInput(preset.payload));
   };
 
   const clearMessages = () => {
@@ -442,13 +442,13 @@ export const App = ({ packageName, packageDescription, panels, flows, templates 
             flows={flows}
             flowRuns={flowRuns}
             hasRunningFlow={hasRunningFlow}
-            templates={templates}
+            presets={presets}
             canDispatch={canDispatch}
             onRunFlow={runFlow}
             onStopFlow={stopFlow}
             onCommandTypeChange={setCommandType}
             onCommandPayloadChange={setCommandPayload}
-            onApplyTemplate={applyTemplate}
+            onApplyPreset={applyPreset}
             onReset={resetForm}
             onSubmit={handleDispatch}
           />

@@ -1,7 +1,8 @@
 import type { MessageEntry } from '../types.js';
 import { cn, formatMessageTableDate, formatPayloadPreview } from '../utils.js';
-import { ScrollArea } from './ui/ScrollArea.js';
 import { ClearIcon } from './icons.js';
+import { ScrollArea } from './ui/ScrollArea.js';
+import { IconButton } from './ui/IconButton.js';
 
 type MessageLogPaneProps = {
   messages: MessageEntry[];
@@ -22,16 +23,15 @@ export const MessageLogPane = ({
         <div className="rz-sidebar-header">
           <div className="rz-sidebar-title">Message Log</div>
           <div className="rz-header-actions">
-            <button
+            <IconButton
               type="button"
-              className="rz-sidebar-close"
               onClick={onClearMessages}
               disabled={messages.length === 0}
               aria-label="Clear message log"
               title="Clear message log"
             >
               <ClearIcon />
-            </button>
+            </IconButton>
           </div>
         </div>
 
