@@ -2,9 +2,7 @@ import { useEffect } from 'react';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
 import type { NetworkActivityDevToolsClient } from '../../shared/client';
 import type { NetworkInspector } from '../network-inspector';
-import {
-  getNetworkActivityAgentState,
-} from './state';
+import { getNetworkActivityAgentState } from './state';
 import {
   NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
   type NetworkActivityGetResponseBodyResult,
@@ -195,7 +193,9 @@ export const useNetworkActivityAgentTools = ({
   useRozenitePluginAgentTool({
     pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getResponseBodyTool,
-    handler: async ({ requestId }): Promise<NetworkActivityGetResponseBodyResult> => {
+    handler: async ({
+      requestId,
+    }): Promise<NetworkActivityGetResponseBodyResult> => {
       const record = state.getHttpRecord(requestId);
       if (!record) {
         throw new Error(`Unknown request "${requestId}"`);

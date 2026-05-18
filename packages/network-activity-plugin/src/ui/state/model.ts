@@ -140,6 +140,7 @@ export type ProcessedRequest = {
   id: RequestId;
   type: NetworkEntryType;
   source?: NetworkEventSource;
+  initiator?: Initiator;
   name: string;
   status: HttpStatus | WebSocketStatus | SSEStatus;
   timestamp: Timestamp;

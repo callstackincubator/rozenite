@@ -6,6 +6,7 @@ import { RequestTab } from '../tabs/RequestTab';
 import { ResponseTab } from '../tabs/ResponseTab';
 import { CookiesTab } from '../tabs/CookiesTab';
 import { TimingTab } from '../tabs/TimingTab';
+import { InitiatorTab } from '../tabs/InitiatorTab';
 import { X } from 'lucide-react';
 import {
   useNetworkActivityActions,
@@ -167,6 +168,12 @@ export const SidePanel = () => {
             Cookies
           </TabsTrigger>
           <TabsTrigger
+            value="initiator"
+            className="data-[state=active]:bg-gray-700"
+          >
+            Initiator
+          </TabsTrigger>
+          <TabsTrigger
             value="timing"
             className="data-[state=active]:bg-gray-700"
           >
@@ -196,6 +203,12 @@ export const SidePanel = () => {
             className="data-[state=active]:bg-gray-700"
           >
             Messages
+          </TabsTrigger>
+          <TabsTrigger
+            value="initiator"
+            className="data-[state=active]:bg-gray-700"
+          >
+            Initiator
           </TabsTrigger>
         </>
       );
@@ -243,6 +256,10 @@ export const SidePanel = () => {
             <CookiesTab selectedRequest={httpDetails} />
           </TabsContent>
 
+          <TabsContent value="initiator" className="flex-1 m-0 overflow-hidden">
+            <InitiatorTab selectedRequest={httpDetails} />
+          </TabsContent>
+
           <TabsContent value="timing" className="flex-1 m-0 overflow-hidden">
             <TimingTab selectedRequest={httpDetails} />
           </TabsContent>
@@ -273,6 +290,10 @@ export const SidePanel = () => {
 
           <TabsContent value="messages" className="flex-1 m-0 overflow-hidden">
             <SSEMessagesTab selectedRequest={sseDetails} />
+          </TabsContent>
+
+          <TabsContent value="initiator" className="flex-1 m-0 overflow-hidden">
+            <InitiatorTab selectedRequest={sseDetails} />
           </TabsContent>
 
           <TabsContent value="cookies" className="flex-1 m-0 overflow-hidden">
@@ -324,7 +345,15 @@ export const SidePanel = () => {
           }
           className="h-full flex flex-col"
         >
-          <TabsList className="grid w-full grid-cols-5 bg-gray-800 rounded-none border-b border-gray-700">
+          <TabsList
+            className={`grid w-full ${
+              selectedRequest.type === 'http'
+                ? 'grid-cols-6'
+                : selectedRequest.type === 'sse'
+                  ? 'grid-cols-4'
+                  : 'grid-cols-1'
+            } bg-gray-800 rounded-none border-b border-gray-700`}
+          >
             {getTabsListTriggers()}
           </TabsList>
 
