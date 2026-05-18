@@ -1,5 +1,6 @@
 import type {
   FileSystemProvider,
+  FileSystemAgentTransferCapabilities,
   FileSystemTransferCapabilities,
   FsEntry,
 } from '../shared/protocol';
@@ -7,6 +8,12 @@ import { joinPath, mimeTypeFromName, normalizeDirPath } from '../shared/path';
 
 export type ExpoFileSystemLike = any;
 export type RNFSLike = any;
+
+export type FileSystemTransferConfig = {
+  import?: boolean;
+  export?: boolean;
+  agent?: Partial<FileSystemAgentTransferCapabilities>;
+};
 
 export type UseFileSystemDevToolsOptions = {
   /**
@@ -27,7 +34,7 @@ export type UseFileSystemDevToolsOptions = {
    *
    * Both directions are disabled by default.
    */
-  fileTransfer?: Partial<FileSystemTransferCapabilities>;
+  fileTransfer?: FileSystemTransferConfig;
 };
 
 export type FileSystemRoot = {
@@ -71,6 +78,10 @@ export const DEFAULT_FILE_TRANSFER_CAPABILITIES: FileSystemTransferCapabilities 
   {
     import: false,
     export: false,
+    agent: {
+      import: false,
+      export: false,
+    },
   };
 
 export function resolveFileTransferCapabilities(
@@ -83,6 +94,20 @@ export function resolveFileTransferCapabilities(
     export:
       options?.fileTransfer?.export ??
       DEFAULT_FILE_TRANSFER_CAPABILITIES.export,
+    agent: resolveAgentFileTransferCapabilities(options),
+  };
+}
+
+export function resolveAgentFileTransferCapabilities(
+  options?: UseFileSystemDevToolsOptions,
+): FileSystemAgentTransferCapabilities {
+  return {
+    import:
+      options?.fileTransfer?.agent?.import ??
+      DEFAULT_FILE_TRANSFER_CAPABILITIES.agent.import,
+    export:
+      options?.fileTransfer?.agent?.export ??
+      DEFAULT_FILE_TRANSFER_CAPABILITIES.agent.export,
   };
 }
 

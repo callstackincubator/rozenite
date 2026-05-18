@@ -4,6 +4,7 @@ export type {
   CreateRNFSAdapterOptions,
   FileSystemAdapter,
   FileSystemRoot,
+  FileSystemTransferConfig,
   UseFileSystemDevToolsOptions,
 } from './src/react-native/fileSystemProvider';
 

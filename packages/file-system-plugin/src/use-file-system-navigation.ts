@@ -21,6 +21,10 @@ export function useFileSystemNavigation(
     useState<FileSystemTransferCapabilities>({
       import: false,
       export: false,
+      agent: {
+        import: false,
+        export: false,
+      },
     });
   const [roots, setRoots] = useState<FsRoots['roots']>([]);
   const [pathInput, setPathInput] = useState('');
@@ -35,7 +39,16 @@ export function useFileSystemNavigation(
     const res = await requests.requestRoots();
     if (!res) return;
     setProvider(res.provider);
-    setFileTransfer(res.fileTransfer ?? { import: false, export: false });
+    setFileTransfer(
+      res.fileTransfer ?? {
+        import: false,
+        export: false,
+        agent: {
+          import: false,
+          export: false,
+        },
+      },
+    );
     if (res.error) {
       setRoots([]);
       setError(res.error);
@@ -96,7 +109,14 @@ export function useFileSystemNavigation(
     const subReady = client.onMessage('fs:ready', async () => {
       // Reset UI state on reconnect
       setProvider('none');
-      setFileTransfer({ import: false, export: false });
+      setFileTransfer({
+        import: false,
+        export: false,
+        agent: {
+          import: false,
+          export: false,
+        },
+      });
       setRoots([]);
       setEntries([]);
       setError(null);

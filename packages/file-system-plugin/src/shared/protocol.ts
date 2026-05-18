@@ -24,6 +24,12 @@ export type FsRoots = {
 export type FileSystemTransferCapabilities = {
   import: boolean;
   export: boolean;
+  agent: FileSystemAgentTransferCapabilities;
+};
+
+export type FileSystemAgentTransferCapabilities = {
+  import: boolean;
+  export: boolean;
 };
 
 export type FileSystemEventMap = {

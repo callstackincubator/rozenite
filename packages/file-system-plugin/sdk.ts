@@ -20,6 +20,10 @@ export type {
   FileSystemListRootsArgs,
   FileSystemListRootsResult,
   FileSystemPathArgs,
+  FileSystemExportFileArgs,
+  FileSystemExportFileResult,
+  FileSystemImportFileArgs,
+  FileSystemImportFileResult,
   FileSystemReadEntryArgs,
   FileSystemReadEntryResult,
   FileSystemReadFileArgs,
@@ -30,6 +34,7 @@ export type {
 } from './src/shared/agent-tools.js';
 
 export type {
+  FileSystemAgentTransferCapabilities,
   FileSystemProvider,
   FileSystemTransferCapabilities,
   FsEntry,

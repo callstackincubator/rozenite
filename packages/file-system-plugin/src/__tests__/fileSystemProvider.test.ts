@@ -283,17 +283,32 @@ describe('resolveFileTransferCapabilities', () => {
     expect(resolveFileTransferCapabilities()).toEqual({
       import: false,
       export: false,
+      agent: {
+        import: false,
+        export: false,
+      },
     });
   });
 
   it('enables each transfer direction explicitly', () => {
     expect(
       resolveFileTransferCapabilities({
-        fileTransfer: { import: true, export: true },
+        fileTransfer: {
+          import: true,
+          export: true,
+          agent: {
+            import: true,
+            export: true,
+          },
+        },
       }),
     ).toEqual({
       import: true,
       export: true,
+      agent: {
+        import: true,
+        export: true,
+      },
     });
   });
 });
