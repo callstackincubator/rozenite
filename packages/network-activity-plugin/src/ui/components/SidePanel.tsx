@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Badge } from './Badge';
 import { Button } from './Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs';
@@ -18,6 +19,7 @@ import { NetworkEntry as OldNetworkEntry } from '../types';
 import { getStatusColor } from '../utils/getStatusColor';
 import { MessagesTab } from '../tabs/MessagesTab';
 import { SSEMessagesTab } from '../tabs/SSEMessagesTab';
+import type { ResponseView } from '../response-renderers';
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
@@ -88,6 +90,14 @@ export const SidePanel = () => {
   const selectedRequest = useSelectedRequest();
   const client = useNetworkActivityStore((state) => state._client);
   const overrides = useOverrides();
+  // Sticky Preview/Raw preference. Lives here, not in ResponseTab,
+  // because the `<Tabs key={selectedRequest.id}>` below intentionally
+  // remounts the Tabs subtree on every request switch (so the active
+  // inner tab resets). SidePanel itself stays mounted across request
+  // switches, so the preference survives — flipping to Raw on one
+  // response keeps Raw selected for every subsequent response whose
+  // renderer supports it. Resets when the panel is closed.
+  const [preferredView, setPreferredView] = useState<ResponseView>('preview');
 
   const onClose = (): void => {
     actions.setSelectedRequest(null);
@@ -242,6 +252,8 @@ export const SidePanel = () => {
             <ResponseTab
               selectedRequest={httpDetails}
               supportsOverrides={supportsOverrides}
+              preferredView={preferredView}
+              onPreferredViewChange={setPreferredView}
               onRequestResponseBody={(requestId) => {
                 if (client) {
                   client.send('get-response-body', {

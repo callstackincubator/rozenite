@@ -228,6 +228,24 @@ export const useNetworkActivityAgentTools = ({
         };
       }
 
+      if (typeof body !== 'string') {
+        if (body.kind === 'binary-too-large') {
+          return {
+            requestId,
+            available: false,
+            reason: `Response body exceeded the in-capture size cap (${body.size} bytes).`,
+          };
+        }
+        return {
+          requestId,
+          available: true,
+          body: body.base64,
+          base64Encoded: true,
+          decoded: false,
+          mimeType: record.response?.contentType,
+        };
+      }
+
       return {
         requestId,
         available: true,

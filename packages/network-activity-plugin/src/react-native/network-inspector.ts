@@ -15,7 +15,7 @@ import {
   NITRO_NETWORK_EVENTS,
 } from './nitro-fetch/nitro-network-inspector';
 import { EventsListener } from './events-listener';
-import { NetworkActivityEventMap } from '../shared/client';
+import { NetworkActivityEventMap, ResponseBody } from '../shared/client';
 import type { InspectorsConfig } from './config';
 import { getResponseBody as getHTTPResponseBody } from './http/http-utils';
 
@@ -28,7 +28,7 @@ export type NetworkInspector = {
   enable: (config?: InspectorsConfig) => void;
   disable: () => void;
   dispose: () => void;
-  getResponseBody: (requestId: string) => Promise<string | null>;
+  getResponseBody: (requestId: string) => Promise<ResponseBody>;
 };
 
 const createNetworkInspectorInstance = (): NetworkInspector => {

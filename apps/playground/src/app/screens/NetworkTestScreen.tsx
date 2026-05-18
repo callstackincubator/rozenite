@@ -148,6 +148,122 @@ const TodoCard: React.FC<{ todo: Todo }> = ({ todo }) => (
   </View>
 );
 
+type ImageTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const IMAGE_TEST_CASES: ImageTestCase[] = [
+  {
+    label: 'PNG',
+    url: 'https://httpbin.org/image/png',
+    hint: 'Small PNG, exercises image-binary capture',
+  },
+  {
+    label: 'JPEG',
+    url: 'https://httpbin.org/image/jpeg',
+    hint: 'Small JPEG, exercises image-binary capture',
+  },
+  {
+    label: 'WebP',
+    url: 'https://httpbin.org/image/webp',
+    hint: 'WebP — `image/*` catch-all',
+  },
+  {
+    label: 'SVG',
+    url: 'https://httpbin.org/image/svg',
+    hint: 'Text-based — captured as string, Raw view shows source',
+  },
+  {
+    label: 'Large JPEG (~1 MB)',
+    url: 'https://picsum.photos/3000/3000.jpg',
+    hint: 'Substantial JPEG, still under the 5 MB capture cap',
+  },
+  {
+    label: 'Huge JPEG (cap test)',
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Pillars_of_creation_2014_HST_WFC3-UVIS_full-res_denoised.jpg',
+    hint: 'Hubble Pillars of Creation, ~45 MB — triggers the `binary-too-large` placeholder',
+  },
+];
+
+const ImageResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchImage = React.useCallback(async (testCase: ImageTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const blob = await response.blob();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${blob.type || 'unknown'} • ${blob.size.toLocaleString()} bytes`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Image Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers image responses to exercise the Network Activity panel&apos;s
+          image preview. Tap a button, then open the captured request in
+          DevTools — Preview tab shows the rendered image, Raw tab shows the
+          metadata card (Content-Type + decoded size) or, for SVG, the XML
+          source.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {IMAGE_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchImage(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {IMAGE_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
 const NitroHTTPTestComponent: React.FC = () => {
   const [isRunning, setIsRunning] = React.useState(false);
   const [result, setResult] = React.useState<NitroDemoResult | null>(null);
@@ -1240,7 +1356,13 @@ const SSETestComponent: React.FC = () => {
 export const NetworkTestScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [activeTest, setActiveTest] = React.useState<
-    'http' | 'nitro' | 'websocket' | 'nitro-websocket' | 'sse' | 'request-body'
+    | 'http'
+    | 'nitro'
+    | 'websocket'
+    | 'nitro-websocket'
+    | 'sse'
+    | 'images'
+    | 'request-body'
   >('http');
 
   const renderHeader = () => (
@@ -1265,6 +1387,7 @@ export const NetworkTestScreen: React.FC = () => {
           { key: 'websocket', label: 'WebSocket Test' },
           { key: 'nitro-websocket', label: 'Nitro WS' },
           { key: 'sse', label: 'SSE Test' },
+          { key: 'images', label: 'Images' },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -1279,7 +1402,8 @@ export const NetworkTestScreen: React.FC = () => {
                   | 'nitro'
                   | 'websocket'
                   | 'nitro-websocket'
-                  | 'sse',
+                  | 'sse'
+                  | 'images',
               )
             }
           >
@@ -1308,6 +1432,8 @@ export const NetworkTestScreen: React.FC = () => {
         <WebSocketTestComponent />
       ) : activeTest === 'nitro-websocket' ? (
         <NitroWebSocketTestComponent />
+      ) : activeTest === 'images' ? (
+        <ImageResponseTestComponent />
       ) : (
         <SSETestComponent />
       )}
@@ -1958,5 +2084,14 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     padding: 12,
     lineHeight: 16,
+  },
+  imageHintList: {
+    marginTop: 12,
+    gap: 4,
+  },
+  imageHintText: {
+    color: '#a0a0a0',
+    fontSize: 12,
+    lineHeight: 18,
   },
 });
