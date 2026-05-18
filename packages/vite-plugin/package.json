@@ -57,8 +57,6 @@
     "vite": "catalog:"
   },
   "devDependencies": {
-    "@radix-ui/react-scroll-area": "^1.2.9",
-    "@radix-ui/react-tabs": "^1.1.12",
     "@types/ejs": "^3.1.5",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

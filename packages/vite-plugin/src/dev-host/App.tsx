@@ -41,6 +41,7 @@ import {
 import { MessageLogPane } from './components/MessageLogPane.js';
 import { PanelTabs } from './components/PanelTabs.js';
 import { ResizeHandle } from './components/ResizeHandle.js';
+import { RozeniteLogo } from './components/icons.js';
 
 type CSSVariables = CSSProperties & Record<`--${string}`, string>;
 
@@ -347,7 +348,11 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
   return (
     <div className="rz-shell">
       <header className="rz-topbar">
-        <div title={panelDescription || undefined}>
+        <div className="rz-topbar-brand" aria-label="Rozenite">
+          <RozeniteLogo />
+        </div>
+
+        <div className="rz-topbar-panel-picker" title={panelDescription || undefined}>
           <PanelTabs panels={panels} activeSource={activeSource} onValueChange={selectPanel} />
         </div>
       </header>
