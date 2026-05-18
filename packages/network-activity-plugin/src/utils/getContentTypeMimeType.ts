@@ -29,3 +29,17 @@ export function isJsonContentType(contentType: string | null | undefined) {
 
   return mimeType === 'application/json' || mimeType.endsWith('+json');
 }
+
+export function isXmlContentType(contentType: string | null | undefined) {
+  if (!contentType) {
+    return false;
+  }
+
+  const mimeType = normalizeContentType(contentType);
+
+  return (
+    mimeType === 'application/xml' ||
+    mimeType === 'text/xml' ||
+    mimeType.endsWith('+xml')
+  );
+}
