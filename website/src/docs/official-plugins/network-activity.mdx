@@ -92,6 +92,8 @@ The response body view adapts to the format of each captured response and expose
 
 The Preview / Raw toggle remembers your choice across requests in a panel session — once you toggle to Raw, subsequent responses whose renderer supports Raw stay on Raw. Formats with only one meaningful view hide the toggle entirely.
 
+Text response bodies above 50 KB render inside a virtualized 500 px scrollable window so the panel stays responsive on multi-megabyte payloads (pretty-printed JSON, minified bundles served as text, large logs). Smaller bodies render as a flat block. No content is truncated.
+
 #### Downloading bytes
 
 Every binary response (image, PDF, font, audio, ...) ships with a Download button on its metadata card. The filename is derived in three tiers:
