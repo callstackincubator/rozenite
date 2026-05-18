@@ -19,6 +19,7 @@ import { getId } from '../utils/getId';
 import { assert } from '../utils/assert';
 import { getContentTypeMime } from '../../utils/getContentTypeMimeType';
 import { applyReactNativeRequestHeadersLogic } from '../../utils/applyReactNativeRequestHeadersLogic';
+import { symbolicateInitiator } from '../utils/symbolication';
 
 const MAX_WEBSOCKET_MESSAGES_PER_CONNECTION = 32;
 const MAX_SSE_MESSAGES_PER_CONNECTION = 32;
@@ -128,7 +129,10 @@ export const createNetworkActivityStore = () =>
                 data as NetworkActivityEventMap['recording-state'];
               const { isRecording, _client } = get();
               if (_client && isRecording !== eventData.isRecording) {
-                _client.send(isRecording ? 'network-enable' : 'network-disable', {});
+                _client.send(
+                  isRecording ? 'network-enable' : 'network-disable',
+                  {},
+                );
               }
               break;
             }
@@ -177,6 +181,39 @@ export const createNetworkActivityStore = () =>
                 newEntries.set(eventData.requestId, entry);
                 return { networkEntries: newEntries };
               });
+
+              if (eventData.initiator.symbolicationStatus === 'pending') {
+                void symbolicateInitiator(eventData.initiator).then(
+                  (symbolicatedInitiator) => {
+                    if (!symbolicatedInitiator) {
+                      return;
+                    }
+
+                    set((state) => {
+                      const entry = state.networkEntries.get(
+                        eventData.requestId,
+                      );
+
+                      if (
+                        !entry ||
+                        (entry.type !== 'http' && entry.type !== 'sse') ||
+                        entry.initiator?.symbolicationStatus !== 'pending'
+                      ) {
+                        return {};
+                      }
+
+                      const updatedEntry = {
+                        ...entry,
+                        initiator: symbolicatedInitiator,
+                      };
+
+                      const newEntries = new Map(state.networkEntries);
+                      newEntries.set(eventData.requestId, updatedEntry);
+                      return { networkEntries: newEntries };
+                    });
+                  },
+                );
+              }
               break;
             }
 
@@ -594,7 +631,7 @@ export const createNetworkActivityStore = () =>
             // Subscribe to all events using the unified handler
             const unsubscribeFunctions = [
               client.onMessage('recording-state', (data) =>
-                handleEvent('recording-state', data)
+                handleEvent('recording-state', data),
               ),
               client.onMessage('client-ui-settings', (data) =>
                 handleEvent('client-ui-settings', data),

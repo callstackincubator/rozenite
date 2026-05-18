@@ -1,10 +1,12 @@
-import {
+import type {
   XHRPostData,
   RequestPostData,
   RequestTextPostData,
   RequestBinaryPostData,
   RequestFormDataPostData,
   ResponseBody,
+  Initiator,
+  InitiatorStackFrame,
 } from '../../shared/client';
 import { safeStringify } from '../../utils/safeStringify';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
@@ -179,26 +181,147 @@ export const getResponseBody = async (
   return null;
 };
 
-export const getInitiatorFromStack = (): {
-  type: string;
-  url?: string;
-  lineNumber?: number;
-  columnNumber?: number;
-} => {
+const STACK_PREVIEW_FRAME_LIMIT = 8;
+const INITIATOR_STACK_FRAME_OFFSET = 3;
+
+const parseStackLocation = (
+  location: string,
+): Pick<InitiatorStackFrame, 'url' | 'lineNumber' | 'columnNumber'> | null => {
+  const match = location.match(/^(.*):(\d+):(\d+)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    url: match[1],
+    lineNumber: Number.parseInt(match[2], 10),
+    columnNumber: Number.parseInt(match[3], 10),
+  };
+};
+
+const normalizeFunctionName = (functionName?: string) => {
+  const trimmedFunctionName = functionName?.trim();
+
+  return trimmedFunctionName &&
+    trimmedFunctionName !== '<anonymous>' &&
+    trimmedFunctionName !== 'anonymous' &&
+    trimmedFunctionName !== '<unknown>'
+    ? trimmedFunctionName
+    : undefined;
+};
+
+const parseStackFrame = (line: string): InitiatorStackFrame | null => {
+  const trimmedLine = line.trim();
+
+  if (!trimmedLine) {
+    return null;
+  }
+
+  let functionName: string | undefined;
+  let location: string | undefined;
+
+  const v8FunctionFrame = trimmedLine.match(/^at\s+(.*?)\s+\((.*)\)$/);
+  if (v8FunctionFrame) {
+    functionName = v8FunctionFrame[1];
+    location = v8FunctionFrame[2];
+  } else {
+    const v8LocationFrame = trimmedLine.match(/^at\s+(.*)$/);
+    const jscFrame = trimmedLine.match(/^(.*?)@(.*)$/);
+
+    if (v8LocationFrame) {
+      location = v8LocationFrame[1];
+    } else if (jscFrame) {
+      functionName = jscFrame[1];
+      location = jscFrame[2];
+    }
+  }
+
+  if (!location) {
+    return null;
+  }
+
+  const parsedLocation = parseStackLocation(location);
+  if (!parsedLocation) {
+    return null;
+  }
+
+  return {
+    functionName: normalizeFunctionName(functionName),
+    ...parsedLocation,
+  };
+};
+
+const toGeneratedStackFrame = (
+  frame: InitiatorStackFrame,
+): InitiatorStackFrame => ({
+  functionName: frame.functionName,
+  generatedUrl: frame.url,
+  generatedLineNumber: frame.lineNumber,
+  generatedColumnNumber: frame.columnNumber,
+});
+
+const getGeneratedFrameLocation = (frame: InitiatorStackFrame) => ({
+  url: frame.generatedUrl ?? frame.url,
+  lineNumber: frame.generatedLineNumber ?? frame.lineNumber,
+  columnNumber: frame.generatedColumnNumber ?? frame.columnNumber,
+});
+
+const canSymbolicateStack = (stack?: InitiatorStackFrame[]) =>
+  stack?.some((frame) =>
+    getGeneratedFrameLocation(frame).url?.startsWith('http'),
+  ) ?? false;
+
+const getStackPreview = (frames: InitiatorStackFrame[]) => {
+  // The first frames are this helper, the HTTP inspector callback and the XHR
+  // wrapper. The caller starts after that fixed interception boundary.
+  const callerFrames = frames.slice(INITIATOR_STACK_FRAME_OFFSET);
+
+  return (callerFrames.length > 0 ? callerFrames : frames).slice(
+    0,
+    STACK_PREVIEW_FRAME_LIMIT,
+  );
+};
+
+export const getInitiatorFromStack = (): Initiator => {
   try {
     const stack = new Error().stack;
     if (!stack) {
       return { type: 'other' };
     }
 
-    const line = stack.split('\n')[9];
-    const match = line.match(/at\s+(.+?)\s+\((.+?):(\d+):(\d+)\)/);
-    if (match) {
+    const parsedFrames = stack
+      .split('\n')
+      .map(parseStackFrame)
+      .filter((frame): frame is InitiatorStackFrame => frame !== null);
+
+    const stackPreview = getStackPreview(parsedFrames);
+    const initiatorFrame = stackPreview[0];
+    const generatedStackPreview = stackPreview.map(toGeneratedStackFrame);
+
+    if (initiatorFrame?.url) {
       return {
         type: 'script',
-        url: match[2],
-        lineNumber: parseInt(match[3]),
-        columnNumber: parseInt(match[4]),
+        functionName: initiatorFrame.functionName,
+        generatedUrl: initiatorFrame.url,
+        generatedLineNumber: initiatorFrame.lineNumber,
+        generatedColumnNumber: initiatorFrame.columnNumber,
+        stack: generatedStackPreview,
+        symbolicationStatus: canSymbolicateStack(generatedStackPreview)
+          ? 'pending'
+          : 'unavailable',
+      };
+    }
+
+    if (parsedFrames.length > 0) {
+      const fallbackStack = stackPreview.map(toGeneratedStackFrame);
+
+      return {
+        type: 'other',
+        stack: fallbackStack,
+        symbolicationStatus: canSymbolicateStack(fallbackStack)
+          ? 'pending'
+          : 'unavailable',
       };
     }
   } catch {
