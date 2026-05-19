@@ -56,10 +56,6 @@ import {
 function App() {
   useFileSystemDevTools({
     adapter: createExpoFileSystemAdapter(FileSystem),
-    fileTransfer: {
-      import: true,
-      export: true,
-    },
   });
 
   return <YourApp />;
@@ -78,10 +74,6 @@ import {
 function App() {
   useFileSystemDevTools({
     adapter: createRNFSAdapter(RNFS),
-    fileTransfer: {
-      import: true,
-      export: true,
-    },
   });
 
   return <YourApp />;
@@ -104,6 +96,18 @@ Start your development server and open React Native DevTools. You’ll find the 
 - File import and export are disabled by default. Enable them explicitly with `fileTransfer.import` and `fileTransfer.export`.
 - Agent-triggered file transfer is disabled separately. Enable it explicitly with `fileTransfer.agent.import` and `fileTransfer.agent.export`.
 - File transfer supports single files only. Import targets the currently viewed directory and asks before overwriting an existing file.
+
+To enable file transfer in the DevTools panel, opt in explicitly:
+
+```typescript
+useFileSystemDevTools({
+  adapter: createRNFSAdapter(RNFS),
+  fileTransfer: {
+    import: true,
+    export: true,
+  },
+});
+```
 
 To enable agent-triggered file transfer, opt in separately:
 
