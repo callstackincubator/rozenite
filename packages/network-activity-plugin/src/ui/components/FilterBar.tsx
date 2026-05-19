@@ -1,14 +1,20 @@
+import { useState } from 'react';
+import {
+  autoUpdate,
+  flip,
+  FloatingPortal,
+  offset,
+  shift,
+  size,
+  useClick,
+  useDismiss,
+  useFloating,
+  useInteractions,
+  useRole,
+} from '@floating-ui/react';
 import { Input } from './Input';
 import { Button } from './Button';
-import { X, Filter, ChevronDown } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from './DropdownMenu';
+import { X, Filter, ChevronDown, Check } from 'lucide-react';
 import type { HttpMethod, NetworkEventSource } from '../../shared/client';
 
 export type RequestTypeFilter = 'http' | 'websocket' | 'sse';
@@ -135,7 +141,66 @@ const FilterField = ({
   </label>
 );
 
+const FilterPanelLabel = ({ children }: { children: string }) => (
+  <div className="px-2 py-1.5 text-xs font-semibold text-gray-400">
+    {children}
+  </div>
+);
+
+const FilterPanelSeparator = () => (
+  <div className="-mx-1 my-1 h-px bg-gray-700" />
+);
+
+const FilterCheckbox = ({
+  checked,
+  onCheckedChange,
+  children,
+}: {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  children: string;
+}) => (
+  <button
+    type="button"
+    role="checkbox"
+    aria-checked={checked}
+    className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-left text-sm outline-none transition-colors hover:bg-gray-700 focus:bg-gray-700 focus:text-gray-100"
+    onClick={() => onCheckedChange(!checked)}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      {checked && <Check className="h-4 w-4" />}
+    </span>
+    {children}
+  </button>
+);
+
 export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const { refs, floatingStyles, context } = useFloating({
+    open: isFilterPanelOpen,
+    onOpenChange: setIsFilterPanelOpen,
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(5),
+      flip({ padding: 8 }),
+      shift({ padding: 8 }),
+      size({
+        padding: 8,
+        apply({ availableHeight, elements }) {
+          elements.floating.style.maxHeight = `${availableHeight}px`;
+        },
+      }),
+    ],
+  });
+  const click = useClick(context);
+  const dismiss = useDismiss(context);
+  const role = useRole(context);
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    click,
+    dismiss,
+    role,
+  ]);
+
   const handleTextChange = (text: string) => {
     onFilterChange({ ...filter, text });
   };
@@ -185,8 +250,7 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
   };
 
   const activeFilterCount = getActiveFilterCount(filter);
-  const hasActiveFilters =
-    filter.text !== '' || activeFilterCount > 0;
+  const hasActiveFilters = filter.text !== '' || activeFilterCount > 0;
 
   return (
     <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
@@ -199,139 +263,152 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
         />
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 px-3 text-xs transition-all ${
-              activeFilterCount > 0
-                ? 'bg-blue-600/20 border border-blue-500/50 text-blue-300 hover:bg-blue-600/30'
-                : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'
-            }`}
+      <Button
+        ref={refs.setReference}
+        variant="ghost"
+        size="sm"
+        className={`h-8 px-3 text-xs transition-all ${
+          activeFilterCount > 0
+            ? 'bg-blue-600/20 border border-blue-500/50 text-blue-300 hover:bg-blue-600/30'
+            : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'
+        }`}
+        {...getReferenceProps()}
+      >
+        <Filter className="h-3 w-3 mr-1" />
+        Filters
+        {activeFilterCount > 0 && (
+          <span className="rounded bg-blue-500/30 px-1 text-[10px] text-blue-100">
+            {activeFilterCount}
+          </span>
+        )}
+        <ChevronDown className="h-3 w-3 ml-1" />
+      </Button>
+
+      {isFilterPanelOpen && (
+        <FloatingPortal>
+          <div
+            ref={refs.setFloating}
+            className="z-50 w-80 space-y-1 overflow-y-auto overscroll-contain rounded-md border border-gray-600 bg-gray-800 p-1 text-gray-100 shadow-lg"
+            style={floatingStyles}
+            {...getFloatingProps()}
           >
-            <Filter className="h-3 w-3 mr-1" />
-            Filters
-            {activeFilterCount > 0 && (
-              <span className="rounded bg-blue-500/30 px-1 text-[10px] text-blue-100">
-                {activeFilterCount}
-              </span>
-            )}
-            <ChevronDown className="h-3 w-3 ml-1" />
-          </Button>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent sideOffset={5} className="w-80 space-y-1">
-          <DropdownMenuLabel>Request Type</DropdownMenuLabel>
-          {REQUEST_TYPES.map((type) => (
-            <DropdownMenuCheckboxItem
-              key={type}
-              checked={filter.types.has(type)}
-              onCheckedChange={() => toggleType(type)}
-            >
-              {getTypeLabel(type)}
-            </DropdownMenuCheckboxItem>
-          ))}
-
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Method</DropdownMenuLabel>
-          <div className="grid grid-cols-2">
-            {HTTP_METHODS.map((method) => (
-              <DropdownMenuCheckboxItem
-                key={method}
-                checked={filter.advanced.methods.has(method)}
-                onCheckedChange={() => toggleMethod(method)}
+            <FilterPanelLabel>Request Type</FilterPanelLabel>
+            {REQUEST_TYPES.map((type) => (
+              <FilterCheckbox
+                key={type}
+                checked={filter.types.has(type)}
+                onCheckedChange={() => toggleType(type)}
               >
-                {method}
-              </DropdownMenuCheckboxItem>
+                {getTypeLabel(type)}
+              </FilterCheckbox>
             ))}
-          </div>
 
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Request Source</DropdownMenuLabel>
-          {SOURCES.map((source) => (
-            <DropdownMenuCheckboxItem
-              key={source}
-              checked={filter.advanced.sources.has(source)}
-              onCheckedChange={() => toggleSource(source)}
+            <FilterPanelSeparator />
+            <FilterPanelLabel>Method</FilterPanelLabel>
+            <div className="grid grid-cols-2">
+              {HTTP_METHODS.map((method) => (
+                <FilterCheckbox
+                  key={method}
+                  checked={filter.advanced.methods.has(method)}
+                  onCheckedChange={() => toggleMethod(method)}
+                >
+                  {method}
+                </FilterCheckbox>
+              ))}
+            </div>
+
+            <FilterPanelSeparator />
+            <FilterPanelLabel>Request Source</FilterPanelLabel>
+            {SOURCES.map((source) => (
+              <FilterCheckbox
+                key={source}
+                checked={filter.advanced.sources.has(source)}
+                onCheckedChange={() => toggleSource(source)}
+              >
+                {getSourceLabel(source)}
+              </FilterCheckbox>
+            ))}
+
+            <FilterPanelSeparator />
+            <FilterCheckbox
+              checked={filter.advanced.failedOnly}
+              onCheckedChange={(checked) =>
+                updateAdvancedFilter({ failedOnly: checked })
+              }
             >
-              {getSourceLabel(source)}
-            </DropdownMenuCheckboxItem>
-          ))}
+              Failed only
+            </FilterCheckbox>
+            <FilterCheckbox
+              checked={filter.advanced.inFlightOnly}
+              onCheckedChange={(checked) =>
+                updateAdvancedFilter({ inFlightOnly: checked })
+              }
+            >
+              In-flight only
+            </FilterCheckbox>
+            <FilterCheckbox
+              checked={filter.advanced.overriddenOnly}
+              onCheckedChange={(checked) =>
+                updateAdvancedFilter({ overriddenOnly: checked })
+              }
+            >
+              Overridden only
+            </FilterCheckbox>
 
-          <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem
-            checked={filter.advanced.failedOnly}
-            onCheckedChange={(checked) =>
-              updateAdvancedFilter({ failedOnly: checked })
-            }
-          >
-            Failed only
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
-            checked={filter.advanced.inFlightOnly}
-            onCheckedChange={(checked) =>
-              updateAdvancedFilter({ inFlightOnly: checked })
-            }
-          >
-            In-flight only
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
-            checked={filter.advanced.overriddenOnly}
-            onCheckedChange={(checked) =>
-              updateAdvancedFilter({ overriddenOnly: checked })
-            }
-          >
-            Overridden only
-          </DropdownMenuCheckboxItem>
-
-          <DropdownMenuSeparator />
-          <div className="grid grid-cols-2 gap-x-2">
-            <FilterField
-              label="Status"
-              value={filter.advanced.status}
-              placeholder="200, 2xx, >=400"
-              onChange={(status) => updateAdvancedFilter({ status })}
-            />
-            <FilterField
-              label="Domain"
-              value={filter.advanced.domain}
-              placeholder="api.example.com"
-              onChange={(domain) => updateAdvancedFilter({ domain })}
-            />
-            <FilterField
-              label="MIME Type"
-              value={filter.advanced.contentType}
-              placeholder="json"
-              onChange={(contentType) => updateAdvancedFilter({ contentType })}
-            />
-            <FilterField
-              label="Min Size"
-              value={filter.advanced.minSize}
-              placeholder="1024"
-              onChange={(minSize) => updateAdvancedFilter({ minSize })}
-            />
-            <FilterField
-              label="Max Size"
-              value={filter.advanced.maxSize}
-              placeholder="50000"
-              onChange={(maxSize) => updateAdvancedFilter({ maxSize })}
-            />
-            <FilterField
-              label="Min Duration"
-              value={filter.advanced.minDuration}
-              placeholder="500"
-              onChange={(minDuration) => updateAdvancedFilter({ minDuration })}
-            />
-            <FilterField
-              label="Max Duration"
-              value={filter.advanced.maxDuration}
-              placeholder="2000"
-              onChange={(maxDuration) => updateAdvancedFilter({ maxDuration })}
-            />
+            <FilterPanelSeparator />
+            <div className="grid grid-cols-2 gap-x-2">
+              <FilterField
+                label="Status"
+                value={filter.advanced.status}
+                placeholder="200, 2xx, >=400"
+                onChange={(status) => updateAdvancedFilter({ status })}
+              />
+              <FilterField
+                label="Domain"
+                value={filter.advanced.domain}
+                placeholder="api.example.com"
+                onChange={(domain) => updateAdvancedFilter({ domain })}
+              />
+              <FilterField
+                label="MIME Type"
+                value={filter.advanced.contentType}
+                placeholder="json"
+                onChange={(contentType) =>
+                  updateAdvancedFilter({ contentType })
+                }
+              />
+              <FilterField
+                label="Min Size"
+                value={filter.advanced.minSize}
+                placeholder="1024"
+                onChange={(minSize) => updateAdvancedFilter({ minSize })}
+              />
+              <FilterField
+                label="Max Size"
+                value={filter.advanced.maxSize}
+                placeholder="50000"
+                onChange={(maxSize) => updateAdvancedFilter({ maxSize })}
+              />
+              <FilterField
+                label="Min Duration"
+                value={filter.advanced.minDuration}
+                placeholder="500"
+                onChange={(minDuration) =>
+                  updateAdvancedFilter({ minDuration })
+                }
+              />
+              <FilterField
+                label="Max Duration"
+                value={filter.advanced.maxDuration}
+                placeholder="2000"
+                onChange={(maxDuration) =>
+                  updateAdvancedFilter({ maxDuration })
+                }
+              />
+            </div>
           </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </FloatingPortal>
+      )}
 
       {hasActiveFilters && (
         <Button
