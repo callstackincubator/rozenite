@@ -8,8 +8,13 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { ProcessedRequest } from '../state/model';
-import { RequestId, RequestOverride } from '../../shared/client';
+import type { ProcessedRequest } from '../state/model';
+import type {
+  HttpMethod,
+  NetworkEventSource,
+  RequestId,
+  RequestOverride,
+} from '../../shared/client';
 import {
   useNetworkActivityActions,
   useOverrides,
@@ -20,18 +25,22 @@ import {
 import { getStatusColor } from '../utils/getStatusColor';
 import { FilterState } from './FilterBar';
 import { isNumber } from '../../utils/typeChecks';
-import type { NetworkEventSource } from '../../shared/client';
 
 type NetworkRequest = {
   id: RequestId;
   name: string;
   status: string | number;
-  method: string;
+  statusCode?: number;
+  statusState: ProcessedRequest['status'];
+  method: ProcessedRequest['method'];
   domain: string;
   path: string;
+  contentType?: string;
   size: string;
+  sizeBytes: number | null;
   time: string;
-  type: string;
+  durationMs: number;
+  type: ProcessedRequest['type'];
   source?: NetworkEventSource;
   startTime: string;
   hasOverride: boolean;
@@ -139,6 +148,175 @@ const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
   return getNumericValue(a) - getNumericValue(b);
 };
 
+const parseThreshold = (value: string): number | null => {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const parsedValue = Number(normalizedValue);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+
+const matchesStatusFilter = (
+  statusCode: number | undefined,
+  statusFilter: string,
+) => {
+  const normalizedFilter = statusFilter.trim().toLowerCase();
+  if (!normalizedFilter) {
+    return true;
+  }
+
+  if (statusCode === undefined) {
+    return false;
+  }
+
+  const statusRangeMatch = normalizedFilter.match(/^(\d{3})\s*-\s*(\d{3})$/);
+  if (statusRangeMatch) {
+    const min = Number(statusRangeMatch[1]);
+    const max = Number(statusRangeMatch[2]);
+    return statusCode >= min && statusCode <= max;
+  }
+
+  const statusClassMatch = normalizedFilter.match(/^([1-5])xx$/);
+  if (statusClassMatch) {
+    return Math.floor(statusCode / 100) === Number(statusClassMatch[1]);
+  }
+
+  const comparisonMatch = normalizedFilter.match(/^(>=|<=|>|<)\s*(\d{3})$/);
+  if (comparisonMatch) {
+    const value = Number(comparisonMatch[2]);
+    switch (comparisonMatch[1]) {
+      case '>=':
+        return statusCode >= value;
+      case '<=':
+        return statusCode <= value;
+      case '>':
+        return statusCode > value;
+      case '<':
+        return statusCode < value;
+    }
+  }
+
+  return statusCode === Number(normalizedFilter);
+};
+
+const isInFlightStatus = (status: string) => {
+  return ['pending', 'loading', 'connecting', 'open'].includes(status);
+};
+
+const isFailedStatus = (status: string) => {
+  return ['failed', 'error'].includes(status);
+};
+
+const isHttpMethod = (method: NetworkRequest['method']): method is HttpMethod =>
+  method !== 'WS' && method !== 'SSE';
+
+const filterNetworkRequests = (
+  requests: NetworkRequest[],
+  filter: FilterState,
+) => {
+  const searchText = filter.text.trim().toLowerCase();
+  const domainFilter = filter.advanced.domain.trim().toLowerCase();
+  const contentTypeFilter = filter.advanced.contentType.trim().toLowerCase();
+  const minSize = parseThreshold(filter.advanced.minSize);
+  const maxSize = parseThreshold(filter.advanced.maxSize);
+  const minDuration = parseThreshold(filter.advanced.minDuration);
+  const maxDuration = parseThreshold(filter.advanced.maxDuration);
+
+  return requests.filter((request) => {
+    if (filter.types.size > 0 && !filter.types.has(request.type)) {
+      return false;
+    }
+
+    if (
+      filter.advanced.methods.size > 0 &&
+      (!isHttpMethod(request.method) ||
+        !filter.advanced.methods.has(request.method))
+    ) {
+      return false;
+    }
+
+    if (
+      filter.advanced.sources.size > 0 &&
+      (!request.source || !filter.advanced.sources.has(request.source))
+    ) {
+      return false;
+    }
+
+    if (!matchesStatusFilter(request.statusCode, filter.advanced.status)) {
+      return false;
+    }
+
+    if (domainFilter && !request.domain.toLowerCase().includes(domainFilter)) {
+      return false;
+    }
+
+    if (
+      contentTypeFilter &&
+      !request.contentType?.toLowerCase().includes(contentTypeFilter)
+    ) {
+      return false;
+    }
+
+    if (filter.advanced.failedOnly && !isFailedStatus(request.statusState)) {
+      return false;
+    }
+
+    if (
+      filter.advanced.inFlightOnly &&
+      !isInFlightStatus(request.statusState)
+    ) {
+      return false;
+    }
+
+    if (filter.advanced.overriddenOnly && !request.hasOverride) {
+      return false;
+    }
+
+    if (
+      minSize !== null &&
+      (request.sizeBytes === null || request.sizeBytes < minSize)
+    ) {
+      return false;
+    }
+
+    if (
+      maxSize !== null &&
+      (request.sizeBytes === null || request.sizeBytes > maxSize)
+    ) {
+      return false;
+    }
+
+    if (minDuration !== null && request.durationMs < minDuration) {
+      return false;
+    }
+
+    if (maxDuration !== null && request.durationMs > maxDuration) {
+      return false;
+    }
+
+    if (searchText) {
+      const searchableFields = [
+        request.name,
+        request.method,
+        request.status,
+        request.domain,
+        request.path,
+        request.source,
+        request.type,
+        request.contentType,
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      return searchableFields.includes(searchText);
+    }
+
+    return true;
+  });
+};
+
 const processNetworkRequests = (
   processedRequests: ProcessedRequest[],
   overrides: Map<string, RequestOverride>,
@@ -161,11 +339,16 @@ const processNetworkRequests = (
       id: request.id,
       name: generateName(request.name, showEntirePathAsName),
       status: statusDisplay,
+      statusCode: request.httpStatus || undefined,
+      statusState: request.status,
       method: request.method,
       domain,
       path,
+      contentType: request.contentType,
       size: isNumber(request.size) ? formatSize(request.size) : '—',
+      sizeBytes: isNumber(request.size) ? request.size : null,
       time: formatDuration(duration),
+      durationMs: duration,
       type: request.type,
       source: request.source,
       startTime: formatStartTime(request.timestamp),
@@ -256,39 +439,14 @@ export const RequestList = ({ filter }: RequestListProps) => {
   const overrides = useOverrides();
   const clientUISettings = useClientUISettings();
 
-  // Filter requests based on current filter state
-  const filteredRequests = useMemo(() => {
-    return processedRequests.filter((request) => {
-      // Type filter
-      if (!filter.types.has(request.type)) {
-        return false;
-      }
-
-      // Text filter
-      if (filter.text) {
-        const searchText = filter.text.toLowerCase();
-        const searchableFields = [
-          request.name,
-          request.method,
-          request.status.toString(),
-        ]
-          .join(' ')
-          .toLowerCase();
-
-        return searchableFields.includes(searchText);
-      }
-
-      return true;
-    });
-  }, [processedRequests, filter]);
-
   const requests = useMemo(() => {
-    return processNetworkRequests(
-      filteredRequests,
+    const allRequests = processNetworkRequests(
+      processedRequests,
       overrides,
       clientUISettings?.showUrlAsName,
     );
-  }, [filteredRequests, overrides, clientUISettings?.showUrlAsName]);
+    return filterNetworkRequests(allRequests, filter);
+  }, [processedRequests, overrides, clientUISettings?.showUrlAsName, filter]);
 
   const table = useReactTable({
     data: requests,

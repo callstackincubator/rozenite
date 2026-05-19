@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react';
 import { Toolbar } from '../components/Toolbar';
 import { RequestList } from '../components/RequestList';
 import { SidePanel } from '../components/SidePanel';
-import { FilterBar, FilterState } from '../components/FilterBar';
+import {
+  createDefaultFilter,
+  FilterBar,
+  FilterState,
+} from '../components/FilterBar';
 import { NetworkActivityDevToolsClient } from '../../shared/client';
 import {
   useNetworkActivityClientManagement,
@@ -20,10 +24,9 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
   const clientManagement = useNetworkActivityClientManagement();
   const hasSelectedRequest = useHasSelectedRequest();
   const overrides = useOverrides();
-  const [filter, setFilter] = useState<FilterState>({
-    text: '',
-    types: new Set(['http', 'websocket', 'sse']),
-  });
+  const [filter, setFilter] = useState<FilterState>(() =>
+    createDefaultFilter(),
+  );
 
   useEffect(() => {
     if (!client) {
