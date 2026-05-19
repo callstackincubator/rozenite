@@ -32,8 +32,10 @@ export const ActionTimeline = ({
 
       {selectedEntry ? (
         <ActionDetailPanel
+          key={selectedActionIndex}
           action={selectedEntry.action}
           state={selectedEntry.state}
+          origin={selectedEntry.origin}
         />
       ) : (
         <div className="flex-1 flex items-center justify-center text-gray-400 bg-gray-900">

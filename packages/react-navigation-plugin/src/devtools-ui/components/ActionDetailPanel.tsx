@@ -1,9 +1,12 @@
 import { JSONTree } from 'react-json-tree';
+import type { ActionOrigin } from '../../react-native/symbolication/types';
 import { NavigationAction, NavigationState } from '../../shared';
+import { DispatchOriginSection } from './DispatchOriginSection';
 
 export type ActionDetailPanelProps = {
   action: NavigationAction;
   state: NavigationState | undefined;
+  origin: ActionOrigin | undefined;
 };
 
 const jsonTreeTheme = {
@@ -28,10 +31,13 @@ const jsonTreeTheme = {
 export const ActionDetailPanel = ({
   action,
   state,
+  origin,
 }: ActionDetailPanelProps) => {
   return (
     <div className="flex-1 overflow-auto bg-gray-900">
       <div className="p-4">
+        <DispatchOriginSection origin={origin} />
+
         <div className="mb-6">
           <h3 className="mb-3 text-base font-bold text-gray-100">
             Action Payload
