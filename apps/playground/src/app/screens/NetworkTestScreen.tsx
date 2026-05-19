@@ -395,7 +395,7 @@ const HTML_TEST_CASES: HtmlTestCase[] = [
   {
     label: '404 HTML',
     url: 'https://httpbin.org/nonexistent-rozenite-test-route',
-    hint: '404 with text/html body — triggers the status banner above the preview',
+    hint: '404 with a text/html body — confirms the renderer handles error responses, not just 2xx',
   },
 ];
 
@@ -431,8 +431,9 @@ const HtmlResponseTestComponent: React.FC = () => {
           Triggers HTML responses to exercise the Network Activity panel&apos;s
           HTML viewer. Tap a button, then open the captured request in DevTools
           — Preview tab shows the page rendered inside a sandboxed iframe (no
-          scripts, no external subresources), Raw tab shows the HTML source. The
-          404 demo also surfaces a status banner above the preview.
+          scripts, no external subresources), Raw tab shows the HTML source. One
+          demo also returns 404 so the renderer is exercised on an error
+          response.
         </Text>
 
         <View style={styles.nitroButtonGrid}>
