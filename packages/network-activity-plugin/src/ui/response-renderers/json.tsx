@@ -7,18 +7,14 @@ export const jsonRenderer: ResponseRenderer = {
   id: 'json',
   matches: (contentType, body) =>
     typeof body === 'string' && isJsonContentType(contentType),
-  views: ['preview'],
+  views: ['preview', 'raw'],
   defaultView: 'preview',
   supportsOverride: true,
-  render: ({ body }) => {
+  render: ({ view, body }) => {
     if (typeof body !== 'string') return null;
+    let parsed: unknown;
     try {
-      const parsed: unknown = JSON.parse(body);
-      return (
-        <CodeBlock>
-          <JsonTree data={parsed} />
-        </CodeBlock>
-      );
+      parsed = JSON.parse(body);
     } catch {
       return (
         <>
@@ -29,5 +25,16 @@ export const jsonRenderer: ResponseRenderer = {
         </>
       );
     }
+    if (view === 'raw') {
+      // Pretty-print regardless of the wire format. APIs commonly ship
+      // minified JSON, and re-serializing with 2-space indent is what
+      // makes the Raw view readable.
+      return <CodeBlock>{JSON.stringify(parsed, null, 2)}</CodeBlock>;
+    }
+    return (
+      <CodeBlock>
+        <JsonTree data={parsed} />
+      </CodeBlock>
+    );
   },
 };

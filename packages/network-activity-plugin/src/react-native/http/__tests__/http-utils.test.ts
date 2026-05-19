@@ -79,6 +79,39 @@ describe('getResponseBody', () => {
     expect(await getResponseBody(xhr)).toBe(svg);
   });
 
+  it('reads application/xml as text', async () => {
+    const xml = '<feed><title>Demo</title></feed>';
+    const blob = new Blob([xml], { type: 'application/xml' });
+    const xhr = makeXHRStub({
+      responseType: 'blob',
+      response: blob,
+      contentType: 'application/xml',
+    });
+    expect(await getResponseBody(xhr)).toBe(xml);
+  });
+
+  it('reads text/xml as text', async () => {
+    const xml = '<root/>';
+    const blob = new Blob([xml], { type: 'text/xml' });
+    const xhr = makeXHRStub({
+      responseType: 'blob',
+      response: blob,
+      contentType: 'text/xml; charset=utf-8',
+    });
+    expect(await getResponseBody(xhr)).toBe(xml);
+  });
+
+  it('reads RFC 7303 +xml composite types (Atom, RSS, SOAP) as text', async () => {
+    const atom =
+      '<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>x</title></entry></feed>';
+    const xhr = makeXHRStub({
+      responseType: 'blob',
+      response: new Blob([atom], { type: 'application/atom+xml' }),
+      contentType: 'application/atom+xml; charset=utf-8',
+    });
+    expect(await getResponseBody(xhr)).toBe(atom);
+  });
+
   it('returns a binary union variant with base64 for an image blob under the cap', async () => {
     // Three bytes (0x01 0x02 0x03) base64-encodes to "AQID".
     const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });

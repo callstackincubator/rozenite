@@ -395,7 +395,7 @@ const HTML_TEST_CASES: HtmlTestCase[] = [
   {
     label: '404 HTML',
     url: 'https://httpbin.org/nonexistent-rozenite-test-route',
-    hint: '404 with text/html body — triggers the status banner above the preview',
+    hint: '404 with a text/html body — confirms the renderer handles error responses, not just 2xx',
   },
 ];
 
@@ -431,8 +431,9 @@ const HtmlResponseTestComponent: React.FC = () => {
           Triggers HTML responses to exercise the Network Activity panel&apos;s
           HTML viewer. Tap a button, then open the captured request in DevTools
           — Preview tab shows the page rendered inside a sandboxed iframe (no
-          scripts, no external subresources), Raw tab shows the HTML source. The
-          404 demo also surfaces a status banner above the preview.
+          scripts, no external subresources), Raw tab shows the HTML source. One
+          demo also returns 404 so the renderer is exercised on an error
+          response.
         </Text>
 
         <View style={styles.nitroButtonGrid}>
@@ -455,6 +456,103 @@ const HtmlResponseTestComponent: React.FC = () => {
 
         <View style={styles.imageHintList}>
           {HTML_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
+type XmlTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const XML_TEST_CASES: XmlTestCase[] = [
+  {
+    label: 'Sample XML',
+    url: 'https://httpbin.org/xml',
+    hint: '~519 B application/xml slideshow — exercises basic tree rendering + attributes',
+  },
+  {
+    label: 'Atom feed',
+    url: 'https://github.com/callstackincubator/rozenite/commits/main.atom',
+    hint: 'Atom feed — namespaces (xmlns, xmlns:media), nested <entry> blocks, CDATA in <content>',
+  },
+];
+
+const XmlResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchXml = React.useCallback(async (testCase: XmlTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const text = await response.text();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${
+          response.headers.get('content-type') ?? 'unknown'
+        } • ${text.length.toLocaleString()} chars`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>XML Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers XML responses to exercise the Network Activity panel&apos;s
+          XML viewer. Tap a button, then open the captured request in DevTools —
+          the Preview tab shows the parsed tree (collapsible elements,
+          namespaces, CDATA content), the Raw tab shows the XML source.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {XML_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchXml(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {XML_TEST_CASES.map((testCase) =>
             testCase.hint ? (
               <Text key={testCase.label} style={styles.imageHintText}>
                 • {testCase.label}: {testCase.hint}
@@ -1578,6 +1676,7 @@ export const NetworkTestScreen: React.FC = () => {
     | 'images'
     | 'binary'
     | 'html'
+    | 'xml'
     | 'request-body'
   >('http');
 
@@ -1606,6 +1705,7 @@ export const NetworkTestScreen: React.FC = () => {
           { key: 'images', label: 'Images' },
           { key: 'binary', label: 'Binary' },
           { key: 'html', label: 'HTML' },
+          { key: 'xml', label: 'XML' },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -1623,7 +1723,8 @@ export const NetworkTestScreen: React.FC = () => {
                   | 'sse'
                   | 'images'
                   | 'binary'
-                  | 'html',
+                  | 'html'
+                  | 'xml',
               )
             }
           >
@@ -1658,6 +1759,8 @@ export const NetworkTestScreen: React.FC = () => {
         <BinaryResponseTestComponent />
       ) : activeTest === 'html' ? (
         <HtmlResponseTestComponent />
+      ) : activeTest === 'xml' ? (
+        <XmlResponseTestComponent />
       ) : (
         <SSETestComponent />
       )}

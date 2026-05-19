@@ -7,6 +7,7 @@ import { jsonRenderer } from './json';
 import { svgRenderer } from './svg';
 import { textFallbackRenderer } from './text-fallback';
 import { unknownRenderer } from './unknown';
+import { xmlRenderer } from './xml';
 import type { ResponseBody } from '../../shared/client';
 import type { ResponseRenderer } from './types';
 
@@ -34,6 +35,7 @@ export const renderers: ResponseRenderer[] = [
   binaryRenderer,
   jsonRenderer,
   htmlRenderer,
+  xmlRenderer,
   textFallbackRenderer,
   unknownRenderer,
 ];

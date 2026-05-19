@@ -54,15 +54,25 @@ describe('findRenderer', () => {
     expect(findRenderer('text/html', '').id).toBe('html');
   });
 
-  it('does not claim application/xhtml+xml (left for the future XML renderer)', () => {
-    expect(findRenderer('application/xhtml+xml', '<p/>').id).toBe(
-      'text-fallback',
+  it('routes XML content-types (and RFC 7303 +xml variants) to the xml renderer', () => {
+    expect(findRenderer('application/xml', '<x/>').id).toBe('xml');
+    expect(findRenderer('text/xml', '<x/>').id).toBe('xml');
+    expect(findRenderer('application/atom+xml', '<feed/>').id).toBe('xml');
+    expect(findRenderer('application/rss+xml', '<rss/>').id).toBe('xml');
+    expect(findRenderer('application/soap+xml; charset=utf-8', '<e/>').id).toBe(
+      'xml',
     );
+    expect(findRenderer('application/xhtml+xml', '<html/>').id).toBe('xml');
   });
 
-  it('routes text/plain, application/xml, application/javascript to the text fallback', () => {
+  it('keeps image/svg+xml routed to svg even though it would match the +xml suffix', () => {
+    // SVG matches isXmlContentType (it ends with +xml), but the registry
+    // order places svgRenderer earlier — first hit wins.
+    expect(findRenderer('image/svg+xml', '<svg/>').id).toBe('svg');
+  });
+
+  it('routes text/plain, application/javascript to the text fallback', () => {
     expect(findRenderer('text/plain', 'hi').id).toBe('text-fallback');
-    expect(findRenderer('application/xml', '<x/>').id).toBe('text-fallback');
     expect(findRenderer('application/javascript', 'var a;').id).toBe(
       'text-fallback',
     );
@@ -95,6 +105,12 @@ describe('findRenderer', () => {
     // html must precede text-fallback, otherwise text-fallback would
     // claim every text/html body before html ever ran.
     expect(ids.indexOf('html')).toBeLessThan(ids.indexOf('text-fallback'));
+    // svg must precede xml because image/svg+xml matches both
+    // predicates — registry order is the tiebreaker.
+    expect(ids.indexOf('svg')).toBeLessThan(ids.indexOf('xml'));
+    // xml must precede text-fallback, otherwise text-fallback would
+    // claim every XML-ish body before xml ever ran.
+    expect(ids.indexOf('xml')).toBeLessThan(ids.indexOf('text-fallback'));
     expect(ids.indexOf('empty')).toBe(0);
     expect(ids.indexOf('unknown')).toBe(ids.length - 1);
   });
