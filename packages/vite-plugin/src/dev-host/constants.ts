@@ -1,4 +1,5 @@
 export const DEV_HOST_STATE_ELEMENT_ID = '__rozenite-dev-host__';
+export const DEV_HOST_CONFIG_GLOBAL_KEY = '__rozenite-dev-config__';
 
 export const DEFAULT_DEVTOOLS_HEIGHT = 288;
 export const MIN_DEVTOOLS_HEIGHT = 180;
