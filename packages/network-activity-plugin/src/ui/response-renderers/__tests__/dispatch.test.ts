@@ -44,8 +44,23 @@ describe('findRenderer', () => {
     expect(findRenderer('application/ld+json', '{}').id).toBe('json');
   });
 
-  it('routes text/html, text/plain, application/xml to the text fallback', () => {
-    expect(findRenderer('text/html', '<p/>').id).toBe('text-fallback');
+  it('routes text/html (and its charset/case variants) to the html renderer', () => {
+    expect(findRenderer('text/html', '<p/>').id).toBe('html');
+    expect(findRenderer('text/html; charset=utf-8', '<p/>').id).toBe('html');
+    // Case-insensitive — proves we use normalizeContentType, not startsWith.
+    expect(findRenderer('text/HTML', '<p/>').id).toBe('html');
+    // Empty-string HTML body is still claimed by html (matcher is
+    // content-type-driven; the renderer happily produces a blank iframe).
+    expect(findRenderer('text/html', '').id).toBe('html');
+  });
+
+  it('does not claim application/xhtml+xml (left for the future XML renderer)', () => {
+    expect(findRenderer('application/xhtml+xml', '<p/>').id).toBe(
+      'text-fallback',
+    );
+  });
+
+  it('routes text/plain, application/xml, application/javascript to the text fallback', () => {
     expect(findRenderer('text/plain', 'hi').id).toBe('text-fallback');
     expect(findRenderer('application/xml', '<x/>').id).toBe('text-fallback');
     expect(findRenderer('application/javascript', 'var a;').id).toBe(
@@ -77,6 +92,9 @@ describe('findRenderer', () => {
     expect(ids.indexOf('svg')).toBeLessThan(ids.indexOf('image'));
     expect(ids.indexOf('binary-too-large')).toBeLessThan(ids.indexOf('image'));
     expect(ids.indexOf('image')).toBeLessThan(ids.indexOf('binary'));
+    // html must precede text-fallback, otherwise text-fallback would
+    // claim every text/html body before html ever ran.
+    expect(ids.indexOf('html')).toBeLessThan(ids.indexOf('text-fallback'));
     expect(ids.indexOf('empty')).toBe(0);
     expect(ids.indexOf('unknown')).toBe(ids.length - 1);
   });
