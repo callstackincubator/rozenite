@@ -283,7 +283,7 @@ export const useFlowRunner = ({ sendMessage }: FlowRunnerOptions) => {
   };
 
   const hasRunningFlow = (flowName: string) => {
-    return [...activeRunsRef.current.values()].some((run) => run.flowName === flowName);
+    return flowRuns.some((run) => run.flowName === flowName && run.status === 'running');
   };
 
   return {
