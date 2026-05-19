@@ -1,11 +1,18 @@
 import type { ReactNode } from 'react';
-import type { ResponseBody } from '../../shared/client';
+import type { HttpHeaders, ResponseBody } from '../../shared/client';
 
 export type ResponseView = 'preview' | 'raw';
 
 export type RenderCtx = {
   contentType: string;
   url: string;
+  // Response headers, used for fields like Content-Length and
+  // Content-Disposition filename. Optional so renderers can be
+  // tested with minimal fixtures.
+  headers?: HttpHeaders;
+  // Response size in bytes as reported by capture (may differ from
+  // the decoded base64 length when the server gzips on the wire).
+  size?: number;
 };
 
 export type RenderArgs = {

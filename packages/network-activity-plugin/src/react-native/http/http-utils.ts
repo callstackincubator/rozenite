@@ -141,6 +141,21 @@ const readBlobAsBase64 = (blob: Blob): Promise<string> =>
     reader.readAsDataURL(blob);
   });
 
+// String.fromCharCode.apply(null, hugeArray) blows up around 64K elements
+// in some engines; chunk through 32K windows so we work uniformly across
+// large arraybuffer responses.
+const ARRAY_BUFFER_BASE64_CHUNK = 0x8000;
+
+const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += ARRAY_BUFFER_BASE64_CHUNK) {
+    const chunk = bytes.subarray(i, i + ARRAY_BUFFER_BASE64_CHUNK);
+    binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
+  }
+  return btoa(binary);
+};
+
 export const getResponseBody = async (
   request: XMLHttpRequest,
 ): Promise<ResponseBody> => {
@@ -154,9 +169,9 @@ export const getResponseBody = async (
   if (responseType === 'blob') {
     const contentType = request.getResponseHeader('Content-Type') || '';
 
-    // SVG is image/svg+xml but it's text content — keep it on the text
-    // path so the panel can show source in the Raw view without base64
-    // round-tripping.
+    // Text-friendly content-types — return as string so the panel's
+    // text / JSON / SVG renderers can preview them directly. SVG is
+    // image/svg+xml on the wire but its payload is XML text.
     if (
       contentType.startsWith('text/') ||
       isJsonContentType(contentType) ||
@@ -165,13 +180,25 @@ export const getResponseBody = async (
       return readBlobAsText(request.response);
     }
 
-    if (contentType.startsWith('image/')) {
-      const blob = request.response as Blob;
-      if (blob.size > BINARY_CAPTURE_SIZE_CAP) {
-        return { kind: 'binary-too-large', size: blob.size };
-      }
-      return { kind: 'binary', base64: await readBlobAsBase64(blob) };
+    // Everything else is binary — image/*, application/pdf, audio/*,
+    // video/*, font/*, application/octet-stream, anything novel a
+    // server might serve.
+    const blob = request.response as Blob;
+    if (blob.size > BINARY_CAPTURE_SIZE_CAP) {
+      return { kind: 'binary-too-large', size: blob.size };
     }
+    return { kind: 'binary', base64: await readBlobAsBase64(blob) };
+  }
+
+  if (responseType === 'arraybuffer') {
+    const buffer = request.response as ArrayBuffer | null;
+    if (!buffer || buffer.byteLength === 0) {
+      return null;
+    }
+    if (buffer.byteLength > BINARY_CAPTURE_SIZE_CAP) {
+      return { kind: 'binary-too-large', size: buffer.byteLength };
+    }
+    return { kind: 'binary', base64: arrayBufferToBase64(buffer) };
   }
 
   if (responseType === 'json') {

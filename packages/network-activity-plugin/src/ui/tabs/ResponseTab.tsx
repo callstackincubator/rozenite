@@ -69,6 +69,8 @@ export const ResponseTab = ({
     const ctx: RenderCtx = {
       contentType: type,
       url: selectedRequest.request.url,
+      headers: selectedRequest.response?.headers,
+      size: selectedRequest.response?.size,
     };
 
     // Override engaged: replace the whole panel with the override editor.

@@ -264,6 +264,117 @@ const ImageResponseTestComponent: React.FC = () => {
   );
 };
 
+type BinaryTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const BINARY_TEST_CASES: BinaryTestCase[] = [
+  {
+    label: 'PDF',
+    url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    hint: 'application/pdf — magic bytes `%PDF` visible in the hex ASCII column',
+  },
+  {
+    label: 'octet-stream',
+    url: 'https://httpbin.org/bytes/4096',
+    hint: 'application/octet-stream — random 4 KB, no recognisable magic',
+  },
+  {
+    label: 'WOFF2 font',
+    url: 'https://cdn.jsdelivr.net/npm/@fontsource/roboto@latest/files/roboto-latin-400-normal.woff2',
+    hint: 'font/woff2 — exercises the font/* content-type branch',
+  },
+  {
+    label: 'MP3',
+    url: 'https://www.kozco.com/tech/piano2-CoolEdit.mp3',
+    hint: 'audio/mpeg — small audio sample, ~99 KB',
+  },
+  {
+    label: 'ZIP',
+    url: 'https://codeload.github.com/octocat/Hello-World/zip/refs/heads/master',
+    hint: 'application/zip — GitHub codeload, `PK` magic in ASCII column',
+  },
+];
+
+const BinaryResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchBinary = React.useCallback(async (testCase: BinaryTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const blob = await response.blob();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${blob.type || 'unknown'} • ${blob.size.toLocaleString()} bytes`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Binary Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers non-image binary responses so the Network Activity
+          panel&apos;s hex viewer + metadata card can be exercised end-to-end.
+          Tap a button, then open the captured request in DevTools — the Raw tab
+          shows the metadata card (size, Content-Length, derived filename,
+          Download button) and the virtualized hex view below.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {BINARY_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchBinary(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {BINARY_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
 const NitroHTTPTestComponent: React.FC = () => {
   const [isRunning, setIsRunning] = React.useState(false);
   const [result, setResult] = React.useState<NitroDemoResult | null>(null);
@@ -1362,6 +1473,7 @@ export const NetworkTestScreen: React.FC = () => {
     | 'nitro-websocket'
     | 'sse'
     | 'images'
+    | 'binary'
     | 'request-body'
   >('http');
 
@@ -1388,6 +1500,7 @@ export const NetworkTestScreen: React.FC = () => {
           { key: 'nitro-websocket', label: 'Nitro WS' },
           { key: 'sse', label: 'SSE Test' },
           { key: 'images', label: 'Images' },
+          { key: 'binary', label: 'Binary' },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -1403,7 +1516,8 @@ export const NetworkTestScreen: React.FC = () => {
                   | 'websocket'
                   | 'nitro-websocket'
                   | 'sse'
-                  | 'images',
+                  | 'images'
+                  | 'binary',
               )
             }
           >
@@ -1434,6 +1548,8 @@ export const NetworkTestScreen: React.FC = () => {
         <NitroWebSocketTestComponent />
       ) : activeTest === 'images' ? (
         <ImageResponseTestComponent />
+      ) : activeTest === 'binary' ? (
+        <BinaryResponseTestComponent />
       ) : (
         <SSETestComponent />
       )}

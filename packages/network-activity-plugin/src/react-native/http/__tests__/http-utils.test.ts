@@ -109,7 +109,7 @@ describe('getResponseBody', () => {
     });
   });
 
-  it('returns null for non-image, non-text blob content-types (PR2 widens this)', async () => {
+  it('returns a binary union variant for non-image, non-text blob content-types', async () => {
     const blob = new Blob([new Uint8Array([1, 2, 3])], {
       type: 'application/pdf',
     });
@@ -118,11 +118,78 @@ describe('getResponseBody', () => {
       response: blob,
       contentType: 'application/pdf',
     });
+    expect(await getResponseBody(xhr)).toEqual({
+      kind: 'binary',
+      base64: 'AQID',
+    });
+  });
+
+  it('captures arraybuffer responses as binary', async () => {
+    const buffer = new Uint8Array([1, 2, 3]).buffer;
+    const xhr = makeXHRStub({
+      responseType: 'arraybuffer',
+      response: buffer,
+    });
+    expect(await getResponseBody(xhr)).toEqual({
+      kind: 'binary',
+      base64: 'AQID',
+    });
+  });
+
+  it('chunks large arraybuffer responses without exhausting fromCharCode', async () => {
+    // 100 KB of bytes — past the 32 KB chunk boundary used by the
+    // base64 encoder, well under the 5 MB cap. Confirms the chunked
+    // path produces correct base64 output.
+    const size = 100 * 1024;
+    const bytes = new Uint8Array(size);
+    for (let i = 0; i < size; i++) {
+      bytes[i] = i & 0xff;
+    }
+    const xhr = makeXHRStub({
+      responseType: 'arraybuffer',
+      response: bytes.buffer,
+    });
+    const result = await getResponseBody(xhr);
+    expect(typeof result === 'object' && result?.kind === 'binary').toBe(true);
+    if (typeof result === 'object' && result?.kind === 'binary') {
+      // Round-trip: decode the base64 back and compare with the input.
+      const binary = atob(result.base64);
+      const decoded = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        decoded[i] = binary.charCodeAt(i);
+      }
+      expect(decoded.length).toBe(size);
+      expect(decoded[0]).toBe(0);
+      expect(decoded[size - 1]).toBe((size - 1) & 0xff);
+    }
+  });
+
+  it('short-circuits arraybuffer responses above the size cap', async () => {
+    // Stub a buffer whose byteLength lies — the cap check should fire
+    // before any encoding work happens.
+    const oversized = {
+      byteLength: BINARY_CAPTURE_SIZE_CAP + 1,
+    } as unknown as ArrayBuffer;
+    const xhr = makeXHRStub({
+      responseType: 'arraybuffer',
+      response: oversized,
+    });
+    expect(await getResponseBody(xhr)).toEqual({
+      kind: 'binary-too-large',
+      size: BINARY_CAPTURE_SIZE_CAP + 1,
+    });
+  });
+
+  it('returns null for an arraybuffer responseType with no payload', async () => {
+    const xhr = makeXHRStub({ responseType: 'arraybuffer' });
     expect(await getResponseBody(xhr)).toBeNull();
   });
 
-  it('returns null when no branch matches', async () => {
-    const xhr = makeXHRStub({ responseType: 'arraybuffer' });
+  it('returns null for an arraybuffer responseType with an empty buffer', async () => {
+    const xhr = makeXHRStub({
+      responseType: 'arraybuffer',
+      response: new ArrayBuffer(0),
+    });
     expect(await getResponseBody(xhr)).toBeNull();
   });
 });
