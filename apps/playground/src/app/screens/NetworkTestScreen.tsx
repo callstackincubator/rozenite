@@ -576,6 +576,107 @@ const XmlResponseTestComponent: React.FC = () => {
   );
 };
 
+type LargeTextTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const LARGE_TEXT_TEST_CASES: LargeTextTestCase[] = [
+  {
+    label: 'Alice in Wonderland (~174 KB)',
+    url: 'https://www.gutenberg.org/cache/epub/11/pg11.txt',
+    hint: 'text/plain — exceeds the 50 KB threshold, Raw view virtualizes into a 500 px scrollable window',
+  },
+  {
+    label: 'GPL-3 license (~35 KB)',
+    url: 'https://www.gnu.org/licenses/gpl-3.0.txt',
+    hint: 'text/plain — under the threshold, renders as a flat <pre> for comparison',
+  },
+];
+
+const LargeTextResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchLargeText = React.useCallback(
+    async (testCase: LargeTextTestCase) => {
+      setLoadingLabel(testCase.label);
+      setError(null);
+      setLastResult(null);
+      try {
+        const response = await fetch(testCase.url);
+        const text = await response.text();
+        setLastResult(
+          `${testCase.label}: HTTP ${response.status} • ${
+            response.headers.get('content-type') ?? 'unknown'
+          } • ${text.length.toLocaleString()} chars`,
+        );
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setLoadingLabel(null);
+      }
+    },
+    [],
+  );
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Large Text Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers large plain-text responses so the Network Activity
+          panel&apos;s code-block viewer can be exercised on both sides of the
+          50 KB virtualization threshold. Tap a button, then open the captured
+          request in DevTools — bodies above 50 KB scroll inside a 500 px window
+          via Virtuoso; bodies below render as a flat &lt;pre&gt;.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {LARGE_TEXT_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchLargeText(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {LARGE_TEXT_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
 const NitroHTTPTestComponent: React.FC = () => {
   const [isRunning, setIsRunning] = React.useState(false);
   const [result, setResult] = React.useState<NitroDemoResult | null>(null);
@@ -1677,6 +1778,7 @@ export const NetworkTestScreen: React.FC = () => {
     | 'binary'
     | 'html'
     | 'xml'
+    | 'large-text'
     | 'request-body'
   >('http');
 
@@ -1706,6 +1808,7 @@ export const NetworkTestScreen: React.FC = () => {
           { key: 'binary', label: 'Binary' },
           { key: 'html', label: 'HTML' },
           { key: 'xml', label: 'XML' },
+          { key: 'large-text', label: 'Large text' },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -1724,7 +1827,8 @@ export const NetworkTestScreen: React.FC = () => {
                   | 'images'
                   | 'binary'
                   | 'html'
-                  | 'xml',
+                  | 'xml'
+                  | 'large-text',
               )
             }
           >
@@ -1761,6 +1865,8 @@ export const NetworkTestScreen: React.FC = () => {
         <HtmlResponseTestComponent />
       ) : activeTest === 'xml' ? (
         <XmlResponseTestComponent />
+      ) : activeTest === 'large-text' ? (
+        <LargeTextResponseTestComponent />
       ) : (
         <SSETestComponent />
       )}
