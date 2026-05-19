@@ -71,8 +71,6 @@ export const ResponseTab = ({
       url: selectedRequest.request.url,
       headers: selectedRequest.response?.headers,
       size: selectedRequest.response?.size,
-      status: selectedRequest.response?.status,
-      statusText: selectedRequest.response?.statusText,
     };
 
     // Override engaged: replace the whole panel with the override editor.

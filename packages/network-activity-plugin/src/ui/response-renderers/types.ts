@@ -13,8 +13,6 @@ export type RenderCtx = {
   // Response size in bytes as reported by capture (may differ from
   // the decoded base64 length when the server gzips on the wire).
   size?: number;
-  status?: number;
-  statusText?: string;
 };
 
 export type RenderArgs = {

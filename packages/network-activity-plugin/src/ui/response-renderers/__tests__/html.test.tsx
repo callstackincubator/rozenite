@@ -13,18 +13,8 @@ const baseCtx: RenderCtx = {
 
 const HTML_BODY = '<!DOCTYPE html><html><body><h1>Hello</h1></body></html>';
 
-const renderHtml = (
-  view: 'preview' | 'raw',
-  body = HTML_BODY,
-  ctxOverride: Partial<RenderCtx> = {},
-) =>
-  render(
-    htmlRenderer.render({
-      view,
-      body,
-      ctx: { ...baseCtx, ...ctxOverride },
-    }) as ReactElement,
-  );
+const renderHtml = (view: 'preview' | 'raw', body = HTML_BODY) =>
+  render(htmlRenderer.render({ view, body, ctx: baseCtx }) as ReactElement);
 
 const getIframe = (container: HTMLElement): HTMLIFrameElement => {
   const iframe = container.querySelector('iframe');
@@ -70,49 +60,6 @@ describe('htmlRenderer', () => {
       const srcdoc = getIframe(container).getAttribute('srcdoc') ?? '';
       expect(srcdoc).toContain(body);
     });
-
-    it('does not render a status banner when status is missing', () => {
-      renderHtml('preview', HTML_BODY, { status: undefined });
-      expect(screen.queryByText(/Server returned/)).toBeNull();
-    });
-
-    it('does not render a status banner for 2xx responses', () => {
-      renderHtml('preview', HTML_BODY, { status: 200, statusText: 'OK' });
-      expect(screen.queryByText(/Server returned/)).toBeNull();
-    });
-
-    it('does not render a status banner just below the 400 boundary', () => {
-      renderHtml('preview', HTML_BODY, { status: 399 });
-      expect(screen.queryByText(/Server returned/)).toBeNull();
-    });
-
-    it('renders a status banner at exactly 400', () => {
-      renderHtml('preview', HTML_BODY, {
-        status: 400,
-        statusText: 'Bad Request',
-      });
-      expect(screen.getByText(/Server returned/)).toBeInTheDocument();
-      expect(screen.getByText('400')).toBeInTheDocument();
-      expect(screen.getByText(/Bad Request/)).toBeInTheDocument();
-    });
-
-    it('renders a status banner for 404', () => {
-      renderHtml('preview', HTML_BODY, {
-        status: 404,
-        statusText: 'Not Found',
-      });
-      expect(screen.getByText(/Server returned/)).toBeInTheDocument();
-      expect(screen.getByText('404')).toBeInTheDocument();
-    });
-
-    it('renders a status banner for 5xx', () => {
-      renderHtml('preview', HTML_BODY, {
-        status: 500,
-        statusText: 'Internal Server Error',
-      });
-      expect(screen.getByText(/Server returned/)).toBeInTheDocument();
-      expect(screen.getByText('500')).toBeInTheDocument();
-    });
   });
 
   describe('raw view', () => {
@@ -120,11 +67,6 @@ describe('htmlRenderer', () => {
       const { container } = renderHtml('raw');
       expect(container.querySelector('iframe')).toBeNull();
       expect(screen.getByText(HTML_BODY)).toBeInTheDocument();
-    });
-
-    it('never renders the status banner in raw view, even on error responses', () => {
-      renderHtml('raw', HTML_BODY, { status: 500, statusText: 'Server Error' });
-      expect(screen.queryByText(/Server returned/)).toBeNull();
     });
   });
 
