@@ -264,7 +264,7 @@ export const rozeniteClientPlugin = (): Plugin => {
           attrs: {
             type: 'module',
           },
-          children: `import rozeniteConfig from ${JSON.stringify(ROZENITE_DEV_CONFIG_MODULE_ID)}; window[${JSON.stringify(DEV_HOST_CONFIG_GLOBAL_KEY)}] = rozeniteConfig.dev ?? {};`,
+          children: `import rozeniteConfig from ${JSON.stringify('/@id/' + ROZENITE_DEV_CONFIG_MODULE_ID)}; window[${JSON.stringify(DEV_HOST_CONFIG_GLOBAL_KEY)}] = rozeniteConfig.dev ?? {};`,
           injectTo: 'body',
         },
         {
