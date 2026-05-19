@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { useNetworkEntries, useWebSocketMessagesMap } from '../state/hooks';
+import { useNetworkActivityStore } from '../state/hooks';
+import { store } from '../state/store';
 import { downloadJsonFile } from '../utils/downloadFile';
 import {
   createNetworkActivitySessionExport,
@@ -7,12 +8,14 @@ import {
 } from '../utils/sessionExport';
 
 export const useNetworkActivitySessionExport = () => {
-  const networkEntries = useNetworkEntries();
-  const websocketMessages = useWebSocketMessagesMap();
-  const canExportSession = networkEntries.size > 0;
+  const canExportSession = useNetworkActivityStore(
+    (state) => state.networkEntries.size > 0,
+  );
 
   const exportSession = useCallback(() => {
-    if (!canExportSession) {
+    const { networkEntries, websocketMessages } = store.getState();
+
+    if (networkEntries.size === 0) {
       return;
     }
 
@@ -27,7 +30,7 @@ export const useNetworkActivitySessionExport = () => {
       getNetworkActivitySessionExportFileName(exportedAt),
       exportData,
     );
-  }, [canExportSession, networkEntries, websocketMessages]);
+  }, []);
 
   return {
     canExportSession,
