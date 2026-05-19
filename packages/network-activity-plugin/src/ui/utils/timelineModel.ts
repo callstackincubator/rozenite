@@ -6,16 +6,17 @@ export const TIMELINE_LAYOUT = {
   liveRefreshMs: 1000,
   maxRenderedRequests: 1000,
   laneCount: 8,
-  laneHeightPx: 3,
-  laneGapPx: 9,
-  laneHitTargetHeightPx: 12,
-  rulerHeightPx: 28,
-  laneTopPx: 44,
-  laneBottomPaddingPx: 32,
+  laneHeightPx: 2,
+  laneGapPx: 6,
+  laneHitTargetHeightPx: 8,
+  rulerHeightPx: 22,
+  laneTopPx: 32,
+  laneBottomPaddingPx: 18,
   tickTargetCount: 7,
   minTickLabelGapPercent: 6,
   rangePaddingRatio: 0.025,
   minRangePaddingMs: 25,
+  streamingRequestMaxDurationMs: 5000,
 } as const;
 
 const NICE_TICK_FACTORS = [1, 2, 2.5, 5, 10] as const;
@@ -27,6 +28,11 @@ type TimelineLayout = {
 export type TimelineTick = {
   label: string;
   offsetPercent: number;
+};
+
+export type TimelineRangeSelection = {
+  startTime: number;
+  endTime: number;
 };
 
 export type TimelineRow = {
@@ -141,6 +147,37 @@ export const getRequestEndTime = (request: ProcessedRequest, now: number) => {
   return request.timestamp;
 };
 
+export const getTimelineRequestEndTime = (
+  request: ProcessedRequest,
+  now: number,
+  layout: TimelineLayout = TIMELINE_LAYOUT,
+) => {
+  const endTime = getRequestEndTime(request, now);
+
+  if (request.type !== 'websocket' && request.type !== 'sse') {
+    return endTime;
+  }
+
+  return Math.min(
+    endTime,
+    request.timestamp + layout.streamingRequestMaxDurationMs,
+  );
+};
+
+export const requestOverlapsTimelineRange = (
+  request: ProcessedRequest,
+  range: TimelineRangeSelection,
+  now: number,
+  layout: TimelineLayout = TIMELINE_LAYOUT,
+) => {
+  const rangeStart = Math.min(range.startTime, range.endTime);
+  const rangeEnd = Math.max(range.startTime, range.endTime);
+  const requestStart = request.timestamp;
+  const requestEnd = getTimelineRequestEndTime(request, now, layout);
+
+  return requestStart <= rangeEnd && requestEnd >= rangeStart;
+};
+
 const getNiceTickStep = (rangeDuration: number, targetTickCount: number) => {
   const targetStep = rangeDuration / targetTickCount;
   const exponent = Math.floor(Math.log10(targetStep));
@@ -190,10 +227,14 @@ export const getTimelineTicks = (
   return ticks;
 };
 
-const getTimelineBounds = (requests: ProcessedRequest[], now: number) => {
+const getTimelineBounds = (
+  requests: ProcessedRequest[],
+  now: number,
+  layout: TimelineLayout,
+) => {
   return requests.reduce(
     (result, request) => {
-      const endTime = getRequestEndTime(request, now);
+      const endTime = getTimelineRequestEndTime(request, now, layout);
 
       return {
         start: Math.min(result.start, request.timestamp),
@@ -246,7 +287,7 @@ export const getTimelineModel = (
     };
   }
 
-  const bounds = getTimelineBounds(renderableRequests, now);
+  const bounds = getTimelineBounds(renderableRequests, now, layout);
   const rawRangeDuration = Math.max(
     bounds.end - bounds.start,
     layout.minRangeMs,
@@ -263,7 +304,7 @@ export const getTimelineModel = (
     .sort((a, b) => a.timestamp - b.timestamp)
     .map((request): TimelineRow => {
       const startTime = request.timestamp;
-      const endTime = getRequestEndTime(request, now);
+      const endTime = getTimelineRequestEndTime(request, now, layout);
       const duration = Math.max(endTime - startTime, 0);
       const offsetPercent = clamp(
         ((startTime - rangeStart) / rangeDuration) * 100,

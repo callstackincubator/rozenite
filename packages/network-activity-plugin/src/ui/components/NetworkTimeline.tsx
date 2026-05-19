@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties, PointerEvent } from 'react';
+import { X } from 'lucide-react';
 import type { RequestId } from '../../shared/client';
 import type { ProcessedRequest } from '../state/model';
 import {
@@ -14,37 +15,26 @@ import {
   isRequestActive,
   TIMELINE_LAYOUT,
 } from '../utils/timelineModel';
-import type { TimelineRow, TimelineTick } from '../utils/timelineModel';
+import type {
+  TimelineModel,
+  TimelineRangeSelection,
+  TimelineRow,
+  TimelineTick,
+} from '../utils/timelineModel';
 
 const REQUEST_TIMELINE_COLORS = {
   error: 'bg-red-400',
-  http: 'bg-sky-400',
-  websocket: 'bg-emerald-400',
-  sse: 'bg-amber-400',
-  httpTtfb: 'bg-lime-400',
+  primary: 'bg-gray-400',
+  active: 'bg-gray-500',
+  httpTtfb: 'bg-gray-200',
 } as const;
-
-const LEGEND_ITEMS = [
-  { label: 'HTTP', className: REQUEST_TIMELINE_COLORS.http },
-  { label: 'WebSocket', className: REQUEST_TIMELINE_COLORS.websocket },
-  { label: 'SSE', className: REQUEST_TIMELINE_COLORS.sse },
-  { label: 'TTFB', className: REQUEST_TIMELINE_COLORS.httpTtfb },
-  { label: 'Error', className: REQUEST_TIMELINE_COLORS.error },
-];
 
 const getPrimaryBarClassName = (request: ProcessedRequest) => {
   if (request.status === 'failed' || request.status === 'error') {
     return REQUEST_TIMELINE_COLORS.error;
   }
 
-  switch (request.type) {
-    case 'websocket':
-      return REQUEST_TIMELINE_COLORS.websocket;
-    case 'sse':
-      return REQUEST_TIMELINE_COLORS.sse;
-    case 'http':
-      return REQUEST_TIMELINE_COLORS.http;
-  }
+  return REQUEST_TIMELINE_COLORS.primary;
 };
 
 const getStyle = (
@@ -61,7 +51,7 @@ const GridLines = ({ ticks }: { ticks: TimelineTick[] }) => {
       {ticks.map((tick) => (
         <div
           key={`${tick.label}-${tick.offsetPercent}`}
-          className="absolute inset-y-0 border-l border-gray-700/70"
+          className="absolute inset-y-0 border-l border-gray-800"
           style={{ left: `${tick.offsetPercent}%` }}
         />
       ))}
@@ -91,12 +81,16 @@ const TimelineTrack = ({
   row,
   isSelected,
   onSelect,
+  shouldSuppressSelect,
 }: {
   row: TimelineRow;
   isSelected: boolean;
   onSelect: (requestId: RequestId) => void;
+  shouldSuppressSelect: () => boolean;
 }) => {
-  const primaryBarClassName = getPrimaryBarClassName(row.request);
+  const primaryBarClassName = row.isActive
+    ? REQUEST_TIMELINE_COLORS.active
+    : getPrimaryBarClassName(row.request);
   const isSplitHttpBar =
     row.request.type === 'http' &&
     row.ttfbPercent > 0 &&
@@ -117,20 +111,29 @@ const TimelineTrack = ({
       type="button"
       aria-label={label}
       title={label}
-      className={`absolute rounded-sm text-left transition-opacity hover:opacity-80 ${
-        row.isActive ? 'animate-pulse' : ''
-      } ${
-        isSelected ? 'outline outline-1 outline-offset-1 outline-blue-300' : ''
-      }`}
+      data-timeline-track="true"
+      className="absolute rounded-sm text-left transition-opacity hover:opacity-80"
       style={{
         ...positionStyle,
         height: TIMELINE_LAYOUT.laneHitTargetHeightPx,
       }}
-      onClick={() => onSelect(row.request.id)}
+      onClick={(event) => {
+        if (shouldSuppressSelect()) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+
+        onSelect(row.request.id);
+      }}
     >
       {isSplitHttpBar ? (
         <div
-          className="absolute flex w-full overflow-hidden rounded-sm"
+          className={`absolute flex w-full overflow-hidden rounded-sm ${
+            isSelected
+              ? 'ring-1 ring-blue-300 ring-offset-1 ring-offset-gray-950'
+              : ''
+          }`}
           style={{
             top: barTop,
             height: TIMELINE_LAYOUT.laneHeightPx,
@@ -141,13 +144,17 @@ const TimelineTrack = ({
             style={{ width: `${row.ttfbPercent}%` }}
           />
           <div
-            className={`h-full ${REQUEST_TIMELINE_COLORS.http}`}
+            className={`h-full ${REQUEST_TIMELINE_COLORS.primary}`}
             style={{ width: `${row.receivePercent}%` }}
           />
         </div>
       ) : (
         <div
-          className={`absolute w-full rounded-sm ${primaryBarClassName}`}
+          className={`absolute w-full rounded-sm ${primaryBarClassName} ${
+            isSelected
+              ? 'ring-1 ring-blue-300 ring-offset-1 ring-offset-gray-950'
+              : ''
+          }`}
           style={{
             top: barTop,
             height: TIMELINE_LAYOUT.laneHeightPx,
@@ -158,29 +165,79 @@ const TimelineTrack = ({
   );
 };
 
-const TimelineLegend = () => {
-  return (
-    <div className="mb-2 flex items-center justify-between gap-2 text-xs text-gray-400">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        {LEGEND_ITEMS.map((item) => (
-          <div key={item.label} className="flex items-center gap-1.5">
-            <span className={`h-2 w-2 rounded-sm ${item.className}`} />
-            <span>{item.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+type DraftSelection = {
+  anchorPercent: number;
+  currentPercent: number;
+  startedOnTrack: boolean;
+};
+
+const clampPercent = (value: number) => Math.min(Math.max(value, 0), 100);
+
+const getPointerPercent = (
+  event: PointerEvent<HTMLDivElement>,
+  element: HTMLDivElement,
+) => {
+  const rect = element.getBoundingClientRect();
+
+  if (rect.width === 0) {
+    return 0;
+  }
+
+  return clampPercent(((event.clientX - rect.left) / rect.width) * 100);
+};
+
+const getSelectionStyle = (
+  range: TimelineRangeSelection,
+  timeline: TimelineModel,
+): CSSProperties => {
+  const startPercent = clampPercent(
+    ((range.startTime - timeline.rangeStart) / timeline.rangeDuration) * 100,
   );
+  const endPercent = clampPercent(
+    ((range.endTime - timeline.rangeStart) / timeline.rangeDuration) * 100,
+  );
+  const left = Math.min(startPercent, endPercent);
+  const width = Math.abs(endPercent - startPercent);
+
+  return {
+    left: `${left}%`,
+    width: `${width}%`,
+    top: TIMELINE_LAYOUT.rulerHeightPx,
+  };
+};
+
+const getDraftSelectionStyle = (draft: DraftSelection): CSSProperties => {
+  const left = Math.min(draft.anchorPercent, draft.currentPercent);
+  const width = Math.abs(draft.currentPercent - draft.anchorPercent);
+
+  return {
+    left: `${left}%`,
+    width: `${width}%`,
+    top: TIMELINE_LAYOUT.rulerHeightPx,
+  };
 };
 
 export type NetworkTimelineProps = {
   requests: ProcessedRequest[];
+  selection: TimelineRangeSelection | null;
+  filteredRequestCount: number;
+  onSelectionChange: (selection: TimelineRangeSelection | null) => void;
 };
 
-export const NetworkTimeline = ({ requests }: NetworkTimelineProps) => {
+export const NetworkTimeline = ({
+  requests,
+  selection,
+  filteredRequestCount,
+  onSelectionChange,
+}: NetworkTimelineProps) => {
   const actions = useNetworkActivityActions();
   const selectedRequestId = useSelectedRequestId();
   const [now, setNow] = useState(() => Date.now());
+  const [draftSelection, setDraftSelection] = useState<DraftSelection | null>(
+    null,
+  );
+  const chartRef = useRef<HTMLDivElement | null>(null);
+  const suppressTrackClickRef = useRef(false);
 
   const hasActiveRequests = requests.some(isRequestActive);
 
@@ -204,17 +261,103 @@ export const NetworkTimeline = ({ requests }: NetworkTimelineProps) => {
     actions.setSelectedRequest(requestId);
   };
 
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || requests.length === 0) {
+      return;
+    }
+
+    const chartElement = chartRef.current;
+
+    if (!chartElement) {
+      return;
+    }
+
+    const percent = getPointerPercent(event, chartElement);
+    const target = event.target;
+    const startedOnTrack =
+      target instanceof Element &&
+      target.closest('[data-timeline-track="true"]') !== null;
+
+    setDraftSelection({
+      anchorPercent: percent,
+      currentPercent: percent,
+      startedOnTrack,
+    });
+    chartElement.setPointerCapture(event.pointerId);
+  };
+
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!draftSelection) {
+      return;
+    }
+
+    const chartElement = chartRef.current;
+
+    if (!chartElement) {
+      return;
+    }
+
+    event.preventDefault();
+    const percent = getPointerPercent(event, chartElement);
+
+    setDraftSelection((current) =>
+      current ? { ...current, currentPercent: percent } : current,
+    );
+  };
+
+  const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (!draftSelection) {
+      return;
+    }
+
+    const chartElement = chartRef.current;
+    const currentPercent = chartElement
+      ? getPointerPercent(event, chartElement)
+      : draftSelection.currentPercent;
+    const distance = Math.abs(currentPercent - draftSelection.anchorPercent);
+
+    if (distance > 1) {
+      const startOffset =
+        (Math.min(draftSelection.anchorPercent, currentPercent) / 100) *
+        timeline.rangeDuration;
+      const endOffset =
+        (Math.max(draftSelection.anchorPercent, currentPercent) / 100) *
+        timeline.rangeDuration;
+
+      onSelectionChange({
+        startTime: timeline.rangeStart + startOffset,
+        endTime: timeline.rangeStart + endOffset,
+      });
+
+      suppressTrackClickRef.current = true;
+      window.setTimeout(() => {
+        suppressTrackClickRef.current = false;
+      }, 0);
+    } else if (!draftSelection.startedOnTrack) {
+      onSelectionChange(null);
+    }
+
+    setDraftSelection(null);
+
+    if (chartElement?.hasPointerCapture(event.pointerId)) {
+      chartElement.releasePointerCapture(event.pointerId);
+    }
+  };
+
   return (
-    <div className="border-b border-gray-700 bg-gray-900 p-2">
-      <TimelineLegend />
+    <div className="border-b border-gray-700 bg-gray-900 p-1.5">
       {requests.length === 0 ? (
-        <div className="flex h-24 items-center justify-center border border-dashed border-gray-700 bg-gray-950 text-sm text-gray-500">
+        <div className="flex h-16 items-center justify-center border border-dashed border-gray-700 bg-gray-950 text-sm text-gray-500">
           No requests match the current filters
         </div>
       ) : (
         <div
+          ref={chartRef}
           className="relative overflow-hidden border border-gray-800 bg-gray-950"
           style={{ height: timeline.chartHeight }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
         >
           <GridLines ticks={timeline.ticks} />
 
@@ -233,17 +376,47 @@ export const NetworkTimeline = ({ requests }: NetworkTimelineProps) => {
             </div>
           ))}
 
+          {selection && (
+            <div
+              className="pointer-events-none absolute bottom-0 border-x border-blue-300/70 bg-blue-400/10"
+              style={getSelectionStyle(selection, timeline)}
+            />
+          )}
+
+          {draftSelection && (
+            <div
+              className="pointer-events-none absolute bottom-0 border-x border-blue-300/70 bg-blue-400/15"
+              style={getDraftSelectionStyle(draftSelection)}
+            />
+          )}
+
           {timeline.rows.map((row) => (
             <TimelineTrack
               key={row.request.id}
               row={row}
               isSelected={selectedRequestId === row.request.id}
               onSelect={onRequestSelect}
+              shouldSuppressSelect={() => suppressTrackClickRef.current}
             />
           ))}
 
+          {selection && (
+            <div className="absolute bottom-1 right-1 flex items-center gap-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
+              <span>{filteredRequestCount} in range</span>
+              <button
+                type="button"
+                title="Clear timeline selection"
+                aria-label="Clear timeline selection"
+                className="rounded p-0.5 text-gray-400 hover:bg-gray-800 hover:text-gray-100"
+                onClick={() => onSelectionChange(null)}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+
           {timeline.hiddenRequestCount > 0 && (
-            <div className="absolute bottom-2 right-2 rounded border border-gray-700 bg-gray-900/95 px-2 py-1 text-xs text-gray-400">
+            <div className="absolute bottom-1 left-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
               Showing latest {timeline.rows.length} of{' '}
               {timeline.totalRequestCount}
             </div>

@@ -3,8 +3,10 @@ import type { ProcessedRequest } from '../../state/model';
 import {
   formatTimelineOffset,
   getTimelineModel,
+  getTimelineRequestEndTime,
   getTimelineTicks,
   isRequestActive,
+  requestOverlapsTimelineRange,
   TIMELINE_LAYOUT,
 } from '../timelineModel';
 
@@ -121,5 +123,48 @@ describe('timelineModel', () => {
     ]);
     expect(model.totalRequestCount).toBe(5);
     expect(model.hiddenRequestCount).toBe(2);
+  });
+
+  it('caps websocket and SSE duration in the timeline model', () => {
+    const now = 60_000;
+    const websocketRequest = createRequest({
+      type: 'websocket',
+      status: 'open',
+      method: 'WS',
+      timestamp: 0,
+      duration: undefined,
+    });
+
+    expect(getTimelineRequestEndTime(websocketRequest, now)).toBe(
+      TIMELINE_LAYOUT.streamingRequestMaxDurationMs,
+    );
+
+    const model = getTimelineModel([websocketRequest], now);
+
+    expect(model.rows[0].duration).toBe(
+      TIMELINE_LAYOUT.streamingRequestMaxDurationMs,
+    );
+  });
+
+  it('matches requests that overlap a selected timeline range', () => {
+    const request = createRequest({
+      timestamp: 1000,
+      duration: 400,
+    });
+
+    expect(
+      requestOverlapsTimelineRange(
+        request,
+        { startTime: 1200, endTime: 1400 },
+        0,
+      ),
+    ).toBe(true);
+    expect(
+      requestOverlapsTimelineRange(
+        request,
+        { startTime: 1500, endTime: 1600 },
+        0,
+      ),
+    ).toBe(false);
   });
 });

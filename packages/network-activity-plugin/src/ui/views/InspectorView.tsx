@@ -15,6 +15,10 @@ import {
 import { createDefaultFilter } from '../state/filter';
 import type { FilterState } from '../state/filter';
 import { matchesRequestFilter } from '../utils/requestFilters';
+import {
+  requestOverlapsTimelineRange,
+  type TimelineRangeSelection,
+} from '../utils/timelineModel';
 
 export type InspectorViewProps = {
   client: NetworkActivityDevToolsClient;
@@ -29,6 +33,8 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
   const [filter, setFilter] = useState<FilterState>(() =>
     createDefaultFilter(),
   );
+  const [timelineSelection, setTimelineSelection] =
+    useState<TimelineRangeSelection | null>(null);
 
   const filteredRequests = useMemo(() => {
     return processedRequests.filter((request) =>
@@ -37,6 +43,17 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
       }),
     );
   }, [processedRequests, filter, overrides]);
+
+  const visibleRequests = useMemo(() => {
+    if (!timelineSelection) {
+      return filteredRequests;
+    }
+
+    const now = Date.now();
+    return filteredRequests.filter((request) =>
+      requestOverlapsTimelineRange(request, timelineSelection, now),
+    );
+  }, [filteredRequests, timelineSelection]);
 
   useEffect(() => {
     if (!client) {
@@ -67,8 +84,13 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
             hasSelectedRequest ? 'w-1/2' : 'w-full'
           } border-r border-gray-700 overflow-hidden`}
         >
-          <NetworkTimeline requests={filteredRequests} />
-          <RequestList requests={filteredRequests} />
+          <NetworkTimeline
+            requests={filteredRequests}
+            selection={timelineSelection}
+            filteredRequestCount={visibleRequests.length}
+            onSelectionChange={setTimelineSelection}
+          />
+          <RequestList requests={visibleRequests} />
         </div>
 
         {hasSelectedRequest && <SidePanel />}
