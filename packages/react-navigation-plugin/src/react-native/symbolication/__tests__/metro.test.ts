@@ -5,12 +5,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // `resolveMetroOrigin` reads.
 const mockScriptURL = vi.hoisted(() => ({
   value: undefined as string | undefined,
+  getConstantsValue: undefined as string | undefined,
 }));
 
 vi.mock('react-native', () => ({
   NativeModules: {
     get SourceCode() {
-      return { scriptURL: mockScriptURL.value };
+      return {
+        scriptURL: mockScriptURL.value,
+        getConstants: () => ({ scriptURL: mockScriptURL.getConstantsValue }),
+      };
     },
   },
 }));
@@ -25,6 +29,7 @@ import type { ActionStackFrame } from '../types';
 beforeEach(() => {
   __resetMetroOriginCache();
   mockScriptURL.value = undefined;
+  mockScriptURL.getConstantsValue = undefined;
 });
 
 describe('resolveMetroOrigin', () => {
@@ -50,6 +55,12 @@ describe('resolveMetroOrigin', () => {
     // Subsequent change to scriptURL must not affect the cached value.
     mockScriptURL.value = 'http://different.host:9999/index.bundle';
     expect(resolveMetroOrigin()).toBe(first);
+  });
+
+  it('falls back to getConstants() when scriptURL is missing on the module object (New Architecture TurboModule)', () => {
+    mockScriptURL.value = undefined;
+    mockScriptURL.getConstantsValue = 'http://localhost:8081/index.bundle';
+    expect(resolveMetroOrigin()).toBe('http://localhost:8081');
   });
 });
 

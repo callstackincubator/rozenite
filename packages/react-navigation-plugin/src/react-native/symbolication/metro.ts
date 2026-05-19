@@ -8,7 +8,18 @@ let cachedMetroOrigin: string | null | undefined;
 // via `__resetMetroOriginCache` between cases.
 export const resolveMetroOrigin = (): string | null => {
   if (cachedMetroOrigin !== undefined) return cachedMetroOrigin;
-  const scriptURL = NativeModules?.SourceCode?.scriptURL as string | undefined;
+  // On the New Architecture, `SourceCode` is a TurboModule whose
+  // constants don't materialize as direct properties on the module
+  // object — `getConstants()` is required to access them. Fall back to
+  // the legacy direct-property access for older runtimes.
+  const sourceCode = NativeModules?.SourceCode as
+    | {
+        scriptURL?: string;
+        getConstants?: () => { scriptURL?: string };
+      }
+    | undefined;
+  const scriptURL =
+    sourceCode?.scriptURL ?? sourceCode?.getConstants?.().scriptURL;
   if (!scriptURL) {
     cachedMetroOrigin = null;
     return null;
