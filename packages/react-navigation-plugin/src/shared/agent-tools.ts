@@ -3,6 +3,7 @@ import {
   type AgentToolContract,
 } from '@rozenite/agent-shared';
 import type { NavigationAction, NavigationState } from './index';
+import type { ActionOrigin } from '../react-native/symbolication/types';
 
 export const REACT_NAVIGATION_AGENT_PLUGIN_ID =
   '@rozenite/react-navigation-plugin';
@@ -12,7 +13,17 @@ export type NavigationActionHistoryEntry = {
   timestamp: number;
   action: NavigationAction;
   state: NavigationState | undefined;
-  stack: string | undefined;
+  /**
+   * Captured dispatch context for this navigation action.
+   *
+   * - `undefined` when React Navigation did not supply a stack.
+   * - When defined, contains the raw stack string, parsed frames, the
+   *   selected origin frame with a confidence level, and the
+   *   symbolication status. Agents querying "where did this come from?"
+   *   should read `origin.originFrame` after confirming
+   *   `origin.symbolicationStatus === 'complete'`.
+   */
+  origin?: ActionOrigin;
 };
 
 export type ReactNavigationListActionsArgs = {
@@ -125,7 +136,8 @@ export const reactNavigationToolDefinitions = {
     ReactNavigationListActionsResult
   >({
     name: 'list-actions',
-    description: 'List recorded navigation actions with states using pagination.',
+    description:
+      'List recorded navigation actions with states using pagination.',
     inputSchema: {
       type: 'object',
       properties: {

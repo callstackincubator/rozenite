@@ -12,12 +12,11 @@ import type {
   NavigationActionHistoryEntry,
   ReactNavigationNavigateArgs,
 } from '../shared/agent-tools';
-import {
-  useReactNavigationAgentTools,
-} from './useReactNavigationAgentTools';
+import { useReactNavigationAgentTools } from './useReactNavigationAgentTools';
 
 export type ReactNavigationDevToolsConfig<
-  TNavigationContainerRef extends NavigationContainerRef<any> = NavigationContainerRef<any>
+  TNavigationContainerRef extends
+    NavigationContainerRef<any> = NavigationContainerRef<any>,
 > = {
   ref: React.RefObject<TNavigationContainerRef | null>;
 };
@@ -26,7 +25,6 @@ export const useReactNavigationDevTools = ({
   ref,
 }: ReactNavigationDevToolsConfig): void => {
   const actionHistoryRef = useRef<NavigationActionHistoryEntry[]>([]);
-  const nextActionIdRef = useRef(1);
   const currentStateRef = useRef<NavigationState | undefined>(undefined);
 
   const getCurrentState = useCallback(() => {
@@ -45,7 +43,7 @@ export const useReactNavigationDevTools = ({
 
       ref.current.resetRoot(state);
     },
-    [ref]
+    [ref],
   );
 
   const openLink = useCallback(async (href: string) => {
@@ -53,12 +51,7 @@ export const useReactNavigationDevTools = ({
   }, []);
 
   const navigate = useCallback(
-    ({
-      name,
-      params,
-      path,
-      merge,
-    }: ReactNavigationNavigateArgs) => {
+    ({ name, params, path, merge }: ReactNavigationNavigateArgs) => {
       if (!ref.current) {
         throw new Error('Navigation ref is not ready.');
       }
@@ -69,10 +62,10 @@ export const useReactNavigationDevTools = ({
           params,
           path,
           merge,
-        })
+        }),
       );
     },
-    [ref]
+    [ref],
   );
 
   const goBack = useCallback(
@@ -93,7 +86,7 @@ export const useReactNavigationDevTools = ({
 
       return performed;
     },
-    [ref]
+    [ref],
   );
 
   const dispatchAction = useCallback(
@@ -104,7 +97,7 @@ export const useReactNavigationDevTools = ({
 
       ref.current.dispatch(action);
     },
-    [ref]
+    [ref],
   );
 
   useReactNavigationAgentTools({
@@ -126,16 +119,21 @@ export const useReactNavigationDevTools = ({
     if (message.type === 'action') {
       currentStateRef.current = message.state;
       const entry: NavigationActionHistoryEntry = {
-        id: nextActionIdRef.current,
+        id: message.id,
         timestamp: Date.now(),
         action: message.action,
         state: message.state,
-        stack: message.stack,
+        origin: message.origin,
       };
-      nextActionIdRef.current += 1;
       actionHistoryRef.current = [entry, ...actionHistoryRef.current].slice(
         0,
-        100
+        100,
+      );
+    } else {
+      // 'action-symbolicated' — replace the pending origin on the
+      // matching history entry. Bridge consumers do the same merge.
+      actionHistoryRef.current = actionHistoryRef.current.map((entry) =>
+        entry.id === message.id ? { ...entry, origin: message.origin } : entry,
       );
     }
 
@@ -177,7 +175,7 @@ export const useReactNavigationDevTools = ({
         void openLink(message.href).catch(() => {
           // We don't care about errors here
         });
-      })
+      }),
     );
 
     return () => {
