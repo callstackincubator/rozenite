@@ -26,9 +26,21 @@ describe('deriveStartupSummary', () => {
     it('returns correct durations for each phase', () => {
       const { phases } = deriveStartupSummary(ALL_MARKS);
       const [native, js, mount] = phases;
-      expect(native).toMatchObject({ name: 'nativeLaunch', status: 'complete', duration: 200 });
-      expect(js).toMatchObject({ name: 'runJSBundle', status: 'complete', duration: 300 });
-      expect(mount).toMatchObject({ name: 'initialMount', status: 'complete', duration: 300 });
+      expect(native).toMatchObject({
+        name: 'nativeLaunch',
+        status: 'complete',
+        duration: 200,
+      });
+      expect(js).toMatchObject({
+        name: 'runJSBundle',
+        status: 'complete',
+        duration: 300,
+      });
+      expect(mount).toMatchObject({
+        name: 'initialMount',
+        status: 'complete',
+        duration: 300,
+      });
     });
 
     it('returns correct total duration', () => {
@@ -117,9 +129,7 @@ describe('deriveStartupSummary', () => {
     });
 
     it('marks an unknown phase in-progress when only Start arrived', () => {
-      const { phases } = deriveStartupSummary([
-        mark('customPhaseStart', 200),
-      ]);
+      const { phases } = deriveStartupSummary([mark('customPhaseStart', 200)]);
       const custom = phases.find((p) => p.name === 'customPhase')!;
       expect(custom.status).toBe('in-progress');
     });
@@ -155,9 +165,21 @@ describe('deriveStartupSummary', () => {
         mark('runJSBundleStart', 300),
         mark('initialMountStart', 600),
       ]);
-      expect(phases[0]).toMatchObject({ name: 'nativeLaunch', status: 'complete', duration: 200 });
-      expect(phases[1]).toMatchObject({ name: 'runJSBundle', status: 'complete', duration: 300 });
-      expect(phases[2]).toMatchObject({ name: 'initialMount', status: 'complete', duration: 300 });
+      expect(phases[0]).toMatchObject({
+        name: 'nativeLaunch',
+        status: 'complete',
+        duration: 200,
+      });
+      expect(phases[1]).toMatchObject({
+        name: 'runJSBundle',
+        status: 'complete',
+        duration: 300,
+      });
+      expect(phases[2]).toMatchObject({
+        name: 'initialMount',
+        status: 'complete',
+        duration: 300,
+      });
     });
   });
 });
