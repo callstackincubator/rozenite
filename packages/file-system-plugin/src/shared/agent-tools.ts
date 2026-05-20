@@ -64,6 +64,40 @@ export type FileSystemReadImageFileResult = {
   dataUri: string;
 };
 
+export type FileSystemAgentTransferAttribution = {
+  triggeredBy: 'agent';
+  pluginId: typeof FILE_SYSTEM_AGENT_PLUGIN_ID;
+  operation: 'export-file' | 'import-file';
+};
+
+export type FileSystemExportFileArgs = FileSystemPathArgs;
+
+export type FileSystemExportFileResult = {
+  provider: FileSystemProvider;
+  path: string;
+  fileName: string;
+  mime: string;
+  size: number | null;
+  base64: string;
+  attribution: FileSystemAgentTransferAttribution;
+};
+
+export type FileSystemImportFileArgs = {
+  directoryPath: string;
+  fileName: string;
+  base64: string;
+  overwrite?: boolean;
+};
+
+export type FileSystemImportFileResult = {
+  provider: FileSystemProvider;
+  directoryPath: string;
+  path?: string;
+  entry?: FsEntry;
+  overwriteRequired?: boolean;
+  attribution: FileSystemAgentTransferAttribution;
+};
+
 export const fileSystemToolDefinitions = {
   listRoots: defineAgentToolContract<
     FileSystemListRootsArgs,
@@ -164,6 +198,57 @@ export const fileSystemToolDefinitions = {
         },
       },
       required: ['path'],
+    },
+  }),
+  exportFile: defineAgentToolContract<
+    FileSystemExportFileArgs,
+    FileSystemExportFileResult
+  >({
+    name: 'export-file',
+    description:
+      'Agent-triggered raw file export. Reads a single file under a configured filesystem root and returns exact base64 contents. This tool is registered only when agent export is explicitly enabled.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'Absolute or provider-root-qualified file path.',
+        },
+      },
+      required: ['path'],
+    },
+  }),
+  importFile: defineAgentToolContract<
+    FileSystemImportFileArgs,
+    FileSystemImportFileResult
+  >({
+    name: 'import-file',
+    description:
+      'Agent-triggered raw file import. Writes a single base64-encoded file into an existing directory under a configured filesystem root. This tool is registered only when agent import is explicitly enabled.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        directoryPath: {
+          type: 'string',
+          description:
+            'Absolute or provider-root-qualified existing directory path.',
+        },
+        fileName: {
+          type: 'string',
+          description:
+            'Destination file name only. Path separators and traversal are rejected.',
+        },
+        base64: {
+          type: 'string',
+          description: 'Exact file contents encoded as base64.',
+        },
+        overwrite: {
+          type: 'boolean',
+          description:
+            'Set to true to overwrite an existing destination file after an overwriteRequired response.',
+        },
+      },
+      required: ['directoryPath', 'fileName', 'base64'],
     },
   }),
 } as const satisfies Record<string, AgentToolContract<unknown, unknown>>;

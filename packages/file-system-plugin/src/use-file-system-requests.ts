@@ -17,6 +17,14 @@ type PendingResolvers = {
     string,
     (payload: FileSystemEventMap['fs:read-file:result']) => void
   >;
+  exportFile: Map<
+    string,
+    (payload: FileSystemEventMap['fs:export-file:result']) => void
+  >;
+  importFile: Map<
+    string,
+    (payload: FileSystemEventMap['fs:import-file:result']) => void
+  >;
 };
 
 export function useFileSystemRequests(
@@ -27,6 +35,8 @@ export function useFileSystemRequests(
     list: new Map(),
     image: new Map(),
     file: new Map(),
+    exportFile: new Map(),
+    importFile: new Map(),
   });
 
   useEffect(() => {
@@ -64,11 +74,35 @@ export function useFileSystemRequests(
       }
     });
 
+    const subExportFile = client.onMessage(
+      'fs:export-file:result',
+      (payload) => {
+        const resolve = pendingRef.current.exportFile.get(payload.requestId);
+        if (resolve) {
+          pendingRef.current.exportFile.delete(payload.requestId);
+          resolve(payload);
+        }
+      },
+    );
+
+    const subImportFile = client.onMessage(
+      'fs:import-file:result',
+      (payload) => {
+        const resolve = pendingRef.current.importFile.get(payload.requestId);
+        if (resolve) {
+          pendingRef.current.importFile.delete(payload.requestId);
+          resolve(payload);
+        }
+      },
+    );
+
     return () => {
       subRoots.remove();
       subList.remove();
       subImage.remove();
       subFile.remove();
+      subExportFile.remove();
+      subImportFile.remove();
     };
   }, [client]);
 
@@ -127,5 +161,53 @@ export function useFileSystemRequests(
     [client],
   );
 
-  return { requestRoots, requestList, requestImagePreview, requestTextPreview };
+  const requestExportFile = useCallback(
+    async (path: string) => {
+      if (!client) return null;
+      const requestId = newRequestId();
+      const p = new Promise<FileSystemEventMap['fs:export-file:result']>(
+        (resolve) => {
+          pendingRef.current.exportFile.set(requestId, resolve);
+        },
+      );
+      client.send('fs:export-file', { requestId, path });
+      return await withTimeout(p, 30000, 'Timeout exporting file');
+    },
+    [client],
+  );
+
+  const requestImportFile = useCallback(
+    async (
+      directoryPath: string,
+      fileName: string,
+      base64: string,
+      overwrite = false,
+    ) => {
+      if (!client) return null;
+      const requestId = newRequestId();
+      const p = new Promise<FileSystemEventMap['fs:import-file:result']>(
+        (resolve) => {
+          pendingRef.current.importFile.set(requestId, resolve);
+        },
+      );
+      client.send('fs:import-file', {
+        requestId,
+        directoryPath,
+        fileName,
+        base64,
+        overwrite,
+      });
+      return await withTimeout(p, 30000, 'Timeout importing file');
+    },
+    [client],
+  );
+
+  return {
+    requestRoots,
+    requestList,
+    requestImagePreview,
+    requestTextPreview,
+    requestExportFile,
+    requestImportFile,
+  };
 }

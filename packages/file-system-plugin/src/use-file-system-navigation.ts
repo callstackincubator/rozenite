@@ -3,6 +3,7 @@ import type { RozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import type {
   FileSystemEventMap,
   FileSystemProvider,
+  FileSystemTransferCapabilities,
   FsEntry,
   FsRoots,
 } from './shared/protocol';
@@ -16,6 +17,15 @@ export function useFileSystemNavigation(
   requests: FileSystemRequests,
 ) {
   const [provider, setProvider] = useState<FileSystemProvider>('none');
+  const [fileTransfer, setFileTransfer] =
+    useState<FileSystemTransferCapabilities>({
+      import: false,
+      export: false,
+      agent: {
+        import: false,
+        export: false,
+      },
+    });
   const [roots, setRoots] = useState<FsRoots['roots']>([]);
   const [pathInput, setPathInput] = useState('');
   const [currentPath, setCurrentPath] = useState('');
@@ -29,6 +39,16 @@ export function useFileSystemNavigation(
     const res = await requests.requestRoots();
     if (!res) return;
     setProvider(res.provider);
+    setFileTransfer(
+      res.fileTransfer ?? {
+        import: false,
+        export: false,
+        agent: {
+          import: false,
+          export: false,
+        },
+      },
+    );
     if (res.error) {
       setRoots([]);
       setError(res.error);
@@ -89,6 +109,14 @@ export function useFileSystemNavigation(
     const subReady = client.onMessage('fs:ready', async () => {
       // Reset UI state on reconnect
       setProvider('none');
+      setFileTransfer({
+        import: false,
+        export: false,
+        agent: {
+          import: false,
+          export: false,
+        },
+      });
       setRoots([]);
       setEntries([]);
       setError(null);
@@ -140,6 +168,7 @@ export function useFileSystemNavigation(
 
   return {
     provider,
+    fileTransfer,
     roots,
     pathInput,
     setPathInput,

@@ -13,6 +13,7 @@ The File System plugin helps you browse the files your app can access at runtime
 - **Text Preview**: Open text files directly in DevTools
 - **Image Preview**: Preview image files inline
 - **Binary Fallback Preview**: Show a hex-style dump when a file cannot be decoded as text
+- **File Transfer**: Import and export single files through explicit opt-in workflows
 - **Path Navigation**: Jump between roots, navigate nested folders, and move back through history
 
 ## Installation
@@ -23,7 +24,7 @@ Install the File System plugin:
 
 <PackageManagerTabs command="install -D @rozenite/file-system-plugin" />
 
-a Install one supported filesystem provider in your app:
+Install one supported filesystem provider in your app:
 
 <PackageManagerTabs command="install -D expo-file-system" />
 
@@ -69,6 +70,38 @@ function App() {
 
 Once configured, the plugin appears in React Native DevTools as "File System".
 
+## File Transfer
+
+File import and export are disabled by default. Enable them explicitly with the `fileTransfer` option when you want the DevTools panel to move raw files in or out of app-accessible directories.
+
+```ts title="App.tsx"
+useFileSystemDevTools({
+  adapter: createRNFSAdapter(RNFS),
+  fileTransfer: {
+    import: true,
+    export: true,
+  },
+});
+```
+
+When enabled, the File System panel lets you import a single file into the currently viewed directory and export a selected file. Imports keep the original filename and ask before overwriting an existing file.
+
+Agent-triggered file transfer is controlled separately. Enable it only when agents should be allowed to import or export exact file contents through Rozenite for Agents.
+
+```ts title="App.tsx"
+useFileSystemDevTools({
+  adapter: createRNFSAdapter(RNFS),
+  fileTransfer: {
+    import: true,
+    export: true,
+    agent: {
+      import: true,
+      export: true,
+    },
+  },
+});
+```
+
 ## Available Roots
 
 ### Expo FileSystem
@@ -103,6 +136,7 @@ File previews are size-limited to keep DevTools responsive. Very large files may
 - `createRNFSAdapter` wraps `react-native-fs` and `@dr.pogodin/react-native-fs`.
 - Text previews fall back to a binary hex-style dump when UTF-8 decoding fails.
 - Expo and RNFS expose slightly different root directories depending on platform and runtime environment.
+- File transfer supports single files only and is restricted to visible filesystem roots.
 
 ## Agent Tools (LLM Integration)
 
@@ -115,6 +149,8 @@ Available tools:
 - `read-entry`
 - `read-text-file`
 - `read-image-file`
+- `export-file` when `fileTransfer.agent.export` is enabled
+- `import-file` when `fileTransfer.agent.import` is enabled
 
 This makes the plugin usable from Rozenite for Agents workflows in Codex, Cursor, and other coding agents that speak to the `rozenite agent` CLI.
 

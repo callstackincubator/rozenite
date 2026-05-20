@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,19 +15,26 @@ import { formatTextPreview } from '../formatters';
 import { DetailLine } from './DetailLine';
 import { PathDisplay } from './PathDisplay';
 import type { useFileSystemRequests } from '../use-file-system-requests';
+import type { WebPressableState } from '../types';
 
 type FileSystemRequests = ReturnType<typeof useFileSystemRequests>;
 
 type DetailPanelProps = {
   selected: FsEntry | null;
+  canExport: boolean;
+  exportLoading: boolean;
   requestImagePreview: FileSystemRequests['requestImagePreview'];
   requestTextPreview: FileSystemRequests['requestTextPreview'];
+  onExport: (entry: FsEntry) => void;
 };
 
 export function DetailPanel({
   selected,
+  canExport,
+  exportLoading,
   requestImagePreview,
   requestTextPreview,
+  onExport,
 }: DetailPanelProps) {
   const [imagePreviewUri, setImagePreviewUri] = useState<string | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState<string | null>(
@@ -113,6 +121,22 @@ export function DetailPanel({
           <Text style={styles.detailName} numberOfLines={2}>
             {selected.name}
           </Text>
+          <Pressable
+            style={(state: WebPressableState) => [
+              styles.exportButton,
+              state.hovered &&
+                canExport &&
+                !exportLoading &&
+                styles.exportButtonHovered,
+              (!canExport || exportLoading) && styles.exportButtonDisabled,
+            ]}
+            onPress={() => onExport(selected)}
+            disabled={!canExport || exportLoading}
+          >
+            <Text style={styles.exportButtonText}>
+              {exportLoading ? 'Exporting…' : 'Export'}
+            </Text>
+          </Pressable>
           <PathDisplay path={selected.path} />
           <View style={styles.detailGrid}>
             <DetailLine
@@ -212,6 +236,26 @@ const styles = StyleSheet.create({
   detailName: {
     color: '#f2f2f2',
     fontSize: 13,
+    fontWeight: '700',
+  },
+  exportButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: '#1b1c25',
+    borderWidth: 1,
+    borderColor: '#2a2b37',
+  },
+  exportButtonHovered: {
+    backgroundColor: '#252633',
+  },
+  exportButtonDisabled: {
+    opacity: 0.45,
+  },
+  exportButtonText: {
+    color: '#e9e9ee',
+    fontSize: 12,
     fontWeight: '700',
   },
   detailGrid: {
