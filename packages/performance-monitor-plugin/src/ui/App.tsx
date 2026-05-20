@@ -32,6 +32,7 @@ import { DetailsSidebar } from './components/DetailsSidebar';
 import { SessionDuration } from './components/SessionDuration';
 import { ExportModal } from './components/ExportModal';
 import { deriveStartupPhases } from './derive-startup-phases';
+import { StartupTab } from './components/StartupTab';
 
 type PerformanceMonitorSession = {
   sessionStartedAt: number;
@@ -264,10 +265,11 @@ export default function PerformanceMonitorPanel() {
           }}
         >
           <Tabs.Root
-            defaultValue="measures"
+            defaultValue="startup"
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
           >
             <Tabs.List style={{ flexShrink: 0 }}>
+              <Tabs.Trigger value="startup">Startup</Tabs.Trigger>
               <Tabs.Trigger value="measures">
                 Measures ({allMeasures.length})
               </Tabs.Trigger>
@@ -293,6 +295,13 @@ export default function PerformanceMonitorPanel() {
                 minHeight: 0,
               }}
             >
+              <Tabs.Content value="startup" style={{ display: 'contents' }}>
+                <StartupTab
+                  reactNativeMarks={session.reactNativeMarks}
+                  isSessionActive={isSessionActive}
+                />
+              </Tabs.Content>
+
               <Tabs.Content
                 value="measures"
                 style={{
