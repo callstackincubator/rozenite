@@ -1,5 +1,14 @@
 # @rozenite/controls-plugin
 
+## 1.10.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.10.0
+  - @rozenite/agent-shared@1.10.0
+  - @rozenite/plugin-bridge@1.10.0
+
 ## 1.9.0
 
 ### Patch Changes

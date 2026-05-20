@@ -1,5 +1,14 @@
 # @rozenite/middleware
 
+## 1.10.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@1.10.0
+  - @rozenite/runtime@1.10.0
+  - @rozenite/tools@1.10.0
+
 ## 1.9.0
 
 ### Patch Changes
