@@ -30,14 +30,16 @@ export const MessageDetailsPane = ({
 
   return (
     <>
-      <ResizeHandle
-        className="rz-column-resize-handle"
-        isDragging={activeResizeHandle === 'details-width'}
-        isHidden={isHidden}
-        orientation={isNarrowViewport ? 'horizontal' : 'vertical'}
-        label="Resize message details"
-        onPointerDown={onResizeStart}
-      />
+      {!isNarrowViewport ? (
+        <ResizeHandle
+          className="rz-column-resize-handle"
+          isDragging={activeResizeHandle === 'details-width'}
+          isHidden={isHidden}
+          orientation="vertical"
+          label="Resize message details"
+          onPointerDown={onResizeStart}
+        />
+      ) : null}
 
       <div className="rz-pane" data-hidden={isHidden} aria-hidden={isHidden}>
         <div className="rz-sidebar">
