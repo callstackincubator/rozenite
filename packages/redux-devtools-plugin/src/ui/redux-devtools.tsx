@@ -76,7 +76,6 @@ export const ReduxDevTools = () => {
     );
 
     client.send('panel-command', { type: 'start' });
-    client.send('panel-command', { type: 'request-state' });
 
     return () => {
       subscription.remove();

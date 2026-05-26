@@ -73,10 +73,18 @@ const appStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'app-store' });
 const sessionStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'session-store' });
 ```
 
-To see more actions in the Redux DevTools, increase `maxAge`:
+`maxAge` controls how many actions Redux DevTools keeps in history. The default is `50`.
+
+On React Native, state is serialized and sent to DevTools over the device bridge. Large stores combined with a high `maxAge` can use a lot of memory — on Android this may cause an out-of-memory crash when opening the Redux DevTools panel. If your store is large (for example, it includes RTK Query caches or big entity maps), keep `maxAge` low and consider using Redux DevTools [`stateSanitizer`](https://github.com/reduxjs/redux-devtools/blob/main/extension/docs/API/Arguments.md#statesanitizer-state--state) to strip bulky slices before they are recorded.
 
 ```ts
-rozeniteDevToolsEnhancer({ maxAge: 150 }) // Default is 50
+rozeniteDevToolsEnhancer({
+  maxAge: 20,
+  stateSanitizer: (state) => ({
+    ...state,
+    api: '[omitted]',
+  }),
+})
 ```
 
 ### 3. Access DevTools
