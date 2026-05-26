@@ -16,35 +16,21 @@ import { Input } from './Input';
 import { Button } from './Button';
 import { X, Filter, ChevronDown, Check } from 'lucide-react';
 import type { HttpMethod, NetworkEventSource } from '../../shared/client';
-
-export type RequestTypeFilter = 'http' | 'websocket' | 'sse';
-export type AdvancedFilterState = {
-  methods: Set<HttpMethod>;
-  sources: Set<NetworkEventSource>;
-  status: string;
-  domain: string;
-  contentType: string;
-  failedOnly: boolean;
-  inFlightOnly: boolean;
-  overriddenOnly: boolean;
-  minSize: string;
-  maxSize: string;
-  minDuration: string;
-  maxDuration: string;
-};
-
-export type FilterState = {
-  text: string;
-  types: Set<RequestTypeFilter>;
-  advanced: AdvancedFilterState;
-};
+import {
+  createDefaultFilter,
+  DEFAULT_REQUEST_TYPES,
+} from '../state/filter';
+import type {
+  AdvancedFilterState,
+  FilterState,
+  RequestTypeFilter,
+} from '../state/filter';
 
 type FilterBarProps = {
   filter: FilterState;
   onFilterChange: (filter: FilterState) => void;
 };
 
-const REQUEST_TYPES: RequestTypeFilter[] = ['http', 'sse', 'websocket'];
 const HTTP_METHODS: HttpMethod[] = [
   'GET',
   'POST',
@@ -54,25 +40,6 @@ const HTTP_METHODS: HttpMethod[] = [
   'HEAD',
 ];
 const SOURCES: NetworkEventSource[] = ['builtin', 'nitro'];
-
-export const createDefaultFilter = (): FilterState => ({
-  text: '',
-  types: new Set(),
-  advanced: {
-    methods: new Set(),
-    sources: new Set(),
-    status: '',
-    domain: '',
-    contentType: '',
-    failedOnly: false,
-    inFlightOnly: false,
-    overriddenOnly: false,
-    minSize: '',
-    maxSize: '',
-    minDuration: '',
-    maxDuration: '',
-  },
-});
 
 const getTypeLabel = (type: RequestTypeFilter) => {
   switch (type) {
@@ -112,7 +79,8 @@ const getAdvancedFilterCount = (advanced: AdvancedFilterState) => {
 };
 
 const getActiveFilterCount = (filter: FilterState) => {
-  const typeFilterCount = filter.types.size > 0 ? 1 : 0;
+  const typeFilterCount =
+    filter.types.size < DEFAULT_REQUEST_TYPES.length ? 1 : 0;
 
   return typeFilterCount + getAdvancedFilterCount(filter.advanced);
 };
@@ -250,7 +218,7 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
   };
 
   const activeFilterCount = getActiveFilterCount(filter);
-  const hasActiveFilters = filter.text !== '' || activeFilterCount > 0;
+  const hasActiveFilters = filter.text.trim() !== '' || activeFilterCount > 0;
 
   return (
     <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
@@ -293,7 +261,7 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
             {...getFloatingProps()}
           >
             <FilterPanelLabel>Request Type</FilterPanelLabel>
-            {REQUEST_TYPES.map((type) => (
+            {DEFAULT_REQUEST_TYPES.map((type) => (
               <FilterCheckbox
                 key={type}
                 checked={filter.types.has(type)}
