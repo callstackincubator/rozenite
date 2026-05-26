@@ -103,9 +103,18 @@ select {
   grid-template-columns: minmax(0, 1fr) var(--rz-command-splitter-width, 6px) minmax(260px, var(--rz-command-width, 320px));
 }
 
+.rz-devtools-mobile {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
 .rz-log-workspace {
   display: grid;
   min-height: 0;
+  position: relative;
   grid-template-columns: minmax(0, 1fr) var(--rz-details-splitter-width, 0px) var(--rz-details-width, 0px);
 }
 
@@ -197,6 +206,34 @@ select {
 .rz-pane[data-hidden='true'],
 .rz-column-resize-handle[data-hidden='true'] {
   display: none;
+}
+
+.rz-devtools-mobile-tabs {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  padding-top: 8px;
+}
+
+.rz-devtools-mobile-toggle {
+  display: flex;
+  align-items: flex-start;
+  padding: 0 8px;
+}
+
+.rz-devtools-mobile-panel {
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.rz-devtools-mobile-panel > .rz-pane {
+  flex: 1;
+  width: 100%;
 }
 
 .rz-tabs-root {
@@ -884,19 +921,8 @@ select {
     grid-template-rows: minmax(0, 1fr) 12px minmax(180px, var(--rz-devtools-height, 272px));
   }
 
-  .rz-devtools {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) var(--rz-command-splitter-width, 6px) minmax(240px, var(--rz-command-width, 320px));
-  }
-
-  .rz-log-workspace {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) var(--rz-details-splitter-width, 0px) var(--rz-details-width, 0px);
-  }
-
-  .rz-pane + .rz-pane {
-    border-left: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  .rz-devtools-mobile-tabs {
+    padding-top: 8px;
   }
 
   .rz-column-resize-handle {
@@ -922,5 +948,22 @@ select {
   .rz-column-resize-handle:hover::after {
     border-top-color: rgba(255, 255, 255, 0.08);
     border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .rz-action-tabs-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .rz-message-list-header,
+  .rz-message-row {
+    grid-template-columns: 36px 136px minmax(92px, 136px) minmax(0, 1fr);
+  }
+
+  .rz-message-header-cell,
+  .rz-message-cell {
+    padding: 8px 10px;
   }
 }
