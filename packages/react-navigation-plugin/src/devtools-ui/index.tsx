@@ -12,7 +12,7 @@ import './globals.css';
 export default function ReactNavigationPanel() {
   const [actionHistory, setActionHistory] = useState<ActionWithState[]>([]);
   const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(
-    null
+    null,
   );
   const [activeTabId, setActiveTabId] = useState('timeline');
 
@@ -30,8 +30,13 @@ export default function ReactNavigationPanel() {
         setActionHistory([{ action: { type: 'SNAPSHOT' }, state }]);
         setSelectedActionIndex(null);
       }),
-      client.onMessage('action', ({ action, state }) => {
-        setActionHistory((prev) => [{ action, state }, ...prev]);
+      client.onMessage('action', ({ id, action, state, origin }) => {
+        setActionHistory((prev) => [{ id, action, state, origin }, ...prev]);
+      }),
+      client.onMessage('action-symbolicated', ({ id, origin }) => {
+        setActionHistory((prev) =>
+          prev.map((entry) => (entry.id === id ? { ...entry, origin } : entry)),
+        );
       }),
     ];
 

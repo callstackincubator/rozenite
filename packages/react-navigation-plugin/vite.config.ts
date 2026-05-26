@@ -1,4 +1,5 @@
 /// <reference types='vitest' />
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import { rozenitePlugin } from '@rozenite/vite-plugin';
 
@@ -7,6 +8,13 @@ export default defineConfig({
   plugins: [rozenitePlugin()],
   test: {
     passWithNoTests: true,
+    setupFiles: ['./vitest.setup.ts'],
+    alias: {
+      '@rozenite/agent-shared': resolve(
+        __dirname,
+        '../agent-shared/src/index.ts',
+      ),
+    },
   },
   base: './',
   build: {

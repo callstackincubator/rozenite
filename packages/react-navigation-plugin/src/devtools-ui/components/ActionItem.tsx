@@ -1,7 +1,10 @@
+import { formatFrameLocation } from '../../react-native/symbolication/format';
+import type { ActionOrigin } from '../../react-native/symbolication/types';
 import { NavigationAction } from '../../shared';
 
 export type ActionItemProps = {
   action: NavigationAction;
+  origin: ActionOrigin | undefined;
   index: number;
   isSelected: boolean;
   onSelect: () => void;
@@ -23,8 +26,39 @@ const getActionTypeColor = (type: string): string => {
   return colors[type] || 'text-gray-400';
 };
 
+// Show only the file basename in the sidebar — full path lives in the
+// detail panel. Keeps each row to a single line in narrow widths.
+const shortenForSidebar = (location: string): string => {
+  const lastSlash = location.lastIndexOf('/');
+  return lastSlash === -1 ? location : location.slice(lastSlash + 1);
+};
+
+const OriginPreview = ({ origin }: { origin: ActionOrigin | undefined }) => {
+  if (!origin) return null;
+  if (origin.symbolicationStatus === 'pending') {
+    return (
+      <div className="mt-1 text-xs italic text-gray-500">↳ Resolving…</div>
+    );
+  }
+  if (origin.symbolicationStatus !== 'complete') return null;
+  if (origin.confidence === 'none') return null;
+  const location = formatFrameLocation(origin.originFrame);
+  if (!location) return null;
+  return (
+    <div
+      className={`mt-1 truncate font-mono text-xs text-gray-500 ${
+        origin.confidence === 'low' ? 'italic' : ''
+      }`}
+      title={location}
+    >
+      ↳ {shortenForSidebar(location)}
+    </div>
+  );
+};
+
 export const ActionItem = ({
   action,
+  origin,
   index,
   isSelected,
   onSelect,
@@ -39,7 +73,7 @@ export const ActionItem = ({
 
   return (
     <div
-      className={`m-1 p-3 rounded cursor-pointer transition-all duration-200 border ${
+      className={`m-1 p-3 rounded cursor-pointer transition-all duration-200 border overflow-hidden ${
         isSelected
           ? 'bg-blue-900/30 border-blue-500'
           : 'bg-gray-800 border-gray-700 hover:bg-gray-700'
@@ -69,6 +103,8 @@ export const ActionItem = ({
       {actionName && (
         <div className="text-xs text-gray-300">→ {actionName}</div>
       )}
+
+      <OriginPreview origin={origin} />
     </div>
   );
 };
