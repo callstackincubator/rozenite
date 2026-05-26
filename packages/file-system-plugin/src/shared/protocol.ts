@@ -13,11 +13,23 @@ export type FsEntry = {
 
 export type FsRoots = {
   provider: FileSystemProvider;
+  fileTransfer?: FileSystemTransferCapabilities;
   roots: Array<{
     id: string;
     label: string;
     path: string;
   }>;
+};
+
+export type FileSystemTransferCapabilities = {
+  import: boolean;
+  export: boolean;
+  agent: FileSystemAgentTransferCapabilities;
+};
+
+export type FileSystemAgentTransferCapabilities = {
+  import: boolean;
+  export: boolean;
 };
 
 export type FileSystemEventMap = {
@@ -59,6 +71,38 @@ export type FileSystemEventMap = {
     provider: FileSystemProvider;
     path: string;
     content?: string;
+    error?: string;
+  };
+
+  "fs:export-file": {
+    requestId: string;
+    path: string;
+  };
+  "fs:export-file:result": {
+    requestId: string;
+    provider: FileSystemProvider;
+    path: string;
+    fileName?: string;
+    mime?: string;
+    size?: number | null;
+    base64?: string;
+    error?: string;
+  };
+
+  "fs:import-file": {
+    requestId: string;
+    directoryPath: string;
+    fileName: string;
+    base64: string;
+    overwrite?: boolean;
+  };
+  "fs:import-file:result": {
+    requestId: string;
+    provider: FileSystemProvider;
+    directoryPath: string;
+    path?: string;
+    entry?: FsEntry;
+    overwriteRequired?: boolean;
     error?: string;
   };
 };

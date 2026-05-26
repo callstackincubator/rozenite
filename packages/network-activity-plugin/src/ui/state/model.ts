@@ -4,6 +4,7 @@ import {
   HttpHeaders,
   RequestPostData,
   NetworkEventSource,
+  ResponseBody,
 } from '../../shared/client';
 
 export type RequestId = string;
@@ -21,7 +22,9 @@ export type HttpRequestData = {
 
 export type HttpResponseData = {
   type: string;
-  data: string;
+  // Mirrors the bridge `ResponseBody` minus null — the store only assigns
+  // `data` when the wire body is non-null (null body → undefined response.body).
+  data: NonNullable<ResponseBody>;
 };
 
 export type HttpRequest = {
@@ -140,6 +143,7 @@ export type ProcessedRequest = {
   id: RequestId;
   type: NetworkEntryType;
   source?: NetworkEventSource;
+  initiator?: Initiator;
   name: string;
   status: HttpStatus | WebSocketStatus | SSEStatus;
   timestamp: Timestamp;
@@ -147,6 +151,8 @@ export type ProcessedRequest = {
   size: number | null;
   method: HttpMethod | 'WS' | 'SSE';
   httpStatus?: number;
+  contentType?: string;
+  ttfb?: number;
   progress?: {
     loaded: number;
     total: number;

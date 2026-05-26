@@ -20,6 +20,11 @@ declare module 'expo-file-system' {
     uri: string,
     options?: { encoding?: 'base64' | 'utf8' },
   ): Promise<string>;
+  export function writeAsStringAsync(
+    uri: string,
+    contents: string,
+    options?: { encoding?: 'base64' | 'utf8' },
+  ): Promise<void>;
 }
 
 declare module 'react-native-fs' {
@@ -49,6 +54,12 @@ declare module 'react-native-fs' {
     path: string,
     encoding: 'base64' | 'utf8',
   ): Promise<string>;
+  export function writeFile(
+    path: string,
+    contents: string,
+    encoding: 'base64' | 'utf8',
+  ): Promise<void>;
+  export function exists(path: string): Promise<boolean>;
 }
 
 declare module '@birdofpreyru/react-native-fs' {

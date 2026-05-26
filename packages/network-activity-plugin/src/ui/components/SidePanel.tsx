@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Badge } from './Badge';
 import { Button } from './Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs';
@@ -6,6 +7,7 @@ import { RequestTab } from '../tabs/RequestTab';
 import { ResponseTab } from '../tabs/ResponseTab';
 import { CookiesTab } from '../tabs/CookiesTab';
 import { TimingTab } from '../tabs/TimingTab';
+import { InitiatorTab } from '../tabs/InitiatorTab';
 import { X } from 'lucide-react';
 import {
   useNetworkActivityActions,
@@ -17,6 +19,7 @@ import { NetworkEntry as OldNetworkEntry } from '../types';
 import { getStatusColor } from '../utils/getStatusColor';
 import { MessagesTab } from '../tabs/MessagesTab';
 import { SSEMessagesTab } from '../tabs/SSEMessagesTab';
+import type { ResponseView } from '../response-renderers';
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
@@ -87,6 +90,14 @@ export const SidePanel = () => {
   const selectedRequest = useSelectedRequest();
   const client = useNetworkActivityStore((state) => state._client);
   const overrides = useOverrides();
+  // Sticky Preview/Raw preference. Lives here, not in ResponseTab,
+  // because the `<Tabs key={selectedRequest.id}>` below intentionally
+  // remounts the Tabs subtree on every request switch (so the active
+  // inner tab resets). SidePanel itself stays mounted across request
+  // switches, so the preference survives — flipping to Raw on one
+  // response keeps Raw selected for every subsequent response whose
+  // renderer supports it. Resets when the panel is closed.
+  const [preferredView, setPreferredView] = useState<ResponseView>('preview');
 
   const onClose = (): void => {
     actions.setSelectedRequest(null);
@@ -167,6 +178,12 @@ export const SidePanel = () => {
             Cookies
           </TabsTrigger>
           <TabsTrigger
+            value="initiator"
+            className="data-[state=active]:bg-gray-700"
+          >
+            Initiator
+          </TabsTrigger>
+          <TabsTrigger
             value="timing"
             className="data-[state=active]:bg-gray-700"
           >
@@ -196,6 +213,12 @@ export const SidePanel = () => {
             className="data-[state=active]:bg-gray-700"
           >
             Messages
+          </TabsTrigger>
+          <TabsTrigger
+            value="initiator"
+            className="data-[state=active]:bg-gray-700"
+          >
+            Initiator
           </TabsTrigger>
         </>
       );
@@ -229,6 +252,8 @@ export const SidePanel = () => {
             <ResponseTab
               selectedRequest={httpDetails}
               supportsOverrides={supportsOverrides}
+              preferredView={preferredView}
+              onPreferredViewChange={setPreferredView}
               onRequestResponseBody={(requestId) => {
                 if (client) {
                   client.send('get-response-body', {
@@ -241,6 +266,10 @@ export const SidePanel = () => {
 
           <TabsContent value="cookies" className="flex-1 m-0 overflow-hidden">
             <CookiesTab selectedRequest={httpDetails} />
+          </TabsContent>
+
+          <TabsContent value="initiator" className="flex-1 m-0 overflow-hidden">
+            <InitiatorTab selectedRequest={httpDetails} />
           </TabsContent>
 
           <TabsContent value="timing" className="flex-1 m-0 overflow-hidden">
@@ -273,6 +302,10 @@ export const SidePanel = () => {
 
           <TabsContent value="messages" className="flex-1 m-0 overflow-hidden">
             <SSEMessagesTab selectedRequest={sseDetails} />
+          </TabsContent>
+
+          <TabsContent value="initiator" className="flex-1 m-0 overflow-hidden">
+            <InitiatorTab selectedRequest={sseDetails} />
           </TabsContent>
 
           <TabsContent value="cookies" className="flex-1 m-0 overflow-hidden">
@@ -324,7 +357,15 @@ export const SidePanel = () => {
           }
           className="h-full flex flex-col"
         >
-          <TabsList className="grid w-full grid-cols-5 bg-gray-800 rounded-none border-b border-gray-700">
+          <TabsList
+            className={`grid w-full ${
+              selectedRequest.type === 'http'
+                ? 'grid-cols-6'
+                : selectedRequest.type === 'sse'
+                  ? 'grid-cols-4'
+                  : 'grid-cols-1'
+            } bg-gray-800 rounded-none border-b border-gray-700`}
+          >
             {getTabsListTriggers()}
           </TabsList>
 

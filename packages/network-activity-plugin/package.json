@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/network-activity-plugin",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Network Activity for Rozenite.",
   "type": "module",
   "main": "./dist/react-native/index.cjs",
@@ -18,7 +18,8 @@
     "build": "rozenite build",
     "dev": "rozenite dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",
@@ -36,6 +37,9 @@
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.0.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "autoprefixer": "^10.4.21",
@@ -50,6 +54,7 @@
     "react-native": "catalog:",
     "react-native-sse": "^1.2.1",
     "react-native-web": "^0.21.2",
+    "react-virtuoso": "^4.6.0",
     "rozenite": "workspace:*",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.17",

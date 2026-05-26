@@ -148,6 +148,535 @@ const TodoCard: React.FC<{ todo: Todo }> = ({ todo }) => (
   </View>
 );
 
+type ImageTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const IMAGE_TEST_CASES: ImageTestCase[] = [
+  {
+    label: 'PNG',
+    url: 'https://httpbin.org/image/png',
+    hint: 'Small PNG, exercises image-binary capture',
+  },
+  {
+    label: 'JPEG',
+    url: 'https://httpbin.org/image/jpeg',
+    hint: 'Small JPEG, exercises image-binary capture',
+  },
+  {
+    label: 'WebP',
+    url: 'https://httpbin.org/image/webp',
+    hint: 'WebP — `image/*` catch-all',
+  },
+  {
+    label: 'SVG',
+    url: 'https://httpbin.org/image/svg',
+    hint: 'Text-based — captured as string, Raw view shows source',
+  },
+  {
+    label: 'Large JPEG (~1 MB)',
+    url: 'https://picsum.photos/3000/3000.jpg',
+    hint: 'Substantial JPEG, still under the 5 MB capture cap',
+  },
+  {
+    label: 'Huge JPEG (cap test)',
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Pillars_of_creation_2014_HST_WFC3-UVIS_full-res_denoised.jpg',
+    hint: 'Hubble Pillars of Creation, ~45 MB — triggers the `binary-too-large` placeholder',
+  },
+];
+
+const ImageResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchImage = React.useCallback(async (testCase: ImageTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const blob = await response.blob();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${blob.type || 'unknown'} • ${blob.size.toLocaleString()} bytes`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Image Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers image responses to exercise the Network Activity panel&apos;s
+          image preview. Tap a button, then open the captured request in
+          DevTools — Preview tab shows the rendered image, Raw tab shows the
+          metadata card (Content-Type + decoded size) or, for SVG, the XML
+          source.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {IMAGE_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchImage(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {IMAGE_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
+type BinaryTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const BINARY_TEST_CASES: BinaryTestCase[] = [
+  {
+    label: 'PDF',
+    url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    hint: 'application/pdf — magic bytes `%PDF` visible in the hex ASCII column',
+  },
+  {
+    label: 'octet-stream',
+    url: 'https://httpbin.org/bytes/4096',
+    hint: 'application/octet-stream — random 4 KB, no recognisable magic',
+  },
+  {
+    label: 'WOFF2 font',
+    url: 'https://cdn.jsdelivr.net/npm/@fontsource/roboto@latest/files/roboto-latin-400-normal.woff2',
+    hint: 'font/woff2 — exercises the font/* content-type branch',
+  },
+  {
+    label: 'MP3',
+    url: 'https://www.kozco.com/tech/piano2-CoolEdit.mp3',
+    hint: 'audio/mpeg — small audio sample, ~99 KB',
+  },
+  {
+    label: 'ZIP',
+    url: 'https://codeload.github.com/octocat/Hello-World/zip/refs/heads/master',
+    hint: 'application/zip — GitHub codeload, `PK` magic in ASCII column',
+  },
+];
+
+const BinaryResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchBinary = React.useCallback(async (testCase: BinaryTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const blob = await response.blob();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${blob.type || 'unknown'} • ${blob.size.toLocaleString()} bytes`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Binary Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers non-image binary responses so the Network Activity
+          panel&apos;s hex viewer + metadata card can be exercised end-to-end.
+          Tap a button, then open the captured request in DevTools — the Raw tab
+          shows the metadata card (size, Content-Length, derived filename,
+          Download button) and the virtualized hex view below.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {BINARY_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchBinary(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {BINARY_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
+type HtmlTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const HTML_TEST_CASES: HtmlTestCase[] = [
+  {
+    label: 'Classic HTML',
+    url: 'https://httpbin.org/html',
+    hint: '200 OK, real HTML body (Moby Dick excerpt) — exercises iframe preview + source view',
+  },
+  {
+    label: 'Minimal HTML',
+    url: 'https://example.com/',
+    hint: '200 OK well-known minimal HTML with inline <style> — verifies CSP allows inline styles',
+  },
+  {
+    label: '404 HTML',
+    url: 'https://httpbin.org/nonexistent-rozenite-test-route',
+    hint: '404 with a text/html body — confirms the renderer handles error responses, not just 2xx',
+  },
+];
+
+const HtmlResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchHtml = React.useCallback(async (testCase: HtmlTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const text = await response.text();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${
+          response.headers.get('content-type') ?? 'unknown'
+        } • ${text.length.toLocaleString()} chars`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>HTML Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers HTML responses to exercise the Network Activity panel&apos;s
+          HTML viewer. Tap a button, then open the captured request in DevTools
+          — Preview tab shows the page rendered inside a sandboxed iframe (no
+          scripts, no external subresources), Raw tab shows the HTML source. One
+          demo also returns 404 so the renderer is exercised on an error
+          response.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {HTML_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchHtml(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {HTML_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
+type XmlTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const XML_TEST_CASES: XmlTestCase[] = [
+  {
+    label: 'Sample XML',
+    url: 'https://httpbin.org/xml',
+    hint: '~519 B application/xml slideshow — exercises basic tree rendering + attributes',
+  },
+  {
+    label: 'Atom feed',
+    url: 'https://github.com/callstackincubator/rozenite/commits/main.atom',
+    hint: 'Atom feed — namespaces (xmlns, xmlns:media), nested <entry> blocks, CDATA in <content>',
+  },
+];
+
+const XmlResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchXml = React.useCallback(async (testCase: XmlTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const text = await response.text();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${
+          response.headers.get('content-type') ?? 'unknown'
+        } • ${text.length.toLocaleString()} chars`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>XML Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers XML responses to exercise the Network Activity panel&apos;s
+          XML viewer. Tap a button, then open the captured request in DevTools —
+          the Preview tab shows the parsed tree (collapsible elements,
+          namespaces, CDATA content), the Raw tab shows the XML source.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {XML_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchXml(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {XML_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
+type LargeTextTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const LARGE_TEXT_TEST_CASES: LargeTextTestCase[] = [
+  {
+    label: 'Alice in Wonderland (~174 KB)',
+    url: 'https://www.gutenberg.org/cache/epub/11/pg11.txt',
+    hint: 'text/plain — exceeds the 50 KB threshold, Raw view virtualizes into a 500 px scrollable window',
+  },
+  {
+    label: 'GPL-3 license (~35 KB)',
+    url: 'https://www.gnu.org/licenses/gpl-3.0.txt',
+    hint: 'text/plain — under the threshold, renders as a flat <pre> for comparison',
+  },
+];
+
+const LargeTextResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchLargeText = React.useCallback(
+    async (testCase: LargeTextTestCase) => {
+      setLoadingLabel(testCase.label);
+      setError(null);
+      setLastResult(null);
+      try {
+        const response = await fetch(testCase.url);
+        const text = await response.text();
+        setLastResult(
+          `${testCase.label}: HTTP ${response.status} • ${
+            response.headers.get('content-type') ?? 'unknown'
+          } • ${text.length.toLocaleString()} chars`,
+        );
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setLoadingLabel(null);
+      }
+    },
+    [],
+  );
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Large Text Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers large plain-text responses so the Network Activity
+          panel&apos;s code-block viewer can be exercised on both sides of the
+          50 KB virtualization threshold. Tap a button, then open the captured
+          request in DevTools — bodies above 50 KB scroll inside a 500 px window
+          via Virtuoso; bodies below render as a flat &lt;pre&gt;.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {LARGE_TEXT_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchLargeText(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {LARGE_TEXT_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
 const NitroHTTPTestComponent: React.FC = () => {
   const [isRunning, setIsRunning] = React.useState(false);
   const [result, setResult] = React.useState<NitroDemoResult | null>(null);
@@ -1240,7 +1769,17 @@ const SSETestComponent: React.FC = () => {
 export const NetworkTestScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [activeTest, setActiveTest] = React.useState<
-    'http' | 'nitro' | 'websocket' | 'nitro-websocket' | 'sse' | 'request-body'
+    | 'http'
+    | 'nitro'
+    | 'websocket'
+    | 'nitro-websocket'
+    | 'sse'
+    | 'images'
+    | 'binary'
+    | 'html'
+    | 'xml'
+    | 'large-text'
+    | 'request-body'
   >('http');
 
   const renderHeader = () => (
@@ -1265,6 +1804,11 @@ export const NetworkTestScreen: React.FC = () => {
           { key: 'websocket', label: 'WebSocket Test' },
           { key: 'nitro-websocket', label: 'Nitro WS' },
           { key: 'sse', label: 'SSE Test' },
+          { key: 'images', label: 'Images' },
+          { key: 'binary', label: 'Binary' },
+          { key: 'html', label: 'HTML' },
+          { key: 'xml', label: 'XML' },
+          { key: 'large-text', label: 'Large text' },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -1279,7 +1823,12 @@ export const NetworkTestScreen: React.FC = () => {
                   | 'nitro'
                   | 'websocket'
                   | 'nitro-websocket'
-                  | 'sse',
+                  | 'sse'
+                  | 'images'
+                  | 'binary'
+                  | 'html'
+                  | 'xml'
+                  | 'large-text',
               )
             }
           >
@@ -1308,6 +1857,16 @@ export const NetworkTestScreen: React.FC = () => {
         <WebSocketTestComponent />
       ) : activeTest === 'nitro-websocket' ? (
         <NitroWebSocketTestComponent />
+      ) : activeTest === 'images' ? (
+        <ImageResponseTestComponent />
+      ) : activeTest === 'binary' ? (
+        <BinaryResponseTestComponent />
+      ) : activeTest === 'html' ? (
+        <HtmlResponseTestComponent />
+      ) : activeTest === 'xml' ? (
+        <XmlResponseTestComponent />
+      ) : activeTest === 'large-text' ? (
+        <LargeTextResponseTestComponent />
       ) : (
         <SSETestComponent />
       )}
@@ -1958,5 +2517,14 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     padding: 12,
     lineHeight: 16,
+  },
+  imageHintList: {
+    marginTop: 12,
+    gap: 4,
+  },
+  imageHintText: {
+    color: '#a0a0a0',
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

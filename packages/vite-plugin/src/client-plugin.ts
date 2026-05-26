@@ -7,7 +7,18 @@ import { fileURLToPath } from 'node:url';
 import { normalizePath } from 'vite';
 import { loadConfig, RozeniteConfig } from './load-config.js';
 import { getPackageJSON } from './package-json.js';
-import { DEV_HOST_STATE_ELEMENT_ID } from './dev-host/constants.js';
+import { DEV_HOST_CONFIG_GLOBAL_KEY, DEV_HOST_STATE_ELEMENT_ID } from './dev-host/constants.js';
+import {
+  getBuiltDevHostAssets,
+  getDevHostHtmlTemplate,
+  getDevHostSourceEntryFile,
+} from './dev-host/server.js';
+import {
+  ROZENITE_DEV_CONFIG_MODULE_ID,
+  getRozeniteConfigPath,
+  loadRozeniteDevConfigModule,
+  resolveRozeniteDevConfigModuleId,
+} from './dev-config-module.js';
 
 type PanelEntry = {
   name: string;
@@ -45,9 +56,7 @@ const PACKAGE_DIR = path.resolve(
   '..',
 );
 
-const DEV_HOST_DIR = path.join(PACKAGE_DIR, 'src', 'dev-host');
-const DEV_HOST_HTML_TEMPLATE = path.join(DEV_HOST_DIR, 'dev-host.html');
-const DEV_HOST_ENTRY_FILE = path.join(DEV_HOST_DIR, 'index.tsx');
+const DEV_HOST_SOURCE_ENTRY_FILE = getDevHostSourceEntryFile(PACKAGE_DIR);
 
 const PANELS_DIR = './panels';
 const DEVTOOLS_DIR = 'devtools';
@@ -118,6 +127,46 @@ export const rozeniteClientPlugin = (): Plugin => {
     return JSON.stringify(state).replace(/</g, '\\u003c');
   };
 
+  const toFsUrl = (filePath: string) => {
+    return `/@fs${normalizePath(filePath)}`;
+  };
+
+  const getDevHostAssetTags = () => {
+    const builtAssets = getBuiltDevHostAssets(PACKAGE_DIR);
+
+    if (!builtAssets) {
+      return [
+        {
+          tag: 'script',
+          attrs: {
+            type: 'module',
+            src: toFsUrl(DEV_HOST_SOURCE_ENTRY_FILE),
+          },
+          injectTo: 'body' as const,
+        },
+      ];
+    }
+
+    return [
+      ...builtAssets.styles.map((stylePath) => ({
+        tag: 'link',
+        attrs: {
+          rel: 'stylesheet',
+          href: toFsUrl(stylePath),
+        },
+        injectTo: 'head' as const,
+      })),
+      {
+        tag: 'script',
+        attrs: {
+          type: 'module',
+          src: toFsUrl(builtAssets.script),
+        },
+        injectTo: 'body' as const,
+      },
+    ];
+  };
+
   return {
     name: 'rozenite-client-plugin',
     async config(config) {
@@ -125,9 +174,7 @@ export const rozeniteClientPlugin = (): Plugin => {
         projectRoot = config.root;
       }
 
-      rozeniteConfig = await loadConfig(
-        path.resolve(projectRoot, 'rozenite.config.ts'),
-      );
+      rozeniteConfig = await loadConfig(getRozeniteConfigPath(projectRoot));
       const panels = getPanels();
 
       config.server ??= {};
@@ -158,6 +205,12 @@ export const rozeniteClientPlugin = (): Plugin => {
     },
 
     resolveId(id) {
+      const devConfigModuleId = resolveRozeniteDevConfigModuleId(id);
+
+      if (devConfigModuleId) {
+        return devConfigModuleId;
+      }
+
       const isPanel = getPanels().some(
         (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
       );
@@ -170,6 +223,12 @@ export const rozeniteClientPlugin = (): Plugin => {
     },
 
     load(id) {
+      const devConfigModule = loadRozeniteDevConfigModule(id, projectRoot);
+
+      if (devConfigModule) {
+        return devConfigModule;
+      }
+
       const panel = getPanels().find(
         (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
       );
@@ -204,10 +263,19 @@ export const rozeniteClientPlugin = (): Plugin => {
           tag: 'script',
           attrs: {
             type: 'module',
-            src: `/@fs${normalizePath(DEV_HOST_ENTRY_FILE)}`,
           },
+          children: `import rozeniteConfig from ${JSON.stringify('/@id/' + ROZENITE_DEV_CONFIG_MODULE_ID)}; window[${JSON.stringify(DEV_HOST_CONFIG_GLOBAL_KEY)}] = rozeniteConfig.dev ?? {};`,
           injectTo: 'body',
         },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'rozenite-dev-host',
+            content: 'true',
+          },
+          injectTo: 'head',
+        },
+        ...getDevHostAssetTags(),
       ];
     },
 
@@ -237,9 +305,8 @@ export const rozeniteClientPlugin = (): Plugin => {
         const url = new URL(requestUrl, 'http://localhost').pathname;
 
         if (url === DEV_HOST_ROUTE) {
-          fs.promises
-            .readFile(DEV_HOST_HTML_TEMPLATE, 'utf-8')
-            .then((htmlContent) => server.transformIndexHtml(requestUrl, htmlContent))
+          server
+            .transformIndexHtml(requestUrl, getDevHostHtmlTemplate())
             .then((html) => {
               res.setHeader('Content-Type', 'text/html');
               res.end(html);

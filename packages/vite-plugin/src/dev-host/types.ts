@@ -1,6 +1,22 @@
+import type { DevFlowEntry } from '../load-config.js';
+
 export type DevHostPanelEntry = {
   label: string;
   source: string;
+};
+
+export type DevHostPresetEntry = {
+  name: string;
+  displayName: string;
+  type: string;
+  payload: unknown;
+};
+
+export type DevHostFlowEntry = {
+  name: string;
+  displayName: string;
+  autoRun: boolean;
+  run: DevFlowEntry['run'];
 };
 
 export type DevHostState = {
@@ -15,6 +31,18 @@ export type MessageEntry = {
   date: string;
   type: string;
   payload: unknown;
+};
+
+export type DevHostFlowRunStatus = 'running' | 'succeeded' | 'failed' | 'aborted';
+
+export type DevHostFlowRunState = {
+  id: string;
+  flowName: string;
+  flowDisplayName: string;
+  status: DevHostFlowRunStatus;
+  result: unknown;
+  error: string | null;
+  autoRun: boolean;
 };
 
 export type PluginMessage = {

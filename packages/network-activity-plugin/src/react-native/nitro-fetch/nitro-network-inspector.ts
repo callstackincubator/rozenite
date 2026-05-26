@@ -4,6 +4,7 @@ import type {
   HttpHeaders,
   HttpMethod,
   RequestPostData,
+  ResponseBody,
 } from '../../shared/client';
 import type { WebSocketEventMap } from '../../shared/websocket-events';
 import type { Inspector } from '../inspector';
@@ -92,7 +93,12 @@ type NanoEventsMap = {
 };
 
 export type NitroNetworkInspector = Inspector<NitroNetworkEventMap> & {
-  getResponseBody: (requestId: string) => string | null;
+  // Returns ResponseBody so the wire shape is consistent across capture
+  // paths. The nitro native module today only surfaces text response
+  // bodies, so at runtime this resolves to string | null — but typing it
+  // as ResponseBody lets future native support for binary slot in without
+  // a wire-format change.
+  getResponseBody: (requestId: string) => ResponseBody;
 };
 
 export const NITRO_NETWORK_EVENTS: (keyof NitroNetworkEventMap)[] = [
@@ -163,7 +169,7 @@ export const createNitroNetworkInspector = (
 ): NitroNetworkInspector => {
   const eventEmitter = createNanoEvents<NanoEventsMap>();
   const previousEntries = new Map<string, NitroInspectorEntry>();
-  const responseBodies = new Map<string, string | null>();
+  const responseBodies = new Map<string, ResponseBody>();
   let nitroModule: NitroModule | null = null;
   let unsubscribe: (() => void) | null = null;
 

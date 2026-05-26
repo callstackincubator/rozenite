@@ -94,6 +94,45 @@ export default {
 };
 ```
 
+### Dev Host Configuration
+
+`rozenite.config.ts` can also define helpers for the in-browser dev host that `rozenite dev` launches.
+
+```typescript title="rozenite.config.ts"
+export default {
+  panels: [
+    {
+      name: 'Storage',
+      source: './src/storage-panel.tsx',
+    },
+  ],
+  dev: {
+    presets: [
+      {
+        name: 'Get snapshot',
+        type: 'get-snapshot',
+        payload: { target: 'all' },
+      },
+    ],
+    flows: [
+      {
+        name: 'Initialize',
+        autoRun: true,
+        async run({ send, waitForMessage }) {
+          await waitForMessage({ type: 'get-snapshot', direction: 'in' });
+          send('snapshot', { items: [] });
+        },
+      },
+    ],
+  },
+};
+```
+
+- `dev.presets` adds ready-made command payloads to the **Presets** button in the Actions pane. Use presets when you want to quickly re-send common messages while iterating on your panel.
+- `dev.flows` adds runnable scripts to the **Flows** tab in the Actions pane. Use flows for small test routines like bootstrapping state, waiting for a request, or simulating a multi-step exchange.
+- Set `autoRun: true` on a flow when it should start automatically after the panel iframe loads. This is useful for initialization routines that should begin listening immediately.
+- These helpers are for the dev host workflow. They do not change the production plugin manifest.
+
 ### Panel Configuration Options
 
 | Property | Type     | Description                      |
@@ -258,6 +297,8 @@ This starts a development server that:
 - **Panel preview** — Every entry in `rozenite.config.ts` appears as a tab. The selected panel loads inside an iframe, similar to how it is embedded in React Native DevTools.
 - **Message log** — Outbound messages from your panel (the same `rozenite-message` envelope the plugin bridge uses when talking to the parent) are listed with timestamps so you can see what the panel emitted.
 - **Dispatch message** — Send a command `type` and JSON `payload` into the iframe as if DevTools had sent it. The host fills in `pluginId` from your package **`name`** in `package.json`. That value must match the `pluginId` you pass to `useRozeniteDevToolsClient` / `getRozeniteDevToolsClient`; otherwise your handlers will not run.
+- **Presets** — Any `dev.presets` entries from `rozenite.config.ts` appear in the Actions pane so you can populate common command and payload combinations with one click.
+- **Flows** — Any `dev.flows` entries appear in a dedicated Flows tab so you can run repeatable dev routines against the panel iframe. Flows with `autoRun: true` start automatically when the preview reloads.
 
 The dev server port is aligned with Rozenite **runtime dev mode**: when you set `ROZENITE_DEV_MODE` to your plugin package name, the app loads the plugin from **http://localhost:8888**, so one `rozenite dev` process can serve both the in-browser host and the in-app plugin bundle.
 

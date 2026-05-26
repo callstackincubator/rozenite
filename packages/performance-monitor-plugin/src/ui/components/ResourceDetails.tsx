@@ -8,7 +8,7 @@ export type ResourceDetailsProps = {
 
 const formatPhase = (value: number | undefined): string => {
   if (value === undefined || value === 0) return '—';
-  return `${value.toFixed(2)}ms`;
+  return formatDuration(value);
 };
 
 const Row = ({

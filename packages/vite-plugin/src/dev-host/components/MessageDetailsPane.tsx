@@ -5,6 +5,7 @@ import { MessagePayloadDetail } from './MessagePayloadDetail.js';
 import { ResizeHandle } from './ResizeHandle.js';
 import { ScrollArea } from './ui/ScrollArea.js';
 import { SendIcon } from './icons.js';
+import { IconButton } from './ui/IconButton.js';
 
 type MessageDetailsPaneProps = {
   selectedMessage: MessageEntry | null;
@@ -43,9 +44,8 @@ export const MessageDetailsPane = ({
           <div className="rz-sidebar-header">
             <div className="rz-sidebar-title">Message Details</div>
             <div className="rz-header-actions">
-              <button
+              <IconButton
                 type="button"
-                className="rz-sidebar-close"
                 aria-label="Use message in dispatcher"
                 title="Use message in dispatcher"
                 onClick={() => {
@@ -55,16 +55,15 @@ export const MessageDetailsPane = ({
                 }}
               >
                 <SendIcon />
-              </button>
+              </IconButton>
 
-              <button
+              <IconButton
                 type="button"
-                className="rz-sidebar-close"
                 aria-label="Close message details"
                 onClick={onClose}
               >
                 ×
-              </button>
+              </IconButton>
             </div>
           </div>
 

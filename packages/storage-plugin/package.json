@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/storage-plugin",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Generic Storage Inspector for Rozenite.",
   "type": "module",
   "main": "./dist/react-native/index.cjs",
@@ -27,6 +27,9 @@
     "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.40.0",
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "@types/react": "catalog:",

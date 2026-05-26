@@ -8,30 +8,35 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { ProcessedRequest } from '../state/model';
-import { RequestId, RequestOverride } from '../../shared/client';
+import type { ProcessedRequest } from '../state/model';
+import type {
+  NetworkEventSource,
+  RequestId,
+  RequestOverride,
+} from '../../shared/client';
 import {
   useNetworkActivityActions,
   useOverrides,
-  useProcessedRequests,
   useSelectedRequestId,
   useClientUISettings,
 } from '../state/hooks';
 import { getStatusColor } from '../utils/getStatusColor';
-import { FilterState } from './FilterBar';
 import { isNumber } from '../../utils/typeChecks';
-import type { NetworkEventSource } from '../../shared/client';
 
 type NetworkRequest = {
   id: RequestId;
   name: string;
   status: string | number;
-  method: string;
+  statusCode?: number;
+  method: ProcessedRequest['method'];
   domain: string;
   path: string;
+  contentType?: string;
   size: string;
+  sizeBytes: number | null;
   time: string;
-  type: string;
+  durationMs: number;
+  type: ProcessedRequest['type'];
   source?: NetworkEventSource;
   startTime: string;
   hasOverride: boolean;
@@ -105,7 +110,6 @@ const sortSize: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
   const a = rowA.getValue(columnId) as string;
   const b = rowB.getValue(columnId) as string;
 
-  // Extract numeric values from formatted strings like "1.2 kB", "500 B", etc.
   const getNumericValue = (str: string) => {
     const match = str.match(/^([\d.]+)\s*([KMGT]?B)$/);
     if (!match) return 0;
@@ -127,7 +131,6 @@ const sortTime: SortingFn<NetworkRequest> = (rowA, rowB, columnId) => {
   const a = rowA.getValue(columnId) as string;
   const b = rowB.getValue(columnId) as string;
 
-  // Extract numeric values from formatted strings like "150 ms", "1.2 s", etc.
   const getNumericValue = (str: string) => {
     const match = str.match(/^([\d.]+)\s*(ms|s)$/);
     if (!match) return 0;
@@ -161,15 +164,19 @@ const processNetworkRequests = (
       id: request.id,
       name: generateName(request.name, showEntirePathAsName),
       status: statusDisplay,
+      statusCode: request.httpStatus || undefined,
       method: request.method,
       domain,
       path,
+      contentType: request.contentType,
       size: isNumber(request.size) ? formatSize(request.size) : '—',
+      sizeBytes: isNumber(request.size) ? request.size : null,
       time: formatDuration(duration),
+      durationMs: duration,
       type: request.type,
       source: request.source,
       startTime: formatStartTime(request.timestamp),
-      hasOverride: hasOverride,
+      hasOverride,
     };
   });
 };
@@ -245,42 +252,15 @@ const columns = [
 ];
 
 export type RequestListProps = {
-  filter: FilterState;
+  requests: ProcessedRequest[];
 };
 
-export const RequestList = ({ filter }: RequestListProps) => {
+export const RequestList = ({ requests: filteredRequests }: RequestListProps) => {
   const actions = useNetworkActivityActions();
-  const processedRequests = useProcessedRequests();
   const selectedRequestId = useSelectedRequestId();
   const [sorting, setSorting] = useState<SortingState>([]);
   const overrides = useOverrides();
   const clientUISettings = useClientUISettings();
-
-  // Filter requests based on current filter state
-  const filteredRequests = useMemo(() => {
-    return processedRequests.filter((request) => {
-      // Type filter
-      if (!filter.types.has(request.type)) {
-        return false;
-      }
-
-      // Text filter
-      if (filter.text) {
-        const searchText = filter.text.toLowerCase();
-        const searchableFields = [
-          request.name,
-          request.method,
-          request.status.toString(),
-        ]
-          .join(' ')
-          .toLowerCase();
-
-        return searchableFields.includes(searchText);
-      }
-
-      return true;
-    });
-  }, [processedRequests, filter]);
 
   const requests = useMemo(() => {
     return processNetworkRequests(
@@ -369,7 +349,6 @@ export const RequestList = ({ filter }: RequestListProps) => {
   );
 };
 
-// Export helper functions for use in other components
 export {
   formatSize,
   formatDuration,

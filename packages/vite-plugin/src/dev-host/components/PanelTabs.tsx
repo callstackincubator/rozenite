@@ -1,5 +1,5 @@
 import type { DevHostPanelEntry } from '../types.js';
-import { Tabs, TabsList, TabsTrigger } from './ui/Tabs.js';
+import { ToggleGroup } from './ui/ToggleGroup.js';
 
 type PanelTabsProps = {
   panels: DevHostPanelEntry[];
@@ -9,14 +9,14 @@ type PanelTabsProps = {
 
 export const PanelTabs = ({ panels, activeSource, onValueChange }: PanelTabsProps) => {
   return (
-    <Tabs className="rz-tabs-root" value={activeSource} onValueChange={onValueChange}>
-      <TabsList aria-label="Plugin panels">
-        {panels.map((panel) => (
-          <TabsTrigger key={panel.source} value={panel.source}>
-            {panel.label}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
+    <ToggleGroup
+      aria-label="Plugin panels"
+      value={activeSource}
+      onChange={onValueChange}
+      options={panels.map((panel) => ({
+        key: panel.source,
+        label: panel.label,
+      }))}
+    />
   );
 };

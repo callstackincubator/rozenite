@@ -1,5 +1,13 @@
 # @rozenite/metro
 
+## 1.10.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/middleware@1.10.0
+  - @rozenite/tools@1.10.0
+
 ## 1.9.0
 
 ### Patch Changes
