@@ -54,8 +54,8 @@ const PhaseBar = ({
 }) => {
   if (
     phase.status !== 'complete' ||
-    totalDuration === undefined ||
-    totalDuration === 0
+    totalDuration == null ||
+    !(totalDuration > 0)
   ) {
     return null;
   }

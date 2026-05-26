@@ -7,6 +7,7 @@ export type StartupPhase = {
   label: string;
   status: StartupPhaseStatus;
   startTime?: number;
+  endTime?: number;
   duration?: number;
 };
 
@@ -56,6 +57,7 @@ export const deriveStartupSummary = (
       label,
       status: 'complete',
       startTime,
+      endTime,
       duration: endTime - (startTime ?? endTime),
     };
   };
@@ -89,7 +91,7 @@ export const deriveStartupSummary = (
   if (totalStart === undefined) {
     total = { status: 'missing' };
   } else if (lastComplete) {
-    const lastEndTime = lastComplete.startTime! + lastComplete.duration!;
+    const lastEndTime = lastComplete.endTime!;
     total = { status: 'complete', duration: lastEndTime - totalStart };
   } else {
     total = { status: 'in-progress' };
