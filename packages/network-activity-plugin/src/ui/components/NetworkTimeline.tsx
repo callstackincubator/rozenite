@@ -346,83 +346,77 @@ export const NetworkTimeline = ({
 
   return (
     <div className="border-b border-gray-700 bg-gray-900 p-1.5">
-      {requests.length === 0 ? (
-        <div className="flex h-16 items-center justify-center border border-dashed border-gray-700 bg-gray-950 text-sm text-gray-500">
-          No requests match the current filters
-        </div>
-      ) : (
+      <div
+        ref={chartRef}
+        className="relative overflow-hidden border border-gray-800 bg-gray-950"
+        style={{ height: timeline.chartHeight }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      >
+        <GridLines ticks={timeline.ticks} />
+
         <div
-          ref={chartRef}
-          className="relative overflow-hidden border border-gray-800 bg-gray-950"
-          style={{ height: timeline.chartHeight }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-        >
-          <GridLines ticks={timeline.ticks} />
+          className="pointer-events-none absolute inset-x-0 border-b border-gray-800"
+          style={{ top: TIMELINE_LAYOUT.rulerHeightPx }}
+        />
 
+        {timeline.ticks.map((tick) => (
           <div
-            className="pointer-events-none absolute inset-x-0 border-b border-gray-800"
-            style={{ top: TIMELINE_LAYOUT.rulerHeightPx }}
+            key={`${tick.label}-${tick.offsetPercent}`}
+            className="absolute top-1 whitespace-nowrap tabular-nums text-xs text-gray-200"
+            style={getTickLabelStyle(tick)}
+          >
+            {tick.label}
+          </div>
+        ))}
+
+        {selection && (
+          <div
+            className="pointer-events-none absolute bottom-0 border-x border-blue-300/70 bg-blue-400/10"
+            style={getSelectionStyle(selection, timeline)}
           />
+        )}
 
-          {timeline.ticks.map((tick) => (
-            <div
-              key={`${tick.label}-${tick.offsetPercent}`}
-              className="absolute top-1 whitespace-nowrap tabular-nums text-xs text-gray-200"
-              style={getTickLabelStyle(tick)}
+        {draftSelection && (
+          <div
+            className="pointer-events-none absolute bottom-0 border-x border-blue-300/70 bg-blue-400/15"
+            style={getDraftSelectionStyle(draftSelection)}
+          />
+        )}
+
+        {timeline.rows.map((row) => (
+          <TimelineTrack
+            key={row.request.id}
+            row={row}
+            isSelected={selectedRequestId === row.request.id}
+            onSelect={onRequestSelect}
+            shouldSuppressSelect={() => suppressTrackClickRef.current}
+          />
+        ))}
+
+        {selection && (
+          <div className="absolute bottom-1 right-1 flex items-center gap-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
+            <span>{filteredRequestCount} in range</span>
+            <button
+              type="button"
+              title="Clear timeline selection"
+              aria-label="Clear timeline selection"
+              className="rounded p-0.5 text-gray-400 hover:bg-gray-800 hover:text-gray-100"
+              onClick={() => onSelectionChange(null)}
             >
-              {tick.label}
-            </div>
-          ))}
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
 
-          {selection && (
-            <div
-              className="pointer-events-none absolute bottom-0 border-x border-blue-300/70 bg-blue-400/10"
-              style={getSelectionStyle(selection, timeline)}
-            />
-          )}
-
-          {draftSelection && (
-            <div
-              className="pointer-events-none absolute bottom-0 border-x border-blue-300/70 bg-blue-400/15"
-              style={getDraftSelectionStyle(draftSelection)}
-            />
-          )}
-
-          {timeline.rows.map((row) => (
-            <TimelineTrack
-              key={row.request.id}
-              row={row}
-              isSelected={selectedRequestId === row.request.id}
-              onSelect={onRequestSelect}
-              shouldSuppressSelect={() => suppressTrackClickRef.current}
-            />
-          ))}
-
-          {selection && (
-            <div className="absolute bottom-1 right-1 flex items-center gap-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
-              <span>{filteredRequestCount} in range</span>
-              <button
-                type="button"
-                title="Clear timeline selection"
-                aria-label="Clear timeline selection"
-                className="rounded p-0.5 text-gray-400 hover:bg-gray-800 hover:text-gray-100"
-                onClick={() => onSelectionChange(null)}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          )}
-
-          {timeline.hiddenRequestCount > 0 && (
-            <div className="absolute bottom-1 left-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
-              Showing latest {timeline.rows.length} of{' '}
-              {timeline.totalRequestCount}
-            </div>
-          )}
-        </div>
-      )}
+        {timeline.hiddenRequestCount > 0 && (
+          <div className="absolute bottom-1 left-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
+            Showing latest {timeline.rows.length} of{' '}
+            {timeline.totalRequestCount}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
