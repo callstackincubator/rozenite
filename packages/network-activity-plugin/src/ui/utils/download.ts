@@ -152,3 +152,10 @@ export const downloadBlob = (blob: Blob, filename: string): void => {
   // the request when the URL disappears mid-click.
   setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
 };
+
+export const downloadJson = (data: unknown, filename: string): void => {
+  downloadBlob(
+    new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
+    filename,
+  );
+};

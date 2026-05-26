@@ -29,14 +29,6 @@ export const useIsRecording = () => {
   return useNetworkActivityStore((state) => state.isRecording);
 };
 
-export const useNetworkEntries = () => {
-  return useNetworkActivityStore((state) => state.networkEntries);
-};
-
-export const useWebSocketMessagesMap = () => {
-  return useNetworkActivityStore((state) => state.websocketMessages);
-};
-
 export const useNetworkActivityActions = () => {
   return useNetworkActivityStore((state) => state.actions);
 };

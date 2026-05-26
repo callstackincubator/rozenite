@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useNetworkActivityStore } from '../state/hooks';
 import { store } from '../state/store';
-import { downloadJsonFile } from '../utils/downloadFile';
+import { downloadJson } from '../utils/download';
 import {
   createNetworkActivitySessionExport,
   getNetworkActivitySessionExportFileName,
@@ -26,9 +26,9 @@ export const useNetworkActivitySessionExport = () => {
       exportedAt,
     );
 
-    downloadJsonFile(
-      getNetworkActivitySessionExportFileName(exportedAt),
+    downloadJson(
       exportData,
+      getNetworkActivitySessionExportFileName(exportedAt),
     );
   }, []);
 
