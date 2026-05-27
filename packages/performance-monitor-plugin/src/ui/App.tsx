@@ -28,6 +28,7 @@ import { MetricsTable } from './components/MetricsTable';
 import { MarksTable } from './components/MarksTable';
 import { ReactNativeMarksTable } from './components/ReactNativeMarksTable';
 import { ResourcesTable } from './components/ResourcesTable';
+import { WaterfallView } from './components/WaterfallView';
 import { DetailsSidebar } from './components/DetailsSidebar';
 import { SessionDuration } from './components/SessionDuration';
 import { ExportModal } from './components/ExportModal';
@@ -60,6 +61,9 @@ export default function PerformanceMonitorPanel() {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [selectedItem, setSelectedItem] =
     useState<SerializedPerformanceEntry | null>(null);
+  const [selectedWaterfallRowId, setSelectedWaterfallRowId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (!client) {
@@ -180,12 +184,17 @@ export default function PerformanceMonitorPanel() {
     }
   };
 
-  const handleEntryClick = (entry: SerializedPerformanceEntry) => {
+  const handleEntryClick = (
+    entry: SerializedPerformanceEntry,
+    waterfallRowId?: string,
+  ) => {
     setSelectedItem(entry);
+    setSelectedWaterfallRowId(waterfallRowId ?? null);
   };
 
   const handleCloseSidebar = () => {
     setSelectedItem(null);
+    setSelectedWaterfallRowId(null);
   };
 
   // Derived measures live only in the UI: paired Start/End RN marks
@@ -194,6 +203,13 @@ export default function PerformanceMonitorPanel() {
   // export still emits raw session data (see ExportModal below).
   const startupPhases = deriveStartupPhases(session.reactNativeMarks);
   const allMeasures = [...startupPhases, ...session.measures];
+  const waterfallEntries: SerializedPerformanceEntry[] = [
+    ...allMeasures,
+    ...session.metrics,
+    ...session.marks,
+    ...session.reactNativeMarks,
+    ...session.resources,
+  ];
 
   return (
     <Theme appearance="dark" accentColor="blue" radius="medium">
@@ -255,121 +271,143 @@ export default function PerformanceMonitorPanel() {
           </Flex>
         </Flex>
 
-        {/* Tabs */}
+        {/* Tabs and details */}
         <Box
           style={{
             flex: '1',
             display: 'flex',
-            flexDirection: 'column',
             minHeight: 0,
           }}
         >
-          <Tabs.Root
-            defaultValue="startup"
-            style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-          >
-            <Tabs.List style={{ flexShrink: 0 }}>
-              <Tabs.Trigger value="startup">Startup</Tabs.Trigger>
-              <Tabs.Trigger value="measures">
-                Measures ({allMeasures.length})
-              </Tabs.Trigger>
-              <Tabs.Trigger value="metrics">
-                Metrics ({session.metrics.length})
-              </Tabs.Trigger>
-              <Tabs.Trigger value="marks">
-                Marks ({session.marks.length})
-              </Tabs.Trigger>
-              <Tabs.Trigger value="reactNativeMarks">
-                React Native Marks ({session.reactNativeMarks.length})
-              </Tabs.Trigger>
-              <Tabs.Trigger value="resources">
-                Resources ({session.resources.length})
-              </Tabs.Trigger>
-            </Tabs.List>
-
-            <Box
+          <Box style={{ flex: '1', minWidth: 0 }}>
+            <Tabs.Root
+              defaultValue="waterfall"
               style={{
-                flexGrow: '1',
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                minHeight: 0,
               }}
             >
-              <Tabs.Content value="startup" style={{ display: 'contents' }}>
-                <StartupTab
-                  reactNativeMarks={session.reactNativeMarks}
-                  isSessionActive={isSessionActive}
-                />
-              </Tabs.Content>
+              <Tabs.List style={{ flexShrink: 0 }}>
+                <Tabs.Trigger value="waterfall">
+                  Waterfall ({waterfallEntries.length})
+                </Tabs.Trigger>
+                <Tabs.Trigger value="startup">Startup</Tabs.Trigger>
+                <Tabs.Trigger value="measures">
+                  Measures ({allMeasures.length})
+                </Tabs.Trigger>
+                <Tabs.Trigger value="metrics">
+                  Metrics ({session.metrics.length})
+                </Tabs.Trigger>
+                <Tabs.Trigger value="marks">
+                  Marks ({session.marks.length})
+                </Tabs.Trigger>
+                <Tabs.Trigger value="reactNativeMarks">
+                  React Native Marks ({session.reactNativeMarks.length})
+                </Tabs.Trigger>
+                <Tabs.Trigger value="resources">
+                  Resources ({session.resources.length})
+                </Tabs.Trigger>
+              </Tabs.List>
 
-              <Tabs.Content
-                value="measures"
+              <Box
                 style={{
-                  display: 'contents',
+                  flexGrow: '1',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  minHeight: 0,
                 }}
               >
-                <MeasuresTable
-                  measures={allMeasures}
-                  onRowClick={handleEntryClick}
-                />
-              </Tabs.Content>
+                <Tabs.Content
+                  value="waterfall"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <WaterfallView
+                    entries={waterfallEntries}
+                    selectedEntry={selectedItem}
+                    selectedEntryId={selectedWaterfallRowId}
+                    onEntrySelect={handleEntryClick}
+                  />
+                </Tabs.Content>
 
-              <Tabs.Content
-                value="metrics"
-                style={{
-                  display: 'contents',
-                }}
-              >
-                <MetricsTable
-                  metrics={session.metrics}
-                  onRowClick={handleEntryClick}
-                />
-              </Tabs.Content>
+                <Tabs.Content value="startup" style={{ display: 'contents' }}>
+                  <StartupTab
+                    reactNativeMarks={session.reactNativeMarks}
+                    isSessionActive={isSessionActive}
+                  />
+                </Tabs.Content>
 
-              <Tabs.Content
-                value="marks"
-                style={{
-                  display: 'contents',
-                }}
-              >
-                <MarksTable
-                  marks={session.marks}
-                  onRowClick={handleEntryClick}
-                />
-              </Tabs.Content>
+                <Tabs.Content
+                  value="measures"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <MeasuresTable
+                    measures={allMeasures}
+                    onRowClick={handleEntryClick}
+                  />
+                </Tabs.Content>
 
-              <Tabs.Content
-                value="reactNativeMarks"
-                style={{
-                  display: 'contents',
-                }}
-              >
-                <ReactNativeMarksTable
-                  reactNativeMarks={session.reactNativeMarks}
-                  onRowClick={handleEntryClick}
-                />
-              </Tabs.Content>
+                <Tabs.Content
+                  value="metrics"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <MetricsTable
+                    metrics={session.metrics}
+                    onRowClick={handleEntryClick}
+                  />
+                </Tabs.Content>
 
-              <Tabs.Content
-                value="resources"
-                style={{
-                  display: 'contents',
-                }}
-              >
-                <ResourcesTable
-                  resources={session.resources}
-                  onRowClick={handleEntryClick}
-                />
-              </Tabs.Content>
-            </Box>
-          </Tabs.Root>
+                <Tabs.Content
+                  value="marks"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <MarksTable
+                    marks={session.marks}
+                    onRowClick={handleEntryClick}
+                  />
+                </Tabs.Content>
+
+                <Tabs.Content
+                  value="reactNativeMarks"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <ReactNativeMarksTable
+                    reactNativeMarks={session.reactNativeMarks}
+                    onRowClick={handleEntryClick}
+                  />
+                </Tabs.Content>
+
+                <Tabs.Content
+                  value="resources"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <ResourcesTable
+                    resources={session.resources}
+                    onRowClick={handleEntryClick}
+                  />
+                </Tabs.Content>
+              </Box>
+            </Tabs.Root>
+          </Box>
+
+          <DetailsSidebar
+            selectedItem={selectedItem}
+            onClose={handleCloseSidebar}
+          />
         </Box>
       </Box>
-
-      <DetailsSidebar
-        selectedItem={selectedItem}
-        onClose={handleCloseSidebar}
-      />
     </Theme>
   );
 }

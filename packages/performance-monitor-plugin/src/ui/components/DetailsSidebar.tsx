@@ -41,36 +41,9 @@ export const DetailsSidebar = ({
 
   return (
     <>
-      {/* Backdrop */}
-      <Box
-        position="fixed"
-        top="0"
-        left="0"
-        right="0"
-        bottom="0"
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 999,
-        }}
-        onClick={onClose}
-      />
-
-      {/* Sidebar */}
-      <Box
-        position="fixed"
-        top="0"
-        right="0"
-        minWidth="400px"
-        maxWidth="50vw"
-        height="100vh"
-        style={{
-          backgroundColor: '#1a1a1a',
-          borderLeft: '1px solid #333333',
-          zIndex: 1000,
-          boxShadow: '-4px 0 8px rgba(0, 0, 0, 0.3)',
-        }}
-      >
-        <Flex p="4" direction="column" height="100vh">
+      <Box className="details-sidebar-backdrop" onClick={onClose} />
+      <Box className="details-sidebar">
+        <Flex p="4" direction="column" height="100%">
           <Flex justify="between" align="center" mb="4">
             <Box />
             <Button
@@ -78,6 +51,7 @@ export const DetailsSidebar = ({
               size="2"
               onClick={onClose}
               style={{ padding: '4px' }}
+              aria-label="Close details"
             >
               <Cross2Icon width="16" height="16" />
             </Button>

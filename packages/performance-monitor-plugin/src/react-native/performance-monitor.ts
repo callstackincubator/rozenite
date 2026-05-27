@@ -165,6 +165,9 @@ export const getPerformanceMonitor = (
         buffered: true,
       },
     );
+    // Resource timings cannot currently be cleared by react-native-performance.
+    // Observing without buffered replay prevents old HTTP entries from
+    // reappearing after a stop/start cycle.
     addObserver(
       (list) => {
         appendResources(
@@ -176,7 +179,6 @@ export const getPerformanceMonitor = (
       },
       {
         type: 'resource',
-        buffered: true,
       },
     );
   };
