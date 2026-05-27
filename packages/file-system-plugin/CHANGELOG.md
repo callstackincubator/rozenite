@@ -1,5 +1,18 @@
 # @rozenite/file-system-plugin
 
+## 1.11.0
+
+### Minor Changes
+
+- [#276](https://github.com/callstackincubator/rozenite/pull/276) [`bf7a59a`](https://github.com/callstackincubator/rozenite/commit/bf7a59a2395bc3aaec6a47e8cd3260f26df74fb2) Thanks [@JKobrynski](https://github.com/JKobrynski)! - Add opt-in single-file import and export support to the File System plugin, including separately gated Rozenite for Agents tools for raw base64 file transfer.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.11.0
+  - @rozenite/agent-shared@1.11.0
+  - @rozenite/plugin-bridge@1.11.0
+
 ## 1.10.0
 
 ### Patch Changes

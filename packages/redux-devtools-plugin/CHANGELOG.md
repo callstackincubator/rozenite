@@ -1,5 +1,17 @@
 # @rozenite/redux-devtools-plugin
 
+## 1.11.0
+
+### Patch Changes
+
+- [#290](https://github.com/callstackincubator/rozenite/pull/290) [`eb0ceae`](https://github.com/callstackincubator/rozenite/commit/eb0ceae4d8f4ee03f58884afa6083ddb5c0d0aa7) Thanks [@V3RON](https://github.com/V3RON)! - Stop sending a redundant state snapshot when the Redux DevTools panel connects. Document `maxAge` memory usage and out-of-memory risks on React Native.
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.11.0
+  - @rozenite/agent-shared@1.11.0
+  - @rozenite/plugin-bridge@1.11.0
+  - @rozenite/tools@1.11.0
+
 ## 1.10.0
 
 ### Patch Changes

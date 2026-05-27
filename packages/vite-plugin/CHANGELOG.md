@@ -1,5 +1,11 @@
 # @rozenite/vite-plugin
 
+## 1.11.0
+
+### Patch Changes
+
+- [#286](https://github.com/callstackincubator/rozenite/pull/286) [`30a35a4`](https://github.com/callstackincubator/rozenite/commit/30a35a422d6a786b1181afb8b2ca17b627e07e80) Thanks [@V3RON](https://github.com/V3RON)! - Improve the Rozenite plugin dev app layout on smaller viewports so panels, navigation, and message details remain usable without horizontal overflow.
+
 ## 1.10.0
 
 ## 1.9.0

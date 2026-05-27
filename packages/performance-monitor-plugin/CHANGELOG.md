@@ -1,5 +1,20 @@
 # @rozenite/performance-monitor-plugin
 
+## 1.11.0
+
+### Minor Changes
+
+- [#283](https://github.com/callstackincubator/rozenite/pull/283) [`dc7cdce`](https://github.com/callstackincubator/rozenite/commit/dc7cdce3659df004b591ccb3e74c1f3c638702b9) Thanks [@burczu](https://github.com/burczu)! - Add first-class startup insights to the Performance Monitor plugin.
+
+  A new Startup tab (first in the tab order) shows Total startup time and the three key launch phases — Native Launch, JS Bundle, and Initial Mount — with proportional bars so you can see at a glance where startup time is spent. Phases that have not yet completed show as "In progress…"; phases absent from the event stream show as "—". The startup data is derived automatically from React Native's buffered native marks, so no extra instrumentation is required.
+
+- [#285](https://github.com/callstackincubator/rozenite/pull/285) [`d2faeeb`](https://github.com/callstackincubator/rozenite/commit/d2faeeb13c0d2d3171bc21542d1b23810d9d51c1) Thanks [@draggie](https://github.com/draggie)! - Add a waterfall timeline view to Performance Monitor so you can inspect marks, measures, metrics, and resources in one chronological view.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/plugin-bridge@1.11.0
+
 ## 1.10.0
 
 ### Minor Changes

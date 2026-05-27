@@ -1,5 +1,22 @@
 # @rozenite/network-activity-plugin
 
+## 1.11.0
+
+### Minor Changes
+
+- [#270](https://github.com/callstackincubator/rozenite/pull/270) [`5dea81e`](https://github.com/callstackincubator/rozenite/commit/5dea81e4139aae51ef01b4db0aacdc66c8fb039c) Thanks [@draggie](https://github.com/draggie)! - Add a timeline view to Network Activity that shows requests as a waterfall. Drag a range on the timeline to filter the request list.
+
+- [#272](https://github.com/callstackincubator/rozenite/pull/272) [`32d4ea3`](https://github.com/callstackincubator/rozenite/commit/32d4ea34b12b2c1adcc7d24698086bd492825935) Thanks [@draggie](https://github.com/draggie)! - Add a toolbar export button that downloads the current network activity session as a JSON file.
+
+  The export includes HTTP requests, WebSocket connections, SSE streams, and realtime messages captured during the session, along with a summary (entry counts by type) and metadata (`schemaVersion`, `exportedAt`).
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.11.0
+  - @rozenite/agent-shared@1.11.0
+  - @rozenite/plugin-bridge@1.11.0
+
 ## 1.10.0
 
 ### Minor Changes

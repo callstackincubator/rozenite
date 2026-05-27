@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/rhf-plugin",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "React Hook Form Inspector for Rozenite.",
   "type": "module",
   "main": "./dist/react-native/index.cjs",

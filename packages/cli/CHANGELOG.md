@@ -1,5 +1,14 @@
 # rozenite
 
+## 1.11.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-sdk@1.11.0
+  - @rozenite/agent-shared@1.11.0
+  - @rozenite/tools@1.11.0
+
 ## 1.10.0
 
 ### Patch Changes
