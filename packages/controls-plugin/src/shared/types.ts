@@ -98,6 +98,14 @@ export type RozeniteControlsPluginOptions = {
   sections: ControlsSection[];
 };
 
+export type RozeniteControlsPluginOptionsUpdater = (
+  previousOptions: RozeniteControlsPluginOptions,
+) => RozeniteControlsPluginOptions;
+
+export type RozeniteControlsPluginOptionsInput =
+  | RozeniteControlsPluginOptions
+  | RozeniteControlsPluginOptionsUpdater;
+
 export const createSection = <TSection extends ControlsSection>(
-  section: TSection
+  section: TSection,
 ): TSection => section;
