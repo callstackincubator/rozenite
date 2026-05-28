@@ -74,5 +74,13 @@
   {
     "npmUrl": "https://www.npmjs.com/package/rozenite-growthbook-plugin",
     "githubUrl": "https://github.com/valeriobelli/rozenite-growthbook-plugin"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/rozenite-zustand-devtools",
+    "githubUrl": "https://github.com/IronTony/rozenite-zustand-devtools"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/rozenite-navigation-inspector",
+    "githubUrl": "https://github.com/IronTony/rozenite-navigation-inspector"
   }
 ]
