@@ -73,10 +73,19 @@ describe('controlsRegistry', () => {
     const second = Symbol('second');
 
     registry.subscribe(listener);
+    expect(registry.getSnapshot()).toBe(0);
+
     registry.set(first, { sections: [section('app')] });
+    expect(registry.getSnapshot()).toBe(1);
+
     registry.set(second, { sections: [section('locale')] });
+    expect(registry.getSnapshot()).toBe(1);
+
     registry.delete(second);
+    expect(registry.getSnapshot()).toBe(2);
+
     registry.delete(first);
+    expect(registry.getSnapshot()).toBe(3);
 
     expect(listener).toHaveBeenCalledTimes(3);
   });

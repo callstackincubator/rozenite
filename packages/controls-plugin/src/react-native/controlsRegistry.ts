@@ -31,10 +31,12 @@ const resolveOptionsInput = (
 export const createControlsRegistry = () => {
   const registrations = new Map<symbol, RozeniteControlsPluginOptionsInput>();
   const listeners = new Set<ControlsRegistryListener>();
+  let snapshot = 0;
 
   const getOwnerId = () => registrations.keys().next().value;
 
   const notify = () => {
+    snapshot += 1;
     listeners.forEach((listener) => listener());
   };
 
@@ -82,6 +84,9 @@ export const createControlsRegistry = () => {
       const ownerEntry = getRegistrationEntries(override)[0];
 
       return ownerEntry?.[0] === id;
+    },
+    getSnapshot() {
+      return snapshot;
     },
     subscribe(listener: ControlsRegistryListener) {
       listeners.add(listener);

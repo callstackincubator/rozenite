@@ -1,5 +1,5 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import type {
   ControlsEventMap,
   ControlsInvokeActionEvent,
@@ -22,18 +22,12 @@ export const useRozeniteControlsPlugin = (
     pluginId: '@rozenite/controls-plugin',
   });
   const registrationIdRef = useRef<symbol>(Symbol('rozenite-controls'));
-  const [ownerVersion, setOwnerVersion] = useState(0);
   const registrationId = registrationIdRef.current;
-
-  useEffect(() => {
-    const unsubscribe = controlsRegistry.subscribe(() => {
-      setOwnerVersion((version) => version + 1);
-    });
-
-    setOwnerVersion((version) => version + 1);
-
-    return unsubscribe;
-  }, []);
+  const registrySnapshot = useSyncExternalStore(
+    controlsRegistry.subscribe,
+    controlsRegistry.getSnapshot,
+    controlsRegistry.getSnapshot,
+  );
 
   useEffect(() => {
     return () => {
@@ -51,7 +45,7 @@ export const useRozeniteControlsPlugin = (
         id: registrationId,
         input: optionsInput,
       }),
-    [optionsInput, ownerVersion, registrationId],
+    [optionsInput, registrySnapshot, registrationId],
   );
 
   useControlsAgentTools(
@@ -68,7 +62,7 @@ export const useRozeniteControlsPlugin = (
       type: 'snapshot',
       sections: serializeSections(controlsRegistry.getOptions().sections),
     });
-  }, [client, optionsInput, ownerVersion]);
+  }, [client, optionsInput, registrySnapshot]);
 
   useEffect(() => {
     if (!client || !isRegistryOwner) {
