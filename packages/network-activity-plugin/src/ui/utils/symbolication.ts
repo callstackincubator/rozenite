@@ -37,9 +37,12 @@ const getGeneratedFrameLocation = (frame: InitiatorStackFrame) => ({
 const isGeneratedBundleUrl = (url: string) =>
   /[^/]+\.bundle(?:[/?#]|$)/.test(url);
 
+const isMetroSymbolicatableUrl = (url?: string) =>
+  url?.startsWith('http') ?? false;
+
 const canSymbolicateStack = (stack?: InitiatorStackFrame[]) =>
   stack?.some((frame) =>
-    getGeneratedFrameLocation(frame).url?.startsWith('http'),
+    isMetroSymbolicatableUrl(getGeneratedFrameLocation(frame).url),
   ) ?? false;
 
 const toReactNativeStackFrame = (
@@ -47,7 +50,7 @@ const toReactNativeStackFrame = (
 ): ReactNativeStackFrame | null => {
   const generatedLocation = getGeneratedFrameLocation(frame);
 
-  if (!generatedLocation.url) {
+  if (!isMetroSymbolicatableUrl(generatedLocation.url)) {
     return null;
   }
 
@@ -195,21 +198,45 @@ export const symbolicateInitiator = async (
     return null;
   }
 
-  const generatedStackFrames =
-    initiator.stack
-      ?.map(toReactNativeStackFrame)
-      .filter((frame): frame is ReactNativeStackFrame => frame !== null) ?? [];
+  const originalStack = initiator.stack ?? [];
+  const generatedStackFrames = originalStack.flatMap(
+    (originalFrame, originalIndex) => {
+      const frame = toReactNativeStackFrame(originalFrame);
+      return frame ? [{ frame, originalIndex }] : [];
+    },
+  );
 
   if (generatedStackFrames.length === 0) {
     return null;
   }
 
   try {
-    const symbolicatedStackTrace =
-      await symbolicateStackTrace(generatedStackFrames);
+    const symbolicatedStackTrace = await symbolicateStackTrace(
+      generatedStackFrames.map((entry) => entry.frame),
+    );
 
-    const symbolicatedStack = symbolicatedStackTrace.stack.map((frame, index) =>
-      fromSymbolicatedStackFrame(frame, initiator.stack?.[index]),
+    const symbolicatedFramesByOriginalIndex = new Map<
+      number,
+      InitiatorStackFrame
+    >();
+
+    symbolicatedStackTrace.stack.forEach((frame, index) => {
+      const generatedFrame = generatedStackFrames[index];
+      if (!generatedFrame) {
+        return;
+      }
+
+      symbolicatedFramesByOriginalIndex.set(
+        generatedFrame.originalIndex,
+        fromSymbolicatedStackFrame(
+          frame,
+          originalStack[generatedFrame.originalIndex],
+        ),
+      );
+    });
+
+    const symbolicatedStack = originalStack.map(
+      (frame, index) => symbolicatedFramesByOriginalIndex.get(index) ?? frame,
     );
     const sourceFrame = getPreferredSourceFrame(
       symbolicatedStack,
