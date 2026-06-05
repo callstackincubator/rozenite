@@ -57,6 +57,11 @@ type CDPEvaluateResponse = {
 
 export type AgentSession = ReturnType<typeof createAgentSession>;
 
+const markPromiseAsHandled = <T>(promise: Promise<T>): Promise<T> => {
+  void promise.catch(() => undefined);
+  return promise;
+};
+
 const getToolCount = (
   target: MetroTarget,
   handler: AgentMessageHandler,
@@ -246,19 +251,21 @@ export const createAgentSession = (options: {
     }
   };
 
-  const sendCommand = async (
+  const sendCommand = (
     method: string,
     params?: Record<string, unknown>,
   ): Promise<Record<string, unknown>> => {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      throw new Error('CDP websocket is not connected');
+      return markPromiseAsHandled(
+        Promise.reject(new Error('CDP websocket is not connected')),
+      );
     }
 
     const commandId = nextCommandId++;
     const payload = JSON.stringify({ id: commandId, method, params });
     touch();
 
-    return await new Promise((resolve, reject) => {
+    const promise = new Promise<Record<string, unknown>>((resolve, reject) => {
       pendingCommands.set(commandId, { resolve, reject });
       ws!.send(payload, (error) => {
         if (!error) {
@@ -269,6 +276,11 @@ export const createAgentSession = (options: {
         reject(error);
       });
     });
+
+    // The pending command map owns the promise lifecycle. Attach a rejection
+    // handler immediately so detached callers cannot surface socket teardown as
+    // a process-level unhandled rejection.
+    return markPromiseAsHandled(promise);
   };
 
   const localServices: LocalAgentToolService[] = [
@@ -313,15 +325,17 @@ export const createAgentSession = (options: {
     }, BOOTSTRAP_DELAY_MS);
   };
 
-  const sendDomainMessage = async (
+  const sendDomainMessage = (
     domain: string,
     message: unknown,
   ): Promise<void> => {
     const serializedMessage = JSON.stringify(message);
     const escapedMessage = JSON.stringify(serializedMessage);
-    await sendCommand('Runtime.evaluate', {
-      expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify(domain)}, ${escapedMessage})`,
-    });
+    return markPromiseAsHandled(
+      sendCommand('Runtime.evaluate', {
+        expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify(domain)}, ${escapedMessage})`,
+      }).then(() => undefined),
+    );
   };
 
   const sendAgentSessionReady = async (): Promise<void> => {

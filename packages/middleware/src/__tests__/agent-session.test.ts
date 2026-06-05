@@ -36,6 +36,7 @@ const mocks = vi.hoisted(() => {
   }));
   const wsInstances: MockWebSocket[] = [];
   let bindingName = 'rozenite-binding';
+  let stalledRuntimeExpression: string | null = null;
 
   class MockWebSocket {
     static readonly CONNECTING = 0;
@@ -92,6 +93,16 @@ const mocks = vi.hoisted(() => {
         params: payload.params,
       });
       callback?.();
+
+      if (
+        payload.method === 'Runtime.evaluate' &&
+        stalledRuntimeExpression &&
+        String(payload.params?.expression ?? '').includes(
+          stalledRuntimeExpression,
+        )
+      ) {
+        return;
+      }
 
       queueMicrotask(() => {
         this.emit(
@@ -162,6 +173,9 @@ const mocks = vi.hoisted(() => {
     extractConsoleMessage: vi.fn(() => null),
     parseRozeniteBindingPayload: vi.fn(() => null),
     wsInstances,
+    stallRuntimeEvaluationContaining: (expression: string) => {
+      stalledRuntimeExpression = expression;
+    },
     reset: () => {
       commandLog.length = 0;
       loggerInfo.mockReset();
@@ -181,6 +195,7 @@ const mocks = vi.hoisted(() => {
         service.captureReactDevToolsMessage?.mockReset();
       });
       bindingName = 'rozenite-binding';
+      stalledRuntimeExpression = null;
       wsInstances.length = 0;
     },
   };
@@ -522,6 +537,40 @@ describe('agent session', () => {
     expect(mocks.loggerInfo).toHaveBeenCalledWith(
       'Rozenite for Agents disconnected from device iPhone 16 (device-1).',
     );
+  });
+
+  it('handles pending CDP command rejection for detached senders when the websocket closes', async () => {
+    const unhandledRejections: unknown[] = [];
+    const handleUnhandledRejection = (reason: unknown) => {
+      unhandledRejections.push(reason);
+    };
+    process.on('unhandledRejection', handleUnhandledRejection);
+
+    try {
+      const { socket } = await startSession();
+      mocks.stallRuntimeEvaluationContaining('detached-cdp-message');
+
+      const sender = mocks.handler.connectDevice.mock.calls[0]?.[2] as
+        | { sendMessage: (message: unknown) => void }
+        | undefined;
+      expect(sender).toBeDefined();
+
+      sender?.sendMessage({
+        marker: 'detached-cdp-message',
+      });
+      await flushMicrotasks();
+
+      socket.close();
+      await flushMicrotasks();
+      vi.useRealTimers();
+      await new Promise((resolve) => {
+        setImmediate(resolve);
+      });
+
+      expect(unhandledRejections).toEqual([]);
+    } finally {
+      process.off('unhandledRejection', handleUnhandledRejection);
+    }
   });
 
   it('rejects startup if the websocket closes before bootstrap completes', async () => {
