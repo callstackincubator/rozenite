@@ -44,11 +44,13 @@ const mocks = vi.hoisted(() => {
     static readonly CLOSED = 3;
 
     readonly url: string;
+    readonly options: unknown;
     readyState = MockWebSocket.CONNECTING;
     private listeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
-    constructor(url: string) {
+    constructor(url: string, options?: unknown) {
       this.url = url;
+      this.options = options;
       wsInstances.push(this);
     }
 
@@ -321,6 +323,17 @@ describe('agent session', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('sets a localhost origin header for the debugger websocket', () => {
+    const { socket } = createStartedSession();
+
+    expect(socket.url).toBe(TARGET.webSocketDebuggerUrl);
+    expect(socket.options).toEqual({
+      headers: {
+        Origin: 'http://localhost:8081',
+      },
+    });
   });
 
   it('does not resolve start before the bootstrap delay elapses', async () => {
