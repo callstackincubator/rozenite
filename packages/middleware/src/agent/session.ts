@@ -30,6 +30,10 @@ const DISPATCHER_INIT_RETRY_MS = 250;
 const PLUGIN_READINESS_QUIET_WINDOW_MS = 50;
 const PLUGIN_READINESS_MAX_WAIT_MS = 250;
 
+const getDebuggerWebSocketOrigin = (port: number): string => {
+  return `http://localhost:${port}`;
+};
+
 type PendingCommand = {
   resolve: (value: Record<string, unknown>) => void;
   reject: (error: Error) => void;
@@ -618,7 +622,11 @@ export const createAgentSession = (options: {
     status = 'connecting';
 
     await new Promise<void>((resolve, reject) => {
-      const socket = new WebSocket(options.target.webSocketDebuggerUrl);
+      const socket = new WebSocket(options.target.webSocketDebuggerUrl, {
+        headers: {
+          Origin: getDebuggerWebSocketOrigin(options.port),
+        },
+      });
       let settled = false;
       ws = socket;
 
