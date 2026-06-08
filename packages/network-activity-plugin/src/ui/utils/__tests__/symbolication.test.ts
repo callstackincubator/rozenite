@@ -126,6 +126,79 @@ describe('symbolication', () => {
     });
   });
 
+  it('keeps internal Hermes frames out of the Metro symbolication request', async () => {
+    const initiator: Initiator = {
+      type: 'script',
+      generatedUrl: 'address at InternalBytecode.js',
+      generatedLineNumber: 1,
+      generatedColumnNumber: 12345,
+      symbolicationStatus: 'pending',
+      stack: [
+        {
+          functionName: 'anonymous',
+          generatedUrl: 'address at InternalBytecode.js',
+          generatedLineNumber: 1,
+          generatedColumnNumber: 12345,
+        },
+        {
+          functionName: 'loadUsers',
+          generatedUrl: 'http://localhost:8081/index.bundle',
+          generatedLineNumber: 1,
+          generatedColumnNumber: 200,
+        },
+      ],
+    };
+    const symbolicateStackTrace = vi.fn().mockResolvedValue({
+      stack: [
+        {
+          methodName: 'loadUsers',
+          file: 'apps/playground/src/app/api.ts',
+          lineNumber: 30,
+          column: 6,
+        },
+      ],
+    });
+
+    const symbolicatedInitiator = await symbolicateInitiator(
+      initiator,
+      symbolicateStackTrace,
+    );
+
+    expect(symbolicateStackTrace).toHaveBeenCalledWith([
+      {
+        methodName: 'loadUsers',
+        file: 'http://localhost:8081/index.bundle',
+        lineNumber: 1,
+        column: 200,
+      },
+    ]);
+    expect(symbolicatedInitiator).toMatchObject({
+      type: 'script',
+      functionName: 'loadUsers',
+      url: 'apps/playground/src/app/api.ts',
+      lineNumber: 30,
+      columnNumber: 6,
+      symbolicationStatus: 'complete',
+      stack: [
+        {
+          functionName: 'anonymous',
+          generatedUrl: 'address at InternalBytecode.js',
+          generatedLineNumber: 1,
+          generatedColumnNumber: 12345,
+        },
+        {
+          functionName: 'loadUsers',
+          url: 'apps/playground/src/app/api.ts',
+          lineNumber: 30,
+          columnNumber: 6,
+          generatedUrl: 'http://localhost:8081/index.bundle',
+          generatedLineNumber: 1,
+          generatedColumnNumber: 200,
+        },
+      ],
+    });
+  });
+
   it('reports symbolication failures on the initiator', async () => {
     const initiator: Initiator = {
       type: 'script',
