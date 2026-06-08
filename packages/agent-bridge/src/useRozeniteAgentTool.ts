@@ -126,7 +126,7 @@ function useRozeniteDomainAgentTool(
     const toolCallSubscription = client.onMessage(
       'tool-call',
       async (payload) => {
-        if (payload.toolName !== toolName) {
+        if (!enabled || payload.toolName !== toolName) {
           return;
         }
 

@@ -8,8 +8,10 @@ export {
   type ControlsSection,
   type ControlsTextItem,
   type ControlsToggleItem,
+  type RozeniteControlsPluginOptionsInput,
   type ControlsValidationResult,
   type RozeniteControlsPluginOptions,
+  type RozeniteControlsPluginOptionsUpdater,
 } from './src/shared/types';
 
 export let useRozeniteControlsPlugin: typeof import('./src/react-native/useRozeniteControlsPlugin').useRozeniteControlsPlugin;

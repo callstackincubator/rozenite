@@ -210,4 +210,20 @@ describe('useRozeniteAgentTool', () => {
 
     await unmountTool(root, container);
   });
+
+  it('does not handle tool calls when disabled', async () => {
+    const { root, container } = await renderTool(false);
+
+    await act(async () => {
+      mocks.emit('tool-call', {
+        toolName: 'app.test-tool',
+        callId: 'call-1',
+        arguments: { value: 1 },
+      });
+    });
+
+    expect(mocks.client.send).not.toHaveBeenCalled();
+
+    await unmountTool(root, container);
+  });
 });
