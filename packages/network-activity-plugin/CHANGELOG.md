@@ -1,5 +1,16 @@
 # @rozenite/network-activity-plugin
 
+## 1.12.0
+
+### Patch Changes
+
+- [#298](https://github.com/callstackincubator/rozenite/pull/298) [`a39eabd`](https://github.com/callstackincubator/rozenite/commit/a39eabd827aec9d7249086f7b318f64230f556b2) Thanks [@V3RON](https://github.com/V3RON)! - Filter Hermes internal bytecode frames out of Network Activity initiator symbolication requests so Metro no longer tries to read pseudo-files like `address at InternalBytecode.js`.
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.12.0
+  - @rozenite/agent-shared@1.12.0
+  - @rozenite/plugin-bridge@1.12.0
+
 ## 1.11.0
 
 ### Minor Changes

@@ -1,5 +1,7 @@
 # @rozenite/vite-plugin
 
+## 1.12.0
+
 ## 1.11.0
 
 ### Patch Changes

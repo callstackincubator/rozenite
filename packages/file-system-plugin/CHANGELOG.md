@@ -1,5 +1,16 @@
 # @rozenite/file-system-plugin
 
+## 1.12.0
+
+### Patch Changes
+
+- [#300](https://github.com/callstackincubator/rozenite/pull/300) [`78c381f`](https://github.com/callstackincubator/rozenite/commit/78c381f475dec7a7c84a1dfff2596d6d9010c358) Thanks [@draggie](https://github.com/draggie)! - Fix modern Expo FileSystem bundle directory inspection on Android by listing `asset://` entries without statting packaged asset files.
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.12.0
+  - @rozenite/agent-shared@1.12.0
+  - @rozenite/plugin-bridge@1.12.0
+
 ## 1.11.0
 
 ### Minor Changes

@@ -1,5 +1,18 @@
 # @rozenite/controls-plugin
 
+## 1.12.0
+
+### Minor Changes
+
+- [#292](https://github.com/callstackincubator/rozenite/pull/292) [`c595bad`](https://github.com/callstackincubator/rozenite/commit/c595bad6b9b05d0212cb18aaf6afcd5134e89288) Thanks [@draggie](https://github.com/draggie)! - Allow multiple `useRozeniteControlsPlugin` hook instances to contribute controls sections to one combined panel.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.12.0
+  - @rozenite/agent-shared@1.12.0
+  - @rozenite/plugin-bridge@1.12.0
+
 ## 1.11.0
 
 ### Patch Changes

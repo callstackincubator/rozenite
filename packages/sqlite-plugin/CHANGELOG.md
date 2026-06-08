@@ -1,5 +1,13 @@
 # @rozenite/sqlite-plugin
 
+## 1.12.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.12.0
+  - @rozenite/plugin-bridge@1.12.0
+
 ## 1.11.0
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @rozenite/middleware
 
+## 1.12.0
+
+### Patch Changes
+
+- [#299](https://github.com/callstackincubator/rozenite/pull/299) [`f09db8d`](https://github.com/callstackincubator/rozenite/commit/f09db8d79f6a6b2b1beb0de1d7f31c487cbcfe32) Thanks [@V3RON](https://github.com/V3RON)! - Avoid unhandled rejections when pending CDP commands are left behind during websocket teardown.
+
+- [#297](https://github.com/callstackincubator/rozenite/pull/297) [`68db2fb`](https://github.com/callstackincubator/rozenite/commit/68db2fb834646064b03ffc1a24457d795abbac3d) Thanks [@V3RON](https://github.com/V3RON)! - Set the debugger WebSocket origin to `http://localhost:<port>` for better compatibility with local dev servers.
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@1.12.0
+  - @rozenite/runtime@1.12.0
+  - @rozenite/tools@1.12.0
+
 ## 1.11.0
 
 ### Patch Changes
