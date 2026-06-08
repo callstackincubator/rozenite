@@ -284,42 +284,138 @@ function createExpoModernFileSystemAdapter(
 ): FileSystemAdapter {
   const FileSystem = fileSystem?.default ?? fileSystem;
 
-  const buildEntry = async (rawPath: string): Promise<FsEntry> => {
-    const pathInfo = await FileSystem.Paths.info(rawPath);
+  const isAssetUri = (uri: string): boolean => uri.startsWith('asset://');
 
-    if (!pathInfo?.exists) {
-      throw new Error(`Path "${rawPath}" does not exist.`);
-    }
-
-    const isDirectory = Boolean(pathInfo.isDirectory);
-    const target = isDirectory
-      ? new FileSystem.Directory(rawPath)
-      : new FileSystem.File(rawPath);
-    const info = await target.info();
+  const buildEntryFromMetadata = (
+    target: any,
+    isDirectory: boolean,
+    info?: any,
+    options: { includeTargetStats?: boolean; path?: string } = {},
+  ): FsEntry => {
+    const path = options.path ?? target.uri;
     const normalizedPath = isDirectory
-      ? normalizeDirPath(target.uri)
-      : target.uri;
+      ? normalizeDirPath(path)
+      : path;
+    const includeTargetStats = options.includeTargetStats ?? true;
 
     return {
-      name: target.name ?? basename(rawPath),
+      name: target.name ?? basename(path),
       path: normalizedPath,
       isDirectory,
       size:
-        typeof info?.size === 'number'
-          ? info.size
-          : typeof target?.size === 'number'
-            ? target.size
-            : null,
+        isDirectory
+          ? null
+          : typeof info?.size === 'number'
+            ? info.size
+            : includeTargetStats && typeof target?.size === 'number'
+              ? target.size
+              : null,
       modifiedAtMs:
         typeof info?.modificationTime === 'number'
           ? info.modificationTime
-          : typeof target?.modificationTime === 'number'
+          : includeTargetStats && typeof target?.modificationTime === 'number'
             ? target.modificationTime
             : null,
       mimeTypeHint: isDirectory
         ? null
-        : target.type || mimeTypeFromName(normalizedPath),
+        : (includeTargetStats ? target.type : null) ||
+          mimeTypeFromName(normalizedPath),
     };
+  };
+
+  const buildEntryFromTarget = async (
+    target: any,
+    isDirectory: boolean,
+  ): Promise<FsEntry> => {
+    const info = await target.info();
+
+    if (!info?.exists) {
+      throw new Error(`Path "${target.uri}" does not exist.`);
+    }
+
+    return buildEntryFromMetadata(target, isDirectory, info);
+  };
+
+  const isDirectoryLike = (target: any): boolean =>
+    typeof target?.list === 'function' ||
+    typeof target?.createFile === 'function' ||
+    typeof target?.createDirectory === 'function';
+
+  const resolveListItemPath = (
+    parentDir: string,
+    target: any,
+    isDirectory: boolean,
+  ): string => {
+    if (!isAssetUri(parentDir)) return target.uri;
+    if (isAssetUri(target.uri)) return target.uri;
+
+    const name = target.name ?? basename(target.uri);
+    const path = joinPath(parentDir, name);
+    return isDirectory ? normalizeDirPath(path) : path;
+  };
+
+  const isReadPermissionError = (error: unknown): boolean => {
+    const message = safeError(error);
+    return (
+      message.includes('Missing') &&
+      message.includes('READ') &&
+      message.includes('permission')
+    );
+  };
+
+  const buildEntryFromListItem = (
+    target: any,
+    parentDir: string,
+  ): Promise<FsEntry> => {
+    const isDirectory = isDirectoryLike(target);
+    const path = resolveListItemPath(parentDir, target, isDirectory);
+    const parentIsAssetUri = isAssetUri(parentDir);
+
+    if (parentIsAssetUri || isAssetUri(target.uri)) {
+      return Promise.resolve(
+        buildEntryFromMetadata(target, isDirectory, undefined, {
+          includeTargetStats: false,
+          path,
+        }),
+      );
+    }
+
+    return buildEntryFromTarget(target, isDirectory).catch((error) => {
+      if (isReadPermissionError(error)) {
+        return buildEntryFromMetadata(target, isDirectory, undefined, {
+          includeTargetStats: false,
+          path,
+        });
+      }
+
+      throw error;
+    });
+  };
+
+  const buildEntry = async (rawPath: string): Promise<FsEntry> => {
+    try {
+      return await buildEntryFromTarget(
+        new FileSystem.Directory(rawPath),
+        true,
+      );
+    } catch (directoryError) {
+      try {
+        return await buildEntryFromTarget(new FileSystem.File(rawPath), false);
+      } catch {
+        if (isAssetUri(rawPath)) {
+          return buildEntryFromMetadata(
+            new FileSystem.File(rawPath),
+            false,
+            undefined,
+            {
+              includeTargetStats: false,
+            },
+          );
+        }
+
+        throw directoryError;
+      }
+    }
   };
 
   const getRootUri = (candidate: any) => {
@@ -367,7 +463,7 @@ function createExpoModernFileSystemAdapter(
       const MAX_ENTRIES = 400;
       const limited = rawItems.slice(0, MAX_ENTRIES);
       const entries = await Promise.all(
-        limited.map(async (item: any) => buildEntry(item.uri)),
+        limited.map(async (item: any) => buildEntryFromListItem(item, dir)),
       );
 
       if (rawItems.length > MAX_ENTRIES) {
@@ -443,8 +539,12 @@ function createExpoModernFileSystemAdapter(
       return buildEntry(file.uri ?? path);
     },
     async pathExists(path) {
-      const pathInfo = await FileSystem.Paths.info(path);
-      return Boolean(pathInfo?.exists);
+      try {
+        await buildEntry(path);
+        return true;
+      } catch {
+        return false;
+      }
     },
   };
 }
