@@ -65,7 +65,10 @@ const createExpoFileSystem = (): ExpoFileSystemLike => ({
         return options?.encoding === 'base64' ? 'aGVsbG8=' : 'hello';
       }
 
-      if (path === 'file:///documents/binary.bin' && options?.encoding === 'utf8') {
+      if (
+        path === 'file:///documents/binary.bin' &&
+        options?.encoding === 'utf8'
+      ) {
         throw new Error('Invalid UTF-8');
       }
 
@@ -75,8 +78,16 @@ const createExpoFileSystem = (): ExpoFileSystemLike => ({
   writeAsStringAsync: vi.fn(async () => {}),
 });
 
-const createExpoModernFileSystem = (): ExpoFileSystemLike => {
+const createExpoModernFileSystem = (
+  options: { bundleUri?: string } = {},
+): ExpoFileSystemLike => {
+  const bundleUri = options.bundleUri ?? 'file:///bundle';
+
   const pathInfo = vi.fn(async (path: string) => {
+    if (!path.startsWith('file://')) {
+      throw new Error('URI scheme is not "file"');
+    }
+
     if (path === 'file:///documents' || path === 'file:///documents/') {
       return { exists: true, isDirectory: true };
     }
@@ -105,15 +116,29 @@ const createExpoModernFileSystem = (): ExpoFileSystemLike => {
       this.name = trimmed.slice(trimmed.lastIndexOf('/') + 1);
     }
     async info() {
+      const uri = this.uri.endsWith('/') ? this.uri.slice(0, -1) : this.uri;
+      if (/\.(bin|json|png|txt)$/.test(uri)) {
+        throw new Error('Invalid directory type');
+      }
+
       return {
         exists: true,
         modificationTime: 100,
       };
     }
     async list() {
-      return [
-        new MockFile('file:///documents/hello.txt'),
-      ];
+      if (this.uri.startsWith('asset://')) {
+        return [
+          new MockDirectory('file:///images'),
+          new MockFile('file:///app.json'),
+        ];
+      }
+
+      if (this.uri === 'file:///restricted/') {
+        return [new MockFile('file:///restricted/app.json')];
+      }
+
+      return [new MockFile('file:///documents/hello.txt')];
     }
   }
 
@@ -131,6 +156,16 @@ const createExpoModernFileSystem = (): ExpoFileSystemLike => {
       this.modificationTime = 101000;
     }
     async info() {
+      if (
+        this.uri.startsWith('asset://') ||
+        this.uri === 'file:///app.json' ||
+        this.uri.startsWith('file:///restricted/')
+      ) {
+        throw new Error(
+          "Call to function 'FileSystemFile.info' has been rejected.\n→ Caused by: Missing 'READ' permission for accessing the file.",
+        );
+      }
+
       return {
         exists: true,
         size: this.size,
@@ -155,7 +190,7 @@ const createExpoModernFileSystem = (): ExpoFileSystemLike => {
     Paths: {
       document: { uri: 'file:///documents' },
       cache: { uri: 'file:///cache' },
-      bundle: { uri: 'file:///bundle' },
+      bundle: { uri: bundleUri },
       info: pathInfo,
     },
     // Modern Expo still exposes deprecated functions that throw at runtime.
@@ -212,14 +247,16 @@ const createCustomAdapter = (): FileSystemAdapter => ({
   provider: 'rnfs',
   getRoots: vi.fn(async () => []),
   listDir: vi.fn(async () => []),
-  statPath: vi.fn(async (path: string): Promise<FsEntry> => ({
-    name: path,
-    path,
-    isDirectory: false,
-    size: 0,
-    modifiedAtMs: null,
-    mimeTypeHint: null,
-  })),
+  statPath: vi.fn(
+    async (path: string): Promise<FsEntry> => ({
+      name: path,
+      path,
+      isDirectory: false,
+      size: 0,
+      modifiedAtMs: null,
+      mimeTypeHint: null,
+    }),
+  ),
   readImageBase64: vi.fn(async () => ({
     mime: 'image/png',
     base64: 'ZmFrZQ==',
@@ -412,13 +449,63 @@ describe('createExpoFileSystemAdapter', () => {
       },
     ]);
 
-    await expect(adapter.readTextFile('file:///documents/hello.txt', 10)).resolves.toBe(
-      'hello',
-    );
+    await expect(
+      adapter.readTextFile('file:///documents/hello.txt', 10),
+    ).resolves.toBe('hello');
 
     await expect(
       adapter.readTextFile('file:///documents/binary.bin', 10),
     ).resolves.toContain('[Binary file - 4 bytes]');
+  });
+
+  it('lists modern Expo Android bundle assets without using Paths.info', async () => {
+    const expoFileSystem = createExpoModernFileSystem({
+      bundleUri: 'asset:///',
+    });
+    const adapter = createExpoFileSystemAdapter(expoFileSystem);
+
+    await expect(adapter.getRoots()).resolves.toContainEqual({
+      id: 'expo.bundleDirectory',
+      label: 'Bundle Directory',
+      path: 'asset:///',
+    });
+
+    await expect(adapter.listDir('asset:///')).resolves.toEqual([
+      {
+        name: 'images',
+        path: 'asset:///images/',
+        isDirectory: true,
+        size: null,
+        modifiedAtMs: null,
+        mimeTypeHint: null,
+      },
+      {
+        name: 'app.json',
+        path: 'asset:///app.json',
+        isDirectory: false,
+        size: null,
+        modifiedAtMs: null,
+        mimeTypeHint: null,
+      },
+    ]);
+
+    expect(expoFileSystem.Paths.info).not.toHaveBeenCalled();
+  });
+
+  it('falls back to list item metadata when Expo file info is permission denied', async () => {
+    const expoFileSystem = createExpoModernFileSystem();
+    const adapter = createExpoFileSystemAdapter(expoFileSystem);
+
+    await expect(adapter.listDir('file:///restricted')).resolves.toEqual([
+      {
+        name: 'app.json',
+        path: 'file:///restricted/app.json',
+        isDirectory: false,
+        size: null,
+        modifiedAtMs: null,
+        mimeTypeHint: null,
+      },
+    ]);
   });
 
   it('writes raw files through the modern Expo File API', async () => {
@@ -499,14 +586,14 @@ describe('createRNFSAdapter', () => {
     const rnfs = createRNFS();
     const adapter = createRNFSAdapter(rnfs);
 
-    await expect(adapter.readFileBase64?.('/documents/binary.bin')).resolves.toEqual(
-      {
-        fileName: 'binary.bin',
-        mime: 'application/octet-stream',
-        size: 4,
-        base64: 'AAECAw==',
-      },
-    );
+    await expect(
+      adapter.readFileBase64?.('/documents/binary.bin'),
+    ).resolves.toEqual({
+      fileName: 'binary.bin',
+      mime: 'application/octet-stream',
+      size: 4,
+      base64: 'AAECAw==',
+    });
 
     await expect(
       adapter.writeFileBase64?.('/documents/import.bin', 'AAECAw=='),
