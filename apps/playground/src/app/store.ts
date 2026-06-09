@@ -14,6 +14,7 @@ const createCounterStore = (name: string) =>
         rozeniteDevToolsEnhancer({
           name,
           maxAge: 150,
+          trace: true,
         }),
       ),
   });
