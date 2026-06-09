@@ -27,6 +27,7 @@ import { resolveReduxTrace } from './symbolication/trace';
 
 const getRandomId = () => Math.random().toString(36).slice(2);
 const MAX_QUEUED_COMMANDS = 50;
+const TRACE_SNAPSHOT_DEBOUNCE_MS = 50;
 const STORE_SENTINEL = Symbol.for('rozenite.redux-devtools.store-sentinel');
 
 /**
@@ -135,6 +136,7 @@ const createRuntimeController = (
   const pendingCommands: ReduxDevToolsPanelCommand[] = [];
   const tracesByActionId = new Map<number, ReduxActionTrace>();
   const pendingTraceKeys = new Set<string>();
+  let traceSnapshotTimer: ReturnType<typeof setTimeout> | null = null;
 
   const enqueueCommand = (command: ReduxDevToolsPanelCommand) => {
     if (pendingCommands.length >= MAX_QUEUED_COMMANDS) {
@@ -167,6 +169,36 @@ const createRuntimeController = (
     });
   };
 
+  const scheduleTraceSnapshot = (): void => {
+    if (!monitored || traceSnapshotTimer) {
+      return;
+    }
+
+    traceSnapshotTimer = setTimeout(() => {
+      traceSnapshotTimer = null;
+
+      if (monitored) {
+        sendStateSnapshot();
+      }
+    }, TRACE_SNAPSHOT_DEBOUNCE_MS);
+  };
+
+  const pruneActionTraces = (
+    liftedState: LiftedState<any, AnyAction, unknown>
+  ): void => {
+    const actionIds = new Set(liftedState.stagedActionIds);
+
+    tracesByActionId.forEach((trace, actionId) => {
+      const liftedAction = liftedState.actionsById[
+        actionId
+      ] as ReduxActionWithTrace | undefined;
+
+      if (!actionIds.has(actionId) || liftedAction?.stack !== trace.rawStack) {
+        tracesByActionId.delete(actionId);
+      }
+    });
+  };
+
   const resolveTraceForAction = (
     actionId: number,
     rawStack: string
@@ -194,9 +226,7 @@ const createRuntimeController = (
           }
 
           tracesByActionId.set(actionId, resolvedTrace);
-          if (monitored) {
-            sendStateSnapshot();
-          }
+          scheduleTraceSnapshot();
         })
         .finally(() => {
           pendingTraceKeys.delete(pendingTraceKey);
@@ -225,6 +255,8 @@ const createRuntimeController = (
   const decorateLiftedState = (
     liftedState: LiftedState<any, AnyAction, unknown>
   ): LiftedState<any, AnyAction, unknown> => {
+    pruneActionTraces(liftedState);
+
     let didChange = false;
     const actionsById = Object.fromEntries(
       Object.entries(liftedState.actionsById).map(([actionId, liftedAction]) => {
@@ -275,6 +307,8 @@ const createRuntimeController = (
     if (!liftedState) {
       return;
     }
+
+    pruneActionTraces(liftedState);
 
     const nextActionId = liftedState.nextActionId;
     const liftedAction = liftedState.actionsById[
