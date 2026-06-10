@@ -4,6 +4,7 @@ import type {
   ReactGetChildrenResult,
   ReactGetInspectableResult,
   ReactGetRenderDataResult,
+  ReactGetTreeResult,
   ReactInspectedNodeRecord,
   ReactProfilingCursorPayload,
   ReactProfilingStatusResult,
@@ -14,6 +15,7 @@ import type {
   ReactSearchNodesResult,
   ReactStartProfilingResult,
   ReactStopProfilingResult,
+  ReactTreeNode,
   ReactTreeNodeInput,
   ReactTreeSyncPayload,
 } from './types.js';
@@ -24,6 +26,7 @@ import {
 
 const DEFAULT_SEARCH_LIMIT = 20;
 const MAX_SEARCH_LIMIT = 100;
+const GET_TREE_TOOL_NAME = 'getTree';
 const SEARCH_TOOL_NAME = 'searchNodes';
 const GET_CHILDREN_TOOL_NAME = 'getChildren';
 const GET_PROPS_TOOL_NAME = 'getProps';
@@ -131,6 +134,19 @@ const normalizeLimit = (value: unknown): number => {
   return Math.min(parsed, MAX_SEARCH_LIMIT);
 };
 
+const normalizeDepth = (value: unknown): number | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 0) {
+    throw new Error('"depth" must be a non-negative integer');
+  }
+
+  return parsed;
+};
+
 const normalizeMatch = (value: unknown): 'name' | 'name-or-key' => {
   if (value === 'name-or-key') {
     return 'name-or-key';
@@ -200,6 +216,20 @@ const ensureNodeSummary = (node: ReactNodeRecord): ReactNodeSummary => {
   };
 };
 
+const ensureTreeNode = (
+  node: ReactNodeRecord,
+  options: {
+    depth: number;
+    childIds: number[];
+  },
+): ReactTreeNode => {
+  return {
+    ...ensureNodeSummary(node),
+    childIds: options.childIds,
+    depth: options.depth,
+  };
+};
+
 const getNodeId = (value: unknown): number => {
   if (!Number.isInteger(value)) {
     throw new Error('"nodeId" must be an integer');
@@ -220,6 +250,18 @@ const ensureNodeExists = (
   }
 
   return node;
+};
+
+const getOptionalRootId = (value: unknown): number | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Number.isInteger(value)) {
+    throw new Error('"root" must be an integer node ID');
+  }
+
+  return Number(value);
 };
 
 const createSerializableSnapshot = (
@@ -942,6 +984,106 @@ export const createReactTreeStore = (options?: {
     };
   };
 
+  const getTree = (
+    deviceId: string,
+    rawRequest: unknown,
+  ): ReactGetTreeResult => {
+    const request = getRecord(rawRequest) || {};
+    const state = getOrCreateState(deviceId);
+    const rootId = getOptionalRootId(request.root);
+    const depth = normalizeDepth(request.depth);
+    const limit = normalizeLimit(request.limit);
+
+    const traversalRoots =
+      rootId === undefined
+        ? state.rootIds.filter((id) => state.nodesById.has(id))
+        : [ensureNodeExists(state, rootId).nodeId];
+
+    const filtersHash = hashFilters({
+      rootId,
+      depth,
+    });
+
+    let offset = 0;
+    if (
+      typeof request.cursor === 'string' &&
+      request.cursor.trim().length > 0
+    ) {
+      const decoded = decodeCursor(request.cursor);
+      if (
+        decoded.deviceId !== deviceId ||
+        decoded.tool !== GET_TREE_TOOL_NAME ||
+        decoded.filtersHash !== filtersHash
+      ) {
+        throw new Error(
+          'Cursor does not match this request context. Restart pagination without cursor.',
+        );
+      }
+      offset = decoded.offset;
+    }
+
+    const visited = new Set<number>();
+    const allItems: ReactTreeNode[] = [];
+
+    const walk = (nodeId: number, currentDepth: number): void => {
+      if (visited.has(nodeId)) {
+        return;
+      }
+      if (depth !== undefined && currentDepth > depth) {
+        return;
+      }
+
+      const node = state.nodesById.get(nodeId);
+      if (!node) {
+        return;
+      }
+
+      visited.add(nodeId);
+      const childIds = node.childIds.filter((childId) =>
+        state.nodesById.has(childId),
+      );
+      allItems.push(
+        ensureTreeNode(node, {
+          depth: currentDepth,
+          childIds,
+        }),
+      );
+
+      for (const childId of childIds) {
+        walk(childId, currentDepth + 1);
+      }
+    };
+
+    for (const traversalRoot of traversalRoots) {
+      walk(traversalRoot, 0);
+    }
+
+    const safeOffset = Math.max(0, Math.min(offset, allItems.length));
+    const end = Math.min(safeOffset + limit, allItems.length);
+    const items = allItems.slice(safeOffset, end);
+    const hasMore = end < allItems.length;
+    const nextCursor = hasMore
+      ? encodeCursor({
+          v: 1,
+          tool: GET_TREE_TOOL_NAME,
+          deviceId,
+          offset: end,
+          filtersHash,
+        })
+      : undefined;
+
+    return {
+      roots: traversalRoots,
+      items,
+      totalCount: allItems.length,
+      page: {
+        limit,
+        hasMore,
+        ...(nextCursor ? { nextCursor } : {}),
+      },
+    };
+  };
+
   const getNode = (deviceId: string, rawRequest: unknown): ReactNodeSummary => {
     const request = getRecord(rawRequest) || {};
     const state = getOrCreateState(deviceId);
@@ -1324,6 +1466,7 @@ export const createReactTreeStore = (options?: {
     isProfilingStarted,
     stopProfiling,
     getRenderData,
+    getTree,
     searchNodes,
     getNode,
     getChildren,

@@ -649,6 +649,33 @@ export const createReactDomainService = (deps: {
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
+      name: 'getTree',
+      description:
+        'Get the current React component tree with optional depth limiting and cursor-based pagination.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          root: {
+            type: 'integer',
+            description: 'Optional root node ID to scope the tree to a subtree.',
+          },
+          depth: {
+            type: 'integer',
+            description:
+              'Optional max descendant depth relative to the selected root. 0 returns only roots.',
+          },
+          limit: {
+            type: 'integer',
+            description: 'Page size. Default 20, max 100.',
+          },
+          cursor: {
+            type: 'string',
+            description: 'Opaque cursor returned by the previous page.',
+          },
+        },
+      },
+    },
+    {
       name: 'getNode',
       description: 'Get a single React node summary by ID.',
       inputSchema: {
@@ -884,6 +911,8 @@ export const createReactDomainService = (deps: {
     getTools: () => tools,
     callTool: async (toolName, args) => {
       switch (toolName) {
+        case 'getTree':
+          return store.getTree(sessionDeviceId, args);
         case 'getNode':
           return store.getNode(sessionDeviceId, args);
         case 'getChildren':
