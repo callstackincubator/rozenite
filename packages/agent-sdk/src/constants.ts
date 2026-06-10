@@ -42,6 +42,7 @@ export const STATIC_DOMAIN_TOOL_NAMES: Record<string, string[]> = {
   console: ['clearMessages', 'getMessages'],
   react: [
     'searchNodes',
+    'getComponent',
     'getNode',
     'getChildren',
     'getProps',

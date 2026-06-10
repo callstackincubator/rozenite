@@ -56,6 +56,20 @@ export interface ReactGetChildrenResult {
   };
 }
 
+export type ReactComponentSection = 'props' | 'state' | 'hooks';
+
+export interface ReactGetComponentResult {
+  node: ReactNodeSummary & {
+    childIds: number[];
+    rendererId?: number;
+  };
+  props?: unknown;
+  state?: unknown;
+  hooks?: unknown;
+  partial?: boolean;
+  unavailable?: ReactComponentSection[];
+}
+
 export interface ReactInspectableEntry {
   name: string;
   value: unknown;

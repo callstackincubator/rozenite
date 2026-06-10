@@ -649,6 +649,38 @@ export const createReactDomainService = (deps: {
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
+      name: 'getComponent',
+      description:
+        'Get a React node summary plus inspected props, state, and hooks in one response.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'integer',
+            description: 'React DevTools node ID.',
+          },
+          nodeId: {
+            type: 'integer',
+            description: 'Deprecated alias for React DevTools node ID.',
+          },
+          include: {
+            type: 'array',
+            items: {
+              type: 'string',
+              enum: ['props', 'state', 'hooks'],
+            },
+            description:
+              'Optional sections to include. Defaults to props, state, and hooks.',
+          },
+          valueDepth: {
+            type: 'integer',
+            description: 'Max nested serialization depth. Default 4, max 8.',
+          },
+        },
+        anyOf: [{ required: ['id'] }, { required: ['nodeId'] }],
+      },
+    },
+    {
       name: 'getNode',
       description: 'Get a single React node summary by ID.',
       inputSchema: {
@@ -884,6 +916,8 @@ export const createReactDomainService = (deps: {
     getTools: () => tools,
     callTool: async (toolName, args) => {
       switch (toolName) {
+        case 'getComponent':
+          return store.getComponent(sessionDeviceId, args);
         case 'getNode':
           return store.getNode(sessionDeviceId, args);
         case 'getChildren':
