@@ -14,6 +14,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import EventSource from 'react-native-sse';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import {
+  createSection,
+  useRozeniteControlsPlugin,
+} from '@rozenite/controls-plugin';
+import {
   NitroWebSocket,
   type WebSocketCloseEvent as NitroWebSocketCloseEvent,
   type WebSocketMessageEvent as NitroWebSocketMessageEvent,
@@ -1781,6 +1785,44 @@ export const NetworkTestScreen: React.FC = () => {
     | 'large-text'
     | 'request-body'
   >('http');
+
+  const networkControlsSections = React.useMemo(
+    () => [
+      createSection({
+        id: 'network-playground',
+        title: 'Network Playground',
+        description:
+          'Local controls registered from the Network screen so we can verify Rozenite Controls can be mounted more than once.',
+        items: [
+          {
+            id: 'active-test',
+            type: 'text' as const,
+            title: 'Active Test',
+            value: activeTest,
+          },
+          {
+            id: 'reset-http',
+            type: 'button' as const,
+            title: 'Reset to HTTP',
+            actionLabel: 'Reset',
+            onPress: () => setActiveTest('http'),
+          },
+          {
+            id: 'request-body-test',
+            type: 'button' as const,
+            title: 'Open Request Body Test',
+            actionLabel: 'Open',
+            onPress: () => navigation.navigate('RequestBodyTest'),
+          },
+        ],
+      }),
+    ],
+    [activeTest, navigation],
+  );
+
+  useRozeniteControlsPlugin({
+    sections: networkControlsSections,
+  });
 
   const renderHeader = () => (
     <View style={styles.header}>

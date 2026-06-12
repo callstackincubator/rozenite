@@ -138,17 +138,32 @@ const sessionStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'session-store' })
 
 `maxAge` controls how many actions Redux DevTools keeps in history. The default is `50`.
 
-On React Native, state is serialized and sent to DevTools over the device bridge. Large stores combined with a high `maxAge` can use a lot of memory — on Android this may cause an out-of-memory crash when opening the Redux DevTools panel. If your store is large (for example, it includes RTK Query caches or big entity maps), keep `maxAge` low and consider using Redux DevTools [`stateSanitizer`](https://github.com/reduxjs/redux-devtools/blob/main/extension/docs/API/Arguments.md#statesanitizer-state--state) to strip bulky slices before they are recorded.
+On React Native, state is serialized and sent to DevTools over the device bridge. Large stores combined with a high `maxAge` can use a lot of memory — on Android this may cause an out-of-memory crash when opening the Redux DevTools panel. If your store is large (for example, it includes RTK Query caches or big entity maps), keep `maxAge` low and use `stateSanitizer` or `actionSanitizer` to strip bulky slices before they are sent to DevTools.
 
 ```ts
 rozeniteDevToolsEnhancer({
   maxAge: 20,
-  stateSanitizer: (state) => ({
-    ...state,
+  stateSanitizer: (state, index) => ({
+    ...(state as Record<string, unknown>),
     api: '[omitted]',
+  }),
+  actionSanitizer: (action, id) => ({
+    ...action,
+    payload: action.type === 'large/payload' ? '[omitted]' : action.payload,
   }),
 })
 ```
+
+Set `trace: true` to capture the dispatch stack for each action and enable the Trace tab. Rozenite attempts to symbolicate captured stacks through Metro so frames point to source files instead of generated bundle locations.
+
+```ts
+rozeniteDevToolsEnhancer({
+  trace: true,
+  traceLimit: 25,
+})
+```
+
+Use `traceSymbolication: false` if you want to keep raw stacks without calling Metro's `/symbolicate` endpoint.
 
 ## Contributing
 

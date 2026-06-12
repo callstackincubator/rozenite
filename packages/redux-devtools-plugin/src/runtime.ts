@@ -28,7 +28,10 @@ import { resolveReduxTrace } from './symbolication/trace';
 const getRandomId = () => Math.random().toString(36).slice(2);
 const MAX_QUEUED_COMMANDS = 50;
 const TRACE_SNAPSHOT_DEBOUNCE_MS = 50;
+const PARTIAL_STATE_CHUNK_SIZE = 1;
 const STORE_SENTINEL = Symbol.for('rozenite.redux-devtools.store-sentinel');
+
+type AnyAction = Action<string>;
 
 /**
  * Options for configuring Rozenite Redux DevTools
@@ -75,9 +78,19 @@ export interface RozeniteDevToolsOptions {
    * @default true
    */
   traceSymbolication?: boolean;
-}
 
-type AnyAction = Action<string>;
+  /**
+   * Sanitizes each Redux state snapshot before it is sent to DevTools.
+   * Useful for omitting large caches, entity maps, or sensitive values.
+   */
+  stateSanitizer?: (state: unknown, index: number) => unknown;
+
+  /**
+   * Sanitizes each Redux action before it is sent to DevTools.
+   * Useful for omitting large payloads or sensitive values.
+   */
+  actionSanitizer?: (action: AnyAction, id: number) => unknown;
+}
 
 type RuntimeController = {
   enhance: () => StoreEnhancer;
@@ -137,6 +150,7 @@ const createRuntimeController = (
   const tracesByActionId = new Map<number, ReduxActionTrace>();
   const pendingTraceKeys = new Set<string>();
   let traceSnapshotTimer: ReturnType<typeof setTimeout> | null = null;
+  const reportedSanitizerErrors = new Set<string>();
 
   const enqueueCommand = (command: ReduxDevToolsPanelCommand) => {
     if (pendingCommands.length >= MAX_QUEUED_COMMANDS) {
@@ -159,6 +173,77 @@ const createRuntimeController = (
       type: 'error',
       message,
     });
+  };
+
+  const reportSanitizerError = (kind: 'state' | 'action', error: unknown) => {
+    const message = (error as Error).message || String(error);
+    const key = `${kind}:${message}`;
+
+    if (reportedSanitizerErrors.has(key)) {
+      return;
+    }
+
+    reportedSanitizerErrors.add(key);
+    sendError(`Redux DevTools ${kind} sanitizer failed: ${message}`);
+  };
+
+  const sanitizeState = (state: unknown, index: number): unknown => {
+    if (!options.stateSanitizer) {
+      return state;
+    }
+
+    try {
+      return options.stateSanitizer(state, index);
+    } catch (error) {
+      reportSanitizerError('state', error);
+      return {
+        __rozeniteSanitizerError: 'State sanitizer failed.',
+      };
+    }
+  };
+
+  const sanitizeAction = (action: AnyAction, id: number): unknown => {
+    if (!options.actionSanitizer) {
+      return action;
+    }
+
+    try {
+      return options.actionSanitizer(action, id);
+    } catch (error) {
+      reportSanitizerError('action', error);
+      return {
+        type:
+          action &&
+          typeof action === 'object' &&
+          'type' in action &&
+          (action as { type?: unknown }).type != null
+            ? String((action as { type?: unknown }).type)
+            : '@@SANITIZER_ERROR',
+        __rozeniteSanitizerError: 'Action sanitizer failed.',
+      };
+    }
+  };
+
+  const sanitizeComputedState = (
+    entry: { state: unknown; error?: string },
+    index: number
+  ) => ({
+    ...entry,
+    state: sanitizeState(entry.state, index),
+  });
+
+  const sanitizeLiftedAction = (
+    liftedAction: PerformAction<AnyAction>,
+    actionId: number
+  ): PerformAction<AnyAction> => {
+    if (liftedAction.type !== 'PERFORM_ACTION') {
+      return liftedAction;
+    }
+
+    return {
+      ...liftedAction,
+      action: sanitizeAction(liftedAction.action, actionId) as AnyAction,
+    };
   };
 
   const sendRequest = (request: ReduxDevToolsRequest): void => {
@@ -252,37 +337,6 @@ const createRuntimeController = (
     };
   };
 
-  const decorateLiftedState = (
-    liftedState: LiftedState<any, AnyAction, unknown>
-  ): LiftedState<any, AnyAction, unknown> => {
-    pruneActionTraces(liftedState);
-
-    let didChange = false;
-    const actionsById = Object.fromEntries(
-      Object.entries(liftedState.actionsById).map(([actionId, liftedAction]) => {
-        const decoratedAction = decorateLiftedAction(
-          Number(actionId),
-          liftedAction
-        );
-
-        if (decoratedAction !== liftedAction) {
-          didChange = true;
-        }
-
-        return [actionId, decoratedAction];
-      })
-    ) as LiftedState<any, AnyAction, unknown>['actionsById'];
-
-    if (!didChange) {
-      return liftedState;
-    }
-
-    return {
-      ...liftedState,
-      actionsById,
-    };
-  };
-
   const sendStateSnapshot = (): void => {
     const liftedState = getLiftedStateRaw();
 
@@ -290,12 +344,102 @@ const createRuntimeController = (
       return;
     }
 
+    pruneActionTraces(liftedState);
+
+    const initialComputedState = liftedState.computedStates[0];
+    const initialStagedActionId = liftedState.stagedActionIds[0] ?? 0;
+    const initialAction = liftedState.actionsById[initialStagedActionId] as
+      | PerformAction<AnyAction>
+      | undefined;
+
     sendRequest({
       type: 'STATE',
       name: instanceName,
       instanceId: appInstanceId,
-      payload: stringify(decorateLiftedState(liftedState)),
+      payload: stringify({
+        actionsById: initialAction
+          ? {
+              [initialStagedActionId]: sanitizeLiftedAction(
+                decorateLiftedAction(initialStagedActionId, initialAction),
+                initialStagedActionId
+              ),
+            }
+          : {},
+        computedStates: initialComputedState
+          ? [sanitizeComputedState(initialComputedState, 0)]
+          : [],
+        committedState: sanitizeState(liftedState.committedState, 0),
+        currentStateIndex: 0,
+        nextActionId: initialStagedActionId + 1,
+        skippedActionIds: [],
+        stagedActionIds: [initialStagedActionId],
+        isLocked: liftedState.isLocked,
+        isPaused: liftedState.isPaused,
+      }),
     });
+
+    for (
+      let startIndex = 1;
+      startIndex < liftedState.stagedActionIds.length;
+      startIndex += PARTIAL_STATE_CHUNK_SIZE
+    ) {
+      const endIndex = Math.min(
+        startIndex + PARTIAL_STATE_CHUNK_SIZE,
+        liftedState.stagedActionIds.length
+      );
+      const chunkStagedActionIds = liftedState.stagedActionIds.slice(
+        startIndex,
+        endIndex
+      );
+      const actionsById: Record<number, PerformAction<AnyAction>> = {};
+
+      chunkStagedActionIds.forEach((actionId) => {
+        const action = liftedState.actionsById[actionId] as
+          | PerformAction<AnyAction>
+          | undefined;
+
+        if (action) {
+          actionsById[actionId] = sanitizeLiftedAction(
+            decorateLiftedAction(actionId, action),
+            actionId
+          );
+        }
+      });
+
+      const stagedActionIds = liftedState.stagedActionIds.slice(0, endIndex);
+      const lastActionId =
+        stagedActionIds[stagedActionIds.length - 1] ?? initialStagedActionId;
+
+      sendRequest({
+        type: 'PARTIAL_STATE',
+        name: instanceName,
+        instanceId: appInstanceId,
+        maxAge: Math.max(maxAge, liftedState.nextActionId),
+        committedState: sanitizeState(liftedState.committedState, 0),
+        payload: stringify({
+          actionsById,
+          computedStates: liftedState.computedStates
+            .slice(startIndex, endIndex)
+            .map((entry, index) =>
+              sanitizeComputedState(entry, startIndex + index)
+            ),
+          currentStateIndex: Math.min(
+            liftedState.currentStateIndex,
+            stagedActionIds.length - 1
+          ),
+          nextActionId:
+            endIndex === liftedState.stagedActionIds.length
+              ? liftedState.nextActionId
+              : lastActionId + 1,
+          skippedActionIds: liftedState.skippedActionIds.filter((actionId) =>
+            stagedActionIds.includes(actionId)
+          ),
+          stagedActionIds,
+          isLocked: liftedState.isLocked,
+          isPaused: liftedState.isPaused,
+        }),
+      });
+    }
   };
 
   const sendActionUpdate = (): void => {
@@ -324,8 +468,15 @@ const createRuntimeController = (
       type: 'ACTION',
       name: instanceName,
       instanceId: appInstanceId,
-      payload: stringify(store.getState()),
-      action: stringify(decorateLiftedAction(nextActionId - 1, liftedAction)),
+      payload: stringify(
+        sanitizeState(store.getState(), liftedState.currentStateIndex)
+      ),
+      action: stringify(
+        sanitizeLiftedAction(
+          decorateLiftedAction(nextActionId - 1, liftedAction),
+          nextActionId - 1
+        )
+      ),
       nextActionId,
       maxAge,
       isExcess: liftedState.stagedActionIds.length >= maxAge,
