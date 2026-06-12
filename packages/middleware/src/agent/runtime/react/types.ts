@@ -55,6 +55,22 @@ export interface ReactSearchNodesResult {
   };
 }
 
+export interface ReactTreeNode extends ReactNodeSummary {
+  childIds: number[];
+  depth: number;
+}
+
+export interface ReactGetTreeResult {
+  roots: number[];
+  items: ReactTreeNode[];
+  totalCount: number;
+  page: {
+    limit: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  };
+}
+
 export interface ReactGetChildrenResult {
   items: ReactNodeSummary[];
   page: {

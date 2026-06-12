@@ -91,6 +91,17 @@ rozeniteDevToolsEnhancer({
 })
 ```
 
+`trace` captures the dispatch stack for each action and enables the Trace tab. Rozenite will also try to symbolicate the stack through Metro so React Native traces point to source files instead of generated bundle locations.
+
+```ts
+rozeniteDevToolsEnhancer({
+  trace: true,
+  traceLimit: 25,
+})
+```
+
+Set `traceSymbolication: false` to keep the raw stack without calling Metro's `/symbolicate` endpoint.
+
 ### 3. Access DevTools
 
 Start your development server and open React Native DevTools. You'll find the "Redux DevTools" panel in the DevTools interface.

@@ -154,6 +154,17 @@ rozeniteDevToolsEnhancer({
 })
 ```
 
+Set `trace: true` to capture the dispatch stack for each action and enable the Trace tab. Rozenite attempts to symbolicate captured stacks through Metro so frames point to source files instead of generated bundle locations.
+
+```ts
+rozeniteDevToolsEnhancer({
+  trace: true,
+  traceLimit: 25,
+})
+```
+
+Use `traceSymbolication: false` if you want to keep raw stacks without calling Metro's `/symbolicate` endpoint.
+
 ## Contributing
 
 The Redux DevTools plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.

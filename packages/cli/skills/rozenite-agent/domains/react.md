@@ -3,11 +3,12 @@ Search and traverse the React component tree, read props, state, and hooks for a
 ## Tools
 
 - `searchNodes` -> `{"query":"<query>"}` | `{"query":"<query>","cursor":"<cursor>"}` | `{"query":"<query>","limit":20}`
-- `getNode` -> `{"nodeId":123}` | `{"id":"@c2"}`
-- `getChildren` -> `{"nodeId":123}` | `{"id":"@c2","cursor":"<cursor>"}` | `{"id":"@c2","limit":20}`
-- `getProps` -> `{"nodeId":123}` | `{"id":"@c2","cursor":"<cursor>"}` | `{"id":"@c2","limit":20}`
-- `getState` -> `{"nodeId":123}` | `{"id":"@c2","cursor":"<cursor>"}` | `{"id":"@c2","limit":20}`
-- `getHooks` -> `{"nodeId":123}` | `{"id":"@c2","path":[0,"subHooks",1]}` | `{"id":"@c2","limit":20}`
+- `getTree` -> `{}` | `{"depth":2}` | `{"root":123}` | `{"cursor":"<cursor>"}`
+- `getNode` -> `{"nodeId":123}`
+- `getChildren` -> `{"nodeId":123}` | `{"nodeId":123,"cursor":"<cursor>"}` | `{"nodeId":123,"limit":20}`
+- `getProps` -> `{"nodeId":123}` | `{"nodeId":123,"cursor":"<cursor>"}` | `{"nodeId":123,"limit":20}`
+- `getState` -> `{"nodeId":123}` | `{"nodeId":123,"cursor":"<cursor>"}` | `{"nodeId":123,"limit":20}`
+- `getHooks` -> `{"nodeId":123}` | `{"nodeId":123,"path":[0,"subHooks",1]}` | `{"nodeId":123,"limit":20}`
 - `startProfiling` -> `{}` | `{"shouldRestart":true}`
 - `isProfilingStarted` -> `{}`
 - `stopProfiling` -> `{}` | `{"waitForDataMs":3000}` | `{"slowRenderThresholdMs":16}`
@@ -16,7 +17,7 @@ Search and traverse the React component tree, read props, state, and hooks for a
 ## Flow
 
 Search and inspect:
-`searchNodes` -> `getNode` / `getChildren` -> `getProps` / `getState` / `getHooks`.
+`getTree` / `searchNodes` -> `getNode` / `getChildren` -> `getProps` / `getState` / `getHooks`.
 
 Profile:
 `startProfiling` -> reproduce interaction -> `stopProfiling` -> `getRenderData`.

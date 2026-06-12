@@ -1,5 +1,6 @@
 import type { Action } from 'redux';
 import type { EnhancedStore, LiftedState } from '@redux-devtools/instrument';
+import type { ReduxActionTrace } from './shared/trace';
 
 type AnyAction = Action<string> & Record<string, unknown>;
 
@@ -12,6 +13,7 @@ export type ReduxDevToolsStoreRegistration = {
   maxAge: number;
   getStore: () => ReduxDevToolsEnhancedStore | null;
   getLiftedState: () => ReduxDevToolsLiftedState | null;
+  getActionTrace?: (actionId: number) => ReduxActionTrace | null;
 };
 
 const registry = new Map<string, ReduxDevToolsStoreRegistration>();
