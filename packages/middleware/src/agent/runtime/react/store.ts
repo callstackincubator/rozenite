@@ -71,6 +71,8 @@ type ReactChangeDescription = {
 type DeviceReactTreeState = {
   rootIds: number[];
   nodesById: Map<number, ReactNodeRecord>;
+  labelByNodeId: Map<number, string>;
+  nodeIdByLabel: Map<string, number>;
   inspectedById: Map<number, ReactInspectedNodeRecord>;
   bridge: ReactDevToolsBridge | null;
   bridgePromise: Promise<ReactDevToolsBridge> | null;
@@ -208,6 +210,7 @@ const delay = async (ms: number): Promise<void> => {
 const ensureNodeSummary = (node: ReactNodeRecord): ReactNodeSummary => {
   return {
     nodeId: node.nodeId,
+    label: '@c?',
     displayName: node.displayName,
     elementType: node.elementType,
     ...(node.key !== undefined ? { key: node.key } : {}),
@@ -311,18 +314,6 @@ const getRequestedNodeId = (
     request.id !== undefined ? request.id : request.nodeId,
     request.id !== undefined ? 'id' : 'nodeId',
   );
-};
-
-const getOptionalNodeId = (
-  state: DeviceReactTreeState,
-  value: unknown,
-  fieldName: string,
-): number | undefined => {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  return resolveNodeId(state, value, fieldName);
 };
 
 const createSerializableSnapshot = (
@@ -605,6 +596,8 @@ export const createReactTreeStore = (options?: {
     const created: DeviceReactTreeState = {
       rootIds: [],
       nodesById: new Map(),
+      labelByNodeId: new Map(),
+      nodeIdByLabel: new Map(),
       inspectedById: new Map(),
       bridge: null,
       bridgePromise: null,
@@ -656,6 +649,34 @@ export const createReactTreeStore = (options?: {
 
     state.rootIds = rootIds.filter((rootId) => nodesById.has(rootId));
     state.nodesById = nodesById;
+    state.labelByNodeId.clear();
+    state.nodeIdByLabel.clear();
+
+    const visited = new Set<number>();
+    let nextLabelIndex = 1;
+    const assignLabels = (nodeId: number): void => {
+      if (visited.has(nodeId)) {
+        return;
+      }
+      const node = nodesById.get(nodeId);
+      if (!node) {
+        return;
+      }
+
+      visited.add(nodeId);
+      const label = `@c${nextLabelIndex++}`;
+      state.labelByNodeId.set(nodeId, label);
+      state.nodeIdByLabel.set(label, nodeId);
+
+      for (const childId of node.childIds) {
+        assignLabels(childId);
+      }
+    };
+
+    for (const rootId of state.rootIds) {
+      assignLabels(rootId);
+    }
+
     state.inspectedById.clear();
   };
 
@@ -1023,7 +1044,9 @@ export const createReactTreeStore = (options?: {
 
     const safeOffset = Math.max(0, Math.min(offset, matched.length));
     const end = Math.min(safeOffset + limit, matched.length);
-    const items = matched.slice(safeOffset, end).map(ensureNodeSummary);
+    const items = matched
+      .slice(safeOffset, end)
+      .map((node) => ensureNodeSummaryForState(state, node));
     const hasMore = end < matched.length;
     const nextCursor = hasMore
       ? encodeCursor({
@@ -1187,7 +1210,9 @@ export const createReactTreeStore = (options?: {
       .filter((child): child is ReactNodeRecord => Boolean(child));
     const safeOffset = Math.max(0, Math.min(offset, children.length));
     const end = Math.min(safeOffset + limit, children.length);
-    const items = children.slice(safeOffset, end).map(ensureNodeSummary);
+    const items = children
+      .slice(safeOffset, end)
+      .map((child) => ensureNodeSummaryForState(state, child));
     const hasMore = end < children.length;
     const nextCursor = hasMore
       ? encodeCursor({
