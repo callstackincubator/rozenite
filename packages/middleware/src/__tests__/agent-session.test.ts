@@ -240,7 +240,7 @@ vi.mock('../logger.js', () => ({
 
 import { createAgentSession } from '../agent/session.js';
 
-const TARGET: MetroTarget = {
+const createTarget = (overrides: Partial<MetroTarget> = {}): MetroTarget => ({
   id: 'device-1',
   pageId: 'page-1',
   appId: 'com.example.app',
@@ -248,7 +248,10 @@ const TARGET: MetroTarget = {
   title: 'App',
   description: 'Device target',
   webSocketDebuggerUrl: 'ws://localhost:8081/debug',
-};
+  ...overrides,
+});
+
+const TARGET = createTarget();
 
 const flushMicrotasks = async () => {
   await Promise.resolve();
@@ -259,13 +262,14 @@ const createStartedSession = (
   overrides?: Partial<{
     cliVersion: string;
     metroVersion: string;
+    target: MetroTarget;
   }>,
 ) => {
   const session = createAgentSession({
     projectRoot: '/app',
     host: 'localhost',
     port: 8081,
-    target: TARGET,
+    target: overrides?.target ?? TARGET,
     ...overrides,
   });
 
@@ -306,13 +310,13 @@ const emitRozeniteBindingPayload = async (
   message: Record<string, unknown>,
 ) => {
   mocks.parseRozeniteBindingPayload.mockImplementation(
-    (((rawMessage: Record<string, unknown>) =>
+    ((rawMessage: Record<string, unknown>) =>
       (rawMessage.bindingPayload as
         | {
             domain: string;
             message: Record<string, unknown>;
           }
-        | undefined) ?? null) as unknown) as () => null,
+        | undefined) ?? null) as unknown as () => null,
   );
 
   socket.emit(
@@ -340,13 +344,28 @@ describe('agent session', () => {
     vi.useRealTimers();
   });
 
-  it('sets a localhost origin header for the debugger websocket', () => {
+  it('sets an origin header derived from the debugger websocket URL', () => {
     const { socket } = createStartedSession();
 
     expect(socket.url).toBe(TARGET.webSocketDebuggerUrl);
     expect(socket.options).toEqual({
       headers: {
         Origin: 'http://localhost:8081',
+      },
+    });
+  });
+
+  it('preserves the debugger websocket host in the origin header', () => {
+    const target = createTarget({
+      webSocketDebuggerUrl: 'ws://127.0.0.1:8081/debug',
+    });
+
+    const { socket } = createStartedSession({ target });
+
+    expect(socket.url).toBe(target.webSocketDebuggerUrl);
+    expect(socket.options).toEqual({
+      headers: {
+        Origin: 'http://127.0.0.1:8081',
       },
     });
   });

@@ -1,6 +1,6 @@
 export const AGENT_PLUGIN_ID = 'rozenite-agent';
 
-export const DEFAULT_AGENT_HOST = 'localhost';
+export const DEFAULT_AGENT_HOST = '127.0.0.1';
 export const DEFAULT_AGENT_PORT = 8081;
 
 export const AGENT_ROUTE_BASE = '/rozenite/agent';
