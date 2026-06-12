@@ -30,8 +30,11 @@ const DISPATCHER_INIT_RETRY_MS = 250;
 const PLUGIN_READINESS_QUIET_WINDOW_MS = 50;
 const PLUGIN_READINESS_MAX_WAIT_MS = 250;
 
-const getDebuggerWebSocketOrigin = (port: number): string => {
-  return `http://localhost:${port}`;
+const getDebuggerWebSocketOrigin = (webSocketDebuggerUrl: string): string => {
+  const url = new URL(webSocketDebuggerUrl);
+  const protocol = url.protocol === 'wss:' ? 'https:' : 'http:';
+
+  return `${protocol}//${url.host}`;
 };
 
 type PendingCommand = {
@@ -605,10 +608,7 @@ export const createAgentSession = (options: {
         notePluginReadinessActivity();
       }
 
-      handler.handleDeviceMessage(
-        options.target.id,
-        devToolsMessage,
-      );
+      handler.handleDeviceMessage(options.target.id, devToolsMessage);
     } else if (bindingPayload.domain === 'react-devtools') {
       for (const service of localServices) {
         if (service.captureReactDevToolsMessage) {
@@ -624,7 +624,9 @@ export const createAgentSession = (options: {
     await new Promise<void>((resolve, reject) => {
       const socket = new WebSocket(options.target.webSocketDebuggerUrl, {
         headers: {
-          Origin: getDebuggerWebSocketOrigin(options.port),
+          Origin: getDebuggerWebSocketOrigin(
+            options.target.webSocketDebuggerUrl,
+          ),
         },
       });
       let settled = false;
