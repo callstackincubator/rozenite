@@ -23,6 +23,8 @@ import {
   type ReduxDevToolsStoreInput as StoreInput,
   type ReduxDevToolsStoreSummary,
 } from './shared/agent-tools';
+import type { ReduxActionTrace, ReduxActionWithTrace } from './shared/trace';
+import { parseStack } from './symbolication/parse';
 
 type AnyAction = Action<string> & Record<string, unknown>;
 const DEFAULT_PAGE_LIMIT = 50;
@@ -152,6 +154,32 @@ const getStoreAndLiftedState = (instanceId?: string) => {
   return { store, enhancedStore, liftedState };
 };
 
+const getActionTraceForAgent = (
+  store: ReduxDevToolsStoreRegistration,
+  actionId: number,
+  liftedAction: unknown
+): ReduxActionTrace | null => {
+  const registeredTrace = store.getActionTrace?.(actionId);
+  if (registeredTrace) {
+    return serializeForAgent(registeredTrace);
+  }
+
+  const actionWithTrace = liftedAction as ReduxActionWithTrace | undefined;
+  if (actionWithTrace?.rozeniteTrace) {
+    return serializeForAgent(actionWithTrace.rozeniteTrace);
+  }
+
+  if (typeof actionWithTrace?.stack === 'string') {
+    return {
+      rawStack: actionWithTrace.stack,
+      frames: parseStack(actionWithTrace.stack),
+      status: 'unavailable',
+    };
+  }
+
+  return null;
+};
+
 const assertKnownAction = (
   store: ReduxDevToolsStoreRegistration,
   liftedState: ReduxDevToolsLiftedState,
@@ -275,6 +303,7 @@ export const getReduxActionDetailsResult = ({
     liftedAction: serializeForAgent(liftedAction),
     state: serializeForAgent(computedState?.state),
     error: computedState?.error ?? null,
+    trace: getActionTraceForAgent(store, actionId, liftedAction),
   };
 };
 

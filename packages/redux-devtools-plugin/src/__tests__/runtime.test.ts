@@ -1,14 +1,51 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ActionCreators } from '@redux-devtools/instrument';
 // @ts-expect-error app-core does not publish declarations for built subpaths.
 import { UPDATE_STATE } from '@redux-devtools/app-core/lib/esm/constants/actionTypes.js';
 // @ts-expect-error app-core does not publish declarations for built subpaths.
 import { instances as reduceInstances } from '@redux-devtools/app-core/lib/esm/reducers/instances.js';
 import { parse } from 'jsan';
 import { createStore, type Action } from 'redux';
+import { rozeniteDevToolsEnhancer } from '../runtime';
+import { getReduxActionDetailsResult } from '../redux-devtools-agent';
+import { clearReduxDevToolsStoreRegistryForTests } from '../redux-devtools-registry';
 import type {
   ReduxDevToolsPanelCommand,
   ReduxDevToolsRuntimeMessage,
 } from '../shared/protocol';
+
+const bridge = vi.hoisted(() => ({
+  panelCommandListener: undefined as
+    | ((command: ReduxDevToolsPanelCommand) => void)
+    | undefined,
+  sentMessages: [] as ReduxDevToolsRuntimeMessage[],
+}));
+
+vi.mock('../runtime-bridge', () => ({
+  getRuntimeConnectionId: () => 'test-connection',
+  sendRuntimeMessage: (message: ReduxDevToolsRuntimeMessage) => {
+    bridge.sentMessages.push(message);
+  },
+  subscribeToPanelCommands: (
+    listener: (command: ReduxDevToolsPanelCommand) => void
+  ) => {
+    bridge.panelCommandListener = listener;
+
+    return () => {
+      if (bridge.panelCommandListener === listener) {
+        bridge.panelCommandListener = undefined;
+      }
+    };
+  },
+}));
+
+vi.mock('react-native', () => ({
+  NativeModules: {
+    SourceCode: {
+      scriptURL: undefined,
+    },
+  },
+}));
 
 type TestState = {
   counter: number;
@@ -41,41 +78,22 @@ const reducer = (
 
 const setupRuntime = async () => {
   vi.resetModules();
-
-  const sentMessages: ReduxDevToolsRuntimeMessage[] = [];
-  let panelCommandListener:
-    | ((command: ReduxDevToolsPanelCommand) => void)
-    | null = null;
-
-  vi.doMock('../runtime-bridge', () => ({
-    getRuntimeConnectionId: () => 'test-connection',
-    sendRuntimeMessage: (message: ReduxDevToolsRuntimeMessage) => {
-      sentMessages.push(message);
-    },
-    subscribeToPanelCommands: (
-      listener: (command: ReduxDevToolsPanelCommand) => void
-    ) => {
-      panelCommandListener = listener;
-
-      return () => {
-        panelCommandListener = null;
-      };
-    },
-  }));
+  bridge.sentMessages.length = 0;
+  bridge.panelCommandListener = undefined;
 
   const runtime = await import('../runtime');
 
   const sendPanelCommand = (command: ReduxDevToolsPanelCommand) => {
-    if (!panelCommandListener) {
+    if (!bridge.panelCommandListener) {
       throw new Error('Panel command listener was not registered.');
     }
 
-    panelCommandListener(command);
+    bridge.panelCommandListener(command);
   };
 
   return {
     ...runtime,
-    sentMessages,
+    sentMessages: bridge.sentMessages,
     sendPanelCommand,
   };
 };
@@ -87,7 +105,9 @@ const getStateUpdateRequests = (messages: ReduxDevToolsRuntimeMessage[]) => {
 };
 
 afterEach(() => {
-  vi.restoreAllMocks();
+  clearReduxDevToolsStoreRegistryForTests();
+  bridge.panelCommandListener = undefined;
+  bridge.sentMessages.length = 0;
   vi.resetModules();
 });
 
@@ -240,5 +260,41 @@ describe('redux devtools runtime', () => {
       )
     ).toEqual([{ counter: 2 }, { counter: 3 }]);
     expect(instanceState.currentStateIndex).toBe(1);
+  });
+});
+
+describe('redux devtools runtime tracing', () => {
+  it('drops traces for actions removed from lifted history', () => {
+    const store = createStore(
+      reducer,
+      rozeniteDevToolsEnhancer({
+        maxAge: 2,
+        trace: (action) =>
+          `Error\n    at ${action.type} (http://localhost:8081/index.bundle:1:1)`,
+        traceSymbolication: false,
+      })
+    );
+
+    bridge.panelCommandListener?.({ type: 'start' });
+
+    store.dispatch({ type: 'counter/increment' });
+    expect(getReduxActionDetailsResult({ actionId: 1 }).trace).toEqual(
+      expect.objectContaining({
+        rawStack: expect.stringContaining('counter/increment'),
+      })
+    );
+
+    (
+      store as typeof store & {
+        liftedStore: { dispatch: (action: unknown) => unknown };
+      }
+    ).liftedStore.dispatch(ActionCreators.commit());
+    store.dispatch({ type: 'counter/decrement' });
+
+    expect(getReduxActionDetailsResult({ actionId: 1 }).trace).toEqual(
+      expect.objectContaining({
+        rawStack: expect.stringContaining('counter/decrement'),
+      })
+    );
   });
 });

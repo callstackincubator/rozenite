@@ -240,6 +240,7 @@ describe('redux devtools agent helpers', () => {
       },
       state: { count: 1 },
       error: null,
+      trace: null,
     });
   });
 

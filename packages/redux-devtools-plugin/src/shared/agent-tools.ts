@@ -2,6 +2,7 @@ import {
   defineAgentToolContract,
   type AgentToolContract,
 } from '@rozenite/agent-shared';
+import type { ReduxActionTrace } from './trace';
 
 export const REDUX_DEVTOOLS_AGENT_PLUGIN_ID =
   '@rozenite/redux-devtools-plugin';
@@ -85,6 +86,7 @@ export type ReduxDevToolsGetActionDetailsResult = {
   liftedAction: unknown;
   state: unknown;
   error: unknown;
+  trace: ReduxActionTrace | null;
 };
 
 export type ReduxDevToolsDispatchActionArgs = ReduxDevToolsDispatchActionInput;
