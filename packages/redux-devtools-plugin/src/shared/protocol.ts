@@ -6,6 +6,14 @@ export type ReduxDevToolsRequest =
       name?: string;
     }
   | {
+      type: 'PARTIAL_STATE';
+      payload: string;
+      committedState?: unknown;
+      instanceId: string;
+      maxAge: number;
+      name?: string;
+    }
+  | {
       type: 'ACTION';
       payload: string;
       action: string;
