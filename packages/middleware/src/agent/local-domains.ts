@@ -682,6 +682,38 @@ export const createReactDomainService = (deps: {
       },
     },
     {
+      name: 'getComponent',
+      description:
+        'Get a React node summary plus inspected props, state, and hooks in one response.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: {
+            ...nodeIdentifierSchema,
+            description: 'React DevTools node ID or component label.',
+          },
+          nodeId: {
+            ...nodeIdentifierSchema,
+            description: 'React DevTools node ID or component label.',
+          },
+          include: {
+            type: 'array',
+            items: {
+              type: 'string',
+              enum: ['props', 'state', 'hooks'],
+            },
+            description:
+              'Optional sections to include. Defaults to props, state, and hooks.',
+          },
+          valueDepth: {
+            type: 'integer',
+            description: 'Max nested serialization depth. Default 4, max 8.',
+          },
+        },
+        anyOf: [{ required: ['id'] }, { required: ['nodeId'] }],
+      },
+    },
+    {
       name: 'getNode',
       description: 'Get a single React node summary by node ID or label.',
       inputSchema: {
@@ -941,6 +973,8 @@ export const createReactDomainService = (deps: {
       switch (toolName) {
         case 'getTree':
           return store.getTree(sessionDeviceId, args);
+        case 'getComponent':
+          return store.getComponent(sessionDeviceId, args);
         case 'getNode':
           return store.getNode(sessionDeviceId, args);
         case 'getChildren':

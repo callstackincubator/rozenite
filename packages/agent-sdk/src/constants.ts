@@ -43,6 +43,7 @@ export const STATIC_DOMAIN_TOOL_NAMES: Record<string, string[]> = {
   react: [
     'getTree',
     'searchNodes',
+    'getComponent',
     'getNode',
     'getChildren',
     'getProps',

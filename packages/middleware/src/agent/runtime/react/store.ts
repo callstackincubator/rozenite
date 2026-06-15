@@ -1,7 +1,9 @@
 import { hashFilters } from '../pagination/cursor.js';
 import type {
+  ReactComponentSection,
   ReactDevToolsBridgeMessage,
   ReactGetChildrenResult,
+  ReactGetComponentResult,
   ReactGetInspectableResult,
   ReactGetRenderDataResult,
   ReactGetTreeResult,
@@ -29,6 +31,8 @@ const MAX_SEARCH_LIMIT = 100;
 const GET_TREE_TOOL_NAME = 'getTree';
 const SEARCH_TOOL_NAME = 'searchNodes';
 const GET_CHILDREN_TOOL_NAME = 'getChildren';
+const DEFAULT_COMPONENT_VALUE_DEPTH = 4;
+const MAX_COMPONENT_VALUE_DEPTH = 8;
 const GET_PROPS_TOOL_NAME = 'getProps';
 const GET_STATE_TOOL_NAME = 'getState';
 const GET_HOOKS_TOOL_NAME = 'getHooks';
@@ -199,6 +203,48 @@ const normalizeRenderDataSort = (value: unknown): ReactRenderDataSort => {
   }
 
   return 'duration-desc';
+};
+
+const normalizeComponentSections = (value: unknown): ReactComponentSection[] => {
+  const defaultSections: ReactComponentSection[] = ['props', 'state', 'hooks'];
+  if (value === undefined) {
+    return defaultSections;
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error('"include" must be an array of props, state, or hooks');
+  }
+
+  const sections: ReactComponentSection[] = [];
+  for (const entry of value) {
+    if (entry !== 'props' && entry !== 'state' && entry !== 'hooks') {
+      throw new Error('"include" must contain only props, state, or hooks');
+    }
+    if (!sections.includes(entry)) {
+      sections.push(entry);
+    }
+  }
+
+  if (sections.length === 0) {
+    throw new Error('"include" must contain at least one section');
+  }
+
+  return sections;
+};
+
+const normalizeComponentValueDepth = (value: unknown): number => {
+  if (value === undefined) {
+    return DEFAULT_COMPONENT_VALUE_DEPTH;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(
+      `"valueDepth" must be an integer between 0 and ${MAX_COMPONENT_VALUE_DEPTH}`,
+    );
+  }
+
+  return Math.min(parsed, MAX_COMPONENT_VALUE_DEPTH);
 };
 
 const delay = async (ms: number): Promise<void> => {
@@ -1234,6 +1280,74 @@ export const createReactTreeStore = (options?: {
     };
   };
 
+  const getInspectedRecord = async (
+    state: DeviceReactTreeState,
+    nodeId: number,
+    sections: ReactComponentSection[],
+  ): Promise<ReactInspectedNodeRecord | null> => {
+    let inspected = state.inspectedById.get(nodeId);
+    const hasAllRequestedSections = sections.every((section) => {
+      return inspected?.[section] !== undefined;
+    });
+
+    if (!inspected || !hasAllRequestedSections) {
+      inspected = await requestInspectableSnapshot(state, nodeId)
+        || state.inspectedById.get(nodeId);
+    }
+
+    return inspected ?? null;
+  };
+
+  const getComponent = async (
+    deviceId: string,
+    rawRequest: unknown,
+  ): Promise<ReactGetComponentResult> => {
+    const request = getRecord(rawRequest) || {};
+    const state = getOrCreateState(deviceId);
+    const nodeId = getRequestedNodeId(state, request);
+    const node = ensureNodeExists(state, nodeId);
+    const sections = normalizeComponentSections(request.include);
+    const valueDepth = normalizeComponentValueDepth(request.valueDepth);
+    const inspected = await getInspectedRecord(state, nodeId, sections);
+
+    if (!inspected) {
+      throw new Error(
+        `No inspected snapshot available for node "${nodeId}". React DevTools did not return inspected data for this node.`,
+      );
+    }
+
+    const unavailable: ReactComponentSection[] = [];
+    const result: ReactGetComponentResult = {
+      node: {
+        ...ensureNodeSummaryForState(state, node),
+        childIds: node.childIds.filter((childId) => state.nodesById.has(childId)),
+        ...(node.rendererId !== undefined ? { rendererId: node.rendererId } : {}),
+      },
+    };
+
+    for (const section of sections) {
+      const value = inspected[section];
+      if (value === undefined) {
+        unavailable.push(section);
+        continue;
+      }
+
+      result[section] = createSerializableSnapshot(value, valueDepth);
+    }
+
+    if (unavailable.length === sections.length) {
+      throw new Error(
+        `No requested component snapshot sections available for node "${nodeId}".`,
+      );
+    }
+    if (unavailable.length > 0) {
+      result.partial = true;
+      result.unavailable = unavailable;
+    }
+
+    return result;
+  };
+
   const requestInspectableSnapshot = async (
     state: DeviceReactTreeState,
     nodeId: number,
@@ -1553,6 +1667,7 @@ export const createReactTreeStore = (options?: {
     stopProfiling,
     getRenderData,
     getTree,
+    getComponent,
     searchNodes,
     getNode,
     getChildren,
