@@ -1,13 +1,21 @@
 export interface ReactNodeSummary {
   nodeId: number;
+  label: string;
   displayName: string;
   elementType: string;
   key?: string;
   childCount: number;
   parentId?: number;
+  parentLabel?: string;
 }
 
-export interface ReactNodeRecord extends ReactNodeSummary {
+export interface ReactNodeRecord {
+  nodeId: number;
+  displayName: string;
+  elementType: string;
+  key?: string;
+  childCount: number;
+  parentId?: number;
   childIds: number[];
   rendererId?: number;
 }

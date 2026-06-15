@@ -647,6 +647,12 @@ export const createReactDomainService = (deps: {
     payload: unknown;
   }) => void;
 }): LocalAgentToolService => {
+  const nodeIdentifierSchema = {
+    oneOf: [{ type: 'integer' }, { type: 'string' }],
+  };
+  const nodeIdentifierRequirement = {
+    anyOf: [{ required: ['id'] }, { required: ['nodeId'] }],
+  };
   const tools: AgentTool[] = [
     {
       name: 'getTree',
@@ -677,27 +683,36 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'getNode',
-      description: 'Get a single React node summary by ID.',
+      description: 'Get a single React node summary by node ID or label.',
       inputSchema: {
         type: 'object',
         properties: {
+          id: {
+            ...nodeIdentifierSchema,
+            description: 'React DevTools node ID or component label.',
+          },
           nodeId: {
-            type: 'integer',
-            description: 'React DevTools node ID.',
+            ...nodeIdentifierSchema,
+            description: 'React DevTools node ID or component label.',
           },
         },
-        required: ['nodeId'],
+        ...nodeIdentifierRequirement,
       },
     },
     {
       name: 'getChildren',
-      description: "Get a node's direct children with cursor-based pagination.",
+      description:
+        "Get a node's direct children by node ID or label with cursor-based pagination.",
       inputSchema: {
         type: 'object',
         properties: {
+          id: {
+            ...nodeIdentifierSchema,
+            description: 'Parent node ID or component label.',
+          },
           nodeId: {
-            type: 'integer',
-            description: 'Parent node ID.',
+            ...nodeIdentifierSchema,
+            description: 'Parent node ID or component label.',
           },
           limit: {
             type: 'integer',
@@ -708,7 +723,7 @@ export const createReactDomainService = (deps: {
             description: 'Opaque cursor returned by the previous page.',
           },
         },
-        required: ['nodeId'],
+        ...nodeIdentifierRequirement,
       },
     },
     {
@@ -718,9 +733,13 @@ export const createReactDomainService = (deps: {
       inputSchema: {
         type: 'object',
         properties: {
+          id: {
+            ...nodeIdentifierSchema,
+            description: 'Node ID or component label to read props for.',
+          },
           nodeId: {
-            type: 'integer',
-            description: 'Node ID to read props for.',
+            ...nodeIdentifierSchema,
+            description: 'Node ID or component label to read props for.',
           },
           limit: {
             type: 'integer',
@@ -731,7 +750,7 @@ export const createReactDomainService = (deps: {
             description: 'Opaque cursor returned by the previous page.',
           },
         },
-        required: ['nodeId'],
+        ...nodeIdentifierRequirement,
       },
     },
     {
@@ -741,9 +760,13 @@ export const createReactDomainService = (deps: {
       inputSchema: {
         type: 'object',
         properties: {
+          id: {
+            ...nodeIdentifierSchema,
+            description: 'Node ID or component label to read state for.',
+          },
           nodeId: {
-            type: 'integer',
-            description: 'Node ID to read state for.',
+            ...nodeIdentifierSchema,
+            description: 'Node ID or component label to read state for.',
           },
           limit: {
             type: 'integer',
@@ -754,7 +777,7 @@ export const createReactDomainService = (deps: {
             description: 'Opaque cursor returned by the previous page.',
           },
         },
-        required: ['nodeId'],
+        ...nodeIdentifierRequirement,
       },
     },
     {
@@ -764,9 +787,13 @@ export const createReactDomainService = (deps: {
       inputSchema: {
         type: 'object',
         properties: {
+          id: {
+            ...nodeIdentifierSchema,
+            description: 'Node ID or component label to read hooks for.',
+          },
           nodeId: {
-            type: 'integer',
-            description: 'Node ID to read hooks for.',
+            ...nodeIdentifierSchema,
+            description: 'Node ID or component label to read hooks for.',
           },
           path: {
             type: 'array',
@@ -784,7 +811,7 @@ export const createReactDomainService = (deps: {
             description: 'Opaque cursor returned by the previous page.',
           },
         },
-        required: ['nodeId'],
+        ...nodeIdentifierRequirement,
       },
     },
     {
@@ -798,8 +825,9 @@ export const createReactDomainService = (deps: {
             description: 'Search query. Required and non-empty.',
           },
           rootId: {
-            type: 'integer',
-            description: 'Optional root node ID to scope search to a subtree.',
+            ...nodeIdentifierSchema,
+            description:
+              'Optional root node ID or component label to scope search to a subtree.',
           },
           match: {
             type: 'string',
