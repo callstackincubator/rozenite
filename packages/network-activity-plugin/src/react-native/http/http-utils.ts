@@ -11,19 +11,22 @@ import type {
 import { safeStringify } from '../../utils/safeStringify';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
 import {
-  isJsonContentType,
-  isXmlContentType,
-} from '../../utils/getContentTypeMimeType';
-import {
   isBlob,
   isArrayBuffer,
   isFormData,
   isNullOrUndefined,
 } from '../../utils/typeChecks';
 import { getContentType } from '../utils';
+import { isJsonContentType } from '../../utils/getContentTypeMimeType';
 import { getBlobName } from '../utils/getBlobName';
 import { getFormDataEntries } from '../utils/getFormDataEntries';
 import type { OverridesRegistry } from './overrides-registry';
+import {
+  captureResponseBodyFromArrayBuffer,
+  captureResponseBodyFromBlob,
+} from './response-body-utils';
+
+export { BINARY_CAPTURE_SIZE_CAP } from './response-body-utils';
 
 /**
  * Utility functions for tracking HTTP requests
@@ -120,45 +123,6 @@ export const getResponseSize = (request: XMLHttpRequest): number | null => {
   }
 };
 
-// Cap on binary capture. Above this, we ship a 'binary-too-large' variant
-// with just the size — no bytes cross the bridge. 5MB comfortably covers
-// debug-relevant images while keeping the bridge from choking on outliers.
-export const BINARY_CAPTURE_SIZE_CAP = 5 * 1024 * 1024;
-
-const readBlobAsText = (blob: Blob): Promise<string> =>
-  new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.readAsText(blob);
-  });
-
-const readBlobAsBase64 = (blob: Blob): Promise<string> =>
-  new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      // FileReader.readAsDataURL returns "data:<mime>;base64,<payload>".
-      // We only want the base64 payload.
-      const dataUrl = reader.result as string;
-      resolve(dataUrl.substring(dataUrl.indexOf(',') + 1));
-    };
-    reader.readAsDataURL(blob);
-  });
-
-// String.fromCharCode.apply(null, hugeArray) blows up around 64K elements
-// in some engines; chunk through 32K windows so we work uniformly across
-// large arraybuffer responses.
-const ARRAY_BUFFER_BASE64_CHUNK = 0x8000;
-
-const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i += ARRAY_BUFFER_BASE64_CHUNK) {
-    const chunk = bytes.subarray(i, i + ARRAY_BUFFER_BASE64_CHUNK);
-    binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
-  }
-  return btoa(binary);
-};
-
 export const getResponseBody = async (
   request: XMLHttpRequest,
 ): Promise<ResponseBody> => {
@@ -171,38 +135,11 @@ export const getResponseBody = async (
 
   if (responseType === 'blob') {
     const contentType = request.getResponseHeader('Content-Type') || '';
-
-    // Text-shaped content stays on the text path so the panel can
-    // show source in the Raw view without base64 round-tripping. XML
-    // composite types (application/xml, atom+xml, soap+xml, ...) and
-    // image/svg+xml are all covered by isXmlContentType per RFC 7303.
-    if (
-      contentType.startsWith('text/') ||
-      isJsonContentType(contentType) ||
-      isXmlContentType(contentType)
-    ) {
-      return readBlobAsText(request.response);
-    }
-
-    // Everything else is binary — image/*, application/pdf, audio/*,
-    // video/*, font/*, application/octet-stream, anything novel a
-    // server might serve.
-    const blob = request.response as Blob;
-    if (blob.size > BINARY_CAPTURE_SIZE_CAP) {
-      return { kind: 'binary-too-large', size: blob.size };
-    }
-    return { kind: 'binary', base64: await readBlobAsBase64(blob) };
+    return captureResponseBodyFromBlob(request.response as Blob, contentType);
   }
 
   if (responseType === 'arraybuffer') {
-    const buffer = request.response as ArrayBuffer | null;
-    if (!buffer || buffer.byteLength === 0) {
-      return null;
-    }
-    if (buffer.byteLength > BINARY_CAPTURE_SIZE_CAP) {
-      return { kind: 'binary-too-large', size: buffer.byteLength };
-    }
-    return { kind: 'binary', base64: arrayBufferToBase64(buffer) };
+    return captureResponseBodyFromArrayBuffer(request.response as ArrayBuffer | null);
   }
 
   if (responseType === 'json') {

@@ -39,7 +39,7 @@ const HTTP_METHODS: HttpMethod[] = [
   'DELETE',
   'HEAD',
 ];
-const SOURCES: NetworkEventSource[] = ['builtin', 'nitro'];
+const SOURCES: NetworkEventSource[] = ['builtin', 'expo', 'nitro'];
 
 const getTypeLabel = (type: RequestTypeFilter) => {
   switch (type) {
@@ -56,6 +56,8 @@ const getSourceLabel = (source: NetworkEventSource) => {
   switch (source) {
     case 'builtin':
       return 'Built-in';
+    case 'expo':
+      return 'Expo';
     case 'nitro':
       return 'Nitro';
   }

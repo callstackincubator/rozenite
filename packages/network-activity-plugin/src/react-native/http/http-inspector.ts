@@ -1,6 +1,7 @@
 import { createNanoEvents } from 'nanoevents';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { XHRInterceptor } from './xhr-interceptor';
+import { FetchInterceptor } from './fetch-interceptor';
 import {
   getRequestBody,
   getResponseSize,
@@ -51,9 +52,15 @@ export const getHTTPInspector = (): HTTPInspector => {
 
   return {
     enable: () => {
-      if (XHRInterceptor.isInterceptorEnabled()) return;
+      if (
+        XHRInterceptor.isInterceptorEnabled() &&
+        FetchInterceptor.isInterceptorEnabled()
+      ) {
+        return;
+      }
 
       XHRInterceptor.disableInterception();
+      FetchInterceptor.disableInterception();
 
       XHRInterceptor.setSendCallback((data, request) => {
         const initiator = getInitiatorFromStack();
@@ -161,19 +168,46 @@ export const getHTTPInspector = (): HTTPInspector => {
         });
       });
 
+      FetchInterceptor.setCallbacks({
+        onRequestSent: (event) => {
+          eventEmitter.emit('request-sent', event);
+        },
+        onResponseReceived: (event) => {
+          eventEmitter.emit('response-received', event);
+        },
+        onRequestCompleted: (event) => {
+          eventEmitter.emit('request-completed', event);
+        },
+        onRequestFailed: (event) => {
+          eventEmitter.emit('request-failed', event);
+        },
+        onRequestProgress: (event) => {
+          eventEmitter.emit('request-progress', event);
+        },
+        onResponseBody: (requestId, body) => {
+          networkRequestsRegistry.setResponseBody(requestId, body);
+        },
+      });
+
       XHRInterceptor.enableInterception();
+      FetchInterceptor.enableInterception();
     },
 
     disable: () => {
       XHRInterceptor.disableInterception();
+      FetchInterceptor.disableInterception();
     },
 
     isEnabled: () => {
-      return XHRInterceptor.isInterceptorEnabled();
+      return (
+        XHRInterceptor.isInterceptorEnabled() ||
+        FetchInterceptor.isInterceptorEnabled()
+      );
     },
 
     dispose: () => {
       XHRInterceptor.disableInterception();
+      FetchInterceptor.disableInterception();
       networkRequestsRegistry.clear();
     },
 
