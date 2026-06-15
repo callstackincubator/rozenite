@@ -22,7 +22,7 @@ export const bytesToBase64 = (bytes: Uint8Array): string => {
   return btoa(binary);
 };
 
-const isTextLikeContentType = (contentType?: string | null) => {
+export const isTextLikeContentType = (contentType?: string | null) => {
   if (!contentType) {
     return false;
   }

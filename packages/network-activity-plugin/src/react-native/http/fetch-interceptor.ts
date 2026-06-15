@@ -1,15 +1,17 @@
 import type { HttpEventMap } from '../../shared/http-events';
 import { getInitiatorFromStack } from './http-utils';
+import { getExpoFetchModule } from './get-expo-fetch-module';
 import {
+  BINARY_CAPTURE_SIZE_CAP,
   captureFetchResponseBodyFromBytes,
   createProgressThrottler,
   getFetchContentLength,
   getFetchContentType,
   getFetchResponseHeaders,
-  isExpoFetchResponse,
   normalizeFetchRequest,
   isFetchAbortError,
 } from './fetch-utils';
+import { isTextLikeContentType } from './response-body-utils';
 
 type FetchInterceptorCallbacks = {
   onRequestSent?: (event: HttpEventMap['request-sent']) => void;
@@ -25,10 +27,14 @@ type FetchInterceptorCallbacks = {
 
 type FetchArgs = Parameters<typeof fetch>;
 
-const originalFetch = globalThis.fetch;
+type ExpoFetchModule = {
+  fetch: typeof globalThis.fetch;
+};
 
 let callbacks: FetchInterceptorCallbacks | null = null;
 let isInterceptorEnabled = false;
+let expoFetchModule: ExpoFetchModule | null = null;
+let originalExpoFetch: typeof globalThis.fetch | null = null;
 
 const createRequestId = () =>
   `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -69,22 +75,12 @@ const captureExpoFetchResponse = async (
   requestId: string,
   sendTime: number,
   response: Response,
-  request: ReturnType<typeof normalizeFetchRequest>,
-  initiator: ReturnType<typeof getInitiatorFromStack>,
 ) => {
   try {
     const responseReceivedAt = Date.now();
     const contentLength = getFetchContentLength(response);
     const contentType = getFetchContentType(response);
-
-    callbacks?.onRequestSent?.({
-      requestId,
-      timestamp: sendTime,
-      request,
-      initiator,
-      type: 'Fetch',
-      source: 'expo',
-    });
+    const isTextLikeResponse = isTextLikeContentType(contentType);
 
     callbacks?.onResponseReceived?.({
       requestId,
@@ -106,6 +102,7 @@ const captureExpoFetchResponse = async (
     const reader = clone.body?.getReader();
     const progressThrottle = createProgressThrottler();
     const chunks: Uint8Array[] = [];
+    let captureBinaryBody = !isTextLikeResponse;
     let loaded = 0;
 
     if (!reader) {
@@ -135,8 +132,18 @@ const captureExpoFetchResponse = async (
         continue;
       }
 
-      chunks.push(value);
       loaded += value.byteLength;
+
+      if (isTextLikeResponse || captureBinaryBody) {
+        chunks.push(value);
+      }
+
+      if (!isTextLikeResponse && captureBinaryBody) {
+        if (loaded > BINARY_CAPTURE_SIZE_CAP) {
+          chunks.length = 0;
+          captureBinaryBody = false;
+        }
+      }
 
       const timestamp = Date.now();
       if (progressThrottle(timestamp)) {
@@ -163,8 +170,13 @@ const captureExpoFetchResponse = async (
       });
     }
 
-    const bodyBytes = concatChunks(chunks, loaded);
-    const body = await captureFetchResponseBodyFromBytes(bodyBytes, contentType);
+    const body: HttpEventMap['response-body']['body'] =
+      captureBinaryBody || isTextLikeResponse
+      ? await captureFetchResponseBodyFromBytes(
+          concatChunks(chunks, loaded),
+          contentType,
+        )
+      : { kind: 'binary-too-large', size: loaded };
     callbacks?.onResponseBody?.(requestId, body);
     callbacks?.onRequestCompleted?.({
       requestId,
@@ -183,6 +195,57 @@ const captureExpoFetchResponse = async (
   }
 };
 
+const patchExpoFetch = (fetchFn: typeof globalThis.fetch) => {
+  if (!expoFetchModule) {
+    return false;
+  }
+
+  if (isInterceptorEnabled) {
+    return true;
+  }
+
+  originalExpoFetch = fetchFn;
+  expoFetchModule.fetch = (async (...args: FetchArgs) => {
+    const sendTime = Date.now();
+    const requestId = createRequestId();
+    const normalizedRequest = normalizeFetchRequest(args[0], args[1] ?? {});
+    const initiator = getInitiatorFromStack();
+
+    callbacks?.onRequestSent?.({
+      requestId,
+      timestamp: sendTime,
+      request: normalizedRequest,
+      initiator,
+      type: 'Fetch',
+      source: 'expo',
+    });
+
+    try {
+      const response = await fetchFn(...args);
+      void captureExpoFetchResponse(
+        requestId,
+        sendTime,
+        response,
+      );
+
+      // The original response is returned to app code unchanged. The
+      // interceptor works off a clone so it can record the response body
+      // without consuming the app's copy.
+      return response;
+    } catch (error) {
+      const signal = normalizedRequest.signal;
+      const canceled =
+        isFetchAbortError(error) || signal?.aborted === true;
+
+      emitRequestFailed(requestId, error, canceled);
+      throw error;
+    }
+  }) as typeof globalThis.fetch;
+
+  isInterceptorEnabled = true;
+  return true;
+};
+
 export const FetchInterceptor = {
   setCallbacks(nextCallbacks: FetchInterceptorCallbacks | null) {
     callbacks = nextCallbacks;
@@ -193,59 +256,16 @@ export const FetchInterceptor = {
   },
 
   enableInterception() {
-    if (isInterceptorEnabled || !originalFetch) {
+    if (isInterceptorEnabled) {
       return;
     }
 
-    globalThis.fetch = (async (...args: FetchArgs) => {
-      const sendTime = Date.now();
-      const requestId = createRequestId();
-      const normalizedRequest = normalizeFetchRequest(args[0], args[1] ?? {});
-      const initiator = getInitiatorFromStack();
+    expoFetchModule = getExpoFetchModule();
+    if (!expoFetchModule) {
+      return;
+    }
 
-      try {
-        const response = await originalFetch.apply(globalThis, args);
-
-        if (!isExpoFetchResponse(response)) {
-          return response;
-        }
-
-        void captureExpoFetchResponse(
-          requestId,
-          sendTime,
-          response,
-          normalizedRequest,
-          initiator,
-        );
-
-        // The original response is returned to app code unchanged. The
-        // interceptor works off a clone so it can record the response body
-        // without consuming the app's copy.
-        return response;
-      } catch (error) {
-        const signal = normalizedRequest.signal;
-        const canceled =
-          isFetchAbortError(error) || signal?.aborted === true;
-
-        if (canceled) {
-          callbacks?.onRequestFailed?.({
-            requestId,
-            timestamp: Date.now(),
-            type: 'Fetch',
-            error:
-              error instanceof Error && error.message
-                ? error.message
-                : 'Aborted',
-            canceled: true,
-            source: 'expo',
-          });
-        }
-
-        throw error;
-      }
-    }) as typeof fetch;
-
-    isInterceptorEnabled = true;
+    patchExpoFetch(expoFetchModule.fetch);
   },
 
   disableInterception() {
@@ -253,10 +273,12 @@ export const FetchInterceptor = {
       return;
     }
 
-    if (originalFetch) {
-      globalThis.fetch = originalFetch;
+    if (expoFetchModule && originalExpoFetch) {
+      expoFetchModule.fetch = originalExpoFetch;
     }
 
+    expoFetchModule = null;
+    originalExpoFetch = null;
     isInterceptorEnabled = false;
     callbacks = null;
   },

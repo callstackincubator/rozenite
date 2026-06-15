@@ -96,17 +96,6 @@ export const normalizeFetchRequest = (
   };
 };
 
-export const isExpoFetchResponse = (response: Response): boolean => {
-  const body = response.body;
-
-  return (
-    typeof response.clone === 'function' &&
-    body != null &&
-    typeof body.getReader === 'function' &&
-    typeof body.tee === 'function'
-  );
-};
-
 export const getFetchResponseHeaders = (response: Response): HttpHeaders => {
   return normalizeHeaders(response.headers);
 };

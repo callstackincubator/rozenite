@@ -6,7 +6,6 @@ import {
   createProgressThrottler,
   getFetchContentLength,
   getFetchContentType,
-  isExpoFetchResponse,
   normalizeFetchRequest,
   normalizeHeaders,
 } from '../fetch-utils';
@@ -154,14 +153,6 @@ describe('progress throttling and response metadata helpers', () => {
     expect(shouldEmit(1_050)).toBe(false);
     expect(shouldEmit(1_100)).toBe(true);
     expect(shouldEmit(1_120, true)).toBe(true);
-  });
-
-  it('detects Expo fetch responses from runtime capabilities', () => {
-    const response = {
-      clone: () => response,
-      body: undefined,
-    } as unknown as Response;
-    expect(isExpoFetchResponse(response)).toBe(false);
   });
 
   it('reads fetch response metadata from headers', () => {

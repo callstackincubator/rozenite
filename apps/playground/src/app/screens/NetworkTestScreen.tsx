@@ -25,6 +25,10 @@ import {
 import { RootStackParamList } from '../navigation/types';
 import { api, User, Post, Todo } from '../utils/network-activity/api';
 import {
+  expoFetchApi,
+  type ExpoFetchDemoResult,
+} from '../utils/network-activity/expo';
+import {
   nitroApi,
   type NitroDemoResult,
 } from '../utils/network-activity/nitro';
@@ -768,6 +772,107 @@ const NitroHTTPTestComponent: React.FC = () => {
           <View style={styles.nitroStatusRow}>
             <ActivityIndicator size="small" color="#ffffff" />
             <Text style={styles.nitroStatusText}>Running Nitro request...</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {result && (
+          <View style={styles.responseContainer}>
+            <Text style={styles.responseTitle}>{result.title}</Text>
+            <Text style={styles.cardMeta}>
+              Status: {result.status} {result.statusText}
+            </Text>
+            {result.extra ? (
+              <Text style={styles.nitroExtraText}>{result.extra}</Text>
+            ) : null}
+            <ScrollView style={styles.responseScrollView} nestedScrollEnabled>
+              <Text style={styles.responseText}>{result.body}</Text>
+            </ScrollView>
+          </View>
+        )}
+      </View>
+    </ScrollView>
+  );
+};
+
+const ExpoFetchHTTPTestComponent: React.FC = () => {
+  const [isRunning, setIsRunning] = React.useState(false);
+  const [result, setResult] = React.useState<ExpoFetchDemoResult | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const runExpoFetchAction = React.useCallback(
+    async (action: () => Promise<ExpoFetchDemoResult>) => {
+      setIsRunning(true);
+      setError(null);
+
+      try {
+        const nextResult = await action();
+        setResult(nextResult);
+      } catch (actionError) {
+        setResult(null);
+        setError(
+          actionError instanceof Error
+            ? actionError.message
+            : String(actionError),
+        );
+      } finally {
+        setIsRunning(false);
+      }
+    },
+    [],
+  );
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Expo Fetch Test</Text>
+        <Text style={styles.cardBody}>
+          Runs requests through `expo/fetch`. Watch the Network Activity panel
+          for Expo source badges. Prefetch is not exposed by `expo/fetch`, so
+          this tab focuses on GET, POST, and abort handling.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runExpoFetchAction(expoFetchApi.getUsers)}
+          >
+            <Text style={styles.nitroButtonText}>Expo GET</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runExpoFetchAction(expoFetchApi.createPost)}
+          >
+            <Text style={styles.nitroButtonText}>Expo POST</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              styles.nitroButtonDanger,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runExpoFetchAction(expoFetchApi.abortSlowRequest)}
+          >
+            <Text style={styles.nitroButtonText}>Abort</Text>
+          </TouchableOpacity>
+        </View>
+
+        {isRunning && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Running Expo request...</Text>
           </View>
         )}
 
@@ -1775,6 +1880,7 @@ export const NetworkTestScreen: React.FC = () => {
   const [activeTest, setActiveTest] = React.useState<
     | 'http'
     | 'nitro'
+    | 'expo-fetch'
     | 'websocket'
     | 'nitro-websocket'
     | 'sse'
@@ -1828,8 +1934,8 @@ export const NetworkTestScreen: React.FC = () => {
     <View style={styles.header}>
       <Text style={styles.title}>Network Test</Text>
       <Text style={styles.subtitle}>
-        Testing built-in HTTP, Nitro HTTP, built-in WebSocket, Nitro WebSocket,
-        and SSE connections
+        Testing built-in HTTP, Expo Fetch, Nitro HTTP, built-in WebSocket,
+        Nitro WebSocket, and SSE connections
       </Text>
 
       <TouchableOpacity
@@ -1842,6 +1948,7 @@ export const NetworkTestScreen: React.FC = () => {
       <View style={styles.mainTabContainer}>
         {[
           { key: 'http', label: 'HTTP Test' },
+          { key: 'expo-fetch', label: 'Expo Fetch' },
           { key: 'nitro', label: 'Nitro HTTP' },
           { key: 'websocket', label: 'WebSocket Test' },
           { key: 'nitro-websocket', label: 'Nitro WS' },
@@ -1862,6 +1969,7 @@ export const NetworkTestScreen: React.FC = () => {
               setActiveTest(
                 tab.key as
                   | 'http'
+                  | 'expo-fetch'
                   | 'nitro'
                   | 'websocket'
                   | 'nitro-websocket'
@@ -1893,6 +2001,8 @@ export const NetworkTestScreen: React.FC = () => {
       {renderHeader()}
       {activeTest === 'http' ? (
         <HTTPTestComponent />
+      ) : activeTest === 'expo-fetch' ? (
+        <ExpoFetchHTTPTestComponent />
       ) : activeTest === 'nitro' ? (
         <NitroHTTPTestComponent />
       ) : activeTest === 'websocket' ? (

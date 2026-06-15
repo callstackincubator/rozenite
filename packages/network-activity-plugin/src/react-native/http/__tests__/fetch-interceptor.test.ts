@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const originalFetch = globalThis.fetch;
+let captureResponseBodySpy: ReturnType<typeof vi.fn> | null = null;
 
-const loadFetchInterceptor = async () => {
+const loadFetchInterceptor = async (
+  expoFetchModule: { fetch: typeof fetch } | null = null,
+) => {
   vi.resetModules();
   vi.doMock('../http-utils', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../http-utils')>();
@@ -13,6 +15,19 @@ const loadFetchInterceptor = async () => {
       getInitiatorFromStack: () => ({ type: 'other' }),
     };
   });
+  vi.doMock('../fetch-utils', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../fetch-utils')>();
+    captureResponseBodySpy = vi.fn(actual.captureFetchResponseBodyFromBytes);
+
+    return {
+      ...actual,
+      BINARY_CAPTURE_SIZE_CAP: 10,
+      captureFetchResponseBodyFromBytes: captureResponseBodySpy,
+    };
+  });
+  vi.doMock('../get-expo-fetch-module', () => ({
+    getExpoFetchModule: () => expoFetchModule,
+  }));
 
   return import('../fetch-interceptor');
 };
@@ -22,7 +37,10 @@ const createExpoResponse = (
   headers: Record<string, string>,
 ) => {
   const encodedChunks = bodyChunks.map((chunk) => new TextEncoder().encode(chunk));
-  const totalSize = encodedChunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+  const totalSize = encodedChunks.reduce(
+    (sum, chunk) => sum + chunk.byteLength,
+    0,
+  );
 
   const createBody = () =>
     new ReadableStream<Uint8Array>({
@@ -50,22 +68,25 @@ const createExpoResponse = (
 };
 
 afterEach(() => {
-  globalThis.fetch = originalFetch;
   vi.restoreAllMocks();
   vi.unmock('../http-utils');
+  vi.unmock('../fetch-utils');
+  vi.unmock('../get-expo-fetch-module');
+  captureResponseBodySpy = null;
 });
 
 describe('FetchInterceptor', () => {
-  it('emits lifecycle events for Expo fetch responses and preserves the original response', async () => {
+  it('patches expo/fetch directly and preserves the original export', async () => {
     const fetchMock = vi.fn(async () =>
       createExpoResponse(['{"ok":', 'true}'], {
         'x-request-id': 'expo-1',
       }),
     );
-    globalThis.fetch = fetchMock as typeof fetch;
+    const expoFetchModule = { fetch: fetchMock as typeof fetch };
 
-    const { FetchInterceptor } = await loadFetchInterceptor();
+    const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
     const events: Array<{ type: string; event: unknown }> = [];
+    const originalModuleFetch = expoFetchModule.fetch;
 
     FetchInterceptor.setCallbacks({
       onRequestSent: (event) => events.push({ type: 'request-sent', event }),
@@ -86,7 +107,10 @@ describe('FetchInterceptor', () => {
 
     FetchInterceptor.enableInterception();
 
-    const response = await fetch('https://example.com/api', {
+    expect(FetchInterceptor.isInterceptorEnabled()).toBe(true);
+    expect(expoFetchModule.fetch).not.toBe(originalModuleFetch);
+
+    const response = await expoFetchModule.fetch('https://example.com/api', {
       method: 'post',
       headers: {
         'x-request-id': 'expo-1',
@@ -160,49 +184,27 @@ describe('FetchInterceptor', () => {
     });
 
     FetchInterceptor.disableInterception();
+
+    expect(FetchInterceptor.isInterceptorEnabled()).toBe(false);
+    expect(expoFetchModule.fetch).toBe(originalModuleFetch);
   });
 
-  it('does not emit fetch-owned events for non-streaming RN responses', async () => {
-    const fetchMock = vi.fn(async () =>
-      ({
-        url: 'https://example.com/api',
-        status: 200,
-        statusText: 'OK',
-        headers: new Headers(),
-        body: undefined,
-        clone: () => null,
-      }) as unknown as Response,
-    );
-    globalThis.fetch = fetchMock as typeof fetch;
+  it('does not start when expo/fetch is unavailable', async () => {
+    const { FetchInterceptor } = await loadFetchInterceptor(null);
 
-    const { FetchInterceptor } = await loadFetchInterceptor();
-    const onRequestSent = vi.fn();
-    const onResponseReceived = vi.fn();
-
-    FetchInterceptor.setCallbacks({
-      onRequestSent,
-      onResponseReceived,
-    });
     FetchInterceptor.enableInterception();
 
-    const response = await fetch('https://example.com/api');
-
-    expect(response).toBeDefined();
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(onRequestSent).not.toHaveBeenCalled();
-    expect(onResponseReceived).not.toHaveBeenCalled();
-    FetchInterceptor.disableInterception();
+    expect(FetchInterceptor.isInterceptorEnabled()).toBe(false);
   });
 
-  it('emits a canceled failure when the original fetch rejects with an AbortError', async () => {
+  it('emits a canceled failure when expo/fetch rejects with an AbortError', async () => {
     const abortError = new DOMException('Aborted', 'AbortError');
     const fetchMock = vi.fn(async () => {
       throw abortError;
     });
-    globalThis.fetch = fetchMock as typeof fetch;
+    const expoFetchModule = { fetch: fetchMock as typeof fetch };
 
-    const { FetchInterceptor } = await loadFetchInterceptor();
+    const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
     const onRequestFailed = vi.fn();
 
     FetchInterceptor.setCallbacks({
@@ -210,9 +212,9 @@ describe('FetchInterceptor', () => {
     });
     FetchInterceptor.enableInterception();
 
-    await expect(fetch('https://example.com/api')).rejects.toThrow(
-      'Aborted',
-    );
+    await expect(
+      expoFetchModule.fetch('https://example.com/api'),
+    ).rejects.toThrow('Aborted');
 
     expect(onRequestFailed).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -225,27 +227,92 @@ describe('FetchInterceptor', () => {
     FetchInterceptor.disableInterception();
   });
 
-  it('restores the original fetch implementation when disabled', async () => {
-    const fetchMock = vi.fn(async () =>
-      ({
-        url: 'https://example.com/api',
-        status: 204,
-        statusText: 'No Content',
-        headers: new Headers(),
-        body: undefined,
-        clone: () => null,
-      }) as unknown as Response,
-    );
-    globalThis.fetch = fetchMock as typeof fetch;
+  it('emits request metadata before a failed expo/fetch rejection', async () => {
+    const fetchMock = vi.fn(async () => {
+      throw new Error('Network down');
+    });
+    const expoFetchModule = { fetch: fetchMock as typeof fetch };
 
-    const { FetchInterceptor } = await loadFetchInterceptor();
+    const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
+    const events: Array<{ type: string; event: unknown }> = [];
 
+    FetchInterceptor.setCallbacks({
+      onRequestSent: (event) => events.push({ type: 'request-sent', event }),
+      onRequestFailed: (event) =>
+        events.push({ type: 'request-failed', event }),
+    });
     FetchInterceptor.enableInterception();
-    expect(FetchInterceptor.isInterceptorEnabled()).toBe(true);
-    expect(globalThis.fetch).not.toBe(fetchMock);
+
+    await expect(
+      expoFetchModule.fetch('https://example.com/api'),
+    ).rejects.toThrow('Network down');
+
+    expect(events.map((entry) => entry.type)).toEqual([
+      'request-sent',
+      'request-failed',
+    ]);
+    expect(events[0]?.event).toMatchObject({
+      request: {
+        url: 'https://example.com/api',
+        method: 'GET',
+      },
+      type: 'Fetch',
+      source: 'expo',
+    });
+    expect(events[1]?.event).toMatchObject({
+      type: 'Fetch',
+      canceled: false,
+      source: 'expo',
+    });
 
     FetchInterceptor.disableInterception();
-    expect(FetchInterceptor.isInterceptorEnabled()).toBe(false);
-    expect(globalThis.fetch).toBe(fetchMock);
+  });
+
+  it('avoids buffering binary bodies past the capture cap', async () => {
+    const size = 11;
+    const fetchMock = vi.fn(async () => {
+      const bytes = new Uint8Array(size);
+      bytes.fill(7);
+
+      const createBody = () =>
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(bytes);
+            controller.close();
+          },
+        });
+
+      const createResponse = (): Response =>
+        ({
+          url: 'https://example.com/file',
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers({
+            'content-type': 'application/octet-stream',
+            'content-length': String(size),
+          }),
+          body: createBody(),
+          clone: () => createResponse(),
+        }) as unknown as Response;
+
+      return createResponse();
+    });
+    const expoFetchModule = { fetch: fetchMock as typeof fetch };
+
+    const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
+    const sentEvents: Array<unknown> = [];
+
+    FetchInterceptor.setCallbacks({
+      onRequestSent: (event) => sentEvents.push(event),
+    });
+    FetchInterceptor.enableInterception();
+
+    await expoFetchModule.fetch('https://example.com/file');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(sentEvents).toHaveLength(1);
+    expect(captureResponseBodySpy).not.toHaveBeenCalled();
+
+    FetchInterceptor.disableInterception();
   });
 });
