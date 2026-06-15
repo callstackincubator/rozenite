@@ -6,6 +6,14 @@ import { rozenitePlugin } from '@rozenite/vite-plugin';
 export default defineConfig({
   root: __dirname,
   plugins: [rozenitePlugin()],
+  resolve: {
+    alias: {
+      '@redux-devtools/inspector-monitor-trace-tab': resolve(
+        __dirname,
+        './src/ui/trace-tab.tsx',
+      ),
+    },
+  },
   test: {
     passWithNoTests: true,
     alias: {

@@ -3,6 +3,7 @@ Search and traverse the React component tree, read props, state, and hooks for a
 ## Tools
 
 - `searchNodes` -> `{"query":"<query>"}` | `{"query":"<query>","cursor":"<cursor>"}` | `{"query":"<query>","limit":20}`
+- `getTree` -> `{}` | `{"depth":2}` | `{"root":123}` | `{"cursor":"<cursor>"}`
 - `getComponent` -> `{"id":123}` | `{"nodeId":123}` | `{"id":123,"include":["props"]}`
 - `getNode` -> `{"nodeId":123}`
 - `getChildren` -> `{"nodeId":123}` | `{"nodeId":123,"cursor":"<cursor>"}` | `{"nodeId":123,"limit":20}`
@@ -17,7 +18,7 @@ Search and traverse the React component tree, read props, state, and hooks for a
 ## Flow
 
 Search and inspect:
-`searchNodes` -> `getComponent` / `getNode` / `getChildren` -> `getProps` / `getState` / `getHooks`.
+`getTree` / `searchNodes` -> `getComponent` / `getNode` / `getChildren` -> `getProps` / `getState` / `getHooks`.
 
 Profile:
 `startProfiling` -> reproduce interaction -> `stopProfiling` -> `getRenderData`.

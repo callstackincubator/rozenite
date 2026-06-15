@@ -1,13 +1,21 @@
 export interface ReactNodeSummary {
   nodeId: number;
+  label: string;
   displayName: string;
   elementType: string;
   key?: string;
   childCount: number;
   parentId?: number;
+  parentLabel?: string;
 }
 
-export interface ReactNodeRecord extends ReactNodeSummary {
+export interface ReactNodeRecord {
+  nodeId: number;
+  displayName: string;
+  elementType: string;
+  key?: string;
+  childCount: number;
+  parentId?: number;
   childIds: number[];
   rendererId?: number;
 }
@@ -40,6 +48,22 @@ export interface ReactDevToolsBridgeMessage {
 
 export interface ReactSearchNodesResult {
   items: ReactNodeSummary[];
+  page: {
+    limit: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  };
+}
+
+export interface ReactTreeNode extends ReactNodeSummary {
+  childIds: number[];
+  depth: number;
+}
+
+export interface ReactGetTreeResult {
+  roots: number[];
+  items: ReactTreeNode[];
+  totalCount: number;
   page: {
     limit: number;
     hasMore: boolean;

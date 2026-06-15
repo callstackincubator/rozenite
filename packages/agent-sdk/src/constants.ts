@@ -41,6 +41,7 @@ export const STATIC_DOMAIN_TOOL_PREFIXES: Record<string, string> = {};
 export const STATIC_DOMAIN_TOOL_NAMES: Record<string, string[]> = {
   console: ['clearMessages', 'getMessages'],
   react: [
+    'getTree',
     'searchNodes',
     'getComponent',
     'getNode',

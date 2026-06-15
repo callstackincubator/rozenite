@@ -18,13 +18,16 @@ import {
   subscribeToPanelCommands,
 } from './runtime-bridge';
 import { registerReduxDevToolsStore } from './redux-devtools-registry';
+import type { ReduxActionTrace, ReduxActionWithTrace } from './shared/trace';
 import type {
   ReduxDevToolsPanelCommand,
   ReduxDevToolsRequest,
 } from './shared/protocol';
+import { resolveReduxTrace } from './symbolication/trace';
 
 const getRandomId = () => Math.random().toString(36).slice(2);
 const MAX_QUEUED_COMMANDS = 50;
+const TRACE_SNAPSHOT_DEBOUNCE_MS = 50;
 const PARTIAL_STATE_CHUNK_SIZE = 1;
 const STORE_SENTINEL = Symbol.for('rozenite.redux-devtools.store-sentinel');
 
@@ -50,6 +53,31 @@ export interface RozeniteDevToolsOptions {
    * @default 50
    */
   maxAge?: number;
+
+  /**
+   * Capture a JavaScript stack trace for each dispatched action.
+   *
+   * When enabled, Rozenite stores the raw Redux DevTools stack and attempts
+   * to symbolicate it through Metro so the Trace tab can show source files
+   * instead of generated bundle locations.
+   *
+   * @default false
+   */
+  trace?: boolean | ((action: AnyAction) => string | undefined);
+
+  /**
+   * Maximum number of stack frames captured for each action.
+   *
+   * @default 25 when trace is enabled
+   */
+  traceLimit?: number;
+
+  /**
+   * Attempt to source-map captured stacks through Metro's /symbolicate endpoint.
+   *
+   * @default true
+   */
+  traceSymbolication?: boolean;
 
   /**
    * Sanitizes each Redux state snapshot before it is sent to DevTools.
@@ -111,11 +139,17 @@ const createRuntimeController = (
   const appInstanceId = getRandomId();
   const instanceName = options.name?.trim() || 'Redux Store';
   const maxAge = options.maxAge ?? 50;
+  const trace = options.trace;
+  const traceLimit = trace ? (options.traceLimit ?? 25) : options.traceLimit;
+  const traceSymbolication = options.traceSymbolication ?? true;
 
   let store: EnhancedStore<any, AnyAction, unknown> | null = null;
   let monitored = false;
   let lastAction: string | undefined;
   const pendingCommands: ReduxDevToolsPanelCommand[] = [];
+  const tracesByActionId = new Map<number, ReduxActionTrace>();
+  const pendingTraceKeys = new Set<string>();
+  let traceSnapshotTimer: ReturnType<typeof setTimeout> | null = null;
   const reportedSanitizerErrors = new Set<string>();
 
   const enqueueCommand = (command: ReduxDevToolsPanelCommand) => {
@@ -220,12 +254,97 @@ const createRuntimeController = (
     });
   };
 
+  const scheduleTraceSnapshot = (): void => {
+    if (!monitored || traceSnapshotTimer) {
+      return;
+    }
+
+    traceSnapshotTimer = setTimeout(() => {
+      traceSnapshotTimer = null;
+
+      if (monitored) {
+        sendStateSnapshot();
+      }
+    }, TRACE_SNAPSHOT_DEBOUNCE_MS);
+  };
+
+  const pruneActionTraces = (
+    liftedState: LiftedState<any, AnyAction, unknown>
+  ): void => {
+    const actionIds = new Set(liftedState.stagedActionIds);
+
+    tracesByActionId.forEach((trace, actionId) => {
+      const liftedAction = liftedState.actionsById[
+        actionId
+      ] as ReduxActionWithTrace | undefined;
+
+      if (!actionIds.has(actionId) || liftedAction?.stack !== trace.rawStack) {
+        tracesByActionId.delete(actionId);
+      }
+    });
+  };
+
+  const resolveTraceForAction = (
+    actionId: number,
+    rawStack: string
+  ): ReduxActionTrace => {
+    const existingTrace = tracesByActionId.get(actionId);
+    if (existingTrace?.rawStack === rawStack) {
+      return existingTrace;
+    }
+
+    const { initialTrace, pendingTrace } = resolveReduxTrace(rawStack, {
+      symbolicate: traceSymbolication,
+    });
+
+    tracesByActionId.set(actionId, initialTrace);
+
+    const pendingTraceKey = `${actionId}:${rawStack}`;
+
+    if (pendingTrace && !pendingTraceKeys.has(pendingTraceKey)) {
+      pendingTraceKeys.add(pendingTraceKey);
+      pendingTrace
+        .then((resolvedTrace) => {
+          const currentTrace = tracesByActionId.get(actionId);
+          if (currentTrace?.rawStack !== rawStack) {
+            return;
+          }
+
+          tracesByActionId.set(actionId, resolvedTrace);
+          scheduleTraceSnapshot();
+        })
+        .finally(() => {
+          pendingTraceKeys.delete(pendingTraceKey);
+        });
+    }
+
+    return initialTrace;
+  };
+
+  const decorateLiftedAction = (
+    actionId: number,
+    liftedAction: PerformAction<AnyAction>
+  ) => {
+    const rawStack = (liftedAction as ReduxActionWithTrace).stack;
+
+    if (typeof rawStack !== 'string' || rawStack.length === 0) {
+      return liftedAction;
+    }
+
+    return {
+      ...liftedAction,
+      rozeniteTrace: resolveTraceForAction(actionId, rawStack),
+    };
+  };
+
   const sendStateSnapshot = (): void => {
     const liftedState = getLiftedStateRaw();
 
     if (!liftedState) {
       return;
     }
+
+    pruneActionTraces(liftedState);
 
     const initialComputedState = liftedState.computedStates[0];
     const initialStagedActionId = liftedState.stagedActionIds[0] ?? 0;
@@ -241,7 +360,7 @@ const createRuntimeController = (
         actionsById: initialAction
           ? {
               [initialStagedActionId]: sanitizeLiftedAction(
-                initialAction,
+                decorateLiftedAction(initialStagedActionId, initialAction),
                 initialStagedActionId
               ),
             }
@@ -280,7 +399,10 @@ const createRuntimeController = (
           | undefined;
 
         if (action) {
-          actionsById[actionId] = sanitizeLiftedAction(action, actionId);
+          actionsById[actionId] = sanitizeLiftedAction(
+            decorateLiftedAction(actionId, action),
+            actionId
+          );
         }
       });
 
@@ -330,6 +452,8 @@ const createRuntimeController = (
       return;
     }
 
+    pruneActionTraces(liftedState);
+
     const nextActionId = liftedState.nextActionId;
     const liftedAction = liftedState.actionsById[
       nextActionId - 1
@@ -347,7 +471,12 @@ const createRuntimeController = (
       payload: stringify(
         sanitizeState(store.getState(), liftedState.currentStateIndex)
       ),
-      action: stringify(sanitizeLiftedAction(liftedAction, nextActionId - 1)),
+      action: stringify(
+        sanitizeLiftedAction(
+          decorateLiftedAction(nextActionId - 1, liftedAction),
+          nextActionId - 1
+        )
+      ),
       nextActionId,
       maxAge,
       isExcess: liftedState.stagedActionIds.length >= maxAge,
@@ -486,6 +615,8 @@ const createRuntimeController = (
         ) => {
           store = instrument(monitorReducer, {
             maxAge,
+            trace,
+            traceLimit,
             shouldHotReload: true,
             shouldRecordChanges: true,
             pauseActionType: '@@PAUSED',
@@ -511,6 +642,7 @@ const createRuntimeController = (
             maxAge,
             getStore: () => store,
             getLiftedState: () => getLiftedStateRaw(),
+            getActionTrace: (actionId) => tracesByActionId.get(actionId) ?? null,
           });
 
           store.subscribe(() => {
