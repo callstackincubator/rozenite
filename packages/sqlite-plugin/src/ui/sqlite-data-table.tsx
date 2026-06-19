@@ -24,11 +24,11 @@ const joinClassNames = (
 ) => classNames.filter(Boolean).join(' ');
 
 const LoadingState = ({ columns }: { columns: number }) => (
-  <div className="sqlite-results-loading" aria-live="polite">
+  <div aria-live="polite" className="grid gap-3">
     {Array.from({ length: 6 }, (_, rowIndex) => (
       <div
         key={`loading-${rowIndex}`}
-        className="sqlite-results-loading-row"
+        className="grid gap-3 rounded-xl border border-border/60 bg-background/80 px-4 py-3"
         style={{
           gridTemplateColumns: `repeat(${Math.max(columns, 3)}, minmax(12rem, 1fr))`,
         }}
@@ -36,7 +36,7 @@ const LoadingState = ({ columns }: { columns: number }) => (
         {Array.from({ length: Math.max(columns, 3) }, (_, columnIndex) => (
           <span
             key={`${rowIndex}-${columnIndex}`}
-            className="sqlite-results-loading-bar"
+            className="h-3 animate-pulse rounded-xl bg-surface-secondary"
           />
         ))}
       </div>
@@ -74,15 +74,15 @@ const SortableColumnHeader = <TData extends RowData>({
     <th
       scope="col"
       className={joinClassNames(
-        header.column.id === SQLITE_ROW_NUMBER_COLUMN_ID &&
-          'sqlite-results-number-col',
-        header.column.getIsResizing() && 'sqlite-table-column-resizing',
+        'relative flex border-b border-border/60 bg-background/80 px-[0.65rem] py-[0.6rem] text-left text-[0.68rem] leading-[1.2] font-medium uppercase tracking-[0.1em] text-muted',
+        header.column.id === SQLITE_ROW_NUMBER_COLUMN_ID && 'w-[4.5rem]',
+        header.column.getIsResizing() && 'bg-accent/5',
       )}
       style={{
         width: header.getSize(),
       }}
     >
-      <div className="sqlite-table-header-content">
+      <div className="flex min-w-0 items-center justify-between gap-1.5 pr-2">
         <div className="min-w-0">
           {header.isPlaceholder
             ? null
@@ -92,14 +92,18 @@ const SortableColumnHeader = <TData extends RowData>({
       {header.column.getCanResize() ? (
         <div
           aria-hidden="true"
-          className={joinClassNames(
-            'sqlite-column-resizer',
-            header.column.getIsResizing() && 'is-active',
-          )}
+          className="absolute inset-y-1.5 -right-2 z-30 w-4 cursor-col-resize touch-none select-none"
           onDoubleClick={() => header.column.resetSize()}
           onMouseDown={header.getResizeHandler()}
           onTouchStart={header.getResizeHandler()}
-        />
+        >
+          <span
+            className={joinClassNames(
+              'pointer-events-none absolute left-1/2 top-0 h-full w-px -translate-x-1/2 rounded-full bg-border/90 transition-colors',
+              header.column.getIsResizing() && 'bg-accent ring-1 ring-accent/25',
+            )}
+          />
+        </div>
       ) : null}
     </th>
   );
@@ -135,7 +139,7 @@ export const SqliteDataTable = <TData extends RowData>({
       minSize: 72,
       maxSize: 72,
       cell: ({ row }) => (
-        <span className="sqlite-results-row-number sqlite-tabular">
+        <span className="sqlite-tabular text-muted">
           {formatNumber(rowNumberOffset + row.index + 1)}
         </span>
       ),
@@ -197,12 +201,15 @@ export const SqliteDataTable = <TData extends RowData>({
 
   const renderTable = (): ReactNode => (
     <table
-      className={joinClassNames('sqlite-results-table', tableClassName)}
+      className={joinClassNames(
+        'grid w-full border-separate border-spacing-0',
+        tableClassName,
+      )}
       style={{ minWidth: table.getTotalSize() }}
     >
-      <thead>
+      <thead className="grid">
         {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id} className="sqlite-table-row-shell">
+          <tr key={headerGroup.id} className="flex w-full">
             {headerGroup.headers.map((header) => (
               <SortableColumnHeader key={header.id} header={header} />
             ))}
@@ -210,6 +217,7 @@ export const SqliteDataTable = <TData extends RowData>({
         ))}
       </thead>
       <tbody
+        className="relative grid"
         style={{
           height: rowVirtualizer.getTotalSize(),
         }}
@@ -230,7 +238,10 @@ export const SqliteDataTable = <TData extends RowData>({
                 }
               }}
               data-index={virtualRow.index}
-              className={joinClassNames(onRowClick && 'sqlite-results-row')}
+              className={joinClassNames(
+                'group absolute left-0 top-0 flex w-full',
+                onRowClick && 'cursor-pointer focus:outline-none',
+              )}
               role={onRowClick ? 'button' : undefined}
               tabIndex={onRowClick ? 0 : undefined}
               aria-label={
@@ -251,8 +262,9 @@ export const SqliteDataTable = <TData extends RowData>({
                 <td
                   key={cell.id}
                   className={joinClassNames(
+                    'flex items-start border-b border-border/60 px-[0.65rem] py-[0.55rem] align-top leading-[1.35] text-foreground transition-colors group-hover:bg-accent/4 group-focus-within:bg-accent/8',
                     cell.column.id === SQLITE_ROW_NUMBER_COLUMN_ID &&
-                      'sqlite-results-row-number',
+                      'sqlite-tabular w-[4.5rem] text-muted',
                   )}
                   style={{ width: cell.column.getSize() }}
                 >
@@ -268,23 +280,28 @@ export const SqliteDataTable = <TData extends RowData>({
 
   return (
     <div
-      className={joinClassNames('sqlite-results-shell', shellClassName)}
+      className={joinClassNames(
+        'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden',
+        shellClassName,
+      )}
       data-table-id={tableId}
     >
       <div
         ref={scrollElementRef}
         className={joinClassNames(
-          'sqlite-results-scroll',
+          'flex min-h-0 min-w-0 flex-1 flex-col overflow-auto p-3',
           scrollContainerClassName,
         )}
       >
         {loading ? (
           <LoadingState columns={loadingColumns} />
         ) : data.length === 0 || columns.length === 0 ? (
-          <div className="sqlite-results-empty">
+          <div className="flex min-h-[12rem] flex-1 items-center justify-center rounded-xl border border-border/50 bg-background/70 p-4">
             <div className="max-w-sm space-y-2 text-center">
-              <p className="text-base font-medium text-white">{emptyTitle}</p>
-              <p className="text-sm text-slate-400">{emptyDescription}</p>
+              <p className="text-base font-medium text-foreground">
+                {emptyTitle}
+              </p>
+              <p className="text-sm text-muted">{emptyDescription}</p>
             </div>
           </div>
         ) : (

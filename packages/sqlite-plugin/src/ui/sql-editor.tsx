@@ -77,45 +77,45 @@ const emptyDecorations = Decoration.set([]);
 const sqlHighlightStyle = HighlightStyle.define([
   {
     tag: [tags.keyword, tags.operatorKeyword],
-    color: '#8ec5ff',
+    color: 'var(--accent)',
     fontWeight: '600',
   },
   {
     tag: [tags.string, tags.special(tags.string)],
-    color: '#8fe0ba',
+    color: 'var(--success)',
   },
   {
     tag: [tags.number, tags.integer, tags.float, tags.bool],
-    color: '#f9c97a',
+    color: 'var(--warning)',
   },
   {
     tag: [tags.comment, tags.lineComment, tags.blockComment],
-    color: 'rgba(165, 185, 204, 0.56)',
+    color: 'var(--muted)',
     fontStyle: 'italic',
   },
   {
     tag: [tags.name, tags.variableName, tags.propertyName],
-    color: '#edf5fb',
+    color: 'var(--foreground)',
   },
   {
     tag: [tags.definition(tags.name), tags.typeName, tags.namespace],
-    color: '#9ecbff',
+    color: 'var(--accent)',
   },
   {
     tag: [tags.function(tags.variableName), tags.function(tags.propertyName)],
-    color: '#7fd8ff',
+    color: 'var(--accent)',
   },
   {
     tag: [tags.operator, tags.compareOperator, tags.logicOperator],
-    color: 'rgba(190, 216, 238, 0.88)',
+    color: 'var(--foreground)',
   },
   {
     tag: tags.null,
-    color: '#ff9f7f',
+    color: 'var(--danger)',
   },
   {
     tag: [tags.paren, tags.squareBracket, tags.brace, tags.punctuation],
-    color: 'rgba(226, 236, 245, 0.82)',
+    color: 'var(--muted)',
   },
 ]);
 
@@ -126,7 +126,7 @@ const sqlEditorTheme = EditorView.theme(
       flex: '1 1 auto',
       minHeight: '0',
       height: '100%',
-      color: 'var(--sqlite-text)',
+      color: 'var(--foreground)',
       backgroundColor: 'transparent',
       fontSize: '0.8rem',
     },
@@ -147,54 +147,59 @@ const sqlEditorTheme = EditorView.theme(
     },
     '.cm-content': {
       minHeight: '100%',
-      caretColor: '#f7fbff',
+      caretColor: 'var(--foreground)',
     },
     '.cm-cursor, .cm-dropCursor': {
-      borderLeftColor: '#f7fbff',
+      borderLeftColor: 'var(--foreground)',
     },
     '.cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection':
       {
-        backgroundColor: 'rgba(89, 163, 255, 0.2)',
+        backgroundColor: 'color-mix(in srgb, var(--accent) 22%, transparent)',
       },
     '.cm-activeLine': {
-      backgroundColor: 'rgba(255, 255, 255, 0.032)',
+      backgroundColor:
+        'color-mix(in srgb, var(--surface-secondary) 18%, transparent)',
     },
     '.cm-activeLineGutter': {
-      backgroundColor: 'rgba(255, 255, 255, 0.028)',
-      color: 'rgba(244, 249, 253, 0.96)',
+      backgroundColor:
+        'color-mix(in srgb, var(--surface-secondary) 24%, transparent)',
+      color: 'var(--foreground)',
     },
     '.cm-gutters': {
-      color: 'rgba(165, 185, 204, 0.5)',
-      backgroundColor: 'rgba(255, 255, 255, 0.02)',
-      borderRight: '1px solid var(--sqlite-line)',
+      color: 'var(--muted)',
+      backgroundColor:
+        'color-mix(in srgb, var(--surface-secondary) 28%, var(--background) 72%)',
+      borderRight: '1px solid var(--border)',
     },
     '.cm-tooltip': {
-      border: '1px solid var(--sqlite-line-strong)',
-      backgroundColor: 'rgba(10, 20, 31, 0.98)',
-      color: 'var(--sqlite-text)',
+      border: '1px solid var(--border)',
+      backgroundColor: 'var(--surface)',
+      color: 'var(--foreground)',
       borderRadius: '0.9rem',
       boxShadow: '0 20px 52px rgba(0, 0, 0, 0.34)',
       overflow: 'hidden',
     },
     '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
-      backgroundColor: 'rgba(89, 163, 255, 0.18)',
-      color: '#fff',
+      backgroundColor: 'color-mix(in srgb, var(--accent) 18%, transparent)',
+      color: 'var(--foreground)',
     },
     '.cm-panels': {
-      backgroundColor: 'rgba(255, 255, 255, 0.02)',
-      color: 'var(--sqlite-text)',
-      borderBottom: '1px solid var(--sqlite-line)',
+      backgroundColor: 'var(--background)',
+      color: 'var(--foreground)',
+      borderBottom: '1px solid var(--border)',
     },
     '.cm-searchMatch': {
-      backgroundColor: 'rgba(255, 191, 105, 0.2)',
-      outline: '1px solid rgba(255, 191, 105, 0.22)',
+      backgroundColor:
+        'color-mix(in srgb, var(--warning) 22%, transparent)',
+      outline: '1px solid color-mix(in srgb, var(--warning) 32%, transparent)',
     },
     '.cm-searchMatch.cm-searchMatch-selected': {
-      backgroundColor: 'rgba(89, 163, 255, 0.26)',
+      backgroundColor: 'color-mix(in srgb, var(--accent) 28%, transparent)',
     },
     '.cm-matchingBracket, .cm-nonmatchingBracket': {
-      backgroundColor: 'rgba(255, 255, 255, 0.06)',
-      outline: '1px solid rgba(255, 255, 255, 0.08)',
+      backgroundColor:
+        'color-mix(in srgb, var(--surface-tertiary) 80%, transparent)',
+      outline: '1px solid color-mix(in srgb, var(--border) 75%, transparent)',
     },
   },
   { dark: true },
