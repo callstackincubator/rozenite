@@ -1,43 +1,33 @@
 import { useEffect } from 'react';
-import type { HTTPInspector } from './http/http-inspector';
+import type { NetworkInspector } from './network-inspector';
 import type { NetworkActivityDevToolsClient } from '../shared/client';
-import { getResponseBody } from './http/http-utils';
 import { getOverridesRegistry } from './http/overrides-registry';
 
 const overridesRegistry = getOverridesRegistry();
 
 export const useHttpInspector = (
   client: NetworkActivityDevToolsClient | null,
-  httpInspector: HTTPInspector,
+  networkInspector: NetworkInspector,
   isEnabled: boolean,
-  isRecordingEnabled: boolean
+  isRecordingEnabled: boolean,
 ) => {
   useEffect(() => {
     if (!client || !isEnabled) {
       return;
     }
 
-    const networkRequestsRegistry =
-      httpInspector.getNetworkRequestsRegistry();
-
     const subscriptions = [
       client.onMessage('network-enable', () => {
-        httpInspector.enable();
+        networkInspector.http.enable();
       }),
       client.onMessage('network-disable', () => {
-        httpInspector.disable();
+        networkInspector.http.disable();
       }),
       client.onMessage('set-overrides', (data) => {
         overridesRegistry.setOverrides(data.overrides);
       }),
       client.onMessage('get-response-body', async ({ requestId }) => {
-        const request = networkRequestsRegistry.getEntry(requestId);
-
-        if (!request) {
-          return;
-        }
-
-        const body = await getResponseBody(request);
+        const body = await networkInspector.getResponseBody(requestId);
 
         client.send('response-body', {
           requestId,
@@ -48,12 +38,12 @@ export const useHttpInspector = (
 
     // If recording was previously enabled, enable the inspector (hot reload)
     if (isRecordingEnabled) {
-      httpInspector.enable();
+      networkInspector.http.enable();
     }
 
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
-      httpInspector.dispose();
+      networkInspector.http.dispose();
     };
-  }, [client, httpInspector, isEnabled, isRecordingEnabled]);
+  }, [client, networkInspector, isEnabled, isRecordingEnabled]);
 };

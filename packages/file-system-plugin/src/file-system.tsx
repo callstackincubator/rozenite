@@ -20,6 +20,7 @@ import { ConnectingScreen } from './ui/ConnectingScreen';
 import { DetailPanel } from './ui/DetailPanel';
 import { FileEntryTable } from './ui/FileEntryTable';
 import { PathDisplay } from './ui/PathDisplay';
+import { downloadBase64File, readFileAsBase64 } from './utils';
 import './ui/globals.css';
 
 function getProviderLabel(provider: string): string {
@@ -43,6 +44,9 @@ export default function FileSystemPanel() {
   const nav = useFileSystemNavigation(client, requests);
 
   const [selected, setSelected] = useState<FsEntry | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [exportPath, setExportPath] = useState<string | null>(null);
+  const [transferError, setTransferError] = useState<string | null>(null);
 
   useEffect(() => {
     setSelected(null);
@@ -76,6 +80,127 @@ export default function FileSystemPanel() {
       setSelected(entry);
     },
     [nav.setCurrentPath],
+  );
+
+  const importSelectedFile = useCallback(
+    async (file: File, overwrite = false) => {
+      if (!nav.currentPath) return;
+
+      setTransferError(null);
+      setImportLoading(true);
+
+      try {
+        const base64 = await readFileAsBase64(file);
+        const res = await requests.requestImportFile(
+          nav.currentPath,
+          file.name,
+          base64,
+          overwrite,
+        );
+
+        if (!res) return;
+
+        if (res.overwriteRequired) {
+          const shouldOverwrite = window.confirm(
+            `"${file.name}" already exists. Overwrite it?`,
+          );
+          if (shouldOverwrite) {
+            const overwriteRes = await requests.requestImportFile(
+              nav.currentPath,
+              file.name,
+              base64,
+              true,
+            );
+            if (overwriteRes?.error) {
+              setTransferError(overwriteRes.error);
+              return;
+            }
+            nav.onReload();
+            if (overwriteRes?.entry) {
+              setSelected(overwriteRes.entry);
+            }
+          }
+          return;
+        }
+
+        if (res.error) {
+          setTransferError(res.error);
+          return;
+        }
+
+        nav.onReload();
+        if (res.entry) {
+          setSelected(res.entry);
+        }
+      } catch (e) {
+        setTransferError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setImportLoading(false);
+      }
+    },
+    [nav.currentPath, nav.onReload, requests.requestImportFile],
+  );
+
+  const onImport = useCallback(() => {
+    if (!nav.currentPath || !nav.fileTransfer.import || importLoading) return;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.style.display = 'none';
+    const removeInput = () => {
+      if (input.parentNode) {
+        document.body.removeChild(input);
+      }
+    };
+    input.onchange = () => {
+      const file = input.files?.[0];
+      removeInput();
+      if (!file) return;
+      void importSelectedFile(file);
+    };
+    input.addEventListener('cancel', removeInput);
+    document.body.appendChild(input);
+    input.click();
+  }, [
+    importLoading,
+    importSelectedFile,
+    nav.currentPath,
+    nav.fileTransfer.import,
+  ]);
+
+  const onExport = useCallback(
+    async (entry: FsEntry) => {
+      if (entry.isDirectory || !nav.fileTransfer.export) return;
+
+      setTransferError(null);
+      setExportPath(entry.path);
+
+      try {
+        const res = await requests.requestExportFile(entry.path);
+        if (!res) return;
+        if (res.error) {
+          setTransferError(res.error);
+          return;
+        }
+        if (res.base64 == null || !res.fileName) {
+          setTransferError('Export did not return file contents.');
+          return;
+        }
+        const didDownload = downloadBase64File(
+          res.fileName,
+          res.base64,
+          res.mime,
+        );
+        if (!didDownload) {
+          setTransferError('Failed to download exported file.');
+        }
+      } catch (e) {
+        setTransferError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setExportPath(null);
+      }
+    },
+    [nav.fileTransfer.export, requests.requestExportFile],
   );
 
   return (
@@ -184,6 +309,23 @@ export default function FileSystemPanel() {
         >
           Go
         </Button>
+        {nav.fileTransfer.import ? (
+          <Button
+            isDisabled={!client || !nav.currentPath || importLoading}
+            onPress={onImport}
+            size="sm"
+            variant="secondary"
+          >
+            {importLoading ? (
+              <>
+                <Loader2 className="size-3 animate-spin" />
+                Importing...
+              </>
+            ) : (
+              'Import'
+            )}
+          </Button>
+        ) : null}
       </div>
 
       <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-3 pt-0 lg:flex-row">
@@ -218,6 +360,16 @@ export default function FileSystemPanel() {
             </Surface>
           ) : null}
 
+          {transferError ? (
+            <Surface
+              className="rounded-xl border border-danger/25 bg-danger/10 px-4 py-4 text-sm text-danger"
+              variant="secondary"
+            >
+              <div className="font-medium">Transfer error</div>
+              <div className="mt-1">{transferError}</div>
+            </Surface>
+          ) : null}
+
           {!client ? (
             <ConnectingScreen />
           ) : nav.currentPath ? (
@@ -246,6 +398,13 @@ export default function FileSystemPanel() {
 
         <section className="flex min-h-0 min-w-0 flex-1 overflow-hidden lg:flex-[2]">
           <DetailPanel
+            canExport={
+              Boolean(selected) &&
+              !selected?.isDirectory &&
+              nav.fileTransfer.export
+            }
+            exportLoading={Boolean(selected && exportPath === selected.path)}
+            onExport={onExport}
             requestImagePreview={requests.requestImagePreview}
             requestTextPreview={requests.requestTextPreview}
             selected={selected}

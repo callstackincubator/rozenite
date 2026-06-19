@@ -44,8 +44,10 @@ export const ActionTimeline = ({
         <Card.Content className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {selectedEntry ? (
             <ActionDetailPanel
+              key={selectedActionIndex}
               action={selectedEntry.action}
               state={selectedEntry.state}
+              origin={selectedEntry.origin}
             />
           ) : (
             <Surface

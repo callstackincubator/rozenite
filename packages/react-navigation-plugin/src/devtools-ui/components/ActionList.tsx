@@ -1,10 +1,13 @@
 import { Surface } from '@rozenite/ui';
+import type { ActionOrigin } from '../../react-native/symbolication/types';
 import type { NavigationAction, NavigationState } from '../../shared';
 import { ActionItem } from './ActionItem';
 
 export type ActionWithState = {
+  id?: number;
   action: NavigationAction;
   state: NavigationState | undefined;
+  origin?: ActionOrigin;
 };
 
 export type ActionListProps = {
@@ -32,6 +35,7 @@ export const ActionList = ({
             <ActionItem
               key={index}
               action={entry.action}
+              origin={entry.origin}
               index={index}
               isSelected={selectedActionIndex === index}
               onSelect={() => onActionSelect(index)}

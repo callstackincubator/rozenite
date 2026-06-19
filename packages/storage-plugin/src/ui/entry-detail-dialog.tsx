@@ -11,6 +11,7 @@ import {
 } from '@rozenite/ui';
 import { Edit3, Info } from 'lucide-react';
 import type { StorageEntry, StorageEntryType } from '../shared/types';
+import { bytesToHexdump } from './binary';
 
 export type EntryDetailDialogProps = {
   onClose: () => void;
@@ -55,10 +56,17 @@ const formatValue = (entry: StorageEntry) => {
     );
   }
 
+  // buffer — show a full hexdump
+  const bufferArray = entry.value as number[];
   return (
-    <span className="font-mono text-sm text-accent">
-      [{entry.value.join(', ')}]
-    </span>
+    <div className="space-y-2">
+      <div className="text-xs text-muted">
+        {bufferArray.length} {bufferArray.length === 1 ? 'byte' : 'bytes'}
+      </div>
+      <pre className="font-mono text-xs text-accent whitespace-pre overflow-auto leading-snug">
+        {bytesToHexdump(bufferArray)}
+      </pre>
+    </div>
   );
 };
 

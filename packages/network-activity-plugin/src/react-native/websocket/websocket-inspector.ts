@@ -5,6 +5,7 @@ import {
   WebSocketEventMap,
 } from '../../shared/websocket-events';
 import type { Inspector } from '../inspector';
+import type { WebSocketInterceptor } from './websocket-interceptor';
 
 type NanoEventsMap = {
   [K in keyof WebSocketEventMap]: (data: WebSocketEventMap[K]) => void;
@@ -23,15 +24,18 @@ export const WEBSOCKET_EVENTS: (keyof WebSocketEventMap)[] = [
 ];
 
 export const isWebSocketEvent = (
-  type: string
+  type: string,
 ): type is keyof WebSocketEventMap => {
   return (WEBSOCKET_EVENTS as readonly string[]).includes(type);
 };
 
-export const getWebSocketInspector = (): WebSocketInspector => {
+const toSocketId = (socketId: number) => String(socketId);
+
+export const createWebSocketInspector = (
+  webSocketInterceptor: WebSocketInterceptor = getWebSocketInterceptor(),
+): WebSocketInspector => {
   const eventEmitter = createNanoEvents<NanoEventsMap>();
   const socketUrlMap = new Map<number, string>();
-  const webSocketInterceptor = getWebSocketInterceptor();
 
   return {
     enable: () => {
@@ -40,19 +44,20 @@ export const getWebSocketInspector = (): WebSocketInspector => {
           url: string,
           protocols: string[] | null,
           options: string[],
-          socketId: number
+          socketId: number,
         ) => {
           socketUrlMap.set(socketId, url);
           const event: WebSocketEvent = {
             type: 'websocket-connect',
             url,
-            socketId,
+            socketId: toSocketId(socketId),
             timestamp: Date.now(),
             protocols,
             options,
+            source: 'builtin',
           };
           eventEmitter.emit('websocket-connect', event);
-        }
+        },
       );
 
       webSocketInterceptor.setCloseCallback(
@@ -66,14 +71,15 @@ export const getWebSocketInspector = (): WebSocketInspector => {
           const event: WebSocketEvent = {
             type: 'websocket-close',
             url,
-            socketId,
+            socketId: toSocketId(socketId),
             timestamp: Date.now(),
             code: code || 0,
             reason: reason || undefined,
+            source: 'builtin',
           };
           eventEmitter.emit('websocket-close', event);
           socketUrlMap.delete(socketId);
-        }
+        },
       );
 
       webSocketInterceptor.setOnMessageCallback(
@@ -87,13 +93,14 @@ export const getWebSocketInspector = (): WebSocketInspector => {
           const event: WebSocketEvent = {
             type: 'websocket-message-received',
             url,
-            socketId,
+            socketId: toSocketId(socketId),
             timestamp: Date.now(),
             data,
             messageType: typeof data === 'string' ? 'text' : 'binary',
+            source: 'builtin',
           };
           eventEmitter.emit('websocket-message-received', event);
-        }
+        },
       );
 
       webSocketInterceptor.setOnErrorCallback(
@@ -107,12 +114,13 @@ export const getWebSocketInspector = (): WebSocketInspector => {
           const event: WebSocketEvent = {
             type: 'websocket-error',
             url,
-            socketId,
+            socketId: toSocketId(socketId),
             timestamp: Date.now(),
             error,
+            source: 'builtin',
           };
           eventEmitter.emit('websocket-error', event);
-        }
+        },
       );
 
       webSocketInterceptor.setSendCallback((data: string, socketId: number) => {
@@ -125,10 +133,11 @@ export const getWebSocketInspector = (): WebSocketInspector => {
         const event: WebSocketEvent = {
           type: 'websocket-message-sent',
           url,
-          socketId,
+          socketId: toSocketId(socketId),
           timestamp: Date.now(),
           data,
           messageType: typeof data === 'string' ? 'text' : 'binary',
+          source: 'builtin',
         };
         eventEmitter.emit('websocket-message-sent', event);
       });
@@ -143,8 +152,9 @@ export const getWebSocketInspector = (): WebSocketInspector => {
         const event: WebSocketEvent = {
           type: 'websocket-open',
           url,
-          socketId,
+          socketId: toSocketId(socketId),
           timestamp: Date.now(),
+          source: 'builtin',
         };
         eventEmitter.emit('websocket-open', event);
       });
@@ -160,14 +170,15 @@ export const getWebSocketInspector = (): WebSocketInspector => {
           const event: WebSocketEvent = {
             type: 'websocket-close',
             url,
-            socketId,
+            socketId: toSocketId(socketId),
             timestamp: Date.now(),
             code: error.code,
             reason: error.reason,
+            source: 'builtin',
           };
           eventEmitter.emit('websocket-close', event);
           socketUrlMap.delete(socketId);
-        }
+        },
       );
 
       webSocketInterceptor.enableInterception();
@@ -182,7 +193,11 @@ export const getWebSocketInspector = (): WebSocketInspector => {
     },
     on: <TEventType extends keyof WebSocketEventMap>(
       event: TEventType,
-      callback: (data: WebSocketEventMap[TEventType]) => void
+      callback: (data: WebSocketEventMap[TEventType]) => void,
     ) => eventEmitter.on(event, callback as NanoEventsMap[TEventType]),
   };
+};
+
+export const getWebSocketInspector = (): WebSocketInspector => {
+  return createWebSocketInspector();
 };

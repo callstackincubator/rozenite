@@ -36,6 +36,7 @@ const mocks = vi.hoisted(() => {
   }));
   const wsInstances: MockWebSocket[] = [];
   let bindingName = 'rozenite-binding';
+  let stalledRuntimeExpression: string | null = null;
 
   class MockWebSocket {
     static readonly CONNECTING = 0;
@@ -44,11 +45,13 @@ const mocks = vi.hoisted(() => {
     static readonly CLOSED = 3;
 
     readonly url: string;
+    readonly options: unknown;
     readyState = MockWebSocket.CONNECTING;
     private listeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
-    constructor(url: string) {
+    constructor(url: string, options?: unknown) {
       this.url = url;
+      this.options = options;
       wsInstances.push(this);
     }
 
@@ -92,6 +95,16 @@ const mocks = vi.hoisted(() => {
         params: payload.params,
       });
       callback?.();
+
+      if (
+        payload.method === 'Runtime.evaluate' &&
+        stalledRuntimeExpression &&
+        String(payload.params?.expression ?? '').includes(
+          stalledRuntimeExpression,
+        )
+      ) {
+        return;
+      }
 
       queueMicrotask(() => {
         this.emit(
@@ -162,6 +175,9 @@ const mocks = vi.hoisted(() => {
     extractConsoleMessage: vi.fn(() => null),
     parseRozeniteBindingPayload: vi.fn(() => null),
     wsInstances,
+    stallRuntimeEvaluationContaining: (expression: string) => {
+      stalledRuntimeExpression = expression;
+    },
     reset: () => {
       commandLog.length = 0;
       loggerInfo.mockReset();
@@ -181,6 +197,7 @@ const mocks = vi.hoisted(() => {
         service.captureReactDevToolsMessage?.mockReset();
       });
       bindingName = 'rozenite-binding';
+      stalledRuntimeExpression = null;
       wsInstances.length = 0;
     },
   };
@@ -223,7 +240,7 @@ vi.mock('../logger.js', () => ({
 
 import { createAgentSession } from '../agent/session.js';
 
-const TARGET: MetroTarget = {
+const createTarget = (overrides: Partial<MetroTarget> = {}): MetroTarget => ({
   id: 'device-1',
   pageId: 'page-1',
   appId: 'com.example.app',
@@ -231,7 +248,10 @@ const TARGET: MetroTarget = {
   title: 'App',
   description: 'Device target',
   webSocketDebuggerUrl: 'ws://localhost:8081/debug',
-};
+  ...overrides,
+});
+
+const TARGET = createTarget();
 
 const flushMicrotasks = async () => {
   await Promise.resolve();
@@ -242,13 +262,14 @@ const createStartedSession = (
   overrides?: Partial<{
     cliVersion: string;
     metroVersion: string;
+    target: MetroTarget;
   }>,
 ) => {
   const session = createAgentSession({
     projectRoot: '/app',
     host: 'localhost',
     port: 8081,
-    target: TARGET,
+    target: overrides?.target ?? TARGET,
     ...overrides,
   });
 
@@ -267,6 +288,7 @@ const startSession = async (
   const started = createStartedSession(overrides);
   started.socket.open();
   await vi.advanceTimersByTimeAsync(500);
+  await vi.advanceTimersByTimeAsync(50);
   await flushMicrotasks();
   await started.startPromise;
 
@@ -283,6 +305,35 @@ const getExpressions = (): string[] => {
     .map((command) => String(command.params?.expression ?? ''));
 };
 
+const emitRozeniteBindingPayload = async (
+  socket: InstanceType<typeof mocks.MockWebSocket>,
+  message: Record<string, unknown>,
+) => {
+  mocks.parseRozeniteBindingPayload.mockImplementation(
+    ((rawMessage: Record<string, unknown>) =>
+      (rawMessage.bindingPayload as
+        | {
+            domain: string;
+            message: Record<string, unknown>;
+          }
+        | undefined) ?? null) as unknown as () => null,
+  );
+
+  socket.emit(
+    'message',
+    JSON.stringify({
+      bindingPayload: {
+        domain: 'rozenite',
+        message,
+      },
+    }),
+  );
+  await flushMicrotasks();
+
+  mocks.parseRozeniteBindingPayload.mockReset();
+  mocks.parseRozeniteBindingPayload.mockReturnValue(null);
+};
+
 describe('agent session', () => {
   beforeEach(() => {
     mocks.reset();
@@ -291,6 +342,32 @@ describe('agent session', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('sets an origin header derived from the debugger websocket URL', () => {
+    const { socket } = createStartedSession();
+
+    expect(socket.url).toBe(TARGET.webSocketDebuggerUrl);
+    expect(socket.options).toEqual({
+      headers: {
+        Origin: 'http://localhost:8081',
+      },
+    });
+  });
+
+  it('preserves the debugger websocket host in the origin header', () => {
+    const target = createTarget({
+      webSocketDebuggerUrl: 'ws://127.0.0.1:8081/debug',
+    });
+
+    const { socket } = createStartedSession({ target });
+
+    expect(socket.url).toBe(target.webSocketDebuggerUrl);
+    expect(socket.options).toEqual({
+      headers: {
+        Origin: 'http://127.0.0.1:8081',
+      },
+    });
   });
 
   it('does not resolve start before the bootstrap delay elapses', async () => {
@@ -308,18 +385,31 @@ describe('agent session', () => {
 
     await vi.advanceTimersByTimeAsync(1);
     await flushMicrotasks();
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(50);
+    await flushMicrotasks();
     await startPromise;
 
     expect(onResolved).toHaveBeenCalledTimes(1);
   });
 
-  it('resolves start after bootstrap completes', async () => {
+  it('resolves start after bootstrap and plugin readiness settles', async () => {
     const { startPromise, socket } = createStartedSession();
     const onResolved = vi.fn();
     startPromise.then(onResolved);
 
     socket.open();
     await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(49);
+    await flushMicrotasks();
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
     await flushMicrotasks();
 
     expect(onResolved).toHaveBeenCalledTimes(1);
@@ -331,6 +421,63 @@ describe('agent session', () => {
         expression.includes('initializeDomain("react-devtools")'),
       ),
     ).toBe(true);
+  });
+
+  it('extends plugin readiness wait when activity arrives', async () => {
+    const { startPromise, socket } = createStartedSession();
+    const onResolved = vi.fn();
+    startPromise.then(onResolved);
+
+    socket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(49);
+    await flushMicrotasks();
+
+    await emitRozeniteBindingPayload(socket, {
+      pluginId: '@rozenite/storage-plugin',
+      type: 'plugin-mounted',
+      payload: {
+        pluginId: '@rozenite/storage-plugin',
+      },
+    });
+
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(49);
+    await flushMicrotasks();
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    await flushMicrotasks();
+    await expect(startPromise).resolves.toBeUndefined();
+  });
+
+  it('resolves start after the bounded plugin readiness timeout', async () => {
+    const { startPromise, socket } = createStartedSession();
+    const onResolved = vi.fn();
+    startPromise.then(onResolved);
+
+    socket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    for (let elapsed = 0; elapsed < 245; elapsed += 49) {
+      await vi.advanceTimersByTimeAsync(49);
+      await flushMicrotasks();
+      await emitRozeniteBindingPayload(socket, {
+        pluginId: '@rozenite/storage-plugin',
+        type: 'plugin-mounted',
+        payload: {
+          pluginId: '@rozenite/storage-plugin',
+        },
+      });
+      expect(onResolved).not.toHaveBeenCalled();
+    }
+
+    await vi.advanceTimersByTimeAsync(5);
+    await flushMicrotasks();
+    await expect(startPromise).resolves.toBeUndefined();
   });
 
   it('emits agent-session-ready after rozenite domain initialization', async () => {
@@ -422,6 +569,40 @@ describe('agent session', () => {
     expect(mocks.loggerInfo).toHaveBeenCalledWith(
       'Rozenite for Agents disconnected from device iPhone 16 (device-1).',
     );
+  });
+
+  it('handles pending CDP command rejection for detached senders when the websocket closes', async () => {
+    const unhandledRejections: unknown[] = [];
+    const handleUnhandledRejection = (reason: unknown) => {
+      unhandledRejections.push(reason);
+    };
+    process.on('unhandledRejection', handleUnhandledRejection);
+
+    try {
+      const { socket } = await startSession();
+      mocks.stallRuntimeEvaluationContaining('detached-cdp-message');
+
+      const sender = mocks.handler.connectDevice.mock.calls[0]?.[2] as
+        | { sendMessage: (message: unknown) => void }
+        | undefined;
+      expect(sender).toBeDefined();
+
+      sender?.sendMessage({
+        marker: 'detached-cdp-message',
+      });
+      await flushMicrotasks();
+
+      socket.close();
+      await flushMicrotasks();
+      vi.useRealTimers();
+      await new Promise((resolve) => {
+        setImmediate(resolve);
+      });
+
+      expect(unhandledRejections).toEqual([]);
+    } finally {
+      process.off('unhandledRejection', handleUnhandledRejection);
+    }
   });
 
   it('rejects startup if the websocket closes before bootstrap completes', async () => {

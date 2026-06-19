@@ -1,121 +1,8 @@
 import { useCallback } from 'react';
-import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
-import type { MMKVEntry, MMKVEntryType, MMKVEntryValue } from '../shared/types';
+import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+import type { MMKVEntryType, MMKVEntryValue } from '../shared/types';
+import { MMKV_AGENT_PLUGIN_ID, mmkvToolDefinitions } from '../shared/agent-tools';
 import type { MMKVView } from './mmkv-view';
-
-type StorageInput = { storageId?: string };
-type KeyInput = StorageInput & { key: string };
-type SetInput = StorageInput & {
-  key: string;
-  type: MMKVEntryType;
-  value: unknown;
-};
-type ListEntriesInput = StorageInput & {
-  offset?: number;
-  limit?: number;
-};
-
-const toolPrefix = '@rozenite/mmkv-plugin';
-const sharedStorageProperty = {
-  storageId: {
-    type: 'string',
-    description: 'MMKV storage ID. Required when multiple storages are configured.',
-  },
-} as const;
-
-const listStoragesTool: AgentTool = {
-  name: 'list-storages',
-  description: 'List MMKV storages currently available on the device.',
-  inputSchema: { type: 'object', properties: {} },
-};
-
-const listEntriesTool: AgentTool = {
-  name: 'list-entries',
-  description:
-    'List MMKV keys in a storage. This call intentionally does not return entry values.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...sharedStorageProperty,
-      offset: {
-        type: 'number',
-        description: 'Pagination offset. Defaults to 0.',
-      },
-      limit: {
-        type: 'number',
-        description: 'Pagination size. Defaults to 100.',
-      },
-    },
-  },
-};
-
-const readEntryTool: AgentTool = {
-  name: 'read-entry',
-  description: 'Read a single MMKV entry value by key.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...sharedStorageProperty,
-      key: { type: 'string', description: 'Entry key.' },
-    },
-    required: ['key'],
-  },
-};
-
-const createEntryTool: AgentTool = {
-  name: 'create-entry',
-  description: 'Create a new MMKV entry. Fails if the key already exists.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...sharedStorageProperty,
-      key: { type: 'string', description: 'Entry key.' },
-      type: {
-        type: 'string',
-        enum: ['string', 'number', 'boolean', 'buffer'],
-        description: 'Entry value type.',
-      },
-      value: {
-        description: 'Entry value matching the provided type.',
-      },
-    },
-    required: ['key', 'type', 'value'],
-  },
-};
-
-const editEntryTool: AgentTool = {
-  name: 'edit-entry',
-  description: 'Edit an existing MMKV entry. Fails if the key does not exist.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...sharedStorageProperty,
-      key: { type: 'string', description: 'Entry key.' },
-      type: {
-        type: 'string',
-        enum: ['string', 'number', 'boolean', 'buffer'],
-        description: 'Entry value type.',
-      },
-      value: {
-        description: 'Entry value matching the provided type.',
-      },
-    },
-    required: ['key', 'type', 'value'],
-  },
-};
-
-const removeEntryTool: AgentTool = {
-  name: 'remove-entry',
-  description: 'Remove an MMKV entry by key.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      ...sharedStorageProperty,
-      key: { type: 'string', description: 'Entry key.' },
-    },
-    required: ['key'],
-  },
-};
 
 const parseValueForType = (
   type: MMKVEntryType,
@@ -182,8 +69,8 @@ export const useMMKVAgentTools = (views: MMKVView[]) => {
   );
 
   useRozenitePluginAgentTool({
-    pluginId: toolPrefix,
-    tool: listStoragesTool,
+    pluginId: MMKV_AGENT_PLUGIN_ID,
+    tool: mmkvToolDefinitions.listStorages,
     handler: () => ({
       storages: views.map((view) => ({
         id: view.getId(),
@@ -192,9 +79,9 @@ export const useMMKVAgentTools = (views: MMKVView[]) => {
     }),
   });
 
-  useRozenitePluginAgentTool<ListEntriesInput>({
-    pluginId: toolPrefix,
-    tool: listEntriesTool,
+  useRozenitePluginAgentTool({
+    pluginId: MMKV_AGENT_PLUGIN_ID,
+    tool: mmkvToolDefinitions.listEntries,
     handler: ({ storageId, offset = 0, limit = 100 }) => {
       const view = resolveStorage(storageId);
       const allKeys = view.getAllKeys();
@@ -212,9 +99,9 @@ export const useMMKVAgentTools = (views: MMKVView[]) => {
     },
   });
 
-  useRozenitePluginAgentTool<KeyInput, { storageId: string; entry: MMKVEntry }>({
-    pluginId: toolPrefix,
-    tool: readEntryTool,
+  useRozenitePluginAgentTool({
+    pluginId: MMKV_AGENT_PLUGIN_ID,
+    tool: mmkvToolDefinitions.readEntry,
     handler: ({ storageId, key }) => {
       const view = resolveStorage(storageId);
       const entry = view.get(key);
@@ -230,9 +117,9 @@ export const useMMKVAgentTools = (views: MMKVView[]) => {
     },
   });
 
-  useRozenitePluginAgentTool<SetInput>({
-    pluginId: toolPrefix,
-    tool: createEntryTool,
+  useRozenitePluginAgentTool({
+    pluginId: MMKV_AGENT_PLUGIN_ID,
+    tool: mmkvToolDefinitions.createEntry,
     handler: ({ storageId, key, type, value }) => {
       const view = resolveStorage(storageId);
       const existing = view.get(key);
@@ -247,15 +134,15 @@ export const useMMKVAgentTools = (views: MMKVView[]) => {
 
       return {
         storageId: view.getId(),
-        created: true,
+        created: true as const,
         key,
       };
     },
   });
 
-  useRozenitePluginAgentTool<SetInput>({
-    pluginId: toolPrefix,
-    tool: editEntryTool,
+  useRozenitePluginAgentTool({
+    pluginId: MMKV_AGENT_PLUGIN_ID,
+    tool: mmkvToolDefinitions.editEntry,
     handler: ({ storageId, key, type, value }) => {
       const view = resolveStorage(storageId);
       const existing = view.get(key);
@@ -270,15 +157,15 @@ export const useMMKVAgentTools = (views: MMKVView[]) => {
 
       return {
         storageId: view.getId(),
-        edited: true,
+        edited: true as const,
         key,
       };
     },
   });
 
-  useRozenitePluginAgentTool<KeyInput>({
-    pluginId: toolPrefix,
-    tool: removeEntryTool,
+  useRozenitePluginAgentTool({
+    pluginId: MMKV_AGENT_PLUGIN_ID,
+    tool: mmkvToolDefinitions.removeEntry,
     handler: ({ storageId, key }) => {
       const view = resolveStorage(storageId);
       const existed = !!view.get(key);

@@ -1,13 +1,21 @@
 export interface ReactNodeSummary {
   nodeId: number;
+  label: string;
   displayName: string;
   elementType: string;
   key?: string;
   childCount: number;
   parentId?: number;
+  parentLabel?: string;
 }
 
-export interface ReactNodeRecord extends ReactNodeSummary {
+export interface ReactNodeRecord {
+  nodeId: number;
+  displayName: string;
+  elementType: string;
+  key?: string;
+  childCount: number;
+  parentId?: number;
   childIds: number[];
   rendererId?: number;
 }
@@ -47,6 +55,22 @@ export interface ReactSearchNodesResult {
   };
 }
 
+export interface ReactTreeNode extends ReactNodeSummary {
+  childIds: number[];
+  depth: number;
+}
+
+export interface ReactGetTreeResult {
+  roots: number[];
+  items: ReactTreeNode[];
+  totalCount: number;
+  page: {
+    limit: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  };
+}
+
 export interface ReactGetChildrenResult {
   items: ReactNodeSummary[];
   page: {
@@ -54,6 +78,20 @@ export interface ReactGetChildrenResult {
     hasMore: boolean;
     nextCursor?: string;
   };
+}
+
+export type ReactComponentSection = 'props' | 'state' | 'hooks';
+
+export interface ReactGetComponentResult {
+  node: ReactNodeSummary & {
+    childIds: number[];
+    rendererId?: number;
+  };
+  props?: unknown;
+  state?: unknown;
+  hooks?: unknown;
+  partial?: boolean;
+  unavailable?: ReactComponentSection[];
 }
 
 export interface ReactInspectableEntry {

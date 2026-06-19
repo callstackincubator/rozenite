@@ -2,29 +2,12 @@ import { useEffect, useMemo } from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
 import {
-  clearMutationCacheTool,
-  clearQueryCacheTool,
   createTanStackQueryAgentController,
-  getCacheSummaryTool,
-  getMutationDetailsTool,
-  getOnlineStatusTool,
-  getQueryDetailsTool,
-  invalidateQueryTool,
-  listMutationsTool,
-  listQueriesTool,
-  refetchQueryTool,
-  removeQueryTool,
-  resetQueryTool,
-  setQueryErrorTool,
-  setQueryLoadingTool,
-  TANSTACK_QUERY_AGENT_PLUGIN_ID,
-  type TanStackQueryAgentMutationIdInput,
-  type TanStackQueryAgentOnlineStatusInput,
-  type TanStackQueryAgentPaginationInput,
-  type TanStackQueryAgentQueryHashInput,
-  type TanStackQueryAgentQueryToggleInput,
-  setOnlineStatusTool,
 } from './tanstack-query-agent';
+import {
+  TANSTACK_QUERY_AGENT_PLUGIN_ID,
+  tanstackQueryToolDefinitions,
+} from '../../shared/agent-tools';
 
 export const useTanStackQueryAgentTools = (queryClient: QueryClient) => {
   const controller = useMemo(
@@ -48,100 +31,91 @@ export const useTanStackQueryAgentTools = (queryClient: QueryClient) => {
 
   useRozenitePluginAgentTool({
     pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: getCacheSummaryTool,
+    tool: tanstackQueryToolDefinitions.getCacheSummary,
     handler: () => controller.getCacheSummary(),
   });
 
   useRozenitePluginAgentTool({
     pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: getOnlineStatusTool,
+    tool: tanstackQueryToolDefinitions.getOnlineStatus,
     handler: () => controller.getOnlineStatus(),
   });
 
-  useRozenitePluginAgentTool<TanStackQueryAgentOnlineStatusInput>({
+  useRozenitePluginAgentTool({
     pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: setOnlineStatusTool,
-    handler: (input: TanStackQueryAgentOnlineStatusInput) =>
-      controller.setOnlineStatus(input),
+    tool: tanstackQueryToolDefinitions.setOnlineStatus,
+    handler: (input) => controller.setOnlineStatus(input),
   });
 
-  useRozenitePluginAgentTool<TanStackQueryAgentPaginationInput>({
+  useRozenitePluginAgentTool({
     pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: listQueriesTool,
+    tool: tanstackQueryToolDefinitions.listQueries,
     handler: (input = {}) => controller.listQueries(input),
   });
 
-  useRozenitePluginAgentTool<TanStackQueryAgentQueryHashInput>({
+  useRozenitePluginAgentTool({
     pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: getQueryDetailsTool,
-    handler: (input: TanStackQueryAgentQueryHashInput) =>
-      controller.getQueryDetails(input),
-  });
-
-  useRozenitePluginAgentTool<TanStackQueryAgentQueryHashInput>({
-    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: refetchQueryTool,
-    handler: (input: TanStackQueryAgentQueryHashInput) =>
-      controller.refetchQuery(input),
-  });
-
-  useRozenitePluginAgentTool<TanStackQueryAgentQueryToggleInput>({
-    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: setQueryLoadingTool,
-    handler: (input: TanStackQueryAgentQueryToggleInput) =>
-      controller.setQueryLoading(input),
-  });
-
-  useRozenitePluginAgentTool<TanStackQueryAgentQueryToggleInput>({
-    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: setQueryErrorTool,
-    handler: (input: TanStackQueryAgentQueryToggleInput) =>
-      controller.setQueryError(input),
-  });
-
-  useRozenitePluginAgentTool<TanStackQueryAgentQueryHashInput>({
-    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: invalidateQueryTool,
-    handler: (input: TanStackQueryAgentQueryHashInput) =>
-      controller.invalidateQuery(input),
-  });
-
-  useRozenitePluginAgentTool<TanStackQueryAgentQueryHashInput>({
-    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: resetQueryTool,
-    handler: (input: TanStackQueryAgentQueryHashInput) =>
-      controller.resetQuery(input),
-  });
-
-  useRozenitePluginAgentTool<TanStackQueryAgentQueryHashInput>({
-    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: removeQueryTool,
-    handler: (input: TanStackQueryAgentQueryHashInput) =>
-      controller.removeQuery(input),
+    tool: tanstackQueryToolDefinitions.getQueryDetails,
+    handler: (input) => controller.getQueryDetails(input),
   });
 
   useRozenitePluginAgentTool({
     pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: clearQueryCacheTool,
+    tool: tanstackQueryToolDefinitions.refetchQuery,
+    handler: (input) => controller.refetchQuery(input),
+  });
+
+  useRozenitePluginAgentTool({
+    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
+    tool: tanstackQueryToolDefinitions.setQueryLoading,
+    handler: (input) => controller.setQueryLoading(input),
+  });
+
+  useRozenitePluginAgentTool({
+    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
+    tool: tanstackQueryToolDefinitions.setQueryError,
+    handler: (input) => controller.setQueryError(input),
+  });
+
+  useRozenitePluginAgentTool({
+    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
+    tool: tanstackQueryToolDefinitions.invalidateQuery,
+    handler: (input) => controller.invalidateQuery(input),
+  });
+
+  useRozenitePluginAgentTool({
+    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
+    tool: tanstackQueryToolDefinitions.resetQuery,
+    handler: (input) => controller.resetQuery(input),
+  });
+
+  useRozenitePluginAgentTool({
+    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
+    tool: tanstackQueryToolDefinitions.removeQuery,
+    handler: (input) => controller.removeQuery(input),
+  });
+
+  useRozenitePluginAgentTool({
+    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
+    tool: tanstackQueryToolDefinitions.clearQueryCache,
     handler: () => controller.clearQueryCache(),
   });
 
-  useRozenitePluginAgentTool<TanStackQueryAgentPaginationInput>({
+  useRozenitePluginAgentTool({
     pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: listMutationsTool,
+    tool: tanstackQueryToolDefinitions.listMutations,
     handler: (input = {}) => controller.listMutations(input),
-  });
-
-  useRozenitePluginAgentTool<TanStackQueryAgentMutationIdInput>({
-    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: getMutationDetailsTool,
-    handler: (input: TanStackQueryAgentMutationIdInput) =>
-      controller.getMutationDetails(input),
   });
 
   useRozenitePluginAgentTool({
     pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
-    tool: clearMutationCacheTool,
+    tool: tanstackQueryToolDefinitions.getMutationDetails,
+    handler: (input) => controller.getMutationDetails(input),
+  });
+
+  useRozenitePluginAgentTool({
+    pluginId: TANSTACK_QUERY_AGENT_PLUGIN_ID,
+    tool: tanstackQueryToolDefinitions.clearMutationCache,
     handler: () => controller.clearMutationCache(),
   });
 };

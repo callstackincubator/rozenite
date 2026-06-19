@@ -47,7 +47,7 @@ type WebSocketAgentRecord = {
   requestId: string;
   kind: 'websocket';
   url: string;
-  socketId: number;
+  socketId: string;
   status: 'connecting' | 'open' | 'closing' | 'closed' | 'error';
   startedAt: number;
   endedAt?: number;
@@ -174,7 +174,7 @@ const decodeCursor = (cursor: string, scope: string): number => {
   const [cursorScope, rawIndex] = cursor.split(':', 2);
   if (cursorScope !== scope || !rawIndex) {
     throw new Error(
-      'Cursor does not match the requested listing. Run the command again.'
+      'Cursor does not match the requested listing. Run the command again.',
     );
   }
 
@@ -190,7 +190,7 @@ const paginate = <T>(
   rows: T[],
   scope: string,
   limit: number,
-  cursor?: string
+  cursor?: string,
 ): Page<T> => {
   const startIndex = cursor ? decodeCursor(cursor, scope) : 0;
   const endIndex = Math.min(startIndex + limit, rows.length);
@@ -208,7 +208,7 @@ const paginate = <T>(
 
 const serializeRequestBody = (
   requestId: string,
-  postData?: RequestPostData
+  postData?: RequestPostData,
 ): NetworkActivityAgentBodyResult => {
   if (!postData) {
     return {
@@ -287,7 +287,7 @@ const getRealtimeSummary = (record: RealtimeAgentRecord) => {
 const trimMap = <T>(
   order: string[],
   records: Map<string, T>,
-  capacity: number
+  capacity: number,
 ): number => {
   let evicted = 0;
   while (order.length > capacity) {
@@ -330,7 +330,7 @@ export const createNetworkActivityAgentState = () => {
 
   const ensureHttpRecord = (
     requestId: string,
-    fallback?: Partial<HttpAgentRecord>
+    fallback?: Partial<HttpAgentRecord>,
   ): HttpAgentRecord => {
     const existing = state.httpRecords.get(requestId);
     if (existing) {
@@ -357,7 +357,7 @@ export const createNetworkActivityAgentState = () => {
     const evicted = trimMap(
       state.httpOrder,
       state.httpRecords,
-      HTTP_BUFFER_CAPACITY
+      HTTP_BUFFER_CAPACITY,
     );
     if (evicted > 0) {
       state.httpEvictedCount += evicted;
@@ -368,7 +368,7 @@ export const createNetworkActivityAgentState = () => {
 
   const ensureRealtimeRecord = (
     requestId: string,
-    createRecord: () => RealtimeAgentRecord
+    createRecord: () => RealtimeAgentRecord,
   ): RealtimeAgentRecord => {
     const existing = state.realtimeRecords.get(requestId);
     if (existing) {
@@ -382,7 +382,7 @@ export const createNetworkActivityAgentState = () => {
     const evicted = trimMap(
       state.realtimeOrder,
       state.realtimeRecords,
-      REALTIME_BUFFER_CAPACITY
+      REALTIME_BUFFER_CAPACITY,
     );
     if (evicted > 0) {
       state.realtimeEvictedCount += evicted;
@@ -706,12 +706,12 @@ export const createNetworkActivityAgentState = () => {
         timestamp: event.timestamp,
       };
       record.messages = [...record.messages, message].slice(
-        -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION
+        -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION,
       );
     },
 
     onWebSocketMessageReceived(
-      event: WebSocketEventMap['websocket-message-received']
+      event: WebSocketEventMap['websocket-message-received'],
     ) {
       if (!state.isRecording) {
         return;
@@ -734,7 +734,7 @@ export const createNetworkActivityAgentState = () => {
         timestamp: event.timestamp,
       };
       record.messages = [...record.messages, message].slice(
-        -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION
+        -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION,
       );
     },
 
@@ -757,7 +757,7 @@ export const createNetworkActivityAgentState = () => {
     },
 
     onWebSocketConnectionStatusChanged(
-      event: WebSocketEventMap['websocket-connection-status-changed']
+      event: WebSocketEventMap['websocket-connection-status-changed'],
     ) {
       if (!state.isRecording) {
         return;

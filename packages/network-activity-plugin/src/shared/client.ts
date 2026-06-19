@@ -14,6 +14,9 @@ export type NetworkActivityEventMap = {
   'network-enable': unknown;
   'network-disable': unknown;
 
+  // Recording state sync (sent by React Native to inform DevTools UI of current state)
+  'recording-state': { isRecording: boolean };
+
   // Client UI settings events
   'get-client-ui-settings': unknown;
   'client-ui-settings': {

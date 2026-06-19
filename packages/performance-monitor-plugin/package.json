@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/performance-monitor-plugin",
-  "version": "1.7.0",
+  "version": "1.12.0",
   "description": "Performance Monitor for Rozenite.",
   "type": "module",
   "main": "./dist/react-native/index.cjs",
@@ -18,7 +18,8 @@
     "build": "rozenite build",
     "dev": "rozenite dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",

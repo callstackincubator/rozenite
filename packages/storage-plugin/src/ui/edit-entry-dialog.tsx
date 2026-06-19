@@ -1,15 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Button,
   Chip,
   Description,
-  Input,
   Label,
-  ListBox,
   Modal,
-  Select,
   Surface,
-  TextField,
 } from '@rozenite/ui';
 import { Edit3 } from 'lucide-react';
 import type {
@@ -18,9 +14,15 @@ import type {
   StorageEntryValue,
 } from '../shared/types';
 import { ConfirmDialog } from './confirm-dialog';
+import { TypedValueEditor } from './typed-value-editor';
+import { defaultValueForType } from './type-conversion';
 
 export type EditEntryDialogProps = {
   onClose: () => void;
+  // Called with the runtime value in its native JS shape — the caller
+  // infers the storage type from `typeof newValue`. Lets the dialog
+  // change the entry's stored type (e.g. string → buffer) without a
+  // dedicated prop for the new type.
   onEditEntry: (key: string, newValue: StorageEntryValue) => void;
   entry: StorageEntry | null;
   supportedTypes: StorageEntryType[];
@@ -51,122 +53,57 @@ const typeColorMap: Record<
   buffer: 'accent',
 };
 
-const getInputType = (type: StorageEntryType) =>
-  type === 'number' ? 'number' : 'text';
-
-const getPlaceholder = (type: StorageEntryType) => {
-  if (type === 'string') {
-    return 'Enter string value';
-  }
-
-  if (type === 'number') {
-    return 'Enter number value';
-  }
-
-  if (type === 'boolean') {
-    return 'Enter true or false';
-  }
-
-  return 'Enter array as JSON, e.g., [1, 2, 3]';
-};
-
 export const EditEntryDialog = ({
   onClose,
   onEditEntry,
   entry,
   supportedTypes,
 }: EditEntryDialogProps) => {
-  const [editValue, setEditValue] = useState('');
+  const [currentType, setCurrentType] = useState<StorageEntryType>('string');
+  const [currentValue, setCurrentValue] = useState<StorageEntryValue | null>(
+    defaultValueForType('string'),
+  );
   const [confirmDialog, setConfirmDialog] =
     useState<DialogState>(EMPTY_DIALOG_STATE);
 
   useEffect(() => {
     if (entry) {
-      setEditValue(
-        Array.isArray(entry.value) ? JSON.stringify(entry.value) : String(entry.value),
-      );
+      setCurrentType(entry.type);
+      setCurrentValue(entry.value);
       setConfirmDialog(EMPTY_DIALOG_STATE);
     }
   }, [entry]);
 
-  const isTypeSupported = useMemo(
-    () => !!entry && supportedTypes.includes(entry.type),
-    [entry, supportedTypes],
-  );
+  const isCurrentTypeSupported = supportedTypes.includes(currentType);
 
-  const resetForm = () => {
-    setEditValue('');
+  const resetAndClose = () => {
+    setCurrentType('string');
+    setCurrentValue(defaultValueForType('string'));
     setConfirmDialog(EMPTY_DIALOG_STATE);
     onClose();
   };
 
-  const handleEditEntry = () => {
-    if (!entry) {
-      return;
-    }
+  const handleSave = () => {
+    if (!entry || currentValue === null) return;
 
-    if (!isTypeSupported) {
+    if (!isCurrentTypeSupported) {
       setConfirmDialog({
         isOpen: true,
         title: 'Unsupported Type',
-        message: 'This storage does not support the current entry type.',
+        message: 'This storage does not support the selected type.',
         type: 'alert',
       });
       return;
     }
 
-    let newValue: StorageEntryValue;
-
-    try {
-      switch (entry.type) {
-        case 'string':
-          newValue = editValue;
-          break;
-        case 'number':
-          newValue = Number(editValue);
-          if (Number.isNaN(newValue)) {
-            throw new Error('Invalid number');
-          }
-          break;
-        case 'boolean':
-          if (editValue !== 'true' && editValue !== 'false') {
-            throw new Error('Boolean value must be "true" or "false"');
-          }
-          newValue = editValue === 'true';
-          break;
-        case 'buffer':
-          newValue = JSON.parse(editValue);
-          if (
-            !Array.isArray(newValue) ||
-            !newValue.every((value) => typeof value === 'number')
-          ) {
-            throw new Error('Buffer must be an array of numbers');
-          }
-          break;
-        default:
-          throw new Error('Invalid type');
-      }
-    } catch (error) {
-      setConfirmDialog({
-        isOpen: true,
-        title: 'Invalid Value',
-        message: `Invalid value for ${entry.type}: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-        type: 'alert',
-      });
-      return;
-    }
-
-    onEditEntry(entry.key, newValue);
-    resetForm();
+    onEditEntry(entry.key, currentValue);
+    resetAndClose();
   };
 
-  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && editValue.trim()) {
-      handleEditEntry();
-    }
-  };
+  // Unsavable when the type isn't supported, or when the current value
+  // is null (the hex editor signals invalid / empty hex as null —
+  // empty bytes are not a meaningful entry to save).
+  const isSaveDisabled = !isCurrentTypeSupported || currentValue === null;
 
   return (
     <>
@@ -174,7 +111,7 @@ export const EditEntryDialog = ({
         isOpen={entry !== null}
         onOpenChange={(nextOpen) => {
           if (!nextOpen) {
-            resetForm();
+            resetAndClose();
           }
         }}
       >
@@ -214,84 +151,37 @@ export const EditEntryDialog = ({
                       >
                         {entry.type}
                       </Chip>
-                      <Description
-                        className={`text-xs ${
-                          isTypeSupported ? 'text-muted' : 'text-warning'
-                        }`}
-                      >
-                        {isTypeSupported
-                          ? 'Type cannot be changed during editing.'
-                          : `This storage does not support ${entry.type} values.`}
-                      </Description>
                     </div>
 
-                    {entry.type === 'boolean' ? (
-                      <div className="flex flex-col gap-2">
-                        <Label>Value</Label>
-                        <Select
-                          className="w-full"
-                          onChange={(key) =>
-                            setEditValue(key == null ? '' : String(key))
-                          }
-                          value={editValue || null}
-                          variant="secondary"
-                        >
-                          <Select.Trigger>
-                            <Select.Value />
-                            <Select.Indicator />
-                          </Select.Trigger>
-                          <Select.Popover>
-                            <ListBox aria-label="Entry value">
-                              <ListBox.Item
-                                id="true"
-                                key="true"
-                                textValue="true"
-                              >
-                                true
-                              </ListBox.Item>
-                              <ListBox.Item
-                                id="false"
-                                key="false"
-                                textValue="false"
-                              >
-                                false
-                              </ListBox.Item>
-                            </ListBox>
-                          </Select.Popover>
-                        </Select>
-                      </div>
-                    ) : (
-                      <TextField
-                        className="w-full"
-                        name="edit-entry-value"
-                        type={getInputType(entry.type)}
-                      >
-                        <Label>Value</Label>
-                        <Input
-                          autoFocus
-                          onChange={(event) => setEditValue(event.target.value)}
-                          onKeyDown={handleInputKeyDown}
-                          placeholder={getPlaceholder(entry.type)}
-                          value={editValue}
-                          variant="secondary"
-                        />
-                        {entry.type === 'buffer' ? (
-                          <Description className="text-xs text-muted">
-                            Enter as JSON array of numbers, e.g., [1, 2, 3, 255]
-                          </Description>
-                        ) : null}
-                      </TextField>
-                    )}
+                    <div className="flex flex-col gap-2">
+                      <Label>Value</Label>
+                      <TypedValueEditor
+                        supportedTypes={supportedTypes}
+                        type={currentType}
+                        value={currentValue}
+                        onChange={(nextType, nextValue) => {
+                          setCurrentType(nextType);
+                          setCurrentValue(nextValue);
+                        }}
+                        inputId="edit-entry-value"
+                        autoFocus
+                      />
+                      {!isCurrentTypeSupported ? (
+                        <Description className="text-xs text-warning">
+                          This storage does not support {currentType} values.
+                        </Description>
+                      ) : null}
+                    </div>
                   </>
                 ) : null}
               </Modal.Body>
               <Modal.Footer className="flex justify-end gap-2">
-                <Button onPress={resetForm} variant="secondary">
+                <Button onPress={resetAndClose} variant="secondary">
                   Cancel
                 </Button>
                 <Button
-                  isDisabled={!editValue.trim() || !isTypeSupported}
-                  onPress={handleEditEntry}
+                  isDisabled={isSaveDisabled}
+                  onPress={handleSave}
                   variant="primary"
                 >
                   Save Changes

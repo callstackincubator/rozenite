@@ -1,8 +1,11 @@
 import { Button, Chip, Surface } from '@rozenite/ui';
+import { formatFrameLocation } from '../../react-native/symbolication/format';
+import type { ActionOrigin } from '../../react-native/symbolication/types';
 import type { NavigationAction } from '../../shared';
 
 export type ActionItemProps = {
   action: NavigationAction;
+  origin: ActionOrigin | undefined;
   index: number;
   isSelected: boolean;
   onSelect: () => void;
@@ -29,8 +32,39 @@ const getActionTypeColor = (
   return colors[type] || 'default';
 };
 
+// Show only the file basename in the sidebar — full path lives in the
+// detail panel. Keeps each row to a single line in narrow widths.
+const shortenForSidebar = (location: string): string => {
+  const lastSlash = location.lastIndexOf('/');
+  return lastSlash === -1 ? location : location.slice(lastSlash + 1);
+};
+
+const OriginPreview = ({ origin }: { origin: ActionOrigin | undefined }) => {
+  if (!origin) return null;
+  if (origin.symbolicationStatus === 'pending') {
+    return (
+      <div className="mt-1 text-xs italic text-gray-500">↳ Resolving…</div>
+    );
+  }
+  if (origin.symbolicationStatus !== 'complete') return null;
+  if (origin.confidence === 'none') return null;
+  const location = formatFrameLocation(origin.originFrame);
+  if (!location) return null;
+  return (
+    <div
+      className={`mt-1 truncate font-mono text-xs text-gray-500 ${
+        origin.confidence === 'low' ? 'italic' : ''
+      }`}
+      title={location}
+    >
+      ↳ {shortenForSidebar(location)}
+    </div>
+  );
+};
+
 export const ActionItem = ({
   action,
+  origin,
   index,
   isSelected,
   onSelect,
@@ -90,6 +124,8 @@ export const ActionItem = ({
                 No route name attached to this action.
               </div>
             )}
+
+            <OriginPreview origin={origin} />
           </div>
 
           <div

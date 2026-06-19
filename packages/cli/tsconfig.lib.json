@@ -2,6 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "paths": {
+      "@rozenite/agent-sdk": ["../agent-sdk/dist/index.d.ts"],
+      "@rozenite/agent-sdk/transport": ["../agent-sdk/dist/transport.d.ts"],
+      "@rozenite/agent-shared": ["../agent-shared/src/index.ts"]
+    },
     "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
@@ -12,6 +17,9 @@
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "references": [
+    {
+      "path": "../agent-sdk/tsconfig.lib.json"
+    },
     {
       "path": "../agent-shared/tsconfig.lib.json"
     },

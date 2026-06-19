@@ -67,6 +67,11 @@ export const useNetworkActivityDevTools = (
     const subscriptions = [
       client.onMessage('network-enable', () => {
         isRecordingEnabledRef.current = true;
+        networkInspector.enable({
+          http: isHttpInspectorEnabled,
+          websocket: isWebSocketInspectorEnabled,
+          sse: isSSEInspectorEnabled,
+        });
 
         // Connect the events listener to send events through the DevTools client
         // This also automatically flushes any queued messages
@@ -87,11 +92,18 @@ export const useNetworkActivityDevTools = (
       }),
       client.onMessage('network-disable', () => {
         isRecordingEnabledRef.current = false;
+        networkInspector.disable();
       }),
       client.onMessage('get-client-ui-settings', () => {
         sendClientUISettings();
       }),
     ];
+
+    // Inform the DevTools UI of the current recording state so it can detect
+    // and resolve desynchronization (e.g. after an app reload)
+    client.send('recording-state', {
+      isRecording: isRecordingEnabledRef.current,
+    });
 
     // Send initial or changed values live
     sendClientUISettings();
@@ -109,7 +121,7 @@ export const useNetworkActivityDevTools = (
 
   useHttpInspector(
     client,
-    networkInspector.http,
+    networkInspector,
     isHttpInspectorEnabled,
     isRecordingEnabledRef.current,
   );

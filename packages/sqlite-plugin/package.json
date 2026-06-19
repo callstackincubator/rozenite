@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/sqlite-plugin",
-  "version": "1.7.0",
+  "version": "1.12.0",
   "description": "SQLite inspector for Rozenite.",
   "type": "module",
   "main": "./dist/react-native/index.cjs",
@@ -19,9 +19,10 @@
     "dev": "rozenite dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest --run"
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
+    "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
     "@rozenite/ui": "workspace:*"
   },

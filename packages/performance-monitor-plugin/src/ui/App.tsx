@@ -16,13 +16,20 @@ import type {
   SerializedPerformanceMark,
   SerializedPerformanceMeasure,
   SerializedPerformanceMetric,
+  SerializedPerformanceReactNativeMark,
+  SerializedPerformanceResource,
 } from '../shared/types';
 import { DetailsSidebar } from './components/DetailsSidebar';
 import { ExportModal } from './components/ExportModal';
 import { MarksTable } from './components/MarksTable';
 import { MeasuresTable } from './components/MeasuresTable';
 import { MetricsTable } from './components/MetricsTable';
+import { ReactNativeMarksTable } from './components/ReactNativeMarksTable';
+import { ResourcesTable } from './components/ResourcesTable';
+import { WaterfallView } from './components/WaterfallView';
 import { SessionDuration } from './components/SessionDuration';
+import { deriveStartupPhases } from './derive-startup-phases';
+import { StartupTab } from './components/StartupTab';
 import './globals.css';
 
 type PerformanceMonitorSession = {
@@ -31,25 +38,39 @@ type PerformanceMonitorSession = {
   measures: SerializedPerformanceMeasure[];
   marks: SerializedPerformanceMark[];
   metrics: SerializedPerformanceMetric[];
+  reactNativeMarks: SerializedPerformanceReactNativeMark[];
+  resources: SerializedPerformanceResource[];
 };
 
-type ActiveTabId = 'measures' | 'metrics' | 'marks';
+type ActiveTabId =
+  | 'waterfall'
+  | 'startup'
+  | 'measures'
+  | 'metrics'
+  | 'marks'
+  | 'reactNativeMarks'
+  | 'resources';
 
 export default function PerformanceMonitorPanel() {
   const client = useRozeniteDevToolsClient<PerformanceMonitorEventMap>({
     pluginId: '@rozenite/performance-monitor-plugin',
   });
-  const [activeTabId, setActiveTabId] = useState<ActiveTabId>('measures');
+  const [activeTabId, setActiveTabId] = useState<ActiveTabId>('waterfall');
   const [session, setSession] = useState<PerformanceMonitorSession>({
     sessionStartedAt: 0,
     clockShift: 0,
     measures: [],
     marks: [],
     metrics: [],
+    reactNativeMarks: [],
+    resources: [],
   });
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [selectedItem, setSelectedItem] =
     useState<SerializedPerformanceEntry | null>(null);
+  const [selectedWaterfallRowId, setSelectedWaterfallRowId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (!client) {
@@ -67,6 +88,8 @@ export default function PerformanceMonitorPanel() {
           measures: [],
           marks: [],
           metrics: [],
+          reactNativeMarks: [],
+          resources: [],
         });
         setSelectedItem(null);
         setIsSessionActive(true);
@@ -118,6 +141,36 @@ export default function PerformanceMonitorPanel() {
       }),
     );
 
+    subscriptions.push(
+      client.onMessage('appendReactNativeMarks', ({ reactNativeMarks }) => {
+        setSession((oldSession) => ({
+          ...oldSession,
+          reactNativeMarks: [
+            ...oldSession.reactNativeMarks,
+            ...reactNativeMarks.map((mark) => ({
+              ...mark,
+              startTime: mark.startTime + oldSession.clockShift,
+            })),
+          ],
+        }));
+      }),
+    );
+
+    subscriptions.push(
+      client.onMessage('appendResources', ({ resources }) => {
+        setSession((oldSession) => ({
+          ...oldSession,
+          resources: [
+            ...oldSession.resources,
+            ...resources.map((resource) => ({
+              ...resource,
+              startTime: resource.startTime + oldSession.clockShift,
+            })),
+          ],
+        }));
+      }),
+    );
+
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
       client.send('setEnabled', { enabled: false });
@@ -137,6 +190,33 @@ export default function PerformanceMonitorPanel() {
       setIsSessionActive(false);
     }
   };
+
+  const handleEntryClick = (
+    entry: SerializedPerformanceEntry,
+    waterfallRowId?: string,
+  ) => {
+    setSelectedItem(entry);
+    setSelectedWaterfallRowId(waterfallRowId ?? null);
+  };
+
+  const handleCloseSidebar = () => {
+    setSelectedItem(null);
+    setSelectedWaterfallRowId(null);
+  };
+
+  // Derived measures live only in the UI: paired Start/End RN marks
+  // are shown alongside user-created measures so the Measures tab
+  // reflects startup phases without forcing manual subtraction. The
+  // export still emits raw session data (see ExportModal below).
+  const startupPhases = deriveStartupPhases(session.reactNativeMarks);
+  const allMeasures = [...startupPhases, ...session.measures];
+  const waterfallEntries: SerializedPerformanceEntry[] = [
+    ...allMeasures,
+    ...session.metrics,
+    ...session.marks,
+    ...session.reactNativeMarks,
+    ...session.resources,
+  ];
 
   return (
     <PluginTheme
@@ -180,6 +260,8 @@ export default function PerformanceMonitorPanel() {
               marks={session.marks}
               measures={session.measures}
               metrics={session.metrics}
+              reactNativeMarks={session.reactNativeMarks}
+              resources={session.resources}
               sessionStartedAt={session.sessionStartedAt}
             />
           </div>
@@ -198,8 +280,16 @@ export default function PerformanceMonitorPanel() {
             aria-label="Performance monitor views"
             className="w-fit min-w-max justify-start"
           >
+            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="waterfall">
+              Waterfall ({waterfallEntries.length})
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="startup">
+              Startup
+              <Tabs.Indicator />
+            </Tabs.Tab>
             <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="measures">
-              Measures ({session.measures.length})
+              Measures ({allMeasures.length})
               <Tabs.Indicator />
             </Tabs.Tab>
             <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="metrics">
@@ -210,16 +300,46 @@ export default function PerformanceMonitorPanel() {
               Marks ({session.marks.length})
               <Tabs.Indicator />
             </Tabs.Tab>
+            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="reactNativeMarks">
+              React Native Marks ({session.reactNativeMarks.length})
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="resources">
+              Resources ({session.resources.length})
+              <Tabs.Indicator />
+            </Tabs.Tab>
           </Tabs.List>
         </Tabs.ListContainer>
+
+        <Tabs.Panel
+          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          id="waterfall"
+        >
+          <WaterfallView
+            entries={waterfallEntries}
+            selectedEntry={selectedItem}
+            selectedEntryId={selectedWaterfallRowId}
+            onEntrySelect={handleEntryClick}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel
+          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          id="startup"
+        >
+          <StartupTab
+            reactNativeMarks={session.reactNativeMarks}
+            isSessionActive={isSessionActive}
+          />
+        </Tabs.Panel>
 
         <Tabs.Panel
           className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
           id="measures"
         >
           <MeasuresTable
-            measures={session.measures}
-            onRowClick={setSelectedItem}
+            measures={allMeasures}
+            onRowClick={handleEntryClick}
           />
         </Tabs.Panel>
 
@@ -227,19 +347,39 @@ export default function PerformanceMonitorPanel() {
           className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
           id="metrics"
         >
-          <MetricsTable metrics={session.metrics} onRowClick={setSelectedItem} />
+          <MetricsTable metrics={session.metrics} onRowClick={handleEntryClick} />
         </Tabs.Panel>
 
         <Tabs.Panel
           className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
           id="marks"
         >
-          <MarksTable marks={session.marks} onRowClick={setSelectedItem} />
+          <MarksTable marks={session.marks} onRowClick={handleEntryClick} />
+        </Tabs.Panel>
+
+        <Tabs.Panel
+          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          id="reactNativeMarks"
+        >
+          <ReactNativeMarksTable
+            reactNativeMarks={session.reactNativeMarks}
+            onRowClick={handleEntryClick}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel
+          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          id="resources"
+        >
+          <ResourcesTable
+            resources={session.resources}
+            onRowClick={handleEntryClick}
+          />
         </Tabs.Panel>
       </Tabs.Root>
 
       <DetailsSidebar
-        onClose={() => setSelectedItem(null)}
+        onClose={handleCloseSidebar}
         selectedItem={selectedItem}
       />
     </PluginTheme>

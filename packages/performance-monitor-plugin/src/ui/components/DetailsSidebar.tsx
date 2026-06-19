@@ -3,6 +3,8 @@ import type { SerializedPerformanceEntry } from '../../shared/types';
 import { MarkDetails } from './MarkDetails';
 import { MeasureDetails } from './MeasureDetails';
 import { MetricDetails } from './MetricDetails';
+import { ReactNativeMarkDetails } from './ReactNativeMarkDetails';
+import { ResourceDetails } from './ResourceDetails';
 
 export type DetailsSidebarProps = {
   selectedItem: SerializedPerformanceEntry | null;
@@ -13,6 +15,8 @@ const entryTypeLabel: Record<SerializedPerformanceEntry['entryType'], string> = 
   mark: 'Mark details',
   measure: 'Measure details',
   metric: 'Metric details',
+  'react-native-mark': 'React Native Mark details',
+  resource: 'Resource details',
 };
 
 export const DetailsSidebar = ({
@@ -31,6 +35,10 @@ export const DetailsSidebar = ({
         return <MetricDetails metric={selectedItem} />;
       case 'mark':
         return <MarkDetails mark={selectedItem} />;
+      case 'react-native-mark':
+        return <ReactNativeMarkDetails mark={selectedItem} />;
+      case 'resource':
+        return <ResourceDetails resource={selectedItem} />;
       default:
         return null;
     }

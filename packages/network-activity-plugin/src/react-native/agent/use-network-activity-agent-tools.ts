@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
 import type { NetworkActivityDevToolsClient } from '../../shared/client';
 import type { NetworkInspector } from '../network-inspector';
-import { getResponseBody } from '../http/http-utils';
+import { getNetworkActivityAgentState } from './state';
 import {
-  getNetworkActivityAgentState,
-  type NetworkActivityAgentBodyResult,
-} from './state';
+  NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
+  type NetworkActivityGetResponseBodyResult,
+} from '../../shared/agent-tools';
 import {
   getRecordingStatusTool,
   getRealtimeConnectionDetailsTool,
@@ -18,17 +18,6 @@ import {
   startRecordingTool,
   stopRecordingTool,
 } from './tools';
-
-const pluginId = '@rozenite/network-activity-plugin';
-
-type PaginationInput = {
-  limit?: number;
-  cursor?: string;
-};
-
-type RequestIdInput = {
-  requestId: string;
-};
 
 type AgentToolsConfig = {
   client: NetworkActivityDevToolsClient | null;
@@ -50,43 +39,76 @@ export const useNetworkActivityAgentTools = ({
   useEffect(() => {
     const unsubscribe = [
       networkInspector.http.on('request-sent', (event) =>
-        state.onRequestSent(event)
+        state.onRequestSent(event),
       ),
       networkInspector.http.on('request-progress', (event) =>
-        state.onRequestProgress(event)
+        state.onRequestProgress(event),
       ),
       networkInspector.http.on('response-received', (event) =>
-        state.onResponseReceived(event)
+        state.onResponseReceived(event),
       ),
       networkInspector.http.on('request-completed', (event) =>
-        state.onRequestCompleted(event)
+        state.onRequestCompleted(event),
       ),
       networkInspector.http.on('request-failed', (event) =>
-        state.onRequestFailed(event)
+        state.onRequestFailed(event),
+      ),
+      networkInspector.nitro.on('request-sent', (event) =>
+        state.onRequestSent(event),
+      ),
+      networkInspector.nitro.on('response-received', (event) =>
+        state.onResponseReceived(event),
+      ),
+      networkInspector.nitro.on('request-completed', (event) =>
+        state.onRequestCompleted(event),
+      ),
+      networkInspector.nitro.on('request-failed', (event) =>
+        state.onRequestFailed(event),
       ),
       networkInspector.websocket.on('websocket-connect', (event) =>
-        state.onWebSocketConnect(event)
+        state.onWebSocketConnect(event),
       ),
       networkInspector.websocket.on('websocket-open', (event) =>
-        state.onWebSocketOpen(event)
+        state.onWebSocketOpen(event),
       ),
       networkInspector.websocket.on('websocket-close', (event) =>
-        state.onWebSocketClose(event)
+        state.onWebSocketClose(event),
       ),
       networkInspector.websocket.on('websocket-message-sent', (event) =>
-        state.onWebSocketMessageSent(event)
+        state.onWebSocketMessageSent(event),
       ),
       networkInspector.websocket.on('websocket-message-received', (event) =>
-        state.onWebSocketMessageReceived(event)
+        state.onWebSocketMessageReceived(event),
       ),
       networkInspector.websocket.on('websocket-error', (event) =>
-        state.onWebSocketError(event)
+        state.onWebSocketError(event),
       ),
-      networkInspector.websocket.on('websocket-connection-status-changed', (event) =>
-        state.onWebSocketConnectionStatusChanged(event)
+      networkInspector.websocket.on(
+        'websocket-connection-status-changed',
+        (event) => state.onWebSocketConnectionStatusChanged(event),
+      ),
+      networkInspector.nitro.on('websocket-connect', (event) =>
+        state.onWebSocketConnect(event),
+      ),
+      networkInspector.nitro.on('websocket-open', (event) =>
+        state.onWebSocketOpen(event),
+      ),
+      networkInspector.nitro.on('websocket-close', (event) =>
+        state.onWebSocketClose(event),
+      ),
+      networkInspector.nitro.on('websocket-message-sent', (event) =>
+        state.onWebSocketMessageSent(event),
+      ),
+      networkInspector.nitro.on('websocket-message-received', (event) =>
+        state.onWebSocketMessageReceived(event),
+      ),
+      networkInspector.nitro.on('websocket-error', (event) =>
+        state.onWebSocketError(event),
       ),
       networkInspector.sse.on('sse-open', (event) => state.onSSEOpen(event)),
-      networkInspector.sse.on('sse-message', (event) => state.onSSEMessage(event)),
+      networkInspector.sse.on('sse-message', (event) =>
+        state.onSSEMessage(event),
+      ),
       networkInspector.sse.on('sse-error', (event) => state.onSSEError(event)),
       networkInspector.sse.on('sse-close', (event) => state.onSSEClose(event)),
     ];
@@ -118,63 +140,62 @@ export const useNetworkActivityAgentTools = ({
   }, [client, enabledInspectors, state]);
 
   useRozenitePluginAgentTool({
-    pluginId,
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: startRecordingTool,
     handler: () => {
       networkInspector.http.getNetworkRequestsRegistry().clear();
       const result = state.startRecording({ enabledInspectors });
       networkInspector.enable(enabledInspectors);
       return {
-        started: true,
+        started: true as const,
         ...result,
       };
     },
   });
 
   useRozenitePluginAgentTool({
-    pluginId,
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: stopRecordingTool,
     handler: () => {
       const result = state.stopRecording();
       networkInspector.disable();
       return {
-        stopped: true,
+        stopped: true as const,
         ...result,
       };
     },
   });
 
   useRozenitePluginAgentTool({
-    pluginId,
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getRecordingStatusTool,
     handler: () => state.getStatus(),
   });
 
-  useRozenitePluginAgentTool<PaginationInput>({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: listRequestsTool,
     handler: (input = {}) => state.listRequests(input),
   });
 
-  useRozenitePluginAgentTool<RequestIdInput>({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getRequestDetailsTool,
-    handler: ({ requestId }: RequestIdInput) => state.getRequestDetails(requestId),
+    handler: ({ requestId }) => state.getRequestDetails(requestId),
   });
 
-  useRozenitePluginAgentTool<RequestIdInput>({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getRequestBodyTool,
-    handler: ({ requestId }: RequestIdInput) => state.getRequestBody(requestId),
+    handler: ({ requestId }) => state.getRequestBody(requestId),
   });
 
-  useRozenitePluginAgentTool<
-    RequestIdInput,
-    Promise<NetworkActivityAgentBodyResult>
-  >({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getResponseBodyTool,
-    handler: async ({ requestId }: RequestIdInput) => {
+    handler: async ({
+      requestId,
+    }): Promise<NetworkActivityGetResponseBodyResult> => {
       const record = state.getHttpRecord(requestId);
       if (!record) {
         throw new Error(`Unknown request "${requestId}"`);
@@ -197,24 +218,31 @@ export const useNetworkActivityAgentTools = ({
         };
       }
 
-      const request =
-        networkInspector.http.getNetworkRequestsRegistry().getEntry(requestId);
-      if (!request) {
-        return {
-          requestId,
-          available: false,
-          reason:
-            'Response body is unavailable because the request object is no longer in the plugin registry.',
-        };
-      }
-
-      const body = await getResponseBody(request);
+      const body = await networkInspector.getResponseBody(requestId);
       if (body === null) {
         return {
           requestId,
           available: false,
           reason:
             'The plugin could not extract a text response body for this request.',
+        };
+      }
+
+      if (typeof body !== 'string') {
+        if (body.kind === 'binary-too-large') {
+          return {
+            requestId,
+            available: false,
+            reason: `Response body exceeded the in-capture size cap (${body.size} bytes).`,
+          };
+        }
+        return {
+          requestId,
+          available: true,
+          body: body.base64,
+          base64Encoded: true,
+          decoded: false,
+          mimeType: record.response?.contentType,
         };
       }
 
@@ -229,16 +257,15 @@ export const useNetworkActivityAgentTools = ({
     },
   });
 
-  useRozenitePluginAgentTool<PaginationInput>({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: listRealtimeConnectionsTool,
     handler: (input = {}) => state.listRealtimeConnections(input),
   });
 
-  useRozenitePluginAgentTool<RequestIdInput>({
-    pluginId,
+  useRozenitePluginAgentTool({
+    pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getRealtimeConnectionDetailsTool,
-    handler: ({ requestId }: RequestIdInput) =>
-      state.getRealtimeConnectionDetails(requestId),
+    handler: ({ requestId }) => state.getRealtimeConnectionDetails(requestId),
   });
 };

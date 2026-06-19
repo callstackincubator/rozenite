@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/middleware",
-  "version": "1.7.0",
+  "version": "1.12.0",
   "description": "Middleware for Rozenite.",
   "type": "module",
   "main": "./dist/index.js",
@@ -42,7 +42,7 @@
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest --run"
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",

@@ -1,13 +1,21 @@
 export interface ReactNodeSummary {
   nodeId: number;
+  label: string;
   displayName: string;
   elementType: string;
   key?: string;
   childCount: number;
   parentId?: number;
+  parentLabel?: string;
 }
 
-export interface ReactNodeRecord extends ReactNodeSummary {
+export interface ReactNodeRecord {
+  nodeId: number;
+  displayName: string;
+  elementType: string;
+  key?: string;
+  childCount: number;
+  parentId?: number;
   childIds: number[];
   rendererId?: number;
 }
@@ -40,7 +48,7 @@ export interface ReactDevToolsBridgeMessage {
 
 export interface ReactSearchNodesRequest {
   query?: string;
-  rootId?: number;
+  rootId?: number | string;
   match?: 'name' | 'name-or-key';
   limit?: number;
   cursor?: string;
@@ -57,10 +65,12 @@ export interface ReactSearchNodesResult {
 
 export interface ReactGetNodeRequest {
   nodeId?: number;
+  id?: string | number;
 }
 
 export interface ReactGetChildrenRequest {
   nodeId?: number;
+  id?: string | number;
   limit?: number;
   cursor?: string;
 }
@@ -81,6 +91,7 @@ export interface ReactInspectableEntry {
 
 export interface ReactGetInspectableRequest {
   nodeId?: number;
+  id?: string | number;
   limit?: number;
   cursor?: string;
 }

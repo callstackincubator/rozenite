@@ -7,6 +7,9 @@ import path from 'node:path';
 export default defineConfig({
   root: __dirname,
   plugins: [rozenitePlugin()],
+  test: {
+    passWithNoTests: true,
+  },
   base: './',
   build: {
     outDir: './dist',

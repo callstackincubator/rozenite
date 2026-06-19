@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
+import {
+  FILE_SYSTEM_AGENT_PLUGIN_ID,
+  fileSystemToolDefinitions,
+} from '../shared/agent-tools';
 import type { FsEntry } from '../shared/protocol';
 import type { ProviderImpl } from '../react-native/fileSystemProvider';
 import {
   createFileSystemAgentHandlers,
-  FILE_SYSTEM_AGENT_PLUGIN_ID,
   fileSystemAgentTools,
+  getFileSystemAgentTools,
 } from '../react-native/useFileSystemAgentTools';
 
 const createEntry = (overrides?: Partial<FsEntry>): FsEntry => ({
@@ -38,12 +42,33 @@ const createProvider = (
     base64: 'ZmFrZQ==',
   })),
   readTextFile: vi.fn(async () => 'hello world'),
+  readFileBase64: vi.fn(async (path: string) => ({
+    fileName: path.slice(path.lastIndexOf('/') + 1),
+    mime: 'application/octet-stream',
+    size: 4,
+    base64: 'AAECAw==',
+  })),
+  writeFileBase64: vi.fn(async (path: string) => createEntry({
+    name: path.slice(path.lastIndexOf('/') + 1),
+    path,
+    size: 4,
+  })),
+  pathExists: vi.fn(async () => false),
   ...overrides,
 });
 
 describe('file system agent tools', () => {
   it('uses the public plugin ID and exposes the expected tool names', () => {
     expect(FILE_SYSTEM_AGENT_PLUGIN_ID).toBe('@rozenite/file-system-plugin');
+    expect(Object.values(fileSystemToolDefinitions).map((tool) => tool.name)).toEqual([
+      'list-roots',
+      'list-entries',
+      'read-entry',
+      'read-text-file',
+      'read-image-file',
+      'export-file',
+      'import-file',
+    ]);
     expect(fileSystemAgentTools.map((tool) => tool.name)).toEqual([
       'list-roots',
       'list-entries',
@@ -51,26 +76,43 @@ describe('file system agent tools', () => {
       'read-text-file',
       'read-image-file',
     ]);
+    expect(
+      getFileSystemAgentTools({ import: true, export: true }).map(
+        (tool) => tool.name,
+      ),
+    ).toEqual([
+      'list-roots',
+      'list-entries',
+      'read-entry',
+      'read-text-file',
+      'read-image-file',
+      'export-file',
+      'import-file',
+    ]);
   });
 
   it('declares required schema fields for path-based tools', () => {
-    const listEntries = fileSystemAgentTools.find(
-      (tool) => tool.name === 'list-entries',
-    );
-    const readEntry = fileSystemAgentTools.find(
-      (tool) => tool.name === 'read-entry',
-    );
-    const readTextFile = fileSystemAgentTools.find(
-      (tool) => tool.name === 'read-text-file',
-    );
-    const readImageFile = fileSystemAgentTools.find(
-      (tool) => tool.name === 'read-image-file',
-    );
-
-    expect(listEntries?.inputSchema.required).toEqual(['path']);
-    expect(readEntry?.inputSchema.required).toEqual(['path']);
-    expect(readTextFile?.inputSchema.required).toEqual(['path']);
-    expect(readImageFile?.inputSchema.required).toEqual(['path']);
+    expect(fileSystemToolDefinitions.listEntries.inputSchema.required).toEqual([
+      'path',
+    ]);
+    expect(fileSystemToolDefinitions.readEntry.inputSchema.required).toEqual([
+      'path',
+    ]);
+    expect(fileSystemToolDefinitions.readTextFile.inputSchema.required).toEqual([
+      'path',
+    ]);
+    expect(fileSystemToolDefinitions.readImageFile.inputSchema.required).toEqual([
+      'path',
+    ]);
+    expect(fileSystemToolDefinitions.exportFile.inputSchema.required).toEqual([
+      'path',
+    ]);
+    expect(fileSystemToolDefinitions.importFile.inputSchema.required).toEqual([
+      'directoryPath',
+      'fileName',
+      'base64',
+    ]);
+    expect(fileSystemAgentTools).toEqual(getFileSystemAgentTools());
   });
 });
 
@@ -284,5 +326,223 @@ describe('createFileSystemAgentHandlers', () => {
     await expect(
       handlers.readImageFile({ path: '/tmp/photo.png', maxBytes: 100 }),
     ).rejects.toThrow('File is too large for preview');
+  });
+
+  it('rejects agent export when agent export is not enabled', async () => {
+    const provider = createProvider(undefined, [
+      createEntry({ path: 'file:///documents/sample.bin' }),
+    ]);
+    const handlers = createFileSystemAgentHandlers(async () => provider);
+
+    await expect(
+      handlers.exportFile({ path: 'file:///documents/sample.bin' }),
+    ).rejects.toThrow('Agent file export is disabled');
+  });
+
+  it('exports files through the agent when explicitly enabled', async () => {
+    const provider = createProvider(undefined, [
+      createEntry({
+        path: 'file:///documents/sample.bin',
+        name: 'sample.bin',
+        size: 4,
+      }),
+    ]);
+    const handlers = createFileSystemAgentHandlers(async () => provider, {
+      import: false,
+      export: true,
+    });
+
+    await expect(
+      handlers.exportFile({ path: 'file:///documents/sample.bin' }),
+    ).resolves.toEqual({
+      provider: 'expo',
+      path: 'file:///documents/sample.bin',
+      fileName: 'sample.bin',
+      mime: 'application/octet-stream',
+      size: 4,
+      base64: 'AAECAw==',
+      attribution: {
+        triggeredBy: 'agent',
+        pluginId: '@rozenite/file-system-plugin',
+        operation: 'export-file',
+      },
+    });
+  });
+
+  it('rejects agent export for directories and paths outside roots', async () => {
+    const provider = createProvider(undefined, [
+      createEntry({
+        path: 'file:///documents/folder/',
+        name: 'folder',
+        isDirectory: true,
+        size: null,
+      }),
+    ]);
+    const handlers = createFileSystemAgentHandlers(async () => provider, {
+      import: false,
+      export: true,
+    });
+
+    await expect(
+      handlers.exportFile({ path: 'file:///documents/folder/' }),
+    ).rejects.toThrow('is a directory, not a file');
+
+    await expect(
+      handlers.exportFile({ path: 'file:///private/sample.bin' }),
+    ).rejects.toThrow('outside the configured filesystem roots');
+  });
+
+  it('rejects agent import when agent import is not enabled', async () => {
+    const provider = createProvider();
+    const handlers = createFileSystemAgentHandlers(async () => provider);
+
+    await expect(
+      handlers.importFile({
+        directoryPath: 'file:///documents/',
+        fileName: 'sample.bin',
+        base64: 'AAECAw==',
+      }),
+    ).rejects.toThrow('Agent file import is disabled');
+  });
+
+  it('returns overwriteRequired before agent import writes', async () => {
+    const provider = createProvider(
+      {
+        pathExists: vi.fn(async () => true),
+      },
+      [
+        createEntry({
+          path: 'file:///documents/',
+          name: 'documents',
+          isDirectory: true,
+          size: null,
+        }),
+      ],
+    );
+    const handlers = createFileSystemAgentHandlers(async () => provider, {
+      import: true,
+      export: false,
+    });
+
+    await expect(
+      handlers.importFile({
+        directoryPath: 'file:///documents/',
+        fileName: 'sample.bin',
+        base64: 'AAECAw==',
+      }),
+    ).resolves.toEqual({
+      provider: 'expo',
+      directoryPath: 'file:///documents/',
+      path: 'file:///documents/sample.bin',
+      overwriteRequired: true,
+      attribution: {
+        triggeredBy: 'agent',
+        pluginId: '@rozenite/file-system-plugin',
+        operation: 'import-file',
+      },
+    });
+    expect(provider.writeFileBase64).not.toHaveBeenCalled();
+  });
+
+  it('writes agent imports only when overwrite is allowed', async () => {
+    const provider = createProvider(
+      {
+        pathExists: vi.fn(async () => true),
+      },
+      [
+        createEntry({
+          path: 'file:///documents/',
+          name: 'documents',
+          isDirectory: true,
+          size: null,
+        }),
+      ],
+    );
+    const handlers = createFileSystemAgentHandlers(async () => provider, {
+      import: true,
+      export: false,
+    });
+
+    await expect(
+      handlers.importFile({
+        directoryPath: 'file:///documents/',
+        fileName: 'sample.bin',
+        base64: 'AAECAw==',
+        overwrite: true,
+      }),
+    ).resolves.toEqual({
+      provider: 'expo',
+      directoryPath: 'file:///documents/',
+      path: 'file:///documents/sample.bin',
+      entry: {
+        name: 'sample.bin',
+        path: 'file:///documents/sample.bin',
+        isDirectory: false,
+        size: 4,
+        modifiedAtMs: 123,
+        mimeTypeHint: null,
+      },
+      attribution: {
+        triggeredBy: 'agent',
+        pluginId: '@rozenite/file-system-plugin',
+        operation: 'import-file',
+      },
+    });
+    expect(provider.writeFileBase64).toHaveBeenCalledWith(
+      'file:///documents/sample.bin',
+      'AAECAw==',
+    );
+  });
+
+  it('rejects unsafe agent import paths and file names', async () => {
+    const provider = createProvider(undefined, [
+      createEntry({
+        path: 'file:///documents/',
+        name: 'documents',
+        isDirectory: true,
+        size: null,
+      }),
+    ]);
+    const handlers = createFileSystemAgentHandlers(async () => provider, {
+      import: true,
+      export: false,
+    });
+
+    await expect(
+      handlers.importFile({
+        directoryPath: 'file:///private/',
+        fileName: 'sample.bin',
+        base64: 'AAECAw==',
+      }),
+    ).rejects.toThrow('outside the configured filesystem roots');
+
+    await expect(
+      handlers.importFile({
+        directoryPath: 'file:///documents/',
+        fileName: '../sample.bin',
+        base64: 'AAECAw==',
+      }),
+    ).rejects.toThrow('single file name');
+  });
+
+  it('surfaces agent transfer provider errors', async () => {
+    const provider = createProvider({
+      readFileBase64: vi.fn(async () => {
+        throw new Error('Permission denied');
+      }),
+    }, [
+      createEntry({
+        path: 'file:///documents/sample.bin',
+        name: 'sample.bin',
+      }),
+    ]);
+    const handlers = createFileSystemAgentHandlers(async () => provider, {
+      import: false,
+      export: true,
+    });
+
+    await expect(
+      handlers.exportFile({ path: 'file:///documents/sample.bin' }),
+    ).rejects.toThrow('Permission denied');
   });
 });

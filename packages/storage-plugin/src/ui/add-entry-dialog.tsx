@@ -16,13 +16,8 @@ import type {
   StorageEntryValue,
 } from '../shared/types';
 import { ConfirmDialog } from './confirm-dialog';
-
-const TYPE_OPTIONS: Array<{ value: StorageEntryType; label: string }> = [
-  { value: 'string', label: 'String' },
-  { value: 'number', label: 'Number' },
-  { value: 'boolean', label: 'Boolean' },
-  { value: 'buffer', label: 'Buffer (Array)' },
-];
+import { TypedValueEditor } from './typed-value-editor';
+import { defaultValueForType } from './type-conversion';
 
 type DialogState = {
   isOpen: boolean;
@@ -37,6 +32,23 @@ const EMPTY_DIALOG_STATE: DialogState = {
   title: '',
   message: '',
   type: 'alert',
+};
+
+const buildEntry = (
+  key: string,
+  type: StorageEntryType,
+  value: StorageEntryValue,
+): StorageEntry => {
+  switch (type) {
+    case 'string':
+      return { key, type: 'string', value: value as string };
+    case 'number':
+      return { key, type: 'number', value: value as number };
+    case 'boolean':
+      return { key, type: 'boolean', value: value as boolean };
+    case 'buffer':
+      return { key, type: 'buffer', value: value as number[] };
+  }
 };
 
 export type AddEntryDialogProps = {
@@ -54,38 +66,45 @@ export const AddEntryDialog = ({
 }: AddEntryDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [newEntryKey, setNewEntryKey] = useState('');
-  const [newEntryType, setNewEntryType] = useState<StorageEntryType>('string');
-  const [newEntryValue, setNewEntryValue] = useState('');
   const [confirmDialog, setConfirmDialog] =
     useState<DialogState>(EMPTY_DIALOG_STATE);
 
-  const enabledTypes = useMemo(
-    () => TYPE_OPTIONS.filter((option) => supportedTypes.includes(option.value)),
+  const initialType = useMemo<StorageEntryType>(
+    () =>
+      supportedTypes.includes('string')
+        ? 'string'
+        : (supportedTypes[0] ?? 'string'),
     [supportedTypes],
   );
-  const firstSupportedType = enabledTypes[0]?.value;
-  const selectedTypeSupported = supportedTypes.includes(newEntryType);
 
+  const [currentType, setCurrentType] = useState<StorageEntryType>(initialType);
+  const [currentValue, setCurrentValue] = useState<StorageEntryValue | null>(
+    defaultValueForType(initialType),
+  );
+
+  const isCurrentTypeSupported = supportedTypes.includes(currentType);
+
+  // Reset state every time the dialog opens, so a previous session's
+  // type / value doesn't bleed in.
   useEffect(() => {
-    if (isOpen && !selectedTypeSupported && firstSupportedType) {
-      setNewEntryType(firstSupportedType);
+    if (isOpen) {
+      setNewEntryKey('');
+      setCurrentType(initialType);
+      setCurrentValue(defaultValueForType(initialType));
+      setConfirmDialog(EMPTY_DIALOG_STATE);
     }
-  }, [firstSupportedType, isOpen, selectedTypeSupported]);
+  }, [isOpen, initialType]);
 
   useEffect(() => {
     if (isDisabled && isOpen) {
-      setNewEntryKey('');
-      setNewEntryType(firstSupportedType ?? 'string');
-      setNewEntryValue('');
-      setConfirmDialog(EMPTY_DIALOG_STATE);
       setIsOpen(false);
     }
-  }, [firstSupportedType, isDisabled, isOpen]);
+  }, [isDisabled, isOpen]);
 
   const resetForm = () => {
     setNewEntryKey('');
-    setNewEntryType(firstSupportedType ?? 'string');
-    setNewEntryValue('');
+    setCurrentType(initialType);
+    setCurrentValue(defaultValueForType(initialType));
     setConfirmDialog(EMPTY_DIALOG_STATE);
   };
 
@@ -95,11 +114,11 @@ export const AddEntryDialog = ({
   };
 
   const handleAddEntry = () => {
-    if (!newEntryKey.trim()) {
+    if (!newEntryKey.trim() || currentValue === null) {
       return;
     }
 
-    if (!selectedTypeSupported) {
+    if (!isCurrentTypeSupported) {
       setConfirmDialog({
         isOpen: true,
         title: 'Unsupported Type',
@@ -119,68 +138,14 @@ export const AddEntryDialog = ({
       return;
     }
 
-    let parsedValue: StorageEntryValue;
-    try {
-      switch (newEntryType) {
-        case 'string':
-          parsedValue = newEntryValue;
-          break;
-        case 'number':
-          parsedValue = Number(newEntryValue);
-          if (Number.isNaN(parsedValue)) {
-            throw new Error('Invalid number');
-          }
-          break;
-        case 'boolean':
-          if (newEntryValue !== 'true' && newEntryValue !== 'false') {
-            throw new Error('Boolean value must be true or false');
-          }
-          parsedValue = newEntryValue === 'true';
-          break;
-        case 'buffer':
-          parsedValue = JSON.parse(newEntryValue);
-          if (
-            !Array.isArray(parsedValue) ||
-            !parsedValue.every((value) => typeof value === 'number')
-          ) {
-            throw new Error('Buffer must be an array of numbers');
-          }
-          break;
-        default:
-          throw new Error('Invalid type');
-      }
-    } catch (error) {
-      setConfirmDialog({
-        isOpen: true,
-        title: 'Invalid Value',
-        message: `Invalid value for ${newEntryType}: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-        type: 'alert',
-      });
-      return;
-    }
-
-    let entry: StorageEntry;
-    if (newEntryType === 'string') {
-      entry = { key: newEntryKey, type: 'string', value: parsedValue as string };
-    } else if (newEntryType === 'number') {
-      entry = { key: newEntryKey, type: 'number', value: parsedValue as number };
-    } else if (newEntryType === 'boolean') {
-      entry = { key: newEntryKey, type: 'boolean', value: parsedValue as boolean };
-    } else {
-      entry = { key: newEntryKey, type: 'buffer', value: parsedValue as number[] };
-    }
-
-    onAddEntry(entry);
+    onAddEntry(buildEntry(newEntryKey, currentType, currentValue));
     closeDialog();
   };
 
-  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && newEntryKey.trim() && newEntryValue.trim()) {
-      handleAddEntry();
-    }
-  };
+  // Unsavable when no key, no supported type, or when the value is
+  // null — the hex editor signals invalid / empty hex via null.
+  const isAddDisabled =
+    !newEntryKey.trim() || !isCurrentTypeSupported || currentValue === null;
 
   return (
     <>
@@ -211,7 +176,6 @@ export const AddEntryDialog = ({
                   <Input
                     autoFocus
                     onChange={(event) => setNewEntryKey(event.target.value)}
-                    onKeyDown={handleInputKeyDown}
                     placeholder="Enter key name"
                     value={newEntryKey}
                     variant="secondary"
@@ -219,124 +183,30 @@ export const AddEntryDialog = ({
                 </TextField>
 
                 <div className="flex flex-col gap-2">
-                  <Label>Type</Label>
-                  <Select
-                    className="w-full"
-                    onChange={(key) => {
-                      setNewEntryType(
-                        (key == null ? '' : String(key)) as StorageEntryType,
-                      );
-                      setNewEntryValue('');
+                  <Label>Value</Label>
+                  <TypedValueEditor
+                    supportedTypes={supportedTypes}
+                    type={currentType}
+                    value={currentValue}
+                    onChange={(nextType, nextValue) => {
+                      setCurrentType(nextType);
+                      setCurrentValue(nextValue);
                     }}
-                    value={newEntryType || null}
-                    variant="secondary"
-                  >
-                    <Select.Trigger>
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox aria-label="Entry type">
-                        {TYPE_OPTIONS.map((option) => {
-                          const isSupported = supportedTypes.includes(
-                            option.value,
-                          );
-
-                          return (
-                            <ListBox.Item
-                              id={option.value}
-                              isDisabled={!isSupported}
-                              key={option.value}
-                              textValue={option.label}
-                            >
-                              {isSupported
-                                ? option.label
-                                : `${option.label} (Not supported)`}
-                            </ListBox.Item>
-                          );
-                        })}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-                  {!selectedTypeSupported ? (
+                    inputId="new-entry-value"
+                  />
+                  {!isCurrentTypeSupported ? (
                     <Description className="text-xs text-warning">
                       Selected type is not supported by this storage.
                     </Description>
                   ) : null}
                 </div>
-
-                {newEntryType === 'boolean' ? (
-                  <div className="flex flex-col gap-2">
-                    <Label>Value</Label>
-                    <Select
-                      className="w-full"
-                      onChange={(key) =>
-                        setNewEntryValue(key == null ? '' : String(key))
-                      }
-                      placeholder="Select value"
-                      value={newEntryValue || null}
-                      variant="secondary"
-                    >
-                      <Select.Trigger>
-                        <Select.Value />
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover>
-                        <ListBox aria-label="Entry value">
-                          <ListBox.Item id="true" key="true" textValue="true">
-                            true
-                          </ListBox.Item>
-                          <ListBox.Item
-                            id="false"
-                            key="false"
-                            textValue="false"
-                          >
-                            false
-                          </ListBox.Item>
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
-                  </div>
-                ) : (
-                  <TextField
-                    className="w-full"
-                    name="new-entry-value"
-                    type={newEntryType === 'number' ? 'number' : 'text'}
-                  >
-                    <Label>Value</Label>
-                    <Input
-                      onChange={(event) => setNewEntryValue(event.target.value)}
-                      onKeyDown={handleInputKeyDown}
-                      placeholder={
-                        newEntryType === 'string'
-                          ? 'Enter string value'
-                          : newEntryType === 'number'
-                            ? 'Enter number value'
-                            : newEntryType === 'buffer'
-                              ? 'Enter array as JSON, e.g., [1, 2, 3]'
-                              : 'Enter value'
-                      }
-                      value={newEntryValue}
-                      variant="secondary"
-                    />
-                    {newEntryType === 'buffer' ? (
-                      <Description className="text-xs text-muted">
-                        Enter as JSON array of numbers, e.g., [1, 2, 3, 255]
-                      </Description>
-                    ) : null}
-                  </TextField>
-                )}
               </Modal.Body>
               <Modal.Footer className="flex justify-end gap-2">
                 <Button onPress={closeDialog} variant="secondary">
                   Cancel
                 </Button>
                 <Button
-                  isDisabled={
-                    !newEntryKey.trim() ||
-                    !newEntryValue.trim() ||
-                    !selectedTypeSupported
-                  }
+                  isDisabled={isAddDisabled}
                   onPress={handleAddEntry}
                   variant="primary"
                 >

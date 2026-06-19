@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Badge } from './Badge';
 import { Button } from './Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs';
@@ -6,6 +7,7 @@ import { RequestTab } from '../tabs/RequestTab';
 import { ResponseTab } from '../tabs/ResponseTab';
 import { CookiesTab } from '../tabs/CookiesTab';
 import { TimingTab } from '../tabs/TimingTab';
+import { InitiatorTab } from '../tabs/InitiatorTab';
 import { X } from 'lucide-react';
 import {
   useNetworkActivityActions,
@@ -17,6 +19,7 @@ import { NetworkEntry as OldNetworkEntry } from '../types';
 import { getStatusColor } from '../utils/getStatusColor';
 import { MessagesTab } from '../tabs/MessagesTab';
 import { SSEMessagesTab } from '../tabs/SSEMessagesTab';
+import type { ResponseView } from '../response-renderers';
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
@@ -37,7 +40,7 @@ const getTypeColor = (type: string) => {
 const createLegacyNetworkEntry = (
   selectedRequest: any,
   httpDetails: any,
-  wsDetails: any
+  wsDetails: any,
 ): OldNetworkEntry | null => {
   if (selectedRequest.type === 'http' && httpDetails) {
     return {
@@ -87,6 +90,14 @@ export const SidePanel = () => {
   const selectedRequest = useSelectedRequest();
   const client = useNetworkActivityStore((state) => state._client);
   const overrides = useOverrides();
+  // Sticky Preview/Raw preference. Lives here, not in ResponseTab,
+  // because the `<Tabs key={selectedRequest.id}>` below intentionally
+  // remounts the Tabs subtree on every request switch (so the active
+  // inner tab resets). SidePanel itself stays mounted across request
+  // switches, so the preference survives — flipping to Raw on one
+  // response keeps Raw selected for every subsequent response whose
+  // renderer supports it. Resets when the panel is closed.
+  const [preferredView, setPreferredView] = useState<ResponseView>('preview');
 
   const onClose = (): void => {
     actions.setSelectedRequest(null);
@@ -108,22 +119,22 @@ export const SidePanel = () => {
     selectedRequest.type === 'http'
       ? httpDetails?.request?.url || 'Unknown'
       : selectedRequest.type === 'websocket'
-      ? wsDetails?.connection?.url || 'Unknown'
-      : sseDetails?.request?.url || 'Unknown';
+        ? wsDetails?.connection?.url || 'Unknown'
+        : sseDetails?.request?.url || 'Unknown';
 
   // Extract status from the request
   const requestStatus =
     selectedRequest.type === 'http'
       ? httpDetails?.response?.status || httpDetails?.status || 'pending'
       : selectedRequest.type === 'websocket'
-      ? wsDetails?.status || 'unknown'
-      : sseDetails?.status || 'unknown';
+        ? wsDetails?.status || 'unknown'
+        : sseDetails?.status || 'unknown';
 
   // Create legacy network entry for tab components
   const legacyEntry = createLegacyNetworkEntry(
     selectedRequest,
     httpDetails,
-    wsDetails
+    wsDetails,
   );
   const legacyNetworkEntries = new Map<string, OldNetworkEntry>();
   if (legacyEntry) {
@@ -131,7 +142,9 @@ export const SidePanel = () => {
   }
 
   const override = legacyEntry !== null ? overrides.get(legacyEntry.url) : null;
-  const hasResponseOverride = override && override.body ? true : false;
+  const supportsOverrides = httpDetails?.source !== 'nitro';
+  const hasResponseOverride =
+    supportsOverrides && override && override.body ? true : false;
 
   const getTabsListTriggers = () => {
     if (httpDetails) {
@@ -165,6 +178,12 @@ export const SidePanel = () => {
             Cookies
           </TabsTrigger>
           <TabsTrigger
+            value="initiator"
+            className="data-[state=active]:bg-gray-700"
+          >
+            Initiator
+          </TabsTrigger>
+          <TabsTrigger
             value="timing"
             className="data-[state=active]:bg-gray-700"
           >
@@ -194,6 +213,12 @@ export const SidePanel = () => {
             className="data-[state=active]:bg-gray-700"
           >
             Messages
+          </TabsTrigger>
+          <TabsTrigger
+            value="initiator"
+            className="data-[state=active]:bg-gray-700"
+          >
+            Initiator
           </TabsTrigger>
         </>
       );
@@ -226,6 +251,9 @@ export const SidePanel = () => {
           <TabsContent value="response" className="flex-1 m-0 overflow-hidden">
             <ResponseTab
               selectedRequest={httpDetails}
+              supportsOverrides={supportsOverrides}
+              preferredView={preferredView}
+              onPreferredViewChange={setPreferredView}
               onRequestResponseBody={(requestId) => {
                 if (client) {
                   client.send('get-response-body', {
@@ -238,6 +266,10 @@ export const SidePanel = () => {
 
           <TabsContent value="cookies" className="flex-1 m-0 overflow-hidden">
             <CookiesTab selectedRequest={httpDetails} />
+          </TabsContent>
+
+          <TabsContent value="initiator" className="flex-1 m-0 overflow-hidden">
+            <InitiatorTab selectedRequest={httpDetails} />
           </TabsContent>
 
           <TabsContent value="timing" className="flex-1 m-0 overflow-hidden">
@@ -272,6 +304,10 @@ export const SidePanel = () => {
             <SSEMessagesTab selectedRequest={sseDetails} />
           </TabsContent>
 
+          <TabsContent value="initiator" className="flex-1 m-0 overflow-hidden">
+            <InitiatorTab selectedRequest={sseDetails} />
+          </TabsContent>
+
           <TabsContent value="cookies" className="flex-1 m-0 overflow-hidden">
             <CookiesTab selectedRequest={sseDetails} />
           </TabsContent>
@@ -289,14 +325,14 @@ export const SidePanel = () => {
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div
             className={`w-3 h-3 rounded-full flex-shrink-0 ${getTypeColor(
-              selectedRequest.type
+              selectedRequest.type,
             )}`}
           ></div>
           <span className="font-medium truncate">{requestName}</span>
           <Badge
             variant="outline"
             className={`${getStatusColor(
-              requestStatus
+              requestStatus,
             )} border-current flex-shrink-0`}
           >
             {requestStatus}
@@ -321,7 +357,15 @@ export const SidePanel = () => {
           }
           className="h-full flex flex-col"
         >
-          <TabsList className="grid w-full grid-cols-5 bg-gray-800 rounded-none border-b border-gray-700">
+          <TabsList
+            className={`grid w-full ${
+              selectedRequest.type === 'http'
+                ? 'grid-cols-6'
+                : selectedRequest.type === 'sse'
+                  ? 'grid-cols-4'
+                  : 'grid-cols-1'
+            } bg-gray-800 rounded-none border-b border-gray-700`}
+          >
             {getTabsListTriggers()}
           </TabsList>
 

@@ -86,6 +86,39 @@ function App() {
 }
 ```
 
+You can also call the hook from multiple components. Each active hook instance contributes sections to the same panel:
+
+```ts
+function LocaleControls() {
+  useRozeniteControlsPlugin((previousOptions) => ({
+    sections: [
+      ...previousOptions.sections,
+      createSection({
+        id: 'locale',
+        title: 'Locale',
+        items: [
+          {
+            id: 'language',
+            type: 'select',
+            title: 'Language',
+            value: 'en',
+            options: [
+              { label: 'English', value: 'en' },
+              { label: 'Polish', value: 'pl' },
+            ],
+            onUpdate: (language) => {
+              i18n.changeLanguage(language);
+            },
+          },
+        ],
+      }),
+    ],
+  }));
+
+  return null;
+}
+```
+
 ## Supported Controls
 
 - `text`: Show read-only runtime values such as current environment, build label, or connection status.

@@ -81,7 +81,7 @@ describe('agent session manager', () => {
     );
   });
 
-  it('uses default localhost Metro endpoint', () => {
+  it('uses default loopback Metro endpoint', () => {
     const manager = createAgentSessionManager({ projectRoot: '/app' });
 
     expect(manager.getInfo()).toEqual({
@@ -101,7 +101,7 @@ describe('agent session manager', () => {
     await expect(manager.listTargets()).resolves.toEqual([
       { id: 'device-1', name: 'Phone' },
     ]);
-    expect(mocks.getMetroTargets).toHaveBeenCalledWith('localhost', 8081);
+    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081);
   });
 
   it('creates and reuses the same session per device', async () => {

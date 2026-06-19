@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createNetworkActivityAgentState } from '../state';
-import { NETWORK_ACTIVITY_AGENT_TOOLS } from '../tools';
+import { networkActivityToolDefinitions } from '../../../shared/agent-tools';
 import type { Request } from '../../../shared/client';
 
 const createRequest = (overrides?: Partial<Request>): Request => ({
@@ -18,7 +18,9 @@ const createRequest = (overrides?: Partial<Request>): Request => ({
 
 describe('network activity agent state', () => {
   it('exposes the expected fallback and realtime tool names', () => {
-    expect(NETWORK_ACTIVITY_AGENT_TOOLS.map((tool) => tool.name)).toEqual([
+    expect(
+      Object.values(networkActivityToolDefinitions).map((tool) => tool.name),
+    ).toEqual([
       'startRecording',
       'stopRecording',
       'getRecordingStatus',
@@ -29,6 +31,9 @@ describe('network activity agent state', () => {
       'listRealtimeConnections',
       'getRealtimeConnectionDetails',
     ]);
+    expect(
+      networkActivityToolDefinitions.getRequestDetails.inputSchema.required,
+    ).toEqual(['requestId']);
   });
 
   it('tracks HTTP requests with parity-oriented list/detail/body results', () => {
@@ -40,7 +45,12 @@ describe('network activity agent state', () => {
       timestamp: 100,
       request: createRequest(),
       type: 'XHR',
-      initiator: { type: 'script', url: 'App.tsx', lineNumber: 12, columnNumber: 4 },
+      initiator: {
+        type: 'script',
+        url: 'App.tsx',
+        lineNumber: 12,
+        columnNumber: 4,
+      },
     });
     state.onResponseReceived({
       requestId: 'req-1',
@@ -126,7 +136,7 @@ describe('network activity agent state', () => {
     state.onWebSocketConnect({
       type: 'websocket-connect',
       url: 'wss://example.com/socket',
-      socketId: 7,
+      socketId: '7',
       timestamp: 100,
       protocols: ['chat'],
       options: [],
@@ -134,13 +144,13 @@ describe('network activity agent state', () => {
     state.onWebSocketOpen({
       type: 'websocket-open',
       url: 'wss://example.com/socket',
-      socketId: 7,
+      socketId: '7',
       timestamp: 110,
     });
     state.onWebSocketMessageSent({
       type: 'websocket-message-sent',
       url: 'wss://example.com/socket',
-      socketId: 7,
+      socketId: '7',
       timestamp: 120,
       data: 'ping',
       messageType: 'text',
@@ -148,7 +158,7 @@ describe('network activity agent state', () => {
     state.onWebSocketMessageReceived({
       type: 'websocket-message-received',
       url: 'wss://example.com/socket',
-      socketId: 7,
+      socketId: '7',
       timestamp: 121,
       data: 'pong',
       messageType: 'text',
@@ -244,7 +254,9 @@ describe('network activity agent state', () => {
     state.startRecording();
 
     expect(() =>
-      state.listRequests({ limit: 1, cursor: firstPage.page.nextCursor })
-    ).toThrow('Cursor does not match the requested listing. Run the command again.');
+      state.listRequests({ limit: 1, cursor: firstPage.page.nextCursor }),
+    ).toThrow(
+      'Cursor does not match the requested listing. Run the command again.',
+    );
   });
 });

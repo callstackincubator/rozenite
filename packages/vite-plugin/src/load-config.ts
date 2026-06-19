@@ -7,8 +7,63 @@ export type PanelEntry = {
   source: string;
 };
 
+export type DevPresetEntry = {
+  name: string;
+  type: string;
+  payload: unknown;
+};
+
+export type DevFlowMessage = {
+  id: string;
+  direction: 'in' | 'out';
+  date: string;
+  type: string;
+  payload: unknown;
+};
+
+export type DevFlowMessageMatcher =
+  | string
+  | ((message: DevFlowMessage) => boolean)
+  | {
+      type?: string;
+      direction?: DevFlowMessage['direction'];
+      predicate?: (message: DevFlowMessage) => boolean;
+    };
+
+export type DevFlowSubscription = {
+  remove: () => void;
+};
+
+export type DevFlowContext = {
+  signal: AbortSignal;
+  send: (type: string, payload: unknown) => void;
+  onMessage: (
+    matcher: DevFlowMessageMatcher,
+    listener: (message: DevFlowMessage) => void,
+  ) => DevFlowSubscription;
+  waitForMessage: (
+    matcher: DevFlowMessageMatcher,
+    options?: {
+      timeoutMs?: number;
+    },
+  ) => Promise<DevFlowMessage>;
+  getMessages: (matcher?: DevFlowMessageMatcher) => DevFlowMessage[];
+};
+
+export type DevFlowEntry = {
+  name?: string;
+  autoRun?: boolean;
+  run: (context: DevFlowContext) => unknown | Promise<unknown>;
+};
+
+export type DevConfig = {
+  presets?: DevPresetEntry[];
+  flows?: DevFlowEntry[];
+};
+
 export type RozeniteConfig = {
   panels: PanelEntry[];
+  dev?: DevConfig;
 };
 
 export const loadConfig = async (

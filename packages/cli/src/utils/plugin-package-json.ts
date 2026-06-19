@@ -11,6 +11,7 @@ type PackageJSON = {
 };
 
 type PackageExportsEntry = {
+  development?: string;
   types: string;
   import: string;
   require: string;
@@ -28,6 +29,7 @@ type PluginPackageContract = {
 type PluginTargets = {
   hasReactNativeEntryPoint: boolean;
   hasMetroEntryPoint: boolean;
+  hasSdkEntryPoint: boolean;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -59,6 +61,15 @@ const buildPackageContract = (
       types: './dist/metro/index.d.ts',
       import: './dist/metro/index.js',
       require: './dist/metro/index.cjs',
+    };
+  }
+
+  if (targets.hasSdkEntryPoint) {
+    contract.exports['./sdk'] = {
+      development: './sdk.ts',
+      types: './dist/sdk/index.d.ts',
+      import: './dist/sdk/index.js',
+      require: './dist/sdk/index.cjs',
     };
   }
 
@@ -95,6 +106,12 @@ const mergeManagedExports = (
     delete mergedExports['./metro'];
   }
 
+  if (targets.hasSdkEntryPoint) {
+    mergedExports['./sdk'] = contract.exports['./sdk'];
+  } else {
+    delete mergedExports['./sdk'];
+  }
+
   return mergedExports;
 };
 
@@ -115,6 +132,7 @@ export const detectPluginTargets = async (
       path.join(projectRoot, 'react-native.ts'),
     ),
     hasMetroEntryPoint: await fileExists(path.join(projectRoot, 'metro.ts')),
+    hasSdkEntryPoint: await fileExists(path.join(projectRoot, 'sdk.ts')),
   };
 };
 
@@ -164,10 +182,12 @@ export const syncPluginPackageJSON = async (
   } else if (
     updatedPackageJson.exports !== undefined &&
     isPackageExports(updatedPackageJson.exports) &&
-    './metro' in updatedPackageJson.exports
+    ('./metro' in updatedPackageJson.exports ||
+      './sdk' in updatedPackageJson.exports)
   ) {
     const nextExports = { ...updatedPackageJson.exports };
     delete nextExports['./metro'];
+    delete nextExports['./sdk'];
     updateField('exports', nextExports);
   }
 

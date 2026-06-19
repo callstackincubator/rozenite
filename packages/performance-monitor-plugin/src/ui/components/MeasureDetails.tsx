@@ -11,6 +11,12 @@ export const MeasureDetails = ({ measure }: MeasureDetailsProps) => {
 
   return (
     <div className="flex flex-col gap-4">
+      {'derivedFromReactNativeMark' in measure && (
+        <p className="text-xs text-muted">
+          Derived from paired react-native-mark Start/End entries.
+        </p>
+      )}
+
       <DetailsCard
         description="Timing information captured for this performance measure."
         title="Overview"

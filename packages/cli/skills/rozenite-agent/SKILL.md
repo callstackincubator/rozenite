@@ -1,12 +1,17 @@
 ---
 name: rozenite-agent
-description: Skill giving access to React Native Devtools and Rozenite plugins.
+description: Use Rozenite for Agents through CLI-driven `rozenite agent` commands to inspect React Native DevTools data and Rozenite plugins on a live app target. Trigger this skill for shell-based debugging and live session work. For Node.js or TypeScript scripts, wrappers, automations, or other programmatic SDK usage, use `rozenite-agent-sdk` instead.
 ---
 
 ## CLI
 
 - Use `npx rozenite` for Rozenite commands.
 - Run `npx rozenite` from the app root where Metro is started for the target app. In monorepos, this is usually the app package root, not the repository root.
+
+## Handoff
+
+- Keep this skill for shell-driven `rozenite agent ...` workflows.
+- If the user wants code instead of shell commands, or asks for a Node.js or TypeScript script, wrapper, benchmark, automation, or agent runtime built on top of Rozenite, switch to `rozenite-agent-sdk`.
 
 ## Rules
 

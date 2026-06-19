@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Button,
   Checkbox,
@@ -11,6 +11,8 @@ import type {
   SerializedPerformanceMark,
   SerializedPerformanceMeasure,
   SerializedPerformanceMetric,
+  SerializedPerformanceReactNativeMark,
+  SerializedPerformanceResource,
 } from '../../shared/types';
 import { downloadFile } from '../utils';
 
@@ -18,6 +20,8 @@ export type ExportModalProps = {
   measures: SerializedPerformanceMeasure[];
   metrics: SerializedPerformanceMetric[];
   marks: SerializedPerformanceMark[];
+  reactNativeMarks: SerializedPerformanceReactNativeMark[];
+  resources: SerializedPerformanceResource[];
   sessionStartedAt: number;
   clockShift: number;
 };
@@ -26,7 +30,14 @@ type ExportOptions = {
   measures: boolean;
   metrics: boolean;
   marks: boolean;
+  reactNativeMarks: boolean;
+  resources: boolean;
 };
+
+type AlertMessage = {
+  type: 'success' | 'error';
+  message: string;
+} | null;
 
 type DataTypeCardProps = {
   title: string;
@@ -70,22 +81,36 @@ const DataTypeCard = ({
   );
 };
 
+const ALL_OPTIONS_ON: ExportOptions = {
+  measures: true,
+  metrics: true,
+  marks: true,
+  reactNativeMarks: true,
+  resources: true,
+};
+
+const ALL_OPTIONS_OFF: ExportOptions = {
+  measures: false,
+  metrics: false,
+  marks: false,
+  reactNativeMarks: false,
+  resources: false,
+};
+
 export function ExportModal({
   measures,
   metrics,
   marks,
+  reactNativeMarks,
+  resources,
   sessionStartedAt,
   clockShift,
 }: ExportModalProps) {
-  const [exportOptions, setExportOptions] = useState<ExportOptions>({
-    measures: true,
-    metrics: true,
-    marks: true,
-  });
+  const [exportOptions, setExportOptions] =
+    useState<ExportOptions>(ALL_OPTIONS_ON);
   const [isOpen, setIsOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [alertMessage, setAlertMessage] = useState<AlertMessage>(null);
 
-  const hasData = measures.length > 0 || metrics.length > 0 || marks.length > 0;
   const selectedCount = Object.values(exportOptions).filter(Boolean).length;
 
   const updateExportOption = (
@@ -99,7 +124,7 @@ export function ExportModal({
   };
 
   const handleExport = async () => {
-    setErrorMessage(null);
+    setAlertMessage(null);
 
     try {
       const exportData: Record<string, unknown> = {
@@ -110,6 +135,8 @@ export function ExportModal({
           totalMeasures: measures.length,
           totalMetrics: metrics.length,
           totalMarks: marks.length,
+          totalReactNativeMarks: reactNativeMarks.length,
+          totalResources: resources.length,
         },
       };
 
@@ -125,37 +152,56 @@ export function ExportModal({
         exportData.marks = marks;
       }
 
+      if (exportOptions.reactNativeMarks) {
+        exportData.reactNativeMarks = reactNativeMarks;
+      }
+
+      if (exportOptions.resources) {
+        exportData.resources = resources;
+      }
+
       await downloadFile(exportData, 'performance-data.json');
+      setAlertMessage({
+        type: 'success',
+        message: 'Performance data exported successfully!',
+      });
       setIsOpen(false);
     } catch {
-      setErrorMessage(
-        'Failed to export performance data. Please try again.',
-      );
+      setAlertMessage({
+        type: 'error',
+        message: 'Failed to export performance data. Please try again.',
+      });
     }
   };
 
-  const handleSelectAll = () => {
-    setExportOptions({
-      measures: true,
-      metrics: true,
-      marks: true,
-    });
+  const handleSelectAll = () => setExportOptions(ALL_OPTIONS_ON);
+  const handleSelectNone = () => setExportOptions(ALL_OPTIONS_OFF);
+
+  const hasData =
+    measures.length > 0 ||
+    metrics.length > 0 ||
+    marks.length > 0 ||
+    reactNativeMarks.length > 0 ||
+    resources.length > 0;
+
+  const clearAlert = () => {
+    setAlertMessage(null);
   };
 
-  const handleSelectNone = () => {
-    setExportOptions({
-      measures: false,
-      metrics: false,
-      marks: false,
-    });
-  };
+  // Auto-clear success alerts after 3 seconds
+  useEffect(() => {
+    if (alertMessage?.type === 'success') {
+      const timer = setTimeout(clearAlert, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [alertMessage]);
 
   return (
     <>
       <Button
         isDisabled={!hasData}
         onPress={() => {
-          setErrorMessage(null);
+          setAlertMessage(null);
           setIsOpen(true);
         }}
         size="sm"
@@ -170,7 +216,7 @@ export function ExportModal({
           setIsOpen(nextOpen);
 
           if (!nextOpen) {
-            setErrorMessage(null);
+            clearAlert();
           }
         }}
       >
@@ -187,12 +233,16 @@ export function ExportModal({
                   Select which data types to include in the exported JSON file.
                 </Description>
 
-                {errorMessage ? (
+                {alertMessage ? (
                   <Surface
-                    className="border-danger/30 px-3 py-2 text-sm text-danger"
+                    className={`px-3 py-2 text-sm ${
+                      alertMessage.type === 'error'
+                        ? 'border-danger/30 text-danger'
+                        : 'border-success/30 text-success'
+                    }`}
                     variant="secondary"
                   >
-                    {errorMessage}
+                    {alertMessage.message}
                   </Surface>
                 ) : null}
 
@@ -235,6 +285,24 @@ export function ExportModal({
                     description="Point-in-time marks recorded during the session."
                     onChange={(checked) => updateExportOption('marks', checked)}
                     title="Marks"
+                  />
+                  <DataTypeCard
+                    checked={exportOptions.reactNativeMarks}
+                    count={reactNativeMarks.length}
+                    description="Internal React Native performance marks."
+                    onChange={(checked) =>
+                      updateExportOption('reactNativeMarks', checked)
+                    }
+                    title="React Native Marks"
+                  />
+                  <DataTypeCard
+                    checked={exportOptions.resources}
+                    count={resources.length}
+                    description="Resource timing entries for network requests and assets."
+                    onChange={(checked) =>
+                      updateExportOption('resources', checked)
+                    }
+                    title="Resources"
                   />
                 </div>
 

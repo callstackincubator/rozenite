@@ -5,6 +5,7 @@ import path from 'node:path';
 import { rozeniteServerPlugin } from './server-plugin.js';
 import { rozeniteClientPlugin } from './client-plugin.js';
 import { rozeniteReactNativePlugin } from './react-native-plugin.js';
+import { rozeniteSdkPlugin } from './sdk-plugin.js';
 import maybeDtsPlugin from 'vite-plugin-dts';
 import requirePlugin from './require-plugin.js';
 import { bundleTargetDeclarations } from './bundle-dts.js';
@@ -15,12 +16,21 @@ const dtsPlugin =
     ? (maybeDtsPlugin.default as typeof maybeDtsPlugin)
     : maybeDtsPlugin;
 
-const getDtsPlugin = (target: 'react-native' | 'metro'): PluginOption => {
+const getDtsPlugin = (
+  target: 'react-native' | 'metro' | 'sdk',
+): PluginOption => {
   const projectRoot = process.cwd();
-  const entryRoot = target === 'react-native' ? 'react-native.ts' : 'metro.ts';
+  const entryRoot =
+    target === 'react-native'
+      ? 'react-native.ts'
+      : target === 'metro'
+        ? 'metro.ts'
+        : 'sdk.ts';
   const distRoot = path.join(projectRoot, 'dist');
   const targetRoot = path.join(distRoot, target);
   const publicEntryPath = path.join(projectRoot, 'dist', target, 'index.d.ts');
+  const sdkBundleEntryPath = path.join(targetRoot, `${target}.d.ts`);
+  const rawSdkEntryPath = path.join(distRoot, `${target}.d.ts`);
 
   return dtsPlugin({
     entryRoot,
@@ -28,6 +38,9 @@ const getDtsPlugin = (target: 'react-native' | 'metro'): PluginOption => {
     outDir: `dist/${target}`,
     strictOutput: false,
     insertTypesEntry: false,
+    // Preserve package specifiers in published declarations instead of
+    // rewriting workspace imports to source file paths.
+    pathsToAliases: false,
     tsconfigPath: path.join(projectRoot, 'tsconfig.json'),
     beforeWriteFile: (filePath, content) => {
       if (!filePath.endsWith('.d.ts')) {
@@ -36,10 +49,23 @@ const getDtsPlugin = (target: 'react-native' | 'metro'): PluginOption => {
 
       if (
         filePath === publicEntryPath ||
-        filePath.endsWith(`/${target}.d.ts`)
+        (target !== 'sdk' && filePath.endsWith(`/${target}.d.ts`))
       ) {
         return {
           filePath: publicEntryPath,
+          content,
+        };
+      }
+
+      if (
+        target === 'sdk' &&
+        filePath === rawSdkEntryPath
+      ) {
+        return {
+          // vite-plugin-dts emits the SDK root declaration at dist/sdk.d.ts.
+          // Move it under dist/sdk/ before API Extractor rolls it up into the
+          // published dist/sdk/index.d.ts.
+          filePath: sdkBundleEntryPath,
           content,
         };
       }
@@ -64,6 +90,7 @@ const getDtsPlugin = (target: 'react-native' | 'metro'): PluginOption => {
 export const rozenitePlugin = (): PluginOption[] => {
   const isServer = process.env.VITE_ROZENITE_TARGET === 'server';
   const isReactNative = process.env.VITE_ROZENITE_TARGET === 'react-native';
+  const isSdk = process.env.VITE_ROZENITE_TARGET === 'sdk';
 
   if (isServer) {
     return [rozeniteServerPlugin(), getDtsPlugin('metro')] as PluginOption[];
@@ -74,6 +101,8 @@ export const rozenitePlugin = (): PluginOption[] => {
       rozeniteReactNativePlugin(),
       getDtsPlugin('react-native'),
     ] as PluginOption[];
+  } else if (isSdk) {
+    return [rozeniteSdkPlugin(), getDtsPlugin('sdk')] as PluginOption[];
   }
 
   return [

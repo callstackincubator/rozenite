@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'scope-enum': [
@@ -30,9 +30,11 @@ export default {
         'controls-plugin',
         'agent-bridge',
         'agent-shared',
+        'agent-sdk',
         'file-system-plugin',
         'sqlite-plugin',
-        ''
+        'rhf-plugin',
+        '',
       ],
     ],
   },

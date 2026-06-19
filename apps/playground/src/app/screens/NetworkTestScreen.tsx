@@ -13,8 +13,21 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import EventSource from 'react-native-sse';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
+import {
+  createSection,
+  useRozeniteControlsPlugin,
+} from '@rozenite/controls-plugin';
+import {
+  NitroWebSocket,
+  type WebSocketCloseEvent as NitroWebSocketCloseEvent,
+  type WebSocketMessageEvent as NitroWebSocketMessageEvent,
+} from 'react-native-nitro-websockets';
 import { RootStackParamList } from '../navigation/types';
 import { api, User, Post, Todo } from '../utils/network-activity/api';
+import {
+  nitroApi,
+  type NitroDemoResult,
+} from '../utils/network-activity/nitro';
 
 const useUsersQuery = () => {
   return useQuery({
@@ -139,6 +152,646 @@ const TodoCard: React.FC<{ todo: Todo }> = ({ todo }) => (
   </View>
 );
 
+type ImageTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const IMAGE_TEST_CASES: ImageTestCase[] = [
+  {
+    label: 'PNG',
+    url: 'https://httpbin.org/image/png',
+    hint: 'Small PNG, exercises image-binary capture',
+  },
+  {
+    label: 'JPEG',
+    url: 'https://httpbin.org/image/jpeg',
+    hint: 'Small JPEG, exercises image-binary capture',
+  },
+  {
+    label: 'WebP',
+    url: 'https://httpbin.org/image/webp',
+    hint: 'WebP — `image/*` catch-all',
+  },
+  {
+    label: 'SVG',
+    url: 'https://httpbin.org/image/svg',
+    hint: 'Text-based — captured as string, Raw view shows source',
+  },
+  {
+    label: 'Large JPEG (~1 MB)',
+    url: 'https://picsum.photos/3000/3000.jpg',
+    hint: 'Substantial JPEG, still under the 5 MB capture cap',
+  },
+  {
+    label: 'Huge JPEG (cap test)',
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Pillars_of_creation_2014_HST_WFC3-UVIS_full-res_denoised.jpg',
+    hint: 'Hubble Pillars of Creation, ~45 MB — triggers the `binary-too-large` placeholder',
+  },
+];
+
+const ImageResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchImage = React.useCallback(async (testCase: ImageTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const blob = await response.blob();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${blob.type || 'unknown'} • ${blob.size.toLocaleString()} bytes`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Image Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers image responses to exercise the Network Activity panel&apos;s
+          image preview. Tap a button, then open the captured request in
+          DevTools — Preview tab shows the rendered image, Raw tab shows the
+          metadata card (Content-Type + decoded size) or, for SVG, the XML
+          source.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {IMAGE_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchImage(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {IMAGE_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
+type BinaryTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const BINARY_TEST_CASES: BinaryTestCase[] = [
+  {
+    label: 'PDF',
+    url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    hint: 'application/pdf — magic bytes `%PDF` visible in the hex ASCII column',
+  },
+  {
+    label: 'octet-stream',
+    url: 'https://httpbin.org/bytes/4096',
+    hint: 'application/octet-stream — random 4 KB, no recognisable magic',
+  },
+  {
+    label: 'WOFF2 font',
+    url: 'https://cdn.jsdelivr.net/npm/@fontsource/roboto@latest/files/roboto-latin-400-normal.woff2',
+    hint: 'font/woff2 — exercises the font/* content-type branch',
+  },
+  {
+    label: 'MP3',
+    url: 'https://www.kozco.com/tech/piano2-CoolEdit.mp3',
+    hint: 'audio/mpeg — small audio sample, ~99 KB',
+  },
+  {
+    label: 'ZIP',
+    url: 'https://codeload.github.com/octocat/Hello-World/zip/refs/heads/master',
+    hint: 'application/zip — GitHub codeload, `PK` magic in ASCII column',
+  },
+];
+
+const BinaryResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchBinary = React.useCallback(async (testCase: BinaryTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const blob = await response.blob();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${blob.type || 'unknown'} • ${blob.size.toLocaleString()} bytes`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Binary Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers non-image binary responses so the Network Activity
+          panel&apos;s hex viewer + metadata card can be exercised end-to-end.
+          Tap a button, then open the captured request in DevTools — the Raw tab
+          shows the metadata card (size, Content-Length, derived filename,
+          Download button) and the virtualized hex view below.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {BINARY_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchBinary(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {BINARY_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
+type HtmlTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const HTML_TEST_CASES: HtmlTestCase[] = [
+  {
+    label: 'Classic HTML',
+    url: 'https://httpbin.org/html',
+    hint: '200 OK, real HTML body (Moby Dick excerpt) — exercises iframe preview + source view',
+  },
+  {
+    label: 'Minimal HTML',
+    url: 'https://example.com/',
+    hint: '200 OK well-known minimal HTML with inline <style> — verifies CSP allows inline styles',
+  },
+  {
+    label: '404 HTML',
+    url: 'https://httpbin.org/nonexistent-rozenite-test-route',
+    hint: '404 with a text/html body — confirms the renderer handles error responses, not just 2xx',
+  },
+];
+
+const HtmlResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchHtml = React.useCallback(async (testCase: HtmlTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const text = await response.text();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${
+          response.headers.get('content-type') ?? 'unknown'
+        } • ${text.length.toLocaleString()} chars`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>HTML Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers HTML responses to exercise the Network Activity panel&apos;s
+          HTML viewer. Tap a button, then open the captured request in DevTools
+          — Preview tab shows the page rendered inside a sandboxed iframe (no
+          scripts, no external subresources), Raw tab shows the HTML source. One
+          demo also returns 404 so the renderer is exercised on an error
+          response.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {HTML_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchHtml(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {HTML_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
+type XmlTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const XML_TEST_CASES: XmlTestCase[] = [
+  {
+    label: 'Sample XML',
+    url: 'https://httpbin.org/xml',
+    hint: '~519 B application/xml slideshow — exercises basic tree rendering + attributes',
+  },
+  {
+    label: 'Atom feed',
+    url: 'https://github.com/callstackincubator/rozenite/commits/main.atom',
+    hint: 'Atom feed — namespaces (xmlns, xmlns:media), nested <entry> blocks, CDATA in <content>',
+  },
+];
+
+const XmlResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchXml = React.useCallback(async (testCase: XmlTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const text = await response.text();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${
+          response.headers.get('content-type') ?? 'unknown'
+        } • ${text.length.toLocaleString()} chars`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>XML Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers XML responses to exercise the Network Activity panel&apos;s
+          XML viewer. Tap a button, then open the captured request in DevTools —
+          the Preview tab shows the parsed tree (collapsible elements,
+          namespaces, CDATA content), the Raw tab shows the XML source.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {XML_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchXml(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {XML_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
+type LargeTextTestCase = {
+  label: string;
+  url: string;
+  hint?: string;
+};
+
+const LARGE_TEXT_TEST_CASES: LargeTextTestCase[] = [
+  {
+    label: 'Alice in Wonderland (~174 KB)',
+    url: 'https://www.gutenberg.org/cache/epub/11/pg11.txt',
+    hint: 'text/plain — exceeds the 50 KB threshold, Raw view virtualizes into a 500 px scrollable window',
+  },
+  {
+    label: 'GPL-3 license (~35 KB)',
+    url: 'https://www.gnu.org/licenses/gpl-3.0.txt',
+    hint: 'text/plain — under the threshold, renders as a flat <pre> for comparison',
+  },
+];
+
+const LargeTextResponseTestComponent: React.FC = () => {
+  const [loadingLabel, setLoadingLabel] = React.useState<string | null>(null);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchLargeText = React.useCallback(
+    async (testCase: LargeTextTestCase) => {
+      setLoadingLabel(testCase.label);
+      setError(null);
+      setLastResult(null);
+      try {
+        const response = await fetch(testCase.url);
+        const text = await response.text();
+        setLastResult(
+          `${testCase.label}: HTTP ${response.status} • ${
+            response.headers.get('content-type') ?? 'unknown'
+          } • ${text.length.toLocaleString()} chars`,
+        );
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setLoadingLabel(null);
+      }
+    },
+    [],
+  );
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Large Text Response Test</Text>
+        <Text style={styles.cardBody}>
+          Triggers large plain-text responses so the Network Activity
+          panel&apos;s code-block viewer can be exercised on both sides of the
+          50 KB virtualization threshold. Tap a button, then open the captured
+          request in DevTools — bodies above 50 KB scroll inside a 500 px window
+          via Virtuoso; bodies below render as a flat &lt;pre&gt;.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          {LARGE_TEXT_TEST_CASES.map((testCase) => (
+            <TouchableOpacity
+              key={testCase.label}
+              style={[
+                styles.nitroButton,
+                loadingLabel !== null && styles.refetchButtonDisabled,
+              ]}
+              disabled={loadingLabel !== null}
+              onPress={() => fetchLargeText(testCase)}
+            >
+              <Text style={styles.nitroButtonText}>
+                {loadingLabel === testCase.label ? 'Fetching…' : testCase.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.imageHintList}>
+          {LARGE_TEXT_TEST_CASES.map((testCase) =>
+            testCase.hint ? (
+              <Text key={testCase.label} style={styles.imageHintText}>
+                • {testCase.label}: {testCase.hint}
+              </Text>
+            ) : null,
+          )}
+        </View>
+
+        {loadingLabel && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Fetching {loadingLabel}…</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {lastResult && <Text style={styles.successText}>{lastResult}</Text>}
+      </View>
+    </ScrollView>
+  );
+};
+
+const NitroHTTPTestComponent: React.FC = () => {
+  const [isRunning, setIsRunning] = React.useState(false);
+  const [result, setResult] = React.useState<NitroDemoResult | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const runNitroAction = React.useCallback(
+    async (action: () => Promise<NitroDemoResult>) => {
+      setIsRunning(true);
+      setError(null);
+
+      try {
+        const nextResult = await action();
+        setResult(nextResult);
+      } catch (actionError) {
+        setResult(null);
+        setError(
+          actionError instanceof Error
+            ? actionError.message
+            : String(actionError),
+        );
+      } finally {
+        setIsRunning(false);
+      }
+    },
+    [],
+  );
+
+  return (
+    <ScrollView contentContainerStyle={styles.listContainer}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Nitro HTTP Test</Text>
+        <Text style={styles.cardBody}>
+          Runs requests through `react-native-nitro-fetch`. Watch the Network
+          Activity panel for `Nitro` source badges.
+        </Text>
+
+        <View style={styles.nitroButtonGrid}>
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runNitroAction(nitroApi.getUsers)}
+          >
+            <Text style={styles.nitroButtonText}>Nitro GET</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runNitroAction(nitroApi.createPost)}
+          >
+            <Text style={styles.nitroButtonText}>Nitro POST</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runNitroAction(nitroApi.prefetchUuid)}
+          >
+            <Text style={styles.nitroButtonText}>Prefetch</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.nitroButton,
+              styles.nitroButtonDanger,
+              isRunning && styles.refetchButtonDisabled,
+            ]}
+            disabled={isRunning}
+            onPress={() => runNitroAction(nitroApi.abortSlowRequest)}
+          >
+            <Text style={styles.nitroButtonText}>Abort</Text>
+          </TouchableOpacity>
+        </View>
+
+        {isRunning && (
+          <View style={styles.nitroStatusRow}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.nitroStatusText}>Running Nitro request...</Text>
+          </View>
+        )}
+
+        {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+        {result && (
+          <View style={styles.responseContainer}>
+            <Text style={styles.responseTitle}>{result.title}</Text>
+            <Text style={styles.cardMeta}>
+              Status: {result.status} {result.statusText}
+            </Text>
+            {result.extra ? (
+              <Text style={styles.nitroExtraText}>{result.extra}</Text>
+            ) : null}
+            <ScrollView style={styles.responseScrollView} nestedScrollEnabled>
+              <Text style={styles.responseText}>{result.body}</Text>
+            </ScrollView>
+          </View>
+        )}
+      </View>
+    </ScrollView>
+  );
+};
+
 const HTTPTestComponent: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<
     'users' | 'posts' | 'todos' | 'slow' | 'unreliable' | 'create' | 'large'
@@ -196,7 +849,7 @@ const HTTPTestComponent: React.FC = () => {
           // Switch to posts tab to see the new post
           setActiveTab('posts');
         },
-      }
+      },
     );
   };
 
@@ -244,7 +897,7 @@ const HTTPTestComponent: React.FC = () => {
                   | 'slow'
                   | 'unreliable'
                   | 'create'
-                  | 'large'
+                  | 'large',
               )
             }
           >
@@ -342,8 +995,10 @@ const HTTPTestComponent: React.FC = () => {
         <View style={styles.largeFileContainer}>
           <Text style={styles.largeFileTitle}>Large File Download Test</Text>
           <Text style={styles.largeFileDescription}>
-            Download a ~5MB GeoJSON file to test progress events. 
-            Watch the Network Activity DevTools for progress percentage. Lower the emulator&apos;s signal strength for slower downloads to observe progress updates.
+            Download a ~5MB GeoJSON file to test progress events. Watch the
+            Network Activity DevTools for progress percentage. Lower the
+            emulator&apos;s signal strength for slower downloads to observe
+            progress updates.
           </Text>
           <TouchableOpacity
             style={[
@@ -456,21 +1111,27 @@ const WEBSOCKET_CONFIG = {
   MAX_MESSAGES_DISPLAY: 10,
 } as const;
 
+const NITRO_WEBSOCKET_CONFIG = {
+  URL: 'wss://echo.websocket.org',
+  DEFAULT_MESSAGE: 'hello from nitro websocket',
+  MAX_MESSAGES_DISPLAY: 12,
+} as const;
+
 const useWebSocket = (
   url: string,
-  messageIntervalMs = WEBSOCKET_CONFIG.MESSAGE_INTERVAL
+  messageIntervalMs = WEBSOCKET_CONFIG.MESSAGE_INTERVAL,
 ) => {
   const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = React.useState(false);
   const [messages, setMessages] = React.useState<string[]>([]);
   const [dataType, setDataType] = React.useState<'text' | 'binary' | 'json'>(
-    'text'
+    'text',
   );
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const addMessage = React.useCallback((message: string) => {
     setMessages((prev) =>
-      [...prev, message].slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY)
+      [...prev, message].slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY),
     );
   }, []);
 
@@ -496,7 +1157,7 @@ const useWebSocket = (
         }
       }
     },
-    [addMessage]
+    [addMessage],
   );
 
   const startMessageInterval = React.useCallback(
@@ -509,7 +1170,7 @@ const useWebSocket = (
         sendMessage(ws, WEBSOCKET_CONFIG.DEFAULT_MESSAGE, dataType);
       }, messageIntervalMs);
     },
-    [sendMessage, dataType, messageIntervalMs]
+    [sendMessage, dataType, messageIntervalMs],
   );
 
   const stopMessageInterval = React.useCallback(() => {
@@ -532,7 +1193,7 @@ const useWebSocket = (
       ws.onmessage = (event) => {
         if (event.data instanceof ArrayBuffer) {
           addMessage(
-            `Received binary: ${String(Array.from(new Uint8Array(event.data)))}`
+            `Received binary: ${String(Array.from(new Uint8Array(event.data)))}`,
           );
         } else {
           addMessage(`Received: ${event.data}`);
@@ -715,6 +1376,216 @@ const WebSocketTestComponent: React.FC = () => {
   );
 };
 
+const NitroWebSocketTestComponent: React.FC = () => {
+  const socketRef = React.useRef<NitroWebSocket | null>(null);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const [isConnected, setIsConnected] = React.useState(false);
+  const [isConnecting, setIsConnecting] = React.useState(false);
+  const [messages, setMessages] = React.useState<string[]>([]);
+  const [message, setMessage] = React.useState<string>(
+    NITRO_WEBSOCKET_CONFIG.DEFAULT_MESSAGE,
+  );
+
+  const addMessage = React.useCallback((nextMessage: string) => {
+    setMessages((prev) =>
+      [...prev, nextMessage].slice(
+        -NITRO_WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY,
+      ),
+    );
+  }, []);
+
+  const connect = React.useCallback(() => {
+    if (socketRef.current || isConnecting) {
+      return;
+    }
+
+    setIsConnecting(true);
+    addMessage(`Connecting to ${NITRO_WEBSOCKET_CONFIG.URL}`);
+
+    try {
+      const socket = new NitroWebSocket(NITRO_WEBSOCKET_CONFIG.URL);
+      socketRef.current = socket;
+
+      socket.onopen = () => {
+        setIsConnected(true);
+        setIsConnecting(false);
+        addMessage('Nitro socket connected');
+      };
+
+      socket.onmessage = (event: NitroWebSocketMessageEvent) => {
+        if (event.isBinary && event.binaryData) {
+          addMessage(`Received binary (${event.binaryData.byteLength} bytes)`);
+          return;
+        }
+
+        addMessage(`Received: ${event.data}`);
+      };
+
+      socket.onerror = (error: string) => {
+        addMessage(`Nitro error: ${error}`);
+        setIsConnected(false);
+        setIsConnecting(false);
+        socketRef.current = null;
+      };
+
+      socket.onclose = (event: NitroWebSocketCloseEvent) => {
+        addMessage(
+          `Nitro socket closed (${event.code}${event.reason ? `: ${event.reason}` : ''})`,
+        );
+        setIsConnected(false);
+        setIsConnecting(false);
+        socketRef.current = null;
+      };
+    } catch (error) {
+      addMessage(`Connection error: ${String(error)}`);
+      setIsConnecting(false);
+      socketRef.current = null;
+    }
+  }, [addMessage, isConnecting]);
+
+  const disconnect = React.useCallback(() => {
+    socketRef.current?.close(1000, 'playground disconnect');
+  }, []);
+
+  const send = React.useCallback(() => {
+    const socket = socketRef.current;
+    const trimmed = message.trim();
+    if (!socket || !trimmed || !isConnected) {
+      return;
+    }
+
+    socket.send(trimmed);
+    addMessage(`Sent: ${trimmed}`);
+  }, [addMessage, isConnected, message]);
+
+  const clearMessages = React.useCallback(() => {
+    setMessages([]);
+  }, []);
+
+  React.useEffect(() => {
+    if (scrollViewRef.current && messages.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 150);
+    }
+  }, [messages]);
+
+  React.useEffect(() => {
+    return () => {
+      socketRef.current?.close(1000, 'screen unmount');
+      socketRef.current = null;
+    };
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Nitro WebSocket Test</Text>
+        <Text style={styles.subtitle}>
+          Testing Nitro WebSocket traffic with a dedicated `Nitro` source in
+          Network Activity
+        </Text>
+      </View>
+
+      <View style={styles.websocketContainer}>
+        <View style={styles.websocketControls}>
+          <TouchableOpacity
+            style={[
+              styles.websocketButton,
+              isConnected
+                ? styles.websocketButtonDisconnect
+                : styles.nitroWebSocketButton,
+            ]}
+            onPress={isConnected ? disconnect : connect}
+            disabled={isConnecting}
+          >
+            {isConnecting ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.websocketButtonText}>
+                {isConnected ? 'Disconnect' : 'Connect'}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.dataTypeContainer}>
+            <Text style={styles.dataTypeLabel}>Source:</Text>
+            <View style={styles.nitroSourcePill}>
+              <Text style={styles.nitroSourcePillText}>Nitro WebSocket</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.connectionStatus}>
+          <Text style={styles.statusLabel}>Status:</Text>
+          <Text
+            style={[
+              styles.statusValue,
+              { color: isConnected ? '#4CAF50' : '#c084fc' },
+            ]}
+          >
+            {isConnected
+              ? 'Connected'
+              : isConnecting
+                ? 'Connecting'
+                : 'Disconnected'}
+          </Text>
+        </View>
+
+        <View style={styles.nitroInputRow}>
+          <TextInput
+            style={[styles.textInput, styles.nitroMessageInput]}
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Type a Nitro WebSocket message..."
+            placeholderTextColor="#666666"
+            editable={isConnected}
+          />
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              !isConnected && styles.sendButtonDisabled,
+            ]}
+            onPress={send}
+            disabled={!isConnected}
+          >
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.messagesContainer}>
+          <Text style={styles.messagesTitle}>Messages ({messages.length})</Text>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesList}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator
+          >
+            {messages.length === 0 ? (
+              <Text style={styles.noMessages}>
+                No Nitro WebSocket messages yet
+              </Text>
+            ) : (
+              messages.map((entry, index) => (
+                <Text key={`${entry}-${index}`} style={styles.messageText}>
+                  {entry}
+                </Text>
+              ))
+            )}
+          </ScrollView>
+        </View>
+
+        <TouchableOpacity
+          style={styles.clearMessagesButton}
+          onPress={clearMessages}
+        >
+          <Text style={styles.clearMessagesButtonText}>Clear Messages</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 const SSE_CONFIG = {
   URL: 'https://stream.wikimedia.org/v2/stream/recentchange',
   MAX_MESSAGES_DISPLAY: 15,
@@ -722,7 +1593,7 @@ const SSE_CONFIG = {
 
 const useSSE = (url: string) => {
   const [eventSource, setEventSource] = React.useState<EventSource | null>(
-    null
+    null,
   );
   const [isConnected, setIsConnected] = React.useState(false);
   const [messages, setMessages] = React.useState<string[]>([]);
@@ -730,7 +1601,7 @@ const useSSE = (url: string) => {
 
   const addMessage = React.useCallback((message: string) => {
     setMessages((prev) =>
-      [...prev, message].slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY)
+      [...prev, message].slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY),
     );
     setEventCount((prev) => prev + 1);
   }, []);
@@ -902,14 +1773,63 @@ const SSETestComponent: React.FC = () => {
 export const NetworkTestScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [activeTest, setActiveTest] = React.useState<
-    'http' | 'websocket' | 'sse' | 'request-body'
+    | 'http'
+    | 'nitro'
+    | 'websocket'
+    | 'nitro-websocket'
+    | 'sse'
+    | 'images'
+    | 'binary'
+    | 'html'
+    | 'xml'
+    | 'large-text'
+    | 'request-body'
   >('http');
+
+  const networkControlsSections = React.useMemo(
+    () => [
+      createSection({
+        id: 'network-playground',
+        title: 'Network Playground',
+        description:
+          'Local controls registered from the Network screen so we can verify Rozenite Controls can be mounted more than once.',
+        items: [
+          {
+            id: 'active-test',
+            type: 'text' as const,
+            title: 'Active Test',
+            value: activeTest,
+          },
+          {
+            id: 'reset-http',
+            type: 'button' as const,
+            title: 'Reset to HTTP',
+            actionLabel: 'Reset',
+            onPress: () => setActiveTest('http'),
+          },
+          {
+            id: 'request-body-test',
+            type: 'button' as const,
+            title: 'Open Request Body Test',
+            actionLabel: 'Open',
+            onPress: () => navigation.navigate('RequestBodyTest'),
+          },
+        ],
+      }),
+    ],
+    [activeTest, navigation],
+  );
+
+  useRozeniteControlsPlugin({
+    sections: networkControlsSections,
+  });
 
   const renderHeader = () => (
     <View style={styles.header}>
       <Text style={styles.title}>Network Test</Text>
       <Text style={styles.subtitle}>
-        Testing HTTP, WebSocket, and SSE connections
+        Testing built-in HTTP, Nitro HTTP, built-in WebSocket, Nitro WebSocket,
+        and SSE connections
       </Text>
 
       <TouchableOpacity
@@ -922,8 +1842,15 @@ export const NetworkTestScreen: React.FC = () => {
       <View style={styles.mainTabContainer}>
         {[
           { key: 'http', label: 'HTTP Test' },
+          { key: 'nitro', label: 'Nitro HTTP' },
           { key: 'websocket', label: 'WebSocket Test' },
+          { key: 'nitro-websocket', label: 'Nitro WS' },
           { key: 'sse', label: 'SSE Test' },
+          { key: 'images', label: 'Images' },
+          { key: 'binary', label: 'Binary' },
+          { key: 'html', label: 'HTML' },
+          { key: 'xml', label: 'XML' },
+          { key: 'large-text', label: 'Large text' },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -932,7 +1859,19 @@ export const NetworkTestScreen: React.FC = () => {
               activeTest === tab.key && styles.mainTabActive,
             ]}
             onPress={() =>
-              setActiveTest(tab.key as 'http' | 'websocket' | 'sse')
+              setActiveTest(
+                tab.key as
+                  | 'http'
+                  | 'nitro'
+                  | 'websocket'
+                  | 'nitro-websocket'
+                  | 'sse'
+                  | 'images'
+                  | 'binary'
+                  | 'html'
+                  | 'xml'
+                  | 'large-text',
+              )
             }
           >
             <Text
@@ -954,8 +1893,22 @@ export const NetworkTestScreen: React.FC = () => {
       {renderHeader()}
       {activeTest === 'http' ? (
         <HTTPTestComponent />
+      ) : activeTest === 'nitro' ? (
+        <NitroHTTPTestComponent />
       ) : activeTest === 'websocket' ? (
         <WebSocketTestComponent />
+      ) : activeTest === 'nitro-websocket' ? (
+        <NitroWebSocketTestComponent />
+      ) : activeTest === 'images' ? (
+        <ImageResponseTestComponent />
+      ) : activeTest === 'binary' ? (
+        <BinaryResponseTestComponent />
+      ) : activeTest === 'html' ? (
+        <HtmlResponseTestComponent />
+      ) : activeTest === 'xml' ? (
+        <XmlResponseTestComponent />
+      ) : activeTest === 'large-text' ? (
+        <LargeTextResponseTestComponent />
       ) : (
         <SSETestComponent />
       )}
@@ -1440,13 +2393,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
     padding: 4,
+    flexWrap: 'wrap',
+    gap: 4,
   },
   mainTab: {
-    flex: 1,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
     alignItems: 'center',
+    minWidth: '24%',
   },
   mainTabActive: {
     backgroundColor: '#007AFF',
@@ -1458,6 +2413,84 @@ const styles = StyleSheet.create({
   },
   mainTabTextActive: {
     color: '#ffffff',
+  },
+  nitroButtonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 8,
+  },
+  nitroButton: {
+    backgroundColor: '#8b5cf6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    minWidth: '46%',
+  },
+  nitroButtonDanger: {
+    backgroundColor: '#d946ef',
+  },
+  nitroWebSocketButton: {
+    backgroundColor: '#8b5cf6',
+  },
+  nitroButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  nitroStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+  },
+  nitroStatusText: {
+    color: '#ffffff',
+    fontSize: 14,
+  },
+  nitroExtraText: {
+    color: '#c4b5fd',
+    fontSize: 13,
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  nitroSourcePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#2e1065',
+    borderColor: '#8b5cf6',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  nitroSourcePillText: {
+    color: '#e9d5ff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  nitroInputRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  nitroMessageInput: {
+    flex: 1,
+  },
+  sendButton: {
+    backgroundColor: '#8b5cf6',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#4b5563',
+  },
+  sendButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   formDataRow: {
     flexDirection: 'row',
@@ -1526,5 +2559,14 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     padding: 12,
     lineHeight: 16,
+  },
+  imageHintList: {
+    marginTop: 12,
+    gap: 4,
+  },
+  imageHintText: {
+    color: '#a0a0a0',
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

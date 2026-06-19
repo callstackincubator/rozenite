@@ -1,6 +1,6 @@
 {
   "name": "rozenite",
-  "version": "1.7.0",
+  "version": "1.12.0",
   "description": "Command-line interface for creating and managing React Native DevTools plugins",
   "type": "module",
   "bin": {
@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
+    "@rozenite/agent-sdk": "workspace:*",
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/tools": "workspace:*",
     "commander": "^14.0.0",

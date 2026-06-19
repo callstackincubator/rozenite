@@ -18,6 +18,7 @@ export default defineConfig({
     open: true,
   },
   test: {
+    passWithNoTests: true,
     environment: 'node',
   },
 });

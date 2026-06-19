@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Card, Chip, Separator, Surface } from '@rozenite/ui';
+import { Button, Card, Chip, Separator, Surface } from '@rozenite/ui';
 import { FileImage, FileText, Loader2 } from 'lucide-react';
 import { formatTextPreview } from '../formatters';
 import { isLikelyImageFile } from '../shared/path';
@@ -14,6 +14,9 @@ type DetailPanelProps = {
   requestImagePreview: FileSystemRequests['requestImagePreview'];
   requestTextPreview: FileSystemRequests['requestTextPreview'];
   selected: FsEntry | null;
+  canExport: boolean;
+  exportLoading: boolean;
+  onExport: (entry: FsEntry) => void;
 };
 
 function getEntryKind(entry: FsEntry): string {
@@ -42,6 +45,9 @@ export function DetailPanel({
   requestImagePreview,
   requestTextPreview,
   selected,
+  canExport,
+  exportLoading,
+  onExport,
 }: DetailPanelProps) {
   const [imagePreviewUri, setImagePreviewUri] = useState<string | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState<string | null>(
@@ -145,16 +151,35 @@ export function DetailPanel({
                 : 'Select a file from the browser to inspect metadata and preview its contents.'}
             </Card.Description>
           </div>
-          {selected ? (
-            <Chip
-              className="shrink-0"
-              color={selected.isDirectory ? 'accent' : 'default'}
-              size="sm"
-              variant="soft"
-            >
-              {getEntryKind(selected)}
-            </Chip>
-          ) : null}
+          <div className="flex shrink-0 items-center gap-2">
+            {selected && !selected.isDirectory ? (
+              <Button
+                isDisabled={!canExport || exportLoading}
+                onPress={() => onExport(selected)}
+                size="sm"
+                variant="secondary"
+              >
+                {exportLoading ? (
+                  <>
+                    <Loader2 className="size-3 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  'Export'
+                )}
+              </Button>
+            ) : null}
+            {selected ? (
+              <Chip
+                className="shrink-0"
+                color={selected.isDirectory ? 'accent' : 'default'}
+                size="sm"
+                variant="soft"
+              >
+                {getEntryKind(selected)}
+              </Chip>
+            ) : null}
+          </div>
         </div>
       </Card.Header>
 

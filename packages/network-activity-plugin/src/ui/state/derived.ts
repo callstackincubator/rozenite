@@ -17,6 +17,8 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
       requests.push({
         id: httpEntry.id,
         type: 'http',
+        source: httpEntry.source,
+        initiator: httpEntry.initiator,
         name: httpEntry.request.url,
         status: httpEntry.status,
         timestamp: httpEntry.timestamp,
@@ -24,6 +26,8 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
         size: httpEntry.size ?? null,
         method: httpEntry.request.method,
         httpStatus: httpEntry.response?.status,
+        contentType: httpEntry.response?.contentType,
+        ttfb: httpEntry.ttfb,
         progress: httpEntry.progress,
       });
     } else if (entry.type === 'websocket') {
@@ -31,6 +35,7 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
       requests.push({
         id: wsEntry.id,
         type: 'websocket',
+        source: wsEntry.source,
         name: wsEntry.connection.url,
         status: wsEntry.status,
         timestamp: wsEntry.timestamp,
@@ -38,12 +43,15 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
         size: null,
         method: 'WS',
         httpStatus: 0,
+        contentType: undefined,
       });
     } else if (entry.type === 'sse') {
       const sseEntry = entry as SSENetworkEntry;
       requests.push({
         id: sseEntry.id,
         type: 'sse',
+        source: sseEntry.source,
+        initiator: sseEntry.initiator,
         name: sseEntry.request.url,
         status: sseEntry.status,
         timestamp: sseEntry.timestamp,
@@ -51,6 +59,7 @@ export const getProcessedRequests = memoize((state: NetworkActivityState) => {
         size: null,
         method: 'SSE',
         httpStatus: 0,
+        contentType: sseEntry.response?.contentType,
       });
     }
   }
@@ -77,6 +86,8 @@ export const getRequestSummary = (
       return {
         id: httpEntry.id,
         type: 'http',
+        source: httpEntry.source,
+        initiator: httpEntry.initiator,
         name: httpEntry.request.url,
         status: httpEntry.status,
         timestamp: httpEntry.timestamp,
@@ -84,6 +95,8 @@ export const getRequestSummary = (
         size: httpEntry.size ?? null,
         method: httpEntry.request.method,
         httpStatus: httpEntry.response?.status || 0,
+        contentType: httpEntry.response?.contentType,
+        ttfb: httpEntry.ttfb,
         progress: httpEntry.progress,
       };
     } else if (entry.type === 'websocket') {
@@ -91,6 +104,7 @@ export const getRequestSummary = (
       return {
         id: wsEntry.id,
         type: 'websocket',
+        source: wsEntry.source,
         name: wsEntry.connection.url,
         status: wsEntry.status,
         timestamp: wsEntry.timestamp,
@@ -98,12 +112,15 @@ export const getRequestSummary = (
         size: null,
         method: 'WS',
         httpStatus: 0,
+        contentType: undefined,
       };
     } else if (entry.type === 'sse') {
       const sseEntry = entry as SSENetworkEntry;
       return {
         id: sseEntry.id,
         type: 'sse',
+        source: sseEntry.source,
+        initiator: sseEntry.initiator,
         name: sseEntry.request.url,
         status: sseEntry.status,
         timestamp: sseEntry.timestamp,
@@ -111,6 +128,7 @@ export const getRequestSummary = (
         size: null,
         method: 'SSE',
         httpStatus: 0,
+        contentType: sseEntry.response?.contentType,
       };
     }
 

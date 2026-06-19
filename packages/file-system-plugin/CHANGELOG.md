@@ -1,5 +1,77 @@
 # @rozenite/file-system-plugin
 
+## 1.12.0
+
+### Patch Changes
+
+- [#300](https://github.com/callstackincubator/rozenite/pull/300) [`78c381f`](https://github.com/callstackincubator/rozenite/commit/78c381f475dec7a7c84a1dfff2596d6d9010c358) Thanks [@draggie](https://github.com/draggie)! - Fix modern Expo FileSystem bundle directory inspection on Android by listing `asset://` entries without statting packaged asset files.
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.12.0
+  - @rozenite/agent-shared@1.12.0
+  - @rozenite/plugin-bridge@1.12.0
+
+## 1.11.0
+
+### Minor Changes
+
+- [#276](https://github.com/callstackincubator/rozenite/pull/276) [`bf7a59a`](https://github.com/callstackincubator/rozenite/commit/bf7a59a2395bc3aaec6a47e8cd3260f26df74fb2) Thanks [@JKobrynski](https://github.com/JKobrynski)! - Add opt-in single-file import and export support to the File System plugin, including separately gated Rozenite for Agents tools for raw base64 file transfer.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.11.0
+  - @rozenite/agent-shared@1.11.0
+  - @rozenite/plugin-bridge@1.11.0
+
+## 1.10.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.10.0
+  - @rozenite/agent-shared@1.10.0
+  - @rozenite/plugin-bridge@1.10.0
+
+## 1.9.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.9.0
+  - @rozenite/agent-shared@1.9.0
+  - @rozenite/plugin-bridge@1.9.0
+
+## 1.8.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@1.8.1
+  - @rozenite/agent-shared@1.8.1
+  - @rozenite/plugin-bridge@1.8.1
+
+## 1.8.0
+
+### Minor Changes
+
+- [#222](https://github.com/callstackincubator/rozenite/pull/222) [`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a) Thanks [@manapard](https://github.com/manapard)! - Add typed `./sdk` entrypoints for the official agent-enabled plugins backed by
+  the same shared tool contracts used at runtime.
+
+  These plugins now publish typed descriptor groups for `session.tools.call(...)`
+  workflows, including shared public input/result types, while keeping their
+  existing tool names and runtime behavior unchanged. The official agent SDK docs
+  and plugin authoring guidance now also document this SDK export pattern,
+  including the `network-activity` fallback note for environments without the
+  built-in `network` domain.
+
+### Patch Changes
+
+- Updated dependencies [[`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a), [`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a)]:
+  - @rozenite/agent-bridge@1.8.0
+  - @rozenite/agent-shared@1.8.0
+  - @rozenite/plugin-bridge@1.8.0
+
 ## 1.7.0
 
 ### Minor Changes

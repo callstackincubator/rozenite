@@ -1,7 +1,12 @@
 import { createNanoEvents } from 'nanoevents';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { XHRInterceptor } from './xhr-interceptor';
-import { getRequestBody, getResponseSize, getInitiatorFromStack, setupRequestOverride } from './http-utils';
+import {
+  getRequestBody,
+  getResponseSize,
+  getInitiatorFromStack,
+  setupRequestOverride,
+} from './http-utils';
 import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
 import { getContentType } from '../utils';
 import { getOverridesRegistry } from './overrides-registry';
@@ -28,7 +33,9 @@ type NanoEventsMap = {
 };
 
 export type HTTPInspector = Inspector<HttpEventMap> & {
-  getNetworkRequestsRegistry: () => ReturnType<typeof getNetworkRequestsRegistry>;
+  getNetworkRequestsRegistry: () => ReturnType<
+    typeof getNetworkRequestsRegistry
+  >;
 };
 
 const READY_STATE_HEADERS_RECEIVED = 2;
@@ -39,9 +46,9 @@ export const getHTTPInspector = (): HTTPInspector => {
 
   const overridesRegistry = getOverridesRegistry();
   XHRInterceptor.setOverrideCallback((request) =>
-    setupRequestOverride(overridesRegistry, request)
+    setupRequestOverride(overridesRegistry, request),
   );
-  
+
   return {
     enable: () => {
       if (XHRInterceptor.isInterceptorEnabled()) return;
@@ -69,6 +76,7 @@ export const getHTTPInspector = (): HTTPInspector => {
           },
           type: 'XHR',
           initiator,
+          source: 'builtin',
         });
 
         request.addEventListener('readystatechange', () => {
@@ -84,6 +92,7 @@ export const getHTTPInspector = (): HTTPInspector => {
             loaded: event.loaded,
             total: event.total,
             lengthComputable: event.lengthComputable,
+            source: 'builtin',
           });
         });
 
@@ -103,6 +112,7 @@ export const getHTTPInspector = (): HTTPInspector => {
               size: getResponseSize(request),
               responseTime: Date.now(),
             },
+            source: 'builtin',
           });
         });
 
@@ -113,6 +123,7 @@ export const getHTTPInspector = (): HTTPInspector => {
             duration: Date.now() - sendTime,
             size: getResponseSize(request),
             ttfb,
+            source: 'builtin',
           });
         });
 
@@ -123,6 +134,7 @@ export const getHTTPInspector = (): HTTPInspector => {
             type: 'XHR',
             error: 'Failed',
             canceled: false,
+            source: 'builtin',
           });
         });
 
@@ -133,6 +145,7 @@ export const getHTTPInspector = (): HTTPInspector => {
             type: 'XHR',
             error: 'Aborted',
             canceled: true,
+            source: 'builtin',
           });
         });
 
@@ -143,6 +156,7 @@ export const getHTTPInspector = (): HTTPInspector => {
             type: 'XHR',
             error: 'Timeout',
             canceled: false,
+            source: 'builtin',
           });
         });
       });
@@ -167,7 +181,7 @@ export const getHTTPInspector = (): HTTPInspector => {
 
     on: <TEventType extends keyof HttpEventMap>(
       event: TEventType,
-      callback: (data: HttpEventMap[TEventType]) => void
+      callback: (data: HttpEventMap[TEventType]) => void,
     ) => eventEmitter.on(event, callback as NanoEventsMap[TEventType]),
   };
 };

@@ -19,11 +19,16 @@ import { getId } from '../utils/getId';
 import { assert } from '../utils/assert';
 import { getContentTypeMime } from '../../utils/getContentTypeMimeType';
 import { applyReactNativeRequestHeadersLogic } from '../../utils/applyReactNativeRequestHeadersLogic';
+import { symbolicateInitiator } from '../utils/symbolication';
 
 const MAX_WEBSOCKET_MESSAGES_PER_CONNECTION = 32;
 const MAX_SSE_MESSAGES_PER_CONNECTION = 32;
 
 const STORE_VERSION = 1;
+
+const getElapsedDuration = (endTimestamp: number, startTimestamp: number) => {
+  return Math.max(endTimestamp - startTimestamp, 0);
+};
 
 export interface NetworkActivityState {
   // State
@@ -50,7 +55,7 @@ export interface NetworkActivityState {
   // Event handling
   handleEvent: <K extends keyof NetworkActivityEventMap>(
     eventType: K,
-    data: NetworkActivityEventMap[K]
+    data: NetworkActivityEventMap[K],
   ) => void;
 
   // Client management
@@ -80,7 +85,7 @@ export const createNetworkActivityStore = () =>
 
             _client.send(
               isRecording ? 'network-enable' : 'network-disable',
-              {}
+              {},
             );
             set({ isRecording });
           },
@@ -120,11 +125,25 @@ export const createNetworkActivityStore = () =>
         // Event handling
         handleEvent: <K extends keyof NetworkActivityEventMap>(
           eventType: K,
-          data: NetworkActivityEventMap[K]
+          data: NetworkActivityEventMap[K],
         ) => {
           switch (eventType) {
+            case 'recording-state': {
+              const eventData =
+                data as NetworkActivityEventMap['recording-state'];
+              const { isRecording, _client } = get();
+              if (_client && isRecording !== eventData.isRecording) {
+                _client.send(
+                  isRecording ? 'network-enable' : 'network-disable',
+                  {},
+                );
+              }
+              break;
+            }
+
             case 'client-ui-settings': {
-              const eventData = data as NetworkActivityEventMap['client-ui-settings'];
+              const eventData =
+                data as NetworkActivityEventMap['client-ui-settings'];
               set({ clientUISettings: eventData.settings || null });
               break;
             }
@@ -135,7 +154,7 @@ export const createNetworkActivityStore = () =>
                 const headersWithContentType =
                   applyReactNativeRequestHeadersLogic(
                     eventData.request.headers,
-                    eventData.request.postData
+                    eventData.request.postData,
                   );
 
                 const requestContentType =
@@ -145,6 +164,7 @@ export const createNetworkActivityStore = () =>
                   id: eventData.requestId,
                   type: 'http',
                   timestamp: eventData.timestamp,
+                  source: eventData.source ?? 'builtin',
                   request: {
                     url: eventData.request.url,
                     method: eventData.request.method,
@@ -165,6 +185,39 @@ export const createNetworkActivityStore = () =>
                 newEntries.set(eventData.requestId, entry);
                 return { networkEntries: newEntries };
               });
+
+              if (eventData.initiator.symbolicationStatus === 'pending') {
+                void symbolicateInitiator(eventData.initiator).then(
+                  (symbolicatedInitiator) => {
+                    if (!symbolicatedInitiator) {
+                      return;
+                    }
+
+                    set((state) => {
+                      const entry = state.networkEntries.get(
+                        eventData.requestId,
+                      );
+
+                      if (
+                        !entry ||
+                        (entry.type !== 'http' && entry.type !== 'sse') ||
+                        entry.initiator?.symbolicationStatus !== 'pending'
+                      ) {
+                        return {};
+                      }
+
+                      const updatedEntry = {
+                        ...entry,
+                        initiator: symbolicatedInitiator,
+                      };
+
+                      const newEntries = new Map(state.networkEntries);
+                      newEntries.set(eventData.requestId, updatedEntry);
+                      return { networkEntries: newEntries };
+                    });
+                  },
+                );
+              }
               break;
             }
 
@@ -253,6 +306,10 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: HttpNetworkEntry = {
                   ...httpEntry,
                   status: 'failed',
+                  duration: getElapsedDuration(
+                    eventData.timestamp,
+                    httpEntry.timestamp,
+                  ),
                   error: eventData.error,
                 };
 
@@ -280,7 +337,7 @@ export const createNetworkActivityStore = () =>
                           ? {
                               type:
                                 getContentTypeMime(
-                                  httpEntry.response?.headers ?? {}
+                                  httpEntry.response?.headers ?? {},
                                 ) || 'text/plain',
                               data: eventData.body,
                             }
@@ -304,6 +361,7 @@ export const createNetworkActivityStore = () =>
                   id: `ws-${eventData.socketId}`,
                   type: 'websocket',
                   timestamp: eventData.timestamp,
+                  source: eventData.source ?? 'builtin',
                   connection: {
                     url: eventData.url,
                     socketId: eventData.socketId,
@@ -332,7 +390,7 @@ export const createNetworkActivityStore = () =>
                 data as NetworkActivityEventMap['websocket-open'];
               set((state) => {
                 const entry = state.networkEntries.get(
-                  `ws-${eventData.socketId}`
+                  `ws-${eventData.socketId}`,
                 );
                 if (!entry || entry.type !== 'websocket') return state;
 
@@ -354,7 +412,7 @@ export const createNetworkActivityStore = () =>
                 data as NetworkActivityEventMap['websocket-close'];
               set((state) => {
                 const entry = state.networkEntries.get(
-                  `ws-${eventData.socketId}`
+                  `ws-${eventData.socketId}`,
                 );
                 if (!entry || entry.type !== 'websocket') return state;
 
@@ -364,7 +422,10 @@ export const createNetworkActivityStore = () =>
                   status: 'closed',
                   closeCode: eventData.code,
                   closeReason: eventData.reason,
-                  duration: eventData.timestamp - wsEntry.timestamp,
+                  duration: getElapsedDuration(
+                    eventData.timestamp,
+                    wsEntry.timestamp,
+                  ),
                 };
 
                 const newEntries = new Map(state.networkEntries);
@@ -394,8 +455,8 @@ export const createNetworkActivityStore = () =>
                 newMessages.set(
                   socketId,
                   [...currentMessages, message].slice(
-                    -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION
-                  )
+                    -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION,
+                  ),
                 );
 
                 return { websocketMessages: newMessages };
@@ -423,8 +484,8 @@ export const createNetworkActivityStore = () =>
                 newMessages.set(
                   socketId,
                   [...currentMessages, message].slice(
-                    -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION
-                  )
+                    -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION,
+                  ),
                 );
 
                 return { websocketMessages: newMessages };
@@ -437,7 +498,7 @@ export const createNetworkActivityStore = () =>
                 data as NetworkActivityEventMap['websocket-error'];
               set((state) => {
                 const entry = state.networkEntries.get(
-                  `ws-${eventData.socketId}`
+                  `ws-${eventData.socketId}`,
                 );
                 if (!entry || entry.type !== 'websocket') return state;
 
@@ -445,6 +506,10 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: WebSocketNetworkEntry = {
                   ...wsEntry,
                   status: 'error',
+                  duration: getElapsedDuration(
+                    eventData.timestamp,
+                    wsEntry.timestamp,
+                  ),
                   error: eventData.error,
                 };
 
@@ -460,7 +525,7 @@ export const createNetworkActivityStore = () =>
                 data as NetworkActivityEventMap['websocket-connection-status-changed'];
               set((state) => {
                 const entry = state.networkEntries.get(
-                  `ws-${eventData.socketId}`
+                  `ws-${eventData.socketId}`,
                 );
                 if (!entry || entry.type !== 'websocket') return state;
 
@@ -520,7 +585,7 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: SSENetworkEntry = {
                   ...sseEntry,
                   messages: [...sseEntry.messages, newMessage].slice(
-                    -MAX_SSE_MESSAGES_PER_CONNECTION
+                    -MAX_SSE_MESSAGES_PER_CONNECTION,
                   ),
                 };
 
@@ -541,6 +606,10 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: SSENetworkEntry = {
                   ...sseEntry,
                   status: 'error',
+                  duration: getElapsedDuration(
+                    eventData.timestamp,
+                    sseEntry.timestamp,
+                  ),
                   error: eventData.error.message,
                 };
 
@@ -561,7 +630,10 @@ export const createNetworkActivityStore = () =>
                 const updatedEntry: SSENetworkEntry = {
                   ...sseEntry,
                   status: 'closed',
-                  duration: eventData.timestamp - sseEntry.timestamp,
+                  duration: getElapsedDuration(
+                    eventData.timestamp,
+                    sseEntry.timestamp,
+                  ),
                 };
 
                 const newEntries = new Map(state.networkEntries);
@@ -580,59 +652,62 @@ export const createNetworkActivityStore = () =>
 
             // Subscribe to all events using the unified handler
             const unsubscribeFunctions = [
+              client.onMessage('recording-state', (data) =>
+                handleEvent('recording-state', data),
+              ),
               client.onMessage('client-ui-settings', (data) =>
-                handleEvent('client-ui-settings', data)
+                handleEvent('client-ui-settings', data),
               ),
               client.onMessage('request-sent', (data) =>
-                handleEvent('request-sent', data)
+                handleEvent('request-sent', data),
               ),
               client.onMessage('request-progress', (data) =>
-                handleEvent('request-progress', data)
+                handleEvent('request-progress', data),
               ),
               client.onMessage('response-received', (data) =>
-                handleEvent('response-received', data)
+                handleEvent('response-received', data),
               ),
               client.onMessage('request-completed', (data) =>
-                handleEvent('request-completed', data)
+                handleEvent('request-completed', data),
               ),
               client.onMessage('request-failed', (data) =>
-                handleEvent('request-failed', data)
+                handleEvent('request-failed', data),
               ),
               client.onMessage('response-body', (data) =>
-                handleEvent('response-body', data)
+                handleEvent('response-body', data),
               ),
               client.onMessage('websocket-connect', (data) =>
-                handleEvent('websocket-connect', data)
+                handleEvent('websocket-connect', data),
               ),
               client.onMessage('websocket-open', (data) =>
-                handleEvent('websocket-open', data)
+                handleEvent('websocket-open', data),
               ),
               client.onMessage('websocket-close', (data) =>
-                handleEvent('websocket-close', data)
+                handleEvent('websocket-close', data),
               ),
               client.onMessage('websocket-message-sent', (data) =>
-                handleEvent('websocket-message-sent', data)
+                handleEvent('websocket-message-sent', data),
               ),
               client.onMessage('websocket-message-received', (data) =>
-                handleEvent('websocket-message-received', data)
+                handleEvent('websocket-message-received', data),
               ),
               client.onMessage('websocket-error', (data) =>
-                handleEvent('websocket-error', data)
+                handleEvent('websocket-error', data),
               ),
               client.onMessage('websocket-connection-status-changed', (data) =>
-                handleEvent('websocket-connection-status-changed', data)
+                handleEvent('websocket-connection-status-changed', data),
               ),
               client.onMessage('sse-open', (data) =>
-                handleEvent('sse-open', data)
+                handleEvent('sse-open', data),
               ),
               client.onMessage('sse-message', (data) =>
-                handleEvent('sse-message', data)
+                handleEvent('sse-message', data),
               ),
               client.onMessage('sse-error', (data) =>
-                handleEvent('sse-error', data)
+                handleEvent('sse-error', data),
               ),
               client.onMessage('sse-close', (data) =>
-                handleEvent('sse-close', data)
+                handleEvent('sse-close', data),
               ),
             ];
 
@@ -651,7 +726,7 @@ export const createNetworkActivityStore = () =>
 
             if (_unsubscribeFunctions) {
               _unsubscribeFunctions.forEach(
-                (unsubscribe: { remove: () => void }) => unsubscribe.remove()
+                (unsubscribe: { remove: () => void }) => unsubscribe.remove(),
               );
             }
 
@@ -693,8 +768,8 @@ export const createNetworkActivityStore = () =>
           },
         }),
         partialize: (state) => ({ overrides: state.overrides }), // Persist only the overrides
-      }
-    )
+      },
+    ),
   );
 
 export const store = createNetworkActivityStore();

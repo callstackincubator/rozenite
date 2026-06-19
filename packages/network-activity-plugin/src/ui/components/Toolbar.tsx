@@ -1,10 +1,12 @@
 import { Button } from './Button';
-import { Circle, Square, Trash2 } from 'lucide-react';
+import { Circle, Download, Square, Trash2 } from 'lucide-react';
 import { useIsRecording, useNetworkActivityActions } from '../state/hooks';
+import { useNetworkActivitySessionExport } from '../hooks/useNetworkActivitySessionExport';
 
 export const Toolbar = () => {
   const actions = useNetworkActivityActions();
   const isRecording = useIsRecording();
+  const { canExportSession, exportSession } = useNetworkActivitySessionExport();
 
   const onToggleRecording = (): void => {
     actions.setRecording(!isRecording);
@@ -40,6 +42,16 @@ export const Toolbar = () => {
         className="h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
       >
         <Trash2 className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={exportSession}
+        disabled={!canExportSession}
+        className="ml-auto h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
+        title="Export session"
+      >
+        <Download className="h-4 w-4" />
       </Button>
     </div>
   );

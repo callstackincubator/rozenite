@@ -13,8 +13,15 @@ const columns: ColumnDef<SerializedPerformanceMeasure>[] = [
     accessorKey: 'name',
     header: 'Name',
     cell: ({ row }) => (
-      <span className="font-medium text-foreground">
-        {String(row.getValue('name'))}
+      <span className="flex items-center gap-2">
+        <span className="font-medium text-foreground">
+          {String(row.getValue('name'))}
+        </span>
+        {'derivedFromReactNativeMark' in row.original && (
+          <span className="rounded bg-muted/20 px-1 py-0.5 text-xs text-muted">
+            RN
+          </span>
+        )}
       </span>
     ),
   },

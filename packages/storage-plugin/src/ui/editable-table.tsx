@@ -15,6 +15,7 @@ import type {
   StorageEntryType,
   StorageEntryValue,
 } from '../shared/types';
+import { compactBufferPreview } from './binary';
 import { ConfirmDialog } from './confirm-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
 
@@ -350,10 +351,9 @@ const formatValue = (entry: StorageEntry) => {
     );
   }
 
-  const displayValue =
-    entry.value.length > 5
-      ? `[${entry.value.slice(0, 5).join(', ')}, ...${entry.value.length - 5} more]`
-      : `[${entry.value.join(', ')}]`;
-
-  return <span className="font-mono text-sm text-accent">{displayValue}</span>;
+  return (
+    <span className="font-mono text-sm text-accent">
+      {compactBufferPreview(entry.value)}
+    </span>
+  );
 };

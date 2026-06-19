@@ -1,5 +1,69 @@
 # @rozenite/middleware
 
+## 1.12.0
+
+### Patch Changes
+
+- [#299](https://github.com/callstackincubator/rozenite/pull/299) [`f09db8d`](https://github.com/callstackincubator/rozenite/commit/f09db8d79f6a6b2b1beb0de1d7f31c487cbcfe32) Thanks [@V3RON](https://github.com/V3RON)! - Avoid unhandled rejections when pending CDP commands are left behind during websocket teardown.
+
+- [#297](https://github.com/callstackincubator/rozenite/pull/297) [`68db2fb`](https://github.com/callstackincubator/rozenite/commit/68db2fb834646064b03ffc1a24457d795abbac3d) Thanks [@V3RON](https://github.com/V3RON)! - Set the debugger WebSocket origin to `http://localhost:<port>` for better compatibility with local dev servers.
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@1.12.0
+  - @rozenite/runtime@1.12.0
+  - @rozenite/tools@1.12.0
+
+## 1.11.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@1.11.0
+  - @rozenite/runtime@1.11.0
+  - @rozenite/tools@1.11.0
+
+## 1.10.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@1.10.0
+  - @rozenite/runtime@1.10.0
+  - @rozenite/tools@1.10.0
+
+## 1.9.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-shared@1.9.0
+  - @rozenite/runtime@1.9.0
+  - @rozenite/tools@1.9.0
+
+## 1.8.1
+
+### Patch Changes
+
+- [#236](https://github.com/callstackincubator/rozenite/pull/236) [`3ad44bb`](https://github.com/callstackincubator/rozenite/commit/3ad44bb39b0ebca67dc233729f94ddc4467514cb) Thanks [@V3RON](https://github.com/V3RON)! - Fix scoped Rozenite middleware so agent setup requests still resolve after the
+  outer `/rozenite` prefix is stripped by Metro integrations.
+- Updated dependencies []:
+  - @rozenite/agent-shared@1.8.1
+  - @rozenite/runtime@1.8.1
+  - @rozenite/tools@1.8.1
+
+## 1.8.0
+
+### Patch Changes
+
+- [#230](https://github.com/callstackincubator/rozenite/pull/230) [`e1e5bd7`](https://github.com/callstackincubator/rozenite/commit/e1e5bd721032d3ddd0b7f16c26466f76d4c846a1) Thanks [@V3RON](https://github.com/V3RON)! - Fix an issue where opening a stack frame from Rozenite could land in the wrong place.
+
+- [#222](https://github.com/callstackincubator/rozenite/pull/222) [`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a) Thanks [@manapard](https://github.com/manapard)! - Fix agent session startup so `createSession()` waits for mounted plugin registrations to settle before returning, reducing races when calling plugin tools immediately after session creation.
+
+- Updated dependencies [[`404244b`](https://github.com/callstackincubator/rozenite/commit/404244bab0600761ed82e5a7e8072b933c46f80a)]:
+  - @rozenite/agent-shared@1.8.0
+  - @rozenite/runtime@1.8.0
+  - @rozenite/tools@1.8.0
+
 ## 1.7.0
 
 ### Minor Changes

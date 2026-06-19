@@ -254,6 +254,20 @@ export default function MMKVPanel() {
       storageKey="@rozenite/mmkv-plugin.theme"
       className="flex h-screen flex-col bg-background text-foreground"
     >
+      <div className="px-3 py-2 border-b border-amber-800/60 bg-amber-950/40 text-xs text-amber-100">
+        <span className="font-semibold">Deprecated:</span>{' '}
+        <code>@rozenite/mmkv-plugin</code> has been replaced by{' '}
+        <a
+          href="https://www.npmjs.com/package/@rozenite/storage-plugin"
+          target="_blank"
+          rel="noreferrer"
+          className="underline decoration-amber-300/70 underline-offset-2 hover:text-white"
+        >
+          <code>@rozenite/storage-plugin</code>
+        </a>
+        , which supports more storage solutions than MMKV and offers the same functionality.
+      </div>
+
       <PluginHeader
         title="MMKV Storage"
         actions={

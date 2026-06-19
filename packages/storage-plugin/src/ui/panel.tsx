@@ -1,5 +1,5 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ListBox,
   PluginHeader,
@@ -7,9 +7,11 @@ import {
   Select,
   SearchField,
 } from '@rozenite/ui';
+import { Download, Upload } from 'lucide-react';
 import type {
   StorageDeleteEntryEvent,
   StorageEventMap,
+  StorageImportResultEvent,
   StorageSetEntryEvent,
   StorageSnapshotEvent,
 } from '../shared/messaging';
@@ -20,10 +22,18 @@ import type {
   StorageTarget,
 } from '../shared/types';
 import { getStorageViewId } from '../shared/types';
+import {
+  buildSnapshot,
+  computePreview,
+  parseSnapshot,
+} from '../shared/snapshot';
 import { EditableTable } from './editable-table';
 import { AddEntryDialog } from './add-entry-dialog';
 import { EntryDetailDialog } from './entry-detail-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
+import { ConfirmDialog } from './confirm-dialog';
+import { ImportDialog, type ImportFlightState } from './import-dialog';
+import { buildExportFilename, downloadJson } from './utils';
 import './globals.css';
 
 type StorageSnapshotState = {
@@ -31,8 +41,18 @@ type StorageSnapshotState = {
   adapterName: string;
   storageName: string;
   capabilities: StorageCapabilities;
+  blacklist?: RegExp;
   entries: StorageEntry[];
 };
+
+type AlertState = {
+  isOpen: boolean;
+  title: string;
+  message: string;
+};
+
+const sameTarget = (a: StorageTarget, b: StorageTarget) =>
+  a.adapterId === b.adapterId && a.storageId === b.storageId;
 
 const getEntryTypeFromValue = (
   value: StorageEntryValue,
@@ -63,6 +83,15 @@ export default function StoragePanel() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<StorageEntry | null>(null);
   const [editingEntry, setEditingEntry] = useState<StorageEntry | null>(null);
+  const [importFlight, setImportFlight] = useState<ImportFlightState | null>(
+    null,
+  );
+  const [alertState, setAlertState] = useState<AlertState>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const client = useRozeniteDevToolsClient<StorageEventMap>({
     pluginId: '@rozenite/storage-plugin',
@@ -84,6 +113,9 @@ export default function StoragePanel() {
             adapterName: event.adapterName,
             storageName: event.storageName,
             capabilities: event.capabilities,
+            blacklist: event.blacklist
+              ? new RegExp(event.blacklist.source, event.blacklist.flags)
+              : undefined,
             entries: event.entries,
           });
 
@@ -130,6 +162,33 @@ export default function StoragePanel() {
 
           return next;
         });
+
+        setImportFlight((previous) => {
+          if (!previous || previous.phase !== 'importing') return previous;
+          if (!sameTarget(event.target, previous.target)) return previous;
+          return { ...previous, written: previous.written + 1 };
+        });
+      },
+    );
+
+    const importResultSubscription = client.onMessage(
+      'import-result',
+      (event: StorageImportResultEvent) => {
+        setImportFlight((previous) => {
+          if (!previous || previous.phase !== 'importing') return previous;
+          if (!sameTarget(event.target, previous.target)) return previous;
+          if (event.ok) {
+            return { phase: 'result', ok: true, written: event.written };
+          }
+          return {
+            phase: 'result',
+            ok: false,
+            written: event.written,
+            total: event.total,
+            failedKey: event.failedKey,
+            error: event.error ?? 'Unknown error',
+          };
+        });
       },
     );
 
@@ -165,6 +224,7 @@ export default function StoragePanel() {
       snapshotSubscription.remove();
       setEntrySubscription.remove();
       deleteEntrySubscription.remove();
+      importResultSubscription.remove();
     };
   }, [client, selectedStorageViewId]);
 
@@ -308,6 +368,101 @@ export default function StoragePanel() {
     ]);
   };
 
+  const showAlert = (title: string, message: string) =>
+    setAlertState({ isOpen: true, title, message });
+
+  const handleImportClick = () => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.value = '';
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedStorage) {
+      return;
+    }
+
+    let raw: unknown;
+    try {
+      const text = await file.text();
+      raw = JSON.parse(text);
+    } catch (parseError) {
+      showAlert(
+        'Could not read file',
+        parseError instanceof Error ? parseError.message : String(parseError),
+      );
+      return;
+    }
+
+    const parsed = parseSnapshot(raw);
+    if (!parsed.ok) {
+      showAlert(
+        'Invalid snapshot',
+        `${parsed.error.path}: ${parsed.error.message}`,
+      );
+      return;
+    }
+
+    const preview = computePreview(parsed.snapshot, {
+      target: selectedStorage.target,
+      capabilities: selectedStorage.capabilities,
+      entryKeys: new Set(selectedStorage.entries.map((entry) => entry.key)),
+      isBlacklisted: selectedStorage.blacklist
+        ? (key) => selectedStorage.blacklist!.test(key)
+        : () => false,
+    });
+
+    const skippedSet = new Set(preview.skippedKeys.map((s) => s.key));
+    const unsupportedSet = new Set(preview.unsupportedTypes.map((u) => u.key));
+    const entriesToWrite = parsed.snapshot.entries.filter(
+      (entry) => !skippedSet.has(entry.key) && !unsupportedSet.has(entry.key),
+    );
+
+    setImportFlight({
+      phase: 'preview',
+      target: selectedStorage.target,
+      targetLabel: `${selectedStorage.adapterName} / ${selectedStorage.storageName}`,
+      snapshot: parsed.snapshot,
+      preview,
+      entriesToWrite,
+    });
+  };
+
+  const handleApplyImport = () => {
+    if (!client) return;
+    if (!importFlight || importFlight.phase !== 'preview') return;
+
+    client.send('import-entries', {
+      type: 'import-entries',
+      target: importFlight.target,
+      entries: importFlight.entriesToWrite,
+    });
+
+    setImportFlight({
+      phase: 'importing',
+      target: importFlight.target,
+      total: importFlight.entriesToWrite.length,
+      written: 0,
+    });
+  };
+
+  const handleCloseImport = () => setImportFlight(null);
+
+  const handleExport = () => {
+    if (!selectedStorage) return;
+    const snapshot = buildSnapshot({
+      target: selectedStorage.target,
+      adapterName: selectedStorage.adapterName,
+      storageName: selectedStorage.storageName,
+      capabilities: selectedStorage.capabilities,
+      entries: selectedStorage.entries,
+    });
+    downloadJson(snapshot, buildExportFilename(selectedStorage.target));
+  };
+
   const storageOptions = [...snapshots.entries()].map(([viewId, snapshot]) => ({
     viewId,
     label: `${snapshot.adapterName} / ${snapshot.storageName}`,
@@ -366,6 +521,31 @@ export default function StoragePanel() {
           onAddEntry={handleAddEntry}
           existingKeys={entries.map((entry) => entry.key)}
           supportedTypes={supportedTypes}
+        />
+        <button
+          onClick={handleImportClick}
+          disabled={!selectedStorage}
+          className="flex items-center gap-1 px-3 h-8 text-xs bg-surface-secondary hover:bg-surface-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed text-foreground rounded transition-colors border border-border/70"
+          title="Import entries from a JSON snapshot"
+        >
+          <Upload className="h-3 w-3" />
+          Import
+        </button>
+        <button
+          onClick={handleExport}
+          disabled={!selectedStorage || entries.length === 0}
+          className="flex items-center gap-1 px-3 h-8 text-xs bg-surface-secondary hover:bg-surface-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed text-foreground rounded transition-colors border border-border/70"
+          title="Export entries to a JSON snapshot"
+        >
+          <Download className="h-3 w-3" />
+          Export
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={handleFileChange}
         />
         <div className="flex-1">
           <SearchField
@@ -426,6 +606,22 @@ export default function StoragePanel() {
         }}
         supportedTypes={supportedTypes}
         entry={editingEntry}
+      />
+
+      <ImportDialog
+        state={importFlight}
+        onApply={handleApplyImport}
+        onCancel={handleCloseImport}
+        onClose={handleCloseImport}
+      />
+
+      <ConfirmDialog
+        isOpen={alertState.isOpen}
+        onClose={() => setAlertState((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={() => setAlertState((prev) => ({ ...prev, isOpen: false }))}
+        title={alertState.title}
+        message={alertState.message}
+        type="alert"
       />
     </PluginTheme>
   );

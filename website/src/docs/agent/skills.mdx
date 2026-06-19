@@ -1,17 +1,30 @@
 # Agent Skills
 
-If you use Codex or another coding agent that supports the Vercel `skills` CLI, you can install the `rozenite-agent` skill so the agent can use Rozenite for Agents efficiently.
+If you use Codex or another coding agent that supports the Vercel `skills` CLI, you can install a Rozenite skill so the agent can use Rozenite for Agents efficiently.
 
-The skill is the easiest way to make a coding agent effective with Rozenite. It gives the agent the expected Rozenite workflow so it can interact with React Native DevTools and Rozenite plugins without fumbling CLI usage or plugin domains.
+Rozenite currently ships two complementary skills:
 
-The skill complements Rozenite, it does not replace it. Your app still needs Rozenite installed and configured because the agent ultimately talks to the running app through `npx rozenite agent ...` commands.
+- `rozenite-agent` for CLI-driven `rozenite agent ...` workflows and live shell-based debugging
+- `rozenite-agent-sdk` for Node.js and TypeScript scripts that use `@rozenite/agent-sdk`
+
+These skills are the easiest way to make a coding agent effective with Rozenite. They give the agent the expected workflow so it can interact with React Native DevTools and Rozenite plugins without fumbling CLI usage, SDK lifecycle, or plugin domain resolution.
+
+Both skills complement Rozenite; they do not replace it. Your app still needs Rozenite installed and configured because the agent ultimately talks to the running app through the Rozenite agent runtime.
 
 ## Install with the Vercel `skills` CLI
 
-Install from this repository using the repo URL and the skill name:
+Install from this repository using the repo URL and the skill name that matches your workflow:
+
+For CLI-driven debugging:
 
 ```bash
 npx skills add https://github.com/callstackincubator/rozenite --skill rozenite-agent --agent codex
+```
+
+For SDK-driven scripts and automations:
+
+```bash
+npx skills add https://github.com/callstackincubator/rozenite --skill rozenite-agent-sdk --agent codex
 ```
 
 By default, the `skills` CLI installs project-local skills. For Codex, that means the skill is linked into `.agents/skills/`. To install it globally for all projects instead, use:
@@ -20,9 +33,11 @@ By default, the `skills` CLI installs project-local skills. For Codex, that mean
 npx skills add https://github.com/callstackincubator/rozenite --skill rozenite-agent --agent codex --global
 ```
 
-After installation, you can ask your agent to use `rozenite-agent` whenever it needs to debug the app through Rozenite for Agents.
+Replace `rozenite-agent` with `rozenite-agent-sdk` in that command if you want the SDK skill globally instead.
 
-This is the recommended setup. Rozenite for Agents is designed for coding agents first, and the skill makes that workflow explicit inside the agent.
+After installation, you can ask your agent to use `rozenite-agent` whenever it needs shell-driven live debugging, or `rozenite-agent-sdk` whenever it needs to write code against `@rozenite/agent-sdk`.
+
+This is the recommended setup. Rozenite for Agents is designed for coding agents first, and these skills make the intended workflow explicit inside the agent.
 
 ## Next steps
 

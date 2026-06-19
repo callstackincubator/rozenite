@@ -61,6 +61,11 @@
   },
   {
     "type": "file",
+    "name": "react-hook-form",
+    "label": "React Hook Form"
+  },
+  {
+    "type": "file",
     "name": "controls",
     "label": "Controls"
   },

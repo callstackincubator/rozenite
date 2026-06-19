@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/plugin-bridge",
-  "version": "1.7.0",
+  "version": "1.12.0",
   "description": "Communication layer for React Native DevTools plugins across React Native and web environments",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -39,7 +39,8 @@
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "tslib": "^2.3.0"

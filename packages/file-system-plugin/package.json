@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/file-system-plugin",
-  "version": "1.7.0",
+  "version": "1.12.0",
   "description": "A Rozenite plugin for browsing app files and previewing file contents in React Native DevTools.",
   "type": "module",
   "main": "./dist/react-native/index.cjs",
@@ -19,9 +19,10 @@
     "dev": "rozenite dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest --run"
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
+    "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
     "@rozenite/ui": "workspace:*"
@@ -58,7 +59,13 @@
       "import": "./dist/react-native/index.js",
       "require": "./dist/react-native/index.cjs"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./sdk": {
+      "development": "./sdk.ts",
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js",
+      "require": "./dist/sdk/index.cjs"
+    }
   },
   "publishConfig": {
     "access": "public"

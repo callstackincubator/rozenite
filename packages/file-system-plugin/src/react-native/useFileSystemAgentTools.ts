@@ -1,127 +1,24 @@
 import { useCallback } from 'react';
-import {
-  useRozenitePluginAgentTool,
-  type AgentTool,
-} from '@rozenite/agent-bridge';
+import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
 import type {
   FileSystemAdapter,
   UseFileSystemDevToolsOptions,
 } from './fileSystemProvider';
-import { resolveFileSystemAdapter } from './fileSystemProvider';
-
-type PathInput = {
-  path: string;
-};
-
-type ListEntriesInput = PathInput & {
-  offset?: number;
-  limit?: number;
-};
-
-type ReadFileInput = PathInput & {
-  maxBytes?: number;
-};
-
-export const FILE_SYSTEM_AGENT_PLUGIN_ID = '@rozenite/file-system-plugin';
-
-export const listRootsTool: AgentTool = {
-  name: 'list-roots',
-  description:
-    'List the filesystem roots currently available on the device and report which provider is active.',
-  inputSchema: {
-    type: 'object',
-    properties: {},
-  },
-};
-
-export const listEntriesTool: AgentTool = {
-  name: 'list-entries',
-  description:
-    'List entries in a directory path without returning file contents. Use this before reading a file preview.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      path: {
-        type: 'string',
-        description: 'Absolute or provider-root-qualified directory path.',
-      },
-      offset: {
-        type: 'number',
-        description: 'Pagination offset. Defaults to 0.',
-      },
-      limit: {
-        type: 'number',
-        description: 'Pagination size. Defaults to 100.',
-      },
-    },
-    required: ['path'],
-  },
-};
-
-export const readEntryTool: AgentTool = {
-  name: 'read-entry',
-  description:
-    'Read metadata for a single filesystem path. Returns file or directory metadata, but not file contents.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      path: {
-        type: 'string',
-        description:
-          'Absolute or provider-root-qualified file or directory path.',
-      },
-    },
-    required: ['path'],
-  },
-};
-
-export const readTextFileTool: AgentTool = {
-  name: 'read-text-file',
-  description:
-    'Read a text-style preview for a file path. Non-text files fall back to a hex-style binary preview.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      path: {
-        type: 'string',
-        description: 'Absolute or provider-root-qualified file path.',
-      },
-      maxBytes: {
-        type: 'number',
-        description: 'Maximum preview size in bytes. Defaults to 10000000.',
-      },
-    },
-    required: ['path'],
-  },
-};
-
-export const readImageFileTool: AgentTool = {
-  name: 'read-image-file',
-  description:
-    'Read an image preview for a file path and return it as a data URI.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      path: {
-        type: 'string',
-        description: 'Absolute or provider-root-qualified image file path.',
-      },
-      maxBytes: {
-        type: 'number',
-        description: 'Maximum preview size in bytes. Defaults to 10000000.',
-      },
-    },
-    required: ['path'],
-  },
-};
-
-export const fileSystemAgentTools = [
-  listRootsTool,
-  listEntriesTool,
-  readEntryTool,
-  readTextFileTool,
-  readImageFileTool,
-] as const;
+import {
+  resolveAgentFileTransferCapabilities,
+  resolveFileSystemAdapter,
+} from './fileSystemProvider';
+import { exportFileTransfer, importFileTransfer } from './fileTransfer';
+import {
+  FILE_SYSTEM_AGENT_PLUGIN_ID,
+  fileSystemToolDefinitions,
+  type FileSystemExportFileArgs,
+  type FileSystemImportFileArgs,
+  type FileSystemListEntriesArgs,
+  type FileSystemPathArgs,
+  type FileSystemReadFileArgs,
+} from '../shared/agent-tools';
+import type { FileSystemAgentTransferCapabilities } from '../shared/protocol';
 
 const getProviderOrThrow = async (
   resolveProvider: () => Promise<FileSystemAdapter | null>,
@@ -135,8 +32,46 @@ const getProviderOrThrow = async (
   return provider;
 };
 
+const createAttribution = (operation: 'export-file' | 'import-file') => ({
+  triggeredBy: 'agent' as const,
+  pluginId: FILE_SYSTEM_AGENT_PLUGIN_ID,
+  operation,
+});
+
+const assertAgentTransferEnabled = (
+  capabilities: FileSystemAgentTransferCapabilities,
+  operation: keyof FileSystemAgentTransferCapabilities,
+): void => {
+  if (!capabilities[operation]) {
+    throw new Error(
+      `Agent file ${operation} is disabled. Enable \`fileTransfer.agent.${operation}\` in \`useFileSystemDevTools()\`.`,
+    );
+  }
+};
+
+export const getFileSystemAgentTools = (
+  capabilities: FileSystemAgentTransferCapabilities = {
+    import: false,
+    export: false,
+  },
+) => [
+  fileSystemToolDefinitions.listRoots,
+  fileSystemToolDefinitions.listEntries,
+  fileSystemToolDefinitions.readEntry,
+  fileSystemToolDefinitions.readTextFile,
+  fileSystemToolDefinitions.readImageFile,
+  ...(capabilities.export ? [fileSystemToolDefinitions.exportFile] : []),
+  ...(capabilities.import ? [fileSystemToolDefinitions.importFile] : []),
+];
+
+export const fileSystemAgentTools = getFileSystemAgentTools();
+
 export const createFileSystemAgentHandlers = (
   resolveProvider: () => Promise<FileSystemAdapter | null>,
+  agentFileTransfer: FileSystemAgentTransferCapabilities = {
+    import: false,
+    export: false,
+  },
 ) => ({
   listRoots: async () => {
     const provider = await resolveProvider();
@@ -153,7 +88,11 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  listEntries: async ({ path, offset = 0, limit = 100 }: ListEntriesInput) => {
+  listEntries: async ({
+    path,
+    offset = 0,
+    limit = 100,
+  }: FileSystemListEntriesArgs) => {
     const provider = await getProviderOrThrow(resolveProvider);
     const allEntries = await provider.listDir(path);
     const safeOffset = Math.max(0, Math.floor(offset));
@@ -169,7 +108,7 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  readEntry: async ({ path }: PathInput) => {
+  readEntry: async ({ path }: FileSystemPathArgs) => {
     const provider = await getProviderOrThrow(resolveProvider);
     const entry = await provider.statPath(path);
 
@@ -180,7 +119,10 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  readTextFile: async ({ path, maxBytes = 10_000_000 }: ReadFileInput) => {
+  readTextFile: async ({
+    path,
+    maxBytes = 10_000_000,
+  }: FileSystemReadFileArgs) => {
     const provider = await getProviderOrThrow(resolveProvider);
     const entry = await provider.statPath(path);
 
@@ -197,7 +139,10 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  readImageFile: async ({ path, maxBytes = 10_000_000 }: ReadFileInput) => {
+  readImageFile: async ({
+    path,
+    maxBytes = 10_000_000,
+  }: FileSystemReadFileArgs) => {
     const provider = await getProviderOrThrow(resolveProvider);
     const entry = await provider.statPath(path);
 
@@ -215,6 +160,38 @@ export const createFileSystemAgentHandlers = (
       dataUri: `data:${preview.mime};base64,${preview.base64}`,
     };
   },
+
+  exportFile: async ({ path }: FileSystemExportFileArgs) => {
+    assertAgentTransferEnabled(agentFileTransfer, 'export');
+    const provider = await getProviderOrThrow(resolveProvider);
+    const result = await exportFileTransfer(provider, path);
+
+    return {
+      ...result,
+      attribution: createAttribution('export-file'),
+    };
+  },
+
+  importFile: async ({
+    directoryPath,
+    fileName,
+    base64,
+    overwrite,
+  }: FileSystemImportFileArgs) => {
+    assertAgentTransferEnabled(agentFileTransfer, 'import');
+    const provider = await getProviderOrThrow(resolveProvider);
+    const result = await importFileTransfer(provider, {
+      directoryPath,
+      fileName,
+      base64,
+      overwrite,
+    });
+
+    return {
+      ...result,
+      attribution: createAttribution('import-file'),
+    };
+  },
 });
 
 export const useFileSystemAgentTools = (
@@ -224,36 +201,54 @@ export const useFileSystemAgentTools = (
     () => resolveFileSystemAdapter(options),
     [options?.adapter, options?.expoFileSystem, options?.rnfs],
   );
+  const agentFileTransfer = resolveAgentFileTransferCapabilities(options);
 
-  const handlers = createFileSystemAgentHandlers(resolveProvider);
+  const handlers = createFileSystemAgentHandlers(
+    resolveProvider,
+    agentFileTransfer,
+  );
 
   useRozenitePluginAgentTool({
     pluginId: FILE_SYSTEM_AGENT_PLUGIN_ID,
-    tool: listRootsTool,
+    tool: fileSystemToolDefinitions.listRoots,
     handler: handlers.listRoots,
   });
 
-  useRozenitePluginAgentTool<ListEntriesInput>({
+  useRozenitePluginAgentTool({
     pluginId: FILE_SYSTEM_AGENT_PLUGIN_ID,
-    tool: listEntriesTool,
+    tool: fileSystemToolDefinitions.listEntries,
     handler: handlers.listEntries,
   });
 
-  useRozenitePluginAgentTool<PathInput>({
+  useRozenitePluginAgentTool({
     pluginId: FILE_SYSTEM_AGENT_PLUGIN_ID,
-    tool: readEntryTool,
+    tool: fileSystemToolDefinitions.readEntry,
     handler: handlers.readEntry,
   });
 
-  useRozenitePluginAgentTool<ReadFileInput>({
+  useRozenitePluginAgentTool({
     pluginId: FILE_SYSTEM_AGENT_PLUGIN_ID,
-    tool: readTextFileTool,
+    tool: fileSystemToolDefinitions.readTextFile,
     handler: handlers.readTextFile,
   });
 
-  useRozenitePluginAgentTool<ReadFileInput>({
+  useRozenitePluginAgentTool({
     pluginId: FILE_SYSTEM_AGENT_PLUGIN_ID,
-    tool: readImageFileTool,
+    tool: fileSystemToolDefinitions.readImageFile,
     handler: handlers.readImageFile,
+  });
+
+  useRozenitePluginAgentTool({
+    pluginId: FILE_SYSTEM_AGENT_PLUGIN_ID,
+    tool: fileSystemToolDefinitions.exportFile,
+    handler: handlers.exportFile,
+    enabled: agentFileTransfer.export,
+  });
+
+  useRozenitePluginAgentTool({
+    pluginId: FILE_SYSTEM_AGENT_PLUGIN_ID,
+    tool: fileSystemToolDefinitions.importFile,
+    handler: handlers.importFile,
+    enabled: agentFileTransfer.import,
   });
 };

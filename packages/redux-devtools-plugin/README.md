@@ -73,11 +73,34 @@ const appStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'app-store' });
 const sessionStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'session-store' });
 ```
 
-To see more actions in the Redux DevTools, increase `maxAge`:
+`maxAge` controls how many actions Redux DevTools keeps in history. The default is `50`.
+
+On React Native, state is serialized and sent to DevTools over the device bridge. Large stores combined with a high `maxAge` can use a lot of memory — on Android this may cause an out-of-memory crash when opening the Redux DevTools panel. If your store is large (for example, it includes RTK Query caches or big entity maps), keep `maxAge` low and use `stateSanitizer` or `actionSanitizer` to strip bulky slices before they are sent to DevTools.
 
 ```ts
-rozeniteDevToolsEnhancer({ maxAge: 150 }) // Default is 50
+rozeniteDevToolsEnhancer({
+  maxAge: 20,
+  stateSanitizer: (state, index) => ({
+    ...(state as Record<string, unknown>),
+    api: '[omitted]',
+  }),
+  actionSanitizer: (action, id) => ({
+    ...action,
+    payload: action.type === 'large/payload' ? '[omitted]' : action.payload,
+  }),
+})
 ```
+
+`trace` captures the dispatch stack for each action and enables the Trace tab. Rozenite will also try to symbolicate the stack through Metro so React Native traces point to source files instead of generated bundle locations.
+
+```ts
+rozeniteDevToolsEnhancer({
+  trace: true,
+  traceLimit: 25,
+})
+```
+
+Set `traceSymbolication: false` to keep the raw stack without calling Metro's `/symbolicate` endpoint.
 
 ### 3. Access DevTools
 

@@ -29,7 +29,7 @@
       import { AppRegistry } from 'react-native';
       import PanelComponent from '/<%= panelFile %>';
 
-      const panelName = '<%= panelName %>';
+      const panelName = <%- JSON.stringify(panelName) %>;
 
       AppRegistry.registerComponent(panelName, () => PanelComponent);
 

@@ -17,6 +17,9 @@ type SendFunction<TEventMap extends Record<string, unknown>> = <
 export class EventsListener<TEventMap extends Record<string, unknown>> {
   private messageQueue: QueuedMessage<TEventMap>[] = [];
   private sendFunction: SendFunction<TEventMap> | null = null;
+  private filterFunction:
+    | ((message: QueuedMessage<TEventMap>) => boolean)
+    | null = null;
   private maxQueueSize = 200;
   private isQueuing = false;
 
@@ -36,9 +39,10 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
    */
   public connect(
     sendFn: SendFunction<TEventMap>,
-    filterFn?: (message: QueuedMessage<TEventMap>) => boolean
+    filterFn?: (message: QueuedMessage<TEventMap>) => boolean,
   ): void {
     this.sendFunction = sendFn;
+    this.filterFunction = filterFn ?? null;
     this.isQueuing = false;
     this.flushQueue(filterFn);
   }
@@ -54,6 +58,9 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
     if (this.isQueuing) {
       this.enqueueMessage({ type, data });
     } else if (this.sendFunction) {
+      if (this.filterFunction && !this.filterFunction({ type, data })) {
+        return;
+      }
       this.sendFunction(type, data);
     }
   }
@@ -67,7 +74,7 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
   }
 
   private flushQueue(
-    filterFn?: (message: QueuedMessage<TEventMap>) => boolean
+    filterFn?: (message: QueuedMessage<TEventMap>) => boolean,
   ): void {
     if (!this.sendFunction) {
       return;
@@ -97,6 +104,8 @@ export type EventsListenerOptions = {
  * Create a new events listener instance for a specific event map.
  * This factory can be used to create listeners for different protocols or plugins.
  */
-export const createEventsListener = <TEventMap extends Record<string, unknown>>(): EventsListener<TEventMap> => {
+export const createEventsListener = <
+  TEventMap extends Record<string, unknown>,
+>(): EventsListener<TEventMap> => {
   return new EventsListener<TEventMap>();
 };

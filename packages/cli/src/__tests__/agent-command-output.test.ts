@@ -1,22 +1,50 @@
 import { Command } from 'commander';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getPackageJSON } from '../package-json.js';
 import { registerAgentCommand } from '../commands/agent/register-agent-command.js';
 
 const mocks = vi.hoisted(() => ({
-  createAgentHttpClient: vi.fn(),
+  createAgentClient: vi.fn(),
+  createAgentTransport: vi.fn(),
   client: {
-    listTargets: vi.fn(),
+    targets: {
+      list: vi.fn(),
+    },
+    openSession: vi.fn(),
+    attachSession: vi.fn(),
+    withSession: vi.fn(),
+  },
+  session: {
+    id: 'session-1',
+    info: {
+      id: 'session-1',
+      deviceName: 'iPhone',
+      status: 'connected',
+    },
+    stop: vi.fn(),
+    domains: {
+      list: vi.fn(),
+    },
+    tools: {
+      list: vi.fn(),
+      getSchema: vi.fn(),
+      call: vi.fn(),
+    },
+  },
+  transport: {
     createSession: vi.fn(),
     listSessions: vi.fn(),
     getSession: vi.fn(),
     stopSession: vi.fn(),
-    getSessionTools: vi.fn(),
-    callSessionTool: vi.fn(),
   },
 }));
 
-vi.mock('../commands/agent/http-client.js', () => ({
-  createAgentHttpClient: mocks.createAgentHttpClient,
+vi.mock('@rozenite/agent-sdk', () => ({
+  createAgentClient: mocks.createAgentClient,
+}));
+
+vi.mock('@rozenite/agent-sdk/transport', () => ({
+  createAgentTransport: mocks.createAgentTransport,
 }));
 
 describe('agent command output', () => {
@@ -27,23 +55,26 @@ describe('agent command output', () => {
   });
 
   const setupClient = () => {
-    mocks.createAgentHttpClient.mockReturnValue(mocks.client);
+    mocks.createAgentClient.mockReturnValue(mocks.client);
+    mocks.client.attachSession.mockResolvedValue(mocks.session);
+  };
+
+  const setupTransport = () => {
+    mocks.createAgentTransport.mockReturnValue(mocks.transport);
   };
 
   it('prints JSON for agent commands without requiring --json', async () => {
     setupClient();
-    mocks.client.listTargets.mockResolvedValue({
-      targets: [
-        {
-          id: 'device-1',
-          name: 'iPhone',
-          description: 'app',
-          appId: 'app.test',
-          pageId: 'page-1',
-          title: 'title',
-        },
-      ],
-    });
+    mocks.client.targets.list.mockResolvedValue([
+      {
+        id: 'device-1',
+        name: 'iPhone',
+        description: 'app',
+        appId: 'app.test',
+        pageId: 'page-1',
+        title: 'title',
+      },
+    ]);
 
     const stdoutWrite = vi
       .spyOn(process.stdout, 'write')
@@ -59,28 +90,24 @@ describe('agent command output', () => {
     expect(stdoutWrite).toHaveBeenCalledWith(
       '{"items":[{"id":"device-1","name":"iPhone"}]}\n',
     );
-    expect(mocks.createAgentHttpClient).toHaveBeenCalledWith({
+    expect(mocks.createAgentClient).toHaveBeenCalledWith({
       host: 'localhost',
       port: 8081,
-      pretty: false,
-      session: undefined,
     });
   });
 
   it('accepts --json as a no-op for agent commands', async () => {
     setupClient();
-    mocks.client.listTargets.mockResolvedValue({
-      targets: [
-        {
-          id: 'device-1',
-          name: 'iPhone',
-          description: 'app',
-          appId: 'app.test',
-          pageId: 'page-1',
-          title: 'title',
-        },
-      ],
-    });
+    mocks.client.targets.list.mockResolvedValue([
+      {
+        id: 'device-1',
+        name: 'iPhone',
+        description: 'app',
+        appId: 'app.test',
+        pageId: 'page-1',
+        title: 'title',
+      },
+    ]);
 
     const stdoutWrite = vi
       .spyOn(process.stdout, 'write')
@@ -100,7 +127,8 @@ describe('agent command output', () => {
 
   it('prints the slim session for session create', async () => {
     setupClient();
-    mocks.client.createSession.mockResolvedValue({
+    setupTransport();
+    mocks.transport.createSession.mockResolvedValue({
       session: {
         id: 'device-1',
         host: 'localhost',
@@ -129,9 +157,9 @@ describe('agent command output', () => {
       from: 'node',
     });
 
-    expect(mocks.client.createSession).toHaveBeenCalledWith({
+    expect(mocks.transport.createSession).toHaveBeenCalledWith({
       deviceId: undefined,
-      cliVersion: '1.6.0',
+      cliVersion: getPackageJSON().version,
     });
     expect(stdoutWrite).toHaveBeenCalledWith(
       '{"id":"device-1","deviceName":"iPhone","status":"connected"}\n',
@@ -140,7 +168,8 @@ describe('agent command output', () => {
 
   it('accepts --json as a no-op for session commands', async () => {
     setupClient();
-    mocks.client.createSession.mockResolvedValue({
+    setupTransport();
+    mocks.transport.createSession.mockResolvedValue({
       session: {
         id: 'device-1',
         host: 'localhost',
@@ -179,7 +208,8 @@ describe('agent command output', () => {
 
   it('prints a human-readable version warning only when incompatible', async () => {
     setupClient();
-    mocks.client.createSession.mockResolvedValue({
+    setupTransport();
+    mocks.transport.createSession.mockResolvedValue({
       session: {
         id: 'device-1',
         host: 'localhost',
@@ -217,15 +247,41 @@ describe('agent command output', () => {
 
   it('prints domains without session metadata', async () => {
     setupClient();
-    mocks.client.getSessionTools.mockResolvedValue({
-      tools: [
-        {
-          name: 'app.echo',
-          description: 'Echo',
-          inputSchema: { type: 'object' },
-        },
-      ],
-    });
+    mocks.session.domains.list.mockResolvedValue([
+      {
+        id: 'app',
+        kind: 'plugin',
+        description: 'Runtime tools exposed by the app itself.',
+      },
+      {
+        id: 'console',
+        kind: 'static',
+        description: 'CDP-style Console domain for React Native log access.',
+      },
+      {
+        id: 'memory',
+        kind: 'static',
+        description:
+          'CDP memory inspection and heap profiling tools with Metro-managed artifact exports.',
+      },
+      {
+        id: 'network',
+        kind: 'static',
+        description:
+          'Raw CDP network recording tools with paginated request browsing.',
+      },
+      {
+        id: 'performance',
+        kind: 'static',
+        description:
+          'CDP performance tracing tools with Metro-managed artifact exports.',
+      },
+      {
+        id: 'react',
+        kind: 'static',
+        description: 'React tree inspection and profiling tools.',
+      },
+    ]);
 
     const stdoutWrite = vi
       .spyOn(process.stdout, 'write')
@@ -273,17 +329,13 @@ describe('agent command output', () => {
 
   it('prints tool schemas without the domain envelope', async () => {
     setupClient();
-    mocks.client.getSessionTools.mockResolvedValue({
-      tools: [
-        {
-          name: 'app.echo',
-          description: 'Echo',
-          inputSchema: {
-            type: 'object',
-            properties: { value: { type: 'string' } },
-          },
-        },
-      ],
+    mocks.session.tools.getSchema.mockResolvedValue({
+      name: 'app.echo',
+      shortName: 'echo',
+      inputSchema: {
+        type: 'object',
+        properties: { value: { type: 'string' } },
+      },
     });
 
     const stdoutWrite = vi
@@ -317,19 +369,8 @@ describe('agent command output', () => {
 
   it('prints raw tool results without domain or tool metadata', async () => {
     setupClient();
-    mocks.client.getSessionTools.mockResolvedValueOnce({
-      tools: [
-        {
-          name: 'app.echo',
-          description: 'Echo',
-          inputSchema: { type: 'object' },
-        },
-      ],
-    });
-    mocks.client.callSessionTool.mockResolvedValueOnce({
-      result: {
-        value: 'hello',
-      },
+    mocks.session.tools.call.mockResolvedValueOnce({
+      value: 'hello',
     });
 
     const stdoutWrite = vi
@@ -363,7 +404,7 @@ describe('agent command output', () => {
 
   it('prints JSON errors for agent command failures', async () => {
     setupClient();
-    mocks.client.listTargets.mockRejectedValue(
+    mocks.client.targets.list.mockRejectedValue(
       new Error(
         'Unable to reach Metro at http://127.0.0.1:8081. Make sure Metro is running and reachable, then try again.',
       ),
@@ -387,7 +428,8 @@ describe('agent command output', () => {
 
   it('preserves agent API validation errors instead of rewriting them as connection failures', async () => {
     setupClient();
-    mocks.client.createSession.mockRejectedValue(
+    setupTransport();
+    mocks.transport.createSession.mockRejectedValue(
       new Error('Multiple Metro targets detected. Pass --deviceId.'),
     );
 
@@ -409,7 +451,7 @@ describe('agent command output', () => {
 
   it('passes custom host and port into the HTTP client', async () => {
     setupClient();
-    mocks.client.listTargets.mockResolvedValue({ targets: [] });
+    mocks.client.targets.list.mockResolvedValue([]);
 
     const program = new Command();
     registerAgentCommand(program);
@@ -430,11 +472,9 @@ describe('agent command output', () => {
       },
     );
 
-    expect(mocks.createAgentHttpClient).toHaveBeenCalledWith({
+    expect(mocks.createAgentClient).toHaveBeenCalledWith({
       host: '10.0.0.5',
       port: 9090,
-      pretty: false,
-      session: undefined,
     });
   });
 });

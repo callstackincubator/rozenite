@@ -1,18 +1,24 @@
 import { JsonInspector, Surface } from '@rozenite/ui';
+import type { ActionOrigin } from '../../react-native/symbolication/types';
 import type { NavigationAction, NavigationState } from '../../shared';
+import { DispatchOriginSection } from './DispatchOriginSection';
 
 export type ActionDetailPanelProps = {
   action: NavigationAction;
   state: NavigationState | undefined;
+  origin: ActionOrigin | undefined;
 };
 
 export const ActionDetailPanel = ({
   action,
   state,
+  origin,
 }: ActionDetailPanelProps) => {
   return (
     <div className="grid min-h-0 flex-1 gap-4 overflow-auto xl:grid-cols-2">
       <section className="flex min-h-0 flex-col gap-2">
+        <DispatchOriginSection origin={origin} />
+
         <h3 className="text-sm font-semibold text-foreground">
           Action Payload
         </h3>
