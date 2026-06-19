@@ -30,7 +30,7 @@ export const CookiesTab = ({ selectedRequest }: CookiesTabProps) => {
     return (
       <ScrollArea className="h-full w-full">
         <div className="p-4">
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-muted">
             No cookies for this request
           </div>
         </div>
@@ -49,7 +49,7 @@ export const CookiesTab = ({ selectedRequest }: CookiesTabProps) => {
                   <CookieCard
                     key={`request-${index}`}
                     cookie={cookie}
-                    keyClassName="text-blue-400"
+                    keyClassName="text-accent"
                   />
                 ))}
               </div>

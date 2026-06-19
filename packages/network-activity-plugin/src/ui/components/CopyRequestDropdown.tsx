@@ -71,7 +71,7 @@ export const CopyRequestDropdown = ({ selectedRequest }: CopyDropdownProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="xs" className="border border-gray-700">
+        <Button variant="ghost" size="xs" className="border border-border/60">
           {isCopied ? <Check size={16} /> : <Copy size={16} />}
           Copy as ...
           <ChevronDown size={12} className="ml-1" />

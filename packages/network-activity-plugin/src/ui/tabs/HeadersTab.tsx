@@ -41,7 +41,7 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
       {
         key: 'Request URL',
         value: selectedRequest.request.url,
-        valueClassName: 'text-blue-400',
+        valueClassName: 'text-accent',
       },
       {
         key: 'Request Method',
@@ -57,7 +57,7 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
             {
               key: 'Content-Type',
               value: requestBody.type,
-              valueClassName: 'text-blue-400',
+              valueClassName: 'text-accent',
             },
           ]
         : []),

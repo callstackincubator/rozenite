@@ -27,7 +27,7 @@ export const KeyValueGrid = ({
   if (items.length === 0) {
     return emptyMessage ? (
       <div className={gridClassName}>
-        <span className="col-span-2 text-gray-500 italic">{emptyMessage}</span>
+        <span className="col-span-2 text-muted/60 italic">{emptyMessage}</span>
       </div>
     ) : null;
   }
@@ -37,7 +37,7 @@ export const KeyValueGrid = ({
       {items.map((item, index) => (
         <Fragment key={index}>
           <span
-            className={cn('text-gray-400 wrap-anywhere', item.keyClassName)}
+            className={cn('text-muted wrap-anywhere', item.keyClassName)}
           >
             {item.key}
           </span>
