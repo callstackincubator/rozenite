@@ -530,6 +530,9 @@ importers:
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
       connect:
         specifier: ^3.7.0
         version: 3.7.0
@@ -543,6 +546,9 @@ importers:
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
+      '@tailwindcss/postcss':
+        specifier: ^4.2.2
+        version: 4.2.2
       '@types/connect':
         specifier: ^3.4.38
         version: 3.4.38
@@ -574,11 +580,8 @@ importers:
         specifier: workspace:*
         version: link:../cli
       tailwindcss:
-        specifier: ^3.4.17
-        version: 3.4.17
-      tailwindcss-animate:
-        specifier: ^1.0.7
-        version: 1.0.7(tailwindcss@3.4.17)
+        specifier: ^4.2.2
+        version: 4.2.2
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
@@ -1237,6 +1240,9 @@ importers:
       '@rozenite/tools':
         specifier: workspace:*
         version: link:../tools
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
       nanoevents:
         specifier: ^9.1.0
         version: 9.1.0
@@ -1244,6 +1250,9 @@ importers:
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
+      '@tailwindcss/postcss':
+        specifier: ^4.2.2
+        version: 4.2.2
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.14
@@ -1281,11 +1290,8 @@ importers:
         specifier: workspace:*
         version: link:../cli
       tailwindcss:
-        specifier: ^3.4.17
-        version: 3.4.17
-      tailwindcss-animate:
-        specifier: ^1.0.7
-        version: 1.0.7(tailwindcss@3.4.17)
+        specifier: ^4.2.2
+        version: 4.2.2
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
@@ -1298,6 +1304,9 @@ importers:
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
@@ -1308,6 +1317,9 @@ importers:
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
+      '@tailwindcss/postcss':
+        specifier: ^4.2.2
+        version: 4.2.2
       '@types/lodash':
         specifier: ^4.17.0
         version: 4.17.20
@@ -1342,11 +1354,8 @@ importers:
         specifier: workspace:*
         version: link:../cli
       tailwindcss:
-        specifier: ^3.4.17
-        version: 3.4.17
-      tailwindcss-animate:
-        specifier: ^1.0.7
-        version: 1.0.7(tailwindcss@3.4.17)
+        specifier: ^4.2.2
+        version: 4.2.2
       typescript:
         specifier: ~5.9.3
         version: 5.9.3

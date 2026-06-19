@@ -22,11 +22,13 @@
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/ui": "workspace:*",
     "connect": "^3.7.0",
     "expo-atlas": "^0.4.0"
   },
   "devDependencies": {
     "@rozenite/vite-plugin": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.2",
     "@types/react": "catalog:",
     "autoprefixer": "^10.4.21",
     "metro-config": "^0.82.5",
@@ -36,8 +38,7 @@
     "react-native": "catalog:",
     "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
-    "tailwindcss": "^3.4.17",
-    "tailwindcss-animate": "^1.0.7",
+    "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "vite": "catalog:",
     "@types/connect": "^3.4.38",

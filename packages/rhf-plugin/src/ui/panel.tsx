@@ -1,6 +1,7 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo, useState } from 'react';
-import { Search, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
+import { Chip, ListBox, PluginHeader, PluginTheme, SearchField, Select } from '@rozenite/ui';
 import type { RHFEventMap, RHFInitEvent, RHFUnmountEvent, RHFUpdateEvent } from '../shared/messaging';
 import type { FieldError, FormSnapshot } from '../shared/types';
 import './globals.css';
@@ -40,11 +41,11 @@ function groupFields(names: string[]): FieldEntry[] {
 
 // --- Small components ---
 
-function Badge({ label, active, color }: { label: string; active: boolean; color: string }) {
+type BadgeColor = 'success' | 'danger' | 'warning' | 'accent' | 'default';
+
+function StatusChip({ label, active, color }: { label: string; active: boolean; color: BadgeColor }) {
   if (!active) return null;
-  return (
-    <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${color}`}>{label}</span>
-  );
+  return <Chip color={color} className="h-5 text-xs">{label}</Chip>;
 }
 
 function ErrorCell({ error }: { error?: FieldError }) {
@@ -52,12 +53,10 @@ function ErrorCell({ error }: { error?: FieldError }) {
   return (
     <div className="flex flex-col gap-0.5">
       {error.type && (
-        <span className="px-1.5 py-0.5 text-xs rounded font-medium bg-red-900 text-red-200 w-fit">
-          {error.type}
-        </span>
+        <Chip color="danger" className="w-fit h-5 text-xs">{error.type}</Chip>
       )}
       {error.message && (
-        <span className="text-xs text-red-300 truncate max-w-[200px]" title={error.message}>
+        <span className="text-xs text-danger truncate max-w-[200px]" title={error.message}>
           {error.message}
         </span>
       )}
@@ -76,33 +75,27 @@ function formatValue(value: unknown): string {
 // --- Form state bar ---
 
 function FormStateBar({ formState }: { formState: FormSnapshot['formState'] }) {
-  const badges = [
-    { label: 'valid', active: formState.isValid, color: 'bg-green-800 text-green-200' },
-    { label: 'invalid', active: !formState.isValid, color: 'bg-red-900 text-red-200' },
-    { label: 'dirty', active: formState.isDirty, color: 'bg-yellow-800 text-yellow-200' },
-    { label: 'submitting', active: formState.isSubmitting, color: 'bg-blue-800 text-blue-200' },
-    { label: 'submitted', active: formState.isSubmitted, color: 'bg-purple-800 text-purple-200' },
-    { label: 'submitSuccessful', active: formState.isSubmitSuccessful, color: 'bg-green-900 text-green-200' },
-    { label: 'validating', active: formState.isValidating, color: 'bg-orange-800 text-orange-200' },
+  const badges: Array<{ label: string; active: boolean; color: BadgeColor }> = [
+    { label: 'valid',           active: formState.isValid,           color: 'success' },
+    { label: 'invalid',         active: !formState.isValid,          color: 'danger'  },
+    { label: 'dirty',           active: formState.isDirty,           color: 'warning' },
+    { label: 'submitting',      active: formState.isSubmitting,      color: 'accent'  },
+    { label: 'submitted',       active: formState.isSubmitted,       color: 'default' },
+    { label: 'submitSuccessful',active: formState.isSubmitSuccessful,color: 'success' },
+    { label: 'validating',      active: formState.isValidating,      color: 'warning' },
   ];
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
       {badges.map((b) => (
-        <Badge key={b.label} {...b} />
+        <StatusChip key={b.label} {...b} />
       ))}
-      <span className="text-xs text-gray-400 ml-1">submits: {formState.submitCount}</span>
+      <span className="text-xs text-muted ml-1">submits: {formState.submitCount}</span>
     </div>
   );
 }
 
 // --- Table rows ---
-
-const COL_FIELD = 'px-3 py-1.5 text-gray-200 font-mono text-xs align-middle';
-const COL_TYPE  = 'px-3 py-1.5 text-gray-400 font-mono text-xs w-20 align-middle';
-const COL_VALUE = 'px-3 py-1.5 text-gray-300 font-mono text-xs align-middle max-w-[220px]';
-const COL_STATE = 'px-3 py-1.5 w-28 align-middle';
-const COL_ERROR = 'px-3 py-1.5 align-middle';
 
 function FieldRow({
   name,
@@ -120,23 +113,25 @@ function FieldRow({
   const type    = snapshot.formState.nativeFields[name];
 
   return (
-    <tr className="border-b border-gray-700 hover:bg-gray-800/50 transition-colors">
-      <td className={COL_FIELD}>
-        <span className={indent ? 'pl-4 text-gray-400' : ''}>
+    <tr className="border-b border-border hover:bg-surface/50 transition-colors">
+      <td className="px-3 py-1.5 text-foreground font-mono text-xs align-middle">
+        <span className={indent ? 'pl-4 text-muted' : ''}>
           {indent ? name.slice(name.indexOf('.') + 1) : name}
         </span>
       </td>
-      <td className={COL_TYPE}>{type ?? <span className="text-gray-600">—</span>}</td>
-      <td className={COL_VALUE}>
+      <td className="px-3 py-1.5 text-muted font-mono text-xs w-20 align-middle">
+        {type ?? <span className="opacity-40">—</span>}
+      </td>
+      <td className="px-3 py-1.5 text-foreground/80 font-mono text-xs align-middle max-w-[220px]">
         <span className="break-all">{formatValue(value)}</span>
       </td>
-      <td className={COL_STATE}>
+      <td className="px-3 py-1.5 w-28 align-middle">
         <span className="inline-flex gap-1 flex-wrap">
-          <Badge label="dirty"   active={!!dirty}   color="bg-yellow-800 text-yellow-200" />
-          <Badge label="touched" active={!!touched} color="bg-blue-900 text-blue-200" />
+          {dirty   && <Chip color="warning" className="h-5 text-xs">dirty</Chip>}
+          {touched && <Chip color="accent"  className="h-5 text-xs">touched</Chip>}
         </span>
       </td>
-      <td className={COL_ERROR}>
+      <td className="px-3 py-1.5 align-middle">
         <ErrorCell error={error} />
       </td>
     </tr>
@@ -160,20 +155,20 @@ function GroupSection({
   return (
     <tbody>
       <tr
-        className="border-b border-gray-700 bg-gray-800 cursor-pointer select-none hover:bg-gray-750 transition-colors"
+        className="border-b border-border bg-surface cursor-pointer select-none hover:bg-surface-secondary transition-colors"
         onClick={() => setOpen((o) => !o)}
       >
         <td className="px-3 py-1.5" colSpan={5}>
           <div className="flex items-center gap-2">
             {open ? (
-              <ChevronDown className="h-3 w-3 text-gray-400 shrink-0" />
+              <ChevronDown className="h-3 w-3 text-muted shrink-0" />
             ) : (
-              <ChevronRight className="h-3 w-3 text-gray-400 shrink-0" />
+              <ChevronRight className="h-3 w-3 text-muted shrink-0" />
             )}
-            <span className="font-mono text-xs text-gray-200 font-medium">{group.prefix}</span>
-            <span className="text-xs text-gray-500">{group.fields.length} fields</span>
-            {isDirty  && <Badge label="dirty"  active color="bg-yellow-800 text-yellow-200" />}
-            {hasError && <Badge label="errors" active color="bg-red-900 text-red-200" />}
+            <span className="font-mono text-xs text-foreground font-medium">{group.prefix}</span>
+            <span className="text-xs text-muted">{group.fields.length} fields</span>
+            {isDirty  && <Chip color="warning" className="h-5 text-xs">dirty</Chip>}
+            {hasError && <Chip color="danger"  className="h-5 text-xs">errors</Chip>}
           </div>
         </td>
       </tr>
@@ -201,8 +196,8 @@ function FieldTable({ snapshot, searchTerm }: { snapshot: FormSnapshot; searchTe
   if (filtered.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center w-full">
-        <h3 className="text-lg font-semibold text-gray-200 mb-2">No fields found</h3>
-        <p className="text-gray-400 text-sm">
+        <h3 className="text-lg font-semibold text-foreground mb-2">No fields found</h3>
+        <p className="text-muted text-sm">
           {searchTerm ? 'Try adjusting your search' : 'No registered fields'}
         </p>
       </div>
@@ -211,13 +206,13 @@ function FieldTable({ snapshot, searchTerm }: { snapshot: FormSnapshot; searchTe
 
   return (
     <table className="w-full text-sm border-collapse self-start h-auto">
-      <thead className="sticky top-0 bg-gray-800 z-10">
-        <tr className="text-left text-xs text-gray-400 uppercase tracking-wider">
-          <th className="px-3 py-2 font-medium border-b border-gray-700">Field</th>
-          <th className="px-3 py-2 font-medium border-b border-gray-700 w-20">Type</th>
-          <th className="px-3 py-2 font-medium border-b border-gray-700">Value</th>
-          <th className="px-3 py-2 font-medium border-b border-gray-700 w-28">State</th>
-          <th className="px-3 py-2 font-medium border-b border-gray-700">Error</th>
+      <thead className="sticky top-0 bg-surface z-10">
+        <tr className="text-left text-xs text-muted uppercase tracking-wider">
+          <th className="px-3 py-2 font-medium border-b border-border">Field</th>
+          <th className="px-3 py-2 font-medium border-b border-border w-20">Type</th>
+          <th className="px-3 py-2 font-medium border-b border-border">Value</th>
+          <th className="px-3 py-2 font-medium border-b border-border w-28">State</th>
+          <th className="px-3 py-2 font-medium border-b border-border">Error</th>
         </tr>
       </thead>
       {entries.map((entry) =>
@@ -238,55 +233,13 @@ function FieldTable({ snapshot, searchTerm }: { snapshot: FormSnapshot; searchTe
   );
 }
 
-// --- Form selector ---
-
-function FormSelector({
-  options,
-  selectedId,
-  staleIds,
-  onSelect,
-}: {
-  options: { id: string; label: string; fieldCount: number }[];
-  selectedId: string | null;
-  staleIds: Set<string>;
-  onSelect: (id: string) => void;
-}) {
-  const selectedIsStale = selectedId ? staleIds.has(selectedId) : false;
-
-  return (
-    <div className="flex items-center gap-2">
-      <label htmlFor="form-select" className="text-xs text-gray-400 shrink-0">
-        Form:
-      </label>
-      <select
-        id="form-select"
-        value={selectedId ?? ''}
-        onChange={(e) => onSelect(e.target.value)}
-        className="h-7 px-2 text-xs bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {options.map((opt) => (
-          <option key={opt.id} value={opt.id}>
-            {opt.label} ({opt.fieldCount} fields)
-            {staleIds.has(opt.id) ? ' — disconnected' : ''}
-          </option>
-        ))}
-      </select>
-      {selectedIsStale && (
-        <span className="text-xs text-yellow-400 flex items-center gap-1">
-          <AlertTriangle className="h-3 w-3" /> disconnected
-        </span>
-      )}
-    </div>
-  );
-}
-
 // --- Panel ---
 
 export default function ReactHookFormPanel() {
-  const [snapshots, setSnapshots]     = useState<Map<string, FormSnapshot>>(new Map());
-  const [staleIds, setStaleIds]       = useState<Set<string>>(new Set());
+  const [snapshots, setSnapshots]           = useState<Map<string, FormSnapshot>>(new Map());
+  const [staleIds, setStaleIds]             = useState<Set<string>>(new Set());
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm]   = useState('');
+  const [searchTerm, setSearchTerm]         = useState('');
 
   const client = useRozeniteDevToolsClient<RHFEventMap>({ pluginId: PLUGIN_ID });
 
@@ -326,6 +279,7 @@ export default function ReactHookFormPanel() {
   }, [client]);
 
   const selectedSnapshot = selectedFormId ? snapshots.get(selectedFormId) ?? null : null;
+  const selectedIsStale  = selectedFormId ? staleIds.has(selectedFormId) : false;
 
   const formOptions = useMemo(
     () =>
@@ -338,57 +292,94 @@ export default function ReactHookFormPanel() {
   );
 
   return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-3 py-2 border-b border-gray-700 bg-gray-800">
-        <span className="text-sm font-semibold text-gray-100 shrink-0">React Hook Form</span>
-        <div className="flex-1" />
-        {formOptions.length > 0 && (
-          <FormSelector
-            options={formOptions}
-            selectedId={selectedFormId}
-            staleIds={staleIds}
-            onSelect={setSelectedFormId}
-          />
-        )}
-      </div>
+    <PluginTheme
+      defaultTheme="dark"
+      storageKey="@rozenite/rhf-plugin.theme"
+      className="flex h-screen flex-col bg-background text-foreground"
+    >
+      <PluginHeader
+        title="React Hook Form"
+        subtitle="Inspect form state and field values."
+        actions={
+          formOptions.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <div className="w-56 max-w-[44vw] min-w-40">
+                <Select
+                  placeholder="Select form"
+                  value={selectedFormId ?? ''}
+                  onChange={(value) => {
+                    if (typeof value === 'string') setSelectedFormId(value);
+                  }}
+                  isDisabled={formOptions.length === 0}
+                >
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {formOptions.map((opt) => (
+                        <ListBox.Item
+                          key={opt.id}
+                          id={opt.id}
+                          textValue={`${opt.label} (${opt.fieldCount} fields)${staleIds.has(opt.id) ? ' — disconnected' : ''}`}
+                        >
+                          {opt.label} ({opt.fieldCount} fields)
+                          {staleIds.has(opt.id) ? ' — disconnected' : ''}
+                          <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              </div>
+              {selectedIsStale && (
+                <span className="text-xs text-warning flex items-center gap-1 shrink-0">
+                  <AlertTriangle className="h-3 w-3" /> disconnected
+                </span>
+              )}
+            </div>
+          ) : undefined
+        }
+      />
 
-      {/* Form state bar */}
       {selectedSnapshot && (
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-700 bg-gray-800">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-border">
           <FormStateBar formState={selectedSnapshot.formState} />
         </div>
       )}
 
-      {/* Search */}
-      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
-        <div className="flex-1 relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search fields…"
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+        <div className="flex-1">
+          <SearchField
+            name="search"
+            fullWidth
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-8 w-full pl-8 pr-3 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+            onChange={setSearchTerm}
+          >
+            <SearchField.Group>
+              <SearchField.SearchIcon />
+              <SearchField.Input placeholder="Search fields…" />
+              <SearchField.ClearButton />
+            </SearchField.Group>
+          </SearchField>
         </div>
       </div>
 
-      {/* Content */}
       <main className="flex flex-1 min-h-0 overflow-auto">
         {selectedSnapshot ? (
           <FieldTable snapshot={selectedSnapshot} searchTerm={searchTerm} />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center w-full">
-            <h2 className="text-xl font-semibold text-gray-200 mb-2">React Hook Form Inspector</h2>
-            <p className="text-gray-400 text-sm">
+            <h2 className="text-xl font-semibold text-foreground mb-2">React Hook Form Inspector</h2>
+            <p className="text-muted text-sm">
               Call{' '}
-              <code className="text-blue-400">useRozeniteRHFPlugin({'{ control }'})</code>{' '}
+              <code className="text-accent">useRozeniteRHFPlugin({'{ control }'})</code>{' '}
               in your form component
             </p>
           </div>
         )}
       </main>
-    </div>
+    </PluginTheme>
   );
 }

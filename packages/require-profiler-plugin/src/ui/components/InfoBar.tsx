@@ -12,27 +12,25 @@ export const InfoBar = ({
   entryName,
 }: InfoBarProps) => {
   return (
-    <div className="info-bar">
-      <div className="info-bar-left">
-        <div className="info-item">
+    <div className="flex items-center justify-between px-4 py-2 bg-surface border-b border-border text-xs shrink-0">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5 text-muted">
           <span>Total Time:</span>
-          <span className="info-item-value">{formatTime(totalTime)}</span>
+          <span className="text-foreground font-semibold tabular-nums">{formatTime(totalTime)}</span>
         </div>
-        <div className="info-item">
+        <div className="flex items-center gap-1.5 text-muted">
           <span>Modules:</span>
-          <span className="info-item-value">
-            {totalModules.toLocaleString()}
-          </span>
+          <span className="text-foreground font-semibold tabular-nums">{totalModules.toLocaleString()}</span>
         </div>
-        <div className="info-item">
+        <div className="flex items-center gap-1.5 text-muted">
           <span>Entry:</span>
-          <span className="info-item-value">{entryName ?? 'N/A'}</span>
+          <span className="text-foreground font-semibold truncate max-w-[200px]">{entryName ?? 'N/A'}</span>
         </div>
       </div>
-      <div className="info-bar-right">
-        <span className="shortcuts-hint">
-          Click to zoom in, <kbd>Esc</kbd> to reset
-        </span>
+      <div className="text-muted hidden md:flex items-center gap-1">
+        <span>Click to zoom in,</span>
+        <kbd className="inline-block px-1 py-0.5 font-mono text-[10px] bg-background border border-border rounded mx-0.5">Esc</kbd>
+        <span>to reset</span>
       </div>
     </div>
   );
