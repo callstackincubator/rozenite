@@ -432,7 +432,7 @@ const renderEmptyState = (
 const PANEL_CLASS_NAME =
   'flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden rounded-[1.4rem] border border-border/60 bg-surface';
 const WORKSPACE_PANEL_CLASS_NAME =
-  "relative flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden rounded-[1.4rem] border border-border/60 bg-surface before:absolute before:inset-x-6 before:top-0 before:h-px before:rounded-full before:bg-accent/40 before:content-['']";
+  'relative flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden rounded-[1.4rem] border border-border/60 bg-surface';
 const CONTENT_PANEL_CLASS_NAME =
   'flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden rounded-[1.2rem] border border-border/60 bg-surface';
 const QUERY_SECTION_CLASS_NAME =
@@ -2639,7 +2639,7 @@ export default function SqlitePanel() {
         }
       />
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-3 lg:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-3 pt-3 lg:flex-row">
         <aside
           ref={sidebarRef}
           className="flex h-[min(28rem,42vh)] min-h-0 w-full min-w-0 max-w-none gap-2 lg:h-full lg:min-w-72 lg:w-[var(--sqlite-sidebar-width)] lg:max-w-[min(28rem,48vw)]"
@@ -2933,7 +2933,7 @@ export default function SqlitePanel() {
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize database explorer"
-            className="relative hidden w-3 shrink-0 cursor-col-resize border-x border-border/70 bg-surface-secondary/60 transition-colors hover:bg-surface-secondary lg:block before:absolute before:left-1/2 before:top-1/2 before:h-16 before:w-0.5 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-muted/70 before:content-['']"
+            className="relative hidden w-3 shrink-0 cursor-col-resize lg:block before:absolute before:left-1/2 before:top-1/2 before:h-16 before:w-0.5 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-border before:content-[''] hover:before:bg-muted/70"
             onPointerDown={handleSidebarResizeStart}
           />
         </aside>

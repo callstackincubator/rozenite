@@ -275,7 +275,7 @@ export default function PerformanceMonitorPanel() {
           setActiveTabId(String(key) as ActiveTabId);
         }}
       >
-        <Tabs.ListContainer className="overflow-x-auto px-3">
+        <Tabs.ListContainer className="overflow-x-auto px-4 pt-3">
           <Tabs.List
             aria-label="Performance monitor views"
             className="w-fit min-w-max justify-start"
@@ -312,7 +312,7 @@ export default function PerformanceMonitorPanel() {
         </Tabs.ListContainer>
 
         <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
           id="waterfall"
         >
           <WaterfallView
@@ -324,7 +324,7 @@ export default function PerformanceMonitorPanel() {
         </Tabs.Panel>
 
         <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
           id="startup"
         >
           <StartupTab
@@ -334,7 +334,7 @@ export default function PerformanceMonitorPanel() {
         </Tabs.Panel>
 
         <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
           id="measures"
         >
           <MeasuresTable
@@ -344,21 +344,21 @@ export default function PerformanceMonitorPanel() {
         </Tabs.Panel>
 
         <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
           id="metrics"
         >
           <MetricsTable metrics={session.metrics} onRowClick={handleEntryClick} />
         </Tabs.Panel>
 
         <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
           id="marks"
         >
           <MarksTable marks={session.marks} onRowClick={handleEntryClick} />
         </Tabs.Panel>
 
         <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
           id="reactNativeMarks"
         >
           <ReactNativeMarksTable
@@ -368,7 +368,7 @@ export default function PerformanceMonitorPanel() {
         </Tabs.Panel>
 
         <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
           id="resources"
         >
           <ResourcesTable

@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import '@heroui/styles';
 
+@source "./src/**/*.{tsx,ts}";
+
 @theme inline {
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);

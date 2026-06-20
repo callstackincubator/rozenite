@@ -522,51 +522,53 @@ export default function ControlsPanel() {
       />
 
       <div className="flex-1 overflow-auto p-4 pt-3">
-        {loading ? (
-          <Surface className="text-sm text-muted" variant="secondary">
-            Loading controls snapshot...
-          </Surface>
-        ) : null}
+        <div className="mx-auto w-full max-w-2xl">
+          {loading ? (
+            <Surface className="text-sm text-muted" variant="secondary">
+              Loading controls snapshot...
+            </Surface>
+          ) : null}
 
-        {!loading && sections.length === 0 ? (
-          <Surface className="text-sm text-muted" variant="secondary">
-            No controls registered on the device.
-          </Surface>
-        ) : null}
+          {!loading && sections.length === 0 ? (
+            <Surface className="text-sm text-muted" variant="secondary">
+              No controls registered on the device.
+            </Surface>
+          ) : null}
 
-        <div className="space-y-4">
-          {sections.map((section) => (
-            <Card key={section.id}>
-              <Card.Header>
-                <Card.Title>{section.title}</Card.Title>
-                {section.description ? (
-                  <Card.Description className="mt-1 text-xs">
-                    {section.description}
-                  </Card.Description>
-                ) : null}
-              </Card.Header>
+          <div className="space-y-4">
+            {sections.map((section) => (
+              <Card key={section.id}>
+                <Card.Header>
+                  <Card.Title>{section.title}</Card.Title>
+                  {section.description ? (
+                    <Card.Description className="mt-1 text-xs">
+                      {section.description}
+                    </Card.Description>
+                  ) : null}
+                </Card.Header>
 
-              <Card.Content>
-                {section.items.map((item) => (
-                  <div key={item.id}>
-                    {renderItem({
-                      sectionId: section.id,
-                      item,
-                      uiState: itemUiState.get(getItemKey(section.id, item.id)),
-                      inputDraft: inputDrafts.get(
-                        getItemKey(section.id, item.id),
-                      ),
-                      onToggle: handleToggle,
-                      onPress: handlePress,
-                      onSelect: handleSelect,
-                      onInputDraftChange: handleInputDraftChange,
-                      onInputApply: handleInputApply,
-                    })}
-                  </div>
-                ))}
-              </Card.Content>
-            </Card>
-          ))}
+                <Card.Content>
+                  {section.items.map((item) => (
+                    <div key={item.id}>
+                      {renderItem({
+                        sectionId: section.id,
+                        item,
+                        uiState: itemUiState.get(getItemKey(section.id, item.id)),
+                        inputDraft: inputDrafts.get(
+                          getItemKey(section.id, item.id),
+                        ),
+                        onToggle: handleToggle,
+                        onPress: handlePress,
+                        onSelect: handleSelect,
+                        onInputDraftChange: handleInputDraftChange,
+                        onInputApply: handleInputApply,
+                      })}
+                    </div>
+                  ))}
+                </Card.Content>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     </PluginTheme>

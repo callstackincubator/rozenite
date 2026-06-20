@@ -123,7 +123,7 @@ export default function ReactNavigationPanel() {
         selectedKey={activeTabId}
         onSelectionChange={(key) => setActiveTabId(String(key))}
       >
-        <Tabs.ListContainer className="overflow-x-auto px-3">
+        <Tabs.ListContainer className="overflow-x-auto px-4 pt-3">
           <Tabs.List
             aria-label="React Navigation views"
             className="w-fit min-w-max justify-start"
@@ -144,7 +144,7 @@ export default function ReactNavigationPanel() {
         {tabs.map((tab) => (
           <Tabs.Panel
             key={tab.id}
-            className="flex min-h-0 flex-1 overflow-hidden px-3 pb-3 pt-3"
+            className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
             id={tab.id}
           >
             {tab.content}

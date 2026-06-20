@@ -88,27 +88,25 @@ export function PluginHeader({
 }: PluginHeaderProps) {
   return (
     <header
-      className={cn('sticky top-0 z-20 px-3 pt-3 pb-3', className)}
+      className={cn('sticky top-0 z-20 flex flex-wrap items-center gap-3 bg-background px-4 py-3 border-b border-border', className)}
       {...props}
     >
-      <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-sm font-semibold text-foreground">
-            {title}
-          </h1>
-          {subtitle ? (
-            <p className="mt-1 truncate text-xs text-muted">{subtitle}</p>
-          ) : null}
-        </div>
-
-        {actions ? (
-          <div className="flex min-w-0 shrink-0 items-center gap-2">
-            {actions}
-          </div>
+      <div className="min-w-0 flex-1 flex flex-col justify-center min-h-[2.5rem]">
+        <h1 className="truncate text-sm font-semibold text-foreground">
+          {title}
+        </h1>
+        {subtitle ? (
+          <p className="mt-1 truncate text-xs text-muted">{subtitle}</p>
         ) : null}
-
-        {showThemeSwitcher ? <PluginThemeSwitcher /> : null}
       </div>
+
+      {actions ? (
+        <div className="flex min-w-0 shrink-0 items-center gap-2">
+          {actions}
+        </div>
+      ) : null}
+
+      {showThemeSwitcher ? <PluginThemeSwitcher /> : null}
     </header>
   );
 }
