@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { cn } from './utils/cn.js';
+import { cn } from '../utils/cn.js';
 
 const THEME_CLASS_NAME = 'dark';
 const THEME_ATTR_NAME = 'data-theme';

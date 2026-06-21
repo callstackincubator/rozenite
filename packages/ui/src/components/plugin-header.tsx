@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { ToggleButton, ToggleButtonGroup } from '@heroui/react';
 import { Monitor, MoonStar, SunMedium } from 'lucide-react';
-import { cn } from './utils/cn.js';
+import { cn } from '../utils/cn.js';
 import { usePluginTheme, type PluginThemeName } from './plugin-theme.js';
 
 type PluginHeaderProps = ComponentPropsWithoutRef<'header'> & {

@@ -34,6 +34,7 @@ module.exports = {
         'file-system-plugin',
         'sqlite-plugin',
         'rhf-plugin',
+        'ui',
         '',
       ],
     ],

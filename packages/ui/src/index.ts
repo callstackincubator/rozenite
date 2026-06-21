@@ -38,12 +38,12 @@ export {
 
 export { createColumnHelper } from '@tanstack/react-table';
 export type { ColumnDef, Row, SortingState } from '@tanstack/react-table';
-export { JsonInspector } from './json-inspector';
-export type { JsonInspectorProps, JsonInspectorTheme } from './json-inspector';
-export { PluginHeader } from './plugin-header';
-export { PluginTheme } from './plugin-theme';
-export type { PluginThemeContextValue, PluginThemeName, PluginThemeProps } from './plugin-theme';
-export { usePluginTheme } from './plugin-theme';
+export { JsonInspector } from './components/json-inspector';
+export type { JsonInspectorProps, JsonInspectorTheme } from './components/json-inspector';
+export { PluginHeader } from './components/plugin-header';
+export { PluginTheme } from './components/plugin-theme';
+export type { PluginThemeContextValue, PluginThemeName, PluginThemeProps } from './components/plugin-theme';
+export { usePluginTheme } from './components/plugin-theme';
 export { parseJsonForInspection } from './utils/json';
 export type {
   JsonInspectionParseMode,

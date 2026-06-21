@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { Button } from '@heroui/react';
 import { Check, Copy } from 'lucide-react';
 import { JSONTree, type ShouldExpandNodeInitially } from 'react-json-tree';
-import { useCopyToClipboard } from './hooks/useCopyToClipboard';
-import { cn } from './utils/cn';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
+import { cn } from '../utils/cn';
 
 export type JsonInspectorTheme = 'dark' | 'light';
 
