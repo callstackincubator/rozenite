@@ -36,4 +36,29 @@ export default [
       '@typescript-eslint/no-require-imports': 'off',
     },
   },
+  {
+    // Ban direct hero-ui imports outside the @rozenite/ui facade.
+    files: ['packages/**/*.{ts,tsx,cts,mts,js,jsx,cjs,mjs}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@heroui/*', '@heroui'],
+              message:
+                'Import hero-ui from "@rozenite/ui" instead of "@heroui/*". If a component is missing, add it to packages/ui/src/index.ts.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // @rozenite/ui IS the facade and is allowed to import hero-ui directly.
+    files: ['packages/ui/**/*.{ts,tsx,cts,mts}'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
 ];

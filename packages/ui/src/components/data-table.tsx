@@ -6,17 +6,35 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type RowData,
   type SortingState,
 } from '@tanstack/react-table';
-import { Table } from '@rozenite/ui';
+import { ChevronUp } from 'lucide-react';
+import { Table } from '@heroui/react';
+
+declare module '@tanstack/react-table' {
+  // Lets a column carry an optional className applied to its body cells. The
+  // type parameters must mirror tanstack's signature for declaration merging,
+  // even though this augmentation doesn't reference them.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    cellClassName?: string;
+  }
+}
 
 export type DataTableProps<TData> = {
   ariaLabel: string;
   data: TData[];
   columns: ColumnDef<TData>[];
-  emptyMessage?: string;
+  /** Stable row id. Defaults to the tanstack row index. */
+  getRowId?: (item: TData, index: number) => string;
   getRowTextValue?: (item: TData, index: number) => string;
   onRowClick?: (item: TData) => void;
+  emptyMessage?: string;
+  /** Overrides the default centered `emptyMessage` rendering. */
+  renderEmptyState?: () => ReactNode;
+  className?: string;
+  scrollClassName?: string;
 };
 
 type TableSortDescriptor = NonNullable<
@@ -58,12 +76,11 @@ function SortableColumnHeader({
     <span className="flex items-center justify-between gap-2">
       <span>{children}</span>
       {sortDirection ? (
-        <span
-          aria-hidden="true"
-          className="text-[11px] font-medium text-muted"
-        >
-          {sortDirection === 'ascending' ? '↑' : '↓'}
-        </span>
+        <ChevronUp
+          className={`size-3 shrink-0 transition-transform duration-100 ease-out ${
+            sortDirection === 'descending' ? 'rotate-180' : ''
+          }`}
+        />
       ) : null}
     </span>
   );
@@ -73,9 +90,13 @@ export const DataTable = <TData,>({
   ariaLabel,
   data,
   columns,
-  emptyMessage = 'No data available',
+  getRowId,
   getRowTextValue,
   onRowClick,
+  emptyMessage = 'No data available',
+  renderEmptyState,
+  className = 'min-h-0 flex-1 overflow-hidden border border-border/70 bg-surface shadow-sm',
+  scrollClassName = 'h-full w-full',
 }: DataTableProps<TData>) => {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -84,6 +105,7 @@ export const DataTable = <TData,>({
     columns,
     state: { sorting },
     onSortingChange: setSorting,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
@@ -91,11 +113,8 @@ export const DataTable = <TData,>({
   const sortDescriptor = useMemo(() => toSortDescriptor(sorting), [sorting]);
 
   return (
-    <Table
-      className="min-h-0 flex-1 overflow-hidden border border-border/70 bg-surface shadow-sm"
-      variant="secondary"
-    >
-      <Table.ScrollContainer className="h-full w-full">
+    <Table className={className} variant="secondary">
+      <Table.ScrollContainer className={scrollClassName}>
         <Table.Content
           aria-label={ariaLabel}
           className="min-w-full"
@@ -142,11 +161,14 @@ export const DataTable = <TData,>({
             )}
           </Table.Header>
           <Table.Body
-            renderEmptyState={() => (
-              <div className="flex h-full min-h-56 w-full items-center justify-center px-4 py-10 text-center">
-                <span className="text-sm text-muted">{emptyMessage}</span>
-              </div>
-            )}
+            renderEmptyState={
+              renderEmptyState ??
+              (() => (
+                <div className="flex h-full min-h-56 w-full items-center justify-center px-4 py-10 text-center">
+                  <span className="text-sm text-muted">{emptyMessage}</span>
+                </div>
+              ))
+            }
           >
             {rows.map((row) => (
               <Table.Row
@@ -160,7 +182,10 @@ export const DataTable = <TData,>({
                 }
               >
                 {row.getVisibleCells().map((cell) => (
-                  <Table.Cell key={cell.id}>
+                  <Table.Cell
+                    key={cell.id}
+                    className={cell.column.columnDef.meta?.cellClassName}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </Table.Cell>
                 ))}

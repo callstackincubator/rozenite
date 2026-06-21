@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { parseColor } from '@heroui/react';
 import {
   Card,
   ColorArea,
@@ -8,11 +7,12 @@ import {
   ColorSlider,
   ColorSwatch,
   Description,
+  parseColor,
   Slider,
   Switch,
 } from '@rozenite/ui';
 import { Grid } from 'lucide-react';
-import { GridConfig } from '../../shared/types';
+import { GridConfig } from '../../shared';
 import { useThrottledCallback } from '../hooks/useThrottledCallback';
 
 type SliderValue = number | number[];

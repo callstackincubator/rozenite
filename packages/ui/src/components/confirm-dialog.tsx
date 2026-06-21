@@ -1,4 +1,4 @@
-import { AlertDialog, Button } from '@rozenite/ui';
+import { AlertDialog, Button } from '@heroui/react';
 import { AlertTriangle, Info } from 'lucide-react';
 
 export type ConfirmDialogProps = {

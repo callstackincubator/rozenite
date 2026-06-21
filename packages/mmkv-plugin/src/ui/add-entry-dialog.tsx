@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Button,
+  ConfirmDialog,
   Description,
   Input,
   Label,
@@ -11,7 +12,6 @@ import {
 } from '@rozenite/ui';
 import { Plus } from 'lucide-react';
 import type { MMKVEntry, MMKVEntryType, MMKVEntryValue } from '../shared/types';
-import { ConfirmDialog } from './confirm-dialog';
 
 const TYPE_OPTIONS: Array<{ value: MMKVEntryType; label: string }> = [
   { value: 'string', label: 'String' },

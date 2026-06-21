@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { SerializedPerformanceResource } from '../../shared/types';
-import { DataTable } from './DataTable';
+import { DataTable } from '@rozenite/ui';
 import { formatBytes, formatDuration } from '../utils';
 
 export type ResourcesTableProps = {

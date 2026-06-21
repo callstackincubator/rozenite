@@ -1,88 +1,75 @@
 import { useMemo } from 'react';
+import type { ReactNode } from 'react';
 import {
   Button,
   Chip,
   Description,
-  JsonInspector,
   Label,
   Modal,
-  parseJsonForInspection,
   Surface,
-} from '@rozenite/ui';
+} from '@heroui/react';
 import { Edit3, Info } from 'lucide-react';
-import type { StorageEntry, StorageEntryType } from '../shared/types';
-import { bytesToHexdump } from './binary';
+import { JsonInspector } from './json-inspector';
+import { parseJsonForInspection } from '../utils/json';
+import type { JsonInspectionParseResult } from '../utils/json';
 
-export type EntryDetailDialogProps = {
-  onClose: () => void;
-  onEdit?: (entry: StorageEntry) => void;
-  entry: StorageEntry | null;
+export type EntryDetailChipColor =
+  | 'success'
+  | 'danger'
+  | 'warning'
+  | 'accent'
+  | 'default';
+
+export type EntryDetailEntry = {
+  key: string;
+  type: string;
+  value: unknown;
 };
 
-const typeColorMap: Record<
-  StorageEntryType,
-  'success' | 'warning' | 'accent' | 'default'
-> = {
+export type EntryDetailDialogProps<T extends EntryDetailEntry> = {
+  entry: T | null;
+  onClose: () => void;
+  onEdit?: (entry: T) => void;
+  /** Maps an entry type to a Chip color. */
+  typeColor?: (type: T['type']) => EntryDetailChipColor;
+  /**
+   * Returns inspectable JSON for an entry. When `ok`, the value is rendered
+   * with `JsonInspector`; otherwise `renderValue` is used. Defaults to parsing
+   * string values as a JSON object/array.
+   */
+  getInspectableJson?: (entry: T) => JsonInspectionParseResult;
+  /** Renders the value when it is not inspectable JSON. */
+  renderValue: (entry: T) => ReactNode;
+};
+
+const DEFAULT_TYPE_COLOR: Record<string, EntryDetailChipColor> = {
   string: 'success',
   number: 'default',
   boolean: 'warning',
   buffer: 'accent',
 };
 
-const formatValue = (entry: StorageEntry) => {
-  if (entry.type === 'string') {
-    return (
-      <span className="break-all font-mono text-sm text-success">
-        "{entry.value}"
-      </span>
-    );
-  }
+const defaultTypeColor = (type: string): EntryDetailChipColor =>
+  DEFAULT_TYPE_COLOR[type] ?? 'default';
 
-  if (entry.type === 'number') {
-    return (
-      <span className="font-mono text-sm text-foreground">{entry.value}</span>
-    );
-  }
+const defaultGetInspectableJson = (
+  entry: EntryDetailEntry,
+): JsonInspectionParseResult =>
+  entry.type === 'string' && typeof entry.value === 'string'
+    ? parseJsonForInspection(entry.value, 'object-or-array')
+    : { ok: false, value: null };
 
-  if (entry.type === 'boolean') {
-    return (
-      <span
-        className={`font-mono text-sm ${
-          entry.value ? 'text-success' : 'text-danger'
-        }`}
-      >
-        {entry.value ? 'true' : 'false'}
-      </span>
-    );
-  }
-
-  // buffer — show a full hexdump
-  const bufferArray = entry.value as number[];
-  return (
-    <div className="space-y-2">
-      <div className="text-xs text-muted">
-        {bufferArray.length} {bufferArray.length === 1 ? 'byte' : 'bytes'}
-      </div>
-      <pre className="font-mono text-xs text-accent whitespace-pre overflow-auto leading-snug">
-        {bytesToHexdump(bufferArray)}
-      </pre>
-    </div>
-  );
-};
-
-export const EntryDetailDialog = ({
+export const EntryDetailDialog = <T extends EntryDetailEntry>({
+  entry,
   onClose,
   onEdit,
-  entry,
-}: EntryDetailDialogProps) => {
-  const isStringValue = entry?.type === 'string';
-  const stringValue = isStringValue ? entry.value : '';
-  const jsonParseResult = useMemo(
-    () =>
-      isStringValue
-        ? parseJsonForInspection(stringValue, 'object-or-array')
-        : { ok: false as const, value: null },
-    [isStringValue, stringValue],
+  typeColor = defaultTypeColor,
+  getInspectableJson = defaultGetInspectableJson,
+  renderValue,
+}: EntryDetailDialogProps<T>) => {
+  const jsonResult = useMemo<JsonInspectionParseResult>(
+    () => (entry ? getInspectableJson(entry) : { ok: false, value: null }),
+    [entry, getInspectableJson],
   );
 
   return (
@@ -97,8 +84,8 @@ export const EntryDetailDialog = ({
       <Modal.Backdrop variant="blur">
         <Modal.Container className="w-full max-w-2xl" placement="center">
           <Modal.Dialog
-            className="flex max-h-[90vh] flex-col"
             aria-label="Entry Details"
+            className="flex max-h-[90vh] flex-col"
           >
             <Modal.CloseTrigger />
             <Modal.Header>
@@ -124,7 +111,7 @@ export const EntryDetailDialog = ({
                     <Label>Type</Label>
                     <Chip
                       className="w-fit"
-                      color={typeColorMap[entry.type]}
+                      color={typeColor(entry.type)}
                       size="sm"
                       variant="soft"
                     >
@@ -138,10 +125,10 @@ export const EntryDetailDialog = ({
                       className="max-h-96 overflow-auto rounded-lg border border-border/70 bg-surface-secondary p-3"
                       variant="secondary"
                     >
-                      {jsonParseResult.ok ? (
+                      {jsonResult.ok ? (
                         <JsonInspector
                           copyable
-                          data={jsonParseResult.value}
+                          data={jsonResult.value}
                           shouldExpandNodeInitially={(keyPath) =>
                             keyPath.length <= 2
                           }
@@ -149,11 +136,11 @@ export const EntryDetailDialog = ({
                         />
                       ) : (
                         <div className="min-h-4 text-sm">
-                          {formatValue(entry)}
+                          {renderValue(entry)}
                         </div>
                       )}
                     </Surface>
-                    {entry.type === 'string' && jsonParseResult.ok ? (
+                    {entry.type === 'string' && jsonResult.ok ? (
                       <Description className="text-xs text-muted">
                         Displaying parsed JSON from the stored string value.
                       </Description>

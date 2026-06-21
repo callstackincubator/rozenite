@@ -1,6 +1,9 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ConfirmDialog,
+  EditableTable,
+  EntryDetailDialog,
   ListBox,
   PluginHeader,
   PluginTheme,
@@ -27,11 +30,9 @@ import {
   computePreview,
   parseSnapshot,
 } from '../shared/snapshot';
-import { EditableTable } from './editable-table';
 import { AddEntryDialog } from './add-entry-dialog';
-import { EntryDetailDialog } from './entry-detail-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
-import { ConfirmDialog } from './confirm-dialog';
+import { renderDetailValue, renderTableValue } from './entry-value';
 import { ImportDialog, type ImportFlightState } from './import-dialog';
 import { buildExportFilename, downloadJson } from './utils';
 import './globals.css';
@@ -568,13 +569,28 @@ export default function StoragePanel() {
       <main className="flex flex-1 min-h-0 overflow-auto">
         {selectedStorage ? (
           <EditableTable
+            ariaLabel="Storage entries"
             data={filteredEntries}
+            emptyMessage={
+              searchTerm
+                ? 'No results found'
+                : 'This storage appears to be empty'
+            }
             loading={loading}
             onDeleteEntry={handleDeleteEntry}
             onRowClick={setSelectedEntry}
-            onValueChange={handleValueChange}
-            searchTerm={searchTerm}
-            supportedTypes={supportedTypes}
+            renderValue={renderTableValue}
+            renderEditDialog={({ entry, onClose }) => (
+              <EditEntryDialog
+                entry={entry}
+                onClose={onClose}
+                onEditEntry={(key, newValue) => {
+                  handleValueChange(key, newValue);
+                  onClose();
+                }}
+                supportedTypes={supportedTypes}
+              />
+            )}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center w-full">
@@ -595,6 +611,7 @@ export default function StoragePanel() {
           setEditingEntry(entry);
         }}
         entry={selectedEntry}
+        renderValue={renderDetailValue}
       />
 
       <EditEntryDialog

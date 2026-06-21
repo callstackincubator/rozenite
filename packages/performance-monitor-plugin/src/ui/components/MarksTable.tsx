@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { SerializedPerformanceMark } from '../../shared/types';
 import { formatTime } from '../utils';
-import { DataTable } from './DataTable';
+import { DataTable } from '@rozenite/ui';
 
 export type MarksTableProps = {
   marks: SerializedPerformanceMark[];

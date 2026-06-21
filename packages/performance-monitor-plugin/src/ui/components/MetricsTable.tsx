@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { SerializedPerformanceMetric } from '../../shared/types';
 import { formatMetricRawValue, formatMetricValue, formatTime, getMetricUnit } from '../utils';
-import { DataTable } from './DataTable';
+import { DataTable } from '@rozenite/ui';
 
 export type MetricsTableProps = {
   metrics: SerializedPerformanceMetric[];

@@ -21,7 +21,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@heroui/react": "^3.0.1",
     "@rozenite/plugin-bridge": "workspace:*",
     "@rozenite/ui": "workspace:*"
   },

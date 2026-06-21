@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   Button,
   Chip,
+  ConfirmDialog,
   Description,
   Input,
   Label,
@@ -13,7 +14,6 @@ import {
 } from '@rozenite/ui';
 import { Edit3 } from 'lucide-react';
 import type { MMKVEntry, MMKVEntryType, MMKVEntryValue } from '../shared/types';
-import { ConfirmDialog } from './confirm-dialog';
 
 export type EditEntryDialogProps = {
   onClose: () => void;

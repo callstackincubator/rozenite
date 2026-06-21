@@ -1,6 +1,8 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  EditableTable,
+  EntryDetailDialog,
   ListBox,
   PluginHeader,
   PluginTheme,
@@ -14,10 +16,13 @@ import type {
   MMKVSnapshotEvent,
 } from '../shared/messaging';
 import type { MMKVEntry, MMKVEntryValue } from '../shared/types';
-import { EditableTable } from './editable-table';
 import { AddEntryDialog } from './add-entry-dialog';
-import { EntryDetailDialog } from './entry-detail-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
+import {
+  getInspectableJson,
+  renderDetailValue,
+  renderTableValue,
+} from './entry-value';
 import './globals.css';
 
 const getEntryTypeFromValue = (value: MMKVEntryValue): MMKVEntry['type'] => {
@@ -336,12 +341,27 @@ export default function MMKVPanel() {
       <main className="flex flex-1 min-h-0 overflow-auto">
         {selectedInstance ? (
           <EditableTable
+            ariaLabel="MMKV entries"
             data={filteredEntries}
+            emptyMessage={
+              searchTerm
+                ? 'No results found'
+                : 'This instance appears to be empty'
+            }
             loading={loading}
             onDeleteEntry={handleDeleteEntry}
             onRowClick={setSelectedEntry}
-            onValueChange={handleValueChange}
-            searchTerm={searchTerm}
+            renderValue={renderTableValue}
+            renderEditDialog={({ entry, onClose }) => (
+              <EditEntryDialog
+                entry={entry}
+                onClose={onClose}
+                onEditEntry={(key, newValue) => {
+                  handleValueChange(key, newValue);
+                  onClose();
+                }}
+              />
+            )}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center w-full">
@@ -362,6 +382,8 @@ export default function MMKVPanel() {
           setEditingEntry(entry);
         }}
         entry={selectedEntry}
+        getInspectableJson={getInspectableJson}
+        renderValue={renderDetailValue}
       />
 
       <EditEntryDialog

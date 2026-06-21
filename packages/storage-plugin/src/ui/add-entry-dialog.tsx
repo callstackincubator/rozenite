@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Button,
+  ConfirmDialog,
   Description,
   Input,
   Label,
@@ -13,7 +14,6 @@ import type {
   StorageEntryType,
   StorageEntryValue,
 } from '../shared/types';
-import { ConfirmDialog } from './confirm-dialog';
 import { TypedValueEditor } from './typed-value-editor';
 import { defaultValueForType } from './type-conversion';
 

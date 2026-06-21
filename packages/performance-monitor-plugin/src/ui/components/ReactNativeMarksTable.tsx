@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { SerializedPerformanceReactNativeMark } from '../../shared/types';
-import { DataTable } from './DataTable';
+import { DataTable } from '@rozenite/ui';
 import { formatTime } from '../utils';
 
 export type ReactNativeMarksTableProps = {

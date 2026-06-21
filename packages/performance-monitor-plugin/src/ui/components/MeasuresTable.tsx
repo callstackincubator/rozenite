@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { SerializedPerformanceMeasure } from '../../shared/types';
 import { formatDuration, formatTime } from '../utils';
-import { DataTable } from './DataTable';
+import { DataTable } from '@rozenite/ui';
 
 export type MeasuresTableProps = {
   measures: SerializedPerformanceMeasure[];
