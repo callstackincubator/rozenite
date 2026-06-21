@@ -294,7 +294,6 @@ export default function ReactHookFormPanel() {
   return (
     <PluginTheme
       defaultTheme="dark"
-      storageKey="@rozenite/rhf-plugin.theme"
       className="flex h-screen flex-col bg-background text-foreground"
     >
       <PluginHeader

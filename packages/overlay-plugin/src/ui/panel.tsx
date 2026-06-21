@@ -66,7 +66,6 @@ export default function OverlayPanel() {
     <PluginTheme
       className="flex h-screen flex-col bg-background text-foreground"
       defaultTheme="dark"
-      storageKey="@rozenite/overlay-plugin.theme"
     >
       <PluginHeader title="Overlay" />
 

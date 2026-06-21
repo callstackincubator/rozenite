@@ -251,7 +251,6 @@ export default function MMKVPanel() {
   return (
     <PluginTheme
       defaultTheme="dark"
-      storageKey="@rozenite/mmkv-plugin.theme"
       className="flex h-screen flex-col bg-background text-foreground"
     >
       <div className="px-3 py-2 border-b border-amber-800/60 bg-amber-950/40 text-xs text-amber-100">

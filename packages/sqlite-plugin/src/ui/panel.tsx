@@ -2596,7 +2596,6 @@ export default function SqlitePanel() {
     <PluginTheme
       className="flex h-screen flex-col bg-background text-foreground"
       defaultTheme="dark"
-      storageKey="@rozenite/sqlite-plugin.theme"
     >
       <a
         href="#sqlite-main-content"

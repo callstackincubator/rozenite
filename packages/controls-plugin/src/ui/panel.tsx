@@ -509,7 +509,6 @@ export default function ControlsPanel() {
   return (
     <PluginTheme
       defaultTheme="dark"
-      storageKey="@rozenite/controls-plugin.theme"
       className="flex h-screen flex-col bg-background text-foreground"
     >
       <PluginHeader

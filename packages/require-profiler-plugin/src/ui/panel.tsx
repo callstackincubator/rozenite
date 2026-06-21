@@ -351,7 +351,6 @@ const App = () => {
   return (
     <PluginTheme
       defaultTheme="dark"
-      storageKey="@rozenite/require-profiler-plugin.theme"
       className="flex flex-col h-screen bg-background text-foreground"
     >
       <Header

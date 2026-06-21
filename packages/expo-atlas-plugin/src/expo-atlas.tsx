@@ -43,7 +43,6 @@ export default function ExpoAtlasPanel() {
   return (
     <PluginTheme
       defaultTheme="dark"
-      storageKey="@rozenite/expo-atlas-plugin.theme"
       className="flex h-screen flex-col bg-background text-foreground"
     >
       {(isLoading || hasError) && (

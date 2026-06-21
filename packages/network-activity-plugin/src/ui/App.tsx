@@ -15,7 +15,6 @@ export default function NetworkActivityPanel() {
     <PluginTheme
       className="flex h-screen flex-col bg-background text-foreground"
       defaultTheme="dark"
-      storageKey="@rozenite/network-activity-plugin.theme"
     >
       <PluginHeader title="Network Activity" subtitle="Inspect HTTP, WebSocket, and SSE requests." />
       <InspectorView client={client} />

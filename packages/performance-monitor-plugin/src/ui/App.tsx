@@ -222,7 +222,6 @@ export default function PerformanceMonitorPanel() {
     <PluginTheme
       className="flex h-screen flex-col bg-background text-foreground"
       defaultTheme="dark"
-      storageKey="@rozenite/performance-monitor-plugin.theme"
     >
       <PluginHeader
         subtitle="Track measures, marks, and metrics captured by react-native-performance."

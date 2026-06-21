@@ -207,7 +207,6 @@ export default function FileSystemPanel() {
     <PluginTheme
       className="flex h-screen flex-col bg-background text-foreground"
       defaultTheme="dark"
-      storageKey="@rozenite/file-system-plugin.theme"
     >
       <PluginHeader
         subtitle="Browse app files and preview contents in React Native DevTools."

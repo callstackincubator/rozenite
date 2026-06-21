@@ -14,6 +14,8 @@ const THEME_CLASS_NAME = 'dark';
 const THEME_ATTR_NAME = 'data-theme';
 const SYSTEM_THEME_MEDIA_QUERY = '(prefers-color-scheme: dark)';
 
+export const SHARED_THEME_STORAGE_KEY = '@rozenite/theme';
+
 type AppliedThemeName = 'light' | 'dark' | 'default';
 
 export type PluginThemeName = 'light' | 'dark' | 'default' | 'system';
@@ -121,7 +123,7 @@ export function PluginTheme({
   theme,
   defaultTheme = 'default',
   onThemeChange,
-  storageKey,
+  storageKey = SHARED_THEME_STORAGE_KEY,
   syncDocument = true,
   className,
   children,
@@ -168,6 +170,28 @@ export function PluginTheme({
       mediaQueryList.removeEventListener('change', handleChange);
     };
   }, []);
+
+  // Sync theme across plugin panels when changed in another panel (cross-frame/tab)
+  useEffect(() => {
+    if (!storageKey || typeof window === 'undefined') {
+      return;
+    }
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key !== storageKey || event.newValue === null) {
+        return;
+      }
+
+      if (isPluginThemeName(event.newValue) && theme === undefined) {
+        setUncontrolledTheme(event.newValue);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [storageKey, theme]);
 
   useLayoutEffect(() => {
     if (storageKey && typeof window !== 'undefined') {

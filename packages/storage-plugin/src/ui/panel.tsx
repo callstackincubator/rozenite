@@ -471,7 +471,6 @@ export default function StoragePanel() {
   return (
     <PluginTheme
       defaultTheme="dark"
-      storageKey="@rozenite/storage-plugin.theme"
       className="flex h-screen flex-col bg-background text-foreground"
     >
       <PluginHeader

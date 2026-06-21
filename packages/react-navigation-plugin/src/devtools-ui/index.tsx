@@ -113,7 +113,6 @@ export default function ReactNavigationPanel() {
   return (
     <PluginTheme
       defaultTheme="dark"
-      storageKey="@rozenite/react-navigation-plugin.theme"
       className="flex h-screen flex-col bg-background text-foreground"
     >
       <PluginHeader title="React Navigation" />
