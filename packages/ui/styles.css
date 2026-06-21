@@ -3,6 +3,18 @@
 
 @source "./src/**/*.{tsx,ts}";
 
+.table-root--secondary .table__column:first-child,
+.table-root--primary .table__column:first-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.table-root--secondary .table__column:last-child,
+.table-root--primary .table__column:last-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 @theme inline {
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
