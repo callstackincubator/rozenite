@@ -1,4 +1,3 @@
-import { Separator } from '@rozenite/ui';
 import { SerializedPerformanceResource } from '../../shared/types';
 import { DetailField, DetailsCard } from './DetailsDisplay';
 import { formatTime, formatDuration, formatBytes } from '../utils';

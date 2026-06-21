@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { HttpNetworkEntry } from '../state/model';
-import { Section } from '../components/Section';
-import { KeyValueGrid } from '../components/KeyValueGrid';
+import { Section } from './Section';
+import { KeyValueGrid } from './KeyValueGrid';
 import { useNetworkActivityActions } from '../state/hooks';
-import { CodeEditor } from '../components/CodeEditor';
+import { CodeEditor } from './CodeEditor';
 import { RequestOverride } from '../../shared/client';
 import { Button } from './Button';
 import { Check, CircleSlash2 } from 'lucide-react';

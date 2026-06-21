@@ -74,25 +74,21 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
   );
 
   const formatData = (data: string) => {
-    if (typeof data === 'string') {
-      try {
-        const jsonData = JSON.parse(data);
-        return (
-          <div className="bg-surface p-3 rounded border border-border/60">
-            <JsonTree data={jsonData} />
-          </div>
-        );
-      } catch {
-        // Fallback to pre tag if JSON parsing fails
-        return (
-          <pre className="text-sm font-mono text-foreground/70 whitespace-pre-wrap bg-surface p-3 rounded border border-border/60 overflow-x-auto">
-            {data}
-          </pre>
-        );
-      }
+    try {
+      const jsonData = JSON.parse(data);
+      return (
+        <div className="bg-surface p-3 rounded border border-border/60">
+          <JsonTree data={jsonData} />
+        </div>
+      );
+    } catch {
+      // Fallback to pre tag if JSON parsing fails
+      return (
+        <pre className="text-sm font-mono text-foreground/70 whitespace-pre-wrap bg-surface p-3 rounded border border-border/60 overflow-x-auto">
+          {data}
+        </pre>
+      );
     }
-
-    return 'Invalid data';
   };
 
   const tableData = useMemo(() => {

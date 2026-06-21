@@ -1,4 +1,3 @@
-import { Separator } from '@rozenite/ui';
 import { SerializedPerformanceReactNativeMark } from '../../shared/types';
 import { DetailField, DetailsCard, DetailsDisplay } from './DetailsDisplay';
 import { formatTime } from '../utils';

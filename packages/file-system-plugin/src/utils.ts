@@ -67,7 +67,7 @@ export function downloadBase64File(
   mime = 'application/octet-stream',
 ): boolean {
   try {
-    const blob = new Blob([base64ToBytes(base64)], { type: mime });
+    const blob = new Blob([base64ToBytes(base64) as BlobPart], { type: mime });
     const objectUrl = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = objectUrl;

@@ -6,7 +6,7 @@ import {
   downloadBlob,
   readHeader,
 } from '../utils/download';
-import type { RenderCtx } from '../response-renderers/types';
+import type { RenderCtx } from '../response-renderers';
 
 export type MetadataCardBody =
   | { kind: 'binary'; base64: string }

@@ -144,7 +144,7 @@ export const SidePanel = () => {
   const override = legacyEntry !== null ? overrides.get(legacyEntry.url) : null;
   const supportsOverrides = httpDetails?.source !== 'nitro';
   const hasResponseOverride =
-    supportsOverrides && override && override.body ? true : false;
+    !!(supportsOverrides && override && override.body);
 
   const getTabsListTriggers = () => {
     if (httpDetails) {
@@ -323,7 +323,7 @@ export const SidePanel = () => {
       <div className="flex items-center justify-between p-3 border-b border-border/60 bg-surface">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div
-            className={`w-3 h-3 rounded-full flex-shrink-0 ${getTypeColor(
+            className={`w-3 h-3 rounded-full shrink-0 ${getTypeColor(
               selectedRequest.type,
             )}`}
           ></div>
@@ -332,7 +332,7 @@ export const SidePanel = () => {
             variant="outline"
             className={`${getStatusColor(
               requestStatus,
-            )} border-current flex-shrink-0`}
+            )} border-current shrink-0`}
           >
             {requestStatus}
           </Badge>
@@ -341,7 +341,7 @@ export const SidePanel = () => {
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="h-6 w-6 p-0 text-muted hover:text-accent flex-shrink-0 ml-2"
+          className="h-6 w-6 p-0 text-muted hover:text-accent shrink-0 ml-2"
         >
           <X className="h-4 w-4" />
         </Button>

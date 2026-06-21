@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { PluginHeader, PluginTheme, Surface } from '@rozenite/ui';
 import { OverlayPluginEventMap } from '../shared';
-import { GridConfig, ImageConfig } from '../shared/types';
+import { GridConfig, ImageConfig } from '../shared';
 import { GridSettings, ImageSettings } from './components';
 import './globals.css';
 
