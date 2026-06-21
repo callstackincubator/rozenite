@@ -372,7 +372,7 @@ export default function FileSystemPanel() {
           {!client ? (
             <ConnectingScreen />
           ) : nav.currentPath ? (
-            <div className="min-h-0 flex-1">
+            <div className="min-h-0 flex-1 overflow-auto">
               <FileEntryTable
                 entries={nav.entries}
                 loading={nav.loading}

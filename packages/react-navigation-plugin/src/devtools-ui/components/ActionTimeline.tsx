@@ -31,7 +31,7 @@ export const ActionTimeline = ({
         onClearActions={onClearActions}
       />
 
-      <Card className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <Card className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto">
         <Card.Header>
           <Card.Title>Action Details</Card.Title>
           <Card.Description className="mt-1 text-xs">
@@ -41,7 +41,7 @@ export const ActionTimeline = ({
           </Card.Description>
         </Card.Header>
 
-        <Card.Content className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <Card.Content className="flex min-h-0 flex-1 flex-col">
           {selectedEntry ? (
             <ActionDetailPanel
               key={selectedActionIndex}

@@ -18,7 +18,7 @@ export const ActionSidebar = ({
   onClearActions,
 }: ActionSidebarProps) => {
   return (
-    <Card className="flex min-h-0 w-80 shrink-0 flex-col xl:w-[21rem]">
+    <Card className="flex min-h-0 w-80 shrink-0 flex-col xl:w-[21rem] overflow-auto">
       <Card.Header>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -43,7 +43,7 @@ export const ActionSidebar = ({
           Clear actions
         </Button>
 
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="min-h-0 flex-1">
           <ActionList
             actionHistory={actionHistory}
             selectedActionIndex={selectedActionIndex}

@@ -289,14 +289,14 @@ export const SqliteDataTable = <TData extends RowData>({
       <div
         ref={scrollElementRef}
         className={joinClassNames(
-          'flex min-h-0 min-w-0 flex-1 flex-col overflow-auto p-3',
+          'flex min-h-0 min-w-0 flex-1 flex-col overflow-auto',
           scrollContainerClassName,
         )}
       >
         {loading ? (
           <LoadingState columns={loadingColumns} />
         ) : data.length === 0 || columns.length === 0 ? (
-          <div className="flex min-h-[12rem] flex-1 items-center justify-center rounded-xl border border-border/50 bg-background/70 p-4">
+          <div className="flex min-h-[12rem] flex-1 items-center justify-center rounded-xl bg-background/70 p-4">
             <div className="max-w-sm space-y-2 text-center">
               <p className="text-base font-medium text-foreground">
                 {emptyTitle}

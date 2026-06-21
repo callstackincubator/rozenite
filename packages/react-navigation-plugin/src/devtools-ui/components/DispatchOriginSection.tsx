@@ -12,7 +12,7 @@ export type DispatchOriginSectionProps = {
 
 const Spinner = () => (
   <svg
-    className="h-4 w-4 animate-spin text-gray-400"
+    className="h-4 w-4 animate-spin text-muted"
     fill="none"
     viewBox="0 0 24 24"
     aria-hidden="true"
@@ -37,7 +37,7 @@ const Spinner = () => (
 const Headline = ({ origin }: { origin: ActionOrigin }) => {
   if (origin.symbolicationStatus === 'pending') {
     return (
-      <div className="flex items-center gap-2 text-gray-300">
+      <div className="flex items-center gap-2 text-foreground">
         <Spinner />
         <span>Resolving origin from Metro…</span>
       </div>
@@ -45,7 +45,7 @@ const Headline = ({ origin }: { origin: ActionOrigin }) => {
   }
   if (origin.symbolicationStatus === 'unavailable') {
     return (
-      <div className="text-gray-400">
+      <div className="text-muted">
         Stack trace symbolication is unavailable (production build or Metro
         disconnected).
       </div>
@@ -53,10 +53,10 @@ const Headline = ({ origin }: { origin: ActionOrigin }) => {
   }
   if (origin.symbolicationStatus === 'failed') {
     return (
-      <div className="text-gray-300">
+      <div className="text-foreground">
         <div>Could not source-map the stack via Metro.</div>
         {origin.symbolicationError && (
-          <div className="mt-1 text-xs text-gray-500">
+          <div className="mt-1 text-xs text-muted">
             {origin.symbolicationError}
           </div>
         )}
@@ -72,9 +72,9 @@ const Headline = ({ origin }: { origin: ActionOrigin }) => {
   const fn = origin.originFrame?.functionName ?? '<anonymous>';
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="text-gray-100">
-        Dispatched from <code className="font-mono text-blue-300">{fn}</code> in{' '}
-        <code className="font-mono text-blue-300">
+      <div className="text-foreground">
+        Dispatched from <code className="font-mono text-accent">{fn}</code> in{' '}
+        <code className="font-mono text-accent">
           {location ?? 'unknown location'}
         </code>
       </div>
@@ -91,7 +91,7 @@ const CodeFrame = ({ origin }: { origin: ActionOrigin }) => {
   if (!origin.codeFrame) return null;
   return (
     <pre
-      className="mt-3 overflow-x-auto rounded bg-gray-900 p-2 font-mono text-xs text-gray-300"
+      className="mt-3 overflow-x-auto rounded bg-surface-secondary p-2 font-mono text-xs text-foreground"
       data-testid="dispatch-origin-code-frame"
     >
       {origin.codeFrame.content}
@@ -112,16 +112,16 @@ const StackFrame = ({
   return (
     <li
       className={`flex flex-wrap items-baseline gap-x-2 rounded-sm px-2 py-0.5 ${
-        isOrigin ? 'border-l-2 border-blue-500 bg-gray-900' : ''
-      } ${cls === 'library' ? 'text-gray-500' : 'text-gray-300'}`}
+        isOrigin ? 'border-l-2 border-blue-500 bg-surface-secondary' : ''
+      } ${cls === 'library' ? 'text-muted' : 'text-foreground'}`}
     >
       <span className="font-mono">
         {location ?? frame.generatedUrl ?? '(no location)'}
       </span>
-      <span className="text-gray-500">—</span>
+      <span className="text-muted">—</span>
       <span className="font-mono">{fn}</span>
       {cls === 'library' && (
-        <span className="rounded border border-gray-700 px-1 text-[10px] text-gray-500">
+        <span className="rounded border border-border/70 px-1 text-[10px] text-muted">
           library
         </span>
       )}
@@ -139,11 +139,11 @@ export const DispatchOriginSection = ({
 
   if (!origin) {
     return (
-      <section className="mb-6">
-        <h3 className="mb-3 text-base font-bold text-gray-100">
+      <section>
+        <h3 className="mb-3 text-base font-bold text-foreground">
           Dispatch Origin
         </h3>
-        <div className="rounded border border-gray-700 bg-gray-800 p-3 text-sm text-gray-400">
+        <div className="rounded border border-border/70 bg-surface-secondary p-3 text-sm text-muted">
           No stack trace captured for this action.
         </div>
       </section>
@@ -161,20 +161,20 @@ export const DispatchOriginSection = ({
   };
 
   return (
-    <section className="mb-6">
+    <section>
       <header className="mb-3 flex items-center justify-between">
-        <h3 className="text-base font-bold text-gray-100">Dispatch Origin</h3>
+        <h3 className="text-base font-bold text-foreground">Dispatch Origin</h3>
         <button
           type="button"
           onClick={copyRaw}
-          className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-300 transition-colors hover:bg-gray-700"
+          className="rounded border border-border/70 bg-surface-secondary px-2 py-1 text-xs text-foreground transition-colors hover:bg-surface-tertiary"
           title="Copy raw stack"
         >
           {copied ? 'Copied' : 'Copy raw'}
         </button>
       </header>
 
-      <div className="rounded border border-gray-700 bg-gray-800 p-3 text-sm">
+      <div className="rounded border border-border/70 bg-surface-secondary p-3 text-sm">
         <Headline origin={origin} />
         {origin.symbolicationStatus === 'complete' && (
           <CodeFrame origin={origin} />
@@ -185,7 +185,7 @@ export const DispatchOriginSection = ({
             <button
               type="button"
               onClick={() => setIsStackExpanded((prev) => !prev)}
-              className="flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-gray-200"
+              className="flex items-center gap-1 text-xs text-muted transition-colors hover:text-foreground"
               aria-expanded={isStackExpanded}
             >
               <span>{isStackExpanded ? '▾' : '▸'}</span>

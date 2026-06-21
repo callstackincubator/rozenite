@@ -2024,22 +2024,17 @@ export default function SqlitePanel() {
         role="separator"
         aria-orientation="horizontal"
         aria-label="Resize query editor and results"
-        className="relative h-4 shrink-0 cursor-row-resize border-y border-border/60 bg-surface/90 before:absolute before:left-1/2 before:top-1/2 before:h-0.5 before:w-16 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-muted/70 before:content-['']"
+        className="relative h-3 shrink-0 cursor-row-resize border-t border-border/40 bg-surface-secondary/20 before:absolute before:left-1/2 before:top-1/2 before:h-0.5 before:w-10 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-border/60 before:content-['']"
         onPointerDown={handleQuerySplitResizeStart}
       />
 
       <section
         className={joinClassNames(
           QUERY_SECTION_CLASS_NAME,
-          'min-h-0 flex-1 border-t border-border/60',
+          'min-h-0 flex-1',
         )}
       >
-        <div
-          className={joinClassNames(
-            QUERY_SECTION_HEADER_CLASS_NAME,
-            'border-b border-border/60',
-          )}
-        >
+        <div className={QUERY_SECTION_HEADER_CLASS_NAME}>
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
             {!queryExecution ? (
               <p className="truncate text-sm text-muted">
@@ -2638,10 +2633,10 @@ export default function SqlitePanel() {
         }
       />
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-3 pt-3 lg:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-3 lg:flex-row">
         <aside
           ref={sidebarRef}
-          className="flex h-[min(28rem,42vh)] min-h-0 w-full min-w-0 max-w-none gap-2 lg:h-full lg:min-w-72 lg:w-[var(--sqlite-sidebar-width)] lg:max-w-[min(28rem,48vw)]"
+          className="flex h-[min(28rem,42vh)] min-h-0 w-full min-w-0 max-w-none lg:h-full lg:min-w-72 lg:w-[var(--sqlite-sidebar-width)] lg:max-w-[min(28rem,48vw)]"
           style={sidebarStyle}
         >
           <section className={PANEL_CLASS_NAME}>
@@ -2652,7 +2647,7 @@ export default function SqlitePanel() {
               </InlineStat>
             </header>
 
-            <div className="border-b border-border/70 bg-surface-secondary/60 px-3 py-3">
+            <div className="px-3 pb-2 pt-1">
               <SearchField
                 className="w-full min-w-0"
                 fullWidth
@@ -2932,7 +2927,7 @@ export default function SqlitePanel() {
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize database explorer"
-            className="relative hidden w-3 shrink-0 cursor-col-resize lg:block before:absolute before:left-1/2 before:top-1/2 before:h-16 before:w-0.5 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-border before:content-[''] hover:before:bg-muted/70"
+            className="relative hidden w-2 shrink-0 cursor-col-resize lg:block before:absolute before:left-1/2 before:top-1/2 before:h-16 before:w-0.5 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-border before:content-[''] hover:before:bg-muted/70"
             onPointerDown={handleSidebarResizeStart}
           />
         </aside>

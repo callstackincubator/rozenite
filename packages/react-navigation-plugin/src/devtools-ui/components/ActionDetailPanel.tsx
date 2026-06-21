@@ -15,15 +15,15 @@ export const ActionDetailPanel = ({
   origin,
 }: ActionDetailPanelProps) => {
   return (
-    <div className="grid min-h-0 flex-1 gap-4 overflow-auto xl:grid-cols-2">
-      <section className="flex min-h-0 flex-col gap-2">
+    <div className="grid gap-4 xl:grid-cols-2">
+      <section className="flex flex-col gap-2">
         <DispatchOriginSection origin={origin} />
 
         <h3 className="text-sm font-semibold text-foreground">
           Action Payload
         </h3>
         <Surface
-          className="min-h-0 flex-1 overflow-auto p-3 text-sm"
+          className="p-3 text-sm"
           variant="secondary"
         >
           <JsonInspector
@@ -34,12 +34,12 @@ export const ActionDetailPanel = ({
         </Surface>
       </section>
 
-      <section className="flex min-h-0 flex-col gap-2">
+      <section className="flex flex-col gap-2">
         <h3 className="text-sm font-semibold text-foreground">
           Navigation State
         </h3>
         <Surface
-          className="min-h-0 flex-1 overflow-auto p-3 text-sm"
+          className="p-3 text-sm"
           variant="secondary"
         >
           {state ? (
