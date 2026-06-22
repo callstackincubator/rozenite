@@ -47,7 +47,7 @@ export function DetailField({
   children: ReactNode;
 }) {
   return (
-    <div className="grid gap-3 border-t border-border/70 px-5 py-4 first:border-t-0 sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-start">
+    <div className="grid gap-3 border-t border-border/70 px-5 py-4 first:border-t-0 sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center">
       <Description className="text-[11px] uppercase tracking-[0.14em] text-muted">
         {label}
       </Description>

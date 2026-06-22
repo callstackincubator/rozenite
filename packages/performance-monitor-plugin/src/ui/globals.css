@@ -1,2 +1,449 @@
 @import 'tailwindcss';
 @import '@rozenite/ui/styles.css';
+
+@layer components {
+  /* ==========================================================================
+     Performance Monitor — Waterfall timeline
+     Built on the shared @rozenite/ui design tokens so the view themes with the
+     rest of the panel (light/dark). Categorical entry-type colors are kept
+     constant across themes so types stay recognizable, like a DevTools network
+     waterfall. The label column width is the single source of truth shared by
+     the overview minimap, the ruler and every row, keeping the lanes aligned.
+     ========================================================================== */
+  .waterfall-shell {
+    --wf-label-width: 248px;
+    --wf-lane-min: 320px;
+    --wf-row-height: 36px;
+
+    /* Categorical entry-type colors (constant across themes). */
+    --wf-measure: #3b82f6;
+    --wf-resource: #06b6d4;
+    --wf-mark: #f59e0b;
+    --wf-metric: #a855f7;
+    --wf-rn: #10b981;
+
+    /* Resource sub-phase colors. */
+    --wf-phase-worker: #2dd4bf;
+    --wf-phase-redirect: #94a3b8;
+    --wf-phase-dns: #34d399;
+    --wf-phase-connect: #fb923c;
+    --wf-phase-tls: #c084fc;
+    --wf-phase-request: #facc15;
+    --wf-phase-response: #60a5fa;
+
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--foreground);
+    font-size: 12px;
+  }
+
+  /* ---- Topbar -------------------------------------------------------------- */
+  .waterfall-topbar {
+    display: flex;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--separator);
+    background: var(--surface-secondary);
+  }
+
+  .waterfall-summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .waterfall-stat {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--surface-tertiary);
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .waterfall-stat strong {
+    color: var(--foreground);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .waterfall-stat-accent {
+    color: var(--accent);
+    background: color-mix(in oklch, var(--accent) 14%, transparent);
+  }
+
+  .waterfall-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px 14px;
+    min-width: 0;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .waterfall-legend span {
+    position: relative;
+    padding-left: 15px;
+    white-space: nowrap;
+  }
+
+  .waterfall-legend span::before {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    content: '';
+    transform: translateY(-50%);
+  }
+
+  .waterfall-legend-measure::before {
+    background: var(--wf-measure);
+  }
+  .waterfall-legend-resource::before {
+    background: var(--wf-resource);
+  }
+  .waterfall-legend-mark::before {
+    background: var(--wf-mark);
+  }
+  .waterfall-legend-metric::before {
+    background: var(--wf-metric);
+  }
+  .waterfall-legend-react-native-mark::before {
+    background: var(--wf-rn);
+  }
+
+  /* ---- Overview minimap ---------------------------------------------------- */
+  .waterfall-overview {
+    position: relative;
+    flex-shrink: 0;
+    height: 52px;
+    margin-left: var(--wf-label-width);
+    overflow: hidden;
+    border-bottom: 1px solid var(--separator);
+    background:
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--foreground) 4%, transparent),
+        transparent 60%
+      ),
+      var(--background);
+  }
+
+  .waterfall-overview-bar {
+    position: absolute;
+    min-width: 2px;
+    height: 6px;
+    border-radius: 2px;
+    opacity: 0.85;
+  }
+
+  /* ---- Ruler --------------------------------------------------------------- */
+  .waterfall-ruler {
+    display: grid;
+    grid-template-columns: var(--wf-label-width) minmax(var(--wf-lane-min), 1fr);
+    flex-shrink: 0;
+    min-height: 28px;
+    border-bottom: 1px solid var(--separator);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .waterfall-label-header {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    border-right: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .waterfall-ruler-track {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .waterfall-tick-label {
+    position: absolute;
+    top: 7px;
+    transform: translateX(-50%);
+    color: var(--muted);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .waterfall-tick-label:first-child {
+    transform: translateX(0);
+  }
+
+  .waterfall-tick-label:last-child {
+    transform: translateX(-100%);
+  }
+
+  /* ---- Rows / virtual list ------------------------------------------------- */
+  .waterfall-container {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .waterfall-virtual-list {
+    height: 100%;
+  }
+
+  .waterfall-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--wf-label-width) minmax(var(--wf-lane-min), 1fr);
+    min-height: var(--wf-row-height);
+    border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.12s ease;
+  }
+
+  .waterfall-row:hover,
+  .waterfall-row:focus-visible {
+    background: var(--surface-secondary);
+  }
+
+  .waterfall-row-selected,
+  .waterfall-row-selected:hover,
+  .waterfall-row-selected:focus-visible {
+    background: color-mix(in oklch, var(--accent) 16%, transparent);
+    box-shadow: inset 2px 0 0 0 var(--accent);
+  }
+
+  .waterfall-row-label {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 6px;
+    min-width: 0;
+    padding: 5px 10px 5px 4px;
+    border-right: 1px solid var(--border);
+  }
+
+  .waterfall-row-index {
+    grid-row: 1 / 3;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+
+  .waterfall-row-text {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .waterfall-row-text strong,
+  .waterfall-row-text small {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .waterfall-row-text strong {
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  .waterfall-row-text small {
+    color: var(--muted);
+    font-size: 10px;
+  }
+
+  .waterfall-row-meta {
+    grid-column: 2;
+    display: flex;
+    min-width: 0;
+    gap: 8px;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .waterfall-row-meta span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ---- Lane / bars --------------------------------------------------------- */
+  .waterfall-lane {
+    position: relative;
+    min-width: var(--wf-lane-min);
+    overflow: hidden;
+  }
+
+  .waterfall-grid-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: color-mix(in oklch, var(--foreground) 8%, transparent);
+    pointer-events: none;
+  }
+
+  .waterfall-gap-break {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    min-width: 12px;
+    border-radius: 2px;
+    border-inline: 1px dashed color-mix(in oklch, var(--foreground) 22%, transparent);
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklch, var(--foreground) 9%, transparent) 0,
+      color-mix(in oklch, var(--foreground) 9%, transparent) 2px,
+      transparent 2px,
+      transparent 6px
+    );
+    pointer-events: none;
+  }
+
+  .waterfall-selected-guide {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 3;
+    width: 1px;
+    background: color-mix(in oklch, var(--accent) 80%, transparent);
+    pointer-events: none;
+  }
+
+  .waterfall-selected-duration {
+    position: absolute;
+    top: 50%;
+    z-index: 5;
+    margin-left: 6px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: color-mix(in oklch, var(--surface) 82%, transparent);
+    color: var(--foreground);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.4;
+    white-space: nowrap;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .waterfall-bar {
+    position: absolute;
+    top: 50%;
+    z-index: 4;
+    min-width: 8px;
+    height: 15px;
+    overflow: hidden;
+    border-radius: 3px;
+    background-image: linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 0.16),
+      rgb(255 255 255 / 0) 62%
+    );
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--foreground) 16%, transparent),
+      0 1px 3px rgb(0 0 0 / 0.28);
+    transform: translateY(-50%);
+    transition:
+      filter 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+
+  .waterfall-row:hover .waterfall-bar {
+    filter: brightness(1.08);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--foreground) 28%, transparent),
+      0 2px 6px rgb(0 0 0 / 0.34);
+  }
+
+  .waterfall-bar-instant {
+    width: 3px !important;
+    min-width: 3px;
+    border-radius: 2px;
+    background-image: none;
+  }
+
+  .waterfall-bar-measure {
+    background-color: var(--wf-measure);
+  }
+  .waterfall-bar-mark {
+    background-color: var(--wf-mark);
+  }
+  .waterfall-bar-metric {
+    background-color: var(--wf-metric);
+  }
+  .waterfall-bar-react-native-mark {
+    background-color: var(--wf-rn);
+  }
+  .waterfall-bar-resource {
+    background-color: color-mix(in oklch, var(--wf-resource) 38%, transparent);
+  }
+
+  .waterfall-overview-bar.waterfall-bar-resource {
+    background-color: color-mix(in oklch, var(--wf-resource) 55%, transparent);
+  }
+
+  .waterfall-phase {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    min-width: 1px;
+  }
+
+  .waterfall-phase-worker {
+    background: var(--wf-phase-worker);
+  }
+  .waterfall-phase-redirect {
+    background: var(--wf-phase-redirect);
+  }
+  .waterfall-phase-dns {
+    background: var(--wf-phase-dns);
+  }
+  .waterfall-phase-connect {
+    background: var(--wf-phase-connect);
+  }
+  .waterfall-phase-tls {
+    background: var(--wf-phase-tls);
+  }
+  .waterfall-phase-request {
+    background: var(--wf-phase-request);
+  }
+  .waterfall-phase-response {
+    background: var(--wf-phase-response);
+  }
+}

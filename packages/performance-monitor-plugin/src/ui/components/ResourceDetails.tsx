@@ -81,18 +81,13 @@ export const ResourceDetails = ({ resource }: ResourceDetailsProps) => {
         description="Phase timestamps are relative to the session, not clock-shifted."
         title="Timing phases"
       >
-        <div className="grid grid-cols-2 gap-2 px-5 py-4">
-          {TIMING_FIELDS.map(({ key, label }) => (
-            <div key={key} className="flex items-center gap-2">
-              <span className="text-sm text-muted" style={{ minWidth: '120px' }}>
-                {label}:
-              </span>
-              <span className="text-sm text-foreground tabular-nums">
-                {formatPhase(resource[key] as number | undefined)}
-              </span>
-            </div>
-          ))}
-        </div>
+        {TIMING_FIELDS.map(({ key, label }) => (
+          <DetailField key={key} label={label}>
+            <span className="tabular-nums text-foreground">
+              {formatPhase(resource[key] as number | undefined)}
+            </span>
+          </DetailField>
+        ))}
       </DetailsCard>
 
       {resource.serverTiming.length > 0 && (
