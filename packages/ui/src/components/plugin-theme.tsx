@@ -121,7 +121,7 @@ const snapshotTheme = (): ThemeSnapshot => ({
 
 export function PluginTheme({
   theme,
-  defaultTheme = 'default',
+  defaultTheme = 'system',
   onThemeChange,
   storageKey = SHARED_THEME_STORAGE_KEY,
   syncDocument = true,
