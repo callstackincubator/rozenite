@@ -24,11 +24,13 @@
     "@rozenite/plugin-bridge": "workspace:*",
     "@rozenite/ui": "workspace:*",
     "connect": "^3.7.0",
-    "expo-atlas": "^0.4.0"
+    "expo-atlas": "^0.4.3"
   },
   "devDependencies": {
+    "@rozenite/tools": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
     "@tailwindcss/postcss": "^4.2.2",
+    "@types/connect": "^3.4.38",
     "@types/react": "catalog:",
     "autoprefixer": "^10.4.21",
     "metro-config": "^0.82.5",
@@ -40,9 +42,7 @@
     "rozenite": "workspace:*",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
-    "vite": "catalog:",
-    "@types/connect": "^3.4.38",
-    "@rozenite/tools": "workspace:*"
+    "vite": "catalog:"
   },
   "peerDependencies": {
     "react": "*",
