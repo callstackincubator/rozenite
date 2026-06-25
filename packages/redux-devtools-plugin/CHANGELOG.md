@@ -1,5 +1,21 @@
 # @rozenite/redux-devtools-plugin
 
+## 1.13.0
+
+### Minor Changes
+
+- [#302](https://github.com/callstackincubator/rozenite/pull/302) [`e1e8761`](https://github.com/callstackincubator/rozenite/commit/e1e8761ebb1ff3ecaa470d2a7a5a86be7acffa5b) Thanks [@draggie](https://github.com/draggie)! - Add symbolicated Redux action traces in the Redux DevTools panel.
+
+- [#301](https://github.com/callstackincubator/rozenite/pull/301) [`a0b62e6`](https://github.com/callstackincubator/rozenite/commit/a0b62e69a7a65a0f3a6571b3afd9453f003f972e) Thanks [@V3RON](https://github.com/V3RON)! - Add Redux state/action sanitizers and stream initial DevTools history with partial state updates to reduce large snapshot pressure.
+
+### Patch Changes
+
+- Updated dependencies [[`7b00844`](https://github.com/callstackincubator/rozenite/commit/7b00844e6439bb7447bc2b61519a6aa6fc1c270f)]:
+  - @rozenite/agent-shared@1.13.0
+  - @rozenite/agent-bridge@1.13.0
+  - @rozenite/plugin-bridge@1.13.0
+  - @rozenite/tools@1.13.0
+
 ## 1.12.0
 
 ### Patch Changes

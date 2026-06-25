@@ -1,5 +1,12 @@
 # @rozenite/overlay-plugin
 
+## 1.13.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/plugin-bridge@1.13.0
+
 ## 1.12.0
 
 ### Patch Changes

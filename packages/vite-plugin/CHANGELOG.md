@@ -1,5 +1,11 @@
 # @rozenite/vite-plugin
 
+## 1.13.0
+
+### Patch Changes
+
+- [#303](https://github.com/callstackincubator/rozenite/pull/303) [`ff97245`](https://github.com/callstackincubator/rozenite/commit/ff972456990e8f2a6c054640aafba22eb4e16544) Thanks [@michaelapollopimentel-svg](https://github.com/michaelapollopimentel-svg)! - Include source files in the published package so the advertised `development` export resolves.
+
 ## 1.12.0
 
 ## 1.11.0

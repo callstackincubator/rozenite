@@ -1,5 +1,13 @@
 # @rozenite/web
 
+## 1.13.0
+
+### Patch Changes
+
+- Updated dependencies [[`7b00844`](https://github.com/callstackincubator/rozenite/commit/7b00844e6439bb7447bc2b61519a6aa6fc1c270f), [`7b41dad`](https://github.com/callstackincubator/rozenite/commit/7b41dad5d54fcb342693059c48af3976213a9a2d), [`58c98ec`](https://github.com/callstackincubator/rozenite/commit/58c98ece9fd470396ed32687cdd069a8b558e927), [`ec6224f`](https://github.com/callstackincubator/rozenite/commit/ec6224ffa45647c184717d08f7c8826af42683f0)]:
+  - @rozenite/middleware@1.13.0
+  - @rozenite/tools@1.13.0
+
 ## 1.12.0
 
 ### Patch Changes

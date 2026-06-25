@@ -1,5 +1,11 @@
 # @rozenite/agent-shared
 
+## 1.13.0
+
+### Patch Changes
+
+- [#307](https://github.com/callstackincubator/rozenite/pull/307) [`7b00844`](https://github.com/callstackincubator/rozenite/commit/7b00844e6439bb7447bc2b61519a6aa6fc1c270f) Thanks [@V3RON](https://github.com/V3RON)! - Derive the Agent debugger WebSocket `Origin` from the selected inspector URL and default local Agent connections to `127.0.0.1` so React Native origin checks accept Rozenite for Agents sessions.
+
 ## 1.12.0
 
 ## 1.11.0

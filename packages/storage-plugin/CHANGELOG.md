@@ -1,5 +1,14 @@
 # @rozenite/storage-plugin
 
+## 1.13.0
+
+### Patch Changes
+
+- Updated dependencies [[`7b00844`](https://github.com/callstackincubator/rozenite/commit/7b00844e6439bb7447bc2b61519a6aa6fc1c270f)]:
+  - @rozenite/agent-shared@1.13.0
+  - @rozenite/agent-bridge@1.13.0
+  - @rozenite/plugin-bridge@1.13.0
+
 ## 1.12.0
 
 ### Patch Changes
