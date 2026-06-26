@@ -25,6 +25,10 @@ type PendingResolvers = {
     string,
     (payload: FileSystemEventMap['fs:import-file:result']) => void
   >;
+  revealInFileManager: Map<
+    string,
+    (payload: FileSystemEventMap['fs:reveal-in-file-manager:result']) => void
+  >;
 };
 
 export function useFileSystemRequests(
@@ -37,6 +41,7 @@ export function useFileSystemRequests(
     file: new Map(),
     exportFile: new Map(),
     importFile: new Map(),
+    revealInFileManager: new Map(),
   });
 
   useEffect(() => {
@@ -96,6 +101,19 @@ export function useFileSystemRequests(
       },
     );
 
+    const subRevealInFileManager = client.onMessage(
+      'fs:reveal-in-file-manager:result',
+      (payload) => {
+        const resolve = pendingRef.current.revealInFileManager.get(
+          payload.requestId,
+        );
+        if (resolve) {
+          pendingRef.current.revealInFileManager.delete(payload.requestId);
+          resolve(payload);
+        }
+      },
+    );
+
     return () => {
       subRoots.remove();
       subList.remove();
@@ -103,6 +121,7 @@ export function useFileSystemRequests(
       subFile.remove();
       subExportFile.remove();
       subImportFile.remove();
+      subRevealInFileManager.remove();
     };
   }, [client]);
 
@@ -202,6 +221,25 @@ export function useFileSystemRequests(
     [client],
   );
 
+  const requestRevealInFileManager = useCallback(
+    async (path: string) => {
+      if (!client) return null;
+      const requestId = newRequestId();
+      const p = new Promise<
+        FileSystemEventMap['fs:reveal-in-file-manager:result']
+      >((resolve) => {
+        pendingRef.current.revealInFileManager.set(requestId, resolve);
+      });
+      client.send('fs:reveal-in-file-manager', { requestId, path });
+      return await withTimeout(
+        p,
+        10000,
+        'Timeout revealing in file manager',
+      );
+    },
+    [client],
+  );
+
   return {
     requestRoots,
     requestList,
@@ -209,5 +247,6 @@ export function useFileSystemRequests(
     requestTextPreview,
     requestExportFile,
     requestImportFile,
+    requestRevealInFileManager,
   };
 }

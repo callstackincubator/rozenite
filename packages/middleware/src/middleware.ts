@@ -3,6 +3,8 @@ import assert from 'node:assert';
 import path from 'node:path';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import { getEntryPointHTML } from './entry-point.js';
 import { InstalledPlugin } from './auto-discovery.js';
 import { getReactNativeDebuggerFrontendPath } from './resolve.js';
@@ -10,6 +12,39 @@ import { RozeniteConfig } from './config.js';
 import { logger } from './logger.js';
 import type { AgentSessionManager } from './agent/index.js';
 import { createAgentRoutes } from './agent/index.js';
+
+const execPromise = promisify(exec);
+
+async function openInFileManager(
+  targetPath: string,
+): Promise<{ success: boolean; error?: string }> {
+  let cleanPath = targetPath;
+  if (cleanPath.startsWith('file://')) {
+    cleanPath = cleanPath.slice(7);
+  }
+
+  // basic command injection check
+  const safePath = cleanPath.replace(/"/g, '\\"');
+
+  let command = '';
+  if (process.platform === 'darwin') {
+    command = `open -R "${safePath}"`;
+  } else if (process.platform === 'win32') {
+    command = `explorer.exe /select,"${safePath}"`;
+  } else {
+    command = `xdg-open "${safePath}"`;
+  }
+
+  try {
+    await execPromise(command);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
 
 const require = createRequire(import.meta.url);
 
@@ -95,6 +130,23 @@ export const getMiddleware = (
   app.get('/host.js', (_, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.end(fs.readFileSync(path.join(frameworkPath, 'host.js'), 'utf8'));
+  });
+
+  app.post('/open-in-file-manager', express.json(), async (req, res) => {
+    const { path } = req.body;
+    if (typeof path !== 'string') {
+      res.status(400).send('Path is required');
+      return;
+    }
+
+    logger.debug(`Opening path in host file manager: ${path}`);
+    const result = await openInFileManager(path);
+    if (result.success) {
+      res.status(200).json({ success: true });
+    } else {
+      logger.error(`Failed to open path in host file manager: ${result.error}`);
+      res.status(500).json({ success: false, error: result.error });
+    }
   });
 
   app.use(createAgentRoutes(agentSessionManager));
