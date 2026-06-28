@@ -1,4 +1,4 @@
-import { JsonInspector, type JsonInspectorTheme } from '@rozenite/ui';
+import { JsonInspector } from '@rozenite/ui';
 import type {
   SqliteQueryMetadata,
   SqliteQueryResult,
@@ -93,10 +93,7 @@ export const getMetadataChipColor = (
   return 'default';
 };
 
-export const renderStructuredValue = (
-  value: unknown,
-  theme?: JsonInspectorTheme,
-) => {
+export const renderStructuredValue = (value: unknown) => {
   if (!isStructuredValue(value)) {
     return null;
   }
@@ -110,7 +107,6 @@ export const renderStructuredValue = (
       hideRoot
       shouldExpandNodeInitially={(keyPath) => keyPath.length <= 2}
       sortObjectKeys
-      theme={theme}
     />
   );
 };

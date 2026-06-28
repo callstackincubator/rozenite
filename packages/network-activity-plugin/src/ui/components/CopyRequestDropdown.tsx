@@ -3,7 +3,7 @@ import { Copy, Check, ChevronDown } from 'lucide-react';
 import { Button } from './Button';
 import { generateFetchCall } from '../utils/generateFetchCall';
 import { generateCurlCommand } from '../utils/generateCurlCommand';
-import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
+import { useCopyToClipboard } from '@rozenite/ui';
 import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
 import {
   DropdownMenu,

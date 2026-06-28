@@ -604,15 +604,17 @@ export default function StoragePanel() {
         )}
       </main>
 
-      <EntryDetailDialog
-        onClose={() => setSelectedEntry(null)}
-        onEdit={(entry) => {
-          setSelectedEntry(null);
-          setEditingEntry(entry);
-        }}
-        entry={selectedEntry}
-        renderValue={renderDetailValue}
-      />
+      {selectedEntry !== null ? (
+        <EntryDetailDialog
+          onClose={() => setSelectedEntry(null)}
+          onEdit={(entry) => {
+            setSelectedEntry(null);
+            setEditingEntry(entry);
+          }}
+          entry={selectedEntry}
+          renderValue={renderDetailValue}
+        />
+      ) : null}
 
       <EditEntryDialog
         onClose={() => setEditingEntry(null)}

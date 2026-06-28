@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Input, TextField } from '@rozenite/ui';
+import { Button, Input, TextField, useCopyToClipboard } from '@rozenite/ui';
 import { AlertCircle, Check, Copy } from 'lucide-react';
-import { copyToClipboard } from '../utils';
-
-type CopyState = 'idle' | 'copied' | 'error';
 
 type PathDisplayProps = {
   label?: string;
@@ -11,7 +8,8 @@ type PathDisplayProps = {
 };
 
 export function PathDisplay({ label, path }: PathDisplayProps) {
-  const [copyState, setCopyState] = useState<CopyState>('idle');
+  const { copy, isCopied } = useCopyToClipboard(2000);
+  const [hasError, setHasError] = useState(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -23,20 +21,25 @@ export function PathDisplay({ label, path }: PathDisplayProps) {
     [],
   );
 
-  const handleCopy = useCallback(() => {
-    const success = copyToClipboard(path);
+  const handleCopy = useCallback(async () => {
+    try {
+      await copy(path);
+      setHasError(false);
+    } catch {
+      setHasError(true);
 
-    setCopyState(success ? 'copied' : 'error');
+      if (resetTimerRef.current) {
+        clearTimeout(resetTimerRef.current);
+      }
 
-    if (resetTimerRef.current) {
-      clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = setTimeout(() => {
+        setHasError(false);
+        resetTimerRef.current = null;
+      }, 2000);
     }
+  }, [copy, path]);
 
-    resetTimerRef.current = setTimeout(() => {
-      setCopyState('idle');
-      resetTimerRef.current = null;
-    }, 2000);
-  }, [path]);
+  const copyState = hasError ? 'error' : isCopied ? 'copied' : 'idle';
 
   const copyLabel =
     copyState === 'copied'

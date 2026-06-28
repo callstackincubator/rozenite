@@ -1,6 +1,6 @@
 import { Check, Copy } from 'lucide-react';
 import { MouseEvent, PropsWithChildren } from 'react';
-import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
+import { useCopyToClipboard } from '@rozenite/ui';
 import { cn } from '../utils/cn';
 
 type JsonTreeCopyableItemProps = PropsWithChildren<{

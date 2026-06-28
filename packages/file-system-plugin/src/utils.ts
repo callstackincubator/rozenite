@@ -40,27 +40,6 @@ export async function withTimeout<T>(
   }
 }
 
-// Helper to copy text to clipboard (works in web views)
-export function copyToClipboard(text: string): boolean {
-  try {
-    // Use the textarea fallback approach which is most reliable
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.top = '0';
-    textArea.style.left = '-9999px';
-    textArea.style.opacity = '0';
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    const success = document.execCommand('copy');
-    document.body.removeChild(textArea);
-    return success;
-  } catch {
-    return false;
-  }
-}
-
 export function downloadBase64File(
   fileName: string,
   base64: string,

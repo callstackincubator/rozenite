@@ -375,16 +375,18 @@ export default function MMKVPanel() {
         )}
       </main>
 
-      <EntryDetailDialog
-        onClose={() => setSelectedEntry(null)}
-        onEdit={(entry) => {
-          setSelectedEntry(null);
-          setEditingEntry(entry);
-        }}
-        entry={selectedEntry}
-        getInspectableJson={getInspectableJson}
-        renderValue={renderDetailValue}
-      />
+      {selectedEntry !== null ? (
+        <EntryDetailDialog
+          onClose={() => setSelectedEntry(null)}
+          onEdit={(entry) => {
+            setSelectedEntry(null);
+            setEditingEntry(entry);
+          }}
+          entry={selectedEntry}
+          getInspectableJson={getInspectableJson}
+          renderValue={renderDetailValue}
+        />
+      ) : null}
 
       <EditEntryDialog
         onClose={() => setEditingEntry(null)}

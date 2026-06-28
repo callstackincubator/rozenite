@@ -10,6 +10,7 @@ import {
   Select,
   Surface,
   Tabs,
+  useCopyToClipboard,
 } from '@rozenite/ui';
 import type { CompletionSource } from '@codemirror/autocomplete';
 import type { ColumnDef, Updater } from '@tanstack/react-table';
@@ -112,12 +113,7 @@ import {
   getDefaultTableColumnOrder,
   resolveTableColumnOrderUpdate,
 } from './sqlite-table-column-order';
-import {
-  copyToClipboard,
-  downloadTextFile,
-  formatNumber,
-  slugifyFileName,
-} from './utils';
+import { downloadTextFile, formatNumber, slugifyFileName } from './utils';
 import { getResultSummary, getScriptResultSummary } from './value-utils';
 import './globals.css';
 
@@ -477,6 +473,7 @@ export default function SqlitePanel() {
   });
   const { requestDatabases, requestQuery, requestScriptExecution } =
     useSqliteRequests(client);
+  const { copy: copyToClipboard } = useCopyToClipboard();
 
   const querySplitRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
@@ -1533,18 +1530,26 @@ export default function SqlitePanel() {
       return;
     }
 
-    await copyToClipboard(JSON.stringify(activeQueryResult.rows, null, 2));
+    try {
+      await copyToClipboard(JSON.stringify(activeQueryResult.rows, null, 2));
+    } catch {
+      // Ignore clipboard failures;
+    }
     setQueryMessage('Copied result rows as JSON.');
-  }, [activeQueryResult]);
+  }, [activeQueryResult, copyToClipboard]);
 
   const handleCopyError = useCallback(async () => {
     if (!queryError) {
       return;
     }
 
-    await copyToClipboard(queryError);
+    try {
+      await copyToClipboard(queryError);
+    } catch {
+      // Ignore clipboard failures;
+    }
     setQueryMessage('Copied SQL error.');
-  }, [queryError]);
+  }, [queryError, copyToClipboard]);
 
   const handleFormatQuery = useCallback(() => {
     try {

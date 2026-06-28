@@ -55,11 +55,13 @@ export type {
   EntryDetailEntry,
 } from './components/entry-detail-dialog';
 export { JsonInspector } from './components/json-inspector';
-export type { JsonInspectorProps, JsonInspectorTheme } from './components/json-inspector';
+export type { JsonInspectorProps } from './components/json-inspector';
 export { PluginHeader } from './components/plugin-header';
 export { PluginTheme } from './components/plugin-theme';
 export type { PluginThemeContextValue, PluginThemeName, PluginThemeProps } from './components/plugin-theme';
 export { usePluginTheme } from './components/plugin-theme';
+export { useCopyToClipboard } from './hooks/useCopyToClipboard';
+export { cn } from './utils/cn';
 export { parseJsonForInspection } from './utils/json';
 export type {
   JsonInspectionParseMode,

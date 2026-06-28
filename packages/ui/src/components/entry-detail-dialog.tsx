@@ -132,7 +132,6 @@ export const EntryDetailDialog = <T extends EntryDetailEntry>({
                           shouldExpandNodeInitially={(keyPath) =>
                             keyPath.length <= 2
                           }
-                          theme="dark"
                         />
                       ) : (
                         <div className="min-h-4 text-sm">

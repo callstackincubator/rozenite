@@ -226,7 +226,7 @@ export const SqliteRowEditModal = ({
         }
       }}
     >
-      <Modal.Backdrop variant="blur">
+      <Modal.Backdrop variant="blur" isDismissable={!submitting}>
         <Modal.Container placement="center" size="lg" scroll="inside">
           <Modal.Dialog
             aria-label={`Edit row ${rowNumber} in ${entityName}`}

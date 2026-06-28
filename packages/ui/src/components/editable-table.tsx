@@ -72,7 +72,7 @@ export const EditableTable = <T extends EditableTableEntry>({
   };
 
   const confirmDelete = () => {
-    if (onDeleteEntry && deleteConfirm.entryKey) {
+    if (onDeleteEntry && deleteConfirm.isOpen) {
       onDeleteEntry(deleteConfirm.entryKey);
     }
 

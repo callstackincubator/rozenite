@@ -1,11 +1,5 @@
 import type { ReactNode } from 'react';
-import {
-  Card,
-  Description,
-  JsonInspector,
-  Surface,
-  usePluginTheme,
-} from '@rozenite/ui';
+import { Card, Description, JsonInspector, Surface } from '@rozenite/ui';
 
 export type DetailsDisplayProps = {
   details?: unknown;
@@ -57,8 +51,6 @@ export function DetailField({
 }
 
 export const DetailsDisplay = ({ details }: DetailsDisplayProps) => {
-  const { resolvedTheme } = usePluginTheme();
-
   return (
     <section className="flex flex-col gap-2">
       <div>
@@ -78,7 +70,6 @@ export const DetailsDisplay = ({ details }: DetailsDisplayProps) => {
             data={details}
             hideRoot
             shouldExpandNodeInitially={(keyPath) => keyPath.length <= 2}
-            theme={resolvedTheme === 'light' ? 'light' : 'dark'}
           />
         )}
       </Surface>

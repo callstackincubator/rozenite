@@ -5,8 +5,6 @@ import { JSONTree, type ShouldExpandNodeInitially } from 'react-json-tree';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { cn } from '../utils/cn';
 
-export type JsonInspectorTheme = 'dark' | 'light';
-
 export type JsonInspectorProps = {
   className?: string;
   collectionLimit?: number;
@@ -15,10 +13,9 @@ export type JsonInspectorProps = {
   hideRoot?: boolean;
   shouldExpandNodeInitially?: ShouldExpandNodeInitially;
   sortObjectKeys?: boolean | ((a: unknown, b: unknown) => number);
-  theme?: JsonInspectorTheme;
 };
 
-const jsonTreeDarkTheme = {
+const jsonTreeTheme = {
   base00: 'transparent',
   base01: 'var(--surface-secondary)',
   base02: 'var(--surface-tertiary)',
@@ -37,11 +34,6 @@ const jsonTreeDarkTheme = {
   base0F: 'var(--danger)',
 };
 
-const jsonTreeLightTheme = {
-  ...jsonTreeDarkTheme,
-  base00: 'transparent',
-};
-
 const stringifyForClipboard = (value: unknown) => {
   try {
     return JSON.stringify(value, null, 2) ?? String(value);
@@ -58,7 +50,6 @@ export const JsonInspector = ({
   hideRoot,
   shouldExpandNodeInitially,
   sortObjectKeys,
-  theme = 'dark',
 }: JsonInspectorProps) => {
   const { copy, isCopied } = useCopyToClipboard();
   const clipboardValue = useMemo(() => stringifyForClipboard(data), [data]);
@@ -92,7 +83,7 @@ export const JsonInspector = ({
           invertTheme={false}
           shouldExpandNodeInitially={shouldExpandNodeInitially}
           sortObjectKeys={sortObjectKeys}
-          theme={theme === 'dark' ? jsonTreeDarkTheme : jsonTreeLightTheme}
+          theme={jsonTreeTheme}
         />
       </div>
     </div>

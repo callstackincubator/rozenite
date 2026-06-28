@@ -29,7 +29,6 @@ export const ActionDetailPanel = ({
           <JsonInspector
             data={action}
             shouldExpandNodeInitially={(keyPath) => keyPath.length <= 2}
-            theme="dark"
           />
         </Surface>
       </section>
@@ -46,7 +45,6 @@ export const ActionDetailPanel = ({
             <JsonInspector
               data={state}
               shouldExpandNodeInitially={(keyPath) => keyPath.length <= 2}
-              theme="dark"
             />
           ) : (
             <div className="text-sm italic text-muted">No state available</div>
