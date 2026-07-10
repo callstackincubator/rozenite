@@ -55,25 +55,24 @@ export const JsonInspector = ({
   const clipboardValue = useMemo(() => stringifyForClipboard(data), [data]);
 
   return (
-    <div className={cn('text-sm', className)}>
+    <div className={cn('relative text-sm', className)}>
       {copyable ? (
-        <div className="mb-2 flex justify-end">
-          <Button
-            aria-label={isCopied ? 'Copied JSON' : 'Copy JSON'}
-            isIconOnly
-            onPress={() => {
-              void copy(clipboardValue).catch(() => {});
-            }}
-            size="sm"
-            variant="ghost"
-          >
-            {isCopied ? (
-              <Check className="size-4 text-success" />
-            ) : (
-              <Copy className="size-4 text-muted" />
-            )}
-          </Button>
-        </div>
+        <Button
+          aria-label={isCopied ? 'Copied JSON' : 'Copy JSON'}
+          className="absolute top-0 right-0 z-10"
+          isIconOnly
+          onPress={() => {
+            void copy(clipboardValue).catch(() => {});
+          }}
+          size="sm"
+          variant="ghost"
+        >
+          {isCopied ? (
+            <Check className="size-4 text-success" />
+          ) : (
+            <Copy className="size-4 text-muted" />
+          )}
+        </Button>
       ) : null}
       <div>
         <JSONTree

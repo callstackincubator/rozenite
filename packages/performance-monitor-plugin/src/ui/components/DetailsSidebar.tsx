@@ -57,7 +57,7 @@ export const DetailsSidebar = ({
         <Drawer.Content className="w-full max-w-2xl" placement="right">
           <Drawer.Dialog
             aria-label={entryTypeLabel[selectedItem.entryType]}
-            className="flex h-full flex-col overflow-hidden w-140! max-w-[90vw]!"
+            className="p-0 flex h-full flex-col overflow-hidden w-140! max-w-[90vw]!"
           >
             <Drawer.Header className="flex items-start justify-between gap-3 border-b border-border/70 px-5 py-4">
               <div className="min-w-0">

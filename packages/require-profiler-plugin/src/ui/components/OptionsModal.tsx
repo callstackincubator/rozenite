@@ -45,7 +45,7 @@ export const OptionsModal = ({
             <Modal.Header>
               <Modal.Heading>Options</Modal.Heading>
             </Modal.Header>
-            <Modal.Body className="p-5 flex flex-col gap-4">
+            <Modal.Body className="flex flex-col gap-4 overflow-visible">
               <TextField
                 className="w-full"
                 name="min-duration"

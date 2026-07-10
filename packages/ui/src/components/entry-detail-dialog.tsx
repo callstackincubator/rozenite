@@ -94,7 +94,7 @@ export const EntryDetailDialog = <T extends EntryDetailEntry>({
               </Modal.Icon>
               <Modal.Heading>Entry Details</Modal.Heading>
             </Modal.Header>
-            <Modal.Body className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-6">
+            <Modal.Body className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto">
               {entry ? (
                 <>
                   <div className="flex flex-col gap-2">

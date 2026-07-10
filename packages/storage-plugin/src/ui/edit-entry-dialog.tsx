@@ -125,7 +125,7 @@ export const EditEntryDialog = ({
                 </Modal.Icon>
                 <Modal.Heading>Edit Entry</Modal.Heading>
               </Modal.Header>
-              <Modal.Body className="flex flex-col gap-4 p-6">
+              <Modal.Body className="flex flex-col gap-4">
                 {entry ? (
                   <>
                     <div className="flex flex-col gap-2">
