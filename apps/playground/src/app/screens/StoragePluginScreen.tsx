@@ -13,17 +13,17 @@ import { MMKV } from 'react-native-mmkv';
 import { initializeMMKVStorages, mmkvStorages } from '../mmkv-storages';
 import {
   asyncStorageV2,
-  asyncStorageV3Instances,
+  asyncStorageScopedInstances,
   forgetSecureStoreKey,
   getKnownSecureStoreKeys,
   rememberSecureStoreKey,
 } from '../storage-plugin-adapters';
 
 type AdapterTab = 'mmkv' | 'async' | 'secure';
-type AsyncStorageMode = 'v2-default' | 'v3-auth' | 'v3-cache';
+type AsyncStorageMode = 'v2-default' | 'scoped-auth' | 'scoped-cache';
 type EntryType = 'string' | 'number' | 'boolean' | 'buffer';
 type AsyncStorageLike = {
-  getAllKeys: () => Promise<string[]>;
+  getAllKeys: () => Promise<readonly string[]>;
   getItem: (key: string) => Promise<string | null>;
   setItem: (key: string, value: string) => Promise<void>;
   removeItem: (key: string) => Promise<void>;
@@ -94,12 +94,12 @@ export const StoragePluginScreen = () => {
   }, [tab]);
 
   const selectedAsyncStorage: AsyncStorageLike = useMemo(() => {
-    if (asyncStorageMode === 'v3-auth') {
-      return asyncStorageV3Instances.auth;
+    if (asyncStorageMode === 'scoped-auth') {
+      return asyncStorageScopedInstances.auth;
     }
 
-    if (asyncStorageMode === 'v3-cache') {
-      return asyncStorageV3Instances.cache;
+    if (asyncStorageMode === 'scoped-cache') {
+      return asyncStorageScopedInstances.cache;
     }
 
     return asyncStorageV2;
@@ -293,20 +293,20 @@ export const StoragePluginScreen = () => {
           <TouchableOpacity
             style={[
               styles.storageChip,
-              asyncStorageMode === 'v3-auth' && styles.storageChipActive,
+              asyncStorageMode === 'scoped-auth' && styles.storageChipActive,
             ]}
-            onPress={() => setAsyncStorageMode('v3-auth')}
+            onPress={() => setAsyncStorageMode('scoped-auth')}
           >
-            <Text style={styles.storageChipText}>v3 auth</Text>
+            <Text style={styles.storageChipText}>scoped auth</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.storageChip,
-              asyncStorageMode === 'v3-cache' && styles.storageChipActive,
+              asyncStorageMode === 'scoped-cache' && styles.storageChipActive,
             ]}
-            onPress={() => setAsyncStorageMode('v3-cache')}
+            onPress={() => setAsyncStorageMode('scoped-cache')}
           >
-            <Text style={styles.storageChipText}>v3 cache</Text>
+            <Text style={styles.storageChipText}>scoped cache</Text>
           </TouchableOpacity>
         </View>
       )}

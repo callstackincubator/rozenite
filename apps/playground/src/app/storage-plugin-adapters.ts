@@ -1,6 +1,4 @@
-import AsyncStorage, {
-  createAsyncStorage,
-} from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import {
   createAsyncStorageAdapter,
@@ -10,9 +8,24 @@ import {
 import { mmkvStorages } from './mmkv-storages';
 
 export const asyncStorageV2 = AsyncStorage;
-export const asyncStorageV3Instances = {
-  auth: createAsyncStorage('rozenite-playground-auth'),
-  cache: createAsyncStorage('rozenite-playground-cache'),
+const createScopedAsyncStorage = (scope: string) => {
+  const prefix = `${scope}:`;
+
+  return {
+    getAllKeys: async () =>
+      (await AsyncStorage.getAllKeys())
+        .filter((key) => key.startsWith(prefix))
+        .map((key) => key.slice(prefix.length)),
+    getItem: (key: string) => AsyncStorage.getItem(`${prefix}${key}`),
+    setItem: (key: string, value: string) =>
+      AsyncStorage.setItem(`${prefix}${key}`, value),
+    removeItem: (key: string) => AsyncStorage.removeItem(`${prefix}${key}`),
+  };
+};
+
+export const asyncStorageScopedInstances = {
+  auth: createScopedAsyncStorage('rozenite-playground-auth'),
+  cache: createScopedAsyncStorage('rozenite-playground-cache'),
 };
 
 const secureStoreKnownKeys = new Set<string>(['token', 'session']);
@@ -46,13 +59,13 @@ export const storagePluginAdapters = [
         storage: asyncStorageV2,
         name: 'AsyncStorage v2 (default)',
       },
-      'v3-auth': {
-        storage: asyncStorageV3Instances.auth,
-        name: 'AsyncStorage v3 (auth)',
+      'scoped-auth': {
+        storage: asyncStorageScopedInstances.auth,
+        name: 'AsyncStorage scoped (auth)',
       },
-      'v3-cache': {
-        storage: asyncStorageV3Instances.cache,
-        name: 'AsyncStorage v3 (cache)',
+      'scoped-cache': {
+        storage: asyncStorageScopedInstances.cache,
+        name: 'AsyncStorage scoped (cache)',
       },
     },
     adapterId: 'async-storage',
