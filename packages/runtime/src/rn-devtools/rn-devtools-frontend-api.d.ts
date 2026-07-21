@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 declare module '/rozenite/ui/legacy/legacy.js' {
   export interface TabbedPaneTab {
     id: string;

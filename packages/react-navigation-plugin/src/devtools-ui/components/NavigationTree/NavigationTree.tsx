@@ -1,4 +1,5 @@
-import { ActionWithState } from '../ActionList';
+import { Chip, Surface } from '@rozenite/ui';
+import type { ActionWithState } from '../ActionList';
 import { NavigationNode } from './NavigationNode';
 import { generateColor } from './navigationTreeColors';
 
@@ -11,18 +12,25 @@ export function NavigationTree({ actionHistory }: NavigationTreeProps) {
     .map((action) => action.state)
     .filter((state) => state !== undefined);
 
+  if (states.length === 0) {
+    return (
+      <Surface className="text-sm text-muted" variant="secondary">
+        No navigation state has been captured yet.
+      </Surface>
+    );
+  }
+
   return (
-    <div className="flex-1 flex-row-reverse overflow-auto overflow-x-scroll flex pb-[12px] h-full">
+    <div className="flex h-full min-h-0 flex-1 flex-row-reverse gap-4 overflow-auto pb-3">
       {states.map((state, index) => (
         <div
           key={states.length - index}
-          className="flex flex-col-reverse items-center overflow-auto h-full min-w-[34vw]"
+          className="flex h-full min-w-[34vw] flex-col-reverse items-center gap-4 overflow-auto"
         >
-          <span className="font-bold text-sm text-gray-400">
+          <Chip size="sm" variant="secondary">
             Navigation state n°{states.length - index}
-          </span>
-          <div className="h-4" />
-          <div className="flex flex-col-reverse items-center overflow-auto h-full min-w-[34vw]">
+          </Chip>
+          <div className="flex h-full min-w-[34vw] flex-col-reverse items-center overflow-auto">
             {state && (
               <NavigationNode
                 name="root"

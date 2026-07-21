@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Text } from '@radix-ui/themes';
-import { formatTime } from '../utils';
+import { Surface } from '@rozenite/ui';
+import { formatDuration, formatTime } from '../utils';
 
 export type SessionDurationProps = {
   isActive: boolean;
@@ -14,38 +14,46 @@ export const SessionDuration = ({
   const [currentTime, setCurrentTime] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!isActive) {
+    if (!sessionStartedAt) {
+      setCurrentTime(null);
       return;
     }
 
     setCurrentTime(Date.now());
+
+    if (!isActive) {
+      return;
+    }
+
     const interval = setInterval(() => {
       setCurrentTime(Date.now());
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isActive]);
+  }, [isActive, sessionStartedAt]);
 
-  const formatDuration = (duration: number) => {
-    return `${Math.round(duration)}s`;
-  };
-
-  const getSessionDuration = () => {
-    if (!currentTime || !sessionStartedAt) return 0;
-    return currentTime - sessionStartedAt;
-  };
+  const duration =
+    currentTime && sessionStartedAt ? currentTime - sessionStartedAt : 0;
 
   return (
-    <>
-      <Text size="2" color="gray">
+    <Surface
+      className="min-w-0 px-3 py-2 text-xs leading-5 text-muted"
+      variant="secondary"
+    >
+      <div className="whitespace-nowrap">
         Session started:{' '}
-        {sessionStartedAt ? formatTime(sessionStartedAt) : 'Not started'}
-      </Text>
-      {!!sessionStartedAt && (
-        <Text size="2" color="gray">
-          Duration: {formatDuration(getSessionDuration() / 1000)}
-        </Text>
-      )}
-    </>
+        <span className="tabular-nums text-foreground">
+          {sessionStartedAt ? formatTime(sessionStartedAt) : 'Not started'}
+        </span>
+      </div>
+      {sessionStartedAt ? (
+        <div className="whitespace-nowrap">
+          Duration:{' '}
+          <span className="tabular-nums text-foreground">
+            {formatDuration(duration)}
+          </span>
+        </div>
+      ) : null}
+    </Surface>
   );
 };

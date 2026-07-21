@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { PluginHeader, PluginTheme, Surface } from '@rozenite/ui';
 import { OverlayPluginEventMap } from '../shared';
-import { GridConfig, ImageConfig } from '../shared/types';
-import { Header, GridSettings, ImageSettings } from './components';
-import './styles.css';
+import { GridConfig, ImageConfig } from '../shared';
+import { GridSettings, ImageSettings } from './components';
+import './globals.css';
 
 export default function OverlayPanel() {
   const [gridConfig, setGridConfig] = useState<GridConfig>({
@@ -34,7 +35,6 @@ export default function OverlayPanel() {
     }
 
     setLoading(true);
-    // Request initial state
     client.send('request-overlay-state', {});
 
     const subscription = client.onMessage('overlay-state', (state) => {
@@ -49,38 +49,44 @@ export default function OverlayPanel() {
   }, [client]);
 
   const updateGridConfig = (newConfig: GridConfig) => {
-    setGridConfig(newConfig); // Optimistic update
+    setGridConfig(newConfig);
     if (client) {
       client.send('set-grid-config', { config: newConfig });
     }
   };
 
   const updateImageConfig = (newConfig: ImageConfig) => {
-    setImageConfig(newConfig); // Optimistic update
+    setImageConfig(newConfig);
     if (client) {
       client.send('set-image-config', { config: newConfig });
     }
   };
 
-  if (loading) {
-    return (
-      <div className="app-container">
-        <Header />
-        <div className="main-content" style={{ alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="app-container">
-      <Header />
-      <div className="main-content">
-        <GridSettings config={gridConfig} onConfigChange={updateGridConfig} />
-        <ImageSettings config={imageConfig} onConfigChange={updateImageConfig} />
-      </div>
-    </div>
-  );
-}
+    <PluginTheme
+      className="flex h-screen flex-col bg-background text-foreground"
+      defaultTheme="dark"
+    >
+      <PluginHeader title="Overlay" />
 
+      <main className="flex-1 overflow-auto p-4 pt-3">
+        {loading ? (
+          <Surface className="text-sm text-muted" variant="secondary">
+            Loading overlay settings...
+          </Surface>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <GridSettings
+              config={gridConfig}
+              onConfigChange={updateGridConfig}
+            />
+            <ImageSettings
+              config={imageConfig}
+              onConfigChange={updateImageConfig}
+            />
+          </div>
+        )}
+      </main>
+    </PluginTheme>
+  );
+};

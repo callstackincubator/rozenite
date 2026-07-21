@@ -15,7 +15,9 @@
     "paths": {
       "@rozenite/agent-bridge": ["../agent-bridge/src/index.ts"],
       "@rozenite/agent-shared": ["../agent-shared/src/index.ts"],
-      "@rozenite/plugin-bridge": ["../plugin-bridge/src/index.ts"]
+      "@rozenite/plugin-bridge": ["../plugin-bridge/src/index.ts"],
+      "@rozenite/ui": ["../ui/src/index.ts"],
+      "@rozenite/ui/*": ["../ui/*"]
     },
     "resolveJsonModule": true,
     "isolatedModules": true,

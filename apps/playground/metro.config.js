@@ -9,6 +9,9 @@ const {
   withRozeniteRequireProfiler,
 } = require('@rozenite/require-profiler-plugin/metro');
 const { withRozeniteWeb } = require('@rozenite/web/metro');
+const {
+  withRozeniteExpoAtlasPlugin,
+} = require('@rozenite/expo-atlas-plugin');
 const path = require('node:path');
 
 /** @type {import('expo/metro-config').MetroConfig} */
@@ -62,6 +65,7 @@ module.exports = composeMetroConfigTransformers([
       withRozeniteRequireProfiler,
       withRozeniteReduxDevTools,
       withRozeniteWeb,
+      withRozeniteExpoAtlasPlugin,
     ),
   },
 ])(config);

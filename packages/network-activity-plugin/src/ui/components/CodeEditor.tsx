@@ -13,7 +13,7 @@ export const CodeEditor = forwardRef<HTMLPreElement, CodeEditorProps>(
         contentEditable
         suppressContentEditableWarning
         className={
-          'w-full text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere ring-offset-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+          'w-full text-sm font-mono text-foreground/70 whitespace-pre-wrap bg-surface p-3 rounded-md border border-border/60 overflow-x-auto wrap-anywhere ring-offset-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2'
         }
         onInput={onInput}
       >

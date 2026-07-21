@@ -6,7 +6,7 @@ import {
   downloadBlob,
   readHeader,
 } from '../utils/download';
-import type { RenderCtx } from '../response-renderers/types';
+import type { RenderCtx } from '../response-renderers';
 
 export type MetadataCardBody =
   | { kind: 'binary'; base64: string }
@@ -57,7 +57,7 @@ export const MetadataCard = ({ body, ctx }: MetadataCardProps) => {
   };
 
   return (
-    <div className="flex items-start justify-between gap-3 bg-gray-800 border border-gray-700 rounded p-3">
+    <div className="flex items-start justify-between gap-3 bg-surface border border-border/60 rounded p-3">
       <div className="flex-1 min-w-0">
         <KeyValueGrid
           items={[
@@ -85,7 +85,7 @@ export const MetadataCard = ({ body, ctx }: MetadataCardProps) => {
         onClick={handleDownload}
         disabled={!isDownloadAvailable}
         title={downloadTitle}
-        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-violet-500 text-violet-200 hover:bg-violet-900/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-accent/50 text-accent hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
       >
         <Download className="h-3 w-3" />
         Download

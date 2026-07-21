@@ -28,7 +28,7 @@ export const xmlRenderer: ResponseRenderer = {
       return (
         <>
           <CodeBlock>{body}</CodeBlock>
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-muted mt-1">
             ⚠️ Failed to parse as XML, showing as raw text
           </div>
         </>

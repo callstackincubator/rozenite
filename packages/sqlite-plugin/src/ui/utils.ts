@@ -55,34 +55,6 @@ export const truncateText = (value: string, maxLength = 180) => {
   return `${value.slice(0, maxLength - 1)}…`;
 };
 
-export const copyToClipboard = async (text: string) => {
-  if (typeof navigator !== 'undefined' && navigator.clipboard) {
-    await navigator.clipboard.writeText(text);
-    return true;
-  }
-
-  if (typeof document === 'undefined') {
-    return false;
-  }
-
-  try {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.top = '0';
-    textArea.style.left = '-9999px';
-    textArea.style.opacity = '0';
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    const success = document.execCommand('copy');
-    document.body.removeChild(textArea);
-    return success;
-  } catch {
-    return false;
-  }
-};
-
 export const downloadTextFile = (fileName: string, content: string) => {
   if (typeof document === 'undefined') {
     return false;

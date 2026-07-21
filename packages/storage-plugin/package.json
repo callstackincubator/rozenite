@@ -24,12 +24,14 @@
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
+    "@rozenite/ui": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
     "@codemirror/commands": "^6.10.3",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.40.0",
+    "@tailwindcss/postcss": "^4.2.2",
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "@types/react": "catalog:",
@@ -38,7 +40,6 @@
     "postcss": "^8.5.6",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-json-tree": "^0.20.0",
     "react-native": "catalog:",
     "react-native-mmkv": "^3.3.0",
     "react-native-mmkv-v3": "npm:react-native-mmkv@^3.0.0",
@@ -46,8 +47,9 @@
     "react-native-nitro-modules": "*",
     "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^4.2.2",
     "tailwindcss-animate": "^1.0.7",
+    "tailwind-variants": "^2.0.0",
     "typescript": "~5.9.3",
     "vite": "catalog:"
   },

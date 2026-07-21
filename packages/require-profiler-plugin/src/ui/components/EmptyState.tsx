@@ -4,9 +4,9 @@ export type EmptyStateProps = {
 
 export const EmptyState = ({ message }: EmptyStateProps) => {
   return (
-    <div className="empty-state">
+    <div className="flex flex-col items-center justify-center w-full h-full text-center p-6">
       <svg
-        className="empty-state-icon"
+        className="w-12 h-12 mb-4 text-muted opacity-50"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -16,7 +16,7 @@ export const EmptyState = ({ message }: EmptyStateProps) => {
         <path d="M2 17l10 5 10-5" />
         <path d="M2 12l10 5 10-5" />
       </svg>
-      <p className="empty-state-text">{message}</p>
+      <p className="text-sm text-muted leading-relaxed">{message}</p>
     </div>
   );
 };

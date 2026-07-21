@@ -1,20 +1,17 @@
-import React, { ReactNode } from 'react';
-
-import { PartialState } from '@react-navigation/core';
-import { NavigationState } from '../../../shared';
+import React, { type CSSProperties, type ReactNode } from 'react';
+import type { PartialState } from '@react-navigation/core';
+import type { NavigationState } from '../../../shared';
 import { Leaf } from './Leaf';
-import { generateColor } from './navigationTreeColors';
+import { generateColor, type NavigationTreeColor } from './navigationTreeColors';
 
 export const NavigationNode = ({
   name,
   state,
   parentColor,
-  isParamsVisible,
 }: {
   name: string;
   state: NavigationState | PartialState<NavigationState>;
-  parentColor: string;
-  isParamsVisible?: boolean;
+  parentColor: NavigationTreeColor;
 }) => {
   const [isClosed, setIsClosed] = React.useState(false);
 
@@ -53,18 +50,10 @@ export const NavigationNode = ({
                 name={route.name}
                 state={route.state}
                 parentColor={color}
-                isParamsVisible={isParamsVisible}
               />
             ) : (
               <Leaf
                 title={route.name}
-                subtitle={
-                  isParamsVisible &&
-                  route.params &&
-                  Object.keys(route.params).length > 0
-                    ? `${JSON.stringify(route.params)}`
-                    : undefined
-                }
                 isSelectedTab={
                   state.type === 'tab' &&
                   state.index === state.routes.length - 1 - index
@@ -76,7 +65,12 @@ export const NavigationNode = ({
           </React.Fragment>
         ))}
       </StackWrapper>
-      <span className={`text-${color}-600 self-center`}>{name}</span>
+      <span
+        className="self-center px-2 pt-2 text-xs font-semibold uppercase tracking-[0.12em]"
+        style={{ color: color.accent }}
+      >
+        {name}
+      </span>
     </NodeContainer>
   );
 };
@@ -87,7 +81,7 @@ const ClosedNode = ({
   openNode,
 }: {
   name: string;
-  color: string;
+  color: NavigationTreeColor;
   openNode: () => void;
 }) => {
   return (
@@ -99,7 +93,12 @@ const ClosedNode = ({
       }}
       isClosed
     >
-      <span className={`text-${color}-600`}>{name}</span>
+      <span
+        className="px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em]"
+        style={{ color: color.accent }}
+      >
+        {name}
+      </span>
     </NodeContainer>
   );
 };
@@ -110,7 +109,7 @@ export const NodeContainer = ({
   children,
   onClick,
 }: {
-  color: string;
+  color: NavigationTreeColor;
   isClosed?: boolean;
   children: ReactNode;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -127,14 +126,22 @@ export const NodeContainer = ({
     e.stopPropagation();
   };
 
+  const style: CSSProperties = {
+    backgroundColor: isHovered ? color.soft : 'transparent',
+    borderColor: color.accent,
+    boxShadow: isHovered ? `0 0 0 1px ${color.softBorder}` : undefined,
+  };
+
   return (
     <button
-      className={`items-stretch flex flex-col rounded-sm cursor-pointer border-2 border-solid p-1 text-center border-${color}-600 ${
+      className={`flex cursor-pointer flex-col items-stretch rounded-md border-2 p-1 text-center transition-colors ${
         isClosed ? '' : 'border-t-0 rounded-t-none'
-      } ${isHovered ? `bg-${color}-600 bg-opacity-30` : 'bg-transparent'}`}
+      }`}
       onMouseOver={handleMouseOver}
       onMouseOut={handleMouseOut}
       onClick={onClick}
+      style={style}
+      type="button"
     >
       {children}
     </button>
@@ -143,7 +150,7 @@ export const NodeContainer = ({
 
 const TabContainer = ({ children }: { children: ReactNode }) => {
   return (
-    <div className="flex flex-1 flex-row items-center justify-around">
+    <div className="flex flex-1 flex-row items-center justify-around gap-2">
       {children}
     </div>
   );

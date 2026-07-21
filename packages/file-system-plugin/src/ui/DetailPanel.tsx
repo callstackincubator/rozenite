@@ -1,39 +1,52 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import type { FsEntry } from '../shared/protocol';
-import { isLikelyImageFile } from '../shared/path';
-import { formatBytes, formatDate } from '../utils';
+import { useCallback, useEffect, useState } from 'react';
+import { Button, Card, Chip, Separator, Surface } from '@rozenite/ui';
+import { FileImage, FileText, Loader2 } from 'lucide-react';
 import { formatTextPreview } from '../formatters';
-import { DetailLine } from './DetailLine';
-import { PathDisplay } from './PathDisplay';
+import { isLikelyImageFile } from '../shared/path';
+import type { FsEntry } from '../shared/protocol';
 import type { useFileSystemRequests } from '../use-file-system-requests';
-import type { WebPressableState } from '../types';
+import { formatBytes, formatDate } from '../utils';
+import { PathDisplay } from './PathDisplay';
 
 type FileSystemRequests = ReturnType<typeof useFileSystemRequests>;
 
 type DetailPanelProps = {
+  requestImagePreview: FileSystemRequests['requestImagePreview'];
+  requestTextPreview: FileSystemRequests['requestTextPreview'];
   selected: FsEntry | null;
   canExport: boolean;
   exportLoading: boolean;
-  requestImagePreview: FileSystemRequests['requestImagePreview'];
-  requestTextPreview: FileSystemRequests['requestTextPreview'];
   onExport: (entry: FsEntry) => void;
 };
 
+function getEntryKind(entry: FsEntry): string {
+  return entry.isDirectory ? 'Directory' : 'File';
+}
+
+function DetailStat({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <Surface
+      className="flex flex-col gap-1 rounded-lg border border-border/70 bg-surface-secondary px-3 py-2"
+      variant="secondary"
+    >
+      <span className="text-xs font-medium text-muted">{label}</span>
+      <span className="text-sm font-medium text-foreground">{value}</span>
+    </Surface>
+  );
+}
+
 export function DetailPanel({
+  requestImagePreview,
+  requestTextPreview,
   selected,
   canExport,
   exportLoading,
-  requestImagePreview,
-  requestTextPreview,
   onExport,
 }: DetailPanelProps) {
   const [imagePreviewUri, setImagePreviewUri] = useState<string | null>(null);
@@ -46,10 +59,8 @@ export function DetailPanel({
   const [textPreviewError, setTextPreviewError] = useState<string | null>(null);
   const [textPreviewLoading, setTextPreviewLoading] = useState(false);
 
-  // Load preview when selected file changes
   const loadPreview = useCallback(
     async (entry: FsEntry) => {
-      // Reset preview state
       setImagePreviewUri(null);
       setImagePreviewError(null);
       setImagePreviewLoading(false);
@@ -57,39 +68,54 @@ export function DetailPanel({
       setTextPreviewError(null);
       setTextPreviewLoading(false);
 
-      if (entry.isDirectory) return;
+      if (entry.isDirectory) {
+        return;
+      }
 
-      // Handle image preview
       if (isLikelyImageFile(entry.path)) {
         setImagePreviewLoading(true);
+
         try {
           const res = await requestImagePreview(entry.path);
-          if (!res) return;
+          if (!res) {
+            return;
+          }
+
           if (res.error || !res.dataUri) {
             setImagePreviewError(res.error ?? 'No preview available');
             return;
           }
+
           setImagePreviewUri(res.dataUri);
-        } catch (e) {
-          setImagePreviewError(e instanceof Error ? e.message : String(e));
+        } catch (error) {
+          setImagePreviewError(
+            error instanceof Error ? error.message : String(error),
+          );
         } finally {
           setImagePreviewLoading(false);
         }
+
         return;
       }
 
-      // Handle text/file preview for any non-image file
       setTextPreviewLoading(true);
+
       try {
         const res = await requestTextPreview(entry.path);
-        if (!res) return;
+        if (!res) {
+          return;
+        }
+
         if (res.error || !res.content) {
           setTextPreviewError(res.error ?? 'No preview available');
           return;
         }
+
         setTextPreview(res.content);
-      } catch (e) {
-        setTextPreviewError(e instanceof Error ? e.message : String(e));
+      } catch (error) {
+        setTextPreviewError(
+          error instanceof Error ? error.message : String(error),
+        );
       } finally {
         setTextPreviewLoading(false);
       }
@@ -99,7 +125,6 @@ export function DetailPanel({
 
   useEffect(() => {
     if (!selected || selected.isDirectory) {
-      // Reset previews when deselected or directory selected
       setImagePreviewUri(null);
       setImagePreviewError(null);
       setImagePreviewLoading(false);
@@ -108,206 +133,168 @@ export function DetailPanel({
       setTextPreviewLoading(false);
       return;
     }
+
     loadPreview(selected);
-  }, [selected, loadPreview]);
+  }, [loadPreview, selected]);
+
+  const isImageEntry = selected ? isLikelyImageFile(selected.path) : false;
 
   return (
-    <View style={styles.detailPane}>
-      <Text style={styles.detailTitle}>Details</Text>
-      {!selected ? (
-        <Text style={styles.detailEmpty}>Select a file or directory.</Text>
-      ) : (
-        <View style={styles.detailCard}>
-          <Text style={styles.detailName} numberOfLines={2}>
-            {selected.name}
-          </Text>
-          <Pressable
-            style={(state: WebPressableState) => [
-              styles.exportButton,
-              state.hovered &&
-                canExport &&
-                !exportLoading &&
-                styles.exportButtonHovered,
-              (!canExport || exportLoading) && styles.exportButtonDisabled,
-            ]}
-            onPress={() => onExport(selected)}
-            disabled={!canExport || exportLoading}
+    <Card className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <Card.Header>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <Card.Title>{selected?.name ?? 'Details'}</Card.Title>
+            <Card.Description className="mt-1 text-xs">
+              {selected
+                ? 'Inspect metadata and preview file contents.'
+                : 'Select a file from the browser to inspect metadata and preview its contents.'}
+            </Card.Description>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {selected && !selected.isDirectory ? (
+              <Button
+                isDisabled={!canExport || exportLoading}
+                onPress={() => onExport(selected)}
+                size="sm"
+                variant="secondary"
+              >
+                {exportLoading ? (
+                  <>
+                    <Loader2 className="size-3 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  'Export'
+                )}
+              </Button>
+            ) : null}
+            {selected ? (
+              <Chip
+                className="shrink-0"
+                color={selected.isDirectory ? 'accent' : 'default'}
+                size="sm"
+                variant="soft"
+              >
+                {getEntryKind(selected)}
+              </Chip>
+            ) : null}
+          </div>
+        </div>
+      </Card.Header>
+
+      <Card.Content className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+        {!selected ? (
+          <Surface
+            className="flex min-h-40 items-center justify-center rounded-xl border border-border/70 bg-surface px-4 py-6 text-center text-sm text-muted"
+            variant="secondary"
           >
-            <Text style={styles.exportButtonText}>
-              {exportLoading ? 'Exporting…' : 'Export'}
-            </Text>
-          </Pressable>
-          <PathDisplay path={selected.path} />
-          <View style={styles.detailGrid}>
-            <DetailLine
-              label="Type"
-              value={selected.isDirectory ? 'Directory' : 'File'}
-            />
-            <DetailLine
-              label="Size"
-              value={selected.isDirectory ? '—' : formatBytes(selected.size)}
-            />
-            <DetailLine
-              label="Modified"
-              value={formatDate(selected.modifiedAtMs)}
-            />
-          </View>
+            Select a file to inspect metadata and preview its contents.
+          </Surface>
+        ) : (
+          <>
+            <PathDisplay label="Path" path={selected.path} />
 
-          {!selected.isDirectory && isLikelyImageFile(selected.path) ? (
-            <View style={styles.previewBox}>
-              <Text style={styles.previewTitle}>Image preview</Text>
-              {imagePreviewLoading ? (
-                <View style={styles.previewLoading}>
-                  <ActivityIndicator />
-                  <Text style={styles.previewLoadingText}>
-                    Loading preview…
-                  </Text>
-                </View>
-              ) : imagePreviewError ? (
-                <Text style={styles.previewError}>{imagePreviewError}</Text>
-              ) : imagePreviewUri ? (
-                <Image
-                  source={{ uri: imagePreviewUri }}
-                  style={styles.previewImage}
-                  resizeMode="contain"
-                />
-              ) : (
-                <Text style={styles.previewHint}>
-                  Tap the file again to re-fetch preview (limited size).
-                </Text>
-              )}
-            </View>
-          ) : null}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <DetailStat label="Type" value={getEntryKind(selected)} />
+              <DetailStat
+                label="Size"
+                value={selected.isDirectory ? '-' : formatBytes(selected.size)}
+              />
+              <DetailStat
+                label="Modified"
+                value={formatDate(selected.modifiedAtMs)}
+              />
+            </div>
 
-          {!selected.isDirectory && !isLikelyImageFile(selected.path) ? (
-            <View style={styles.previewBox}>
-              <Text style={styles.previewTitle}>File preview</Text>
-              {textPreviewLoading ? (
-                <View style={styles.previewLoading}>
-                  <ActivityIndicator />
-                  <Text style={styles.previewLoadingText}>
-                    Loading preview…
-                  </Text>
-                </View>
-              ) : textPreviewError ? (
-                <Text style={styles.previewError}>{textPreviewError}</Text>
-              ) : textPreview ? (
-                <ScrollView style={styles.textPreviewScroll}>
-                  <Text style={styles.textPreviewContent}>
-                    {formatTextPreview(textPreview)}
-                  </Text>
-                </ScrollView>
-              ) : (
-                <Text style={styles.previewHint}>
-                  Tap the file again to re-fetch preview (limited size).
-                </Text>
-              )}
-            </View>
-          ) : null}
-        </View>
-      )}
-    </View>
+            <Separator />
+
+            {isImageEntry ? (
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <FileImage className="size-4 text-accent" />
+                  Image preview
+                </div>
+
+                {imagePreviewLoading ? (
+                  <Surface
+                    className="flex min-h-48 items-center justify-center gap-3 rounded-xl border border-border/70 bg-surface px-4 py-8 text-sm text-muted"
+                    variant="secondary"
+                  >
+                    <Loader2 className="size-5 animate-spin text-accent" />
+                    Loading preview...
+                  </Surface>
+                ) : imagePreviewError ? (
+                  <Surface
+                    className="rounded-xl border border-danger/25 bg-danger/10 px-4 py-4 text-sm text-danger"
+                    variant="secondary"
+                  >
+                    {imagePreviewError}
+                  </Surface>
+                ) : imagePreviewUri ? (
+                  <Surface
+                    className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-surface p-0"
+                    variant="secondary"
+                  >
+                    <img
+                      alt={`Preview of ${selected.name}`}
+                      className="h-auto max-h-80 w-full object-contain"
+                      src={imagePreviewUri}
+                    />
+                  </Surface>
+                ) : (
+                  <Surface
+                    className="rounded-xl border border-border/70 bg-surface px-4 py-4 text-sm text-muted"
+                    variant="secondary"
+                  >
+                    Select the file again to re-fetch the preview.
+                  </Surface>
+                )}
+              </div>
+            ) : (
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <FileText className="size-4 text-accent" />
+                  File preview
+                </div>
+
+                {textPreviewLoading ? (
+                  <Surface
+                    className="flex min-h-48 items-center justify-center gap-3 rounded-xl border border-border/70 bg-surface px-4 py-8 text-sm text-muted"
+                    variant="secondary"
+                  >
+                    <Loader2 className="size-5 animate-spin text-accent" />
+                    Loading preview...
+                  </Surface>
+                ) : textPreviewError ? (
+                  <Surface
+                    className="rounded-xl border border-danger/25 bg-danger/10 px-4 py-4 text-sm text-danger"
+                    variant="secondary"
+                  >
+                    {textPreviewError}
+                  </Surface>
+                ) : textPreview ? (
+                  <Surface
+                    className="min-h-0 min-w-0 max-w-full overflow-x-auto overflow-y-auto rounded-xl border border-border/70 bg-surface px-4 py-4"
+                    variant="secondary"
+                  >
+                    <pre className="wrap-anywhere w-full max-w-full whitespace-pre-wrap break-all font-mono text-xs text-foreground">
+                      {formatTextPreview(textPreview)}
+                    </pre>
+                  </Surface>
+                ) : (
+                  <Surface
+                    className="rounded-xl border border-border/70 bg-surface px-4 py-4 text-sm text-muted"
+                    variant="secondary"
+                  >
+                    Select the file again to re-fetch the preview.
+                  </Surface>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </Card.Content>
+    </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  detailPane: {
-    flex: 1,
-    padding: 16,
-  },
-  detailTitle: {
-    color: '#f2f2f2',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  detailEmpty: {
-    color: '#9a9aa7',
-    fontSize: 12,
-  },
-  detailCard: {
-    borderWidth: 1,
-    borderColor: '#1c1c24',
-    borderRadius: 12,
-    padding: 12,
-    backgroundColor: '#0f1016',
-    gap: 10,
-  },
-  detailName: {
-    color: '#f2f2f2',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  exportButton: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 8,
-    backgroundColor: '#1b1c25',
-    borderWidth: 1,
-    borderColor: '#2a2b37',
-  },
-  exportButtonHovered: {
-    backgroundColor: '#252633',
-  },
-  exportButtonDisabled: {
-    opacity: 0.45,
-  },
-  exportButtonText: {
-    color: '#e9e9ee',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  detailGrid: {
-    gap: 8,
-  },
-  previewBox: {
-    marginTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: '#1c1c24',
-    paddingTop: 10,
-    gap: 8,
-  },
-  previewTitle: {
-    color: '#eaeaf2',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  previewHint: {
-    color: '#9a9aa7',
-    fontSize: 12,
-  },
-  previewError: {
-    color: '#ffb3c1',
-    fontSize: 12,
-  },
-  previewLoading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  previewLoadingText: {
-    color: '#cfcfe0',
-    fontSize: 12,
-  },
-  previewImage: {
-    width: '100%',
-    height: 240,
-    backgroundColor: '#0b0b0f',
-    borderRadius: 10,
-  },
-  textPreviewScroll: {
-    maxHeight: 300,
-    backgroundColor: '#0b0b0f',
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#1c1c24',
-  },
-  textPreviewContent: {
-    color: '#d6d6d6',
-    fontSize: 11,
-    fontFamily: 'Menlo',
-    lineHeight: 16,
-  },
-});

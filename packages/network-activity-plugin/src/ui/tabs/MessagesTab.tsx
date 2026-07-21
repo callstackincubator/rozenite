@@ -59,14 +59,14 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
       try {
         const jsonData = JSON.parse(data);
         return (
-          <div className="bg-gray-800 p-3 rounded border border-gray-700">
+          <div className="bg-surface p-3 rounded border border-border/60">
             <JsonTree data={jsonData} />
           </div>
         );
       } catch {
         // Fallback to pre tag if JSON parsing fails
         return (
-          <pre className="text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded border border-gray-700 overflow-x-auto">
+          <pre className="text-sm font-mono text-foreground/70 whitespace-pre-wrap bg-surface p-3 rounded border border-border/60 overflow-x-auto">
             {data}
           </pre>
         );
@@ -101,11 +101,11 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
     messageType: WebSocketMessageType
   ) => {
     if (messageType === 'binary') {
-      return <span className="text-gray-400">Binary message</span>;
+      return <span className="text-muted">Binary message</span>;
     }
 
     return (
-      <span className="max-w-xs truncate text-gray-400">
+      <span className="max-w-xs truncate text-muted">
         {data.substring(0, 100) + (data.length > 100 ? '...' : '')}
       </span>
     );
@@ -141,7 +141,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
     columnHelper.accessor('timestamp', {
       header: 'Timestamp',
       cell: ({ getValue }) => (
-        <div className="text-gray-400">{formatTimestamp(getValue())}</div>
+        <div className="text-muted">{formatTimestamp(getValue())}</div>
       ),
       size: 120,
     }),
@@ -156,7 +156,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
   if (websocketMessages.length === 0) {
     return (
       <ScrollArea className="h-full min-h-0 p-4">
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-muted">
           No WebSocket messages available for this connection. Messages will
           appear here when the WebSocket connection sends or receives data.
         </div>
@@ -167,16 +167,16 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
   return (
     <div className="h-full flex flex-col">
       {/* Messages Table */}
-      <div className="flex-1 border border-gray-700 rounded overflow-hidden">
+      <div className="flex-1 border border-border/60 rounded overflow-hidden">
         <div className="overflow-y-auto h-full">
           <table className="w-full text-sm">
-            <thead className="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
+            <thead className="bg-surface border-b border-border/60 sticky top-0 z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="text-left p-2 font-medium text-gray-300"
+                      className="text-left p-2 font-medium text-foreground/70"
                       style={{ width: header.getSize() }}
                     >
                       <div className="flex items-center gap-1">
@@ -196,8 +196,8 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
               {table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className={`border-b border-gray-700 hover:bg-gray-800 cursor-pointer ${
-                    selectedMessageId === row.original.id ? 'bg-gray-800' : ''
+                  className={`border-b border-border/60 hover:bg-surface cursor-pointer ${
+                    selectedMessageId === row.original.id ? 'bg-surface' : ''
                   }`}
                   onClick={() => setSelectedMessageId(row.original.id)}
                 >
@@ -222,15 +222,15 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
 
       {/* Message Details Panel */}
       {selectedMessage && (
-        <div className="border-t border-gray-700 bg-gray-800">
+        <div className="border-t border-border/60 bg-surface">
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-gray-300">
+              <h4 className="text-sm font-medium text-foreground/70">
                 Message Details
               </h4>
               <button
                 onClick={() => setSelectedMessageId(null)}
-                className="text-gray-400 hover:text-blue-400 text-sm"
+                className="text-muted hover:text-accent text-sm"
               >
                 Close
               </button>
@@ -238,7 +238,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-400">Type: </span>
+                  <span className="text-muted">Type: </span>
                   <span
                     className={getMessageTypeColor(selectedMessage.direction)}
                   >
@@ -246,20 +246,20 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400">Message Type: </span>
-                  <span className="text-blue-400 capitalize">
+                  <span className="text-muted">Message Type: </span>
+                  <span className="text-accent capitalize">
                     {selectedMessage.messageType}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400">Timestamp: </span>
-                  <span className="text-gray-300">
+                  <span className="text-muted">Timestamp: </span>
+                  <span className="text-foreground/70">
                     {formatTimestamp(selectedMessage.timestamp)}
                   </span>
                 </div>
               </div>
               <div>
-                <span className="text-gray-400 text-sm">Content:</span>
+                <span className="text-muted text-sm">Content:</span>
                 <div className="mt-2 max-h-96 overflow-y-auto">
                   {formatData(
                     selectedMessage.data,

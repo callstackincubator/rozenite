@@ -1,9 +1,10 @@
+import { Chip, Surface } from '@rozenite/ui';
 import { useMemo, useState, type ReactNode } from 'react';
 import type { CellContext, ColumnDef, OnChangeFn } from '@tanstack/react-table';
 import type { SqliteQueryResult } from '../shared/types';
 import { formatDuration, formatNumber } from './utils';
 import {
-  getMetadataBadgeClassName,
+  getMetadataChipColor,
   getValueKind,
   getValuePreview,
 } from './value-utils';
@@ -44,9 +45,8 @@ type DrawerPayload = {
   value: Record<string, unknown>;
 } | null;
 
-const joinClassNames = (
-  ...classNames: Array<string | false | null | undefined>
-) => classNames.filter(Boolean).join(' ');
+const RESULT_STAT_CLASS_NAME =
+  'sqlite-tabular inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs text-muted';
 
 const getColumnHeaderTitle = (
   column: string,
@@ -115,11 +115,13 @@ export const QueryResultTable = ({
           const value = row.original[column];
 
           return (
-            <div className="sqlite-cell-value">
-              <span className="sqlite-cell-preview">
+            <div className="grid min-w-0 w-full gap-1 text-left">
+              <span className="truncate text-foreground">
                 {getValuePreview(value)}
               </span>
-              <span className="sqlite-cell-kind">{getValueKind(value)}</span>
+              <span className="text-[0.72rem] uppercase tracking-[0.08em] text-muted">
+                {getValueKind(value)}
+              </span>
             </div>
           );
         },
@@ -144,27 +146,26 @@ export const QueryResultTable = ({
   return (
     <>
       {showMetadata && metadata ? (
-        <div className="sqlite-inline-metadata">
-          <span
-            className={joinClassNames(
-              'sqlite-badge',
-              getMetadataBadgeClassName(metadata),
-            )}
+        <div className="flex min-w-0 flex-wrap gap-2 px-3 pt-3">
+          <Chip
+            color={getMetadataChipColor(metadata)}
+            size="sm"
+            variant="soft"
           >
             {metadata.statementType}
-          </span>
-          <span className="sqlite-inline-stat sqlite-tabular">
+          </Chip>
+          <Surface className={RESULT_STAT_CLASS_NAME} variant="secondary">
             {formatNumber(metadata.rowCount)} rows
-          </span>
-          <span className="sqlite-inline-stat sqlite-tabular">
+          </Surface>
+          <Surface className={RESULT_STAT_CLASS_NAME} variant="secondary">
             {formatNumber(metadata.changes)} changes
-          </span>
-          <span className="sqlite-inline-stat sqlite-tabular">
+          </Surface>
+          <Surface className={RESULT_STAT_CLASS_NAME} variant="secondary">
             last insert {formatNumber(metadata.lastInsertRowId)}
-          </span>
-          <span className="sqlite-inline-stat sqlite-tabular">
+          </Surface>
+          <Surface className={RESULT_STAT_CLASS_NAME} variant="secondary">
             {formatDuration(metadata.durationMs)}
-          </span>
+          </Surface>
         </div>
       ) : null}
 

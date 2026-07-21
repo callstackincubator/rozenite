@@ -1,8 +1,7 @@
-import { ColumnDef } from '@tanstack/react-table';
-import { Text, Badge, Flex } from '@radix-ui/themes';
-import { SerializedPerformanceMeasure } from '../../shared/types';
-import { DataTable } from './DataTable';
-import { formatTime, formatDuration } from '../utils';
+import type { ColumnDef } from '@tanstack/react-table';
+import type { SerializedPerformanceMeasure } from '../../shared/types';
+import { formatDuration, formatTime } from '../utils';
+import { DataTable } from '@rozenite/ui';
 
 export type MeasuresTableProps = {
   measures: SerializedPerformanceMeasure[];
@@ -14,60 +13,60 @@ const columns: ColumnDef<SerializedPerformanceMeasure>[] = [
     accessorKey: 'name',
     header: 'Name',
     cell: ({ row }) => (
-      <Flex align="center" gap="2">
-        <Text weight="medium">{row.getValue('name')}</Text>
+      <span className="flex items-center gap-2">
+        <span className="font-medium text-foreground">
+          {String(row.getValue('name'))}
+        </span>
         {'derivedFromReactNativeMark' in row.original && (
-          <Badge size="1" color="gray" variant="soft">
+          <span className="rounded bg-muted/20 px-1 py-0.5 text-xs text-muted">
             RN
-          </Badge>
+          </span>
         )}
-      </Flex>
+      </span>
     ),
   },
   {
     accessorKey: 'duration',
     header: 'Duration',
-    cell: ({ row }) => {
-      const duration = row.getValue('duration') as number;
-      return <Text color="blue">{formatDuration(duration)}</Text>;
-    },
+    cell: ({ row }) => (
+      <span className="font-medium text-accent">
+        {formatDuration(row.getValue('duration') as number)}
+      </span>
+    ),
   },
   {
     accessorKey: 'startTime',
     header: 'Start Time',
-    cell: ({ row }) => {
-      const startTime = row.getValue('startTime') as number;
-      return (
-        <Text size="2" color="gray">
-          {formatTime(startTime)}
-        </Text>
-      );
-    },
+    cell: ({ row }) => (
+      <span className="tabular-nums text-sm text-muted">
+        {formatTime(row.getValue('startTime') as number)}
+      </span>
+    ),
   },
   {
     id: 'endTime',
     accessorFn: (row) => row.startTime + row.duration,
     header: 'End Time',
-    cell: ({ row }) => {
-      const startTime = row.getValue('startTime') as number;
-      const duration = row.getValue('duration') as number;
-      const endTime = startTime + duration;
-      return (
-        <Text size="2" color="gray">
-          {formatTime(endTime)}
-        </Text>
-      );
-    },
+    cell: ({ row }) => (
+      <span className="tabular-nums text-sm text-muted">
+        {formatTime((row.original.startTime ?? 0) + row.original.duration)}
+      </span>
+    ),
   },
 ];
 
-export const MeasuresTable = ({ measures, onRowClick }: MeasuresTableProps) => {
+export const MeasuresTable = ({
+  measures,
+  onRowClick,
+}: MeasuresTableProps) => {
   return (
     <DataTable
-      data={measures}
+      ariaLabel="Performance measures"
       columns={columns}
-      onRowClick={onRowClick}
+      data={measures}
       emptyMessage="No measures recorded"
+      getRowTextValue={(measure) => measure.name}
+      onRowClick={onRowClick}
     />
   );
 };

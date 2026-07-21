@@ -186,7 +186,7 @@ const columnHelper = createColumnHelper<NetworkRequest>();
 const columns = [
   columnHelper.accessor('startTime', {
     header: 'Start Time',
-    cell: ({ getValue }) => <div className="text-gray-300">{getValue()}</div>,
+    cell: ({ getValue }) => <div className="text-foreground/70">{getValue()}</div>,
     size: 120,
     sortingFn: 'basic',
   }),
@@ -201,7 +201,7 @@ const columns = [
         )}
 
         {getSourceLabel(row.original.source) && (
-          <span className="ml-2 rounded border border-gray-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-400">
+          <span className="ml-2 rounded border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted">
             {getSourceLabel(row.original.source)}
           </span>
         )}
@@ -221,14 +221,14 @@ const columns = [
   }),
   columnHelper.accessor('method', {
     header: 'Method',
-    cell: ({ getValue }) => <div className="text-gray-300">{getValue()}</div>,
+    cell: ({ getValue }) => <div className="text-foreground/70">{getValue()}</div>,
     size: 64,
     sortingFn: 'alphanumeric',
   }),
   columnHelper.accessor('domain', {
     header: 'Domain',
     cell: ({ getValue }) => (
-      <div className="text-gray-300 truncate">{getValue()}</div>
+      <div className="text-foreground/70 truncate">{getValue()}</div>
     ),
     size: 128,
     sortingFn: 'alphanumeric',
@@ -236,7 +236,7 @@ const columns = [
   columnHelper.accessor('size', {
     header: 'Size',
     cell: ({ getValue }) => (
-      <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>
+      <div className="text-foreground/70 whitespace-nowrap">{getValue()}</div>
     ),
     size: 80,
     sortingFn: sortSize,
@@ -244,7 +244,7 @@ const columns = [
   columnHelper.accessor('time', {
     header: 'Time',
     cell: ({ getValue }) => (
-      <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>
+      <div className="text-foreground/70 whitespace-nowrap">{getValue()}</div>
     ),
     size: 80,
     sortingFn: sortTime,
@@ -288,15 +288,15 @@ export const RequestList = ({ requests: filteredRequests }: RequestListProps) =>
   return (
     <div className="flex-1 overflow-auto">
       <table className="w-full">
-        <thead className="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
+        <thead className="bg-surface border-b border-border/60 sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className={`text-left text-xs font-medium text-gray-400 px-2 py-2 ${
+                  className={`text-left text-xs font-medium text-muted px-2 py-2 ${
                     header.column.getCanSort()
-                      ? 'cursor-pointer select-none hover:bg-gray-700'
+                      ? 'cursor-pointer select-none hover:bg-surface-secondary'
                       : ''
                   }`}
                   style={{ width: header.getSize() }}
@@ -310,7 +310,7 @@ export const RequestList = ({ requests: filteredRequests }: RequestListProps) =>
                           header.getContext(),
                         )}
                     {header.column.getCanSort() && (
-                      <span className="text-gray-500">
+                      <span className="text-muted/60">
                         {{
                           asc: '↑',
                           desc: '↓',
@@ -327,8 +327,8 @@ export const RequestList = ({ requests: filteredRequests }: RequestListProps) =>
           {table.getRowModel().rows.map((row) => (
             <tr
               key={row.id}
-              className={`text-sm hover:bg-gray-800 cursor-pointer border-b border-gray-800 ${
-                selectedRequestId === row.original.id ? 'bg-blue-900/30' : ''
+              className={`text-sm hover:bg-surface cursor-pointer border-b border-border/40 ${
+                selectedRequestId === row.original.id ? 'bg-accent/10' : ''
               }`}
               onClick={() => onRequestSelect(row.original.id)}
             >

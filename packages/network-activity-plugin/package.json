@@ -25,6 +25,7 @@
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/ui": "workspace:*",
     "nanoevents": "^9.1.0"
   },
   "devDependencies": {
@@ -35,6 +36,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.12",
     "@rozenite/vite-plugin": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.2",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.0.0",
     "@testing-library/dom": "^10.4.0",
@@ -57,8 +59,7 @@
     "react-virtuoso": "^4.6.0",
     "rozenite": "workspace:*",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^3.4.17",
-    "tailwindcss-animate": "^1.0.7",
+    "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "vite": "catalog:",
     "zustand": "^5.0.6"

@@ -1,12 +1,19 @@
-import { Modal, useOverlayState } from '@heroui/react';
+import {
+  Button,
+  Chip,
+  Description,
+  Input,
+  Label,
+  ListBox,
+  Modal,
+  Select,
+  Surface,
+  TextArea,
+  TextField,
+} from '@rozenite/ui';
 import { Pencil, Save } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { SqliteColumnInfo } from './sqlite-introspection';
-import {
-  SqliteModalCloseButton,
-  sqlitePrimaryButtonClassName,
-  sqliteSecondaryButtonClassName,
-} from './sqlite-modal-controls';
 import {
   canColumnBeNull,
   getCompatibleValueKinds,
@@ -87,6 +94,30 @@ const createFieldDraft = (
   };
 };
 
+const getKindLabel = (kind: EditableValueKind) => {
+  if (kind === 'blob-ish') {
+    return 'Blob';
+  }
+
+  if (kind === 'json') {
+    return 'JSON';
+  }
+
+  if (kind === 'boolean') {
+    return 'Boolean';
+  }
+
+  if (kind === 'number') {
+    return 'Number';
+  }
+
+  if (kind === 'null') {
+    return 'NULL';
+  }
+
+  return 'Text';
+};
+
 export const SqliteRowEditModal = ({
   isOpen,
   rowNumber,
@@ -96,14 +127,6 @@ export const SqliteRowEditModal = ({
   onClose,
   onSave,
 }: SqliteRowEditModalProps) => {
-  const overlay = useOverlayState({
-    isOpen,
-    onOpenChange: (open: boolean) => {
-      if (!open) {
-        onClose();
-      }
-    },
-  });
   const primaryKeyColumns = useMemo(
     () => getPrimaryKeyColumns(columns),
     [columns],
@@ -195,290 +218,326 @@ export const SqliteRowEditModal = ({
   };
 
   return (
-    <Modal state={overlay}>
-      <Modal.Backdrop
-        variant="blur"
-        isDismissable={!submitting}
-        className="bg-[rgba(5,10,16,0.24)] backdrop-blur-[2px]"
-      >
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onClose();
+        }
+      }}
+    >
+      <Modal.Backdrop variant="blur" isDismissable={!submitting}>
         <Modal.Container placement="center" size="lg" scroll="inside">
           <Modal.Dialog
             aria-label={`Edit row ${rowNumber} in ${entityName}`}
-            className="w-full max-w-4xl overflow-hidden border border-white/10 bg-[#0a121b] p-0 text-white shadow-[0_30px_90px_rgba(0,0,0,0.42)]"
+            className="w-full max-w-4xl"
           >
-            <div className="flex items-center justify-between gap-4 border-b border-white/8 px-5 py-5">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Pencil aria-hidden="true" className="h-4 w-4 text-sky-300" />
-                  <h2 className="text-lg font-semibold text-white">
-                    Edit Row {rowNumber}
-                  </h2>
-                </div>
-                <p className="mt-1 text-sm text-slate-400">{entityName}</p>
+            <Modal.CloseTrigger isDisabled={submitting} />
+            <Modal.Header>
+              <Modal.Icon className="bg-info/15 text-info">
+                <Pencil className="size-5" />
+              </Modal.Icon>
+              <div className="min-w-0">
+                <Modal.Heading>Edit Row {rowNumber}</Modal.Heading>
+                <p className="mt-1 text-xs text-muted">{entityName}</p>
               </div>
-              <SqliteModalCloseButton onClose={onClose} disabled={submitting} />
-            </div>
+            </Modal.Header>
 
-            <Modal.Body className="space-y-0 p-0">
-              <div className="space-y-5 px-5 py-5">
-                {primaryKeyColumns.length > 0 ? (
-                  <section className="space-y-3">
-                    <div>
-                      <h3 className="text-sm font-medium text-slate-200">
-                        Row Identifier
-                      </h3>
-                      <p className="mt-1 text-xs text-slate-400">
-                        Primary-key fields are shown for reference and cannot be
-                        edited.
-                      </p>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {primaryKeyColumns.map((column) => (
-                        <div
+            <Modal.Body className="flex flex-col gap-5 p-6">
+              {primaryKeyColumns.length > 0 ? (
+                <section className="space-y-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-foreground">
+                      Row Identifier
+                    </h3>
+                    <p className="mt-1 text-xs text-muted">
+                      Primary-key fields are shown for reference and cannot be
+                      edited.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {primaryKeyColumns.map((column) => (
+                      <Surface
+                        key={column.name}
+                        className="rounded-xl border border-border/70 p-3"
+                        variant="secondary"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">
+                              {column.name}
+                            </p>
+                            <p className="text-xs uppercase tracking-[0.24em] text-muted">
+                              {column.type || 'value'}
+                            </p>
+                          </div>
+                          <Chip size="sm" variant="soft">
+                            PK
+                          </Chip>
+                        </div>
+                        <p className="mt-3 break-all font-mono text-sm text-foreground">
+                          {getValuePreview(row?.[column.name])}
+                        </p>
+                        <p className="mt-1 text-xs text-muted">
+                          {getValueKind(row?.[column.name])}
+                        </p>
+                      </Surface>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              <section className="space-y-3">
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">
+                    Editable Values
+                  </h3>
+                  <p className="mt-1 text-xs text-muted">
+                    Update any non-primary-key column and save to write the row
+                    back to SQLite.
+                  </p>
+                </div>
+
+                {editableColumns.length === 0 ? (
+                  <Surface
+                    className="rounded-xl border border-border/70 p-4 text-sm text-muted"
+                    variant="secondary"
+                  >
+                    This row does not expose editable, non-primary-key columns.
+                  </Surface>
+                ) : (
+                  <div className="space-y-4">
+                    {editableColumns.map((column) => {
+                      const draft =
+                        drafts[column.name] ??
+                        createFieldDraft(column, row?.[column.name]);
+                      const compatibleKinds = getCompatibleValueKinds(
+                        column,
+                        row?.[column.name],
+                      );
+                      const allowNull = canColumnBeNull(column);
+                      const shouldUseTextArea =
+                        draft.kind === 'blob-ish' ||
+                        draft.kind === 'json' ||
+                        (draft.kind === 'text' &&
+                          draft.rawValue.includes('\n'));
+
+                      return (
+                        <Surface
                           key={column.name}
-                          className="rounded-2xl border border-white/8 bg-white/[0.03] p-3"
+                          className="rounded-xl border border-border/70 p-4"
+                          variant="secondary"
                         >
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-medium text-white">
+                          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                            <div className="min-w-0">
+                              <Label htmlFor={`sqlite-row-edit-${column.name}`}>
                                 {column.name}
-                              </p>
-                              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                              </Label>
+                              <p className="mt-1 text-xs text-muted">
                                 {column.type || 'value'}
                               </p>
                             </div>
-                            <span className="sqlite-chip sqlite-chip-static">
-                              PK
-                            </span>
-                          </div>
-                          <p className="mt-3 break-all font-mono text-sm text-slate-200">
-                            {getValuePreview(row?.[column.name])}
-                          </p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {getValueKind(row?.[column.name])}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                ) : null}
 
-                <section className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-medium text-slate-200">
-                      Editable Values
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-400">
-                      Update any non-primary-key column and save to write the
-                      row back to SQLite.
-                    </p>
-                  </div>
-
-                  {editableColumns.length === 0 ? (
-                    <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm text-slate-300">
-                      This row does not expose editable, non-primary-key
-                      columns.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {editableColumns.map((column) => {
-                        const draft =
-                          drafts[column.name] ??
-                          createFieldDraft(column, row?.[column.name]);
-                        const compatibleKinds = getCompatibleValueKinds(
-                          column,
-                          row?.[column.name],
-                        );
-                        const allowNull = canColumnBeNull(column);
-                        const shouldUseTextArea =
-                          draft.kind === 'blob-ish' ||
-                          draft.kind === 'json' ||
-                          (draft.kind === 'text' &&
-                            draft.rawValue.includes('\n'));
-
-                        return (
-                          <div
-                            key={column.name}
-                            className="rounded-2xl border border-white/8 bg-white/[0.03] p-4"
-                          >
-                            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                              <div className="min-w-0">
-                                <label
-                                  htmlFor={`sqlite-row-edit-${column.name}`}
-                                  className="text-sm font-medium text-white"
-                                >
-                                  {column.name}
-                                </label>
-                                <p className="mt-1 text-xs text-slate-500">
-                                  {column.type || 'value'}
-                                </p>
-                              </div>
-
-                              {compatibleKinds.length > 1 || allowNull ? (
-                                <div className="w-full max-w-[12rem]">
-                                  <label
-                                    htmlFor={`sqlite-row-edit-type-${column.name}`}
-                                    className="sr-only"
-                                  >
-                                    Value type
-                                  </label>
-                                  <select
-                                    id={`sqlite-row-edit-type-${column.name}`}
-                                    className="sqlite-select w-full"
-                                    value={draft.kind}
-                                    disabled={submitting}
-                                    onChange={(event) =>
-                                      handleKindChange(
-                                        column.name,
-                                        event.target.value as EditableValueKind,
-                                      )
+                            {compatibleKinds.length > 1 || allowNull ? (
+                              <div className="w-full max-w-[12rem]">
+                                <Select
+                                  aria-label={`Value type for ${column.name}`}
+                                  className="w-full"
+                                  isDisabled={submitting}
+                                  onChange={(value) => {
+                                    if (value == null) {
+                                      return;
                                     }
-                                  >
-                                    {compatibleKinds.map((kind) => (
-                                      <option key={kind} value={kind}>
-                                        {kind === 'blob-ish'
-                                          ? 'Blob'
-                                          : kind === 'json'
-                                            ? 'JSON'
-                                            : kind === 'boolean'
-                                              ? 'Boolean'
-                                              : kind === 'number'
-                                                ? 'Number'
-                                                : 'Text'}
-                                      </option>
-                                    ))}
-                                    {allowNull ? (
-                                      <option value="null">NULL</option>
-                                    ) : null}
-                                  </select>
-                                </div>
-                              ) : (
-                                <span className="sqlite-chip sqlite-chip-static">
-                                  {compatibleKinds[0] === 'blob-ish'
-                                    ? 'Blob'
-                                    : compatibleKinds[0] === 'json'
-                                      ? 'JSON'
-                                      : compatibleKinds[0] === 'boolean'
-                                        ? 'Boolean'
-                                        : compatibleKinds[0] === 'number'
-                                          ? 'Number'
-                                          : 'Text'}
-                                </span>
-                              )}
-                            </div>
 
-                            <div className="mt-3">
-                              {draft.kind === 'null' ? (
-                                <div className="rounded-xl border border-dashed border-white/10 bg-black/10 px-3 py-2 text-sm text-slate-400">
-                                  This field will be saved as SQL NULL.
-                                </div>
-                              ) : draft.kind === 'boolean' ? (
-                                <select
-                                  id={`sqlite-row-edit-${column.name}`}
-                                  className="sqlite-select w-full"
-                                  value={draft.rawValue}
-                                  disabled={submitting}
-                                  onChange={(event) =>
-                                    setDrafts((current) => ({
-                                      ...current,
-                                      [column.name]: {
-                                        ...draft,
-                                        rawValue: event.target.value,
-                                      },
-                                    }))
-                                  }
+                                    handleKindChange(
+                                      column.name,
+                                      String(value) as EditableValueKind,
+                                    );
+                                  }}
+                                  value={draft.kind}
+                                  variant="secondary"
                                 >
-                                  <option value="true">true</option>
-                                  <option value="false">false</option>
-                                </select>
-                              ) : shouldUseTextArea ? (
-                                <textarea
-                                  id={`sqlite-row-edit-${column.name}`}
-                                  className="sqlite-input min-h-28 w-full resize-y py-3"
-                                  value={draft.rawValue}
-                                  disabled={submitting}
-                                  onChange={(event) =>
-                                    setDrafts((current) => ({
-                                      ...current,
-                                      [column.name]: {
-                                        ...draft,
-                                        rawValue: event.target.value,
-                                      },
-                                    }))
-                                  }
-                                />
-                              ) : (
-                                <input
-                                  id={`sqlite-row-edit-${column.name}`}
-                                  type="text"
-                                  className="sqlite-input w-full"
-                                  value={draft.rawValue}
-                                  disabled={submitting}
-                                  onChange={(event) =>
-                                    setDrafts((current) => ({
-                                      ...current,
-                                      [column.name]: {
-                                        ...draft,
-                                        rawValue: event.target.value,
-                                      },
-                                    }))
-                                  }
-                                />
-                              )}
-                            </div>
-
-                            <p className="mt-2 text-xs text-slate-500">
-                              Current value:{' '}
-                              {getValuePreview(row?.[column.name])} (
-                              {getValueKind(row?.[column.name])}) · Compatible:{' '}
-                              {compatibleKinds
-                                .map((kind) =>
-                                  kind === 'blob-ish'
-                                    ? 'blob'
-                                    : kind === 'json'
-                                      ? 'json'
-                                      : kind,
-                                )
-                                .join(', ')}
-                              {allowNull ? ', null' : ''}
-                            </p>
+                                  <Select.Trigger>
+                                    <Select.Value />
+                                    <Select.Indicator />
+                                  </Select.Trigger>
+                                  <Select.Popover>
+                                    <ListBox
+                                      aria-label={`Value type for ${column.name}`}
+                                    >
+                                      {compatibleKinds.map((kind) => (
+                                        <ListBox.Item
+                                          key={kind}
+                                          id={kind}
+                                          textValue={getKindLabel(kind)}
+                                        >
+                                          {getKindLabel(kind)}
+                                          <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                      ))}
+                                      {allowNull ? (
+                                        <ListBox.Item
+                                          key="null"
+                                          id="null"
+                                          textValue="NULL"
+                                        >
+                                          NULL
+                                          <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                      ) : null}
+                                    </ListBox>
+                                  </Select.Popover>
+                                </Select>
+                              </div>
+                            ) : (
+                              <Chip size="sm" variant="soft">
+                                {getKindLabel(compatibleKinds[0] ?? 'text')}
+                              </Chip>
+                            )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
 
-                {error ? (
-                  <div className="sqlite-inline-error" aria-live="polite">
-                    <div>
-                      <p className="font-medium text-rose-100">Save Failed</p>
-                      <p className="mt-1 text-sm text-rose-100/90">{error}</p>
-                    </div>
+                          <div className="mt-3">
+                            {draft.kind === 'null' ? (
+                              <Surface
+                                className="rounded-xl border border-dashed border-border/70 px-3 py-2 text-sm text-muted"
+                                variant="secondary"
+                              >
+                                This field will be saved as SQL NULL.
+                              </Surface>
+                            ) : draft.kind === 'boolean' ? (
+                              <Select
+                                aria-label={`Value for ${column.name}`}
+                                className="w-full"
+                                isDisabled={submitting}
+                                onChange={(value) =>
+                                  setDrafts((current) => ({
+                                    ...current,
+                                    [column.name]: {
+                                      ...draft,
+                                      rawValue:
+                                        value == null ? '' : String(value),
+                                    },
+                                  }))
+                                }
+                                value={draft.rawValue}
+                                variant="secondary"
+                              >
+                                <Select.Trigger>
+                                  <Select.Value />
+                                  <Select.Indicator />
+                                </Select.Trigger>
+                                <Select.Popover>
+                                  <ListBox
+                                    aria-label={`Boolean value for ${column.name}`}
+                                  >
+                                    <ListBox.Item
+                                      id="true"
+                                      key="true"
+                                      textValue="true"
+                                    >
+                                      true
+                                      <ListBox.ItemIndicator />
+                                    </ListBox.Item>
+                                    <ListBox.Item
+                                      id="false"
+                                      key="false"
+                                      textValue="false"
+                                    >
+                                      false
+                                      <ListBox.ItemIndicator />
+                                    </ListBox.Item>
+                                  </ListBox>
+                                </Select.Popover>
+                              </Select>
+                            ) : shouldUseTextArea ? (
+                              <TextField className="w-full">
+                                <TextArea
+                                  id={`sqlite-row-edit-${column.name}`}
+                                  className="min-h-28 w-full resize-y"
+                                  disabled={submitting}
+                                  onChange={(event) =>
+                                    setDrafts((current) => ({
+                                      ...current,
+                                      [column.name]: {
+                                        ...draft,
+                                        rawValue: event.target.value,
+                                      },
+                                    }))
+                                  }
+                                  value={draft.rawValue}
+                                  variant="secondary"
+                                />
+                              </TextField>
+                            ) : (
+                              <TextField className="w-full" type="text">
+                                <Input
+                                  id={`sqlite-row-edit-${column.name}`}
+                                  disabled={submitting}
+                                  onChange={(event) =>
+                                    setDrafts((current) => ({
+                                      ...current,
+                                      [column.name]: {
+                                        ...draft,
+                                        rawValue: event.target.value,
+                                      },
+                                    }))
+                                  }
+                                  value={draft.rawValue}
+                                  variant="secondary"
+                                />
+                              </TextField>
+                            )}
+                          </div>
+
+                          <Description className="mt-2 text-xs text-muted">
+                            Current value: {getValuePreview(row?.[column.name])}{' '}
+                            ({getValueKind(row?.[column.name])}) · Compatible:{' '}
+                            {compatibleKinds
+                              .map((kind) =>
+                                kind === 'blob-ish'
+                                  ? 'blob'
+                                  : kind === 'json'
+                                    ? 'json'
+                                    : kind,
+                              )
+                              .join(', ')}
+                            {allowNull ? ', null' : ''}
+                          </Description>
+                        </Surface>
+                      );
+                    })}
                   </div>
-                ) : null}
-              </div>
+                )}
+              </section>
 
-              <div className="flex items-center justify-end gap-3 border-t border-white/8 px-5 py-5">
-                <button
-                  type="button"
-                  className={sqliteSecondaryButtonClassName}
-                  onClick={onClose}
-                  disabled={submitting}
+              {error ? (
+                <Surface
+                  aria-live="polite"
+                  className="rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 text-danger"
+                  variant="secondary"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className={sqlitePrimaryButtonClassName}
-                  onClick={() => void handleSave()}
-                  disabled={submitting || editableColumns.length === 0}
-                >
-                  <Save aria-hidden="true" className="h-4 w-4" />
-                  {submitting ? 'Saving…' : 'Save Changes'}
-                </button>
-              </div>
+                  <p className="font-medium">Save Failed</p>
+                  <p className="mt-1 text-sm text-danger">{error}</p>
+                </Surface>
+              ) : null}
             </Modal.Body>
+            <Modal.Footer className="flex justify-end gap-2">
+              <Button
+                isDisabled={submitting}
+                onPress={onClose}
+                variant="secondary"
+              >
+                Cancel
+              </Button>
+              <Button
+                isDisabled={submitting || editableColumns.length === 0}
+                onPress={() => void handleSave()}
+                variant="primary"
+              >
+                <Save aria-hidden="true" className="size-4" />
+                {submitting ? 'Saving…' : 'Save Changes'}
+              </Button>
+            </Modal.Footer>
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
