@@ -10,7 +10,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.callstackcincubator.rozenite",
-      "icon": "./assets/images/app.icon"
+      "icon": "./assets/images/app.icon",
+      "deploymentTarget": "16.4"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,6 +28,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "@react-native-async-storage/expo-with-async-storage",
       "expo-sqlite",
       [
         "expo-splash-screen",

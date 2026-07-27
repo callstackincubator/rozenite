@@ -14,11 +14,18 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "lint": "expo lint"
   },
+  "expo": {
+    "install": {
+      "exclude": [
+        "@react-native-async-storage/async-storage"
+      ]
+    }
+  },
   "dependencies": {
     "@dr.pogodin/react-native-fs": "^2.36.2",
-    "@expo/metro-config": "~57.0.6",
     "@expo/vector-icons": "^15.0.3",
-    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-async-storage/async-storage": "^3.1.1",
+    "@react-native-async-storage/expo-with-async-storage": "^1.0.0",
     "@react-navigation/bottom-tabs": "^7.4.7",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.17",
@@ -43,19 +50,19 @@
     "@rozenite/tanstack-query-plugin": "workspace:*",
     "@rozenite/web": "workspace:*",
     "@tanstack/react-query": "^5.81.5",
-    "expo": "^57.0.7",
-    "expo-constants": "~57.0.6",
+    "expo": "^57.0.8",
+    "expo-constants": "~57.0.7",
     "expo-font": "~57.0.1",
     "expo-haptics": "~57.0.1",
     "expo-image": "~57.0.1",
-    "expo-linking": "~57.0.3",
+    "expo-linking": "~57.0.4",
     "expo-secure-store": "^57.0.1",
-    "expo-splash-screen": "~57.0.4",
+    "expo-splash-screen": "~57.0.5",
     "expo-sqlite": "^57.0.1",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.1",
     "expo-system-ui": "~57.0.1",
-    "expo-web-browser": "~57.0.1",
+    "expo-web-browser": "~57.0.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.54.2",
@@ -71,7 +78,7 @@
     "react-native-performance": "5.1.4",
     "react-native-reanimated": "~4.5.0",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.25.2",
+    "react-native-screens": "~4.26.2",
     "react-native-sse": "^1.2.1",
     "react-native-svg": "15.15.4",
     "react-native-svg-web": "~1.0.9",

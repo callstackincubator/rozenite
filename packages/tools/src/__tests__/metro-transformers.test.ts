@@ -80,7 +80,7 @@ const mockMetroConfig = {
       enabled: false,
     },
   },
-} as MetroConfig;
+} as unknown as MetroConfig;
 
 // Helper to create a test config
 const createTestConfig = (): MetroConfig => ({
