@@ -11,11 +11,14 @@ export const withRozeniteExpoAtlasPlugin = createMetroConfigTransformer(
       serializer: {
         ...config.serializer,
         customSerializer:
-          config?.serializer?.customSerializer ?? getBaseSerializer(),
+          config?.serializer?.customSerializer ??
+          (getBaseSerializer() as NonNullable<
+            MetroConfig['serializer']['customSerializer']
+          >),
       },
     };
     const instance = createExpoAtlasMiddleware(
-      basicConfig as unknown as Parameters<typeof createExpoAtlasMiddleware>[0]
+      basicConfig as unknown as Parameters<typeof createExpoAtlasMiddleware>[0],
     );
 
     return {

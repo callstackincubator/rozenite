@@ -89,4 +89,4 @@ export const createBaseSerializer = (moduleLoader: ModuleLoader = require) => {
     bundleToString(baseJSBundle(...args));
 };
 
-export const getBaseSerializer = () => createBaseSerializer() as never;
+export const getBaseSerializer = () => createBaseSerializer();
