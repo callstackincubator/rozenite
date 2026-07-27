@@ -1,10 +1,11 @@
 import { createExpoAtlasMiddleware } from 'expo-atlas/cli';
 import connect from 'connect';
+import type { ConfigT as MetroConfig } from 'metro-config';
 import { createMetroConfigTransformer } from '@rozenite/tools';
 import { getBaseSerializer } from './base-serializer';
 
 export const withRozeniteExpoAtlasPlugin = createMetroConfigTransformer(
-  async (config) => {
+  async (config: MetroConfig): Promise<MetroConfig> => {
     const basicConfig = {
       ...config,
       serializer: {
