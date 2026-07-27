@@ -1,5 +1,3 @@
-import type { ConfigT as MetroConfig } from 'metro-config';
-
 type ModuleLoader = {
   (id: string): unknown;
   resolve(id: string): string;
@@ -10,9 +8,7 @@ type SerializerModulePaths = {
   bundleToString: string;
 };
 
-type BaseSerializer = NonNullable<
-  MetroConfig['serializer']['customSerializer']
->;
+type BaseSerializer = (...args: unknown[]) => unknown;
 
 const modernSerializerModulePaths: SerializerModulePaths = {
   baseJSBundle: 'metro/private/DeltaBundler/Serializers/baseJSBundle',
@@ -84,13 +80,13 @@ export const createBaseSerializer = (moduleLoader: ModuleLoader = require) => {
 
   const baseJSBundle = unwrapDefaultExport(
     moduleLoader(modulePaths.baseJSBundle)
-  ) as (...args: Parameters<BaseSerializer>) => unknown;
+  ) as BaseSerializer;
   const bundleToString = unwrapDefaultExport(
     moduleLoader(modulePaths.bundleToString)
-  ) as (bundle: unknown) => ReturnType<BaseSerializer>;
+  ) as BaseSerializer;
 
-  return (...args: Parameters<BaseSerializer>) =>
+  return (...args: unknown[]) =>
     bundleToString(baseJSBundle(...args));
 };
 
-export const getBaseSerializer = () => createBaseSerializer();
+export const getBaseSerializer = () => createBaseSerializer() as never;

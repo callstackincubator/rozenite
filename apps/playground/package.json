@@ -94,6 +94,8 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~55.0.0",
     "html-webpack-plugin": "^5.6.6",
+    "metro": "0.83.3",
+    "metro-config": "0.83.3",
     "react-test-renderer": "19.2.0",
     "rozenite": "workspace:*",
     "typescript": "~5.9.2",
