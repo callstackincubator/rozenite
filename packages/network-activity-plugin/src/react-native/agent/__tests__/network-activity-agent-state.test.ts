@@ -34,6 +34,12 @@ describe('network activity agent state', () => {
     expect(
       networkActivityToolDefinitions.getRequestDetails.inputSchema.required,
     ).toEqual(['requestId']);
+    expect(
+      networkActivityToolDefinitions.listRequests.pagination,
+    ).toMatchObject({
+      kind: 'cursor',
+      fields: expect.arrayContaining(['requestId', 'url', 'status']),
+    });
   });
 
   it('tracks HTTP requests with parity-oriented list/detail/body results', () => {

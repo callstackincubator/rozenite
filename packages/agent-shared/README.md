@@ -9,6 +9,7 @@
 ## Features
 
 - **Shared Tool Types**: Common `AgentTool` and JSON-schema-like input types
+- **Paginated Tool Contracts**: Typed row fields and a shared page envelope for built-in and third-party tools
 - **Message Contracts**: Typed payloads for register, unregister, call, and result messages
 - **Single Protocol Constant**: Shared `AGENT_PLUGIN_ID` for the Agent transport
 - **Package Reuse**: Intended for bridge and runtime packages that implement Agent support
@@ -27,6 +28,10 @@ This package exports:
 
 - `AGENT_PLUGIN_ID`
 - `AgentTool`
+- `AgentToolPagination`
+- `PageEnvelope`
+- `PageResult`
+- `definePaginatedAgentToolContract`
 - `JSONSchema7`
 - `DevToolsPluginMessage`
 - `RegisterToolPayload`

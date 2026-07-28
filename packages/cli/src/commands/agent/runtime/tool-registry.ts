@@ -11,7 +11,11 @@ export const createToolRegistry = () => {
     deviceName: string,
     reactNativeVersion?: string,
   ): void => {
-    devices.set(deviceId, { id: deviceId, name: deviceName, reactNativeVersion });
+    devices.set(deviceId, {
+      id: deviceId,
+      name: deviceName,
+      reactNativeVersion,
+    });
     if (!tools.has(deviceId)) {
       tools.set(deviceId, new Map());
     }
@@ -22,7 +26,10 @@ export const createToolRegistry = () => {
     tools.delete(deviceId);
   };
 
-  const registerTools = (deviceId: string, incomingTools: AgentTool[]): void => {
+  const registerTools = (
+    deviceId: string,
+    incomingTools: AgentTool[],
+  ): void => {
     let deviceTools = tools.get(deviceId);
     if (!deviceTools) {
       deviceTools = new Map();
@@ -129,7 +136,7 @@ export const createToolRegistry = () => {
 
     const aggregatedTools: AgentTool[] = [];
 
-    for (const [toolName, registeredTools] of toolsByName.entries()) {
+    for (const registeredTools of toolsByName.values()) {
       const firstTool = registeredTools[0].tool;
 
       if (availableDevices.length <= 1 || registeredTools.length === 1) {
@@ -156,8 +163,7 @@ export const createToolRegistry = () => {
       };
 
       aggregatedTools.push({
-        name: toolName,
-        description: firstTool.description,
+        ...firstTool,
         inputSchema: modifiedSchema,
       });
     }
@@ -165,7 +171,10 @@ export const createToolRegistry = () => {
     return aggregatedTools;
   };
 
-  const findToolDevice = (toolName: string, deviceId?: string): string | null => {
+  const findToolDevice = (
+    toolName: string,
+    deviceId?: string,
+  ): string | null => {
     if (deviceId) {
       const deviceTools = tools.get(deviceId);
       if (deviceTools && deviceTools.has(toolName)) {

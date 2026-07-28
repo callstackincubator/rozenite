@@ -9,12 +9,27 @@ describe('agent runtime handler console domain', () => {
       sendMessage() {},
     });
 
-    const toolNames = handler.getTools().map((tool) => tool.name);
+    const tools = handler.getTools();
+    const toolNames = tools.map((tool) => tool.name);
 
     expect(toolNames).toContain('getMessages');
     expect(toolNames).toContain('clearMessages');
     expect(toolNames).not.toContain('enable');
     expect(toolNames).not.toContain('disable');
+    expect(
+      tools.find((tool) => tool.name === 'getMessages')?.pagination,
+    ).toEqual({
+      kind: 'cursor',
+      fields: [
+        'seq',
+        'timestamp',
+        'level',
+        'source',
+        'text',
+        'argsPreview',
+        'context',
+      ],
+    });
   });
 
   it('captures console messages without an explicit enable step', async () => {
@@ -31,7 +46,7 @@ describe('agent runtime handler console domain', () => {
       timestamp: Date.now(),
     });
 
-    const result = await handler.callTool('getMessages', {}) as {
+    const result = (await handler.callTool('getMessages', {})) as {
       items: Array<{ text: string }>;
       meta: { bufferSize: number };
     };

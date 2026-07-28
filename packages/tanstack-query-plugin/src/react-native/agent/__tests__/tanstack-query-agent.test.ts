@@ -106,10 +106,13 @@ describe('tanstack query agent controller', () => {
       'get-mutation-details',
       'clear-mutation-cache',
     ]);
-    expect(tanstackQueryToolDefinitions.setQueryLoading.inputSchema.required).toEqual([
-      'queryHash',
-      'enabled',
-    ]);
+    expect(
+      tanstackQueryToolDefinitions.setQueryLoading.inputSchema.required,
+    ).toEqual(['queryHash', 'enabled']);
+    expect(tanstackQueryToolDefinitions.listQueries.pagination).toMatchObject({
+      kind: 'cursor',
+      fields: expect.arrayContaining(['queryHash', 'status', 'fetchStatus']),
+    });
   });
 
   it('lists queries with cursor pagination and invalidates stale cursors after additions', async () => {

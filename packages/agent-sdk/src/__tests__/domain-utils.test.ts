@@ -84,7 +84,9 @@ describe('agent domain utils', () => {
       (domain) => domain.pluginId === '@rozenite/mmkv-plugin',
     );
 
-    expect(appDomain?.description).toBe('Runtime tools exposed by the app itself.');
+    expect(appDomain?.description).toBe(
+      'Runtime tools exposed by the app itself.',
+    );
     expect(pluginDomain?.description).toBe(
       'Runtime tools exposed by plugin "@rozenite/mmkv-plugin".',
     );
@@ -100,17 +102,29 @@ describe('agent domain utils', () => {
       tool('app.echo'),
     ]);
 
-    expect(domains.some((domain) => domain.pluginId === 'getMessages')).toBe(false);
+    expect(domains.some((domain) => domain.pluginId === 'getMessages')).toBe(
+      false,
+    );
     expect(domains.some((domain) => domain.pluginId === 'getNode')).toBe(false);
-    expect(domains.some((domain) => domain.pluginId === 'startTrace')).toBe(false);
-    expect(domains.some((domain) => domain.pluginId === 'takeHeapSnapshot')).toBe(false);
-    expect(domains.some((domain) => domain.pluginId === 'startRecording')).toBe(false);
+    expect(domains.some((domain) => domain.pluginId === 'startTrace')).toBe(
+      false,
+    );
+    expect(
+      domains.some((domain) => domain.pluginId === 'takeHeapSnapshot'),
+    ).toBe(false);
+    expect(domains.some((domain) => domain.pluginId === 'startRecording')).toBe(
+      false,
+    );
     expect(domains.some((domain) => domain.pluginId === 'app')).toBe(true);
   });
 
   it('filters static domain tools by built-in tool names', () => {
-    const consoleDomain = STATIC_DOMAINS.find((domain) => domain.id === 'console');
-    const networkDomain = STATIC_DOMAINS.find((domain) => domain.id === 'network');
+    const consoleDomain = STATIC_DOMAINS.find(
+      (domain) => domain.id === 'console',
+    );
+    const networkDomain = STATIC_DOMAINS.find(
+      (domain) => domain.id === 'network',
+    );
 
     expect(
       getDomainToolsByDefinition(
@@ -182,7 +196,9 @@ describe('agent domain utils', () => {
     expect(
       formatUnknownDomainError('netw', [
         ...STATIC_DOMAINS,
-        ...buildRuntimePluginDomains([tool('@rozenite/mmkv-plugin.list-entries')]),
+        ...buildRuntimePluginDomains([
+          tool('@rozenite/mmkv-plugin.list-entries'),
+        ]),
       ]).message,
     ).toBe(
       'Unknown domain "netw". Did you mean: network? Run `rozenite agent domains` to list available domains.',
@@ -190,7 +206,14 @@ describe('agent domain utils', () => {
   });
 
   it('projects helper output for domain tool and schema views', () => {
-    const entry = tool('@rozenite/mmkv-plugin.list-entries');
+    const entry: AgentTool = {
+      ...tool('@rozenite/mmkv-plugin.list-entries'),
+      pagination: {
+        kind: 'cursor',
+        fields: ['key', 'type'],
+        defaultFields: ['key'],
+      },
+    };
 
     expect(toAgentDomainTool(entry)).toEqual({
       ...entry,
@@ -201,6 +224,7 @@ describe('agent domain utils', () => {
       name: '@rozenite/mmkv-plugin.list-entries',
       shortName: 'list-entries',
       inputSchema: entry.inputSchema,
+      pagination: entry.pagination,
     });
   });
 });

@@ -10,8 +10,9 @@ description: Use Rozenite for Agents through CLI-driven `rozenite agent` command
 
 ## Listing output contract
 
-`agent domains`, `agent <domain> tools`, and known paginated domain tool calls
-always write compact JSON by default. Pass `--pretty` for indented JSON. The
+`agent domains`, `agent <domain> tools`, and tools that declare the shared
+pagination contract always write compact JSON by default. This includes
+built-in and third-party plugin tools. Pass `--pretty` for indented JSON. The
 `--json` / `-j` option is retained as a compatibility no-op and never changes
 the output shape.
 
@@ -25,11 +26,12 @@ the output shape.
   shell-escaped, runnable `rozenite agent ... --cursor <token>` command that
   preserves the listing's connection, session, projection, and limit options.
 
-Known paginated calls include console messages, React tree/search/inspection
-rows, render data, and network request listings. Tool-specific metadata (for
+Declared paginated calls include console messages, React
+tree/search/inspection rows, render data, network request listings, and any
+plugin tool registered with pagination metadata. Tool-specific metadata (for
 example `roots`, `totalCount`, or `recording`) remains alongside the row shape.
-SDK responses and genuinely non-row command results retain their existing
-shapes.
+Undeclared tool results, SDK responses, and genuinely non-row command results
+retain their existing shapes.
 
 ## Handoff
 

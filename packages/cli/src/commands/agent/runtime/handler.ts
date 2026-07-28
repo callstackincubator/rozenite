@@ -62,6 +62,18 @@ const CONSOLE_TOOLS: AgentTool[] = [
         },
       },
     },
+    pagination: {
+      kind: 'cursor',
+      fields: [
+        'seq',
+        'timestamp',
+        'level',
+        'source',
+        'text',
+        'argsPreview',
+        'context',
+      ],
+    },
   },
 ];
 
@@ -89,7 +101,11 @@ export const createAgentMessageHandler = () => {
     return CONSOLE_TOOLS.some((tool) => tool.name === toolName);
   };
 
-  const attachDeviceSchema = (tools: AgentTool[], deviceIds: string[], deviceNames: string[]): AgentTool[] => {
+  const attachDeviceSchema = (
+    tools: AgentTool[],
+    deviceIds: string[],
+    deviceNames: string[],
+  ): AgentTool[] => {
     if (deviceIds.length <= 1) {
       return tools;
     }
@@ -130,7 +146,9 @@ export const createAgentMessageHandler = () => {
   const resolveDeviceForLocalTool = (requestedDeviceId?: string): string => {
     const devices = registry.getDevices();
     if (devices.length === 0) {
-      throw new Error('No connected device is available for local Agent tools.');
+      throw new Error(
+        'No connected device is available for local Agent tools.',
+      );
     }
 
     if (requestedDeviceId) {
@@ -260,7 +278,10 @@ export const createAgentMessageHandler = () => {
     return registry.getDevices();
   };
 
-  const callTool = async (toolName: string, args: unknown): Promise<unknown> => {
+  const callTool = async (
+    toolName: string,
+    args: unknown,
+  ): Promise<unknown> => {
     let deviceId: string | undefined;
     let toolArgs = args;
 
@@ -315,7 +336,12 @@ export const createAgentMessageHandler = () => {
         }
       }, 30000);
 
-      pendingCalls.set(callId, { deviceId: targetDeviceId, resolve, reject, timeoutId });
+      pendingCalls.set(callId, {
+        deviceId: targetDeviceId,
+        resolve,
+        reject,
+        timeoutId,
+      });
     });
 
     try {

@@ -663,7 +663,8 @@ export const createReactDomainService = (deps: {
         properties: {
           root: {
             type: 'integer',
-            description: 'Optional root node ID to scope the tree to a subtree.',
+            description:
+              'Optional root node ID to scope the tree to a subtree.',
           },
           depth: {
             type: 'integer',
@@ -679,6 +680,21 @@ export const createReactDomainService = (deps: {
             description: 'Opaque cursor returned by the previous page.',
           },
         },
+      },
+      pagination: {
+        kind: 'cursor',
+        fields: [
+          'nodeId',
+          'label',
+          'displayName',
+          'elementType',
+          'key',
+          'childCount',
+          'parentId',
+          'parentLabel',
+          'childIds',
+          'depth',
+        ],
       },
     },
     {
@@ -757,6 +773,19 @@ export const createReactDomainService = (deps: {
         },
         ...nodeIdentifierRequirement,
       },
+      pagination: {
+        kind: 'cursor',
+        fields: [
+          'nodeId',
+          'label',
+          'displayName',
+          'elementType',
+          'key',
+          'childCount',
+          'parentId',
+          'parentLabel',
+        ],
+      },
     },
     {
       name: 'getProps',
@@ -784,6 +813,10 @@ export const createReactDomainService = (deps: {
         },
         ...nodeIdentifierRequirement,
       },
+      pagination: {
+        kind: 'cursor',
+        fields: ['name', 'value'],
+      },
     },
     {
       name: 'getState',
@@ -810,6 +843,10 @@ export const createReactDomainService = (deps: {
           },
         },
         ...nodeIdentifierRequirement,
+      },
+      pagination: {
+        kind: 'cursor',
+        fields: ['name', 'value'],
       },
     },
     {
@@ -845,6 +882,10 @@ export const createReactDomainService = (deps: {
         },
         ...nodeIdentifierRequirement,
       },
+      pagination: {
+        kind: 'cursor',
+        fields: ['name', 'value'],
+      },
     },
     {
       name: 'searchNodes',
@@ -876,6 +917,19 @@ export const createReactDomainService = (deps: {
           },
         },
         required: ['query'],
+      },
+      pagination: {
+        kind: 'cursor',
+        fields: [
+          'nodeId',
+          'label',
+          'displayName',
+          'elementType',
+          'key',
+          'childCount',
+          'parentId',
+          'parentLabel',
+        ],
       },
     },
     {
@@ -957,6 +1011,16 @@ export const createReactDomainService = (deps: {
           },
         },
         required: ['rootId', 'commitIndex'],
+      },
+      pagination: {
+        kind: 'cursor',
+        fields: [
+          'fiberId',
+          'actualDurationMs',
+          'selfDurationMs',
+          'isSlow',
+          'changeTypeHints',
+        ],
       },
     },
   ];
@@ -1273,6 +1337,22 @@ export const createNetworkDomainService = (deps: {
               'Opaque pagination cursor from a previous listRequests call.',
           },
         },
+      },
+      pagination: {
+        kind: 'cursor',
+        fields: [
+          'requestId',
+          'method',
+          'url',
+          'status',
+          'type',
+          'startTimeMs',
+          'endTimeMs',
+          'durationMs',
+          'transferSize',
+          'encodedDataLength',
+          'outcome',
+        ],
       },
     },
     {

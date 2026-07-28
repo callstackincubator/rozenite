@@ -1,7 +1,12 @@
 import { Command } from 'commander';
 import { createAgentClient } from '@rozenite/agent-sdk';
 import { createAgentTransport } from '@rozenite/agent-sdk/transport';
-import { DEFAULT_AGENT_HOST, DEFAULT_AGENT_PORT } from '@rozenite/agent-shared';
+import {
+  DEFAULT_AGENT_HOST,
+  DEFAULT_AGENT_PORT,
+  isAgentToolPagination,
+  type AgentToolPagination,
+} from '@rozenite/agent-shared';
 import { printOutput } from './output.js';
 import {
   formatAgentCommand,
@@ -98,107 +103,6 @@ const DOMAIN_LIST_FIELDS = [
 ] as const;
 const DOMAIN_LIST_DEFAULT_FIELDS = ['id', 'kind'] as const;
 
-type ToolRowShape = {
-  fields: readonly string[];
-};
-
-type DomainToolRowShapes = {
-  /** Every accepted token for this exact domain, never a prefix match. */
-  tokens: readonly string[];
-  tools: Readonly<Record<string, ToolRowShape>>;
-};
-
-const NODE_FIELDS = [
-  'nodeId',
-  'label',
-  'displayName',
-  'elementType',
-  'key',
-  'childCount',
-  'parentId',
-  'parentLabel',
-] as const;
-
-const REACT_TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
-  getTree: {
-    fields: [...NODE_FIELDS, 'childIds', 'depth'],
-  },
-  searchNodes: { fields: NODE_FIELDS },
-  getChildren: { fields: NODE_FIELDS },
-  getProps: { fields: ['name', 'value'] },
-  getState: { fields: ['name', 'value'] },
-  getHooks: { fields: ['name', 'value'] },
-  getRenderData: {
-    fields: [
-      'fiberId',
-      'actualDurationMs',
-      'selfDurationMs',
-      'isSlow',
-      'changeTypeHints',
-    ],
-  },
-};
-
-const CONSOLE_TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
-  getMessages: {
-    fields: [
-      'seq',
-      'timestamp',
-      'level',
-      'source',
-      'text',
-      'argsPreview',
-      'context',
-    ],
-  },
-};
-
-const NETWORK_TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
-  listRequests: {
-    fields: [
-      'requestId',
-      'method',
-      'url',
-      'status',
-      'type',
-      'startTimeMs',
-      'endTimeMs',
-      'durationMs',
-      'transferSize',
-      'encodedDataLength',
-      'outcome',
-    ],
-  },
-  listRealtimeConnections: {
-    fields: [
-      'requestId',
-      'kind',
-      'url',
-      'status',
-      'startedAt',
-      'endedAt',
-      'durationMs',
-      'messageCount',
-      'error',
-      'closeCode',
-      'httpStatus',
-    ],
-  },
-};
-
-const NETWORK_ACTIVITY_PLUGIN_ID = '@rozenite/network-activity-plugin';
-const NETWORK_ACTIVITY_PLUGIN_SLUG = 'at-rozenite__network-activity-plugin';
-
-const KNOWN_DOMAIN_TOOL_ROW_SHAPES: readonly DomainToolRowShapes[] = [
-  { tokens: ['react'], tools: REACT_TOOL_ROW_SHAPES },
-  { tokens: ['console'], tools: CONSOLE_TOOL_ROW_SHAPES },
-  { tokens: ['network'], tools: NETWORK_TOOL_ROW_SHAPES },
-  {
-    tokens: [NETWORK_ACTIVITY_PLUGIN_ID, NETWORK_ACTIVITY_PLUGIN_SLUG],
-    tools: NETWORK_TOOL_ROW_SHAPES,
-  },
-];
-
 const projectSessionOutput = (
   session: Record<string, unknown>,
   versionCheck?: unknown,
@@ -248,31 +152,20 @@ const getListingOptionArgs = (
   ...(pretty ? ['--pretty'] : []),
 ];
 
-const getToolRowShape = (
-  domain: string,
-  tool: string,
-): ToolRowShape | undefined => {
-  const knownDomain = KNOWN_DOMAIN_TOOL_ROW_SHAPES.find((candidate) =>
-    candidate.tokens.includes(domain),
-  );
-  if (!knownDomain) {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const getToolPagination = (value: unknown): AgentToolPagination | undefined => {
+  if (!isRecord(value) || !isRecord(value.pagination)) {
     return undefined;
   }
 
-  const prefix = knownDomain.tokens
-    .map((token) => `${token}.`)
-    .find((candidate) => tool.startsWith(candidate));
-  const shortName = tool.includes('.')
-    ? prefix
-      ? tool.slice(prefix.length)
-      : undefined
-    : tool;
+  if (!isAgentToolPagination(value.pagination)) {
+    throw new Error('Tool exposes invalid pagination metadata');
+  }
 
-  return shortName ? knownDomain.tools[shortName] : undefined;
+  return value.pagination;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const getToolCallCommand = (
   domain: string,
@@ -403,7 +296,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
     .option('-a, --args <json>', 'Tool arguments as JSON object', '{}')
     .option(
       '-f, --fields <csv>',
-      'Comma-separated output fields; allowed fields depend on the listing or known row tool',
+      'Comma-separated output fields; allowed fields depend on the listing or declared paginated tool',
     )
     .option('-v, --verbose', 'Include all supported fields')
     .option('-n, --limit <n>', 'Page size (default 20, max 100)')
@@ -530,17 +423,21 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
             }
 
             const parsedArgs = parseJsonArgs(dynamicOptions.args);
-            const rowShape = getToolRowShape(domainToken, dynamicOptions.tool);
-            const knownToolArgs = rowShape
+            const toolSchema = await session.tools.getSchema({
+              domain: domainToken,
+              tool: dynamicOptions.tool,
+            });
+            const pagination = getToolPagination(toolSchema);
+            const paginatedToolArgs = pagination
               ? isRecord(parsedArgs)
                 ? parsedArgs
                 : {}
               : undefined;
-            const fields = rowShape
+            const fields = pagination
               ? parseFields(
                   dynamicOptions.fields,
-                  rowShape.fields,
-                  rowShape.fields,
+                  pagination.fields,
+                  pagination.defaultFields ?? pagination.fields,
                   !!dynamicOptions.verbose,
                 )
               : undefined;
@@ -548,11 +445,11 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
             const toolResult = await session.tools.call({
               domain: domainToken,
               tool: dynamicOptions.tool,
-              args: knownToolArgs ?? parsedArgs,
+              args: paginatedToolArgs ?? parsedArgs,
               autoPaginate: autoPagination,
             });
 
-            if (!rowShape || !knownToolArgs || !fields) {
+            if (!pagination || !paginatedToolArgs || !fields) {
               return toolResult;
             }
 
@@ -571,7 +468,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                 ? getToolCallCommand(
                     domainToken,
                     dynamicOptions.tool,
-                    knownToolArgs,
+                    paginatedToolArgs,
                     nextCursor,
                     dynamicOptions,
                     options,

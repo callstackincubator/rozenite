@@ -49,6 +49,32 @@ vi.mock('@rozenite/agent-sdk/transport', () => ({
 }));
 
 describe('agent command output', () => {
+  const reactTreeFields = [
+    'nodeId',
+    'label',
+    'displayName',
+    'elementType',
+    'key',
+    'childCount',
+    'parentId',
+    'parentLabel',
+    'childIds',
+    'depth',
+  ];
+  const networkRequestFields = [
+    'requestId',
+    'method',
+    'url',
+    'status',
+    'type',
+    'startTimeMs',
+    'endTimeMs',
+    'durationMs',
+    'transferSize',
+    'encodedDataLength',
+    'outcome',
+  ];
+
   afterEach(() => {
     process.exitCode = undefined;
     vi.restoreAllMocks();
@@ -58,6 +84,19 @@ describe('agent command output', () => {
   const setupClient = () => {
     mocks.createAgentClient.mockReturnValue(mocks.client);
     mocks.client.attachSession.mockResolvedValue(mocks.session);
+  };
+
+  const setupPaginatedTool = (fields: string[], defaultFields?: string[]) => {
+    mocks.session.tools.getSchema.mockResolvedValue({
+      name: 'plugin.list',
+      shortName: 'list',
+      inputSchema: { type: 'object', properties: {} },
+      pagination: {
+        kind: 'cursor',
+        fields,
+        ...(defaultFields ? { defaultFields } : {}),
+      },
+    });
   };
 
   const setupTransport = () => {
@@ -418,7 +457,7 @@ describe('agent command output', () => {
     );
 
     expect(fieldsOption?.description).toContain(
-      'allowed fields depend on the listing or known row tool',
+      'allowed fields depend on the listing or declared paginated tool',
     );
     expect(fieldsOption?.description).not.toContain(
       '(name, shortName, description)',
@@ -502,6 +541,7 @@ describe('agent command output', () => {
 
   it('columnar-encodes terminal getTree rows using requested fields', async () => {
     setupClient();
+    setupPaginatedTool(reactTreeFields);
     mocks.session.tools.call.mockResolvedValueOnce({
       roots: [1],
       totalCount: 2,
@@ -544,6 +584,7 @@ describe('agent command output', () => {
 
   it('keeps an empty getTree result expanded without terminal page metadata', async () => {
     setupClient();
+    setupPaginatedTool(reactTreeFields);
     mocks.session.tools.call.mockResolvedValueOnce({
       roots: [],
       totalCount: 0,
@@ -579,6 +620,7 @@ describe('agent command output', () => {
 
   it('keeps one row tool results expanded and prints a complete continuation', async () => {
     setupClient();
+    setupPaginatedTool(networkRequestFields);
     mocks.session.tools.call.mockResolvedValueOnce({
       recording: { isRecording: true },
       items: [
@@ -663,8 +705,9 @@ describe('agent command output', () => {
     ]);
   });
 
-  it('normalizes non-object args before calling and shaping a known row tool', async () => {
+  it('normalizes non-object args before calling and shaping a declared paginated tool', async () => {
     setupClient();
+    setupPaginatedTool(networkRequestFields);
     mocks.session.tools.call.mockResolvedValueOnce({
       items: [{ requestId: 'request-1', url: 'https://example.test' }],
       page: { limit: 1, hasMore: true, nextCursor: 'next-cursor' },
@@ -708,8 +751,9 @@ describe('agent command output', () => {
     expect(output.next).toContain('--args \'{"cursor":"next-cursor"}\'');
   });
 
-  it('validates known row fields before invoking the remote tool', async () => {
+  it('validates declared row fields before invoking the remote tool', async () => {
     setupClient();
+    setupPaginatedTool(networkRequestFields);
 
     const stdoutWrite = vi
       .spyOn(process.stdout, 'write')
@@ -744,6 +788,7 @@ describe('agent command output', () => {
 
   it('uses the fixed default schema for two-row listRequests results', async () => {
     setupClient();
+    setupPaginatedTool(networkRequestFields);
     mocks.session.tools.call.mockResolvedValueOnce({
       items: [
         { requestId: 'one', method: 'GET', url: '/', status: 200 },
@@ -814,11 +859,19 @@ describe('agent command output', () => {
     expect(stdoutWrite).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
   });
 
-  it('shapes the fallback network-activity plugin by its exact domain token', async () => {
+  it('shapes an arbitrary third-party plugin from its declared pagination metadata', async () => {
     setupClient();
+    setupPaginatedTool(['url', 'requestId', 'status']);
     mocks.session.tools.call.mockResolvedValueOnce({
-      items: [{ requestId: 'request-1', url: 'https://example.test' }],
-      page: { limit: 1, hasMore: false },
+      items: [
+        { requestId: 'request-1', url: 'https://example.test' },
+        {
+          requestId: 'request-2',
+          url: 'https://example.test/two',
+          status: 200,
+        },
+      ],
+      page: { limit: 2, hasMore: false },
     });
 
     const stdoutWrite = vi
@@ -847,7 +900,44 @@ describe('agent command output', () => {
     );
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"items":[{"url":"https://example.test","requestId":"request-1","status":null}]}\n',
+      '{"cols":["url","requestId","status"],"rows":[["https://example.test","request-1",null],["https://example.test/two","request-2",200]]}\n',
+    );
+  });
+
+  it('uses a third-party tool default projection without a CLI allowlist', async () => {
+    setupClient();
+    setupPaginatedTool(['id', 'label', 'details'], ['id', 'label']);
+    mocks.session.tools.call.mockResolvedValueOnce({
+      items: [
+        { id: 'one', label: 'First', details: { size: 1 } },
+        { id: 'two', label: 'Second', details: { size: 2 } },
+      ],
+      page: { limit: 2, hasMore: false },
+    });
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        '@example/plugin',
+        'call',
+        '--tool',
+        'list',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"cols":["id","label"],"rows":[["one","First"],["two","Second"]]}\n',
     );
   });
 

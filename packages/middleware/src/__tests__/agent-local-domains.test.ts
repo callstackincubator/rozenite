@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createMemoryDomainService } from '../agent/local-domains.js';
+import {
+  createMemoryDomainService,
+  createNetworkDomainService,
+  createReactDomainService,
+} from '../agent/local-domains.js';
 
 const waitForWriteCalls = async (
   fn: { mock: { calls: unknown[] } },
@@ -15,6 +19,41 @@ const waitForWriteCalls = async (
 
   expect(fn.mock.calls.length).toBeGreaterThanOrEqual(count);
 };
+
+describe('paginated local domain contracts', () => {
+  it('publishes row metadata from React and network tool definitions', async () => {
+    const react = createReactDomainService({
+      sessionId: 'session-1',
+      sendReactDevToolsMessage() {},
+    });
+    const network = createNetworkDomainService({
+      getSessionInfo: () => ({
+        sessionId: 'session-1',
+        pageId: 'page-1',
+        deviceId: 'device-1',
+      }),
+      sendCommand: async () => ({}),
+      subscribeToCDPEvent: () => () => {},
+    });
+
+    expect(
+      react.getTools().find((tool) => tool.name === 'getTree')?.pagination,
+    ).toMatchObject({
+      kind: 'cursor',
+      fields: expect.arrayContaining(['nodeId', 'childIds', 'depth']),
+    });
+    expect(
+      network.getTools().find((tool) => tool.name === 'listRequests')
+        ?.pagination,
+    ).toMatchObject({
+      kind: 'cursor',
+      fields: expect.arrayContaining(['requestId', 'url', 'status']),
+    });
+
+    await react.dispose();
+    await network.dispose();
+  });
+});
 
 describe('memory domain service', () => {
   it('waits for pending heap snapshot chunk writes before finalizing', async () => {

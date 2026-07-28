@@ -62,6 +62,18 @@ const CONSOLE_TOOLS: AgentTool[] = [
         },
       },
     },
+    pagination: {
+      kind: 'cursor',
+      fields: [
+        'seq',
+        'timestamp',
+        'level',
+        'source',
+        'text',
+        'argsPreview',
+        'context',
+      ],
+    },
   },
 ];
 

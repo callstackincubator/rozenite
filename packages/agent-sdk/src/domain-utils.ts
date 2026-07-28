@@ -264,4 +264,5 @@ export const toAgentToolSchema = (tool: AgentTool): AgentToolSchema => ({
   name: tool.name,
   shortName: inferToolShortName(tool.name),
   inputSchema: tool.inputSchema,
+  ...(tool.pagination ? { pagination: tool.pagination } : {}),
 });
