@@ -131,6 +131,7 @@ export const createAgentSession = (options: {
   let socketAttempt = 0;
   let activeSocketAttempt = 0;
   let expectedPluginToolNames = new Set<string>();
+  let pluginReadinessSatisfied = false;
   let healing: AgentSessionInfo['healing'];
   const activeAccumulatedDomains = new Map<string, string>();
   const lostAccumulatedDomains = new Map<string, string>();
@@ -242,7 +243,10 @@ export const createAgentSession = (options: {
     }
 
     pluginReadiness.quietTimer = setTimeout(() => {
-      resolveStartReadiness();
+      pluginReadinessSatisfied = true;
+      if (bootstrapped) {
+        resolveStartReadiness();
+      }
     }, PLUGIN_READINESS_QUIET_WINDOW_MS);
   };
 
@@ -252,8 +256,9 @@ export const createAgentSession = (options: {
     }
 
     clearPluginReadiness();
+    pluginReadinessSatisfied = false;
     if (expectedPluginToolNames.size === 0) {
-      resolveStartReadiness();
+      pluginReadinessSatisfied = true;
       return;
     }
     pluginReadiness = {
@@ -518,13 +523,17 @@ export const createAgentSession = (options: {
       await sendCommand('Runtime.evaluate', {
         expression: `void ${RUNTIME_GLOBAL}.initializeDomain("rozenite")`,
       });
-      bootstrapped = true;
       // Arm before notifying the plugin: registration may be synchronous.
       beginPluginReadinessWait();
       await sendAgentSessionReady();
       await sendCommand('Runtime.evaluate', {
         expression: `void ${RUNTIME_GLOBAL}.initializeDomain("react-devtools")`,
       });
+
+      bootstrapped = true;
+      if (pluginReadinessSatisfied) {
+        resolveStartReadiness();
+      }
 
       lastError = undefined;
       touch();
@@ -655,6 +664,9 @@ export const createAgentSession = (options: {
       new Error('CDP connection closed before bootstrap completed'),
     );
 
+    const previousPluginToolNames = new Set(
+      handler.getTools(options.target.id).map((tool) => tool.name),
+    );
     handler.disconnectDevice(options.target.id);
 
     for (const service of localServices) {
@@ -691,9 +703,7 @@ export const createAgentSession = (options: {
       (candidate) => reason.includes(candidate),
     );
     if (recoveryReason) {
-      expectedPluginToolNames = new Set(
-        handler.getTools(options.target.id).map((tool) => tool.name),
-      );
+      expectedPluginToolNames = previousPluginToolNames;
       rememberLostAccumulatedState();
       recoveryPromise ??= recover(recoveryReason, generation);
       return;
