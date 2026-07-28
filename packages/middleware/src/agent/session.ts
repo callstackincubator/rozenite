@@ -29,6 +29,18 @@ const DISPATCHER_INIT_MAX_ATTEMPTS = 20;
 const DISPATCHER_INIT_RETRY_MS = 250;
 const PLUGIN_READINESS_QUIET_WINDOW_MS = 50;
 const PLUGIN_READINESS_MAX_WAIT_MS = 250;
+const RECOVERY_RETRY_DELAY_MS = 500;
+const RECOVERY_MAX_ATTEMPTS = 16;
+
+const RECOVERABLE_CLOSE_REASONS = new Set([
+  '[RECREATING_DEVICE]',
+  '[PAGE_NOT_FOUND]',
+  '[CONNECTION_LOST]',
+]);
+const DEVTOOLS_TOOK_CONNECTION_REASON = '[NEW_DEBUGGER_OPENED]';
+
+const getCloseReason = (reason: unknown): string =>
+  Buffer.isBuffer(reason) ? reason.toString() : String(reason ?? '');
 
 const getDebuggerWebSocketOrigin = (webSocketDebuggerUrl: string): string => {
   const url = new URL(webSocketDebuggerUrl);
@@ -87,10 +99,12 @@ export const createAgentSession = (options: {
   host: string;
   port: number;
   target: MetroTarget;
+  resolveTarget?: (deviceId: string) => Promise<MetroTarget>;
   cliVersion?: string;
   metroVersion?: string;
   onTerminated?: (sessionId: string) => void;
 }) => {
+  let target = options.target;
   const handler = createAgentMessageHandler();
   const artifacts = createAgentArtifacts(
     options.projectRoot,
@@ -112,6 +126,10 @@ export const createAgentSession = (options: {
   let disconnectLogged = false;
   let startReadiness: StartReadiness | null = null;
   let pluginReadiness: PluginReadiness | null = null;
+  let recoveryPromise: Promise<void> | null = null;
+  let healing: AgentSessionInfo['healing'];
+  const activeAccumulatedDomains = new Map<string, string>();
+  const lostAccumulatedDomains = new Map<string, string>();
 
   const pendingCommands = new Map<number, PendingCommand>();
   const cdpEventListeners = new Map<
@@ -129,7 +147,7 @@ export const createAgentSession = (options: {
 
   const getSessionInfoFields = () => ({
     sessionId: options.target.id,
-    pageId: options.target.pageId,
+    pageId: target.pageId,
     deviceId: options.target.id,
   });
 
@@ -493,7 +511,86 @@ export const createAgentSession = (options: {
     await Promise.all(localServices.map((service) => service.dispose()));
   };
 
-  const handleSocketClosed = (): void => {
+  const rememberLostAccumulatedState = (): void => {
+    for (const [toolName, domain] of activeAccumulatedDomains) {
+      lostAccumulatedDomains.set(toolName, domain);
+    }
+    activeAccumulatedDomains.clear();
+  };
+
+  const waitForRecoveryTarget = async (): Promise<MetroTarget> => {
+    if (!options.resolveTarget) {
+      throw new Error('This session cannot resolve a fresh Metro target');
+    }
+
+    let lastRecoveryError: unknown;
+    for (let attempt = 1; attempt <= RECOVERY_MAX_ATTEMPTS; attempt += 1) {
+      try {
+        return await options.resolveTarget(options.target.id);
+      } catch (error) {
+        lastRecoveryError = error;
+        if (attempt < RECOVERY_MAX_ATTEMPTS) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, RECOVERY_RETRY_DELAY_MS);
+          });
+        }
+      }
+    }
+
+    throw lastRecoveryError instanceof Error
+      ? lastRecoveryError
+      : new Error('The app did not reconnect to Metro');
+  };
+
+  const recover = async (reason: string): Promise<void> => {
+    status = 'connecting';
+    try {
+      // Metro can still be publishing the replacement page when it first
+      // closes the old debugger socket. Retry one fresh connection after the
+      // target-resolution backoff above instead of treating that race as a
+      // terminal session failure.
+      let connected = false;
+      let lastConnectError: unknown;
+      for (let attempt = 1; attempt <= 2 && !connected; attempt += 1) {
+        try {
+          target = await waitForRecoveryTarget();
+          const readinessPromise = createStartReadiness();
+          void readinessPromise.catch(() => undefined);
+          await connect();
+          await readinessPromise;
+          connected = true;
+        } catch (error) {
+          lastConnectError = error;
+          if (stopped || attempt === 2) {
+            throw error;
+          }
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, RECOVERY_RETRY_DELAY_MS);
+          });
+        }
+      }
+      if (!connected) {
+        throw lastConnectError;
+      }
+      healing = {
+        outcome: 'recovered',
+        message: `Reconnected after ${reason}. Accumulated state from the previous app instance was lost.`,
+        at: Date.now(),
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      lastError = message;
+      healing = { outcome: 'failed', message, at: Date.now() };
+      status = 'stopped';
+      stopped = true;
+      await disposeServices();
+      notifyTerminated();
+    } finally {
+      recoveryPromise = null;
+    }
+  };
+
+  const handleSocketClosed = (reason: string): void => {
     logDisconnected();
     bindingName = null;
     bootstrapped = false;
@@ -515,17 +612,37 @@ export const createAgentSession = (options: {
 
     clearBootstrapTimer();
     clearPluginReadiness();
-    status = 'stopped';
-
     if (stopped) {
+      status = 'stopped';
       notifyTerminated();
       return;
     }
 
+    rememberLostAccumulatedState();
+    if (reason.includes(DEVTOOLS_TOOK_CONNECTION_REASON)) {
+      status = 'stopped';
+      stopped = true;
+      const message =
+        'React Native DevTools took the connection — close it and retry.';
+      lastError = message;
+      healing = { outcome: 'blocked', message, at: Date.now() };
+      void disposeServices().finally(() => {
+        notifyTerminated();
+      });
+      return;
+    }
+
+    const recoveryReason = Array.from(RECOVERABLE_CLOSE_REASONS).find(
+      (candidate) => reason.includes(candidate),
+    );
+    if (recoveryReason) {
+      recoveryPromise ??= recover(recoveryReason);
+      return;
+    }
+
+    status = 'stopped';
     stopped = true;
-    void disposeServices().finally(() => {
-      notifyTerminated();
-    });
+    void disposeServices().finally(() => notifyTerminated());
   };
 
   const handleSocketMessage = (rawMessage: string): void => {
@@ -583,7 +700,15 @@ export const createAgentSession = (options: {
 
     const consoleMessage = extractConsoleMessage(message);
     if (consoleMessage) {
+      activeAccumulatedDomains.set('getMessages', 'console messages');
       handler.captureConsoleMessage(options.target.id, consoleMessage);
+    }
+
+    if (
+      typeof message.method === 'string' &&
+      message.method.startsWith('Network.')
+    ) {
+      activeAccumulatedDomains.set('listRequests', 'network recording');
     }
 
     const bindingPayload = parseRozeniteBindingPayload(message);
@@ -622,10 +747,10 @@ export const createAgentSession = (options: {
     status = 'connecting';
 
     await new Promise<void>((resolve, reject) => {
-      const socket = new WebSocket(options.target.webSocketDebuggerUrl, {
+      const socket = new WebSocket(target.webSocketDebuggerUrl, {
         headers: {
           Origin: getDebuggerWebSocketOrigin(
-            options.target.webSocketDebuggerUrl,
+            target.webSocketDebuggerUrl,
           ),
         },
       });
@@ -679,8 +804,11 @@ export const createAgentSession = (options: {
         }
       });
 
-      socket.once('close', () => {
-        handleSocketClosed();
+      socket.once('close', (_code: unknown, reason: unknown) => {
+        if (ws === socket) {
+          ws = null;
+        }
+        handleSocketClosed(getCloseReason(reason));
         if (!settled) {
           reject(
             new Error('CDP websocket closed before session initialization'),
@@ -695,15 +823,16 @@ export const createAgentSession = (options: {
     host: options.host,
     port: options.port,
     deviceId: options.target.id,
-    deviceName: options.target.name,
-    appId: options.target.appId,
-    pageId: options.target.pageId,
+    deviceName: target.name,
+    appId: target.appId,
+    pageId: target.pageId,
     status,
     createdAt,
     lastActivityAt,
     ...(connectedAt ? { connectedAt } : {}),
     ...(lastError ? { lastError } : {}),
-    toolCount: getToolCount(options.target, handler, localServices),
+    ...(healing ? { healing } : {}),
+    toolCount: getToolCount(target, handler, localServices),
   });
 
   const getTools = () => {
@@ -723,11 +852,29 @@ export const createAgentSession = (options: {
       );
     }
 
+    const lostDomain = lostAccumulatedDomains.get(toolName);
+    if (lostDomain) {
+      lostAccumulatedDomains.delete(toolName);
+      throw new Error(
+        `AGENT_SESSION_STATE_LOST: ${lostDomain} was lost while the app relaunched. Retry this operation to collect new state.`,
+      );
+    }
+
     touch();
+
+    if (toolName === 'startProfiling') {
+      activeAccumulatedDomains.set('stopProfiling', 'profiling data');
+    }
+    if (toolName === 'startRecording') {
+      activeAccumulatedDomains.set('stopRecording', 'network recording');
+    }
 
     for (const service of localServices) {
       const result = await service.callTool(toolName, args);
       if (result !== undefined) {
+        if (toolName === 'stopProfiling' || toolName === 'stopRecording') {
+          activeAccumulatedDomains.delete(toolName);
+        }
         return result;
       }
     }
@@ -758,6 +905,7 @@ export const createAgentSession = (options: {
     }
 
     stopped = true;
+    recoveryPromise = null;
     clearBootstrapTimer();
     clearPluginReadiness();
     rejectStartReadiness(
@@ -783,5 +931,7 @@ export const createAgentSession = (options: {
     getInfo,
     getTools,
     callTool,
+    isReusable: (nextTarget: MetroTarget) =>
+      status === 'connected' && target.pageId === nextTarget.pageId,
   };
 };

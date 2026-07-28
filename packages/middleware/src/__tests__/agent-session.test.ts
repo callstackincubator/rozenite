@@ -263,6 +263,7 @@ const createStartedSession = (
     cliVersion: string;
     metroVersion: string;
     target: MetroTarget;
+    resolveTarget: (deviceId: string) => Promise<MetroTarget>;
   }>,
 ) => {
   const session = createAgentSession({
@@ -283,6 +284,7 @@ const startSession = async (
   overrides?: Partial<{
     cliVersion: string;
     metroVersion: string;
+    resolveTarget: (deviceId: string) => Promise<MetroTarget>;
   }>,
 ) => {
   const started = createStartedSession(overrides);
@@ -526,6 +528,71 @@ describe('agent session', () => {
     );
 
     expect(readyExpressions).toHaveLength(2);
+  });
+
+  it('heals a relaunched app with the same device id and a new page id', async () => {
+    const replacementTarget = createTarget({
+      pageId: 'page-2',
+      webSocketDebuggerUrl: 'ws://localhost:8081/debug?page=2',
+    });
+    const resolveTarget = vi.fn().mockResolvedValue(replacementTarget);
+    const { session, socket } = await startSession({ resolveTarget });
+
+    socket.emit('close', 1000, Buffer.from('[RECREATING_DEVICE]'));
+    await flushMicrotasks();
+
+    expect(session.getInfo()).toMatchObject({ status: 'connecting' });
+    expect(resolveTarget).toHaveBeenCalledWith('device-1');
+
+    const replacementSocket = mocks.wsInstances[1];
+    replacementSocket.open();
+    await vi.advanceTimersByTimeAsync(550);
+    await flushMicrotasks();
+
+    expect(session.getInfo()).toMatchObject({
+      id: 'device-1',
+      pageId: 'page-2',
+      status: 'connected',
+      healing: { outcome: 'recovered' },
+    });
+    expect(mocks.handler.disconnectDevice).toHaveBeenCalledWith('device-1');
+    expect(mocks.handler.connectDevice).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not reconnect when React Native DevTools takes the connection', async () => {
+    const resolveTarget = vi.fn();
+    const { session, socket } = await startSession({ resolveTarget });
+
+    socket.emit('close', 1000, Buffer.from('[NEW_DEBUGGER_OPENED]'));
+    await flushMicrotasks();
+
+    expect(resolveTarget).not.toHaveBeenCalled();
+    expect(mocks.wsInstances).toHaveLength(1);
+    expect(session.getInfo()).toMatchObject({
+      status: 'stopped',
+      healing: {
+        outcome: 'blocked',
+        message:
+          'React Native DevTools took the connection — close it and retry.',
+      },
+    });
+  });
+
+  it('surfaces profiling state lost during a healed relaunch', async () => {
+    const resolveTarget = vi.fn().mockResolvedValue(createTarget({ pageId: 'page-2' }));
+    const { session, socket } = await startSession({ resolveTarget });
+    await session.callTool('startProfiling', {});
+
+    socket.emit('close', 1000, Buffer.from('[CONNECTION_LOST]'));
+    await flushMicrotasks();
+    const replacementSocket = mocks.wsInstances[1];
+    replacementSocket.open();
+    await vi.advanceTimersByTimeAsync(550);
+    await flushMicrotasks();
+
+    await expect(session.callTool('stopProfiling', {})).rejects.toThrow(
+      'AGENT_SESSION_STATE_LOST: profiling data was lost',
+    );
   });
 
   it('logs when the agent session websocket connects', async () => {
