@@ -8,6 +8,25 @@ description: Use Rozenite for Agents through CLI-driven `rozenite agent` command
 - Use `npx rozenite` for Rozenite commands.
 - Run `npx rozenite` from the app root where Metro is started for the target app. In monorepos, this is usually the app package root, not the repository root.
 
+## Listing output contract
+
+`agent domains` and `agent <domain> tools` always write compact JSON. The
+`--json` / `-j` option is retained as a compatibility no-op and never changes
+the output shape.
+
+- With two or more rows, listings use the stable columnar contract:
+  `{"cols":["id","kind"],"rows":[["console","static"],["react","static"]]}`.
+  `cols` is exactly the requested field order; an absent optional value is
+  represented by `null` in its row.
+- With zero or one row, listings remain row-keyed:
+  `{"items":[{"id":"console","kind":"static"}]}`.
+- Terminal pages omit pagination metadata. When more rows exist, `next` is a
+  shell-escaped, runnable `rozenite agent ... --cursor <token>` command that
+  preserves the listing's connection, session, projection, and limit options.
+
+This is a CLI presentation contract. Direct tool-call payloads, SDK responses,
+and non-row command results retain their existing shapes.
+
 ## Handoff
 
 - Keep this skill for shell-driven `rozenite agent ...` workflows.

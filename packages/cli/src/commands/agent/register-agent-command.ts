@@ -7,10 +7,12 @@ import {
 } from '@rozenite/agent-shared';
 import { printOutput } from './output.js';
 import {
+  formatAgentCommand,
   paginateRows,
   parseFields,
   parseLimit,
   projectRows,
+  shapePaginatedRows,
 } from './output-shaping.js';
 import { getErrorMessage } from './error-message.js';
 import { getPackageJSON } from '../../package-json.js';
@@ -121,6 +123,25 @@ const getConnectionOptions = (cmd: Command): CommonOptions => {
     session: options.session,
   };
 };
+
+const getConnectionCommandArgs = (options: CommonOptions): string[] => [
+  '--host',
+  options.host,
+  '--port',
+  String(options.port),
+];
+
+const getListingOptionArgs = (
+  options: Pick<DynamicDomainCommandOptions, 'fields' | 'verbose'>,
+  limit: number,
+  cursor: string,
+): string[] => [
+  ...(options.verbose ? ['--verbose'] : options.fields ? ['--fields', options.fields] : []),
+  '--limit',
+  String(limit),
+  '--cursor',
+  cursor,
+];
 
 const getSessionId = (cmd: Command): string => {
   const options = cmd.optsWithGlobals<CommonOptions>();
@@ -314,10 +335,24 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                 cursor: dynamicOptions.cursor,
               });
 
-              return {
-                items: paged.items,
-                page: paged.page,
-              };
+              return shapePaginatedRows(
+                paged,
+                fields,
+                paged.page.nextCursor
+                  ? formatAgentCommand([
+                      domainToken,
+                      'tools',
+                      ...getConnectionCommandArgs(options),
+                      '--session',
+                      sessionId,
+                      ...getListingOptionArgs(
+                        dynamicOptions,
+                        limit,
+                        paged.page.nextCursor,
+                      ),
+                    ])
+                  : undefined,
+              );
             }
 
             if (!dynamicOptions.tool) {
@@ -358,7 +393,7 @@ export const registerAgentCommand = (program: Command): void => {
     .option('--host <host>', 'Metro host', DEFAULT_METRO_HOST)
     .option('--port <port>', 'Metro port', String(DEFAULT_METRO_PORT))
     .option('-j, --json', 'Deprecated no-op; agent commands always output JSON')
-    .option('--pretty', 'Pretty-print JSON output when --json is used');
+    .option('--pretty', 'Pretty-print JSON output');
 
   mcpCommand
     .command('targets')
@@ -390,7 +425,7 @@ export const registerAgentCommand = (program: Command): void => {
     .option('--host <host>', 'Metro host', DEFAULT_METRO_HOST)
     .option('--port <port>', 'Metro port', String(DEFAULT_METRO_PORT))
     .option('-j, --json', 'Deprecated no-op; agent commands always output JSON')
-    .option('--pretty', 'Pretty-print JSON output when --json is used');
+    .option('--pretty', 'Pretty-print JSON output');
 
   sessionCommand
     .command('create')
@@ -522,10 +557,23 @@ export const registerAgentCommand = (program: Command): void => {
             cursor: listOptions.cursor,
           });
 
-          return {
-            items: paged.items,
-            page: paged.page,
-          };
+          return shapePaginatedRows(
+            paged,
+            fields,
+            paged.page.nextCursor
+              ? formatAgentCommand([
+                  'domains',
+                  ...getConnectionCommandArgs(options),
+                  '--session',
+                  sessionId,
+                  ...getListingOptionArgs(
+                    listOptions,
+                    limit,
+                    paged.page.nextCursor,
+                  ),
+                ])
+              : undefined,
+          );
         })();
 
         printOutput(result, true, !!options.pretty);

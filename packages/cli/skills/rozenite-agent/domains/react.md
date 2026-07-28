@@ -22,3 +22,7 @@ Search and inspect:
 
 Profile:
 `startProfiling` -> reproduce interaction -> `stopProfiling` -> `getRenderData`.
+
+For CLI discovery listings (`agent react tools`), use the columnar `cols` and
+`rows` output when two or more tools are returned. Tool-call results such as
+`getTree` retain their tool-defined payload shape.

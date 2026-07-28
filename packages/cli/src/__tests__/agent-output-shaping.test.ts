@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatAgentCommand,
   parseFields,
   parseLimit,
   paginateRows,
   projectRows,
+  shapePaginatedRows,
 } from '../commands/agent/output-shaping.js';
 
 describe('agent output shaping', () => {
@@ -104,6 +106,57 @@ describe('agent output shaping', () => {
 
     expect(projected).toEqual([{ name: 'x', shortName: 'x' }]);
     expect(projected[0]).not.toHaveProperty('inputSchema');
+  });
+
+  it('uses selected fields to encode two or more rows as columns', () => {
+    const output = shapePaginatedRows(
+      {
+        items: [
+          { id: 'a', kind: 'static' },
+          { id: 'b' },
+        ],
+        page: { limit: 20, hasMore: false },
+      },
+      ['id', 'kind'],
+      undefined,
+    );
+
+    expect(output).toEqual({
+      cols: ['id', 'kind'],
+      rows: [
+        ['a', 'static'],
+        ['b', null],
+      ],
+    });
+  });
+
+  it('keeps zero and one row listings expanded and omits terminal pagination', () => {
+    expect(
+      shapePaginatedRows(
+        { items: [], page: { limit: 20, hasMore: false } },
+        ['id'],
+        undefined,
+      ),
+    ).toEqual({ items: [] });
+    expect(
+      shapePaginatedRows(
+        {
+          items: [{ id: 'a' }],
+          page: { limit: 1, hasMore: true, nextCursor: 'cursor' },
+        },
+        ['id'],
+        'rozenite agent domains --cursor cursor',
+      ),
+    ).toEqual({
+      items: [{ id: 'a' }],
+      next: 'rozenite agent domains --cursor cursor',
+    });
+  });
+
+  it('makes next commands safe to paste into a POSIX shell', () => {
+    expect(
+      formatAgentCommand(['domains', '--session', "session with ' quote"]),
+    ).toBe("rozenite agent domains --session 'session with '\"'\"' quote'");
   });
 
   it('clamps limit to max range', () => {

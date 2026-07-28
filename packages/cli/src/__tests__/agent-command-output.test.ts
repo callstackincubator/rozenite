@@ -91,7 +91,7 @@ describe('agent command output', () => {
       '{"items":[{"id":"device-1","name":"iPhone"}]}\n',
     );
     expect(mocks.createAgentClient).toHaveBeenCalledWith({
-      host: 'localhost',
+      host: '127.0.0.1',
       port: 8081,
     });
   });
@@ -298,7 +298,72 @@ describe('agent command output', () => {
     );
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"items":[{"id":"app","kind":"plugin"},{"id":"console","kind":"static"},{"id":"memory","kind":"static"},{"id":"network","kind":"static"},{"id":"performance","kind":"static"},{"id":"react","kind":"static"}],"page":{"limit":20,"hasMore":false}}\n',
+      '{"cols":["id","kind"],"rows":[["app","plugin"],["console","static"],["memory","static"],["network","static"],["performance","static"],["react","static"]]}\n',
+    );
+  });
+
+  it('prints a runnable next command instead of a pagination envelope', async () => {
+    setupClient();
+    mocks.session.domains.list.mockResolvedValue([
+      { id: 'app', kind: 'plugin' },
+      { id: 'console', kind: 'static' },
+    ]);
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'domains',
+        '--session',
+        'session 1',
+        '--limit',
+        '1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"items":[{"id":"app","kind":"plugin"}],"next":"rozenite agent domains --host 127.0.0.1 --port 8081 --session \'session 1\' --limit 1 --cursor eyJ2IjoxLCJraW5kIjoiZG9tYWlucyIsInNjb3BlIjoiYWxsIiwiaW5kZXgiOjF9"}\n',
+    );
+  });
+
+  it('uses the requested field order for columnar tool listings', async () => {
+    setupClient();
+    mocks.session.tools.list.mockResolvedValue([
+      { name: 'network.listRequests', shortName: 'listRequests', description: 'List requests' },
+      { name: 'network.getRequestDetails', shortName: 'getRequestDetails', description: 'Get details' },
+    ]);
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'network',
+        'tools',
+        '--session',
+        'session-1',
+        '--fields',
+        'description,name',
+      ],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"cols":["description","name"],"rows":[["Get details","network.getRequestDetails"],["List requests","network.listRequests"]]}\n',
     );
   });
 

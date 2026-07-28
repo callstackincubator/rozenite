@@ -93,6 +93,58 @@ export const projectRows = <T extends Record<string, unknown>>(
   });
 };
 
+type PaginatedRows<T> = {
+  items: T[];
+  page: {
+    limit: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  };
+};
+
+/**
+ * Shapes CLI-owned row listings for agent consumption.
+ *
+ * The selected fields, rather than fields observed in individual rows, define
+ * `cols`. This keeps the wire shape stable when optional values are absent.
+ * Zero- and one-row listings remain expanded because a column header costs
+ * more than the repeated keys it removes.
+ */
+export const shapePaginatedRows = (
+  paged: PaginatedRows<Record<string, unknown>>,
+  fields: readonly string[],
+  nextCommand: string | undefined,
+): Record<string, unknown> => {
+  const next = paged.page.hasMore && nextCommand ? { next: nextCommand } : {};
+
+  if (paged.items.length < 2) {
+    return {
+      items: paged.items,
+      ...next,
+    };
+  }
+
+  return {
+    cols: [...fields],
+    rows: paged.items.map((row) =>
+      fields.map((field) => row[field] ?? null),
+    ),
+    ...next,
+  };
+};
+
+const shellEscape = (value: string): string => {
+  if (/^[A-Za-z0-9_@%+=:,./-]+$/.test(value)) {
+    return value;
+  }
+
+  return `'${value.replaceAll("'", "'\"'\"'")}'`;
+};
+
+/** Builds a copy-pasteable POSIX shell command from already-separated args. */
+export const formatAgentCommand = (args: readonly string[]): string =>
+  ['rozenite', 'agent', ...args].map(shellEscape).join(' ');
+
 export const paginateRows = <T>(
   rows: T[],
   options: {
@@ -101,14 +153,7 @@ export const paginateRows = <T>(
     limit: number;
     cursor?: string;
   },
-): {
-  items: T[];
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
-} => {
+): PaginatedRows<T> => {
   let startIndex = 0;
   if (options.cursor) {
     const decoded = decodeCursor(options.cursor);

@@ -18,3 +18,7 @@ Record HTTP/HTTPS traffic, then list requests, inspect request and response deta
 ## Flow
 
 `startRecording` -> reproduce traffic -> `listRequests` -> `getRequestDetails` -> optional body fetch.
+
+The `agent network tools` discovery listing uses columnar `cols` and `rows`
+output at two or more rows; `listRequests` itself retains its tool-defined
+payload shape.
