@@ -40,7 +40,7 @@ const mockAttachedSessionRoute = (
 };
 
 describe('agent session domain and tool helpers', () => {
-  it('lists static and runtime domains with collision-safe plugin slugs', async () => {
+  it('lists static and runtime domains with short, derived plugin domain names', async () => {
     httpTestHarness.requestHandler.mockImplementation(
       async ({ pathname }: MockHttpRequest): Promise<MockHttpResult> => {
         const sessionRoute = mockAttachedSessionRoute(pathname);
@@ -65,13 +65,13 @@ describe('agent session domain and tool helpers', () => {
                     inputSchema: { type: 'object' },
                   },
                   {
-                    name: '@a/b.list',
-                    description: 'Scoped plugin',
+                    name: '@rozenite/mmkv-plugin.list-entries',
+                    description: 'Official plugin',
                     inputSchema: { type: 'object' },
                   },
                   {
-                    name: 'at-a__b.list',
-                    description: 'Colliding plugin',
+                    name: '@avasapp/rozenite-plugin-ably.list-channels',
+                    description: 'Third-party scoped plugin',
                     inputSchema: { type: 'object' },
                   },
                 ],
@@ -95,13 +95,61 @@ describe('agent session domain and tool helpers', () => {
       id: 'app',
       kind: 'plugin',
     });
+    expect(
+      domains.find((domain) => domain.pluginId === '@rozenite/mmkv-plugin'),
+    ).toMatchObject({
+      id: 'mmkv',
+      kind: 'plugin',
+    });
+    expect(
+      domains.find(
+        (domain) => domain.pluginId === '@avasapp/rozenite-plugin-ably',
+      ),
+    ).toMatchObject({
+      id: 'avasapp/ably',
+      kind: 'plugin',
+    });
+  });
 
-    const scoped = domains.find((domain) => domain.pluginId === '@a/b');
-    const colliding = domains.find((domain) => domain.pluginId === 'at-a__b');
+  it('rejects listing domains when two plugins would derive the same domain name', async () => {
+    httpTestHarness.requestHandler.mockImplementation(
+      async ({ pathname }: MockHttpRequest): Promise<MockHttpResult> => {
+        const sessionRoute = mockAttachedSessionRoute(pathname);
+        if (sessionRoute) {
+          return sessionRoute;
+        }
 
-    expect(scoped?.id).toMatch(/^at-a__b--[a-f0-9]{8}$/);
-    expect(colliding?.id).toMatch(/^at-a__b--[a-f0-9]{8}$/);
-    expect(scoped?.id).not.toBe(colliding?.id);
+        if (pathname === getAgentSessionToolsRoute('session-1')) {
+          return {
+            payload: {
+              ok: true,
+              result: {
+                tools: [
+                  {
+                    name: '@a/rozenite-plugin-x.list',
+                    description: 'First plugin',
+                    inputSchema: { type: 'object' },
+                  },
+                  {
+                    name: '@a/x-plugin.list',
+                    description: 'Second, same-author plugin',
+                    inputSchema: { type: 'object' },
+                  },
+                ],
+              },
+            },
+          };
+        }
+
+        return mockUnknownRoute();
+      },
+    );
+
+    const session = await attachSession();
+
+    await expect(session.domains.list()).rejects.toThrow(
+      /Ambiguous domain name "a\/x"/,
+    );
   });
 
   it('resolves domains and tools by plugin id and short tool name', async () => {
