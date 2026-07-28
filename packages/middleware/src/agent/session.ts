@@ -589,6 +589,25 @@ export const createAgentSession = (options: {
       : new Error('The app did not reconnect to Metro');
   };
 
+  const teardownConnection = (): void => {
+    bindingName = null;
+    bootstrapped = false;
+    connectedAt = undefined;
+    rejectStartReadiness(
+      new Error('CDP connection closed before bootstrap completed'),
+    );
+    handler.disconnectDevice(options.target.id);
+    for (const service of localServices) {
+      service.onDisconnected();
+    }
+    for (const [commandId, pending] of pendingCommands.entries()) {
+      pendingCommands.delete(commandId);
+      pending.reject(new Error('CDP connection closed'));
+    }
+    clearBootstrapTimer();
+    clearPluginReadiness();
+  };
+
   const recover = async (reason: string, generation: number): Promise<void> => {
     status = 'connecting';
     try {
@@ -616,6 +635,7 @@ export const createAgentSession = (options: {
           }
           const failedSocket = ws;
           if (failedSocket && failedSocket.readyState !== WebSocket.CLOSED) {
+            teardownConnection();
             activeSocketAttempt += 1;
             ws = null;
             await new Promise<void>((resolve) => {
