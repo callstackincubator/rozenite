@@ -778,6 +778,14 @@ export const createReactTreeStore = (
     const bridge = await ensureProfilingBridge(state);
     const statusBeforeStop = bridge.getProfilingStatus();
 
+    if (
+      !statusBeforeStop.isProfilingStarted &&
+      !statusBeforeStop.isProcessingData &&
+      !statusBeforeStop.hasProfilingData
+    ) {
+      throw new Error('No active profiling session for this session');
+    }
+
     if (statusBeforeStop.isProfilingStarted) {
       bridge.stopProfiling();
     }

@@ -167,3 +167,144 @@ describe('CLI React tree store labels', () => {
     });
   });
 });
+
+type MockPhase = 'idle' | 'profiling' | 'processing';
+
+const createConfigurableProfilingBridge = (options: {
+  initialPhase?: MockPhase;
+  initialDataForRoots?: Map<
+    number,
+    { commitData: Array<{ duration: number; timestamp: number }> }
+  >;
+  drainAfterStatusCalls?: number;
+  dataOnDrain?: Map<
+    number,
+    { commitData: Array<{ duration: number; timestamp: number }> }
+  >;
+}) => {
+  let phase: MockPhase = options.initialPhase ?? 'idle';
+  let dataForRoots = options.initialDataForRoots ?? new Map();
+  let statusCallCount = 0;
+
+  return {
+    ingest: () => null,
+    send: () => undefined,
+    startProfiling: () => {
+      phase = 'profiling';
+    },
+    stopProfiling: () => {
+      phase = 'idle';
+    },
+    reloadAndProfile: () => undefined,
+    getProfilingStatus: () => {
+      statusCallCount += 1;
+      if (
+        phase === 'processing' &&
+        options.drainAfterStatusCalls !== undefined &&
+        statusCallCount > options.drainAfterStatusCalls
+      ) {
+        phase = 'idle';
+        if (options.dataOnDrain) {
+          dataForRoots = options.dataOnDrain;
+        }
+      }
+
+      return {
+        supportsProfiling: true,
+        supportsReloadAndProfile: false,
+        isProfilingStarted: phase === 'profiling',
+        isProcessingData: phase === 'processing',
+        hasProfilingData: dataForRoots.size > 0,
+        rootsWithData: dataForRoots.size,
+        rootsCount: dataForRoots.size,
+      };
+    },
+    getProfilingDataSnapshot: () => ({
+      phase,
+      dataForRoots,
+      conflictingRootIds: new Set<number>(),
+      participatingRendererIds: new Set([1]),
+      pendingRendererIds: new Set<number>(),
+      receivedRendererIds: new Set([1]),
+    }),
+    getCommitData: () => {
+      throw new Error('No commit data');
+    },
+  };
+};
+
+describe('React stopProfiling guard', () => {
+  it('throws when stopProfiling is called with no active session', async () => {
+    const bridge = createConfigurableProfilingBridge({ initialPhase: 'idle' });
+    const store = createReactTreeStore({
+      createBridge: async () => bridge,
+    });
+    store.registerDevice(DEVICE_ID, { sendMessage: () => undefined });
+
+    await expect(store.stopProfiling(DEVICE_ID, {})).rejects.toThrow(
+      'No active profiling session for this session',
+    );
+  });
+
+  it('still collects data when profiling self-stopped and is still draining', async () => {
+    const dataOnDrain = new Map([
+      [1, { commitData: [{ duration: 5, timestamp: 100 }] }],
+    ]);
+    const bridge = createConfigurableProfilingBridge({
+      initialPhase: 'processing',
+      drainAfterStatusCalls: 2,
+      dataOnDrain,
+    });
+    const store = createReactTreeStore({
+      createBridge: async () => bridge,
+    });
+    store.registerDevice(DEVICE_ID, { sendMessage: () => undefined });
+
+    const result = await store.stopProfiling(DEVICE_ID, {
+      waitForDataMs: 200,
+    });
+
+    expect(result).toMatchObject({
+      session: { totalCommits: 1 },
+      renders: { count: 1 },
+    });
+    expect(result).not.toHaveProperty('partial');
+  });
+
+  it('returns already-collected data for an already-complete session', async () => {
+    const initialDataForRoots = new Map([
+      [1, { commitData: [{ duration: 8, timestamp: 200 }] }],
+    ]);
+    const bridge = createConfigurableProfilingBridge({
+      initialPhase: 'idle',
+      initialDataForRoots,
+    });
+    const store = createReactTreeStore({
+      createBridge: async () => bridge,
+    });
+    store.registerDevice(DEVICE_ID, { sendMessage: () => undefined });
+
+    const result = await store.stopProfiling(DEVICE_ID, {});
+
+    expect(result).toMatchObject({
+      session: { totalCommits: 1 },
+      renders: { count: 1 },
+    });
+  });
+
+  it('returns a real zero-commit measurement after start then stop with no re-renders', async () => {
+    const bridge = createConfigurableProfilingBridge({ initialPhase: 'idle' });
+    const store = createReactTreeStore({
+      createBridge: async () => bridge,
+    });
+    store.registerDevice(DEVICE_ID, { sendMessage: () => undefined });
+
+    await store.startProfiling(DEVICE_ID, {});
+    const result = await store.stopProfiling(DEVICE_ID, {});
+
+    expect(result).toMatchObject({
+      session: { totalCommits: 0 },
+      renders: { count: 0 },
+    });
+  });
+});
