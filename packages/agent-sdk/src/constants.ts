@@ -36,6 +36,10 @@ export const STATIC_DOMAINS: DomainDefinition[] = [
   },
 ];
 
+export const RESERVED_DOMAIN_NAMES: ReadonlySet<string> = new Set(
+  STATIC_DOMAINS.map((domain) => domain.id),
+);
+
 export const STATIC_DOMAIN_TOOL_PREFIXES: Record<string, string> = {};
 
 export const STATIC_DOMAIN_TOOL_NAMES: Record<string, string[]> = {

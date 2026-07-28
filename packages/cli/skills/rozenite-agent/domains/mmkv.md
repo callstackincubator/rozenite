@@ -5,7 +5,7 @@ A Rozenite plugin for MMKV storage inspection in React Native DevTools. It provi
 ## Domain
 
 - Plugin ID: `@rozenite/mmkv-plugin`
-- Domain token: `at-rozenite__mmkv-plugin`
+- Domain token: `mmkv`
 
 ## Tools
 

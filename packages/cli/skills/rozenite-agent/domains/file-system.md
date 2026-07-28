@@ -5,7 +5,7 @@ A Rozenite plugin for browsing app files and previewing file contents in React N
 ## Domain
 
 - Plugin ID: `@rozenite/file-system-plugin`
-- Domain token: `at-rozenite__file-system-plugin`
+- Domain token: `file-system`
 
 ## Tools
 

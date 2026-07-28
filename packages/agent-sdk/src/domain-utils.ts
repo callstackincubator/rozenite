@@ -1,6 +1,6 @@
-import { createHash } from 'node:crypto';
 import type { AgentTool } from '@rozenite/agent-shared';
 import {
+  RESERVED_DOMAIN_NAMES,
   STATIC_DOMAIN_TOOL_NAMES,
   STATIC_DOMAIN_TOOL_PREFIXES,
 } from './constants.js';
@@ -75,7 +75,79 @@ export const getDomainToolsByDefinition = (
   );
 };
 
-export const encodePluginDomainSlug = (pluginId: string): string => {
+const GENERIC_RESIDUE_NAMES = new Set(['plugin', 'devtool', 'devtools']);
+
+const ROZENITE_PLUGIN_PREFIX = 'rozenite-plugin-';
+const ROZENITE_PREFIX = 'rozenite-';
+const PLUGIN_SUFFIX = '-plugin';
+
+/**
+ * Strips the `rozenite-plugin-` prefix, else the `rozenite-` prefix, then the
+ * `-plugin` suffix. Order matters: `rozenite-plugin-ably` must reduce to
+ * `ably`, not `plugin-ably`.
+ */
+const reducePackageName = (name: string): string => {
+  let reduced = name;
+  if (reduced.startsWith(ROZENITE_PLUGIN_PREFIX)) {
+    reduced = reduced.slice(ROZENITE_PLUGIN_PREFIX.length);
+  } else if (reduced.startsWith(ROZENITE_PREFIX)) {
+    reduced = reduced.slice(ROZENITE_PREFIX.length);
+  }
+
+  if (reduced.endsWith(PLUGIN_SUFFIX)) {
+    reduced = reduced.slice(0, -PLUGIN_SUFFIX.length);
+  }
+
+  return reduced;
+};
+
+const parseScopedPackageName = (
+  pluginId: string,
+): { scope: string; name: string } | null => {
+  const match = pluginId.match(/^@([^/]+)\/(.+)$/);
+  if (!match) {
+    return null;
+  }
+
+  return { scope: match[1]!, name: match[2]! };
+};
+
+/**
+ * Derives a short, stable domain name from an npm package name. This is a
+ * pure function of `pluginId` alone: installing, removing, or updating any
+ * *other* plugin must never change the result. See
+ * https://github.com/callstackincubator/rozenite/issues/319 for the rules.
+ */
+export const deriveDomainName = (pluginId: string): string => {
+  const scoped = parseScopedPackageName(pluginId);
+
+  let candidate: string;
+  if (scoped) {
+    const reduced = reducePackageName(scoped.name);
+    if (!reduced || GENERIC_RESIDUE_NAMES.has(reduced)) {
+      candidate = scoped.scope;
+    } else if (scoped.scope === 'rozenite') {
+      candidate = reduced;
+    } else {
+      candidate = `${scoped.scope}/${reduced}`;
+    }
+  } else {
+    candidate = pluginId;
+  }
+
+  if (RESERVED_DOMAIN_NAMES.has(candidate)) {
+    return pluginId;
+  }
+
+  return candidate;
+};
+
+/**
+ * Undocumented, deprecated alias for the pre-#319 domain token shape, kept so
+ * `resolveDomainToken` still accepts scripts written against
+ * `at-rozenite__mmkv-plugin`-style tokens for one release cycle.
+ */
+const deriveLegacyDomainSlug = (pluginId: string): string => {
   const normalized = pluginId
     .toLowerCase()
     .replaceAll('@', 'at-')
@@ -85,10 +157,6 @@ export const encodePluginDomainSlug = (pluginId: string): string => {
     .replace(/^-+|-+$/g, '');
 
   return normalized || 'plugin';
-};
-
-const getCollisionHash = (pluginId: string): string => {
-  return createHash('sha1').update(pluginId).digest('hex').slice(0, 8);
 };
 
 export const buildRuntimePluginDomains = (
@@ -118,44 +186,47 @@ export const buildRuntimePluginDomains = (
     ),
   ).sort();
 
-  const baseSlugGroups = new Map<string, string[]>();
+  const pluginIdsByDomainName = new Map<string, string[]>();
   for (const pluginId of pluginIds) {
-    const baseSlug = encodePluginDomainSlug(pluginId);
-    const existing = baseSlugGroups.get(baseSlug) || [];
+    const domainName = deriveDomainName(pluginId);
+    const existing = pluginIdsByDomainName.get(domainName) || [];
     existing.push(pluginId);
-    baseSlugGroups.set(baseSlug, existing);
+    pluginIdsByDomainName.set(domainName, existing);
   }
 
-  const usedSlugs = new Set<string>();
+  for (const [domainName, collidingIds] of pluginIdsByDomainName) {
+    if (collidingIds.length > 1) {
+      throw new Error(
+        `Ambiguous domain name "${domainName}": plugins ${collidingIds.join(
+          ', ',
+        )} all derive the same domain name. Rename one of these packages to disambiguate.`,
+      );
+    }
+  }
 
   return pluginIds.map((pluginId) => {
-    const baseSlug = encodePluginDomainSlug(pluginId);
-    const collidingIds = baseSlugGroups.get(baseSlug) || [];
-
-    let slug = baseSlug;
-    if (collidingIds.length > 1) {
-      slug = `${baseSlug}--${getCollisionHash(pluginId)}`;
-    }
-
-    while (usedSlugs.has(slug)) {
-      slug = `${slug}-${getCollisionHash(`${pluginId}:${slug}`)}`;
-    }
-    usedSlugs.add(slug);
-
     const description =
       pluginId === 'app'
         ? 'Runtime tools exposed by the app itself.'
         : `Runtime tools exposed by plugin "${pluginId}".`;
 
     return {
-      id: slug,
+      id: deriveDomainName(pluginId),
       kind: 'plugin',
       pluginId,
-      slug,
+      slug: deriveLegacyDomainSlug(pluginId),
       description,
       actions: ['list-tools', 'get-tool-schema', 'call-tool'],
     };
   });
+};
+
+const getRozeniteScopedAlias = (
+  domain: DomainDefinition,
+): string | undefined => {
+  return domain.pluginId?.startsWith('@rozenite/')
+    ? `rozenite/${domain.id}`
+    : undefined;
 };
 
 export const resolveDomainToken = (
@@ -167,7 +238,8 @@ export const resolveDomainToken = (
     (domain) =>
       domain.id === normalized ||
       domain.slug === normalized ||
-      domain.pluginId === normalized,
+      domain.pluginId === normalized ||
+      getRozeniteScopedAlias(domain) === normalized,
   );
 };
 
@@ -188,7 +260,12 @@ export const rankDomainSuggestions = (
 
   return domains
     .map((domain) => {
-      const candidates = [domain.id, domain.slug, domain.pluginId]
+      const candidates = [
+        domain.id,
+        domain.slug,
+        domain.pluginId,
+        getRozeniteScopedAlias(domain),
+      ]
         .filter((value): value is string => typeof value === 'string')
         .map((value) => value.toLowerCase());
 
