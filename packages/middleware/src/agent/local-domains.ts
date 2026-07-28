@@ -1841,6 +1841,7 @@ export const createNetworkDomainService = (deps: {
       clearSubscriptions();
       state.isRecording = false;
       state.enabled = false;
+      resetCapture();
     },
     dispose: async () => {
       clearSubscriptions();
