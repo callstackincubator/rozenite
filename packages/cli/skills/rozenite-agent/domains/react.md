@@ -23,6 +23,8 @@ Search and inspect:
 Profile:
 `startProfiling` -> reproduce interaction -> `stopProfiling` -> `getRenderData`.
 
-For CLI discovery listings (`agent react tools`), use the columnar `cols` and
-`rows` output when two or more tools are returned. Tool-call results such as
-`getTree` retain their tool-defined payload shape.
+CLI discovery listings and paginated React calls (`getTree`, `searchNodes`,
+`getChildren`, `getProps`, `getState`, `getHooks`, and `getRenderData`) use
+columnar `cols` and `rows` output when two or more rows are returned. Their
+tool-specific metadata remains present, and `next` replaces the page envelope
+when another page is available.

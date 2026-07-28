@@ -10,22 +10,26 @@ description: Use Rozenite for Agents through CLI-driven `rozenite agent` command
 
 ## Listing output contract
 
-`agent domains` and `agent <domain> tools` always write compact JSON. The
+`agent domains`, `agent <domain> tools`, and known paginated domain tool calls
+always write compact JSON by default. Pass `--pretty` for indented JSON. The
 `--json` / `-j` option is retained as a compatibility no-op and never changes
 the output shape.
 
-- With two or more rows, listings use the stable columnar contract:
+- With two or more rows, row-shaped results use the stable columnar contract:
   `{"cols":["id","kind"],"rows":[["console","static"],["react","static"]]}`.
   `cols` is exactly the requested field order; an absent optional value is
   represented by `null` in its row.
-- With zero or one row, listings remain row-keyed:
+- With zero or one row, row-shaped results remain row-keyed:
   `{"items":[{"id":"console","kind":"static"}]}`.
 - Terminal pages omit pagination metadata. When more rows exist, `next` is a
   shell-escaped, runnable `rozenite agent ... --cursor <token>` command that
   preserves the listing's connection, session, projection, and limit options.
 
-This is a CLI presentation contract. Direct tool-call payloads, SDK responses,
-and non-row command results retain their existing shapes.
+Known paginated calls include console messages, React tree/search/inspection
+rows, render data, and network request listings. Tool-specific metadata (for
+example `roots`, `totalCount`, or `recording`) remains alongside the row shape.
+SDK responses and genuinely non-row command results retain their existing
+shapes.
 
 ## Handoff
 

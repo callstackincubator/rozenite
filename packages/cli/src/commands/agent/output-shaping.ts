@@ -27,7 +27,9 @@ const decodeCursor = (raw: string): CursorPayload => {
     }
     return payload;
   } catch {
-    throw new Error('Invalid --cursor. Run the listing command again with --limit 20.');
+    throw new Error(
+      'Invalid --cursor. Run the listing command again with --limit 20.',
+    );
   }
 };
 
@@ -72,7 +74,9 @@ export const parseLimit = (rawLimit: string | undefined): number => {
 
   const parsed = Number(rawLimit);
   if (!Number.isFinite(parsed) || parsed < 1 || !Number.isInteger(parsed)) {
-    throw new Error(`--limit must be an integer between 1 and ${MAX_PAGE_LIMIT}`);
+    throw new Error(
+      `--limit must be an integer between 1 and ${MAX_PAGE_LIMIT}`,
+    );
   }
 
   return Math.min(parsed, MAX_PAGE_LIMIT);
@@ -102,6 +106,9 @@ type PaginatedRows<T> = {
   };
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 /**
  * Shapes CLI-owned row listings for agent consumption.
  *
@@ -126,10 +133,52 @@ export const shapePaginatedRows = (
 
   return {
     cols: [...fields],
-    rows: paged.items.map((row) =>
-      fields.map((field) => row[field] ?? null),
-    ),
+    rows: paged.items.map((row) => fields.map((field) => row[field] ?? null)),
     ...next,
+  };
+};
+
+/**
+ * Applies the CLI presentation contract to a known tool's paginated result
+ * while retaining any non-row metadata owned by that tool.
+ */
+export const shapeToolResult = (
+  result: unknown,
+  fields: readonly string[],
+  nextCommand: string | undefined,
+): unknown => {
+  if (
+    !isRecord(result) ||
+    !Array.isArray(result.items) ||
+    !isRecord(result.page)
+  ) {
+    return result;
+  }
+
+  const { items, page, ...metadata } = result;
+  if (typeof page.limit !== 'number' || typeof page.hasMore !== 'boolean') {
+    return result;
+  }
+  if (page.hasMore && !nextCommand) {
+    return result;
+  }
+
+  return {
+    ...metadata,
+    ...shapePaginatedRows(
+      {
+        items: items as Record<string, unknown>[],
+        page: {
+          limit: page.limit,
+          hasMore: page.hasMore,
+          ...(typeof page.nextCursor === 'string'
+            ? { nextCursor: page.nextCursor }
+            : {}),
+        },
+      },
+      fields,
+      nextCommand,
+    ),
   };
 };
 
@@ -158,7 +207,9 @@ export const paginateRows = <T>(
   if (options.cursor) {
     const decoded = decodeCursor(options.cursor);
     if (decoded.kind !== options.kind || decoded.scope !== options.scope) {
-      throw new Error('Cursor does not match the requested listing. Run the command again.');
+      throw new Error(
+        'Cursor does not match the requested listing. Run the command again.',
+      );
     }
     startIndex = decoded.index;
   }

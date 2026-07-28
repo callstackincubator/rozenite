@@ -1,10 +1,7 @@
 import { Command } from 'commander';
 import { createAgentClient } from '@rozenite/agent-sdk';
 import { createAgentTransport } from '@rozenite/agent-sdk/transport';
-import {
-  DEFAULT_AGENT_HOST,
-  DEFAULT_AGENT_PORT,
-} from '@rozenite/agent-shared';
+import { DEFAULT_AGENT_HOST, DEFAULT_AGENT_PORT } from '@rozenite/agent-shared';
 import { printOutput } from './output.js';
 import {
   formatAgentCommand,
@@ -13,6 +10,7 @@ import {
   parseLimit,
   projectRows,
   shapePaginatedRows,
+  shapeToolResult,
 } from './output-shaping.js';
 import { getErrorMessage } from './error-message.js';
 import { getPackageJSON } from '../../package-json.js';
@@ -100,6 +98,82 @@ const DOMAIN_LIST_FIELDS = [
 ] as const;
 const DOMAIN_LIST_DEFAULT_FIELDS = ['id', 'kind'] as const;
 
+type ToolRowShape = {
+  fields: readonly string[];
+};
+
+const NODE_FIELDS = [
+  'nodeId',
+  'label',
+  'displayName',
+  'elementType',
+  'key',
+  'childCount',
+  'parentId',
+  'parentLabel',
+] as const;
+
+const TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
+  getTree: {
+    fields: [...NODE_FIELDS, 'childIds', 'depth'],
+  },
+  searchNodes: { fields: NODE_FIELDS },
+  getChildren: { fields: NODE_FIELDS },
+  getProps: { fields: ['name', 'value'] },
+  getState: { fields: ['name', 'value'] },
+  getHooks: { fields: ['name', 'value'] },
+  getRenderData: {
+    fields: [
+      'fiberId',
+      'actualDurationMs',
+      'selfDurationMs',
+      'isSlow',
+      'changeTypeHints',
+    ],
+  },
+  getMessages: {
+    fields: [
+      'seq',
+      'timestamp',
+      'level',
+      'source',
+      'text',
+      'argsPreview',
+      'context',
+    ],
+  },
+  listRequests: {
+    fields: [
+      'requestId',
+      'method',
+      'url',
+      'status',
+      'type',
+      'startTimeMs',
+      'endTimeMs',
+      'durationMs',
+      'transferSize',
+      'encodedDataLength',
+      'outcome',
+    ],
+  },
+  listRealtimeConnections: {
+    fields: [
+      'requestId',
+      'kind',
+      'url',
+      'status',
+      'startedAt',
+      'endedAt',
+      'durationMs',
+      'messageCount',
+      'error',
+      'closeCode',
+      'httpStatus',
+    ],
+  },
+};
+
 const projectSessionOutput = (
   session: Record<string, unknown>,
   versionCheck?: unknown,
@@ -136,12 +210,51 @@ const getListingOptionArgs = (
   limit: number,
   cursor: string,
 ): string[] => [
-  ...(options.verbose ? ['--verbose'] : options.fields ? ['--fields', options.fields] : []),
+  ...(options.verbose
+    ? ['--verbose']
+    : options.fields
+      ? ['--fields', options.fields]
+      : []),
   '--limit',
   String(limit),
   '--cursor',
   cursor,
 ];
+
+const getToolRowShape = (tool: string): ToolRowShape | undefined =>
+  TOOL_ROW_SHAPES[tool.split('.').at(-1) ?? tool];
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const getToolCallCommand = (
+  domain: string,
+  tool: string,
+  args: Record<string, unknown>,
+  cursor: string,
+  options: DynamicDomainCommandOptions,
+  connection: CommonOptions,
+  sessionId: string,
+): string =>
+  formatAgentCommand([
+    domain,
+    'call',
+    ...getConnectionCommandArgs(connection),
+    '--session',
+    sessionId,
+    '--tool',
+    tool,
+    '--args',
+    JSON.stringify({ ...args, cursor }),
+    ...(options.verbose
+      ? ['--verbose']
+      : options.fields
+        ? ['--fields', options.fields]
+        : []),
+    ...(options.pages ? ['--pages', options.pages] : []),
+    ...(options.maxItems ? ['--max-items', options.maxItems] : []),
+    ...(connection.pretty ? ['--pretty'] : []),
+  ]);
 
 const getSessionId = (cmd: Command): string => {
   const options = cmd.optsWithGlobals<CommonOptions>();
@@ -243,7 +356,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
     .option('-a, --args <json>', 'Tool arguments as JSON object', '{}')
     .option(
       '-f, --fields <csv>',
-      `Fields to include (${TOOL_LIST_FIELDS.join(', ')})`,
+      `Fields for discovery listings and known row results (${TOOL_LIST_FIELDS.join(', ')})`,
     )
     .option('-v, --verbose', 'Include all supported fields')
     .option('-n, --limit <n>', 'Page size (default 20, max 100)')
@@ -370,12 +483,47 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
 
             const parsedArgs = parseJsonArgs(dynamicOptions.args);
             const autoPagination = resolveAutoPaginationConfig(dynamicOptions);
-            return await session.tools.call({
+            const toolResult = await session.tools.call({
               domain: domainToken,
               tool: dynamicOptions.tool,
               args: parsedArgs,
               autoPaginate: autoPagination,
             });
+
+            const rowShape = getToolRowShape(dynamicOptions.tool);
+            if (!rowShape || !isRecord(parsedArgs)) {
+              return toolResult;
+            }
+
+            const fields = parseFields(
+              dynamicOptions.fields,
+              rowShape.fields,
+              rowShape.fields,
+              !!dynamicOptions.verbose,
+            );
+            const nextCursor =
+              isRecord(toolResult) &&
+              isRecord(toolResult.page) &&
+              toolResult.page.hasMore === true &&
+              typeof toolResult.page.nextCursor === 'string'
+                ? toolResult.page.nextCursor
+                : undefined;
+
+            return shapeToolResult(
+              toolResult,
+              fields,
+              nextCursor
+                ? getToolCallCommand(
+                    domainToken,
+                    dynamicOptions.tool,
+                    parsedArgs,
+                    nextCursor,
+                    dynamicOptions,
+                    options,
+                    sessionId,
+                  )
+                : undefined,
+            );
           })();
 
           printOutput(result, true, !!options.pretty);

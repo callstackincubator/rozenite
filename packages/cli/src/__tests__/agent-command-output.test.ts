@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { execFileSync } from 'node:child_process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getPackageJSON } from '../package-json.js';
 import { registerAgentCommand } from '../commands/agent/register-agent-command.js';
@@ -337,8 +338,16 @@ describe('agent command output', () => {
   it('uses the requested field order for columnar tool listings', async () => {
     setupClient();
     mocks.session.tools.list.mockResolvedValue([
-      { name: 'network.listRequests', shortName: 'listRequests', description: 'List requests' },
-      { name: 'network.getRequestDetails', shortName: 'getRequestDetails', description: 'Get details' },
+      {
+        name: 'network.listRequests',
+        shortName: 'listRequests',
+        description: 'List requests',
+      },
+      {
+        name: 'network.getRequestDetails',
+        shortName: 'getRequestDetails',
+        description: 'Get details',
+      },
     ]);
 
     const stdoutWrite = vi
@@ -465,6 +474,207 @@ describe('agent command output', () => {
     );
 
     expect(stdoutWrite).toHaveBeenCalledWith('{"value":"hello"}\n');
+  });
+
+  it('columnar-encodes terminal getTree rows using requested fields', async () => {
+    setupClient();
+    mocks.session.tools.call.mockResolvedValueOnce({
+      roots: [1],
+      totalCount: 2,
+      items: [
+        { nodeId: 1, displayName: 'App', childIds: [2] },
+        { nodeId: 2, displayName: 'Screen' },
+      ],
+      page: { limit: 20, hasMore: false },
+    });
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'react',
+        'call',
+        '--tool',
+        'getTree',
+        '--args',
+        '{}',
+        '--fields',
+        'displayName,nodeId,childIds',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"roots":[1],"totalCount":2,"cols":["displayName","nodeId","childIds"],"rows":[["App",1,[2]],["Screen",2,null]]}\n',
+    );
+  });
+
+  it('keeps an empty getTree result expanded without terminal page metadata', async () => {
+    setupClient();
+    mocks.session.tools.call.mockResolvedValueOnce({
+      roots: [],
+      totalCount: 0,
+      items: [],
+      page: { limit: 20, hasMore: false },
+    });
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'react',
+        'call',
+        '--tool',
+        'getTree',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"roots":[],"totalCount":0,"items":[]}\n',
+    );
+  });
+
+  it('keeps one row tool results expanded and prints a complete continuation', async () => {
+    setupClient();
+    mocks.session.tools.call.mockResolvedValueOnce({
+      recording: { isRecording: true },
+      items: [
+        {
+          requestId: 'request-1',
+          method: 'GET',
+          url: 'https://example.test',
+          status: null,
+          type: 'fetch',
+          startTimeMs: 1,
+          endTimeMs: null,
+          durationMs: null,
+          transferSize: null,
+          encodedDataLength: null,
+          outcome: 'in-flight',
+        },
+      ],
+      page: { limit: 1, hasMore: true, nextCursor: "next ' cursor" },
+    });
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'network domain',
+        'call',
+        '--tool',
+        'listRequests',
+        '--args',
+        '{"limit":1,"filter":"two words"}',
+        '--fields',
+        'url,status',
+        '--session',
+        'session id',
+        '--pretty',
+      ],
+      { from: 'node' },
+    );
+
+    const rawOutput = String(stdoutWrite.mock.calls[0][0]);
+    expect(rawOutput).toMatch(/^\{\n\s{2}"recording"/);
+    const output = JSON.parse(rawOutput);
+    expect(output).toMatchObject({
+      recording: { isRecording: true },
+      items: [{ requestId: 'request-1', status: null }],
+      next: expect.stringContaining("rozenite agent 'network domain' call"),
+    });
+
+    const continuation = output.next;
+    const args = execFileSync(
+      'zsh',
+      ['-c', `for arg in ${continuation}; do print -r -- "$arg"; done`],
+      { encoding: 'utf8' },
+    )
+      .trim()
+      .split('\n');
+    expect(args).toEqual([
+      'rozenite',
+      'agent',
+      'network domain',
+      'call',
+      '--host',
+      '127.0.0.1',
+      '--port',
+      '8081',
+      '--session',
+      'session id',
+      '--tool',
+      'listRequests',
+      '--args',
+      '{"limit":1,"filter":"two words","cursor":"next \' cursor"}',
+      '--fields',
+      'url,status',
+      '--pretty',
+    ]);
+  });
+
+  it('uses the fixed default schema for two-row listRequests results', async () => {
+    setupClient();
+    mocks.session.tools.call.mockResolvedValueOnce({
+      items: [
+        { requestId: 'one', method: 'GET', url: '/', status: 200 },
+        { requestId: 'two', method: 'POST', url: '/two', status: null },
+      ],
+      page: { limit: 20, hasMore: false },
+    });
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'network',
+        'call',
+        '--tool',
+        'listRequests',
+        '--args',
+        '{}',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"cols":["requestId","method","url","status","type","startTimeMs","endTimeMs","durationMs","transferSize","encodedDataLength","outcome"],"rows":[["one","GET","/",200,null,null,null,null,null,null,null],["two","POST","/two",null,null,null,null,null,null,null,null]]}\n',
+    );
   });
 
   it('prints JSON errors for agent command failures', async () => {

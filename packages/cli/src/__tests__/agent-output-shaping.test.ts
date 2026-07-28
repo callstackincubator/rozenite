@@ -6,6 +6,7 @@ import {
   paginateRows,
   projectRows,
   shapePaginatedRows,
+  shapeToolResult,
 } from '../commands/agent/output-shaping.js';
 
 describe('agent output shaping', () => {
@@ -111,10 +112,7 @@ describe('agent output shaping', () => {
   it('uses selected fields to encode two or more rows as columns', () => {
     const output = shapePaginatedRows(
       {
-        items: [
-          { id: 'a', kind: 'static' },
-          { id: 'b' },
-        ],
+        items: [{ id: 'a', kind: 'static' }, { id: 'b' }],
         page: { limit: 20, hasMore: false },
       },
       ['id', 'kind'],
@@ -157,6 +155,15 @@ describe('agent output shaping', () => {
     expect(
       formatAgentCommand(['domains', '--session', "session with ' quote"]),
     ).toBe("rozenite agent domains --session 'session with '\"'\"' quote'");
+  });
+
+  it('does not hide a malformed continuation from a known tool result', () => {
+    const result = {
+      items: [{ id: 'a' }, { id: 'b' }],
+      page: { limit: 2, hasMore: true },
+    };
+
+    expect(shapeToolResult(result, ['id'], undefined)).toBe(result);
   });
 
   it('clamps limit to max range', () => {

@@ -19,6 +19,6 @@ Record HTTP/HTTPS traffic, then list requests, inspect request and response deta
 
 `startRecording` -> reproduce traffic -> `listRequests` -> `getRequestDetails` -> optional body fetch.
 
-The `agent network tools` discovery listing uses columnar `cols` and `rows`
-output at two or more rows; `listRequests` itself retains its tool-defined
-payload shape.
+The `agent network tools` discovery listing and `listRequests` use columnar
+`cols` and `rows` output at two or more rows. `recording` metadata remains
+present, and `next` replaces the page envelope when another page is available.
