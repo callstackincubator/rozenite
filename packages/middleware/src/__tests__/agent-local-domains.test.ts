@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createMemoryDomainService } from '../agent/local-domains.js';
+import {
+  createMemoryDomainService,
+  createNetworkDomainService,
+} from '../agent/local-domains.js';
 
 const waitForWriteCalls = async (
   fn: { mock: { calls: unknown[] } },
@@ -124,5 +127,82 @@ describe('memory domain service', () => {
 
     expect(finalize).toHaveBeenCalledTimes(1);
     expect(abort).not.toHaveBeenCalled();
+  });
+});
+
+describe('network domain service', () => {
+  it('clears the captured request buffer and bumps the generation on disconnect', async () => {
+    const listeners = new Map<
+      string,
+      Set<(params: Record<string, unknown>) => void | Promise<void>>
+    >();
+
+    const subscribeToCDPEvent = (
+      method: string,
+      listener: (params: Record<string, unknown>) => void | Promise<void>,
+    ) => {
+      const entries = listeners.get(method) || new Set();
+      entries.add(listener);
+      listeners.set(method, entries);
+
+      return () => {
+        entries.delete(listener);
+        if (entries.size === 0) {
+          listeners.delete(method);
+        }
+      };
+    };
+
+    const emit = (method: string, params: Record<string, unknown>) => {
+      for (const listener of listeners.get(method) || []) {
+        void listener(params);
+      }
+    };
+
+    const service = createNetworkDomainService({
+      getSessionInfo: () => ({
+        sessionId: 'device-1',
+        pageId: 'page-1',
+        deviceId: 'device-1',
+      }),
+      sendCommand: async () => ({}),
+      subscribeToCDPEvent,
+    });
+
+    await service.callTool('startRecording', {});
+    emit('Network.requestWillBeSent', {
+      requestId: 'req-1',
+      request: { url: 'https://example.com', method: 'GET' },
+    });
+
+    const statusBeforeDisconnect = await service.callTool(
+      'getRecordingStatus',
+      {},
+    );
+    expect(statusBeforeDisconnect).toMatchObject({
+      recording: {
+        requestCount: 1,
+        generation: 1,
+      },
+    });
+
+    service.onDisconnected();
+
+    const statusAfterDisconnect = await service.callTool(
+      'getRecordingStatus',
+      {},
+    );
+    expect(statusAfterDisconnect).toMatchObject({
+      recording: {
+        isRecording: false,
+        requestCount: 0,
+        generation: 2,
+      },
+    });
+
+    const listResult = (await service.callTool('listRequests', {})) as {
+      items: unknown[];
+    };
+    expect(listResult.items).toEqual([]);
   });
 });
