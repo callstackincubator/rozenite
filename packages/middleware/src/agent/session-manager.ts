@@ -89,7 +89,12 @@ export const createAgentSessionManager = (options: {
         resolveMetroTarget(currentHost, currentPort, deviceId),
       onTerminated: (sessionId) => {
         const current = sessions.get(sessionId);
-        if (current === session && session.getInfo().healing) {
+        if (
+          current === session &&
+          ['blocked', 'failed'].includes(
+            session.getInfo().healing?.outcome ?? '',
+          )
+        ) {
           // Keep terminal recovery information visible to `session show` and
           // `session list`; an explicit stop or a replacement target removes it.
           return;

@@ -128,6 +128,9 @@ export const createAgentSession = (options: {
   let pluginReadiness: PluginReadiness | null = null;
   let recoveryPromise: Promise<void> | null = null;
   let connectionGeneration = 0;
+  let socketAttempt = 0;
+  let activeSocketAttempt = 0;
+  let expectedPluginToolNames = new Set<string>();
   let healing: AgentSessionInfo['healing'];
   const activeAccumulatedDomains = new Map<string, string>();
   const lostAccumulatedDomains = new Map<string, string>();
@@ -249,6 +252,10 @@ export const createAgentSession = (options: {
     }
 
     clearPluginReadiness();
+    if (expectedPluginToolNames.size === 0) {
+      resolveStartReadiness();
+      return;
+    }
     pluginReadiness = {
       quietTimer: null,
       timeoutTimer: setTimeout(() => {
@@ -266,7 +273,16 @@ export const createAgentSession = (options: {
       return;
     }
 
-    schedulePluginReadinessQuietTimer();
+    const registeredToolNames = new Set(
+      handler.getTools(options.target.id).map((tool) => tool.name),
+    );
+    if (
+      Array.from(expectedPluginToolNames).every((name) =>
+        registeredToolNames.has(name),
+      )
+    ) {
+      schedulePluginReadinessQuietTimer();
+    }
   };
 
   const isCurrentGeneration = (generation: number): boolean =>
@@ -502,15 +518,16 @@ export const createAgentSession = (options: {
       await sendCommand('Runtime.evaluate', {
         expression: `void ${RUNTIME_GLOBAL}.initializeDomain("rozenite")`,
       });
+      bootstrapped = true;
+      // Arm before notifying the plugin: registration may be synchronous.
+      beginPluginReadinessWait();
       await sendAgentSessionReady();
       await sendCommand('Runtime.evaluate', {
         expression: `void ${RUNTIME_GLOBAL}.initializeDomain("react-devtools")`,
       });
 
-      bootstrapped = true;
       lastError = undefined;
       touch();
-      beginPluginReadinessWait();
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
       scheduleBootstrap();
@@ -657,7 +674,6 @@ export const createAgentSession = (options: {
       return;
     }
 
-    rememberLostAccumulatedState();
     if (reason.includes(DEVTOOLS_TOOK_CONNECTION_REASON)) {
       status = 'stopped';
       stopped = true;
@@ -675,6 +691,10 @@ export const createAgentSession = (options: {
       (candidate) => reason.includes(candidate),
     );
     if (recoveryReason) {
+      expectedPluginToolNames = new Set(
+        handler.getTools(options.target.id).map((tool) => tool.name),
+      );
+      rememberLostAccumulatedState();
       recoveryPromise ??= recover(recoveryReason, generation);
       return;
     }
@@ -739,15 +759,7 @@ export const createAgentSession = (options: {
 
     const consoleMessage = extractConsoleMessage(message);
     if (consoleMessage) {
-      activeAccumulatedDomains.set('getMessages', 'console messages');
       handler.captureConsoleMessage(options.target.id, consoleMessage);
-    }
-
-    if (
-      typeof message.method === 'string' &&
-      message.method.startsWith('Network.')
-    ) {
-      activeAccumulatedDomains.set('listRequests', 'network recording');
     }
 
     const bindingPayload = parseRozeniteBindingPayload(message);
@@ -765,11 +777,10 @@ export const createAgentSession = (options: {
       }
 
       const devToolsMessage = bindingPayload.message as DevToolsPluginMessage;
+      handler.handleDeviceMessage(options.target.id, devToolsMessage);
       if (devToolsMessage.type === 'register-tool') {
         notePluginReadinessActivity();
       }
-
-      handler.handleDeviceMessage(options.target.id, devToolsMessage);
     } else if (bindingPayload.domain === 'react-devtools') {
       for (const service of localServices) {
         if (service.captureReactDevToolsMessage) {
@@ -789,10 +800,16 @@ export const createAgentSession = (options: {
         },
       });
       let settled = false;
+      const attempt = ++socketAttempt;
+      activeSocketAttempt = attempt;
       ws = socket;
 
       socket.once('open', () => {
-        if (!isCurrentGeneration(generation)) {
+        if (
+          !isCurrentGeneration(generation) ||
+          ws !== socket ||
+          activeSocketAttempt !== attempt
+        ) {
           socket.close();
           return;
         }
@@ -825,21 +842,29 @@ export const createAgentSession = (options: {
             lastError = startupError.message;
             clearBootstrapTimer();
             rejectStartReadiness(startupError);
-            ws?.close();
+            socket.close();
             reject(startupError);
           }
         })();
       });
 
       socket.on('message', (rawMessage: unknown) => {
-        if (generation !== connectionGeneration) {
+        if (
+          generation !== connectionGeneration ||
+          ws !== socket ||
+          activeSocketAttempt !== attempt
+        ) {
           return;
         }
         handleSocketMessage(String(rawMessage));
       });
 
       socket.once('error', (error: unknown) => {
-        if (generation !== connectionGeneration) {
+        if (
+          generation !== connectionGeneration ||
+          ws !== socket ||
+          activeSocketAttempt !== attempt
+        ) {
           return;
         }
         lastError = error instanceof Error ? error.message : String(error);
@@ -849,9 +874,8 @@ export const createAgentSession = (options: {
       });
 
       socket.once('close', (_code: unknown, reason: unknown) => {
-        if (ws === socket) {
-          ws = null;
-        }
+        if (ws !== socket || activeSocketAttempt !== attempt) return;
+        ws = null;
         handleSocketClosed(getCloseReason(reason), generation);
         if (!settled) {
           reject(

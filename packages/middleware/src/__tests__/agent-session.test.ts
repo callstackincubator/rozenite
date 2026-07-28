@@ -390,16 +390,7 @@ describe('agent session', () => {
     await flushMicrotasks();
     expect(onResolved).not.toHaveBeenCalled();
 
-    await vi.advanceTimersByTimeAsync(50);
-    await flushMicrotasks();
-    expect(onResolved).not.toHaveBeenCalled();
-
-    await emitRozeniteBindingPayload(socket, {
-      pluginId: '@rozenite/test-plugin',
-      type: 'register-tool',
-      payload: {},
-    });
-    await vi.advanceTimersByTimeAsync(50);
+    await vi.advanceTimersByTimeAsync(1);
     await flushMicrotasks();
     await startPromise;
 
@@ -415,18 +406,6 @@ describe('agent session', () => {
     await vi.advanceTimersByTimeAsync(500);
     await flushMicrotasks();
 
-    expect(onResolved).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(49);
-    await flushMicrotasks();
-    expect(onResolved).not.toHaveBeenCalled();
-
-    await emitRozeniteBindingPayload(socket, {
-      pluginId: '@rozenite/test-plugin',
-      type: 'register-tool',
-      payload: {},
-    });
-    await vi.advanceTimersByTimeAsync(50);
     await flushMicrotasks();
 
     expect(onResolved).toHaveBeenCalledTimes(1);
@@ -459,45 +438,20 @@ describe('agent session', () => {
       },
     });
 
-    expect(onResolved).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(49);
-    await flushMicrotasks();
-    expect(onResolved).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(1);
-    await flushMicrotasks();
     await expect(startPromise).resolves.toBeUndefined();
   });
 
-  it('fails start when plugin readiness never arrives', async () => {
+  it('starts built-in-only sessions without plugin registration', async () => {
     const { startPromise, socket } = createStartedSession();
-    void startPromise.catch(() => undefined);
     const onResolved = vi.fn();
-    startPromise.then(onResolved, () => undefined);
+    startPromise.then(onResolved);
 
     socket.open();
     await vi.advanceTimersByTimeAsync(500);
     await flushMicrotasks();
 
-    for (let elapsed = 0; elapsed < 245; elapsed += 49) {
-      await vi.advanceTimersByTimeAsync(49);
-      await flushMicrotasks();
-      await emitRozeniteBindingPayload(socket, {
-        pluginId: '@rozenite/storage-plugin',
-        type: 'plugin-mounted',
-        payload: {
-          pluginId: '@rozenite/storage-plugin',
-        },
-      });
-      expect(onResolved).not.toHaveBeenCalled();
-    }
-
-    await vi.advanceTimersByTimeAsync(5);
-    await flushMicrotasks();
-    await expect(startPromise).rejects.toThrow(
-      'Plugin tools did not re-register',
-    );
+    await expect(startPromise).resolves.toBeUndefined();
+    expect(onResolved).toHaveBeenCalledTimes(1);
   });
 
   it('emits agent-session-ready after rozenite domain initialization', async () => {
