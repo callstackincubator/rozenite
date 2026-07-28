@@ -403,7 +403,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
     .option('-a, --args <json>', 'Tool arguments as JSON object', '{}')
     .option(
       '-f, --fields <csv>',
-      `Fields for discovery listings and known row results (${TOOL_LIST_FIELDS.join(', ')})`,
+      'Comma-separated output fields; allowed fields depend on the listing or known row tool',
     )
     .option('-v, --verbose', 'Include all supported fields')
     .option('-n, --limit <n>', 'Page size (default 20, max 100)')
@@ -530,25 +530,32 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
             }
 
             const parsedArgs = parseJsonArgs(dynamicOptions.args);
+            const rowShape = getToolRowShape(domainToken, dynamicOptions.tool);
+            const knownToolArgs = rowShape
+              ? isRecord(parsedArgs)
+                ? parsedArgs
+                : {}
+              : undefined;
+            const fields = rowShape
+              ? parseFields(
+                  dynamicOptions.fields,
+                  rowShape.fields,
+                  rowShape.fields,
+                  !!dynamicOptions.verbose,
+                )
+              : undefined;
             const autoPagination = resolveAutoPaginationConfig(dynamicOptions);
             const toolResult = await session.tools.call({
               domain: domainToken,
               tool: dynamicOptions.tool,
-              args: parsedArgs,
+              args: knownToolArgs ?? parsedArgs,
               autoPaginate: autoPagination,
             });
 
-            const rowShape = getToolRowShape(domainToken, dynamicOptions.tool);
-            if (!rowShape || !isRecord(parsedArgs)) {
+            if (!rowShape || !knownToolArgs || !fields) {
               return toolResult;
             }
 
-            const fields = parseFields(
-              dynamicOptions.fields,
-              rowShape.fields,
-              rowShape.fields,
-              !!dynamicOptions.verbose,
-            );
             const nextCursor =
               isRecord(toolResult) &&
               isRecord(toolResult.page) &&
@@ -564,7 +571,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                 ? getToolCallCommand(
                     domainToken,
                     dynamicOptions.tool,
-                    parsedArgs,
+                    knownToolArgs,
                     nextCursor,
                     dynamicOptions,
                     options,

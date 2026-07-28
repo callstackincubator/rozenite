@@ -401,6 +401,30 @@ describe('agent command output', () => {
     expect(help).toContain('targets');
   });
 
+  it('describes fields without claiming a discovery-only field enum', () => {
+    setupClient();
+
+    const program = new Command();
+    registerAgentCommand(program);
+
+    const agentCommand = program.commands.find(
+      (command) => command.name() === 'agent',
+    );
+    const domainCommand = agentCommand?.commands.find(
+      (command) => command.name() === '*',
+    );
+    const fieldsOption = domainCommand?.options.find(
+      (option) => option.long === '--fields',
+    );
+
+    expect(fieldsOption?.description).toContain(
+      'allowed fields depend on the listing or known row tool',
+    );
+    expect(fieldsOption?.description).not.toContain(
+      '(name, shortName, description)',
+    );
+  });
+
   it('prints tool schemas without the domain envelope', async () => {
     setupClient();
     mocks.session.tools.getSchema.mockResolvedValue({
@@ -637,6 +661,85 @@ describe('agent command output', () => {
       'url,status',
       '--pretty',
     ]);
+  });
+
+  it('normalizes non-object args before calling and shaping a known row tool', async () => {
+    setupClient();
+    mocks.session.tools.call.mockResolvedValueOnce({
+      items: [{ requestId: 'request-1', url: 'https://example.test' }],
+      page: { limit: 1, hasMore: true, nextCursor: 'next-cursor' },
+    });
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'network',
+        'call',
+        '--tool',
+        'listRequests',
+        '--args',
+        'null',
+        '--fields',
+        'url,status',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(mocks.session.tools.call).toHaveBeenCalledWith({
+      domain: 'network',
+      tool: 'listRequests',
+      args: {},
+      autoPaginate: {},
+    });
+    const output = JSON.parse(String(stdoutWrite.mock.calls[0][0]));
+    expect(output.items).toEqual([
+      { url: 'https://example.test', status: null },
+    ]);
+    expect(output.next).toContain('--args \'{"cursor":"next-cursor"}\'');
+  });
+
+  it('validates known row fields before invoking the remote tool', async () => {
+    setupClient();
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'network',
+        'call',
+        '--tool',
+        'listRequests',
+        '--fields',
+        'name',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(mocks.session.tools.call).not.toHaveBeenCalled();
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      expect.stringContaining(
+        '"message":"Unknown fields: name. Allowed fields: requestId, method, url, status',
+      ),
+    );
   });
 
   it('uses the fixed default schema for two-row listRequests results', async () => {
