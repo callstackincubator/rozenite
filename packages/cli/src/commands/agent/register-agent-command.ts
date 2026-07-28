@@ -102,6 +102,12 @@ type ToolRowShape = {
   fields: readonly string[];
 };
 
+type DomainToolRowShapes = {
+  /** Every accepted token for this exact domain, never a prefix match. */
+  tokens: readonly string[];
+  tools: Readonly<Record<string, ToolRowShape>>;
+};
+
 const NODE_FIELDS = [
   'nodeId',
   'label',
@@ -113,7 +119,7 @@ const NODE_FIELDS = [
   'parentLabel',
 ] as const;
 
-const TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
+const REACT_TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
   getTree: {
     fields: [...NODE_FIELDS, 'childIds', 'depth'],
   },
@@ -131,6 +137,9 @@ const TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
       'changeTypeHints',
     ],
   },
+};
+
+const CONSOLE_TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
   getMessages: {
     fields: [
       'seq',
@@ -142,6 +151,9 @@ const TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
       'context',
     ],
   },
+};
+
+const NETWORK_TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
   listRequests: {
     fields: [
       'requestId',
@@ -173,6 +185,19 @@ const TOOL_ROW_SHAPES: Record<string, ToolRowShape> = {
     ],
   },
 };
+
+const NETWORK_ACTIVITY_PLUGIN_ID = '@rozenite/network-activity-plugin';
+const NETWORK_ACTIVITY_PLUGIN_SLUG = 'at-rozenite__network-activity-plugin';
+
+const KNOWN_DOMAIN_TOOL_ROW_SHAPES: readonly DomainToolRowShapes[] = [
+  { tokens: ['react'], tools: REACT_TOOL_ROW_SHAPES },
+  { tokens: ['console'], tools: CONSOLE_TOOL_ROW_SHAPES },
+  { tokens: ['network'], tools: NETWORK_TOOL_ROW_SHAPES },
+  {
+    tokens: [NETWORK_ACTIVITY_PLUGIN_ID, NETWORK_ACTIVITY_PLUGIN_SLUG],
+    tools: NETWORK_TOOL_ROW_SHAPES,
+  },
+];
 
 const projectSessionOutput = (
   session: Record<string, unknown>,
@@ -209,6 +234,7 @@ const getListingOptionArgs = (
   options: Pick<DynamicDomainCommandOptions, 'fields' | 'verbose'>,
   limit: number,
   cursor: string,
+  pretty: boolean,
 ): string[] => [
   ...(options.verbose
     ? ['--verbose']
@@ -219,10 +245,31 @@ const getListingOptionArgs = (
   String(limit),
   '--cursor',
   cursor,
+  ...(pretty ? ['--pretty'] : []),
 ];
 
-const getToolRowShape = (tool: string): ToolRowShape | undefined =>
-  TOOL_ROW_SHAPES[tool.split('.').at(-1) ?? tool];
+const getToolRowShape = (
+  domain: string,
+  tool: string,
+): ToolRowShape | undefined => {
+  const knownDomain = KNOWN_DOMAIN_TOOL_ROW_SHAPES.find((candidate) =>
+    candidate.tokens.includes(domain),
+  );
+  if (!knownDomain) {
+    return undefined;
+  }
+
+  const prefix = knownDomain.tokens
+    .map((token) => `${token}.`)
+    .find((candidate) => tool.startsWith(candidate));
+  const shortName = tool.includes('.')
+    ? prefix
+      ? tool.slice(prefix.length)
+      : undefined
+    : tool;
+
+  return shortName ? knownDomain.tools[shortName] : undefined;
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -462,6 +509,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                         dynamicOptions,
                         limit,
                         paged.page.nextCursor,
+                        !!options.pretty,
                       ),
                     ])
                   : undefined,
@@ -490,7 +538,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
               autoPaginate: autoPagination,
             });
 
-            const rowShape = getToolRowShape(dynamicOptions.tool);
+            const rowShape = getToolRowShape(domainToken, dynamicOptions.tool);
             if (!rowShape || !isRecord(parsedArgs)) {
               return toolResult;
             }
@@ -718,6 +766,7 @@ export const registerAgentCommand = (program: Command): void => {
                     listOptions,
                     limit,
                     paged.page.nextCursor,
+                    !!options.pretty,
                   ),
                 ])
               : undefined,

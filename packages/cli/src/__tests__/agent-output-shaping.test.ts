@@ -92,7 +92,7 @@ describe('agent output shaping', () => {
     ).toThrow(/Invalid --cursor/);
   });
 
-  it('projects rows and excludes schema-like fields', () => {
+  it('projects every row into the selected schema in deterministic order', () => {
     const projected = projectRows(
       [
         {
@@ -107,6 +107,10 @@ describe('agent output shaping', () => {
 
     expect(projected).toEqual([{ name: 'x', shortName: 'x' }]);
     expect(projected[0]).not.toHaveProperty('inputSchema');
+
+    expect(
+      projectRows([{ name: 'missing short name' }], ['shortName', 'name']),
+    ).toEqual([{ shortName: null, name: 'missing short name' }]);
   });
 
   it('uses selected fields to encode two or more rows as columns', () => {
@@ -151,6 +155,19 @@ describe('agent output shaping', () => {
     });
   });
 
+  it('uses the selected schema for expanded tool rows', () => {
+    expect(
+      shapeToolResult(
+        {
+          items: [{ id: 'a', extra: 'not selected' }],
+          page: { limit: 1, hasMore: false },
+        },
+        ['name', 'id'],
+        undefined,
+      ),
+    ).toEqual({ items: [{ name: null, id: 'a' }] });
+  });
+
   it('makes next commands safe to paste into a POSIX shell', () => {
     expect(
       formatAgentCommand(['domains', '--session', "session with ' quote"]),
@@ -164,6 +181,54 @@ describe('agent output shaping', () => {
     };
 
     expect(shapeToolResult(result, ['id'], undefined)).toBe(result);
+  });
+
+  it('leaves malformed paginated envelopes untouched without throwing', () => {
+    const malformed = [
+      null,
+      1,
+      { items: [null], page: { limit: 1, hasMore: false } },
+      { items: [1], page: { limit: 1, hasMore: false } },
+      { items: [[]], page: { limit: 1, hasMore: false } },
+      { items: [], page: null },
+      { items: [], page: { limit: Number.NaN, hasMore: false } },
+      { items: [], page: { limit: Number.POSITIVE_INFINITY, hasMore: false } },
+      { items: [], page: { limit: Number.NEGATIVE_INFINITY, hasMore: false } },
+      { items: [], page: { limit: 0, hasMore: false } },
+      { items: [], page: { limit: 1, hasMore: 'false' } },
+      { items: [], page: { limit: 1, hasMore: false, nextCursor: 1 } },
+    ];
+
+    for (const result of malformed) {
+      expect(shapeToolResult(result, ['id'], undefined)).toBe(result);
+    }
+  });
+
+  it('preserves reset metadata on terminal and continued tool pages', () => {
+    expect(
+      shapeToolResult(
+        {
+          items: [{ id: 'a' }],
+          page: { limit: 1, hasMore: false, reset: true },
+        },
+        ['id'],
+        undefined,
+      ),
+    ).toEqual({ page: { reset: true }, items: [{ id: 'a' }] });
+    expect(
+      shapeToolResult(
+        {
+          items: [{ id: 'a' }],
+          page: { limit: 1, hasMore: true, nextCursor: 'cursor', reset: true },
+        },
+        ['id'],
+        'rozenite agent react call --cursor cursor',
+      ),
+    ).toEqual({
+      page: { reset: true },
+      items: [{ id: 'a' }],
+      next: 'rozenite agent react call --cursor cursor',
+    });
   });
 
   it('clamps limit to max range', () => {

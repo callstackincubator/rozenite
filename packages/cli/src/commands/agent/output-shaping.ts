@@ -89,9 +89,7 @@ export const projectRows = <T extends Record<string, unknown>>(
   return rows.map((row) => {
     const projected: Record<string, unknown> = {};
     for (const field of fields) {
-      if (Object.hasOwn(row, field)) {
-        projected[field] = row[field];
-      }
+      projected[field] = row[field] ?? null;
     }
     return projected;
   });
@@ -123,17 +121,18 @@ export const shapePaginatedRows = (
   nextCommand: string | undefined,
 ): Record<string, unknown> => {
   const next = paged.page.hasMore && nextCommand ? { next: nextCommand } : {};
+  const items = projectRows(paged.items, fields);
 
-  if (paged.items.length < 2) {
+  if (items.length < 2) {
     return {
-      items: paged.items,
+      items,
       ...next,
     };
   }
 
   return {
     cols: [...fields],
-    rows: paged.items.map((row) => fields.map((field) => row[field] ?? null)),
+    rows: items.map((row) => fields.map((field) => row[field])),
     ...next,
   };
 };
@@ -156,7 +155,16 @@ export const shapeToolResult = (
   }
 
   const { items, page, ...metadata } = result;
-  if (typeof page.limit !== 'number' || typeof page.hasMore !== 'boolean') {
+  if (
+    !items.every(isRecord) ||
+    typeof page.limit !== 'number' ||
+    !Number.isFinite(page.limit) ||
+    !Number.isInteger(page.limit) ||
+    page.limit < 1 ||
+    typeof page.hasMore !== 'boolean' ||
+    (page.nextCursor !== undefined && typeof page.nextCursor !== 'string') ||
+    (page.reset !== undefined && typeof page.reset !== 'boolean')
+  ) {
     return result;
   }
   if (page.hasMore && !nextCommand) {
@@ -165,6 +173,7 @@ export const shapeToolResult = (
 
   return {
     ...metadata,
+    ...(page.reset === true ? { page: { reset: true } } : {}),
     ...shapePaginatedRows(
       {
         items: items as Record<string, unknown>[],

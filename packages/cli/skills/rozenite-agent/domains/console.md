@@ -8,3 +8,7 @@ Read, filter, and paginate React Native console messages from the app, and clear
 ## Flow
 
 Logs are captured automatically. Use `getMessages` -> optional filtered and paginated reads -> `clearMessages`.
+
+CLI discovery listings and paginated `getMessages` calls use columnar `cols`
+and `rows` output when two or more rows are returned. Tool metadata remains
+present, and `next` replaces the page envelope when another page is available.

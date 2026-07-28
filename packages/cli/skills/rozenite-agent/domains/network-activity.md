@@ -36,3 +36,7 @@ HTTP fallback:
 
 Realtime:
 `startRecording` -> reproduce traffic -> `listRealtimeConnections` -> `getRealtimeConnectionDetails`.
+
+CLI discovery listings and paginated calls use columnar `cols` and `rows`
+output when two or more rows are returned. Tool metadata remains present, and
+`next` replaces the page envelope when another page is available.

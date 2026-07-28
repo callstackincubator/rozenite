@@ -586,7 +586,7 @@ describe('agent command output', () => {
         'node',
         'test',
         'agent',
-        'network domain',
+        'network',
         'call',
         '--tool',
         'listRequests',
@@ -606,8 +606,8 @@ describe('agent command output', () => {
     const output = JSON.parse(rawOutput);
     expect(output).toMatchObject({
       recording: { isRecording: true },
-      items: [{ requestId: 'request-1', status: null }],
-      next: expect.stringContaining("rozenite agent 'network domain' call"),
+      items: [{ url: 'https://example.test', status: null }],
+      next: expect.stringContaining('rozenite agent network call'),
     });
 
     const continuation = output.next;
@@ -621,7 +621,7 @@ describe('agent command output', () => {
     expect(args).toEqual([
       'rozenite',
       'agent',
-      'network domain',
+      'network',
       'call',
       '--host',
       '127.0.0.1',
@@ -675,6 +675,133 @@ describe('agent command output', () => {
     expect(stdoutWrite).toHaveBeenCalledWith(
       '{"cols":["requestId","method","url","status","type","startTimeMs","endTimeMs","durationMs","transferSize","encodedDataLength","outcome"],"rows":[["one","GET","/",200,null,null,null,null,null,null,null],["two","POST","/two",null,null,null,null,null,null,null,null]]}\n',
     );
+  });
+
+  it('leaves a plugin tool with a colliding short name unchanged', async () => {
+    setupClient();
+    const result = {
+      items: [{ pluginValue: 'preserve me' }],
+      page: { limit: 1, hasMore: false },
+    };
+    mocks.session.tools.call.mockResolvedValueOnce(result);
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'third-party-plugin',
+        'call',
+        '--tool',
+        'listRequests',
+        '--args',
+        '{}',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
+  it('shapes the fallback network-activity plugin by its exact domain token', async () => {
+    setupClient();
+    mocks.session.tools.call.mockResolvedValueOnce({
+      items: [{ requestId: 'request-1', url: 'https://example.test' }],
+      page: { limit: 1, hasMore: false },
+    });
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'at-rozenite__network-activity-plugin',
+        'call',
+        '--tool',
+        'listRequests',
+        '--args',
+        '{}',
+        '--fields',
+        'url,requestId,status',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"items":[{"url":"https://example.test","requestId":"request-1","status":null}]}\n',
+    );
+  });
+
+  it('keeps pretty output in runnable listing continuations', async () => {
+    setupClient();
+    mocks.session.tools.list.mockResolvedValue([
+      { name: 'network.getRequestDetails', shortName: 'getRequestDetails' },
+      { name: 'network.listRequests', shortName: 'listRequests' },
+    ]);
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'network domain',
+        'tools',
+        '--session',
+        'session id',
+        '--limit',
+        '1',
+        '--pretty',
+      ],
+      { from: 'node' },
+    );
+
+    const output = JSON.parse(String(stdoutWrite.mock.calls[0][0]));
+    const args = execFileSync(
+      'zsh',
+      ['-c', `for arg in ${output.next}; do print -r -- "$arg"; done`],
+      { encoding: 'utf8' },
+    )
+      .trim()
+      .split('\n');
+    expect(args).toEqual([
+      'rozenite',
+      'agent',
+      'network domain',
+      'tools',
+      '--host',
+      '127.0.0.1',
+      '--port',
+      '8081',
+      '--session',
+      'session id',
+      '--limit',
+      '1',
+      '--cursor',
+      expect.any(String),
+      '--pretty',
+    ]);
   });
 
   it('prints JSON errors for agent command failures', async () => {
