@@ -156,6 +156,12 @@ describe('agent domain utils', () => {
     );
   });
 
+  it('errors instead of silently shadowing a built-in domain with an unscoped package literally named after it', () => {
+    expect(() =>
+      buildRuntimePluginDomains([tool('console.list')]),
+    ).toThrow(/Plugin "console" derives the domain name "console"/);
+  });
+
   it('resolves plugin domains by id or pluginId token', () => {
     const domains = buildRuntimePluginDomains([
       tool('@rozenite/mmkv-plugin.list-entries'),

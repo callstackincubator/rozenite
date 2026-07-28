@@ -202,6 +202,16 @@ export const buildRuntimePluginDomains = (
         )} all derive the same domain name. Rename one of these packages to disambiguate.`,
       );
     }
+
+    // Scoped package names already fall back to their full pluginId when
+    // they would shadow a built-in domain (see deriveDomainName). An
+    // unscoped package literally named e.g. "console" has no alternate
+    // representation to fall back to, so guard against that here.
+    if (RESERVED_DOMAIN_NAMES.has(domainName)) {
+      throw new Error(
+        `Plugin "${collidingIds[0]}" derives the domain name "${domainName}", which shadows the built-in "${domainName}" domain. Rename the package to avoid the collision.`,
+      );
+    }
   }
 
   return pluginIds.map((pluginId) => {
