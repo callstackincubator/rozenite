@@ -279,7 +279,9 @@ export const createAgentSession = (options: {
     }
 
     const registeredToolNames = new Set(
-      handler.getTools(options.target.id).map((tool) => tool.name),
+      handler
+        .getRegisteredPluginTools(options.target.id)
+        .map((tool) => tool.name),
     );
     if (
       Array.from(expectedPluginToolNames).every((name) =>
@@ -612,6 +614,19 @@ export const createAgentSession = (options: {
           if (!isCurrentGeneration(generation)) {
             return;
           }
+          const failedSocket = ws;
+          if (failedSocket && failedSocket.readyState !== WebSocket.CLOSED) {
+            activeSocketAttempt += 1;
+            ws = null;
+            await new Promise<void>((resolve) => {
+              const timeout = setTimeout(resolve, 250);
+              failedSocket.once('close', () => {
+                clearTimeout(timeout);
+                resolve();
+              });
+              failedSocket.close();
+            });
+          }
           if (attempt === 2) {
             throw error;
           }
@@ -665,7 +680,9 @@ export const createAgentSession = (options: {
     );
 
     const previousPluginToolNames = new Set(
-      handler.getTools(options.target.id).map((tool) => tool.name),
+      handler
+        .getRegisteredPluginTools(options.target.id)
+        .map((tool) => tool.name),
     );
     handler.disconnectDevice(options.target.id);
 

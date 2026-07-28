@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
     handleDeviceMessage: vi.fn(),
     captureConsoleMessage: vi.fn(),
     getTools: vi.fn(() => []),
+    getRegisteredPluginTools: vi.fn(() => []),
     callTool: vi.fn(),
   };
   const services: MockService[] = Array.from({ length: 4 }, () => ({
@@ -188,6 +189,7 @@ const mocks = vi.hoisted(() => {
       handler.handleDeviceMessage.mockReset();
       handler.captureConsoleMessage.mockReset();
       handler.getTools.mockClear();
+      handler.getRegisteredPluginTools.mockClear();
       handler.callTool.mockReset();
       services.forEach((service) => {
         service.getTools.mockClear();
