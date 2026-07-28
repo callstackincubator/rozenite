@@ -218,11 +218,11 @@ Agents discover domains and tools at runtime:
 
 ```bash
 rozenite agent domains --session <sessionId> --json
-rozenite agent @my-org/my-rozenite-plugin tools --session <sessionId> --json
-rozenite agent @my-org/my-rozenite-plugin call --tool echo --args '{"value":"hello"}' --session <sessionId> --json
+rozenite agent my-rozenite tools --session <sessionId> --json
+rozenite agent my-rozenite call --tool echo --args '{"value":"hello"}' --session <sessionId> --json
 ```
 
-The domain slug is derived from your `pluginId`. Document your plugin’s agent tools (names, arguments, and return shapes) so agent users know what they can call.
+Rozenite derives a short, stable domain name from your `pluginId` alone (for example, `@my-org/my-rozenite-plugin` becomes `my-org/my-rozenite`; an official `@rozenite/*` plugin drops the scope entirely, e.g. `@rozenite/mmkv-plugin` becomes `mmkv`). The full `pluginId` always works as a domain token too, so `rozenite agent @my-org/my-rozenite-plugin tools ...` is equally valid — the derived name is just shorter and computable by an agent without a lookup. Document your plugin’s agent tools (names, arguments, and return shapes) so agent users know what they can call.
 
 ## Summary
 
