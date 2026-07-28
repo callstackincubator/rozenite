@@ -262,6 +262,10 @@ export const createAgentMessageHandler = () => {
     return [...registry.getAggregatedTools(), ...getConsoleTools()];
   };
 
+  const getRegisteredPluginTools = (deviceId: string): AgentTool[] => {
+    return registry.getToolsForDevice(deviceId);
+  };
+
   const getDevices = () => {
     return registry.getDevices();
   };
@@ -352,6 +356,7 @@ export const createAgentMessageHandler = () => {
     disconnectDevice,
     handleDeviceMessage,
     getTools,
+    getRegisteredPluginTools,
     getDevices,
     callTool,
     captureConsoleMessage: (deviceId: string, message: ConsoleMessageInput) => {

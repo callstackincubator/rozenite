@@ -65,10 +65,17 @@ export const createAgentSessionManager = (options: {
     );
     const existing = sessions.get(target.id);
     if (existing) {
-      return {
-        session: existing.getInfo(),
-        versionCheck,
-      };
+      if (existing.isReusable(target)) {
+        return {
+          session: existing.getInfo(),
+          versionCheck,
+        };
+      }
+
+      // A logical device id survives most reloads, while Metro gives the app a
+      // new page id. Never hand a caller a session pinned to that old page.
+      sessions.delete(target.id);
+      await existing.stop();
     }
 
     const session = createAgentSession({
@@ -78,8 +85,20 @@ export const createAgentSessionManager = (options: {
       target,
       cliVersion: request.cliVersion,
       metroVersion,
+      resolveTarget: (deviceId) =>
+        resolveMetroTarget(currentHost, currentPort, deviceId),
       onTerminated: (sessionId) => {
         const current = sessions.get(sessionId);
+        if (
+          current === session &&
+          ['blocked', 'failed'].includes(
+            session.getInfo().healing?.outcome ?? '',
+          )
+        ) {
+          // Keep terminal recovery information visible to `session show` and
+          // `session list`; an explicit stop or a replacement target removes it.
+          return;
+        }
         if (current === session) {
           sessions.delete(sessionId);
         }

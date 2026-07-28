@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
     handleDeviceMessage: vi.fn(),
     captureConsoleMessage: vi.fn(),
     getTools: vi.fn(() => []),
+    getRegisteredPluginTools: vi.fn(() => []),
     callTool: vi.fn(),
   };
   const services: MockService[] = Array.from({ length: 4 }, () => ({
@@ -188,6 +189,7 @@ const mocks = vi.hoisted(() => {
       handler.handleDeviceMessage.mockReset();
       handler.captureConsoleMessage.mockReset();
       handler.getTools.mockClear();
+      handler.getRegisteredPluginTools.mockClear();
       handler.callTool.mockReset();
       services.forEach((service) => {
         service.getTools.mockClear();
@@ -263,6 +265,7 @@ const createStartedSession = (
     cliVersion: string;
     metroVersion: string;
     target: MetroTarget;
+    resolveTarget: (deviceId: string) => Promise<MetroTarget>;
   }>,
 ) => {
   const session = createAgentSession({
@@ -283,11 +286,17 @@ const startSession = async (
   overrides?: Partial<{
     cliVersion: string;
     metroVersion: string;
+    resolveTarget: (deviceId: string) => Promise<MetroTarget>;
   }>,
 ) => {
   const started = createStartedSession(overrides);
   started.socket.open();
   await vi.advanceTimersByTimeAsync(500);
+  await emitRozeniteBindingPayload(started.socket, {
+    pluginId: '@rozenite/test-plugin',
+    type: 'register-tool',
+    payload: {},
+  });
   await vi.advanceTimersByTimeAsync(50);
   await flushMicrotasks();
   await started.startPromise;
@@ -385,10 +394,6 @@ describe('agent session', () => {
 
     await vi.advanceTimersByTimeAsync(1);
     await flushMicrotasks();
-    expect(onResolved).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(50);
-    await flushMicrotasks();
     await startPromise;
 
     expect(onResolved).toHaveBeenCalledTimes(1);
@@ -397,19 +402,12 @@ describe('agent session', () => {
   it('resolves start after bootstrap and plugin readiness settles', async () => {
     const { startPromise, socket } = createStartedSession();
     const onResolved = vi.fn();
-    startPromise.then(onResolved);
+    startPromise.then(onResolved, () => undefined);
 
     socket.open();
     await vi.advanceTimersByTimeAsync(500);
     await flushMicrotasks();
 
-    expect(onResolved).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(49);
-    await flushMicrotasks();
-    expect(onResolved).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(1);
     await flushMicrotasks();
 
     expect(onResolved).toHaveBeenCalledTimes(1);
@@ -426,7 +424,7 @@ describe('agent session', () => {
   it('extends plugin readiness wait when activity arrives', async () => {
     const { startPromise, socket } = createStartedSession();
     const onResolved = vi.fn();
-    startPromise.then(onResolved);
+    startPromise.then(onResolved, () => undefined);
 
     socket.open();
     await vi.advanceTimersByTimeAsync(500);
@@ -436,24 +434,16 @@ describe('agent session', () => {
 
     await emitRozeniteBindingPayload(socket, {
       pluginId: '@rozenite/storage-plugin',
-      type: 'plugin-mounted',
+      type: 'register-tool',
       payload: {
         pluginId: '@rozenite/storage-plugin',
       },
     });
 
-    expect(onResolved).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(49);
-    await flushMicrotasks();
-    expect(onResolved).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(1);
-    await flushMicrotasks();
     await expect(startPromise).resolves.toBeUndefined();
   });
 
-  it('resolves start after the bounded plugin readiness timeout', async () => {
+  it('starts built-in-only sessions without plugin registration', async () => {
     const { startPromise, socket } = createStartedSession();
     const onResolved = vi.fn();
     startPromise.then(onResolved);
@@ -462,22 +452,8 @@ describe('agent session', () => {
     await vi.advanceTimersByTimeAsync(500);
     await flushMicrotasks();
 
-    for (let elapsed = 0; elapsed < 245; elapsed += 49) {
-      await vi.advanceTimersByTimeAsync(49);
-      await flushMicrotasks();
-      await emitRozeniteBindingPayload(socket, {
-        pluginId: '@rozenite/storage-plugin',
-        type: 'plugin-mounted',
-        payload: {
-          pluginId: '@rozenite/storage-plugin',
-        },
-      });
-      expect(onResolved).not.toHaveBeenCalled();
-    }
-
-    await vi.advanceTimersByTimeAsync(5);
-    await flushMicrotasks();
     await expect(startPromise).resolves.toBeUndefined();
+    expect(onResolved).toHaveBeenCalledTimes(1);
   });
 
   it('emits agent-session-ready after rozenite domain initialization', async () => {
@@ -526,6 +502,126 @@ describe('agent session', () => {
     );
 
     expect(readyExpressions).toHaveLength(2);
+  });
+
+  it('heals a relaunched app with the same device id and a new page id', async () => {
+    const replacementTarget = createTarget({
+      pageId: 'page-2',
+      webSocketDebuggerUrl: 'ws://localhost:8081/debug?page=2',
+    });
+    const resolveTarget = vi.fn().mockResolvedValue(replacementTarget);
+    const { session, socket } = await startSession({ resolveTarget });
+
+    socket.emit('close', 1000, Buffer.from('[RECREATING_DEVICE]'));
+    await flushMicrotasks();
+
+    expect(session.getInfo()).toMatchObject({ status: 'connecting' });
+    expect(resolveTarget).toHaveBeenCalledWith('device-1');
+
+    const replacementSocket = mocks.wsInstances[1];
+    replacementSocket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await emitRozeniteBindingPayload(replacementSocket, {
+      pluginId: '@rozenite/test-plugin',
+      type: 'register-tool',
+      payload: {},
+    });
+    await vi.advanceTimersByTimeAsync(50);
+    await flushMicrotasks();
+
+    expect(session.getInfo()).toMatchObject({
+      id: 'device-1',
+      pageId: 'page-2',
+      status: 'connected',
+      healing: { outcome: 'recovered' },
+    });
+    expect(mocks.handler.disconnectDevice).toHaveBeenCalledWith('device-1');
+    expect(mocks.handler.connectDevice).toHaveBeenCalledTimes(2);
+  });
+
+  it('heals PAGE_NOT_FOUND before the initial socket opens', async () => {
+    const replacementTarget = createTarget({ pageId: 'page-2' });
+    const { startPromise, socket } = createStartedSession({
+      resolveTarget: vi.fn().mockResolvedValue(replacementTarget),
+    });
+    void startPromise.catch(() => undefined);
+
+    socket.emit('close', 1000, Buffer.from('[PAGE_NOT_FOUND]'));
+    await flushMicrotasks();
+    const replacementSocket = mocks.wsInstances[1];
+    replacementSocket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await emitRozeniteBindingPayload(replacementSocket, {
+      pluginId: '@rozenite/test-plugin',
+      type: 'register-tool',
+      payload: {},
+    });
+    await vi.advanceTimersByTimeAsync(50);
+
+    await expect(startPromise).resolves.toBeUndefined();
+  });
+
+  it('does not reconnect when React Native DevTools takes the connection', async () => {
+    const resolveTarget = vi.fn();
+    const { session, socket } = await startSession({ resolveTarget });
+
+    socket.emit('close', 1000, Buffer.from('[NEW_DEBUGGER_OPENED]'));
+    await flushMicrotasks();
+
+    expect(resolveTarget).not.toHaveBeenCalled();
+    expect(mocks.wsInstances).toHaveLength(1);
+    expect(session.getInfo()).toMatchObject({
+      status: 'stopped',
+      healing: {
+        outcome: 'blocked',
+        message:
+          'React Native DevTools took the connection — close it and retry.',
+      },
+    });
+  });
+
+  it('cancels recovery when the session is stopped', async () => {
+    let resolveTarget: ((target: MetroTarget) => void) | undefined;
+    const targetPromise = new Promise<MetroTarget>((resolve) => {
+      resolveTarget = resolve;
+    });
+    const { session, socket } = await startSession({
+      resolveTarget: vi.fn().mockReturnValue(targetPromise),
+    });
+
+    socket.emit('close', 1000, Buffer.from('[CONNECTION_LOST]'));
+    await flushMicrotasks();
+    await session.stop();
+    resolveTarget?.(createTarget({ pageId: 'page-2' }));
+    await flushMicrotasks();
+
+    expect(session.getInfo().status).toBe('stopped');
+    expect(mocks.wsInstances).toHaveLength(1);
+  });
+
+  it('surfaces profiling state lost during a healed relaunch', async () => {
+    const resolveTarget = vi
+      .fn()
+      .mockResolvedValue(createTarget({ pageId: 'page-2' }));
+    const { session, socket } = await startSession({ resolveTarget });
+    await session.callTool('startProfiling', {});
+
+    socket.emit('close', 1000, Buffer.from('[CONNECTION_LOST]'));
+    await flushMicrotasks();
+    const replacementSocket = mocks.wsInstances[1];
+    replacementSocket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await emitRozeniteBindingPayload(replacementSocket, {
+      pluginId: '@rozenite/test-plugin',
+      type: 'register-tool',
+      payload: {},
+    });
+    await vi.advanceTimersByTimeAsync(50);
+    await flushMicrotasks();
+
+    await expect(session.callTool('stopProfiling', {})).rejects.toThrow(
+      'AGENT_SESSION_STATE_LOST: profiling data was lost',
+    );
   });
 
   it('logs when the agent session websocket connects', async () => {
