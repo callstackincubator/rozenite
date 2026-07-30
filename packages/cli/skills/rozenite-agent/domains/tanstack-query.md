@@ -5,7 +5,7 @@ A Rozenite plugin for inspecting and managing TanStack Query caches in React Nat
 ## Domain
 
 - Plugin ID: `@rozenite/tanstack-query-plugin`
-- Domain token: `at-rozenite__tanstack-query-plugin`
+- Domain token: `tanstack-query`
 
 ## Tools
 

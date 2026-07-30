@@ -58,17 +58,18 @@ retain their existing shapes.
 - Do not explore the codebase to infer live runtime state when Rozenite can answer directly.
 - Explore source code only when the user asks about implementation or setup, when no relevant domain is available, or when Rozenite shows the required plugin or domain is not registered and the task becomes setup or debugging.
 - If the expected plugin domain is missing from the live session, tell the user that the corresponding plugin must be installed and registered in the app.
-- When referring to plugin domains in user-facing output, use the plugin's `pluginId` instead of the normalized slug.
+- When referring to plugin domains in user-facing output, use the plugin's `pluginId` instead of the domain token.
 - When making Rozenite calls against a discovered plugin domain, use the live domain token returned by Rozenite.
 - Built-in domains are `console`, `network`, `react`, `performance`, and `memory`.
-- Additional domains can appear at runtime from the app or installed plugins.
+- Additional domains can appear at runtime from the app or installed plugins. Plugin domain tokens are short, derived names, not the npm package name: `@rozenite/mmkv-plugin` becomes `mmkv`, `@avasapp/rozenite-plugin-ably` becomes `avasapp/ably`.
+- Domain token shape tells you provenance: a bare word (`mmkv`) is a built-in or an official `@rozenite/*` plugin; `scope/name` (`avasapp/ably`) is a third-party scoped plugin; a verbatim `rozenite-*` name is a third-party unscoped plugin. `evil/mmkv` and `mmkv` are never the same plugin.
 
 ## Calls
 
 - Do not pass domain tool names as direct CLI subcommands.
 - Always invoke domain tools with `npx rozenite agent <domain> call --tool <toolName> --args '<json>' --session <id>`.
 - If a domain reference lists only tool names, treat them as tool names, not CLI actions.
-- Example: `npx rozenite agent at-rozenite__mmkv-plugin call --tool list-storages --args '{}' --session <id>`.
+- Example: `npx rozenite agent mmkv call --tool list-storages --args '{}' --session <id>`.
 - If a command fails with `Unknown domain action`, check the CLI syntax and retry with `call --tool <toolName> --session <id>`.
 
 ## Flow

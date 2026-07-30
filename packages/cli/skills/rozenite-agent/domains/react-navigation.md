@@ -5,7 +5,7 @@ A Rozenite plugin for React Navigation debugging and inspection in React Native 
 ## Domain
 
 - Plugin ID: `@rozenite/react-navigation-plugin`
-- Domain token: `at-rozenite__react-navigation-plugin`
+- Domain token: `react-navigation`
 
 ## Tools
 

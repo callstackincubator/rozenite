@@ -5,7 +5,7 @@ A Rozenite plugin for exposing app-defined controls in React Native DevTools. Yo
 ## Domain
 
 - Plugin ID: `@rozenite/controls-plugin`
-- Domain token: `at-rozenite__controls-plugin`
+- Domain token: `controls`
 
 ## Tools
 

@@ -5,7 +5,7 @@ A Rozenite plugin for fallback network inspection when the built-in `network` do
 ## Domain
 
 - Plugin ID: `@rozenite/network-activity-plugin`
-- Domain token: `at-rozenite__network-activity-plugin`
+- Domain token: `network-activity`
 
 ## Precedence
 

@@ -5,7 +5,7 @@ A Rozenite plugin for Redux state inspection and curated history control in Reac
 ## Domain
 
 - Plugin ID: `@rozenite/redux-devtools-plugin`
-- Domain token: `at-rozenite__redux-devtools-plugin`
+- Domain token: `redux-devtools`
 
 ## Tools
 

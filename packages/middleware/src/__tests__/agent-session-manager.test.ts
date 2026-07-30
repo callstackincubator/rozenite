@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => {
   const getInfo = vi.fn();
   const getTools = vi.fn();
   const callTool = vi.fn();
+  const isReusable = vi.fn(() => true);
   const createAgentSession = vi.fn(() => ({
     id: 'device-1',
     start,
@@ -26,6 +27,7 @@ const mocks = vi.hoisted(() => {
     getInfo,
     getTools,
     callTool,
+    isReusable,
   }));
 
   return {
@@ -36,6 +38,7 @@ const mocks = vi.hoisted(() => {
     getInfo,
     getTools,
     callTool,
+    isReusable,
     createAgentSession,
   };
 });
@@ -54,6 +57,7 @@ describe('agent session manager', () => {
     vi.clearAllMocks();
     mocks.start.mockReset();
     mocks.start.mockResolvedValue(undefined);
+    mocks.isReusable.mockReturnValue(true);
   });
 
   const target = {
@@ -123,6 +127,36 @@ describe('agent session manager', () => {
 
     expect(mocks.createAgentSession).toHaveBeenCalledTimes(1);
     expect(mocks.start).toHaveBeenCalledTimes(1);
+  });
+
+  it('recreates a stale session whose Metro page changed', async () => {
+    mocks.resolveMetroTarget.mockResolvedValue(target);
+    mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
+    mocks.isReusable.mockReturnValue(false);
+    const manager = createAgentSessionManager({ projectRoot: '/app' });
+
+    await manager.createSession({ deviceId: 'device-1' });
+    await manager.createSession({ deviceId: 'device-1' });
+
+    expect(mocks.stop).toHaveBeenCalledTimes(1);
+    expect(mocks.createAgentSession).toHaveBeenCalledTimes(2);
+  });
+
+  it('creates a new session when Metro assigns a relaunched app a new device id', async () => {
+    const replacementTarget = { ...target, id: 'device-2', pageId: 'page-2' };
+    mocks.resolveMetroTarget
+      .mockResolvedValueOnce(target)
+      .mockResolvedValueOnce(replacementTarget);
+    mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
+    const manager = createAgentSessionManager({ projectRoot: '/app' });
+
+    await manager.createSession({ deviceId: 'device-1' });
+    await manager.createSession({ deviceId: 'device-2' });
+
+    expect(mocks.createAgentSession).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ target: replacementTarget }),
+    );
   });
 
   it('passes CLI and Metro versions into a new session', async () => {

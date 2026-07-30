@@ -211,6 +211,12 @@ export const defineAgentToolDescriptors = <
 
 export type AgentSessionStatus = 'connecting' | 'connected' | 'stopped';
 
+export type AgentSessionHealingOutcome = {
+  outcome: 'recovered' | 'failed' | 'blocked';
+  message: string;
+  at: number;
+};
+
 export type MetroTarget = {
   id: string;
   name: string;
@@ -241,6 +247,7 @@ export type AgentSessionInfo = {
   lastActivityAt: number;
   connectedAt?: number;
   lastError?: string;
+  healing?: AgentSessionHealingOutcome;
   toolCount: number;
 };
 

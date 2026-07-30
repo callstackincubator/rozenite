@@ -29,6 +29,18 @@ const DISPATCHER_INIT_MAX_ATTEMPTS = 20;
 const DISPATCHER_INIT_RETRY_MS = 250;
 const PLUGIN_READINESS_QUIET_WINDOW_MS = 50;
 const PLUGIN_READINESS_MAX_WAIT_MS = 250;
+const RECOVERY_RETRY_DELAY_MS = 500;
+const RECOVERY_MAX_ATTEMPTS = 16;
+
+const RECOVERABLE_CLOSE_REASONS = new Set([
+  '[RECREATING_DEVICE]',
+  '[PAGE_NOT_FOUND]',
+  '[CONNECTION_LOST]',
+]);
+const DEVTOOLS_TOOK_CONNECTION_REASON = '[NEW_DEBUGGER_OPENED]';
+
+const getCloseReason = (reason: unknown): string =>
+  Buffer.isBuffer(reason) ? reason.toString() : String(reason ?? '');
 
 const getDebuggerWebSocketOrigin = (webSocketDebuggerUrl: string): string => {
   const url = new URL(webSocketDebuggerUrl);
@@ -87,10 +99,12 @@ export const createAgentSession = (options: {
   host: string;
   port: number;
   target: MetroTarget;
+  resolveTarget?: (deviceId: string) => Promise<MetroTarget>;
   cliVersion?: string;
   metroVersion?: string;
   onTerminated?: (sessionId: string) => void;
 }) => {
+  let target = options.target;
   const handler = createAgentMessageHandler();
   const artifacts = createAgentArtifacts(
     options.projectRoot,
@@ -112,6 +126,15 @@ export const createAgentSession = (options: {
   let disconnectLogged = false;
   let startReadiness: StartReadiness | null = null;
   let pluginReadiness: PluginReadiness | null = null;
+  let recoveryPromise: Promise<void> | null = null;
+  let connectionGeneration = 0;
+  let socketAttempt = 0;
+  let activeSocketAttempt = 0;
+  let expectedPluginToolNames = new Set<string>();
+  let pluginReadinessSatisfied = false;
+  let healing: AgentSessionInfo['healing'];
+  const activeAccumulatedDomains = new Map<string, string>();
+  const lostAccumulatedDomains = new Map<string, string>();
 
   const pendingCommands = new Map<number, PendingCommand>();
   const cdpEventListeners = new Map<
@@ -129,7 +152,7 @@ export const createAgentSession = (options: {
 
   const getSessionInfoFields = () => ({
     sessionId: options.target.id,
-    pageId: options.target.pageId,
+    pageId: target.pageId,
     deviceId: options.target.id,
   });
 
@@ -200,6 +223,9 @@ export const createAgentSession = (options: {
   };
 
   const resolveStartReadiness = (): void => {
+    if (!stopped && bootstrapped) {
+      status = 'connected';
+    }
     startReadiness?.resolve();
   };
 
@@ -217,7 +243,10 @@ export const createAgentSession = (options: {
     }
 
     pluginReadiness.quietTimer = setTimeout(() => {
-      resolveStartReadiness();
+      pluginReadinessSatisfied = true;
+      if (bootstrapped) {
+        resolveStartReadiness();
+      }
     }, PLUGIN_READINESS_QUIET_WINDOW_MS);
   };
 
@@ -227,13 +256,21 @@ export const createAgentSession = (options: {
     }
 
     clearPluginReadiness();
+    pluginReadinessSatisfied = false;
+    if (expectedPluginToolNames.size === 0) {
+      pluginReadinessSatisfied = true;
+      return;
+    }
     pluginReadiness = {
       quietTimer: null,
       timeoutTimer: setTimeout(() => {
-        resolveStartReadiness();
+        rejectStartReadiness(
+          new Error(
+            'Plugin tools did not re-register after the agent session became ready',
+          ),
+        );
       }, PLUGIN_READINESS_MAX_WAIT_MS),
     };
-    schedulePluginReadinessQuietTimer();
   };
 
   const notePluginReadinessActivity = (): void => {
@@ -241,8 +278,22 @@ export const createAgentSession = (options: {
       return;
     }
 
-    schedulePluginReadinessQuietTimer();
+    const registeredToolNames = new Set(
+      handler
+        .getRegisteredPluginTools(options.target.id)
+        .map((tool) => tool.name),
+    );
+    if (
+      Array.from(expectedPluginToolNames).every((name) =>
+        registeredToolNames.has(name),
+      )
+    ) {
+      schedulePluginReadinessQuietTimer();
+    }
   };
+
+  const isCurrentGeneration = (generation: number): boolean =>
+    !stopped && generation === connectionGeneration;
 
   const emitCDPEvent = (
     method: string,
@@ -474,15 +525,20 @@ export const createAgentSession = (options: {
       await sendCommand('Runtime.evaluate', {
         expression: `void ${RUNTIME_GLOBAL}.initializeDomain("rozenite")`,
       });
+      // Arm before notifying the plugin: registration may be synchronous.
+      beginPluginReadinessWait();
       await sendAgentSessionReady();
       await sendCommand('Runtime.evaluate', {
         expression: `void ${RUNTIME_GLOBAL}.initializeDomain("react-devtools")`,
       });
 
       bootstrapped = true;
+      if (pluginReadinessSatisfied) {
+        resolveStartReadiness();
+      }
+
       lastError = undefined;
       touch();
-      beginPluginReadinessWait();
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
       scheduleBootstrap();
@@ -493,7 +549,148 @@ export const createAgentSession = (options: {
     await Promise.all(localServices.map((service) => service.dispose()));
   };
 
-  const handleSocketClosed = (): void => {
+  const rememberLostAccumulatedState = (): void => {
+    for (const [toolName, domain] of activeAccumulatedDomains) {
+      lostAccumulatedDomains.set(toolName, domain);
+    }
+    activeAccumulatedDomains.clear();
+  };
+
+  const waitForRecoveryTarget = async (
+    generation: number,
+  ): Promise<MetroTarget> => {
+    if (!options.resolveTarget) {
+      throw new Error('This session cannot resolve a fresh Metro target');
+    }
+
+    let lastRecoveryError: unknown;
+    for (let attempt = 1; attempt <= RECOVERY_MAX_ATTEMPTS; attempt += 1) {
+      if (!isCurrentGeneration(generation)) {
+        throw new Error('Agent session recovery was cancelled');
+      }
+      try {
+        const resolvedTarget = await options.resolveTarget(options.target.id);
+        if (!isCurrentGeneration(generation)) {
+          throw new Error('Agent session recovery was cancelled');
+        }
+        return resolvedTarget;
+      } catch (error) {
+        lastRecoveryError = error;
+        if (attempt < RECOVERY_MAX_ATTEMPTS) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, RECOVERY_RETRY_DELAY_MS);
+          });
+        }
+      }
+    }
+
+    throw lastRecoveryError instanceof Error
+      ? lastRecoveryError
+      : new Error('The app did not reconnect to Metro');
+  };
+
+  const teardownConnection = (): void => {
+    bindingName = null;
+    bootstrapped = false;
+    connectedAt = undefined;
+    rejectStartReadiness(
+      new Error('CDP connection closed before bootstrap completed'),
+    );
+    handler.disconnectDevice(options.target.id);
+    for (const service of localServices) {
+      service.onDisconnected();
+    }
+    for (const [commandId, pending] of pendingCommands.entries()) {
+      pendingCommands.delete(commandId);
+      pending.reject(new Error('CDP connection closed'));
+    }
+    clearBootstrapTimer();
+    clearPluginReadiness();
+  };
+
+  const recover = async (reason: string, generation: number): Promise<void> => {
+    status = 'connecting';
+    try {
+      // Metro can still be publishing the replacement page when it first
+      // closes the old debugger socket. Retry one fresh connection after the
+      // target-resolution backoff above instead of treating that race as a
+      // terminal session failure.
+      let connected = false;
+      let lastConnectError: unknown;
+      for (let attempt = 1; attempt <= 2 && !connected; attempt += 1) {
+        try {
+          target = await waitForRecoveryTarget(generation);
+          const readinessPromise = createStartReadiness();
+          void readinessPromise.catch(() => undefined);
+          await connect(generation);
+          await readinessPromise;
+          if (!isCurrentGeneration(generation)) {
+            throw new Error('Agent session recovery was cancelled');
+          }
+          connected = true;
+        } catch (error) {
+          lastConnectError = error;
+          if (!isCurrentGeneration(generation)) {
+            return;
+          }
+          const failedSocket = ws;
+          if (failedSocket && failedSocket.readyState !== WebSocket.CLOSED) {
+            teardownConnection();
+            activeSocketAttempt += 1;
+            ws = null;
+            await new Promise<void>((resolve) => {
+              const timeout = setTimeout(resolve, 250);
+              failedSocket.once('close', () => {
+                clearTimeout(timeout);
+                resolve();
+              });
+              failedSocket.close();
+            });
+          }
+          if (attempt === 2) {
+            throw error;
+          }
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, RECOVERY_RETRY_DELAY_MS);
+          });
+        }
+      }
+      if (!connected) {
+        throw lastConnectError;
+      }
+      if (!isCurrentGeneration(generation)) {
+        return;
+      }
+      healing = {
+        outcome: 'recovered',
+        message:
+          lostAccumulatedDomains.size > 0
+            ? `Reconnected after ${reason}. Accumulated state was lost for: ${Array.from(lostAccumulatedDomains.values()).join(', ')}.`
+            : `Reconnected after ${reason}.`,
+        at: Date.now(),
+      };
+    } catch (error) {
+      if (!isCurrentGeneration(generation)) {
+        return;
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      lastError = message;
+      healing = { outcome: 'failed', message, at: Date.now() };
+      status = 'stopped';
+      stopped = true;
+      await disposeServices();
+      notifyTerminated();
+    } finally {
+      if (generation === connectionGeneration) {
+        recoveryPromise = null;
+      }
+    }
+  };
+
+  const handleSocketClosed = (reason: string, generation: number): void => {
+    if (generation !== connectionGeneration) {
+      return;
+    }
     logDisconnected();
     bindingName = null;
     bootstrapped = false;
@@ -502,6 +699,11 @@ export const createAgentSession = (options: {
       new Error('CDP connection closed before bootstrap completed'),
     );
 
+    const previousPluginToolNames = new Set(
+      handler
+        .getRegisteredPluginTools(options.target.id)
+        .map((tool) => tool.name),
+    );
     handler.disconnectDevice(options.target.id);
 
     for (const service of localServices) {
@@ -515,17 +717,38 @@ export const createAgentSession = (options: {
 
     clearBootstrapTimer();
     clearPluginReadiness();
-    status = 'stopped';
-
     if (stopped) {
+      status = 'stopped';
       notifyTerminated();
       return;
     }
 
+    if (reason.includes(DEVTOOLS_TOOK_CONNECTION_REASON)) {
+      status = 'stopped';
+      stopped = true;
+      const message =
+        'React Native DevTools took the connection — close it and retry.';
+      lastError = message;
+      healing = { outcome: 'blocked', message, at: Date.now() };
+      void disposeServices().finally(() => {
+        notifyTerminated();
+      });
+      return;
+    }
+
+    const recoveryReason = Array.from(RECOVERABLE_CLOSE_REASONS).find(
+      (candidate) => reason.includes(candidate),
+    );
+    if (recoveryReason) {
+      expectedPluginToolNames = previousPluginToolNames;
+      rememberLostAccumulatedState();
+      recoveryPromise ??= recover(recoveryReason, generation);
+      return;
+    }
+
+    status = 'stopped';
     stopped = true;
-    void disposeServices().finally(() => {
-      notifyTerminated();
-    });
+    void disposeServices().finally(() => notifyTerminated());
   };
 
   const handleSocketMessage = (rawMessage: string): void => {
@@ -601,14 +824,10 @@ export const createAgentSession = (options: {
       }
 
       const devToolsMessage = bindingPayload.message as DevToolsPluginMessage;
-      if (
-        devToolsMessage.type === 'plugin-mounted' ||
-        devToolsMessage.type === 'register-tool'
-      ) {
+      handler.handleDeviceMessage(options.target.id, devToolsMessage);
+      if (devToolsMessage.type === 'register-tool') {
         notePluginReadinessActivity();
       }
-
-      handler.handleDeviceMessage(options.target.id, devToolsMessage);
     } else if (bindingPayload.domain === 'react-devtools') {
       for (const service of localServices) {
         if (service.captureReactDevToolsMessage) {
@@ -618,23 +837,31 @@ export const createAgentSession = (options: {
     }
   };
 
-  const connect = async (): Promise<void> => {
+  const connect = async (generation = connectionGeneration): Promise<void> => {
     status = 'connecting';
 
     await new Promise<void>((resolve, reject) => {
-      const socket = new WebSocket(options.target.webSocketDebuggerUrl, {
+      const socket = new WebSocket(target.webSocketDebuggerUrl, {
         headers: {
-          Origin: getDebuggerWebSocketOrigin(
-            options.target.webSocketDebuggerUrl,
-          ),
+          Origin: getDebuggerWebSocketOrigin(target.webSocketDebuggerUrl),
         },
       });
       let settled = false;
+      const attempt = ++socketAttempt;
+      activeSocketAttempt = attempt;
       ws = socket;
 
       socket.once('open', () => {
+        if (
+          !isCurrentGeneration(generation) ||
+          ws !== socket ||
+          activeSocketAttempt !== attempt
+        ) {
+          socket.close();
+          return;
+        }
         settled = true;
-        status = 'connected';
+        status = 'connecting';
         connectedAt = Date.now();
         lastError = undefined;
         touch();
@@ -662,25 +889,41 @@ export const createAgentSession = (options: {
             lastError = startupError.message;
             clearBootstrapTimer();
             rejectStartReadiness(startupError);
-            ws?.close();
+            socket.close();
             reject(startupError);
           }
         })();
       });
 
       socket.on('message', (rawMessage: unknown) => {
+        if (
+          generation !== connectionGeneration ||
+          ws !== socket ||
+          activeSocketAttempt !== attempt
+        ) {
+          return;
+        }
         handleSocketMessage(String(rawMessage));
       });
 
       socket.once('error', (error: unknown) => {
+        if (
+          generation !== connectionGeneration ||
+          ws !== socket ||
+          activeSocketAttempt !== attempt
+        ) {
+          return;
+        }
         lastError = error instanceof Error ? error.message : String(error);
         if (!settled) {
           reject(error);
         }
       });
 
-      socket.once('close', () => {
-        handleSocketClosed();
+      socket.once('close', (_code: unknown, reason: unknown) => {
+        if (ws !== socket || activeSocketAttempt !== attempt) return;
+        ws = null;
+        handleSocketClosed(getCloseReason(reason), generation);
         if (!settled) {
           reject(
             new Error('CDP websocket closed before session initialization'),
@@ -695,15 +938,16 @@ export const createAgentSession = (options: {
     host: options.host,
     port: options.port,
     deviceId: options.target.id,
-    deviceName: options.target.name,
-    appId: options.target.appId,
-    pageId: options.target.pageId,
+    deviceName: target.name,
+    appId: target.appId,
+    pageId: target.pageId,
     status,
     createdAt,
     lastActivityAt,
     ...(connectedAt ? { connectedAt } : {}),
     ...(lastError ? { lastError } : {}),
-    toolCount: getToolCount(options.target, handler, localServices),
+    ...(healing ? { healing } : {}),
+    toolCount: getToolCount(target, handler, localServices),
   });
 
   const getTools = () => {
@@ -718,21 +962,75 @@ export const createAgentSession = (options: {
     args: unknown,
   ): Promise<unknown> => {
     if (status !== 'connected') {
+      const recovery = recoveryPromise;
+      if (
+        recovery &&
+        ['getTree', 'getMessages', 'listRequests'].includes(toolName)
+      ) {
+        await recovery;
+        return await callTool(toolName, args);
+      }
       throw new Error(
         `Session "${options.target.id}" is not connected to a device`,
       );
     }
 
-    touch();
-
-    for (const service of localServices) {
-      const result = await service.callTool(toolName, args);
-      if (result !== undefined) {
-        return result;
-      }
+    const lostDomain = lostAccumulatedDomains.get(toolName);
+    if (lostDomain) {
+      lostAccumulatedDomains.delete(toolName);
+      throw new Error(
+        `AGENT_SESSION_STATE_LOST: ${lostDomain} was lost while the app relaunched. Retry this operation to collect new state.`,
+      );
     }
 
-    return await handler.callTool(toolName, args);
+    touch();
+
+    const trackSuccessfulToolCall = (): void => {
+      const startedBy = new Map([
+        ['startProfiling', ['stopProfiling', 'profiling data']],
+        ['startRecording', ['stopRecording', 'network recording']],
+        ['startTrace', ['stopTrace', 'performance trace']],
+        ['startSampling', ['stopSampling', 'memory sampling']],
+      ]);
+      const started = startedBy.get(toolName);
+      if (started) {
+        activeAccumulatedDomains.set(started[0], started[1]);
+      }
+      if (
+        [
+          'stopProfiling',
+          'stopRecording',
+          'stopTrace',
+          'stopSampling',
+        ].includes(toolName)
+      ) {
+        activeAccumulatedDomains.delete(toolName);
+      }
+    };
+
+    try {
+      for (const service of localServices) {
+        const result = await service.callTool(toolName, args);
+        if (result !== undefined) {
+          trackSuccessfulToolCall();
+          return result;
+        }
+      }
+
+      const result = await handler.callTool(toolName, args);
+      trackSuccessfulToolCall();
+      return result;
+    } catch (error) {
+      const recovery = recoveryPromise;
+      if (
+        recovery &&
+        ['getTree', 'getMessages', 'listRequests'].includes(toolName)
+      ) {
+        await recovery;
+        return await callTool(toolName, args);
+      }
+      throw error;
+    }
   };
 
   const start = async (): Promise<void> => {
@@ -742,6 +1040,16 @@ export const createAgentSession = (options: {
     try {
       await connect();
     } catch (error) {
+      // A stale page can be rejected before the websocket ever opens. The
+      // close handler has already started recovery in that case, so make the
+      // initial create request observe that healing attempt instead of making
+      // the manager tear the session down.
+      if (recoveryPromise) {
+        await recoveryPromise;
+        if (status === 'connected') {
+          return;
+        }
+      }
       rejectStartReadiness(
         error instanceof Error ? error : new Error(String(error)),
       );
@@ -758,6 +1066,8 @@ export const createAgentSession = (options: {
     }
 
     stopped = true;
+    connectionGeneration += 1;
+    recoveryPromise = null;
     clearBootstrapTimer();
     clearPluginReadiness();
     rejectStartReadiness(
@@ -783,5 +1093,7 @@ export const createAgentSession = (options: {
     getInfo,
     getTools,
     callTool,
+    isReusable: (nextTarget: MetroTarget) =>
+      status === 'connected' && target.pageId === nextTarget.pageId,
   };
 };
