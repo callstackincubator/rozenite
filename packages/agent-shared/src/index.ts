@@ -162,6 +162,27 @@ export type AgentErrorInfo = {
   message: string;
 };
 
+/**
+ * Envelope describing pagination state for a cursor-paginated agent tool
+ * result. `limit` and `hasMore` are always required; `nextCursor` is an
+ * opaque, producer-owned token (its encoding is not part of this contract
+ * and must never be constructed by a consumer). `reset` signals that the
+ * underlying dataset was reshuffled and pagination should restart from
+ * these items. `truncated` signals that a consumer (e.g. an auto-pagination
+ * helper) discarded trailing rows from this page because the producer
+ * returned more rows than were requested; when `truncated` is `true`,
+ * `nextCursor` MUST be absent because the discarded rows make the
+ * producer's own cursor unsafe to resume from - callers should restart or
+ * narrow their query instead of trusting a stale cursor.
+ */
+export type PageEnvelope = {
+  limit: number;
+  hasMore: boolean;
+  nextCursor?: string;
+  reset?: boolean;
+  truncated?: boolean;
+};
+
 export type AgentSuccessEnvelope<TResult> = {
   ok: true;
   result: TResult;
