@@ -155,16 +155,30 @@ const getListingOptionArgs = (
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const getToolPagination = (value: unknown): AgentToolPagination | undefined => {
+type ToolPaginationResolution = {
+  pagination?: AgentToolPagination;
+  warning?: string;
+};
+
+/**
+ * Reads a tool's declared pagination metadata. Malformed metadata (e.g. from
+ * a third-party plugin) degrades to "non-paginated" with a warning rather
+ * than failing the call outright, per the documented contract: undeclared,
+ * malformed, and non-row results remain unchanged.
+ */
+const getToolPagination = (value: unknown): ToolPaginationResolution => {
   if (!isRecord(value) || !isRecord(value.pagination)) {
-    return undefined;
+    return {};
   }
 
   if (!isAgentToolPagination(value.pagination)) {
-    throw new Error('Tool exposes invalid pagination metadata');
+    return {
+      warning:
+        'Warning: tool exposes invalid pagination metadata; returning its result unshaped.',
+    };
   }
 
-  return value.pagination;
+  return { pagination: value.pagination };
 };
 
 const getToolCallCommand = (
@@ -423,16 +437,23 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
             }
 
             const parsedArgs = parseJsonArgs(dynamicOptions.args);
-            const toolSchema = await session.tools.getSchema({
+            const resolvedTool = await session.tools.resolve({
               domain: domainToken,
               tool: dynamicOptions.tool,
             });
-            const pagination = getToolPagination(toolSchema);
-            const paginatedToolArgs = pagination
-              ? isRecord(parsedArgs)
-                ? parsedArgs
-                : {}
-              : undefined;
+            const { pagination, warning } = getToolPagination(
+              resolvedTool.schema,
+            );
+            if (warning) {
+              process.stderr.write(`${warning}\n`);
+            }
+
+            if (pagination && !isRecord(parsedArgs)) {
+              throw new Error('--args must be a JSON object');
+            }
+
+            const paginatedToolArgs: Record<string, unknown> | undefined =
+              pagination ? (parsedArgs as Record<string, unknown>) : undefined;
             const fields = pagination
               ? parseFields(
                   dynamicOptions.fields,
@@ -442,12 +463,10 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                 )
               : undefined;
             const autoPagination = resolveAutoPaginationConfig(dynamicOptions);
-            const toolResult = await session.tools.call({
-              domain: domainToken,
-              tool: dynamicOptions.tool,
-              args: paginatedToolArgs ?? parsedArgs,
-              autoPaginate: autoPagination,
-            });
+            const toolResult = await resolvedTool.call(
+              paginatedToolArgs ?? parsedArgs,
+              { autoPaginate: autoPagination },
+            );
 
             if (!pagination || !paginatedToolArgs || !fields) {
               return toolResult;

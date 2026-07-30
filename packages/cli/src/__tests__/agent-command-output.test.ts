@@ -29,6 +29,7 @@ const mocks = vi.hoisted(() => ({
     tools: {
       list: vi.fn(),
       getSchema: vi.fn(),
+      resolve: vi.fn(),
       call: vi.fn(),
     },
   },
@@ -84,18 +85,31 @@ describe('agent command output', () => {
   const setupClient = () => {
     mocks.createAgentClient.mockReturnValue(mocks.client);
     mocks.client.attachSession.mockResolvedValue(mocks.session);
+    mocks.session.tools.resolve.mockResolvedValue({
+      domainId: 'domain',
+      schema: {
+        name: 'plugin.tool',
+        shortName: 'tool',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      call: mocks.session.tools.call,
+    });
   };
 
   const setupPaginatedTool = (fields: string[], defaultFields?: string[]) => {
-    mocks.session.tools.getSchema.mockResolvedValue({
-      name: 'plugin.list',
-      shortName: 'list',
-      inputSchema: { type: 'object', properties: {} },
-      pagination: {
-        kind: 'cursor',
-        fields,
-        ...(defaultFields ? { defaultFields } : {}),
+    mocks.session.tools.resolve.mockResolvedValue({
+      domainId: 'domain',
+      schema: {
+        name: 'plugin.list',
+        shortName: 'list',
+        inputSchema: { type: 'object', properties: {} },
+        pagination: {
+          kind: 'cursor',
+          fields,
+          ...(defaultFields ? { defaultFields } : {}),
+        },
       },
+      call: mocks.session.tools.call,
     });
   };
 
@@ -705,13 +719,9 @@ describe('agent command output', () => {
     ]);
   });
 
-  it('normalizes non-object args before calling and shaping a declared paginated tool', async () => {
+  it('rejects non-object --args for a declared paginated tool instead of silently using {}', async () => {
     setupClient();
     setupPaginatedTool(networkRequestFields);
-    mocks.session.tools.call.mockResolvedValueOnce({
-      items: [{ requestId: 'request-1', url: 'https://example.test' }],
-      page: { limit: 1, hasMore: true, nextCursor: 'next-cursor' },
-    });
 
     const stdoutWrite = vi
       .spyOn(process.stdout, 'write')
@@ -738,17 +748,43 @@ describe('agent command output', () => {
       { from: 'node' },
     );
 
-    expect(mocks.session.tools.call).toHaveBeenCalledWith({
-      domain: 'network',
-      tool: 'listRequests',
-      args: {},
+    expect(mocks.session.tools.call).not.toHaveBeenCalled();
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"error":{"message":"--args must be a JSON object"}}\n',
+    );
+  });
+
+  it('still normalizes non-object --args for non-paginated tools', async () => {
+    setupClient();
+    mocks.session.tools.call.mockResolvedValueOnce({ value: 'hello' });
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'app',
+        'call',
+        '--tool',
+        'echo',
+        '--args',
+        'null',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(mocks.session.tools.call).toHaveBeenCalledWith(null, {
       autoPaginate: {},
     });
-    const output = JSON.parse(String(stdoutWrite.mock.calls[0][0]));
-    expect(output.items).toEqual([
-      { url: 'https://example.test', status: null },
-    ]);
-    expect(output.next).toContain('--args \'{"cursor":"next-cursor"}\'');
+    expect(stdoutWrite).toHaveBeenCalledWith('{"value":"hello"}\n');
   });
 
   it('validates declared row fields before invoking the remote tool', async () => {
@@ -783,6 +819,56 @@ describe('agent command output', () => {
       expect.stringContaining(
         '"message":"Unknown fields: name. Allowed fields: requestId, method, url, status',
       ),
+    );
+  });
+
+  it('degrades to unshaped output on stdout with a stderr warning for invalid pagination metadata', async () => {
+    setupClient();
+    mocks.session.tools.resolve.mockResolvedValue({
+      domainId: 'broken-plugin',
+      schema: {
+        name: 'plugin.list',
+        shortName: 'list',
+        inputSchema: { type: 'object', properties: {} },
+        pagination: { kind: 'cursor', fields: [] },
+      },
+      call: mocks.session.tools.call,
+    });
+    const result = {
+      items: [{ id: 'one' }],
+      page: { limit: 20, hasMore: false },
+    };
+    mocks.session.tools.call.mockResolvedValueOnce(result);
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const stderrWrite = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'broken-plugin',
+        'call',
+        '--tool',
+        'list',
+        '--args',
+        '{}',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+    expect(stderrWrite).toHaveBeenCalledWith(
+      expect.stringContaining('invalid pagination metadata'),
     );
   });
 

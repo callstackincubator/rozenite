@@ -5,6 +5,7 @@ export type {
   AgentClient,
   AgentClientOptions,
   AgentDomainTool,
+  AgentResolvedTool,
   AgentSessionCallback,
   AgentSessionClient,
   AgentSessionDomains,

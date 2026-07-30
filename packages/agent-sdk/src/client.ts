@@ -20,6 +20,7 @@ import type {
   AgentClient,
   AgentClientOptions,
   AgentDynamicToolCallInput,
+  AgentResolvedTool,
   AgentSessionCallback,
   AgentSessionClient,
   AgentSessionTools,
@@ -136,6 +137,40 @@ export const createAgentClient = (
         const selectedTool = resolveDomainTool(domainTools, domainLabel, tool);
         return toAgentToolSchema(selectedTool);
       },
+      resolve: (async ({
+        domain,
+        tool,
+      }: {
+        domain: string;
+        tool: string;
+      }): Promise<AgentResolvedTool> => {
+        const { resolvedDomain, domainTools } = await resolveDomainContext({
+          sessionId: sessionInfo.id,
+          domain,
+        });
+        const domainLabel = resolvedDomain.pluginId ?? resolvedDomain.id;
+        const selectedTool = resolveDomainTool(domainTools, domainLabel, tool);
+
+        return {
+          domainId: resolvedDomain.id,
+          schema: toAgentToolSchema(selectedTool),
+          call: async (args?: unknown, options?: AgentToolCallOptions) =>
+            await callToolWithOptionalPagination(
+              {
+                callTool: async (name, payload) =>
+                  (
+                    await transport.callSessionTool(sessionInfo.id, {
+                      toolName: name,
+                      args: payload,
+                    })
+                  ).result,
+              },
+              selectedTool.name,
+              args ?? {},
+              toAutoPaginationConfig(options?.autoPaginate),
+            ),
+        };
+      }) as AgentSessionTools['resolve'],
       call: (async (
         descriptorOrInput:
           | AgentToolDescriptor<unknown, unknown>
