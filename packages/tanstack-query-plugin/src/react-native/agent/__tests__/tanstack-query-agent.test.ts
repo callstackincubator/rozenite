@@ -115,6 +115,27 @@ describe('tanstack query agent controller', () => {
     });
   });
 
+  it('trims listQueries/listMutations defaultFields narrower than the full field set', () => {
+    const listQueriesPagination =
+      tanstackQueryToolDefinitions.listQueries.pagination;
+    const listMutationsPagination =
+      tanstackQueryToolDefinitions.listMutations.pagination;
+
+    expect(listQueriesPagination?.defaultFields?.length).toBeLessThan(
+      listQueriesPagination?.fields.length ?? 0,
+    );
+    for (const field of listQueriesPagination?.defaultFields ?? []) {
+      expect(listQueriesPagination?.fields).toContain(field);
+    }
+
+    expect(listMutationsPagination?.defaultFields?.length).toBeLessThan(
+      listMutationsPagination?.fields.length ?? 0,
+    );
+    for (const field of listMutationsPagination?.defaultFields ?? []) {
+      expect(listMutationsPagination?.fields).toContain(field);
+    }
+  });
+
   it('lists queries with cursor pagination and invalidates stale cursors after additions', async () => {
     const queryClient = createQueryClient();
     const controller = createTanStackQueryAgentController(queryClient);

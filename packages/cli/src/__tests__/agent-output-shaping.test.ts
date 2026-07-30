@@ -41,6 +41,59 @@ describe('agent output shaping', () => {
     ).toThrow(/Unknown fields/);
   });
 
+  it('defaults to a narrower projection than the full field set for a migrated tool', () => {
+    // Mirrors console getMessages: defaultFields drops the heavy
+    // argsPreview/context columns from the full declared field set.
+    const allFields = [
+      'seq',
+      'timestamp',
+      'level',
+      'source',
+      'text',
+      'argsPreview',
+      'context',
+    ] as const;
+    const defaultFields = [
+      'seq',
+      'timestamp',
+      'level',
+      'source',
+      'text',
+    ] as const;
+
+    const fields = parseFields(undefined, allFields, defaultFields, false);
+
+    expect(fields).toEqual([...defaultFields]);
+    expect(fields.length).toBeLessThan(allFields.length);
+    expect(fields).not.toContain('argsPreview');
+    expect(fields).not.toContain('context');
+  });
+
+  it('--verbose widens a migrated tool default projection back to the full field set', () => {
+    const allFields = [
+      'seq',
+      'timestamp',
+      'level',
+      'source',
+      'text',
+      'argsPreview',
+      'context',
+    ] as const;
+    const defaultFields = [
+      'seq',
+      'timestamp',
+      'level',
+      'source',
+      'text',
+    ] as const;
+
+    const fields = parseFields(undefined, allFields, defaultFields, true);
+
+    expect(fields).toEqual([...allFields]);
+    expect(fields).toContain('argsPreview');
+    expect(fields).toContain('context');
+  });
+
   it('supports cursor pagination across pages', () => {
     const rows = [
       { name: 'a' },
@@ -213,9 +266,7 @@ describe('agent output shaping', () => {
   it('makes next commands safe to paste into a POSIX shell', () => {
     expect(
       formatAgentCommand(['domains', '--session', "session with ' quote"]),
-    ).toBe(
-      "npx rozenite agent domains --session 'session with '\"'\"' quote'",
-    );
+    ).toBe("npx rozenite agent domains --session 'session with '\"'\"' quote'");
   });
 
   it('emits slash-containing domain ids unquoted and shell-safe', () => {

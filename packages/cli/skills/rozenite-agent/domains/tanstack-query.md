@@ -25,6 +25,10 @@ A Rozenite plugin for inspecting and managing TanStack Query caches in React Nat
 - `get-mutation-details` -> `{"mutationId":12}`
 - `clear-mutation-cache` -> `{}`
 
+`list-queries` and `list-mutations` return a trimmed default column set
+(identifiers, status, and error flag, not every field). Pass `--fields` or
+`--verbose` to widen the projection.
+
 ## Minimal Flow
 
 Inspection:

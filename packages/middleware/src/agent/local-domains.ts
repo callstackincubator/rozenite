@@ -1,6 +1,31 @@
-import type { JSONSchema7, AgentTool } from '@rozenite/agent-shared';
+import type {
+  JSONSchema7,
+  AgentTool,
+  AgentToolPagination,
+} from '@rozenite/agent-shared';
 import { createReactTreeStore } from './runtime/react/store.js';
 import type { ArtifactBucket, ArtifactFileWriter } from './artifacts.js';
+import type {
+  ReactTreeNode,
+  ReactNodeSummary,
+  ReactInspectableEntry,
+  ReactRenderDataItem,
+} from './runtime/react/types.js';
+
+/**
+ * Ties a tool's declared pagination `fields`/`defaultFields` to the keys of
+ * its actual row type at compile time, so a renamed or removed field on
+ * `TRow` becomes a build error here instead of a silent `null` column at
+ * runtime.
+ */
+const cursorPagination = <TRow>(config: {
+  fields: readonly Extract<keyof TRow, string>[];
+  defaultFields?: readonly Extract<keyof TRow, string>[];
+}): AgentToolPagination => ({
+  kind: 'cursor',
+  fields: config.fields,
+  ...(config.defaultFields ? { defaultFields: config.defaultFields } : {}),
+});
 
 type CDPCommandSender = (
   method: string,
@@ -401,6 +426,8 @@ const createNetworkSummary = (record: NetworkRequestRecord) => ({
       : 'in-flight',
 });
 
+type NetworkRequestSummary = ReturnType<typeof createNetworkSummary>;
+
 const createNetworkStatus = (state: NetworkRecordingState) => ({
   recording: {
     isRecording: state.isRecording,
@@ -727,8 +754,7 @@ export const createReactDomainService = (deps: {
           },
         },
       },
-      pagination: {
-        kind: 'cursor',
+      pagination: cursorPagination<ReactTreeNode>({
         fields: [
           'nodeId',
           'label',
@@ -741,7 +767,15 @@ export const createReactDomainService = (deps: {
           'childIds',
           'depth',
         ],
-      },
+        defaultFields: [
+          'nodeId',
+          'label',
+          'displayName',
+          'elementType',
+          'childCount',
+          'depth',
+        ],
+      }),
     },
     {
       name: 'getComponent',
@@ -819,8 +853,7 @@ export const createReactDomainService = (deps: {
         },
         ...nodeIdentifierRequirement,
       },
-      pagination: {
-        kind: 'cursor',
+      pagination: cursorPagination<ReactNodeSummary>({
         fields: [
           'nodeId',
           'label',
@@ -831,7 +864,14 @@ export const createReactDomainService = (deps: {
           'parentId',
           'parentLabel',
         ],
-      },
+        defaultFields: [
+          'nodeId',
+          'label',
+          'displayName',
+          'elementType',
+          'childCount',
+        ],
+      }),
     },
     {
       name: 'getProps',
@@ -859,10 +899,10 @@ export const createReactDomainService = (deps: {
         },
         ...nodeIdentifierRequirement,
       },
-      pagination: {
-        kind: 'cursor',
+      pagination: cursorPagination<ReactInspectableEntry>({
+        // Only two fields exist; there is nothing sensible to trim.
         fields: ['name', 'value'],
-      },
+      }),
     },
     {
       name: 'getState',
@@ -890,10 +930,10 @@ export const createReactDomainService = (deps: {
         },
         ...nodeIdentifierRequirement,
       },
-      pagination: {
-        kind: 'cursor',
+      pagination: cursorPagination<ReactInspectableEntry>({
+        // Only two fields exist; there is nothing sensible to trim.
         fields: ['name', 'value'],
-      },
+      }),
     },
     {
       name: 'getHooks',
@@ -928,10 +968,10 @@ export const createReactDomainService = (deps: {
         },
         ...nodeIdentifierRequirement,
       },
-      pagination: {
-        kind: 'cursor',
+      pagination: cursorPagination<ReactInspectableEntry>({
+        // Only two fields exist; there is nothing sensible to trim.
         fields: ['name', 'value'],
-      },
+      }),
     },
     {
       name: 'searchNodes',
@@ -964,8 +1004,7 @@ export const createReactDomainService = (deps: {
         },
         required: ['query'],
       },
-      pagination: {
-        kind: 'cursor',
+      pagination: cursorPagination<ReactNodeSummary>({
         fields: [
           'nodeId',
           'label',
@@ -976,7 +1015,15 @@ export const createReactDomainService = (deps: {
           'parentId',
           'parentLabel',
         ],
-      },
+        defaultFields: [
+          'nodeId',
+          'label',
+          'displayName',
+          'elementType',
+          'childCount',
+          'parentLabel',
+        ],
+      }),
     },
     {
       name: 'startProfiling',
@@ -1058,8 +1105,7 @@ export const createReactDomainService = (deps: {
         },
         required: ['rootId', 'commitIndex'],
       },
-      pagination: {
-        kind: 'cursor',
+      pagination: cursorPagination<ReactRenderDataItem>({
         fields: [
           'fiberId',
           'actualDurationMs',
@@ -1067,7 +1113,13 @@ export const createReactDomainService = (deps: {
           'isSlow',
           'changeTypeHints',
         ],
-      },
+        defaultFields: [
+          'fiberId',
+          'actualDurationMs',
+          'selfDurationMs',
+          'isSlow',
+        ],
+      }),
     },
   ];
 
@@ -1384,8 +1436,7 @@ export const createNetworkDomainService = (deps: {
           },
         },
       },
-      pagination: {
-        kind: 'cursor',
+      pagination: cursorPagination<NetworkRequestSummary>({
         fields: [
           'requestId',
           'method',
@@ -1399,7 +1450,15 @@ export const createNetworkDomainService = (deps: {
           'encodedDataLength',
           'outcome',
         ],
-      },
+        defaultFields: [
+          'requestId',
+          'method',
+          'url',
+          'status',
+          'durationMs',
+          'outcome',
+        ],
+      }),
     },
     {
       name: 'getRequestDetails',

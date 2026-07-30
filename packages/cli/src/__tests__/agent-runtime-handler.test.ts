@@ -29,6 +29,7 @@ describe('agent runtime handler console domain', () => {
         'argsPreview',
         'context',
       ],
+      defaultFields: ['seq', 'timestamp', 'level', 'source', 'text'],
     });
   });
 

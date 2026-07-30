@@ -43,6 +43,11 @@ example `roots`, `totalCount`, or `recording`) remains alongside the row shape.
 Undeclared tool results, SDK responses, and genuinely non-row command results
 retain their existing shapes.
 
+- Paginated calls return a **trimmed default projection**, not every declared
+  field. For example, `console getMessages` omits `argsPreview` and `context`
+  by default. Pass `-f, --fields <csv>` to pick specific columns, or
+  `-v, --verbose` to include every field the tool declares.
+
 ## Handoff
 
 - Keep this skill for shell-driven `rozenite agent ...` workflows.

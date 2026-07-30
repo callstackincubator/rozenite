@@ -28,3 +28,9 @@ CLI discovery listings and paginated React calls (`getTree`, `searchNodes`,
 columnar `cols` and `rows` output when two or more rows are returned. Their
 tool-specific metadata remains present, and `next` replaces the page envelope
 when another page is available.
+
+`getTree`, `getChildren`, `searchNodes`, and `getRenderData` return a trimmed
+default column set (identifiers and labels, not every field such as `key`,
+`parentId`, or `changeTypeHints`). Pass `--fields` or `--verbose` to widen the
+projection. `getProps`, `getState`, and `getHooks` always return both of their
+only two fields (`name`, `value`).

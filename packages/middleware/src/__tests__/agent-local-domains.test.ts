@@ -53,6 +53,48 @@ describe('paginated local domain contracts', () => {
     await react.dispose();
     await network.dispose();
   });
+
+  it('trims defaultFields narrower than the full field set for migrated tools', async () => {
+    const react = createReactDomainService({
+      sessionId: 'session-1',
+      sendReactDevToolsMessage() {},
+    });
+    const network = createNetworkDomainService({
+      getSessionInfo: () => ({
+        sessionId: 'session-1',
+        pageId: 'page-1',
+        deviceId: 'device-1',
+      }),
+      sendCommand: async () => ({}),
+      subscribeToCDPEvent: () => () => {},
+    });
+
+    const getTreePagination = react
+      .getTools()
+      .find((tool) => tool.name === 'getTree')?.pagination;
+    const listRequestsPagination = network
+      .getTools()
+      .find((tool) => tool.name === 'listRequests')?.pagination;
+
+    expect(getTreePagination?.defaultFields?.length).toBeLessThan(
+      getTreePagination?.fields.length ?? 0,
+    );
+    expect(getTreePagination?.defaultFields).not.toContain('childIds');
+    for (const field of getTreePagination?.defaultFields ?? []) {
+      expect(getTreePagination?.fields).toContain(field);
+    }
+
+    expect(listRequestsPagination?.defaultFields?.length).toBeLessThan(
+      listRequestsPagination?.fields.length ?? 0,
+    );
+    expect(listRequestsPagination?.defaultFields).not.toContain('type');
+    for (const field of listRequestsPagination?.defaultFields ?? []) {
+      expect(listRequestsPagination?.fields).toContain(field);
+    }
+
+    await react.dispose();
+    await network.dispose();
+  });
 });
 
 describe('memory domain service', () => {

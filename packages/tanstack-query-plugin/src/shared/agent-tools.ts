@@ -283,6 +283,13 @@ export const tanstackQueryToolDefinitions = {
         'hasData',
         'hasError',
       ],
+      defaultFields: [
+        'queryHash',
+        'queryKey',
+        'status',
+        'fetchStatus',
+        'hasError',
+      ],
     },
   }),
   getQueryDetails: defineAgentToolContract<
@@ -416,6 +423,7 @@ export const tanstackQueryToolDefinitions = {
         'hasData',
         'hasError',
       ],
+      defaultFields: ['mutationId', 'mutationKey', 'status', 'hasError'],
     },
   }),
   getMutationDetails: defineAgentToolContract<
