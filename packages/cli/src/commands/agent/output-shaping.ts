@@ -82,6 +82,12 @@ export const parseLimit = (rawLimit: string | undefined): number => {
   return Math.min(parsed, MAX_PAGE_LIMIT);
 };
 
+/**
+ * Projects rows onto the selected fields for columnar encoding, where each
+ * row becomes a fixed-width array positionally aligned with `cols`. Absent
+ * values become an explicit `null` placeholder because a missing array slot
+ * would shift every column after it.
+ */
 export const projectRows = <T extends Record<string, unknown>>(
   rows: T[],
   fields: readonly string[],
@@ -90,6 +96,29 @@ export const projectRows = <T extends Record<string, unknown>>(
     const projected: Record<string, unknown> = {};
     for (const field of fields) {
       projected[field] = row[field] ?? null;
+    }
+    return projected;
+  });
+};
+
+/**
+ * Projects rows onto the selected fields for row-keyed encoding, where each
+ * row stays an object. Unlike {@link projectRows}, absent fields are omitted
+ * rather than nulled: row-keyed output exists specifically for the 0/1-row
+ * case (see {@link shapePaginatedRows}), where explicit nulls would make the
+ * payload larger than the pre-columnar shape and defeat the point of
+ * staying expanded.
+ */
+const projectRowKeyed = <T extends Record<string, unknown>>(
+  rows: T[],
+  fields: readonly string[],
+): Record<string, unknown>[] => {
+  return rows.map((row) => {
+    const projected: Record<string, unknown> = {};
+    for (const field of fields) {
+      if (Object.hasOwn(row, field)) {
+        projected[field] = row[field];
+      }
     }
     return projected;
   });
@@ -114,6 +143,15 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * `cols`. This keeps the wire shape stable when optional values are absent.
  * Zero- and one-row listings remain expanded because a column header costs
  * more than the repeated keys it removes.
+ *
+ * The two branches project rows differently on purpose, via separate
+ * helpers rather than a shared one with a flag: the row-keyed (`items`)
+ * branch uses {@link projectRowKeyed}, which omits absent fields, so it
+ * never grows past the pre-columnar row-keyed shape — the entire reason
+ * 0/1-row listings stay expanded instead of going columnar. The columnar
+ * (`cols`/`rows`) branch uses {@link projectRows}, which fills absent
+ * fields with `null`, because positional array cells must line up with
+ * `cols` and can't simply be omitted.
  */
 export const shapePaginatedRows = (
   paged: PaginatedRows<Record<string, unknown>>,
@@ -121,15 +159,15 @@ export const shapePaginatedRows = (
   nextCommand: string | undefined,
 ): Record<string, unknown> => {
   const next = paged.page.hasMore && nextCommand ? { next: nextCommand } : {};
-  const items = projectRows(paged.items, fields);
 
-  if (items.length < 2) {
+  if (paged.items.length < 2) {
     return {
-      items,
+      items: projectRowKeyed(paged.items, fields),
       ...next,
     };
   }
 
+  const items = projectRows(paged.items, fields);
   return {
     cols: [...fields],
     rows: items.map((row) => fields.map((field) => row[field])),
@@ -137,9 +175,20 @@ export const shapePaginatedRows = (
   };
 };
 
+/** Top-level keys `shapeToolResult` itself introduces into its output. */
+const SHAPED_OUTPUT_KEYS = ['cols', 'rows', 'next'] as const;
+
 /**
  * Applies the CLI presentation contract to a known tool's paginated result
  * while retaining any non-row metadata owned by that tool.
+ *
+ * `metadata` (every top-level key besides `items`/`page`) is spread ahead of
+ * the shaped output, so a tool whose own metadata uses one of the keys this
+ * function produces (`cols`, `rows`, `next`) would otherwise have it
+ * silently overwritten. Rather than let that happen invisibly, such a
+ * collision degrades the whole result to unshaped — the same "degrade
+ * rather than corrupt" rule this function already applies to malformed
+ * pagination envelopes.
  */
 export const shapeToolResult = (
   result: unknown,
@@ -168,6 +217,9 @@ export const shapeToolResult = (
     return result;
   }
   if (page.hasMore && !nextCommand) {
+    return result;
+  }
+  if (SHAPED_OUTPUT_KEYS.some((key) => Object.hasOwn(metadata, key))) {
     return result;
   }
 

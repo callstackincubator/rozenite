@@ -259,12 +259,29 @@ const isTextLikeMimeType = (mimeType: string | undefined): boolean => {
   );
 };
 
+/**
+ * Generic offset-cursor pagination for local domain listings.
+ *
+ * `generation` is an optional stamp a caller can bump whenever the
+ * underlying buffer is invalidated out from under any outstanding cursors
+ * (e.g. the network domain's capture buffer is wiped on disconnect). When a
+ * presented cursor's generation doesn't match the current one, the rows it
+ * indexes into no longer correspond to what the caller had in mind, so this
+ * returns `page.reset: true` with an empty page instead of silently
+ * resuming into the new buffer at the same numeric offset — which could
+ * return unrelated rows, or an empty page indistinguishable from "no more
+ * results". This is intentionally narrow (a single caller-supplied
+ * generation counter), not the general shared cursor engine tracked by
+ * issue #320 — that issue's scope is a cross-domain cursor abstraction,
+ * which this function does not attempt to be.
+ */
 const paginateRows = <T>(
   rows: T[],
   options: {
     scope: string;
     limit: number;
     cursor?: string;
+    generation?: number;
   },
 ): {
   items: T[];
@@ -272,14 +289,21 @@ const paginateRows = <T>(
     limit: number;
     hasMore: boolean;
     nextCursor?: string;
+    reset?: boolean;
   };
 } => {
   let startIndex = 0;
   if (options.cursor) {
+    let decoded: {
+      v: 1;
+      scope: string;
+      index: number;
+      generation?: number;
+    };
     try {
-      const decoded = JSON.parse(
+      decoded = JSON.parse(
         Buffer.from(options.cursor, 'base64url').toString('utf8'),
-      ) as { v: 1; scope: string; index: number };
+      ) as typeof decoded;
       if (
         decoded.v !== 1 ||
         decoded.scope !== options.scope ||
@@ -288,12 +312,27 @@ const paginateRows = <T>(
       ) {
         throw new Error('Invalid cursor payload');
       }
-      startIndex = decoded.index;
     } catch {
       throw new Error(
         'Invalid "cursor". Run the command again without cursor to restart pagination.',
       );
     }
+
+    if (
+      options.generation !== undefined &&
+      decoded.generation !== options.generation
+    ) {
+      return {
+        items: [],
+        page: {
+          limit: options.limit,
+          hasMore: false,
+          reset: true,
+        },
+      };
+    }
+
+    startIndex = decoded.index;
   }
 
   const endIndex = Math.min(startIndex + options.limit, rows.length);
@@ -301,7 +340,14 @@ const paginateRows = <T>(
   const hasMore = endIndex < rows.length;
   const nextCursor = hasMore
     ? Buffer.from(
-        JSON.stringify({ v: 1, scope: options.scope, index: endIndex }),
+        JSON.stringify({
+          v: 1,
+          scope: options.scope,
+          index: endIndex,
+          ...(options.generation !== undefined
+            ? { generation: options.generation }
+            : {}),
+        }),
         'utf8',
       ).toString('base64url')
     : undefined;
@@ -1719,9 +1765,10 @@ export const createNetworkDomainService = (deps: {
       .reverse()
       .map(createNetworkSummary);
     const page = paginateRows(rows, {
-      scope: `network:requests:${state.generation}`,
+      scope: 'network:requests',
       limit,
       cursor,
+      generation: state.generation,
     });
 
     return {

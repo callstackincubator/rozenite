@@ -873,6 +873,45 @@ describe('agent command output', () => {
     );
   });
 
+  it('degrades to unshaped output when tool metadata collides with a shaped output key', async () => {
+    setupClient();
+    setupPaginatedTool(networkRequestFields);
+    const result = {
+      cols: 'owned by the tool, not the shaping contract',
+      items: [
+        { requestId: 'one', method: 'GET', url: '/', status: 200 },
+        { requestId: 'two', method: 'POST', url: '/two', status: null },
+      ],
+      page: { limit: 20, hasMore: false },
+    };
+    mocks.session.tools.call.mockResolvedValueOnce(result);
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      [
+        'node',
+        'test',
+        'agent',
+        'network',
+        'call',
+        '--tool',
+        'listRequests',
+        '--args',
+        '{}',
+        '--session',
+        'session-1',
+      ],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
   it('uses the fixed default schema for two-row listRequests results', async () => {
     setupClient();
     setupPaginatedTool(networkRequestFields);

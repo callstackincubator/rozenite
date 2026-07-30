@@ -241,4 +241,79 @@ describe('network domain service', () => {
     };
     expect(listResult.items).toEqual([]);
   });
+
+  it('signals page.reset instead of silently-empty items for a cursor from before a disconnect', async () => {
+    const listeners = new Map<
+      string,
+      Set<(params: Record<string, unknown>) => void | Promise<void>>
+    >();
+
+    const subscribeToCDPEvent = (
+      method: string,
+      listener: (params: Record<string, unknown>) => void | Promise<void>,
+    ) => {
+      const entries = listeners.get(method) || new Set();
+      entries.add(listener);
+      listeners.set(method, entries);
+
+      return () => {
+        entries.delete(listener);
+        if (entries.size === 0) {
+          listeners.delete(method);
+        }
+      };
+    };
+
+    const emit = (method: string, params: Record<string, unknown>) => {
+      for (const listener of listeners.get(method) || []) {
+        void listener(params);
+      }
+    };
+
+    const service = createNetworkDomainService({
+      getSessionInfo: () => ({
+        sessionId: 'device-1',
+        pageId: 'page-1',
+        deviceId: 'device-1',
+      }),
+      sendCommand: async () => ({}),
+      subscribeToCDPEvent,
+    });
+
+    await service.callTool('startRecording', {});
+    emit('Network.requestWillBeSent', {
+      requestId: 'req-1',
+      request: { url: 'https://example.com/one', method: 'GET' },
+    });
+    emit('Network.requestWillBeSent', {
+      requestId: 'req-2',
+      request: { url: 'https://example.com/two', method: 'GET' },
+    });
+
+    const firstPage = (await service.callTool('listRequests', {
+      limit: 1,
+    })) as {
+      items: unknown[];
+      page: { hasMore: boolean; nextCursor?: string; reset?: boolean };
+    };
+    expect(firstPage.items).toHaveLength(1);
+    expect(firstPage.page.hasMore).toBe(true);
+    expect(firstPage.page.nextCursor).toBeTruthy();
+    expect(firstPage.page.reset).toBeUndefined();
+
+    // An app relaunch (or any disconnect) wipes the capture buffer and bumps
+    // the generation, so the cursor issued above now points at a buffer
+    // that no longer exists.
+    service.onDisconnected();
+
+    const staleContinuation = (await service.callTool('listRequests', {
+      cursor: firstPage.page.nextCursor,
+    })) as {
+      items: unknown[];
+      page: { hasMore: boolean; nextCursor?: string; reset?: boolean };
+    };
+    expect(staleContinuation.items).toEqual([]);
+    expect(staleContinuation.page.hasMore).toBe(false);
+    expect(staleContinuation.page.reset).toBe(true);
+  });
 });

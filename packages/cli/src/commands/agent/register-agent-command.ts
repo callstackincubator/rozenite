@@ -13,7 +13,6 @@ import {
   paginateRows,
   parseFields,
   parseLimit,
-  projectRows,
   shapePaginatedRows,
   shapeToolResult,
 } from './output-shaping.js';
@@ -394,8 +393,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                   description: tool.description,
                 }))
                 .sort((a, b) => a.name.localeCompare(b.name));
-              const projected = projectRows(rows, fields);
-              const paged = paginateRows(projected, {
+              const paged = paginateRows(rows, {
                 kind: 'tools',
                 scope: `domain:${domainId}`,
                 limit,
@@ -668,8 +666,7 @@ export const registerAgentCommand = (program: Command): void => {
               description: domain.description,
             }))
             .sort((a, b) => a.id.localeCompare(b.id));
-          const projected = projectRows(domains, fields);
-          const paged = paginateRows(projected, {
+          const paged = paginateRows(domains, {
             kind: 'domains',
             scope: 'all',
             limit,

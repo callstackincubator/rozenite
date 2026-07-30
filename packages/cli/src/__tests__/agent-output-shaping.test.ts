@@ -165,7 +165,49 @@ describe('agent output shaping', () => {
         ['name', 'id'],
         undefined,
       ),
-    ).toEqual({ items: [{ name: null, id: 'a' }] });
+    ).toEqual({ items: [{ id: 'a' }] });
+  });
+
+  it('omits absent fields (not null) from row-keyed items, unlike columnar rows', () => {
+    expect(
+      shapePaginatedRows(
+        { items: [{ id: 'a' }], page: { limit: 20, hasMore: false } },
+        ['id', 'kind'],
+        undefined,
+      ),
+    ).toEqual({ items: [{ id: 'a' }] });
+
+    expect(
+      shapePaginatedRows(
+        { items: [], page: { limit: 20, hasMore: false } },
+        ['id', 'kind'],
+        undefined,
+      ),
+    ).toEqual({ items: [] });
+  });
+
+  it('degrades to unshaped when tool metadata collides with a shaped output key', () => {
+    const collidingResult = {
+      cols: 'tool-owned-value',
+      items: [{ id: 'a' }, { id: 'b' }],
+      page: { limit: 2, hasMore: false },
+    };
+    expect(shapeToolResult(collidingResult, ['id'], undefined)).toBe(
+      collidingResult,
+    );
+
+    const collidingNext = {
+      next: 'tool-owned-value',
+      items: [{ id: 'a' }],
+      page: { limit: 1, hasMore: true, nextCursor: 'cursor' },
+    };
+    expect(
+      shapeToolResult(
+        collidingNext,
+        ['id'],
+        'npx rozenite agent domains --cursor cursor',
+      ),
+    ).toBe(collidingNext);
   });
 
   it('makes next commands safe to paste into a POSIX shell', () => {

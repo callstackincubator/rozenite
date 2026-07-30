@@ -19,13 +19,22 @@ the output shape.
 - With two or more rows, row-shaped results use the stable columnar contract:
   `{"cols":["id","kind"],"rows":[["console","static"],["react","static"]]}`.
   `cols` is exactly the requested field order; an absent optional value is
-  represented by `null` in its row.
+  represented by `null` in its row, since a positional array cell can't
+  simply be omitted without shifting the columns after it.
 - With zero or one row, row-shaped results remain row-keyed:
-  `{"items":[{"id":"console","kind":"static"}]}`.
+  `{"items":[{"id":"console","kind":"static"}]}`. Here an absent optional
+  value is omitted from the object entirely (not `null`), so these payloads
+  never grow past their pre-columnar shape — the reason 0/1-row results stay
+  row-keyed in the first place.
 - Terminal pages omit pagination metadata. When more rows exist, `next` is a
   shell-escaped, runnable `npx rozenite agent ... --cursor <token>` command
   that preserves the listing's connection, session, projection, and limit
   options.
+- A `--cursor` from an earlier page can go stale if the underlying data was
+  invalidated (for example, an app relaunch resets the network domain's
+  capture buffer). Re-running a stale cursor returns
+  `{"page":{"reset":true},"items":[]}` instead of a normal empty page — treat
+  that as "restart this listing from scratch," not "no more rows."
 
 Declared paginated calls include console messages, React
 tree/search/inspection rows, render data, network request listings, and any
