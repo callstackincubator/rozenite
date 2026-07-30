@@ -384,7 +384,7 @@ describe('agent command output', () => {
     );
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"items":[{"id":"app","kind":"plugin"}],"next":"rozenite agent domains --host 127.0.0.1 --port 8081 --session \'session 1\' --limit 1 --cursor eyJ2IjoxLCJraW5kIjoiZG9tYWlucyIsInNjb3BlIjoiYWxsIiwiaW5kZXgiOjF9"}\n',
+      '{"items":[{"id":"app","kind":"plugin"}],"next":"npx rozenite agent domains --host 127.0.0.1 --port 8081 --session \'session 1\' --limit 1 --cursor eyJ2IjoxLCJraW5kIjoiZG9tYWlucyIsInNjb3BlIjoiYWxsIiwiaW5kZXgiOjF9"}\n',
     );
   });
 
@@ -687,7 +687,7 @@ describe('agent command output', () => {
     expect(output).toMatchObject({
       recording: { isRecording: true },
       items: [{ url: 'https://example.test', status: null }],
-      next: expect.stringContaining('rozenite agent network call'),
+      next: expect.stringContaining('npx rozenite agent domain call'),
     });
 
     const continuation = output.next;
@@ -699,9 +699,10 @@ describe('agent command output', () => {
       .trim()
       .split('\n');
     expect(args).toEqual([
+      'npx',
       'rozenite',
       'agent',
-      'network',
+      'domain',
       'call',
       '--host',
       '127.0.0.1',
@@ -1030,8 +1031,16 @@ describe('agent command output', () => {
   it('keeps pretty output in runnable listing continuations', async () => {
     setupClient();
     mocks.session.tools.list.mockResolvedValue([
-      { name: 'network.getRequestDetails', shortName: 'getRequestDetails' },
-      { name: 'network.listRequests', shortName: 'listRequests' },
+      {
+        name: 'network.getRequestDetails',
+        shortName: 'getRequestDetails',
+        domainId: 'network',
+      },
+      {
+        name: 'network.listRequests',
+        shortName: 'listRequests',
+        domainId: 'network',
+      },
     ]);
 
     const stdoutWrite = vi
@@ -1065,9 +1074,10 @@ describe('agent command output', () => {
       .trim()
       .split('\n');
     expect(args).toEqual([
+      'npx',
       'rozenite',
       'agent',
-      'network domain',
+      'network',
       'tools',
       '--host',
       '127.0.0.1',

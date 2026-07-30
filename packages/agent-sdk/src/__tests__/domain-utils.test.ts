@@ -342,9 +342,10 @@ describe('agent domain utils', () => {
       },
     };
 
-    expect(toAgentDomainTool(entry)).toEqual({
+    expect(toAgentDomainTool(entry, 'mmkv')).toEqual({
       ...entry,
       shortName: 'list-entries',
+      domainId: 'mmkv',
     });
 
     expect(toAgentToolSchema(entry)).toEqual({

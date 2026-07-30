@@ -194,6 +194,7 @@ describe('agent session domain and tool helpers', () => {
       {
         name: '@rozenite/mmkv-plugin.list-entries',
         shortName: 'list-entries',
+        domainId: 'mmkv',
         description: 'List entries',
         inputSchema: {
           type: 'object',

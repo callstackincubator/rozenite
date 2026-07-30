@@ -201,7 +201,7 @@ const shellEscape = (value: string): string => {
 
 /** Builds a copy-pasteable POSIX shell command from already-separated args. */
 export const formatAgentCommand = (args: readonly string[]): string =>
-  ['rozenite', 'agent', ...args].map(shellEscape).join(' ');
+  ['npx', 'rozenite', 'agent', ...args].map(shellEscape).join(' ');
 
 export const paginateRows = <T>(
   rows: T[],

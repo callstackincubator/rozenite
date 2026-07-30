@@ -383,11 +383,11 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                 !!dynamicOptions.verbose,
               );
               const limit = parseLimit(dynamicOptions.limit);
-              const rows = (
-                await session.tools.list({
-                  domain: domainToken,
-                })
-              )
+              const domainTools = await session.tools.list({
+                domain: domainToken,
+              });
+              const domainId = domainTools[0]?.domainId ?? domainToken;
+              const rows = domainTools
                 .map<ToolListRow>((tool) => ({
                   name: tool.name,
                   shortName: tool.shortName,
@@ -397,7 +397,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
               const projected = projectRows(rows, fields);
               const paged = paginateRows(projected, {
                 kind: 'tools',
-                scope: `domain:${domainToken}`,
+                scope: `domain:${domainId}`,
                 limit,
                 cursor: dynamicOptions.cursor,
               });
@@ -407,7 +407,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                 fields,
                 paged.page.nextCursor
                   ? formatAgentCommand([
-                      domainToken,
+                      domainId,
                       'tools',
                       ...getConnectionCommandArgs(options),
                       '--session',
@@ -485,7 +485,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
               fields,
               nextCursor
                 ? getToolCallCommand(
-                    domainToken,
+                    resolvedTool.domainId,
                     dynamicOptions.tool,
                     paginatedToolArgs,
                     nextCursor,

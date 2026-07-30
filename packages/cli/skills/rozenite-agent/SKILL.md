@@ -23,8 +23,9 @@ the output shape.
 - With zero or one row, row-shaped results remain row-keyed:
   `{"items":[{"id":"console","kind":"static"}]}`.
 - Terminal pages omit pagination metadata. When more rows exist, `next` is a
-  shell-escaped, runnable `rozenite agent ... --cursor <token>` command that
-  preserves the listing's connection, session, projection, and limit options.
+  shell-escaped, runnable `npx rozenite agent ... --cursor <token>` command
+  that preserves the listing's connection, session, projection, and limit
+  options.
 
 Declared paginated calls include console messages, React
 tree/search/inspection rows, render data, network request listings, and any

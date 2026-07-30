@@ -122,11 +122,13 @@ export const createAgentClient = (
 
     const toolsApi: AgentSessionTools = {
       list: async ({ domain }) => {
-        const { domainTools } = await resolveDomainContext({
+        const { resolvedDomain, domainTools } = await resolveDomainContext({
           sessionId: sessionInfo.id,
           domain,
         });
-        return domainTools.map(toAgentDomainTool);
+        return domainTools.map((tool) =>
+          toAgentDomainTool(tool, resolvedDomain.id),
+        );
       },
       getSchema: async ({ domain, tool }) => {
         const { resolvedDomain, domainTools } = await resolveDomainContext({

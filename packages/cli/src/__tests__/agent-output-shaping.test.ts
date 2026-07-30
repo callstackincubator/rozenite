@@ -147,11 +147,11 @@ describe('agent output shaping', () => {
           page: { limit: 1, hasMore: true, nextCursor: 'cursor' },
         },
         ['id'],
-        'rozenite agent domains --cursor cursor',
+        'npx rozenite agent domains --cursor cursor',
       ),
     ).toEqual({
       items: [{ id: 'a' }],
-      next: 'rozenite agent domains --cursor cursor',
+      next: 'npx rozenite agent domains --cursor cursor',
     });
   });
 
@@ -171,7 +171,15 @@ describe('agent output shaping', () => {
   it('makes next commands safe to paste into a POSIX shell', () => {
     expect(
       formatAgentCommand(['domains', '--session', "session with ' quote"]),
-    ).toBe("rozenite agent domains --session 'session with '\"'\"' quote'");
+    ).toBe(
+      "npx rozenite agent domains --session 'session with '\"'\"' quote'",
+    );
+  });
+
+  it('emits slash-containing domain ids unquoted and shell-safe', () => {
+    expect(
+      formatAgentCommand(['avasapp/ably', 'tools', '--cursor', 'cursor']),
+    ).toBe('npx rozenite agent avasapp/ably tools --cursor cursor');
   });
 
   it('does not hide a malformed continuation from a known tool result', () => {
@@ -222,12 +230,12 @@ describe('agent output shaping', () => {
           page: { limit: 1, hasMore: true, nextCursor: 'cursor', reset: true },
         },
         ['id'],
-        'rozenite agent react call --cursor cursor',
+        'npx rozenite agent react call --cursor cursor',
       ),
     ).toEqual({
       page: { reset: true },
       items: [{ id: 'a' }],
-      next: 'rozenite agent react call --cursor cursor',
+      next: 'npx rozenite agent react call --cursor cursor',
     });
   });
 

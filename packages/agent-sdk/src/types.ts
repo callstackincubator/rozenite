@@ -30,6 +30,8 @@ export interface DomainDefinition {
 
 export interface AgentDomainTool extends AgentTool {
   shortName: string;
+  /** Canonical domain id the requested domain token resolved to. */
+  domainId: string;
 }
 
 export interface AgentToolSchema {

@@ -342,9 +342,13 @@ export const resolveDomainTool = (
   return selectedTool;
 };
 
-export const toAgentDomainTool = (tool: AgentTool): AgentDomainTool => ({
+export const toAgentDomainTool = (
+  tool: AgentTool,
+  domainId: string,
+): AgentDomainTool => ({
   ...tool,
   shortName: inferToolShortName(tool.name),
+  domainId,
 });
 
 export const toAgentToolSchema = (tool: AgentTool): AgentToolSchema => ({
