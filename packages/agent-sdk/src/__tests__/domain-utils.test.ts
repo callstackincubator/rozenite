@@ -108,9 +108,9 @@ describe('agent domain utils', () => {
   });
 
   it('falls back to the scope when the reduced name is empty or generic residue', () => {
-    expect(deriveDomainName('@react-native-nitro-geolocation/rozenite-plugin')).toBe(
-      'react-native-nitro-geolocation',
-    );
+    expect(
+      deriveDomainName('@react-native-nitro-geolocation/rozenite-plugin'),
+    ).toBe('react-native-nitro-geolocation');
     expect(deriveDomainName('@scope/plugin')).toBe('scope');
     expect(deriveDomainName('@scope/devtools')).toBe('scope');
   });
@@ -157,9 +157,9 @@ describe('agent domain utils', () => {
   });
 
   it('errors instead of silently shadowing a built-in domain with an unscoped package literally named after it', () => {
-    expect(() =>
-      buildRuntimePluginDomains([tool('console.list')]),
-    ).toThrow(/Plugin "console" derives the domain name "console"/);
+    expect(() => buildRuntimePluginDomains([tool('console.list')])).toThrow(
+      /Plugin "console" derives the domain name "console"/,
+    );
   });
 
   it('resolves plugin domains by id or pluginId token', () => {
@@ -185,9 +185,9 @@ describe('agent domain utils', () => {
     expect(resolveDomainToken('rozenite/mmkv', domains)?.pluginId).toBe(
       '@rozenite/mmkv-plugin',
     );
-    expect(
-      resolveDomainToken('@rozenite/mmkv-plugin', domains)?.pluginId,
-    ).toBe('@rozenite/mmkv-plugin');
+    expect(resolveDomainToken('@rozenite/mmkv-plugin', domains)?.pluginId).toBe(
+      '@rozenite/mmkv-plugin',
+    );
   });
 
   it('still accepts the deprecated pre-#319 mangled slug as a compatibility alias', () => {

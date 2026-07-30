@@ -112,7 +112,9 @@ export const createAgentClient = (
     )) as TResult;
   };
 
-  const createSessionClient = (sessionInfo: AgentSessionInfo): AgentSessionClient => {
+  const createSessionClient = (
+    sessionInfo: AgentSessionInfo,
+  ): AgentSessionClient => {
     let stopped = sessionInfo.status === 'stopped';
 
     const listDomains = async () => {
