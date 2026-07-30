@@ -91,7 +91,7 @@ describe('agent command output', () => {
       '{"items":[{"id":"device-1","name":"iPhone"}]}\n',
     );
     expect(mocks.createAgentClient).toHaveBeenCalledWith({
-      host: 'localhost',
+      host: '127.0.0.1',
       port: 8081,
     });
   });
@@ -131,7 +131,7 @@ describe('agent command output', () => {
     mocks.transport.createSession.mockResolvedValue({
       session: {
         id: 'device-1',
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 8081,
         deviceId: 'device-1',
         deviceName: 'iPhone',
@@ -172,7 +172,7 @@ describe('agent command output', () => {
     mocks.transport.createSession.mockResolvedValue({
       session: {
         id: 'device-1',
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 8081,
         deviceId: 'device-1',
         deviceName: 'iPhone',
@@ -212,7 +212,7 @@ describe('agent command output', () => {
     mocks.transport.createSession.mockResolvedValue({
       session: {
         id: 'device-1',
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 8081,
         deviceId: 'device-1',
         deviceName: 'iPhone',
