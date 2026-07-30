@@ -5,17 +5,14 @@ import {
   DEFAULT_AGENT_HOST,
   DEFAULT_AGENT_PORT,
   isAgentToolPagination,
-  type AgentToolPagination,
-} from '@rozenite/agent-shared';
-import { printOutput } from './output.js';
-import {
-  formatAgentCommand,
-  paginateRows,
   parseFields,
   parseLimit,
   shapePaginatedRows,
   shapeToolResult,
-} from './output-shaping.js';
+  type AgentToolPagination,
+} from '@rozenite/agent-shared';
+import { printOutput } from './output.js';
+import { formatAgentCommand, paginateRows } from './output-shaping.js';
 import { getErrorMessage } from './error-message.js';
 import { getPackageJSON } from '../../package-json.js';
 

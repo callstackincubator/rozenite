@@ -1,3 +1,13 @@
+export {
+  DEFAULT_PAGE_LIMIT,
+  MAX_PAGE_LIMIT,
+  parseFields,
+  parseLimit,
+  projectRows,
+  shapePaginatedRows,
+  shapeToolResult,
+} from './output-shaping.js';
+
 export const AGENT_PLUGIN_ID = 'rozenite-agent';
 
 export const DEFAULT_AGENT_HOST = '127.0.0.1';
