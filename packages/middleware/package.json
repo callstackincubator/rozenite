@@ -58,7 +58,8 @@
     "@react-native/dev-middleware": "~0.76.0",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",
-    "@types/semver": "^7.7.0"
+    "@types/semver": "^7.7.0",
+    "@types/ws": "^8.18.1"
   },
   "engines": {
     "node": ">=20"
