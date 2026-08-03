@@ -63,6 +63,29 @@ describe('agent command output', () => {
     mocks.createAgentTransport.mockReturnValue(mocks.transport);
   };
 
+  it('does not expose SDK auto-pagination flags', () => {
+    const program = new Command();
+    registerAgentCommand(program);
+
+    const agentCommand = program.commands.find(
+      (command) => command.name() === 'agent',
+    );
+    const domainCommand = agentCommand?.commands.find(
+      (command) => command.name() === '*',
+    );
+    expect(domainCommand).toBeDefined();
+
+    const optionNames = domainCommand!.options.flatMap((option) => [
+      option.short,
+      option.long,
+    ]);
+
+    expect(optionNames).not.toContain('-p');
+    expect(optionNames).not.toContain('--pages');
+    expect(optionNames).not.toContain('-m');
+    expect(optionNames).not.toContain('--max-items');
+  });
+
   it('prints JSON for agent commands without requiring --json', async () => {
     setupClient();
     mocks.client.targets.list.mockResolvedValue([
@@ -399,6 +422,12 @@ describe('agent command output', () => {
       },
     );
 
+    expect(mocks.session.tools.call).toHaveBeenCalledTimes(1);
+    expect(mocks.session.tools.call).toHaveBeenCalledWith({
+      domain: 'app',
+      tool: 'echo',
+      args: { value: 'hello' },
+    });
     expect(stdoutWrite).toHaveBeenCalledWith('{"value":"hello"}\n');
   });
 

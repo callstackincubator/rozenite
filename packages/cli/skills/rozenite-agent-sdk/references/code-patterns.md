@@ -131,20 +131,37 @@ import { createAgentClient } from '@rozenite/agent-sdk';
 
 const client = createAgentClient();
 
-const requests = await client.withSession(async (session) => {
-  return await session.tools.call<
-    { limit: number },
-    { items: Array<{ id: string }> }
+const pages = await client.withSession(async (session) => {
+  type RequestsPage = {
+    items: Array<{ id: string }>;
+    page: { limit: number; hasMore: boolean; nextCursor?: string };
+  };
+
+  const first = await session.tools.call<
+    { limit: number; cursor?: string },
+    RequestsPage
   >({
     domain: 'network',
     tool: 'listRequests',
     args: { limit: 50 },
-    autoPaginate: { pagesLimit: 3, maxItems: 100 },
   });
+
+  const second = first.page.nextCursor
+    ? await session.tools.call<
+        { limit: number; cursor?: string },
+        RequestsPage
+      >({
+        domain: 'network',
+        tool: 'listRequests',
+        args: { limit: 50, cursor: first.page.nextCursor },
+      })
+    : undefined;
+
+  return { first, second };
 });
 ```
 
-Use this when a tool returns paged results and you want the SDK to follow cursors and merge pages for you.
+Fetch one page per call. Pass the plugin's cursor unchanged when requesting the next page.
 
 ## Typed Plugin Fallback Network Call
 

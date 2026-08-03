@@ -163,21 +163,31 @@ If a plugin only mounts after you navigate to one of its screens, do that first 
 
 ## Pagination
 
-Some tools return paged results. When you want the SDK to keep following cursors for you and merge the pages into one result, pass `autoPaginate` to `session.tools.call(...)`.
+Some tools return paged results. The SDK makes one tool call and returns the plugin's page and cursor unchanged. To fetch another page, pass the returned cursor explicitly in the next call.
 
 ```ts title="agent-sdk-pagination.ts"
-const requests = await session.tools.call<
-  { limit: number },
-  { items: Array<{ id: string }> }
+type RequestsPage = {
+  items: Array<{ id: string }>;
+  page: { limit: number; hasMore: boolean; nextCursor?: string };
+};
+
+const firstPage = await session.tools.call<
+  { limit: number; cursor?: string },
+  RequestsPage
 >({
   domain: 'network',
   tool: 'listRequests',
   args: { limit: 50 },
-  autoPaginate: { pagesLimit: 3 },
 });
-```
 
-Use `pagesLimit` to control how many pages the SDK should follow. If you also want to cap the merged result size, add `maxItems`.
+const secondPage = firstPage.page.nextCursor
+  ? await session.tools.call<{ limit: number; cursor?: string }, RequestsPage>({
+      domain: 'network',
+      tool: 'listRequests',
+      args: { limit: 50, cursor: firstPage.page.nextCursor },
+    })
+  : undefined;
+```
 
 ## Choosing a target
 

@@ -1,10 +1,7 @@
 import { Command } from 'commander';
 import { createAgentClient } from '@rozenite/agent-sdk';
 import { createAgentTransport } from '@rozenite/agent-sdk/transport';
-import {
-  DEFAULT_AGENT_HOST,
-  DEFAULT_AGENT_PORT,
-} from '@rozenite/agent-shared';
+import { DEFAULT_AGENT_HOST, DEFAULT_AGENT_PORT } from '@rozenite/agent-shared';
 import { printOutput } from './output.js';
 import {
   paginateRows,
@@ -53,8 +50,6 @@ type DynamicDomainCommandOptions = CommonOptions & {
   fields?: string;
   limit?: string;
   cursor?: string;
-  pages?: string;
-  maxItems?: string;
   verbose?: boolean;
   session?: string;
 };
@@ -153,35 +148,6 @@ const parseJsonArgs = (rawArgs?: string): unknown => {
   }
 };
 
-const parsePositiveIntOption = (
-  rawValue: string | undefined,
-  optionName: string,
-): number | undefined => {
-  if (!rawValue) {
-    return undefined;
-  }
-
-  const parsed = Number(rawValue);
-  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 1) {
-    throw new Error(`${optionName} must be a positive integer`);
-  }
-
-  return parsed;
-};
-
-const resolveAutoPaginationConfig = (options: DynamicDomainCommandOptions) => {
-  const pagesLimit = parsePositiveIntOption(options.pages, '--pages');
-  const maxItems = parsePositiveIntOption(options.maxItems, '--max-items');
-  if (maxItems !== undefined && pagesLimit === undefined) {
-    throw new Error('--max-items requires --pages');
-  }
-
-  return {
-    ...(pagesLimit ? { pagesLimit } : {}),
-    ...(maxItems ? { maxItems } : {}),
-  };
-};
-
 const outputAgentError = (command: Command, error: unknown): void => {
   const options = getConnectionOptions(command);
   printOutput(
@@ -225,15 +191,13 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
       `Fields to include (${TOOL_LIST_FIELDS.join(', ')})`,
     )
     .option('-v, --verbose', 'Include all supported fields')
-    .option('-n, --limit <n>', 'Page size (default 20, max 100)')
-    .option('-c, --cursor <token>', 'Opaque cursor from previous page')
     .option(
-      '-p, --pages <n>',
-      'Auto-follow paged tool responses for up to N pages',
+      '-n, --limit <n>',
+      'CLI-owned domain/tool listing page size (default 20, max 100)',
     )
     .option(
-      '-m, --max-items <n>',
-      'Auto-pagination item cap (requires --pages)',
+      '-c, --cursor <token>',
+      'Cursor for a CLI-owned domain/tool listing',
     )
     .requiredOption('-s, --session <id>', 'Target Agent session ID')
     .action(
@@ -334,12 +298,10 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
             }
 
             const parsedArgs = parseJsonArgs(dynamicOptions.args);
-            const autoPagination = resolveAutoPaginationConfig(dynamicOptions);
             return await session.tools.call({
               domain: domainToken,
               tool: dynamicOptions.tool,
               args: parsedArgs,
-              autoPaginate: autoPagination,
             });
           })();
 
