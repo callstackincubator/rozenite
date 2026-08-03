@@ -13,10 +13,8 @@ import {
   toAgentDomainTool,
   toAgentToolSchema,
 } from './domain-utils.js';
-import { callToolWithOptionalPagination } from './pagination.js';
 import { createAgentTransport } from './transport.js';
 import type {
-  AgentCallToolAutoPaginationOptions,
   AgentClient,
   AgentClientOptions,
   AgentDynamicToolCallInput,
@@ -24,7 +22,6 @@ import type {
   AgentSessionCallback,
   AgentSessionClient,
   AgentSessionTools,
-  AgentToolCallOptions,
   DomainDefinition,
 } from './types.js';
 
@@ -43,16 +40,6 @@ const sortTools = <
   tools: TTool[],
 ): TTool[] => {
   return [...tools].sort((a, b) => a.name.localeCompare(b.name));
-};
-
-const toAutoPaginationConfig = (
-  options?: AgentCallToolAutoPaginationOptions,
-): AgentCallToolAutoPaginationOptions => {
-  if (!options) {
-    return {};
-  }
-
-  return options;
 };
 
 export const createAgentClient = (
@@ -88,7 +75,7 @@ export const createAgentClient = (
       sessionId: string;
     } & AgentDynamicToolCallInput<TArgs>,
   ): Promise<TResult> => {
-    const { sessionId, domain, tool, args = {} as TArgs, autoPaginate } = input;
+    const { sessionId, domain, tool, args = {} as TArgs } = input;
     const { resolvedDomain, domainTools } = await resolveDomainContext({
       sessionId,
       domain,
@@ -96,20 +83,12 @@ export const createAgentClient = (
     const domainLabel = resolvedDomain.pluginId ?? resolvedDomain.id;
     const selectedTool = resolveDomainTool(domainTools, domainLabel, tool);
 
-    return (await callToolWithOptionalPagination(
-      {
-        callTool: async (name, payload) =>
-          (
-            await transport.callSessionTool(sessionId, {
-              toolName: name,
-              args: payload,
-            })
-          ).result,
-      },
-      selectedTool.name,
-      args,
-      toAutoPaginationConfig(autoPaginate),
-    )) as TResult;
+    return (
+      await transport.callSessionTool(sessionId, {
+        toolName: selectedTool.name,
+        args,
+      })
+    ).result as TResult;
   };
 
   const createSessionClient = (
@@ -158,21 +137,13 @@ export const createAgentClient = (
         return {
           domainId: resolvedDomain.id,
           schema: toAgentToolSchema(selectedTool),
-          call: async (args?: unknown, options?: AgentToolCallOptions) =>
-            await callToolWithOptionalPagination(
-              {
-                callTool: async (name, payload) =>
-                  (
-                    await transport.callSessionTool(sessionInfo.id, {
-                      toolName: name,
-                      args: payload,
-                    })
-                  ).result,
-              },
-              selectedTool.name,
-              args ?? {},
-              toAutoPaginationConfig(options?.autoPaginate),
-            ),
+          call: async (args?: unknown) =>
+            (
+              await transport.callSessionTool(sessionInfo.id, {
+                toolName: selectedTool.name,
+                args: args ?? {},
+              })
+            ).result,
         };
       }) as AgentSessionTools['resolve'],
       call: (async (
@@ -180,7 +151,6 @@ export const createAgentClient = (
           | AgentToolDescriptor<unknown, unknown>
           | AgentDynamicToolCallInput<unknown>,
         argsOrOptions?: unknown,
-        maybeOptions?: AgentToolCallOptions,
       ) => {
         if (
           typeof descriptorOrInput === 'object' &&
@@ -202,7 +172,6 @@ export const createAgentClient = (
           domain: descriptor.domain,
           tool: descriptor.name,
           args: argsOrOptions,
-          autoPaginate: maybeOptions?.autoPaginate,
         });
       }) as AgentSessionTools['call'],
     };

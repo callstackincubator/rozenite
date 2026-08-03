@@ -117,6 +117,29 @@ describe('agent command output', () => {
     mocks.createAgentTransport.mockReturnValue(mocks.transport);
   };
 
+  it('does not expose SDK auto-pagination flags', () => {
+    const program = new Command();
+    registerAgentCommand(program);
+
+    const agentCommand = program.commands.find(
+      (command) => command.name() === 'agent',
+    );
+    const domainCommand = agentCommand?.commands.find(
+      (command) => command.name() === '*',
+    );
+    expect(domainCommand).toBeDefined();
+
+    const optionNames = domainCommand!.options.flatMap((option) => [
+      option.short,
+      option.long,
+    ]);
+
+    expect(optionNames).not.toContain('-p');
+    expect(optionNames).not.toContain('--pages');
+    expect(optionNames).not.toContain('-m');
+    expect(optionNames).not.toContain('--max-items');
+  });
+
   it('prints JSON for agent commands without requiring --json', async () => {
     setupClient();
     mocks.client.targets.list.mockResolvedValue([
@@ -689,6 +712,11 @@ describe('agent command output', () => {
       items: [{ url: 'https://example.test', status: null }],
       next: expect.stringContaining('npx rozenite agent domain call'),
     });
+    expect(mocks.session.tools.call).toHaveBeenCalledTimes(1);
+    expect(mocks.session.tools.call).toHaveBeenCalledWith({
+      limit: 1,
+      filter: 'two words',
+    });
 
     const continuation = output.next;
     const args = execFileSync(
@@ -782,9 +810,7 @@ describe('agent command output', () => {
       { from: 'node' },
     );
 
-    expect(mocks.session.tools.call).toHaveBeenCalledWith(null, {
-      autoPaginate: {},
-    });
+    expect(mocks.session.tools.call).toHaveBeenCalledWith(null);
     expect(stdoutWrite).toHaveBeenCalledWith('{"value":"hello"}\n');
   });
 

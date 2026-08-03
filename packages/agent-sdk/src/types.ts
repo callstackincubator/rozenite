@@ -46,29 +46,19 @@ export interface AgentClientOptions {
   port?: number;
 }
 
-export interface AgentCallToolAutoPaginationOptions {
-  pagesLimit?: number;
-  maxItems?: number;
-}
-
 export interface AgentDynamicToolCallInput<TArgs = unknown> {
   domain: string;
   tool: string;
   args?: TArgs;
-  autoPaginate?: AgentCallToolAutoPaginationOptions;
-}
-
-export interface AgentToolCallOptions {
-  autoPaginate?: AgentCallToolAutoPaginationOptions;
 }
 
 type AgentDescriptorCallTuple<
   TDescriptor extends AgentToolDescriptor<unknown, unknown>,
 > = [InferAgentToolArgs<TDescriptor>] extends [undefined]
-  ? [args?: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions]
+  ? [args?: InferAgentToolArgs<TDescriptor>]
   : Record<string, never> extends InferAgentToolArgs<TDescriptor>
-    ? [args?: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions]
-    : [args: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions];
+    ? [args?: InferAgentToolArgs<TDescriptor>]
+    : [args: InferAgentToolArgs<TDescriptor>];
 
 export interface AgentSessionDomains {
   list: () => Promise<DomainDefinition[]>;
@@ -78,7 +68,7 @@ export interface AgentResolvedTool<TArgs = unknown, TResult = unknown> {
   /** Canonical domain id the requested domain token resolved to. */
   domainId: string;
   schema: AgentToolSchema;
-  call: (args?: TArgs, options?: AgentToolCallOptions) => Promise<TResult>;
+  call: (args?: TArgs) => Promise<TResult>;
 }
 
 export interface AgentSessionTools {

@@ -261,7 +261,7 @@ describe('wrapConfigFile', () => {
           "const { withRozenite } = require('@rozenite/metro');"
         );
         expect(wrappedContent).toContain(
-          'withRozenite(getDefaultConfig(__dirname))'
+          "withRozenite(getDefaultConfig(__dirname), { enabled: process.env.WITH_ROZENITE === 'true' })"
         );
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
@@ -333,7 +333,7 @@ describe('wrapConfigFile', () => {
           "import { withRozenite } from '@rozenite/metro';"
         );
         expect(wrappedContent).toContain(
-          'export default withRozenite(getDefaultConfig(__dirname))'
+          "export default withRozenite(getDefaultConfig(__dirname), { enabled: process.env.WITH_ROZENITE === 'true' })"
         );
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
@@ -405,7 +405,7 @@ describe('wrapConfigFile', () => {
           "const { withRozenite } = require('@rozenite/repack');"
         );
         expect(wrappedContent).toContain(
-          'withRozenite(getDefaultConfig(__dirname))'
+          "withRozenite(getDefaultConfig(__dirname), { enabled: process.env.WITH_ROZENITE === 'true' })"
         );
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
@@ -459,7 +459,7 @@ describe('wrapConfigFile', () => {
           "import { withRozenite } from '@rozenite/repack';"
         );
         expect(wrappedContent).toContain(
-          'export default withRozenite(getDefaultConfig(process.cwd()))'
+          "export default withRozenite(getDefaultConfig(process.cwd()), { enabled: process.env.WITH_ROZENITE === 'true' })"
         );
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
@@ -727,7 +727,7 @@ export default getDefaultConfig(__dirname);`;
         "import { withRozenite } from '@rozenite/metro';"
       );
       expect(wrappedContent).toContain(
-        'export default withRozenite(getDefaultConfig(__dirname))'
+        "export default withRozenite(getDefaultConfig(__dirname), { enabled: process.env.WITH_ROZENITE === 'true' })"
       );
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });

@@ -27,9 +27,10 @@ the output shape.
   never grow past their pre-columnar shape — the reason 0/1-row results stay
   row-keyed in the first place.
 - Terminal pages omit pagination metadata. When more rows exist, `next` is a
-  shell-escaped, runnable `npx rozenite agent ... --cursor <token>` command
-  that preserves the listing's connection, session, projection, and limit
-  options.
+  shell-escaped, runnable `npx rozenite agent ...` command that preserves the
+  connection, session, projection, and limit options. CLI-owned domain and
+  tool listings pass their cursor with `--cursor`; paginated tool calls pass
+  the producer cursor inside `--args`.
 - A `--cursor` from an earlier page can go stale if the underlying data was
   invalidated (for example, an app relaunch resets the network domain's
   capture buffer). Re-running a stale cursor returns
@@ -83,6 +84,7 @@ retain their existing shapes.
 
 - Do not pass domain tool names as direct CLI subcommands.
 - Always invoke domain tools with `npx rozenite agent <domain> call --tool <toolName> --args '<json>' --session <id>`.
+- Continue a paginated domain tool call by passing its returned cursor inside `--args`; `--cursor` is only for CLI-owned domain and tool listings.
 - If a domain reference lists only tool names, treat them as tool names, not CLI actions.
 - Example: `npx rozenite agent mmkv call --tool list-storages --args '{}' --session <id>`.
 - If a command fails with `Unknown domain action`, check the CLI syntax and retry with `call --tool <toolName> --session <id>`.

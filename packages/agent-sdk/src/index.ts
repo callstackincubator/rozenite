@@ -1,7 +1,6 @@
 export { createAgentClient } from './client.js';
 export type {
   AgentDynamicToolCallInput,
-  AgentCallToolAutoPaginationOptions,
   AgentClient,
   AgentClientOptions,
   AgentDomainTool,
@@ -10,7 +9,6 @@ export type {
   AgentSessionClient,
   AgentSessionDomains,
   AgentSessionTools,
-  AgentToolCallOptions,
   AgentToolSchema,
   DomainDefinition,
 } from './types.js';
