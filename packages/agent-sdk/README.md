@@ -12,7 +12,7 @@
 - **Explicit Session Handles**: Use `openSession()` / `attachSession()` when you need manual control
 - **Domain Resolution**: Discover static and runtime plugin domains from session tools
 - **Tool Resolution**: Call tools by name or via typed descriptors
-- **Auto Pagination**: Merge paged tool responses when requested
+- **Plugin-Owned Pagination**: Receive each tool response and cursor unchanged
 
 ## Installation
 
@@ -29,19 +29,37 @@ import { createAgentClient } from '@rozenite/agent-sdk';
 
 const client = createAgentClient();
 const result = await client.withSession(async (session) => {
+  type RequestsPage = {
+    items: Array<{ id: string }>;
+    page: { limit: number; hasMore: boolean; nextCursor?: string };
+  };
+
   const domains = await session.domains.list();
   const tools = await session.tools.list({
     domain: 'network',
   });
 
-  const requests = await session.tools.call({
+  const requests = await session.tools.call<
+    { limit: number; cursor?: string },
+    RequestsPage
+  >({
     domain: 'network',
     tool: 'listRequests',
     args: { limit: 20 },
-    autoPaginate: { pagesLimit: 2 },
   });
 
-  return { domains, tools, requests };
+  const nextRequests = requests.page.nextCursor
+    ? await session.tools.call<
+        { limit: number; cursor?: string },
+        RequestsPage
+      >({
+        domain: 'network',
+        tool: 'listRequests',
+        args: { limit: 20, cursor: requests.page.nextCursor },
+      })
+    : undefined;
+
+  return { domains, tools, requests, nextRequests };
 });
 
 console.log(result);

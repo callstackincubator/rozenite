@@ -344,7 +344,7 @@ describe('agent session domain and tool helpers', () => {
     );
   });
 
-  it('calls tools without auto-pagination by default', async () => {
+  it('forwards dynamic call arguments once and preserves the result', async () => {
     const calls: Array<{ toolName: string; args: unknown }> = [];
 
     httpTestHarness.requestHandler.mockImplementation(
@@ -424,114 +424,8 @@ describe('agent session domain and tool helpers', () => {
     ]);
   });
 
-  it('merges paged tool results when auto-pagination is requested', async () => {
-    const calls: Array<{
-      toolName: string;
-      args: { cursor?: string } & Record<string, unknown>;
-    }> = [];
-
-    httpTestHarness.requestHandler.mockImplementation(
-      async ({
-        method,
-        pathname,
-        body,
-      }: MockHttpRequest): Promise<MockHttpResult> => {
-        const sessionRoute = mockAttachedSessionRoute(pathname);
-        if (sessionRoute) {
-          return sessionRoute;
-        }
-
-        if (pathname === getAgentSessionToolsRoute('session-1')) {
-          return {
-            payload: {
-              ok: true,
-              result: {
-                tools: [
-                  {
-                    name: 'listRequests',
-                    description: 'List requests',
-                    inputSchema: { type: 'object' },
-                  },
-                ],
-              },
-            },
-          };
-        }
-
-        if (
-          method === 'POST' &&
-          pathname === getAgentSessionCallToolRoute('session-1')
-        ) {
-          const toolCall = body as {
-            toolName: string;
-            args: { cursor?: string } & Record<string, unknown>;
-          };
-          calls.push(toolCall);
-
-          if (toolCall.args.cursor === 'c1') {
-            return {
-              payload: {
-                ok: true,
-                result: {
-                  result: {
-                    items: [{ id: 2 }],
-                    page: { limit: 1, hasMore: false },
-                  },
-                },
-              },
-            };
-          }
-
-          return {
-            payload: {
-              ok: true,
-              result: {
-                result: {
-                  items: [{ id: 1 }],
-                  page: { limit: 1, hasMore: true, nextCursor: 'c1' },
-                },
-              },
-            },
-          };
-        }
-
-        return mockUnknownRoute();
-      },
-    );
-
-    const session = await attachSession();
-
-    await expect(
-      session.tools.call<
-        { limit: number },
-        {
-          items: Array<{ id: number }>;
-          page: { limit: number; hasMore: boolean; nextCursor?: string };
-        }
-      >({
-        domain: 'network',
-        tool: 'listRequests',
-        args: { limit: 1 },
-        autoPaginate: { pagesLimit: 2 },
-      }),
-    ).resolves.toEqual({
-      items: [{ id: 1 }, { id: 2 }],
-      page: { limit: 1, hasMore: false },
-    });
-
-    expect(calls).toEqual([
-      {
-        toolName: 'listRequests',
-        args: { limit: 1 },
-      },
-      {
-        toolName: 'listRequests',
-        args: { limit: 1, cursor: 'c1' },
-      },
-    ]);
-  });
-
   it('calls typed descriptors through the session tool helper', async () => {
+    const calls: Array<{ toolName: string; args: unknown }> = [];
     const echoTool = defineAgentToolDescriptor<
       { value: string },
       { echoed: string }
@@ -580,6 +474,7 @@ describe('agent session domain and tool helpers', () => {
           method === 'POST' &&
           pathname === getAgentSessionCallToolRoute('session-1')
         ) {
+          calls.push(body as { toolName: string; args: unknown });
           return {
             payload: {
               ok: true,
@@ -605,5 +500,11 @@ describe('agent session domain and tool helpers', () => {
     ).resolves.toEqual({
       echoed: 'hello from descriptor',
     });
+    expect(calls).toEqual([
+      {
+        toolName: 'app.echo',
+        args: { value: 'hello from descriptor' },
+      },
+    ]);
   });
 });

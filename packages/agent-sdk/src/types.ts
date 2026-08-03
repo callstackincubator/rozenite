@@ -42,30 +42,19 @@ export interface AgentClientOptions {
   port?: number;
 }
 
-export interface AgentCallToolAutoPaginationOptions {
-  pagesLimit?: number;
-  maxItems?: number;
-}
-
 export interface AgentDynamicToolCallInput<TArgs = unknown> {
   domain: string;
   tool: string;
   args?: TArgs;
-  autoPaginate?: AgentCallToolAutoPaginationOptions;
-}
-
-export interface AgentToolCallOptions {
-  autoPaginate?: AgentCallToolAutoPaginationOptions;
 }
 
 type AgentDescriptorCallTuple<
   TDescriptor extends AgentToolDescriptor<unknown, unknown>,
-> =
-  [InferAgentToolArgs<TDescriptor>] extends [undefined]
-    ? [args?: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions]
-    : Record<string, never> extends InferAgentToolArgs<TDescriptor>
-      ? [args?: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions]
-      : [args: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions];
+> = [InferAgentToolArgs<TDescriptor>] extends [undefined]
+  ? [args?: InferAgentToolArgs<TDescriptor>]
+  : Record<string, never> extends InferAgentToolArgs<TDescriptor>
+    ? [args?: InferAgentToolArgs<TDescriptor>]
+    : [args: InferAgentToolArgs<TDescriptor>];
 
 export interface AgentSessionDomains {
   list: () => Promise<DomainDefinition[]>;
@@ -111,9 +100,7 @@ export interface AgentTransport {
   listSessions: () => Promise<ListAgentSessionsResponse>;
   getSession: (sessionId: string) => Promise<GetAgentSessionResponse>;
   stopSession: (sessionId: string) => Promise<DeleteAgentSessionResponse>;
-  getSessionTools: (
-    sessionId: string,
-  ) => Promise<GetAgentSessionToolsResponse>;
+  getSessionTools: (sessionId: string) => Promise<GetAgentSessionToolsResponse>;
   callSessionTool: (
     sessionId: string,
     body: CallAgentSessionToolRequest,
@@ -131,6 +118,8 @@ export interface AgentClient {
       callback: AgentSessionCallback<T>,
     ): Promise<T>;
   };
-  openSession: (input?: CreateAgentSessionRequest) => Promise<AgentSessionClient>;
+  openSession: (
+    input?: CreateAgentSessionRequest,
+  ) => Promise<AgentSessionClient>;
   attachSession: (sessionId: string) => Promise<AgentSessionClient>;
 }
