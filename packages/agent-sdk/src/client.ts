@@ -18,6 +18,7 @@ import type {
   AgentClient,
   AgentClientOptions,
   AgentDynamicToolCallInput,
+  AgentResolvedTool,
   AgentSessionCallback,
   AgentSessionClient,
   AgentSessionTools,
@@ -102,11 +103,13 @@ export const createAgentClient = (
 
     const toolsApi: AgentSessionTools = {
       list: async ({ domain }) => {
-        const { domainTools } = await resolveDomainContext({
+        const { resolvedDomain, domainTools } = await resolveDomainContext({
           sessionId: sessionInfo.id,
           domain,
         });
-        return domainTools.map(toAgentDomainTool);
+        return domainTools.map((tool) =>
+          toAgentDomainTool(tool, resolvedDomain.id),
+        );
       },
       getSchema: async ({ domain, tool }) => {
         const { resolvedDomain, domainTools } = await resolveDomainContext({
@@ -117,6 +120,32 @@ export const createAgentClient = (
         const selectedTool = resolveDomainTool(domainTools, domainLabel, tool);
         return toAgentToolSchema(selectedTool);
       },
+      resolve: (async ({
+        domain,
+        tool,
+      }: {
+        domain: string;
+        tool: string;
+      }): Promise<AgentResolvedTool> => {
+        const { resolvedDomain, domainTools } = await resolveDomainContext({
+          sessionId: sessionInfo.id,
+          domain,
+        });
+        const domainLabel = resolvedDomain.pluginId ?? resolvedDomain.id;
+        const selectedTool = resolveDomainTool(domainTools, domainLabel, tool);
+
+        return {
+          domainId: resolvedDomain.id,
+          schema: toAgentToolSchema(selectedTool),
+          call: async (args?: unknown) =>
+            (
+              await transport.callSessionTool(sessionInfo.id, {
+                toolName: selectedTool.name,
+                args: args ?? {},
+              })
+            ).result,
+        };
+      }) as AgentSessionTools['resolve'],
       call: (async (
         descriptorOrInput:
           | AgentToolDescriptor<unknown, unknown>

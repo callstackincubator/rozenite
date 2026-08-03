@@ -1,3 +1,4 @@
+import type { AgentToolPagination } from '@rozenite/agent-shared';
 import { createToolRegistry } from './tool-registry.js';
 import type {
   DevToolsPluginMessage,
@@ -9,7 +10,22 @@ import type {
 } from './types.js';
 import { AGENT_PLUGIN_ID } from './types.js';
 import { createConsoleLogStore } from './console/store.js';
-import type { ConsoleMessageInput } from './console/types.js';
+import type { ConsoleMessageInput, ConsoleLogEntry } from './console/types.js';
+
+/**
+ * Ties a tool's declared pagination `fields`/`defaultFields` to the keys of
+ * its actual row type at compile time, so a renamed or removed field on
+ * `TRow` becomes a build error here instead of a silent `null` column at
+ * runtime.
+ */
+const cursorPagination = <TRow>(config: {
+  fields: readonly Extract<keyof TRow, string>[];
+  defaultFields?: readonly Extract<keyof TRow, string>[];
+}): AgentToolPagination => ({
+  kind: 'cursor',
+  fields: config.fields,
+  ...(config.defaultFields ? { defaultFields: config.defaultFields } : {}),
+});
 
 const CONSOLE_TOOL_NAMES = {
   getMessages: 'getMessages',
@@ -62,6 +78,20 @@ const CONSOLE_TOOLS: AgentTool[] = [
         },
       },
     },
+    pagination: cursorPagination<ConsoleLogEntry>({
+      fields: [
+        'seq',
+        'timestamp',
+        'level',
+        'source',
+        'text',
+        'argsPreview',
+        'context',
+      ],
+      // Drop the two heaviest columns from the default projection; they
+      // remain available via --fields/--verbose.
+      defaultFields: ['seq', 'timestamp', 'level', 'source', 'text'],
+    }),
   },
 ];
 
@@ -89,7 +119,11 @@ export const createAgentMessageHandler = () => {
     return CONSOLE_TOOLS.some((tool) => tool.name === toolName);
   };
 
-  const attachDeviceSchema = (tools: AgentTool[], deviceIds: string[], deviceNames: string[]): AgentTool[] => {
+  const attachDeviceSchema = (
+    tools: AgentTool[],
+    deviceIds: string[],
+    deviceNames: string[],
+  ): AgentTool[] => {
     if (deviceIds.length <= 1) {
       return tools;
     }
@@ -130,7 +164,9 @@ export const createAgentMessageHandler = () => {
   const resolveDeviceForLocalTool = (requestedDeviceId?: string): string => {
     const devices = registry.getDevices();
     if (devices.length === 0) {
-      throw new Error('No connected device is available for local Agent tools.');
+      throw new Error(
+        'No connected device is available for local Agent tools.',
+      );
     }
 
     if (requestedDeviceId) {
@@ -260,7 +296,10 @@ export const createAgentMessageHandler = () => {
     return registry.getDevices();
   };
 
-  const callTool = async (toolName: string, args: unknown): Promise<unknown> => {
+  const callTool = async (
+    toolName: string,
+    args: unknown,
+  ): Promise<unknown> => {
     let deviceId: string | undefined;
     let toolArgs = args;
 
@@ -315,7 +354,12 @@ export const createAgentMessageHandler = () => {
         }
       }, 30000);
 
-      pendingCalls.set(callId, { deviceId: targetDeviceId, resolve, reject, timeoutId });
+      pendingCalls.set(callId, {
+        deviceId: targetDeviceId,
+        resolve,
+        reject,
+        timeoutId,
+      });
     });
 
     try {

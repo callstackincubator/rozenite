@@ -1,3 +1,13 @@
+export {
+  DEFAULT_PAGE_LIMIT,
+  MAX_PAGE_LIMIT,
+  parseFields,
+  parseLimit,
+  projectRows,
+  shapePaginatedRows,
+  shapeToolResult,
+} from './output-shaping.js';
+
 export const AGENT_PLUGIN_ID = 'rozenite-agent';
 
 export const DEFAULT_AGENT_HOST = '127.0.0.1';
@@ -37,10 +47,66 @@ export interface JSONSchema7 {
   [key: string]: unknown;
 }
 
+export interface PageEnvelope {
+  limit: number;
+  hasMore: boolean;
+  nextCursor?: string;
+  reset?: boolean;
+}
+
+export interface PageResult<TItem, TMeta = unknown> {
+  items: TItem[];
+  page: PageEnvelope;
+  meta?: TMeta;
+}
+
+export interface AgentToolPagination {
+  kind: 'cursor';
+  fields: readonly string[];
+  defaultFields?: readonly string[];
+}
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+export const isAgentToolPagination = (
+  value: unknown,
+): value is AgentToolPagination => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const pagination = value as Record<string, unknown>;
+  if (
+    pagination.kind !== 'cursor' ||
+    !isStringArray(pagination.fields) ||
+    pagination.fields.length === 0 ||
+    new Set(pagination.fields).size !== pagination.fields.length
+  ) {
+    return false;
+  }
+
+  if (pagination.defaultFields === undefined) {
+    return true;
+  }
+
+  if (
+    !isStringArray(pagination.defaultFields) ||
+    pagination.defaultFields.length === 0 ||
+    new Set(pagination.defaultFields).size !== pagination.defaultFields.length
+  ) {
+    return false;
+  }
+
+  const allowedFields = new Set(pagination.fields);
+  return pagination.defaultFields.every((field) => allowedFields.has(field));
+};
+
 export interface AgentTool {
   name: string;
   description: string;
   inputSchema: JSONSchema7;
+  pagination?: AgentToolPagination;
 }
 
 type AgentToolTypeCarrier<TArgs = unknown, TResult = unknown> = {
@@ -61,6 +127,7 @@ type AgentToolDescriptorShape = {
   name: string;
   description: string;
   inputSchema: JSONSchema7;
+  pagination?: AgentToolPagination;
 };
 
 export interface AgentToolDescriptor<TArgs = unknown, TResult = unknown>
@@ -78,6 +145,41 @@ export type InferAgentToolResult<TTool> =
 export const defineAgentToolContract = <TArgs, TResult>(
   tool: AgentTool,
 ): AgentToolContract<TArgs, TResult> => {
+  return tool as AgentToolContract<TArgs, TResult>;
+};
+
+type PaginatedResultShape<TItem> = {
+  items: TItem[];
+  page: PageEnvelope;
+};
+
+type PaginatedItem<TResult> =
+  TResult extends PaginatedResultShape<infer TItem> ? TItem : never;
+
+type PaginatedItemField<TResult> = Extract<
+  keyof PaginatedItem<TResult>,
+  string
+>;
+
+type PaginatedToolShape<TResult> = AgentTool & {
+  pagination: Omit<AgentToolPagination, 'fields' | 'defaultFields'> & {
+    fields: readonly PaginatedItemField<TResult>[];
+    defaultFields?: readonly PaginatedItemField<TResult>[];
+  };
+};
+
+export const definePaginatedAgentToolContract = <
+  TArgs,
+  TResult extends PaginatedResultShape<Record<string, unknown>>,
+>(
+  tool: PaginatedToolShape<TResult>,
+): AgentToolContract<TArgs, TResult> => {
+  if (!isAgentToolPagination(tool.pagination)) {
+    throw new Error(
+      'Paginated agent tool fields must be non-empty, unique, and contain every default field',
+    );
+  }
+
   return tool as AgentToolContract<TArgs, TResult>;
 };
 
@@ -106,6 +208,7 @@ export const defineAgentToolDescriptors = <
         name: tool.name,
         description: tool.description,
         inputSchema: tool.inputSchema,
+        ...(tool.pagination ? { pagination: tool.pagination } : {}),
       }),
     ]),
   ) as {

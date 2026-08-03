@@ -194,6 +194,7 @@ describe('agent session domain and tool helpers', () => {
       {
         name: '@rozenite/mmkv-plugin.list-entries',
         shortName: 'list-entries',
+        domainId: 'mmkv',
         description: 'List entries',
         inputSchema: {
           type: 'object',
@@ -419,6 +420,93 @@ describe('agent session domain and tool helpers', () => {
     expect(calls).toEqual([
       {
         toolName: 'listRequests',
+        args: { limit: 1 },
+      },
+    ]);
+  });
+
+  it('resolves a tool schema and call target with a single getSessionTools fetch', async () => {
+    const toolsFetches: string[] = [];
+    const calls: Array<{ toolName: string; args: unknown }> = [];
+
+    httpTestHarness.requestHandler.mockImplementation(
+      async ({
+        method,
+        pathname,
+        body,
+      }: MockHttpRequest): Promise<MockHttpResult> => {
+        const sessionRoute = mockAttachedSessionRoute(pathname);
+        if (sessionRoute) {
+          return sessionRoute;
+        }
+
+        if (pathname === getAgentSessionToolsRoute('session-1')) {
+          toolsFetches.push(pathname);
+          return {
+            payload: {
+              ok: true,
+              result: {
+                tools: [
+                  {
+                    name: 'app.listRequests',
+                    description: 'List requests',
+                    inputSchema: { type: 'object' },
+                    pagination: { kind: 'cursor', fields: ['id'] },
+                  },
+                ],
+              },
+            },
+          };
+        }
+
+        if (
+          method === 'POST' &&
+          pathname === getAgentSessionCallToolRoute('session-1')
+        ) {
+          calls.push(body as { toolName: string; args: unknown });
+          return {
+            payload: {
+              ok: true,
+              result: {
+                result: {
+                  items: [{ id: 1 }],
+                  page: { limit: 1, hasMore: false },
+                },
+              },
+            },
+          };
+        }
+
+        return mockUnknownRoute();
+      },
+    );
+
+    const session = await attachSession();
+
+    const resolved = await session.tools.resolve({
+      domain: 'app',
+      tool: 'listRequests',
+    });
+
+    expect(resolved.domainId).toBe('app');
+    expect(resolved.schema).toEqual({
+      name: 'app.listRequests',
+      shortName: 'listRequests',
+      inputSchema: { type: 'object' },
+      pagination: { kind: 'cursor', fields: ['id'] },
+    });
+
+    await expect(resolved.call({ limit: 1 })).resolves.toEqual({
+      items: [{ id: 1 }],
+      page: { limit: 1, hasMore: false },
+    });
+
+    // Exactly one getSessionTools fetch for both the schema lookup and the
+    // subsequent call, even though they resolve the same (domain, tool).
+    expect(toolsFetches).toEqual([getAgentSessionToolsRoute('session-1')]);
+    expect(calls).toEqual([
+      {
+        toolName: 'app.listRequests',
         args: { limit: 1 },
       },
     ]);

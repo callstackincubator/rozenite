@@ -106,10 +106,34 @@ describe('tanstack query agent controller', () => {
       'get-mutation-details',
       'clear-mutation-cache',
     ]);
-    expect(tanstackQueryToolDefinitions.setQueryLoading.inputSchema.required).toEqual([
-      'queryHash',
-      'enabled',
-    ]);
+    expect(
+      tanstackQueryToolDefinitions.setQueryLoading.inputSchema.required,
+    ).toEqual(['queryHash', 'enabled']);
+    expect(tanstackQueryToolDefinitions.listQueries.pagination).toMatchObject({
+      kind: 'cursor',
+      fields: expect.arrayContaining(['queryHash', 'status', 'fetchStatus']),
+    });
+  });
+
+  it('trims listQueries/listMutations defaultFields narrower than the full field set', () => {
+    const listQueriesPagination =
+      tanstackQueryToolDefinitions.listQueries.pagination;
+    const listMutationsPagination =
+      tanstackQueryToolDefinitions.listMutations.pagination;
+
+    expect(listQueriesPagination?.defaultFields?.length).toBeLessThan(
+      listQueriesPagination?.fields.length ?? 0,
+    );
+    for (const field of listQueriesPagination?.defaultFields ?? []) {
+      expect(listQueriesPagination?.fields).toContain(field);
+    }
+
+    expect(listMutationsPagination?.defaultFields?.length).toBeLessThan(
+      listMutationsPagination?.fields.length ?? 0,
+    );
+    for (const field of listMutationsPagination?.defaultFields ?? []) {
+      expect(listMutationsPagination?.fields).toContain(field);
+    }
   });
 
   it('lists queries with cursor pagination and invalidates stale cursors after additions', async () => {

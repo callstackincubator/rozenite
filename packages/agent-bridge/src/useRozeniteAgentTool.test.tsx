@@ -12,6 +12,7 @@ import {
   vi,
 } from 'vitest';
 import { defineAgentToolContract } from '@rozenite/agent-shared';
+import { definePaginatedAgentToolContract, type PageResult } from './index.js';
 import type { AgentTool } from './types.js';
 import {
   type UseRozeniteInAppAgentToolOptions,
@@ -149,6 +150,28 @@ describe('useRozeniteAgentTool', () => {
       min?: number;
       max?: number;
     }>();
+  });
+
+  it('exports paginated tool contracts from the bridge package', () => {
+    type Result = PageResult<{ id: string; label?: string }>;
+
+    const tool = definePaginatedAgentToolContract<
+      Record<string, never>,
+      Result
+    >({
+      name: 'list',
+      description: 'List rows',
+      inputSchema: { type: 'object', properties: {} },
+      pagination: {
+        kind: 'cursor',
+        fields: ['id', 'label'],
+      },
+    });
+
+    expect(tool.pagination).toEqual({
+      kind: 'cursor',
+      fields: ['id', 'label'],
+    });
   });
 
   it('registers initially after listeners are attached', async () => {

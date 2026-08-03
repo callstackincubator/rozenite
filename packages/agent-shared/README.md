@@ -9,6 +9,8 @@
 ## Features
 
 - **Shared Tool Types**: Common `AgentTool` and JSON-schema-like input types
+- **Paginated Tool Contracts**: Typed row fields and a shared page envelope for built-in and third-party tools
+- **Row Shaping**: Frontend-neutral columnar/row-keyed encoding (`shapePaginatedRows`, `shapeToolResult`) shared by the CLI and any other Agent frontend
 - **Message Contracts**: Typed payloads for register, unregister, call, and result messages
 - **Single Protocol Constant**: Shared `AGENT_PLUGIN_ID` for the Agent transport
 - **Package Reuse**: Intended for bridge and runtime packages that implement Agent support
@@ -27,6 +29,17 @@ This package exports:
 
 - `AGENT_PLUGIN_ID`
 - `AgentTool`
+- `AgentToolPagination`
+- `PageEnvelope`
+- `PageResult`
+- `definePaginatedAgentToolContract`
+- `DEFAULT_PAGE_LIMIT`
+- `MAX_PAGE_LIMIT`
+- `parseFields`
+- `parseLimit`
+- `projectRows`
+- `shapePaginatedRows`
+- `shapeToolResult`
 - `JSONSchema7`
 - `DevToolsPluginMessage`
 - `RegisterToolPayload`

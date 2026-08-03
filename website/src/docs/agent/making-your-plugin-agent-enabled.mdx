@@ -32,7 +32,10 @@ Each tool is qualified as `{pluginId}.{tool.name}`. The hook registers the tool 
 ### Example: echo tool
 
 ```tsx
-import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+import {
+  useRozenitePluginAgentTool,
+  type AgentTool,
+} from '@rozenite/agent-bridge';
 
 const PLUGIN_ID = '@my-org/my-rozenite-plugin';
 
@@ -192,6 +195,59 @@ Recommended conventions:
 - Use `undefined` for tools that take no arguments, so SDK users can write `session.tools.call(myPluginTools.ping)` without passing `{}`.
 - Export any shared value/model types referenced by your public results from `sdk.ts`, not just the descriptor object.
 - Keep the tool `name`, `description`, and `inputSchema` in the shared contract module so your runtime registration and published SDK surface cannot drift.
+
+### Paginated tools
+
+Use the shared paginated contract for tools that return cursor-paginated rows.
+The declaration travels with the registered tool, so the CLI can validate
+`--fields` and use compact columnar output without knowing your plugin ID or
+tool name.
+
+```ts
+import {
+  definePaginatedAgentToolContract,
+  type PageResult,
+} from '@rozenite/agent-bridge';
+
+type ListEntriesArgs = {
+  limit?: number;
+  cursor?: string;
+};
+
+type EntryRow = {
+  key: string;
+  type: string;
+  size?: number;
+};
+
+type ListEntriesResult = PageResult<EntryRow>;
+
+export const listEntriesTool = definePaginatedAgentToolContract<
+  ListEntriesArgs,
+  ListEntriesResult
+>({
+  name: 'list-entries',
+  description: 'List entries with cursor pagination.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      limit: { type: 'number' },
+      cursor: { type: 'string' },
+    },
+  },
+  pagination: {
+    kind: 'cursor',
+    fields: ['key', 'type', 'size'],
+    defaultFields: ['key', 'type'],
+  },
+});
+```
+
+Return `{items, page}` from the handler. `fields` is the stable set available
+to agents, while `defaultFields` is the smaller projection used unless the
+caller passes `--fields` or `--verbose`. Both arrays are validated against the
+row type, and the CLI never infers columns from observed values. Tools without
+pagination metadata keep their original output unchanged.
 
 :::tip
 You do not need to hand-maintain the `./sdk` export in `package.json`. If your plugin has `sdk.ts`, `rozenite build` will detect it and publish the `./sdk` subpath automatically.

@@ -1,14 +1,18 @@
 import { Command } from 'commander';
 import { createAgentClient } from '@rozenite/agent-sdk';
 import { createAgentTransport } from '@rozenite/agent-sdk/transport';
-import { DEFAULT_AGENT_HOST, DEFAULT_AGENT_PORT } from '@rozenite/agent-shared';
-import { printOutput } from './output.js';
 import {
-  paginateRows,
+  DEFAULT_AGENT_HOST,
+  DEFAULT_AGENT_PORT,
+  isAgentToolPagination,
   parseFields,
   parseLimit,
-  projectRows,
-} from './output-shaping.js';
+  shapePaginatedRows,
+  shapeToolResult,
+  type AgentToolPagination,
+} from '@rozenite/agent-shared';
+import { printOutput } from './output.js';
+import { formatAgentCommand, paginateRows } from './output-shaping.js';
 import { getErrorMessage } from './error-message.js';
 import { getPackageJSON } from '../../package-json.js';
 
@@ -117,6 +121,87 @@ const getConnectionOptions = (cmd: Command): CommonOptions => {
   };
 };
 
+const getConnectionCommandArgs = (options: CommonOptions): string[] => [
+  '--host',
+  options.host,
+  '--port',
+  String(options.port),
+];
+
+const getListingOptionArgs = (
+  options: Pick<DynamicDomainCommandOptions, 'fields' | 'verbose'>,
+  limit: number,
+  cursor: string,
+  pretty: boolean,
+): string[] => [
+  ...(options.verbose
+    ? ['--verbose']
+    : options.fields
+      ? ['--fields', options.fields]
+      : []),
+  '--limit',
+  String(limit),
+  '--cursor',
+  cursor,
+  ...(pretty ? ['--pretty'] : []),
+];
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+type ToolPaginationResolution = {
+  pagination?: AgentToolPagination;
+  warning?: string;
+};
+
+/**
+ * Reads a tool's declared pagination metadata. Malformed metadata (e.g. from
+ * a third-party plugin) degrades to "non-paginated" with a warning rather
+ * than failing the call outright, per the documented contract: undeclared,
+ * malformed, and non-row results remain unchanged.
+ */
+const getToolPagination = (value: unknown): ToolPaginationResolution => {
+  if (!isRecord(value) || !isRecord(value.pagination)) {
+    return {};
+  }
+
+  if (!isAgentToolPagination(value.pagination)) {
+    return {
+      warning:
+        'Warning: tool exposes invalid pagination metadata; returning its result unshaped.',
+    };
+  }
+
+  return { pagination: value.pagination };
+};
+
+const getToolCallCommand = (
+  domain: string,
+  tool: string,
+  args: Record<string, unknown>,
+  cursor: string,
+  options: DynamicDomainCommandOptions,
+  connection: CommonOptions,
+  sessionId: string,
+): string =>
+  formatAgentCommand([
+    domain,
+    'call',
+    ...getConnectionCommandArgs(connection),
+    '--session',
+    sessionId,
+    '--tool',
+    tool,
+    '--args',
+    JSON.stringify({ ...args, cursor }),
+    ...(options.verbose
+      ? ['--verbose']
+      : options.fields
+        ? ['--fields', options.fields]
+        : []),
+    ...(connection.pretty ? ['--pretty'] : []),
+  ]);
+
 const getSessionId = (cmd: Command): string => {
   const options = cmd.optsWithGlobals<CommonOptions>();
   if (!options.session) {
@@ -188,7 +273,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
     .option('-a, --args <json>', 'Tool arguments as JSON object', '{}')
     .option(
       '-f, --fields <csv>',
-      `Fields to include (${TOOL_LIST_FIELDS.join(', ')})`,
+      'Comma-separated output fields; allowed fields depend on the listing or declared paginated tool',
     )
     .option('-v, --verbose', 'Include all supported fields')
     .option(
@@ -259,29 +344,43 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                 !!dynamicOptions.verbose,
               );
               const limit = parseLimit(dynamicOptions.limit);
-              const rows = (
-                await session.tools.list({
-                  domain: domainToken,
-                })
-              )
+              const domainTools = await session.tools.list({
+                domain: domainToken,
+              });
+              const domainId = domainTools[0]?.domainId ?? domainToken;
+              const rows = domainTools
                 .map<ToolListRow>((tool) => ({
                   name: tool.name,
                   shortName: tool.shortName,
                   description: tool.description,
                 }))
                 .sort((a, b) => a.name.localeCompare(b.name));
-              const projected = projectRows(rows, fields);
-              const paged = paginateRows(projected, {
+              const paged = paginateRows(rows, {
                 kind: 'tools',
-                scope: `domain:${domainToken}`,
+                scope: `domain:${domainId}`,
                 limit,
                 cursor: dynamicOptions.cursor,
               });
 
-              return {
-                items: paged.items,
-                page: paged.page,
-              };
+              return shapePaginatedRows(
+                paged,
+                fields,
+                paged.page.nextCursor
+                  ? formatAgentCommand([
+                      domainId,
+                      'tools',
+                      ...getConnectionCommandArgs(options),
+                      '--session',
+                      sessionId,
+                      ...getListingOptionArgs(
+                        dynamicOptions,
+                        limit,
+                        paged.page.nextCursor,
+                        !!options.pretty,
+                      ),
+                    ])
+                  : undefined,
+              );
             }
 
             if (!dynamicOptions.tool) {
@@ -298,11 +397,62 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
             }
 
             const parsedArgs = parseJsonArgs(dynamicOptions.args);
-            return await session.tools.call({
+            const resolvedTool = await session.tools.resolve({
               domain: domainToken,
               tool: dynamicOptions.tool,
-              args: parsedArgs,
             });
+            const { pagination, warning } = getToolPagination(
+              resolvedTool.schema,
+            );
+            if (warning) {
+              process.stderr.write(`${warning}\n`);
+            }
+
+            if (pagination && !isRecord(parsedArgs)) {
+              throw new Error('--args must be a JSON object');
+            }
+
+            const paginatedToolArgs: Record<string, unknown> | undefined =
+              pagination ? (parsedArgs as Record<string, unknown>) : undefined;
+            const fields = pagination
+              ? parseFields(
+                  dynamicOptions.fields,
+                  pagination.fields,
+                  pagination.defaultFields ?? pagination.fields,
+                  !!dynamicOptions.verbose,
+                )
+              : undefined;
+            const toolResult = await resolvedTool.call(
+              paginatedToolArgs ?? parsedArgs,
+            );
+
+            if (!pagination || !paginatedToolArgs || !fields) {
+              return toolResult;
+            }
+
+            const nextCursor =
+              isRecord(toolResult) &&
+              isRecord(toolResult.page) &&
+              toolResult.page.hasMore === true &&
+              typeof toolResult.page.nextCursor === 'string'
+                ? toolResult.page.nextCursor
+                : undefined;
+
+            return shapeToolResult(
+              toolResult,
+              fields,
+              nextCursor
+                ? getToolCallCommand(
+                    resolvedTool.domainId,
+                    dynamicOptions.tool,
+                    paginatedToolArgs,
+                    nextCursor,
+                    dynamicOptions,
+                    options,
+                    sessionId,
+                  )
+                : undefined,
+            );
           })();
 
           printOutput(result, true, !!options.pretty);
@@ -320,7 +470,7 @@ export const registerAgentCommand = (program: Command): void => {
     .option('--host <host>', 'Metro host', DEFAULT_METRO_HOST)
     .option('--port <port>', 'Metro port', String(DEFAULT_METRO_PORT))
     .option('-j, --json', 'Deprecated no-op; agent commands always output JSON')
-    .option('--pretty', 'Pretty-print JSON output when --json is used');
+    .option('--pretty', 'Pretty-print JSON output');
 
   mcpCommand
     .command('targets')
@@ -352,7 +502,7 @@ export const registerAgentCommand = (program: Command): void => {
     .option('--host <host>', 'Metro host', DEFAULT_METRO_HOST)
     .option('--port <port>', 'Metro port', String(DEFAULT_METRO_PORT))
     .option('-j, --json', 'Deprecated no-op; agent commands always output JSON')
-    .option('--pretty', 'Pretty-print JSON output when --json is used');
+    .option('--pretty', 'Pretty-print JSON output');
 
   sessionCommand
     .command('create')
@@ -476,18 +626,31 @@ export const registerAgentCommand = (program: Command): void => {
               description: domain.description,
             }))
             .sort((a, b) => a.id.localeCompare(b.id));
-          const projected = projectRows(domains, fields);
-          const paged = paginateRows(projected, {
+          const paged = paginateRows(domains, {
             kind: 'domains',
             scope: 'all',
             limit,
             cursor: listOptions.cursor,
           });
 
-          return {
-            items: paged.items,
-            page: paged.page,
-          };
+          return shapePaginatedRows(
+            paged,
+            fields,
+            paged.page.nextCursor
+              ? formatAgentCommand([
+                  'domains',
+                  ...getConnectionCommandArgs(options),
+                  '--session',
+                  sessionId,
+                  ...getListingOptionArgs(
+                    listOptions,
+                    limit,
+                    paged.page.nextCursor,
+                    !!options.pretty,
+                  ),
+                ])
+              : undefined,
+          );
         })();
 
         printOutput(result, true, !!options.pretty);

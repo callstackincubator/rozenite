@@ -34,6 +34,34 @@ describe('network activity agent state', () => {
     expect(
       networkActivityToolDefinitions.getRequestDetails.inputSchema.required,
     ).toEqual(['requestId']);
+    expect(
+      networkActivityToolDefinitions.listRequests.pagination,
+    ).toMatchObject({
+      kind: 'cursor',
+      fields: expect.arrayContaining(['requestId', 'url', 'status']),
+    });
+  });
+
+  it('trims listRequests/listRealtimeConnections defaultFields narrower than the full field set', () => {
+    const listRequestsPagination =
+      networkActivityToolDefinitions.listRequests.pagination;
+    const listRealtimeConnectionsPagination =
+      networkActivityToolDefinitions.listRealtimeConnections.pagination;
+
+    expect(listRequestsPagination?.defaultFields?.length).toBeLessThan(
+      listRequestsPagination?.fields.length ?? 0,
+    );
+    for (const field of listRequestsPagination?.defaultFields ?? []) {
+      expect(listRequestsPagination?.fields).toContain(field);
+    }
+
+    expect(
+      listRealtimeConnectionsPagination?.defaultFields?.length,
+    ).toBeLessThan(listRealtimeConnectionsPagination?.fields.length ?? 0);
+    for (const field of listRealtimeConnectionsPagination?.defaultFields ??
+      []) {
+      expect(listRealtimeConnectionsPagination?.fields).toContain(field);
+    }
   });
 
   it('tracks HTTP requests with parity-oriented list/detail/body results', () => {

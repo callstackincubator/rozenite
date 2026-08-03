@@ -1,12 +1,26 @@
+/**
+ * CLI-only Agent output shaping.
+ *
+ * The transport-agnostic shaping primitives (`parseFields`, `parseLimit`,
+ * `projectRows`, `shapePaginatedRows`, `shapeToolResult`, and friends) live
+ * in `@rozenite/agent-shared` — they're shared with MCP and any other
+ * `@rozenite/agent-sdk` consumer. What stays here is CLI-specific:
+ *
+ * - `paginateRows` is an offset pager scoped to CLI-owned listings
+ *   (`tools`/`domains`), not the general shared pagination engine (that's
+ *   a separate effort — see #320).
+ * - `formatAgentCommand`/`shellEscape` build the `npx rozenite agent ...`
+ *   next-page affordance, which is meaningless outside a shell (in MCP the
+ *   next-page affordance is a `page` argument to the call-tool, not a
+ *   command to run).
+ */
+
 type CursorPayload = {
   v: 1;
   kind: 'tools' | 'domains';
   scope: string;
   index: number;
 };
-
-export const DEFAULT_PAGE_LIMIT = 20;
-export const MAX_PAGE_LIMIT = 100;
 
 const encodeCursor = (payload: CursorPayload): string => {
   return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
@@ -27,71 +41,32 @@ const decodeCursor = (raw: string): CursorPayload => {
     }
     return payload;
   } catch {
-    throw new Error('Invalid --cursor. Run the listing command again with --limit 20.');
-  }
-};
-
-export const parseFields = <T extends string>(
-  rawFields: string | undefined,
-  allowedFields: readonly T[],
-  defaultFields: readonly T[],
-  verbose: boolean,
-): T[] => {
-  if (verbose) {
-    return [...allowedFields];
-  }
-
-  if (!rawFields || rawFields.trim().length === 0) {
-    return [...defaultFields];
-  }
-
-  const requested = rawFields
-    .split(',')
-    .map((field) => field.trim())
-    .filter(Boolean) as T[];
-
-  if (requested.length === 0) {
-    return [...defaultFields];
-  }
-
-  const allowedSet = new Set(allowedFields);
-  const invalid = requested.filter((field) => !allowedSet.has(field));
-  if (invalid.length > 0) {
     throw new Error(
-      `Unknown fields: ${invalid.join(', ')}. Allowed fields: ${allowedFields.join(', ')}`,
+      'Invalid --cursor. Run the listing command again with --limit 20.',
     );
   }
-
-  return requested;
 };
 
-export const parseLimit = (rawLimit: string | undefined): number => {
-  if (!rawLimit) {
-    return DEFAULT_PAGE_LIMIT;
+type PaginatedRows<T> = {
+  items: T[];
+  page: {
+    limit: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  };
+};
+
+const shellEscape = (value: string): string => {
+  if (/^[A-Za-z0-9_@%+=:,./-]+$/.test(value)) {
+    return value;
   }
 
-  const parsed = Number(rawLimit);
-  if (!Number.isFinite(parsed) || parsed < 1 || !Number.isInteger(parsed)) {
-    throw new Error(`--limit must be an integer between 1 and ${MAX_PAGE_LIMIT}`);
-  }
-
-  return Math.min(parsed, MAX_PAGE_LIMIT);
+  return `'${value.replaceAll("'", "'\"'\"'")}'`;
 };
 
-export const projectRows = <T extends Record<string, unknown>>(
-  rows: T[],
-  fields: readonly string[],
-): Record<string, unknown>[] => {
-  return rows.map((row) => {
-    const projected: Record<string, unknown> = {};
-    for (const field of fields) {
-      if (Object.hasOwn(row, field)) {
-        projected[field] = row[field];
-      }
-    }
-    return projected;
-  });
-};
+/** Builds a copy-pasteable POSIX shell command from already-separated args. */
+export const formatAgentCommand = (args: readonly string[]): string =>
+  ['npx', 'rozenite', 'agent', ...args].map(shellEscape).join(' ');
 
 export const paginateRows = <T>(
   rows: T[],
@@ -101,19 +76,14 @@ export const paginateRows = <T>(
     limit: number;
     cursor?: string;
   },
-): {
-  items: T[];
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
-} => {
+): PaginatedRows<T> => {
   let startIndex = 0;
   if (options.cursor) {
     const decoded = decodeCursor(options.cursor);
     if (decoded.kind !== options.kind || decoded.scope !== options.scope) {
-      throw new Error('Cursor does not match the requested listing. Run the command again.');
+      throw new Error(
+        'Cursor does not match the requested listing. Run the command again.',
+      );
     }
     startIndex = decoded.index;
   }

@@ -108,9 +108,9 @@ describe('agent domain utils', () => {
   });
 
   it('falls back to the scope when the reduced name is empty or generic residue', () => {
-    expect(deriveDomainName('@react-native-nitro-geolocation/rozenite-plugin')).toBe(
-      'react-native-nitro-geolocation',
-    );
+    expect(
+      deriveDomainName('@react-native-nitro-geolocation/rozenite-plugin'),
+    ).toBe('react-native-nitro-geolocation');
     expect(deriveDomainName('@scope/plugin')).toBe('scope');
     expect(deriveDomainName('@scope/devtools')).toBe('scope');
   });
@@ -157,9 +157,9 @@ describe('agent domain utils', () => {
   });
 
   it('errors instead of silently shadowing a built-in domain with an unscoped package literally named after it', () => {
-    expect(() =>
-      buildRuntimePluginDomains([tool('console.list')]),
-    ).toThrow(/Plugin "console" derives the domain name "console"/);
+    expect(() => buildRuntimePluginDomains([tool('console.list')])).toThrow(
+      /Plugin "console" derives the domain name "console"/,
+    );
   });
 
   it('resolves plugin domains by id or pluginId token', () => {
@@ -185,9 +185,9 @@ describe('agent domain utils', () => {
     expect(resolveDomainToken('rozenite/mmkv', domains)?.pluginId).toBe(
       '@rozenite/mmkv-plugin',
     );
-    expect(
-      resolveDomainToken('@rozenite/mmkv-plugin', domains)?.pluginId,
-    ).toBe('@rozenite/mmkv-plugin');
+    expect(resolveDomainToken('@rozenite/mmkv-plugin', domains)?.pluginId).toBe(
+      '@rozenite/mmkv-plugin',
+    );
   });
 
   it('still accepts the deprecated pre-#319 mangled slug as a compatibility alias', () => {
@@ -211,7 +211,9 @@ describe('agent domain utils', () => {
       (domain) => domain.pluginId === '@rozenite/mmkv-plugin',
     );
 
-    expect(appDomain?.description).toBe('Runtime tools exposed by the app itself.');
+    expect(appDomain?.description).toBe(
+      'Runtime tools exposed by the app itself.',
+    );
     expect(pluginDomain?.description).toBe(
       'Runtime tools exposed by plugin "@rozenite/mmkv-plugin".',
     );
@@ -227,17 +229,29 @@ describe('agent domain utils', () => {
       tool('app.echo'),
     ]);
 
-    expect(domains.some((domain) => domain.pluginId === 'getMessages')).toBe(false);
+    expect(domains.some((domain) => domain.pluginId === 'getMessages')).toBe(
+      false,
+    );
     expect(domains.some((domain) => domain.pluginId === 'getNode')).toBe(false);
-    expect(domains.some((domain) => domain.pluginId === 'startTrace')).toBe(false);
-    expect(domains.some((domain) => domain.pluginId === 'takeHeapSnapshot')).toBe(false);
-    expect(domains.some((domain) => domain.pluginId === 'startRecording')).toBe(false);
+    expect(domains.some((domain) => domain.pluginId === 'startTrace')).toBe(
+      false,
+    );
+    expect(
+      domains.some((domain) => domain.pluginId === 'takeHeapSnapshot'),
+    ).toBe(false);
+    expect(domains.some((domain) => domain.pluginId === 'startRecording')).toBe(
+      false,
+    );
     expect(domains.some((domain) => domain.pluginId === 'app')).toBe(true);
   });
 
   it('filters static domain tools by built-in tool names', () => {
-    const consoleDomain = STATIC_DOMAINS.find((domain) => domain.id === 'console');
-    const networkDomain = STATIC_DOMAINS.find((domain) => domain.id === 'network');
+    const consoleDomain = STATIC_DOMAINS.find(
+      (domain) => domain.id === 'console',
+    );
+    const networkDomain = STATIC_DOMAINS.find(
+      (domain) => domain.id === 'network',
+    );
 
     expect(
       getDomainToolsByDefinition(
@@ -309,7 +323,9 @@ describe('agent domain utils', () => {
     expect(
       formatUnknownDomainError('netw', [
         ...STATIC_DOMAINS,
-        ...buildRuntimePluginDomains([tool('@rozenite/mmkv-plugin.list-entries')]),
+        ...buildRuntimePluginDomains([
+          tool('@rozenite/mmkv-plugin.list-entries'),
+        ]),
       ]).message,
     ).toBe(
       'Unknown domain "netw". Did you mean: network? Run `rozenite agent domains` to list available domains.',
@@ -317,17 +333,26 @@ describe('agent domain utils', () => {
   });
 
   it('projects helper output for domain tool and schema views', () => {
-    const entry = tool('@rozenite/mmkv-plugin.list-entries');
+    const entry: AgentTool = {
+      ...tool('@rozenite/mmkv-plugin.list-entries'),
+      pagination: {
+        kind: 'cursor',
+        fields: ['key', 'type'],
+        defaultFields: ['key'],
+      },
+    };
 
-    expect(toAgentDomainTool(entry)).toEqual({
+    expect(toAgentDomainTool(entry, 'mmkv')).toEqual({
       ...entry,
       shortName: 'list-entries',
+      domainId: 'mmkv',
     });
 
     expect(toAgentToolSchema(entry)).toEqual({
       name: '@rozenite/mmkv-plugin.list-entries',
       shortName: 'list-entries',
       inputSchema: entry.inputSchema,
+      pagination: entry.pagination,
     });
   });
 });

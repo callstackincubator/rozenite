@@ -1,6 +1,7 @@
 import type {
   AgentSessionInfo,
   AgentTool,
+  AgentToolPagination,
   AgentToolDescriptor,
   CallAgentSessionToolRequest,
   CallAgentSessionToolResponse,
@@ -29,12 +30,15 @@ export interface DomainDefinition {
 
 export interface AgentDomainTool extends AgentTool {
   shortName: string;
+  /** Canonical domain id the requested domain token resolved to. */
+  domainId: string;
 }
 
 export interface AgentToolSchema {
   name: string;
   shortName: string;
   inputSchema: JSONSchema7;
+  pagination?: AgentToolPagination;
 }
 
 export interface AgentClientOptions {
@@ -60,12 +64,29 @@ export interface AgentSessionDomains {
   list: () => Promise<DomainDefinition[]>;
 }
 
+export interface AgentResolvedTool<TArgs = unknown, TResult = unknown> {
+  /** Canonical domain id the requested domain token resolved to. */
+  domainId: string;
+  schema: AgentToolSchema;
+  call: (args?: TArgs) => Promise<TResult>;
+}
+
 export interface AgentSessionTools {
   list: (input: { domain: string }) => Promise<AgentDomainTool[]>;
   getSchema: (input: {
     domain: string;
     tool: string;
   }) => Promise<AgentToolSchema>;
+  /**
+   * Resolves a domain token and tool name to its schema and a bound `call`
+   * once, so callers that need both the schema (e.g. to inspect pagination
+   * metadata) and the ability to invoke the tool don't pay for a second
+   * `getSessionTools` round trip.
+   */
+  resolve: <TArgs = unknown, TResult = unknown>(input: {
+    domain: string;
+    tool: string;
+  }) => Promise<AgentResolvedTool<TArgs, TResult>>;
   call: {
     <TArgs = unknown, TResult = unknown>(
       input: AgentDynamicToolCallInput<TArgs>,

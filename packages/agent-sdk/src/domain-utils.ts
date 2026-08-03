@@ -342,13 +342,18 @@ export const resolveDomainTool = (
   return selectedTool;
 };
 
-export const toAgentDomainTool = (tool: AgentTool): AgentDomainTool => ({
+export const toAgentDomainTool = (
+  tool: AgentTool,
+  domainId: string,
+): AgentDomainTool => ({
   ...tool,
   shortName: inferToolShortName(tool.name),
+  domainId,
 });
 
 export const toAgentToolSchema = (tool: AgentTool): AgentToolSchema => ({
   name: tool.name,
   shortName: inferToolShortName(tool.name),
   inputSchema: tool.inputSchema,
+  ...(tool.pagination ? { pagination: tool.pagination } : {}),
 });
