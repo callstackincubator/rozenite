@@ -410,6 +410,41 @@ describe('agent command output', () => {
     );
   });
 
+  it('prints globally qualified names, descriptions, and traits for tool listings', async () => {
+    setupClient();
+    mocks.session.tools.list.mockResolvedValue([
+      {
+        name: 'network.listRequests',
+        shortName: 'listRequests',
+        description: 'List requests',
+        readOnly: true,
+        destructive: false,
+        idempotent: true,
+      },
+      {
+        name: 'network.getRequestDetails',
+        shortName: 'getRequestDetails',
+        description: 'Get details',
+        readOnly: true,
+      },
+    ]);
+
+    const stdoutWrite = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation(() => true);
+    const program = new Command();
+    registerAgentCommand(program);
+
+    await program.parseAsync(
+      ['node', 'test', 'agent', 'network', 'tools', '--session', 'session-1'],
+      { from: 'node' },
+    );
+
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"cols":["name","description","readOnly","destructive","idempotent"],"rows":[["network.getRequestDetails","Get details",true,null,null],["network.listRequests","List requests",true,false,true]]}\n',
+    );
+  });
+
   it('uses the requested field order for columnar tool listings', async () => {
     setupClient();
     mocks.session.tools.list.mockResolvedValue([

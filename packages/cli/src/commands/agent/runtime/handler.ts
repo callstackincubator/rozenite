@@ -36,6 +36,9 @@ const CONSOLE_TOOLS: AgentTool[] = [
   {
     name: CONSOLE_TOOL_NAMES.clearMessages,
     description: 'Clear buffered console logs for this device.',
+    readOnly: false,
+    destructive: true,
+    idempotent: true,
     inputSchema: {
       type: 'object',
       properties: {},
@@ -44,6 +47,9 @@ const CONSOLE_TOOLS: AgentTool[] = [
   {
     name: CONSOLE_TOOL_NAMES.getMessages,
     description: 'Read buffered console logs with cursor-based pagination.',
+    readOnly: true,
+    destructive: false,
+    idempotent: true,
     inputSchema: {
       type: 'object',
       properties: {

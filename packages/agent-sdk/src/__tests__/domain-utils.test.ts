@@ -335,6 +335,9 @@ describe('agent domain utils', () => {
   it('projects helper output for domain tool and schema views', () => {
     const entry: AgentTool = {
       ...tool('@rozenite/mmkv-plugin.list-entries'),
+      readOnly: true,
+      destructive: false,
+      idempotent: true,
       pagination: {
         kind: 'cursor',
         fields: ['key', 'type'],
@@ -352,6 +355,9 @@ describe('agent domain utils', () => {
       name: '@rozenite/mmkv-plugin.list-entries',
       shortName: 'list-entries',
       inputSchema: entry.inputSchema,
+      readOnly: true,
+      destructive: false,
+      idempotent: true,
       pagination: entry.pagination,
     });
   });

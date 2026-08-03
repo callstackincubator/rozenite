@@ -22,6 +22,8 @@ describe('paginated agent tool contracts', () => {
     const list = definePaginatedAgentToolContract<ListArgs, ListResult>({
       name: 'list',
       description: 'List rows',
+      readOnly: true,
+      idempotent: true,
       inputSchema: { type: 'object', properties: {} },
       pagination: {
         kind: 'cursor',
@@ -33,6 +35,8 @@ describe('paginated agent tool contracts', () => {
     expect(defineAgentToolDescriptors('example', { list }).list).toMatchObject({
       domain: 'example',
       name: 'list',
+      readOnly: true,
+      idempotent: true,
       pagination: {
         kind: 'cursor',
         fields: ['id', 'label'],

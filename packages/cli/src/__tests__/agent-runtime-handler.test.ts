@@ -16,6 +16,16 @@ describe('agent runtime handler console domain', () => {
     expect(toolNames).toContain('clearMessages');
     expect(toolNames).not.toContain('enable');
     expect(toolNames).not.toContain('disable');
+    expect(tools.find((tool) => tool.name === 'getMessages')).toMatchObject({
+      readOnly: true,
+      destructive: false,
+      idempotent: true,
+    });
+    expect(tools.find((tool) => tool.name === 'clearMessages')).toMatchObject({
+      readOnly: false,
+      destructive: true,
+      idempotent: true,
+    });
     expect(
       tools.find((tool) => tool.name === 'getMessages')?.pagination,
     ).toEqual({

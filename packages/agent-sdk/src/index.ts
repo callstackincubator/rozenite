@@ -19,6 +19,7 @@ export type {
   AgentSessionInfo,
   AgentSessionStatus,
   AgentTool,
+  AgentToolTraits,
   JSONSchema7,
   MetroTarget,
 } from '@rozenite/agent-shared';
