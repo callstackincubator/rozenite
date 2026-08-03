@@ -1,5 +1,4 @@
 import { Command } from 'commander';
-import { execFileSync } from 'node:child_process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getPackageJSON } from '../package-json.js';
 import { registerAgentCommand } from '../commands/agent/register-agent-command.js';
@@ -718,34 +717,9 @@ describe('agent command output', () => {
       filter: 'two words',
     });
 
-    const continuation = output.next;
-    const args = execFileSync(
-      'zsh',
-      ['-c', `for arg in ${continuation}; do print -r -- "$arg"; done`],
-      { encoding: 'utf8' },
-    )
-      .trim()
-      .split('\n');
-    expect(args).toEqual([
-      'npx',
-      'rozenite',
-      'agent',
-      'domain',
-      'call',
-      '--host',
-      '127.0.0.1',
-      '--port',
-      '8081',
-      '--session',
-      'session id',
-      '--tool',
-      'listRequests',
-      '--args',
-      '{"limit":1,"filter":"two words","cursor":"next \' cursor"}',
-      '--fields',
-      'url,status',
-      '--pretty',
-    ]);
+    expect(output.next).toBe(
+      `npx rozenite agent domain call --host 127.0.0.1 --port 8081 --session 'session id' --tool listRequests --args '{"limit":1,"filter":"two words","cursor":"next '"'"' cursor"}' --fields url,status --pretty`,
+    );
   });
 
   it('rejects non-object --args for a declared paginated tool instead of silently using {}', async () => {
@@ -1131,31 +1105,9 @@ describe('agent command output', () => {
     );
 
     const output = JSON.parse(String(stdoutWrite.mock.calls[0][0]));
-    const args = execFileSync(
-      'zsh',
-      ['-c', `for arg in ${output.next}; do print -r -- "$arg"; done`],
-      { encoding: 'utf8' },
-    )
-      .trim()
-      .split('\n');
-    expect(args).toEqual([
-      'npx',
-      'rozenite',
-      'agent',
-      'network',
-      'tools',
-      '--host',
-      '127.0.0.1',
-      '--port',
-      '8081',
-      '--session',
-      'session id',
-      '--limit',
-      '1',
-      '--cursor',
-      expect.any(String),
-      '--pretty',
-    ]);
+    expect(output.next).toBe(
+      `npx rozenite agent network tools --host 127.0.0.1 --port 8081 --session 'session id' --limit 1 --cursor eyJ2IjoxLCJraW5kIjoidG9vbHMiLCJzY29wZSI6ImRvbWFpbjpuZXR3b3JrIiwiaW5kZXgiOjF9 --pretty`,
+    );
   });
 
   it('prints JSON errors for agent command failures', async () => {
