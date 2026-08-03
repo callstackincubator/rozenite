@@ -102,7 +102,16 @@ export const isAgentToolPagination = (
   return pagination.defaultFields.every((field) => allowedFields.has(field));
 };
 
-export interface AgentTool {
+export interface AgentToolTraits {
+  /** Whether this tool leaves app, device, and external state unchanged. */
+  readOnly?: boolean;
+  /** Whether this tool can delete, reset, overwrite, or cause meaningful loss. */
+  destructive?: boolean;
+  /** Whether repeating an identical call produces the same final effect. */
+  idempotent?: boolean;
+}
+
+export interface AgentTool extends AgentToolTraits {
   name: string;
   description: string;
   inputSchema: JSONSchema7;
@@ -122,7 +131,7 @@ export interface AgentToolContract<TArgs = unknown, TResult = unknown>
   extends AgentTool,
     AgentToolTypeCarrier<TArgs, TResult> {}
 
-type AgentToolDescriptorShape = {
+type AgentToolDescriptorShape = AgentToolTraits & {
   domain: string;
   name: string;
   description: string;
@@ -208,6 +217,13 @@ export const defineAgentToolDescriptors = <
         name: tool.name,
         description: tool.description,
         inputSchema: tool.inputSchema,
+        ...(tool.readOnly !== undefined ? { readOnly: tool.readOnly } : {}),
+        ...(tool.destructive !== undefined
+          ? { destructive: tool.destructive }
+          : {}),
+        ...(tool.idempotent !== undefined
+          ? { idempotent: tool.idempotent }
+          : {}),
         ...(tool.pagination ? { pagination: tool.pagination } : {}),
       }),
     ]),

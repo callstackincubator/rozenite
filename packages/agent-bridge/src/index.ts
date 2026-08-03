@@ -14,6 +14,7 @@ export type {
 export type {
   JSONSchema7,
   AgentTool,
+  AgentToolTraits,
   AgentToolPagination,
   PageEnvelope,
   PageResult,

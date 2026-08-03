@@ -26,6 +26,10 @@ the output shape.
   value is omitted from the object entirely (not `null`), so these payloads
   never grow past their pre-columnar shape — the reason 0/1-row results stay
   row-keyed in the first place.
+- Tool listings default to `name`, `description`, `readOnly`, `destructive`,
+  and `idempotent`. `name` is the globally qualified identifier to pass to a
+  later `call` or `schema` command. Traits are optional; `null` in a columnar
+  row or an omitted key in a row-keyed result means unknown, not `false`.
 - Terminal pages omit pagination metadata. When more rows exist, `next` is a
   shell-escaped, runnable `npx rozenite agent ...` command that preserves the
   connection, session, projection, and limit options. CLI-owned domain and

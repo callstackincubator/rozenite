@@ -64,8 +64,10 @@ type SessionCommandOptions = CommonOptions & {
 
 type ToolListRow = {
   name: string;
-  shortName: string;
   description: string;
+  readOnly?: boolean;
+  destructive?: boolean;
+  idempotent?: boolean;
 };
 
 type DomainListRow = {
@@ -86,8 +88,14 @@ type AgentSessionOutput = {
 const DEFAULT_METRO_HOST = DEFAULT_AGENT_HOST;
 const DEFAULT_METRO_PORT = DEFAULT_AGENT_PORT;
 
-const TOOL_LIST_FIELDS = ['name', 'shortName', 'description'] as const;
-const TOOL_LIST_DEFAULT_FIELDS = ['name', 'shortName'] as const;
+const TOOL_LIST_FIELDS = [
+  'name',
+  'description',
+  'readOnly',
+  'destructive',
+  'idempotent',
+] as const;
+const TOOL_LIST_DEFAULT_FIELDS = TOOL_LIST_FIELDS;
 const DOMAIN_LIST_FIELDS = [
   'id',
   'kind',
@@ -351,8 +359,16 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
               const rows = domainTools
                 .map<ToolListRow>((tool) => ({
                   name: tool.name,
-                  shortName: tool.shortName,
                   description: tool.description,
+                  ...(tool.readOnly !== undefined
+                    ? { readOnly: tool.readOnly }
+                    : {}),
+                  ...(tool.destructive !== undefined
+                    ? { destructive: tool.destructive }
+                    : {}),
+                  ...(tool.idempotent !== undefined
+                    ? { idempotent: tool.idempotent }
+                    : {}),
                 }))
                 .sort((a, b) => a.name.localeCompare(b.name));
               const paged = paginateRows(rows, {

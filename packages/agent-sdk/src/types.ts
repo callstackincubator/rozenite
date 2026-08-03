@@ -1,6 +1,7 @@
 import type {
   AgentSessionInfo,
   AgentTool,
+  AgentToolTraits,
   AgentToolPagination,
   AgentToolDescriptor,
   CallAgentSessionToolRequest,
@@ -34,7 +35,7 @@ export interface AgentDomainTool extends AgentTool {
   domainId: string;
 }
 
-export interface AgentToolSchema {
+export interface AgentToolSchema extends AgentToolTraits {
   name: string;
   shortName: string;
   inputSchema: JSONSchema7;

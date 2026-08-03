@@ -93,6 +93,7 @@ You can mirror this pattern: define one or more `AgentTool` objects, then regist
 - **pluginId**: Must match the plugin ID you use in Rozenite.
 - **name**: Use kebab-case. The full tool name seen by agents is `{pluginId}.{name}`.
 - **description** and **inputSchema**: Same as for [in-app tools](/docs/agent/adding-tools-to-your-application). Good descriptions and schema help agents call your tools correctly.
+- **readOnly**, **destructive**, and **idempotent**: Optional tool traits that help agents choose and safely retry tools. Omit a trait when its value is unknown; agents must not assume an omitted trait is `false`.
 - **handler**: Can be async. Return serializable data; on throw, the bridge sends an error result to the agent.
 
 Tools are registered when the component that calls `useRozenitePluginAgentTool` mounts, and unregistered when it unmounts. If your plugin’s UI or logic is conditional, keep the agent tools in a component that stays mounted whenever the plugin is “active” so the domain and tools remain visible to agents.
@@ -146,6 +147,8 @@ export const myToolDefinitions = {
   echo: defineAgentToolContract<EchoArgs, EchoResult>({
     name: 'echo',
     description: 'Return the provided value.',
+    readOnly: true,
+    idempotent: true,
     inputSchema: {
       type: 'object',
       properties: {

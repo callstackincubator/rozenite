@@ -355,5 +355,8 @@ export const toAgentToolSchema = (tool: AgentTool): AgentToolSchema => ({
   name: tool.name,
   shortName: inferToolShortName(tool.name),
   inputSchema: tool.inputSchema,
+  ...(tool.readOnly !== undefined ? { readOnly: tool.readOnly } : {}),
+  ...(tool.destructive !== undefined ? { destructive: tool.destructive } : {}),
+  ...(tool.idempotent !== undefined ? { idempotent: tool.idempotent } : {}),
   ...(tool.pagination ? { pagination: tool.pagination } : {}),
 });

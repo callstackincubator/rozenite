@@ -3,6 +3,7 @@ export { AGENT_PLUGIN_ID } from '@rozenite/agent-shared';
 export type {
   JSONSchema7,
   AgentTool,
+  AgentToolTraits,
   AgentToolPagination,
   PageEnvelope,
   PageResult,
