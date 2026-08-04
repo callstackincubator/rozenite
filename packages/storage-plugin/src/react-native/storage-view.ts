@@ -100,6 +100,7 @@ export type StorageView = {
   adapterName: string;
   storageName: string;
   capabilities: StorageCapabilities;
+  supportsSubscriptions: boolean;
   blacklist?: RegExp;
   get: (key: string) => Promise<StorageEntry | undefined>;
   set: (entry: StorageEntry) => Promise<void>;
@@ -208,6 +209,7 @@ export const createStorageView = (
     adapterName: adapter.name,
     storageName: storageNode.name,
     capabilities: storageNode.capabilities,
+    supportsSubscriptions: storage.subscribe != null,
     blacklist: storageNode.blacklist,
     get,
     set: async (entry) => {

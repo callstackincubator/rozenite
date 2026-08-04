@@ -19,6 +19,14 @@ export type StorageCapabilities = {
   supportedTypes: StorageEntryType[];
 };
 
+export type StorageDescriptor = {
+  target: StorageTarget;
+  adapterName: string;
+  storageName: string;
+  capabilities: StorageCapabilities;
+  supportsSubscriptions: boolean;
+};
+
 export type StorageSubscription = { remove: () => void };
 
 export type SyncStorage = {

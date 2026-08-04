@@ -1,4 +1,9 @@
-import type { StorageCapabilities, StorageEntry, StorageTarget } from './types';
+import type {
+  StorageCapabilities,
+  StorageDescriptor,
+  StorageEntry,
+  StorageTarget,
+} from './types';
 
 export type SerializedBlacklist = {
   source: string;
@@ -32,6 +37,34 @@ export type StorageGetSnapshotEvent = {
   target: StorageTarget | 'all';
 };
 
+export type StorageDiscoverStoragesRequestEvent = {
+  type: 'discover-storages';
+  requestId: string;
+};
+
+export type StorageDiscoverStoragesResponseEvent = {
+  type: 'storage-descriptors';
+  requestId: string;
+  storages: StorageDescriptor[];
+};
+
+export type StorageRequestError = {
+  requestId: string;
+  code:
+    | 'TARGET_NOT_FOUND'
+    | 'ENTRY_NOT_FOUND'
+    | 'INVALID_CURSOR'
+    | 'INVALID_REQUEST'
+    | 'READ_FAILED'
+    | 'WRITE_FAILED';
+  message: string;
+  resetPagination?: boolean;
+};
+
+export type StorageRequestErrorEvent = StorageRequestError & {
+  type: 'storage-request-error';
+};
+
 export type StorageImportEntriesEvent = {
   type: 'import-entries';
   target: StorageTarget;
@@ -53,6 +86,9 @@ export type StorageEvent =
   | StorageSetEntryEvent
   | StorageDeleteEntryEvent
   | StorageGetSnapshotEvent
+  | StorageDiscoverStoragesRequestEvent
+  | StorageDiscoverStoragesResponseEvent
+  | StorageRequestErrorEvent
   | StorageImportEntriesEvent
   | StorageImportResultEvent;
 

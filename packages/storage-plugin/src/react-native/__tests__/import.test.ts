@@ -28,6 +28,7 @@ const buildView = (overrides?: Partial<StorageView>): StorageView => {
     getAllEntries: unexpected('getAllEntries'),
     watch: unexpected('watch'),
     ...overrides,
+    supportsSubscriptions: overrides?.supportsSubscriptions ?? false,
   };
 };
 

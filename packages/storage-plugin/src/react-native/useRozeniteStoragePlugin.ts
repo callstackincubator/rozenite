@@ -2,6 +2,7 @@ import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo } from 'react';
 import type {
   StorageDeleteEntryEvent,
+  StorageDiscoverStoragesRequestEvent,
   StorageEventMap,
   StorageGetSnapshotEvent,
   StorageImportEntriesEvent,
@@ -9,6 +10,7 @@ import type {
 } from '../shared/messaging';
 import type { StorageAdapter } from '../shared/types';
 import { handleImportEntries } from './import';
+import { handleStorageDiscoveryRequest } from './storage-discovery';
 import { createStorageViews } from './storage-view';
 import { useStorageAgentTools } from './useStorageAgentTools';
 
@@ -152,6 +154,13 @@ export const useRozeniteStoragePlugin = ({
               error,
             );
           }
+        },
+      ),
+      client.onMessage(
+        'discover-storages',
+        (event: StorageDiscoverStoragesRequestEvent) => {
+          const response = handleStorageDiscoveryRequest(views, event);
+          client.send(response.type, response);
         },
       ),
       client.onMessage(
