@@ -7,6 +7,14 @@ export type StorageEntry =
 export type StorageEntryType = StorageEntry['type'];
 export type StorageEntryValue = StorageEntry['value'];
 
+export type StorageEntryPreview = {
+  key: string;
+  type: StorageEntryType;
+  preview: string;
+  valueSize: number;
+  isTruncated: boolean;
+};
+
 export type StorageCapabilities = {
   supportedTypes: StorageEntryType[];
 };
