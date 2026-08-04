@@ -32,6 +32,8 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
   const sourceLabel =
     selectedRequest.source === 'nitro'
       ? 'Nitro'
+      : selectedRequest.source === 'expo'
+        ? 'Expo'
       : selectedRequest.source === 'builtin'
         ? 'Built-in'
         : null;

@@ -51,6 +51,10 @@ const getSourceLabel = (source?: NetworkEventSource) => {
     return 'Built-in';
   }
 
+  if (source === 'expo') {
+    return 'Expo';
+  }
+
   return null;
 };
 

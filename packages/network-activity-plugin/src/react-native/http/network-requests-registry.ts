@@ -1,12 +1,17 @@
+import type { ResponseBody } from '../../shared/client';
+
 type NetworkRegistryEntry = {
   id: string;
   sentAt: number;
-  request: XMLHttpRequest;
+  request?: XMLHttpRequest;
+  responseBody?: ResponseBody;
 };
 
 export type NetworkRequestRegistry = {
   addEntry: (id: string, request: XMLHttpRequest) => void;
   getEntry: (id: string) => XMLHttpRequest | null;
+  setResponseBody: (id: string, body: ResponseBody) => void;
+  getResponseBody: (id: string) => ResponseBody | undefined;
   clear: () => void;
 };
 
@@ -29,15 +34,34 @@ export const getNetworkRequestsRegistry = (): NetworkRequestRegistry => {
 
   const addEntry = (id: string, request: XMLHttpRequest): void => {
     trimRegistry();
+    const existing = registry.get(id);
+
     registry.set(id, {
       id,
       request,
-      sentAt: Date.now(),
+      responseBody: existing?.responseBody,
+      sentAt: existing?.sentAt ?? Date.now(),
     });
   };
 
   const getEntry = (id: string): XMLHttpRequest | null => {
     return registry.get(id)?.request ?? null;
+  };
+
+  const setResponseBody = (id: string, body: ResponseBody): void => {
+    trimRegistry();
+    const existing = registry.get(id);
+
+    registry.set(id, {
+      id,
+      request: existing?.request,
+      responseBody: body,
+      sentAt: existing?.sentAt ?? Date.now(),
+    });
+  };
+
+  const getResponseBody = (id: string): ResponseBody | undefined => {
+    return registry.get(id)?.responseBody;
   };
 
   const clear = () => {
@@ -47,6 +71,8 @@ export const getNetworkRequestsRegistry = (): NetworkRequestRegistry => {
   return {
     addEntry,
     getEntry,
+    setResponseBody,
+    getResponseBody,
     clear,
   };
 };

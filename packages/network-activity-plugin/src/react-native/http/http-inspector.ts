@@ -1,6 +1,7 @@
 import { createNanoEvents } from 'nanoevents';
 import { getNetworkRequestsRegistry } from './network-requests-registry';
 import { XHRInterceptor } from './xhr-interceptor';
+import { FetchInterceptor } from './fetch-interceptor';
 import {
   getRequestBody,
   getResponseSize,
@@ -51,129 +52,158 @@ export const getHTTPInspector = (): HTTPInspector => {
 
   return {
     enable: () => {
-      if (XHRInterceptor.isInterceptorEnabled()) return;
+      if (!XHRInterceptor.isInterceptorEnabled()) {
+        XHRInterceptor.setSendCallback((data, request) => {
+          const initiator = getInitiatorFromStack();
+          const sendTime = Date.now();
+          const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
-      XHRInterceptor.disableInterception();
+          request._rozeniteRequestId = requestId;
+          networkRequestsRegistry.addEntry(requestId, request);
 
-      XHRInterceptor.setSendCallback((data, request) => {
-        const initiator = getInitiatorFromStack();
-        const sendTime = Date.now();
-        const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+          let ttfb = 0;
 
-        request._rozeniteRequestId = requestId;
-        networkRequestsRegistry.addEntry(requestId, request);
-
-        let ttfb = 0;
-
-        eventEmitter.emit('request-sent', {
-          requestId: requestId,
-          timestamp: sendTime,
-          request: {
-            url: request._url as string,
-            method: request._method as HttpMethod,
-            headers: request._headers,
-            postData: getRequestBody(data),
-          },
-          type: 'XHR',
-          initiator,
-          source: 'builtin',
-        });
-
-        request.addEventListener('readystatechange', () => {
-          if (request.readyState === READY_STATE_HEADERS_RECEIVED) {
-            ttfb = Date.now() - sendTime;
-          }
-        });
-
-        request.addEventListener('progress', (event) => {
-          eventEmitter.emit('request-progress', {
+          eventEmitter.emit('request-sent', {
             requestId: requestId,
-            timestamp: Date.now(),
-            loaded: event.loaded,
-            total: event.total,
-            lengthComputable: event.lengthComputable,
-            source: 'builtin',
-          });
-        });
-
-        request.addEventListener('load', () => {
-          eventEmitter.emit('response-received', {
-            requestId: requestId,
-            timestamp: Date.now(),
-            type: 'XHR',
-            response: {
+            timestamp: sendTime,
+            request: {
               url: request._url as string,
-              status: request.status,
-              statusText: request.statusText,
-              headers: applyReactNativeResponseHeadersLogic(
-                request.responseHeaders || {},
-              ),
-              contentType: getContentType(request),
-              size: getResponseSize(request),
-              responseTime: Date.now(),
+              method: request._method as HttpMethod,
+              headers: request._headers,
+              postData: getRequestBody(data),
             },
-            source: 'builtin',
-          });
-        });
-
-        request.addEventListener('loadend', () => {
-          eventEmitter.emit('request-completed', {
-            requestId: requestId,
-            timestamp: Date.now(),
-            duration: Date.now() - sendTime,
-            size: getResponseSize(request),
-            ttfb,
-            source: 'builtin',
-          });
-        });
-
-        request.addEventListener('error', () => {
-          eventEmitter.emit('request-failed', {
-            requestId: requestId,
-            timestamp: Date.now(),
             type: 'XHR',
-            error: 'Failed',
-            canceled: false,
+            initiator,
             source: 'builtin',
           });
-        });
 
-        request.addEventListener('abort', () => {
-          eventEmitter.emit('request-failed', {
-            requestId: requestId,
-            timestamp: Date.now(),
-            type: 'XHR',
-            error: 'Aborted',
-            canceled: true,
-            source: 'builtin',
+          request.addEventListener('readystatechange', () => {
+            if (request.readyState === READY_STATE_HEADERS_RECEIVED) {
+              ttfb = Date.now() - sendTime;
+            }
           });
-        });
 
-        request.addEventListener('timeout', () => {
-          eventEmitter.emit('request-failed', {
-            requestId: requestId,
-            timestamp: Date.now(),
-            type: 'XHR',
-            error: 'Timeout',
-            canceled: false,
-            source: 'builtin',
+          request.addEventListener('progress', (event) => {
+            eventEmitter.emit('request-progress', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              loaded: event.loaded,
+              total: event.total,
+              lengthComputable: event.lengthComputable,
+              source: 'builtin',
+            });
+          });
+
+          request.addEventListener('load', () => {
+            eventEmitter.emit('response-received', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              type: 'XHR',
+              response: {
+                url: request._url as string,
+                status: request.status,
+                statusText: request.statusText,
+                headers: applyReactNativeResponseHeadersLogic(
+                  request.responseHeaders || {},
+                ),
+                contentType: getContentType(request),
+                size: getResponseSize(request),
+                responseTime: Date.now(),
+              },
+              source: 'builtin',
+            });
+          });
+
+          request.addEventListener('loadend', () => {
+            eventEmitter.emit('request-completed', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              duration: Date.now() - sendTime,
+              size: getResponseSize(request),
+              ttfb,
+              source: 'builtin',
+            });
+          });
+
+          request.addEventListener('error', () => {
+            eventEmitter.emit('request-failed', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              type: 'XHR',
+              error: 'Failed',
+              canceled: false,
+              source: 'builtin',
+            });
+          });
+
+          request.addEventListener('abort', () => {
+            eventEmitter.emit('request-failed', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              type: 'XHR',
+              error: 'Aborted',
+              canceled: true,
+              source: 'builtin',
+            });
+          });
+
+          request.addEventListener('timeout', () => {
+            eventEmitter.emit('request-failed', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              type: 'XHR',
+              error: 'Timeout',
+              canceled: false,
+              source: 'builtin',
+            });
           });
         });
+      }
+
+      FetchInterceptor.setCallbacks({
+        onRequestSent: (event) => {
+          eventEmitter.emit('request-sent', event);
+        },
+        onResponseReceived: (event) => {
+          eventEmitter.emit('response-received', event);
+        },
+        onRequestCompleted: (event) => {
+          eventEmitter.emit('request-completed', event);
+        },
+        onRequestFailed: (event) => {
+          eventEmitter.emit('request-failed', event);
+        },
+        onRequestProgress: (event) => {
+          eventEmitter.emit('request-progress', event);
+        },
+        onResponseBody: (requestId, body) => {
+          networkRequestsRegistry.setResponseBody(requestId, body);
+        },
       });
 
-      XHRInterceptor.enableInterception();
+      if (!XHRInterceptor.isInterceptorEnabled()) {
+        XHRInterceptor.enableInterception();
+      }
+      if (!FetchInterceptor.isInterceptorEnabled()) {
+        FetchInterceptor.enableInterception();
+      }
     },
 
     disable: () => {
       XHRInterceptor.disableInterception();
+      FetchInterceptor.disableInterception();
     },
 
     isEnabled: () => {
-      return XHRInterceptor.isInterceptorEnabled();
+      return (
+        XHRInterceptor.isInterceptorEnabled() ||
+        FetchInterceptor.isInterceptorEnabled()
+      );
     },
 
     dispose: () => {
       XHRInterceptor.disableInterception();
+      FetchInterceptor.disableInterception();
       networkRequestsRegistry.clear();
     },
 

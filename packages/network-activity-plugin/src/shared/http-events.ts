@@ -16,7 +16,7 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 
 export type RequestId = string;
 export type Timestamp = number;
-export type NetworkEventSource = 'builtin' | 'nitro';
+export type NetworkEventSource = 'builtin' | 'nitro' | 'expo';
 
 export type XHRPostData =
   | string

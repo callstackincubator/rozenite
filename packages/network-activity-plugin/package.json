@@ -65,10 +65,14 @@
     "zustand": "^5.0.6"
   },
   "peerDependencies": {
+    "expo": "*",
     "react-native-nitro-fetch": "*",
     "react-native-sse": "*"
   },
   "peerDependenciesMeta": {
+    "expo": {
+      "optional": true
+    },
     "react-native-nitro-fetch": {
       "optional": true
     },

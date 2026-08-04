@@ -35,6 +35,10 @@ export default defineConfig({
             return 'get-nitro-module';
           }
 
+          if (id.includes('get-expo-fetch-module.ts')) {
+            return 'get-expo-fetch-module';
+          }
+
           return undefined;
         },
       },

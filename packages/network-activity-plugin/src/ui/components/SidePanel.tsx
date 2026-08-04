@@ -142,7 +142,8 @@ export const SidePanel = () => {
   }
 
   const override = legacyEntry !== null ? overrides.get(legacyEntry.url) : null;
-  const supportsOverrides = httpDetails?.source !== 'nitro';
+  const supportsOverrides =
+    httpDetails?.source !== 'nitro' && httpDetails?.source !== 'expo';
   const hasResponseOverride =
     !!(supportsOverrides && override && override.body);
 
