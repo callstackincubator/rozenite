@@ -2,6 +2,7 @@ import type {
   StorageCapabilities,
   StorageDescriptor,
   StorageEntry,
+  StorageEntryPreview,
   StorageTarget,
 } from './types';
 
@@ -48,6 +49,25 @@ export type StorageDiscoverStoragesResponseEvent = {
   storages: StorageDescriptor[];
 };
 
+export type StorageListEntryPreviewsRequestEvent = {
+  type: 'list-entry-previews';
+  requestId: string;
+  target: StorageTarget;
+  search?: string;
+  keySortDirection?: 'ascending' | 'descending';
+  cursor?: string;
+  limit: number;
+};
+
+export type StorageListEntryPreviewsResponseEvent = {
+  type: 'entry-previews';
+  requestId: string;
+  target: StorageTarget;
+  items: StorageEntryPreview[];
+  nextCursor?: string;
+  previousCursor?: string;
+};
+
 export type StorageRequestError = {
   requestId: string;
   code:
@@ -88,6 +108,8 @@ export type StorageEvent =
   | StorageGetSnapshotEvent
   | StorageDiscoverStoragesRequestEvent
   | StorageDiscoverStoragesResponseEvent
+  | StorageListEntryPreviewsRequestEvent
+  | StorageListEntryPreviewsResponseEvent
   | StorageRequestErrorEvent
   | StorageImportEntriesEvent
   | StorageImportResultEvent;

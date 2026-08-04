@@ -6,11 +6,13 @@ import type {
   StorageEventMap,
   StorageGetSnapshotEvent,
   StorageImportEntriesEvent,
+  StorageListEntryPreviewsRequestEvent,
   StorageSetEntryEvent,
 } from '../shared/messaging';
 import type { StorageAdapter } from '../shared/types';
 import { handleImportEntries } from './import';
 import { handleStorageDiscoveryRequest } from './storage-discovery';
+import { handleListEntryPreviewsRequest } from './entry-preview-pagination';
 import { createStorageViews } from './storage-view';
 import { useStorageAgentTools } from './useStorageAgentTools';
 
@@ -172,6 +174,13 @@ export const useRozeniteStoragePlugin = ({
         'discover-storages',
         (event: StorageDiscoverStoragesRequestEvent) => {
           const response = handleStorageDiscoveryRequest(views, event);
+          client.send(response.type, response);
+        }
+      ),
+      client.onMessage(
+        'list-entry-previews',
+        async (event: StorageListEntryPreviewsRequestEvent) => {
+          const response = await handleListEntryPreviewsRequest(views, event);
           client.send(response.type, response);
         }
       ),
