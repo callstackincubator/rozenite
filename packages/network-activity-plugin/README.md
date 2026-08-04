@@ -20,6 +20,17 @@ The plugin now integrates with `react-native-nitro-fetch` when it is installed i
 - Response body lookup works for both built-in and nitro HTTP entries
 - HTTP response overrides remain built-in only and are disabled for nitro entries
 
+## Expo Fetch Support
+
+The plugin optionally observes `expo/fetch` on Expo SDK 54 and newer. Expo
+requests appear in the same panel with an `Expo` source badge, including when
+SDK 56+ installs Expo fetch as the default global `fetch` implementation.
+
+On SDK 54–55, response bodies can only be captured after the application
+consumes them with the usual body helpers (such as `text()` or `json()`).
+Unconsumed and directly streamed bodies remain unavailable; the request itself
+is still recorded normally. Expo response overrides are not supported.
+
 ## Features
 
 - **Real-time Network Monitoring**: Track all HTTP/HTTPS requests in real-time

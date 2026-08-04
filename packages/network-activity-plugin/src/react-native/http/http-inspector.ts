@@ -52,121 +52,113 @@ export const getHTTPInspector = (): HTTPInspector => {
 
   return {
     enable: () => {
-      if (
-        XHRInterceptor.isInterceptorEnabled() &&
-        FetchInterceptor.isInterceptorEnabled()
-      ) {
-        return;
-      }
+      if (!XHRInterceptor.isInterceptorEnabled()) {
+        XHRInterceptor.setSendCallback((data, request) => {
+          const initiator = getInitiatorFromStack();
+          const sendTime = Date.now();
+          const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
-      XHRInterceptor.disableInterception();
-      FetchInterceptor.disableInterception();
+          request._rozeniteRequestId = requestId;
+          networkRequestsRegistry.addEntry(requestId, request);
 
-      XHRInterceptor.setSendCallback((data, request) => {
-        const initiator = getInitiatorFromStack();
-        const sendTime = Date.now();
-        const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+          let ttfb = 0;
 
-        request._rozeniteRequestId = requestId;
-        networkRequestsRegistry.addEntry(requestId, request);
-
-        let ttfb = 0;
-
-        eventEmitter.emit('request-sent', {
-          requestId: requestId,
-          timestamp: sendTime,
-          request: {
-            url: request._url as string,
-            method: request._method as HttpMethod,
-            headers: request._headers,
-            postData: getRequestBody(data),
-          },
-          type: 'XHR',
-          initiator,
-          source: 'builtin',
-        });
-
-        request.addEventListener('readystatechange', () => {
-          if (request.readyState === READY_STATE_HEADERS_RECEIVED) {
-            ttfb = Date.now() - sendTime;
-          }
-        });
-
-        request.addEventListener('progress', (event) => {
-          eventEmitter.emit('request-progress', {
+          eventEmitter.emit('request-sent', {
             requestId: requestId,
-            timestamp: Date.now(),
-            loaded: event.loaded,
-            total: event.total,
-            lengthComputable: event.lengthComputable,
-            source: 'builtin',
-          });
-        });
-
-        request.addEventListener('load', () => {
-          eventEmitter.emit('response-received', {
-            requestId: requestId,
-            timestamp: Date.now(),
-            type: 'XHR',
-            response: {
+            timestamp: sendTime,
+            request: {
               url: request._url as string,
-              status: request.status,
-              statusText: request.statusText,
-              headers: applyReactNativeResponseHeadersLogic(
-                request.responseHeaders || {},
-              ),
-              contentType: getContentType(request),
-              size: getResponseSize(request),
-              responseTime: Date.now(),
+              method: request._method as HttpMethod,
+              headers: request._headers,
+              postData: getRequestBody(data),
             },
-            source: 'builtin',
-          });
-        });
-
-        request.addEventListener('loadend', () => {
-          eventEmitter.emit('request-completed', {
-            requestId: requestId,
-            timestamp: Date.now(),
-            duration: Date.now() - sendTime,
-            size: getResponseSize(request),
-            ttfb,
-            source: 'builtin',
-          });
-        });
-
-        request.addEventListener('error', () => {
-          eventEmitter.emit('request-failed', {
-            requestId: requestId,
-            timestamp: Date.now(),
             type: 'XHR',
-            error: 'Failed',
-            canceled: false,
+            initiator,
             source: 'builtin',
           });
-        });
 
-        request.addEventListener('abort', () => {
-          eventEmitter.emit('request-failed', {
-            requestId: requestId,
-            timestamp: Date.now(),
-            type: 'XHR',
-            error: 'Aborted',
-            canceled: true,
-            source: 'builtin',
+          request.addEventListener('readystatechange', () => {
+            if (request.readyState === READY_STATE_HEADERS_RECEIVED) {
+              ttfb = Date.now() - sendTime;
+            }
           });
-        });
 
-        request.addEventListener('timeout', () => {
-          eventEmitter.emit('request-failed', {
-            requestId: requestId,
-            timestamp: Date.now(),
-            type: 'XHR',
-            error: 'Timeout',
-            canceled: false,
-            source: 'builtin',
+          request.addEventListener('progress', (event) => {
+            eventEmitter.emit('request-progress', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              loaded: event.loaded,
+              total: event.total,
+              lengthComputable: event.lengthComputable,
+              source: 'builtin',
+            });
+          });
+
+          request.addEventListener('load', () => {
+            eventEmitter.emit('response-received', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              type: 'XHR',
+              response: {
+                url: request._url as string,
+                status: request.status,
+                statusText: request.statusText,
+                headers: applyReactNativeResponseHeadersLogic(
+                  request.responseHeaders || {},
+                ),
+                contentType: getContentType(request),
+                size: getResponseSize(request),
+                responseTime: Date.now(),
+              },
+              source: 'builtin',
+            });
+          });
+
+          request.addEventListener('loadend', () => {
+            eventEmitter.emit('request-completed', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              duration: Date.now() - sendTime,
+              size: getResponseSize(request),
+              ttfb,
+              source: 'builtin',
+            });
+          });
+
+          request.addEventListener('error', () => {
+            eventEmitter.emit('request-failed', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              type: 'XHR',
+              error: 'Failed',
+              canceled: false,
+              source: 'builtin',
+            });
+          });
+
+          request.addEventListener('abort', () => {
+            eventEmitter.emit('request-failed', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              type: 'XHR',
+              error: 'Aborted',
+              canceled: true,
+              source: 'builtin',
+            });
+          });
+
+          request.addEventListener('timeout', () => {
+            eventEmitter.emit('request-failed', {
+              requestId: requestId,
+              timestamp: Date.now(),
+              type: 'XHR',
+              error: 'Timeout',
+              canceled: false,
+              source: 'builtin',
+            });
           });
         });
-      });
+      }
 
       FetchInterceptor.setCallbacks({
         onRequestSent: (event) => {
@@ -189,8 +181,12 @@ export const getHTTPInspector = (): HTTPInspector => {
         },
       });
 
-      XHRInterceptor.enableInterception();
-      FetchInterceptor.enableInterception();
+      if (!XHRInterceptor.isInterceptorEnabled()) {
+        XHRInterceptor.enableInterception();
+      }
+      if (!FetchInterceptor.isInterceptorEnabled()) {
+        FetchInterceptor.enableInterception();
+      }
     },
 
     disable: () => {

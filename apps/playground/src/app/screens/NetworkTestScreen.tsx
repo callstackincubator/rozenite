@@ -829,8 +829,8 @@ const ExpoFetchHTTPTestComponent: React.FC = () => {
         <Text style={styles.cardTitle}>Expo Fetch Test</Text>
         <Text style={styles.cardBody}>
           Runs requests through `expo/fetch`. Watch the Network Activity panel
-          for Expo source badges. Prefetch is not exposed by `expo/fetch`, so
-          this tab focuses on GET, POST, and abort handling.
+          for Expo source badges. This small flow covers a JSON response and
+          cancellation without becoming an Expo fetch conformance suite.
         </Text>
 
         <View style={styles.nitroButtonGrid}>
@@ -843,17 +843,6 @@ const ExpoFetchHTTPTestComponent: React.FC = () => {
             onPress={() => runExpoFetchAction(expoFetchApi.getUsers)}
           >
             <Text style={styles.nitroButtonText}>Expo GET</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.nitroButton,
-              isRunning && styles.refetchButtonDisabled,
-            ]}
-            disabled={isRunning}
-            onPress={() => runExpoFetchAction(expoFetchApi.createPost)}
-          >
-            <Text style={styles.nitroButtonText}>Expo POST</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -1934,8 +1923,8 @@ export const NetworkTestScreen: React.FC = () => {
     <View style={styles.header}>
       <Text style={styles.title}>Network Test</Text>
       <Text style={styles.subtitle}>
-        Testing built-in HTTP, Expo Fetch, Nitro HTTP, built-in WebSocket,
-        Nitro WebSocket, and SSE connections
+        Testing built-in HTTP, Expo Fetch, Nitro HTTP, built-in WebSocket, Nitro
+        WebSocket, and SSE connections
       </Text>
 
       <TouchableOpacity

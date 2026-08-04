@@ -70,7 +70,7 @@ describe('normalizeFetchRequest', () => {
     });
   });
 
-  it('normalizes Request input and merges override headers', () => {
+  it('normalizes Request input and replaces inherited headers with init headers', () => {
     const request = new Request('https://example.com/items', {
       method: 'put',
       headers: {
@@ -94,6 +94,29 @@ describe('normalizeFetchRequest', () => {
       },
       postData: undefined,
       signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('normalizes Expo request-like inputs and gives init precedence', () => {
+    const requestLike = {
+      url: 'https://example.com/expo',
+      method: 'patch',
+      headers: { 'x-inherited': 'yes', 'x-replaced': 'old' },
+      body: 'inherited body',
+      signal: new AbortController().signal,
+    };
+
+    expect(
+      normalizeFetchRequest(requestLike, {
+        method: 'post',
+        headers: { 'x-replaced': 'new' },
+        body: 'init body',
+      }),
+    ).toMatchObject({
+      url: 'https://example.com/expo',
+      method: 'POST',
+      headers: { 'x-replaced': 'new' },
+      postData: { type: 'text', value: 'init body' },
     });
   });
 
@@ -121,10 +144,12 @@ describe('captureFetchResponseBodyFromBytes', () => {
       await captureFetchResponseBodyFromBytes(xml, 'application/xml'),
     ).toBe('<root />');
 
-    const svg = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" />');
-    expect(
-      await captureFetchResponseBodyFromBytes(svg, 'image/svg+xml'),
-    ).toBe('<svg xmlns="http://www.w3.org/2000/svg" />');
+    const svg = new TextEncoder().encode(
+      '<svg xmlns="http://www.w3.org/2000/svg" />',
+    );
+    expect(await captureFetchResponseBodyFromBytes(svg, 'image/svg+xml')).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg" />',
+    );
   });
 
   it('returns a binary union for non-text bytes under the cap', async () => {
@@ -137,7 +162,10 @@ describe('captureFetchResponseBodyFromBytes', () => {
   it('short-circuits binary capture above the cap', async () => {
     const bytes = new Uint8Array(BINARY_CAPTURE_SIZE_CAP + 1);
     expect(
-      await captureFetchResponseBodyFromBytes(bytes, 'application/octet-stream'),
+      await captureFetchResponseBodyFromBytes(
+        bytes,
+        'application/octet-stream',
+      ),
     ).toEqual({
       kind: 'binary-too-large',
       size: BINARY_CAPTURE_SIZE_CAP + 1,

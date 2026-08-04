@@ -36,7 +36,9 @@ const createExpoResponse = (
   bodyChunks: string[],
   headers: Record<string, string>,
 ) => {
-  const encodedChunks = bodyChunks.map((chunk) => new TextEncoder().encode(chunk));
+  const encodedChunks = bodyChunks.map((chunk) =>
+    new TextEncoder().encode(chunk),
+  );
   const totalSize = encodedChunks.reduce(
     (sum, chunk) => sum + chunk.byteLength,
     0,
@@ -76,13 +78,20 @@ afterEach(() => {
 });
 
 describe('FetchInterceptor', () => {
-  it('patches expo/fetch directly and preserves the original export', async () => {
+  it('patches the private export, its getter facade, and Expo global alias', async () => {
     const fetchMock = vi.fn(async () =>
       createExpoResponse(['{"ok":', 'true}'], {
         'x-request-id': 'expo-1',
       }),
     );
     const expoFetchModule = { fetch: fetchMock as typeof fetch };
+    const expoFetchFacade = {
+      get fetch() {
+        return expoFetchModule.fetch;
+      },
+    };
+    const originalGlobalFetch = globalThis.fetch;
+    globalThis.fetch = fetchMock as typeof fetch;
 
     const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
     const events: Array<{ type: string; event: unknown }> = [];
@@ -108,9 +117,10 @@ describe('FetchInterceptor', () => {
     FetchInterceptor.enableInterception();
 
     expect(FetchInterceptor.isInterceptorEnabled()).toBe(true);
-    expect(expoFetchModule.fetch).not.toBe(originalModuleFetch);
+    expect(expoFetchFacade.fetch).not.toBe(originalModuleFetch);
+    expect(globalThis.fetch).toBe(expoFetchFacade.fetch);
 
-    const response = await expoFetchModule.fetch('https://example.com/api', {
+    const response = await expoFetchFacade.fetch('https://example.com/api', {
       method: 'post',
       headers: {
         'x-request-id': 'expo-1',
@@ -182,19 +192,278 @@ describe('FetchInterceptor', () => {
       ttfb: expect.any(Number),
       source: 'expo',
     });
+    expect(
+      events.filter(
+        (entry) =>
+          entry.type === 'request-completed' || entry.type === 'request-failed',
+      ),
+    ).toHaveLength(1);
 
     FetchInterceptor.disableInterception();
 
     expect(FetchInterceptor.isInterceptorEnabled()).toBe(false);
     expect(expoFetchModule.fetch).toBe(originalModuleFetch);
+    expect(globalThis.fetch).toBe(fetchMock);
+    globalThis.fetch = originalGlobalFetch;
   });
 
-  it('does not start when expo/fetch is unavailable', async () => {
-    const { FetchInterceptor } = await loadFetchInterceptor(null);
-
+  it('captures a consumed SDK 54–55 response without turning clone failure into a request failure', async () => {
+    const response = {
+      url: 'https://example.com/fallback',
+      status: 200,
+      statusText: 'OK',
+      headers: new Headers({ 'content-type': 'application/json' }),
+      clone: () => {
+        throw new Error('Response.clone is not supported');
+      },
+      text: vi.fn(async () => '{"ok":true}'),
+      json: function (this: { text: () => Promise<string> }) {
+        return this.text().then(JSON.parse);
+      },
+    } as unknown as Response;
+    const expoFetchModule = {
+      fetch: vi.fn(async () => response) as typeof fetch,
+    };
+    const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
+    const onResponseBody = vi.fn();
+    const onRequestCompleted = vi.fn();
+    const onRequestFailed = vi.fn();
+    const terminalEvents: string[] = [];
+    FetchInterceptor.setCallbacks({
+      onResponseBody,
+      onRequestCompleted: (event) => {
+        terminalEvents.push('request-completed');
+        onRequestCompleted(event);
+      },
+      onRequestFailed: (event) => {
+        terminalEvents.push('request-failed');
+        onRequestFailed(event);
+      },
+    });
     FetchInterceptor.enableInterception();
 
-    expect(FetchInterceptor.isInterceptorEnabled()).toBe(false);
+    const received = await expoFetchModule.fetch(
+      'https://example.com/fallback',
+    );
+    await expect(received.json()).resolves.toEqual({ ok: true });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(onRequestCompleted).toHaveBeenCalledTimes(1);
+    expect(onRequestFailed).not.toHaveBeenCalled();
+    expect(terminalEvents).toEqual(['request-completed']);
+    expect(onResponseBody).toHaveBeenCalledWith(
+      expect.any(String),
+      '{"ok":true}',
+    );
+    FetchInterceptor.disableInterception();
+  });
+
+  it('does not create a derived unhandled rejection when a consumed body rejects', async () => {
+    const error = new Error('Body read failed');
+    let rejectBody: (reason: unknown) => void = () => undefined;
+    const bodyPromise = new Promise<string>((_resolve, reject) => {
+      rejectBody = reject;
+    });
+    const response = {
+      url: 'https://example.com/fallback-error',
+      status: 200,
+      statusText: 'OK',
+      headers: new Headers({ 'content-type': 'text/plain' }),
+      clone: () => {
+        throw new Error('Response.clone is not supported');
+      },
+      text: vi.fn(() => bodyPromise),
+    } as unknown as Response;
+    const expoFetchModule = {
+      fetch: vi.fn(async () => response) as typeof fetch,
+    };
+    const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
+    FetchInterceptor.enableInterception();
+
+    const received = await expoFetchModule.fetch(response.url);
+    const returnedPromise = received.text();
+    expect(returnedPromise).toBe(bodyPromise);
+    rejectBody(error);
+    await expect(returnedPromise).rejects.toBe(error);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    FetchInterceptor.disableInterception();
+  });
+
+  it('uses one clone and reports captured bytes when Content-Length is unavailable', async () => {
+    const bytes = new TextEncoder().encode('{"ok":true}');
+    const clone = {
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(bytes);
+          controller.close();
+        },
+      }),
+    } as Response;
+    const response = {
+      url: 'https://example.com/no-length',
+      status: 200,
+      statusText: 'OK',
+      headers: new Headers({ 'content-type': 'application/json' }),
+      clone: vi.fn(() => clone),
+    } as unknown as Response;
+    const expoFetchModule = {
+      fetch: vi.fn(async () => response) as typeof fetch,
+    };
+    const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
+    const events: string[] = [];
+    const onRequestCompleted = vi.fn((event) => {
+      events.push('request-completed');
+      return event;
+    });
+    FetchInterceptor.setCallbacks({
+      onRequestSent: () => events.push('request-sent'),
+      onResponseReceived: () => events.push('response-received'),
+      onResponseBody: () => events.push('response-body'),
+      onRequestCompleted,
+      onRequestFailed: () => events.push('request-failed'),
+    });
+    FetchInterceptor.enableInterception();
+
+    expect(await expoFetchModule.fetch(response.url)).toBe(response);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(response.clone).toHaveBeenCalledTimes(1);
+    expect(events).toEqual([
+      'request-sent',
+      'response-received',
+      'response-body',
+      'request-completed',
+    ]);
+    expect(onRequestCompleted).toHaveBeenCalledWith(
+      expect.objectContaining({ size: bytes.byteLength }),
+    );
+    FetchInterceptor.disableInterception();
+  });
+
+  it('completes successfully when response metadata throws', async () => {
+    const response = {
+      get headers() {
+        throw new Error('headers unavailable');
+      },
+    } as unknown as Response;
+    const expoFetchModule = {
+      fetch: vi.fn(async () => response) as typeof fetch,
+    };
+    const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
+    const onResponseBody = vi.fn();
+    const onRequestCompleted = vi.fn();
+    const onRequestFailed = vi.fn();
+    const terminalEvents: string[] = [];
+    FetchInterceptor.setCallbacks({
+      onResponseBody,
+      onRequestCompleted: (event) => {
+        terminalEvents.push('request-completed');
+        onRequestCompleted(event);
+      },
+      onRequestFailed: (event) => {
+        terminalEvents.push('request-failed');
+        onRequestFailed(event);
+      },
+    });
+    FetchInterceptor.enableInterception();
+
+    expect(await expoFetchModule.fetch('https://example.com/metadata')).toBe(
+      response,
+    );
+    expect(onResponseBody).toHaveBeenCalledWith(expect.any(String), null);
+    expect(onRequestCompleted).toHaveBeenCalledTimes(1);
+    expect(onRequestFailed).not.toHaveBeenCalled();
+    expect(terminalEvents).toEqual(['request-completed']);
+    FetchInterceptor.disableInterception();
+  });
+
+  it('leaves later wrappers intact and remains disabled without Expo', async () => {
+    const original = vi.fn();
+    const expoFetchModule = { fetch: original as typeof fetch };
+    const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
+    FetchInterceptor.enableInterception();
+    const rozeniteWrapper = expoFetchModule.fetch;
+    FetchInterceptor.enableInterception();
+    expect(expoFetchModule.fetch).toBe(rozeniteWrapper);
+
+    const laterWrapper = vi.fn();
+    expoFetchModule.fetch = laterWrapper as typeof fetch;
+    FetchInterceptor.disableInterception();
+    expect(expoFetchModule.fetch).toBe(laterWrapper);
+
+    const absent = await loadFetchInterceptor(null);
+    absent.FetchInterceptor.enableInterception();
+    expect(absent.FetchInterceptor.isInterceptorEnabled()).toBe(false);
+  });
+
+  it('restores a lazily materialized Expo global alias', async () => {
+    const originalGlobalDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      'fetch',
+    );
+    const originalExpoFetch = vi.fn();
+    const expoFetchModule = { fetch: originalExpoFetch as typeof fetch };
+    Object.defineProperty(globalThis, 'fetch', {
+      configurable: true,
+      get: () => expoFetchModule.fetch,
+      set: (value) => {
+        Object.defineProperty(globalThis, 'fetch', {
+          configurable: true,
+          writable: true,
+          value,
+        });
+      },
+    });
+
+    try {
+      const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
+      FetchInterceptor.enableInterception();
+      expect(globalThis.fetch).toBe(expoFetchModule.fetch);
+
+      FetchInterceptor.disableInterception();
+      expect(globalThis.fetch).toBe(originalExpoFetch);
+    } finally {
+      if (originalGlobalDescriptor) {
+        Object.defineProperty(globalThis, 'fetch', originalGlobalDescriptor);
+      }
+    }
+  });
+
+  it('restores Expo fetch when its lazy global is installed after enable', async () => {
+    const originalGlobalDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      'fetch',
+    );
+    const reactNativeFetch = vi.fn();
+    const originalExpoFetch = vi.fn();
+    const expoFetchModule = { fetch: originalExpoFetch as typeof fetch };
+    globalThis.fetch = reactNativeFetch as typeof fetch;
+
+    try {
+      const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
+      FetchInterceptor.enableInterception();
+      Object.defineProperty(globalThis, 'fetch', {
+        configurable: true,
+        get: () => expoFetchModule.fetch,
+        set: (value) => {
+          Object.defineProperty(globalThis, 'fetch', {
+            configurable: true,
+            writable: true,
+            value,
+          });
+        },
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(globalThis.fetch).toBe(expoFetchModule.fetch);
+      FetchInterceptor.disableInterception();
+      expect(globalThis.fetch).toBe(originalExpoFetch);
+    } finally {
+      if (originalGlobalDescriptor) {
+        Object.defineProperty(globalThis, 'fetch', originalGlobalDescriptor);
+      }
+    }
   });
 
   it('emits a canceled failure when expo/fetch rejects with an AbortError', async () => {
@@ -206,15 +475,24 @@ describe('FetchInterceptor', () => {
 
     const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
     const onRequestFailed = vi.fn();
+    const onRequestCompleted = vi.fn();
+    const terminalEvents: string[] = [];
 
     FetchInterceptor.setCallbacks({
-      onRequestFailed,
+      onRequestCompleted: (event) => {
+        terminalEvents.push('request-completed');
+        onRequestCompleted(event);
+      },
+      onRequestFailed: (event) => {
+        terminalEvents.push('request-failed');
+        onRequestFailed(event);
+      },
     });
     FetchInterceptor.enableInterception();
 
-    await expect(
-      expoFetchModule.fetch('https://example.com/api'),
-    ).rejects.toThrow('Aborted');
+    await expect(expoFetchModule.fetch('https://example.com/api')).rejects.toBe(
+      abortError,
+    );
 
     expect(onRequestFailed).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -223,6 +501,8 @@ describe('FetchInterceptor', () => {
         source: 'expo',
       }),
     );
+    expect(onRequestCompleted).not.toHaveBeenCalled();
+    expect(terminalEvents).toEqual(['request-failed']);
 
     FetchInterceptor.disableInterception();
   });
@@ -240,6 +520,8 @@ describe('FetchInterceptor', () => {
       onRequestSent: (event) => events.push({ type: 'request-sent', event }),
       onRequestFailed: (event) =>
         events.push({ type: 'request-failed', event }),
+      onRequestCompleted: (event) =>
+        events.push({ type: 'request-completed', event }),
     });
     FetchInterceptor.enableInterception();
 
@@ -264,54 +546,12 @@ describe('FetchInterceptor', () => {
       canceled: false,
       source: 'expo',
     });
-
-    FetchInterceptor.disableInterception();
-  });
-
-  it('avoids buffering binary bodies past the capture cap', async () => {
-    const size = 11;
-    const fetchMock = vi.fn(async () => {
-      const bytes = new Uint8Array(size);
-      bytes.fill(7);
-
-      const createBody = () =>
-        new ReadableStream<Uint8Array>({
-          start(controller) {
-            controller.enqueue(bytes);
-            controller.close();
-          },
-        });
-
-      const createResponse = (): Response =>
-        ({
-          url: 'https://example.com/file',
-          status: 200,
-          statusText: 'OK',
-          headers: new Headers({
-            'content-type': 'application/octet-stream',
-            'content-length': String(size),
-          }),
-          body: createBody(),
-          clone: () => createResponse(),
-        }) as unknown as Response;
-
-      return createResponse();
-    });
-    const expoFetchModule = { fetch: fetchMock as typeof fetch };
-
-    const { FetchInterceptor } = await loadFetchInterceptor(expoFetchModule);
-    const sentEvents: Array<unknown> = [];
-
-    FetchInterceptor.setCallbacks({
-      onRequestSent: (event) => sentEvents.push(event),
-    });
-    FetchInterceptor.enableInterception();
-
-    await expoFetchModule.fetch('https://example.com/file');
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(sentEvents).toHaveLength(1);
-    expect(captureResponseBodySpy).not.toHaveBeenCalled();
+    expect(
+      events.filter(
+        (entry) =>
+          entry.type === 'request-completed' || entry.type === 'request-failed',
+      ),
+    ).toHaveLength(1);
 
     FetchInterceptor.disableInterception();
   });

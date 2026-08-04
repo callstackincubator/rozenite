@@ -9,7 +9,15 @@ import { captureResponseBodyFromBytes } from './response-body-utils';
 import { getContentTypeMime } from '../../utils/getContentTypeMimeType';
 export { BINARY_CAPTURE_SIZE_CAP } from './response-body-utils';
 
-export type FetchInput = RequestInfo | URL;
+export type FetchInput = RequestInfo | URL | FetchRequestLike;
+
+export type FetchRequestLike = {
+  url?: string;
+  method?: string;
+  headers?: HeadersInit;
+  body?: BodyInit | null;
+  signal?: AbortSignal | null;
+};
 
 export type NormalizedFetchRequest = {
   url: string;
@@ -39,7 +47,7 @@ export const normalizeHeaders = (headers?: HeadersInit): HttpHeaders => {
       : [existing, value];
   };
 
-  if (headers instanceof Headers) {
+  if (typeof Headers !== 'undefined' && headers instanceof Headers) {
     headers.forEach((value, key) => {
       assign(key, value);
     });
@@ -81,18 +89,29 @@ export const normalizeFetchRequest = (
   input: FetchInput,
   init: RequestInit = {},
 ): NormalizedFetchRequest => {
-  const request = input instanceof Request ? input : null;
-  const headers = {
-    ...normalizeHeaders(request?.headers),
-    ...normalizeHeaders(init.headers),
-  };
+  const request =
+    typeof Request !== 'undefined' && input instanceof Request ? input : null;
+  const requestLike =
+    !request && typeof input === 'object' && input !== null
+      ? (input as FetchRequestLike)
+      : null;
+  // Expo follows fetch's `init.headers ?? input.headers` semantics: supplying
+  // init headers replaces inherited headers instead of merging them.
+  const headers = normalizeHeaders(
+    init.headers ?? request?.headers ?? requestLike?.headers,
+  );
 
   return {
-    url: request?.url ?? input.toString(),
-    method: (init.method ?? request?.method ?? 'GET').toUpperCase() as HttpMethod,
+    url: request?.url ?? requestLike?.url ?? input.toString(),
+    method: (
+      init.method ??
+      request?.method ??
+      requestLike?.method ??
+      'GET'
+    ).toUpperCase() as HttpMethod,
     headers,
-    postData: normalizeFetchBody(init.body),
-    signal: init.signal ?? request?.signal,
+    postData: normalizeFetchBody(init.body ?? requestLike?.body),
+    signal: init.signal ?? request?.signal ?? requestLike?.signal ?? undefined,
   };
 };
 
@@ -103,7 +122,7 @@ export const getFetchResponseHeaders = (response: Response): HttpHeaders => {
 export const getFetchContentType = (response: Response): string => {
   const contentType = response.headers.get('content-type');
   return contentType
-    ? getContentTypeMime({ 'content-type': contentType }) ?? ''
+    ? (getContentTypeMime({ 'content-type': contentType }) ?? '')
     : '';
 };
 

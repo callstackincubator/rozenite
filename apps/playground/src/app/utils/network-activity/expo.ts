@@ -1,5 +1,5 @@
 import { fetch as expoFetch } from 'expo/fetch';
-import type { Post, User } from './api';
+import type { User } from './api';
 
 export type ExpoFetchDemoResult = {
   title: string;
@@ -23,7 +23,9 @@ export const expoFetchApi = {
     );
 
     if (!response.ok) {
-      throw new Error(`Expo fetch request failed with status ${response.status}`);
+      throw new Error(
+        `Expo fetch request failed with status ${response.status}`,
+      );
     }
 
     const users = (await response.json()) as User[];
@@ -34,40 +36,6 @@ export const expoFetchApi = {
       statusText: response.statusText,
       body: prettyPrint(users),
       extra: `Fetched ${users.length} users via expo/fetch.`,
-    };
-  },
-
-  async createPost(): Promise<ExpoFetchDemoResult> {
-    const payload: Omit<Post, 'id'> = {
-      userId: 1,
-      title: 'Rozenite Expo fetch test post',
-      body: 'This request was created from the playground using expo/fetch.',
-    };
-
-    const response = await expoFetch(
-      'https://jsonplaceholder.typicode.com/posts?source=expo-fetch-playground',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Rozenite-Test': 'expo-fetch-create-post',
-        },
-        body: JSON.stringify(payload),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`Expo fetch request failed with status ${response.status}`);
-    }
-
-    const post = (await response.json()) as Post;
-
-    return {
-      title: 'Expo POST JSON',
-      status: response.status,
-      statusText: response.statusText,
-      body: prettyPrint(post),
-      extra: 'Creates a POST entry with an Expo source badge in Network Activity.',
     };
   },
 
