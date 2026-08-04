@@ -74,38 +74,45 @@ export const useRozeniteStoragePlugin = ({
 
     // Prevent one storage watcher failure from breaking the whole plugin.
     void Promise.all(
-      views.map(async (view) => {
-        try {
-          const subscription = await view.watch({
-            onSet: (entry) => {
-              client.send('set-entry', {
-                type: 'set-entry',
-                target: view.target,
-                entry,
-              });
-            },
-            onDelete: (key) => {
-              client.send('delete-entry', {
-                type: 'delete-entry',
-                target: view.target,
-                key,
-              });
-            },
-          });
+      views
+        .filter((view) => view.supportsSubscriptions && view.watch)
+        .map(async (view) => {
+          try {
+            const watch = view.watch;
+            if (!watch) {
+              return;
+            }
 
-          if (disposed) {
-            subscription.remove();
-            return;
+            const subscription = await watch({
+              onSet: (entry) => {
+                client.send('set-entry', {
+                  type: 'set-entry',
+                  target: view.target,
+                  entry,
+                });
+              },
+              onDelete: (key) => {
+                client.send('delete-entry', {
+                  type: 'delete-entry',
+                  target: view.target,
+                  key,
+                });
+              },
+            });
+
+            if (disposed) {
+              subscription.remove();
+              return;
+            }
+
+            viewSubscriptions.push(subscription);
+          } catch (error) {
+            console.warn(
+              `[Rozenite] Storage Plugin: Failed to attach watcher for ${view.target.adapterId}/${view.target.storageId}.`,
+              error
+            );
           }
-
-          viewSubscriptions.push(subscription);
-        } catch (error) {
-          console.warn(
-            `[Rozenite] Storage Plugin: Failed to attach watcher for ${view.target.adapterId}/${view.target.storageId}.`,
-            error
-          );
-        }
-      })
+        })
     );
 
     const messageSubscriptions = [

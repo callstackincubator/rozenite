@@ -12,26 +12,10 @@ import {
   type SyncStorage,
 } from '../shared/types';
 
-const POLLING_INTERVAL_MS = 1500;
-
-type StorageSnapshotMap = Map<string, StorageEntry>;
-
 type AsyncStorageLike = SyncStorage | AsyncStorage;
 
 const isAsyncStorage = (storage: AsyncStorageLike): storage is AsyncStorage =>
   storage.kind === 'async';
-
-const fingerprintEntry = (entry: StorageEntry) => {
-  if (entry.type === 'buffer') {
-    return `${entry.type}:${entry.value.join(',')}`;
-  }
-
-  return `${entry.type}:${String(entry.value)}`;
-};
-
-const toSnapshotMap = (entries: StorageEntry[]) => {
-  return new Map(entries.map((entry) => [entry.key, entry]));
-};
 
 const shouldFilterKey = (storage: StorageNode, key: string) => {
   if (storage.shouldFilterKey?.(key)) {
@@ -107,71 +91,10 @@ export type StorageView = {
   delete: (key: string) => Promise<void>;
   getAllKeys: () => Promise<readonly string[]>;
   getAllEntries: () => Promise<StorageEntry[]>;
-  watch: (callbacks: {
+  watch?: (callbacks: {
     onSet: (entry: StorageEntry) => void;
     onDelete: (key: string) => void;
   }) => Promise<StorageSubscription>;
-};
-
-const buildSnapshotMap = async (
-  getAllEntries: () => Promise<StorageEntry[]>,
-): Promise<StorageSnapshotMap> => {
-  const entries = await getAllEntries();
-  return toSnapshotMap(entries);
-};
-
-const diffSnapshots = (
-  previous: StorageSnapshotMap,
-  next: StorageSnapshotMap,
-  handlers: {
-    onSet: (entry: StorageEntry) => void;
-    onDelete: (key: string) => void;
-  },
-) => {
-  next.forEach((nextEntry, key) => {
-    const previousEntry = previous.get(key);
-
-    if (!previousEntry) {
-      handlers.onSet(nextEntry);
-      return;
-    }
-
-    if (fingerprintEntry(previousEntry) !== fingerprintEntry(nextEntry)) {
-      handlers.onSet(nextEntry);
-    }
-  });
-
-  previous.forEach((_value, key) => {
-    if (!next.has(key)) {
-      handlers.onDelete(key);
-    }
-  });
-};
-
-const createPollingSubscription = async (
-  getAllEntries: () => Promise<StorageEntry[]>,
-  handlers: {
-    onSet: (entry: StorageEntry) => void;
-    onDelete: (key: string) => void;
-  },
-): Promise<StorageSubscription> => {
-  let previousSnapshot = await buildSnapshotMap(getAllEntries);
-
-  const interval = setInterval(async () => {
-    try {
-      const nextSnapshot = await buildSnapshotMap(getAllEntries);
-      diffSnapshots(previousSnapshot, nextSnapshot, handlers);
-      previousSnapshot = nextSnapshot;
-    } catch {
-      // Silently ignore polling errors and try again on next tick.
-    }
-  }, POLLING_INTERVAL_MS);
-
-  return {
-    remove: () => {
-      clearInterval(interval);
-    },
-  };
 };
 
 export const createStorageView = (
@@ -179,6 +102,7 @@ export const createStorageView = (
   storageNode: StorageNode,
 ): StorageView => {
   const storage = storageNode.storage;
+  const subscribe = storage.subscribe;
   const target: StorageTarget = {
     adapterId: adapter.id,
     storageId: storageNode.id,
@@ -209,7 +133,7 @@ export const createStorageView = (
     adapterName: adapter.name,
     storageName: storageNode.name,
     capabilities: storageNode.capabilities,
-    supportsSubscriptions: storage.subscribe != null,
+    supportsSubscriptions: subscribe != null,
     blacklist: storageNode.blacklist,
     get,
     set: async (entry) => {
@@ -224,26 +148,25 @@ export const createStorageView = (
       return keys.filter((key) => !shouldFilterKey(storageNode, key));
     },
     getAllEntries,
-    watch: async ({ onSet, onDelete }) => {
-      if (storage.subscribe) {
-        return storage.subscribe(async (key) => {
-          try {
-            const entry = await get(key);
+    ...(subscribe
+      ? {
+          watch: async ({ onSet, onDelete }) =>
+            subscribe(async (key) => {
+              try {
+                const entry = await get(key);
 
-            if (!entry) {
-              onDelete(key);
-              return;
-            }
+                if (!entry) {
+                  onDelete(key);
+                  return;
+                }
 
-            onSet(entry);
-          } catch {
-            // Ignore runtime callback errors; polling fallback is not needed when subscribe exists.
-          }
-        });
-      }
-
-      return createPollingSubscription(getAllEntries, { onSet, onDelete });
-    },
+                onSet(entry);
+              } catch {
+                // Ignore runtime callback errors from native subscriptions.
+              }
+            }),
+        }
+      : {}),
   };
 };
 
