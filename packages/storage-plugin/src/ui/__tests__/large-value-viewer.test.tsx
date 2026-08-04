@@ -2,7 +2,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
-import { TEXT_CHUNK_SIZE } from '../large-value-viewer-state';
+import {
+  TEXT_CHUNK_SIZE,
+  VIRTUALIZED_TEXT_THRESHOLD,
+} from '../large-value-viewer-state';
 
 vi.mock('react-virtuoso', async () => {
   const React = await import('react');
@@ -24,7 +27,7 @@ describe('large value viewers', () => {
   afterEach(cleanup);
 
   it('renders only virtualized chunks for a large single-line string', () => {
-    const value = 'x'.repeat(TEXT_CHUNK_SIZE * 30);
+    const value = 'x'.repeat(VIRTUALIZED_TEXT_THRESHOLD + TEXT_CHUNK_SIZE);
     const { container } = render(<TextValueViewer value={value} />);
 
     expect(screen.getByTestId('virtuoso')).toBeInTheDocument();
@@ -49,7 +52,9 @@ describe('large value viewers', () => {
 
   it('drops virtualized value markup when its detail interaction closes', () => {
     const { container, unmount } = render(
-      <TextValueViewer value={'x'.repeat(TEXT_CHUNK_SIZE * 30)} />,
+      <TextValueViewer
+        value={'x'.repeat(VIRTUALIZED_TEXT_THRESHOLD + TEXT_CHUNK_SIZE)}
+      />,
     );
 
     unmount();

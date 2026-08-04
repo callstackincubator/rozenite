@@ -217,7 +217,16 @@ describe('StoragePanel preview query cutover', () => {
     const { root, container } = await renderPanel();
     await discover();
     await act(async () => {
-      await vi.waitFor(() => expect(container.textContent).toContain('first'));
+      await vi.waitFor(() =>
+        expect(mocks.client.request).toHaveBeenCalledTimes(1),
+      );
+      await vi.waitFor(() =>
+        expect(
+          Array.from(container.querySelectorAll('button')).some(
+            (button) => button.textContent === 'first',
+          ),
+        ).toBe(true),
+      );
     });
     await act(async () => {
       const edge = Array.from(container.querySelectorAll('button')).find(

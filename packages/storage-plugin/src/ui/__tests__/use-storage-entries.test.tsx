@@ -228,7 +228,9 @@ describe('storage entry query hooks', () => {
 
   it('invalidates only the changed storage preview prefix and drops its stale full value', async () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-    const request = vi.fn(({ payload }) => Promise.resolve(response(payload.cursor)));
+    const request = vi.fn(({ payload }) =>
+      Promise.resolve(response(payload.cursor)),
+    );
     const hook = await renderPreviewHook({
       client: asClient(request),
       target,
@@ -244,10 +246,10 @@ describe('storage entry query hooks', () => {
       'ascending',
     );
     hook.queryClient.setQueryDefaults(otherQueryKey, { gcTime: Infinity });
-    hook.queryClient.setQueryData(
-      otherQueryKey,
-      { pages: [response(undefined)], pageParams: [undefined] },
-    );
+    hook.queryClient.setQueryData(otherQueryKey, {
+      pages: [response(undefined)],
+      pageParams: [undefined],
+    });
     hook.queryClient.setQueryData(
       ['storage-full-entry', target.adapterId, target.storageId, 'changed'],
       { entry: { key: 'changed', type: 'string', value: 'stale full value' } },
@@ -259,11 +261,7 @@ describe('storage entry query hooks', () => {
     });
 
     expect(request).toHaveBeenCalledTimes(2);
-    expect(
-      hook.queryClient.getQueryData(
-        otherQueryKey,
-      ),
-    ).toBeDefined();
+    expect(hook.queryClient.getQueryData(otherQueryKey)).toBeDefined();
     expect(
       hook.queryClient.getQueryData([
         'storage-full-entry',

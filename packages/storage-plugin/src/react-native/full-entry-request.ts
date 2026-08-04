@@ -6,9 +6,7 @@ import type {
 import type { StorageTarget } from '../shared/types';
 import type { StorageView } from './storage-view';
 
-type FullEntryResult =
-  | StorageGetEntryResponseEvent
-  | StorageRequestErrorEvent;
+type FullEntryResult = StorageGetEntryResponseEvent | StorageRequestErrorEvent;
 
 const getRequestId = (payload: unknown) =>
   typeof payload === 'object' &&

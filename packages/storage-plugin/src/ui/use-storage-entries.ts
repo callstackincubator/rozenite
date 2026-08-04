@@ -70,9 +70,10 @@ export const dropStorageFullEntries = async (
   target: StorageTarget,
   key?: string,
 ) => {
-  const queryKey = key == null
-    ? storageFullEntryQueryKeyPrefix(target)
-    : storageFullEntryQueryKey(target, key);
+  const queryKey =
+    key == null
+      ? storageFullEntryQueryKeyPrefix(target)
+      : storageFullEntryQueryKey(target, key);
 
   await queryClient.cancelQueries({ queryKey, exact: key != null });
   queryClient.removeQueries({ queryKey, exact: key != null });

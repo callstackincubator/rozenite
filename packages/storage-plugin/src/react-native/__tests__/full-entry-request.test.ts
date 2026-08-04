@@ -137,9 +137,7 @@ describe('handleFullEntryRequest', () => {
     );
 
     await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(2));
-    resolvers
-      .get('second')
-      ?.({ key: 'second', type: 'string', value: 'two' });
+    resolvers.get('second')?.({ key: 'second', type: 'string', value: 'two' });
     resolvers.get('first')?.({ key: 'first', type: 'string', value: 'one' });
 
     await expect(first).resolves.toMatchObject({
