@@ -27,6 +27,7 @@ import type {
   StorageDeleteEntryEvent,
   StorageDiscoverStoragesResponseEvent,
   StorageEventMap,
+  StorageImportProgressEvent,
   StorageImportResultEvent,
   StorageSetEntryEvent,
   StorageSnapshotEvent,
@@ -39,7 +40,7 @@ import type {
   StorageTarget,
 } from '../shared/types';
 import { getStorageViewId } from '../shared/types';
-import { computePreview, parseSnapshot } from '../shared/snapshot';
+import { parseSnapshot } from '../shared/snapshot';
 import {
   buildStorageSidebarGroups,
   type StorageSnapshotEntry,
@@ -57,7 +58,6 @@ type StorageSnapshotState = {
   adapterName: string;
   storageName: string;
   capabilities: StorageCapabilities;
-  blacklist?: RegExp;
   entries: StorageEntry[];
 };
 
@@ -122,6 +122,10 @@ export default function StoragePanel() {
   const selectedTargetRef = useRef<StorageTarget | null>(null);
   const discoveryRequestIdRef = useRef(0);
   const exportAbortControllerRef = useRef<AbortController | null>(null);
+  const importPreviewAbortControllerRef = useRef<AbortController | null>(null);
+  const importRequestIdRef = useRef(0);
+  const activeImportRequestIdRef = useRef<string | null>(null);
+  const importTargetRef = useRef<StorageTarget | null>(null);
 
   const client = useRozeniteDevToolsClient<StorageEventMap>({
     pluginId: '@rozenite/storage-plugin',
@@ -147,9 +151,6 @@ export default function StoragePanel() {
           adapterName: event.adapterName,
           storageName: event.storageName,
           capabilities: event.capabilities,
-          blacklist: event.blacklist
-            ? new RegExp(event.blacklist.source, event.blacklist.flags)
-            : undefined,
           entries: event.entries,
         });
         setLoading(false);
@@ -199,11 +200,21 @@ export default function StoragePanel() {
 
           return { ...current, entries };
         });
+      },
+    );
 
+    const importProgressSubscription = client.onMessage(
+      'import-progress',
+      (event: StorageImportProgressEvent) => {
         setImportFlight((previous) => {
           if (!previous || previous.phase !== 'importing') return previous;
-          if (!sameTarget(event.target, previous.target)) return previous;
-          return { ...previous, written: previous.written + 1 };
+          if (
+            previous.requestId !== event.requestId ||
+            !sameTarget(event.target, previous.target)
+          ) {
+            return previous;
+          }
+          return { ...previous, written: event.written, total: event.total };
         });
       },
     );
@@ -211,9 +222,22 @@ export default function StoragePanel() {
     const importResultSubscription = client.onMessage(
       'import-result',
       (event: StorageImportResultEvent) => {
+        if (
+          activeImportRequestIdRef.current === event.requestId &&
+          selectedTargetRef.current &&
+          sameTarget(event.target, selectedTargetRef.current)
+        ) {
+          activeImportRequestIdRef.current = null;
+          setRefreshVersion((version) => version + 1);
+        }
         setImportFlight((previous) => {
           if (!previous || previous.phase !== 'importing') return previous;
-          if (!sameTarget(event.target, previous.target)) return previous;
+          if (
+            previous.requestId !== event.requestId ||
+            !sameTarget(event.target, previous.target)
+          ) {
+            return previous;
+          }
           if (event.ok) {
             return { phase: 'result', ok: true, written: event.written };
           }
@@ -254,6 +278,7 @@ export default function StoragePanel() {
       snapshotSubscription.remove();
       descriptorsSubscription.remove();
       setEntrySubscription.remove();
+      importProgressSubscription.remove();
       deleteEntrySubscription.remove();
       importResultSubscription.remove();
     };
@@ -263,6 +288,8 @@ export default function StoragePanel() {
     selectedTargetRef.current = selectedTarget;
     exportAbortControllerRef.current?.abort();
     exportAbortControllerRef.current = null;
+    importPreviewAbortControllerRef.current?.abort();
+    importPreviewAbortControllerRef.current = null;
     setExportState({ status: 'idle' });
     setSelectedSnapshot(null);
     setSelectedEntry(null);
@@ -283,9 +310,21 @@ export default function StoragePanel() {
   useEffect(
     () => () => {
       exportAbortControllerRef.current?.abort();
+      importPreviewAbortControllerRef.current?.abort();
     },
     [],
   );
+
+  useEffect(() => {
+    if (
+      importTargetRef.current &&
+      (!selectedTarget || !sameTarget(importTargetRef.current, selectedTarget))
+    ) {
+      activeImportRequestIdRef.current = null;
+      setImportFlight(null);
+    }
+    importTargetRef.current = selectedTarget;
+  }, [selectedTarget]);
 
   const selectedStorage =
     selectedSnapshot &&
@@ -421,7 +460,7 @@ export default function StoragePanel() {
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
-    if (!file || !selectedStorage) {
+    if (!file || !client || !selectedTarget) {
       return;
     }
 
@@ -446,43 +485,77 @@ export default function StoragePanel() {
       return;
     }
 
-    const preview = computePreview(parsed.snapshot, {
-      target: selectedStorage.target,
-      capabilities: selectedStorage.capabilities,
-      entryKeys: new Set(selectedStorage.entries.map((entry) => entry.key)),
-      isBlacklisted: selectedStorage.blacklist
-        ? (key) => selectedStorage.blacklist!.test(key)
-        : () => false,
-    });
-
-    const skippedSet = new Set(preview.skippedKeys.map((s) => s.key));
-    const unsupportedSet = new Set(preview.unsupportedTypes.map((u) => u.key));
-    const entriesToWrite = parsed.snapshot.entries.filter(
-      (entry) => !skippedSet.has(entry.key) && !unsupportedSet.has(entry.key),
+    importPreviewAbortControllerRef.current?.abort();
+    const controller = new AbortController();
+    importPreviewAbortControllerRef.current = controller;
+    const target = selectedTarget;
+    const selectedDescriptor = descriptors.find((descriptor) =>
+      sameTarget(descriptor.target, target),
     );
+    const targetLabel = selectedDescriptor
+      ? `${selectedDescriptor.adapterName} / ${selectedDescriptor.storageName}`
+      : 'selected storage';
 
-    setImportFlight({
-      phase: 'preview',
-      target: selectedStorage.target,
-      targetLabel: `${selectedStorage.adapterName} / ${selectedStorage.storageName}`,
-      snapshot: parsed.snapshot,
-      preview,
-      entriesToWrite,
-    });
+    try {
+      const response = await client.request({
+        requestType: 'preview-import',
+        responseType: 'import-preview',
+        errorType: 'storage-request-error',
+        payload: { type: 'preview-import', target, snapshot: parsed.snapshot },
+        signal: controller.signal,
+      });
+      if (
+        controller.signal.aborted ||
+        !sameTarget(target, selectedTargetRef.current ?? target)
+      ) {
+        return;
+      }
+
+      const entriesToWrite = response.preview.acceptedEntryIndexes.map(
+        (index) => parsed.snapshot.entries[index],
+      );
+      setImportFlight({
+        phase: 'preview',
+        target,
+        targetLabel,
+        snapshot: parsed.snapshot,
+        preview: response.preview,
+        entriesToWrite,
+      });
+    } catch {
+      if (
+        !controller.signal.aborted &&
+        sameTarget(target, selectedTargetRef.current ?? target)
+      ) {
+        showAlert(
+          'Could not preview import',
+          'Could not inspect the selected storage. Please try again.',
+        );
+      }
+    } finally {
+      if (importPreviewAbortControllerRef.current === controller) {
+        importPreviewAbortControllerRef.current = null;
+      }
+    }
   };
 
   const handleApplyImport = () => {
     if (!client) return;
     if (!importFlight || importFlight.phase !== 'preview') return;
 
+    importRequestIdRef.current += 1;
+    const requestId = `import-${importRequestIdRef.current}`;
+    activeImportRequestIdRef.current = requestId;
     client.send('import-entries', {
       type: 'import-entries',
+      requestId,
       target: importFlight.target,
       entries: importFlight.entriesToWrite,
     });
 
     setImportFlight({
       phase: 'importing',
+      requestId,
       target: importFlight.target,
       total: importFlight.entriesToWrite.length,
       written: 0,
@@ -649,6 +722,8 @@ export default function StoragePanel() {
                           );
 
                           if (descriptor) {
+                            activeImportRequestIdRef.current = null;
+                            setImportFlight(null);
                             selectedTargetRef.current = descriptor.target;
                             setSelectedTarget(descriptor.target);
                           }

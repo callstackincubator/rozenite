@@ -5,7 +5,7 @@ import type {
   StorageEntryPreview,
   StorageTarget,
 } from './types';
-import type { StorageSnapshotV1 } from './snapshot';
+import type { ImportPreview, StorageSnapshotV1 } from './snapshot';
 
 export type SerializedBlacklist = {
   source: string;
@@ -96,6 +96,20 @@ export type StorageExportSnapshotResponseEvent = {
   snapshot: StorageSnapshotV1;
 };
 
+export type StorageImportPreviewRequestEvent = {
+  type: 'preview-import';
+  requestId: string;
+  target: StorageTarget;
+  snapshot: StorageSnapshotV1;
+};
+
+export type StorageImportPreviewResponseEvent = {
+  type: 'import-preview';
+  requestId: string;
+  target: StorageTarget;
+  preview: ImportPreview;
+};
+
 export type StorageRequestError = {
   requestId: string;
   code:
@@ -115,12 +129,22 @@ export type StorageRequestErrorEvent = StorageRequestError & {
 
 export type StorageImportEntriesEvent = {
   type: 'import-entries';
+  requestId: string;
   target: StorageTarget;
   entries: StorageEntry[];
 };
 
+export type StorageImportProgressEvent = {
+  type: 'import-progress';
+  requestId: string;
+  target: StorageTarget;
+  written: number;
+  total: number;
+};
+
 export type StorageImportResultEvent = {
   type: 'import-result';
+  requestId: string;
   target: StorageTarget;
   ok: boolean;
   written: number;
@@ -142,8 +166,11 @@ export type StorageEvent =
   | StorageGetEntryResponseEvent
   | StorageExportSnapshotRequestEvent
   | StorageExportSnapshotResponseEvent
+  | StorageImportPreviewRequestEvent
+  | StorageImportPreviewResponseEvent
   | StorageRequestErrorEvent
   | StorageImportEntriesEvent
+  | StorageImportProgressEvent
   | StorageImportResultEvent;
 
 export type StorageEventMap = {

@@ -8,11 +8,12 @@ import type {
   StorageGetEntryRequestEvent,
   StorageGetSnapshotEvent,
   StorageImportEntriesEvent,
+  StorageImportPreviewRequestEvent,
   StorageListEntryPreviewsRequestEvent,
   StorageSetEntryEvent,
 } from '../shared/messaging';
 import type { StorageAdapter } from '../shared/types';
-import { handleImportEntries } from './import';
+import { handleImportEntries, handleImportPreviewRequest } from './import';
 import { handleStorageDiscoveryRequest } from './storage-discovery';
 import { handleListEntryPreviewsRequest } from './entry-preview-pagination';
 import { handleFullEntryRequest } from './full-entry-request';
@@ -209,14 +210,17 @@ export const useRozeniteStoragePlugin = ({
         },
       ),
       client.onMessage(
+        'preview-import',
+        async (event: StorageImportPreviewRequestEvent) => {
+          const response = await handleImportPreviewRequest(views, event);
+          client.send(response.type, response);
+        },
+      ),
+      client.onMessage(
         'import-entries',
         async (event: StorageImportEntriesEvent) => {
           await handleImportEntries(views, event, (out) => {
-            if (out.type === 'set-entry') {
-              client.send('set-entry', out);
-            } else {
-              client.send('import-result', out);
-            }
+            client.send(out.type, out);
           });
         },
       ),

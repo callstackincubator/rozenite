@@ -229,6 +229,7 @@ export type ImportPreview = {
   overwriteKeys: string[];
   skippedKeys: { key: string; reason: 'blacklist' }[];
   unsupportedTypes: { key: string; type: StorageEntryType }[];
+  acceptedEntryIndexes: number[];
   metadataMismatch: boolean;
 };
 
@@ -245,8 +246,9 @@ export const computePreview = (
   const overwriteKeys: string[] = [];
   const skippedKeys: { key: string; reason: 'blacklist' }[] = [];
   const unsupportedTypes: { key: string; type: StorageEntryType }[] = [];
+  const acceptedEntryIndexes: number[] = [];
 
-  for (const entry of snapshot.entries) {
+  for (const [index, entry] of snapshot.entries.entries()) {
     if (!supportsType(current.capabilities, entry.type)) {
       unsupportedTypes.push({ key: entry.key, type: entry.type });
       continue;
@@ -260,6 +262,10 @@ export const computePreview = (
     } else {
       newKeys.push(entry.key);
     }
+    acceptedEntryIndexes.push(index);
+    // Duplicate keys are applied in source order, so every accepted duplicate
+    // after the first overwrites the value that preceded it in this import.
+    current.entryKeys.add(entry.key);
   }
 
   const metadataMismatch =
@@ -271,6 +277,7 @@ export const computePreview = (
     overwriteKeys,
     skippedKeys,
     unsupportedTypes,
+    acceptedEntryIndexes,
     metadataMismatch,
   };
 };

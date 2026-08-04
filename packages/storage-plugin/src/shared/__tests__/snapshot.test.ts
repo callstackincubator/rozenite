@@ -358,4 +358,25 @@ describe('computePreview', () => {
     });
     expect(preview.metadataMismatch).toBe(false);
   });
+
+  it('treats accepted duplicate keys as sequential overwrites', () => {
+    const preview = computePreview(
+      validSnapshot({
+        entries: [
+          { key: 'duplicate', type: 'string', value: 'first' },
+          { key: 'duplicate', type: 'string', value: 'second' },
+        ],
+      }),
+      {
+        target,
+        capabilities: allTypes,
+        entryKeys: new Set(),
+        isBlacklisted: noBlacklist,
+      },
+    );
+
+    expect(preview.newKeys).toEqual(['duplicate']);
+    expect(preview.overwriteKeys).toEqual(['duplicate']);
+    expect(preview.acceptedEntryIndexes).toEqual([0, 1]);
+  });
 });
