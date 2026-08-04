@@ -34,7 +34,7 @@ export type StorageDeleteEntryEvent = {
 
 export type StorageGetSnapshotEvent = {
   type: 'get-snapshot';
-  target: StorageTarget | 'all';
+  target: StorageTarget;
 };
 
 export type StorageDiscoverStoragesRequestEvent = {

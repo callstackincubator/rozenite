@@ -13,10 +13,11 @@ import {
   Toolbar,
   type DataTableColumn,
 } from '@rozenite/ui';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Database, Download, Edit3, Plus, Trash2, Upload } from 'lucide-react';
 import type {
   StorageDeleteEntryEvent,
+  StorageDiscoverStoragesResponseEvent,
   StorageEventMap,
   StorageImportResultEvent,
   StorageSetEntryEvent,
@@ -24,6 +25,7 @@ import type {
 } from '../shared/messaging';
 import type {
   StorageCapabilities,
+  StorageDescriptor,
   StorageEntry,
   StorageEntryValue,
   StorageTarget,
@@ -36,7 +38,6 @@ import {
 } from '../shared/snapshot';
 import {
   buildStorageSidebarGroups,
-  parseStorageViewId,
   type StorageSnapshotEntry,
 } from './storage-groups';
 import { AddEntryDialog } from './add-entry-dialog';
@@ -69,7 +70,7 @@ const sameTarget = (a: StorageTarget, b: StorageTarget) =>
   a.adapterId === b.adapterId && a.storageId === b.storageId;
 
 const getEntryTypeFromValue = (
-  value: StorageEntryValue,
+  value: StorageEntryValue
 ): StorageEntry['type'] => {
   if (typeof value === 'string') {
     return 'string';
@@ -87,12 +88,12 @@ const getEntryTypeFromValue = (
 };
 
 export default function StoragePanel() {
-  const [snapshots, setSnapshots] = useState<Map<string, StorageSnapshotState>>(
-    new Map(),
+  const [descriptors, setDescriptors] = useState<StorageDescriptor[]>([]);
+  const [selectedTarget, setSelectedTarget] = useState<StorageTarget | null>(
+    null
   );
-  const [selectedStorageViewId, setSelectedStorageViewId] = useState<
-    string | null
-  >(null);
+  const [selectedSnapshot, setSelectedSnapshot] =
+    useState<StorageSnapshotState | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -101,13 +102,15 @@ export default function StoragePanel() {
   const [editingEntry, setEditingEntry] = useState<StorageEntry | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [importFlight, setImportFlight] = useState<ImportFlightState | null>(
-    null,
+    null
   );
   const [alertState, setAlertState] = useState<AlertState | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState | null>(
     null,
   );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const selectedTargetRef = useRef<StorageTarget | null>(null);
+  const discoveryRequestIdRef = useRef(0);
 
   const client = useRozeniteDevToolsClient<StorageEventMap>({
     pluginId: '@rozenite/storage-plugin',
@@ -121,62 +124,69 @@ export default function StoragePanel() {
     const snapshotSubscription = client.onMessage(
       'snapshot',
       (event: StorageSnapshotEvent) => {
-        const viewId = getStorageViewId(event.target);
-        setSnapshots((previous) => {
-          const next = new Map(previous);
-          next.set(viewId, {
-            target: event.target,
-            adapterName: event.adapterName,
-            storageName: event.storageName,
-            capabilities: event.capabilities,
-            blacklist: event.blacklist
-              ? new RegExp(event.blacklist.source, event.blacklist.flags)
-              : undefined,
-            entries: event.entries,
-          });
+        if (
+          !selectedTargetRef.current ||
+          !sameTarget(event.target, selectedTargetRef.current)
+        ) {
+          return;
+        }
 
-          if (previous.size === 0 && !selectedStorageViewId) {
-            setSelectedStorageViewId(viewId);
+        setSelectedSnapshot({
+          target: event.target,
+          adapterName: event.adapterName,
+          storageName: event.storageName,
+          capabilities: event.capabilities,
+          blacklist: event.blacklist
+            ? new RegExp(event.blacklist.source, event.blacklist.flags)
+            : undefined,
+          entries: event.entries,
+        });
+        setLoading(false);
+      }
+    );
+
+    const descriptorsSubscription = client.onMessage(
+      'storage-descriptors',
+      (event: StorageDiscoverStoragesResponseEvent) => {
+        if (event.requestId !== `discovery-${discoveryRequestIdRef.current}`) {
+          return;
+        }
+
+        setDescriptors(event.storages);
+        setSelectedTarget((previous) => {
+          if (
+            previous &&
+            event.storages.some((descriptor) =>
+              sameTarget(descriptor.target, previous)
+            )
+          ) {
+            return previous;
           }
 
-          return next;
+          return event.storages[0]?.target ?? null;
         });
-
-        if (viewId === selectedStorageViewId) {
-          setLoading(false);
-        }
-      },
+      }
     );
 
     const setEntrySubscription = client.onMessage(
       'set-entry',
       (event: StorageSetEntryEvent) => {
-        const viewId = getStorageViewId(event.target);
-        setSnapshots((previous) => {
-          const next = new Map(previous);
-          const current = next.get(viewId);
-
-          if (!current) {
-            return previous;
-          }
+        setSelectedSnapshot((current) => {
+          if (!current || !sameTarget(event.target, current.target))
+            return current;
 
           const existingIndex = current.entries.findIndex(
-            (entry) => entry.key === event.entry.key,
+            (entry) => entry.key === event.entry.key
           );
 
           const entries =
             existingIndex >= 0
               ? current.entries.map((entry) =>
-                  entry.key === event.entry.key ? event.entry : entry,
+                  entry.key === event.entry.key ? event.entry : entry
                 )
               : [...current.entries, event.entry];
 
-          next.set(viewId, {
-            ...current,
-            entries,
-          });
-
-          return next;
+          return { ...current, entries };
         });
 
         setImportFlight((previous) => {
@@ -184,7 +194,7 @@ export default function StoragePanel() {
           if (!sameTarget(event.target, previous.target)) return previous;
           return { ...previous, written: previous.written + 1 };
         });
-      },
+      }
     );
 
     const importResultSubscription = client.onMessage(
@@ -205,62 +215,46 @@ export default function StoragePanel() {
             error: event.error ?? 'Unknown error',
           };
         });
-      },
+      }
     );
 
     const deleteEntrySubscription = client.onMessage(
       'delete-entry',
       (event: StorageDeleteEntryEvent) => {
-        const viewId = getStorageViewId(event.target);
+        setSelectedSnapshot((current) => {
+          if (!current || !sameTarget(event.target, current.target))
+            return current;
 
-        setSnapshots((previous) => {
-          const next = new Map(previous);
-          const current = next.get(viewId);
-
-          if (!current) {
-            return previous;
-          }
-
-          next.set(viewId, {
+          return {
             ...current,
             entries: current.entries.filter((entry) => entry.key !== event.key),
-          });
-
-          return next;
+          };
         });
-      },
+      }
     );
 
-    client.send('get-snapshot', {
-      type: 'get-snapshot',
-      target: 'all',
+    discoveryRequestIdRef.current += 1;
+    client.send('discover-storages', {
+      type: 'discover-storages',
+      requestId: `discovery-${discoveryRequestIdRef.current}`,
     });
 
     return () => {
       snapshotSubscription.remove();
+      descriptorsSubscription.remove();
       setEntrySubscription.remove();
       deleteEntrySubscription.remove();
       importResultSubscription.remove();
     };
-  }, [client, selectedStorageViewId]);
+  }, [client]);
 
   useEffect(() => {
-    if (!client || !selectedStorageViewId) {
-      return;
-    }
+    selectedTargetRef.current = selectedTarget;
+    setSelectedSnapshot(null);
+    setSelectedEntry(null);
+    setEditingEntry(null);
 
-    const selectedSnapshot = snapshots.get(selectedStorageViewId);
-
-    if (selectedSnapshot) {
-      setLoading(false);
-      return;
-    }
-
-    const target = parseStorageViewId(selectedStorageViewId);
-    if (!target) {
-      console.warn(
-        `[Rozenite] Storage Plugin: Invalid storage view id "${selectedStorageViewId}".`,
-      );
+    if (!client || !selectedTarget) {
       setLoading(false);
       return;
     }
@@ -268,101 +262,97 @@ export default function StoragePanel() {
     setLoading(true);
     client.send('get-snapshot', {
       type: 'get-snapshot',
-      target,
+      target: selectedTarget,
     });
-  }, [client, selectedStorageViewId, snapshots]);
+  }, [client, selectedTarget]);
 
-  const selectedStorage = selectedStorageViewId
-    ? (snapshots.get(selectedStorageViewId) ?? null)
-    : null;
+  const selectedStorage =
+    selectedSnapshot &&
+    selectedTarget &&
+    sameTarget(selectedSnapshot.target, selectedTarget)
+      ? selectedSnapshot
+      : null;
 
   const entries = selectedStorage?.entries ?? [];
 
   const filteredEntries = useMemo(
     () =>
       entries.filter((entry) =>
-        entry.key.toLowerCase().includes(searchTerm.toLowerCase()),
+        entry.key.toLowerCase().includes(searchTerm.toLowerCase())
       ),
-    [entries, searchTerm],
+    [entries, searchTerm]
   );
 
   const supportedTypes = selectedStorage?.capabilities.supportedTypes ?? [];
 
   const sidebarGroups = useMemo(() => {
     const summary = new Map<string, StorageSnapshotEntry>();
-    for (const [viewId, snapshot] of snapshots) {
+
+    for (const descriptor of descriptors) {
+      const viewId = getStorageViewId(descriptor.target);
+      const snapshot =
+        selectedSnapshot && sameTarget(descriptor.target, selectedSnapshot.target)
+          ? selectedSnapshot
+          : null;
+
       summary.set(viewId, {
-        target: snapshot.target,
-        adapterName: snapshot.adapterName,
-        storageName: snapshot.storageName,
-        entryCount: snapshot.entries.length,
+        target: descriptor.target,
+        adapterName: descriptor.adapterName,
+        storageName: descriptor.storageName,
+        entryCount: snapshot?.entries.length ?? 0,
       });
     }
+
     return buildStorageSidebarGroups(summary);
-  }, [snapshots]);
+  }, [descriptors, selectedSnapshot]);
 
-  const updateEntriesForSelectedStorage = useCallback(
-    (mutate: (entries: StorageEntry[]) => StorageEntry[]) => {
-      if (!selectedStorageViewId) {
-        return;
+  const updateEntriesForSelectedStorage = (
+    mutate: (entries: StorageEntry[]) => StorageEntry[]
+  ) => {
+    setSelectedSnapshot((current) => {
+      if (!current) {
+        return current;
       }
 
-      setSnapshots((previous) => {
-        const next = new Map(previous);
-        const current = next.get(selectedStorageViewId);
+      return {
+        ...current,
+        entries: mutate(current.entries),
+      };
+    });
+  };
 
-        if (!current) {
-          return previous;
-        }
+  const handleValueChange = (key: string, newValue: StorageEntryValue) => {
+    if (!client || !selectedStorage) {
+      return;
+    }
 
-        next.set(selectedStorageViewId, {
-          ...current,
-          entries: mutate(current.entries),
-        });
+    const type = getEntryTypeFromValue(newValue);
 
-        return next;
-      });
-    },
-    [selectedStorageViewId],
-  );
+    if (!selectedStorage.capabilities.supportedTypes.includes(type)) {
+      return;
+    }
 
-  const handleValueChange = useCallback(
-    (key: string, newValue: StorageEntryValue) => {
-      if (!client || !selectedStorage) {
-        return;
-      }
+    let updatedEntry: StorageEntry;
+    if (type === 'string') {
+      updatedEntry = { key, type: 'string', value: newValue as string };
+    } else if (type === 'number') {
+      updatedEntry = { key, type: 'number', value: newValue as number };
+    } else if (type === 'boolean') {
+      updatedEntry = { key, type: 'boolean', value: newValue as boolean };
+    } else {
+      updatedEntry = { key, type: 'buffer', value: newValue as number[] };
+    }
 
-      const type = getEntryTypeFromValue(newValue);
+    client.send('set-entry', {
+      type: 'set-entry',
+      target: selectedStorage.target,
+      entry: updatedEntry,
+    });
 
-      if (!selectedStorage.capabilities.supportedTypes.includes(type)) {
-        return;
-      }
-
-      let updatedEntry: StorageEntry;
-      if (type === 'string') {
-        updatedEntry = { key, type: 'string', value: newValue as string };
-      } else if (type === 'number') {
-        updatedEntry = { key, type: 'number', value: newValue as number };
-      } else if (type === 'boolean') {
-        updatedEntry = { key, type: 'boolean', value: newValue as boolean };
-      } else {
-        updatedEntry = { key, type: 'buffer', value: newValue as number[] };
-      }
-
-      client.send('set-entry', {
-        type: 'set-entry',
-        target: selectedStorage.target,
-        entry: updatedEntry,
-      });
-
-      updateEntriesForSelectedStorage((currentEntries) =>
-        currentEntries.map((entry) =>
-          entry.key === key ? updatedEntry : entry,
-        ),
-      );
-    },
-    [client, selectedStorage, updateEntriesForSelectedStorage],
-  );
+    updateEntriesForSelectedStorage((currentEntries) =>
+      currentEntries.map((entry) => (entry.key === key ? updatedEntry : entry))
+    );
+  };
 
   const handleDeleteEntry = (key: string) => {
     if (!client || !selectedStorage) {
@@ -376,7 +366,7 @@ export default function StoragePanel() {
     });
 
     updateEntriesForSelectedStorage((currentEntries) =>
-      currentEntries.filter((entry) => entry.key !== key),
+      currentEntries.filter((entry) => entry.key !== key)
     );
   };
 
@@ -407,7 +397,7 @@ export default function StoragePanel() {
   };
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (!file || !selectedStorage) {
@@ -421,7 +411,7 @@ export default function StoragePanel() {
     } catch (parseError) {
       showAlert(
         'Could not read file',
-        parseError instanceof Error ? parseError.message : String(parseError),
+        parseError instanceof Error ? parseError.message : String(parseError)
       );
       return;
     }
@@ -430,7 +420,7 @@ export default function StoragePanel() {
     if (!parsed.ok) {
       showAlert(
         'Invalid snapshot',
-        `${parsed.error.path}: ${parsed.error.message}`,
+        `${parsed.error.path}: ${parsed.error.message}`
       );
       return;
     }
@@ -447,7 +437,7 @@ export default function StoragePanel() {
     const skippedSet = new Set(preview.skippedKeys.map((s) => s.key));
     const unsupportedSet = new Set(preview.unsupportedTypes.map((u) => u.key));
     const entriesToWrite = parsed.snapshot.entries.filter(
-      (entry) => !skippedSet.has(entry.key) && !unsupportedSet.has(entry.key),
+      (entry) => !skippedSet.has(entry.key) && !unsupportedSet.has(entry.key)
     );
 
     setImportFlight({
@@ -573,6 +563,10 @@ export default function StoragePanel() {
     [handleValueChange],
   );
 
+  const selectedStorageViewId = selectedTarget
+    ? getStorageViewId(selectedTarget)
+    : '';
+
   return (
     <PluginShell>
       <PluginShell.Body>
@@ -596,7 +590,17 @@ export default function StoragePanel() {
                         trailing={
                           <Badge variant="secondary">{item.entryCount}</Badge>
                         }
-                        onClick={() => setSelectedStorageViewId(item.viewId)}
+                        onClick={() => {
+                          const descriptor = descriptors.find(
+                            (candidate) =>
+                              getStorageViewId(candidate.target) === item.viewId,
+                          );
+
+                          if (descriptor) {
+                            selectedTargetRef.current = descriptor.target;
+                            setSelectedTarget(descriptor.target);
+                          }
+                        }}
                       >
                         {item.storageName}
                       </Sidebar.Item>
