@@ -68,6 +68,20 @@ export type StorageListEntryPreviewsResponseEvent = {
   previousCursor?: string;
 };
 
+export type StorageGetEntryRequestEvent = {
+  type: 'get-entry';
+  requestId: string;
+  target: StorageTarget;
+  key: string;
+};
+
+export type StorageGetEntryResponseEvent = {
+  type: 'entry';
+  requestId: string;
+  target: StorageTarget;
+  entry: StorageEntry;
+};
+
 export type StorageRequestError = {
   requestId: string;
   code:
@@ -110,6 +124,8 @@ export type StorageEvent =
   | StorageDiscoverStoragesResponseEvent
   | StorageListEntryPreviewsRequestEvent
   | StorageListEntryPreviewsResponseEvent
+  | StorageGetEntryRequestEvent
+  | StorageGetEntryResponseEvent
   | StorageRequestErrorEvent
   | StorageImportEntriesEvent
   | StorageImportResultEvent;

@@ -4,6 +4,7 @@ import type {
   StorageDeleteEntryEvent,
   StorageDiscoverStoragesRequestEvent,
   StorageEventMap,
+  StorageGetEntryRequestEvent,
   StorageGetSnapshotEvent,
   StorageImportEntriesEvent,
   StorageListEntryPreviewsRequestEvent,
@@ -13,6 +14,7 @@ import type { StorageAdapter } from '../shared/types';
 import { handleImportEntries } from './import';
 import { handleStorageDiscoveryRequest } from './storage-discovery';
 import { handleListEntryPreviewsRequest } from './entry-preview-pagination';
+import { handleFullEntryRequest } from './full-entry-request';
 import { createStorageViews } from './storage-view';
 import { useStorageAgentTools } from './useStorageAgentTools';
 
@@ -183,6 +185,13 @@ export const useRozeniteStoragePlugin = ({
           const response = await handleListEntryPreviewsRequest(views, event);
           client.send(response.type, response);
         }
+      ),
+      client.onMessage(
+        'get-entry',
+        async (event: StorageGetEntryRequestEvent) => {
+          const response = await handleFullEntryRequest(views, event);
+          client.send(response.type, response);
+        },
       ),
       client.onMessage(
         'get-snapshot',
