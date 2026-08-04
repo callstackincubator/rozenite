@@ -5,6 +5,7 @@ import type {
   StorageEntryPreview,
   StorageTarget,
 } from './types';
+import type { StorageSnapshotV1 } from './snapshot';
 
 export type SerializedBlacklist = {
   source: string;
@@ -82,6 +83,19 @@ export type StorageGetEntryResponseEvent = {
   entry: StorageEntry;
 };
 
+export type StorageExportSnapshotRequestEvent = {
+  type: 'export-snapshot';
+  requestId: string;
+  target: StorageTarget;
+};
+
+export type StorageExportSnapshotResponseEvent = {
+  type: 'export-snapshot-result';
+  requestId: string;
+  target: StorageTarget;
+  snapshot: StorageSnapshotV1;
+};
+
 export type StorageRequestError = {
   requestId: string;
   code:
@@ -126,6 +140,8 @@ export type StorageEvent =
   | StorageListEntryPreviewsResponseEvent
   | StorageGetEntryRequestEvent
   | StorageGetEntryResponseEvent
+  | StorageExportSnapshotRequestEvent
+  | StorageExportSnapshotResponseEvent
   | StorageRequestErrorEvent
   | StorageImportEntriesEvent
   | StorageImportResultEvent;

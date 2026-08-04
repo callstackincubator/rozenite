@@ -39,11 +39,7 @@ import type {
   StorageTarget,
 } from '../shared/types';
 import { getStorageViewId } from '../shared/types';
-import {
-  buildSnapshot,
-  computePreview,
-  parseSnapshot,
-} from '../shared/snapshot';
+import { computePreview, parseSnapshot } from '../shared/snapshot';
 import {
   buildStorageSidebarGroups,
   type StorageSnapshotEntry,
@@ -78,7 +74,7 @@ const sameTarget = (a: StorageTarget, b: StorageTarget) =>
   a.adapterId === b.adapterId && a.storageId === b.storageId;
 
 const getEntryTypeFromValue = (
-  value: StorageEntryValue
+  value: StorageEntryValue,
 ): StorageEntry['type'] => {
   if (typeof value === 'string') {
     return 'string';
@@ -98,12 +94,17 @@ const getEntryTypeFromValue = (
 export default function StoragePanel() {
   const [descriptors, setDescriptors] = useState<StorageDescriptor[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<StorageTarget | null>(
-    null
+    null,
   );
   const [selectedSnapshot, setSelectedSnapshot] =
     useState<StorageSnapshotState | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
+  const [exportState, setExportState] = useState<
+    | { status: 'idle' }
+    | { status: 'loading' }
+    | { status: 'error'; message: string }
+  >({ status: 'idle' });
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<StorageEntry | null>(null);
@@ -111,7 +112,7 @@ export default function StoragePanel() {
   const [editingEntry, setEditingEntry] = useState<StorageEntry | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [importFlight, setImportFlight] = useState<ImportFlightState | null>(
-    null
+    null,
   );
   const [alertState, setAlertState] = useState<AlertState | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState | null>(
@@ -120,6 +121,7 @@ export default function StoragePanel() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const selectedTargetRef = useRef<StorageTarget | null>(null);
   const discoveryRequestIdRef = useRef(0);
+  const exportAbortControllerRef = useRef<AbortController | null>(null);
 
   const client = useRozeniteDevToolsClient<StorageEventMap>({
     pluginId: '@rozenite/storage-plugin',
@@ -151,7 +153,7 @@ export default function StoragePanel() {
           entries: event.entries,
         });
         setLoading(false);
-      }
+      },
     );
 
     const descriptorsSubscription = client.onMessage(
@@ -166,7 +168,7 @@ export default function StoragePanel() {
           if (
             previous &&
             event.storages.some((descriptor) =>
-              sameTarget(descriptor.target, previous)
+              sameTarget(descriptor.target, previous),
             )
           ) {
             return previous;
@@ -174,7 +176,7 @@ export default function StoragePanel() {
 
           return event.storages[0]?.target ?? null;
         });
-      }
+      },
     );
 
     const setEntrySubscription = client.onMessage(
@@ -185,13 +187,13 @@ export default function StoragePanel() {
             return current;
 
           const existingIndex = current.entries.findIndex(
-            (entry) => entry.key === event.entry.key
+            (entry) => entry.key === event.entry.key,
           );
 
           const entries =
             existingIndex >= 0
               ? current.entries.map((entry) =>
-                  entry.key === event.entry.key ? event.entry : entry
+                  entry.key === event.entry.key ? event.entry : entry,
                 )
               : [...current.entries, event.entry];
 
@@ -203,7 +205,7 @@ export default function StoragePanel() {
           if (!sameTarget(event.target, previous.target)) return previous;
           return { ...previous, written: previous.written + 1 };
         });
-      }
+      },
     );
 
     const importResultSubscription = client.onMessage(
@@ -224,7 +226,7 @@ export default function StoragePanel() {
             error: event.error ?? 'Unknown error',
           };
         });
-      }
+      },
     );
 
     const deleteEntrySubscription = client.onMessage(
@@ -239,7 +241,7 @@ export default function StoragePanel() {
             entries: current.entries.filter((entry) => entry.key !== event.key),
           };
         });
-      }
+      },
     );
 
     discoveryRequestIdRef.current += 1;
@@ -259,6 +261,9 @@ export default function StoragePanel() {
 
   useEffect(() => {
     selectedTargetRef.current = selectedTarget;
+    exportAbortControllerRef.current?.abort();
+    exportAbortControllerRef.current = null;
+    setExportState({ status: 'idle' });
     setSelectedSnapshot(null);
     setSelectedEntry(null);
     setEditingEntry(null);
@@ -275,6 +280,13 @@ export default function StoragePanel() {
     });
   }, [client, refreshVersion, selectedTarget]);
 
+  useEffect(
+    () => () => {
+      exportAbortControllerRef.current?.abort();
+    },
+    [],
+  );
+
   const selectedStorage =
     selectedSnapshot &&
     selectedTarget &&
@@ -287,9 +299,9 @@ export default function StoragePanel() {
   const filteredEntries = useMemo(
     () =>
       entries.filter((entry) =>
-        entry.key.toLowerCase().includes(searchTerm.toLowerCase())
+        entry.key.toLowerCase().includes(searchTerm.toLowerCase()),
       ),
-    [entries, searchTerm]
+    [entries, searchTerm],
   );
 
   const supportedTypes = selectedStorage?.capabilities.supportedTypes ?? [];
@@ -316,7 +328,7 @@ export default function StoragePanel() {
   }, [descriptors, selectedSnapshot]);
 
   const updateEntriesForSelectedStorage = (
-    mutate: (entries: StorageEntry[]) => StorageEntry[]
+    mutate: (entries: StorageEntry[]) => StorageEntry[],
   ) => {
     setSelectedSnapshot((current) => {
       if (!current) {
@@ -359,7 +371,7 @@ export default function StoragePanel() {
     });
 
     updateEntriesForSelectedStorage((currentEntries) =>
-      currentEntries.map((entry) => (entry.key === key ? updatedEntry : entry))
+      currentEntries.map((entry) => (entry.key === key ? updatedEntry : entry)),
     );
   };
 
@@ -375,7 +387,7 @@ export default function StoragePanel() {
     });
 
     updateEntriesForSelectedStorage((currentEntries) =>
-      currentEntries.filter((entry) => entry.key !== key)
+      currentEntries.filter((entry) => entry.key !== key),
     );
   };
 
@@ -406,7 +418,7 @@ export default function StoragePanel() {
   };
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file || !selectedStorage) {
@@ -420,7 +432,7 @@ export default function StoragePanel() {
     } catch (parseError) {
       showAlert(
         'Could not read file',
-        parseError instanceof Error ? parseError.message : String(parseError)
+        parseError instanceof Error ? parseError.message : String(parseError),
       );
       return;
     }
@@ -429,7 +441,7 @@ export default function StoragePanel() {
     if (!parsed.ok) {
       showAlert(
         'Invalid snapshot',
-        `${parsed.error.path}: ${parsed.error.message}`
+        `${parsed.error.path}: ${parsed.error.message}`,
       );
       return;
     }
@@ -446,7 +458,7 @@ export default function StoragePanel() {
     const skippedSet = new Set(preview.skippedKeys.map((s) => s.key));
     const unsupportedSet = new Set(preview.unsupportedTypes.map((u) => u.key));
     const entriesToWrite = parsed.snapshot.entries.filter(
-      (entry) => !skippedSet.has(entry.key) && !unsupportedSet.has(entry.key)
+      (entry) => !skippedSet.has(entry.key) && !unsupportedSet.has(entry.key),
     );
 
     setImportFlight({
@@ -479,16 +491,47 @@ export default function StoragePanel() {
 
   const handleCloseImport = () => setImportFlight(null);
 
-  const handleExport = () => {
-    if (!selectedStorage) return;
-    const snapshot = buildSnapshot({
-      target: selectedStorage.target,
-      adapterName: selectedStorage.adapterName,
-      storageName: selectedStorage.storageName,
-      capabilities: selectedStorage.capabilities,
-      entries: selectedStorage.entries,
-    });
-    downloadJson(snapshot, buildExportFilename(selectedStorage.target));
+  const handleExport = async () => {
+    if (!client || !selectedTarget || exportAbortControllerRef.current) return;
+
+    const target = selectedTarget;
+    const controller = new AbortController();
+    exportAbortControllerRef.current = controller;
+    setExportState({ status: 'loading' });
+
+    try {
+      const response = await client.request({
+        requestType: 'export-snapshot',
+        responseType: 'export-snapshot-result',
+        errorType: 'storage-request-error',
+        payload: { type: 'export-snapshot', target },
+        signal: controller.signal,
+      });
+
+      if (
+        controller.signal.aborted ||
+        !sameTarget(target, selectedTargetRef.current ?? target)
+      ) {
+        return;
+      }
+
+      downloadJson(response.snapshot, buildExportFilename(target));
+      setExportState({ status: 'idle' });
+    } catch {
+      if (
+        !controller.signal.aborted &&
+        sameTarget(target, selectedTargetRef.current ?? target)
+      ) {
+        setExportState({
+          status: 'error',
+          message: 'Could not export the selected storage. Please try again.',
+        });
+      }
+    } finally {
+      if (exportAbortControllerRef.current === controller) {
+        exportAbortControllerRef.current = null;
+      }
+    }
   };
 
   const columns = useMemo<DataTableColumn<StorageEntry>[]>(
@@ -649,10 +692,14 @@ export default function StoragePanel() {
                   </Toolbar.Button>
                   <Toolbar.Button
                     onClick={handleExport}
-                    disabled={!selectedStorage || entries.length === 0}
+                    disabled={
+                      !client ||
+                      !selectedTarget ||
+                      exportState.status === 'loading'
+                    }
                   >
                     <Download className="h-3.5 w-3.5" />
-                    Export
+                    {exportState.status === 'loading' ? 'Exporting...' : 'Export'}
                   </Toolbar.Button>
                 </Toolbar.Group>
 
@@ -667,6 +714,12 @@ export default function StoragePanel() {
                     disabled={!selectedStorage}
                   />
                 </div>
+
+                {exportState.status === 'error' ? (
+                  <span role="alert" className="text-xs text-destructive">
+                    {exportState.message}
+                  </span>
+                ) : null}
 
                 <input
                   ref={fileInputRef}

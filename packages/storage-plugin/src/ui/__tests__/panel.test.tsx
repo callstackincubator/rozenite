@@ -15,6 +15,8 @@ type Listener = (payload: unknown) => void;
 const mocks = vi.hoisted(() => {
   const listeners = new Map<string, Set<Listener>>();
   const send = vi.fn();
+  const request = vi.fn();
+  const downloadJson = vi.fn();
   const onMessage = vi.fn((type: string, listener: Listener) => {
     const typeListeners = listeners.get(type) ?? new Set<Listener>();
     typeListeners.add(listener);
@@ -24,13 +26,16 @@ const mocks = vi.hoisted(() => {
   });
 
   return {
-    client: { send, onMessage },
+    client: { send, onMessage, request },
+    downloadJson,
     emit: (type: keyof StorageEventMap, payload: unknown) => {
       listeners.get(type)?.forEach((listener) => listener(payload));
     },
     reset: () => {
       listeners.clear();
       send.mockReset();
+      request.mockReset();
+      downloadJson.mockReset();
       onMessage.mockClear();
     },
   };
@@ -98,6 +103,10 @@ vi.mock('../add-entry-dialog', () => ({ AddEntryDialog: () => null }));
 vi.mock('../edit-entry-dialog', () => ({ EditEntryDialog: () => null }));
 vi.mock('../import-dialog', () => ({ ImportDialog: () => null }));
 vi.mock('../entry-detail-dialog', () => ({ EntryDetailDialog: () => null }));
+vi.mock('../utils', () => ({
+  buildExportFilename: vi.fn(() => 'snapshot.json'),
+  downloadJson: mocks.downloadJson,
+}));
 
 import StoragePanel from '../panel';
 
@@ -140,13 +149,18 @@ const unmountPanel = async (root: Root, container: HTMLDivElement) => {
 
 const emittedDiscoveryRequest = () =>
   mocks.client.send.mock.calls.find(
-    ([type]) => type === 'discover-storages'
+    ([type]) => type === 'discover-storages',
   )?.[1] as StorageEventMap['discover-storages'];
 
 const snapshotTargets = () =>
   mocks.client.send.mock.calls
     .filter(([type]) => type === 'get-snapshot')
     .map(([, event]) => (event as StorageEventMap['get-snapshot']).target);
+
+const exportButton = (container: HTMLDivElement) =>
+  Array.from(container.querySelectorAll('button')).find((button) =>
+    button.textContent?.includes('Export'),
+  );
 
 describe('StoragePanel discovery migration', () => {
   beforeEach(() => {
@@ -210,7 +224,7 @@ describe('StoragePanel discovery migration', () => {
     });
 
     const refresh = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes('Refresh')
+      (button) => button.textContent?.includes('Refresh'),
     );
     expect(refresh).toBeDefined();
     await act(async () => refresh?.click());
@@ -220,6 +234,104 @@ describe('StoragePanel discovery migration', () => {
       secondTarget,
       secondTarget,
     ]);
+    await unmountPanel(root, container);
+  });
+
+  it('exports the complete device snapshot only after Export is pressed, including an empty storage', async () => {
+    mocks.client.request.mockResolvedValue({
+      type: 'export-snapshot-result',
+      requestId: 'export-1',
+      target: firstTarget,
+      snapshot: {
+        version: 1,
+        plugin: '@rozenite/storage-plugin',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        storage: {
+          adapterId: firstTarget.adapterId,
+          storageId: firstTarget.storageId,
+          adapterName: 'MMKV',
+          storageName: 'First',
+          capabilities: { supportedTypes: ['string'] },
+        },
+        entries: [],
+      },
+    });
+    const { root, container } = await renderPanel();
+    const discovery = emittedDiscoveryRequest();
+    await act(async () => {
+      mocks.emit('storage-descriptors', {
+        type: 'storage-descriptors',
+        requestId: discovery.requestId,
+        storages: descriptors,
+      });
+    });
+
+    expect(mocks.client.request).not.toHaveBeenCalled();
+    await act(async () => exportButton(container)?.click());
+
+    expect(mocks.client.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestType: 'export-snapshot',
+        responseType: 'export-snapshot-result',
+        errorType: 'storage-request-error',
+        payload: { type: 'export-snapshot', target: firstTarget },
+      }),
+    );
+    expect(mocks.downloadJson).toHaveBeenCalledTimes(1);
+    await unmountPanel(root, container);
+  });
+
+  it('cancels export on target switch and ignores its stale response', async () => {
+    let resolveExport: ((value: unknown) => void) | undefined;
+    mocks.client.request.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveExport = resolve;
+        }),
+    );
+    const { root, container } = await renderPanel();
+    const discovery = emittedDiscoveryRequest();
+    await act(async () => {
+      mocks.emit('storage-descriptors', {
+        type: 'storage-descriptors',
+        requestId: discovery.requestId,
+        storages: descriptors,
+      });
+      exportButton(container)?.click();
+    });
+
+    const options = mocks.client.request.mock.calls[0][0];
+    await act(async () => {
+      Array.from(container.querySelectorAll('button'))
+        .find((button) => button.textContent?.includes('Second'))
+        ?.click();
+    });
+    expect(options.signal.aborted).toBe(true);
+
+    await act(async () => {
+      resolveExport?.({ snapshot: {}, target: firstTarget });
+    });
+    expect(container.textContent).not.toContain('Could not export');
+    await unmountPanel(root, container);
+  });
+
+  it('shows an export failure and clears its loading state', async () => {
+    mocks.client.request.mockRejectedValue(new Error('device failed'));
+    const { root, container } = await renderPanel();
+    const discovery = emittedDiscoveryRequest();
+    await act(async () => {
+      mocks.emit('storage-descriptors', {
+        type: 'storage-descriptors',
+        requestId: discovery.requestId,
+        storages: descriptors,
+      });
+      exportButton(container)?.click();
+    });
+
+    expect(container.textContent).toContain(
+      'Could not export the selected storage. Please try again.',
+    );
+    expect(exportButton(container)?.textContent).toContain('Export');
     await unmountPanel(root, container);
   });
 });

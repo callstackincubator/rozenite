@@ -4,6 +4,7 @@ import type {
   StorageDeleteEntryEvent,
   StorageDiscoverStoragesRequestEvent,
   StorageEventMap,
+  StorageExportSnapshotRequestEvent,
   StorageGetEntryRequestEvent,
   StorageGetSnapshotEvent,
   StorageImportEntriesEvent,
@@ -15,6 +16,7 @@ import { handleImportEntries } from './import';
 import { handleStorageDiscoveryRequest } from './storage-discovery';
 import { handleListEntryPreviewsRequest } from './entry-preview-pagination';
 import { handleFullEntryRequest } from './full-entry-request';
+import { handleExportSnapshotRequest } from './export-snapshot';
 import { createStorageViews } from './storage-view';
 import { useStorageAgentTools } from './useStorageAgentTools';
 
@@ -42,12 +44,12 @@ export const useRozeniteStoragePlugin = ({
       const view = views.find(
         (candidate) =>
           candidate.target.adapterId === target.adapterId &&
-          candidate.target.storageId === target.storageId
+          candidate.target.storageId === target.storageId,
       );
 
       if (!view) {
         console.warn(
-          `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`
+          `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
         );
         return;
       }
@@ -68,7 +70,7 @@ export const useRozeniteStoragePlugin = ({
       } catch (error) {
         console.warn(
           `[Rozenite] Storage Plugin: Failed to snapshot ${view.target.adapterId}/${view.target.storageId}.`,
-          error
+          error,
         );
       }
     };
@@ -113,10 +115,10 @@ export const useRozeniteStoragePlugin = ({
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to attach watcher for ${view.target.adapterId}/${view.target.storageId}.`,
-              error
+              error,
             );
           }
-        })
+        }),
     );
 
     const messageSubscriptions = [
@@ -126,12 +128,12 @@ export const useRozeniteStoragePlugin = ({
           const view = views.find(
             (candidate) =>
               candidate.target.adapterId === target.adapterId &&
-              candidate.target.storageId === target.storageId
+              candidate.target.storageId === target.storageId,
           );
 
           if (!view) {
             console.warn(
-              `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`
+              `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
             );
             return;
           }
@@ -141,10 +143,10 @@ export const useRozeniteStoragePlugin = ({
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to set entry in ${target.adapterId}/${target.storageId}.`,
-              error
+              error,
             );
           }
-        }
+        },
       ),
       client.onMessage(
         'delete-entry',
@@ -152,12 +154,12 @@ export const useRozeniteStoragePlugin = ({
           const view = views.find(
             (candidate) =>
               candidate.target.adapterId === target.adapterId &&
-              candidate.target.storageId === target.storageId
+              candidate.target.storageId === target.storageId,
           );
 
           if (!view) {
             console.warn(
-              `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`
+              `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
             );
             return;
           }
@@ -167,24 +169,24 @@ export const useRozeniteStoragePlugin = ({
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to delete entry in ${target.adapterId}/${target.storageId}.`,
-              error
+              error,
             );
           }
-        }
+        },
       ),
       client.onMessage(
         'discover-storages',
         (event: StorageDiscoverStoragesRequestEvent) => {
           const response = handleStorageDiscoveryRequest(views, event);
           client.send(response.type, response);
-        }
+        },
       ),
       client.onMessage(
         'list-entry-previews',
         async (event: StorageListEntryPreviewsRequestEvent) => {
           const response = await handleListEntryPreviewsRequest(views, event);
           client.send(response.type, response);
-        }
+        },
       ),
       client.onMessage(
         'get-entry',
@@ -194,10 +196,17 @@ export const useRozeniteStoragePlugin = ({
         },
       ),
       client.onMessage(
+        'export-snapshot',
+        async (event: StorageExportSnapshotRequestEvent) => {
+          const response = await handleExportSnapshotRequest(views, event);
+          client.send(response.type, response);
+        },
+      ),
+      client.onMessage(
         'get-snapshot',
         async ({ target }: StorageGetSnapshotEvent) => {
           await pushSnapshot(target);
-        }
+        },
       ),
       client.onMessage(
         'import-entries',
@@ -209,7 +218,7 @@ export const useRozeniteStoragePlugin = ({
               client.send('import-result', out);
             }
           });
-        }
+        },
       ),
     ];
 
