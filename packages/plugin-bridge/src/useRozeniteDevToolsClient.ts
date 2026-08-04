@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { RozeniteDevToolsClient, getRozeniteDevToolsClient } from './client';
+import {
+  RozeniteDevToolsClient,
+  RozeniteDevToolsRequestClient,
+  getRozeniteDevToolsClient,
+} from './client';
 import { MissingRozeniteForWebError, UnsupportedPlatformError } from './errors';
 
 export type UseRozeniteDevToolsClientOptions<
@@ -24,14 +28,14 @@ export const useRozeniteDevToolsClient = <
   TEventMap extends Record<string, unknown> = Record<string, unknown>,
 >({
   pluginId,
-}: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsClient<TEventMap> | null => {
+}: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsRequestClient<TEventMap> | null => {
   const [client, setClient] =
-    useState<RozeniteDevToolsClient<TEventMap> | null>(null);
+    useState<RozeniteDevToolsRequestClient<TEventMap> | null>(null);
   const [error, setError] = useState<unknown | null>(null);
 
   useEffect(() => {
     let isMounted = true;
-    let client: RozeniteDevToolsClient<TEventMap> | null = null;
+    let client: RozeniteDevToolsRequestClient<TEventMap> | null = null;
 
     const setup = async () => {
       try {
