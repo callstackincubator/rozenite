@@ -1,26 +1,10 @@
 import type {
-  StorageCapabilities,
   StorageDescriptor,
   StorageEntry,
   StorageEntryPreview,
   StorageTarget,
 } from './types';
 import type { ImportPreview, StorageSnapshotV1 } from './snapshot';
-
-export type SerializedBlacklist = {
-  source: string;
-  flags: string;
-};
-
-export type StorageSnapshotEvent = {
-  type: 'snapshot';
-  target: StorageTarget;
-  adapterName: string;
-  storageName: string;
-  capabilities: StorageCapabilities;
-  blacklist?: SerializedBlacklist;
-  entries: StorageEntry[];
-};
 
 export type StorageSetEntryEvent = {
   type: 'set-entry';
@@ -42,11 +26,6 @@ export type StorageInvalidatedEvent = {
   /** Native subscriptions only expose a key, not the operation. */
   key?: string;
   operation?: StorageInvalidationOperation;
-};
-
-export type StorageGetSnapshotEvent = {
-  type: 'get-snapshot';
-  target: StorageTarget;
 };
 
 export type StorageDiscoverStoragesRequestEvent = {
@@ -164,11 +143,9 @@ export type StorageImportResultEvent = {
 };
 
 export type StorageEvent =
-  | StorageSnapshotEvent
   | StorageSetEntryEvent
   | StorageDeleteEntryEvent
   | StorageInvalidatedEvent
-  | StorageGetSnapshotEvent
   | StorageDiscoverStoragesRequestEvent
   | StorageDiscoverStoragesResponseEvent
   | StorageListEntryPreviewsRequestEvent

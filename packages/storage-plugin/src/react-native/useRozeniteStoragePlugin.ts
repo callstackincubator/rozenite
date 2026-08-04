@@ -6,7 +6,6 @@ import type {
   StorageEventMap,
   StorageExportSnapshotRequestEvent,
   StorageGetEntryRequestEvent,
-  StorageGetSnapshotEvent,
   StorageImportEntriesEvent,
   StorageImportPreviewRequestEvent,
   StorageInvalidationOperation,
@@ -42,46 +41,11 @@ export const useRozeniteStoragePlugin = ({
       return;
     }
 
-    const pushSnapshot = async (target: StorageGetSnapshotEvent['target']) => {
-      const view = views.find(
-        (candidate) =>
-          candidate.target.adapterId === target.adapterId &&
-          candidate.target.storageId === target.storageId,
-      );
-
-      if (!view) {
-        console.warn(
-          `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
-        );
-        return;
-      }
-
-      try {
-        const entries = await view.getAllEntries();
-        client.send('snapshot', {
-          type: 'snapshot',
-          target: view.target,
-          adapterName: view.adapterName,
-          storageName: view.storageName,
-          capabilities: view.capabilities,
-          blacklist: view.blacklist
-            ? { source: view.blacklist.source, flags: view.blacklist.flags }
-            : undefined,
-          entries,
-        });
-      } catch (error) {
-        console.warn(
-          `[Rozenite] Storage Plugin: Failed to snapshot ${view.target.adapterId}/${view.target.storageId}.`,
-          error,
-        );
-      }
-    };
-
     const viewSubscriptions: { remove: () => void }[] = [];
     let disposed = false;
 
     const sendInvalidation = (
-      target: StorageGetSnapshotEvent['target'],
+      target: StorageSetEntryEvent['target'],
       key?: string,
       operation?: StorageInvalidationOperation,
     ) => {
@@ -204,12 +168,6 @@ export const useRozeniteStoragePlugin = ({
         async (event: StorageExportSnapshotRequestEvent) => {
           const response = await handleExportSnapshotRequest(views, event);
           client.send(response.type, response);
-        },
-      ),
-      client.onMessage(
-        'get-snapshot',
-        async ({ target }: StorageGetSnapshotEvent) => {
-          await pushSnapshot(target);
         },
       ),
       client.onMessage(
