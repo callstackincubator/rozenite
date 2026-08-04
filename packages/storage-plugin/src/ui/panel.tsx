@@ -51,6 +51,7 @@ import { EntryDetailDialog } from './entry-detail-dialog';
 import { ImportDialog, type ImportFlightState } from './import-dialog';
 import { formatValue } from './format-value';
 import { buildExportFilename, downloadJson } from './utils';
+import { StorageQueryClientProvider } from './query-client';
 import './globals.css';
 
 type StorageSnapshotState = {
@@ -91,7 +92,7 @@ const getEntryTypeFromValue = (
   return 'buffer';
 };
 
-export default function StoragePanel() {
+function StoragePanelContent() {
   const [descriptors, setDescriptors] = useState<StorageDescriptor[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<StorageTarget | null>(
     null,
@@ -908,5 +909,13 @@ export default function StoragePanel() {
         description={alertState?.message}
       />
     </PluginShell>
+  );
+}
+
+export default function StoragePanel() {
+  return (
+    <StorageQueryClientProvider>
+      <StoragePanelContent />
+    </StorageQueryClientProvider>
   );
 }
