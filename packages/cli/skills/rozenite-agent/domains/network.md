@@ -18,3 +18,12 @@ Record HTTP/HTTPS traffic, then list requests, inspect request and response deta
 ## Flow
 
 `startRecording` -> reproduce traffic -> `listRequests` -> `getRequestDetails` -> optional body fetch.
+
+The `agent network tools` discovery listing and `listRequests` use columnar
+`cols` and `rows` output at two or more rows. `recording` metadata remains
+present, and `next` replaces the page envelope when another page is available.
+
+`listRequests` returns a trimmed default column set (`requestId`, `method`,
+`url`, `status`, `durationMs`, `outcome`). Pass `--fields` or `--verbose` for
+the remaining fields such as `type`, `startTimeMs`, `endTimeMs`,
+`transferSize`, and `encodedDataLength`.

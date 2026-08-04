@@ -30,6 +30,7 @@
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "test": "vitest --run --passWithNoTests",
     "clean": "rm -rf dist"
   },
   "exports": {

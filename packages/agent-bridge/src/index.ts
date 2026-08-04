@@ -2,6 +2,10 @@ export {
   useRozenitePluginAgentTool,
   useRozeniteInAppAgentTool,
 } from './useRozeniteAgentTool.js';
+export {
+  definePaginatedAgentToolContract,
+  isAgentToolPagination,
+} from '@rozenite/agent-shared';
 export type {
   UseRozeniteAgentToolOptions,
   UseRozenitePluginAgentToolOptions,
@@ -10,6 +14,10 @@ export type {
 export type {
   JSONSchema7,
   AgentTool,
+  AgentToolTraits,
+  AgentToolPagination,
+  PageEnvelope,
+  PageResult,
   AgentMessage,
   AgentSessionReadyPayload,
   AgentSessionReadyMessage,

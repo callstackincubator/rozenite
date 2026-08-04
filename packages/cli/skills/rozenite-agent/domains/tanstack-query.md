@@ -5,7 +5,7 @@ A Rozenite plugin for inspecting and managing TanStack Query caches in React Nat
 ## Domain
 
 - Plugin ID: `@rozenite/tanstack-query-plugin`
-- Domain token: `at-rozenite__tanstack-query-plugin`
+- Domain token: `tanstack-query`
 
 ## Tools
 
@@ -24,6 +24,10 @@ A Rozenite plugin for inspecting and managing TanStack Query caches in React Nat
 - `list-mutations` -> `{}` | `{"limit":20}` | `{"limit":20,"cursor":"<cursor>"}`
 - `get-mutation-details` -> `{"mutationId":12}`
 - `clear-mutation-cache` -> `{}`
+
+`list-queries` and `list-mutations` return a trimmed default column set
+(identifiers, status, and error flag, not every field). Pass `--fields` or
+`--verbose` to widen the projection.
 
 ## Minimal Flow
 

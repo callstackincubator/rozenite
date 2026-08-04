@@ -40,7 +40,7 @@ const mockAttachedSessionRoute = (
 };
 
 describe('agent session domain and tool helpers', () => {
-  it('lists static and runtime domains with collision-safe plugin slugs', async () => {
+  it('lists static and runtime domains with short, derived plugin domain names', async () => {
     httpTestHarness.requestHandler.mockImplementation(
       async ({ pathname }: MockHttpRequest): Promise<MockHttpResult> => {
         const sessionRoute = mockAttachedSessionRoute(pathname);
@@ -65,13 +65,13 @@ describe('agent session domain and tool helpers', () => {
                     inputSchema: { type: 'object' },
                   },
                   {
-                    name: '@a/b.list',
-                    description: 'Scoped plugin',
+                    name: '@rozenite/mmkv-plugin.list-entries',
+                    description: 'Official plugin',
                     inputSchema: { type: 'object' },
                   },
                   {
-                    name: 'at-a__b.list',
-                    description: 'Colliding plugin',
+                    name: '@avasapp/rozenite-plugin-ably.list-channels',
+                    description: 'Third-party scoped plugin',
                     inputSchema: { type: 'object' },
                   },
                 ],
@@ -95,13 +95,61 @@ describe('agent session domain and tool helpers', () => {
       id: 'app',
       kind: 'plugin',
     });
+    expect(
+      domains.find((domain) => domain.pluginId === '@rozenite/mmkv-plugin'),
+    ).toMatchObject({
+      id: 'mmkv',
+      kind: 'plugin',
+    });
+    expect(
+      domains.find(
+        (domain) => domain.pluginId === '@avasapp/rozenite-plugin-ably',
+      ),
+    ).toMatchObject({
+      id: 'avasapp/ably',
+      kind: 'plugin',
+    });
+  });
 
-    const scoped = domains.find((domain) => domain.pluginId === '@a/b');
-    const colliding = domains.find((domain) => domain.pluginId === 'at-a__b');
+  it('rejects listing domains when two plugins would derive the same domain name', async () => {
+    httpTestHarness.requestHandler.mockImplementation(
+      async ({ pathname }: MockHttpRequest): Promise<MockHttpResult> => {
+        const sessionRoute = mockAttachedSessionRoute(pathname);
+        if (sessionRoute) {
+          return sessionRoute;
+        }
 
-    expect(scoped?.id).toMatch(/^at-a__b--[a-f0-9]{8}$/);
-    expect(colliding?.id).toMatch(/^at-a__b--[a-f0-9]{8}$/);
-    expect(scoped?.id).not.toBe(colliding?.id);
+        if (pathname === getAgentSessionToolsRoute('session-1')) {
+          return {
+            payload: {
+              ok: true,
+              result: {
+                tools: [
+                  {
+                    name: '@a/rozenite-plugin-x.list',
+                    description: 'First plugin',
+                    inputSchema: { type: 'object' },
+                  },
+                  {
+                    name: '@a/x-plugin.list',
+                    description: 'Second, same-author plugin',
+                    inputSchema: { type: 'object' },
+                  },
+                ],
+              },
+            },
+          };
+        }
+
+        return mockUnknownRoute();
+      },
+    );
+
+    const session = await attachSession();
+
+    await expect(session.domains.list()).rejects.toThrow(
+      /Ambiguous domain name "a\/x"/,
+    );
   });
 
   it('resolves domains and tools by plugin id and short tool name', async () => {
@@ -146,6 +194,7 @@ describe('agent session domain and tool helpers', () => {
       {
         name: '@rozenite/mmkv-plugin.list-entries',
         shortName: 'list-entries',
+        domainId: 'mmkv',
         description: 'List entries',
         inputSchema: {
           type: 'object',
@@ -296,7 +345,7 @@ describe('agent session domain and tool helpers', () => {
     );
   });
 
-  it('calls tools without auto-pagination by default', async () => {
+  it('forwards dynamic call arguments once and preserves the result', async () => {
     const calls: Array<{ toolName: string; args: unknown }> = [];
 
     httpTestHarness.requestHandler.mockImplementation(
@@ -376,11 +425,9 @@ describe('agent session domain and tool helpers', () => {
     ]);
   });
 
-  it('merges paged tool results when auto-pagination is requested', async () => {
-    const calls: Array<{
-      toolName: string;
-      args: { cursor?: string } & Record<string, unknown>;
-    }> = [];
+  it('resolves a tool schema and call target with a single getSessionTools fetch', async () => {
+    const toolsFetches: string[] = [];
+    const calls: Array<{ toolName: string; args: unknown }> = [];
 
     httpTestHarness.requestHandler.mockImplementation(
       async ({
@@ -394,15 +441,17 @@ describe('agent session domain and tool helpers', () => {
         }
 
         if (pathname === getAgentSessionToolsRoute('session-1')) {
+          toolsFetches.push(pathname);
           return {
             payload: {
               ok: true,
               result: {
                 tools: [
                   {
-                    name: 'listRequests',
+                    name: 'app.listRequests',
                     description: 'List requests',
                     inputSchema: { type: 'object' },
+                    pagination: { kind: 'cursor', fields: ['id'] },
                   },
                 ],
               },
@@ -414,33 +463,14 @@ describe('agent session domain and tool helpers', () => {
           method === 'POST' &&
           pathname === getAgentSessionCallToolRoute('session-1')
         ) {
-          const toolCall = body as {
-            toolName: string;
-            args: { cursor?: string } & Record<string, unknown>;
-          };
-          calls.push(toolCall);
-
-          if (toolCall.args.cursor === 'c1') {
-            return {
-              payload: {
-                ok: true,
-                result: {
-                  result: {
-                    items: [{ id: 2 }],
-                    page: { limit: 1, hasMore: false },
-                  },
-                },
-              },
-            };
-          }
-
+          calls.push(body as { toolName: string; args: unknown });
           return {
             payload: {
               ok: true,
               result: {
                 result: {
                   items: [{ id: 1 }],
-                  page: { limit: 1, hasMore: true, nextCursor: 'c1' },
+                  page: { limit: 1, hasMore: false },
                 },
               },
             },
@@ -453,37 +483,37 @@ describe('agent session domain and tool helpers', () => {
 
     const session = await attachSession();
 
-    await expect(
-      session.tools.call<
-        { limit: number },
-        {
-          items: Array<{ id: number }>;
-          page: { limit: number; hasMore: boolean; nextCursor?: string };
-        }
-      >({
-        domain: 'network',
-        tool: 'listRequests',
-        args: { limit: 1 },
-        autoPaginate: { pagesLimit: 2 },
-      }),
-    ).resolves.toEqual({
-      items: [{ id: 1 }, { id: 2 }],
+    const resolved = await session.tools.resolve({
+      domain: 'app',
+      tool: 'listRequests',
+    });
+
+    expect(resolved.domainId).toBe('app');
+    expect(resolved.schema).toEqual({
+      name: 'app.listRequests',
+      shortName: 'listRequests',
+      inputSchema: { type: 'object' },
+      pagination: { kind: 'cursor', fields: ['id'] },
+    });
+
+    await expect(resolved.call({ limit: 1 })).resolves.toEqual({
+      items: [{ id: 1 }],
       page: { limit: 1, hasMore: false },
     });
 
+    // Exactly one getSessionTools fetch for both the schema lookup and the
+    // subsequent call, even though they resolve the same (domain, tool).
+    expect(toolsFetches).toEqual([getAgentSessionToolsRoute('session-1')]);
     expect(calls).toEqual([
       {
-        toolName: 'listRequests',
+        toolName: 'app.listRequests',
         args: { limit: 1 },
-      },
-      {
-        toolName: 'listRequests',
-        args: { limit: 1, cursor: 'c1' },
       },
     ]);
   });
 
   it('calls typed descriptors through the session tool helper', async () => {
+    const calls: Array<{ toolName: string; args: unknown }> = [];
     const echoTool = defineAgentToolDescriptor<
       { value: string },
       { echoed: string }
@@ -532,6 +562,7 @@ describe('agent session domain and tool helpers', () => {
           method === 'POST' &&
           pathname === getAgentSessionCallToolRoute('session-1')
         ) {
+          calls.push(body as { toolName: string; args: unknown });
           return {
             payload: {
               ok: true,
@@ -557,5 +588,11 @@ describe('agent session domain and tool helpers', () => {
     ).resolves.toEqual({
       echoed: 'hello from descriptor',
     });
+    expect(calls).toEqual([
+      {
+        toolName: 'app.echo',
+        args: { value: 'hello from descriptor' },
+      },
+    ]);
   });
 });

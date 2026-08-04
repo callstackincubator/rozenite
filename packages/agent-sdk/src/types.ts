@@ -1,6 +1,8 @@
 import type {
   AgentSessionInfo,
   AgentTool,
+  AgentToolTraits,
+  AgentToolPagination,
   AgentToolDescriptor,
   CallAgentSessionToolRequest,
   CallAgentSessionToolResponse,
@@ -29,12 +31,15 @@ export interface DomainDefinition {
 
 export interface AgentDomainTool extends AgentTool {
   shortName: string;
+  /** Canonical domain id the requested domain token resolved to. */
+  domainId: string;
 }
 
-export interface AgentToolSchema {
+export interface AgentToolSchema extends AgentToolTraits {
   name: string;
   shortName: string;
   inputSchema: JSONSchema7;
+  pagination?: AgentToolPagination;
 }
 
 export interface AgentClientOptions {
@@ -42,33 +47,29 @@ export interface AgentClientOptions {
   port?: number;
 }
 
-export interface AgentCallToolAutoPaginationOptions {
-  pagesLimit?: number;
-  maxItems?: number;
-}
-
 export interface AgentDynamicToolCallInput<TArgs = unknown> {
   domain: string;
   tool: string;
   args?: TArgs;
-  autoPaginate?: AgentCallToolAutoPaginationOptions;
-}
-
-export interface AgentToolCallOptions {
-  autoPaginate?: AgentCallToolAutoPaginationOptions;
 }
 
 type AgentDescriptorCallTuple<
   TDescriptor extends AgentToolDescriptor<unknown, unknown>,
-> =
-  [InferAgentToolArgs<TDescriptor>] extends [undefined]
-    ? [args?: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions]
-    : Record<string, never> extends InferAgentToolArgs<TDescriptor>
-      ? [args?: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions]
-      : [args: InferAgentToolArgs<TDescriptor>, options?: AgentToolCallOptions];
+> = [InferAgentToolArgs<TDescriptor>] extends [undefined]
+  ? [args?: InferAgentToolArgs<TDescriptor>]
+  : Record<string, never> extends InferAgentToolArgs<TDescriptor>
+    ? [args?: InferAgentToolArgs<TDescriptor>]
+    : [args: InferAgentToolArgs<TDescriptor>];
 
 export interface AgentSessionDomains {
   list: () => Promise<DomainDefinition[]>;
+}
+
+export interface AgentResolvedTool<TArgs = unknown, TResult = unknown> {
+  /** Canonical domain id the requested domain token resolved to. */
+  domainId: string;
+  schema: AgentToolSchema;
+  call: (args?: TArgs) => Promise<TResult>;
 }
 
 export interface AgentSessionTools {
@@ -77,6 +78,16 @@ export interface AgentSessionTools {
     domain: string;
     tool: string;
   }) => Promise<AgentToolSchema>;
+  /**
+   * Resolves a domain token and tool name to its schema and a bound `call`
+   * once, so callers that need both the schema (e.g. to inspect pagination
+   * metadata) and the ability to invoke the tool don't pay for a second
+   * `getSessionTools` round trip.
+   */
+  resolve: <TArgs = unknown, TResult = unknown>(input: {
+    domain: string;
+    tool: string;
+  }) => Promise<AgentResolvedTool<TArgs, TResult>>;
   call: {
     <TArgs = unknown, TResult = unknown>(
       input: AgentDynamicToolCallInput<TArgs>,
@@ -111,9 +122,7 @@ export interface AgentTransport {
   listSessions: () => Promise<ListAgentSessionsResponse>;
   getSession: (sessionId: string) => Promise<GetAgentSessionResponse>;
   stopSession: (sessionId: string) => Promise<DeleteAgentSessionResponse>;
-  getSessionTools: (
-    sessionId: string,
-  ) => Promise<GetAgentSessionToolsResponse>;
+  getSessionTools: (sessionId: string) => Promise<GetAgentSessionToolsResponse>;
   callSessionTool: (
     sessionId: string,
     body: CallAgentSessionToolRequest,
@@ -131,6 +140,8 @@ export interface AgentClient {
       callback: AgentSessionCallback<T>,
     ): Promise<T>;
   };
-  openSession: (input?: CreateAgentSessionRequest) => Promise<AgentSessionClient>;
+  openSession: (
+    input?: CreateAgentSessionRequest,
+  ) => Promise<AgentSessionClient>;
   attachSession: (sessionId: string) => Promise<AgentSessionClient>;
 }

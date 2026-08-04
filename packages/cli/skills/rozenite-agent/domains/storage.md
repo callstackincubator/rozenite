@@ -5,7 +5,7 @@ A Rozenite plugin for inspecting multiple storage backends in React Native DevTo
 ## Domain
 
 - Plugin ID: `@rozenite/storage-plugin`
-- Domain token: `at-rozenite__storage-plugin`
+- Domain token: `storage`
 
 ## Tools
 

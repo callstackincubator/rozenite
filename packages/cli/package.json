@@ -9,7 +9,8 @@
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
   },
   "files": [
     "dist",
@@ -47,12 +48,10 @@
     "is-unicode-supported": "^2.1.0",
     "nano-spawn": "^1.0.2",
     "picocolors": "^1.1.1",
-    "validate-npm-package-name": "^6.0.1",
-    "ws": "^8.18.3"
+    "validate-npm-package-name": "^6.0.1"
   },
   "devDependencies": {
     "@types/ejs": "^3.1.5",
-    "@types/ws": "^8.18.1",
     "@types/validate-npm-package-name": "^4.0.2"
   },
   "engines": {

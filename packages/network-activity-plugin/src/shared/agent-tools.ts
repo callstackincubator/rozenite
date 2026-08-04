@@ -1,5 +1,6 @@
 import {
   defineAgentToolContract,
+  definePaginatedAgentToolContract,
   type AgentToolContract,
 } from '@rozenite/agent-shared';
 import type {
@@ -53,11 +54,13 @@ export type NetworkActivityGetRequestDetailsResult = ReturnType<
 
 export type NetworkActivityGetRequestBodyArgs = NetworkActivityRequestIdArgs;
 
-export type NetworkActivityGetRequestBodyResult = NetworkActivityAgentBodyResult;
+export type NetworkActivityGetRequestBodyResult =
+  NetworkActivityAgentBodyResult;
 
 export type NetworkActivityGetResponseBodyArgs = NetworkActivityRequestIdArgs;
 
-export type NetworkActivityGetResponseBodyResult = NetworkActivityAgentBodyResult;
+export type NetworkActivityGetResponseBodyResult =
+  NetworkActivityAgentBodyResult;
 
 export type NetworkActivityListRealtimeConnectionsArgs =
   NetworkActivityPaginationArgs;
@@ -110,7 +113,7 @@ export const networkActivityToolDefinitions = {
       properties: {},
     },
   }),
-  listRequests: defineAgentToolContract<
+  listRequests: definePaginatedAgentToolContract<
     NetworkActivityListRequestsArgs,
     NetworkActivityListRequestsResult
   >({
@@ -130,6 +133,30 @@ export const networkActivityToolDefinitions = {
             'Opaque pagination cursor from a previous listRequests call.',
         },
       },
+    },
+    pagination: {
+      kind: 'cursor',
+      fields: [
+        'requestId',
+        'method',
+        'url',
+        'status',
+        'type',
+        'startTimeMs',
+        'endTimeMs',
+        'durationMs',
+        'transferSize',
+        'encodedDataLength',
+        'outcome',
+      ],
+      defaultFields: [
+        'requestId',
+        'method',
+        'url',
+        'status',
+        'durationMs',
+        'outcome',
+      ],
     },
   }),
   getRequestDetails: defineAgentToolContract<
@@ -186,7 +213,7 @@ export const networkActivityToolDefinitions = {
       required: ['requestId'],
     },
   }),
-  listRealtimeConnections: defineAgentToolContract<
+  listRealtimeConnections: definePaginatedAgentToolContract<
     NetworkActivityListRealtimeConnectionsArgs,
     NetworkActivityListRealtimeConnectionsResult
   >({
@@ -207,6 +234,30 @@ export const networkActivityToolDefinitions = {
             'Opaque pagination cursor from a previous listRealtimeConnections call.',
         },
       },
+    },
+    pagination: {
+      kind: 'cursor',
+      fields: [
+        'requestId',
+        'kind',
+        'url',
+        'status',
+        'startedAt',
+        'endedAt',
+        'durationMs',
+        'messageCount',
+        'error',
+        'closeCode',
+        'httpStatus',
+      ],
+      defaultFields: [
+        'requestId',
+        'kind',
+        'url',
+        'status',
+        'durationMs',
+        'messageCount',
+      ],
     },
   }),
   getRealtimeConnectionDetails: defineAgentToolContract<

@@ -5,7 +5,7 @@ A Rozenite plugin for fallback network inspection when the built-in `network` do
 ## Domain
 
 - Plugin ID: `@rozenite/network-activity-plugin`
-- Domain token: `at-rozenite__network-activity-plugin`
+- Domain token: `network-activity`
 
 ## Precedence
 
@@ -36,3 +36,11 @@ HTTP fallback:
 
 Realtime:
 `startRecording` -> reproduce traffic -> `listRealtimeConnections` -> `getRealtimeConnectionDetails`.
+
+CLI discovery listings and paginated calls use columnar `cols` and `rows`
+output when two or more rows are returned. Tool metadata remains present, and
+`next` replaces the page envelope when another page is available.
+
+`listRequests` and `listRealtimeConnections` return a trimmed default column
+set (identifiers, status, and duration, not every field). Pass `--fields` or
+`--verbose` to widen the projection.

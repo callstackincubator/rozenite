@@ -136,7 +136,7 @@ export const createToolRegistry = () => {
 
     const aggregatedTools: AgentTool[] = [];
 
-    for (const [toolName, registeredTools] of toolsByName.entries()) {
+    for (const registeredTools of toolsByName.values()) {
       const firstTool = registeredTools[0].tool;
 
       if (availableDevices.length <= 1 || registeredTools.length === 1) {
@@ -163,8 +163,7 @@ export const createToolRegistry = () => {
       };
 
       aggregatedTools.push({
-        name: toolName,
-        description: firstTool.description,
+        ...firstTool,
         inputSchema: modifiedSchema,
       });
     }

@@ -18,7 +18,8 @@
     "build": "rozenite build",
     "dev": "rozenite dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
@@ -42,7 +43,8 @@
     "rozenite": "workspace:*",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "^3.0.0"
   },
   "peerDependencies": {
     "react": "*",

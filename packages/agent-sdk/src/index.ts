@@ -1,15 +1,14 @@
 export { createAgentClient } from './client.js';
 export type {
   AgentDynamicToolCallInput,
-  AgentCallToolAutoPaginationOptions,
   AgentClient,
   AgentClientOptions,
   AgentDomainTool,
+  AgentResolvedTool,
   AgentSessionCallback,
   AgentSessionClient,
   AgentSessionDomains,
   AgentSessionTools,
-  AgentToolCallOptions,
   AgentToolSchema,
   DomainDefinition,
 } from './types.js';
@@ -20,6 +19,7 @@ export type {
   AgentSessionInfo,
   AgentSessionStatus,
   AgentTool,
+  AgentToolTraits,
   JSONSchema7,
   MetroTarget,
 } from '@rozenite/agent-shared';

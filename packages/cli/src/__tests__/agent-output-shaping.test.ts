@@ -1,43 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  parseFields,
-  parseLimit,
+  formatAgentCommand,
   paginateRows,
-  projectRows,
 } from '../commands/agent/output-shaping.js';
 
-describe('agent output shaping', () => {
-  it('uses default fields when none provided', () => {
-    const fields = parseFields(
-      undefined,
-      ['name', 'shortName', 'description'] as const,
-      ['name', 'shortName'] as const,
-      false,
-    );
-    expect(fields).toEqual(['name', 'shortName']);
-  });
-
-  it('parses valid fields and preserves order', () => {
-    const fields = parseFields(
-      'description,name',
-      ['name', 'shortName', 'description'] as const,
-      ['name', 'shortName'] as const,
-      false,
-    );
-    expect(fields).toEqual(['description', 'name']);
-  });
-
-  it('throws on invalid fields', () => {
-    expect(() =>
-      parseFields(
-        'name,badField',
-        ['name', 'shortName', 'description'] as const,
-        ['name', 'shortName'] as const,
-        false,
-      ),
-    ).toThrow(/Unknown fields/);
-  });
-
+describe('agent output shaping (CLI-only)', () => {
   it('supports cursor pagination across pages', () => {
     const rows = [
       { name: 'a' },
@@ -89,24 +56,15 @@ describe('agent output shaping', () => {
     ).toThrow(/Invalid --cursor/);
   });
 
-  it('projects rows and excludes schema-like fields', () => {
-    const projected = projectRows(
-      [
-        {
-          name: 'x',
-          shortName: 'x',
-          description: 'desc',
-          inputSchema: { type: 'object' },
-        },
-      ],
-      ['name', 'shortName'],
-    );
-
-    expect(projected).toEqual([{ name: 'x', shortName: 'x' }]);
-    expect(projected[0]).not.toHaveProperty('inputSchema');
+  it('makes next commands safe to paste into a POSIX shell', () => {
+    expect(
+      formatAgentCommand(['domains', '--session', "session with ' quote"]),
+    ).toBe("npx rozenite agent domains --session 'session with '\"'\"' quote'");
   });
 
-  it('clamps limit to max range', () => {
-    expect(parseLimit('500')).toBe(100);
+  it('emits slash-containing domain ids unquoted and shell-safe', () => {
+    expect(
+      formatAgentCommand(['avasapp/ably', 'tools', '--cursor', 'cursor']),
+    ).toBe('npx rozenite agent avasapp/ably tools --cursor cursor');
   });
 });

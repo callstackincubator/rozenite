@@ -1,4 +1,7 @@
-import { AGENT_PLUGIN_ID } from '@rozenite/agent-shared';
+import {
+  AGENT_PLUGIN_ID,
+  type AgentToolPagination,
+} from '@rozenite/agent-shared';
 import { createToolRegistry } from './tool-registry.js';
 import type {
   DevToolsPluginMessage,
@@ -9,7 +12,22 @@ import type {
   ToolResultPayload,
 } from './types.js';
 import { createConsoleLogStore } from './console/store.js';
-import type { ConsoleMessageInput } from './console/types.js';
+import type { ConsoleMessageInput, ConsoleLogEntry } from './console/types.js';
+
+/**
+ * Ties a tool's declared pagination `fields`/`defaultFields` to the keys of
+ * its actual row type at compile time, so a renamed or removed field on
+ * `TRow` becomes a build error here instead of a silent `null` column at
+ * runtime.
+ */
+const cursorPagination = <TRow>(config: {
+  fields: readonly Extract<keyof TRow, string>[];
+  defaultFields?: readonly Extract<keyof TRow, string>[];
+}): AgentToolPagination => ({
+  kind: 'cursor',
+  fields: config.fields,
+  ...(config.defaultFields ? { defaultFields: config.defaultFields } : {}),
+});
 
 const CONSOLE_TOOL_NAMES = {
   getMessages: 'getMessages',
@@ -20,6 +38,9 @@ const CONSOLE_TOOLS: AgentTool[] = [
   {
     name: CONSOLE_TOOL_NAMES.clearMessages,
     description: 'Clear buffered console logs for this device.',
+    readOnly: false,
+    destructive: true,
+    idempotent: true,
     inputSchema: {
       type: 'object',
       properties: {},
@@ -28,6 +49,9 @@ const CONSOLE_TOOLS: AgentTool[] = [
   {
     name: CONSOLE_TOOL_NAMES.getMessages,
     description: 'Read buffered console logs with cursor-based pagination.',
+    readOnly: true,
+    destructive: false,
+    idempotent: true,
     inputSchema: {
       type: 'object',
       properties: {
@@ -62,6 +86,20 @@ const CONSOLE_TOOLS: AgentTool[] = [
         },
       },
     },
+    pagination: cursorPagination<ConsoleLogEntry>({
+      fields: [
+        'seq',
+        'timestamp',
+        'level',
+        'source',
+        'text',
+        'argsPreview',
+        'context',
+      ],
+      // Drop the two heaviest columns from the default projection; they
+      // remain available via --fields/--verbose.
+      defaultFields: ['seq', 'timestamp', 'level', 'source', 'text'],
+    }),
   },
 ];
 
@@ -262,6 +300,10 @@ export const createAgentMessageHandler = () => {
     return [...registry.getAggregatedTools(), ...getConsoleTools()];
   };
 
+  const getRegisteredPluginTools = (deviceId: string): AgentTool[] => {
+    return registry.getToolsForDevice(deviceId);
+  };
+
   const getDevices = () => {
     return registry.getDevices();
   };
@@ -352,6 +394,7 @@ export const createAgentMessageHandler = () => {
     disconnectDevice,
     handleDeviceMessage,
     getTools,
+    getRegisteredPluginTools,
     getDevices,
     callTool,
     captureConsoleMessage: (deviceId: string, message: ConsoleMessageInput) => {
