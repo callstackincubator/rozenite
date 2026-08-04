@@ -25,6 +25,40 @@ const formatHexLine = (slice: readonly number[]): string => {
   return right ? `${left}  ${right}` : left;
 };
 
+export type HexdumpRow = {
+  offset: string;
+  hex: string;
+  ascii: string;
+};
+
+// Produces one visible hexdump row. Unlike bytesToHexdump this never builds a
+// representation for bytes outside the requested row.
+export const formatHexdumpRow = (
+  bytes: readonly number[],
+  rowStart: number,
+): HexdumpRow => {
+  let left = '';
+  let right = '';
+  let ascii = '';
+  const rowEnd = Math.min(rowStart + BYTES_PER_LINE, bytes.length);
+
+  for (let index = rowStart; index < rowEnd; index++) {
+    const hex = toHexPair(bytes[index]);
+    if (index < rowStart + BYTES_PER_GROUP) {
+      left += left ? ` ${hex}` : hex;
+    } else {
+      right += right ? ` ${hex}` : hex;
+    }
+    ascii += toAsciiChar(bytes[index]);
+  }
+
+  return {
+    offset: rowStart.toString(16).padStart(OFFSET_WIDTH, '0'),
+    hex: right ? `${left}  ${right}` : left,
+    ascii,
+  };
+};
+
 export const bytesToGroupedHex = (bytes: readonly number[]): string => {
   const lines: string[] = [];
   for (let i = 0; i < bytes.length; i += BYTES_PER_LINE) {
@@ -48,12 +82,30 @@ export const bytesToHexdump = (bytes: readonly number[]): string => {
 export const bytesToAsciiPreview = (bytes: readonly number[]): string =>
   bytes.map(toAsciiChar).join('');
 
-export const bytesToBase64 = (bytes: readonly number[]): string => {
-  let binary = '';
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
+export const compactAsciiPreview = (
+  bytes: readonly number[],
+  maxBytes = 64,
+): string => {
+  let preview = '';
+  const limit = Math.min(bytes.length, maxBytes);
+  for (let index = 0; index < limit; index++) {
+    preview += toAsciiChar(bytes[index]);
   }
-  return btoa(binary);
+  return bytes.length > maxBytes ? `${preview}…` : preview;
+};
+
+export const bytesToBase64 = (bytes: readonly number[]): string => {
+  const chunks: string[] = [];
+  const chunkSize = 8_192;
+  for (let start = 0; start < bytes.length; start += chunkSize) {
+    let chunk = '';
+    const end = Math.min(start + chunkSize, bytes.length);
+    for (let index = start; index < end; index++) {
+      chunk += String.fromCharCode(bytes[index]);
+    }
+    chunks.push(chunk);
+  }
+  return btoa(chunks.join(''));
 };
 
 export const compactBufferPreview = (

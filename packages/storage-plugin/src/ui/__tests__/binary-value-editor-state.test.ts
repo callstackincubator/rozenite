@@ -176,6 +176,19 @@ describe('reduce: switch-mode', () => {
   });
 });
 
+describe('reduce: replace-bytes', () => {
+  it('formats fetched bytes after the editor has had a chance to paint', () => {
+    expect(
+      reduce(hexState(), { type: 'replace-bytes', bytes: [0x48, 0x69] }),
+    ).toEqual({
+      mode: 'hex',
+      text: '48 69',
+      bytes: [0x48, 0x69],
+      error: null,
+    });
+  });
+});
+
 describe('validate', () => {
   it('passes when bytes are valid and non-empty', () => {
     const state = reduce(hexState(), { type: 'set-text', text: '89 50' });

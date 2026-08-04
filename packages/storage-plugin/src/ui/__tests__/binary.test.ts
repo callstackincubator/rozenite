@@ -5,7 +5,9 @@ import {
   bytesToBase64,
   bytesToGroupedHex,
   bytesToHexdump,
+  compactAsciiPreview,
   compactBufferPreview,
+  formatHexdumpRow,
   hexInputToBytes,
 } from '../binary';
 
@@ -80,6 +82,16 @@ describe('bytesToHexdump', () => {
   });
 });
 
+describe('formatHexdumpRow', () => {
+  it('formats one requested row without requiring a complete hexdump', () => {
+    expect(formatHexdumpRow(new Array(32).fill(0x41), 16)).toEqual({
+      offset: '00000010',
+      hex: '41 41 41 41 41 41 41 41  41 41 41 41 41 41 41 41',
+      ascii: 'AAAAAAAAAAAAAAAA',
+    });
+  });
+});
+
 describe('bytesToAsciiPreview', () => {
   it('maps printable bytes to characters', () => {
     expect(bytesToAsciiPreview([0x48, 0x69])).toBe('Hi');
@@ -91,6 +103,12 @@ describe('bytesToAsciiPreview', () => {
 
   it('treats tab and newline as non-printable', () => {
     expect(bytesToAsciiPreview([0x09, 0x0a, 0x0d])).toBe('...');
+  });
+});
+
+describe('compactAsciiPreview', () => {
+  it('only converts the visible prefix of a large buffer', () => {
+    expect(compactAsciiPreview(new Array(128).fill(0x41), 4)).toBe('AAAA…');
   });
 });
 

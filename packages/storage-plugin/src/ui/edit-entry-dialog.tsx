@@ -107,6 +107,7 @@ export const EditEntryDialog = ({
             <Field>
               <Field.Label htmlFor="edit-entry-value">Value</Field.Label>
               <TypedValueEditor
+                key={entry.key}
                 supportedTypes={supportedTypes}
                 type={currentType}
                 value={currentValue}

@@ -44,6 +44,7 @@
     "react-native-mmkv-v4": "npm:react-native-mmkv@^4.0.0",
     "react-native-nitro-modules": "*",
     "react-native-web": "^0.21.2",
+    "react-virtuoso": "^4.14.1",
     "rozenite": "workspace:*",
     "typescript": "~5.9.3",
     "vite": "catalog:"
