@@ -207,6 +207,20 @@ createAsyncStorageAdapter({
 });
 ```
 
+## Large storages
+
+The panel discovers configured storages without reading their entries. After
+you select a storage, it loads bounded, key-sorted pages containing value
+previews only. Search applies to keys on the device before pagination.
+
+Open or edit an entry to load its complete value. Closing that interaction,
+switching storage, or using Refresh discards the loaded full value. The table
+keeps only a bounded working set of preview pages while scrolling.
+
+Storages with native subscriptions send key-only invalidations to keep the
+active view current. Storages without native subscriptions do not poll; use
+**Refresh** to see external changes.
+
 ## Import / Export
 
 The panel can export the currently selected storage to a JSON snapshot and import a snapshot back. Use this to reproduce bugs from a captured state, share state between teammates, or seed known test scenarios without writing one-off app code.
@@ -218,7 +232,9 @@ The panel can export the currently selected storage to a JSON snapshot and impor
 - **Validate before write**: The file is fully parsed and validated before any entries are applied. If validation fails, nothing is written and the error points at the offending path (for example, `entries[3].value`).
 - **Stop on first error**: If a write fails mid-import (rare — most failures are caught up-front), the import stops and reports which key failed. Already-written entries stay; rerunning import is safe because writes are idempotent.
 - **Skipped keys**: Keys matching the target storage's `blacklist` are skipped during write. The preview shows the count and the keys before you apply.
-- **Live updates**: As entries are written, the table updates row by row.
+- **Live updates**: Completion invalidates the selected storage once, then the
+  table reloads authoritative preview pages. Progress events contain counts,
+  not imported values.
 
 ### JSON snapshot schema
 

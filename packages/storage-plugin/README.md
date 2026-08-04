@@ -101,6 +101,11 @@ When you use [Rozenite for Web](https://rozenite.dev/docs/rozenite-for-web) in d
 
 - Unsupported value types are disabled in UI create/edit flows.
 - Type support is enforced in UI, runtime and Agent tools.
-- Storages without subscriptions automatically use internal polling updates.
+- Storage discovery reads metadata only. Entry lists load key-and-preview pages
+  for the selected storage; opening or editing an entry fetches its full value
+  on demand.
+- Storages without subscriptions do not poll in the background. Use Refresh to
+  see external changes; storages with native subscriptions update through
+  key-only invalidations.
 - Per-storage blacklists are supported through adapter configuration.
 - Storage snapshots can be exported to and imported from a versioned JSON file from the panel. See the [storage plugin docs](https://www.rozenite.dev/docs/official-plugins/storage) for the schema and behavior.
