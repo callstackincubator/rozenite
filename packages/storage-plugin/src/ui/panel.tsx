@@ -32,6 +32,7 @@ import type {
   StorageEventMap,
   StorageImportProgressEvent,
   StorageImportResultEvent,
+  StorageInvalidatedEvent,
 } from '../shared/messaging';
 import { parseSnapshot } from '../shared/snapshot';
 import type {
@@ -50,6 +51,8 @@ import { StorageQueryClientProvider } from './query-client';
 import { buildStorageSidebarGroups } from './storage-groups';
 import {
   flattenStorageEntryPreviewPages,
+  dropStorageFullEntries,
+  invalidateStorageEntryPreviews,
   resetSelectedStorageQueries,
   useStorageEntryPreviews,
   useStorageFullEntry,
@@ -116,6 +119,7 @@ function StoragePanelContent() {
   const activeImportRequestIdRef = useRef<string | null>(null);
   const isFetchingNextPageRef = useRef(false);
   const isFetchingPreviousPageRef = useRef(false);
+  const pendingInvalidationsRef = useRef(new Set<string>());
   const client = useRozeniteDevToolsClient<StorageEventMap>({
     pluginId: '@rozenite/storage-plugin',
   });
@@ -225,6 +229,36 @@ function StoragePanelContent() {
         });
       },
     );
+    const invalidationSubscription = client.onMessage(
+      'storage-invalidated',
+      (event: StorageInvalidatedEvent) => {
+        void dropStorageFullEntries(queryClient, event.target, event.key);
+        if (
+          selectedTargetRef.current &&
+          sameTarget(event.target, selectedTargetRef.current)
+        ) {
+          setInteraction((current) =>
+            current && (event.key == null || current.key === event.key)
+              ? null
+              : current,
+          );
+        }
+
+        const targetId = getStorageViewId(event.target);
+        if (pendingInvalidationsRef.current.has(targetId)) return;
+        pendingInvalidationsRef.current.add(targetId);
+        queueMicrotask(() => {
+          pendingInvalidationsRef.current.delete(targetId);
+          if (
+            selectedTargetRef.current &&
+            sameTarget(event.target, selectedTargetRef.current)
+          ) {
+            setVirtualListVersion((version) => version + 1);
+          }
+          void invalidateStorageEntryPreviews(queryClient, event.target);
+        });
+      },
+    );
 
     discoveryRequestIdRef.current += 1;
     client.send('discover-storages', {
@@ -235,6 +269,7 @@ function StoragePanelContent() {
       descriptorsSubscription.remove();
       importProgressSubscription.remove();
       importResultSubscription.remove();
+      invalidationSubscription.remove();
     };
   }, [client, queryClient]);
 
@@ -260,10 +295,7 @@ function StoragePanelContent() {
   );
 
   const mutateSelectedStorage = (operation: () => void) => {
-    if (!selectedTarget) return;
     operation();
-    closeInteraction();
-    void resetSelectedStorageQueries(queryClient, selectedTarget);
   };
 
   const handleValueChange = (key: string, newValue: StorageEntryValue) => {

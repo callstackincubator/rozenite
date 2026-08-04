@@ -38,7 +38,7 @@ describe('StorageView subscriptions', () => {
     expect(get).not.toHaveBeenCalled();
   });
 
-  it('forwards native MMKV changes through the existing set and delete callbacks', async () => {
+  it('forwards native MMKV changes as key-only invalidations without reading values', async () => {
     let onValueChanged: ((key: string) => void) | undefined;
     const remove = vi.fn();
     const storage = {
@@ -57,29 +57,58 @@ describe('StorageView subscriptions', () => {
     const [view] = createStorageViews([
       createMMKVStorageAdapter({ storages: { settings: storage as never } }),
     ]);
-    const onSet = vi.fn();
-    const onDelete = vi.fn();
+    const onChange = vi.fn();
 
     expect(view.supportsSubscriptions).toBe(true);
     expect(view.watch).toBeDefined();
-    const subscription = await view.watch?.({ onSet, onDelete });
+    const subscription = await view.watch?.(onChange);
     expect(storage.addOnValueChangedListener).toHaveBeenCalledTimes(1);
 
     onValueChanged?.('theme');
-    await vi.waitFor(() => {
-      expect(onSet).toHaveBeenCalledWith({
-        key: 'theme',
-        type: 'string',
-        value: 'dark',
-      });
-    });
+    expect(onChange).toHaveBeenCalledWith('theme');
 
     onValueChanged?.('removed');
-    await vi.waitFor(() => {
-      expect(onDelete).toHaveBeenCalledWith('removed');
-    });
+    expect(onChange).toHaveBeenCalledWith('removed');
+    expect(storage.getString).not.toHaveBeenCalled();
+    expect(storage.getNumber).not.toHaveBeenCalled();
+    expect(storage.getBoolean).not.toHaveBeenCalled();
+    expect(storage.getBuffer).not.toHaveBeenCalled();
+    expect(storage.getAllKeys).not.toHaveBeenCalled();
 
     subscription?.remove();
     expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not duplicate synchronous callbacks caused by plugin-originated writes', async () => {
+    let onValueChanged: ((key: string) => void) | undefined;
+    const adapter: StorageAdapter = {
+      id: 'subscribed',
+      name: 'Subscribed',
+      storages: [
+        {
+          id: 'storage',
+          name: 'Storage',
+          capabilities: { supportedTypes: ['string'] },
+          storage: {
+            kind: 'sync',
+            getAllKeys: vi.fn(() => []),
+            get: vi.fn(),
+            set: vi.fn((entry: StorageEntry) => onValueChanged?.(entry.key)),
+            delete: vi.fn(),
+            subscribe: vi.fn((listener) => {
+              onValueChanged = listener;
+              return { remove: vi.fn() };
+            }),
+          },
+        },
+      ],
+    };
+    const [view] = createStorageViews([adapter]);
+    const onChange = vi.fn();
+    await view.watch?.(onChange);
+
+    await view.set({ key: 'written', type: 'string', value: 'value' });
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

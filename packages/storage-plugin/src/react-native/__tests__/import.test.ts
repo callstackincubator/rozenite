@@ -44,7 +44,7 @@ const buildEntries = (count: number): StorageEntry[] =>
   }));
 
 describe('handleImportEntries', () => {
-  it('emits value-free progress followed by one success import-result', async () => {
+  it('emits value-free progress, one invalidation, and one success import-result', async () => {
     const view = buildView();
     const entries = buildEntries(5);
     const event: StorageImportEntriesEvent = {
@@ -59,7 +59,7 @@ describe('handleImportEntries', () => {
 
     expect(view.set).toHaveBeenCalledTimes(5);
 
-    expect(emitted).toHaveLength(6);
+    expect(emitted).toHaveLength(7);
     expect(emitted.slice(0, 5)).toEqual(
       entries.map((_, index) => ({
         type: 'import-progress',
@@ -70,6 +70,11 @@ describe('handleImportEntries', () => {
       })),
     );
     expect(emitted[5]).toEqual({
+      type: 'storage-invalidated',
+      target,
+      operation: 'import',
+    });
+    expect(emitted[6]).toEqual({
       type: 'import-result',
       requestId: 'request-1',
       target,
@@ -99,9 +104,9 @@ describe('handleImportEntries', () => {
 
     await handleImportEntries([view], event, (out) => emitted.push(out));
 
-    // 2 value-free progress events (k0, k1), then the failure result.
+    // 2 value-free progress events (k0, k1), one batch invalidation, then failure.
     expect(view.set).toHaveBeenCalledTimes(3);
-    expect(emitted).toHaveLength(3);
+    expect(emitted).toHaveLength(4);
     expect(emitted[0]).toMatchObject({
       type: 'import-progress',
       requestId: 'request-1',
@@ -113,6 +118,11 @@ describe('handleImportEntries', () => {
       written: 2,
     });
     expect(emitted[2]).toEqual({
+      type: 'storage-invalidated',
+      target,
+      operation: 'import',
+    });
+    expect(emitted[3]).toEqual({
       type: 'import-result',
       requestId: 'request-1',
       target,
@@ -278,6 +288,11 @@ describe('handleImportEntries', () => {
         target,
         written: 1,
         total: 1,
+      },
+      {
+        type: 'storage-invalidated',
+        target,
+        operation: 'import',
       },
       {
         type: 'import-result',

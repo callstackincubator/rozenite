@@ -34,6 +34,16 @@ export type StorageDeleteEntryEvent = {
   key: string;
 };
 
+export type StorageInvalidationOperation = 'set' | 'delete' | 'import';
+
+export type StorageInvalidatedEvent = {
+  type: 'storage-invalidated';
+  target: StorageTarget;
+  /** Native subscriptions only expose a key, not the operation. */
+  key?: string;
+  operation?: StorageInvalidationOperation;
+};
+
 export type StorageGetSnapshotEvent = {
   type: 'get-snapshot';
   target: StorageTarget;
@@ -157,6 +167,7 @@ export type StorageEvent =
   | StorageSnapshotEvent
   | StorageSetEntryEvent
   | StorageDeleteEntryEvent
+  | StorageInvalidatedEvent
   | StorageGetSnapshotEvent
   | StorageDiscoverStoragesRequestEvent
   | StorageDiscoverStoragesResponseEvent

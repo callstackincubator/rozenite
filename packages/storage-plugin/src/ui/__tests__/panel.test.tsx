@@ -297,4 +297,29 @@ describe('StoragePanel preview query cutover', () => {
     ).toBeUndefined();
     await act(async () => root.unmount());
   });
+
+  it('coalesces invalidation events into one active preview refetch', async () => {
+    const { root } = await renderPanel();
+    await discover();
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(mocks.client.request).toHaveBeenCalledTimes(1),
+      );
+      mocks.emit('storage-invalidated', {
+        type: 'storage-invalidated',
+        target,
+        key: 'first',
+        operation: 'set',
+      });
+      mocks.emit('storage-invalidated', {
+        type: 'storage-invalidated',
+        target,
+        key: 'next',
+      });
+    });
+    await vi.waitFor(() =>
+      expect(mocks.client.request).toHaveBeenCalledTimes(2),
+    );
+    await act(async () => root.unmount());
+  });
 });

@@ -10,6 +10,8 @@ import type { StorageTarget } from '../../shared/types';
 import { createStorageQueryClient } from '../query-client';
 import {
   resetSelectedStorageQueries,
+  dropStorageFullEntries,
+  invalidateStorageEntryPreviews,
   storageEntryPreviewQueryKey,
   useStorageEntryPreviews,
   useStorageFullEntry,
@@ -220,6 +222,55 @@ describe('storage entry query hooks', () => {
       hook.queryClient.getQueryData(
         storageEntryPreviewQueryKey(target, 'inactive', 'ascending'),
       ),
+    ).toBeUndefined();
+    await hook.unmount();
+  });
+
+  it('invalidates only the changed storage preview prefix and drops its stale full value', async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const request = vi.fn(({ payload }) => Promise.resolve(response(payload.cursor)));
+    const hook = await renderPreviewHook({
+      client: asClient(request),
+      target,
+      search: 'active',
+      keySortDirection: 'ascending',
+    });
+    await act(async () => {
+      await vi.waitFor(() => expect(hook.result.isSuccess).toBe(true));
+    });
+    const otherQueryKey = storageEntryPreviewQueryKey(
+      otherTarget,
+      'other',
+      'ascending',
+    );
+    hook.queryClient.setQueryDefaults(otherQueryKey, { gcTime: Infinity });
+    hook.queryClient.setQueryData(
+      otherQueryKey,
+      { pages: [response(undefined)], pageParams: [undefined] },
+    );
+    hook.queryClient.setQueryData(
+      ['storage-full-entry', target.adapterId, target.storageId, 'changed'],
+      { entry: { key: 'changed', type: 'string', value: 'stale full value' } },
+    );
+
+    await act(async () => {
+      await invalidateStorageEntryPreviews(hook.queryClient, target);
+      await dropStorageFullEntries(hook.queryClient, target, 'changed');
+    });
+
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(
+      hook.queryClient.getQueryData(
+        otherQueryKey,
+      ),
+    ).toBeDefined();
+    expect(
+      hook.queryClient.getQueryData([
+        'storage-full-entry',
+        target.adapterId,
+        target.storageId,
+        'changed',
+      ]),
     ).toBeUndefined();
     await hook.unmount();
   });

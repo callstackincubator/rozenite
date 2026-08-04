@@ -91,10 +91,7 @@ export type StorageView = {
   delete: (key: string) => Promise<void>;
   getAllKeys: () => Promise<readonly string[]>;
   getAllEntries: () => Promise<StorageEntry[]>;
-  watch?: (callbacks: {
-    onSet: (entry: StorageEntry) => void;
-    onDelete: (key: string) => void;
-  }) => Promise<StorageSubscription>;
+  watch?: (onChange: (key: string) => void) => Promise<StorageSubscription>;
 };
 
 export const createStorageView = (
@@ -103,6 +100,7 @@ export const createStorageView = (
 ): StorageView => {
   const storage = storageNode.storage;
   const subscribe = storage.subscribe;
+  const locallyMutatingKeys = new Set<string>();
   const target: StorageTarget = {
     adapterId: adapter.id,
     storageId: storageNode.id,
@@ -138,10 +136,20 @@ export const createStorageView = (
     get,
     set: async (entry) => {
       checkTypeSupport(storageNode.capabilities, entry.type, target);
-      await setEntry(storage, entry);
+      locallyMutatingKeys.add(entry.key);
+      try {
+        await setEntry(storage, entry);
+      } finally {
+        locallyMutatingKeys.delete(entry.key);
+      }
     },
     delete: async (key) => {
-      await deleteEntry(storage, key);
+      locallyMutatingKeys.add(key);
+      try {
+        await deleteEntry(storage, key);
+      } finally {
+        locallyMutatingKeys.delete(key);
+      }
     },
     getAllKeys: async () => {
       const keys = await getAllKeys(storage);
@@ -150,19 +158,13 @@ export const createStorageView = (
     getAllEntries,
     ...(subscribe
       ? {
-          watch: async ({ onSet, onDelete }) =>
-            subscribe(async (key) => {
-              try {
-                const entry = await get(key);
-
-                if (!entry) {
-                  onDelete(key);
-                  return;
-                }
-
-                onSet(entry);
-              } catch {
-                // Ignore runtime callback errors from native subscriptions.
+          watch: async (onChange) =>
+            subscribe((key) => {
+              if (
+                !locallyMutatingKeys.has(key) &&
+                !shouldFilterKey(storageNode, key)
+              ) {
+                onChange(key);
               }
             }),
         }

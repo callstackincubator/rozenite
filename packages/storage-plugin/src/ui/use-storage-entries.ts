@@ -57,6 +57,27 @@ export const resetSelectedStorageQueries = async (
   await queryClient.resetQueries({ queryKey: previewQueryKey });
 };
 
+export const invalidateStorageEntryPreviews = async (
+  queryClient: QueryClient,
+  target: StorageTarget,
+) =>
+  queryClient.invalidateQueries({
+    queryKey: storageEntryPreviewQueryKeyPrefix(target),
+  });
+
+export const dropStorageFullEntries = async (
+  queryClient: QueryClient,
+  target: StorageTarget,
+  key?: string,
+) => {
+  const queryKey = key == null
+    ? storageFullEntryQueryKeyPrefix(target)
+    : storageFullEntryQueryKey(target, key);
+
+  await queryClient.cancelQueries({ queryKey, exact: key != null });
+  queryClient.removeQueries({ queryKey, exact: key != null });
+};
+
 export type UseStorageEntryPreviewsOptions = {
   client: StorageRequestClient | null | undefined;
   target: StorageTarget | null | undefined;

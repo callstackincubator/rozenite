@@ -9,6 +9,7 @@ import type {
   StorageGetSnapshotEvent,
   StorageImportEntriesEvent,
   StorageImportPreviewRequestEvent,
+  StorageInvalidationOperation,
   StorageListEntryPreviewsRequestEvent,
   StorageSetEntryEvent,
 } from '../shared/messaging';
@@ -79,6 +80,19 @@ export const useRozeniteStoragePlugin = ({
     const viewSubscriptions: { remove: () => void }[] = [];
     let disposed = false;
 
+    const sendInvalidation = (
+      target: StorageGetSnapshotEvent['target'],
+      key?: string,
+      operation?: StorageInvalidationOperation,
+    ) => {
+      client.send('storage-invalidated', {
+        type: 'storage-invalidated',
+        target,
+        key,
+        operation,
+      });
+    };
+
     // Prevent one storage watcher failure from breaking the whole plugin.
     void Promise.all(
       views
@@ -90,21 +104,8 @@ export const useRozeniteStoragePlugin = ({
               return;
             }
 
-            const subscription = await watch({
-              onSet: (entry) => {
-                client.send('set-entry', {
-                  type: 'set-entry',
-                  target: view.target,
-                  entry,
-                });
-              },
-              onDelete: (key) => {
-                client.send('delete-entry', {
-                  type: 'delete-entry',
-                  target: view.target,
-                  key,
-                });
-              },
+            const subscription = await watch((key) => {
+              sendInvalidation(view.target, key);
             });
 
             if (disposed) {
@@ -141,6 +142,7 @@ export const useRozeniteStoragePlugin = ({
 
           try {
             await view.set(entry);
+            sendInvalidation(view.target, entry.key, 'set');
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to set entry in ${target.adapterId}/${target.storageId}.`,
@@ -167,6 +169,7 @@ export const useRozeniteStoragePlugin = ({
 
           try {
             await view.delete(key);
+            sendInvalidation(view.target, key, 'delete');
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to delete entry in ${target.adapterId}/${target.storageId}.`,

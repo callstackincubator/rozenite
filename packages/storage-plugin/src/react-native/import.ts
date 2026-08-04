@@ -4,6 +4,7 @@ import type {
   StorageImportPreviewResponseEvent,
   StorageImportProgressEvent,
   StorageImportResultEvent,
+  StorageInvalidatedEvent,
   StorageRequestErrorEvent,
 } from '../shared/messaging';
 import { computePreview, parseSnapshot } from '../shared/snapshot';
@@ -16,7 +17,8 @@ import type { StorageView } from './storage-view';
 
 export type ImportEmittedEvent =
   | StorageImportProgressEvent
-  | StorageImportResultEvent;
+  | StorageImportResultEvent
+  | StorageInvalidatedEvent;
 
 type ImportPreviewResult =
   | StorageImportPreviewResponseEvent
@@ -191,6 +193,13 @@ export const handleImportEntries = async (
     try {
       await view.set(entry);
     } catch (error) {
+      if (i > 0) {
+        emit({
+          type: 'storage-invalidated',
+          target: event.target,
+          operation: 'import',
+        });
+      }
       emit({
         type: 'import-result',
         requestId: event.requestId,
@@ -210,6 +219,14 @@ export const handleImportEntries = async (
       target: event.target,
       written: i + 1,
       total: entries.length,
+    });
+  }
+
+  if (entries.length > 0) {
+    emit({
+      type: 'storage-invalidated',
+      target: event.target,
+      operation: 'import',
     });
   }
 
