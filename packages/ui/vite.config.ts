@@ -31,6 +31,7 @@ export default defineConfig({
         'class-variance-authority',
         /^@base-ui\/react/,
         '@tanstack/react-table',
+        'react-virtuoso',
       ],
     },
   },
