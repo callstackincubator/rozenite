@@ -1,4 +1,7 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
+// This app intentionally uses React Navigation with a custom AppRegistry entry point.
+process.env.EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK = '1';
+
 const { getDefaultConfig } = require('expo/metro-config');
 const { composeMetroConfigTransformers } = require('@rozenite/tools');
 const { withRozenite } = require('@rozenite/metro');

@@ -34,7 +34,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-native": "catalog:",
-    "react-native-svg": "~15.8.0",
+    "react-native-svg": "15.15.4",
     "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
     "tailwind-variants": "^2.0.0",

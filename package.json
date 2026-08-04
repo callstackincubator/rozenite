@@ -36,6 +36,7 @@
     "dts-bundle-generator": "^9.5.1",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
+    "expo": "^57.0.7",
     "husky": "^9.1.7",
     "jiti": "2.4.2",
     "jsdom": "~22.1.0",
@@ -57,6 +58,7 @@
     }
   },
   "resolutions": {
-    "@microsoft/api-extractor": "7.48.1"
+    "@microsoft/api-extractor": "7.48.1",
+    "metro-config": "0.84.4"
   }
 }
