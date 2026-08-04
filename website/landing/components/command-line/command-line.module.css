@@ -1,0 +1,67 @@
+.root {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  padding-left: 14px;
+  padding-right: 5px;
+  background-color: var(--rz-surface-alt);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-control);
+  font-family: var(--rz-font-mono);
+  font-size: 0.875rem;
+  color: var(--rz-text);
+  max-width: 100%;
+}
+
+.prompt {
+  flex: none;
+  color: var(--rz-accent);
+  user-select: none;
+}
+
+.command {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.command::-webkit-scrollbar {
+  display: none;
+}
+
+.copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--rz-radius-control);
+  color: var(--rz-text-secondary);
+  cursor: pointer;
+  transition: var(--rz-transition);
+}
+
+.copy:hover {
+  background-color: var(--rz-border);
+  color: var(--rz-text);
+}
+
+.copy:active {
+  transform: scale(0.94);
+}
+
+.copy:focus-visible {
+  outline: 2px solid var(--rz-accent);
+  outline-offset: -2px;
+}
+
+.copied {
+  color: var(--rz-accent);
+}

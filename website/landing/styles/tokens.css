@@ -1,0 +1,94 @@
+/*
+ * Design tokens for the Rozenite landing page.
+ *
+ * Everything the landing page needs lives under the `[data-rz-landing]` scope so
+ * the whole `landing/` directory can be lifted out of Rspress without dragging
+ * the docs theme along. The only outside contract is the dark-mode signal, which
+ * we read from either `html.dark` (Rspress) or `[data-theme='dark']`.
+ *
+ * Palette, type pairing and radii follow callstack.com.
+ *
+ * Radius rule (applied everywhere, no exceptions):
+ *   --rz-radius-control  interactive elements and chips
+ *   --rz-radius-surface  panels, cards, frames, code blocks
+ */
+
+@font-face {
+  font-family: 'Switzer';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/Switzer-Variable.woff2') format('woff2');
+}
+
+[data-rz-landing] {
+  --rz-font-display: 'Alliance No. 2', 'Switzer', system-ui, sans-serif;
+  --rz-font-body: 'Switzer', system-ui, -apple-system, sans-serif;
+  --rz-font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --rz-bg: #ffffff;
+  --rz-bg-subtle: #f9f8fd;
+  --rz-surface: #ffffff;
+  --rz-surface-alt: #f4f2fa;
+  --rz-border: #e6e3ee;
+  --rz-border-strong: #c9c7d2;
+  --rz-text: #201f24;
+  --rz-text-secondary: #5d5c63;
+  --rz-text-tertiary: #8b8a93;
+
+  --rz-accent: #7226e8;
+  --rz-accent-contrast: #ffffff;
+  --rz-accent-soft: rgba(114, 38, 232, 0.08);
+  --rz-accent-line: rgba(114, 38, 232, 0.3);
+
+  /* The single colour block on the page. Same values in both themes. */
+  --rz-block-bg: #17161a;
+  --rz-block-surface: #201f24;
+  --rz-block-text: #ffffff;
+  --rz-block-secondary: rgba(255, 255, 255, 0.66);
+  --rz-block-tertiary: rgba(255, 255, 255, 0.42);
+  --rz-block-border: rgba(255, 255, 255, 0.14);
+  --rz-block-accent: #b18cff;
+
+  --rz-radius-control: 2px;
+  --rz-radius-surface: 4px;
+
+  --rz-gutter: 24px;
+  --rz-max-width: 1280px;
+  --rz-section-y: 112px;
+  /* Height of whatever navigation sits above the page, so the hero can fill
+     the rest of the first screen. */
+  --rz-nav-height: 64px;
+
+  --rz-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --rz-transition: color 0.2s ease, background-color 0.2s ease,
+    border-color 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+}
+
+html.dark [data-rz-landing],
+[data-theme='dark'] [data-rz-landing] {
+  --rz-bg: #201f24;
+  --rz-bg-subtle: #26252a;
+  --rz-surface: #26252a;
+  --rz-surface-alt: #2c2b31;
+  --rz-border: #37363c;
+  --rz-border-strong: #4d4c53;
+  --rz-text: #ffffff;
+  --rz-text-secondary: #aeadb5;
+  --rz-text-tertiary: #7c7b83;
+
+  --rz-accent: #b18cff;
+  --rz-accent-contrast: #17161a;
+  --rz-accent-soft: rgba(177, 140, 255, 0.14);
+  --rz-accent-line: rgba(177, 140, 255, 0.34);
+
+  --rz-block-bg: #141317;
+  --rz-block-surface: #1c1b20;
+}
+
+@media (max-width: 900px) {
+  [data-rz-landing] {
+    --rz-gutter: 20px;
+    --rz-section-y: 72px;
+  }
+}

@@ -1,0 +1,130 @@
+/*
+ * The hero owns the first screen. `dvh` rather than `vh` so the mobile browser
+ * chrome collapsing does not shift the layout, and `min-height` rather than
+ * `height` so a wrapped headline can still grow past the viewport.
+ */
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  min-height: calc(100dvh - var(--rz-nav-height, 64px));
+  background-color: var(--rz-bg);
+  color: var(--rz-text);
+  padding-block: clamp(56px, 5vw, 88px) clamp(72px, 7vw, 112px);
+}
+
+/* Purple wash from the Callstack gradient stack, kept low enough to read as
+   paper texture rather than a glow. */
+.wash {
+  position: absolute;
+  inset: -40% -10% auto -10%;
+  height: 140%;
+  pointer-events: none;
+  background: radial-gradient(
+      ellipse 64vw 42vw at 84% 4%,
+      rgba(114, 38, 232, 0.13) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 50vw 32vw at 4% 40%,
+      rgba(114, 38, 232, 0.07) 0%,
+      transparent 60%
+    );
+}
+
+html.dark .wash,
+[data-theme='dark'] .wash {
+  background: radial-gradient(
+      ellipse 64vw 42vw at 84% 4%,
+      rgba(140, 74, 255, 0.26) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 50vw 32vw at 4% 40%,
+      rgba(140, 74, 255, 0.14) 0%,
+      transparent 60%
+    );
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  max-width: var(--rz-max-width);
+  margin-inline: auto;
+  padding-inline: var(--rz-gutter);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 56px;
+  align-items: center;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--rz-font-display);
+  font-weight: 500;
+  font-size: clamp(2.25rem, 1.35rem + 2.8vw, 3.75rem);
+  --rz-lh: 1.04;
+  --rz-ls: -0.035em;
+}
+
+/* One sentence per line, so the headline is always exactly two lines. */
+.titleLine {
+  display: block;
+}
+
+.titleMuted {
+  color: var(--rz-text-secondary);
+}
+
+.lead {
+  margin: 24px 0 0;
+  max-width: 46ch;
+  font-size: clamp(1rem, 0.95rem + 0.28vw, 1.125rem);
+  --rz-lh: 1.6;
+  color: var(--rz-text-secondary);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.install {
+  width: min(400px, 100%);
+  margin-top: 16px;
+}
+
+.visual {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 44px;
+  }
+
+  .copy {
+    max-width: 680px;
+  }
+}
+
+@media (max-width: 560px) {
+  .actions {
+    width: 100%;
+  }
+
+  .actions > * {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

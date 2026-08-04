@@ -1,0 +1,109 @@
+/*
+ * Stacked composition: two anatomy tiles across the top, then the code sample
+ * and the scaffold commands side by side underneath. Different family from the
+ * hero split and the Rozenite for Web split.
+ */
+
+.halves {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background-color: var(--rz-border);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-surface);
+  overflow: hidden;
+  margin-bottom: 40px;
+}
+
+.half {
+  padding: 28px 26px 30px;
+  background-color: var(--rz-bg);
+}
+
+.halfIcon {
+  color: var(--rz-accent);
+}
+
+.halfTitle {
+  margin: 12px 0 0;
+  font-family: var(--rz-font-display);
+  font-size: 1.125rem;
+  font-weight: 500;
+  --rz-ls: -0.018em;
+}
+
+.halfBody {
+  margin: 8px 0 0;
+  font-size: 0.9375rem;
+  --rz-lh: 1.55;
+  color: var(--rz-text-secondary);
+}
+
+.bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.asideTitle {
+  margin: 0;
+  font-family: var(--rz-font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  --rz-ls: -0.02em;
+  --rz-lh: 1.25;
+}
+
+.commands {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.note {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  font-size: 0.9375rem;
+  --rz-lh: 1.5;
+  color: var(--rz-text-secondary);
+}
+
+.noteIcon {
+  color: var(--rz-accent);
+  margin-top: 1px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .halves,
+  .bottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bottom {
+    gap: 32px;
+  }
+}

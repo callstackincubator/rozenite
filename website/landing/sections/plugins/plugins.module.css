@@ -1,0 +1,48 @@
+/*
+ * Hairline grid. The wrapper draws the top and left rules, each cell draws its
+ * own right and bottom rule.
+ *
+ * Six cells divide evenly by three, two and one, so the grid never leaves a
+ * hole at any breakpoint. Keep the featured count divisible by six.
+ */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--rz-border);
+  border-left: 1px solid var(--rz-border);
+}
+
+.grid > * {
+  border-right: 1px solid var(--rz-border);
+  border-bottom: 1px solid var(--rz-border);
+}
+
+/* The rest of the set, stated rather than drawn. */
+.more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 32px;
+  margin-top: 32px;
+}
+
+.moreText {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 0.9375rem;
+  --rz-lh: 1.6;
+  color: var(--rz-text-secondary);
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

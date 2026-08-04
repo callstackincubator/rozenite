@@ -1,0 +1,10 @@
+.eyebrow {
+  margin: 0;
+  font-family: var(--rz-font-mono);
+  font-size: 0.75rem;
+  font-weight: 400;
+  --rz-lh: 1.4;
+  --rz-ls: 0.07em;
+  text-transform: uppercase;
+  color: var(--rz-accent);
+}

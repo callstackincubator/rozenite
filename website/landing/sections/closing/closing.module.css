@@ -1,0 +1,54 @@
+/*
+ * Stays in the page theme. The page already spends its one colour-block moment
+ * on Rozenite for Agents, so this panel earns its weight from the accent rule
+ * and the surface tint instead of inverting.
+ */
+
+.panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 48px;
+  align-items: center;
+  padding: 56px;
+  background-color: var(--rz-surface-alt);
+  border: 1px solid var(--rz-border);
+  border-left: 2px solid var(--rz-accent);
+  border-radius: var(--rz-radius-surface);
+}
+
+.title {
+  margin: 0;
+  max-width: 18ch;
+  font-family: var(--rz-font-display);
+  font-weight: 500;
+  font-size: clamp(1.75rem, 1.25rem + 1.7vw, 2.5rem);
+  --rz-lh: 1.1;
+  --rz-ls: -0.03em;
+}
+
+.body {
+  margin: 18px 0 0;
+  max-width: 52ch;
+  font-size: 1rem;
+  --rz-lh: 1.6;
+  color: var(--rz-text-secondary);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 236px;
+}
+
+@media (max-width: 900px) {
+  .panel {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 36px 24px 40px;
+    gap: 32px;
+  }
+
+  .actions {
+    min-width: 0;
+  }
+}

@@ -1,0 +1,78 @@
+.section {
+  position: relative;
+  padding-block: var(--rz-section-y);
+  background-color: var(--rz-bg);
+  color: var(--rz-text);
+}
+
+.tintSubtle {
+  background-color: var(--rz-bg-subtle);
+}
+
+/*
+ * The page has one colour block. It remaps the token set locally so components
+ * inside need no block-specific styling of their own.
+ */
+.tintBlock {
+  background-color: var(--rz-block-bg);
+  color: var(--rz-block-text);
+  --rz-bg: var(--rz-block-bg);
+  --rz-bg-subtle: var(--rz-block-surface);
+  --rz-surface: var(--rz-block-surface);
+  --rz-surface-alt: rgba(255, 255, 255, 0.04);
+  --rz-text: var(--rz-block-text);
+  --rz-text-secondary: var(--rz-block-secondary);
+  --rz-text-tertiary: var(--rz-block-tertiary);
+  --rz-border: var(--rz-block-border);
+  --rz-border-strong: rgba(255, 255, 255, 0.24);
+  --rz-accent: var(--rz-block-accent);
+  --rz-accent-contrast: #17161a;
+  --rz-accent-line: rgba(177, 140, 255, 0.34);
+  --rz-accent-soft: rgba(177, 140, 255, 0.12);
+}
+
+.bordered {
+  border-top: 1px solid var(--rz-border);
+}
+
+.container {
+  width: 100%;
+  max-width: var(--rz-max-width);
+  margin-inline: auto;
+  padding-inline: var(--rz-gutter);
+}
+
+/* --- Section header ---------------------------------------------------- */
+
+.header {
+  max-width: 62ch;
+  margin-bottom: 56px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--rz-font-display);
+  font-weight: 500;
+  font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  --rz-lh: 1.08;
+  --rz-ls: -0.028em;
+  text-wrap: balance;
+}
+
+.eyebrow + .title {
+  margin-top: 14px;
+}
+
+.body {
+  margin: 20px 0 0;
+  max-width: 58ch;
+  font-size: clamp(1rem, 0.97rem + 0.16vw, 1.0625rem);
+  --rz-lh: 1.6;
+  color: var(--rz-text-secondary);
+}
+
+@media (max-width: 900px) {
+  .header {
+    margin-bottom: 36px;
+  }
+}
