@@ -1,4 +1,4 @@
-import { Button } from '@callstack/rspress-theme';
+import { GithubLogo, Package, Star } from '@phosphor-icons/react';
 
 import styles from './plugin-card.module.css';
 import { RozenitePluginEntry } from '../types';
@@ -19,66 +19,43 @@ export function PluginCard({ plugin }: PluginCardProps) {
   } = plugin;
 
   return (
-    <div className={styles.pluginCardContainer}>
-      <div className={styles.pluginCard}>
-        <div className={styles.pluginHeader}>
-          <div className={styles.pluginTitleContainer}>
-            <h3 className={styles.pluginTitle}>{packageName}</h3>
-            <div
-              className={styles.pluginVersion}
-              aria-label={`Version ${version}`}
-            >
-              v{version}
-            </div>
-          </div>
-          {isOfficial && (
-            <div className={styles.officialBadge} aria-label="Official plugin">
-              Official
-            </div>
-          )}
-        </div>
-        {description && (
-          <p className={styles.pluginDescription}>{description}</p>
-        )}
-        <div className={styles.pluginFooter}>
-          <div className={styles.pluginStats}>
-            <div
-              className={styles.starsContainer}
-              aria-label={`${stars.toLocaleString()} stars`}
-            >
-              <svg
-                className={styles.starIcon}
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-              <span className={styles.starsCount}>
-                {stars.toLocaleString()}
-              </span>
-            </div>
-          </div>
-          <div className={styles.pluginLinks}>
-            <Button
-              theme="alt"
-              href={githubUrl}
-              external
-              aria-label={`View ${packageName} on GitHub`}
-            >
-              GitHub
-            </Button>
-            <Button
-              theme="alt"
-              href={npmUrl}
-              external
-              aria-label={`View ${packageName} on NPM`}
-            >
-              NPM
-            </Button>
-          </div>
+    <article className={styles.card}>
+      <div className={styles.top}>
+        <span className={styles.version} aria-label={`Version ${version}`}>
+          v{version}
+        </span>
+        {isOfficial && <span className={styles.official}>Official</span>}
+      </div>
+      <h3 className={styles.title}>{packageName}</h3>
+      <p className={styles.description}>
+        {description || 'A Rozenite plugin for React Native DevTools.'}
+      </p>
+      <div className={styles.meta}>
+        <span className={styles.stars} aria-label={`${stars.toLocaleString()} stars`}>
+          <Star aria-hidden="true" size={15} weight="fill" />
+          {stars.toLocaleString()}
+        </span>
+        <div className={styles.links}>
+          <a
+            href={githubUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label={`View ${packageName} on GitHub`}
+          >
+            <GithubLogo aria-hidden="true" size={17} weight="bold" />
+            GitHub
+          </a>
+          <a
+            href={npmUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label={`View ${packageName} on npm`}
+          >
+            <Package aria-hidden="true" size={17} weight="bold" />
+            npm
+          </a>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

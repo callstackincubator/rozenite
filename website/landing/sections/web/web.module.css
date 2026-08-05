@@ -1,0 +1,95 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 64px;
+  align-items: center;
+}
+
+/*
+ * The default diagram padding is top-heavy to balance a caption underneath a
+ * meta line. This one drops the meta line, so the stage would otherwise sit
+ * low in its box; even padding puts the line back on the copy column's
+ * vertical centre.
+ */
+.diagram {
+  padding-top: 40px;
+}
+
+.diagramReveal {
+  align-self: center;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.header {
+  margin-bottom: 0;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Grouped rows: one hairline between pairs, not under every line. */
+.points {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.point {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.pointIcon {
+  color: var(--rz-accent);
+  margin-top: 1px;
+}
+
+.pointLabel {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  --rz-lh: 1.4;
+}
+
+.pointBody {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.875rem;
+  --rz-lh: 1.55;
+  color: var(--rz-text-secondary);
+}
+
+.setup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rz-border);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+}

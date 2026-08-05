@@ -1,0 +1,96 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  padding-left: 16px;
+  padding-right: 5px;
+  border: 1px solid transparent;
+  border-radius: var(--rz-radius-control);
+  font-family: var(--rz-font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  --rz-lh: 1;
+  --rz-ls: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--rz-transition);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--rz-accent);
+  outline-offset: 2px;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+/* Solid: inverts against whatever surface it sits on. */
+.solid {
+  background-color: var(--rz-text);
+  color: var(--rz-bg);
+}
+
+.solid:hover {
+  background-color: var(--rz-accent);
+  color: var(--rz-accent-contrast);
+}
+
+.solid .icon {
+  background-color: rgba(127, 127, 127, 0.24);
+}
+
+/* Outline: hairline border, inherits the surrounding text colour. */
+.outline {
+  background-color: transparent;
+  border-color: var(--rz-border-strong);
+  color: var(--rz-text);
+}
+
+.outline:hover {
+  border-color: var(--rz-accent);
+  color: var(--rz-accent);
+}
+
+.outline .icon {
+  background-color: var(--rz-surface-alt);
+}
+
+/* Quiet: underlined text link, no chrome. */
+.quiet {
+  height: auto;
+  padding: 0 0 6px;
+  gap: 8px;
+  background: none;
+  color: var(--rz-text);
+  border-radius: 0;
+  border-bottom: 1px solid var(--rz-border-strong);
+}
+
+.quiet:hover {
+  color: var(--rz-accent);
+  border-bottom-color: var(--rz-accent);
+}
+
+.quiet .icon {
+  width: auto;
+  height: auto;
+  background: none;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--rz-radius-control);
+}
+
+.full {
+  width: 100%;
+  justify-content: space-between;
+}

@@ -1,0 +1,73 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 26px 26px 28px;
+  background-color: transparent;
+  color: inherit;
+  text-decoration: none;
+  transition: var(--rz-transition);
+}
+
+.card:hover {
+  background-color: var(--rz-surface);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--rz-accent);
+  outline-offset: -2px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 24px;
+}
+
+.icon {
+  color: var(--rz-accent);
+}
+
+.agentTag {
+  font-family: var(--rz-font-mono);
+  font-size: 0.625rem;
+  --rz-ls: 0.08em;
+  text-transform: uppercase;
+  color: var(--rz-accent);
+  padding: 3px 6px;
+  border: 1px solid var(--rz-accent-line);
+  border-radius: var(--rz-radius-control);
+  white-space: nowrap;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--rz-font-display);
+  font-size: 1.125rem;
+  font-weight: 500;
+  --rz-ls: -0.018em;
+  --rz-lh: 1.2;
+  transition: var(--rz-transition);
+}
+
+.exposes {
+  margin: 0;
+  flex: 1 1 auto;
+  font-size: 0.9375rem;
+  --rz-lh: 1.55;
+  color: var(--rz-text-secondary);
+}
+
+.package {
+  font-family: var(--rz-font-mono);
+  font-size: 0.75rem;
+  color: var(--rz-text-tertiary);
+  word-break: break-all;
+}
+
+.card:hover .name {
+  color: var(--rz-accent);
+}

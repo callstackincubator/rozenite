@@ -1,0 +1,101 @@
+/*
+ * Hairline grid. The wrapper draws the top and left rules, each cell draws its
+ * own right and bottom rule.
+ *
+ * Six cells divide evenly by three, two and one, so the grid never leaves a
+ * hole at any breakpoint. Keep the featured count divisible by six.
+ */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--rz-border);
+  border-left: 1px solid var(--rz-border);
+}
+
+.grid > * {
+  border-right: 1px solid var(--rz-border);
+  border-bottom: 1px solid var(--rz-border);
+}
+
+/* The rest of the set, stated rather than drawn: one full-width CTA that
+ * carries both the count and the link, instead of splitting them. */
+.more {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 32px;
+  padding: 22px 26px;
+  border: 1px solid var(--rz-border-strong);
+  border-radius: var(--rz-radius-control);
+  text-decoration: none;
+  transition: var(--rz-transition);
+}
+
+.more:hover {
+  border-color: var(--rz-accent);
+}
+
+.more:hover .moreCta {
+  color: var(--rz-accent);
+}
+
+.more:focus-visible {
+  outline: 2px solid var(--rz-accent);
+  outline-offset: 2px;
+}
+
+.moreIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--rz-radius-control);
+  background-color: var(--rz-surface-alt);
+  color: var(--rz-accent);
+}
+
+.moreText {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 0.9375rem;
+  --rz-lh: 1.5;
+  color: var(--rz-text-secondary);
+}
+
+.moreCta {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--rz-text);
+  transition: var(--rz-transition);
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .more {
+    flex-wrap: wrap;
+  }
+
+  .moreText {
+    max-width: none;
+  }
+
+  .moreCta {
+    margin-left: 54px;
+  }
+}

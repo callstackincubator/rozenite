@@ -1,0 +1,51 @@
+/*
+ * Reserved slot for a product screenshot that does not exist yet. Deliberately
+ * NOT a mock of the product: no fake window chrome, no invented UI. It states
+ * what belongs here and holds the right amount of space so the surrounding
+ * layout is already final.
+ *
+ * To ship the real capture, replace the whole element with an <img> at the same
+ * aspect ratio.
+ */
+
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 32px;
+  background-color: var(--rz-surface-alt);
+  border: 1px dashed var(--rz-border-strong);
+  border-radius: var(--rz-radius-surface);
+}
+
+.caption {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+  color: var(--rz-text-secondary);
+}
+
+.label {
+  font-family: var(--rz-font-mono);
+  font-size: 0.6875rem;
+  --rz-ls: 0.08em;
+  text-transform: uppercase;
+  color: var(--rz-text-tertiary);
+}
+
+.what {
+  max-width: 36ch;
+  font-size: 0.9375rem;
+  --rz-lh: 1.55;
+}
+
+.ratioWide {
+  aspect-ratio: 16 / 10;
+}
+
+.ratioSquare {
+  aspect-ratio: 4 / 3;
+}

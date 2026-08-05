@@ -1,0 +1,65 @@
+.root {
+  font-family: var(--rz-font-body);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--rz-text);
+  background-color: var(--rz-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/*
+ * The landing page owns its own typography. These resets keep host styles
+ * (Rspress today, whatever comes next) from leaking into the sections.
+ *
+ * The element list sits in :where() so each rule weighs exactly one class,
+ * enough to beat the host's element selectors, and low enough that component
+ * styles win on source order. `landing-page.tsx` imports this file first for
+ * that reason.
+ */
+.root :where(h1, h2, h3, h4, p, ul, ol, li, figure, figcaption, pre) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.root :where(a) {
+  color: inherit;
+  text-decoration: none;
+}
+
+.root :where(code, pre) {
+  font-family: var(--rz-font-mono);
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+.root :where(*, *::before, *::after) {
+  box-sizing: border-box;
+}
+
+.root :where(img, svg) {
+  display: block;
+  max-width: 100%;
+}
+
+/*
+ * Line height and letter spacing are special.
+ *
+ * The docs theme sets both with !important on `body *`, and !important always
+ * beats a normal declaration no matter how specific it is. So the landing page
+ * claims those two properties once, here, at a specificity the host rule cannot
+ * reach, and reads the actual values from two custom properties.
+ *
+ * Components therefore set `--rz-lh` and `--rz-ls` instead of `line-height` and
+ * `letter-spacing`. Everything else is ordinary CSS.
+ *
+ * Both custom properties inherit, so set them on the element that renders the
+ * text, never on a wrapper: a container that sets --rz-lh hands it to its whole
+ * subtree.
+ */
+.root :where(*) {
+  line-height: var(--rz-lh, 1.5) !important;
+  letter-spacing: var(--rz-ls, -0.004em) !important;
+}

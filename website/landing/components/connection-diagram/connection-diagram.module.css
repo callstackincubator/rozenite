@@ -1,0 +1,213 @@
+.root {
+  margin: 0;
+  padding: 76px 40px 40px;
+  background-color: var(--rz-bg-subtle);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-surface);
+}
+
+/*
+ * Endpoint, link, endpoint. Items align to the start so the line can be pushed
+ * down to meet the centre of the marks rather than the centre of the columns,
+ * which the labels below would otherwise drag out of true.
+ */
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(64px, 1.05fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: 18px;
+  background-color: var(--rz-bg);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-surface);
+  color: var(--rz-text);
+}
+
+.label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  --rz-lh: 1.4;
+}
+
+.meta {
+  margin-top: 5px;
+  font-family: var(--rz-font-mono);
+  font-size: 0.75rem;
+  color: var(--rz-text-tertiary);
+}
+
+/* 44px is half the mark, so the line lands on its centre. */
+.connector {
+  position: relative;
+  height: 1px;
+  margin-top: 44px;
+  background-color: var(--rz-border-strong);
+}
+
+.pulse {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  animation-duration: 2.8s;
+  animation-timing-function: cubic-bezier(0.45, 0, 0.25, 1);
+  animation-iteration-count: infinite;
+}
+
+/* The resting state, and the whole of it when motion is turned down. */
+.pulseForward {
+  left: 34%;
+  background-color: var(--rz-accent);
+}
+
+.pulseBack {
+  left: 66%;
+  background-color: var(--rz-text-tertiary);
+}
+
+.caption {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rz-border);
+  font-family: var(--rz-font-mono);
+  font-size: 0.75rem;
+  --rz-ls: 0.04em;
+  text-align: center;
+  color: var(--rz-text-tertiary);
+}
+
+/* --- Motion ------------------------------------------------------------- */
+
+@keyframes travelRight {
+  0% {
+    left: 0%;
+    opacity: 0;
+  }
+  14%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes travelLeft {
+  0% {
+    left: 100%;
+    opacity: 0;
+  }
+  14%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    left: 0%;
+    opacity: 0;
+  }
+}
+
+@keyframes travelDown {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  14%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes travelUp {
+  0% {
+    top: 100%;
+    opacity: 0;
+  }
+  14%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    top: 0%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pulseForward {
+    animation-name: travelRight;
+  }
+
+  .pulseBack {
+    animation-name: travelLeft;
+    animation-delay: 1.4s;
+  }
+}
+
+/* --- Stacked ------------------------------------------------------------ */
+
+/*
+ * Below this the three columns squeeze the labels into two or three words per
+ * line, so the diagram turns vertical and the link with it.
+ */
+@media (max-width: 540px) {
+  .root {
+    padding: 40px 24px 32px;
+  }
+
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .connector {
+    justify-self: center;
+    width: 1px;
+    height: 52px;
+    margin-top: 0;
+  }
+
+  .pulse {
+    top: auto;
+    left: 50%;
+  }
+
+  .pulseForward {
+    top: 34%;
+  }
+
+  .pulseBack {
+    top: 66%;
+  }
+}
+
+@media (max-width: 540px) and (prefers-reduced-motion: no-preference) {
+  .pulseForward {
+    animation-name: travelDown;
+  }
+
+  .pulseBack {
+    animation-name: travelUp;
+  }
+}

@@ -1,0 +1,83 @@
+/*
+ * The section headline and the terminal sample share the top line: copy on the
+ * left, the command that produces it on the right. Below the fold line, the
+ * capabilities run as a sparse three-up.
+ */
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 48px;
+  align-items: center;
+  margin-bottom: 56px;
+}
+
+/* The header sits in a grid cell now, so it drops its own stacking margin.
+ * The docs link joins it in the same column, right under the body copy. */
+.headerCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.header {
+  max-width: 46ch;
+  margin-bottom: 0;
+}
+
+.sample {
+  min-width: 0;
+}
+
+.capabilities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 36px 48px;
+  padding-top: 36px;
+  border-top: 1px solid var(--rz-border);
+}
+
+.capability {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.capabilityIcon {
+  color: var(--rz-accent);
+}
+
+.capabilityLabel {
+  margin: 0;
+  font-family: var(--rz-font-display);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  --rz-ls: -0.015em;
+  --rz-lh: 1.3;
+}
+
+.capabilityBody {
+  margin: 0;
+  font-size: 0.9375rem;
+  --rz-lh: 1.55;
+  color: var(--rz-text-secondary);
+}
+
+/* The terminal needs the full measure before the copy does, so it wraps first. */
+@media (max-width: 1024px) {
+  .top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  .header {
+    max-width: 62ch;
+  }
+}
+
+@media (max-width: 900px) {
+  .capabilities {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}
