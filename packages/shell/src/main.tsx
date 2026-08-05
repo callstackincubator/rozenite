@@ -7,6 +7,7 @@ import './styles.css';
 function App() {
   const [configuration, setConfiguration] = useState<ShellConfiguration>({
     plugins: [],
+    destroyOnDetachPlugins: [],
   });
 
   useEffect(() => {
@@ -25,7 +26,7 @@ function App() {
     return () => window.removeEventListener('message', receiveConfiguration);
   }, []);
 
-  return <Shell plugins={configuration.plugins} />;
+  return <Shell {...configuration} />;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);

@@ -8,11 +8,15 @@ import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
 
-export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
+export function Shell({
+  plugins,
+  destroyOnDetachPlugins,
+  runtimeVersion,
+}: ShellConfiguration) {
   const [selection, setSelection] = useState<ShellSelection>(() =>
     getInitialSelection(plugins),
   );
-  const contentFrame = useRef<HTMLIFrameElement>(null);
+  const contentFrames = useRef(new Map<string, HTMLIFrameElement>());
 
   useEffect(() => {
     setSelection((current) => {
@@ -32,21 +36,25 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
   }, [plugins]);
 
   useEffect(() => {
-    const forwardToActivePanel = (event: MessageEvent) => {
-      const activeFrame = contentFrame.current;
-
+    const forwardToPanels = (event: MessageEvent) => {
       if (event.source === window.parent) {
-        activeFrame?.contentWindow?.postMessage(event.data, '*');
+        for (const frame of contentFrames.current.values()) {
+          frame.contentWindow?.postMessage(event.data, '*');
+        }
         return;
       }
 
-      if (event.source === activeFrame?.contentWindow) {
+      if (
+        [...contentFrames.current.values()].some(
+          (frame) => event.source === frame.contentWindow,
+        )
+      ) {
         window.parent.postMessage(event.data, '*');
       }
     };
 
-    window.addEventListener('message', forwardToActivePanel);
-    return () => window.removeEventListener('message', forwardToActivePanel);
+    window.addEventListener('message', forwardToPanels);
+    return () => window.removeEventListener('message', forwardToPanels);
   }, []);
 
   const activePlugin = useMemo(
@@ -55,6 +63,10 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
   );
   const activePanel = activePlugin?.panels.find(
     (panel) => panel.id === selection?.panelId,
+  );
+  const destroyedPluginIds = new Set(destroyOnDetachPlugins);
+  const panels = plugins.flatMap((plugin) =>
+    plugin.panels.map((panel) => ({ plugin, panel })),
   );
   const selectPanel = (plugin: ShellPlugin, panel: ShellPanel) => {
     setSelection({ pluginId: plugin.id, panelId: panel.id });
@@ -132,12 +144,30 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
           <NewVersionFooter currentVersion={runtimeVersion} />
         </Sidebar>
         <div className="min-w-0 flex-1">
-          <iframe
-            key={`${activePlugin.id}:${activePanel.id}`}
-            ref={contentFrame}
-            title={`${activePlugin.name}: ${activePanel.name}`}
-            src={activePanel.source}
-          />
+          {panels.map(({ plugin, panel }) => {
+            const isActive = panel.id === activePanel.id;
+            const shouldDestroy = destroyedPluginIds.has(plugin.id);
+
+            if (shouldDestroy && !isActive) {
+              return null;
+            }
+
+            return (
+              <iframe
+                key={panel.id}
+                ref={(frame) => {
+                  if (frame) {
+                    contentFrames.current.set(panel.id, frame);
+                  } else {
+                    contentFrames.current.delete(panel.id);
+                  }
+                }}
+                hidden={!isActive}
+                title={`${plugin.name}: ${panel.name}`}
+                src={panel.source}
+              />
+            );
+          })}
         </div>
       </PluginShell.Body>
     </PluginShell>
