@@ -1,5 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
-import type { ColumnDef, OnChangeFn, SortingState } from '@tanstack/react-table';
+import type {
+  ColumnDef,
+  OnChangeFn,
+  SortingState,
+} from '@tanstack/react-table';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
   Badge,
@@ -14,7 +18,15 @@ import {
   VirtualizedDataTable,
 } from '@rozenite/ui';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { Database, Download, Edit3, Plus, RefreshCw, Trash2, Upload } from 'lucide-react';
+import {
+  Database,
+  Download,
+  Edit3,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import type {
   StorageDiscoverStoragesResponseEvent,
   StorageEventMap,
@@ -73,7 +85,9 @@ const useDebouncedValue = (value: string, delay = 250) => {
 
 function StoragePanelContent() {
   const [descriptors, setDescriptors] = useState<StorageDescriptor[]>([]);
-  const [selectedTarget, setSelectedTarget] = useState<StorageTarget | null>(null);
+  const [selectedTarget, setSelectedTarget] = useState<StorageTarget | null>(
+    null,
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [keySortDirection, setKeySortDirection] = useState<
     'ascending' | 'descending'
@@ -85,9 +99,13 @@ function StoragePanelContent() {
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
   const [virtualListVersion, setVirtualListVersion] = useState(0);
   const [exportState, setExportState] = useState<
-    { status: 'idle' } | { status: 'loading' } | { status: 'error'; message: string }
+    | { status: 'idle' }
+    | { status: 'loading' }
+    | { status: 'error'; message: string }
   >({ status: 'idle' });
-  const [importFlight, setImportFlight] = useState<ImportFlightState | null>(null);
+  const [importFlight, setImportFlight] = useState<ImportFlightState | null>(
+    null,
+  );
   const [alertState, setAlertState] = useState<AlertState | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const selectedTargetRef = useRef<StorageTarget | null>(null);
@@ -104,7 +122,8 @@ function StoragePanelContent() {
   const queryClient = useQueryClient();
   const debouncedSearch = useDebouncedValue(searchTerm);
   const selectedDescriptor = descriptors.find(
-    (descriptor) => selectedTarget && sameTarget(descriptor.target, selectedTarget),
+    (descriptor) =>
+      selectedTarget && sameTarget(descriptor.target, selectedTarget),
   );
   const previews = useStorageEntryPreviews({
     client,
@@ -148,10 +167,14 @@ function StoragePanelContent() {
     const descriptorsSubscription = client.onMessage(
       'storage-descriptors',
       (event: StorageDiscoverStoragesResponseEvent) => {
-        if (event.requestId !== `discovery-${discoveryRequestIdRef.current}`) return;
+        if (event.requestId !== `discovery-${discoveryRequestIdRef.current}`)
+          return;
         setDescriptors(event.storages);
         setSelectedTarget((previous) =>
-          previous && event.storages.some((descriptor) => sameTarget(descriptor.target, previous))
+          previous &&
+          event.storages.some((descriptor) =>
+            sameTarget(descriptor.target, previous),
+          )
             ? previous
             : (event.storages[0]?.target ?? null),
         );
@@ -187,12 +210,16 @@ function StoragePanelContent() {
             previous?.phase !== 'importing' ||
             previous.requestId !== event.requestId ||
             !sameTarget(previous.target, event.target)
-          ) return previous;
+          )
+            return previous;
           return event.ok
             ? { phase: 'result', ok: true, written: event.written }
             : {
-                phase: 'result', ok: false, written: event.written,
-                total: event.total, failedKey: event.failedKey,
+                phase: 'result',
+                ok: false,
+                written: event.written,
+                total: event.total,
+                failedKey: event.failedKey,
                 error: event.error ?? 'Unknown error',
               };
         });
@@ -240,29 +267,56 @@ function StoragePanelContent() {
   };
 
   const handleValueChange = (key: string, newValue: StorageEntryValue) => {
-    if (!client || !selectedTarget || !supportedTypes.includes(getEntryTypeFromValue(newValue))) return;
+    if (
+      !client ||
+      !selectedTarget ||
+      !supportedTypes.includes(getEntryTypeFromValue(newValue))
+    )
+      return;
     const type = getEntryTypeFromValue(newValue);
     const entry =
-      type === 'string' ? { key, type, value: newValue as string } :
-      type === 'number' ? { key, type, value: newValue as number } :
-      type === 'boolean' ? { key, type, value: newValue as boolean } :
-      { key, type, value: newValue as number[] };
-    mutateSelectedStorage(() => client.send('set-entry', { type: 'set-entry', target: selectedTarget, entry }));
+      type === 'string'
+        ? { key, type, value: newValue as string }
+        : type === 'number'
+          ? { key, type, value: newValue as number }
+          : type === 'boolean'
+            ? { key, type, value: newValue as boolean }
+            : { key, type, value: newValue as number[] };
+    mutateSelectedStorage(() =>
+      client.send('set-entry', {
+        type: 'set-entry',
+        target: selectedTarget,
+        entry,
+      }),
+    );
   };
 
   const handleAddEntry = (entry: StorageEntry) => {
     if (!client || !selectedTarget) return;
-    mutateSelectedStorage(() => client.send('set-entry', { type: 'set-entry', target: selectedTarget, entry }));
+    mutateSelectedStorage(() =>
+      client.send('set-entry', {
+        type: 'set-entry',
+        target: selectedTarget,
+        entry,
+      }),
+    );
   };
 
   const handleDeleteEntry = () => {
     if (!client || !selectedTarget || !deleteKey) return;
     const key = deleteKey;
     setDeleteKey(null);
-    mutateSelectedStorage(() => client.send('delete-entry', { type: 'delete-entry', target: selectedTarget, key }));
+    mutateSelectedStorage(() =>
+      client.send('delete-entry', {
+        type: 'delete-entry',
+        target: selectedTarget,
+        key,
+      }),
+    );
   };
 
-  const showAlert = (title: string, message: string) => setAlertState({ title, message });
+  const showAlert = (title: string, message: string) =>
+    setAlertState({ title, message });
 
   const handleImportClick = () => {
     if (fileInputRef.current) {
@@ -278,12 +332,18 @@ function StoragePanelContent() {
     try {
       raw = JSON.parse(await file.text());
     } catch (error) {
-      showAlert('Could not read file', error instanceof Error ? error.message : String(error));
+      showAlert(
+        'Could not read file',
+        error instanceof Error ? error.message : String(error),
+      );
       return;
     }
     const parsed = parseSnapshot(raw);
     if (!parsed.ok) {
-      showAlert('Invalid snapshot', `${parsed.error.path}: ${parsed.error.message}`);
+      showAlert(
+        'Invalid snapshot',
+        `${parsed.error.path}: ${parsed.error.message}`,
+      );
       return;
     }
     importPreviewAbortControllerRef.current?.abort();
@@ -292,22 +352,42 @@ function StoragePanelContent() {
     const target = selectedTarget;
     try {
       const response = await client.request({
-        requestType: 'preview-import', responseType: 'import-preview', errorType: 'storage-request-error',
-        payload: { type: 'preview-import', target, snapshot: parsed.snapshot }, signal: controller.signal,
+        requestType: 'preview-import',
+        responseType: 'import-preview',
+        errorType: 'storage-request-error',
+        payload: { type: 'preview-import', target, snapshot: parsed.snapshot },
+        signal: controller.signal,
       });
-      if (controller.signal.aborted || !sameTarget(target, selectedTargetRef.current ?? target)) return;
+      if (
+        controller.signal.aborted ||
+        !sameTarget(target, selectedTargetRef.current ?? target)
+      )
+        return;
       setImportFlight({
-        phase: 'preview', target,
-        targetLabel: selectedDescriptor ? `${selectedDescriptor.adapterName} / ${selectedDescriptor.storageName}` : 'selected storage',
-        snapshot: parsed.snapshot, preview: response.preview,
-        entriesToWrite: response.preview.acceptedEntryIndexes.map((index) => parsed.snapshot.entries[index]),
+        phase: 'preview',
+        target,
+        targetLabel: selectedDescriptor
+          ? `${selectedDescriptor.adapterName} / ${selectedDescriptor.storageName}`
+          : 'selected storage',
+        snapshot: parsed.snapshot,
+        preview: response.preview,
+        entriesToWrite: response.preview.acceptedEntryIndexes.map(
+          (index) => parsed.snapshot.entries[index],
+        ),
       });
     } catch {
-      if (!controller.signal.aborted && sameTarget(target, selectedTargetRef.current ?? target)) {
-        showAlert('Could not preview import', 'Could not inspect the selected storage. Please try again.');
+      if (
+        !controller.signal.aborted &&
+        sameTarget(target, selectedTargetRef.current ?? target)
+      ) {
+        showAlert(
+          'Could not preview import',
+          'Could not inspect the selected storage. Please try again.',
+        );
       }
     } finally {
-      if (importPreviewAbortControllerRef.current === controller) importPreviewAbortControllerRef.current = null;
+      if (importPreviewAbortControllerRef.current === controller)
+        importPreviewAbortControllerRef.current = null;
     }
   };
 
@@ -315,8 +395,19 @@ function StoragePanelContent() {
     if (!client || importFlight?.phase !== 'preview') return;
     const requestId = `import-${++importRequestIdRef.current}`;
     activeImportRequestIdRef.current = requestId;
-    client.send('import-entries', { type: 'import-entries', requestId, target: importFlight.target, entries: importFlight.entriesToWrite });
-    setImportFlight({ phase: 'importing', requestId, target: importFlight.target, total: importFlight.entriesToWrite.length, written: 0 });
+    client.send('import-entries', {
+      type: 'import-entries',
+      requestId,
+      target: importFlight.target,
+      entries: importFlight.entriesToWrite,
+    });
+    setImportFlight({
+      phase: 'importing',
+      requestId,
+      target: importFlight.target,
+      total: importFlight.entriesToWrite.length,
+      written: 0,
+    });
   };
 
   const handleExport = async () => {
@@ -327,85 +418,358 @@ function StoragePanelContent() {
     setExportState({ status: 'loading' });
     try {
       const response = await client.request({
-        requestType: 'export-snapshot', responseType: 'export-snapshot-result', errorType: 'storage-request-error',
-        payload: { type: 'export-snapshot', target }, signal: controller.signal,
+        requestType: 'export-snapshot',
+        responseType: 'export-snapshot-result',
+        errorType: 'storage-request-error',
+        payload: { type: 'export-snapshot', target },
+        signal: controller.signal,
       });
-      if (!controller.signal.aborted && sameTarget(target, selectedTargetRef.current ?? target)) {
+      if (
+        !controller.signal.aborted &&
+        sameTarget(target, selectedTargetRef.current ?? target)
+      ) {
         downloadJson(response.snapshot, buildExportFilename(target));
         setExportState({ status: 'idle' });
       }
     } catch {
-      if (!controller.signal.aborted && sameTarget(target, selectedTargetRef.current ?? target)) {
-        setExportState({ status: 'error', message: 'Could not export the selected storage. Please try again.' });
+      if (
+        !controller.signal.aborted &&
+        sameTarget(target, selectedTargetRef.current ?? target)
+      ) {
+        setExportState({
+          status: 'error',
+          message: 'Could not export the selected storage. Please try again.',
+        });
       }
     } finally {
-      if (exportAbortControllerRef.current === controller) exportAbortControllerRef.current = null;
+      if (exportAbortControllerRef.current === controller)
+        exportAbortControllerRef.current = null;
     }
   };
 
   const columns = useMemo<ColumnDef<StorageEntryPreview>[]>(
     () => [
-      { id: 'key', accessorKey: 'key', header: 'Key', enableSorting: true, cell: ({ row }) => <span className="font-mono text-sm text-foreground">{row.original.key}</span> },
-      { id: 'type', accessorKey: 'type', header: 'Type', enableSorting: false, cell: ({ row }) => <Badge variant="outline">{row.original.type}</Badge> },
-      { id: 'preview', accessorKey: 'preview', header: 'Value', enableSorting: false, cell: ({ row }) => <div className="min-w-0"><span className="break-all font-mono text-sm text-foreground">{row.original.preview}</span><span className="ml-2 text-xs text-muted-foreground" title={row.original.isTruncated ? `Full value size: ${row.original.valueSize}` : undefined}>{row.original.isTruncated ? `truncated · ${row.original.valueSize}` : row.original.valueSize}</span></div> },
-      { id: 'actions', header: '', enableSorting: false, cell: ({ row }) => <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}><Button variant="ghost" size="icon" onClick={() => setInteraction({ key: row.original.key, mode: 'edit' })} aria-label={`Edit value for ${row.original.key}`}><Edit3 className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteKey(row.original.key)} aria-label={`Delete entry ${row.original.key}`}><Trash2 className="h-3.5 w-3.5" /></Button></div> },
+      {
+        id: 'key',
+        accessorKey: 'key',
+        header: 'Key',
+        enableSorting: true,
+        cell: ({ row }) => (
+          <span className="font-mono text-sm text-foreground">
+            {row.original.key}
+          </span>
+        ),
+      },
+      {
+        id: 'type',
+        accessorKey: 'type',
+        header: 'Type',
+        enableSorting: false,
+        cell: ({ row }) => <Badge variant="outline">{row.original.type}</Badge>,
+      },
+      {
+        id: 'preview',
+        accessorKey: 'preview',
+        header: 'Value',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <span className="break-all font-mono text-sm text-foreground">
+              {row.original.preview}
+            </span>
+            <span
+              className="ml-2 text-xs text-muted-foreground"
+              title={
+                row.original.isTruncated
+                  ? `Full value size: ${row.original.valueSize}`
+                  : undefined
+              }
+            >
+              {row.original.isTruncated
+                ? `truncated · ${row.original.valueSize}`
+                : row.original.valueSize}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div
+            className="flex items-center gap-1"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                setInteraction({ key: row.original.key, mode: 'edit' })
+              }
+              aria-label={`Edit value for ${row.original.key}`}
+            >
+              <Edit3 className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => setDeleteKey(row.original.key)}
+              aria-label={`Delete entry ${row.original.key}`}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ),
+      },
     ],
     [],
   );
-  const sorting: SortingState = [{ id: 'key', desc: keySortDirection === 'descending' }];
+  const sorting: SortingState = [
+    { id: 'key', desc: keySortDirection === 'descending' },
+  ];
   const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
     const next = typeof updater === 'function' ? updater(sorting) : updater;
     const keySort = next.find((item) => item.id === 'key');
     if (keySort) setKeySortDirection(keySort.desc ? 'descending' : 'ascending');
   };
   const fetchNextPage = () => {
-    if (!previews.hasNextPage || previews.isFetching || previews.isFetchingNextPage || isFetchingNextPageRef.current) return;
+    if (
+      !previews.hasNextPage ||
+      previews.isFetching ||
+      previews.isFetchingNextPage ||
+      isFetchingNextPageRef.current
+    )
+      return;
     isFetchingNextPageRef.current = true;
-    void previews.fetchNextPage().finally(() => { isFetchingNextPageRef.current = false; });
+    void previews.fetchNextPage().finally(() => {
+      isFetchingNextPageRef.current = false;
+    });
   };
   const fetchPreviousPage = () => {
-    if (!previews.hasPreviousPage || previews.isFetching || previews.isFetchingPreviousPage || isFetchingPreviousPageRef.current) return;
+    if (
+      !previews.hasPreviousPage ||
+      previews.isFetching ||
+      previews.isFetchingPreviousPage ||
+      isFetchingPreviousPageRef.current
+    )
+      return;
     isFetchingPreviousPageRef.current = true;
-    void previews.fetchPreviousPage().finally(() => { isFetchingPreviousPageRef.current = false; });
+    void previews.fetchPreviousPage().finally(() => {
+      isFetchingPreviousPageRef.current = false;
+    });
   };
-  const selectedStorageViewId = selectedTarget ? getStorageViewId(selectedTarget) : '';
+  const selectedStorageViewId = selectedTarget
+    ? getStorageViewId(selectedTarget)
+    : '';
 
-  return <PluginShell>
-    <PluginShell.Body>
-      <Split direction="horizontal" autoSaveId="storage">
-        <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
-          <Sidebar className="w-full border-r-0">
-            {sidebarGroups.length === 0 ? <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-sidebar-foreground/60">Waiting for storages…</div> : sidebarGroups.map((group) => <Sidebar.Group key={group.adapterId} label={group.adapterName}>{group.items.map((item) => <Sidebar.Item key={item.viewId} selected={item.viewId === selectedStorageViewId} trailing={<Badge variant="secondary">{item.entryCount}</Badge>} onClick={() => {
-              const descriptor = descriptors.find((candidate) => getStorageViewId(candidate.target) === item.viewId);
-              if (descriptor) setSelectedTarget(descriptor.target);
-            }}>{item.storageName}</Sidebar.Item>)}</Sidebar.Group>)}
-          </Sidebar>
-        </Split.Pane>
-        <Split.Handle />
-        <Split.Pane>
-          <div className="flex h-full min-h-0 flex-col">
-            <Toolbar><Toolbar.Group>
-              <Toolbar.Button onClick={() => setShowAddDialog(true)} disabled={!selectedDescriptor}><Plus className="h-3.5 w-3.5" />Add Entry</Toolbar.Button>
-              <Toolbar.Button onClick={() => void refreshSelectedStorage()} disabled={!selectedTarget || previews.isFetching}><RefreshCw className="h-3.5 w-3.5" />Refresh</Toolbar.Button>
-              <Toolbar.Button onClick={handleImportClick} disabled={!selectedDescriptor}><Upload className="h-3.5 w-3.5" />Import</Toolbar.Button>
-              <Toolbar.Button onClick={handleExport} disabled={!client || !selectedTarget || exportState.status === 'loading'}><Download className="h-3.5 w-3.5" />{exportState.status === 'loading' ? 'Exporting...' : 'Export'}</Toolbar.Button>
-            </Toolbar.Group><Toolbar.Separator /><div className="min-w-40 flex-1"><SearchField placeholder="Search keys…" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} onClear={() => setSearchTerm('')} disabled={!selectedDescriptor} /></div>{exportState.status === 'error' ? <span role="alert" className="text-xs text-destructive">{exportState.message}</span> : null}<input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden" onChange={handleFileChange} /></Toolbar>
-            <div className="min-h-0 flex-1 overflow-auto">
-              {selectedDescriptor ? <VirtualizedDataTable key={virtualListVersion} ariaLabel="Storage entries" columns={columns} data={rows} getRowId={(entry) => entry.key} getRowTextValue={(entry) => entry.key} loading={previews.isLoading} emptyMessage={debouncedSearch ? 'No entries match your search.' : 'This storage is empty.'} manualSorting onEndReached={fetchNextPage} onRowClick={(entry) => setInteraction({ key: entry.key, mode: 'detail' })} onSortingChange={handleSortingChange} onStartReached={fetchPreviousPage} scrollClassName="h-full w-full overflow-auto" style={{ height: '100%' }} sorting={sorting} /> : <EmptyState icon={Database} title="No storage selected" description="Choose a storage from the sidebar to inspect its entries." />}
+  return (
+    <PluginShell>
+      <PluginShell.Body>
+        <Split direction="horizontal" autoSaveId="storage">
+          <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
+            <Sidebar className="w-full border-r-0">
+              {sidebarGroups.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-sidebar-foreground/60">
+                  Waiting for storages…
+                </div>
+              ) : (
+                sidebarGroups.map((group) => (
+                  <Sidebar.Group
+                    key={group.adapterId}
+                    label={group.adapterName}
+                  >
+                    {group.items.map((item) => (
+                      <Sidebar.Item
+                        key={item.viewId}
+                        selected={item.viewId === selectedStorageViewId}
+                        trailing={
+                          <Badge variant="secondary">{item.entryCount}</Badge>
+                        }
+                        onClick={() => {
+                          const descriptor = descriptors.find(
+                            (candidate) =>
+                              getStorageViewId(candidate.target) ===
+                              item.viewId,
+                          );
+                          if (descriptor) setSelectedTarget(descriptor.target);
+                        }}
+                      >
+                        {item.storageName}
+                      </Sidebar.Item>
+                    ))}
+                  </Sidebar.Group>
+                ))
+              )}
+            </Sidebar>
+          </Split.Pane>
+          <Split.Handle />
+          <Split.Pane>
+            <div className="flex h-full min-h-0 flex-col">
+              <Toolbar>
+                <Toolbar.Group>
+                  <Toolbar.Button
+                    onClick={() => setShowAddDialog(true)}
+                    disabled={!selectedDescriptor}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Entry
+                  </Toolbar.Button>
+                  <Toolbar.Button
+                    onClick={() => void refreshSelectedStorage()}
+                    disabled={!selectedTarget || previews.isFetching}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Refresh
+                  </Toolbar.Button>
+                  <Toolbar.Button
+                    onClick={handleImportClick}
+                    disabled={!selectedDescriptor}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Import
+                  </Toolbar.Button>
+                  <Toolbar.Button
+                    onClick={handleExport}
+                    disabled={
+                      !client ||
+                      !selectedTarget ||
+                      exportState.status === 'loading'
+                    }
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    {exportState.status === 'loading'
+                      ? 'Exporting...'
+                      : 'Export'}
+                  </Toolbar.Button>
+                </Toolbar.Group>
+                <Toolbar.Separator />
+                <div className="min-w-40 flex-1">
+                  <SearchField
+                    placeholder="Search keys…"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    onClear={() => setSearchTerm('')}
+                    disabled={!selectedDescriptor}
+                  />
+                </div>
+                {exportState.status === 'error' ? (
+                  <span role="alert" className="text-xs text-destructive">
+                    {exportState.message}
+                  </span>
+                ) : null}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </Toolbar>
+              <div className="min-h-0 flex-1 overflow-auto">
+                {selectedDescriptor ? (
+                  <VirtualizedDataTable
+                    key={virtualListVersion}
+                    ariaLabel="Storage entries"
+                    columns={columns}
+                    data={rows}
+                    getRowId={(entry) => entry.key}
+                    getRowTextValue={(entry) => entry.key}
+                    loading={previews.isLoading}
+                    emptyMessage={
+                      debouncedSearch
+                        ? 'No entries match your search.'
+                        : 'This storage is empty.'
+                    }
+                    manualSorting
+                    onEndReached={fetchNextPage}
+                    onRowClick={(entry) =>
+                      setInteraction({ key: entry.key, mode: 'detail' })
+                    }
+                    onSortingChange={handleSortingChange}
+                    onStartReached={fetchPreviousPage}
+                    scrollClassName="h-full w-full overflow-auto"
+                    style={{ height: '100%' }}
+                    sorting={sorting}
+                  />
+                ) : (
+                  <EmptyState
+                    icon={Database}
+                    title="No storage selected"
+                    description="Choose a storage from the sidebar to inspect its entries."
+                  />
+                )}
+              </div>
             </div>
-          </div>
-        </Split.Pane>
-      </Split>
-    </PluginShell.Body>
-    <AddEntryDialog isOpen={showAddDialog} onClose={() => setShowAddDialog(false)} onAddEntry={handleAddEntry} existingKeys={rows.map((entry) => entry.key)} supportedTypes={supportedTypes} />
-    <EntryDetailDialog open={interaction?.mode === 'detail' && fullEntry.entry != null} onOpenChange={(open) => { if (!open) closeInteraction(); }} onEdit={() => setInteraction((current) => current ? { ...current, mode: 'edit' } : current)} entry={fullEntry.entry ?? null} />
-    <EditEntryDialog isOpen={interaction?.mode === 'edit' && fullEntry.entry != null} onClose={closeInteraction} onEditEntry={handleValueChange} entry={fullEntry.entry ?? null} supportedTypes={supportedTypes} />
-    <ImportDialog state={importFlight} onApply={handleApplyImport} onCancel={() => setImportFlight(null)} onClose={() => setImportFlight(null)} />
-    <ConfirmDialog open={deleteKey !== null} onOpenChange={(open) => { if (!open) setDeleteKey(null); }} variant="confirm" destructive title="Delete Entry" description={deleteKey ? `Are you sure you want to delete the entry "${deleteKey}"?` : undefined} confirmLabel="Delete" onConfirm={handleDeleteEntry} />
-    <ConfirmDialog open={alertState !== null} onOpenChange={(open) => { if (!open) setAlertState(null); }} variant="alert" title={alertState?.title ?? ''} description={alertState?.message} />
-  </PluginShell>;
+          </Split.Pane>
+        </Split>
+      </PluginShell.Body>
+      <AddEntryDialog
+        isOpen={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onAddEntry={handleAddEntry}
+        existingKeys={rows.map((entry) => entry.key)}
+        supportedTypes={supportedTypes}
+      />
+      <EntryDetailDialog
+        open={interaction?.mode === 'detail' && fullEntry.entry != null}
+        onOpenChange={(open) => {
+          if (!open) closeInteraction();
+        }}
+        onEdit={() =>
+          setInteraction((current) =>
+            current ? { ...current, mode: 'edit' } : current,
+          )
+        }
+        entry={fullEntry.entry ?? null}
+      />
+      <EditEntryDialog
+        isOpen={interaction?.mode === 'edit' && fullEntry.entry != null}
+        onClose={closeInteraction}
+        onEditEntry={handleValueChange}
+        entry={fullEntry.entry ?? null}
+        supportedTypes={supportedTypes}
+      />
+      <ImportDialog
+        state={importFlight}
+        onApply={handleApplyImport}
+        onCancel={() => setImportFlight(null)}
+        onClose={() => setImportFlight(null)}
+      />
+      <ConfirmDialog
+        open={deleteKey !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteKey(null);
+        }}
+        variant="confirm"
+        destructive
+        title="Delete Entry"
+        description={
+          deleteKey
+            ? `Are you sure you want to delete the entry "${deleteKey}"?`
+            : undefined
+        }
+        confirmLabel="Delete"
+        onConfirm={handleDeleteEntry}
+      />
+      <ConfirmDialog
+        open={alertState !== null}
+        onOpenChange={(open) => {
+          if (!open) setAlertState(null);
+        }}
+        variant="alert"
+        title={alertState?.title ?? ''}
+        description={alertState?.message}
+      />
+    </PluginShell>
+  );
 }
 
 export default function StoragePanel() {
-  return <StorageQueryClientProvider><StoragePanelContent /></StorageQueryClientProvider>;
+  return (
+    <StorageQueryClientProvider>
+      <StoragePanelContent />
+    </StorageQueryClientProvider>
+  );
 }
