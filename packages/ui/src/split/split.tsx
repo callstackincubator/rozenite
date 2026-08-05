@@ -95,13 +95,13 @@ export type SplitHandleProps = {
   style?: CSSProperties;
   children?: ReactNode;
   disabled?: boolean;
-  /** Renders a grip affordance in the middle of the handle. */
+  /** Renders an optional grip affordance in the middle of the separator. */
   withHandle?: boolean;
 };
 
 function SplitHandle({
   className,
-  withHandle = true,
+  withHandle = false,
   children,
   ...props
 }: SplitHandleProps) {
@@ -109,13 +109,12 @@ function SplitHandle({
     <Separator
       data-slot="split-handle"
       className={cn(
-        // A horizontal Split renders a vertical (left/right) separator, and
-        // vice versa — aria-orientation reflects the separator's own axis.
-        'group/split-handle relative flex aria-[orientation=vertical]:w-px aria-[orientation=horizontal]:h-px',
-        'items-center justify-center bg-border',
-        'hover:bg-ring/50 data-[active]:bg-ring',
+        // Match shadcn's ResizableHandle: the one-pixel separator is the only
+        // visible affordance unless callers explicitly opt into a grip.
+        'group/split-handle relative flex items-center justify-center bg-border',
+        'aria-[orientation=vertical]:w-px aria-[orientation=horizontal]:h-px',
+        'after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-        'transition-colors',
         className,
       )}
       {...props}
@@ -123,7 +122,7 @@ function SplitHandle({
       {withHandle && (
         <div
           className={cn(
-            'z-10 flex items-center justify-center rounded-sm border border-border bg-border',
+            'z-10 flex items-center justify-center rounded-sm border border-border bg-background',
             // `aria-orientation` lives on the Separator, so these read it from
             // the parent rather than from the grip itself.
             'group-aria-[orientation=vertical]/split-handle:h-4 group-aria-[orientation=vertical]/split-handle:w-3',
