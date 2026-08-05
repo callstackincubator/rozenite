@@ -30,9 +30,7 @@
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "@types/react": "catalog:",
-    "autoprefixer": "^10.4.21",
     "lucide-react": "^0.263.1",
-    "postcss": "^8.5.6",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-json-tree": "^0.20.0",
@@ -43,8 +41,6 @@
     "react-native-nitro-modules": "*",
     "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
-    "tailwindcss": "^3.4.17",
-    "tailwindcss-animate": "^1.0.7",
     "typescript": "~5.9.3",
     "vite": "catalog:"
   },
