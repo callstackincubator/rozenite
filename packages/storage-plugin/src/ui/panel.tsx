@@ -1,6 +1,21 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, Plus, Search, Upload } from 'lucide-react';
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DataTableEditableCell,
+  EmptyState,
+  PluginHeader,
+  PluginShell,
+  SearchField,
+  Sidebar,
+  Split,
+  Toolbar,
+  type DataTableColumn,
+} from '@rozenite/ui';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Database, Download, Edit3, Plus, Trash2, Upload } from 'lucide-react';
 import type {
   StorageDeleteEntryEvent,
   StorageEventMap,
@@ -20,12 +35,16 @@ import {
   computePreview,
   parseSnapshot,
 } from '../shared/snapshot';
-import { EditableTable } from './editable-table';
+import {
+  buildStorageSidebarGroups,
+  parseStorageViewId,
+  type StorageSnapshotEntry,
+} from './storage-groups';
 import { AddEntryDialog } from './add-entry-dialog';
-import { EntryDetailDialog } from './entry-detail-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
-import { ConfirmDialog } from './confirm-dialog';
+import { EntryDetailDialog } from './entry-detail-dialog';
 import { ImportDialog, type ImportFlightState } from './import-dialog';
+import { formatValue } from './format-value';
 import { buildExportFilename, downloadJson } from './utils';
 import './globals.css';
 
@@ -39,9 +58,12 @@ type StorageSnapshotState = {
 };
 
 type AlertState = {
-  isOpen: boolean;
   title: string;
   message: string;
+};
+
+type DeleteConfirmState = {
+  key: string;
 };
 
 const sameTarget = (a: StorageTarget, b: StorageTarget) =>
@@ -82,11 +104,10 @@ export default function StoragePanel() {
   const [importFlight, setImportFlight] = useState<ImportFlightState | null>(
     null,
   );
-  const [alertState, setAlertState] = useState<AlertState>({
-    isOpen: false,
-    title: '',
-    message: '',
-  });
+  const [alertState, setAlertState] = useState<AlertState | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const client = useRozeniteDevToolsClient<StorageEventMap>({
@@ -236,8 +257,8 @@ export default function StoragePanel() {
       return;
     }
 
-    const separatorIndex = selectedStorageViewId.indexOf(':');
-    if (separatorIndex < 0) {
+    const target = parseStorageViewId(selectedStorageViewId);
+    if (!target) {
       console.warn(
         `[Rozenite] Storage Plugin: Invalid storage view id "${selectedStorageViewId}".`,
       );
@@ -245,16 +266,10 @@ export default function StoragePanel() {
       return;
     }
 
-    const adapterId = selectedStorageViewId.slice(0, separatorIndex);
-    const storageId = selectedStorageViewId.slice(separatorIndex + 1);
-
     setLoading(true);
     client.send('get-snapshot', {
       type: 'get-snapshot',
-      target: {
-        adapterId,
-        storageId,
-      },
+      target,
     });
   }, [client, selectedStorageViewId, snapshots]);
 
@@ -274,62 +289,81 @@ export default function StoragePanel() {
 
   const supportedTypes = selectedStorage?.capabilities.supportedTypes ?? [];
 
-  const updateEntriesForSelectedStorage = (
-    mutate: (entries: StorageEntry[]) => StorageEntry[],
-  ) => {
-    if (!selectedStorageViewId) {
-      return;
+  const sidebarGroups = useMemo(() => {
+    const summary = new Map<string, StorageSnapshotEntry>();
+    for (const [viewId, snapshot] of snapshots) {
+      summary.set(viewId, {
+        target: snapshot.target,
+        adapterName: snapshot.adapterName,
+        storageName: snapshot.storageName,
+        entryCount: snapshot.entries.length,
+      });
     }
+    return buildStorageSidebarGroups(summary);
+  }, [snapshots]);
 
-    setSnapshots((previous) => {
-      const next = new Map(previous);
-      const current = next.get(selectedStorageViewId);
-
-      if (!current) {
-        return previous;
+  const updateEntriesForSelectedStorage = useCallback(
+    (mutate: (entries: StorageEntry[]) => StorageEntry[]) => {
+      if (!selectedStorageViewId) {
+        return;
       }
 
-      next.set(selectedStorageViewId, {
-        ...current,
-        entries: mutate(current.entries),
+      setSnapshots((previous) => {
+        const next = new Map(previous);
+        const current = next.get(selectedStorageViewId);
+
+        if (!current) {
+          return previous;
+        }
+
+        next.set(selectedStorageViewId, {
+          ...current,
+          entries: mutate(current.entries),
+        });
+
+        return next;
+      });
+    },
+    [selectedStorageViewId],
+  );
+
+  const handleValueChange = useCallback(
+    (key: string, newValue: StorageEntryValue) => {
+      if (!client || !selectedStorage) {
+        return;
+      }
+
+      const type = getEntryTypeFromValue(newValue);
+
+      if (!selectedStorage.capabilities.supportedTypes.includes(type)) {
+        return;
+      }
+
+      let updatedEntry: StorageEntry;
+      if (type === 'string') {
+        updatedEntry = { key, type: 'string', value: newValue as string };
+      } else if (type === 'number') {
+        updatedEntry = { key, type: 'number', value: newValue as number };
+      } else if (type === 'boolean') {
+        updatedEntry = { key, type: 'boolean', value: newValue as boolean };
+      } else {
+        updatedEntry = { key, type: 'buffer', value: newValue as number[] };
+      }
+
+      client.send('set-entry', {
+        type: 'set-entry',
+        target: selectedStorage.target,
+        entry: updatedEntry,
       });
 
-      return next;
-    });
-  };
-
-  const handleValueChange = (key: string, newValue: StorageEntryValue) => {
-    if (!client || !selectedStorage) {
-      return;
-    }
-
-    const type = getEntryTypeFromValue(newValue);
-
-    if (!selectedStorage.capabilities.supportedTypes.includes(type)) {
-      return;
-    }
-
-    let updatedEntry: StorageEntry;
-    if (type === 'string') {
-      updatedEntry = { key, type: 'string', value: newValue as string };
-    } else if (type === 'number') {
-      updatedEntry = { key, type: 'number', value: newValue as number };
-    } else if (type === 'boolean') {
-      updatedEntry = { key, type: 'boolean', value: newValue as boolean };
-    } else {
-      updatedEntry = { key, type: 'buffer', value: newValue as number[] };
-    }
-
-    client.send('set-entry', {
-      type: 'set-entry',
-      target: selectedStorage.target,
-      entry: updatedEntry,
-    });
-
-    updateEntriesForSelectedStorage((currentEntries) =>
-      currentEntries.map((entry) => (entry.key === key ? updatedEntry : entry)),
-    );
-  };
+      updateEntriesForSelectedStorage((currentEntries) =>
+        currentEntries.map((entry) =>
+          entry.key === key ? updatedEntry : entry,
+        ),
+      );
+    },
+    [client, selectedStorage, updateEntriesForSelectedStorage],
+  );
 
   const handleDeleteEntry = (key: string) => {
     if (!client || !selectedStorage) {
@@ -365,7 +399,7 @@ export default function StoragePanel() {
   };
 
   const showAlert = (title: string, message: string) =>
-    setAlertState({ isOpen: true, title, message });
+    setAlertState({ title, message });
 
   const handleImportClick = () => {
     if (!fileInputRef.current) return;
@@ -459,131 +493,213 @@ export default function StoragePanel() {
     downloadJson(snapshot, buildExportFilename(selectedStorage.target));
   };
 
-  const storageOptions = [...snapshots.entries()].map(([viewId, snapshot]) => ({
-    viewId,
-    label: `${snapshot.adapterName} / ${snapshot.storageName}`,
-  }));
+  const columns = useMemo<DataTableColumn<StorageEntry>[]>(
+    () => [
+      {
+        accessorKey: 'key',
+        header: 'Key',
+        cell: ({ getValue }) => (
+          <span className="font-mono text-sm text-foreground">
+            {getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'type',
+        header: 'Type',
+        cell: ({ getValue }) => (
+          <Badge variant="outline">{getValue<string>()}</Badge>
+        ),
+      },
+      {
+        id: 'value',
+        header: 'Value',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const entry = row.original;
+          return (
+            <div className="flex items-center gap-2">
+              {entry.type === 'string' ? (
+                <span
+                  className="min-w-0 flex-1"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <DataTableEditableCell
+                    value={entry.value}
+                    onCommit={(next) => handleValueChange(entry.key, next)}
+                    className="font-mono"
+                  />
+                </span>
+              ) : (
+                <span className="min-w-0 flex-1 truncate">
+                  {formatValue(entry)}
+                </span>
+              )}
+              <span onClick={(event) => event.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setEditingEntry(entry);
+                    setShowEditDialog(true);
+                  }}
+                  aria-label={`Edit value for ${entry.key}`}
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                </Button>
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div onClick={(event) => event.stopPropagation()}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => setDeleteConfirm({ key: row.original.key })}
+              aria-label={`Delete entry ${row.original.key}`}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [handleValueChange],
+  );
 
   return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
-      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-200">Storage</span>
-        </div>
-        <div className="flex-1" />
-        <div className="flex items-center gap-2">
-          <label htmlFor="storage-select" className="text-xs text-gray-400">
-            Storage:
-          </label>
-          <select
-            id="storage-select"
-            value={selectedStorageViewId ?? ''}
-            onChange={(event) => setSelectedStorageViewId(event.target.value)}
-            disabled={snapshots.size === 0}
-            className="h-8 px-2 text-xs bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {snapshots.size === 0 ? (
-              <option>No storages found</option>
-            ) : (
-              storageOptions.map((option) => (
-                <option key={option.viewId} value={option.viewId}>
-                  {option.label}
-                </option>
-              ))
-            )}
-          </select>
-        </div>
-      </div>
+    <PluginShell>
+      <PluginHeader>
+        <PluginHeader.Title>Storage</PluginHeader.Title>
+        <PluginHeader.Actions>
+          <PluginHeader.ThemeSwitcher />
+        </PluginHeader.Actions>
+      </PluginHeader>
 
-      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
-        <button
-          onClick={() => setShowAddDialog(true)}
-          disabled={!selectedStorage}
-          className="flex items-center gap-1 px-3 h-8 text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
-          title="Add new entry"
-        >
-          <Plus className="h-3 w-3" />
-          Add Entry
-        </button>
-        <button
-          onClick={handleImportClick}
-          disabled={!selectedStorage}
-          className="flex items-center gap-1 px-3 h-8 text-xs bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-gray-100 rounded transition-colors"
-          title="Import entries from a JSON snapshot"
-        >
-          <Upload className="h-3 w-3" />
-          Import
-        </button>
-        <button
-          onClick={handleExport}
-          disabled={!selectedStorage || entries.length === 0}
-          className="flex items-center gap-1 px-3 h-8 text-xs bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-gray-100 rounded transition-colors"
-          title="Export entries to a JSON snapshot"
-        >
-          <Download className="h-3 w-3" />
-          Export
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search keys..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="h-8 w-full pl-8 pr-3 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          {filteredEntries.length} of {entries.length} entries
-        </div>
-      </div>
+      <PluginShell.Body>
+        <Split direction="horizontal" autoSaveId="storage">
+          <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
+            <Sidebar className="w-full">
+              {sidebarGroups.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-sidebar-foreground/60">
+                  Waiting for storages…
+                </div>
+              ) : (
+                sidebarGroups.map((group) => (
+                  <Sidebar.Group
+                    key={group.adapterId}
+                    label={group.adapterName}
+                  >
+                    {group.items.map((item) => (
+                      <Sidebar.Item
+                        key={item.viewId}
+                        selected={item.viewId === selectedStorageViewId}
+                        trailing={
+                          <Badge variant="secondary">{item.entryCount}</Badge>
+                        }
+                        onClick={() => setSelectedStorageViewId(item.viewId)}
+                      >
+                        {item.storageName}
+                      </Sidebar.Item>
+                    ))}
+                  </Sidebar.Group>
+                ))
+              )}
+            </Sidebar>
+          </Split.Pane>
 
-      <main className="flex flex-1 min-h-0 overflow-auto">
-        {selectedStorage ? (
-          filteredEntries.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center w-full">
-              <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                No entries found
-              </h3>
-              <p className="text-gray-400 text-sm">
-                {searchTerm
-                  ? 'Try adjusting your search terms'
-                  : 'This storage appears to be empty'}
-              </p>
+          <Split.Handle />
+
+          <Split.Pane>
+            <div className="flex h-full min-h-0 flex-col">
+              <Toolbar>
+                <Toolbar.Group>
+                  <Toolbar.Button
+                    onClick={() => setShowAddDialog(true)}
+                    disabled={!selectedStorage}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Entry
+                  </Toolbar.Button>
+                  <Toolbar.Button
+                    onClick={handleImportClick}
+                    disabled={!selectedStorage}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Import
+                  </Toolbar.Button>
+                  <Toolbar.Button
+                    onClick={handleExport}
+                    disabled={!selectedStorage || entries.length === 0}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Export
+                  </Toolbar.Button>
+                </Toolbar.Group>
+
+                <Toolbar.Separator />
+
+                <div className="min-w-40 flex-1">
+                  <SearchField
+                    placeholder="Search keys…"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    onClear={() => setSearchTerm('')}
+                    disabled={!selectedStorage}
+                  />
+                </div>
+
+                {selectedStorage && (
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {filteredEntries.length} of {entries.length} entries
+                  </span>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </Toolbar>
+
+              <div className="min-h-0 flex-1 overflow-auto">
+                {selectedStorage ? (
+                  <DataTable
+                    columns={columns}
+                    data={filteredEntries}
+                    loading={loading}
+                    getRowId={(entry) => entry.key}
+                    onRowClick={(entry) => {
+                      setSelectedEntry(entry);
+                      setShowDetailDialog(true);
+                    }}
+                    emptyMessage={
+                      searchTerm
+                        ? 'No entries match your search.'
+                        : 'This storage is empty.'
+                    }
+                  />
+                ) : (
+                  <EmptyState
+                    icon={Database}
+                    title="No storage selected"
+                    description="Choose a storage from the sidebar to inspect its entries."
+                  />
+                )}
+              </div>
             </div>
-          ) : (
-            <EditableTable
-              data={filteredEntries}
-              supportedTypes={supportedTypes}
-              onValueChange={handleValueChange}
-              onDeleteEntry={handleDeleteEntry}
-              onRowClick={(entry) => {
-                setSelectedEntry(entry);
-                setShowDetailDialog(true);
-              }}
-              loading={loading}
-            />
-          )
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center w-full">
-            <h2 className="text-xl font-semibold text-gray-200 mb-2">
-              Welcome to Storage Inspector
-            </h2>
-            <p className="text-gray-400 text-sm">
-              Select a storage from the dropdown above to inspect data
-            </p>
-          </div>
-        )}
-      </main>
+          </Split.Pane>
+        </Split>
+      </PluginShell.Body>
 
       <AddEntryDialog
         isOpen={showAddDialog}
@@ -594,10 +710,10 @@ export default function StoragePanel() {
       />
 
       <EntryDetailDialog
-        isOpen={showDetailDialog}
-        onClose={() => {
-          setShowDetailDialog(false);
-          setSelectedEntry(null);
+        open={showDetailDialog}
+        onOpenChange={(open) => {
+          setShowDetailDialog(open);
+          if (!open) setSelectedEntry(null);
         }}
         onEdit={(entry) => {
           setShowDetailDialog(false);
@@ -630,13 +746,33 @@ export default function StoragePanel() {
       />
 
       <ConfirmDialog
-        isOpen={alertState.isOpen}
-        onClose={() => setAlertState((prev) => ({ ...prev, isOpen: false }))}
-        onConfirm={() => setAlertState((prev) => ({ ...prev, isOpen: false }))}
-        title={alertState.title}
-        message={alertState.message}
-        type="alert"
+        open={deleteConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
+        variant="confirm"
+        destructive
+        title="Delete Entry"
+        description={
+          deleteConfirm
+            ? `Are you sure you want to delete the entry "${deleteConfirm.key}"?`
+            : undefined
+        }
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (deleteConfirm) handleDeleteEntry(deleteConfirm.key);
+        }}
       />
-    </div>
+
+      <ConfirmDialog
+        open={alertState !== null}
+        onOpenChange={(open) => {
+          if (!open) setAlertState(null);
+        }}
+        variant="alert"
+        title={alertState?.title ?? ''}
+        description={alertState?.message}
+      />
+    </PluginShell>
   );
 }
