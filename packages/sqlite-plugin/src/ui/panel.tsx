@@ -65,6 +65,17 @@ import {
 } from './sqlite-introspection';
 import { QueryResultTable } from './query-result-table';
 import { SqliteRowDeleteModal } from './sqlite-row-delete-modal';
+import {
+  SqliteDropModal,
+  type SqliteDropModalTarget,
+} from './sqlite-drop-modal';
+import {
+  buildDropAllEntitiesSql,
+  buildDropEntitySql,
+  buildSetForeignKeysSql,
+  isForeignKeysEnabled,
+  SQLITE_READ_FOREIGN_KEYS_SQL,
+} from './sqlite-drop-mutations';
 import { SqliteDataTable } from './sqlite-data-table';
 import { SqliteRowEditModal } from './sqlite-row-edit-modal';
 import { SqlEditor, type SqlEditorHandle } from './sql-editor';
@@ -148,6 +159,15 @@ type ActiveRowMutationState = {
   rowIndex: number;
 } | null;
 
+/**
+ * The drop dialog operates on the target captured when it opened, so that a
+ * mid-dialog explorer reload cannot repoint it at a different object.
+ */
+type ActiveDropState = {
+  databaseId: string;
+  target: SqliteDropModalTarget;
+} | null;
+
 const DEFAULT_QUERY =
   'SELECT name, type FROM sqlite_schema ORDER BY type, name';
 const DEFAULT_QUERY_LIMIT = 100;
@@ -162,6 +182,14 @@ const DEFAULT_EXPLORER_STATE: ExplorerState = {
   loading: false,
   error: null,
   loaded: false,
+};
+
+const DEFAULT_DROP_TARGET: SqliteDropModalTarget = {
+  kind: 'entity',
+  entityType: 'table',
+  qualifiedName: '',
+  confirmationValue: '',
+  sql: '',
 };
 
 const joinClassNames = (
@@ -315,6 +343,7 @@ const iconButtonClassName =
   'sqlite-icon-button inline-flex h-10 w-10 items-center justify-center rounded-xl';
 const primaryIconButtonClassName = `${iconButtonClassName} sqlite-button-primary`;
 const secondaryIconButtonClassName = `${iconButtonClassName} sqlite-button-secondary`;
+const dangerIconButtonClassName = `${iconButtonClassName} sqlite-button-danger`;
 const ghostIconButtonClassName = `${iconButtonClassName} sqlite-button-ghost`;
 
 const renderEmptyState = (
@@ -418,6 +447,7 @@ export default function SqlitePanel() {
   >({});
   const [editingRow, setEditingRow] = useState<ActiveRowMutationState>(null);
   const [deletingRow, setDeletingRow] = useState<ActiveRowMutationState>(null);
+  const [activeDrop, setActiveDrop] = useState<ActiveDropState>(null);
 
   const [objectSearch, setObjectSearch] = useState('');
   const [dataSearch, setDataSearch] = useState('');
@@ -1201,6 +1231,149 @@ export default function SqlitePanel() {
     selectedDatabaseId,
     selectedEntity,
   ]);
+
+  const handleOpenDropEntity = useCallback(() => {
+    if (!selectedDatabaseId || !selectedEntity) {
+      return;
+    }
+
+    setActiveDrop({
+      databaseId: selectedDatabaseId,
+      target: {
+        kind: 'entity',
+        entityType: selectedEntity.type,
+        qualifiedName: `${selectedEntity.schemaName}.${selectedEntity.name}`,
+        confirmationValue: selectedEntity.name,
+        sql: `${buildDropEntitySql(selectedEntity)};`,
+      },
+    });
+  }, [selectedDatabaseId, selectedEntity]);
+
+  const handleOpenDropAllEntities = useCallback(() => {
+    if (!selectedDatabaseId || !selectedDatabase) {
+      return;
+    }
+
+    const tableCount = entities.filter(
+      (entity) => entity.type === 'table',
+    ).length;
+    const viewCount = entities.filter(
+      (entity) => entity.type === 'view',
+    ).length;
+
+    setActiveDrop({
+      databaseId: selectedDatabaseId,
+      target: {
+        kind: 'database',
+        databaseName: selectedDatabase.name,
+        confirmationValue: selectedDatabase.name,
+        tableCount,
+        viewCount,
+        sql: buildDropAllEntitiesSql(entities),
+      },
+    });
+  }, [entities, selectedDatabase, selectedDatabaseId]);
+
+  const dropSelectedEntity = useCallback(
+    async (databaseId: string, sql: string) => {
+      await requestQuery({ databaseId, sql });
+    },
+    [requestQuery],
+  );
+
+  const dropAllEntities = useCallback(
+    async (databaseId: string, sql: string) => {
+      // Dropping a parent table before its children fails while foreign key
+      // enforcement is on, so turn it off for the sweep. The pragma is
+      // per-connection and that connection belongs to the running app, so the
+      // original value has to be restored on every path out of here.
+      const foreignKeysResult = await requestQuery({
+        databaseId,
+        sql: SQLITE_READ_FOREIGN_KEYS_SQL,
+      });
+      const foreignKeysWereEnabled = isForeignKeysEnabled(
+        foreignKeysResult.rows,
+      );
+
+      if (foreignKeysWereEnabled) {
+        await requestQuery({
+          databaseId,
+          sql: buildSetForeignKeysSql(false),
+        });
+      }
+
+      let dropError: unknown = null;
+
+      try {
+        const scriptResult = await requestScriptExecution({
+          databaseId,
+          sql,
+        });
+
+        if (scriptResult.failedStatementIndex != null) {
+          const failedStatement = scriptResult.statements.find(
+            (statement) =>
+              statement.index === scriptResult.failedStatementIndex,
+          );
+          throw new Error(failedStatement?.error ?? 'Script execution failed.');
+        }
+      } catch (error) {
+        dropError = error;
+      }
+
+      if (foreignKeysWereEnabled) {
+        try {
+          await requestQuery({
+            databaseId,
+            sql: buildSetForeignKeysSql(true),
+          });
+        } catch (restoreError) {
+          // The drop error, if any, takes priority: it's the reason the user
+          // is looking at this modal. Only surface the restore failure when
+          // the drop itself succeeded, since that's a new, silent problem.
+          if (!dropError) {
+            throw restoreError instanceof Error
+              ? restoreError
+              : new Error(String(restoreError));
+          }
+        }
+      }
+
+      if (dropError) {
+        throw dropError instanceof Error
+          ? dropError
+          : new Error(String(dropError));
+      }
+    },
+    [requestQuery, requestScriptExecution],
+  );
+
+  const handleConfirmDrop = useCallback(async () => {
+    if (!activeDrop) {
+      throw new Error('The drop target is no longer available.');
+    }
+
+    // Execute the target captured when the dialog opened rather than the
+    // current selection: an app reload can fire `sqlite:ready` mid-dialog,
+    // which reloads the explorer and may move the selection elsewhere. The
+    // user confirmed by typing this object's name, so this is the object that
+    // has to be dropped.
+    const { databaseId, target } = activeDrop;
+
+    if (!target.sql) {
+      throw new Error('There is nothing to drop.');
+    }
+
+    if (target.kind === 'entity') {
+      await dropSelectedEntity(databaseId, target.sql);
+    } else {
+      await dropAllEntities(databaseId, target.sql);
+    }
+
+    setActiveDrop(null);
+    setSelectedEntityKey(null);
+    await refreshExplorerData();
+  }, [activeDrop, dropAllEntities, dropSelectedEntity, refreshExplorerData]);
 
   const getActiveStatement = useCallback(() => {
     const cursorPosition =
@@ -2287,6 +2460,17 @@ export default function SqlitePanel() {
               )}
             />
           </button>
+          <button
+            type="button"
+            className={dangerIconButtonClassName}
+            onClick={handleOpenDropEntity}
+            aria-label={
+              selectedEntity.type === 'view' ? 'Drop view' : 'Drop table'
+            }
+            title={selectedEntity.type === 'view' ? 'Drop view' : 'Drop table'}
+          >
+            <Trash2 aria-hidden="true" className="h-4 w-4" />
+          </button>
         </div>
       </header>
 
@@ -2454,6 +2638,29 @@ export default function SqlitePanel() {
                       (databaseLoading || entityLoading) && 'animate-spin',
                     )}
                   />
+                </button>
+                <button
+                  type="button"
+                  className={dangerIconButtonClassName}
+                  aria-label={
+                    selectedDatabase
+                      ? `Drop all objects in ${selectedDatabase.name}`
+                      : 'Drop all objects'
+                  }
+                  title={
+                    selectedDatabase
+                      ? `Drop all objects in ${selectedDatabase.name}`
+                      : 'Drop all objects'
+                  }
+                  onClick={handleOpenDropAllEntities}
+                  disabled={
+                    !selectedDatabaseId ||
+                    entities.length === 0 ||
+                    databaseLoading ||
+                    entityLoading
+                  }
+                >
+                  <Trash2 aria-hidden="true" className="h-4 w-4" />
                 </button>
               </div>
             </header>
@@ -2808,6 +3015,13 @@ export default function SqlitePanel() {
           entityName={selectedEntity?.name ?? 'row'}
           onClose={() => setDeletingRow(null)}
           onDelete={handleDeleteRow}
+        />
+
+        <SqliteDropModal
+          isOpen={!!activeDrop}
+          target={activeDrop?.target ?? DEFAULT_DROP_TARGET}
+          onClose={() => setActiveDrop(null)}
+          onConfirm={handleConfirmDrop}
         />
       </div>
     </div>
