@@ -5,6 +5,9 @@
   `packages/`; the test app lives in `apps/playground`.
 - Read `CONTRIBUTING.md` and the relevant source, tests, and agent guide before
   making a change.
+- For unit-testing guidance, see @./docs/agents/unit-testing.md.
+- For end-to-end testing guidance, see @./docs/agents/e2e-testing.md.
+- For plugin-development guidance, see @./docs/agents/plugin-development.md.
 - For version plans, see @./docs/agents/version-plans.md.
 - Before preparing or opening a pull request, see @./docs/agents/pull-requests.md.
 - Preserve unrelated work already present in the working tree.
