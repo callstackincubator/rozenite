@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@rozenite/ui": "workspace:*",
+    "lucide-react": "^0.263.1",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

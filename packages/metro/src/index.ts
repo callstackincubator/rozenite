@@ -8,6 +8,7 @@ import {
   type RozeniteConfig,
 } from '@rozenite/middleware';
 import { logger } from '@rozenite/tools';
+import runtimePackage from '@rozenite/runtime/package.json' with { type: 'json' };
 import path from 'node:path';
 import { isBundling } from './is-bundling.js';
 
@@ -57,10 +58,13 @@ export const withRozenite = <T extends MetroConfig>(
     }
 
     const { devModePackage, middleware: rozeniteMiddleware } =
-      initializeRozenite({
-        projectRoot,
-        ...options,
-      });
+      initializeRozenite(
+        {
+          projectRoot,
+          ...options,
+        },
+        runtimePackage.version,
+      );
 
     const rozeniteMetroConfig = {
       ...resolvedConfig,

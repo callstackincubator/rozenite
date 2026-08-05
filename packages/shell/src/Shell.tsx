@@ -3,11 +3,12 @@ import { EmptyState, PluginShell, Sidebar } from '@rozenite/ui';
 import lightLogo from '../../../website/src/public/logo-light.svg';
 import darkLogo from '../../../website/src/public/logo-dark.svg';
 import { getInitialSelection, type ShellSelection } from './selection';
+import { NewVersionFooter } from './NewVersionFooter';
 import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
 
-export function Shell({ plugins }: ShellConfiguration) {
+export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
   const [selection, setSelection] = useState<ShellSelection>(() =>
     getInitialSelection(plugins),
   );
@@ -91,29 +92,17 @@ export function Shell({ plugins }: ShellConfiguration) {
               className="hidden h-6 w-auto dark:block"
             />
           </header>
-          <div className="flex flex-col gap-3 p-2">
-            {plugins.map((plugin) => {
-              if (plugin.panels.length === 0) {
-                return null;
-              }
+          <div className="min-h-0 flex-1 overflow-y-auto p-2">
+            <div className="flex flex-col gap-3">
+              {plugins.map((plugin) => {
+                if (plugin.panels.length === 0) {
+                  return null;
+                }
 
-              if (plugin.panels.length === 1) {
-                const [panel] = plugin.panels;
+                if (plugin.panels.length === 1) {
+                  const [panel] = plugin.panels;
 
-                return (
-                  <Sidebar.Item
-                    key={panel.id}
-                    selected={panel.id === activePanel.id}
-                    onClick={() => selectPanel(plugin, panel)}
-                  >
-                    {panel.name}
-                  </Sidebar.Item>
-                );
-              }
-
-              return (
-                <Sidebar.Group key={plugin.id} label={plugin.name}>
-                  {plugin.panels.map((panel) => (
+                  return (
                     <Sidebar.Item
                       key={panel.id}
                       selected={panel.id === activePanel.id}
@@ -121,11 +110,26 @@ export function Shell({ plugins }: ShellConfiguration) {
                     >
                       {panel.name}
                     </Sidebar.Item>
-                  ))}
-                </Sidebar.Group>
-              );
-            })}
+                  );
+                }
+
+                return (
+                  <Sidebar.Group key={plugin.id} label={plugin.name}>
+                    {plugin.panels.map((panel) => (
+                      <Sidebar.Item
+                        key={panel.id}
+                        selected={panel.id === activePanel.id}
+                        onClick={() => selectPanel(plugin, panel)}
+                      >
+                        {panel.name}
+                      </Sidebar.Item>
+                    ))}
+                  </Sidebar.Group>
+                );
+              })}
+            </div>
           </div>
+          <NewVersionFooter currentVersion={runtimeVersion} />
         </Sidebar>
         <div className="min-w-0 flex-1">
           <iframe

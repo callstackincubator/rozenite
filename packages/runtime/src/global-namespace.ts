@@ -4,6 +4,7 @@ declare global {
     developmentServer: boolean;
     destroyOnDetachPlugins: string[];
     pluginDisplay: 'tabs' | 'sidebar';
+    runtimeVersion?: string;
   };
 }
 
