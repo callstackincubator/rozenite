@@ -43,12 +43,13 @@
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
   gap: 40px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .aside {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 24px;
 }
 

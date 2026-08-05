@@ -12,9 +12,8 @@ export const Closing = () => (
         <div>
           <h2 className={styles.title}>Come see what your app is doing</h2>
           <p className={styles.body}>
-            One command and every panel here is running in your app. Missing
-            one? Open an issue or send a plugin yourself — that is how most of
-            the official set got here, and we would love to see yours join it.
+            Set up Rozenite, then add the plugins your app needs. Browse the
+            directory, report a missing integration, or publish your own plugin.
           </p>
         </div>
 

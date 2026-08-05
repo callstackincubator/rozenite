@@ -21,7 +21,8 @@
   inset: -40% -10% auto -10%;
   height: 140%;
   pointer-events: none;
-  background: radial-gradient(
+  background:
+    radial-gradient(
       ellipse 64vw 42vw at 84% 4%,
       rgba(114, 38, 232, 0.13) 0%,
       transparent 62%
@@ -35,7 +36,8 @@
 
 html.dark .wash,
 [data-theme='dark'] .wash {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       ellipse 64vw 42vw at 84% 4%,
       rgba(140, 74, 255, 0.26) 0%,
       transparent 62%
@@ -54,7 +56,7 @@ html.dark .wash,
   margin-inline: auto;
   padding-inline: var(--rz-gutter);
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 56px;
   align-items: center;
 }
@@ -63,6 +65,33 @@ html.dark .wash,
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+}
+
+.logo {
+  width: 172.5px;
+  height: 32px;
+  margin-bottom: 24px;
+}
+
+.logoLight,
+.logoDark {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.logoDark {
+  display: none;
+}
+
+:global(html.dark) .logoLight,
+:global([data-theme='dark']) .logoLight {
+  display: none;
+}
+
+:global(html.dark) .logoDark,
+:global([data-theme='dark']) .logoDark {
+  display: block;
 }
 
 .title {
@@ -105,6 +134,11 @@ html.dark .wash,
 
 .visual {
   min-width: 0;
+}
+
+.screenshot {
+  width: 100%;
+  height: auto;
 }
 
 @media (max-width: 1024px) {

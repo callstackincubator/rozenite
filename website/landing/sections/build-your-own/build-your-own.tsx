@@ -11,12 +11,12 @@ const HALVES: { icon: Icon; title: string; body: string }[] = [
   {
     icon: DeviceMobile,
     title: 'The app side',
-    body: 'Runs inside your app with access to React Native APIs and anything you already depend on.',
+    body: 'Runs in your app and can use React Native APIs and your existing dependencies.',
   },
   {
     icon: SquaresFour,
     title: 'The DevTools UI side',
-    body: 'React components mounted as DevTools tabs, wired to the app side over a typed event bridge.',
+    body: 'A React panel in DevTools, connected to the app through a typed event bridge.',
   },
 ];
 
@@ -33,8 +33,8 @@ client.send('clear-cart', { reason: 'devtools' });`;
 export const BuildYourOwn = () => (
   <Section id="build" tint="subtle">
     <SectionHeader
-      title="The panel you need does not exist yet"
-      body="Feature flags for one checkout flow. A window into your own sync engine. A bridge to internal observability. Rozenite gives you the transport, the build setup and the DevTools slot, so a plugin is a panel and a message map instead of a project."
+      title="Build the panel your app needs"
+      body="Use a plugin for app-specific state, controls, or diagnostics. Rozenite provides the DevTools connection and plugin build setup."
     />
 
     <Reveal>
@@ -56,7 +56,7 @@ export const BuildYourOwn = () => (
         <CodeSample title="panel.tsx" meta="typescript" code={PLUGIN_SAMPLE} />
 
         <div className={styles.aside}>
-          <h3 className={styles.asideTitle}>Scaffold one in two commands</h3>
+          <h3 className={styles.asideTitle}>Create a plugin in two commands</h3>
 
           <div className={styles.commands}>
             <CommandLine command="npx rozenite generate my-plugin" />

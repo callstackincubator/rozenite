@@ -20,33 +20,36 @@ type Capability = {
 const CAPABILITIES: Capability[] = [
   {
     icon: Terminal,
-    label: 'Read what actually happened',
-    body: 'Console output, network captures from a real flow, React profiles and memory snapshots, taken from the running app.',
+    label: 'Inspect runtime data',
+    body: 'Read console logs, network requests, React profiles, and memory snapshots from the selected app session.',
   },
   {
     icon: PlugsConnected,
-    label: 'Call the tools your plugins expose',
-    body: 'Agent-enabled plugins register their own tools. Storage, navigation, Redux and TanStack Query become callable in the same session.',
+    label: 'Use plugin tools',
+    body: 'Plugins can register agent tools. Storage, React Navigation, Redux, and TanStack Query expose tools when their integration is enabled.',
   },
   {
     icon: BracketsCurly,
-    label: 'Call the tools your app exposes',
-    body: 'Register tools from the app itself when the thing an agent needs is specific to your product, not to a library.',
+    label: 'Add app-specific tools',
+    body: 'Register tools for product-specific state or actions that do not belong to a library plugin.',
   },
 ];
 
 const CLI_SAMPLE = `npx rozenite agent session create
 
-npx rozenite agent console call --tool getMessages --args '{"levels":["error"]}'`;
+npx rozenite agent console call \\
+  --tool getMessages \\
+  --args '{"levels":["error"]}' \\
+  --session <session-id>`;
 
 export const Agents = () => (
-  <Section id="agents" tint="block">
+  <Section id="agents" tint="subtle">
     <div className={styles.top}>
       <div className={styles.headerCol}>
         <SectionHeader
           eyebrow="Rozenite for Agents"
-          title="Your agent stops guessing at runtime"
-          body="Coding agents read code well and runtime badly. Rozenite opens a session against the running app and hands over what it finds there as callable tools."
+          title="Give your agent access to the running app"
+          body="Rozenite creates a session for the running app. An agent can inspect its runtime domains and call registered app or plugin tools."
           className={styles.header}
         />
 

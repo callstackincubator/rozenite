@@ -2,7 +2,6 @@ import {
   Browser,
   Globe,
   PuzzlePiece,
-  SquaresFour,
   Stack,
   type Icon,
 } from '@phosphor-icons/react';
@@ -23,72 +22,76 @@ type Point = {
 const POINTS: Point[] = [
   {
     icon: Browser,
-    label: 'One set of panels for native and web',
-    body: 'The panels you use against a simulator keep working against the browser build.',
+    label: 'Select a browser target',
+    body: 'Open your web app in a supported browser, then select that target in React Native DevTools.',
   },
   {
     icon: Stack,
-    label: 'Metro only, or Webpack for web',
-    body: 'Wrap the config with withRozeniteWeb either way. Metro can bundle both platforms, or Webpack Dev Server can serve the web app.',
+    label: 'Use Metro or Webpack',
+    body: 'Use the matching withRozeniteWeb wrapper: Metro can bundle native and web, while Webpack Dev Server can serve the web app.',
   },
   {
     icon: PuzzlePiece,
-    label: 'Two moving parts',
-    body: 'The browser extension, and @rozenite/web in the app. The package gates itself, so the import needs no __DEV__ guard.',
+    label: 'Install the extension and package',
+    body: 'Install the Rozenite browser extension and load @rozenite/web from the web entry point. It runs only in development.',
   },
 ];
 
 export const Web = () => (
   <Section id="web" bordered>
-    <SectionHeader
-      eyebrow="Rozenite for Web"
-      title="Same panels, pointed at web"
-      body="React Native web builds usually drop out of the DevTools story and back into browser tabs. This keeps them where everything else is."
-    />
+    <div className={styles.layout}>
+      <div className={styles.copy}>
+        <SectionHeader
+          eyebrow="Rozenite for Web"
+          title="Debug React Native web in DevTools"
+          body="Use supported Rozenite panels with browser targets from your React Native web app."
+          className={styles.header}
+        />
 
-    <Reveal>
-      <div className={styles.layout}>
-        <div className={styles.copy}>
-          <ul className={styles.points}>
-            {POINTS.map((point) => {
-              const Glyph = point.icon;
+        <Reveal>
+          <div className={styles.details}>
+            <ul className={styles.points}>
+              {POINTS.map((point) => {
+                const Glyph = point.icon;
 
-              return (
-                <li className={styles.point} key={point.label}>
-                  <Glyph className={styles.pointIcon} size={20} />
-                  <span>
-                    <span className={styles.pointLabel}>{point.label}</span>
-                    <span className={styles.pointBody}>{point.body}</span>
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+                return (
+                  <li className={styles.point} key={point.label}>
+                    <Glyph className={styles.pointIcon} size={20} />
+                    <span>
+                      <span className={styles.pointLabel}>{point.label}</span>
+                      <span className={styles.pointBody}>{point.body}</span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
 
-          <div className={styles.setup}>
-            <CommandLine command="npm install -D @rozenite/web" />
-            <div className={styles.actions}>
-              <ActionButton href="/docs/rozenite-for-web" variant="outline">
-                Web setup guide
-              </ActionButton>
+            <div className={styles.setup}>
+              <CommandLine command="npm install -D @rozenite/web" />
+              <div className={styles.actions}>
+                <ActionButton href="/docs/rozenite-for-web" variant="outline">
+                  Web setup guide
+                </ActionButton>
+              </div>
             </div>
           </div>
-        </div>
+        </Reveal>
+      </div>
 
+      <Reveal className={styles.diagramReveal}>
         <ConnectionDiagram
           from={{
             mark: <Globe size={40} />,
             label: 'React Native Web / Expo Web',
           }}
           to={{
-            mark: <SquaresFour size={40} />,
+            mark: <img src="/logo.svg" alt="Rozenite" width={40} height={40} />,
             label: 'Rozenite / React Native DevTools',
           }}
-          caption="One session, messages both ways"
           animated={false}
           className={styles.diagram}
         />
-      </div>
-    </Reveal>
+      </Reveal>
+    </div>
   </Section>
 );

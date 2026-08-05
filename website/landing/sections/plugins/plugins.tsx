@@ -10,8 +10,8 @@ export const Plugins = () => (
   <Section id="plugins" tint="subtle" bordered>
     <SectionHeader
       eyebrow="Official plugins"
-      title="The panels you would otherwise build"
-      body="We build and maintain these ourselves: install one, restart the bundler, and the tab is there. The community maintains a further set of plugins on top of it."
+      title="Panels for common React Native work"
+      body="Install the plugin you need and follow its setup guide. Each one adds a panel to React Native DevTools."
     />
 
     <Reveal>
@@ -26,8 +26,8 @@ export const Plugins = () => (
           <GridFour size={20} />
         </span>
         <span className={styles.moreText}>
-          +{REMAINING_PLUGIN_COUNT} more official plugins, covering SQLite, the
-          file system, bundle size, startup profiling and forms.
+          +{REMAINING_PLUGIN_COUNT} more official plugins for other libraries
+          and development tasks.
         </span>
         <span className={styles.moreCta}>
           Browse plugins
