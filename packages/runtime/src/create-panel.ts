@@ -1,6 +1,12 @@
 import { getPluginView } from './rn-devtools/plugin-view.js';
 import { UI } from './rn-devtools/rn-devtools-frontend.js';
 
+type CreatePanelOptions = {
+  shellConfiguration?: unknown;
+  insertAtStart?: boolean;
+  insertAtEnd?: boolean;
+};
+
 const toExtendedKebabCase = (input: string): string => {
   return input
     .toLowerCase()
@@ -16,8 +22,7 @@ export const createPanel = (
   pluginId: string,
   name: string,
   url: string,
-  shellConfiguration?: unknown,
-  insertAtStart = false,
+  options: CreatePanelOptions = {},
 ) => {
   try {
     const pluginIdKebab = toExtendedKebabCase(pluginId);
@@ -33,12 +38,12 @@ export const createPanel = (
       panelId,
       name,
       url,
-      shellConfiguration,
+      options.shellConfiguration,
     );
 
     UI.InspectorView.InspectorView.instance().addPanel(panelView);
 
-    if (insertAtStart) {
+    if (options.insertAtStart || options.insertAtEnd) {
       const tabbedPane = UI.InspectorView.InspectorView.instance().tabbedPane;
       const panelViewTab = tabbedPane.tabsById.get(panelId);
 
@@ -46,8 +51,12 @@ export const createPanel = (
         throw new Error(`Panel view tab not found: ${panelId}`);
       }
 
-      tabbedPane.insertBefore(panelViewTab, 0);
-      tabbedPane.selectTab(panelViewTab.id);
+      if (options.insertAtStart) {
+        tabbedPane.insertBefore(panelViewTab, 0);
+        tabbedPane.selectTab(panelViewTab.id);
+      } else {
+        tabbedPane.insertBefore(panelViewTab, tabbedPane.tabsById.size);
+      }
     }
   } catch (err) {
     console.error(err);
