@@ -25,7 +25,6 @@ const mocks = vi.hoisted(() => {
 
   return {
     client: { send, onMessage },
-    selectChange: undefined as ((value: unknown) => void) | undefined,
     emit: (type: keyof StorageEventMap, payload: unknown) => {
       listeners.get(type)?.forEach((listener) => listener(payload));
     },
@@ -33,7 +32,6 @@ const mocks = vi.hoisted(() => {
       listeners.clear();
       send.mockReset();
       onMessage.mockClear();
-      mocks.selectChange = undefined;
     },
   };
 });
@@ -47,54 +45,59 @@ vi.mock('@rozenite/ui', async () => {
   const PassThrough = ({ children }: { children?: ReactNode }) => (
     <>{children}</>
   );
-  const Select = Object.assign(
-    ({
-      children,
-      onChange,
-    }: {
-      children?: ReactNode;
-      onChange: (value: unknown) => void;
-    }) => {
-      mocks.selectChange = onChange;
-      return <>{children}</>;
-    },
-    {
-      Trigger: PassThrough,
-      Value: PassThrough,
-      Indicator: PassThrough,
-      Popover: PassThrough,
-    }
-  );
-  const ListBox = Object.assign(PassThrough, {
-    Item: PassThrough,
-    ItemIndicator: PassThrough,
-  });
   const SearchField = Object.assign(PassThrough, {
     Group: PassThrough,
-    SearchIcon: PassThrough,
-    Input: () => null,
-    ClearButton: PassThrough,
+  });
+  const PluginShell = Object.assign(PassThrough, {
+    Body: PassThrough,
+  });
+  const Split = Object.assign(PassThrough, {
+    Pane: PassThrough,
+    Handle: PassThrough,
+  });
+  const Sidebar = Object.assign(PassThrough, {
+    Group: PassThrough,
+    Item: ({ children, onClick }: { children?: ReactNode; onClick: () => void }) => (
+      <button onClick={onClick}>{children}</button>
+    ),
+  });
+  const Toolbar = Object.assign(PassThrough, {
+    Group: PassThrough,
+    Separator: PassThrough,
+    Button: ({
+      children,
+      onClick,
+      disabled,
+    }: {
+      children?: ReactNode;
+      onClick: () => void;
+      disabled?: boolean;
+    }) => (
+      <button onClick={onClick} disabled={disabled}>
+        {children}
+      </button>
+    ),
   });
 
   return {
+    Badge: PassThrough,
+    Button: PassThrough,
     ConfirmDialog: () => null,
-    EditableTable: () => <div />,
-    EntryDetailDialog: () => null,
-    ListBox,
-    PluginHeader: ({ actions }: { actions?: ReactNode }) => <>{actions}</>,
-    PluginTheme: PassThrough,
+    DataTable: () => <div />,
+    DataTableEditableCell: () => null,
+    EmptyState: () => <div />,
+    PluginShell,
     SearchField,
-    Select,
+    Sidebar,
+    Split,
+    Toolbar,
   };
 });
 
 vi.mock('../add-entry-dialog', () => ({ AddEntryDialog: () => null }));
 vi.mock('../edit-entry-dialog', () => ({ EditEntryDialog: () => null }));
 vi.mock('../import-dialog', () => ({ ImportDialog: () => null }));
-vi.mock('../entry-value', () => ({
-  renderDetailValue: vi.fn(),
-  renderTableValue: vi.fn(),
-}));
+vi.mock('../entry-detail-dialog', () => ({ EntryDetailDialog: () => null }));
 
 import StoragePanel from '../panel';
 
@@ -188,7 +191,11 @@ describe('StoragePanel discovery migration', () => {
     });
     expect(snapshotTargets()).toEqual([firstTarget]);
 
-    await act(async () => mocks.selectChange?.('async:second'));
+    await act(async () => {
+      Array.from(container.querySelectorAll('button'))
+        .find((button) => button.textContent?.includes('Second'))
+        ?.click();
+    });
     expect(snapshotTargets()).toEqual([firstTarget, secondTarget]);
 
     await act(async () => {

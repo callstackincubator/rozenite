@@ -14,7 +14,15 @@ import {
   type DataTableColumn,
 } from '@rozenite/ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Database, Download, Edit3, Plus, Trash2, Upload } from 'lucide-react';
+import {
+  Database,
+  Download,
+  Edit3,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import type {
   StorageDeleteEntryEvent,
   StorageDiscoverStoragesResponseEvent,
@@ -95,6 +103,7 @@ export default function StoragePanel() {
   const [selectedSnapshot, setSelectedSnapshot] =
     useState<StorageSnapshotState | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<StorageEntry | null>(null);
@@ -264,7 +273,7 @@ export default function StoragePanel() {
       type: 'get-snapshot',
       target: selectedTarget,
     });
-  }, [client, selectedTarget]);
+  }, [client, refreshVersion, selectedTarget]);
 
   const selectedStorage =
     selectedSnapshot &&
@@ -623,6 +632,13 @@ export default function StoragePanel() {
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Add Entry
+                  </Toolbar.Button>
+                  <Toolbar.Button
+                    onClick={() => setRefreshVersion((version) => version + 1)}
+                    disabled={!selectedTarget || loading}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Refresh
                   </Toolbar.Button>
                   <Toolbar.Button
                     onClick={handleImportClick}
