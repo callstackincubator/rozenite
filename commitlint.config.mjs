@@ -34,7 +34,6 @@ export default {
         'file-system-plugin',
         'sqlite-plugin',
         'rhf-plugin',
-        'ui',
         '',
       ],
     ],

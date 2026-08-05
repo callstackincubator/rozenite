@@ -55,7 +55,10 @@ describe('agent client', () => {
           };
         }
 
-        if (method === 'GET' && pathname === getAgentSessionRoute('session-2')) {
+        if (
+          method === 'GET' &&
+          pathname === getAgentSessionRoute('session-2')
+        ) {
           return {
             payload: {
               ok: true,
@@ -268,10 +271,7 @@ describe('agent client', () => {
           ]),
         );
 
-        return await session.tools.call<
-          { value: string },
-          { echoed: string }
-        >({
+        return await session.tools.call<{ value: string }, { echoed: string }>({
           domain: 'app',
           tool: 'echo',
           args: { value: 'hello from withSession' },

@@ -231,7 +231,9 @@ const CodeFrame = ({ trace }: { trace: ReduxActionTrace }) => {
 
 const Status = ({ trace }: { trace: ReduxActionTrace }) => {
   if (trace.status === 'pending') {
-    return <div style={statusStyle}>Symbolicating stack trace with Metro...</div>;
+    return (
+      <div style={statusStyle}>Symbolicating stack trace with Metro...</div>
+    );
   }
 
   if (trace.status === 'failed') {

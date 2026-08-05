@@ -8,43 +8,33 @@ export type SidebarProps = {
 
 export const Sidebar = ({ selectedNode }: SidebarProps) => {
   return (
-    <aside className="w-80 bg-surface border-l border-border flex flex-col overflow-hidden shrink-0">
-      <div className="flex items-center px-4 py-3 border-b border-border shrink-0">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Module Details
-        </span>
+    <aside className="sidebar">
+      <div className="sidebar-header">
+        <span className="sidebar-title">Module Details</span>
       </div>
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="sidebar-content">
         {selectedNode ? (
           <>
-            <div className="mb-5">
-              <div className="text-xs font-medium uppercase tracking-wider text-muted mb-1.5">
-                Evaluation Time
-              </div>
-              <div className="text-2xl font-semibold tabular-nums text-accent">
+            <div className="detail-section">
+              <div className="detail-label">Evaluation Time</div>
+              <div className="detail-value detail-value-large">
                 {formatTime(selectedNode.value)}
               </div>
             </div>
-            <div className="mb-5">
-              <div className="text-xs font-medium uppercase tracking-wider text-muted mb-1.5">
-                Module Name
-              </div>
-              <div className="text-sm text-foreground break-all">{selectedNode.name}</div>
+            <div className="detail-section">
+              <div className="detail-label">Module Name</div>
+              <div className="detail-value">{selectedNode.name}</div>
             </div>
-            <div className="mb-5">
-              <div className="text-xs font-medium uppercase tracking-wider text-muted mb-1.5">
-                Full Path
-              </div>
-              <div className="text-xs font-mono text-foreground bg-background border border-border rounded p-2 break-all leading-relaxed">
+            <div className="detail-section">
+              <div className="detail-label">Full Path</div>
+              <div className="detail-value detail-value-path">
                 {selectedNode.tooltip ?? selectedNode.name}
               </div>
             </div>
             {selectedNode.children && selectedNode.children.length > 0 && (
-              <div className="mb-5">
-                <div className="text-xs font-medium uppercase tracking-wider text-muted mb-1.5">
-                  Direct Dependencies
-                </div>
-                <div className="text-sm text-foreground">
+              <div className="detail-section">
+                <div className="detail-label">Direct Dependencies</div>
+                <div className="detail-value">
                   {selectedNode.children.length} module
                   {selectedNode.children.length !== 1 ? 's' : ''}
                 </div>

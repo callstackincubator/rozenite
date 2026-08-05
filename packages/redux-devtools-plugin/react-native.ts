@@ -19,8 +19,8 @@ if (isDev && !isServer) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (options?: any) =>
       (createStore: (...args: any[]) => any) =>
-        (...args: any[]) =>
-          createStore(...args);
+      (...args: any[]) =>
+        createStore(...args);
 
   // Noop composer: returns a compose function (which composes enhancers)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -34,9 +34,8 @@ if (isDev && !isServer) {
       }
       // Compose enhancers from right to left (Redux's compose behavior)
       return enhancers.reduceRight(
-        (composed, enhancer) =>
-          (createStore: (...args: any[]) => any) =>
-            enhancer(composed(createStore))
+        (composed, enhancer) => (createStore: (...args: any[]) => any) =>
+          enhancer(composed(createStore)),
       );
     };
   };

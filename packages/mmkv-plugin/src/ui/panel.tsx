@@ -1,55 +1,27 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  EditableTable,
-  EntryDetailDialog,
-  ListBox,
-  PluginHeader,
-  PluginTheme,
-  SearchField,
-  Select,
-} from '@rozenite/ui';
-import type {
-  MMKVDeleteEntryEvent,
-  MMKVEventMap,
-  MMKVSetEntryEvent,
-  MMKVSnapshotEvent,
-} from '../shared/messaging';
-import type { MMKVEntry, MMKVEntryValue } from '../shared/types';
+import { useEffect, useState } from 'react';
+import { Search, Plus } from 'lucide-react';
+import { MMKVEventMap } from '../shared/messaging';
+import { MMKVEntry, MMKVEntryValue } from '../shared/types';
+import { EditableTable } from './editable-table';
 import { AddEntryDialog } from './add-entry-dialog';
+import { EntryDetailDialog } from './entry-detail-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
-import {
-  getInspectableJson,
-  renderDetailValue,
-  renderTableValue,
-} from './entry-value';
 import './globals.css';
-
-const getEntryTypeFromValue = (value: MMKVEntryValue): MMKVEntry['type'] => {
-  if (typeof value === 'string') {
-    return 'string';
-  }
-
-  if (typeof value === 'number') {
-    return 'number';
-  }
-
-  if (typeof value === 'boolean') {
-    return 'boolean';
-  }
-
-  return 'buffer';
-};
 
 export default function MMKVPanel() {
   const [instances, setInstances] = useState<Map<string, MMKVEntry[]>>(
     new Map(),
   );
   const [selectedInstance, setSelectedInstance] = useState<string | null>(null);
+  const [entries, setEntries] = useState<MMKVEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<MMKVEntry | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [editingEntry, setEditingEntry] = useState<MMKVEntry | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const client = useRozeniteDevToolsClient<MMKVEventMap>({
     pluginId: '@rozenite/mmkv-plugin',
@@ -60,74 +32,92 @@ export default function MMKVPanel() {
       return;
     }
 
-    const snapshotSubscription = client.onMessage(
-      'snapshot',
-      (event: MMKVSnapshotEvent) => {
-        setInstances((previous) => {
-          const next = new Map(previous);
-          next.set(event.id, event.entries);
+    const snapshotSubscription = client.onMessage('snapshot', (event) => {
+      setInstances((prevInstances) => {
+        const newInstances = new Map(prevInstances);
+        newInstances.set(event.id, event.entries);
 
-          if (previous.size === 0 && !selectedInstance) {
-            setSelectedInstance(event.id);
-          }
-
-          return next;
-        });
-
-        if (event.id === selectedInstance) {
-          setLoading(false);
+        // If this is the first instance and no instance is selected, select it
+        if (prevInstances.size === 0 && !selectedInstance) {
+          setSelectedInstance(event.id);
         }
-      },
-    );
 
-    const setEntrySubscription = client.onMessage(
-      'set-entry',
-      (event: MMKVSetEntryEvent) => {
-        setInstances((previous) => {
-          const next = new Map(previous);
-          const current = next.get(event.id);
+        return newInstances;
+      });
 
-          if (!current) {
-            return previous;
-          }
+      // If this snapshot is for the currently selected instance, update entries
+      if (event.id === selectedInstance) {
+        setEntries(event.entries);
+        setLoading(false);
+      }
+    });
 
-          const existingIndex = current.findIndex(
+    const setEntrySubscription = client.onMessage('set-entry', (event) => {
+      if (event.id === selectedInstance) {
+        setEntries((prevEntries) => {
+          const existingIndex = prevEntries.findIndex(
             (entry) => entry.key === event.entry.key,
           );
-
-          const entries =
-            existingIndex >= 0
-              ? current.map((entry) =>
-                  entry.key === event.entry.key ? event.entry : entry,
-                )
-              : [...current, event.entry];
-
-          next.set(event.id, entries);
-          return next;
+          if (existingIndex >= 0) {
+            // Update existing entry
+            return prevEntries.map((entry) =>
+              entry.key === event.entry.key ? event.entry : entry,
+            );
+          } else {
+            // Add new entry
+            return [...prevEntries, event.entry];
+          }
         });
-      },
-    );
+      }
+
+      // Update the instances map as well
+      setInstances((prevInstances) => {
+        const newInstances = new Map(prevInstances);
+        const instanceEntries = newInstances.get(event.id);
+        if (instanceEntries) {
+          const existingIndex = instanceEntries.findIndex(
+            (entry) => entry.key === event.entry.key,
+          );
+          if (existingIndex >= 0) {
+            // Update existing entry
+            const updatedEntries = instanceEntries.map((entry) =>
+              entry.key === event.entry.key ? event.entry : entry,
+            );
+            newInstances.set(event.id, updatedEntries);
+          } else {
+            // Add new entry
+            newInstances.set(event.id, [...instanceEntries, event.entry]);
+          }
+        }
+        return newInstances;
+      });
+    });
 
     const deleteEntrySubscription = client.onMessage(
       'delete-entry',
-      (event: MMKVDeleteEntryEvent) => {
-        setInstances((previous) => {
-          const next = new Map(previous);
-          const current = next.get(event.id);
-
-          if (!current) {
-            return previous;
-          }
-
-          next.set(
-            event.id,
-            current.filter((entry) => entry.key !== event.key),
+      (event) => {
+        if (event.id === selectedInstance) {
+          setEntries((prevEntries) =>
+            prevEntries.filter((entry) => entry.key !== event.key),
           );
-          return next;
+        }
+
+        // Update the instances map as well
+        setInstances((prevInstances) => {
+          const newInstances = new Map(prevInstances);
+          const instanceEntries = newInstances.get(event.id);
+          if (instanceEntries) {
+            const updatedEntries = instanceEntries.filter(
+              (entry) => entry.key !== event.key,
+            );
+            newInstances.set(event.id, updatedEntries);
+          }
+          return newInstances;
         });
       },
     );
 
+    // Request initial snapshots for all instances
     client.send('get-snapshot', {
       type: 'get-snapshot',
       id: 'all',
@@ -145,67 +135,42 @@ export default function MMKVPanel() {
       return;
     }
 
-    if (instances.has(selectedInstance)) {
-      setLoading(false);
-      return;
+    // Update entries when selected instance changes
+    const instanceEntries = instances.get(selectedInstance);
+    if (instanceEntries) {
+      setEntries(instanceEntries);
+    } else {
+      setLoading(true);
+      // Request snapshot for the specific instance
+      client.send('get-snapshot', {
+        type: 'get-snapshot',
+        id: selectedInstance,
+      });
     }
-
-    setLoading(true);
-    client.send('get-snapshot', {
-      type: 'get-snapshot',
-      id: selectedInstance,
-    });
   }, [client, selectedInstance, instances]);
 
-  const entries = selectedInstance
-    ? (instances.get(selectedInstance) ?? [])
-    : [];
-
-  const filteredEntries = useMemo(
-    () =>
-      entries.filter((entry) =>
-        entry.key.toLowerCase().includes(searchTerm.toLowerCase()),
-      ),
-    [entries, searchTerm],
+  const filteredEntries = entries.filter((entry) =>
+    entry.key.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const updateEntriesForSelectedInstance = (
-    mutate: (entries: MMKVEntry[]) => MMKVEntry[],
-  ) => {
-    if (!selectedInstance) {
-      return;
-    }
-
-    setInstances((previous) => {
-      const next = new Map(previous);
-      const current = next.get(selectedInstance);
-
-      if (!current) {
-        return previous;
-      }
-
-      next.set(selectedInstance, mutate(current));
-      return next;
-    });
-  };
-
   const handleValueChange = (key: string, newValue: MMKVEntryValue) => {
-    if (!client || !selectedInstance) {
-      return;
-    }
+    if (!client || !selectedInstance) return;
 
-    const type = getEntryTypeFromValue(newValue);
-
-    let updatedEntry: MMKVEntry;
-    if (type === 'string') {
-      updatedEntry = { key, type: 'string', value: newValue as string };
-    } else if (type === 'number') {
-      updatedEntry = { key, type: 'number', value: newValue as number };
-    } else if (type === 'boolean') {
-      updatedEntry = { key, type: 'boolean', value: newValue as boolean };
+    // Determine the entry type based on the new value
+    let type: 'string' | 'number' | 'boolean' | 'buffer';
+    if (typeof newValue === 'string') {
+      type = 'string';
+    } else if (typeof newValue === 'number') {
+      type = 'number';
+    } else if (typeof newValue === 'boolean') {
+      type = 'boolean';
+    } else if (Array.isArray(newValue)) {
+      type = 'buffer';
     } else {
-      updatedEntry = { key, type: 'buffer', value: newValue as number[] };
+      type = 'string'; // fallback
     }
+
+    const updatedEntry: MMKVEntry = { key, type, value: newValue } as MMKVEntry;
 
     client.send('set-entry', {
       type: 'set-entry',
@@ -213,15 +178,27 @@ export default function MMKVPanel() {
       entry: updatedEntry,
     });
 
-    updateEntriesForSelectedInstance((currentEntries) =>
-      currentEntries.map((entry) => (entry.key === key ? updatedEntry : entry)),
+    // Optimistically update local state
+    setEntries((prevEntries) =>
+      prevEntries.map((entry) => (entry.key === key ? updatedEntry : entry)),
     );
+
+    // Update the instances map as well
+    setInstances((prevInstances) => {
+      const newInstances = new Map(prevInstances);
+      const instanceEntries = newInstances.get(selectedInstance);
+      if (instanceEntries) {
+        const updatedEntries = instanceEntries.map((entry) =>
+          entry.key === key ? updatedEntry : entry,
+        );
+        newInstances.set(selectedInstance, updatedEntries);
+      }
+      return newInstances;
+    });
   };
 
   const handleDeleteEntry = (key: string) => {
-    if (!client || !selectedInstance) {
-      return;
-    }
+    if (!client || !selectedInstance) return;
 
     client.send('delete-entry', {
       type: 'delete-entry',
@@ -229,35 +206,84 @@ export default function MMKVPanel() {
       key,
     });
 
-    updateEntriesForSelectedInstance((currentEntries) =>
-      currentEntries.filter((entry) => entry.key !== key),
+    // Optimistically update local state
+    setEntries((prevEntries) =>
+      prevEntries.filter((entry) => entry.key !== key),
     );
+
+    // Update the instances map as well
+    setInstances((prevInstances) => {
+      const newInstances = new Map(prevInstances);
+      const instanceEntries = newInstances.get(selectedInstance);
+      if (instanceEntries) {
+        const updatedEntries = instanceEntries.filter(
+          (entry) => entry.key !== key,
+        );
+        newInstances.set(selectedInstance, updatedEntries);
+      }
+      return newInstances;
+    });
   };
 
-  const handleAddEntry = (entry: MMKVEntry) => {
-    if (!client || !selectedInstance) {
-      return;
-    }
+  const handleAddEntry = (newEntry: MMKVEntry) => {
+    if (!client || !selectedInstance) return;
 
+    // Send to device
     client.send('set-entry', {
       type: 'set-entry',
       id: selectedInstance,
-      entry,
+      entry: newEntry,
     });
 
-    updateEntriesForSelectedInstance((currentEntries) => [
-      ...currentEntries,
-      entry,
-    ]);
+    // Optimistically update local state
+    setEntries((prevEntries) => [...prevEntries, newEntry]);
+
+    // Update the instances map as well
+    setInstances((prevInstances) => {
+      const newInstances = new Map(prevInstances);
+      const instanceEntries = newInstances.get(selectedInstance);
+      if (instanceEntries) {
+        newInstances.set(selectedInstance, [...instanceEntries, newEntry]);
+      }
+      return newInstances;
+    });
   };
 
-  const instanceOptions = [...instances.keys()];
-
   return (
-    <PluginTheme
-      defaultTheme="dark"
-      className="flex h-screen flex-col bg-background text-foreground"
-    >
+    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">💾</span>
+          <span className="text-sm font-medium text-gray-200">
+            MMKV Storage
+          </span>
+        </div>
+        <div className="flex-1" />
+        <div className="flex items-center gap-2">
+          <label htmlFor="instance-select" className="text-xs text-gray-400">
+            Instance:
+          </label>
+          <select
+            id="instance-select"
+            value={selectedInstance || ''}
+            onChange={(e) => setSelectedInstance(e.target.value)}
+            disabled={instances.size === 0}
+            className="h-8 px-2 text-xs bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {instances.size === 0 ? (
+              <option>No instances found</option>
+            ) : (
+              Array.from(instances.keys()).map((instance) => (
+                <option key={instance} value={instance}>
+                  {instance}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+      </div>
+
       <div className="px-3 py-2 border-b border-amber-800/60 bg-amber-950/40 text-xs text-amber-100">
         <span className="font-semibold">Deprecated:</span>{' '}
         <code>@rozenite/mmkv-plugin</code> has been replaced by{' '}
@@ -269,133 +295,115 @@ export default function MMKVPanel() {
         >
           <code>@rozenite/storage-plugin</code>
         </a>
-        , which supports more storage solutions than MMKV and offers the same functionality.
+        , which supports more storage solutions than MMKV and offers the same
+        functionality.
       </div>
 
-      <PluginHeader
-        title="MMKV Storage"
-        actions={
-          <div className="w-56 max-w-[44vw] min-w-40">
-            <Select
-              placeholder="Select instance"
-              value={selectedInstance ?? ''}
-              onChange={(value) =>
-                setSelectedInstance(
-                  typeof value === 'string'
-                    ? value
-                    : value == null
-                      ? null
-                      : String(value),
-                )
-              }
-              isDisabled={instances.size === 0}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox>
-                  {instanceOptions.map((instanceId) => (
-                    <ListBox.Item
-                      key={instanceId}
-                      id={instanceId}
-                      textValue={instanceId}
-                    >
-                      {instanceId}
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-          </div>
-        }
-      />
-
-      <div className="flex items-center gap-2 px-3 pb-3 pt-3">
-        <AddEntryDialog
-          isDisabled={!selectedInstance}
-          onAddEntry={handleAddEntry}
-          existingKeys={entries.map((entry) => entry.key)}
-        />
+      {/* Search and Filter Bar */}
+      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
+        <button
+          onClick={() => setShowAddDialog(true)}
+          disabled={!selectedInstance}
+          className="flex items-center gap-1 px-3 h-8 text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+          title="Add new entry"
+        >
+          <Plus className="h-3 w-3" />
+          Add Entry
+        </button>
         <div className="flex-1">
-          <SearchField
-            name="search"
-            fullWidth
-            value={searchTerm}
-            onChange={setSearchTerm}
-          >
-            <SearchField.Group>
-              <SearchField.SearchIcon />
-              <SearchField.Input placeholder="Search keys..." />
-              <SearchField.ClearButton />
-            </SearchField.Group>
-          </SearchField>
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search keys..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-8 w-full pl-8 pr-3 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-default-foreground">
+        <div className="flex items-center gap-2 text-xs text-gray-400">
           {filteredEntries.length} of {entries.length} entries
         </div>
       </div>
 
+      {/* Main Content */}
       <main className="flex flex-1 min-h-0 overflow-auto">
         {selectedInstance ? (
-          <EditableTable
-            ariaLabel="MMKV entries"
-            data={filteredEntries}
-            emptyMessage={
-              searchTerm
-                ? 'No results found'
-                : 'This instance appears to be empty'
-            }
-            loading={loading}
-            onDeleteEntry={handleDeleteEntry}
-            onRowClick={setSelectedEntry}
-            renderValue={renderTableValue}
-            renderEditDialog={({ entry, onClose }) => (
-              <EditEntryDialog
-                entry={entry}
-                onClose={onClose}
-                onEditEntry={(key, newValue) => {
-                  handleValueChange(key, newValue);
-                  onClose();
+          <>
+            {filteredEntries.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center w-full">
+                <div className="text-4xl mb-4">🔍</div>
+                <h3 className="text-lg font-semibold text-gray-200 mb-2">
+                  No entries found
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  {searchTerm
+                    ? 'Try adjusting your search terms'
+                    : 'This instance appears to be empty'}
+                </p>
+              </div>
+            ) : (
+              <EditableTable
+                data={filteredEntries}
+                onValueChange={handleValueChange}
+                onDeleteEntry={handleDeleteEntry}
+                onRowClick={(entry) => {
+                  setSelectedEntry(entry);
+                  setShowDetailDialog(true);
                 }}
+                loading={loading}
               />
             )}
-          />
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center w-full">
-            <h2 className="text-xl font-semibold text-default-foreground mb-2">
+            <div className="text-4xl mb-4">🚀</div>
+            <h2 className="text-xl font-semibold text-gray-200 mb-2">
               Welcome to MMKV Inspector
             </h2>
-            <p className="text-default-foreground text-sm">
-              Select an MMKV instance from the dropdown above to inspect data
+            <p className="text-gray-400 text-sm">
+              Select an MMKV instance from the dropdown above to start exploring
+              your data
             </p>
           </div>
         )}
       </main>
 
-      {selectedEntry !== null ? (
-        <EntryDetailDialog
-          onClose={() => setSelectedEntry(null)}
-          onEdit={(entry) => {
-            setSelectedEntry(null);
-            setEditingEntry(entry);
-          }}
-          entry={selectedEntry}
-          getInspectableJson={getInspectableJson}
-          renderValue={renderDetailValue}
-        />
-      ) : null}
+      <AddEntryDialog
+        isOpen={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onAddEntry={handleAddEntry}
+        existingKeys={entries.map((entry) => entry.key)}
+      />
+
+      <EntryDetailDialog
+        isOpen={showDetailDialog}
+        onClose={() => {
+          setShowDetailDialog(false);
+          setSelectedEntry(null);
+        }}
+        onEdit={(entry) => {
+          setShowDetailDialog(false);
+          setEditingEntry(entry);
+          setShowEditDialog(true);
+        }}
+        entry={selectedEntry}
+      />
 
       <EditEntryDialog
-        onClose={() => setEditingEntry(null)}
+        isOpen={showEditDialog}
+        onClose={() => {
+          setShowEditDialog(false);
+          setEditingEntry(null);
+        }}
         onEditEntry={(key, newValue) => {
           handleValueChange(key, newValue);
+          setShowEditDialog(false);
           setEditingEntry(null);
         }}
         entry={editingEntry}
       />
-    </PluginTheme>
+    </div>
   );
 }

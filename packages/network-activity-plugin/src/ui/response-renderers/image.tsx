@@ -23,7 +23,7 @@ export const imageRenderer: ResponseRenderer = {
         <img
           src={dataUrl}
           alt="Response image"
-          className="max-w-full max-h-[400px] object-contain bg-surface rounded-md border border-border/60 p-2"
+          className="max-w-full max-h-[400px] object-contain bg-gray-800 rounded-md border border-gray-700 p-2"
         />
       );
     }

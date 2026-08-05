@@ -4,10 +4,7 @@ import {
   networkActivityToolDefinitions,
 } from './src/shared/agent-tools.js';
 
-export {
-  NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
-  networkActivityToolDefinitions,
-};
+export { NETWORK_ACTIVITY_AGENT_PLUGIN_ID, networkActivityToolDefinitions };
 
 export const networkActivityTools = defineAgentToolDescriptors(
   NETWORK_ACTIVITY_AGENT_PLUGIN_ID,

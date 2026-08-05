@@ -1,35 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
-  Button,
-  ConfirmDialog,
-  Description,
-  Input,
-  Label,
-  Modal,
-  TextField,
-} from '@rozenite/ui';
-import { Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import type {
   StorageEntry,
   StorageEntryType,
   StorageEntryValue,
 } from '../shared/types';
+import { ConfirmDialog } from './confirm-dialog';
 import { TypedValueEditor } from './typed-value-editor';
 import { defaultValueForType } from './type-conversion';
 
-type DialogState = {
+export type AddEntryDialogProps = {
   isOpen: boolean;
-  title: string;
-  message: string;
-  type: 'confirm' | 'alert';
-  onConfirm?: () => void;
-};
-
-const EMPTY_DIALOG_STATE: DialogState = {
-  isOpen: false,
-  title: '',
-  message: '',
-  type: 'alert',
+  onClose: () => void;
+  onAddEntry: (entry: StorageEntry) => void;
+  existingKeys: string[];
+  supportedTypes: StorageEntryType[];
 };
 
 const buildEntry = (
@@ -49,38 +34,27 @@ const buildEntry = (
   }
 };
 
-export type AddEntryDialogProps = {
-  onAddEntry: (entry: StorageEntry) => void;
-  existingKeys: string[];
-  supportedTypes: StorageEntryType[];
-  isDisabled?: boolean;
-};
-
 export const AddEntryDialog = ({
+  isOpen,
+  onClose,
   onAddEntry,
   existingKeys,
   supportedTypes,
-  isDisabled = false,
 }: AddEntryDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const initialType: StorageEntryType = supportedTypes.includes('string')
+    ? 'string'
+    : (supportedTypes[0] ?? 'string');
+
   const [newEntryKey, setNewEntryKey] = useState('');
-  const [confirmDialog, setConfirmDialog] =
-    useState<DialogState>(EMPTY_DIALOG_STATE);
-
-  const initialType = useMemo<StorageEntryType>(
-    () =>
-      supportedTypes.includes('string')
-        ? 'string'
-        : (supportedTypes[0] ?? 'string'),
-    [supportedTypes],
-  );
-
   const [currentType, setCurrentType] = useState<StorageEntryType>(initialType);
   const [currentValue, setCurrentValue] = useState<StorageEntryValue | null>(
     defaultValueForType(initialType),
   );
-
-  const isCurrentTypeSupported = supportedTypes.includes(currentType);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({ isOpen: false, title: '', message: '' });
 
   // Reset state every time the dialog opens, so a previous session's
   // type / value doesn't bleed in.
@@ -89,39 +63,26 @@ export const AddEntryDialog = ({
       setNewEntryKey('');
       setCurrentType(initialType);
       setCurrentValue(defaultValueForType(initialType));
-      setConfirmDialog(EMPTY_DIALOG_STATE);
     }
   }, [isOpen, initialType]);
 
-  useEffect(() => {
-    if (isDisabled && isOpen) {
-      setIsOpen(false);
-    }
-  }, [isDisabled, isOpen]);
+  const isCurrentTypeSupported = supportedTypes.includes(currentType);
 
-  const resetForm = () => {
+  const resetAndClose = () => {
     setNewEntryKey('');
     setCurrentType(initialType);
     setCurrentValue(defaultValueForType(initialType));
-    setConfirmDialog(EMPTY_DIALOG_STATE);
+    onClose();
   };
 
-  const closeDialog = () => {
-    resetForm();
-    setIsOpen(false);
-  };
-
-  const handleAddEntry = () => {
-    if (!newEntryKey.trim() || currentValue === null) {
-      return;
-    }
+  const handleAdd = () => {
+    if (!newEntryKey.trim() || currentValue === null) return;
 
     if (!isCurrentTypeSupported) {
       setConfirmDialog({
         isOpen: true,
         title: 'Unsupported Type',
         message: 'Selected type is not supported by this storage.',
-        type: 'alert',
       });
       return;
     }
@@ -131,14 +92,31 @@ export const AddEntryDialog = ({
         isOpen: true,
         title: 'Key Already Exists',
         message: 'An entry with this key already exists.',
-        type: 'alert',
       });
       return;
     }
 
     onAddEntry(buildEntry(newEntryKey, currentType, currentValue));
-    closeDialog();
+    resetAndClose();
   };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      resetAndClose();
+      return;
+    }
+    if (
+      event.key === 'Enter' &&
+      newEntryKey.trim() &&
+      currentType !== 'buffer'
+    ) {
+      handleAdd();
+    }
+  };
+
+  if (!isOpen) {
+    return null;
+  }
 
   // Unsavable when no key, no supported type, or when the value is
   // null — the hex editor signals invalid / empty hex via null.
@@ -146,91 +124,97 @@ export const AddEntryDialog = ({
     !newEntryKey.trim() || !isCurrentTypeSupported || currentValue === null;
 
   return (
-    <>
-      <Button isDisabled={isDisabled} onPress={() => setIsOpen(true)}>
-        <Plus className="h-3 w-3" />
-        Add Entry
-      </Button>
-
-      <Modal
-        isOpen={isOpen}
-        onOpenChange={(nextOpen) => {
-          setIsOpen(nextOpen);
-          if (!nextOpen) {
-            resetForm();
-          }
-        }}
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={resetAndClose}
+    >
+      <div
+        className="bg-gray-800 rounded-lg p-6 w-[32rem] max-w-full mx-4"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={handleKeyDown}
       >
-        <Modal.Backdrop variant="blur">
-          <Modal.Container placement="center">
-            <Modal.Dialog aria-label="Add New Entry">
-              <Modal.CloseTrigger />
-              <Modal.Header>
-                <Modal.Heading>Add New Entry</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="flex flex-col gap-4 p-6">
-                <TextField className="w-full" name="new-entry-key" type="text">
-                  <Label>Key</Label>
-                  <Input
-                    autoFocus
-                    onChange={(event) => setNewEntryKey(event.target.value)}
-                    placeholder="Enter key name"
-                    value={newEntryKey}
-                    variant="secondary"
-                  />
-                </TextField>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-100">Add New Entry</h2>
+          <button
+            onClick={resetAndClose}
+            className="p-1 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded transition-colors"
+            title="Close dialog"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label>Value</Label>
-                  <TypedValueEditor
-                    supportedTypes={supportedTypes}
-                    type={currentType}
-                    value={currentValue}
-                    onChange={(nextType, nextValue) => {
-                      setCurrentType(nextType);
-                      setCurrentValue(nextValue);
-                    }}
-                    inputId="new-entry-value"
-                  />
-                  {!isCurrentTypeSupported ? (
-                    <Description className="text-xs text-warning">
-                      Selected type is not supported by this storage.
-                    </Description>
-                  ) : null}
-                </div>
-              </Modal.Body>
-              <Modal.Footer className="flex justify-end gap-2">
-                <Button onPress={closeDialog} variant="secondary">
-                  Cancel
-                </Button>
-                <Button
-                  isDisabled={isAddDisabled}
-                  onPress={handleAddEntry}
-                  variant="primary"
-                >
-                  Add Entry
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="new-entry-key"
+              className="block text-sm font-medium text-gray-200 mb-1"
+            >
+              Key
+            </label>
+            <input
+              id="new-entry-key"
+              type="text"
+              value={newEntryKey}
+              onChange={(event) => setNewEntryKey(event.target.value)}
+              placeholder="Enter key name"
+              className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="new-entry-value"
+              className="block text-sm font-medium text-gray-200 mb-1"
+            >
+              Value
+            </label>
+            <TypedValueEditor
+              supportedTypes={supportedTypes}
+              type={currentType}
+              value={currentValue}
+              onChange={(nextType, nextValue) => {
+                setCurrentType(nextType);
+                setCurrentValue(nextValue);
+              }}
+              inputId="new-entry-value"
+            />
+            {!isCurrentTypeSupported && (
+              <p className="text-xs text-amber-400 mt-1">
+                Selected type is not supported by this storage.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 mt-6">
+          <button
+            onClick={resetAndClose}
+            className="px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAdd}
+            disabled={isAddDisabled}
+            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+          >
+            Add Entry
+          </button>
+        </div>
+      </div>
 
       <ConfirmDialog
-        confirmText="OK"
         isOpen={confirmDialog.isOpen}
-        message={confirmDialog.message}
         onClose={() =>
           setConfirmDialog((previous) => ({ ...previous, isOpen: false }))
         }
-        onConfirm={() => {
-          if (confirmDialog.onConfirm) {
-            confirmDialog.onConfirm();
-          }
-        }}
+        onConfirm={() => {}}
         title={confirmDialog.title}
-        type={confirmDialog.type}
+        message={confirmDialog.message}
+        type="alert"
       />
-    </>
+    </div>
   );
 };

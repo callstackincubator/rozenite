@@ -71,7 +71,7 @@ export const RequestTab = ({ selectedRequest }: RequestTabProps) => {
         {renderQueryParams()}
         {renderRequestBody()}
         {!hasQueryParams && !requestBody && (
-          <div className="text-sm text-muted">
+          <div className="text-sm text-gray-400">
             No request body or query params for this request
           </div>
         )}

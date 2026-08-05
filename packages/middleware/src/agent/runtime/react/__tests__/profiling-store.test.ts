@@ -19,32 +19,48 @@ describe('profiling store', () => {
     expect(stopUpdate.requestProfilingDataForRendererIds).toEqual([1, 2]);
     expect(store.getStatus(1).isProcessingData).toBe(true);
 
-    expect(store.ingestProfilingData(normalizeProfilingDataEvent({
-      rendererID: 1,
-      dataForRoots: [{
-        rootID: 10,
-        commitData: [{
-          duration: 12,
-          timestamp: 100,
-          fiberActualDurations: [[10, 12]],
-          fiberSelfDurations: [[10, 4]],
-        }],
-      }],
-    }))).toBe(true);
+    expect(
+      store.ingestProfilingData(
+        normalizeProfilingDataEvent({
+          rendererID: 1,
+          dataForRoots: [
+            {
+              rootID: 10,
+              commitData: [
+                {
+                  duration: 12,
+                  timestamp: 100,
+                  fiberActualDurations: [[10, 12]],
+                  fiberSelfDurations: [[10, 4]],
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toBe(true);
     expect(store.getStatus(1).isProcessingData).toBe(true);
 
-    expect(store.ingestProfilingData(normalizeProfilingDataEvent({
-      rendererID: 2,
-      dataForRoots: [{
-        rootID: 11,
-        commitData: [{
-          duration: 8,
-          timestamp: 120,
-          fiberActualDurations: [[11, 8]],
-          fiberSelfDurations: [[11, 3]],
-        }],
-      }],
-    }))).toBe(true);
+    expect(
+      store.ingestProfilingData(
+        normalizeProfilingDataEvent({
+          rendererID: 2,
+          dataForRoots: [
+            {
+              rootID: 11,
+              commitData: [
+                {
+                  duration: 8,
+                  timestamp: 120,
+                  fiberActualDurations: [[11, 8]],
+                  fiberSelfDurations: [[11, 3]],
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toBe(true);
 
     const status = store.getStatus(2);
     expect(status.isProcessingData).toBe(false);
@@ -61,18 +77,26 @@ describe('profiling store', () => {
     store.noteProfilingOperation(7);
     store.ingestProfilingStatus({ isProfiling: false });
 
-    expect(store.ingestProfilingData(normalizeProfilingDataEvent({
-      rendererID: 8,
-      dataForRoots: [{
-        rootID: 1,
-        commitData: [{
-          duration: 15,
-          timestamp: 10,
-          fiberActualDurations: [[1, 15]],
-          fiberSelfDurations: [[1, 7]],
-        }],
-      }],
-    }))).toBe(false);
+    expect(
+      store.ingestProfilingData(
+        normalizeProfilingDataEvent({
+          rendererID: 8,
+          dataForRoots: [
+            {
+              rootID: 1,
+              commitData: [
+                {
+                  duration: 15,
+                  timestamp: 10,
+                  fiberActualDurations: [[1, 15]],
+                  fiberSelfDurations: [[1, 7]],
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toBe(false);
 
     const snapshot = store.getSnapshot();
     expect(snapshot.pendingRendererIds).toEqual(new Set([7]));
@@ -102,31 +126,47 @@ describe('profiling store', () => {
     store.noteProfilingOperation(2);
     store.ingestProfilingStatus({ isProfiling: false });
 
-    expect(store.ingestProfilingData(normalizeProfilingDataEvent({
-      rendererID: 1,
-      dataForRoots: [{
-        rootID: 10,
-        commitData: [{
-          duration: 12,
-          timestamp: 100,
-          fiberActualDurations: [[10, 12]],
-          fiberSelfDurations: [[10, 4]],
-        }],
-      }],
-    }))).toBe(true);
+    expect(
+      store.ingestProfilingData(
+        normalizeProfilingDataEvent({
+          rendererID: 1,
+          dataForRoots: [
+            {
+              rootID: 10,
+              commitData: [
+                {
+                  duration: 12,
+                  timestamp: 100,
+                  fiberActualDurations: [[10, 12]],
+                  fiberSelfDurations: [[10, 4]],
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toBe(true);
 
-    expect(store.ingestProfilingData(normalizeProfilingDataEvent({
-      rendererID: 2,
-      dataForRoots: [{
-        rootID: 10,
-        commitData: [{
-          duration: 18,
-          timestamp: 120,
-          fiberActualDurations: [[10, 18]],
-          fiberSelfDurations: [[10, 5]],
-        }],
-      }],
-    }))).toBe(true);
+    expect(
+      store.ingestProfilingData(
+        normalizeProfilingDataEvent({
+          rendererID: 2,
+          dataForRoots: [
+            {
+              rootID: 10,
+              commitData: [
+                {
+                  duration: 18,
+                  timestamp: 120,
+                  fiberActualDurations: [[10, 18]],
+                  fiberSelfDurations: [[10, 5]],
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toBe(true);
 
     const snapshot = store.getSnapshot();
     expect(snapshot.conflictingRootIds).toEqual(new Set([10]));

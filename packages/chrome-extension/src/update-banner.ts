@@ -6,17 +6,17 @@
  * Layout: bottom-left corner, single panel with logo on the left.
  */
 export function injectUpdateBanner(
-	latestVersion: string,
-	releasesUrl: string,
-	logoUrl: string,
-	dismissStorageKey: string,
-	dismissDurationMs: number
+  latestVersion: string,
+  releasesUrl: string,
+  logoUrl: string,
+  dismissStorageKey: string,
+  dismissDurationMs: number,
 ): void {
-	if (document.getElementById('rozenite-update-banner')) return;
+  if (document.getElementById('rozenite-update-banner')) return;
 
-	const panel = document.createElement('div');
-	panel.id = 'rozenite-update-banner';
-	panel.style.cssText = `
+  const panel = document.createElement('div');
+  panel.id = 'rozenite-update-banner';
+  panel.style.cssText = `
 		position: fixed;
 		bottom: 20px;
 		left: 20px;
@@ -36,10 +36,10 @@ export function injectUpdateBanner(
 		backdrop-filter: blur(8px);
 	`;
 
-	const logoImg = document.createElement('img');
-	logoImg.src = logoUrl;
-	logoImg.alt = 'Rozenite';
-	logoImg.style.cssText = `
+  const logoImg = document.createElement('img');
+  logoImg.src = logoUrl;
+  logoImg.alt = 'Rozenite';
+  logoImg.style.cssText = `
 		width: 32px;
 		height: 32px;
 		flex-shrink: 0;
@@ -47,16 +47,16 @@ export function injectUpdateBanner(
 		border-radius: 50%;
 	`;
 
-	const text = document.createElement('span');
-	text.textContent = `Update available — v${latestVersion}`;
-	text.style.cssText = 'font-weight: 500; white-space: nowrap;';
+  const text = document.createElement('span');
+  text.textContent = `Update available — v${latestVersion}`;
+  text.style.cssText = 'font-weight: 500; white-space: nowrap;';
 
-	const downloadBtn = document.createElement('a');
-	downloadBtn.href = releasesUrl;
-	downloadBtn.target = '_blank';
-	downloadBtn.rel = 'noopener noreferrer';
-	downloadBtn.textContent = 'Download';
-	downloadBtn.style.cssText = `
+  const downloadBtn = document.createElement('a');
+  downloadBtn.href = releasesUrl;
+  downloadBtn.target = '_blank';
+  downloadBtn.rel = 'noopener noreferrer';
+  downloadBtn.textContent = 'Download';
+  downloadBtn.style.cssText = `
 		display: inline-flex;
 		align-items: center;
 		padding: 6px 12px;
@@ -71,17 +71,17 @@ export function injectUpdateBanner(
 		transition: background 150ms ease;
 		white-space: nowrap;
 	`;
-	downloadBtn.addEventListener('mouseenter', () => {
-		downloadBtn.style.background = '#9a5aff';
-	});
-	downloadBtn.addEventListener('mouseleave', () => {
-		downloadBtn.style.background = '#8232FF';
-	});
+  downloadBtn.addEventListener('mouseenter', () => {
+    downloadBtn.style.background = '#9a5aff';
+  });
+  downloadBtn.addEventListener('mouseleave', () => {
+    downloadBtn.style.background = '#8232FF';
+  });
 
-	const dismissBtn = document.createElement('button');
-	dismissBtn.innerHTML = '&times;';
-	dismissBtn.type = 'button';
-	dismissBtn.style.cssText = `
+  const dismissBtn = document.createElement('button');
+  dismissBtn.innerHTML = '&times;';
+  dismissBtn.type = 'button';
+  dismissBtn.style.cssText = `
 		background: none;
 		border: none;
 		color: #8a8a8a;
@@ -92,20 +92,20 @@ export function injectUpdateBanner(
 		transition: color 150ms ease;
 		flex-shrink: 0;
 	`;
-	dismissBtn.addEventListener('mouseenter', () => {
-		dismissBtn.style.color = '#e6e6e6';
-	});
-	dismissBtn.addEventListener('mouseleave', () => {
-		dismissBtn.style.color = '#8a8a8a';
-	});
+  dismissBtn.addEventListener('mouseenter', () => {
+    dismissBtn.style.color = '#e6e6e6';
+  });
+  dismissBtn.addEventListener('mouseleave', () => {
+    dismissBtn.style.color = '#8a8a8a';
+  });
 
-	panel.append(logoImg, text, downloadBtn, dismissBtn);
-	document.body.appendChild(panel);
+  panel.append(logoImg, text, downloadBtn, dismissBtn);
+  document.body.appendChild(panel);
 
-	dismissBtn.addEventListener('click', () => {
-		chrome.storage.local.set({
-			[dismissStorageKey]: Date.now() + dismissDurationMs,
-		});
-		panel.remove();
-	});
+  dismissBtn.addEventListener('click', () => {
+    chrome.storage.local.set({
+      [dismissStorageKey]: Date.now() + dismissDurationMs,
+    });
+    panel.remove();
+  });
 }

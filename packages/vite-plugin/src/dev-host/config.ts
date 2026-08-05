@@ -19,7 +19,9 @@ const getEntryDisplayName = (value: unknown, fallback: string) => {
 };
 
 const getDevHostConfig = () => {
-  const value = (window as unknown as Record<string, unknown>)[DEV_HOST_CONFIG_GLOBAL_KEY];
+  const value = (window as unknown as Record<string, unknown>)[
+    DEV_HOST_CONFIG_GLOBAL_KEY
+  ];
 
   if (typeof value !== 'object' || value === null) {
     return {} as { presets?: unknown; flows?: unknown };
@@ -28,7 +30,9 @@ const getDevHostConfig = () => {
   return value as { presets?: unknown; flows?: unknown };
 };
 
-const isDevHostPresetSource = (value: unknown): value is DevHostPresetSource => {
+const isDevHostPresetSource = (
+  value: unknown,
+): value is DevHostPresetSource => {
   return (
     typeof value === 'object' &&
     value !== null &&

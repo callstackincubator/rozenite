@@ -4,10 +4,7 @@ import {
   reactNavigationToolDefinitions,
 } from './src/shared/agent-tools.js';
 
-export {
-  REACT_NAVIGATION_AGENT_PLUGIN_ID,
-  reactNavigationToolDefinitions,
-};
+export { REACT_NAVIGATION_AGENT_PLUGIN_ID, reactNavigationToolDefinitions };
 
 export const reactNavigationTools = defineAgentToolDescriptors(
   REACT_NAVIGATION_AGENT_PLUGIN_ID,
@@ -35,7 +32,4 @@ export type {
   ReactNavigationResetRootResult,
 } from './src/shared/agent-tools.js';
 
-export type {
-  NavigationAction,
-  NavigationState,
-} from './src/shared/index.js';
+export type { NavigationAction, NavigationState } from './src/shared/index.js';

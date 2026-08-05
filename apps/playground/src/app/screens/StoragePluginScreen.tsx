@@ -69,7 +69,8 @@ export const StoragePluginScreen = () => {
   const [tab, setTab] = useState<AdapterTab>('mmkv');
   const [asyncStorageMode, setAsyncStorageMode] =
     useState<AsyncStorageMode>('v2-default');
-  const [mmkvStorageId, setMmkvStorageId] = useState<keyof typeof mmkvStorages>('user-storage');
+  const [mmkvStorageId, setMmkvStorageId] =
+    useState<keyof typeof mmkvStorages>('user-storage');
   const [key, setKey] = useState('');
   const [value, setValue] = useState('');
   const [entryType, setEntryType] = useState<EntryType>('string');
@@ -119,17 +120,17 @@ export const StoragePluginScreen = () => {
     if (tab === 'async') {
       const keys = await selectedAsyncStorage.getAllKeys();
       const values = await Promise.all(
-        keys.map(async (entryKey) => [
-          entryKey,
-          await selectedAsyncStorage.getItem(entryKey),
-        ] as const)
+        keys.map(
+          async (entryKey) =>
+            [entryKey, await selectedAsyncStorage.getItem(entryKey)] as const,
+        ),
       );
       setEntries(
         values.map(([entryKey, entryValue]) => ({
           key: entryKey,
           type: 'string',
           value: entryValue ?? '',
-        }))
+        })),
       );
       return;
     }
@@ -139,7 +140,7 @@ export const StoragePluginScreen = () => {
       keys.map(async (entryKey) => ({
         key: entryKey,
         value: (await SecureStore.getItemAsync(entryKey)) ?? '',
-      }))
+      })),
     );
 
     setEntries(
@@ -149,7 +150,7 @@ export const StoragePluginScreen = () => {
           key: item.key,
           type: 'string',
           value: item.value,
-        }))
+        })),
     );
   };
 
@@ -180,7 +181,10 @@ export const StoragePluginScreen = () => {
           storage.set(key, value === 'true');
         } else {
           const parsed = JSON.parse(value);
-          if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'number')) {
+          if (
+            !Array.isArray(parsed) ||
+            !parsed.every((item) => typeof item === 'number')
+          ) {
             throw new Error('Buffer value must be a JSON array of numbers');
           }
           storage.set(key, new Uint8Array(parsed).buffer);
@@ -195,7 +199,10 @@ export const StoragePluginScreen = () => {
       setValue('');
       await loadEntries();
     } catch (error) {
-      Alert.alert('Set failed', error instanceof Error ? error.message : 'Unknown error');
+      Alert.alert(
+        'Set failed',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   };
 
@@ -320,23 +327,25 @@ export const StoragePluginScreen = () => {
       />
 
       <View style={styles.inlineRow}>
-        {(['string', 'number', 'boolean', 'buffer'] as EntryType[]).map((type) => {
-          const disabled = !supportsTypedValues && type !== 'string';
-          return (
-            <TouchableOpacity
-              key={type}
-              disabled={disabled}
-              onPress={() => setEntryType(type)}
-              style={[
-                styles.typeChip,
-                entryType === type && styles.typeChipActive,
-                disabled && styles.typeChipDisabled,
-              ]}
-            >
-              <Text style={styles.typeChipText}>{type}</Text>
-            </TouchableOpacity>
-          );
-        })}
+        {(['string', 'number', 'boolean', 'buffer'] as EntryType[]).map(
+          (type) => {
+            const disabled = !supportsTypedValues && type !== 'string';
+            return (
+              <TouchableOpacity
+                key={type}
+                disabled={disabled}
+                onPress={() => setEntryType(type)}
+                style={[
+                  styles.typeChip,
+                  entryType === type && styles.typeChipActive,
+                  disabled && styles.typeChipDisabled,
+                ]}
+              >
+                <Text style={styles.typeChipText}>{type}</Text>
+              </TouchableOpacity>
+            );
+          },
+        )}
       </View>
 
       {!supportsTypedValues && (
@@ -349,16 +358,17 @@ export const StoragePluginScreen = () => {
         value={value}
         onChangeText={setValue}
         placeholder={
-          entryType === 'buffer'
-            ? 'JSON buffer, e.g. [1,2,3]'
-            : 'Value'
+          entryType === 'buffer' ? 'JSON buffer, e.g. [1,2,3]' : 'Value'
         }
         placeholderTextColor="#6b7280"
         style={styles.input}
       />
 
       <View style={styles.actionsRow}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => void handleSet()}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => void handleSet()}
+        >
           <Text style={styles.actionButtonText}>Set</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -367,7 +377,10 @@ export const StoragePluginScreen = () => {
         >
           <Text style={styles.actionButtonText}>Delete</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={() => void loadEntries()}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => void loadEntries()}
+        >
           <Text style={styles.actionButtonText}>Refresh</Text>
         </TouchableOpacity>
       </View>

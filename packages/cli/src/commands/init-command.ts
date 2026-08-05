@@ -1,7 +1,4 @@
-import {
-  getProjectType,
-  type BundlerType
-} from '@rozenite/tools';
+import { getProjectType, type BundlerType } from '@rozenite/tools';
 import { getAvailableBundlerTypes } from '@rozenite/tools';
 import { wrapConfigFile } from '../utils/config-wrapper.js';
 import { isGitRepositoryClean } from '../utils/git.js';
@@ -52,16 +49,16 @@ export const initCommand = async (projectRoot: string) => {
           ['expo', 'customize', 'metro.config.js'],
           {
             cwd: projectRoot,
-          }
+          },
         );
-      }
+      },
     );
     bundlerTypes.push('metro');
   }
 
   if (!bundlerTypes.length) {
     throw new Error(
-      'Could not determine bundler type. Please ensure you have a metro.config.js or rspack.config.js file.'
+      'Could not determine bundler type. Please ensure you have a metro.config.js or rspack.config.js file.',
     );
   }
 
@@ -78,7 +75,7 @@ export const initCommand = async (projectRoot: string) => {
       },
       async () => {
         await installDevDependency(projectRoot, packageName);
-      }
+      },
     );
 
     // Wrap the configuration file
@@ -91,7 +88,7 @@ export const initCommand = async (projectRoot: string) => {
       },
       async () => {
         await wrapConfigFile(projectRoot, bundlerType);
-      }
+      },
     );
   }
 

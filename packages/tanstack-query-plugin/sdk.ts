@@ -4,10 +4,7 @@ import {
   tanstackQueryToolDefinitions,
 } from './src/shared/agent-tools.js';
 
-export {
-  TANSTACK_QUERY_AGENT_PLUGIN_ID,
-  tanstackQueryToolDefinitions,
-};
+export { TANSTACK_QUERY_AGENT_PLUGIN_ID, tanstackQueryToolDefinitions };
 
 export const tanstackQueryTools = defineAgentToolDescriptors(
   TANSTACK_QUERY_AGENT_PLUGIN_ID,

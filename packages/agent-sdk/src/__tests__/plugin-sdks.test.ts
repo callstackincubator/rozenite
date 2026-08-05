@@ -12,10 +12,7 @@ import {
   fileSystemTools,
   type FileSystemListRootsResult,
 } from '@rozenite/file-system-plugin/sdk';
-import {
-  mmkvTools,
-  type MMKVReadEntryResult,
-} from '@rozenite/mmkv-plugin/sdk';
+import { mmkvTools, type MMKVReadEntryResult } from '@rozenite/mmkv-plugin/sdk';
 import {
   networkActivityTools,
   type NetworkActivityListRequestsResult,
@@ -85,12 +82,12 @@ describe('official plugin sdk descriptors', () => {
   });
 
   it('type-checks representative zero-arg, required-arg, and paginated descriptor calls', () => {
-    expectTypeOf(typedCall(controlsTools.listSections)).toEqualTypeOf<
-      ControlsListSectionsResult
-    >();
-    expectTypeOf(typedCall(fileSystemTools.listRoots)).toEqualTypeOf<
-      FileSystemListRootsResult
-    >();
+    expectTypeOf(
+      typedCall(controlsTools.listSections),
+    ).toEqualTypeOf<ControlsListSectionsResult>();
+    expectTypeOf(
+      typedCall(fileSystemTools.listRoots),
+    ).toEqualTypeOf<FileSystemListRootsResult>();
     expectTypeOf(
       typedCall(storageTools.readEntry, {
         adapterId: 'mmkv',

@@ -31,22 +31,22 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     runtimeModel?.removeEventListener(
       'BindingCalled',
       this.bindingCalled,
-      this
+      this,
     );
     runtimeModel?.removeEventListener(
       'ExecutionContextCreated',
       this.onExecutionContextCreated,
-      this
+      this,
     );
     runtimeModel?.removeEventListener(
       'ExecutionContextDestroyed',
       this.onExecutionContextDestroyed,
-      this
+      this,
     );
   }
 
   private bindingCalled(
-    event: RuntimeEvent<{ name: string; payload: string }>
+    event: RuntimeEvent<{ name: string; payload: string }>,
   ): void {
     // If binding name is not initialized, then we failed to get its name
     if (
@@ -78,7 +78,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
         // It is expected that messages are flushed out right after we notify listeners with BackendExecutionContextCreated event
         if (!this.isDomainMessagesQueueEmpty()) {
           throw new Error(
-            `Attempted to send a message to domain ${domainName} while queue is not empty`
+            `Attempted to send a message to domain ${domainName} while queue is not empty`,
           );
         }
 
@@ -129,7 +129,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
 
     if (errors.length > 0) {
       throw new Error(
-        'Error occurred in RozeniteBindingsModel while calling event listeners'
+        'Error occurred in RozeniteBindingsModel while calling event listeners',
       );
     }
   }
@@ -138,7 +138,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
     if (!runtimeModel) {
       throw new Error(
-        `Failed to initialize domain for RozeniteBindingsModel: runtime model is not available`
+        `Failed to initialize domain for RozeniteBindingsModel: runtime model is not available`,
       );
     }
 
@@ -158,7 +158,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
     if (!runtimeModel) {
       throw new Error(
-        `Failed to send message from RozeniteBindingsModel: runtime model is not available`
+        `Failed to send message from RozeniteBindingsModel: runtime model is not available`,
       );
     }
 
@@ -179,7 +179,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
     if (!runtimeModel) {
       throw new Error(
-        'Failed to enable RozeniteBindingsModel: runtime model is not available'
+        'Failed to enable RozeniteBindingsModel: runtime model is not available',
       );
     }
 
@@ -187,13 +187,13 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       .then(() =>
         runtimeModel.agent.invoke_evaluate({
           expression: `${RUNTIME_GLOBAL}.BINDING_NAME`,
-        })
+        }),
       )
       .then((response) => {
         if (response.exceptionDetails) {
           throw new Error(
             'Failed to get binding name for RozeniteBindingsModel on a global: ' +
-              response.exceptionDetails.text
+              response.exceptionDetails.text,
           );
         }
 
@@ -203,13 +203,13 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
         ) {
           throw new Error(
             'Failed to get binding name for RozeniteBindingsModel on a global: returned value is ' +
-              String(response.result.value)
+              String(response.result.value),
           );
         }
 
         if (response.result.value === '') {
           throw new Error(
-            'Failed to get binding name for ReactDevToolsBindingsModel on a global: returned value is an empty string'
+            'Failed to get binding name for ReactDevToolsBindingsModel on a global: returned value is an empty string',
           );
         }
 
@@ -220,7 +220,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
         runtimeModel.addEventListener(
           'BindingCalled',
           this.bindingCalled,
-          this
+          this,
         );
 
         return runtimeModel.agent.invoke_addBinding({ name: bindingName });
@@ -230,7 +230,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
         if (possiblyError) {
           throw new Error(
             'Failed to add binding for ReactDevToolsBindingsModel: ' +
-              possiblyError
+              possiblyError,
           );
         }
 
@@ -247,19 +247,19 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
     if (!runtimeModel) {
       throw new Error(
-        'Failed to initialize execution context listeners for RozeniteBindingsModel: runtime model is not available'
+        'Failed to initialize execution context listeners for RozeniteBindingsModel: runtime model is not available',
       );
     }
 
     runtimeModel.addEventListener(
       'ExecutionContextCreated',
       this.onExecutionContextCreated,
-      this
+      this,
     );
     runtimeModel.addEventListener(
       'ExecutionContextDestroyed',
       this.onExecutionContextDestroyed,
-      this
+      this,
     );
   }
 
@@ -278,8 +278,8 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       .catch((error: Error) =>
         this.dispatchEventToListeners(
           'BackendExecutionContextUnavailable',
-          error.message
-        )
+          error.message,
+        ),
       );
   }
 
@@ -295,7 +295,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
   }
 
   private async waitForFuseboxDispatcherToBeInitialized(
-    attempt = 1
+    attempt = 1,
   ): Promise<void> {
     // Ideally, this should not be polling, but rather one `Runtime.evaluate` request with `awaitPromise` option
     // We need to support it in Hermes first, then we can migrate this to awaitPromise
@@ -307,7 +307,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
     if (!runtimeModel) {
       throw new Error(
-        'Failed to wait for React DevTools dispatcher initialization: runtime model is not available'
+        'Failed to wait for React DevTools dispatcher initialization: runtime model is not available',
       );
     }
 
@@ -320,14 +320,14 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
         if (response.exceptionDetails) {
           throw new Error(
             'Failed to wait for React DevTools dispatcher initialization: ' +
-              response.exceptionDetails.text
+              response.exceptionDetails.text,
           );
         }
 
         if (response.result.value === false) {
           // Wait for 250 ms and restart
           return new Promise((resolve) => setTimeout(resolve, 250)).then(() =>
-            this.waitForFuseboxDispatcherToBeInitialized(attempt + 1)
+            this.waitForFuseboxDispatcherToBeInitialized(attempt + 1),
           );
         }
 

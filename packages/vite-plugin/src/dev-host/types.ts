@@ -33,7 +33,11 @@ export type MessageEntry = {
   payload: unknown;
 };
 
-export type DevHostFlowRunStatus = 'running' | 'succeeded' | 'failed' | 'aborted';
+export type DevHostFlowRunStatus =
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'aborted';
 
 export type DevHostFlowRunState = {
   id: string;
@@ -51,7 +55,10 @@ export type PluginMessage = {
   payload: unknown;
 };
 
-export type ResizeHandleId = 'devtools-height' | 'command-width' | 'details-width';
+export type ResizeHandleId =
+  | 'devtools-height'
+  | 'command-width'
+  | 'details-width';
 
 export type ResizeSession = {
   handleId: ResizeHandleId;

@@ -17,15 +17,15 @@ export const Toolbar = () => {
   };
 
   return (
-    <div className="flex items-center gap-2 p-2 border-b border-border/60 bg-surface">
+    <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
       <Button
         variant="ghost"
         size="sm"
         onClick={onToggleRecording}
         className={`h-8 w-8 p-0 ${
           isRecording
-            ? 'text-danger hover:text-danger/80'
-            : 'text-muted hover:text-accent'
+            ? 'text-red-400 hover:text-red-300'
+            : 'text-gray-400 hover:text-blue-400'
         }`}
         title={isRecording ? 'Stop recording' : 'Start recording'}
       >
@@ -39,7 +39,7 @@ export const Toolbar = () => {
         variant="ghost"
         size="sm"
         onClick={onClearRequests}
-        className="h-8 w-8 p-0 text-muted hover:text-accent"
+        className="h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
       >
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -48,7 +48,7 @@ export const Toolbar = () => {
         size="sm"
         onClick={exportSession}
         disabled={!canExportSession}
-        className="ml-auto h-8 w-8 p-0 text-muted hover:text-accent"
+        className="ml-auto h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
         title="Export session"
       >
         <Download className="h-4 w-4" />

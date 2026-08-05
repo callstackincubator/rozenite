@@ -17,7 +17,7 @@ export const ViewToggle = ({ views, value, onChange }: ViewToggleProps) => {
   return (
     <div
       role="tablist"
-      className="flex items-center rounded-md border border-border/60 overflow-hidden ms-2"
+      className="flex items-center rounded-md border border-gray-700 overflow-hidden ms-2"
     >
       {views.map((v) => (
         <button
@@ -32,8 +32,8 @@ export const ViewToggle = ({ views, value, onChange }: ViewToggleProps) => {
           className={cn(
             'px-2 py-0.5 text-xs transition-colors',
             value === v
-              ? 'bg-accent text-background'
-              : 'text-foreground/70 hover:bg-surface-secondary',
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-300 hover:bg-gray-700',
           )}
         >
           {VIEW_LABELS[v]}

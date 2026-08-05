@@ -8,7 +8,7 @@ export class UnsupportedPlatformError extends Error {
 export class MissingRozeniteForWebError extends Error {
   constructor() {
     super(
-      'Rozenite for web is not configured. A separate integration is required for web. Consult Rozenite docs for details.'
+      'Rozenite for web is not configured. A separate integration is required for web. Consult Rozenite docs for details.',
     );
     this.name = 'MissingRozeniteForWebError';
   }

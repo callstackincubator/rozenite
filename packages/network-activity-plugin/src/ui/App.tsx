@@ -1,8 +1,8 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { PluginHeader, PluginTheme } from '@rozenite/ui';
 import { NetworkActivityEventMap } from '../shared/client';
 
 import { InspectorView } from './views/InspectorView';
+import { LoadingView } from './views/LoadingView';
 
 import './globals.css';
 
@@ -11,13 +11,9 @@ export default function NetworkActivityPanel() {
     pluginId: '@rozenite/network-activity-plugin',
   });
 
-  return (
-    <PluginTheme
-      className="flex h-screen flex-col bg-background text-foreground"
-      defaultTheme="dark"
-    >
-      <PluginHeader title="Network Activity" subtitle="Inspect HTTP, WebSocket, and SSE requests." />
-      <InspectorView client={client} />
-    </PluginTheme>
-  );
+  if (!client) {
+    return <LoadingView />;
+  }
+
+  return <InspectorView client={client} />;
 }

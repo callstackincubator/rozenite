@@ -5,23 +5,23 @@ import { Subscription } from './types';
 type MessageListener = (payload: unknown) => void;
 
 export type RozeniteDevToolsClient<
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
 > = {
   send: <TType extends keyof TEventMap>(
     type: TType,
-    payload: TEventMap[TType]
+    payload: TEventMap[TType],
   ) => void;
   onMessage: <TType extends keyof TEventMap>(
     type: TType,
-    listener: (payload: TEventMap[TType]) => void
+    listener: (payload: TEventMap[TType]) => void,
   ) => Subscription;
   close: () => void;
 };
 
 const createRozeniteDevToolsClient = async <
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
 >(
-  pluginId: string
+  pluginId: string,
 ): Promise<RozeniteDevToolsClient<TEventMap>> => {
   const channel = await getChannel();
   const listeners = new Map<string, Set<MessageListener>>();
@@ -44,7 +44,7 @@ const createRozeniteDevToolsClient = async <
 
   const send = <TType extends keyof TEventMap>(
     type: TType,
-    payload: TEventMap[TType]
+    payload: TEventMap[TType],
   ) => {
     channel.send({
       pluginId,
@@ -59,7 +59,7 @@ const createRozeniteDevToolsClient = async <
     send,
     onMessage: <TType extends keyof TEventMap>(
       type: TType,
-      listener: (payload: TEventMap[TType]) => void
+      listener: (payload: TEventMap[TType]) => void,
     ) => {
       const typeListeners = listeners.get(type as string) ?? new Set();
       typeListeners.add(listener as MessageListener);
@@ -81,9 +81,9 @@ const createRozeniteDevToolsClient = async <
 };
 
 export const getRozeniteDevToolsClient = async <
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
 >(
-  pluginId: string
+  pluginId: string,
 ): Promise<RozeniteDevToolsClient<TEventMap>> => {
   return createRozeniteDevToolsClient<TEventMap>(pluginId);
 };

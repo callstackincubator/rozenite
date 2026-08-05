@@ -57,7 +57,15 @@ const overrides = {
 
 const segmentOverrides = {
   Segment: {
-    style: ({ $isActive, $disabled, $isFocusVisible }: { $isActive?: boolean; $disabled?: boolean; $isFocusVisible?: boolean }) => ({
+    style: ({
+      $isActive,
+      $disabled,
+      $isFocusVisible,
+    }: {
+      $isActive?: boolean;
+      $disabled?: boolean;
+      $isFocusVisible?: boolean;
+    }) => ({
       minHeight: '22px',
       minWidth: 'auto',
       paddingTop: '3px',
@@ -76,9 +84,12 @@ const segmentOverrides = {
       outlineOffset: '-2px',
       cursor: $disabled ? 'default' : 'pointer',
       opacity: $disabled ? 0.4 : 1,
-      ':hover': $disabled || $isActive ? undefined : {
-        color: '#ffffff',
-      },
+      ':hover':
+        $disabled || $isActive
+          ? undefined
+          : {
+              color: '#ffffff',
+            },
     }),
   },
   LabelBlock: {
@@ -99,7 +110,12 @@ const segmentOverrides = {
   },
 };
 
-export const ToggleGroup = ({ value, options, onChange, 'aria-label': ariaLabel }: ToggleGroupProps) => {
+export const ToggleGroup = ({
+  value,
+  options,
+  onChange,
+  'aria-label': ariaLabel,
+}: ToggleGroupProps) => {
   return (
     <SegmentedControl
       activeKey={value}
@@ -113,7 +129,12 @@ export const ToggleGroup = ({ value, options, onChange, 'aria-label': ariaLabel 
       })}
     >
       {options.map((option) => (
-        <Segment key={option.key} label={option.label} disabled={option.disabled} overrides={segmentOverrides} />
+        <Segment
+          key={option.key}
+          label={option.label}
+          disabled={option.disabled}
+          overrides={segmentOverrides}
+        />
       ))}
     </SegmentedControl>
   );

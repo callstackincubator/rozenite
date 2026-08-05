@@ -58,21 +58,33 @@ const getViewportMatch = () => {
   return window.matchMedia('(max-width: 960px)').matches;
 };
 
-export const App = ({ packageName, packageDescription, panels, flows, presets }: AppProps) => {
-  const [activePanel, setActivePanel] = useState<DevHostPanelEntry | null>(() => {
-    return getInitialPanel(panels);
-  });
+export const App = ({
+  packageName,
+  packageDescription,
+  panels,
+  flows,
+  presets,
+}: AppProps) => {
+  const [activePanel, setActivePanel] = useState<DevHostPanelEntry | null>(
+    () => {
+      return getInitialPanel(panels);
+    },
+  );
   const [commandType, setCommandType] = useState('');
   const [commandPayload, setCommandPayload] = useState('');
   const [messages, setMessages] = useState<MessageEntry[]>([]);
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
+    null,
+  );
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [devToolsHeight, setDevToolsHeight] = useState(DEFAULT_DEVTOOLS_HEIGHT);
   const [commandWidth, setCommandWidth] = useState(DEFAULT_COMMAND_WIDTH);
   const [detailsWidth, setDetailsWidth] = useState(DETAILS_PANEL_WIDTH);
-  const [activeResizeHandle, setActiveResizeHandle] = useState<ResizeHandleId | null>(null);
+  const [activeResizeHandle, setActiveResizeHandle] =
+    useState<ResizeHandleId | null>(null);
   const [isNarrowViewport, setIsNarrowViewport] = useState(getViewportMatch);
-  const [activeMobileTab, setActiveMobileTab] = useState<MobileDevtoolsTab>('log');
+  const [activeMobileTab, setActiveMobileTab] =
+    useState<MobileDevtoolsTab>('log');
   const [iframeLoadNonce, setIframeLoadNonce] = useState(0);
   const workspaceRef = useRef<HTMLElement | null>(null);
   const logWorkspaceRef = useRef<HTMLDivElement | null>(null);
@@ -80,7 +92,14 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
   const resizeSessionRef = useRef<ResizeSession | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const lastAutoRunLoadRef = useRef(0);
-  const { flowRuns, runFlow, stopFlow, hasRunningFlow, registerMessage, resetMessages } = useFlowRunner({
+  const {
+    flowRuns,
+    runFlow,
+    stopFlow,
+    hasRunningFlow,
+    registerMessage,
+    resetMessages,
+  } = useFlowRunner({
     sendMessage: (type, payload) => {
       iframeRef.current?.contentWindow?.postMessage(
         {
@@ -102,7 +121,8 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
   const activeSource = activePanel?.source ?? '';
   const activeLabel = activePanel?.label ?? '';
   const emptyState = panels.length === 0;
-  const selectedMessage = messages.find((message) => message.id === selectedMessageId) ?? null;
+  const selectedMessage =
+    messages.find((message) => message.id === selectedMessageId) ?? null;
   const trimmedCommandType = commandType.trim();
   const trimmedCommandPayload = commandPayload.trim();
   const hasCommandType = trimmedCommandType.length > 0;
@@ -121,7 +141,9 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
   const canDispatch = hasCommandType && hasValidCommandPayload;
   const panelDescription = packageDescription.trim();
   const isDetailsVisible = isDetailsOpen && selectedMessage !== null;
-  const iframeMinHeight = isNarrowViewport ? MIN_NARROW_IFRAME_HEIGHT : MIN_IFRAME_HEIGHT;
+  const iframeMinHeight = isNarrowViewport
+    ? MIN_NARROW_IFRAME_HEIGHT
+    : MIN_IFRAME_HEIGHT;
 
   useEffect(() => {
     document.title = `${packageName} Dev Host`;
@@ -167,9 +189,14 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
     }
 
     const bounds = workspace.getBoundingClientRect();
-    const maxHeight = Math.max(MIN_DEVTOOLS_HEIGHT, bounds.height - iframeMinHeight - 12);
+    const maxHeight = Math.max(
+      MIN_DEVTOOLS_HEIGHT,
+      bounds.height - iframeMinHeight - 12,
+    );
 
-    setDevToolsHeight((current) => clamp(current, MIN_DEVTOOLS_HEIGHT, maxHeight));
+    setDevToolsHeight((current) =>
+      clamp(current, MIN_DEVTOOLS_HEIGHT, maxHeight),
+    );
   }, [iframeMinHeight]);
 
   useEffect(() => {
@@ -307,7 +334,10 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
 
     const bounds = workspace.getBoundingClientRect();
     const nextHeight = bounds.bottom - event.clientY;
-    const maxHeight = Math.max(MIN_DEVTOOLS_HEIGHT, bounds.height - iframeMinHeight - 12);
+    const maxHeight = Math.max(
+      MIN_DEVTOOLS_HEIGHT,
+      bounds.height - iframeMinHeight - 12,
+    );
 
     setDevToolsHeight(clamp(nextHeight, MIN_DEVTOOLS_HEIGHT, maxHeight));
   };
@@ -333,7 +363,10 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
 
     const bounds = logWorkspace.getBoundingClientRect();
     const nextWidth = bounds.right - event.clientX;
-    const maxWidth = Math.max(MIN_DETAILS_WIDTH, bounds.width - 280 - SPLITTER_SIZE);
+    const maxWidth = Math.max(
+      MIN_DETAILS_WIDTH,
+      bounds.width - 280 - SPLITTER_SIZE,
+    );
 
     setDetailsWidth(clamp(nextWidth, MIN_DETAILS_WIDTH, maxWidth));
   };
@@ -382,7 +415,10 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
       return;
     }
 
-    iframeRef.current?.contentWindow?.postMessage({ pluginId: packageName, type, payload }, '*');
+    iframeRef.current?.contentWindow?.postMessage(
+      { pluginId: packageName, type, payload },
+      '*',
+    );
 
     appendMessage({ direction: 'in', type, payload });
 
@@ -396,29 +432,40 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
           <RozeniteLogo />
         </div>
 
-        <div className="rz-topbar-panel-picker" title={panelDescription || undefined}>
-          <PanelTabs panels={panels} activeSource={activeSource} onValueChange={selectPanel} />
+        <div
+          className="rz-topbar-panel-picker"
+          title={panelDescription || undefined}
+        >
+          <PanelTabs
+            panels={panels}
+            activeSource={activeSource}
+            onValueChange={selectPanel}
+          />
         </div>
       </header>
 
       <main
         ref={workspaceRef}
         className="rz-workspace"
-        style={{ '--rz-devtools-height': `${devToolsHeight}px` } as CSSVariables}
+        style={
+          { '--rz-devtools-height': `${devToolsHeight}px` } as CSSVariables
+        }
       >
         <section className="rz-card">
           {emptyState ? (
-            <div className="rz-empty-state">No panels were defined in rozenite.config.ts.</div>
+            <div className="rz-empty-state">
+              No panels were defined in rozenite.config.ts.
+            </div>
           ) : (
-              <iframe
-                key={activeSource}
-                ref={iframeRef}
-                title={activeLabel || 'Rozenite panel preview'}
-                src={activeSource}
-                className="rz-iframe"
-                data-resizing={activeResizeHandle === 'devtools-height'}
-                onLoad={() => setIframeLoadNonce((value) => value + 1)}
-              />
+            <iframe
+              key={activeSource}
+              ref={iframeRef}
+              title={activeLabel || 'Rozenite panel preview'}
+              src={activeSource}
+              className="rz-iframe"
+              data-resizing={activeResizeHandle === 'devtools-height'}
+              onLoad={() => setIframeLoadNonce((value) => value + 1)}
+            />
           )}
         </section>
 
@@ -427,7 +474,9 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
           isDragging={activeResizeHandle === 'devtools-height'}
           orientation="horizontal"
           label="Resize DevTools"
-          onPointerDown={(event) => startResize('devtools-height', event, resizeDevtoolsHeight)}
+          onPointerDown={(event) =>
+            startResize('devtools-height', event, resizeDevtoolsHeight)
+          }
         />
 
         {isNarrowViewport ? (
@@ -455,13 +504,16 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
                       activeResizeHandle={activeResizeHandle}
                       onClose={handleDetailsClose}
                       onUseMessage={(message) => {
-                        const nextValues = getDispatcherValuesFromMessage(message);
+                        const nextValues =
+                          getDispatcherValuesFromMessage(message);
                         setCommandType(nextValues.commandType);
                         setCommandPayload(nextValues.commandPayload);
                         setIsDetailsOpen(false);
                         setActiveMobileTab('actions');
                       }}
-                      onResizeStart={(event) => startResize('details-width', event, resizeDetailsPane)}
+                      onResizeStart={(event) =>
+                        startResize('details-width', event, resizeDetailsPane)
+                      }
                     />
                   ) : (
                     <MessageLogPane
@@ -508,8 +560,12 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
               className="rz-log-workspace"
               style={
                 {
-                  '--rz-details-width': isDetailsVisible ? `${detailsWidth}px` : '0px',
-                  '--rz-details-splitter-width': isDetailsVisible ? `${SPLITTER_SIZE}px` : '0px',
+                  '--rz-details-width': isDetailsVisible
+                    ? `${detailsWidth}px`
+                    : '0px',
+                  '--rz-details-splitter-width': isDetailsVisible
+                    ? `${SPLITTER_SIZE}px`
+                    : '0px',
                 } as CSSVariables
               }
             >
@@ -531,7 +587,9 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
                   setCommandType(nextValues.commandType);
                   setCommandPayload(nextValues.commandPayload);
                 }}
-                onResizeStart={(event) => startResize('details-width', event, resizeDetailsPane)}
+                onResizeStart={(event) =>
+                  startResize('details-width', event, resizeDetailsPane)
+                }
               />
             </div>
 
@@ -540,7 +598,9 @@ export const App = ({ packageName, packageDescription, panels, flows, presets }:
               isDragging={activeResizeHandle === 'command-width'}
               orientation="vertical"
               label="Resize command dispatcher"
-              onPointerDown={(event) => startResize('command-width', event, resizeCommandPane)}
+              onPointerDown={(event) =>
+                startResize('command-width', event, resizeCommandPane)
+              }
             />
 
             <DispatchForm

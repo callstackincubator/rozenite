@@ -1,6 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table';
+import { Text } from '@radix-ui/themes';
 import { SerializedPerformanceResource } from '../../shared/types';
-import { DataTable } from '@rozenite/ui';
+import { DataTable } from './DataTable';
 import { formatBytes, formatDuration } from '../utils';
 
 export type ResourcesTableProps = {
@@ -13,18 +14,18 @@ const columns: ColumnDef<SerializedPerformanceResource>[] = [
     accessorKey: 'name',
     header: 'Name',
     cell: ({ row }) => (
-      <span className="font-medium text-foreground" style={{ wordBreak: 'break-all' }}>
-        {String(row.getValue('name'))}
-      </span>
+      <Text weight="medium" style={{ wordBreak: 'break-all' }}>
+        {row.getValue('name')}
+      </Text>
     ),
   },
   {
     accessorKey: 'initiatorType',
     header: 'Type',
     cell: ({ row }) => (
-      <span className="text-sm text-muted">
+      <Text size="2" color="gray">
         {(row.getValue('initiatorType') as string | undefined) ?? '—'}
-      </span>
+      </Text>
     ),
   },
   {
@@ -32,11 +33,7 @@ const columns: ColumnDef<SerializedPerformanceResource>[] = [
     header: 'Duration',
     cell: ({ row }) => {
       const duration = row.getValue('duration') as number;
-      return (
-        <span className="font-medium tabular-nums text-primary">
-          {formatDuration(duration)}
-        </span>
-      );
+      return <Text color="blue">{formatDuration(duration)}</Text>;
     },
   },
   {
@@ -45,9 +42,9 @@ const columns: ColumnDef<SerializedPerformanceResource>[] = [
     cell: ({ row }) => {
       const size = row.getValue('transferSize') as number;
       return (
-        <span className="text-sm text-muted tabular-nums">
+        <Text size="2" color="gray">
           {formatBytes(size)}
-        </span>
+        </Text>
       );
     },
   },
@@ -59,12 +56,10 @@ export const ResourcesTable = ({
 }: ResourcesTableProps) => {
   return (
     <DataTable
-      ariaLabel="Performance resources"
       data={resources}
       columns={columns}
       onRowClick={onRowClick}
       emptyMessage="No resources recorded"
-      getRowTextValue={(resource) => resource.name}
     />
   );
 };

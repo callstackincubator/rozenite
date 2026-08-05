@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import type { DevFlowContext, DevFlowMessage, DevFlowMessageMatcher } from '../load-config.js';
-import type { DevHostFlowEntry, DevHostFlowRunState, MessageEntry } from './types.js';
+import type {
+  DevFlowContext,
+  DevFlowMessage,
+  DevFlowMessageMatcher,
+} from '../load-config.js';
+import type {
+  DevHostFlowEntry,
+  DevHostFlowRunState,
+  MessageEntry,
+} from './types.js';
 
 type FlowRunnerOptions = {
   sendMessage: (type: string, payload: unknown) => void;
@@ -138,12 +146,12 @@ export const useFlowRunner = ({ sendMessage }: FlowRunnerOptions) => {
       }
     };
 
-      const cleanupRun = () => {
-        activeRun.cleanups.forEach((cleanup) => cleanup());
-        activeRun.cleanups.clear();
-        activeRun.listeners.clear();
-        activeRunsRef.current.delete(runId);
-      };
+    const cleanupRun = () => {
+      activeRun.cleanups.forEach((cleanup) => cleanup());
+      activeRun.cleanups.clear();
+      activeRun.listeners.clear();
+      activeRunsRef.current.delete(runId);
+    };
 
     const onMessage: DevFlowContext['onMessage'] = (matcher, listener) => {
       throwIfAborted();
@@ -203,13 +211,17 @@ export const useFlowRunner = ({ sendMessage }: FlowRunnerOptions) => {
             resolve(message);
           });
 
-          controller.signal.addEventListener('abort', handleAbort, { once: true });
+          controller.signal.addEventListener('abort', handleAbort, {
+            once: true,
+          });
 
           if (options?.timeoutMs != null) {
             timeoutId = window.setTimeout(() => {
               cleanup();
               reject(
-                new Error(`Timed out waiting for a matching message after ${options.timeoutMs}ms.`),
+                new Error(
+                  `Timed out waiting for a matching message after ${options.timeoutMs}ms.`,
+                ),
               );
             }, options.timeoutMs);
           }
@@ -238,7 +250,14 @@ export const useFlowRunner = ({ sendMessage }: FlowRunnerOptions) => {
       ...current,
     ]);
 
-    const updateRunState = (nextState: Partial<Omit<DevHostFlowRunState, 'id' | 'flowName' | 'flowDisplayName' | 'autoRun'>>) => {
+    const updateRunState = (
+      nextState: Partial<
+        Omit<
+          DevHostFlowRunState,
+          'id' | 'flowName' | 'flowDisplayName' | 'autoRun'
+        >
+      >,
+    ) => {
       setFlowRuns((current) =>
         current.map((run) =>
           run.id === runId
@@ -283,7 +302,9 @@ export const useFlowRunner = ({ sendMessage }: FlowRunnerOptions) => {
   };
 
   const hasRunningFlow = (flowName: string) => {
-    return flowRuns.some((run) => run.flowName === flowName && run.status === 'running');
+    return flowRuns.some(
+      (run) => run.flowName === flowName && run.status === 'running',
+    );
   };
 
   return {

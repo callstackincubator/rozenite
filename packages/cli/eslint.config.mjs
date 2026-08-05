@@ -3,9 +3,7 @@ import baseConfig from '../../eslint.config.mjs';
 export default [
   ...baseConfig,
   {
-    ignores: [
-      'template/**/*',
-    ],
+    ignores: ['template/**/*'],
   },
   {
     files: ['**/*.json'],

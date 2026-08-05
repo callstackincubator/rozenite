@@ -14,7 +14,11 @@ type DropdownMenuProps<T> = {
   children: ReactNode;
 };
 
-export const DropdownMenu = <T,>({ items, onSelect, children }: DropdownMenuProps<T>) => {
+export const DropdownMenu = <T,>({
+  items,
+  onSelect,
+  children,
+}: DropdownMenuProps<T>) => {
   return (
     <StatefulPopover
       triggerType={TRIGGER_TYPE.click}
@@ -48,10 +52,13 @@ export const DropdownMenu = <T,>({ items, onSelect, children }: DropdownMenuProp
               },
               Option: {
                 props: {
-                  getItemLabel: (menuItem: DropdownMenuItem<T>) => menuItem.label,
+                  getItemLabel: (menuItem: DropdownMenuItem<T>) =>
+                    menuItem.label,
                 },
                 style: ({ $isHighlighted }: { $isHighlighted?: boolean }) => ({
-                  backgroundColor: $isHighlighted ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                  backgroundColor: $isHighlighted
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'transparent',
                   color: '#ffffff',
                   fontSize: '13px',
                   lineHeight: '1.4',

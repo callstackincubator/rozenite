@@ -9,8 +9,8 @@ export interface WebSocketInterceptor {
     callback: (
       code: number | null,
       reason: string | null,
-      socketId: number
-    ) => void
+      socketId: number,
+    ) => void,
   ): void;
 
   /**
@@ -26,8 +26,8 @@ export interface WebSocketInterceptor {
       url: string,
       protocols: string[] | null,
       options: string[],
-      socketId: number
-    ) => void
+      socketId: number,
+    ) => void,
   ): void;
 
   /**
@@ -39,7 +39,7 @@ export interface WebSocketInterceptor {
    * Invoked when event "websocketMessage" happens.
    */
   setOnMessageCallback(
-    callback: (data: string, socketId: number) => void
+    callback: (data: string, socketId: number) => void,
   ): void;
 
   /**
@@ -53,8 +53,8 @@ export interface WebSocketInterceptor {
   setOnCloseCallback(
     callback: (
       error: { code: number; reason?: string },
-      socketId: number
-    ) => void
+      socketId: number,
+    ) => void,
   ): void;
 
   isInterceptorEnabled(): boolean;
@@ -70,8 +70,8 @@ export interface WebSocketInterceptorPreRN079 {
     callback: (
       code: number | null,
       reason: string | null,
-      socketId: number
-    ) => void
+      socketId: number,
+    ) => void,
   ): void;
 
   /**
@@ -87,8 +87,8 @@ export interface WebSocketInterceptorPreRN079 {
       url: string,
       protocols: string[] | null,
       options: string[],
-      socketId: number
-    ) => void
+      socketId: number,
+    ) => void,
   ): void;
 
   /**
@@ -100,7 +100,7 @@ export interface WebSocketInterceptorPreRN079 {
    * Invoked when event "websocketMessage" happens.
    */
   setOnMessageCallback(
-    callback: (socketId: number, data: string) => void
+    callback: (socketId: number, data: string) => void,
   ): void;
 
   /**
@@ -114,8 +114,8 @@ export interface WebSocketInterceptorPreRN079 {
   setOnCloseCallback(
     callback: (
       socketId: number,
-      error: { code: number; reason?: string }
-    ) => void
+      error: { code: number; reason?: string },
+    ) => void,
   ): void;
 
   isInterceptorEnabled(): boolean;
@@ -138,7 +138,7 @@ export const getWebSocketInterceptor = (): WebSocketInterceptor => {
     return {
       ...WebSocketInterceptorPreRN079,
       setOnMessageCallback: (
-        callback: (data: string, socketId: number) => void
+        callback: (data: string, socketId: number) => void,
       ) => {
         WebSocketInterceptorPreRN079.setOnMessageCallback((socketId, data) => {
           callback(data, socketId);
@@ -147,15 +147,15 @@ export const getWebSocketInterceptor = (): WebSocketInterceptor => {
       setOnCloseCallback: (
         callback: (
           error: { code: number; reason?: string },
-          socketId: number
-        ) => void
+          socketId: number,
+        ) => void,
       ) => {
         WebSocketInterceptorPreRN079.setOnCloseCallback((error, socketId) => {
           callback(socketId, error);
         });
       },
       setOnErrorCallback: (
-        callback: (error: string, socketId: number) => void
+        callback: (error: string, socketId: number) => void,
       ) => {
         WebSocketInterceptorPreRN079.setOnErrorCallback((error, socketId) => {
           callback(socketId, error);

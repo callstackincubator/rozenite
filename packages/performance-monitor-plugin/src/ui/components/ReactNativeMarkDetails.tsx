@@ -1,5 +1,6 @@
+import { Box, Text, Heading, Separator, Flex } from '@radix-ui/themes';
 import { SerializedPerformanceReactNativeMark } from '../../shared/types';
-import { DetailField, DetailsCard, DetailsDisplay } from './DetailsDisplay';
+import { DetailsDisplay } from './DetailsDisplay';
 import { formatTime } from '../utils';
 
 export type ReactNativeMarkDetailsProps = {
@@ -10,22 +11,34 @@ export const ReactNativeMarkDetails = ({
   mark,
 }: ReactNativeMarkDetailsProps) => {
   return (
-    <div className="flex flex-col gap-4">
-      <DetailsCard
-        description="Point-in-time information captured for this React Native mark."
-        title="Overview"
-      >
-        <DetailField label="Name">
-          <span className="font-medium text-foreground">{mark.name}</span>
-        </DetailField>
-        <DetailField label="Recorded At">
-          <span className="tabular-nums text-foreground">
-            {formatTime(mark.startTime)}
-          </span>
-        </DetailField>
-      </DetailsCard>
+    <Box>
+      <Heading size="5" mb="4">
+        React Native Mark Details
+      </Heading>
+
+      <Box mb="4">
+        <Flex align="center" gap="3">
+          <Text size="2" color="gray" style={{ minWidth: '80px' }}>
+            Name:
+          </Text>
+          <Text weight="medium" size="3">
+            {mark.name}
+          </Text>
+        </Flex>
+      </Box>
+
+      <Box mb="4">
+        <Flex align="center" gap="3">
+          <Text size="2" color="gray" style={{ minWidth: '80px' }}>
+            Recorded at:
+          </Text>
+          <Text size="3">{formatTime(mark.startTime)}</Text>
+        </Flex>
+      </Box>
+
+      <Separator size="4" my="4" />
 
       <DetailsDisplay details={mark.detail} />
-    </div>
+    </Box>
   );
 };

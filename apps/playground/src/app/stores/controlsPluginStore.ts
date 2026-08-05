@@ -16,7 +16,7 @@ type ControlsPluginState = {
   featureFlags: FeatureFlags;
   updateReleaseLabel: (releaseLabel: string) => void;
   selectEnvironment: (
-    environment: ControlsPluginState['selectedEnvironment']
+    environment: ControlsPluginState['selectedEnvironment'],
   ) => void;
   toggleFlag: (flag: keyof FeatureFlags, nextValue: boolean) => void;
   incrementCounter: () => void;
@@ -57,7 +57,11 @@ export const useControlsPluginStore = create<ControlsPluginState>((set) => ({
         ...state.featureFlags,
         [flag]: nextValue,
       },
-      status: nextValue ? 'armed' : state.status === 'armed' ? 'idle' : state.status,
+      status: nextValue
+        ? 'armed'
+        : state.status === 'armed'
+          ? 'idle'
+          : state.status,
       lastActionAt: formatTimestamp(new Date()),
     })),
   incrementCounter: () =>

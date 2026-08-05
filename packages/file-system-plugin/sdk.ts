@@ -4,10 +4,7 @@ import {
   fileSystemToolDefinitions,
 } from './src/shared/agent-tools.js';
 
-export {
-  FILE_SYSTEM_AGENT_PLUGIN_ID,
-  fileSystemToolDefinitions,
-};
+export { FILE_SYSTEM_AGENT_PLUGIN_ID, fileSystemToolDefinitions };
 
 export const fileSystemTools = defineAgentToolDescriptors(
   FILE_SYSTEM_AGENT_PLUGIN_ID,

@@ -103,17 +103,21 @@ const persistConfig = {
 
 const rootReducer = combineReducers(coreReducers);
 
-const persistedReducer: Reducer<ReduxDevToolsStoreState, ReduxDevToolsStoreAction> =
-  persistReducer(
-    persistConfig,
-    rootReducer as unknown as Reducer<
-      ReduxDevToolsStoreState,
-      ReduxDevToolsStoreAction
-    >
-  ) as any;
+const persistedReducer: Reducer<
+  ReduxDevToolsStoreState,
+  ReduxDevToolsStoreAction
+> = persistReducer(
+  persistConfig,
+  rootReducer as unknown as Reducer<
+    ReduxDevToolsStoreState,
+    ReduxDevToolsStoreAction
+  >,
+) as any;
 
 export default function configureStore(
-  callback: (store: Store<ReduxDevToolsStoreState, ReduxDevToolsStoreAction>) => void
+  callback: (
+    store: Store<ReduxDevToolsStoreState, ReduxDevToolsStoreAction>,
+  ) => void,
 ) {
   let composeEnhancers = compose;
 
@@ -131,7 +135,7 @@ export default function configureStore(
 
   const store = createStore(
     persistedReducer,
-    composeEnhancers(applyMiddleware(...middlewares, bridgeMiddleware))
+    composeEnhancers(applyMiddleware(...middlewares, bridgeMiddleware)),
   );
 
   const persistor = persistStore(store as Store, null, () => {

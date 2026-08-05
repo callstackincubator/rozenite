@@ -9,10 +9,7 @@ export default defineConfig(() => ({
     alias: [
       {
         find: '@rozenite/agent-sdk/transport',
-        replacement: resolve(
-          __dirname,
-          '../agent-sdk/src/transport.ts',
-        ),
+        replacement: resolve(__dirname, '../agent-sdk/src/transport.ts'),
       },
       {
         find: /^@rozenite\/agent-sdk$/,

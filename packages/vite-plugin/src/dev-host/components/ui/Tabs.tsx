@@ -1,4 +1,11 @@
-import { Children, createContext, isValidElement, useContext, type ReactElement, type ReactNode } from 'react';
+import {
+  Children,
+  createContext,
+  isValidElement,
+  useContext,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { Tab, Tabs as BaseTabs } from 'baseui/tabs/index.js';
 import { cn } from '../../utils.js';
 
@@ -56,7 +63,9 @@ const collectElements = <T,>(
     const childWithChildren = child as ElementWithChildren;
 
     if (childWithChildren.props.children !== undefined) {
-      matches.push(...collectElements(childWithChildren.props.children, matcher));
+      matches.push(
+        ...collectElements(childWithChildren.props.children, matcher),
+      );
     }
   });
 
@@ -90,7 +99,15 @@ const tabsOverrides = {
     },
   },
   Tab: {
-    style: ({ $active, $disabled, $isFocusVisible }: { $active?: boolean; $disabled?: boolean; $isFocusVisible?: boolean }) => ({
+    style: ({
+      $active,
+      $disabled,
+      $isFocusVisible,
+    }: {
+      $active?: boolean;
+      $disabled?: boolean;
+      $isFocusVisible?: boolean;
+    }) => ({
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -112,16 +129,30 @@ const tabsOverrides = {
       outlineOffset: '-2px',
       cursor: $disabled ? 'default' : 'pointer',
       opacity: $disabled ? 0.4 : 1,
-      ':hover': $disabled || $active ? undefined : {
-        color: '#ffffff',
-      },
+      ':hover':
+        $disabled || $active
+          ? undefined
+          : {
+              color: '#ffffff',
+            },
     }),
   },
 };
 
-export const Tabs = ({ className, value, onValueChange, children }: TabsProps) => {
-  const lists = collectElements(children, (child): child is ReactElement<TabsListProps> => child.type === TabsList);
-  const content = collectElements(children, (child): child is TabsContentElement => child.type === TabsContent);
+export const Tabs = ({
+  className,
+  value,
+  onValueChange,
+  children,
+}: TabsProps) => {
+  const lists = collectElements(
+    children,
+    (child): child is ReactElement<TabsListProps> => child.type === TabsList,
+  );
+  const content = collectElements(
+    children,
+    (child): child is TabsContentElement => child.type === TabsContent,
+  );
   const list = lists[0];
 
   if (!list) {
@@ -129,15 +160,24 @@ export const Tabs = ({ className, value, onValueChange, children }: TabsProps) =
   }
 
   const triggers = Children.toArray(list.props.children).filter(
-    (child): child is TabTriggerElement => isValidElement(child) && child.type === TabsTrigger,
+    (child): child is TabTriggerElement =>
+      isValidElement(child) && child.type === TabsTrigger,
   );
 
   return (
     <TabsContext.Provider value={{ activeKey: value }}>
       <div className={cn('rz-tabs-root', className)}>
-        <BaseTabs activeKey={value} onChange={({ activeKey }) => onValueChange(String(activeKey))} overrides={tabsOverrides}>
+        <BaseTabs
+          activeKey={value}
+          onChange={({ activeKey }) => onValueChange(String(activeKey))}
+          overrides={tabsOverrides}
+        >
           {triggers.map((trigger) => (
-            <Tab key={trigger.props.value} title={trigger.props.children} disabled={trigger.props.disabled} />
+            <Tab
+              key={trigger.props.value}
+              title={trigger.props.children}
+              disabled={trigger.props.disabled}
+            />
           ))}
         </BaseTabs>
         {content}
@@ -154,7 +194,11 @@ export const TabsTrigger: (_props: TabsTriggerProps) => null = () => {
   return null;
 };
 
-export const TabsContent = ({ value, className, children }: TabsContentProps) => {
+export const TabsContent = ({
+  value,
+  className,
+  children,
+}: TabsContentProps) => {
   const context = useContext(TabsContext);
   const isActive = context?.activeKey === value;
 

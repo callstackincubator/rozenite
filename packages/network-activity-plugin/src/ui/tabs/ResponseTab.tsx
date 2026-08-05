@@ -55,7 +55,7 @@ export const ResponseTab = ({
   const renderResponseBody = () => {
     if (!responseBody) {
       return (
-        <div className="text-sm text-muted">
+        <div className="text-sm text-gray-400">
           No response body available for this request
         </div>
       );
@@ -98,7 +98,7 @@ export const ResponseTab = ({
       <Button
         variant="ghost"
         size="xs"
-        className="text-accent hover:text-accent"
+        className="text-violet-300 hover:text-violet-300"
         onClick={(e) => {
           e.stopPropagation();
           setInitialOverride({
@@ -137,7 +137,7 @@ export const ResponseTab = ({
               {
                 key: 'Content-Type',
                 value: type,
-                valueClassName: 'text-accent',
+                valueClassName: 'text-blue-400',
               },
             ]}
           />

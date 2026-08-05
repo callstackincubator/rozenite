@@ -4,12 +4,16 @@ import {
   STORAGE_AGENT_PLUGIN_ID,
   storageToolDefinitions,
 } from '../shared/agent-tools';
-import type { StorageEntry, StorageEntryType, StorageEntryValue } from '../shared/types';
+import type {
+  StorageEntry,
+  StorageEntryType,
+  StorageEntryValue,
+} from '../shared/types';
 import type { StorageView } from './storage-view';
 
 const parseValueForType = (
   type: StorageEntryType,
-  value: unknown
+  value: unknown,
 ): StorageEntryValue => {
   if (type === 'string') {
     if (typeof value !== 'string') {
@@ -53,7 +57,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
         const selected = views.find(
           (view) =>
             (adapterId === undefined || view.target.adapterId === adapterId) &&
-            (storageId === undefined || view.target.storageId === storageId)
+            (storageId === undefined || view.target.storageId === storageId),
         );
 
         if (!selected) {
@@ -64,7 +68,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
             .filter(Boolean)
             .join(', ');
           throw new Error(
-            `No storage matched ${qualifier}. Available: ${views.map(formatViewRef).join(', ')}`
+            `No storage matched ${qualifier}. Available: ${views.map(formatViewRef).join(', ')}`,
           );
         }
 
@@ -73,13 +77,13 @@ export const useStorageAgentTools = (views: StorageView[]) => {
 
       if (views.length > 1) {
         throw new Error(
-          `Multiple storages detected. Provide adapterId and/or storageId. Available: ${views.map(formatViewRef).join(', ')}`
+          `Multiple storages detected. Provide adapterId and/or storageId. Available: ${views.map(formatViewRef).join(', ')}`,
         );
       }
 
       return views[0];
     },
-    [views]
+    [views],
   );
 
   useRozenitePluginAgentTool({
@@ -94,7 +98,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
           storageName: view.storageName,
           supportedTypes: view.capabilities.supportedTypes,
           entryCount: (await view.getAllKeys()).length,
-        }))
+        })),
       ),
     }),
   });
@@ -129,7 +133,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
 
       if (!entry) {
         throw new Error(
-          `Key "${key}" not found in storage "${formatViewRef(view)}".`
+          `Key "${key}" not found in storage "${formatViewRef(view)}".`,
         );
       }
 
@@ -150,7 +154,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
 
       if (existing) {
         throw new Error(
-          `Key "${key}" already exists in storage "${formatViewRef(view)}". Use edit-entry instead.`
+          `Key "${key}" already exists in storage "${formatViewRef(view)}". Use edit-entry instead.`,
         );
       }
 
@@ -175,7 +179,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
 
       if (!existing) {
         throw new Error(
-          `Key "${key}" not found in storage "${formatViewRef(view)}". Use create-entry instead.`
+          `Key "${key}" not found in storage "${formatViewRef(view)}". Use create-entry instead.`,
         );
       }
 

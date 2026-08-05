@@ -29,7 +29,7 @@ export const htmlRenderer: ResponseRenderer = {
         title="HTML response preview"
         sandbox=""
         srcDoc={CSP_META + body}
-        className="w-full h-[500px] bg-white border border-border/60 rounded-md"
+        className="w-full h-[500px] bg-white border border-gray-700 rounded-md"
       />
     );
   },

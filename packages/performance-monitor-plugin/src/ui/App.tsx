@@ -1,36 +1,39 @@
 import {
   useRozeniteDevToolsClient,
-  type Subscription,
+  Subscription,
 } from '@rozenite/plugin-bridge';
-import { useEffect, useState } from 'react';
 import {
-  Button,
-  Chip,
-  PluginHeader,
-  PluginTheme,
-  Tabs,
-} from '@rozenite/ui';
-import type {
   PerformanceMonitorEventMap,
-  SerializedPerformanceEntry,
-  SerializedPerformanceMark,
   SerializedPerformanceMeasure,
+  SerializedPerformanceMark,
   SerializedPerformanceMetric,
   SerializedPerformanceReactNativeMark,
   SerializedPerformanceResource,
+  SerializedPerformanceEntry,
 } from '../shared/types';
-import { DetailsSidebar } from './components/DetailsSidebar';
-import { ExportModal } from './components/ExportModal';
-import { MarksTable } from './components/MarksTable';
+import { useEffect, useState } from 'react';
+import {
+  Theme,
+  Tabs,
+  Button,
+  Heading,
+  Text,
+  Flex,
+  Box,
+} from '@radix-ui/themes';
+import '@radix-ui/themes/styles.css';
+import './App.css';
 import { MeasuresTable } from './components/MeasuresTable';
 import { MetricsTable } from './components/MetricsTable';
+import { MarksTable } from './components/MarksTable';
 import { ReactNativeMarksTable } from './components/ReactNativeMarksTable';
 import { ResourcesTable } from './components/ResourcesTable';
 import { WaterfallView } from './components/WaterfallView';
+import { DetailsSidebar } from './components/DetailsSidebar';
 import { SessionDuration } from './components/SessionDuration';
+import { ExportModal } from './components/ExportModal';
 import { deriveStartupPhases } from './derive-startup-phases';
 import { StartupTab } from './components/StartupTab';
-import './globals.css';
 
 type PerformanceMonitorSession = {
   sessionStartedAt: number;
@@ -42,20 +45,10 @@ type PerformanceMonitorSession = {
   resources: SerializedPerformanceResource[];
 };
 
-type ActiveTabId =
-  | 'waterfall'
-  | 'startup'
-  | 'measures'
-  | 'metrics'
-  | 'marks'
-  | 'reactNativeMarks'
-  | 'resources';
-
 export default function PerformanceMonitorPanel() {
   const client = useRozeniteDevToolsClient<PerformanceMonitorEventMap>({
     pluginId: '@rozenite/performance-monitor-plugin',
   });
-  const [activeTabId, setActiveTabId] = useState<ActiveTabId>('waterfall');
   const [session, setSession] = useState<PerformanceMonitorSession>({
     sessionStartedAt: 0,
     clockShift: 0,
@@ -84,6 +77,7 @@ export default function PerformanceMonitorPanel() {
         const receivedAt = Date.now();
         setSession({
           sessionStartedAt: receivedAt,
+          // It's likely that there is a small clock shift between the device and the DevTools.
           clockShift: receivedAt - sessionStartedAt,
           measures: [],
           marks: [],
@@ -91,7 +85,6 @@ export default function PerformanceMonitorPanel() {
           reactNativeMarks: [],
           resources: [],
         });
-        setSelectedItem(null);
         setIsSessionActive(true);
       }),
     );
@@ -219,168 +212,202 @@ export default function PerformanceMonitorPanel() {
   ];
 
   return (
-    <PluginTheme
-      className="flex h-screen flex-col bg-background text-foreground"
-      defaultTheme="dark"
-    >
-      <PluginHeader
-        subtitle="Track measures, marks, and metrics captured by react-native-performance."
-        title="Performance Monitor"
-        actions={
-          <div className="flex flex-wrap items-center justify-end gap-2">
+    <Theme appearance="dark" accentColor="blue" radius="medium">
+      <Box
+        p="4"
+        height="100vh"
+        style={{ display: 'flex', flexDirection: 'column' }}
+      >
+        {/* Header */}
+        <Box mb="4" style={{ flexShrink: 0 }}>
+          <Heading size="6" mb="2">
+            Performance Monitor
+          </Heading>
+          <Flex gap="4" align="center">
             <SessionDuration
               isActive={isSessionActive}
               sessionStartedAt={session.sessionStartedAt}
             />
-            <Chip
-              color={isSessionActive ? 'success' : 'default'}
-              size="sm"
-              variant="soft"
-            >
-              {isSessionActive ? 'Session Active' : 'Session Inactive'}
-            </Chip>
-            <Button
-              isDisabled={!client || isSessionActive}
-              onPress={handleStartSession}
-              size="sm"
-            >
-              Start Session
-            </Button>
-            <Button
-              isDisabled={!client || !isSessionActive}
-              onPress={handleStopSession}
-              size="sm"
-              variant="danger"
-            >
-              Stop Session
-            </Button>
-            <ExportModal
-              clockShift={session.clockShift}
-              marks={session.marks}
-              measures={session.measures}
-              metrics={session.metrics}
-              reactNativeMarks={session.reactNativeMarks}
-              resources={session.resources}
-              sessionStartedAt={session.sessionStartedAt}
-            />
-          </div>
-        }
-      />
+          </Flex>
+        </Box>
 
-      <Tabs.Root
-        className="flex min-h-0 flex-1 flex-col"
-        selectedKey={activeTabId}
-        onSelectionChange={(key) => {
-          setActiveTabId(String(key) as ActiveTabId);
-        }}
-      >
-        <Tabs.ListContainer className="overflow-x-auto px-4 pt-3">
-          <Tabs.List
-            aria-label="Performance monitor views"
-            className="w-fit min-w-max justify-start"
+        {/* Toolbar */}
+        <Flex gap="3" align="center" mb="4" style={{ flexShrink: 0 }}>
+          <Button
+            onClick={handleStartSession}
+            disabled={isSessionActive}
+            color="green"
           >
-            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="waterfall">
-              Waterfall ({waterfallEntries.length})
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="startup">
-              Startup
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="measures">
-              Measures ({allMeasures.length})
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="metrics">
-              Metrics ({session.metrics.length})
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="marks">
-              Marks ({session.marks.length})
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="reactNativeMarks">
-              React Native Marks ({session.reactNativeMarks.length})
-              <Tabs.Indicator />
-            </Tabs.Tab>
-            <Tabs.Tab className="w-auto shrink-0 whitespace-nowrap" id="resources">
-              Resources ({session.resources.length})
-              <Tabs.Indicator />
-            </Tabs.Tab>
-          </Tabs.List>
-        </Tabs.ListContainer>
-
-        <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
-          id="waterfall"
-        >
-          <WaterfallView
-            entries={waterfallEntries}
-            selectedEntry={selectedItem}
-            selectedEntryId={selectedWaterfallRowId}
-            onEntrySelect={handleEntryClick}
-          />
-        </Tabs.Panel>
-
-        <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
-          id="startup"
-        >
-          <StartupTab
+            Start Session
+          </Button>
+          <Button
+            onClick={handleStopSession}
+            disabled={!isSessionActive}
+            color="red"
+          >
+            Stop Session
+          </Button>
+          <ExportModal
+            measures={session.measures}
+            metrics={session.metrics}
+            marks={session.marks}
             reactNativeMarks={session.reactNativeMarks}
-            isSessionActive={isSessionActive}
-          />
-        </Tabs.Panel>
-
-        <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
-          id="measures"
-        >
-          <MeasuresTable
-            measures={allMeasures}
-            onRowClick={handleEntryClick}
-          />
-        </Tabs.Panel>
-
-        <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
-          id="metrics"
-        >
-          <MetricsTable metrics={session.metrics} onRowClick={handleEntryClick} />
-        </Tabs.Panel>
-
-        <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
-          id="marks"
-        >
-          <MarksTable marks={session.marks} onRowClick={handleEntryClick} />
-        </Tabs.Panel>
-
-        <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
-          id="reactNativeMarks"
-        >
-          <ReactNativeMarksTable
-            reactNativeMarks={session.reactNativeMarks}
-            onRowClick={handleEntryClick}
-          />
-        </Tabs.Panel>
-
-        <Tabs.Panel
-          className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
-          id="resources"
-        >
-          <ResourcesTable
             resources={session.resources}
-            onRowClick={handleEntryClick}
+            sessionStartedAt={session.sessionStartedAt}
+            clockShift={session.clockShift}
           />
-        </Tabs.Panel>
-      </Tabs.Root>
+          <Flex gap="2" align="center" ml="auto">
+            <Box
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: isSessionActive ? '#10b981' : '#ef4444',
+              }}
+            />
+            <Text size="2" color="gray">
+              {isSessionActive ? 'Session Active' : 'Session Inactive'}
+            </Text>
+          </Flex>
+        </Flex>
 
-      <DetailsSidebar
-        onClose={handleCloseSidebar}
-        selectedItem={selectedItem}
-      />
-    </PluginTheme>
+        {/* Tabs and details */}
+        <Box
+          style={{
+            flex: '1',
+            display: 'flex',
+            minHeight: 0,
+          }}
+        >
+          <Box style={{ flex: '1', minWidth: 0 }}>
+            <Tabs.Root
+              defaultValue="waterfall"
+              style={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Tabs.List style={{ flexShrink: 0 }}>
+                <Tabs.Trigger value="waterfall">
+                  Waterfall ({waterfallEntries.length})
+                </Tabs.Trigger>
+                <Tabs.Trigger value="startup">Startup</Tabs.Trigger>
+                <Tabs.Trigger value="measures">
+                  Measures ({allMeasures.length})
+                </Tabs.Trigger>
+                <Tabs.Trigger value="metrics">
+                  Metrics ({session.metrics.length})
+                </Tabs.Trigger>
+                <Tabs.Trigger value="marks">
+                  Marks ({session.marks.length})
+                </Tabs.Trigger>
+                <Tabs.Trigger value="reactNativeMarks">
+                  React Native Marks ({session.reactNativeMarks.length})
+                </Tabs.Trigger>
+                <Tabs.Trigger value="resources">
+                  Resources ({session.resources.length})
+                </Tabs.Trigger>
+              </Tabs.List>
+
+              <Box
+                style={{
+                  flexGrow: '1',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  minHeight: 0,
+                }}
+              >
+                <Tabs.Content
+                  value="waterfall"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <WaterfallView
+                    entries={waterfallEntries}
+                    selectedEntry={selectedItem}
+                    selectedEntryId={selectedWaterfallRowId}
+                    onEntrySelect={handleEntryClick}
+                  />
+                </Tabs.Content>
+
+                <Tabs.Content value="startup" style={{ display: 'contents' }}>
+                  <StartupTab
+                    reactNativeMarks={session.reactNativeMarks}
+                    isSessionActive={isSessionActive}
+                  />
+                </Tabs.Content>
+
+                <Tabs.Content
+                  value="measures"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <MeasuresTable
+                    measures={allMeasures}
+                    onRowClick={handleEntryClick}
+                  />
+                </Tabs.Content>
+
+                <Tabs.Content
+                  value="metrics"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <MetricsTable
+                    metrics={session.metrics}
+                    onRowClick={handleEntryClick}
+                  />
+                </Tabs.Content>
+
+                <Tabs.Content
+                  value="marks"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <MarksTable
+                    marks={session.marks}
+                    onRowClick={handleEntryClick}
+                  />
+                </Tabs.Content>
+
+                <Tabs.Content
+                  value="reactNativeMarks"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <ReactNativeMarksTable
+                    reactNativeMarks={session.reactNativeMarks}
+                    onRowClick={handleEntryClick}
+                  />
+                </Tabs.Content>
+
+                <Tabs.Content
+                  value="resources"
+                  style={{
+                    display: 'contents',
+                  }}
+                >
+                  <ResourcesTable
+                    resources={session.resources}
+                    onRowClick={handleEntryClick}
+                  />
+                </Tabs.Content>
+              </Box>
+            </Tabs.Root>
+          </Box>
+
+          <DetailsSidebar
+            selectedItem={selectedItem}
+            onClose={handleCloseSidebar}
+          />
+        </Box>
+      </Box>
+    </Theme>
   );
 }

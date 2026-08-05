@@ -36,7 +36,7 @@ const toStorageNode = (
   storageId: string,
   config: AsyncStorageLike | AsyncStorageInstanceConfig,
   fallbackName?: string,
-  fallbackBlacklist?: RegExp
+  fallbackBlacklist?: RegExp,
 ): StorageNode => {
   const resolved =
     'storage' in config
@@ -82,22 +82,21 @@ const toStorageNode = (
 };
 
 export const createAsyncStorageAdapter = (
-  options: CreateAsyncStorageAdapterOptions
+  options: CreateAsyncStorageAdapterOptions,
 ): StorageAdapter => {
-  const { adapterId = 'async-storage', adapterName = 'AsyncStorage' } =
-    options;
+  const { adapterId = 'async-storage', adapterName = 'AsyncStorage' } = options;
 
   const storageNodes: StorageNode[] =
     'storages' in options
       ? Object.entries(options.storages).map(([storageId, config]) =>
-          toStorageNode(storageId, config)
+          toStorageNode(storageId, config),
         )
       : [
           toStorageNode(
             options.storageId ?? 'default',
             options.storage,
             options.storageName ?? 'Default Storage',
-            options.blacklist
+            options.blacklist,
           ),
         ];
 
@@ -112,4 +111,5 @@ export const createAsyncStorageAdapter = (
  * @deprecated Use createAsyncStorageAdapter instead.
  */
 export const createExpoAsyncStorageAdapter = createAsyncStorageAdapter;
-export type CreateExpoAsyncStorageAdapterOptions = CreateAsyncStorageAdapterOptions;
+export type CreateExpoAsyncStorageAdapterOptions =
+  CreateAsyncStorageAdapterOptions;

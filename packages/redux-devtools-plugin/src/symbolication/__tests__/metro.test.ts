@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NativeModules } from 'react-native';
-import { __resetMetroOriginCache, resolveMetroOrigin, symbolicateFrames } from '../metro';
+import {
+  __resetMetroOriginCache,
+  resolveMetroOrigin,
+  symbolicateFrames,
+} from '../metro';
 
 vi.mock('react-native', () => ({
   NativeModules: {
@@ -46,7 +50,11 @@ describe('redux trace Metro symbolication', () => {
     await expect(
       symbolicateFrames(
         [
-          { generatedUrl: 'native', generatedLineNumber: 1, generatedColumnNumber: 1 },
+          {
+            generatedUrl: 'native',
+            generatedLineNumber: 1,
+            generatedColumnNumber: 1,
+          },
           {
             functionName: 'dispatchAction',
             generatedUrl: 'http://localhost:8081/index.bundle',
@@ -59,7 +67,11 @@ describe('redux trace Metro symbolication', () => {
     ).resolves.toEqual({
       status: 'complete',
       frames: [
-        { generatedUrl: 'native', generatedLineNumber: 1, generatedColumnNumber: 1 },
+        {
+          generatedUrl: 'native',
+          generatedLineNumber: 1,
+          generatedColumnNumber: 1,
+        },
         {
           functionName: 'dispatchAction',
           url: '/app/src/store.ts',

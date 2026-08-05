@@ -21,7 +21,7 @@ export type SettingsStore = {
   settings: PluginSettings;
   updateSettings: <K extends keyof PluginSettings>(
     plugin: K,
-    settings: Partial<PluginSettings[K]>
+    settings: Partial<PluginSettings[K]>,
   ) => void;
 };
 

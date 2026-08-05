@@ -16,7 +16,7 @@ export type MMKVView = {
 export const getMMKVView = (
   storageId: string,
   storage: MMKV,
-  blacklist?: RegExp
+  blacklist?: RegExp,
 ): MMKVView => {
   const mmkv = getMMKVAdapter(storage);
 
@@ -100,12 +100,12 @@ export const getMMKVView = (
     },
     getAllEntries: () => {
       return mmkvView.getAllKeys().map((key) => {
-          const entry = mmkvView.get(key);
-          if (!entry) {
-            throw new Error(`Failed to get entry for key: ${key}`);
-          }
-          return entry;
-        });
+        const entry = mmkvView.get(key);
+        if (!entry) {
+          throw new Error(`Failed to get entry for key: ${key}`);
+        }
+        return entry;
+      });
     },
     getId: () => storageId,
     onChange: (callback) => mmkv.addOnValueChangedListener(callback),

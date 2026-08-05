@@ -14,8 +14,8 @@ export const getPluginReferences = async (): Promise<
     const plugins = JSON.parse(
       fs.readFileSync(
         path.join(__dirname, '../../../plugin-directory.json'),
-        'utf8'
-      )
+        'utf8',
+      ),
     );
 
     return plugins;
@@ -23,13 +23,13 @@ export const getPluginReferences = async (): Promise<
     throw new Error(
       `Failed to read plugin directory: ${
         error instanceof Error ? error.message : 'Unknown error'
-      }`
+      }`,
     );
   }
 };
 
 export const getPlugins = async (
-  references: PluginDirectoryReference[]
+  references: PluginDirectoryReference[],
 ): Promise<RozenitePluginEntry[]> => {
   try {
     const repository = await getRepository();
@@ -38,7 +38,7 @@ export const getPlugins = async (
     const cachedPlugins = await repository.getPlugins(packageNames);
     const cachedPackageNames = new Set(cachedPlugins.map((p) => p.packageName));
     console.log(
-      `Found ${cachedPlugins.length} of ${packageNames.length} plugins in cache`
+      `Found ${cachedPlugins.length} of ${packageNames.length} plugins in cache`,
     );
 
     const pluginsToFetch = references.filter((ref) => {
@@ -47,10 +47,10 @@ export const getPlugins = async (
     });
 
     console.log(
-      `Fetching missing ${pluginsToFetch.length} of ${packageNames.length} plugins`
+      `Fetching missing ${pluginsToFetch.length} of ${packageNames.length} plugins`,
     );
     const fetchedPlugins = await Promise.all(
-      pluginsToFetch.map((ref) => repository.getPluginWithFallback(ref))
+      pluginsToFetch.map((ref) => repository.getPluginWithFallback(ref)),
     );
 
     const allPlugins = [...cachedPlugins, ...fetchedPlugins];
@@ -62,7 +62,7 @@ export const getPlugins = async (
     throw new Error(
       `Failed to fetch plugins data: ${
         error instanceof Error ? error.message : 'Unknown error'
-      }`
+      }`,
     );
   }
 };

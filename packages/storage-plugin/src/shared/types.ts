@@ -63,5 +63,5 @@ export const getStorageViewId = ({ adapterId, storageId }: StorageTarget) =>
 
 export const supportsType = (
   capabilities: StorageCapabilities,
-  type: StorageEntryType
+  type: StorageEntryType,
 ) => capabilities.supportedTypes.includes(type);

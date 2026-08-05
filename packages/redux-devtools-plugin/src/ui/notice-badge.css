@@ -1,6 +1,6 @@
 .notice-badge {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto',
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
   background: rgb(42, 47, 58);
   border: 1px solid rgb(60, 68, 79);
   padding: 8px 12px;

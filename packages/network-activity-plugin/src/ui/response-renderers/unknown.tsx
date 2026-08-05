@@ -11,7 +11,7 @@ export const unknownRenderer: ResponseRenderer = {
   defaultView: 'raw',
   supportsOverride: false,
   render: ({ ctx }) => (
-    <div className="text-sm text-muted">
+    <div className="text-sm text-gray-400">
       Could not display response (Content-Type: {ctx.contentType || 'unknown'})
     </div>
   ),

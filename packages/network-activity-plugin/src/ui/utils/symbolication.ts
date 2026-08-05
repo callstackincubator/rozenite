@@ -104,9 +104,7 @@ const stripAnsiSequences = (value: string) =>
   // as plain text, so terminal control sequences need to be removed.
   value.replace(ANSI_SEQUENCE_PATTERN, '');
 
-const sanitizeCodeFrame = (
-  codeFrame: Initiator['codeFrame'] | undefined,
-) => {
+const sanitizeCodeFrame = (codeFrame: Initiator['codeFrame'] | undefined) => {
   if (!codeFrame) {
     return null;
   }

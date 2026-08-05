@@ -11,7 +11,8 @@ type MMKVStorageSelection = {
 const sharedStorageProperty = {
   storageId: {
     type: 'string',
-    description: 'MMKV storage ID. Required when multiple storages are configured.',
+    description:
+      'MMKV storage ID. Required when multiple storages are configured.',
   },
 } as const;
 
@@ -151,12 +152,10 @@ export const mmkvToolDefinitions = {
       required: ['key', 'type', 'value'],
     },
   }),
-  editEntry: defineAgentToolContract<
-    MMKVEditEntryArgs,
-    MMKVEditEntryResult
-  >({
+  editEntry: defineAgentToolContract<MMKVEditEntryArgs, MMKVEditEntryResult>({
     name: 'edit-entry',
-    description: 'Edit an existing MMKV entry. Fails if the key does not exist.',
+    description:
+      'Edit an existing MMKV entry. Fails if the key does not exist.',
     inputSchema: {
       type: 'object',
       properties: {

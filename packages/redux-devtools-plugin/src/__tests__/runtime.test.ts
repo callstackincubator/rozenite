@@ -27,7 +27,7 @@ vi.mock('../runtime-bridge', () => ({
     bridge.sentMessages.push(message);
   },
   subscribeToPanelCommands: (
-    listener: (command: ReduxDevToolsPanelCommand) => void
+    listener: (command: ReduxDevToolsPanelCommand) => void,
   ) => {
     bridge.panelCommandListener = listener;
 
@@ -64,7 +64,7 @@ const initialState: TestState = {
 
 const reducer = (
   state: TestState = initialState,
-  action: TestAction
+  action: TestAction,
 ): TestState => {
   if (action.type === 'counter/add') {
     return {
@@ -113,11 +113,8 @@ afterEach(() => {
 
 describe('redux devtools runtime', () => {
   it('streams sanitized lifted state snapshots through PARTIAL_STATE', async () => {
-    const {
-      rozeniteDevToolsEnhancer,
-      sentMessages,
-      sendPanelCommand,
-    } = await setupRuntime();
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } =
+      await setupRuntime();
 
     const store = createStore(
       reducer,
@@ -128,7 +125,7 @@ describe('redux devtools runtime', () => {
         actionSanitizer: (action) => ({
           type: (action as TestAction).type,
         }),
-      })
+      }),
     );
 
     store.dispatch({
@@ -161,11 +158,8 @@ describe('redux devtools runtime', () => {
   });
 
   it('sanitizes live action updates after monitoring starts', async () => {
-    const {
-      rozeniteDevToolsEnhancer,
-      sentMessages,
-      sendPanelCommand,
-    } = await setupRuntime();
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } =
+      await setupRuntime();
 
     const store = createStore(
       reducer,
@@ -176,7 +170,7 @@ describe('redux devtools runtime', () => {
         actionSanitizer: (action) => ({
           type: (action as TestAction).type,
         }),
-      })
+      }),
     );
 
     sendPanelCommand({ type: 'start' });
@@ -207,11 +201,8 @@ describe('redux devtools runtime', () => {
   });
 
   it('reconstructs maxAge-trimmed history in the Redux DevTools reducer', async () => {
-    const {
-      rozeniteDevToolsEnhancer,
-      sentMessages,
-      sendPanelCommand,
-    } = await setupRuntime();
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } =
+      await setupRuntime();
 
     const store = createStore(
       reducer,
@@ -223,7 +214,7 @@ describe('redux devtools runtime', () => {
         actionSanitizer: (action) => ({
           type: action.type,
         }),
-      })
+      }),
     );
 
     store.dispatch({ type: 'counter/add', payload: 1 });
@@ -240,7 +231,7 @@ describe('redux devtools runtime', () => {
           request: request as never,
           id: 'test-connection',
         }),
-      undefined as Parameters<typeof reduceInstances>[0] | undefined
+      undefined as Parameters<typeof reduceInstances>[0] | undefined,
     );
 
     if (!state) {
@@ -256,8 +247,8 @@ describe('redux devtools runtime', () => {
     expect(instanceState.committedState).toEqual({ counter: 2 });
     expect(
       instanceState.computedStates.map(
-        (entry: { state: unknown }) => entry.state
-      )
+        (entry: { state: unknown }) => entry.state,
+      ),
     ).toEqual([{ counter: 2 }, { counter: 3 }]);
     expect(instanceState.currentStateIndex).toBe(1);
   });
@@ -272,7 +263,7 @@ describe('redux devtools runtime tracing', () => {
         trace: (action) =>
           `Error\n    at ${action.type} (http://localhost:8081/index.bundle:1:1)`,
         traceSymbolication: false,
-      })
+      }),
     );
 
     bridge.panelCommandListener?.({ type: 'start' });
@@ -281,7 +272,7 @@ describe('redux devtools runtime tracing', () => {
     expect(getReduxActionDetailsResult({ actionId: 1 }).trace).toEqual(
       expect.objectContaining({
         rawStack: expect.stringContaining('counter/increment'),
-      })
+      }),
     );
 
     (
@@ -294,7 +285,7 @@ describe('redux devtools runtime tracing', () => {
     expect(getReduxActionDetailsResult({ actionId: 1 }).trace).toEqual(
       expect.objectContaining({
         rawStack: expect.stringContaining('counter/decrement'),
-      })
+      }),
     );
   });
 });

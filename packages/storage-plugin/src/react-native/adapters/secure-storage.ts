@@ -59,7 +59,9 @@ export const createExpoSecureStorageAdapter = ({
       },
       set: async (entry) => {
         if (entry.type !== 'string') {
-          throw new Error('Expo SecureStore adapter supports only string values.');
+          throw new Error(
+            'Expo SecureStore adapter supports only string values.',
+          );
         }
 
         await storage.setItemAsync(entry.key, entry.value);

@@ -28,15 +28,11 @@ const isModuleResolutionError = (error: unknown) =>
 
 const getUnsupportedMetroError = () =>
   new Error(
-    'Cannot find required internals of Metro. Please make sure you have installed a supported version of Metro.'
+    'Cannot find required internals of Metro. Please make sure you have installed a supported version of Metro.',
   );
 
 const unwrapDefaultExport = (module: unknown) => {
-  if (
-    module !== null &&
-    typeof module === 'object' &&
-    'default' in module
-  ) {
+  if (module !== null && typeof module === 'object' && 'default' in module) {
     return module.default;
   }
 
@@ -45,7 +41,7 @@ const unwrapDefaultExport = (module: unknown) => {
 
 const resolveModulePaths = (
   moduleLoader: ModuleLoader,
-  modulePaths: SerializerModulePaths
+  modulePaths: SerializerModulePaths,
 ) => {
   moduleLoader.resolve(modulePaths.baseJSBundle);
   moduleLoader.resolve(modulePaths.bundleToString);
@@ -79,14 +75,13 @@ export const createBaseSerializer = (moduleLoader: ModuleLoader = require) => {
   }
 
   const baseJSBundle = unwrapDefaultExport(
-    moduleLoader(modulePaths.baseJSBundle)
+    moduleLoader(modulePaths.baseJSBundle),
   ) as BaseSerializer;
   const bundleToString = unwrapDefaultExport(
-    moduleLoader(modulePaths.bundleToString)
+    moduleLoader(modulePaths.bundleToString),
   ) as BaseSerializer;
 
-  return (...args: unknown[]) =>
-    bundleToString(baseJSBundle(...args));
+  return (...args: unknown[]) => bundleToString(baseJSBundle(...args));
 };
 
 export const getBaseSerializer = () => createBaseSerializer();

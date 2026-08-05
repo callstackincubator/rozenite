@@ -19,25 +19,25 @@ const originalXHRSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
 type XHRInterceptorOpenCallback = (
   method: string,
   url: string,
-  request: XMLHttpRequest
+  request: XMLHttpRequest,
 ) => void;
 
 type XHRInterceptorSendCallback = (
   data: XHRPostData,
-  request: XMLHttpRequest
+  request: XMLHttpRequest,
 ) => void;
 
 type XHRInterceptorRequestHeaderCallback = (
   header: string,
   value: string,
-  request: XMLHttpRequest
+  request: XMLHttpRequest,
 ) => void;
 
 type XHRInterceptorHeaderReceivedCallback = (
   responseContentType: string | undefined,
   responseSize: number | undefined,
   allHeaders: string,
-  request: XMLHttpRequest
+  request: XMLHttpRequest,
 ) => void;
 
 type XHRInterceptorResponseCallback = (
@@ -46,7 +46,7 @@ type XHRInterceptorResponseCallback = (
   response: string,
   responseURL: string,
   responseType: string,
-  request: XMLHttpRequest
+  request: XMLHttpRequest,
 ) => void;
 
 type XHRInterceptorOverrideCallback = (request: XMLHttpRequest) => void;
@@ -136,7 +136,7 @@ export const XHRInterceptor = {
     // $FlowFixMe[missing-this-annot]
     XMLHttpRequest.prototype.setRequestHeader = function (
       header: string,
-      value: string
+      value: string,
     ) {
       if (requestHeaderCallback) {
         requestHeaderCallback(header, value, this);
@@ -179,7 +179,7 @@ export const XHRInterceptor = {
                   responseContentType,
                   responseSize,
                   this.getAllResponseHeaders(),
-                  this
+                  this,
                 );
               }
             }
@@ -191,12 +191,12 @@ export const XHRInterceptor = {
                   this.response,
                   this.responseURL,
                   this.responseType,
-                  this
+                  this,
                 );
               }
             }
           },
-          false
+          false,
         );
       }
 

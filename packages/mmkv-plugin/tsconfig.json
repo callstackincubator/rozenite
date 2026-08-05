@@ -11,12 +11,8 @@
     "noFallthroughCasesInSwitch": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "paths": {
-      "@rozenite/agent-shared": ["../agent-shared/src/index.ts"],
-      "@rozenite/plugin-bridge": ["../plugin-bridge/src/index.ts"],
-      "@rozenite/ui": ["../ui/src/index.ts"],
-      "@rozenite/ui/*": ["../ui/*"]
+      "@rozenite/agent-shared": ["../agent-shared/src/index.ts"]
     },
     "resolveJsonModule": true,
     "isolatedModules": true,

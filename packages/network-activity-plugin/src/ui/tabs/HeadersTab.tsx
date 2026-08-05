@@ -34,16 +34,16 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
       ? 'Nitro'
       : selectedRequest.source === 'expo'
         ? 'Expo'
-      : selectedRequest.source === 'builtin'
-        ? 'Built-in'
-        : null;
+        : selectedRequest.source === 'builtin'
+          ? 'Built-in'
+          : null;
 
   const generalItems: KeyValueItem[] = useMemo(
     () => [
       {
         key: 'Request URL',
         value: selectedRequest.request.url,
-        valueClassName: 'text-accent',
+        valueClassName: 'text-blue-400',
       },
       {
         key: 'Request Method',
@@ -59,7 +59,7 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
             {
               key: 'Content-Type',
               value: requestBody.type,
-              valueClassName: 'text-accent',
+              valueClassName: 'text-blue-400',
             },
           ]
         : []),

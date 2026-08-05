@@ -46,7 +46,9 @@ export const LandingScreen = () => {
 
               <TouchableOpacity
                 style={styles.navigationButton}
-                onPress={() => navigation.navigate('ReactHookFormPlugin' as never)}
+                onPress={() =>
+                  navigation.navigate('ReactHookFormPlugin' as never)
+                }
               >
                 <Text style={styles.buttonText}>React Hook Form</Text>
               </TouchableOpacity>

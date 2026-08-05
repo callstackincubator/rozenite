@@ -5,7 +5,7 @@ import { TEMPLATE_DIR } from '../../constants.js';
 
 export const bootstrapPlugin = async (
   projectRoot: string,
-  pluginInfo: PluginInfo
+  pluginInfo: PluginInfo,
 ): Promise<void> => {
   await step(
     {
@@ -15,6 +15,6 @@ export const bootstrapPlugin = async (
     },
     async () => {
       await renderTemplate(TEMPLATE_DIR, projectRoot, pluginInfo);
-    }
+    },
   );
 };

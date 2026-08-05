@@ -1,5 +1,10 @@
 import { DEV_HOST_STATE_ELEMENT_ID } from './constants.js';
-import type { DevHostPanelEntry, DevHostState, MessageEntry, PluginMessage } from './types.js';
+import type {
+  DevHostPanelEntry,
+  DevHostState,
+  MessageEntry,
+  PluginMessage,
+} from './types.js';
 
 export const cn = (...parts: Array<string | false | null | undefined>) => {
   return parts.filter(Boolean).join(' ');
@@ -21,7 +26,9 @@ export const formatPayloadPreview = (payload: unknown) => {
   }
 };
 
-export const isJsonTreeData = (value: unknown): value is Record<string, unknown> | unknown[] => {
+export const isJsonTreeData = (
+  value: unknown,
+): value is Record<string, unknown> | unknown[] => {
   return Array.isArray(value) || (typeof value === 'object' && value !== null);
 };
 
@@ -59,7 +66,9 @@ export const isPluginMessage = (value: unknown): value is PluginMessage => {
 };
 
 export const getInitialPanel = (panels: DevHostPanelEntry[]) => {
-  const requestedPanel = new URLSearchParams(window.location.search).get('panel');
+  const requestedPanel = new URLSearchParams(window.location.search).get(
+    'panel',
+  );
 
   if (requestedPanel) {
     const matchedPanel = panels.find((panel) => panel.label === requestedPanel);

@@ -52,7 +52,7 @@ const serializeForAgent = <T>(value: T): T => {
 
 const getActionDisplayType = (
   liftedState: ReduxDevToolsLiftedState,
-  actionId: number
+  actionId: number,
 ) => {
   const liftedAction = liftedState.actionsById[actionId];
   if (!liftedAction) {
@@ -74,11 +74,12 @@ const getActionDisplayType = (
 const buildActionSummary = (
   store: ReduxDevToolsStoreRegistration,
   liftedState: ReduxDevToolsLiftedState,
-  actionId: number
+  actionId: number,
 ) => {
   const liftedAction = liftedState.actionsById[actionId];
   const stagedIndex = liftedState.stagedActionIds.indexOf(actionId);
-  const computedState = stagedIndex >= 0 ? liftedState.computedStates[stagedIndex] : undefined;
+  const computedState =
+    stagedIndex >= 0 ? liftedState.computedStates[stagedIndex] : undefined;
 
   return {
     instanceId: store.instanceId,
@@ -93,7 +94,9 @@ const buildActionSummary = (
 };
 
 const getVisibleActionIds = (liftedState: ReduxDevToolsLiftedState) => {
-  return liftedState.stagedActionIds.filter((actionId) => actionId !== 0).reverse();
+  return liftedState.stagedActionIds
+    .filter((actionId) => actionId !== 0)
+    .reverse();
 };
 
 const getKnownActionIds = (liftedState: ReduxDevToolsLiftedState) => {
@@ -101,7 +104,7 @@ const getKnownActionIds = (liftedState: ReduxDevToolsLiftedState) => {
 };
 
 export const buildStoreSummary = (
-  store: ReduxDevToolsStoreRegistration
+  store: ReduxDevToolsStoreRegistration,
 ): ReduxDevToolsStoreSummary => {
   const liftedState = store.getLiftedState();
 
@@ -127,7 +130,7 @@ export const resolveReduxDevToolsStore = (instanceId?: string) => {
     const store = getReduxDevToolsStore(instanceId);
     if (!store) {
       throw new Error(
-        `Unknown instanceId "${instanceId}". Available: ${stores.map((item) => item.instanceId).join(', ')}`
+        `Unknown instanceId "${instanceId}". Available: ${stores.map((item) => item.instanceId).join(', ')}`,
       );
     }
     return store;
@@ -135,7 +138,7 @@ export const resolveReduxDevToolsStore = (instanceId?: string) => {
 
   if (stores.length > 1) {
     throw new Error(
-      `Multiple Redux DevTools stores detected. Provide instanceId. Available: ${stores.map((item) => `${item.name} (${item.instanceId})`).join(', ')}`
+      `Multiple Redux DevTools stores detected. Provide instanceId. Available: ${stores.map((item) => `${item.name} (${item.instanceId})`).join(', ')}`,
     );
   }
 
@@ -148,7 +151,9 @@ const getStoreAndLiftedState = (instanceId?: string) => {
   const liftedState = store.getLiftedState();
 
   if (!enhancedStore || !liftedState) {
-    throw new Error(`Redux DevTools store "${store.instanceId}" is not ready yet.`);
+    throw new Error(
+      `Redux DevTools store "${store.instanceId}" is not ready yet.`,
+    );
   }
 
   return { store, enhancedStore, liftedState };
@@ -157,7 +162,7 @@ const getStoreAndLiftedState = (instanceId?: string) => {
 const getActionTraceForAgent = (
   store: ReduxDevToolsStoreRegistration,
   actionId: number,
-  liftedAction: unknown
+  liftedAction: unknown,
 ): ReduxActionTrace | null => {
   const registeredTrace = store.getActionTrace?.(actionId);
   if (registeredTrace) {
@@ -183,7 +188,7 @@ const getActionTraceForAgent = (
 const assertKnownAction = (
   store: ReduxDevToolsStoreRegistration,
   liftedState: ReduxDevToolsLiftedState,
-  actionId: number
+  actionId: number,
 ) => {
   if (!Number.isInteger(actionId)) {
     throw new Error('actionId must be an integer.');
@@ -191,7 +196,7 @@ const assertKnownAction = (
 
   if (actionId === 0 || !liftedState.actionsById[actionId]) {
     throw new Error(
-      `Unknown actionId "${actionId}" for store "${store.instanceId}". Available: ${getKnownActionIds(liftedState).join(', ')}`
+      `Unknown actionId "${actionId}" for store "${store.instanceId}". Available: ${getKnownActionIds(liftedState).join(', ')}`,
     );
   }
 };
@@ -202,11 +207,19 @@ const isSerializable = (value: unknown): boolean => {
   }
 
   const valueType = typeof value;
-  if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') {
+  if (
+    valueType === 'string' ||
+    valueType === 'number' ||
+    valueType === 'boolean'
+  ) {
     return Number.isNaN(value as number) ? false : true;
   }
 
-  if (valueType === 'undefined' || valueType === 'function' || valueType === 'symbol') {
+  if (
+    valueType === 'undefined' ||
+    valueType === 'function' ||
+    valueType === 'symbol'
+  ) {
     return false;
   }
 
@@ -230,12 +243,17 @@ export const parseSerializableReduxAction = (action: unknown): AnyAction => {
     throw new Error('action must be a plain object.');
   }
 
-  if (!('type' in action) || typeof (action as { type?: unknown }).type !== 'string') {
+  if (
+    !('type' in action) ||
+    typeof (action as { type?: unknown }).type !== 'string'
+  ) {
     throw new Error('action.type must be a string.');
   }
 
   if (!isSerializable(action)) {
-    throw new Error('action must be serializable and must not contain functions, symbols, or class instances.');
+    throw new Error(
+      'action must be serializable and must not contain functions, symbols, or class instances.',
+    );
   }
 
   return action as AnyAction;
@@ -243,15 +261,16 @@ export const parseSerializableReduxAction = (action: unknown): AnyAction => {
 
 export const listReduxDevToolsStoresResult =
   (): ReduxDevToolsListStoresResult => {
-  return {
-    stores: listReduxDevToolsStores().map(buildStoreSummary),
+    return {
+      stores: listReduxDevToolsStores().map(buildStoreSummary),
+    };
   };
-};
 
 export const getReduxStoreStateResult = ({
   instanceId,
 }: StoreInput): ReduxDevToolsGetStoreStateResult => {
-  const { store, enhancedStore, liftedState } = getStoreAndLiftedState(instanceId);
+  const { store, enhancedStore, liftedState } =
+    getStoreAndLiftedState(instanceId);
   const currentActionId =
     liftedState.stagedActionIds[liftedState.currentStateIndex] ?? null;
 
@@ -282,7 +301,9 @@ export const listReduxActionsResult = ({
     total: actionIds.length,
     offset: safeOffset,
     limit: safeLimit,
-    items: selectedIds.map((actionId) => buildActionSummary(store, liftedState, actionId)),
+    items: selectedIds.map((actionId) =>
+      buildActionSummary(store, liftedState, actionId),
+    ),
   };
 };
 
@@ -325,9 +346,10 @@ export const dispatchReduxActionResult = ({
 const runLiftedStoreAction = (
   instanceId: string | undefined,
   actionId: number | undefined,
-  createAction: () => unknown
+  createAction: () => unknown,
 ): ReduxDevToolsApplyStoreActionResult => {
-  const { store, enhancedStore, liftedState } = getStoreAndLiftedState(instanceId);
+  const { store, enhancedStore, liftedState } =
+    getStoreAndLiftedState(instanceId);
 
   if (typeof actionId === 'number') {
     assertKnownAction(store, liftedState, actionId);
@@ -341,32 +363,46 @@ const runLiftedStoreAction = (
   };
 };
 
-export const jumpToReduxActionResult = ({ instanceId, actionId }: ActionInput) => {
+export const jumpToReduxActionResult = ({
+  instanceId,
+  actionId,
+}: ActionInput) => {
   return runLiftedStoreAction(instanceId, actionId, () =>
-    ActionCreators.jumpToAction(actionId)
+    ActionCreators.jumpToAction(actionId),
   );
 };
 
-export const toggleReduxActionResult = ({ instanceId, actionId }: ActionInput) => {
+export const toggleReduxActionResult = ({
+  instanceId,
+  actionId,
+}: ActionInput) => {
   return runLiftedStoreAction(instanceId, actionId, () =>
-    ActionCreators.toggleAction(actionId)
+    ActionCreators.toggleAction(actionId),
   );
 };
 
 export const resetReduxHistoryResult = ({ instanceId }: StoreInput) => {
-  return runLiftedStoreAction(instanceId, undefined, () => ActionCreators.reset());
+  return runLiftedStoreAction(instanceId, undefined, () =>
+    ActionCreators.reset(),
+  );
 };
 
 export const rollbackReduxStateResult = ({ instanceId }: StoreInput) => {
-  return runLiftedStoreAction(instanceId, undefined, () => ActionCreators.rollback());
+  return runLiftedStoreAction(instanceId, undefined, () =>
+    ActionCreators.rollback(),
+  );
 };
 
 export const commitReduxCurrentStateResult = ({ instanceId }: StoreInput) => {
-  return runLiftedStoreAction(instanceId, undefined, () => ActionCreators.commit());
+  return runLiftedStoreAction(instanceId, undefined, () =>
+    ActionCreators.commit(),
+  );
 };
 
 export const sweepReduxSkippedActionsResult = ({ instanceId }: StoreInput) => {
-  return runLiftedStoreAction(instanceId, undefined, () => ActionCreators.sweep());
+  return runLiftedStoreAction(instanceId, undefined, () =>
+    ActionCreators.sweep(),
+  );
 };
 
 export const setReduxRecordingPausedResult = ({
@@ -374,7 +410,7 @@ export const setReduxRecordingPausedResult = ({
   paused,
 }: ReduxDevToolsSetRecordingPausedInput) => {
   return runLiftedStoreAction(instanceId, undefined, () =>
-    ActionCreators.pauseRecording(paused)
+    ActionCreators.pauseRecording(paused),
   );
 };
 
@@ -383,7 +419,7 @@ export const setReduxLockedResult = ({
   locked,
 }: ReduxDevToolsSetLockedInput) => {
   return runLiftedStoreAction(instanceId, undefined, () =>
-    ActionCreators.lockChanges(locked)
+    ActionCreators.lockChanges(locked),
   );
 };
 

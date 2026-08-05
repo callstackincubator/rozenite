@@ -20,7 +20,7 @@ interface GitHubError {
 }
 
 async function getGitHubRepository(
-  repository: string
+  repository: string,
 ): Promise<GitHubRepository> {
   const response = await fetch(`https://api.github.com/repos/${repository}`, {
     headers: {

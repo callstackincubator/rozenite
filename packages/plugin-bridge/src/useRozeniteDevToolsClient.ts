@@ -3,7 +3,7 @@ import { RozeniteDevToolsClient, getRozeniteDevToolsClient } from './client';
 import { MissingRozeniteForWebError, UnsupportedPlatformError } from './errors';
 
 export type UseRozeniteDevToolsClientOptions<
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
 > = {
   pluginId: string;
   eventMap?: TEventMap;
@@ -21,7 +21,7 @@ const isPanelClient = (): boolean => {
 
 // TODO: Handle multiple hooks (should not kill the socket)
 export const useRozeniteDevToolsClient = <
-  TEventMap extends Record<string, unknown> = Record<string, unknown>
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
 >({
   pluginId,
 }: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsClient<TEventMap> | null => {
@@ -44,7 +44,7 @@ export const useRozeniteDevToolsClient = <
         if (error instanceof MissingRozeniteForWebError) {
           // On web without Rozenite, the client is expected to be null.
           console.warn(
-            `[Rozenite, ${pluginId}] Rozenite for web is not configured. A separate integration is required for web. Consult Rozenite docs for details.`
+            `[Rozenite, ${pluginId}] Rozenite for web is not configured. A separate integration is required for web. Consult Rozenite docs for details.`,
           );
           return;
         }
@@ -53,12 +53,15 @@ export const useRozeniteDevToolsClient = <
           // We don't want to show an error for unsupported platforms.
           // It's expected that the client will be null.
           console.warn(
-            `[Rozenite, ${pluginId}] Unsupported platform, skipping setup.`
+            `[Rozenite, ${pluginId}] Unsupported platform, skipping setup.`,
           );
           return;
         }
 
-        console.error(`[Rozenite, ${pluginId}] Error setting up client.`, error);
+        console.error(
+          `[Rozenite, ${pluginId}] Error setting up client.`,
+          error,
+        );
 
         if (isMounted) {
           setError(error);

@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-} from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { OverlayPluginEventMap } from '../shared';
 import { GridConfig, ImageConfig } from '../shared/types';

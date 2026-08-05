@@ -1,10 +1,29 @@
-import { JsonInspector } from '@rozenite/ui';
+import { JSONTree } from 'react-json-tree';
 import type {
   SqliteQueryMetadata,
   SqliteQueryResult,
   SqliteScriptResult,
 } from '../shared/types';
 import { truncateText } from './utils';
+
+const jsonTreeTheme = {
+  base00: 'transparent',
+  base01: '#10233c',
+  base02: '#173150',
+  base03: '#7b94b6',
+  base04: '#bfd0e5',
+  base05: '#eef5ff',
+  base06: '#ffffff',
+  base07: '#ffffff',
+  base08: '#fb7185',
+  base09: '#f59e0b',
+  base0A: '#facc15',
+  base0B: '#34d399',
+  base0C: '#22d3ee',
+  base0D: '#60a5fa',
+  base0E: '#78b8ff',
+  base0F: '#f97316',
+};
 
 export const isStructuredValue = (
   value: unknown,
@@ -70,16 +89,14 @@ export const getValuePreview = (value: unknown, maxLength = 120) => {
   return truncateText(stringifyValue(value).replace(/\s+/g, ' '), maxLength);
 };
 
-export const getMetadataChipColor = (
-  metadata: SqliteQueryMetadata,
-): 'success' | 'warning' | 'default' => {
+export const getMetadataBadgeClassName = (metadata: SqliteQueryMetadata) => {
   if (
     metadata.statementType === 'select' ||
     metadata.statementType === 'pragma' ||
     metadata.statementType === 'with' ||
     metadata.statementType === 'explain'
   ) {
-    return 'success';
+    return 'sqlite-badge sqlite-badge-success';
   }
 
   if (
@@ -87,10 +104,10 @@ export const getMetadataChipColor = (
     metadata.statementType === 'update' ||
     metadata.statementType === 'delete'
   ) {
-    return 'warning';
+    return 'sqlite-badge sqlite-badge-warning';
   }
 
-  return 'default';
+  return 'sqlite-badge sqlite-badge-neutral';
 };
 
 export const renderStructuredValue = (value: unknown) => {
@@ -99,14 +116,11 @@ export const renderStructuredValue = (value: unknown) => {
   }
 
   return (
-    <JsonInspector
-      className="text-sm"
-      collectionLimit={100}
-      copyable
+    <JSONTree
       data={value}
-      hideRoot
+      theme={jsonTreeTheme}
+      invertTheme={false}
       shouldExpandNodeInitially={(keyPath) => keyPath.length <= 2}
-      sortObjectKeys
     />
   );
 };

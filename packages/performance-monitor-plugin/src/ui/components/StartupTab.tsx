@@ -1,3 +1,4 @@
+import { Box, Flex, Text } from '@radix-ui/themes';
 import type { SerializedPerformanceReactNativeMark } from '../../shared/types';
 import {
   deriveStartupSummary,
@@ -17,28 +18,30 @@ const BAR_TRACK_COLOR = 'hsl(0 0% 14.9%)';
 const DurationCell = ({ phase }: { phase: StartupPhase | StartupTotal }) => {
   if (phase.status === 'missing') {
     return (
-      <span
-        className="text-sm text-muted"
+      <Text
+        size="2"
+        color="gray"
         style={{ fontVariantNumeric: 'tabular-nums' }}
       >
         —
-      </span>
+      </Text>
     );
   }
   if (phase.status === 'in-progress') {
     return (
-      <span className="text-sm text-muted" style={{ fontStyle: 'italic' }}>
+      <Text size="2" color="gray" style={{ fontStyle: 'italic' }}>
         In progress…
-      </span>
+      </Text>
     );
   }
   return (
-    <span
-      className="text-sm text-primary"
+    <Text
+      size="2"
+      color="blue"
       style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}
     >
       {formatDuration(phase.duration!)}
-    </span>
+    </Text>
   );
 };
 
@@ -58,7 +61,7 @@ const PhaseBar = ({
   }
   const pct = Math.min((phase.duration! / totalDuration) * 100, 100);
   return (
-    <div
+    <Box
       style={{
         flex: 1,
         height: '8px',
@@ -67,7 +70,7 @@ const PhaseBar = ({
         overflow: 'hidden',
       }}
     >
-      <div
+      <Box
         style={{
           width: `${pct}%`,
           height: '100%',
@@ -75,7 +78,7 @@ const PhaseBar = ({
           background: BAR_COLOR,
         }}
       />
-    </div>
+    </Box>
   );
 };
 
@@ -90,11 +93,11 @@ export const StartupTab = ({
 }: StartupTabProps) => {
   if (!isSessionActive && reactNativeMarks.length === 0) {
     return (
-      <div className="flex items-center justify-center" style={{ flex: 1, height: '100%' }}>
-        <span className="text-sm text-muted">
+      <Flex align="center" justify="center" style={{ flex: 1, height: '100%' }}>
+        <Text color="gray" size="2">
           Start a session to see startup data
-        </span>
-      </div>
+        </Text>
+      </Flex>
     );
   }
 
@@ -103,29 +106,33 @@ export const StartupTab = ({
     total.status === 'complete' ? total.duration : undefined;
 
   return (
-    <div className="p-4" style={{ overflowY: 'auto', height: '100%' }}>
+    <Box p="4" style={{ overflowY: 'auto', height: '100%' }}>
       {/* Total row */}
-      <div className="flex items-center gap-4" style={ROW_STYLE}>
-        <div style={{ width: '160px', flexShrink: 0 }}>
-          <span className="text-sm font-bold">Total startup</span>
-        </div>
-        <div style={{ width: '90px', flexShrink: 0 }}>
+      <Flex align="center" gap="4" style={ROW_STYLE}>
+        <Box style={{ width: '160px', flexShrink: 0 }}>
+          <Text size="2" weight="bold">
+            Total startup
+          </Text>
+        </Box>
+        <Box style={{ width: '90px', flexShrink: 0 }}>
           <DurationCell phase={total} />
-        </div>
-      </div>
+        </Box>
+      </Flex>
 
       {/* Phase rows */}
       {phases.map((phase) => (
-        <div key={phase.name} className="flex items-center gap-4" style={ROW_STYLE}>
-          <div style={{ width: '160px', flexShrink: 0 }}>
-            <span className="text-sm text-muted">{phase.label}</span>
-          </div>
-          <div style={{ width: '90px', flexShrink: 0 }}>
+        <Flex key={phase.name} align="center" gap="4" style={ROW_STYLE}>
+          <Box style={{ width: '160px', flexShrink: 0 }}>
+            <Text size="2" color="gray">
+              {phase.label}
+            </Text>
+          </Box>
+          <Box style={{ width: '90px', flexShrink: 0 }}>
             <DurationCell phase={phase} />
-          </div>
+          </Box>
           <PhaseBar phase={phase} totalDuration={totalDuration} />
-        </div>
+        </Flex>
       ))}
-    </div>
+    </Box>
   );
 };

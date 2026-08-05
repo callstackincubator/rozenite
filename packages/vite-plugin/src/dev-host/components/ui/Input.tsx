@@ -35,7 +35,8 @@ const inputOverrides = {
       paddingRight: '12px',
       paddingBottom: '10px',
       paddingLeft: '12px',
-      fontFamily: '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
+      fontFamily:
+        '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
       fontWeight: 400,
       color: 'rgba(255, 255, 255, 0.9)',
       fontSize: '12px',

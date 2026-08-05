@@ -7,12 +7,12 @@ import { useEffect, useRef, useCallback, useLayoutEffect } from 'react';
  */
 export function useThrottledCallback<A extends any[]>(
   callback: (...args: A) => void,
-  delay: number
+  delay: number,
 ) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const argsRef = useRef<A | null>(null);
   const lastRunRef = useRef<number>(0);
-  
+
   const callbackRef = useRef(callback);
 
   // Keep callback ref up to date
@@ -35,11 +35,11 @@ export function useThrottledCallback<A extends any[]>(
       argsRef.current = args;
 
       const execute = () => {
-         if (argsRef.current) {
-             callbackRef.current(...argsRef.current);
-             lastRunRef.current = Date.now();
-             argsRef.current = null;
-         }
+        if (argsRef.current) {
+          callbackRef.current(...argsRef.current);
+          lastRunRef.current = Date.now();
+          argsRef.current = null;
+        }
       };
 
       if (!timeoutRef.current) {
@@ -65,6 +65,6 @@ export function useThrottledCallback<A extends any[]>(
         }
       }
     },
-    [delay]
+    [delay],
   );
 }

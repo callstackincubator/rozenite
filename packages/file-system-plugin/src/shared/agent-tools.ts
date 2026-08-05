@@ -2,11 +2,7 @@ import {
   defineAgentToolContract,
   type AgentToolContract,
 } from '@rozenite/agent-shared';
-import type {
-  FileSystemProvider,
-  FsEntry,
-  FsRoots,
-} from './protocol';
+import type { FileSystemProvider, FsEntry, FsRoots } from './protocol';
 
 export const FILE_SYSTEM_AGENT_PLUGIN_ID = '@rozenite/file-system-plugin';
 

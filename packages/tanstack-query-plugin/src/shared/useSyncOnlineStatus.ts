@@ -3,7 +3,7 @@ import { onlineManager } from '@tanstack/react-query';
 import { TanStackQueryPluginClient } from './messaging';
 
 export const useSyncOnlineStatus = (
-  client: TanStackQueryPluginClient | null
+  client: TanStackQueryPluginClient | null,
 ) => {
   useEffect(() => {
     if (!client) {
@@ -18,7 +18,7 @@ export const useSyncOnlineStatus = (
       'online-status-changed',
       ({ online }) => {
         onlineManager.setOnline(online);
-      }
+      },
     );
 
     return () => {

@@ -1,16 +1,6 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ConfirmDialog,
-  EditableTable,
-  EntryDetailDialog,
-  ListBox,
-  PluginHeader,
-  PluginTheme,
-  Select,
-  SearchField,
-} from '@rozenite/ui';
-import { Download, Upload } from 'lucide-react';
+import { Download, Plus, Search, Upload } from 'lucide-react';
 import type {
   StorageDeleteEntryEvent,
   StorageEventMap,
@@ -30,9 +20,11 @@ import {
   computePreview,
   parseSnapshot,
 } from '../shared/snapshot';
+import { EditableTable } from './editable-table';
 import { AddEntryDialog } from './add-entry-dialog';
+import { EntryDetailDialog } from './entry-detail-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
-import { renderDetailValue, renderTableValue } from './entry-value';
+import { ConfirmDialog } from './confirm-dialog';
 import { ImportDialog, type ImportFlightState } from './import-dialog';
 import { buildExportFilename, downloadJson } from './utils';
 import './globals.css';
@@ -82,8 +74,11 @@ export default function StoragePanel() {
   >(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<StorageEntry | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [editingEntry, setEditingEntry] = useState<StorageEntry | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [importFlight, setImportFlight] = useState<ImportFlightState | null>(
     null,
   );
@@ -470,62 +465,50 @@ export default function StoragePanel() {
   }));
 
   return (
-    <PluginTheme
-      defaultTheme="dark"
-      className="flex h-screen flex-col bg-background text-foreground"
-    >
-      <PluginHeader
-        title="Storage"
-        actions={
-          <div className="w-56 max-w-[44vw] min-w-40">
-            <Select
-              placeholder="Select storage"
-              value={selectedStorageViewId ?? ''}
-              onChange={(value) =>
-                setSelectedStorageViewId(
-                  typeof value === 'string'
-                    ? value
-                    : value == null
-                      ? null
-                      : String(value),
-                )
-              }
-              isDisabled={snapshots.size === 0}
-            >
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox>
-                  {storageOptions.map((option) => (
-                    <ListBox.Item
-                      key={option.viewId}
-                      id={option.viewId}
-                      textValue={option.label}
-                    >
-                      {option.label}
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-          </div>
-        }
-      />
+    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
+      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-200">Storage</span>
+        </div>
+        <div className="flex-1" />
+        <div className="flex items-center gap-2">
+          <label htmlFor="storage-select" className="text-xs text-gray-400">
+            Storage:
+          </label>
+          <select
+            id="storage-select"
+            value={selectedStorageViewId ?? ''}
+            onChange={(event) => setSelectedStorageViewId(event.target.value)}
+            disabled={snapshots.size === 0}
+            className="h-8 px-2 text-xs bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {snapshots.size === 0 ? (
+              <option>No storages found</option>
+            ) : (
+              storageOptions.map((option) => (
+                <option key={option.viewId} value={option.viewId}>
+                  {option.label}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+      </div>
 
-      <div className="flex items-center gap-2 px-3 pb-3 pt-3">
-        <AddEntryDialog
-          isDisabled={!selectedStorage}
-          onAddEntry={handleAddEntry}
-          existingKeys={entries.map((entry) => entry.key)}
-          supportedTypes={supportedTypes}
-        />
+      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
+        <button
+          onClick={() => setShowAddDialog(true)}
+          disabled={!selectedStorage}
+          className="flex items-center gap-1 px-3 h-8 text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+          title="Add new entry"
+        >
+          <Plus className="h-3 w-3" />
+          Add Entry
+        </button>
         <button
           onClick={handleImportClick}
           disabled={!selectedStorage}
-          className="flex items-center gap-1 px-3 h-8 text-xs bg-surface-secondary hover:bg-surface-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed text-foreground rounded transition-colors border border-border/70"
+          className="flex items-center gap-1 px-3 h-8 text-xs bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-gray-100 rounded transition-colors"
           title="Import entries from a JSON snapshot"
         >
           <Upload className="h-3 w-3" />
@@ -534,7 +517,7 @@ export default function StoragePanel() {
         <button
           onClick={handleExport}
           disabled={!selectedStorage || entries.length === 0}
-          className="flex items-center gap-1 px-3 h-8 text-xs bg-surface-secondary hover:bg-surface-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed text-foreground rounded transition-colors border border-border/70"
+          className="flex items-center gap-1 px-3 h-8 text-xs bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-gray-100 rounded transition-colors"
           title="Export entries to a JSON snapshot"
         >
           <Download className="h-3 w-3" />
@@ -548,78 +531,91 @@ export default function StoragePanel() {
           onChange={handleFileChange}
         />
         <div className="flex-1">
-          <SearchField
-            name="search"
-            fullWidth
-            value={searchTerm}
-            onChange={setSearchTerm}
-          >
-            <SearchField.Group>
-              <SearchField.SearchIcon />
-              <SearchField.Input placeholder="Search keys..." />
-              <SearchField.ClearButton />
-            </SearchField.Group>
-          </SearchField>
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search keys..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="h-8 w-full pl-8 pr-3 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-default-foreground">
+        <div className="flex items-center gap-2 text-xs text-gray-400">
           {filteredEntries.length} of {entries.length} entries
         </div>
       </div>
 
       <main className="flex flex-1 min-h-0 overflow-auto">
         {selectedStorage ? (
-          <EditableTable
-            ariaLabel="Storage entries"
-            data={filteredEntries}
-            emptyMessage={
-              searchTerm
-                ? 'No results found'
-                : 'This storage appears to be empty'
-            }
-            loading={loading}
-            onDeleteEntry={handleDeleteEntry}
-            onRowClick={setSelectedEntry}
-            renderValue={renderTableValue}
-            renderEditDialog={({ entry, onClose }) => (
-              <EditEntryDialog
-                entry={entry}
-                onClose={onClose}
-                onEditEntry={(key, newValue) => {
-                  handleValueChange(key, newValue);
-                  onClose();
-                }}
-                supportedTypes={supportedTypes}
-              />
-            )}
-          />
+          filteredEntries.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center w-full">
+              <h3 className="text-lg font-semibold text-gray-200 mb-2">
+                No entries found
+              </h3>
+              <p className="text-gray-400 text-sm">
+                {searchTerm
+                  ? 'Try adjusting your search terms'
+                  : 'This storage appears to be empty'}
+              </p>
+            </div>
+          ) : (
+            <EditableTable
+              data={filteredEntries}
+              supportedTypes={supportedTypes}
+              onValueChange={handleValueChange}
+              onDeleteEntry={handleDeleteEntry}
+              onRowClick={(entry) => {
+                setSelectedEntry(entry);
+                setShowDetailDialog(true);
+              }}
+              loading={loading}
+            />
+          )
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center w-full">
-            <h2 className="text-xl font-semibold text-default-foreground mb-2">
+            <h2 className="text-xl font-semibold text-gray-200 mb-2">
               Welcome to Storage Inspector
             </h2>
-            <p className="text-default-foreground text-sm">
+            <p className="text-gray-400 text-sm">
               Select a storage from the dropdown above to inspect data
             </p>
           </div>
         )}
       </main>
 
-      {selectedEntry !== null ? (
-        <EntryDetailDialog
-          onClose={() => setSelectedEntry(null)}
-          onEdit={(entry) => {
-            setSelectedEntry(null);
-            setEditingEntry(entry);
-          }}
-          entry={selectedEntry}
-          renderValue={renderDetailValue}
-        />
-      ) : null}
+      <AddEntryDialog
+        isOpen={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onAddEntry={handleAddEntry}
+        existingKeys={entries.map((entry) => entry.key)}
+        supportedTypes={supportedTypes}
+      />
+
+      <EntryDetailDialog
+        isOpen={showDetailDialog}
+        onClose={() => {
+          setShowDetailDialog(false);
+          setSelectedEntry(null);
+        }}
+        onEdit={(entry) => {
+          setShowDetailDialog(false);
+          setEditingEntry(entry);
+          setShowEditDialog(true);
+        }}
+        entry={selectedEntry}
+      />
 
       <EditEntryDialog
-        onClose={() => setEditingEntry(null)}
+        isOpen={showEditDialog}
+        onClose={() => {
+          setShowEditDialog(false);
+          setEditingEntry(null);
+        }}
         onEditEntry={(key, newValue) => {
           handleValueChange(key, newValue);
+          setShowEditDialog(false);
           setEditingEntry(null);
         }}
         supportedTypes={supportedTypes}
@@ -641,6 +637,6 @@ export default function StoragePanel() {
         message={alertState.message}
         type="alert"
       />
-    </PluginTheme>
+    </div>
   );
 }

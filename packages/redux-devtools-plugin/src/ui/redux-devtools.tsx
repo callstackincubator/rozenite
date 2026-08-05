@@ -27,7 +27,7 @@ type StoreBundle = {
 
 const handleRuntimeMessage = (
   store: Store<ReduxDevToolsStoreState, ReduxDevToolsStoreAction>,
-  message: ReduxDevToolsRuntimeMessage
+  message: ReduxDevToolsRuntimeMessage,
 ) => {
   switch (message.type) {
     case 'state-update': {
@@ -39,7 +39,9 @@ const handleRuntimeMessage = (
       return;
     }
     case 'error': {
-      store.dispatch(showNotification(message.message) as ReduxDevToolsStoreAction);
+      store.dispatch(
+        showNotification(message.message) as ReduxDevToolsStoreAction,
+      );
       return;
     }
     default:
@@ -71,8 +73,8 @@ export const ReduxDevTools = () => {
     const subscription = client.onMessage(
       'runtime-message',
       (message: ReduxDevToolsRuntimeMessage) => {
-      handleRuntimeMessage(bundle.store, message);
-      }
+        handleRuntimeMessage(bundle.store, message);
+      },
     );
 
     client.send('panel-command', { type: 'start' });

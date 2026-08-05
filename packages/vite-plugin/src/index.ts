@@ -57,10 +57,7 @@ const getDtsPlugin = (
         };
       }
 
-      if (
-        target === 'sdk' &&
-        filePath === rawSdkEntryPath
-      ) {
+      if (target === 'sdk' && filePath === rawSdkEntryPath) {
         return {
           // vite-plugin-dts emits the SDK root declaration at dist/sdk.d.ts.
           // Move it under dist/sdk/ before API Extractor rolls it up into the

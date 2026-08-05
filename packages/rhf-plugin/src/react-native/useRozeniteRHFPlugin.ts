@@ -25,7 +25,9 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
   const nestedFormValues = useWatch({ control });
   const formState = useFormState({ control });
 
-  const client = useRozeniteDevToolsClient<RHFEventMap>({ pluginId: PLUGIN_ID });
+  const client = useRozeniteDevToolsClient<RHFEventMap>({
+    pluginId: PLUGIN_ID,
+  });
 
   const previousSnapshotRef = useRef<FormSnapshot | null>(null);
   const [, forceUpdate] = useState(0);
@@ -42,12 +44,30 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
       ...formStatus
     } = proxyToObject(formState as unknown as Record<string, unknown>);
 
-    const flatFieldNames = [...(control as unknown as { _names: { mount: Set<string> } })._names.mount];
+    const flatFieldNames = [
+      ...(control as unknown as { _names: { mount: Set<string> } })._names
+        .mount,
+    ];
 
-    const formValues = nestToFlat<unknown>(flatFieldNames, nestedFormValues as object, '');
-    const dirtyFields = nestToFlat<boolean>(flatFieldNames, nestedDirtyFields as object, false);
-    const touchedFields = nestToFlat<boolean>(flatFieldNames, nestedTouchedFields as object, false);
-    const flatErrors = nestToFlat<FieldError>(flatFieldNames, nestedErrors as object);
+    const formValues = nestToFlat<unknown>(
+      flatFieldNames,
+      nestedFormValues as object,
+      '',
+    );
+    const dirtyFields = nestToFlat<boolean>(
+      flatFieldNames,
+      nestedDirtyFields as object,
+      false,
+    );
+    const touchedFields = nestToFlat<boolean>(
+      flatFieldNames,
+      nestedTouchedFields as object,
+      false,
+    );
+    const flatErrors = nestToFlat<FieldError>(
+      flatFieldNames,
+      nestedErrors as object,
+    );
 
     const errors = Object.entries(flatErrors).reduce(
       (prev, [key, value]) => {
@@ -57,23 +77,24 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
         };
         return prev;
       },
-      {} as Record<string, FieldError>
+      {} as Record<string, FieldError>,
     );
 
     const nativeFields = flatFieldNames.reduce(
       (prev, name) => {
         const field = get(
           (control as unknown as { _fields: Record<string, unknown> })._fields,
-          name
+          name,
         ) as { _f?: { ref?: { type?: string } } } | undefined;
         // ref.type works for DOM inputs (web/RNW); for native RN components there
         // is no type property, so fall back to the JS type of the current value.
         const domType = field?._f?.ref?.type;
         const value = formValues[name];
-        prev[name] = domType ?? (value != null && value !== '' ? typeof value : undefined);
+        prev[name] =
+          domType ?? (value != null && value !== '' ? typeof value : undefined);
         return prev;
       },
-      {} as Record<string, string | undefined>
+      {} as Record<string, string | undefined>,
     );
 
     const snapshot: FormSnapshot = {

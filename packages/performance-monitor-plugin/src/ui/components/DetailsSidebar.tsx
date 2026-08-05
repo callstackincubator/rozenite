@@ -1,33 +1,24 @@
-import { Drawer } from '@rozenite/ui';
-import type { SerializedPerformanceEntry } from '../../shared/types';
-import { MarkDetails } from './MarkDetails';
+import { ScrollArea, Box, Button, Flex } from '@radix-ui/themes';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { MeasureDetails } from './MeasureDetails';
 import { MetricDetails } from './MetricDetails';
+import { MarkDetails } from './MarkDetails';
 import { ReactNativeMarkDetails } from './ReactNativeMarkDetails';
 import { ResourceDetails } from './ResourceDetails';
+import { SerializedPerformanceEntry } from '../../shared/types';
 
 export type DetailsSidebarProps = {
   selectedItem: SerializedPerformanceEntry | null;
   onClose: () => void;
 };
 
-const entryTypeLabel: Record<SerializedPerformanceEntry['entryType'], string> = {
-  mark: 'Mark details',
-  measure: 'Measure details',
-  metric: 'Metric details',
-  'react-native-mark': 'React Native Mark details',
-  resource: 'Resource details',
-};
-
 export const DetailsSidebar = ({
   selectedItem,
   onClose,
 }: DetailsSidebarProps) => {
-  if (!selectedItem) {
-    return null;
-  }
-
   const renderDetails = () => {
+    if (!selectedItem) return null;
+
     switch (selectedItem.entryType) {
       case 'measure':
         return <MeasureDetails measure={selectedItem} />;
@@ -44,39 +35,33 @@ export const DetailsSidebar = ({
     }
   };
 
-  return (
-    <Drawer
-      isOpen
-      onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          onClose();
-        }
-      }}
-    >
-      <Drawer.Backdrop variant="blur">
-        <Drawer.Content className="w-full max-w-2xl" placement="right">
-          <Drawer.Dialog
-            aria-label={entryTypeLabel[selectedItem.entryType]}
-            className="p-0 flex h-full flex-col overflow-hidden w-140! max-w-[90vw]!"
-          >
-            <Drawer.Header className="flex items-start justify-between gap-3 border-b border-border/70 px-5 py-4">
-              <div className="min-w-0">
-                <Drawer.Heading className="truncate">
-                  {selectedItem.name}
-                </Drawer.Heading>
-                <p className="mt-1 text-xs text-muted">
-                  {entryTypeLabel[selectedItem.entryType]}
-                </p>
-              </div>
-              <Drawer.CloseTrigger aria-label="Close details panel" />
-            </Drawer.Header>
+  if (!selectedItem) {
+    return null;
+  }
 
-            <Drawer.Body className="min-h-0 flex-1 overflow-auto p-5">
-              {renderDetails()}
-            </Drawer.Body>
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer.Backdrop>
-    </Drawer>
+  return (
+    <>
+      <Box className="details-sidebar-backdrop" onClick={onClose} />
+      <Box className="details-sidebar">
+        <Flex p="4" direction="column" height="100%">
+          <Flex justify="between" align="center" mb="4">
+            <Box />
+            <Button
+              variant="ghost"
+              size="2"
+              onClick={onClose}
+              style={{ padding: '4px' }}
+              aria-label="Close details"
+            >
+              <Cross2Icon width="16" height="16" />
+            </Button>
+          </Flex>
+
+          <ScrollArea style={{ flex: 1 }}>
+            <Box pr="4">{renderDetails()}</Box>
+          </ScrollArea>
+        </Flex>
+      </Box>
+    </>
   );
 };

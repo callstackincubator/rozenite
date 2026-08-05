@@ -20,7 +20,7 @@ const createResolutionError = (code: string) =>
 const createModuleLoader = (
   modules: Record<string, unknown>,
   resolve: (id: string) => string,
-  load: (id: string) => unknown = (id) => modules[id]
+  load: (id: string) => unknown = (id) => modules[id],
 ) =>
   Object.assign(vi.fn(load), {
     resolve: vi.fn(resolve),
@@ -36,16 +36,18 @@ describe('createBaseSerializer', () => {
         [modernModulePaths.baseJSBundle]: baseJSBundle,
         [modernModulePaths.bundleToString]: bundleToString,
       },
-      (id) => id
+      (id) => id,
     );
 
     const serializer = createBaseSerializer(moduleLoader);
 
     expect(moduleLoader).toHaveBeenCalledWith(modernModulePaths.baseJSBundle);
     expect(moduleLoader).toHaveBeenCalledWith(modernModulePaths.bundleToString);
-    expect(moduleLoader).not.toHaveBeenCalledWith(legacyModulePaths.baseJSBundle);
+    expect(moduleLoader).not.toHaveBeenCalledWith(
+      legacyModulePaths.baseJSBundle,
+    );
     expect(serializer('entry', [], {} as never, {} as never)).toBe(
-      'serialized:bundle'
+      'serialized:bundle',
     );
   });
 
@@ -61,7 +63,7 @@ describe('createBaseSerializer', () => {
         }
 
         return id;
-      }
+      },
     );
 
     createBaseSerializer(moduleLoader);
@@ -78,12 +80,12 @@ describe('createBaseSerializer', () => {
           [modernModulePaths.bundleToString]: (bundle: string) =>
             `serialized:${bundle}`,
         },
-        (id) => id
-      )
+        (id) => id,
+      ),
     );
 
     expect(serializer('entry', [], {} as never, {} as never)).toBe(
-      'serialized:bundle'
+      'serialized:bundle',
     );
   });
 
@@ -96,12 +98,12 @@ describe('createBaseSerializer', () => {
             default: (bundle: string) => `serialized:${bundle}`,
           },
         },
-        (id) => id
-      )
+        (id) => id,
+      ),
     );
 
     expect(serializer('entry', [], {} as never, {} as never)).toBe(
-      'serialized:bundle'
+      'serialized:bundle',
     );
   });
 
@@ -111,7 +113,7 @@ describe('createBaseSerializer', () => {
     });
 
     expect(() => createBaseSerializer(moduleLoader)).toThrow(
-      'Cannot find required internals of Metro'
+      'Cannot find required internals of Metro',
     );
   });
 
@@ -128,40 +130,39 @@ describe('createBaseSerializer', () => {
         }
 
         return bundleToString;
-      }
+      },
     );
 
     expect(() => createBaseSerializer(moduleLoader)).toThrow(evaluationError);
-    expect(moduleLoader).not.toHaveBeenCalledWith(legacyModulePaths.baseJSBundle);
+    expect(moduleLoader).not.toHaveBeenCalledWith(
+      legacyModulePaths.baseJSBundle,
+    );
   });
 });
 
 const fixtureVersions = ['0.76', '0.82', '0.83', '0.84'] as const;
 const fixturesDirectory = join(
   dirname(fileURLToPath(import.meta.url)),
-  '../metro-fixtures'
+  '../metro-fixtures',
 );
 
 const createFixtureLoader = (version: (typeof fixtureVersions)[number]) => {
   const fixtureRequire = createRequire(
-    join(fixturesDirectory, `metro-${version}/package.json`)
+    join(fixturesDirectory, `metro-${version}/package.json`),
   );
   const metroDirectory = dirname(fixtureRequire.resolve('metro/package.json'));
 
-  return Object.assign(
-    (id: string) => fixtureRequire(id),
-    {
-      resolve: (id: string) => {
-        const resolvedPath = fixtureRequire.resolve(id);
+  return Object.assign((id: string) => fixtureRequire(id), {
+    resolve: (id: string) => {
+      const resolvedPath = fixtureRequire.resolve(id);
 
-        if (!resolvedPath.startsWith(`${metroDirectory}/`)) {
-          throw createResolutionError('MODULE_NOT_FOUND');
-        }
+      if (!resolvedPath.startsWith(`${metroDirectory}/`)) {
+        throw createResolutionError('MODULE_NOT_FOUND');
+      }
 
-        return resolvedPath;
-      },
-    }
-  ) as Parameters<typeof createBaseSerializer>[0];
+      return resolvedPath;
+    },
+  }) as Parameters<typeof createBaseSerializer>[0];
 };
 
 const graph = { dependencies: new Map() };
@@ -188,7 +189,9 @@ describe.each(fixtureVersions)('Metro %s compatibility', (version) => {
   it('creates and invokes a serializer from the pinned fixture', () => {
     const serializer = createBaseSerializer(createFixtureLoader(version));
 
-    expect(serializer('/entry.js', [], graph as never, bundleOptions as never)).toEqual({
+    expect(
+      serializer('/entry.js', [], graph as never, bundleOptions as never),
+    ).toEqual({
       code: '',
       metadata: { modules: [], post: 0, pre: 0 },
     });

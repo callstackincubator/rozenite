@@ -1,12 +1,22 @@
 import type { ComponentProps } from 'react';
 import { mergeOverrides } from 'baseui';
-import { Button as BaseButton, KIND, SHAPE, SIZE, WIDTH_TYPE, type ButtonOverrides } from 'baseui/button/index.js';
+import {
+  Button as BaseButton,
+  KIND,
+  SHAPE,
+  SIZE,
+  WIDTH_TYPE,
+  type ButtonOverrides,
+} from 'baseui/button/index.js';
 
 type ButtonVariant = 'default' | 'primary' | 'pill';
 
 type BaseButtonProps = ComponentProps<typeof BaseButton>;
 
-export type ButtonProps = Omit<BaseButtonProps, 'kind' | 'shape' | 'size' | 'widthType'> & {
+export type ButtonProps = Omit<
+  BaseButtonProps,
+  'kind' | 'shape' | 'size' | 'widthType'
+> & {
   variant?: ButtonVariant;
 };
 
@@ -39,7 +49,10 @@ const variantOverrides: Record<ButtonVariant, ButtonOverrides> = {
     BaseButton: {
       style: ({ $disabled, $isHovered }) => ({
         borderColor: 'rgba(255, 255, 255, 0.08)',
-        backgroundColor: !$disabled && $isHovered ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+        backgroundColor:
+          !$disabled && $isHovered
+            ? 'rgba(255, 255, 255, 0.06)'
+            : 'transparent',
         color: 'rgba(255, 255, 255, 0.56)',
       }),
     },
@@ -51,14 +64,19 @@ const variantOverrides: Record<ButtonVariant, ButtonOverrides> = {
         backgroundColor: '#ffffff',
         color: '#000000',
         opacity: $disabled ? 0.4 : 1,
-        ':hover': !$disabled && $isHovered ? { backgroundColor: 'rgba(255, 255, 255, 0.88)' } : undefined,
+        ':hover':
+          !$disabled && $isHovered
+            ? { backgroundColor: 'rgba(255, 255, 255, 0.88)' }
+            : undefined,
       }),
     },
   },
   pill: {
     BaseButton: {
       style: ({ $disabled, $isHovered, $isSelected }) => ({
-        borderColor: $isSelected ? 'rgba(130, 50, 255, 0.5)' : 'rgba(255, 255, 255, 0.08)',
+        borderColor: $isSelected
+          ? 'rgba(130, 50, 255, 0.5)'
+          : 'rgba(255, 255, 255, 0.08)',
         borderRadius: '999px',
         backgroundColor: $isSelected
           ? 'rgba(130, 50, 255, 0.18)'
@@ -77,14 +95,21 @@ const variantOverrides: Record<ButtonVariant, ButtonOverrides> = {
   },
 };
 
-export const Button = ({ overrides, variant = 'default', ...props }: ButtonProps) => {
+export const Button = ({
+  overrides,
+  variant = 'default',
+  ...props
+}: ButtonProps) => {
   return (
     <BaseButton
       kind={KIND.tertiary}
       shape={variant === 'pill' ? SHAPE.pill : SHAPE.rectangular}
       size={SIZE.compact}
       widthType={WIDTH_TYPE.hug}
-      overrides={mergeOverrides(mergeOverrides(baseOverrides, variantOverrides[variant]), overrides)}
+      overrides={mergeOverrides(
+        mergeOverrides(baseOverrides, variantOverrides[variant]),
+        overrides,
+      )}
       {...props}
     />
   );

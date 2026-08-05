@@ -45,7 +45,7 @@ const processRequestBody = (body: HttpRequestData, headers: XHRHeaders) => {
 };
 
 export const generateFetchCall = (
-  request: HttpNetworkEntry | SSENetworkEntry
+  request: HttpNetworkEntry | SSENetworkEntry,
 ) => {
   const { url, headers: requestHeaders, method, body } = request.request;
 

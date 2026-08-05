@@ -30,27 +30,27 @@ export const TimingTab = ({ selectedRequest }: TimingTabProps) => {
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted">Start Time</span>
-              <span className="text-foreground/70">
+              <span className="text-gray-400">Start Time</span>
+              <span className="text-gray-300">
                 {formatTimestamp(startTime)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted">Time To First Byte (TTFB)</span>
-              <span className="text-foreground/70">{formatTime(ttfb)}</span>
+              <span className="text-gray-400">Time To First Byte (TTFB)</span>
+              <span className="text-gray-300">{formatTime(ttfb)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted">End Time</span>
-              <span className="text-foreground/70">
+              <span className="text-gray-400">End Time</span>
+              <span className="text-gray-300">
                 {endTime ? formatTimestamp(endTime) : 'Pending'}
               </span>
             </div>
           </div>
 
-          <div className="border-t border-border/60 pt-4">
+          <div className="border-t border-gray-700 pt-4">
             <div className="flex justify-between text-sm font-medium">
-              <span className="text-foreground/70">Total Duration</span>
-              <span className="text-foreground">{formatTime(duration)}</span>
+              <span className="text-gray-300">Total Duration</span>
+              <span className="text-gray-100">{formatTime(duration)}</span>
             </div>
           </div>
         </div>

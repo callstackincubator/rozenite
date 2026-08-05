@@ -4,10 +4,7 @@ import {
   controlsToolDefinitions,
 } from './src/shared/agent-tools.js';
 
-export {
-  CONTROLS_AGENT_PLUGIN_ID,
-  controlsToolDefinitions,
-};
+export { CONTROLS_AGENT_PLUGIN_ID, controlsToolDefinitions };
 
 export const controlsTools = defineAgentToolDescriptors(
   CONTROLS_AGENT_PLUGIN_ID,

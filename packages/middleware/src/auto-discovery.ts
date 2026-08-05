@@ -25,7 +25,7 @@ const readPackageJsonName = (packagePath: string): string | null => {
 
 export const findPackageRoot = (
   packageName: string,
-  resolvedPath: string
+  resolvedPath: string,
 ): string | null => {
   let currentPath = path.dirname(resolvedPath);
 
@@ -46,7 +46,7 @@ export const findPackageRoot = (
 
 const resolvePackageRoot = (
   projectRoot: string,
-  packageName: string
+  packageName: string,
 ): string | null => {
   try {
     const resolvedPath = require.resolve(packageName, { paths: [projectRoot] });
@@ -58,7 +58,7 @@ const resolvePackageRoot = (
 
 const tryResolvePlugin = (
   projectRoot: string,
-  maybePlugin: string
+  maybePlugin: string,
 ): string | null => {
   return resolvePackageRoot(projectRoot, maybePlugin);
 };
@@ -91,7 +91,7 @@ const getIncludedPlugins = (options: RozeniteConfig): InstalledPlugin[] => {
 };
 
 export const getInstalledPlugins = (
-  options: RozeniteConfig
+  options: RozeniteConfig,
 ): InstalledPlugin[] => {
   if (options.include) {
     logger.info('Auto-discovery is disabled. Using only included plugins.');
@@ -102,16 +102,18 @@ export const getInstalledPlugins = (
 };
 
 const getInstalledPluginsFromDependencies = (
-  options: RozeniteConfig
+  options: RozeniteConfig,
 ): InstalledPlugin[] => {
   const plugins: InstalledPlugin[] = [];
   const packageJsonPath = path.join(options.projectRoot, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
-  const dependencies = Array.from(new Set([
-    ...Object.keys(packageJson.dependencies || {}),
-    ...Object.keys(packageJson.devDependencies || {}),
-  ]));
+  const dependencies = Array.from(
+    new Set([
+      ...Object.keys(packageJson.dependencies || {}),
+      ...Object.keys(packageJson.devDependencies || {}),
+    ]),
+  );
 
   for (const dependency of dependencies) {
     if (options.exclude?.includes(dependency)) {
@@ -136,7 +138,7 @@ const getInstalledPluginsFromDependencies = (
 
 const tryExtractPlugin = (
   packagePath: string,
-  packageName: string
+  packageName: string,
 ): InstalledPlugin | null => {
   const rozeniteConfigPath = path.join(packagePath, 'dist', ROZENITE_MANIFEST);
 

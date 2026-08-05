@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { FlameGraph, RawData } from 'react-flame-graph';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { PluginTheme } from '@rozenite/ui';
 import {
   RequireProfilerEventMap,
   RequireChainMeta,
@@ -97,9 +96,7 @@ const App = () => {
       (event) => {
         const data = event.data;
         if (data) {
-          setChainDataCache(
-            (prev) => new Map(prev.set(data.index, data)),
-          );
+          setChainDataCache((prev) => new Map(prev.set(data.index, data)));
           setCurrentChainData(data);
         }
         setLoading(false);
@@ -349,10 +346,7 @@ const App = () => {
   }, [handleReset]);
 
   return (
-    <PluginTheme
-      defaultTheme="dark"
-      className="flex flex-col h-screen bg-background text-foreground"
-    >
+    <div className="app-container">
       <Header
         onRefresh={handleRefresh}
         onToggleSidebar={handleToggleSidebar}
@@ -381,9 +375,9 @@ const App = () => {
         entryName={currentChainData?.rootModuleName || transformedData?.name}
       />
 
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-background">
-          <div className="flex-1 overflow-hidden relative min-h-0 flame-graph-wrapper" ref={containerRef}>
+      <div className="main-content">
+        <div className="flame-graph-container">
+          <div className="flame-graph-wrapper" ref={containerRef}>
             {loading ? (
               <LoadingState />
             ) : !transformedData ||
@@ -418,7 +412,7 @@ const App = () => {
 
         {showSidebar && <Sidebar selectedNode={selectedNode} />}
       </div>
-    </PluginTheme>
+    </div>
   );
 };
 

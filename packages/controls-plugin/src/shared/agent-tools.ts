@@ -2,10 +2,7 @@ import {
   defineAgentToolContract,
   type AgentToolContract,
 } from '@rozenite/agent-shared';
-import type {
-  ControlsItem,
-  ControlsItemSnapshot,
-} from './types';
+import type { ControlsItem, ControlsItemSnapshot } from './types';
 
 export const CONTROLS_AGENT_PLUGIN_ID = '@rozenite/controls-plugin';
 

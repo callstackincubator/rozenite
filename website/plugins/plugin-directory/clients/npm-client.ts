@@ -38,7 +38,7 @@ export interface NpmPackageError {
 
 async function fetchNpmPackage(
   packageName: string,
-  version?: string
+  version?: string,
 ): Promise<NpmPackageInfo> {
   try {
     const registryUrl = 'https://registry.npmjs.org';
@@ -58,12 +58,12 @@ async function fetchNpmPackage(
         throw new Error(
           `Package "${packageName}"${
             version ? `@${version}` : ''
-          } not found in npm registry`
+          } not found in npm registry`,
         );
       }
 
       throw new Error(
-        `Failed to fetch package ${packageName} ${version ? `@${version}` : ''}`
+        `Failed to fetch package ${packageName} ${version ? `@${version}` : ''}`,
       );
     }
 
@@ -71,7 +71,7 @@ async function fetchNpmPackage(
     return data as NpmPackageInfo;
   } catch {
     throw new Error(
-      `Failed to fetch package ${packageName} ${version ? `@${version}` : ''}`
+      `Failed to fetch package ${packageName} ${version ? `@${version}` : ''}`,
     );
   }
 }

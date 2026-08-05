@@ -1,19 +1,4 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import {
-  Button,
-  Card,
-  Chip,
-  Description,
-  FieldError,
-  Input,
-  ListBox,
-  PluginHeader,
-  PluginTheme,
-  Select,
-  Surface,
-  Switch,
-  TextField,
-} from '@rozenite/ui';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type {
@@ -49,21 +34,17 @@ const RowShell = ({
   errorMessage?: string;
   children: ReactNode;
 }) => (
-  <div className="flex flex-col gap-3 py-3 sm:flex-row sm:items-start sm:justify-between">
+  <div className="flex items-start justify-between gap-4 py-3">
     <div className="min-w-0">
-      <div className="text-sm font-medium text-foreground">{title}</div>
+      <div className="text-sm font-medium text-gray-100">{title}</div>
       {description ? (
-        <Description className="mt-1 text-xs text-muted">
-          {description}
-        </Description>
+        <div className="mt-1 text-xs text-gray-400">{description}</div>
       ) : null}
       {errorMessage ? (
-        <FieldError className="mt-1">{errorMessage}</FieldError>
+        <div className="mt-1 text-xs text-red-400">{errorMessage}</div>
       ) : null}
     </div>
-    <div className="flex w-full shrink-0 items-center justify-end sm:w-auto">
-      {children}
-    </div>
+    {children}
   </div>
 );
 
@@ -84,17 +65,18 @@ const ToggleRow = ({
       description={item.description}
       errorMessage={uiState?.message}
     >
-      <Switch
-        aria-label={item.title}
-        isDisabled={item.disabled || uiState?.pending}
-        isSelected={item.value}
-        onChange={(isSelected) => onToggle(sectionId, item.id, isSelected)}
-        size="sm"
-      >
-        <Switch.Control>
-          <Switch.Thumb />
-        </Switch.Control>
-      </Switch>
+      <label className="relative inline-flex cursor-pointer items-center">
+        <input
+          type="checkbox"
+          className="peer sr-only"
+          checked={item.value}
+          disabled={item.disabled || uiState?.pending}
+          onChange={(event) =>
+            onToggle(sectionId, item.id, event.target.checked)
+          }
+        />
+        <div className="h-6 w-11 rounded-full bg-gray-700 transition peer-checked:bg-violet-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5" />
+      </label>
     </RowShell>
   );
 };
@@ -116,13 +98,13 @@ const ButtonRow = ({
       description={item.description}
       errorMessage={uiState?.message}
     >
-      <Button
-        isDisabled={item.disabled || uiState?.pending}
-        onPress={() => onPress(sectionId, item.id)}
-        size="sm"
+      <button
+        className="rounded-md border border-violet-500/60 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-violet-100 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:border-gray-700 disabled:bg-gray-800 disabled:text-gray-500"
+        disabled={item.disabled || uiState?.pending}
+        onClick={() => onPress(sectionId, item.id)}
       >
         {uiState?.pending ? 'Running...' : (item.actionLabel ?? 'Run')}
-      </Button>
+      </button>
     </RowShell>
   );
 };
@@ -144,39 +126,18 @@ const SelectRow = ({
       description={item.description}
       errorMessage={uiState?.message}
     >
-      <Select
-        aria-label={item.title}
-        className="w-full sm:w-44"
-        isDisabled={item.disabled || uiState?.pending}
-        onChange={(key) => {
-          if (key == null) {
-            return;
-          }
-
-          onSelect(sectionId, item.id, String(key));
-        }}
+      <select
+        className="min-w-[160px] rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-xs text-gray-200 outline-none transition focus:border-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
         value={item.value}
-        variant="secondary"
+        disabled={item.disabled || uiState?.pending}
+        onChange={(event) => onSelect(sectionId, item.id, event.target.value)}
       >
-        <Select.Trigger>
-          <Select.Value />
-          <Select.Indicator />
-        </Select.Trigger>
-        <Select.Popover>
-          <ListBox aria-label={`${item.title} options`}>
-            {item.options.map((option) => (
-              <ListBox.Item
-                key={option.value}
-                id={option.value}
-                textValue={option.label}
-              >
-                {option.label}
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            ))}
-          </ListBox>
-        </Select.Popover>
-      </Select>
+        {item.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </RowShell>
   );
 };
@@ -188,12 +149,9 @@ const TextRow = ({
 }) => {
   return (
     <RowShell title={item.title} description={item.description}>
-      <Surface
-        className="wrap-anywhere w-full max-w-full rounded-md border border-border/70 px-3 py-2 text-left font-mono text-xs text-foreground sm:max-w-72 sm:text-right"
-        variant="secondary"
-      >
+      <div className="max-w-[50%] rounded-md bg-gray-950/80 px-3 py-1.5 text-right text-xs text-gray-300">
         {item.value}
-      </Surface>
+      </div>
     </RowShell>
   );
 };
@@ -214,7 +172,6 @@ const InputRow = ({
   onApply: (sectionId: string, itemId: string) => void;
 }) => {
   const isChanged = draftValue !== item.value;
-  const isDisabled = item.disabled || uiState?.pending;
 
   return (
     <RowShell
@@ -222,32 +179,24 @@ const InputRow = ({
       description={item.description}
       errorMessage={uiState?.message}
     >
-      <div className="flex w-full min-w-0 items-center gap-2 sm:min-w-72">
-        <TextField
-          aria-label={item.title}
-          className="min-w-0 flex-1"
-          isDisabled={isDisabled}
-          name={getItemKey(sectionId, item.id)}
+      <div className="flex min-w-[240px] items-center gap-2">
+        <input
+          className="flex-1 rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-xs text-gray-200 outline-none transition focus:border-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
           type="text"
-        >
-          <Input
-            disabled={isDisabled}
-            fullWidth
-            onChange={(event) =>
-              onDraftChange(sectionId, item.id, event.target.value)
-            }
-            placeholder={item.placeholder}
-            value={draftValue}
-            variant="secondary"
-          />
-        </TextField>
-        <Button
-          isDisabled={!isChanged || isDisabled}
-          onPress={() => onApply(sectionId, item.id)}
-          size="sm"
+          value={draftValue}
+          placeholder={item.placeholder}
+          disabled={item.disabled || uiState?.pending}
+          onChange={(event) =>
+            onDraftChange(sectionId, item.id, event.target.value)
+          }
+        />
+        <button
+          className="rounded-md border border-violet-500/60 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-100 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:border-gray-700 disabled:bg-gray-800 disabled:text-gray-500"
+          disabled={!isChanged || item.disabled || uiState?.pending}
+          onClick={() => onApply(sectionId, item.id)}
         >
           {uiState?.pending ? 'Applying...' : (item.applyLabel ?? 'Apply')}
-        </Button>
+        </button>
       </div>
     </RowShell>
   );
@@ -507,69 +456,68 @@ export default function ControlsPanel() {
   };
 
   return (
-    <PluginTheme
-      defaultTheme="dark"
-      className="flex h-screen flex-col bg-background text-foreground"
-    >
-      <PluginHeader
-        title="Controls"
-        actions={
-          <Chip className="shrink-0" variant="secondary">
-            {sections.length} sections
-          </Chip>
-        }
-      />
+    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
+      <div className="flex items-center gap-2 border-b border-gray-700 bg-gray-800 p-2">
+        <span className="text-sm font-medium text-gray-200">Controls</span>
+        <div className="flex-1" />
+        <span className="text-xs text-gray-400">
+          {sections.length} sections
+        </span>
+      </div>
 
-      <div className="flex-1 overflow-auto p-4 pt-3">
-        <div className="mx-auto w-full max-w-2xl">
-          {loading ? (
-            <Surface className="text-sm text-muted" variant="secondary">
-              Loading controls snapshot...
-            </Surface>
-          ) : null}
-
-          {!loading && sections.length === 0 ? (
-            <Surface className="text-sm text-muted" variant="secondary">
-              No controls registered on the device.
-            </Surface>
-          ) : null}
-
-          <div className="space-y-4">
-            {sections.map((section) => (
-              <Card key={section.id}>
-                <Card.Header>
-                  <Card.Title>{section.title}</Card.Title>
-                  {section.description ? (
-                    <Card.Description className="mt-1 text-xs">
-                      {section.description}
-                    </Card.Description>
-                  ) : null}
-                </Card.Header>
-
-                <Card.Content>
-                  {section.items.map((item) => (
-                    <div key={item.id}>
-                      {renderItem({
-                        sectionId: section.id,
-                        item,
-                        uiState: itemUiState.get(getItemKey(section.id, item.id)),
-                        inputDraft: inputDrafts.get(
-                          getItemKey(section.id, item.id),
-                        ),
-                        onToggle: handleToggle,
-                        onPress: handlePress,
-                        onSelect: handleSelect,
-                        onInputDraftChange: handleInputDraftChange,
-                        onInputApply: handleInputApply,
-                      })}
-                    </div>
-                  ))}
-                </Card.Content>
-              </Card>
-            ))}
+      <div className="flex-1 overflow-auto p-4">
+        {loading ? (
+          <div className="rounded-lg border border-gray-800 bg-gray-800 p-6 text-sm text-gray-400">
+            Loading controls snapshot...
           </div>
+        ) : null}
+
+        {!loading && sections.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-gray-700 bg-gray-800/80 p-6 text-sm text-gray-400">
+            No controls registered on the device.
+          </div>
+        ) : null}
+
+        <div className="space-y-4">
+          {sections.map((section) => (
+            <section
+              key={section.id}
+              className="rounded-xl border border-gray-800 bg-gray-800/90 shadow-lg shadow-black/10"
+            >
+              <div className="border-b border-gray-800 px-4 py-3">
+                <div className="text-sm font-semibold text-gray-100">
+                  {section.title}
+                </div>
+                {section.description ? (
+                  <div className="mt-1 text-xs text-gray-400">
+                    {section.description}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="divide-y divide-gray-800 px-4">
+                {section.items.map((item) => (
+                  <div key={item.id}>
+                    {renderItem({
+                      sectionId: section.id,
+                      item,
+                      uiState: itemUiState.get(getItemKey(section.id, item.id)),
+                      inputDraft: inputDrafts.get(
+                        getItemKey(section.id, item.id),
+                      ),
+                      onToggle: handleToggle,
+                      onPress: handlePress,
+                      onSelect: handleSelect,
+                      onInputDraftChange: handleInputDraftChange,
+                      onInputApply: handleInputApply,
+                    })}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       </div>
-    </PluginTheme>
+    </div>
   );
 }

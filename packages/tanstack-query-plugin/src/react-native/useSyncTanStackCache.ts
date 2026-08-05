@@ -15,10 +15,10 @@ import { SerializableObserver, PartialQueryState } from '../shared/types';
 
 export const useSyncTanStackCache = (
   queryClient: QueryClient,
-  client: TanStackQueryPluginClient | null
+  client: TanStackQueryPluginClient | null,
 ) => {
   const previousObserversRef = useRef<Map<string, SerializableObserver[]>>(
-    new Map()
+    new Map(),
   );
 
   const handler = useMemo(() => {
@@ -188,7 +188,7 @@ export const useSyncTanStackCache = (
         ) {
           const dehydratedObservers = dehydrateObservers(query);
           const previousObservers = previousObserversRef.current.get(
-            query.queryHash
+            query.queryHash,
           );
 
           // For observerOptionsUpdated, only send if the observers actually changed
@@ -201,7 +201,7 @@ export const useSyncTanStackCache = (
 
           previousObserversRef.current.set(
             query.queryHash,
-            dehydratedObservers
+            dehydratedObservers,
           );
 
           client.send('sync-query-event', {

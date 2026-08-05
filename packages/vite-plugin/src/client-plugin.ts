@@ -7,7 +7,10 @@ import { fileURLToPath } from 'node:url';
 import { normalizePath } from 'vite';
 import { loadConfig, RozeniteConfig } from './load-config.js';
 import { getPackageJSON } from './package-json.js';
-import { DEV_HOST_CONFIG_GLOBAL_KEY, DEV_HOST_STATE_ELEMENT_ID } from './dev-host/constants.js';
+import {
+  DEV_HOST_CONFIG_GLOBAL_KEY,
+  DEV_HOST_STATE_ELEMENT_ID,
+} from './dev-host/constants.js';
 import {
   getBuiltDevHostAssets,
   getDevHostHtmlTemplate,
@@ -50,11 +53,7 @@ const TEMPLATES_DIR = path.resolve(
   'templates',
 );
 
-const PACKAGE_DIR = path.resolve(
-  fileURLToPath(import.meta.url),
-  '..',
-  '..',
-);
+const PACKAGE_DIR = path.resolve(fileURLToPath(import.meta.url), '..', '..');
 
 const DEV_HOST_SOURCE_ENTRY_FILE = getDevHostSourceEntryFile(PACKAGE_DIR);
 

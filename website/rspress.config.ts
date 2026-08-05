@@ -30,5 +30,5 @@ export default withCallstackPreset(
       enableScrollToTop: true,
     },
     plugins: [pluginDirectoryPlugin()],
-  }
+  },
 );
