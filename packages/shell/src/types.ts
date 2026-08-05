@@ -13,5 +13,6 @@ export type ShellPlugin = {
 
 export type ShellConfiguration = {
   plugins: ShellPlugin[];
+  destroyOnDetachPlugins: string[];
   runtimeVersion?: string;
 };
