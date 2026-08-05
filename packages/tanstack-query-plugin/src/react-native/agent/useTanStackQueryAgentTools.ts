@@ -1,9 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
-import {
-  createTanStackQueryAgentController,
-} from './tanstack-query-agent';
+import { createTanStackQueryAgentController } from './tanstack-query-agent';
 import {
   TANSTACK_QUERY_AGENT_PLUGIN_ID,
   tanstackQueryToolDefinitions,
@@ -12,7 +10,7 @@ import {
 export const useTanStackQueryAgentTools = (queryClient: QueryClient) => {
   const controller = useMemo(
     () => createTanStackQueryAgentController(queryClient),
-    [queryClient]
+    [queryClient],
   );
 
   useEffect(() => {

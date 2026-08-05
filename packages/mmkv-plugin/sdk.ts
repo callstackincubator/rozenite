@@ -5,11 +5,7 @@ import {
   mmkvToolDefinitions,
 } from './src/shared/agent-tools.js';
 
-export {
-  MMKV_AGENT_ENTRY_TYPES,
-  MMKV_AGENT_PLUGIN_ID,
-  mmkvToolDefinitions,
-};
+export { MMKV_AGENT_ENTRY_TYPES, MMKV_AGENT_PLUGIN_ID, mmkvToolDefinitions };
 
 export const mmkvTools = defineAgentToolDescriptors(
   MMKV_AGENT_PLUGIN_ID,

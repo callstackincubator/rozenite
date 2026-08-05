@@ -98,8 +98,9 @@ const createNetworkInspectorInstance = (): NetworkInspector => {
         return getHTTPResponseBody(request);
       }
 
-      const capturedResponseBody =
-        http.getNetworkRequestsRegistry().getResponseBody(requestId);
+      const capturedResponseBody = http
+        .getNetworkRequestsRegistry()
+        .getResponseBody(requestId);
       if (capturedResponseBody !== undefined) {
         return capturedResponseBody;
       }

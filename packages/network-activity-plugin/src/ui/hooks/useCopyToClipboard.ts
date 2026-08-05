@@ -12,7 +12,7 @@ export function useCopyToClipboard() {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-    }
+    };
   }, []);
 
   const copy = useCallback(async (value: string) => {

@@ -67,7 +67,10 @@ describe('agent transport', () => {
           };
         }
 
-        if (method === 'GET' && pathname === getAgentSessionRoute('session-1')) {
+        if (
+          method === 'GET' &&
+          pathname === getAgentSessionRoute('session-1')
+        ) {
           return {
             payload: {
               ok: true,
@@ -132,7 +135,9 @@ describe('agent transport', () => {
     await expect(transport.listTargets()).resolves.toEqual({
       targets: [{ id: 'device-1', name: 'Phone' }],
     });
-    await expect(transport.createSession({ deviceId: 'device-1' })).resolves.toEqual({
+    await expect(
+      transport.createSession({ deviceId: 'device-1' }),
+    ).resolves.toEqual({
       session: { id: 'session-1', deviceId: 'device-1' },
     });
     await expect(transport.getSession('session-1')).resolves.toEqual({

@@ -6,7 +6,10 @@ import type {
   ControlsSnapshotEvent,
   ControlsUpdateResultEvent,
 } from '../shared/messaging';
-import type { ControlsItemSnapshot, ControlsSectionSnapshot } from '../shared/types';
+import type {
+  ControlsItemSnapshot,
+  ControlsSectionSnapshot,
+} from '../shared/types';
 import './globals.css';
 
 type ItemUiState = {
@@ -14,7 +17,8 @@ type ItemUiState = {
   message?: string;
 };
 
-const getItemKey = (sectionId: string, itemId: string) => `${sectionId}:${itemId}`;
+const getItemKey = (sectionId: string, itemId: string) =>
+  `${sectionId}:${itemId}`;
 
 const createRequestId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -67,7 +71,9 @@ const ToggleRow = ({
           className="peer sr-only"
           checked={item.value}
           disabled={item.disabled || uiState?.pending}
-          onChange={(event) => onToggle(sectionId, item.id, event.target.checked)}
+          onChange={(event) =>
+            onToggle(sectionId, item.id, event.target.checked)
+          }
         />
         <div className="h-6 w-11 rounded-full bg-gray-700 transition peer-checked:bg-violet-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5" />
       </label>
@@ -97,7 +103,7 @@ const ButtonRow = ({
         disabled={item.disabled || uiState?.pending}
         onClick={() => onPress(sectionId, item.id)}
       >
-        {uiState?.pending ? 'Running...' : item.actionLabel ?? 'Run'}
+        {uiState?.pending ? 'Running...' : (item.actionLabel ?? 'Run')}
       </button>
     </RowShell>
   );
@@ -189,7 +195,7 @@ const InputRow = ({
           disabled={!isChanged || item.disabled || uiState?.pending}
           onClick={() => onApply(sectionId, item.id)}
         >
-          {uiState?.pending ? 'Applying...' : item.applyLabel ?? 'Apply'}
+          {uiState?.pending ? 'Applying...' : (item.applyLabel ?? 'Apply')}
         </button>
       </div>
     </RowShell>
@@ -214,7 +220,11 @@ const renderItem = ({
   onToggle: (sectionId: string, itemId: string, value: boolean) => void;
   onPress: (sectionId: string, itemId: string) => void;
   onSelect: (sectionId: string, itemId: string, value: string) => void;
-  onInputDraftChange: (sectionId: string, itemId: string, value: string) => void;
+  onInputDraftChange: (
+    sectionId: string,
+    itemId: string,
+    value: string,
+  ) => void;
   onInputApply: (sectionId: string, itemId: string) => void;
 }) => {
   if (item.type === 'text') {
@@ -269,8 +279,12 @@ const renderItem = ({
 export default function ControlsPanel() {
   const [sections, setSections] = useState<ControlsSectionSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [itemUiState, setItemUiState] = useState<Map<string, ItemUiState>>(new Map());
-  const [inputDrafts, setInputDrafts] = useState<Map<string, string>>(new Map());
+  const [itemUiState, setItemUiState] = useState<Map<string, ItemUiState>>(
+    new Map(),
+  );
+  const [inputDrafts, setInputDrafts] = useState<Map<string, string>>(
+    new Map(),
+  );
   const committedInputValuesRef = useRef<Map<string, string>>(new Map());
 
   const client = useRozeniteDevToolsClient<ControlsEventMap>({
@@ -292,7 +306,10 @@ export default function ControlsPanel() {
         event.sections.forEach((section) => {
           section.items.forEach((item) => {
             if (item.type === 'input') {
-              nextCommittedValues.set(getItemKey(section.id, item.id), item.value);
+              nextCommittedValues.set(
+                getItemKey(section.id, item.id),
+                item.value,
+              );
             }
           });
         });
@@ -310,7 +327,8 @@ export default function ControlsPanel() {
             const previousCommitted = committedInputValuesRef.current.get(key);
             const previousDraft = previous.get(key);
             const isDirty =
-              previousDraft !== undefined && previousDraft !== previousCommitted;
+              previousDraft !== undefined &&
+              previousDraft !== previousCommitted;
 
             if (!isDirty || previousDraft === committedValue) {
               next.set(key, committedValue);
@@ -321,7 +339,7 @@ export default function ControlsPanel() {
         });
 
         committedInputValuesRef.current = nextCommittedValues;
-      }
+      },
     );
     const updateResultSubscription = client.onMessage(
       'update-result',
@@ -336,7 +354,7 @@ export default function ControlsPanel() {
           });
           return next;
         });
-      }
+      },
     );
 
     client.send('get-snapshot', {
@@ -352,7 +370,7 @@ export default function ControlsPanel() {
   const sendUpdateRequest = (
     sectionId: string,
     itemId: string,
-    value: boolean | string
+    value: boolean | string,
   ) => {
     if (!client) {
       return;
@@ -403,7 +421,7 @@ export default function ControlsPanel() {
   const handleInputDraftChange = (
     sectionId: string,
     itemId: string,
-    value: string
+    value: string,
   ) => {
     const key = getItemKey(sectionId, itemId);
 
@@ -442,7 +460,9 @@ export default function ControlsPanel() {
       <div className="flex items-center gap-2 border-b border-gray-700 bg-gray-800 p-2">
         <span className="text-sm font-medium text-gray-200">Controls</span>
         <div className="flex-1" />
-        <span className="text-xs text-gray-400">{sections.length} sections</span>
+        <span className="text-xs text-gray-400">
+          {sections.length} sections
+        </span>
       </div>
 
       <div className="flex-1 overflow-auto p-4">
@@ -482,7 +502,9 @@ export default function ControlsPanel() {
                       sectionId: section.id,
                       item,
                       uiState: itemUiState.get(getItemKey(section.id, item.id)),
-                      inputDraft: inputDrafts.get(getItemKey(section.id, item.id)),
+                      inputDraft: inputDrafts.get(
+                        getItemKey(section.id, item.id),
+                      ),
                       onToggle: handleToggle,
                       onPress: handlePress,
                       onSelect: handleSelect,

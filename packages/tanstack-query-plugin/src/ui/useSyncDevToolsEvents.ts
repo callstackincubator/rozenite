@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { TanStackQueryPluginClient } from '../shared/messaging';
 
 export const useSyncDevToolsEvents = (
-  client: TanStackQueryPluginClient | null
+  client: TanStackQueryPluginClient | null,
 ) => {
   const queryClient = useQueryClient();
 

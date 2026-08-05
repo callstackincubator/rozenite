@@ -6,7 +6,7 @@ export const useWebSocketInspector = (
   client: NetworkActivityDevToolsClient | null,
   websocketInspector: WebSocketInspector,
   isEnabled: boolean,
-  isRecordingEnabled: boolean
+  isRecordingEnabled: boolean,
 ) => {
   useEffect(() => {
     if (!client || !isEnabled) {

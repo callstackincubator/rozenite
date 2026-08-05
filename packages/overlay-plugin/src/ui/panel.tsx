@@ -66,7 +66,10 @@ export default function OverlayPanel() {
     return (
       <div className="app-container">
         <Header />
-        <div className="main-content" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          className="main-content"
+          style={{ alignItems: 'center', justifyContent: 'center' }}
+        >
           <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
         </div>
       </div>
@@ -78,9 +81,11 @@ export default function OverlayPanel() {
       <Header />
       <div className="main-content">
         <GridSettings config={gridConfig} onConfigChange={updateGridConfig} />
-        <ImageSettings config={imageConfig} onConfigChange={updateImageConfig} />
+        <ImageSettings
+          config={imageConfig}
+          onConfigChange={updateImageConfig}
+        />
       </div>
     </div>
   );
 }
-

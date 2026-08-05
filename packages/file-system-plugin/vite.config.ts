@@ -9,7 +9,10 @@ export default defineConfig({
   test: {
     passWithNoTests: true,
     alias: {
-      '@rozenite/agent-shared': resolve(__dirname, '../agent-shared/src/index.ts'),
+      '@rozenite/agent-shared': resolve(
+        __dirname,
+        '../agent-shared/src/index.ts',
+      ),
     },
   },
   base: './',

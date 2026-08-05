@@ -16,10 +16,7 @@ import { Input } from './Input';
 import { Button } from './Button';
 import { X, Filter, ChevronDown, Check } from 'lucide-react';
 import type { HttpMethod, NetworkEventSource } from '../../shared/client';
-import {
-  createDefaultFilter,
-  DEFAULT_REQUEST_TYPES,
-} from '../state/filter';
+import { createDefaultFilter, DEFAULT_REQUEST_TYPES } from '../state/filter';
 import type {
   AdvancedFilterState,
   FilterState,

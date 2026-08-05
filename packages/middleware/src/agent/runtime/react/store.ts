@@ -205,7 +205,9 @@ const normalizeRenderDataSort = (value: unknown): ReactRenderDataSort => {
   return 'duration-desc';
 };
 
-const normalizeComponentSections = (value: unknown): ReactComponentSection[] => {
+const normalizeComponentSections = (
+  value: unknown,
+): ReactComponentSection[] => {
   const defaultSections: ReactComponentSection[] = ['props', 'state', 'hooks'];
   if (value === undefined) {
     return defaultSections;
@@ -270,7 +272,9 @@ const ensureNodeSummaryForState = (
   node: ReactNodeRecord,
 ): ReactNodeSummary => {
   const parentLabel =
-    node.parentId !== undefined ? state.labelByNodeId.get(node.parentId) : undefined;
+    node.parentId !== undefined
+      ? state.labelByNodeId.get(node.parentId)
+      : undefined;
 
   return {
     ...ensureNodeSummary(node),
@@ -322,7 +326,9 @@ const resolveNodeId = (
     }
   }
 
-  throw new Error(`"${fieldName}" must be an integer or component label like "@c12"`);
+  throw new Error(
+    `"${fieldName}" must be an integer or component label like "@c12"`,
+  );
 };
 
 const ensureNodeExists = (
@@ -1299,8 +1305,9 @@ export const createReactTreeStore = (options?: {
     });
 
     if (!inspected || !hasAllRequestedSections) {
-      inspected = await requestInspectableSnapshot(state, nodeId)
-        || state.inspectedById.get(nodeId);
+      inspected =
+        (await requestInspectableSnapshot(state, nodeId)) ||
+        state.inspectedById.get(nodeId);
     }
 
     return inspected ?? null;
@@ -1328,8 +1335,12 @@ export const createReactTreeStore = (options?: {
     const result: ReactGetComponentResult = {
       node: {
         ...ensureNodeSummaryForState(state, node),
-        childIds: node.childIds.filter((childId) => state.nodesById.has(childId)),
-        ...(node.rendererId !== undefined ? { rendererId: node.rendererId } : {}),
+        childIds: node.childIds.filter((childId) =>
+          state.nodesById.has(childId),
+        ),
+        ...(node.rendererId !== undefined
+          ? { rendererId: node.rendererId }
+          : {}),
       },
     };
 

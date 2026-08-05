@@ -189,9 +189,7 @@ function useRozeniteDomainAgentTool(
 export function useRozenitePluginAgentTool<
   TToolOrArgs = AgentTool,
   TResult = unknown,
->(
-  options: UseRozenitePluginAgentToolOptions<TToolOrArgs, TResult>,
-): void {
+>(options: UseRozenitePluginAgentToolOptions<TToolOrArgs, TResult>): void {
   const { pluginId, ...toolOptions } =
     options as UseRozenitePluginAgentToolRuntimeOptions;
   useRozeniteDomainAgentTool(pluginId, toolOptions);
@@ -213,9 +211,7 @@ export function useRozenitePluginAgentTool<
 export function useRozeniteInAppAgentTool<
   TToolOrArgs = AgentTool,
   TResult = unknown,
->(
-  options: UseRozeniteInAppAgentToolOptions<TToolOrArgs, TResult>,
-): void {
+>(options: UseRozeniteInAppAgentToolOptions<TToolOrArgs, TResult>): void {
   const { ...toolOptions } = options;
   useRozeniteDomainAgentTool(
     APP_DOMAIN,

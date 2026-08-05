@@ -34,7 +34,7 @@ export type ActionRegistryEntry =
 
 const validateValue = <TValue>(
   validate: ControlsMutableItemBase<TValue>['validate'],
-  value: TValue
+  value: TValue,
 ): ControlsValidationResult => {
   if (!validate) {
     return { valid: true };
@@ -95,7 +95,7 @@ const toSnapshotItem = (item: ControlsItem): ControlsItemSnapshot => {
 };
 
 export const serializeSections = (
-  sections: ControlsSection[]
+  sections: ControlsSection[],
 ): ControlsSectionSnapshot[] =>
   sections.map((section) => ({
     id: section.id,

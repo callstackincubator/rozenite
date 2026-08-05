@@ -55,10 +55,20 @@ export const MessageLogPane = ({
                 <div
                   className={cn(
                     'rz-message-cell rz-message-direction',
-                    message.direction === 'in' ? 'rz-message-dir-in' : 'rz-message-dir-out',
+                    message.direction === 'in'
+                      ? 'rz-message-dir-in'
+                      : 'rz-message-dir-out',
                   )}
-                  aria-label={message.direction === 'in' ? 'Sent message' : 'Received message'}
-                  title={message.direction === 'in' ? 'Sent message' : 'Received message'}
+                  aria-label={
+                    message.direction === 'in'
+                      ? 'Sent message'
+                      : 'Received message'
+                  }
+                  title={
+                    message.direction === 'in'
+                      ? 'Sent message'
+                      : 'Received message'
+                  }
                 >
                   <span className="rz-message-arrow" aria-hidden="true">
                     {message.direction === 'in' ? '↑' : '↓'}
@@ -69,7 +79,9 @@ export const MessageLogPane = ({
                   {formatMessageTableDate(message.date)}
                 </div>
 
-                <div className="rz-message-cell rz-message-type">{message.type}</div>
+                <div className="rz-message-cell rz-message-type">
+                  {message.type}
+                </div>
 
                 <pre className="rz-message-cell rz-message-preview">
                   {formatPayloadPreview(message.payload)}

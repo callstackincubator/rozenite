@@ -9,7 +9,7 @@ function stringifyData(postData: unknown): string {
     const jsonString = JSON.stringify(
       typeof postData === 'string' ? JSON.parse(postData) : postData,
       null,
-      BASE_TAB_INDENT * 4
+      BASE_TAB_INDENT * 4,
     );
 
     return jsonString.replace(/([}\]])$/, '$1'.padStart(BASE_TAB_INDENT * 2));
@@ -50,11 +50,11 @@ function addBodyToCurl(curlParts: string[], postData: RequestPostData): void {
 
   if (type === 'form-data') {
     const formParts = Object.entries(value).map(
-      ([key, value]) => `${key}=${stringifyData(value)}`
+      ([key, value]) => `${key}=${stringifyData(value)}`,
     );
 
     formParts.forEach((part) =>
-      addCurlParam(curlParts, '--form', escapeShellArg(part))
+      addCurlParam(curlParts, '--form', escapeShellArg(part)),
     );
 
     return;
@@ -64,7 +64,7 @@ function addBodyToCurl(curlParts: string[], postData: RequestPostData): void {
 }
 
 export function generateCurlCommand(
-  request: HttpNetworkEntry | SSENetworkEntry
+  request: HttpNetworkEntry | SSENetworkEntry,
 ) {
   const { method, url, headers = {}, body } = request.request;
 

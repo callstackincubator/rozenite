@@ -15,7 +15,10 @@ export type MockHttpResult = {
 };
 
 const httpTestHarnessState = vi.hoisted(() => ({
-  requestHandler: vi.fn<(request: MockHttpRequest) => MockHttpResult | Promise<MockHttpResult>>(),
+  requestHandler:
+    vi.fn<
+      (request: MockHttpRequest) => MockHttpResult | Promise<MockHttpResult>
+    >(),
 }));
 
 export const httpTestHarness = {
@@ -29,13 +32,11 @@ vi.mock('node:http', () => ({
       method?: string;
       headers?: Record<string, string | number>;
     },
-    callback: (
-      response: {
-        statusCode?: number;
-        setEncoding: () => void;
-        on: (event: string, handler: (chunk?: unknown) => void) => void;
-      },
-    ) => void,
+    callback: (response: {
+      statusCode?: number;
+      setEncoding: () => void;
+      on: (event: string, handler: (chunk?: unknown) => void) => void;
+    }) => void,
   ) => {
     class MockEmitter {
       private readonly listeners = new Map<

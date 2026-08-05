@@ -34,8 +34,9 @@ const createProvider = (
     },
   ]),
   listDir: vi.fn(async () => entries),
-  statPath: vi.fn(async (path: string) =>
-    entries.find((entry) => entry.path === path) ?? createEntry({ path })
+  statPath: vi.fn(
+    async (path: string) =>
+      entries.find((entry) => entry.path === path) ?? createEntry({ path }),
   ),
   readImageBase64: vi.fn(async () => ({
     mime: 'image/png',
@@ -48,11 +49,13 @@ const createProvider = (
     size: 4,
     base64: 'AAECAw==',
   })),
-  writeFileBase64: vi.fn(async (path: string) => createEntry({
-    name: path.slice(path.lastIndexOf('/') + 1),
-    path,
-    size: 4,
-  })),
+  writeFileBase64: vi.fn(async (path: string) =>
+    createEntry({
+      name: path.slice(path.lastIndexOf('/') + 1),
+      path,
+      size: 4,
+    }),
+  ),
   pathExists: vi.fn(async () => false),
   ...overrides,
 });
@@ -60,7 +63,9 @@ const createProvider = (
 describe('file system agent tools', () => {
   it('uses the public plugin ID and exposes the expected tool names', () => {
     expect(FILE_SYSTEM_AGENT_PLUGIN_ID).toBe('@rozenite/file-system-plugin');
-    expect(Object.values(fileSystemToolDefinitions).map((tool) => tool.name)).toEqual([
+    expect(
+      Object.values(fileSystemToolDefinitions).map((tool) => tool.name),
+    ).toEqual([
       'list-roots',
       'list-entries',
       'read-entry',
@@ -98,12 +103,12 @@ describe('file system agent tools', () => {
     expect(fileSystemToolDefinitions.readEntry.inputSchema.required).toEqual([
       'path',
     ]);
-    expect(fileSystemToolDefinitions.readTextFile.inputSchema.required).toEqual([
-      'path',
-    ]);
-    expect(fileSystemToolDefinitions.readImageFile.inputSchema.required).toEqual([
-      'path',
-    ]);
+    expect(fileSystemToolDefinitions.readTextFile.inputSchema.required).toEqual(
+      ['path'],
+    );
+    expect(
+      fileSystemToolDefinitions.readImageFile.inputSchema.required,
+    ).toEqual(['path']);
     expect(fileSystemToolDefinitions.exportFile.inputSchema.required).toEqual([
       'path',
     ]);
@@ -195,13 +200,13 @@ describe('createFileSystemAgentHandlers', () => {
     const provider = createProvider(undefined, [fileEntry, dirEntry]);
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(handlers.readEntry({ path: '/tmp/file.txt' })).resolves.toEqual(
-      {
-        provider: 'expo',
-        path: '/tmp/file.txt',
-        entry: fileEntry,
-      },
-    );
+    await expect(
+      handlers.readEntry({ path: '/tmp/file.txt' }),
+    ).resolves.toEqual({
+      provider: 'expo',
+      path: '/tmp/file.txt',
+      entry: fileEntry,
+    });
 
     await expect(handlers.readEntry({ path: '/tmp/folder/' })).resolves.toEqual(
       {
@@ -243,9 +248,14 @@ describe('createFileSystemAgentHandlers', () => {
   });
 
   it('supports binary fallback text previews through the provider', async () => {
-    const provider = createProvider({
-      readTextFile: vi.fn(async () => '[Binary file - 4 bytes]\n\n00 01 02 03'),
-    }, [createEntry({ path: '/tmp/binary.bin', name: 'binary.bin', size: 4 })]);
+    const provider = createProvider(
+      {
+        readTextFile: vi.fn(
+          async () => '[Binary file - 4 bytes]\n\n00 01 02 03',
+        ),
+      },
+      [createEntry({ path: '/tmp/binary.bin', name: 'binary.bin', size: 4 })],
+    );
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
     await expect(
@@ -258,11 +268,14 @@ describe('createFileSystemAgentHandlers', () => {
   });
 
   it('surfaces oversize text preview errors', async () => {
-    const provider = createProvider({
-      readTextFile: vi.fn(async () => {
-        throw new Error('File is too large for preview (11 bytes, limit 10)');
-      }),
-    }, [createEntry({ path: '/tmp/large.txt', size: 11 })]);
+    const provider = createProvider(
+      {
+        readTextFile: vi.fn(async () => {
+          throw new Error('File is too large for preview (11 bytes, limit 10)');
+        }),
+      },
+      [createEntry({ path: '/tmp/large.txt', size: 11 })],
+    );
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
     await expect(
@@ -309,18 +322,23 @@ describe('createFileSystemAgentHandlers', () => {
   });
 
   it('surfaces oversize image preview errors', async () => {
-    const provider = createProvider({
-      readImageBase64: vi.fn(async () => {
-        throw new Error('File is too large for preview (101 bytes, limit 100)');
-      }),
-    }, [
-      createEntry({
-        path: '/tmp/photo.png',
-        name: 'photo.png',
-        mimeTypeHint: 'image/png',
-        size: 101,
-      }),
-    ]);
+    const provider = createProvider(
+      {
+        readImageBase64: vi.fn(async () => {
+          throw new Error(
+            'File is too large for preview (101 bytes, limit 100)',
+          );
+        }),
+      },
+      [
+        createEntry({
+          path: '/tmp/photo.png',
+          name: 'photo.png',
+          mimeTypeHint: 'image/png',
+          size: 101,
+        }),
+      ],
+    );
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
     await expect(
@@ -526,16 +544,19 @@ describe('createFileSystemAgentHandlers', () => {
   });
 
   it('surfaces agent transfer provider errors', async () => {
-    const provider = createProvider({
-      readFileBase64: vi.fn(async () => {
-        throw new Error('Permission denied');
-      }),
-    }, [
-      createEntry({
-        path: 'file:///documents/sample.bin',
-        name: 'sample.bin',
-      }),
-    ]);
+    const provider = createProvider(
+      {
+        readFileBase64: vi.fn(async () => {
+          throw new Error('Permission denied');
+        }),
+      },
+      [
+        createEntry({
+          path: 'file:///documents/sample.bin',
+          name: 'sample.bin',
+        }),
+      ],
+    );
     const handlers = createFileSystemAgentHandlers(async () => provider, {
       import: false,
       export: true,

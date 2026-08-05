@@ -1,11 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { FileSystemProvider, FsRoots } from '../shared/protocol';
 import type { WebPressableState } from '../types';
 

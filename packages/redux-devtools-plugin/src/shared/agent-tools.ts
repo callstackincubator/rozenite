@@ -4,8 +4,7 @@ import {
 } from '@rozenite/agent-shared';
 import type { ReduxActionTrace } from './trace';
 
-export const REDUX_DEVTOOLS_AGENT_PLUGIN_ID =
-  '@rozenite/redux-devtools-plugin';
+export const REDUX_DEVTOOLS_AGENT_PLUGIN_ID = '@rozenite/redux-devtools-plugin';
 
 export type ReduxDevToolsStoreInput = {
   instanceId?: string;
@@ -105,7 +104,8 @@ export type ReduxDevToolsApplyStoreActionResult = {
 const storeIdProperty = {
   instanceId: {
     type: 'string',
-    description: 'Redux DevTools instance ID. Optional when only one store is registered.',
+    description:
+      'Redux DevTools instance ID. Optional when only one store is registered.',
   },
 } as const;
 
@@ -188,7 +188,8 @@ export const reduxDevToolsToolDefinitions = {
         ...storeIdProperty,
         action: {
           type: 'object',
-          description: 'Plain serializable Redux action object with a string type.',
+          description:
+            'Plain serializable Redux action object with a string type.',
         },
       },
       required: ['action'],
@@ -302,7 +303,8 @@ export const reduxDevToolsToolDefinitions = {
     ReduxDevToolsApplyStoreActionResult
   >({
     name: 'set-locked',
-    description: 'Lock or unlock Redux DevTools changes for the selected store.',
+    description:
+      'Lock or unlock Redux DevTools changes for the selected store.',
     inputSchema: {
       type: 'object',
       properties: {

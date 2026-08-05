@@ -1,6 +1,6 @@
-export const PLUGIN_ID = "file-system";
+export const PLUGIN_ID = 'file-system';
 
-export type FileSystemProvider = "expo" | "rnfs" | "none";
+export type FileSystemProvider = 'expo' | 'rnfs' | 'none';
 
 export type FsEntry = {
   name: string;
@@ -34,13 +34,13 @@ export type FileSystemAgentTransferCapabilities = {
 
 export type FileSystemEventMap = {
   // Sent by RN side when it initializes/reconnects - panel should re-fetch data
-  "fs:ready": { timestamp: number };
+  'fs:ready': { timestamp: number };
 
-  "fs:get-roots": { requestId: string };
-  "fs:get-roots:result": { requestId: string } & FsRoots & { error?: string };
+  'fs:get-roots': { requestId: string };
+  'fs:get-roots:result': { requestId: string } & FsRoots & { error?: string };
 
-  "fs:list": { requestId: string; path: string };
-  "fs:list:result": {
+  'fs:list': { requestId: string; path: string };
+  'fs:list:result': {
     requestId: string;
     provider: FileSystemProvider;
     path: string;
@@ -48,12 +48,12 @@ export type FileSystemEventMap = {
     error?: string;
   };
 
-  "fs:read-image": {
+  'fs:read-image': {
     requestId: string;
     path: string;
     maxBytes?: number;
   };
-  "fs:read-image:result": {
+  'fs:read-image:result': {
     requestId: string;
     provider: FileSystemProvider;
     path: string;
@@ -61,12 +61,12 @@ export type FileSystemEventMap = {
     error?: string;
   };
 
-  "fs:read-file": {
+  'fs:read-file': {
     requestId: string;
     path: string;
     maxBytes?: number;
   };
-  "fs:read-file:result": {
+  'fs:read-file:result': {
     requestId: string;
     provider: FileSystemProvider;
     path: string;
@@ -74,11 +74,11 @@ export type FileSystemEventMap = {
     error?: string;
   };
 
-  "fs:export-file": {
+  'fs:export-file': {
     requestId: string;
     path: string;
   };
-  "fs:export-file:result": {
+  'fs:export-file:result': {
     requestId: string;
     provider: FileSystemProvider;
     path: string;
@@ -89,14 +89,14 @@ export type FileSystemEventMap = {
     error?: string;
   };
 
-  "fs:import-file": {
+  'fs:import-file': {
     requestId: string;
     directoryPath: string;
     fileName: string;
     base64: string;
     overwrite?: boolean;
   };
-  "fs:import-file:result": {
+  'fs:import-file:result': {
     requestId: string;
     provider: FileSystemProvider;
     directoryPath: string;

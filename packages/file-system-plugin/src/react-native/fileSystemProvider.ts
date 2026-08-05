@@ -293,23 +293,20 @@ function createExpoModernFileSystemAdapter(
     options: { includeTargetStats?: boolean; path?: string } = {},
   ): FsEntry => {
     const path = options.path ?? target.uri;
-    const normalizedPath = isDirectory
-      ? normalizeDirPath(path)
-      : path;
+    const normalizedPath = isDirectory ? normalizeDirPath(path) : path;
     const includeTargetStats = options.includeTargetStats ?? true;
 
     return {
       name: target.name ?? basename(path),
       path: normalizedPath,
       isDirectory,
-      size:
-        isDirectory
-          ? null
-          : typeof info?.size === 'number'
-            ? info.size
-            : includeTargetStats && typeof target?.size === 'number'
-              ? target.size
-              : null,
+      size: isDirectory
+        ? null
+        : typeof info?.size === 'number'
+          ? info.size
+          : includeTargetStats && typeof target?.size === 'number'
+            ? target.size
+            : null,
       modifiedAtMs:
         typeof info?.modificationTime === 'number'
           ? info.modificationTime

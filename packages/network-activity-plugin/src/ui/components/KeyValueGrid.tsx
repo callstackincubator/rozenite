@@ -21,7 +21,7 @@ export const KeyValueGrid = ({
 }: KeyValueGridProps) => {
   const gridClassName = cn(
     'grid grid-cols-[minmax(7rem,25%)_minmax(3rem,1fr)] gap-x-2 gap-y-2 text-sm',
-    className
+    className,
   );
 
   if (items.length === 0) {

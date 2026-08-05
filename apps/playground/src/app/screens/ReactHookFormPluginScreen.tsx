@@ -33,22 +33,23 @@ type LoginFormValues = {
 };
 
 function ProfileForm() {
-  const { control, handleSubmit, reset, formState } = useForm<ProfileFormValues>({
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      age: '',
-      bio: '',
-      newsletter: false,
-      address: {
-        street: '',
-        city: '',
-        zip: '',
+  const { control, handleSubmit, reset, formState } =
+    useForm<ProfileFormValues>({
+      defaultValues: {
+        firstName: '',
+        lastName: '',
+        email: '',
+        age: '',
+        bio: '',
+        newsletter: false,
+        address: {
+          street: '',
+          city: '',
+          zip: '',
+        },
       },
-    },
-    mode: 'onChange',
-  });
+      mode: 'onChange',
+    });
 
   useRozeniteRHFPlugin({ control, id: 'profile-form' });
 
@@ -63,7 +64,10 @@ function ProfileForm() {
       <Controller
         control={control}
         name="firstName"
-        rules={{ required: 'First name is required', minLength: { value: 2, message: 'Min 2 chars' } }}
+        rules={{
+          required: 'First name is required',
+          minLength: { value: 2, message: 'Min 2 chars' },
+        }}
         render={({ field, fieldState }) => (
           <View style={styles.fieldContainer}>
             <Text style={styles.label}>First Name *</Text>
@@ -109,7 +113,10 @@ function ProfileForm() {
         name="email"
         rules={{
           required: 'Email is required',
-          pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Invalid email' },
+          pattern: {
+            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+            message: 'Invalid email',
+          },
         }}
         render={({ field, fieldState }) => (
           <View style={styles.fieldContainer}>
@@ -268,7 +275,11 @@ function ProfileForm() {
           <Text style={styles.buttonSecondaryText}>Reset</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.button, styles.buttonPrimary, !formState.isValid && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            styles.buttonPrimary,
+            !formState.isValid && styles.buttonDisabled,
+          ]}
           onPress={handleSubmit(onSubmit)}
         >
           <Text style={styles.buttonPrimaryText}>Submit</Text>
@@ -297,7 +308,10 @@ function LoginForm() {
       <Controller
         control={control}
         name="username"
-        rules={{ required: 'Username required', minLength: { value: 3, message: 'Min 3 chars' } }}
+        rules={{
+          required: 'Username required',
+          minLength: { value: 3, message: 'Min 3 chars' },
+        }}
         render={({ field, fieldState }) => (
           <View style={styles.fieldContainer}>
             <Text style={styles.label}>Username *</Text>
@@ -320,7 +334,10 @@ function LoginForm() {
       <Controller
         control={control}
         name="password"
-        rules={{ required: 'Password required', minLength: { value: 8, message: 'Min 8 chars' } }}
+        rules={{
+          required: 'Password required',
+          minLength: { value: 8, message: 'Min 8 chars' },
+        }}
         render={({ field, fieldState }) => (
           <View style={styles.fieldContainer}>
             <Text style={styles.label}>Password *</Text>
@@ -341,7 +358,11 @@ function LoginForm() {
       />
 
       <TouchableOpacity
-        style={[styles.button, styles.buttonPrimary, formState.isSubmitting && styles.buttonDisabled]}
+        style={[
+          styles.button,
+          styles.buttonPrimary,
+          formState.isSubmitting && styles.buttonDisabled,
+        ]}
         onPress={handleSubmit(onSubmit)}
       >
         <Text style={styles.buttonPrimaryText}>
@@ -361,7 +382,10 @@ export function ReactHookFormPluginScreen() {
       style={styles.container}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + 20, paddingBottom: Math.max(insets.bottom, 40) },
+        {
+          paddingTop: insets.top + 20,
+          paddingBottom: Math.max(insets.bottom, 40),
+        },
       ]}
     >
       <Text style={styles.screenTitle}>React Hook Form Plugin</Text>
@@ -374,7 +398,12 @@ export function ReactHookFormPluginScreen() {
           style={[styles.tab, activeForm === 'profile' && styles.tabActive]}
           onPress={() => setActiveForm('profile')}
         >
-          <Text style={[styles.tabText, activeForm === 'profile' && styles.tabTextActive]}>
+          <Text
+            style={[
+              styles.tabText,
+              activeForm === 'profile' && styles.tabTextActive,
+            ]}
+          >
             Profile Form
           </Text>
         </TouchableOpacity>
@@ -382,7 +411,12 @@ export function ReactHookFormPluginScreen() {
           style={[styles.tab, activeForm === 'login' && styles.tabActive]}
           onPress={() => setActiveForm('login')}
         >
-          <Text style={[styles.tabText, activeForm === 'login' && styles.tabTextActive]}>
+          <Text
+            style={[
+              styles.tabText,
+              activeForm === 'login' && styles.tabTextActive,
+            ]}
+          >
             Login Form
           </Text>
         </TouchableOpacity>

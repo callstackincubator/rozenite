@@ -25,15 +25,15 @@ export const useMMKVDevTools = ({
 }: MMKVDevToolsOptions) => {
   const normalizedStorages = useMemo(
     () => normalizeStoragesConfigProperty(storages as any),
-    [storages]
+    [storages],
   );
 
   const views = useMemo(
     () =>
       Object.entries(normalizedStorages).map(([id, storage]) =>
-        getMMKVView(id, storage, blacklist)
+        getMMKVView(id, storage, blacklist),
       ),
-    [normalizedStorages, blacklist]
+    [normalizedStorages, blacklist],
   );
 
   useMMKVAgentTools(views);
@@ -82,7 +82,7 @@ export const useMMKVDevTools = ({
 
         if (!view) {
           console.warn(
-            `[Rozenite] MMKV DevTools: View not found for entry key "${entry.key}"`
+            `[Rozenite] MMKV DevTools: View not found for entry key "${entry.key}"`,
           );
           return;
         }
@@ -93,7 +93,9 @@ export const useMMKVDevTools = ({
         const view = views.find((item) => item.getId() === id);
 
         if (!view) {
-          console.warn(`[Rozenite] MMKV DevTools: View not found for key "${key}"`);
+          console.warn(
+            `[Rozenite] MMKV DevTools: View not found for key "${key}"`,
+          );
           return;
         }
 
@@ -116,7 +118,7 @@ export const useMMKVDevTools = ({
 
         if (!view) {
           console.warn(
-            `[Rozenite] MMKV DevTools: View not found for storage ID "${id}"`
+            `[Rozenite] MMKV DevTools: View not found for storage ID "${id}"`,
           );
           return;
         }

@@ -55,7 +55,7 @@ import rootReducer from './reducers';
 const store = createStore(
   rootReducer,
   applyMiddleware(/* your middleware */),
-  rozeniteDevToolsEnhancer()
+  rozeniteDevToolsEnhancer(),
 );
 
 export default store;
@@ -133,7 +133,9 @@ To distinguish multiple stores, set a custom `name` per store:
 
 ```ts
 const appStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'app-store' });
-const sessionStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'session-store' });
+const sessionStoreEnhancer = rozeniteDevToolsEnhancer({
+  name: 'session-store',
+});
 ```
 
 `maxAge` controls how many actions Redux DevTools keeps in history. The default is `50`.
@@ -151,7 +153,7 @@ rozeniteDevToolsEnhancer({
     ...action,
     payload: action.type === 'large/payload' ? '[omitted]' : action.payload,
   }),
-})
+});
 ```
 
 Set `trace: true` to capture the dispatch stack for each action and enable the Trace tab. Rozenite attempts to symbolicate captured stacks through Metro so frames point to source files instead of generated bundle locations.
@@ -160,7 +162,7 @@ Set `trace: true` to capture the dispatch stack for each action and enable the T
 rozeniteDevToolsEnhancer({
   trace: true,
   traceLimit: 25,
-})
+});
 ```
 
 Use `traceSymbolication: false` if you want to keep raw stacks without calling Metro's `/symbolicate` endpoint.

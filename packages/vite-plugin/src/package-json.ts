@@ -8,7 +8,7 @@ export type PackageJSON = {
 };
 
 export const getPackageJSON = async (
-  projectRoot: string
+  projectRoot: string,
 ): Promise<PackageJSON> => {
   const packageJSONPath = path.join(projectRoot, 'package.json');
   const packageJSON = await fs.readFile(packageJSONPath, 'utf8');

@@ -5,7 +5,6 @@ export const isWeb = (): boolean => {
   );
 };
 
-
 declare global {
   var __ROZENITE_WEB__: unknown;
 }

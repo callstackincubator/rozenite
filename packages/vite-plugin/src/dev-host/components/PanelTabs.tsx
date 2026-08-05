@@ -7,7 +7,11 @@ type PanelTabsProps = {
   onValueChange: (value: string) => void;
 };
 
-export const PanelTabs = ({ panels, activeSource, onValueChange }: PanelTabsProps) => {
+export const PanelTabs = ({
+  panels,
+  activeSource,
+  onValueChange,
+}: PanelTabsProps) => {
   return (
     <ToggleGroup
       aria-label="Plugin panels"

@@ -61,7 +61,8 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
 
           <div className="control-group">
             <label className="control-label">
-              Major grid every {config.majorEvery > 0 ? `${config.majorEvery} cells` : 'Off'}
+              Major grid every{' '}
+              {config.majorEvery > 0 ? `${config.majorEvery} cells` : 'Off'}
             </label>
             <input
               type="range"
@@ -69,7 +70,9 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
               max="20"
               step="1"
               value={config.majorEvery}
-              onChange={(e) => handleChange({ majorEvery: Number(e.target.value) })}
+              onChange={(e) =>
+                handleChange({ majorEvery: Number(e.target.value) })
+              }
               className="input-range"
             />
           </div>
@@ -80,7 +83,11 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
               <div style={{ flex: 1 }}>
                 <label
                   className="control-label"
-                  style={{ fontSize: '11px', marginBottom: '4px', color: 'var(--color-text-secondary)' }}
+                  style={{
+                    fontSize: '11px',
+                    marginBottom: '4px',
+                    color: 'var(--color-text-secondary)',
+                  }}
                 >
                   Minor ({config.minorLineWidth}px)
                 </label>
@@ -89,14 +96,20 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
                   min="1"
                   max="10"
                   value={config.minorLineWidth}
-                  onChange={(e) => handleChange({ minorLineWidth: Number(e.target.value) })}
+                  onChange={(e) =>
+                    handleChange({ minorLineWidth: Number(e.target.value) })
+                  }
                   className="input-range"
                 />
               </div>
               <div style={{ flex: 1 }}>
                 <label
                   className="control-label"
-                  style={{ fontSize: '11px', marginBottom: '4px', color: 'var(--color-text-secondary)' }}
+                  style={{
+                    fontSize: '11px',
+                    marginBottom: '4px',
+                    color: 'var(--color-text-secondary)',
+                  }}
                 >
                   Major ({config.majorLineWidth}px)
                 </label>
@@ -105,7 +118,9 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
                   min="1"
                   max="10"
                   value={config.majorLineWidth}
-                  onChange={(e) => handleChange({ majorLineWidth: Number(e.target.value) })}
+                  onChange={(e) =>
+                    handleChange({ majorLineWidth: Number(e.target.value) })
+                  }
                   className="input-range"
                 />
               </div>

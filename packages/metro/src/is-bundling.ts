@@ -8,7 +8,7 @@ export const isBundling = (projectRoot: string): boolean => {
   const expoBinRelativePath = getBinaryRelativePath(projectRoot, 'expo');
   const reactNativeBinRelativePath = getBinaryRelativePath(
     projectRoot,
-    'react-native'
+    'react-native',
   );
 
   // Check for Expo bundling

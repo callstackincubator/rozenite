@@ -34,9 +34,9 @@ export const HeadersTab = ({ selectedRequest }: HeadersTabProps) => {
       ? 'Nitro'
       : selectedRequest.source === 'expo'
         ? 'Expo'
-      : selectedRequest.source === 'builtin'
-        ? 'Built-in'
-        : null;
+        : selectedRequest.source === 'builtin'
+          ? 'Built-in'
+          : null;
 
   const generalItems: KeyValueItem[] = useMemo(
     () => [

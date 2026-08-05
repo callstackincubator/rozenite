@@ -203,19 +203,19 @@ body {
   bottom: 0;
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
-  transition: .4s;
+  transition: 0.4s;
   border-radius: 24px;
 }
 
 .toggle-slider:before {
   position: absolute;
-  content: "";
+  content: '';
   height: 18px;
   width: 18px;
   left: 2px;
   bottom: 2px;
   background-color: var(--color-text-secondary);
-  transition: .4s;
+  transition: 0.4s;
   border-radius: 50%;
 }
 
@@ -307,7 +307,11 @@ input:checked + .toggle-slider:before {
     linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
     linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
   background-size: 20px 20px;
-  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0px;
 }
 
 /* Scrollbar styling */

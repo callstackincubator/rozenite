@@ -4,10 +4,7 @@ import {
   reduxDevToolsToolDefinitions,
 } from './src/shared/agent-tools.js';
 
-export {
-  REDUX_DEVTOOLS_AGENT_PLUGIN_ID,
-  reduxDevToolsToolDefinitions,
-};
+export { REDUX_DEVTOOLS_AGENT_PLUGIN_ID, reduxDevToolsToolDefinitions };
 
 export const reduxDevToolsTools = defineAgentToolDescriptors(
   REDUX_DEVTOOLS_AGENT_PLUGIN_ID,

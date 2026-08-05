@@ -5,7 +5,7 @@ export interface PluginRepository {
   getPlugins(packageNames: string[]): Promise<RozenitePluginEntry[]>;
   refreshPlugin(plugin: PluginDirectoryReference): Promise<RozenitePluginEntry>;
   getPluginWithFallback(
-    plugin: PluginDirectoryReference
+    plugin: PluginDirectoryReference,
   ): Promise<RozenitePluginEntry>;
   getExpiredPlugins(packageNames: string[]): Promise<string[]>;
   cleanupExpired(): Promise<void>;

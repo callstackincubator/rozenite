@@ -6,7 +6,10 @@
   height: 100%;
   padding: 20px;
   text-align: center;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 .loadingCard {
@@ -34,8 +37,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .errorContainer {
@@ -46,7 +53,10 @@
   height: 100%;
   padding: 20px;
   text-align: center;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 .errorCard {
@@ -80,4 +90,4 @@
 
 .setupLink:hover {
   background-color: #0056b3;
-} 
+}

@@ -40,7 +40,8 @@ const textareaOverrides = {
       paddingRight: '12px',
       paddingBottom: '12px',
       paddingLeft: '12px',
-      fontFamily: '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
+      fontFamily:
+        '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
       fontWeight: 400,
       color: 'rgba(255, 255, 255, 0.9)',
       fontSize: '12px',
@@ -53,7 +54,12 @@ const textareaOverrides = {
   },
 };
 
-export const Textarea = ({ overrides, rows = 6, spellCheck, ...props }: TextareaProps) => {
+export const Textarea = ({
+  overrides,
+  rows = 6,
+  spellCheck,
+  ...props
+}: TextareaProps) => {
   return (
     <BaseTextarea
       rows={rows}

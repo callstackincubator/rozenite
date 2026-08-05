@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildActionRegistry, getActionRegistryKey, serializeSections } from '../shared/serialization';
+import {
+  buildActionRegistry,
+  getActionRegistryKey,
+  serializeSections,
+} from '../shared/serialization';
 import { createSection } from '../shared/types';
 
 describe('controls serialization', () => {
@@ -167,12 +171,14 @@ describe('controls serialization', () => {
     const registry = buildActionRegistry(sections);
 
     const toggleEntry = registry.get(getActionRegistryKey('controls', 'flag'));
-    const buttonEntry = registry.get(getActionRegistryKey('controls', 'refresh'));
+    const buttonEntry = registry.get(
+      getActionRegistryKey('controls', 'refresh'),
+    );
     const selectEntry = registry.get(
-      getActionRegistryKey('controls', 'environment')
+      getActionRegistryKey('controls', 'environment'),
     );
     const inputEntry = registry.get(
-      getActionRegistryKey('controls', 'release-label')
+      getActionRegistryKey('controls', 'release-label'),
     );
 
     expect(toggleEntry?.type).toBe('toggle');

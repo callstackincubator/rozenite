@@ -9,7 +9,7 @@ import {
 } from '../shared/hydrate';
 
 export const useHandleSyncMessages = (
-  client: TanStackQueryPluginClient | null
+  client: TanStackQueryPluginClient | null,
 ) => {
   const queryClient = useQueryClient();
 
@@ -42,14 +42,14 @@ export const useHandleSyncMessages = (
           applyQueryObserverEvent(queryClient, data);
           return;
         }
-      }
+      },
     );
 
     const mutationSubscription = client.onMessage(
       'sync-mutation-event',
       ({ type, data }) => {
         applyMutationEvent(queryClient, type, data);
-      }
+      },
     );
 
     // Keep the full sync for initial data requests

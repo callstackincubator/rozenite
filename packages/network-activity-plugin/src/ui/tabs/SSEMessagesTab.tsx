@@ -70,7 +70,7 @@ const columns = [
 export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
   // Capture the selected message, so when it gets removed (message limit), it's still displayed
   const [selectedMessage, setSelectedMessage] = useState<SSEMessageRow | null>(
-    null
+    null,
   );
 
   const formatData = (data: string) => {
@@ -102,7 +102,7 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
         type: message.type,
         data: message.data,
         timestamp: message.timestamp,
-      })
+      }),
     );
   }, [selectedRequest.messages]);
 
@@ -143,7 +143,7 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </div>
                     </th>
@@ -168,7 +168,7 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </td>
                   ))}

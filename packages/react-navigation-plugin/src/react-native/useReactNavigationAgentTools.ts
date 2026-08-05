@@ -15,7 +15,8 @@ import {
 export type { NavigationActionHistoryEntry } from '../shared/agent-tools';
 
 type UseReactNavigationAgentToolsConfig<
-  TNavigationContainerRef extends NavigationContainerRef<any> = NavigationContainerRef<any>
+  TNavigationContainerRef extends
+    NavigationContainerRef<any> = NavigationContainerRef<any>,
 > = {
   ref: React.RefObject<TNavigationContainerRef | null>;
   getCurrentState: () => NavigationState | undefined;
@@ -74,7 +75,8 @@ const getCurrentRouteDetails = (state: NavigationState | undefined) => {
 };
 
 export const useReactNavigationAgentTools = <
-  TNavigationContainerRef extends NavigationContainerRef<any> = NavigationContainerRef<any>
+  TNavigationContainerRef extends
+    NavigationContainerRef<any> = NavigationContainerRef<any>,
 >({
   ref,
   getCurrentState,

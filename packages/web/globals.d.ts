@@ -4,24 +4,30 @@
 declare const __DEV__: boolean;
 
 declare module 'react-devtools-core' {
-	export function initialize(hookSettings: unknown, isProfiling: boolean, profilingSettings: unknown): void;
-	export function connectWithCustomMessagingProtocol(options: unknown): () => void;
+  export function initialize(
+    hookSettings: unknown,
+    isProfiling: boolean,
+    profilingSettings: unknown,
+  ): void;
+  export function connectWithCustomMessagingProtocol(
+    options: unknown,
+  ): () => void;
 }
 
 declare module 'react-native/Libraries/Components/View/ReactNativeStyleAttributes' {
-	const attrs: Record<string, unknown>;
-	export default attrs;
+  const attrs: Record<string, unknown>;
+  export default attrs;
 }
 
 declare module 'react-native/Libraries/StyleSheet/flattenStyle' {
-	const flattenStyle: (style: unknown) => unknown;
-	export default flattenStyle;
+  const flattenStyle: (style: unknown) => unknown;
+  export default flattenStyle;
 }
 
 declare module 'react-native/package.json' {
-	interface PackageJson {
-		version: string;
-	}
-	const pkg: PackageJson;
-	export default pkg;
+  interface PackageJson {
+    version: string;
+  }
+  const pkg: PackageJson;
+  export default pkg;
 }

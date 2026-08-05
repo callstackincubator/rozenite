@@ -31,7 +31,7 @@ export const DEFAULT_CONFIG: NetworkActivityDevToolsConfig = {
   },
   clientUISettings: {
     showUrlAsName: false,
-  }
+  },
 };
 
 export const validateConfig = (config: NetworkActivityDevToolsConfig): void => {

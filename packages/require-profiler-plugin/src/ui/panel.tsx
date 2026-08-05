@@ -96,9 +96,7 @@ const App = () => {
       (event) => {
         const data = event.data;
         if (data) {
-          setChainDataCache(
-            (prev) => new Map(prev.set(data.index, data)),
-          );
+          setChainDataCache((prev) => new Map(prev.set(data.index, data)));
           setCurrentChainData(data);
         }
         setLoading(false);

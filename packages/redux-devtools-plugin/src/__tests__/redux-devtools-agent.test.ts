@@ -27,7 +27,7 @@ import {
 } from '../redux-devtools-registry';
 
 const createLiftedState = (
-  overrides: Partial<ReduxDevToolsLiftedState> = {}
+  overrides: Partial<ReduxDevToolsLiftedState> = {},
 ): ReduxDevToolsLiftedState => {
   const initAction = ActionCreators.performAction({ type: '@@INIT' });
   const incrementAction = ActionCreators.performAction({
@@ -146,7 +146,7 @@ describe('redux devtools agent helpers', () => {
     registerStore({ instanceId: 'store-2', name: 'Two' });
 
     expect(() => resolveReduxDevToolsStore()).toThrow(
-      'Multiple Redux DevTools stores detected.'
+      'Multiple Redux DevTools stores detected.',
     );
     expect(resolveReduxDevToolsStore('store-2').name).toBe('Two');
   });
@@ -269,7 +269,7 @@ describe('redux devtools agent helpers', () => {
       parseSerializableReduxAction({
         type: 'counter/increment',
         callback: () => undefined,
-      })
+      }),
     ).toThrow('action must be serializable');
   });
 
@@ -287,32 +287,32 @@ describe('redux devtools agent helpers', () => {
 
     expect(liftedDispatch).toHaveBeenNthCalledWith(
       1,
-      ActionCreators.jumpToAction(2)
+      ActionCreators.jumpToAction(2),
     );
     expect(liftedDispatch).toHaveBeenNthCalledWith(
       2,
-      ActionCreators.toggleAction(1)
+      ActionCreators.toggleAction(1),
     );
     expect(liftedDispatch).toHaveBeenNthCalledWith(
       3,
-      expect.objectContaining({ type: 'RESET' })
+      expect.objectContaining({ type: 'RESET' }),
     );
     expect(liftedDispatch).toHaveBeenNthCalledWith(
       4,
-      expect.objectContaining({ type: 'ROLLBACK' })
+      expect.objectContaining({ type: 'ROLLBACK' }),
     );
     expect(liftedDispatch).toHaveBeenNthCalledWith(
       5,
-      expect.objectContaining({ type: 'COMMIT' })
+      expect.objectContaining({ type: 'COMMIT' }),
     );
     expect(liftedDispatch).toHaveBeenNthCalledWith(6, ActionCreators.sweep());
     expect(liftedDispatch).toHaveBeenNthCalledWith(
       7,
-      ActionCreators.pauseRecording(true)
+      ActionCreators.pauseRecording(true),
     );
     expect(liftedDispatch).toHaveBeenNthCalledWith(
       8,
-      ActionCreators.lockChanges(true)
+      ActionCreators.lockChanges(true),
     );
   });
 });

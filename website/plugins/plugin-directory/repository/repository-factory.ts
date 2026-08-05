@@ -9,14 +9,14 @@ export const getRepository = async (): Promise<PluginRepository> => {
 
   if (process.env.NODE_ENV === 'production' && process.env.USE_DATABASE) {
     repository = import('./neon-repository').then(
-      ({ PostgresPluginRepository }) => new PostgresPluginRepository()
+      ({ PostgresPluginRepository }) => new PostgresPluginRepository(),
     );
     console.log('Using Neon repository');
     return repository;
   }
 
   repository = import('./mock-repository').then(
-    ({ MockPluginRepository }) => new MockPluginRepository()
+    ({ MockPluginRepository }) => new MockPluginRepository(),
   );
   console.log('Using mock repository');
   return repository;

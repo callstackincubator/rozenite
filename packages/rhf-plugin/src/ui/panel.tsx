@@ -1,7 +1,12 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo, useState } from 'react';
 import { Search, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
-import type { RHFEventMap, RHFInitEvent, RHFUnmountEvent, RHFUpdateEvent } from '../shared/messaging';
+import type {
+  RHFEventMap,
+  RHFInitEvent,
+  RHFUnmountEvent,
+  RHFUpdateEvent,
+} from '../shared/messaging';
 import type { FieldError, FormSnapshot } from '../shared/types';
 import './globals.css';
 
@@ -40,10 +45,20 @@ function groupFields(names: string[]): FieldEntry[] {
 
 // --- Small components ---
 
-function Badge({ label, active, color }: { label: string; active: boolean; color: string }) {
+function Badge({
+  label,
+  active,
+  color,
+}: {
+  label: string;
+  active: boolean;
+  color: string;
+}) {
   if (!active) return null;
   return (
-    <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${color}`}>{label}</span>
+    <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${color}`}>
+      {label}
+    </span>
   );
 }
 
@@ -57,7 +72,10 @@ function ErrorCell({ error }: { error?: FieldError }) {
         </span>
       )}
       {error.message && (
-        <span className="text-xs text-red-300 truncate max-w-[200px]" title={error.message}>
+        <span
+          className="text-xs text-red-300 truncate max-w-[200px]"
+          title={error.message}
+        >
           {error.message}
         </span>
       )}
@@ -77,13 +95,41 @@ function formatValue(value: unknown): string {
 
 function FormStateBar({ formState }: { formState: FormSnapshot['formState'] }) {
   const badges = [
-    { label: 'valid', active: formState.isValid, color: 'bg-green-800 text-green-200' },
-    { label: 'invalid', active: !formState.isValid, color: 'bg-red-900 text-red-200' },
-    { label: 'dirty', active: formState.isDirty, color: 'bg-yellow-800 text-yellow-200' },
-    { label: 'submitting', active: formState.isSubmitting, color: 'bg-blue-800 text-blue-200' },
-    { label: 'submitted', active: formState.isSubmitted, color: 'bg-purple-800 text-purple-200' },
-    { label: 'submitSuccessful', active: formState.isSubmitSuccessful, color: 'bg-green-900 text-green-200' },
-    { label: 'validating', active: formState.isValidating, color: 'bg-orange-800 text-orange-200' },
+    {
+      label: 'valid',
+      active: formState.isValid,
+      color: 'bg-green-800 text-green-200',
+    },
+    {
+      label: 'invalid',
+      active: !formState.isValid,
+      color: 'bg-red-900 text-red-200',
+    },
+    {
+      label: 'dirty',
+      active: formState.isDirty,
+      color: 'bg-yellow-800 text-yellow-200',
+    },
+    {
+      label: 'submitting',
+      active: formState.isSubmitting,
+      color: 'bg-blue-800 text-blue-200',
+    },
+    {
+      label: 'submitted',
+      active: formState.isSubmitted,
+      color: 'bg-purple-800 text-purple-200',
+    },
+    {
+      label: 'submitSuccessful',
+      active: formState.isSubmitSuccessful,
+      color: 'bg-green-900 text-green-200',
+    },
+    {
+      label: 'validating',
+      active: formState.isValidating,
+      color: 'bg-orange-800 text-orange-200',
+    },
   ];
 
   return (
@@ -91,7 +137,9 @@ function FormStateBar({ formState }: { formState: FormSnapshot['formState'] }) {
       {badges.map((b) => (
         <Badge key={b.label} {...b} />
       ))}
-      <span className="text-xs text-gray-400 ml-1">submits: {formState.submitCount}</span>
+      <span className="text-xs text-gray-400 ml-1">
+        submits: {formState.submitCount}
+      </span>
     </div>
   );
 }
@@ -99,8 +147,10 @@ function FormStateBar({ formState }: { formState: FormSnapshot['formState'] }) {
 // --- Table rows ---
 
 const COL_FIELD = 'px-3 py-1.5 text-gray-200 font-mono text-xs align-middle';
-const COL_TYPE  = 'px-3 py-1.5 text-gray-400 font-mono text-xs w-20 align-middle';
-const COL_VALUE = 'px-3 py-1.5 text-gray-300 font-mono text-xs align-middle max-w-[220px]';
+const COL_TYPE =
+  'px-3 py-1.5 text-gray-400 font-mono text-xs w-20 align-middle';
+const COL_VALUE =
+  'px-3 py-1.5 text-gray-300 font-mono text-xs align-middle max-w-[220px]';
 const COL_STATE = 'px-3 py-1.5 w-28 align-middle';
 const COL_ERROR = 'px-3 py-1.5 align-middle';
 
@@ -113,11 +163,11 @@ function FieldRow({
   snapshot: FormSnapshot;
   indent?: boolean;
 }) {
-  const value   = snapshot.formValues[name];
-  const error   = snapshot.formState.errors[name];
-  const dirty   = snapshot.formState.dirtyFields[name];
+  const value = snapshot.formValues[name];
+  const error = snapshot.formState.errors[name];
+  const dirty = snapshot.formState.dirtyFields[name];
   const touched = snapshot.formState.touchedFields[name];
-  const type    = snapshot.formState.nativeFields[name];
+  const type = snapshot.formState.nativeFields[name];
 
   return (
     <tr className="border-b border-gray-700 hover:bg-gray-800/50 transition-colors">
@@ -126,14 +176,24 @@ function FieldRow({
           {indent ? name.slice(name.indexOf('.') + 1) : name}
         </span>
       </td>
-      <td className={COL_TYPE}>{type ?? <span className="text-gray-600">—</span>}</td>
+      <td className={COL_TYPE}>
+        {type ?? <span className="text-gray-600">—</span>}
+      </td>
       <td className={COL_VALUE}>
         <span className="break-all">{formatValue(value)}</span>
       </td>
       <td className={COL_STATE}>
         <span className="inline-flex gap-1 flex-wrap">
-          <Badge label="dirty"   active={!!dirty}   color="bg-yellow-800 text-yellow-200" />
-          <Badge label="touched" active={!!touched} color="bg-blue-900 text-blue-200" />
+          <Badge
+            label="dirty"
+            active={!!dirty}
+            color="bg-yellow-800 text-yellow-200"
+          />
+          <Badge
+            label="touched"
+            active={!!touched}
+            color="bg-blue-900 text-blue-200"
+          />
         </span>
       </td>
       <td className={COL_ERROR}>
@@ -155,7 +215,7 @@ function GroupSection({
   const [open, setOpen] = useState(defaultOpen);
 
   const hasError = group.fields.some((f) => snapshot.formState.errors[f]?.type);
-  const isDirty  = group.fields.some((f) => snapshot.formState.dirtyFields[f]);
+  const isDirty = group.fields.some((f) => snapshot.formState.dirtyFields[f]);
 
   return (
     <tbody>
@@ -170,10 +230,22 @@ function GroupSection({
             ) : (
               <ChevronRight className="h-3 w-3 text-gray-400 shrink-0" />
             )}
-            <span className="font-mono text-xs text-gray-200 font-medium">{group.prefix}</span>
-            <span className="text-xs text-gray-500">{group.fields.length} fields</span>
-            {isDirty  && <Badge label="dirty"  active color="bg-yellow-800 text-yellow-200" />}
-            {hasError && <Badge label="errors" active color="bg-red-900 text-red-200" />}
+            <span className="font-mono text-xs text-gray-200 font-medium">
+              {group.prefix}
+            </span>
+            <span className="text-xs text-gray-500">
+              {group.fields.length} fields
+            </span>
+            {isDirty && (
+              <Badge
+                label="dirty"
+                active
+                color="bg-yellow-800 text-yellow-200"
+              />
+            )}
+            {hasError && (
+              <Badge label="errors" active color="bg-red-900 text-red-200" />
+            )}
           </div>
         </td>
       </tr>
@@ -187,7 +259,13 @@ function GroupSection({
 
 // --- Field table ---
 
-function FieldTable({ snapshot, searchTerm }: { snapshot: FormSnapshot; searchTerm: string }) {
+function FieldTable({
+  snapshot,
+  searchTerm,
+}: {
+  snapshot: FormSnapshot;
+  searchTerm: string;
+}) {
   const allNames = Object.keys(snapshot.formValues);
 
   const filtered = useMemo(() => {
@@ -201,7 +279,9 @@ function FieldTable({ snapshot, searchTerm }: { snapshot: FormSnapshot; searchTe
   if (filtered.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center w-full">
-        <h3 className="text-lg font-semibold text-gray-200 mb-2">No fields found</h3>
+        <h3 className="text-lg font-semibold text-gray-200 mb-2">
+          No fields found
+        </h3>
         <p className="text-gray-400 text-sm">
           {searchTerm ? 'Try adjusting your search' : 'No registered fields'}
         </p>
@@ -213,11 +293,21 @@ function FieldTable({ snapshot, searchTerm }: { snapshot: FormSnapshot; searchTe
     <table className="w-full text-sm border-collapse self-start h-auto">
       <thead className="sticky top-0 bg-gray-800 z-10">
         <tr className="text-left text-xs text-gray-400 uppercase tracking-wider">
-          <th className="px-3 py-2 font-medium border-b border-gray-700">Field</th>
-          <th className="px-3 py-2 font-medium border-b border-gray-700 w-20">Type</th>
-          <th className="px-3 py-2 font-medium border-b border-gray-700">Value</th>
-          <th className="px-3 py-2 font-medium border-b border-gray-700 w-28">State</th>
-          <th className="px-3 py-2 font-medium border-b border-gray-700">Error</th>
+          <th className="px-3 py-2 font-medium border-b border-gray-700">
+            Field
+          </th>
+          <th className="px-3 py-2 font-medium border-b border-gray-700 w-20">
+            Type
+          </th>
+          <th className="px-3 py-2 font-medium border-b border-gray-700">
+            Value
+          </th>
+          <th className="px-3 py-2 font-medium border-b border-gray-700 w-28">
+            State
+          </th>
+          <th className="px-3 py-2 font-medium border-b border-gray-700">
+            Error
+          </th>
         </tr>
       </thead>
       {entries.map((entry) =>
@@ -230,9 +320,14 @@ function FieldTable({ snapshot, searchTerm }: { snapshot: FormSnapshot; searchTe
             key={entry.prefix}
             group={entry}
             snapshot={snapshot}
-            defaultOpen={!searchTerm || entry.fields.some((f) => f.toLowerCase().includes(searchTerm.toLowerCase()))}
+            defaultOpen={
+              !searchTerm ||
+              entry.fields.some((f) =>
+                f.toLowerCase().includes(searchTerm.toLowerCase()),
+              )
+            }
           />
-        )
+        ),
       )}
     </table>
   );
@@ -283,12 +378,16 @@ function FormSelector({
 // --- Panel ---
 
 export default function ReactHookFormPanel() {
-  const [snapshots, setSnapshots]     = useState<Map<string, FormSnapshot>>(new Map());
-  const [staleIds, setStaleIds]       = useState<Set<string>>(new Set());
+  const [snapshots, setSnapshots] = useState<Map<string, FormSnapshot>>(
+    new Map(),
+  );
+  const [staleIds, setStaleIds] = useState<Set<string>>(new Set());
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm]   = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const client = useRozeniteDevToolsClient<RHFEventMap>({ pluginId: PLUGIN_ID });
+  const client = useRozeniteDevToolsClient<RHFEventMap>({
+    pluginId: PLUGIN_ID,
+  });
 
   useEffect(() => {
     if (!client) return;
@@ -325,7 +424,9 @@ export default function ReactHookFormPanel() {
     };
   }, [client]);
 
-  const selectedSnapshot = selectedFormId ? snapshots.get(selectedFormId) ?? null : null;
+  const selectedSnapshot = selectedFormId
+    ? (snapshots.get(selectedFormId) ?? null)
+    : null;
 
   const formOptions = useMemo(
     () =>
@@ -334,14 +435,16 @@ export default function ReactHookFormPanel() {
         label: REACT_AUTO_ID.test(id) ? `Form ${index + 1}` : id,
         fieldCount: Object.keys(snapshots.get(id)!.formValues).length,
       })),
-    [snapshots]
+    [snapshots],
   );
 
   return (
     <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-3 py-2 border-b border-gray-700 bg-gray-800">
-        <span className="text-sm font-semibold text-gray-100 shrink-0">React Hook Form</span>
+        <span className="text-sm font-semibold text-gray-100 shrink-0">
+          React Hook Form
+        </span>
         <div className="flex-1" />
         {formOptions.length > 0 && (
           <FormSelector
@@ -380,10 +483,14 @@ export default function ReactHookFormPanel() {
           <FieldTable snapshot={selectedSnapshot} searchTerm={searchTerm} />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center w-full">
-            <h2 className="text-xl font-semibold text-gray-200 mb-2">React Hook Form Inspector</h2>
+            <h2 className="text-xl font-semibold text-gray-200 mb-2">
+              React Hook Form Inspector
+            </h2>
             <p className="text-gray-400 text-sm">
               Call{' '}
-              <code className="text-blue-400">useRozeniteRHFPlugin({'{ control }'})</code>{' '}
+              <code className="text-blue-400">
+                useRozeniteRHFPlugin({'{ control }'})
+              </code>{' '}
               in your form component
             </p>
           </div>

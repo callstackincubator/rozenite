@@ -2,7 +2,7 @@ import { step } from '../../utils/steps.js';
 import { spawn } from '../../utils/spawn.js';
 
 export const createGitRepository = async (
-  projectRoot: string
+  projectRoot: string,
 ): Promise<void> => {
   await step(
     {
@@ -16,6 +16,6 @@ export const createGitRepository = async (
       await spawn('git', ['commit', '-m', 'Initial commit'], {
         cwd: projectRoot,
       });
-    }
+    },
   );
 };

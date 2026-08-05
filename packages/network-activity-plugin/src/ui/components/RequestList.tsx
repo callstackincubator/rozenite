@@ -259,7 +259,9 @@ export type RequestListProps = {
   requests: ProcessedRequest[];
 };
 
-export const RequestList = ({ requests: filteredRequests }: RequestListProps) => {
+export const RequestList = ({
+  requests: filteredRequests,
+}: RequestListProps) => {
   const actions = useNetworkActivityActions();
   const selectedRequestId = useSelectedRequestId();
   const [sorting, setSorting] = useState<SortingState>([]);

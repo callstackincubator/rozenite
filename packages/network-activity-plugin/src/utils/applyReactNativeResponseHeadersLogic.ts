@@ -10,7 +10,7 @@ import { getHttpHeader } from './getHttpHeader';
  * @see https://github.com/facebook/react-native/blob/588f0c5ce6c283f116228456da2170d2adc3cbf4/ReactAndroid/src/main/java/com/facebook/react/modules/network/NetworkingModule.java#L637
  */
 export const applyReactNativeResponseHeadersLogic = (
-  headers: XHRHeaders
+  headers: XHRHeaders,
 ): HttpHeaders => {
   const parsedHeaders: HttpHeaders = { ...headers };
 

@@ -139,7 +139,9 @@ export const getResponseBody = async (
   }
 
   if (responseType === 'arraybuffer') {
-    return captureResponseBodyFromArrayBuffer(request.response as ArrayBuffer | null);
+    return captureResponseBodyFromArrayBuffer(
+      request.response as ArrayBuffer | null,
+    );
   }
 
   if (responseType === 'json') {

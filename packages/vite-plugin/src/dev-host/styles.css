@@ -1,6 +1,13 @@
 :root {
   color-scheme: dark;
-  font-family: "Switzer Variable", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    'Switzer Variable',
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   background: #000000;
   color: #ffffff;
 }
@@ -71,7 +78,10 @@ select {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) 12px minmax(180px, var(--rz-devtools-height, 288px));
+  grid-template-rows: minmax(0, 1fr) 12px minmax(
+      180px,
+      var(--rz-devtools-height, 288px)
+    );
   overflow: hidden;
 }
 
@@ -100,7 +110,9 @@ select {
 .rz-devtools {
   display: grid;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) var(--rz-command-splitter-width, 6px) minmax(260px, var(--rz-command-width, 320px));
+  grid-template-columns:
+    minmax(0, 1fr) var(--rz-command-splitter-width, 6px)
+    minmax(260px, var(--rz-command-width, 320px));
 }
 
 .rz-devtools-mobile {
@@ -115,7 +127,9 @@ select {
   display: grid;
   min-height: 0;
   position: relative;
-  grid-template-columns: minmax(0, 1fr) var(--rz-details-splitter-width, 0px) var(--rz-details-width, 0px);
+  grid-template-columns:
+    minmax(0, 1fr) var(--rz-details-splitter-width, 0px)
+    var(--rz-details-width, 0px);
 }
 
 .rz-resize-handle {
@@ -274,7 +288,9 @@ select {
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: 0;
-  transition: background-color 120ms ease, color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
 }
 
 .rz-tabs-trigger:hover {
@@ -327,7 +343,7 @@ select {
 
 .rz-message-list {
   min-width: 100%;
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .rz-log-pane {
@@ -383,7 +399,9 @@ select {
   padding: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  transition: background-color 120ms ease, box-shadow 120ms ease;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .rz-message-row:last-child {
@@ -495,7 +513,7 @@ select {
   line-height: 18px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .rz-header-actions {
@@ -570,7 +588,7 @@ select {
 }
 
 .rz-detail-mono {
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -590,7 +608,7 @@ select {
 }
 
 .rz-detail-json-tree {
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -769,7 +787,7 @@ select {
   color: #c9a9ff;
   font-size: 10px;
   line-height: 1;
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   text-transform: uppercase;
 }
 
@@ -777,7 +795,7 @@ select {
   color: rgba(255, 255, 255, 0.56);
   font-size: 11px;
   line-height: 1.4;
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   text-transform: uppercase;
 }
 
@@ -832,7 +850,7 @@ select {
   color: rgba(255, 255, 255, 0.6);
   font-size: 12px;
   line-height: 1.4;
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   text-transform: uppercase;
 }
 
@@ -862,7 +880,7 @@ select {
   font-size: 12px;
   line-height: 20px;
   letter-spacing: -0.04em;
-  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .rz-input,
@@ -918,7 +936,10 @@ select {
   }
 
   .rz-workspace {
-    grid-template-rows: minmax(0, 1fr) 12px minmax(180px, var(--rz-devtools-height, 272px));
+    grid-template-rows: minmax(0, 1fr) 12px minmax(
+        180px,
+        var(--rz-devtools-height, 272px)
+      );
   }
 
   .rz-devtools-mobile-tabs {

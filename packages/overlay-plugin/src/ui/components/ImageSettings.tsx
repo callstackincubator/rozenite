@@ -1,5 +1,10 @@
 import { useRef, useState, useEffect } from 'react';
-import { ImageConfig, ImageResizeMode, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../shared';
+import {
+  ImageConfig,
+  ImageResizeMode,
+  MAX_IMAGE_SIZE_BYTES,
+  MAX_IMAGE_SIZE_MB,
+} from '../../shared';
 import { Image as ImageIcon, Upload, X, Clipboard } from 'lucide-react';
 import { useThrottledCallback } from '../hooks/useThrottledCallback';
 
@@ -8,10 +13,15 @@ export type ImageSettingsProps = {
   onConfigChange: (config: ImageConfig) => void;
 };
 
-export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) => {
+export const ImageSettings = ({
+  config,
+  onConfigChange,
+}: ImageSettingsProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localOpacity, setLocalOpacity] = useState(config.opacity);
-  const [isPasteSupported] = useState(() => navigator.clipboard && 'read' in navigator.clipboard);
+  const [isPasteSupported] = useState(
+    () => navigator.clipboard && 'read' in navigator.clipboard,
+  );
 
   useEffect(() => {
     setLocalOpacity(config.opacity);
@@ -34,7 +44,7 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
     // Check file size
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
       alert(
-        `Image size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds the maximum allowed size of ${MAX_IMAGE_SIZE_MB}MB.`
+        `Image size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds the maximum allowed size of ${MAX_IMAGE_SIZE_MB}MB.`,
       );
       return;
     }
@@ -71,7 +81,9 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
       alert('No image found in clipboard');
     } catch (err) {
       console.error('Failed to read clipboard contents: ', err);
-      alert('Failed to access clipboard. Please ensure you have granted permission.');
+      alert(
+        'Failed to access clipboard. Please ensure you have granted permission.',
+      );
     }
   };
 
@@ -103,17 +115,23 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
         <div className="control-group">
           <label className="control-label">Overlay Image</label>
           {!config.uri ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+            >
               <div
                 className="file-upload-area"
                 onClick={() => fileInputRef.current?.click()}
                 style={{ cursor: 'pointer' }}
               >
                 <Upload size={32} color="var(--color-text-muted)" />
-                <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>
+                <span
+                  style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}
+                >
                   Click to upload reference image
                 </span>
-                <span style={{ color: 'var(--color-text-muted)', fontSize: '11px' }}>
+                <span
+                  style={{ color: 'var(--color-text-muted)', fontSize: '11px' }}
+                >
                   Max size: {MAX_IMAGE_SIZE_MB}MB
                 </span>
               </div>
@@ -130,13 +148,20 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
             </div>
           ) : (
             <div className="control-group">
-              <div className="control-row" style={{ justifyContent: 'flex-end' }}>
+              <div
+                className="control-row"
+                style={{ justifyContent: 'flex-end' }}
+              >
                 <button className="btn btn-danger" onClick={handleRemoveImage}>
                   <X size={14} />
                   Remove
                 </button>
               </div>
-              <img src={config.uri} alt="Overlay preview" className="file-preview" />
+              <img
+                src={config.uri}
+                alt="Overlay preview"
+                className="file-preview"
+              />
             </div>
           )}
           <input
@@ -153,7 +178,16 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
             <div className="control-group">
               <label className="control-label">Mode</label>
               <div className="control-row">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-text)', cursor: 'pointer' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px',
+                    color: 'var(--color-text)',
+                    cursor: 'pointer',
+                  }}
+                >
                   <input
                     type="radio"
                     name="mode"
@@ -163,7 +197,16 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
                   />
                   Simple overlay
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-text)', cursor: 'pointer' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px',
+                    color: 'var(--color-text)',
+                    cursor: 'pointer',
+                  }}
+                >
                   <input
                     type="radio"
                     name="mode"
@@ -180,7 +223,11 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
               <label className="control-label">Resize Mode</label>
               <select
                 value={config.resizeMode}
-                onChange={(e) => handleChange({ resizeMode: e.target.value as ImageResizeMode })}
+                onChange={(e) =>
+                  handleChange({
+                    resizeMode: e.target.value as ImageResizeMode,
+                  })
+                }
                 className="input-control"
                 style={{ width: '100%' }}
               >

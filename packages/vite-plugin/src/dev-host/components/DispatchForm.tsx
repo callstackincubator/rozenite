@@ -1,5 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import type { DevHostFlowEntry, DevHostFlowRunState, DevHostPresetEntry } from '../types.js';
+import type {
+  DevHostFlowEntry,
+  DevHostFlowRunState,
+  DevHostPresetEntry,
+} from '../types.js';
 import { ClearIcon, PresetsIcon, SendIcon } from './icons.js';
 import { FlowList } from './FlowList.js';
 import { DropdownMenu, type DropdownMenuItem } from './ui/DropdownMenu.js';
@@ -43,11 +47,13 @@ export const DispatchForm = ({
   onSubmit,
 }: DispatchFormProps) => {
   const [activeTab, setActiveTab] = useState<'dispatch' | 'flows'>('dispatch');
-  const presetItems: DropdownMenuItem<DevHostPresetEntry>[] = presets.map((preset) => ({
-    id: preset.displayName,
-    label: preset.displayName,
-    item: preset,
-  }));
+  const presetItems: DropdownMenuItem<DevHostPresetEntry>[] = presets.map(
+    (preset) => ({
+      id: preset.displayName,
+      label: preset.displayName,
+      item: preset,
+    }),
+  );
   const presetButton = (
     <IconButton
       type="button"
@@ -82,18 +88,24 @@ export const DispatchForm = ({
               <ToggleGroup
                 aria-label="Action modes"
                 value={activeTab}
-                onChange={(value) => setActiveTab(value as 'dispatch' | 'flows')}
+                onChange={(value) =>
+                  setActiveTab(value as 'dispatch' | 'flows')
+                }
                 options={[
                   { key: 'dispatch', label: 'Dispatch' },
                   { key: 'flows', label: 'Flows' },
                 ]}
               />
 
-              {activeTab === 'dispatch'
-                ? presets.length > 0
-                  ? <DropdownMenu items={presetItems} onSelect={onApplyPreset}>{presetButton}</DropdownMenu>
-                  : presetButton
-                : null}
+              {activeTab === 'dispatch' ? (
+                presets.length > 0 ? (
+                  <DropdownMenu items={presetItems} onSelect={onApplyPreset}>
+                    {presetButton}
+                  </DropdownMenu>
+                ) : (
+                  presetButton
+                )
+              ) : null}
             </div>
 
             {activeTab === 'dispatch' ? (
@@ -106,7 +118,9 @@ export const DispatchForm = ({
                     <Input
                       id="command-type"
                       value={commandType}
-                      onChange={(event) => onCommandTypeChange(event.currentTarget.value)}
+                      onChange={(event) =>
+                        onCommandTypeChange(event.currentTarget.value)
+                      }
                       placeholder="get-snapshot"
                       spellCheck={false}
                     />
@@ -119,7 +133,9 @@ export const DispatchForm = ({
                     <Textarea
                       id="command-payload"
                       value={commandPayload}
-                      onChange={(event) => onCommandPayloadChange(event.currentTarget.value)}
+                      onChange={(event) =>
+                        onCommandPayloadChange(event.currentTarget.value)
+                      }
                       placeholder='{"example": true}'
                       spellCheck={false}
                     />

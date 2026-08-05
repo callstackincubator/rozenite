@@ -1,12 +1,15 @@
 import { useCallback } from 'react';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
 import type { MMKVEntryType, MMKVEntryValue } from '../shared/types';
-import { MMKV_AGENT_PLUGIN_ID, mmkvToolDefinitions } from '../shared/agent-tools';
+import {
+  MMKV_AGENT_PLUGIN_ID,
+  mmkvToolDefinitions,
+} from '../shared/agent-tools';
 import type { MMKVView } from './mmkv-view';
 
 const parseValueForType = (
   type: MMKVEntryType,
-  value: unknown
+  value: unknown,
 ): MMKVEntryValue => {
   if (type === 'string') {
     if (typeof value !== 'string') {
@@ -49,7 +52,7 @@ export const useMMKVAgentTools = (views: MMKVView[]) => {
           throw new Error(
             `Unknown storageId "${storageId}". Available: ${views
               .map((view) => view.getId())
-              .join(', ')}`
+              .join(', ')}`,
           );
         }
         return selected;
@@ -59,13 +62,13 @@ export const useMMKVAgentTools = (views: MMKVView[]) => {
         throw new Error(
           `Multiple MMKV storages detected. Provide storageId. Available: ${views
             .map((view) => view.getId())
-            .join(', ')}`
+            .join(', ')}`,
         );
       }
 
       return views[0];
     },
-    [views]
+    [views],
   );
 
   useRozenitePluginAgentTool({
@@ -125,7 +128,7 @@ export const useMMKVAgentTools = (views: MMKVView[]) => {
       const existing = view.get(key);
       if (existing) {
         throw new Error(
-          `Key "${key}" already exists in storage "${view.getId()}". Use edit-entry instead.`
+          `Key "${key}" already exists in storage "${view.getId()}". Use edit-entry instead.`,
         );
       }
 
@@ -148,7 +151,7 @@ export const useMMKVAgentTools = (views: MMKVView[]) => {
       const existing = view.get(key);
       if (!existing) {
         throw new Error(
-          `Key "${key}" not found in storage "${view.getId()}". Use create-entry instead.`
+          `Key "${key}" not found in storage "${view.getId()}". Use create-entry instead.`,
         );
       }
 

@@ -164,10 +164,10 @@ export const api = {
         headers: {
           'X-Rozenite-Test': 'large-download',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          Pragma: 'no-cache',
+          Expires: '0',
         },
-      }
+      },
     );
 
     if (!response.ok) {

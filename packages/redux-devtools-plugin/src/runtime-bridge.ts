@@ -43,23 +43,28 @@ const ensureClient = () => {
   }
 
   initPromise = getRozeniteDevToolsClient<ReduxDevToolsBridgeEventMap>(
-    PLUGIN_ID
+    PLUGIN_ID,
   )
-    .then((resolvedClient: RozeniteDevToolsClient<ReduxDevToolsBridgeEventMap>) => {
-      client = resolvedClient;
+    .then(
+      (resolvedClient: RozeniteDevToolsClient<ReduxDevToolsBridgeEventMap>) => {
+        client = resolvedClient;
 
-      client.onMessage('panel-command', (command: ReduxDevToolsPanelCommand) => {
-        commandListeners.forEach((listener) => {
-          listener(command);
-        });
-      });
+        client.onMessage(
+          'panel-command',
+          (command: ReduxDevToolsPanelCommand) => {
+            commandListeners.forEach((listener) => {
+              listener(command);
+            });
+          },
+        );
 
-      flushQueue();
-    })
+        flushQueue();
+      },
+    )
     .catch((error: unknown) => {
       console.warn(
         '[Rozenite, redux-devtools] Failed to initialize bridge client.',
-        error
+        error,
       );
     })
     .finally(() => {

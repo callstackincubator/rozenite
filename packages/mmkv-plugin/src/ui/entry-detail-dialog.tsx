@@ -105,7 +105,7 @@ export const EntryDetailDialog = ({
   const stringValue = entry.value as string;
   const jsonValue = useMemo(
     () => isStringValue && jsonSafeParse(stringValue),
-    [isStringValue, stringValue]
+    [isStringValue, stringValue],
   );
 
   return (
@@ -153,7 +153,7 @@ export const EntryDetailDialog = ({
             <div className="flex items-center">
               <span
                 className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
-                  entry.type
+                  entry.type,
                 )}`}
               >
                 {entry.type}

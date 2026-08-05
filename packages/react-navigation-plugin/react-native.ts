@@ -1,5 +1,4 @@
 export let useReactNavigationDevTools: typeof import('./src/react-native').useReactNavigationDevTools;
-;
 const isDev = process.env.NODE_ENV !== 'production';
 const isServer = typeof window === 'undefined';
 

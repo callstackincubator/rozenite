@@ -28,13 +28,13 @@ export const getNavigationTreeColor = (color: NavigationTreeColors): string => {
 };
 
 export const getNavigationTreeBorderColor = (
-  color: NavigationTreeColors
+  color: NavigationTreeColors,
 ): string => {
   return `border-${color}-600`;
 };
 
 export const getNavigationTreeBackgroundColor = (
-  color: NavigationTreeColors
+  color: NavigationTreeColors,
 ): string => {
   return `bg-${color}-600`;
 };

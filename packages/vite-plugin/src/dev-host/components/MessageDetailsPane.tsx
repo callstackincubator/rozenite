@@ -81,7 +81,9 @@ export const MessageDetailsPane = ({
 
                 <div className="rz-detail-section">
                   <div className="rz-label">Type</div>
-                  <div className="rz-detail-value rz-detail-mono">{selectedMessage.type}</div>
+                  <div className="rz-detail-value rz-detail-mono">
+                    {selectedMessage.type}
+                  </div>
                 </div>
 
                 <div className="rz-detail-section">
@@ -92,7 +94,9 @@ export const MessageDetailsPane = ({
                 </div>
               </div>
             ) : (
-              <div className="rz-empty-state">Select a message to inspect its details.</div>
+              <div className="rz-empty-state">
+                Select a message to inspect its details.
+              </div>
             )}
           </ScrollArea>
         </div>

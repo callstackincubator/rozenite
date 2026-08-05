@@ -33,7 +33,7 @@ export const dehydrateMutation = (mutation: Mutation): SerializableMutation => {
 };
 
 export const dehydrateQueryClient = (
-  queryClient: QueryClient
+  queryClient: QueryClient,
 ): SerializableQueryClient => {
   return {
     queries: queryClient.getQueryCache().getAll().map(dehydrateQuery),

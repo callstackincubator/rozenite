@@ -14,7 +14,7 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
     const bindingsModel = target.model(RozeniteBindingsModel);
     if (bindingsModel === null) {
       throw new Error(
-        `Failed to construct RozenitePluginModel: RozeniteBindingsModel was null`
+        `Failed to construct RozenitePluginModel: RozeniteBindingsModel was null`,
       );
     }
 
@@ -23,17 +23,17 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
     bindingsModel.addEventListener(
       'BackendExecutionContextCreated',
       this.#handleBackendExecutionContextCreated,
-      this
+      this,
     );
     bindingsModel.addEventListener(
       'BackendExecutionContextUnavailable',
       this.#handleBackendExecutionContextUnavailable,
-      this
+      this,
     );
     bindingsModel.addEventListener(
       'BackendExecutionContextDestroyed',
       this.#handleBackendExecutionContextDestroyed,
-      this
+      this,
     );
   }
 
@@ -41,17 +41,17 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
     this.#bindingsModel.removeEventListener(
       'BackendExecutionContextCreated',
       this.#handleBackendExecutionContextCreated,
-      this
+      this,
     );
     this.#bindingsModel.removeEventListener(
       'BackendExecutionContextUnavailable',
       this.#handleBackendExecutionContextUnavailable,
-      this
+      this,
     );
     this.#bindingsModel.removeEventListener(
       'BackendExecutionContextDestroyed',
       this.#handleBackendExecutionContextDestroyed,
-      this
+      this,
     );
 
     this.#listeners.clear();
@@ -75,7 +75,7 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
       }
 
       bindingsModel.subscribeToDomainMessages((message) =>
-        this.#handleMessage(message)
+        this.#handleMessage(message),
       );
 
       await bindingsModel.initializeDomain();
@@ -85,7 +85,7 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
     } catch (e) {
       this.dispatchEventToListeners(
         'InitializationFailed',
-        (e as Error).message
+        (e as Error).message,
       );
     }
   }
@@ -108,7 +108,7 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
     const rdtBindingsModel = this.#bindingsModel;
     if (!rdtBindingsModel) {
       throw new Error(
-        'RozenitePluginModel failed to send message: RozeniteBindingsModel was null'
+        'RozenitePluginModel failed to send message: RozeniteBindingsModel was null',
       );
     }
 
@@ -127,7 +127,7 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
     const rdtBindingsModel = this.#bindingsModel;
     if (!rdtBindingsModel) {
       throw new Error(
-        'RozenitePluginModel failed to handle BackendExecutionContextCreated event: RozeniteBindingsModel was null'
+        'RozenitePluginModel failed to handle BackendExecutionContextCreated event: RozeniteBindingsModel was null',
       );
     }
 

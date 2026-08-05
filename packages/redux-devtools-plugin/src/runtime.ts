@@ -118,7 +118,7 @@ const ensureBridgeSubscription = () => {
 };
 
 const registerCommandHandler = (
-  handler: (command: ReduxDevToolsPanelCommand) => void
+  handler: (command: ReduxDevToolsPanelCommand) => void,
 ): (() => void) => {
   commandHandlers.add(handler);
   ensureBridgeSubscription();
@@ -134,7 +134,7 @@ const registerCommandHandler = (
 };
 
 const createRuntimeController = (
-  options: RozeniteDevToolsOptions = {}
+  options: RozeniteDevToolsOptions = {},
 ): RuntimeController => {
   const appInstanceId = getRandomId();
   const instanceName = options.name?.trim() || 'Redux Store';
@@ -226,7 +226,7 @@ const createRuntimeController = (
 
   const sanitizeComputedState = (
     entry: { state: unknown; error?: string },
-    index: number
+    index: number,
   ) => ({
     ...entry,
     state: sanitizeState(entry.state, index),
@@ -234,7 +234,7 @@ const createRuntimeController = (
 
   const sanitizeLiftedAction = (
     liftedAction: PerformAction<AnyAction>,
-    actionId: number
+    actionId: number,
   ): PerformAction<AnyAction> => {
     if (liftedAction.type !== 'PERFORM_ACTION') {
       return liftedAction;
@@ -269,14 +269,14 @@ const createRuntimeController = (
   };
 
   const pruneActionTraces = (
-    liftedState: LiftedState<any, AnyAction, unknown>
+    liftedState: LiftedState<any, AnyAction, unknown>,
   ): void => {
     const actionIds = new Set(liftedState.stagedActionIds);
 
     tracesByActionId.forEach((trace, actionId) => {
-      const liftedAction = liftedState.actionsById[
-        actionId
-      ] as ReduxActionWithTrace | undefined;
+      const liftedAction = liftedState.actionsById[actionId] as
+        | ReduxActionWithTrace
+        | undefined;
 
       if (!actionIds.has(actionId) || liftedAction?.stack !== trace.rawStack) {
         tracesByActionId.delete(actionId);
@@ -286,7 +286,7 @@ const createRuntimeController = (
 
   const resolveTraceForAction = (
     actionId: number,
-    rawStack: string
+    rawStack: string,
   ): ReduxActionTrace => {
     const existingTrace = tracesByActionId.get(actionId);
     if (existingTrace?.rawStack === rawStack) {
@@ -323,7 +323,7 @@ const createRuntimeController = (
 
   const decorateLiftedAction = (
     actionId: number,
-    liftedAction: PerformAction<AnyAction>
+    liftedAction: PerformAction<AnyAction>,
   ) => {
     const rawStack = (liftedAction as ReduxActionWithTrace).stack;
 
@@ -361,7 +361,7 @@ const createRuntimeController = (
           ? {
               [initialStagedActionId]: sanitizeLiftedAction(
                 decorateLiftedAction(initialStagedActionId, initialAction),
-                initialStagedActionId
+                initialStagedActionId,
               ),
             }
           : {},
@@ -385,11 +385,11 @@ const createRuntimeController = (
     ) {
       const endIndex = Math.min(
         startIndex + PARTIAL_STATE_CHUNK_SIZE,
-        liftedState.stagedActionIds.length
+        liftedState.stagedActionIds.length,
       );
       const chunkStagedActionIds = liftedState.stagedActionIds.slice(
         startIndex,
-        endIndex
+        endIndex,
       );
       const actionsById: Record<number, PerformAction<AnyAction>> = {};
 
@@ -401,7 +401,7 @@ const createRuntimeController = (
         if (action) {
           actionsById[actionId] = sanitizeLiftedAction(
             decorateLiftedAction(actionId, action),
-            actionId
+            actionId,
           );
         }
       });
@@ -421,18 +421,18 @@ const createRuntimeController = (
           computedStates: liftedState.computedStates
             .slice(startIndex, endIndex)
             .map((entry, index) =>
-              sanitizeComputedState(entry, startIndex + index)
+              sanitizeComputedState(entry, startIndex + index),
             ),
           currentStateIndex: Math.min(
             liftedState.currentStateIndex,
-            stagedActionIds.length - 1
+            stagedActionIds.length - 1,
           ),
           nextActionId:
             endIndex === liftedState.stagedActionIds.length
               ? liftedState.nextActionId
               : lastActionId + 1,
           skippedActionIds: liftedState.skippedActionIds.filter((actionId) =>
-            stagedActionIds.includes(actionId)
+            stagedActionIds.includes(actionId),
           ),
           stagedActionIds,
           isLocked: liftedState.isLocked,
@@ -455,9 +455,9 @@ const createRuntimeController = (
     pruneActionTraces(liftedState);
 
     const nextActionId = liftedState.nextActionId;
-    const liftedAction = liftedState.actionsById[
-      nextActionId - 1
-    ] as PerformAction<AnyAction> | undefined;
+    const liftedAction = liftedState.actionsById[nextActionId - 1] as
+      | PerformAction<AnyAction>
+      | undefined;
 
     if (!liftedAction) {
       sendStateSnapshot();
@@ -469,13 +469,13 @@ const createRuntimeController = (
       name: instanceName,
       instanceId: appInstanceId,
       payload: stringify(
-        sanitizeState(store.getState(), liftedState.currentStateIndex)
+        sanitizeState(store.getState(), liftedState.currentStateIndex),
       ),
       action: stringify(
         sanitizeLiftedAction(
           decorateLiftedAction(nextActionId - 1, liftedAction),
-          nextActionId - 1
-        )
+          nextActionId - 1,
+        ),
       ),
       nextActionId,
       maxAge,
@@ -484,7 +484,7 @@ const createRuntimeController = (
   };
 
   const dispatchRemotely = (
-    action: string | { args: string[]; rest: string; selected: number }
+    action: string | { args: string[]; rest: string; selected: number },
   ): void => {
     if (!store) {
       enqueueCommand({ type: 'action', action, instanceId: appInstanceId });
@@ -609,10 +609,7 @@ const createRuntimeController = (
     },
     enhance: () => {
       return ((next: StoreEnhancerStoreCreator) => {
-        return (
-          reducer: Reducer<any, AnyAction>,
-          initialState?: unknown
-        ) => {
+        return (reducer: Reducer<any, AnyAction>, initialState?: unknown) => {
           store = instrument(monitorReducer, {
             maxAge,
             trace,
@@ -620,16 +617,23 @@ const createRuntimeController = (
             shouldHotReload: true,
             shouldRecordChanges: true,
             pauseActionType: '@@PAUSED',
-          })(next)(reducer, initialState) as EnhancedStore<any, AnyAction, unknown>;
+          })(next)(reducer, initialState) as EnhancedStore<
+            any,
+            AnyAction,
+            unknown
+          >;
 
-          const storeWithSentinel = store as EnhancedStore<any, AnyAction, unknown> & {
+          const storeWithSentinel = store as EnhancedStore<
+            any,
+            AnyAction,
+            unknown
+          > & {
             [STORE_SENTINEL]?: StoreSentinel;
           };
 
           if (!storeWithSentinel[STORE_SENTINEL]) {
-            const unsubscribeCommandHandler = registerCommandHandler(
-              handlePanelCommand
-            );
+            const unsubscribeCommandHandler =
+              registerCommandHandler(handlePanelCommand);
             storeWithSentinel[STORE_SENTINEL] = {
               instanceId: appInstanceId,
               unsubscribeCommandHandler: unsubscribeCommandHandler,
@@ -642,7 +646,8 @@ const createRuntimeController = (
             maxAge,
             getStore: () => store,
             getLiftedState: () => getLiftedStateRaw(),
-            getActionTrace: (actionId) => tracesByActionId.get(actionId) ?? null,
+            getActionTrace: (actionId) =>
+              tracesByActionId.get(actionId) ?? null,
           });
 
           store.subscribe(() => {
@@ -659,7 +664,7 @@ const createRuntimeController = (
 };
 
 export const rozeniteDevToolsEnhancer = (
-  options: RozeniteDevToolsOptions = {}
+  options: RozeniteDevToolsOptions = {},
 ): StoreEnhancer => {
   return createRuntimeController(options).enhance();
 };
@@ -683,7 +688,7 @@ const composeWithOptions = (options: RozeniteDevToolsOptions) => {
 
       return [preEnhancer, ...funcs].reduceRight(
         (composed, enhancer) => enhancer(composed),
-        controller.enhance()(...args)
+        controller.enhance()(...args),
       );
     };
   };

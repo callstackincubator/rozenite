@@ -8,7 +8,9 @@ import type { RozeniteConfig } from '../config.js';
 const tempDirs: string[] = [];
 
 const createTempDir = (): string => {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rozenite-middleware-'));
+  const tempDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'rozenite-middleware-'),
+  );
   tempDirs.push(tempDir);
   return tempDir;
 };
@@ -29,7 +31,7 @@ const createPackage = (
   options?: {
     hasPluginManifest?: boolean;
     main?: string;
-  }
+  },
 ): void => {
   const main = options?.main ?? './dist/index.js';
 
@@ -38,7 +40,10 @@ const createPackage = (
     version: '1.0.0',
     main,
   });
-  writeFile(path.join(packageRoot, main.replace('./', '')), 'module.exports = {};');
+  writeFile(
+    path.join(packageRoot, main.replace('./', '')),
+    'module.exports = {};',
+  );
 
   if (options?.hasPluginManifest) {
     writeJson(path.join(packageRoot, 'dist', 'rozenite.json'), {
@@ -47,9 +52,7 @@ const createPackage = (
   }
 };
 
-const createProject = (
-  packageJson: Record<string, unknown>
-): string => {
+const createProject = (packageJson: Record<string, unknown>): string => {
   const projectRoot = createTempDir();
   writeJson(path.join(projectRoot, 'package.json'), packageJson);
   return projectRoot;
@@ -61,7 +64,7 @@ const createNodeModulesPackage = (
   options?: {
     hasPluginManifest?: boolean;
     main?: string;
-  }
+  },
 ): string => {
   const packageRoot = path.join(projectRoot, 'node_modules', packageName);
   createPackage(packageRoot, packageName, options);
@@ -70,7 +73,7 @@ const createNodeModulesPackage = (
 
 const createConfig = (
   projectRoot: string,
-  overrides?: Partial<RozeniteConfig>
+  overrides?: Partial<RozeniteConfig>,
 ): RozeniteConfig => ({
   projectRoot,
   ...overrides,
@@ -85,7 +88,12 @@ afterEach(() => {
 describe('findPackageRoot', () => {
   it('finds a package root for a classic node_modules path', () => {
     const root = createTempDir();
-    const packageRoot = path.join(root, 'node_modules', '@rozenite', 'demo-plugin');
+    const packageRoot = path.join(
+      root,
+      'node_modules',
+      '@rozenite',
+      'demo-plugin',
+    );
 
     createPackage(packageRoot, '@rozenite/demo-plugin', {
       hasPluginManifest: true,
@@ -95,7 +103,7 @@ describe('findPackageRoot', () => {
     const resolvedPath = path.join(packageRoot, 'dist', 'react-native.cjs');
 
     expect(findPackageRoot('@rozenite/demo-plugin', resolvedPath)).toBe(
-      packageRoot
+      packageRoot,
     );
   });
 
@@ -110,7 +118,7 @@ describe('findPackageRoot', () => {
       'cache',
       'demo-plugin-npm-1.0.0.zip',
       'node_modules',
-      'demo-plugin'
+      'demo-plugin',
     );
 
     createPackage(packageRoot, 'demo-plugin', {
@@ -185,8 +193,8 @@ describe('getInstalledPlugins', () => {
 
     expect(
       getInstalledPlugins(
-        createConfig(projectRoot, { exclude: ['demo-plugin'] })
-      )
+        createConfig(projectRoot, { exclude: ['demo-plugin'] }),
+      ),
     ).toEqual([]);
   });
 
@@ -243,8 +251,8 @@ describe('getInstalledPlugins', () => {
 
     expect(() =>
       getInstalledPlugins(
-        createConfig(projectRoot, { include: ['missing-plugin'] })
-      )
+        createConfig(projectRoot, { include: ['missing-plugin'] }),
+      ),
     ).toThrowError('Could not resolve plugin missing-plugin.');
   });
 });

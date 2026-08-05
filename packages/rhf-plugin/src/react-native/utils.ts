@@ -10,13 +10,13 @@ export function proxyToObject<T extends Record<string, unknown>>(proxy: T): T {
 export function nestToFlat<V>(
   flatKeys: string[],
   obj: object,
-  defaultValue?: V
+  defaultValue?: V,
 ): Record<string, V> {
   return flatKeys.reduce(
     (prev, name) => {
       prev[name] = (get(obj, name) || defaultValue) as V;
       return prev;
     },
-    {} as Record<string, V>
+    {} as Record<string, V>,
   );
 }

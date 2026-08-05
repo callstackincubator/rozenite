@@ -20,7 +20,7 @@ export const CodeEditor = forwardRef<HTMLPreElement, CodeEditorProps>(
         {data}
       </pre>
     );
-  }
+  },
 );
 
 CodeEditor.displayName = 'CodeEditor';

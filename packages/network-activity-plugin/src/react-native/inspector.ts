@@ -5,6 +5,6 @@ export interface Inspector<TEventMap> {
   dispose: () => void;
   on<TEventType extends keyof TEventMap>(
     type: TEventType,
-    callback: (event: TEventMap[TEventType]) => void
+    callback: (event: TEventMap[TEventType]) => void,
   ): () => void;
 }

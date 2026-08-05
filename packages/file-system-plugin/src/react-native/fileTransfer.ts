@@ -113,10 +113,7 @@ export async function pathExists(
   }
 }
 
-export function assertInsideRoots(
-  path: string,
-  roots: FileSystemRoot[],
-): void {
+export function assertInsideRoots(path: string, roots: FileSystemRoot[]): void {
   if (hasTraversalSegment(path)) {
     throw new Error('Path must not contain traversal segments.');
   }

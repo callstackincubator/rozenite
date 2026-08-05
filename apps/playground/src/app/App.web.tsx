@@ -18,8 +18,8 @@ export default function App() {
         <Text style={styles.description}>
           Requirements: install the Rozenite Chrome extension, add
           `@rozenite/web`, wrap your web bundler config with `withRozeniteWeb`,
-          and load `require(&apos;@rozenite/web&apos;)` in your web entry point. Then run
-          the app in development on a Chromium-based browser.
+          and load `require(&apos;@rozenite/web&apos;)` in your web entry point.
+          Then run the app in development on a Chromium-based browser.
         </Text>
 
         <StoragePluginSection />

@@ -97,7 +97,9 @@ const isGeneratedBundleUrl = (url: string | undefined): boolean =>
 const isSymbolicatableUrl = (url: string | undefined): boolean =>
   url?.startsWith('http://') || url?.startsWith('https://') || false;
 
-const toMetroFrame = (frame: ReduxTraceFrame): MetroSymbolicatedFrame | null => {
+const toMetroFrame = (
+  frame: ReduxTraceFrame,
+): MetroSymbolicatedFrame | null => {
   if (!isSymbolicatableUrl(frame.generatedUrl)) {
     return null;
   }

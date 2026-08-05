@@ -44,12 +44,13 @@ export const bundleTargetDeclarations = async (
   const targetRoot = path.join(projectRoot, 'dist', target);
   const publicEntryPath = path.join(targetRoot, 'index.d.ts');
   const bundleEntryPath =
-    target === 'sdk' ? path.join(targetRoot, `${target}.d.ts`) : publicEntryPath;
-  const entryPath =
-    (await fs
-      .access(bundleEntryPath)
-      .then(() => bundleEntryPath)
-      .catch(() => publicEntryPath));
+    target === 'sdk'
+      ? path.join(targetRoot, `${target}.d.ts`)
+      : publicEntryPath;
+  const entryPath = await fs
+    .access(bundleEntryPath)
+    .then(() => bundleEntryPath)
+    .catch(() => publicEntryPath);
   const tempOutputPath = path.join(targetRoot, 'index.public.d.ts');
   const srcDeclarationsPath = path.join(targetRoot, 'src');
   const configObjectFullPath = path.join(projectRoot, 'api-extractor.json');

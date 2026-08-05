@@ -88,7 +88,10 @@ const Wrapper = () => {
     >
       <Stack.Screen name="Landing" component={LandingScreen} />
       <Stack.Screen name="ControlsPlugin" component={ControlsPluginScreen} />
-      <Stack.Screen name="ReactHookFormPlugin" component={ReactHookFormPluginScreen} />
+      <Stack.Screen
+        name="ReactHookFormPlugin"
+        component={ReactHookFormPluginScreen}
+      />
       <Stack.Screen name="StoragePlugin" component={StoragePluginScreen} />
       <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
       <Stack.Screen name="RequestBodyTest" component={RequestBodyTestScreen} />

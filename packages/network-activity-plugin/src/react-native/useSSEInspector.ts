@@ -6,7 +6,7 @@ export const useSSEInspector = (
   client: NetworkActivityDevToolsClient | null,
   sseInspector: SSEInspector,
   isEnabled: boolean,
-  isRecordingEnabled: boolean
+  isRecordingEnabled: boolean,
 ) => {
   useEffect(() => {
     if (!client || !isEnabled) {

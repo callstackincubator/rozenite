@@ -16,20 +16,22 @@ export const ControlsPluginScreen = () => {
   const counter = useControlsPluginStore((state) => state.counter);
   const releaseLabel = useControlsPluginStore((state) => state.releaseLabel);
   const selectedEnvironment = useControlsPluginStore(
-    (state) => state.selectedEnvironment
+    (state) => state.selectedEnvironment,
   );
   const status = useControlsPluginStore((state) => state.status);
   const lastActionAt = useControlsPluginStore((state) => state.lastActionAt);
   const notes = useControlsPluginStore((state) => state.notes);
   const featureFlags = useControlsPluginStore((state) => state.featureFlags);
   const updateReleaseLabel = useControlsPluginStore(
-    (state) => state.updateReleaseLabel
+    (state) => state.updateReleaseLabel,
   );
   const selectEnvironment = useControlsPluginStore(
-    (state) => state.selectEnvironment
+    (state) => state.selectEnvironment,
   );
   const toggleFlag = useControlsPluginStore((state) => state.toggleFlag);
-  const incrementCounter = useControlsPluginStore((state) => state.incrementCounter);
+  const incrementCounter = useControlsPluginStore(
+    (state) => state.incrementCounter,
+  );
   const markSynced = useControlsPluginStore((state) => state.markSynced);
   const addCheckpoint = useControlsPluginStore((state) => state.addCheckpoint);
   const resetDemo = useControlsPluginStore((state) => state.resetDemo);
@@ -42,7 +44,7 @@ export const ControlsPluginScreen = () => {
       ['Release label', releaseLabel],
       ['Last action', lastActionAt ?? 'No actions yet'],
     ],
-    [counter, lastActionAt, releaseLabel, selectedEnvironment, status]
+    [counter, lastActionAt, releaseLabel, selectedEnvironment, status],
   );
 
   return (
@@ -58,8 +60,8 @@ export const ControlsPluginScreen = () => {
     >
       <Text style={styles.title}>Controls Plugin Demo</Text>
       <Text style={styles.subtitle}>
-        Change state locally and from DevTools. The Controls panel should always mirror
-        this screen because the device owns the source of truth.
+        Change state locally and from DevTools. The Controls panel should always
+        mirror this screen because the device owns the source of truth.
       </Text>
 
       <View style={styles.card}>
@@ -139,7 +141,11 @@ export const ControlsPluginScreen = () => {
         </View>
         <View style={styles.buttonRow}>
           <DemoButton label="Add Checkpoint" onPress={addCheckpoint} />
-          <DemoButton label="Reset Demo" onPress={resetDemo} variant="secondary" />
+          <DemoButton
+            label="Reset Demo"
+            onPress={resetDemo}
+            variant="secondary"
+          />
         </View>
       </View>
 
@@ -173,7 +179,10 @@ const DemoButton = ({
     onPress={onPress}
   >
     <Text
-      style={[styles.buttonLabel, variant === 'secondary' && styles.secondaryButtonLabel]}
+      style={[
+        styles.buttonLabel,
+        variant === 'secondary' && styles.secondaryButtonLabel,
+      ]}
     >
       {label}
     </Text>

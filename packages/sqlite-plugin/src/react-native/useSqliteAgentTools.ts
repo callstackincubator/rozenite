@@ -1,5 +1,8 @@
 import { useCallback } from 'react';
-import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
+import {
+  useRozenitePluginAgentTool,
+  type AgentTool,
+} from '@rozenite/agent-bridge';
 import { formatSqliteError } from '../shared/bridge-values';
 import { normalizeSingleStatementSql, splitSqlStatements } from '../shared/sql';
 import type { SqliteExecuteStatementsError } from '../shared/types';

@@ -3,7 +3,7 @@ import path from 'node:path';
 
 export const getBinaryRelativePath = (
   projectRoot: string,
-  packageName: string
+  packageName: string,
 ): string | null => {
   try {
     const packagePath = require.resolve(`${packageName}/package.json`, {

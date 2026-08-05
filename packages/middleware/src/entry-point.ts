@@ -12,17 +12,17 @@ const updateCSP = (html: string, nonce: string): string => {
     // Add our nonce to the existing script-src directive
     const updatedCSP = originalCSP.replace(
       /script-src\s+([^;]+)/,
-      `script-src $1 'nonce-${nonce}'`
+      `script-src $1 'nonce-${nonce}'`,
     );
 
     return html.replace(
       cspRegex,
-      `<meta http-equiv="Content-Security-Policy" content="${updatedCSP}" />`
+      `<meta http-equiv="Content-Security-Policy" content="${updatedCSP}" />`,
     );
   }
 
   throw new Error(
-    "Content-Security-Policy not found. Report this as a bug in Rozenite's issue tracker."
+    "Content-Security-Policy not found. Report this as a bug in Rozenite's issue tracker.",
   );
 };
 
@@ -30,7 +30,7 @@ const appendScripts = (
   html: string,
   nonce: string,
   installedPlugins: string[],
-  destroyOnDetachPlugins: string[]
+  destroyOnDetachPlugins: string[],
 ): string => {
   const bodyTagRegex = /<body[^>]*>/;
   const bodyMatch = html.match(bodyTagRegex);
@@ -47,7 +47,7 @@ const appendScripts = (
 
   if (!bodyMatch) {
     throw new Error(
-      "Body tag not found. Report this as a bug in Rozenite's issue tracker."
+      "Body tag not found. Report this as a bug in Rozenite's issue tracker.",
     );
   }
 
@@ -62,18 +62,18 @@ const appendScripts = (
 export const getEntryPointHTML = (
   rnDevToolsFrontendPath: string,
   installedPlugins: string[],
-  destroyOnDetachPlugins: string[]
+  destroyOnDetachPlugins: string[],
 ): string => {
   const nonce = crypto.randomUUID();
   const originalEntryPoint = fs.readFileSync(
     path.join(rnDevToolsFrontendPath, 'rn_fusebox.html'),
-    'utf8'
+    'utf8',
   );
 
   return appendScripts(
     updateCSP(originalEntryPoint, nonce),
     nonce,
     installedPlugins,
-    destroyOnDetachPlugins
+    destroyOnDetachPlugins,
   );
 };
