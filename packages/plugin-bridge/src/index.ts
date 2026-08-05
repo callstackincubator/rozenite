@@ -17,8 +17,9 @@ export type {
   RemoteErrorInfo,
   RozeniteRpcError,
   InvokeOptions,
-  InvokeArgs,
+  InvokeParams,
   RozeniteRpc,
   RpcContext,
   RpcMethods,
+  RpcMethodHandle,
 } from './rpc/index.js';

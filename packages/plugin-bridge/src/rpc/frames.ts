@@ -25,8 +25,6 @@ export type AckFrame = {
 export type HeartbeatFrame = {
   kind: 'heartbeat';
   id: string;
-  /** Piggybacks the latest `ctx.progress()` value, if any was reported. */
-  progress?: unknown;
 };
 
 export type ResultFrame = {

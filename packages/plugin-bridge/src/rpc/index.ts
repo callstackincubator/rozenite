@@ -13,8 +13,9 @@ export type {
 export { ROZENITE_RPC_MESSAGE_TYPE } from './frames.js';
 export type {
   InvokeOptions,
-  InvokeArgs,
+  InvokeParams,
   RozeniteRpc,
   RpcContext,
   RpcMethods,
+  RpcMethodHandle,
 } from './types.js';

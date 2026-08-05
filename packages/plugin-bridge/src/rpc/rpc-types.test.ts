@@ -16,11 +16,13 @@ type TestMethods = {
 };
 
 function checksParamsAndResultInference(rpc: RozeniteRpc<TestMethods>) {
-  expectTypeOf(rpc.invoke('getUser', { id: '1' })).resolves.toEqualTypeOf<{
+  expectTypeOf(
+    rpc.method('getUser').invoke({ id: '1' }),
+  ).resolves.toEqualTypeOf<{
     id: string;
     name: string;
   }>();
-  expectTypeOf(rpc.invoke('ping')).resolves.toEqualTypeOf<'pong'>();
+  expectTypeOf(rpc.method('ping').invoke()).resolves.toEqualTypeOf<'pong'>();
 
   rpc.handle('getUser', (params) => {
     expectTypeOf(params).toEqualTypeOf<{ id: string }>();
@@ -28,38 +30,43 @@ function checksParamsAndResultInference(rpc: RozeniteRpc<TestMethods>) {
   });
 }
 
-function checksZeroArgOverloads(rpc: RozeniteRpc<TestMethods>) {
-  rpc.invoke('ping');
-  rpc.invoke('ping', { timeoutMs: 1_000 });
+function checksZeroArgHandleAcceptsNoParams(rpc: RozeniteRpc<TestMethods>) {
+  rpc.method('ping').invoke();
+
+  // @ts-expect-error -- `ping` takes no params; `invoke` accepts none.
+  rpc.method('ping').invoke({ id: '1' });
 }
 
-function checksParamsAreRequiredWhenDeclared(rpc: RozeniteRpc<TestMethods>) {
-  rpc.invoke('getUser', { id: '1' });
-  rpc.invoke('getUser', { id: '1' }, { timeoutMs: 1_000 });
+function checksOptionsLiveOnlyOnMethod(rpc: RozeniteRpc<TestMethods>) {
+  rpc.method('ping', { timeoutMs: 1_000 }).invoke();
+  rpc.method('getUser', { timeoutMs: 1_000 }).invoke({ id: '1' });
 
-  // @ts-expect-error -- getUser requires a `params` argument.
-  rpc.invoke('getUser');
+  // @ts-expect-error -- `getUser` requires a `params` argument.
+  rpc.method('getUser').invoke();
+
+  // @ts-expect-error -- options belong on `method()`, not `invoke()`.
+  rpc.method('getUser').invoke({ id: '1' }, { timeoutMs: 1_000 });
 }
 
 function checksUnknownMethodNamesAreATypeError(rpc: RozeniteRpc<TestMethods>) {
   // @ts-expect-error -- "doesNotExist" is not a key of TestMethods.
-  rpc.invoke('doesNotExist');
+  rpc.method('doesNotExist');
 
   // @ts-expect-error -- same for handle().
   rpc.handle('doesNotExist', () => {});
 }
 
 describe('RozeniteRpc types', () => {
-  it('infers params and result from the method map', () => {
+  it('infers params and result through the method handle', () => {
     expectTypeOf(checksParamsAndResultInference).toBeFunction();
   });
 
-  it('zero-arg methods accept invoke("name") and invoke("name", { timeoutMs })', () => {
-    expectTypeOf(checksZeroArgOverloads).toBeFunction();
+  it('method("zeroArg").invoke() is valid, invoke(params) is a type error', () => {
+    expectTypeOf(checksZeroArgHandleAcceptsNoParams).toBeFunction();
   });
 
-  it('methods with params require params to be passed', () => {
-    expectTypeOf(checksParamsAreRequiredWhenDeclared).toBeFunction();
+  it('options live only on method(); passing them to invoke() is a type error', () => {
+    expectTypeOf(checksOptionsLiveOnlyOnMethod).toBeFunction();
   });
 
   it('unknown method names are a type error', () => {

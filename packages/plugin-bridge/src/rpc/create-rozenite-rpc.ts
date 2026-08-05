@@ -21,31 +21,6 @@ const DEFAULT_STALE_TIMEOUT_MS = 6_000;
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_RETRIES = 1;
 
-// Every recognized key of `InvokeOptions`. Used at runtime to tell apart a
-// single trailing `options` argument from a single trailing `params`
-// argument for zero-arg methods — see `invoke` below for why this is
-// necessary.
-const OPTION_KEYS = new Set<string>([
-  'signal',
-  'ackTimeoutMs',
-  'heartbeatMs',
-  'staleTimeoutMs',
-  'timeoutMs',
-  'retries',
-  'onProgress',
-]);
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const looksLikeInvokeOptions = (value: unknown): value is InvokeOptions => {
-  if (!isPlainObject(value)) {
-    return false;
-  }
-  const keys = Object.keys(value);
-  return keys.length === 0 || keys.every((key) => OPTION_KEYS.has(key));
-};
-
 // The client that carries RPC frames. RPC only needs `send`/`onMessage` for
 // a single reserved message type plus `close`, but consumers pass in a
 // `RozeniteDevToolsClient<TEventMap>` scoped to their own plugin event map
@@ -67,8 +42,6 @@ type ActiveHandlerCall = {
   interval: ReturnType<typeof setInterval> | null;
   settled: boolean;
   discarded: boolean;
-  hasProgress: boolean;
-  latestProgress: unknown;
 };
 
 type NormalizedError = {
@@ -180,25 +153,15 @@ export const createRozeniteRpc = <M extends RpcMethods>(
       interval: null,
       settled: false,
       discarded: false,
-      hasProgress: false,
-      latestProgress: undefined,
     };
     activeCalls.set(frame.id, call);
 
     const ctx: RpcContext = {
       signal: controller.signal,
-      progress: (value: unknown) => {
-        call.hasProgress = true;
-        call.latestProgress = value;
-      },
     };
 
     call.interval = setInterval(() => {
       const heartbeat: HeartbeatFrame = { kind: 'heartbeat', id: frame.id };
-      if (call.hasProgress) {
-        heartbeat.progress = call.latestProgress;
-        call.hasProgress = false;
-      }
       send(heartbeat);
     }, frame.heartbeatMs);
 
@@ -299,7 +262,7 @@ export const createRozeniteRpc = <M extends RpcMethods>(
     const staleTimeoutMs = options.staleTimeoutMs ?? DEFAULT_STALE_TIMEOUT_MS;
     const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const retries = options.retries ?? DEFAULT_RETRIES;
-    const { signal, onProgress } = options;
+    const { signal } = options;
 
     return new Promise<unknown>((resolve, reject) => {
       if (closed) {
@@ -444,11 +407,8 @@ export const createRozeniteRpc = <M extends RpcMethods>(
             }
             rearmStale();
           },
-          onHeartbeat: (frame) => {
+          onHeartbeat: () => {
             rearmStale();
-            if ('progress' in frame) {
-              onProgress?.(frame.progress);
-            }
           },
           onResult: (frame) => {
             cleanupAttempt();
@@ -467,32 +427,10 @@ export const createRozeniteRpc = <M extends RpcMethods>(
     });
   };
 
-  const invoke = (method: string, ...args: unknown[]): Promise<unknown> => {
-    let params: unknown;
-    let options: InvokeOptions;
-
-    if (args.length >= 2) {
-      params = args[0];
-      options = (args[1] as InvokeOptions | undefined) ?? {};
-    } else if (args.length === 1) {
-      // A single trailing argument is ambiguous at runtime: for a zero-arg
-      // method it's `options`, for a with-params method it's `params`. `M`
-      // is erased by the time this function runs, so we recognize `options`
-      // structurally (every own key is a known `InvokeOptions` key).
-      if (looksLikeInvokeOptions(args[0])) {
-        params = undefined;
-        options = args[0] as InvokeOptions;
-      } else {
-        params = args[0];
-        options = {};
-      }
-    } else {
-      params = undefined;
-      options = {};
-    }
-
-    return performInvoke(method, params, options);
-  };
+  const method = (methodName: string, options: InvokeOptions = {}) => ({
+    invoke: (...params: unknown[]): Promise<unknown> =>
+      performInvoke(methodName, params[0], options),
+  });
 
   const handle = (
     method: string,
@@ -542,7 +480,7 @@ export const createRozeniteRpc = <M extends RpcMethods>(
   };
 
   return {
-    invoke: invoke as RozeniteRpc<M>['invoke'],
+    method: method as RozeniteRpc<M>['method'],
     handle: handle as RozeniteRpc<M>['handle'],
     close,
   };

@@ -2,16 +2,12 @@ import { Subscription } from '../types.js';
 
 export type RpcMethods = Record<string, (...args: never[]) => unknown>;
 
-export type InvokeArgs<M extends RpcMethods, K extends keyof M> =
-  Parameters<M[K]> extends []
-    ? [options?: InvokeOptions]
-    : [params: Parameters<M[K]>[0], options?: InvokeOptions];
+export type InvokeParams<M extends RpcMethods, K extends keyof M> =
+  Parameters<M[K]> extends [] ? [] : [params: Parameters<M[K]>[0]];
 
 export type RpcContext = {
   /** Aborts when the caller cancels, times out, or gives up. */
   signal: AbortSignal;
-  /** Piggybacks on the next heartbeat frame. */
-  progress(value: unknown): void;
 };
 
 export type InvokeOptions = {
@@ -26,14 +22,17 @@ export type InvokeOptions = {
   timeoutMs?: number;
   /** Retries `ACK_TIMEOUT` only. Default `1`. */
   retries?: number;
-  onProgress?: (value: unknown) => void;
+};
+
+export type RpcMethodHandle<M extends RpcMethods, K extends keyof M> = {
+  invoke(...params: InvokeParams<M, K>): Promise<Awaited<ReturnType<M[K]>>>;
 };
 
 export type RozeniteRpc<M extends RpcMethods> = {
-  invoke<K extends keyof M>(
+  method<K extends keyof M>(
     method: K,
-    ...args: InvokeArgs<M, K>
-  ): Promise<Awaited<ReturnType<M[K]>>>;
+    options?: InvokeOptions,
+  ): RpcMethodHandle<M, K>;
 
   handle<K extends keyof M>(
     method: K,

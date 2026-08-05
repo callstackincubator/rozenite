@@ -3,7 +3,7 @@ import { createRozeniteRpc } from './create-rozenite-rpc.js';
 import { isHandlerError, isProtocolError } from './errors.js';
 import type { RozeniteHandlerError, RozeniteProtocolError } from './errors.js';
 import { ROZENITE_RPC_MESSAGE_TYPE } from './frames.js';
-import { RozeniteRpc } from './types.js';
+import { InvokeOptions, RozeniteRpc } from './types.js';
 import { createFakeClientPair } from './test-utils.js';
 
 // The behavior tests below intentionally use a loose method map — they
@@ -12,17 +12,23 @@ import { createFakeClientPair } from './test-utils.js';
 // method names) is covered separately in `rpc-types.test.ts`.
 type AnyMethods = Record<string, (...args: any[]) => any>;
 
-// `AnyMethods` gives every method the same signature, so `InvokeArgs`
-// always picks the "params required" branch — fine for the calls in this
-// file that pass params, but too strict for the zero-arg calls we also want
-// to exercise (`invoke('ping')`). Route those through this untyped helper
-// instead of fighting the type system for a runtime-behavior test.
+// `AnyMethods` gives every method the same `(...args: any[]) => any)`
+// signature, so `InvokeParams` always picks the "params required" branch —
+// fine for calls that pass params, but too strict for the zero-arg calls we
+// also want to exercise (`method('ping').invoke()`). Route those through
+// this untyped helper instead of fighting the type system for a
+// runtime-behavior test.
 const invokeLoose = (
   rpc: RozeniteRpc<AnyMethods>,
-  method: string,
-  ...args: unknown[]
+  methodName: string,
+  options?: InvokeOptions,
+  ...params: unknown[]
 ): Promise<unknown> =>
-  (rpc.invoke as (...a: unknown[]) => Promise<unknown>)(method, ...args);
+  (
+    rpc.method(methodName, options) as unknown as {
+      invoke: (...a: unknown[]) => Promise<unknown>;
+    }
+  ).invoke(...params);
 
 const requestFramesOf = (sendMock: {
   mock: { calls: unknown[][] };
@@ -55,12 +61,12 @@ describe('createRozeniteRpc', () => {
       name: 'Ada',
     }));
 
-    const result = await rpcA.invoke('getUser', { id: '42' });
+    const result = await invokeLoose(rpcA, 'getUser', undefined, { id: '42' });
 
     expect(result).toEqual({ id: '42', name: 'Ada' });
   });
 
-  it('invoke("name") works for zero-arg methods', async () => {
+  it('method("name").invoke() works for zero-arg methods', async () => {
     const { clientA, clientB } = createFakeClientPair();
     const rpcA = createRozeniteRpc<AnyMethods>(clientA);
     const rpcB = createRozeniteRpc<AnyMethods>(clientB);
@@ -70,7 +76,7 @@ describe('createRozeniteRpc', () => {
     await expect(invokeLoose(rpcA, 'ping')).resolves.toBe('pong');
   });
 
-  it('invoke("name", { options }) applies options for a zero-arg method', async () => {
+  it('options passed to method() apply to the call, independent of params', async () => {
     const { clientA, clientB } = createFakeClientPair();
     const rpcA = createRozeniteRpc<AnyMethods>(clientA);
     const rpcB = createRozeniteRpc<AnyMethods>(clientB);
@@ -81,10 +87,21 @@ describe('createRozeniteRpc', () => {
       return 'pong';
     });
 
-    await rpcA.invoke('ping', { timeoutMs: 15_000 });
+    await invokeLoose(rpcA, 'ping', { timeoutMs: 15_000 });
 
-    // The single trailing argument was recognized as `options`, not `params`.
     expect(receivedParams).toBeUndefined();
+  });
+
+  it('a handle can be reused across multiple invoke() calls', async () => {
+    const { clientA, clientB } = createFakeClientPair();
+    const rpcA = createRozeniteRpc<AnyMethods>(clientA);
+    const rpcB = createRozeniteRpc<AnyMethods>(clientB);
+
+    rpcB.handle('echo', async (params: unknown) => params);
+
+    const echo = rpcA.method('echo', { timeoutMs: 15_000 });
+    await expect(echo.invoke('a')).resolves.toBe('a');
+    await expect(echo.invoke('b')).resolves.toBe('b');
   });
 
   it('rejects with METHOD_NOT_FOUND for an unregistered method', async () => {
@@ -105,7 +122,7 @@ describe('createRozeniteRpc', () => {
     const { clientA } = createFakeClientPair(); // no peer rpc instance at all
 
     const rpcA = createRozeniteRpc<AnyMethods>(clientA);
-    const promise = rpcA.invoke('ping', undefined, {
+    const promise = invokeLoose(rpcA, 'ping', {
       ackTimeoutMs: 1_000,
       retries: 0,
     });
@@ -123,7 +140,7 @@ describe('createRozeniteRpc', () => {
     const { clientA } = createFakeClientPair();
 
     const rpcA = createRozeniteRpc<AnyMethods>(clientA);
-    const promise = rpcA.invoke('ping', undefined, { ackTimeoutMs: 1_000 });
+    const promise = invokeLoose(rpcA, 'ping', { ackTimeoutMs: 1_000 });
     const errorPromise = promise.catch((e) => e);
 
     await vi.advanceTimersByTimeAsync(1_000);
@@ -145,7 +162,7 @@ describe('createRozeniteRpc', () => {
 
     rpcB.handle('slow', () => new Promise(() => {})); // never resolves
 
-    const promise = rpcA.invoke('slow', undefined, {
+    const promise = invokeLoose(rpcA, 'slow', {
       staleTimeoutMs: 3_000,
       heartbeatMs: 1_000,
       timeoutMs: 60_000,
@@ -170,7 +187,7 @@ describe('createRozeniteRpc', () => {
 
     rpcB.handle('never', () => new Promise(() => {}));
 
-    const promise = rpcA.invoke('never', undefined, {
+    const promise = invokeLoose(rpcA, 'never', {
       timeoutMs: 5_000,
       heartbeatMs: 1_000,
       staleTimeoutMs: 3_000,
@@ -200,7 +217,7 @@ describe('createRozeniteRpc', () => {
         }),
     );
 
-    const promise = rpcA.invoke('slow', undefined, {
+    const promise = invokeLoose(rpcA, 'slow', {
       staleTimeoutMs: 3_000,
       heartbeatMs: 1_000,
       timeoutMs: 60_000,
@@ -232,7 +249,7 @@ describe('createRozeniteRpc', () => {
     });
 
     const controller = new AbortController();
-    const promise = rpcA.invoke('longRunning', undefined, {
+    const promise = invokeLoose(rpcA, 'longRunning', {
       signal: controller.signal,
     });
     const errorPromise = promise.catch((e) => e);
@@ -263,9 +280,7 @@ describe('createRozeniteRpc', () => {
     );
 
     const controller = new AbortController();
-    const promise = rpcA.invoke('op', undefined, {
-      signal: controller.signal,
-    });
+    const promise = invokeLoose(rpcA, 'op', { signal: controller.signal });
     const errorPromise = promise.catch((e) => e);
 
     await vi.advanceTimersByTimeAsync(0);
@@ -390,29 +405,5 @@ describe('createRozeniteRpc', () => {
     rpcB.handle('x', () => 'ok');
 
     expect(() => rpcB.handle('x', () => 'ok2')).toThrow();
-  });
-
-  it('delivers ctx.progress() values via onProgress', async () => {
-    const { clientA, clientB } = createFakeClientPair();
-    const rpcA = createRozeniteRpc<AnyMethods>(clientA);
-    const rpcB = createRozeniteRpc<AnyMethods>(clientB);
-
-    rpcB.handle('withProgress', (_params: unknown, ctx) => {
-      ctx.progress(50);
-      return new Promise((resolve) => {
-        setTimeout(() => resolve('done'), 2_000);
-      });
-    });
-
-    const progressValues: unknown[] = [];
-    const promise = rpcA.invoke('withProgress', undefined, {
-      heartbeatMs: 1_000,
-      onProgress: (value) => progressValues.push(value),
-    });
-
-    await vi.advanceTimersByTimeAsync(2_100);
-
-    await expect(promise).resolves.toBe('done');
-    expect(progressValues).toContain(50);
   });
 });
