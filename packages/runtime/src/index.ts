@@ -35,9 +35,9 @@ const main = async (): Promise<void> => {
   console.groupEnd();
 
   const { pluginDisplay = 'sidebar' } = getGlobalNamespace();
+  addWelcomeView();
 
   if (pluginDisplay === 'tabs') {
-    addWelcomeView();
     await Promise.all(plugins.map((plugin) => loadPlugin(plugin)));
     await setupDevMode();
   } else {
