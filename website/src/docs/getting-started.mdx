@@ -302,6 +302,22 @@ export default withRozenite(
 
 **Note**: When using the `include` option, auto-discovery is completely disabled. Only the explicitly listed plugins will be loaded, and any plugins not in the list will be ignored, even if they are installed in your `node_modules`.
 
+## Plugin display
+
+By default, Rozenite puts all available plugin panels in one DevTools tab. Use
+the sidebar to move between panels. Plugins with one panel appear directly in
+the list, while plugins with several panels are grouped together.
+
+If you prefer each panel to have its own DevTools tab, set `pluginDisplay` to
+`'tabs'` in your Rozenite configuration:
+
+```javascript title="metro.config.js"
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  enabled: process.env.WITH_ROZENITE === 'true',
+  pluginDisplay: 'tabs',
+});
+```
+
 ## Plugin State Management
 
 By default, Rozenite preserves plugin UI state when switching between DevTools panels. This provides a smooth user experience where data doesn't get lost when navigating between different plugins. However, for plugins that consume significant memory or resources, you may want to destroy them when they're not active.
