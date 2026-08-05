@@ -8,6 +8,9 @@ export const rozeniteReactNativePlugin = (): Plugin => {
       const projectRoot = config.root ?? process.cwd();
 
       config.build ??= {};
+      if (process.env.ROZENITE_BUILD === '1') {
+        config.build.emptyOutDir = false;
+      }
       config.build.rollupOptions ??= {};
 
       config.build.lib = {
