@@ -1,4 +1,5 @@
 import type { PluginOption } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import reactNativeWeb from 'vite-plugin-react-native-web';
 import path from 'node:path';
@@ -84,7 +85,18 @@ const getDtsPlugin = (
   });
 };
 
-export const rozenitePlugin = (): PluginOption[] => {
+export type RozenitePluginOptions = {
+  /**
+   * Configure Tailwind CSS v4 for client panels.
+   *
+   * @default true
+   */
+  tailwind?: boolean;
+};
+
+export const rozenitePlugin = ({
+  tailwind = true,
+}: RozenitePluginOptions = {}): PluginOption[] => {
   const isServer = process.env.VITE_ROZENITE_TARGET === 'server';
   const isReactNative = process.env.VITE_ROZENITE_TARGET === 'react-native';
   const isSdk = process.env.VITE_ROZENITE_TARGET === 'sdk';
@@ -103,6 +115,7 @@ export const rozenitePlugin = (): PluginOption[] => {
   }
 
   return [
+    ...(tailwind ? [tailwindcss()] : []),
     react(),
     // @ts-expect-error: TypeScript gets confused by the dual export
     reactNativeWeb(),

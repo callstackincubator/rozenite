@@ -11,6 +11,7 @@ The Rozenite Vite Plugin provides a complete development environment for React N
 - **Multi-Target Building**: Build for client panels and React Native
 - **Hot Reload Development**: Instant updates during plugin development
 - **React Native Web Support**: Seamless React Native component development
+- **Tailwind CSS Support**: Processes Tailwind CSS v4 in client panels without additional Vite or PostCSS configuration
 - **Automatic Manifest Generation**: Creates `rozenite.json` manifest files
 - **Panel HTML Generation**: Automatically generates HTML for plugin panels
 - **TypeScript Support**: Full TypeScript support with type generation
@@ -38,6 +39,17 @@ import { rozenitePlugin } from '@rozenite/vite-plugin';
 
 export default defineConfig({
   plugins: rozenitePlugin(),
+});
+```
+
+Tailwind CSS v4 is configured automatically for client panels. Import your
+Tailwind entry stylesheet from the panel source; no Tailwind-specific Vite or
+PostCSS setup is required. Projects that do not want Tailwind processing can
+disable it explicitly:
+
+```typescript
+export default defineConfig({
+  plugins: rozenitePlugin({ tailwind: false }),
 });
 ```
 

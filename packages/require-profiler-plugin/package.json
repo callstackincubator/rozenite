@@ -41,10 +41,8 @@
   "devDependencies": {
     "@rozenite/vite-plugin": "workspace:*",
     "@types/react": "catalog:",
-    "autoprefixer": "^10.4.21",
     "lucide-react": "^0.263.1",
     "metro-config": "*",
-    "postcss": "^8.5.6",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-flame-graph": "^1.4.0",
@@ -52,8 +50,6 @@
     "react-native": "catalog:",
     "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
-    "tailwindcss": "^3.4.17",
-    "tailwindcss-animate": "^1.0.7",
     "typescript": "~5.9.3",
     "vite": "catalog:"
   },

@@ -35,8 +35,6 @@
     "@testing-library/react": "^16.1.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.6",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-json-tree": "^0.20.0",
@@ -44,8 +42,6 @@
     "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^3.4.17",
-    "tailwindcss-animate": "^1.0.7",
     "typescript": "~5.9.3",
     "vite": "catalog:"
   },
