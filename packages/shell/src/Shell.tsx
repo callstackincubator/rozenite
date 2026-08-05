@@ -216,7 +216,7 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
           </Split.Pane>
           <Split.Handle className="bg-sidebar-border" />
           <Split.Pane>
-            <div className="min-w-0 flex-1">
+            <div className="h-full min-w-0">
               <iframe
                 key={`${activePlugin.id}:${activePanel.id}`}
                 ref={contentFrame}
