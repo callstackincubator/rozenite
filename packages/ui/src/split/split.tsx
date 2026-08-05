@@ -34,7 +34,7 @@ function SplitRoot({
   autoSaveId,
   id,
   className,
-  disableCursor,
+  disableCursor = true,
   ...props
 }: SplitProps) {
   return (
