@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { Sidebar, Split } from '@rozenite/ui';
 
 export type Tab = {
   id: string;
@@ -14,28 +15,28 @@ export type TabsProps = {
 
 export const Tabs = ({ tabs, activeTabId, onTabChange }: TabsProps) => {
   return (
-    <div className="h-full flex flex-col">
-      {/* Tab Headers */}
-      <div className="flex border-b border-gray-700 bg-gray-800">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => onTabChange(tab.id)}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              activeTabId === tab.id
-                ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <div className="flex-1 overflow-hidden">
-        {tabs.find((tab) => tab.id === activeTabId)?.content}
-      </div>
-    </div>
+    <Split direction="horizontal" autoSaveId="react-navigation-views">
+      <Split.Pane defaultSize={18} minSize={14} maxSize={28}>
+        <Sidebar className="w-full border-r-0">
+          <Sidebar.Group>
+            {tabs.map((tab) => (
+              <Sidebar.Item
+                key={tab.id}
+                selected={tab.id === activeTabId}
+                onClick={() => onTabChange(tab.id)}
+              >
+                {tab.label}
+              </Sidebar.Item>
+            ))}
+          </Sidebar.Group>
+        </Sidebar>
+      </Split.Pane>
+      <Split.Handle />
+      <Split.Pane>
+        <div className="h-full min-w-0">
+          {tabs.find((tab) => tab.id === activeTabId)?.content}
+        </div>
+      </Split.Pane>
+    </Split>
   );
 };

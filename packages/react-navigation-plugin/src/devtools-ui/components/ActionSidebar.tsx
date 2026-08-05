@@ -1,4 +1,5 @@
 import { ActionList, ActionWithState } from './ActionList';
+import { Button, Toolbar } from '@rozenite/ui';
 
 export type ActionSidebarProps = {
   actionHistory: ActionWithState[];
@@ -16,11 +17,12 @@ export const ActionSidebar = ({
   onClearActions,
 }: ActionSidebarProps) => {
   return (
-    <div className="w-80 border-r border-gray-700 overflow-hidden bg-gray-900 flex flex-col">
-      <div className="p-3 border-b border-gray-700">
-        <button
+    <div className="flex h-full min-w-0 flex-col bg-background">
+      <Toolbar>
+        <Button
+          variant="outline"
+          className="w-full border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
           onClick={onClearActions}
-          className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
           title="Clear all actions and request initial state"
         >
           <svg
@@ -37,8 +39,8 @@ export const ActionSidebar = ({
             />
           </svg>
           Clear Actions
-        </button>
-      </div>
+        </Button>
+      </Toolbar>
       <ActionList
         actionHistory={actionHistory}
         selectedActionIndex={selectedActionIndex}

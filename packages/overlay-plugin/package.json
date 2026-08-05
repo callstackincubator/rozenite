@@ -21,7 +21,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@rozenite/plugin-bridge": "workspace:*"
+    "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/ui": "workspace:*"
   },
   "devDependencies": {
     "@rozenite/vite-plugin": "workspace:*",

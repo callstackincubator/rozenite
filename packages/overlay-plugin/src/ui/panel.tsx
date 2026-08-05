@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { PluginShell, Sidebar, Split } from '@rozenite/ui';
 import { OverlayPluginEventMap } from '../shared';
 import { GridConfig, ImageConfig } from '../shared/types';
-import { Header, GridSettings, ImageSettings } from './components';
+import { GridSettings, ImageSettings } from './components';
+import '@rozenite/ui/styles.css';
 import './styles.css';
 
 export default function OverlayPanel() {
@@ -23,6 +25,7 @@ export default function OverlayPanel() {
     resizeMode: 'contain',
   });
   const [loading, setLoading] = useState(false);
+  const [activeView, setActiveView] = useState<'grid' | 'image'>('grid');
 
   const client = useRozeniteDevToolsClient<OverlayPluginEventMap>({
     pluginId: '@rozenite/overlay-plugin',
@@ -64,28 +67,52 @@ export default function OverlayPanel() {
 
   if (loading) {
     return (
-      <div className="app-container">
-        <Header />
-        <div
-          className="main-content"
-          style={{ alignItems: 'center', justifyContent: 'center' }}
-        >
-          <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
-        </div>
-      </div>
+      <PluginShell className="dark">
+        <PluginShell.Body className="items-center justify-center">
+          <div className="text-sm text-muted-foreground">Loading overlay…</div>
+        </PluginShell.Body>
+      </PluginShell>
     );
   }
 
   return (
-    <div className="app-container">
-      <Header />
-      <div className="main-content">
-        <GridSettings config={gridConfig} onConfigChange={updateGridConfig} />
-        <ImageSettings
-          config={imageConfig}
-          onConfigChange={updateImageConfig}
-        />
-      </div>
-    </div>
+    <PluginShell className="dark">
+      <PluginShell.Body>
+        <Split direction="horizontal" autoSaveId="overlay-settings">
+          <Split.Pane defaultSize={18} minSize={14} maxSize={28}>
+            <Sidebar className="w-full border-r-0">
+              <Sidebar.Group>
+                <Sidebar.Item
+                  selected={activeView === 'grid'}
+                  onClick={() => setActiveView('grid')}
+                >
+                  Grid overlay
+                </Sidebar.Item>
+                <Sidebar.Item
+                  selected={activeView === 'image'}
+                  onClick={() => setActiveView('image')}
+                >
+                  Image overlay
+                </Sidebar.Item>
+              </Sidebar.Group>
+            </Sidebar>
+          </Split.Pane>
+          <Split.Handle />
+          <Split.Pane>
+            {activeView === 'grid' ? (
+              <GridSettings
+                config={gridConfig}
+                onConfigChange={updateGridConfig}
+              />
+            ) : (
+              <ImageSettings
+                config={imageConfig}
+                onConfigChange={updateImageConfig}
+              />
+            )}
+          </Split.Pane>
+        </Split>
+      </PluginShell.Body>
+    </PluginShell>
   );
 }

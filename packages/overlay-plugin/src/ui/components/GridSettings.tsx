@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { GridConfig } from '../../shared/types';
 import { Grid } from 'lucide-react';
+import { Input, Switch } from '@rozenite/ui';
 import { useThrottledCallback } from '../hooks/useThrottledCallback';
 
 export type GridSettingsProps = {
@@ -35,14 +36,11 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
           <Grid size={18} />
           <span>Grid overlay</span>
         </div>
-        <label className="toggle-switch">
-          <input
-            type="checkbox"
-            checked={config.enabled}
-            onChange={(e) => handleChange({ enabled: e.target.checked })}
-          />
-          <span className="toggle-slider"></span>
-        </label>
+        <Switch
+          aria-label="Enable grid overlay"
+          checked={config.enabled}
+          onCheckedChange={(enabled) => handleChange({ enabled })}
+        />
       </div>
 
       {config.enabled && (
@@ -130,13 +128,13 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
           <div className="control-group">
             <label className="control-label">Color</label>
             <div className="control-row">
-              <input
+              <Input
                 type="color"
                 value={config.color}
                 onChange={(e) => handleChange({ color: e.target.value })}
                 className="input-control"
               />
-              <input
+              <Input
                 type="text"
                 value={config.color}
                 onChange={(e) => handleChange({ color: e.target.value })}
