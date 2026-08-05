@@ -9,13 +9,28 @@ import { NewVersionFooter } from './NewVersionFooter';
 import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
+const COLLAPSED_SIDEBAR_WIDTH = 48;
+const EXPANDED_SIDEBAR_WIDTH = 224;
+const SIDEBAR_SNAP_POINT =
+  (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 2;
+const UPDATE_NOTICE_PREVIEW_MS = 60_000;
 
 export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
   const [selection, setSelection] = useState<ShellSelection>(() =>
     getInitialSelection(plugins),
   );
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showUpdateNoticePreview, setShowUpdateNoticePreview] = useState(true);
   const contentFrame = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => setShowUpdateNoticePreview(false),
+      UPDATE_NOTICE_PREVIEW_MS,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     setSelection((current) => {
@@ -62,6 +77,9 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
   const selectPanel = (plugin: ShellPlugin, panel: ShellPanel) => {
     setSelection({ pluginId: plugin.id, panelId: panel.id });
   };
+  const resizeSidebar = (clientX: number) => {
+    setIsSidebarCollapsed(clientX < SIDEBAR_SNAP_POINT);
+  };
 
   if (!activePlugin || !activePanel) {
     return (
@@ -83,8 +101,8 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
           aria-label="Rozenite panels"
           className={
             isSidebarCollapsed
-              ? 'w-12 shrink-0 gap-0 overflow-hidden p-0'
-              : 'w-56 shrink-0 gap-0 p-0'
+              ? 'w-12 shrink-0 gap-0 overflow-hidden border-r-0 p-0'
+              : 'w-56 shrink-0 gap-0 border-r-0 p-0'
           }
         >
           <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-3">
@@ -144,10 +162,13 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
               </div>
             </div>
           )}
-          {!isSidebarCollapsed && (
-            <NewVersionFooter currentVersion={runtimeVersion} />
-          )}
-          <footer className="mt-auto flex shrink-0 border-t border-sidebar-border p-2">
+          <footer className="mt-auto flex shrink-0 gap-1 border-t border-sidebar-border p-2">
+            {!isSidebarCollapsed && (
+              <NewVersionFooter
+                currentVersion={runtimeVersion}
+                forceDisplay={showUpdateNoticePreview}
+              />
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -161,6 +182,46 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
             </Button>
           </footer>
         </Sidebar>
+        <div
+          aria-label="Resize sidebar"
+          aria-orientation="vertical"
+          aria-valuemax={EXPANDED_SIDEBAR_WIDTH}
+          aria-valuemin={COLLAPSED_SIDEBAR_WIDTH}
+          aria-valuenow={
+            isSidebarCollapsed
+              ? COLLAPSED_SIDEBAR_WIDTH
+              : EXPANDED_SIDEBAR_WIDTH
+          }
+          role="separator"
+          tabIndex={0}
+          className="relative w-px shrink-0 cursor-col-resize bg-sidebar-border outline-none after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:ring-2 focus-visible:ring-ring"
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowLeft') {
+              event.preventDefault();
+              setIsSidebarCollapsed(true);
+            }
+            if (event.key === 'ArrowRight') {
+              event.preventDefault();
+              setIsSidebarCollapsed(false);
+            }
+          }}
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            resizeSidebar(event.clientX);
+          }}
+          onPointerMove={(event) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              resizeSidebar(event.clientX);
+            }
+          }}
+          onPointerUp={(event) => {
+            resizeSidebar(event.clientX);
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerCancel={(event) => {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+        />
         <div className="min-w-0 flex-1">
           <iframe
             key={`${activePlugin.id}:${activePanel.id}`}
