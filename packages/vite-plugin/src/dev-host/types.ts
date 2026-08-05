@@ -54,15 +54,3 @@ export type PluginMessage = {
   type: string;
   payload: unknown;
 };
-
-export type ResizeHandleId =
-  | 'devtools-height'
-  | 'command-width'
-  | 'details-width';
-
-export type ResizeSession = {
-  handleId: ResizeHandleId;
-  pointerId: number;
-  element: HTMLElement;
-  onMove: (event: PointerEvent) => void;
-};

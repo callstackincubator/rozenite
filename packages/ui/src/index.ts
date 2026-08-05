@@ -104,6 +104,9 @@ export type { BadgeProps } from './badge/badge';
 export { Input } from './input/input';
 export type { InputProps } from './input/input';
 
+export { Textarea } from './textarea/textarea';
+export type { TextareaProps } from './textarea/textarea';
+
 export { Switch } from './switch/switch';
 export type { SwitchProps } from './switch/switch';
 

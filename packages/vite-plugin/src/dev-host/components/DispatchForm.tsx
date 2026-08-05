@@ -1,17 +1,12 @@
+import { Button, Input, Select, Tabs, Textarea } from '@rozenite/ui';
+import { RotateCcw, Send } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import type {
   DevHostFlowEntry,
   DevHostFlowRunState,
   DevHostPresetEntry,
 } from '../types.js';
-import { ClearIcon, PresetsIcon, SendIcon } from './icons.js';
 import { FlowList } from './FlowList.js';
-import { DropdownMenu, type DropdownMenuItem } from './ui/DropdownMenu.js';
-import { IconButton } from './ui/IconButton.js';
-import { Input } from './ui/Input.js';
-import { ScrollArea } from './ui/ScrollArea.js';
-import { Textarea } from './ui/Textarea.js';
-import { ToggleGroup } from './ui/ToggleGroup.js';
 
 type DispatchFormProps = {
   commandType: string;
@@ -47,139 +42,114 @@ export const DispatchForm = ({
   onSubmit,
 }: DispatchFormProps) => {
   const [activeTab, setActiveTab] = useState<'dispatch' | 'flows'>('dispatch');
-  const presetItems: DropdownMenuItem<DevHostPresetEntry>[] = presets.map(
-    (preset) => ({
-      id: preset.displayName,
-      label: preset.displayName,
-      item: preset,
-    }),
-  );
-  const presetButton = (
-    <IconButton
-      type="button"
-      variant="default"
-      aria-label={presets.length > 0 ? 'Open presets' : 'No presets available'}
-      title={presets.length > 0 ? 'Presets' : 'No presets available'}
-      disabled={presets.length === 0}
-      overrides={{
-        BaseButton: {
-          style: {
-            borderRadius: '6px',
-            backgroundColor: 'rgba(255, 255, 255, 0.04)',
-            color: 'rgba(255, 255, 255, 0.88)',
-          },
-        },
-      }}
-    >
-      <PresetsIcon />
-    </IconButton>
-  );
 
   return (
-    <div className="rz-pane">
-      <div className="rz-sidebar">
-        <div className="rz-sidebar-header">
-          <div className="rz-sidebar-title">Actions</div>
+    <section className="dev-host-pane">
+      <header className="dev-host-pane-header">
+        <h2 className="dev-host-pane-title">Actions</h2>
+      </header>
+
+      <Tabs
+        className="flex min-h-0 flex-1 flex-col"
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as 'dispatch' | 'flows')}
+      >
+        <div className="dev-host-tabs-header">
+          <Tabs.List aria-label="Action modes">
+            <Tabs.Tab value="dispatch">Dispatch</Tabs.Tab>
+            <Tabs.Tab value="flows">Flows</Tabs.Tab>
+          </Tabs.List>
+
+          {activeTab === 'dispatch' ? (
+            <Select
+              value={null}
+              onValueChange={(value) => {
+                const preset = presets.find((item) => item.name === value);
+                if (preset) {
+                  onApplyPreset(preset);
+                }
+              }}
+            >
+              <Select.Trigger
+                className="w-auto"
+                aria-label={
+                  presets.length > 0 ? 'Open presets' : 'No presets available'
+                }
+                disabled={presets.length === 0}
+                title={presets.length > 0 ? 'Presets' : 'No presets available'}
+              >
+                <Select.Value>Presets</Select.Value>
+              </Select.Trigger>
+              <Select.Content align="end">
+                {presets.map((preset) => (
+                  <Select.Item key={preset.name} value={preset.name}>
+                    {preset.displayName}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select>
+          ) : null}
         </div>
 
-        <ScrollArea className="rz-sidebar-scroll">
-          <div className="rz-action-tabs rz-command-form">
-            <div className="rz-action-tabs-header">
-              <ToggleGroup
-                aria-label="Action modes"
-                value={activeTab}
-                onChange={(value) =>
-                  setActiveTab(value as 'dispatch' | 'flows')
+        <Tabs.Panel value="dispatch" className="dev-host-tab-panel">
+          <form className="dev-host-form" onSubmit={onSubmit}>
+            <label className="dev-host-field">
+              <span className="dev-host-label">Command</span>
+              <Input
+                value={commandType}
+                onChange={(event) =>
+                  onCommandTypeChange(event.currentTarget.value)
                 }
-                options={[
-                  { key: 'dispatch', label: 'Dispatch' },
-                  { key: 'flows', label: 'Flows' },
-                ]}
+                placeholder="get-snapshot"
+                spellCheck={false}
               />
+            </label>
 
-              {activeTab === 'dispatch' ? (
-                presets.length > 0 ? (
-                  <DropdownMenu items={presetItems} onSelect={onApplyPreset}>
-                    {presetButton}
-                  </DropdownMenu>
-                ) : (
-                  presetButton
-                )
-              ) : null}
+            <label className="dev-host-field">
+              <span className="dev-host-label">Payload</span>
+              <Textarea
+                value={commandPayload}
+                onChange={(event) =>
+                  onCommandPayloadChange(event.currentTarget.value)
+                }
+                placeholder='{"example": true}'
+                spellCheck={false}
+              />
+            </label>
+
+            <div className="dev-host-actions">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={onReset}
+                aria-label="Reset dispatcher"
+                title="Reset dispatcher"
+              >
+                <RotateCcw />
+              </Button>
+              <Button
+                type="submit"
+                size="icon"
+                disabled={!canDispatch}
+                aria-label="Dispatch message"
+                title="Dispatch message"
+              >
+                <Send />
+              </Button>
             </div>
+          </form>
+        </Tabs.Panel>
 
-            {activeTab === 'dispatch' ? (
-              <div className="rz-action-tab-panel">
-                <form className="rz-action-form" onSubmit={onSubmit}>
-                  <div className="rz-field">
-                    <label className="rz-label" htmlFor="command-type">
-                      Command
-                    </label>
-                    <Input
-                      id="command-type"
-                      value={commandType}
-                      onChange={(event) =>
-                        onCommandTypeChange(event.currentTarget.value)
-                      }
-                      placeholder="get-snapshot"
-                      spellCheck={false}
-                    />
-                  </div>
-
-                  <div className="rz-field">
-                    <label className="rz-label" htmlFor="command-payload">
-                      Payload
-                    </label>
-                    <Textarea
-                      id="command-payload"
-                      value={commandPayload}
-                      onChange={(event) =>
-                        onCommandPayloadChange(event.currentTarget.value)
-                      }
-                      placeholder='{"example": true}'
-                      spellCheck={false}
-                    />
-                  </div>
-
-                  <div className="rz-button-row">
-                    <IconButton
-                      type="button"
-                      variant="default"
-                      aria-label="Reset dispatcher"
-                      title="Reset dispatcher"
-                      onClick={onReset}
-                    >
-                      <ClearIcon />
-                    </IconButton>
-
-                    <IconButton
-                      type="submit"
-                      variant="primary"
-                      aria-label="Dispatch message"
-                      title="Dispatch message"
-                      disabled={!canDispatch}
-                    >
-                      <SendIcon />
-                    </IconButton>
-                  </div>
-                </form>
-              </div>
-            ) : null}
-
-            {activeTab === 'flows' ? (
-              <div className="rz-action-tab-panel">
-                <FlowList
-                  flows={flows}
-                  flowRuns={flowRuns}
-                  hasRunningFlow={hasRunningFlow}
-                  onRunFlow={onRunFlow}
-                  onStopFlow={onStopFlow}
-                />
-              </div>
-            ) : null}
-          </div>
-        </ScrollArea>
-      </div>
-    </div>
+        <Tabs.Panel value="flows" className="dev-host-tab-panel">
+          <FlowList
+            flows={flows}
+            flowRuns={flowRuns}
+            hasRunningFlow={hasRunningFlow}
+            onRunFlow={onRunFlow}
+            onStopFlow={onStopFlow}
+          />
+        </Tabs.Panel>
+      </Tabs>
+    </section>
   );
 };

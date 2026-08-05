@@ -1,5 +1,5 @@
+import { Select } from '@rozenite/ui';
 import type { DevHostPanelEntry } from '../types.js';
-import { ToggleGroup } from './ui/ToggleGroup.js';
 
 type PanelTabsProps = {
   panels: DevHostPanelEntry[];
@@ -12,15 +12,30 @@ export const PanelTabs = ({
   activeSource,
   onValueChange,
 }: PanelTabsProps) => {
+  if (panels.length === 0) {
+    return null;
+  }
+
+  const activePanel = panels.find((panel) => panel.source === activeSource);
+
   return (
-    <ToggleGroup
-      aria-label="Plugin panels"
+    <Select
       value={activeSource}
-      onChange={onValueChange}
-      options={panels.map((panel) => ({
-        key: panel.source,
-        label: panel.label,
-      }))}
-    />
+      onValueChange={(value) => onValueChange(String(value))}
+    >
+      <Select.Trigger
+        className="dev-host-panel-select"
+        aria-label="Plugin panel"
+      >
+        <Select.Value>{activePanel?.label}</Select.Value>
+      </Select.Trigger>
+      <Select.Content align="end">
+        {panels.map((panel) => (
+          <Select.Item key={panel.source} value={panel.source}>
+            {panel.label}
+          </Select.Item>
+        ))}
+      </Select.Content>
+    </Select>
   );
 };

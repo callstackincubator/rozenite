@@ -46,12 +46,14 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@rozenite/ui": "workspace:*",
     "@microsoft/api-extractor": "^7.50.1",
     "@tailwindcss/vite": "4.2.2",
     "@vitejs/plugin-react": "^4.3.4",
     "ejs": "^3.1.9",
     "vite-plugin-dts": "~4.5.0",
-    "vite-plugin-react-native-web": "^2.1.1"
+    "vite-plugin-react-native-web": "^2.1.1",
+    "lucide-react": "^0.263.1"
   },
   "peerDependencies": {
     "react": "*",
@@ -62,12 +64,8 @@
     "@types/ejs": "^3.1.5",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "baseui": "^16.1.1",
-    "react-json-tree": "^0.20.0",
     "react": "catalog:",
-    "react-dom": "catalog:",
-    "styletron-engine-monolithic": "^1.0.0",
-    "styletron-react": "^6.1.1"
+    "react-dom": "catalog:"
   },
   "engines": {
     "node": ">=20"

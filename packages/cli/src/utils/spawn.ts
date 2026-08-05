@@ -2,13 +2,17 @@ import type { Options, Subprocess } from 'nano-spawn';
 import nanoSpawn, { SubprocessError } from 'nano-spawn';
 import { logger } from './logger.js';
 
-export type SpawnOptions = Options;
+export type SpawnOptions = Options & {
+  /** Let the caller coordinate shutdown for a group of related processes. */
+  handleSignals?: boolean;
+};
 
 export const spawn = (
   file: string,
   args?: readonly string[],
   options?: SpawnOptions,
 ): Subprocess => {
+  const { handleSignals = true, ...nanoSpawnOptions } = options ?? {};
   const defaultStream = logger.isVerbose() ? 'inherit' : 'pipe';
   const defaultOptions: Options = {
     stdin: defaultStream,
@@ -17,9 +21,14 @@ export const spawn = (
     stderr: 'pipe',
   };
   logger.debug(`Running: ${file}`, ...(args ?? []));
-  const childProcess = nanoSpawn(file, args, { ...defaultOptions, ...options });
+  const childProcess = nanoSpawn(file, args, {
+    ...defaultOptions,
+    ...nanoSpawnOptions,
+  });
 
-  setupChildProcessCleanup(childProcess);
+  if (handleSignals) {
+    setupChildProcessCleanup(childProcess);
+  }
   return childProcess;
 };
 

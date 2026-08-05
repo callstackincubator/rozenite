@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
 const HOST_APP_ROOT = fileURLToPath(new URL('./', import.meta.url));
@@ -9,6 +10,7 @@ export default defineConfig({
   root: HOST_APP_ROOT,
   base: './',
   publicDir: false,
+  plugins: [tailwindcss()],
   build: {
     outDir: path.join(PACKAGE_ROOT, 'dist', 'dev-host'),
     emptyOutDir: true,

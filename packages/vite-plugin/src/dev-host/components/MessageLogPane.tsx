@@ -1,96 +1,102 @@
+import { Button, DataTable, ScrollArea } from '@rozenite/ui';
+import { Trash2 } from 'lucide-react';
+import { useMemo } from 'react';
+import type { DataTableColumn } from '@rozenite/ui';
 import type { MessageEntry } from '../types.js';
-import { cn, formatMessageTableDate, formatPayloadPreview } from '../utils.js';
-import { ClearIcon } from './icons.js';
-import { ScrollArea } from './ui/ScrollArea.js';
-import { IconButton } from './ui/IconButton.js';
+import { formatMessageTableDate, formatPayloadPreview } from '../utils.js';
 
 type MessageLogPaneProps = {
   messages: MessageEntry[];
-  selectedMessageId: string | null;
   onSelectMessage: (messageId: string) => void;
   onClearMessages: () => void;
 };
 
 export const MessageLogPane = ({
   messages,
-  selectedMessageId,
   onSelectMessage,
   onClearMessages,
 }: MessageLogPaneProps) => {
-  return (
-    <div className="rz-pane">
-      <div className="rz-log-pane">
-        <div className="rz-sidebar-header">
-          <div className="rz-sidebar-title">Message Log</div>
-          <div className="rz-header-actions">
-            <IconButton
-              type="button"
-              onClick={onClearMessages}
-              disabled={messages.length === 0}
-              aria-label="Clear message log"
-              title="Clear message log"
+  const columns = useMemo<DataTableColumn<MessageEntry>[]>(
+    () => [
+      {
+        accessorKey: 'direction',
+        header: 'Dir',
+        cell: ({ getValue }) => {
+          const direction = getValue<MessageEntry['direction']>();
+          const isSent = direction === 'in';
+
+          return (
+            <span
+              className={
+                isSent ? 'dev-host-direction-in' : 'dev-host-direction-out'
+              }
+              aria-label={isSent ? 'Sent message' : 'Received message'}
+              title={isSent ? 'Sent message' : 'Received message'}
             >
-              <ClearIcon />
-            </IconButton>
-          </div>
-        </div>
+              {isSent ? '↑' : '↓'}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'date',
+        header: 'Date',
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {formatMessageTableDate(row.original.date)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'type',
+        header: 'Type',
+        cell: ({ getValue }) => (
+          <span className="font-medium">{getValue<string>()}</span>
+        ),
+      },
+      {
+        id: 'payload',
+        accessorFn: (message) => formatPayloadPreview(message.payload),
+        header: 'Payload',
+        cell: ({ getValue }) => (
+          <span className="block max-w-160 truncate font-mono text-xs text-muted-foreground">
+            {getValue<string>()}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
 
-        <ScrollArea className="rz-sidebar-scroll">
-          <div className="rz-message-list">
-            <div className="rz-message-list-header">
-              <div className="rz-message-header-cell">Dir</div>
-              <div className="rz-message-header-cell">Date</div>
-              <div className="rz-message-header-cell">Type</div>
-              <div className="rz-message-header-cell">Payload</div>
-            </div>
+  return (
+    <section className="dev-host-pane">
+      <header className="dev-host-pane-header">
+        <h2 className="dev-host-pane-title">Message Log</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClearMessages}
+          disabled={messages.length === 0}
+          aria-label="Clear message log"
+          title="Clear message log"
+        >
+          <Trash2 />
+        </Button>
+      </header>
 
-            {messages.map((message) => (
-              <button
-                key={message.id}
-                type="button"
-                className="rz-message-row"
-                data-selected={message.id === selectedMessageId}
-                onClick={() => onSelectMessage(message.id)}
-              >
-                <div
-                  className={cn(
-                    'rz-message-cell rz-message-direction',
-                    message.direction === 'in'
-                      ? 'rz-message-dir-in'
-                      : 'rz-message-dir-out',
-                  )}
-                  aria-label={
-                    message.direction === 'in'
-                      ? 'Sent message'
-                      : 'Received message'
-                  }
-                  title={
-                    message.direction === 'in'
-                      ? 'Sent message'
-                      : 'Received message'
-                  }
-                >
-                  <span className="rz-message-arrow" aria-hidden="true">
-                    {message.direction === 'in' ? '↑' : '↓'}
-                  </span>
-                </div>
-
-                <div className="rz-message-cell rz-message-date">
-                  {formatMessageTableDate(message.date)}
-                </div>
-
-                <div className="rz-message-cell rz-message-type">
-                  {message.type}
-                </div>
-
-                <pre className="rz-message-cell rz-message-preview">
-                  {formatPayloadPreview(message.payload)}
-                </pre>
-              </button>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
-    </div>
+      <ScrollArea
+        className="dev-host-scroll"
+        viewportClassName="dev-host-scroll-viewport"
+      >
+        <DataTable
+          className="dev-host-message-table"
+          columns={columns}
+          data={messages}
+          emptyMessage="No messages yet."
+          getRowId={(message) => message.id}
+          onRowClick={(message) => onSelectMessage(message.id)}
+        />
+      </ScrollArea>
+    </section>
   );
 };
