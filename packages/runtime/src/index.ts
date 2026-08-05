@@ -35,9 +35,9 @@ const main = async (): Promise<void> => {
   console.groupEnd();
 
   const { pluginDisplay = 'sidebar' } = getGlobalNamespace();
-  addWelcomeView();
 
   if (pluginDisplay === 'tabs') {
+    addWelcomeView();
     await Promise.all(plugins.map((plugin) => loadPlugin(plugin)));
     await setupDevMode();
   } else {
@@ -55,9 +55,15 @@ const main = async (): Promise<void> => {
     const shellUrl = new URL(location.href);
     shellUrl.search = '';
     shellUrl.pathname = '/rozenite/shell/index.html';
-    createPanel('@rozenite/shell', 'Rozenite', shellUrl.toString(), {
-      plugins: loadedPlugins,
-    });
+    createPanel(
+      '@rozenite/shell',
+      'Rozenite',
+      shellUrl.toString(),
+      {
+        plugins: loadedPlugins,
+      },
+      true,
+    );
   }
 
   trackPanelSelection();

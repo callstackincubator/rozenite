@@ -17,6 +17,7 @@ export const createPanel = (
   name: string,
   url: string,
   shellConfiguration?: unknown,
+  insertAtStart = false,
 ) => {
   try {
     const pluginIdKebab = toExtendedKebabCase(pluginId);
@@ -36,6 +37,18 @@ export const createPanel = (
     );
 
     UI.InspectorView.InspectorView.instance().addPanel(panelView);
+
+    if (insertAtStart) {
+      const tabbedPane = UI.InspectorView.InspectorView.instance().tabbedPane;
+      const panelViewTab = tabbedPane.tabsById.get(panelId);
+
+      if (!panelViewTab) {
+        throw new Error(`Panel view tab not found: ${panelId}`);
+      }
+
+      tabbedPane.insertBefore(panelViewTab, 0);
+      tabbedPane.selectTab(panelViewTab.id);
+    }
   } catch (err) {
     console.error(err);
     throw err;
