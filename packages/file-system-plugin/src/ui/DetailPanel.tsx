@@ -26,6 +26,7 @@ type DetailPanelProps = {
   requestImagePreview: FileSystemRequests['requestImagePreview'];
   requestTextPreview: FileSystemRequests['requestTextPreview'];
   onExport: (entry: FsEntry) => void;
+  onRevealInFileManager: (entry: FsEntry) => void;
 };
 
 export function DetailPanel({
@@ -35,6 +36,7 @@ export function DetailPanel({
   requestImagePreview,
   requestTextPreview,
   onExport,
+  onRevealInFileManager,
 }: DetailPanelProps) {
   const [imagePreviewUri, setImagePreviewUri] = useState<string | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState<string | null>(
@@ -121,22 +123,35 @@ export function DetailPanel({
           <Text style={styles.detailName} numberOfLines={2}>
             {selected.name}
           </Text>
-          <Pressable
-            style={(state: WebPressableState) => [
-              styles.exportButton,
-              state.hovered &&
-                canExport &&
-                !exportLoading &&
-                styles.exportButtonHovered,
-              (!canExport || exportLoading) && styles.exportButtonDisabled,
-            ]}
-            onPress={() => onExport(selected)}
-            disabled={!canExport || exportLoading}
-          >
-            <Text style={styles.exportButtonText}>
-              {exportLoading ? 'Exporting…' : 'Export'}
-            </Text>
-          </Pressable>
+          <View style={styles.buttonRow}>
+            <Pressable
+              style={(state: WebPressableState) => [
+                styles.revealButton,
+                state.hovered && styles.revealButtonHovered,
+              ]}
+              onPress={() => onRevealInFileManager(selected)}
+            >
+              <Text style={styles.revealButtonText}>Open in File Manager</Text>
+            </Pressable>
+
+            {canExport && (
+              <Pressable
+                style={(state: WebPressableState) => [
+                  styles.exportButton,
+                  state.hovered &&
+                    !exportLoading &&
+                    styles.exportButtonHovered,
+                  exportLoading && styles.exportButtonDisabled,
+                ]}
+                onPress={() => onExport(selected)}
+                disabled={exportLoading}
+              >
+                <Text style={styles.exportButtonText}>
+                  {exportLoading ? 'Exporting…' : 'Export'}
+                </Text>
+              </Pressable>
+            )}
+          </View>
           <PathDisplay path={selected.path} />
           <View style={styles.detailGrid}>
             <DetailLine
@@ -236,6 +251,29 @@ const styles = StyleSheet.create({
   detailName: {
     color: '#f2f2f2',
     fontSize: 13,
+    fontWeight: '700',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  revealButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: '#1b1c25',
+    borderWidth: 1,
+    borderColor: '#2a2b37',
+  },
+  revealButtonHovered: {
+    backgroundColor: '#252633',
+  },
+  revealButtonText: {
+    color: '#e9e9ee',
+    fontSize: 12,
     fontWeight: '700',
   },
   exportButton: {

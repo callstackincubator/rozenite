@@ -105,4 +105,11 @@ export type FileSystemEventMap = {
     overwriteRequired?: boolean;
     error?: string;
   };
+
+  "fs:reveal-in-file-manager": { requestId: string; path: string };
+  "fs:reveal-in-file-manager:result": {
+    requestId: string;
+    path: string;
+    error?: string;
+  };
 };

@@ -33,22 +33,62 @@ export default function FileSystemPanel() {
   const [importLoading, setImportLoading] = useState(false);
   const [exportPath, setExportPath] = useState<string | null>(null);
   const [transferError, setTransferError] = useState<string | null>(null);
+  const [revealStatus, setRevealStatus] = useState<string | null>(null);
 
-  // Clear selection when the directory changes (preserves original loadDir behavior)
+  // Clear selection when the directory changes, except when entering the currently selected directory
   useEffect(() => {
-    setSelected(null);
+    if (selected && selected.path !== nav.currentPath) {
+      setSelected(null);
+    }
   }, [nav.currentPath]);
 
   const onSelectEntry = useCallback(
     (entry: FsEntry) => {
-      if (entry.isDirectory) {
-        setSelected(null);
-        nav.setCurrentPath(entry.path);
-        return;
-      }
       setSelected(entry);
+      if (entry.isDirectory) {
+        nav.setCurrentPath(entry.path);
+      }
     },
     [nav.setCurrentPath],
+  );
+
+  const onRevealInFileManager = useCallback(
+    async (entry: FsEntry) => {
+      setRevealStatus('Opening in file manager…');
+
+      const triggerDeviceFallback = async () => {
+        const res = await requests.requestRevealInFileManager(entry.path);
+        if (res?.error) {
+          throw new Error(res.error);
+        }
+      };
+
+      try {
+        const response = await fetch('/rozenite/open-in-file-manager', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ path: entry.path }),
+        });
+
+        if (!response.ok) {
+          await triggerDeviceFallback();
+        }
+        setRevealStatus('✓ Revealed in file manager');
+      } catch (e) {
+        try {
+          await triggerDeviceFallback();
+          setRevealStatus('✓ Revealed in file manager');
+        } catch (fallbackErr) {
+          setRevealStatus(
+            `⚠ ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`,
+          );
+        }
+      }
+      setTimeout(() => setRevealStatus(null), 3000);
+    },
+    [requests],
   );
 
   const renderItem = useCallback(
@@ -250,6 +290,12 @@ export default function FileSystemPanel() {
             contentContainerStyle={styles.listContent}
             renderItem={renderItem}
           />
+
+          {revealStatus ? (
+            <View style={styles.revealToast}>
+              <Text style={styles.revealToastText}>{revealStatus}</Text>
+            </View>
+          ) : null}
         </View>
 
         <DetailPanel
@@ -263,6 +309,7 @@ export default function FileSystemPanel() {
           requestImagePreview={requests.requestImagePreview}
           requestTextPreview={requests.requestTextPreview}
           onExport={onExport}
+          onRevealInFileManager={onRevealInFileManager}
         />
       </View>
     </SafeAreaView>
@@ -336,5 +383,23 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#ffb3c1',
     fontSize: 12,
+  },
+  revealToast: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    right: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: 'rgba(130, 50, 255, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(130, 50, 255, 0.35)',
+  },
+  revealToastText: {
+    color: '#d4b8ff',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
