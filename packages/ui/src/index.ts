@@ -5,6 +5,7 @@ export type {
   SplitDirection,
   SplitProps,
   SplitPaneProps,
+  SplitPaneHandle,
   SplitHandleProps,
 } from './split/split';
 

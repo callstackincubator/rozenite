@@ -1,5 +1,11 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Group, Panel, Separator } from 'react-resizable-panels';
+import {
+  Group,
+  Panel,
+  Separator,
+  type PanelImperativeHandle,
+  type PanelProps,
+} from 'react-resizable-panels';
 import { GripVertical } from 'lucide-react';
 import { cn } from '../utils/cn';
 
@@ -14,6 +20,8 @@ export type SplitProps = {
   disabled?: boolean;
   /** Layout axis of the group. */
   direction?: SplitDirection;
+  /** Disables the library's global cursor treatment during resize interactions. */
+  disableCursor?: boolean;
   /**
    * Stable id used to key persisted layouts in a future release. Accepted
    * today for API stability, but layout persistence is not wired up yet.
@@ -26,6 +34,7 @@ function SplitRoot({
   autoSaveId,
   id,
   className,
+  disableCursor,
   ...props
 }: SplitProps) {
   return (
@@ -36,6 +45,7 @@ function SplitRoot({
       // group for now, falling back to it as a stable `id` when one isn't
       // given explicitly.
       id={id ?? autoSaveId}
+      disableCursor={disableCursor}
       className={cn('flex h-full w-full', className)}
       {...props}
     />
@@ -55,7 +65,11 @@ export type SplitPaneProps = {
   /** Whether the pane can be collapsed down to `collapsedSize`. */
   collapsible?: boolean;
   collapsedSize?: number | string;
+  onResize?: PanelProps['onResize'];
+  panelRef?: PanelProps['panelRef'];
 };
+
+export type SplitPaneHandle = PanelImperativeHandle;
 
 // react-resizable-panels v4 treats a bare number as pixels and a unitless
 // string as a percentage. Split.Pane's contract is the opposite — a bare
