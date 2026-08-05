@@ -5,28 +5,17 @@ import {
   ConfirmDialog,
   DataTable,
   DataTableEditableCell,
-  Dialog,
   EmptyState,
-  JsonInspector,
   PluginHeader,
   PluginShell,
   SearchField,
   Sidebar,
   Split,
   Toolbar,
-  cn,
   type DataTableColumn,
 } from '@rozenite/ui';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Database,
-  Download,
-  Edit3,
-  Info,
-  Plus,
-  Trash2,
-  Upload,
-} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Database, Download, Edit3, Plus, Trash2, Upload } from 'lucide-react';
 import type {
   StorageDeleteEntryEvent,
   StorageEventMap,
@@ -53,8 +42,9 @@ import {
 } from './storage-groups';
 import { AddEntryDialog } from './add-entry-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
+import { EntryDetailDialog } from './entry-detail-dialog';
 import { ImportDialog, type ImportFlightState } from './import-dialog';
-import { bytesToHexdump, compactBufferPreview } from './binary';
+import { formatValue } from './format-value';
 import { buildExportFilename, downloadJson } from './utils';
 import './globals.css';
 
@@ -95,35 +85,6 @@ const getEntryTypeFromValue = (
   }
 
   return 'buffer';
-};
-
-const formatValue = (entry: StorageEntry) => {
-  if (entry.type === 'string') {
-    return <span className="font-mono text-foreground">"{entry.value}"</span>;
-  }
-
-  if (entry.type === 'number') {
-    return <span className="font-mono text-foreground">{entry.value}</span>;
-  }
-
-  if (entry.type === 'boolean') {
-    return (
-      <span
-        className={cn(
-          'font-mono',
-          entry.value ? 'text-primary' : 'text-destructive',
-        )}
-      >
-        {entry.value ? 'true' : 'false'}
-      </span>
-    );
-  }
-
-  return (
-    <span className="font-mono text-muted-foreground">
-      {compactBufferPreview(entry.value)}
-    </span>
-  );
 };
 
 export default function StoragePanel() {
@@ -341,62 +302,68 @@ export default function StoragePanel() {
     return buildStorageSidebarGroups(summary);
   }, [snapshots]);
 
-  const updateEntriesForSelectedStorage = (
-    mutate: (entries: StorageEntry[]) => StorageEntry[],
-  ) => {
-    if (!selectedStorageViewId) {
-      return;
-    }
-
-    setSnapshots((previous) => {
-      const next = new Map(previous);
-      const current = next.get(selectedStorageViewId);
-
-      if (!current) {
-        return previous;
+  const updateEntriesForSelectedStorage = useCallback(
+    (mutate: (entries: StorageEntry[]) => StorageEntry[]) => {
+      if (!selectedStorageViewId) {
+        return;
       }
 
-      next.set(selectedStorageViewId, {
-        ...current,
-        entries: mutate(current.entries),
+      setSnapshots((previous) => {
+        const next = new Map(previous);
+        const current = next.get(selectedStorageViewId);
+
+        if (!current) {
+          return previous;
+        }
+
+        next.set(selectedStorageViewId, {
+          ...current,
+          entries: mutate(current.entries),
+        });
+
+        return next;
+      });
+    },
+    [selectedStorageViewId],
+  );
+
+  const handleValueChange = useCallback(
+    (key: string, newValue: StorageEntryValue) => {
+      if (!client || !selectedStorage) {
+        return;
+      }
+
+      const type = getEntryTypeFromValue(newValue);
+
+      if (!selectedStorage.capabilities.supportedTypes.includes(type)) {
+        return;
+      }
+
+      let updatedEntry: StorageEntry;
+      if (type === 'string') {
+        updatedEntry = { key, type: 'string', value: newValue as string };
+      } else if (type === 'number') {
+        updatedEntry = { key, type: 'number', value: newValue as number };
+      } else if (type === 'boolean') {
+        updatedEntry = { key, type: 'boolean', value: newValue as boolean };
+      } else {
+        updatedEntry = { key, type: 'buffer', value: newValue as number[] };
+      }
+
+      client.send('set-entry', {
+        type: 'set-entry',
+        target: selectedStorage.target,
+        entry: updatedEntry,
       });
 
-      return next;
-    });
-  };
-
-  const handleValueChange = (key: string, newValue: StorageEntryValue) => {
-    if (!client || !selectedStorage) {
-      return;
-    }
-
-    const type = getEntryTypeFromValue(newValue);
-
-    if (!selectedStorage.capabilities.supportedTypes.includes(type)) {
-      return;
-    }
-
-    let updatedEntry: StorageEntry;
-    if (type === 'string') {
-      updatedEntry = { key, type: 'string', value: newValue as string };
-    } else if (type === 'number') {
-      updatedEntry = { key, type: 'number', value: newValue as number };
-    } else if (type === 'boolean') {
-      updatedEntry = { key, type: 'boolean', value: newValue as boolean };
-    } else {
-      updatedEntry = { key, type: 'buffer', value: newValue as number[] };
-    }
-
-    client.send('set-entry', {
-      type: 'set-entry',
-      target: selectedStorage.target,
-      entry: updatedEntry,
-    });
-
-    updateEntriesForSelectedStorage((currentEntries) =>
-      currentEntries.map((entry) => (entry.key === key ? updatedEntry : entry)),
-    );
-  };
+      updateEntriesForSelectedStorage((currentEntries) =>
+        currentEntries.map((entry) =>
+          entry.key === key ? updatedEntry : entry,
+        ),
+      );
+    },
+    [client, selectedStorage, updateEntriesForSelectedStorage],
+  );
 
   const handleDeleteEntry = (key: string) => {
     if (!client || !selectedStorage) {
@@ -551,32 +518,36 @@ export default function StoragePanel() {
         cell: ({ row }) => {
           const entry = row.original;
           return (
-            <div
-              className="flex items-center gap-2"
-              onClick={(event) => event.stopPropagation()}
-            >
+            <div className="flex items-center gap-2">
               {entry.type === 'string' ? (
-                <DataTableEditableCell
-                  value={entry.value}
-                  onCommit={(next) => handleValueChange(entry.key, next)}
-                  className="min-w-0 flex-1 font-mono"
-                />
+                <span
+                  className="min-w-0 flex-1"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <DataTableEditableCell
+                    value={entry.value}
+                    onCommit={(next) => handleValueChange(entry.key, next)}
+                    className="font-mono"
+                  />
+                </span>
               ) : (
                 <span className="min-w-0 flex-1 truncate">
                   {formatValue(entry)}
                 </span>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setEditingEntry(entry);
-                  setShowEditDialog(true);
-                }}
-                aria-label={`Edit value for ${entry.key}`}
-              >
-                <Edit3 className="h-3.5 w-3.5" />
-              </Button>
+              <span onClick={(event) => event.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setEditingEntry(entry);
+                    setShowEditDialog(true);
+                  }}
+                  aria-label={`Edit value for ${entry.key}`}
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                </Button>
+              </span>
             </div>
           );
         },
@@ -600,7 +571,7 @@ export default function StoragePanel() {
         ),
       },
     ],
-    [],
+    [handleValueChange],
   );
 
   return (
@@ -805,110 +776,3 @@ export default function StoragePanel() {
     </PluginShell>
   );
 }
-
-type EntryDetailDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onEdit?: (entry: StorageEntry) => void;
-  entry: StorageEntry | null;
-};
-
-const jsonSafeParse = (
-  value: string,
-): Record<string, unknown> | unknown[] | null => {
-  try {
-    const parsed = JSON.parse(value) as unknown;
-
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-
-    if (parsed && typeof parsed === 'object') {
-      return parsed as Record<string, unknown>;
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-};
-
-const EntryDetailDialog = ({
-  open,
-  onOpenChange,
-  onEdit,
-  entry,
-}: EntryDetailDialogProps) => {
-  const isStringValue = entry?.type === 'string';
-  const stringValue = isStringValue ? entry.value : '';
-  const jsonValue = useMemo(
-    () => (isStringValue ? jsonSafeParse(stringValue) : null),
-    [isStringValue, stringValue],
-  );
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content className="max-w-2xl">
-        <Dialog.Header>
-          <div className="flex items-center gap-2">
-            <Info className="h-4 w-4 text-muted-foreground" />
-            <Dialog.Title>Entry Details</Dialog.Title>
-          </div>
-        </Dialog.Header>
-
-        {entry && (
-          <div className="flex max-h-[70vh] flex-col gap-4 overflow-auto">
-            <div>
-              <div className="mb-1 text-sm font-medium text-foreground">
-                Key
-              </div>
-              <div className="w-full break-all rounded-md border border-input bg-muted px-3 py-2 font-mono text-sm text-foreground">
-                {entry.key}
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-1 text-sm font-medium text-foreground">
-                Type
-              </div>
-              <Badge variant="outline">{entry.type}</Badge>
-            </div>
-
-            <div className="flex min-h-0 flex-1 flex-col">
-              <div className="mb-1 text-sm font-medium text-foreground">
-                Value
-              </div>
-              <div className="max-h-96 overflow-auto rounded-md border border-input bg-muted p-3">
-                {jsonValue ? (
-                  <JsonInspector data={jsonValue} />
-                ) : entry.type === 'buffer' ? (
-                  <div className="flex flex-col gap-2">
-                    <div className="text-xs text-muted-foreground">
-                      {entry.value.length}{' '}
-                      {entry.value.length === 1 ? 'byte' : 'bytes'}
-                    </div>
-                    <pre className="overflow-auto whitespace-pre font-mono text-xs leading-snug text-foreground">
-                      {bytesToHexdump(entry.value)}
-                    </pre>
-                  </div>
-                ) : (
-                  <div className="text-sm">{formatValue(entry)}</div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <Dialog.Footer>
-          {entry && onEdit && (
-            <Button variant="outline" onClick={() => onEdit(entry)}>
-              <Edit3 className="h-3.5 w-3.5" />
-              Edit
-            </Button>
-          )}
-          <Dialog.Close render={<Button />}>Close</Dialog.Close>
-        </Dialog.Footer>
-      </Dialog.Content>
-    </Dialog>
-  );
-};
