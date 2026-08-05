@@ -79,7 +79,7 @@ export function Shell({ plugins }: ShellConfiguration) {
           aria-label="Rozenite panels"
           className="w-56 shrink-0 gap-0 p-0"
         >
-          <header className="shrink-0 border-b border-sidebar-border px-3 py-3">
+          <header className="sticky top-0 z-10 shrink-0 border-b border-sidebar-border bg-sidebar px-3 py-3">
             <img
               src={lightLogo}
               alt="Rozenite"
