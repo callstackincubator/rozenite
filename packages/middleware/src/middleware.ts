@@ -46,6 +46,10 @@ export const getMiddleware = (
     require.resolve('@rozenite/runtime'),
     '..',
   );
+  const shellPath = path.join(
+    path.dirname(require.resolve('@rozenite/shell/package.json')),
+    'dist',
+  );
 
   logger.debug(`Debugger frontend path: ${debuggerFrontend}`);
   logger.debug(`Framework path: ${frameworkPath}`);
@@ -88,6 +92,7 @@ export const getMiddleware = (
         debuggerFrontend,
         installedPlugins.map((plugin) => plugin.name),
         destroyOnDetachPlugins,
+        options.pluginDisplay ?? 'sidebar',
       ),
     );
   });
@@ -96,6 +101,8 @@ export const getMiddleware = (
     res.setHeader('Content-Type', 'application/javascript');
     res.end(fs.readFileSync(path.join(frameworkPath, 'host.js'), 'utf8'));
   });
+
+  app.use('/shell', express.static(shellPath));
 
   app.use(createAgentRoutes(agentSessionManager));
 

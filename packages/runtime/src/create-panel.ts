@@ -12,7 +12,13 @@ const toExtendedKebabCase = (input: string): string => {
     .replace(/^\.+|\.+$/g, '');
 };
 
-export const createPanel = (pluginId: string, name: string, url: string) => {
+export const createPanel = (
+  pluginId: string,
+  name: string,
+  url: string,
+  shellConfiguration?: unknown,
+  insertAtStart = false,
+) => {
   try {
     const pluginIdKebab = toExtendedKebabCase(pluginId);
     const nameKebab = toExtendedKebabCase(name);
@@ -22,9 +28,27 @@ export const createPanel = (pluginId: string, name: string, url: string) => {
       return;
     }
 
-    const panelView = getPluginView(pluginId, panelId, name, url);
+    const panelView = getPluginView(
+      pluginId,
+      panelId,
+      name,
+      url,
+      shellConfiguration,
+    );
 
     UI.InspectorView.InspectorView.instance().addPanel(panelView);
+
+    if (insertAtStart) {
+      const tabbedPane = UI.InspectorView.InspectorView.instance().tabbedPane;
+      const panelViewTab = tabbedPane.tabsById.get(panelId);
+
+      if (!panelViewTab) {
+        throw new Error(`Panel view tab not found: ${panelId}`);
+      }
+
+      tabbedPane.insertBefore(panelViewTab, 0);
+      tabbedPane.selectTab(panelViewTab.id);
+    }
   } catch (err) {
     console.error(err);
     throw err;

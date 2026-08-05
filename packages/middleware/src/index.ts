@@ -5,7 +5,7 @@ import { logger } from './logger.js';
 import { getPackageJSON } from './package-json.js';
 import { getInstalledPlugins } from './auto-discovery.js';
 import { createScopedMiddleware } from './scoped-middleware.js';
-import type { RozeniteConfig } from './config.js';
+import type { RozeniteConfig, RozenitePluginDisplay } from './config.js';
 import { getDevModePackage } from './dev-mode.js';
 import { verifyReactNativeVersion } from './verify-react-native-version.js';
 import { getReactNativePackagePath } from './resolve.js';
@@ -82,4 +82,4 @@ export const initializeRozenite = (
   };
 };
 
-export type { RozeniteConfig };
+export type { RozeniteConfig, RozenitePluginDisplay };

@@ -1,29 +1,19 @@
-import { getManifest } from './manifest';
-import { loadPluginFromUrl } from './plugin-loader';
+import { loadPluginFromUrl, type LoadedPlugin } from './plugin-loader';
 
 /** Must match `config.server.port` in `packages/vite-plugin` (`rozeniteClientPlugin`). */
 const DEV_SERVER_URL = 'http://localhost:8888';
 
-const isDevServerAvailable = async (): Promise<boolean> => {
+export const setupDevMode = async (): Promise<LoadedPlugin | null> => {
   try {
-    await getManifest(DEV_SERVER_URL);
-    return true;
+    const plugin = await loadPluginFromUrl(DEV_SERVER_URL);
+
+    console.group('🔧 Rozenite Dev Mode');
+    console.log('We detected that you are developing a plugin.');
+    console.log('This plugin will be automatically loaded with hot reload.');
+    console.groupEnd();
+
+    return plugin;
   } catch {
-    return false;
+    return null;
   }
-};
-
-export const setupDevMode = async (): Promise<void> => {
-  const isAvailable = await isDevServerAvailable();
-
-  if (!isAvailable) {
-    return;
-  }
-
-  console.group('🔧 Rozenite Dev Mode');
-  console.log('We detected that you are developing a plugin.');
-  console.log('This plugin will be automatically loaded with hot reload.');
-  console.groupEnd();
-
-  await loadPluginFromUrl(DEV_SERVER_URL);
 };

@@ -31,6 +31,7 @@ const appendScripts = (
   nonce: string,
   installedPlugins: string[],
   destroyOnDetachPlugins: string[],
+  pluginDisplay: 'tabs' | 'sidebar',
 ): string => {
   const bodyTagRegex = /<body[^>]*>/;
   const bodyMatch = html.match(bodyTagRegex);
@@ -41,6 +42,7 @@ const appendScripts = (
       var __ROZENITE__ = {
         installedPlugins: ${JSON.stringify(installedPlugins)},
         destroyOnDetachPlugins: ${JSON.stringify(destroyOnDetachPlugins)},
+        pluginDisplay: ${JSON.stringify(pluginDisplay)},
       };
     </script>
   `;
@@ -63,6 +65,7 @@ export const getEntryPointHTML = (
   rnDevToolsFrontendPath: string,
   installedPlugins: string[],
   destroyOnDetachPlugins: string[],
+  pluginDisplay: 'tabs' | 'sidebar' = 'sidebar',
 ): string => {
   const nonce = crypto.randomUUID();
   const originalEntryPoint = fs.readFileSync(
@@ -75,5 +78,6 @@ export const getEntryPointHTML = (
     nonce,
     installedPlugins,
     destroyOnDetachPlugins,
+    pluginDisplay,
   );
 };
