@@ -24,7 +24,8 @@
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
-    "@rozenite/plugin-bridge": "workspace:*"
+    "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/ui": "workspace:*"
   },
   "devDependencies": {
     "@codemirror/commands": "^6.10.3",
@@ -36,7 +37,6 @@
     "lucide-react": "^0.263.1",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-json-tree": "^0.20.0",
     "react-native": "catalog:",
     "react-native-mmkv": "^3.3.0",
     "react-native-mmkv-v3": "npm:react-native-mmkv@^3.0.0",

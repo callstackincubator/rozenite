@@ -1,6 +1,32 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DataTableEditableCell,
+  Dialog,
+  EmptyState,
+  JsonInspector,
+  PluginHeader,
+  PluginShell,
+  SearchField,
+  Sidebar,
+  Split,
+  Toolbar,
+  cn,
+  type DataTableColumn,
+} from '@rozenite/ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, Plus, Search, Upload } from 'lucide-react';
+import {
+  Database,
+  Download,
+  Edit3,
+  Info,
+  Plus,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import type {
   StorageDeleteEntryEvent,
   StorageEventMap,
@@ -20,12 +46,15 @@ import {
   computePreview,
   parseSnapshot,
 } from '../shared/snapshot';
-import { EditableTable } from './editable-table';
+import {
+  buildStorageSidebarGroups,
+  parseStorageViewId,
+  type StorageSnapshotEntry,
+} from './storage-groups';
 import { AddEntryDialog } from './add-entry-dialog';
-import { EntryDetailDialog } from './entry-detail-dialog';
 import { EditEntryDialog } from './edit-entry-dialog';
-import { ConfirmDialog } from './confirm-dialog';
 import { ImportDialog, type ImportFlightState } from './import-dialog';
+import { bytesToHexdump, compactBufferPreview } from './binary';
 import { buildExportFilename, downloadJson } from './utils';
 import './globals.css';
 
@@ -39,9 +68,12 @@ type StorageSnapshotState = {
 };
 
 type AlertState = {
-  isOpen: boolean;
   title: string;
   message: string;
+};
+
+type DeleteConfirmState = {
+  key: string;
 };
 
 const sameTarget = (a: StorageTarget, b: StorageTarget) =>
@@ -65,6 +97,35 @@ const getEntryTypeFromValue = (
   return 'buffer';
 };
 
+const formatValue = (entry: StorageEntry) => {
+  if (entry.type === 'string') {
+    return <span className="font-mono text-foreground">"{entry.value}"</span>;
+  }
+
+  if (entry.type === 'number') {
+    return <span className="font-mono text-foreground">{entry.value}</span>;
+  }
+
+  if (entry.type === 'boolean') {
+    return (
+      <span
+        className={cn(
+          'font-mono',
+          entry.value ? 'text-primary' : 'text-destructive',
+        )}
+      >
+        {entry.value ? 'true' : 'false'}
+      </span>
+    );
+  }
+
+  return (
+    <span className="font-mono text-muted-foreground">
+      {compactBufferPreview(entry.value)}
+    </span>
+  );
+};
+
 export default function StoragePanel() {
   const [snapshots, setSnapshots] = useState<Map<string, StorageSnapshotState>>(
     new Map(),
@@ -82,11 +143,10 @@ export default function StoragePanel() {
   const [importFlight, setImportFlight] = useState<ImportFlightState | null>(
     null,
   );
-  const [alertState, setAlertState] = useState<AlertState>({
-    isOpen: false,
-    title: '',
-    message: '',
-  });
+  const [alertState, setAlertState] = useState<AlertState | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const client = useRozeniteDevToolsClient<StorageEventMap>({
@@ -236,8 +296,8 @@ export default function StoragePanel() {
       return;
     }
 
-    const separatorIndex = selectedStorageViewId.indexOf(':');
-    if (separatorIndex < 0) {
+    const target = parseStorageViewId(selectedStorageViewId);
+    if (!target) {
       console.warn(
         `[Rozenite] Storage Plugin: Invalid storage view id "${selectedStorageViewId}".`,
       );
@@ -245,16 +305,10 @@ export default function StoragePanel() {
       return;
     }
 
-    const adapterId = selectedStorageViewId.slice(0, separatorIndex);
-    const storageId = selectedStorageViewId.slice(separatorIndex + 1);
-
     setLoading(true);
     client.send('get-snapshot', {
       type: 'get-snapshot',
-      target: {
-        adapterId,
-        storageId,
-      },
+      target,
     });
   }, [client, selectedStorageViewId, snapshots]);
 
@@ -273,6 +327,19 @@ export default function StoragePanel() {
   );
 
   const supportedTypes = selectedStorage?.capabilities.supportedTypes ?? [];
+
+  const sidebarGroups = useMemo(() => {
+    const summary = new Map<string, StorageSnapshotEntry>();
+    for (const [viewId, snapshot] of snapshots) {
+      summary.set(viewId, {
+        target: snapshot.target,
+        adapterName: snapshot.adapterName,
+        storageName: snapshot.storageName,
+        entryCount: snapshot.entries.length,
+      });
+    }
+    return buildStorageSidebarGroups(summary);
+  }, [snapshots]);
 
   const updateEntriesForSelectedStorage = (
     mutate: (entries: StorageEntry[]) => StorageEntry[],
@@ -365,7 +432,7 @@ export default function StoragePanel() {
   };
 
   const showAlert = (title: string, message: string) =>
-    setAlertState({ isOpen: true, title, message });
+    setAlertState({ title, message });
 
   const handleImportClick = () => {
     if (!fileInputRef.current) return;
@@ -459,131 +526,209 @@ export default function StoragePanel() {
     downloadJson(snapshot, buildExportFilename(selectedStorage.target));
   };
 
-  const storageOptions = [...snapshots.entries()].map(([viewId, snapshot]) => ({
-    viewId,
-    label: `${snapshot.adapterName} / ${snapshot.storageName}`,
-  }));
+  const columns = useMemo<DataTableColumn<StorageEntry>[]>(
+    () => [
+      {
+        accessorKey: 'key',
+        header: 'Key',
+        cell: ({ getValue }) => (
+          <span className="font-mono text-sm text-foreground">
+            {getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'type',
+        header: 'Type',
+        cell: ({ getValue }) => (
+          <Badge variant="outline">{getValue<string>()}</Badge>
+        ),
+      },
+      {
+        id: 'value',
+        header: 'Value',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const entry = row.original;
+          return (
+            <div
+              className="flex items-center gap-2"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {entry.type === 'string' ? (
+                <DataTableEditableCell
+                  value={entry.value}
+                  onCommit={(next) => handleValueChange(entry.key, next)}
+                  className="min-w-0 flex-1 font-mono"
+                />
+              ) : (
+                <span className="min-w-0 flex-1 truncate">
+                  {formatValue(entry)}
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setEditingEntry(entry);
+                  setShowEditDialog(true);
+                }}
+                aria-label={`Edit value for ${entry.key}`}
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div onClick={(event) => event.stopPropagation()}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => setDeleteConfirm({ key: row.original.key })}
+              aria-label={`Delete entry ${row.original.key}`}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
-      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-200">Storage</span>
-        </div>
-        <div className="flex-1" />
-        <div className="flex items-center gap-2">
-          <label htmlFor="storage-select" className="text-xs text-gray-400">
-            Storage:
-          </label>
-          <select
-            id="storage-select"
-            value={selectedStorageViewId ?? ''}
-            onChange={(event) => setSelectedStorageViewId(event.target.value)}
-            disabled={snapshots.size === 0}
-            className="h-8 px-2 text-xs bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {snapshots.size === 0 ? (
-              <option>No storages found</option>
-            ) : (
-              storageOptions.map((option) => (
-                <option key={option.viewId} value={option.viewId}>
-                  {option.label}
-                </option>
-              ))
-            )}
-          </select>
-        </div>
-      </div>
+    <PluginShell>
+      <PluginHeader>
+        <PluginHeader.Title>Storage</PluginHeader.Title>
+        <PluginHeader.Actions>
+          <PluginHeader.ThemeSwitcher />
+        </PluginHeader.Actions>
+      </PluginHeader>
 
-      <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
-        <button
-          onClick={() => setShowAddDialog(true)}
-          disabled={!selectedStorage}
-          className="flex items-center gap-1 px-3 h-8 text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
-          title="Add new entry"
-        >
-          <Plus className="h-3 w-3" />
-          Add Entry
-        </button>
-        <button
-          onClick={handleImportClick}
-          disabled={!selectedStorage}
-          className="flex items-center gap-1 px-3 h-8 text-xs bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-gray-100 rounded transition-colors"
-          title="Import entries from a JSON snapshot"
-        >
-          <Upload className="h-3 w-3" />
-          Import
-        </button>
-        <button
-          onClick={handleExport}
-          disabled={!selectedStorage || entries.length === 0}
-          className="flex items-center gap-1 px-3 h-8 text-xs bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-gray-100 rounded transition-colors"
-          title="Export entries to a JSON snapshot"
-        >
-          <Download className="h-3 w-3" />
-          Export
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search keys..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="h-8 w-full pl-8 pr-3 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          {filteredEntries.length} of {entries.length} entries
-        </div>
-      </div>
+      <PluginShell.Body>
+        <Split direction="horizontal" autoSaveId="storage">
+          <Split.Pane defaultSize={22} minSize={15} maxSize={40} collapsible>
+            <Sidebar className="w-full">
+              {sidebarGroups.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-sidebar-foreground/60">
+                  Waiting for storages…
+                </div>
+              ) : (
+                sidebarGroups.map((group) => (
+                  <Sidebar.Group
+                    key={group.adapterId}
+                    label={group.adapterName}
+                  >
+                    {group.items.map((item) => (
+                      <Sidebar.Item
+                        key={item.viewId}
+                        selected={item.viewId === selectedStorageViewId}
+                        trailing={
+                          <Badge variant="secondary">{item.entryCount}</Badge>
+                        }
+                        onClick={() => setSelectedStorageViewId(item.viewId)}
+                      >
+                        {item.storageName}
+                      </Sidebar.Item>
+                    ))}
+                  </Sidebar.Group>
+                ))
+              )}
+            </Sidebar>
+          </Split.Pane>
 
-      <main className="flex flex-1 min-h-0 overflow-auto">
-        {selectedStorage ? (
-          filteredEntries.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center w-full">
-              <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                No entries found
-              </h3>
-              <p className="text-gray-400 text-sm">
-                {searchTerm
-                  ? 'Try adjusting your search terms'
-                  : 'This storage appears to be empty'}
-              </p>
+          <Split.Handle />
+
+          <Split.Pane>
+            <div className="flex h-full min-h-0 flex-col">
+              <Toolbar>
+                <Toolbar.Group>
+                  <Toolbar.Button
+                    onClick={() => setShowAddDialog(true)}
+                    disabled={!selectedStorage}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Entry
+                  </Toolbar.Button>
+                  <Toolbar.Button
+                    onClick={handleImportClick}
+                    disabled={!selectedStorage}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Import
+                  </Toolbar.Button>
+                  <Toolbar.Button
+                    onClick={handleExport}
+                    disabled={!selectedStorage || entries.length === 0}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Export
+                  </Toolbar.Button>
+                </Toolbar.Group>
+
+                <Toolbar.Separator />
+
+                <div className="min-w-40 flex-1">
+                  <SearchField
+                    placeholder="Search keys…"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    onClear={() => setSearchTerm('')}
+                    disabled={!selectedStorage}
+                  />
+                </div>
+
+                {selectedStorage && (
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {filteredEntries.length} of {entries.length} entries
+                  </span>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </Toolbar>
+
+              <div className="min-h-0 flex-1 overflow-auto">
+                {selectedStorage ? (
+                  <DataTable
+                    columns={columns}
+                    data={filteredEntries}
+                    loading={loading}
+                    getRowId={(entry) => entry.key}
+                    onRowClick={(entry) => {
+                      setSelectedEntry(entry);
+                      setShowDetailDialog(true);
+                    }}
+                    emptyMessage={
+                      searchTerm
+                        ? 'No entries match your search.'
+                        : 'This storage is empty.'
+                    }
+                  />
+                ) : (
+                  <EmptyState
+                    icon={Database}
+                    title="No storage selected"
+                    description="Choose a storage from the sidebar to inspect its entries."
+                  />
+                )}
+              </div>
             </div>
-          ) : (
-            <EditableTable
-              data={filteredEntries}
-              supportedTypes={supportedTypes}
-              onValueChange={handleValueChange}
-              onDeleteEntry={handleDeleteEntry}
-              onRowClick={(entry) => {
-                setSelectedEntry(entry);
-                setShowDetailDialog(true);
-              }}
-              loading={loading}
-            />
-          )
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center w-full">
-            <h2 className="text-xl font-semibold text-gray-200 mb-2">
-              Welcome to Storage Inspector
-            </h2>
-            <p className="text-gray-400 text-sm">
-              Select a storage from the dropdown above to inspect data
-            </p>
-          </div>
-        )}
-      </main>
+          </Split.Pane>
+        </Split>
+      </PluginShell.Body>
 
       <AddEntryDialog
         isOpen={showAddDialog}
@@ -594,10 +739,10 @@ export default function StoragePanel() {
       />
 
       <EntryDetailDialog
-        isOpen={showDetailDialog}
-        onClose={() => {
-          setShowDetailDialog(false);
-          setSelectedEntry(null);
+        open={showDetailDialog}
+        onOpenChange={(open) => {
+          setShowDetailDialog(open);
+          if (!open) setSelectedEntry(null);
         }}
         onEdit={(entry) => {
           setShowDetailDialog(false);
@@ -630,13 +775,140 @@ export default function StoragePanel() {
       />
 
       <ConfirmDialog
-        isOpen={alertState.isOpen}
-        onClose={() => setAlertState((prev) => ({ ...prev, isOpen: false }))}
-        onConfirm={() => setAlertState((prev) => ({ ...prev, isOpen: false }))}
-        title={alertState.title}
-        message={alertState.message}
-        type="alert"
+        open={deleteConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
+        variant="confirm"
+        destructive
+        title="Delete Entry"
+        description={
+          deleteConfirm
+            ? `Are you sure you want to delete the entry "${deleteConfirm.key}"?`
+            : undefined
+        }
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (deleteConfirm) handleDeleteEntry(deleteConfirm.key);
+        }}
       />
-    </div>
+
+      <ConfirmDialog
+        open={alertState !== null}
+        onOpenChange={(open) => {
+          if (!open) setAlertState(null);
+        }}
+        variant="alert"
+        title={alertState?.title ?? ''}
+        description={alertState?.message}
+      />
+    </PluginShell>
   );
 }
+
+type EntryDetailDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onEdit?: (entry: StorageEntry) => void;
+  entry: StorageEntry | null;
+};
+
+const jsonSafeParse = (
+  value: string,
+): Record<string, unknown> | unknown[] | null => {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, unknown>;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const EntryDetailDialog = ({
+  open,
+  onOpenChange,
+  onEdit,
+  entry,
+}: EntryDetailDialogProps) => {
+  const isStringValue = entry?.type === 'string';
+  const stringValue = isStringValue ? entry.value : '';
+  const jsonValue = useMemo(
+    () => (isStringValue ? jsonSafeParse(stringValue) : null),
+    [isStringValue, stringValue],
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog.Content className="max-w-2xl">
+        <Dialog.Header>
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-muted-foreground" />
+            <Dialog.Title>Entry Details</Dialog.Title>
+          </div>
+        </Dialog.Header>
+
+        {entry && (
+          <div className="flex max-h-[70vh] flex-col gap-4 overflow-auto">
+            <div>
+              <div className="mb-1 text-sm font-medium text-foreground">
+                Key
+              </div>
+              <div className="w-full break-all rounded-md border border-input bg-muted px-3 py-2 font-mono text-sm text-foreground">
+                {entry.key}
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1 text-sm font-medium text-foreground">
+                Type
+              </div>
+              <Badge variant="outline">{entry.type}</Badge>
+            </div>
+
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="mb-1 text-sm font-medium text-foreground">
+                Value
+              </div>
+              <div className="max-h-96 overflow-auto rounded-md border border-input bg-muted p-3">
+                {jsonValue ? (
+                  <JsonInspector data={jsonValue} />
+                ) : entry.type === 'buffer' ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-xs text-muted-foreground">
+                      {entry.value.length}{' '}
+                      {entry.value.length === 1 ? 'byte' : 'bytes'}
+                    </div>
+                    <pre className="overflow-auto whitespace-pre font-mono text-xs leading-snug text-foreground">
+                      {bytesToHexdump(entry.value)}
+                    </pre>
+                  </div>
+                ) : (
+                  <div className="text-sm">{formatValue(entry)}</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <Dialog.Footer>
+          {entry && onEdit && (
+            <Button variant="outline" onClick={() => onEdit(entry)}>
+              <Edit3 className="h-3.5 w-3.5" />
+              Edit
+            </Button>
+          )}
+          <Dialog.Close render={<Button />}>Close</Dialog.Close>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog>
+  );
+};

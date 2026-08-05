@@ -1,6 +1,7 @@
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { EditorState as CMEditorState } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
+import { cn } from '@rozenite/ui';
 import { useEffect, useReducer, useRef } from 'react';
 import { bytesToAsciiPreview } from './binary';
 import {
@@ -14,25 +15,24 @@ export type BinaryValueEditorProps = {
   onChange: (bytes: number[] | null) => void;
 };
 
-const darkTheme = EditorView.theme(
-  {
-    '&': {
-      color: '#e5e7eb',
-      backgroundColor: '#111827',
-      fontSize: '12px',
-    },
-    '.cm-content': {
-      caretColor: '#60a5fa',
-      fontFamily:
-        'ui-monospace, "Cascadia Mono", "Fira Code", Menlo, monospace',
-      padding: '8px',
-    },
-    '.cm-focused': { outline: 'none' },
-    '.cm-gutters': { display: 'none' },
-    '.cm-scroller': { overflow: 'auto' },
+// Pulls colors from the shared design tokens (set by `PluginShell` on its
+// root as CSS custom properties) so the editor follows the active
+// light/dark theme instead of being locked to one palette.
+const editorTheme = EditorView.theme({
+  '&': {
+    color: 'var(--foreground)',
+    backgroundColor: 'transparent',
+    fontSize: '12px',
   },
-  { dark: true },
-);
+  '.cm-content': {
+    caretColor: 'var(--ring)',
+    fontFamily: 'ui-monospace, "Cascadia Mono", "Fira Code", Menlo, monospace',
+    padding: '8px',
+  },
+  '.cm-focused': { outline: 'none' },
+  '.cm-gutters': { display: 'none' },
+  '.cm-scroller': { overflow: 'auto' },
+});
 
 const ModeButton = ({
   label,
@@ -46,11 +46,12 @@ const ModeButton = ({
   <button
     type="button"
     onClick={onClick}
-    className={`rounded px-2 py-1 text-xs transition-colors ${
+    className={cn(
+      'rounded-md px-2 py-1 text-xs font-medium transition-colors',
       active
-        ? 'bg-blue-600 text-white'
-        : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-    }`}
+        ? 'bg-primary text-primary-foreground'
+        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+    )}
   >
     {label}
   </button>
@@ -84,7 +85,7 @@ export const BinaryValueEditor = ({
         extensions: [
           history(),
           keymap.of([...defaultKeymap, ...historyKeymap]),
-          darkTheme,
+          editorTheme,
           EditorView.lineWrapping,
           EditorView.updateListener.of((update) => {
             if (!update.docChanged) return;
@@ -150,18 +151,18 @@ export const BinaryValueEditor = ({
 
       <div
         ref={hostRef}
-        className="min-h-[120px] max-h-[300px] overflow-auto rounded border border-gray-700 bg-gray-900"
+        className="min-h-[120px] max-h-[300px] overflow-auto rounded-md border border-input bg-muted"
       />
 
       <div className="flex flex-col gap-1 text-xs">
-        <div className="text-gray-400">{byteCount} bytes</div>
+        <div className="text-muted-foreground">{byteCount} bytes</div>
         {asciiPreview && (
-          <div className="overflow-hidden text-ellipsis whitespace-nowrap text-gray-400">
+          <div className="overflow-hidden text-ellipsis whitespace-nowrap text-muted-foreground">
             ASCII:{' '}
-            <span className="font-mono text-gray-300">{asciiPreview}</span>
+            <span className="font-mono text-foreground">{asciiPreview}</span>
           </div>
         )}
-        {state.error && <div className="text-red-400">{state.error}</div>}
+        {state.error && <div className="text-destructive">{state.error}</div>}
       </div>
     </div>
   );

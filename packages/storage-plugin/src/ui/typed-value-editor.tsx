@@ -1,3 +1,4 @@
+import { Input, Select } from '@rozenite/ui';
 import type { StorageEntryType, StorageEntryValue } from '../shared/types';
 import { BinaryValueEditor } from './binary-value-editor';
 import { EditorSwitcher } from './editor-switcher';
@@ -41,7 +42,7 @@ export const TypedValueEditor = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       <EditorSwitcher
         supportedTypes={supportedTypes}
         value={type}
@@ -54,20 +55,20 @@ export const TypedValueEditor = ({
           onChange={(bytes) => onChange('buffer', bytes)}
         />
       ) : type === 'boolean' ? (
-        <select
-          id={inputId}
+        <Select
           value={String(value ?? false)}
-          onChange={(event) =>
-            onChange('boolean', event.target.value === 'true')
-          }
-          className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          autoFocus={autoFocus}
+          onValueChange={(next) => onChange('boolean', next === 'true')}
         >
-          <option value="true">true</option>
-          <option value="false">false</option>
-        </select>
+          <Select.Trigger id={inputId} autoFocus={autoFocus}>
+            <Select.Value />
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="true">true</Select.Item>
+            <Select.Item value="false">false</Select.Item>
+          </Select.Content>
+        </Select>
       ) : type === 'number' ? (
-        <input
+        <Input
           id={inputId}
           type="number"
           value={String(value ?? '')}
@@ -77,17 +78,15 @@ export const TypedValueEditor = ({
             onChange('number', Number.isNaN(parsed) ? 0 : parsed);
           }}
           placeholder="Enter number value"
-          className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           autoFocus={autoFocus}
         />
       ) : (
-        <input
+        <Input
           id={inputId}
           type="text"
           value={String(value ?? '')}
           onChange={(event) => onChange('string', event.target.value)}
           placeholder="Enter string value"
-          className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           autoFocus={autoFocus}
         />
       )}
