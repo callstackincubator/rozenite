@@ -43,7 +43,7 @@ npx rozenite agent console call \\
   --session <session-id>`;
 
 export const Agents = () => (
-  <Section id="agents" tint="subtle">
+  <Section id="agents">
     <div className={styles.top}>
       <div className={styles.headerCol}>
         <SectionHeader

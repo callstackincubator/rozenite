@@ -38,7 +38,7 @@ const POINTS: Point[] = [
 ];
 
 export const Web = () => (
-  <Section id="web" bordered>
+  <Section id="web" tint="subtle" bordered>
     <div className={styles.layout}>
       <div className={styles.copy}>
         <SectionHeader

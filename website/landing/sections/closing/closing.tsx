@@ -6,7 +6,7 @@ import { Section } from '../../components/section/section';
 import styles from './closing.module.css';
 
 export const Closing = () => (
-  <Section bordered>
+  <Section tint="subtle" bordered>
     <Reveal>
       <div className={styles.panel}>
         <div>
