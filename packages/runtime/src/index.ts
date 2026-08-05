@@ -1,7 +1,7 @@
 import { setupDevMode } from './dev-mode.js';
 import { getGlobalNamespace } from './global-namespace.js';
 import { createPanel } from './create-panel.js';
-import { loadPlugin } from './plugin-loader.js';
+import { loadPlugin, type LoadedPlugin } from './plugin-loader.js';
 import { addWelcomeView } from './rn-devtools/rozenite-welcome-view.js';
 import {
   trackPanelSelection,
@@ -38,8 +38,24 @@ const main = async (): Promise<void> => {
 
   if (pluginDisplay === 'tabs') {
     addWelcomeView();
-    await Promise.all(plugins.map((plugin) => loadPlugin(plugin)));
-    await setupDevMode();
+    const loadedPlugins = await Promise.all(
+      plugins.map((plugin) => loadPlugin(plugin)),
+    );
+
+    const addPluginPanels = (plugin: LoadedPlugin): void => {
+      plugin.panels.forEach((panel) => {
+        createPanel(plugin.id, panel.name, panel.source, {
+          insertAtEnd: true,
+        });
+      });
+    };
+
+    loadedPlugins.forEach(addPluginPanels);
+
+    const developmentPlugin = await setupDevMode();
+    if (developmentPlugin) {
+      addPluginPanels(developmentPlugin);
+    }
   } else {
     const loadedPlugins = await Promise.all(
       plugins.map(async (plugin) => {
@@ -55,17 +71,14 @@ const main = async (): Promise<void> => {
     const shellUrl = new URL(location.href);
     shellUrl.search = '';
     shellUrl.pathname = '/rozenite/shell/index.html';
-    createPanel(
-      '@rozenite/shell',
-      'Rozenite',
-      shellUrl.toString(),
-      {
+    createPanel('@rozenite/shell', 'Rozenite', shellUrl.toString(), {
+      shellConfiguration: {
         plugins: loadedPlugins,
         destroyOnDetachPlugins: getGlobalNamespace().destroyOnDetachPlugins,
         runtimeVersion: getGlobalNamespace().runtimeVersion,
       },
-      true,
-    );
+      insertAtStart: true,
+    });
   }
 
   trackPanelSelection();
