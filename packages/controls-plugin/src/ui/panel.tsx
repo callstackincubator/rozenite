@@ -1,4 +1,14 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import {
+  Button,
+  EmptyState,
+  Input,
+  PluginShell,
+  Select,
+  Sidebar,
+  Split,
+  Switch,
+} from '@rozenite/ui';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type {
@@ -10,7 +20,7 @@ import type {
   ControlsItemSnapshot,
   ControlsSectionSnapshot,
 } from '../shared/types';
-import './globals.css';
+import '@rozenite/ui/styles.css';
 
 type ItemUiState = {
   pending: boolean;
@@ -36,12 +46,12 @@ const RowShell = ({
 }) => (
   <div className="flex items-start justify-between gap-4 py-3">
     <div className="min-w-0">
-      <div className="text-sm font-medium text-gray-100">{title}</div>
+      <div className="text-sm font-medium text-foreground">{title}</div>
       {description ? (
-        <div className="mt-1 text-xs text-gray-400">{description}</div>
+        <div className="mt-1 text-xs text-muted-foreground">{description}</div>
       ) : null}
       {errorMessage ? (
-        <div className="mt-1 text-xs text-red-400">{errorMessage}</div>
+        <div className="mt-1 text-xs text-destructive">{errorMessage}</div>
       ) : null}
     </div>
     {children}
@@ -65,18 +75,12 @@ const ToggleRow = ({
       description={item.description}
       errorMessage={uiState?.message}
     >
-      <label className="relative inline-flex cursor-pointer items-center">
-        <input
-          type="checkbox"
-          className="peer sr-only"
-          checked={item.value}
-          disabled={item.disabled || uiState?.pending}
-          onChange={(event) =>
-            onToggle(sectionId, item.id, event.target.checked)
-          }
-        />
-        <div className="h-6 w-11 rounded-full bg-gray-700 transition peer-checked:bg-violet-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5" />
-      </label>
+      <Switch
+        aria-label={item.title}
+        checked={item.value}
+        disabled={item.disabled || uiState?.pending}
+        onCheckedChange={(checked) => onToggle(sectionId, item.id, checked)}
+      />
     </RowShell>
   );
 };
@@ -98,13 +102,14 @@ const ButtonRow = ({
       description={item.description}
       errorMessage={uiState?.message}
     >
-      <button
-        className="rounded-md border border-violet-500/60 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-violet-100 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:border-gray-700 disabled:bg-gray-800 disabled:text-gray-500"
+      <Button
+        size="compact"
+        variant="outline"
         disabled={item.disabled || uiState?.pending}
         onClick={() => onPress(sectionId, item.id)}
       >
         {uiState?.pending ? 'Running...' : (item.actionLabel ?? 'Run')}
-      </button>
+      </Button>
     </RowShell>
   );
 };
@@ -126,18 +131,26 @@ const SelectRow = ({
       description={item.description}
       errorMessage={uiState?.message}
     >
-      <select
-        className="min-w-[160px] rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-xs text-gray-200 outline-none transition focus:border-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+      <Select
         value={item.value}
         disabled={item.disabled || uiState?.pending}
-        onChange={(event) => onSelect(sectionId, item.id, event.target.value)}
+        onValueChange={(value) => {
+          if (value !== null) {
+            onSelect(sectionId, item.id, value);
+          }
+        }}
       >
-        {item.options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        <Select.Trigger className="w-40">
+          <Select.Value />
+        </Select.Trigger>
+        <Select.Content>
+          {item.options.map((option) => (
+            <Select.Item key={option.value} value={option.value}>
+              {option.label}
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select>
     </RowShell>
   );
 };
@@ -149,7 +162,7 @@ const TextRow = ({
 }) => {
   return (
     <RowShell title={item.title} description={item.description}>
-      <div className="max-w-[50%] rounded-md bg-gray-950/80 px-3 py-1.5 text-right text-xs text-gray-300">
+      <div className="max-w-[50%] rounded-md bg-muted px-3 py-1.5 text-right text-xs text-muted-foreground">
         {item.value}
       </div>
     </RowShell>
@@ -180,8 +193,8 @@ const InputRow = ({
       errorMessage={uiState?.message}
     >
       <div className="flex min-w-[240px] items-center gap-2">
-        <input
-          className="flex-1 rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-xs text-gray-200 outline-none transition focus:border-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+        <Input
+          className="flex-1"
           type="text"
           value={draftValue}
           placeholder={item.placeholder}
@@ -190,13 +203,14 @@ const InputRow = ({
             onDraftChange(sectionId, item.id, event.target.value)
           }
         />
-        <button
-          className="rounded-md border border-violet-500/60 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-100 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:border-gray-700 disabled:bg-gray-800 disabled:text-gray-500"
+        <Button
+          size="compact"
+          variant="outline"
           disabled={!isChanged || item.disabled || uiState?.pending}
           onClick={() => onApply(sectionId, item.id)}
         >
           {uiState?.pending ? 'Applying...' : (item.applyLabel ?? 'Apply')}
-        </button>
+        </Button>
       </div>
     </RowShell>
   );
@@ -278,6 +292,9 @@ const renderItem = ({
 
 export default function ControlsPanel() {
   const [sections, setSections] = useState<ControlsSectionSnapshot[]>([]);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [itemUiState, setItemUiState] = useState<Map<string, ItemUiState>>(
     new Map(),
@@ -300,6 +317,11 @@ export default function ControlsPanel() {
       'snapshot',
       (event: ControlsSnapshotEvent) => {
         setSections(event.sections);
+        setSelectedSectionId((previous) =>
+          event.sections.some((section) => section.id === previous)
+            ? previous
+            : (event.sections[0]?.id ?? null),
+        );
         setLoading(false);
 
         const nextCommittedValues = new Map<string, string>();
@@ -455,69 +477,76 @@ export default function ControlsPanel() {
     sendUpdateRequest(sectionId, itemId, draftValue);
   };
 
-  return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
-      <div className="flex items-center gap-2 border-b border-gray-700 bg-gray-800 p-2">
-        <span className="text-sm font-medium text-gray-200">Controls</span>
-        <div className="flex-1" />
-        <span className="text-xs text-gray-400">
-          {sections.length} sections
-        </span>
-      </div>
+  const selectedSection = sections.find(
+    (section) => section.id === selectedSectionId,
+  );
 
-      <div className="flex-1 overflow-auto p-4">
-        {loading ? (
-          <div className="rounded-lg border border-gray-800 bg-gray-800 p-6 text-sm text-gray-400">
-            Loading controls snapshot...
-          </div>
-        ) : null}
+  return (
+    <PluginShell className="dark">
+      <PluginShell.Body>
+        {loading ? <EmptyState title="Loading controls…" /> : null}
 
         {!loading && sections.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-700 bg-gray-800/80 p-6 text-sm text-gray-400">
-            No controls registered on the device.
-          </div>
+          <EmptyState
+            title="No controls registered"
+            description="Register controls in the app to manage them here."
+          />
         ) : null}
 
-        <div className="space-y-4">
-          {sections.map((section) => (
-            <section
-              key={section.id}
-              className="rounded-xl border border-gray-800 bg-gray-800/90 shadow-lg shadow-black/10"
-            >
-              <div className="border-b border-gray-800 px-4 py-3">
-                <div className="text-sm font-semibold text-gray-100">
-                  {section.title}
-                </div>
-                {section.description ? (
-                  <div className="mt-1 text-xs text-gray-400">
-                    {section.description}
-                  </div>
+        {!loading && selectedSection ? (
+          <Split direction="horizontal" autoSaveId="controls-sections">
+            <Split.Pane defaultSize={22} minSize={15} maxSize={35}>
+              <Sidebar className="w-full border-r-0">
+                <Sidebar.Group>
+                  {sections.map((section) => (
+                    <Sidebar.Item
+                      key={section.id}
+                      selected={section.id === selectedSection.id}
+                      onClick={() => setSelectedSectionId(section.id)}
+                    >
+                      {section.title}
+                    </Sidebar.Item>
+                  ))}
+                </Sidebar.Group>
+              </Sidebar>
+            </Split.Pane>
+            <Split.Handle />
+            <Split.Pane>
+              <section className="h-full overflow-auto p-6">
+                <h1 className="text-base font-semibold text-foreground">
+                  {selectedSection.title}
+                </h1>
+                {selectedSection.description ? (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {selectedSection.description}
+                  </p>
                 ) : null}
-              </div>
-
-              <div className="divide-y divide-gray-800 px-4">
-                {section.items.map((item) => (
-                  <div key={item.id}>
-                    {renderItem({
-                      sectionId: section.id,
-                      item,
-                      uiState: itemUiState.get(getItemKey(section.id, item.id)),
-                      inputDraft: inputDrafts.get(
-                        getItemKey(section.id, item.id),
-                      ),
-                      onToggle: handleToggle,
-                      onPress: handlePress,
-                      onSelect: handleSelect,
-                      onInputDraftChange: handleInputDraftChange,
-                      onInputApply: handleInputApply,
-                    })}
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </div>
-    </div>
+                <div className="mt-5 divide-y divide-border">
+                  {selectedSection.items.map((item) => (
+                    <div key={item.id}>
+                      {renderItem({
+                        sectionId: selectedSection.id,
+                        item,
+                        uiState: itemUiState.get(
+                          getItemKey(selectedSection.id, item.id),
+                        ),
+                        inputDraft: inputDrafts.get(
+                          getItemKey(selectedSection.id, item.id),
+                        ),
+                        onToggle: handleToggle,
+                        onPress: handlePress,
+                        onSelect: handleSelect,
+                        onInputDraftChange: handleInputDraftChange,
+                        onInputApply: handleInputApply,
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </Split.Pane>
+          </Split>
+        ) : null}
+      </PluginShell.Body>
+    </PluginShell>
   );
 }

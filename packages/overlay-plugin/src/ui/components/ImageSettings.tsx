@@ -6,6 +6,7 @@ import {
   MAX_IMAGE_SIZE_MB,
 } from '../../shared';
 import { Image as ImageIcon, Upload, X, Clipboard } from 'lucide-react';
+import { Button, Select, Switch } from '@rozenite/ui';
 import { useThrottledCallback } from '../hooks/useThrottledCallback';
 
 export type ImageSettingsProps = {
@@ -99,16 +100,13 @@ export const ImageSettings = ({
       <div className="section-header">
         <div className="section-title">
           <ImageIcon size={18} />
-          <span>Image verlay</span>
+          <span>Image overlay</span>
         </div>
-        <label className="toggle-switch">
-          <input
-            type="checkbox"
-            checked={config.enabled}
-            onChange={(e) => handleChange({ enabled: e.target.checked })}
-          />
-          <span className="toggle-slider"></span>
-        </label>
+        <Switch
+          aria-label="Enable image overlay"
+          checked={config.enabled}
+          onCheckedChange={(enabled) => handleChange({ enabled })}
+        />
       </div>
 
       <div className="section-content">
@@ -136,14 +134,14 @@ export const ImageSettings = ({
                 </span>
               </div>
               {isPasteSupported && (
-                <button
-                  className="btn"
+                <Button
+                  variant="outline"
                   onClick={handlePaste}
                   style={{ justifyContent: 'center', width: '100%' }}
                 >
                   <Clipboard size={14} />
                   Paste from Clipboard
-                </button>
+                </Button>
               )}
             </div>
           ) : (
@@ -152,10 +150,10 @@ export const ImageSettings = ({
                 className="control-row"
                 style={{ justifyContent: 'flex-end' }}
               >
-                <button className="btn btn-danger" onClick={handleRemoveImage}>
+                <Button variant="destructive" onClick={handleRemoveImage}>
                   <X size={14} />
                   Remove
-                </button>
+                </Button>
               </div>
               <img
                 src={config.uri}
@@ -221,21 +219,24 @@ export const ImageSettings = ({
 
             <div className="control-group">
               <label className="control-label">Resize Mode</label>
-              <select
+              <Select
                 value={config.resizeMode}
-                onChange={(e) =>
-                  handleChange({
-                    resizeMode: e.target.value as ImageResizeMode,
-                  })
-                }
-                className="input-control"
-                style={{ width: '100%' }}
+                onValueChange={(resizeMode) => {
+                  if (resizeMode !== null) {
+                    handleChange({ resizeMode: resizeMode as ImageResizeMode });
+                  }
+                }}
               >
-                <option value="contain">Contain</option>
-                <option value="cover">Cover</option>
-                <option value="stretch">Stretch</option>
-                <option value="center">Center</option>
-              </select>
+                <Select.Trigger>
+                  <Select.Value />
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="contain">Contain</Select.Item>
+                  <Select.Item value="cover">Cover</Select.Item>
+                  <Select.Item value="stretch">Stretch</Select.Item>
+                  <Select.Item value="center">Center</Select.Item>
+                </Select.Content>
+              </Select>
             </div>
 
             <div className="control-group">

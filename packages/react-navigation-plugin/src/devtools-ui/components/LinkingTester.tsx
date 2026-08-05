@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button, Input } from '@rozenite/ui';
 
 export type LinkingTesterProps = {
   onLinkOpen: (url: string) => void;
@@ -20,35 +21,30 @@ export const LinkingTester = ({ onLinkOpen }: LinkingTesterProps) => {
   };
 
   return (
-    <div className="h-full bg-gray-900 p-6 overflow-auto">
+    <div className="h-full overflow-auto bg-background p-6">
       <div className="max-w-2xl">
         <div className="space-y-4">
           {/* URL Input */}
           <form onSubmit={handleOpenLink} className="flex gap-2">
-            <input
+            <Input
               id="url-input"
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="myapp://screen/param"
-              className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1"
               autoComplete="off"
             />
-            <button
-              type="submit"
-              disabled={!url.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
-            >
+            <Button type="submit" disabled={!url.trim()}>
               Open
-            </button>
+            </Button>
           </form>
 
           {/* Last Opened */}
           {lastOpened && (
-            <div className="p-3 bg-gray-800 rounded border border-gray-700">
-              <p className="text-sm text-gray-300">
-                <span className="text-green-400">Last opened:</span>{' '}
-                {lastOpened}
+            <div className="rounded-md border border-border bg-card p-3">
+              <p className="text-sm text-foreground">
+                <span className="text-primary">Last opened:</span> {lastOpened}
               </p>
             </div>
           )}

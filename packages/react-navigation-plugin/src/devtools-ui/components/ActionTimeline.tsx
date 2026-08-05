@@ -1,6 +1,7 @@
 import { ActionSidebar } from './ActionSidebar';
 import { ActionDetailPanel } from './ActionDetailPanel';
 import { ActionWithState } from './ActionList';
+import { EmptyState, Split } from '@rozenite/ui';
 
 export type ActionTimelineProps = {
   actionHistory: ActionWithState[];
@@ -21,27 +22,32 @@ export const ActionTimeline = ({
     selectedActionIndex !== null ? actionHistory[selectedActionIndex] : null;
 
   return (
-    <div className="h-full bg-gray-900 text-gray-100 flex">
-      <ActionSidebar
-        actionHistory={actionHistory}
-        selectedActionIndex={selectedActionIndex}
-        onActionSelect={onActionSelect}
-        onGoToAction={onGoToAction}
-        onClearActions={onClearActions}
-      />
-
-      {selectedEntry ? (
-        <ActionDetailPanel
-          key={selectedActionIndex}
-          action={selectedEntry.action}
-          state={selectedEntry.state}
-          origin={selectedEntry.origin}
+    <Split direction="horizontal" autoSaveId="react-navigation-timeline">
+      <Split.Pane defaultSize={28} minSize={18} maxSize={45}>
+        <ActionSidebar
+          actionHistory={actionHistory}
+          selectedActionIndex={selectedActionIndex}
+          onActionSelect={onActionSelect}
+          onGoToAction={onGoToAction}
+          onClearActions={onClearActions}
         />
-      ) : (
-        <div className="flex-1 flex items-center justify-center text-gray-400 bg-gray-900">
-          Select an action from the timeline to view its details
-        </div>
-      )}
-    </div>
+      </Split.Pane>
+      <Split.Handle />
+      <Split.Pane>
+        {selectedEntry ? (
+          <ActionDetailPanel
+            key={selectedActionIndex}
+            action={selectedEntry.action}
+            state={selectedEntry.state}
+            origin={selectedEntry.origin}
+          />
+        ) : (
+          <EmptyState
+            title="No action selected"
+            description="Select an action from the timeline to inspect its details."
+          />
+        )}
+      </Split.Pane>
+    </Split>
   );
 };

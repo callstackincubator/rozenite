@@ -1,4 +1,5 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { PluginShell } from '@rozenite/ui';
 import { useEffect, useState } from 'react';
 import { ReactNavigationPluginEventMap } from '../shared';
 import { ActionWithState } from './components/ActionList';
@@ -112,12 +113,12 @@ export default function ReactNavigationPanel() {
   ];
 
   return (
-    <div className="h-screen bg-gray-900 text-gray-100">
+    <PluginShell className="dark">
       <Tabs
         tabs={tabs}
         activeTabId={activeTabId}
         onTabChange={setActiveTabId}
       />
-    </div>
+    </PluginShell>
   );
 }

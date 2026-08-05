@@ -24,7 +24,8 @@
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
-    "@rozenite/plugin-bridge": "workspace:*"
+    "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/ui": "workspace:*"
   },
   "devDependencies": {
     "@rozenite/vite-plugin": "workspace:*",

@@ -104,6 +104,9 @@ export type { BadgeProps } from './badge/badge';
 export { Input } from './input/input';
 export type { InputProps } from './input/input';
 
+export { Switch } from './switch/switch';
+export type { SwitchProps } from './switch/switch';
+
 export { SearchField } from './search-field/search-field';
 export type { SearchFieldProps } from './search-field/search-field';
 
