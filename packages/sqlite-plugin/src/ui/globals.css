@@ -399,6 +399,18 @@
     flex-shrink: 0;
   }
 
+  .sqlite-button-danger {
+    border-color: rgba(255, 100, 100, 0.35);
+    background: rgba(255, 90, 90, 0.14);
+    color: rgba(255, 214, 214, 0.95);
+  }
+
+  .sqlite-button-danger:hover:not(:disabled) {
+    border-color: rgba(255, 120, 120, 0.55);
+    background: rgba(255, 90, 90, 0.22);
+    color: white;
+  }
+
   .sqlite-badge,
   .sqlite-chip,
   .sqlite-count-pill {
