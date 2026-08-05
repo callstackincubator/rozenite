@@ -1,10 +1,12 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { step } from '../utils/steps.js';
 import { spawn } from '../utils/spawn.js';
 import { intro, outro } from '../utils/prompts.js';
 import { logger } from '../utils/logger.js';
 import { syncPluginPackageJSON } from '../utils/plugin-package-json.js';
+import { runWithConcurrency } from '../utils/concurrency.js';
 
 export const buildCommand = async (targetDir: string) => {
   intro('Rozenite');
@@ -34,71 +36,72 @@ export const buildCommand = async (targetDir: string) => {
     },
   );
 
-  await step(
+  const buildJobs = [
     {
       start: 'Building panels',
       stop: 'Panels built',
       error: 'Failed to build panels',
+      env: undefined,
     },
-    async () => {
-      await spawn('vite', ['build'], {
-        cwd: targetDir,
-      });
-    },
-  );
-
-  if (hasMetroEntryPoint) {
-    await step(
-      {
-        start: 'Building Metro entry point',
-        stop: 'Metro entry point built',
-        error: 'Failed to build Metro entry point',
-      },
-      async () => {
-        await spawn('vite', ['build'], {
-          cwd: targetDir,
-          env: {
-            VITE_ROZENITE_TARGET: 'server',
+    ...(hasMetroEntryPoint
+      ? [
+          {
+            start: 'Building Metro entry point',
+            stop: 'Metro entry point built',
+            error: 'Failed to build Metro entry point',
+            env: { VITE_ROZENITE_TARGET: 'server' },
           },
-        });
-      },
-    );
-  }
-
-  if (hasReactNativeEntryPoint) {
-    await step(
-      {
-        start: 'Building React Native entry point',
-        stop: 'React Native entry point built',
-        error: 'Failed to build React Native entry point',
-      },
-      async () => {
-        await spawn('vite', ['build'], {
-          cwd: targetDir,
-          env: {
-            VITE_ROZENITE_TARGET: 'react-native',
+        ]
+      : []),
+    ...(hasReactNativeEntryPoint
+      ? [
+          {
+            start: 'Building React Native entry point',
+            stop: 'React Native entry point built',
+            error: 'Failed to build React Native entry point',
+            env: { VITE_ROZENITE_TARGET: 'react-native' },
           },
-        });
-      },
-    );
-  }
-
-  if (hasSdkEntryPoint) {
-    await step(
-      {
-        start: 'Building SDK entry point',
-        stop: 'SDK entry point built',
-        error: 'Failed to build SDK entry point',
-      },
-      async () => {
-        await spawn('vite', ['build'], {
-          cwd: targetDir,
-          env: {
-            VITE_ROZENITE_TARGET: 'sdk',
+        ]
+      : []),
+    ...(hasSdkEntryPoint
+      ? [
+          {
+            start: 'Building SDK entry point',
+            stop: 'SDK entry point built',
+            error: 'Failed to build SDK entry point',
+            env: { VITE_ROZENITE_TARGET: 'sdk' },
           },
-        });
-      },
+        ]
+      : []),
+  ];
+
+  const buildController = new AbortController();
+
+  try {
+    await runWithConcurrency(
+      buildJobs.map((job) => async () => {
+        try {
+          await step(job, async () => {
+            await spawn('vite', ['build'], {
+              cwd: targetDir,
+              env: {
+                ...job.env,
+                ROZENITE_BUILD: '1',
+              },
+              signal: buildController.signal,
+            });
+          });
+        } catch (error) {
+          buildController.abort(error);
+          throw error;
+        }
+      }),
+      os.availableParallelism(),
+      { signal: buildController.signal },
     );
+  } catch (error) {
+    buildController.abort(error);
+    throw error;
   }
 
   outro('Plugin built successfully');

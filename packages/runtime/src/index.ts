@@ -61,6 +61,7 @@ const main = async (): Promise<void> => {
       shellUrl.toString(),
       {
         plugins: loadedPlugins,
+        destroyOnDetachPlugins: getGlobalNamespace().destroyOnDetachPlugins,
         runtimeVersion: getGlobalNamespace().runtimeVersion,
       },
       true,

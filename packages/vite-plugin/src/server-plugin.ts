@@ -10,6 +10,9 @@ export const rozeniteServerPlugin = (): Plugin => {
       const projectRoot = config.root ?? process.cwd();
 
       config.build ??= {};
+      if (process.env.ROZENITE_BUILD === '1') {
+        config.build.emptyOutDir = false;
+      }
       config.build.lib = {
         entry: path.resolve(projectRoot, 'metro.ts'),
         formats: ['es' as const, 'cjs' as const],
