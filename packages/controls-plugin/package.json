@@ -24,12 +24,10 @@
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
-    "@rozenite/plugin-bridge": "workspace:*",
-    "@rozenite/ui": "workspace:*"
+    "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
     "@rozenite/vite-plugin": "workspace:*",
-    "@tailwindcss/postcss": "^4.2.2",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "autoprefixer": "^10.4.21",
@@ -39,7 +37,7 @@
     "react-native": "catalog:",
     "react-native-web": "^0.21.2",
     "rozenite": "workspace:*",
-    "tailwindcss": "^4.2.2",
+    "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "~5.9.3",
     "vite": "catalog:"

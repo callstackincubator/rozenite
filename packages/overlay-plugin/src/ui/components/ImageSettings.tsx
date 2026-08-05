@@ -1,55 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
-import {
-  Button,
-  Card,
-  Description,
-  ListBox,
-  Radio,
-  RadioGroup,
-  Select,
-  Slider,
-  Surface,
-  Switch,
-} from '@rozenite/ui';
-import { Clipboard, Image as ImageIcon, Upload, X } from 'lucide-react';
-import {
-  ImageConfig,
-  ImageOverlayMode,
-  ImageResizeMode,
-  MAX_IMAGE_SIZE_BYTES,
-  MAX_IMAGE_SIZE_MB,
-} from '../../shared';
+import { useRef, useState, useEffect } from 'react';
+import { ImageConfig, ImageResizeMode, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../../shared';
+import { Image as ImageIcon, Upload, X, Clipboard } from 'lucide-react';
 import { useThrottledCallback } from '../hooks/useThrottledCallback';
-
-type SliderValue = number | number[];
 
 export type ImageSettingsProps = {
   config: ImageConfig;
   onConfigChange: (config: ImageConfig) => void;
 };
 
-const resizeModeOptions: Array<{
-  label: string;
-  value: ImageResizeMode;
-}> = [
-  { label: 'Contain', value: 'contain' },
-  { label: 'Cover', value: 'cover' },
-  { label: 'Stretch', value: 'stretch' },
-  { label: 'Center', value: 'center' },
-];
-
-const getSliderNumber = (value: SliderValue) =>
-  Array.isArray(value) ? (value[0] ?? 0) : value;
-
-export const ImageSettings = ({
-  config,
-  onConfigChange,
-}: ImageSettingsProps) => {
+export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localOpacity, setLocalOpacity] = useState(config.opacity);
-  const [isPasteSupported] = useState(
-    () => navigator.clipboard && 'read' in navigator.clipboard,
-  );
+  const [isPasteSupported] = useState(() => navigator.clipboard && 'read' in navigator.clipboard);
 
   useEffect(() => {
     setLocalOpacity(config.opacity);
@@ -69,16 +31,17 @@ export const ImageSettings = ({
   };
 
   const processFile = (file: File | Blob) => {
+    // Check file size
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
       alert(
-        `Image size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds the maximum allowed size of ${MAX_IMAGE_SIZE_MB}MB.`,
+        `Image size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds the maximum allowed size of ${MAX_IMAGE_SIZE_MB}MB.`
       );
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string;
       handleChange({ uri: base64, enabled: true });
     };
     reader.onerror = () => {
@@ -89,18 +52,15 @@ export const ImageSettings = ({
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
+    if (!file) return;
     processFile(file);
   };
 
   const handlePaste = async () => {
     try {
       const clipboardItems = await navigator.clipboard.read();
-
       for (const item of clipboardItems) {
+        // Look for an image type
         const imageType = item.types.find((type) => type.startsWith('image/'));
         if (imageType) {
           const blob = await item.getType(imageType);
@@ -108,13 +68,10 @@ export const ImageSettings = ({
           return;
         }
       }
-
       alert('No image found in clipboard');
-    } catch (error) {
-      console.error('Failed to read clipboard contents: ', error);
-      alert(
-        'Failed to access clipboard. Please ensure you have granted permission.',
-      );
+    } catch (err) {
+      console.error('Failed to read clipboard contents: ', err);
+      alert('Failed to access clipboard. Please ensure you have granted permission.');
     }
   };
 
@@ -125,250 +82,143 @@ export const ImageSettings = ({
     }
   };
 
-  const handleModeChange = (value: string) => {
-    handleChange({ mode: value as ImageOverlayMode });
-  };
-
   return (
-    <Card className="flex min-h-0 flex-col">
-      <Card.Header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Card.Title className="flex items-center gap-2">
-            <ImageIcon className="size-4" />
-            Image overlay
-          </Card.Title>
-          <Card.Description className="mt-1 text-xs">
-            Compare the app against reference imagery without leaving DevTools.
-          </Card.Description>
+    <div className="settings-section">
+      <div className="section-header">
+        <div className="section-title">
+          <ImageIcon size={18} />
+          <span>Image verlay</span>
         </div>
-        <Switch
-          aria-label="Toggle image overlay"
-          isSelected={config.enabled}
-          size="sm"
-          onChange={(isSelected) => handleChange({ enabled: isSelected })}
-        >
-          <Switch.Control>
-            <Switch.Thumb />
-          </Switch.Control>
-        </Switch>
-      </Card.Header>
+        <label className="toggle-switch">
+          <input
+            type="checkbox"
+            checked={config.enabled}
+            onChange={(e) => handleChange({ enabled: e.target.checked })}
+          />
+          <span className="toggle-slider"></span>
+        </label>
+      </div>
 
-      <Card.Content className="space-y-5">
-        <div className="space-y-3">
-          <div>
-            <div className="text-sm font-medium text-foreground">
-              Overlay image
-            </div>
-            <Description className="mt-1 text-xs text-muted">
-              Upload a design reference or paste directly from the clipboard.
-            </Description>
-          </div>
-
+      <div className="section-content">
+        <div className="control-group">
+          <label className="control-label">Overlay Image</label>
           {!config.uri ? (
-            <div className="space-y-3">
-              <Surface
-                className="relative overflow-hidden border border-dashed border-border/70 bg-linear-to-b from-surface-secondary/80 to-surface px-6 py-7"
-                variant="secondary"
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div
+                className="file-upload-area"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ cursor: 'pointer' }}
               >
-                <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-accent/45 to-transparent" />
-
-                <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="flex size-14 items-center justify-center rounded-full bg-accent/10 text-accent">
-                    <Upload className="size-7" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="text-sm font-semibold text-foreground">
-                      Add a reference image
-                    </div>
-                    <Description className="mx-auto max-w-xs text-xs leading-5 text-muted">
-                      Choose a file or paste a screenshot to compare it against
-                      the running screen.
-                    </Description>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    <Button
-                      size="sm"
-                      onPress={() => fileInputRef.current?.click()}
-                    >
-                      Choose image
-                    </Button>
-
-                    {isPasteSupported ? (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onPress={handlePaste}
-                      >
-                        <Clipboard className="size-4" />
-                        Paste screenshot
-                      </Button>
-                    ) : null}
-                  </div>
-
-                  <Description className="text-[11px] uppercase tracking-[0.14em] text-muted">
-                    Max size {MAX_IMAGE_SIZE_MB}MB
-                  </Description>
-                </div>
-              </Surface>
+                <Upload size={32} color="var(--color-text-muted)" />
+                <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>
+                  Click to upload reference image
+                </span>
+                <span style={{ color: 'var(--color-text-muted)', fontSize: '11px' }}>
+                  Max size: {MAX_IMAGE_SIZE_MB}MB
+                </span>
+              </div>
+              {isPasteSupported && (
+                <button
+                  className="btn"
+                  onClick={handlePaste}
+                  style={{ justifyContent: 'center', width: '100%' }}
+                >
+                  <Clipboard size={14} />
+                  Paste from Clipboard
+                </button>
+              )}
             </div>
           ) : (
-            <div className="space-y-3">
-              <div className="flex justify-end">
-                <Button size="sm" variant="danger" onPress={handleRemoveImage}>
-                  <X className="size-4" />
+            <div className="control-group">
+              <div className="control-row" style={{ justifyContent: 'flex-end' }}>
+                <button className="btn btn-danger" onClick={handleRemoveImage}>
+                  <X size={14} />
                   Remove
-                </Button>
+                </button>
               </div>
-
-              <Surface className="overflow-hidden p-2" variant="secondary">
-                <img
-                  alt="Overlay preview"
-                  className="max-h-[24rem] w-full rounded-md object-contain"
-                  src={config.uri}
-                />
-              </Surface>
+              <img src={config.uri} alt="Overlay preview" className="file-preview" />
             </div>
           )}
-
           <input
             ref={fileInputRef}
-            accept="image/*"
-            className="hidden"
             type="file"
+            accept="image/*"
             onChange={handleFileSelect}
+            style={{ display: 'none' }}
           />
         </div>
 
-        {config.enabled && config.uri ? (
+        {config.enabled && config.uri && (
           <>
-            <div className="space-y-3">
-              <div>
-                <div className="text-sm font-medium text-foreground">Mode</div>
-                <Description className="mt-1 text-xs text-muted">
-                  Pick the comparison style that fits the screen you are
-                  reviewing.
-                </Description>
+            <div className="control-group">
+              <label className="control-label">Mode</label>
+              <div className="control-row">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-text)', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="overlay"
+                    checked={config.mode === 'overlay'}
+                    onChange={() => handleChange({ mode: 'overlay' })}
+                  />
+                  Simple overlay
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-text)', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="slider"
+                    checked={config.mode === 'slider'}
+                    onChange={() => handleChange({ mode: 'slider' })}
+                  />
+                  Slider comparison
+                </label>
               </div>
-
-              <RadioGroup
-                aria-label="Overlay comparison mode"
-                className="grid gap-2 sm:grid-cols-2"
-                value={config.mode}
-                onChange={handleModeChange}
-              >
-                <Radio
-                  className="rounded-md border border-border/70 bg-surface-secondary/40 p-3"
-                  value="overlay"
-                >
-                  <Radio.Control>
-                    <Radio.Indicator />
-                  </Radio.Control>
-                  <Radio.Content>
-                    <div className="text-sm font-medium text-foreground">
-                      Simple overlay
-                    </div>
-                    <Description className="mt-1 text-xs text-muted">
-                      Layer the reference image directly over the app.
-                    </Description>
-                  </Radio.Content>
-                </Radio>
-
-                <Radio
-                  className="rounded-md border border-border/70 bg-surface-secondary/40 p-3"
-                  value="slider"
-                >
-                  <Radio.Control>
-                    <Radio.Indicator />
-                  </Radio.Control>
-                  <Radio.Content>
-                    <div className="text-sm font-medium text-foreground">
-                      Slider comparison
-                    </div>
-                    <Description className="mt-1 text-xs text-muted">
-                      Drag a divider on the device to compare both versions.
-                    </Description>
-                  </Radio.Content>
-                </Radio>
-              </RadioGroup>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <div className="text-sm font-medium text-foreground">
-                  Resize mode
-                </div>
-                <Description className="mt-1 text-xs text-muted">
-                  Control how the reference image fits the available screen
-                  space.
-                </Description>
-              </div>
-
-              <Select
-                aria-label="Image resize mode"
+            <div className="control-group">
+              <label className="control-label">Resize Mode</label>
+              <select
                 value={config.resizeMode}
-                variant="secondary"
-                onChange={(value) => {
-                  if (typeof value === 'string') {
-                    handleChange({ resizeMode: value as ImageResizeMode });
-                  }
-                }}
+                onChange={(e) => handleChange({ resizeMode: e.target.value as ImageResizeMode })}
+                className="input-control"
+                style={{ width: '100%' }}
               >
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox aria-label="Resize mode options">
-                    {resizeModeOptions.map((option) => (
-                      <ListBox.Item
-                        key={option.value}
-                        id={option.value}
-                        textValue={option.label}
-                      >
-                        {option.label}
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
+                <option value="contain">Contain</option>
+                <option value="cover">Cover</option>
+                <option value="stretch">Stretch</option>
+                <option value="center">Center</option>
+              </select>
             </div>
 
-            <Slider
-              aria-label="Image overlay opacity"
-              className="gap-3"
-              maxValue={1}
-              minValue={0}
-              step={0.01}
-              value={localOpacity}
-              onChange={(value) =>
-                handleOpacityChange(getSliderNumber(value))
-              }
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-medium text-foreground">
-                  Opacity
-                </div>
-                <div className="text-xs text-muted">
-                  {Math.round(localOpacity * 100)}%
-                </div>
-              </div>
-              <Slider.Track>
-                <Slider.Fill />
-                <Slider.Thumb />
-              </Slider.Track>
-            </Slider>
-
-            {config.mode === 'slider' ? (
-              <Description className="text-xs text-muted">
-                Drag the divider handle on your device to compare.
-              </Description>
-            ) : null}
+            <div className="control-group">
+              <label className="control-label">
+                Opacity ({Math.round(localOpacity * 100)}%)
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={localOpacity}
+                onChange={(e) => handleOpacityChange(Number(e.target.value))}
+                className="input-range"
+              />
+              {config.mode === 'slider' && (
+                <p
+                  style={{
+                    fontSize: '11px',
+                    color: 'var(--color-text-muted)',
+                    marginTop: '4px',
+                  }}
+                >
+                  Drag the divider handle on your device to compare.
+                </p>
+              )}
+            </div>
           </>
-        ) : null}
-      </Card.Content>
-    </Card>
+        )}
+      </div>
+    </div>
   );
 };

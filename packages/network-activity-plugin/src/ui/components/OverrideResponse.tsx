@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { HttpNetworkEntry } from '../state/model';
-import { Section } from './Section';
-import { KeyValueGrid } from './KeyValueGrid';
+import { Section } from '../components/Section';
+import { KeyValueGrid } from '../components/KeyValueGrid';
 import { useNetworkActivityActions } from '../state/hooks';
-import { CodeEditor } from './CodeEditor';
+import { CodeEditor } from '../components/CodeEditor';
 import { RequestOverride } from '../../shared/client';
 import { Button } from './Button';
 import { Check, CircleSlash2 } from 'lucide-react';
@@ -53,7 +53,7 @@ export const OverrideResponse = ({
 
   if (!responseBody || responseBody.data === null) {
     return (
-      <div className="text-sm text-muted">
+      <div className="text-sm text-gray-400">
         No response body available for this request
       </div>
     );
@@ -70,7 +70,7 @@ export const OverrideResponse = ({
       <Button
         variant="ghost"
         size="xs"
-        className="text-accent hover:text-accent ms-2"
+        className="text-violet-300 hover:text-violet-300 ms-2"
         onClick={clearOverride}
       >
         <CircleSlash2 className="h-2 w-2" />
@@ -80,7 +80,7 @@ export const OverrideResponse = ({
       <Button
         variant="ghost"
         size="xs"
-        className="text-accent hover:text-accent"
+        className="text-violet-300 hover:text-violet-300"
         onClick={saveOverride}
         disabled={!hasChanges}
       >
@@ -103,20 +103,20 @@ export const OverrideResponse = ({
               {
                 key: 'Content-Type',
                 value: type,
-                valueClassName: 'text-accent',
+                valueClassName: 'text-blue-400',
               },
             ]}
           />
 
           <div className="grid grid-cols-[minmax(7rem,25%)_minmax(3rem,1fr)] gap-x-2 gap-y-2 text-sm">
-            <span className={'text-muted wrap-anywhere'}>Status Code</span>
+            <span className={'text-gray-400 wrap-anywhere'}>Status Code</span>
             <input
               type="number"
               value={editedStatus}
               onChange={(e) => {
                 setEditedStatus(parseInt(e.target.value));
               }}
-              className="max-w-24 font-mono text-foreground/70 whitespace-pre-wrap bg-surface p-1 rounded-md border border-border/60 overflow-x-auto wrap-anywhere ring-offset-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+              className="max-w-24 font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-1 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere ring-offset-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
 

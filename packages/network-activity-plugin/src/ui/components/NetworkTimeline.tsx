@@ -24,9 +24,9 @@ import type {
 
 const REQUEST_TIMELINE_COLORS = {
   error: 'bg-red-400',
-  primary: 'bg-foreground/40',
-  active: 'bg-foreground/30',
-  httpTtfb: 'bg-foreground/60',
+  primary: 'bg-gray-400',
+  active: 'bg-gray-500',
+  httpTtfb: 'bg-gray-200',
 } as const;
 
 const getPrimaryBarClassName = (request: ProcessedRequest) => {
@@ -51,7 +51,7 @@ const GridLines = ({ ticks }: { ticks: TimelineTick[] }) => {
       {ticks.map((tick) => (
         <div
           key={`${tick.label}-${tick.offsetPercent}`}
-          className="absolute inset-y-0 border-l border-border/40"
+          className="absolute inset-y-0 border-l border-gray-800"
           style={{ left: `${tick.offsetPercent}%` }}
         />
       ))}
@@ -131,7 +131,7 @@ const TimelineTrack = ({
         <div
           className={`absolute flex w-full overflow-hidden rounded-sm ${
             isSelected
-              ? 'ring-1 ring-accent/60 ring-offset-1 ring-offset-background'
+              ? 'ring-1 ring-blue-300 ring-offset-1 ring-offset-gray-950'
               : ''
           }`}
           style={{
@@ -152,7 +152,7 @@ const TimelineTrack = ({
         <div
           className={`absolute w-full rounded-sm ${primaryBarClassName} ${
             isSelected
-              ? 'ring-1 ring-accent/60 ring-offset-1 ring-offset-background'
+              ? 'ring-1 ring-blue-300 ring-offset-1 ring-offset-gray-950'
               : ''
           }`}
           style={{
@@ -345,10 +345,10 @@ export const NetworkTimeline = ({
   };
 
   return (
-    <div className="border-b border-border/60 bg-surface p-1.5">
+    <div className="border-b border-gray-700 bg-gray-900 p-1.5">
       <div
         ref={chartRef}
-        className="relative overflow-hidden border border-border/40 bg-background"
+        className="relative overflow-hidden border border-gray-800 bg-gray-950"
         style={{ height: timeline.chartHeight }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -357,14 +357,14 @@ export const NetworkTimeline = ({
         <GridLines ticks={timeline.ticks} />
 
         <div
-          className="pointer-events-none absolute inset-x-0 border-b border-border/40"
+          className="pointer-events-none absolute inset-x-0 border-b border-gray-800"
           style={{ top: TIMELINE_LAYOUT.rulerHeightPx }}
         />
 
         {timeline.ticks.map((tick) => (
           <div
             key={`${tick.label}-${tick.offsetPercent}`}
-            className="absolute top-1 whitespace-nowrap tabular-nums text-xs text-foreground/70"
+            className="absolute top-1 whitespace-nowrap tabular-nums text-xs text-gray-200"
             style={getTickLabelStyle(tick)}
           >
             {tick.label}
@@ -373,14 +373,14 @@ export const NetworkTimeline = ({
 
         {selection && (
           <div
-            className="pointer-events-none absolute bottom-0 border-x border-accent/50 bg-accent/10"
+            className="pointer-events-none absolute bottom-0 border-x border-blue-300/70 bg-blue-400/10"
             style={getSelectionStyle(selection, timeline)}
           />
         )}
 
         {draftSelection && (
           <div
-            className="pointer-events-none absolute bottom-0 border-x border-accent/50 bg-accent/15"
+            className="pointer-events-none absolute bottom-0 border-x border-blue-300/70 bg-blue-400/15"
             style={getDraftSelectionStyle(draftSelection)}
           />
         )}
@@ -396,13 +396,13 @@ export const NetworkTimeline = ({
         ))}
 
         {selection && (
-          <div className="absolute bottom-1 right-1 flex items-center gap-1 rounded border border-border/60 bg-surface/95 px-1.5 py-0.5 text-xs text-muted">
+          <div className="absolute bottom-1 right-1 flex items-center gap-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
             <span>{filteredRequestCount} in range</span>
             <button
               type="button"
               title="Clear timeline selection"
               aria-label="Clear timeline selection"
-              className="rounded p-0.5 text-muted hover:bg-surface hover:text-foreground"
+              className="rounded p-0.5 text-gray-400 hover:bg-gray-800 hover:text-gray-100"
               onClick={() => onSelectionChange(null)}
             >
               <X className="h-3 w-3" />
@@ -411,7 +411,7 @@ export const NetworkTimeline = ({
         )}
 
         {timeline.hiddenRequestCount > 0 && (
-          <div className="absolute bottom-1 left-1 rounded border border-border/60 bg-surface/95 px-1.5 py-0.5 text-xs text-muted">
+          <div className="absolute bottom-1 left-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
             Showing latest {timeline.rows.length} of{' '}
             {timeline.totalRequestCount}
           </div>

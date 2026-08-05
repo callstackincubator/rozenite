@@ -11,7 +11,7 @@ export type CodeBlockProps = HTMLProps<HTMLPreElement>;
 const VIRTUALIZATION_THRESHOLD = 50_000;
 
 const codeBlockClassNames =
-  'text-sm font-mono text-foreground/70 whitespace-pre-wrap bg-surface p-3 rounded-md border border-border/60 overflow-x-auto wrap-anywhere';
+  'text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere';
 
 export const CodeBlock = ({
   children,

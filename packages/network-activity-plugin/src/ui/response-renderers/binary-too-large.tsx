@@ -28,7 +28,7 @@ export const binaryTooLargeRenderer: ResponseRenderer = {
       return null;
     }
     return (
-      <div className="text-sm text-muted">
+      <div className="text-sm text-gray-400">
         Response too large for preview ({formatBytes(body.size)})
       </div>
     );

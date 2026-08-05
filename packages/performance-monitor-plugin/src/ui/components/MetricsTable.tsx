@@ -1,7 +1,9 @@
-import type { ColumnDef } from '@tanstack/react-table';
-import type { SerializedPerformanceMetric } from '../../shared/types';
-import { formatMetricRawValue, formatMetricValue, formatTime, getMetricUnit } from '../utils';
-import { DataTable } from '@rozenite/ui';
+import React from 'react';
+import { ColumnDef } from '@tanstack/react-table';
+import { Text } from '@radix-ui/themes';
+import { SerializedPerformanceMetric } from '../../shared/types';
+import { DataTable } from './DataTable';
+import { formatTime } from '../utils';
 
 export type MetricsTableProps = {
   metrics: SerializedPerformanceMetric[];
@@ -12,53 +14,41 @@ const columns: ColumnDef<SerializedPerformanceMetric>[] = [
   {
     accessorKey: 'name',
     header: 'Name',
-    cell: ({ row }) => (
-      <span className="font-medium text-foreground">
-        {String(row.getValue('name'))}
-      </span>
-    ),
+    cell: ({ row }) => <Text weight="medium">{row.getValue('name')}</Text>,
   },
   {
     accessorKey: 'value',
     header: 'Value',
     cell: ({ row }) => {
-      const unit = getMetricUnit(row.original.detail);
-      const formattedValue = formatMetricValue(row.original.value, {
-        mode: 'compact',
-        unit,
-      });
-      const rawValue = formatMetricRawValue(row.original.value, unit);
-
+      const value = row.getValue('value');
       return (
-        <span
-          className="font-medium tabular-nums text-success"
-          title={rawValue}
-        >
-          {formattedValue}
-        </span>
+        <Text color="green" weight="medium">
+          {String(value)}
+        </Text>
       );
     },
   },
   {
     accessorKey: 'startTime',
-    header: 'Recorded At',
-    cell: ({ row }) => (
-      <span className="tabular-nums text-sm text-muted">
-        {formatTime(row.getValue('startTime') as number)}
-      </span>
-    ),
+    header: 'Recorded at',
+    cell: ({ row }) => {
+      const startTime = row.getValue('startTime') as number;
+      return (
+        <Text size="2" color="gray">
+          {formatTime(startTime)}
+        </Text>
+      );
+    },
   },
 ];
 
 export const MetricsTable = ({ metrics, onRowClick }: MetricsTableProps) => {
   return (
     <DataTable
-      ariaLabel="Performance metrics"
-      columns={columns}
       data={metrics}
-      emptyMessage="No metrics recorded"
-      getRowTextValue={(metric) => metric.name}
+      columns={columns}
       onRowClick={onRowClick}
+      emptyMessage="No metrics recorded"
     />
   );
 };

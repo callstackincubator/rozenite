@@ -1,17 +1,4 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import {
-  Button,
-  Card,
-  Chip,
-  ListBox,
-  PluginHeader,
-  PluginTheme,
-  SearchField,
-  Select,
-  Surface,
-  Tabs,
-  useCopyToClipboard,
-} from '@rozenite/ui';
 import type { CompletionSource } from '@codemirror/autocomplete';
 import type { ColumnDef, Updater } from '@tanstack/react-table';
 import {
@@ -20,9 +7,8 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
+  type ChangeEvent,
   type PointerEvent as ReactPointerEvent,
-  type ReactNode,
 } from 'react';
 import {
   ChevronDown,
@@ -36,6 +22,7 @@ import {
   Pencil,
   Play,
   RefreshCw,
+  Search,
   Table2,
   TerminalSquare,
   Trash2,
@@ -113,7 +100,12 @@ import {
   getDefaultTableColumnOrder,
   resolveTableColumnOrderUpdate,
 } from './sqlite-table-column-order';
-import { downloadTextFile, formatNumber, slugifyFileName } from './utils';
+import {
+  copyToClipboard,
+  downloadTextFile,
+  formatNumber,
+  slugifyFileName,
+} from './utils';
 import { getResultSummary, getScriptResultSummary } from './value-utils';
 import './globals.css';
 
@@ -314,86 +306,16 @@ const buildExplorerGroups = (
     .filter((group) => group.visible);
 };
 
-type SelectOption = {
-  id: string;
-  label: string;
-};
+const toneButtonClassName =
+  'sqlite-button inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium';
 
-const SharedSelect = ({
-  ariaLabel,
-  className,
-  isDisabled = false,
-  options,
-  placeholder,
-  value,
-  onChange,
-}: {
-  ariaLabel: string;
-  className?: string;
-  isDisabled?: boolean;
-  options: SelectOption[];
-  placeholder?: string;
-  value: string | null;
-  onChange: (value: string | null) => void;
-}) => (
-  <Select
-    aria-label={ariaLabel}
-    className={className}
-    isDisabled={isDisabled}
-    onChange={(nextValue) =>
-      onChange(nextValue == null ? null : String(nextValue))
-    }
-    placeholder={placeholder}
-    value={value ?? ''}
-    variant="secondary"
-  >
-    <Select.Trigger>
-      <Select.Value />
-      <Select.Indicator />
-    </Select.Trigger>
-    <Select.Popover>
-      <ListBox aria-label={ariaLabel}>
-        {options.map((option) => (
-          <ListBox.Item
-            key={option.id}
-            id={option.id}
-            textValue={option.label}
-          >
-            {option.label}
-            <ListBox.ItemIndicator />
-          </ListBox.Item>
-        ))}
-      </ListBox>
-    </Select.Popover>
-  </Select>
-);
-
-const InlineError = ({
-  title,
-  message,
-  action,
-  className,
-}: {
-  title: string;
-  message: ReactNode;
-  action?: ReactNode;
-  className?: string;
-}) => (
-  <Surface
-    aria-live="polite"
-    className={joinClassNames(
-      'mx-3 mt-3 flex flex-wrap items-start justify-between gap-3 rounded-xl border border-danger/35 bg-danger/10 px-4 py-3 text-danger',
-      className,
-    )}
-    variant="secondary"
-  >
-    <div>
-      <p className="font-medium">{title}</p>
-      <p className="mt-1 text-sm text-danger">{message}</p>
-    </div>
-    {action}
-  </Surface>
-);
+const secondaryButtonClassName = `${toneButtonClassName} sqlite-button-secondary`;
+const ghostButtonClassName = `${toneButtonClassName} sqlite-button-ghost`;
+const iconButtonClassName =
+  'sqlite-icon-button inline-flex h-10 w-10 items-center justify-center rounded-xl';
+const primaryIconButtonClassName = `${iconButtonClassName} sqlite-button-primary`;
+const secondaryIconButtonClassName = `${iconButtonClassName} sqlite-button-secondary`;
+const ghostIconButtonClassName = `${iconButtonClassName} sqlite-button-ghost`;
 
 const renderEmptyState = (
   title: string,
@@ -405,67 +327,22 @@ const renderEmptyState = (
       ? TerminalSquare
       : icon === 'structure'
         ? FolderTree
-      : icon === 'table'
+        : icon === 'table'
           ? Table2
           : Database;
 
   return (
-    <Surface
-      className="flex min-h-[16rem] flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border/70 bg-surface-secondary/50 px-6 py-8 text-center"
-      variant="secondary"
-    >
-      <div className="flex size-12 items-center justify-center rounded-xl border border-border/70 bg-surface-tertiary text-muted">
-        <Icon aria-hidden="true" className="size-5" />
+    <div className="sqlite-empty-state">
+      <div className="sqlite-empty-state-icon">
+        <Icon aria-hidden="true" className="h-6 w-6" />
       </div>
       <div className="max-w-md space-y-2 text-center">
-        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-        <p className="text-sm leading-6 text-muted">{description}</p>
+        <h2 className="text-lg font-semibold text-white">{title}</h2>
+        <p className="text-sm leading-6 text-slate-400">{description}</p>
       </div>
-    </Surface>
+    </div>
   );
 };
-
-const PANEL_CLASS_NAME =
-  'flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden rounded-[1.4rem] border border-border/60 bg-surface';
-const WORKSPACE_PANEL_CLASS_NAME =
-  'relative flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden rounded-[1.4rem] border border-border/60 bg-surface';
-const CONTENT_PANEL_CLASS_NAME =
-  'flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden rounded-[1.2rem] border border-border/60 bg-surface';
-const QUERY_SECTION_CLASS_NAME =
-  'flex min-h-0 min-w-0 w-full flex-col overflow-hidden';
-const QUERY_SECTION_HEADER_CLASS_NAME =
-  'flex flex-wrap items-center justify-between gap-3 px-4 py-3';
-const PANEL_HEADER_CLASS_NAME =
-  'flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3';
-const PANEL_SECTION_HEADER_CLASS_NAME =
-  'flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3';
-const INLINE_STAT_CLASS_NAME =
-  'sqlite-tabular inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs text-muted';
-const TREE_STACK_CLASS_NAME = 'grid min-w-0 gap-2';
-const TREE_GROUP_CLASS_NAME = 'grid min-w-0 gap-1.5';
-const TREE_BUTTON_CLASS_NAME =
-  'flex w-full min-w-0 items-center gap-2 rounded-xl border border-transparent bg-transparent px-3 py-2.5 text-left text-foreground transition-colors hover:bg-surface-secondary';
-const TREE_ACTIVE_BUTTON_CLASS_NAME = 'border-accent/30 bg-accent/10';
-const TREE_SECTION_TITLE_CLASS_NAME =
-  'm-0 text-[0.72rem] uppercase tracking-[0.08em] text-muted';
-const SKELETON_ROW_CLASS_NAME = 'h-12 animate-pulse rounded-2xl bg-surface-tertiary';
-const STRUCTURE_SKELETON_ROW_CLASS_NAME =
-  'h-[4.5rem] animate-pulse rounded-2xl bg-surface-tertiary';
-
-const InlineStat = ({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) => (
-  <Surface
-    className={joinClassNames(INLINE_STAT_CLASS_NAME, className)}
-    variant="secondary"
-  >
-    {children}
-  </Surface>
-);
 
 export default function SqlitePanel() {
   const client = useRozeniteDevToolsClient<SqliteEventMap>({
@@ -473,7 +350,6 @@ export default function SqlitePanel() {
   });
   const { requestDatabases, requestQuery, requestScriptExecution } =
     useSqliteRequests(client);
-  const { copy: copyToClipboard } = useCopyToClipboard();
 
   const querySplitRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
@@ -486,7 +362,7 @@ export default function SqlitePanel() {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('query');
   const [sidebarWidth, setSidebarWidth] = useState(304);
-  const [editorSplit, setEditorSplit] = useState(60);
+  const [editorSplit, setEditorSplit] = useState(50);
   const [expandedDatabaseIds, setExpandedDatabaseIds] = useState<string[]>([]);
   const [expandedSchemaKeys, setExpandedSchemaKeys] = useState<string[]>([]);
   const [structureSection, setStructureSection] =
@@ -792,10 +668,7 @@ export default function SqlitePanel() {
     [selectedQueryStatement],
   );
 
-  const selectedQueryStatementValue =
-    selectedQueryStatement?.index != null
-      ? String(selectedQueryStatement.index)
-      : null;
+  const selectedQueryStatementValue = selectedQueryStatement?.index ?? '';
 
   const queryTableId = useMemo(
     () =>
@@ -1530,26 +1403,18 @@ export default function SqlitePanel() {
       return;
     }
 
-    try {
-      await copyToClipboard(JSON.stringify(activeQueryResult.rows, null, 2));
-    } catch {
-      // Ignore clipboard failures;
-    }
+    await copyToClipboard(JSON.stringify(activeQueryResult.rows, null, 2));
     setQueryMessage('Copied result rows as JSON.');
-  }, [activeQueryResult, copyToClipboard]);
+  }, [activeQueryResult]);
 
   const handleCopyError = useCallback(async () => {
     if (!queryError) {
       return;
     }
 
-    try {
-      await copyToClipboard(queryError);
-    } catch {
-      // Ignore clipboard failures;
-    }
+    await copyToClipboard(queryError);
     setQueryMessage('Copied SQL error.');
-  }, [queryError, copyToClipboard]);
+  }, [queryError]);
 
   const handleFormatQuery = useCallback(() => {
     try {
@@ -1659,8 +1524,6 @@ export default function SqlitePanel() {
       }
 
       event.preventDefault();
-      event.stopPropagation();
-      event.currentTarget.setPointerCapture?.(event.pointerId);
 
       const startX = event.clientX;
       const startWidth = sidebarWidth;
@@ -1701,8 +1564,6 @@ export default function SqlitePanel() {
       }
 
       event.preventDefault();
-      event.stopPropagation();
-      event.currentTarget.setPointerCapture?.(event.pointerId);
 
       const rect = container.getBoundingClientRect();
       const totalHeight = rect.height;
@@ -1899,70 +1760,46 @@ export default function SqlitePanel() {
     return () => readySubscription.remove();
   }, [client, refreshExplorerData]);
 
-  const queryStatementOptions = useMemo(
-    () =>
-      (queryExecution?.statements ?? []).map((statement) => ({
-        id: String(statement.index),
-        label: getStatementSelectorLabel(statement),
-      })),
-    [queryExecution],
-  );
-  const queryLimitOptions = useMemo<SelectOption[]>(
-    () => [25, 50, 100, 250, 500].map((value) => ({
-      id: String(value),
-      label: String(value),
-    })),
-    [],
-  );
-  const pageSizeOptions = useMemo<SelectOption[]>(
-    () => [25, 50, 100].map((value) => ({
-      id: String(value),
-      label: String(value),
-    })),
-    [],
-  );
-
   const queryTabHeader = (
-    <div className={QUERY_SECTION_HEADER_CLASS_NAME}>
-      <div className="flex items-center gap-2">
-        <Button
+    <div className="sqlite-subtoolbar">
+      <div className="sqlite-subtoolbar-group">
+        <button
+          type="button"
+          className={primaryIconButtonClassName}
+          onClick={() => void handleRun()}
+          disabled={!selectedDatabaseId || queryLoading || !queryInput.trim()}
           aria-label="Run all statements"
-          isDisabled={!selectedDatabaseId || queryLoading || !queryInput.trim()}
-          isIconOnly
-          onPress={() => void handleRun()}
-          size="sm"
-          variant="primary"
+          title="Run all statements"
         >
-          <Play aria-hidden="true" className="size-4" />
-        </Button>
+          <Play aria-hidden="true" className="h-4 w-4" />
+        </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
+      <div className="sqlite-subtoolbar-group">
+        <button
+          type="button"
+          className={secondaryIconButtonClassName}
+          onClick={handleFormatQuery}
+          disabled={!queryInput.trim()}
           aria-label="Format SQL"
-          isDisabled={!queryInput.trim()}
-          isIconOnly
-          onPress={handleFormatQuery}
-          size="sm"
-          variant="secondary"
+          title="Format SQL"
         >
-          <Wand2 aria-hidden="true" className="size-4" />
-        </Button>
-        <Button
+          <Wand2 aria-hidden="true" className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          className={secondaryIconButtonClassName}
+          onClick={handleSaveQuery}
+          disabled={!queryInput.trim()}
           aria-label="Save query"
-          isDisabled={!queryInput.trim()}
-          isIconOnly
-          onPress={handleSaveQuery}
-          size="sm"
-          variant="secondary"
+          title="Save query"
         >
-          <Download aria-hidden="true" className="size-4" />
-        </Button>
-        <Button
-          aria-label="Clear query"
-          isDisabled={!queryInput && !queryExecution && !queryError}
-          isIconOnly
-          onPress={() => {
+          <Download aria-hidden="true" className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          className={ghostIconButtonClassName}
+          onClick={() => {
             setQueryInput('');
             setQueryExecution(null);
             setSelectedQueryStatementIndex(null);
@@ -1971,11 +1808,12 @@ export default function SqlitePanel() {
             setQueryMessage('Cleared the query editor.');
             queueMicrotask(() => editorRef.current?.focus());
           }}
-          size="sm"
-          variant="ghost"
+          disabled={!queryInput && !queryExecution && !queryError}
+          aria-label="Clear query"
+          title="Clear query"
         >
-          <X aria-hidden="true" className="size-4" />
-        </Button>
+          <X aria-hidden="true" className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );
@@ -1987,16 +1825,13 @@ export default function SqlitePanel() {
       'database',
     )
   ) : (
-    <section
-      ref={querySplitRef}
-      className={joinClassNames(CONTENT_PANEL_CLASS_NAME, 'min-h-[32rem]')}
-    >
+    <div ref={querySplitRef} className="sqlite-query-layout">
       <section
-        className={QUERY_SECTION_CLASS_NAME}
+        className="sqlite-query-editor-pane"
         style={{ flex: `0 0 ${editorSplit}%` }}
       >
         {queryTabHeader}
-        <div className="flex min-h-0 min-w-0 flex-1 border-t border-border/60 bg-background">
+        <div className="sqlite-editor-frame">
           <SqlEditor
             ref={editorRef}
             ariaLabel="SQL query editor"
@@ -2029,108 +1864,116 @@ export default function SqlitePanel() {
         role="separator"
         aria-orientation="horizontal"
         aria-label="Resize query editor and results"
-        className="relative h-3 shrink-0 cursor-row-resize border-t border-border/40 bg-surface-secondary/20 before:absolute before:left-1/2 before:top-1/2 before:h-0.5 before:w-10 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-border/60 before:content-['']"
+        className="sqlite-view-splitter"
         onPointerDown={handleQuerySplitResizeStart}
       />
 
-      <section
-        className={joinClassNames(
-          QUERY_SECTION_CLASS_NAME,
-          'min-h-0 flex-1',
-        )}
-      >
-        <div className={QUERY_SECTION_HEADER_CLASS_NAME}>
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+      <section className="sqlite-query-results-pane">
+        <div className="sqlite-results-header sqlite-query-results-header">
+          <div className="sqlite-toolbar-actions sqlite-query-results-header-main">
             {!queryExecution ? (
-              <p className="truncate text-sm text-muted">
+              <span className="sqlite-helper-text">
                 Run SQL to inspect per-statement results.
-              </p>
+              </span>
             ) : null}
 
             {queryExecution && queryExecution.statements.length > 1 ? (
-              <div className="min-w-0 flex-1 basis-[22rem]">
-                <SharedSelect
-                  ariaLabel="Selected query statement result"
-                  className="w-full"
-                  onChange={(value) => {
-                    setSelectedQueryStatementIndex(
-                      value == null ? null : Number(value),
-                    );
-                  }}
-                  options={queryStatementOptions}
+              <div className="sqlite-query-statement-switcher">
+                <select
+                  id="sqlite-query-statement-select"
+                  aria-label="Selected query statement result"
+                  name="queryStatementResult"
+                  autoComplete="off"
+                  className="sqlite-select"
                   value={selectedQueryStatementValue}
-                />
+                  onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                    setSelectedQueryStatementIndex(Number(event.target.value));
+                  }}
+                >
+                  {queryExecution.statements.map((statement) => {
+                    return (
+                      <option key={statement.index} value={statement.index}>
+                        {getStatementSelectorLabel(statement)}
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
             ) : null}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted">
-                Row Limit
-              </span>
-              <SharedSelect
-                ariaLabel="Default query row limit"
-                className="w-24"
-                onChange={(value) => {
-                  if (value != null) {
-                    setQueryRowLimit(Number(value));
-                  }
+          <div className="sqlite-toolbar-actions ml-auto sqlite-query-results-header-actions">
+            <div className="sqlite-field sqlite-field-inline">
+              <label htmlFor="sqlite-query-limit">Row Limit</label>
+              <select
+                id="sqlite-query-limit"
+                aria-label="Default query row limit"
+                name="queryLimit"
+                autoComplete="off"
+                className="sqlite-select"
+                value={queryRowLimit}
+                onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                  setQueryRowLimit(Number(event.target.value));
                 }}
-                options={queryLimitOptions}
-                value={String(queryRowLimit)}
-              />
+              >
+                {[25, 50, 100, 250, 500].map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
             </div>
-            <Button
+            <button
+              type="button"
+              className={secondaryIconButtonClassName}
+              onClick={handleCopyResults}
+              disabled={!activeQueryResult}
               aria-label="Copy results"
-              isDisabled={!activeQueryResult}
-              isIconOnly
-              onPress={() => void handleCopyResults()}
-              size="sm"
-              variant="secondary"
+              title="Copy results"
             >
-              <Copy aria-hidden="true" className="size-4" />
-            </Button>
-            <Button
+              <Copy aria-hidden="true" className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className={secondaryIconButtonClassName}
+              onClick={handleExportResults}
+              disabled={!activeQueryResult}
               aria-label="Export results"
-              isDisabled={!activeQueryResult}
-              isIconOnly
-              onPress={() => void handleExportResults()}
-              size="sm"
-              variant="secondary"
+              title="Export results"
             >
-              <Download aria-hidden="true" className="size-4" />
-            </Button>
+              <Download aria-hidden="true" className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
         {queryError ? (
-          <InlineError
-            action={
-              <Button onPress={() => void handleCopyError()} size="sm" variant="ghost">
-                <Copy aria-hidden="true" className="size-4" />
-                Copy Error
-              </Button>
-            }
-            message={
-              <>
-                {queryError}
-                {queryErrorLine ? (
-                  <span className="mt-1 block text-xs text-danger">
-                    Approximate location: line {formatNumber(queryErrorLine)}
-                  </span>
-                ) : null}
-              </>
-            }
-            title={
-              (queryExecution?.totalStatementCount ?? queryStatements.length) > 1
-                ? 'Script Error'
-                : 'SQL Error'
-            }
-          />
+          <div className="sqlite-inline-error" aria-live="polite">
+            <div>
+              <p className="font-medium text-rose-100">
+                {(queryExecution?.totalStatementCount ??
+                  queryStatements.length) > 1
+                  ? 'Script Error'
+                  : 'SQL Error'}
+              </p>
+              <p className="mt-1 text-sm text-rose-100/90">{queryError}</p>
+              {queryErrorLine ? (
+                <p className="mt-1 text-xs text-rose-100/70">
+                  Approximate location: line {formatNumber(queryErrorLine)}
+                </p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className={ghostButtonClassName}
+              onClick={handleCopyError}
+            >
+              <Copy aria-hidden="true" className="h-4 w-4" />
+              Copy Error
+            </button>
+          </div>
         ) : null}
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+        <div className="sqlite-results-panel">
           <QueryResultTable
             tableId={queryTableId}
             result={activeQueryResult}
@@ -2146,7 +1989,7 @@ export default function SqlitePanel() {
             loading={queryLoading}
             showMetadata={false}
             shellClassName="h-full min-h-0"
-            scrollContainerClassName="min-h-0 p-0"
+            scrollContainerClassName="min-h-0 sqlite-results-scroll-flush"
             emptyTitle={
               selectedQueryStatement?.error ? 'Statement Failed' : 'No Results'
             }
@@ -2158,7 +2001,7 @@ export default function SqlitePanel() {
           />
         </div>
       </section>
-    </section>
+    </div>
   );
 
   const dataRowActions = canMutateRows
@@ -2169,40 +2012,44 @@ export default function SqlitePanel() {
           const rowNumber = browseOffset + rowIndex + 1;
 
           return (
-            <div className="flex items-center justify-end gap-1">
-              <Button
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className={secondaryIconButtonClassName}
+                disabled={editableColumns.length === 0}
                 aria-label={`Edit row ${rowNumber}`}
-                isDisabled={editableColumns.length === 0}
-                isIconOnly
-                onClick={(event) => event.stopPropagation()}
-                onPress={() => {
+                title={
+                  editableColumns.length === 0
+                    ? 'No editable columns'
+                    : `Edit row ${rowNumber}`
+                }
+                onClick={(event) => {
+                  event.stopPropagation();
                   setDeletingRow(null);
                   setEditingRow({
                     row,
                     rowIndex,
                   });
                 }}
-                size="sm"
-                variant="ghost"
               >
-                <Pencil aria-hidden="true" className="size-4" />
-              </Button>
-              <Button
+                <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                className={secondaryIconButtonClassName}
                 aria-label={`Delete row ${rowNumber}`}
-                isIconOnly
-                onClick={(event) => event.stopPropagation()}
-                onPress={() => {
+                title={`Delete row ${rowNumber}`}
+                onClick={(event) => {
+                  event.stopPropagation();
                   setEditingRow(null);
                   setDeletingRow({
                     row,
                     rowIndex,
                   });
                 }}
-                size="sm"
-                variant="ghost"
               >
-                <Trash2 aria-hidden="true" className="size-4 text-danger" />
-              </Button>
+                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+              </button>
             </div>
           );
         },
@@ -2222,73 +2069,70 @@ export default function SqlitePanel() {
       'table',
     )
   ) : (
-    <div className={joinClassNames(CONTENT_PANEL_CLASS_NAME, 'h-full')}>
-      <header className="border-b border-border/60 px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <SearchField
-              className="w-full max-w-xl"
-              fullWidth
-              name="dataSearch"
-              onChange={setDataSearch}
-              value={dataSearch}
-            >
-              <SearchField.Group className="w-full min-w-0">
-                <SearchField.SearchIcon />
-                <SearchField.Input placeholder="Filter visible rows…" />
-                <SearchField.ClearButton />
-              </SearchField.Group>
-            </SearchField>
+    <div className="sqlite-content-stack">
+      <header className="sqlite-object-header">
+        <div className="sqlite-toolbar-actions sqlite-subtoolbar-group-grow">
+          <div className="sqlite-field sqlite-field-grow">
+            <label htmlFor="sqlite-data-search" className="sr-only">
+              Search current result
+            </label>
+            <div className="sqlite-input-with-icon">
+              <Search aria-hidden="true" className="h-4 w-4" />
+              <input
+                id="sqlite-data-search"
+                type="text"
+                name="dataSearch"
+                autoComplete="off"
+                spellCheck={false}
+                value={dataSearch}
+                onChange={(event) => setDataSearch(event.target.value)}
+                placeholder="Filter visible rows…"
+                className="sqlite-input"
+              />
+            </div>
           </div>
+          {dataSearch.trim() ? (
+            <button
+              type="button"
+              className="sqlite-chip"
+              onClick={() => setDataSearch('')}
+            >
+              contains {dataSearch}
+              <X aria-hidden="true" className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+        </div>
 
-          <Button
+        <div className="sqlite-toolbar-actions">
+          <button
+            type="button"
+            className={secondaryIconButtonClassName}
+            onClick={() => void loadBrowse()}
+            disabled={browseLoading || !isQueryableEntity(selectedEntity)}
             aria-label="Refresh data"
-            isDisabled={browseLoading || !isQueryableEntity(selectedEntity)}
-            isIconOnly
-            onPress={() => void loadBrowse()}
-            size="sm"
-            variant="secondary"
+            title="Refresh data"
           >
             <RefreshCw
               aria-hidden="true"
               className={joinClassNames(
-                'size-4',
+                'h-4 w-4',
                 browseLoading && 'animate-spin',
               )}
             />
-          </Button>
+          </button>
         </div>
-
-        {dataSearch.trim() ? (
-          <div className="mt-3 border-t border-border/60 pt-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[0.72rem] font-medium uppercase tracking-[0.16em] text-muted">
-                Filter: contains
-              </span>
-              <Button
-                onPress={() => setDataSearch('')}
-                size="sm"
-                variant="ghost"
-              >
-                Clear
-                <X aria-hidden="true" className="size-4" />
-              </Button>
-            </div>
-            <Surface
-              className="mt-2 min-w-0 break-words rounded-xl border border-border/70 px-3 py-2 text-sm text-foreground"
-              variant="secondary"
-            >
-              {dataSearch}
-            </Surface>
-          </div>
-        ) : null}
       </header>
 
       {browseError ? (
-        <InlineError message={browseError} title="Data Load Failed" />
+        <div className="sqlite-inline-error" aria-live="polite">
+          <div>
+            <p className="font-medium text-rose-100">Data Load Failed</p>
+            <p className="mt-1 text-sm text-rose-100/90">{browseError}</p>
+          </div>
+        </div>
       ) : null}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+      <div className="sqlite-results-panel flex-1">
         <QueryResultTable
           tableId={dataTableId}
           result={filteredBrowseResult}
@@ -2301,7 +2145,7 @@ export default function SqlitePanel() {
           loading={browseLoading}
           showMetadata={false}
           shellClassName="h-full min-h-0"
-          scrollContainerClassName="min-h-0 p-0"
+          scrollContainerClassName="min-h-0 sqlite-results-scroll-flush"
           emptyTitle={
             selectedEntity ? 'No Rows On This Page' : 'No Table Selected'
           }
@@ -2317,70 +2161,67 @@ export default function SqlitePanel() {
         />
       </div>
 
-      <footer
-        className={joinClassNames(
-          PANEL_HEADER_CLASS_NAME,
-          'border-b-0 border-t',
-        )}
-      >
-        <div className="flex min-w-0 flex-wrap gap-2">
-          <InlineStat>
-            Page {currentDataPage > 0 ? currentDataPage : '—'}
-          </InlineStat>
-          <InlineStat>
+      <footer className="sqlite-status-footer">
+        <div className="sqlite-status-cluster sqlite-tabular">
+          <span>Page {currentDataPage > 0 ? currentDataPage : '—'}</span>
+          <span>
             Rows{' '}
             {dataPageStart > 0
               ? `${formatNumber(dataPageStart)}–${formatNumber(dataPageEnd)}`
               : '—'}
-          </InlineStat>
-          <InlineStat>
-            Total {formatNumber(entityRowCount)}
-          </InlineStat>
-          <InlineStat>
-            Visible {formatNumber(filteredBrowseRows.length)}
-          </InlineStat>
+          </span>
+          <span>Total {formatNumber(entityRowCount)}</span>
+          <span>Visible {formatNumber(filteredBrowseRows.length)}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted">
-              Page Size
-            </span>
-            <SharedSelect
-              ariaLabel="Data page size"
-              className="w-24"
-              onChange={(value) => {
-                if (value != null) {
-                  setBrowsePageSize(Number(value));
-                  setBrowseOffset(0);
-                }
+        <div className="sqlite-toolbar-actions">
+          <div className="sqlite-field sqlite-field-inline">
+            <label htmlFor="sqlite-data-page-size">Page Size</label>
+            <select
+              id="sqlite-data-page-size"
+              aria-label="Data page size"
+              name="dataPageSize"
+              autoComplete="off"
+              className="sqlite-select"
+              value={browsePageSize}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                setBrowsePageSize(Number(event.target.value));
+                setBrowseOffset(0);
               }}
-              options={pageSizeOptions}
-              value={String(browsePageSize)}
-            />
+            >
+              {[25, 50, 100].map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
           </div>
-          <Button
-            isDisabled={browseLoading || !canBrowseBackward}
-            onPress={() =>
-              setBrowseOffset((current) => Math.max(0, current - browsePageSize))
+          <button
+            type="button"
+            className={secondaryButtonClassName}
+            onClick={() =>
+              setBrowseOffset((current) =>
+                Math.max(0, current - browsePageSize),
+              )
             }
-            size="sm"
-            variant="secondary"
+            disabled={browseLoading || !canBrowseBackward}
           >
             Previous
-          </Button>
-          <Button
-            isDisabled={browseLoading || !canBrowseForward}
-            onPress={() =>
+          </button>
+          <button
+            type="button"
+            className={secondaryButtonClassName}
+            onClick={() =>
               setBrowseOffset((current) => current + browsePageSize)
             }
-            size="sm"
-            variant="secondary"
+            disabled={browseLoading || !canBrowseForward}
           >
             Next
-          </Button>
-          <InlineStat>
-            {totalDataPages > 0 ? `${currentDataPage}/${totalDataPages}` : '0/0'}
-          </InlineStat>
+          </button>
+          <span className="sqlite-badge sqlite-badge-neutral sqlite-tabular">
+            {totalDataPages > 0
+              ? `${currentDataPage}/${totalDataPages}`
+              : '0/0'}
+          </span>
         </div>
       </footer>
     </div>
@@ -2399,66 +2240,73 @@ export default function SqlitePanel() {
       'structure',
     )
   ) : (
-    <div className={joinClassNames(CONTENT_PANEL_CLASS_NAME, 'h-full')}>
-      <header className={PANEL_HEADER_CLASS_NAME}>
-        <div className="min-w-0 flex-1">
-          <Tabs.Root
-            className="min-w-0"
-            onSelectionChange={(key) =>
-              setStructureSection(String(key) as StructureSection)
-            }
-            selectedKey={structureSection}
-          >
-            <Tabs.ListContainer className="overflow-x-auto">
-              <Tabs.List
-                aria-label="Structure sections"
-                className="w-fit min-w-max justify-start"
-              >
-                {(
-                  [
-                    ['columns', 'Columns'],
-                    ['keys', 'Keys'],
-                    ['indexes', 'Indexes'],
-                  ] as Array<[StructureSection, string]>
-                ).map(([key, label]) => (
-                  <Tabs.Tab
-                    className="w-auto shrink-0 whitespace-nowrap"
-                    id={key}
-                    key={key}
-                  >
-                    {label}
-                    <Tabs.Indicator />
-                  </Tabs.Tab>
-                ))}
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs.Root>
+    <div className="sqlite-content-stack">
+      <header className="sqlite-object-header">
+        <div
+          className="sqlite-section-tabs"
+          role="tablist"
+          aria-label="Structure sections"
+        >
+          {(
+            [
+              ['columns', 'Columns'],
+              ['keys', 'Keys'],
+              ['indexes', 'Indexes'],
+            ] as Array<[StructureSection, string]>
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={structureSection === key}
+              className={joinClassNames(
+                'sqlite-section-tab',
+                structureSection === key && 'is-active',
+              )}
+              onClick={() => setStructureSection(key)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
-        <Button
-          aria-label="Refresh structure"
-          isDisabled={structureLoading}
-          isIconOnly
-          onPress={() => void loadStructure()}
-          size="sm"
-          variant="secondary"
-        >
-          <RefreshCw
-            aria-hidden="true"
-            className={joinClassNames(
-              'size-4',
-              structureLoading && 'animate-spin',
-            )}
-          />
-        </Button>
+        <div className="sqlite-toolbar-actions">
+          <button
+            type="button"
+            className={secondaryIconButtonClassName}
+            onClick={() => void loadStructure()}
+            disabled={structureLoading}
+            aria-label="Refresh structure"
+            title="Refresh structure"
+          >
+            <RefreshCw
+              aria-hidden="true"
+              className={joinClassNames(
+                'h-4 w-4',
+                structureLoading && 'animate-spin',
+              )}
+            />
+          </button>
+        </div>
       </header>
 
       {structureError ? (
-        <InlineError message={structureError} title="Structure Load Failed" />
+        <div className="sqlite-inline-error" aria-live="polite">
+          <div>
+            <p className="font-medium text-rose-100">Structure Load Failed</p>
+            <p className="mt-1 text-sm text-rose-100/90">{structureError}</p>
+          </div>
+        </div>
       ) : null}
 
-      {structureSection === 'columns' ? (
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+      <div
+        className={joinClassNames(
+          'sqlite-structure-panel',
+          (structureSection === 'columns' || structureSection === 'indexes') &&
+            'sqlite-structure-panel-flush',
+        )}
+      >
+        {structureSection === 'columns' ? (
           <SqliteDataTable
             tableId={structureColumnsTableId}
             data={structureColumnRows}
@@ -2474,92 +2322,82 @@ export default function SqlitePanel() {
             loading={structureLoading}
             emptyTitle="No Columns Found"
             emptyDescription="This table or view does not expose columns."
-            shellClassName="p-0"
+            shellClassName="sqlite-metadata-table-wrap sqlite-metadata-table-wrap-flush"
             scrollContainerClassName="p-0"
+            tableClassName="sqlite-metadata-table"
           />
-        </div>
-      ) : null}
-
-      {structureSection === 'keys' ? (
-        <div className="min-h-0 flex-1 overflow-auto bg-background p-4">
-        {structureLoading ? (
-          <div aria-live="polite" className="grid gap-3">
-            {Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className={STRUCTURE_SKELETON_ROW_CLASS_NAME} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid gap-3 lg:grid-cols-2">
-            <Card>
-              <Card.Header>
-                <Card.Title>Primary Key</Card.Title>
-              </Card.Header>
-              <Card.Content>
+        ) : structureSection === 'keys' ? (
+          structureLoading ? (
+            <div className="sqlite-structure-skeleton" aria-live="polite">
+              {Array.from({ length: 4 }, (_, index) => (
+                <div key={index} className="sqlite-structure-skeleton-row" />
+              ))}
+            </div>
+          ) : (
+            <div className="sqlite-structure-grid">
+              <section className="sqlite-detail-card">
+                <header className="mb-3">
+                  <h3 className="sqlite-detail-card-title">Primary Key</h3>
+                </header>
                 {primaryKeyColumns.length === 0 ? (
-                  <p className="text-sm text-muted">No primary key defined.</p>
+                  <p className="sqlite-helper-text">No primary key defined.</p>
                 ) : (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="sqlite-chip-row">
                     {primaryKeyColumns
                       .sort(
                         (left, right) =>
                           left.primaryKeyOrder - right.primaryKeyOrder,
                       )
                       .map((column) => (
-                        <Chip
+                        <span
                           key={column.name}
-                          size="sm"
-                          variant="soft"
+                          className="sqlite-chip sqlite-chip-static"
                         >
-                          <KeyRound aria-hidden="true" className="size-3.5" />
+                          <KeyRound
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5"
+                          />
                           {column.name}
-                        </Chip>
+                        </span>
                       ))}
                   </div>
                 )}
-              </Card.Content>
-            </Card>
+              </section>
 
-            <Card>
-              <Card.Header>
-                <Card.Title>Foreign Keys</Card.Title>
-              </Card.Header>
-              <Card.Content>
+              <section className="sqlite-detail-card">
+                <header className="mb-3">
+                  <h3 className="sqlite-detail-card-title">Foreign Keys</h3>
+                </header>
                 {structureState.foreignKeys.length === 0 ? (
-                  <p className="text-sm text-muted">No foreign keys defined.</p>
+                  <p className="sqlite-helper-text">No foreign keys defined.</p>
                 ) : (
                   <div className="space-y-3">
                     {structureState.foreignKeys.map((foreignKey) => (
-                      <Surface
+                      <div
                         key={`${foreignKey.id}-${foreignKey.seq}`}
-                        className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-border/70 px-4 py-3"
-                        variant="secondary"
+                        className="sqlite-key-row"
                       >
                         <div>
-                          <p className="font-medium text-foreground">
+                          <p className="font-medium text-white">
                             {foreignKey.from} → {foreignKey.table}
                             {foreignKey.to ? `.${foreignKey.to}` : ''}
                           </p>
-                          <p className="mt-1 text-sm text-muted">
+                          <p className="sqlite-helper-text">
                             Update {foreignKey.onUpdate} · Delete{' '}
                             {foreignKey.onDelete}
                           </p>
                         </div>
-                        <Chip size="sm" variant="soft">
+                        <span className="sqlite-badge sqlite-badge-neutral">
                           Match {foreignKey.match}
-                        </Chip>
-                      </Surface>
+                        </span>
+                      </div>
                     ))}
                   </div>
                 )}
-              </Card.Content>
-            </Card>
-          </div>
-        )}
-        </div>
-      ) : null}
-
-      {structureSection === 'indexes' ? (
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+              </section>
+            </div>
+          )
+        ) : (
           <SqliteDataTable
             tableId={structureIndexesTableId}
             data={structureIndexRows}
@@ -2575,108 +2413,76 @@ export default function SqlitePanel() {
             loading={structureLoading}
             emptyTitle="No Indexes Defined"
             emptyDescription="This table or view does not define indexes."
-            shellClassName="p-0"
+            shellClassName="sqlite-metadata-table-wrap sqlite-metadata-table-wrap-flush"
             scrollContainerClassName="p-0"
+            tableClassName="sqlite-metadata-table"
           />
-        </div>
-      ) : null}
+        )}
+      </div>
     </div>
   );
 
-  const headerSubtitle = selectedDatabase
-    ? selectedEntity
-      ? `${selectedDatabase.name} · ${selectedEntity.schemaName}.${selectedEntity.name}`
-      : selectedDatabase.name
-    : 'Query, browse, and edit SQLite data.';
-  const sidebarStyle = {
-    '--sqlite-sidebar-width': `${sidebarWidth}px`,
-  } as CSSProperties;
-
   return (
-    <PluginTheme
-      className="flex h-screen flex-col bg-background text-foreground"
-      defaultTheme="dark"
-    >
-      <a
-        href="#sqlite-main-content"
-        className="absolute left-4 top-[-3rem] z-50 rounded-full border border-border/80 bg-surface px-4 py-2.5 text-foreground opacity-0 transition-[top,opacity] duration-150 ease-out focus-visible:top-4 focus-visible:opacity-100"
-      >
+    <div className="sqlite-app-shell">
+      <a href="#sqlite-main-content" className="sqlite-skip-link">
         Skip To Workspace
       </a>
-
-      <PluginHeader
-        subtitle={headerSubtitle}
-        title="SQLite"
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Chip className="shrink-0" size="sm" variant="secondary">
-              {formatNumber(databases.length)}{' '}
-              {databases.length === 1 ? 'database' : 'databases'}
-            </Chip>
-            {selectedDatabase ? (
-              <Chip className="max-w-56 truncate" color="accent" size="sm" variant="soft">
-                {selectedDatabase.name}
-              </Chip>
-            ) : null}
-            <Button
-              aria-label="Refresh SQLite explorer"
-              isDisabled={databaseLoading || entityLoading}
-              isIconOnly
-              onPress={() => void refreshWorkspace()}
-              size="sm"
-              variant="secondary"
-            >
-              <RefreshCw
-                aria-hidden="true"
-                className={joinClassNames(
-                  'size-4',
-                  (databaseLoading || entityLoading) && 'animate-spin',
-                )}
-              />
-            </Button>
-          </div>
-        }
-      />
-
-      <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-3 lg:flex-row">
+      <div className="sqlite-app-body">
         <aside
           ref={sidebarRef}
-          className="flex h-[min(28rem,42vh)] min-h-0 w-full min-w-0 max-w-none lg:h-full lg:min-w-72 lg:w-[var(--sqlite-sidebar-width)] lg:max-w-[min(28rem,48vw)]"
-          style={sidebarStyle}
+          className="sqlite-sidebar-wrap"
+          style={{ width: sidebarWidth }}
         >
-          <section className={PANEL_CLASS_NAME}>
-            <header className={PANEL_SECTION_HEADER_CLASS_NAME}>
-              <h2 className="text-sm font-semibold text-foreground">Databases</h2>
-              <InlineStat>
-                {formatNumber(databases.length)}
-              </InlineStat>
+          <section className="sqlite-sidebar-panel">
+            <header className="sqlite-sidebar-header">
+              <div className="sqlite-toolbar-actions">
+                <h1 className="sqlite-section-title">Databases</h1>
+              </div>
+              <div className="sqlite-toolbar-actions">
+                <button
+                  type="button"
+                  className={iconButtonClassName}
+                  aria-label="Refresh databases"
+                  title="Refresh databases"
+                  onClick={() => void refreshWorkspace()}
+                  disabled={databaseLoading || entityLoading}
+                >
+                  <RefreshCw
+                    aria-hidden="true"
+                    className={joinClassNames(
+                      'h-4 w-4',
+                      (databaseLoading || entityLoading) && 'animate-spin',
+                    )}
+                  />
+                </button>
+              </div>
             </header>
 
-            <div className="px-3 pb-2 pt-1">
-              <SearchField
-                className="w-full min-w-0"
-                fullWidth
-                name="sidebarFilter"
-                onChange={setObjectSearch}
-                value={objectSearch}
-              >
-                <SearchField.Group className="w-full min-w-0">
-                  <SearchField.SearchIcon />
-                  <SearchField.Input
-                    className="min-w-0"
-                    placeholder="Filter explorer items…"
-                    ref={objectSearchRef}
-                  />
-                  <SearchField.ClearButton />
-                </SearchField.Group>
-              </SearchField>
+            <div className="sqlite-sidebar-toolbar">
+              <label htmlFor="sqlite-sidebar-filter" className="sr-only">
+                Filter databases, tables, and views
+              </label>
+              <div className="sqlite-input-with-icon">
+                <Search aria-hidden="true" className="h-4 w-4" />
+                <input
+                  id="sqlite-sidebar-filter"
+                  type="text"
+                  name="sidebarFilter"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={objectSearch}
+                  onChange={(event) => setObjectSearch(event.target.value)}
+                  placeholder="Filter databases, tables, views…"
+                  className="sqlite-input"
+                />
+              </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-auto p-3">
+            <div className="sqlite-sidebar-scroll">
               {databaseLoading && databases.length === 0 ? (
-                <div aria-live="polite" className="grid gap-3">
+                <div className="sqlite-sidebar-skeleton" aria-live="polite">
                   {Array.from({ length: 6 }, (_, index) => (
-                    <div key={index} className={SKELETON_ROW_CLASS_NAME} />
+                    <div key={index} className="sqlite-sidebar-skeleton-row" />
                   ))}
                 </div>
               ) : databases.length === 0 ? (
@@ -2689,7 +2495,7 @@ export default function SqlitePanel() {
                   'database',
                 )
               ) : (
-                <div className={TREE_STACK_CLASS_NAME}>
+                <div className="sqlite-connection-list">
                   {databases.map((database) => {
                     const isExpanded = expandedDatabaseIds.includes(
                       database.id,
@@ -2704,10 +2510,10 @@ export default function SqlitePanel() {
                     );
 
                     return (
-                      <div key={database.id} className={TREE_GROUP_CLASS_NAME}>
+                      <div key={database.id} className="sqlite-connection-card">
                         <button
                           type="button"
-                          className={TREE_BUTTON_CLASS_NAME}
+                          className="sqlite-connection-row"
                           onClick={() => {
                             setSelectedDatabaseId(database.id);
                             setExpandedDatabaseIds((current) =>
@@ -2742,33 +2548,38 @@ export default function SqlitePanel() {
                         </button>
 
                         {isExpanded ? (
-                          <div className="grid min-w-0 gap-2 pl-2">
+                          <div className="sqlite-tree-shell">
                             {databaseExplorerState.loading ||
                             !databaseExplorerState.loaded ? (
                               <div
+                                className="sqlite-sidebar-skeleton"
                                 aria-live="polite"
-                                className="grid gap-3"
                               >
                                 {Array.from({ length: 4 }, (_, index) => (
                                   <div
                                     key={index}
-                                    className={SKELETON_ROW_CLASS_NAME}
+                                    className="sqlite-sidebar-skeleton-row"
                                   />
                                 ))}
                               </div>
                             ) : databaseExplorerState.error ? (
-                              <InlineError
-                                className="mx-0 mt-0"
-                                message={databaseExplorerState.error}
-                                title="Explorer Load Failed"
-                              />
-                            ) : databaseExplorerGroups.length === 0 ? (
-                              <Surface
-                                className="rounded-xl border border-dashed border-border/70 px-3 py-3 text-xs uppercase tracking-[0.16em] text-muted"
-                                variant="secondary"
+                              <div
+                                className="sqlite-inline-error"
+                                aria-live="polite"
                               >
+                                <div>
+                                  <p className="font-medium text-rose-100">
+                                    Explorer Load Failed
+                                  </p>
+                                  <p className="mt-1 text-sm text-rose-100/90">
+                                    {databaseExplorerState.error}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : databaseExplorerGroups.length === 0 ? (
+                              <div className="sqlite-tree-empty">
                                 No objects match this filter.
-                              </Surface>
+                              </div>
                             ) : (
                               databaseExplorerGroups.map(
                                 ({ schema, tables, views }) => {
@@ -2782,11 +2593,11 @@ export default function SqlitePanel() {
                                   return (
                                     <div
                                       key={`${database.id}-${schema.name}`}
-                                      className={TREE_GROUP_CLASS_NAME}
+                                      className="sqlite-schema-group"
                                     >
                                       <button
                                         type="button"
-                                        className={TREE_BUTTON_CLASS_NAME}
+                                        className="sqlite-schema-row"
                                         onClick={() => {
                                           setExpandedSchemaKeys((current) =>
                                             current.includes(schemaKey)
@@ -2819,13 +2630,13 @@ export default function SqlitePanel() {
                                       </button>
 
                                       {isSchemaExpanded ? (
-                                        <div className="grid min-w-0 gap-3 border-l border-border/70 pl-3">
+                                        <div className="sqlite-schema-content">
                                           {tables.length > 0 ? (
-                                            <div className={TREE_GROUP_CLASS_NAME}>
-                                              <p className={TREE_SECTION_TITLE_CLASS_NAME}>
+                                            <div className="sqlite-object-section">
+                                              <p className="sqlite-object-section-title">
                                                 Tables
                                               </p>
-                                              <div className={TREE_STACK_CLASS_NAME}>
+                                              <div className="sqlite-object-list">
                                                 {tables.map((entity) => {
                                                   const isSelected =
                                                     getEntityKey(
@@ -2839,9 +2650,9 @@ export default function SqlitePanel() {
                                                       key={`${database.id}-${entity.schemaName}-${entity.name}`}
                                                       type="button"
                                                       className={joinClassNames(
-                                                        TREE_BUTTON_CLASS_NAME,
+                                                        'sqlite-object-row',
                                                         isSelected &&
-                                                          TREE_ACTIVE_BUTTON_CLASS_NAME,
+                                                          'is-active',
                                                       )}
                                                       onClick={() => {
                                                         setEntitySelection(
@@ -2866,11 +2677,11 @@ export default function SqlitePanel() {
                                           ) : null}
 
                                           {views.length > 0 ? (
-                                            <div className={TREE_GROUP_CLASS_NAME}>
-                                              <p className={TREE_SECTION_TITLE_CLASS_NAME}>
+                                            <div className="sqlite-object-section">
+                                              <p className="sqlite-object-section-title">
                                                 Views
                                               </p>
-                                              <div className={TREE_STACK_CLASS_NAME}>
+                                              <div className="sqlite-object-list">
                                                 {views.map((entity) => {
                                                   const isSelected =
                                                     getEntityKey(
@@ -2884,9 +2695,9 @@ export default function SqlitePanel() {
                                                       key={`${database.id}-${entity.schemaName}-${entity.name}`}
                                                       type="button"
                                                       className={joinClassNames(
-                                                        TREE_BUTTON_CLASS_NAME,
+                                                        'sqlite-object-row',
                                                         isSelected &&
-                                                          TREE_ACTIVE_BUTTON_CLASS_NAME,
+                                                          'is-active',
                                                       )}
                                                       onClick={() => {
                                                         setEntitySelection(
@@ -2932,73 +2743,73 @@ export default function SqlitePanel() {
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize database explorer"
-            className="relative hidden w-2 shrink-0 cursor-col-resize lg:block before:absolute before:left-1/2 before:top-1/2 before:h-16 before:w-0.5 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:bg-border before:content-[''] hover:before:bg-muted/70"
+            className="sqlite-sidebar-resizer"
             onPointerDown={handleSidebarResizeStart}
           />
         </aside>
 
-        <main id="sqlite-main-content" className="flex min-h-0 min-w-0 flex-1">
-          <div className={WORKSPACE_PANEL_CLASS_NAME}>
-            <div className="px-3 pt-3">
-              <Tabs.Root
-                className="shrink-0"
-                onSelectionChange={(key) => setActiveTab(String(key) as ActiveTab)}
-                selectedKey={activeTab}
-              >
-                <Tabs.ListContainer className="overflow-x-auto px-1">
-                  <Tabs.List
-                    aria-label="Workspace tabs"
-                    className="w-fit min-w-max justify-start"
-                  >
-                    {(
-                      [
-                        ['query', 'Query'],
-                        ['data', 'Data'],
-                        ['structure', 'Structure'],
-                      ] as Array<[ActiveTab, string]>
-                    ).map(([tab, label]) => (
-                      <Tabs.Tab
-                        className="w-auto shrink-0 whitespace-nowrap"
-                        id={tab}
-                        key={tab}
-                      >
-                        {label}
-                        <Tabs.Indicator />
-                      </Tabs.Tab>
-                    ))}
-                  </Tabs.List>
-                </Tabs.ListContainer>
-              </Tabs.Root>
-            </div>
+        <main id="sqlite-main-content" className="sqlite-workspace">
+          <section className="sqlite-workspace-panel">
+            <div className="sqlite-workspace-content">
+              <div className="sqlite-main-stack">
+                <div
+                  className="sqlite-workspace-tabs sqlite-main-tabs"
+                  role="tablist"
+                  aria-label="Workspace tabs"
+                >
+                  {(
+                    [
+                      ['query', 'Query'],
+                      ['data', 'Data'],
+                      ['structure', 'Structure'],
+                    ] as Array<[ActiveTab, string]>
+                  ).map(([tab, label]) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === tab}
+                      className={joinClassNames(
+                        'sqlite-workspace-tab',
+                        activeTab === tab && 'is-active',
+                      )}
+                      onClick={() => setActiveTab(tab)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
 
-            <div className="flex min-h-0 min-w-0 flex-1 px-3 pb-3 pt-2">
-              {activeTab === 'query'
-                ? queryPane
-                : activeTab === 'data'
-                  ? dataPane
-                  : structurePane}
+                <div className="sqlite-main-pane">
+                  {activeTab === 'query'
+                    ? queryPane
+                    : activeTab === 'data'
+                      ? dataPane
+                      : structurePane}
+                </div>
+              </div>
             </div>
-          </div>
+          </section>
         </main>
+
+        <SqliteRowEditModal
+          isOpen={!!editingRow && !!selectedEntity}
+          rowNumber={browseOffset + (editingRow?.rowIndex ?? 0) + 1}
+          entityName={selectedEntity?.name ?? 'row'}
+          row={editingRow?.row ?? null}
+          columns={structureState.columns}
+          onClose={() => setEditingRow(null)}
+          onSave={handleSaveRow}
+        />
+
+        <SqliteRowDeleteModal
+          isOpen={!!deletingRow && !!selectedEntity}
+          rowNumber={browseOffset + (deletingRow?.rowIndex ?? 0) + 1}
+          entityName={selectedEntity?.name ?? 'row'}
+          onClose={() => setDeletingRow(null)}
+          onDelete={handleDeleteRow}
+        />
       </div>
-
-      <SqliteRowEditModal
-        isOpen={!!editingRow && !!selectedEntity}
-        rowNumber={browseOffset + (editingRow?.rowIndex ?? 0) + 1}
-        entityName={selectedEntity?.name ?? 'row'}
-        row={editingRow?.row ?? null}
-        columns={structureState.columns}
-        onClose={() => setEditingRow(null)}
-        onSave={handleSaveRow}
-      />
-
-      <SqliteRowDeleteModal
-        isOpen={!!deletingRow && !!selectedEntity}
-        rowNumber={browseOffset + (deletingRow?.rowIndex ?? 0) + 1}
-        entityName={selectedEntity?.name ?? 'row'}
-        onClose={() => setDeletingRow(null)}
-        onDelete={handleDeleteRow}
-      />
-    </PluginTheme>
+    </div>
   );
 }

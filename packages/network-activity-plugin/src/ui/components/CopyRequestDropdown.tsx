@@ -3,7 +3,7 @@ import { Copy, Check, ChevronDown } from 'lucide-react';
 import { Button } from './Button';
 import { generateFetchCall } from '../utils/generateFetchCall';
 import { generateCurlCommand } from '../utils/generateCurlCommand';
-import { useCopyToClipboard } from '@rozenite/ui';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { HttpNetworkEntry, SSENetworkEntry } from '../state/model';
 import {
   DropdownMenu,
@@ -71,7 +71,7 @@ export const CopyRequestDropdown = ({ selectedRequest }: CopyDropdownProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="xs" className="border border-border/60">
+        <Button variant="ghost" size="xs" className="border border-gray-700">
           {isCopied ? <Check size={16} /> : <Copy size={16} />}
           Copy as ...
           <ChevronDown size={12} className="ml-1" />

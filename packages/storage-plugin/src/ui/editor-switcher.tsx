@@ -39,7 +39,7 @@ export const EditorSwitcher = ({
     <div
       role="tablist"
       aria-label="Edit as"
-      className="inline-flex gap-1 rounded-2xl bg-default p-1"
+      className="inline-flex rounded border border-gray-600 overflow-hidden"
     >
       {available.map((type) => (
         <button
@@ -48,10 +48,10 @@ export const EditorSwitcher = ({
           role="tab"
           aria-selected={value === type}
           onClick={() => onChange(type)}
-          className={`rounded-xl px-3 py-1 text-xs font-medium transition-colors ${
+          className={`px-3 py-1 text-xs transition-colors ${
             value === type
-              ? 'bg-segment text-segment-foreground shadow-sm'
-              : 'text-muted hover:text-foreground'
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-300 hover:bg-gray-700'
           }`}
         >
           {TYPE_LABELS[type]}

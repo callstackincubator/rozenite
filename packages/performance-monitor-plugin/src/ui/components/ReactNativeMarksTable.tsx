@@ -1,6 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table';
+import { Text } from '@radix-ui/themes';
 import { SerializedPerformanceReactNativeMark } from '../../shared/types';
-import { DataTable } from '@rozenite/ui';
+import { DataTable } from './DataTable';
 import { formatTime } from '../utils';
 
 export type ReactNativeMarksTableProps = {
@@ -12,21 +13,17 @@ const columns: ColumnDef<SerializedPerformanceReactNativeMark>[] = [
   {
     accessorKey: 'name',
     header: 'Name',
-    cell: ({ row }) => (
-      <span className="font-medium text-foreground">
-        {String(row.getValue('name'))}
-      </span>
-    ),
+    cell: ({ row }) => <Text weight="medium">{row.getValue('name')}</Text>,
   },
   {
     accessorKey: 'startTime',
-    header: 'Recorded At',
+    header: 'Recorded at',
     cell: ({ row }) => {
       const startTime = row.getValue('startTime') as number;
       return (
-        <span className="tabular-nums text-sm text-muted">
+        <Text size="2" color="gray">
           {formatTime(startTime)}
-        </span>
+        </Text>
       );
     },
   },
@@ -38,12 +35,10 @@ export const ReactNativeMarksTable = ({
 }: ReactNativeMarksTableProps) => {
   return (
     <DataTable
-      ariaLabel="React Native marks"
       data={reactNativeMarks}
       columns={columns}
       onRowClick={onRowClick}
       emptyMessage="No React Native marks recorded"
-      getRowTextValue={(mark) => mark.name}
     />
   );
 };

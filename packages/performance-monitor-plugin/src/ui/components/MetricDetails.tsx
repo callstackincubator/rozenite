@@ -1,49 +1,53 @@
-import { Description } from '@rozenite/ui';
-import type { SerializedPerformanceMetric } from '../../shared/types';
-import {
-  formatTime,
-  getMetricUnit,
-  getMetricValueKind,
-} from '../utils';
-import { DetailField, DetailsCard, DetailsDisplay } from './DetailsDisplay';
+import { Box, Text, Heading, Separator, Flex } from '@radix-ui/themes';
+import { SerializedPerformanceMetric } from '../../shared/types';
+import { DetailsDisplay } from './DetailsDisplay';
+import { formatTime } from '../utils';
 
 export type MetricDetailsProps = {
   metric: SerializedPerformanceMetric;
 };
 
 export const MetricDetails = ({ metric }: MetricDetailsProps) => {
-  const unit = getMetricUnit(metric.detail);
-  const valueKind = getMetricValueKind(metric.value);
-
   return (
-    <div className="flex flex-col gap-4">
-      <DetailsCard
-        description="Metric metadata captured for this event."
-        title="Overview"
-      >
-        <DetailField label="Name">
-          <span className="font-medium text-foreground">{metric.name}</span>
-        </DetailField>
-        <DetailField label="Value">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="break-all font-medium text-success">
-              {String(metric.value)}
-            </span>
-            {unit ? (
-              <Description className="text-xs text-muted">{unit}</Description>
-            ) : null}
-          </div>
-        </DetailField>
-        {unit ? <DetailField label="Unit">{unit}</DetailField> : null}
-        <DetailField label="Value Type">{valueKind}</DetailField>
-        <DetailField label="Recorded At">
-          <span className="tabular-nums text-foreground">
-            {formatTime(metric.startTime)}
-          </span>
-        </DetailField>
-      </DetailsCard>
+    <Box>
+      <Heading size="5" mb="4">
+        Metric Details
+      </Heading>
+
+      <Box mb="4">
+        <Flex align="center" gap="3">
+          <Text size="2" color="gray" style={{ minWidth: '80px' }}>
+            Name:
+          </Text>
+          <Text weight="medium" size="3">
+            {metric.name}
+          </Text>
+        </Flex>
+      </Box>
+
+      <Box mb="4">
+        <Flex align="center" gap="3">
+          <Text size="2" color="gray" style={{ minWidth: '80px' }}>
+            Value:
+          </Text>
+          <Text color="green" weight="medium" size="3">
+            {String(metric.value)}
+          </Text>
+        </Flex>
+      </Box>
+
+      <Box mb="4">
+        <Flex align="center" gap="3">
+          <Text size="2" color="gray" style={{ minWidth: '80px' }}>
+            Recorded at:
+          </Text>
+          <Text size="3">{formatTime(metric.startTime)}</Text>
+        </Flex>
+      </Box>
+
+      <Separator size="4" my="4" />
 
       <DetailsDisplay details={metric.detail} />
-    </div>
+    </Box>
   );
 };

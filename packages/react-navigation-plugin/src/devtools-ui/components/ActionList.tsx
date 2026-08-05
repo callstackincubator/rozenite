@@ -1,6 +1,5 @@
-import { Surface } from '@rozenite/ui';
 import type { ActionOrigin } from '../../react-native/symbolication/types';
-import type { NavigationAction, NavigationState } from '../../shared';
+import { NavigationAction, NavigationState } from '../../shared';
 import { ActionItem } from './ActionItem';
 
 export type ActionWithState = {
@@ -24,13 +23,13 @@ export const ActionList = ({
   onGoToAction,
 }: ActionListProps) => {
   return (
-    <div className="h-full">
+    <div className="min-w-0 flex-1 overflow-auto">
       {actionHistory.length === 0 ? (
-        <Surface className="text-sm text-muted" variant="secondary">
-          No actions recorded yet.
-        </Surface>
+        <div className="p-4 text-center text-gray-400">
+          No actions recorded yet
+        </div>
       ) : (
-        <div className="space-y-2 pb-1">
+        <div className="p-2">
           {actionHistory.map((entry, index) => (
             <ActionItem
               key={index}

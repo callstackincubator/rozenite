@@ -1,85 +1,54 @@
 import { useState } from 'react';
-import {
-  Button,
-  ConfirmDialog,
-  Description,
-  Input,
-  Label,
-  ListBox,
-  Modal,
-  Select,
-  TextField,
-} from '@rozenite/ui';
-import { Plus } from 'lucide-react';
-import type { MMKVEntry, MMKVEntryType, MMKVEntryValue } from '../shared/types';
-
-const TYPE_OPTIONS: Array<{ value: MMKVEntryType; label: string }> = [
-  { value: 'string', label: 'String' },
-  { value: 'number', label: 'Number' },
-  { value: 'boolean', label: 'Boolean' },
-  { value: 'buffer', label: 'Buffer (Array)' },
-];
-
-type DialogState = {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  type: 'confirm' | 'alert';
-  onConfirm?: () => void;
-};
-
-const EMPTY_DIALOG_STATE: DialogState = {
-  isOpen: false,
-  title: '',
-  message: '',
-  type: 'alert',
-};
+import { X } from 'lucide-react';
+import { MMKVEntry, MMKVEntryType, MMKVEntryValue } from '../shared/types';
+import { ConfirmDialog } from './confirm-dialog';
 
 export type AddEntryDialogProps = {
+  isOpen: boolean;
+  onClose: () => void;
   onAddEntry: (entry: MMKVEntry) => void;
   existingKeys: string[];
-  isDisabled?: boolean;
 };
 
 export const AddEntryDialog = ({
+  isOpen,
+  onClose,
   onAddEntry,
   existingKeys,
-  isDisabled = false,
 }: AddEntryDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [newEntryKey, setNewEntryKey] = useState('');
   const [newEntryType, setNewEntryType] = useState<MMKVEntryType>('string');
   const [newEntryValue, setNewEntryValue] = useState('');
-  const [confirmDialog, setConfirmDialog] =
-    useState<DialogState>(EMPTY_DIALOG_STATE);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'confirm' | 'alert';
+    onConfirm?: () => void;
+  }>({ isOpen: false, title: '', message: '', type: 'alert' });
 
   const resetForm = () => {
     setNewEntryKey('');
     setNewEntryType('string');
     setNewEntryValue('');
-    setConfirmDialog(EMPTY_DIALOG_STATE);
-  };
-
-  const closeDialog = () => {
-    resetForm();
-    setIsOpen(false);
+    onClose();
   };
 
   const handleAddEntry = () => {
-    if (!newEntryKey.trim()) {
-      return;
-    }
+    if (!newEntryKey.trim()) return;
 
+    // Check if key already exists
     if (existingKeys.includes(newEntryKey)) {
       setConfirmDialog({
         isOpen: true,
         title: 'Key Already Exists',
-        message: 'An entry with this key already exists.',
+        message: 'An entry with this key already exists!',
         type: 'alert',
       });
       return;
     }
 
+    // Parse the value based on type
     let parsedValue: MMKVEntryValue;
     try {
       switch (newEntryType) {
@@ -88,21 +57,18 @@ export const AddEntryDialog = ({
           break;
         case 'number':
           parsedValue = Number(newEntryValue);
-          if (Number.isNaN(parsedValue)) {
+          if (isNaN(parsedValue as number)) {
             throw new Error('Invalid number');
           }
           break;
         case 'boolean':
-          if (newEntryValue !== 'true' && newEntryValue !== 'false') {
-            throw new Error('Boolean value must be true or false');
-          }
-          parsedValue = newEntryValue === 'true';
+          parsedValue = newEntryValue.toLowerCase() === 'true';
           break;
         case 'buffer':
           parsedValue = JSON.parse(newEntryValue);
           if (
             !Array.isArray(parsedValue) ||
-            !parsedValue.every((value) => typeof value === 'number')
+            !parsedValue.every((v) => typeof v === 'number')
           ) {
             throw new Error('Buffer must be an array of numbers');
           }
@@ -122,206 +88,172 @@ export const AddEntryDialog = ({
       return;
     }
 
-    let entry: MMKVEntry;
-    if (newEntryType === 'string') {
-      entry = {
-        key: newEntryKey,
-        type: 'string',
-        value: parsedValue as string,
-      };
-    } else if (newEntryType === 'number') {
-      entry = {
-        key: newEntryKey,
-        type: 'number',
-        value: parsedValue as number,
-      };
-    } else if (newEntryType === 'boolean') {
-      entry = {
-        key: newEntryKey,
-        type: 'boolean',
-        value: parsedValue as boolean,
-      };
-    } else {
-      entry = {
-        key: newEntryKey,
-        type: 'buffer',
-        value: parsedValue as number[],
-      };
-    }
+    const newEntry: MMKVEntry = {
+      key: newEntryKey,
+      type: newEntryType,
+      value: parsedValue,
+    } as MMKVEntry;
 
-    onAddEntry(entry);
-    closeDialog();
+    onAddEntry(newEntry);
+
+    // Reset form and close dialog
+    resetForm();
   };
 
-  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && newEntryKey.trim() && newEntryValue.trim()) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      resetForm();
+    } else if (
+      e.key === 'Enter' &&
+      newEntryKey.trim() &&
+      newEntryValue.trim()
+    ) {
       handleAddEntry();
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <>
-      <Button isDisabled={isDisabled} onPress={() => setIsOpen(true)}>
-        <Plus className="h-3 w-3" />
-        Add Entry
-      </Button>
-
-      <Modal
-        isOpen={isOpen}
-        onOpenChange={(nextOpen) => {
-          setIsOpen(nextOpen);
-          if (!nextOpen) {
-            resetForm();
-          }
-        }}
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={resetForm}
+    >
+      <div
+        className="bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={handleKeyDown}
       >
-        <Modal.Backdrop variant="blur">
-          <Modal.Container placement="center">
-            <Modal.Dialog aria-label="Add New Entry">
-              <Modal.CloseTrigger />
-              <Modal.Header>
-                <Modal.Heading>Add New Entry</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="flex flex-col gap-4 p-6">
-                <TextField className="w-full" name="new-entry-key" type="text">
-                  <Label>Key</Label>
-                  <Input
-                    autoFocus
-                    onChange={(event) => setNewEntryKey(event.target.value)}
-                    onKeyDown={handleInputKeyDown}
-                    placeholder="Enter key name"
-                    value={newEntryKey}
-                    variant="secondary"
-                  />
-                </TextField>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-100">Add New Entry</h2>
+          <button
+            onClick={resetForm}
+            className="p-1 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded transition-colors"
+            title="Close dialog"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label>Type</Label>
-                  <Select
-                    className="w-full"
-                    onChange={(key) => {
-                      setNewEntryType(
-                        (key == null ? '' : String(key)) as MMKVEntryType,
-                      );
-                      setNewEntryValue('');
-                    }}
-                    value={newEntryType || null}
-                    variant="secondary"
-                  >
-                    <Select.Trigger>
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox aria-label="Entry type">
-                        {TYPE_OPTIONS.map((option) => (
-                          <ListBox.Item
-                            id={option.value}
-                            key={option.value}
-                            textValue={option.label}
-                          >
-                            {option.label}
-                          </ListBox.Item>
-                        ))}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-                </div>
+        <div className="space-y-4">
+          {/* Key Input */}
+          <div>
+            <label
+              htmlFor="new-entry-key"
+              className="block text-sm font-medium text-gray-200 mb-1"
+            >
+              Key
+            </label>
+            <input
+              id="new-entry-key"
+              type="text"
+              value={newEntryKey}
+              onChange={(e) => setNewEntryKey(e.target.value)}
+              placeholder="Enter key name"
+              className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+          </div>
 
-                {newEntryType === 'boolean' ? (
-                  <div className="flex flex-col gap-2">
-                    <Label>Value</Label>
-                    <Select
-                      className="w-full"
-                      onChange={(key) =>
-                        setNewEntryValue(key == null ? '' : String(key))
-                      }
-                      placeholder="Select value"
-                      value={newEntryValue || null}
-                      variant="secondary"
-                    >
-                      <Select.Trigger>
-                        <Select.Value />
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover>
-                        <ListBox aria-label="Entry value">
-                          <ListBox.Item id="true" key="true" textValue="true">
-                            true
-                          </ListBox.Item>
-                          <ListBox.Item
-                            id="false"
-                            key="false"
-                            textValue="false"
-                          >
-                            false
-                          </ListBox.Item>
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
-                  </div>
-                ) : (
-                  <TextField
-                    className="w-full"
-                    name="new-entry-value"
-                    type={newEntryType === 'number' ? 'number' : 'text'}
-                  >
-                    <Label>Value</Label>
-                    <Input
-                      onChange={(event) => setNewEntryValue(event.target.value)}
-                      onKeyDown={handleInputKeyDown}
-                      placeholder={
-                        newEntryType === 'string'
-                          ? 'Enter string value'
-                          : newEntryType === 'number'
-                            ? 'Enter number value'
-                            : newEntryType === 'buffer'
-                              ? 'Enter array as JSON, e.g., [1, 2, 3]'
-                              : 'Enter value'
-                      }
-                      value={newEntryValue}
-                      variant="secondary"
-                    />
-                    {newEntryType === 'buffer' ? (
-                      <Description className="text-xs text-muted">
-                        Enter as JSON array of numbers, e.g., [1, 2, 3, 255]
-                      </Description>
-                    ) : null}
-                  </TextField>
-                )}
-              </Modal.Body>
-              <Modal.Footer className="flex justify-end gap-2">
-                <Button onPress={closeDialog} variant="secondary">
-                  Cancel
-                </Button>
-                <Button
-                  isDisabled={!newEntryKey.trim() || !newEntryValue.trim()}
-                  onPress={handleAddEntry}
-                  variant="primary"
-                >
-                  Add Entry
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+          {/* Type Select */}
+          <div>
+            <label
+              htmlFor="new-entry-type"
+              className="block text-sm font-medium text-gray-200 mb-1"
+            >
+              Type
+            </label>
+            <select
+              id="new-entry-type"
+              value={newEntryType}
+              onChange={(e) => {
+                setNewEntryType(e.target.value as MMKVEntryType);
+                setNewEntryValue(''); // Reset value when type changes
+              }}
+              className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="string">String</option>
+              <option value="number">Number</option>
+              <option value="boolean">Boolean</option>
+              <option value="buffer">Buffer (Array)</option>
+            </select>
+          </div>
+
+          {/* Value Input */}
+          <div>
+            <label
+              htmlFor="new-entry-value"
+              className="block text-sm font-medium text-gray-200 mb-1"
+            >
+              Value
+            </label>
+            {newEntryType === 'boolean' ? (
+              <select
+                id="new-entry-value"
+                value={newEntryValue}
+                onChange={(e) => setNewEntryValue(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select value</option>
+                <option value="true">true</option>
+                <option value="false">false</option>
+              </select>
+            ) : (
+              <input
+                id="new-entry-value"
+                type={newEntryType === 'number' ? 'number' : 'text'}
+                value={newEntryValue}
+                onChange={(e) => setNewEntryValue(e.target.value)}
+                placeholder={
+                  newEntryType === 'string'
+                    ? 'Enter string value'
+                    : newEntryType === 'number'
+                    ? 'Enter number value'
+                    : newEntryType === 'buffer'
+                    ? 'Enter array as JSON, e.g., [1, 2, 3]'
+                    : 'Enter value'
+                }
+                className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            )}
+            {newEntryType === 'buffer' && (
+              <p className="text-xs text-gray-400 mt-1">
+                Enter as JSON array of numbers, e.g., [1, 2, 3, 255]
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Dialog Actions */}
+        <div className="flex items-center justify-end gap-2 mt-6">
+          <button
+            onClick={resetForm}
+            className="px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAddEntry}
+            disabled={!newEntryKey.trim() || !newEntryValue.trim()}
+            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+          >
+            Add Entry
+          </button>
+        </div>
+      </div>
 
       <ConfirmDialog
-        confirmText="OK"
         isOpen={confirmDialog.isOpen}
-        message={confirmDialog.message}
-        onClose={() =>
-          setConfirmDialog((previous) => ({ ...previous, isOpen: false }))
-        }
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={() => {
           if (confirmDialog.onConfirm) {
             confirmDialog.onConfirm();
           }
         }}
         title={confirmDialog.title}
+        message={confirmDialog.message}
         type={confirmDialog.type}
       />
-    </>
+    </div>
   );
 };

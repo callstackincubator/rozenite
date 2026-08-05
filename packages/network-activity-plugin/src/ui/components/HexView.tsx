@@ -20,9 +20,9 @@ type HexRowProps = {
 // which itself is cheap; memoizing wouldn't change cost meaningfully.
 const HexRow = ({ offset, hex, ascii }: HexRowProps) => (
   <div className="flex gap-4 font-mono text-xs leading-snug whitespace-pre">
-    <span className="text-muted">{offset}</span>
-    <span className="text-foreground/70">{hex}</span>
-    <span className="text-muted/70">{`|${ascii}|`}</span>
+    <span className="text-gray-500">{offset}</span>
+    <span className="text-gray-200">{hex}</span>
+    <span className="text-gray-400">{`|${ascii}|`}</span>
   </div>
 );
 
@@ -35,12 +35,12 @@ export const HexView = ({ bytes }: HexViewProps) => {
 
   if (totalCount === 0) {
     return (
-      <div className="text-xs text-muted italic">No bytes to display.</div>
+      <div className="text-xs text-gray-500 italic">No bytes to display.</div>
     );
   }
 
   return (
-    <div className="bg-background border border-border/60 rounded">
+    <div className="bg-gray-900 border border-gray-700 rounded">
       <Virtuoso
         style={{ height: 320 }}
         totalCount={totalCount}

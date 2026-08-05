@@ -24,28 +24,23 @@
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
-    "@rozenite/plugin-bridge": "workspace:*",
-    "@rozenite/ui": "workspace:*"
+    "@rozenite/plugin-bridge": "workspace:*"
   },
   "devDependencies": {
-    "@tanstack/react-table": "^8.21.3",
-    "@tailwindcss/postcss": "^4.2.2",
     "@rozenite/vite-plugin": "workspace:*",
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
+    "@types/react": "~18.3.12",
     "autoprefixer": "^10.4.21",
     "lucide-react": "^0.263.1",
     "postcss": "^8.5.6",
-    "react": "catalog:",
-    "react-dom": "catalog:",
-    "react-native": "catalog:",
+    "react": "18.3.1",
+    "react-dom": "18.3.0",
+    "react-native": "0.76.0",
     "react-native-web": "0.21.0",
     "rozenite": "workspace:*",
-    "tailwind-variants": "^2.0.0",
-    "tailwindcss": "^4.2.2",
+    "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "~5.9.3",
-    "vite": "catalog:",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.0",
     "vitest": "^3.0.0"
   },
   "peerDependencies": {

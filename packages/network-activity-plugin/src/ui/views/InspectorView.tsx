@@ -21,7 +21,7 @@ import {
 } from '../utils/timelineModel';
 
 export type InspectorViewProps = {
-  client: NetworkActivityDevToolsClient | null;
+  client: NetworkActivityDevToolsClient;
 };
 
 export const InspectorView = ({ client }: InspectorViewProps) => {
@@ -74,15 +74,15 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
   }, [client, clientManagement, actions, overrides]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col">
       <Toolbar />
       <FilterBar filter={filter} onFilterChange={setFilter} />
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         <div
           className={`flex flex-col ${
             hasSelectedRequest ? 'w-1/2' : 'w-full'
-          } border-r border-border/60 overflow-hidden`}
+          } border-r border-gray-700 overflow-hidden`}
         >
           <NetworkTimeline
             requests={filteredRequests}

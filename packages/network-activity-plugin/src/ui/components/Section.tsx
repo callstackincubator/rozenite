@@ -22,8 +22,8 @@ export const Section = ({
     setIsCollapsed((prevState) => !prevState);
   };
 
-  const headerClassName = `flex items-center w-full text-left text-sm text-foreground/70 mb-2 ${
-    collapsible ? 'hover:text-foreground' : 'cursor-default'
+  const headerClassName = `flex items-center w-full text-left text-sm text-gray-300 mb-2 ${
+    collapsible ? 'hover:text-white' : 'cursor-default'
   }`;
 
   return (

@@ -68,7 +68,7 @@ const getInitiatorItems = (initiator?: Initiator): KeyValueItem[] => {
             valueClassName:
               initiator.symbolicationStatus === 'failed'
                 ? 'text-red-300'
-                : 'text-foreground/70',
+                : 'text-gray-300',
           },
         ]
       : []),
@@ -77,7 +77,7 @@ const getInitiatorItems = (initiator?: Initiator): KeyValueItem[] => {
           {
             key: 'Function',
             value: sourceFrame.functionName,
-            valueClassName: 'font-mono text-accent',
+            valueClassName: 'font-mono text-blue-300',
           },
         ]
       : []),
@@ -86,7 +86,7 @@ const getInitiatorItems = (initiator?: Initiator): KeyValueItem[] => {
           {
             key: 'Source',
             value: formatSourcePath(sourceFrame.url),
-            valueClassName: 'font-mono text-accent',
+            valueClassName: 'font-mono text-blue-300',
           },
         ]
       : []),
@@ -111,7 +111,7 @@ const getInitiatorItems = (initiator?: Initiator): KeyValueItem[] => {
           {
             key: 'Location',
             value: sourceLocation,
-            valueClassName: 'font-mono text-accent',
+            valueClassName: 'font-mono text-blue-300',
           },
         ]
       : []),
@@ -120,7 +120,7 @@ const getInitiatorItems = (initiator?: Initiator): KeyValueItem[] => {
           {
             key: 'Generated',
             value: generatedLocation,
-            valueClassName: 'font-mono text-muted',
+            valueClassName: 'font-mono text-gray-500',
           },
         ]
       : []),
@@ -141,7 +141,7 @@ const getStackFrameLocation = (frame: InitiatorStackFrame) => {
     return (
       <span>
         {sourceLocation}
-        <span className="ml-2 text-muted">
+        <span className="ml-2 text-gray-500">
           generated {generatedLocation}
         </span>
       </span>
@@ -158,7 +158,7 @@ const getStackItems = (initiator?: Initiator): KeyValueItem[] => {
         key: frame.functionName || `Frame ${index + 1}`,
         value: getStackFrameLocation(frame),
         keyClassName: 'font-mono',
-        valueClassName: 'font-mono text-accent',
+        valueClassName: 'font-mono text-blue-300',
       };
     }) ?? []
   );
@@ -178,13 +178,13 @@ export const InitiatorTab = ({ selectedRequest }: InitiatorTabProps) => {
   return (
     <ScrollArea className="h-full w-full">
       <div className="p-4 space-y-4">
-        <div className="rounded-md border border-border/60 bg-surface/60 p-3">
-          <div className="text-xs uppercase text-muted">Triggered by</div>
-          <div className="mt-1 font-mono text-sm text-accent">
+        <div className="rounded-md border border-gray-700 bg-gray-800/60 p-3">
+          <div className="text-xs uppercase text-gray-500">Triggered by</div>
+          <div className="mt-1 font-mono text-sm text-blue-300">
             {initiatorLabel ?? 'Unknown initiator'}
           </div>
           {initiatorLocation && initiatorLocation !== initiatorLabel && (
-            <div className="mt-1 font-mono text-xs text-muted wrap-anywhere">
+            <div className="mt-1 font-mono text-xs text-gray-400 wrap-anywhere">
               {initiatorLocation}
             </div>
           )}
@@ -199,7 +199,7 @@ export const InitiatorTab = ({ selectedRequest }: InitiatorTabProps) => {
 
         {!hasSourceMappedFrame &&
           initiator?.symbolicationStatus !== 'pending' && (
-            <div className="rounded-md border border-border/60 bg-surface/60 p-3 text-sm text-muted">
+            <div className="rounded-md border border-gray-700 bg-gray-800/60 p-3 text-sm text-gray-400">
               This request only includes generated bundle location data. Metro
               source maps were not available for this entry.
             </div>
@@ -213,7 +213,7 @@ export const InitiatorTab = ({ selectedRequest }: InitiatorTabProps) => {
 
         {initiator?.codeFrame && (
           <Section title="Code Frame">
-            <pre className="overflow-auto rounded-md bg-background p-3 text-xs text-foreground/70">
+            <pre className="overflow-auto rounded-md bg-gray-950 p-3 text-xs text-gray-300">
               <code>{initiator.codeFrame.content}</code>
             </pre>
           </Section>

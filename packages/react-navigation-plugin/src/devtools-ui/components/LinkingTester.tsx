@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button, Card, Input, Surface, TextField } from '@rozenite/ui';
 
 export type LinkingTesterProps = {
   onLinkOpen: (url: string) => void;
@@ -21,52 +20,40 @@ export const LinkingTester = ({ onLinkOpen }: LinkingTesterProps) => {
   };
 
   return (
-    <div className="flex h-full min-h-0 overflow-auto">
-      <Card className="h-fit w-full max-w-2xl">
-        <Card.Header>
-          <Card.Title>Link Tester</Card.Title>
-          <Card.Description className="mt-1 text-xs">
-            Open a deep link against the connected app and keep the last value
-            handy while you debug.
-          </Card.Description>
-        </Card.Header>
-
-        <Card.Content className="space-y-4">
-          <form
-            className="flex flex-col gap-3 sm:flex-row sm:items-start"
-            onSubmit={handleOpenLink}
-          >
-            <TextField
-              aria-label="Deep link URL"
-              className="min-w-0 flex-1"
-              name="url-input"
+    <div className="h-full bg-gray-900 p-6 overflow-auto">
+      <div className="max-w-2xl">
+        <div className="space-y-4">
+          {/* URL Input */}
+          <form onSubmit={handleOpenLink} className="flex gap-2">
+            <input
+              id="url-input"
               type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="myapp://screen/param"
+              className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              autoComplete="off"
+            />
+            <button
+              type="submit"
+              disabled={!url.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
             >
-              <Input
-                autoComplete="off"
-                fullWidth
-                onChange={(event) => setUrl(event.target.value)}
-                placeholder="myapp://screen/param"
-                value={url}
-                variant="secondary"
-              />
-            </TextField>
-
-            <Button isDisabled={!url.trim()} type="submit">
               Open
-            </Button>
+            </button>
           </form>
 
-          {lastOpened ? (
-            <Surface className="space-y-1 text-sm" variant="secondary">
-              <div className="font-medium text-foreground">Last opened</div>
-              <div className="break-all font-mono text-muted">
+          {/* Last Opened */}
+          {lastOpened && (
+            <div className="p-3 bg-gray-800 rounded border border-gray-700">
+              <p className="text-sm text-gray-300">
+                <span className="text-green-400">Last opened:</span>{' '}
                 {lastOpened}
-              </div>
-            </Surface>
-          ) : null}
-        </Card.Content>
-      </Card>
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

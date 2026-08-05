@@ -1,10 +1,11 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useState } from 'react';
-import { PluginHeader, PluginTheme, Tabs } from '@rozenite/ui';
 import { ReactNavigationPluginEventMap } from '../shared';
-import type { ActionWithState } from './components/ActionList';
+import { ActionWithState } from './components/ActionList';
 import { ActionTimeline } from './components/ActionTimeline';
 import { LinkingTester } from './components/LinkingTester';
+import { Tab, Tabs } from './components/Tabs';
+
 import { NavigationTree } from './components/NavigationTree/NavigationTree';
 import './globals.css';
 
@@ -84,10 +85,10 @@ export default function ReactNavigationPanel() {
     });
   };
 
-  const tabs = [
+  const tabs: Tab[] = [
     {
       id: 'timeline',
-      label: 'Timeline',
+      label: 'Action Timeline',
       content: (
         <ActionTimeline
           actionHistory={actionHistory}
@@ -100,56 +101,23 @@ export default function ReactNavigationPanel() {
     },
     {
       id: 'linking',
-      label: 'Deep Links',
+      label: 'Link Tester',
       content: <LinkingTester onLinkOpen={onLinkOpen} />,
     },
     {
       id: 'tree',
-      label: 'Tree',
+      label: 'Navigation Tree',
       content: <NavigationTree actionHistory={actionHistory} />,
     },
   ];
 
   return (
-    <PluginTheme
-      defaultTheme="dark"
-      className="flex h-screen flex-col bg-background text-foreground"
-    >
-      <PluginHeader title="React Navigation" />
-
-      <Tabs.Root
-        className="flex min-h-0 flex-1 flex-col"
-        selectedKey={activeTabId}
-        onSelectionChange={(key) => setActiveTabId(String(key))}
-      >
-        <Tabs.ListContainer className="overflow-x-auto px-4 pt-3">
-          <Tabs.List
-            aria-label="React Navigation views"
-            className="w-fit min-w-max justify-start"
-          >
-            {tabs.map((tab) => (
-              <Tabs.Tab
-                key={tab.id}
-                className="w-auto shrink-0 whitespace-nowrap"
-                id={tab.id}
-              >
-                {tab.label}
-                <Tabs.Indicator />
-              </Tabs.Tab>
-            ))}
-          </Tabs.List>
-        </Tabs.ListContainer>
-
-        {tabs.map((tab) => (
-          <Tabs.Panel
-            key={tab.id}
-            className="flex min-h-0 flex-1 overflow-hidden px-4 pb-4 pt-3"
-            id={tab.id}
-          >
-            {tab.content}
-          </Tabs.Panel>
-        ))}
-      </Tabs.Root>
-    </PluginTheme>
+    <div className="h-screen bg-gray-900 text-gray-100">
+      <Tabs
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onTabChange={setActiveTabId}
+      />
+    </div>
   );
 }
