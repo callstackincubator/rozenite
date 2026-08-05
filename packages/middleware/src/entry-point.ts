@@ -32,6 +32,7 @@ const appendScripts = (
   installedPlugins: string[],
   destroyOnDetachPlugins: string[],
   pluginDisplay: 'tabs' | 'sidebar',
+  runtimeVersion?: string,
 ): string => {
   const bodyTagRegex = /<body[^>]*>/;
   const bodyMatch = html.match(bodyTagRegex);
@@ -43,6 +44,7 @@ const appendScripts = (
         installedPlugins: ${JSON.stringify(installedPlugins)},
         destroyOnDetachPlugins: ${JSON.stringify(destroyOnDetachPlugins)},
         pluginDisplay: ${JSON.stringify(pluginDisplay)},
+        runtimeVersion: ${JSON.stringify(runtimeVersion)},
       };
     </script>
   `;
@@ -66,6 +68,7 @@ export const getEntryPointHTML = (
   installedPlugins: string[],
   destroyOnDetachPlugins: string[],
   pluginDisplay: 'tabs' | 'sidebar' = 'sidebar',
+  runtimeVersion?: string,
 ): string => {
   const nonce = crypto.randomUUID();
   const originalEntryPoint = fs.readFileSync(
@@ -79,5 +82,6 @@ export const getEntryPointHTML = (
     installedPlugins,
     destroyOnDetachPlugins,
     pluginDisplay,
+    runtimeVersion,
   );
 };

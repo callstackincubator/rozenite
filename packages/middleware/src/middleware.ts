@@ -38,6 +38,7 @@ export const getMiddleware = (
   installedPlugins: InstalledPlugin[],
   destroyOnDetachPlugins: string[],
   agentSessionManager: AgentSessionManager,
+  runtimeVersion?: string,
 ): Application => {
   const app = express();
   const debuggerFrontend = require(getReactNativeDebuggerFrontendPath(options));
@@ -93,6 +94,7 @@ export const getMiddleware = (
         installedPlugins.map((plugin) => plugin.name),
         destroyOnDetachPlugins,
         options.pluginDisplay ?? 'sidebar',
+        runtimeVersion,
       ),
     );
   });

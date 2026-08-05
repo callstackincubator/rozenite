@@ -632,6 +632,9 @@ importers:
       '@rozenite/middleware':
         specifier: workspace:*
         version: link:../middleware
+      '@rozenite/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       '@rozenite/tools':
         specifier: workspace:*
         version: link:../tools
@@ -1240,6 +1243,9 @@ importers:
       '@rozenite/ui':
         specifier: workspace:*
         version: link:../ui
+      lucide-react:
+        specifier: ^0.263.1
+        version: 0.263.1(react@19.2.3)
       react:
         specifier: 'catalog:'
         version: 19.2.3

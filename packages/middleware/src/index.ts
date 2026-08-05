@@ -27,6 +27,7 @@ export type {
 
 export const initializeRozenite = (
   options: RozeniteConfig,
+  runtimeVersion?: string,
 ): RozeniteInstance => {
   options.logLevel =
     process.env.ROZENITE_DEBUG === 'true'
@@ -74,6 +75,7 @@ export const initializeRozenite = (
       allInstalledPlugins,
       options.destroyOnDetachPlugins || [],
       agentSessionManager,
+      runtimeVersion,
     ),
     devModePackage,
     dispose: async () => {
