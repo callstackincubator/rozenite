@@ -226,7 +226,7 @@ export const VirtualizedDataTable = <TData,>({
   const itemContent = useCallback(
     (_index: number, row: Row<TData>) =>
       row.getVisibleCells().map((cell) => (
-        <td key={cell.id} className={cell.column.columnDef.meta?.cellClassName}>
+        <td key={cell.id}>
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>
       )),
