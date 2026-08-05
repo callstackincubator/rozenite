@@ -82,3 +82,21 @@ export function usePluginTheme(): PluginThemeContextValue {
 
   return context;
 }
+
+/**
+ * Holds the `PluginShell` root element so that portal-rendered surfaces
+ * (Select, Combobox, Dialog, Tooltip, Toast) can mount inside it instead of
+ * `document.body`. The shell's `dark` class lives on that root element, so
+ * anything portalled to `document.body` would otherwise escape it and
+ * render with light tokens.
+ *
+ * `null` outside a `PluginShell` (or before it has mounted), in which case
+ * consumers should fall back to the Base UI default of `document.body`.
+ */
+export const PluginPortalContainerContext = createContext<HTMLElement | null>(
+  null,
+);
+
+export function usePluginPortalContainer(): HTMLElement | null {
+  return useContext(PluginPortalContainerContext);
+}
