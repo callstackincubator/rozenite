@@ -185,7 +185,9 @@ export const rozeniteClientPlugin = (): Plugin => {
       config.server.port = 8888;
 
       config.build ??= {};
-      config.build.emptyOutDir = false;
+      if (process.env.ROZENITE_BUILD === '1') {
+        config.build.emptyOutDir = false;
+      }
       config.build.rollupOptions ??= {};
       config.build.rollupOptions.input = {
         ...(config.build.rollupOptions.input as Record<string, string>),

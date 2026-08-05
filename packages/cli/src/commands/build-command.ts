@@ -75,18 +75,34 @@ export const buildCommand = async (targetDir: string) => {
       : []),
   ];
 
-  await runWithConcurrency(
-    buildJobs.map(
-      (job) => () =>
-        step(job, async () => {
-          await spawn('vite', ['build'], {
-            cwd: targetDir,
-            env: job.env,
+  const buildController = new AbortController();
+
+  try {
+    await runWithConcurrency(
+      buildJobs.map((job) => async () => {
+        try {
+          await step(job, async () => {
+            await spawn('vite', ['build'], {
+              cwd: targetDir,
+              env: {
+                ...job.env,
+                ROZENITE_BUILD: '1',
+              },
+              signal: buildController.signal,
+            });
           });
-        }),
-    ),
-    os.availableParallelism(),
-  );
+        } catch (error) {
+          buildController.abort(error);
+          throw error;
+        }
+      }),
+      os.availableParallelism(),
+      { signal: buildController.signal },
+    );
+  } catch (error) {
+    buildController.abort(error);
+    throw error;
+  }
 
   outro('Plugin built successfully');
 };
