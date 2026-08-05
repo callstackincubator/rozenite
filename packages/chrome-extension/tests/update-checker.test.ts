@@ -70,7 +70,8 @@ describe('checkForUpdates', () => {
 
     assert.strictEqual(result.hasUpdate, true);
     assert.strictEqual(result.latestVersion, '1.1.0');
-    assert.ok(result.releasesUrl?.includes('github.com'));
+    assert.ok(result.releasesUrl);
+    assert.strictEqual(new URL(result.releasesUrl).hostname, 'github.com');
   });
 
   it('returns hasUpdate: false when versions match', async () => {
