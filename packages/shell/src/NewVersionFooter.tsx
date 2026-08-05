@@ -1,5 +1,5 @@
 import { ArrowUpRight } from 'lucide-react';
-import { Badge, buttonVariants, cn } from '@rozenite/ui';
+import { Badge } from '@rozenite/ui';
 import { useEffect, useState } from 'react';
 import { getAvailableRuntimeVersion } from './new-version';
 
@@ -40,26 +40,28 @@ export function NewVersionFooter({ currentVersion }: NewVersionFooterProps) {
 
   return (
     <footer className="shrink-0 border-t border-sidebar-border p-2">
-      <div className="rounded-md bg-sidebar-accent p-2">
-        <p className="text-xs font-medium text-sidebar-accent-foreground">
-          New version available
-        </p>
-        <Badge className="mt-1" variant="outline">
-          {latestVersion}
-        </Badge>
-        <a
-          className={cn(
-            buttonVariants({ variant: 'secondary', size: 'compact' }),
-            'mt-2 w-full',
-          )}
-          href={RELEASES_URL}
-          rel="noreferrer"
-          target="_blank"
-        >
-          View release
-          <ArrowUpRight aria-hidden="true" />
-        </a>
-      </div>
+      <a
+        className="group flex items-center gap-2.5 rounded-md border border-sidebar-border bg-sidebar-accent/40 p-2.5 outline-none transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+        href={RELEASES_URL}
+        rel="noreferrer"
+        target="_blank"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-semibold text-sidebar-accent-foreground">
+            Update available
+          </span>
+          <span className="mt-0.5 flex items-center gap-1.5 text-xs text-sidebar-foreground/65">
+            Rozenite
+            <Badge className="px-1.5 py-0 text-[11px]" variant="outline">
+              v{latestVersion}
+            </Badge>
+          </span>
+        </span>
+        <ArrowUpRight
+          aria-hidden="true"
+          className="size-4 shrink-0 text-sidebar-foreground/50 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+        />
+      </a>
     </footer>
   );
 }
