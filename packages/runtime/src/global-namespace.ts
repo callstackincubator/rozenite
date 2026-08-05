@@ -3,6 +3,7 @@ declare global {
     installedPlugins: string[];
     developmentServer: boolean;
     destroyOnDetachPlugins: string[];
+    pluginDisplay: 'tabs' | 'sidebar';
   };
 }
 

@@ -9,11 +9,19 @@ export class PluginView
 {
   #model: RozenitePluginModel | null = null;
   #src: string;
+  #shellConfiguration: unknown;
 
-  constructor(pluginId: string, panelId: string, name: string, url: string) {
+  constructor(
+    pluginId: string,
+    panelId: string,
+    name: string,
+    url: string,
+    shellConfiguration?: unknown,
+  ) {
     super(name + ' 💎', true, panelId);
 
     this.#src = url;
+    this.#shellConfiguration = shellConfiguration;
 
     const globalNamespace = getGlobalNamespace();
     const destroyOnDetachPlugins = globalNamespace.destroyOnDetachPlugins;
@@ -104,6 +112,17 @@ export class PluginView
         return;
       }
 
+      if (event.data?.type === 'rozenite-shell-ready') {
+        iframe.contentWindow?.postMessage(
+          {
+            type: 'rozenite-shell-configuration',
+            payload: this.#shellConfiguration,
+          },
+          '*',
+        );
+        return;
+      }
+
       model.sendMessage(event.data.payload);
     });
 
@@ -166,6 +185,7 @@ export const getPluginView = (
   panelId: string,
   name: string,
   url: string,
+  shellConfiguration?: unknown,
 ) => {
-  return new PluginView(pluginId, panelId, name, url);
+  return new PluginView(pluginId, panelId, name, url, shellConfiguration);
 };

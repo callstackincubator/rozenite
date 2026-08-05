@@ -47,6 +47,7 @@
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/runtime": "workspace:*",
+    "@rozenite/shell": "workspace:*",
     "@rozenite/tools": "workspace:*",
     "express": "^5.1.0",
     "semver": "^7.7.2",

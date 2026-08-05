@@ -12,7 +12,12 @@ const toExtendedKebabCase = (input: string): string => {
     .replace(/^\.+|\.+$/g, '');
 };
 
-export const createPanel = (pluginId: string, name: string, url: string) => {
+export const createPanel = (
+  pluginId: string,
+  name: string,
+  url: string,
+  shellConfiguration?: unknown,
+) => {
   try {
     const pluginIdKebab = toExtendedKebabCase(pluginId);
     const nameKebab = toExtendedKebabCase(name);
@@ -22,7 +27,13 @@ export const createPanel = (pluginId: string, name: string, url: string) => {
       return;
     }
 
-    const panelView = getPluginView(pluginId, panelId, name, url);
+    const panelView = getPluginView(
+      pluginId,
+      panelId,
+      name,
+      url,
+      shellConfiguration,
+    );
 
     UI.InspectorView.InspectorView.instance().addPanel(panelView);
   } catch (err) {

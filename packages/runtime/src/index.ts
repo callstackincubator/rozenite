@@ -1,5 +1,6 @@
 import { setupDevMode } from './dev-mode.js';
 import { getGlobalNamespace } from './global-namespace.js';
+import { createPanel } from './create-panel.js';
 import { loadPlugin } from './plugin-loader.js';
 import { addWelcomeView } from './rn-devtools/rozenite-welcome-view.js';
 import {
@@ -33,18 +34,34 @@ const main = async (): Promise<void> => {
   console.log('Found plugins: ' + plugins.join(', '));
   console.groupEnd();
 
-  addWelcomeView();
+  const { pluginDisplay = 'sidebar' } = getGlobalNamespace();
 
-  await Promise.all(
-    plugins.map(async (plugin) => {
-      await loadPlugin(plugin);
-    }),
-  );
+  if (pluginDisplay === 'tabs') {
+    addWelcomeView();
+    await Promise.all(plugins.map((plugin) => loadPlugin(plugin)));
+    await setupDevMode();
+  } else {
+    const loadedPlugins = await Promise.all(
+      plugins.map(async (plugin) => {
+        return loadPlugin(plugin);
+      }),
+    );
+
+    const developmentPlugin = await setupDevMode();
+    if (developmentPlugin) {
+      loadedPlugins.push(developmentPlugin);
+    }
+
+    const shellUrl = new URL(location.href);
+    shellUrl.search = '';
+    shellUrl.pathname = '/rozenite/shell/index.html';
+    createPanel('@rozenite/shell', 'Rozenite', shellUrl.toString(), {
+      plugins: loadedPlugins,
+    });
+  }
 
   trackPanelSelection();
   switchToSelectedPanel();
-
-  await setupDevMode();
 };
 
 void main().catch((error) => {

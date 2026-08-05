@@ -54,6 +54,7 @@ export default withRozenite(
     include: ['@my-org/my-plugin', 'another-plugin'],
     exclude: ['unwanted-plugin'],
     destroyOnDetachPlugins: ['@rozenite/network-activity-plugin'],
+    pluginDisplay: 'sidebar',
   }
 );
 ```
@@ -69,6 +70,7 @@ type RozeniteMetroConfig = {
   include?: string[]; // Only load these specific plugins
   exclude?: string[]; // Exclude these plugins from loading
   destroyOnDetachPlugins?: string[]; // Plugins that should be destroyed when switching panels
+  pluginDisplay?: 'sidebar' | 'tabs'; // How plugins are displayed in DevTools
 };
 ```
 
@@ -77,6 +79,7 @@ type RozeniteMetroConfig = {
 - `include` - Array of package names to explicitly include (optional)
 - `exclude` - Array of package names to exclude from loading (optional)
 - `destroyOnDetachPlugins` - Array of package names that should be destroyed when switching panels instead of maintaining their state (optional, by default all plugins persist their state)
+- `pluginDisplay` - Use `'sidebar'` (default) to show all plugin panels in one Rozenite tab, or `'tabs'` to retain a separate DevTools tab for every plugin panel
 
 ## Plugin Discovery
 

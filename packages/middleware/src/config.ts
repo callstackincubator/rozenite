@@ -1,6 +1,9 @@
 import { type ProjectType } from '@rozenite/tools';
 import { RozeniteLogLevel } from './logger.js';
 
+/** Controls whether plugins are shown as individual tabs or in one sidebar. */
+export type RozenitePluginDisplay = 'tabs' | 'sidebar';
+
 export type RozeniteConfig = {
   projectRoot: string;
   include?: string[];
@@ -24,4 +27,11 @@ export type RozeniteConfig = {
    * @default 'info'
    */
   logLevel?: RozeniteLogLevel;
+
+  /**
+   * How Rozenite plugins are shown in React Native DevTools.
+   *
+   * @default 'sidebar'
+   */
+  pluginDisplay?: RozenitePluginDisplay;
 };
