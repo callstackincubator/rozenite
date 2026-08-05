@@ -24,7 +24,7 @@ type MyMethods = {
   listDevices: () => Promise<Device[]>;
 };
 
-const client = await getRozeniteDevToolsClient<MyEventMap>('your-plugin-id');
+const client = await getRozeniteDevToolsClient('your-plugin-id');
 const rpc = createRozeniteRpc<MyMethods>(client);
 ```
 
@@ -40,15 +40,9 @@ type in your own plugin's event map, or it will collide with the RPC layer.
 
 ## Declaring methods
 
-Methods are declared function-shaped, so params and result are both
-inferred from a single type:
-
-```typescript
-type MyMethods = {
-  readFile: (params: { path: string }) => Promise<string>;
-  listDevices: () => Promise<Device[]>;
-};
-```
+Methods are declared function-shaped, as in the example above, so params and
+result are both inferred from a single type. A method that takes no params is
+declared with no arguments.
 
 ## Registering a handler
 
@@ -67,7 +61,7 @@ Calling is a two-step handle: `method()` names the method and takes the
 call's options, and `invoke()` takes the params.
 
 ```typescript
-await rpc.method('getUser').invoke({ id: '42' });
+await rpc.method('readFile').invoke({ path: 'app.log' });
 await rpc.method('listDevices').invoke();
 await rpc.method('readFile', { timeoutMs: 60_000 }).invoke({ path });
 ```
@@ -81,11 +75,6 @@ const readFile = rpc.method('readFile', { timeoutMs: 60_000 });
 await readFile.invoke({ path: 'a' });
 await readFile.invoke({ path: 'b' });
 ```
-
-Note that the handle is a plain object with an `invoke` method — it is not
-itself callable. A remote call that reads like an ordinary function call
-hides the fact that it can time out, stall, or be cancelled; `.invoke()`
-keeps that round-trip visible at the call site.
 
 ## Why a single timeout isn't enough
 
