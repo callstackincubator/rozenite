@@ -1,12 +1,4 @@
-import {
-  BracketsCurly,
-  DeviceMobile,
-  Robot,
-  ShieldCheck,
-  SquaresFour,
-  TerminalWindow,
-  type Icon,
-} from '@phosphor-icons/react';
+import { DeviceMobile, SquaresFour, type Icon } from '@phosphor-icons/react';
 
 import { ActionButton } from '../../components/action-button/action-button';
 import { CodeSample } from '../../components/code-sample/code-sample';
@@ -25,25 +17,6 @@ const HALVES: { icon: Icon; title: string; body: string }[] = [
     icon: SquaresFour,
     title: 'The DevTools UI side',
     body: 'React components mounted as DevTools tabs, wired to the app side over a typed event bridge.',
-  },
-];
-
-const NOTES: { icon: Icon; text: string }[] = [
-  {
-    icon: BracketsCurly,
-    text: 'One event map types both sides. Rename an event and TypeScript finds every call site.',
-  },
-  {
-    icon: TerminalWindow,
-    text: 'rozenite dev opens a browser shell for the panel, so you skip booting a test app.',
-  },
-  {
-    icon: Robot,
-    text: 'Register agent tools and the same plugin answers coding agents too.',
-  },
-  {
-    icon: ShieldCheck,
-    text: 'Publish it to npm, or keep it internal in your monorepo.',
   },
 ];
 
@@ -89,19 +62,6 @@ export const BuildYourOwn = () => (
             <CommandLine command="npx rozenite generate my-plugin" />
             <CommandLine command="cd my-plugin && rozenite dev" />
           </div>
-
-          <ul className={styles.notes}>
-            {NOTES.map((note) => {
-              const Glyph = note.icon;
-
-              return (
-                <li className={styles.note} key={note.text}>
-                  <Glyph className={styles.noteIcon} size={18} />
-                  <span>{note.text}</span>
-                </li>
-              );
-            })}
-          </ul>
 
           <div className={styles.actions}>
             <ActionButton

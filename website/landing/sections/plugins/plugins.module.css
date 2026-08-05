@@ -17,22 +17,63 @@
   border-bottom: 1px solid var(--rz-border);
 }
 
-/* The rest of the set, stated rather than drawn. */
+/* The rest of the set, stated rather than drawn: one full-width CTA that
+ * carries both the count and the link, instead of splitting them. */
 .more {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px 32px;
+  gap: 20px;
   margin-top: 32px;
+  padding: 22px 26px;
+  border: 1px solid var(--rz-border-strong);
+  border-radius: var(--rz-radius-control);
+  text-decoration: none;
+  transition: var(--rz-transition);
+}
+
+.more:hover {
+  border-color: var(--rz-accent);
+}
+
+.more:hover .moreCta {
+  color: var(--rz-accent);
+}
+
+.more:focus-visible {
+  outline: 2px solid var(--rz-accent);
+  outline-offset: 2px;
+}
+
+.moreIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--rz-radius-control);
+  background-color: var(--rz-surface-alt);
+  color: var(--rz-accent);
 }
 
 .moreText {
   margin: 0;
   max-width: 52ch;
   font-size: 0.9375rem;
-  --rz-lh: 1.6;
+  --rz-lh: 1.5;
   color: var(--rz-text-secondary);
+}
+
+.moreCta {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--rz-text);
+  transition: var(--rz-transition);
 }
 
 @media (max-width: 1024px) {
@@ -44,5 +85,17 @@
 @media (max-width: 640px) {
   .grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .more {
+    flex-wrap: wrap;
+  }
+
+  .moreText {
+    max-width: none;
+  }
+
+  .moreCta {
+    margin-left: 54px;
   }
 }

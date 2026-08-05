@@ -5,6 +5,16 @@
   align-items: center;
 }
 
+/*
+ * The default diagram padding is top-heavy to balance a caption underneath a
+ * meta line. This one drops the meta line, so the stage would otherwise sit
+ * low in its box; even padding puts the line back on the copy column's
+ * vertical centre.
+ */
+.diagram {
+  padding-top: 40px;
+}
+
 .copy {
   display: flex;
   flex-direction: column;

@@ -11,7 +11,15 @@
   margin-bottom: 56px;
 }
 
-/* The header sits in a grid cell now, so it drops its own stacking margin. */
+/* The header sits in a grid cell now, so it drops its own stacking margin.
+ * The docs link joins it in the same column, right under the body copy. */
+.headerCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 28px;
+}
+
 .header {
   max-width: 46ch;
   margin-bottom: 0;
@@ -51,25 +59,6 @@
 .capabilityBody {
   margin: 0;
   font-size: 0.9375rem;
-  --rz-lh: 1.55;
-  color: var(--rz-text-secondary);
-}
-
-.footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin-top: 48px;
-}
-
-.caveat {
-  margin: 0;
-  max-width: 56ch;
-  padding-left: 16px;
-  border-left: 2px solid var(--rz-accent-line);
-  font-size: 0.875rem;
   --rz-lh: 1.55;
   color: var(--rz-text-secondary);
 }

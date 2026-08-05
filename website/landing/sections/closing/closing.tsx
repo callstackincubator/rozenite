@@ -10,10 +10,11 @@ export const Closing = () => (
     <Reveal>
       <div className={styles.panel}>
         <div>
-          <h2 className={styles.title}>Install it in one command</h2>
+          <h2 className={styles.title}>Come see what your app is doing</h2>
           <p className={styles.body}>
-            If a panel you need is missing, open an issue or send a plugin. That
-            is how most of the official set got here.
+            One command and every panel here is running in your app. Missing
+            one? Open an issue or send a plugin yourself — that is how most of
+            the official set got here, and we would love to see yours join it.
           </p>
         </div>
 

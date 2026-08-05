@@ -1,6 +1,5 @@
-import { GridFour } from '@phosphor-icons/react';
+import { ArrowRight, GridFour } from '@phosphor-icons/react';
 
-import { ActionButton } from '../../components/action-button/action-button';
 import { PluginCard } from '../../components/plugin-card/plugin-card';
 import { Reveal } from '../../components/reveal/reveal';
 import { Section, SectionHeader } from '../../components/section/section';
@@ -12,7 +11,7 @@ export const Plugins = () => (
     <SectionHeader
       eyebrow="Official plugins"
       title="The panels you would otherwise build"
-      body="Each one is a dev dependency we maintain in the Rozenite repository. Install it, restart the bundler, and the tab is there."
+      body="We build and maintain these ourselves: install one, restart the bundler, and the tab is there. The community maintains a further set of plugins on top of it."
     />
 
     <Reveal>
@@ -22,15 +21,19 @@ export const Plugins = () => (
         ))}
       </div>
 
-      <div className={styles.more}>
-        <p className={styles.moreText}>
-          Another {REMAINING_PLUGIN_COUNT} official plugins cover SQLite, the
+      <a href="/plugin-directory" className={styles.more}>
+        <span className={styles.moreIcon}>
+          <GridFour size={20} />
+        </span>
+        <span className={styles.moreText}>
+          +{REMAINING_PLUGIN_COUNT} more official plugins, covering SQLite, the
           file system, bundle size, startup profiling and forms.
-        </p>
-        <ActionButton href="/plugin-directory" variant="outline" icon={GridFour}>
+        </span>
+        <span className={styles.moreCta}>
           Browse plugins
-        </ActionButton>
-      </div>
+          <ArrowRight size={17} weight="bold" />
+        </span>
+      </a>
     </Reveal>
   </Section>
 );

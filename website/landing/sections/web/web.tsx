@@ -1,7 +1,13 @@
-import { Browser, PuzzlePiece, Stack, type Icon } from '@phosphor-icons/react';
+import {
+  Browser,
+  Globe,
+  PuzzlePiece,
+  SquaresFour,
+  Stack,
+  type Icon,
+} from '@phosphor-icons/react';
 
 import { ActionButton } from '../../components/action-button/action-button';
-import { BrandMark } from '../../components/brand-mark/brand-mark';
 import { CommandLine } from '../../components/command-line/command-line';
 import { ConnectionDiagram } from '../../components/connection-diagram/connection-diagram';
 import { Reveal } from '../../components/reveal/reveal';
@@ -71,18 +77,16 @@ export const Web = () => (
 
         <ConnectionDiagram
           from={{
-            mark: <BrandMark slug="react" label="React Native" size={40} />,
-            label: 'Your web build',
-            meta: '@rozenite/web',
+            mark: <Globe size={40} />,
+            label: 'React Native Web / Expo Web',
           }}
           to={{
-            mark: (
-              <BrandMark slug="googlechrome" label="Google Chrome" size={40} />
-            ),
-            label: 'Rozenite panels',
-            meta: 'browser extension',
+            mark: <SquaresFour size={40} />,
+            label: 'Rozenite / React Native DevTools',
           }}
           caption="One session, messages both ways"
+          animated={false}
+          className={styles.diagram}
         />
       </div>
     </Reveal>

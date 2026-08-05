@@ -67,30 +67,6 @@
   gap: 10px;
 }
 
-.notes {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.note {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
-  font-size: 0.9375rem;
-  --rz-lh: 1.5;
-  color: var(--rz-text-secondary);
-}
-
-.noteIcon {
-  color: var(--rz-accent);
-  margin-top: 1px;
-}
-
 .actions {
   display: flex;
   flex-wrap: wrap;

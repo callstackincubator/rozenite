@@ -14,6 +14,8 @@ type ConnectionDiagramProps = {
   to: ConnectionNode;
   /** Small line under the diagram, for what the connection carries. */
   caption?: string;
+  /** Set to false for a plain, motionless line with no travelling dots. */
+  animated?: boolean;
   className?: string;
 };
 
@@ -29,14 +31,17 @@ const Node = ({ mark, label, meta }: ConnectionNode) => (
  * Two endpoints and the link between them, in place of a product screenshot.
  *
  * The two dots travelling the line are the page's second and last piece of
- * motion. They earn it: the thing being illustrated is traffic, and a still
+ * motion, used sparingly: the thing being illustrated is traffic, and a still
  * line cannot show a direction. Both are decorative, so the whole stage is
- * hidden from assistive tech and the endpoints are read from the labels.
+ * hidden from assistive tech and the endpoints are read from the labels. Set
+ * `animated={false}` where the connection itself isn't the point, and a plain
+ * line reads better than motion.
  */
 export const ConnectionDiagram = ({
   from,
   to,
   caption,
+  animated = true,
   className,
 }: ConnectionDiagramProps) => (
   <figure className={[styles.root, className].filter(Boolean).join(' ')}>
@@ -44,8 +49,12 @@ export const ConnectionDiagram = ({
       <Node {...from} />
 
       <div className={styles.connector} aria-hidden="true">
-        <span className={[styles.pulse, styles.pulseForward].join(' ')} />
-        <span className={[styles.pulse, styles.pulseBack].join(' ')} />
+        {animated ? (
+          <>
+            <span className={[styles.pulse, styles.pulseForward].join(' ')} />
+            <span className={[styles.pulse, styles.pulseBack].join(' ')} />
+          </>
+        ) : null}
       </div>
 
       <Node {...to} />

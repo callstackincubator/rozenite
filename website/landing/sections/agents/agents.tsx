@@ -37,20 +37,23 @@ const CAPABILITIES: Capability[] = [
 
 const CLI_SAMPLE = `npx rozenite agent session create
 
-# Whatever the connected target currently exposes
-npx rozenite agent app tools
-
-npx rozenite agent app call --tool get-build-info`;
+npx rozenite agent console call --tool getMessages --args '{"levels":["error"]}'`;
 
 export const Agents = () => (
   <Section id="agents" tint="block">
     <div className={styles.top}>
-      <SectionHeader
-        eyebrow="Rozenite for Agents"
-        title="Your agent stops guessing at runtime"
-        body="Coding agents read code well and runtime badly. Rozenite opens a session against the running app and hands over what it finds there as callable tools."
-        className={styles.header}
-      />
+      <div className={styles.headerCol}>
+        <SectionHeader
+          eyebrow="Rozenite for Agents"
+          title="Your agent stops guessing at runtime"
+          body="Coding agents read code well and runtime badly. Rozenite opens a session against the running app and hands over what it finds there as callable tools."
+          className={styles.header}
+        />
+
+        <ActionButton href="/docs/agent/overview" variant="outline">
+          Agent documentation
+        </ActionButton>
+      </div>
 
       <Reveal>
         <CodeSample
@@ -76,17 +79,6 @@ export const Agents = () => (
             </div>
           );
         })}
-      </div>
-
-      <div className={styles.footer}>
-        <p className={styles.caveat}>
-          A session takes over the debugger connection, so React Native DevTools
-          disconnects while the agent is attached. That is a React Native
-          limitation, not a design choice.
-        </p>
-        <ActionButton href="/docs/agent/overview" variant="outline">
-          Agent documentation
-        </ActionButton>
       </div>
     </Reveal>
   </Section>
