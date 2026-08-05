@@ -129,9 +129,10 @@ function SplitHandle({
         // Match shadcn's ResizableHandle: the one-pixel separator is the only
         // visible affordance unless callers explicitly opt into a grip.
         'group/split-handle relative flex items-center justify-center bg-border',
-        'aria-[orientation=vertical]:w-px aria-[orientation=horizontal]:h-px',
+        'aria-[orientation=vertical]:w-px aria-[orientation=vertical]:cursor-col-resize',
+        'aria-[orientation=horizontal]:h-px aria-[orientation=horizontal]:cursor-row-resize',
         'after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2',
-        'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+        'outline-none',
         className,
       )}
       {...props}
