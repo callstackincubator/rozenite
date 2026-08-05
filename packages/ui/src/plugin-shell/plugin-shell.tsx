@@ -1,6 +1,10 @@
-import type { ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { cn } from '../utils/cn';
-import { PluginThemeProvider, usePluginTheme } from '../theme/theme-context';
+import {
+  PluginPortalContainerContext,
+  PluginThemeProvider,
+  usePluginTheme,
+} from '../theme/theme-context';
 
 export type PluginShellProps = ComponentProps<'div'> & {
   /**
@@ -44,9 +48,11 @@ function ThemedShell({
   ...props
 }: Omit<PluginShellProps, 'unstyled'>) {
   const { theme } = usePluginTheme();
+  const [rootElement, setRootElement] = useState<HTMLDivElement | null>(null);
 
   return (
     <div
+      ref={setRootElement}
       data-slot="plugin-shell"
       className={cn(
         theme === 'dark' && 'dark',
@@ -55,7 +61,9 @@ function ThemedShell({
       )}
       {...props}
     >
-      {children}
+      <PluginPortalContainerContext.Provider value={rootElement}>
+        {children}
+      </PluginPortalContainerContext.Provider>
     </div>
   );
 }

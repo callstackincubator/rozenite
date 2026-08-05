@@ -47,6 +47,8 @@
     "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
+    "@base-ui/react": "^1.7.0",
+    "@tanstack/react-table": "^8.21.3",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.3.1",
     "class-variance-authority": "^0.7.1",

@@ -29,6 +29,8 @@ export default defineConfig({
         'clsx',
         'tailwind-merge',
         'class-variance-authority',
+        /^@base-ui\/react/,
+        '@tanstack/react-table',
       ],
     },
   },
