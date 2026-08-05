@@ -297,8 +297,9 @@ describe('StoragePanel discovery migration', () => {
         requestId: discovery.requestId,
         storages: descriptors,
       });
-      exportButton(container)?.click();
     });
+
+    await act(async () => exportButton(container)?.click());
 
     const options = mocks.client.request.mock.calls[0][0];
     await act(async () => {
@@ -325,8 +326,9 @@ describe('StoragePanel discovery migration', () => {
         requestId: discovery.requestId,
         storages: descriptors,
       });
-      exportButton(container)?.click();
     });
+
+    await act(async () => exportButton(container)?.click());
 
     expect(container.textContent).toContain(
       'Could not export the selected storage. Please try again.',
