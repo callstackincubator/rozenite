@@ -47,7 +47,8 @@ export type SplitPaneProps = {
   className?: string;
   style?: CSSProperties;
   children?: ReactNode;
-  /** Numbers are pixels; unitless strings are percentages. */
+  /** Numbers are percentages; strings are passed through, so an explicit
+   * unit (e.g. "200px", "22%") can still be used. */
   defaultSize?: number | string;
   minSize?: number | string;
   maxSize?: number | string;
@@ -56,11 +57,33 @@ export type SplitPaneProps = {
   collapsedSize?: number | string;
 };
 
-function SplitPane({ className, ...props }: SplitPaneProps) {
+// react-resizable-panels v4 treats a bare number as pixels and a unitless
+// string as a percentage. Split.Pane's contract is the opposite — a bare
+// number means percent, which is the intuitive reading — so numbers are
+// converted to percentage strings before being handed to `Panel`. Strings
+// pass through untouched, letting an author opt into explicit units.
+export function toPanelSize(
+  size: number | string | undefined,
+): number | string | undefined {
+  return typeof size === 'number' ? `${size}%` : size;
+}
+
+function SplitPane({
+  className,
+  defaultSize,
+  minSize,
+  maxSize,
+  collapsedSize,
+  ...props
+}: SplitPaneProps) {
   return (
     <Panel
       data-slot="split-pane"
       className={cn('min-h-0 min-w-0', className)}
+      defaultSize={toPanelSize(defaultSize)}
+      minSize={toPanelSize(minSize)}
+      maxSize={toPanelSize(maxSize)}
+      collapsedSize={toPanelSize(collapsedSize)}
       {...props}
     />
   );
