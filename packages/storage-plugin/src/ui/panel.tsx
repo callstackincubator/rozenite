@@ -585,7 +585,7 @@ export default function StoragePanel() {
 
       <PluginShell.Body>
         <Split direction="horizontal" autoSaveId="storage">
-          <Split.Pane defaultSize={22} minSize={15} maxSize={40} collapsible>
+          <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
             <Sidebar className="w-full">
               {sidebarGroups.length === 0 ? (
                 <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-sidebar-foreground/60">
