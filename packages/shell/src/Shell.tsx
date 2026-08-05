@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { EmptyState, PluginShell, Sidebar } from '@rozenite/ui';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import {
+  Button,
+  EmptyState,
+  PluginShell,
+  Sidebar,
+  Split,
+  type SplitPaneHandle,
+} from '@rozenite/ui';
+import compactLogo from '../../../website/src/public/logo.svg';
 import lightLogo from '../../../website/src/public/logo-light.svg';
 import darkLogo from '../../../website/src/public/logo-dark.svg';
 import { getInitialSelection, type ShellSelection } from './selection';
@@ -7,6 +16,11 @@ import { NewVersionFooter } from './NewVersionFooter';
 import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
+const COLLAPSED_SIDEBAR_WIDTH = 48;
+const EXPANDED_SIDEBAR_WIDTH = 224;
+const SIDEBAR_SNAP_POINT =
+  (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 2;
+const UPDATE_NOTICE_PREVIEW_MS = 60_000;
 
 export function Shell({
   plugins,
@@ -16,7 +30,19 @@ export function Shell({
   const [selection, setSelection] = useState<ShellSelection>(() =>
     getInitialSelection(plugins),
   );
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showUpdateNoticePreview, setShowUpdateNoticePreview] = useState(true);
   const contentFrames = useRef(new Map<string, HTMLIFrameElement>());
+  const sidebarPanel = useRef<SplitPaneHandle>(null);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => setShowUpdateNoticePreview(false),
+      UPDATE_NOTICE_PREVIEW_MS,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     setSelection((current) => {
@@ -71,6 +97,21 @@ export function Shell({
   const selectPanel = (plugin: ShellPlugin, panel: ShellPanel) => {
     setSelection({ pluginId: plugin.id, panelId: panel.id });
   };
+  const resizeSidebar = (collapsed: boolean) => {
+    sidebarPanel.current?.resize(
+      `${collapsed ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH}px`,
+    );
+    setIsSidebarCollapsed(collapsed);
+  };
+  const snapSidebar = () => {
+    const size = sidebarPanel.current?.getSize().inPixels;
+
+    if (size === undefined) {
+      return;
+    }
+
+    resizeSidebar(size < SIDEBAR_SNAP_POINT);
+  };
 
   if (!activePlugin || !activePanel) {
     return (
@@ -88,87 +129,133 @@ export function Shell({
   return (
     <PluginShell>
       <PluginShell.Body className="flex-row overflow-hidden">
-        <Sidebar
-          aria-label="Rozenite panels"
-          className="w-56 shrink-0 gap-0 p-0"
+        <Split
+          direction="horizontal"
+          onLayoutChanged={(_, { isUserInteraction }) => {
+            if (isUserInteraction) {
+              snapSidebar();
+            }
+          }}
         >
-          <header className="sticky top-0 z-10 shrink-0 border-b border-sidebar-border bg-sidebar px-3 py-3">
-            <img
-              src={lightLogo}
-              alt="Rozenite"
-              className="h-6 w-auto dark:hidden"
-            />
-            <img
-              src={darkLogo}
-              alt="Rozenite"
-              className="hidden h-6 w-auto dark:block"
-            />
-          </header>
-          <div className="min-h-0 flex-1 overflow-y-auto p-2">
-            <div className="flex flex-col gap-3">
-              {plugins.map((plugin) => {
-                if (plugin.panels.length === 0) {
+          <Split.Pane
+            id="shell-sidebar"
+            panelRef={sidebarPanel}
+            defaultSize={`${EXPANDED_SIDEBAR_WIDTH}px`}
+            minSize={`${COLLAPSED_SIDEBAR_WIDTH}px`}
+            maxSize={`${EXPANDED_SIDEBAR_WIDTH}px`}
+          >
+            <Sidebar
+              aria-label="Rozenite panels"
+              className="h-full w-full gap-0 overflow-hidden border-r-0 p-0"
+            >
+              <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-3">
+                {isSidebarCollapsed ? (
+                  <img src={compactLogo} alt="Rozenite" className="h-6 w-6" />
+                ) : (
+                  <>
+                    <img
+                      src={lightLogo}
+                      alt="Rozenite"
+                      className="h-6 w-auto dark:hidden"
+                    />
+                    <img
+                      src={darkLogo}
+                      alt="Rozenite"
+                      className="hidden h-6 w-auto dark:block"
+                    />
+                  </>
+                )}
+              </header>
+              {!isSidebarCollapsed && (
+                <div className="min-h-0 flex-1 overflow-y-auto p-2">
+                  <div className="flex flex-col gap-3">
+                    {plugins.map((plugin) => {
+                      if (plugin.panels.length === 0) {
+                        return null;
+                      }
+
+                      if (plugin.panels.length === 1) {
+                        const [panel] = plugin.panels;
+
+                        return (
+                          <Sidebar.Item
+                            key={panel.id}
+                            selected={panel.id === activePanel.id}
+                            onClick={() => selectPanel(plugin, panel)}
+                          >
+                            {panel.name}
+                          </Sidebar.Item>
+                        );
+                      }
+
+                      return (
+                        <Sidebar.Group key={plugin.id} label={plugin.name}>
+                          {plugin.panels.map((panel) => (
+                            <Sidebar.Item
+                              key={panel.id}
+                              selected={panel.id === activePanel.id}
+                              onClick={() => selectPanel(plugin, panel)}
+                            >
+                              {panel.name}
+                            </Sidebar.Item>
+                          ))}
+                        </Sidebar.Group>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              <footer className="mt-auto flex shrink-0 gap-1 border-t border-sidebar-border p-2">
+                {!isSidebarCollapsed && (
+                  <NewVersionFooter
+                    currentVersion={runtimeVersion}
+                    forceDisplay={showUpdateNoticePreview}
+                  />
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="ml-auto"
+                  aria-label={
+                    isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'
+                  }
+                  onClick={() => resizeSidebar(!isSidebarCollapsed)}
+                >
+                  {isSidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+                </Button>
+              </footer>
+            </Sidebar>
+          </Split.Pane>
+          <Split.Handle className="bg-sidebar-border" />
+          <Split.Pane>
+            <div className="h-full min-w-0">
+              {panels.map(({ plugin, panel }) => {
+                const isActive = panel.id === activePanel.id;
+                const shouldDestroy = destroyedPluginIds.has(plugin.id);
+
+                if (shouldDestroy && !isActive) {
                   return null;
                 }
 
-                if (plugin.panels.length === 1) {
-                  const [panel] = plugin.panels;
-
-                  return (
-                    <Sidebar.Item
-                      key={panel.id}
-                      selected={panel.id === activePanel.id}
-                      onClick={() => selectPanel(plugin, panel)}
-                    >
-                      {panel.name}
-                    </Sidebar.Item>
-                  );
-                }
-
                 return (
-                  <Sidebar.Group key={plugin.id} label={plugin.name}>
-                    {plugin.panels.map((panel) => (
-                      <Sidebar.Item
-                        key={panel.id}
-                        selected={panel.id === activePanel.id}
-                        onClick={() => selectPanel(plugin, panel)}
-                      >
-                        {panel.name}
-                      </Sidebar.Item>
-                    ))}
-                  </Sidebar.Group>
+                  <iframe
+                    key={panel.id}
+                    ref={(frame) => {
+                      if (frame) {
+                        contentFrames.current.set(panel.id, frame);
+                      } else {
+                        contentFrames.current.delete(panel.id);
+                      }
+                    }}
+                    hidden={!isActive}
+                    title={`${plugin.name}: ${panel.name}`}
+                    src={panel.source}
+                  />
                 );
               })}
             </div>
-          </div>
-          <NewVersionFooter currentVersion={runtimeVersion} />
-        </Sidebar>
-        <div className="min-w-0 flex-1">
-          {panels.map(({ plugin, panel }) => {
-            const isActive = panel.id === activePanel.id;
-            const shouldDestroy = destroyedPluginIds.has(plugin.id);
-
-            if (shouldDestroy && !isActive) {
-              return null;
-            }
-
-            return (
-              <iframe
-                key={panel.id}
-                ref={(frame) => {
-                  if (frame) {
-                    contentFrames.current.set(panel.id, frame);
-                  } else {
-                    contentFrames.current.delete(panel.id);
-                  }
-                }}
-                hidden={!isActive}
-                title={`${plugin.name}: ${panel.name}`}
-                src={panel.source}
-              />
-            );
-          })}
-        </div>
+          </Split.Pane>
+        </Split>
       </PluginShell.Body>
     </PluginShell>
   );

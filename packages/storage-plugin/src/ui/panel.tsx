@@ -6,7 +6,6 @@ import {
   DataTable,
   DataTableEditableCell,
   EmptyState,
-  PluginHeader,
   PluginShell,
   SearchField,
   Sidebar,
@@ -576,17 +575,10 @@ export default function StoragePanel() {
 
   return (
     <PluginShell>
-      <PluginHeader>
-        <PluginHeader.Title>Storage</PluginHeader.Title>
-        <PluginHeader.Actions>
-          <PluginHeader.ThemeSwitcher />
-        </PluginHeader.Actions>
-      </PluginHeader>
-
       <PluginShell.Body>
         <Split direction="horizontal" autoSaveId="storage">
           <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
-            <Sidebar className="w-full">
+            <Sidebar className="w-full border-r-0">
               {sidebarGroups.length === 0 ? (
                 <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-sidebar-foreground/60">
                   Waiting for storages…
@@ -655,12 +647,6 @@ export default function StoragePanel() {
                     disabled={!selectedStorage}
                   />
                 </div>
-
-                {selectedStorage && (
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {filteredEntries.length} of {entries.length} entries
-                  </span>
-                )}
 
                 <input
                   ref={fileInputRef}

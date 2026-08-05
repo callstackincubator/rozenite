@@ -1,5 +1,12 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Group, Panel, Separator } from 'react-resizable-panels';
+import {
+  Group,
+  Panel,
+  Separator,
+  type GroupProps,
+  type PanelImperativeHandle,
+  type PanelProps,
+} from 'react-resizable-panels';
 import { GripVertical } from 'lucide-react';
 import { cn } from '../utils/cn';
 
@@ -14,6 +21,10 @@ export type SplitProps = {
   disabled?: boolean;
   /** Layout axis of the group. */
   direction?: SplitDirection;
+  /** Disables the library's global cursor treatment during resize interactions. */
+  disableCursor?: boolean;
+  /** Called after a user finishes changing the panel layout. */
+  onLayoutChanged?: GroupProps['onLayoutChanged'];
   /**
    * Stable id used to key persisted layouts in a future release. Accepted
    * today for API stability, but layout persistence is not wired up yet.
@@ -26,6 +37,7 @@ function SplitRoot({
   autoSaveId,
   id,
   className,
+  disableCursor = true,
   ...props
 }: SplitProps) {
   return (
@@ -36,6 +48,7 @@ function SplitRoot({
       // group for now, falling back to it as a stable `id` when one isn't
       // given explicitly.
       id={id ?? autoSaveId}
+      disableCursor={disableCursor}
       className={cn('flex h-full w-full', className)}
       {...props}
     />
@@ -55,7 +68,11 @@ export type SplitPaneProps = {
   /** Whether the pane can be collapsed down to `collapsedSize`. */
   collapsible?: boolean;
   collapsedSize?: number | string;
+  onResize?: PanelProps['onResize'];
+  panelRef?: PanelProps['panelRef'];
 };
+
+export type SplitPaneHandle = PanelImperativeHandle;
 
 // react-resizable-panels v4 treats a bare number as pixels and a unitless
 // string as a percentage. Split.Pane's contract is the opposite — a bare
@@ -95,13 +112,13 @@ export type SplitHandleProps = {
   style?: CSSProperties;
   children?: ReactNode;
   disabled?: boolean;
-  /** Renders a grip affordance in the middle of the handle. */
+  /** Renders an optional grip affordance in the middle of the separator. */
   withHandle?: boolean;
 };
 
 function SplitHandle({
   className,
-  withHandle = true,
+  withHandle = false,
   children,
   ...props
 }: SplitHandleProps) {
@@ -109,13 +126,13 @@ function SplitHandle({
     <Separator
       data-slot="split-handle"
       className={cn(
-        // A horizontal Split renders a vertical (left/right) separator, and
-        // vice versa — aria-orientation reflects the separator's own axis.
-        'group/split-handle relative flex aria-[orientation=vertical]:w-px aria-[orientation=horizontal]:h-px',
-        'items-center justify-center bg-border',
-        'hover:bg-ring/50 data-[active]:bg-ring',
-        'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-        'transition-colors',
+        // Match shadcn's ResizableHandle: the one-pixel separator is the only
+        // visible affordance unless callers explicitly opt into a grip.
+        'group/split-handle relative flex items-center justify-center bg-border',
+        'aria-[orientation=vertical]:w-px aria-[orientation=vertical]:cursor-col-resize',
+        'aria-[orientation=horizontal]:h-px aria-[orientation=horizontal]:cursor-row-resize',
+        'after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2',
+        'outline-none',
         className,
       )}
       {...props}
@@ -123,7 +140,7 @@ function SplitHandle({
       {withHandle && (
         <div
           className={cn(
-            'z-10 flex items-center justify-center rounded-sm border border-border bg-border',
+            'z-10 flex items-center justify-center rounded-sm border border-border bg-background',
             // `aria-orientation` lives on the Separator, so these read it from
             // the parent rather than from the grip itself.
             'group-aria-[orientation=vertical]/split-handle:h-4 group-aria-[orientation=vertical]/split-handle:w-3',
