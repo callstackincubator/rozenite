@@ -18,6 +18,8 @@ import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
 const COLLAPSED_SIDEBAR_WIDTH = 48;
 const EXPANDED_SIDEBAR_WIDTH = 224;
+const SIDEBAR_SNAP_POINT =
+  (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 2;
 const UPDATE_NOTICE_PREVIEW_MS = 60_000;
 
 export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
@@ -83,12 +85,20 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
   const selectPanel = (plugin: ShellPlugin, panel: ShellPanel) => {
     setSelection({ pluginId: plugin.id, panelId: panel.id });
   };
-  const toggleSidebar = () => {
-    if (isSidebarCollapsed) {
-      sidebarPanel.current?.expand();
-    } else {
-      sidebarPanel.current?.collapse();
+  const resizeSidebar = (collapsed: boolean) => {
+    sidebarPanel.current?.resize(
+      `${collapsed ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH}px`,
+    );
+    setIsSidebarCollapsed(collapsed);
+  };
+  const snapSidebar = () => {
+    const size = sidebarPanel.current?.getSize().inPixels;
+
+    if (size === undefined) {
+      return;
     }
+
+    resizeSidebar(size < SIDEBAR_SNAP_POINT);
   };
 
   if (!activePlugin || !activePanel) {
@@ -107,18 +117,20 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
   return (
     <PluginShell>
       <PluginShell.Body className="flex-row overflow-hidden">
-        <Split direction="horizontal" disableCursor>
+        <Split
+          direction="horizontal"
+          onLayoutChanged={(_, { isUserInteraction }) => {
+            if (isUserInteraction) {
+              snapSidebar();
+            }
+          }}
+        >
           <Split.Pane
             id="shell-sidebar"
             panelRef={sidebarPanel}
             defaultSize={`${EXPANDED_SIDEBAR_WIDTH}px`}
-            minSize={`${EXPANDED_SIDEBAR_WIDTH}px`}
+            minSize={`${COLLAPSED_SIDEBAR_WIDTH}px`}
             maxSize={`${EXPANDED_SIDEBAR_WIDTH}px`}
-            collapsible
-            collapsedSize={`${COLLAPSED_SIDEBAR_WIDTH}px`}
-            onResize={(size) => {
-              setIsSidebarCollapsed(size.inPixels === COLLAPSED_SIDEBAR_WIDTH);
-            }}
           >
             <Sidebar
               aria-label="Rozenite panels"
@@ -195,7 +207,7 @@ export function Shell({ plugins, runtimeVersion }: ShellConfiguration) {
                   aria-label={
                     isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'
                   }
-                  onClick={toggleSidebar}
+                  onClick={() => resizeSidebar(!isSidebarCollapsed)}
                 >
                   {isSidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
                 </Button>

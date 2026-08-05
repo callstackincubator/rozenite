@@ -3,6 +3,7 @@ import {
   Group,
   Panel,
   Separator,
+  type GroupProps,
   type PanelImperativeHandle,
   type PanelProps,
 } from 'react-resizable-panels';
@@ -22,6 +23,8 @@ export type SplitProps = {
   direction?: SplitDirection;
   /** Disables the library's global cursor treatment during resize interactions. */
   disableCursor?: boolean;
+  /** Called after a user finishes changing the panel layout. */
+  onLayoutChanged?: GroupProps['onLayoutChanged'];
   /**
    * Stable id used to key persisted layouts in a future release. Accepted
    * today for API stability, but layout persistence is not wired up yet.
