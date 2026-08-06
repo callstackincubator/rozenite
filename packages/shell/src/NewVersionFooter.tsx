@@ -6,13 +6,10 @@ const RELEASES_URL = 'https://github.com/callstackincubator/rozenite/releases';
 
 type NewVersionFooterProps = {
   currentVersion?: string;
-  /** Temporarily shows the compact update affordance when no update is found. */
-  forceDisplay?: boolean;
 };
 
 export function NewVersionFooter({
   currentVersion,
-  forceDisplay = false,
 }: NewVersionFooterProps) {
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
 
@@ -38,11 +35,7 @@ export function NewVersionFooter({
     };
   }, [currentVersion]);
 
-  const updateLabel = latestVersion
-    ? `Update v${latestVersion}`
-    : forceDisplay
-      ? 'Update available'
-      : null;
+  const updateLabel = latestVersion ? `Update v${latestVersion}` : null;
 
   if (!updateLabel) {
     return null;
