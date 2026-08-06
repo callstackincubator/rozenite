@@ -45,12 +45,6 @@ export function WelcomeDialog({ runtimeVersion }: WelcomeDialogProps) {
       }}
     >
       <Dialog.Content className="max-w-xl" showCloseButton={false}>
-        <Dialog.Header>
-          <Dialog.Title>Welcome to Rozenite {WELCOME_RELEASE_ID}</Dialog.Title>
-          <Dialog.Description>
-            Here is what is new in this release.
-          </Dialog.Description>
-        </Dialog.Header>
         <ScrollArea className="max-h-80 pr-4">
           <ReleaseContent />
         </ScrollArea>
