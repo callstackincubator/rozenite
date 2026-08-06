@@ -36,6 +36,7 @@ export type SyncStorage = {
   get: (key: string) => StorageEntry | undefined;
   set: (entry: StorageEntry) => void;
   delete: (key: string) => void;
+  clear: () => void;
   subscribe?: (callback: (key: string) => void) => StorageSubscription;
 };
 
@@ -45,6 +46,7 @@ export type AsyncStorage = {
   get: (key: string) => Promise<StorageEntry | undefined>;
   set: (entry: StorageEntry) => Promise<void>;
   delete: (key: string) => Promise<void>;
+  clear: () => Promise<void>;
   subscribe?: (callback: (key: string) => void) => StorageSubscription;
 };
 

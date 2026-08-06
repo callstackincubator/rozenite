@@ -4,6 +4,62 @@ import { createStorageViews } from '../storage-view';
 import type { StorageAdapter, StorageEntry } from '../../shared/types';
 
 describe('StorageView subscriptions', () => {
+  it('uses the storage clear operation when purging', async () => {
+    const clear = vi.fn();
+    const adapter: StorageAdapter = {
+      id: 'manual',
+      name: 'Manual',
+      storages: [
+        {
+          id: 'storage',
+          name: 'Storage',
+          capabilities: { supportedTypes: ['string'] },
+          storage: {
+            kind: 'sync',
+            getAllKeys: vi.fn(() => ['key']),
+            get: vi.fn(),
+            set: vi.fn(),
+            delete: vi.fn(),
+            clear,
+          },
+        },
+      ],
+    };
+
+    const [view] = createStorageViews([adapter]);
+    await view.purge();
+
+    expect(clear).toHaveBeenCalledOnce();
+  });
+
+  it('delegates purging to the storage implementation', async () => {
+    const clear = vi.fn();
+    const adapter: StorageAdapter = {
+      id: 'manual',
+      name: 'Manual',
+      storages: [
+        {
+          id: 'storage',
+          name: 'Storage',
+          capabilities: { supportedTypes: ['string'] },
+          storage: {
+            kind: 'sync',
+            getAllKeys: vi.fn(() => ['first', 'second']),
+            get: vi.fn(),
+            set: vi.fn(),
+            delete: vi.fn(),
+            clear,
+          },
+        },
+      ],
+    };
+
+    const [view] = createStorageViews([adapter]);
+    await view.purge();
+
+    expect(clear).toHaveBeenCalledOnce();
+  });
+
   it('does not create a watcher or read unsupported storage while idle', async () => {
     const getAllKeys = vi.fn(() => ['key']);
     const get = vi.fn((): StorageEntry | undefined => ({
@@ -25,6 +81,7 @@ describe('StorageView subscriptions', () => {
             get,
             set: vi.fn(),
             delete: vi.fn(),
+            clear: vi.fn(),
           },
         },
       ],
@@ -95,6 +152,7 @@ describe('StorageView subscriptions', () => {
             get: vi.fn(),
             set: vi.fn((entry: StorageEntry) => onValueChanged?.(entry.key)),
             delete: vi.fn(),
+            clear: vi.fn(),
             subscribe: vi.fn((listener) => {
               onValueChanged = listener;
               return { remove: vi.fn() };

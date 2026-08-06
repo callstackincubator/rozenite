@@ -78,12 +78,21 @@ vi.mock('@rozenite/ui', async () => {
       children,
       onClick,
       disabled,
+      'aria-label': ariaLabel,
+      title,
     }: {
       children?: ReactNode;
       onClick: () => void;
       disabled?: boolean;
+      'aria-label'?: string;
+      title?: string;
     }) => (
-      <button onClick={onClick} disabled={disabled}>
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        title={title}
+      >
         {children}
       </button>
     ),
@@ -359,7 +368,9 @@ describe('StoragePanel preview query cutover', () => {
     });
     await act(async () =>
       Array.from(container.querySelectorAll('button'))
-        .find((button) => button.textContent?.includes('Refresh'))
+        .find(
+          (button) => button.getAttribute('aria-label') === 'Refresh storage',
+        )
         ?.click(),
     );
     await vi.waitFor(() =>

@@ -32,6 +32,7 @@ const createViews = (
             get: vi.fn((key: string) => entries[key]),
             set: vi.fn(),
             delete: vi.fn(),
+            clear: vi.fn(),
           },
         },
       ],

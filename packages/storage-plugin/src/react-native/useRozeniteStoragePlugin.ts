@@ -11,6 +11,7 @@ import type {
   StorageInvalidationOperation,
   StorageListEntryPreviewsRequestEvent,
   StorageSetEntryEvent,
+  StoragePurgeEvent,
 } from '../shared/messaging';
 import type { StorageAdapter } from '../shared/types';
 import { handleImportEntries, handleImportPreviewRequest } from './import';
@@ -137,6 +138,33 @@ export const useRozeniteStoragePlugin = ({
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to delete entry in ${target.adapterId}/${target.storageId}.`,
+              error,
+            );
+          }
+        },
+      ),
+      client.onMessage(
+        'purge-storage',
+        async ({ target }: StoragePurgeEvent) => {
+          const view = views.find(
+            (candidate) =>
+              candidate.target.adapterId === target.adapterId &&
+              candidate.target.storageId === target.storageId,
+          );
+
+          if (!view) {
+            console.warn(
+              `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
+            );
+            return;
+          }
+
+          try {
+            await view.purge();
+            sendInvalidation(view.target, undefined, 'purge');
+          } catch (error) {
+            console.warn(
+              `[Rozenite] Storage Plugin: Failed to purge storage in ${target.adapterId}/${target.storageId}.`,
               error,
             );
           }

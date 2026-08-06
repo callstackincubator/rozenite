@@ -100,6 +100,7 @@ function StoragePanelContent() {
   );
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
+  const [showPurgeDialog, setShowPurgeDialog] = useState(false);
   const [virtualListVersion, setVirtualListVersion] = useState(0);
   const [exportState, setExportState] = useState<
     | { status: 'idle' }
@@ -233,6 +234,15 @@ function StoragePanelContent() {
       'storage-invalidated',
       (event: StorageInvalidatedEvent) => {
         void dropStorageFullEntries(queryClient, event.target, event.key);
+        if (event.operation === 'purge') {
+          setDescriptors((current) =>
+            current.map((descriptor) =>
+              sameTarget(descriptor.target, event.target)
+                ? { ...descriptor, entryCount: 0 }
+                : descriptor,
+            ),
+          );
+        }
         if (
           selectedTargetRef.current &&
           sameTarget(event.target, selectedTargetRef.current)
@@ -282,6 +292,7 @@ function StoragePanelContent() {
     activeImportRequestIdRef.current = null;
     setExportState({ status: 'idle' });
     setDeleteKey(null);
+    setShowPurgeDialog(false);
     setInteraction(null);
     setImportFlight(null);
   }, [selectedTarget]);
@@ -345,6 +356,15 @@ function StoragePanelContent() {
         key,
       }),
     );
+  };
+
+  const handlePurgeStorage = () => {
+    if (!client || !selectedTarget) return;
+    setShowPurgeDialog(false);
+    client.send('purge-storage', {
+      type: 'purge-storage',
+      target: selectedTarget,
+    });
   };
 
   const showAlert = (title: string, message: string) =>
@@ -644,23 +664,44 @@ function StoragePanelContent() {
                   <Toolbar.Button
                     onClick={() => setShowAddDialog(true)}
                     disabled={!selectedDescriptor}
+                    aria-label="Add entry"
+                    title="Add entry"
+                    className="w-7 px-0"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    Add Entry
                   </Toolbar.Button>
+                  <Toolbar.Button
+                    onClick={() => setShowPurgeDialog(true)}
+                    disabled={!client || !selectedTarget || previews.isFetching}
+                    aria-label="Purge storage"
+                    title="Purge storage"
+                    className="w-7 px-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Toolbar.Button>
+                </Toolbar.Group>
+                <Toolbar.Separator />
+                <Toolbar.Group>
                   <Toolbar.Button
                     onClick={() => void refreshSelectedStorage()}
                     disabled={!selectedTarget || previews.isFetching}
+                    aria-label="Refresh storage"
+                    title="Refresh storage"
+                    className="w-7 px-0"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
-                    Refresh
                   </Toolbar.Button>
+                </Toolbar.Group>
+                <Toolbar.Separator />
+                <Toolbar.Group>
                   <Toolbar.Button
                     onClick={handleImportClick}
                     disabled={!selectedDescriptor}
+                    aria-label="Import storage"
+                    title="Import storage"
+                    className="w-7 px-0"
                   >
                     <Upload className="h-3.5 w-3.5" />
-                    Import
                   </Toolbar.Button>
                   <Toolbar.Button
                     onClick={handleExport}
@@ -669,11 +710,19 @@ function StoragePanelContent() {
                       !selectedTarget ||
                       exportState.status === 'loading'
                     }
+                    aria-label={
+                      exportState.status === 'loading'
+                        ? 'Exporting storage'
+                        : 'Export storage'
+                    }
+                    title={
+                      exportState.status === 'loading'
+                        ? 'Exporting storage'
+                        : 'Export storage'
+                    }
+                    className="w-7 px-0"
                   >
                     <Download className="h-3.5 w-3.5" />
-                    {exportState.status === 'loading'
-                      ? 'Exporting...'
-                      : 'Export'}
                   </Toolbar.Button>
                 </Toolbar.Group>
                 <Toolbar.Separator />
@@ -784,6 +833,20 @@ function StoragePanelContent() {
         }
         confirmLabel="Delete"
         onConfirm={handleDeleteEntry}
+      />
+      <ConfirmDialog
+        open={showPurgeDialog}
+        onOpenChange={setShowPurgeDialog}
+        variant="confirm"
+        destructive
+        title="Purge Storage"
+        description={
+          selectedDescriptor
+            ? `Are you sure you want to remove all entries from "${selectedDescriptor.storageName}"? This action cannot be undone.`
+            : 'Are you sure you want to remove all entries from this storage? This action cannot be undone.'
+        }
+        confirmLabel="Purge"
+        onConfirm={handlePurgeStorage}
       />
       <ConfirmDialog
         open={alertState !== null}

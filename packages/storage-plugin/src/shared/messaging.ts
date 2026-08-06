@@ -18,7 +18,16 @@ export type StorageDeleteEntryEvent = {
   key: string;
 };
 
-export type StorageInvalidationOperation = 'set' | 'delete' | 'import';
+export type StoragePurgeEvent = {
+  type: 'purge-storage';
+  target: StorageTarget;
+};
+
+export type StorageInvalidationOperation =
+  | 'set'
+  | 'delete'
+  | 'import'
+  | 'purge';
 
 export type StorageInvalidatedEvent = {
   type: 'storage-invalidated';
@@ -145,6 +154,7 @@ export type StorageImportResultEvent = {
 export type StorageEvent =
   | StorageSetEntryEvent
   | StorageDeleteEntryEvent
+  | StoragePurgeEvent
   | StorageInvalidatedEvent
   | StorageDiscoverStoragesRequestEvent
   | StorageDiscoverStoragesResponseEvent

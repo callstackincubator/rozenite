@@ -78,6 +78,10 @@ const deleteEntry = async (storage: AsyncStorageLike, key: string) => {
   storage.delete(key);
 };
 
+const clearStorage = async (storage: AsyncStorageLike) => {
+  await storage.clear();
+};
+
 export type StorageView = {
   id: string;
   target: StorageTarget;
@@ -89,6 +93,7 @@ export type StorageView = {
   get: (key: string) => Promise<StorageEntry | undefined>;
   set: (entry: StorageEntry) => Promise<void>;
   delete: (key: string) => Promise<void>;
+  purge: () => Promise<void>;
   getAllKeys: () => Promise<readonly string[]>;
   getAllEntries: () => Promise<StorageEntry[]>;
   watch?: (onChange: (key: string) => void) => Promise<StorageSubscription>;
@@ -101,6 +106,7 @@ export const createStorageView = (
   const storage = storageNode.storage;
   const subscribe = storage.subscribe;
   const locallyMutatingKeys = new Set<string>();
+  let isLocallyPurging = false;
   const target: StorageTarget = {
     adapterId: adapter.id,
     storageId: storageNode.id,
@@ -151,6 +157,14 @@ export const createStorageView = (
         locallyMutatingKeys.delete(key);
       }
     },
+    purge: async () => {
+      isLocallyPurging = true;
+      try {
+        await clearStorage(storage);
+      } finally {
+        isLocallyPurging = false;
+      }
+    },
     getAllKeys: async () => {
       const keys = await getAllKeys(storage);
       return keys.filter((key) => !shouldFilterKey(storageNode, key));
@@ -161,6 +175,7 @@ export const createStorageView = (
           watch: async (onChange) =>
             subscribe((key) => {
               if (
+                !isLocallyPurging &&
                 !locallyMutatingKeys.has(key) &&
                 !shouldFilterKey(storageNode, key)
               ) {

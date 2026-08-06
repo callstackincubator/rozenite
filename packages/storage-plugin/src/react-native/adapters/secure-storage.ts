@@ -67,6 +67,12 @@ export const createExpoSecureStorageAdapter = ({
         await storage.setItemAsync(entry.key, entry.value);
       },
       delete: (key) => storage.deleteItemAsync(key),
+      clear: async () => {
+        const storageKeys = await resolveKeys(keys);
+        await Promise.all(
+          storageKeys.map((key) => storage.deleteItemAsync(key)),
+        );
+      },
     },
   };
 

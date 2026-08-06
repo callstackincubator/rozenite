@@ -33,6 +33,7 @@ const createView = (
           get: get as (key: string) => StorageEntry | undefined,
           set: vi.fn(),
           delete: vi.fn(),
+          clear: vi.fn(),
         },
       },
     ],

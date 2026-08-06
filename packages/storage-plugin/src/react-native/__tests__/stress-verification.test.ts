@@ -58,6 +58,7 @@ const createStressAdapter = () => {
           get,
           set: vi.fn(async () => undefined),
           delete: vi.fn(async () => undefined),
+          clear: vi.fn(async () => undefined),
         },
       },
     };

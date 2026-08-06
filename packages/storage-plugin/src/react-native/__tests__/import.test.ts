@@ -28,6 +28,7 @@ const buildView = (overrides?: Partial<StorageView>): StorageView => {
     get: unexpected('get'),
     set: vi.fn(async () => {}),
     delete: unexpected('delete'),
+    purge: unexpected('purge'),
     getAllKeys: unexpected('getAllKeys'),
     getAllEntries: unexpected('getAllEntries'),
     watch: unexpected('watch'),
