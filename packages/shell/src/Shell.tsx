@@ -13,6 +13,7 @@ import lightLogo from '../../../website/src/public/logo-light.svg';
 import darkLogo from '../../../website/src/public/logo-dark.svg';
 import { getInitialSelection, type ShellSelection } from './selection';
 import { NewVersionFooter } from './NewVersionFooter';
+import { WelcomeDialog } from './WelcomeDialog';
 import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
@@ -104,6 +105,7 @@ export function Shell({
   if (!activePlugin || !activePanel) {
     return (
       <PluginShell>
+        <WelcomeDialog runtimeVersion={runtimeVersion} />
         <PluginShell.Body className="items-center justify-center">
           <EmptyState
             title="No Rozenite plugins available"
@@ -116,6 +118,7 @@ export function Shell({
 
   return (
     <PluginShell>
+      <WelcomeDialog runtimeVersion={runtimeVersion} />
       <PluginShell.Body className="flex-row overflow-hidden">
         <Split
           direction="horizontal"
