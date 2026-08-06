@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   type InfiniteData,
   type QueryClient,
   useInfiniteQuery,
@@ -114,6 +115,7 @@ export const useStorageEntryPreviews = ({
     enabled: client != null && target != null,
     initialPageParam: undefined as string | undefined,
     maxPages: Math.max(1, maxPages),
+    placeholderData: keepPreviousData,
     queryFn: ({ pageParam, signal }) => {
       if (!client || !target) {
         throw new Error('A storage target and request client are required.');

@@ -10,6 +10,7 @@ declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
 type Listener = (payload: unknown) => void;
+type SortingItem = { id: string; desc: boolean };
 
 const mocks = vi.hoisted(() => {
   const listeners = new Map<string, Set<Listener>>();
@@ -26,6 +27,7 @@ const mocks = vi.hoisted(() => {
     searchChange: undefined as
       | ((event: React.ChangeEvent<HTMLInputElement>) => void)
       | undefined,
+    sortKey: undefined as (() => void) | undefined,
     emit: (type: keyof StorageEventMap, payload: unknown) =>
       listeners.get(type)?.forEach((listener) => listener(payload)),
     reset: () => {
@@ -34,6 +36,7 @@ const mocks = vi.hoisted(() => {
       request.mockReset();
       onMessage.mockClear();
       mocks.searchChange = undefined;
+      mocks.sortKey = undefined;
     },
   };
 });
@@ -107,20 +110,35 @@ vi.mock('@rozenite/ui', async () => {
       data,
       onEndReached,
       onRowClick,
+      onSortingChange,
     }: {
       data: { key: string }[];
       onEndReached?: () => void;
       onRowClick?: (entry: { key: string }) => void;
-    }) => (
-      <div>
-        <button onClick={onEndReached}>reach end</button>
-        {data.map((entry) => (
-          <button key={entry.key} onClick={() => onRowClick?.(entry)}>
-            {entry.key}
-          </button>
-        ))}
-      </div>
-    ),
+      onSortingChange?: (
+        updater: (current: SortingItem[]) => SortingItem[],
+      ) => void;
+    }) => {
+      mocks.sortKey = () => {
+        onSortingChange?.((current) => {
+          const keySort = current.find((item) => item.id === 'key');
+          if (!keySort) return [{ id: 'key', desc: false }];
+          if (!keySort.desc) return [{ id: 'key', desc: true }];
+          return [];
+        });
+      };
+      return (
+        <div>
+          <button onClick={onEndReached}>reach end</button>
+          <button onClick={mocks.sortKey}>sort key</button>
+          {data.map((entry) => (
+            <button key={entry.key} onClick={() => onRowClick?.(entry)}>
+              {entry.key}
+            </button>
+          ))}
+        </div>
+      );
+    },
   };
 });
 vi.mock('../add-entry-dialog', () => ({ AddEntryDialog: () => null }));
@@ -265,6 +283,43 @@ describe('StoragePanel preview query cutover', () => {
     expect(mocks.client.request.mock.calls[1][0].payload).toMatchObject({
       cursor: undefined,
       search: 'needle',
+    });
+    await act(async () => root.unmount());
+  });
+
+  it('cycles Key sorting back to ascending after descending', async () => {
+    const { root, container } = await renderPanel();
+    await discover();
+    await act(async () => {
+      await vi.waitFor(() => expect(container.textContent).toContain('first'));
+    });
+    const sortKey = () => {
+      if (!mocks.sortKey) throw new Error('Sort control is not mounted.');
+      mocks.sortKey();
+    };
+
+    await act(async () => sortKey());
+    await vi.waitFor(() =>
+      expect(mocks.client.request).toHaveBeenCalledTimes(2),
+    );
+    expect(mocks.client.request.mock.calls[1][0].payload).toMatchObject({
+      keySortDirection: 'descending',
+    });
+
+    await act(async () => sortKey());
+    await vi.waitFor(() =>
+      expect(mocks.client.request).toHaveBeenCalledTimes(3),
+    );
+    expect(mocks.client.request.mock.calls[2][0].payload).toMatchObject({
+      keySortDirection: 'ascending',
+    });
+
+    await act(async () => sortKey());
+    await vi.waitFor(() =>
+      expect(mocks.client.request).toHaveBeenCalledTimes(4),
+    );
+    expect(mocks.client.request.mock.calls[3][0].payload).toMatchObject({
+      keySortDirection: 'descending',
     });
     await act(async () => root.unmount());
   });

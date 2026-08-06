@@ -564,7 +564,7 @@ function StoragePanelContent() {
   const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
     const next = typeof updater === 'function' ? updater(sorting) : updater;
     const keySort = next.find((item) => item.id === 'key');
-    if (keySort) setKeySortDirection(keySort.desc ? 'descending' : 'ascending');
+    setKeySortDirection(keySort?.desc ? 'descending' : 'ascending');
   };
   const fetchNextPage = () => {
     if (

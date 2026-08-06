@@ -178,6 +178,52 @@ describe('storage entry query hooks', () => {
     await hook.unmount();
   });
 
+  it('keeps the previous pages while a search or sort change is loading', async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    let resolveNext: ((value: ReturnType<typeof response>) => void) | undefined;
+    const request = vi.fn(({ payload }) => {
+      if (payload.search === 'next') {
+        return new Promise((resolve) => {
+          resolveNext = resolve;
+        });
+      }
+      return Promise.resolve(response(undefined));
+    });
+    const hook = await renderPreviewHook({
+      client: asClient(request),
+      target,
+      search: 'current',
+      keySortDirection: 'ascending',
+    });
+
+    await act(async () => {
+      await vi.waitFor(() => expect(hook.result.isSuccess).toBe(true));
+    });
+    expect(hook.result.data?.pages[0].items[0].key).toBe('first');
+
+    await hook.rerender({
+      client: asClient(request),
+      target,
+      search: 'next',
+      keySortDirection: 'descending',
+    });
+
+    expect(hook.result.isFetching).toBe(true);
+    expect(hook.result.isPlaceholderData).toBe(true);
+    expect(hook.result.data?.pages[0].items[0].key).toBe('first');
+    expect(request.mock.calls[1][0].payload).toMatchObject({
+      search: 'next',
+      keySortDirection: 'descending',
+    });
+
+    await act(async () => {
+      resolveNext?.(response('new'));
+      await vi.waitFor(() => expect(hook.result.isPlaceholderData).toBe(false));
+    });
+    expect(hook.result.data?.pages[0].items[0].key).toBe('new');
+    await hook.unmount();
+  });
+
   it('exposes request errors without retrying bridge work', async () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     const request = vi.fn(() => Promise.reject(new Error('device failed')));
