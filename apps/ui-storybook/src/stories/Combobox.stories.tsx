@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Combobox } from '../../../../packages/ui/src/combobox/combobox';
+import { Combobox } from '@rozenite/ui';
 const meta = {
   component: Combobox,
   title: 'Components/Combobox',

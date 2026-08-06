@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from '@rozenite/ui';
-import { ConfirmDialog } from '../../../../packages/ui/src/confirm-dialog/confirm-dialog';
+import { ConfirmDialog } from '@rozenite/ui';
 const meta = {
   component: ConfirmDialog,
   title: 'Components/ConfirmDialog',

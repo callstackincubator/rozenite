@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button, useToast } from '@rozenite/ui';
-import { Toast } from '../../../../packages/ui/src/toast/toast';
+import { Toast } from '@rozenite/ui';
 function ToastDemo() {
   const toast = useToast();
   return (

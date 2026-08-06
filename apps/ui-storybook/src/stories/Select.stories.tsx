@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Select } from '../../../../packages/ui/src/select/select';
+import { Select } from '@rozenite/ui';
 const meta = { component: Select, title: 'Components/Select' } satisfies Meta<
   typeof Select
 >;

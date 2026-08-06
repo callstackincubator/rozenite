@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Badge } from '../../../../packages/ui/src/badge/badge';
+import { Badge } from '@rozenite/ui';
 const meta = { component: Badge, title: 'Components/Badge' } satisfies Meta<
   typeof Badge
 >;

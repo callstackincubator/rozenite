@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ColumnDef } from '@tanstack/react-table';
-import { VirtualizedDataTable } from '../../../../packages/ui/src/components/virtualized-data-table';
+import { VirtualizedDataTable } from '@rozenite/ui';
 type Row = { id: string; name: string; status: string };
 const data: Row[] = Array.from({ length: 30 }, (_, index) => ({
   id: String(index),

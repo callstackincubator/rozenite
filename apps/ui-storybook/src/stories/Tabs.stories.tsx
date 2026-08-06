@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Tabs } from '../../../../packages/ui/src/tabs/tabs';
+import { Tabs } from '@rozenite/ui';
 const meta = { component: Tabs, title: 'Components/Tabs' } satisfies Meta<
   typeof Tabs
 >;

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Toolbar } from '../../../../packages/ui/src/toolbar/toolbar';
+import { Toolbar } from '@rozenite/ui';
 const meta = { component: Toolbar, title: 'Components/Toolbar' } satisfies Meta<
   typeof Toolbar
 >;

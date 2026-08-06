@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from '@rozenite/ui';
-import { Tooltip } from '../../../../packages/ui/src/tooltip/tooltip';
+import { Tooltip } from '@rozenite/ui';
 const meta = { component: Tooltip, title: 'Components/Tooltip' } satisfies Meta<
   typeof Tooltip
 >;

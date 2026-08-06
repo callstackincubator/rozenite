@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DataTableEditableCell } from '../../../../packages/ui/src/data-table/data-table-editable-cell';
+import { DataTableEditableCell } from '@rozenite/ui';
 const meta = {
   component: DataTableEditableCell,
   title: 'Components/DataTableEditableCell',

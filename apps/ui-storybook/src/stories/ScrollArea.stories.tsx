@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ScrollArea } from '../../../../packages/ui/src/scroll-area/scroll-area';
+import { ScrollArea } from '@rozenite/ui';
 const meta = {
   component: ScrollArea,
   title: 'Components/ScrollArea',

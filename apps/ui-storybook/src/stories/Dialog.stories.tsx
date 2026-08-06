@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from '@rozenite/ui';
-import { Dialog } from '../../../../packages/ui/src/dialog/dialog';
+import { Dialog } from '@rozenite/ui';
 const meta = { component: Dialog, title: 'Components/Dialog' } satisfies Meta<
   typeof Dialog
 >;

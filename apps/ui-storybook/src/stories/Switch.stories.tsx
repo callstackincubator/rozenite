@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Switch } from '../../../../packages/ui/src/switch/switch';
+import { Switch } from '@rozenite/ui';
 const meta = { component: Switch, title: 'Components/Switch' } satisfies Meta<
   typeof Switch
 >;

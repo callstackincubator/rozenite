@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Button } from '../../../../packages/ui/src/button/button';
+import { Button } from '@rozenite/ui';
 
 const meta = {
   component: Button,

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Badge } from '@rozenite/ui';
-import { Sidebar } from '../../../../packages/ui/src/sidebar/sidebar';
+import { Sidebar } from '@rozenite/ui';
 const meta = { component: Sidebar, title: 'Components/Sidebar' } satisfies Meta<
   typeof Sidebar
 >;

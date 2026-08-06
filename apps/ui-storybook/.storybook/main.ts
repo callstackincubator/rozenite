@@ -13,9 +13,6 @@ function getAbsolutePath(value: string) {
 }
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
-  features: {
-    experimentalDocgenServer: true,
-  },
   typescript: {
     reactDocgen: 'react-docgen-typescript',
     reactDocgenTypescriptOptions: {

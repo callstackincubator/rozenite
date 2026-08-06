@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Split } from '../../../../packages/ui/src/split/split';
+import { Split } from '@rozenite/ui';
 const meta = { component: Split, title: 'Components/Split' } satisfies Meta<
   typeof Split
 >;

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PluginHeader } from '@rozenite/ui';
-import { PluginShell } from '../../../../packages/ui/src/plugin-shell/plugin-shell';
+import { PluginShell } from '@rozenite/ui';
 const meta = {
   component: PluginShell,
   title: 'Components/PluginShell',

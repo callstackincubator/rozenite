@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from '@rozenite/ui';
-import { EmptyState } from '../../../../packages/ui/src/empty-state/empty-state';
+import { EmptyState } from '@rozenite/ui';
 const meta = {
   component: EmptyState,
   title: 'Components/EmptyState',

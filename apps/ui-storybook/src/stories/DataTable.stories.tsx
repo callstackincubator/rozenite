@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DataTable } from '../../../../packages/ui/src/data-table/data-table';
+import { DataTable } from '@rozenite/ui';
 type Row = { name: string; status: string };
 const columns = [
   { accessorKey: 'name', header: 'Name' },

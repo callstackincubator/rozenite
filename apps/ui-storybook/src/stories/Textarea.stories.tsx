@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Textarea } from '../../../../packages/ui/src/textarea/textarea';
+import { Textarea } from '@rozenite/ui';
 const meta = {
   component: Textarea,
   title: 'Components/Textarea',

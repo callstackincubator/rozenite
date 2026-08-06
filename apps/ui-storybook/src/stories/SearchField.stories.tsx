@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { SearchField } from '../../../../packages/ui/src/search-field/search-field';
+import { SearchField } from '@rozenite/ui';
 const meta = {
   component: SearchField,
   title: 'Components/SearchField',

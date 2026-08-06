@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { JsonInspector } from '../../../../packages/ui/src/json-inspector/json-inspector';
+import { JsonInspector } from '@rozenite/ui';
 const meta = {
   component: JsonInspector,
   title: 'Components/JsonInspector',

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Input } from '../../../../packages/ui/src/input/input';
+import { Input } from '@rozenite/ui';
 const meta = { component: Input, title: 'Components/Input' } satisfies Meta<
   typeof Input
 >;

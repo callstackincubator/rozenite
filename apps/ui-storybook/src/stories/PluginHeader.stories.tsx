@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button, PluginShell } from '@rozenite/ui';
-import { PluginHeader } from '../../../../packages/ui/src/plugin-header/plugin-header';
+import { PluginHeader } from '@rozenite/ui';
 const meta = {
   component: PluginHeader,
   title: 'Components/PluginHeader',

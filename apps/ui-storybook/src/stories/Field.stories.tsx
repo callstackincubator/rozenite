@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Field } from '../../../../packages/ui/src/field/field';
+import { Field } from '@rozenite/ui';
 const meta = { component: Field, title: 'Components/Field' } satisfies Meta<
   typeof Field
 >;
