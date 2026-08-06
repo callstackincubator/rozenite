@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/ui",
-  "version": "1.13.0",
+  "version": "2.0.0",
   "description": "Shared UI foundation and layout primitives for Rozenite DevTools plugin panels",
   "type": "module",
   "main": "./dist/index.cjs",

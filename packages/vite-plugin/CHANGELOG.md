@@ -1,5 +1,23 @@
 # @rozenite/vite-plugin
 
+## 2.0.0
+
+### Minor Changes
+
+- [#340](https://github.com/callstackincubator/rozenite/pull/340) [`4f54f65`](https://github.com/callstackincubator/rozenite/commit/4f54f6594c4ba62c12b44fa65d265c76f9464729) Thanks [@V3RON](https://github.com/V3RON)! - Configure Tailwind CSS v4 automatically for DevTools client panels so plugin
+  projects can use Tailwind styles without their own Vite or PostCSS setup. Migrate
+  the built-in plugins to Tailwind CSS v4 and remove their redundant build tooling.
+
+- [#365](https://github.com/callstackincubator/rozenite/pull/365) [`81bddb8`](https://github.com/callstackincubator/rozenite/commit/81bddb87ab29e45804172a4be7595880099384d9) Thanks [@V3RON](https://github.com/V3RON)! - Rebuild the Rozenite Dev Host on shared UI primitives and add a storage-plugin
+  initialization flow for exercising storage message interactions during plugin development.
+
+### Patch Changes
+
+- [#359](https://github.com/callstackincubator/rozenite/pull/359) [`6ab6fbe`](https://github.com/callstackincubator/rozenite/commit/6ab6fbee1b214b7d42c7a5434bcb909a59d9ffbe) Thanks [@V3RON](https://github.com/V3RON)! - Improve plugin build times by running independent build targets concurrently while preserving all generated outputs.
+
+- Updated dependencies [[`de396d6`](https://github.com/callstackincubator/rozenite/commit/de396d651d592ac4186f3971d26c8f0551358d64), [`81bddb8`](https://github.com/callstackincubator/rozenite/commit/81bddb87ab29e45804172a4be7595880099384d9), [`88c1faf`](https://github.com/callstackincubator/rozenite/commit/88c1faffb6ffdeaaf05bad750cfb8e46470f3ff5), [`6fad9f3`](https://github.com/callstackincubator/rozenite/commit/6fad9f3a3ac8a5c350d2e8b8c8336642aac5f73d), [`222945f`](https://github.com/callstackincubator/rozenite/commit/222945f00049ca8b7a3746478d6a94b7e4ced6a7), [`b42bf95`](https://github.com/callstackincubator/rozenite/commit/b42bf95cd1573e84ce2faefae92c021575709a33)]:
+  - @rozenite/ui@2.0.0
+
 ## 1.13.0
 
 ### Patch Changes

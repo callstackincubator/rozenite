@@ -1,5 +1,14 @@
 # @rozenite/expo-atlas-plugin
 
+## 2.0.0
+
+### Patch Changes
+
+- [#316](https://github.com/callstackincubator/rozenite/pull/316) [`4e1c3bd`](https://github.com/callstackincubator/rozenite/commit/4e1c3bd8854b01c0d775287362d222307a7c8ffc) Thanks [@V3RON](https://github.com/V3RON)! - Support Metro's private serializer module paths through Metro 0.84.
+
+- Updated dependencies [[`476a27f`](https://github.com/callstackincubator/rozenite/commit/476a27f5532f4e35ad66feb5c9481b9396592d14)]:
+  - @rozenite/plugin-bridge@2.0.0
+
 ## 1.13.0
 
 ### Patch Changes

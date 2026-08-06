@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/shell",
-  "version": "1.13.0",
+  "version": "2.0.0",
   "description": "Unified Rozenite panel shell for React Native DevTools.",
   "type": "module",
   "files": [

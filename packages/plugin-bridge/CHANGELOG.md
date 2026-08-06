@@ -1,5 +1,14 @@
 # @rozenite/plugin-bridge
 
+## 2.0.0
+
+### Minor Changes
+
+- [#351](https://github.com/callstackincubator/rozenite/pull/351) [`476a27f`](https://github.com/callstackincubator/rozenite/commit/476a27f5532f4e35ad66feb5c9481b9396592d14) Thanks [@V3RON](https://github.com/V3RON)! - Add `createRozeniteRpc` to `@rozenite/plugin-bridge` — a request/response RPC
+  layer on top of `RozeniteDevToolsClient` with acknowledgement, heartbeats,
+  timeouts, retries, cancellation, and a typed error union
+  (`RozeniteProtocolError` / `RozeniteHandlerError`).
+
 ## 1.13.0
 
 ## 1.12.0

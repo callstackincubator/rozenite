@@ -1,5 +1,43 @@
 # rozenite
 
+## 2.0.0
+
+### Major Changes
+
+- [#335](https://github.com/callstackincubator/rozenite/pull/335) [`a57b914`](https://github.com/callstackincubator/rozenite/commit/a57b91448e6cc9b88bd987bf462f07deef6b0d55) Thanks [@V3RON](https://github.com/V3RON)! - Expose globally qualified tool names, descriptions, and optional safety traits
+  in agent CLI tool discovery. Agent tool contracts now support `readOnly`,
+  `destructive`, and `idempotent` metadata.
+
+- [#322](https://github.com/callstackincubator/rozenite/pull/322) [`fa96bb8`](https://github.com/callstackincubator/rozenite/commit/fa96bb84d53d264b1f30aa7034ec678711a2c6b1) Thanks [@V3RON](https://github.com/V3RON)! - Change agent CLI row-shaped output to the stable columnar `cols` / `rows`
+  contract for two or more rows. Terminal pagination envelopes are removed, and
+  additional pages now provide a runnable `next` command instead of a bare
+  cursor. Paginated tools now declare their stable row fields through a reusable
+  shared contract, re-exported from `@rozenite/agent-bridge`, so built-in and
+  third-party plugins receive the same output behavior without CLI allowlists.
+
+- [#333](https://github.com/callstackincubator/rozenite/pull/333) [`f20d89d`](https://github.com/callstackincubator/rozenite/commit/f20d89d6f0f75fe364b7e7a3b6e76db7e2b3f77a) Thanks [@V3RON](https://github.com/V3RON)! - Remove SDK and CLI auto-pagination so every tool invocation performs exactly
+  one call and preserves plugin-owned page results and cursors unchanged. Fetch
+  additional pages by passing the returned cursor explicitly.
+
+### Minor Changes
+
+- [#328](https://github.com/callstackincubator/rozenite/pull/328) [`dc8b4ea`](https://github.com/callstackincubator/rozenite/commit/dc8b4eacbab70b871a02bdd93e0611a400b92ae2) Thanks [@V3RON](https://github.com/V3RON)! - Derive short, stable agent domain names from npm package names instead of mangled, hash-suffixed slugs. `@rozenite/mmkv-plugin` now resolves to the domain `mmkv` instead of `at-rozenite__mmkv-plugin`, and `@avasapp/rozenite-plugin-ably` resolves to `avasapp/ably`. The domain name is a pure function of the plugin's package name alone — installing, removing, or updating other plugins never changes it, and two packages that would derive the same domain name now fail loudly instead of one silently shadowing the other.
+
+  The previous mangled slug form (e.g. `at-rozenite__mmkv-plugin`) is still accepted by `resolveDomainToken` as an undocumented compatibility alias for one release cycle.
+
+### Patch Changes
+
+- [#321](https://github.com/callstackincubator/rozenite/pull/321) [`94941d2`](https://github.com/callstackincubator/rozenite/commit/94941d23af5cb99077a41a8c6e405edffccd2467) Thanks [@V3RON](https://github.com/V3RON)! - Agent sessions now automatically recover after an app relaunch while keeping their session ID and restoring tools. If a relaunch interrupts profiling or recording, Rozenite reports the lost data instead of returning a misleading empty result.
+
+- [#359](https://github.com/callstackincubator/rozenite/pull/359) [`6ab6fbe`](https://github.com/callstackincubator/rozenite/commit/6ab6fbee1b214b7d42c7a5434bcb909a59d9ffbe) Thanks [@V3RON](https://github.com/V3RON)! - Improve plugin build times by running independent build targets concurrently while preserving all generated outputs.
+
+- [#326](https://github.com/callstackincubator/rozenite/pull/326) [`cdd656b`](https://github.com/callstackincubator/rozenite/commit/cdd656bac330240543d6626c6e13bb2b0c3dd2a4) Thanks [@V3RON](https://github.com/V3RON)! - Fix `react.stopProfiling` agent tool returning an empty success result instead of erroring when called with no active profiling session. It now throws `No active profiling session for this session`, matching the guard used by the other stop-style agent tools (`network.stopRecording`, `performance.stopTrace`, `memory.stopSampling`).
+
+- Updated dependencies [[`a57b914`](https://github.com/callstackincubator/rozenite/commit/a57b91448e6cc9b88bd987bf462f07deef6b0d55), [`fa96bb8`](https://github.com/callstackincubator/rozenite/commit/fa96bb84d53d264b1f30aa7034ec678711a2c6b1), [`f20d89d`](https://github.com/callstackincubator/rozenite/commit/f20d89d6f0f75fe364b7e7a3b6e76db7e2b3f77a), [`dc8b4ea`](https://github.com/callstackincubator/rozenite/commit/dc8b4eacbab70b871a02bdd93e0611a400b92ae2)]:
+  - @rozenite/agent-sdk@2.0.0
+  - @rozenite/agent-shared@2.0.0
+  - @rozenite/tools@2.0.0
+
 ## 1.13.0
 
 ### Patch Changes

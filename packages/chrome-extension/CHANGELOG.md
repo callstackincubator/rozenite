@@ -1,5 +1,7 @@
 # @rozenite/chrome-extension
 
+## 2.0.0
+
 ## 1.13.0
 
 ## 1.12.0

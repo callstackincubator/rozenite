@@ -1,5 +1,14 @@
 # @rozenite/metro
 
+## 2.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`94941d2`](https://github.com/callstackincubator/rozenite/commit/94941d23af5cb99077a41a8c6e405edffccd2467), [`dd0146d`](https://github.com/callstackincubator/rozenite/commit/dd0146d0773885fb19d756c60adb81ab5f251ef2), [`bd3a5a8`](https://github.com/callstackincubator/rozenite/commit/bd3a5a8ad53628d0010a23e636abc9500a295950), [`893f238`](https://github.com/callstackincubator/rozenite/commit/893f238c9e7015776ccb79915620271785227022), [`e88b100`](https://github.com/callstackincubator/rozenite/commit/e88b10051a2e0c56c67202b7ba74fbf3241744de), [`cdd656b`](https://github.com/callstackincubator/rozenite/commit/cdd656bac330240543d6626c6e13bb2b0c3dd2a4), [`ea5a01f`](https://github.com/callstackincubator/rozenite/commit/ea5a01fa86bc5f716896483fa6e1a49c283e6097)]:
+  - @rozenite/middleware@2.0.0
+  - @rozenite/runtime@2.0.0
+  - @rozenite/tools@2.0.0
+
 ## 1.13.0
 
 ### Patch Changes

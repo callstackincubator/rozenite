@@ -1,5 +1,33 @@
 # @rozenite/storage-plugin
 
+## 2.0.0
+
+### Minor Changes
+
+- [#341](https://github.com/callstackincubator/rozenite/pull/341) [`de396d6`](https://github.com/callstackincubator/rozenite/commit/de396d651d592ac4186f3971d26c8f0551358d64) Thanks [@V3RON](https://github.com/V3RON)! - Add a confirmation-gated action to purge all entries from the selected storage.
+
+- [#341](https://github.com/callstackincubator/rozenite/pull/341) [`de396d6`](https://github.com/callstackincubator/rozenite/commit/de396d651d592ac4186f3971d26c8f0551358d64) Thanks [@V3RON](https://github.com/V3RON)! - Keep large storage inspections responsive by discovering storage metadata first,
+  loading bounded key-and-preview pages for the selected storage, and fetching
+  full values only when an entry is opened or edited.
+
+- [#349](https://github.com/callstackincubator/rozenite/pull/349) [`1efd15a`](https://github.com/callstackincubator/rozenite/commit/1efd15a28f53c55a5cd0b12a1e96f47e8c28a431) Thanks [@V3RON](https://github.com/V3RON)! - Rebuild the Storage Inspector panel on the shared `@rozenite/ui` design
+  system. Storages are now grouped by adapter (MMKV, AsyncStorage, Expo Secure
+  Store, …) in a sidebar instead of a single flat dropdown, and the panel gains
+  light/dark theming, a redesigned data table, and consistent dialogs for
+  adding, editing, importing, and deleting entries.
+
+### Patch Changes
+
+- [#341](https://github.com/callstackincubator/rozenite/pull/341) [`de396d6`](https://github.com/callstackincubator/rozenite/commit/de396d651d592ac4186f3971d26c8f0551358d64) Thanks [@V3RON](https://github.com/V3RON)! - Keep dialog contents visible and unchanged throughout close transitions.
+
+- [#365](https://github.com/callstackincubator/rozenite/pull/365) [`81bddb8`](https://github.com/callstackincubator/rozenite/commit/81bddb87ab29e45804172a4be7595880099384d9) Thanks [@V3RON](https://github.com/V3RON)! - Rebuild the Rozenite Dev Host on shared UI primitives and add a storage-plugin
+  initialization flow for exercising storage message interactions during plugin development.
+- Updated dependencies [[`a57b914`](https://github.com/callstackincubator/rozenite/commit/a57b91448e6cc9b88bd987bf462f07deef6b0d55), [`fa96bb8`](https://github.com/callstackincubator/rozenite/commit/fa96bb84d53d264b1f30aa7034ec678711a2c6b1), [`de396d6`](https://github.com/callstackincubator/rozenite/commit/de396d651d592ac4186f3971d26c8f0551358d64), [`476a27f`](https://github.com/callstackincubator/rozenite/commit/476a27f5532f4e35ad66feb5c9481b9396592d14), [`81bddb8`](https://github.com/callstackincubator/rozenite/commit/81bddb87ab29e45804172a4be7595880099384d9), [`88c1faf`](https://github.com/callstackincubator/rozenite/commit/88c1faffb6ffdeaaf05bad750cfb8e46470f3ff5), [`6fad9f3`](https://github.com/callstackincubator/rozenite/commit/6fad9f3a3ac8a5c350d2e8b8c8336642aac5f73d), [`222945f`](https://github.com/callstackincubator/rozenite/commit/222945f00049ca8b7a3746478d6a94b7e4ced6a7), [`b42bf95`](https://github.com/callstackincubator/rozenite/commit/b42bf95cd1573e84ce2faefae92c021575709a33)]:
+  - @rozenite/agent-bridge@2.0.0
+  - @rozenite/agent-shared@2.0.0
+  - @rozenite/ui@2.0.0
+  - @rozenite/plugin-bridge@2.0.0
+
 ## 1.13.0
 
 ### Patch Changes

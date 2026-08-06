@@ -1,5 +1,13 @@
 # @rozenite/repack
 
+## 2.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`94941d2`](https://github.com/callstackincubator/rozenite/commit/94941d23af5cb99077a41a8c6e405edffccd2467), [`bd3a5a8`](https://github.com/callstackincubator/rozenite/commit/bd3a5a8ad53628d0010a23e636abc9500a295950), [`cdd656b`](https://github.com/callstackincubator/rozenite/commit/cdd656bac330240543d6626c6e13bb2b0c3dd2a4), [`ea5a01f`](https://github.com/callstackincubator/rozenite/commit/ea5a01fa86bc5f716896483fa6e1a49c283e6097)]:
+  - @rozenite/middleware@2.0.0
+  - @rozenite/tools@2.0.0
+
 ## 1.13.0
 
 ### Patch Changes
