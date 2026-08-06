@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { handleImportEntries, type ImportEmittedEvent } from '../import';
+import {
+  handleImportEntries,
+  handleImportPreviewRequest,
+  type ImportEmittedEvent,
+} from '../import';
 import type { StorageView } from '../storage-view';
 import { getStorageViewId } from '../../shared/types';
 import type { StorageEntry, StorageTarget } from '../../shared/types';
@@ -24,10 +28,12 @@ const buildView = (overrides?: Partial<StorageView>): StorageView => {
     get: unexpected('get'),
     set: vi.fn(async () => {}),
     delete: unexpected('delete'),
+    purge: unexpected('purge'),
     getAllKeys: unexpected('getAllKeys'),
     getAllEntries: unexpected('getAllEntries'),
     watch: unexpected('watch'),
     ...overrides,
+    supportsSubscriptions: overrides?.supportsSubscriptions ?? false,
   };
 };
 
@@ -39,11 +45,12 @@ const buildEntries = (count: number): StorageEntry[] =>
   }));
 
 describe('handleImportEntries', () => {
-  it('emits a set-entry echo per write followed by a success import-result', async () => {
+  it('emits value-free progress, one invalidation, and one success import-result', async () => {
     const view = buildView();
     const entries = buildEntries(5);
     const event: StorageImportEntriesEvent = {
       type: 'import-entries',
+      requestId: 'request-1',
       target,
       entries,
     };
@@ -53,16 +60,24 @@ describe('handleImportEntries', () => {
 
     expect(view.set).toHaveBeenCalledTimes(5);
 
-    expect(emitted).toHaveLength(6);
+    expect(emitted).toHaveLength(7);
     expect(emitted.slice(0, 5)).toEqual(
-      entries.map((entry) => ({
-        type: 'set-entry',
+      entries.map((_, index) => ({
+        type: 'import-progress',
+        requestId: 'request-1',
         target,
-        entry,
+        written: index + 1,
+        total: 5,
       })),
     );
     expect(emitted[5]).toEqual({
+      type: 'storage-invalidated',
+      target,
+      operation: 'import',
+    });
+    expect(emitted[6]).toEqual({
       type: 'import-result',
+      requestId: 'request-1',
       target,
       ok: true,
       written: 5,
@@ -82,6 +97,7 @@ describe('handleImportEntries', () => {
     const entries = buildEntries(5);
     const event: StorageImportEntriesEvent = {
       type: 'import-entries',
+      requestId: 'request-1',
       target,
       entries,
     };
@@ -89,13 +105,27 @@ describe('handleImportEntries', () => {
 
     await handleImportEntries([view], event, (out) => emitted.push(out));
 
-    // 2 set-entry echoes (k0, k1), then the failure result. No echoes for k2+.
+    // 2 value-free progress events (k0, k1), one batch invalidation, then failure.
     expect(view.set).toHaveBeenCalledTimes(3);
-    expect(emitted).toHaveLength(3);
-    expect(emitted[0]).toMatchObject({ type: 'set-entry', entry: entries[0] });
-    expect(emitted[1]).toMatchObject({ type: 'set-entry', entry: entries[1] });
+    expect(emitted).toHaveLength(4);
+    expect(emitted[0]).toMatchObject({
+      type: 'import-progress',
+      requestId: 'request-1',
+      written: 1,
+    });
+    expect(emitted[1]).toMatchObject({
+      type: 'import-progress',
+      requestId: 'request-1',
+      written: 2,
+    });
     expect(emitted[2]).toEqual({
+      type: 'storage-invalidated',
+      target,
+      operation: 'import',
+    });
+    expect(emitted[3]).toEqual({
       type: 'import-result',
+      requestId: 'request-1',
       target,
       ok: false,
       written: 2,
@@ -113,6 +143,7 @@ describe('handleImportEntries', () => {
     });
     const event: StorageImportEntriesEvent = {
       type: 'import-entries',
+      requestId: 'request-1',
       target,
       entries: buildEntries(1),
     };
@@ -123,6 +154,7 @@ describe('handleImportEntries', () => {
     expect(emitted).toHaveLength(1);
     expect(emitted[0]).toMatchObject({
       type: 'import-result',
+      requestId: 'request-1',
       ok: false,
       error: 'plain string failure',
     });
@@ -137,6 +169,7 @@ describe('handleImportEntries', () => {
     const entries = buildEntries(3);
     const event: StorageImportEntriesEvent = {
       type: 'import-entries',
+      requestId: 'request-1',
       target: unknownTarget,
       entries,
     };
@@ -148,6 +181,7 @@ describe('handleImportEntries', () => {
     expect(emitted).toEqual([
       {
         type: 'import-result',
+        requestId: 'request-1',
         target: unknownTarget,
         ok: false,
         written: 0,
@@ -161,6 +195,7 @@ describe('handleImportEntries', () => {
     const view = buildView();
     const event: StorageImportEntriesEvent = {
       type: 'import-entries',
+      requestId: 'request-1',
       target,
       entries: [],
     };
@@ -172,11 +207,138 @@ describe('handleImportEntries', () => {
     expect(emitted).toEqual([
       {
         type: 'import-result',
+        requestId: 'request-1',
         target,
         ok: true,
         written: 0,
         total: 0,
       },
     ]);
+  });
+
+  it('previews current device keys and blacklist decisions without reading values', async () => {
+    const view = buildView({
+      getAllKeys: vi.fn(async () => ['existing', 'unseen']),
+      blacklist: /^private$/,
+    });
+
+    const result = await handleImportPreviewRequest([view], {
+      type: 'preview-import',
+      requestId: 'preview-1',
+      target,
+      snapshot: {
+        version: 1,
+        plugin: '@rozenite/storage-plugin',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        storage: {
+          adapterId: target.adapterId,
+          storageId: target.storageId,
+          adapterName: 'MMKV',
+          storageName: 'user',
+          capabilities: view.capabilities,
+        },
+        entries: [
+          { key: 'existing', type: 'string', value: 'new' },
+          { key: 'fresh', type: 'string', value: 'value' },
+          { key: 'private', type: 'string', value: 'hidden' },
+        ],
+      },
+    });
+
+    expect(result).toMatchObject({
+      type: 'import-preview',
+      requestId: 'preview-1',
+      target,
+      preview: {
+        overwriteKeys: ['existing'],
+        newKeys: ['fresh'],
+        skippedKeys: [{ key: 'private', reason: 'blacklist' }],
+        acceptedEntryIndexes: [0, 1],
+      },
+    });
+    expect(view.get).not.toHaveBeenCalled();
+  });
+
+  it('rechecks blacklist and supported types when applying a stale preview', async () => {
+    const view = buildView({
+      capabilities: { supportedTypes: ['string'] },
+      blacklist: /^blocked$/,
+    });
+    const emitted: ImportEmittedEvent[] = [];
+
+    await handleImportEntries(
+      [view],
+      {
+        type: 'import-entries',
+        requestId: 'request-1',
+        target,
+        entries: [
+          { key: 'blocked', type: 'string', value: 'skip' },
+          { key: 'binary', type: 'buffer', value: [1] },
+          { key: 'kept', type: 'string', value: 'write' },
+        ],
+      },
+      (out) => emitted.push(out),
+    );
+
+    expect(view.set).toHaveBeenCalledTimes(1);
+    expect(emitted).toEqual([
+      {
+        type: 'import-progress',
+        requestId: 'request-1',
+        target,
+        written: 1,
+        total: 1,
+      },
+      {
+        type: 'storage-invalidated',
+        target,
+        operation: 'import',
+      },
+      {
+        type: 'import-result',
+        requestId: 'request-1',
+        target,
+        ok: true,
+        written: 1,
+        total: 1,
+      },
+    ]);
+  });
+
+  it('returns predictable errors for malformed and unknown preview targets', async () => {
+    const view = buildView();
+
+    await expect(handleImportPreviewRequest([view], {})).resolves.toMatchObject(
+      {
+        type: 'storage-request-error',
+        requestId: '',
+        code: 'INVALID_REQUEST',
+      },
+    );
+    await expect(
+      handleImportPreviewRequest([view], {
+        type: 'preview-import',
+        requestId: 'preview-1',
+        target: { adapterId: 'missing', storageId: 'missing' },
+        snapshot: {
+          version: 1,
+          plugin: '@rozenite/storage-plugin',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          storage: {
+            adapterId: target.adapterId,
+            storageId: target.storageId,
+            adapterName: 'MMKV',
+            storageName: 'user',
+            capabilities: view.capabilities,
+          },
+          entries: [],
+        },
+      }),
+    ).resolves.toMatchObject({
+      type: 'storage-request-error',
+      requestId: 'preview-1',
+      code: 'TARGET_NOT_FOUND',
+    });
   });
 });

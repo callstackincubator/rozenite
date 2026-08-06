@@ -2,8 +2,8 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { EditorState as CMEditorState } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { cn } from '@rozenite/ui';
-import { useEffect, useReducer, useRef } from 'react';
-import { bytesToAsciiPreview } from './binary';
+import { useEffect, useReducer, useRef, useState } from 'react';
+import { compactAsciiPreview } from './binary';
 import {
   initialState,
   reduce,
@@ -62,7 +62,11 @@ export const BinaryValueEditor = ({
   onChange,
 }: BinaryValueEditorProps) => {
   const [state, dispatch] = useReducer(reduce, undefined, () =>
-    initialState({ initialBytes }),
+    initialState({}),
+  );
+  const initialBytesRef = useRef(initialBytes);
+  const [isPreparing, setIsPreparing] = useState(
+    Boolean(initialBytesRef.current && initialBytesRef.current.length > 0),
   );
 
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -71,6 +75,19 @@ export const BinaryValueEditor = ({
   stateRef.current = state;
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+
+  // Formatting a complete binary editor document is unavoidable when editing,
+  // but not when the dialog first opens. Yield once so the dialog can paint a
+  // size-aware loading state before constructing a potentially huge document.
+  useEffect(() => {
+    const initialBytes = initialBytesRef.current;
+    if (!initialBytes?.length) return;
+    const timeout = window.setTimeout(() => {
+      dispatch({ type: 'replace-bytes', bytes: initialBytes });
+      setIsPreparing(false);
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   // Mount the CodeMirror view once. The update listener compares the
   // doc to the latest reducer text (via stateRef) so paste-or-type
@@ -126,8 +143,8 @@ export const BinaryValueEditor = ({
     onChangeRef.current(state.bytes);
   }, [state.bytes]);
 
-  const byteCount = state.bytes?.length ?? 0;
-  const asciiPreview = state.bytes ? bytesToAsciiPreview(state.bytes) : '';
+  const byteCount = state.bytes?.length ?? initialBytes?.length ?? 0;
+  const asciiPreview = state.bytes ? compactAsciiPreview(state.bytes) : '';
 
   const handleModeChange = (mode: EditorMode) => {
     if (state.mode === mode) return;
@@ -153,6 +170,12 @@ export const BinaryValueEditor = ({
         ref={hostRef}
         className="min-h-[120px] max-h-[300px] overflow-auto rounded-md border border-input bg-muted"
       />
+
+      {isPreparing ? (
+        <div className="text-xs text-muted-foreground">
+          Preparing editor for {initialBytes?.length ?? 0} bytes…
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-1 text-xs">
         <div className="text-muted-foreground">{byteCount} bytes</div>

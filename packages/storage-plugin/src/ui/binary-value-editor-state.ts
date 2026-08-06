@@ -17,7 +17,8 @@ export type EditorState = {
 export type EditorAction =
   | { type: 'set-text'; text: string }
   | { type: 'normalize-paste'; text: string }
-  | { type: 'switch-mode'; mode: EditorMode };
+  | { type: 'switch-mode'; mode: EditorMode }
+  | { type: 'replace-bytes'; bytes: number[] };
 
 export type Validation =
   | { ok: true; bytes: number[] }
@@ -105,6 +106,14 @@ export const reduce = (
         mode: action.mode,
         text: '',
         bytes: null,
+        error: null,
+      };
+    }
+    case 'replace-bytes': {
+      return {
+        mode: state.mode,
+        text: encode(action.bytes, state.mode),
+        bytes: action.bytes,
         error: null,
       };
     }

@@ -14,6 +14,7 @@ export type ImportFlightState =
     }
   | {
       phase: 'importing';
+      requestId: string;
       target: StorageTarget;
       total: number;
       written: number;

@@ -2,13 +2,23 @@ import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { useEffect, useMemo } from 'react';
 import type {
   StorageDeleteEntryEvent,
+  StorageDiscoverStoragesRequestEvent,
   StorageEventMap,
-  StorageGetSnapshotEvent,
+  StorageExportSnapshotRequestEvent,
+  StorageGetEntryRequestEvent,
   StorageImportEntriesEvent,
+  StorageImportPreviewRequestEvent,
+  StorageInvalidationOperation,
+  StorageListEntryPreviewsRequestEvent,
   StorageSetEntryEvent,
+  StoragePurgeEvent,
 } from '../shared/messaging';
 import type { StorageAdapter } from '../shared/types';
-import { handleImportEntries } from './import';
+import { handleImportEntries, handleImportPreviewRequest } from './import';
+import { handleStorageDiscoveryRequest } from './storage-discovery';
+import { handleListEntryPreviewsRequest } from './entry-preview-pagination';
+import { handleFullEntryRequest } from './full-entry-request';
+import { handleExportSnapshotRequest } from './export-snapshot';
 import { createStorageViews } from './storage-view';
 import { useStorageAgentTools } from './useStorageAgentTools';
 
@@ -32,73 +42,50 @@ export const useRozeniteStoragePlugin = ({
       return;
     }
 
-    const pushSnapshot = async (viewId?: string) => {
-      const selectedViews = viewId
-        ? views.filter((view) => view.id === viewId)
-        : views;
-
-      for (const view of selectedViews) {
-        try {
-          const entries = await view.getAllEntries();
-          client.send('snapshot', {
-            type: 'snapshot',
-            target: view.target,
-            adapterName: view.adapterName,
-            storageName: view.storageName,
-            capabilities: view.capabilities,
-            blacklist: view.blacklist
-              ? { source: view.blacklist.source, flags: view.blacklist.flags }
-              : undefined,
-            entries,
-          });
-        } catch (error) {
-          console.warn(
-            `[Rozenite] Storage Plugin: Failed to snapshot ${view.target.adapterId}/${view.target.storageId}.`,
-            error,
-          );
-        }
-      }
-    };
-
-    void pushSnapshot();
-
     const viewSubscriptions: { remove: () => void }[] = [];
     let disposed = false;
 
+    const sendInvalidation = (
+      target: StorageSetEntryEvent['target'],
+      key?: string,
+      operation?: StorageInvalidationOperation,
+    ) => {
+      client.send('storage-invalidated', {
+        type: 'storage-invalidated',
+        target,
+        key,
+        operation,
+      });
+    };
+
     // Prevent one storage watcher failure from breaking the whole plugin.
     void Promise.all(
-      views.map(async (view) => {
-        try {
-          const subscription = await view.watch({
-            onSet: (entry) => {
-              client.send('set-entry', {
-                type: 'set-entry',
-                target: view.target,
-                entry,
-              });
-            },
-            onDelete: (key) => {
-              client.send('delete-entry', {
-                type: 'delete-entry',
-                target: view.target,
-                key,
-              });
-            },
-          });
+      views
+        .filter((view) => view.supportsSubscriptions && view.watch)
+        .map(async (view) => {
+          try {
+            const watch = view.watch;
+            if (!watch) {
+              return;
+            }
 
-          if (disposed) {
-            subscription.remove();
-            return;
+            const subscription = await watch((key) => {
+              sendInvalidation(view.target, key);
+            });
+
+            if (disposed) {
+              subscription.remove();
+              return;
+            }
+
+            viewSubscriptions.push(subscription);
+          } catch (error) {
+            console.warn(
+              `[Rozenite] Storage Plugin: Failed to attach watcher for ${view.target.adapterId}/${view.target.storageId}.`,
+              error,
+            );
           }
-
-          viewSubscriptions.push(subscription);
-        } catch (error) {
-          console.warn(
-            `[Rozenite] Storage Plugin: Failed to attach watcher for ${view.target.adapterId}/${view.target.storageId}.`,
-            error,
-          );
-        }
-      }),
+        }),
     );
 
     const messageSubscriptions = [
@@ -120,6 +107,7 @@ export const useRozeniteStoragePlugin = ({
 
           try {
             await view.set(entry);
+            sendInvalidation(view.target, entry.key, 'set');
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to set entry in ${target.adapterId}/${target.storageId}.`,
@@ -146,6 +134,7 @@ export const useRozeniteStoragePlugin = ({
 
           try {
             await view.delete(key);
+            sendInvalidation(view.target, key, 'delete');
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to delete entry in ${target.adapterId}/${target.storageId}.`,
@@ -155,25 +144,72 @@ export const useRozeniteStoragePlugin = ({
         },
       ),
       client.onMessage(
-        'get-snapshot',
-        async ({ target }: StorageGetSnapshotEvent) => {
-          if (target === 'all') {
-            await pushSnapshot();
+        'purge-storage',
+        async ({ target }: StoragePurgeEvent) => {
+          const view = views.find(
+            (candidate) =>
+              candidate.target.adapterId === target.adapterId &&
+              candidate.target.storageId === target.storageId,
+          );
+
+          if (!view) {
+            console.warn(
+              `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
+            );
             return;
           }
 
-          await pushSnapshot(`${target.adapterId}:${target.storageId}`);
+          try {
+            await view.purge();
+            sendInvalidation(view.target, undefined, 'purge');
+          } catch (error) {
+            console.warn(
+              `[Rozenite] Storage Plugin: Failed to purge storage in ${target.adapterId}/${target.storageId}.`,
+              error,
+            );
+          }
+        },
+      ),
+      client.onMessage(
+        'discover-storages',
+        async (event: StorageDiscoverStoragesRequestEvent) => {
+          const response = await handleStorageDiscoveryRequest(views, event);
+          client.send(response.type, response);
+        },
+      ),
+      client.onMessage(
+        'list-entry-previews',
+        async (event: StorageListEntryPreviewsRequestEvent) => {
+          const response = await handleListEntryPreviewsRequest(views, event);
+          client.send(response.type, response);
+        },
+      ),
+      client.onMessage(
+        'get-entry',
+        async (event: StorageGetEntryRequestEvent) => {
+          const response = await handleFullEntryRequest(views, event);
+          client.send(response.type, response);
+        },
+      ),
+      client.onMessage(
+        'export-snapshot',
+        async (event: StorageExportSnapshotRequestEvent) => {
+          const response = await handleExportSnapshotRequest(views, event);
+          client.send(response.type, response);
+        },
+      ),
+      client.onMessage(
+        'preview-import',
+        async (event: StorageImportPreviewRequestEvent) => {
+          const response = await handleImportPreviewRequest(views, event);
+          client.send(response.type, response);
         },
       ),
       client.onMessage(
         'import-entries',
         async (event: StorageImportEntriesEvent) => {
           await handleImportEntries(views, event, (out) => {
-            if (out.type === 'set-entry') {
-              client.send('set-entry', out);
-            } else {
-              client.send('import-result', out);
-            }
+            client.send(out.type, out);
           });
         },
       ),

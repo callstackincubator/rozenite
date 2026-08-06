@@ -1,8 +1,18 @@
 export { useRozeniteDevToolsClient } from './useRozeniteDevToolsClient';
-export type { RozeniteDevToolsClient } from './client';
+export type {
+  RozeniteDevToolsClient,
+  RozeniteDevToolsRequestClient,
+  RozeniteDevToolsRequestOptions,
+} from './client';
 export type { Subscription } from './types';
 export type { UseRozeniteDevToolsClientOptions } from './useRozeniteDevToolsClient';
 export { getRozeniteDevToolsClient } from './client';
+export {
+  RozeniteDevToolsRequestAbortedError,
+  RozeniteDevToolsRequestClientClosedError,
+  RozeniteDevToolsRequestResponseError,
+  RozeniteDevToolsRequestTimeoutError,
+} from './client';
 export { UnsupportedPlatformError, MissingRozeniteForWebError } from './errors';
 export { createRozeniteRpc } from './rpc/index.js';
 export {

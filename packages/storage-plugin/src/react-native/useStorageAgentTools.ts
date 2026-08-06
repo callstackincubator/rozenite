@@ -1,13 +1,15 @@
-import { useCallback } from 'react';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import {
   STORAGE_AGENT_PLUGIN_ID,
   storageToolDefinitions,
+  type StorageListEntriesArgs,
 } from '../shared/agent-tools';
 import type {
   StorageEntry,
   StorageEntryType,
   StorageEntryValue,
+  StorageTarget,
 } from '../shared/types';
 import type { StorageView } from './storage-view';
 
@@ -46,110 +48,225 @@ const parseValueForType = (
 const formatViewRef = (view: StorageView) =>
   `${view.target.adapterId}/${view.target.storageId}`;
 
-export const useStorageAgentTools = (views: StorageView[]) => {
-  const resolveStorage = useCallback(
-    (adapterId?: string, storageId?: string) => {
-      if (views.length === 0) {
-        throw new Error('No storages are registered.');
-      }
+const isSameTarget = (left: StorageTarget, right: StorageTarget) =>
+  left.adapterId === right.adapterId && left.storageId === right.storageId;
 
-      if (adapterId !== undefined || storageId !== undefined) {
-        const selected = views.find(
-          (view) =>
-            (adapterId === undefined || view.target.adapterId === adapterId) &&
-            (storageId === undefined || view.target.storageId === storageId),
-        );
+type ListEntriesCursor = {
+  version: 1;
+  target: StorageTarget;
+  offset: number;
+};
 
-        if (!selected) {
-          const qualifier = [
-            adapterId && `adapterId="${adapterId}"`,
-            storageId && `storageId="${storageId}"`,
-          ]
-            .filter(Boolean)
-            .join(', ');
-          throw new Error(
-            `No storage matched ${qualifier}. Available: ${views.map(formatViewRef).join(', ')}`,
-          );
-        }
+const encodeCursor = (cursor: ListEntriesCursor) =>
+  btoa(encodeURIComponent(JSON.stringify(cursor)));
 
-        return selected;
-      }
+const decodeCursor = (value: string): ListEntriesCursor => {
+  try {
+    const cursor: unknown = JSON.parse(decodeURIComponent(atob(value)));
+    if (
+      typeof cursor !== 'object' ||
+      cursor == null ||
+      Array.isArray(cursor) ||
+      (cursor as { version?: unknown }).version !== 1 ||
+      typeof (cursor as { target?: { adapterId?: unknown } }).target
+        ?.adapterId !== 'string' ||
+      typeof (cursor as { target?: { storageId?: unknown } }).target
+        ?.storageId !== 'string' ||
+      !Number.isSafeInteger((cursor as { offset?: unknown }).offset) ||
+      (cursor as { offset: number }).offset < 0
+    ) {
+      throw new Error('Invalid cursor');
+    }
 
-      if (views.length > 1) {
-        throw new Error(
-          `Multiple storages detected. Provide adapterId and/or storageId. Available: ${views.map(formatViewRef).join(', ')}`,
-        );
-      }
+    return cursor as ListEntriesCursor;
+  } catch {
+    throw new Error(
+      'Invalid cursor. Run list-entries again without a cursor to restart pagination.',
+    );
+  }
+};
 
-      return views[0];
+const sanitizeLimit = (limit: number | undefined) => {
+  if (
+    typeof limit !== 'number' ||
+    !Number.isFinite(limit) ||
+    !Number.isInteger(limit) ||
+    limit < 1
+  ) {
+    return DEFAULT_PAGE_LIMIT;
+  }
+
+  return Math.min(limit, MAX_PAGE_LIMIT);
+};
+
+const sanitizeOffset = (offset: number | undefined) => {
+  if (
+    typeof offset !== 'number' ||
+    !Number.isFinite(offset) ||
+    !Number.isSafeInteger(offset) ||
+    offset < 0
+  ) {
+    return 0;
+  }
+
+  return offset;
+};
+
+const resolveStorage = (
+  views: readonly StorageView[],
+  adapterId?: string,
+  storageId?: string,
+) => {
+  if (views.length === 0) {
+    throw new Error('No storages are registered.');
+  }
+
+  if (adapterId !== undefined || storageId !== undefined) {
+    const matches = views.filter(
+      (view) =>
+        (adapterId === undefined || view.target.adapterId === adapterId) &&
+        (storageId === undefined || view.target.storageId === storageId),
+    );
+    const qualifier = [
+      adapterId !== undefined && `adapterId="${adapterId}"`,
+      storageId !== undefined && `storageId="${storageId}"`,
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+    if (matches.length === 0) {
+      throw new Error(
+        `No storage matched ${qualifier}. Available: ${views.map(formatViewRef).join(', ')}`,
+      );
+    }
+
+    if (matches.length > 1) {
+      throw new Error(
+        `Multiple storages matched ${qualifier}. Provide both adapterId and storageId. Available: ${matches.map(formatViewRef).join(', ')}`,
+      );
+    }
+
+    return matches[0]!;
+  }
+
+  if (views.length > 1) {
+    throw new Error(
+      `Multiple storages detected. Provide adapterId and/or storageId. Available: ${views.map(formatViewRef).join(', ')}`,
+    );
+  }
+
+  return views[0]!;
+};
+
+const listStorageKeys = async (
+  view: StorageView,
+  input: StorageListEntriesArgs,
+) => {
+  const limit = sanitizeLimit(input.limit);
+  if (input.cursor !== undefined && input.offset !== undefined) {
+    throw new Error('Provide either cursor or offset, not both.');
+  }
+  const cursor =
+    input.cursor === undefined ? undefined : decodeCursor(input.cursor);
+  if (cursor && !isSameTarget(cursor.target, view.target)) {
+    throw new Error(
+      'Cursor does not match the requested storage. Run list-entries again without a cursor to restart pagination.',
+    );
+  }
+
+  const allKeys = await view.getAllKeys();
+  const offset = cursor?.offset ?? sanitizeOffset(input.offset);
+  const end = Math.min(offset + limit, allKeys.length);
+
+  return {
+    adapterId: view.target.adapterId,
+    storageId: view.target.storageId,
+    total: allKeys.length,
+    items: allKeys.slice(offset, end).map((key) => ({ key })),
+    page: {
+      limit,
+      hasMore: end < allKeys.length,
+      ...(end < allKeys.length
+        ? {
+            nextCursor: encodeCursor({
+              version: 1,
+              target: view.target,
+              offset: end,
+            }),
+          }
+        : {}),
     },
-    [views],
-  );
+  };
+};
+
+export const createStorageAgentHandlers = (views: readonly StorageView[]) => ({
+  listStorages: async () => ({
+    storages: views.map((view) => ({
+      adapterId: view.target.adapterId,
+      storageId: view.target.storageId,
+      adapterName: view.adapterName,
+      storageName: view.storageName,
+      supportedTypes: view.capabilities.supportedTypes,
+    })),
+  }),
+
+  listEntries: async (input: StorageListEntriesArgs) => {
+    const view = resolveStorage(views, input.adapterId, input.storageId);
+    return listStorageKeys(view, input);
+  },
+
+  readEntry: async ({
+    adapterId,
+    storageId,
+    key,
+  }: {
+    adapterId?: string;
+    storageId?: string;
+    key: string;
+  }) => {
+    const view = resolveStorage(views, adapterId, storageId);
+    const entry = await view.get(key);
+
+    if (!entry) {
+      throw new Error(
+        `Key "${key}" not found in storage "${formatViewRef(view)}".`,
+      );
+    }
+
+    return {
+      adapterId: view.target.adapterId,
+      storageId: view.target.storageId,
+      entry,
+    };
+  },
+});
+
+export const useStorageAgentTools = (views: StorageView[]) => {
+  const handlers = createStorageAgentHandlers(views);
 
   useRozenitePluginAgentTool({
     pluginId: STORAGE_AGENT_PLUGIN_ID,
     tool: storageToolDefinitions.listStorages,
-    handler: async () => ({
-      storages: await Promise.all(
-        views.map(async (view) => ({
-          adapterId: view.target.adapterId,
-          storageId: view.target.storageId,
-          adapterName: view.adapterName,
-          storageName: view.storageName,
-          supportedTypes: view.capabilities.supportedTypes,
-          entryCount: (await view.getAllKeys()).length,
-        })),
-      ),
-    }),
+    handler: handlers.listStorages,
   });
 
   useRozenitePluginAgentTool({
     pluginId: STORAGE_AGENT_PLUGIN_ID,
     tool: storageToolDefinitions.listEntries,
-    handler: async ({ adapterId, storageId, offset = 0, limit = 100 }) => {
-      const view = resolveStorage(adapterId, storageId);
-      const allKeys = await view.getAllKeys();
-      const safeOffset = Math.max(0, Math.floor(offset));
-      const safeLimit = Math.max(1, Math.floor(limit));
-      const keys = allKeys.slice(safeOffset, safeOffset + safeLimit);
-
-      return {
-        adapterId: view.target.adapterId,
-        storageId: view.target.storageId,
-        total: allKeys.length,
-        offset: safeOffset,
-        limit: safeLimit,
-        keys,
-      };
-    },
+    handler: handlers.listEntries,
   });
 
   useRozenitePluginAgentTool({
     pluginId: STORAGE_AGENT_PLUGIN_ID,
     tool: storageToolDefinitions.readEntry,
-    handler: async ({ adapterId, storageId, key }) => {
-      const view = resolveStorage(adapterId, storageId);
-      const entry = await view.get(key);
-
-      if (!entry) {
-        throw new Error(
-          `Key "${key}" not found in storage "${formatViewRef(view)}".`,
-        );
-      }
-
-      return {
-        adapterId: view.target.adapterId,
-        storageId: view.target.storageId,
-        entry,
-      };
-    },
+    handler: handlers.readEntry,
   });
 
   useRozenitePluginAgentTool({
     pluginId: STORAGE_AGENT_PLUGIN_ID,
     tool: storageToolDefinitions.createEntry,
     handler: async ({ adapterId, storageId, key, type, value }) => {
-      const view = resolveStorage(adapterId, storageId);
+      const view = resolveStorage(views, adapterId, storageId);
       const existing = await view.get(key);
 
       if (existing) {
@@ -174,7 +291,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
     pluginId: STORAGE_AGENT_PLUGIN_ID,
     tool: storageToolDefinitions.editEntry,
     handler: async ({ adapterId, storageId, key, type, value }) => {
-      const view = resolveStorage(adapterId, storageId);
+      const view = resolveStorage(views, adapterId, storageId);
       const existing = await view.get(key);
 
       if (!existing) {
@@ -199,7 +316,7 @@ export const useStorageAgentTools = (views: StorageView[]) => {
     pluginId: STORAGE_AGENT_PLUGIN_ID,
     tool: storageToolDefinitions.removeEntry,
     handler: async ({ adapterId, storageId, key }) => {
-      const view = resolveStorage(adapterId, storageId);
+      const view = resolveStorage(views, adapterId, storageId);
       const existed = !!(await view.get(key));
       await view.delete(key);
 

@@ -20,8 +20,6 @@ const COLLAPSED_SIDEBAR_WIDTH = 48;
 const EXPANDED_SIDEBAR_WIDTH = 224;
 const SIDEBAR_SNAP_POINT =
   (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 2;
-const UPDATE_NOTICE_PREVIEW_MS = 60_000;
-
 export function Shell({
   plugins,
   destroyOnDetachPlugins,
@@ -31,18 +29,8 @@ export function Shell({
     getInitialSelection(plugins),
   );
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [showUpdateNoticePreview, setShowUpdateNoticePreview] = useState(true);
   const contentFrames = useRef(new Map<string, HTMLIFrameElement>());
   const sidebarPanel = useRef<SplitPaneHandle>(null);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(
-      () => setShowUpdateNoticePreview(false),
-      UPDATE_NOTICE_PREVIEW_MS,
-    );
-
-    return () => window.clearTimeout(timeout);
-  }, []);
 
   useEffect(() => {
     setSelection((current) => {
@@ -209,7 +197,6 @@ export function Shell({
                 {!isSidebarCollapsed && (
                   <NewVersionFooter
                     currentVersion={runtimeVersion}
-                    forceDisplay={showUpdateNoticePreview}
                   />
                 )}
                 <Button

@@ -1,5 +1,6 @@
 import {
   defineAgentToolContract,
+  definePaginatedAgentToolContract,
   type AgentToolContract,
 } from '@rozenite/agent-shared';
 
@@ -36,7 +37,6 @@ export type StorageListStoragesItem = {
   storageId: string;
   adapterName: string;
   storageName: string;
-  entryCount: number;
   supportedTypes: StorageEntryType[];
 };
 
@@ -45,17 +45,22 @@ export type StorageListStoragesResult = {
 };
 
 export type StorageListEntriesArgs = StorageSelection & {
-  offset?: number;
   limit?: number;
+  cursor?: string;
+  /** @deprecated Use the opaque cursor returned by a previous page. */
+  offset?: number;
 };
 
 export type StorageListEntriesResult = {
   adapterId: string;
   storageId: string;
   total: number;
-  offset: number;
-  limit: number;
-  keys: string[];
+  items: Array<{ key: string }>;
+  page: {
+    limit: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  };
 };
 
 export type StorageReadEntryArgs = StorageSelection & {
@@ -106,10 +111,10 @@ export const storageToolDefinitions = {
   >({
     name: 'list-storages',
     description:
-      'List all storage adapters and their storage nodes currently available on the device, including supported entry types and entry counts.',
+      'List all storage adapters and their storage nodes currently available on the device, including supported entry types. Entry counts are omitted to avoid enumerating every storage.',
     inputSchema: { type: 'object', properties: {} },
   }),
-  listEntries: defineAgentToolContract<
+  listEntries: definePaginatedAgentToolContract<
     StorageListEntriesArgs,
     StorageListEntriesResult
   >({
@@ -120,15 +125,26 @@ export const storageToolDefinitions = {
       type: 'object',
       properties: {
         ...sharedStorageProperties,
-        offset: {
-          type: 'number',
-          description: 'Pagination offset. Defaults to 0.',
-        },
         limit: {
           type: 'number',
-          description: 'Pagination size. Defaults to 100.',
+          description: 'Pagination size. Defaults to 20 and is capped at 100.',
+        },
+        cursor: {
+          type: 'string',
+          description:
+            'Opaque pagination cursor from a previous list-entries call.',
+        },
+        offset: {
+          type: 'number',
+          description:
+            'Deprecated initial pagination offset. Must be a non-negative integer and cannot be combined with cursor.',
         },
       },
+    },
+    pagination: {
+      kind: 'cursor',
+      fields: ['key'],
+      defaultFields: ['key'],
     },
   }),
   readEntry: defineAgentToolContract<

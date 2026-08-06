@@ -32,6 +32,7 @@
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.40.0",
     "@rozenite/vite-plugin": "workspace:*",
+    "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-table": "^8.21.3",
     "@types/react": "catalog:",
     "lucide-react": "^0.263.1",
@@ -43,6 +44,7 @@
     "react-native-mmkv-v4": "npm:react-native-mmkv@^4.0.0",
     "react-native-nitro-modules": "*",
     "react-native-web": "^0.21.2",
+    "react-virtuoso": "^4.14.1",
     "rozenite": "workspace:*",
     "typescript": "~5.9.3",
     "vite": "catalog:"

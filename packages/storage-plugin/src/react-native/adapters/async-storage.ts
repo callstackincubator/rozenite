@@ -5,6 +5,7 @@ export type AsyncStorageLike = {
   getItem: (key: string) => Promise<string | null>;
   setItem: (key: string, value: string) => Promise<void>;
   removeItem: (key: string) => Promise<void>;
+  clear: () => Promise<void>;
 };
 
 export type AsyncStorageInstanceConfig = {
@@ -77,6 +78,7 @@ const toStorageNode = (
         await storage.setItem(entry.key, entry.value);
       },
       delete: (key) => storage.removeItem(key),
+      clear: () => storage.clear(),
     },
   };
 };

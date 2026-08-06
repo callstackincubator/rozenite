@@ -2,8 +2,8 @@ import { Badge, Button, Dialog, JsonInspector } from '@rozenite/ui';
 import { useMemo } from 'react';
 import { Edit3, Info } from 'lucide-react';
 import type { StorageEntry } from '../shared/types';
-import { bytesToHexdump } from './binary';
 import { formatValue } from './format-value';
+import { HexdumpValueViewer, TextValueViewer } from './large-value-viewer';
 
 export type EntryDetailDialogProps = {
   open: boolean;
@@ -11,6 +11,8 @@ export type EntryDetailDialogProps = {
   onEdit?: (entry: StorageEntry) => void;
   entry: StorageEntry | null;
 };
+
+const MAX_AUTO_JSON_INSPECTION_LENGTH = 50_000;
 
 export const jsonSafeParse = (
   value: string,
@@ -40,10 +42,13 @@ export const EntryDetailDialog = ({
 }: EntryDetailDialogProps) => {
   const isStringValue = entry?.type === 'string';
   const stringValue = isStringValue ? entry.value : '';
-  const jsonValue = useMemo(
-    () => (isStringValue ? jsonSafeParse(stringValue) : null),
-    [isStringValue, stringValue],
-  );
+  const jsonValue = useMemo(() => {
+    if (!isStringValue || stringValue.length > MAX_AUTO_JSON_INSPECTION_LENGTH) {
+      return null;
+    }
+
+    return jsonSafeParse(stringValue);
+  }, [isStringValue, stringValue]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,10 +91,10 @@ export const EntryDetailDialog = ({
                       {entry.value.length}{' '}
                       {entry.value.length === 1 ? 'byte' : 'bytes'}
                     </div>
-                    <pre className="overflow-auto whitespace-pre font-mono text-xs leading-snug text-foreground">
-                      {bytesToHexdump(entry.value)}
-                    </pre>
+                    <HexdumpValueViewer bytes={entry.value} />
                   </div>
+                ) : entry.type === 'string' ? (
+                  <TextValueViewer value={entry.value} />
                 ) : (
                   <div className="text-sm">{formatValue(entry)}</div>
                 )}

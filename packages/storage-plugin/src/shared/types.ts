@@ -7,8 +7,25 @@ export type StorageEntry =
 export type StorageEntryType = StorageEntry['type'];
 export type StorageEntryValue = StorageEntry['value'];
 
+export type StorageEntryPreview = {
+  key: string;
+  type: StorageEntryType;
+  preview: string;
+  valueSize: number;
+  isTruncated: boolean;
+};
+
 export type StorageCapabilities = {
   supportedTypes: StorageEntryType[];
+};
+
+export type StorageDescriptor = {
+  target: StorageTarget;
+  adapterName: string;
+  storageName: string;
+  entryCount: number;
+  capabilities: StorageCapabilities;
+  supportsSubscriptions: boolean;
 };
 
 export type StorageSubscription = { remove: () => void };
@@ -19,6 +36,7 @@ export type SyncStorage = {
   get: (key: string) => StorageEntry | undefined;
   set: (entry: StorageEntry) => void;
   delete: (key: string) => void;
+  clear: () => void;
   subscribe?: (callback: (key: string) => void) => StorageSubscription;
 };
 
@@ -28,6 +46,7 @@ export type AsyncStorage = {
   get: (key: string) => Promise<StorageEntry | undefined>;
   set: (entry: StorageEntry) => Promise<void>;
   delete: (key: string) => Promise<void>;
+  clear: () => Promise<void>;
   subscribe?: (callback: (key: string) => void) => StorageSubscription;
 };
 

@@ -17,6 +17,7 @@ type MMKVAdapter = {
   getBuffer: (key: string) => ArrayBuffer | undefined;
   delete: (key: string) => void;
   getAllKeys: () => string[];
+  clear: () => void;
   addOnValueChangedListener: (callback: (key: string) => void) => {
     remove: () => void;
   };
@@ -52,6 +53,7 @@ const normalizeStorages = (storages: MMKV[] | Record<string, MMKV>) => {
 };
 
 const getMMKVAdapter = (mmkv: MMKV): MMKVAdapter => {
+  const clear = () => mmkv.clearAll();
   if (isMMKVV4(mmkv)) {
     return {
       set: (key, value) => mmkv.set(key, value),
@@ -61,6 +63,7 @@ const getMMKVAdapter = (mmkv: MMKV): MMKVAdapter => {
       getBuffer: (key) => mmkv.getBuffer(key),
       delete: (key) => mmkv.remove(key),
       getAllKeys: () => mmkv.getAllKeys(),
+      clear,
       addOnValueChangedListener: (callback) =>
         mmkv.addOnValueChangedListener(callback),
     };
@@ -74,6 +77,7 @@ const getMMKVAdapter = (mmkv: MMKV): MMKVAdapter => {
     getBuffer: (key) => mmkv.getBuffer(key) as ArrayBuffer | undefined,
     delete: (key) => mmkv.delete(key),
     getAllKeys: () => mmkv.getAllKeys(),
+    clear,
     addOnValueChangedListener: (callback) =>
       mmkv.addOnValueChangedListener(callback),
   };
@@ -199,6 +203,7 @@ export const createMMKVStorageAdapter = ({
           get: (key) => getEntry(mmkv, key),
           set: (entry) => setEntry(mmkv, entry),
           delete: (key) => mmkv.delete(key),
+          clear: mmkv.clear,
           subscribe: (callback) => mmkv.addOnValueChangedListener(callback),
         },
       };

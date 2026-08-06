@@ -1399,6 +1399,9 @@ importers:
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
+      '@tanstack/react-query':
+        specifier: ^5.0.0
+        version: 5.83.0(react@19.2.3)
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1432,6 +1435,9 @@ importers:
       react-native-web:
         specifier: ^0.21.2
         version: 0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-virtuoso:
+        specifier: ^4.14.1
+        version: 4.18.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       rozenite:
         specifier: workspace:*
         version: link:../cli
@@ -1523,6 +1529,9 @@ importers:
       react-resizable-panels:
         specifier: ^4.12.2
         version: 4.12.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-virtuoso:
+        specifier: ^4.14.1
+        version: 4.18.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.4.0
