@@ -1529,6 +1529,9 @@ importers:
       react-resizable-panels:
         specifier: ^4.12.2
         version: 4.12.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-virtuoso:
+        specifier: ^4.14.1
+        version: 4.18.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.4.0
@@ -19838,9 +19841,7 @@ snapshots:
       metro-config: 0.84.4
       metro-runtime: 0.84.4
     transitivePeerDependencies:
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

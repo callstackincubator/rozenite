@@ -59,10 +59,17 @@ vi.mock('@rozenite/ui', async () => {
     Item: ({
       children,
       onClick,
+      trailing,
     }: {
       children?: ReactNode;
       onClick: () => void;
-    }) => <button onClick={onClick}>{children}</button>,
+      trailing?: ReactNode;
+    }) => (
+      <button onClick={onClick}>
+        {children}
+        {trailing}
+      </button>
+    ),
   });
   const Toolbar = Object.assign(PassThrough, {
     Group: PassThrough,
@@ -235,6 +242,7 @@ describe('StoragePanel preview query cutover', () => {
   it('loads bounded preview pages and guards duplicate edge fetches', async () => {
     const { root, container } = await renderPanel();
     await discover();
+    expect(container.textContent).toContain('1');
     await act(async () => {
       await vi.waitFor(() =>
         expect(mocks.client.request).toHaveBeenCalledTimes(1),

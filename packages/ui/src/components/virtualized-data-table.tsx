@@ -21,6 +21,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
+import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 
 export type VirtualizedDataTableProps<TData> = {
   ariaLabel: string;
@@ -111,7 +112,7 @@ const VirtualizedTableRow = ({
       aria-label={
         context.getRowTextValue?.(row.original, row.index) ?? String(row.id)
       }
-      className={`transition-colors hover:bg-surface-secondary/70 ${
+      className={`border-b border-border last:border-0 transition-colors hover:bg-accent/50 ${
         isActionable ? 'cursor-pointer' : ''
       }`}
       onClick={isActionable ? activateRow : undefined}
@@ -167,8 +168,8 @@ export const VirtualizedDataTable = <TData,>({
   loading = false,
   emptyMessage = 'No data available',
   renderEmptyState,
-  className = 'min-w-full border-separate border-spacing-0 bg-surface',
-  scrollClassName = 'h-full w-full overflow-auto border border-border/70 shadow-sm',
+  className = 'w-full border-collapse text-sm',
+  scrollClassName = 'h-full w-full overflow-auto',
   style = { height: 400 },
 }: VirtualizedDataTableProps<TData>) => {
   const [uncontrolledSorting, setUncontrolledSorting] = useState<SortingState>(
@@ -226,7 +227,7 @@ export const VirtualizedDataTable = <TData,>({
   const itemContent = useCallback(
     (_index: number, row: Row<TData>) =>
       row.getVisibleCells().map((cell) => (
-        <td key={cell.id}>
+        <td key={cell.id} className="px-3 py-1.5 text-foreground">
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>
       )),
@@ -235,7 +236,7 @@ export const VirtualizedDataTable = <TData,>({
   const fixedHeaderContent = useCallback(
     () =>
       table.getHeaderGroups().map((headerGroup) => (
-        <tr key={headerGroup.id}>
+        <tr key={headerGroup.id} className="border-b border-border">
           {headerGroup.headers.map((header) => {
             const canSort = header.column.getCanSort();
             const sortDirection = header.column.getIsSorted();
@@ -251,11 +252,12 @@ export const VirtualizedDataTable = <TData,>({
                       : 'none'
                 }
                 colSpan={header.colSpan}
+                className="h-8 px-3 text-left text-xs font-medium text-muted-foreground"
                 scope="col"
               >
                 {header.isPlaceholder ? null : canSort ? (
                   <button
-                    className="flex w-full items-center justify-between gap-2"
+                    className="inline-flex items-center gap-1 hover:text-foreground"
                     onClick={header.column.getToggleSortingHandler()}
                     type="button"
                   >
@@ -264,11 +266,7 @@ export const VirtualizedDataTable = <TData,>({
                       header.getContext(),
                     )}
                     <span aria-hidden="true">
-                      {sortDirection === 'asc'
-                        ? '↑'
-                        : sortDirection === 'desc'
-                          ? '↓'
-                          : ''}
+                      <SortIcon direction={sortDirection} />
                     </span>
                   </button>
                 ) : (
@@ -309,3 +307,15 @@ export const VirtualizedDataTable = <TData,>({
     />
   );
 };
+
+function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
+  if (direction === 'asc') {
+    return <ChevronUp className="h-3 w-3" />;
+  }
+
+  if (direction === 'desc') {
+    return <ChevronDown className="h-3 w-3" />;
+  }
+
+  return <ChevronsUpDown className="h-3 w-3 text-muted-foreground/60" />;
+}
