@@ -18,7 +18,8 @@
     "release:run": "node scripts/release/release.mjs",
     "start:playground": "pnpm --filter @rozenite/playground start",
     "start:playground:android": "pnpm --filter @rozenite/playground android",
-    "start:playground:ios": "pnpm --filter @rozenite/playground ios"
+    "start:playground:ios": "pnpm --filter @rozenite/playground ios",
+    "start:ui-storybook": "pnpm --filter ui-storybook storybook"
   },
   "private": true,
   "devDependencies": {
