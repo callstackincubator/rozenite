@@ -3,6 +3,22 @@
   "version": "2.0.0",
   "description": "Unified Rozenite panel shell for React Native DevTools.",
   "type": "module",
+  "keywords": [
+    "react-native",
+    "devtools",
+    "shell",
+    "plugin"
+  ],
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "license": "MIT",
   "files": [
     "dist"
   ],
