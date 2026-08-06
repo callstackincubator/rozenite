@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DataTable } from '@rozenite/ui';
+import { DataTable } from '../../../../packages/ui/src/data-table/data-table';
 type Row = { name: string; status: string };
 const columns = [
   { accessorKey: 'name', header: 'Name' },
@@ -16,6 +16,9 @@ const meta = {
 } satisfies Meta<typeof DataTable>;
 export default meta;
 type Story = StoryObj;
+/** Use for sortable tabular data when the full dataset fits in the rendered table.
+ * @summary Display sortable tabular data.
+ */
 export const Default: Story = {
   render: () => <DataTable<Row> columns={columns} data={data} />,
 };

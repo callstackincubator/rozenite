@@ -153,6 +153,7 @@ const virtualizedTableComponents: TableComponents<
   TableRow: VirtualizedTableRow,
 };
 
+/** A virtualized sortable table for large datasets and incremental loading. */
 export const VirtualizedDataTable = <TData,>({
   ariaLabel,
   data,

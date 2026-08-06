@@ -37,6 +37,7 @@ export const buttonVariants = cva(
 export type ButtonProps = ComponentProps<'button'> &
   VariantProps<typeof buttonVariants>;
 
+/** A styled button for actions that change state or submit work. */
 export function Button({
   className,
   variant,

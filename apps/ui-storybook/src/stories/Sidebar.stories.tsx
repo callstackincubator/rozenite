@@ -1,10 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Badge, Sidebar } from '@rozenite/ui';
+import { Badge } from '@rozenite/ui';
+import { Sidebar } from '../../../../packages/ui/src/sidebar/sidebar';
 const meta = { component: Sidebar, title: 'Components/Sidebar' } satisfies Meta<
   typeof Sidebar
 >;
 export default meta;
 type Story = StoryObj<typeof meta>;
+/** Use for persistent panel navigation with grouped items.
+ * @summary Navigate grouped panel sections.
+ */
 export const Default: Story = {
   render: () => (
     <div className="h-72">

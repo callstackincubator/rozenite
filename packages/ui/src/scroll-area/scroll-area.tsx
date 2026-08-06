@@ -55,4 +55,5 @@ function ScrollAreaBar({
   );
 }
 
+/** A scrollable viewport with styled vertical and horizontal scrollbars. */
 export const ScrollArea = ScrollAreaRoot;

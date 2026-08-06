@@ -1,10 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Split } from '@rozenite/ui';
+import { Split } from '../../../../packages/ui/src/split/split';
 const meta = { component: Split, title: 'Components/Split' } satisfies Meta<
   typeof Split
 >;
 export default meta;
 type Story = StoryObj<typeof meta>;
+/** Use when related panel content needs resizable panes.
+ * @summary Resize related content panes.
+ */
 export const Horizontal: Story = {
   render: () => (
     <div className="h-64 w-[40rem] border border-border">

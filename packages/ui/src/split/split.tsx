@@ -155,6 +155,7 @@ function SplitHandle({
   );
 }
 
+/** A resizable layout group made of panes separated by draggable handles. */
 export const Split = Object.assign(SplitRoot, {
   Pane: SplitPane,
   Handle: SplitHandle,

@@ -107,6 +107,7 @@ function SelectItem({ className, children, ...props }: SelectItemProps) {
   );
 }
 
+/** A single- or multi-value select menu for choosing from known options. */
 export const Select = Object.assign(SelectRoot, {
   Trigger: SelectTrigger,
   Value: SelectValue,

@@ -15,6 +15,7 @@ export type DataTableEditableCellProps = Omit<
  * until clicked, then swaps to an input; commits on Enter or blur, discards
  * on Escape.
  */
+/** A click-to-edit text cell that commits changes on Enter or blur. */
 export function DataTableEditableCell({
   value,
   onCommit,

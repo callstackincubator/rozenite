@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { PluginHeader, PluginShell } from '@rozenite/ui';
+import { PluginHeader } from '@rozenite/ui';
+import { PluginShell } from '../../../../packages/ui/src/plugin-shell/plugin-shell';
 const meta = {
   component: PluginShell,
   title: 'Components/PluginShell',
@@ -7,6 +8,9 @@ const meta = {
 } satisfies Meta<typeof PluginShell>;
 export default meta;
 type Story = StoryObj<typeof meta>;
+/** Use as the themed root for a plugin panel and its portal-based surfaces.
+ * @summary Render a themed plugin panel shell.
+ */
 export const WithHeader: Story = {
   render: () => (
     <PluginShell className="h-96 w-[40rem]">

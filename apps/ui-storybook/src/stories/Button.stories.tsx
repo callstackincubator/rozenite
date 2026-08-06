@@ -1,13 +1,33 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Button } from '@rozenite/ui';
+import { Button } from '../../../../packages/ui/src/button/button';
 
-const meta = { component: Button, title: 'Components/Button' } satisfies Meta<
-  typeof Button
->;
+const meta = {
+  component: Button,
+  title: 'Components/Button',
+  parameters: {
+    docs: {
+      description: {
+        component: 'Use Button for actions that change state or submit work.',
+      },
+    },
+  },
+} satisfies Meta<typeof Button>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/**
+ * Compare the available visual variants when choosing an action emphasis.
+ * @summary Compare button action emphasis variants.
+ */
 export const AllVariants: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Compare the available visual variants when choosing an action emphasis.',
+      },
+    },
+  },
   render: () => (
     <div className="flex flex-wrap gap-2">
       <Button>Default</Button>

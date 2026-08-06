@@ -1,11 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Button, ConfirmDialog } from '@rozenite/ui';
+import { Button } from '@rozenite/ui';
+import { ConfirmDialog } from '../../../../packages/ui/src/confirm-dialog/confirm-dialog';
 const meta = {
   component: ConfirmDialog,
   title: 'Components/ConfirmDialog',
 } satisfies Meta<typeof ConfirmDialog>;
 export default meta;
 type Story = StoryObj<typeof meta>;
+/** Use before destructive actions when the user must explicitly confirm.
+ * @summary Confirm a destructive action.
+ */
 export const Open: Story = {
   args: { open: true, onOpenChange: () => undefined, title: 'Delete project?' },
   render: (args) => (

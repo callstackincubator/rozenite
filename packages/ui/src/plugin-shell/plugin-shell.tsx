@@ -80,6 +80,7 @@ function PluginShellBody({ className, ...props }: PluginShellBodyProps) {
   );
 }
 
+/** The themed layout root that provides design tokens and portal context. */
 export const PluginShell = Object.assign(PluginShellRoot, {
   Body: PluginShellBody,
 });

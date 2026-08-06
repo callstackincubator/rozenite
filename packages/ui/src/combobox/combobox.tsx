@@ -117,6 +117,7 @@ function ComboboxItem({ className, children, ...props }: ComboboxItemProps) {
   );
 }
 
+/** A searchable input for selecting one or more values from a list. */
 export const Combobox = Object.assign(ComboboxRoot, {
   Input: ComboboxInput,
   Content: ComboboxContent,

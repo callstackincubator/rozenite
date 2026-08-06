@@ -7,6 +7,7 @@ export type SearchFieldProps = Omit<ComponentProps<'input'>, 'type'> & {
   onClear?: () => void;
 };
 
+/** A search input with a leading search icon and clear affordance. */
 export function SearchField({
   className,
   value,

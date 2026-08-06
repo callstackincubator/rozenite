@@ -1,11 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Button, PluginHeader, PluginShell } from '@rozenite/ui';
+import { Button, PluginShell } from '@rozenite/ui';
+import { PluginHeader } from '../../../../packages/ui/src/plugin-header/plugin-header';
 const meta = {
   component: PluginHeader,
   title: 'Components/PluginHeader',
 } satisfies Meta<typeof PluginHeader>;
 export default meta;
 type Story = StoryObj<typeof meta>;
+/** Use as the top-level heading for a themed plugin panel.
+ * @summary Show a plugin panel heading.
+ */
 export const Default: Story = {
   render: () => (
     <PluginShell className="w-[40rem]">

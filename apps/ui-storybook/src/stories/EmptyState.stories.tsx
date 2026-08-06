@@ -1,11 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Button, EmptyState } from '@rozenite/ui';
+import { Button } from '@rozenite/ui';
+import { EmptyState } from '../../../../packages/ui/src/empty-state/empty-state';
 const meta = {
   component: EmptyState,
   title: 'Components/EmptyState',
 } satisfies Meta<typeof EmptyState>;
 export default meta;
 type Story = StoryObj<typeof meta>;
+/** Use when a view has no results and needs to guide the next action.
+ * @summary Guide the next action from an empty view.
+ */
 export const Default: Story = {
   args: { title: 'No results found' },
   render: (args) => (

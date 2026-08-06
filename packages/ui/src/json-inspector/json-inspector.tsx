@@ -16,6 +16,7 @@ export type JsonInspectorProps = {
   defaultExpandedDepth?: number;
 };
 
+/** A collapsible tree for inspecting structured JSON-like values. */
 export function JsonInspector({
   data,
   className,

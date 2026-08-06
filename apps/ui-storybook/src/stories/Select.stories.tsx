@@ -1,10 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Select } from '@rozenite/ui';
+import { Select } from '../../../../packages/ui/src/select/select';
 const meta = { component: Select, title: 'Components/Select' } satisfies Meta<
   typeof Select
 >;
 export default meta;
 type Story = StoryObj<typeof meta>;
+/** Use when the available options are known and should be chosen from a menu.
+ * @summary Choose from known options.
+ */
 export const Default: Story = {
   render: () => (
     <Select defaultValue="light">

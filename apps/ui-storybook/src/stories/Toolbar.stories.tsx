@@ -1,10 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Toolbar } from '@rozenite/ui';
+import { Toolbar } from '../../../../packages/ui/src/toolbar/toolbar';
 const meta = { component: Toolbar, title: 'Components/Toolbar' } satisfies Meta<
   typeof Toolbar
 >;
 export default meta;
 type Story = StoryObj<typeof meta>;
+/** Use for a compact group of related actions.
+ * @summary Group related actions.
+ */
 export const Default: Story = {
   render: () => (
     <Toolbar>
