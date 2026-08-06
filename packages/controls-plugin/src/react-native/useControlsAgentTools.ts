@@ -1,22 +1,13 @@
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
-import {
-  CONTROLS_AGENT_PLUGIN_ID,
-  controlsToolDefinitions,
-} from '../shared/agent-tools';
+import { CONTROLS_AGENT_PLUGIN_ID, controlsToolDefinitions } from '../shared/agent-tools';
 import type { ControlsSection } from '../shared/types';
 
-const resolveItem = (
-  sections: ControlsSection[],
-  sectionId: string,
-  itemId: string,
-) => {
+const resolveItem = (sections: ControlsSection[], sectionId: string, itemId: string) => {
   const section = sections.find((s) => s.id === sectionId);
 
   if (!section) {
     const available = sections.map((s) => s.id).join(', ');
-    throw new Error(
-      `Section "${sectionId}" not found. Available: ${available || '(none)'}`,
-    );
+    throw new Error(`Section "${sectionId}" not found. Available: ${available || '(none)'}`);
   }
 
   const item = section.items.find((i) => i.id === itemId);
@@ -31,10 +22,7 @@ const resolveItem = (
   return { section, item };
 };
 
-export const useControlsAgentTools = (
-  getSections: () => ControlsSection[],
-  enabled = true,
-) => {
+export const useControlsAgentTools = (getSections: () => ControlsSection[], enabled = true) => {
   useRozenitePluginAgentTool({
     pluginId: CONTROLS_AGENT_PLUGIN_ID,
     tool: controlsToolDefinitions.listSections,
@@ -141,15 +129,11 @@ export const useControlsAgentTools = (
       const { item } = resolveItem(getSections(), sectionId, itemId);
 
       if (item.type === 'text') {
-        throw new Error(
-          `Item "${itemId}" is a read-only text item and cannot be updated.`,
-        );
+        throw new Error(`Item "${itemId}" is a read-only text item and cannot be updated.`);
       }
 
       if (item.type === 'button') {
-        throw new Error(
-          `Item "${itemId}" is a button. Use press-button to trigger its action.`,
-        );
+        throw new Error(`Item "${itemId}" is a button. Use press-button to trigger its action.`);
       }
 
       if (item.disabled) {
@@ -158,9 +142,7 @@ export const useControlsAgentTools = (
 
       if (item.type === 'toggle') {
         if (typeof value !== 'boolean') {
-          throw new Error(
-            `Expected boolean value for toggle item "${itemId}".`,
-          );
+          throw new Error(`Expected boolean value for toggle item "${itemId}".`);
         }
 
         if (item.validate) {
@@ -175,9 +157,7 @@ export const useControlsAgentTools = (
       }
 
       if (typeof value !== 'string') {
-        throw new Error(
-          `Expected string value for ${item.type} item "${itemId}".`,
-        );
+        throw new Error(`Expected string value for ${item.type} item "${itemId}".`);
       }
 
       if (item.type === 'select') {

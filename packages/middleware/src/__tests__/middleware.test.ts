@@ -1,10 +1,7 @@
 import { createServer, get } from 'node:http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getNormalizedRequestUrl } from '../middleware.js';
-import {
-  createScopedMiddleware,
-  type MiddlewareHandler,
-} from '../scoped-middleware.js';
+import { createScopedMiddleware, type MiddlewareHandler } from '../scoped-middleware.js';
 
 let activeServer: ReturnType<typeof createServer> | null = null;
 
@@ -50,23 +47,20 @@ const runRequest = async (
   }
 
   return new Promise((resolve, reject) => {
-    const request = get(
-      `http://127.0.0.1:${address.port}${url}`,
-      (response) => {
-        let body = '';
+    const request = get(`http://127.0.0.1:${address.port}${url}`, (response) => {
+      let body = '';
 
-        response.setEncoding('utf8');
-        response.on('data', (chunk) => {
-          body += chunk;
+      response.setEncoding('utf8');
+      response.on('data', (chunk) => {
+        body += chunk;
+      });
+      response.on('end', () => {
+        resolve({
+          status: response.statusCode ?? 0,
+          body,
         });
-        response.on('end', () => {
-          resolve({
-            status: response.statusCode ?? 0,
-            body,
-          });
-        });
-      },
-    );
+      });
+    });
 
     request.on('error', reject);
   });
@@ -74,18 +68,14 @@ const runRequest = async (
 
 describe('middleware request normalization', () => {
   it('restores stripped agent routes for scoped integrations', () => {
-    expect(getNormalizedRequestUrl('/agent/targets')).toBe(
-      '/rozenite/agent/targets',
-    );
+    expect(getNormalizedRequestUrl('/agent/targets')).toBe('/rozenite/agent/targets');
     expect(getNormalizedRequestUrl('/agent/sessions/device-1')).toBe(
       '/rozenite/agent/sessions/device-1',
     );
   });
 
   it('preserves agent routes under /rozenite', () => {
-    expect(getNormalizedRequestUrl('/rozenite/agent/targets')).toBe(
-      '/rozenite/agent/targets',
-    );
+    expect(getNormalizedRequestUrl('/rozenite/agent/targets')).toBe('/rozenite/agent/targets');
     expect(getNormalizedRequestUrl('/rozenite/agent/sessions/device-1')).toBe(
       '/rozenite/agent/sessions/device-1',
     );
@@ -95,19 +85,14 @@ describe('middleware request normalization', () => {
     expect(getNormalizedRequestUrl('/rozenite/plugins/demo/index.js')).toBe(
       '/plugins/demo/index.js',
     );
-    expect(getNormalizedRequestUrl('/rozenite/rn_fusebox.html')).toBe(
-      '/rn_fusebox.html',
-    );
+    expect(getNormalizedRequestUrl('/rozenite/rn_fusebox.html')).toBe('/rn_fusebox.html');
   });
 });
 
 describe('scoped middleware', () => {
   it('keeps agent setup working when the outer prefix is stripped first', async () => {
     const middleware = createScopedMiddleware('/rozenite', (req, res, next) => {
-      if (
-        req.url &&
-        getNormalizedRequestUrl(req.url) === '/rozenite/agent/targets'
-      ) {
+      if (req.url && getNormalizedRequestUrl(req.url) === '/rozenite/agent/targets') {
         res.end('agent targets');
         return;
       }
@@ -129,10 +114,7 @@ describe('scoped middleware', () => {
     });
     const middleware = createScopedMiddleware('/rozenite', handler);
 
-    const insideResponse = await runRequest(
-      middleware,
-      '/rozenite/plugins/demo/index.js',
-    );
+    const insideResponse = await runRequest(middleware, '/rozenite/plugins/demo/index.js');
     const outsideResponse = await runRequest(middleware, '/open-stack-frame');
 
     expect(insideResponse).toEqual({
@@ -148,14 +130,11 @@ describe('scoped middleware', () => {
 
   it('stops propagation when delegated middleware ends the response and still calls next', async () => {
     const downstream = vi.fn();
-    const buggyMiddleware = createScopedMiddleware(
-      '/rozenite',
-      (_req, res, next) => {
-        res.statusCode = 204;
-        res.end();
-        next();
-      },
-    );
+    const buggyMiddleware = createScopedMiddleware('/rozenite', (_req, res, next) => {
+      res.statusCode = 204;
+      res.end();
+      next();
+    });
 
     const response = await runRequest((req, res, next) => {
       buggyMiddleware(req, res, () => {

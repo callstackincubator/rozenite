@@ -1,10 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {
-  Extractor,
-  ExtractorConfig,
-  ExtractorLogLevel,
-} from '@microsoft/api-extractor';
+import { Extractor, ExtractorConfig, ExtractorLogLevel } from '@microsoft/api-extractor';
 
 type Target = 'react-native' | 'metro' | 'sdk';
 
@@ -37,16 +33,11 @@ export const normalizeRolledUpDeclarations = (content: string) => {
     );
 };
 
-export const bundleTargetDeclarations = async (
-  projectRoot: string,
-  target: Target,
-) => {
+export const bundleTargetDeclarations = async (projectRoot: string, target: Target) => {
   const targetRoot = path.join(projectRoot, 'dist', target);
   const publicEntryPath = path.join(targetRoot, 'index.d.ts');
   const bundleEntryPath =
-    target === 'sdk'
-      ? path.join(targetRoot, `${target}.d.ts`)
-      : publicEntryPath;
+    target === 'sdk' ? path.join(targetRoot, `${target}.d.ts`) : publicEntryPath;
   const entryPath = await fs
     .access(bundleEntryPath)
     .then(() => bundleEntryPath)

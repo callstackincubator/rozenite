@@ -1,7 +1,7 @@
 {
   "name": "@rozenite-test/metro-0.82",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "dependencies": {
     "metro": "0.82.5"
   }

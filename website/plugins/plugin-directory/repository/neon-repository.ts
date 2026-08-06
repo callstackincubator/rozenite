@@ -1,12 +1,6 @@
 import { neon } from '@neondatabase/serverless';
-import {
-  extractPackageNameFromNpmUrl,
-  getBasicPackageInfo,
-} from '../clients/npm-client';
-import {
-  getRepositoryFromUrl,
-  getRepositoryStars,
-} from '../clients/github-client';
+import { extractPackageNameFromNpmUrl, getBasicPackageInfo } from '../clients/npm-client';
+import { getRepositoryFromUrl, getRepositoryStars } from '../clients/github-client';
 import { PluginDirectoryReference, RozenitePluginEntry } from '../types';
 import { PluginRepository } from './types';
 
@@ -39,10 +33,7 @@ export class PostgresPluginRepository implements PluginRepository {
         isOfficial: row.is_official,
       };
     } catch (error) {
-      console.error(
-        `Failed to get plugin ${packageName} from database:`,
-        error,
-      );
+      console.error(`Failed to get plugin ${packageName} from database:`, error);
       return null;
     }
   }
@@ -76,9 +67,7 @@ export class PostgresPluginRepository implements PluginRepository {
     }
   }
 
-  async refreshPlugin(
-    plugin: PluginDirectoryReference,
-  ): Promise<RozenitePluginEntry> {
+  async refreshPlugin(plugin: PluginDirectoryReference): Promise<RozenitePluginEntry> {
     const githubRepository = getRepositoryFromUrl(plugin.githubUrl);
     const npmPackageName = extractPackageNameFromNpmUrl(plugin.npmUrl);
 
@@ -172,9 +161,7 @@ export class PostgresPluginRepository implements PluginRepository {
     }
   }
 
-  async getPluginWithFallback(
-    plugin: PluginDirectoryReference,
-  ): Promise<RozenitePluginEntry> {
+  async getPluginWithFallback(plugin: PluginDirectoryReference): Promise<RozenitePluginEntry> {
     const npmPackageName = extractPackageNameFromNpmUrl(plugin.npmUrl);
 
     if (!npmPackageName) {

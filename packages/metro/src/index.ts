@@ -12,10 +12,7 @@ import runtimePackage from '@rozenite/runtime/package.json' with { type: 'json' 
 import path from 'node:path';
 import { isBundling } from './is-bundling.js';
 
-export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<
-  RozeniteConfig,
-  'projectRoot'
-> & {
+export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<RozeniteConfig, 'projectRoot'> & {
   /**
    * Whether to enable Rozenite.
    * If false, Rozenite will not be initialized and the config will be returned as is.
@@ -26,9 +23,7 @@ export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<
    * Certain Rozenite plugins require Metro to be configured in a specific way.
    * This option allows you to modify the Metro config in a way that is safe to do when bundling.
    */
-  enhanceMetroConfig?: (
-    config: TMetroConfig,
-  ) => Promise<TMetroConfig> | TMetroConfig;
+  enhanceMetroConfig?: (config: TMetroConfig) => Promise<TMetroConfig> | TMetroConfig;
 };
 
 export const withRozenite = <T extends MetroConfig>(
@@ -40,12 +35,8 @@ export const withRozenite = <T extends MetroConfig>(
     const projectRoot = resolvedConfig.projectRoot ?? process.cwd();
 
     if (options.enabled === undefined) {
-      logger.info(
-        'Rozenite will no longer be enabled by default in the next version.',
-      );
-      logger.info(
-        'To continue using Rozenite, please set `enabled` in the options.',
-      );
+      logger.info('Rozenite will no longer be enabled by default in the next version.');
+      logger.info('To continue using Rozenite, please set `enabled` in the options.');
       logger.info('Remember to make it conditional to avoid bundling issues.');
 
       if (isBundling(projectRoot)) {
@@ -57,14 +48,13 @@ export const withRozenite = <T extends MetroConfig>(
       return resolvedConfig;
     }
 
-    const { devModePackage, middleware: rozeniteMiddleware } =
-      initializeRozenite(
-        {
-          projectRoot,
-          ...options,
-        },
-        runtimePackage.version,
-      );
+    const { devModePackage, middleware: rozeniteMiddleware } = initializeRozenite(
+      {
+        projectRoot,
+        ...options,
+      },
+      runtimePackage.version,
+    );
 
     const rozeniteMetroConfig = {
       ...resolvedConfig,
@@ -82,9 +72,7 @@ export const withRozenite = <T extends MetroConfig>(
 
               // Rozenite package should use the same versions of React and React Native as the app.
               // Using dirname as sometimes developers use deep imports for react-native.
-              react: path.dirname(
-                require.resolve('react', { paths: [projectRoot] }),
-              ),
+              react: path.dirname(require.resolve('react', { paths: [projectRoot] })),
               'react-native': path.dirname(
                 require.resolve('react-native', {
                   paths: [projectRoot],
@@ -97,8 +85,7 @@ export const withRozenite = <T extends MetroConfig>(
           // This is currently the only module that we need to mock, but it may change in the future.
           if (
             platform === 'web' &&
-            moduleName ===
-              'react-native/Libraries/WebSocket/WebSocketInterceptor'
+            moduleName === 'react-native/Libraries/WebSocket/WebSocketInterceptor'
           ) {
             return {
               type: 'empty',
@@ -106,11 +93,8 @@ export const withRozenite = <T extends MetroConfig>(
           }
 
           return (
-            resolvedConfig.resolver?.resolveRequest?.(
-              context,
-              moduleName,
-              platform,
-            ) ?? context.resolveRequest(context, moduleName, platform)
+            resolvedConfig.resolver?.resolveRequest?.(context, moduleName, platform) ??
+            context.resolveRequest(context, moduleName, platform)
           );
         },
       },
@@ -118,16 +102,10 @@ export const withRozenite = <T extends MetroConfig>(
         ...resolvedConfig.server,
         enhanceMiddleware: (metroMiddleware, server) => {
           const prevMiddleware =
-            resolvedConfig.server?.enhanceMiddleware?.(
-              metroMiddleware,
-              server,
-            ) ?? metroMiddleware;
+            resolvedConfig.server?.enhanceMiddleware?.(metroMiddleware, server) ?? metroMiddleware;
           const delegatedMetroMiddleware = prevMiddleware as MiddlewareHandler;
 
-          const scopedRozeniteMiddleware = createScopedMiddleware(
-            '/rozenite',
-            rozeniteMiddleware,
-          );
+          const scopedRozeniteMiddleware = createScopedMiddleware('/rozenite', rozeniteMiddleware);
 
           return (
             req: MiddlewareRequest,
@@ -148,8 +126,7 @@ export const withRozenite = <T extends MetroConfig>(
     } satisfies MetroConfig;
 
     if (options.enhanceMetroConfig) {
-      const enhancedConfig =
-        await options.enhanceMetroConfig(rozeniteMetroConfig);
+      const enhancedConfig = await options.enhanceMetroConfig(rozeniteMetroConfig);
       return enhancedConfig;
     }
 

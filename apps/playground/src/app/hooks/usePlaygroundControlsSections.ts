@@ -5,23 +5,15 @@ import { useControlsPluginStore } from '../stores/controlsPluginStore';
 export const usePlaygroundControlsSections = () => {
   const counter = useControlsPluginStore((state) => state.counter);
   const releaseLabel = useControlsPluginStore((state) => state.releaseLabel);
-  const selectedEnvironment = useControlsPluginStore(
-    (state) => state.selectedEnvironment,
-  );
+  const selectedEnvironment = useControlsPluginStore((state) => state.selectedEnvironment);
   const status = useControlsPluginStore((state) => state.status);
   const lastActionAt = useControlsPluginStore((state) => state.lastActionAt);
   const notes = useControlsPluginStore((state) => state.notes);
   const featureFlags = useControlsPluginStore((state) => state.featureFlags);
-  const updateReleaseLabel = useControlsPluginStore(
-    (state) => state.updateReleaseLabel,
-  );
-  const selectEnvironment = useControlsPluginStore(
-    (state) => state.selectEnvironment,
-  );
+  const updateReleaseLabel = useControlsPluginStore((state) => state.updateReleaseLabel);
+  const selectEnvironment = useControlsPluginStore((state) => state.selectEnvironment);
   const toggleFlag = useControlsPluginStore((state) => state.toggleFlag);
-  const incrementCounter = useControlsPluginStore(
-    (state) => state.incrementCounter,
-  );
+  const incrementCounter = useControlsPluginStore((state) => state.incrementCounter);
   const markSynced = useControlsPluginStore((state) => state.markSynced);
   const addCheckpoint = useControlsPluginStore((state) => state.addCheckpoint);
   const resetDemo = useControlsPluginStore((state) => state.resetDemo);
@@ -102,8 +94,7 @@ export const usePlaygroundControlsSections = () => {
       createSection({
         id: 'feature-flags',
         title: 'Feature Flags',
-        description:
-          'These toggles are handled on the device and mirrored into DevTools.',
+        description: 'These toggles are handled on the device and mirrored into DevTools.',
         items: [
           {
             id: 'verbose-logging',
@@ -111,8 +102,7 @@ export const usePlaygroundControlsSections = () => {
             title: 'Verbose Logging',
             value: featureFlags.verboseLogging,
             description: 'Changes status to armed when enabled.',
-            onUpdate: (nextValue: boolean) =>
-              toggleFlag('verboseLogging', nextValue),
+            onUpdate: (nextValue: boolean) => toggleFlag('verboseLogging', nextValue),
           },
           {
             id: 'mock-latency',
@@ -124,22 +114,18 @@ export const usePlaygroundControlsSections = () => {
               status === 'synced' && nextValue
                 ? {
                     valid: false,
-                    message:
-                      'Disable synced status before enabling mock latency.',
+                    message: 'Disable synced status before enabling mock latency.',
                   }
                 : { valid: true },
-            onUpdate: (nextValue: boolean) =>
-              toggleFlag('mockLatency', nextValue),
+            onUpdate: (nextValue: boolean) => toggleFlag('mockLatency', nextValue),
           },
           {
             id: 'reverse-diagnostics',
             type: 'toggle' as const,
             title: 'Reverse Diagnostics',
             value: featureFlags.reverseDiagnostics,
-            description:
-              'Reorders the diagnostics section to prove full snapshot replacement.',
-            onUpdate: (nextValue: boolean) =>
-              toggleFlag('reverseDiagnostics', nextValue),
+            description: 'Reorders the diagnostics section to prove full snapshot replacement.',
+            onUpdate: (nextValue: boolean) => toggleFlag('reverseDiagnostics', nextValue),
           },
           {
             id: 'blocked-toggle',
@@ -172,14 +158,11 @@ export const usePlaygroundControlsSections = () => {
               counter > 0 && nextValue === 'production'
                 ? {
                     valid: false,
-                    message:
-                      'Reset the counter before switching to production.',
+                    message: 'Reset the counter before switching to production.',
                   }
                 : { valid: true },
             onUpdate: (nextValue: string) =>
-              selectEnvironment(
-                nextValue as 'local' | 'staging' | 'production',
-              ),
+              selectEnvironment(nextValue as 'local' | 'staging' | 'production'),
           },
           {
             id: 'release-label-input',

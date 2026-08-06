@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { MMKV } from 'react-native-mmkv';
 import { initializeMMKVStorages, mmkvStorages } from '../mmkv-storages';
@@ -67,10 +59,8 @@ const parseMMKVEntry = (storage: MMKV, key: string): Entry | null => {
 
 export const StoragePluginScreen = () => {
   const [tab, setTab] = useState<AdapterTab>('mmkv');
-  const [asyncStorageMode, setAsyncStorageMode] =
-    useState<AsyncStorageMode>('v2-default');
-  const [mmkvStorageId, setMmkvStorageId] =
-    useState<keyof typeof mmkvStorages>('user-storage');
+  const [asyncStorageMode, setAsyncStorageMode] = useState<AsyncStorageMode>('v2-default');
+  const [mmkvStorageId, setMmkvStorageId] = useState<keyof typeof mmkvStorages>('user-storage');
   const [key, setKey] = useState('');
   const [value, setValue] = useState('');
   const [entryType, setEntryType] = useState<EntryType>('string');
@@ -121,8 +111,7 @@ export const StoragePluginScreen = () => {
       const keys = await selectedAsyncStorage.getAllKeys();
       const values = await Promise.all(
         keys.map(
-          async (entryKey) =>
-            [entryKey, await selectedAsyncStorage.getItem(entryKey)] as const,
+          async (entryKey) => [entryKey, await selectedAsyncStorage.getItem(entryKey)] as const,
         ),
       );
       setEntries(
@@ -181,10 +170,7 @@ export const StoragePluginScreen = () => {
           storage.set(key, value === 'true');
         } else {
           const parsed = JSON.parse(value);
-          if (
-            !Array.isArray(parsed) ||
-            !parsed.every((item) => typeof item === 'number')
-          ) {
+          if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'number')) {
             throw new Error('Buffer value must be a JSON array of numbers');
           }
           storage.set(key, new Uint8Array(parsed).buffer);
@@ -199,10 +185,7 @@ export const StoragePluginScreen = () => {
       setValue('');
       await loadEntries();
     } catch (error) {
-      Alert.alert(
-        'Set failed',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      Alert.alert('Set failed', error instanceof Error ? error.message : 'Unknown error');
     }
   };
 
@@ -274,10 +257,7 @@ export const StoragePluginScreen = () => {
           {mmkvIds.map((id) => (
             <TouchableOpacity
               key={id}
-              style={[
-                styles.storageChip,
-                mmkvStorageId === id && styles.storageChipActive,
-              ]}
+              style={[styles.storageChip, mmkvStorageId === id && styles.storageChipActive]}
               onPress={() => setMmkvStorageId(id)}
             >
               <Text style={styles.storageChipText}>{id}</Text>
@@ -298,10 +278,7 @@ export const StoragePluginScreen = () => {
             <Text style={styles.storageChipText}>v2 default</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[
-              styles.storageChip,
-              asyncStorageMode === 'v3-auth' && styles.storageChipActive,
-            ]}
+            style={[styles.storageChip, asyncStorageMode === 'v3-auth' && styles.storageChipActive]}
             onPress={() => setAsyncStorageMode('v3-auth')}
           >
             <Text style={styles.storageChipText}>v3 auth</Text>
@@ -327,25 +304,23 @@ export const StoragePluginScreen = () => {
       />
 
       <View style={styles.inlineRow}>
-        {(['string', 'number', 'boolean', 'buffer'] as EntryType[]).map(
-          (type) => {
-            const disabled = !supportsTypedValues && type !== 'string';
-            return (
-              <TouchableOpacity
-                key={type}
-                disabled={disabled}
-                onPress={() => setEntryType(type)}
-                style={[
-                  styles.typeChip,
-                  entryType === type && styles.typeChipActive,
-                  disabled && styles.typeChipDisabled,
-                ]}
-              >
-                <Text style={styles.typeChipText}>{type}</Text>
-              </TouchableOpacity>
-            );
-          },
-        )}
+        {(['string', 'number', 'boolean', 'buffer'] as EntryType[]).map((type) => {
+          const disabled = !supportsTypedValues && type !== 'string';
+          return (
+            <TouchableOpacity
+              key={type}
+              disabled={disabled}
+              onPress={() => setEntryType(type)}
+              style={[
+                styles.typeChip,
+                entryType === type && styles.typeChipActive,
+                disabled && styles.typeChipDisabled,
+              ]}
+            >
+              <Text style={styles.typeChipText}>{type}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {!supportsTypedValues && (
@@ -357,18 +332,13 @@ export const StoragePluginScreen = () => {
       <TextInput
         value={value}
         onChangeText={setValue}
-        placeholder={
-          entryType === 'buffer' ? 'JSON buffer, e.g. [1,2,3]' : 'Value'
-        }
+        placeholder={entryType === 'buffer' ? 'JSON buffer, e.g. [1,2,3]' : 'Value'}
         placeholderTextColor="#6b7280"
         style={styles.input}
       />
 
       <View style={styles.actionsRow}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => void handleSet()}
-        >
+        <TouchableOpacity style={styles.actionButton} onPress={() => void handleSet()}>
           <Text style={styles.actionButtonText}>Set</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -377,10 +347,7 @@ export const StoragePluginScreen = () => {
         >
           <Text style={styles.actionButtonText}>Delete</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => void loadEntries()}
-        >
+        <TouchableOpacity style={styles.actionButton} onPress={() => void loadEntries()}>
           <Text style={styles.actionButtonText}>Refresh</Text>
         </TouchableOpacity>
       </View>

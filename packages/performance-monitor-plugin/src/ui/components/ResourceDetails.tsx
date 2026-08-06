@@ -11,13 +11,7 @@ const formatPhase = (value: number | undefined): string => {
   return formatDuration(value);
 };
 
-const Row = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <Box mb="3">
     <Flex align="center" gap="3">
       <Text size="2" color="gray" style={{ minWidth: '140px' }}>
@@ -102,9 +96,7 @@ export const ResourceDetails = ({ resource }: ResourceDetailsProps) => {
             <Text size="2" color="gray" style={{ minWidth: '120px' }}>
               {label}:
             </Text>
-            <Text size="2">
-              {formatPhase(resource[key] as number | undefined)}
-            </Text>
+            <Text size="2">{formatPhase(resource[key] as number | undefined)}</Text>
           </Flex>
         ))}
       </Grid>

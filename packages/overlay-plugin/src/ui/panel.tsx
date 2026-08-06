@@ -100,15 +100,9 @@ export default function OverlayPanel() {
           <Split.Handle />
           <Split.Pane>
             {activeView === 'grid' ? (
-              <GridSettings
-                config={gridConfig}
-                onConfigChange={updateGridConfig}
-              />
+              <GridSettings config={gridConfig} onConfigChange={updateGridConfig} />
             ) : (
-              <ImageSettings
-                config={imageConfig}
-                onConfigChange={updateImageConfig}
-              />
+              <ImageSettings config={imageConfig} onConfigChange={updateImageConfig} />
             )}
           </Split.Pane>
         </Split>

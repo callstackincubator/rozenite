@@ -23,11 +23,7 @@ describe('agent client', () => {
     }> = [];
 
     httpTestHarness.requestHandler.mockImplementation(
-      async ({
-        method,
-        pathname,
-        body,
-      }: MockHttpRequest): Promise<MockHttpResult> => {
+      async ({ method, pathname, body }: MockHttpRequest): Promise<MockHttpResult> => {
         requests.push({ method, pathname, body });
 
         if (method === 'GET' && pathname === AGENT_TARGETS_ROUTE) {
@@ -55,10 +51,7 @@ describe('agent client', () => {
           };
         }
 
-        if (
-          method === 'GET' &&
-          pathname === getAgentSessionRoute('session-2')
-        ) {
+        if (method === 'GET' && pathname === getAgentSessionRoute('session-2')) {
           return {
             payload: {
               ok: true,
@@ -74,10 +67,7 @@ describe('agent client', () => {
           };
         }
 
-        if (
-          method === 'DELETE' &&
-          pathname === getAgentSessionRoute('session-1')
-        ) {
+        if (method === 'DELETE' && pathname === getAgentSessionRoute('session-1')) {
           return {
             payload: {
               ok: true,
@@ -86,10 +76,7 @@ describe('agent client', () => {
           };
         }
 
-        if (
-          method === 'DELETE' &&
-          pathname === getAgentSessionRoute('session-2')
-        ) {
+        if (method === 'DELETE' && pathname === getAgentSessionRoute('session-2')) {
           return {
             payload: {
               ok: true,
@@ -107,9 +94,7 @@ describe('agent client', () => {
       port: 8081,
     });
 
-    await expect(client.targets.list()).resolves.toEqual([
-      { id: 'device-1', name: 'Phone' },
-    ]);
+    await expect(client.targets.list()).resolves.toEqual([{ id: 'device-1', name: 'Phone' }]);
 
     const openedSession = await client.openSession({ deviceId: 'device-1' });
     expect(openedSession.id).toBe('session-1');
@@ -165,11 +150,7 @@ describe('agent client', () => {
     }> = [];
 
     httpTestHarness.requestHandler.mockImplementation(
-      async ({
-        method,
-        pathname,
-        body,
-      }: MockHttpRequest): Promise<MockHttpResult> => {
+      async ({ method, pathname, body }: MockHttpRequest): Promise<MockHttpResult> => {
         requests.push({ method, pathname, body });
 
         if (method === 'POST' && pathname === AGENT_SESSIONS_ROUTE) {
@@ -188,10 +169,7 @@ describe('agent client', () => {
           };
         }
 
-        if (
-          method === 'GET' &&
-          pathname === getAgentSessionToolsRoute('session-3')
-        ) {
+        if (method === 'GET' && pathname === getAgentSessionToolsRoute('session-3')) {
           return {
             payload: {
               ok: true,
@@ -213,10 +191,7 @@ describe('agent client', () => {
           };
         }
 
-        if (
-          method === 'POST' &&
-          pathname === getAgentSessionCallToolRoute('session-3')
-        ) {
+        if (method === 'POST' && pathname === getAgentSessionCallToolRoute('session-3')) {
           return {
             payload: {
               ok: true,
@@ -229,10 +204,7 @@ describe('agent client', () => {
           };
         }
 
-        if (
-          method === 'DELETE' &&
-          pathname === getAgentSessionRoute('session-3')
-        ) {
+        if (method === 'DELETE' && pathname === getAgentSessionRoute('session-3')) {
           return {
             payload: {
               ok: true,
@@ -321,11 +293,7 @@ describe('agent client', () => {
     }> = [];
 
     httpTestHarness.requestHandler.mockImplementation(
-      async ({
-        method,
-        pathname,
-        body,
-      }: MockHttpRequest): Promise<MockHttpResult> => {
+      async ({ method, pathname, body }: MockHttpRequest): Promise<MockHttpResult> => {
         requests.push({ method, pathname, body });
 
         if (method === 'POST' && pathname === AGENT_SESSIONS_ROUTE) {
@@ -344,10 +312,7 @@ describe('agent client', () => {
           };
         }
 
-        if (
-          method === 'DELETE' &&
-          pathname === getAgentSessionRoute('session-4')
-        ) {
+        if (method === 'DELETE' && pathname === getAgentSessionRoute('session-4')) {
           return {
             payload: {
               ok: true,

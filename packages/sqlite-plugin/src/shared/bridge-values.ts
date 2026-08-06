@@ -8,9 +8,7 @@ type SqliteEncodedBinaryValue = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object';
 
-const isEncodedBinaryValue = (
-  value: unknown,
-): value is SqliteEncodedBinaryValue =>
+const isEncodedBinaryValue = (value: unknown): value is SqliteEncodedBinaryValue =>
   isRecord(value) &&
   value[SQLITE_BRIDGE_BINARY_TYPE] === true &&
   Array.isArray(value.data) &&
@@ -114,8 +112,7 @@ const describeError = (error: unknown): string | null => {
     const reason = getStringField(error, 'reason');
     const message = error.message.trim();
     const detailParts = [message || null, reason].filter(
-      (part, index, parts): part is string =>
-        !!part && parts.indexOf(part) === index,
+      (part, index, parts): part is string => !!part && parts.indexOf(part) === index,
     );
     const detail = detailParts.join(' | ') || error.name;
 

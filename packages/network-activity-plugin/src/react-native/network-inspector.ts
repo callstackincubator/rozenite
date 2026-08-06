@@ -1,8 +1,4 @@
-import {
-  getHTTPInspector,
-  HTTPInspector,
-  HTTP_EVENTS,
-} from './http/http-inspector';
+import { getHTTPInspector, HTTPInspector, HTTP_EVENTS } from './http/http-inspector';
 import { getSSEInspector, SSEInspector, SSE_EVENTS } from './sse/sse-inspector';
 import {
   getWebSocketInspector,
@@ -69,9 +65,7 @@ const createNetworkInspectorInstance = (): NetworkInspector => {
       });
     },
 
-    enable(
-      config: InspectorsConfig = { http: true, sse: true, websocket: true },
-    ) {
+    enable(config: InspectorsConfig = { http: true, sse: true, websocket: true }) {
       if (config.http) http.enable();
       if (config.sse) sse.enable();
       if (config.websocket) websocket.enable();
@@ -98,9 +92,7 @@ const createNetworkInspectorInstance = (): NetworkInspector => {
         return getHTTPResponseBody(request);
       }
 
-      const capturedResponseBody = http
-        .getNetworkRequestsRegistry()
-        .getResponseBody(requestId);
+      const capturedResponseBody = http.getNetworkRequestsRegistry().getResponseBody(requestId);
       if (capturedResponseBody !== undefined) {
         return capturedResponseBody;
       }

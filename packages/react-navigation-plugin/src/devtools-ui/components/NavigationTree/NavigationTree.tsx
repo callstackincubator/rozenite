@@ -7,9 +7,7 @@ export type NavigationTreeProps = {
 };
 
 export function NavigationTree({ actionHistory }: NavigationTreeProps) {
-  const states = actionHistory
-    .map((action) => action.state)
-    .filter((state) => state !== undefined);
+  const states = actionHistory.map((action) => action.state).filter((state) => state !== undefined);
 
   return (
     <div className="flex-1 flex-row-reverse overflow-auto overflow-x-scroll flex pb-[12px] h-full">
@@ -24,11 +22,7 @@ export function NavigationTree({ actionHistory }: NavigationTreeProps) {
           <div className="h-4" />
           <div className="flex flex-col-reverse items-center overflow-auto h-full min-w-[34vw]">
             {state && (
-              <NavigationNode
-                name="root"
-                state={state}
-                parentColor={generateColor(state.key)}
-              />
+              <NavigationNode name="root" state={state} parentColor={generateColor(state.key)} />
             )}
           </div>
         </div>

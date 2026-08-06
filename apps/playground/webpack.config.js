@@ -8,14 +8,8 @@ const workspaceRoot = path.resolve(appDirectory, '../..');
 const entryFile = path.resolve(appDirectory, 'src/main.tsx');
 const srcDirectory = path.resolve(appDirectory, 'src');
 const distDirectory = path.resolve(appDirectory, 'dist');
-const reactNativeDirectory = path.resolve(
-  workspaceRoot,
-  'node_modules/react-native',
-);
-const localReactNativeDirectory = path.resolve(
-  appDirectory,
-  'node_modules/react-native',
-);
+const reactNativeDirectory = path.resolve(workspaceRoot, 'node_modules/react-native');
+const localReactNativeDirectory = path.resolve(appDirectory, 'node_modules/react-native');
 const htmlTemplate = ({ htmlWebpackPlugin }) => `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -42,12 +36,7 @@ const htmlTemplate = ({ htmlWebpackPlugin }) => `<!DOCTYPE html>
 
 const babelLoaderConfiguration = {
   test: /\.[jt]sx?$/,
-  include: [
-    entryFile,
-    srcDirectory,
-    reactNativeDirectory,
-    localReactNativeDirectory,
-  ],
+  include: [entryFile, srcDirectory, reactNativeDirectory, localReactNativeDirectory],
   use: {
     loader: 'babel-loader',
     options: {

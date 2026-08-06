@@ -28,11 +28,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     this.messageQueue = [];
 
     const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
-    runtimeModel?.removeEventListener(
-      'BindingCalled',
-      this.bindingCalled,
-      this,
-    );
+    runtimeModel?.removeEventListener('BindingCalled', this.bindingCalled, this);
     runtimeModel?.removeEventListener(
       'ExecutionContextCreated',
       this.onExecutionContextCreated,
@@ -45,14 +41,9 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     );
   }
 
-  private bindingCalled(
-    event: RuntimeEvent<{ name: string; payload: string }>,
-  ): void {
+  private bindingCalled(event: RuntimeEvent<{ name: string; payload: string }>): void {
     // If binding name is not initialized, then we failed to get its name
-    if (
-      this.messagingBindingName === null ||
-      event.data.name !== this.messagingBindingName
-    ) {
+    if (this.messagingBindingName === null || event.data.name !== this.messagingBindingName) {
       return;
     }
 
@@ -128,9 +119,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     }
 
     if (errors.length > 0) {
-      throw new Error(
-        'Error occurred in RozeniteBindingsModel while calling event listeners',
-      );
+      throw new Error('Error occurred in RozeniteBindingsModel while calling event listeners');
     }
   }
 
@@ -178,9 +167,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
 
     const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
     if (!runtimeModel) {
-      throw new Error(
-        'Failed to enable RozeniteBindingsModel: runtime model is not available',
-      );
+      throw new Error('Failed to enable RozeniteBindingsModel: runtime model is not available');
     }
 
     await this.waitForFuseboxDispatcherToBeInitialized()
@@ -197,10 +184,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
           );
         }
 
-        if (
-          response.result.value === null ||
-          response.result.value === undefined
-        ) {
+        if (response.result.value === null || response.result.value === undefined) {
           throw new Error(
             'Failed to get binding name for RozeniteBindingsModel on a global: returned value is ' +
               String(response.result.value),
@@ -217,21 +201,14 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       })
       .then((bindingName) => {
         this.messagingBindingName = bindingName;
-        runtimeModel.addEventListener(
-          'BindingCalled',
-          this.bindingCalled,
-          this,
-        );
+        runtimeModel.addEventListener('BindingCalled', this.bindingCalled, this);
 
         return runtimeModel.agent.invoke_addBinding({ name: bindingName });
       })
       .then((response) => {
         const possiblyError = response.getError();
         if (possiblyError) {
-          throw new Error(
-            'Failed to add binding for ReactDevToolsBindingsModel: ' +
-              possiblyError,
-          );
+          throw new Error('Failed to add binding for ReactDevToolsBindingsModel: ' + possiblyError);
         }
 
         this.enabled = true;
@@ -251,11 +228,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       );
     }
 
-    runtimeModel.addEventListener(
-      'ExecutionContextCreated',
-      this.onExecutionContextCreated,
-      this,
-    );
+    runtimeModel.addEventListener('ExecutionContextCreated', this.onExecutionContextCreated, this);
     runtimeModel.addEventListener(
       'ExecutionContextDestroyed',
       this.onExecutionContextDestroyed,
@@ -276,10 +249,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
         this.flushOutDomainMessagesQueues();
       })
       .catch((error: Error) =>
-        this.dispatchEventToListeners(
-          'BackendExecutionContextUnavailable',
-          error.message,
-        ),
+        this.dispatchEventToListeners('BackendExecutionContextUnavailable', error.message),
       );
   }
 
@@ -294,9 +264,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     this.dispatchEventToListeners('BackendExecutionContextDestroyed');
   }
 
-  private async waitForFuseboxDispatcherToBeInitialized(
-    attempt = 1,
-  ): Promise<void> {
+  private async waitForFuseboxDispatcherToBeInitialized(attempt = 1): Promise<void> {
     // Ideally, this should not be polling, but rather one `Runtime.evaluate` request with `awaitPromise` option
     // We need to support it in Hermes first, then we can migrate this to awaitPromise
     if (attempt >= 20) {

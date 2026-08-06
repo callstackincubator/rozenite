@@ -18,15 +18,10 @@ export type RozeniteSqlitePluginOptions = {
 
 const safeError = (error: unknown) => formatSqliteError(error);
 
-const isExecuteStatementsError = (
-  error: unknown,
-): error is SqliteExecuteStatementsError =>
-  error instanceof Error &&
-  ('completedResults' in error || 'failedStatementIndex' in error);
+const isExecuteStatementsError = (error: unknown): error is SqliteExecuteStatementsError =>
+  error instanceof Error && ('completedResults' in error || 'failedStatementIndex' in error);
 
-export const useRozeniteSqlitePlugin = ({
-  adapters,
-}: RozeniteSqlitePluginOptions) => {
+export const useRozeniteSqlitePlugin = ({ adapters }: RozeniteSqlitePluginOptions) => {
   const views = useMemo(() => createSqliteDatabaseViews(adapters), [adapters]);
 
   useSqliteAgentTools(views);
@@ -45,8 +40,7 @@ export const useRozeniteSqlitePlugin = ({
       databaseId: string,
       task: () => Promise<T>,
     ): Promise<T> => {
-      const queue =
-        databaseQueuesRef.current.get(databaseId) ?? Promise.resolve();
+      const queue = databaseQueuesRef.current.get(databaseId) ?? Promise.resolve();
       const next = queue.catch(() => undefined).then(task);
 
       databaseQueuesRef.current.set(
@@ -70,10 +64,7 @@ export const useRozeniteSqlitePlugin = ({
       return database;
     };
 
-    const executeStatements = async (
-      databaseId: string,
-      statements: SqliteStatementInput[],
-    ) => {
+    const executeStatements = async (databaseId: string, statements: SqliteStatementInput[]) => {
       const database = resolveDatabase(databaseId);
       const normalizedStatements = statements.map(({ sql, params }) => ({
         sql: normalizeSingleStatementSql(sql),
@@ -130,128 +121,117 @@ export const useRozeniteSqlitePlugin = ({
     );
 
     subscriptionsRef.current.push(
-      client.onMessage(
-        'sqlite:query',
-        async ({ requestId, databaseId, sql, params }) => {
-          try {
-            const result = await enqueueDatabaseTask(databaseId, () =>
-              executeSingleQuery(databaseId, sql, params),
-            );
+      client.onMessage('sqlite:query', async ({ requestId, databaseId, sql, params }) => {
+        try {
+          const result = await enqueueDatabaseTask(databaseId, () =>
+            executeSingleQuery(databaseId, sql, params),
+          );
 
-            client.send('sqlite:query:result', {
-              requestId,
-              databaseId,
-              result,
-            });
-          } catch (error) {
-            client.send('sqlite:query:result', {
-              requestId,
-              databaseId,
-              error: safeError(error),
-            });
-          }
-        },
-      ),
+          client.send('sqlite:query:result', {
+            requestId,
+            databaseId,
+            result,
+          });
+        } catch (error) {
+          client.send('sqlite:query:result', {
+            requestId,
+            databaseId,
+            error: safeError(error),
+          });
+        }
+      }),
     );
 
     subscriptionsRef.current.push(
-      client.onMessage(
-        'sqlite:execute-script',
-        async ({ requestId, databaseId, sql }) => {
-          try {
-            const result = await enqueueDatabaseTask(databaseId, async () => {
-              const statementSegments = splitSqlStatements(sql);
+      client.onMessage('sqlite:execute-script', async ({ requestId, databaseId, sql }) => {
+        try {
+          const result = await enqueueDatabaseTask(databaseId, async () => {
+            const statementSegments = splitSqlStatements(sql);
 
-              if (statementSegments.length === 0) {
-                throw new Error('Query cannot be empty.');
+            if (statementSegments.length === 0) {
+              throw new Error('Query cannot be empty.');
+            }
+
+            const statementInputs = statementSegments.map((statement) => ({
+              sql: statement.text,
+            }));
+
+            try {
+              const execution = await executeStatements(databaseId, statementInputs);
+
+              return {
+                statements: statementSegments.map((statement, index) => ({
+                  index,
+                  start: statement.start,
+                  end: statement.end,
+                  input: execution.inputs[index],
+                  execution: {
+                    input: execution.inputs[index],
+                    result: execution.results[index],
+                  },
+                })),
+                totalStatementCount: statementSegments.length,
+                failedStatementIndex: null,
+              };
+            } catch (error) {
+              if (!isExecuteStatementsError(error)) {
+                throw error;
               }
 
-              const statementInputs = statementSegments.map((statement) => ({
-                sql: statement.text,
+              const failedStatementIndex = Math.max(
+                0,
+                Math.min(
+                  typeof error.failedStatementIndex === 'number'
+                    ? error.failedStatementIndex
+                    : (error.completedResults?.length ?? 0),
+                  statementSegments.length - 1,
+                ),
+              );
+              const completedResults = (error.completedResults ?? []).slice(
+                0,
+                failedStatementIndex,
+              );
+              const completedStatements = completedResults.map((queryResult, index) => ({
+                index,
+                start: statementSegments[index].start,
+                end: statementSegments[index].end,
+                input: statementInputs[index],
+                execution: {
+                  input: statementInputs[index],
+                  result: queryResult,
+                },
               }));
 
-              try {
-                const execution = await executeStatements(
-                  databaseId,
-                  statementInputs,
-                );
+              return {
+                statements: [
+                  ...completedStatements,
+                  {
+                    index: failedStatementIndex,
+                    start: statementSegments[failedStatementIndex].start,
+                    end: statementSegments[failedStatementIndex].end,
+                    input: statementInputs[failedStatementIndex],
+                    error: safeError(error),
+                  },
+                ],
+                totalStatementCount: statementSegments.length,
+                failedStatementIndex,
+              };
+            }
+          });
 
-                return {
-                  statements: statementSegments.map((statement, index) => ({
-                    index,
-                    start: statement.start,
-                    end: statement.end,
-                    input: execution.inputs[index],
-                    execution: {
-                      input: execution.inputs[index],
-                      result: execution.results[index],
-                    },
-                  })),
-                  totalStatementCount: statementSegments.length,
-                  failedStatementIndex: null,
-                };
-              } catch (error) {
-                if (!isExecuteStatementsError(error)) {
-                  throw error;
-                }
-
-                const failedStatementIndex = Math.max(
-                  0,
-                  Math.min(
-                    typeof error.failedStatementIndex === 'number'
-                      ? error.failedStatementIndex
-                      : (error.completedResults?.length ?? 0),
-                    statementSegments.length - 1,
-                  ),
-                );
-                const completedResults = (error.completedResults ?? []).slice(
-                  0,
-                  failedStatementIndex,
-                );
-                const completedStatements = completedResults.map(
-                  (queryResult, index) => ({
-                    index,
-                    start: statementSegments[index].start,
-                    end: statementSegments[index].end,
-                    input: statementInputs[index],
-                    execution: {
-                      input: statementInputs[index],
-                      result: queryResult,
-                    },
-                  }),
-                );
-
-                return {
-                  statements: [
-                    ...completedStatements,
-                    {
-                      index: failedStatementIndex,
-                      start: statementSegments[failedStatementIndex].start,
-                      end: statementSegments[failedStatementIndex].end,
-                      input: statementInputs[failedStatementIndex],
-                      error: safeError(error),
-                    },
-                  ],
-                  totalStatementCount: statementSegments.length,
-                  failedStatementIndex,
-                };
-              }
-            });
-
-            client.send('sqlite:execute-script:result', {
-              requestId,
-              databaseId,
-              result,
-            });
-          } catch (error) {
-            client.send('sqlite:execute-script:result', {
-              requestId,
-              databaseId,
-              error: safeError(error),
-            });
-          }
-        },
-      ),
+          client.send('sqlite:execute-script:result', {
+            requestId,
+            databaseId,
+            result,
+          });
+        } catch (error) {
+          client.send('sqlite:execute-script:result', {
+            requestId,
+            databaseId,
+            error: safeError(error),
+          });
+        }
+      }),
     );
 
     return () => {

@@ -24,9 +24,7 @@ const mocks = vi.hoisted(() => {
   });
   return {
     client: { send, onMessage, request },
-    searchChange: undefined as
-      | ((event: React.ChangeEvent<HTMLInputElement>) => void)
-      | undefined,
+    searchChange: undefined as ((event: React.ChangeEvent<HTMLInputElement>) => void) | undefined,
     sortKey: undefined as (() => void) | undefined,
     emit: (type: keyof StorageEventMap, payload: unknown) =>
       listeners.get(type)?.forEach((listener) => listener(payload)),
@@ -46,9 +44,7 @@ vi.mock('@rozenite/plugin-bridge', () => ({
 }));
 vi.mock('@rozenite/ui', async () => {
   const React = await import('react');
-  const PassThrough = ({ children }: { children?: ReactNode }) => (
-    <>{children}</>
-  );
+  const PassThrough = ({ children }: { children?: ReactNode }) => <>{children}</>;
   const PluginShell = Object.assign(PassThrough, { Body: PassThrough });
   const Split = Object.assign(PassThrough, {
     Pane: PassThrough,
@@ -87,25 +83,16 @@ vi.mock('@rozenite/ui', async () => {
       'aria-label'?: string;
       title?: string;
     }) => (
-      <button
-        onClick={onClick}
-        disabled={disabled}
-        aria-label={ariaLabel}
-        title={title}
-      >
+      <button onClick={onClick} disabled={disabled} aria-label={ariaLabel} title={title}>
         {children}
       </button>
     ),
   });
   return {
     Badge: PassThrough,
-    Button: ({
-      children,
-      onClick,
-    }: {
-      children?: ReactNode;
-      onClick?: () => void;
-    }) => <button onClick={onClick}>{children}</button>,
+    Button: ({ children, onClick }: { children?: ReactNode; onClick?: () => void }) => (
+      <button onClick={onClick}>{children}</button>
+    ),
     ConfirmDialog: () => null,
     EmptyState: () => <div />,
     PluginShell,
@@ -131,9 +118,7 @@ vi.mock('@rozenite/ui', async () => {
       data: { key: string }[];
       onEndReached?: () => void;
       onRowClick?: (entry: { key: string }) => void;
-      onSortingChange?: (
-        updater: (current: SortingItem[]) => SortingItem[],
-      ) => void;
+      onSortingChange?: (updater: (current: SortingItem[]) => SortingItem[]) => void;
     }) => {
       mocks.sortKey = () => {
         onSortingChange?.((current) => {
@@ -202,9 +187,7 @@ const renderPanel = async () => {
   return { root, container };
 };
 const discover = async () => {
-  const request = mocks.client.send.mock.calls.find(
-    ([type]) => type === 'discover-storages',
-  )?.[1];
+  const request = mocks.client.send.mock.calls.find(([type]) => type === 'discover-storages')?.[1];
   await act(async () =>
     mocks.emit('storage-descriptors', {
       type: 'storage-descriptors',
@@ -219,11 +202,7 @@ describe('StoragePanel preview query cutover', () => {
     mocks.reset();
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     mocks.client.request.mockImplementation(
-      ({
-        payload,
-      }: {
-        payload: { type: string; cursor?: string; key?: string };
-      }) => {
+      ({ payload }: { payload: { type: string; cursor?: string; key?: string } }) => {
         if (payload.type === 'list-entry-previews')
           return Promise.resolve(previewResponse(payload.cursor));
         if (payload.type === 'get-entry')
@@ -253,9 +232,7 @@ describe('StoragePanel preview query cutover', () => {
     await discover();
     expect(container.textContent).toContain('1');
     await act(async () => {
-      await vi.waitFor(() =>
-        expect(mocks.client.request).toHaveBeenCalledTimes(1),
-      );
+      await vi.waitFor(() => expect(mocks.client.request).toHaveBeenCalledTimes(1));
       await vi.waitFor(() =>
         expect(
           Array.from(container.querySelectorAll('button')).some(
@@ -271,14 +248,11 @@ describe('StoragePanel preview query cutover', () => {
       edge?.click();
       edge?.click();
     });
-    await vi.waitFor(() =>
-      expect(mocks.client.request).toHaveBeenCalledTimes(2),
-    );
-    expect(
-      mocks.client.request.mock.calls.map(
-        ([options]) => options.payload.cursor,
-      ),
-    ).toEqual([undefined, 'next']);
+    await vi.waitFor(() => expect(mocks.client.request).toHaveBeenCalledTimes(2));
+    expect(mocks.client.request.mock.calls.map(([options]) => options.payload.cursor)).toEqual([
+      undefined,
+      'next',
+    ]);
     await act(async () => root.unmount());
   });
 
@@ -295,9 +269,7 @@ describe('StoragePanel preview query cutover', () => {
       } as React.ChangeEvent<HTMLInputElement>);
       vi.advanceTimersByTime(250);
     });
-    await vi.waitFor(() =>
-      expect(mocks.client.request).toHaveBeenCalledTimes(2),
-    );
+    await vi.waitFor(() => expect(mocks.client.request).toHaveBeenCalledTimes(2));
     expect(mocks.client.request.mock.calls[1][0].payload).toMatchObject({
       cursor: undefined,
       search: 'needle',
@@ -317,25 +289,19 @@ describe('StoragePanel preview query cutover', () => {
     };
 
     await act(async () => sortKey());
-    await vi.waitFor(() =>
-      expect(mocks.client.request).toHaveBeenCalledTimes(2),
-    );
+    await vi.waitFor(() => expect(mocks.client.request).toHaveBeenCalledTimes(2));
     expect(mocks.client.request.mock.calls[1][0].payload).toMatchObject({
       keySortDirection: 'descending',
     });
 
     await act(async () => sortKey());
-    await vi.waitFor(() =>
-      expect(mocks.client.request).toHaveBeenCalledTimes(3),
-    );
+    await vi.waitFor(() => expect(mocks.client.request).toHaveBeenCalledTimes(3));
     expect(mocks.client.request.mock.calls[2][0].payload).toMatchObject({
       keySortDirection: 'ascending',
     });
 
     await act(async () => sortKey());
-    await vi.waitFor(() =>
-      expect(mocks.client.request).toHaveBeenCalledTimes(4),
-    );
+    await vi.waitFor(() => expect(mocks.client.request).toHaveBeenCalledTimes(4));
     expect(mocks.client.request.mock.calls[3][0].payload).toMatchObject({
       keySortDirection: 'descending',
     });
@@ -368,17 +334,11 @@ describe('StoragePanel preview query cutover', () => {
     });
     await act(async () =>
       Array.from(container.querySelectorAll('button'))
-        .find(
-          (button) => button.getAttribute('aria-label') === 'Refresh storage',
-        )
+        .find((button) => button.getAttribute('aria-label') === 'Refresh storage')
         ?.click(),
     );
-    await vi.waitFor(() =>
-      expect(mocks.client.request).toHaveBeenCalledTimes(2),
-    );
-    expect(
-      mocks.client.request.mock.calls[1][0].payload.cursor,
-    ).toBeUndefined();
+    await vi.waitFor(() => expect(mocks.client.request).toHaveBeenCalledTimes(2));
+    expect(mocks.client.request.mock.calls[1][0].payload.cursor).toBeUndefined();
     await act(async () => root.unmount());
   });
 
@@ -386,9 +346,7 @@ describe('StoragePanel preview query cutover', () => {
     const { root } = await renderPanel();
     await discover();
     await act(async () => {
-      await vi.waitFor(() =>
-        expect(mocks.client.request).toHaveBeenCalledTimes(1),
-      );
+      await vi.waitFor(() => expect(mocks.client.request).toHaveBeenCalledTimes(1));
       mocks.emit('storage-invalidated', {
         type: 'storage-invalidated',
         target,
@@ -401,9 +359,7 @@ describe('StoragePanel preview query cutover', () => {
         key: 'next',
       });
     });
-    await vi.waitFor(() =>
-      expect(mocks.client.request).toHaveBeenCalledTimes(2),
-    );
+    await vi.waitFor(() => expect(mocks.client.request).toHaveBeenCalledTimes(2));
     await act(async () => root.unmount());
   });
 });

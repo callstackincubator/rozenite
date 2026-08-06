@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "ignorePatterns": [
+    "**/dist",
+    "**/coverage",
+    "/.nx/cache",
+    "/.nx/workspace-data",
+    "/pnpm-lock.yaml",
+    "**/*.md",
+    "apps/playground/android",
+    "apps/playground/ios"
+  ]
+}

@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  classifyValue,
-  getChildKeys,
-  getContainerSummary,
-  isExpandable,
-} from './json-node';
+import { classifyValue, getChildKeys, getContainerSummary, isExpandable } from './json-node';
 
 describe('classifyValue', () => {
   it('classifies primitives', () => {

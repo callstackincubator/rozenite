@@ -60,8 +60,6 @@ export const ConnectionDiagram = ({
       <Node {...to} />
     </div>
 
-    {caption ? (
-      <figcaption className={styles.caption}>{caption}</figcaption>
-    ) : null}
+    {caption ? <figcaption className={styles.caption}>{caption}</figcaption> : null}
   </figure>
 );

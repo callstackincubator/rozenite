@@ -1,18 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import {
-  formatAgentCommand,
-  paginateRows,
-} from '../commands/agent/output-shaping.js';
+import { formatAgentCommand, paginateRows } from '../commands/agent/output-shaping.js';
 
 describe('agent output shaping (CLI-only)', () => {
   it('supports cursor pagination across pages', () => {
-    const rows = [
-      { name: 'a' },
-      { name: 'b' },
-      { name: 'c' },
-      { name: 'd' },
-      { name: 'e' },
-    ];
+    const rows = [{ name: 'a' }, { name: 'b' }, { name: 'c' }, { name: 'd' }, { name: 'e' }];
 
     const first = paginateRows(rows, {
       kind: 'tools',
@@ -57,14 +48,14 @@ describe('agent output shaping (CLI-only)', () => {
   });
 
   it('makes next commands safe to paste into a POSIX shell', () => {
-    expect(
-      formatAgentCommand(['domains', '--session', "session with ' quote"]),
-    ).toBe("npx rozenite agent domains --session 'session with '\"'\"' quote'");
+    expect(formatAgentCommand(['domains', '--session', "session with ' quote"])).toBe(
+      "npx rozenite agent domains --session 'session with '\"'\"' quote'",
+    );
   });
 
   it('emits slash-containing domain ids unquoted and shell-safe', () => {
-    expect(
-      formatAgentCommand(['avasapp/ably', 'tools', '--cursor', 'cursor']),
-    ).toBe('npx rozenite agent avasapp/ably tools --cursor cursor');
+    expect(formatAgentCommand(['avasapp/ably', 'tools', '--cursor', 'cursor'])).toBe(
+      'npx rozenite agent avasapp/ably tools --cursor cursor',
+    );
   });
 });

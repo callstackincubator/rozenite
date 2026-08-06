@@ -8,9 +8,7 @@ export const normalizePageLimit = (rawLimit: unknown): number => {
 
   const parsed = Number(rawLimit);
   if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 1) {
-    throw new Error(
-      `"limit" must be an integer between 1 and ${MAX_PAGE_LIMIT}`,
-    );
+    throw new Error(`"limit" must be an integer between 1 and ${MAX_PAGE_LIMIT}`);
   }
 
   return Math.min(parsed, MAX_PAGE_LIMIT);

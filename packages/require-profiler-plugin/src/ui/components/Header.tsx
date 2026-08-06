@@ -58,9 +58,7 @@ export const Header = ({
               className="btn btn-icon"
               onClick={onNextChain}
               title="Next chain"
-              disabled={
-                loading || (currentChainIndex ?? 0) === (totalChains ?? 0) - 1
-              }
+              disabled={loading || (currentChainIndex ?? 0) === (totalChains ?? 0) - 1}
               aria-label="Next chain"
             >
               <svg

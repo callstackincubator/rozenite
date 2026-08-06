@@ -312,13 +312,11 @@ describe('handleImportEntries', () => {
   it('returns predictable errors for malformed and unknown preview targets', async () => {
     const view = buildView();
 
-    await expect(handleImportPreviewRequest([view], {})).resolves.toMatchObject(
-      {
-        type: 'storage-request-error',
-        requestId: '',
-        code: 'INVALID_REQUEST',
-      },
-    );
+    await expect(handleImportPreviewRequest([view], {})).resolves.toMatchObject({
+      type: 'storage-request-error',
+      requestId: '',
+      code: 'INVALID_REQUEST',
+    });
     await expect(
       handleImportPreviewRequest([view], {
         type: 'preview-import',

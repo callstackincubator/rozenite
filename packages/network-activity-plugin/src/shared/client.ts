@@ -26,5 +26,4 @@ export type NetworkActivityEventMap = {
   WebSocketEventMap &
   SSEEventMap;
 
-export type NetworkActivityDevToolsClient =
-  RozeniteDevToolsClient<NetworkActivityEventMap>;
+export type NetworkActivityDevToolsClient = RozeniteDevToolsClient<NetworkActivityEventMap>;

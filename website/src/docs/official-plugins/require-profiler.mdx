@@ -34,9 +34,7 @@ Add the require profiler instrumentation to your Metro configuration using the `
 ```javascript title="metro.config.js"
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withRozenite } = require('@rozenite/metro');
-const {
-  withRozeniteRequireProfiler,
-} = require('@rozenite/require-profiler-plugin/metro');
+const { withRozeniteRequireProfiler } = require('@rozenite/require-profiler-plugin/metro');
 
 const defaultConfig = getDefaultConfig(__dirname);
 

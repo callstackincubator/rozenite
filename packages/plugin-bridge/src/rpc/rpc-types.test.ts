@@ -16,9 +16,7 @@ type TestMethods = {
 };
 
 function checksParamsAndResultInference(rpc: RozeniteRpc<TestMethods>) {
-  expectTypeOf(
-    rpc.method('getUser').invoke({ id: '1' }),
-  ).resolves.toEqualTypeOf<{
+  expectTypeOf(rpc.method('getUser').invoke({ id: '1' })).resolves.toEqualTypeOf<{
     id: string;
     name: string;
   }>();

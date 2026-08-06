@@ -4,11 +4,7 @@ import {
   type AgentToolContract,
   type JSONSchema7,
 } from '@rozenite/agent-shared';
-import type {
-  FetchStatus,
-  MutationStatus,
-  QueryStatus,
-} from '@tanstack/react-query';
+import type { FetchStatus, MutationStatus, QueryStatus } from '@tanstack/react-query';
 import type { applyTanStackQueryDevtoolsAction } from '../react-native/devtools-actions';
 
 export const TANSTACK_QUERY_AGENT_PLUGIN_ID = '@rozenite/tanstack-query-plugin';
@@ -22,10 +18,9 @@ export type TanStackQueryAgentQueryHashInput = {
   queryHash: string;
 };
 
-export type TanStackQueryAgentQueryToggleInput =
-  TanStackQueryAgentQueryHashInput & {
-    enabled: boolean;
-  };
+export type TanStackQueryAgentQueryToggleInput = TanStackQueryAgentQueryHashInput & {
+  enabled: boolean;
+};
 
 export type TanStackQueryAgentMutationIdInput = {
   mutationId: number;
@@ -171,14 +166,12 @@ export type TanStackQueryGetCacheSummaryArgs = undefined;
 export type TanStackQueryGetCacheSummaryResult = TanStackQueryCacheSummary;
 export type TanStackQueryGetOnlineStatusArgs = undefined;
 export type TanStackQueryGetOnlineStatusResult = { online: boolean };
-export type TanStackQuerySetOnlineStatusArgs =
-  TanStackQueryAgentOnlineStatusInput;
+export type TanStackQuerySetOnlineStatusArgs = TanStackQueryAgentOnlineStatusInput;
 export type TanStackQuerySetOnlineStatusResult = { online: boolean };
 export type TanStackQueryListQueriesArgs = TanStackQueryAgentPaginationInput;
 export type TanStackQueryGetQueryDetailsArgs = TanStackQueryAgentQueryHashInput;
 export type TanStackQueryRefetchQueryArgs = TanStackQueryAgentQueryHashInput;
-export type TanStackQuerySetQueryLoadingArgs =
-  TanStackQueryAgentQueryToggleInput;
+export type TanStackQuerySetQueryLoadingArgs = TanStackQueryAgentQueryToggleInput;
 export type TanStackQuerySetQueryErrorArgs = TanStackQueryAgentQueryToggleInput;
 export type TanStackQueryInvalidateQueryArgs = TanStackQueryAgentQueryHashInput;
 export type TanStackQueryResetQueryArgs = TanStackQueryAgentQueryHashInput;
@@ -186,8 +179,7 @@ export type TanStackQueryRemoveQueryArgs = TanStackQueryAgentQueryHashInput;
 export type TanStackQueryClearQueryCacheArgs = undefined;
 export type TanStackQueryClearQueryCacheResult = TanStackQueryActionResult;
 export type TanStackQueryListMutationsArgs = TanStackQueryAgentPaginationInput;
-export type TanStackQueryGetMutationDetailsArgs =
-  TanStackQueryAgentMutationIdInput;
+export type TanStackQueryGetMutationDetailsArgs = TanStackQueryAgentMutationIdInput;
 export type TanStackQueryClearMutationCacheArgs = undefined;
 export type TanStackQueryClearMutationCacheResult = TanStackQueryActionResult;
 
@@ -208,8 +200,7 @@ const mutationActionProperties = {
 const paginationProperties = {
   limit: {
     type: 'number',
-    description:
-      'Maximum number of items to return. Defaults to 20. Maximum 100.',
+    description: 'Maximum number of items to return. Defaults to 20. Maximum 100.',
   },
   cursor: {
     type: 'string',
@@ -228,8 +219,7 @@ export const tanstackQueryToolDefinitions = {
     TanStackQueryGetCacheSummaryResult
   >({
     name: 'get-cache-summary',
-    description:
-      'Return aggregate TanStack Query cache health and count information.',
+    description: 'Return aggregate TanStack Query cache health and count information.',
     inputSchema: emptyInputSchema,
   }),
   getOnlineStatus: defineAgentToolContract<
@@ -245,15 +235,13 @@ export const tanstackQueryToolDefinitions = {
     TanStackQuerySetOnlineStatusResult
   >({
     name: 'set-online-status',
-    description:
-      'Set the TanStack Query onlineManager status for testing offline/online behavior.',
+    description: 'Set the TanStack Query onlineManager status for testing offline/online behavior.',
     inputSchema: {
       type: 'object',
       properties: {
         online: {
           type: 'boolean',
-          description:
-            'Whether the TanStack Query onlineManager should be online.',
+          description: 'Whether the TanStack Query onlineManager should be online.',
         },
       },
       required: ['online'],
@@ -283,13 +271,7 @@ export const tanstackQueryToolDefinitions = {
         'hasData',
         'hasError',
       ],
-      defaultFields: [
-        'queryHash',
-        'queryKey',
-        'status',
-        'fetchStatus',
-        'hasError',
-      ],
+      defaultFields: ['queryHash', 'queryKey', 'status', 'fetchStatus', 'hasError'],
     },
   }),
   getQueryDetails: defineAgentToolContract<
@@ -297,18 +279,14 @@ export const tanstackQueryToolDefinitions = {
     TanStackQueryGetQueryDetailsResult
   >({
     name: 'get-query-details',
-    description:
-      'Return a JSON-safe TanStack Query query snapshot and observer summary.',
+    description: 'Return a JSON-safe TanStack Query query snapshot and observer summary.',
     inputSchema: {
       type: 'object',
       properties: queryActionProperties,
       required: ['queryHash'],
     },
   }),
-  refetchQuery: defineAgentToolContract<
-    TanStackQueryRefetchQueryArgs,
-    TanStackQueryActionResult
-  >({
+  refetchQuery: defineAgentToolContract<TanStackQueryRefetchQueryArgs, TanStackQueryActionResult>({
     name: 'refetch-query',
     description: 'Refetch a TanStack Query query by queryHash.',
     inputSchema: {
@@ -330,32 +308,30 @@ export const tanstackQueryToolDefinitions = {
         ...queryActionProperties,
         enabled: {
           type: 'boolean',
-          description:
-            'Whether the loading-state simulation should be enabled.',
+          description: 'Whether the loading-state simulation should be enabled.',
         },
       },
       required: ['queryHash', 'enabled'],
     },
   }),
-  setQueryError: defineAgentToolContract<
-    TanStackQuerySetQueryErrorArgs,
-    TanStackQueryActionResult
-  >({
-    name: 'set-query-error',
-    description:
-      'Enable or disable TanStack Query error-state simulation for a query by queryHash.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        ...queryActionProperties,
-        enabled: {
-          type: 'boolean',
-          description: 'Whether the error-state simulation should be enabled.',
+  setQueryError: defineAgentToolContract<TanStackQuerySetQueryErrorArgs, TanStackQueryActionResult>(
+    {
+      name: 'set-query-error',
+      description:
+        'Enable or disable TanStack Query error-state simulation for a query by queryHash.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          ...queryActionProperties,
+          enabled: {
+            type: 'boolean',
+            description: 'Whether the error-state simulation should be enabled.',
+          },
         },
+        required: ['queryHash', 'enabled'],
       },
-      required: ['queryHash', 'enabled'],
     },
-  }),
+  ),
   invalidateQuery: defineAgentToolContract<
     TanStackQueryInvalidateQueryArgs,
     TanStackQueryActionResult
@@ -368,10 +344,7 @@ export const tanstackQueryToolDefinitions = {
       required: ['queryHash'],
     },
   }),
-  resetQuery: defineAgentToolContract<
-    TanStackQueryResetQueryArgs,
-    TanStackQueryActionResult
-  >({
+  resetQuery: defineAgentToolContract<TanStackQueryResetQueryArgs, TanStackQueryActionResult>({
     name: 'reset-query',
     description: 'Reset a TanStack Query query by queryHash.',
     inputSchema: {
@@ -380,10 +353,7 @@ export const tanstackQueryToolDefinitions = {
       required: ['queryHash'],
     },
   }),
-  removeQuery: defineAgentToolContract<
-    TanStackQueryRemoveQueryArgs,
-    TanStackQueryActionResult
-  >({
+  removeQuery: defineAgentToolContract<TanStackQueryRemoveQueryArgs, TanStackQueryActionResult>({
     name: 'remove-query',
     description: 'Remove a TanStack Query query from the cache by queryHash.',
     inputSchema: {
@@ -405,8 +375,7 @@ export const tanstackQueryToolDefinitions = {
     TanStackQueryListMutationsResult
   >({
     name: 'list-mutations',
-    description:
-      'List TanStack Query mutation summaries using cursor pagination.',
+    description: 'List TanStack Query mutation summaries using cursor pagination.',
     inputSchema: {
       type: 'object',
       properties: paginationProperties,
@@ -431,8 +400,7 @@ export const tanstackQueryToolDefinitions = {
     TanStackQueryGetMutationDetailsResult
   >({
     name: 'get-mutation-details',
-    description:
-      'Return a JSON-safe TanStack Query mutation snapshot for a mutationId.',
+    description: 'Return a JSON-safe TanStack Query mutation snapshot for a mutationId.',
     inputSchema: {
       type: 'object',
       properties: mutationActionProperties,

@@ -1,10 +1,4 @@
-import {
-  Browser,
-  Globe,
-  PuzzlePiece,
-  Stack,
-  type Icon,
-} from '@phosphor-icons/react';
+import { Browser, Globe, PuzzlePiece, Stack, type Icon } from '@phosphor-icons/react';
 
 import { ActionButton } from '../../components/action-button/action-button';
 import { CommandLine } from '../../components/command-line/command-line';

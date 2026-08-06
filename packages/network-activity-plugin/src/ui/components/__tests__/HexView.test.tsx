@@ -26,15 +26,12 @@ describe('HexView', () => {
 
   it('renders a fully-formatted row with the post-byte-8 gap and ASCII column', () => {
     const bytes = new Uint8Array([
-      0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x21,
-      0x0a, 0x0d, 0x09, 0xff,
+      0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x0a, 0x0d, 0x09,
+      0xff,
     ]);
     render(<HexView bytes={bytes} />);
     expect(
-      screen.getByText(
-        '48 65 6C 6C 6F 20 77 6F  72 6C 64 21 0A 0D 09 FF',
-        preserveWhitespace,
-      ),
+      screen.getByText('48 65 6C 6C 6F 20 77 6F  72 6C 64 21 0A 0D 09 FF', preserveWhitespace),
     ).toBeInTheDocument();
     expect(screen.getByText('|Hello world!....|')).toBeInTheDocument();
   });

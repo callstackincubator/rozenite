@@ -16,10 +16,7 @@ const parseThreshold = (value: string): number | null => {
   return Number.isFinite(parsedValue) ? parsedValue : null;
 };
 
-const matchesStatusFilter = (
-  statusCode: number | undefined,
-  statusFilter: string,
-) => {
+const matchesStatusFilter = (statusCode: number | undefined, statusFilter: string) => {
   const normalizedFilter = statusFilter.trim().toLowerCase();
   if (!normalizedFilter) {
     return true;
@@ -67,9 +64,8 @@ const isFailedStatus = (status: ProcessedRequest['status']) => {
   return ['failed', 'error'].includes(status);
 };
 
-const isHttpMethod = (
-  method: ProcessedRequest['method'],
-): method is HttpMethod => method !== 'WS' && method !== 'SSE';
+const isHttpMethod = (method: ProcessedRequest['method']): method is HttpMethod =>
+  method !== 'WS' && method !== 'SSE';
 
 const extractDomainAndPath = (url: string) => {
   try {
@@ -95,8 +91,7 @@ export const matchesRequestFilter = (
 
   if (
     filter.advanced.methods.size > 0 &&
-    (!isHttpMethod(request.method) ||
-      !filter.advanced.methods.has(request.method))
+    (!isHttpMethod(request.method) || !filter.advanced.methods.has(request.method))
   ) {
     return false;
   }
@@ -119,10 +114,7 @@ export const matchesRequestFilter = (
   }
 
   const contentTypeFilter = filter.advanced.contentType.trim().toLowerCase();
-  if (
-    contentTypeFilter &&
-    !request.contentType?.toLowerCase().includes(contentTypeFilter)
-  ) {
+  if (contentTypeFilter && !request.contentType?.toLowerCase().includes(contentTypeFilter)) {
     return false;
   }
 

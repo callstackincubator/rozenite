@@ -16,10 +16,7 @@ import type {
   ControlsSnapshotEvent,
   ControlsUpdateResultEvent,
 } from '../shared/messaging';
-import type {
-  ControlsItemSnapshot,
-  ControlsSectionSnapshot,
-} from '../shared/types';
+import type { ControlsItemSnapshot, ControlsSectionSnapshot } from '../shared/types';
 import '@rozenite/ui/styles.css';
 
 type ItemUiState = {
@@ -27,8 +24,7 @@ type ItemUiState = {
   message?: string;
 };
 
-const getItemKey = (sectionId: string, itemId: string) =>
-  `${sectionId}:${itemId}`;
+const getItemKey = (sectionId: string, itemId: string) => `${sectionId}:${itemId}`;
 
 const createRequestId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -47,12 +43,8 @@ const RowShell = ({
   <div className="flex items-start justify-between gap-4 py-3">
     <div className="min-w-0">
       <div className="text-sm font-medium text-foreground">{title}</div>
-      {description ? (
-        <div className="mt-1 text-xs text-muted-foreground">{description}</div>
-      ) : null}
-      {errorMessage ? (
-        <div className="mt-1 text-xs text-destructive">{errorMessage}</div>
-      ) : null}
+      {description ? <div className="mt-1 text-xs text-muted-foreground">{description}</div> : null}
+      {errorMessage ? <div className="mt-1 text-xs text-destructive">{errorMessage}</div> : null}
     </div>
     {children}
   </div>
@@ -70,11 +62,7 @@ const ToggleRow = ({
   onToggle: (sectionId: string, itemId: string, value: boolean) => void;
 }) => {
   return (
-    <RowShell
-      title={item.title}
-      description={item.description}
-      errorMessage={uiState?.message}
-    >
+    <RowShell title={item.title} description={item.description} errorMessage={uiState?.message}>
       <Switch
         aria-label={item.title}
         checked={item.value}
@@ -97,11 +85,7 @@ const ButtonRow = ({
   onPress: (sectionId: string, itemId: string) => void;
 }) => {
   return (
-    <RowShell
-      title={item.title}
-      description={item.description}
-      errorMessage={uiState?.message}
-    >
+    <RowShell title={item.title} description={item.description} errorMessage={uiState?.message}>
       <Button
         size="compact"
         variant="outline"
@@ -126,11 +110,7 @@ const SelectRow = ({
   onSelect: (sectionId: string, itemId: string, value: string) => void;
 }) => {
   return (
-    <RowShell
-      title={item.title}
-      description={item.description}
-      errorMessage={uiState?.message}
-    >
+    <RowShell title={item.title} description={item.description} errorMessage={uiState?.message}>
       <Select
         value={item.value}
         disabled={item.disabled || uiState?.pending}
@@ -155,11 +135,7 @@ const SelectRow = ({
   );
 };
 
-const TextRow = ({
-  item,
-}: {
-  item: Extract<ControlsItemSnapshot, { type: 'text' }>;
-}) => {
+const TextRow = ({ item }: { item: Extract<ControlsItemSnapshot, { type: 'text' }> }) => {
   return (
     <RowShell title={item.title} description={item.description}>
       <div className="max-w-[50%] rounded-md bg-muted px-3 py-1.5 text-right text-xs text-muted-foreground">
@@ -187,11 +163,7 @@ const InputRow = ({
   const isChanged = draftValue !== item.value;
 
   return (
-    <RowShell
-      title={item.title}
-      description={item.description}
-      errorMessage={uiState?.message}
-    >
+    <RowShell title={item.title} description={item.description} errorMessage={uiState?.message}>
       <div className="flex min-w-[240px] items-center gap-2">
         <Input
           className="flex-1"
@@ -199,9 +171,7 @@ const InputRow = ({
           value={draftValue}
           placeholder={item.placeholder}
           disabled={item.disabled || uiState?.pending}
-          onChange={(event) =>
-            onDraftChange(sectionId, item.id, event.target.value)
-          }
+          onChange={(event) => onDraftChange(sectionId, item.id, event.target.value)}
         />
         <Button
           size="compact"
@@ -234,11 +204,7 @@ const renderItem = ({
   onToggle: (sectionId: string, itemId: string, value: boolean) => void;
   onPress: (sectionId: string, itemId: string) => void;
   onSelect: (sectionId: string, itemId: string, value: string) => void;
-  onInputDraftChange: (
-    sectionId: string,
-    itemId: string,
-    value: string,
-  ) => void;
+  onInputDraftChange: (sectionId: string, itemId: string, value: string) => void;
   onInputApply: (sectionId: string, itemId: string) => void;
 }) => {
   if (item.type === 'text') {
@@ -246,25 +212,11 @@ const renderItem = ({
   }
 
   if (item.type === 'toggle') {
-    return (
-      <ToggleRow
-        sectionId={sectionId}
-        item={item}
-        uiState={uiState}
-        onToggle={onToggle}
-      />
-    );
+    return <ToggleRow sectionId={sectionId} item={item} uiState={uiState} onToggle={onToggle} />;
   }
 
   if (item.type === 'select') {
-    return (
-      <SelectRow
-        sectionId={sectionId}
-        item={item}
-        uiState={uiState}
-        onSelect={onSelect}
-      />
-    );
+    return <SelectRow sectionId={sectionId} item={item} uiState={uiState} onSelect={onSelect} />;
   }
 
   if (item.type === 'input') {
@@ -280,28 +232,15 @@ const renderItem = ({
     );
   }
 
-  return (
-    <ButtonRow
-      sectionId={sectionId}
-      item={item}
-      uiState={uiState}
-      onPress={onPress}
-    />
-  );
+  return <ButtonRow sectionId={sectionId} item={item} uiState={uiState} onPress={onPress} />;
 };
 
 export default function ControlsPanel() {
   const [sections, setSections] = useState<ControlsSectionSnapshot[]>([]);
-  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(
-    null,
-  );
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [itemUiState, setItemUiState] = useState<Map<string, ItemUiState>>(
-    new Map(),
-  );
-  const [inputDrafts, setInputDrafts] = useState<Map<string, string>>(
-    new Map(),
-  );
+  const [itemUiState, setItemUiState] = useState<Map<string, ItemUiState>>(new Map());
+  const [inputDrafts, setInputDrafts] = useState<Map<string, string>>(new Map());
   const committedInputValuesRef = useRef<Map<string, string>>(new Map());
 
   const client = useRozeniteDevToolsClient<ControlsEventMap>({
@@ -313,56 +252,48 @@ export default function ControlsPanel() {
       return;
     }
 
-    const snapshotSubscription = client.onMessage(
-      'snapshot',
-      (event: ControlsSnapshotEvent) => {
-        setSections(event.sections);
-        setSelectedSectionId((previous) =>
-          event.sections.some((section) => section.id === previous)
-            ? previous
-            : (event.sections[0]?.id ?? null),
-        );
-        setLoading(false);
+    const snapshotSubscription = client.onMessage('snapshot', (event: ControlsSnapshotEvent) => {
+      setSections(event.sections);
+      setSelectedSectionId((previous) =>
+        event.sections.some((section) => section.id === previous)
+          ? previous
+          : (event.sections[0]?.id ?? null),
+      );
+      setLoading(false);
 
-        const nextCommittedValues = new Map<string, string>();
-        event.sections.forEach((section) => {
-          section.items.forEach((item) => {
-            if (item.type === 'input') {
-              nextCommittedValues.set(
-                getItemKey(section.id, item.id),
-                item.value,
-              );
-            }
-          });
+      const nextCommittedValues = new Map<string, string>();
+      event.sections.forEach((section) => {
+        section.items.forEach((item) => {
+          if (item.type === 'input') {
+            nextCommittedValues.set(getItemKey(section.id, item.id), item.value);
+          }
+        });
+      });
+
+      setInputDrafts((previous) => {
+        const next = new Map(previous);
+
+        next.forEach((_value, key) => {
+          if (!nextCommittedValues.has(key)) {
+            next.delete(key);
+          }
         });
 
-        setInputDrafts((previous) => {
-          const next = new Map(previous);
+        nextCommittedValues.forEach((committedValue, key) => {
+          const previousCommitted = committedInputValuesRef.current.get(key);
+          const previousDraft = previous.get(key);
+          const isDirty = previousDraft !== undefined && previousDraft !== previousCommitted;
 
-          next.forEach((_value, key) => {
-            if (!nextCommittedValues.has(key)) {
-              next.delete(key);
-            }
-          });
-
-          nextCommittedValues.forEach((committedValue, key) => {
-            const previousCommitted = committedInputValuesRef.current.get(key);
-            const previousDraft = previous.get(key);
-            const isDirty =
-              previousDraft !== undefined &&
-              previousDraft !== previousCommitted;
-
-            if (!isDirty || previousDraft === committedValue) {
-              next.set(key, committedValue);
-            }
-          });
-
-          return next;
+          if (!isDirty || previousDraft === committedValue) {
+            next.set(key, committedValue);
+          }
         });
 
-        committedInputValuesRef.current = nextCommittedValues;
-      },
-    );
+        return next;
+      });
+
+      committedInputValuesRef.current = nextCommittedValues;
+    });
     const updateResultSubscription = client.onMessage(
       'update-result',
       (event: ControlsUpdateResultEvent) => {
@@ -389,11 +320,7 @@ export default function ControlsPanel() {
     };
   }, [client]);
 
-  const sendUpdateRequest = (
-    sectionId: string,
-    itemId: string,
-    value: boolean | string,
-  ) => {
+  const sendUpdateRequest = (sectionId: string, itemId: string, value: boolean | string) => {
     if (!client) {
       return;
     }
@@ -440,11 +367,7 @@ export default function ControlsPanel() {
     sendUpdateRequest(sectionId, itemId, value);
   };
 
-  const handleInputDraftChange = (
-    sectionId: string,
-    itemId: string,
-    value: string,
-  ) => {
+  const handleInputDraftChange = (sectionId: string, itemId: string, value: string) => {
     const key = getItemKey(sectionId, itemId);
 
     setInputDrafts((previous) => {
@@ -477,9 +400,7 @@ export default function ControlsPanel() {
     sendUpdateRequest(sectionId, itemId, draftValue);
   };
 
-  const selectedSection = sections.find(
-    (section) => section.id === selectedSectionId,
-  );
+  const selectedSection = sections.find((section) => section.id === selectedSectionId);
 
   return (
     <PluginShell className="dark">
@@ -513,9 +434,7 @@ export default function ControlsPanel() {
             <Split.Handle />
             <Split.Pane>
               <section className="h-full overflow-auto p-6">
-                <h1 className="text-base font-semibold text-foreground">
-                  {selectedSection.title}
-                </h1>
+                <h1 className="text-base font-semibold text-foreground">{selectedSection.title}</h1>
                 {selectedSection.description ? (
                   <p className="mt-1 text-sm text-muted-foreground">
                     {selectedSection.description}
@@ -527,12 +446,8 @@ export default function ControlsPanel() {
                       {renderItem({
                         sectionId: selectedSection.id,
                         item,
-                        uiState: itemUiState.get(
-                          getItemKey(selectedSection.id, item.id),
-                        ),
-                        inputDraft: inputDrafts.get(
-                          getItemKey(selectedSection.id, item.id),
-                        ),
+                        uiState: itemUiState.get(getItemKey(selectedSection.id, item.id)),
+                        inputDraft: inputDrafts.get(getItemKey(selectedSection.id, item.id)),
                         onToggle: handleToggle,
                         onPress: handlePress,
                         onSelect: handleSelect,

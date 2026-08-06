@@ -1,10 +1,6 @@
 import type { MMKV as MMKVV3 } from 'react-native-mmkv-v3';
 import type { MMKV as MMKVV4 } from 'react-native-mmkv-v4';
-import type {
-  StorageAdapter,
-  StorageEntry,
-  StorageNode,
-} from '../../shared/types';
+import type { StorageAdapter, StorageEntry, StorageNode } from '../../shared/types';
 import { DEFAULT_SUPPORTED_TYPES } from '../../shared/types';
 
 type MMKV = MMKVV3 | MMKVV4;
@@ -44,9 +40,7 @@ const normalizeStorages = (storages: MMKV[] | Record<string, MMKV>) => {
       );
     }
 
-    return Object.fromEntries(
-      (storages as MMKVV3[]).map((storage) => [storage['id'], storage]),
-    );
+    return Object.fromEntries((storages as MMKVV3[]).map((storage) => [storage['id'], storage]));
   }
 
   return storages;
@@ -64,8 +58,7 @@ const getMMKVAdapter = (mmkv: MMKV): MMKVAdapter => {
       delete: (key) => mmkv.remove(key),
       getAllKeys: () => mmkv.getAllKeys(),
       clear,
-      addOnValueChangedListener: (callback) =>
-        mmkv.addOnValueChangedListener(callback),
+      addOnValueChangedListener: (callback) => mmkv.addOnValueChangedListener(callback),
     };
   }
 
@@ -78,8 +71,7 @@ const getMMKVAdapter = (mmkv: MMKV): MMKVAdapter => {
     delete: (key) => mmkv.delete(key),
     getAllKeys: () => mmkv.getAllKeys(),
     clear,
-    addOnValueChangedListener: (callback) =>
-      mmkv.addOnValueChangedListener(callback),
+    addOnValueChangedListener: (callback) => mmkv.addOnValueChangedListener(callback),
   };
 };
 
@@ -102,10 +94,7 @@ const getMMKVAdapter = (mmkv: MMKV): MMKVAdapter => {
 //      those keys, so the chain falls through.
 //   4. Empty string — intentional `setString(key, "")` lands here once
 //      we've ruled out a non-empty buffer payload at the same key.
-const getEntry = (
-  adapter: MMKVAdapter,
-  key: string,
-): StorageEntry | undefined => {
+const getEntry = (adapter: MMKVAdapter, key: string): StorageEntry | undefined => {
   const stringValue = adapter.getString(key);
   if (stringValue !== undefined && stringValue.length > 0) {
     return { key, type: 'string', value: stringValue };
@@ -145,10 +134,7 @@ const setEntry = (adapter: MMKVAdapter, entry: StorageEntry) => {
   }
 };
 
-const getStorageBlacklist = (
-  config: MMKVBlacklistConfig | undefined,
-  storageId: string,
-) => {
+const getStorageBlacklist = (config: MMKVBlacklistConfig | undefined, storageId: string) => {
   if (!config) {
     return undefined;
   }
@@ -180,10 +166,7 @@ export const createMMKVStorageAdapter = ({
   storages,
   blacklist,
 }: CreateMMKVStorageAdapterOptions): StorageAdapter => {
-  const normalizedStorages = normalizeStorages(storages) as Record<
-    string,
-    MMKV
-  >;
+  const normalizedStorages = normalizeStorages(storages) as Record<string, MMKV>;
 
   const storageNodes: StorageNode[] = Object.entries(normalizedStorages).map(
     ([storageId, storage]) => {

@@ -69,9 +69,7 @@ export interface AgentToolPagination {
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === 'string');
 
-export const isAgentToolPagination = (
-  value: unknown,
-): value is AgentToolPagination => {
+export const isAgentToolPagination = (value: unknown): value is AgentToolPagination => {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false;
   }
@@ -128,8 +126,7 @@ type AgentToolTypeCarrier<TArgs = unknown, TResult = unknown> = {
 };
 
 export interface AgentToolContract<TArgs = unknown, TResult = unknown>
-  extends AgentTool,
-    AgentToolTypeCarrier<TArgs, TResult> {}
+  extends AgentTool, AgentToolTypeCarrier<TArgs, TResult> {}
 
 type AgentToolDescriptorShape = AgentToolTraits & {
   domain: string;
@@ -140,16 +137,13 @@ type AgentToolDescriptorShape = AgentToolTraits & {
 };
 
 export interface AgentToolDescriptor<TArgs = unknown, TResult = unknown>
-  extends AgentToolDescriptorShape,
-    AgentToolTypeCarrier<TArgs, TResult> {}
+  extends AgentToolDescriptorShape, AgentToolTypeCarrier<TArgs, TResult> {}
 
 export type InferAgentToolArgs<TTool> =
   TTool extends AgentToolTypeCarrier<infer TArgs, unknown> ? TArgs : unknown;
 
 export type InferAgentToolResult<TTool> =
-  TTool extends AgentToolTypeCarrier<unknown, infer TResult>
-    ? TResult
-    : unknown;
+  TTool extends AgentToolTypeCarrier<unknown, infer TResult> ? TResult : unknown;
 
 export const defineAgentToolContract = <TArgs, TResult>(
   tool: AgentTool,
@@ -162,13 +156,9 @@ type PaginatedResultShape<TItem> = {
   page: PageEnvelope;
 };
 
-type PaginatedItem<TResult> =
-  TResult extends PaginatedResultShape<infer TItem> ? TItem : never;
+type PaginatedItem<TResult> = TResult extends PaginatedResultShape<infer TItem> ? TItem : never;
 
-type PaginatedItemField<TResult> = Extract<
-  keyof PaginatedItem<TResult>,
-  string
->;
+type PaginatedItemField<TResult> = Extract<keyof PaginatedItem<TResult>, string>;
 
 type PaginatedToolShape<TResult> = AgentTool & {
   pagination: Omit<AgentToolPagination, 'fields' | 'defaultFields'> & {
@@ -218,12 +208,8 @@ export const defineAgentToolDescriptors = <
         description: tool.description,
         inputSchema: tool.inputSchema,
         ...(tool.readOnly !== undefined ? { readOnly: tool.readOnly } : {}),
-        ...(tool.destructive !== undefined
-          ? { destructive: tool.destructive }
-          : {}),
-        ...(tool.idempotent !== undefined
-          ? { idempotent: tool.idempotent }
-          : {}),
+        ...(tool.destructive !== undefined ? { destructive: tool.destructive } : {}),
+        ...(tool.idempotent !== undefined ? { idempotent: tool.idempotent } : {}),
         ...(tool.pagination ? { pagination: tool.pagination } : {}),
       }),
     ]),
@@ -291,9 +277,7 @@ export type AgentErrorEnvelope = {
   error: AgentErrorInfo;
 };
 
-export type AgentResponseEnvelope<TResult> =
-  | AgentSuccessEnvelope<TResult>
-  | AgentErrorEnvelope;
+export type AgentResponseEnvelope<TResult> = AgentSuccessEnvelope<TResult> | AgentErrorEnvelope;
 
 export type GetAgentInfoResponse = {
   info: AgentServerInfo;

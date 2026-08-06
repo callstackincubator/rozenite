@@ -135,18 +135,12 @@ describe('normalizeFetchRequest', () => {
 describe('captureFetchResponseBodyFromBytes', () => {
   it('returns text for JSON, XML, and text content types', async () => {
     const json = new TextEncoder().encode('{"ok":true}');
-    expect(
-      await captureFetchResponseBodyFromBytes(json, 'application/json'),
-    ).toBe('{"ok":true}');
+    expect(await captureFetchResponseBodyFromBytes(json, 'application/json')).toBe('{"ok":true}');
 
     const xml = new TextEncoder().encode('<root />');
-    expect(
-      await captureFetchResponseBodyFromBytes(xml, 'application/xml'),
-    ).toBe('<root />');
+    expect(await captureFetchResponseBodyFromBytes(xml, 'application/xml')).toBe('<root />');
 
-    const svg = new TextEncoder().encode(
-      '<svg xmlns="http://www.w3.org/2000/svg" />',
-    );
+    const svg = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" />');
     expect(await captureFetchResponseBodyFromBytes(svg, 'image/svg+xml')).toBe(
       '<svg xmlns="http://www.w3.org/2000/svg" />',
     );
@@ -154,19 +148,15 @@ describe('captureFetchResponseBodyFromBytes', () => {
 
   it('returns a binary union for non-text bytes under the cap', async () => {
     const bytes = new Uint8Array([1, 2, 3]);
-    expect(
-      await captureFetchResponseBodyFromBytes(bytes, 'application/pdf'),
-    ).toEqual({ kind: 'binary', base64: 'AQID' });
+    expect(await captureFetchResponseBodyFromBytes(bytes, 'application/pdf')).toEqual({
+      kind: 'binary',
+      base64: 'AQID',
+    });
   });
 
   it('short-circuits binary capture above the cap', async () => {
     const bytes = new Uint8Array(BINARY_CAPTURE_SIZE_CAP + 1);
-    expect(
-      await captureFetchResponseBodyFromBytes(
-        bytes,
-        'application/octet-stream',
-      ),
-    ).toEqual({
+    expect(await captureFetchResponseBodyFromBytes(bytes, 'application/octet-stream')).toEqual({
       kind: 'binary-too-large',
       size: BINARY_CAPTURE_SIZE_CAP + 1,
     });

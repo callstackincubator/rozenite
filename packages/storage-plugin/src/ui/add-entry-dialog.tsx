@@ -1,10 +1,6 @@
 import { Button, ConfirmDialog, Dialog, Field, Input } from '@rozenite/ui';
 import { useEffect, useState } from 'react';
-import type {
-  StorageEntry,
-  StorageEntryType,
-  StorageEntryValue,
-} from '../shared/types';
+import type { StorageEntry, StorageEntryType, StorageEntryValue } from '../shared/types';
 import { TypedValueEditor } from './typed-value-editor';
 import { defaultValueForType } from './type-conversion';
 
@@ -49,9 +45,7 @@ export const AddEntryDialog = ({
   const [currentValue, setCurrentValue] = useState<StorageEntryValue | null>(
     defaultValueForType(initialType),
   );
-  const [alert, setAlert] = useState<{ title: string; message: string } | null>(
-    null,
-  );
+  const [alert, setAlert] = useState<{ title: string; message: string } | null>(null);
 
   // Reset state every time the dialog opens, so a previous session's
   // type / value doesn't bleed in.
@@ -96,19 +90,14 @@ export const AddEntryDialog = ({
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (
-      event.key === 'Enter' &&
-      newEntryKey.trim() &&
-      currentType !== 'buffer'
-    ) {
+    if (event.key === 'Enter' && newEntryKey.trim() && currentType !== 'buffer') {
       handleAdd();
     }
   };
 
   // Unsavable when no key, no supported type, or when the value is
   // null — the hex editor signals invalid / empty hex via null.
-  const isAddDisabled =
-    !newEntryKey.trim() || !isCurrentTypeSupported || currentValue === null;
+  const isAddDisabled = !newEntryKey.trim() || !isCurrentTypeSupported || currentValue === null;
 
   return (
     <>

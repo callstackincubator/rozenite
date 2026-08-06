@@ -8,9 +8,7 @@ import {
 } from '../utils/sessionExport';
 
 export const useNetworkActivitySessionExport = () => {
-  const canExportSession = useNetworkActivityStore(
-    (state) => state.networkEntries.size > 0,
-  );
+  const canExportSession = useNetworkActivityStore((state) => state.networkEntries.size > 0);
 
   const exportSession = useCallback(() => {
     const { networkEntries, websocketMessages } = store.getState();
@@ -26,10 +24,7 @@ export const useNetworkActivitySessionExport = () => {
       exportedAt,
     );
 
-    downloadJson(
-      exportData,
-      getNetworkActivitySessionExportFileName(exportedAt),
-    );
+    downloadJson(exportData, getNetworkActivitySessionExportFileName(exportedAt));
   }, []);
 
   return {

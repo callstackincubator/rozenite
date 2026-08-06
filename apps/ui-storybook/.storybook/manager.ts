@@ -2,8 +2,7 @@ import { addons } from 'storybook/manager-api';
 import { create, themes } from 'storybook/theming';
 
 const prefersDark =
-  typeof window !== 'undefined' &&
-  window.matchMedia('(prefers-color-scheme: dark)').matches;
+  typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
 addons.setConfig({
   theme: create({

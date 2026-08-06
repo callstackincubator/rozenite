@@ -2,37 +2,28 @@
   "name": "@rozenite/agent-shared",
   "version": "2.0.0",
   "description": "Shared types and utilities for Rozenite agent packages",
-  "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
   "keywords": [
-    "react-native",
+    "agent",
     "devtools",
-    "agent"
+    "react-native"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
     "url": "https://github.com/callstackincubator/rozenite/issues"
   },
+  "license": "MIT",
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
-  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "build": "vite build",
-    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
-    "test": "vitest --run --passWithNoTests",
-    "clean": "rm -rf dist"
-  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -41,6 +32,15 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "test": "vitest --run --passWithNoTests",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "tslib": "^2.3.0"

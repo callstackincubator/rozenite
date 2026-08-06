@@ -14,8 +14,7 @@ const injectConfig = (config: MetroConfig): MetroConfig => {
     resolver: {
       ...config.resolver,
       resolveRequest: (context, moduleName, platform) => {
-        const resolveRequest =
-          config.resolver?.resolveRequest ?? context.resolveRequest;
+        const resolveRequest = config.resolver?.resolveRequest ?? context.resolveRequest;
 
         if (platform === 'web') {
           if (moduleName.includes('ReactNativeFeatureFlags')) {

@@ -1,13 +1,5 @@
 import { useMemo } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useControlsPluginStore } from '../stores/controlsPluginStore';
 
@@ -15,23 +7,15 @@ export const ControlsPluginScreen = () => {
   const insets = useSafeAreaInsets();
   const counter = useControlsPluginStore((state) => state.counter);
   const releaseLabel = useControlsPluginStore((state) => state.releaseLabel);
-  const selectedEnvironment = useControlsPluginStore(
-    (state) => state.selectedEnvironment,
-  );
+  const selectedEnvironment = useControlsPluginStore((state) => state.selectedEnvironment);
   const status = useControlsPluginStore((state) => state.status);
   const lastActionAt = useControlsPluginStore((state) => state.lastActionAt);
   const notes = useControlsPluginStore((state) => state.notes);
   const featureFlags = useControlsPluginStore((state) => state.featureFlags);
-  const updateReleaseLabel = useControlsPluginStore(
-    (state) => state.updateReleaseLabel,
-  );
-  const selectEnvironment = useControlsPluginStore(
-    (state) => state.selectEnvironment,
-  );
+  const updateReleaseLabel = useControlsPluginStore((state) => state.updateReleaseLabel);
+  const selectEnvironment = useControlsPluginStore((state) => state.selectEnvironment);
   const toggleFlag = useControlsPluginStore((state) => state.toggleFlag);
-  const incrementCounter = useControlsPluginStore(
-    (state) => state.incrementCounter,
-  );
+  const incrementCounter = useControlsPluginStore((state) => state.incrementCounter);
   const markSynced = useControlsPluginStore((state) => state.markSynced);
   const addCheckpoint = useControlsPluginStore((state) => state.addCheckpoint);
   const resetDemo = useControlsPluginStore((state) => state.resetDemo);
@@ -60,8 +44,8 @@ export const ControlsPluginScreen = () => {
     >
       <Text style={styles.title}>Controls Plugin Demo</Text>
       <Text style={styles.subtitle}>
-        Change state locally and from DevTools. The Controls panel should always
-        mirror this screen because the device owns the source of truth.
+        Change state locally and from DevTools. The Controls panel should always mirror this screen
+        because the device owns the source of truth.
       </Text>
 
       <View style={styles.card}>
@@ -76,42 +60,36 @@ export const ControlsPluginScreen = () => {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Feature Flags</Text>
-        {(
-          Object.entries(featureFlags) as Array<
-            [keyof typeof featureFlags, boolean]
-          >
-        ).map(([flag, enabled]) => (
-          <View key={flag} style={styles.row}>
-            <View style={styles.rowText}>
-              <Text style={styles.label}>{flag}</Text>
-              <Text style={styles.helperText}>
-                Toggle locally or from DevTools to validate two-way updates.
-              </Text>
+        {(Object.entries(featureFlags) as Array<[keyof typeof featureFlags, boolean]>).map(
+          ([flag, enabled]) => (
+            <View key={flag} style={styles.row}>
+              <View style={styles.rowText}>
+                <Text style={styles.label}>{flag}</Text>
+                <Text style={styles.helperText}>
+                  Toggle locally or from DevTools to validate two-way updates.
+                </Text>
+              </View>
+              <Switch
+                value={enabled}
+                onValueChange={(nextValue) => toggleFlag(flag, nextValue)}
+                trackColor={{ false: '#374151', true: '#8232FF' }}
+                thumbColor="#ffffff"
+              />
             </View>
-            <Switch
-              value={enabled}
-              onValueChange={(nextValue) => toggleFlag(flag, nextValue)}
-              trackColor={{ false: '#374151', true: '#8232FF' }}
-              thumbColor="#ffffff"
-            />
-          </View>
-        ))}
+          ),
+        )}
       </View>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Environment</Text>
-        <Text style={styles.helperText}>
-          Change it here or from the DevTools select control.
-        </Text>
+        <Text style={styles.helperText}>Change it here or from the DevTools select control.</Text>
         <View style={styles.buttonRow}>
           {(['local', 'staging', 'production'] as const).map((environment) => (
             <DemoButton
               key={environment}
               label={environment}
               onPress={() => selectEnvironment(environment)}
-              variant={
-                selectedEnvironment === environment ? 'primary' : 'secondary'
-              }
+              variant={selectedEnvironment === environment ? 'primary' : 'secondary'}
             />
           ))}
         </View>
@@ -119,9 +97,7 @@ export const ControlsPluginScreen = () => {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Release Label</Text>
-        <Text style={styles.helperText}>
-          Edit it here or from the DevTools input control.
-        </Text>
+        <Text style={styles.helperText}>Edit it here or from the DevTools input control.</Text>
         <TextInput
           style={styles.input}
           value={releaseLabel}
@@ -141,11 +117,7 @@ export const ControlsPluginScreen = () => {
         </View>
         <View style={styles.buttonRow}>
           <DemoButton label="Add Checkpoint" onPress={addCheckpoint} />
-          <DemoButton
-            label="Reset Demo"
-            onPress={resetDemo}
-            variant="secondary"
-          />
+          <DemoButton label="Reset Demo" onPress={resetDemo} variant="secondary" />
         </View>
       </View>
 
@@ -178,12 +150,7 @@ const DemoButton = ({
     style={[styles.button, variant === 'secondary' && styles.secondaryButton]}
     onPress={onPress}
   >
-    <Text
-      style={[
-        styles.buttonLabel,
-        variant === 'secondary' && styles.secondaryButtonLabel,
-      ]}
-    >
+    <Text style={[styles.buttonLabel, variant === 'secondary' && styles.secondaryButtonLabel]}>
       {label}
     </Text>
   </Pressable>

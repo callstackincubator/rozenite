@@ -10,12 +10,7 @@ export type EditEntryDialogProps = {
   entry: MMKVEntry | null;
 };
 
-export const EditEntryDialog = ({
-  isOpen,
-  onClose,
-  onEditEntry,
-  entry,
-}: EditEntryDialogProps) => {
+export const EditEntryDialog = ({ isOpen, onClose, onEditEntry, entry }: EditEntryDialogProps) => {
   const [editValue, setEditValue] = useState('');
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -62,10 +57,7 @@ export const EditEntryDialog = ({
           }
           break;
         case 'boolean':
-          if (
-            editValue.toLowerCase() !== 'true' &&
-            editValue.toLowerCase() !== 'false'
-          ) {
+          if (editValue.toLowerCase() !== 'true' && editValue.toLowerCase() !== 'false') {
             throw new Error('Boolean value must be "true" or "false"');
           }
           newValue = editValue.toLowerCase() === 'true';
@@ -73,16 +65,11 @@ export const EditEntryDialog = ({
         case 'buffer':
           try {
             newValue = JSON.parse(editValue);
-            if (
-              !Array.isArray(newValue) ||
-              !newValue.every((v) => typeof v === 'number')
-            ) {
+            if (!Array.isArray(newValue) || !newValue.every((v) => typeof v === 'number')) {
               throw new Error('Buffer must be an array of numbers');
             }
           } catch {
-            throw new Error(
-              'Invalid buffer format. Use JSON array like [1,2,3]',
-            );
+            throw new Error('Invalid buffer format. Use JSON array like [1,2,3]');
           }
           break;
         default:
@@ -182,22 +169,16 @@ export const EditEntryDialog = ({
         <div className="space-y-4">
           {/* Key Display */}
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1">
-              Key
-            </label>
+            <label className="block text-sm font-medium text-gray-200 mb-1">Key</label>
             <div className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 font-mono">
               {entry.key}
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Key cannot be changed during editing
-            </p>
+            <p className="text-xs text-gray-400 mt-1">Key cannot be changed during editing</p>
           </div>
 
           {/* Type Display */}
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1">
-              Type
-            </label>
+            <label className="block text-sm font-medium text-gray-200 mb-1">Type</label>
             <div className="flex items-center">
               <span
                 className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
@@ -207,9 +188,7 @@ export const EditEntryDialog = ({
                 {entry.type}
               </span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Type cannot be changed during editing
-            </p>
+            <p className="text-xs text-gray-400 mt-1">Type cannot be changed during editing</p>
           </div>
 
           {/* Value Input */}

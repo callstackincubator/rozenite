@@ -10,9 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '../navigation/types';
-import performance, {
-  setResourceLoggingEnabled,
-} from 'react-native-performance';
+import performance, { setResourceLoggingEnabled } from 'react-native-performance';
 
 const NETWORK_TEST_URL = 'https://jsonplaceholder.typicode.com/posts/1';
 
@@ -127,11 +125,7 @@ export const PerformanceMonitorScreen = () => {
       performance.mark(processMark);
 
       // Create intermediate measure
-      performance.measure(
-        `processing-time-${scenarioId}`,
-        startMark,
-        processMark,
-      );
+      performance.measure(`processing-time-${scenarioId}`, startMark, processMark);
 
       // Simulate more work
       setTimeout(() => {
@@ -157,27 +151,21 @@ export const PerformanceMonitorScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Performance Monitor</Text>
       </View>
 
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentInner}
-      >
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
-            Use these buttons to generate performance data that will be captured
-            by the Performance Monitor plugin.
+            Use these buttons to generate performance data that will be captured by the Performance
+            Monitor plugin.
           </Text>
           <Text style={styles.infoText}>
-            Open the Performance Monitor DevTools to see the captured metrics,
-            marks, and measures in real-time.
+            Open the Performance Monitor DevTools to see the captured metrics, marks, and measures
+            in real-time.
           </Text>
         </View>
 
@@ -187,9 +175,7 @@ export const PerformanceMonitorScreen = () => {
             onPress={firePerformanceMetric}
           >
             <Text style={styles.buttonText}>Fire Performance Metric</Text>
-            <Text style={styles.buttonSubtext}>
-              Creates a custom performance metric
-            </Text>
+            <Text style={styles.buttonSubtext}>Creates a custom performance metric</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -197,9 +183,7 @@ export const PerformanceMonitorScreen = () => {
             onPress={firePerformanceMark}
           >
             <Text style={styles.buttonText}>Fire Performance Mark</Text>
-            <Text style={styles.buttonSubtext}>
-              Creates a performance mark at current time
-            </Text>
+            <Text style={styles.buttonSubtext}>Creates a performance mark at current time</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -207,9 +191,7 @@ export const PerformanceMonitorScreen = () => {
             onPress={firePerformanceMeasure}
           >
             <Text style={styles.buttonText}>Fire Performance Measure</Text>
-            <Text style={styles.buttonSubtext}>
-              Creates marks and measures between them
-            </Text>
+            <Text style={styles.buttonSubtext}>Creates marks and measures between them</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -242,20 +224,19 @@ export const PerformanceMonitorScreen = () => {
             • Performance Mark: Creates a timestamp marker
           </Text>
           <Text style={styles.instructionsText}>
-            • Performance Measure: Creates two marks and measures the time
-            between them
+            • Performance Measure: Creates two marks and measures the time between them
           </Text>
           <Text style={styles.instructionsText}>
-            • Network Request: Performs a fetch which logs a resource timing
-            entry on the Resources tab
+            • Network Request: Performs a fetch which logs a resource timing entry on the Resources
+            tab
           </Text>
           <Text style={styles.instructionsText}>
             • Complex Scenario: Marks, measures, and a network request together
           </Text>
           <Text style={styles.instructionsText}>
-            • React Native Marks (nativeLaunchStart, runJSBundleStart, ...) are
-            emitted by the native runtime during app startup. They appear
-            automatically when you start a session — no button needed.
+            • React Native Marks (nativeLaunchStart, runJSBundleStart, ...) are emitted by the
+            native runtime during app startup. They appear automatically when you start a session —
+            no button needed.
           </Text>
         </View>
       </ScrollView>

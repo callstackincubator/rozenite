@@ -86,9 +86,7 @@ const transformRequireToChunkReferences = (
     }
 
     const outFileName = getFileName(moduleInfo.referenceId);
-    const relPath = normalizePath(
-      path.posix.relative('react-native', outFileName),
-    );
+    const relPath = normalizePath(path.posix.relative('react-native', outFileName));
     const requirePath = relPath.startsWith('.') ? relPath : `./${relPath}`;
 
     return `require('${requirePath}')`;
@@ -143,10 +141,7 @@ export default function requirePlugin(): Plugin {
     async buildStart(options) {
       try {
         assert(Array.isArray(options.input), 'input must be an array');
-        assert(
-          options.input.length === 1,
-          'input must be an array with one entry',
-        );
+        assert(options.input.length === 1, 'input must be an array with one entry');
 
         input = options.input[0];
         inputName = extractModuleName(input);
@@ -167,16 +162,11 @@ export default function requirePlugin(): Plugin {
 
             this.addWatchFile(resolved.id);
 
-            const exportName = sanitizeChunkName(
-              extractModuleName(resolved.id),
-            );
+            const exportName = sanitizeChunkName(extractModuleName(resolved.id));
             const wrapperName = `${exportName}${REQUIRE_WRAPPER_SUFFIX}`;
             const virtualId = `${VIRTUAL_REQUIRE_PREFIX}${wrapperName}`;
 
-            virtualModuleSources.set(
-              virtualId,
-              `export * from ${JSON.stringify(req)};`,
-            );
+            virtualModuleSources.set(virtualId, `export * from ${JSON.stringify(req)};`);
 
             const referenceId = this.emitFile({
               type: 'chunk',
@@ -205,10 +195,8 @@ export default function requirePlugin(): Plugin {
         }
 
         return {
-          code: transformRequireToChunkReferences(
-            code,
-            moduleInfoMap,
-            (referenceId) => normalizePath(this.getFileName(referenceId)),
+          code: transformRequireToChunkReferences(code, moduleInfoMap, (referenceId) =>
+            normalizePath(this.getFileName(referenceId)),
           ),
           map: null,
         };

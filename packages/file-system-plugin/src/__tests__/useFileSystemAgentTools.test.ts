@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  FILE_SYSTEM_AGENT_PLUGIN_ID,
-  fileSystemToolDefinitions,
-} from '../shared/agent-tools';
+import { FILE_SYSTEM_AGENT_PLUGIN_ID, fileSystemToolDefinitions } from '../shared/agent-tools';
 import type { FsEntry } from '../shared/protocol';
 import type { ProviderImpl } from '../react-native/fileSystemProvider';
 import {
@@ -35,8 +32,7 @@ const createProvider = (
   ]),
   listDir: vi.fn(async () => entries),
   statPath: vi.fn(
-    async (path: string) =>
-      entries.find((entry) => entry.path === path) ?? createEntry({ path }),
+    async (path: string) => entries.find((entry) => entry.path === path) ?? createEntry({ path }),
   ),
   readImageBase64: vi.fn(async () => ({
     mime: 'image/png',
@@ -63,9 +59,7 @@ const createProvider = (
 describe('file system agent tools', () => {
   it('uses the public plugin ID and exposes the expected tool names', () => {
     expect(FILE_SYSTEM_AGENT_PLUGIN_ID).toBe('@rozenite/file-system-plugin');
-    expect(
-      Object.values(fileSystemToolDefinitions).map((tool) => tool.name),
-    ).toEqual([
+    expect(Object.values(fileSystemToolDefinitions).map((tool) => tool.name)).toEqual([
       'list-roots',
       'list-entries',
       'read-entry',
@@ -82,9 +76,7 @@ describe('file system agent tools', () => {
       'read-image-file',
     ]);
     expect(
-      getFileSystemAgentTools({ import: true, export: true }).map(
-        (tool) => tool.name,
-      ),
+      getFileSystemAgentTools({ import: true, export: true }).map((tool) => tool.name),
     ).toEqual([
       'list-roots',
       'list-entries',
@@ -97,21 +89,11 @@ describe('file system agent tools', () => {
   });
 
   it('declares required schema fields for path-based tools', () => {
-    expect(fileSystemToolDefinitions.listEntries.inputSchema.required).toEqual([
-      'path',
-    ]);
-    expect(fileSystemToolDefinitions.readEntry.inputSchema.required).toEqual([
-      'path',
-    ]);
-    expect(fileSystemToolDefinitions.readTextFile.inputSchema.required).toEqual(
-      ['path'],
-    );
-    expect(
-      fileSystemToolDefinitions.readImageFile.inputSchema.required,
-    ).toEqual(['path']);
-    expect(fileSystemToolDefinitions.exportFile.inputSchema.required).toEqual([
-      'path',
-    ]);
+    expect(fileSystemToolDefinitions.listEntries.inputSchema.required).toEqual(['path']);
+    expect(fileSystemToolDefinitions.readEntry.inputSchema.required).toEqual(['path']);
+    expect(fileSystemToolDefinitions.readTextFile.inputSchema.required).toEqual(['path']);
+    expect(fileSystemToolDefinitions.readImageFile.inputSchema.required).toEqual(['path']);
+    expect(fileSystemToolDefinitions.exportFile.inputSchema.required).toEqual(['path']);
     expect(fileSystemToolDefinitions.importFile.inputSchema.required).toEqual([
       'directoryPath',
       'fileName',
@@ -156,9 +138,7 @@ describe('createFileSystemAgentHandlers', () => {
     const provider = createProvider(undefined, entries);
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(
-      handlers.listEntries({ path: '/tmp/', offset: 1, limit: 1 }),
-    ).resolves.toEqual({
+    await expect(handlers.listEntries({ path: '/tmp/', offset: 1, limit: 1 })).resolves.toEqual({
       provider: 'expo',
       path: '/tmp/',
       total: 3,
@@ -184,9 +164,7 @@ describe('createFileSystemAgentHandlers', () => {
     });
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(handlers.listEntries({ path: '/private/' })).rejects.toThrow(
-      'Permission denied',
-    );
+    await expect(handlers.listEntries({ path: '/private/' })).rejects.toThrow('Permission denied');
   });
 
   it('reads entry metadata for files and directories', async () => {
@@ -200,21 +178,17 @@ describe('createFileSystemAgentHandlers', () => {
     const provider = createProvider(undefined, [fileEntry, dirEntry]);
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(
-      handlers.readEntry({ path: '/tmp/file.txt' }),
-    ).resolves.toEqual({
+    await expect(handlers.readEntry({ path: '/tmp/file.txt' })).resolves.toEqual({
       provider: 'expo',
       path: '/tmp/file.txt',
       entry: fileEntry,
     });
 
-    await expect(handlers.readEntry({ path: '/tmp/folder/' })).resolves.toEqual(
-      {
-        provider: 'expo',
-        path: '/tmp/folder/',
-        entry: dirEntry,
-      },
-    );
+    await expect(handlers.readEntry({ path: '/tmp/folder/' })).resolves.toEqual({
+      provider: 'expo',
+      path: '/tmp/folder/',
+      entry: dirEntry,
+    });
   });
 
   it('surfaces missing path errors from stat lookups', async () => {
@@ -231,14 +205,10 @@ describe('createFileSystemAgentHandlers', () => {
   });
 
   it('reads text file previews', async () => {
-    const provider = createProvider(undefined, [
-      createEntry({ path: '/tmp/note.txt', size: 42 }),
-    ]);
+    const provider = createProvider(undefined, [createEntry({ path: '/tmp/note.txt', size: 42 })]);
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(
-      handlers.readTextFile({ path: '/tmp/note.txt', maxBytes: 256 }),
-    ).resolves.toEqual({
+    await expect(handlers.readTextFile({ path: '/tmp/note.txt', maxBytes: 256 })).resolves.toEqual({
       provider: 'expo',
       path: '/tmp/note.txt',
       mimeTypeHint: null,
@@ -250,17 +220,13 @@ describe('createFileSystemAgentHandlers', () => {
   it('supports binary fallback text previews through the provider', async () => {
     const provider = createProvider(
       {
-        readTextFile: vi.fn(
-          async () => '[Binary file - 4 bytes]\n\n00 01 02 03',
-        ),
+        readTextFile: vi.fn(async () => '[Binary file - 4 bytes]\n\n00 01 02 03'),
       },
       [createEntry({ path: '/tmp/binary.bin', name: 'binary.bin', size: 4 })],
     );
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(
-      handlers.readTextFile({ path: '/tmp/binary.bin' }),
-    ).resolves.toMatchObject({
+    await expect(handlers.readTextFile({ path: '/tmp/binary.bin' })).resolves.toMatchObject({
       provider: 'expo',
       path: '/tmp/binary.bin',
       content: '[Binary file - 4 bytes]\n\n00 01 02 03',
@@ -278,9 +244,9 @@ describe('createFileSystemAgentHandlers', () => {
     );
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(
-      handlers.readTextFile({ path: '/tmp/large.txt', maxBytes: 10 }),
-    ).rejects.toThrow('File is too large for preview');
+    await expect(handlers.readTextFile({ path: '/tmp/large.txt', maxBytes: 10 })).rejects.toThrow(
+      'File is too large for preview',
+    );
   });
 
   it('rejects text preview requests for directories', async () => {
@@ -294,9 +260,9 @@ describe('createFileSystemAgentHandlers', () => {
     ]);
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(
-      handlers.readTextFile({ path: '/tmp/folder/' }),
-    ).rejects.toThrow('is a directory, not a file');
+    await expect(handlers.readTextFile({ path: '/tmp/folder/' })).rejects.toThrow(
+      'is a directory, not a file',
+    );
   });
 
   it('reads image previews', async () => {
@@ -325,9 +291,7 @@ describe('createFileSystemAgentHandlers', () => {
     const provider = createProvider(
       {
         readImageBase64: vi.fn(async () => {
-          throw new Error(
-            'File is too large for preview (101 bytes, limit 100)',
-          );
+          throw new Error('File is too large for preview (101 bytes, limit 100)');
         }),
       },
       [
@@ -341,9 +305,9 @@ describe('createFileSystemAgentHandlers', () => {
     );
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(
-      handlers.readImageFile({ path: '/tmp/photo.png', maxBytes: 100 }),
-    ).rejects.toThrow('File is too large for preview');
+    await expect(handlers.readImageFile({ path: '/tmp/photo.png', maxBytes: 100 })).rejects.toThrow(
+      'File is too large for preview',
+    );
   });
 
   it('rejects agent export when agent export is not enabled', async () => {
@@ -352,9 +316,9 @@ describe('createFileSystemAgentHandlers', () => {
     ]);
     const handlers = createFileSystemAgentHandlers(async () => provider);
 
-    await expect(
-      handlers.exportFile({ path: 'file:///documents/sample.bin' }),
-    ).rejects.toThrow('Agent file export is disabled');
+    await expect(handlers.exportFile({ path: 'file:///documents/sample.bin' })).rejects.toThrow(
+      'Agent file export is disabled',
+    );
   });
 
   it('exports files through the agent when explicitly enabled', async () => {
@@ -370,9 +334,7 @@ describe('createFileSystemAgentHandlers', () => {
       export: true,
     });
 
-    await expect(
-      handlers.exportFile({ path: 'file:///documents/sample.bin' }),
-    ).resolves.toEqual({
+    await expect(handlers.exportFile({ path: 'file:///documents/sample.bin' })).resolves.toEqual({
       provider: 'expo',
       path: 'file:///documents/sample.bin',
       fileName: 'sample.bin',
@@ -401,13 +363,13 @@ describe('createFileSystemAgentHandlers', () => {
       export: true,
     });
 
-    await expect(
-      handlers.exportFile({ path: 'file:///documents/folder/' }),
-    ).rejects.toThrow('is a directory, not a file');
+    await expect(handlers.exportFile({ path: 'file:///documents/folder/' })).rejects.toThrow(
+      'is a directory, not a file',
+    );
 
-    await expect(
-      handlers.exportFile({ path: 'file:///private/sample.bin' }),
-    ).rejects.toThrow('outside the configured filesystem roots');
+    await expect(handlers.exportFile({ path: 'file:///private/sample.bin' })).rejects.toThrow(
+      'outside the configured filesystem roots',
+    );
   });
 
   it('rejects agent import when agent import is not enabled', async () => {
@@ -562,8 +524,8 @@ describe('createFileSystemAgentHandlers', () => {
       export: true,
     });
 
-    await expect(
-      handlers.exportFile({ path: 'file:///documents/sample.bin' }),
-    ).rejects.toThrow('Permission denied');
+    await expect(handlers.exportFile({ path: 'file:///documents/sample.bin' })).rejects.toThrow(
+      'Permission denied',
+    );
   });
 });

@@ -27,11 +27,7 @@ const getLocalUrl = async (process: Subprocess) => {
 
     const handleExit = () => {
       cleanup();
-      reject(
-        new Error(
-          'The Vite development server stopped before reporting a URL.',
-        ),
-      );
+      reject(new Error('The Vite development server stopped before reporting a URL.'));
     };
 
     const cleanup = () => {
@@ -45,9 +41,7 @@ const getLocalUrl = async (process: Subprocess) => {
 };
 
 const stopProcesses = async (processes: Subprocess[]) => {
-  const settledProcesses = processes.map((process) =>
-    process.catch(() => undefined),
-  );
+  const settledProcesses = processes.map((process) => process.catch(() => undefined));
 
   await Promise.all(
     processes.map(async (process) => {
@@ -68,9 +62,7 @@ export const devCommand = async (targetDir: string) => {
   const { updatedFields, targets } = await syncPluginPackageJSON(targetDir);
 
   if (updatedFields.length > 0) {
-    logger.warn(
-      `Updated package.json builder-managed fields: ${updatedFields.join(', ')}`,
-    );
+    logger.warn(`Updated package.json builder-managed fields: ${updatedFields.join(', ')}`);
   }
 
   const { hasReactNativeEntryPoint, hasMetroEntryPoint } = targets;
@@ -100,18 +92,14 @@ export const devCommand = async (targetDir: string) => {
       processes.push(metroProcess);
     }
 
-    const clientProcess = spawn(
-      'vite',
-      ['dev', isInteractive() ? '--open' : '--no-open'],
-      {
-        cwd: targetDir,
-        handleSignals: false,
-        stdout: 'pipe',
-        env: {
-          VITE_ROZENITE_TARGET: 'client',
-        },
+    const clientProcess = spawn('vite', ['dev', isInteractive() ? '--open' : '--no-open'], {
+      cwd: targetDir,
+      handleSignals: false,
+      stdout: 'pipe',
+      env: {
+        VITE_ROZENITE_TARGET: 'client',
       },
-    );
+    });
     processes.push(clientProcess);
 
     const localUrlPromise = getLocalUrl(clientProcess);

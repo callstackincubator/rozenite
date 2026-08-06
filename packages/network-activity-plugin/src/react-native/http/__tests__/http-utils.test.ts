@@ -102,8 +102,7 @@ describe('getResponseBody', () => {
   });
 
   it('reads RFC 7303 +xml composite types (Atom, RSS, SOAP) as text', async () => {
-    const atom =
-      '<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>x</title></entry></feed>';
+    const atom = '<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>x</title></entry></feed>';
     const xhr = makeXHRStub({
       responseType: 'blob',
       response: new Blob([atom], { type: 'application/atom+xml' }),

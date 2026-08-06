@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  symbolicateInitiator,
-  symbolicateStackTraceWithMetro,
-} from '../symbolication';
+import { symbolicateInitiator, symbolicateStackTraceWithMetro } from '../symbolication';
 import type { Initiator } from '../../../shared/client';
 
 describe('symbolication', () => {
@@ -159,10 +156,7 @@ describe('symbolication', () => {
       ],
     });
 
-    const symbolicatedInitiator = await symbolicateInitiator(
-      initiator,
-      symbolicateStackTrace,
-    );
+    const symbolicatedInitiator = await symbolicateInitiator(initiator, symbolicateStackTrace);
 
     expect(symbolicateStackTrace).toHaveBeenCalledWith([
       {

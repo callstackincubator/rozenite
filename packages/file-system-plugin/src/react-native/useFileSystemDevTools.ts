@@ -13,9 +13,7 @@ import { useFileSystemAgentTools } from './useFileSystemAgentTools';
 
 export type { UseFileSystemDevToolsOptions } from './fileSystemProvider';
 
-export const useFileSystemDevTools = (
-  options?: UseFileSystemDevToolsOptions,
-) => {
+export const useFileSystemDevTools = (options?: UseFileSystemDevToolsOptions) => {
   useFileSystemAgentTools(options);
   const fileTransfer = resolveFileTransferCapabilities(options);
 
@@ -102,85 +100,79 @@ export const useFileSystemDevTools = (
     );
 
     subsRef.current.push(
-      client.onMessage(
-        'fs:read-image',
-        async ({ requestId, path, maxBytes }) => {
-          try {
-            const provider = await resolveFileSystemAdapter(options);
-            if (!provider) {
-              client.send('fs:read-image:result', {
-                requestId,
-                provider: 'none',
-                path,
-                error:
-                  'No filesystem provider detected. Pass `adapter: createExpoFileSystemAdapter(FileSystem)` or `adapter: createRNFSAdapter(RNFS)` to `useFileSystemDevTools()`.',
-              });
-              return;
-            }
-
-            const { mime, base64 } = await provider.readImageBase64(
-              path,
-              typeof maxBytes === 'number' ? maxBytes : 10_000_000,
-            );
-
+      client.onMessage('fs:read-image', async ({ requestId, path, maxBytes }) => {
+        try {
+          const provider = await resolveFileSystemAdapter(options);
+          if (!provider) {
             client.send('fs:read-image:result', {
               requestId,
-              provider: provider.provider,
+              provider: 'none',
               path,
-              dataUri: `data:${mime};base64,${base64}`,
+              error:
+                'No filesystem provider detected. Pass `adapter: createExpoFileSystemAdapter(FileSystem)` or `adapter: createRNFSAdapter(RNFS)` to `useFileSystemDevTools()`.',
             });
-          } catch (e) {
-            const provider = await resolveFileSystemAdapter(options);
-            client.send('fs:read-image:result', {
-              requestId,
-              provider: provider?.provider ?? 'none',
-              path,
-              error: safeError(e),
-            });
+            return;
           }
-        },
-      ),
+
+          const { mime, base64 } = await provider.readImageBase64(
+            path,
+            typeof maxBytes === 'number' ? maxBytes : 10_000_000,
+          );
+
+          client.send('fs:read-image:result', {
+            requestId,
+            provider: provider.provider,
+            path,
+            dataUri: `data:${mime};base64,${base64}`,
+          });
+        } catch (e) {
+          const provider = await resolveFileSystemAdapter(options);
+          client.send('fs:read-image:result', {
+            requestId,
+            provider: provider?.provider ?? 'none',
+            path,
+            error: safeError(e),
+          });
+        }
+      }),
     );
 
     subsRef.current.push(
-      client.onMessage(
-        'fs:read-file',
-        async ({ requestId, path, maxBytes }) => {
-          try {
-            const provider = await resolveFileSystemAdapter(options);
-            if (!provider) {
-              client.send('fs:read-file:result', {
-                requestId,
-                provider: 'none',
-                path,
-                error:
-                  'No filesystem provider detected. Pass `adapter: createExpoFileSystemAdapter(FileSystem)` or `adapter: createRNFSAdapter(RNFS)` to `useFileSystemDevTools()`.',
-              });
-              return;
-            }
-
-            const content = await provider.readTextFile(
-              path,
-              typeof maxBytes === 'number' ? maxBytes : 10_000_000,
-            );
-
+      client.onMessage('fs:read-file', async ({ requestId, path, maxBytes }) => {
+        try {
+          const provider = await resolveFileSystemAdapter(options);
+          if (!provider) {
             client.send('fs:read-file:result', {
               requestId,
-              provider: provider.provider,
+              provider: 'none',
               path,
-              content,
+              error:
+                'No filesystem provider detected. Pass `adapter: createExpoFileSystemAdapter(FileSystem)` or `adapter: createRNFSAdapter(RNFS)` to `useFileSystemDevTools()`.',
             });
-          } catch (e) {
-            const provider = await resolveFileSystemAdapter(options);
-            client.send('fs:read-file:result', {
-              requestId,
-              provider: provider?.provider ?? 'none',
-              path,
-              error: safeError(e),
-            });
+            return;
           }
-        },
-      ),
+
+          const content = await provider.readTextFile(
+            path,
+            typeof maxBytes === 'number' ? maxBytes : 10_000_000,
+          );
+
+          client.send('fs:read-file:result', {
+            requestId,
+            provider: provider.provider,
+            path,
+            content,
+          });
+        } catch (e) {
+          const provider = await resolveFileSystemAdapter(options);
+          client.send('fs:read-file:result', {
+            requestId,
+            provider: provider?.provider ?? 'none',
+            path,
+            error: safeError(e),
+          });
+        }
+      }),
     );
 
     subsRef.current.push(

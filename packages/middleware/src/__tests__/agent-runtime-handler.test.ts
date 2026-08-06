@@ -27,19 +27,9 @@ describe('agent runtime handler console domain', () => {
       destructive: true,
       idempotent: true,
     });
-    expect(
-      tools.find((tool) => tool.name === 'getMessages')?.pagination,
-    ).toEqual({
+    expect(tools.find((tool) => tool.name === 'getMessages')?.pagination).toEqual({
       kind: 'cursor',
-      fields: [
-        'seq',
-        'timestamp',
-        'level',
-        'source',
-        'text',
-        'argsPreview',
-        'context',
-      ],
+      fields: ['seq', 'timestamp', 'level', 'source', 'text', 'argsPreview', 'context'],
       defaultFields: ['seq', 'timestamp', 'level', 'source', 'text'],
     });
   });

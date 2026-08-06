@@ -3,8 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const updateCSP = (html: string, nonce: string): string => {
-  const cspRegex =
-    /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/;
+  const cspRegex = /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/;
   const cspMatch = html.match(cspRegex);
 
   if (cspMatch) {
@@ -50,17 +49,13 @@ const appendScripts = (
   `;
 
   if (!bodyMatch) {
-    throw new Error(
-      "Body tag not found. Report this as a bug in Rozenite's issue tracker.",
-    );
+    throw new Error("Body tag not found. Report this as a bug in Rozenite's issue tracker.");
   }
 
   const bodyTag = bodyMatch[0];
   const bodyIndex = html.indexOf(bodyTag);
 
-  return (
-    html.substring(0, bodyIndex) + scriptContent + html.substring(bodyIndex)
-  );
+  return html.substring(0, bodyIndex) + scriptContent + html.substring(bodyIndex);
 };
 
 export const getEntryPointHTML = (

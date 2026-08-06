@@ -49,13 +49,9 @@ function addBodyToCurl(curlParts: string[], postData: RequestPostData): void {
   const { type, value } = postData;
 
   if (type === 'form-data') {
-    const formParts = Object.entries(value).map(
-      ([key, value]) => `${key}=${stringifyData(value)}`,
-    );
+    const formParts = Object.entries(value).map(([key, value]) => `${key}=${stringifyData(value)}`);
 
-    formParts.forEach((part) =>
-      addCurlParam(curlParts, '--form', escapeShellArg(part)),
-    );
+    formParts.forEach((part) => addCurlParam(curlParts, '--form', escapeShellArg(part)));
 
     return;
   }
@@ -63,9 +59,7 @@ function addBodyToCurl(curlParts: string[], postData: RequestPostData): void {
   addCurlParam(curlParts, '--data-raw', escapeShellArg(stringifyData(value)));
 }
 
-export function generateCurlCommand(
-  request: HttpNetworkEntry | SSENetworkEntry,
-) {
+export function generateCurlCommand(request: HttpNetworkEntry | SSENetworkEntry) {
   const { method, url, headers = {}, body } = request.request;
 
   const postData = body?.data;

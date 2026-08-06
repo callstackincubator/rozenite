@@ -63,13 +63,10 @@ const initializeAppDatabase = () => {
   `);
 
   const userCount =
-    appDatabase.getFirstSync<{ count: number }>(
-      'SELECT COUNT(*) AS count FROM users',
-    )?.count ?? 0;
+    appDatabase.getFirstSync<{ count: number }>('SELECT COUNT(*) AS count FROM users')?.count ?? 0;
   const wideDemoCount =
-    appDatabase.getFirstSync<{ count: number }>(
-      'SELECT COUNT(*) AS count FROM wide_demo',
-    )?.count ?? 0;
+    appDatabase.getFirstSync<{ count: number }>('SELECT COUNT(*) AS count FROM wide_demo')?.count ??
+    0;
 
   if (userCount === 0) {
     appDatabase.execSync(`
@@ -121,9 +118,8 @@ const initializeAnalyticsDatabase = () => {
   `);
 
   const metricsCount =
-    analyticsDatabase.getFirstSync<{ count: number }>(
-      'SELECT COUNT(*) AS count FROM query_metrics',
-    )?.count ?? 0;
+    analyticsDatabase.getFirstSync<{ count: number }>('SELECT COUNT(*) AS count FROM query_metrics')
+      ?.count ?? 0;
 
   if (metricsCount === 0) {
     analyticsDatabase.execSync(`
@@ -189,9 +185,8 @@ const initializeTestingDatabase = () => {
   `);
 
   const testRowCount =
-    testingDatabase.getFirstSync<{ count: number }>(
-      'SELECT COUNT(*) AS count FROM test_rows',
-    )?.count ?? 0;
+    testingDatabase.getFirstSync<{ count: number }>('SELECT COUNT(*) AS count FROM test_rows')
+      ?.count ?? 0;
 
   if (testRowCount !== TESTING_ROWS_COUNT) {
     testingDatabase.execSync(buildTestingRowsSeedSql());
@@ -223,13 +218,11 @@ const initializeBinaryDatabase = () => {
   `);
 
   const binaryAssetCount =
-    binaryDatabase.getFirstSync<{ count: number }>(
-      'SELECT COUNT(*) AS count FROM binary_assets',
-    )?.count ?? 0;
+    binaryDatabase.getFirstSync<{ count: number }>('SELECT COUNT(*) AS count FROM binary_assets')
+      ?.count ?? 0;
   const packetCaptureCount =
-    binaryDatabase.getFirstSync<{ count: number }>(
-      'SELECT COUNT(*) AS count FROM packet_captures',
-    )?.count ?? 0;
+    binaryDatabase.getFirstSync<{ count: number }>('SELECT COUNT(*) AS count FROM packet_captures')
+      ?.count ?? 0;
 
   if (binaryAssetCount !== BINARY_ASSET_ROWS_COUNT) {
     binaryDatabase.execSync(`

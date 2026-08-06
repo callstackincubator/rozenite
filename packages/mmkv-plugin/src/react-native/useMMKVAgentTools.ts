@@ -1,16 +1,10 @@
 import { useCallback } from 'react';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
 import type { MMKVEntryType, MMKVEntryValue } from '../shared/types';
-import {
-  MMKV_AGENT_PLUGIN_ID,
-  mmkvToolDefinitions,
-} from '../shared/agent-tools';
+import { MMKV_AGENT_PLUGIN_ID, mmkvToolDefinitions } from '../shared/agent-tools';
 import type { MMKVView } from './mmkv-view';
 
-const parseValueForType = (
-  type: MMKVEntryType,
-  value: unknown,
-): MMKVEntryValue => {
+const parseValueForType = (type: MMKVEntryType, value: unknown): MMKVEntryValue => {
   if (type === 'string') {
     if (typeof value !== 'string') {
       throw new Error('Expected string value for type=string');

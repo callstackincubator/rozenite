@@ -1,10 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const resolveFileWithExtensions = (
-  directory: string,
-  baseName: string,
-): string | null => {
+export const resolveFileWithExtensions = (directory: string, baseName: string): string | null => {
   const extensions = ['.tsx', '.ts', '.jsx', '.js'];
 
   for (const ext of extensions) {

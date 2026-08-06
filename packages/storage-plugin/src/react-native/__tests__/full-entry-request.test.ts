@@ -17,9 +17,7 @@ const createView = (
   values: Record<string, StorageEntry>,
   options?: {
     blacklist?: RegExp;
-    get?: (
-      key: string,
-    ) => StorageEntry | undefined | Promise<StorageEntry | undefined>;
+    get?: (key: string) => StorageEntry | undefined | Promise<StorageEntry | undefined>;
   },
 ) => {
   const get = vi.fn(options?.get ?? ((key: string) => values[key]));
@@ -69,9 +67,7 @@ describe('handleFullEntryRequest', () => {
 
   it('returns structured errors for missing, blacklisted, invalid, and unknown targets', async () => {
     const missing = createView({});
-    await expect(
-      handleFullEntryRequest([missing.view], request()),
-    ).resolves.toMatchObject({
+    await expect(handleFullEntryRequest([missing.view], request())).resolves.toMatchObject({
       type: 'storage-request-error',
       requestId: 'request-1',
       code: 'ENTRY_NOT_FOUND',
@@ -81,9 +77,7 @@ describe('handleFullEntryRequest', () => {
       { key: { key: 'key', type: 'string', value: 'secret' } },
       { blacklist: /^key$/ },
     );
-    await expect(
-      handleFullEntryRequest([blacklisted.view], request()),
-    ).resolves.toMatchObject({
+    await expect(handleFullEntryRequest([blacklisted.view], request())).resolves.toMatchObject({
       code: 'ENTRY_NOT_FOUND',
     });
     expect(blacklisted.get).not.toHaveBeenCalled();
@@ -128,14 +122,8 @@ describe('handleFullEntryRequest', () => {
           }),
       },
     );
-    const first = handleFullEntryRequest(
-      [view],
-      request({ requestId: 'first', key: 'first' }),
-    );
-    const second = handleFullEntryRequest(
-      [view],
-      request({ requestId: 'second', key: 'second' }),
-    );
+    const first = handleFullEntryRequest([view], request({ requestId: 'first', key: 'first' }));
+    const second = handleFullEntryRequest([view], request({ requestId: 'second', key: 'second' }));
 
     await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(2));
     resolvers.get('second')?.({ key: 'second', type: 'string', value: 'two' });

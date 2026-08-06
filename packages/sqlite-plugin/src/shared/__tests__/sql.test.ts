@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  getStatementAtCursor,
-  normalizeSingleStatementSql,
-  splitSqlStatements,
-} from '../sql';
+import { getStatementAtCursor, normalizeSingleStatementSql, splitSqlStatements } from '../sql';
 
 describe('SQL statement helpers', () => {
   it('finds the active statement when earlier statements contain comments and quoted semicolons', () => {
@@ -26,9 +22,9 @@ describe('SQL statement helpers', () => {
   });
 
   it('rejects multiple statements', () => {
-    expect(() =>
-      normalizeSingleStatementSql('SELECT * FROM projects; DELETE FROM logs;'),
-    ).toThrow('Only a single SQL statement is supported in v1.');
+    expect(() => normalizeSingleStatementSql('SELECT * FROM projects; DELETE FROM logs;')).toThrow(
+      'Only a single SQL statement is supported in v1.',
+    );
   });
 
   it('splits statements while preserving source offsets', () => {

@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 export function ConnectingScreen() {
   return (

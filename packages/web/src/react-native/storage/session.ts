@@ -10,9 +10,7 @@ export interface ReloadAndProfileConfig {
   recordChangeDescriptions?: boolean;
 }
 
-export const setReloadAndProfileConfig = (
-  config: ReloadAndProfileConfig,
-): void => {
+export const setReloadAndProfileConfig = (config: ReloadAndProfileConfig): void => {
   try {
     sessionStorage.setItem(RELOAD_AND_PROFILE_CONFIG, JSON.stringify(config));
   } catch (e) {

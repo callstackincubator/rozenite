@@ -14,8 +14,7 @@ export const resolveMetroOrigin = (): string | null => {
         getConstants?: () => { scriptURL?: string };
       }
     | undefined;
-  const scriptURL =
-    sourceCode?.scriptURL ?? sourceCode?.getConstants?.().scriptURL;
+  const scriptURL = sourceCode?.scriptURL ?? sourceCode?.getConstants?.().scriptURL;
 
   if (!scriptURL) {
     cachedMetroOrigin = null;
@@ -88,8 +87,7 @@ const ANSI_SEQUENCE_PATTERN = new RegExp(
   'g',
 );
 
-const stripAnsi = (value: string): string =>
-  value.replace(ANSI_SEQUENCE_PATTERN, '');
+const stripAnsi = (value: string): string => value.replace(ANSI_SEQUENCE_PATTERN, '');
 
 const isGeneratedBundleUrl = (url: string | undefined): boolean =>
   !!url && /[^/]+\.bundle(?:[/?#]|$)/.test(url);
@@ -97,9 +95,7 @@ const isGeneratedBundleUrl = (url: string | undefined): boolean =>
 const isSymbolicatableUrl = (url: string | undefined): boolean =>
   url?.startsWith('http://') || url?.startsWith('https://') || false;
 
-const toMetroFrame = (
-  frame: ReduxTraceFrame,
-): MetroSymbolicatedFrame | null => {
+const toMetroFrame = (frame: ReduxTraceFrame): MetroSymbolicatedFrame | null => {
   if (!isSymbolicatableUrl(frame.generatedUrl)) {
     return null;
   }
@@ -142,9 +138,7 @@ const fromMetroFrame = (
   };
 };
 
-const toCodeFrame = (
-  codeFrame: MetroCodeFrame | undefined,
-): ReduxTraceCodeFrame | undefined => {
+const toCodeFrame = (codeFrame: MetroCodeFrame | undefined): ReduxTraceCodeFrame | undefined => {
   if (!codeFrame) {
     return undefined;
   }
@@ -167,8 +161,7 @@ export const symbolicateFrames = async (
   frames: ReduxTraceFrame[],
   options: SymbolicateOptions = {},
 ): Promise<SymbolicationOutcome> => {
-  const origin =
-    options.origin !== undefined ? options.origin : resolveMetroOrigin();
+  const origin = options.origin !== undefined ? options.origin : resolveMetroOrigin();
   if (!origin) {
     return { status: 'unavailable', frames };
   }
@@ -187,15 +180,12 @@ export const symbolicateFrames = async (
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await (options.fetch ?? globalThis.fetch)(
-      `${origin}/symbolicate`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stack: entries.map((entry) => entry.frame) }),
-        signal: controller.signal,
-      },
-    );
+    const response = await (options.fetch ?? globalThis.fetch)(`${origin}/symbolicate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stack: entries.map((entry) => entry.frame) }),
+      signal: controller.signal,
+    });
     clearTimeout(timer);
 
     if (!response.ok) {
@@ -215,10 +205,7 @@ export const symbolicateFrames = async (
         return;
       }
 
-      mappedFrames[entry.originalIndex] = fromMetroFrame(
-        metroFrame,
-        frames[entry.originalIndex],
-      );
+      mappedFrames[entry.originalIndex] = fromMetroFrame(metroFrame, frames[entry.originalIndex]);
     });
 
     return {

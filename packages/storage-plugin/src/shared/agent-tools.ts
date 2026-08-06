@@ -11,8 +11,7 @@ type StorageSelection = Partial<StorageTarget>;
 const sharedStorageProperties = {
   adapterId: {
     type: 'string',
-    description:
-      'Storage adapter ID. Required when multiple adapters are configured.',
+    description: 'Storage adapter ID. Required when multiple adapters are configured.',
   },
   storageId: {
     type: 'string',
@@ -105,19 +104,13 @@ export type StorageRemoveEntryResult = {
 };
 
 export const storageToolDefinitions = {
-  listStorages: defineAgentToolContract<
-    StorageListStoragesArgs,
-    StorageListStoragesResult
-  >({
+  listStorages: defineAgentToolContract<StorageListStoragesArgs, StorageListStoragesResult>({
     name: 'list-storages',
     description:
       'List all storage adapters and their storage nodes currently available on the device, including supported entry types. Entry counts are omitted to avoid enumerating every storage.',
     inputSchema: { type: 'object', properties: {} },
   }),
-  listEntries: definePaginatedAgentToolContract<
-    StorageListEntriesArgs,
-    StorageListEntriesResult
-  >({
+  listEntries: definePaginatedAgentToolContract<StorageListEntriesArgs, StorageListEntriesResult>({
     name: 'list-entries',
     description:
       'List keys in a storage. This call intentionally does not return entry values to keep responses token-efficient.',
@@ -131,8 +124,7 @@ export const storageToolDefinitions = {
         },
         cursor: {
           type: 'string',
-          description:
-            'Opaque pagination cursor from a previous list-entries call.',
+          description: 'Opaque pagination cursor from a previous list-entries call.',
         },
         offset: {
           type: 'number',
@@ -147,10 +139,7 @@ export const storageToolDefinitions = {
       defaultFields: ['key'],
     },
   }),
-  readEntry: defineAgentToolContract<
-    StorageReadEntryArgs,
-    StorageReadEntryResult
-  >({
+  readEntry: defineAgentToolContract<StorageReadEntryArgs, StorageReadEntryResult>({
     name: 'read-entry',
     description: 'Read a single storage entry value by key.',
     inputSchema: {
@@ -162,10 +151,7 @@ export const storageToolDefinitions = {
       required: ['key'],
     },
   }),
-  createEntry: defineAgentToolContract<
-    StorageCreateEntryArgs,
-    StorageCreateEntryResult
-  >({
+  createEntry: defineAgentToolContract<StorageCreateEntryArgs, StorageCreateEntryResult>({
     name: 'create-entry',
     description: 'Create a new storage entry. Fails if the key already exists.',
     inputSchema: {
@@ -186,13 +172,9 @@ export const storageToolDefinitions = {
       required: ['key', 'type', 'value'],
     },
   }),
-  editEntry: defineAgentToolContract<
-    StorageEditEntryArgs,
-    StorageEditEntryResult
-  >({
+  editEntry: defineAgentToolContract<StorageEditEntryArgs, StorageEditEntryResult>({
     name: 'edit-entry',
-    description:
-      'Edit an existing storage entry. Fails if the key does not exist.',
+    description: 'Edit an existing storage entry. Fails if the key does not exist.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -211,10 +193,7 @@ export const storageToolDefinitions = {
       required: ['key', 'type', 'value'],
     },
   }),
-  removeEntry: defineAgentToolContract<
-    StorageRemoveEntryArgs,
-    StorageRemoveEntryResult
-  >({
+  removeEntry: defineAgentToolContract<StorageRemoveEntryArgs, StorageRemoveEntryResult>({
     name: 'remove-entry',
     description: 'Remove a storage entry by key.',
     inputSchema: {

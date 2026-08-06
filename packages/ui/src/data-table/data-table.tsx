@@ -69,10 +69,7 @@ export function DataTable<TRow>({
   const columnCount = columns.length;
 
   return (
-    <table
-      data-slot="data-table"
-      className={cn('w-full border-collapse text-sm', className)}
-    >
+    <table data-slot="data-table" className={cn('w-full border-collapse text-sm', className)}>
       <thead data-slot="data-table-head">
         {table.getHeaderGroups().map((headerGroup) => (
           <tr key={headerGroup.id} className="border-b border-border">
@@ -92,17 +89,11 @@ export function DataTable<TRow>({
                       onClick={header.column.getToggleSortingHandler()}
                       className="inline-flex items-center gap-1 hover:text-foreground"
                     >
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                      {flexRender(header.column.columnDef.header, header.getContext())}
                       <SortIcon direction={sortDirection} />
                     </button>
                   ) : (
-                    flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
-                    )
+                    flexRender(header.column.columnDef.header, header.getContext())
                   )}
                 </th>
               );
@@ -113,19 +104,13 @@ export function DataTable<TRow>({
       <tbody data-slot="data-table-body">
         {loading ? (
           <tr>
-            <td
-              colSpan={columnCount}
-              className="h-16 text-center text-xs text-muted-foreground"
-            >
+            <td colSpan={columnCount} className="h-16 text-center text-xs text-muted-foreground">
               Loading…
             </td>
           </tr>
         ) : data.length === 0 ? (
           <tr>
-            <td
-              colSpan={columnCount}
-              className="h-16 text-center text-xs text-muted-foreground"
-            >
+            <td colSpan={columnCount} className="h-16 text-center text-xs text-muted-foreground">
               {emptyMessage}
             </td>
           </tr>

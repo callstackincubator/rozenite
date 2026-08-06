@@ -16,9 +16,7 @@ function getHeadersItems(headers?: HttpHeaders): KeyValueItem[] {
 
   return Object.entries(headers).reduce<KeyValueItem[]>((acc, [key, value]) => {
     if (Array.isArray(value)) {
-      acc.push(
-        ...value.map((item) => ({ key: key.toLowerCase(), value: item })),
-      );
+      acc.push(...value.map((item) => ({ key: key.toLowerCase(), value: item })));
     } else {
       acc.push({ key: key.toLowerCase(), value: value });
     }

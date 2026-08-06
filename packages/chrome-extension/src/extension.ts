@@ -18,10 +18,7 @@ export type ExtensionDeps = {
     app: string;
     profiling: string;
   }) => Connection;
-  createCDPClient: (
-    connection: Connection,
-    reactNativeAgent: ReactNativeAgent | null,
-  ) => CDPClient;
+  createCDPClient: (connection: Connection, reactNativeAgent: ReactNativeAgent | null) => CDPClient;
   createPageManager: (app: string) => PageManager;
   createReactNativeAgent: (pageManager: PageManager) => ReactNativeAgent;
   getDeviceName: () => string;
@@ -72,9 +69,7 @@ export const createExtension = ({
     const cdpClient = createCDPClient(connection, reactNativeAgent);
 
     connection.on('getPages', () => {
-      cdpClient.sendPages(
-        pageManager.getByOrigin(origin) as unknown as CDPPageLike[],
-      );
+      cdpClient.sendPages(pageManager.getByOrigin(origin) as unknown as CDPPageLike[]);
     });
 
     connection.on('connect', (payload) => {

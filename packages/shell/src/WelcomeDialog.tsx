@@ -23,9 +23,7 @@ export function WelcomeDialog({ runtimeVersion }: WelcomeDialogProps) {
     }
 
     const dismissedVersion =
-      dismissedRuntimeVersion.current === runtimeVersion
-        ? runtimeVersion
-        : readWelcomeDismissal();
+      dismissedRuntimeVersion.current === runtimeVersion ? runtimeVersion : readWelcomeDismissal();
 
     setOpen(shouldShowWelcomeDialog(runtimeVersion, dismissedVersion));
   }, [runtimeVersion]);

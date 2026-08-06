@@ -1,8 +1,4 @@
-import type {
-  AgentSessionInfo,
-  AgentTool,
-  AgentToolDescriptor,
-} from '@rozenite/agent-shared';
+import type { AgentSessionInfo, AgentTool, AgentToolDescriptor } from '@rozenite/agent-shared';
 import { STATIC_DOMAINS } from './constants.js';
 import {
   buildRuntimePluginDomains,
@@ -27,9 +23,7 @@ import type {
 
 const getKnownDomains = (tools: AgentTool[]): DomainDefinition[] => {
   const runtimeDomains = buildRuntimePluginDomains(tools);
-  return [...STATIC_DOMAINS, ...runtimeDomains].sort((a, b) =>
-    a.id.localeCompare(b.id),
-  );
+  return [...STATIC_DOMAINS, ...runtimeDomains].sort((a, b) => a.id.localeCompare(b.id));
 };
 
 const sortTools = <
@@ -42,15 +36,10 @@ const sortTools = <
   return [...tools].sort((a, b) => a.name.localeCompare(b.name));
 };
 
-export const createAgentClient = (
-  options?: AgentClientOptions,
-): AgentClient => {
+export const createAgentClient = (options?: AgentClientOptions): AgentClient => {
   const transport = createAgentTransport(options);
 
-  const resolveDomainContext = async (input: {
-    sessionId: string;
-    domain: string;
-  }) => {
+  const resolveDomainContext = async (input: { sessionId: string; domain: string }) => {
     const { tools } = await transport.getSessionTools(input.sessionId);
     const sortedTools = sortTools(tools);
     const knownDomains = getKnownDomains(sortedTools);
@@ -59,9 +48,7 @@ export const createAgentClient = (
       throw formatUnknownDomainError(input.domain, knownDomains);
     }
 
-    const domainTools = sortTools(
-      getDomainToolsByDefinition(sortedTools, resolvedDomain),
-    );
+    const domainTools = sortTools(getDomainToolsByDefinition(sortedTools, resolvedDomain));
 
     return {
       knownDomains,
@@ -91,9 +78,7 @@ export const createAgentClient = (
     ).result as TResult;
   };
 
-  const createSessionClient = (
-    sessionInfo: AgentSessionInfo,
-  ): AgentSessionClient => {
+  const createSessionClient = (sessionInfo: AgentSessionInfo): AgentSessionClient => {
     let stopped = sessionInfo.status === 'stopped';
 
     const listDomains = async () => {
@@ -107,9 +92,7 @@ export const createAgentClient = (
           sessionId: sessionInfo.id,
           domain,
         });
-        return domainTools.map((tool) =>
-          toAgentDomainTool(tool, resolvedDomain.id),
-        );
+        return domainTools.map((tool) => toAgentDomainTool(tool, resolvedDomain.id));
       },
       getSchema: async ({ domain, tool }) => {
         const { resolvedDomain, domainTools } = await resolveDomainContext({
@@ -163,10 +146,7 @@ export const createAgentClient = (
           });
         }
 
-        const descriptor = descriptorOrInput as AgentToolDescriptor<
-          unknown,
-          unknown
-        >;
+        const descriptor = descriptorOrInput as AgentToolDescriptor<unknown, unknown>;
         return await callSessionTool({
           sessionId: sessionInfo.id,
           domain: descriptor.domain,
@@ -218,13 +198,10 @@ export const createAgentClient = (
   };
 
   const withSession: AgentClient['withSession'] = async <T>(
-    inputOrCallback:
-      | Parameters<AgentClient['openSession']>[0]
-      | AgentSessionCallback<T>,
+    inputOrCallback: Parameters<AgentClient['openSession']>[0] | AgentSessionCallback<T>,
     maybeCallback?: AgentSessionCallback<T>,
   ): Promise<T> => {
-    const callback =
-      typeof inputOrCallback === 'function' ? inputOrCallback : maybeCallback;
+    const callback = typeof inputOrCallback === 'function' ? inputOrCallback : maybeCallback;
     const input = typeof inputOrCallback === 'function' ? {} : inputOrCallback;
 
     if (typeof callback !== 'function') {

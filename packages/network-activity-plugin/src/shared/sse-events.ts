@@ -36,11 +36,7 @@ export type SSECloseEvent = {
   timestamp: number;
 };
 
-export type SSEEvent =
-  | SSEOpenEvent
-  | SSEMessageEvent
-  | SSEErrorEvent
-  | SSECloseEvent;
+export type SSEEvent = SSEOpenEvent | SSEMessageEvent | SSEErrorEvent | SSECloseEvent;
 
 export type SSEEventMap = {
   [K in SSEEvent['type']]: Extract<SSEEvent, { type: K }>;

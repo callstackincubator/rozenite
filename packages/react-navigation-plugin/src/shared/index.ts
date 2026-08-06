@@ -46,5 +46,4 @@ export type ReactNavigationPluginEventMap = {
   'open-link': ReactNavigationPluginOpenLinkMessage;
 };
 
-export type ReactNavigationPluginClient =
-  RozeniteDevToolsClient<ReactNavigationPluginEventMap>;
+export type ReactNavigationPluginClient = RozeniteDevToolsClient<ReactNavigationPluginEventMap>;

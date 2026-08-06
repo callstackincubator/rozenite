@@ -1,9 +1,6 @@
 import { useCallback } from 'react';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
-import type {
-  FileSystemAdapter,
-  UseFileSystemDevToolsOptions,
-} from './fileSystemProvider';
+import type { FileSystemAdapter, UseFileSystemDevToolsOptions } from './fileSystemProvider';
 import {
   resolveAgentFileTransferCapabilities,
   resolveFileSystemAdapter,
@@ -88,11 +85,7 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  listEntries: async ({
-    path,
-    offset = 0,
-    limit = 100,
-  }: FileSystemListEntriesArgs) => {
+  listEntries: async ({ path, offset = 0, limit = 100 }: FileSystemListEntriesArgs) => {
     const provider = await getProviderOrThrow(resolveProvider);
     const allEntries = await provider.listDir(path);
     const safeOffset = Math.max(0, Math.floor(offset));
@@ -119,10 +112,7 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  readTextFile: async ({
-    path,
-    maxBytes = 10_000_000,
-  }: FileSystemReadFileArgs) => {
+  readTextFile: async ({ path, maxBytes = 10_000_000 }: FileSystemReadFileArgs) => {
     const provider = await getProviderOrThrow(resolveProvider);
     const entry = await provider.statPath(path);
 
@@ -139,10 +129,7 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  readImageFile: async ({
-    path,
-    maxBytes = 10_000_000,
-  }: FileSystemReadFileArgs) => {
+  readImageFile: async ({ path, maxBytes = 10_000_000 }: FileSystemReadFileArgs) => {
     const provider = await getProviderOrThrow(resolveProvider);
     const entry = await provider.statPath(path);
 
@@ -172,12 +159,7 @@ export const createFileSystemAgentHandlers = (
     };
   },
 
-  importFile: async ({
-    directoryPath,
-    fileName,
-    base64,
-    overwrite,
-  }: FileSystemImportFileArgs) => {
+  importFile: async ({ directoryPath, fileName, base64, overwrite }: FileSystemImportFileArgs) => {
     assertAgentTransferEnabled(agentFileTransfer, 'import');
     const provider = await getProviderOrThrow(resolveProvider);
     const result = await importFileTransfer(provider, {
@@ -194,19 +176,14 @@ export const createFileSystemAgentHandlers = (
   },
 });
 
-export const useFileSystemAgentTools = (
-  options?: UseFileSystemDevToolsOptions,
-) => {
+export const useFileSystemAgentTools = (options?: UseFileSystemDevToolsOptions) => {
   const resolveProvider = useCallback(
     () => resolveFileSystemAdapter(options),
     [options?.adapter, options?.expoFileSystem, options?.rnfs],
   );
   const agentFileTransfer = resolveAgentFileTransferCapabilities(options);
 
-  const handlers = createFileSystemAgentHandlers(
-    resolveProvider,
-    agentFileTransfer,
-  );
+  const handlers = createFileSystemAgentHandlers(resolveProvider, agentFileTransfer);
 
   useRozenitePluginAgentTool({
     pluginId: FILE_SYSTEM_AGENT_PLUGIN_ID,

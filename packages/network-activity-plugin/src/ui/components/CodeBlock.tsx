@@ -13,18 +13,11 @@ const VIRTUALIZATION_THRESHOLD = 50_000;
 const codeBlockClassNames =
   'text-sm font-mono text-gray-300 whitespace-pre-wrap bg-gray-800 p-3 rounded-md border border-gray-700 overflow-x-auto wrap-anywhere';
 
-export const CodeBlock = ({
-  children,
-  className,
-  ...props
-}: CodeBlockProps) => {
+export const CodeBlock = ({ children, className, ...props }: CodeBlockProps) => {
   // Only string children are eligible for virtualization. Component
   // children (JsonTree / XmlTree / etc.) manage their own rendering;
   // CodeBlock here just provides the monospace-on-dark frame.
-  if (
-    typeof children === 'string' &&
-    children.length > VIRTUALIZATION_THRESHOLD
-  ) {
+  if (typeof children === 'string' && children.length > VIRTUALIZATION_THRESHOLD) {
     return <VirtualizedCodeBlock text={children} className={className} />;
   }
 
@@ -40,10 +33,7 @@ type VirtualizedCodeBlockProps = {
   className?: string;
 };
 
-const VirtualizedCodeBlock = ({
-  text,
-  className,
-}: VirtualizedCodeBlockProps) => {
+const VirtualizedCodeBlock = ({ text, className }: VirtualizedCodeBlockProps) => {
   const lines = useMemo(() => text.split('\n'), [text]);
 
   // Content with no newlines collapses to a single row containing the
@@ -54,9 +44,7 @@ const VirtualizedCodeBlock = ({
     <Virtuoso
       style={{ height: 500 }}
       totalCount={lines.length}
-      itemContent={(idx) => (
-        <div className="whitespace-pre-wrap wrap-anywhere">{lines[idx]}</div>
-      )}
+      itemContent={(idx) => <div className="whitespace-pre-wrap wrap-anywhere">{lines[idx]}</div>}
       className={cn(codeBlockClassNames, className)}
     />
   );

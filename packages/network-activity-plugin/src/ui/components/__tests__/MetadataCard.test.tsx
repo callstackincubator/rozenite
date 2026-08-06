@@ -27,9 +27,7 @@ describe('MetadataCard', () => {
 
   it('shows the decoded byte size for a binary body', () => {
     // "AQID" decodes to 3 bytes.
-    render(
-      <MetadataCard body={{ kind: 'binary', base64: 'AQID' }} ctx={baseCtx} />,
-    );
+    render(<MetadataCard body={{ kind: 'binary', base64: 'AQID' }} ctx={baseCtx} />);
     expect(screen.getByText('Size')).toBeInTheDocument();
     expect(screen.getByText('3 bytes')).toBeInTheDocument();
   });
@@ -62,45 +60,31 @@ describe('MetadataCard', () => {
   });
 
   it('falls back to the URL last path segment for the filename', () => {
-    render(
-      <MetadataCard body={{ kind: 'binary', base64: 'AQID' }} ctx={baseCtx} />,
-    );
+    render(<MetadataCard body={{ kind: 'binary', base64: 'AQID' }} ctx={baseCtx} />);
     expect(screen.getByText('report.pdf')).toBeInTheDocument();
   });
 
   it('shows an enabled Download button for a binary body', () => {
-    render(
-      <MetadataCard body={{ kind: 'binary', base64: 'AQID' }} ctx={baseCtx} />,
-    );
+    render(<MetadataCard body={{ kind: 'binary', base64: 'AQID' }} ctx={baseCtx} />);
     const button = screen.getByRole('button', { name: /download/i });
     expect(button).not.toBeDisabled();
   });
 
   it('fires the download flow when the button is clicked', () => {
-    render(
-      <MetadataCard body={{ kind: 'binary', base64: 'AQID' }} ctx={baseCtx} />,
-    );
+    render(<MetadataCard body={{ kind: 'binary', base64: 'AQID' }} ctx={baseCtx} />);
     fireEvent.click(screen.getByRole('button', { name: /download/i }));
     expect(URL.createObjectURL).toHaveBeenCalled();
   });
 
   it('disables Download for the binary-too-large variant', () => {
-    render(
-      <MetadataCard
-        body={{ kind: 'binary-too-large', size: 9_999_999 }}
-        ctx={baseCtx}
-      />,
-    );
+    render(<MetadataCard body={{ kind: 'binary-too-large', size: 9_999_999 }} ctx={baseCtx} />);
     const button = screen.getByRole('button', { name: /download/i });
     expect(button).toBeDisabled();
   });
 
   it('renders the body.size for binary-too-large entries', () => {
     render(
-      <MetadataCard
-        body={{ kind: 'binary-too-large', size: 8 * 1024 * 1024 }}
-        ctx={baseCtx}
-      />,
+      <MetadataCard body={{ kind: 'binary-too-large', size: 8 * 1024 * 1024 }} ctx={baseCtx} />,
     );
     expect(screen.getByText('8.0 MB')).toBeInTheDocument();
   });

@@ -8,15 +8,7 @@ export type PluginCardProps = {
 };
 
 export function PluginCard({ plugin }: PluginCardProps) {
-  const {
-    packageName,
-    version,
-    githubUrl,
-    npmUrl,
-    description,
-    stars,
-    isOfficial,
-  } = plugin;
+  const { packageName, version, githubUrl, npmUrl, description, stars, isOfficial } = plugin;
 
   return (
     <article className={styles.card}>

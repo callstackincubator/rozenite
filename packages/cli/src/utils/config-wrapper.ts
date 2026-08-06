@@ -8,14 +8,7 @@ const CONFIG_BASE_NAMES = {
   repack: 'rspack.config',
 } as const;
 
-const MODULE_EXTENSIONS = [
-  '.js',
-  '.mjs',
-  '.cjs',
-  '.ts',
-  '.cts',
-  '.mts',
-] as const;
+const MODULE_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts', '.cts', '.mts'] as const;
 
 const WRAPPER_IMPORTS = {
   metro: {
@@ -53,9 +46,7 @@ const findConfigFile = async (
 /**
  * Determines module system based on file extension
  */
-const getModuleSystemFromExtension = (
-  extension: string,
-): 'esm' | 'commonjs' | null => {
+const getModuleSystemFromExtension = (extension: string): 'esm' | 'commonjs' | null => {
   switch (extension) {
     case '.mjs':
     case '.mts':
@@ -79,19 +70,14 @@ const detectQuoteStyle = (sourceCode: string): 'single' | 'double' => {
   const singleQuoteMatches = sourceCode.match(/(?:import|require).*'/g) || [];
   const doubleQuoteMatches = sourceCode.match(/(?:import|require).*"/g) || [];
 
-  return doubleQuoteMatches.length > singleQuoteMatches.length
-    ? 'double'
-    : 'single';
+  return doubleQuoteMatches.length > singleQuoteMatches.length ? 'double' : 'single';
 };
 
 /**
  * Helper function to determine if code uses ESM or CommonJS style for imports
  * Now prioritizes file extension over content analysis
  */
-const determineImportStyle = (
-  sourceCode: string,
-  extension?: string,
-): 'esm' | 'commonjs' => {
+const determineImportStyle = (sourceCode: string, extension?: string): 'esm' | 'commonjs' => {
   // First check if extension gives us a definitive answer
   if (extension) {
     const extensionBasedStyle = getModuleSystemFromExtension(extension);
@@ -132,12 +118,7 @@ const findFirstImportLine = (lines: string[]): number => {
     const line = lines[i].trim();
 
     // Skip empty lines and comments
-    if (
-      !line ||
-      line.startsWith('//') ||
-      line.startsWith('/*') ||
-      line.startsWith('*')
-    ) {
+    if (!line || line.startsWith('//') || line.startsWith('/*') || line.startsWith('*')) {
       continue;
     }
 
@@ -173,9 +154,7 @@ export const wrapConfigFile = async (
   if (!configFileInfo) {
     const baseName = CONFIG_BASE_NAMES[bundlerType];
     throw new Error(
-      `Configuration file ${baseName}.{${MODULE_EXTENSIONS.join(
-        ',',
-      )}} not found in ${projectRoot}`,
+      `Configuration file ${baseName}.{${MODULE_EXTENSIONS.join(',')}} not found in ${projectRoot}`,
     );
   }
 
@@ -187,8 +166,7 @@ export const wrapConfigFile = async (
 
   // Check if already configured
   const hasEsmImport =
-    sourceCode.includes(`from '${packageName}'`) ||
-    sourceCode.includes(`from "${packageName}"`);
+    sourceCode.includes(`from '${packageName}'`) || sourceCode.includes(`from "${packageName}"`);
   const hasCommonJsImport =
     sourceCode.includes(`require('${packageName}')`) ||
     sourceCode.includes(`require("${packageName}")`);
@@ -224,12 +202,7 @@ export const wrapConfigFile = async (
       let insertIndex = 0;
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
-        if (
-          line &&
-          !line.startsWith('//') &&
-          !line.startsWith('/*') &&
-          !line.startsWith('*')
-        ) {
+        if (line && !line.startsWith('//') && !line.startsWith('/*') && !line.startsWith('*')) {
           insertIndex = i;
           break;
         }
@@ -245,8 +218,7 @@ export const wrapConfigFile = async (
     // Handle different export patterns using regex with minimal changes
 
     // Pattern 1: export default { ... }
-    const exportDefaultObjectRegex =
-      /(export\s+default\s+)(\{[\s\S]*?\});?\s*$/m;
+    const exportDefaultObjectRegex = /(export\s+default\s+)(\{[\s\S]*?\});?\s*$/m;
     const exportDefaultObjectMatch = sourceCode.match(exportDefaultObjectRegex);
     if (exportDefaultObjectMatch) {
       const exportContent = exportDefaultObjectMatch[2];
@@ -266,11 +238,8 @@ export const wrapConfigFile = async (
         );
       } else {
         // Pattern 3: module.exports = { ... }
-        const moduleExportsObjectRegex =
-          /(module\.exports\s*=\s*)(\{[\s\S]*?\});?\s*$/m;
-        const moduleExportsObjectMatch = sourceCode.match(
-          moduleExportsObjectRegex,
-        );
+        const moduleExportsObjectRegex = /(module\.exports\s*=\s*)(\{[\s\S]*?\});?\s*$/m;
+        const moduleExportsObjectMatch = sourceCode.match(moduleExportsObjectRegex);
         if (moduleExportsObjectMatch) {
           const exportContent = moduleExportsObjectMatch[2];
           sourceCode = sourceCode.replace(
@@ -279,11 +248,8 @@ export const wrapConfigFile = async (
           );
         } else {
           // Pattern 4: module.exports = someFunction()
-          const moduleExportsCallRegex =
-            /(module\.exports\s*=\s*)([^;]+);?\s*$/m;
-          const moduleExportsCallMatch = sourceCode.match(
-            moduleExportsCallRegex,
-          );
+          const moduleExportsCallRegex = /(module\.exports\s*=\s*)([^;]+);?\s*$/m;
+          const moduleExportsCallMatch = sourceCode.match(moduleExportsCallRegex);
           if (moduleExportsCallMatch) {
             const exportContent = moduleExportsCallMatch[2];
             sourceCode = sourceCode.replace(

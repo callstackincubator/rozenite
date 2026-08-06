@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,9 +27,7 @@ const PerfItem = ({ index }: PerfItemProps) => {
   return (
     <View style={styles.item}>
       <Text style={styles.itemTitle}>Heavy Item {index + 1}</Text>
-      <Text style={styles.itemSubtitle}>
-        Render blocked JS thread for {renderDuration}ms
-      </Text>
+      <Text style={styles.itemSubtitle}>Render blocked JS thread for {renderDuration}ms</Text>
     </View>
   );
 };
@@ -42,8 +39,7 @@ export const PerfProblemScreen = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.title}>PerfProblemScreen</Text>
       <Text style={styles.subtitle}>
-        This screen intentionally renders 16 items that each block for over
-        50ms.
+        This screen intentionally renders 16 items that each block for over 50ms.
       </Text>
       <FlatList
         data={items}

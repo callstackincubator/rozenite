@@ -3,10 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
 
-type ParameterDisplayRouteProp = RouteProp<
-  RootStackParamList,
-  'ParameterDisplay'
->;
+type ParameterDisplayRouteProp = RouteProp<RootStackParamList, 'ParameterDisplay'>;
 
 export const ParameterDisplayScreen = () => {
   const navigation = useNavigation();
@@ -21,10 +18,7 @@ export const ParameterDisplayScreen = () => {
         <Text style={styles.message}>{message}</Text>
         <Text style={styles.source}>From: {source}</Text>
 
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Go Back</Text>
         </TouchableOpacity>
       </View>

@@ -126,9 +126,7 @@ describe('RozeniteDevToolsClient request', () => {
 
     controller.abort();
     mocks.emit('response', { requestId: 'aborted', value: 'too late' });
-    await expect(aborted).rejects.toBeInstanceOf(
-      RozeniteDevToolsRequestAbortedError,
-    );
+    await expect(aborted).rejects.toBeInstanceOf(RozeniteDevToolsRequestAbortedError);
 
     const failed = client.request({
       requestType: 'request',
@@ -156,9 +154,7 @@ describe('RozeniteDevToolsClient request', () => {
       requestId: 'timeout',
       timeoutMs: 10,
     });
-    const assertion = expect(request).rejects.toBeInstanceOf(
-      RozeniteDevToolsRequestTimeoutError,
-    );
+    const assertion = expect(request).rejects.toBeInstanceOf(RozeniteDevToolsRequestTimeoutError);
 
     await vi.advanceTimersByTimeAsync(10);
     mocks.emit('response', { requestId: 'timeout', value: 'too late' });

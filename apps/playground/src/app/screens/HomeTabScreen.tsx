@@ -28,24 +28,15 @@ export const HomeTabScreen = () => {
       <Text style={styles.text}>Home Tab</Text>
       <Text style={styles.subtext}>This is the home tab screen</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleNavigateToParameter}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleNavigateToParameter}>
         <Text style={styles.buttonText}>Show Parameter Screen</Text>
       </TouchableOpacity>
       <View style={styles.spacer} />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleNavigateToSuccessiveScreens}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleNavigateToSuccessiveScreens}>
         <Text style={styles.buttonText}>Go to successive screens</Text>
       </TouchableOpacity>
       <View style={styles.spacer} />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleNavigateToPerfProblem}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleNavigateToPerfProblem}>
         <Text style={styles.buttonText}>Open perf problem screen</Text>
       </TouchableOpacity>
     </View>

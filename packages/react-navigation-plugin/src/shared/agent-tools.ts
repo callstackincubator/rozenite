@@ -1,12 +1,8 @@
-import {
-  defineAgentToolContract,
-  type AgentToolContract,
-} from '@rozenite/agent-shared';
+import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
 import type { NavigationAction, NavigationState } from './index';
 import type { ActionOrigin } from '../react-native/symbolication/types';
 
-export const REACT_NAVIGATION_AGENT_PLUGIN_ID =
-  '@rozenite/react-navigation-plugin';
+export const REACT_NAVIGATION_AGENT_PLUGIN_ID = '@rozenite/react-navigation-plugin';
 
 export type NavigationActionHistoryEntry = {
   id: number;
@@ -136,8 +132,7 @@ export const reactNavigationToolDefinitions = {
     ReactNavigationListActionsResult
   >({
     name: 'list-actions',
-    description:
-      'List recorded navigation actions with states using pagination.',
+    description: 'List recorded navigation actions with states using pagination.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -152,10 +147,7 @@ export const reactNavigationToolDefinitions = {
       },
     },
   }),
-  resetRoot: defineAgentToolContract<
-    ReactNavigationResetRootArgs,
-    ReactNavigationResetRootResult
-  >({
+  resetRoot: defineAgentToolContract<ReactNavigationResetRootArgs, ReactNavigationResetRootResult>({
     name: 'reset-root',
     description: 'Reset navigation root state to provided state snapshot.',
     inputSchema: {
@@ -169,10 +161,7 @@ export const reactNavigationToolDefinitions = {
       required: ['state'],
     },
   }),
-  openLink: defineAgentToolContract<
-    ReactNavigationOpenLinkArgs,
-    ReactNavigationOpenLinkResult
-  >({
+  openLink: defineAgentToolContract<ReactNavigationOpenLinkArgs, ReactNavigationOpenLinkResult>({
     name: 'open-link',
     description: 'Open a deep link URL using React Native Linking.',
     inputSchema: {
@@ -186,10 +175,7 @@ export const reactNavigationToolDefinitions = {
       required: ['href'],
     },
   }),
-  navigate: defineAgentToolContract<
-    ReactNavigationNavigateArgs,
-    ReactNavigationNavigateResult
-  >({
+  navigate: defineAgentToolContract<ReactNavigationNavigateArgs, ReactNavigationNavigateResult>({
     name: 'navigate',
     description: 'Navigate to a route by name with optional params.',
     inputSchema: {
@@ -214,10 +200,7 @@ export const reactNavigationToolDefinitions = {
       required: ['name'],
     },
   }),
-  goBack: defineAgentToolContract<
-    ReactNavigationGoBackArgs,
-    ReactNavigationGoBackResult
-  >({
+  goBack: defineAgentToolContract<ReactNavigationGoBackArgs, ReactNavigationGoBackResult>({
     name: 'go-back',
     description: 'Go back in navigation history.',
     inputSchema: {
@@ -235,8 +218,7 @@ export const reactNavigationToolDefinitions = {
     ReactNavigationDispatchActionResult
   >({
     name: 'dispatch-action',
-    description:
-      'Dispatch an arbitrary React Navigation action (e.g. NAVIGATE, JUMP_TO).',
+    description: 'Dispatch an arbitrary React Navigation action (e.g. NAVIGATE, JUMP_TO).',
     inputSchema: {
       type: 'object',
       properties: {

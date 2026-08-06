@@ -42,13 +42,7 @@ type PluginCardProps = {
   children?: ReactNode;
 };
 
-const PluginCard = ({
-  title,
-  packageName,
-  description,
-  notes,
-  children,
-}: PluginCardProps) => {
+const PluginCard = ({ title, packageName, description, notes, children }: PluginCardProps) => {
   return (
     <View style={styles.card}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -153,9 +147,7 @@ export const ReduxDevToolsPluginSection = () => {
       title="Redux DevTools"
       packageName="@rozenite/redux-devtools-plugin"
       description="Connect Redux stores to Rozenite with the Redux enhancer so time-travel and state inspection work in the browser target."
-      notes={[
-        'A dedicated demo store is created with rozeniteDevToolsEnhancer.',
-      ]}
+      notes={['A dedicated demo store is created with rozeniteDevToolsEnhancer.']}
     />
   );
 };
@@ -170,9 +162,7 @@ export const SqlitePluginSection = () => {
       title="SQLite"
       packageName="@rozenite/sqlite-plugin"
       description="The SQLite plugin is disabled in this web entry because of upstream bugs in expo-sqlite on web. Use the iOS or Android playground to exercise the SQLite plugin with Rozenite."
-      notes={[
-        '`useRozeniteSqlitePlugin` and expo-sqlite are not loaded on web.',
-      ]}
+      notes={['`useRozeniteSqlitePlugin` and expo-sqlite are not loaded on web.']}
     />
   );
 };
@@ -214,8 +204,7 @@ const styles = StyleSheet.create({
     color: '#a78bfa',
     fontSize: 13,
     fontWeight: '600',
-    fontFamily:
-      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   },
   cardText: {
     color: '#cbd5e1',

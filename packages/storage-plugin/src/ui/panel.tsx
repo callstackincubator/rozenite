@@ -1,9 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import type {
-  ColumnDef,
-  OnChangeFn,
-  SortingState,
-} from '@tanstack/react-table';
+import type { ColumnDef, OnChangeFn, SortingState } from '@tanstack/react-table';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
   Badge,
@@ -18,15 +14,7 @@ import {
   VirtualizedDataTable,
 } from '@rozenite/ui';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import {
-  Database,
-  Download,
-  Edit3,
-  Plus,
-  RefreshCw,
-  Trash2,
-  Upload,
-} from 'lucide-react';
+import { Database, Download, Edit3, Plus, RefreshCw, Trash2, Upload } from 'lucide-react';
 import type {
   StorageDiscoverStoragesResponseEvent,
   StorageEventMap,
@@ -66,9 +54,7 @@ type FullEntryInteraction = { key: string; mode: 'detail' | 'edit' };
 const sameTarget = (a: StorageTarget, b: StorageTarget) =>
   a.adapterId === b.adapterId && a.storageId === b.storageId;
 
-const getEntryTypeFromValue = (
-  value: StorageEntryValue,
-): StorageEntry['type'] => {
+const getEntryTypeFromValue = (value: StorageEntryValue): StorageEntry['type'] => {
   if (typeof value === 'string') return 'string';
   if (typeof value === 'number') return 'number';
   if (typeof value === 'boolean') return 'boolean';
@@ -88,28 +74,18 @@ const useDebouncedValue = (value: string, delay = 250) => {
 
 function StoragePanelContent() {
   const [descriptors, setDescriptors] = useState<StorageDescriptor[]>([]);
-  const [selectedTarget, setSelectedTarget] = useState<StorageTarget | null>(
-    null,
-  );
+  const [selectedTarget, setSelectedTarget] = useState<StorageTarget | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [keySortDirection, setKeySortDirection] = useState<
-    'ascending' | 'descending'
-  >('ascending');
-  const [interaction, setInteraction] = useState<FullEntryInteraction | null>(
-    null,
-  );
+  const [keySortDirection, setKeySortDirection] = useState<'ascending' | 'descending'>('ascending');
+  const [interaction, setInteraction] = useState<FullEntryInteraction | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
   const [showPurgeDialog, setShowPurgeDialog] = useState(false);
   const [virtualListVersion, setVirtualListVersion] = useState(0);
   const [exportState, setExportState] = useState<
-    | { status: 'idle' }
-    | { status: 'loading' }
-    | { status: 'error'; message: string }
+    { status: 'idle' } | { status: 'loading' } | { status: 'error'; message: string }
   >({ status: 'idle' });
-  const [importFlight, setImportFlight] = useState<ImportFlightState | null>(
-    null,
-  );
+  const [importFlight, setImportFlight] = useState<ImportFlightState | null>(null);
   const [alertState, setAlertState] = useState<AlertState | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const selectedTargetRef = useRef<StorageTarget | null>(null);
@@ -127,8 +103,7 @@ function StoragePanelContent() {
   const queryClient = useQueryClient();
   const debouncedSearch = useDebouncedValue(searchTerm);
   const selectedDescriptor = descriptors.find(
-    (descriptor) =>
-      selectedTarget && sameTarget(descriptor.target, selectedTarget),
+    (descriptor) => selectedTarget && sameTarget(descriptor.target, selectedTarget),
   );
   const previews = useStorageEntryPreviews({
     client,
@@ -146,10 +121,7 @@ function StoragePanelContent() {
   const supportedTypes = selectedDescriptor?.capabilities.supportedTypes ?? [];
   const sidebarGroups = useMemo(() => {
     const storages = new Map(
-      descriptors.map((descriptor) => [
-        getStorageViewId(descriptor.target),
-        descriptor,
-      ]),
+      descriptors.map((descriptor) => [getStorageViewId(descriptor.target), descriptor]),
     );
     return buildStorageSidebarGroups(storages);
   }, [descriptors]);
@@ -172,14 +144,10 @@ function StoragePanelContent() {
     const descriptorsSubscription = client.onMessage(
       'storage-descriptors',
       (event: StorageDiscoverStoragesResponseEvent) => {
-        if (event.requestId !== `discovery-${discoveryRequestIdRef.current}`)
-          return;
+        if (event.requestId !== `discovery-${discoveryRequestIdRef.current}`) return;
         setDescriptors(event.storages);
         setSelectedTarget((previous) =>
-          previous &&
-          event.storages.some((descriptor) =>
-            sameTarget(descriptor.target, previous),
-          )
+          previous && event.storages.some((descriptor) => sameTarget(descriptor.target, previous))
             ? previous
             : (event.storages[0]?.target ?? null),
         );
@@ -241,14 +209,9 @@ function StoragePanelContent() {
               : descriptor,
           ),
         );
-        if (
-          selectedTargetRef.current &&
-          sameTarget(event.target, selectedTargetRef.current)
-        ) {
+        if (selectedTargetRef.current && sameTarget(event.target, selectedTargetRef.current)) {
           setInteraction((current) =>
-            current && (event.key == null || current.key === event.key)
-              ? null
-              : current,
+            current && (event.key == null || current.key === event.key) ? null : current,
           );
         }
 
@@ -257,10 +220,7 @@ function StoragePanelContent() {
         pendingInvalidationsRef.current.add(targetId);
         queueMicrotask(() => {
           pendingInvalidationsRef.current.delete(targetId);
-          if (
-            selectedTargetRef.current &&
-            sameTarget(event.target, selectedTargetRef.current)
-          ) {
+          if (selectedTargetRef.current && sameTarget(event.target, selectedTargetRef.current)) {
             setVirtualListVersion((version) => version + 1);
           }
           void invalidateStorageEntryPreviews(queryClient, event.target);
@@ -308,11 +268,7 @@ function StoragePanelContent() {
   };
 
   const handleValueChange = (key: string, newValue: StorageEntryValue) => {
-    if (
-      !client ||
-      !selectedTarget ||
-      !supportedTypes.includes(getEntryTypeFromValue(newValue))
-    )
+    if (!client || !selectedTarget || !supportedTypes.includes(getEntryTypeFromValue(newValue)))
       return;
     const type = getEntryTypeFromValue(newValue);
     const entry =
@@ -365,8 +321,7 @@ function StoragePanelContent() {
     });
   };
 
-  const showAlert = (title: string, message: string) =>
-    setAlertState({ title, message });
+  const showAlert = (title: string, message: string) => setAlertState({ title, message });
 
   const handleImportClick = () => {
     if (fileInputRef.current) {
@@ -382,18 +337,12 @@ function StoragePanelContent() {
     try {
       raw = JSON.parse(await file.text());
     } catch (error) {
-      showAlert(
-        'Could not read file',
-        error instanceof Error ? error.message : String(error),
-      );
+      showAlert('Could not read file', error instanceof Error ? error.message : String(error));
       return;
     }
     const parsed = parseSnapshot(raw);
     if (!parsed.ok) {
-      showAlert(
-        'Invalid snapshot',
-        `${parsed.error.path}: ${parsed.error.message}`,
-      );
+      showAlert('Invalid snapshot', `${parsed.error.path}: ${parsed.error.message}`);
       return;
     }
     importPreviewAbortControllerRef.current?.abort();
@@ -408,10 +357,7 @@ function StoragePanelContent() {
         payload: { type: 'preview-import', target, snapshot: parsed.snapshot },
         signal: controller.signal,
       });
-      if (
-        controller.signal.aborted ||
-        !sameTarget(target, selectedTargetRef.current ?? target)
-      )
+      if (controller.signal.aborted || !sameTarget(target, selectedTargetRef.current ?? target))
         return;
       setImportFlight({
         phase: 'preview',
@@ -426,10 +372,7 @@ function StoragePanelContent() {
         ),
       });
     } catch {
-      if (
-        !controller.signal.aborted &&
-        sameTarget(target, selectedTargetRef.current ?? target)
-      ) {
+      if (!controller.signal.aborted && sameTarget(target, selectedTargetRef.current ?? target)) {
         showAlert(
           'Could not preview import',
           'Could not inspect the selected storage. Please try again.',
@@ -474,26 +417,19 @@ function StoragePanelContent() {
         payload: { type: 'export-snapshot', target },
         signal: controller.signal,
       });
-      if (
-        !controller.signal.aborted &&
-        sameTarget(target, selectedTargetRef.current ?? target)
-      ) {
+      if (!controller.signal.aborted && sameTarget(target, selectedTargetRef.current ?? target)) {
         downloadJson(response.snapshot, buildExportFilename(target));
         setExportState({ status: 'idle' });
       }
     } catch {
-      if (
-        !controller.signal.aborted &&
-        sameTarget(target, selectedTargetRef.current ?? target)
-      ) {
+      if (!controller.signal.aborted && sameTarget(target, selectedTargetRef.current ?? target)) {
         setExportState({
           status: 'error',
           message: 'Could not export the selected storage. Please try again.',
         });
       }
     } finally {
-      if (exportAbortControllerRef.current === controller)
-        exportAbortControllerRef.current = null;
+      if (exportAbortControllerRef.current === controller) exportAbortControllerRef.current = null;
     }
   };
 
@@ -505,9 +441,7 @@ function StoragePanelContent() {
         header: 'Key',
         enableSorting: true,
         cell: ({ row }) => (
-          <span className="font-mono text-sm text-foreground">
-            {row.original.key}
-          </span>
+          <span className="font-mono text-sm text-foreground">{row.original.key}</span>
         ),
       },
       {
@@ -530,9 +464,7 @@ function StoragePanelContent() {
             <span
               className="ml-2 text-xs text-muted-foreground"
               title={
-                row.original.isTruncated
-                  ? `Full value size: ${row.original.valueSize}`
-                  : undefined
+                row.original.isTruncated ? `Full value size: ${row.original.valueSize}` : undefined
               }
             >
               {row.original.isTruncated
@@ -547,16 +479,11 @@ function StoragePanelContent() {
         header: '',
         enableSorting: false,
         cell: ({ row }) => (
-          <div
-            className="flex items-center gap-1"
-            onClick={(event) => event.stopPropagation()}
-          >
+          <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
             <Button
               variant="ghost"
               size="icon"
-              onClick={() =>
-                setInteraction({ key: row.original.key, mode: 'edit' })
-              }
+              onClick={() => setInteraction({ key: row.original.key, mode: 'edit' })}
               aria-label={`Edit value for ${row.original.key}`}
             >
               <Edit3 className="h-3.5 w-3.5" />
@@ -576,9 +503,7 @@ function StoragePanelContent() {
     ],
     [],
   );
-  const sorting: SortingState = [
-    { id: 'key', desc: keySortDirection === 'descending' },
-  ];
+  const sorting: SortingState = [{ id: 'key', desc: keySortDirection === 'descending' }];
   const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
     const next = typeof updater === 'function' ? updater(sorting) : updater;
     const keySort = next.find((item) => item.id === 'key');
@@ -610,9 +535,7 @@ function StoragePanelContent() {
       isFetchingPreviousPageRef.current = false;
     });
   };
-  const selectedStorageViewId = selectedTarget
-    ? getStorageViewId(selectedTarget)
-    : '';
+  const selectedStorageViewId = selectedTarget ? getStorageViewId(selectedTarget) : '';
 
   return (
     <PluginShell>
@@ -626,22 +549,15 @@ function StoragePanelContent() {
                 </div>
               ) : (
                 sidebarGroups.map((group) => (
-                  <Sidebar.Group
-                    key={group.adapterId}
-                    label={group.adapterName}
-                  >
+                  <Sidebar.Group key={group.adapterId} label={group.adapterName}>
                     {group.items.map((item) => (
                       <Sidebar.Item
                         key={item.viewId}
                         selected={item.viewId === selectedStorageViewId}
-                        trailing={
-                          <Badge variant="secondary">{item.entryCount}</Badge>
-                        }
+                        trailing={<Badge variant="secondary">{item.entryCount}</Badge>}
                         onClick={() => {
                           const descriptor = descriptors.find(
-                            (candidate) =>
-                              getStorageViewId(candidate.target) ===
-                              item.viewId,
+                            (candidate) => getStorageViewId(candidate.target) === item.viewId,
                           );
                           if (descriptor) setSelectedTarget(descriptor.target);
                         }}
@@ -703,20 +619,12 @@ function StoragePanelContent() {
                   </Toolbar.Button>
                   <Toolbar.Button
                     onClick={handleExport}
-                    disabled={
-                      !client ||
-                      !selectedTarget ||
-                      exportState.status === 'loading'
-                    }
+                    disabled={!client || !selectedTarget || exportState.status === 'loading'}
                     aria-label={
-                      exportState.status === 'loading'
-                        ? 'Exporting storage'
-                        : 'Export storage'
+                      exportState.status === 'loading' ? 'Exporting storage' : 'Export storage'
                     }
                     title={
-                      exportState.status === 'loading'
-                        ? 'Exporting storage'
-                        : 'Export storage'
+                      exportState.status === 'loading' ? 'Exporting storage' : 'Export storage'
                     }
                     className="w-7 px-0"
                   >
@@ -757,15 +665,11 @@ function StoragePanelContent() {
                     getRowTextValue={(entry) => entry.key}
                     loading={previews.isLoading}
                     emptyMessage={
-                      debouncedSearch
-                        ? 'No entries match your search.'
-                        : 'This storage is empty.'
+                      debouncedSearch ? 'No entries match your search.' : 'This storage is empty.'
                     }
                     manualSorting
                     onEndReached={fetchNextPage}
-                    onRowClick={(entry) =>
-                      setInteraction({ key: entry.key, mode: 'detail' })
-                    }
+                    onRowClick={(entry) => setInteraction({ key: entry.key, mode: 'detail' })}
                     onSortingChange={handleSortingChange}
                     onStartReached={fetchPreviousPage}
                     scrollClassName="h-full w-full overflow-auto"
@@ -797,9 +701,7 @@ function StoragePanelContent() {
           if (!open) closeInteraction();
         }}
         onEdit={() =>
-          setInteraction((current) =>
-            current ? { ...current, mode: 'edit' } : current,
-          )
+          setInteraction((current) => (current ? { ...current, mode: 'edit' } : current))
         }
         entry={fullEntry.entry ?? null}
       />
@@ -825,9 +727,7 @@ function StoragePanelContent() {
         destructive
         title="Delete Entry"
         description={
-          deleteKey
-            ? `Are you sure you want to delete the entry "${deleteKey}"?`
-            : undefined
+          deleteKey ? `Are you sure you want to delete the entry "${deleteKey}"?` : undefined
         }
         confirmLabel="Delete"
         onConfirm={handleDeleteEntry}

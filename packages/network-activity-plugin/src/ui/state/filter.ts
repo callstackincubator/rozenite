@@ -23,11 +23,7 @@ export type FilterState = {
   advanced: AdvancedFilterState;
 };
 
-export const DEFAULT_REQUEST_TYPES: RequestTypeFilter[] = [
-  'http',
-  'websocket',
-  'sse',
-];
+export const DEFAULT_REQUEST_TYPES: RequestTypeFilter[] = ['http', 'websocket', 'sse'];
 
 export const createDefaultFilter = (): FilterState => ({
   text: '',

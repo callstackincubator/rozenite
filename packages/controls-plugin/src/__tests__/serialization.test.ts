@@ -171,15 +171,9 @@ describe('controls serialization', () => {
     const registry = buildActionRegistry(sections);
 
     const toggleEntry = registry.get(getActionRegistryKey('controls', 'flag'));
-    const buttonEntry = registry.get(
-      getActionRegistryKey('controls', 'refresh'),
-    );
-    const selectEntry = registry.get(
-      getActionRegistryKey('controls', 'environment'),
-    );
-    const inputEntry = registry.get(
-      getActionRegistryKey('controls', 'release-label'),
-    );
+    const buttonEntry = registry.get(getActionRegistryKey('controls', 'refresh'));
+    const selectEntry = registry.get(getActionRegistryKey('controls', 'environment'));
+    const inputEntry = registry.get(getActionRegistryKey('controls', 'release-label'));
 
     expect(toggleEntry?.type).toBe('toggle');
     expect(buttonEntry?.type).toBe('button');

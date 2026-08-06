@@ -12,22 +12,18 @@ export const useHandleDevToolsMessages = (
       return;
     }
 
-    const subscription = client.onMessage(
-      'devtools-action',
-      ({ type, queryHash, metadata }) => {
-        void applyTanStackQueryDevtoolsAction(queryClient, {
-          type,
-          queryHash,
-          metadata,
-        }).catch((error) => {
-          const message =
-            error instanceof Error ? error.message : String(error);
-          console.warn(
-            `[Rozenite, tanstack-query-plugin] Failed to apply devtools action "${type}": ${message}`,
-          );
-        });
-      },
-    );
+    const subscription = client.onMessage('devtools-action', ({ type, queryHash, metadata }) => {
+      void applyTanStackQueryDevtoolsAction(queryClient, {
+        type,
+        queryHash,
+        metadata,
+      }).catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(
+          `[Rozenite, tanstack-query-plugin] Failed to apply devtools action "${type}": ${message}`,
+        );
+      });
+    });
 
     return () => {
       subscription.remove();

@@ -5,26 +5,11 @@ import {
   completionKeymap,
   type CompletionSource,
 } from '@codemirror/autocomplete';
-import {
-  defaultKeymap,
-  history,
-  historyKeymap,
-  indentWithTab,
-} from '@codemirror/commands';
-import {
-  schemaCompletionSource,
-  sql,
-  SQLite,
-  type SQLNamespace,
-} from '@codemirror/lang-sql';
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { schemaCompletionSource, sql, SQLite, type SQLNamespace } from '@codemirror/lang-sql';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
-import {
-  Compartment,
-  EditorSelection,
-  EditorState,
-  type Extension,
-} from '@codemirror/state';
+import { Compartment, EditorSelection, EditorState, type Extension } from '@codemirror/state';
 import { searchKeymap } from '@codemirror/search';
 import {
   Decoration,
@@ -36,13 +21,7 @@ import {
   lineNumbers,
   placeholder,
 } from '@codemirror/view';
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  type Ref,
-} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, type Ref } from 'react';
 
 export type SqlEditorHandle = {
   focus: () => void;
@@ -137,8 +116,7 @@ const sqlEditorTheme = EditorView.theme(
       display: 'flex',
       flex: '1 1 auto',
       minHeight: '0',
-      fontFamily:
-        "'IBM Plex Mono', 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace",
+      fontFamily: "'IBM Plex Mono', 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace",
     },
     '.cm-sizer': {
       minHeight: '100%',
@@ -152,10 +130,9 @@ const sqlEditorTheme = EditorView.theme(
     '.cm-cursor, .cm-dropCursor': {
       borderLeftColor: '#f7fbff',
     },
-    '.cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection':
-      {
-        backgroundColor: 'rgba(89, 163, 255, 0.2)',
-      },
+    '.cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection': {
+      backgroundColor: 'rgba(89, 163, 255, 0.2)',
+    },
     '.cm-activeLine': {
       backgroundColor: 'rgba(255, 255, 255, 0.032)',
     },
@@ -367,9 +344,7 @@ const SqlEditorInner = (
           history(),
           closeBrackets(),
           syntaxHighlighting(sqlHighlightStyle),
-          sqlSupportCompartment.of(
-            sql({ dialect: SQLite, upperCaseKeywords: true }),
-          ),
+          sqlSupportCompartment.of(sql({ dialect: SQLite, upperCaseKeywords: true })),
           autocompleteCompartment.of(
             createAutocompleteExtension({
               completionSchema: initialConfigRef.current.completionSchema,
@@ -378,15 +353,9 @@ const SqlEditorInner = (
               defaultTable: initialConfigRef.current.defaultTable,
             }),
           ),
-          errorLineCompartment.of(
-            createErrorLineExtension(initialConfigRef.current.errorLine),
-          ),
-          placeholderCompartment.of(
-            placeholder(initialConfigRef.current.placeholderText),
-          ),
-          editableCompartment.of(
-            createEditableExtension(initialConfigRef.current.readOnly),
-          ),
+          errorLineCompartment.of(createErrorLineExtension(initialConfigRef.current.errorLine)),
+          placeholderCompartment.of(placeholder(initialConfigRef.current.placeholderText)),
+          editableCompartment.of(createEditableExtension(initialConfigRef.current.readOnly)),
           keymap.of([
             {
               key: 'Mod-Enter',
@@ -447,9 +416,7 @@ const SqlEditorInner = (
 
     editorView.dispatch({
       effects: [
-        sqlSupportCompartment.reconfigure(
-          sql({ dialect: SQLite, upperCaseKeywords: true }),
-        ),
+        sqlSupportCompartment.reconfigure(sql({ dialect: SQLite, upperCaseKeywords: true })),
         autocompleteCompartment.reconfigure(
           createAutocompleteExtension({
             completionSchema,

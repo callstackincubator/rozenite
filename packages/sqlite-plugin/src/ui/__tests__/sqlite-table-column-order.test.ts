@@ -23,13 +23,7 @@ describe('sqlite table column order helpers', () => {
       normalizeTableColumnOrder({
         columnIds: [SQLITE_ROW_NUMBER_COLUMN_ID, 'name', 'type'],
         fixedLeadingColumnIds: [SQLITE_ROW_NUMBER_COLUMN_ID],
-        storedColumnOrder: [
-          'type',
-          SQLITE_ROW_NUMBER_COLUMN_ID,
-          'stale',
-          'name',
-          'type',
-        ],
+        storedColumnOrder: ['type', SQLITE_ROW_NUMBER_COLUMN_ID, 'stale', 'name', 'type'],
       }),
     ).toEqual([SQLITE_ROW_NUMBER_COLUMN_ID, 'type', 'name']);
   });
@@ -49,12 +43,7 @@ describe('sqlite table column order helpers', () => {
       reorderTableColumnOrder({
         columnIds: [SQLITE_ROW_NUMBER_COLUMN_ID, 'name', 'type', 'extra'],
         fixedLeadingColumnIds: [SQLITE_ROW_NUMBER_COLUMN_ID],
-        storedColumnOrder: [
-          SQLITE_ROW_NUMBER_COLUMN_ID,
-          'name',
-          'type',
-          'extra',
-        ],
+        storedColumnOrder: [SQLITE_ROW_NUMBER_COLUMN_ID, 'name', 'type', 'extra'],
         activeColumnId: 'extra',
         overColumnId: 'name',
       }),
@@ -73,11 +62,7 @@ describe('sqlite table column order helpers', () => {
   });
 
   it('builds stable table ids for entity and query surfaces', () => {
-    expect(buildEntityTableId('data', 'db-1', 'main', 'users')).toBe(
-      'data:db-1:main:users',
-    );
-    expect(buildQueryTableId('db-1', ['id', 'name'])).toBe(
-      'query:db-1:["id","name"]',
-    );
+    expect(buildEntityTableId('data', 'db-1', 'main', 'users')).toBe('data:db-1:main:users');
+    expect(buildQueryTableId('db-1', ['id', 'name'])).toBe('query:db-1:["id","name"]');
   });
 });

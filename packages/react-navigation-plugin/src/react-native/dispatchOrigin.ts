@@ -64,11 +64,7 @@ export type ResolveDispatchOriginResult = {
 // dispatch from the same callsite.
 export const resolveDispatchOrigin = (
   rawStack: string,
-  {
-    cache,
-    symbolicate = symbolicateFrames,
-    symbolicateOptions,
-  }: ResolveDispatchOriginDeps,
+  { cache, symbolicate = symbolicateFrames, symbolicateOptions }: ResolveDispatchOriginDeps,
 ): ResolveDispatchOriginResult => {
   const frames = parseStack(rawStack);
 
@@ -83,25 +79,23 @@ export const resolveDispatchOrigin = (
 
   const initialOrigin = buildOrigin(rawStack, frames, 'pending');
 
-  const pendingResolution = symbolicate(frames, symbolicateOptions ?? {}).then(
-    (outcome) => {
-      if (outcome.status === 'complete') {
-        cache.set(rawStack, {
-          frames: outcome.frames,
-          codeFrame: outcome.codeFrame,
-        });
-        return buildOrigin(rawStack, outcome.frames, 'complete', {
-          codeFrame: outcome.codeFrame,
-        });
-      }
-      if (outcome.status === 'failed') {
-        return buildOrigin(rawStack, frames, 'failed', {
-          error: outcome.error,
-        });
-      }
-      return buildOrigin(rawStack, frames, 'unavailable');
-    },
-  );
+  const pendingResolution = symbolicate(frames, symbolicateOptions ?? {}).then((outcome) => {
+    if (outcome.status === 'complete') {
+      cache.set(rawStack, {
+        frames: outcome.frames,
+        codeFrame: outcome.codeFrame,
+      });
+      return buildOrigin(rawStack, outcome.frames, 'complete', {
+        codeFrame: outcome.codeFrame,
+      });
+    }
+    if (outcome.status === 'failed') {
+      return buildOrigin(rawStack, frames, 'failed', {
+        error: outcome.error,
+      });
+    }
+    return buildOrigin(rawStack, frames, 'unavailable');
+  });
 
   return { initialOrigin, pendingResolution };
 };

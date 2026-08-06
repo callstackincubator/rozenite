@@ -38,8 +38,7 @@ import rootReducer from './reducers';
 
 const store = configureStore({
   reducer: rootReducer,
-  enhancers: (getDefaultEnhancers) =>
-    getDefaultEnhancers().concat(rozeniteDevToolsEnhancer()),
+  enhancers: (getDefaultEnhancers) => getDefaultEnhancers().concat(rozeniteDevToolsEnhancer()),
 });
 
 export default store;

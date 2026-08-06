@@ -29,10 +29,7 @@ export type RpcMethodHandle<M extends RpcMethods, K extends keyof M> = {
 };
 
 export type RozeniteRpc<M extends RpcMethods> = {
-  method<K extends keyof M>(
-    method: K,
-    options?: InvokeOptions,
-  ): RpcMethodHandle<M, K>;
+  method<K extends keyof M>(method: K, options?: InvokeOptions): RpcMethodHandle<M, K>;
 
   handle<K extends keyof M>(
     method: K,

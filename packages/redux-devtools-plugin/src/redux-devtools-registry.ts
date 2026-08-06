@@ -18,9 +18,7 @@ export type ReduxDevToolsStoreRegistration = {
 
 const registry = new Map<string, ReduxDevToolsStoreRegistration>();
 
-export const registerReduxDevToolsStore = (
-  registration: ReduxDevToolsStoreRegistration,
-) => {
+export const registerReduxDevToolsStore = (registration: ReduxDevToolsStoreRegistration) => {
   registry.set(registration.instanceId, registration);
 };
 

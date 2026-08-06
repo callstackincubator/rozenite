@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { formatFrameLocation } from '../../react-native/symbolication/format';
 import { classifyFrame } from '../../react-native/symbolication/rank';
-import type {
-  ActionOrigin,
-  ActionStackFrame,
-} from '../../react-native/symbolication/types';
+import type { ActionOrigin, ActionStackFrame } from '../../react-native/symbolication/types';
 
 export type DispatchOriginSectionProps = {
   origin: ActionOrigin | undefined;
@@ -17,20 +14,8 @@ const Spinner = () => (
     viewBox="0 0 24 24"
     aria-hidden="true"
   >
-    <circle
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="3"
-      className="opacity-25"
-    />
-    <path
-      d="M4 12a8 8 0 018-8"
-      stroke="currentColor"
-      strokeWidth="3"
-      className="opacity-75"
-    />
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" className="opacity-75" />
   </svg>
 );
 
@@ -46,8 +31,7 @@ const Headline = ({ origin }: { origin: ActionOrigin }) => {
   if (origin.symbolicationStatus === 'unavailable') {
     return (
       <div className="text-gray-400">
-        Stack trace symbolication is unavailable (production build or Metro
-        disconnected).
+        Stack trace symbolication is unavailable (production build or Metro disconnected).
       </div>
     );
   }
@@ -56,17 +40,13 @@ const Headline = ({ origin }: { origin: ActionOrigin }) => {
       <div className="text-gray-300">
         <div>Could not source-map the stack via Metro.</div>
         {origin.symbolicationError && (
-          <div className="mt-1 text-xs text-gray-500">
-            {origin.symbolicationError}
-          </div>
+          <div className="mt-1 text-xs text-gray-500">{origin.symbolicationError}</div>
         )}
       </div>
     );
   }
   if (origin.confidence === 'none') {
-    return (
-      <div className="text-orange-400">Could not resolve dispatch origin.</div>
-    );
+    return <div className="text-orange-400">Could not resolve dispatch origin.</div>;
   }
   const location = formatFrameLocation(origin.originFrame);
   const fn = origin.originFrame?.functionName ?? '<anonymous>';
@@ -74,9 +54,7 @@ const Headline = ({ origin }: { origin: ActionOrigin }) => {
     <div className="flex flex-wrap items-center gap-2">
       <div className="text-gray-100">
         Dispatched from <code className="font-mono text-blue-300">{fn}</code> in{' '}
-        <code className="font-mono text-blue-300">
-          {location ?? 'unknown location'}
-        </code>
+        <code className="font-mono text-blue-300">{location ?? 'unknown location'}</code>
       </div>
       {origin.confidence === 'low' && (
         <span className="rounded border border-yellow-700 bg-yellow-900/40 px-2 py-0.5 text-xs text-yellow-300">
@@ -99,13 +77,7 @@ const CodeFrame = ({ origin }: { origin: ActionOrigin }) => {
   );
 };
 
-const StackFrame = ({
-  frame,
-  isOrigin,
-}: {
-  frame: ActionStackFrame;
-  isOrigin: boolean;
-}) => {
+const StackFrame = ({ frame, isOrigin }: { frame: ActionStackFrame; isOrigin: boolean }) => {
   const cls = classifyFrame(frame.url);
   const location = formatFrameLocation(frame);
   const fn = frame.functionName ?? '<anonymous>';
@@ -115,9 +87,7 @@ const StackFrame = ({
         isOrigin ? 'border-l-2 border-blue-500 bg-gray-900' : ''
       } ${cls === 'library' ? 'text-gray-500' : 'text-gray-300'}`}
     >
-      <span className="font-mono">
-        {location ?? frame.generatedUrl ?? '(no location)'}
-      </span>
+      <span className="font-mono">{location ?? frame.generatedUrl ?? '(no location)'}</span>
       <span className="text-gray-500">—</span>
       <span className="font-mono">{fn}</span>
       {cls === 'library' && (
@@ -129,9 +99,7 @@ const StackFrame = ({
   );
 };
 
-export const DispatchOriginSection = ({
-  origin,
-}: DispatchOriginSectionProps) => {
+export const DispatchOriginSection = ({ origin }: DispatchOriginSectionProps) => {
   const initiallyExpanded =
     origin?.symbolicationStatus === 'complete' && origin?.confidence === 'none';
   const [isStackExpanded, setIsStackExpanded] = useState(initiallyExpanded);
@@ -140,9 +108,7 @@ export const DispatchOriginSection = ({
   if (!origin) {
     return (
       <section className="mb-6">
-        <h3 className="mb-3 text-base font-bold text-gray-100">
-          Dispatch Origin
-        </h3>
+        <h3 className="mb-3 text-base font-bold text-gray-100">Dispatch Origin</h3>
         <div className="rounded border border-gray-700 bg-gray-800 p-3 text-sm text-gray-400">
           No stack trace captured for this action.
         </div>
@@ -176,9 +142,7 @@ export const DispatchOriginSection = ({
 
       <div className="rounded border border-gray-700 bg-gray-800 p-3 text-sm">
         <Headline origin={origin} />
-        {origin.symbolicationStatus === 'complete' && (
-          <CodeFrame origin={origin} />
-        )}
+        {origin.symbolicationStatus === 'complete' && <CodeFrame origin={origin} />}
 
         {origin.frames.length > 0 && (
           <div className="mt-3">
@@ -190,18 +154,14 @@ export const DispatchOriginSection = ({
             >
               <span>{isStackExpanded ? '▾' : '▸'}</span>
               <span>
-                Full stack ({origin.frames.length}{' '}
-                {origin.frames.length === 1 ? 'frame' : 'frames'})
+                Full stack ({origin.frames.length} {origin.frames.length === 1 ? 'frame' : 'frames'}
+                )
               </span>
             </button>
             {isStackExpanded && (
               <ul className="mt-2 space-y-0.5 text-xs">
                 {origin.frames.map((frame, idx) => (
-                  <StackFrame
-                    key={idx}
-                    frame={frame}
-                    isOrigin={origin.originFrame === frame}
-                  />
+                  <StackFrame key={idx} frame={frame} isOrigin={origin.originFrame === frame} />
                 ))}
               </ul>
             )}

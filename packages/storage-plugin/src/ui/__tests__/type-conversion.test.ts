@@ -25,13 +25,9 @@ describe('convertValue', () => {
     });
 
     it('UTF-8 encodes a string to a byte array', () => {
-      expect(convertValue('string', 'buffer', 'hello')).toEqual([
-        0x68, 0x65, 0x6c, 0x6c, 0x6f,
-      ]);
+      expect(convertValue('string', 'buffer', 'hello')).toEqual([0x68, 0x65, 0x6c, 0x6c, 0x6f]);
       // 'é' is two bytes in UTF-8: 0xC3 0xA9.
-      expect(convertValue('string', 'buffer', 'café')).toEqual([
-        0x63, 0x61, 0x66, 0xc3, 0xa9,
-      ]);
+      expect(convertValue('string', 'buffer', 'café')).toEqual([0x63, 0x61, 0x66, 0xc3, 0xa9]);
       expect(convertValue('string', 'buffer', '')).toEqual([]);
     });
   });
@@ -66,20 +62,14 @@ describe('convertValue', () => {
     });
 
     it('encodes the literal "true" / "false" bytes for buffer conversion', () => {
-      expect(convertValue('boolean', 'buffer', true)).toEqual([
-        0x74, 0x72, 0x75, 0x65,
-      ]);
-      expect(convertValue('boolean', 'buffer', false)).toEqual([
-        0x66, 0x61, 0x6c, 0x73, 0x65,
-      ]);
+      expect(convertValue('boolean', 'buffer', true)).toEqual([0x74, 0x72, 0x75, 0x65]);
+      expect(convertValue('boolean', 'buffer', false)).toEqual([0x66, 0x61, 0x6c, 0x73, 0x65]);
     });
   });
 
   describe('from buffer', () => {
     it('UTF-8 decodes bytes back to a string (the headline round-trip)', () => {
-      expect(
-        convertValue('buffer', 'string', [0x68, 0x65, 0x6c, 0x6c, 0x6f]),
-      ).toBe('hello');
+      expect(convertValue('buffer', 'string', [0x68, 0x65, 0x6c, 0x6c, 0x6f])).toBe('hello');
     });
 
     it('returns an empty string when bytes are not valid UTF-8', () => {
@@ -88,19 +78,13 @@ describe('convertValue', () => {
 
     it('decodes then parses to number, falls back to 0 on failure', () => {
       expect(convertValue('buffer', 'number', [0x34, 0x32])).toBe(42); // "42"
-      expect(
-        convertValue('buffer', 'number', [0x68, 0x65, 0x6c, 0x6c, 0x6f]),
-      ).toBe(0); // "hello" → NaN → 0
+      expect(convertValue('buffer', 'number', [0x68, 0x65, 0x6c, 0x6c, 0x6f])).toBe(0); // "hello" → NaN → 0
       expect(convertValue('buffer', 'number', [0xff])).toBe(0); // invalid UTF-8 → 0
     });
 
     it('decodes then matches "true" for boolean conversion', () => {
-      expect(convertValue('buffer', 'boolean', [0x74, 0x72, 0x75, 0x65])).toBe(
-        true,
-      );
-      expect(
-        convertValue('buffer', 'boolean', [0x66, 0x61, 0x6c, 0x73, 0x65]),
-      ).toBe(false);
+      expect(convertValue('buffer', 'boolean', [0x74, 0x72, 0x75, 0x65])).toBe(true);
+      expect(convertValue('buffer', 'boolean', [0x66, 0x61, 0x6c, 0x73, 0x65])).toBe(false);
       expect(convertValue('buffer', 'boolean', [0xff])).toBe(false);
     });
   });

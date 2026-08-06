@@ -1,10 +1,4 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '../navigation/types';
@@ -56,10 +50,7 @@ export const ReduxTestScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Redux Multi-Store Test</Text>
@@ -75,9 +66,7 @@ export const ReduxTestScreen = () => {
         </Provider>
 
         <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            This screen uses two independent Redux stores.
-          </Text>
+          <Text style={styles.infoText}>This screen uses two independent Redux stores.</Text>
           <Text style={styles.infoText}>
             Open Redux DevTools and switch instances to inspect each store.
           </Text>

@@ -47,8 +47,7 @@ describe('getDeviceName', () => {
   it('detects Firefox with version', () => {
     restoreNavigator();
     restoreNavigator = setNavigatorMock({
-      userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
     });
     assert.strictEqual(getDeviceName(), 'Firefox 121');
   });
@@ -91,8 +90,7 @@ describe('getDeviceName', () => {
   it('prioritizes specific browsers over generic Chrome', () => {
     restoreNavigator();
     restoreNavigator = setNavigatorMock({
-      userAgent:
-        'Mozilla/5.0 AppleWebKit/537.36 Chrome/120.0.0.0 OPR/106.0.0.0',
+      userAgent: 'Mozilla/5.0 AppleWebKit/537.36 Chrome/120.0.0.0 OPR/106.0.0.0',
     });
     const result = getDeviceName();
     assert.ok(result.startsWith('Opera'), 'Should detect Opera over Chrome');

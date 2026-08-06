@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { deriveStartupSummary } from '../derive-startup-summary';
 import type { SerializedPerformanceReactNativeMark } from '../../shared/types';
 
-const mark = (
-  name: string,
-  startTime: number,
-): SerializedPerformanceReactNativeMark => ({
+const mark = (name: string, startTime: number): SerializedPerformanceReactNativeMark => ({
   name,
   startTime,
   duration: 0,
@@ -105,11 +102,7 @@ describe('deriveStartupSummary', () => {
 
     it('returns all three known phases as missing for empty input', () => {
       const { phases } = deriveStartupSummary([]);
-      expect(phases.slice(0, 3).map((p) => p.status)).toEqual([
-        'missing',
-        'missing',
-        'missing',
-      ]);
+      expect(phases.slice(0, 3).map((p) => p.status)).toEqual(['missing', 'missing', 'missing']);
     });
   });
 

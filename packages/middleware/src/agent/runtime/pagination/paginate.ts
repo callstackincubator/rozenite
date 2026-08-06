@@ -1,22 +1,8 @@
-import {
-  decodeCursor,
-  encodeCursor,
-  hashFilters,
-  validateCursorContext,
-} from './cursor.js';
+import { decodeCursor, encodeCursor, hashFilters, validateCursorContext } from './cursor.js';
 import { normalizePageLimit } from './limits.js';
-import type {
-  CursorPayload,
-  PageOrder,
-  PageResult,
-  PaginatedSource,
-} from './types.js';
+import type { CursorPayload, PageOrder, PageResult, PaginatedSource } from './types.js';
 
-export const paginateSource = <
-  TCheckpoint extends string | number,
-  TItem,
-  TFilters,
->(
+export const paginateSource = <TCheckpoint extends string | number, TItem, TFilters>(
   source: PaginatedSource<TCheckpoint, TItem, TFilters>,
   input: {
     tool: string;
@@ -34,10 +20,7 @@ export const paginateSource = <
   const filtersHash = hashFilters(input.request.filters);
 
   let checkpoint: TCheckpoint | undefined;
-  if (
-    typeof input.request.cursor === 'string' &&
-    input.request.cursor.trim().length > 0
-  ) {
+  if (typeof input.request.cursor === 'string' && input.request.cursor.trim().length > 0) {
     const payload = decodeCursor<TCheckpoint>(input.request.cursor);
     validateCursorContext(payload as CursorPayload<unknown>, {
       tool: input.tool,

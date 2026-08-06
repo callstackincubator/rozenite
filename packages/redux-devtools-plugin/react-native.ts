@@ -9,8 +9,7 @@ const isServer = typeof window === 'undefined';
 
 if (isDev && !isServer) {
   rozeniteDevToolsEnhancer = require('./src/runtime').rozeniteDevToolsEnhancer;
-  composeWithRozeniteDevTools =
-    require('./src/runtime').composeWithRozeniteDevTools;
+  composeWithRozeniteDevTools = require('./src/runtime').composeWithRozeniteDevTools;
   useReduxDevToolsAgentTools =
     require('./src/useReduxDevToolsAgentTools').useReduxDevToolsAgentTools;
 } else {

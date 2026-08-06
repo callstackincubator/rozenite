@@ -6,12 +6,9 @@ export const intro = (title?: string) => clack.intro(title);
 
 export const outro = (message?: string) => clack.outro(message);
 
-export const note = (message?: string, title?: string) =>
-  clack.note(message, title);
+export const note = (message?: string, title?: string) => clack.note(message, title);
 
-export const promptText = async (
-  options: clack.TextOptions,
-): Promise<string> => {
+export const promptText = async (options: clack.TextOptions): Promise<string> => {
   const result = await clack.text(options);
   if (clack.isCancel(result)) {
     cancelPromptAndExit();
@@ -20,9 +17,7 @@ export const promptText = async (
   return result as string;
 };
 
-export const promptPassword = async (
-  options: clack.PasswordOptions,
-): Promise<string> => {
+export const promptPassword = async (options: clack.PasswordOptions): Promise<string> => {
   const result = await clack.password(options);
   if (clack.isCancel(result)) {
     cancelPromptAndExit();
@@ -31,9 +26,7 @@ export const promptPassword = async (
   return result as string;
 };
 
-export const promptSelect = async <T>(
-  options: clack.SelectOptions<T>,
-): Promise<T> => {
+export const promptSelect = async <T>(options: clack.SelectOptions<T>): Promise<T> => {
   // If there is only one option, return it immediately
   if (options.options.length === 1) {
     return options.options[0].value as T;
@@ -53,9 +46,7 @@ type ConfirmOptions = {
   cancelLabel?: string;
 };
 
-export const promptConfirm = async (
-  options: ConfirmOptions,
-): Promise<boolean> => {
+export const promptConfirm = async (options: ConfirmOptions): Promise<boolean> => {
   const result = await clack.select({
     message: options.message,
     options: [
@@ -71,9 +62,7 @@ export const promptConfirm = async (
   return result === true;
 };
 
-export const promptMultiselect = async <T>(
-  options: clack.MultiSelectOptions<T>,
-): Promise<T[]> => {
+export const promptMultiselect = async <T>(options: clack.MultiSelectOptions<T>): Promise<T[]> => {
   const result = await clack.multiselect<T>(options);
   if (clack.isCancel(result)) {
     cancelPromptAndExit();
@@ -120,9 +109,7 @@ export const spinner = (options?: clack.SpinnerOptions) => {
   };
 };
 
-export const formatStartMessage = (
-  text: string | undefined,
-): string | undefined => {
+export const formatStartMessage = (text: string | undefined): string | undefined => {
   if (text === undefined) {
     return undefined;
   }

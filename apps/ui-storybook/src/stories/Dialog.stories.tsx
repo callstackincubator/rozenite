@@ -1,9 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from '@rozenite/ui';
 import { Dialog } from '@rozenite/ui';
-const meta = { component: Dialog, title: 'Components/Dialog' } satisfies Meta<
-  typeof Dialog
->;
+const meta = { component: Dialog, title: 'Components/Dialog' } satisfies Meta<typeof Dialog>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 /** Use for focused tasks that temporarily interrupt the current view.
@@ -16,14 +14,10 @@ export const Default: Story = {
       <Dialog.Content>
         <Dialog.Header>
           <Dialog.Title>Project settings</Dialog.Title>
-          <Dialog.Description>
-            Manage your project configuration.
-          </Dialog.Description>
+          <Dialog.Description>Manage your project configuration.</Dialog.Description>
         </Dialog.Header>
         <Dialog.Footer>
-          <Dialog.Close render={<Button variant="outline" />}>
-            Cancel
-          </Dialog.Close>
+          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
           <Button>Save changes</Button>
         </Dialog.Footer>
       </Dialog.Content>

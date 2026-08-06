@@ -1,13 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  Alert,
-  Image,
-} from 'react-native';
+import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, Image } from 'react-native';
 import * as RNFS from '@dr.pogodin/react-native-fs';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -54,9 +46,7 @@ function getSaveLocations(): SaveLocation[] {
 
 export const FileSystemTestScreen = () => {
   const locations = getSaveLocations();
-  const [selectedLocation, setSelectedLocation] = useState<SaveLocation>(
-    locations[0]!,
-  );
+  const [selectedLocation, setSelectedLocation] = useState<SaveLocation>(locations[0]!);
   const [savedFiles, setSavedFiles] = useState<SavedFile[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -124,26 +114,22 @@ export const FileSystemTestScreen = () => {
 
   const handleRemove = useCallback(
     async (file: SavedFile) => {
-      Alert.alert(
-        'Confirm Delete',
-        `Are you sure you want to delete "${file.name}"?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await RNFS.unlink(file.path);
-                Alert.alert('Deleted', `${file.name} removed`);
-                await refreshFiles();
-              } catch (error) {
-                Alert.alert('Error', `Failed to delete file: ${error}`);
-              }
-            },
+      Alert.alert('Confirm Delete', `Are you sure you want to delete "${file.name}"?`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await RNFS.unlink(file.path);
+              Alert.alert('Deleted', `${file.name} removed`);
+              await refreshFiles();
+            } catch (error) {
+              Alert.alert('Error', `Failed to delete file: ${error}`);
+            }
           },
-        ],
-      );
+        },
+      ]);
     },
     [refreshFiles],
   );
@@ -187,10 +173,7 @@ export const FileSystemTestScreen = () => {
         </Text>
         <Text style={styles.fileSize}>{formatBytes(item.size)}</Text>
       </View>
-      <TouchableOpacity
-        style={styles.removeButton}
-        onPress={() => handleRemove(item)}
-      >
+      <TouchableOpacity style={styles.removeButton} onPress={() => handleRemove(item)}>
         <Text style={styles.removeButtonText}>Remove</Text>
       </TouchableOpacity>
     </View>
@@ -200,9 +183,7 @@ export const FileSystemTestScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>File System Plugin</Text>
-        <Text style={styles.subtitle}>
-          Save and manage files across device directories
-        </Text>
+        <Text style={styles.subtitle}>Save and manage files across device directories</Text>
       </View>
 
       {/* Location selector */}
@@ -221,8 +202,7 @@ export const FileSystemTestScreen = () => {
               <Text
                 style={[
                   styles.locationTabText,
-                  selectedLocation.id === loc.id &&
-                    styles.selectedLocationTabText,
+                  selectedLocation.id === loc.id && styles.selectedLocationTabText,
                 ]}
                 numberOfLines={1}
               >
@@ -236,17 +216,11 @@ export const FileSystemTestScreen = () => {
       {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity
-          style={[
-            styles.actionBtn,
-            styles.saveBtn,
-            loading && styles.disabledBtn,
-          ]}
+          style={[styles.actionBtn, styles.saveBtn, loading && styles.disabledBtn]}
           onPress={handleSave}
           disabled={loading}
         >
-          <Text style={styles.actionBtnText}>
-            {loading ? 'Saving...' : 'Save React Logo'}
-          </Text>
+          <Text style={styles.actionBtnText}>{loading ? 'Saving...' : 'Save React Logo'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -258,12 +232,7 @@ export const FileSystemTestScreen = () => {
           onPress={handleRemoveAll}
           disabled={savedFiles.length === 0}
         >
-          <Text
-            style={[
-              styles.actionBtnText,
-              savedFiles.length === 0 && styles.disabledBtnText,
-            ]}
-          >
+          <Text style={[styles.actionBtnText, savedFiles.length === 0 && styles.disabledBtnText]}>
             Remove All
           </Text>
         </TouchableOpacity>
@@ -282,8 +251,7 @@ export const FileSystemTestScreen = () => {
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>No PNG files found</Text>
             <Text style={styles.emptyStateSubtext}>
-              Tap &quot;Save React Logo&quot; to write a file to the selected
-              directory
+              Tap &quot;Save React Logo&quot; to write a file to the selected directory
             </Text>
           </View>
         ) : (

@@ -66,10 +66,7 @@ const extensionForContentType = (contentType: string): string => {
   return CONTENT_TYPE_EXTENSIONS[bare] ?? 'bin';
 };
 
-export const readHeader = (
-  headers: HttpHeaders | undefined,
-  name: string,
-): string | undefined => {
+export const readHeader = (headers: HttpHeaders | undefined, name: string): string | undefined => {
   if (!headers) return undefined;
   const lowerTarget = name.toLowerCase();
   for (const [key, value] of Object.entries(headers)) {
@@ -85,9 +82,7 @@ export const readHeader = (
 // raw value here; downstream callers can sanitize further if they care
 // about path traversal etc. (irrelevant for the playground / debug use
 // case but worth knowing).
-const parseContentDispositionFilename = (
-  header: string | undefined,
-): string | undefined => {
+const parseContentDispositionFilename = (header: string | undefined): string | undefined => {
   if (!header) return undefined;
   // Prefer RFC 5987 `filename*` over the legacy `filename` when both
   // are present — it has a stricter encoding contract.
@@ -154,8 +149,5 @@ export const downloadBlob = (blob: Blob, filename: string): void => {
 };
 
 export const downloadJson = (data: unknown, filename: string): void => {
-  downloadBlob(
-    new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
-    filename,
-  );
+  downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), filename);
 };

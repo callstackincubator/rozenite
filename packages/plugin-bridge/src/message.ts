@@ -4,9 +4,7 @@ export type DevToolsPluginMessage = {
   payload: unknown;
 };
 
-export const getDevToolsMessage = (
-  message: unknown,
-): DevToolsPluginMessage | null => {
+export const getDevToolsMessage = (message: unknown): DevToolsPluginMessage | null => {
   if (
     typeof message !== 'object' ||
     message === null ||

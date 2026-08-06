@@ -25,9 +25,7 @@ export const normalizeStoragesConfigProperty = (
       '[Rozenite] MMKV DevTools: `storages` should be a record (object) of storage IDs and MMKV instances, not an array.',
     );
 
-    return Object.fromEntries(
-      (storages as MMKVV3[]).map((storage) => [storage['id'], storage]),
-    );
+    return Object.fromEntries((storages as MMKVV3[]).map((storage) => [storage['id'], storage]));
   }
 
   return storages;

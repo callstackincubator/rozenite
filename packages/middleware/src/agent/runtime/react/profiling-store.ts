@@ -22,12 +22,7 @@ type ReactRootProfilingData = {
   commitData: ReactCommitData[];
 };
 
-type ProfilingPhase =
-  | 'idle'
-  | 'profiling'
-  | 'stopping'
-  | 'processing'
-  | 'complete';
+type ProfilingPhase = 'idle' | 'profiling' | 'stopping' | 'processing' | 'complete';
 
 export type NormalizedProfilingStatusEvent = {
   isProfiling?: boolean;
@@ -134,9 +129,7 @@ const getNumberMap = (value: unknown): Map<number, number> => {
   return result;
 };
 
-const getChangeDescriptions = (
-  value: unknown,
-): Map<number, ReactChangeDescription> | null => {
+const getChangeDescriptions = (value: unknown): Map<number, ReactChangeDescription> | null => {
   if (value === null || value === undefined) {
     return null;
   }
@@ -155,9 +148,7 @@ const getChangeDescriptions = (
       contextValue === true
         ? true
         : Array.isArray(contextValue)
-          ? contextValue.filter(
-              (entry): entry is string => typeof entry === 'string',
-            )
+          ? contextValue.filter((entry): entry is string => typeof entry === 'string')
           : null;
 
     result.set(parsedKey, {
@@ -165,14 +156,10 @@ const getChangeDescriptions = (
       didHooksChange: record.didHooksChange === true,
       isFirstMount: record.isFirstMount === true,
       props: Array.isArray(record.props)
-        ? record.props.filter(
-            (entry): entry is string => typeof entry === 'string',
-          )
+        ? record.props.filter((entry): entry is string => typeof entry === 'string')
         : null,
       state: Array.isArray(record.state)
-        ? record.state.filter(
-            (entry): entry is string => typeof entry === 'string',
-          )
+        ? record.state.filter((entry): entry is string => typeof entry === 'string')
         : null,
     });
   };
@@ -221,12 +208,10 @@ const normalizeCommitData = (value: unknown): ReactCommitData | null => {
     fiberActualDurations: getNumberMap(record.fiberActualDurations),
     fiberSelfDurations: getNumberMap(record.fiberSelfDurations),
     passiveEffectDuration:
-      record.passiveEffectDuration === null ||
-      record.passiveEffectDuration === undefined
+      record.passiveEffectDuration === null || record.passiveEffectDuration === undefined
         ? null
         : Number(record.passiveEffectDuration),
-    priorityLevel:
-      typeof record.priorityLevel === 'string' ? record.priorityLevel : null,
+    priorityLevel: typeof record.priorityLevel === 'string' ? record.priorityLevel : null,
     timestamp: Number(record.timestamp) || 0,
     updaters: Array.isArray(record.updaters)
       ? record.updaters
@@ -263,9 +248,7 @@ const normalizeRootData = (value: unknown): ReactRootProfilingData => {
   };
 };
 
-const normalizeDataForRoots = (
-  payload: unknown,
-): Map<number, ReactRootProfilingData> => {
+const normalizeDataForRoots = (payload: unknown): Map<number, ReactRootProfilingData> => {
   const result = new Map<number, ReactRootProfilingData>();
   const payloadRecord = getRecord(payload);
   if (!payloadRecord) {
@@ -327,14 +310,10 @@ const normalizeDataForRoots = (
   return result;
 };
 
-export const normalizeProfilingDataEvent = (
-  payload: unknown,
-): NormalizedProfilingDataEvent => {
+export const normalizeProfilingDataEvent = (payload: unknown): NormalizedProfilingDataEvent => {
   const record = getRecord(payload);
   const rawRendererId = record?.rendererID ?? record?.rendererId;
-  const rendererId = Number.isInteger(rawRendererId)
-    ? Number(rawRendererId)
-    : undefined;
+  const rendererId = Number.isInteger(rawRendererId) ? Number(rawRendererId) : undefined;
 
   return {
     ...(rendererId !== undefined ? { rendererId } : {}),
@@ -387,8 +366,7 @@ export const createProfilingStore = () => {
       return;
     }
 
-    state.session.phase =
-      state.session.dataForRoots.size > 0 ? 'complete' : 'idle';
+    state.session.phase = state.session.dataForRoots.size > 0 ? 'complete' : 'idle';
   };
 
   return {
@@ -416,10 +394,7 @@ export const createProfilingStore = () => {
         return;
       }
 
-      if (
-        state.session.phase !== 'profiling' &&
-        state.session.phase !== 'stopping'
-      ) {
+      if (state.session.phase !== 'profiling' && state.session.phase !== 'stopping') {
         return;
       }
 
@@ -448,10 +423,7 @@ export const createProfilingStore = () => {
         return { requestProfilingDataForRendererIds: [] };
       }
 
-      if (
-        state.session.phase !== 'profiling' &&
-        state.session.phase !== 'stopping'
-      ) {
+      if (state.session.phase !== 'profiling' && state.session.phase !== 'stopping') {
         if (state.session.pendingRendererIds.size === 0) {
           updatePhaseAfterData();
         }
@@ -472,10 +444,7 @@ export const createProfilingStore = () => {
     ingestProfilingData: (event: NormalizedProfilingDataEvent): boolean => {
       const { rendererId, dataForRoots } = event;
 
-      if (
-        rendererId === undefined ||
-        !state.session.pendingRendererIds.has(rendererId)
-      ) {
+      if (rendererId === undefined || !state.session.pendingRendererIds.has(rendererId)) {
         return false;
       }
 
@@ -516,8 +485,7 @@ export const createProfilingStore = () => {
         supportsReloadAndProfile: state.supportsReloadAndProfile,
         isProfilingStarted: state.session.phase === 'profiling',
         isProcessingData:
-          state.session.phase === 'stopping' ||
-          state.session.phase === 'processing',
+          state.session.phase === 'stopping' || state.session.phase === 'processing',
         hasProfilingData: state.session.dataForRoots.size > 0,
         rootsWithData: state.session.dataForRoots.size,
         rootsCount,

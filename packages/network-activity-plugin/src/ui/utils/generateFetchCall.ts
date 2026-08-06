@@ -1,9 +1,5 @@
 import { generateMultipartBody } from './generateMultipartBody';
-import {
-  HttpNetworkEntry,
-  HttpRequestData,
-  SSENetworkEntry,
-} from '../state/model';
+import { HttpNetworkEntry, HttpRequestData, SSENetworkEntry } from '../state/model';
 import { getHttpHeaderValueAsString } from '../../utils/getHttpHeaderValueAsString';
 import { HttpHeaders, XHRHeaders } from '../../shared/client';
 
@@ -44,9 +40,7 @@ const processRequestBody = (body: HttpRequestData, headers: XHRHeaders) => {
   }
 };
 
-export const generateFetchCall = (
-  request: HttpNetworkEntry | SSENetworkEntry,
-) => {
+export const generateFetchCall = (request: HttpNetworkEntry | SSENetworkEntry) => {
   const { url, headers: requestHeaders, method, body } = request.request;
 
   const headers = processHeaders(requestHeaders);

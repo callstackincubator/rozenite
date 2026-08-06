@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type {
-  DevFlowContext,
-  DevFlowMessage,
-  DevFlowMessageMatcher,
-} from '../load-config.js';
-import type {
-  DevHostFlowEntry,
-  DevHostFlowRunState,
-  MessageEntry,
-} from './types.js';
+import type { DevFlowContext, DevFlowMessage, DevFlowMessageMatcher } from '../load-config.js';
+import type { DevHostFlowEntry, DevHostFlowRunState, MessageEntry } from './types.js';
 
 type FlowRunnerOptions = {
   sendMessage: (type: string, payload: unknown) => void;
@@ -44,10 +36,7 @@ const toFlowMessage = (message: MessageEntry): DevFlowMessage => {
   };
 };
 
-const matchesMessage = (
-  message: DevFlowMessage,
-  matcher?: DevFlowMessageMatcher,
-) => {
+const matchesMessage = (message: DevFlowMessage, matcher?: DevFlowMessageMatcher) => {
   if (!matcher) {
     return true;
   }
@@ -219,9 +208,7 @@ export const useFlowRunner = ({ sendMessage }: FlowRunnerOptions) => {
             timeoutId = window.setTimeout(() => {
               cleanup();
               reject(
-                new Error(
-                  `Timed out waiting for a matching message after ${options.timeoutMs}ms.`,
-                ),
+                new Error(`Timed out waiting for a matching message after ${options.timeoutMs}ms.`),
               );
             }, options.timeoutMs);
           }
@@ -252,10 +239,7 @@ export const useFlowRunner = ({ sendMessage }: FlowRunnerOptions) => {
 
     const updateRunState = (
       nextState: Partial<
-        Omit<
-          DevHostFlowRunState,
-          'id' | 'flowName' | 'flowDisplayName' | 'autoRun'
-        >
+        Omit<DevHostFlowRunState, 'id' | 'flowName' | 'flowDisplayName' | 'autoRun'>
       >,
     ) => {
       setFlowRuns((current) =>
@@ -302,9 +286,7 @@ export const useFlowRunner = ({ sendMessage }: FlowRunnerOptions) => {
   };
 
   const hasRunningFlow = (flowName: string) => {
-    return flowRuns.some(
-      (run) => run.flowName === flowName && run.status === 'running',
-    );
+    return flowRuns.some((run) => run.flowName === flowName && run.status === 'running');
   };
 
   return {

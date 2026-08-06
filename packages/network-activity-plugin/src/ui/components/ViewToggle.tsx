@@ -31,9 +31,7 @@ export const ViewToggle = ({ views, value, onChange }: ViewToggleProps) => {
           }}
           className={cn(
             'px-2 py-0.5 text-xs transition-colors',
-            value === v
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-300 hover:bg-gray-700',
+            value === v ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700',
           )}
         >
           {VIEW_LABELS[v]}

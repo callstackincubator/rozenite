@@ -22,11 +22,7 @@ const shortenForSidebar = (location: string): string => {
 const OriginPreview = ({ origin }: { origin: ActionOrigin | undefined }) => {
   if (!origin) return null;
   if (origin.symbolicationStatus === 'pending') {
-    return (
-      <div className="mt-1 text-xs italic text-muted-foreground">
-        ↳ Resolving…
-      </div>
-    );
+    return <div className="mt-1 text-xs italic text-muted-foreground">↳ Resolving…</div>;
   }
   if (origin.symbolicationStatus !== 'complete') return null;
   if (origin.confidence === 'none') return null;
@@ -53,18 +49,14 @@ export const ActionItem = ({
   onGoToAction,
 }: ActionItemProps) => {
   const actionName =
-    !!action.payload &&
-    'name' in action.payload &&
-    typeof action.payload.name === 'string'
+    !!action.payload && 'name' in action.payload && typeof action.payload.name === 'string'
       ? action.payload.name
       : undefined;
 
   return (
     <div
       className={`m-1 cursor-pointer border p-3 transition-colors ${
-        isSelected
-          ? 'border-primary bg-accent'
-          : 'border-border bg-card hover:bg-muted'
+        isSelected ? 'border-primary bg-accent' : 'border-border bg-card hover:bg-muted'
       }`}
       onClick={onSelect}
     >
@@ -85,9 +77,7 @@ export const ActionItem = ({
         </Button>
       </div>
 
-      {actionName && (
-        <div className="text-xs text-foreground">→ {actionName}</div>
-      )}
+      {actionName && <div className="text-xs text-foreground">→ {actionName}</div>}
 
       <OriginPreview origin={origin} />
     </div>

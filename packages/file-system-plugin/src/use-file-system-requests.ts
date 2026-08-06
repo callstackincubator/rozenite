@@ -4,32 +4,15 @@ import type { FileSystemEventMap } from './shared/protocol';
 import { newRequestId, withTimeout } from './utils';
 
 type PendingResolvers = {
-  roots: Map<
-    string,
-    (payload: FileSystemEventMap['fs:get-roots:result']) => void
-  >;
+  roots: Map<string, (payload: FileSystemEventMap['fs:get-roots:result']) => void>;
   list: Map<string, (payload: FileSystemEventMap['fs:list:result']) => void>;
-  image: Map<
-    string,
-    (payload: FileSystemEventMap['fs:read-image:result']) => void
-  >;
-  file: Map<
-    string,
-    (payload: FileSystemEventMap['fs:read-file:result']) => void
-  >;
-  exportFile: Map<
-    string,
-    (payload: FileSystemEventMap['fs:export-file:result']) => void
-  >;
-  importFile: Map<
-    string,
-    (payload: FileSystemEventMap['fs:import-file:result']) => void
-  >;
+  image: Map<string, (payload: FileSystemEventMap['fs:read-image:result']) => void>;
+  file: Map<string, (payload: FileSystemEventMap['fs:read-file:result']) => void>;
+  exportFile: Map<string, (payload: FileSystemEventMap['fs:export-file:result']) => void>;
+  importFile: Map<string, (payload: FileSystemEventMap['fs:import-file:result']) => void>;
 };
 
-export function useFileSystemRequests(
-  client: RozeniteDevToolsClient<FileSystemEventMap> | null,
-) {
+export function useFileSystemRequests(client: RozeniteDevToolsClient<FileSystemEventMap> | null) {
   const pendingRef = useRef<PendingResolvers>({
     roots: new Map(),
     list: new Map(),
@@ -74,27 +57,21 @@ export function useFileSystemRequests(
       }
     });
 
-    const subExportFile = client.onMessage(
-      'fs:export-file:result',
-      (payload) => {
-        const resolve = pendingRef.current.exportFile.get(payload.requestId);
-        if (resolve) {
-          pendingRef.current.exportFile.delete(payload.requestId);
-          resolve(payload);
-        }
-      },
-    );
+    const subExportFile = client.onMessage('fs:export-file:result', (payload) => {
+      const resolve = pendingRef.current.exportFile.get(payload.requestId);
+      if (resolve) {
+        pendingRef.current.exportFile.delete(payload.requestId);
+        resolve(payload);
+      }
+    });
 
-    const subImportFile = client.onMessage(
-      'fs:import-file:result',
-      (payload) => {
-        const resolve = pendingRef.current.importFile.get(payload.requestId);
-        if (resolve) {
-          pendingRef.current.importFile.delete(payload.requestId);
-          resolve(payload);
-        }
-      },
-    );
+    const subImportFile = client.onMessage('fs:import-file:result', (payload) => {
+      const resolve = pendingRef.current.importFile.get(payload.requestId);
+      if (resolve) {
+        pendingRef.current.importFile.delete(payload.requestId);
+        resolve(payload);
+      }
+    });
 
     return () => {
       subRoots.remove();
@@ -109,11 +86,9 @@ export function useFileSystemRequests(
   const requestRoots = useCallback(async () => {
     if (!client) return null;
     const requestId = newRequestId();
-    const p = new Promise<FileSystemEventMap['fs:get-roots:result']>(
-      (resolve) => {
-        pendingRef.current.roots.set(requestId, resolve);
-      },
-    );
+    const p = new Promise<FileSystemEventMap['fs:get-roots:result']>((resolve) => {
+      pendingRef.current.roots.set(requestId, resolve);
+    });
     client.send('fs:get-roots', { requestId });
     return await withTimeout(p, 8000, 'Timeout fetching roots');
   }, [client]);
@@ -135,11 +110,9 @@ export function useFileSystemRequests(
     async (path: string, maxBytes = 10_000_000) => {
       if (!client) return null;
       const requestId = newRequestId();
-      const p = new Promise<FileSystemEventMap['fs:read-image:result']>(
-        (resolve) => {
-          pendingRef.current.image.set(requestId, resolve);
-        },
-      );
+      const p = new Promise<FileSystemEventMap['fs:read-image:result']>((resolve) => {
+        pendingRef.current.image.set(requestId, resolve);
+      });
       client.send('fs:read-image', { requestId, path, maxBytes });
       return await withTimeout(p, 15000, 'Timeout reading image');
     },
@@ -150,11 +123,9 @@ export function useFileSystemRequests(
     async (path: string, maxBytes = 10_000_000) => {
       if (!client) return null;
       const requestId = newRequestId();
-      const p = new Promise<FileSystemEventMap['fs:read-file:result']>(
-        (resolve) => {
-          pendingRef.current.file.set(requestId, resolve);
-        },
-      );
+      const p = new Promise<FileSystemEventMap['fs:read-file:result']>((resolve) => {
+        pendingRef.current.file.set(requestId, resolve);
+      });
       client.send('fs:read-file', { requestId, path, maxBytes });
       return await withTimeout(p, 15000, 'Timeout reading file');
     },
@@ -165,11 +136,9 @@ export function useFileSystemRequests(
     async (path: string) => {
       if (!client) return null;
       const requestId = newRequestId();
-      const p = new Promise<FileSystemEventMap['fs:export-file:result']>(
-        (resolve) => {
-          pendingRef.current.exportFile.set(requestId, resolve);
-        },
-      );
+      const p = new Promise<FileSystemEventMap['fs:export-file:result']>((resolve) => {
+        pendingRef.current.exportFile.set(requestId, resolve);
+      });
       client.send('fs:export-file', { requestId, path });
       return await withTimeout(p, 30000, 'Timeout exporting file');
     },
@@ -177,19 +146,12 @@ export function useFileSystemRequests(
   );
 
   const requestImportFile = useCallback(
-    async (
-      directoryPath: string,
-      fileName: string,
-      base64: string,
-      overwrite = false,
-    ) => {
+    async (directoryPath: string, fileName: string, base64: string, overwrite = false) => {
       if (!client) return null;
       const requestId = newRequestId();
-      const p = new Promise<FileSystemEventMap['fs:import-file:result']>(
-        (resolve) => {
-          pendingRef.current.importFile.set(requestId, resolve);
-        },
-      );
+      const p = new Promise<FileSystemEventMap['fs:import-file:result']>((resolve) => {
+        pendingRef.current.importFile.set(requestId, resolve);
+      });
       client.send('fs:import-file', {
         requestId,
         directoryPath,

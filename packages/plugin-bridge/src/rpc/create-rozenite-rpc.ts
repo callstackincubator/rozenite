@@ -53,10 +53,7 @@ type NormalizedError = {
 
 const normalizeThrown = (thrown: unknown): NormalizedError => {
   if (thrown instanceof Error) {
-    const data =
-      'data' in thrown
-        ? (thrown as unknown as { data?: unknown }).data
-        : undefined;
+    const data = 'data' in thrown ? (thrown as unknown as { data?: unknown }).data : undefined;
     return {
       name: thrown.name,
       message: thrown.message,
@@ -96,17 +93,12 @@ const buildErrorFromFrame = (
  * Reserves the message type `'rozenite:rpc'` on `client` — a plugin's own
  * event map must not use that type.
  */
-export const createRozeniteRpc = <M extends RpcMethods>(
-  client: RpcTransport,
-): RozeniteRpc<M> => {
+export const createRozeniteRpc = <M extends RpcMethods>(client: RpcTransport): RozeniteRpc<M> => {
   const clientPrefix = Math.random().toString(36).slice(2, 10);
   let counter = 0;
   const nextId = () => `${clientPrefix}:${counter++}`;
 
-  const handlers = new Map<
-    string,
-    (params: unknown, ctx: RpcContext) => unknown
-  >();
+  const handlers = new Map<string, (params: unknown, ctx: RpcContext) => unknown>();
   const pending = new Map<string, PendingCall>();
   const activeCalls = new Map<string, ActiveHandlerCall>();
   let closed = false;
@@ -223,12 +215,9 @@ export const createRozeniteRpc = <M extends RpcMethods>(
   // --- Caller side (handling incoming `ack`/`heartbeat`/`result`/`error`) ---
 
   const handleAck = (frame: AckFrame) => pending.get(frame.id)?.onAck();
-  const handleHeartbeat = (frame: HeartbeatFrame) =>
-    pending.get(frame.id)?.onHeartbeat(frame);
-  const handleResult = (frame: ResultFrame) =>
-    pending.get(frame.id)?.onResult(frame);
-  const handleError = (frame: ErrorFrame) =>
-    pending.get(frame.id)?.onError(frame);
+  const handleHeartbeat = (frame: HeartbeatFrame) => pending.get(frame.id)?.onHeartbeat(frame);
+  const handleResult = (frame: ResultFrame) => pending.get(frame.id)?.onResult(frame);
+  const handleError = (frame: ErrorFrame) => pending.get(frame.id)?.onError(frame);
 
   const handleFrame = (frame: RpcFrame) => {
     switch (frame.kind) {
@@ -307,13 +296,7 @@ export const createRozeniteRpc = <M extends RpcMethods>(
         }
         cleanupAttempt();
         finish(() =>
-          reject(
-            new RozeniteProtocolError(
-              method,
-              'CANCELLED',
-              `"${method}" was cancelled.`,
-            ),
-          ),
+          reject(new RozeniteProtocolError(method, 'CANCELLED', `"${method}" was cancelled.`)),
         );
       };
 
@@ -437,9 +420,7 @@ export const createRozeniteRpc = <M extends RpcMethods>(
     handler: (params: unknown, ctx: RpcContext) => unknown,
   ): Subscription => {
     if (handlers.has(method)) {
-      throw new Error(
-        `A handler for method "${method}" is already registered.`,
-      );
+      throw new Error(`A handler for method "${method}" is already registered.`);
     }
     handlers.set(method, handler);
 

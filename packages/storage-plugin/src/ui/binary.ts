@@ -1,6 +1,4 @@
-export type ParseResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; error: string };
+export type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
 const BYTES_PER_LINE = 16;
 const BYTES_PER_GROUP = 8;
@@ -11,13 +9,10 @@ const OFFSET_WIDTH = 8;
 const ASCII_PRINTABLE_MIN = 0x20;
 const ASCII_PRINTABLE_MAX = 0x7e;
 
-const toHexPair = (byte: number): string =>
-  byte.toString(16).toUpperCase().padStart(2, '0');
+const toHexPair = (byte: number): string => byte.toString(16).toUpperCase().padStart(2, '0');
 
 const toAsciiChar = (byte: number): string =>
-  byte >= ASCII_PRINTABLE_MIN && byte <= ASCII_PRINTABLE_MAX
-    ? String.fromCharCode(byte)
-    : '.';
+  byte >= ASCII_PRINTABLE_MIN && byte <= ASCII_PRINTABLE_MAX ? String.fromCharCode(byte) : '.';
 
 const formatHexLine = (slice: readonly number[]): string => {
   const left = slice.slice(0, BYTES_PER_GROUP).map(toHexPair).join(' ');
@@ -33,10 +28,7 @@ export type HexdumpRow = {
 
 // Produces one visible hexdump row. Unlike bytesToHexdump this never builds a
 // representation for bytes outside the requested row.
-export const formatHexdumpRow = (
-  bytes: readonly number[],
-  rowStart: number,
-): HexdumpRow => {
+export const formatHexdumpRow = (bytes: readonly number[], rowStart: number): HexdumpRow => {
   let left = '';
   let right = '';
   let ascii = '';
@@ -82,10 +74,7 @@ export const bytesToHexdump = (bytes: readonly number[]): string => {
 export const bytesToAsciiPreview = (bytes: readonly number[]): string =>
   bytes.map(toAsciiChar).join('');
 
-export const compactAsciiPreview = (
-  bytes: readonly number[],
-  maxBytes = 64,
-): string => {
+export const compactAsciiPreview = (bytes: readonly number[], maxBytes = 64): string => {
   let preview = '';
   const limit = Math.min(bytes.length, maxBytes);
   for (let index = 0; index < limit; index++) {
@@ -133,9 +122,7 @@ const TRAILING_ASCII_COLUMN_RE = /\|[^|]*\|\s*$/;
 export const hexInputToBytes = (input: string): ParseResult<number[]> => {
   const cleaned = input
     .split(/\r?\n/)
-    .map((line) =>
-      line.replace(TRAILING_ASCII_COLUMN_RE, '').replace(HEXDUMP_OFFSET_RE, ''),
-    )
+    .map((line) => line.replace(TRAILING_ASCII_COLUMN_RE, '').replace(HEXDUMP_OFFSET_RE, ''))
     .join('')
     .replace(/0x/gi, '')
     .replace(/\s+/g, '');

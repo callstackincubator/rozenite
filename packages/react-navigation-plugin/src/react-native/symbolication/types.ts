@@ -9,11 +9,7 @@ export type ActionStackFrame = {
   isCollapsed?: boolean;
 };
 
-export type SymbolicationStatus =
-  | 'pending'
-  | 'complete'
-  | 'failed'
-  | 'unavailable';
+export type SymbolicationStatus = 'pending' | 'complete' | 'failed' | 'unavailable';
 
 export type OriginConfidence = 'high' | 'low' | 'none';
 

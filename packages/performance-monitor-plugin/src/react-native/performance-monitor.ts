@@ -92,9 +92,7 @@ export const getPerformanceMonitor = (
       });
     };
 
-    const appendReactNativeMarks = (
-      reactNativeMarks: SerializedPerformanceReactNativeMark[],
-    ) => {
+    const appendReactNativeMarks = (reactNativeMarks: SerializedPerformanceReactNativeMark[]) => {
       client.send('appendReactNativeMarks', {
         reactNativeMarks,
       });

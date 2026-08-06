@@ -74,12 +74,8 @@ describe('agent session manager', () => {
     expect(AGENT_INFO_ROUTE).toBe('/rozenite/agent/info');
     expect(AGENT_TARGETS_ROUTE).toBe('/rozenite/agent/targets');
     expect(AGENT_SESSIONS_ROUTE).toBe('/rozenite/agent/sessions');
-    expect(getAgentSessionRoute('device-1')).toBe(
-      '/rozenite/agent/sessions/device-1',
-    );
-    expect(getAgentSessionToolsRoute('device-1')).toBe(
-      '/rozenite/agent/sessions/device-1/tools',
-    );
+    expect(getAgentSessionRoute('device-1')).toBe('/rozenite/agent/sessions/device-1');
+    expect(getAgentSessionToolsRoute('device-1')).toBe('/rozenite/agent/sessions/device-1/tools');
     expect(getAgentSessionCallToolRoute('device-1')).toBe(
       '/rozenite/agent/sessions/device-1/call-tool',
     );
@@ -97,14 +93,10 @@ describe('agent session manager', () => {
   });
 
   it('lists targets through Metro discovery', async () => {
-    mocks.getMetroTargets.mockResolvedValue([
-      { id: 'device-1', name: 'Phone' },
-    ]);
+    mocks.getMetroTargets.mockResolvedValue([{ id: 'device-1', name: 'Phone' }]);
     const manager = createAgentSessionManager({ projectRoot: '/app' });
 
-    await expect(manager.listTargets()).resolves.toEqual([
-      { id: 'device-1', name: 'Phone' },
-    ]);
+    await expect(manager.listTargets()).resolves.toEqual([{ id: 'device-1', name: 'Phone' }]);
     expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081);
   });
 
@@ -114,14 +106,10 @@ describe('agent session manager', () => {
 
     const manager = createAgentSessionManager({ projectRoot: '/app' });
 
-    await expect(
-      manager.createSession({ deviceId: 'device-1' }),
-    ).resolves.toEqual({
+    await expect(manager.createSession({ deviceId: 'device-1' })).resolves.toEqual({
       session: { id: 'device-1', deviceName: 'Phone' },
     });
-    await expect(
-      manager.createSession({ deviceId: 'device-1' }),
-    ).resolves.toEqual({
+    await expect(manager.createSession({ deviceId: 'device-1' })).resolves.toEqual({
       session: { id: 'device-1', deviceName: 'Phone' },
     });
 
@@ -144,9 +132,7 @@ describe('agent session manager', () => {
 
   it('creates a new session when Metro assigns a relaunched app a new device id', async () => {
     const replacementTarget = { ...target, id: 'device-2', pageId: 'page-2' };
-    mocks.resolveMetroTarget
-      .mockResolvedValueOnce(target)
-      .mockResolvedValueOnce(replacementTarget);
+    mocks.resolveMetroTarget.mockResolvedValueOnce(target).mockResolvedValueOnce(replacementTarget);
     mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
     const manager = createAgentSessionManager({ projectRoot: '/app' });
 
@@ -222,12 +208,10 @@ describe('agent session manager', () => {
     const manager = createAgentSessionManager({ projectRoot: '/app' });
     await manager.createSession({ deviceId: 'device-1' });
 
-    expect(manager.getSessionTools('device-1')).toEqual([
-      { name: 'startTrace' },
-    ]);
-    await expect(
-      manager.callSessionTool('device-1', 'startTrace', {}),
-    ).resolves.toEqual({ ok: true });
+    expect(manager.getSessionTools('device-1')).toEqual([{ name: 'startTrace' }]);
+    await expect(manager.callSessionTool('device-1', 'startTrace', {})).resolves.toEqual({
+      ok: true,
+    });
   });
 
   it('waits for session startup before resolving createSession', async () => {

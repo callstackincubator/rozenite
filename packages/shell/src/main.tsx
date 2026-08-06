@@ -12,10 +12,7 @@ function App() {
 
   useEffect(() => {
     const receiveConfiguration = (event: MessageEvent) => {
-      if (
-        event.source === window.parent &&
-        event.data?.type === SHELL_CONFIGURATION_TYPE
-      ) {
+      if (event.source === window.parent && event.data?.type === SHELL_CONFIGURATION_TYPE) {
         setConfiguration(event.data.payload as ShellConfiguration);
       }
     };

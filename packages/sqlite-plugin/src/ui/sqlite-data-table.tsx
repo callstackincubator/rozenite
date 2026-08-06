@@ -19,9 +19,8 @@ import {
 import { formatNumber } from './utils';
 import { SQLITE_ROW_NUMBER_COLUMN_ID } from './sqlite-table-column-order';
 
-const joinClassNames = (
-  ...classNames: Array<string | false | null | undefined>
-) => classNames.filter(Boolean).join(' ');
+const joinClassNames = (...classNames: Array<string | false | null | undefined>) =>
+  classNames.filter(Boolean).join(' ');
 
 const LoadingState = ({ columns }: { columns: number }) => (
   <div className="sqlite-results-loading" aria-live="polite">
@@ -34,10 +33,7 @@ const LoadingState = ({ columns }: { columns: number }) => (
         }}
       >
         {Array.from({ length: Math.max(columns, 3) }, (_, columnIndex) => (
-          <span
-            key={`${rowIndex}-${columnIndex}`}
-            className="sqlite-results-loading-bar"
-          />
+          <span key={`${rowIndex}-${columnIndex}`} className="sqlite-results-loading-bar" />
         ))}
       </div>
     ))}
@@ -74,8 +70,7 @@ const SortableColumnHeader = <TData extends RowData>({
     <th
       scope="col"
       className={joinClassNames(
-        header.column.id === SQLITE_ROW_NUMBER_COLUMN_ID &&
-          'sqlite-results-number-col',
+        header.column.id === SQLITE_ROW_NUMBER_COLUMN_ID && 'sqlite-results-number-col',
         header.column.getIsResizing() && 'sqlite-table-column-resizing',
       )}
       style={{
@@ -165,8 +160,7 @@ export const SqliteDataTable = <TData extends RowData>({
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const loadingColumns =
-    loadingColumnCount ?? columns.length + (showRowNumbers ? 1 : 0);
+  const loadingColumns = loadingColumnCount ?? columns.length + (showRowNumbers ? 1 : 0);
   const tableRows = table.getRowModel().rows;
   const rowVirtualizer = useVirtualizer({
     count: tableRows.length,
@@ -175,8 +169,7 @@ export const SqliteDataTable = <TData extends RowData>({
     overscan: 10,
     getItemKey: (index) => tableRows[index]?.id ?? index,
     measureElement:
-      typeof window !== 'undefined' &&
-      !window.navigator.userAgent.includes('Firefox')
+      typeof window !== 'undefined' && !window.navigator.userAgent.includes('Firefox')
         ? (element) => element?.getBoundingClientRect().height ?? 0
         : undefined,
   });
@@ -235,14 +228,11 @@ export const SqliteDataTable = <TData extends RowData>({
               tabIndex={onRowClick ? 0 : undefined}
               aria-label={
                 onRowClick
-                  ? (getRowAriaLabel?.(row.original, row.index) ??
-                    `Inspect row ${row.index + 1}`)
+                  ? (getRowAriaLabel?.(row.original, row.index) ?? `Inspect row ${row.index + 1}`)
                   : undefined
               }
               onClick={() => onRowClick?.(row.original, row.index)}
-              onKeyDown={(event) =>
-                handleRowKeyDown(event, row.original, row.index)
-              }
+              onKeyDown={(event) => handleRowKeyDown(event, row.original, row.index)}
               style={{
                 transform: `translateY(${virtualRow.start}px)`,
               }}
@@ -251,8 +241,7 @@ export const SqliteDataTable = <TData extends RowData>({
                 <td
                   key={cell.id}
                   className={joinClassNames(
-                    cell.column.id === SQLITE_ROW_NUMBER_COLUMN_ID &&
-                      'sqlite-results-row-number',
+                    cell.column.id === SQLITE_ROW_NUMBER_COLUMN_ID && 'sqlite-results-row-number',
                   )}
                   style={{ width: cell.column.getSize() }}
                 >
@@ -267,16 +256,10 @@ export const SqliteDataTable = <TData extends RowData>({
   );
 
   return (
-    <div
-      className={joinClassNames('sqlite-results-shell', shellClassName)}
-      data-table-id={tableId}
-    >
+    <div className={joinClassNames('sqlite-results-shell', shellClassName)} data-table-id={tableId}>
       <div
         ref={scrollElementRef}
-        className={joinClassNames(
-          'sqlite-results-scroll',
-          scrollContainerClassName,
-        )}
+        className={joinClassNames('sqlite-results-scroll', scrollContainerClassName)}
       >
         {loading ? (
           <LoadingState columns={loadingColumns} />

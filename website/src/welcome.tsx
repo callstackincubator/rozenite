@@ -11,9 +11,7 @@ export default function Welcome() {
 
   useEffect(() => {
     const withPluginsInstalled =
-      new URLSearchParams(window.location.search).get(
-        'withPluginsInstalled',
-      ) === 'true';
+      new URLSearchParams(window.location.search).get('withPluginsInstalled') === 'true';
     setWithPluginsInstalled(withPluginsInstalled);
   }, []);
 
@@ -31,10 +29,7 @@ export default function Welcome() {
           <h1 className={styles.title}>Rozenite loaded successfully!</h1>
           <p className={styles.subtitle}>
             {withPluginsInstalled ? (
-              <>
-                You should see installed plugins as tabs at the end of the tab
-                list.
-              </>
+              <>You should see installed plugins as tabs at the end of the tab list.</>
             ) : (
               <>
                 You are now ready to install your first plugin.

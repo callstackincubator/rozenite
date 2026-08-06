@@ -13,11 +13,7 @@ export type MMKVView = {
   onChange: (callback: (key: string) => void) => { remove: () => void };
 };
 
-export const getMMKVView = (
-  storageId: string,
-  storage: MMKV,
-  blacklist?: RegExp,
-): MMKVView => {
+export const getMMKVView = (storageId: string, storage: MMKV, blacklist?: RegExp): MMKVView => {
   const mmkv = getMMKVAdapter(storage);
 
   // Helper function to check if a key should be blacklisted

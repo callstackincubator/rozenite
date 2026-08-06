@@ -18,11 +18,7 @@ const BAR_TRACK_COLOR = 'hsl(0 0% 14.9%)';
 const DurationCell = ({ phase }: { phase: StartupPhase | StartupTotal }) => {
   if (phase.status === 'missing') {
     return (
-      <Text
-        size="2"
-        color="gray"
-        style={{ fontVariantNumeric: 'tabular-nums' }}
-      >
+      <Text size="2" color="gray" style={{ fontVariantNumeric: 'tabular-nums' }}>
         —
       </Text>
     );
@@ -35,11 +31,7 @@ const DurationCell = ({ phase }: { phase: StartupPhase | StartupTotal }) => {
     );
   }
   return (
-    <Text
-      size="2"
-      color="blue"
-      style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}
-    >
+    <Text size="2" color="blue" style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>
       {formatDuration(phase.duration!)}
     </Text>
   );
@@ -52,11 +44,7 @@ const PhaseBar = ({
   phase: StartupPhase;
   totalDuration: number | undefined;
 }) => {
-  if (
-    phase.status !== 'complete' ||
-    totalDuration == null ||
-    !(totalDuration > 0)
-  ) {
+  if (phase.status !== 'complete' || totalDuration == null || !(totalDuration > 0)) {
     return null;
   }
   const pct = Math.min((phase.duration! / totalDuration) * 100, 100);
@@ -87,10 +75,7 @@ const ROW_STYLE: React.CSSProperties = {
   padding: '10px 0',
 };
 
-export const StartupTab = ({
-  reactNativeMarks,
-  isSessionActive,
-}: StartupTabProps) => {
+export const StartupTab = ({ reactNativeMarks, isSessionActive }: StartupTabProps) => {
   if (!isSessionActive && reactNativeMarks.length === 0) {
     return (
       <Flex align="center" justify="center" style={{ flex: 1, height: '100%' }}>
@@ -102,8 +87,7 @@ export const StartupTab = ({
   }
 
   const { phases, total } = deriveStartupSummary(reactNativeMarks);
-  const totalDuration =
-    total.status === 'complete' ? total.duration : undefined;
+  const totalDuration = total.status === 'complete' ? total.duration : undefined;
 
   return (
     <Box p="4" style={{ overflowY: 'auto', height: '100%' }}>

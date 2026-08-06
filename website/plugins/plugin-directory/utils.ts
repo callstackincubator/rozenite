@@ -11,14 +11,12 @@ export function extractPackageNameFromNpmUrl(npmUrl: string): string | null {
     }
 
     return null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
 
-export function getPackageNamesFromReferences(
-  references: Array<{ npmUrl: string }>,
-): string[] {
+export function getPackageNamesFromReferences(references: Array<{ npmUrl: string }>): string[] {
   return references
     .map((ref) => extractPackageNameFromNpmUrl(ref.npmUrl))
     .filter(Boolean) as string[];

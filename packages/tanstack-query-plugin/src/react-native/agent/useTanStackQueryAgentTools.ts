@@ -8,10 +8,7 @@ import {
 } from '../../shared/agent-tools';
 
 export const useTanStackQueryAgentTools = (queryClient: QueryClient) => {
-  const controller = useMemo(
-    () => createTanStackQueryAgentController(queryClient),
-    [queryClient],
-  );
+  const controller = useMemo(() => createTanStackQueryAgentController(queryClient), [queryClient]);
 
   useEffect(() => {
     const unsubscribeQueryCache = queryClient

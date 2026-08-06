@@ -45,29 +45,13 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
     } = proxyToObject(formState as unknown as Record<string, unknown>);
 
     const flatFieldNames = [
-      ...(control as unknown as { _names: { mount: Set<string> } })._names
-        .mount,
+      ...(control as unknown as { _names: { mount: Set<string> } })._names.mount,
     ];
 
-    const formValues = nestToFlat<unknown>(
-      flatFieldNames,
-      nestedFormValues as object,
-      '',
-    );
-    const dirtyFields = nestToFlat<boolean>(
-      flatFieldNames,
-      nestedDirtyFields as object,
-      false,
-    );
-    const touchedFields = nestToFlat<boolean>(
-      flatFieldNames,
-      nestedTouchedFields as object,
-      false,
-    );
-    const flatErrors = nestToFlat<FieldError>(
-      flatFieldNames,
-      nestedErrors as object,
-    );
+    const formValues = nestToFlat<unknown>(flatFieldNames, nestedFormValues as object, '');
+    const dirtyFields = nestToFlat<boolean>(flatFieldNames, nestedDirtyFields as object, false);
+    const touchedFields = nestToFlat<boolean>(flatFieldNames, nestedTouchedFields as object, false);
+    const flatErrors = nestToFlat<FieldError>(flatFieldNames, nestedErrors as object);
 
     const errors = Object.entries(flatErrors).reduce(
       (prev, [key, value]) => {
@@ -90,8 +74,7 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
         // is no type property, so fall back to the JS type of the current value.
         const domType = field?._f?.ref?.type;
         const value = formValues[name];
-        prev[name] =
-          domType ?? (value != null && value !== '' ? typeof value : undefined);
+        prev[name] = domType ?? (value != null && value !== '' ? typeof value : undefined);
         return prev;
       },
       {} as Record<string, string | undefined>,
