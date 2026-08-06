@@ -23,6 +23,7 @@ export type StorageDescriptor = {
   target: StorageTarget;
   adapterName: string;
   storageName: string;
+  entryCount: number;
   capabilities: StorageCapabilities;
   supportsSubscriptions: boolean;
 };

@@ -147,7 +147,7 @@ function StoragePanelContent() {
     const storages = new Map(
       descriptors.map((descriptor) => [
         getStorageViewId(descriptor.target),
-        { ...descriptor, entryCount: 0 },
+        descriptor,
       ]),
     );
     return buildStorageSidebarGroups(storages);

@@ -144,8 +144,8 @@ export const useRozeniteStoragePlugin = ({
       ),
       client.onMessage(
         'discover-storages',
-        (event: StorageDiscoverStoragesRequestEvent) => {
-          const response = handleStorageDiscoveryRequest(views, event);
+        async (event: StorageDiscoverStoragesRequestEvent) => {
+          const response = await handleStorageDiscoveryRequest(views, event);
           client.send(response.type, response);
         },
       ),

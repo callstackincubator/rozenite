@@ -158,6 +158,7 @@ const descriptors: StorageDescriptor[] = [
     target,
     adapterName: 'MMKV',
     storageName: 'First',
+    entryCount: 1,
     capabilities: { supportedTypes: ['string'] },
     supportsSubscriptions: true,
   },

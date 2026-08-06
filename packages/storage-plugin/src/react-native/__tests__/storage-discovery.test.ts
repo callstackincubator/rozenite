@@ -27,7 +27,7 @@ const createAdapter = (): StorageAdapter => {
         capabilities,
         storage: {
           kind: 'sync',
-          getAllKeys: unexpectedRead('getAllKeys'),
+          getAllKeys: vi.fn(() => ['theme', 'token']),
           get: unexpectedRead('get'),
           set: vi.fn(),
           delete: vi.fn(),
@@ -40,7 +40,7 @@ const createAdapter = (): StorageAdapter => {
         capabilities,
         storage: {
           kind: 'sync',
-          getAllKeys: unexpectedRead('getAllKeys'),
+          getAllKeys: vi.fn(() => ['session']),
           get: unexpectedRead('get'),
           set: vi.fn(),
           delete: vi.fn(),
@@ -53,11 +53,11 @@ const createAdapter = (): StorageAdapter => {
 const request = { type: 'discover-storages', requestId: 'request-1' };
 
 describe('handleStorageDiscoveryRequest', () => {
-  it('returns ordered descriptors without reading storage keys or values', () => {
+  it('returns ordered descriptors with key counts without reading values', async () => {
     const adapter = createAdapter();
     const views = createStorageViews([adapter]);
 
-    const result = handleStorageDiscoveryRequest(views, request);
+    const result = await handleStorageDiscoveryRequest(views, request);
 
     expect(result).toEqual({
       type: 'storage-descriptors',
@@ -67,6 +67,7 @@ describe('handleStorageDiscoveryRequest', () => {
           target: { adapterId: 'adapter', storageId: 'subscribed' },
           adapterName: 'Adapter',
           storageName: 'Subscribed storage',
+          entryCount: 2,
           capabilities,
           supportsSubscriptions: true,
         },
@@ -74,6 +75,7 @@ describe('handleStorageDiscoveryRequest', () => {
           target: { adapterId: 'adapter', storageId: 'manual' },
           adapterName: 'Adapter',
           storageName: 'Manual storage',
+          entryCount: 1,
           capabilities,
           supportsSubscriptions: false,
         },
@@ -81,17 +83,20 @@ describe('handleStorageDiscoveryRequest', () => {
     });
 
     for (const storage of adapter.storages) {
-      expect(storage.storage.getAllKeys).not.toHaveBeenCalled();
+      expect(storage.storage.getAllKeys).toHaveBeenCalledTimes(1);
       expect(storage.storage.get).not.toHaveBeenCalled();
     }
   });
 
-  it('returns a correlated structured error for invalid requests', () => {
+  it('returns a correlated structured error for invalid requests', async () => {
     expect(
-      handleStorageDiscoveryRequest(createStorageViews([createAdapter()]), {
-        type: 'discover-storages',
-        requestId: ' ',
-      }),
+      await handleStorageDiscoveryRequest(
+        createStorageViews([createAdapter()]),
+        {
+          type: 'discover-storages',
+          requestId: ' ',
+        },
+      ),
     ).toEqual({
       type: 'storage-request-error',
       requestId: ' ',
@@ -100,7 +105,7 @@ describe('handleStorageDiscoveryRequest', () => {
     });
   });
 
-  it('rejects duplicate configured targets predictably', () => {
+  it('rejects duplicate configured targets predictably', async () => {
     const target: StorageTarget = { adapterId: 'adapter', storageId: 'shared' };
     const view = (storageName: string): StorageView => ({
       id: `adapter:${storageName}`,
@@ -118,7 +123,7 @@ describe('handleStorageDiscoveryRequest', () => {
     });
 
     expect(
-      handleStorageDiscoveryRequest([view('One'), view('Two')], request),
+      await handleStorageDiscoveryRequest([view('One'), view('Two')], request),
     ).toEqual({
       type: 'storage-request-error',
       requestId: 'request-1',
@@ -127,7 +132,7 @@ describe('handleStorageDiscoveryRequest', () => {
     });
   });
 
-  it('does not expose adapter exceptions over the bridge', () => {
+  it('does not expose adapter exceptions over the bridge', async () => {
     const view = {
       target: { adapterId: 'adapter', storageId: 'broken' },
       get adapterName() {
@@ -135,7 +140,9 @@ describe('handleStorageDiscoveryRequest', () => {
       },
     } as unknown as StorageView;
 
-    expect(handleStorageDiscoveryRequest([view], request)).toEqual({
+    await expect(
+      handleStorageDiscoveryRequest([view], request),
+    ).resolves.toEqual({
       type: 'storage-request-error',
       requestId: 'request-1',
       code: 'READ_FAILED',

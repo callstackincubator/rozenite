@@ -33,18 +33,19 @@ const validateRequest = (
   typeof (payload as { requestId?: unknown }).requestId === 'string' &&
   (payload as { requestId: string }).requestId.trim().length > 0;
 
-const toDescriptor = (view: StorageView): StorageDescriptor => ({
+const toDescriptor = async (view: StorageView): Promise<StorageDescriptor> => ({
   target: view.target,
   adapterName: view.adapterName,
   storageName: view.storageName,
+  entryCount: (await view.getAllKeys()).length,
   capabilities: view.capabilities,
   supportsSubscriptions: view.supportsSubscriptions,
 });
 
-const hasDuplicateTargets = (descriptors: StorageDescriptor[]) => {
+const hasDuplicateTargets = (views: readonly Pick<StorageView, 'target'>[]) => {
   const targets = new Set<string>();
 
-  return descriptors.some(({ target }) => {
+  return views.some(({ target }) => {
     const id = `${target.adapterId}:${target.storageId}`;
 
     if (targets.has(id)) {
@@ -56,10 +57,10 @@ const hasDuplicateTargets = (descriptors: StorageDescriptor[]) => {
   });
 };
 
-export const handleStorageDiscoveryRequest = (
+export const handleStorageDiscoveryRequest = async (
   views: readonly StorageView[],
   payload: unknown,
-): DiscoveryResult => {
+): Promise<DiscoveryResult> => {
   const requestId = getRequestId(payload);
 
   if (!validateRequest(payload)) {
@@ -72,9 +73,7 @@ export const handleStorageDiscoveryRequest = (
   }
 
   try {
-    const storages = views.map(toDescriptor);
-
-    if (hasDuplicateTargets(storages)) {
+    if (hasDuplicateTargets(views)) {
       return {
         type: 'storage-request-error',
         requestId,
@@ -82,6 +81,8 @@ export const handleStorageDiscoveryRequest = (
         message: 'Configured storages must have unique targets.',
       };
     }
+
+    const storages = await Promise.all(views.map(toDescriptor));
 
     return { type: 'storage-descriptors', requestId, storages };
   } catch {

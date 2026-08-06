@@ -77,11 +77,11 @@ const createStressAdapter = () => {
 };
 
 describe('storage scalability stress fixture', () => {
-  it('discovers many storages without starting value work or polling', () => {
+  it('discovers many storages without starting value work', async () => {
     const fixture = createStressAdapter();
 
     expect(
-      handleStorageDiscoveryRequest(fixture.views, {
+      await handleStorageDiscoveryRequest(fixture.views, {
         type: 'discover-storages',
         requestId: 'discover-stress',
       }),
@@ -91,7 +91,7 @@ describe('storage scalability stress fixture', () => {
     });
     expect(fixture.views).toHaveLength(STORAGE_COUNT);
     for (const { get, getAllKeys } of fixture.storageReads) {
-      expect(getAllKeys).not.toHaveBeenCalled();
+      expect(getAllKeys).toHaveBeenCalledTimes(1);
       expect(get).not.toHaveBeenCalled();
     }
   });
