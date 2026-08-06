@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { NestedList } from '@rozenite/ui';
+import { NestedList, ScrollArea } from '@rozenite/ui';
 
 function FolderIcon() {
   return (
@@ -41,5 +41,31 @@ export const Default: Story = {
         <NestedList.Item label="package.json" adornment={<FileIcon />} />
       </NestedList>
     </div>
+  ),
+};
+
+/** Rows keep their natural width instead of truncating, so a narrow, deeply nested tree
+ * overflows horizontally — wrap it in `ScrollArea` to make that overflow scrollable.
+ * @summary Scroll horizontally through deeply nested, long labels.
+ */
+export const DeepNestingWithHorizontalScroll: Story = {
+  render: () => (
+    <ScrollArea className="h-72 w-64 border border-border">
+      <div className="p-2">
+        <NestedList>
+          <NestedList.Item label="src" adornment={<FolderIcon />} defaultExpanded>
+            <NestedList.Item label="components" adornment={<FolderIcon />} defaultExpanded>
+              <NestedList.Item label="storage-adapters" adornment={<FolderIcon />} defaultExpanded>
+                <NestedList.Item
+                  label="async-storage-adapter-implementation.ts"
+                  adornment={<FileIcon />}
+                  selected
+                />
+              </NestedList.Item>
+            </NestedList.Item>
+          </NestedList.Item>
+        </NestedList>
+      </div>
+    </ScrollArea>
   ),
 };

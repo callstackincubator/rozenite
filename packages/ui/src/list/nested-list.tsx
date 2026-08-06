@@ -77,7 +77,7 @@ function NestedListItem({
         aria-expanded={hasChildren ? expanded : undefined}
         style={{ paddingLeft: BASE_PADDING_PX + depth * INDENT_PER_DEPTH_PX }}
         className={cn(
-          'flex h-7 w-full items-center gap-1.5 rounded-md pr-2 text-left text-sm text-sidebar-foreground',
+          'flex h-7 min-w-full items-center gap-1.5 rounded-md pr-2 text-left text-sm text-sidebar-foreground',
           'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
           'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
           'data-[selected]:bg-sidebar-accent data-[selected]:text-sidebar-accent-foreground data-[selected]:font-medium',
@@ -105,7 +105,7 @@ function NestedListItem({
             {adornment}
           </span>
         )}
-        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <span className="flex-1 whitespace-nowrap">{label}</span>
         {trailing}
       </button>
       {hasChildren && expanded && (
@@ -119,7 +119,11 @@ function NestedListItem({
   );
 }
 
-/** A collapsible tree of items nested to an arbitrary depth, with automatic left indentation. */
+/**
+ * A collapsible tree of items nested to an arbitrary depth, with automatic left indentation.
+ * Rows keep their natural width instead of truncating, so deep/long items overflow rather
+ * than clip — wrap in `ScrollArea` to make that overflow scrollable.
+ */
 export const NestedList = Object.assign(NestedListRoot, {
   Item: NestedListItem,
 });
