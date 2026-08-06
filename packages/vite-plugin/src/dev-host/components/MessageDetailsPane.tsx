@@ -1,107 +1,76 @@
-import type { PointerEvent as ReactPointerEvent } from 'react';
-import type { MessageEntry, ResizeHandleId } from '../types.js';
+import { Button, JsonInspector, ScrollArea } from '@rozenite/ui';
+import { Send, X } from 'lucide-react';
+import type { MessageEntry } from '../types.js';
 import { formatMessageDate, formatPayloadForCommandInput } from '../utils.js';
-import { MessagePayloadDetail } from './MessagePayloadDetail.js';
-import { ResizeHandle } from './ResizeHandle.js';
-import { ScrollArea } from './ui/ScrollArea.js';
-import { SendIcon } from './icons.js';
-import { IconButton } from './ui/IconButton.js';
 
 type MessageDetailsPaneProps = {
-  selectedMessage: MessageEntry | null;
-  isOpen: boolean;
-  isNarrowViewport: boolean;
-  activeResizeHandle: ResizeHandleId | null;
+  selectedMessage: MessageEntry;
   onClose: () => void;
   onUseMessage: (message: MessageEntry) => void;
-  onResizeStart: (event: ReactPointerEvent<HTMLDivElement>) => void;
 };
 
 export const MessageDetailsPane = ({
   selectedMessage,
-  isOpen,
-  isNarrowViewport,
-  activeResizeHandle,
   onClose,
   onUseMessage,
-  onResizeStart,
 }: MessageDetailsPaneProps) => {
-  const isHidden = !isOpen || !selectedMessage;
-
   return (
-    <>
-      {!isNarrowViewport ? (
-        <ResizeHandle
-          className="rz-column-resize-handle"
-          isDragging={activeResizeHandle === 'details-width'}
-          isHidden={isHidden}
-          orientation="vertical"
-          label="Resize message details"
-          onPointerDown={onResizeStart}
-        />
-      ) : null}
+    <section className="dev-host-pane">
+      <header className="dev-host-pane-header">
+        <h2 className="dev-host-pane-title">Message Details</h2>
+        <div className="dev-host-pane-actions">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onUseMessage(selectedMessage)}
+            aria-label="Use message in dispatcher"
+            title="Use message in dispatcher"
+          >
+            <Send />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            aria-label="Close message details"
+            title="Close message details"
+          >
+            <X />
+          </Button>
+        </div>
+      </header>
 
-      <div className="rz-pane" data-hidden={isHidden} aria-hidden={isHidden}>
-        <div className="rz-sidebar">
-          <div className="rz-sidebar-header">
-            <div className="rz-sidebar-title">Message Details</div>
-            <div className="rz-header-actions">
-              <IconButton
-                type="button"
-                aria-label="Use message in dispatcher"
-                title="Use message in dispatcher"
-                onClick={() => {
-                  if (selectedMessage) {
-                    onUseMessage(selectedMessage);
-                  }
-                }}
-              >
-                <SendIcon />
-              </IconButton>
-
-              <IconButton
-                type="button"
-                aria-label="Close message details"
-                onClick={onClose}
-              >
-                ×
-              </IconButton>
+      <ScrollArea className="dev-host-scroll">
+        <div className="dev-host-details">
+          <div className="dev-host-detail-section">
+            <span className="dev-host-label">Date</span>
+            <div className="dev-host-detail-value">
+              {formatMessageDate(selectedMessage.date)}
             </div>
           </div>
-
-          <ScrollArea className="rz-sidebar-scroll">
-            {selectedMessage ? (
-              <div className="rz-message-detail">
-                <div className="rz-detail-section">
-                  <div className="rz-label">Date</div>
-                  <div className="rz-detail-value rz-detail-mono">
-                    {formatMessageDate(selectedMessage.date)}
-                  </div>
-                </div>
-
-                <div className="rz-detail-section">
-                  <div className="rz-label">Type</div>
-                  <div className="rz-detail-value rz-detail-mono">
-                    {selectedMessage.type}
-                  </div>
-                </div>
-
-                <div className="rz-detail-section">
-                  <div className="rz-label">Payload</div>
-                  <div className="rz-detail-payload">
-                    <MessagePayloadDetail payload={selectedMessage.payload} />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="rz-empty-state">
-                Select a message to inspect its details.
-              </div>
-            )}
-          </ScrollArea>
+          <div className="dev-host-detail-section">
+            <span className="dev-host-label">Type</span>
+            <div className="dev-host-detail-value">{selectedMessage.type}</div>
+          </div>
+          <div className="dev-host-detail-section">
+            <span className="dev-host-label">Payload</span>
+            <div className="dev-host-detail-payload">
+              {typeof selectedMessage.payload === 'object' &&
+              selectedMessage.payload !== null ? (
+                <JsonInspector
+                  data={selectedMessage.payload}
+                  defaultExpandedDepth={2}
+                />
+              ) : (
+                <pre className="m-0 whitespace-pre-wrap break-words">
+                  {formatPayloadForCommandInput(selectedMessage.payload)}
+                </pre>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    </>
+      </ScrollArea>
+    </section>
   );
 };
 

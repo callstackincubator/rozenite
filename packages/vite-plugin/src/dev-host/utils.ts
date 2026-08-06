@@ -26,12 +26,6 @@ export const formatPayloadPreview = (payload: unknown) => {
   }
 };
 
-export const isJsonTreeData = (
-  value: unknown,
-): value is Record<string, unknown> | unknown[] => {
-  return Array.isArray(value) || (typeof value === 'object' && value !== null);
-};
-
 export const formatMessageDate = (date: string) => {
   return new Date(date).toLocaleString();
 };
