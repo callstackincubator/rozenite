@@ -10,6 +10,7 @@
 - For plugin-development guidance, see @./docs/agents/plugin-development.md.
 - For version plans, see @./docs/agents/version-plans.md.
 - For welcome dialog release content, see @./agents/release-content.md.
+- When working on `@rozenite/ui`, follow @./agents/working-on-ui-components.md.
 - Before preparing or opening a pull request, see @./docs/agents/pull-requests.md.
 - Preserve unrelated work already present in the working tree.
 - Keep changes focused; do not make opportunistic refactors.
