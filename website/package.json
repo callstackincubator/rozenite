@@ -3,7 +3,8 @@
   "version": "1.0.9",
   "private": true,
   "scripts": {
-    "build": "rspress build",
+    "build": "rspress build && pnpm run build:storybook",
+    "build:storybook": "pnpm --filter ui-storybook run build-storybook && node scripts/copy-storybook.mjs",
     "dev": "rspress dev",
     "preview": "rspress preview"
   },
