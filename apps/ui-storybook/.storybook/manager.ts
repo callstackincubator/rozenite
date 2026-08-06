@@ -9,7 +9,9 @@ addons.setConfig({
   theme: create({
     ...themes.normal,
     brandTitle: 'Rozenite UI',
-    brandImage: prefersDark ? '/logo-dark.svg' : '/logo-light.svg',
+    // Relative so it still resolves correctly when this build is served
+    // under a subpath (e.g. /storybook) via the <base> tag in main.ts.
+    brandImage: prefersDark ? './logo-dark.svg' : './logo-light.svg',
     brandUrl: 'https://rozenite.dev',
     brandTarget: '_blank',
   }),

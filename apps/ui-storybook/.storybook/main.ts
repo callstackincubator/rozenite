@@ -28,5 +28,22 @@ const config: StorybookConfig = {
     getAbsolutePath('@storybook/addon-mcp'),
   ],
   framework: getAbsolutePath('@storybook/react-vite'),
+  // The docs site serves this build at /storybook. Vite's default relative
+  // base (`./`) breaks when the page is requested without a trailing slash
+  // (e.g. `/storybook`, which the site's `trailingSlash: false` Vercel
+  // config produces), since relative asset paths then resolve against `/`
+  // instead of `/storybook/`. An absolute base fixes the preview iframe
+  // regardless of trailing slash.
+  async viteFinal(config, { configType }) {
+    const { mergeConfig } = await import('vite');
+    return mergeConfig(config, {
+      base: configType === 'PRODUCTION' ? '/storybook/' : '/',
+    });
+  },
+  // The manager's own HTML (built separately from the Vite preview above)
+  // always emits relative asset paths, so it needs the same fix via a
+  // `<base>` tag placed before Storybook's default head content.
+  managerHead: (head, { configType }) =>
+    configType === 'PRODUCTION' ? `<base href="/storybook/" />\n${head}` : head,
 };
 export default config;
