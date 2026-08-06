@@ -26,9 +26,7 @@ export type RozeniteStoragePluginOptions = {
   storages: StorageAdapter[];
 };
 
-export const useRozeniteStoragePlugin = ({
-  storages,
-}: RozeniteStoragePluginOptions) => {
+export const useRozeniteStoragePlugin = ({ storages }: RozeniteStoragePluginOptions) => {
   const views = useMemo(() => createStorageViews(storages), [storages]);
 
   useStorageAgentTools(views);
@@ -96,94 +94,82 @@ export const useRozeniteStoragePlugin = ({
     );
 
     const messageSubscriptions = [
-      client.onMessage(
-        'set-entry',
-        async ({ target, entry }: StorageSetEntryEvent) => {
-          const view = views.find(
-            (candidate) =>
-              candidate.target.adapterId === target.adapterId &&
-              candidate.target.storageId === target.storageId,
+      client.onMessage('set-entry', async ({ target, entry }: StorageSetEntryEvent) => {
+        const view = views.find(
+          (candidate) =>
+            candidate.target.adapterId === target.adapterId &&
+            candidate.target.storageId === target.storageId,
+        );
+
+        if (!view) {
+          console.warn(
+            `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
           );
+          return;
+        }
 
-          if (!view) {
-            console.warn(
-              `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
-            );
-            return;
-          }
-
-          try {
-            await view.set(entry);
-            await sendInvalidation(view.target, entry.key, 'set');
-          } catch (error) {
-            console.warn(
-              `[Rozenite] Storage Plugin: Failed to set entry in ${target.adapterId}/${target.storageId}.`,
-              error,
-            );
-          }
-        },
-      ),
-      client.onMessage(
-        'delete-entry',
-        async ({ target, key }: StorageDeleteEntryEvent) => {
-          const view = views.find(
-            (candidate) =>
-              candidate.target.adapterId === target.adapterId &&
-              candidate.target.storageId === target.storageId,
+        try {
+          await view.set(entry);
+          await sendInvalidation(view.target, entry.key, 'set');
+        } catch (error) {
+          console.warn(
+            `[Rozenite] Storage Plugin: Failed to set entry in ${target.adapterId}/${target.storageId}.`,
+            error,
           );
+        }
+      }),
+      client.onMessage('delete-entry', async ({ target, key }: StorageDeleteEntryEvent) => {
+        const view = views.find(
+          (candidate) =>
+            candidate.target.adapterId === target.adapterId &&
+            candidate.target.storageId === target.storageId,
+        );
 
-          if (!view) {
-            console.warn(
-              `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
-            );
-            return;
-          }
-
-          try {
-            await view.delete(key);
-            await sendInvalidation(view.target, key, 'delete');
-          } catch (error) {
-            console.warn(
-              `[Rozenite] Storage Plugin: Failed to delete entry in ${target.adapterId}/${target.storageId}.`,
-              error,
-            );
-          }
-        },
-      ),
-      client.onMessage(
-        'purge-storage',
-        async ({ target }: StoragePurgeEvent) => {
-          const view = views.find(
-            (candidate) =>
-              candidate.target.adapterId === target.adapterId &&
-              candidate.target.storageId === target.storageId,
+        if (!view) {
+          console.warn(
+            `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
           );
+          return;
+        }
 
-          if (!view) {
-            console.warn(
-              `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
-            );
-            return;
-          }
+        try {
+          await view.delete(key);
+          await sendInvalidation(view.target, key, 'delete');
+        } catch (error) {
+          console.warn(
+            `[Rozenite] Storage Plugin: Failed to delete entry in ${target.adapterId}/${target.storageId}.`,
+            error,
+          );
+        }
+      }),
+      client.onMessage('purge-storage', async ({ target }: StoragePurgeEvent) => {
+        const view = views.find(
+          (candidate) =>
+            candidate.target.adapterId === target.adapterId &&
+            candidate.target.storageId === target.storageId,
+        );
 
-          try {
-            await view.purge();
-            await sendInvalidation(view.target, undefined, 'purge');
-          } catch (error) {
-            console.warn(
-              `[Rozenite] Storage Plugin: Failed to purge storage in ${target.adapterId}/${target.storageId}.`,
-              error,
-            );
-          }
-        },
-      ),
-      client.onMessage(
-        'discover-storages',
-        async (event: StorageDiscoverStoragesRequestEvent) => {
-          const response = await handleStorageDiscoveryRequest(views, event);
-          client.send(response.type, response);
-        },
-      ),
+        if (!view) {
+          console.warn(
+            `[Rozenite] Storage Plugin: Storage target not found for ${target.adapterId}/${target.storageId}`,
+          );
+          return;
+        }
+
+        try {
+          await view.purge();
+          await sendInvalidation(view.target, undefined, 'purge');
+        } catch (error) {
+          console.warn(
+            `[Rozenite] Storage Plugin: Failed to purge storage in ${target.adapterId}/${target.storageId}.`,
+            error,
+          );
+        }
+      }),
+      client.onMessage('discover-storages', async (event: StorageDiscoverStoragesRequestEvent) => {
+        const response = await handleStorageDiscoveryRequest(views, event);
+        client.send(response.type, response);
+      }),
       client.onMessage(
         'list-entry-previews',
         async (event: StorageListEntryPreviewsRequestEvent) => {
@@ -191,35 +177,23 @@ export const useRozeniteStoragePlugin = ({
           client.send(response.type, response);
         },
       ),
-      client.onMessage(
-        'get-entry',
-        async (event: StorageGetEntryRequestEvent) => {
-          const response = await handleFullEntryRequest(views, event);
-          client.send(response.type, response);
-        },
-      ),
-      client.onMessage(
-        'export-snapshot',
-        async (event: StorageExportSnapshotRequestEvent) => {
-          const response = await handleExportSnapshotRequest(views, event);
-          client.send(response.type, response);
-        },
-      ),
-      client.onMessage(
-        'preview-import',
-        async (event: StorageImportPreviewRequestEvent) => {
-          const response = await handleImportPreviewRequest(views, event);
-          client.send(response.type, response);
-        },
-      ),
-      client.onMessage(
-        'import-entries',
-        async (event: StorageImportEntriesEvent) => {
-          await handleImportEntries(views, event, (out) => {
-            client.send(out.type, out);
-          });
-        },
-      ),
+      client.onMessage('get-entry', async (event: StorageGetEntryRequestEvent) => {
+        const response = await handleFullEntryRequest(views, event);
+        client.send(response.type, response);
+      }),
+      client.onMessage('export-snapshot', async (event: StorageExportSnapshotRequestEvent) => {
+        const response = await handleExportSnapshotRequest(views, event);
+        client.send(response.type, response);
+      }),
+      client.onMessage('preview-import', async (event: StorageImportPreviewRequestEvent) => {
+        const response = await handleImportPreviewRequest(views, event);
+        client.send(response.type, response);
+      }),
+      client.onMessage('import-entries', async (event: StorageImportEntriesEvent) => {
+        await handleImportEntries(views, event, (out) => {
+          client.send(out.type, out);
+        });
+      }),
     ];
 
     return () => {

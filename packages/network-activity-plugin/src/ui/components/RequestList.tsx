@@ -9,11 +9,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import type { ProcessedRequest } from '../state/model';
-import type {
-  NetworkEventSource,
-  RequestId,
-  RequestOverride,
-} from '../../shared/client';
+import type { NetworkEventSource, RequestId, RequestOverride } from '../../shared/client';
 import {
   useNetworkActivityActions,
   useOverrides,
@@ -83,9 +79,7 @@ const formatStartTime = (startTime: number): string => {
   return `${timeString}.${milliseconds}`;
 };
 
-const extractDomainAndPath = (
-  url: string,
-): { domain: string; path: string } => {
+const extractDomainAndPath = (url: string): { domain: string; path: string } => {
   try {
     const { hostname, pathname, search, hash, port } = new URL(url);
 
@@ -158,9 +152,7 @@ const processNetworkRequests = (
 
     let statusDisplay: string | number = request.httpStatus || request.status;
     if (request.status === 'loading' && request.progress?.lengthComputable) {
-      const percentage = Math.round(
-        (request.progress.loaded / request.progress.total) * 100,
-      );
+      const percentage = Math.round((request.progress.loaded / request.progress.total) * 100);
       statusDisplay = `${percentage}%`;
     }
 
@@ -216,9 +208,7 @@ const columns = [
   columnHelper.accessor('status', {
     header: 'Status',
     cell: ({ getValue }) => {
-      return (
-        <div className={`${getStatusColor(getValue())}`}>{getValue()}</div>
-      );
+      return <div className={`${getStatusColor(getValue())}`}>{getValue()}</div>;
     },
     size: 64,
     sortingFn: 'basic',
@@ -231,25 +221,19 @@ const columns = [
   }),
   columnHelper.accessor('domain', {
     header: 'Domain',
-    cell: ({ getValue }) => (
-      <div className="text-gray-300 truncate">{getValue()}</div>
-    ),
+    cell: ({ getValue }) => <div className="text-gray-300 truncate">{getValue()}</div>,
     size: 128,
     sortingFn: 'alphanumeric',
   }),
   columnHelper.accessor('size', {
     header: 'Size',
-    cell: ({ getValue }) => (
-      <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>
-    ),
+    cell: ({ getValue }) => <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>,
     size: 80,
     sortingFn: sortSize,
   }),
   columnHelper.accessor('time', {
     header: 'Time',
-    cell: ({ getValue }) => (
-      <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>
-    ),
+    cell: ({ getValue }) => <div className="text-gray-300 whitespace-nowrap">{getValue()}</div>,
     size: 80,
     sortingFn: sortTime,
   }),
@@ -259,9 +243,7 @@ export type RequestListProps = {
   requests: ProcessedRequest[];
 };
 
-export const RequestList = ({
-  requests: filteredRequests,
-}: RequestListProps) => {
+export const RequestList = ({ requests: filteredRequests }: RequestListProps) => {
   const actions = useNetworkActivityActions();
   const selectedRequestId = useSelectedRequestId();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -269,11 +251,7 @@ export const RequestList = ({
   const clientUISettings = useClientUISettings();
 
   const requests = useMemo(() => {
-    return processNetworkRequests(
-      filteredRequests,
-      overrides,
-      clientUISettings?.showUrlAsName,
-    );
+    return processNetworkRequests(filteredRequests, overrides, clientUISettings?.showUrlAsName);
   }, [filteredRequests, overrides, clientUISettings?.showUrlAsName]);
 
   const table = useReactTable({
@@ -301,9 +279,7 @@ export const RequestList = ({
                 <th
                   key={header.id}
                   className={`text-left text-xs font-medium text-gray-400 px-2 py-2 ${
-                    header.column.getCanSort()
-                      ? 'cursor-pointer select-none hover:bg-gray-700'
-                      : ''
+                    header.column.getCanSort() ? 'cursor-pointer select-none hover:bg-gray-700' : ''
                   }`}
                   style={{ width: header.getSize() }}
                   onClick={header.column.getToggleSortingHandler()}
@@ -311,10 +287,7 @@ export const RequestList = ({
                   <div className="flex items-center gap-1">
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getCanSort() && (
                       <span className="text-gray-500">
                         {{
@@ -339,11 +312,7 @@ export const RequestList = ({
               onClick={() => onRequestSelect(row.original.id)}
             >
               {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  className="px-2 py-1"
-                  style={{ width: cell.column.getSize() }}
-                >
+                <td key={cell.id} className="px-2 py-1" style={{ width: cell.column.getSize() }}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

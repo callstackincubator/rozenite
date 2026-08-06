@@ -35,9 +35,7 @@ type PluginTargets = {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const BUILDER_MANAGED_FIELDS = ['main', 'module', 'types', 'exports'] as const;
 
-const buildPackageContract = (
-  targets: PluginTargets,
-): PluginPackageContract | null => {
+const buildPackageContract = (targets: PluginTargets): PluginPackageContract | null => {
   if (!targets.hasReactNativeEntryPoint) {
     return null;
   }
@@ -93,9 +91,7 @@ const mergeManagedExports = (
   contract: PluginPackageContract,
   targets: PluginTargets,
 ): PackageExports => {
-  const mergedExports = isPackageExports(existingExports)
-    ? { ...existingExports }
-    : {};
+  const mergedExports = isPackageExports(existingExports) ? { ...existingExports } : {};
 
   mergedExports['.'] = contract.exports['.'];
   mergedExports['./package.json'] = contract.exports['./package.json'];
@@ -124,13 +120,9 @@ export type SyncPluginPackageJSONResult = {
   targets: PluginTargets;
 };
 
-export const detectPluginTargets = async (
-  projectRoot: string,
-): Promise<PluginTargets> => {
+export const detectPluginTargets = async (projectRoot: string): Promise<PluginTargets> => {
   return {
-    hasReactNativeEntryPoint: await fileExists(
-      path.join(projectRoot, 'react-native.ts'),
-    ),
+    hasReactNativeEntryPoint: await fileExists(path.join(projectRoot, 'react-native.ts')),
     hasMetroEntryPoint: await fileExists(path.join(projectRoot, 'metro.ts')),
     hasSdkEntryPoint: await fileExists(path.join(projectRoot, 'sdk.ts')),
   };
@@ -140,9 +132,7 @@ export const syncPluginPackageJSON = async (
   projectRoot: string,
 ): Promise<SyncPluginPackageJSONResult> => {
   const packageJsonPath = path.join(projectRoot, 'package.json');
-  const packageJson = JSON.parse(
-    await fs.readFile(packageJsonPath, 'utf8'),
-  ) as PackageJSON;
+  const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8')) as PackageJSON;
   const targets = await detectPluginTargets(projectRoot);
   const contract = buildPackageContract(targets);
   const updatedPackageJson: PackageJSON = { ...packageJson };
@@ -172,18 +162,13 @@ export const syncPluginPackageJSON = async (
     updateField('module', contract.module);
     updateField('types', contract.types);
 
-    const mergedExports = mergeManagedExports(
-      updatedPackageJson.exports,
-      contract,
-      targets,
-    );
+    const mergedExports = mergeManagedExports(updatedPackageJson.exports, contract, targets);
 
     updateField('exports', mergedExports);
   } else if (
     updatedPackageJson.exports !== undefined &&
     isPackageExports(updatedPackageJson.exports) &&
-    ('./metro' in updatedPackageJson.exports ||
-      './sdk' in updatedPackageJson.exports)
+    ('./metro' in updatedPackageJson.exports || './sdk' in updatedPackageJson.exports)
   ) {
     const nextExports = { ...updatedPackageJson.exports };
     delete nextExports['./metro'];

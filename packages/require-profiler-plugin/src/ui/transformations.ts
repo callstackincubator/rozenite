@@ -2,9 +2,7 @@ import { RawData } from 'react-flame-graph';
 import { RequireTimingNode } from '../shared';
 
 // Transform RequireTimingNode to RawData format for flame graph
-export const transformToFlameGraphData = (
-  node: RequireTimingNode | null,
-): RawData | null => {
+export const transformToFlameGraphData = (node: RequireTimingNode | null): RawData | null => {
   if (!node) {
     return null;
   }
@@ -43,8 +41,7 @@ export const calculateStats = (
 
 // Calculate self-time for a node (time spent in module itself, excluding children)
 export const getSelfTime = (node: RawData): number => {
-  const childrenTime =
-    node.children?.reduce((sum, child) => sum + child.value, 0) ?? 0;
+  const childrenTime = node.children?.reduce((sum, child) => sum + child.value, 0) ?? 0;
   return node.value - childrenTime;
 };
 
@@ -77,8 +74,7 @@ export const ensureMinimumValues = (node: RawData): RawData => {
   const children = node.children?.map(ensureMinimumValues);
 
   // Calculate minimum value: 1 for self + sum of children's values
-  const childrenValue =
-    children?.reduce((sum, child) => sum + child.value, 0) ?? 0;
+  const childrenValue = children?.reduce((sum, child) => sum + child.value, 0) ?? 0;
   const minValue = 1 + childrenValue;
 
   return {

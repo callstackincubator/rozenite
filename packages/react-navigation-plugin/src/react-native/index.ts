@@ -1,10 +1,7 @@
 import type { NavigationAction, NavigationState } from '@react-navigation/core';
 import { CommonActions, NavigationContainerRef } from '@react-navigation/core';
 import { useCallback, useEffect, useRef } from 'react';
-import {
-  useRozeniteDevToolsClient,
-  Subscription,
-} from '@rozenite/plugin-bridge';
+import { useRozeniteDevToolsClient, Subscription } from '@rozenite/plugin-bridge';
 import { useReactNavigationEvents } from './useReactNavigationEvents';
 import { ReactNavigationPluginEventMap } from '../shared';
 import { Linking } from 'react-native';
@@ -15,15 +12,12 @@ import type {
 import { useReactNavigationAgentTools } from './useReactNavigationAgentTools';
 
 export type ReactNavigationDevToolsConfig<
-  TNavigationContainerRef extends
-    NavigationContainerRef<any> = NavigationContainerRef<any>,
+  TNavigationContainerRef extends NavigationContainerRef<any> = NavigationContainerRef<any>,
 > = {
   ref: React.RefObject<TNavigationContainerRef | null>;
 };
 
-export const useReactNavigationDevTools = ({
-  ref,
-}: ReactNavigationDevToolsConfig): void => {
+export const useReactNavigationDevTools = ({ ref }: ReactNavigationDevToolsConfig): void => {
   const actionHistoryRef = useRef<NavigationActionHistoryEntry[]>([]);
   const currentStateRef = useRef<NavigationState | undefined>(undefined);
 
@@ -125,10 +119,7 @@ export const useReactNavigationDevTools = ({
         state: message.state,
         origin: message.origin,
       };
-      actionHistoryRef.current = [entry, ...actionHistoryRef.current].slice(
-        0,
-        100,
-      );
+      actionHistoryRef.current = [entry, ...actionHistoryRef.current].slice(0, 100);
     } else {
       // 'action-symbolicated' — replace the pending origin on the
       // matching history entry. Bridge consumers do the same merge.

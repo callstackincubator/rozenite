@@ -14,8 +14,7 @@ const CSP_META =
 export const htmlRenderer: ResponseRenderer = {
   id: 'html',
   matches: (contentType, body) =>
-    typeof body === 'string' &&
-    normalizeContentType(contentType) === 'text/html',
+    typeof body === 'string' && normalizeContentType(contentType) === 'text/html',
   views: ['preview', 'raw'],
   defaultView: 'preview',
   supportsOverride: true,

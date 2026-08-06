@@ -13,9 +13,7 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
 
     const bindingsModel = target.model(RozeniteBindingsModel);
     if (bindingsModel === null) {
-      throw new Error(
-        `Failed to construct RozenitePluginModel: RozeniteBindingsModel was null`,
-      );
+      throw new Error(`Failed to construct RozenitePluginModel: RozeniteBindingsModel was null`);
     }
 
     this.#bindingsModel = bindingsModel;
@@ -74,19 +72,14 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
         await bindingsModel.enable();
       }
 
-      bindingsModel.subscribeToDomainMessages((message) =>
-        this.#handleMessage(message),
-      );
+      bindingsModel.subscribeToDomainMessages((message) => this.#handleMessage(message));
 
       await bindingsModel.initializeDomain();
 
       this.#initialized = true;
       this.#finishInitializationAndNotify();
     } catch (e) {
-      this.dispatchEventToListeners(
-        'InitializationFailed',
-        (e as Error).message,
-      );
+      this.dispatchEventToListeners('InitializationFailed', (e as Error).message);
     }
   }
 
@@ -107,9 +100,7 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
   async sendMessage(message: JSONValue): Promise<void> {
     const rdtBindingsModel = this.#bindingsModel;
     if (!rdtBindingsModel) {
-      throw new Error(
-        'RozenitePluginModel failed to send message: RozeniteBindingsModel was null',
-      );
+      throw new Error('RozenitePluginModel failed to send message: RozeniteBindingsModel was null');
     }
 
     return await rdtBindingsModel.sendMessage(message);
@@ -143,9 +134,7 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
     this.dispatchEventToListeners('InitializationCompleted');
   }
 
-  #handleBackendExecutionContextUnavailable({
-    data: errorMessage,
-  }: RuntimeEvent<string>): void {
+  #handleBackendExecutionContextUnavailable({ data: errorMessage }: RuntimeEvent<string>): void {
     this.dispatchEventToListeners('InitializationFailed', errorMessage);
   }
 

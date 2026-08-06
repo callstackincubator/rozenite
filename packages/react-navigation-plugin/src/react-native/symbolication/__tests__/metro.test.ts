@@ -19,11 +19,7 @@ vi.mock('react-native', () => ({
   },
 }));
 
-import {
-  __resetMetroOriginCache,
-  resolveMetroOrigin,
-  symbolicateFrames,
-} from '../metro';
+import { __resetMetroOriginCache, resolveMetroOrigin, symbolicateFrames } from '../metro';
 import type { ActionStackFrame } from '../types';
 
 beforeEach(() => {
@@ -44,8 +40,7 @@ describe('resolveMetroOrigin', () => {
   });
 
   it('returns the http origin for a Metro bundle URL', () => {
-    mockScriptURL.value =
-      'http://10.0.2.2:8081/index.bundle?platform=android&dev=true';
+    mockScriptURL.value = 'http://10.0.2.2:8081/index.bundle?platform=android&dev=true';
     expect(resolveMetroOrigin()).toBe('http://10.0.2.2:8081');
   });
 
@@ -64,9 +59,7 @@ describe('resolveMetroOrigin', () => {
   });
 });
 
-const sampleFrame = (
-  overrides: Partial<ActionStackFrame> = {},
-): ActionStackFrame => ({
+const sampleFrame = (overrides: Partial<ActionStackFrame> = {}): ActionStackFrame => ({
   functionName: 'handleClick',
   generatedUrl: 'http://localhost:8081/index.bundle?platform=ios&dev=true',
   generatedLineNumber: 12345,
@@ -117,10 +110,7 @@ describe('symbolicateFrames', () => {
     });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
-    const [callUrl, callInit] = fetchSpy.mock.calls[0] as unknown as [
-      string,
-      RequestInit,
-    ];
+    const [callUrl, callInit] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
     expect(callUrl).toBe('http://localhost:8081/symbolicate');
     expect(callInit.method).toBe('POST');
     expect(JSON.parse(callInit.body as string)).toEqual({
@@ -184,9 +174,7 @@ describe('symbolicateFrames', () => {
   });
 
   it('returns "failed" when Metro responds with a non-200 status', async () => {
-    const fetchSpy = vi.fn(
-      async () => new Response('Server Error', { status: 500 }),
-    );
+    const fetchSpy = vi.fn(async () => new Response('Server Error', { status: 500 }));
     const result = await symbolicateFrames([sampleFrame()], {
       origin: 'http://localhost:8081',
       fetch: fetchSpy as typeof globalThis.fetch,

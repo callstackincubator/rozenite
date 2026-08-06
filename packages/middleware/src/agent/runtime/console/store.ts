@@ -57,8 +57,7 @@ const applyConsoleFilters = (
 ): ConsoleLogEntry[] => {
   const hasLevels = Array.isArray(filters.levels) && filters.levels.length > 0;
   const levelSet = hasLevels ? new Set(filters.levels) : null;
-  const text =
-    typeof filters.text === 'string' ? filters.text.trim().toLowerCase() : '';
+  const text = typeof filters.text === 'string' ? filters.text.trim().toLowerCase() : '';
   const since =
     typeof filters.since === 'number' && Number.isFinite(filters.since)
       ? Math.round(filters.since)
@@ -89,9 +88,7 @@ const getRecord = (value: unknown): Record<string, unknown> | null => {
   return null;
 };
 
-export const createConsoleLogStore = (
-  capacity = DEFAULT_CONSOLE_BUFFER_CAPACITY,
-) => {
+export const createConsoleLogStore = (capacity = DEFAULT_CONSOLE_BUFFER_CAPACITY) => {
   const normalizedCapacity =
     Number.isFinite(capacity) && capacity > 0
       ? Math.round(capacity)
@@ -153,10 +150,7 @@ export const createConsoleLogStore = (
     }
   };
 
-  const getMessages = (
-    deviceId: string,
-    rawRequest: unknown,
-  ): ConsoleMessagesResult => {
+  const getMessages = (deviceId: string, rawRequest: unknown): ConsoleMessagesResult => {
     const request = getRecord(rawRequest) || {};
     const state = getOrCreateState(deviceId);
     const filters: ConsoleLogFilters = {
@@ -164,10 +158,7 @@ export const createConsoleLogStore = (
         ? {
             levels: request.levels.filter(
               (level): level is ConsoleLogEntry['level'] =>
-                level === 'verbose' ||
-                level === 'info' ||
-                level === 'warning' ||
-                level === 'error',
+                level === 'verbose' || level === 'info' || level === 'warning' || level === 'error',
             ),
           }
         : {}),

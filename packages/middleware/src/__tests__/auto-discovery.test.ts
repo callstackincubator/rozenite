@@ -8,9 +8,7 @@ import type { RozeniteConfig } from '../config.js';
 const tempDirs: string[] = [];
 
 const createTempDir = (): string => {
-  const tempDir = fs.mkdtempSync(
-    path.join(os.tmpdir(), 'rozenite-middleware-'),
-  );
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rozenite-middleware-'));
   tempDirs.push(tempDir);
   return tempDir;
 };
@@ -40,10 +38,7 @@ const createPackage = (
     version: '1.0.0',
     main,
   });
-  writeFile(
-    path.join(packageRoot, main.replace('./', '')),
-    'module.exports = {};',
-  );
+  writeFile(path.join(packageRoot, main.replace('./', '')), 'module.exports = {};');
 
   if (options?.hasPluginManifest) {
     writeJson(path.join(packageRoot, 'dist', 'rozenite.json'), {
@@ -88,12 +83,7 @@ afterEach(() => {
 describe('findPackageRoot', () => {
   it('finds a package root for a classic node_modules path', () => {
     const root = createTempDir();
-    const packageRoot = path.join(
-      root,
-      'node_modules',
-      '@rozenite',
-      'demo-plugin',
-    );
+    const packageRoot = path.join(root, 'node_modules', '@rozenite', 'demo-plugin');
 
     createPackage(packageRoot, '@rozenite/demo-plugin', {
       hasPluginManifest: true,
@@ -102,9 +92,7 @@ describe('findPackageRoot', () => {
 
     const resolvedPath = path.join(packageRoot, 'dist', 'react-native.cjs');
 
-    expect(findPackageRoot('@rozenite/demo-plugin', resolvedPath)).toBe(
-      packageRoot,
-    );
+    expect(findPackageRoot('@rozenite/demo-plugin', resolvedPath)).toBe(packageRoot);
   });
 
   it('finds a package root for a Yarn virtual or unplugged path', () => {
@@ -191,11 +179,9 @@ describe('getInstalledPlugins', () => {
       hasPluginManifest: true,
     });
 
-    expect(
-      getInstalledPlugins(
-        createConfig(projectRoot, { exclude: ['demo-plugin'] }),
-      ),
-    ).toEqual([]);
+    expect(getInstalledPlugins(createConfig(projectRoot, { exclude: ['demo-plugin'] }))).toEqual(
+      [],
+    );
   });
 
   it('deduplicates names declared in dependencies and devDependencies', () => {
@@ -250,9 +236,7 @@ describe('getInstalledPlugins', () => {
     });
 
     expect(() =>
-      getInstalledPlugins(
-        createConfig(projectRoot, { include: ['missing-plugin'] }),
-      ),
+      getInstalledPlugins(createConfig(projectRoot, { include: ['missing-plugin'] })),
     ).toThrowError('Could not resolve plugin missing-plugin.');
   });
 });

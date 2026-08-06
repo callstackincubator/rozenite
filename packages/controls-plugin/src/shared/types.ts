@@ -6,9 +6,7 @@ export type ControlsTextItem = {
   description?: string;
 };
 
-export type ControlsValidationResult =
-  | { valid: true }
-  | { valid: false; message: string };
+export type ControlsValidationResult = { valid: true } | { valid: false; message: string };
 
 export type ControlsMutableItemBase<TValue> = {
   id: string;
@@ -66,22 +64,13 @@ export type ControlsSection = {
 
 export type ControlsTextItemSnapshot = Omit<ControlsTextItem, never>;
 
-export type ControlsToggleItemSnapshot = Omit<
-  ControlsToggleItem,
-  'validate' | 'onUpdate'
->;
+export type ControlsToggleItemSnapshot = Omit<ControlsToggleItem, 'validate' | 'onUpdate'>;
 
 export type ControlsButtonItemSnapshot = Omit<ControlsButtonItem, 'onPress'>;
 
-export type ControlsSelectItemSnapshot = Omit<
-  ControlsSelectItem,
-  'validate' | 'onUpdate'
->;
+export type ControlsSelectItemSnapshot = Omit<ControlsSelectItem, 'validate' | 'onUpdate'>;
 
-export type ControlsInputItemSnapshot = Omit<
-  ControlsInputItem,
-  'validate' | 'onUpdate'
->;
+export type ControlsInputItemSnapshot = Omit<ControlsInputItem, 'validate' | 'onUpdate'>;
 
 export type ControlsItemSnapshot =
   | ControlsTextItemSnapshot
@@ -106,6 +95,5 @@ export type RozeniteControlsPluginOptionsInput =
   | RozeniteControlsPluginOptions
   | RozeniteControlsPluginOptionsUpdater;
 
-export const createSection = <TSection extends ControlsSection>(
-  section: TSection,
-): TSection => section;
+export const createSection = <TSection extends ControlsSection>(section: TSection): TSection =>
+  section;

@@ -53,5 +53,4 @@ export type TanStackQueryPluginEventMap = {
   };
 };
 
-export type TanStackQueryPluginClient =
-  RozeniteDevToolsClient<TanStackQueryPluginEventMap>;
+export type TanStackQueryPluginClient = RozeniteDevToolsClient<TanStackQueryPluginEventMap>;

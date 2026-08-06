@@ -55,10 +55,7 @@ const sendResult = <TResult>(res: Response, result: TResult): void => {
 
 const sendError = (res: Response, error: unknown): void => {
   const status =
-    error instanceof Error &&
-    /Unknown session|Unknown deviceId/.test(error.message)
-      ? 404
-      : 400;
+    error instanceof Error && /Unknown session|Unknown deviceId/.test(error.message) ? 404 : 400;
   const payload: AgentResponseEnvelope<never> = {
     ok: false,
     error: {
@@ -112,12 +109,8 @@ export const createAgentRoutes = (manager: AgentSessionManager): Router => {
     try {
       const body = getBodyRecord(req);
       const result = await manager.createSession({
-        ...(typeof body.deviceId === 'string'
-          ? { deviceId: body.deviceId }
-          : {}),
-        ...(typeof body.cliVersion === 'string'
-          ? { cliVersion: body.cliVersion }
-          : {}),
+        ...(typeof body.deviceId === 'string' ? { deviceId: body.deviceId } : {}),
+        ...(typeof body.cliVersion === 'string' ? { cliVersion: body.cliVersion } : {}),
       } satisfies CreateAgentSessionRequest);
       sendResult<CreateAgentSessionResponse>(res, result);
     } catch (error) {
@@ -176,11 +169,7 @@ export const createAgentRoutes = (manager: AgentSessionManager): Router => {
         throw new Error('"toolName" is required');
       }
 
-      const result = await manager.callSessionTool(
-        getSessionId(req),
-        body.toolName,
-        body.args,
-      );
+      const result = await manager.callSessionTool(getSessionId(req), body.toolName, body.args);
       sendResult<CallAgentSessionToolResponse>(res, {
         result,
       } satisfies CallAgentSessionToolResponse);

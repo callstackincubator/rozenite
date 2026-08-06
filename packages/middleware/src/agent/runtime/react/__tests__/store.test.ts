@@ -17,9 +17,7 @@ const waitFor = async (predicate: () => boolean): Promise<void> => {
   expect(predicate()).toBe(true);
 };
 
-const createStoreWithBridgeStub = (
-  sent: Array<{ event: string; payload: unknown }>,
-) => {
+const createStoreWithBridgeStub = (sent: Array<{ event: string; payload: unknown }>) => {
   return createReactTreeStore({
     createBridge: async (options) => ({
       ingest: () => null,
@@ -507,9 +505,7 @@ describe('React tree store getComponent', () => {
       },
     });
 
-    await expect(resultPromise).rejects.toThrow(
-      'No inspected snapshot available for node "2".',
-    );
+    await expect(resultPromise).rejects.toThrow('No inspected snapshot available for node "2".');
   });
 });
 
@@ -517,15 +513,9 @@ type MockPhase = 'idle' | 'profiling' | 'processing';
 
 const createConfigurableProfilingBridge = (options: {
   initialPhase?: MockPhase;
-  initialDataForRoots?: Map<
-    number,
-    { commitData: Array<{ duration: number; timestamp: number }> }
-  >;
+  initialDataForRoots?: Map<number, { commitData: Array<{ duration: number; timestamp: number }> }>;
   drainAfterStatusCalls?: number;
-  dataOnDrain?: Map<
-    number,
-    { commitData: Array<{ duration: number; timestamp: number }> }
-  >;
+  dataOnDrain?: Map<number, { commitData: Array<{ duration: number; timestamp: number }> }>;
 }) => {
   let phase: MockPhase = options.initialPhase ?? 'idle';
   let dataForRoots = options.initialDataForRoots ?? new Map();
@@ -592,9 +582,7 @@ describe('React stopProfiling guard', () => {
   });
 
   it('still collects data when profiling self-stopped and is still draining', async () => {
-    const dataOnDrain = new Map([
-      [1, { commitData: [{ duration: 5, timestamp: 100 }] }],
-    ]);
+    const dataOnDrain = new Map([[1, { commitData: [{ duration: 5, timestamp: 100 }] }]]);
     const bridge = createConfigurableProfilingBridge({
       initialPhase: 'processing',
       drainAfterStatusCalls: 2,
@@ -615,9 +603,7 @@ describe('React stopProfiling guard', () => {
   });
 
   it('returns already-collected data for an already-complete session', async () => {
-    const initialDataForRoots = new Map([
-      [1, { commitData: [{ duration: 8, timestamp: 200 }] }],
-    ]);
+    const initialDataForRoots = new Map([[1, { commitData: [{ duration: 8, timestamp: 200 }] }]]);
     const bridge = createConfigurableProfilingBridge({
       initialPhase: 'idle',
       initialDataForRoots,

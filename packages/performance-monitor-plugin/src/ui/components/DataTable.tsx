@@ -93,10 +93,7 @@ export const DataTable = <TData,>({
                   }}
                 >
                   <Flex align="center" gap="2">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
-                    )}
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getCanSort() && (
                       <Text size="1" color="gray">
                         {{

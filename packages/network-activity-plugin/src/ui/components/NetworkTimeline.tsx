@@ -3,10 +3,7 @@ import type { CSSProperties, PointerEvent } from 'react';
 import { X } from 'lucide-react';
 import type { RequestId } from '../../shared/client';
 import type { ProcessedRequest } from '../state/model';
-import {
-  useNetworkActivityActions,
-  useSelectedRequestId,
-} from '../state/hooks';
+import { useNetworkActivityActions, useSelectedRequestId } from '../state/hooks';
 import {
   formatTimelineOffset,
   getTimelineBarTopOffset,
@@ -37,10 +34,7 @@ const getPrimaryBarClassName = (request: ProcessedRequest) => {
   return REQUEST_TIMELINE_COLORS.primary;
 };
 
-const getStyle = (
-  offsetPercent: number,
-  widthPercent: number,
-): CSSProperties => ({
+const getStyle = (offsetPercent: number, widthPercent: number): CSSProperties => ({
   left: `${offsetPercent}%`,
   width: `${widthPercent}%`,
 });
@@ -92,9 +86,7 @@ const TimelineTrack = ({
     ? REQUEST_TIMELINE_COLORS.active
     : getPrimaryBarClassName(row.request);
   const isSplitHttpBar =
-    row.request.type === 'http' &&
-    row.ttfbPercent > 0 &&
-    row.receivePercent > 0;
+    row.request.type === 'http' && row.ttfbPercent > 0 && row.receivePercent > 0;
   const trackTop = getTimelineTrackTop(row.lane);
   const barTop = getTimelineBarTopOffset();
   const positionStyle = {
@@ -130,9 +122,7 @@ const TimelineTrack = ({
       {isSplitHttpBar ? (
         <div
           className={`absolute flex w-full overflow-hidden rounded-sm ${
-            isSelected
-              ? 'ring-1 ring-blue-300 ring-offset-1 ring-offset-gray-950'
-              : ''
+            isSelected ? 'ring-1 ring-blue-300 ring-offset-1 ring-offset-gray-950' : ''
           }`}
           style={{
             top: barTop,
@@ -151,9 +141,7 @@ const TimelineTrack = ({
       ) : (
         <div
           className={`absolute w-full rounded-sm ${primaryBarClassName} ${
-            isSelected
-              ? 'ring-1 ring-blue-300 ring-offset-1 ring-offset-gray-950'
-              : ''
+            isSelected ? 'ring-1 ring-blue-300 ring-offset-1 ring-offset-gray-950' : ''
           }`}
           style={{
             top: barTop,
@@ -173,10 +161,7 @@ type DraftSelection = {
 
 const clampPercent = (value: number) => Math.min(Math.max(value, 0), 100);
 
-const getPointerPercent = (
-  event: PointerEvent<HTMLDivElement>,
-  element: HTMLDivElement,
-) => {
+const getPointerPercent = (event: PointerEvent<HTMLDivElement>, element: HTMLDivElement) => {
   const rect = element.getBoundingClientRect();
 
   if (rect.width === 0) {
@@ -233,9 +218,7 @@ export const NetworkTimeline = ({
   const actions = useNetworkActivityActions();
   const selectedRequestId = useSelectedRequestId();
   const [now, setNow] = useState(() => Date.now());
-  const [draftSelection, setDraftSelection] = useState<DraftSelection | null>(
-    null,
-  );
+  const [draftSelection, setDraftSelection] = useState<DraftSelection | null>(null);
   const chartRef = useRef<HTMLDivElement | null>(null);
   const suppressTrackClickRef = useRef(false);
 
@@ -275,8 +258,7 @@ export const NetworkTimeline = ({
     const percent = getPointerPercent(event, chartElement);
     const target = event.target;
     const startedOnTrack =
-      target instanceof Element &&
-      target.closest('[data-timeline-track="true"]') !== null;
+      target instanceof Element && target.closest('[data-timeline-track="true"]') !== null;
 
     setDraftSelection({
       anchorPercent: percent,
@@ -300,9 +282,7 @@ export const NetworkTimeline = ({
     event.preventDefault();
     const percent = getPointerPercent(event, chartElement);
 
-    setDraftSelection((current) =>
-      current ? { ...current, currentPercent: percent } : current,
-    );
+    setDraftSelection((current) => (current ? { ...current, currentPercent: percent } : current));
   };
 
   const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
@@ -318,11 +298,9 @@ export const NetworkTimeline = ({
 
     if (distance > 1) {
       const startOffset =
-        (Math.min(draftSelection.anchorPercent, currentPercent) / 100) *
-        timeline.rangeDuration;
+        (Math.min(draftSelection.anchorPercent, currentPercent) / 100) * timeline.rangeDuration;
       const endOffset =
-        (Math.max(draftSelection.anchorPercent, currentPercent) / 100) *
-        timeline.rangeDuration;
+        (Math.max(draftSelection.anchorPercent, currentPercent) / 100) * timeline.rangeDuration;
 
       onSelectionChange({
         startTime: timeline.rangeStart + startOffset,
@@ -412,8 +390,7 @@ export const NetworkTimeline = ({
 
         {timeline.hiddenRequestCount > 0 && (
           <div className="absolute bottom-1 left-1 rounded border border-gray-700 bg-gray-900/95 px-1.5 py-0.5 text-xs text-gray-400">
-            Showing latest {timeline.rows.length} of{' '}
-            {timeline.totalRequestCount}
+            Showing latest {timeline.rows.length} of {timeline.totalRequestCount}
           </div>
         )}
       </div>

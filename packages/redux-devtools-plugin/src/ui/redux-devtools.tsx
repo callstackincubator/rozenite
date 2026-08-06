@@ -3,22 +3,14 @@ import { Provider } from 'react-redux';
 import type { Store } from 'redux';
 import { Persistor } from 'redux-persist';
 import { PersistGate } from 'redux-persist/integration/react';
-import {
-  App,
-  UPDATE_STATE,
-  showNotification,
-  type Request,
-} from '@redux-devtools/app-core';
+import { App, UPDATE_STATE, showNotification, type Request } from '@redux-devtools/app-core';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import configureStore, {
   setReduxDevToolsCommandSender,
   type ReduxDevToolsStoreAction,
   type ReduxDevToolsStoreState,
 } from './store';
-import type {
-  ReduxDevToolsBridgeEventMap,
-  ReduxDevToolsRuntimeMessage,
-} from '../shared/protocol';
+import type { ReduxDevToolsBridgeEventMap, ReduxDevToolsRuntimeMessage } from '../shared/protocol';
 
 type StoreBundle = {
   store: Store<ReduxDevToolsStoreState, ReduxDevToolsStoreAction>;
@@ -39,9 +31,7 @@ const handleRuntimeMessage = (
       return;
     }
     case 'error': {
-      store.dispatch(
-        showNotification(message.message) as ReduxDevToolsStoreAction,
-      );
+      store.dispatch(showNotification(message.message) as ReduxDevToolsStoreAction);
       return;
     }
     default:

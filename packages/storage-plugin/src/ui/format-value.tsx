@@ -13,20 +13,13 @@ export const formatValue = (entry: StorageEntry) => {
 
   if (entry.type === 'boolean') {
     return (
-      <span
-        className={cn(
-          'font-mono',
-          entry.value ? 'text-primary' : 'text-destructive',
-        )}
-      >
+      <span className={cn('font-mono', entry.value ? 'text-primary' : 'text-destructive')}>
         {entry.value ? 'true' : 'false'}
       </span>
     );
   }
 
   return (
-    <span className="font-mono text-muted-foreground">
-      {compactBufferPreview(entry.value)}
-    </span>
+    <span className="font-mono text-muted-foreground">{compactBufferPreview(entry.value)}</span>
   );
 };

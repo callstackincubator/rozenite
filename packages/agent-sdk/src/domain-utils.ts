@@ -4,11 +4,7 @@ import {
   STATIC_DOMAIN_TOOL_NAMES,
   STATIC_DOMAIN_TOOL_PREFIXES,
 } from './constants.js';
-import type {
-  AgentDomainTool,
-  AgentToolSchema,
-  DomainDefinition,
-} from './types.js';
+import type { AgentDomainTool, AgentToolSchema, DomainDefinition } from './types.js';
 
 const splitByDelimiters = (value: string): string[] => {
   return value
@@ -70,8 +66,7 @@ export const getDomainToolsByDefinition = (
 
   return tools.filter(
     (tool) =>
-      (staticPrefix ? tool.name.startsWith(staticPrefix) : false) ||
-      staticToolNames.has(tool.name),
+      (staticPrefix ? tool.name.startsWith(staticPrefix) : false) || staticToolNames.has(tool.name),
   );
 };
 
@@ -101,9 +96,7 @@ const reducePackageName = (name: string): string => {
   return reduced;
 };
 
-const parseScopedPackageName = (
-  pluginId: string,
-): { scope: string; name: string } | null => {
+const parseScopedPackageName = (pluginId: string): { scope: string; name: string } | null => {
   const match = pluginId.match(/^@([^/]+)\/(.+)$/);
   if (!match) {
     return null;
@@ -159,9 +152,7 @@ const deriveLegacyDomainSlug = (pluginId: string): string => {
   return normalized || 'plugin';
 };
 
-export const buildRuntimePluginDomains = (
-  tools: AgentTool[],
-): DomainDefinition[] => {
+export const buildRuntimePluginDomains = (tools: AgentTool[]): DomainDefinition[] => {
   const staticPrefixes = new Set(Object.values(STATIC_DOMAIN_TOOL_PREFIXES));
   const staticToolNames = new Set(
     Object.values(STATIC_DOMAIN_TOOL_NAMES).flatMap((names) => names),
@@ -231,12 +222,8 @@ export const buildRuntimePluginDomains = (
   });
 };
 
-const getRozeniteScopedAlias = (
-  domain: DomainDefinition,
-): string | undefined => {
-  return domain.pluginId?.startsWith('@rozenite/')
-    ? `rozenite/${domain.id}`
-    : undefined;
+const getRozeniteScopedAlias = (domain: DomainDefinition): string | undefined => {
+  return domain.pluginId?.startsWith('@rozenite/') ? `rozenite/${domain.id}` : undefined;
 };
 
 export const resolveDomainToken = (
@@ -262,20 +249,12 @@ const formatLimitedList = (items: string[]): string => {
   return `${first}, and ${items.length - 5} more`;
 };
 
-export const rankDomainSuggestions = (
-  token: string,
-  domains: DomainDefinition[],
-): string[] => {
+export const rankDomainSuggestions = (token: string, domains: DomainDefinition[]): string[] => {
   const query = token.toLowerCase();
 
   return domains
     .map((domain) => {
-      const candidates = [
-        domain.id,
-        domain.slug,
-        domain.pluginId,
-        getRozeniteScopedAlias(domain),
-      ]
+      const candidates = [domain.id, domain.slug, domain.pluginId, getRozeniteScopedAlias(domain)]
         .filter((value): value is string => typeof value === 'string')
         .map((value) => value.toLowerCase());
 
@@ -298,13 +277,9 @@ export const rankDomainSuggestions = (
     .map((item) => item.domain.id);
 };
 
-export const formatUnknownDomainError = (
-  token: string,
-  domains: DomainDefinition[],
-): Error => {
+export const formatUnknownDomainError = (token: string, domains: DomainDefinition[]): Error => {
   const suggestions = rankDomainSuggestions(token, domains);
-  const suggestionsText =
-    suggestions.length > 0 ? ` Did you mean: ${suggestions.join(', ')}?` : '';
+  const suggestionsText = suggestions.length > 0 ? ` Did you mean: ${suggestions.join(', ')}?` : '';
 
   return new Error(
     `Unknown domain "${token}".${suggestionsText} Run \`rozenite agent domains\` to list available domains.`,
@@ -317,17 +292,12 @@ export const resolveDomainTool = (
   toolName: string,
 ): AgentTool => {
   const exactMatch = domainTools.find((tool) => tool.name === toolName);
-  const shortMatches = domainTools.filter(
-    (tool) => inferToolShortName(tool.name) === toolName,
-  );
+  const shortMatches = domainTools.filter((tool) => inferToolShortName(tool.name) === toolName);
 
-  const selectedTool =
-    exactMatch || (shortMatches.length === 1 ? shortMatches[0] : null);
+  const selectedTool = exactMatch || (shortMatches.length === 1 ? shortMatches[0] : null);
   if (!selectedTool) {
     if (shortMatches.length > 1) {
-      const fullNames = formatLimitedList(
-        shortMatches.map((tool) => tool.name),
-      );
+      const fullNames = formatLimitedList(shortMatches.map((tool) => tool.name));
       throw new Error(
         `Ambiguous tool "${toolName}" for domain "${domainLabel}". Matches: ${fullNames}.`,
       );
@@ -342,10 +312,7 @@ export const resolveDomainTool = (
   return selectedTool;
 };
 
-export const toAgentDomainTool = (
-  tool: AgentTool,
-  domainId: string,
-): AgentDomainTool => ({
+export const toAgentDomainTool = (tool: AgentTool, domainId: string): AgentDomainTool => ({
   ...tool,
   shortName: inferToolShortName(tool.name),
   domainId,

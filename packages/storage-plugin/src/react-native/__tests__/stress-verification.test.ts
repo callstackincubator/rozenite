@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type {
-  StorageAdapter,
-  StorageEntry,
-  StorageEntryType,
-} from '../../shared/types';
+import type { StorageAdapter, StorageEntry, StorageEntryType } from '../../shared/types';
 import {
   ENTRY_PREVIEW_READ_CONCURRENCY,
   MAX_ENTRY_PREVIEW_PAGE_SIZE,
@@ -100,10 +96,7 @@ describe('storage scalability stress fixture', () => {
   it('reads only one bounded page from the selected storage when values are slow and large', async () => {
     const fixture = createStressAdapter();
 
-    const result = await handleListEntryPreviewsRequest(
-      fixture.views,
-      previewRequest(),
-    );
+    const result = await handleListEntryPreviewsRequest(fixture.views, previewRequest());
 
     expect(result).toMatchObject({
       type: 'entry-previews',
@@ -119,12 +112,8 @@ describe('storage scalability stress fixture', () => {
       expect(result.items.every((item) => !('value' in item))).toBe(true);
     }
     expect(fixture.storageReads[0]?.getAllKeys).toHaveBeenCalledTimes(1);
-    expect(fixture.storageReads[0]?.get).toHaveBeenCalledTimes(
-      MAX_ENTRY_PREVIEW_PAGE_SIZE,
-    );
-    expect(fixture.maxActiveReads()).toBeLessThanOrEqual(
-      ENTRY_PREVIEW_READ_CONCURRENCY,
-    );
+    expect(fixture.storageReads[0]?.get).toHaveBeenCalledTimes(MAX_ENTRY_PREVIEW_PAGE_SIZE);
+    expect(fixture.maxActiveReads()).toBeLessThanOrEqual(ENTRY_PREVIEW_READ_CONCURRENCY);
     for (const { get, getAllKeys } of fixture.storageReads.slice(1)) {
       expect(getAllKeys).not.toHaveBeenCalled();
       expect(get).not.toHaveBeenCalled();
@@ -143,9 +132,7 @@ describe('storage scalability stress fixture', () => {
       type: 'entry-previews',
       items: [expect.objectContaining({ key: 'entry-0999' })],
     });
-    expect(fixture.storageReads[0]?.get).toHaveBeenCalledExactlyOnceWith(
-      'entry-0999',
-    );
+    expect(fixture.storageReads[0]?.get).toHaveBeenCalledExactlyOnceWith('entry-0999');
     for (const { get } of fixture.storageReads.slice(1)) {
       expect(get).not.toHaveBeenCalled();
     }

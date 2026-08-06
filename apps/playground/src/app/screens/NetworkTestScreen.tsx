@@ -13,10 +13,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import EventSource from 'react-native-sse';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import {
-  createSection,
-  useRozeniteControlsPlugin,
-} from '@rozenite/controls-plugin';
+import { createSection, useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 import {
   NitroWebSocket,
   type WebSocketCloseEvent as NitroWebSocketCloseEvent,
@@ -24,14 +21,8 @@ import {
 } from 'react-native-nitro-websockets';
 import { RootStackParamList } from '../navigation/types';
 import { api, User, Post, Todo } from '../utils/network-activity/api';
-import {
-  expoFetchApi,
-  type ExpoFetchDemoResult,
-} from '../utils/network-activity/expo';
-import {
-  nitroApi,
-  type NitroDemoResult,
-} from '../utils/network-activity/nitro';
+import { expoFetchApi, type ExpoFetchDemoResult } from '../utils/network-activity/expo';
+import { nitroApi, type NitroDemoResult } from '../utils/network-activity/nitro';
 
 const useUsersQuery = () => {
   return useQuery({
@@ -100,9 +91,7 @@ const useCreatePostMutation = () => {
       postData: Omit<Post, 'id'>;
       useFormData: boolean;
     }) => {
-      return useFormData
-        ? api.createPostWithFormData(postData)
-        : api.createPost(postData);
+      return useFormData ? api.createPostWithFormData(postData) : api.createPost(postData);
     },
     onSuccess: () => {
       // Invalidate and refetch posts query to show the new post
@@ -138,15 +127,11 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => (
 const TodoCard: React.FC<{ todo: Todo }> = ({ todo }) => (
   <View style={styles.card}>
     <View style={styles.todoHeader}>
-      <Text style={[styles.todoTitle, todo.completed && styles.todoCompleted]}>
-        {todo.title}
-      </Text>
+      <Text style={[styles.todoTitle, todo.completed && styles.todoCompleted]}>{todo.title}</Text>
       <View
         style={[
           styles.todoStatus,
-          todo.completed
-            ? styles.todoStatusCompleted
-            : styles.todoStatusPending,
+          todo.completed ? styles.todoStatusCompleted : styles.todoStatusPending,
         ]}
       >
         <Text style={styles.todoStatusText}>{todo.completed ? '✓' : '○'}</Text>
@@ -222,10 +207,9 @@ const ImageResponseTestComponent: React.FC = () => {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Image Response Test</Text>
         <Text style={styles.cardBody}>
-          Triggers image responses to exercise the Network Activity panel&apos;s
-          image preview. Tap a button, then open the captured request in
-          DevTools — Preview tab shows the rendered image, Raw tab shows the
-          metadata card (Content-Type + decoded size) or, for SVG, the XML
+          Triggers image responses to exercise the Network Activity panel&apos;s image preview. Tap
+          a button, then open the captured request in DevTools — Preview tab shows the rendered
+          image, Raw tab shows the metadata card (Content-Type + decoded size) or, for SVG, the XML
           source.
         </Text>
 
@@ -233,10 +217,7 @@ const ImageResponseTestComponent: React.FC = () => {
           {IMAGE_TEST_CASES.map((testCase) => (
             <TouchableOpacity
               key={testCase.label}
-              style={[
-                styles.nitroButton,
-                loadingLabel !== null && styles.refetchButtonDisabled,
-              ]}
+              style={[styles.nitroButton, loadingLabel !== null && styles.refetchButtonDisabled]}
               disabled={loadingLabel !== null}
               onPress={() => fetchImage(testCase)}
             >
@@ -333,10 +314,9 @@ const BinaryResponseTestComponent: React.FC = () => {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Binary Response Test</Text>
         <Text style={styles.cardBody}>
-          Triggers non-image binary responses so the Network Activity
-          panel&apos;s hex viewer + metadata card can be exercised end-to-end.
-          Tap a button, then open the captured request in DevTools — the Raw tab
-          shows the metadata card (size, Content-Length, derived filename,
+          Triggers non-image binary responses so the Network Activity panel&apos;s hex viewer +
+          metadata card can be exercised end-to-end. Tap a button, then open the captured request in
+          DevTools — the Raw tab shows the metadata card (size, Content-Length, derived filename,
           Download button) and the virtualized hex view below.
         </Text>
 
@@ -344,10 +324,7 @@ const BinaryResponseTestComponent: React.FC = () => {
           {BINARY_TEST_CASES.map((testCase) => (
             <TouchableOpacity
               key={testCase.label}
-              style={[
-                styles.nitroButton,
-                loadingLabel !== null && styles.refetchButtonDisabled,
-              ]}
+              style={[styles.nitroButton, loadingLabel !== null && styles.refetchButtonDisabled]}
               disabled={loadingLabel !== null}
               onPress={() => fetchBinary(testCase)}
             >
@@ -436,22 +413,17 @@ const HtmlResponseTestComponent: React.FC = () => {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>HTML Response Test</Text>
         <Text style={styles.cardBody}>
-          Triggers HTML responses to exercise the Network Activity panel&apos;s
-          HTML viewer. Tap a button, then open the captured request in DevTools
-          — Preview tab shows the page rendered inside a sandboxed iframe (no
-          scripts, no external subresources), Raw tab shows the HTML source. One
-          demo also returns 404 so the renderer is exercised on an error
-          response.
+          Triggers HTML responses to exercise the Network Activity panel&apos;s HTML viewer. Tap a
+          button, then open the captured request in DevTools — Preview tab shows the page rendered
+          inside a sandboxed iframe (no scripts, no external subresources), Raw tab shows the HTML
+          source. One demo also returns 404 so the renderer is exercised on an error response.
         </Text>
 
         <View style={styles.nitroButtonGrid}>
           {HTML_TEST_CASES.map((testCase) => (
             <TouchableOpacity
               key={testCase.label}
-              style={[
-                styles.nitroButton,
-                loadingLabel !== null && styles.refetchButtonDisabled,
-              ]}
+              style={[styles.nitroButton, loadingLabel !== null && styles.refetchButtonDisabled]}
               disabled={loadingLabel !== null}
               onPress={() => fetchHtml(testCase)}
             >
@@ -535,20 +507,16 @@ const XmlResponseTestComponent: React.FC = () => {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>XML Response Test</Text>
         <Text style={styles.cardBody}>
-          Triggers XML responses to exercise the Network Activity panel&apos;s
-          XML viewer. Tap a button, then open the captured request in DevTools —
-          the Preview tab shows the parsed tree (collapsible elements,
-          namespaces, CDATA content), the Raw tab shows the XML source.
+          Triggers XML responses to exercise the Network Activity panel&apos;s XML viewer. Tap a
+          button, then open the captured request in DevTools — the Preview tab shows the parsed tree
+          (collapsible elements, namespaces, CDATA content), the Raw tab shows the XML source.
         </Text>
 
         <View style={styles.nitroButtonGrid}>
           {XML_TEST_CASES.map((testCase) => (
             <TouchableOpacity
               key={testCase.label}
-              style={[
-                styles.nitroButton,
-                loadingLabel !== null && styles.refetchButtonDisabled,
-              ]}
+              style={[styles.nitroButton, loadingLabel !== null && styles.refetchButtonDisabled]}
               disabled={loadingLabel !== null}
               onPress={() => fetchXml(testCase)}
             >
@@ -608,37 +576,33 @@ const LargeTextResponseTestComponent: React.FC = () => {
   const [lastResult, setLastResult] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  const fetchLargeText = React.useCallback(
-    async (testCase: LargeTextTestCase) => {
-      setLoadingLabel(testCase.label);
-      setError(null);
-      setLastResult(null);
-      try {
-        const response = await fetch(testCase.url);
-        const text = await response.text();
-        setLastResult(
-          `${testCase.label}: HTTP ${response.status} • ${
-            response.headers.get('content-type') ?? 'unknown'
-          } • ${text.length.toLocaleString()} chars`,
-        );
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      } finally {
-        setLoadingLabel(null);
-      }
-    },
-    [],
-  );
+  const fetchLargeText = React.useCallback(async (testCase: LargeTextTestCase) => {
+    setLoadingLabel(testCase.label);
+    setError(null);
+    setLastResult(null);
+    try {
+      const response = await fetch(testCase.url);
+      const text = await response.text();
+      setLastResult(
+        `${testCase.label}: HTTP ${response.status} • ${
+          response.headers.get('content-type') ?? 'unknown'
+        } • ${text.length.toLocaleString()} chars`,
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLabel(null);
+    }
+  }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.listContainer}>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Large Text Response Test</Text>
         <Text style={styles.cardBody}>
-          Triggers large plain-text responses so the Network Activity
-          panel&apos;s code-block viewer can be exercised on both sides of the
-          50 KB virtualization threshold. Tap a button, then open the captured
-          request in DevTools — bodies above 50 KB scroll inside a 500 px window
+          Triggers large plain-text responses so the Network Activity panel&apos;s code-block viewer
+          can be exercised on both sides of the 50 KB virtualization threshold. Tap a button, then
+          open the captured request in DevTools — bodies above 50 KB scroll inside a 500 px window
           via Virtuoso; bodies below render as a flat &lt;pre&gt;.
         </Text>
 
@@ -646,10 +610,7 @@ const LargeTextResponseTestComponent: React.FC = () => {
           {LARGE_TEXT_TEST_CASES.map((testCase) => (
             <TouchableOpacity
               key={testCase.label}
-              style={[
-                styles.nitroButton,
-                loadingLabel !== null && styles.refetchButtonDisabled,
-              ]}
+              style={[styles.nitroButton, loadingLabel !== null && styles.refetchButtonDisabled]}
               disabled={loadingLabel !== null}
               onPress={() => fetchLargeText(testCase)}
             >
@@ -690,43 +651,33 @@ const NitroHTTPTestComponent: React.FC = () => {
   const [result, setResult] = React.useState<NitroDemoResult | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  const runNitroAction = React.useCallback(
-    async (action: () => Promise<NitroDemoResult>) => {
-      setIsRunning(true);
-      setError(null);
+  const runNitroAction = React.useCallback(async (action: () => Promise<NitroDemoResult>) => {
+    setIsRunning(true);
+    setError(null);
 
-      try {
-        const nextResult = await action();
-        setResult(nextResult);
-      } catch (actionError) {
-        setResult(null);
-        setError(
-          actionError instanceof Error
-            ? actionError.message
-            : String(actionError),
-        );
-      } finally {
-        setIsRunning(false);
-      }
-    },
-    [],
-  );
+    try {
+      const nextResult = await action();
+      setResult(nextResult);
+    } catch (actionError) {
+      setResult(null);
+      setError(actionError instanceof Error ? actionError.message : String(actionError));
+    } finally {
+      setIsRunning(false);
+    }
+  }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.listContainer}>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Nitro HTTP Test</Text>
         <Text style={styles.cardBody}>
-          Runs requests through `react-native-nitro-fetch`. Watch the Network
-          Activity panel for `Nitro` source badges.
+          Runs requests through `react-native-nitro-fetch`. Watch the Network Activity panel for
+          `Nitro` source badges.
         </Text>
 
         <View style={styles.nitroButtonGrid}>
           <TouchableOpacity
-            style={[
-              styles.nitroButton,
-              isRunning && styles.refetchButtonDisabled,
-            ]}
+            style={[styles.nitroButton, isRunning && styles.refetchButtonDisabled]}
             disabled={isRunning}
             onPress={() => runNitroAction(nitroApi.getUsers)}
           >
@@ -734,10 +685,7 @@ const NitroHTTPTestComponent: React.FC = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.nitroButton,
-              isRunning && styles.refetchButtonDisabled,
-            ]}
+            style={[styles.nitroButton, isRunning && styles.refetchButtonDisabled]}
             disabled={isRunning}
             onPress={() => runNitroAction(nitroApi.createPost)}
           >
@@ -745,10 +693,7 @@ const NitroHTTPTestComponent: React.FC = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.nitroButton,
-              isRunning && styles.refetchButtonDisabled,
-            ]}
+            style={[styles.nitroButton, isRunning && styles.refetchButtonDisabled]}
             disabled={isRunning}
             onPress={() => runNitroAction(nitroApi.prefetchUuid)}
           >
@@ -783,9 +728,7 @@ const NitroHTTPTestComponent: React.FC = () => {
             <Text style={styles.cardMeta}>
               Status: {result.status} {result.statusText}
             </Text>
-            {result.extra ? (
-              <Text style={styles.nitroExtraText}>{result.extra}</Text>
-            ) : null}
+            {result.extra ? <Text style={styles.nitroExtraText}>{result.extra}</Text> : null}
             <ScrollView style={styles.responseScrollView} nestedScrollEnabled>
               <Text style={styles.responseText}>{result.body}</Text>
             </ScrollView>
@@ -811,11 +754,7 @@ const ExpoFetchHTTPTestComponent: React.FC = () => {
         setResult(nextResult);
       } catch (actionError) {
         setResult(null);
-        setError(
-          actionError instanceof Error
-            ? actionError.message
-            : String(actionError),
-        );
+        setError(actionError instanceof Error ? actionError.message : String(actionError));
       } finally {
         setIsRunning(false);
       }
@@ -828,17 +767,14 @@ const ExpoFetchHTTPTestComponent: React.FC = () => {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Expo Fetch Test</Text>
         <Text style={styles.cardBody}>
-          Runs requests through `expo/fetch`. Watch the Network Activity panel
-          for Expo source badges. This small flow covers a JSON response and
-          cancellation without becoming an Expo fetch conformance suite.
+          Runs requests through `expo/fetch`. Watch the Network Activity panel for Expo source
+          badges. This small flow covers a JSON response and cancellation without becoming an Expo
+          fetch conformance suite.
         </Text>
 
         <View style={styles.nitroButtonGrid}>
           <TouchableOpacity
-            style={[
-              styles.nitroButton,
-              isRunning && styles.refetchButtonDisabled,
-            ]}
+            style={[styles.nitroButton, isRunning && styles.refetchButtonDisabled]}
             disabled={isRunning}
             onPress={() => runExpoFetchAction(expoFetchApi.getUsers)}
           >
@@ -873,9 +809,7 @@ const ExpoFetchHTTPTestComponent: React.FC = () => {
             <Text style={styles.cardMeta}>
               Status: {result.status} {result.statusText}
             </Text>
-            {result.extra ? (
-              <Text style={styles.nitroExtraText}>{result.extra}</Text>
-            ) : null}
+            {result.extra ? <Text style={styles.nitroExtraText}>{result.extra}</Text> : null}
             <ScrollView style={styles.responseScrollView} nestedScrollEnabled>
               <Text style={styles.responseText}>{result.body}</Text>
             </ScrollView>
@@ -984,23 +918,11 @@ const HTTPTestComponent: React.FC = () => {
             style={[styles.tab, activeTab === tab.key && styles.tabActive]}
             onPress={() =>
               setActiveTab(
-                tab.key as
-                  | 'users'
-                  | 'posts'
-                  | 'todos'
-                  | 'slow'
-                  | 'unreliable'
-                  | 'create'
-                  | 'large',
+                tab.key as 'users' | 'posts' | 'todos' | 'slow' | 'unreliable' | 'create' | 'large',
               )
             }
           >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === tab.key && styles.tabTextActive,
-              ]}
-            >
+            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -1037,16 +959,8 @@ const HTTPTestComponent: React.FC = () => {
           </View>
 
           <View style={styles.checkboxContainer}>
-            <TouchableOpacity
-              style={styles.checkbox}
-              onPress={() => setUseFormData(!useFormData)}
-            >
-              <View
-                style={[
-                  styles.checkboxBox,
-                  useFormData && styles.checkboxBoxChecked,
-                ]}
-              >
+            <TouchableOpacity style={styles.checkbox} onPress={() => setUseFormData(!useFormData)}>
+              <View style={[styles.checkboxBox, useFormData && styles.checkboxBoxChecked]}>
                 {useFormData && <Text style={styles.checkboxCheckmark}>✓</Text>}
               </View>
               <Text style={styles.checkboxLabel}>Use FormData</Text>
@@ -1056,17 +970,11 @@ const HTTPTestComponent: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.createButton,
-              (!newPostTitle.trim() ||
-                !newPostBody.trim() ||
-                createPostMutation.isPending) &&
+              (!newPostTitle.trim() || !newPostBody.trim() || createPostMutation.isPending) &&
                 styles.createButtonDisabled,
             ]}
             onPress={handleCreatePost}
-            disabled={
-              !newPostTitle.trim() ||
-              !newPostBody.trim() ||
-              createPostMutation.isPending
-            }
+            disabled={!newPostTitle.trim() || !newPostBody.trim() || createPostMutation.isPending}
           >
             {createPostMutation.isPending ? (
               <ActivityIndicator size="small" color="#ffffff" />
@@ -1076,9 +984,7 @@ const HTTPTestComponent: React.FC = () => {
           </TouchableOpacity>
 
           {createPostMutation.isError && (
-            <Text style={styles.errorText}>
-              Error: {createPostMutation.error?.message}
-            </Text>
+            <Text style={styles.errorText}>Error: {createPostMutation.error?.message}</Text>
           )}
 
           {createPostMutation.isSuccess && (
@@ -1089,10 +995,9 @@ const HTTPTestComponent: React.FC = () => {
         <View style={styles.largeFileContainer}>
           <Text style={styles.largeFileTitle}>Large File Download Test</Text>
           <Text style={styles.largeFileDescription}>
-            Download a ~5MB GeoJSON file to test progress events. Watch the
-            Network Activity DevTools for progress percentage. Lower the
-            emulator&apos;s signal strength for slower downloads to observe
-            progress updates.
+            Download a ~5MB GeoJSON file to test progress events. Watch the Network Activity
+            DevTools for progress percentage. Lower the emulator&apos;s signal strength for slower
+            downloads to observe progress updates.
           </Text>
           <TouchableOpacity
             style={[
@@ -1110,9 +1015,7 @@ const HTTPTestComponent: React.FC = () => {
           </TouchableOpacity>
 
           {largeFileQuery.isError && (
-            <Text style={styles.errorText}>
-              Error: {largeFileQuery.error?.message}
-            </Text>
+            <Text style={styles.errorText}>Error: {largeFileQuery.error?.message}</Text>
           )}
 
           {largeFileQuery.isSuccess && largeFileQuery.data && (
@@ -1126,10 +1029,7 @@ const HTTPTestComponent: React.FC = () => {
         </View>
       ) : (
         <TouchableOpacity
-          style={[
-            styles.refetchButton,
-            isRefetching && styles.refetchButtonDisabled,
-          ]}
+          style={[styles.refetchButton, isRefetching && styles.refetchButtonDisabled]}
           onPress={() => refetch()}
           disabled={isRefetching}
         >
@@ -1211,22 +1111,15 @@ const NITRO_WEBSOCKET_CONFIG = {
   MAX_MESSAGES_DISPLAY: 12,
 } as const;
 
-const useWebSocket = (
-  url: string,
-  messageIntervalMs = WEBSOCKET_CONFIG.MESSAGE_INTERVAL,
-) => {
+const useWebSocket = (url: string, messageIntervalMs = WEBSOCKET_CONFIG.MESSAGE_INTERVAL) => {
   const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = React.useState(false);
   const [messages, setMessages] = React.useState<string[]>([]);
-  const [dataType, setDataType] = React.useState<'text' | 'binary' | 'json'>(
-    'text',
-  );
+  const [dataType, setDataType] = React.useState<'text' | 'binary' | 'json'>('text');
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const addMessage = React.useCallback((message: string) => {
-    setMessages((prev) =>
-      [...prev, message].slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY),
-    );
+    setMessages((prev) => [...prev, message].slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY));
   }, []);
 
   const clearMessages = React.useCallback(() => {
@@ -1286,9 +1179,7 @@ const useWebSocket = (
 
       ws.onmessage = (event) => {
         if (event.data instanceof ArrayBuffer) {
-          addMessage(
-            `Received binary: ${String(Array.from(new Uint8Array(event.data)))}`,
-          );
+          addMessage(`Received binary: ${String(Array.from(new Uint8Array(event.data)))}`);
         } else {
           addMessage(`Received: ${event.data}`);
         }
@@ -1355,14 +1246,8 @@ const useWebSocket = (
 
 const WebSocketTestComponent: React.FC = () => {
   const scrollViewRef = React.useRef<ScrollView>(null);
-  const {
-    isConnected,
-    messages,
-    dataType,
-    setDataType,
-    toggleConnection,
-    clearMessages,
-  } = useWebSocket(WEBSOCKET_CONFIG.URL, WEBSOCKET_CONFIG.MESSAGE_INTERVAL);
+  const { isConnected, messages, dataType, setDataType, toggleConnection, clearMessages } =
+    useWebSocket(WEBSOCKET_CONFIG.URL, WEBSOCKET_CONFIG.MESSAGE_INTERVAL);
 
   // Auto-scroll to bottom when messages change
   React.useEffect(() => {
@@ -1378,9 +1263,7 @@ const WebSocketTestComponent: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>WebSocket Test</Text>
-        <Text style={styles.subtitle}>
-          Testing WebSocket connection to echo.websocket.org
-        </Text>
+        <Text style={styles.subtitle}>Testing WebSocket connection to echo.websocket.org</Text>
       </View>
 
       <View style={styles.websocketContainer}>
@@ -1388,15 +1271,11 @@ const WebSocketTestComponent: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.websocketButton,
-              isConnected
-                ? styles.websocketButtonDisconnect
-                : styles.websocketButtonConnect,
+              isConnected ? styles.websocketButtonDisconnect : styles.websocketButtonConnect,
             ]}
             onPress={toggleConnection}
           >
-            <Text style={styles.websocketButtonText}>
-              {isConnected ? 'Disconnect' : 'Connect'}
-            </Text>
+            <Text style={styles.websocketButtonText}>{isConnected ? 'Disconnect' : 'Connect'}</Text>
           </TouchableOpacity>
 
           <View style={styles.dataTypeContainer}>
@@ -1405,10 +1284,7 @@ const WebSocketTestComponent: React.FC = () => {
               {(['text', 'binary', 'json'] as const).map((type) => (
                 <TouchableOpacity
                   key={type}
-                  style={[
-                    styles.dataTypeButton,
-                    dataType === type && styles.dataTypeButtonActive,
-                  ]}
+                  style={[styles.dataTypeButton, dataType === type && styles.dataTypeButtonActive]}
                   onPress={() => setDataType(type)}
                 >
                   <Text
@@ -1427,12 +1303,7 @@ const WebSocketTestComponent: React.FC = () => {
 
         <View style={styles.connectionStatus}>
           <Text style={styles.statusLabel}>Status:</Text>
-          <Text
-            style={[
-              styles.statusValue,
-              { color: isConnected ? '#4CAF50' : '#FF4444' },
-            ]}
-          >
+          <Text style={[styles.statusValue, { color: isConnected ? '#4CAF50' : '#FF4444' }]}>
             {isConnected ? 'Connected' : 'Disconnected'}
           </Text>
         </View>
@@ -1448,21 +1319,16 @@ const WebSocketTestComponent: React.FC = () => {
             {messages.length === 0 ? (
               <Text style={styles.noMessages}>No messages yet</Text>
             ) : (
-              messages
-                .slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY)
-                .map((message, index) => (
-                  <Text key={`${message}-${index}`} style={styles.messageText}>
-                    {message}
-                  </Text>
-                ))
+              messages.slice(-WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY).map((message, index) => (
+                <Text key={`${message}-${index}`} style={styles.messageText}>
+                  {message}
+                </Text>
+              ))
             )}
           </ScrollView>
         </View>
 
-        <TouchableOpacity
-          style={styles.clearMessagesButton}
-          onPress={clearMessages}
-        >
+        <TouchableOpacity style={styles.clearMessagesButton} onPress={clearMessages}>
           <Text style={styles.clearMessagesButtonText}>Clear Messages</Text>
         </TouchableOpacity>
       </View>
@@ -1476,15 +1342,11 @@ const NitroWebSocketTestComponent: React.FC = () => {
   const [isConnected, setIsConnected] = React.useState(false);
   const [isConnecting, setIsConnecting] = React.useState(false);
   const [messages, setMessages] = React.useState<string[]>([]);
-  const [message, setMessage] = React.useState<string>(
-    NITRO_WEBSOCKET_CONFIG.DEFAULT_MESSAGE,
-  );
+  const [message, setMessage] = React.useState<string>(NITRO_WEBSOCKET_CONFIG.DEFAULT_MESSAGE);
 
   const addMessage = React.useCallback((nextMessage: string) => {
     setMessages((prev) =>
-      [...prev, nextMessage].slice(
-        -NITRO_WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY,
-      ),
+      [...prev, nextMessage].slice(-NITRO_WEBSOCKET_CONFIG.MAX_MESSAGES_DISPLAY),
     );
   }, []);
 
@@ -1523,9 +1385,7 @@ const NitroWebSocketTestComponent: React.FC = () => {
       };
 
       socket.onclose = (event: NitroWebSocketCloseEvent) => {
-        addMessage(
-          `Nitro socket closed (${event.code}${event.reason ? `: ${event.reason}` : ''})`,
-        );
+        addMessage(`Nitro socket closed (${event.code}${event.reason ? `: ${event.reason}` : ''})`);
         setIsConnected(false);
         setIsConnecting(false);
         socketRef.current = null;
@@ -1576,8 +1436,7 @@ const NitroWebSocketTestComponent: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.title}>Nitro WebSocket Test</Text>
         <Text style={styles.subtitle}>
-          Testing Nitro WebSocket traffic with a dedicated `Nitro` source in
-          Network Activity
+          Testing Nitro WebSocket traffic with a dedicated `Nitro` source in Network Activity
         </Text>
       </View>
 
@@ -1586,9 +1445,7 @@ const NitroWebSocketTestComponent: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.websocketButton,
-              isConnected
-                ? styles.websocketButtonDisconnect
-                : styles.nitroWebSocketButton,
+              isConnected ? styles.websocketButtonDisconnect : styles.nitroWebSocketButton,
             ]}
             onPress={isConnected ? disconnect : connect}
             disabled={isConnecting}
@@ -1612,17 +1469,8 @@ const NitroWebSocketTestComponent: React.FC = () => {
 
         <View style={styles.connectionStatus}>
           <Text style={styles.statusLabel}>Status:</Text>
-          <Text
-            style={[
-              styles.statusValue,
-              { color: isConnected ? '#4CAF50' : '#c084fc' },
-            ]}
-          >
-            {isConnected
-              ? 'Connected'
-              : isConnecting
-                ? 'Connecting'
-                : 'Disconnected'}
+          <Text style={[styles.statusValue, { color: isConnected ? '#4CAF50' : '#c084fc' }]}>
+            {isConnected ? 'Connected' : isConnecting ? 'Connecting' : 'Disconnected'}
           </Text>
         </View>
 
@@ -1636,10 +1484,7 @@ const NitroWebSocketTestComponent: React.FC = () => {
             editable={isConnected}
           />
           <TouchableOpacity
-            style={[
-              styles.sendButton,
-              !isConnected && styles.sendButtonDisabled,
-            ]}
+            style={[styles.sendButton, !isConnected && styles.sendButtonDisabled]}
             onPress={send}
             disabled={!isConnected}
           >
@@ -1656,9 +1501,7 @@ const NitroWebSocketTestComponent: React.FC = () => {
             showsVerticalScrollIndicator
           >
             {messages.length === 0 ? (
-              <Text style={styles.noMessages}>
-                No Nitro WebSocket messages yet
-              </Text>
+              <Text style={styles.noMessages}>No Nitro WebSocket messages yet</Text>
             ) : (
               messages.map((entry, index) => (
                 <Text key={`${entry}-${index}`} style={styles.messageText}>
@@ -1669,10 +1512,7 @@ const NitroWebSocketTestComponent: React.FC = () => {
           </ScrollView>
         </View>
 
-        <TouchableOpacity
-          style={styles.clearMessagesButton}
-          onPress={clearMessages}
-        >
+        <TouchableOpacity style={styles.clearMessagesButton} onPress={clearMessages}>
           <Text style={styles.clearMessagesButtonText}>Clear Messages</Text>
         </TouchableOpacity>
       </View>
@@ -1686,17 +1526,13 @@ const SSE_CONFIG = {
 } as const;
 
 const useSSE = (url: string) => {
-  const [eventSource, setEventSource] = React.useState<EventSource | null>(
-    null,
-  );
+  const [eventSource, setEventSource] = React.useState<EventSource | null>(null);
   const [isConnected, setIsConnected] = React.useState(false);
   const [messages, setMessages] = React.useState<string[]>([]);
   const [eventCount, setEventCount] = React.useState(0);
 
   const addMessage = React.useCallback((message: string) => {
-    setMessages((prev) =>
-      [...prev, message].slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY),
-    );
+    setMessages((prev) => [...prev, message].slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY));
     setEventCount((prev) => prev + 1);
   }, []);
 
@@ -1773,8 +1609,9 @@ const useSSE = (url: string) => {
 
 const SSETestComponent: React.FC = () => {
   const scrollViewRef = React.useRef<ScrollView>(null);
-  const { isConnected, messages, eventCount, toggleConnection, clearMessages } =
-    useSSE(SSE_CONFIG.URL);
+  const { isConnected, messages, eventCount, toggleConnection, clearMessages } = useSSE(
+    SSE_CONFIG.URL,
+  );
 
   // Auto-scroll to bottom when messages change
   React.useEffect(() => {
@@ -1800,26 +1637,17 @@ const SSETestComponent: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.websocketButton,
-              isConnected
-                ? styles.websocketButtonDisconnect
-                : styles.websocketButtonConnect,
+              isConnected ? styles.websocketButtonDisconnect : styles.websocketButtonConnect,
             ]}
             onPress={toggleConnection}
           >
-            <Text style={styles.websocketButtonText}>
-              {isConnected ? 'Disconnect' : 'Connect'}
-            </Text>
+            <Text style={styles.websocketButtonText}>{isConnected ? 'Disconnect' : 'Connect'}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.connectionStatus}>
           <Text style={styles.statusLabel}>Status:</Text>
-          <Text
-            style={[
-              styles.statusValue,
-              { color: isConnected ? '#4CAF50' : '#FF4444' },
-            ]}
-          >
+          <Text style={[styles.statusValue, { color: isConnected ? '#4CAF50' : '#FF4444' }]}>
             {isConnected ? 'Connected' : 'Disconnected'}
           </Text>
         </View>
@@ -1830,9 +1658,7 @@ const SSETestComponent: React.FC = () => {
         </View>
 
         <View style={styles.messagesContainer}>
-          <Text style={styles.messagesTitle}>
-            Recent Changes ({messages.length})
-          </Text>
+          <Text style={styles.messagesTitle}>Recent Changes ({messages.length})</Text>
           <ScrollView
             ref={scrollViewRef}
             style={styles.messagesList}
@@ -1842,21 +1668,16 @@ const SSETestComponent: React.FC = () => {
             {messages.length === 0 ? (
               <Text style={styles.noMessages}>No events yet</Text>
             ) : (
-              messages
-                .slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY)
-                .map((message, index) => (
-                  <Text key={`${message}-${index}`} style={styles.messageText}>
-                    {message}
-                  </Text>
-                ))
+              messages.slice(-SSE_CONFIG.MAX_MESSAGES_DISPLAY).map((message, index) => (
+                <Text key={`${message}-${index}`} style={styles.messageText}>
+                  {message}
+                </Text>
+              ))
             )}
           </ScrollView>
         </View>
 
-        <TouchableOpacity
-          style={styles.clearMessagesButton}
-          onPress={clearMessages}
-        >
+        <TouchableOpacity style={styles.clearMessagesButton} onPress={clearMessages}>
           <Text style={styles.clearMessagesButtonText}>Clear Events</Text>
         </TouchableOpacity>
       </View>
@@ -1923,8 +1744,8 @@ export const NetworkTestScreen: React.FC = () => {
     <View style={styles.header}>
       <Text style={styles.title}>Network Test</Text>
       <Text style={styles.subtitle}>
-        Testing built-in HTTP, Expo Fetch, Nitro HTTP, built-in WebSocket, Nitro
-        WebSocket, and SSE connections
+        Testing built-in HTTP, Expo Fetch, Nitro HTTP, built-in WebSocket, Nitro WebSocket, and SSE
+        connections
       </Text>
 
       <TouchableOpacity
@@ -1950,10 +1771,7 @@ export const NetworkTestScreen: React.FC = () => {
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
-            style={[
-              styles.mainTab,
-              activeTest === tab.key && styles.mainTabActive,
-            ]}
+            style={[styles.mainTab, activeTest === tab.key && styles.mainTabActive]}
             onPress={() =>
               setActiveTest(
                 tab.key as
@@ -1971,12 +1789,7 @@ export const NetworkTestScreen: React.FC = () => {
               )
             }
           >
-            <Text
-              style={[
-                styles.mainTabText,
-                activeTest === tab.key && styles.mainTabTextActive,
-              ]}
-            >
+            <Text style={[styles.mainTabText, activeTest === tab.key && styles.mainTabTextActive]}>
               {tab.label}
             </Text>
           </TouchableOpacity>

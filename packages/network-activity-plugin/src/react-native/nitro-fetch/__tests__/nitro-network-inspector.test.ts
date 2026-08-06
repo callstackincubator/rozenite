@@ -21,8 +21,7 @@ describe('nitro network inspector', () => {
       },
     }));
 
-    const events: Array<{ type: string; socketId?: string; data?: string }> =
-      [];
+    const events: Array<{ type: string; socketId?: string; data?: string }> = [];
     inspector.on('websocket-connect', (event) => {
       events.push({ type: event.type, socketId: event.socketId });
     });

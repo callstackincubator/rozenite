@@ -48,10 +48,7 @@ export function TopBar({
           onPress={() => setCurrentPath(r.path)}
         >
           <Text
-            style={[
-              styles.chipText,
-              isActive ? styles.chipTextActive : undefined,
-            ]}
+            style={[styles.chipText, isActive ? styles.chipTextActive : undefined]}
             numberOfLines={1}
           >
             {r.label}

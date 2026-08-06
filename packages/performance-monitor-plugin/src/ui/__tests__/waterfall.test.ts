@@ -51,10 +51,7 @@ const resource = (
 
 describe('buildWaterfallModel', () => {
   it('sorts entries chronologically and computes offsets across the session', () => {
-    const model = buildWaterfallModel([
-      measure('later', 1_200, 300),
-      measure('first', 1_000, 100),
-    ]);
+    const model = buildWaterfallModel([measure('later', 1_200, 300), measure('first', 1_000, 100)]);
 
     expect(model.rows.map((row) => row.entry.name)).toEqual(['first', 'later']);
     expect(model.startTime).toBe(1_000);
@@ -82,9 +79,7 @@ describe('buildWaterfallModel', () => {
     expect(model.gaps).toHaveLength(1);
     expect(model.gaps[0].duration).toBe(59_500);
     expect(model.rows[1].startOffset).toBe(60_000);
-    expect(model.rows[1].visualStartOffset).toBeLessThan(
-      model.rows[1].startOffset,
-    );
+    expect(model.rows[1].visualStartOffset).toBeLessThan(model.rows[1].startOffset);
     expect(model.rows[1].widthPercent).toBeGreaterThan(5);
   });
 
@@ -183,10 +178,7 @@ describe('isSamePerformanceEntry', () => {
 
   it('does not match different entry timing', () => {
     expect(
-      isSamePerformanceEntry(
-        measure('nativeLaunch', 10, 20),
-        measure('nativeLaunch', 11, 20),
-      ),
+      isSamePerformanceEntry(measure('nativeLaunch', 10, 20), measure('nativeLaunch', 11, 20)),
     ).toBe(false);
   });
 });

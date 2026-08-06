@@ -3,10 +3,7 @@ import { Text, View, StyleSheet, ScrollView } from 'react-native';
 export default function HelloWorldPanel() {
   return (
     <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <Text style={styles.logo}>💎</Text>
@@ -42,17 +39,13 @@ export default function HelloWorldPanel() {
             <View style={styles.featureCard}>
               <Text style={styles.featureIcon}>🔌</Text>
               <Text style={styles.featureTitle}>Easy Integration</Text>
-              <Text style={styles.featureDescription}>
-                Simple setup and configuration process
-              </Text>
+              <Text style={styles.featureDescription}>Simple setup and configuration process</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Built with ❤️ for the React Native community
-          </Text>
+          <Text style={styles.footerText}>Built with ❤️ for the React Native community</Text>
         </View>
       </ScrollView>
     </View>

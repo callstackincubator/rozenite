@@ -7,10 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { normalizePath } from 'vite';
 import { loadConfig, RozeniteConfig } from './load-config.js';
 import { getPackageJSON } from './package-json.js';
-import {
-  DEV_HOST_CONFIG_GLOBAL_KEY,
-  DEV_HOST_STATE_ELEMENT_ID,
-} from './dev-host/constants.js';
+import { DEV_HOST_CONFIG_GLOBAL_KEY, DEV_HOST_STATE_ELEMENT_ID } from './dev-host/constants.js';
 import {
   getBuiltDevHostAssets,
   getDevHostHtmlTemplate,
@@ -46,12 +43,7 @@ type DevHostState = {
   panels: DevHostPanelEntry[];
 };
 
-const TEMPLATES_DIR = path.resolve(
-  fileURLToPath(import.meta.url),
-  '..',
-  '..',
-  'templates',
-);
+const TEMPLATES_DIR = path.resolve(fileURLToPath(import.meta.url), '..', '..', 'templates');
 
 const PACKAGE_DIR = path.resolve(fileURLToPath(import.meta.url), '..', '..');
 
@@ -178,9 +170,7 @@ export const rozeniteClientPlugin = (): Plugin => {
 
       config.server ??= {};
       config.server.open =
-        config.server.open === true
-          ? DEV_HOST_ROUTE
-          : (config.server.open ?? DEV_HOST_ROUTE);
+        config.server.open === true ? DEV_HOST_ROUTE : (config.server.open ?? DEV_HOST_ROUTE);
       // Keep in sync with `DEV_SERVER_URL` in packages/runtime/src/dev-mode.ts
       config.server.port = 8888;
 
@@ -192,10 +182,7 @@ export const rozeniteClientPlugin = (): Plugin => {
       config.build.rollupOptions.input = {
         ...(config.build.rollupOptions.input as Record<string, string>),
         ...Object.fromEntries(
-          panels.map((panel) => [
-            panel.name,
-            `${DEVTOOLS_DIR}/${panel.htmlFile}`,
-          ]),
+          panels.map((panel) => [panel.name, `${DEVTOOLS_DIR}/${panel.htmlFile}`]),
         ),
       };
       config.build.rollupOptions.output = {
@@ -213,9 +200,7 @@ export const rozeniteClientPlugin = (): Plugin => {
         return devConfigModuleId;
       }
 
-      const isPanel = getPanels().some(
-        (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
-      );
+      const isPanel = getPanels().some((panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id);
 
       if (isPanel) {
         return id;
@@ -231,9 +216,7 @@ export const rozeniteClientPlugin = (): Plugin => {
         return devConfigModule;
       }
 
-      const panel = getPanels().find(
-        (panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id,
-      );
+      const panel = getPanels().find((panel) => `${DEVTOOLS_DIR}/${panel.htmlFile}` === id);
 
       if (panel) {
         return generatePanelHtmlContent(panel);
@@ -287,14 +270,8 @@ export const rozeniteClientPlugin = (): Plugin => {
 
       server.middlewares.use((req, res, next) => {
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader(
-          'Access-Control-Allow-Methods',
-          'GET, POST, PUT, DELETE, OPTIONS',
-        );
-        res.setHeader(
-          'Access-Control-Allow-Headers',
-          'Content-Type, Authorization',
-        );
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
         if (req.method === 'OPTIONS') {
           res.statusCode = 200;
@@ -336,9 +313,7 @@ export const rozeniteClientPlugin = (): Plugin => {
           return;
         }
 
-        const panel = panels.find(
-          (panel) => `/${DEVTOOLS_DIR}/` + panel.htmlFile === url,
-        );
+        const panel = panels.find((panel) => `/${DEVTOOLS_DIR}/` + panel.htmlFile === url);
 
         if (panel) {
           const htmlContent = generatePanelHtmlContent(panel);

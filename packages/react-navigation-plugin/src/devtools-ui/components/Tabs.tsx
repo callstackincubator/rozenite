@@ -33,9 +33,7 @@ export const Tabs = ({ tabs, activeTabId, onTabChange }: TabsProps) => {
       </Split.Pane>
       <Split.Handle />
       <Split.Pane>
-        <div className="h-full min-w-0">
-          {tabs.find((tab) => tab.id === activeTabId)?.content}
-        </div>
+        <div className="h-full min-w-0">{tabs.find((tab) => tab.id === activeTabId)?.content}</div>
       </Split.Pane>
     </Split>
   );

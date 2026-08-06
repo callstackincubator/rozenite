@@ -23,10 +23,7 @@ describe('buildStorageSidebarGroups', () => {
     const snapshots = new Map([
       ['mmkv:default', entry('mmkv', 'default', 'MMKV', 'default', 3)],
       ['mmkv:user', entry('mmkv', 'user', 'MMKV', 'user', 1)],
-      [
-        'async-storage:default',
-        entry('async-storage', 'default', 'AsyncStorage', 'default', 5),
-      ],
+      ['async-storage:default', entry('async-storage', 'default', 'AsyncStorage', 'default', 5)],
     ]);
 
     expect(buildStorageSidebarGroups(snapshots)).toEqual([

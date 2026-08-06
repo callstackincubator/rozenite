@@ -41,9 +41,7 @@ const decodeCursor = (raw: string): CursorPayload => {
     }
     return payload;
   } catch {
-    throw new Error(
-      'Invalid --cursor. Run the listing command again with --limit 20.',
-    );
+    throw new Error('Invalid --cursor. Run the listing command again with --limit 20.');
   }
 };
 
@@ -81,9 +79,7 @@ export const paginateRows = <T>(
   if (options.cursor) {
     const decoded = decodeCursor(options.cursor);
     if (decoded.kind !== options.kind || decoded.scope !== options.scope) {
-      throw new Error(
-        'Cursor does not match the requested listing. Run the command again.',
-      );
+      throw new Error('Cursor does not match the requested listing. Run the command again.');
     }
     startIndex = decoded.index;
   }

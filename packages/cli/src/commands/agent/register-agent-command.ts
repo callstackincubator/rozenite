@@ -28,8 +28,7 @@ const DOMAIN_ACTION_ALIASES = {
   call: 'call-tool',
 } as const;
 
-const DOMAIN_ACTION_HINT =
-  'list-tools|tools, get-tool-schema|schema, call-tool|call';
+const DOMAIN_ACTION_HINT = 'list-tools|tools, get-tool-schema|schema, call-tool|call';
 
 type DomainAction = 'list-tools' | 'get-tool-schema' | 'call-tool';
 
@@ -88,21 +87,9 @@ type AgentSessionOutput = {
 const DEFAULT_METRO_HOST = DEFAULT_AGENT_HOST;
 const DEFAULT_METRO_PORT = DEFAULT_AGENT_PORT;
 
-const TOOL_LIST_FIELDS = [
-  'name',
-  'description',
-  'readOnly',
-  'destructive',
-  'idempotent',
-] as const;
+const TOOL_LIST_FIELDS = ['name', 'description', 'readOnly', 'destructive', 'idempotent'] as const;
 const TOOL_LIST_DEFAULT_FIELDS = TOOL_LIST_FIELDS;
-const DOMAIN_LIST_FIELDS = [
-  'id',
-  'kind',
-  'pluginId',
-  'slug',
-  'description',
-] as const;
+const DOMAIN_LIST_FIELDS = ['id', 'kind', 'pluginId', 'slug', 'description'] as const;
 const DOMAIN_LIST_DEFAULT_FIELDS = ['id', 'kind'] as const;
 
 const projectSessionOutput = (
@@ -142,11 +129,7 @@ const getListingOptionArgs = (
   cursor: string,
   pretty: boolean,
 ): string[] => [
-  ...(options.verbose
-    ? ['--verbose']
-    : options.fields
-      ? ['--fields', options.fields]
-      : []),
+  ...(options.verbose ? ['--verbose'] : options.fields ? ['--fields', options.fields] : []),
   '--limit',
   String(limit),
   '--cursor',
@@ -175,8 +158,7 @@ const getToolPagination = (value: unknown): ToolPaginationResolution => {
 
   if (!isAgentToolPagination(value.pagination)) {
     return {
-      warning:
-        'Warning: tool exposes invalid pagination metadata; returning its result unshaped.',
+      warning: 'Warning: tool exposes invalid pagination metadata; returning its result unshaped.',
     };
   }
 
@@ -202,11 +184,7 @@ const getToolCallCommand = (
     tool,
     '--args',
     JSON.stringify({ ...args, cursor }),
-    ...(options.verbose
-      ? ['--verbose']
-      : options.fields
-        ? ['--fields', options.fields]
-        : []),
+    ...(options.verbose ? ['--verbose'] : options.fields ? ['--fields', options.fields] : []),
     ...(connection.pretty ? ['--pretty'] : []),
   ]);
 
@@ -255,10 +233,7 @@ const outputAgentError = (command: Command, error: unknown): void => {
   process.exitCode = 1;
 };
 
-const runAgentAction = async (
-  command: Command,
-  action: () => Promise<void>,
-): Promise<void> => {
+const runAgentAction = async (command: Command, action: () => Promise<void>): Promise<void> => {
   try {
     await action();
   } catch (error) {
@@ -268,9 +243,7 @@ const runAgentAction = async (
 
 const toDomainAction = (value: string): DomainAction | null => {
   const normalized = value.trim().toLowerCase();
-  return (
-    (DOMAIN_ACTION_ALIASES as Record<string, DomainAction>)[normalized] || null
-  );
+  return (DOMAIN_ACTION_ALIASES as Record<string, DomainAction>)[normalized] || null;
 };
 
 const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
@@ -284,26 +257,14 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
       'Comma-separated output fields; allowed fields depend on the listing or declared paginated tool',
     )
     .option('-v, --verbose', 'Include all supported fields')
-    .option(
-      '-n, --limit <n>',
-      'CLI-owned domain/tool listing page size (default 20, max 100)',
-    )
-    .option(
-      '-c, --cursor <token>',
-      'Cursor for a CLI-owned domain/tool listing',
-    )
+    .option('-n, --limit <n>', 'CLI-owned domain/tool listing page size (default 20, max 100)')
+    .option('-c, --cursor <token>', 'Cursor for a CLI-owned domain/tool listing')
     .requiredOption('-s, --session <id>', 'Target Agent session ID')
     .action(
-      async (
-        domainToken: string,
-        actionToken?: string | string[],
-        ...actionArgs: unknown[]
-      ) => {
+      async (domainToken: string, actionToken?: string | string[], ...actionArgs: unknown[]) => {
         const activeCommand = actionArgs[actionArgs.length - 1] as Command;
         await runAgentAction(activeCommand, async () => {
-          const normalizedActionToken = Array.isArray(actionToken)
-            ? actionToken[0]
-            : actionToken;
+          const normalizedActionToken = Array.isArray(actionToken) ? actionToken[0] : actionToken;
           const actionTokenString = normalizedActionToken
             ? String(normalizedActionToken).trim()
             : '';
@@ -324,17 +285,14 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
             );
           }
 
-          const action = actionTokenString
-            ? toDomainAction(actionTokenString)
-            : null;
+          const action = actionTokenString ? toDomainAction(actionTokenString) : null;
           if (!action) {
             throw new Error(
               `Unknown domain action "${actionTokenString}". Expected: ${DOMAIN_ACTION_HINT}.`,
             );
           }
 
-          const dynamicOptions =
-            activeCommand.optsWithGlobals<DynamicDomainCommandOptions>();
+          const dynamicOptions = activeCommand.optsWithGlobals<DynamicDomainCommandOptions>();
           const options = getConnectionOptions(activeCommand);
           const sessionId = getSessionId(activeCommand);
           const client = createAgentClient({
@@ -360,15 +318,9 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                 .map<ToolListRow>((tool) => ({
                   name: tool.name,
                   description: tool.description,
-                  ...(tool.readOnly !== undefined
-                    ? { readOnly: tool.readOnly }
-                    : {}),
-                  ...(tool.destructive !== undefined
-                    ? { destructive: tool.destructive }
-                    : {}),
-                  ...(tool.idempotent !== undefined
-                    ? { idempotent: tool.idempotent }
-                    : {}),
+                  ...(tool.readOnly !== undefined ? { readOnly: tool.readOnly } : {}),
+                  ...(tool.destructive !== undefined ? { destructive: tool.destructive } : {}),
+                  ...(tool.idempotent !== undefined ? { idempotent: tool.idempotent } : {}),
                 }))
                 .sort((a, b) => a.name.localeCompare(b.name));
               const paged = paginateRows(rows, {
@@ -400,9 +352,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
             }
 
             if (!dynamicOptions.tool) {
-              throw new Error(
-                '--tool is required for schema/get-tool-schema and call/call-tool',
-              );
+              throw new Error('--tool is required for schema/get-tool-schema and call/call-tool');
             }
 
             if (action === 'get-tool-schema') {
@@ -417,9 +367,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
               domain: domainToken,
               tool: dynamicOptions.tool,
             });
-            const { pagination, warning } = getToolPagination(
-              resolvedTool.schema,
-            );
+            const { pagination, warning } = getToolPagination(resolvedTool.schema);
             if (warning) {
               process.stderr.write(`${warning}\n`);
             }
@@ -428,8 +376,9 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
               throw new Error('--args must be a JSON object');
             }
 
-            const paginatedToolArgs: Record<string, unknown> | undefined =
-              pagination ? (parsedArgs as Record<string, unknown>) : undefined;
+            const paginatedToolArgs: Record<string, unknown> | undefined = pagination
+              ? (parsedArgs as Record<string, unknown>)
+              : undefined;
             const fields = pagination
               ? parseFields(
                   dynamicOptions.fields,
@@ -438,9 +387,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
                   !!dynamicOptions.verbose,
                 )
               : undefined;
-            const toolResult = await resolvedTool.call(
-              paginatedToolArgs ?? parsedArgs,
-            );
+            const toolResult = await resolvedTool.call(paginatedToolArgs ?? parsedArgs);
 
             if (!pagination || !paginatedToolArgs || !fields) {
               return toolResult;
@@ -480,9 +427,7 @@ const registerDynamicPluginDomainDispatcher = (mcpCommand: Command): void => {
 export const registerAgentCommand = (program: Command): void => {
   const mcpCommand = program
     .command('agent')
-    .description(
-      'CLI for session-scoped domain discovery and dynamic tool execution',
-    )
+    .description('CLI for session-scoped domain discovery and dynamic tool execution')
     .option('--host <host>', 'Metro host', DEFAULT_METRO_HOST)
     .option('--port <port>', 'Metro port', String(DEFAULT_METRO_PORT))
     .option('-j, --json', 'Deprecated no-op; agent commands always output JSON')
@@ -606,10 +551,7 @@ export const registerAgentCommand = (program: Command): void => {
     .command('list-domains')
     .alias('domains')
     .description('List available static and plugin domains')
-    .option(
-      '-f, --fields <csv>',
-      `Fields to include (${DOMAIN_LIST_FIELDS.join(', ')})`,
-    )
+    .option('-f, --fields <csv>', `Fields to include (${DOMAIN_LIST_FIELDS.join(', ')})`)
     .option('-v, --verbose', 'Include all supported fields')
     .option('-n, --limit <n>', 'Page size (default 20, max 100)')
     .option('-c, --cursor <token>', 'Opaque cursor from previous page')

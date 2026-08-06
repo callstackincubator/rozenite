@@ -1,10 +1,6 @@
 import { createRequire } from 'node:module';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  withRozeniteWeb,
-  type WebpackConfig,
-  type WebpackConfigExport,
-} from '../webpack/index.js';
+import { withRozeniteWeb, type WebpackConfig, type WebpackConfigExport } from '../webpack/index.js';
 
 const require = createRequire(import.meta.url);
 const reactNativeFeatureFlagsReplacement = (() => {
@@ -22,13 +18,9 @@ const reactNativeFeatureFlagsReplacement = (() => {
   throw new Error('Unable to resolve test ReactNativeFeatureFlags shim');
 })();
 
-const openDebuggerShortcutSymbol = Symbol.for(
-  'rozenite.web.openDebuggerShortcut',
-);
+const openDebuggerShortcutSymbol = Symbol.for('rozenite.web.openDebuggerShortcut');
 
-const createWebpackConfig = (
-  overrides: Partial<WebpackConfig> = {},
-): WebpackConfig => ({
+const createWebpackConfig = (overrides: Partial<WebpackConfig> = {}): WebpackConfig => ({
   mode: 'development',
   entry: './src/index.tsx',
   ...overrides,
@@ -53,9 +45,7 @@ describe('withRozeniteWeb (webpack)', () => {
 
   it('preserves existing devServer options without prepending proxy entries', () => {
     const originalHistoryFallback = { index: '/index.html' };
-    const originalProxy = [
-      { context: '/api', target: 'http://localhost:3000' },
-    ];
+    const originalProxy = [{ context: '/api', target: 'http://localhost:3000' }];
 
     const result = withRozeniteWeb(
       createWebpackConfig({
@@ -73,9 +63,7 @@ describe('withRozeniteWeb (webpack)', () => {
 
   it('prepends local dev-middleware and preserves existing setupMiddlewares', () => {
     const middlewares: unknown[] = [];
-    const setupMiddlewares = vi.fn(
-      (inputMiddlewares: unknown[]) => inputMiddlewares,
-    );
+    const setupMiddlewares = vi.fn((inputMiddlewares: unknown[]) => inputMiddlewares);
     const serverOn = vi.fn();
 
     const result = withRozeniteWeb(
@@ -86,19 +74,16 @@ describe('withRozeniteWeb (webpack)', () => {
       }),
     ) as WebpackConfig;
 
-    const returnedMiddlewares = result.devServer?.setupMiddlewares?.(
-      middlewares,
-      {
-        app: {},
-        options: {
-          host: '0.0.0.0',
-          port: 3000,
-        },
-        server: {
-          on: serverOn,
-        },
-      } as never,
-    );
+    const returnedMiddlewares = result.devServer?.setupMiddlewares?.(middlewares, {
+      app: {},
+      options: {
+        host: '0.0.0.0',
+        port: 3000,
+      },
+      server: {
+        on: serverOn,
+      },
+    } as never);
 
     expect(middlewares).toHaveLength(1);
     expect(typeof middlewares[0]).toBe('function');
@@ -154,9 +139,7 @@ describe('withRozeniteWeb (webpack)', () => {
 
   it('restores SIGINT when Ctrl+C is pressed in raw mode', () => {
     const stdinOn = vi.spyOn(process.stdin, 'on');
-    const processKill = vi
-      .spyOn(process, 'kill')
-      .mockImplementation(() => true);
+    const processKill = vi.spyOn(process, 'kill').mockImplementation(() => true);
 
     delete (
       globalThis as typeof globalThis & {
@@ -255,11 +238,9 @@ describe('withRozeniteWeb (webpack)', () => {
       keypressHandler('j', { name: 'j' });
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        1,
-        new URL('/json/list', 'http://localhost:3000'),
-        { method: 'POST' },
-      );
+      expect(fetchMock).toHaveBeenNthCalledWith(1, new URL('/json/list', 'http://localhost:3000'), {
+        method: 'POST',
+      });
       expect(fetchMock).toHaveBeenNthCalledWith(
         2,
         new URL('/open-debugger?target=web-target', 'http://localhost:3000'),
@@ -370,15 +351,12 @@ describe('withRozeniteWeb (webpack)', () => {
                 beforeResolve: {
                   tap: (_pluginName, beforeResolve) => {
                     const resolved = {
-                      request:
-                        'react-native/src/private/featureflags/ReactNativeFeatureFlags',
+                      request: 'react-native/src/private/featureflags/ReactNativeFeatureFlags',
                     };
 
                     beforeResolve(resolved);
 
-                    expect(resolved.request).toBe(
-                      reactNativeFeatureFlagsReplacement,
-                    );
+                    expect(resolved.request).toBe(reactNativeFeatureFlagsReplacement);
                   },
                 },
               },

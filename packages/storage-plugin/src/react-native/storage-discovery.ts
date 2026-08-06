@@ -6,9 +6,7 @@ import type {
 import type { StorageDescriptor } from '../shared/types';
 import type { StorageView } from './storage-view';
 
-type DiscoveryResult =
-  | StorageDiscoverStoragesResponseEvent
-  | StorageRequestErrorEvent;
+type DiscoveryResult = StorageDiscoverStoragesResponseEvent | StorageRequestErrorEvent;
 
 const getRequestId = (payload: unknown) => {
   if (
@@ -23,9 +21,7 @@ const getRequestId = (payload: unknown) => {
   return '';
 };
 
-const validateRequest = (
-  payload: unknown,
-): payload is StorageDiscoverStoragesRequestEvent =>
+const validateRequest = (payload: unknown): payload is StorageDiscoverStoragesRequestEvent =>
   typeof payload === 'object' &&
   payload != null &&
   !Array.isArray(payload) &&

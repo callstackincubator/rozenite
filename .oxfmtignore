@@ -1,4 +1,4 @@
-# Add files here to ignore them from prettier formatting
+# Add files here to ignore them from oxfmt formatting
 **/dist
 **/coverage
 /.nx/cache

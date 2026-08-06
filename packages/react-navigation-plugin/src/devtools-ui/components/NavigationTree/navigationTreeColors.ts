@@ -27,15 +27,11 @@ export const getNavigationTreeColor = (color: NavigationTreeColors): string => {
   return `text-${color}-600`;
 };
 
-export const getNavigationTreeBorderColor = (
-  color: NavigationTreeColors,
-): string => {
+export const getNavigationTreeBorderColor = (color: NavigationTreeColors): string => {
   return `border-${color}-600`;
 };
 
-export const getNavigationTreeBackgroundColor = (
-  color: NavigationTreeColors,
-): string => {
+export const getNavigationTreeBackgroundColor = (color: NavigationTreeColors): string => {
   return `bg-${color}-600`;
 };
 

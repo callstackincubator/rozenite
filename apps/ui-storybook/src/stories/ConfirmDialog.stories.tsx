@@ -15,11 +15,7 @@ export const Open: Story = {
   render: (args) => (
     <>
       <Button>Trigger is represented by the open dialog</Button>
-      <ConfirmDialog
-        {...args}
-        description="This action cannot be undone."
-        destructive
-      />
+      <ConfirmDialog {...args} description="This action cannot be undone." destructive />
     </>
   ),
 };

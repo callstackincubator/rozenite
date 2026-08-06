@@ -16,9 +16,7 @@ const matchesPrefix = (url: string, prefix: string): boolean => {
   return url === prefix || url.startsWith(prefix + '/');
 };
 
-const withFinishedResponseGuard = (
-  middleware: MiddlewareHandler,
-): MiddlewareHandler => {
+const withFinishedResponseGuard = (middleware: MiddlewareHandler): MiddlewareHandler => {
   return (req, res, next) => {
     middleware(req, res, (error) => {
       if (error) {

@@ -1,11 +1,7 @@
 import { Button, Input, Select, Tabs, Textarea } from '@rozenite/ui';
 import { RotateCcw, Send } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import type {
-  DevHostFlowEntry,
-  DevHostFlowRunState,
-  DevHostPresetEntry,
-} from '../types.js';
+import type { DevHostFlowEntry, DevHostFlowRunState, DevHostPresetEntry } from '../types.js';
 import { FlowList } from './FlowList.js';
 
 type DispatchFormProps = {
@@ -72,9 +68,7 @@ export const DispatchForm = ({
             >
               <Select.Trigger
                 className="w-auto"
-                aria-label={
-                  presets.length > 0 ? 'Open presets' : 'No presets available'
-                }
+                aria-label={presets.length > 0 ? 'Open presets' : 'No presets available'}
                 disabled={presets.length === 0}
                 title={presets.length > 0 ? 'Presets' : 'No presets available'}
               >
@@ -97,9 +91,7 @@ export const DispatchForm = ({
               <span className="dev-host-label">Command</span>
               <Input
                 value={commandType}
-                onChange={(event) =>
-                  onCommandTypeChange(event.currentTarget.value)
-                }
+                onChange={(event) => onCommandTypeChange(event.currentTarget.value)}
                 placeholder="get-snapshot"
                 spellCheck={false}
               />
@@ -109,9 +101,7 @@ export const DispatchForm = ({
               <span className="dev-host-label">Payload</span>
               <Textarea
                 value={commandPayload}
-                onChange={(event) =>
-                  onCommandPayloadChange(event.currentTarget.value)
-                }
+                onChange={(event) => onCommandPayloadChange(event.currentTarget.value)}
                 placeholder='{"example": true}'
                 spellCheck={false}
               />

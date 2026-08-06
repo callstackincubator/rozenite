@@ -13,9 +13,7 @@ const createView = (
   values: Record<string, StorageEntry>,
   options?: {
     blacklist?: RegExp;
-    get?: (
-      key: string,
-    ) => StorageEntry | undefined | Promise<StorageEntry | undefined>;
+    get?: (key: string) => StorageEntry | undefined | Promise<StorageEntry | undefined>;
   },
 ) => {
   const get = vi.fn(options?.get ?? ((key: string) => values[key]));
@@ -45,9 +43,7 @@ const createView = (
 };
 
 const entries = (...keys: string[]): Record<string, StorageEntry> =>
-  Object.fromEntries(
-    keys.map((key) => [key, { key, type: 'string', value: `value:${key}` }]),
-  );
+  Object.fromEntries(keys.map((key) => [key, { key, type: 'string', value: `value:${key}` }]));
 
 const request = (overrides: Record<string, unknown> = {}) => ({
   type: 'list-entry-previews' as const,
@@ -59,9 +55,7 @@ const request = (overrides: Record<string, unknown> = {}) => ({
 
 describe('handleListEntryPreviewsRequest', () => {
   it('returns sorted first, next, and previous pages without reading outside each page', async () => {
-    const { view, get } = createView(
-      entries('delta', 'bravo', 'alpha', 'charlie', 'echo'),
-    );
+    const { view, get } = createView(entries('delta', 'bravo', 'alpha', 'charlie', 'echo'));
 
     const first = await handleListEntryPreviewsRequest([view], request());
     expect(first).toMatchObject({
@@ -85,8 +79,7 @@ describe('handleListEntryPreviewsRequest', () => {
     const previous = await handleListEntryPreviewsRequest(
       [view],
       request({
-        cursor:
-          next.type === 'entry-previews' ? next.previousCursor : undefined,
+        cursor: next.type === 'entry-previews' ? next.previousCursor : undefined,
       }),
     );
     expect(previous).toMatchObject({
@@ -97,9 +90,7 @@ describe('handleListEntryPreviewsRequest', () => {
   });
 
   it('filters normalized key search and sorts before pagination without inspecting non-page values', async () => {
-    const { view, get } = createView(
-      entries('Alpha', 'alphabet', 'beta', 'ALPINE'),
-    );
+    const { view, get } = createView(entries('Alpha', 'alphabet', 'beta', 'ALPINE'));
 
     const result = await handleListEntryPreviewsRequest(
       [view],
@@ -125,9 +116,7 @@ describe('handleListEntryPreviewsRequest', () => {
       target,
       items: [],
     });
-    await expect(
-      handleListEntryPreviewsRequest([view], request()),
-    ).resolves.toEqual({
+    await expect(handleListEntryPreviewsRequest([view], request())).resolves.toEqual({
       type: 'entry-previews',
       requestId: 'request-1',
       target,
@@ -148,25 +137,16 @@ describe('handleListEntryPreviewsRequest', () => {
     const { view } = createView(entries('alpha', 'bravo', 'charlie'));
 
     await expect(
-      handleListEntryPreviewsRequest(
-        [view],
-        request({ cursor: 'not-a-cursor' }),
-      ),
+      handleListEntryPreviewsRequest([view], request({ cursor: 'not-a-cursor' })),
     ).resolves.toMatchObject({ code: 'INVALID_CURSOR', resetPagination: true });
 
     const first = await handleListEntryPreviewsRequest([view], request());
     const cursor = first.type === 'entry-previews' ? first.nextCursor! : '';
     await expect(
-      handleListEntryPreviewsRequest(
-        [view],
-        request({ search: 'alpha', cursor }),
-      ),
+      handleListEntryPreviewsRequest([view], request({ search: 'alpha', cursor })),
     ).resolves.toMatchObject({ code: 'INVALID_CURSOR', resetPagination: true });
 
-    const stale = await handleListEntryPreviewsRequest(
-      [view],
-      request({ cursor }),
-    );
+    const stale = await handleListEntryPreviewsRequest([view], request({ cursor }));
     expect(stale).toMatchObject({ type: 'entry-previews' });
     const noBoundary = createView(entries('alpha', 'charlie')).view;
     await expect(
@@ -177,10 +157,7 @@ describe('handleListEntryPreviewsRequest', () => {
   it('applies blacklist rules before pagination and caps oversized page limits', async () => {
     const { view, get } = createView(
       entries(
-        ...Array.from(
-          { length: MAX_ENTRY_PREVIEW_PAGE_SIZE + 2 },
-          (_, index) => `key-${index}`,
-        ),
+        ...Array.from({ length: MAX_ENTRY_PREVIEW_PAGE_SIZE + 2 }, (_, index) => `key-${index}`),
         'secret',
       ),
       { blacklist: /^secret$/ },
@@ -209,10 +186,7 @@ describe('handleListEntryPreviewsRequest', () => {
       },
     });
 
-    const result = await handleListEntryPreviewsRequest(
-      [view],
-      request({ limit: 5 }),
-    );
+    const result = await handleListEntryPreviewsRequest([view], request({ limit: 5 }));
 
     expect(maxActiveReads).toBeLessThanOrEqual(ENTRY_PREVIEW_READ_CONCURRENCY);
     expect(result).toMatchObject({
@@ -239,9 +213,7 @@ describe('handleListEntryPreviewsRequest', () => {
       },
     });
 
-    await expect(
-      handleListEntryPreviewsRequest([view], request()),
-    ).resolves.toEqual({
+    await expect(handleListEntryPreviewsRequest([view], request())).resolves.toEqual({
       type: 'storage-request-error',
       requestId: 'request-1',
       code: 'READ_FAILED',

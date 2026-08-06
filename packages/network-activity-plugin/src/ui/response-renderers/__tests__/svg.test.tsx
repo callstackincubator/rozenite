@@ -11,8 +11,7 @@ const ctx: RenderCtx = {
   url: 'https://example.com/icon.svg',
 };
 
-const SVG_SOURCE =
-  '<svg xmlns="http://www.w3.org/2000/svg"><circle r="5"/></svg>';
+const SVG_SOURCE = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="5"/></svg>';
 
 const renderSvg = (view: 'preview' | 'raw', body = SVG_SOURCE) =>
   render(svgRenderer.render({ view, body, ctx }) as ReactElement);

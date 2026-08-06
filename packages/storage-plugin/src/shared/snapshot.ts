@@ -48,10 +48,7 @@ const describe = (value: unknown): string => {
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const expectObject = (
-  value: unknown,
-  path: string,
-): Record<string, unknown> => {
+const expectObject = (value: unknown, path: string): Record<string, unknown> => {
   if (!isPlainObject(value)) {
     throw new ParseException(path, `Expected object, got ${describe(value)}`);
   }
@@ -73,10 +70,7 @@ const expectArray = (value: unknown, path: string): unknown[] => {
 };
 
 const expectEntryType = (value: unknown, path: string): StorageEntryType => {
-  if (
-    typeof value !== 'string' ||
-    !DEFAULT_SUPPORTED_TYPES.includes(value as StorageEntryType)
-  ) {
+  if (typeof value !== 'string' || !DEFAULT_SUPPORTED_TYPES.includes(value as StorageEntryType)) {
     throw new ParseException(
       path,
       `Expected one of ${DEFAULT_SUPPORTED_TYPES.join(', ')}, got ${describe(value)}`,
@@ -151,12 +145,7 @@ const parseEntry = (raw: unknown, path: string): StorageEntry => {
         );
       }
       const bytes = value.map((byte, index) => {
-        if (
-          typeof byte !== 'number' ||
-          !Number.isInteger(byte) ||
-          byte < 0 ||
-          byte > 255
-        ) {
+        if (typeof byte !== 'number' || !Number.isInteger(byte) || byte < 0 || byte > 255) {
           throw new ParseException(
             `${valuePath}[${index}]`,
             `Expected uint8 (integer 0-255), got ${describe(byte)}`,
@@ -183,9 +172,7 @@ export const parseSnapshot = (raw: unknown): ParseResult => {
     const createdAt = expectString(root.createdAt, 'createdAt');
     const storage = parseStorageMeta(root.storage);
     const rawEntries = expectArray(root.entries, 'entries');
-    const entries = rawEntries.map((entry, index) =>
-      parseEntry(entry, `entries[${index}]`),
-    );
+    const entries = rawEntries.map((entry, index) => parseEntry(entry, `entries[${index}]`));
     return {
       ok: true,
       snapshot: {

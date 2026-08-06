@@ -34,9 +34,7 @@ describe('XmlTree', () => {
     // element. After filtering, only the two <item> elements survive —
     // no stray text nodes containing the source's `\n  ` indentation.
     const { container } = render(
-      <XmlTree
-        root={parseXml('<list>\n  <item>a</item>\n  <item>b</item>\n</list>')}
-      />,
+      <XmlTree root={parseXml('<list>\n  <item>a</item>\n  <item>b</item>\n</list>')} />,
     );
     // Each <item> renders as open + close tag, so 2 items × 2 = 4
     // occurrences of "item" text.
@@ -54,20 +52,14 @@ describe('XmlTree', () => {
   });
 
   it('renders CDATA content wrapped in <![CDATA[ ... ]]> markers', () => {
-    render(
-      <XmlTree root={parseXml('<content><![CDATA[<p>html</p>]]></content>')} />,
-    );
+    render(<XmlTree root={parseXml('<content><![CDATA[<p>html</p>]]></content>')} />);
     expect(screen.getByText('<![CDATA[')).toBeInTheDocument();
     expect(screen.getByText(']]>')).toBeInTheDocument();
     expect(screen.getByText('<p>html</p>')).toBeInTheDocument();
   });
 
   it('recursively renders nested elements', () => {
-    render(
-      <XmlTree
-        root={parseXml('<feed><entry><title>T</title></entry></feed>')}
-      />,
-    );
+    render(<XmlTree root={parseXml('<feed><entry><title>T</title></entry></feed>')} />);
     // Each non-self-closing element renders open + close, hence 2x.
     expect(screen.getAllByText('feed')).toHaveLength(2);
     expect(screen.getAllByText('entry')).toHaveLength(2);
@@ -81,9 +73,7 @@ describe('XmlTree', () => {
     // collapse/expand cycle. Verify the mechanism directly at the DOM
     // level: after collapsing, the inner element's tag name STILL
     // appears in the rendered tree (it's in the DOM, just hidden).
-    const { container } = render(
-      <XmlTree root={parseXml('<outer><inner>v</inner></outer>')} />,
-    );
+    const { container } = render(<XmlTree root={parseXml('<outer><inner>v</inner></outer>')} />);
 
     // Both elements visible initially.
     expect(container.textContent).toContain('inner');
@@ -100,16 +90,12 @@ describe('XmlTree', () => {
 
     // The children container should have display:none applied so the
     // inner element is visually hidden.
-    const hiddenContainers = container.querySelectorAll(
-      'div[style*="display: none"]',
-    );
+    const hiddenContainers = container.querySelectorAll('div[style*="display: none"]');
     expect(hiddenContainers.length).toBeGreaterThan(0);
   });
 
   it('toggles the chevron icon aria-label between Collapse and Expand', () => {
-    const { container } = render(
-      <XmlTree root={parseXml('<outer><inner/></outer>')} />,
-    );
+    const { container } = render(<XmlTree root={parseXml('<outer><inner/></outer>')} />);
     const button = container.querySelector('button');
     if (!button) throw new Error('expected a chevron button');
     expect(button.getAttribute('aria-label')).toBe('Collapse');
@@ -129,9 +115,7 @@ describe('XmlTree', () => {
   });
 
   it('renders a closing tag for elements with children', () => {
-    const { container } = render(
-      <XmlTree root={parseXml('<wrap><child/></wrap>')} />,
-    );
+    const { container } = render(<XmlTree root={parseXml('<wrap><child/></wrap>')} />);
     // wrap should have `</wrap>` closing tag visible.
     expect(container.textContent ?? '').toContain('</');
   });

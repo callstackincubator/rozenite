@@ -49,10 +49,7 @@ export const getSourceFrameLocation = (
 
 export const formatSourcePath = (url: string) => {
   const withoutQuery = url.split(/[?#]/)[0];
-  const decodedPath = safeDecodeURIComponent(withoutQuery).replace(
-    /^file:\/\//,
-    '',
-  );
+  const decodedPath = safeDecodeURIComponent(withoutQuery).replace(/^file:\/\//, '');
   const bundlePathMatch = decodedPath.match(/([^/]+\.bundle)(?:\/|$)/);
 
   if (bundlePathMatch) {
@@ -93,9 +90,7 @@ export const formatFrameLocation = (frame?: FrameLocation | null) => {
   return locationParts.join(':');
 };
 
-export const getBestInitiatorFrame = (
-  initiator?: Initiator,
-): FrameLocation | null => {
+export const getBestInitiatorFrame = (initiator?: Initiator): FrameLocation | null => {
   const directSourceFrame = getSourceFrameLocation(initiator);
   if (directSourceFrame) {
     return directSourceFrame;

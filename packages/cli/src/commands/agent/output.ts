@@ -1,14 +1,8 @@
 import { logger } from '../../utils/logger.js';
 
-export const printOutput = (
-  payload: unknown,
-  asJson: boolean,
-  pretty: boolean = false,
-): void => {
+export const printOutput = (payload: unknown, asJson: boolean, pretty: boolean = false): void => {
   if (asJson) {
-    const json = pretty
-      ? JSON.stringify(payload, null, 2)
-      : JSON.stringify(payload);
+    const json = pretty ? JSON.stringify(payload, null, 2) : JSON.stringify(payload);
     process.stdout.write(`${json}\n`);
     return;
   }

@@ -1,8 +1,4 @@
-import type {
-  SqliteAdapter,
-  SqliteDatabaseInfo,
-  SqliteStatementInput,
-} from '../shared/types';
+import type { SqliteAdapter, SqliteDatabaseInfo, SqliteStatementInput } from '../shared/types';
 
 export type SqliteDatabaseView = SqliteDatabaseInfo & {
   executeStatements: (
@@ -10,9 +6,7 @@ export type SqliteDatabaseView = SqliteDatabaseInfo & {
   ) => ReturnType<SqliteAdapter['databases'][number]['executeStatements']>;
 };
 
-export const createSqliteDatabaseViews = (
-  adapters: SqliteAdapter[],
-): SqliteDatabaseView[] =>
+export const createSqliteDatabaseViews = (adapters: SqliteAdapter[]): SqliteDatabaseView[] =>
   adapters.flatMap((adapter) =>
     adapter.databases.map((database) => ({
       id: database.id,

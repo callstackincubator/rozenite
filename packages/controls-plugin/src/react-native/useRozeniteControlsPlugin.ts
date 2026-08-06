@@ -15,9 +15,7 @@ import {
 import { useControlsAgentTools } from './useControlsAgentTools';
 import { controlsRegistry } from './controlsRegistry';
 
-export const useRozeniteControlsPlugin = (
-  optionsInput: RozeniteControlsPluginOptionsInput,
-) => {
+export const useRozeniteControlsPlugin = (optionsInput: RozeniteControlsPluginOptionsInput) => {
   const client = useRozeniteDevToolsClient<ControlsEventMap>({
     pluginId: '@rozenite/controls-plugin',
   });
@@ -48,10 +46,7 @@ export const useRozeniteControlsPlugin = (
     [optionsInput, registrySnapshot, registrationId],
   );
 
-  useControlsAgentTools(
-    () => controlsRegistry.getOptions().sections,
-    isRegistryOwner,
-  );
+  useControlsAgentTools(() => controlsRegistry.getOptions().sections, isRegistryOwner);
 
   useEffect(() => {
     if (!client) {
@@ -76,9 +71,7 @@ export const useRozeniteControlsPlugin = (
       value,
     }: ControlsUpdateRequestEvent) => {
       const key = getActionRegistryKey(sectionId, itemId);
-      const entry = buildActionRegistry(
-        controlsRegistry.getOptions().sections,
-      ).get(key);
+      const entry = buildActionRegistry(controlsRegistry.getOptions().sections).get(key);
 
       if (!entry || entry.type === 'button') {
         client.send('update-result', {
@@ -179,11 +172,7 @@ export const useRozeniteControlsPlugin = (
       }
     };
 
-    const handleInvokeAction = async ({
-      sectionId,
-      itemId,
-      action,
-    }: ControlsInvokeActionEvent) => {
+    const handleInvokeAction = async ({ sectionId, itemId, action }: ControlsInvokeActionEvent) => {
       if (action !== 'press') {
         console.warn(
           `[Rozenite] Controls Plugin: Unsupported action "${action}" for ${sectionId}/${itemId}.`,
@@ -192,9 +181,7 @@ export const useRozeniteControlsPlugin = (
       }
 
       const key = getActionRegistryKey(sectionId, itemId);
-      const entry = buildActionRegistry(
-        controlsRegistry.getOptions().sections,
-      ).get(key);
+      const entry = buildActionRegistry(controlsRegistry.getOptions().sections).get(key);
 
       if (!entry) {
         console.warn(
@@ -227,12 +214,9 @@ export const useRozeniteControlsPlugin = (
           sections: serializeSections(controlsRegistry.getOptions().sections),
         });
       }),
-      client.onMessage(
-        'update-request',
-        (event: ControlsUpdateRequestEvent) => {
-          void handleUpdateRequest(event);
-        },
-      ),
+      client.onMessage('update-request', (event: ControlsUpdateRequestEvent) => {
+        void handleUpdateRequest(event);
+      }),
       client.onMessage('invoke-action', (event: ControlsInvokeActionEvent) => {
         void handleInvokeAction(event);
       }),

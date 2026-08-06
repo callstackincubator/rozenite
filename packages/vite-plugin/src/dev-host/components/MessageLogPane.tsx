@@ -27,9 +27,7 @@ export const MessageLogPane = ({
 
           return (
             <span
-              className={
-                isSent ? 'dev-host-direction-in' : 'dev-host-direction-out'
-              }
+              className={isSent ? 'dev-host-direction-in' : 'dev-host-direction-out'}
               aria-label={isSent ? 'Sent message' : 'Received message'}
               title={isSent ? 'Sent message' : 'Received message'}
             >
@@ -42,17 +40,13 @@ export const MessageLogPane = ({
         accessorKey: 'date',
         header: 'Date',
         cell: ({ row }) => (
-          <span className="text-muted-foreground">
-            {formatMessageTableDate(row.original.date)}
-          </span>
+          <span className="text-muted-foreground">{formatMessageTableDate(row.original.date)}</span>
         ),
       },
       {
         accessorKey: 'type',
         header: 'Type',
-        cell: ({ getValue }) => (
-          <span className="font-medium">{getValue<string>()}</span>
-        ),
+        cell: ({ getValue }) => <span className="font-medium">{getValue<string>()}</span>,
       },
       {
         id: 'payload',
@@ -84,10 +78,7 @@ export const MessageLogPane = ({
         </Button>
       </header>
 
-      <ScrollArea
-        className="dev-host-scroll"
-        viewportClassName="dev-host-scroll-viewport"
-      >
+      <ScrollArea className="dev-host-scroll" viewportClassName="dev-host-scroll-viewport">
         <DataTable
           className="dev-host-message-table"
           columns={columns}

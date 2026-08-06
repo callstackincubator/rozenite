@@ -1,10 +1,5 @@
 export { parseStack } from './parse';
-export {
-  classifyFrame,
-  pickOriginFrame,
-  type FrameClass,
-  type OriginPick,
-} from './rank';
+export { classifyFrame, pickOriginFrame, type FrameClass, type OriginPick } from './rank';
 export {
   resolveMetroOrigin,
   symbolicateFrames,

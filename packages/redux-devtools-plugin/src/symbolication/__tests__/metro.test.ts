@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NativeModules } from 'react-native';
-import {
-  __resetMetroOriginCache,
-  resolveMetroOrigin,
-  symbolicateFrames,
-} from '../metro';
+import { __resetMetroOriginCache, resolveMetroOrigin, symbolicateFrames } from '../metro';
 
 vi.mock('react-native', () => ({
   NativeModules: {
@@ -21,8 +17,7 @@ describe('redux trace Metro symbolication', () => {
   });
 
   it('resolves the Metro origin from SourceCode.scriptURL', () => {
-    NativeModules.SourceCode.scriptURL =
-      'http://10.0.2.2:8081/index.bundle?platform=android';
+    NativeModules.SourceCode.scriptURL = 'http://10.0.2.2:8081/index.bundle?platform=android';
 
     expect(resolveMetroOrigin()).toBe('http://10.0.2.2:8081');
   });

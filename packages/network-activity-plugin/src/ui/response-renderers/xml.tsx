@@ -7,8 +7,7 @@ import type { ResponseRenderer } from './types';
 // Document containing a `<parsererror>` element, but with different
 // placement across engines: Chrome/Safari put it as `documentElement`;
 // Firefox nests it under a dedicated namespace. Cover both.
-const FIREFOX_PARSERERROR_NS =
-  'http://www.mozilla.org/newlayout/xml/parsererror.xml';
+const FIREFOX_PARSERERROR_NS = 'http://www.mozilla.org/newlayout/xml/parsererror.xml';
 
 const hasParseError = (doc: Document): boolean =>
   doc.documentElement.nodeName === 'parsererror' ||
@@ -16,8 +15,7 @@ const hasParseError = (doc: Document): boolean =>
 
 export const xmlRenderer: ResponseRenderer = {
   id: 'xml',
-  matches: (contentType, body) =>
-    typeof body === 'string' && isXmlContentType(contentType),
+  matches: (contentType, body) => typeof body === 'string' && isXmlContentType(contentType),
   views: ['preview', 'raw'],
   defaultView: 'preview',
   supportsOverride: true,

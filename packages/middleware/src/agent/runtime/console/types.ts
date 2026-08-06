@@ -1,8 +1,4 @@
-import type {
-  PageOrder,
-  PageRequest,
-  PageResult,
-} from '../pagination/types.js';
+import type { PageOrder, PageRequest, PageResult } from '../pagination/types.js';
 
 export type ConsoleLogLevel = 'verbose' | 'info' | 'warning' | 'error';
 
@@ -32,10 +28,7 @@ export interface ConsoleMessagesMeta {
   bufferSize: number;
 }
 
-export type ConsoleMessagesResult = PageResult<
-  ConsoleLogEntry,
-  ConsoleMessagesMeta
->;
+export type ConsoleMessagesResult = PageResult<ConsoleLogEntry, ConsoleMessagesMeta>;
 
 export interface ConsoleMessageInput {
   timestamp?: number;

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 // Initialize require chains tracking
 global.__requireChains = []; // Array of completed chains (with tree structure)
 global.__currentChain = null; // Currently active chain
@@ -39,10 +40,7 @@ const createInstrumentedSystrace = (originalSystrace) => {
 
     beginEvent: function (eventName, args) {
       // Check if this is a require event (prefix used by Metro)
-      if (
-        typeof eventName === 'string' &&
-        eventName.startsWith('JS_require_')
-      ) {
+      if (typeof eventName === 'string' && eventName.startsWith('JS_require_')) {
         const moduleIdentifier = eventName.slice('JS_require_'.length);
         const startTime = Date.now();
         const moduleId = parseInt(moduleIdentifier, 10);
@@ -96,10 +94,7 @@ const createInstrumentedSystrace = (originalSystrace) => {
         const totalTime = endTime - startTime;
 
         // Calculate self time (total time minus children's time)
-        const childrenTime = node.children.reduce(
-          (sum, child) => sum + child.value,
-          0,
-        );
+        const childrenTime = node.children.reduce((sum, child) => sum + child.value, 0);
         node.selfTime = totalTime - childrenTime;
         node.value = totalTime;
 

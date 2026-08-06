@@ -183,10 +183,7 @@ describe('createMetroConfigTransformer', () => {
       const finalConfig = await result(createTestConfig());
 
       expect(finalConfig).toHaveProperty('originalPromiseAsyncFunction', true);
-      expect(finalConfig).toHaveProperty(
-        'promiseAsyncFunctionProperty',
-        'added',
-      );
+      expect(finalConfig).toHaveProperty('promiseAsyncFunctionProperty', 'added');
     });
   });
 
@@ -212,12 +209,10 @@ describe('createMetroConfigTransformer', () => {
     });
 
     it('2.3 should pass options to mutation function', () => {
-      const transformer = createMetroConfigTransformer<{ test: string }>(
-        (config, options) => ({
-          ...config,
-          receivedOptions: options,
-        }),
-      );
+      const transformer = createMetroConfigTransformer<{ test: string }>((config, options) => ({
+        ...config,
+        receivedOptions: options,
+      }));
 
       const result = transformer(createTestConfig(), { test: 'value' });
       expect(result).toHaveProperty('receivedOptions', { test: 'value' });
@@ -386,11 +381,7 @@ describe('composeMetroConfigTransformers', () => {
         step3: true,
       }));
 
-      const composed = composeMetroConfigTransformers(
-        transformer1,
-        transformer2,
-        transformer3,
-      );
+      const composed = composeMetroConfigTransformers(transformer1, transformer2, transformer3);
       const result = composed(createTestConfig());
 
       expect(result).toHaveProperty('step1', true);
@@ -414,11 +405,7 @@ describe('composeMetroConfigTransformers', () => {
         order: [...(config as any).order, 'step3'],
       }));
 
-      const composed = composeMetroConfigTransformers(
-        transformer1,
-        transformer2,
-        transformer3,
-      );
+      const composed = composeMetroConfigTransformers(transformer1, transformer2, transformer3);
       const result = composed(createTestConfig());
 
       expect(result).toHaveProperty('order', ['step1', 'step2', 'step3']);
@@ -439,17 +426,12 @@ describe('composeMetroConfigTransformers', () => {
     });
 
     it('6.2 should pass options from tuple', () => {
-      const transformer = createMetroConfigTransformer<{ test: string }>(
-        (config, options) => ({
-          ...config,
-          options: options,
-        }),
-      );
+      const transformer = createMetroConfigTransformer<{ test: string }>((config, options) => ({
+        ...config,
+        options: options,
+      }));
 
-      const composed = composeMetroConfigTransformers([
-        transformer,
-        { test: 'value' },
-      ] as any);
+      const composed = composeMetroConfigTransformers([transformer, { test: 'value' }] as any);
       const result = composed(createTestConfig());
 
       expect(result).toHaveProperty('options', { test: 'value' });
@@ -461,12 +443,10 @@ describe('composeMetroConfigTransformers', () => {
         plain: true,
       }));
 
-      const transformer2 = createMetroConfigTransformer<{ mixed: string }>(
-        (config, options) => ({
-          ...config,
-          options: options,
-        }),
-      );
+      const transformer2 = createMetroConfigTransformer<{ mixed: string }>((config, options) => ({
+        ...config,
+        options: options,
+      }));
 
       const transformer3 = createMetroConfigTransformer((config) => ({
         ...config,
@@ -487,12 +467,10 @@ describe('composeMetroConfigTransformers', () => {
     });
 
     it('6.4 should handle different option types', () => {
-      const transformer = createMetroConfigTransformer<any>(
-        (config, options) => ({
-          ...config,
-          options,
-        }),
-      );
+      const transformer = createMetroConfigTransformer<any>((config, options) => ({
+        ...config,
+        options,
+      }));
 
       const testCases = [
         { input: 'string', expected: 'string' },
@@ -503,10 +481,7 @@ describe('composeMetroConfigTransformers', () => {
       ];
 
       testCases.forEach(({ input, expected }) => {
-        const composed = composeMetroConfigTransformers([
-          transformer,
-          input,
-        ] as any);
+        const composed = composeMetroConfigTransformers([transformer, input] as any);
         const result = composed(createTestConfig());
         expect(result).toHaveProperty('options', expected);
       });
@@ -580,10 +555,7 @@ describe('composeMetroConfigTransformers', () => {
         step2: true,
       }));
 
-      const composed = composeMetroConfigTransformers(
-        transformer1,
-        transformer2,
-      );
+      const composed = composeMetroConfigTransformers(transformer1, transformer2);
       const result = composed(createTestConfig());
 
       expect(result).toHaveProperty('step1', true);
@@ -613,10 +585,7 @@ describe('composeMetroConfigTransformers', () => {
         async2: true,
       }));
 
-      const composed = composeMetroConfigTransformers(
-        transformer1,
-        transformer2,
-      );
+      const composed = composeMetroConfigTransformers(transformer1, transformer2);
       const result = await composed(createTestConfig());
 
       expect(result).toHaveProperty('async1', true);
@@ -639,11 +608,7 @@ describe('composeMetroConfigTransformers', () => {
         sync2: true,
       }));
 
-      const composed = composeMetroConfigTransformers(
-        sync1,
-        asyncTransformer,
-        sync2,
-      );
+      const composed = composeMetroConfigTransformers(sync1, asyncTransformer, sync2);
       const result = await composed(createTestConfig());
 
       expect(result).toHaveProperty('sync1', true);
@@ -670,10 +635,7 @@ describe('composeMetroConfigTransformers', () => {
         },
       }));
 
-      const composed = composeMetroConfigTransformers(
-        addPolyfills,
-        addCustomSerializer,
-      );
+      const composed = composeMetroConfigTransformers(addPolyfills, addCustomSerializer);
       const result = composed(createTestConfig());
       const config = result as MetroConfig;
 
@@ -699,10 +661,7 @@ describe('composeMetroConfigTransformers', () => {
         },
       }));
 
-      const composed = composeMetroConfigTransformers(
-        addMiddleware1,
-        addMiddleware2,
-      );
+      const composed = composeMetroConfigTransformers(addMiddleware1, addMiddleware2);
       const result = composed(createTestConfig());
       const config = result as MetroConfig;
 

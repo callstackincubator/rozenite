@@ -1,7 +1,4 @@
-import {
-  fetch as nitroFetch,
-  prefetch as nitroPrefetch,
-} from 'react-native-nitro-fetch';
+import { fetch as nitroFetch, prefetch as nitroPrefetch } from 'react-native-nitro-fetch';
 import type { Post, User } from './api';
 
 const PREFETCH_KEY = 'playground-nitro-uuid';
@@ -18,14 +15,11 @@ const prettyPrint = (value: unknown) => JSON.stringify(value, null, 2);
 
 export const nitroApi = {
   async getUsers(): Promise<NitroDemoResult> {
-    const response = await nitroFetch(
-      'https://jsonplaceholder.typicode.com/users?_limit=3',
-      {
-        headers: {
-          'X-Rozenite-Test': 'nitro-users',
-        },
+    const response = await nitroFetch('https://jsonplaceholder.typicode.com/users?_limit=3', {
+      headers: {
+        'X-Rozenite-Test': 'nitro-users',
       },
-    );
+    });
 
     if (!response.ok) {
       throw new Error(`Nitro request failed with status ${response.status}`);
@@ -72,8 +66,7 @@ export const nitroApi = {
       status: response.status,
       statusText: response.statusText,
       body: prettyPrint(post),
-      extra:
-        'Creates a POST entry with a Nitro source badge in Network Activity.',
+      extra: 'Creates a POST entry with a Nitro source badge in Network Activity.',
     };
   },
 
@@ -134,8 +127,7 @@ export const nitroApi = {
         status: 0,
         statusText: 'Aborted',
         body: message,
-        extra:
-          'Use this to verify failed Nitro requests show up in Network Activity.',
+        extra: 'Use this to verify failed Nitro requests show up in Network Activity.',
       };
     } finally {
       clearTimeout(timeout);

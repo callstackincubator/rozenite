@@ -59,28 +59,21 @@ const createExpoFileSystem = (): ExpoFileSystemLike => ({
     };
   }),
   readDirectoryAsync: vi.fn(async () => ['hello.txt']),
-  readAsStringAsync: vi.fn(
-    async (path: string, options?: { encoding?: 'base64' | 'utf8' }) => {
-      if (path === 'file:///documents/hello.txt') {
-        return options?.encoding === 'base64' ? 'aGVsbG8=' : 'hello';
-      }
+  readAsStringAsync: vi.fn(async (path: string, options?: { encoding?: 'base64' | 'utf8' }) => {
+    if (path === 'file:///documents/hello.txt') {
+      return options?.encoding === 'base64' ? 'aGVsbG8=' : 'hello';
+    }
 
-      if (
-        path === 'file:///documents/binary.bin' &&
-        options?.encoding === 'utf8'
-      ) {
-        throw new Error('Invalid UTF-8');
-      }
+    if (path === 'file:///documents/binary.bin' && options?.encoding === 'utf8') {
+      throw new Error('Invalid UTF-8');
+    }
 
-      return 'AAECAw==';
-    },
-  ),
+    return 'AAECAw==';
+  }),
   writeAsStringAsync: vi.fn(async () => {}),
 });
 
-const createExpoModernFileSystem = (
-  options: { bundleUri?: string } = {},
-): ExpoFileSystemLike => {
+const createExpoModernFileSystem = (options: { bundleUri?: string } = {}): ExpoFileSystemLike => {
   const bundleUri = options.bundleUri ?? 'file:///bundle';
 
   const pathInfo = vi.fn(async (path: string) => {
@@ -128,10 +121,7 @@ const createExpoModernFileSystem = (
     }
     async list() {
       if (this.uri.startsWith('asset://')) {
-        return [
-          new MockDirectory('file:///images'),
-          new MockFile('file:///app.json'),
-        ];
+        return [new MockDirectory('file:///images'), new MockFile('file:///app.json')];
       }
 
       if (this.uri === 'file:///restricted/') {
@@ -247,16 +237,14 @@ const createCustomAdapter = (): FileSystemAdapter => ({
   provider: 'rnfs',
   getRoots: vi.fn(async () => []),
   listDir: vi.fn(async () => []),
-  statPath: vi.fn(
-    async (path: string): Promise<FsEntry> => ({
-      name: path,
-      path,
-      isDirectory: false,
-      size: 0,
-      modifiedAtMs: null,
-      mimeTypeHint: null,
-    }),
-  ),
+  statPath: vi.fn(async (path: string): Promise<FsEntry> => ({
+    name: path,
+    path,
+    isDirectory: false,
+    size: 0,
+    modifiedAtMs: null,
+    mimeTypeHint: null,
+  })),
   readImageBase64: vi.fn(async () => ({
     mime: 'image/png',
     base64: 'ZmFrZQ==',
@@ -273,9 +261,7 @@ describe('resolveFileSystemAdapter', () => {
     const adapter = createCustomAdapter();
     const expoFileSystem = createExpoFileSystem();
 
-    await expect(
-      resolveFileSystemAdapter({ adapter, expoFileSystem }),
-    ).resolves.toBe(adapter);
+    await expect(resolveFileSystemAdapter({ adapter, expoFileSystem })).resolves.toBe(adapter);
   });
 
   it('prefers expoFileSystem over rnfs when both legacy options are present', async () => {
@@ -387,26 +373,24 @@ describe('createExpoFileSystemAdapter', () => {
   it('falls back to a hex preview for binary files', async () => {
     const adapter = createExpoFileSystemAdapter(createExpoFileSystem());
 
-    await expect(
-      adapter.readTextFile('file:///documents/binary.bin', 10),
-    ).resolves.toContain('[Binary file - 4 bytes]');
+    await expect(adapter.readTextFile('file:///documents/binary.bin', 10)).resolves.toContain(
+      '[Binary file - 4 bytes]',
+    );
   });
 
   it('rejects oversize previews', async () => {
     const adapter = createExpoFileSystemAdapter(createExpoFileSystem());
 
-    await expect(
-      adapter.readImageBase64('file:///documents/hello.txt', 1),
-    ).rejects.toThrow('File is too large for preview');
+    await expect(adapter.readImageBase64('file:///documents/hello.txt', 1)).rejects.toThrow(
+      'File is too large for preview',
+    );
   });
 
   it('reads and writes raw files as base64', async () => {
     const fileSystem = createExpoFileSystem();
     const adapter = createExpoFileSystemAdapter(fileSystem);
 
-    await expect(
-      adapter.readFileBase64?.('file:///documents/binary.bin'),
-    ).resolves.toEqual({
+    await expect(adapter.readFileBase64?.('file:///documents/binary.bin')).resolves.toEqual({
       fileName: 'binary.bin',
       mime: 'application/octet-stream',
       size: 4,
@@ -449,13 +433,11 @@ describe('createExpoFileSystemAdapter', () => {
       },
     ]);
 
-    await expect(
-      adapter.readTextFile('file:///documents/hello.txt', 10),
-    ).resolves.toBe('hello');
+    await expect(adapter.readTextFile('file:///documents/hello.txt', 10)).resolves.toBe('hello');
 
-    await expect(
-      adapter.readTextFile('file:///documents/binary.bin', 10),
-    ).resolves.toContain('[Binary file - 4 bytes]');
+    await expect(adapter.readTextFile('file:///documents/binary.bin', 10)).resolves.toContain(
+      '[Binary file - 4 bytes]',
+    );
   });
 
   it('lists modern Expo Android bundle assets without using Paths.info', async () => {
@@ -569,26 +551,24 @@ describe('createRNFSAdapter', () => {
   it('falls back to a hex preview for binary files', async () => {
     const adapter = createRNFSAdapter(createRNFS());
 
-    await expect(
-      adapter.readTextFile('/documents/binary.bin', 10),
-    ).resolves.toContain('[Binary file - 4 bytes]');
+    await expect(adapter.readTextFile('/documents/binary.bin', 10)).resolves.toContain(
+      '[Binary file - 4 bytes]',
+    );
   });
 
   it('rejects oversize previews', async () => {
     const adapter = createRNFSAdapter(createRNFS());
 
-    await expect(
-      adapter.readImageBase64('/documents/hello.txt', 1),
-    ).rejects.toThrow('File is too large for preview');
+    await expect(adapter.readImageBase64('/documents/hello.txt', 1)).rejects.toThrow(
+      'File is too large for preview',
+    );
   });
 
   it('reads and writes raw files as base64', async () => {
     const rnfs = createRNFS();
     const adapter = createRNFSAdapter(rnfs);
 
-    await expect(
-      adapter.readFileBase64?.('/documents/binary.bin'),
-    ).resolves.toEqual({
+    await expect(adapter.readFileBase64?.('/documents/binary.bin')).resolves.toEqual({
       fileName: 'binary.bin',
       mime: 'application/octet-stream',
       size: 4,
@@ -603,10 +583,6 @@ describe('createRNFSAdapter', () => {
       isDirectory: false,
     });
 
-    expect(rnfs.writeFile).toHaveBeenCalledWith(
-      '/documents/import.bin',
-      'AAECAw==',
-      'base64',
-    );
+    expect(rnfs.writeFile).toHaveBeenCalledWith('/documents/import.bin', 'AAECAw==', 'base64');
   });
 });

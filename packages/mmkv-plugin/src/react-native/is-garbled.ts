@@ -9,8 +9,7 @@ export const looksLikeGarbled = (str: string): boolean => {
   if (controlChars.test(str)) return true;
 
   // 3. Optionally, check if most chars are non-printable
-  const printableRatio =
-    [...str].filter((c) => c >= ' ' && c <= '~').length / str.length;
+  const printableRatio = [...str].filter((c) => c >= ' ' && c <= '~').length / str.length;
   if (printableRatio < 0.7) return true; // mostly non-printable → probably binary
 
   return false; // seems like valid string

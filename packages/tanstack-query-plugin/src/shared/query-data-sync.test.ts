@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
-import {
-  applyRemoteQueryState,
-  instrumentQuery,
-  instrumentQueryClient,
-} from './query-data-sync';
+import { applyRemoteQueryState, instrumentQuery, instrumentQueryClient } from './query-data-sync';
 
 const createQueryClient = () =>
   new QueryClient({

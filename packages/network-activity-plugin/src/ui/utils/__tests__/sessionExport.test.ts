@@ -165,10 +165,8 @@ describe('sessionExport', () => {
   });
 
   it('creates filesystem-friendly export filenames', () => {
-    expect(
-      getNetworkActivitySessionExportFileName(
-        new Date('2026-05-14T10:00:00.123Z'),
-      ),
-    ).toBe('rozenite-network-session-2026-05-14T10-00-00Z.json');
+    expect(getNetworkActivitySessionExportFileName(new Date('2026-05-14T10:00:00.123Z'))).toBe(
+      'rozenite-network-session-2026-05-14T10-00-00Z.json',
+    );
   });
 });

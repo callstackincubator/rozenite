@@ -1,8 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type {
-  InferAgentToolArgs,
-  InferAgentToolResult,
-} from '@rozenite/agent-shared';
+import type { InferAgentToolArgs, InferAgentToolResult } from '@rozenite/agent-shared';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
   AGENT_PLUGIN_ID,
@@ -30,20 +27,13 @@ interface UseRozeniteAgentToolRuntimeOptions {
   enabled?: boolean;
 }
 
-export interface UseRozeniteTypedAgentToolOptions<
-  TTool extends AgentTool = AgentTool,
-> {
+export interface UseRozeniteTypedAgentToolOptions<TTool extends AgentTool = AgentTool> {
   tool: TTool;
-  handler: (
-    args: InferAgentToolArgs<TTool>,
-  ) => MaybePromise<InferAgentToolResult<TTool>>;
+  handler: (args: InferAgentToolArgs<TTool>) => MaybePromise<InferAgentToolResult<TTool>>;
   enabled?: boolean;
 }
 
-export interface UseRozenitePlainAgentToolOptions<
-  TArgs = unknown,
-  TResult = unknown,
-> {
+export interface UseRozenitePlainAgentToolOptions<TArgs = unknown, TResult = unknown> {
   tool: AgentTool;
   handler: (args: TArgs) => MaybePromise<TResult>;
   enabled?: boolean;
@@ -66,10 +56,7 @@ export type UseRozeniteTypedPluginAgentToolWithPluginIdOptions<
   pluginId: string;
 } & UseRozeniteTypedAgentToolOptions<TTool>;
 
-export type UseRozenitePlainPluginAgentToolOptions<
-  TArgs = unknown,
-  TResult = unknown,
-> = {
+export type UseRozenitePlainPluginAgentToolOptions<TArgs = unknown, TResult = unknown> = {
   pluginId: string;
 } & UseRozenitePlainAgentToolOptions<TArgs, TResult>;
 
@@ -123,41 +110,35 @@ function useRozeniteDomainAgentTool(
       });
     };
 
-    const toolCallSubscription = client.onMessage(
-      'tool-call',
-      async (payload) => {
-        if (!enabled || payload.toolName !== toolName) {
-          return;
-        }
+    const toolCallSubscription = client.onMessage('tool-call', async (payload) => {
+      if (!enabled || payload.toolName !== toolName) {
+        return;
+      }
 
-        try {
-          const result = await handlerRef.current(payload.arguments);
+      try {
+        const result = await handlerRef.current(payload.arguments);
 
-          const response: ToolResultMessage['payload'] = {
-            callId: payload.callId,
-            success: true,
-            result,
-          };
+        const response: ToolResultMessage['payload'] = {
+          callId: payload.callId,
+          success: true,
+          result,
+        };
 
-          client.send('tool-result', response);
-        } catch (error) {
-          const response: ToolResultMessage['payload'] = {
-            callId: payload.callId,
-            success: false,
-            error: error instanceof Error ? error.message : String(error),
-          };
+        client.send('tool-result', response);
+      } catch (error) {
+        const response: ToolResultMessage['payload'] = {
+          callId: payload.callId,
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
 
-          client.send('tool-result', response);
-        }
-      },
-    );
+        client.send('tool-result', response);
+      }
+    });
 
-    const sessionReadySubscription = client.onMessage(
-      'agent-session-ready',
-      () => {
-        registerTool();
-      },
-    );
+    const sessionReadySubscription = client.onMessage('agent-session-ready', () => {
+      registerTool();
+    });
 
     registerTool();
 
@@ -186,12 +167,10 @@ function useRozeniteDomainAgentTool(
  *
  * @param options - Configuration using `pluginId`, `tool`, `handler`, and optional `enabled`.
  */
-export function useRozenitePluginAgentTool<
-  TToolOrArgs = AgentTool,
-  TResult = unknown,
->(options: UseRozenitePluginAgentToolOptions<TToolOrArgs, TResult>): void {
-  const { pluginId, ...toolOptions } =
-    options as UseRozenitePluginAgentToolRuntimeOptions;
+export function useRozenitePluginAgentTool<TToolOrArgs = AgentTool, TResult = unknown>(
+  options: UseRozenitePluginAgentToolOptions<TToolOrArgs, TResult>,
+): void {
+  const { pluginId, ...toolOptions } = options as UseRozenitePluginAgentToolRuntimeOptions;
   useRozeniteDomainAgentTool(pluginId, toolOptions);
 }
 
@@ -208,13 +187,9 @@ export function useRozenitePluginAgentTool<
  *
  * @param options - Configuration: `tool`, `handler`, and optional `enabled`.
  */
-export function useRozeniteInAppAgentTool<
-  TToolOrArgs = AgentTool,
-  TResult = unknown,
->(options: UseRozeniteInAppAgentToolOptions<TToolOrArgs, TResult>): void {
+export function useRozeniteInAppAgentTool<TToolOrArgs = AgentTool, TResult = unknown>(
+  options: UseRozeniteInAppAgentToolOptions<TToolOrArgs, TResult>,
+): void {
   const { ...toolOptions } = options;
-  useRozeniteDomainAgentTool(
-    APP_DOMAIN,
-    toolOptions as UseRozeniteAgentToolRuntimeOptions,
-  );
+  useRozeniteDomainAgentTool(APP_DOMAIN, toolOptions as UseRozeniteAgentToolRuntimeOptions);
 }

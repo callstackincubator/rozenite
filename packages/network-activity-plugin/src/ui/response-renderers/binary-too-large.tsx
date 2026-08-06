@@ -13,18 +13,12 @@ const formatBytes = (bytes: number): string => {
 export const binaryTooLargeRenderer: ResponseRenderer = {
   id: 'binary-too-large',
   matches: (_contentType, body) =>
-    typeof body === 'object' &&
-    body !== null &&
-    body.kind === 'binary-too-large',
+    typeof body === 'object' && body !== null && body.kind === 'binary-too-large',
   views: ['raw'],
   defaultView: 'raw',
   supportsOverride: false,
   render: ({ body }) => {
-    if (
-      typeof body !== 'object' ||
-      body === null ||
-      body.kind !== 'binary-too-large'
-    ) {
+    if (typeof body !== 'object' || body === null || body.kind !== 'binary-too-large') {
       return null;
     }
     return (

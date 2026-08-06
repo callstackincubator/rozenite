@@ -11,21 +11,16 @@ describe('sqlite bridge values', () => {
       params: [new Uint8Array([1, 2, 255]), { nested: new Uint8Array([9, 8]) }],
     };
 
-    expect(decodeSqliteBridgeValue(encodeSqliteBridgeValue(original))).toEqual(
-      original,
-    );
+    expect(decodeSqliteBridgeValue(encodeSqliteBridgeValue(original))).toEqual(original);
   });
 
   it('formats nested error details with code and cause information', () => {
-    const error = Object.assign(
-      new Error("Calling the 'runAsync' function has failed"),
-      {
-        cause: {
-          code: 'ERR_INTERNAL_SQLITE_ERROR',
-          reason: 'Invalid bind parameter',
-        },
+    const error = Object.assign(new Error("Calling the 'runAsync' function has failed"), {
+      cause: {
+        code: 'ERR_INTERNAL_SQLITE_ERROR',
+        reason: 'Invalid bind parameter',
       },
-    );
+    });
 
     expect(formatSqliteError(error)).toBe(
       "Calling the 'runAsync' function has failed\nCaused by: [ERR_INTERNAL_SQLITE_ERROR] Invalid bind parameter",

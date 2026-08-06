@@ -1,9 +1,4 @@
-import {
-  base64ToBytes,
-  bytesToBase64,
-  bytesToGroupedHex,
-  hexInputToBytes,
-} from './binary';
+import { base64ToBytes, bytesToBase64, bytesToGroupedHex, hexInputToBytes } from './binary';
 
 export type EditorMode = 'hex' | 'base64';
 
@@ -20,9 +15,7 @@ export type EditorAction =
   | { type: 'switch-mode'; mode: EditorMode }
   | { type: 'replace-bytes'; bytes: number[] };
 
-export type Validation =
-  | { ok: true; bytes: number[] }
-  | { ok: false; reason: string };
+export type Validation = { ok: true; bytes: number[] } | { ok: false; reason: string };
 
 const encode = (bytes: readonly number[], mode: EditorMode): string =>
   mode === 'hex' ? bytesToGroupedHex(bytes) : bytesToBase64(bytes);
@@ -30,20 +23,12 @@ const encode = (bytes: readonly number[], mode: EditorMode): string =>
 const parse = (text: string, mode: EditorMode) =>
   mode === 'hex' ? hexInputToBytes(text) : base64ToBytes(text);
 
-const parsedToState = (
-  text: string,
-  mode: EditorMode,
-): Pick<EditorState, 'bytes' | 'error'> => {
+const parsedToState = (text: string, mode: EditorMode): Pick<EditorState, 'bytes' | 'error'> => {
   const result = parse(text, mode);
-  return result.ok
-    ? { bytes: result.value, error: null }
-    : { bytes: null, error: result.error };
+  return result.ok ? { bytes: result.value, error: null } : { bytes: null, error: result.error };
 };
 
-export const initialState = (args: {
-  initialBytes?: number[];
-  mode?: EditorMode;
-}): EditorState => {
+export const initialState = (args: { initialBytes?: number[]; mode?: EditorMode }): EditorState => {
   const mode = args.mode ?? 'hex';
   if (args.initialBytes && args.initialBytes.length > 0) {
     return {
@@ -61,10 +46,7 @@ export const initialState = (args: {
   };
 };
 
-export const reduce = (
-  state: EditorState,
-  action: EditorAction,
-): EditorState => {
+export const reduce = (state: EditorState, action: EditorAction): EditorState => {
   switch (action.type) {
     case 'set-text': {
       return {

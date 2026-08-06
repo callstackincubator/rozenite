@@ -26,10 +26,7 @@ export const createToolRegistry = () => {
     tools.delete(deviceId);
   };
 
-  const registerTools = (
-    deviceId: string,
-    incomingTools: AgentTool[],
-  ): void => {
+  const registerTools = (deviceId: string, incomingTools: AgentTool[]): void => {
     let deviceTools = tools.get(deviceId);
     if (!deviceTools) {
       deviceTools = new Map();
@@ -115,9 +112,7 @@ export const createToolRegistry = () => {
       return [];
     }
 
-    const commonToolNames = getCommonToolNames(
-      availableDevices.map((device) => device.id),
-    );
+    const commonToolNames = getCommonToolNames(availableDevices.map((device) => device.id));
     const toolsByName = new Map<string, RegisteredTool[]>();
 
     for (const toolName of commonToolNames) {
@@ -145,9 +140,7 @@ export const createToolRegistry = () => {
       }
 
       const deviceIds = registeredTools.map((rt) => rt.deviceId);
-      const deviceNames = deviceIds
-        .map((id) => devices.get(id)?.name || id)
-        .join(', ');
+      const deviceNames = deviceIds.map((id) => devices.get(id)?.name || id).join(', ');
 
       const modifiedSchema: typeof firstTool.inputSchema = {
         type: 'object',
@@ -171,10 +164,7 @@ export const createToolRegistry = () => {
     return aggregatedTools;
   };
 
-  const findToolDevice = (
-    toolName: string,
-    deviceId?: string,
-  ): string | null => {
+  const findToolDevice = (toolName: string, deviceId?: string): string | null => {
     if (deviceId) {
       const deviceTools = tools.get(deviceId);
       if (deviceTools && deviceTools.has(toolName)) {

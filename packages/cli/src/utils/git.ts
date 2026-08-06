@@ -1,8 +1,6 @@
 import { spawn } from './spawn.js';
 
-export const isGitRepositoryClean = async (
-  projectRoot: string,
-): Promise<boolean> => {
+export const isGitRepositoryClean = async (projectRoot: string): Promise<boolean> => {
   try {
     const process = await spawn('git', ['status', '--porcelain'], {
       cwd: projectRoot,

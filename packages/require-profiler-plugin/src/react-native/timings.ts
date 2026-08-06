@@ -1,10 +1,7 @@
 import { RequireChainMeta, RequireChainData } from '../shared';
 
 export const getRequireChainsList = (): RequireChainMeta[] => {
-  if (
-    !('getRequireChainsList' in global) ||
-    typeof global.getRequireChainsList !== 'function'
-  ) {
+  if (!('getRequireChainsList' in global) || typeof global.getRequireChainsList !== 'function') {
     return [];
   }
 
@@ -12,10 +9,7 @@ export const getRequireChainsList = (): RequireChainMeta[] => {
 };
 
 export const getRequireChainData = (index: number): RequireChainData | null => {
-  if (
-    !('getRequireChainData' in global) ||
-    typeof global.getRequireChainData !== 'function'
-  ) {
+  if (!('getRequireChainData' in global) || typeof global.getRequireChainData !== 'function') {
     return null;
   }
 
@@ -27,8 +21,7 @@ export const onRequireChainComplete = (
 ): (() => void) => {
   if (
     !('__onRequireChainComplete' in global) ||
-    typeof (global as Record<string, unknown>).__onRequireChainComplete !==
-      'function'
+    typeof (global as Record<string, unknown>).__onRequireChainComplete !== 'function'
   ) {
     return () => {
       // Return no-op unsubscribe if not available
@@ -36,8 +29,6 @@ export const onRequireChainComplete = (
   }
 
   return (
-    global.__onRequireChainComplete as (
-      callback: (chain: RequireChainMeta) => void,
-    ) => () => void
+    global.__onRequireChainComplete as (callback: (chain: RequireChainMeta) => void) => () => void
   )(callback) as () => void;
 };

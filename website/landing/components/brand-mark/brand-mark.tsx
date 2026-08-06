@@ -19,12 +19,7 @@ type BrandMarkProps = {
  * Rendered in `currentColor` rather than the brand hex, so a mark sits in the
  * page's palette instead of dragging a second accent into it.
  */
-export const BrandMark = ({
-  slug,
-  label,
-  size = 26,
-  className,
-}: BrandMarkProps) => (
+export const BrandMark = ({ slug, label, size = 26, className }: BrandMarkProps) => (
   <svg
     role="img"
     aria-label={label}

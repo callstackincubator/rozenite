@@ -1,19 +1,10 @@
-import {
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
 export const LandingScreen = () => {
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
@@ -46,9 +37,7 @@ export const LandingScreen = () => {
 
               <TouchableOpacity
                 style={styles.navigationButton}
-                onPress={() =>
-                  navigation.navigate('ReactHookFormPlugin' as never)
-                }
+                onPress={() => navigation.navigate('ReactHookFormPlugin' as never)}
               >
                 <Text style={styles.buttonText}>React Hook Form</Text>
               </TouchableOpacity>
@@ -69,18 +58,14 @@ export const LandingScreen = () => {
 
               <TouchableOpacity
                 style={styles.navigationButton}
-                onPress={() =>
-                  navigation.navigate('PerformanceMonitor' as never)
-                }
+                onPress={() => navigation.navigate('PerformanceMonitor' as never)}
               >
                 <Text style={styles.buttonText}>Performance Monitor</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.navigationButton}
-                onPress={() =>
-                  navigation.navigate('RequireProfilerTest' as never)
-                }
+                onPress={() => navigation.navigate('RequireProfilerTest' as never)}
               >
                 <Text style={styles.buttonText}>Require Profiler Test</Text>
               </TouchableOpacity>
@@ -108,8 +93,8 @@ export const LandingScreen = () => {
             </View>
 
             <Text style={styles.description}>
-              Test and explore Rozenite plugins with type-safe, isomorphic
-              communication between DevTools and React Native
+              Test and explore Rozenite plugins with type-safe, isomorphic communication between
+              DevTools and React Native
             </Text>
           </View>
         </ScrollView>

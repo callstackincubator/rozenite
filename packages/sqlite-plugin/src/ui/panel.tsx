@@ -65,10 +65,7 @@ import {
 } from './sqlite-introspection';
 import { QueryResultTable } from './query-result-table';
 import { SqliteRowDeleteModal } from './sqlite-row-delete-modal';
-import {
-  SqliteDropModal,
-  type SqliteDropModalTarget,
-} from './sqlite-drop-modal';
+import { SqliteDropModal, type SqliteDropModalTarget } from './sqlite-drop-modal';
 import {
   buildDropAllEntitiesSql,
   buildDropEntitySql,
@@ -111,12 +108,7 @@ import {
   getDefaultTableColumnOrder,
   resolveTableColumnOrderUpdate,
 } from './sqlite-table-column-order';
-import {
-  copyToClipboard,
-  downloadTextFile,
-  formatNumber,
-  slugifyFileName,
-} from './utils';
+import { copyToClipboard, downloadTextFile, formatNumber, slugifyFileName } from './utils';
 import { getResultSummary, getScriptResultSummary } from './value-utils';
 import './globals.css';
 
@@ -168,8 +160,7 @@ type ActiveDropState = {
   target: SqliteDropModalTarget;
 } | null;
 
-const DEFAULT_QUERY =
-  'SELECT name, type FROM sqlite_schema ORDER BY type, name';
+const DEFAULT_QUERY = 'SELECT name, type FROM sqlite_schema ORDER BY type, name';
 const DEFAULT_QUERY_LIMIT = 100;
 const DEFAULT_PAGE_SIZE = 50;
 const MIN_EDITOR_HEIGHT = 180;
@@ -192,18 +183,13 @@ const DEFAULT_DROP_TARGET: SqliteDropModalTarget = {
   sql: '',
 };
 
-const joinClassNames = (
-  ...classNames: Array<string | false | null | undefined>
-) => classNames.filter(Boolean).join(' ');
+const joinClassNames = (...classNames: Array<string | false | null | undefined>) =>
+  classNames.filter(Boolean).join(' ');
 
-const safeError = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
+const safeError = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
-const getEntityKey = (
-  databaseId: string,
-  schemaName: string,
-  entityName: string,
-) => JSON.stringify([databaseId, schemaName, entityName]);
+const getEntityKey = (databaseId: string, schemaName: string, entityName: string) =>
+  JSON.stringify([databaseId, schemaName, entityName]);
 
 const getSchemaKey = (databaseId: string, schemaName: string) =>
   JSON.stringify([databaseId, schemaName]);
@@ -211,20 +197,12 @@ const getSchemaKey = (databaseId: string, schemaName: string) =>
 const getLineNumberAtPosition = (value: string, position: number) =>
   value.slice(0, Math.max(0, position)).split('\n').length;
 
-const buildGeneratedSelect = (
-  entity: SqliteEntity | null,
-  rowLimit: number,
-) => {
+const buildGeneratedSelect = (entity: SqliteEntity | null, rowLimit: number) => {
   if (!entity) {
     return DEFAULT_QUERY;
   }
 
-  return buildBrowseEntitySql(
-    entity.schemaName,
-    entity.name,
-    Math.max(1, Math.floor(rowLimit)),
-    0,
-  );
+  return buildBrowseEntitySql(entity.schemaName, entity.name, Math.max(1, Math.floor(rowLimit)), 0);
 };
 
 const buildCsv = (result: SqliteQueryResult | null) => {
@@ -240,15 +218,11 @@ const buildCsv = (result: SqliteQueryResult | null) => {
 
   return [
     result.columns.join(','),
-    ...result.rows.map((row) =>
-      result.columns.map((column) => escapeCell(row[column])).join(','),
-    ),
+    ...result.rows.map((row) => result.columns.map((column) => escapeCell(row[column])).join(',')),
   ].join('\n');
 };
 
-const getDefaultSelectedQueryStatementIndex = (
-  execution: SqliteScriptResult | null,
-) => {
+const getDefaultSelectedQueryStatementIndex = (execution: SqliteScriptResult | null) => {
   if (!execution || execution.statements.length === 0) {
     return null;
   }
@@ -260,18 +234,11 @@ const getDefaultSelectedQueryStatementIndex = (
   );
 };
 
-const getStatementQueryResult = (
-  statement: SqliteScriptStatementResult | null,
-) => statement?.execution?.result ?? null;
+const getStatementQueryResult = (statement: SqliteScriptStatementResult | null) =>
+  statement?.execution?.result ?? null;
 
-const getStatementSelectorLabel = (
-  statement: SqliteScriptStatementResult,
-  maxLength = 72,
-) => {
-  const normalizedSql = statement.input.sql
-    .replace(/\s+/g, ' ')
-    .replace(/;\s*$/, '')
-    .trim();
+const getStatementSelectorLabel = (statement: SqliteScriptStatementResult, maxLength = 72) => {
+  const normalizedSql = statement.input.sql.replace(/\s+/g, ' ').replace(/;\s*$/, '').trim();
 
   if (normalizedSql.length <= maxLength) {
     return `${formatNumber(statement.index + 1)}. ${normalizedSql}`;
@@ -305,19 +272,13 @@ const buildExplorerGroups = (
 
   return schemas
     .map((schema) => {
-      const schemaEntities = entities.filter(
-        (entity) => entity.schemaName === schema.name,
-      );
+      const schemaEntities = entities.filter((entity) => entity.schemaName === schema.name);
       const filteredEntities = term
         ? schemaEntities.filter((entity) =>
-            `${entity.name} ${entity.type} ${schema.name}`
-              .toLowerCase()
-              .includes(term),
+            `${entity.name} ${entity.type} ${schema.name}`.toLowerCase().includes(term),
           )
         : schemaEntities;
-      const tables = filteredEntities.filter(
-        (entity) => entity.type === 'table',
-      );
+      const tables = filteredEntities.filter((entity) => entity.type === 'table');
       const views = filteredEntities.filter((entity) => entity.type === 'view');
       const visible =
         term.length === 0 ||
@@ -377,8 +338,7 @@ export default function SqlitePanel() {
   const client = useRozeniteDevToolsClient<SqliteEventMap>({
     pluginId: PLUGIN_ID,
   });
-  const { requestDatabases, requestQuery, requestScriptExecution } =
-    useSqliteRequests(client);
+  const { requestDatabases, requestQuery, requestScriptExecution } = useSqliteRequests(client);
 
   const querySplitRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
@@ -394,19 +354,14 @@ export default function SqlitePanel() {
   const [editorSplit, setEditorSplit] = useState(50);
   const [expandedDatabaseIds, setExpandedDatabaseIds] = useState<string[]>([]);
   const [expandedSchemaKeys, setExpandedSchemaKeys] = useState<string[]>([]);
-  const [structureSection, setStructureSection] =
-    useState<StructureSection>('columns');
+  const [structureSection, setStructureSection] = useState<StructureSection>('columns');
 
   const [databases, setDatabases] = useState<SqliteDatabaseInfo[]>([]);
-  const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | null>(
-    null,
-  );
+  const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | null>(null);
   const [explorerStateByDatabase, setExplorerStateByDatabase] = useState<
     Record<string, ExplorerState>
   >({});
-  const [selectedEntityKey, setSelectedEntityKey] = useState<string | null>(
-    null,
-  );
+  const [selectedEntityKey, setSelectedEntityKey] = useState<string | null>(null);
 
   const [databaseLoading, setDatabaseLoading] = useState(false);
   const [browseLoading, setBrowseLoading] = useState(false);
@@ -420,9 +375,7 @@ export default function SqlitePanel() {
 
   const [browseOffset, setBrowseOffset] = useState(0);
   const [browsePageSize, setBrowsePageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [browseResult, setBrowseResult] = useState<SqliteQueryResult | null>(
-    null,
-  );
+  const [browseResult, setBrowseResult] = useState<SqliteQueryResult | null>(null);
   const [entityRowCount, setEntityRowCount] = useState<number | null>(null);
   const [structureState, setStructureState] = useState<StructureState>({
     columns: [],
@@ -431,20 +384,16 @@ export default function SqlitePanel() {
   });
 
   const [queryInput, setQueryInput] = useState(DEFAULT_QUERY);
-  const [queryExecution, setQueryExecution] =
-    useState<SqliteScriptResult | null>(null);
-  const [selectedQueryStatementIndex, setSelectedQueryStatementIndex] =
-    useState<number | null>(null);
+  const [queryExecution, setQueryExecution] = useState<SqliteScriptResult | null>(null);
+  const [selectedQueryStatementIndex, setSelectedQueryStatementIndex] = useState<number | null>(
+    null,
+  );
   const [queryRowLimit, setQueryRowLimit] = useState(DEFAULT_QUERY_LIMIT);
   const [querySelection, setQuerySelection] = useState({ start: 0, end: 0 });
   const [, setQueryMessage] = useState('Ready.');
   const [queryErrorLine, setQueryErrorLine] = useState<number | null>(null);
-  const [queryColumnCache, setQueryColumnCache] = useState(() =>
-    createSqlEditorColumnCache(),
-  );
-  const [tableColumnOrderById, setTableColumnOrderById] = useState<
-    Record<string, string[]>
-  >({});
+  const [queryColumnCache, setQueryColumnCache] = useState(() => createSqlEditorColumnCache());
+  const [tableColumnOrderById, setTableColumnOrderById] = useState<Record<string, string[]>>({});
   const [editingRow, setEditingRow] = useState<ActiveRowMutationState>(null);
   const [deletingRow, setDeletingRow] = useState<ActiveRowMutationState>(null);
   const [activeDrop, setActiveDrop] = useState<ActiveDropState>(null);
@@ -453,16 +402,14 @@ export default function SqlitePanel() {
   const [dataSearch, setDataSearch] = useState('');
 
   const selectedDatabase = useMemo(
-    () =>
-      databases.find((database) => database.id === selectedDatabaseId) ?? null,
+    () => databases.find((database) => database.id === selectedDatabaseId) ?? null,
     [databases, selectedDatabaseId],
   );
 
   const selectedExplorerState = useMemo(
     () =>
-      (selectedDatabaseId
-        ? explorerStateByDatabase[selectedDatabaseId]
-        : null) ?? DEFAULT_EXPLORER_STATE,
+      (selectedDatabaseId ? explorerStateByDatabase[selectedDatabaseId] : null) ??
+      DEFAULT_EXPLORER_STATE,
     [explorerStateByDatabase, selectedDatabaseId],
   );
 
@@ -475,8 +422,7 @@ export default function SqlitePanel() {
       entities.find(
         (entity) =>
           selectedDatabaseId != null &&
-          getEntityKey(selectedDatabaseId, entity.schemaName, entity.name) ===
-            selectedEntityKey,
+          getEntityKey(selectedDatabaseId, entity.schemaName, entity.name) === selectedEntityKey,
       ) ?? null,
     [entities, selectedDatabaseId, selectedEntityKey],
   );
@@ -576,20 +522,12 @@ export default function SqlitePanel() {
   }, [browseResult, filteredBrowseRows]);
 
   const dataPageStart = filteredBrowseRows.length > 0 ? browseOffset + 1 : 0;
-  const dataPageEnd =
-    filteredBrowseRows.length > 0
-      ? browseOffset + filteredBrowseRows.length
-      : 0;
+  const dataPageEnd = filteredBrowseRows.length > 0 ? browseOffset + filteredBrowseRows.length : 0;
   const canBrowseBackward = browseOffset > 0;
-  const canBrowseForward =
-    entityRowCount != null && browseOffset + browsePageSize < entityRowCount;
-  const currentDataPage = selectedEntity
-    ? Math.floor(browseOffset / browsePageSize) + 1
-    : 0;
+  const canBrowseForward = entityRowCount != null && browseOffset + browsePageSize < entityRowCount;
+  const currentDataPage = selectedEntity ? Math.floor(browseOffset / browsePageSize) + 1 : 0;
   const totalDataPages =
-    entityRowCount == null || entityRowCount === 0
-      ? 0
-      : Math.ceil(entityRowCount / browsePageSize);
+    entityRowCount == null || entityRowCount === 0 ? 0 : Math.ceil(entityRowCount / browsePageSize);
   const primaryKeyColumns = useMemo(
     () => getPrimaryKeyColumns(structureState.columns),
     [structureState.columns],
@@ -618,11 +556,8 @@ export default function SqlitePanel() {
         type: column.type || '—',
         nullable: column.notNull ? 'No' : 'Yes',
         defaultValue: column.defaultValue ?? '—',
-        primaryKey:
-          column.primaryKeyOrder > 0 ? `PK ${column.primaryKeyOrder}` : '—',
-        foreignKey: structureState.foreignKeys.some(
-          (foreignKey) => foreignKey.from === column.name,
-        )
+        primaryKey: column.primaryKeyOrder > 0 ? `PK ${column.primaryKeyOrder}` : '—',
+        foreignKey: structureState.foreignKeys.some((foreignKey) => foreignKey.from === column.name)
           ? 'Yes'
           : '—',
         extra: column.hidden > 0 ? `Hidden ${column.hidden}` : '—',
@@ -641,9 +576,7 @@ export default function SqlitePanel() {
     [structureState.indexes],
   );
 
-  const structureColumnsTableColumns = useMemo<
-    ColumnDef<StructureColumnRow, unknown>[]
-  >(
+  const structureColumnsTableColumns = useMemo<ColumnDef<StructureColumnRow, unknown>[]>(
     () => [
       { id: 'name', header: 'Name', accessorKey: 'name' },
       { id: 'type', header: 'Type', accessorKey: 'type' },
@@ -656,9 +589,7 @@ export default function SqlitePanel() {
     [],
   );
 
-  const structureIndexesTableColumns = useMemo<
-    ColumnDef<StructureIndexRow, unknown>[]
-  >(
+  const structureIndexesTableColumns = useMemo<ColumnDef<StructureIndexRow, unknown>[]>(
     () => [
       { id: 'indexName', header: 'Index Name', accessorKey: 'indexName' },
       { id: 'columns', header: 'Columns', accessorKey: 'columns' },
@@ -668,10 +599,7 @@ export default function SqlitePanel() {
     [],
   );
 
-  const queryStatements = useMemo(
-    () => splitSqlStatements(queryInput),
-    [queryInput],
-  );
+  const queryStatements = useMemo(() => splitSqlStatements(queryInput), [queryInput]);
 
   const selectedQueryStatement = useMemo(() => {
     if (!queryExecution) {
@@ -679,18 +607,13 @@ export default function SqlitePanel() {
     }
 
     const nextIndex =
-      selectedQueryStatementIndex ??
-      getDefaultSelectedQueryStatementIndex(queryExecution);
+      selectedQueryStatementIndex ?? getDefaultSelectedQueryStatementIndex(queryExecution);
 
     if (nextIndex == null) {
       return null;
     }
 
-    return (
-      queryExecution.statements.find(
-        (statement) => statement.index === nextIndex,
-      ) ?? null
-    );
+    return queryExecution.statements.find((statement) => statement.index === nextIndex) ?? null;
   }, [queryExecution, selectedQueryStatementIndex]);
 
   const activeQueryResult = useMemo(
@@ -701,8 +624,7 @@ export default function SqlitePanel() {
   const selectedQueryStatementValue = selectedQueryStatement?.index ?? '';
 
   const queryTableId = useMemo(
-    () =>
-      buildQueryTableId(selectedDatabaseId, activeQueryResult?.columns ?? []),
+    () => buildQueryTableId(selectedDatabaseId, activeQueryResult?.columns ?? []),
     [activeQueryResult?.columns, selectedDatabaseId],
   );
 
@@ -740,19 +662,12 @@ export default function SqlitePanel() {
   );
 
   const getTableColumnOrder = useCallback(
-    (
-      tableId: string,
-      columnIds: string[],
-      fixedLeadingColumnIds: string[] = [],
-    ) =>
+    (tableId: string, columnIds: string[], fixedLeadingColumnIds: string[] = []) =>
       resolveTableColumnOrderUpdate({
         columnIds,
         fixedLeadingColumnIds,
         storedColumnOrder: tableColumnOrderById[tableId],
-        nextColumnOrder: getDefaultTableColumnOrder(
-          columnIds,
-          fixedLeadingColumnIds,
-        ),
+        nextColumnOrder: getDefaultTableColumnOrder(columnIds, fixedLeadingColumnIds),
       }),
     [tableColumnOrderById],
   );
@@ -807,39 +722,26 @@ export default function SqlitePanel() {
   );
 
   const queryColumnOrder = useMemo(
-    () =>
-      getTableColumnOrder(queryTableId, queryColumnIds, [
-        SQLITE_ROW_NUMBER_COLUMN_ID,
-      ]),
+    () => getTableColumnOrder(queryTableId, queryColumnIds, [SQLITE_ROW_NUMBER_COLUMN_ID]),
     [getTableColumnOrder, queryColumnIds, queryTableId],
   );
   const dataColumnOrder = useMemo(
-    () =>
-      getTableColumnOrder(dataTableId, dataColumnIds, [
-        SQLITE_ROW_NUMBER_COLUMN_ID,
-      ]),
+    () => getTableColumnOrder(dataTableId, dataColumnIds, [SQLITE_ROW_NUMBER_COLUMN_ID]),
     [dataColumnIds, dataTableId, getTableColumnOrder],
   );
   const structureColumnsColumnOrder = useMemo(
-    () =>
-      getTableColumnOrder(structureColumnsTableId, structureColumnsColumnIds),
+    () => getTableColumnOrder(structureColumnsTableId, structureColumnsColumnIds),
     [getTableColumnOrder, structureColumnsColumnIds, structureColumnsTableId],
   );
   const structureIndexesColumnOrder = useMemo(
-    () =>
-      getTableColumnOrder(structureIndexesTableId, structureIndexesColumnIds),
+    () => getTableColumnOrder(structureIndexesTableId, structureIndexesColumnIds),
     [getTableColumnOrder, structureIndexesColumnIds, structureIndexesTableId],
   );
 
-  const setEntitySelection = useCallback(
-    (databaseId: string, entity: SqliteEntity) => {
-      setSelectedDatabaseId(databaseId);
-      setSelectedEntityKey(
-        getEntityKey(databaseId, entity.schemaName, entity.name),
-      );
-    },
-    [],
-  );
+  const setEntitySelection = useCallback((databaseId: string, entity: SqliteEntity) => {
+    setSelectedDatabaseId(databaseId);
+    setSelectedEntityKey(getEntityKey(databaseId, entity.schemaName, entity.name));
+  }, []);
 
   const loadDatabases = useCallback(async () => {
     setDatabaseLoading(true);
@@ -867,10 +769,7 @@ export default function SqlitePanel() {
         return [...currentIds, ...missingIds];
       });
       setSelectedDatabaseId((current) => {
-        if (
-          current &&
-          nextDatabases.some((database) => database.id === current)
-        ) {
+        if (current && nextDatabases.some((database) => database.id === current)) {
           return current;
         }
 
@@ -929,9 +828,7 @@ export default function SqlitePanel() {
           },
         }));
         setExpandedSchemaKeys((current) => {
-          const nextKeys = nextSchemas.map((schema) =>
-            getSchemaKey(databaseId, schema.name),
-          );
+          const nextKeys = nextSchemas.map((schema) => getSchemaKey(databaseId, schema.name));
           return Array.from(new Set([...current, ...nextKeys]));
         });
       } catch (error) {
@@ -978,17 +875,12 @@ export default function SqlitePanel() {
             selectedEntity.name,
             browsePageSize,
             browseOffset,
-            rowMutationDescriptor?.mode === 'rowid'
-              ? rowMutationDescriptor.rowIdIdentifier
-              : null,
+            rowMutationDescriptor?.mode === 'rowid' ? rowMutationDescriptor.rowIdIdentifier : null,
           ),
         }),
         requestQuery({
           databaseId: selectedDatabaseId,
-          sql: buildEntityCountSql(
-            selectedEntity.schemaName,
-            selectedEntity.name,
-          ),
+          sql: buildEntityCountSql(selectedEntity.schemaName, selectedEntity.name),
         }),
       ]);
 
@@ -1051,43 +943,27 @@ export default function SqlitePanel() {
     setStructureError(null);
 
     try {
-      const [columnsOutcome, foreignKeysOutcome, indexesOutcome] =
-        await Promise.allSettled([
-          requestQuery({
-            databaseId: selectedDatabaseId,
-            sql: buildTableXInfoSql(
-              selectedEntity.schemaName,
-              selectedEntity.name,
-            ),
-          }),
-          requestQuery({
-            databaseId: selectedDatabaseId,
-            sql: buildForeignKeySql(
-              selectedEntity.schemaName,
-              selectedEntity.name,
-            ),
-          }),
-          requestQuery({
-            databaseId: selectedDatabaseId,
-            sql: buildIndexListSql(
-              selectedEntity.schemaName,
-              selectedEntity.name,
-            ),
-          }),
-        ]);
+      const [columnsOutcome, foreignKeysOutcome, indexesOutcome] = await Promise.allSettled([
+        requestQuery({
+          databaseId: selectedDatabaseId,
+          sql: buildTableXInfoSql(selectedEntity.schemaName, selectedEntity.name),
+        }),
+        requestQuery({
+          databaseId: selectedDatabaseId,
+          sql: buildForeignKeySql(selectedEntity.schemaName, selectedEntity.name),
+        }),
+        requestQuery({
+          databaseId: selectedDatabaseId,
+          sql: buildIndexListSql(selectedEntity.schemaName, selectedEntity.name),
+        }),
+      ]);
 
       const columns =
-        columnsOutcome.status === 'fulfilled'
-          ? parseColumns(columnsOutcome.value)
-          : [];
+        columnsOutcome.status === 'fulfilled' ? parseColumns(columnsOutcome.value) : [];
       const foreignKeys =
-        foreignKeysOutcome.status === 'fulfilled'
-          ? parseForeignKeys(foreignKeysOutcome.value)
-          : [];
+        foreignKeysOutcome.status === 'fulfilled' ? parseForeignKeys(foreignKeysOutcome.value) : [];
       const indexes =
-        indexesOutcome.status === 'fulfilled'
-          ? parseIndexes(indexesOutcome.value)
-          : [];
+        indexesOutcome.status === 'fulfilled' ? parseIndexes(indexesOutcome.value) : [];
 
       const enrichedIndexes = await Promise.all(
         indexes.map(async (index) => {
@@ -1149,9 +1025,7 @@ export default function SqlitePanel() {
 
   const refreshExplorerData = useCallback(async () => {
     const nextDatabases = await loadDatabases();
-    await Promise.all(
-      nextDatabases.map((database) => loadExplorer(database.id)),
-    );
+    await Promise.all(nextDatabases.map((database) => loadExplorer(database.id)));
   }, [loadDatabases, loadExplorer]);
 
   const refreshWorkspace = useCallback(async () => {
@@ -1164,12 +1038,7 @@ export default function SqlitePanel() {
 
   const handleSaveRow = useCallback(
     async (nextValues: Record<string, unknown>) => {
-      if (
-        !selectedDatabaseId ||
-        !selectedEntity ||
-        !editingRow ||
-        !rowMutationDescriptor
-      ) {
+      if (!selectedDatabaseId || !selectedEntity || !editingRow || !rowMutationDescriptor) {
         throw new Error('The selected row is no longer available.');
       }
 
@@ -1201,12 +1070,7 @@ export default function SqlitePanel() {
   );
 
   const handleDeleteRow = useCallback(async () => {
-    if (
-      !selectedDatabaseId ||
-      !selectedEntity ||
-      !deletingRow ||
-      !rowMutationDescriptor
-    ) {
+    if (!selectedDatabaseId || !selectedEntity || !deletingRow || !rowMutationDescriptor) {
       throw new Error('The selected row is no longer available.');
     }
 
@@ -1254,12 +1118,8 @@ export default function SqlitePanel() {
       return;
     }
 
-    const tableCount = entities.filter(
-      (entity) => entity.type === 'table',
-    ).length;
-    const viewCount = entities.filter(
-      (entity) => entity.type === 'view',
-    ).length;
+    const tableCount = entities.filter((entity) => entity.type === 'table').length;
+    const viewCount = entities.filter((entity) => entity.type === 'view').length;
 
     setActiveDrop({
       databaseId: selectedDatabaseId,
@@ -1291,9 +1151,7 @@ export default function SqlitePanel() {
         databaseId,
         sql: SQLITE_READ_FOREIGN_KEYS_SQL,
       });
-      const foreignKeysWereEnabled = isForeignKeysEnabled(
-        foreignKeysResult.rows,
-      );
+      const foreignKeysWereEnabled = isForeignKeysEnabled(foreignKeysResult.rows);
 
       if (foreignKeysWereEnabled) {
         await requestQuery({
@@ -1312,8 +1170,7 @@ export default function SqlitePanel() {
 
         if (scriptResult.failedStatementIndex != null) {
           const failedStatement = scriptResult.statements.find(
-            (statement) =>
-              statement.index === scriptResult.failedStatementIndex,
+            (statement) => statement.index === scriptResult.failedStatementIndex,
           );
           throw new Error(failedStatement?.error ?? 'Script execution failed.');
         }
@@ -1332,17 +1189,13 @@ export default function SqlitePanel() {
           // is looking at this modal. Only surface the restore failure when
           // the drop itself succeeded, since that's a new, silent problem.
           if (!dropError) {
-            throw restoreError instanceof Error
-              ? restoreError
-              : new Error(String(restoreError));
+            throw restoreError instanceof Error ? restoreError : new Error(String(restoreError));
           }
         }
       }
 
       if (dropError) {
-        throw dropError instanceof Error
-          ? dropError
-          : new Error(String(dropError));
+        throw dropError instanceof Error ? dropError : new Error(String(dropError));
       }
     },
     [requestQuery, requestScriptExecution],
@@ -1376,8 +1229,7 @@ export default function SqlitePanel() {
   }, [activeDrop, dropAllEntities, dropSelectedEntity, refreshExplorerData]);
 
   const getActiveStatement = useCallback(() => {
-    const cursorPosition =
-      editorRef.current?.getSelection().start ?? querySelection.start;
+    const cursorPosition = editorRef.current?.getSelection().start ?? querySelection.start;
     const currentStatement = getStatementAtCursor(queryInput, cursorPosition);
     const start = currentStatement?.start ?? 0;
     const end = currentStatement?.end ?? queryInput.length;
@@ -1486,25 +1338,18 @@ export default function SqlitePanel() {
           execution.failedStatementIndex == null
             ? null
             : (execution.statements.find(
-                (statement) =>
-                  statement.index === execution.failedStatementIndex,
+                (statement) => statement.index === execution.failedStatementIndex,
               ) ?? null);
 
         setQueryExecution(execution);
-        setSelectedQueryStatementIndex(
-          getDefaultSelectedQueryStatementIndex(execution),
-        );
+        setSelectedQueryStatementIndex(getDefaultSelectedQueryStatementIndex(execution));
 
         if (failedStatement?.error) {
           setQueryError(failedStatement.error);
-          setQueryErrorLine(
-            getLineNumberAtPosition(queryInput, failedStatement.start),
-          );
+          setQueryErrorLine(getLineNumberAtPosition(queryInput, failedStatement.start));
         }
 
-        setQueryMessage(
-          getScriptResultSummary(execution) ?? 'Script execution completed.',
-        );
+        setQueryMessage(getScriptResultSummary(execution) ?? 'Script execution completed.');
 
         if (hasMutatingStatements(execution)) {
           await refreshWorkspace();
@@ -1513,9 +1358,7 @@ export default function SqlitePanel() {
         setQueryExecution(null);
         setSelectedQueryStatementIndex(null);
         setQueryError(safeError(error));
-        setQueryErrorLine(
-          getLineNumberAtPosition(queryInput, querySelection.start),
-        );
+        setQueryErrorLine(getLineNumberAtPosition(queryInput, querySelection.start));
         setQueryMessage('Execution failed.');
       } finally {
         setQueryLoading(false);
@@ -1537,22 +1380,12 @@ export default function SqlitePanel() {
 
   const handleRunCurrentStatement = useCallback(async () => {
     try {
-      await runSingleStatement(
-        getActiveStatement(),
-        'Running current statement',
-      );
+      await runSingleStatement(getActiveStatement(), 'Running current statement');
     } catch (error) {
       setQueryError(safeError(error));
-      setQueryErrorLine(
-        getLineNumberAtPosition(queryInput, querySelection.start),
-      );
+      setQueryErrorLine(getLineNumberAtPosition(queryInput, querySelection.start));
     }
-  }, [
-    getActiveStatement,
-    queryInput,
-    querySelection.start,
-    runSingleStatement,
-  ]);
+  }, [getActiveStatement, queryInput, querySelection.start, runSingleStatement]);
 
   const handleSaveQuery = useCallback(() => {
     const fileName = `${slugifyFileName(selectedEntity?.name ?? 'query')}.sql`;
@@ -1595,9 +1428,7 @@ export default function SqlitePanel() {
       setQueryInput(formatted);
       setQueryError(null);
       setQueryErrorLine(null);
-      setQueryMessage(
-        formatted ? 'Formatted query.' : 'Cleared query formatting.',
-      );
+      setQueryMessage(formatted ? 'Formatted query.' : 'Cleared query formatting.');
     } catch (error) {
       setQueryError(safeError(error));
       setQueryErrorLine(null);
@@ -1628,13 +1459,7 @@ export default function SqlitePanel() {
       const columns = parseColumns(result);
 
       setQueryColumnCache((current) =>
-        setSqlEditorCachedColumns(
-          current,
-          selectedDatabaseId,
-          schemaName,
-          entityName,
-          columns,
-        ),
+        setSqlEditorCachedColumns(current, selectedDatabaseId, schemaName, entityName, columns),
       );
 
       return columns;
@@ -1652,24 +1477,18 @@ export default function SqlitePanel() {
         return null;
       }
 
-      const aliases = extractSqlEditorAliases(
-        context.state.doc.sliceString(0, context.pos),
-      );
+      const aliases = extractSqlEditorAliases(context.state.doc.sliceString(0, context.pos));
       const entity = resolveSqlEditorEntityReference({
         aliases,
         entities,
         request,
-        selectedSchemaName:
-          selectedEntity?.schemaName ?? defaultCompletionSchemaName ?? null,
+        selectedSchemaName: selectedEntity?.schemaName ?? defaultCompletionSchemaName ?? null,
       });
       if (!entity) {
         return null;
       }
 
-      const columns = await ensureQueryEntityColumns(
-        entity.schemaName,
-        entity.name,
-      );
+      const columns = await ensureQueryEntityColumns(entity.schemaName, entity.name);
       if (context.aborted || columns.length === 0) {
         return null;
       }
@@ -1681,12 +1500,7 @@ export default function SqlitePanel() {
         validFor: /^[A-Za-z_][\w$]*$/,
       };
     },
-    [
-      defaultCompletionSchemaName,
-      ensureQueryEntityColumns,
-      entities,
-      selectedEntity?.schemaName,
-    ],
+    [defaultCompletionSchemaName, ensureQueryEntityColumns, entities, selectedEntity?.schemaName],
   );
 
   const handleSidebarResizeStart = useCallback(
@@ -1777,11 +1591,7 @@ export default function SqlitePanel() {
   }, [refreshExplorerData]);
 
   useEffect(() => {
-    if (
-      !selectedDatabaseId ||
-      selectedExplorerState.loading ||
-      !selectedExplorerState.loaded
-    ) {
+    if (!selectedDatabaseId || selectedExplorerState.loading || !selectedExplorerState.loaded) {
       return;
     }
 
@@ -1789,9 +1599,7 @@ export default function SqlitePanel() {
       if (
         current &&
         selectedExplorerState.entities.some(
-          (entity) =>
-            getEntityKey(selectedDatabaseId, entity.schemaName, entity.name) ===
-            current,
+          (entity) => getEntityKey(selectedDatabaseId, entity.schemaName, entity.name) === current,
         )
       ) {
         return current;
@@ -1799,11 +1607,7 @@ export default function SqlitePanel() {
 
       const fallbackEntity = selectedExplorerState.entities[0];
       return fallbackEntity
-        ? getEntityKey(
-            selectedDatabaseId,
-            fallbackEntity.schemaName,
-            fallbackEntity.name,
-          )
+        ? getEntityKey(selectedDatabaseId, fallbackEntity.schemaName, fallbackEntity.name)
         : null;
     });
   }, [
@@ -1843,18 +1647,11 @@ export default function SqlitePanel() {
   }, [loadBrowse, selectedEntityKey]);
 
   useEffect(() => {
-    setQueryColumnCache((current) =>
-      syncSqlEditorColumnCacheDatabase(current, selectedDatabaseId),
-    );
+    setQueryColumnCache((current) => syncSqlEditorColumnCacheDatabase(current, selectedDatabaseId));
   }, [selectedDatabaseId]);
 
   useEffect(() => {
-    if (
-      !selectedDatabaseId ||
-      !selectedEntity ||
-      structureLoading ||
-      structureError
-    ) {
+    if (!selectedDatabaseId || !selectedEntity || structureLoading || structureError) {
       return;
     }
 
@@ -1999,10 +1796,7 @@ export default function SqlitePanel() {
     )
   ) : (
     <div ref={querySplitRef} className="sqlite-query-layout">
-      <section
-        className="sqlite-query-editor-pane"
-        style={{ flex: `0 0 ${editorSplit}%` }}
-      >
+      <section className="sqlite-query-editor-pane" style={{ flex: `0 0 ${editorSplit}%` }}>
         {queryTabHeader}
         <div className="sqlite-editor-frame">
           <SqlEditor
@@ -2010,14 +1804,8 @@ export default function SqlitePanel() {
             ariaLabel="SQL query editor"
             completionSchema={editorCompletionSchema}
             completionSource={editorCompletionSource}
-            defaultSchema={
-              selectedEntity?.schemaName ?? defaultCompletionSchemaName
-            }
-            defaultTable={
-              cachedSelectedEntityColumns.length > 0
-                ? selectedEntity?.name
-                : undefined
-            }
+            defaultSchema={selectedEntity?.schemaName ?? defaultCompletionSchemaName}
+            defaultTable={cachedSelectedEntityColumns.length > 0 ? selectedEntity?.name : undefined}
             errorLine={queryErrorLine}
             onFormat={handleFormatQuery}
             onRun={() => void handleRun()}
@@ -2045,9 +1833,7 @@ export default function SqlitePanel() {
         <div className="sqlite-results-header sqlite-query-results-header">
           <div className="sqlite-toolbar-actions sqlite-query-results-header-main">
             {!queryExecution ? (
-              <span className="sqlite-helper-text">
-                Run SQL to inspect per-statement results.
-              </span>
+              <span className="sqlite-helper-text">Run SQL to inspect per-statement results.</span>
             ) : null}
 
             {queryExecution && queryExecution.statements.length > 1 ? (
@@ -2123,8 +1909,7 @@ export default function SqlitePanel() {
           <div className="sqlite-inline-error" aria-live="polite">
             <div>
               <p className="font-medium text-rose-100">
-                {(queryExecution?.totalStatementCount ??
-                  queryStatements.length) > 1
+                {(queryExecution?.totalStatementCount ?? queryStatements.length) > 1
                   ? 'Script Error'
                   : 'SQL Error'}
               </p>
@@ -2135,11 +1920,7 @@ export default function SqlitePanel() {
                 </p>
               ) : null}
             </div>
-            <button
-              type="button"
-              className={ghostButtonClassName}
-              onClick={handleCopyError}
-            >
+            <button type="button" className={ghostButtonClassName} onClick={handleCopyError}>
               <Copy aria-hidden="true" className="h-4 w-4" />
               Copy Error
             </button>
@@ -2152,20 +1933,15 @@ export default function SqlitePanel() {
             result={activeQueryResult}
             columnOrder={queryColumnOrder}
             onColumnOrderChange={(nextColumnOrder) =>
-              setTableColumnOrder(
-                queryTableId,
-                queryColumnIds,
-                nextColumnOrder,
-                [SQLITE_ROW_NUMBER_COLUMN_ID],
-              )
+              setTableColumnOrder(queryTableId, queryColumnIds, nextColumnOrder, [
+                SQLITE_ROW_NUMBER_COLUMN_ID,
+              ])
             }
             loading={queryLoading}
             showMetadata={false}
             shellClassName="h-full min-h-0"
             scrollContainerClassName="min-h-0 sqlite-results-scroll-flush"
-            emptyTitle={
-              selectedQueryStatement?.error ? 'Statement Failed' : 'No Results'
-            }
+            emptyTitle={selectedQueryStatement?.error ? 'Statement Failed' : 'No Results'}
             emptyDescription={
               selectedQueryStatement?.error
                 ? 'Select another statement to inspect its rows, or fix the error and run again.'
@@ -2192,9 +1968,7 @@ export default function SqlitePanel() {
                 disabled={editableColumns.length === 0}
                 aria-label={`Edit row ${rowNumber}`}
                 title={
-                  editableColumns.length === 0
-                    ? 'No editable columns'
-                    : `Edit row ${rowNumber}`
+                  editableColumns.length === 0 ? 'No editable columns' : `Edit row ${rowNumber}`
                 }
                 onClick={(event) => {
                   event.stopPropagation();
@@ -2236,11 +2010,7 @@ export default function SqlitePanel() {
       'database',
     )
   ) : !selectedEntity ? (
-    renderEmptyState(
-      'Select A Table',
-      'Choose a table in the sidebar to view its rows.',
-      'table',
-    )
+    renderEmptyState('Select A Table', 'Choose a table in the sidebar to view its rows.', 'table')
   ) : (
     <div className="sqlite-content-stack">
       <header className="sqlite-object-header">
@@ -2265,11 +2035,7 @@ export default function SqlitePanel() {
             </div>
           </div>
           {dataSearch.trim() ? (
-            <button
-              type="button"
-              className="sqlite-chip"
-              onClick={() => setDataSearch('')}
-            >
+            <button type="button" className="sqlite-chip" onClick={() => setDataSearch('')}>
               contains {dataSearch}
               <X aria-hidden="true" className="h-3.5 w-3.5" />
             </button>
@@ -2287,10 +2053,7 @@ export default function SqlitePanel() {
           >
             <RefreshCw
               aria-hidden="true"
-              className={joinClassNames(
-                'h-4 w-4',
-                browseLoading && 'animate-spin',
-              )}
+              className={joinClassNames('h-4 w-4', browseLoading && 'animate-spin')}
             />
           </button>
         </div>
@@ -2319,9 +2082,7 @@ export default function SqlitePanel() {
           showMetadata={false}
           shellClassName="h-full min-h-0"
           scrollContainerClassName="min-h-0 sqlite-results-scroll-flush"
-          emptyTitle={
-            selectedEntity ? 'No Rows On This Page' : 'No Table Selected'
-          }
+          emptyTitle={selectedEntity ? 'No Rows On This Page' : 'No Table Selected'}
           emptyDescription={
             selectedEntity
               ? 'This page does not contain rows.'
@@ -2371,11 +2132,7 @@ export default function SqlitePanel() {
           <button
             type="button"
             className={secondaryButtonClassName}
-            onClick={() =>
-              setBrowseOffset((current) =>
-                Math.max(0, current - browsePageSize),
-              )
-            }
+            onClick={() => setBrowseOffset((current) => Math.max(0, current - browsePageSize))}
             disabled={browseLoading || !canBrowseBackward}
           >
             Previous
@@ -2383,17 +2140,13 @@ export default function SqlitePanel() {
           <button
             type="button"
             className={secondaryButtonClassName}
-            onClick={() =>
-              setBrowseOffset((current) => current + browsePageSize)
-            }
+            onClick={() => setBrowseOffset((current) => current + browsePageSize)}
             disabled={browseLoading || !canBrowseForward}
           >
             Next
           </button>
           <span className="sqlite-badge sqlite-badge-neutral sqlite-tabular">
-            {totalDataPages > 0
-              ? `${currentDataPage}/${totalDataPages}`
-              : '0/0'}
+            {totalDataPages > 0 ? `${currentDataPage}/${totalDataPages}` : '0/0'}
           </span>
         </div>
       </footer>
@@ -2415,11 +2168,7 @@ export default function SqlitePanel() {
   ) : (
     <div className="sqlite-content-stack">
       <header className="sqlite-object-header">
-        <div
-          className="sqlite-section-tabs"
-          role="tablist"
-          aria-label="Structure sections"
-        >
+        <div className="sqlite-section-tabs" role="tablist" aria-label="Structure sections">
           {(
             [
               ['columns', 'Columns'],
@@ -2454,19 +2203,14 @@ export default function SqlitePanel() {
           >
             <RefreshCw
               aria-hidden="true"
-              className={joinClassNames(
-                'h-4 w-4',
-                structureLoading && 'animate-spin',
-              )}
+              className={joinClassNames('h-4 w-4', structureLoading && 'animate-spin')}
             />
           </button>
           <button
             type="button"
             className={dangerIconButtonClassName}
             onClick={handleOpenDropEntity}
-            aria-label={
-              selectedEntity.type === 'view' ? 'Drop view' : 'Drop table'
-            }
+            aria-label={selectedEntity.type === 'view' ? 'Drop view' : 'Drop table'}
             title={selectedEntity.type === 'view' ? 'Drop view' : 'Drop table'}
           >
             <Trash2 aria-hidden="true" className="h-4 w-4" />
@@ -2528,19 +2272,10 @@ export default function SqlitePanel() {
                 ) : (
                   <div className="sqlite-chip-row">
                     {primaryKeyColumns
-                      .sort(
-                        (left, right) =>
-                          left.primaryKeyOrder - right.primaryKeyOrder,
-                      )
+                      .sort((left, right) => left.primaryKeyOrder - right.primaryKeyOrder)
                       .map((column) => (
-                        <span
-                          key={column.name}
-                          className="sqlite-chip sqlite-chip-static"
-                        >
-                          <KeyRound
-                            aria-hidden="true"
-                            className="h-3.5 w-3.5"
-                          />
+                        <span key={column.name} className="sqlite-chip sqlite-chip-static">
+                          <KeyRound aria-hidden="true" className="h-3.5 w-3.5" />
                           {column.name}
                         </span>
                       ))}
@@ -2557,18 +2292,14 @@ export default function SqlitePanel() {
                 ) : (
                   <div className="space-y-3">
                     {structureState.foreignKeys.map((foreignKey) => (
-                      <div
-                        key={`${foreignKey.id}-${foreignKey.seq}`}
-                        className="sqlite-key-row"
-                      >
+                      <div key={`${foreignKey.id}-${foreignKey.seq}`} className="sqlite-key-row">
                         <div>
                           <p className="font-medium text-white">
                             {foreignKey.from} → {foreignKey.table}
                             {foreignKey.to ? `.${foreignKey.to}` : ''}
                           </p>
                           <p className="sqlite-helper-text">
-                            Update {foreignKey.onUpdate} · Delete{' '}
-                            {foreignKey.onDelete}
+                            Update {foreignKey.onUpdate} · Delete {foreignKey.onDelete}
                           </p>
                         </div>
                         <span className="sqlite-badge sqlite-badge-neutral">
@@ -2612,11 +2343,7 @@ export default function SqlitePanel() {
         Skip To Workspace
       </a>
       <div className="sqlite-app-body">
-        <aside
-          ref={sidebarRef}
-          className="sqlite-sidebar-wrap"
-          style={{ width: sidebarWidth }}
-        >
+        <aside ref={sidebarRef} className="sqlite-sidebar-wrap" style={{ width: sidebarWidth }}>
           <section className="sqlite-sidebar-panel">
             <header className="sqlite-sidebar-header">
               <div className="sqlite-toolbar-actions">
@@ -2654,10 +2381,7 @@ export default function SqlitePanel() {
                   }
                   onClick={handleOpenDropAllEntities}
                   disabled={
-                    !selectedDatabaseId ||
-                    entities.length === 0 ||
-                    databaseLoading ||
-                    entityLoading
+                    !selectedDatabaseId || entities.length === 0 || databaseLoading || entityLoading
                   }
                 >
                   <Trash2 aria-hidden="true" className="h-4 w-4" />
@@ -2694,9 +2418,7 @@ export default function SqlitePanel() {
                 </div>
               ) : databases.length === 0 ? (
                 renderEmptyState(
-                  databaseError
-                    ? 'Could Not Load Databases'
-                    : 'No Databases Found',
+                  databaseError ? 'Could Not Load Databases' : 'No Databases Found',
                   databaseError ??
                     'Expose a SQLite adapter in your app, then refresh to inspect it here.',
                   'database',
@@ -2704,12 +2426,9 @@ export default function SqlitePanel() {
               ) : (
                 <div className="sqlite-connection-list">
                   {databases.map((database) => {
-                    const isExpanded = expandedDatabaseIds.includes(
-                      database.id,
-                    );
+                    const isExpanded = expandedDatabaseIds.includes(database.id);
                     const databaseExplorerState =
-                      explorerStateByDatabase[database.id] ??
-                      DEFAULT_EXPLORER_STATE;
+                      explorerStateByDatabase[database.id] ?? DEFAULT_EXPLORER_STATE;
                     const databaseExplorerGroups = buildExplorerGroups(
                       databaseExplorerState.schemas,
                       databaseExplorerState.entities,
@@ -2735,206 +2454,147 @@ export default function SqlitePanel() {
                           }}
                         >
                           {isExpanded ? (
-                            <ChevronDown
-                              aria-hidden="true"
-                              className="h-4 w-4 shrink-0"
-                            />
+                            <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0" />
                           ) : (
-                            <ChevronRight
-                              aria-hidden="true"
-                              className="h-4 w-4 shrink-0"
-                            />
+                            <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0" />
                           )}
-                          <Database
-                            aria-hidden="true"
-                            className="h-4 w-4 shrink-0"
-                          />
-                          <span className="min-w-0 truncate font-medium">
-                            {database.name}
-                          </span>
+                          <Database aria-hidden="true" className="h-4 w-4 shrink-0" />
+                          <span className="min-w-0 truncate font-medium">{database.name}</span>
                         </button>
 
                         {isExpanded ? (
                           <div className="sqlite-tree-shell">
-                            {databaseExplorerState.loading ||
-                            !databaseExplorerState.loaded ? (
-                              <div
-                                className="sqlite-sidebar-skeleton"
-                                aria-live="polite"
-                              >
+                            {databaseExplorerState.loading || !databaseExplorerState.loaded ? (
+                              <div className="sqlite-sidebar-skeleton" aria-live="polite">
                                 {Array.from({ length: 4 }, (_, index) => (
-                                  <div
-                                    key={index}
-                                    className="sqlite-sidebar-skeleton-row"
-                                  />
+                                  <div key={index} className="sqlite-sidebar-skeleton-row" />
                                 ))}
                               </div>
                             ) : databaseExplorerState.error ? (
-                              <div
-                                className="sqlite-inline-error"
-                                aria-live="polite"
-                              >
+                              <div className="sqlite-inline-error" aria-live="polite">
                                 <div>
-                                  <p className="font-medium text-rose-100">
-                                    Explorer Load Failed
-                                  </p>
+                                  <p className="font-medium text-rose-100">Explorer Load Failed</p>
                                   <p className="mt-1 text-sm text-rose-100/90">
                                     {databaseExplorerState.error}
                                   </p>
                                 </div>
                               </div>
                             ) : databaseExplorerGroups.length === 0 ? (
-                              <div className="sqlite-tree-empty">
-                                No objects match this filter.
-                              </div>
+                              <div className="sqlite-tree-empty">No objects match this filter.</div>
                             ) : (
-                              databaseExplorerGroups.map(
-                                ({ schema, tables, views }) => {
-                                  const schemaKey = getSchemaKey(
-                                    database.id,
-                                    schema.name,
-                                  );
-                                  const isSchemaExpanded =
-                                    expandedSchemaKeys.includes(schemaKey);
+                              databaseExplorerGroups.map(({ schema, tables, views }) => {
+                                const schemaKey = getSchemaKey(database.id, schema.name);
+                                const isSchemaExpanded = expandedSchemaKeys.includes(schemaKey);
 
-                                  return (
-                                    <div
-                                      key={`${database.id}-${schema.name}`}
-                                      className="sqlite-schema-group"
+                                return (
+                                  <div
+                                    key={`${database.id}-${schema.name}`}
+                                    className="sqlite-schema-group"
+                                  >
+                                    <button
+                                      type="button"
+                                      className="sqlite-schema-row"
+                                      onClick={() => {
+                                        setExpandedSchemaKeys((current) =>
+                                          current.includes(schemaKey)
+                                            ? current.filter((value) => value !== schemaKey)
+                                            : [...current, schemaKey],
+                                        );
+                                      }}
                                     >
-                                      <button
-                                        type="button"
-                                        className="sqlite-schema-row"
-                                        onClick={() => {
-                                          setExpandedSchemaKeys((current) =>
-                                            current.includes(schemaKey)
-                                              ? current.filter(
-                                                  (value) =>
-                                                    value !== schemaKey,
-                                                )
-                                              : [...current, schemaKey],
-                                          );
-                                        }}
-                                      >
-                                        {isSchemaExpanded ? (
-                                          <ChevronDown
-                                            aria-hidden="true"
-                                            className="h-4 w-4"
-                                          />
-                                        ) : (
-                                          <ChevronRight
-                                            aria-hidden="true"
-                                            className="h-4 w-4"
-                                          />
-                                        )}
-                                        <FolderTree
-                                          aria-hidden="true"
-                                          className="h-4 w-4"
-                                        />
-                                        <span className="min-w-0 flex-1 truncate">
-                                          {schema.name}
-                                        </span>
-                                      </button>
-
                                       {isSchemaExpanded ? (
-                                        <div className="sqlite-schema-content">
-                                          {tables.length > 0 ? (
-                                            <div className="sqlite-object-section">
-                                              <p className="sqlite-object-section-title">
-                                                Tables
-                                              </p>
-                                              <div className="sqlite-object-list">
-                                                {tables.map((entity) => {
-                                                  const isSelected =
-                                                    getEntityKey(
-                                                      database.id,
-                                                      entity.schemaName,
-                                                      entity.name,
-                                                    ) === selectedEntityKey;
+                                        <ChevronDown aria-hidden="true" className="h-4 w-4" />
+                                      ) : (
+                                        <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                                      )}
+                                      <FolderTree aria-hidden="true" className="h-4 w-4" />
+                                      <span className="min-w-0 flex-1 truncate">{schema.name}</span>
+                                    </button>
 
-                                                  return (
-                                                    <button
-                                                      key={`${database.id}-${entity.schemaName}-${entity.name}`}
-                                                      type="button"
-                                                      className={joinClassNames(
-                                                        'sqlite-object-row',
-                                                        isSelected &&
-                                                          'is-active',
-                                                      )}
-                                                      onClick={() => {
-                                                        setEntitySelection(
-                                                          database.id,
-                                                          entity,
-                                                        );
-                                                        setActiveTab('data');
-                                                      }}
-                                                    >
-                                                      <Table2
-                                                        aria-hidden="true"
-                                                        className="h-4 w-4 shrink-0"
-                                                      />
-                                                      <span className="min-w-0 flex-1 truncate text-left">
-                                                        {entity.name}
-                                                      </span>
-                                                    </button>
-                                                  );
-                                                })}
-                                              </div>
+                                    {isSchemaExpanded ? (
+                                      <div className="sqlite-schema-content">
+                                        {tables.length > 0 ? (
+                                          <div className="sqlite-object-section">
+                                            <p className="sqlite-object-section-title">Tables</p>
+                                            <div className="sqlite-object-list">
+                                              {tables.map((entity) => {
+                                                const isSelected =
+                                                  getEntityKey(
+                                                    database.id,
+                                                    entity.schemaName,
+                                                    entity.name,
+                                                  ) === selectedEntityKey;
+
+                                                return (
+                                                  <button
+                                                    key={`${database.id}-${entity.schemaName}-${entity.name}`}
+                                                    type="button"
+                                                    className={joinClassNames(
+                                                      'sqlite-object-row',
+                                                      isSelected && 'is-active',
+                                                    )}
+                                                    onClick={() => {
+                                                      setEntitySelection(database.id, entity);
+                                                      setActiveTab('data');
+                                                    }}
+                                                  >
+                                                    <Table2
+                                                      aria-hidden="true"
+                                                      className="h-4 w-4 shrink-0"
+                                                    />
+                                                    <span className="min-w-0 flex-1 truncate text-left">
+                                                      {entity.name}
+                                                    </span>
+                                                  </button>
+                                                );
+                                              })}
                                             </div>
-                                          ) : null}
+                                          </div>
+                                        ) : null}
 
-                                          {views.length > 0 ? (
-                                            <div className="sqlite-object-section">
-                                              <p className="sqlite-object-section-title">
-                                                Views
-                                              </p>
-                                              <div className="sqlite-object-list">
-                                                {views.map((entity) => {
-                                                  const isSelected =
-                                                    getEntityKey(
-                                                      database.id,
-                                                      entity.schemaName,
-                                                      entity.name,
-                                                    ) === selectedEntityKey;
+                                        {views.length > 0 ? (
+                                          <div className="sqlite-object-section">
+                                            <p className="sqlite-object-section-title">Views</p>
+                                            <div className="sqlite-object-list">
+                                              {views.map((entity) => {
+                                                const isSelected =
+                                                  getEntityKey(
+                                                    database.id,
+                                                    entity.schemaName,
+                                                    entity.name,
+                                                  ) === selectedEntityKey;
 
-                                                  return (
-                                                    <button
-                                                      key={`${database.id}-${entity.schemaName}-${entity.name}`}
-                                                      type="button"
-                                                      className={joinClassNames(
-                                                        'sqlite-object-row',
-                                                        isSelected &&
-                                                          'is-active',
-                                                      )}
-                                                      onClick={() => {
-                                                        setEntitySelection(
-                                                          database.id,
-                                                          entity,
-                                                        );
-                                                        setActiveTab(
-                                                          'structure',
-                                                        );
-                                                      }}
-                                                    >
-                                                      <FileCode2
-                                                        aria-hidden="true"
-                                                        className="h-4 w-4 shrink-0"
-                                                      />
-                                                      <span className="min-w-0 flex-1 truncate text-left">
-                                                        {entity.name}
-                                                      </span>
-                                                    </button>
-                                                  );
-                                                })}
-                                              </div>
+                                                return (
+                                                  <button
+                                                    key={`${database.id}-${entity.schemaName}-${entity.name}`}
+                                                    type="button"
+                                                    className={joinClassNames(
+                                                      'sqlite-object-row',
+                                                      isSelected && 'is-active',
+                                                    )}
+                                                    onClick={() => {
+                                                      setEntitySelection(database.id, entity);
+                                                      setActiveTab('structure');
+                                                    }}
+                                                  >
+                                                    <FileCode2
+                                                      aria-hidden="true"
+                                                      className="h-4 w-4 shrink-0"
+                                                    />
+                                                    <span className="min-w-0 flex-1 truncate text-left">
+                                                      {entity.name}
+                                                    </span>
+                                                  </button>
+                                                );
+                                              })}
                                             </div>
-                                          ) : null}
-                                        </div>
-                                      ) : null}
-                                    </div>
-                                  );
-                                },
-                              )
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                );
+                              })
                             )}
                           </div>
                         ) : null}

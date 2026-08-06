@@ -17,35 +17,31 @@ const createViews = (
     entries: Record<string, StorageEntry>;
   }>,
 ) => {
-  const adapters = storages.map(
-    ({ adapterId, storageId, entries }): StorageAdapter => ({
-      id: adapterId,
-      name: `Adapter ${adapterId}`,
-      storages: [
-        {
-          id: storageId,
-          name: `Storage ${storageId}`,
-          capabilities: { supportedTypes: ['string', 'buffer'] },
-          storage: {
-            kind: 'sync',
-            getAllKeys: vi.fn(() => Object.keys(entries)),
-            get: vi.fn((key: string) => entries[key]),
-            set: vi.fn(),
-            delete: vi.fn(),
-            clear: vi.fn(),
-          },
+  const adapters = storages.map(({ adapterId, storageId, entries }): StorageAdapter => ({
+    id: adapterId,
+    name: `Adapter ${adapterId}`,
+    storages: [
+      {
+        id: storageId,
+        name: `Storage ${storageId}`,
+        capabilities: { supportedTypes: ['string', 'buffer'] },
+        storage: {
+          kind: 'sync',
+          getAllKeys: vi.fn(() => Object.keys(entries)),
+          get: vi.fn((key: string) => entries[key]),
+          set: vi.fn(),
+          delete: vi.fn(),
+          clear: vi.fn(),
         },
-      ],
-    }),
-  );
+      },
+    ],
+  }));
 
   return { adapters, views: createStorageViews(adapters) };
 };
 
 const entries = (...keys: string[]): Record<string, StorageEntry> =>
-  Object.fromEntries(
-    keys.map((key) => [key, { key, type: 'string', value: `value:${key}` }]),
-  );
+  Object.fromEntries(keys.map((key) => [key, { key, type: 'string', value: `value:${key}` }]));
 
 describe('storage Agent tool handlers', () => {
   it('lists storage descriptors without reading keys or values', async () => {
@@ -54,9 +50,7 @@ describe('storage Agent tool handlers', () => {
       { adapterId: 'two', storageId: 'second', entries: entries('b') },
     ]);
 
-    await expect(
-      createStorageAgentHandlers(views).listStorages(),
-    ).resolves.toEqual({
+    await expect(createStorageAgentHandlers(views).listStorages()).resolves.toEqual({
       storages: [
         {
           adapterId: 'one',
@@ -111,9 +105,7 @@ describe('storage Agent tool handlers', () => {
     });
     expect(first.items.every((item) => !('value' in item))).toBe(true);
 
-    await expect(
-      handlers.listEntries({ cursor: first.page.nextCursor }),
-    ).resolves.toEqual({
+    await expect(handlers.listEntries({ cursor: first.page.nextCursor })).resolves.toEqual({
       adapterId: 'adapter',
       storageId: 'storage',
       total: 3,
@@ -129,9 +121,7 @@ describe('storage Agent tool handlers', () => {
         adapterId: 'adapter',
         storageId: 'storage',
         entries: entries(
-          ...Array.from({ length: MAX_PAGE_LIMIT + 1 }, (_, index) =>
-            String(index),
-          ),
+          ...Array.from({ length: MAX_PAGE_LIMIT + 1 }, (_, index) => String(index)),
         ),
       },
     ]);
@@ -198,9 +188,9 @@ describe('storage Agent tool handlers', () => {
         offset: 0,
       }),
     ).rejects.toThrow('either cursor or offset');
-    await expect(
-      handlers.listEntries({ adapterId: 'adapter' }),
-    ).rejects.toThrow('Multiple storages matched');
+    await expect(handlers.listEntries({ adapterId: 'adapter' })).rejects.toThrow(
+      'Multiple storages matched',
+    );
     await expect(handlers.listEntries({ storageId: 'one' })).rejects.toThrow(
       'Multiple storages matched',
     );

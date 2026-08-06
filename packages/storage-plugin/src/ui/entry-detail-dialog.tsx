@@ -14,9 +14,7 @@ export type EntryDetailDialogProps = {
 
 const MAX_AUTO_JSON_INSPECTION_LENGTH = 50_000;
 
-export const jsonSafeParse = (
-  value: string,
-): Record<string, unknown> | unknown[] | null => {
+export const jsonSafeParse = (value: string): Record<string, unknown> | unknown[] | null => {
   try {
     const parsed = JSON.parse(value) as unknown;
 
@@ -63,33 +61,26 @@ export const EntryDetailDialog = ({
         {entry && (
           <div className="flex max-h-[70vh] flex-col gap-4 overflow-auto">
             <div>
-              <div className="mb-1 text-sm font-medium text-foreground">
-                Key
-              </div>
+              <div className="mb-1 text-sm font-medium text-foreground">Key</div>
               <div className="w-full break-all rounded-md border border-input bg-muted px-3 py-2 font-mono text-sm text-foreground">
                 {entry.key}
               </div>
             </div>
 
             <div>
-              <div className="mb-1 text-sm font-medium text-foreground">
-                Type
-              </div>
+              <div className="mb-1 text-sm font-medium text-foreground">Type</div>
               <Badge variant="outline">{entry.type}</Badge>
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col">
-              <div className="mb-1 text-sm font-medium text-foreground">
-                Value
-              </div>
+              <div className="mb-1 text-sm font-medium text-foreground">Value</div>
               <div className="max-h-96 overflow-auto rounded-md border border-input bg-muted p-3">
                 {jsonValue ? (
                   <JsonInspector data={jsonValue} />
                 ) : entry.type === 'buffer' ? (
                   <div className="flex flex-col gap-2">
                     <div className="text-xs text-muted-foreground">
-                      {entry.value.length}{' '}
-                      {entry.value.length === 1 ? 'byte' : 'bytes'}
+                      {entry.value.length} {entry.value.length === 1 ? 'byte' : 'bytes'}
                     </div>
                     <HexdumpValueViewer bytes={entry.value} />
                   </div>

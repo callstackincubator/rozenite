@@ -36,11 +36,7 @@ const getErrorDetails = (error: unknown): string | null => {
   return error instanceof Error ? error.message : String(error);
 };
 
-const createMetroConnectionError = (
-  host: string,
-  port: number,
-  error: unknown,
-): Error => {
+const createMetroConnectionError = (host: string, port: number, error: unknown): Error => {
   const details = getErrorDetails(error);
   return new Error(
     `Unable to reach Metro at http://${host}:${port}. Make sure Metro is running and reachable, then try again.${details ? ` Details: ${details}` : ''}`,
@@ -55,8 +51,7 @@ const requestJson = async <TResult>(input: {
   body?: unknown;
 }): Promise<TResult> => {
   const url = new URL(`http://${input.host}:${input.port}${input.pathname}`);
-  const payload =
-    input.body === undefined ? undefined : JSON.stringify(input.body);
+  const payload = input.body === undefined ? undefined : JSON.stringify(input.body);
 
   return await new Promise<TResult>((resolve, reject) => {
     const req = httpRequest(
@@ -80,11 +75,7 @@ const requestJson = async <TResult>(input: {
           try {
             if (data.length === 0) {
               if ((res.statusCode ?? 500) >= 400) {
-                reject(
-                  new Error(
-                    `Agent request failed with status ${res.statusCode ?? 500}`,
-                  ),
-                );
+                reject(new Error(`Agent request failed with status ${res.statusCode ?? 500}`));
                 return;
               }
 
@@ -102,9 +93,7 @@ const requestJson = async <TResult>(input: {
           } catch (error) {
             if ((res.statusCode ?? 500) >= 400) {
               reject(
-                new Error(
-                  `Agent request failed with status ${res.statusCode ?? 500}: ${data}`,
-                ),
+                new Error(`Agent request failed with status ${res.statusCode ?? 500}: ${data}`),
               );
               return;
             }
@@ -127,9 +116,7 @@ const requestJson = async <TResult>(input: {
   });
 };
 
-export const createAgentTransport = (
-  options?: AgentClientOptions,
-): AgentTransport => {
+export const createAgentTransport = (options?: AgentClientOptions): AgentTransport => {
   const host = options?.host ?? DEFAULT_AGENT_HOST;
   const port = options?.port ?? DEFAULT_AGENT_PORT;
 

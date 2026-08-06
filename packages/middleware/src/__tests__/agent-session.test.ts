@@ -100,9 +100,7 @@ const mocks = vi.hoisted(() => {
       if (
         payload.method === 'Runtime.evaluate' &&
         stalledRuntimeExpression &&
-        String(payload.params?.expression ?? '').includes(
-          stalledRuntimeExpression,
-        )
+        String(payload.params?.expression ?? '').includes(stalledRuntimeExpression)
       ) {
         return;
       }
@@ -129,10 +127,7 @@ const mocks = vi.hoisted(() => {
     }
   }
 
-  const getCommandResult = (
-    method: string,
-    params?: Record<string, unknown>,
-  ) => {
+  const getCommandResult = (method: string, params?: Record<string, unknown>) => {
     if (method !== 'Runtime.evaluate') {
       return {};
     }
@@ -415,9 +410,7 @@ describe('agent session', () => {
 
     const expressions = getExpressions();
     expect(
-      expressions.some((expression) =>
-        expression.includes('initializeDomain("react-devtools")'),
-      ),
+      expressions.some((expression) => expression.includes('initializeDomain("react-devtools")')),
     ).toBe(true);
   });
 
@@ -465,8 +458,7 @@ describe('agent session', () => {
     );
     const readyIndex = expressions.findIndex(
       (expression) =>
-        expression.includes('sendMessage("rozenite"') &&
-        expression.includes('agent-session-ready'),
+        expression.includes('sendMessage("rozenite"') && expression.includes('agent-session-ready'),
     );
     const reactDevToolsIndex = expressions.findIndex((expression) =>
       expression.includes('initializeDomain("react-devtools")'),
@@ -497,8 +489,7 @@ describe('agent session', () => {
 
     const readyExpressions = getExpressions().filter(
       (expression) =>
-        expression.includes('sendMessage("rozenite"') &&
-        expression.includes('agent-session-ready'),
+        expression.includes('sendMessage("rozenite"') && expression.includes('agent-session-ready'),
     );
 
     expect(readyExpressions).toHaveLength(2);
@@ -574,8 +565,7 @@ describe('agent session', () => {
       status: 'stopped',
       healing: {
         outcome: 'blocked',
-        message:
-          'React Native DevTools took the connection — close it and retry.',
+        message: 'React Native DevTools took the connection — close it and retry.',
       },
     });
   });
@@ -600,9 +590,7 @@ describe('agent session', () => {
   });
 
   it('surfaces profiling state lost during a healed relaunch', async () => {
-    const resolveTarget = vi
-      .fn()
-      .mockResolvedValue(createTarget({ pageId: 'page-2' }));
+    const resolveTarget = vi.fn().mockResolvedValue(createTarget({ pageId: 'page-2' }));
     const { session, socket } = await startSession({ resolveTarget });
     await session.callTool('startProfiling', {});
 

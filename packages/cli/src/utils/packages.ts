@@ -64,9 +64,7 @@ export const getExecForPackageManager = (projectRoot?: string): string => {
   return 'npx';
 };
 
-export const installDependencies = async (
-  projectRoot: string,
-): Promise<void> => {
+export const installDependencies = async (projectRoot: string): Promise<void> => {
   const packageManager = getPackageManager(projectRoot);
   await spawn(packageManager, ['install'], { cwd: projectRoot });
 };

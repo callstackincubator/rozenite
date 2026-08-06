@@ -1,12 +1,5 @@
-import {
-  createScopedMiddleware,
-  initializeRozenite,
-  RozeniteConfig,
-} from '@rozenite/middleware';
-import {
-  RepackRspackConfig,
-  type RepackRspackConfigExport,
-} from '@callstack/repack';
+import { createScopedMiddleware, initializeRozenite, RozeniteConfig } from '@rozenite/middleware';
+import { RepackRspackConfig, type RepackRspackConfigExport } from '@callstack/repack';
 import { assertSupportedRePackVersion } from './version-check.js';
 
 const patchConfig = (
@@ -18,11 +11,8 @@ const patchConfig = (
     devServer: {
       ...config.devServer,
       setupMiddlewares: (middlewares) => {
-        const { middleware: rozeniteMiddleware } =
-          initializeRozenite(rozeniteConfig);
-        middlewares.unshift(
-          createScopedMiddleware('/rozenite', rozeniteMiddleware),
-        );
+        const { middleware: rozeniteMiddleware } = initializeRozenite(rozeniteConfig);
+        middlewares.unshift(createScopedMiddleware('/rozenite', rozeniteMiddleware));
         return middlewares;
       },
     },

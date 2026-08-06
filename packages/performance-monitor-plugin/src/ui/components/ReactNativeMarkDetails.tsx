@@ -7,9 +7,7 @@ export type ReactNativeMarkDetailsProps = {
   mark: SerializedPerformanceReactNativeMark;
 };
 
-export const ReactNativeMarkDetails = ({
-  mark,
-}: ReactNativeMarkDetailsProps) => {
+export const ReactNativeMarkDetails = ({ mark }: ReactNativeMarkDetailsProps) => {
   return (
     <Box>
       <Heading size="5" mb="4">

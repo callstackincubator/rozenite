@@ -21,10 +21,7 @@ export const SettingsTabScreen = () => {
       <Text style={styles.text}>Settings Tab</Text>
       <Text style={styles.subtext}>This is the settings tab screen</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleNavigateToParameter}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleNavigateToParameter}>
         <Text style={styles.buttonText}>Configure Settings</Text>
       </TouchableOpacity>
     </View>

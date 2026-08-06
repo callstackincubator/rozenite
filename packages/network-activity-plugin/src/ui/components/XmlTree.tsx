@@ -72,11 +72,7 @@ const XmlElementNode = ({ element, depth }: XmlElementNodeProps) => {
             className="mt-0.5 mr-1 -ml-5 text-gray-500 hover:text-gray-300 transition-colors"
             aria-label={expanded ? 'Collapse' : 'Expand'}
           >
-            {expanded ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronRight className="h-3 w-3" />
-            )}
+            {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </button>
         ) : null}
         <JsonTreeCopyableItem getCopyableValue={serializeSubtree}>

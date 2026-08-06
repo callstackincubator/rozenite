@@ -2,38 +2,29 @@
   "name": "@rozenite/agent-sdk",
   "version": "2.0.0",
   "description": "Programmatic SDK for Rozenite agent sessions and domain tools",
-  "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
   "keywords": [
-    "react-native",
-    "devtools",
     "agent",
+    "devtools",
+    "react-native",
     "sdk"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
     "url": "https://github.com/callstackincubator/rozenite/issues"
   },
+  "license": "MIT",
+  "author": "Anatoly Belobrovik <anatoly.belobrovik@callstack.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
-  "author": "Anatoly Belobrovik <anatoly.belobrovik@callstack.com>",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "build": "vite build",
-    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
-    "lint": "eslint .",
-    "test": "vitest --run --passWithNoTests"
-  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -48,6 +39,15 @@
       "import": "./dist/transport.js",
       "require": "./dist/transport.cjs"
     }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",

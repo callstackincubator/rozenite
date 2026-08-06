@@ -7,8 +7,6 @@ export const emptyRenderer: ResponseRenderer = {
   defaultView: 'raw',
   supportsOverride: false,
   render: () => (
-    <div className="text-sm text-gray-400">
-      No response body available for this request
-    </div>
+    <div className="text-sm text-gray-400">No response body available for this request</div>
   ),
 };

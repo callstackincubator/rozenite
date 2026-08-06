@@ -22,8 +22,7 @@ type Grammar = {
 
 const GRAMMARS: Record<CodeSampleLanguage, Grammar> = {
   ts: {
-    token:
-      /(?<comment>\/\/[^\n]*)|(?<string>'[^']*'|"[^"]*"|`[^`]*`)|(?<word>[A-Za-z_$][\w$]*)/g,
+    token: /(?<comment>\/\/[^\n]*)|(?<string>'[^']*'|"[^"]*"|`[^`]*`)|(?<word>[A-Za-z_$][\w$]*)/g,
     keywords: new Set([
       'import',
       'from',
@@ -83,7 +82,7 @@ const highlight = (code: string, language: CodeSampleLanguage): ReactNode[] => {
     nodes.push(
       <span className={className} key={match.index}>
         {text}
-      </span>
+      </span>,
     );
     cursor = match.index + text.length;
   }
@@ -95,13 +94,7 @@ const highlight = (code: string, language: CodeSampleLanguage): ReactNode[] => {
   return nodes;
 };
 
-export const CodeSample = ({
-  title,
-  meta,
-  code,
-  language = 'ts',
-  className,
-}: CodeSampleProps) => (
+export const CodeSample = ({ title, meta, code, language = 'ts', className }: CodeSampleProps) => (
   <div className={[styles.root, className].filter(Boolean).join(' ')}>
     <div className={styles.head}>
       <span>{title}</span>

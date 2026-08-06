@@ -39,20 +39,14 @@ export function ConfirmDialog({
       <Dialog.Content showCloseButton={false}>
         <Dialog.Header>
           <Dialog.Title>{title}</Dialog.Title>
-          {description && (
-            <Dialog.Description>{description}</Dialog.Description>
-          )}
+          {description && <Dialog.Description>{description}</Dialog.Description>}
         </Dialog.Header>
         <Dialog.Footer>
           {!isAlert && (
-            <Dialog.Close render={<Button variant="outline" />}>
-              {cancelLabel}
-            </Dialog.Close>
+            <Dialog.Close render={<Button variant="outline" />}>{cancelLabel}</Dialog.Close>
           )}
           <Dialog.Close
-            render={
-              <Button variant={destructive ? 'destructive' : 'default'} />
-            }
+            render={<Button variant={destructive ? 'destructive' : 'default'} />}
             onClick={onConfirm}
           >
             {confirmLabel ?? (isAlert ? 'OK' : 'Confirm')}

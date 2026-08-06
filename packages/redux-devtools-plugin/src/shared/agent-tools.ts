@@ -1,7 +1,4 @@
-import {
-  defineAgentToolContract,
-  type AgentToolContract,
-} from '@rozenite/agent-shared';
+import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
 import type { ReduxActionTrace } from './trace';
 
 export const REDUX_DEVTOOLS_AGENT_PLUGIN_ID = '@rozenite/redux-devtools-plugin';
@@ -104,19 +101,14 @@ export type ReduxDevToolsApplyStoreActionResult = {
 const storeIdProperty = {
   instanceId: {
     type: 'string',
-    description:
-      'Redux DevTools instance ID. Optional when only one store is registered.',
+    description: 'Redux DevTools instance ID. Optional when only one store is registered.',
   },
 } as const;
 
 export const reduxDevToolsToolDefinitions = {
-  listStores: defineAgentToolContract<
-    ReduxDevToolsListStoresArgs,
-    ReduxDevToolsListStoresResult
-  >({
+  listStores: defineAgentToolContract<ReduxDevToolsListStoresArgs, ReduxDevToolsListStoresResult>({
     name: 'list-stores',
-    description:
-      'List all Redux DevTools store instances currently registered on the device.',
+    description: 'List all Redux DevTools store instances currently registered on the device.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -139,8 +131,7 @@ export const reduxDevToolsToolDefinitions = {
     ReduxDevToolsListActionsResult
   >({
     name: 'list-actions',
-    description:
-      'List Redux action history for a store in newest-first order using pagination.',
+    description: 'List Redux action history for a store in newest-first order using pagination.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -180,16 +171,14 @@ export const reduxDevToolsToolDefinitions = {
     ReduxDevToolsDispatchActionResult
   >({
     name: 'dispatch-action',
-    description:
-      'Dispatch a plain serializable Redux action through the real store dispatch path.',
+    description: 'Dispatch a plain serializable Redux action through the real store dispatch path.',
     inputSchema: {
       type: 'object',
       properties: {
         ...storeIdProperty,
         action: {
           type: 'object',
-          description:
-            'Plain serializable Redux action object with a string type.',
+          description: 'Plain serializable Redux action object with a string type.',
         },
       },
       required: ['action'],
@@ -218,8 +207,7 @@ export const reduxDevToolsToolDefinitions = {
     ReduxDevToolsApplyStoreActionResult
   >({
     name: 'toggle-action',
-    description:
-      'Toggle whether a Redux DevTools action is skipped in history recomputation.',
+    description: 'Toggle whether a Redux DevTools action is skipped in history recomputation.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -272,8 +260,7 @@ export const reduxDevToolsToolDefinitions = {
     ReduxDevToolsApplyStoreActionResult
   >({
     name: 'sweep-skipped-actions',
-    description:
-      'Remove skipped Redux DevTools actions from history for the selected store.',
+    description: 'Remove skipped Redux DevTools actions from history for the selected store.',
     inputSchema: {
       type: 'object',
       properties: storeIdProperty,
@@ -284,8 +271,7 @@ export const reduxDevToolsToolDefinitions = {
     ReduxDevToolsApplyStoreActionResult
   >({
     name: 'set-recording-paused',
-    description:
-      'Pause or resume Redux DevTools action recording for the selected store.',
+    description: 'Pause or resume Redux DevTools action recording for the selected store.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -303,8 +289,7 @@ export const reduxDevToolsToolDefinitions = {
     ReduxDevToolsApplyStoreActionResult
   >({
     name: 'set-locked',
-    description:
-      'Lock or unlock Redux DevTools changes for the selected store.',
+    description: 'Lock or unlock Redux DevTools changes for the selected store.',
     inputSchema: {
       type: 'object',
       properties: {

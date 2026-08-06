@@ -173,9 +173,7 @@ const encodeCursor = (scope: string, index: number): string => {
 const decodeCursor = (cursor: string, scope: string): number => {
   const [cursorScope, rawIndex] = cursor.split(':', 2);
   if (cursorScope !== scope || !rawIndex) {
-    throw new Error(
-      'Cursor does not match the requested listing. Run the command again.',
-    );
+    throw new Error('Cursor does not match the requested listing. Run the command again.');
   }
 
   const index = Number(rawIndex);
@@ -186,12 +184,7 @@ const decodeCursor = (cursor: string, scope: string): number => {
   return index;
 };
 
-const paginate = <T>(
-  rows: T[],
-  scope: string,
-  limit: number,
-  cursor?: string,
-): Page<T> => {
+const paginate = <T>(rows: T[], scope: string, limit: number, cursor?: string): Page<T> => {
   const startIndex = cursor ? decodeCursor(cursor, scope) : 0;
   const endIndex = Math.min(startIndex + limit, rows.length);
   const hasMore = endIndex < rows.length;
@@ -247,11 +240,7 @@ const createHttpSummary = (record: HttpAgentRecord) => ({
   transferSize: record.size ?? null,
   encodedDataLength: record.response?.size ?? null,
   outcome:
-    record.status === 'failed'
-      ? 'failed'
-      : record.status === 'finished'
-        ? 'success'
-        : 'in-flight',
+    record.status === 'failed' ? 'failed' : record.status === 'finished' ? 'success' : 'in-flight',
 });
 
 const getRealtimeSummary = (record: RealtimeAgentRecord) => {
@@ -284,11 +273,7 @@ const getRealtimeSummary = (record: RealtimeAgentRecord) => {
   };
 };
 
-const trimMap = <T>(
-  order: string[],
-  records: Map<string, T>,
-  capacity: number,
-): number => {
+const trimMap = <T>(order: string[], records: Map<string, T>, capacity: number): number => {
   let evicted = 0;
   while (order.length > capacity) {
     const oldestId = order.shift();
@@ -354,11 +339,7 @@ export const createNetworkActivityAgentState = () => {
     state.httpRecords.set(requestId, record);
     state.httpOrder.push(requestId);
     state.httpTotalRecorded += 1;
-    const evicted = trimMap(
-      state.httpOrder,
-      state.httpRecords,
-      HTTP_BUFFER_CAPACITY,
-    );
+    const evicted = trimMap(state.httpOrder, state.httpRecords, HTTP_BUFFER_CAPACITY);
     if (evicted > 0) {
       state.httpEvictedCount += evicted;
       state.httpTruncated = true;
@@ -379,11 +360,7 @@ export const createNetworkActivityAgentState = () => {
     state.realtimeRecords.set(requestId, record);
     state.realtimeOrder.push(requestId);
     state.realtimeTotalRecorded += 1;
-    const evicted = trimMap(
-      state.realtimeOrder,
-      state.realtimeRecords,
-      REALTIME_BUFFER_CAPACITY,
-    );
+    const evicted = trimMap(state.realtimeOrder, state.realtimeRecords, REALTIME_BUFFER_CAPACITY);
     if (evicted > 0) {
       state.realtimeEvictedCount += evicted;
       state.realtimeTruncated = true;
@@ -705,14 +682,10 @@ export const createNetworkActivityAgentState = () => {
         messageType: event.messageType,
         timestamp: event.timestamp,
       };
-      record.messages = [...record.messages, message].slice(
-        -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION,
-      );
+      record.messages = [...record.messages, message].slice(-MAX_WEBSOCKET_MESSAGES_PER_CONNECTION);
     },
 
-    onWebSocketMessageReceived(
-      event: WebSocketEventMap['websocket-message-received'],
-    ) {
+    onWebSocketMessageReceived(event: WebSocketEventMap['websocket-message-received']) {
       if (!state.isRecording) {
         return;
       }
@@ -733,9 +706,7 @@ export const createNetworkActivityAgentState = () => {
         messageType: event.messageType,
         timestamp: event.timestamp,
       };
-      record.messages = [...record.messages, message].slice(
-        -MAX_WEBSOCKET_MESSAGES_PER_CONNECTION,
-      );
+      record.messages = [...record.messages, message].slice(-MAX_WEBSOCKET_MESSAGES_PER_CONNECTION);
     },
 
     onWebSocketError(event: WebSocketEventMap['websocket-error']) {
@@ -852,9 +823,7 @@ export const createNetworkActivityAgentState = () => {
   };
 };
 
-export type NetworkActivityAgentState = ReturnType<
-  typeof createNetworkActivityAgentState
->;
+export type NetworkActivityAgentState = ReturnType<typeof createNetworkActivityAgentState>;
 
 export const getNetworkActivityAgentState = (() => {
   let instance: NetworkActivityAgentState | null = null;

@@ -17,11 +17,7 @@ const writeJson = async (filePath: string, value: unknown) => {
 };
 
 afterEach(async () => {
-  await Promise.all(
-    tempDirs
-      .splice(0)
-      .map((dir) => fs.rm(dir, { recursive: true, force: true })),
-  );
+  await Promise.all(tempDirs.splice(0).map((dir) => fs.rm(dir, { recursive: true, force: true })));
 });
 
 describe('syncPluginPackageJSON', () => {
@@ -55,10 +51,7 @@ describe('syncPluginPackageJSON', () => {
       },
     });
 
-    await fs.writeFile(
-      path.join(projectRoot, 'react-native.ts'),
-      'export {}\n',
-    );
+    await fs.writeFile(path.join(projectRoot, 'react-native.ts'), 'export {}\n');
     await fs.writeFile(path.join(projectRoot, 'metro.ts'), 'export {}\n');
     await fs.writeFile(path.join(projectRoot, 'sdk.ts'), 'export {}\n');
 
@@ -67,12 +60,7 @@ describe('syncPluginPackageJSON', () => {
       await fs.readFile(path.join(projectRoot, 'package.json'), 'utf8'),
     );
 
-    expect(result.updatedFields).toEqual([
-      'main',
-      'module',
-      'types',
-      'exports',
-    ]);
+    expect(result.updatedFields).toEqual(['main', 'module', 'types', 'exports']);
     expect(packageJson.main).toBe('./dist/react-native/index.cjs');
     expect(packageJson.module).toBe('./dist/react-native/index.js');
     expect(packageJson.types).toBe('./dist/react-native/index.d.ts');
@@ -128,10 +116,7 @@ describe('syncPluginPackageJSON', () => {
       },
     });
 
-    await fs.writeFile(
-      path.join(projectRoot, 'react-native.ts'),
-      'export {}\n',
-    );
+    await fs.writeFile(path.join(projectRoot, 'react-native.ts'), 'export {}\n');
 
     const result = await syncPluginPackageJSON(projectRoot);
     const packageJson = JSON.parse(
@@ -161,10 +146,7 @@ describe('syncPluginPackageJSON', () => {
       },
     });
 
-    await fs.writeFile(
-      path.join(projectRoot, 'react-native.ts'),
-      'export {}\n',
-    );
+    await fs.writeFile(path.join(projectRoot, 'react-native.ts'), 'export {}\n');
     await fs.writeFile(path.join(projectRoot, 'sdk.ts'), 'export {}\n');
 
     const result = await syncPluginPackageJSON(projectRoot);
@@ -172,12 +154,7 @@ describe('syncPluginPackageJSON', () => {
       await fs.readFile(path.join(projectRoot, 'package.json'), 'utf8'),
     );
 
-    expect(result.updatedFields).toEqual([
-      'main',
-      'module',
-      'types',
-      'exports',
-    ]);
+    expect(result.updatedFields).toEqual(['main', 'module', 'types', 'exports']);
     expect(packageJson.exports).toEqual({
       '.': {
         types: './dist/react-native/index.d.ts',

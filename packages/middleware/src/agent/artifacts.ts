@@ -54,10 +54,7 @@ const createFileName = (extension: string, nameHint?: string): string => {
   return `${createTimestampPrefix()}${safeHint}.${safeExtension}`;
 };
 
-export const createAgentArtifacts = (
-  projectRoot: string,
-  sessionId: string,
-) => {
+export const createAgentArtifacts = (projectRoot: string, sessionId: string) => {
   const sessionRoot = path.join(
     projectRoot,
     '.rozenite',
@@ -89,9 +86,7 @@ export const createAgentArtifacts = (
       }
 
       const chunkBytes =
-        typeof chunk === 'string'
-          ? Buffer.byteLength(chunk, 'utf8')
-          : chunk.byteLength;
+        typeof chunk === 'string' ? Buffer.byteLength(chunk, 'utf8') : chunk.byteLength;
 
       await new Promise<void>((resolve, reject) => {
         stream.write(chunk, (error) => {

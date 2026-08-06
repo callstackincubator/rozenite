@@ -12,9 +12,7 @@ import './globals.css';
 
 export default function ReactNavigationPanel() {
   const [actionHistory, setActionHistory] = useState<ActionWithState[]>([]);
-  const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(
-    null,
-  );
+  const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(null);
   const [activeTabId, setActiveTabId] = useState('timeline');
 
   const client = useRozeniteDevToolsClient<ReactNavigationPluginEventMap>({
@@ -114,11 +112,7 @@ export default function ReactNavigationPanel() {
 
   return (
     <PluginShell className="dark">
-      <Tabs
-        tabs={tabs}
-        activeTabId={activeTabId}
-        onTabChange={setActiveTabId}
-      />
+      <Tabs tabs={tabs} activeTabId={activeTabId} onTabChange={setActiveTabId} />
     </PluginShell>
   );
 }

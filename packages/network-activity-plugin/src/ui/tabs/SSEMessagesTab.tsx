@@ -45,16 +45,12 @@ const formatTimestamp = (timestamp: number) => {
 const columns = [
   columnHelper.accessor('timestamp', {
     header: 'Timestamp',
-    cell: ({ getValue }) => (
-      <div className="text-gray-400">{formatTimestamp(getValue())}</div>
-    ),
+    cell: ({ getValue }) => <div className="text-gray-400">{formatTimestamp(getValue())}</div>,
     size: 120,
   }),
   columnHelper.accessor('type', {
     header: 'Type',
-    cell: ({ getValue }) => (
-      <div className="text-purple-400 font-medium">{getValue()}</div>
-    ),
+    cell: ({ getValue }) => <div className="text-purple-400 font-medium">{getValue()}</div>,
     size: 100,
   }),
   columnHelper.accessor('data', {
@@ -69,9 +65,7 @@ const columns = [
 
 export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
   // Capture the selected message, so when it gets removed (message limit), it's still displayed
-  const [selectedMessage, setSelectedMessage] = useState<SSEMessageRow | null>(
-    null,
-  );
+  const [selectedMessage, setSelectedMessage] = useState<SSEMessageRow | null>(null);
 
   const formatData = (data: string) => {
     if (typeof data === 'string') {
@@ -96,14 +90,12 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
   };
 
   const tableData = useMemo(() => {
-    return selectedRequest.messages.map(
-      (message): SSEMessageRow => ({
-        id: message.id,
-        type: message.type,
-        data: message.data,
-        timestamp: message.timestamp,
-      }),
-    );
+    return selectedRequest.messages.map((message): SSEMessageRow => ({
+      id: message.id,
+      type: message.type,
+      data: message.data,
+      timestamp: message.timestamp,
+    }));
   }, [selectedRequest.messages]);
 
   const table = useReactTable({
@@ -116,8 +108,8 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
     return (
       <ScrollArea className="h-full min-h-0 p-4">
         <div className="text-sm text-gray-400">
-          No SSE messages available for this connection. Messages will appear
-          here when the SSE connection receives data.
+          No SSE messages available for this connection. Messages will appear here when the SSE
+          connection receives data.
         </div>
       </ScrollArea>
     );
@@ -141,10 +133,7 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
                       <div className="flex items-center gap-1">
                         {header.isPlaceholder
                           ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </div>
                     </th>
                   ))}
@@ -161,15 +150,8 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
                   onClick={() => setSelectedMessage(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="p-2"
-                      style={{ width: cell.column.getSize() }}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                    <td key={cell.id} className="p-2" style={{ width: cell.column.getSize() }}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
                 </tr>
@@ -184,9 +166,7 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
         <div className="border-t border-gray-700 bg-gray-800">
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-gray-300">
-                Message Details
-              </h4>
+              <h4 className="text-sm font-medium text-gray-300">Message Details</h4>
               <button
                 onClick={() => setSelectedMessage(null)}
                 className="text-gray-400 hover:text-blue-400 text-sm"
@@ -198,9 +178,7 @@ export const SSEMessagesTab = ({ selectedRequest }: SSEMessagesTabProps) => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-400">Type: </span>
-                  <span className="text-purple-400">
-                    {selectedMessage.type}
-                  </span>
+                  <span className="text-purple-400">{selectedMessage.type}</span>
                 </div>
                 <div>
                   <span className="text-gray-400">Timestamp: </span>

@@ -11,12 +11,7 @@ import { xmlRenderer } from './xml';
 import type { ResponseBody } from '../../shared/client';
 import type { ResponseRenderer } from './types';
 
-export type {
-  RenderCtx,
-  ResponseRenderer,
-  ResponseView,
-  RenderArgs,
-} from './types';
+export type { RenderCtx, ResponseRenderer, ResponseView, RenderArgs } from './types';
 
 // Order matters: matches() is evaluated top to bottom, first hit wins.
 // More specific predicates must come before more general ones — e.g.
@@ -40,10 +35,7 @@ export const renderers: ResponseRenderer[] = [
   unknownRenderer,
 ];
 
-export const findRenderer = (
-  contentType: string,
-  body: ResponseBody,
-): ResponseRenderer => {
+export const findRenderer = (contentType: string, body: ResponseBody): ResponseRenderer => {
   for (const renderer of renderers) {
     if (renderer.matches(contentType, body)) {
       return renderer;

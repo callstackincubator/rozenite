@@ -2,11 +2,7 @@ import type { NetworkEventSource } from './http-events';
 
 export type WebSocketMessageType = 'text' | 'binary';
 
-export type WebSocketConnectionStatus =
-  | 'connecting'
-  | 'open'
-  | 'closing'
-  | 'closed';
+export type WebSocketConnectionStatus = 'connecting' | 'open' | 'closing' | 'closed';
 
 export type WebSocketConnectEvent = {
   type: 'websocket-connect';

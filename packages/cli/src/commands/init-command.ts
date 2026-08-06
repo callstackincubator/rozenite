@@ -3,11 +3,7 @@ import { getAvailableBundlerTypes } from '@rozenite/tools';
 import { wrapConfigFile } from '../utils/config-wrapper.js';
 import { isGitRepositoryClean } from '../utils/git.js';
 import { logger } from '../utils/logger.js';
-import {
-  getExecForPackageManager,
-  installDevDependency,
-  isProject,
-} from '../utils/packages.js';
+import { getExecForPackageManager, installDevDependency, isProject } from '../utils/packages.js';
 import { intro, outro, promptConfirm } from '../utils/prompts.js';
 import { spawn } from '../utils/spawn.js';
 import { step } from '../utils/steps.js';
@@ -64,8 +60,7 @@ export const initCommand = async (projectRoot: string) => {
 
   for (const bundlerType of bundlerTypes) {
     // Install the appropriate Rozenite package
-    const packageName =
-      bundlerType === 'metro' ? '@rozenite/metro' : '@rozenite/repack';
+    const packageName = bundlerType === 'metro' ? '@rozenite/metro' : '@rozenite/repack';
 
     await step(
       {

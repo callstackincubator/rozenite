@@ -9,12 +9,7 @@ const SQLITE_ROWID_IDENTIFIERS = ['rowid', '_rowid_', 'oid'] as const;
 
 export type SqliteRowIdIdentifier = (typeof SQLITE_ROWID_IDENTIFIERS)[number];
 
-export type SqliteEditableValueKind =
-  | 'text'
-  | 'number'
-  | 'boolean'
-  | 'blob-ish'
-  | 'json';
+export type SqliteEditableValueKind = 'text' | 'number' | 'boolean' | 'blob-ish' | 'json';
 
 export type SqliteRowMutationDescriptor =
   | {
@@ -57,16 +52,11 @@ export const getPrimaryKeyColumns = (columns: SqliteColumnInfo[]) =>
     .sort((left, right) => left.primaryKeyOrder - right.primaryKeyOrder);
 
 export const getEditableColumns = (columns: SqliteColumnInfo[]) =>
-  columns.filter(
-    (column) => column.primaryKeyOrder === 0 && column.hidden === 0,
-  );
+  columns.filter((column) => column.primaryKeyOrder === 0 && column.hidden === 0);
 
-const getNormalizedColumnType = (column: SqliteColumnInfo) =>
-  column.type.trim().toLowerCase();
+const getNormalizedColumnType = (column: SqliteColumnInfo) => column.type.trim().toLowerCase();
 
-const inferValueKindFromRuntimeValue = (
-  value: unknown,
-): SqliteEditableValueKind => {
+const inferValueKindFromRuntimeValue = (value: unknown): SqliteEditableValueKind => {
   if (typeof value === 'number') {
     return 'number';
   }
@@ -76,9 +66,7 @@ const inferValueKindFromRuntimeValue = (
   }
 
   if (Array.isArray(value)) {
-    return value.every((item) => typeof item === 'number')
-      ? 'blob-ish'
-      : 'json';
+    return value.every((item) => typeof item === 'number') ? 'blob-ish' : 'json';
   }
 
   if (value && typeof value === 'object') {
@@ -135,14 +123,10 @@ export const canColumnBeNull = (column: SqliteColumnInfo) => !column.notNull;
 export const getAvailableRowIdIdentifier = (
   columns: SqliteColumnInfo[],
 ): SqliteRowIdIdentifier | null => {
-  const lowerCaseColumnNames = new Set(
-    columns.map((column) => column.name.toLowerCase()),
-  );
+  const lowerCaseColumnNames = new Set(columns.map((column) => column.name.toLowerCase()));
 
   return (
-    SQLITE_ROWID_IDENTIFIERS.find(
-      (identifier) => !lowerCaseColumnNames.has(identifier),
-    ) ?? null
+    SQLITE_ROWID_IDENTIFIERS.find((identifier) => !lowerCaseColumnNames.has(identifier)) ?? null
   );
 };
 
@@ -182,9 +166,7 @@ const buildWhereClause = (
   descriptor: SqliteRowMutationDescriptor,
 ) => {
   if (descriptor.mode === 'primary-key') {
-    const params = descriptor.primaryKeyColumns.map(
-      (column) => row[column.name],
-    );
+    const params = descriptor.primaryKeyColumns.map((column) => row[column.name]);
     const clause = descriptor.primaryKeyColumns
       .map((column) => `${quoteSqlIdentifier(column.name)} = ?`)
       .join(' AND ');
@@ -210,9 +192,7 @@ export const buildRowUpdateMutation = ({
 }: BuildRowUpdateMutationInput): SqliteMutationResult => {
   const updateColumnNames = getEditableColumns(columns)
     .map((column) => column.name)
-    .filter((columnName) =>
-      Object.prototype.hasOwnProperty.call(nextValues, columnName),
-    );
+    .filter((columnName) => Object.prototype.hasOwnProperty.call(nextValues, columnName));
 
   if (updateColumnNames.length === 0) {
     throw new Error('No editable columns are available for this row.');
@@ -221,9 +201,7 @@ export const buildRowUpdateMutation = ({
   const assignments = updateColumnNames.map(
     (columnName) => `${quoteSqlIdentifier(columnName)} = ?`,
   );
-  const assignmentParams = updateColumnNames.map(
-    (columnName) => nextValues[columnName],
-  );
+  const assignmentParams = updateColumnNames.map((columnName) => nextValues[columnName]);
   const where = buildWhereClause(row, descriptor);
 
   return {

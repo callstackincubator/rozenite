@@ -1,8 +1,5 @@
 import type { ReactTreeNodeInput, ReactTreeSyncPayload } from './types.js';
-import {
-  parseTreeOperations,
-  toReactElementTypeLabel,
-} from './operations-parser.js';
+import { parseTreeOperations, toReactElementTypeLabel } from './operations-parser.js';
 
 type TreeNodeRecord = {
   nodeId: number;
@@ -77,9 +74,7 @@ export const createComponentTreeStore = () => {
       if (!parent.childIds.includes(record.nodeId)) {
         parent.childIds.push(record.nodeId);
       }
-      parent.childIds = parent.childIds.filter(
-        (id, index, ids) => ids.indexOf(id) === index,
-      );
+      parent.childIds = parent.childIds.filter((id, index, ids) => ids.indexOf(id) === index);
     }
   };
 
@@ -123,18 +118,14 @@ export const createComponentTreeStore = () => {
         continue;
       }
 
-      const childIds = node.childIds.filter((childId) =>
-        nodesById.has(childId),
-      );
+      const childIds = node.childIds.filter((childId) => nodesById.has(childId));
       nodes.push({
         nodeId: node.nodeId,
         displayName: node.displayName,
         elementType: node.elementType,
         ...(node.key !== undefined ? { key: node.key } : {}),
         ...(node.parentId !== undefined ? { parentId: node.parentId } : {}),
-        ...(node.rendererId !== undefined
-          ? { rendererId: node.rendererId }
-          : {}),
+        ...(node.rendererId !== undefined ? { rendererId: node.rendererId } : {}),
         childIds,
       });
 
@@ -149,9 +140,7 @@ export const createComponentTreeStore = () => {
     };
   };
 
-  const ingestOperations = (
-    operations: unknown,
-  ): ReactTreeSyncPayload | null => {
+  const ingestOperations = (operations: unknown): ReactTreeSyncPayload | null => {
     const parsed = parseTreeOperations(operations, {
       extendedAddFormat: usesExtendedAddFormat,
     });

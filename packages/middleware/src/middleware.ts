@@ -43,10 +43,7 @@ export const getMiddleware = (
   const app = express();
   const debuggerFrontend = require(getReactNativeDebuggerFrontendPath(options));
 
-  const frameworkPath = path.resolve(
-    require.resolve('@rozenite/runtime'),
-    '..',
-  );
+  const frameworkPath = path.resolve(require.resolve('@rozenite/runtime'), '..');
   const shellPath = path.join(
     path.dirname(require.resolve('@rozenite/shell/package.json')),
     'dist',
@@ -67,9 +64,7 @@ export const getMiddleware = (
 
   app.get('/plugins/:plugin/*others', (req, res, next) => {
     const pluginName = req.params.plugin.replace('_', '/');
-    const plugin = installedPlugins.find(
-      (plugin) => plugin.name === pluginName,
-    );
+    const plugin = installedPlugins.find((plugin) => plugin.name === pluginName);
 
     if (!plugin) {
       res.status(404).send('Plugin not found');

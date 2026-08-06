@@ -107,10 +107,7 @@ Use this form when you already know the domain and tool name, or when you just l
 If you want a typed result, pass type arguments to `session.tools.call(...)`.
 
 ```ts title="agent-sdk-call-by-name.ts"
-const requests = await session.tools.call<
-  { limit: number },
-  { items: Array<{ id: string }> }
->({
+const requests = await session.tools.call<{ limit: number }, { items: Array<{ id: string }> }>({
   domain: 'network',
   tool: 'listRequests',
   args: { limit: 20 },
@@ -171,10 +168,7 @@ type RequestsPage = {
   page: { limit: number; hasMore: boolean; nextCursor?: string };
 };
 
-const firstPage = await session.tools.call<
-  { limit: number; cursor?: string },
-  RequestsPage
->({
+const firstPage = await session.tools.call<{ limit: number; cursor?: string }, RequestsPage>({
   domain: 'network',
   tool: 'listRequests',
   args: { limit: 50 },

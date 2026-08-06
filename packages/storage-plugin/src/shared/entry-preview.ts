@@ -3,12 +3,9 @@ import type { StorageEntry, StorageEntryPreview } from './types';
 export const MAX_STRING_PREVIEW_CODE_POINTS = 256;
 export const MAX_BUFFER_PREVIEW_BYTES = 16;
 
-const toHexPair = (byte: number): string =>
-  byte.toString(16).toUpperCase().padStart(2, '0');
+const toHexPair = (byte: number): string => byte.toString(16).toUpperCase().padStart(2, '0');
 
-const truncateString = (
-  value: string,
-): Pick<StorageEntryPreview, 'preview' | 'isTruncated'> => {
+const truncateString = (value: string): Pick<StorageEntryPreview, 'preview' | 'isTruncated'> => {
   let preview = '';
   let codePointCount = 0;
 
@@ -24,9 +21,7 @@ const truncateString = (
   return { preview, isTruncated: false };
 };
 
-export const toStorageEntryPreview = (
-  entry: StorageEntry,
-): StorageEntryPreview => {
+export const toStorageEntryPreview = (entry: StorageEntry): StorageEntryPreview => {
   if (entry.type === 'string') {
     return {
       key: entry.key,

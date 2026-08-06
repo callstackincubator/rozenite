@@ -1,7 +1,4 @@
-import {
-  NavigationContainer,
-  NavigationContainerRef,
-} from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
@@ -88,22 +85,13 @@ const Wrapper = () => {
     >
       <Stack.Screen name="Landing" component={LandingScreen} />
       <Stack.Screen name="ControlsPlugin" component={ControlsPluginScreen} />
-      <Stack.Screen
-        name="ReactHookFormPlugin"
-        component={ReactHookFormPluginScreen}
-      />
+      <Stack.Screen name="ReactHookFormPlugin" component={ReactHookFormPluginScreen} />
       <Stack.Screen name="StoragePlugin" component={StoragePluginScreen} />
       <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
       <Stack.Screen name="RequestBodyTest" component={RequestBodyTestScreen} />
       <Stack.Screen name="ReduxTest" component={ReduxTestScreen} />
-      <Stack.Screen
-        name="PerformanceMonitor"
-        component={PerformanceMonitorScreen}
-      />
-      <Stack.Screen
-        name="RequireProfilerTest"
-        component={RequireProfilerTestScreen}
-      />
+      <Stack.Screen name="PerformanceMonitor" component={PerformanceMonitorScreen} />
+      <Stack.Screen name="RequireProfilerTest" component={RequireProfilerTestScreen} />
       <Stack.Screen name="FileSystemTest" component={FileSystemTestScreen} />
       <Stack.Screen
         name="Config"
@@ -124,10 +112,7 @@ const Wrapper = () => {
           headerTitle: 'Parameter Display',
         }}
       />
-      <Stack.Screen
-        name="SuccessiveScreensStack"
-        component={SuccessiveScreensNavigator}
-      />
+      <Stack.Screen name="SuccessiveScreensStack" component={SuccessiveScreensNavigator} />
       <Stack.Screen name="PerfProblem" component={PerfProblemScreen} />
     </Stack.Navigator>
   );

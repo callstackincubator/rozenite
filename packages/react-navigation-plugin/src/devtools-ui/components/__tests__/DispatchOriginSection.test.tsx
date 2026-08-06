@@ -3,10 +3,7 @@ import '@testing-library/jest-dom/vitest';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DispatchOriginSection } from '../DispatchOriginSection';
-import type {
-  ActionOrigin,
-  ActionStackFrame,
-} from '../../../react-native/symbolication/types';
+import type { ActionOrigin, ActionStackFrame } from '../../../react-native/symbolication/types';
 
 const appFrame: ActionStackFrame = {
   functionName: 'handlePress',
@@ -40,9 +37,7 @@ const buildOrigin = (overrides: Partial<ActionOrigin> = {}): ActionOrigin => ({
 describe('DispatchOriginSection', () => {
   it('renders the empty state when no origin is captured', () => {
     render(<DispatchOriginSection origin={undefined} />);
-    expect(
-      screen.getByText('No stack trace captured for this action.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('No stack trace captured for this action.')).toBeInTheDocument();
   });
 
   it('renders the resolving headline while pending', () => {
@@ -55,9 +50,7 @@ describe('DispatchOriginSection', () => {
         })}
       />,
     );
-    expect(
-      screen.getByText('Resolving origin from Metro…'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Resolving origin from Metro…')).toBeInTheDocument();
   });
 
   it('renders the failure copy and error message', () => {
@@ -71,12 +64,8 @@ describe('DispatchOriginSection', () => {
         })}
       />,
     );
-    expect(
-      screen.getByText('Could not source-map the stack via Metro.'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Metro symbolication timed out after 5000ms'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Could not source-map the stack via Metro.')).toBeInTheDocument();
+    expect(screen.getByText('Metro symbolication timed out after 5000ms')).toBeInTheDocument();
   });
 
   it('renders the unavailable copy in production / disconnected mode', () => {
@@ -89,17 +78,13 @@ describe('DispatchOriginSection', () => {
         })}
       />,
     );
-    expect(
-      screen.getByText(/Stack trace symbolication is unavailable/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Stack trace symbolication is unavailable/)).toBeInTheDocument();
   });
 
   it('renders a high-confidence headline without a confidence chip', () => {
     render(<DispatchOriginSection origin={buildOrigin()} />);
     expect(screen.getByText('handlePress')).toBeInTheDocument();
-    expect(
-      screen.getByText('apps/playground/src/Screen.tsx:42:5'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('apps/playground/src/Screen.tsx:42:5')).toBeInTheDocument();
     expect(screen.queryByText('low confidence')).not.toBeInTheDocument();
   });
 
@@ -124,9 +109,7 @@ describe('DispatchOriginSection', () => {
         })}
       />,
     );
-    expect(
-      screen.getByText('Could not resolve dispatch origin.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Could not resolve dispatch origin.')).toBeInTheDocument();
   });
 
   it('toggles the full stack on click and marks library frames', () => {
@@ -174,12 +157,8 @@ describe('DispatchOriginSection', () => {
       '42 | handlePress();',
     );
 
-    rerender(
-      <DispatchOriginSection origin={buildOrigin({ codeFrame: undefined })} />,
-    );
-    expect(
-      screen.queryByTestId('dispatch-origin-code-frame'),
-    ).not.toBeInTheDocument();
+    rerender(<DispatchOriginSection origin={buildOrigin({ codeFrame: undefined })} />);
+    expect(screen.queryByTestId('dispatch-origin-code-frame')).not.toBeInTheDocument();
   });
 
   it('copies the verbatim raw stack and reflects success in the button label', async () => {

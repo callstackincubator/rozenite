@@ -13,10 +13,7 @@ import type {
 } from '../shared/types';
 import type { StorageView } from './storage-view';
 
-const parseValueForType = (
-  type: StorageEntryType,
-  value: unknown,
-): StorageEntryValue => {
+const parseValueForType = (type: StorageEntryType, value: unknown): StorageEntryValue => {
   if (type === 'string') {
     if (typeof value !== 'string') {
       throw new Error('Expected string value for type=string');
@@ -45,8 +42,7 @@ const parseValueForType = (
   return value as number[];
 };
 
-const formatViewRef = (view: StorageView) =>
-  `${view.target.adapterId}/${view.target.storageId}`;
+const formatViewRef = (view: StorageView) => `${view.target.adapterId}/${view.target.storageId}`;
 
 const isSameTarget = (left: StorageTarget, right: StorageTarget) =>
   left.adapterId === right.adapterId && left.storageId === right.storageId;
@@ -68,10 +64,8 @@ const decodeCursor = (value: string): ListEntriesCursor => {
       cursor == null ||
       Array.isArray(cursor) ||
       (cursor as { version?: unknown }).version !== 1 ||
-      typeof (cursor as { target?: { adapterId?: unknown } }).target
-        ?.adapterId !== 'string' ||
-      typeof (cursor as { target?: { storageId?: unknown } }).target
-        ?.storageId !== 'string' ||
+      typeof (cursor as { target?: { adapterId?: unknown } }).target?.adapterId !== 'string' ||
+      typeof (cursor as { target?: { storageId?: unknown } }).target?.storageId !== 'string' ||
       !Number.isSafeInteger((cursor as { offset?: unknown }).offset) ||
       (cursor as { offset: number }).offset < 0
     ) {
@@ -112,11 +106,7 @@ const sanitizeOffset = (offset: number | undefined) => {
   return offset;
 };
 
-const resolveStorage = (
-  views: readonly StorageView[],
-  adapterId?: string,
-  storageId?: string,
-) => {
+const resolveStorage = (views: readonly StorageView[], adapterId?: string, storageId?: string) => {
   if (views.length === 0) {
     throw new Error('No storages are registered.');
   }
@@ -158,16 +148,12 @@ const resolveStorage = (
   return views[0]!;
 };
 
-const listStorageKeys = async (
-  view: StorageView,
-  input: StorageListEntriesArgs,
-) => {
+const listStorageKeys = async (view: StorageView, input: StorageListEntriesArgs) => {
   const limit = sanitizeLimit(input.limit);
   if (input.cursor !== undefined && input.offset !== undefined) {
     throw new Error('Provide either cursor or offset, not both.');
   }
-  const cursor =
-    input.cursor === undefined ? undefined : decodeCursor(input.cursor);
+  const cursor = input.cursor === undefined ? undefined : decodeCursor(input.cursor);
   if (cursor && !isSameTarget(cursor.target, view.target)) {
     throw new Error(
       'Cursor does not match the requested storage. Run list-entries again without a cursor to restart pagination.',
@@ -228,9 +214,7 @@ export const createStorageAgentHandlers = (views: readonly StorageView[]) => ({
     const entry = await view.get(key);
 
     if (!entry) {
-      throw new Error(
-        `Key "${key}" not found in storage "${formatViewRef(view)}".`,
-      );
+      throw new Error(`Key "${key}" not found in storage "${formatViewRef(view)}".`);
     }
 
     return {

@@ -115,13 +115,11 @@ export const NITRO_NETWORK_EVENTS: (keyof NitroNetworkEventMap)[] = [
 ];
 
 const timestampOrigin =
-  typeof performance !== 'undefined' &&
-  typeof performance.timeOrigin === 'number'
+  typeof performance !== 'undefined' && typeof performance.timeOrigin === 'number'
     ? performance.timeOrigin
     : Date.now() - performance.now();
 
-const toEpochTime = (timestamp: number) =>
-  Math.round(timestampOrigin + timestamp);
+const toEpochTime = (timestamp: number) => Math.round(timestampOrigin + timestamp);
 
 const toHeaders = (headers: NitroHttpHeader[]): HttpHeaders => {
   return headers.reduce<HttpHeaders>((acc, { key, value }) => {
@@ -131,9 +129,7 @@ const toHeaders = (headers: NitroHttpHeader[]): HttpHeaders => {
       return acc;
     }
 
-    acc[key] = Array.isArray(existing)
-      ? [...existing, value]
-      : [existing, value];
+    acc[key] = Array.isArray(existing) ? [...existing, value] : [existing, value];
     return acc;
   }, {});
 };
@@ -149,16 +145,13 @@ const toPostData = (body?: string): RequestPostData => {
   };
 };
 
-const cloneEntry = <TEntry extends NitroInspectorEntry>(
-  entry: TEntry,
-): TEntry => {
+const cloneEntry = <TEntry extends NitroInspectorEntry>(entry: TEntry): TEntry => {
   return JSON.parse(JSON.stringify(entry)) as TEntry;
 };
 
 const getContentType = (headers: NitroHttpHeader[]) => {
   return (
-    headers.find((header) => header.key.toLowerCase() === 'content-type')
-      ?.value ?? 'text/plain'
+    headers.find((header) => header.key.toLowerCase() === 'content-type')?.value ?? 'text/plain'
   );
 };
 
@@ -243,15 +236,10 @@ export const createNitroNetworkInspector = (
     });
   };
 
-  const emitWebSocketEvents = (
-    entry: NitroWebSocketEntry,
-    previous?: NitroWebSocketEntry,
-  ) => {
+  const emitWebSocketEvents = (entry: NitroWebSocketEntry, previous?: NitroWebSocketEntry) => {
     const socketId = entry.id;
     const readyState = normalizeReadyState(entry.readyState);
-    const previousReadyState = previous
-      ? normalizeReadyState(previous.readyState)
-      : null;
+    const previousReadyState = previous ? normalizeReadyState(previous.readyState) : null;
 
     if (!previous) {
       eventEmitter.emit('websocket-connect', {

@@ -1,15 +1,11 @@
 import { useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { formatHexdumpRow } from './binary';
-import {
-  textRowRanges,
-  VIRTUALIZED_TEXT_THRESHOLD,
-} from './large-value-viewer-state';
+import { textRowRanges, VIRTUALIZED_TEXT_THRESHOLD } from './large-value-viewer-state';
 
 export const TextValueViewer = ({ value }: { value: string }) => {
   const ranges = useMemo(
-    () =>
-      value.length > VIRTUALIZED_TEXT_THRESHOLD ? textRowRanges(value) : null,
+    () => (value.length > VIRTUALIZED_TEXT_THRESHOLD ? textRowRanges(value) : null),
     [value],
   );
 
@@ -45,9 +41,7 @@ export const HexdumpValueViewer = ({ bytes }: { bytes: readonly number[] }) => {
   const totalCount = Math.ceil(bytes.length / 16);
 
   if (totalCount === 0) {
-    return (
-      <div className="text-xs text-muted italic">No bytes to display.</div>
-    );
+    return <div className="text-xs text-muted italic">No bytes to display.</div>;
   }
 
   return (

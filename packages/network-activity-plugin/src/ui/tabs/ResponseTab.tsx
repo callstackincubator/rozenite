@@ -9,11 +9,7 @@ import { OverrideResponse } from '../components/OverrideResponse';
 import { Button } from '../components/Button';
 import { Pencil } from 'lucide-react';
 import { ViewToggle } from '../components/ViewToggle';
-import {
-  findRenderer,
-  type RenderCtx,
-  type ResponseView,
-} from '../response-renderers';
+import { findRenderer, type RenderCtx, type ResponseView } from '../response-renderers';
 
 export type ResponseTabProps = {
   selectedRequest: HttpNetworkEntry;
@@ -36,9 +32,9 @@ export const ResponseTab = ({
 }: ResponseTabProps) => {
   const onRequestResponseBodyRef = useRef(onRequestResponseBody);
   const overrides = useOverrides();
-  const [initialOverride, setInitialOverride] = useState<
-    RequestOverride | undefined
-  >(() => overrides.get(selectedRequest.request.url));
+  const [initialOverride, setInitialOverride] = useState<RequestOverride | undefined>(() =>
+    overrides.get(selectedRequest.request.url),
+  );
 
   useEffect(() => {
     onRequestResponseBodyRef.current = onRequestResponseBody;
@@ -55,9 +51,7 @@ export const ResponseTab = ({
   const renderResponseBody = () => {
     if (!responseBody) {
       return (
-        <div className="text-sm text-gray-400">
-          No response body available for this request
-        </div>
+        <div className="text-sm text-gray-400">No response body available for this request</div>
       );
     }
 
@@ -76,11 +70,7 @@ export const ResponseTab = ({
     // Override engaged: replace the whole panel with the override editor.
     // Only reachable for renderers that support override AND when the
     // user has clicked into the override flow.
-    if (
-      supportsOverrides &&
-      renderer.supportsOverride &&
-      initialOverride !== undefined
-    ) {
+    if (supportsOverrides && renderer.supportsOverride && initialOverride !== undefined) {
       return (
         <OverrideResponse
           selectedRequest={selectedRequest}
@@ -90,10 +80,7 @@ export const ResponseTab = ({
       );
     }
 
-    const canOverride =
-      renderer.supportsOverride &&
-      supportsOverrides &&
-      typeof data === 'string';
+    const canOverride = renderer.supportsOverride && supportsOverrides && typeof data === 'string';
     const overrideAction = canOverride ? (
       <Button
         variant="ghost"
@@ -114,11 +101,7 @@ export const ResponseTab = ({
 
     const toggle =
       renderer.views.length > 1 ? (
-        <ViewToggle
-          views={renderer.views}
-          value={activeView}
-          onChange={onPreferredViewChange}
-        />
+        <ViewToggle views={renderer.views} value={activeView} onChange={onPreferredViewChange} />
       ) : null;
 
     const sectionAction =

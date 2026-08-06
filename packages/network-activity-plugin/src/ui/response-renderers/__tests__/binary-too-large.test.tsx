@@ -49,8 +49,6 @@ describe('binaryTooLargeRenderer', () => {
         ctx,
       }) as ReactElement,
     );
-    expect(
-      screen.getByText(/Response too large for preview/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Response too large for preview/)).toBeInTheDocument();
   });
 });

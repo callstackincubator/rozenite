@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { type PluginTheme, resolveInitialTheme } from './resolve-theme';
 
 const STORAGE_KEY = '@rozenite/ui:theme';
@@ -61,16 +54,9 @@ export function PluginThemeProvider({ children }: PluginThemeProviderProps) {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   }, [setTheme, theme]);
 
-  const value = useMemo(
-    () => ({ theme, setTheme, toggleTheme }),
-    [theme, setTheme, toggleTheme],
-  );
+  const value = useMemo(() => ({ theme, setTheme, toggleTheme }), [theme, setTheme, toggleTheme]);
 
-  return (
-    <PluginThemeContext.Provider value={value}>
-      {children}
-    </PluginThemeContext.Provider>
-  );
+  return <PluginThemeContext.Provider value={value}>{children}</PluginThemeContext.Provider>;
 }
 
 export function usePluginTheme(): PluginThemeContextValue {
@@ -93,9 +79,7 @@ export function usePluginTheme(): PluginThemeContextValue {
  * `null` outside a `PluginShell` (or before it has mounted), in which case
  * consumers should fall back to the Base UI default of `document.body`.
  */
-export const PluginPortalContainerContext = createContext<HTMLElement | null>(
-  null,
-);
+export const PluginPortalContainerContext = createContext<HTMLElement | null>(null);
 
 export function usePluginPortalContainer(): HTMLElement | null {
   return useContext(PluginPortalContainerContext);

@@ -110,10 +110,7 @@ const adapters = [
           const results = [];
 
           for (const statement of statements) {
-            const result = await driver.execute(
-              statement.sql,
-              statement.params,
-            );
+            const result = await driver.execute(statement.sql, statement.params);
 
             results.push({
               rows: result.rows,

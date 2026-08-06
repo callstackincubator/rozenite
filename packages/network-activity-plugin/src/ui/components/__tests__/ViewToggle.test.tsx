@@ -6,54 +6,30 @@ import { ViewToggle } from '../ViewToggle';
 
 describe('ViewToggle', () => {
   it('renders nothing when only one view is available (adaptive)', () => {
-    const { container } = render(
-      <ViewToggle views={['raw']} value="raw" onChange={() => {}} />,
-    );
+    const { container } = render(<ViewToggle views={['raw']} value="raw" onChange={() => {}} />);
     expect(container.firstChild).toBeNull();
   });
 
   it('renders nothing when the renderer offers no views', () => {
-    const { container } = render(
-      <ViewToggle views={[]} value="raw" onChange={() => {}} />,
-    );
+    const { container } = render(<ViewToggle views={[]} value="raw" onChange={() => {}} />);
     expect(container.firstChild).toBeNull();
   });
 
   it('renders both labels when preview and raw are available', () => {
-    render(
-      <ViewToggle
-        views={['preview', 'raw']}
-        value="preview"
-        onChange={() => {}}
-      />,
-    );
+    render(<ViewToggle views={['preview', 'raw']} value="preview" onChange={() => {}} />);
     expect(screen.getByRole('tab', { name: 'Preview' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Raw' })).toBeInTheDocument();
   });
 
   it('marks the active view as aria-selected', () => {
-    render(
-      <ViewToggle views={['preview', 'raw']} value="raw" onChange={() => {}} />,
-    );
-    expect(screen.getByRole('tab', { name: 'Raw' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(screen.getByRole('tab', { name: 'Preview' })).toHaveAttribute(
-      'aria-selected',
-      'false',
-    );
+    render(<ViewToggle views={['preview', 'raw']} value="raw" onChange={() => {}} />);
+    expect(screen.getByRole('tab', { name: 'Raw' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Preview' })).toHaveAttribute('aria-selected', 'false');
   });
 
   it('fires onChange with the clicked view', () => {
     const onChange = vi.fn();
-    render(
-      <ViewToggle
-        views={['preview', 'raw']}
-        value="preview"
-        onChange={onChange}
-      />,
-    );
+    render(<ViewToggle views={['preview', 'raw']} value="preview" onChange={onChange} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Raw' }));
     expect(onChange).toHaveBeenCalledExactlyOnceWith('raw');
   });
@@ -66,11 +42,7 @@ describe('ViewToggle', () => {
     const onParentClick = vi.fn();
     render(
       <div onClick={onParentClick}>
-        <ViewToggle
-          views={['preview', 'raw']}
-          value="preview"
-          onChange={onChange}
-        />
+        <ViewToggle views={['preview', 'raw']} value="preview" onChange={onChange} />
       </div>,
     );
     fireEvent.click(screen.getByRole('tab', { name: 'Raw' }));

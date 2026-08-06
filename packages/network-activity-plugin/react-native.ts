@@ -5,8 +5,7 @@ export let withOnBootNetworkActivityRecording: typeof import('./src/react-native
 export type { NetworkActivityDevToolsConfig } from './src/react-native/config';
 export type { BootRecordingOptions } from './src/react-native/boot-recording';
 
-const isWeb =
-  typeof window !== 'undefined' && window.navigator.product !== 'ReactNative';
+const isWeb = typeof window !== 'undefined' && window.navigator.product !== 'ReactNative';
 const isDev = process.env.NODE_ENV !== 'production';
 const isServer = typeof window === 'undefined';
 

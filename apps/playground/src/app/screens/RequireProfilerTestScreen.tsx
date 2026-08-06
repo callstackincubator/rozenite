@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '../navigation/types';
 
@@ -25,10 +18,7 @@ export const RequireProfilerTestScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Require Profiler Test</Text>
@@ -37,12 +27,12 @@ export const RequireProfilerTestScreen = () => {
       <View style={styles.content}>
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
-            This screen allows you to test the require profiler plugin by
-            requiring a module that performs heavy computation.
+            This screen allows you to test the require profiler plugin by requiring a module that
+            performs heavy computation.
           </Text>
           <Text style={styles.infoText}>
-            The require() call and module execution should be captured and
-            displayed in the Require Profiler DevTools.
+            The require() call and module execution should be captured and displayed in the Require
+            Profiler DevTools.
           </Text>
         </View>
 
@@ -51,9 +41,7 @@ export const RequireProfilerTestScreen = () => {
             style={[styles.button, styles.requireButton]}
             onPress={handleRequireHeavyModule}
           >
-            <Text style={styles.buttonText}>
-              Require Heavy Computation Module
-            </Text>
+            <Text style={styles.buttonText}>Require Heavy Computation Module</Text>
             <Text style={styles.buttonSubtext}>
               Executes require() and runs 2-second computation
             </Text>
@@ -63,15 +51,13 @@ export const RequireProfilerTestScreen = () => {
         <View style={styles.instructionsContainer}>
           <Text style={styles.instructionsTitle}>How it works:</Text>
           <Text style={styles.instructionsText}>
-            • The button calls require() on a module that performs heavy
-            computation
+            • The button calls require() on a module that performs heavy computation
           </Text>
           <Text style={styles.instructionsText}>
             • The module contains a while loop that runs for exactly 2 seconds
           </Text>
           <Text style={styles.instructionsText}>
-            • The require profiler should capture the require timing and
-            execution
+            • The require profiler should capture the require timing and execution
           </Text>
           <Text style={styles.instructionsText}>
             • Check the Require Profiler DevTools to see the captured metrics

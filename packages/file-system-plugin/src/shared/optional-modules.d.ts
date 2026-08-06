@@ -50,10 +50,7 @@ declare module 'react-native-fs' {
     isFile: () => boolean;
     isDirectory: () => boolean;
   }>;
-  export function readFile(
-    path: string,
-    encoding: 'base64' | 'utf8',
-  ): Promise<string>;
+  export function readFile(path: string, encoding: 'base64' | 'utf8'): Promise<string>;
   export function writeFile(
     path: string,
     contents: string,

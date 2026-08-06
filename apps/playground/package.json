@@ -1,8 +1,8 @@
 {
   "name": "@rozenite/playground",
   "version": "0.0.1",
-  "main": "./src/main.tsx",
   "private": true,
+  "main": "./src/main.tsx",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -13,13 +13,6 @@
     "web:webpack:build": "webpack --config webpack.config.js --mode production",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "lint": "expo lint"
-  },
-  "expo": {
-    "install": {
-      "exclude": [
-        "@react-native-async-storage/async-storage"
-      ]
-    }
   },
   "dependencies": {
     "@dr.pogodin/react-native-fs": "^2.36.2",
@@ -107,5 +100,12 @@
     "webpack": "^5.105.4",
     "webpack-cli": "^7.0.2",
     "webpack-dev-server": "^5.2.3"
+  },
+  "expo": {
+    "install": {
+      "exclude": [
+        "@react-native-async-storage/async-storage"
+      ]
+    }
   }
 }

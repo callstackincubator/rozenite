@@ -7,9 +7,7 @@ import {
 
 describe('toStorageEntryPreview', () => {
   it('represents empty and boundary-sized strings completely', () => {
-    expect(
-      toStorageEntryPreview({ key: 'empty', type: 'string', value: '' }),
-    ).toEqual({
+    expect(toStorageEntryPreview({ key: 'empty', type: 'string', value: '' })).toEqual({
       key: 'empty',
       type: 'string',
       preview: '',
@@ -18,9 +16,7 @@ describe('toStorageEntryPreview', () => {
     });
 
     const value = 'a'.repeat(MAX_STRING_PREVIEW_CODE_POINTS);
-    expect(
-      toStorageEntryPreview({ key: 'boundary', type: 'string', value }),
-    ).toEqual({
+    expect(toStorageEntryPreview({ key: 'boundary', type: 'string', value })).toEqual({
       key: 'boundary',
       type: 'string',
       preview: value,
@@ -32,9 +28,7 @@ describe('toStorageEntryPreview', () => {
   it('truncates an oversized string at the fixed code-point boundary', () => {
     const value = `${'a'.repeat(MAX_STRING_PREVIEW_CODE_POINTS)}z`;
 
-    expect(
-      toStorageEntryPreview({ key: 'long', type: 'string', value }),
-    ).toEqual({
+    expect(toStorageEntryPreview({ key: 'long', type: 'string', value })).toEqual({
       key: 'long',
       type: 'string',
       preview: 'a'.repeat(MAX_STRING_PREVIEW_CODE_POINTS),
@@ -46,9 +40,7 @@ describe('toStorageEntryPreview', () => {
   it('does not split Unicode code points while preserving string length', () => {
     const value = `${'😀'.repeat(MAX_STRING_PREVIEW_CODE_POINTS)}!`;
 
-    expect(
-      toStorageEntryPreview({ key: 'emoji', type: 'string', value }),
-    ).toEqual({
+    expect(toStorageEntryPreview({ key: 'emoji', type: 'string', value })).toEqual({
       key: 'emoji',
       type: 'string',
       preview: '😀'.repeat(MAX_STRING_PREVIEW_CODE_POINTS),
@@ -58,18 +50,14 @@ describe('toStorageEntryPreview', () => {
   });
 
   it('formats primitive values completely', () => {
-    expect(
-      toStorageEntryPreview({ key: 'count', type: 'number', value: 42 }),
-    ).toEqual({
+    expect(toStorageEntryPreview({ key: 'count', type: 'number', value: 42 })).toEqual({
       key: 'count',
       type: 'number',
       preview: '42',
       valueSize: 2,
       isTruncated: false,
     });
-    expect(
-      toStorageEntryPreview({ key: 'enabled', type: 'boolean', value: false }),
-    ).toEqual({
+    expect(toStorageEntryPreview({ key: 'enabled', type: 'boolean', value: false })).toEqual({
       key: 'enabled',
       type: 'boolean',
       preview: 'false',
@@ -79,9 +67,7 @@ describe('toStorageEntryPreview', () => {
   });
 
   it('formats empty and boundary-sized buffers as hexadecimal', () => {
-    expect(
-      toStorageEntryPreview({ key: 'empty', type: 'buffer', value: [] }),
-    ).toEqual({
+    expect(toStorageEntryPreview({ key: 'empty', type: 'buffer', value: [] })).toEqual({
       key: 'empty',
       type: 'buffer',
       preview: '',
@@ -90,9 +76,7 @@ describe('toStorageEntryPreview', () => {
     });
 
     const value = new Array(MAX_BUFFER_PREVIEW_BYTES).fill(0xab);
-    expect(
-      toStorageEntryPreview({ key: 'boundary', type: 'buffer', value }),
-    ).toEqual({
+    expect(toStorageEntryPreview({ key: 'boundary', type: 'buffer', value })).toEqual({
       key: 'boundary',
       type: 'buffer',
       preview: new Array(MAX_BUFFER_PREVIEW_BYTES).fill('AB').join(' '),
@@ -104,9 +88,7 @@ describe('toStorageEntryPreview', () => {
   it('truncates oversized buffers at the fixed byte boundary', () => {
     const value = [...new Array(MAX_BUFFER_PREVIEW_BYTES).fill(0xab), 0xcd];
 
-    expect(
-      toStorageEntryPreview({ key: 'long', type: 'buffer', value }),
-    ).toEqual({
+    expect(toStorageEntryPreview({ key: 'long', type: 'buffer', value })).toEqual({
       key: 'long',
       type: 'buffer',
       preview: new Array(MAX_BUFFER_PREVIEW_BYTES).fill('AB').join(' '),

@@ -14,15 +14,10 @@ export type ImageSettingsProps = {
   onConfigChange: (config: ImageConfig) => void;
 };
 
-export const ImageSettings = ({
-  config,
-  onConfigChange,
-}: ImageSettingsProps) => {
+export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localOpacity, setLocalOpacity] = useState(config.opacity);
-  const [isPasteSupported] = useState(
-    () => navigator.clipboard && 'read' in navigator.clipboard,
-  );
+  const [isPasteSupported] = useState(() => navigator.clipboard && 'read' in navigator.clipboard);
 
   useEffect(() => {
     setLocalOpacity(config.opacity);
@@ -82,9 +77,7 @@ export const ImageSettings = ({
       alert('No image found in clipboard');
     } catch (err) {
       console.error('Failed to read clipboard contents: ', err);
-      alert(
-        'Failed to access clipboard. Please ensure you have granted permission.',
-      );
+      alert('Failed to access clipboard. Please ensure you have granted permission.');
     }
   };
 
@@ -113,23 +106,17 @@ export const ImageSettings = ({
         <div className="control-group">
           <label className="control-label">Overlay Image</label>
           {!config.uri ? (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-            >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div
                 className="file-upload-area"
                 onClick={() => fileInputRef.current?.click()}
                 style={{ cursor: 'pointer' }}
               >
                 <Upload size={32} color="var(--color-text-muted)" />
-                <span
-                  style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}
-                >
+                <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>
                   Click to upload reference image
                 </span>
-                <span
-                  style={{ color: 'var(--color-text-muted)', fontSize: '11px' }}
-                >
+                <span style={{ color: 'var(--color-text-muted)', fontSize: '11px' }}>
                   Max size: {MAX_IMAGE_SIZE_MB}MB
                 </span>
               </div>
@@ -146,20 +133,13 @@ export const ImageSettings = ({
             </div>
           ) : (
             <div className="control-group">
-              <div
-                className="control-row"
-                style={{ justifyContent: 'flex-end' }}
-              >
+              <div className="control-row" style={{ justifyContent: 'flex-end' }}>
                 <Button variant="destructive" onClick={handleRemoveImage}>
                   <X size={14} />
                   Remove
                 </Button>
               </div>
-              <img
-                src={config.uri}
-                alt="Overlay preview"
-                className="file-preview"
-              />
+              <img src={config.uri} alt="Overlay preview" className="file-preview" />
             </div>
           )}
           <input
@@ -240,9 +220,7 @@ export const ImageSettings = ({
             </div>
 
             <div className="control-group">
-              <label className="control-label">
-                Opacity ({Math.round(localOpacity * 100)}%)
-              </label>
+              <label className="control-label">Opacity ({Math.round(localOpacity * 100)}%)</label>
               <input
                 type="range"
                 min="0"

@@ -13,19 +13,14 @@ const prettyPrint = (value: unknown) => JSON.stringify(value, null, 2);
 
 export const expoFetchApi = {
   async getUsers(): Promise<ExpoFetchDemoResult> {
-    const response = await expoFetch(
-      'https://jsonplaceholder.typicode.com/users?_limit=3',
-      {
-        headers: {
-          'X-Rozenite-Test': 'expo-fetch-users',
-        },
+    const response = await expoFetch('https://jsonplaceholder.typicode.com/users?_limit=3', {
+      headers: {
+        'X-Rozenite-Test': 'expo-fetch-users',
       },
-    );
+    });
 
     if (!response.ok) {
-      throw new Error(
-        `Expo fetch request failed with status ${response.status}`,
-      );
+      throw new Error(`Expo fetch request failed with status ${response.status}`);
     }
 
     const users = (await response.json()) as User[];
@@ -65,8 +60,7 @@ export const expoFetchApi = {
         status: 0,
         statusText: 'Aborted',
         body: message,
-        extra:
-          'Use this to verify failed Expo fetch requests show up in Network Activity.',
+        extra: 'Use this to verify failed Expo fetch requests show up in Network Activity.',
       };
     } finally {
       clearTimeout(timeout);

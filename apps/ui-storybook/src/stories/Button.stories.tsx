@@ -23,8 +23,7 @@ export const AllVariants: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          'Compare the available visual variants when choosing an action emphasis.',
+        story: 'Compare the available visual variants when choosing an action emphasis.',
       },
     },
   },

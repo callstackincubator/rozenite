@@ -6,8 +6,7 @@ import { isInteractive } from './isInteractive.js';
 
 const unicode = isUnicodeSupported();
 
-const unicodeWithFallback = (c: string, fallback: string) =>
-  unicode ? c : fallback;
+const unicodeWithFallback = (c: string, fallback: string) => (unicode ? c : fallback);
 
 const SYMBOL_DEBUG = unicodeWithFallback('●', '•');
 

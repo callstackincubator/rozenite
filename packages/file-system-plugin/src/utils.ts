@@ -22,11 +22,7 @@ export function formatDate(ms?: number | null): string {
   }
 }
 
-export async function withTimeout<T>(
-  p: Promise<T>,
-  ms: number,
-  message: string,
-): Promise<T> {
+export async function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   try {
     return await Promise.race([

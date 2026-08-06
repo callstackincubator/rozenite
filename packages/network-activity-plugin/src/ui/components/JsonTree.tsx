@@ -6,10 +6,7 @@ export type JsonTreeProps = {
   shouldExpandNodeInitially?: () => boolean;
 };
 
-export const JsonTree = ({
-  data,
-  shouldExpandNodeInitially = () => true,
-}: JsonTreeProps) => {
+export const JsonTree = ({ data, shouldExpandNodeInitially = () => true }: JsonTreeProps) => {
   return (
     <JSONTree
       data={data}
@@ -35,9 +32,7 @@ export const JsonTree = ({
       shouldExpandNodeInitially={shouldExpandNodeInitially}
       // For objects and arrays
       getItemString={(_type, data, itemType, itemString) => (
-        <JsonTreeCopyableItem
-          getCopyableValue={() => JSON.stringify(data, null, 2)}
-        >
+        <JsonTreeCopyableItem getCopyableValue={() => JSON.stringify(data, null, 2)}>
           <>
             {itemType} {itemString}
           </>
@@ -45,10 +40,7 @@ export const JsonTree = ({
       )}
       // For primitives
       valueRenderer={(valueAsString, value) => (
-        <JsonTreeCopyableItem
-          getCopyableValue={() => String(value)}
-          className="ml-2"
-        >
+        <JsonTreeCopyableItem getCopyableValue={() => String(value)} className="ml-2">
           {String(valueAsString)}
         </JsonTreeCopyableItem>
       )}

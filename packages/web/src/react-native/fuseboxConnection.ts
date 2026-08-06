@@ -2,10 +2,7 @@
  * Fusebox connection management for React DevTools.
  */
 
-import type {
-  ReloadAndProfileResult,
-  SessionStore,
-} from './reloadAndProfile.js';
+import type { ReloadAndProfileResult, SessionStore } from './reloadAndProfile.js';
 import type { FuseboxDomain } from './types.js';
 
 export type FuseboxConnectionDeps = {
@@ -25,9 +22,7 @@ export type FuseboxConnectionDeps = {
     onReloadAndProfileFlagsReset: () => void;
   }) => () => void;
   savePersistedHookSettings: (settings: unknown) => void;
-  readReloadAndProfileConfig: (
-    sessionStore: SessionStore,
-  ) => ReloadAndProfileResult;
+  readReloadAndProfileConfig: (sessionStore: SessionStore) => ReloadAndProfileResult;
 };
 
 export const createFuseboxConnection = (deps: FuseboxConnectionDeps) => {

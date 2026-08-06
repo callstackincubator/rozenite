@@ -76,24 +76,14 @@ export const FlowList = ({
           <span className="dev-host-label">Flow runs</span>
           <div className="dev-host-flow-runs">
             {flowRuns.map((flowRun) => (
-              <div
-                key={flowRun.id}
-                className="dev-host-flow-state"
-                data-status={flowRun.status}
-              >
+              <div key={flowRun.id} className="dev-host-flow-state" data-status={flowRun.status}>
                 <div className="dev-host-flow-state-header">
                   <span className="dev-host-flow-title">
                     {flowRun.flowDisplayName}
-                    {flowRun.autoRun ? (
-                      <Badge variant="outline">Auto</Badge>
-                    ) : null}
+                    {flowRun.autoRun ? <Badge variant="outline">Auto</Badge> : null}
                   </span>
                   {flowRun.status === 'running' ? (
-                    <Button
-                      variant="ghost"
-                      size="compact"
-                      onClick={() => onStopFlow(flowRun.id)}
-                    >
+                    <Button variant="ghost" size="compact" onClick={() => onStopFlow(flowRun.id)}>
                       <Square />
                       Stop
                     </Button>
@@ -103,9 +93,7 @@ export const FlowList = ({
                   {getStatusLabel(flowRun.status)}
                 </span>
                 {flowRun.error ? (
-                  <div className="dev-host-flow-state-error">
-                    {flowRun.error}
-                  </div>
+                  <div className="dev-host-flow-state-error">{flowRun.error}</div>
                 ) : null}
                 {flowRun.result != null ? (
                   <pre className="dev-host-flow-state-result">

@@ -31,9 +31,7 @@ type AppProps = DevHostState & {
 type MobileDevtoolsTab = 'log' | 'actions';
 
 const useNarrowViewport = () => {
-  const [isNarrow, setIsNarrow] = useState(
-    () => window.matchMedia('(max-width: 960px)').matches,
-  );
+  const [isNarrow, setIsNarrow] = useState(() => window.matchMedia('(max-width: 960px)').matches);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 960px)');
@@ -50,50 +48,34 @@ const useNarrowViewport = () => {
   return isNarrow;
 };
 
-export const App = ({
-  packageName,
-  packageDescription,
-  panels,
-  flows,
-  presets,
-}: AppProps) => {
+export const App = ({ packageName, packageDescription, panels, flows, presets }: AppProps) => {
   const [activePanel, setActivePanel] = useState<DevHostPanelEntry | null>(() =>
     getInitialPanel(panels),
   );
   const [commandType, setCommandType] = useState('');
   const [commandPayload, setCommandPayload] = useState('');
   const [messages, setMessages] = useState<MessageEntry[]>([]);
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
-    null,
-  );
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [activeMobileTab, setActiveMobileTab] =
-    useState<MobileDevtoolsTab>('log');
+  const [activeMobileTab, setActiveMobileTab] = useState<MobileDevtoolsTab>('log');
   const [iframeLoadNonce, setIframeLoadNonce] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const lastAutoRunLoadRef = useRef(0);
   const isNarrowViewport = useNarrowViewport();
-  const {
-    flowRuns,
-    runFlow,
-    stopFlow,
-    hasRunningFlow,
-    registerMessage,
-    resetMessages,
-  } = useFlowRunner({
-    sendMessage: (type, payload) => {
-      iframeRef.current?.contentWindow?.postMessage(
-        { pluginId: packageName, type, payload },
-        '*',
-      );
-      appendMessage({ direction: 'in', type, payload });
-    },
-  });
+  const { flowRuns, runFlow, stopFlow, hasRunningFlow, registerMessage, resetMessages } =
+    useFlowRunner({
+      sendMessage: (type, payload) => {
+        iframeRef.current?.contentWindow?.postMessage(
+          { pluginId: packageName, type, payload },
+          '*',
+        );
+        appendMessage({ direction: 'in', type, payload });
+      },
+    });
 
   const activeSource = activePanel?.source ?? '';
   const activeLabel = activePanel?.label ?? '';
-  const selectedMessage =
-    messages.find((message) => message.id === selectedMessageId) ?? null;
+  const selectedMessage = messages.find((message) => message.id === selectedMessageId) ?? null;
   const panelDescription = packageDescription.trim();
   const trimmedCommandType = commandType.trim();
   const trimmedCommandPayload = commandPayload.trim();
@@ -266,10 +248,7 @@ export const App = ({
       value={activeMobileTab}
       onValueChange={(value) => setActiveMobileTab(value as MobileDevtoolsTab)}
     >
-      <Tabs.List
-        className="dev-host-mobile-tab-list"
-        aria-label="DevTools sections"
-      >
+      <Tabs.List className="dev-host-mobile-tab-list" aria-label="DevTools sections">
         <Tabs.Tab value="log">Log</Tabs.Tab>
         <Tabs.Tab value="actions">Actions</Tabs.Tab>
       </Tabs.List>
@@ -319,34 +298,19 @@ export const App = ({
       <PluginHeader className="dev-host-header">
         <div className="dev-host-header-title">
           <PluginHeader.Title>Rozenite Dev Host</PluginHeader.Title>
-          <PluginHeader.Subtitle
-            className="dev-host-header-subtitle"
-            title={panelDescription}
-          >
+          <PluginHeader.Subtitle className="dev-host-header-subtitle" title={panelDescription}>
             {packageName}
           </PluginHeader.Subtitle>
         </div>
         <PluginHeader.Actions>
           <PluginHeader.ThemeSwitcher />
-          <PanelTabs
-            panels={panels}
-            activeSource={activeSource}
-            onValueChange={selectPanel}
-          />
+          <PanelTabs panels={panels} activeSource={activeSource} onValueChange={selectPanel} />
         </PluginHeader.Actions>
       </PluginHeader>
 
       <PluginShell.Body className="dev-host-body">
-        <Split
-          direction="vertical"
-          className="dev-host-main-split"
-          autoSaveId="dev-host"
-        >
-          <Split.Pane
-            defaultSize={64}
-            minSize={30}
-            className="dev-host-preview"
-          >
+        <Split direction="vertical" className="dev-host-main-split" autoSaveId="dev-host">
+          <Split.Pane defaultSize={64} minSize={30} className="dev-host-preview">
             {panels.length === 0 ? (
               <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
                 No panels were defined in rozenite.config.ts.

@@ -8,7 +8,5 @@ type EyebrowProps = {
 };
 
 export const Eyebrow = ({ children, className }: EyebrowProps) => (
-  <p className={[styles.eyebrow, className].filter(Boolean).join(' ')}>
-    {children}
-  </p>
+  <p className={[styles.eyebrow, className].filter(Boolean).join(' ')}>{children}</p>
 );

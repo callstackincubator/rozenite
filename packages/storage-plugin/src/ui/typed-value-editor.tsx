@@ -43,11 +43,7 @@ export const TypedValueEditor = ({
 
   return (
     <div className="flex flex-col gap-2">
-      <EditorSwitcher
-        supportedTypes={supportedTypes}
-        value={type}
-        onChange={handleTypeChange}
-      />
+      <EditorSwitcher supportedTypes={supportedTypes} value={type} onChange={handleTypeChange} />
 
       {type === 'buffer' ? (
         <BinaryValueEditor

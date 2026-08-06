@@ -20,10 +20,7 @@ type FetchInterceptorCallbacks = {
   onRequestCompleted?: (event: HttpEventMap['request-completed']) => void;
   onRequestFailed?: (event: HttpEventMap['request-failed']) => void;
   onRequestProgress?: (event: HttpEventMap['request-progress']) => void;
-  onResponseBody?: (
-    requestId: string,
-    body: HttpEventMap['response-body']['body'],
-  ) => void;
+  onResponseBody?: (requestId: string, body: HttpEventMap['response-body']['body']) => void;
 };
 
 type FetchArgs = Parameters<typeof fetch>;
@@ -36,8 +33,7 @@ let wrapper: typeof globalThis.fetch | null = null;
 let originalGlobalFetch: typeof globalThis.fetch | null = null;
 let reconciliationTimer: ReturnType<typeof setTimeout> | null = null;
 
-const createRequestId = () =>
-  `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+const createRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
 const concatChunks = (chunks: Uint8Array[], totalBytes: number) => {
   const bytes = new Uint8Array(totalBytes);
@@ -145,24 +141,15 @@ const captureCloneBody = async (
   callbacks?.onResponseBody?.(
     requestId,
     captureBinary || textLike
-      ? await captureFetchResponseBodyFromBytes(
-          concatChunks(chunks, loaded),
-          contentType,
-        )
+      ? await captureFetchResponseBodyFromBytes(concatChunks(chunks, loaded), contentType)
       : { kind: 'binary-too-large', size: loaded },
   );
   return loaded;
 };
 
-const decorateConsumedBody = (
-  requestId: string,
-  response: Response,
-  contentType: string,
-) => {
+const decorateConsumedBody = (requestId: string, response: Response, contentType: string) => {
   let captured = false;
-  const captureOnce = (
-    capture: () => Promise<HttpEventMap['response-body']['body']>,
-  ) => {
+  const captureOnce = (capture: () => Promise<HttpEventMap['response-body']['body']>) => {
     if (captured) return;
     captured = true;
     void capture()
@@ -192,10 +179,7 @@ const decorateConsumedBody = (
       response.arrayBuffer = function () {
         const result = originalArrayBuffer.call(this);
         void result.then(
-          (value) =>
-            captureOnce(() =>
-              captureResponseBodyFromArrayBuffer(value, contentType),
-            ),
+          (value) => captureOnce(() => captureResponseBodyFromArrayBuffer(value, contentType)),
           () => undefined,
         );
         return result;
@@ -206,11 +190,7 @@ const decorateConsumedBody = (
   }
 };
 
-const observeResponse = (
-  requestId: string,
-  sendTime: number,
-  response: Response,
-) => {
+const observeResponse = (requestId: string, sendTime: number, response: Response) => {
   const responseReceivedAt = Date.now();
   let contentLength: number | undefined;
   let contentType = '';
@@ -247,37 +227,21 @@ const observeResponse = (
   try {
     const clone = response.clone();
     void captureCloneBody(requestId, clone, contentType, contentLength).then(
-      (loaded) =>
-        emitCompleted(
-          requestId,
-          sendTime,
-          responseReceivedAt,
-          contentLength ?? loaded,
-        ),
+      (loaded) => emitCompleted(requestId, sendTime, responseReceivedAt, contentLength ?? loaded),
       () => {
         try {
           callbacks?.onResponseBody?.(requestId, null);
         } catch {
           // Keep observation fail-open.
         }
-        emitCompleted(
-          requestId,
-          sendTime,
-          responseReceivedAt,
-          contentLength ?? null,
-        );
+        emitCompleted(requestId, sendTime, responseReceivedAt, contentLength ?? null);
       },
     );
   } catch {
     // SDK 54–55: complete the request now, and only observe a primitive body
     // consumer if application code uses one later.
     decorateConsumedBody(requestId, response, contentType);
-    emitCompleted(
-      requestId,
-      sendTime,
-      responseReceivedAt,
-      contentLength ?? null,
-    );
+    emitCompleted(requestId, sendTime, responseReceivedAt, contentLength ?? null);
   }
 };
 
@@ -298,8 +262,7 @@ const createWrapper = (fetchFn: typeof globalThis.fetch) =>
   async function (this: unknown, ...args: FetchArgs) {
     const sendTime = Date.now();
     const requestId = createRequestId();
-    let normalizedRequest: ReturnType<typeof normalizeFetchRequest> | null =
-      null;
+    let normalizedRequest: ReturnType<typeof normalizeFetchRequest> | null = null;
     try {
       normalizedRequest = normalizeFetchRequest(args[0], args[1] ?? {});
       callbacks?.onRequestSent?.({

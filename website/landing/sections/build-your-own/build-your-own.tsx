@@ -64,10 +64,7 @@ export const BuildYourOwn = () => (
           </div>
 
           <div className={styles.actions}>
-            <ActionButton
-              href="/docs/plugin-development/overview"
-              variant="outline"
-            >
+            <ActionButton href="/docs/plugin-development/overview" variant="outline">
               Plugin development guide
             </ActionButton>
           </div>

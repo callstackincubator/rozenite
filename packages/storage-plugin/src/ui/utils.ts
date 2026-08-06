@@ -15,10 +15,7 @@ export const downloadJson = (data: unknown, filename: string): void => {
 
 const sanitize = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '-');
 
-export const buildExportFilename = (
-  target: StorageTarget,
-  now: Date = new Date(),
-): string => {
+export const buildExportFilename = (target: StorageTarget, now: Date = new Date()): string => {
   const yyyy = now.getFullYear().toString().padStart(4, '0');
   const mm = (now.getMonth() + 1).toString().padStart(2, '0');
   const dd = now.getDate().toString().padStart(2, '0');

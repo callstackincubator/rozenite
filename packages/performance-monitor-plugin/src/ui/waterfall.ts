@@ -128,10 +128,7 @@ export const getEntryValueLabel = (entry: SerializedPerformanceEntry) => {
   return null;
 };
 
-export const getEntryKey = (
-  entry: SerializedPerformanceEntry,
-  index?: number,
-) => {
+export const getEntryKey = (entry: SerializedPerformanceEntry, index?: number) => {
   const suffix = index === undefined ? '' : `:${index}`;
   return (
     [
@@ -212,10 +209,7 @@ const getResourceTimingBaseline = (resource: SerializedPerformanceResource) => {
     getPositiveTimingValue(resource.connectStart),
     getPositiveTimingValue(resource.requestStart),
     getPositiveTimingValue(resource.responseStart),
-  ].filter(
-    (value): value is number =>
-      value !== null && isFiniteNumber(value) && value >= 0,
-  );
+  ].filter((value): value is number => value !== null && isFiniteNumber(value) && value >= 0);
 
   if (candidates.length > 0) {
     return Math.min(...candidates);
@@ -240,9 +234,7 @@ export const getResourcePhaseSegments = (
   const baseline = getResourceTimingBaseline(resource);
   const duration = getResourceDuration(resource);
   const workerStart = getPositiveTimingValue(resource.workerStart);
-  const secureConnectionStart = getPositiveTimingValue(
-    resource.secureConnectionStart,
-  );
+  const secureConnectionStart = getPositiveTimingValue(resource.secureConnectionStart);
   const connectPhaseEnd =
     secureConnectionStart !== null &&
     secureConnectionStart > resource.connectStart &&
@@ -313,9 +305,7 @@ export const getResourcePhaseSegments = (
     ),
   ];
 
-  return segments.filter((segment): segment is WaterfallPhaseSegment =>
-    Boolean(segment),
-  );
+  return segments.filter((segment): segment is WaterfallPhaseSegment => Boolean(segment));
 };
 
 const getEntryEndTime = (entry: SerializedPerformanceEntry) => {
@@ -345,18 +335,14 @@ type WaterfallScale = {
   gapThreshold: number;
 };
 
-const createScale = (
-  sortedEntries: SerializedPerformanceEntry[],
-): WaterfallScale => {
+const createScale = (sortedEntries: SerializedPerformanceEntry[]): WaterfallScale => {
   const positiveDurations = sortedEntries
     .map((entry) => getEntryEndTime(entry) - entry.startTime)
     .filter((duration) => duration > 0);
   const typicalDuration = median(positiveDurations);
   const gapThreshold = Math.max(1000, typicalDuration * 8);
   const compressedGapDuration = Math.max(250, Math.min(1500, gapThreshold / 2));
-  const clusters: Array<
-    Omit<WaterfallCluster, 'visualStart' | 'visualDuration'>
-  > = [];
+  const clusters: Array<Omit<WaterfallCluster, 'visualStart' | 'visualDuration'>> = [];
 
   for (const entry of sortedEntries) {
     const entryStart = entry.startTime;
@@ -383,10 +369,7 @@ const createScale = (
   let visualCursor = 0;
 
   clusters.forEach((cluster, index) => {
-    const visualDuration = Math.max(
-      MIN_TIMELINE_DURATION,
-      cluster.end - cluster.start,
-    );
+    const visualDuration = Math.max(MIN_TIMELINE_DURATION, cluster.end - cluster.start);
 
     visualClusters.push({
       ...cluster,
@@ -427,8 +410,7 @@ const getVisualTime = (time: number, scale: WaterfallScale) => {
     if (time <= cluster.end) {
       return (
         cluster.visualStart +
-        clampRatio((time - cluster.start) / cluster.visualDuration) *
-          cluster.visualDuration
+        clampRatio((time - cluster.start) / cluster.visualDuration) * cluster.visualDuration
       );
     }
 
@@ -446,9 +428,7 @@ const createTicks = (scale: WaterfallScale): WaterfallTick[] => {
   const seenOffsets = new Set<number>();
 
   const addTick = (visualTime: number) => {
-    const offsetPercent = clampPercent(
-      (visualTime / scale.visualDuration) * 100,
-    );
+    const offsetPercent = clampPercent((visualTime / scale.visualDuration) * 100);
     const roundedOffset = Math.round(visualTime);
     const lastTick = ticks.at(-1);
 
@@ -456,10 +436,7 @@ const createTicks = (scale: WaterfallScale): WaterfallTick[] => {
       return;
     }
 
-    if (
-      lastTick &&
-      offsetPercent - lastTick.offsetPercent < MIN_TICK_SPACING_PERCENT
-    ) {
+    if (lastTick && offsetPercent - lastTick.offsetPercent < MIN_TICK_SPACING_PERCENT) {
       return;
     }
 
@@ -475,10 +452,7 @@ const createTicks = (scale: WaterfallScale): WaterfallTick[] => {
 
   for (const cluster of scale.clusters) {
     const step = getNiceTickStep(cluster.end - cluster.start);
-    const tickCount = Math.max(
-      1,
-      Math.floor((cluster.end - cluster.start) / step),
-    );
+    const tickCount = Math.max(1, Math.floor((cluster.end - cluster.start) / step));
 
     for (let index = 0; index <= tickCount; index += 1) {
       const localTime = Math.min(index * step, cluster.end - cluster.start);
@@ -491,9 +465,7 @@ const createTicks = (scale: WaterfallScale): WaterfallTick[] => {
   return ticks;
 };
 
-export const buildWaterfallModel = (
-  entries: SerializedPerformanceEntry[],
-): WaterfallModel => {
+export const buildWaterfallModel = (entries: SerializedPerformanceEntry[]): WaterfallModel => {
   const sortedEntries = entries
     .filter((entry) => isFiniteNumber(entry.startTime))
     .slice()
@@ -524,19 +496,12 @@ export const buildWaterfallModel = (
 
   return {
     rows: sortedEntries.map((entry, index) => {
-      const entryDuration = Math.max(
-        0,
-        getEntryEndTime(entry) - entry.startTime,
-      );
+      const entryDuration = Math.max(0, getEntryEndTime(entry) - entry.startTime);
       const startOffset = entry.startTime - startTime;
       const visualStart = getVisualTime(entry.startTime, scale);
       const visualEnd = getVisualTime(getEntryEndTime(entry), scale);
-      const offsetPercent = clampPercent(
-        (visualStart / scale.visualDuration) * 100,
-      );
-      const widthPercent = clampPercent(
-        ((visualEnd - visualStart) / scale.visualDuration) * 100,
-      );
+      const offsetPercent = clampPercent((visualStart / scale.visualDuration) * 100);
+      const widthPercent = clampPercent(((visualEnd - visualStart) / scale.visualDuration) * 100);
 
       return {
         id: getEntryKey(entry, index),
@@ -549,8 +514,7 @@ export const buildWaterfallModel = (
         offsetPercent,
         widthPercent,
         valueLabel: getEntryValueLabel(entry),
-        phases:
-          entry.entryType === 'resource' ? getResourcePhaseSegments(entry) : [],
+        phases: entry.entryType === 'resource' ? getResourcePhaseSegments(entry) : [],
       };
     }),
     ticks: createTicks(scale),
@@ -559,18 +523,12 @@ export const buildWaterfallModel = (
       label: `${formatDuration(gap.end - gap.start)} idle`,
       startOffset: gap.start - startTime,
       duration: gap.end - gap.start,
-      offsetPercent: clampPercent(
-        (gap.visualStart / scale.visualDuration) * 100,
-      ),
-      widthPercent: clampPercent(
-        (gap.visualDuration / scale.visualDuration) * 100,
-      ),
+      offsetPercent: clampPercent((gap.visualStart / scale.visualDuration) * 100),
+      widthPercent: clampPercent((gap.visualDuration / scale.visualDuration) * 100),
     })),
     startTime,
     duration,
     timelineDuration: scale.visualDuration,
-    hasCompressedGaps: scale.gaps.some(
-      (gap) => gap.end - gap.start > scale.gapThreshold,
-    ),
+    hasCompressedGaps: scale.gaps.some((gap) => gap.end - gap.start > scale.gapThreshold),
   };
 };

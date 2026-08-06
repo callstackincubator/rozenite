@@ -39,14 +39,10 @@ export const pluginDirectoryPlugin = (): RspressPlugin => {
       const startIndex = (pageNumber - 1) * PLUGINS_PER_PAGE;
       const endIndex = startIndex + PLUGINS_PER_PAGE;
       const allPluginsReferences = await getPluginsReferences();
-      const totalPages = Math.ceil(
-        allPluginsReferences.length / PLUGINS_PER_PAGE,
-      );
+      const totalPages = Math.ceil(allPluginsReferences.length / PLUGINS_PER_PAGE);
 
       try {
-        const data = await getPlugins(
-          allPluginsReferences.slice(startIndex, endIndex),
-        );
+        const data = await getPlugins(allPluginsReferences.slice(startIndex, endIndex));
 
         pageData.pluginDirectoryPage = {
           pageNumber,
@@ -65,25 +61,17 @@ export const pluginDirectoryPlugin = (): RspressPlugin => {
     async addPages() {
       const allPluginsReferences = await getPluginsReferences();
       const pages = [];
-      const totalPages = Math.ceil(
-        allPluginsReferences.length / PLUGINS_PER_PAGE,
-      );
+      const totalPages = Math.ceil(allPluginsReferences.length / PLUGINS_PER_PAGE);
 
       pages.push({
         routePath: '/plugin-directory',
-        filepath: path.join(
-          __dirname,
-          `plugin-directory-page/plugin-directory-page.tsx`,
-        ),
+        filepath: path.join(__dirname, `plugin-directory-page/plugin-directory-page.tsx`),
       });
 
       for (let page = 1; page <= totalPages; page++) {
         pages.push({
           routePath: `/plugin-directory/${page}`,
-          filepath: path.join(
-            __dirname,
-            `plugin-directory-page/plugin-directory-page.tsx`,
-          ),
+          filepath: path.join(__dirname, `plugin-directory-page/plugin-directory-page.tsx`),
         });
       }
 

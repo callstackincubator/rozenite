@@ -3,10 +3,7 @@ import '@testing-library/jest-dom/vitest';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ActionItem } from '../ActionItem';
-import type {
-  ActionOrigin,
-  ActionStackFrame,
-} from '../../../react-native/symbolication/types';
+import type { ActionOrigin, ActionStackFrame } from '../../../react-native/symbolication/types';
 import type { NavigationAction } from '../../../shared';
 
 const appFrame: ActionStackFrame = {
@@ -54,10 +51,7 @@ describe('ActionItem origin preview', () => {
   it('exposes the full path as a hover tooltip', () => {
     renderItem(buildOrigin({}));
     const preview = screen.getByText('↳ Screen.tsx:42:5');
-    expect(preview).toHaveAttribute(
-      'title',
-      'apps/playground/src/Screen.tsx:42:5',
-    );
+    expect(preview).toHaveAttribute('title', 'apps/playground/src/Screen.tsx:42:5');
   });
 
   it('renders the preview italicised for low-confidence origins', () => {

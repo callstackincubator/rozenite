@@ -123,9 +123,7 @@ export const createStorageView = (
   const getAllEntries = async () => {
     const keys = await getAllKeys(storage);
     const visibleEntries = await Promise.all(
-      keys
-        .filter((key) => !shouldFilterKey(storageNode, key))
-        .map((key) => getEntry(storage, key)),
+      keys.filter((key) => !shouldFilterKey(storageNode, key)).map((key) => getEntry(storage, key)),
     );
 
     return visibleEntries.filter((entry): entry is StorageEntry => !!entry);
@@ -189,7 +187,5 @@ export const createStorageView = (
 
 export const createStorageViews = (storages: StorageAdapter[]) =>
   storages.flatMap((adapter) =>
-    adapter.storages.map((storageNode) =>
-      createStorageView(adapter, storageNode),
-    ),
+    adapter.storages.map((storageNode) => createStorageView(adapter, storageNode)),
   );

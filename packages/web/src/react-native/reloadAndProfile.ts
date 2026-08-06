@@ -20,9 +20,7 @@ export type ReloadAndProfileResult = {
   onReloadAndProfileFlagsReset: () => void;
 };
 
-export const readReloadAndProfileConfig = (
-  sessionStore: SessionStore,
-): ReloadAndProfileResult => {
+export const readReloadAndProfileConfig = (sessionStore: SessionStore): ReloadAndProfileResult => {
   const config = sessionStore.getReloadAndProfileConfig();
   const isProfiling = config?.shouldReloadAndProfile === true;
   const profilingSettings = {

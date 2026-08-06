@@ -6,10 +6,7 @@ export const isBundling = (projectRoot: string): boolean => {
 
   // Relative -> expo/bin/cli.js | react-native/cli.js
   const expoBinRelativePath = getBinaryRelativePath(projectRoot, 'expo');
-  const reactNativeBinRelativePath = getBinaryRelativePath(
-    projectRoot,
-    'react-native',
-  );
+  const reactNativeBinRelativePath = getBinaryRelativePath(projectRoot, 'react-native');
 
   // Check for Expo bundling
   if (command === 'export') {
@@ -27,10 +24,7 @@ export const isBundling = (projectRoot: string): boolean => {
   // Check for React Native bundling
   if (command === 'bundle') {
     // Check direct binary path
-    if (
-      reactNativeBinRelativePath &&
-      executablePath.endsWith(reactNativeBinRelativePath)
-    ) {
+    if (reactNativeBinRelativePath && executablePath.endsWith(reactNativeBinRelativePath)) {
       return true;
     }
 

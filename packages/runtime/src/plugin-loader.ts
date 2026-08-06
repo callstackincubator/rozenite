@@ -18,10 +18,7 @@ export const getPluginUrl = (pluginId: string) => {
   return url.toString();
 };
 
-export const loadPluginFromUrl = async (
-  url: string,
-  pluginId?: string,
-): Promise<LoadedPlugin> => {
+export const loadPluginFromUrl = async (url: string, pluginId?: string): Promise<LoadedPlugin> => {
   const manifest = await getManifest(url);
   const id = pluginId ?? manifest.name;
 

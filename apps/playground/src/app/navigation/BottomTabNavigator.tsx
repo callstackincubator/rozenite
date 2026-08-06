@@ -51,9 +51,7 @@ export const BottomTabNavigator = () => {
   );
 };
 
-const HomeIcon = ({ color }: { color: string }) => (
-  <Text style={{ color, fontSize: 20 }}>🏠</Text>
-);
+const HomeIcon = ({ color }: { color: string }) => <Text style={{ color, fontSize: 20 }}>🏠</Text>;
 
 const ProfileIcon = ({ color }: { color: string }) => (
   <Text style={{ color, fontSize: 20 }}>👤</Text>

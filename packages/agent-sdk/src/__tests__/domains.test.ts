@@ -17,9 +17,7 @@ const attachSession = async () => {
   return await createAgentClient().attachSession('session-1');
 };
 
-const mockAttachedSessionRoute = (
-  pathname: string,
-): MockHttpResult | undefined => {
+const mockAttachedSessionRoute = (pathname: string): MockHttpResult | undefined => {
   if (pathname === getAgentSessionRoute('session-1')) {
     return {
       payload: {
@@ -95,16 +93,12 @@ describe('agent session domain and tool helpers', () => {
       id: 'app',
       kind: 'plugin',
     });
-    expect(
-      domains.find((domain) => domain.pluginId === '@rozenite/mmkv-plugin'),
-    ).toMatchObject({
+    expect(domains.find((domain) => domain.pluginId === '@rozenite/mmkv-plugin')).toMatchObject({
       id: 'mmkv',
       kind: 'plugin',
     });
     expect(
-      domains.find(
-        (domain) => domain.pluginId === '@avasapp/rozenite-plugin-ably',
-      ),
+      domains.find((domain) => domain.pluginId === '@avasapp/rozenite-plugin-ably'),
     ).toMatchObject({
       id: 'avasapp/ably',
       kind: 'plugin',
@@ -147,9 +141,7 @@ describe('agent session domain and tool helpers', () => {
 
     const session = await attachSession();
 
-    await expect(session.domains.list()).rejects.toThrow(
-      /Ambiguous domain name "a\/x"/,
-    );
+    await expect(session.domains.list()).rejects.toThrow(/Ambiguous domain name "a\/x"/);
   });
 
   it('resolves domains and tools by plugin id and short tool name', async () => {
@@ -349,11 +341,7 @@ describe('agent session domain and tool helpers', () => {
     const calls: Array<{ toolName: string; args: unknown }> = [];
 
     httpTestHarness.requestHandler.mockImplementation(
-      async ({
-        method,
-        pathname,
-        body,
-      }: MockHttpRequest): Promise<MockHttpResult> => {
+      async ({ method, pathname, body }: MockHttpRequest): Promise<MockHttpResult> => {
         const sessionRoute = mockAttachedSessionRoute(pathname);
         if (sessionRoute) {
           return sessionRoute;
@@ -376,10 +364,7 @@ describe('agent session domain and tool helpers', () => {
           };
         }
 
-        if (
-          method === 'POST' &&
-          pathname === getAgentSessionCallToolRoute('session-1')
-        ) {
+        if (method === 'POST' && pathname === getAgentSessionCallToolRoute('session-1')) {
           calls.push(body as { toolName: string; args: unknown });
           return {
             payload: {
@@ -430,11 +415,7 @@ describe('agent session domain and tool helpers', () => {
     const calls: Array<{ toolName: string; args: unknown }> = [];
 
     httpTestHarness.requestHandler.mockImplementation(
-      async ({
-        method,
-        pathname,
-        body,
-      }: MockHttpRequest): Promise<MockHttpResult> => {
+      async ({ method, pathname, body }: MockHttpRequest): Promise<MockHttpResult> => {
         const sessionRoute = mockAttachedSessionRoute(pathname);
         if (sessionRoute) {
           return sessionRoute;
@@ -459,10 +440,7 @@ describe('agent session domain and tool helpers', () => {
           };
         }
 
-        if (
-          method === 'POST' &&
-          pathname === getAgentSessionCallToolRoute('session-1')
-        ) {
+        if (method === 'POST' && pathname === getAgentSessionCallToolRoute('session-1')) {
           calls.push(body as { toolName: string; args: unknown });
           return {
             payload: {
@@ -514,10 +492,7 @@ describe('agent session domain and tool helpers', () => {
 
   it('calls typed descriptors through the session tool helper', async () => {
     const calls: Array<{ toolName: string; args: unknown }> = [];
-    const echoTool = defineAgentToolDescriptor<
-      { value: string },
-      { echoed: string }
-    >({
+    const echoTool = defineAgentToolDescriptor<{ value: string }, { echoed: string }>({
       domain: 'app',
       name: 'echo',
       description: 'Echo the provided value.',
@@ -531,11 +506,7 @@ describe('agent session domain and tool helpers', () => {
     });
 
     httpTestHarness.requestHandler.mockImplementation(
-      async ({
-        method,
-        pathname,
-        body,
-      }: MockHttpRequest): Promise<MockHttpResult> => {
+      async ({ method, pathname, body }: MockHttpRequest): Promise<MockHttpResult> => {
         const sessionRoute = mockAttachedSessionRoute(pathname);
         if (sessionRoute) {
           return sessionRoute;
@@ -558,10 +529,7 @@ describe('agent session domain and tool helpers', () => {
           };
         }
 
-        if (
-          method === 'POST' &&
-          pathname === getAgentSessionCallToolRoute('session-1')
-        ) {
+        if (method === 'POST' && pathname === getAgentSessionCallToolRoute('session-1')) {
           calls.push(body as { toolName: string; args: unknown });
           return {
             payload: {

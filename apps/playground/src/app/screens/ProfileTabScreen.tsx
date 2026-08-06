@@ -21,10 +21,7 @@ export const ProfileTabScreen = () => {
       <Text style={styles.text}>Profile Tab</Text>
       <Text style={styles.subtext}>This is the profile tab screen</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleNavigateToParameter}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleNavigateToParameter}>
         <Text style={styles.buttonText}>View Profile Details</Text>
       </TouchableOpacity>
     </View>

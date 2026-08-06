@@ -22,11 +22,10 @@ export type SerializedPerformanceMetric = SharedPerformanceEntryProperties & {
   detail?: unknown;
 };
 
-export type SerializedPerformanceReactNativeMark =
-  SharedPerformanceEntryProperties & {
-    entryType: 'react-native-mark';
-    detail?: unknown;
-  };
+export type SerializedPerformanceReactNativeMark = SharedPerformanceEntryProperties & {
+  entryType: 'react-native-mark';
+  detail?: unknown;
+};
 
 // PerformanceResourceTiming carries ~14 timing-phase fields plus size
 // fields. We serialize all of them so the DetailsSidebar can render
@@ -85,5 +84,4 @@ export type PerformanceMonitorEventMap = {
   };
 };
 
-export type PerformanceMonitorDevToolsClient =
-  RozeniteDevToolsClient<PerformanceMonitorEventMap>;
+export type PerformanceMonitorDevToolsClient = RozeniteDevToolsClient<PerformanceMonitorEventMap>;

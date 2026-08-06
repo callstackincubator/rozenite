@@ -32,10 +32,7 @@ function PluginHeaderTitle({ className, ...props }: PluginHeaderTitleProps) {
 
 export type PluginHeaderSubtitleProps = ComponentProps<'p'>;
 
-function PluginHeaderSubtitle({
-  className,
-  ...props
-}: PluginHeaderSubtitleProps) {
+function PluginHeaderSubtitle({ className, ...props }: PluginHeaderSubtitleProps) {
   return (
     <p
       data-slot="plugin-header-subtitle"
@@ -47,10 +44,7 @@ function PluginHeaderSubtitle({
 
 export type PluginHeaderActionsProps = ComponentProps<'div'>;
 
-function PluginHeaderActions({
-  className,
-  ...props
-}: PluginHeaderActionsProps) {
+function PluginHeaderActions({ className, ...props }: PluginHeaderActionsProps) {
   return (
     <div
       data-slot="plugin-header-actions"
@@ -62,19 +56,14 @@ function PluginHeaderActions({
 
 export type PluginHeaderThemeSwitcherProps = ComponentProps<'button'>;
 
-function PluginHeaderThemeSwitcher({
-  className,
-  ...props
-}: PluginHeaderThemeSwitcherProps) {
+function PluginHeaderThemeSwitcher({ className, ...props }: PluginHeaderThemeSwitcherProps) {
   const { theme, toggleTheme } = usePluginTheme();
 
   return (
     <button
       type="button"
       data-slot="plugin-header-theme-switcher"
-      aria-label={
-        theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
-      }
+      aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
       onClick={toggleTheme}
       className={cn(
         'inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground',
@@ -85,11 +74,7 @@ function PluginHeaderThemeSwitcher({
       )}
       {...props}
     >
-      {theme === 'dark' ? (
-        <Sun className="h-4 w-4" />
-      ) : (
-        <Moon className="h-4 w-4" />
-      )}
+      {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>
   );
 }

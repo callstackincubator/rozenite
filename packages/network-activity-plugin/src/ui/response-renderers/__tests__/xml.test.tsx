@@ -14,8 +14,7 @@ const baseCtx: RenderCtx = {
 const renderXml = (view: 'preview' | 'raw', body: string) =>
   render(xmlRenderer.render({ view, body, ctx: baseCtx }) as ReactElement);
 
-const VALID_XML =
-  '<feed xmlns="http://www.w3.org/2005/Atom"><title>Demo</title></feed>';
+const VALID_XML = '<feed xmlns="http://www.w3.org/2005/Atom"><title>Demo</title></feed>';
 
 describe('xmlRenderer', () => {
   it('declares both preview and raw views with preview as default', () => {
@@ -60,9 +59,7 @@ describe('xmlRenderer', () => {
       const MALFORMED = '<feed><unclosed></feed>';
       renderXml('preview', MALFORMED);
       expect(screen.getByText(MALFORMED)).toBeInTheDocument();
-      expect(
-        screen.getByText(/Failed to parse as XML, showing as raw text/),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Failed to parse as XML, showing as raw text/)).toBeInTheDocument();
     });
 
     it('also flags Firefox-style nested parsererror (namespace-aware detection)', () => {
@@ -79,16 +76,13 @@ describe('xmlRenderer', () => {
       const FIREFOX_LIKE =
         '<root xmlns:px="http://www.mozilla.org/newlayout/xml/parsererror.xml"><px:parsererror>broken</px:parsererror></root>';
       renderXml('preview', FIREFOX_LIKE);
-      expect(
-        screen.getByText(/Failed to parse as XML, showing as raw text/),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Failed to parse as XML, showing as raw text/)).toBeInTheDocument();
     });
   });
 
   describe('content-type acceptance', () => {
     it('renders an application/xhtml+xml body as a tree', () => {
-      const XHTML =
-        '<html xmlns="http://www.w3.org/1999/xhtml"><body><p>Hi</p></body></html>';
+      const XHTML = '<html xmlns="http://www.w3.org/1999/xhtml"><body><p>Hi</p></body></html>';
       renderXml('preview', XHTML);
       // Each element renders open + close, so 2x per tag.
       expect(screen.getAllByText('html').length).toBeGreaterThan(0);

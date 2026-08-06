@@ -2,11 +2,7 @@ import type { Completion } from '@codemirror/autocomplete';
 import type { SQLNamespace } from '@codemirror/lang-sql';
 import { format } from 'sql-formatter';
 import { quoteSqlIdentifier } from '../shared/sql';
-import type {
-  SqliteColumnInfo,
-  SqliteEntity,
-  SqliteSchema,
-} from './sqlite-introspection';
+import type { SqliteColumnInfo, SqliteEntity, SqliteSchema } from './sqlite-introspection';
 
 export type SqlEditorColumnCacheState = {
   databaseId: string | null;
@@ -28,17 +24,14 @@ type SqlEditorAliasLookup = Record<
   }
 >;
 
-const SQL_IDENTIFIER_PATTERN =
-  '"(?:[^"]|"")+"|`(?:[^`]|``)+`|\\[[^\\]]+\\]|[A-Za-z_][\\w$]*';
+const SQL_IDENTIFIER_PATTERN = '"(?:[^"]|"")+"|`(?:[^`]|``)+`|\\[[^\\]]+\\]|[A-Za-z_][\\w$]*';
 
 const bareIdentifierPattern = /^[A-Za-z_][\w$]*$/;
 const trailingIdentifierPattern = /[A-Za-z_][\w$]*$/;
 const entityMemberPattern = new RegExp(
   `(${SQL_IDENTIFIER_PATTERN})\\s*\\.\\s*(${SQL_IDENTIFIER_PATTERN})\\s*\\.\\s*$`,
 );
-const singleMemberPattern = new RegExp(
-  `(${SQL_IDENTIFIER_PATTERN})\\s*\\.\\s*$`,
-);
+const singleMemberPattern = new RegExp(`(${SQL_IDENTIFIER_PATTERN})\\s*\\.\\s*$`);
 const aliasPattern = new RegExp(
   `\\b(?:FROM|JOIN|UPDATE|INTO)\\s+(?:(?:(${SQL_IDENTIFIER_PATTERN})\\s*\\.\\s*)?(${SQL_IDENTIFIER_PATTERN}))(?:\\s+(?:AS\\s+)?(${SQL_IDENTIFIER_PATTERN}))?`,
   'gi',
@@ -63,9 +56,7 @@ const unquoteIdentifier = (identifier: string) => {
 };
 
 const getIdentifierInsertText = (identifier: string) =>
-  bareIdentifierPattern.test(identifier)
-    ? identifier
-    : quoteSqlIdentifier(identifier);
+  bareIdentifierPattern.test(identifier) ? identifier : quoteSqlIdentifier(identifier);
 
 const getColumnDetail = (column: SqliteColumnInfo) => {
   const parts = [column.type].filter(Boolean);
@@ -95,10 +86,7 @@ export const createSqlEditorColumnCache = (
 export const syncSqlEditorColumnCacheDatabase = (
   state: SqlEditorColumnCacheState,
   databaseId: string | null,
-) =>
-  state.databaseId === databaseId
-    ? state
-    : createSqlEditorColumnCache(databaseId);
+) => (state.databaseId === databaseId ? state : createSqlEditorColumnCache(databaseId));
 
 export const getSqlEditorColumnCacheKey = (
   databaseId: string,
@@ -111,8 +99,7 @@ export const getSqlEditorCachedColumns = (
   databaseId: string,
   schemaName: string,
   entityName: string,
-) =>
-  state.entries[getSqlEditorColumnCacheKey(databaseId, schemaName, entityName)];
+) => state.entries[getSqlEditorColumnCacheKey(databaseId, schemaName, entityName)];
 
 export const setSqlEditorCachedColumns = (
   state: SqlEditorColumnCacheState,
@@ -176,12 +163,8 @@ export const buildSqlCompletionSchema = ({
       const columns =
         databaseId == null
           ? []
-          : (getSqlEditorCachedColumns(
-              columnCache,
-              databaseId,
-              entity.schemaName,
-              entity.name,
-            ) ?? []);
+          : (getSqlEditorCachedColumns(columnCache, databaseId, entity.schemaName, entity.name) ??
+            []);
 
       schemaChildren[entity.name] = {
         self: {
@@ -220,19 +203,15 @@ export const getDefaultSqlCompletionSchema = (schemas: SqliteSchema[]) =>
   schemas.find((schema) => schema.name === 'main')?.name ?? schemas[0]?.name;
 
 export const createSqlColumnCompletions = (columns: SqliteColumnInfo[]) =>
-  columns.map(
-    (column): Completion => ({
-      label: column.name,
-      apply: getIdentifierInsertText(column.name),
-      detail: getColumnDetail(column) || undefined,
-      type: 'property',
-      boost: column.primaryKeyOrder > 0 ? 1 : 0,
-    }),
-  );
+  columns.map((column): Completion => ({
+    label: column.name,
+    apply: getIdentifierInsertText(column.name),
+    detail: getColumnDetail(column) || undefined,
+    type: 'property',
+    boost: column.primaryKeyOrder > 0 ? 1 : 0,
+  }));
 
-export const extractSqlEditorAliases = (
-  sqlBeforeCursor: string,
-): SqlEditorAliasLookup => {
+export const extractSqlEditorAliases = (sqlBeforeCursor: string): SqlEditorAliasLookup => {
   const aliases: SqlEditorAliasLookup = {};
 
   let match: RegExpExecArray | null;
@@ -256,10 +235,7 @@ export const getSqlEditorColumnCompletionRequest = (
   const beforeCursor = sql.slice(0, cursorPosition);
   const trailingIdentifier = beforeCursor.match(trailingIdentifierPattern)?.[0];
   const replacementLength = trailingIdentifier?.length ?? 0;
-  const lookupPrefix = beforeCursor.slice(
-    0,
-    beforeCursor.length - replacementLength,
-  );
+  const lookupPrefix = beforeCursor.slice(0, beforeCursor.length - replacementLength);
 
   const qualifiedMatch = lookupPrefix.match(entityMemberPattern);
   if (qualifiedMatch) {
@@ -298,8 +274,7 @@ export const resolveSqlEditorEntityReference = ({
   const findExactEntity = (schemaName: string, entityName: string) =>
     entities.find(
       (entity) =>
-        normalizeIdentifier(entity.schemaName) ===
-          normalizeIdentifier(schemaName) &&
+        normalizeIdentifier(entity.schemaName) === normalizeIdentifier(schemaName) &&
         normalizeIdentifier(entity.name) === normalizeIdentifier(entityName),
     ) ?? null;
 
@@ -315,17 +290,13 @@ export const resolveSqlEditorEntityReference = ({
 
     return (
       entities.find(
-        (entity) =>
-          normalizeIdentifier(entity.name) ===
-          normalizeIdentifier(aliasMatch.entityName),
+        (entity) => normalizeIdentifier(entity.name) === normalizeIdentifier(aliasMatch.entityName),
       ) ?? null
     );
   }
 
   const entityMatches = entities.filter(
-    (entity) =>
-      normalizeIdentifier(entity.name) ===
-      normalizeIdentifier(request.entityName),
+    (entity) => normalizeIdentifier(entity.name) === normalizeIdentifier(request.entityName),
   );
 
   if (entityMatches.length === 0) {
@@ -335,8 +306,7 @@ export const resolveSqlEditorEntityReference = ({
   if (selectedSchemaName) {
     const schemaMatch = entityMatches.find(
       (entity) =>
-        normalizeIdentifier(entity.schemaName) ===
-        normalizeIdentifier(selectedSchemaName),
+        normalizeIdentifier(entity.schemaName) === normalizeIdentifier(selectedSchemaName),
     );
 
     if (schemaMatch) {
@@ -345,8 +315,7 @@ export const resolveSqlEditorEntityReference = ({
   }
 
   return (
-    entityMatches.find(
-      (entity) => normalizeIdentifier(entity.schemaName) === 'main',
-    ) ?? entityMatches[0]
+    entityMatches.find((entity) => normalizeIdentifier(entity.schemaName) === 'main') ??
+    entityMatches[0]
   );
 };

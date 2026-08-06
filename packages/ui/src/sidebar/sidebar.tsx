@@ -20,18 +20,9 @@ export type SidebarGroupProps = ComponentProps<'div'> & {
   label?: ReactNode;
 };
 
-function SidebarGroup({
-  className,
-  label,
-  children,
-  ...props
-}: SidebarGroupProps) {
+function SidebarGroup({ className, label, children, ...props }: SidebarGroupProps) {
   return (
-    <div
-      data-slot="sidebar-group"
-      className={cn('flex flex-col gap-0.5', className)}
-      {...props}
-    >
+    <div data-slot="sidebar-group" className={cn('flex flex-col gap-0.5', className)} {...props}>
       {label && (
         <div
           data-slot="sidebar-group-label"

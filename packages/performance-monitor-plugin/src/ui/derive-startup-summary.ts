@@ -62,9 +62,7 @@ export const deriveStartupSummary = (
     };
   };
 
-  const knownPhases = KNOWN_PHASES.map(({ name, label }) =>
-    buildPhase(name, label),
-  );
+  const knownPhases = KNOWN_PHASES.map(({ name, label }) => buildPhase(name, label));
 
   const unknownPhases: StartupPhase[] = [];
   for (const [name] of starts) {

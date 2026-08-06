@@ -1,7 +1,4 @@
-import {
-  defineAgentToolContract,
-  type AgentToolContract,
-} from '@rozenite/agent-shared';
+import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
 import type { FileSystemProvider, FsEntry, FsRoots } from './protocol';
 
 export const FILE_SYSTEM_AGENT_PLUGIN_ID = '@rozenite/file-system-plugin';
@@ -95,10 +92,7 @@ export type FileSystemImportFileResult = {
 };
 
 export const fileSystemToolDefinitions = {
-  listRoots: defineAgentToolContract<
-    FileSystemListRootsArgs,
-    FileSystemListRootsResult
-  >({
+  listRoots: defineAgentToolContract<FileSystemListRootsArgs, FileSystemListRootsResult>({
     name: 'list-roots',
     description:
       'List the filesystem roots currently available on the device and report which provider is active.',
@@ -107,10 +101,7 @@ export const fileSystemToolDefinitions = {
       properties: {},
     },
   }),
-  listEntries: defineAgentToolContract<
-    FileSystemListEntriesArgs,
-    FileSystemListEntriesResult
-  >({
+  listEntries: defineAgentToolContract<FileSystemListEntriesArgs, FileSystemListEntriesResult>({
     name: 'list-entries',
     description:
       'List entries in a directory path without returning file contents. Use this before reading a file preview.',
@@ -133,10 +124,7 @@ export const fileSystemToolDefinitions = {
       required: ['path'],
     },
   }),
-  readEntry: defineAgentToolContract<
-    FileSystemReadEntryArgs,
-    FileSystemReadEntryResult
-  >({
+  readEntry: defineAgentToolContract<FileSystemReadEntryArgs, FileSystemReadEntryResult>({
     name: 'read-entry',
     description:
       'Read metadata for a single filesystem path. Returns file or directory metadata, but not file contents.',
@@ -145,17 +133,13 @@ export const fileSystemToolDefinitions = {
       properties: {
         path: {
           type: 'string',
-          description:
-            'Absolute or provider-root-qualified file or directory path.',
+          description: 'Absolute or provider-root-qualified file or directory path.',
         },
       },
       required: ['path'],
     },
   }),
-  readTextFile: defineAgentToolContract<
-    FileSystemReadTextFileArgs,
-    FileSystemReadTextFileResult
-  >({
+  readTextFile: defineAgentToolContract<FileSystemReadTextFileArgs, FileSystemReadTextFileResult>({
     name: 'read-text-file',
     description:
       'Read a text-style preview for a file path. Non-text files fall back to a hex-style binary preview.',
@@ -179,8 +163,7 @@ export const fileSystemToolDefinitions = {
     FileSystemReadImageFileResult
   >({
     name: 'read-image-file',
-    description:
-      'Read an image preview for a file path and return it as a data URI.',
+    description: 'Read an image preview for a file path and return it as a data URI.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -196,10 +179,7 @@ export const fileSystemToolDefinitions = {
       required: ['path'],
     },
   }),
-  exportFile: defineAgentToolContract<
-    FileSystemExportFileArgs,
-    FileSystemExportFileResult
-  >({
+  exportFile: defineAgentToolContract<FileSystemExportFileArgs, FileSystemExportFileResult>({
     name: 'export-file',
     description:
       'Agent-triggered raw file export. Reads a single file under a configured filesystem root and returns exact base64 contents. This tool is registered only when agent export is explicitly enabled.',
@@ -214,10 +194,7 @@ export const fileSystemToolDefinitions = {
       required: ['path'],
     },
   }),
-  importFile: defineAgentToolContract<
-    FileSystemImportFileArgs,
-    FileSystemImportFileResult
-  >({
+  importFile: defineAgentToolContract<FileSystemImportFileArgs, FileSystemImportFileResult>({
     name: 'import-file',
     description:
       'Agent-triggered raw file import. Writes a single base64-encoded file into an existing directory under a configured filesystem root. This tool is registered only when agent import is explicitly enabled.',
@@ -226,13 +203,11 @@ export const fileSystemToolDefinitions = {
       properties: {
         directoryPath: {
           type: 'string',
-          description:
-            'Absolute or provider-root-qualified existing directory path.',
+          description: 'Absolute or provider-root-qualified existing directory path.',
         },
         fileName: {
           type: 'string',
-          description:
-            'Destination file name only. Path separators and traversal are rejected.',
+          description: 'Destination file name only. Path separators and traversal are rejected.',
         },
         base64: {
           type: 'string',

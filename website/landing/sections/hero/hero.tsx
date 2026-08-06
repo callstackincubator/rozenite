@@ -11,47 +11,29 @@ export const Hero = () => (
     <div className={styles.container}>
       <div className={styles.copy}>
         <div className={styles.logo}>
-          <img
-            className={styles.logoLight}
-            src="/logo-light.svg"
-            alt="Rozenite"
-          />
-          <img
-            className={styles.logoDark}
-            src="/logo-dark.svg"
-            alt=""
-            aria-hidden="true"
-          />
+          <img className={styles.logoLight} src="/logo-light.svg" alt="Rozenite" />
+          <img className={styles.logoDark} src="/logo-dark.svg" alt="" aria-hidden="true" />
         </div>
         <h1 className={styles.title}>
-          <span className={styles.titleLine}>
-            DevTools panels for React Native.
-          </span>
+          <span className={styles.titleLine}>DevTools panels for React Native.</span>
           <span className={[styles.titleLine, styles.titleMuted].join(' ')}>
             Runtime tools for agents.
           </span>
         </h1>
 
         <p className={styles.lead}>
-          Rozenite adds debugging panels to React Native DevTools. Agents can
-          read the same runtime data.
+          Rozenite adds debugging panels to React Native DevTools. Agents can read the same runtime
+          data.
         </p>
 
         <div className={styles.actions}>
           <ActionButton href="/docs/getting-started">Get started</ActionButton>
-          <ActionButton
-            href="/plugin-directory"
-            variant="outline"
-            icon={GridFour}
-          >
+          <ActionButton href="/plugin-directory" variant="outline" icon={GridFour}>
             Browse plugins
           </ActionButton>
         </div>
 
-        <CommandLine
-          command="npx rozenite@latest init"
-          className={styles.install}
-        />
+        <CommandLine command="npx rozenite@latest init" className={styles.install} />
       </div>
 
       <div className={styles.visual}>

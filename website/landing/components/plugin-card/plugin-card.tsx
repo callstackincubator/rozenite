@@ -12,9 +12,7 @@ export const PluginCard = ({ plugin }: PluginCardProps) => {
     <a className={styles.card} href={plugin.href}>
       <div className={styles.top}>
         <Glyph className={styles.icon} size={22} />
-        {plugin.agentEnabled ? (
-          <span className={styles.agentTag}>Agent tools</span>
-        ) : null}
+        {plugin.agentEnabled ? <span className={styles.agentTag}>Agent tools</span> : null}
       </div>
       <h3 className={styles.name}>{plugin.name}</h3>
       <p className={styles.exposes}>{plugin.exposes}</p>

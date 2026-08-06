@@ -59,9 +59,7 @@ export const createExpoSecureStorageAdapter = ({
       },
       set: async (entry) => {
         if (entry.type !== 'string') {
-          throw new Error(
-            'Expo SecureStore adapter supports only string values.',
-          );
+          throw new Error('Expo SecureStore adapter supports only string values.');
         }
 
         await storage.setItemAsync(entry.key, entry.value);
@@ -69,9 +67,7 @@ export const createExpoSecureStorageAdapter = ({
       delete: (key) => storage.deleteItemAsync(key),
       clear: async () => {
         const storageKeys = await resolveKeys(keys);
-        await Promise.all(
-          storageKeys.map((key) => storage.deleteItemAsync(key)),
-        );
+        await Promise.all(storageKeys.map((key) => storage.deleteItemAsync(key)));
       },
     },
   };

@@ -4,11 +4,7 @@ import { Toast } from '@rozenite/ui';
 function ToastDemo() {
   const toast = useToast();
   return (
-    <Button
-      onClick={() =>
-        toast.add({ title: 'Saved', description: 'Your changes were saved.' })
-      }
-    >
+    <Button onClick={() => toast.add({ title: 'Saved', description: 'Your changes were saved.' })}>
       Show toast
     </Button>
   );
