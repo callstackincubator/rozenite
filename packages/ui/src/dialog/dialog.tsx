@@ -161,6 +161,7 @@ function DialogDescription({ className, ...props }: DialogDescriptionProps) {
   );
 }
 
+/** A modal surface for focused tasks, information, or confirmation flows. */
 export const Dialog = Object.assign(DialogRoot, {
   Trigger: DialogTrigger,
   Close: DialogClose,

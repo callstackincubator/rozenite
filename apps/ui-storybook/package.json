@@ -1,0 +1,40 @@
+{
+  "name": "ui-storybook",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@rozenite/ui": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "18.16.9",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@tailwindcss/vite": "^4.2.2",
+    "@vitejs/plugin-react": "^4.2.0",
+    "oxlint": "^1.75.0",
+    "typescript": "~5.9.3",
+    "vite": "catalog:",
+    "storybook": "^10.5.6",
+    "@storybook/react-vite": "^10.5.6",
+    "@chromatic-com/storybook": "^5.3.0",
+    "@storybook/addon-vitest": "^10.5.6",
+    "@storybook/addon-a11y": "^10.5.6",
+    "@storybook/addon-docs": "^10.5.6",
+    "@storybook/addon-mcp": "^0.7.0",
+    "eslint-plugin-storybook": "^10.5.6",
+    "@vitest/browser": "^3.0.0",
+    "@vitest/coverage-v8": "^3.0.0",
+    "playwright": "^1.62.1"
+  }
+}

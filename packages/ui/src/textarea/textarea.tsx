@@ -3,6 +3,7 @@ import { cn } from '../utils/cn';
 
 export type TextareaProps = ComponentProps<'textarea'>;
 
+/** A multiline text input styled for the Rozenite UI. */
 export function Textarea({ className, ...props }: TextareaProps) {
   return (
     <textarea

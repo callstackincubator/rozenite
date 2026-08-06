@@ -10,6 +10,7 @@ export type EmptyStateProps = ComponentProps<'div'> & {
   action?: ReactNode;
 };
 
+/** A centered message for an empty view with optional guidance and action. */
 export function EmptyState({
   className,
   icon: Icon,

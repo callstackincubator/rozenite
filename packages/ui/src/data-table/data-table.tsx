@@ -38,6 +38,7 @@ export type DataTableProps<TRow> = {
   getRowId?: (row: TRow, index: number) => string;
 };
 
+/** A sortable table for displaying structured row data. */
 export function DataTable<TRow>({
   columns,
   data,

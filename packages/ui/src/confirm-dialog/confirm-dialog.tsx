@@ -20,6 +20,7 @@ export type ConfirmDialogProps = {
   onConfirm?: () => void;
 };
 
+/** A confirmation or acknowledgement dialog for destructive or important actions. */
 export function ConfirmDialog({
   open,
   onOpenChange,

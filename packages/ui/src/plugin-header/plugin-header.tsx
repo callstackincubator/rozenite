@@ -94,6 +94,7 @@ function PluginHeaderThemeSwitcher({
   );
 }
 
+/** A themed header with title, supporting text, actions, and theme switching. */
 export const PluginHeader = Object.assign(PluginHeaderRoot, {
   Title: PluginHeaderTitle,
   Subtitle: PluginHeaderSubtitle,

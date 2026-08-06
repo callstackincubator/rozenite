@@ -72,4 +72,5 @@ function Toaster() {
   );
 }
 
+/** A provider for transient notifications that appear above the current view. */
 export const Toast = { Provider: ToastProviderRoot };

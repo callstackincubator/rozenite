@@ -3,6 +3,7 @@ import { cn } from '../utils/cn';
 
 export type SwitchProps = SwitchPrimitive.Root.Props;
 
+/** A two-state control for enabling or disabling an option. */
 export function Switch({ className, ...props }: SwitchProps) {
   return (
     <SwitchPrimitive.Root

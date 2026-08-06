@@ -80,6 +80,7 @@ function SidebarItem({
   );
 }
 
+/** A navigation rail with grouped, selectable items and optional trailing content. */
 export const Sidebar = Object.assign(SidebarRoot, {
   Group: SidebarGroup,
   Item: SidebarItem,

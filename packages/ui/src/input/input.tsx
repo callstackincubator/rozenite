@@ -3,6 +3,7 @@ import { cn } from '../utils/cn';
 
 export type InputProps = ComponentProps<'input'>;
 
+/** A single-line text input styled for the Rozenite UI. */
 export function Input({ className, type = 'text', ...props }: InputProps) {
   return (
     <input
