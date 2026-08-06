@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Button, Dialog, ScrollArea } from '@rozenite/ui';
-import { ReleaseContent, WELCOME_RELEASE_ID } from './ReleaseContent';
+import { ReleaseContent } from './ReleaseContent';
 import {
   readWelcomeDismissal,
   shouldShowWelcomeDialog,
@@ -13,25 +13,28 @@ type WelcomeDialogProps = {
 
 export function WelcomeDialog({ runtimeVersion }: WelcomeDialogProps) {
   const [open, setOpen] = useState(false);
-  const dismissedReleaseId = useRef<string | null>(null);
+  const dismissedRuntimeVersion = useRef<string | null>(null);
+  const dismissButtonId = useId();
 
   useEffect(() => {
-    const isDismissed =
-      dismissedReleaseId.current === WELCOME_RELEASE_ID ||
-      readWelcomeDismissal(WELCOME_RELEASE_ID);
+    if (runtimeVersion === undefined) {
+      setOpen(false);
+      return;
+    }
 
-    setOpen(
-      shouldShowWelcomeDialog(
-        runtimeVersion,
-        WELCOME_RELEASE_ID,
-        isDismissed,
-      ),
-    );
+    const dismissedVersion =
+      dismissedRuntimeVersion.current === runtimeVersion
+        ? runtimeVersion
+        : readWelcomeDismissal();
+
+    setOpen(shouldShowWelcomeDialog(runtimeVersion, dismissedVersion));
   }, [runtimeVersion]);
 
   const dismiss = () => {
-    dismissedReleaseId.current = WELCOME_RELEASE_ID;
-    writeWelcomeDismissal(WELCOME_RELEASE_ID);
+    if (runtimeVersion !== undefined) {
+      dismissedRuntimeVersion.current = runtimeVersion;
+      writeWelcomeDismissal(runtimeVersion);
+    }
     setOpen(false);
   };
 
@@ -44,12 +47,18 @@ export function WelcomeDialog({ runtimeVersion }: WelcomeDialogProps) {
         }
       }}
     >
-      <Dialog.Content className="max-w-xl" showCloseButton={false}>
+      <Dialog.Content
+        className="max-w-xl"
+        initialFocus={() => document.getElementById(dismissButtonId)}
+        showCloseButton={false}
+      >
         <ScrollArea className="max-h-80 pr-4">
           <ReleaseContent />
         </ScrollArea>
         <Dialog.Footer>
-          <Button onClick={dismiss}>Got it</Button>
+          <Button id={dismissButtonId} onClick={dismiss}>
+            Got it
+          </Button>
         </Dialog.Footer>
       </Dialog.Content>
     </Dialog>

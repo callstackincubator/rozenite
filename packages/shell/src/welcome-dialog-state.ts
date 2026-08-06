@@ -1,28 +1,24 @@
-const STORAGE_KEY_PREFIX = '@rozenite/shell:welcome-dismissed:';
-
-export function getWelcomeDismissalStorageKey(releaseId: string): string {
-  return `${STORAGE_KEY_PREFIX}${releaseId}`;
-}
+export const WELCOME_DISMISSAL_STORAGE_KEY =
+  '@rozenite/shell:welcome-dismissed-version';
 
 export function shouldShowWelcomeDialog(
   runtimeVersion: string | undefined,
-  releaseId: string,
-  isDismissed: boolean,
+  dismissedVersion: string | null,
 ): boolean {
-  return runtimeVersion === releaseId && !isDismissed;
+  return runtimeVersion !== undefined && runtimeVersion !== dismissedVersion;
 }
 
-export function readWelcomeDismissal(releaseId: string): boolean {
+export function readWelcomeDismissal(): string | null {
   try {
-    return localStorage.getItem(getWelcomeDismissalStorageKey(releaseId)) === '1';
+    return localStorage.getItem(WELCOME_DISMISSAL_STORAGE_KEY);
   } catch {
-    return false;
+    return null;
   }
 }
 
-export function writeWelcomeDismissal(releaseId: string): void {
+export function writeWelcomeDismissal(runtimeVersion: string): void {
   try {
-    localStorage.setItem(getWelcomeDismissalStorageKey(releaseId), '1');
+    localStorage.setItem(WELCOME_DISMISSAL_STORAGE_KEY, runtimeVersion);
   } catch {
     // Storage may be unavailable. The dialog remains dismissed until unmount.
   }

@@ -1,20 +1,32 @@
 import { Dialog } from '@rozenite/ui';
-
-export const WELCOME_RELEASE_ID = '1.13.0';
+import lightLogo from '../../../website/src/public/logo-light.svg';
+import darkLogo from '../../../website/src/public/logo-dark.svg';
 
 const METRO_CONFIGURATION_URL =
   'https://github.com/callstackincubator/rozenite/tree/main/packages/metro#configuration';
 const ISSUES_URL = 'https://github.com/callstackincubator/rozenite/issues';
 
 /**
- * Release-specific welcome content. Replace this component and update
- * WELCOME_RELEASE_ID when preparing a release that needs a welcome dialog.
+ * Release-specific welcome content. Replace this component when preparing a
+ * release that needs a welcome dialog.
  */
 export function ReleaseContent() {
   return (
     <div className="space-y-4">
+      <div className="h-8">
+        <img
+          src={lightLogo}
+          alt="Rozenite"
+          className="h-8 w-auto dark:hidden"
+        />
+        <img
+          src={darkLogo}
+          alt="Rozenite"
+          className="hidden h-8 w-auto dark:block"
+        />
+      </div>
       <Dialog.Header>
-        <Dialog.Title>Rozenite is changing</Dialog.Title>
+        <Dialog.Title>We are changing</Dialog.Title>
         <Dialog.Description>
           The DevTools experience now uses a unified UI.
         </Dialog.Description>
