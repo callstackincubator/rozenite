@@ -18,10 +18,11 @@ const meta = {
 export default meta;
 type Story = StoryObj;
 export const Default: Story = {
-  args: { ariaLabel: 'Requests', columns, data },
-  render: (args) => (
+  render: () => (
     <VirtualizedDataTable<Row>
-      {...args}
+      ariaLabel="Requests"
+      columns={columns}
+      data={data}
       getRowId={(row) => row.id}
       getRowTextValue={(row) => row.name}
       style={{ height: 320 }}

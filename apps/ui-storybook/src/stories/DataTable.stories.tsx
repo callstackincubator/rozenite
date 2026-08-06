@@ -17,6 +17,5 @@ const meta = {
 export default meta;
 type Story = StoryObj;
 export const Default: Story = {
-  args: { columns, data },
-  render: (args) => <DataTable<Row> {...args} />,
+  render: () => <DataTable<Row> columns={columns} data={data} />,
 };
