@@ -1,0 +1,20 @@
+pre-commit:
+  commands:
+    prettier:
+      glob: '*.{js,ts,tsx,jsx,json,md,yaml,yml}'
+      run: pnpm exec prettier --check {staged_files}
+    eslint:
+      glob: '*.{js,ts,tsx,jsx}'
+      run: pnpm exec eslint {staged_files}
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm dlx commitlint --edit $1
+
+pre-push:
+  commands:
+    typecheck:
+      run: pnpm typecheck:all
+    lint:
+      run: pnpm lint:all
