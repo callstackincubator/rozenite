@@ -1,4 +1,10 @@
-import type { ComponentProps } from 'react';
+import {
+  createContext,
+  useContext,
+  useRef,
+  useState,
+  type ComponentProps,
+} from 'react';
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { X } from 'lucide-react';
 import { cn } from '../utils/cn';
@@ -6,8 +12,27 @@ import { usePluginPortalContainer } from '../theme/theme-context';
 
 export type DialogProps = DialogPrimitive.Root.Props;
 
+const DialogOpenContext = createContext<boolean | null>(null);
+
 function DialogRoot(props: DialogProps) {
-  return <DialogPrimitive.Root {...props} />;
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(
+    props.defaultOpen ?? false,
+  );
+  const open = props.open ?? uncontrolledOpen;
+
+  return (
+    <DialogOpenContext.Provider value={open}>
+      <DialogPrimitive.Root
+        {...props}
+        onOpenChange={(nextOpen, eventDetails) => {
+          if (props.open === undefined) {
+            setUncontrolledOpen(nextOpen);
+          }
+          props.onOpenChange?.(nextOpen, eventDetails);
+        }}
+      />
+    </DialogOpenContext.Provider>
+  );
 }
 
 export type DialogTriggerProps = DialogPrimitive.Trigger.Props;
@@ -34,6 +59,8 @@ function DialogContent({
   ...props
 }: DialogContentProps) {
   const container = usePluginPortalContainer();
+  const rootOpen = useContext(DialogOpenContext);
+  const childrenRef = useRef(children);
 
   return (
     <DialogPrimitive.Portal container={container}>
@@ -52,6 +79,15 @@ function DialogContent({
             'transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
             className,
           )}
+          render={(renderProps) => {
+            const { children: nextChildren, ...elementProps } = renderProps;
+
+            if (rootOpen) {
+              childrenRef.current = nextChildren;
+            }
+
+            return <div {...elementProps}>{childrenRef.current}</div>;
+          }}
           {...props}
         >
           {children}

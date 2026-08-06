@@ -1,5 +1,5 @@
 import { Button, ConfirmDialog, Dialog, Field } from '@rozenite/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   StorageEntry,
   StorageEntryType,
@@ -27,6 +27,7 @@ export const EditEntryDialog = ({
   entry,
   supportedTypes,
 }: EditEntryDialogProps) => {
+  const lastEntryRef = useRef<StorageEntry | null>(entry);
   const [currentType, setCurrentType] = useState<StorageEntryType>('string');
   const [currentValue, setCurrentValue] = useState<StorageEntryValue | null>(
     defaultValueForType('string'),
@@ -37,10 +38,13 @@ export const EditEntryDialog = ({
 
   useEffect(() => {
     if (entry && isOpen) {
+      lastEntryRef.current = entry;
       setCurrentType(entry.type);
       setCurrentValue(entry.value);
     }
   }, [entry, isOpen]);
+
+  const entryForDisplay = entry ?? lastEntryRef.current;
 
   const isCurrentTypeSupported = supportedTypes.includes(currentType);
 
@@ -71,7 +75,7 @@ export const EditEntryDialog = ({
     }
   };
 
-  if (!entry) {
+  if (!entryForDisplay) {
     return null;
   }
 
@@ -97,7 +101,7 @@ export const EditEntryDialog = ({
             <Field>
               <Field.Label>Key</Field.Label>
               <div className="h-8 w-full truncate rounded-md border border-input bg-muted px-3 py-1.5 font-mono text-sm text-foreground">
-                {entry.key}
+                {entryForDisplay.key}
               </div>
               <Field.Description>
                 Key cannot be changed during editing
@@ -107,7 +111,7 @@ export const EditEntryDialog = ({
             <Field>
               <Field.Label htmlFor="edit-entry-value">Value</Field.Label>
               <TypedValueEditor
-                key={entry.key}
+                key={entryForDisplay.key}
                 supportedTypes={supportedTypes}
                 type={currentType}
                 value={currentValue}
