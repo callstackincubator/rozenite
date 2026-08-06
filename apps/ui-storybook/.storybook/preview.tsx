@@ -1,8 +1,27 @@
 import type { Preview } from '@storybook/react-vite';
+import { PluginShell } from '@rozenite/ui';
 import '../../../packages/ui/styles.css';
 
 const preview: Preview = {
+  decorators: [
+    (Story, context) => {
+      if (context.parameters.withPluginShell === false) {
+        return <Story />;
+      }
+
+      return (
+        <PluginShell className="min-h-screen w-full">
+          <PluginShell.Body>
+            <div className="min-h-full p-4">
+              <Story />
+            </div>
+          </PluginShell.Body>
+        </PluginShell>
+      );
+    },
+  ],
   parameters: {
+    layout: 'fullscreen',
     controls: {
       matchers: {
         color: /(background|color)$/i,

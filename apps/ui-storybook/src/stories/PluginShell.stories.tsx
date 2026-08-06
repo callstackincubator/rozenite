@@ -3,6 +3,7 @@ import { PluginHeader, PluginShell } from '@rozenite/ui';
 const meta = {
   component: PluginShell,
   title: 'Components/PluginShell',
+  parameters: { withPluginShell: false },
 } satisfies Meta<typeof PluginShell>;
 export default meta;
 type Story = StoryObj<typeof meta>;
