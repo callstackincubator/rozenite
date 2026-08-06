@@ -234,15 +234,13 @@ function StoragePanelContent() {
       'storage-invalidated',
       (event: StorageInvalidatedEvent) => {
         void dropStorageFullEntries(queryClient, event.target, event.key);
-        if (event.operation === 'purge') {
-          setDescriptors((current) =>
-            current.map((descriptor) =>
-              sameTarget(descriptor.target, event.target)
-                ? { ...descriptor, entryCount: 0 }
-                : descriptor,
-            ),
-          );
-        }
+        setDescriptors((current) =>
+          current.map((descriptor) =>
+            sameTarget(descriptor.target, event.target)
+              ? { ...descriptor, entryCount: event.entryCount }
+              : descriptor,
+          ),
+        );
         if (
           selectedTargetRef.current &&
           sameTarget(event.target, selectedTargetRef.current)

@@ -45,16 +45,23 @@ export const useRozeniteStoragePlugin = ({
     const viewSubscriptions: { remove: () => void }[] = [];
     let disposed = false;
 
-    const sendInvalidation = (
+    const sendInvalidation = async (
       target: StorageSetEntryEvent['target'],
       key?: string,
       operation?: StorageInvalidationOperation,
     ) => {
+      const view = views.find(
+        (candidate) =>
+          candidate.target.adapterId === target.adapterId &&
+          candidate.target.storageId === target.storageId,
+      );
+      const entryCount = view ? (await view.getAllKeys()).length : 0;
       client.send('storage-invalidated', {
         type: 'storage-invalidated',
         target,
         key,
         operation,
+        entryCount,
       });
     };
 
@@ -70,7 +77,7 @@ export const useRozeniteStoragePlugin = ({
             }
 
             const subscription = await watch((key) => {
-              sendInvalidation(view.target, key);
+              void sendInvalidation(view.target, key);
             });
 
             if (disposed) {
@@ -107,7 +114,7 @@ export const useRozeniteStoragePlugin = ({
 
           try {
             await view.set(entry);
-            sendInvalidation(view.target, entry.key, 'set');
+            await sendInvalidation(view.target, entry.key, 'set');
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to set entry in ${target.adapterId}/${target.storageId}.`,
@@ -134,7 +141,7 @@ export const useRozeniteStoragePlugin = ({
 
           try {
             await view.delete(key);
-            sendInvalidation(view.target, key, 'delete');
+            await sendInvalidation(view.target, key, 'delete');
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to delete entry in ${target.adapterId}/${target.storageId}.`,
@@ -161,7 +168,7 @@ export const useRozeniteStoragePlugin = ({
 
           try {
             await view.purge();
-            sendInvalidation(view.target, undefined, 'purge');
+            await sendInvalidation(view.target, undefined, 'purge');
           } catch (error) {
             console.warn(
               `[Rozenite] Storage Plugin: Failed to purge storage in ${target.adapterId}/${target.storageId}.`,

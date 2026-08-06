@@ -29,7 +29,7 @@ const buildView = (overrides?: Partial<StorageView>): StorageView => {
     set: vi.fn(async () => {}),
     delete: unexpected('delete'),
     purge: unexpected('purge'),
-    getAllKeys: unexpected('getAllKeys'),
+    getAllKeys: vi.fn(async () => []),
     getAllEntries: unexpected('getAllEntries'),
     watch: unexpected('watch'),
     ...overrides,
@@ -74,6 +74,7 @@ describe('handleImportEntries', () => {
       type: 'storage-invalidated',
       target,
       operation: 'import',
+      entryCount: 0,
     });
     expect(emitted[6]).toEqual({
       type: 'import-result',
@@ -122,6 +123,7 @@ describe('handleImportEntries', () => {
       type: 'storage-invalidated',
       target,
       operation: 'import',
+      entryCount: 0,
     });
     expect(emitted[3]).toEqual({
       type: 'import-result',
@@ -294,6 +296,7 @@ describe('handleImportEntries', () => {
         type: 'storage-invalidated',
         target,
         operation: 'import',
+        entryCount: 0,
       },
       {
         type: 'import-result',

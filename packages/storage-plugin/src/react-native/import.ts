@@ -194,10 +194,12 @@ export const handleImportEntries = async (
       await view.set(entry);
     } catch (error) {
       if (i > 0) {
+        const entryCount = (await view.getAllKeys()).length;
         emit({
           type: 'storage-invalidated',
           target: event.target,
           operation: 'import',
+          entryCount,
         });
       }
       emit({
@@ -223,10 +225,12 @@ export const handleImportEntries = async (
   }
 
   if (entries.length > 0) {
+    const entryCount = (await view.getAllKeys()).length;
     emit({
       type: 'storage-invalidated',
       target: event.target,
       operation: 'import',
+      entryCount,
     });
   }
 
