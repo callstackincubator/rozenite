@@ -45,7 +45,7 @@ export const initCommand = async (projectRoot: string) => {
       },
       async () => {
         await spawn(
-          getExecForPackageManager(),
+          getExecForPackageManager(projectRoot),
           ['expo', 'customize', 'metro.config.js'],
           {
             cwd: projectRoot,
