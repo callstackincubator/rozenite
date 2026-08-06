@@ -16,7 +16,7 @@ const meta = {
   title: 'Components/VirtualizedDataTable',
 } satisfies Meta<typeof VirtualizedDataTable>;
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj;
 export const Default: Story = {
   args: { ariaLabel: 'Requests', columns, data },
   render: (args) => (
