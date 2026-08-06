@@ -634,6 +634,7 @@ function StoragePanelContent() {
                       <Sidebar.Item
                         key={item.viewId}
                         selected={item.viewId === selectedStorageViewId}
+                        adornment={<Database />}
                         trailing={
                           <Badge variant="secondary">{item.entryCount}</Badge>
                         }

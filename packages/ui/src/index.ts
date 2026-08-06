@@ -121,6 +121,12 @@ export { DataTableEditableCell } from './data-table/data-table-editable-cell';
 export type { DataTableEditableCellProps } from './data-table/data-table-editable-cell';
 export { updateCellValue } from './data-table/data-table-utils';
 
+export { List } from './list/list';
+export type { ListProps, ListGroupProps, ListItemProps } from './list/list';
+
+export { NestedList } from './list/nested-list';
+export type { NestedListProps, NestedListItemProps } from './list/nested-list';
+
 export { Sidebar } from './sidebar/sidebar';
 export type {
   SidebarProps,
