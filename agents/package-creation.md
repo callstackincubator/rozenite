@@ -1,0 +1,23 @@
+# New packages
+
+- Compare with similar packages under `packages/`.
+- README must follow the shared repository structure:
+  - banner
+  - tagline
+  - badges
+  - description
+  - features or exports
+  - installation
+  - usage
+  - Callstack footer and link definitions
+- Copy standard `package.json` metadata:
+  - `homepage`
+  - `bugs`
+  - `repository`
+  - `author`
+  - `license`
+  - `publishConfig`
+  - `files`
+- Library packages must also define matching `main`, `module`, `types`, and `exports` fields.
+- Use package-specific npm links in README badges and links.
+- Run formatting and package checks before opening a PR.
