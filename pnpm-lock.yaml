@@ -399,6 +399,9 @@ importers:
       '@storybook/react-vite':
         specifier: ^10.5.6
         version: 10.5.6(@types/react-dom@19.2.4(@types/react@19.2.14))(@types/react@19.2.14)(esbuild@0.27.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rollup@4.62.2)(storybook@10.5.6(@types/react@19.2.14)(prettier@3.6.2)(react@19.2.3))(typescript@5.9.3)(vite@7.3.5(@types/node@18.16.9)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))(webpack@5.105.4(@swc/core@1.5.29(@swc/helpers@0.5.17))(esbuild@0.27.3))
+      '@tailwindcss/vite':
+        specifier: ^4.2.2
+        version: 4.2.2(vite@7.3.5(@types/node@18.16.9)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
       '@types/node':
         specifier: 18.16.9
         version: 18.16.9
@@ -21984,6 +21987,13 @@ snapshots:
       '@tailwindcss/oxide-wasm32-wasi': 4.2.2
       '@tailwindcss/oxide-win32-arm64-msvc': 4.2.2
       '@tailwindcss/oxide-win32-x64-msvc': 4.2.2
+
+  '@tailwindcss/vite@4.2.2(vite@7.3.5(@types/node@18.16.9)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))':
+    dependencies:
+      '@tailwindcss/node': 4.2.2
+      '@tailwindcss/oxide': 4.2.2
+      tailwindcss: 4.2.2
+      vite: 7.3.5(@types/node@18.16.9)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
 
   '@tailwindcss/vite@4.2.2(vite@7.3.5(@types/node@22.17.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))':
     dependencies:
