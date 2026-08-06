@@ -37,6 +37,7 @@
     "dts-bundle-generator": "^9.5.1",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
+    "eslint-plugin-storybook": "^10.5.6",
     "expo": "^57.0.7",
     "husky": "^9.1.7",
     "jiti": "2.4.2",
