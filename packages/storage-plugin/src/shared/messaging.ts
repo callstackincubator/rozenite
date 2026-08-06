@@ -35,6 +35,8 @@ export type StorageInvalidatedEvent = {
   /** Native subscriptions only expose a key, not the operation. */
   key?: string;
   operation?: StorageInvalidationOperation;
+  /** Updated entry count for the storage after the invalidation. */
+  entryCount: number;
 };
 
 export type StorageDiscoverStoragesRequestEvent = {
