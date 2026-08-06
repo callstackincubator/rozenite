@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -16,7 +16,10 @@ describe('Package Manager Detection', () => {
   });
 
   it('should detect pnpm from pnpm-lock.yaml', () => {
-    fs.writeFileSync(path.join(testDir, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0');
+    fs.writeFileSync(
+      path.join(testDir, 'pnpm-lock.yaml'),
+      'lockfileVersion: 9.0',
+    );
     const exec = getExecForPackageManager(testDir);
     expect(exec).toBe('pnpx');
   });
@@ -46,7 +49,10 @@ describe('Package Manager Detection', () => {
   });
 
   it('should prefer pnpm over other lockfiles', () => {
-    fs.writeFileSync(path.join(testDir, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0');
+    fs.writeFileSync(
+      path.join(testDir, 'pnpm-lock.yaml'),
+      'lockfileVersion: 9.0',
+    );
     fs.writeFileSync(path.join(testDir, 'package-lock.json'), '{}');
     const exec = getExecForPackageManager(testDir);
     expect(exec).toBe('pnpx');
