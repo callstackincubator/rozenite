@@ -1,7 +1,4 @@
-import {
-  useRozeniteDevToolsClient,
-  Subscription,
-} from '@rozenite/plugin-bridge';
+import { useRozeniteDevToolsClient, Subscription } from '@rozenite/plugin-bridge';
 import {
   PerformanceMonitorEventMap,
   SerializedPerformanceMeasure,
@@ -12,15 +9,7 @@ import {
   SerializedPerformanceEntry,
 } from '../shared/types';
 import { useEffect, useState } from 'react';
-import {
-  Theme,
-  Tabs,
-  Button,
-  Heading,
-  Text,
-  Flex,
-  Box,
-} from '@radix-ui/themes';
+import { Theme, Tabs, Button, Heading, Text, Flex, Box } from '@radix-ui/themes';
 import '@radix-ui/themes/styles.css';
 import './App.css';
 import { MeasuresTable } from './components/MeasuresTable';
@@ -59,11 +48,8 @@ export default function PerformanceMonitorPanel() {
     resources: [],
   });
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const [selectedItem, setSelectedItem] =
-    useState<SerializedPerformanceEntry | null>(null);
-  const [selectedWaterfallRowId, setSelectedWaterfallRowId] = useState<
-    string | null
-  >(null);
+  const [selectedItem, setSelectedItem] = useState<SerializedPerformanceEntry | null>(null);
+  const [selectedWaterfallRowId, setSelectedWaterfallRowId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!client) {
@@ -184,10 +170,7 @@ export default function PerformanceMonitorPanel() {
     }
   };
 
-  const handleEntryClick = (
-    entry: SerializedPerformanceEntry,
-    waterfallRowId?: string,
-  ) => {
+  const handleEntryClick = (entry: SerializedPerformanceEntry, waterfallRowId?: string) => {
     setSelectedItem(entry);
     setSelectedWaterfallRowId(waterfallRowId ?? null);
   };
@@ -213,11 +196,7 @@ export default function PerformanceMonitorPanel() {
 
   return (
     <Theme appearance="dark" accentColor="blue" radius="medium">
-      <Box
-        p="4"
-        height="100vh"
-        style={{ display: 'flex', flexDirection: 'column' }}
-      >
+      <Box p="4" height="100vh" style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <Box mb="4" style={{ flexShrink: 0 }}>
           <Heading size="6" mb="2">
@@ -233,18 +212,10 @@ export default function PerformanceMonitorPanel() {
 
         {/* Toolbar */}
         <Flex gap="3" align="center" mb="4" style={{ flexShrink: 0 }}>
-          <Button
-            onClick={handleStartSession}
-            disabled={isSessionActive}
-            color="green"
-          >
+          <Button onClick={handleStartSession} disabled={isSessionActive} color="green">
             Start Session
           </Button>
-          <Button
-            onClick={handleStopSession}
-            disabled={!isSessionActive}
-            color="red"
-          >
+          <Button onClick={handleStopSession} disabled={!isSessionActive} color="red">
             Stop Session
           </Button>
           <ExportModal
@@ -289,19 +260,11 @@ export default function PerformanceMonitorPanel() {
               }}
             >
               <Tabs.List style={{ flexShrink: 0 }}>
-                <Tabs.Trigger value="waterfall">
-                  Waterfall ({waterfallEntries.length})
-                </Tabs.Trigger>
+                <Tabs.Trigger value="waterfall">Waterfall ({waterfallEntries.length})</Tabs.Trigger>
                 <Tabs.Trigger value="startup">Startup</Tabs.Trigger>
-                <Tabs.Trigger value="measures">
-                  Measures ({allMeasures.length})
-                </Tabs.Trigger>
-                <Tabs.Trigger value="metrics">
-                  Metrics ({session.metrics.length})
-                </Tabs.Trigger>
-                <Tabs.Trigger value="marks">
-                  Marks ({session.marks.length})
-                </Tabs.Trigger>
+                <Tabs.Trigger value="measures">Measures ({allMeasures.length})</Tabs.Trigger>
+                <Tabs.Trigger value="metrics">Metrics ({session.metrics.length})</Tabs.Trigger>
+                <Tabs.Trigger value="marks">Marks ({session.marks.length})</Tabs.Trigger>
                 <Tabs.Trigger value="reactNativeMarks">
                   React Native Marks ({session.reactNativeMarks.length})
                 </Tabs.Trigger>
@@ -345,10 +308,7 @@ export default function PerformanceMonitorPanel() {
                     display: 'contents',
                   }}
                 >
-                  <MeasuresTable
-                    measures={allMeasures}
-                    onRowClick={handleEntryClick}
-                  />
+                  <MeasuresTable measures={allMeasures} onRowClick={handleEntryClick} />
                 </Tabs.Content>
 
                 <Tabs.Content
@@ -357,10 +317,7 @@ export default function PerformanceMonitorPanel() {
                     display: 'contents',
                   }}
                 >
-                  <MetricsTable
-                    metrics={session.metrics}
-                    onRowClick={handleEntryClick}
-                  />
+                  <MetricsTable metrics={session.metrics} onRowClick={handleEntryClick} />
                 </Tabs.Content>
 
                 <Tabs.Content
@@ -369,10 +326,7 @@ export default function PerformanceMonitorPanel() {
                     display: 'contents',
                   }}
                 >
-                  <MarksTable
-                    marks={session.marks}
-                    onRowClick={handleEntryClick}
-                  />
+                  <MarksTable marks={session.marks} onRowClick={handleEntryClick} />
                 </Tabs.Content>
 
                 <Tabs.Content
@@ -393,19 +347,13 @@ export default function PerformanceMonitorPanel() {
                     display: 'contents',
                   }}
                 >
-                  <ResourcesTable
-                    resources={session.resources}
-                    onRowClick={handleEntryClick}
-                  />
+                  <ResourcesTable resources={session.resources} onRowClick={handleEntryClick} />
                 </Tabs.Content>
               </Box>
             </Tabs.Root>
           </Box>
 
-          <DetailsSidebar
-            selectedItem={selectedItem}
-            onClose={handleCloseSidebar}
-          />
+          <DetailsSidebar selectedItem={selectedItem} onClose={handleCloseSidebar} />
         </Box>
       </Box>
     </Theme>

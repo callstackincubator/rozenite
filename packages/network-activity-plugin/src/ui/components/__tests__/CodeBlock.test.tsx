@@ -66,9 +66,7 @@ describe('CodeBlock', () => {
   });
 
   it('forwards className to the flat <pre> branch', () => {
-    const { container } = render(
-      <CodeBlock className="extra-class">{'short'}</CodeBlock>,
-    );
+    const { container } = render(<CodeBlock className="extra-class">{'short'}</CodeBlock>);
     const pre = container.querySelector('pre');
     expect(pre).toBeInTheDocument();
     expect(pre?.className).toContain('extra-class');

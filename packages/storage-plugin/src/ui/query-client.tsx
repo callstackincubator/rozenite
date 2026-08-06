@@ -1,8 +1,4 @@
-import {
-  QueryClient,
-  QueryClientProvider,
-  type QueryClientConfig,
-} from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, type QueryClientConfig } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
 
 const storageQueryClientConfig: QueryClientConfig = {
@@ -16,19 +12,12 @@ const storageQueryClientConfig: QueryClientConfig = {
   },
 };
 
-export const createStorageQueryClient = () =>
-  new QueryClient(storageQueryClientConfig);
+export const createStorageQueryClient = () => new QueryClient(storageQueryClientConfig);
 
-export const StorageQueryClientProvider = ({
-  children,
-}: {
-  children: ReactNode;
-}) => {
+export const StorageQueryClientProvider = ({ children }: { children: ReactNode }) => {
   const [queryClient] = useState(createStorageQueryClient);
 
   useEffect(() => () => queryClient.clear(), [queryClient]);
 
-  return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 };

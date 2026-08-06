@@ -33,11 +33,7 @@ export type MessageEntry = {
   payload: unknown;
 };
 
-export type DevHostFlowRunStatus =
-  | 'running'
-  | 'succeeded'
-  | 'failed'
-  | 'aborted';
+export type DevHostFlowRunStatus = 'running' | 'succeeded' | 'failed' | 'aborted';
 
 export type DevHostFlowRunState = {
   id: string;

@@ -18,8 +18,7 @@ export const ActionTimeline = ({
   onGoToAction,
   onClearActions,
 }: ActionTimelineProps) => {
-  const selectedEntry =
-    selectedActionIndex !== null ? actionHistory[selectedActionIndex] : null;
+  const selectedEntry = selectedActionIndex !== null ? actionHistory[selectedActionIndex] : null;
 
   return (
     <Split direction="horizontal" autoSaveId="react-navigation-timeline">

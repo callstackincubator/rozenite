@@ -91,9 +91,7 @@ describe('useRozeniteDevToolsClient', () => {
   it('sends plugin-mounted after the device client becomes available', async () => {
     const { root, container } = await renderHook();
 
-    expect(mocks.getRozeniteDevToolsClient).toHaveBeenCalledWith(
-      '@rozenite/storage-plugin',
-    );
+    expect(mocks.getRozeniteDevToolsClient).toHaveBeenCalledWith('@rozenite/storage-plugin');
     expect(mocks.send).not.toHaveBeenCalled();
 
     await act(async () => {

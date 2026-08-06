@@ -17,17 +17,12 @@ type SingleDatabaseOptions = {
 };
 
 type MultiDatabaseOptions = {
-  databases: Record<
-    string,
-    SqliteExecuteStatementsRunner | SqliteDatabaseConfig
-  >;
+  databases: Record<string, SqliteExecuteStatementsRunner | SqliteDatabaseConfig>;
   adapterId?: string;
   adapterName?: string;
 };
 
-export type CreateSqliteAdapterOptions =
-  | SingleDatabaseOptions
-  | MultiDatabaseOptions;
+export type CreateSqliteAdapterOptions = SingleDatabaseOptions | MultiDatabaseOptions;
 
 const slugify = (value: string) =>
   value
@@ -39,9 +34,8 @@ const slugify = (value: string) =>
 const createDatabaseId = (adapterId: string, seed: string, index: number) =>
   `${adapterId}__${slugify(seed)}__${index.toString(36)}`;
 
-const resolveDatabaseConfig = (
-  config: SqliteExecuteStatementsRunner | SqliteDatabaseConfig,
-) => (typeof config === 'function' ? { executeStatements: config } : config);
+const resolveDatabaseConfig = (config: SqliteExecuteStatementsRunner | SqliteDatabaseConfig) =>
+  typeof config === 'function' ? { executeStatements: config } : config;
 
 const toDatabaseNode = (
   adapterId: string,
@@ -60,9 +54,7 @@ const toDatabaseNode = (
   };
 };
 
-export const createSqliteAdapter = (
-  options: CreateSqliteAdapterOptions,
-): SqliteAdapter => {
+export const createSqliteAdapter = (options: CreateSqliteAdapterOptions): SqliteAdapter => {
   const { adapterId = 'sqlite', adapterName = 'SQLite' } = options;
 
   const databases =

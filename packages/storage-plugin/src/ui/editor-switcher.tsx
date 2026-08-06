@@ -10,12 +10,7 @@ const TYPE_LABELS: Record<StorageEntryType, string> = {
 
 // Visual ordering of the pills. Keep `string` first because it's the
 // most common landing type after a fresh read on an MMKV key.
-const TYPE_ORDER: StorageEntryType[] = [
-  'string',
-  'number',
-  'boolean',
-  'buffer',
-];
+const TYPE_ORDER: StorageEntryType[] = ['string', 'number', 'boolean', 'buffer'];
 
 export type EditorSwitcherProps = {
   supportedTypes: StorageEntryType[];
@@ -23,11 +18,7 @@ export type EditorSwitcherProps = {
   onChange: (type: StorageEntryType) => void;
 };
 
-export const EditorSwitcher = ({
-  supportedTypes,
-  value,
-  onChange,
-}: EditorSwitcherProps) => {
+export const EditorSwitcher = ({ supportedTypes, value, onChange }: EditorSwitcherProps) => {
   const available = TYPE_ORDER.filter((type) => supportedTypes.includes(type));
 
   // Adaptive hide: the switcher is meaningless when the backend only

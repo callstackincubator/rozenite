@@ -15,8 +15,7 @@ export const rozeniteReactNativePlugin = (): Plugin => {
 
       config.build.lib = {
         entry: path.resolve(projectRoot, 'react-native.ts'),
-        fileName: (format) =>
-          `react-native/index.${format === 'es' ? 'js' : 'cjs'}`,
+        fileName: (format) => `react-native/index.${format === 'es' ? 'js' : 'cjs'}`,
       };
 
       config.build.rollupOptions.external = (id) => {

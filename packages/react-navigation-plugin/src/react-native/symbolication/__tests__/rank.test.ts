@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { classifyFrame, pickOriginFrame } from '../rank';
 import type { ActionStackFrame } from '../types';
 
-const frame = (
-  overrides: Partial<ActionStackFrame> = {},
-): ActionStackFrame => ({
+const frame = (overrides: Partial<ActionStackFrame> = {}): ActionStackFrame => ({
   ...overrides,
 });
 
@@ -21,9 +19,7 @@ describe('classifyFrame', () => {
 
   it('returns "library" for paths under node_modules', () => {
     expect(classifyFrame('node_modules/react/index.js')).toBe('library');
-    expect(
-      classifyFrame('/abs/node_modules/@react-navigation/native/lib/foo.js'),
-    ).toBe('library');
+    expect(classifyFrame('/abs/node_modules/@react-navigation/native/lib/foo.js')).toBe('library');
     expect(classifyFrame('apps/x/node_modules/react/index.js')).toBe('library');
   });
 });
@@ -48,9 +44,7 @@ describe('pickOriginFrame', () => {
     ];
     const result = pickOriginFrame(frames);
     expect(result.confidence).toBe('low');
-    expect(result.frame?.url).toBe(
-      'node_modules/@react-navigation/core/dispatch.js',
-    );
+    expect(result.frame?.url).toBe('node_modules/@react-navigation/core/dispatch.js');
   });
 
   it('returns the first frame with no source as "none" confidence', () => {
@@ -77,8 +71,7 @@ describe('pickOriginFrame', () => {
     // matters during the pending state, before Metro symbolicates.
     const frames = [
       frame({
-        generatedUrl:
-          'http://localhost:8081/index.bundle?platform=ios&dev=true',
+        generatedUrl: 'http://localhost:8081/index.bundle?platform=ios&dev=true',
       }),
     ];
     expect(pickOriginFrame(frames).confidence).toBe('none');

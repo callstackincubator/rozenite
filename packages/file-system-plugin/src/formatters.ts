@@ -73,11 +73,7 @@ function formatXml(xml: string): string {
     }
 
     // Handle self-closing tags and processing instructions
-    if (
-      token.endsWith('/>') ||
-      token.startsWith('<?') ||
-      token.startsWith('<!')
-    ) {
+    if (token.endsWith('/>') || token.startsWith('<?') || token.startsWith('<!')) {
       formatted += tab.repeat(indent) + token + '\n';
       continue;
     }

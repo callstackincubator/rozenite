@@ -33,9 +33,7 @@ const previewRemoteObject = (value: unknown): string => {
   const directValue = record.value;
   if (directValue !== undefined) {
     try {
-      return typeof directValue === 'string'
-        ? directValue
-        : JSON.stringify(directValue);
+      return typeof directValue === 'string' ? directValue : JSON.stringify(directValue);
     } catch {
       return String(directValue);
     }
@@ -71,9 +69,7 @@ const mapLevelFromConsoleType = (type: string | undefined): ConsoleLogLevel => {
   return 'info';
 };
 
-export const extractConsoleMessage = (
-  message: unknown,
-): ConsoleMessageInput | null => {
+export const extractConsoleMessage = (message: unknown): ConsoleMessageInput | null => {
   const record = getRecord(message);
   if (!record) {
     return null;
@@ -89,8 +85,7 @@ export const extractConsoleMessage = (
     const text = argsPreview.join(' ').trim() || `[${type || 'log'}]`;
 
     return {
-      timestamp:
-        typeof params.timestamp === 'number' ? params.timestamp : Date.now(),
+      timestamp: typeof params.timestamp === 'number' ? params.timestamp : Date.now(),
       level: mapLevelFromConsoleType(type),
       text,
       source: 'console',
@@ -109,8 +104,7 @@ export const extractConsoleMessage = (
       'Unhandled exception';
 
     return {
-      timestamp:
-        typeof params.timestamp === 'number' ? params.timestamp : Date.now(),
+      timestamp: typeof params.timestamp === 'number' ? params.timestamp : Date.now(),
       level: 'error',
       text,
       source: 'exception',
@@ -127,8 +121,7 @@ export const extractConsoleMessage = (
     const level = mapLevelFromConsoleType(getString(entry.level));
 
     return {
-      timestamp:
-        typeof entry.timestamp === 'number' ? entry.timestamp : Date.now(),
+      timestamp: typeof entry.timestamp === 'number' ? entry.timestamp : Date.now(),
       level,
       text,
       source: 'log',

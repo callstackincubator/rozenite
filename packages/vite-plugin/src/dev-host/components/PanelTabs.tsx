@@ -7,11 +7,7 @@ type PanelTabsProps = {
   onValueChange: (value: string) => void;
 };
 
-export const PanelTabs = ({
-  panels,
-  activeSource,
-  onValueChange,
-}: PanelTabsProps) => {
+export const PanelTabs = ({ panels, activeSource, onValueChange }: PanelTabsProps) => {
   if (panels.length === 0) {
     return null;
   }
@@ -19,14 +15,8 @@ export const PanelTabs = ({
   const activePanel = panels.find((panel) => panel.source === activeSource);
 
   return (
-    <Select
-      value={activeSource}
-      onValueChange={(value) => onValueChange(String(value))}
-    >
-      <Select.Trigger
-        className="dev-host-panel-select"
-        aria-label="Plugin panel"
-      >
+    <Select value={activeSource} onValueChange={(value) => onValueChange(String(value))}>
+      <Select.Trigger className="dev-host-panel-select" aria-label="Plugin panel">
         <Select.Value>{activePanel?.label}</Select.Value>
       </Select.Trigger>
       <Select.Content align="end">

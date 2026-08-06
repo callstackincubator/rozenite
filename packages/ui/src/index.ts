@@ -10,10 +10,7 @@ export type {
 } from './split/split';
 
 export { PluginShell } from './plugin-shell/plugin-shell';
-export type {
-  PluginShellProps,
-  PluginShellBodyProps,
-} from './plugin-shell/plugin-shell';
+export type { PluginShellProps, PluginShellBodyProps } from './plugin-shell/plugin-shell';
 
 export { PluginHeader } from './plugin-header/plugin-header';
 export type {
@@ -65,12 +62,7 @@ export type {
 } from './tooltip/tooltip';
 
 export { Tabs } from './tabs/tabs';
-export type {
-  TabsProps,
-  TabsListProps,
-  TabsTabProps,
-  TabsPanelProps,
-} from './tabs/tabs';
+export type { TabsProps, TabsListProps, TabsTabProps, TabsPanelProps } from './tabs/tabs';
 
 export { ScrollArea } from './scroll-area/scroll-area';
 export type { ScrollAreaProps } from './scroll-area/scroll-area';
@@ -128,11 +120,7 @@ export { NestedList } from './list/nested-list';
 export type { NestedListProps, NestedListItemProps } from './list/nested-list';
 
 export { Sidebar } from './sidebar/sidebar';
-export type {
-  SidebarProps,
-  SidebarGroupProps,
-  SidebarItemProps,
-} from './sidebar/sidebar';
+export type { SidebarProps, SidebarGroupProps, SidebarItemProps } from './sidebar/sidebar';
 
 export { EmptyState } from './empty-state/empty-state';
 export type { EmptyStateProps } from './empty-state/empty-state';

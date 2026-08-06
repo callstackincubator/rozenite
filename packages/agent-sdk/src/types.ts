@@ -53,9 +53,9 @@ export interface AgentDynamicToolCallInput<TArgs = unknown> {
   args?: TArgs;
 }
 
-type AgentDescriptorCallTuple<
-  TDescriptor extends AgentToolDescriptor<unknown, unknown>,
-> = [InferAgentToolArgs<TDescriptor>] extends [undefined]
+type AgentDescriptorCallTuple<TDescriptor extends AgentToolDescriptor<unknown, unknown>> = [
+  InferAgentToolArgs<TDescriptor>,
+] extends [undefined]
   ? [args?: InferAgentToolArgs<TDescriptor>]
   : Record<string, never> extends InferAgentToolArgs<TDescriptor>
     ? [args?: InferAgentToolArgs<TDescriptor>]
@@ -74,10 +74,7 @@ export interface AgentResolvedTool<TArgs = unknown, TResult = unknown> {
 
 export interface AgentSessionTools {
   list: (input: { domain: string }) => Promise<AgentDomainTool[]>;
-  getSchema: (input: {
-    domain: string;
-    tool: string;
-  }) => Promise<AgentToolSchema>;
+  getSchema: (input: { domain: string; tool: string }) => Promise<AgentToolSchema>;
   /**
    * Resolves a domain token and tool name to its schema and a bound `call`
    * once, so callers that need both the schema (e.g. to inspect pagination
@@ -89,9 +86,7 @@ export interface AgentSessionTools {
     tool: string;
   }) => Promise<AgentResolvedTool<TArgs, TResult>>;
   call: {
-    <TArgs = unknown, TResult = unknown>(
-      input: AgentDynamicToolCallInput<TArgs>,
-    ): Promise<TResult>;
+    <TArgs = unknown, TResult = unknown>(input: AgentDynamicToolCallInput<TArgs>): Promise<TResult>;
     <TDescriptor extends AgentToolDescriptor<unknown, unknown>>(
       descriptor: TDescriptor,
       ...args: AgentDescriptorCallTuple<TDescriptor>
@@ -107,18 +102,14 @@ export interface AgentSessionClient {
   tools: AgentSessionTools;
 }
 
-export type AgentSessionCallback<T> = (
-  session: AgentSessionClient,
-) => Promise<T> | T;
+export type AgentSessionCallback<T> = (session: AgentSessionClient) => Promise<T> | T;
 
 export interface AgentTransport {
   host: string;
   port: number;
   getInfo: () => Promise<GetAgentInfoResponse>;
   listTargets: () => Promise<GetAgentTargetsResponse>;
-  createSession: (
-    body: CreateAgentSessionRequest,
-  ) => Promise<CreateAgentSessionResponse>;
+  createSession: (body: CreateAgentSessionRequest) => Promise<CreateAgentSessionResponse>;
   listSessions: () => Promise<ListAgentSessionsResponse>;
   getSession: (sessionId: string) => Promise<GetAgentSessionResponse>;
   stopSession: (sessionId: string) => Promise<DeleteAgentSessionResponse>;
@@ -135,13 +126,8 @@ export interface AgentClient {
   };
   withSession: {
     <T>(callback: AgentSessionCallback<T>): Promise<T>;
-    <T>(
-      input: CreateAgentSessionRequest,
-      callback: AgentSessionCallback<T>,
-    ): Promise<T>;
+    <T>(input: CreateAgentSessionRequest, callback: AgentSessionCallback<T>): Promise<T>;
   };
-  openSession: (
-    input?: CreateAgentSessionRequest,
-  ) => Promise<AgentSessionClient>;
+  openSession: (input?: CreateAgentSessionRequest) => Promise<AgentSessionClient>;
   attachSession: (sessionId: string) => Promise<AgentSessionClient>;
 }

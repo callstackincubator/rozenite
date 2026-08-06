@@ -8,22 +8,15 @@ import {
 } from '@tanstack/react-query';
 import type { RozeniteDevToolsRequestClient } from '@rozenite/plugin-bridge';
 import { useCallback, useEffect, useMemo } from 'react';
-import type {
-  StorageEventMap,
-  StorageListEntryPreviewsResponseEvent,
-} from '../shared/messaging';
+import type { StorageEventMap, StorageListEntryPreviewsResponseEvent } from '../shared/messaging';
 import type { StorageEntryPreview, StorageTarget } from '../shared/types';
 
 export const STORAGE_ENTRY_PREVIEW_PAGE_SIZE = 100;
 export const STORAGE_ENTRY_PREVIEW_MAX_PAGES = 5;
 
-type StorageRequestClient = Pick<
-  RozeniteDevToolsRequestClient<StorageEventMap>,
-  'request'
->;
+type StorageRequestClient = Pick<RozeniteDevToolsRequestClient<StorageEventMap>, 'request'>;
 
-export const normalizeStorageKeySearch = (search: string) =>
-  search.trim().toLowerCase();
+export const normalizeStorageKeySearch = (search: string) => search.trim().toLowerCase();
 
 export const storageEntryPreviewQueryKeyPrefix = (target: StorageTarget) =>
   ['storage-entry-previews', target.adapterId, target.storageId] as const;
@@ -72,9 +65,7 @@ export const dropStorageFullEntries = async (
   key?: string,
 ) => {
   const queryKey =
-    key == null
-      ? storageFullEntryQueryKeyPrefix(target)
-      : storageFullEntryQueryKey(target, key);
+    key == null ? storageFullEntryQueryKeyPrefix(target) : storageFullEntryQueryKey(target, key);
 
   await queryClient.cancelQueries({ queryKey, exact: key != null });
   queryClient.removeQueries({ queryKey, exact: key != null });
@@ -101,11 +92,7 @@ export const useStorageEntryPreviews = ({
   const queryKey = useMemo(
     () =>
       target
-        ? storageEntryPreviewQueryKey(
-            target,
-            normalizedSearch,
-            keySortDirection,
-          )
+        ? storageEntryPreviewQueryKey(target, normalizedSearch, keySortDirection)
         : (['storage-entry-previews', 'no-target'] as const),
     [keySortDirection, normalizedSearch, target?.adapterId, target?.storageId],
   );
@@ -174,9 +161,7 @@ export const useStorageFullEntry = ({
     gcTime: 0,
     queryFn: ({ signal }) => {
       if (!client || !target || key == null) {
-        throw new Error(
-          'A storage target, key, and request client are required.',
-        );
+        throw new Error('A storage target, key, and request client are required.');
       }
 
       return client.request({

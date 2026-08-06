@@ -1,7 +1,4 @@
-import {
-  AGENT_PLUGIN_ID,
-  type AgentToolPagination,
-} from '@rozenite/agent-shared';
+import { AGENT_PLUGIN_ID, type AgentToolPagination } from '@rozenite/agent-shared';
 import { createToolRegistry } from './tool-registry.js';
 import type {
   DevToolsPluginMessage,
@@ -87,15 +84,7 @@ const CONSOLE_TOOLS: AgentTool[] = [
       },
     },
     pagination: cursorPagination<ConsoleLogEntry>({
-      fields: [
-        'seq',
-        'timestamp',
-        'level',
-        'source',
-        'text',
-        'argsPreview',
-        'context',
-      ],
+      fields: ['seq', 'timestamp', 'level', 'source', 'text', 'argsPreview', 'context'],
       // Drop the two heaviest columns from the default projection; they
       // remain available via --fields/--verbose.
       defaultFields: ['seq', 'timestamp', 'level', 'source', 'text'],
@@ -172,9 +161,7 @@ export const createAgentMessageHandler = () => {
   const resolveDeviceForLocalTool = (requestedDeviceId?: string): string => {
     const devices = registry.getDevices();
     if (devices.length === 0) {
-      throw new Error(
-        'No connected device is available for local Agent tools.',
-      );
+      throw new Error('No connected device is available for local Agent tools.');
     }
 
     if (requestedDeviceId) {
@@ -246,10 +233,7 @@ export const createAgentMessageHandler = () => {
     notifyToolsChanged();
   };
 
-  const handleDeviceMessage = (
-    deviceId: string,
-    message: DevToolsPluginMessage,
-  ): void => {
+  const handleDeviceMessage = (deviceId: string, message: DevToolsPluginMessage): void => {
     if (message.pluginId !== AGENT_PLUGIN_ID) {
       return;
     }
@@ -291,10 +275,7 @@ export const createAgentMessageHandler = () => {
 
   const getTools = (deviceId?: string) => {
     if (deviceId) {
-      return [
-        ...registry.getToolsForDevice(deviceId),
-        ...getConsoleTools(deviceId),
-      ];
+      return [...registry.getToolsForDevice(deviceId), ...getConsoleTools(deviceId)];
     }
 
     return [...registry.getAggregatedTools(), ...getConsoleTools()];
@@ -308,10 +289,7 @@ export const createAgentMessageHandler = () => {
     return registry.getDevices();
   };
 
-  const callTool = async (
-    toolName: string,
-    args: unknown,
-  ): Promise<unknown> => {
+  const callTool = async (toolName: string, args: unknown): Promise<unknown> => {
     let deviceId: string | undefined;
     let toolArgs = args;
 
@@ -333,9 +311,7 @@ export const createAgentMessageHandler = () => {
 
     const targetDeviceId = registry.findToolDevice(toolName, deviceId);
     if (!targetDeviceId) {
-      throw new Error(
-        `Tool "${toolName}" not found${deviceId ? ` on device "${deviceId}"` : ''}`,
-      );
+      throw new Error(`Tool "${toolName}" not found${deviceId ? ` on device "${deviceId}"` : ''}`);
     }
 
     const sender = deviceConnections.get(targetDeviceId);

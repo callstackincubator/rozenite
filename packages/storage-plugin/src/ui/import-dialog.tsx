@@ -82,8 +82,8 @@ const PreviewBody = ({
           <div className="flex items-start gap-2 rounded-md border border-border bg-muted p-2 text-xs text-foreground">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
-              This file was exported from <strong>{sourceLabel}</strong>. You
-              are importing into <strong>{targetLabel}</strong>.
+              This file was exported from <strong>{sourceLabel}</strong>. You are importing into{' '}
+              <strong>{targetLabel}</strong>.
             </div>
           </div>
         )}
@@ -93,15 +93,10 @@ const PreviewBody = ({
             <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               {preview.unsupportedTypes.length}{' '}
-              {preview.unsupportedTypes.length === 1
-                ? 'entry has a type'
-                : 'entries have types'}{' '}
-              not supported by this storage. Remove them from the file and try
-              again.
+              {preview.unsupportedTypes.length === 1 ? 'entry has a type' : 'entries have types'}{' '}
+              not supported by this storage. Remove them from the file and try again.
               <div className="mt-1 max-h-20 overflow-auto rounded-md bg-muted px-2 py-1 font-mono text-xs">
-                {preview.unsupportedTypes
-                  .map((u) => `${u.key} (${u.type})`)
-                  .join(', ')}
+                {preview.unsupportedTypes.map((u) => `${u.key} (${u.type})`).join(', ')}
               </div>
             </div>
           </div>
@@ -191,12 +186,7 @@ const ResultBody = ({
   </>
 );
 
-export const ImportDialog = ({
-  state,
-  onApply,
-  onCancel,
-  onClose,
-}: ImportDialogProps) => {
+export const ImportDialog = ({ state, onApply, onCancel, onClose }: ImportDialogProps) => {
   const title =
     state === null
       ? ''
@@ -227,9 +217,7 @@ export const ImportDialog = ({
           <PreviewBody state={state} onApply={onApply} onCancel={onCancel} />
         )}
         {state?.phase === 'importing' && <ImportingBody state={state} />}
-        {state?.phase === 'result' && (
-          <ResultBody state={state} onClose={onClose} />
-        )}
+        {state?.phase === 'result' && <ResultBody state={state} onClose={onClose} />}
       </Dialog.Content>
     </Dialog>
   );

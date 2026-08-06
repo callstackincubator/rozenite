@@ -1,8 +1,5 @@
 import { defineAgentToolDescriptors } from '@rozenite/agent-shared';
-import {
-  CONTROLS_AGENT_PLUGIN_ID,
-  controlsToolDefinitions,
-} from './src/shared/agent-tools.js';
+import { CONTROLS_AGENT_PLUGIN_ID, controlsToolDefinitions } from './src/shared/agent-tools.js';
 
 export { CONTROLS_AGENT_PLUGIN_ID, controlsToolDefinitions };
 

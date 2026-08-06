@@ -1,10 +1,6 @@
 import { Button, ConfirmDialog, Dialog, Field } from '@rozenite/ui';
 import { useEffect, useRef, useState } from 'react';
-import type {
-  StorageEntry,
-  StorageEntryType,
-  StorageEntryValue,
-} from '../shared/types';
+import type { StorageEntry, StorageEntryType, StorageEntryValue } from '../shared/types';
 import { TypedValueEditor } from './typed-value-editor';
 import { defaultValueForType } from './type-conversion';
 
@@ -32,9 +28,7 @@ export const EditEntryDialog = ({
   const [currentValue, setCurrentValue] = useState<StorageEntryValue | null>(
     defaultValueForType('string'),
   );
-  const [alert, setAlert] = useState<{ title: string; message: string } | null>(
-    null,
-  );
+  const [alert, setAlert] = useState<{ title: string; message: string } | null>(null);
 
   useEffect(() => {
     if (entry && isOpen) {
@@ -103,9 +97,7 @@ export const EditEntryDialog = ({
               <div className="h-8 w-full truncate rounded-md border border-input bg-muted px-3 py-1.5 font-mono text-sm text-foreground">
                 {entryForDisplay.key}
               </div>
-              <Field.Description>
-                Key cannot be changed during editing
-              </Field.Description>
+              <Field.Description>Key cannot be changed during editing</Field.Description>
             </Field>
 
             <Field>

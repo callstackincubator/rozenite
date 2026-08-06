@@ -56,10 +56,7 @@ type ExportedSSEEntry = {
   messages: SSENetworkEntry['messages'];
 };
 
-export type ExportedNetworkEntry =
-  | ExportedHttpEntry
-  | ExportedWebSocketEntry
-  | ExportedSSEEntry;
+export type ExportedNetworkEntry = ExportedHttpEntry | ExportedWebSocketEntry | ExportedSSEEntry;
 
 export type NetworkActivitySessionExport = {
   schemaVersion: typeof EXPORT_SCHEMA_VERSION;
@@ -157,9 +154,7 @@ export const createNetworkActivitySessionExport = (
     summary: {
       totalEntries: entries.length,
       httpRequests: entries.filter((entry) => entry.type === 'http').length,
-      webSocketConnections: entries.filter(
-        (entry) => entry.type === 'websocket',
-      ).length,
+      webSocketConnections: entries.filter((entry) => entry.type === 'websocket').length,
       sseConnections: entries.filter((entry) => entry.type === 'sse').length,
       realtimeMessages: entries.reduce((count, entry) => {
         if (entry.type === 'websocket' || entry.type === 'sse') {
@@ -173,9 +168,7 @@ export const createNetworkActivitySessionExport = (
   };
 };
 
-export const getNetworkActivitySessionExportFileName = (
-  exportedAt = new Date(),
-) => {
+export const getNetworkActivitySessionExportFileName = (exportedAt = new Date()) => {
   const timestamp = exportedAt
     .toISOString()
     .replace(/\.\d{3}Z$/, 'Z')

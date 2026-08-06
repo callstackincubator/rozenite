@@ -8,9 +8,7 @@ export const SuccessiveScreens = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Successive Screens</Text>
-      <Text style={styles.subtext}>
-        Successive screens to be stacked one on top of the other
-      </Text>
+      <Text style={styles.subtext}>Successive screens to be stacked one on top of the other</Text>
 
       <TouchableOpacity
         style={styles.button}

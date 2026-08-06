@@ -1,9 +1,4 @@
-import type {
-  HttpHeaders,
-  HttpMethod,
-  RequestPostData,
-  ResponseBody,
-} from '../../shared/client';
+import type { HttpHeaders, HttpMethod, RequestPostData, ResponseBody } from '../../shared/client';
 import { getRequestBody } from './http-utils';
 import { captureResponseBodyFromBytes } from './response-body-utils';
 import { getContentTypeMime } from '../../utils/getContentTypeMimeType';
@@ -42,9 +37,7 @@ export const normalizeHeaders = (headers?: HeadersInit): HttpHeaders => {
       return;
     }
 
-    normalized[key] = Array.isArray(existing)
-      ? [...existing, value]
-      : [existing, value];
+    normalized[key] = Array.isArray(existing) ? [...existing, value] : [existing, value];
   };
 
   if (typeof Headers !== 'undefined' && headers instanceof Headers) {
@@ -89,17 +82,12 @@ export const normalizeFetchRequest = (
   input: FetchInput,
   init: RequestInit = {},
 ): NormalizedFetchRequest => {
-  const request =
-    typeof Request !== 'undefined' && input instanceof Request ? input : null;
+  const request = typeof Request !== 'undefined' && input instanceof Request ? input : null;
   const requestLike =
-    !request && typeof input === 'object' && input !== null
-      ? (input as FetchRequestLike)
-      : null;
+    !request && typeof input === 'object' && input !== null ? (input as FetchRequestLike) : null;
   // Expo follows fetch's `init.headers ?? input.headers` semantics: supplying
   // init headers replaces inherited headers instead of merging them.
-  const headers = normalizeHeaders(
-    init.headers ?? request?.headers ?? requestLike?.headers,
-  );
+  const headers = normalizeHeaders(init.headers ?? request?.headers ?? requestLike?.headers);
 
   return {
     url: request?.url ?? requestLike?.url ?? input.toString(),
@@ -121,14 +109,10 @@ export const getFetchResponseHeaders = (response: Response): HttpHeaders => {
 
 export const getFetchContentType = (response: Response): string => {
   const contentType = response.headers.get('content-type');
-  return contentType
-    ? (getContentTypeMime({ 'content-type': contentType }) ?? '')
-    : '';
+  return contentType ? (getContentTypeMime({ 'content-type': contentType }) ?? '') : '';
 };
 
-export const getFetchContentLength = (
-  response: Response,
-): number | undefined => {
+export const getFetchContentLength = (response: Response): number | undefined => {
   const contentLength = response.headers.get('content-length');
 
   if (!contentLength) {
@@ -143,11 +127,7 @@ export const createProgressThrottler = (minIntervalMs = 100) => {
   let lastEmittedAt = 0;
 
   return (timestamp: number, force = false) => {
-    if (
-      force ||
-      lastEmittedAt === 0 ||
-      timestamp - lastEmittedAt >= minIntervalMs
-    ) {
+    if (force || lastEmittedAt === 0 || timestamp - lastEmittedAt >= minIntervalMs) {
       lastEmittedAt = timestamp;
       return true;
     }

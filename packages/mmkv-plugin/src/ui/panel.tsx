@@ -10,9 +10,7 @@ import { EditEntryDialog } from './edit-entry-dialog';
 import './globals.css';
 
 export default function MMKVPanel() {
-  const [instances, setInstances] = useState<Map<string, MMKVEntry[]>>(
-    new Map(),
-  );
+  const [instances, setInstances] = useState<Map<string, MMKVEntry[]>>(new Map());
   const [selectedInstance, setSelectedInstance] = useState<string | null>(null);
   const [entries, setEntries] = useState<MMKVEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,9 +53,7 @@ export default function MMKVPanel() {
     const setEntrySubscription = client.onMessage('set-entry', (event) => {
       if (event.id === selectedInstance) {
         setEntries((prevEntries) => {
-          const existingIndex = prevEntries.findIndex(
-            (entry) => entry.key === event.entry.key,
-          );
+          const existingIndex = prevEntries.findIndex((entry) => entry.key === event.entry.key);
           if (existingIndex >= 0) {
             // Update existing entry
             return prevEntries.map((entry) =>
@@ -75,9 +71,7 @@ export default function MMKVPanel() {
         const newInstances = new Map(prevInstances);
         const instanceEntries = newInstances.get(event.id);
         if (instanceEntries) {
-          const existingIndex = instanceEntries.findIndex(
-            (entry) => entry.key === event.entry.key,
-          );
+          const existingIndex = instanceEntries.findIndex((entry) => entry.key === event.entry.key);
           if (existingIndex >= 0) {
             // Update existing entry
             const updatedEntries = instanceEntries.map((entry) =>
@@ -93,29 +87,22 @@ export default function MMKVPanel() {
       });
     });
 
-    const deleteEntrySubscription = client.onMessage(
-      'delete-entry',
-      (event) => {
-        if (event.id === selectedInstance) {
-          setEntries((prevEntries) =>
-            prevEntries.filter((entry) => entry.key !== event.key),
-          );
-        }
+    const deleteEntrySubscription = client.onMessage('delete-entry', (event) => {
+      if (event.id === selectedInstance) {
+        setEntries((prevEntries) => prevEntries.filter((entry) => entry.key !== event.key));
+      }
 
-        // Update the instances map as well
-        setInstances((prevInstances) => {
-          const newInstances = new Map(prevInstances);
-          const instanceEntries = newInstances.get(event.id);
-          if (instanceEntries) {
-            const updatedEntries = instanceEntries.filter(
-              (entry) => entry.key !== event.key,
-            );
-            newInstances.set(event.id, updatedEntries);
-          }
-          return newInstances;
-        });
-      },
-    );
+      // Update the instances map as well
+      setInstances((prevInstances) => {
+        const newInstances = new Map(prevInstances);
+        const instanceEntries = newInstances.get(event.id);
+        if (instanceEntries) {
+          const updatedEntries = instanceEntries.filter((entry) => entry.key !== event.key);
+          newInstances.set(event.id, updatedEntries);
+        }
+        return newInstances;
+      });
+    });
 
     // Request initial snapshots for all instances
     client.send('get-snapshot', {
@@ -207,18 +194,14 @@ export default function MMKVPanel() {
     });
 
     // Optimistically update local state
-    setEntries((prevEntries) =>
-      prevEntries.filter((entry) => entry.key !== key),
-    );
+    setEntries((prevEntries) => prevEntries.filter((entry) => entry.key !== key));
 
     // Update the instances map as well
     setInstances((prevInstances) => {
       const newInstances = new Map(prevInstances);
       const instanceEntries = newInstances.get(selectedInstance);
       if (instanceEntries) {
-        const updatedEntries = instanceEntries.filter(
-          (entry) => entry.key !== key,
-        );
+        const updatedEntries = instanceEntries.filter((entry) => entry.key !== key);
         newInstances.set(selectedInstance, updatedEntries);
       }
       return newInstances;
@@ -255,9 +238,7 @@ export default function MMKVPanel() {
       <div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-gray-800">
         <div className="flex items-center gap-2">
           <span className="text-lg">💾</span>
-          <span className="text-sm font-medium text-gray-200">
-            MMKV Storage
-          </span>
+          <span className="text-sm font-medium text-gray-200">MMKV Storage</span>
         </div>
         <div className="flex-1" />
         <div className="flex items-center gap-2">
@@ -285,8 +266,8 @@ export default function MMKVPanel() {
       </div>
 
       <div className="px-3 py-2 border-b border-amber-800/60 bg-amber-950/40 text-xs text-amber-100">
-        <span className="font-semibold">Deprecated:</span>{' '}
-        <code>@rozenite/mmkv-plugin</code> has been replaced by{' '}
+        <span className="font-semibold">Deprecated:</span> <code>@rozenite/mmkv-plugin</code> has
+        been replaced by{' '}
         <a
           href="https://www.npmjs.com/package/@rozenite/storage-plugin"
           target="_blank"
@@ -295,8 +276,7 @@ export default function MMKVPanel() {
         >
           <code>@rozenite/storage-plugin</code>
         </a>
-        , which supports more storage solutions than MMKV and offers the same
-        functionality.
+        , which supports more storage solutions than MMKV and offers the same functionality.
       </div>
 
       {/* Search and Filter Bar */}
@@ -334,9 +314,7 @@ export default function MMKVPanel() {
             {filteredEntries.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center w-full">
                 <div className="text-4xl mb-4">🔍</div>
-                <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                  No entries found
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-200 mb-2">No entries found</h3>
                 <p className="text-gray-400 text-sm">
                   {searchTerm
                     ? 'Try adjusting your search terms'
@@ -359,12 +337,9 @@ export default function MMKVPanel() {
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center w-full">
             <div className="text-4xl mb-4">🚀</div>
-            <h2 className="text-xl font-semibold text-gray-200 mb-2">
-              Welcome to MMKV Inspector
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-200 mb-2">Welcome to MMKV Inspector</h2>
             <p className="text-gray-400 text-sm">
-              Select an MMKV instance from the dropdown above to start exploring
-              your data
+              Select an MMKV instance from the dropdown above to start exploring your data
             </p>
           </div>
         )}

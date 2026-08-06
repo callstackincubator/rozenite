@@ -7,9 +7,7 @@ const REQUIRED_REPACK_VERSION = '5.2';
 
 const require = createRequire(import.meta.url);
 
-export const getRepackPackageJsonPath = (
-  projectRoot: string,
-): string | null => {
+export const getRepackPackageJsonPath = (projectRoot: string): string | null => {
   try {
     return require.resolve('@callstack/repack/package.json', {
       paths: [projectRoot],

@@ -50,9 +50,7 @@ export const hashFilters = (filters: unknown): string => {
   return createHash('sha1').update(raw).digest('hex');
 };
 
-export const encodeCursor = <TPosition>(
-  payload: CursorPayload<TPosition>,
-): string => {
+export const encodeCursor = <TPosition>(payload: CursorPayload<TPosition>): string => {
   const compact: CompactCursorPayload<TPosition> = {
     v: payload.v,
     t: payload.tool,
@@ -65,9 +63,7 @@ export const encodeCursor = <TPosition>(
   return Buffer.from(JSON.stringify(compact), 'utf8').toString('base64url');
 };
 
-export const decodeCursor = <TPosition>(
-  raw: string,
-): CursorPayload<TPosition> => {
+export const decodeCursor = <TPosition>(raw: string): CursorPayload<TPosition> => {
   try {
     const decoded = Buffer.from(raw, 'base64url').toString('utf8');
     const parsed = JSON.parse(decoded) as CompactCursorPayload<TPosition>;

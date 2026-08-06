@@ -33,10 +33,7 @@ export function DataTableEditableCell({
           setDraft(value);
           setEditing(true);
         }}
-        className={cn(
-          'w-full rounded-sm px-1 py-0.5 text-left hover:bg-accent/50',
-          className,
-        )}
+        className={cn('w-full rounded-sm px-1 py-0.5 text-left hover:bg-accent/50', className)}
       >
         {value}
       </button>

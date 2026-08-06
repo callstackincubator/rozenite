@@ -27,12 +27,7 @@ export const ActionButton = ({
   return (
     <a
       href={href}
-      className={[
-        styles.button,
-        styles[variant],
-        fullWidth ? styles.full : '',
-        className,
-      ]
+      className={[styles.button, styles[variant], fullWidth ? styles.full : '', className]
         .filter(Boolean)
         .join(' ')}
       {...(external ? { target: '_blank', rel: 'noreferrer noopener' } : {})}

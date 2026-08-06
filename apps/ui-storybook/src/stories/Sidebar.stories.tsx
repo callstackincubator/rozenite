@@ -13,9 +13,7 @@ function OverviewIcon() {
   );
 }
 
-const meta = { component: Sidebar, title: 'Components/Sidebar' } satisfies Meta<
-  typeof Sidebar
->;
+const meta = { component: Sidebar, title: 'Components/Sidebar' } satisfies Meta<typeof Sidebar>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 /** Use for persistent panel navigation with grouped items.

@@ -120,18 +120,11 @@ describe('agent command output', () => {
     const program = new Command();
     registerAgentCommand(program);
 
-    const agentCommand = program.commands.find(
-      (command) => command.name() === 'agent',
-    );
-    const domainCommand = agentCommand?.commands.find(
-      (command) => command.name() === '*',
-    );
+    const agentCommand = program.commands.find((command) => command.name() === 'agent');
+    const domainCommand = agentCommand?.commands.find((command) => command.name() === '*');
     expect(domainCommand).toBeDefined();
 
-    const optionNames = domainCommand!.options.flatMap((option) => [
-      option.short,
-      option.long,
-    ]);
+    const optionNames = domainCommand!.options.flatMap((option) => [option.short, option.long]);
 
     expect(optionNames).not.toContain('-p');
     expect(optionNames).not.toContain('--pages');
@@ -152,9 +145,7 @@ describe('agent command output', () => {
       },
     ]);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
@@ -163,9 +154,7 @@ describe('agent command output', () => {
       from: 'node',
     });
 
-    expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"items":[{"id":"device-1","name":"iPhone"}]}\n',
-    );
+    expect(stdoutWrite).toHaveBeenCalledWith('{"items":[{"id":"device-1","name":"iPhone"}]}\n');
     expect(mocks.createAgentClient).toHaveBeenCalledWith({
       host: '127.0.0.1',
       port: 8081,
@@ -185,9 +174,7 @@ describe('agent command output', () => {
       },
     ]);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
@@ -196,9 +183,7 @@ describe('agent command output', () => {
       from: 'node',
     });
 
-    expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"items":[{"id":"device-1","name":"iPhone"}]}\n',
-    );
+    expect(stdoutWrite).toHaveBeenCalledWith('{"items":[{"id":"device-1","name":"iPhone"}]}\n');
   });
 
   it('prints the slim session for session create', async () => {
@@ -222,9 +207,7 @@ describe('agent command output', () => {
       },
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
@@ -263,19 +246,14 @@ describe('agent command output', () => {
       },
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
 
-    await program.parseAsync(
-      ['node', 'test', 'agent', 'session', 'create', '--json'],
-      {
-        from: 'node',
-      },
-    );
+    await program.parseAsync(['node', 'test', 'agent', 'session', 'create', '--json'], {
+      from: 'node',
+    });
 
     expect(stdoutWrite).toHaveBeenCalledWith(
       '{"id":"device-1","deviceName":"iPhone","status":"connected"}\n',
@@ -305,9 +283,7 @@ describe('agent command output', () => {
         'Connected Rozenite agent uses version 1.5.0, but Metro is running version 1.6.0. Integration may not work correctly.',
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
@@ -343,14 +319,12 @@ describe('agent command output', () => {
       {
         id: 'network',
         kind: 'static',
-        description:
-          'Raw CDP network recording tools with paginated request browsing.',
+        description: 'Raw CDP network recording tools with paginated request browsing.',
       },
       {
         id: 'performance',
         kind: 'static',
-        description:
-          'CDP performance tracing tools with Metro-managed artifact exports.',
+        description: 'CDP performance tracing tools with Metro-managed artifact exports.',
       },
       {
         id: 'react',
@@ -359,19 +333,14 @@ describe('agent command output', () => {
       },
     ]);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
 
-    await program.parseAsync(
-      ['node', 'test', 'agent', 'domains', '--session', 'session-1'],
-      {
-        from: 'node',
-      },
-    );
+    await program.parseAsync(['node', 'test', 'agent', 'domains', '--session', 'session-1'], {
+      from: 'node',
+    });
 
     expect(stdoutWrite).toHaveBeenCalledWith(
       '{"cols":["id","kind"],"rows":[["app","plugin"],["console","static"],["memory","static"],["network","static"],["performance","static"],["react","static"]]}\n',
@@ -385,23 +354,12 @@ describe('agent command output', () => {
       { id: 'console', kind: 'static' },
     ]);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
     await program.parseAsync(
-      [
-        'node',
-        'test',
-        'agent',
-        'domains',
-        '--session',
-        'session 1',
-        '--limit',
-        '1',
-      ],
+      ['node', 'test', 'agent', 'domains', '--session', 'session 1', '--limit', '1'],
       { from: 'node' },
     );
 
@@ -429,9 +387,7 @@ describe('agent command output', () => {
       },
     ]);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -460,9 +416,7 @@ describe('agent command output', () => {
       },
     ]);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -488,9 +442,7 @@ describe('agent command output', () => {
 
   it('does not expose daemon lifecycle commands in help output', () => {
     setupClient();
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
@@ -501,9 +453,7 @@ describe('agent command output', () => {
       }),
     ).toThrow();
 
-    const help = stdoutWrite.mock.calls
-      .map(([chunk]) => String(chunk))
-      .join('');
+    const help = stdoutWrite.mock.calls.map(([chunk]) => String(chunk)).join('');
     expect(help).not.toMatch(/\n\s+daemon(?:\s|\n)/);
     expect(help).not.toContain('kill-all');
     expect(help).not.toMatch(/\n\s+ps(?:\s|\n)/);
@@ -517,22 +467,14 @@ describe('agent command output', () => {
     const program = new Command();
     registerAgentCommand(program);
 
-    const agentCommand = program.commands.find(
-      (command) => command.name() === 'agent',
-    );
-    const domainCommand = agentCommand?.commands.find(
-      (command) => command.name() === '*',
-    );
-    const fieldsOption = domainCommand?.options.find(
-      (option) => option.long === '--fields',
-    );
+    const agentCommand = program.commands.find((command) => command.name() === 'agent');
+    const domainCommand = agentCommand?.commands.find((command) => command.name() === '*');
+    const fieldsOption = domainCommand?.options.find((option) => option.long === '--fields');
 
     expect(fieldsOption?.description).toContain(
       'allowed fields depend on the listing or declared paginated tool',
     );
-    expect(fieldsOption?.description).not.toContain(
-      '(name, shortName, description)',
-    );
+    expect(fieldsOption?.description).not.toContain('(name, shortName, description)');
   });
 
   it('prints tool schemas without the domain envelope', async () => {
@@ -546,25 +488,13 @@ describe('agent command output', () => {
       },
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
 
     await program.parseAsync(
-      [
-        'node',
-        'test',
-        'agent',
-        'app',
-        'schema',
-        '--tool',
-        'echo',
-        '--session',
-        'session-1',
-      ],
+      ['node', 'test', 'agent', 'app', 'schema', '--tool', 'echo', '--session', 'session-1'],
       {
         from: 'node',
       },
@@ -581,9 +511,7 @@ describe('agent command output', () => {
       value: 'hello',
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
@@ -623,9 +551,7 @@ describe('agent command output', () => {
       page: { limit: 20, hasMore: false },
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -663,30 +589,16 @@ describe('agent command output', () => {
       page: { limit: 20, hasMore: false },
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
     await program.parseAsync(
-      [
-        'node',
-        'test',
-        'agent',
-        'react',
-        'call',
-        '--tool',
-        'getTree',
-        '--session',
-        'session-1',
-      ],
+      ['node', 'test', 'agent', 'react', 'call', '--tool', 'getTree', '--session', 'session-1'],
       { from: 'node' },
     );
 
-    expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"roots":[],"totalCount":0,"items":[]}\n',
-    );
+    expect(stdoutWrite).toHaveBeenCalledWith('{"roots":[],"totalCount":0,"items":[]}\n');
   });
 
   it('keeps one row tool results expanded and prints a complete continuation', async () => {
@@ -712,9 +624,7 @@ describe('agent command output', () => {
       page: { limit: 1, hasMore: true, nextCursor: "next ' cursor" },
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -761,9 +671,7 @@ describe('agent command output', () => {
     setupClient();
     setupPaginatedTool(networkRequestFields);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -796,9 +704,7 @@ describe('agent command output', () => {
     setupClient();
     mocks.session.tools.call.mockResolvedValueOnce({ value: 'hello' });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -827,9 +733,7 @@ describe('agent command output', () => {
     setupClient();
     setupPaginatedTool(networkRequestFields);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -876,12 +780,8 @@ describe('agent command output', () => {
     };
     mocks.session.tools.call.mockResolvedValueOnce(result);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
-    const stderrWrite = vi
-      .spyOn(process.stderr, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -921,9 +821,7 @@ describe('agent command output', () => {
     };
     mocks.session.tools.call.mockResolvedValueOnce(result);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -958,9 +856,7 @@ describe('agent command output', () => {
       page: { limit: 20, hasMore: false },
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -994,9 +890,7 @@ describe('agent command output', () => {
     };
     mocks.session.tools.call.mockResolvedValueOnce(result);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -1035,9 +929,7 @@ describe('agent command output', () => {
       page: { limit: 2, hasMore: false },
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -1076,9 +968,7 @@ describe('agent command output', () => {
       page: { limit: 2, hasMore: false },
     });
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -1117,9 +1007,7 @@ describe('agent command output', () => {
       },
     ]);
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const program = new Command();
     registerAgentCommand(program);
 
@@ -1153,9 +1041,7 @@ describe('agent command output', () => {
       ),
     );
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
@@ -1176,9 +1062,7 @@ describe('agent command output', () => {
       new Error('Multiple Metro targets detected. Pass --deviceId.'),
     );
 
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     const program = new Command();
     registerAgentCommand(program);
@@ -1200,16 +1084,7 @@ describe('agent command output', () => {
     registerAgentCommand(program);
 
     await program.parseAsync(
-      [
-        'node',
-        'test',
-        'agent',
-        'targets',
-        '--host',
-        '10.0.0.5',
-        '--port',
-        '9090',
-      ],
+      ['node', 'test', 'agent', 'targets', '--host', '10.0.0.5', '--port', '9090'],
       {
         from: 'node',
       },

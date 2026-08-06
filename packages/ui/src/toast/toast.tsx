@@ -37,8 +37,7 @@ function Toaster() {
             className={cn(
               'relative flex items-start gap-2 rounded-md border border-border bg-card p-3 text-card-foreground shadow-md',
               'transition-[transform,opacity] data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
-              toast.type === 'error' &&
-                'border-destructive/50 text-destructive',
+              toast.type === 'error' && 'border-destructive/50 text-destructive',
             )}
           >
             <ToastPrimitive.Content
@@ -46,10 +45,7 @@ function Toaster() {
               className="flex min-w-0 flex-1 flex-col gap-0.5"
             >
               {toast.title && (
-                <ToastPrimitive.Title
-                  data-slot="toast-title"
-                  className="text-sm font-medium"
-                />
+                <ToastPrimitive.Title data-slot="toast-title" className="text-sm font-medium" />
               )}
               {toast.description && (
                 <ToastPrimitive.Description

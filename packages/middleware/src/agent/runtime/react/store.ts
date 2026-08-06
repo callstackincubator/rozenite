@@ -21,10 +21,7 @@ import type {
   ReactTreeNodeInput,
   ReactTreeSyncPayload,
 } from './types.js';
-import {
-  createReactDevToolsBridge,
-  type ReactDevToolsBridge,
-} from './react-devtools-bridge.js';
+import { createReactDevToolsBridge, type ReactDevToolsBridge } from './react-devtools-bridge.js';
 
 const DEFAULT_SEARCH_LIMIT = 20;
 const MAX_SEARCH_LIMIT = 100;
@@ -132,9 +129,7 @@ const normalizeLimit = (value: unknown): number => {
 
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 1) {
-    throw new Error(
-      `"limit" must be an integer between 1 and ${MAX_SEARCH_LIMIT}`,
-    );
+    throw new Error(`"limit" must be an integer between 1 and ${MAX_SEARCH_LIMIT}`);
   }
 
   return Math.min(parsed, MAX_SEARCH_LIMIT);
@@ -189,9 +184,7 @@ const normalizeWaitForDataMs = (value: unknown): number => {
 
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error(
-      `"waitForDataMs" must be a number between 0 and ${MAX_STOP_PROFILING_WAIT_MS}`,
-    );
+    throw new Error(`"waitForDataMs" must be a number between 0 and ${MAX_STOP_PROFILING_WAIT_MS}`);
   }
 
   return Math.min(parsed, MAX_STOP_PROFILING_WAIT_MS);
@@ -205,9 +198,7 @@ const normalizeRenderDataSort = (value: unknown): ReactRenderDataSort => {
   return 'duration-desc';
 };
 
-const normalizeComponentSections = (
-  value: unknown,
-): ReactComponentSection[] => {
+const normalizeComponentSections = (value: unknown): ReactComponentSection[] => {
   const defaultSections: ReactComponentSection[] = ['props', 'state', 'hooks'];
   if (value === undefined) {
     return defaultSections;
@@ -241,9 +232,7 @@ const normalizeComponentValueDepth = (value: unknown): number => {
 
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 0) {
-    throw new Error(
-      `"valueDepth" must be an integer between 0 and ${MAX_COMPONENT_VALUE_DEPTH}`,
-    );
+    throw new Error(`"valueDepth" must be an integer between 0 and ${MAX_COMPONENT_VALUE_DEPTH}`);
   }
 
   return Math.min(parsed, MAX_COMPONENT_VALUE_DEPTH);
@@ -272,9 +261,7 @@ const ensureNodeSummaryForState = (
   node: ReactNodeRecord,
 ): ReactNodeSummary => {
   const parentLabel =
-    node.parentId !== undefined
-      ? state.labelByNodeId.get(node.parentId)
-      : undefined;
+    node.parentId !== undefined ? state.labelByNodeId.get(node.parentId) : undefined;
 
   return {
     ...ensureNodeSummary(node),
@@ -298,11 +285,7 @@ const ensureTreeNode = (
   };
 };
 
-const resolveNodeId = (
-  state: DeviceReactTreeState,
-  value: unknown,
-  fieldName: string,
-): number => {
+const resolveNodeId = (state: DeviceReactTreeState, value: unknown, fieldName: string): number => {
   if (Number.isInteger(value)) {
     return Number(value);
   }
@@ -312,9 +295,7 @@ const resolveNodeId = (
     if (/^@c\d+$/.test(trimmed)) {
       const nodeId = state.nodeIdByLabel.get(trimmed);
       if (nodeId === undefined) {
-        throw new Error(
-          `Component label "${trimmed}" no longer exists in the current React tree.`,
-        );
+        throw new Error(`Component label "${trimmed}" no longer exists in the current React tree.`);
       }
 
       return nodeId;
@@ -326,20 +307,13 @@ const resolveNodeId = (
     }
   }
 
-  throw new Error(
-    `"${fieldName}" must be an integer or component label like "@c12"`,
-  );
+  throw new Error(`"${fieldName}" must be an integer or component label like "@c12"`);
 };
 
-const ensureNodeExists = (
-  state: DeviceReactTreeState,
-  nodeId: number,
-): ReactNodeRecord => {
+const ensureNodeExists = (state: DeviceReactTreeState, nodeId: number): ReactNodeRecord => {
   const node = state.nodesById.get(nodeId);
   if (!node) {
-    throw new Error(
-      `Node "${nodeId}" no longer exists in the current React tree.`,
-    );
+    throw new Error(`Node "${nodeId}" no longer exists in the current React tree.`);
   }
 
   return node;
@@ -407,18 +381,12 @@ const createSerializableSnapshot = (
     if (depth <= 0) {
       return `[array(${value.length})]`;
     }
-    return value
-      .slice(0, 50)
-      .map((item) => createSerializableSnapshot(item, depth - 1, seen));
+    return value.slice(0, 50).map((item) => createSerializableSnapshot(item, depth - 1, seen));
   }
 
   if (value && typeof value === 'object') {
     const record = value as Record<string, unknown>;
-    if (
-      'data' in record &&
-      'cleaned' in record &&
-      Object.keys(record).length <= 5
-    ) {
+    if ('data' in record && 'cleaned' in record && Object.keys(record).length <= 5) {
       return createSerializableSnapshot(record.data, depth, seen);
     }
 
@@ -429,8 +397,7 @@ const createSerializableSnapshot = (
     const entries = Object.entries(record).slice(0, 100);
     return Object.fromEntries(
       entries.map(
-        ([key, nested]) =>
-          [key, createSerializableSnapshot(nested, depth - 1, seen)] as const,
+        ([key, nested]) => [key, createSerializableSnapshot(nested, depth - 1, seen)] as const,
       ),
     );
   }
@@ -438,9 +405,7 @@ const createSerializableSnapshot = (
   return String(value);
 };
 
-const toInspectableEntries = (
-  value: unknown,
-): Array<{ name: string; value: unknown }> => {
+const toInspectableEntries = (value: unknown): Array<{ name: string; value: unknown }> => {
   const snapshot = createSerializableSnapshot(value);
   if (Array.isArray(snapshot)) {
     return snapshot.map((entry, index) => ({
@@ -450,12 +415,10 @@ const toInspectableEntries = (
   }
 
   if (snapshot && typeof snapshot === 'object') {
-    return Object.entries(snapshot as Record<string, unknown>).map(
-      ([name, entryValue]) => ({
-        name,
-        value: entryValue,
-      }),
-    );
+    return Object.entries(snapshot as Record<string, unknown>).map(([name, entryValue]) => ({
+      name,
+      value: entryValue,
+    }));
   }
 
   return [
@@ -466,16 +429,13 @@ const toInspectableEntries = (
   ];
 };
 
-const toHookEntries = (
-  value: unknown,
-): Array<{ name: string; value: unknown }> => {
+const toHookEntries = (value: unknown): Array<{ name: string; value: unknown }> => {
   const entries: Array<{ name: string; value: unknown }> = [];
 
   const visit = (current: unknown, pathLabel: string): void => {
     if (Array.isArray(current)) {
       current.forEach((item, index) => {
-        const nextLabel =
-          pathLabel.length > 0 ? `${pathLabel}.${index}` : String(index);
+        const nextLabel = pathLabel.length > 0 ? `${pathLabel}.${index}` : String(index);
         visit(item, nextLabel);
       });
       return;
@@ -483,11 +443,8 @@ const toHookEntries = (
 
     if (current && typeof current === 'object') {
       const record = current as Record<string, unknown>;
-      const hookName =
-        typeof record.name === 'string' ? record.name : undefined;
-      const label = hookName
-        ? `${pathLabel || 'value'} (${hookName})`
-        : pathLabel || 'value';
+      const hookName = typeof record.name === 'string' ? record.name : undefined;
+      const label = hookName ? `${pathLabel || 'value'} (${hookName})` : pathLabel || 'value';
       const hookValue =
         'value' in record
           ? createSerializableSnapshot(record.value, 6)
@@ -501,9 +458,7 @@ const toHookEntries = (
       if (Array.isArray(record.subHooks)) {
         record.subHooks.forEach((subHook, index) => {
           const subLabel =
-            pathLabel.length > 0
-              ? `${pathLabel}.subHooks.${index}`
-              : `subHooks.${index}`;
+            pathLabel.length > 0 ? `${pathLabel}.subHooks.${index}` : `subHooks.${index}`;
           visit(subHook, subLabel);
         });
       }
@@ -546,10 +501,7 @@ const normalizePath = (value: unknown): Array<string | number> => {
   return path;
 };
 
-const getValueAtPath = (
-  root: unknown,
-  path: Array<string | number>,
-): unknown => {
+const getValueAtPath = (root: unknown, path: Array<string | number>): unknown => {
   let current: unknown = root;
   for (const segment of path) {
     if (current === null || current === undefined) {
@@ -732,9 +684,7 @@ export const createReactTreeStore = (options?: {
     state.inspectedById.clear();
   };
 
-  const ensureBridge = async (
-    state: DeviceReactTreeState,
-  ): Promise<ReactDevToolsBridge> => {
+  const ensureBridge = async (state: DeviceReactTreeState): Promise<ReactDevToolsBridge> => {
     if (state.bridge) {
       return state.bridge;
     }
@@ -806,8 +756,7 @@ export const createReactTreeStore = (options?: {
     }
 
     if (state.pendingMessages.length >= MAX_PENDING_REACT_MESSAGES) {
-      const overflow =
-        state.pendingMessages.length - MAX_PENDING_REACT_MESSAGES + 1;
+      const overflow = state.pendingMessages.length - MAX_PENDING_REACT_MESSAGES + 1;
       state.pendingMessages.splice(0, overflow);
       state.droppedPendingMessages += overflow;
     }
@@ -830,16 +779,12 @@ export const createReactTreeStore = (options?: {
     const bridge = await ensureBridge(state);
     const status = bridge.getProfilingStatus();
     if (!status.supportsProfiling && status.rootsCount > 0) {
-      throw new Error(
-        'React profiling is not supported by this React DevTools connection.',
-      );
+      throw new Error('React profiling is not supported by this React DevTools connection.');
     }
     return bridge;
   };
 
-  const isProfilingStarted = async (
-    deviceId: string,
-  ): Promise<ReactProfilingStatusResult> => {
+  const isProfilingStarted = async (deviceId: string): Promise<ReactProfilingStatusResult> => {
     const state = getOrCreateState(deviceId);
     const bridge = await ensureBridge(state);
     const status = bridge.getProfilingStatus();
@@ -864,9 +809,7 @@ export const createReactTreeStore = (options?: {
     if (shouldRestart) {
       const status = bridge.getProfilingStatus();
       if (!status.supportsReloadAndProfile) {
-        throw new Error(
-          'Reload-and-profile is not supported by this React DevTools connection.',
-        );
+        throw new Error('Reload-and-profile is not supported by this React DevTools connection.');
       }
       bridge.reloadAndProfile();
     } else {
@@ -904,9 +847,7 @@ export const createReactTreeStore = (options?: {
   ): Promise<ReactStopProfilingResult> => {
     const request = getRecord(rawRequest) || {};
     const waitForDataMs = normalizeWaitForDataMs(request.waitForDataMs);
-    const slowRenderThresholdMs = normalizeSlowRenderThreshold(
-      request.slowRenderThresholdMs,
-    );
+    const slowRenderThresholdMs = normalizeSlowRenderThreshold(request.slowRenderThresholdMs);
     const state = getOrCreateState(deviceId);
     const bridge = await ensureProfilingBridge(state);
     const statusBeforeStop = bridge.getProfilingStatus();
@@ -927,10 +868,7 @@ export const createReactTreeStore = (options?: {
     const status = bridge.getProfilingStatus();
     const profilingData = bridge.getProfilingDataSnapshot() as {
       phase?: string;
-      dataForRoots?: Map<
-        number,
-        { commitData?: Array<{ duration: number; timestamp: number }> }
-      >;
+      dataForRoots?: Map<number, { commitData?: Array<{ duration: number; timestamp: number }> }>;
       conflictingRootIds?: Set<number>;
       participatingRendererIds?: Set<number>;
       pendingRendererIds?: Set<number>;
@@ -938,10 +876,7 @@ export const createReactTreeStore = (options?: {
     } | null;
     const dataForRoots =
       profilingData?.dataForRoots ??
-      new Map<
-        number,
-        { commitData?: Array<{ duration: number; timestamp: number }> }
-      >();
+      new Map<number, { commitData?: Array<{ duration: number; timestamp: number }> }>();
     const conflictingRootCount = profilingData?.conflictingRootIds?.size ?? 0;
     const receivedRendererCount = profilingData?.receivedRendererIds?.size ?? 0;
     const pendingRendererCount = profilingData?.pendingRendererIds?.size ?? 0;
@@ -958,9 +893,7 @@ export const createReactTreeStore = (options?: {
     }> = [];
 
     dataForRoots.forEach((rootData, rootId) => {
-      const commitData = Array.isArray(rootData.commitData)
-        ? rootData.commitData
-        : [];
+      const commitData = Array.isArray(rootData.commitData) ? rootData.commitData : [];
       totalCommits += commitData.length;
       for (let index = 0; index < commitData.length; index += 1) {
         const commit = commitData[index];
@@ -978,9 +911,7 @@ export const createReactTreeStore = (options?: {
       }
     });
 
-    slowCommits.sort(
-      (a, b) => b.durationMs - a.durationMs || a.timestampMs - b.timestampMs,
-    );
+    slowCommits.sort((a, b) => b.durationMs - a.durationMs || a.timestampMs - b.timestampMs);
     const truncated = slowCommits.length > TOP_SLOW_COMMITS_LIMIT;
     const partial =
       !finished ||
@@ -1017,9 +948,7 @@ export const createReactTreeStore = (options?: {
     if (rootId !== undefined) {
       const root = state.nodesById.get(rootId);
       if (!root) {
-        throw new Error(
-          `Node "${rootId}" no longer exists in the current React tree.`,
-        );
+        throw new Error(`Node "${rootId}" no longer exists in the current React tree.`);
       }
       queue.push(rootId);
     } else {
@@ -1045,10 +974,7 @@ export const createReactTreeStore = (options?: {
     return orderedNodes;
   };
 
-  const searchNodes = (
-    deviceId: string,
-    rawRequest: unknown,
-  ): ReactSearchNodesResult => {
+  const searchNodes = (deviceId: string, rawRequest: unknown): ReactSearchNodesResult => {
     const request = getRecord(rawRequest) || {};
     const state = getOrCreateState(deviceId);
 
@@ -1058,9 +984,7 @@ export const createReactTreeStore = (options?: {
     }
     const query = rawQuery.trim().toLowerCase();
 
-    const rootId = Number.isInteger(request.rootId)
-      ? Number(request.rootId)
-      : undefined;
+    const rootId = Number.isInteger(request.rootId) ? Number(request.rootId) : undefined;
     const match = normalizeMatch(request.match);
     const limit = normalizeLimit(request.limit);
 
@@ -1071,10 +995,7 @@ export const createReactTreeStore = (options?: {
     });
 
     let offset = 0;
-    if (
-      typeof request.cursor === 'string' &&
-      request.cursor.trim().length > 0
-    ) {
+    if (typeof request.cursor === 'string' && request.cursor.trim().length > 0) {
       const decoded = decodeCursor(request.cursor);
       if (
         decoded.deviceId !== deviceId ||
@@ -1128,10 +1049,7 @@ export const createReactTreeStore = (options?: {
     };
   };
 
-  const getTree = (
-    deviceId: string,
-    rawRequest: unknown,
-  ): ReactGetTreeResult => {
+  const getTree = (deviceId: string, rawRequest: unknown): ReactGetTreeResult => {
     const request = getRecord(rawRequest) || {};
     const state = getOrCreateState(deviceId);
     const rootId = getOptionalRootId(request.root);
@@ -1149,10 +1067,7 @@ export const createReactTreeStore = (options?: {
     });
 
     let offset = 0;
-    if (
-      typeof request.cursor === 'string' &&
-      request.cursor.trim().length > 0
-    ) {
+    if (typeof request.cursor === 'string' && request.cursor.trim().length > 0) {
       const decoded = decodeCursor(request.cursor);
       if (
         decoded.deviceId !== deviceId ||
@@ -1183,9 +1098,7 @@ export const createReactTreeStore = (options?: {
       }
 
       visited.add(nodeId);
-      const childIds = node.childIds.filter((childId) =>
-        state.nodesById.has(childId),
-      );
+      const childIds = node.childIds.filter((childId) => state.nodesById.has(childId));
       allItems.push(
         ensureTreeNode(state, node, {
           depth: currentDepth,
@@ -1236,10 +1149,7 @@ export const createReactTreeStore = (options?: {
     return ensureNodeSummaryForState(state, node);
   };
 
-  const getChildren = (
-    deviceId: string,
-    rawRequest: unknown,
-  ): ReactGetChildrenResult => {
+  const getChildren = (deviceId: string, rawRequest: unknown): ReactGetChildrenResult => {
     const request = getRecord(rawRequest) || {};
     const state = getOrCreateState(deviceId);
     const nodeId = getRequestedNodeId(state, request);
@@ -1248,10 +1158,7 @@ export const createReactTreeStore = (options?: {
     const filtersHash = hashFilters({ nodeId });
 
     let offset = 0;
-    if (
-      typeof request.cursor === 'string' &&
-      request.cursor.trim().length > 0
-    ) {
+    if (typeof request.cursor === 'string' && request.cursor.trim().length > 0) {
       const decoded = decodeCursor(request.cursor);
       if (
         decoded.deviceId !== deviceId ||
@@ -1306,8 +1213,7 @@ export const createReactTreeStore = (options?: {
 
     if (!inspected || !hasAllRequestedSections) {
       inspected =
-        (await requestInspectableSnapshot(state, nodeId)) ||
-        state.inspectedById.get(nodeId);
+        (await requestInspectableSnapshot(state, nodeId)) || state.inspectedById.get(nodeId);
     }
 
     return inspected ?? null;
@@ -1335,12 +1241,8 @@ export const createReactTreeStore = (options?: {
     const result: ReactGetComponentResult = {
       node: {
         ...ensureNodeSummaryForState(state, node),
-        childIds: node.childIds.filter((childId) =>
-          state.nodesById.has(childId),
-        ),
-        ...(node.rendererId !== undefined
-          ? { rendererId: node.rendererId }
-          : {}),
+        childIds: node.childIds.filter((childId) => state.nodesById.has(childId)),
+        ...(node.rendererId !== undefined ? { rendererId: node.rendererId } : {}),
       },
     };
 
@@ -1355,9 +1257,7 @@ export const createReactTreeStore = (options?: {
     }
 
     if (unavailable.length === sections.length) {
-      throw new Error(
-        `No requested component snapshot sections available for node "${nodeId}".`,
-      );
+      throw new Error(`No requested component snapshot sections available for node "${nodeId}".`);
     }
     if (unavailable.length > 0) {
       result.partial = true;
@@ -1379,9 +1279,7 @@ export const createReactTreeStore = (options?: {
 
     const node = ensureNodeExists(state, nodeId);
     if (!Number.isInteger(node.rendererId)) {
-      throw new Error(
-        `Node "${nodeId}" is missing renderer metadata required for inspection.`,
-      );
+      throw new Error(`Node "${nodeId}" is missing renderer metadata required for inspection.`);
     }
 
     const bridge = await ensureBridge(state);
@@ -1432,11 +1330,7 @@ export const createReactTreeStore = (options?: {
 
     let inspected = state.inspectedById.get(nodeId);
     let sourceValue =
-      kind === 'props'
-        ? inspected?.props
-        : kind === 'state'
-          ? inspected?.state
-          : inspected?.hooks;
+      kind === 'props' ? inspected?.props : kind === 'state' ? inspected?.state : inspected?.hooks;
     if (sourceValue === undefined) {
       const requested = await requestInspectableSnapshot(state, nodeId);
       inspected = requested || state.inspectedById.get(nodeId);
@@ -1453,8 +1347,7 @@ export const createReactTreeStore = (options?: {
       }
     }
 
-    const scopedValue =
-      path.length > 0 ? getValueAtPath(sourceValue, path) : sourceValue;
+    const scopedValue = path.length > 0 ? getValueAtPath(sourceValue, path) : sourceValue;
     const limit = normalizeLimit(request.limit);
     const filtersHash = hashFilters({ nodeId, kind, path });
     const toolName =
@@ -1464,10 +1357,7 @@ export const createReactTreeStore = (options?: {
           ? GET_STATE_TOOL_NAME
           : GET_HOOKS_TOOL_NAME;
     let offset = 0;
-    if (
-      typeof request.cursor === 'string' &&
-      request.cursor.trim().length > 0
-    ) {
+    if (typeof request.cursor === 'string' && request.cursor.trim().length > 0) {
       const decoded = decodeCursor(request.cursor);
       if (
         decoded.deviceId !== deviceId ||
@@ -1482,9 +1372,7 @@ export const createReactTreeStore = (options?: {
     }
 
     const entries =
-      kind === 'hooks'
-        ? toHookEntries(scopedValue)
-        : toInspectableEntries(scopedValue);
+      kind === 'hooks' ? toHookEntries(scopedValue) : toInspectableEntries(scopedValue);
     const safeOffset = Math.max(0, Math.min(offset, entries.length));
     const end = Math.min(safeOffset + limit, entries.length);
     const items = entries.slice(safeOffset, end);
@@ -1509,30 +1397,21 @@ export const createReactTreeStore = (options?: {
     };
   };
 
-  const toChangeTypeHints = (
-    changeDescription: ReactChangeDescription,
-  ): string[] => {
+  const toChangeTypeHints = (changeDescription: ReactChangeDescription): string[] => {
     const hints: string[] = [];
 
     if (changeDescription.isFirstMount) {
       hints.push('mount');
     }
-    if (
-      Array.isArray(changeDescription.props) &&
-      changeDescription.props.length > 0
-    ) {
+    if (Array.isArray(changeDescription.props) && changeDescription.props.length > 0) {
       hints.push('props');
     }
-    if (
-      Array.isArray(changeDescription.state) &&
-      changeDescription.state.length > 0
-    ) {
+    if (Array.isArray(changeDescription.state) && changeDescription.state.length > 0) {
       hints.push('state');
     }
     if (
       changeDescription.context === true ||
-      (Array.isArray(changeDescription.context) &&
-        changeDescription.context.length > 0)
+      (Array.isArray(changeDescription.context) && changeDescription.context.length > 0)
     ) {
       hints.push('context');
     }
@@ -1549,26 +1428,16 @@ export const createReactTreeStore = (options?: {
   ): Promise<ReactGetRenderDataResult> => {
     const request = getRecord(rawRequest) || {};
     const rootId = normalizeNonNegativeInteger(request.rootId, 'rootId');
-    const commitIndex = normalizeNonNegativeInteger(
-      request.commitIndex,
-      'commitIndex',
-    );
+    const commitIndex = normalizeNonNegativeInteger(request.commitIndex, 'commitIndex');
     const limit = normalizeLimit(request.limit);
     const sort = normalizeRenderDataSort(request.sort);
-    const slowRenderThresholdMs = normalizeSlowRenderThreshold(
-      request.slowRenderThresholdMs,
-    );
+    const slowRenderThresholdMs = normalizeSlowRenderThreshold(request.slowRenderThresholdMs);
 
     const state = getOrCreateState(deviceId);
     const bridge = await ensureProfilingBridge(state);
-    const commitData = bridge.getCommitData(
-      rootId,
-      commitIndex,
-    ) as ReactCommitData;
-    const fiberActualDurations =
-      commitData.fiberActualDurations ?? new Map<number, number>();
-    const fiberSelfDurations =
-      commitData.fiberSelfDurations ?? new Map<number, number>();
+    const commitData = bridge.getCommitData(rootId, commitIndex) as ReactCommitData;
+    const fiberActualDurations = commitData.fiberActualDurations ?? new Map<number, number>();
+    const fiberSelfDurations = commitData.fiberSelfDurations ?? new Map<number, number>();
     const changeDescriptions = commitData.changeDescriptions ?? new Map();
 
     const filtersHash = hashFilters({
@@ -1578,13 +1447,8 @@ export const createReactTreeStore = (options?: {
       slowRenderThresholdMs,
     });
     let offset = 0;
-    if (
-      typeof request.cursor === 'string' &&
-      request.cursor.trim().length > 0
-    ) {
-      const decoded = decodeCursor(
-        request.cursor,
-      ) as ReactProfilingCursorPayload;
+    if (typeof request.cursor === 'string' && request.cursor.trim().length > 0) {
+      const decoded = decodeCursor(request.cursor) as ReactProfilingCursorPayload;
       if (
         decoded.deviceId !== deviceId ||
         decoded.tool !== GET_RENDER_DATA_TOOL_NAME ||
@@ -1601,14 +1465,9 @@ export const createReactTreeStore = (options?: {
     fiberActualDurations.forEach((actualDurationMs, fiberId) => {
       const selfDurationMs = fiberSelfDurations.get(fiberId) ?? 0;
       const rawChangeDescription =
-        changeDescriptions instanceof Map
-          ? changeDescriptions.get(fiberId)
-          : null;
-      const changeTypeHints = rawChangeDescription
-        ? toChangeTypeHints(rawChangeDescription)
-        : [];
-      const displayName =
-        state.nodesById.get(fiberId)?.displayName ?? `Fiber ${fiberId}`;
+        changeDescriptions instanceof Map ? changeDescriptions.get(fiberId) : null;
+      const changeTypeHints = rawChangeDescription ? toChangeTypeHints(rawChangeDescription) : [];
+      const displayName = state.nodesById.get(fiberId)?.displayName ?? `Fiber ${fiberId}`;
       allItems.push({
         fiberId,
         actualDurationMs: Number(actualDurationMs) || 0,
@@ -1620,14 +1479,9 @@ export const createReactTreeStore = (options?: {
     });
 
     if (sort === 'name-asc') {
-      allItems.sort(
-        (a, b) => a.sortName.localeCompare(b.sortName) || a.fiberId - b.fiberId,
-      );
+      allItems.sort((a, b) => a.sortName.localeCompare(b.sortName) || a.fiberId - b.fiberId);
     } else {
-      allItems.sort(
-        (a, b) =>
-          b.actualDurationMs - a.actualDurationMs || a.fiberId - b.fiberId,
-      );
+      allItems.sort((a, b) => b.actualDurationMs - a.actualDurationMs || a.fiberId - b.fiberId);
     }
 
     const safeOffset = Math.max(0, Math.min(offset, allItems.length));
@@ -1662,9 +1516,7 @@ export const createReactTreeStore = (options?: {
         renderedFiberCount: allItems.length,
         slowFiberCount: allItems.filter((item) => item.isSlow).length,
         slowRenderThresholdMs,
-        updaterCount: Array.isArray(commitData.updaters)
-          ? commitData.updaters.length
-          : 0,
+        updaterCount: Array.isArray(commitData.updaters) ? commitData.updaters.length : 0,
         hasChangeDescriptions: commitData.changeDescriptions !== null,
       },
       items: pageItems,
@@ -1690,22 +1542,13 @@ export const createReactTreeStore = (options?: {
     searchNodes,
     getNode,
     getChildren,
-    getProps: (
-      deviceId: string,
-      rawRequest: unknown,
-    ): Promise<ReactGetInspectableResult> => {
+    getProps: (deviceId: string, rawRequest: unknown): Promise<ReactGetInspectableResult> => {
       return getInspectableEntries(deviceId, rawRequest, 'props');
     },
-    getState: (
-      deviceId: string,
-      rawRequest: unknown,
-    ): Promise<ReactGetInspectableResult> => {
+    getState: (deviceId: string, rawRequest: unknown): Promise<ReactGetInspectableResult> => {
       return getInspectableEntries(deviceId, rawRequest, 'state');
     },
-    getHooks: (
-      deviceId: string,
-      rawRequest: unknown,
-    ): Promise<ReactGetInspectableResult> => {
+    getHooks: (deviceId: string, rawRequest: unknown): Promise<ReactGetInspectableResult> => {
       return getInspectableEntries(deviceId, rawRequest, 'hooks');
     },
   };

@@ -49,26 +49,24 @@ const hydrateObservers = (
 
     hydratedOptions.queryFn = mockQueryFn;
 
-    const observer = new QueryObserver(
-      client,
-      hydratedOptions as QueryObserverOptions,
-    );
+    const observer = new QueryObserver(client, hydratedOptions as QueryObserverOptions);
     query.addObserver(observer);
   });
 };
 
-const hydrateMutation = (
-  client: QueryClient,
-  dehydratedMutation: SerializableMutation,
-) => {
+const hydrateMutation = (client: QueryClient, dehydratedMutation: SerializableMutation) => {
   const mutationCache = client.getMutationCache();
   const { options, state } = dehydratedMutation;
 
   const existingMutation = mutationCache.find({
     mutationKey: options.mutationKey,
   });
-  const hydratedState: MutationState<unknown, Error, void, unknown> =
-    state as MutationState<unknown, Error, void, unknown>;
+  const hydratedState: MutationState<unknown, Error, void, unknown> = state as MutationState<
+    unknown,
+    Error,
+    void,
+    unknown
+  >;
   const hydratedOptions: MutationOptions = options;
 
   if (existingMutation) {
@@ -78,10 +76,7 @@ const hydrateMutation = (
   mutationCache.build(client, hydratedOptions, hydratedState);
 };
 
-const hydrateQuery = (
-  client: QueryClient,
-  dehydratedQuery: SerializableQuery,
-) => {
+const hydrateQuery = (client: QueryClient, dehydratedQuery: SerializableQuery) => {
   const queryCache = client.getQueryCache();
   const { queryKey, state, queryHash, observers } = dehydratedQuery;
 
@@ -132,9 +127,7 @@ export const hydrateQueryClient = (
   dehydratedState: SerializableQueryClient,
 ): void => {
   // Hydrate mutations
-  dehydratedState.mutations.forEach((mutation) =>
-    hydrateMutation(client, mutation),
-  );
+  dehydratedState.mutations.forEach((mutation) => hydrateMutation(client, mutation));
 
   // Hydrate queries
   dehydratedState.queries.forEach((query) => hydrateQuery(client, query));
@@ -187,10 +180,7 @@ export const applyQueryEvent = (
 };
 
 // New function to handle action-based partial state updates
-export const applyPartialQueryState = (
-  queryClient: QueryClient,
-  data: PartialQueryState,
-): void => {
+export const applyPartialQueryState = (queryClient: QueryClient, data: PartialQueryState): void => {
   const queryCache = queryClient.getQueryCache();
   const query = queryCache.get(data.queryHash);
 

@@ -24,14 +24,9 @@ declare module '/rozenite/ui/legacy/legacy.js' {
     hasTab(tabId: string): boolean;
     addEventListener<T extends keyof TabbedPaneEventTypes>(
       event: T,
-      listener: (
-        data: Common.EventTarget.EventTargetEvent<TabbedPaneEventTypes[T]>,
-      ) => void,
+      listener: (data: Common.EventTarget.EventTargetEvent<TabbedPaneEventTypes[T]>) => void,
     ): void;
-    removeEventListener(
-      event: keyof TabbedPaneEventTypes,
-      listener: (data: any) => void,
-    ): void;
+    removeEventListener(event: keyof TabbedPaneEventTypes, listener: (data: any) => void): void;
   }
 
   export namespace View {
@@ -224,9 +219,7 @@ declare module '/rozenite/models/react_native/react_native.js' {
       metadataCached?: MetadataUpdatedEvent;
       addEventListener<T extends keyof EventTypes>(
         event: T,
-        callback: (
-          event: Common.EventTarget.EventTargetEvent<EventTypes[T]>,
-        ) => void,
+        callback: (event: Common.EventTarget.EventTargetEvent<EventTypes[T]>) => void,
         thisArg: unknown,
       ): void;
       removeEventListener(
@@ -240,20 +233,10 @@ declare module '/rozenite/models/react_native/react_native.js' {
   export namespace ReactDevToolsBindingsModel {
     export class ReactDevToolsBindingsModel {
       initializeDomain(domain: string): Promise<void>;
-      subscribeToDomainMessages(
-        domain: string,
-        callback: (message: unknown) => void,
-      ): void;
+      subscribeToDomainMessages(domain: string, callback: (message: unknown) => void): void;
       sendMessage(domain: string, message: unknown): Promise<void>;
-      unsubscribeFromDomainMessages(
-        domain: string,
-        callback: (message: unknown) => void,
-      ): void;
-      addEventListener(
-        event: string,
-        callback: (message: unknown) => void,
-        thisArg: unknown,
-      ): void;
+      unsubscribeFromDomainMessages(domain: string, callback: (message: unknown) => void): void;
+      addEventListener(event: string, callback: (message: unknown) => void, thisArg: unknown): void;
       removeEventListener(
         event: string,
         callback: (message: unknown) => void,
@@ -306,10 +289,7 @@ declare module '/rozenite/core/sdk/sdk.js' {
 
     export class TargetManager {
       static instance(): TargetManager;
-      observeModels<T>(
-        model: typeof SDKModel.SDKModel<T>,
-        observer: SDKModelObserver<T>,
-      ): void;
+      observeModels<T>(model: typeof SDKModel.SDKModel<T>, observer: SDKModelObserver<T>): void;
       primaryPageTarget(): {
         model<T>(model: typeof SDKModel.SDKModel<T>): T | null;
       };

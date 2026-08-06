@@ -2,18 +2,19 @@
   "name": "@rozenite/redux-devtools-plugin",
   "version": "2.0.0",
   "description": "Redux DevTools for Rozenite.",
-  "type": "module",
-  "main": "./dist/react-native/index.cjs",
-  "module": "./dist/react-native/index.js",
-  "types": "./dist/react-native/index.d.ts",
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
     "url": "https://github.com/callstackincubator/rozenite/issues"
   },
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
+  "type": "module",
+  "main": "./dist/react-native/index.cjs",
+  "module": "./dist/react-native/index.js",
+  "types": "./dist/react-native/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/react-native/index.d.ts",
@@ -33,6 +34,9 @@
       "require": "./dist/sdk/index.cjs"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "rozenite build",
     "dev": "rozenite dev",
@@ -42,11 +46,11 @@
   "dependencies": {
     "@redux-devtools/instrument": "^2.2.0",
     "@redux-devtools/utils": "^3.1.1",
-    "@rozenite/agent-shared": "workspace:*",
     "@rozenite/agent-bridge": "workspace:*",
+    "@rozenite/agent-shared": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
-    "jsan": "^3.1.14",
-    "@rozenite/tools": "workspace:*"
+    "@rozenite/tools": "workspace:*",
+    "jsan": "^3.1.14"
   },
   "devDependencies": {
     "@redux-devtools/app": "^6.2.2",
@@ -63,16 +67,12 @@
     "redux": "^5.0.1",
     "redux-persist": "^6.0.0",
     "rozenite": "workspace:*",
+    "styled-components": "^5.3.11",
     "typescript": "~5.9.3",
-    "vite": "catalog:",
-    "styled-components": "^5.3.11"
+    "vite": "catalog:"
   },
   "peerDependencies": {
     "react": "*",
     "react-native": "*"
-  },
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
   }
 }

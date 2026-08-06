@@ -1,7 +1,4 @@
-import {
-  defineAgentToolContract,
-  type AgentToolContract,
-} from '@rozenite/agent-shared';
+import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
 import type { ControlsItem, ControlsItemSnapshot } from './types';
 
 export const CONTROLS_AGENT_PLUGIN_ID = '@rozenite/controls-plugin';
@@ -57,10 +54,7 @@ export type ControlsPressButtonResult = {
 };
 
 export const controlsToolDefinitions = {
-  listSections: defineAgentToolContract<
-    ControlsListSectionsArgs,
-    ControlsListSectionsResult
-  >({
+  listSections: defineAgentToolContract<ControlsListSectionsArgs, ControlsListSectionsResult>({
     name: 'list-sections',
     description:
       'List all controls sections with their item IDs, types, and titles. Does not include values — call get-item for that.',
@@ -79,10 +73,7 @@ export const controlsToolDefinitions = {
       required: ['sectionId', 'itemId'],
     },
   }),
-  setValue: defineAgentToolContract<
-    ControlsSetValueArgs,
-    ControlsSetValueResult
-  >({
+  setValue: defineAgentToolContract<ControlsSetValueArgs, ControlsSetValueResult>({
     name: 'set-value',
     description:
       'Update the value of a toggle, select, or input item. Runs the validate callback when present. Fails for text (read-only) and button items.',
@@ -92,17 +83,13 @@ export const controlsToolDefinitions = {
         sectionId: { type: 'string', description: 'Section ID.' },
         itemId: { type: 'string', description: 'Item ID.' },
         value: {
-          description:
-            'New value. Boolean for toggle items, string for select/input items.',
+          description: 'New value. Boolean for toggle items, string for select/input items.',
         },
       },
       required: ['sectionId', 'itemId', 'value'],
     },
   }),
-  pressButton: defineAgentToolContract<
-    ControlsPressButtonArgs,
-    ControlsPressButtonResult
-  >({
+  pressButton: defineAgentToolContract<ControlsPressButtonArgs, ControlsPressButtonResult>({
     name: 'press-button',
     description:
       "Trigger a button item's action. Fails if the item is not a button or is disabled.",

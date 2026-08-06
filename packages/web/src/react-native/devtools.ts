@@ -8,20 +8,11 @@
 
 import type { FuseboxDomain } from './types.js';
 import { defineRozeniteGlobal } from './rozeniteGlobal.js';
-import {
-  loadPersistedHookSettings,
-  savePersistedHookSettings,
-} from './storage/local.js';
-import {
-  getReloadAndProfileConfig,
-  setReloadAndProfileConfig,
-} from './storage/session.js';
+import { loadPersistedHookSettings, savePersistedHookSettings } from './storage/local.js';
+import { getReloadAndProfileConfig, setReloadAndProfileConfig } from './storage/session.js';
 import { readReloadAndProfileConfig } from './reloadAndProfile.js';
 import { createFuseboxConnection } from './fuseboxConnection.js';
-import {
-  initialize,
-  connectWithCustomMessagingProtocol,
-} from 'react-devtools-core';
+import { initialize, connectWithCustomMessagingProtocol } from 'react-devtools-core';
 // Use subpath imports - do NOT import from 'react-native' directly (breaks React DevTools)
 import 'react-native/src/private/devsupport/rndevtools/setUpFuseboxReactDevToolsDispatcher';
 import ReactNativeStyleAttributes from 'react-native/Libraries/Components/View/ReactNativeStyleAttributes';
@@ -49,8 +40,7 @@ const sessionStore = {
 
 // 3. Initialize hook
 const hookSettings = loadPersistedHookSettings();
-const { isProfiling, profilingSettings } =
-  readReloadAndProfileConfig(sessionStore);
+const { isProfiling, profilingSettings } = readReloadAndProfileConfig(sessionStore);
 initialize(hookSettings, isProfiling, profilingSettings);
 
 // 4. Set up Fusebox connection

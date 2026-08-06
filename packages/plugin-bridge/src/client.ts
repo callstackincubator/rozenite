@@ -9,9 +9,7 @@ type RequestMessage = {
 };
 
 type RequestMessageType<TEventMap extends Record<string, unknown>> = {
-  [TType in keyof TEventMap]: TEventMap[TType] extends RequestMessage
-    ? TType
-    : never;
+  [TType in keyof TEventMap]: TEventMap[TType] extends RequestMessage ? TType : never;
 }[keyof TEventMap];
 
 export type RozeniteDevToolsRequestOptions<
@@ -65,10 +63,7 @@ export class RozeniteDevToolsRequestResponseError<
 export type RozeniteDevToolsClient<
   TEventMap extends Record<string, unknown> = Record<string, unknown>,
 > = {
-  send: <TType extends keyof TEventMap>(
-    type: TType,
-    payload: TEventMap[TType],
-  ) => void;
+  send: <TType extends keyof TEventMap>(type: TType, payload: TEventMap[TType]) => void;
   onMessage: <TType extends keyof TEventMap>(
     type: TType,
     listener: (payload: TEventMap[TType]) => void,
@@ -84,12 +79,7 @@ export type RozeniteDevToolsRequestClient<
     TResponseType extends RequestMessageType<TEventMap>,
     TErrorType extends RequestMessageType<TEventMap> | undefined = undefined,
   >(
-    options: RozeniteDevToolsRequestOptions<
-      TEventMap,
-      TRequestType,
-      TResponseType,
-      TErrorType
-    >,
+    options: RozeniteDevToolsRequestOptions<TEventMap, TRequestType, TResponseType, TErrorType>,
   ) => Promise<TEventMap[TResponseType]>;
 };
 
@@ -132,10 +122,7 @@ const createRozeniteDevToolsClient = async <
     }
   };
 
-  const send = <TType extends keyof TEventMap>(
-    type: TType,
-    payload: TEventMap[TType],
-  ) => {
+  const send = <TType extends keyof TEventMap>(type: TType, payload: TEventMap[TType]) => {
     channel.send({
       pluginId,
       type,
@@ -170,21 +157,15 @@ const createRozeniteDevToolsClient = async <
       const timeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
 
       if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
-        return Promise.reject(
-          new RangeError('timeoutMs must be a finite, non-negative number.'),
-        );
+        return Promise.reject(new RangeError('timeoutMs must be a finite, non-negative number.'));
       }
 
       if (isClosed) {
-        return Promise.reject(
-          new RozeniteDevToolsRequestClientClosedError(requestId),
-        );
+        return Promise.reject(new RozeniteDevToolsRequestClientClosedError(requestId));
       }
 
       if (options.signal?.aborted) {
-        return Promise.reject(
-          new RozeniteDevToolsRequestAbortedError(requestId),
-        );
+        return Promise.reject(new RozeniteDevToolsRequestAbortedError(requestId));
       }
 
       return new Promise((resolve, reject) => {
@@ -221,18 +202,15 @@ const createRozeniteDevToolsClient = async <
           cancel(new RozeniteDevToolsRequestClientClosedError(requestId));
         };
 
-        const responseSubscription = client.onMessage(
-          options.responseType,
-          (payload) => {
-            if ((payload as RequestMessage).requestId !== requestId) {
-              return;
-            }
+        const responseSubscription = client.onMessage(options.responseType, (payload) => {
+          if ((payload as RequestMessage).requestId !== requestId) {
+            return;
+          }
 
-            settle(() => {
-              resolve(payload);
-            });
-          },
-        );
+          settle(() => {
+            resolve(payload);
+          });
+        });
 
         const errorSubscription =
           options.errorType != null
@@ -242,11 +220,7 @@ const createRozeniteDevToolsClient = async <
                 }
 
                 settle(() => {
-                  reject(
-                    new RozeniteDevToolsRequestResponseError(
-                      payload as RequestMessage,
-                    ),
-                  );
+                  reject(new RozeniteDevToolsRequestResponseError(payload as RequestMessage));
                 });
               })
             : undefined;

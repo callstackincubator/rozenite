@@ -49,10 +49,9 @@ const getDevMiddlewarePathFromExpo = (projectRoot: string): string | null => {
 const getDevMiddlewarePathFromReactNative = (projectRoot: string): string => {
   const reactNativePackagePath = getReactNativePackagePath(projectRoot);
 
-  const reactNativeCommunityCliPluginPath = require.resolve(
-    '@react-native/community-cli-plugin',
-    { paths: [reactNativePackagePath] },
-  );
+  const reactNativeCommunityCliPluginPath = require.resolve('@react-native/community-cli-plugin', {
+    paths: [reactNativePackagePath],
+  });
 
   return require.resolve('@react-native/dev-middleware', {
     paths: [reactNativeCommunityCliPluginPath],
@@ -66,9 +65,7 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
         'User declared this is an Expo project, resolving @react-native/dev-middleware from Expo package.',
       );
 
-      const expoDevMiddlewarePath = getDevMiddlewarePathFromExpo(
-        options.projectRoot,
-      );
+      const expoDevMiddlewarePath = getDevMiddlewarePathFromExpo(options.projectRoot);
 
       if (!expoDevMiddlewarePath) {
         throw new Error(
@@ -99,9 +96,7 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
       'Guessing that this is an Expo project, resolving @react-native/dev-middleware from Expo package.',
     );
 
-    const expoDevMiddlewarePath = getDevMiddlewarePathFromExpo(
-      options.projectRoot,
-    );
+    const expoDevMiddlewarePath = getDevMiddlewarePathFromExpo(options.projectRoot);
 
     if (!expoDevMiddlewarePath) {
       throw new Error(
@@ -119,9 +114,7 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
   return getDevMiddlewarePathFromReactNative(options.projectRoot);
 };
 
-export const getReactNativeDebuggerFrontendPath = (
-  options: RozeniteConfig,
-): string => {
+export const getReactNativeDebuggerFrontendPath = (options: RozeniteConfig): string => {
   const devMiddlewarePath = getDevMiddlewarePath(options);
 
   return require.resolve('@react-native/debugger-frontend', {

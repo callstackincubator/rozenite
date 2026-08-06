@@ -1,19 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import {
-  buildSnapshot,
-  computePreview,
-  parseSnapshot,
-  type StorageSnapshotV1,
-} from '../snapshot';
-import type {
-  StorageCapabilities,
-  StorageEntry,
-  StorageTarget,
-} from '../types';
+import { buildSnapshot, computePreview, parseSnapshot, type StorageSnapshotV1 } from '../snapshot';
+import type { StorageCapabilities, StorageEntry, StorageTarget } from '../types';
 
-const validSnapshot = (
-  overrides: Partial<StorageSnapshotV1> = {},
-): StorageSnapshotV1 => ({
+const validSnapshot = (overrides: Partial<StorageSnapshotV1> = {}): StorageSnapshotV1 => ({
   version: 1,
   plugin: '@rozenite/storage-plugin',
   createdAt: '2026-05-11T12:00:00.000Z',
@@ -125,16 +114,13 @@ describe('parseSnapshot', () => {
       const result = parseSnapshot(input);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error.path).toBe(
-          'storage.capabilities.supportedTypes[1]',
-        );
+        expect(result.error.path).toBe('storage.capabilities.supportedTypes[1]');
       }
     });
   });
 
   describe('per-entry rejections', () => {
-    const withEntry = (entry: unknown) =>
-      parseSnapshot({ ...validSnapshot(), entries: [entry] });
+    const withEntry = (entry: unknown) => parseSnapshot({ ...validSnapshot(), entries: [entry] });
 
     it('rejects entry missing key', () => {
       const result = withEntry({ type: 'string', value: 'x' });
@@ -217,9 +203,7 @@ describe('buildSnapshot', () => {
     const capabilities: StorageCapabilities = {
       supportedTypes: ['string', 'number'],
     };
-    const entries: StorageEntry[] = [
-      { key: 'token', type: 'string', value: 'abc' },
-    ];
+    const entries: StorageEntry[] = [{ key: 'token', type: 'string', value: 'abc' }];
 
     const result = buildSnapshot({
       target,
@@ -280,9 +264,7 @@ describe('computePreview', () => {
       entryKeys: new Set(),
       isBlacklisted: (key) => key.startsWith('__'),
     });
-    expect(preview.skippedKeys).toEqual([
-      { key: '__internal', reason: 'blacklist' },
-    ]);
+    expect(preview.skippedKeys).toEqual([{ key: '__internal', reason: 'blacklist' }]);
     expect(preview.newKeys).toEqual(['visible']);
   });
 
@@ -320,12 +302,8 @@ describe('computePreview', () => {
       entryKeys: new Set(['existing']),
       isBlacklisted: (key) => key.startsWith('__'),
     });
-    expect(preview.unsupportedTypes).toEqual([
-      { key: '__blocked', type: 'buffer' },
-    ]);
-    expect(preview.skippedKeys).toEqual([
-      { key: '__skipped', reason: 'blacklist' },
-    ]);
+    expect(preview.unsupportedTypes).toEqual([{ key: '__blocked', type: 'buffer' }]);
+    expect(preview.skippedKeys).toEqual([{ key: '__skipped', reason: 'blacklist' }]);
     expect(preview.overwriteKeys).toEqual(['existing']);
     expect(preview.newKeys).toEqual(['fresh']);
   });

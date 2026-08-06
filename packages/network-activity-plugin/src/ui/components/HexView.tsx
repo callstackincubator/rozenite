@@ -1,9 +1,5 @@
 import { Virtuoso } from 'react-virtuoso';
-import {
-  BYTES_PER_HEX_ROW,
-  formatHexRow,
-  rowCountForByteLength,
-} from '../utils/hex';
+import { BYTES_PER_HEX_ROW, formatHexRow, rowCountForByteLength } from '../utils/hex';
 
 export type HexViewProps = {
   bytes: Uint8Array;
@@ -34,9 +30,7 @@ export const HexView = ({ bytes }: HexViewProps) => {
   const totalCount = rowCountForByteLength(bytes.byteLength);
 
   if (totalCount === 0) {
-    return (
-      <div className="text-xs text-gray-500 italic">No bytes to display.</div>
-    );
+    return <div className="text-xs text-gray-500 italic">No bytes to display.</div>;
   }
 
   return (

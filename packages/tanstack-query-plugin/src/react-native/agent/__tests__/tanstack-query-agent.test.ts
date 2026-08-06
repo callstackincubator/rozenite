@@ -1,15 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  Mutation,
-  QueryClient,
-  QueryObserver,
-  onlineManager,
-} from '@tanstack/react-query';
+import { Mutation, QueryClient, QueryObserver, onlineManager } from '@tanstack/react-query';
 import { applyTanStackQueryDevtoolsAction } from '../../devtools-actions';
-import {
-  createTanStackQueryAgentController,
-  serializeForAgent,
-} from '../tanstack-query-agent';
+import { createTanStackQueryAgentController, serializeForAgent } from '../tanstack-query-agent';
 import { tanstackQueryToolDefinitions } from '../../../shared/agent-tools';
 
 const createQueryClient = () =>
@@ -87,9 +79,7 @@ afterEach(() => {
 
 describe('tanstack query agent controller', () => {
   it('exposes the expected tool names', () => {
-    expect(
-      Object.values(tanstackQueryToolDefinitions).map((tool) => tool.name),
-    ).toEqual([
+    expect(Object.values(tanstackQueryToolDefinitions).map((tool) => tool.name)).toEqual([
       'get-cache-summary',
       'get-online-status',
       'set-online-status',
@@ -106,9 +96,10 @@ describe('tanstack query agent controller', () => {
       'get-mutation-details',
       'clear-mutation-cache',
     ]);
-    expect(
-      tanstackQueryToolDefinitions.setQueryLoading.inputSchema.required,
-    ).toEqual(['queryHash', 'enabled']);
+    expect(tanstackQueryToolDefinitions.setQueryLoading.inputSchema.required).toEqual([
+      'queryHash',
+      'enabled',
+    ]);
     expect(tanstackQueryToolDefinitions.listQueries.pagination).toMatchObject({
       kind: 'cursor',
       fields: expect.arrayContaining(['queryHash', 'status', 'fetchStatus']),
@@ -116,10 +107,8 @@ describe('tanstack query agent controller', () => {
   });
 
   it('trims listQueries/listMutations defaultFields narrower than the full field set', () => {
-    const listQueriesPagination =
-      tanstackQueryToolDefinitions.listQueries.pagination;
-    const listMutationsPagination =
-      tanstackQueryToolDefinitions.listMutations.pagination;
+    const listQueriesPagination = tanstackQueryToolDefinitions.listQueries.pagination;
+    const listMutationsPagination = tanstackQueryToolDefinitions.listMutations.pagination;
 
     expect(listQueriesPagination?.defaultFields?.length).toBeLessThan(
       listQueriesPagination?.fields.length ?? 0,
@@ -155,9 +144,7 @@ describe('tanstack query agent controller', () => {
         limit: 1,
         cursor: firstPage.page.nextCursor,
       }),
-    ).toThrow(
-      'Cursor does not match the requested listing. Run the command again.',
-    );
+    ).toThrow('Cursor does not match the requested listing. Run the command again.');
 
     unsubscribe();
   });
@@ -178,9 +165,7 @@ describe('tanstack query agent controller', () => {
         limit: 1,
         cursor: firstPage.page.nextCursor,
       }),
-    ).toThrow(
-      'Cursor does not match the requested listing. Run the command again.',
-    );
+    ).toThrow('Cursor does not match the requested listing. Run the command again.');
 
     queryClient.setQueryData(['third'], { value: 3 });
     queryClient.setQueryData(['fourth'], { value: 4 });
@@ -192,9 +177,7 @@ describe('tanstack query agent controller', () => {
         limit: 1,
         cursor: secondPageSeed.page.nextCursor,
       }),
-    ).toThrow(
-      'Cursor does not match the requested listing. Run the command again.',
-    );
+    ).toThrow('Cursor does not match the requested listing. Run the command again.');
 
     unsubscribe();
   });
@@ -229,9 +212,7 @@ describe('tanstack query agent controller', () => {
         limit: 1,
         cursor: firstPage.page.nextCursor,
       }),
-    ).toThrow(
-      'Cursor does not match the requested listing. Run the command again.',
-    );
+    ).toThrow('Cursor does not match the requested listing. Run the command again.');
 
     const mutation = queryClient.getMutationCache().getAll()[0];
     queryClient.getMutationCache().remove(mutation);
@@ -244,9 +225,7 @@ describe('tanstack query agent controller', () => {
         limit: 1,
         cursor: secondPageSeed.page.nextCursor,
       }),
-    ).toThrow(
-      'Cursor does not match the requested listing. Run the command again.',
-    );
+    ).toThrow('Cursor does not match the requested listing. Run the command again.');
 
     unsubscribe();
   });
@@ -272,9 +251,7 @@ describe('tanstack query agent controller', () => {
       queryFn,
     });
 
-    const queryHash = queryClient
-      .getQueryCache()
-      .find({ queryKey: ['todos', 1] })!.queryHash;
+    const queryHash = queryClient.getQueryCache().find({ queryKey: ['todos', 1] })!.queryHash;
     const details = controller.getQueryDetails({ queryHash });
 
     expect(details.query).toMatchObject({

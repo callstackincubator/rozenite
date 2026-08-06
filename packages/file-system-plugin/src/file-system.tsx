@@ -73,19 +73,12 @@ export default function FileSystemPanel() {
 
       try {
         const base64 = await readFileAsBase64(file);
-        const res = await requests.requestImportFile(
-          nav.currentPath,
-          file.name,
-          base64,
-          overwrite,
-        );
+        const res = await requests.requestImportFile(nav.currentPath, file.name, base64, overwrite);
 
         if (!res) return;
 
         if (res.overwriteRequired) {
-          const shouldOverwrite = window.confirm(
-            `"${file.name}" already exists. Overwrite it?`,
-          );
+          const shouldOverwrite = window.confirm(`"${file.name}" already exists. Overwrite it?`);
           if (shouldOverwrite) {
             const overwriteRes = await requests.requestImportFile(
               nav.currentPath,
@@ -143,12 +136,7 @@ export default function FileSystemPanel() {
     input.addEventListener('cancel', removeInput);
     document.body.appendChild(input);
     input.click();
-  }, [
-    importLoading,
-    importSelectedFile,
-    nav.currentPath,
-    nav.fileTransfer.import,
-  ]);
+  }, [importLoading, importSelectedFile, nav.currentPath, nav.fileTransfer.import]);
 
   const onExport = useCallback(
     async (entry: FsEntry) => {
@@ -168,11 +156,7 @@ export default function FileSystemPanel() {
           setTransferError('Export did not return file contents.');
           return;
         }
-        const didDownload = downloadBase64File(
-          res.fileName,
-          res.base64,
-          res.mime,
-        );
+        const didDownload = downloadBase64File(res.fileName, res.base64, res.mime);
         if (!didDownload) {
           setTransferError('Failed to download exported file.');
         }
@@ -221,19 +205,13 @@ export default function FileSystemPanel() {
                   !!nav.currentPath &&
                   !importLoading &&
                   styles.importButtonHovered,
-                (!nav.fileTransfer.import ||
-                  !nav.currentPath ||
-                  importLoading) &&
+                (!nav.fileTransfer.import || !nav.currentPath || importLoading) &&
                   styles.importButtonDisabled,
               ]}
               onPress={onImport}
-              disabled={
-                !nav.fileTransfer.import || !nav.currentPath || importLoading
-              }
+              disabled={!nav.fileTransfer.import || !nav.currentPath || importLoading}
             >
-              <Text style={styles.importButtonText}>
-                {importLoading ? 'Importing…' : 'Import'}
-              </Text>
+              <Text style={styles.importButtonText}>{importLoading ? 'Importing…' : 'Import'}</Text>
             </Pressable>
           </View>
 
@@ -254,11 +232,7 @@ export default function FileSystemPanel() {
 
         <DetailPanel
           selected={selected}
-          canExport={
-            Boolean(selected) &&
-            !selected?.isDirectory &&
-            nav.fileTransfer.export
-          }
+          canExport={Boolean(selected) && !selected?.isDirectory && nav.fileTransfer.export}
           exportLoading={Boolean(selected && exportPath === selected.path)}
           requestImagePreview={requests.requestImagePreview}
           requestTextPreview={requests.requestTextPreview}

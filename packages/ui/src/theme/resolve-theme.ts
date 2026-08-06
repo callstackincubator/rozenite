@@ -7,10 +7,7 @@ export type PluginTheme = 'light' | 'dark';
  * Kept separate from any storage/media-query access so it can be unit
  * tested without touching `localStorage` or `matchMedia`.
  */
-export function resolveInitialTheme(
-  storedValue: string | null,
-  prefersDark: boolean,
-): PluginTheme {
+export function resolveInitialTheme(storedValue: string | null, prefersDark: boolean): PluginTheme {
   if (storedValue === 'light' || storedValue === 'dark') {
     return storedValue;
   }

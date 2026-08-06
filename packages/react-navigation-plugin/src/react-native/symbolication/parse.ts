@@ -10,17 +10,11 @@ const V8_FUNCTION_FRAME_PATTERN = /^at\s+(.*?)\s+\((.*)\)$/;
 const V8_LOCATION_FRAME_PATTERN = /^at\s+(.*)$/;
 const JSC_FRAME_PATTERN = /^(.*?)@(.*)$/;
 
-const ANONYMOUS_FUNCTION_NAMES = new Set([
-  '<anonymous>',
-  'anonymous',
-  '<unknown>',
-]);
+const ANONYMOUS_FUNCTION_NAMES = new Set(['<anonymous>', 'anonymous', '<unknown>']);
 
 const normalizeFunctionName = (fn: string | undefined): string | undefined => {
   const trimmed = fn?.trim();
-  return trimmed && !ANONYMOUS_FUNCTION_NAMES.has(trimmed)
-    ? trimmed
-    : undefined;
+  return trimmed && !ANONYMOUS_FUNCTION_NAMES.has(trimmed) ? trimmed : undefined;
 };
 
 type ParsedLocation = {

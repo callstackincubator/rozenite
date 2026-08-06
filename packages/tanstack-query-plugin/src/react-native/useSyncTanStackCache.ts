@@ -6,20 +6,14 @@ import {
 import { useEffect, useMemo, useRef } from 'react';
 import equal from 'fast-deep-equal';
 import { TanStackQueryPluginClient } from '../shared/messaging';
-import {
-  dehydrateQuery,
-  dehydrateMutation,
-  dehydrateObservers,
-} from '../shared/dehydrate';
+import { dehydrateQuery, dehydrateMutation, dehydrateObservers } from '../shared/dehydrate';
 import { SerializableObserver, PartialQueryState } from '../shared/types';
 
 export const useSyncTanStackCache = (
   queryClient: QueryClient,
   client: TanStackQueryPluginClient | null,
 ) => {
-  const previousObserversRef = useRef<Map<string, SerializableObserver[]>>(
-    new Map(),
-  );
+  const previousObserversRef = useRef<Map<string, SerializableObserver[]>>(new Map());
 
   const handler = useMemo(() => {
     return (event: QueryCacheNotifyEvent | MutationCacheNotifyEvent): void => {
@@ -187,9 +181,7 @@ export const useSyncTanStackCache = (
           type === 'observerOptionsUpdated'
         ) {
           const dehydratedObservers = dehydrateObservers(query);
-          const previousObservers = previousObserversRef.current.get(
-            query.queryHash,
-          );
+          const previousObservers = previousObserversRef.current.get(query.queryHash);
 
           // For observerOptionsUpdated, only send if the observers actually changed
           if (type === 'observerOptionsUpdated' && previousObservers) {
@@ -199,10 +191,7 @@ export const useSyncTanStackCache = (
             }
           }
 
-          previousObserversRef.current.set(
-            query.queryHash,
-            dehydratedObservers,
-          );
+          previousObserversRef.current.set(query.queryHash, dehydratedObservers);
 
           client.send('sync-query-event', {
             type,
@@ -231,12 +220,8 @@ export const useSyncTanStackCache = (
       return;
     }
 
-    const mutationCacheSubscription = queryClient
-      .getMutationCache()
-      .subscribe(handler);
-    const queryCacheSubscription = queryClient
-      .getQueryCache()
-      .subscribe(handler);
+    const mutationCacheSubscription = queryClient.getMutationCache().subscribe(handler);
+    const queryCacheSubscription = queryClient.getQueryCache().subscribe(handler);
 
     return () => {
       mutationCacheSubscription();

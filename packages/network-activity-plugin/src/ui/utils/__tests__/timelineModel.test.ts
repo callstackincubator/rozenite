@@ -10,9 +10,7 @@ import {
   TIMELINE_LAYOUT,
 } from '../timelineModel';
 
-const createRequest = (
-  overrides: Partial<ProcessedRequest> = {},
-): ProcessedRequest => ({
+const createRequest = (overrides: Partial<ProcessedRequest> = {}): ProcessedRequest => ({
   id: 'request-1',
   type: 'http',
   name: 'https://example.com/api',
@@ -42,14 +40,12 @@ describe('timelineModel', () => {
   });
 
   it('uses the earliest ending lane when all lanes are occupied', () => {
-    const requests = Array.from(
-      { length: TIMELINE_LAYOUT.laneCount },
-      (_, index) =>
-        createRequest({
-          id: `request-${index}`,
-          timestamp: 0,
-          duration: index === 1 ? 100 : 1000,
-        }),
+    const requests = Array.from({ length: TIMELINE_LAYOUT.laneCount }, (_, index) =>
+      createRequest({
+        id: `request-${index}`,
+        timestamp: 0,
+        duration: index === 1 ? 100 : 1000,
+      }),
     );
 
     const overflowingRequest = createRequest({
@@ -59,9 +55,7 @@ describe('timelineModel', () => {
     });
 
     const model = getTimelineModel([...requests, overflowingRequest], 0);
-    const overflowingRow = model.rows.find(
-      (row) => row.request.id === overflowingRequest.id,
-    );
+    const overflowingRow = model.rows.find((row) => row.request.id === overflowingRequest.id);
 
     expect(overflowingRow?.lane).toBe(1);
     expect(overflowingRow?.isOverflowingLane).toBe(true);
@@ -78,9 +72,7 @@ describe('timelineModel', () => {
       0,
     );
 
-    expect(model.ticks.length).toBeLessThanOrEqual(
-      TIMELINE_LAYOUT.tickTargetCount + 2,
-    );
+    expect(model.ticks.length).toBeLessThanOrEqual(TIMELINE_LAYOUT.tickTargetCount + 2);
   });
 
   it('does not add a duplicate final tick label', () => {
@@ -141,9 +133,7 @@ describe('timelineModel', () => {
 
     const model = getTimelineModel([websocketRequest], now);
 
-    expect(model.rows[0].duration).toBe(
-      TIMELINE_LAYOUT.streamingRequestMaxDurationMs,
-    );
+    expect(model.rows[0].duration).toBe(TIMELINE_LAYOUT.streamingRequestMaxDurationMs);
   });
 
   it('matches requests that overlap a selected timeline range', () => {
@@ -152,19 +142,9 @@ describe('timelineModel', () => {
       duration: 400,
     });
 
-    expect(
-      requestOverlapsTimelineRange(
-        request,
-        { startTime: 1200, endTime: 1400 },
-        0,
-      ),
-    ).toBe(true);
-    expect(
-      requestOverlapsTimelineRange(
-        request,
-        { startTime: 1500, endTime: 1600 },
-        0,
-      ),
-    ).toBe(false);
+    expect(requestOverlapsTimelineRange(request, { startTime: 1200, endTime: 1400 }, 0)).toBe(true);
+    expect(requestOverlapsTimelineRange(request, { startTime: 1500, endTime: 1600 }, 0)).toBe(
+      false,
+    );
   });
 });

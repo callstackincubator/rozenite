@@ -7,10 +7,7 @@ export type SessionDurationProps = {
   sessionStartedAt: number;
 };
 
-export const SessionDuration = ({
-  isActive,
-  sessionStartedAt,
-}: SessionDurationProps) => {
+export const SessionDuration = ({ isActive, sessionStartedAt }: SessionDurationProps) => {
   const [currentTime, setCurrentTime] = useState<number | null>(null);
 
   useEffect(() => {
@@ -38,8 +35,7 @@ export const SessionDuration = ({
   return (
     <>
       <Text size="2" color="gray">
-        Session started:{' '}
-        {sessionStartedAt ? formatTime(sessionStartedAt) : 'Not started'}
+        Session started: {sessionStartedAt ? formatTime(sessionStartedAt) : 'Not started'}
       </Text>
       {!!sessionStartedAt && (
         <Text size="2" color="gray">

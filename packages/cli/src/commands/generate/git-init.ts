@@ -1,9 +1,7 @@
 import { step } from '../../utils/steps.js';
 import { spawn } from '../../utils/spawn.js';
 
-export const createGitRepository = async (
-  projectRoot: string,
-): Promise<void> => {
+export const createGitRepository = async (projectRoot: string): Promise<void> => {
   await step(
     {
       start: 'Initializing Git repository',

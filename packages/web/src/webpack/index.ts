@@ -29,19 +29,14 @@ const resolveReactNativeFeatureFlagsReplacement = () => {
   throw new Error('Unable to resolve Rozenite ReactNativeFeatureFlags shim');
 };
 
-const REACT_NATIVE_FEATURE_FLAGS_REPLACEMENT =
-  resolveReactNativeFeatureFlagsReplacement();
+const REACT_NATIVE_FEATURE_FLAGS_REPLACEMENT = resolveReactNativeFeatureFlagsReplacement();
 
 const CTRL_C = '\u0003';
 const CTRL_D = '\u0004';
 const OPEN_DEBUGGER_SHORTCUT = 'j';
 const RELOAD_SHORTCUT = 'r';
-const ROZENITE_OPEN_DEBUGGER_SHORTCUT = Symbol.for(
-  'rozenite.web.openDebuggerShortcut',
-);
-const ROZENITE_WEBPACK_DEV_MIDDLEWARE = Symbol.for(
-  'rozenite.web.webpackDevMiddleware',
-);
+const ROZENITE_OPEN_DEBUGGER_SHORTCUT = Symbol.for('rozenite.web.openDebuggerShortcut');
+const ROZENITE_WEBPACK_DEV_MIDDLEWARE = Symbol.for('rozenite.web.webpackDevMiddleware');
 
 const REACT_NATIVE_FEATURE_FLAGS_PATTERN = /ReactNativeFeatureFlags(?:\.js)?$/;
 
@@ -67,18 +62,11 @@ type DevServerProxy =
   | Record<string, string | Record<string, unknown>>
   | Array<Record<string, unknown>>;
 
-type UpgradeHandler = (
-  request: IncomingMessage,
-  socket: Duplex,
-  head: Buffer,
-) => void;
+type UpgradeHandler = (request: IncomingMessage, socket: Duplex, head: Buffer) => void;
 
 type WebpackDevServer = {
   proxy?: DevServerProxy;
-  setupMiddlewares?: (
-    middlewares: unknown[],
-    devServer?: { app?: unknown },
-  ) => unknown[];
+  setupMiddlewares?: (middlewares: unknown[], devServer?: { app?: unknown }) => unknown[];
   onListening?: (devServer: WebpackDevServerRuntime) => void;
   [key: string]: unknown;
 };
@@ -129,11 +117,7 @@ type DevMiddlewareApi = {
         head: Buffer,
         callback: (client: unknown, upgradedRequest: IncomingMessage) => void,
       ) => void;
-      emit: (
-        event: 'connection',
-        client: unknown,
-        upgradedRequest: IncomingMessage,
-      ) => void;
+      emit: (event: 'connection', client: unknown, upgradedRequest: IncomingMessage) => void;
     }
   >;
 };
@@ -178,9 +162,7 @@ type WebpackCompiler = {
               tap: (
                 name: string,
                 callback: (
-                  resolveData:
-                    | { request: string; [key: string]: unknown }
-                    | undefined,
+                  resolveData: { request: string; [key: string]: unknown } | undefined,
                 ) => false | void,
               ) => void;
             };
@@ -193,31 +175,19 @@ type WebpackCompiler = {
 
 class RozeniteWebpackPlugin {
   apply(compiler: WebpackCompiler) {
-    compiler.hooks.normalModuleFactory.tap(
-      'RozeniteWebpackPlugin',
-      (normalModuleFactory) => {
-        normalModuleFactory.hooks.beforeResolve.tap(
-          'RozeniteWebpackPlugin',
-          (resolveData) => {
-            if (
-              resolveData &&
-              REACT_NATIVE_FEATURE_FLAGS_PATTERN.test(resolveData.request)
-            ) {
-              resolveData.request = REACT_NATIVE_FEATURE_FLAGS_REPLACEMENT;
-            }
-          },
-        );
-      },
-    );
+    compiler.hooks.normalModuleFactory.tap('RozeniteWebpackPlugin', (normalModuleFactory) => {
+      normalModuleFactory.hooks.beforeResolve.tap('RozeniteWebpackPlugin', (resolveData) => {
+        if (resolveData && REACT_NATIVE_FEATURE_FLAGS_PATTERN.test(resolveData.request)) {
+          resolveData.request = REACT_NATIVE_FEATURE_FLAGS_REPLACEMENT;
+        }
+      });
+    });
   }
 }
 
-const getDevServerUrl = (
-  devServer: WebpackDevServerRuntime | undefined,
-): string | null => {
+const getDevServerUrl = (devServer: WebpackDevServerRuntime | undefined): string | null => {
   const host = devServer?.options.host;
-  const normalizedHost =
-    !host || host === '0.0.0.0' || host === '::' ? 'localhost' : host;
+  const normalizedHost = !host || host === '0.0.0.0' || host === '::' ? 'localhost' : host;
   const port = devServer?.options.port;
 
   if (typeof port === 'number') {
@@ -257,14 +227,11 @@ const exitOnCtrlC = (): void => {
   process.kill(process.pid, 'SIGINT');
 };
 
-const inverse = (value: string): string =>
-  `\u001B[37m\u001B[7m${value}\u001B[27m\u001B[39m`;
+const inverse = (value: string): string => `\u001B[37m\u001B[7m${value}\u001B[27m\u001B[39m`;
 
 const triggerWebpackRebuild = async (devServerUrl: string): Promise<void> => {
   try {
-    const response = await fetch(
-      new URL('/webpack-dev-server/invalidate', devServerUrl),
-    );
+    const response = await fetch(new URL('/webpack-dev-server/invalidate', devServerUrl));
 
     if (!response.ok) {
       throw new Error(`Unexpected status code: ${response.status}`);
@@ -297,15 +264,11 @@ class OpenDebuggerKeyboardHandler {
 
     try {
       await this.#getFetch()(
-        new URL(
-          `/open-debugger?target=${encodeURIComponent(target.id)}`,
-          this.#devServerUrl,
-        ),
+        new URL(`/open-debugger?target=${encodeURIComponent(target.id)}`, this.#devServerUrl),
         { method: 'POST' },
       );
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown network error';
+      const message = error instanceof Error ? error.message : 'Unknown network error';
       console.error(
         `[Rozenite] Failed to open debugger for ${target.title} (${target.description}): ${message}`,
       );
@@ -317,12 +280,9 @@ class OpenDebuggerKeyboardHandler {
     this.#targetsShownForSelection = null;
 
     try {
-      const response = await this.#getFetch()(
-        new URL('/json/list', this.#devServerUrl),
-        {
-          method: 'POST',
-        },
-      );
+      const response = await this.#getFetch()(new URL('/json/list', this.#devServerUrl), {
+        method: 'POST',
+      });
 
       if (response.status !== 200) {
         throw new Error(`Unexpected status code: ${response.status}`);
@@ -344,23 +304,18 @@ class OpenDebuggerKeyboardHandler {
       }
 
       if (targets.length > 9) {
-        console.warn(
-          '[Rozenite] 10 or more debug targets available, showing the first 9.',
-        );
+        console.warn('[Rozenite] 10 or more debug targets available, showing the first 9.');
       }
 
       const targetsShown = targets.slice(0, 9) as DebugTarget[];
       const hasDuplicateTitles =
-        new Set(targetsShown.map((target) => target.title)).size <
-        targetsShown.length;
+        new Set(targetsShown.map((target) => target.title)).size < targetsShown.length;
 
       this.#targetsShownForSelection = targetsShown;
       console.info(
         `Multiple debug targets available, please select:\n ${targetsShown
           .map(({ title, description }, index) => {
-            const descriptionSuffix = hasDuplicateTitles
-              ? ` (${description})`
-              : '';
+            const descriptionSuffix = hasDuplicateTitles ? ` (${description})` : '';
 
             return `${inverse(` ${index + 1} `)} - "${title}${descriptionSuffix}"`;
           })
@@ -414,9 +369,7 @@ const registerDebuggerShortcut = (devServer: WebpackDevServerRuntime): void => {
   state.installedUrls.add(devServerUrl);
   readline.emitKeypressEvents(process.stdin);
   setRawMode(true);
-  const openDebuggerKeyboardHandler = new OpenDebuggerKeyboardHandler(
-    devServerUrl,
-  );
+  const openDebuggerKeyboardHandler = new OpenDebuggerKeyboardHandler(devServerUrl);
 
   const onKeypress = (str: string, key: { ctrl?: boolean; name?: string }) => {
     const keyName = key?.name;
@@ -470,9 +423,7 @@ const getDevMiddlewareApi = (devServerUrl: string): DevMiddlewareApi => {
     return existing;
   }
 
-  const { createDevMiddleware } = nodeRequire(
-    '@react-native/dev-middleware',
-  ) as {
+  const { createDevMiddleware } = nodeRequire('@react-native/dev-middleware') as {
     createDevMiddleware: CreateLocalDevMiddleware;
   };
 
@@ -498,9 +449,7 @@ const registerDevMiddlewareWebSocketEndpoints = (
 
   registeredUpgradeServers.add(server);
   server.on('upgrade', (request, socket, head) => {
-    const pathname = request.url
-      ? new URL(request.url, 'http://localhost').pathname
-      : '';
+    const pathname = request.url ? new URL(request.url, 'http://localhost').pathname : '';
     const endpoint = devMiddlewareApi.websocketEndpoints[pathname];
 
     if (!endpoint) {
@@ -523,18 +472,13 @@ const mergeSetupMiddlewares = (
     if (devServerUrl) {
       const devMiddlewareApi = getDevMiddlewareApi(devServerUrl);
       if (runtimeDevServer) {
-        registerDevMiddlewareWebSocketEndpoints(
-          runtimeDevServer,
-          devMiddlewareApi,
-        );
+        registerDevMiddlewareWebSocketEndpoints(runtimeDevServer, devMiddlewareApi);
       }
 
       middlewares.unshift(devMiddlewareApi.middleware);
     }
 
-    return setupMiddlewares
-      ? setupMiddlewares(middlewares, devServer)
-      : middlewares;
+    return setupMiddlewares ? setupMiddlewares(middlewares, devServer) : middlewares;
   };
 };
 
@@ -564,9 +508,7 @@ const patchDevelopmentConfig = (config: WebpackConfig): WebpackConfig => {
     devServer: {
       ...config.devServer,
       proxy: config.devServer?.proxy ?? [],
-      setupMiddlewares: mergeSetupMiddlewares(
-        config.devServer?.setupMiddlewares,
-      ),
+      setupMiddlewares: mergeSetupMiddlewares(config.devServer?.setupMiddlewares),
       onListening: (devServer) => {
         registerDebuggerShortcut(devServer);
         config.devServer?.onListening?.(devServer);
@@ -575,10 +517,7 @@ const patchDevelopmentConfig = (config: WebpackConfig): WebpackConfig => {
   };
 };
 
-const patchConfig = (
-  config: WebpackConfig,
-  argvMode: WebpackMode | undefined,
-): WebpackConfig => {
+const patchConfig = (config: WebpackConfig, argvMode: WebpackMode | undefined): WebpackConfig => {
   const resolvedMode = argvMode ?? config.mode;
   if (resolvedMode === 'production') {
     return config;
@@ -591,18 +530,13 @@ const patchConfig = (
     : compatibilityConfig;
 };
 
-export const withRozeniteWeb = (
-  config: WebpackConfigExport,
-): WebpackConfigExport => {
+export const withRozeniteWeb = (config: WebpackConfigExport): WebpackConfigExport => {
   if (typeof config === 'function') {
-    return async (env, argv) =>
-      patchConfig(await config(env, argv), argv?.mode);
+    return async (env, argv) => patchConfig(await config(env, argv), argv?.mode);
   }
 
   if (config instanceof Promise) {
-    return config.then((resolvedConfig) =>
-      patchConfig(resolvedConfig, resolvedConfig.mode),
-    );
+    return config.then((resolvedConfig) => patchConfig(resolvedConfig, resolvedConfig.mode));
   }
 
   return patchConfig(config, config.mode);

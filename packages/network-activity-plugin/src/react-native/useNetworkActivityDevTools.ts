@@ -4,11 +4,7 @@ import { NetworkActivityEventMap } from '../shared/client';
 import { isHttpEvent } from './http/http-inspector';
 import { isWebSocketEvent } from './websocket/websocket-inspector';
 import { isSSEEvent } from './sse/sse-inspector';
-import {
-  DEFAULT_CONFIG,
-  NetworkActivityDevToolsConfig,
-  validateConfig,
-} from './config';
+import { DEFAULT_CONFIG, NetworkActivityDevToolsConfig, validateConfig } from './config';
 import { createNetworkInspectorsConfiguration } from './boot-recording';
 import { useNetworkActivityAgentTools } from './agent/use-network-activity-agent-tools';
 import { useHttpInspector } from './useHttpInspector';
@@ -58,8 +54,7 @@ export const useNetworkActivityDevTools = (
     const sendClientUISettings = () => {
       client.send('client-ui-settings', {
         settings: {
-          showUrlAsName:
-            showUrlAsName ?? DEFAULT_CONFIG.clientUISettings?.showUrlAsName,
+          showUrlAsName: showUrlAsName ?? DEFAULT_CONFIG.clientUISettings?.showUrlAsName,
         },
       });
     };
@@ -119,12 +114,7 @@ export const useNetworkActivityDevTools = (
     isSSEInspectorEnabled,
   ]);
 
-  useHttpInspector(
-    client,
-    networkInspector,
-    isHttpInspectorEnabled,
-    isRecordingEnabledRef.current,
-  );
+  useHttpInspector(client, networkInspector, isHttpInspectorEnabled, isRecordingEnabledRef.current);
 
   useWebSocketInspector(
     client,

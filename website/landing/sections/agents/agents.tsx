@@ -1,9 +1,4 @@
-import {
-  BracketsCurly,
-  PlugsConnected,
-  Terminal,
-  type Icon,
-} from '@phosphor-icons/react';
+import { BracketsCurly, PlugsConnected, Terminal, type Icon } from '@phosphor-icons/react';
 
 import { ActionButton } from '../../components/action-button/action-button';
 import { CodeSample } from '../../components/code-sample/code-sample';

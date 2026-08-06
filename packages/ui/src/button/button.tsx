@@ -13,10 +13,8 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive:
-          'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         outline:
           'border border-input bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground',
         ghost: 'text-foreground hover:bg-accent hover:text-accent-foreground',
@@ -34,17 +32,10 @@ export const buttonVariants = cva(
   },
 );
 
-export type ButtonProps = ComponentProps<'button'> &
-  VariantProps<typeof buttonVariants>;
+export type ButtonProps = ComponentProps<'button'> & VariantProps<typeof buttonVariants>;
 
 /** A styled button for actions that change state or submit work. */
-export function Button({
-  className,
-  variant,
-  size,
-  type = 'button',
-  ...props
-}: ButtonProps) {
+export function Button({ className, variant, size, type = 'button', ...props }: ButtonProps) {
   return (
     <button
       type={type}

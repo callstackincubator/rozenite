@@ -11,9 +11,7 @@ function DatabaseIcon() {
   );
 }
 
-const meta = { component: List, title: 'Components/List' } satisfies Meta<
-  typeof List
->;
+const meta = { component: List, title: 'Components/List' } satisfies Meta<typeof List>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 /** Use for a flat, grouped list of selectable items with optional leading and trailing content.

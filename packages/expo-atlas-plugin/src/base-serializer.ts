@@ -23,8 +23,7 @@ const legacySerializerModulePaths: SerializerModulePaths = {
 const isModuleResolutionError = (error: unknown) =>
   error instanceof Error &&
   'code' in error &&
-  (error.code === 'MODULE_NOT_FOUND' ||
-    error.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED');
+  (error.code === 'MODULE_NOT_FOUND' || error.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED');
 
 const getUnsupportedMetroError = () =>
   new Error(
@@ -39,10 +38,7 @@ const unwrapDefaultExport = (module: unknown) => {
   return module;
 };
 
-const resolveModulePaths = (
-  moduleLoader: ModuleLoader,
-  modulePaths: SerializerModulePaths,
-) => {
+const resolveModulePaths = (moduleLoader: ModuleLoader, modulePaths: SerializerModulePaths) => {
   moduleLoader.resolve(modulePaths.baseJSBundle);
   moduleLoader.resolve(modulePaths.bundleToString);
 

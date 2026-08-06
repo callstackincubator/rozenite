@@ -1,10 +1,7 @@
 import { Modal, useOverlayState } from '@heroui/react';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import {
-  SqliteModalCloseButton,
-  sqliteSecondaryButtonClassName,
-} from './sqlite-modal-controls';
+import { SqliteModalCloseButton, sqliteSecondaryButtonClassName } from './sqlite-modal-controls';
 
 type SqliteRowDeleteModalProps = {
   isOpen: boolean;
@@ -50,9 +47,7 @@ export const SqliteRowDeleteModal = ({
       await onDelete();
       onClose();
     } catch (nextError) {
-      setError(
-        nextError instanceof Error ? nextError.message : String(nextError),
-      );
+      setError(nextError instanceof Error ? nextError.message : String(nextError));
     } finally {
       setDeleting(false);
     }
@@ -76,9 +71,7 @@ export const SqliteRowDeleteModal = ({
                   <AlertTriangle aria-hidden="true" className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white">
-                    Delete Row {rowNumber}
-                  </h2>
+                  <h2 className="text-lg font-semibold text-white">Delete Row {rowNumber}</h2>
                   <p className="mt-1 text-sm text-slate-400">{entityName}</p>
                 </div>
               </div>
@@ -88,8 +81,8 @@ export const SqliteRowDeleteModal = ({
             <Modal.Body className="space-y-0 p-0">
               <div className="space-y-5 px-5 py-5">
                 <p className="text-sm leading-6 text-slate-300">
-                  This will permanently delete the selected row and immediately
-                  refetch the current page.
+                  This will permanently delete the selected row and immediately refetch the current
+                  page.
                 </p>
 
                 {error ? (

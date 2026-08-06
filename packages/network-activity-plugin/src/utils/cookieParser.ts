@@ -89,9 +89,7 @@ export const parseCookieHeader = (cookieString: string): Cookie[] => {
     .filter((cookieObj) => cookieObj.name);
 };
 
-export const parseRequestCookiesFromHeaders = (
-  headers: HttpHeaders,
-): Cookie[] => {
+export const parseRequestCookiesFromHeaders = (headers: HttpHeaders): Cookie[] => {
   const cookieHeader = getHttpHeader(headers, 'cookie');
 
   if (!cookieHeader) {
@@ -107,9 +105,7 @@ export const parseRequestCookiesFromHeaders = (
   return parseCookieHeader(value);
 };
 
-export const parseResponseCookiesFromHeaders = (
-  headers: HttpHeaders,
-): Cookie[] => {
+export const parseResponseCookiesFromHeaders = (headers: HttpHeaders): Cookie[] => {
   const setCookieHeader = getHttpHeader(headers, 'set-cookie');
 
   if (!setCookieHeader) {

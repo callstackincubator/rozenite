@@ -32,10 +32,7 @@ Each tool is qualified as `{pluginId}.{tool.name}`. The hook registers the tool 
 ### Example: echo tool
 
 ```tsx
-import {
-  useRozenitePluginAgentTool,
-  type AgentTool,
-} from '@rozenite/agent-bridge';
+import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
 
 const PLUGIN_ID = '@my-org/my-rozenite-plugin';
 
@@ -128,10 +125,7 @@ That split keeps one source of truth for:
 ### 1. Define shared tool contracts
 
 ```ts
-import {
-  defineAgentToolContract,
-  type AgentToolContract,
-} from '@rozenite/agent-shared';
+import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
 
 export const MY_PLUGIN_ID = '@my-org/my-rozenite-plugin';
 
@@ -185,10 +179,7 @@ import { MY_PLUGIN_ID, myToolDefinitions } from './src/shared/agent-tools.js';
 
 export { MY_PLUGIN_ID, myToolDefinitions };
 
-export const myPluginTools = defineAgentToolDescriptors(
-  MY_PLUGIN_ID,
-  myToolDefinitions,
-);
+export const myPluginTools = defineAgentToolDescriptors(MY_PLUGIN_ID, myToolDefinitions);
 
 export type { EchoArgs, EchoResult } from './src/shared/agent-tools.js';
 ```
@@ -207,10 +198,7 @@ The declaration travels with the registered tool, so the CLI can validate
 tool name.
 
 ```ts
-import {
-  definePaginatedAgentToolContract,
-  type PageResult,
-} from '@rozenite/agent-bridge';
+import { definePaginatedAgentToolContract, type PageResult } from '@rozenite/agent-bridge';
 
 type ListEntriesArgs = {
   limit?: number;
@@ -225,25 +213,24 @@ type EntryRow = {
 
 type ListEntriesResult = PageResult<EntryRow>;
 
-export const listEntriesTool = definePaginatedAgentToolContract<
-  ListEntriesArgs,
-  ListEntriesResult
->({
-  name: 'list-entries',
-  description: 'List entries with cursor pagination.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      limit: { type: 'number' },
-      cursor: { type: 'string' },
+export const listEntriesTool = definePaginatedAgentToolContract<ListEntriesArgs, ListEntriesResult>(
+  {
+    name: 'list-entries',
+    description: 'List entries with cursor pagination.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number' },
+        cursor: { type: 'string' },
+      },
+    },
+    pagination: {
+      kind: 'cursor',
+      fields: ['key', 'type', 'size'],
+      defaultFields: ['key', 'type'],
     },
   },
-  pagination: {
-    kind: 'cursor',
-    fields: ['key', 'type', 'size'],
-    defaultFields: ['key', 'type'],
-  },
-});
+);
 ```
 
 Return `{items, page}` from the handler. `fields` is the stable set available

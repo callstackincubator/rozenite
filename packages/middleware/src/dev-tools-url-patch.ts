@@ -6,14 +6,9 @@ import { RozeniteConfig } from './index.js';
 const require = createRequire(import.meta.url);
 
 export const patchDevtoolsFrontendUrl = (options: RozeniteConfig): void => {
-  const getDevToolsFrontendUrlModulePath = path.dirname(
-    getDevMiddlewarePath(options),
-  );
+  const getDevToolsFrontendUrlModulePath = path.dirname(getDevMiddlewarePath(options));
   const getDevToolsFrontendUrlModule = require(
-    path.join(
-      getDevToolsFrontendUrlModulePath,
-      '/utils/getDevToolsFrontendUrl',
-    ),
+    path.join(getDevToolsFrontendUrlModulePath, '/utils/getDevToolsFrontendUrl'),
   );
   const getDevToolsFrontendUrl = getDevToolsFrontendUrlModule.default;
   getDevToolsFrontendUrlModule.default = (

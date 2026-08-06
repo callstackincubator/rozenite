@@ -26,9 +26,7 @@ describe('rozenitePlugin', () => {
     const plugins = rozenitePlugin({ tailwind: false });
 
     expect(plugins.flat(Infinity)).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ name: '@tailwindcss/vite:scan' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ name: '@tailwindcss/vite:scan' })]),
     );
   });
 });

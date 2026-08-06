@@ -3,29 +3,25 @@ import { formatFrameLocation, formatSourcePath } from '../format';
 
 describe('formatSourcePath', () => {
   it('extracts the apps/ workspace suffix from a long absolute path', () => {
-    expect(
-      formatSourcePath('/Users/me/code/myapp/apps/playground/src/Screen.tsx'),
-    ).toBe('apps/playground/src/Screen.tsx');
+    expect(formatSourcePath('/Users/me/code/myapp/apps/playground/src/Screen.tsx')).toBe(
+      'apps/playground/src/Screen.tsx',
+    );
   });
 
   it('extracts the packages/ workspace suffix', () => {
-    expect(
-      formatSourcePath('/Users/me/code/myapp/packages/shared/src/util.ts'),
-    ).toBe('packages/shared/src/util.ts');
+    expect(formatSourcePath('/Users/me/code/myapp/packages/shared/src/util.ts')).toBe(
+      'packages/shared/src/util.ts',
+    );
   });
 
   it('returns the bundle filename for Metro bundle URLs', () => {
-    expect(
-      formatSourcePath(
-        'http://localhost:8081/index.bundle?platform=ios&dev=true',
-      ),
-    ).toBe('index.bundle');
+    expect(formatSourcePath('http://localhost:8081/index.bundle?platform=ios&dev=true')).toBe(
+      'index.bundle',
+    );
   });
 
   it('strips query string and hash before matching', () => {
-    expect(formatSourcePath('/abs/apps/foo/src/x.ts?bar=1#frag')).toBe(
-      'apps/foo/src/x.ts',
-    );
+    expect(formatSourcePath('/abs/apps/foo/src/x.ts?bar=1#frag')).toBe('apps/foo/src/x.ts');
   });
 
   it('falls back to the last few segments for non-workspace URLs', () => {

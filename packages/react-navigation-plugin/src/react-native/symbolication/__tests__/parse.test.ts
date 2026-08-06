@@ -74,11 +74,7 @@ describe('parseStack', () => {
       'at <unknown> (apps/playground/src/c.ts:3:1)',
     ].join('\n');
     const frames = parseStack(stack);
-    expect(frames.map((f) => f.functionName)).toEqual([
-      undefined,
-      undefined,
-      undefined,
-    ]);
+    expect(frames.map((f) => f.functionName)).toEqual([undefined, undefined, undefined]);
   });
 
   it('caps the result at 50 frames', () => {

@@ -92,9 +92,7 @@ export type ChromeStub = {
   };
   storage: {
     local: {
-      get: (
-        key: string | Record<string, unknown>,
-      ) => Promise<Record<string, unknown>>;
+      get: (key: string | Record<string, unknown>) => Promise<Record<string, unknown>>;
       set: (data: Record<string, unknown>) => Promise<void>;
     };
   };

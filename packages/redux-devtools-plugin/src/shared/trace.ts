@@ -16,11 +16,7 @@ export type ReduxTraceCodeFrame = {
   column: number;
 };
 
-export type ReduxTraceStatus =
-  | 'pending'
-  | 'complete'
-  | 'failed'
-  | 'unavailable';
+export type ReduxTraceStatus = 'pending' | 'complete' | 'failed' | 'unavailable';
 
 export type ReduxActionTrace = {
   rawStack: string;

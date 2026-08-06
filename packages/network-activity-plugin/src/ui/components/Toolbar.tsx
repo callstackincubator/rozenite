@@ -23,9 +23,7 @@ export const Toolbar = () => {
         size="sm"
         onClick={onToggleRecording}
         className={`h-8 w-8 p-0 ${
-          isRecording
-            ? 'text-red-400 hover:text-red-300'
-            : 'text-gray-400 hover:text-blue-400'
+          isRecording ? 'text-red-400 hover:text-red-300' : 'text-gray-400 hover:text-blue-400'
         }`}
         title={isRecording ? 'Stop recording' : 'Start recording'}
       >

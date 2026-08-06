@@ -3,9 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 let captureResponseBodySpy: ReturnType<typeof vi.fn> | null = null;
 
-const loadFetchInterceptor = async (
-  expoFetchModule: { fetch: typeof fetch } | null = null,
-) => {
+const loadFetchInterceptor = async (expoFetchModule: { fetch: typeof fetch } | null = null) => {
   vi.resetModules();
   vi.doMock('../http-utils', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../http-utils')>();
@@ -32,17 +30,9 @@ const loadFetchInterceptor = async (
   return import('../fetch-interceptor');
 };
 
-const createExpoResponse = (
-  bodyChunks: string[],
-  headers: Record<string, string>,
-) => {
-  const encodedChunks = bodyChunks.map((chunk) =>
-    new TextEncoder().encode(chunk),
-  );
-  const totalSize = encodedChunks.reduce(
-    (sum, chunk) => sum + chunk.byteLength,
-    0,
-  );
+const createExpoResponse = (bodyChunks: string[], headers: Record<string, string>) => {
+  const encodedChunks = bodyChunks.map((chunk) => new TextEncoder().encode(chunk));
+  const totalSize = encodedChunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
 
   const createBody = () =>
     new ReadableStream<Uint8Array>({
@@ -99,14 +89,10 @@ describe('FetchInterceptor', () => {
 
     FetchInterceptor.setCallbacks({
       onRequestSent: (event) => events.push({ type: 'request-sent', event }),
-      onResponseReceived: (event) =>
-        events.push({ type: 'response-received', event }),
-      onRequestProgress: (event) =>
-        events.push({ type: 'request-progress', event }),
-      onRequestCompleted: (event) =>
-        events.push({ type: 'request-completed', event }),
-      onRequestFailed: (event) =>
-        events.push({ type: 'request-failed', event }),
+      onResponseReceived: (event) => events.push({ type: 'response-received', event }),
+      onRequestProgress: (event) => events.push({ type: 'request-progress', event }),
+      onRequestCompleted: (event) => events.push({ type: 'request-completed', event }),
+      onRequestFailed: (event) => events.push({ type: 'request-failed', event }),
       onResponseBody: (requestId, body) =>
         events.push({
           type: 'response-body',
@@ -134,15 +120,9 @@ describe('FetchInterceptor', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const requestSent = events.find((entry) => entry.type === 'request-sent');
-    const responseReceived = events.find(
-      (entry) => entry.type === 'response-received',
-    );
-    const progressEvents = events.filter(
-      (entry) => entry.type === 'request-progress',
-    );
-    const completed = events.find(
-      (entry) => entry.type === 'request-completed',
-    );
+    const responseReceived = events.find((entry) => entry.type === 'response-received');
+    const progressEvents = events.filter((entry) => entry.type === 'request-progress');
+    const completed = events.find((entry) => entry.type === 'request-completed');
     const bodyEvent = events.find((entry) => entry.type === 'response-body');
 
     expect(requestSent?.event).toMatchObject({
@@ -194,8 +174,7 @@ describe('FetchInterceptor', () => {
     });
     expect(
       events.filter(
-        (entry) =>
-          entry.type === 'request-completed' || entry.type === 'request-failed',
+        (entry) => entry.type === 'request-completed' || entry.type === 'request-failed',
       ),
     ).toHaveLength(1);
 
@@ -242,19 +221,14 @@ describe('FetchInterceptor', () => {
     });
     FetchInterceptor.enableInterception();
 
-    const received = await expoFetchModule.fetch(
-      'https://example.com/fallback',
-    );
+    const received = await expoFetchModule.fetch('https://example.com/fallback');
     await expect(received.json()).resolves.toEqual({ ok: true });
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(onRequestCompleted).toHaveBeenCalledTimes(1);
     expect(onRequestFailed).not.toHaveBeenCalled();
     expect(terminalEvents).toEqual(['request-completed']);
-    expect(onResponseBody).toHaveBeenCalledWith(
-      expect.any(String),
-      '{"ok":true}',
-    );
+    expect(onResponseBody).toHaveBeenCalledWith(expect.any(String), '{"ok":true}');
     FetchInterceptor.disableInterception();
   });
 
@@ -368,9 +342,7 @@ describe('FetchInterceptor', () => {
     });
     FetchInterceptor.enableInterception();
 
-    expect(await expoFetchModule.fetch('https://example.com/metadata')).toBe(
-      response,
-    );
+    expect(await expoFetchModule.fetch('https://example.com/metadata')).toBe(response);
     expect(onResponseBody).toHaveBeenCalledWith(expect.any(String), null);
     expect(onRequestCompleted).toHaveBeenCalledTimes(1);
     expect(onRequestFailed).not.toHaveBeenCalled();
@@ -398,10 +370,7 @@ describe('FetchInterceptor', () => {
   });
 
   it('restores a lazily materialized Expo global alias', async () => {
-    const originalGlobalDescriptor = Object.getOwnPropertyDescriptor(
-      globalThis,
-      'fetch',
-    );
+    const originalGlobalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'fetch');
     const originalExpoFetch = vi.fn();
     const expoFetchModule = { fetch: originalExpoFetch as typeof fetch };
     Object.defineProperty(globalThis, 'fetch', {
@@ -431,10 +400,7 @@ describe('FetchInterceptor', () => {
   });
 
   it('restores Expo fetch when its lazy global is installed after enable', async () => {
-    const originalGlobalDescriptor = Object.getOwnPropertyDescriptor(
-      globalThis,
-      'fetch',
-    );
+    const originalGlobalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'fetch');
     const reactNativeFetch = vi.fn();
     const originalExpoFetch = vi.fn();
     const expoFetchModule = { fetch: originalExpoFetch as typeof fetch };
@@ -490,9 +456,7 @@ describe('FetchInterceptor', () => {
     });
     FetchInterceptor.enableInterception();
 
-    await expect(expoFetchModule.fetch('https://example.com/api')).rejects.toBe(
-      abortError,
-    );
+    await expect(expoFetchModule.fetch('https://example.com/api')).rejects.toBe(abortError);
 
     expect(onRequestFailed).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -518,21 +482,14 @@ describe('FetchInterceptor', () => {
 
     FetchInterceptor.setCallbacks({
       onRequestSent: (event) => events.push({ type: 'request-sent', event }),
-      onRequestFailed: (event) =>
-        events.push({ type: 'request-failed', event }),
-      onRequestCompleted: (event) =>
-        events.push({ type: 'request-completed', event }),
+      onRequestFailed: (event) => events.push({ type: 'request-failed', event }),
+      onRequestCompleted: (event) => events.push({ type: 'request-completed', event }),
     });
     FetchInterceptor.enableInterception();
 
-    await expect(
-      expoFetchModule.fetch('https://example.com/api'),
-    ).rejects.toThrow('Network down');
+    await expect(expoFetchModule.fetch('https://example.com/api')).rejects.toThrow('Network down');
 
-    expect(events.map((entry) => entry.type)).toEqual([
-      'request-sent',
-      'request-failed',
-    ]);
+    expect(events.map((entry) => entry.type)).toEqual(['request-sent', 'request-failed']);
     expect(events[0]?.event).toMatchObject({
       request: {
         url: 'https://example.com/api',
@@ -548,8 +505,7 @@ describe('FetchInterceptor', () => {
     });
     expect(
       events.filter(
-        (entry) =>
-          entry.type === 'request-completed' || entry.type === 'request-failed',
+        (entry) => entry.type === 'request-completed' || entry.type === 'request-failed',
       ),
     ).toHaveLength(1);
 

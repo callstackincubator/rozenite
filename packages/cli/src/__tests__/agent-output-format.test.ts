@@ -7,9 +7,7 @@ describe('agent output format', () => {
   });
 
   it('prints compact JSON by default', () => {
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     printOutput({ a: 1, b: 'x' }, true);
 
@@ -17,9 +15,7 @@ describe('agent output format', () => {
   });
 
   it('prints pretty JSON when pretty flag is enabled', () => {
-    const stdoutWrite = vi
-      .spyOn(process.stdout, 'write')
-      .mockImplementation(() => true);
+    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     printOutput({ a: 1 }, true, true);
 

@@ -39,15 +39,12 @@ export const EditableTable = ({
     entryKey: string;
   }>({ isOpen: false, entryKey: '' });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns = useMemo<ColumnDef<MMKVEntry, any>[]>(
     () => [
       columnHelper.accessor('key', {
         header: 'Key',
         enableSorting: true,
-        cell: ({ getValue }) => (
-          <div className="text-gray-300 font-mono text-sm">{getValue()}</div>
-        ),
+        cell: ({ getValue }) => <div className="text-gray-300 font-mono text-sm">{getValue()}</div>,
       }),
       columnHelper.accessor('type', {
         header: 'Type',
@@ -184,24 +181,12 @@ export const EditableTable = ({
   const formatValue = (entry: MMKVEntry) => {
     switch (entry.type) {
       case 'string':
-        return (
-          <span className="text-green-300 font-mono">
-            "{entry.value as string}"
-          </span>
-        );
+        return <span className="text-green-300 font-mono">"{entry.value as string}"</span>;
       case 'number':
-        return (
-          <span className="text-blue-300 font-mono">
-            {entry.value as number}
-          </span>
-        );
+        return <span className="text-blue-300 font-mono">{entry.value as number}</span>;
       case 'boolean':
         return (
-          <span
-            className={`font-mono ${
-              entry.value ? 'text-green-400' : 'text-red-400'
-            }`}
-          >
+          <span className={`font-mono ${entry.value ? 'text-green-400' : 'text-red-400'}`}>
             {entry.value ? 'true' : 'false'}
           </span>
         );
@@ -209,13 +194,9 @@ export const EditableTable = ({
         const bufferArray = entry.value as number[];
         const displayValue =
           bufferArray.length > 5
-            ? `[${bufferArray.slice(0, 5).join(', ')}, ...${
-                bufferArray.length - 5
-              } more]`
+            ? `[${bufferArray.slice(0, 5).join(', ')}, ...${bufferArray.length - 5} more]`
             : `[${bufferArray.join(', ')}]`;
-        return (
-          <span className="text-purple-300 font-mono">{displayValue}</span>
-        );
+        return <span className="text-purple-300 font-mono">{displayValue}</span>;
       }
       default:
         return <span className="text-gray-400">Unknown</span>;
@@ -241,19 +222,14 @@ export const EditableTable = ({
                 <th
                   key={header.id}
                   className={`text-left text-xs font-medium text-gray-400 px-3 py-2 ${
-                    header.column.getCanSort()
-                      ? 'cursor-pointer select-none hover:bg-gray-700'
-                      : ''
+                    header.column.getCanSort() ? 'cursor-pointer select-none hover:bg-gray-700' : ''
                   }`}
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   <div className="flex items-center gap-1">
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getCanSort() && (
                       <span className="text-gray-500">
                         {{

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 // Learn more https://docs.expo.io/guides/customizing-metro
 // This app intentionally uses React Navigation with a custom AppRegistry entry point.
 process.env.EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK = '1';
@@ -5,12 +6,8 @@ process.env.EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK = '1';
 const { getDefaultConfig } = require('expo/metro-config');
 const { composeMetroConfigTransformers } = require('@rozenite/tools');
 const { withRozenite } = require('@rozenite/metro');
-const {
-  withRozeniteReduxDevTools,
-} = require('@rozenite/redux-devtools-plugin/metro');
-const {
-  withRozeniteRequireProfiler,
-} = require('@rozenite/require-profiler-plugin/metro');
+const { withRozeniteReduxDevTools } = require('@rozenite/redux-devtools-plugin/metro');
+const { withRozeniteRequireProfiler } = require('@rozenite/require-profiler-plugin/metro');
 const { withRozeniteWeb } = require('@rozenite/web/metro');
 const path = require('node:path');
 
@@ -33,8 +30,7 @@ const previousEnhanceMiddleware = config.server?.enhanceMiddleware;
 config.server = {
   ...config.server,
   enhanceMiddleware: (middleware) => {
-    const previousMiddleware =
-      previousEnhanceMiddleware?.(middleware) ?? middleware;
+    const previousMiddleware = previousEnhanceMiddleware?.(middleware) ?? middleware;
 
     return (req, res, next) => {
       res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');

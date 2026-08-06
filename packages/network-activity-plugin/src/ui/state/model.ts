@@ -112,12 +112,7 @@ export type WebSocketMessage = {
   timestamp: Timestamp;
 };
 
-export type WebSocketStatus =
-  | 'connecting'
-  | 'open'
-  | 'closing'
-  | 'closed'
-  | 'error';
+export type WebSocketStatus = 'connecting' | 'open' | 'closing' | 'closed' | 'error';
 
 export type WebSocketNetworkEntry = {
   id: RequestId;
@@ -134,10 +129,7 @@ export type WebSocketNetworkEntry = {
 };
 
 /* Shared */
-export type NetworkEntry =
-  | HttpNetworkEntry
-  | WebSocketNetworkEntry
-  | SSENetworkEntry;
+export type NetworkEntry = HttpNetworkEntry | WebSocketNetworkEntry | SSENetworkEntry;
 
 export type ProcessedRequest = {
   id: RequestId;

@@ -1,94 +1,82 @@
 import React, { useEffect, useRef, memo } from 'react';
-import {
-  View,
-  StyleSheet,
-  Image,
-  Animated,
-  PanResponder,
-  useWindowDimensions,
-} from 'react-native';
+import { View, StyleSheet, Image, Animated, PanResponder, useWindowDimensions } from 'react-native';
 import { ImageConfig } from '../../shared/types';
 
-export const SliderOverlayLayer: React.FC<{ config: ImageConfig }> = memo(
-  ({ config }) => {
-    const { width: SCREEN_WIDTH } = useWindowDimensions();
-    const splitPosition = useRef(new Animated.Value(SCREEN_WIDTH / 2)).current;
-    const currentPositionRef = useRef(SCREEN_WIDTH / 2);
+export const SliderOverlayLayer: React.FC<{ config: ImageConfig }> = memo(({ config }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const splitPosition = useRef(new Animated.Value(SCREEN_WIDTH / 2)).current;
+  const currentPositionRef = useRef(SCREEN_WIDTH / 2);
 
-    // Update split position if it's out of bounds after rotation
-    useEffect(() => {
-      if (currentPositionRef.current > SCREEN_WIDTH) {
-        const newPos = SCREEN_WIDTH / 2;
-        currentPositionRef.current = newPos;
-        splitPosition.setValue(newPos);
-      }
-    }, [SCREEN_WIDTH]);
-
-    const panResponder = useRef(
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderMove: (evt) => {
-          const newPosition = Math.max(
-            0,
-            Math.min(SCREEN_WIDTH, evt.nativeEvent.pageX),
-          );
-          splitPosition.setValue(newPosition);
-          currentPositionRef.current = newPosition;
-        },
-      }),
-    ).current;
-
-    if (!config.uri) {
-      return null;
+  // Update split position if it's out of bounds after rotation
+  useEffect(() => {
+    if (currentPositionRef.current > SCREEN_WIDTH) {
+      const newPos = SCREEN_WIDTH / 2;
+      currentPositionRef.current = newPos;
+      splitPosition.setValue(newPos);
     }
+  }, [SCREEN_WIDTH]);
 
-    return (
-      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-        {/* Left side - overlay image */}
-        <Animated.View
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderMove: (evt) => {
+        const newPosition = Math.max(0, Math.min(SCREEN_WIDTH, evt.nativeEvent.pageX));
+        splitPosition.setValue(newPosition);
+        currentPositionRef.current = newPosition;
+      },
+    }),
+  ).current;
+
+  if (!config.uri) {
+    return null;
+  }
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+      {/* Left side - overlay image */}
+      <Animated.View
+        style={[
+          styles.imageContainer,
+          {
+            width: splitPosition,
+          },
+        ]}
+        pointerEvents="none"
+      >
+        <Image
+          source={{ uri: config.uri }}
           style={[
-            styles.imageContainer,
+            styles.overlayImage,
             {
-              width: splitPosition,
+              width: SCREEN_WIDTH, // Fixed width to prevent resizing
+              opacity: config.opacity,
             },
           ]}
-          pointerEvents="none"
-        >
-          <Image
-            source={{ uri: config.uri }}
-            style={[
-              styles.overlayImage,
-              {
-                width: SCREEN_WIDTH, // Fixed width to prevent resizing
-                opacity: config.opacity,
-              },
-            ]}
-            resizeMode={config.resizeMode || 'contain'}
-          />
-        </Animated.View>
+          resizeMode={config.resizeMode || 'contain'}
+        />
+      </Animated.View>
 
-        {/* Draggable handle */}
-        <Animated.View
-          style={[
-            styles.dragHandle,
-            {
-              left: Animated.subtract(splitPosition, 22), // Half of dragHandle width (44/2)
-            },
-          ]}
-          {...panResponder.panHandlers}
-        >
-          <View style={styles.dragHandleBar} />
-          <View style={styles.dragHandleThumb}>
-            {/* Grip lines */}
-            <View style={styles.gripLine} />
-            <View style={styles.gripLine} />
-          </View>
-        </Animated.View>
-      </View>
-    );
-  },
-);
+      {/* Draggable handle */}
+      <Animated.View
+        style={[
+          styles.dragHandle,
+          {
+            left: Animated.subtract(splitPosition, 22), // Half of dragHandle width (44/2)
+          },
+        ]}
+        {...panResponder.panHandlers}
+      >
+        <View style={styles.dragHandleBar} />
+        <View style={styles.dragHandleThumb}>
+          {/* Grip lines */}
+          <View style={styles.gripLine} />
+          <View style={styles.gripLine} />
+        </View>
+      </Animated.View>
+    </View>
+  );
+});
 
 const styles = StyleSheet.create({
   imageContainer: {

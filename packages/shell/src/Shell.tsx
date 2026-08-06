@@ -19,16 +19,9 @@ import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
 const COLLAPSED_SIDEBAR_WIDTH = 48;
 const EXPANDED_SIDEBAR_WIDTH = 224;
-const SIDEBAR_SNAP_POINT =
-  (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 2;
-export function Shell({
-  plugins,
-  destroyOnDetachPlugins,
-  runtimeVersion,
-}: ShellConfiguration) {
-  const [selection, setSelection] = useState<ShellSelection>(() =>
-    getInitialSelection(plugins),
-  );
+const SIDEBAR_SNAP_POINT = (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 2;
+export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: ShellConfiguration) {
+  const [selection, setSelection] = useState<ShellSelection>(() => getInitialSelection(plugins));
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const contentFrames = useRef(new Map<string, HTMLIFrameElement>());
   const sidebarPanel = useRef<SplitPaneHandle>(null);
@@ -60,9 +53,7 @@ export function Shell({
       }
 
       if (
-        [...contentFrames.current.values()].some(
-          (frame) => event.source === frame.contentWindow,
-        )
+        [...contentFrames.current.values()].some((frame) => event.source === frame.contentWindow)
       ) {
         window.parent.postMessage(event.data, '*');
       }
@@ -76,13 +67,9 @@ export function Shell({
     () => plugins.find((plugin) => plugin.id === selection?.pluginId) ?? null,
     [plugins, selection?.pluginId],
   );
-  const activePanel = activePlugin?.panels.find(
-    (panel) => panel.id === selection?.panelId,
-  );
+  const activePanel = activePlugin?.panels.find((panel) => panel.id === selection?.panelId);
   const destroyedPluginIds = new Set(destroyOnDetachPlugins);
-  const panels = plugins.flatMap((plugin) =>
-    plugin.panels.map((panel) => ({ plugin, panel })),
-  );
+  const panels = plugins.flatMap((plugin) => plugin.panels.map((panel) => ({ plugin, panel })));
   const selectPanel = (plugin: ShellPlugin, panel: ShellPanel) => {
     setSelection({ pluginId: plugin.id, panelId: panel.id });
   };
@@ -144,16 +131,8 @@ export function Shell({
                   <img src={compactLogo} alt="Rozenite" className="h-6 w-6" />
                 ) : (
                   <>
-                    <img
-                      src={lightLogo}
-                      alt="Rozenite"
-                      className="h-6 w-auto dark:hidden"
-                    />
-                    <img
-                      src={darkLogo}
-                      alt="Rozenite"
-                      className="hidden h-6 w-auto dark:block"
-                    />
+                    <img src={lightLogo} alt="Rozenite" className="h-6 w-auto dark:hidden" />
+                    <img src={darkLogo} alt="Rozenite" className="hidden h-6 w-auto dark:block" />
                   </>
                 )}
               </header>
@@ -197,18 +176,12 @@ export function Shell({
                 </div>
               )}
               <footer className="mt-auto flex shrink-0 gap-1 border-t border-sidebar-border p-2">
-                {!isSidebarCollapsed && (
-                  <NewVersionFooter
-                    currentVersion={runtimeVersion}
-                  />
-                )}
+                {!isSidebarCollapsed && <NewVersionFooter currentVersion={runtimeVersion} />}
                 <Button
                   variant="ghost"
                   size="icon"
                   className="ml-auto"
-                  aria-label={
-                    isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'
-                  }
+                  aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                   onClick={() => resizeSidebar(!isSidebarCollapsed)}
                 >
                   {isSidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}

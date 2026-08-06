@@ -11,8 +11,6 @@ describe('cn', () => {
   });
 
   it('respects conditional class values', () => {
-    expect(cn('text-sm', { 'text-lg': true, 'text-xs': false })).toBe(
-      'text-lg',
-    );
+    expect(cn('text-sm', { 'text-lg': true, 'text-xs': false })).toBe('text-lg');
   });
 });

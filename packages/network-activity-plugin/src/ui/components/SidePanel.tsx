@@ -51,18 +51,14 @@ const createLegacyNetworkEntry = (
       body: httpDetails.request?.body,
       status: httpDetails.status,
       startTime: httpDetails.timestamp,
-      endTime: httpDetails.duration
-        ? httpDetails.timestamp + httpDetails.duration
-        : undefined,
+      endTime: httpDetails.duration ? httpDetails.timestamp + httpDetails.duration : undefined,
       duration: httpDetails.duration,
       ttfb: httpDetails.ttfb,
       type: httpDetails.resourceType,
       initiator: httpDetails.initiator,
       request: httpDetails.request,
       response: httpDetails.response,
-      responseBody: httpDetails.response?.body
-        ? { body: httpDetails.response.body }
-        : undefined,
+      responseBody: httpDetails.response?.body ? { body: httpDetails.response.body } : undefined,
       error: httpDetails.error,
       canceled: httpDetails.canceled,
       size: httpDetails.size,
@@ -76,9 +72,7 @@ const createLegacyNetworkEntry = (
       headers: {},
       status: wsDetails.status === 'open' ? 'finished' : 'pending',
       startTime: wsDetails.timestamp,
-      endTime: wsDetails.duration
-        ? wsDetails.timestamp + wsDetails.duration
-        : undefined,
+      endTime: wsDetails.duration ? wsDetails.timestamp + wsDetails.duration : undefined,
       duration: wsDetails.duration,
     };
   }
@@ -110,8 +104,7 @@ export const SidePanel = () => {
 
   // Get detailed information based on request type
   const httpDetails = selectedRequest.type === 'http' ? selectedRequest : null;
-  const wsDetails =
-    selectedRequest.type === 'websocket' ? selectedRequest : null;
+  const wsDetails = selectedRequest.type === 'websocket' ? selectedRequest : null;
   const sseDetails = selectedRequest.type === 'sse' ? selectedRequest : null;
 
   // Extract name from the request
@@ -131,63 +124,39 @@ export const SidePanel = () => {
         : sseDetails?.status || 'unknown';
 
   // Create legacy network entry for tab components
-  const legacyEntry = createLegacyNetworkEntry(
-    selectedRequest,
-    httpDetails,
-    wsDetails,
-  );
+  const legacyEntry = createLegacyNetworkEntry(selectedRequest, httpDetails, wsDetails);
   const legacyNetworkEntries = new Map<string, OldNetworkEntry>();
   if (legacyEntry) {
     legacyNetworkEntries.set(legacyEntry.requestId, legacyEntry);
   }
 
   const override = legacyEntry !== null ? overrides.get(legacyEntry.url) : null;
-  const supportsOverrides =
-    httpDetails?.source !== 'nitro' && httpDetails?.source !== 'expo';
-  const hasResponseOverride =
-    supportsOverrides && override && override.body ? true : false;
+  const supportsOverrides = httpDetails?.source !== 'nitro' && httpDetails?.source !== 'expo';
+  const hasResponseOverride = supportsOverrides && override && override.body ? true : false;
 
   const getTabsListTriggers = () => {
     if (httpDetails) {
       return (
         <>
-          <TabsTrigger
-            value="headers"
-            className="data-[state=active]:bg-gray-700"
-          >
+          <TabsTrigger value="headers" className="data-[state=active]:bg-gray-700">
             Headers
           </TabsTrigger>
-          <TabsTrigger
-            value="request"
-            className="data-[state=active]:bg-gray-700"
-          >
+          <TabsTrigger value="request" className="data-[state=active]:bg-gray-700">
             Request
           </TabsTrigger>
-          <TabsTrigger
-            value="response"
-            className="data-[state=active]:bg-gray-700"
-          >
+          <TabsTrigger value="response" className="data-[state=active]:bg-gray-700">
             Response
             {hasResponseOverride && (
               <span className="w-2 h-2 rounded-full bg-violet-300 ms-2 inline-block"></span>
             )}
           </TabsTrigger>
-          <TabsTrigger
-            value="cookies"
-            className="data-[state=active]:bg-gray-700"
-          >
+          <TabsTrigger value="cookies" className="data-[state=active]:bg-gray-700">
             Cookies
           </TabsTrigger>
-          <TabsTrigger
-            value="initiator"
-            className="data-[state=active]:bg-gray-700"
-          >
+          <TabsTrigger value="initiator" className="data-[state=active]:bg-gray-700">
             Initiator
           </TabsTrigger>
-          <TabsTrigger
-            value="timing"
-            className="data-[state=active]:bg-gray-700"
-          >
+          <TabsTrigger value="timing" className="data-[state=active]:bg-gray-700">
             Timing
           </TabsTrigger>
         </>
@@ -197,28 +166,16 @@ export const SidePanel = () => {
     if (sseDetails) {
       return (
         <>
-          <TabsTrigger
-            value="headers"
-            className="data-[state=active]:bg-gray-700"
-          >
+          <TabsTrigger value="headers" className="data-[state=active]:bg-gray-700">
             Headers
           </TabsTrigger>
-          <TabsTrigger
-            value="request"
-            className="data-[state=active]:bg-gray-700"
-          >
+          <TabsTrigger value="request" className="data-[state=active]:bg-gray-700">
             Request
           </TabsTrigger>
-          <TabsTrigger
-            value="messages"
-            className="data-[state=active]:bg-gray-700"
-          >
+          <TabsTrigger value="messages" className="data-[state=active]:bg-gray-700">
             Messages
           </TabsTrigger>
-          <TabsTrigger
-            value="initiator"
-            className="data-[state=active]:bg-gray-700"
-          >
+          <TabsTrigger value="initiator" className="data-[state=active]:bg-gray-700">
             Initiator
           </TabsTrigger>
         </>
@@ -227,10 +184,7 @@ export const SidePanel = () => {
 
     return (
       <>
-        <TabsTrigger
-          value="messages"
-          className="data-[state=active]:bg-gray-700"
-        >
+        <TabsTrigger value="messages" className="data-[state=active]:bg-gray-700">
           Messages
         </TabsTrigger>
       </>
@@ -325,16 +279,12 @@ export const SidePanel = () => {
       <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div
-            className={`w-3 h-3 rounded-full flex-shrink-0 ${getTypeColor(
-              selectedRequest.type,
-            )}`}
+            className={`w-3 h-3 rounded-full flex-shrink-0 ${getTypeColor(selectedRequest.type)}`}
           ></div>
           <span className="font-medium truncate">{requestName}</span>
           <Badge
             variant="outline"
-            className={`${getStatusColor(
-              requestStatus,
-            )} border-current flex-shrink-0`}
+            className={`${getStatusColor(requestStatus)} border-current flex-shrink-0`}
           >
             {requestStatus}
           </Badge>
@@ -353,9 +303,7 @@ export const SidePanel = () => {
       <div className="flex-1 overflow-hidden">
         <Tabs
           key={selectedRequest.id}
-          defaultValue={
-            selectedRequest.type === 'websocket' ? 'messages' : 'headers'
-          }
+          defaultValue={selectedRequest.type === 'websocket' ? 'messages' : 'headers'}
           className="h-full flex flex-col"
         >
           <TabsList

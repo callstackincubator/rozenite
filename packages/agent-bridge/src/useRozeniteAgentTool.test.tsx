@@ -2,15 +2,7 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  expectTypeOf,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { defineAgentToolContract } from '@rozenite/agent-shared';
 import { definePaginatedAgentToolContract, type PageResult } from './index.js';
 import type { AgentTool } from './types.js';
@@ -120,10 +112,7 @@ describe('useRozeniteAgentTool', () => {
   });
 
   it('supports typed contracts and explicit handler generics for plain tools', () => {
-    const typedTool = defineAgentToolContract<
-      { message: string },
-      { echoed: string }
-    >({
+    const typedTool = defineAgentToolContract<{ message: string }, { echoed: string }>({
       ...TOOL,
       name: 'typed-tool',
     });
@@ -155,10 +144,7 @@ describe('useRozeniteAgentTool', () => {
   it('exports paginated tool contracts from the bridge package', () => {
     type Result = PageResult<{ id: string; label?: string }>;
 
-    const tool = definePaginatedAgentToolContract<
-      Record<string, never>,
-      Result
-    >({
+    const tool = definePaginatedAgentToolContract<Record<string, never>, Result>({
       name: 'list',
       description: 'List rows',
       inputSchema: { type: 'object', properties: {} },
@@ -177,11 +163,7 @@ describe('useRozeniteAgentTool', () => {
   it('registers initially after listeners are attached', async () => {
     const { root, container } = await renderTool();
 
-    expect(mocks.client.onMessage).toHaveBeenNthCalledWith(
-      1,
-      'tool-call',
-      expect.any(Function),
-    );
+    expect(mocks.client.onMessage).toHaveBeenNthCalledWith(1, 'tool-call', expect.any(Function));
     expect(mocks.client.onMessage).toHaveBeenNthCalledWith(
       2,
       'agent-session-ready',

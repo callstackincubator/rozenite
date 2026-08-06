@@ -97,10 +97,7 @@ export async function importFileTransfer(
   };
 }
 
-export async function pathExists(
-  provider: FileSystemAdapter,
-  path: string,
-): Promise<boolean> {
+export async function pathExists(provider: FileSystemAdapter, path: string): Promise<boolean> {
   if (provider.pathExists) {
     return provider.pathExists(path);
   }

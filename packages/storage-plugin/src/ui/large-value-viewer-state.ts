@@ -14,15 +14,8 @@ export const textRowRanges = (text: string): TextRange[] => {
     const newline = text.indexOf('\n', start);
     const lineEnd = newline === -1 ? text.length : newline + 1;
 
-    for (
-      let chunkStart = start;
-      chunkStart < lineEnd;
-      chunkStart += TEXT_CHUNK_SIZE
-    ) {
-      ranges.push([
-        chunkStart,
-        Math.min(chunkStart + TEXT_CHUNK_SIZE, lineEnd),
-      ]);
+    for (let chunkStart = start; chunkStart < lineEnd; chunkStart += TEXT_CHUNK_SIZE) {
+      ranges.push([chunkStart, Math.min(chunkStart + TEXT_CHUNK_SIZE, lineEnd)]);
     }
 
     start = lineEnd;

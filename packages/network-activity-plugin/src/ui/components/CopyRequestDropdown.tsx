@@ -37,8 +37,7 @@ const copyOptions: CopyOption[] = [
     id: 'curl',
     label: 'cURL',
     generate: generateCurlCommand,
-    isEnabled: (request) =>
-      !checkRequestBodyBinary(request) || request.type === 'sse',
+    isEnabled: (request) => !checkRequestBodyBinary(request) || request.type === 'sse',
   },
 ];
 
@@ -60,9 +59,7 @@ export const CopyRequestDropdown = ({ selectedRequest }: CopyDropdownProps) => {
     [selectedRequest, copy],
   );
 
-  const filteredCopyOptions = copyOptions.filter((option) =>
-    option.isEnabled(selectedRequest),
-  );
+  const filteredCopyOptions = copyOptions.filter((option) => option.isEnabled(selectedRequest));
 
   if (filteredCopyOptions.length === 0) {
     return null;

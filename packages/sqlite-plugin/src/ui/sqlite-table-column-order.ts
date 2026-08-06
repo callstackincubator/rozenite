@@ -17,13 +17,8 @@ type ReorderTableColumnOrderInput = NormalizeTableColumnOrderInput & {
   overColumnId: string;
 };
 
-const applyUpdater = <TValue>(
-  updater: Updater<TValue>,
-  currentValue: TValue,
-): TValue =>
-  typeof updater === 'function'
-    ? (updater as (old: TValue) => TValue)(currentValue)
-    : updater;
+const applyUpdater = <TValue>(updater: Updater<TValue>, currentValue: TValue): TValue =>
+  typeof updater === 'function' ? (updater as (old: TValue) => TValue)(currentValue) : updater;
 
 export const getDefaultTableColumnOrder = (
   columnIds: string[],
@@ -95,9 +90,7 @@ export const reorderTableColumnOrder = ({
     return normalizedOrder;
   }
 
-  const movableColumnOrder = normalizedOrder.filter(
-    (columnId) => !fixedColumnIds.has(columnId),
-  );
+  const movableColumnOrder = normalizedOrder.filter((columnId) => !fixedColumnIds.has(columnId));
   const activeIndex = movableColumnOrder.indexOf(activeColumnId);
   const overIndex = movableColumnOrder.indexOf(overColumnId);
 
@@ -131,24 +124,16 @@ export const resolveTableColumnOrderUpdate = ({
   });
 };
 
-export const areColumnOrdersEqual = (
-  leftColumnOrder: string[],
-  rightColumnOrder: string[],
-) =>
+export const areColumnOrdersEqual = (leftColumnOrder: string[], rightColumnOrder: string[]) =>
   leftColumnOrder.length === rightColumnOrder.length &&
-  leftColumnOrder.every(
-    (columnId, columnIndex) => columnId === rightColumnOrder[columnIndex],
-  );
+  leftColumnOrder.every((columnId, columnIndex) => columnId === rightColumnOrder[columnIndex]);
 
 export const buildEntityTableId = (
   scope: 'data' | 'structure-columns' | 'structure-indexes',
   databaseId: string | null,
   schemaName: string | null,
   entityName: string | null,
-) =>
-  `${scope}:${databaseId ?? 'unknown'}:${schemaName ?? 'unknown'}:${entityName ?? 'unknown'}`;
+) => `${scope}:${databaseId ?? 'unknown'}:${schemaName ?? 'unknown'}:${entityName ?? 'unknown'}`;
 
-export const buildQueryTableId = (
-  databaseId: string | null,
-  columnIds: string[],
-) => `query:${databaseId ?? 'unknown'}:${JSON.stringify(columnIds)}`;
+export const buildQueryTableId = (databaseId: string | null, columnIds: string[]) =>
+  `query:${databaseId ?? 'unknown'}:${JSON.stringify(columnIds)}`;

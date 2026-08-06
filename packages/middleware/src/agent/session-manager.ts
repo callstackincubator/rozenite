@@ -58,11 +58,7 @@ export const createAgentSessionManager = (options: {
       request.cliVersion && metroVersion && request.cliVersion !== metroVersion
         ? `Connected Rozenite agent uses version ${request.cliVersion}, but Metro is running version ${metroVersion}. Integration may not work correctly.`
         : undefined;
-    const target = await resolveMetroTarget(
-      currentHost,
-      currentPort,
-      request.deviceId,
-    );
+    const target = await resolveMetroTarget(currentHost, currentPort, request.deviceId);
     const existing = sessions.get(target.id);
     if (existing) {
       if (existing.isReusable(target)) {
@@ -85,15 +81,12 @@ export const createAgentSessionManager = (options: {
       target,
       cliVersion: request.cliVersion,
       metroVersion,
-      resolveTarget: (deviceId) =>
-        resolveMetroTarget(currentHost, currentPort, deviceId),
+      resolveTarget: (deviceId) => resolveMetroTarget(currentHost, currentPort, deviceId),
       onTerminated: (sessionId) => {
         const current = sessions.get(sessionId);
         if (
           current === session &&
-          ['blocked', 'failed'].includes(
-            session.getInfo().healing?.outcome ?? '',
-          )
+          ['blocked', 'failed'].includes(session.getInfo().healing?.outcome ?? '')
         ) {
           // Keep terminal recovery information visible to `session show` and
           // `session list`; an explicit stop or a replacement target removes it.
@@ -126,19 +119,14 @@ export const createAgentSessionManager = (options: {
   const listSessions = (): AgentSessionInfo[] => {
     return Array.from(sessions.values())
       .map((session) => session.getInfo())
-      .sort(
-        (a, b) =>
-          a.deviceName.localeCompare(b.deviceName) || a.id.localeCompare(b.id),
-      );
+      .sort((a, b) => a.deviceName.localeCompare(b.deviceName) || a.id.localeCompare(b.id));
   };
 
   const getSession = (sessionId: string): AgentSessionInfo => {
     return getSessionOrThrow(sessionId).getInfo();
   };
 
-  const stopSession = async (
-    sessionId: string,
-  ): Promise<{ stopped: boolean }> => {
+  const stopSession = async (sessionId: string): Promise<{ stopped: boolean }> => {
     const session = getSessionOrThrow(sessionId);
     sessions.delete(sessionId);
     await session.stop();

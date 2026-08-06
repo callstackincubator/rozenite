@@ -33,16 +33,8 @@ export const Default: Story = {
       <NestedList>
         <NestedList.Item label="src" adornment={<FolderIcon />} defaultExpanded>
           <NestedList.Item label="index.ts" adornment={<FileIcon />} />
-          <NestedList.Item
-            label="components"
-            adornment={<FolderIcon />}
-            defaultExpanded
-          >
-            <NestedList.Item
-              label="Button.tsx"
-              adornment={<FileIcon />}
-              selected
-            />
+          <NestedList.Item label="components" adornment={<FolderIcon />} defaultExpanded>
+            <NestedList.Item label="Button.tsx" adornment={<FileIcon />} selected />
             <NestedList.Item label="List.tsx" adornment={<FileIcon />} />
           </NestedList.Item>
         </NestedList.Item>

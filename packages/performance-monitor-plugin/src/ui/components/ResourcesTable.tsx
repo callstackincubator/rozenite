@@ -50,10 +50,7 @@ const columns: ColumnDef<SerializedPerformanceResource>[] = [
   },
 ];
 
-export const ResourcesTable = ({
-  resources,
-  onRowClick,
-}: ResourcesTableProps) => {
+export const ResourcesTable = ({ resources, onRowClick }: ResourcesTableProps) => {
   return (
     <DataTable
       data={resources}

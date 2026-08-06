@@ -6,10 +6,7 @@ export type StepOptions = {
   error: string;
 };
 
-export const step = async (
-  { start, stop, error }: StepOptions,
-  fn: () => Promise<void>,
-) => {
+export const step = async ({ start, stop, error }: StepOptions, fn: () => Promise<void>) => {
   const step = spinner();
   step.start(start);
 

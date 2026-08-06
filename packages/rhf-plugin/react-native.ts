@@ -9,6 +9,5 @@ const isServer = typeof window === 'undefined';
 if (!isDev || isServer) {
   useRozeniteRHFPlugin = () => undefined;
 } else {
-  useRozeniteRHFPlugin =
-    require('./src/react-native/useRozeniteRHFPlugin').useRozeniteRHFPlugin;
+  useRozeniteRHFPlugin = require('./src/react-native/useRozeniteRHFPlugin').useRozeniteRHFPlugin;
 }

@@ -59,9 +59,7 @@ export const parseLimit = (rawLimit: string | undefined): number => {
 
   const parsed = Number(rawLimit);
   if (!Number.isFinite(parsed) || parsed < 1 || !Number.isInteger(parsed)) {
-    throw new Error(
-      `--limit must be an integer between 1 and ${MAX_PAGE_LIMIT}`,
-    );
+    throw new Error(`--limit must be an integer between 1 and ${MAX_PAGE_LIMIT}`);
   }
 
   return Math.min(parsed, MAX_PAGE_LIMIT);
@@ -148,8 +146,7 @@ export const shapePaginatedRows = (
   fields: readonly string[],
   nextAffordance: string | undefined,
 ): Record<string, unknown> => {
-  const next =
-    paged.page.hasMore && nextAffordance ? { next: nextAffordance } : {};
+  const next = paged.page.hasMore && nextAffordance ? { next: nextAffordance } : {};
 
   if (paged.items.length < 2) {
     return {
@@ -191,11 +188,7 @@ export const shapeToolResult = (
   fields: readonly string[],
   nextAffordance: string | undefined,
 ): unknown => {
-  if (
-    !isRecord(result) ||
-    !Array.isArray(result.items) ||
-    !isRecord(result.page)
-  ) {
+  if (!isRecord(result) || !Array.isArray(result.items) || !isRecord(result.page)) {
     return result;
   }
 
@@ -228,9 +221,7 @@ export const shapeToolResult = (
         page: {
           limit: page.limit,
           hasMore: page.hasMore,
-          ...(typeof page.nextCursor === 'string'
-            ? { nextCursor: page.nextCursor }
-            : {}),
+          ...(typeof page.nextCursor === 'string' ? { nextCursor: page.nextCursor } : {}),
         },
       },
       fields,

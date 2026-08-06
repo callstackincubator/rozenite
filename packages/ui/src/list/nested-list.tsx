@@ -18,14 +18,8 @@ export type NestedListProps = ComponentProps<'div'>;
 
 function NestedListRoot({ className, children, ...props }: NestedListProps) {
   return (
-    <div
-      data-slot="nested-list"
-      className={cn('flex flex-col gap-0.5', className)}
-      {...props}
-    >
-      <NestedListDepthContext.Provider value={0}>
-        {children}
-      </NestedListDepthContext.Provider>
+    <div data-slot="nested-list" className={cn('flex flex-col gap-0.5', className)} {...props}>
+      <NestedListDepthContext.Provider value={0}>{children}</NestedListDepthContext.Provider>
     </div>
   );
 }
@@ -62,8 +56,7 @@ function NestedListItem({
 }: NestedListItemProps) {
   const depth = useContext(NestedListDepthContext);
   const hasChildren = Children.count(children) > 0;
-  const [uncontrolledExpanded, setUncontrolledExpanded] =
-    useState(defaultExpanded);
+  const [uncontrolledExpanded, setUncontrolledExpanded] = useState(defaultExpanded);
   const expanded = expandedProp ?? uncontrolledExpanded;
 
   const toggleExpanded: ComponentProps<'button'>['onClick'] = (event) => {
@@ -117,10 +110,7 @@ function NestedListItem({
       </button>
       {hasChildren && expanded && (
         <NestedListDepthContext.Provider value={depth + 1}>
-          <div
-            data-slot="nested-list-children"
-            className="flex flex-col gap-0.5"
-          >
+          <div data-slot="nested-list-children" className="flex flex-col gap-0.5">
             {children}
           </div>
         </NestedListDepthContext.Provider>

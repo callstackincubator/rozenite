@@ -32,10 +32,7 @@ export class PluginView
       this.setHideOnDetach();
     }
 
-    SDK.TargetManager.TargetManager.instance().observeModels(
-      RozenitePluginModel,
-      this,
-    );
+    SDK.TargetManager.TargetManager.instance().observeModels(RozenitePluginModel, this);
 
     this.#renderLoader();
   }
@@ -43,16 +40,8 @@ export class PluginView
   modelAdded(model: RozenitePluginModel): void {
     this.#model = model;
 
-    model.addEventListener(
-      'InitializationCompleted',
-      this.#handleInitializationCompleted,
-      this,
-    );
-    model.addEventListener(
-      'InitializationFailed',
-      this.#handleInitializationFailed,
-      this,
-    );
+    model.addEventListener('InitializationCompleted', this.#handleInitializationCompleted, this);
+    model.addEventListener('InitializationFailed', this.#handleInitializationFailed, this);
     model.addEventListener('Destroyed', this.#handleBackendDestroyed, this);
 
     if (model.isInitialized()) {
@@ -66,16 +55,8 @@ export class PluginView
   }
 
   modelRemoved(model: RozenitePluginModel): void {
-    model.removeEventListener(
-      'InitializationCompleted',
-      this.#handleInitializationCompleted,
-      this,
-    );
-    model.removeEventListener(
-      'InitializationFailed',
-      this.#handleInitializationFailed,
-      this,
-    );
+    model.removeEventListener('InitializationCompleted', this.#handleInitializationCompleted, this);
+    model.removeEventListener('InitializationFailed', this.#handleInitializationFailed, this);
     model.removeEventListener('Destroyed', this.#handleBackendDestroyed, this);
   }
 
@@ -83,9 +64,7 @@ export class PluginView
     this.#renderDevToolsView();
   }
 
-  #handleInitializationFailed({
-    data: errorMessage,
-  }: RuntimeEvent<string>): void {
+  #handleInitializationFailed({ data: errorMessage }: RuntimeEvent<string>): void {
     this.#renderErrorView(errorMessage);
   }
 

@@ -10,9 +10,7 @@ import { FakeWebSocket, createChromeStub } from './stubs.js';
 
 const noopLogger = { info: () => {}, warn: () => {}, error: () => {} };
 
-const createExtensionWithStubs = (
-  chromeStub: ReturnType<typeof createChromeStub>,
-) => {
+const createExtensionWithStubs = (chromeStub: ReturnType<typeof createChromeStub>) => {
   globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
   (globalThis as { chrome?: unknown }).chrome = chromeStub;
 
@@ -36,17 +34,16 @@ const simulatePageAdded = async (
   (
     globalThis as { chrome?: ReturnType<typeof createChromeStub> }
   ).chrome!.configure.setDebuggerTargets([{ id: targetId, tabId }]);
-  (
-    globalThis as { chrome?: ReturnType<typeof createChromeStub> }
-  ).chrome!.configure.setTabData(tabId, {
-    title: 'Test',
-  });
+  (globalThis as { chrome?: ReturnType<typeof createChromeStub> }).chrome!.configure.setTabData(
+    tabId,
+    {
+      title: 'Test',
+    },
+  );
   await ext.pageManager.onNavigationCompleted({ tabId, url, frameId: 0 });
 };
 
-const wireChromeListeners = (
-  ext: ReturnType<typeof createExtensionWithStubs>,
-) => {
+const wireChromeListeners = (ext: ReturnType<typeof createExtensionWithStubs>) => {
   (
     globalThis as { chrome?: ReturnType<typeof createChromeStub> }
   ).chrome!.webNavigation.onCompleted.addListener((...args: unknown[]) =>
@@ -56,9 +53,7 @@ const wireChromeListeners = (
   );
   (
     globalThis as { chrome?: ReturnType<typeof createChromeStub> }
-  ).chrome!.tabs.onRemoved.addListener((tabId: number) =>
-    ext.pageManager.onTabRemoved(tabId),
-  );
+  ).chrome!.tabs.onRemoved.addListener((tabId: number) => ext.pageManager.onTabRemoved(tabId));
 };
 
 const simulateTabRemoved = (tabId: number) => {
@@ -87,11 +82,7 @@ describe('Extension integration', () => {
 
   it('no socket before page added', () => {
     createExtensionWithStubs(chromeStub);
-    assert.strictEqual(
-      FakeWebSocket.instances.length,
-      0,
-      'No WebSocket should be created at init',
-    );
+    assert.strictEqual(FakeWebSocket.instances.length, 0, 'No WebSocket should be created at init');
   });
 
   it('socket created on first page', async () => {
@@ -165,12 +156,8 @@ describe('Extension integration', () => {
     await simulatePageAdded(ext, 1, 'http://localhost:8081/');
     await simulatePageAdded(ext, 2, 'http://localhost:3000/');
 
-    const ws8081 = FakeWebSocket.instances.find((ws) =>
-      ws.url.includes('8081'),
-    );
-    const ws3000 = FakeWebSocket.instances.find((ws) =>
-      ws.url.includes('3000'),
-    );
+    const ws8081 = FakeWebSocket.instances.find((ws) => ws.url.includes('8081'));
+    const ws3000 = FakeWebSocket.instances.find((ws) => ws.url.includes('3000'));
 
     simulateTabRemoved(1);
 
@@ -202,9 +189,6 @@ describe('Extension integration', () => {
     const ws = FakeWebSocket.instances[0];
     simulateTabRemoved(1);
 
-    assert.ok(
-      !ws._closed,
-      'WebSocket should remain open when one of two pages removed',
-    );
+    assert.ok(!ws._closed, 'WebSocket should remain open when one of two pages removed');
   });
 });

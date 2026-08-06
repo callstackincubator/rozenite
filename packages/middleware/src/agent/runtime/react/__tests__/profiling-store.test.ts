@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  createProfilingStore,
-  normalizeProfilingDataEvent,
-} from '../profiling-store.js';
+import { createProfilingStore, normalizeProfilingDataEvent } from '../profiling-store.js';
 
 describe('profiling store', () => {
   it('waits for all participating renderers before completing processing', () => {

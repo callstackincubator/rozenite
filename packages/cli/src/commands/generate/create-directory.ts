@@ -1,9 +1,7 @@
 import fs from 'node:fs/promises';
 import { step } from '../../utils/steps.js';
 
-export const createProjectDirectory = async (
-  projectRoot: string,
-): Promise<void> => {
+export const createProjectDirectory = async (projectRoot: string): Promise<void> => {
   await step(
     {
       start: 'Creating plugin directory',

@@ -86,10 +86,7 @@ const getToolCount = (
   handler: AgentMessageHandler,
   services: LocalAgentToolService[],
 ): number => {
-  const localToolCount = services.reduce(
-    (count, service) => count + service.getTools().length,
-    0,
-  );
+  const localToolCount = services.reduce((count, service) => count + service.getTools().length, 0);
 
   return handler.getTools(target.id).length + localToolCount;
 };
@@ -106,10 +103,7 @@ export const createAgentSession = (options: {
 }) => {
   let target = options.target;
   const handler = createAgentMessageHandler();
-  const artifacts = createAgentArtifacts(
-    options.projectRoot,
-    options.target.id,
-  );
+  const artifacts = createAgentArtifacts(options.projectRoot, options.target.id);
   const createdAt = Date.now();
 
   let lastActivityAt = createdAt;
@@ -265,9 +259,7 @@ export const createAgentSession = (options: {
       quietTimer: null,
       timeoutTimer: setTimeout(() => {
         rejectStartReadiness(
-          new Error(
-            'Plugin tools did not re-register after the agent session became ready',
-          ),
+          new Error('Plugin tools did not re-register after the agent session became ready'),
         );
       }, PLUGIN_READINESS_MAX_WAIT_MS),
     };
@@ -279,15 +271,9 @@ export const createAgentSession = (options: {
     }
 
     const registeredToolNames = new Set(
-      handler
-        .getRegisteredPluginTools(options.target.id)
-        .map((tool) => tool.name),
+      handler.getRegisteredPluginTools(options.target.id).map((tool) => tool.name),
     );
-    if (
-      Array.from(expectedPluginToolNames).every((name) =>
-        registeredToolNames.has(name),
-      )
-    ) {
+    if (Array.from(expectedPluginToolNames).every((name) => registeredToolNames.has(name))) {
       schedulePluginReadinessQuietTimer();
     }
   };
@@ -295,10 +281,7 @@ export const createAgentSession = (options: {
   const isCurrentGeneration = (generation: number): boolean =>
     !stopped && generation === connectionGeneration;
 
-  const emitCDPEvent = (
-    method: string,
-    params: Record<string, unknown>,
-  ): void => {
+  const emitCDPEvent = (method: string, params: Record<string, unknown>): void => {
     const listeners = cdpEventListeners.get(method);
     if (!listeners) {
       return;
@@ -314,9 +297,7 @@ export const createAgentSession = (options: {
     params?: Record<string, unknown>,
   ): Promise<Record<string, unknown>> => {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      return markPromiseAsHandled(
-        Promise.reject(new Error('CDP websocket is not connected')),
-      );
+      return markPromiseAsHandled(Promise.reject(new Error('CDP websocket is not connected')));
     }
 
     const commandId = nextCommandId++;
@@ -383,10 +364,7 @@ export const createAgentSession = (options: {
     }, BOOTSTRAP_DELAY_MS);
   };
 
-  const sendDomainMessage = (
-    domain: string,
-    message: unknown,
-  ): Promise<void> => {
+  const sendDomainMessage = (domain: string, message: unknown): Promise<void> => {
     const serializedMessage = JSON.stringify(message);
     const escapedMessage = JSON.stringify(serializedMessage);
     return markPromiseAsHandled(
@@ -415,11 +393,7 @@ export const createAgentSession = (options: {
     logger.info(
       `Rozenite for Agents connected to device ${options.target.name} (${options.target.id}).`,
     );
-    if (
-      options.cliVersion &&
-      options.metroVersion &&
-      options.cliVersion !== options.metroVersion
-    ) {
+    if (options.cliVersion && options.metroVersion && options.cliVersion !== options.metroVersion) {
       logger.warn(
         `Connected Rozenite agent uses version ${options.cliVersion}, but Metro is running version ${options.metroVersion}. Integration may not work correctly.`,
       );
@@ -448,17 +422,12 @@ export const createAgentSession = (options: {
     });
   };
 
-  const waitForFuseboxDispatcherToBeInitialized = async (
-    attempt = 1,
-  ): Promise<void> => {
+  const waitForFuseboxDispatcherToBeInitialized = async (attempt = 1): Promise<void> => {
     if (attempt >= DISPATCHER_INIT_MAX_ATTEMPTS) {
       throw new Error('Failed to wait for initialization: it took too long');
     }
 
-    const response = await evaluateRuntime(
-      `globalThis.${RUNTIME_GLOBAL} != undefined`,
-      true,
-    );
+    const response = await evaluateRuntime(`globalThis.${RUNTIME_GLOBAL} != undefined`, true);
 
     if (response.exceptionDetails) {
       throw new Error(
@@ -556,9 +525,7 @@ export const createAgentSession = (options: {
     activeAccumulatedDomains.clear();
   };
 
-  const waitForRecoveryTarget = async (
-    generation: number,
-  ): Promise<MetroTarget> => {
+  const waitForRecoveryTarget = async (generation: number): Promise<MetroTarget> => {
     if (!options.resolveTarget) {
       throw new Error('This session cannot resolve a fresh Metro target');
     }
@@ -593,9 +560,7 @@ export const createAgentSession = (options: {
     bindingName = null;
     bootstrapped = false;
     connectedAt = undefined;
-    rejectStartReadiness(
-      new Error('CDP connection closed before bootstrap completed'),
-    );
+    rejectStartReadiness(new Error('CDP connection closed before bootstrap completed'));
     handler.disconnectDevice(options.target.id);
     for (const service of localServices) {
       service.onDisconnected();
@@ -695,14 +660,10 @@ export const createAgentSession = (options: {
     bindingName = null;
     bootstrapped = false;
     connectedAt = undefined;
-    rejectStartReadiness(
-      new Error('CDP connection closed before bootstrap completed'),
-    );
+    rejectStartReadiness(new Error('CDP connection closed before bootstrap completed'));
 
     const previousPluginToolNames = new Set(
-      handler
-        .getRegisteredPluginTools(options.target.id)
-        .map((tool) => tool.name),
+      handler.getRegisteredPluginTools(options.target.id).map((tool) => tool.name),
     );
     handler.disconnectDevice(options.target.id);
 
@@ -726,8 +687,7 @@ export const createAgentSession = (options: {
     if (reason.includes(DEVTOOLS_TOOK_CONNECTION_REASON)) {
       status = 'stopped';
       stopped = true;
-      const message =
-        'React Native DevTools took the connection — close it and retry.';
+      const message = 'React Native DevTools took the connection — close it and retry.';
       lastError = message;
       healing = { outcome: 'blocked', message, at: Date.now() };
       void disposeServices().finally(() => {
@@ -736,8 +696,8 @@ export const createAgentSession = (options: {
       return;
     }
 
-    const recoveryReason = Array.from(RECOVERABLE_CLOSE_REASONS).find(
-      (candidate) => reason.includes(candidate),
+    const recoveryReason = Array.from(RECOVERABLE_CLOSE_REASONS).find((candidate) =>
+      reason.includes(candidate),
     );
     if (recoveryReason) {
       expectedPluginToolNames = previousPluginToolNames;
@@ -774,9 +734,7 @@ export const createAgentSession = (options: {
       }
 
       pending.resolve(
-        message.result &&
-          typeof message.result === 'object' &&
-          !Array.isArray(message.result)
+        message.result && typeof message.result === 'object' && !Array.isArray(message.result)
           ? (message.result as Record<string, unknown>)
           : {},
       );
@@ -784,16 +742,13 @@ export const createAgentSession = (options: {
     }
 
     if (typeof message.method === 'string') {
-      emitCDPEvent(
-        message.method,
-        (message.params as Record<string, unknown> | undefined) || {},
-      );
+      emitCDPEvent(message.method, (message.params as Record<string, unknown> | undefined) || {});
     }
 
     if (
       message.method === 'Runtime.executionContextCreated' &&
-      (message.params as { context?: { name?: string } } | undefined)?.context
-        ?.name === MAIN_EXECUTION_CONTEXT_NAME
+      (message.params as { context?: { name?: string } } | undefined)?.context?.name ===
+        MAIN_EXECUTION_CONTEXT_NAME
     ) {
       bootstrapped = false;
       scheduleBootstrap();
@@ -816,10 +771,7 @@ export const createAgentSession = (options: {
 
     logger.debug('Received Rozenite binding payload.', bindingPayload);
     if (bindingPayload.domain === 'rozenite') {
-      if (
-        !bindingPayload.message ||
-        typeof bindingPayload.message !== 'object'
-      ) {
+      if (!bindingPayload.message || typeof bindingPayload.message !== 'object') {
         return;
       }
 
@@ -852,11 +804,7 @@ export const createAgentSession = (options: {
       ws = socket;
 
       socket.once('open', () => {
-        if (
-          !isCurrentGeneration(generation) ||
-          ws !== socket ||
-          activeSocketAttempt !== attempt
-        ) {
+        if (!isCurrentGeneration(generation) || ws !== socket || activeSocketAttempt !== attempt) {
           socket.close();
           return;
         }
@@ -925,9 +873,7 @@ export const createAgentSession = (options: {
         ws = null;
         handleSocketClosed(getCloseReason(reason), generation);
         if (!settled) {
-          reject(
-            new Error('CDP websocket closed before session initialization'),
-          );
+          reject(new Error('CDP websocket closed before session initialization'));
         }
       });
     });
@@ -957,22 +903,14 @@ export const createAgentSession = (options: {
     ];
   };
 
-  const callTool = async (
-    toolName: string,
-    args: unknown,
-  ): Promise<unknown> => {
+  const callTool = async (toolName: string, args: unknown): Promise<unknown> => {
     if (status !== 'connected') {
       const recovery = recoveryPromise;
-      if (
-        recovery &&
-        ['getTree', 'getMessages', 'listRequests'].includes(toolName)
-      ) {
+      if (recovery && ['getTree', 'getMessages', 'listRequests'].includes(toolName)) {
         await recovery;
         return await callTool(toolName, args);
       }
-      throw new Error(
-        `Session "${options.target.id}" is not connected to a device`,
-      );
+      throw new Error(`Session "${options.target.id}" is not connected to a device`);
     }
 
     const lostDomain = lostAccumulatedDomains.get(toolName);
@@ -996,14 +934,7 @@ export const createAgentSession = (options: {
       if (started) {
         activeAccumulatedDomains.set(started[0], started[1]);
       }
-      if (
-        [
-          'stopProfiling',
-          'stopRecording',
-          'stopTrace',
-          'stopSampling',
-        ].includes(toolName)
-      ) {
+      if (['stopProfiling', 'stopRecording', 'stopTrace', 'stopSampling'].includes(toolName)) {
         activeAccumulatedDomains.delete(toolName);
       }
     };
@@ -1022,10 +953,7 @@ export const createAgentSession = (options: {
       return result;
     } catch (error) {
       const recovery = recoveryPromise;
-      if (
-        recovery &&
-        ['getTree', 'getMessages', 'listRequests'].includes(toolName)
-      ) {
+      if (recovery && ['getTree', 'getMessages', 'listRequests'].includes(toolName)) {
         await recovery;
         return await callTool(toolName, args);
       }
@@ -1050,9 +978,7 @@ export const createAgentSession = (options: {
           return;
         }
       }
-      rejectStartReadiness(
-        error instanceof Error ? error : new Error(String(error)),
-      );
+      rejectStartReadiness(error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
 
@@ -1070,9 +996,7 @@ export const createAgentSession = (options: {
     recoveryPromise = null;
     clearBootstrapTimer();
     clearPluginReadiness();
-    rejectStartReadiness(
-      new Error('Agent session stopped before bootstrap completed'),
-    );
+    rejectStartReadiness(new Error('Agent session stopped before bootstrap completed'));
     await disposeServices();
     logDisconnected();
 

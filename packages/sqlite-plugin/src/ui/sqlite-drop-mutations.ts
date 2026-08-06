@@ -1,10 +1,7 @@
 import { quoteSqlIdentifier } from '../shared/sql';
 import type { SqliteEntity } from './sqlite-introspection';
 
-export type SqliteDropTarget = Pick<
-  SqliteEntity,
-  'schemaName' | 'name' | 'type'
->;
+export type SqliteDropTarget = Pick<SqliteEntity, 'schemaName' | 'name' | 'type'>;
 
 const buildQualifiedEntityName = (schemaName: string, entityName: string) =>
   `${quoteSqlIdentifier(schemaName)}.${quoteSqlIdentifier(entityName)}`;
@@ -25,9 +22,7 @@ export const buildDropEntitySql = (entity: SqliteDropTarget): string => {
  * relative order within each group. This keeps a view that references a
  * table from ever being left dangling mid-sweep.
  */
-export const orderEntitiesForDrop = (
-  entities: SqliteDropTarget[],
-): SqliteDropTarget[] => [
+export const orderEntitiesForDrop = (entities: SqliteDropTarget[]): SqliteDropTarget[] => [
   ...entities.filter((entity) => entity.type === 'view'),
   ...entities.filter((entity) => entity.type === 'table'),
 ];
@@ -52,9 +47,7 @@ export const SQLITE_READ_FOREIGN_KEYS_SQL = 'PRAGMA foreign_keys';
 export const buildSetForeignKeysSql = (enabled: boolean): string =>
   `PRAGMA foreign_keys = ${enabled ? 'ON' : 'OFF'}`;
 
-export const isForeignKeysEnabled = (
-  rows: Record<string, unknown>[],
-): boolean => {
+export const isForeignKeysEnabled = (rows: Record<string, unknown>[]): boolean => {
   const rawValue = rows[0]?.foreign_keys;
   return Number(rawValue) === 1;
 };

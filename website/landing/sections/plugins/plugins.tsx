@@ -26,8 +26,7 @@ export const Plugins = () => (
           <GridFour size={20} />
         </span>
         <span className={styles.moreText}>
-          +{REMAINING_PLUGIN_COUNT} more official plugins for other libraries
-          and development tasks.
+          +{REMAINING_PLUGIN_COUNT} more official plugins for other libraries and development tasks.
         </span>
         <span className={styles.moreCta}>
           Browse plugins

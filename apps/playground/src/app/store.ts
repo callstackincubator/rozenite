@@ -20,9 +20,7 @@ const createCounterStore = (name: string) =>
   });
 
 export const primaryStore = createCounterStore('playground-primary-counter');
-export const secondaryStore = createCounterStore(
-  'playground-secondary-counter',
-);
+export const secondaryStore = createCounterStore('playground-secondary-counter');
 
 export type RootState = ReturnType<typeof primaryStore.getState>;
 export type AppDispatch = typeof primaryStore.dispatch;

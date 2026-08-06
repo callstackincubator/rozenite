@@ -9,15 +9,10 @@ import { createStore, type Action } from 'redux';
 import { rozeniteDevToolsEnhancer } from '../runtime';
 import { getReduxActionDetailsResult } from '../redux-devtools-agent';
 import { clearReduxDevToolsStoreRegistryForTests } from '../redux-devtools-registry';
-import type {
-  ReduxDevToolsPanelCommand,
-  ReduxDevToolsRuntimeMessage,
-} from '../shared/protocol';
+import type { ReduxDevToolsPanelCommand, ReduxDevToolsRuntimeMessage } from '../shared/protocol';
 
 const bridge = vi.hoisted(() => ({
-  panelCommandListener: undefined as
-    | ((command: ReduxDevToolsPanelCommand) => void)
-    | undefined,
+  panelCommandListener: undefined as ((command: ReduxDevToolsPanelCommand) => void) | undefined,
   sentMessages: [] as ReduxDevToolsRuntimeMessage[],
 }));
 
@@ -26,9 +21,7 @@ vi.mock('../runtime-bridge', () => ({
   sendRuntimeMessage: (message: ReduxDevToolsRuntimeMessage) => {
     bridge.sentMessages.push(message);
   },
-  subscribeToPanelCommands: (
-    listener: (command: ReduxDevToolsPanelCommand) => void,
-  ) => {
+  subscribeToPanelCommands: (listener: (command: ReduxDevToolsPanelCommand) => void) => {
     bridge.panelCommandListener = listener;
 
     return () => {
@@ -62,10 +55,7 @@ const initialState: TestState = {
   largeValue: 'initial-large-value',
 };
 
-const reducer = (
-  state: TestState = initialState,
-  action: TestAction,
-): TestState => {
+const reducer = (state: TestState = initialState, action: TestAction): TestState => {
   if (action.type === 'counter/add') {
     return {
       counter: state.counter + (action.payload ?? 0),
@@ -113,8 +103,7 @@ afterEach(() => {
 
 describe('redux devtools runtime', () => {
   it('streams sanitized lifted state snapshots through PARTIAL_STATE', async () => {
-    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } =
-      await setupRuntime();
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } = await setupRuntime();
 
     const store = createStore(
       reducer,
@@ -137,10 +126,7 @@ describe('redux devtools runtime', () => {
     sendPanelCommand({ type: 'start' });
 
     const requests = getStateUpdateRequests(sentMessages);
-    expect(requests.map((request) => request.type)).toEqual([
-      'STATE',
-      'PARTIAL_STATE',
-    ]);
+    expect(requests.map((request) => request.type)).toEqual(['STATE', 'PARTIAL_STATE']);
 
     const initialPayload = parse(requests[0].payload) as {
       computedStates: Array<{ state: unknown }>;
@@ -158,8 +144,7 @@ describe('redux devtools runtime', () => {
   });
 
   it('sanitizes live action updates after monitoring starts', async () => {
-    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } =
-      await setupRuntime();
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } = await setupRuntime();
 
     const store = createStore(
       reducer,
@@ -201,8 +186,7 @@ describe('redux devtools runtime', () => {
   });
 
   it('reconstructs maxAge-trimmed history in the Redux DevTools reducer', async () => {
-    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } =
-      await setupRuntime();
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } = await setupRuntime();
 
     const store = createStore(
       reducer,
@@ -240,16 +224,12 @@ describe('redux devtools runtime', () => {
 
     const instanceState = state.states[requests[0].instanceId];
 
-    expect(requests.map((request) => request.type)).toEqual([
-      'STATE',
-      'PARTIAL_STATE',
-    ]);
+    expect(requests.map((request) => request.type)).toEqual(['STATE', 'PARTIAL_STATE']);
     expect(instanceState.committedState).toEqual({ counter: 2 });
-    expect(
-      instanceState.computedStates.map(
-        (entry: { state: unknown }) => entry.state,
-      ),
-    ).toEqual([{ counter: 2 }, { counter: 3 }]);
+    expect(instanceState.computedStates.map((entry: { state: unknown }) => entry.state)).toEqual([
+      { counter: 2 },
+      { counter: 3 },
+    ]);
     expect(instanceState.currentStateIndex).toBe(1);
   });
 });
@@ -260,8 +240,7 @@ describe('redux devtools runtime tracing', () => {
       reducer,
       rozeniteDevToolsEnhancer({
         maxAge: 2,
-        trace: (action) =>
-          `Error\n    at ${action.type} (http://localhost:8081/index.bundle:1:1)`,
+        trace: (action) => `Error\n    at ${action.type} (http://localhost:8081/index.bundle:1:1)`,
         traceSymbolication: false,
       }),
     );

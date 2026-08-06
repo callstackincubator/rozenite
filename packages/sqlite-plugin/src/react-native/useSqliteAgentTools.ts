@@ -1,8 +1,5 @@
 import { useCallback } from 'react';
-import {
-  useRozenitePluginAgentTool,
-  type AgentTool,
-} from '@rozenite/agent-bridge';
+import { useRozenitePluginAgentTool, type AgentTool } from '@rozenite/agent-bridge';
 import { formatSqliteError } from '../shared/bridge-values';
 import { normalizeSingleStatementSql, splitSqlStatements } from '../shared/sql';
 import type { SqliteExecuteStatementsError } from '../shared/types';
@@ -34,19 +31,15 @@ const executeSqlTool: AgentTool = {
       },
       sql: {
         type: 'string',
-        description:
-          'SQL to execute. May contain multiple semicolon-separated statements.',
+        description: 'SQL to execute. May contain multiple semicolon-separated statements.',
       },
     },
     required: ['databaseId', 'sql'],
   },
 };
 
-const isExecuteStatementsError = (
-  error: unknown,
-): error is SqliteExecuteStatementsError =>
-  error instanceof Error &&
-  ('completedResults' in error || 'failedStatementIndex' in error);
+const isExecuteStatementsError = (error: unknown): error is SqliteExecuteStatementsError =>
+  error instanceof Error && ('completedResults' in error || 'failedStatementIndex' in error);
 
 export const useSqliteAgentTools = (views: SqliteDatabaseView[]) => {
   const resolveDatabase = useCallback(
@@ -55,9 +48,7 @@ export const useSqliteAgentTools = (views: SqliteDatabaseView[]) => {
 
       if (!database) {
         const available = views.map((v) => v.id).join(', ');
-        throw new Error(
-          `Unknown databaseId "${databaseId}". Available: ${available || '(none)'}`,
-        );
+        throw new Error(`Unknown databaseId "${databaseId}". Available: ${available || '(none)'}`);
       }
 
       return database;
@@ -125,10 +116,7 @@ export const useSqliteAgentTools = (views: SqliteDatabaseView[]) => {
             statementSegments.length - 1,
           ),
         );
-        const completedResults = (error.completedResults ?? []).slice(
-          0,
-          failedStatementIndex,
-        );
+        const completedResults = (error.completedResults ?? []).slice(0, failedStatementIndex);
 
         return {
           databaseId,

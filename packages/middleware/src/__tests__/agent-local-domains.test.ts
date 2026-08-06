@@ -36,15 +36,12 @@ describe('paginated local domain contracts', () => {
       subscribeToCDPEvent: () => () => {},
     });
 
-    expect(
-      react.getTools().find((tool) => tool.name === 'getTree')?.pagination,
-    ).toMatchObject({
+    expect(react.getTools().find((tool) => tool.name === 'getTree')?.pagination).toMatchObject({
       kind: 'cursor',
       fields: expect.arrayContaining(['nodeId', 'childIds', 'depth']),
     });
     expect(
-      network.getTools().find((tool) => tool.name === 'listRequests')
-        ?.pagination,
+      network.getTools().find((tool) => tool.name === 'listRequests')?.pagination,
     ).toMatchObject({
       kind: 'cursor',
       fields: expect.arrayContaining(['requestId', 'url', 'status']),
@@ -69,9 +66,7 @@ describe('paginated local domain contracts', () => {
       subscribeToCDPEvent: () => () => {},
     });
 
-    const getTreePagination = react
-      .getTools()
-      .find((tool) => tool.name === 'getTree')?.pagination;
+    const getTreePagination = react.getTools().find((tool) => tool.name === 'getTree')?.pagination;
     const listRequestsPagination = network
       .getTools()
       .find((tool) => tool.name === 'listRequests')?.pagination;
@@ -112,8 +107,7 @@ describe('memory domain service', () => {
     );
     const finalize = vi.fn(async () => ({
       path: '/tmp/snapshot.heapsnapshot',
-      relativePath:
-        '.rozenite/agent/sessions/device-1/memory/snapshot.heapsnapshot',
+      relativePath: '.rozenite/agent/sessions/device-1/memory/snapshot.heapsnapshot',
       bytes: 10,
       bucket: 'memory' as const,
       fileName: 'snapshot.heapsnapshot',
@@ -160,8 +154,7 @@ describe('memory domain service', () => {
       subscribeToCDPEvent,
       createArtifactWriter: async () => ({
         path: '/tmp/snapshot.heapsnapshot',
-        relativePath:
-          '.rozenite/agent/sessions/device-1/memory/snapshot.heapsnapshot',
+        relativePath: '.rozenite/agent/sessions/device-1/memory/snapshot.heapsnapshot',
         fileName: 'snapshot.heapsnapshot',
         bucket: 'memory',
         write,
@@ -171,11 +164,9 @@ describe('memory domain service', () => {
     });
 
     let settled = false;
-    const resultPromise = service
-      .callTool('takeHeapSnapshot', {})
-      .finally(() => {
-        settled = true;
-      });
+    const resultPromise = service.callTool('takeHeapSnapshot', {}).finally(() => {
+      settled = true;
+    });
     await Promise.resolve();
     await Promise.resolve();
 
@@ -253,10 +244,7 @@ describe('network domain service', () => {
       request: { url: 'https://example.com', method: 'GET' },
     });
 
-    const statusBeforeDisconnect = await service.callTool(
-      'getRecordingStatus',
-      {},
-    );
+    const statusBeforeDisconnect = await service.callTool('getRecordingStatus', {});
     expect(statusBeforeDisconnect).toMatchObject({
       recording: {
         requestCount: 1,
@@ -266,10 +254,7 @@ describe('network domain service', () => {
 
     service.onDisconnected();
 
-    const statusAfterDisconnect = await service.callTool(
-      'getRecordingStatus',
-      {},
-    );
+    const statusAfterDisconnect = await service.callTool('getRecordingStatus', {});
     expect(statusAfterDisconnect).toMatchObject({
       recording: {
         isRecording: false,

@@ -16,8 +16,7 @@ export const STATIC_DOMAINS: DomainDefinition[] = [
   {
     id: 'performance',
     kind: 'static',
-    description:
-      'CDP performance tracing tools with Metro-managed artifact exports.',
+    description: 'CDP performance tracing tools with Metro-managed artifact exports.',
     actions: ['list-tools', 'get-tool-schema', 'call-tool'],
   },
   {
@@ -30,8 +29,7 @@ export const STATIC_DOMAINS: DomainDefinition[] = [
   {
     id: 'network',
     kind: 'static',
-    description:
-      'Raw CDP network recording tools with paginated request browsing.',
+    description: 'Raw CDP network recording tools with paginated request browsing.',
     actions: ['list-tools', 'get-tool-schema', 'call-tool'],
   },
 ];

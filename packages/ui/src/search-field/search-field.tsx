@@ -8,12 +8,7 @@ export type SearchFieldProps = Omit<ComponentProps<'input'>, 'type'> & {
 };
 
 /** A search input with a leading search icon and clear affordance. */
-export function SearchField({
-  className,
-  value,
-  onClear,
-  ...props
-}: SearchFieldProps) {
+export function SearchField({ className, value, onClear, ...props }: SearchFieldProps) {
   const showClear = Boolean(onClear) && Boolean(value);
 
   return (

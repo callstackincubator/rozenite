@@ -1,7 +1,4 @@
-import {
-  defineAgentToolContract,
-  type AgentToolContract,
-} from '@rozenite/agent-shared';
+import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
 import type { MMKVEntry, MMKVEntryType } from './types';
 
 type MMKVStorageSelection = {
@@ -11,8 +8,7 @@ type MMKVStorageSelection = {
 const sharedStorageProperty = {
   storageId: {
     type: 'string',
-    description:
-      'MMKV storage ID. Required when multiple storages are configured.',
+    description: 'MMKV storage ID. Required when multiple storages are configured.',
   },
 } as const;
 
@@ -87,18 +83,12 @@ export type MMKVRemoveEntryResult = {
 };
 
 export const mmkvToolDefinitions = {
-  listStorages: defineAgentToolContract<
-    MMKVListStoragesArgs,
-    MMKVListStoragesResult
-  >({
+  listStorages: defineAgentToolContract<MMKVListStoragesArgs, MMKVListStoragesResult>({
     name: 'list-storages',
     description: 'List MMKV storages currently available on the device.',
     inputSchema: { type: 'object', properties: {} },
   }),
-  listEntries: defineAgentToolContract<
-    MMKVListEntriesArgs,
-    MMKVListEntriesResult
-  >({
+  listEntries: defineAgentToolContract<MMKVListEntriesArgs, MMKVListEntriesResult>({
     name: 'list-entries',
     description:
       'List MMKV keys in a storage. This call intentionally does not return entry values.',
@@ -129,10 +119,7 @@ export const mmkvToolDefinitions = {
       required: ['key'],
     },
   }),
-  createEntry: defineAgentToolContract<
-    MMKVCreateEntryArgs,
-    MMKVCreateEntryResult
-  >({
+  createEntry: defineAgentToolContract<MMKVCreateEntryArgs, MMKVCreateEntryResult>({
     name: 'create-entry',
     description: 'Create a new MMKV entry. Fails if the key already exists.',
     inputSchema: {
@@ -154,8 +141,7 @@ export const mmkvToolDefinitions = {
   }),
   editEntry: defineAgentToolContract<MMKVEditEntryArgs, MMKVEditEntryResult>({
     name: 'edit-entry',
-    description:
-      'Edit an existing MMKV entry. Fails if the key does not exist.',
+    description: 'Edit an existing MMKV entry. Fails if the key does not exist.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -173,10 +159,7 @@ export const mmkvToolDefinitions = {
       required: ['key', 'type', 'value'],
     },
   }),
-  removeEntry: defineAgentToolContract<
-    MMKVRemoveEntryArgs,
-    MMKVRemoveEntryResult
-  >({
+  removeEntry: defineAgentToolContract<MMKVRemoveEntryArgs, MMKVRemoveEntryResult>({
     name: 'remove-entry',
     description: 'Remove an MMKV entry by key.',
     inputSchema: {

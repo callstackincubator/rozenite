@@ -37,9 +37,5 @@ export function isXmlContentType(contentType: string | null | undefined) {
 
   const mimeType = normalizeContentType(contentType);
 
-  return (
-    mimeType === 'application/xml' ||
-    mimeType === 'text/xml' ||
-    mimeType.endsWith('+xml')
-  );
+  return mimeType === 'application/xml' || mimeType === 'text/xml' || mimeType.endsWith('+xml');
 }

@@ -105,9 +105,7 @@ afterEach(() => {
   container = undefined;
 });
 
-const renderTable = (
-  props: Partial<ComponentProps<typeof VirtualizedDataTable<TestRow>>> = {},
-) => {
+const renderTable = (props: Partial<ComponentProps<typeof VirtualizedDataTable<TestRow>>> = {}) => {
   container = document.createElement('div');
   document.body.append(container);
   root = createRoot(container);
@@ -135,19 +133,11 @@ describe('VirtualizedDataTable', () => {
     expect(rows).toHaveLength(8);
     expect(rows[0]?.getAttribute('data-index')).toBe('0');
     expect(rows[0]?.getAttribute('aria-label')).toBe('row-0');
-    expect(view.querySelector('table')?.getAttribute('aria-label')).toBe(
-      'Entries',
-    );
-    expect(view.querySelector('thead tr')?.className).toContain(
-      'border-b border-border',
-    );
-    expect(view.querySelector('th')?.className).toContain(
-      'text-muted-foreground',
-    );
+    expect(view.querySelector('table')?.getAttribute('aria-label')).toBe('Entries');
+    expect(view.querySelector('thead tr')?.className).toContain('border-b border-border');
+    expect(view.querySelector('th')?.className).toContain('text-muted-foreground');
     expect(rows[0]?.className).toContain('border-b border-border');
-    expect(rows[0]?.querySelector('td')?.className).toContain(
-      'px-3 py-1.5 text-foreground',
-    );
+    expect(rows[0]?.querySelector('td')?.className).toContain('px-3 py-1.5 text-foreground');
   });
 
   it('forwards both edge callbacks', () => {
@@ -167,8 +157,8 @@ describe('VirtualizedDataTable', () => {
     const onRowClick = vi.fn();
     const onSortingChange = vi.fn();
     const view = renderTable({ onRowClick, onSortingChange });
-    const sortButton = Array.from(view.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes('Name'),
+    const sortButton = Array.from(view.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Name'),
     );
     const firstRow = view.querySelector('tbody tr');
 
@@ -178,9 +168,7 @@ describe('VirtualizedDataTable', () => {
 
     expect(firstRow?.getAttribute('tabindex')).toBe('0');
     act(() =>
-      firstRow?.dispatchEvent(
-        new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' }),
-      ),
+      firstRow?.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })),
     );
     expect(onRowClick).toHaveBeenCalledExactlyOnceWith(data[0]);
     expect(view.textContent).toContain('detail-0');
@@ -189,9 +177,7 @@ describe('VirtualizedDataTable', () => {
   it('renders an accessible loading and empty state in semantic table markup', () => {
     const loadingView = renderTable({ data: [], loading: true });
 
-    expect(loadingView.querySelector('tbody td')?.getAttribute('colspan')).toBe(
-      '2',
-    );
+    expect(loadingView.querySelector('tbody td')?.getAttribute('colspan')).toBe('2');
     expect(loadingView.textContent).toContain('Loading…');
   });
 });

@@ -9,9 +9,7 @@ import { UI } from './rn-devtools-frontend.js';
  */
 const extractInspectorDeviceIdFromUrl = () => {
   try {
-    const match = decodeURIComponent(window.location.href).match(
-      /[?&]device=([^&]+)/,
-    );
+    const match = decodeURIComponent(window.location.href).match(/[?&]device=([^&]+)/);
 
     return match ? match[1] : null;
   } catch {

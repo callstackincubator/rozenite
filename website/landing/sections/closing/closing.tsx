@@ -12,8 +12,8 @@ export const Closing = () => (
         <div>
           <h2 className={styles.title}>Come see what your app is doing</h2>
           <p className={styles.body}>
-            Set up Rozenite, then add the plugins your app needs. Browse the
-            directory, report a missing integration, or publish your own plugin.
+            Set up Rozenite, then add the plugins your app needs. Browse the directory, report a
+            missing integration, or publish your own plugin.
           </p>
         </div>
 

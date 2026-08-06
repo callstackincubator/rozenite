@@ -1,11 +1,5 @@
-export {
-  useRozenitePluginAgentTool,
-  useRozeniteInAppAgentTool,
-} from './useRozeniteAgentTool.js';
-export {
-  definePaginatedAgentToolContract,
-  isAgentToolPagination,
-} from '@rozenite/agent-shared';
+export { useRozenitePluginAgentTool, useRozeniteInAppAgentTool } from './useRozeniteAgentTool.js';
+export { definePaginatedAgentToolContract, isAgentToolPagination } from '@rozenite/agent-shared';
 export type {
   UseRozeniteAgentToolOptions,
   UseRozenitePluginAgentToolOptions,

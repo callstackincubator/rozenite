@@ -4,13 +4,7 @@ import { cn } from '../utils/cn';
 export type ListProps = ComponentProps<'div'>;
 
 function ListRoot({ className, ...props }: ListProps) {
-  return (
-    <div
-      data-slot="list"
-      className={cn('flex flex-col gap-4', className)}
-      {...props}
-    />
-  );
+  return <div data-slot="list" className={cn('flex flex-col gap-4', className)} {...props} />;
 }
 
 export type ListGroupProps = ComponentProps<'div'> & {
@@ -19,11 +13,7 @@ export type ListGroupProps = ComponentProps<'div'> & {
 
 function ListGroup({ className, label, children, ...props }: ListGroupProps) {
   return (
-    <div
-      data-slot="list-group"
-      className={cn('flex flex-col gap-0.5', className)}
-      {...props}
-    >
+    <div data-slot="list-group" className={cn('flex flex-col gap-0.5', className)} {...props}>
       {label && (
         <div
           data-slot="list-group-label"

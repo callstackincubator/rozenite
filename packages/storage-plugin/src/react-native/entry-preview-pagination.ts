@@ -10,9 +10,7 @@ import type { StorageView } from './storage-view';
 export const MAX_ENTRY_PREVIEW_PAGE_SIZE = 100;
 export const ENTRY_PREVIEW_READ_CONCURRENCY = 4;
 
-type PaginationResult =
-  | StorageListEntryPreviewsResponseEvent
-  | StorageRequestErrorEvent;
+type PaginationResult = StorageListEntryPreviewsResponseEvent | StorageRequestErrorEvent;
 
 type Cursor = {
   version: 1;
@@ -49,8 +47,7 @@ const isTarget = (value: unknown): value is StorageTarget =>
   typeof (value as { storageId?: unknown }).storageId === 'string' &&
   (value as { storageId: string }).storageId.trim().length > 0;
 
-const normalizeSearch = (search: string | undefined) =>
-  (search ?? '').trim().toLowerCase();
+const normalizeSearch = (search: string | undefined) => (search ?? '').trim().toLowerCase();
 
 const validateRequest = (payload: unknown): ValidRequest | undefined => {
   if (
@@ -72,8 +69,7 @@ const validateRequest = (payload: unknown): ValidRequest | undefined => {
     return undefined;
   }
 
-  const keySortDirection = (payload as { keySortDirection?: unknown })
-    .keySortDirection;
+  const keySortDirection = (payload as { keySortDirection?: unknown }).keySortDirection;
   if (
     keySortDirection !== undefined &&
     keySortDirection !== 'ascending' &&
@@ -93,8 +89,7 @@ const validateRequest = (payload: unknown): ValidRequest | undefined => {
 
 // Cursor contents are intentionally private to the device protocol. Callers only
 // receive and return this opaque token; its representation may change freely.
-const encodeCursor = (cursor: Cursor) =>
-  btoa(encodeURIComponent(JSON.stringify(cursor)));
+const encodeCursor = (cursor: Cursor) => btoa(encodeURIComponent(JSON.stringify(cursor)));
 
 const decodeCursor = (value: string): Cursor | undefined => {
   try {
@@ -106,10 +101,8 @@ const decodeCursor = (value: string): Cursor | undefined => {
       (parsed as { version?: unknown }).version !== 1 ||
       !isTarget((parsed as { target?: unknown }).target) ||
       typeof (parsed as { search?: unknown }).search !== 'string' ||
-      ((parsed as { keySortDirection?: unknown }).keySortDirection !==
-        'ascending' &&
-        (parsed as { keySortDirection?: unknown }).keySortDirection !==
-          'descending') ||
+      ((parsed as { keySortDirection?: unknown }).keySortDirection !== 'ascending' &&
+        (parsed as { keySortDirection?: unknown }).keySortDirection !== 'descending') ||
       typeof (parsed as { boundaryKey?: unknown }).boundaryKey !== 'string' ||
       ((parsed as { direction?: unknown }).direction !== 'next' &&
         (parsed as { direction?: unknown }).direction !== 'previous')
@@ -126,8 +119,7 @@ const decodeCursor = (value: string): Cursor | undefined => {
 const isSameTarget = (left: StorageTarget, right: StorageTarget) =>
   left.adapterId === right.adapterId && left.storageId === right.storageId;
 
-const compareKeys = (left: string, right: string) =>
-  left < right ? -1 : left > right ? 1 : 0;
+const compareKeys = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
 
 const readPreviews = async (
   view: StorageView,
@@ -148,14 +140,9 @@ const readPreviews = async (
   };
 
   await Promise.all(
-    Array.from(
-      { length: Math.min(ENTRY_PREVIEW_READ_CONCURRENCY, keys.length) },
-      worker,
-    ),
+    Array.from({ length: Math.min(ENTRY_PREVIEW_READ_CONCURRENCY, keys.length) }, worker),
   );
-  return previews.filter(
-    (preview): preview is StorageEntryPreview => preview != null,
-  );
+  return previews.filter((preview): preview is StorageEntryPreview => preview != null);
 };
 
 export const handleListEntryPreviewsRequest = async (
@@ -174,9 +161,7 @@ export const handleListEntryPreviewsRequest = async (
     };
   }
 
-  const view = views.find((candidate) =>
-    isSameTarget(candidate.target, request.target),
-  );
+  const view = views.find((candidate) => isSameTarget(candidate.target, request.target));
   if (!view) {
     return {
       type: 'storage-request-error',
@@ -199,8 +184,7 @@ export const handleListEntryPreviewsRequest = async (
         type: 'storage-request-error',
         requestId,
         code: 'INVALID_CURSOR',
-        message:
-          'The entry preview cursor is invalid or belongs to a different query.',
+        message: 'The entry preview cursor is invalid or belongs to a different query.',
         resetPagination: true,
       };
     }

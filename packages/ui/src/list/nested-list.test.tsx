@@ -62,27 +62,17 @@ describe('NestedList', () => {
     );
 
     const rows = Array.from(
-      view.querySelectorAll<HTMLButtonElement>(
-        '[data-slot="nested-list-item-row"]',
-      ),
+      view.querySelectorAll<HTMLButtonElement>('[data-slot="nested-list-item-row"]'),
     );
 
-    expect(rows.map((row) => row.style.paddingLeft)).toEqual([
-      '8px',
-      '24px',
-      '40px',
-    ]);
+    expect(rows.map((row) => row.style.paddingLeft)).toEqual(['8px', '24px', '40px']);
   });
 
   it('defers to the controlled expanded prop instead of toggling itself', () => {
     const onExpandedChange = vi.fn();
     const view = render(
       <NestedList>
-        <NestedList.Item
-          label="src"
-          expanded={false}
-          onExpandedChange={onExpandedChange}
-        >
+        <NestedList.Item label="src" expanded={false} onExpandedChange={onExpandedChange}>
           <NestedList.Item label="index.ts" />
         </NestedList.Item>
       </NestedList>,
@@ -102,8 +92,6 @@ describe('NestedList', () => {
       </NestedList>,
     );
 
-    expect(
-      view.querySelector('[data-slot="nested-list-item-chevron"]'),
-    ).toBeNull();
+    expect(view.querySelector('[data-slot="nested-list-item-chevron"]')).toBeNull();
   });
 });

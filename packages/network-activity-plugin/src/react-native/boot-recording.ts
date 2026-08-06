@@ -4,9 +4,7 @@ import { getNetworkInspector, NetworkInspector } from './network-inspector';
 import { validateConfig, type NetworkInspectorConfig } from './config';
 
 type InspectorsConfiguration = {
-  eventsListener: ReturnType<
-    typeof createEventsListener<NetworkActivityEventMap>
-  >;
+  eventsListener: ReturnType<typeof createEventsListener<NetworkActivityEventMap>>;
   networkInspector: NetworkInspector;
 };
 
@@ -29,9 +27,7 @@ export type BootRecordingOptions = NetworkInspectorConfig &
  *
  * @internal
  */
-export const createNetworkInspectorsConfiguration = (
-  options?: BootRecordingOptions,
-) => {
+export const createNetworkInspectorsConfiguration = (options?: BootRecordingOptions) => {
   if (inspectorsConfig) {
     return inspectorsConfig;
   }
@@ -83,8 +79,6 @@ export const createNetworkInspectorsConfiguration = (
  * }
  * ```
  */
-export const withOnBootNetworkActivityRecording = (
-  options?: BootRecordingOptions,
-) => {
+export const withOnBootNetworkActivityRecording = (options?: BootRecordingOptions) => {
   createNetworkInspectorsConfiguration(options);
 };

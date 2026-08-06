@@ -109,9 +109,7 @@ describe('createRozeniteRpc', () => {
     const rpcA = createRozeniteRpc<AnyMethods>(clientA);
     createRozeniteRpc<AnyMethods>(clientB); // listening, but nothing registered
 
-    const error = (await invokeLoose(rpcA, 'missing').catch(
-      (e) => e,
-    )) as RozeniteProtocolError;
+    const error = (await invokeLoose(rpcA, 'missing').catch((e) => e)) as RozeniteProtocolError;
 
     expect(isProtocolError(error)).toBe(true);
     expect(error.code).toBe('METHOD_NOT_FOUND');
@@ -290,18 +288,16 @@ describe('createRozeniteRpc', () => {
     const error = (await errorPromise) as RozeniteProtocolError;
     expect(error.code).toBe('CANCELLED');
 
-    const sendCallsBefore = (
-      clientB.send as unknown as { mock: { calls: unknown[] } }
-    ).mock.calls.length;
+    const sendCallsBefore = (clientB.send as unknown as { mock: { calls: unknown[] } }).mock.calls
+      .length;
 
     // The handler settles well after the caller gave up. It must be
     // silently discarded — no frame is sent for it, and nothing throws.
     resolveHandler('too late');
     await vi.advanceTimersByTimeAsync(0);
 
-    const sendCallsAfter = (
-      clientB.send as unknown as { mock: { calls: unknown[] } }
-    ).mock.calls.length;
+    const sendCallsAfter = (clientB.send as unknown as { mock: { calls: unknown[] } }).mock.calls
+      .length;
     expect(sendCallsAfter).toBe(sendCallsBefore);
   });
 
@@ -314,9 +310,7 @@ describe('createRozeniteRpc', () => {
       throw new TypeError('bad input');
     });
 
-    const error = (await invokeLoose(rpcA, 'boom').catch(
-      (e) => e,
-    )) as RozeniteHandlerError;
+    const error = (await invokeLoose(rpcA, 'boom').catch((e) => e)) as RozeniteHandlerError;
 
     expect(isHandlerError(error)).toBe(true);
     expect(error.remote.name).toBe('TypeError');
@@ -336,9 +330,7 @@ describe('createRozeniteRpc', () => {
       });
 
       process.env.NODE_ENV = 'development';
-      const devError = (await invokeLoose(rpcA, 'boom').catch(
-        (e) => e,
-      )) as RozeniteHandlerError;
+      const devError = (await invokeLoose(rpcA, 'boom').catch((e) => e)) as RozeniteHandlerError;
       expect(devError.remote.stack).toBeTypeOf('string');
     } finally {
       process.env.NODE_ENV = originalNodeEnv;
@@ -356,9 +348,7 @@ describe('createRozeniteRpc', () => {
       });
 
       process.env.NODE_ENV = 'production';
-      const prodError = (await invokeLoose(rpcA, 'boom').catch(
-        (e) => e,
-      )) as RozeniteHandlerError;
+      const prodError = (await invokeLoose(rpcA, 'boom').catch((e) => e)) as RozeniteHandlerError;
       expect(prodError.remote.stack).toBeUndefined();
     } finally {
       process.env.NODE_ENV = originalNodeEnv;
@@ -372,9 +362,7 @@ describe('createRozeniteRpc', () => {
 
     rpcB.handle('badResult', () => ({ fn: () => 'not cloneable' }));
 
-    const error = (await invokeLoose(rpcA, 'badResult').catch(
-      (e) => e,
-    )) as RozeniteProtocolError;
+    const error = (await invokeLoose(rpcA, 'badResult').catch((e) => e)) as RozeniteProtocolError;
 
     expect(isProtocolError(error)).toBe(true);
     expect(error.code).toBe('SERIALIZATION_ERROR');

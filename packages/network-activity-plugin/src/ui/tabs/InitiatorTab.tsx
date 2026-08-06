@@ -50,9 +50,7 @@ const getInitiatorItems = (initiator?: Initiator): KeyValueItem[] => {
 
   const sourceFrame = getBestInitiatorFrame(initiator);
   const sourceLocation = getInitiatorLocationLabel(initiator);
-  const generatedLocation = formatFrameLocation(
-    getGeneratedFrameLocation(initiator),
-  );
+  const generatedLocation = formatFrameLocation(getGeneratedFrameLocation(initiator));
   const status = formatSymbolicationStatus(initiator);
 
   return [
@@ -66,9 +64,7 @@ const getInitiatorItems = (initiator?: Initiator): KeyValueItem[] => {
             key: 'Source map',
             value: status,
             valueClassName:
-              initiator.symbolicationStatus === 'failed'
-                ? 'text-red-300'
-                : 'text-gray-300',
+              initiator.symbolicationStatus === 'failed' ? 'text-red-300' : 'text-gray-300',
           },
         ]
       : []),
@@ -129,21 +125,13 @@ const getInitiatorItems = (initiator?: Initiator): KeyValueItem[] => {
 
 const getStackFrameLocation = (frame: InitiatorStackFrame) => {
   const sourceLocation = formatFrameLocation(getSourceFrameLocation(frame));
-  const generatedLocation = formatFrameLocation(
-    getGeneratedFrameLocation(frame),
-  );
+  const generatedLocation = formatFrameLocation(getGeneratedFrameLocation(frame));
 
-  if (
-    sourceLocation &&
-    generatedLocation &&
-    sourceLocation !== generatedLocation
-  ) {
+  if (sourceLocation && generatedLocation && sourceLocation !== generatedLocation) {
     return (
       <span>
         {sourceLocation}
-        <span className="ml-2 text-gray-500">
-          generated {generatedLocation}
-        </span>
+        <span className="ml-2 text-gray-500">generated {generatedLocation}</span>
       </span>
     );
   }
@@ -172,7 +160,7 @@ export const InitiatorTab = ({ selectedRequest }: InitiatorTabProps) => {
   const initiatorLocation = getInitiatorLocationLabel(initiator);
   const hasSourceMappedFrame = Boolean(
     getSourceFrameLocation(initiator) ||
-      initiator?.stack?.some((frame) => getSourceFrameLocation(frame)),
+    initiator?.stack?.some((frame) => getSourceFrameLocation(frame)),
   );
 
   return (
@@ -191,19 +179,15 @@ export const InitiatorTab = ({ selectedRequest }: InitiatorTabProps) => {
         </div>
 
         <Section title="Initiator">
-          <KeyValueGrid
-            items={initiatorItems}
-            emptyMessage="No initiator metadata available"
-          />
+          <KeyValueGrid items={initiatorItems} emptyMessage="No initiator metadata available" />
         </Section>
 
-        {!hasSourceMappedFrame &&
-          initiator?.symbolicationStatus !== 'pending' && (
-            <div className="rounded-md border border-gray-700 bg-gray-800/60 p-3 text-sm text-gray-400">
-              This request only includes generated bundle location data. Metro
-              source maps were not available for this entry.
-            </div>
-          )}
+        {!hasSourceMappedFrame && initiator?.symbolicationStatus !== 'pending' && (
+          <div className="rounded-md border border-gray-700 bg-gray-800/60 p-3 text-sm text-gray-400">
+            This request only includes generated bundle location data. Metro source maps were not
+            available for this entry.
+          </div>
+        )}
 
         {initiator?.symbolicationError && (
           <div className="rounded-md border border-red-900/70 bg-red-950/30 p-3 text-sm text-red-200">

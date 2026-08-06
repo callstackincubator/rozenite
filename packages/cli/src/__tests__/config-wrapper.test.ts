@@ -178,11 +178,7 @@ describe('wrapConfigFile', () => {
   });
 
   // Helper function to create a config file with given content
-  const createConfigFile = async (
-    bundlerType: BundlerType,
-    content: string,
-    extension = '.js',
-  ) => {
+  const createConfigFile = async (bundlerType: BundlerType, content: string, extension = '.js') => {
     const baseName = bundlerType === 'metro' ? 'metro.config' : 'rspack.config';
     const filename = baseName + extension;
     const configPath = path.join(tempDir, filename);
@@ -206,13 +202,11 @@ describe('wrapConfigFile', () => {
       if (openParens !== closeParens) return false;
 
       // Check for basic export patterns
-      const hasValidExport =
-        /export\s+default\s+/.test(code) || /module\.exports\s*=/.test(code);
+      const hasValidExport = /export\s+default\s+/.test(code) || /module\.exports\s*=/.test(code);
       if (!hasValidExport) return false;
 
       // Check for proper import/require syntax
-      const importMatches =
-        code.match(/import\s+.*from\s+['"][^'"]+['"]/g) || [];
+      const importMatches = code.match(/import\s+.*from\s+['"][^'"]+['"]/g) || [];
 
       // Validate import statements
       for (const importMatch of importMatches) {
@@ -228,19 +222,14 @@ describe('wrapConfigFile', () => {
   describe('metro', () => {
     describe('CommonJS', () => {
       it('should wrap basic CommonJS config file', async () => {
-        const configPath = await createConfigFile(
-          'metro',
-          FIXTURES.metro.commonjs.basic,
-        );
+        const configPath = await createConfigFile('metro', FIXTURES.metro.commonjs.basic);
 
         await wrapConfigFile(tempDir, 'metro');
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
         // Should have CommonJS require statement for CommonJS config
-        expect(wrappedContent).toContain(
-          "const { withRozenite } = require('@rozenite/metro');",
-        );
+        expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/metro');");
         // Should wrap the export
         expect(wrappedContent).toContain('withRozenite({');
         // Should be valid JavaScript
@@ -248,18 +237,13 @@ describe('wrapConfigFile', () => {
       });
 
       it('should wrap CommonJS config with function call', async () => {
-        const configPath = await createConfigFile(
-          'metro',
-          FIXTURES.metro.commonjs.functionCall,
-        );
+        const configPath = await createConfigFile('metro', FIXTURES.metro.commonjs.functionCall);
 
         await wrapConfigFile(tempDir, 'metro');
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent).toContain(
-          "const { withRozenite } = require('@rozenite/metro');",
-        );
+        expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/metro');");
         expect(wrappedContent).toContain(
           "withRozenite(getDefaultConfig(__dirname), { enabled: process.env.WITH_ROZENITE === 'true' })",
         );
@@ -267,18 +251,13 @@ describe('wrapConfigFile', () => {
       });
 
       it('should wrap complex CommonJS config', async () => {
-        const configPath = await createConfigFile(
-          'metro',
-          FIXTURES.metro.commonjs.complex,
-        );
+        const configPath = await createConfigFile('metro', FIXTURES.metro.commonjs.complex);
 
         await wrapConfigFile(tempDir, 'metro');
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent).toContain(
-          "const { withRozenite } = require('@rozenite/metro');",
-        );
+        expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/metro');");
         expect(wrappedContent).toContain('withRozenite({');
         expect(wrappedContent).toContain('projectRoot:');
         expect(validateJavaScript(wrappedContent)).toBe(true);
@@ -293,9 +272,7 @@ describe('wrapConfigFile', () => {
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
         // Should remain unchanged since it's already properly wrapped
-        expect(wrappedContent.replace(/\s+/g, ' ')).toBe(
-          originalContent.replace(/\s+/g, ' '),
-        );
+        expect(wrappedContent.replace(/\s+/g, ' ')).toBe(originalContent.replace(/\s+/g, ' '));
 
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
@@ -303,35 +280,25 @@ describe('wrapConfigFile', () => {
 
     describe('ESM', () => {
       it('should wrap basic ESM config file', async () => {
-        const configPath = await createConfigFile(
-          'metro',
-          FIXTURES.metro.esm.basic,
-        );
+        const configPath = await createConfigFile('metro', FIXTURES.metro.esm.basic);
 
         await wrapConfigFile(tempDir, 'metro');
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent).toContain(
-          "import { withRozenite } from '@rozenite/metro';",
-        );
+        expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/metro';");
         expect(wrappedContent).toContain('export default withRozenite({');
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
 
       it('should wrap ESM config with function call', async () => {
-        const configPath = await createConfigFile(
-          'metro',
-          FIXTURES.metro.esm.functionCall,
-        );
+        const configPath = await createConfigFile('metro', FIXTURES.metro.esm.functionCall);
 
         await wrapConfigFile(tempDir, 'metro');
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent).toContain(
-          "import { withRozenite } from '@rozenite/metro';",
-        );
+        expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/metro';");
         expect(wrappedContent).toContain(
           "export default withRozenite(getDefaultConfig(__dirname), { enabled: process.env.WITH_ROZENITE === 'true' })",
         );
@@ -339,18 +306,13 @@ describe('wrapConfigFile', () => {
       });
 
       it('should wrap complex ESM config', async () => {
-        const configPath = await createConfigFile(
-          'metro',
-          FIXTURES.metro.esm.complex,
-        );
+        const configPath = await createConfigFile('metro', FIXTURES.metro.esm.complex);
 
         await wrapConfigFile(tempDir, 'metro');
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent).toContain(
-          "import { withRozenite } from '@rozenite/metro';",
-        );
+        expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/metro';");
         expect(wrappedContent).toContain('export default withRozenite({');
         expect(wrappedContent).toContain('projectRoot:');
         expect(validateJavaScript(wrappedContent)).toBe(true);
@@ -364,9 +326,7 @@ describe('wrapConfigFile', () => {
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent.replace(/\s+/g, ' ')).toBe(
-          originalContent.replace(/\s+/g, ' '),
-        );
+        expect(wrappedContent.replace(/\s+/g, ' ')).toBe(originalContent.replace(/\s+/g, ' '));
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
     });
@@ -375,35 +335,25 @@ describe('wrapConfigFile', () => {
   describe('repack', () => {
     describe('CommonJS', () => {
       it('should wrap basic CommonJS config file', async () => {
-        const configPath = await createConfigFile(
-          'repack',
-          FIXTURES.repack.commonjs.basic,
-        );
+        const configPath = await createConfigFile('repack', FIXTURES.repack.commonjs.basic);
 
         await wrapConfigFile(tempDir, 'repack');
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent).toContain(
-          "const { withRozenite } = require('@rozenite/repack');",
-        );
+        expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/repack');");
         expect(wrappedContent).toContain('withRozenite({');
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
 
       it('should wrap CommonJS config with function call', async () => {
-        const configPath = await createConfigFile(
-          'repack',
-          FIXTURES.repack.commonjs.functionCall,
-        );
+        const configPath = await createConfigFile('repack', FIXTURES.repack.commonjs.functionCall);
 
         await wrapConfigFile(tempDir, 'repack');
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent).toContain(
-          "const { withRozenite } = require('@rozenite/repack');",
-        );
+        expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/repack');");
         expect(wrappedContent).toContain(
           "withRozenite(getDefaultConfig(__dirname), { enabled: process.env.WITH_ROZENITE === 'true' })",
         );
@@ -419,9 +369,7 @@ describe('wrapConfigFile', () => {
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
         // Should remain unchanged since it's already properly wrapped
-        expect(wrappedContent.replace(/\s+/g, ' ')).toBe(
-          originalContent.replace(/\s+/g, ' '),
-        );
+        expect(wrappedContent.replace(/\s+/g, ' ')).toBe(originalContent.replace(/\s+/g, ' '));
 
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
@@ -429,35 +377,25 @@ describe('wrapConfigFile', () => {
 
     describe('ESM', () => {
       it('should wrap basic ESM config file', async () => {
-        const configPath = await createConfigFile(
-          'repack',
-          FIXTURES.repack.esm.basic,
-        );
+        const configPath = await createConfigFile('repack', FIXTURES.repack.esm.basic);
 
         await wrapConfigFile(tempDir, 'repack');
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent).toContain(
-          "import { withRozenite } from '@rozenite/repack';",
-        );
+        expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/repack';");
         expect(wrappedContent).toContain('export default withRozenite({');
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
 
       it('should wrap ESM config with function call', async () => {
-        const configPath = await createConfigFile(
-          'repack',
-          FIXTURES.repack.esm.functionCall,
-        );
+        const configPath = await createConfigFile('repack', FIXTURES.repack.esm.functionCall);
 
         await wrapConfigFile(tempDir, 'repack');
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent).toContain(
-          "import { withRozenite } from '@rozenite/repack';",
-        );
+        expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/repack';");
         expect(wrappedContent).toContain(
           "export default withRozenite(getDefaultConfig(process.cwd()), { enabled: process.env.WITH_ROZENITE === 'true' })",
         );
@@ -472,9 +410,7 @@ describe('wrapConfigFile', () => {
 
         const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-        expect(wrappedContent.replace(/\s+/g, ' ')).toBe(
-          originalContent.replace(/\s+/g, ' '),
-        );
+        expect(wrappedContent.replace(/\s+/g, ' ')).toBe(originalContent.replace(/\s+/g, ' '));
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
     });
@@ -482,42 +418,28 @@ describe('wrapConfigFile', () => {
 
   describe('import style detection', () => {
     it('should use CommonJS style for CommonJS configs', async () => {
-      const configPath = await createConfigFile(
-        'metro',
-        FIXTURES.metro.commonjs.basic,
-      );
+      const configPath = await createConfigFile('metro', FIXTURES.metro.commonjs.basic);
 
       await wrapConfigFile(tempDir, 'metro');
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
       // Should use CommonJS require syntax, not ESM import
-      expect(wrappedContent).toContain(
-        "const { withRozenite } = require('@rozenite/metro');",
-      );
-      expect(wrappedContent).not.toContain(
-        "import { withRozenite } from '@rozenite/metro';",
-      );
+      expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/metro');");
+      expect(wrappedContent).not.toContain("import { withRozenite } from '@rozenite/metro';");
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
 
     it('should use ESM style for ESM configs', async () => {
-      const configPath = await createConfigFile(
-        'metro',
-        FIXTURES.metro.esm.basic,
-      );
+      const configPath = await createConfigFile('metro', FIXTURES.metro.esm.basic);
 
       await wrapConfigFile(tempDir, 'metro');
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
       // Should use ESM import syntax, not CommonJS require
-      expect(wrappedContent).toContain(
-        "import { withRozenite } from '@rozenite/metro';",
-      );
-      expect(wrappedContent).not.toContain(
-        "const { withRozenite } = require('@rozenite/metro');",
-      );
+      expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/metro';");
+      expect(wrappedContent).not.toContain("const { withRozenite } = require('@rozenite/metro');");
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
 
@@ -543,12 +465,8 @@ export default {
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
       // Should use CommonJS require syntax since file already has require
-      expect(wrappedContent).toContain(
-        "const { withRozenite } = require('@rozenite/metro');",
-      );
-      expect(wrappedContent).not.toContain(
-        "import { withRozenite } from '@rozenite/metro';",
-      );
+      expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/metro');");
+      expect(wrappedContent).not.toContain("import { withRozenite } from '@rozenite/metro';");
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
 
@@ -574,12 +492,8 @@ module.exports = {
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
       // Should use ESM import syntax since file already has imports
-      expect(wrappedContent).toContain(
-        "import { withRozenite } from '@rozenite/metro';",
-      );
-      expect(wrappedContent).not.toContain(
-        "const { withRozenite } = require('@rozenite/metro');",
-      );
+      expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/metro';");
+      expect(wrappedContent).not.toContain("const { withRozenite } = require('@rozenite/metro');");
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
 
@@ -591,22 +505,15 @@ module.exports = {
 
 export default getDefaultConfig(__dirname);`;
 
-      const configPath = await createConfigFile(
-        'metro',
-        configWithMultilineImport,
-      );
+      const configPath = await createConfigFile('metro', configWithMultilineImport);
 
       await wrapConfigFile(tempDir, 'metro');
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
       // Should use ESM import syntax since file already has multiline imports
-      expect(wrappedContent).toContain(
-        "import { withRozenite } from '@rozenite/metro';",
-      );
-      expect(wrappedContent).not.toContain(
-        "const { withRozenite } = require('@rozenite/metro');",
-      );
+      expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/metro';");
+      expect(wrappedContent).not.toContain("const { withRozenite } = require('@rozenite/metro');");
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
 
@@ -618,22 +525,15 @@ export default getDefaultConfig(__dirname);`;
 
 module.exports = getDefaultConfig(__dirname);`;
 
-      const configPath = await createConfigFile(
-        'metro',
-        configWithMultilineRequire,
-      );
+      const configPath = await createConfigFile('metro', configWithMultilineRequire);
 
       await wrapConfigFile(tempDir, 'metro');
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
       // Should use CommonJS require syntax since file already has multiline require
-      expect(wrappedContent).toContain(
-        "const { withRozenite } = require('@rozenite/metro');",
-      );
-      expect(wrappedContent).not.toContain(
-        "import { withRozenite } from '@rozenite/metro';",
-      );
+      expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/metro');");
+      expect(wrappedContent).not.toContain("import { withRozenite } from '@rozenite/metro';");
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
 
@@ -653,10 +553,7 @@ export default withRozenite({
   },
 });`;
 
-      const configPath = await createConfigFile(
-        'metro',
-        alreadyWrappedMultiline,
-      );
+      const configPath = await createConfigFile('metro', alreadyWrappedMultiline);
 
       await wrapConfigFile(tempDir, 'metro');
 
@@ -685,10 +582,7 @@ module.exports = withRozenite({
   },
 });`;
 
-      const configPath = await createConfigFile(
-        'metro',
-        alreadyWrappedMultilineRequire,
-      );
+      const configPath = await createConfigFile('metro', alreadyWrappedMultilineRequire);
 
       await wrapConfigFile(tempDir, 'metro');
 
@@ -713,19 +607,14 @@ import {
 // Export the configuration
 export default getDefaultConfig(__dirname);`;
 
-      const configPath = await createConfigFile(
-        'metro',
-        configWithCommentedImport,
-      );
+      const configPath = await createConfigFile('metro', configWithCommentedImport);
 
       await wrapConfigFile(tempDir, 'metro');
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
       // Should use ESM import syntax and preserve existing structure
-      expect(wrappedContent).toContain(
-        "import { withRozenite } from '@rozenite/metro';",
-      );
+      expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/metro';");
       expect(wrappedContent).toContain(
         "export default withRozenite(getDefaultConfig(__dirname), { enabled: process.env.WITH_ROZENITE === 'true' })",
       );
@@ -769,9 +658,7 @@ module.exports = withRozenite(
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
       // Should remain unchanged since it's already properly wrapped with multiline requires
-      expect(wrappedContent.replace(/\s+/g, ' ')).toBe(
-        realWorldConfig.replace(/\s+/g, ' '),
-      );
+      expect(wrappedContent.replace(/\s+/g, ' ')).toBe(realWorldConfig.replace(/\s+/g, ' '));
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
   });
@@ -795,9 +682,7 @@ module.exports = withRozenite(
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-      expect(wrappedContent).toContain(
-        "import { withRozenite } from '@rozenite/metro';",
-      );
+      expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/metro';");
       expect(wrappedContent).toContain('export default withRozenite({');
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
@@ -820,9 +705,7 @@ module.exports = withRozenite(
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-      expect(wrappedContent).toContain(
-        "const { withRozenite } = require('@rozenite/metro');",
-      );
+      expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/metro');");
       expect(wrappedContent).toContain('module.exports = withRozenite({');
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
@@ -848,9 +731,7 @@ export default {
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-      expect(wrappedContent).toContain(
-        "import { withRozenite } from '@rozenite/metro';",
-      );
+      expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/metro';");
       expect(wrappedContent).toContain('export default withRozenite({');
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
@@ -876,9 +757,7 @@ module.exports = {
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-      expect(wrappedContent).toContain(
-        "const { withRozenite } = require('@rozenite/metro');",
-      );
+      expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/metro');");
       expect(wrappedContent).toContain('module.exports = withRozenite({');
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
@@ -903,19 +782,13 @@ module.exports = {
   },
 };`;
 
-      const configPath = await createConfigFile(
-        'repack',
-        repackEsmConfig,
-        '.mjs',
-      );
+      const configPath = await createConfigFile('repack', repackEsmConfig, '.mjs');
 
       await wrapConfigFile(tempDir, 'repack');
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-      expect(wrappedContent).toContain(
-        "import { withRozenite } from '@rozenite/repack';",
-      );
+      expect(wrappedContent).toContain("import { withRozenite } from '@rozenite/repack';");
       expect(wrappedContent).toContain('export default withRozenite({');
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
@@ -957,9 +830,7 @@ module.exports = {
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-      expect(wrappedContent).toContain(
-        "const { withRozenite } = require('@rozenite/metro');",
-      );
+      expect(wrappedContent).toContain("const { withRozenite } = require('@rozenite/metro');");
       expect(wrappedContent).toContain('withRozenite({');
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
@@ -975,9 +846,7 @@ module.exports = getDefaultConfig(__dirname);`;
 
       const wrappedContent = await fs.readFile(configPath, 'utf8');
 
-      expect(wrappedContent).toContain(
-        'const { withRozenite } = require("@rozenite/metro");',
-      );
+      expect(wrappedContent).toContain('const { withRozenite } = require("@rozenite/metro");');
       expect(validateJavaScript(wrappedContent)).toBe(true);
     });
   });

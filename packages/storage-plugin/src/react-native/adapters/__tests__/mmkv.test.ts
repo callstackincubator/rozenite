@@ -109,9 +109,9 @@ describe('createMMKVStorageAdapter', () => {
   it('rejects MMKV v4 storages passed as an array', () => {
     const storage = createFakeMMKVV4();
 
-    expect(() =>
-      createMMKVStorageAdapter({ storages: [storage as any] }),
-    ).toThrow(/MMKV arrays are not supported for v4 storages/);
+    expect(() => createMMKVStorageAdapter({ storages: [storage as any] })).toThrow(
+      /MMKV arrays are not supported for v4 storages/,
+    );
   });
 
   it('applies global blacklist patterns against storageId:key', async () => {
@@ -129,12 +129,8 @@ describe('createMMKVStorageAdapter', () => {
     });
 
     const views = createStorageViews([adapter]);
-    const userView = views.find(
-      (view) => view.target.storageId === 'user-storage',
-    );
-    const cacheView = views.find(
-      (view) => view.target.storageId === 'cache-storage',
-    );
+    const userView = views.find((view) => view.target.storageId === 'user-storage');
+    const cacheView = views.find((view) => view.target.storageId === 'cache-storage');
 
     expect(userView).toBeDefined();
     expect(cacheView).toBeDefined();
@@ -173,22 +169,20 @@ const createAmbiguousFakeMMKVV4 = ({
   const values = new Map<string, Stored>();
 
   return {
-    set: vi.fn(
-      (key: string, value: string | number | boolean | ArrayBuffer) => {
-        if (typeof value === 'string') {
-          values.set(key, { kind: 'string', value });
-        } else if (typeof value === 'number') {
-          values.set(key, { kind: 'number', value });
-        } else if (typeof value === 'boolean') {
-          values.set(key, { kind: 'boolean', value });
-        } else {
-          values.set(key, {
-            kind: 'buffer',
-            bytes: new Uint8Array(value),
-          });
-        }
-      },
-    ),
+    set: vi.fn((key: string, value: string | number | boolean | ArrayBuffer) => {
+      if (typeof value === 'string') {
+        values.set(key, { kind: 'string', value });
+      } else if (typeof value === 'number') {
+        values.set(key, { kind: 'number', value });
+      } else if (typeof value === 'boolean') {
+        values.set(key, { kind: 'boolean', value });
+      } else {
+        values.set(key, {
+          kind: 'buffer',
+          bytes: new Uint8Array(value),
+        });
+      }
+    }),
     getString: vi.fn((key: string) => {
       const stored = values.get(key);
       if (!stored) return undefined;
@@ -205,11 +199,7 @@ const createAmbiguousFakeMMKVV4 = ({
     getNumber: vi.fn((key: string) => {
       const stored = values.get(key);
       if (stored?.kind === 'number') return stored.value;
-      if (
-        lenientGetNumber &&
-        stored?.kind === 'buffer' &&
-        stored.bytes.byteLength === 8
-      ) {
+      if (lenientGetNumber && stored?.kind === 'buffer' && stored.bytes.byteLength === 8) {
         return new DataView(stored.bytes.buffer).getFloat64(0, true);
       }
       return undefined;

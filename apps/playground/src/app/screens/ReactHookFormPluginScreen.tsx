@@ -33,23 +33,22 @@ type LoginFormValues = {
 };
 
 function ProfileForm() {
-  const { control, handleSubmit, reset, formState } =
-    useForm<ProfileFormValues>({
-      defaultValues: {
-        firstName: '',
-        lastName: '',
-        email: '',
-        age: '',
-        bio: '',
-        newsletter: false,
-        address: {
-          street: '',
-          city: '',
-          zip: '',
-        },
+  const { control, handleSubmit, reset, formState } = useForm<ProfileFormValues>({
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      age: '',
+      bio: '',
+      newsletter: false,
+      address: {
+        street: '',
+        city: '',
+        zip: '',
       },
-      mode: 'onChange',
-    });
+    },
+    mode: 'onChange',
+  });
 
   useRozeniteRHFPlugin({ control, id: 'profile-form' });
 
@@ -79,9 +78,7 @@ function ProfileForm() {
               placeholder="John"
               placeholderTextColor="#666"
             />
-            {fieldState.error && (
-              <Text style={styles.errorText}>{fieldState.error.message}</Text>
-            )}
+            {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
           </View>
         )}
       />
@@ -101,9 +98,7 @@ function ProfileForm() {
               placeholder="Doe"
               placeholderTextColor="#666"
             />
-            {fieldState.error && (
-              <Text style={styles.errorText}>{fieldState.error.message}</Text>
-            )}
+            {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
           </View>
         )}
       />
@@ -131,9 +126,7 @@ function ProfileForm() {
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            {fieldState.error && (
-              <Text style={styles.errorText}>{fieldState.error.message}</Text>
-            )}
+            {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
           </View>
         )}
       />
@@ -157,9 +150,7 @@ function ProfileForm() {
               placeholderTextColor="#666"
               keyboardType="numeric"
             />
-            {fieldState.error && (
-              <Text style={styles.errorText}>{fieldState.error.message}</Text>
-            )}
+            {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
           </View>
         )}
       />
@@ -201,9 +192,7 @@ function ProfileForm() {
               placeholder="123 Main St"
               placeholderTextColor="#666"
             />
-            {fieldState.error && (
-              <Text style={styles.errorText}>{fieldState.error.message}</Text>
-            )}
+            {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
           </View>
         )}
       />
@@ -224,9 +213,7 @@ function ProfileForm() {
                 placeholder="New York"
                 placeholderTextColor="#666"
               />
-              {fieldState.error && (
-                <Text style={styles.errorText}>{fieldState.error.message}</Text>
-              )}
+              {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
             </View>
           )}
         />
@@ -248,9 +235,7 @@ function ProfileForm() {
                 keyboardType="numeric"
                 maxLength={5}
               />
-              {fieldState.error && (
-                <Text style={styles.errorText}>{fieldState.error.message}</Text>
-              )}
+              {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
             </View>
           )}
         />
@@ -268,18 +253,11 @@ function ProfileForm() {
       />
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity
-          style={[styles.button, styles.buttonSecondary]}
-          onPress={() => reset()}
-        >
+        <TouchableOpacity style={[styles.button, styles.buttonSecondary]} onPress={() => reset()}>
           <Text style={styles.buttonSecondaryText}>Reset</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.button,
-            styles.buttonPrimary,
-            !formState.isValid && styles.buttonDisabled,
-          ]}
+          style={[styles.button, styles.buttonPrimary, !formState.isValid && styles.buttonDisabled]}
           onPress={handleSubmit(onSubmit)}
         >
           <Text style={styles.buttonPrimaryText}>Submit</Text>
@@ -324,9 +302,7 @@ function LoginForm() {
               placeholderTextColor="#666"
               autoCapitalize="none"
             />
-            {fieldState.error && (
-              <Text style={styles.errorText}>{fieldState.error.message}</Text>
-            )}
+            {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
           </View>
         )}
       />
@@ -350,9 +326,7 @@ function LoginForm() {
               placeholderTextColor="#666"
               secureTextEntry
             />
-            {fieldState.error && (
-              <Text style={styles.errorText}>{fieldState.error.message}</Text>
-            )}
+            {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
           </View>
         )}
       />
@@ -398,12 +372,7 @@ export function ReactHookFormPluginScreen() {
           style={[styles.tab, activeForm === 'profile' && styles.tabActive]}
           onPress={() => setActiveForm('profile')}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeForm === 'profile' && styles.tabTextActive,
-            ]}
-          >
+          <Text style={[styles.tabText, activeForm === 'profile' && styles.tabTextActive]}>
             Profile Form
           </Text>
         </TouchableOpacity>
@@ -411,12 +380,7 @@ export function ReactHookFormPluginScreen() {
           style={[styles.tab, activeForm === 'login' && styles.tabActive]}
           onPress={() => setActiveForm('login')}
         >
-          <Text
-            style={[
-              styles.tabText,
-              activeForm === 'login' && styles.tabTextActive,
-            ]}
-          >
+          <Text style={[styles.tabText, activeForm === 'login' && styles.tabTextActive]}>
             Login Form
           </Text>
         </TouchableOpacity>

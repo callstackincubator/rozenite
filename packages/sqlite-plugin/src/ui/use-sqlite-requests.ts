@@ -10,19 +10,11 @@ import type {
 } from '../shared/types';
 import { newRequestId, withTimeout } from './utils';
 
-type PendingListResolver = (
-  payload: SqliteEventMap['sqlite:list-databases:result'],
-) => void;
-type PendingQueryResolver = (
-  payload: SqliteEventMap['sqlite:query:result'],
-) => void;
-type PendingScriptResolver = (
-  payload: SqliteEventMap['sqlite:execute-script:result'],
-) => void;
+type PendingListResolver = (payload: SqliteEventMap['sqlite:list-databases:result']) => void;
+type PendingQueryResolver = (payload: SqliteEventMap['sqlite:query:result']) => void;
+type PendingScriptResolver = (payload: SqliteEventMap['sqlite:execute-script:result']) => void;
 
-export const useSqliteRequests = (
-  client: RozeniteDevToolsClient<SqliteEventMap> | null,
-) => {
+export const useSqliteRequests = (client: RozeniteDevToolsClient<SqliteEventMap> | null) => {
   const listResolversRef = useRef(new Map<string, PendingListResolver>());
   const queryResolversRef = useRef(new Map<string, PendingQueryResolver>());
   const scriptResolversRef = useRef(new Map<string, PendingScriptResolver>());
@@ -32,44 +24,35 @@ export const useSqliteRequests = (
       return;
     }
 
-    const listSubscription = client.onMessage(
-      'sqlite:list-databases:result',
-      (payload) => {
-        const resolve = listResolversRef.current.get(payload.requestId);
-        if (!resolve) {
-          return;
-        }
+    const listSubscription = client.onMessage('sqlite:list-databases:result', (payload) => {
+      const resolve = listResolversRef.current.get(payload.requestId);
+      if (!resolve) {
+        return;
+      }
 
-        listResolversRef.current.delete(payload.requestId);
-        resolve(payload);
-      },
-    );
+      listResolversRef.current.delete(payload.requestId);
+      resolve(payload);
+    });
 
-    const querySubscription = client.onMessage(
-      'sqlite:query:result',
-      (payload) => {
-        const resolve = queryResolversRef.current.get(payload.requestId);
-        if (!resolve) {
-          return;
-        }
+    const querySubscription = client.onMessage('sqlite:query:result', (payload) => {
+      const resolve = queryResolversRef.current.get(payload.requestId);
+      if (!resolve) {
+        return;
+      }
 
-        queryResolversRef.current.delete(payload.requestId);
-        resolve(payload);
-      },
-    );
+      queryResolversRef.current.delete(payload.requestId);
+      resolve(payload);
+    });
 
-    const scriptSubscription = client.onMessage(
-      'sqlite:execute-script:result',
-      (payload) => {
-        const resolve = scriptResolversRef.current.get(payload.requestId);
-        if (!resolve) {
-          return;
-        }
+    const scriptSubscription = client.onMessage('sqlite:execute-script:result', (payload) => {
+      const resolve = scriptResolversRef.current.get(payload.requestId);
+      if (!resolve) {
+        return;
+      }
 
-        scriptResolversRef.current.delete(payload.requestId);
-        resolve(payload);
-      },
-    );
+      scriptResolversRef.current.delete(payload.requestId);
+      resolve(payload);
+    });
 
     return () => {
       listSubscription.remove();
@@ -81,27 +64,19 @@ export const useSqliteRequests = (
     };
   }, [client]);
 
-  const requestDatabases = useCallback(async (): Promise<
-    SqliteDatabaseInfo[]
-  > => {
+  const requestDatabases = useCallback(async (): Promise<SqliteDatabaseInfo[]> => {
     if (!client) {
       return [];
     }
 
     const requestId = newRequestId();
-    const pending = new Promise<SqliteEventMap['sqlite:list-databases:result']>(
-      (resolve) => {
-        listResolversRef.current.set(requestId, resolve);
-      },
-    );
+    const pending = new Promise<SqliteEventMap['sqlite:list-databases:result']>((resolve) => {
+      listResolversRef.current.set(requestId, resolve);
+    });
 
     client.send('sqlite:list-databases', { requestId });
 
-    const response = await withTimeout(
-      pending,
-      8000,
-      'Timeout fetching databases.',
-    );
+    const response = await withTimeout(pending, 8000, 'Timeout fetching databases.');
 
     if (response.error) {
       throw new Error(response.error);
@@ -121,11 +96,9 @@ export const useSqliteRequests = (
       }
 
       const requestId = newRequestId();
-      const pending = new Promise<SqliteEventMap['sqlite:query:result']>(
-        (resolve) => {
-          queryResolversRef.current.set(requestId, resolve);
-        },
-      );
+      const pending = new Promise<SqliteEventMap['sqlite:query:result']>((resolve) => {
+        queryResolversRef.current.set(requestId, resolve);
+      });
 
       client.send('sqlite:query', {
         requestId,
@@ -137,11 +110,7 @@ export const useSqliteRequests = (
             : (encodeSqliteBridgeValue(input.params) as SqliteQueryParams),
       });
 
-      const response = await withTimeout(
-        pending,
-        15000,
-        'Timeout executing SQL query.',
-      );
+      const response = await withTimeout(pending, 15000, 'Timeout executing SQL query.');
 
       if (response.error) {
         throw new Error(response.error);
@@ -157,18 +126,13 @@ export const useSqliteRequests = (
   );
 
   const requestScriptExecution = useCallback(
-    async (input: {
-      databaseId: string;
-      sql: string;
-    }): Promise<SqliteScriptResult> => {
+    async (input: { databaseId: string; sql: string }): Promise<SqliteScriptResult> => {
       if (!client) {
         throw new Error('Rozenite client is not connected.');
       }
 
       const requestId = newRequestId();
-      const pending = new Promise<
-        SqliteEventMap['sqlite:execute-script:result']
-      >((resolve) => {
+      const pending = new Promise<SqliteEventMap['sqlite:execute-script:result']>((resolve) => {
         scriptResolversRef.current.set(requestId, resolve);
       });
 
@@ -178,11 +142,7 @@ export const useSqliteRequests = (
         sql: input.sql,
       });
 
-      const response = await withTimeout(
-        pending,
-        30000,
-        'Timeout executing SQL script.',
-      );
+      const response = await withTimeout(pending, 30000, 'Timeout executing SQL script.');
 
       if (response.error) {
         throw new Error(response.error);

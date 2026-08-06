@@ -26,8 +26,8 @@ describe('bytesToGroupedHex', () => {
   it('inserts a double-space gap between bytes 8 and 9', () => {
     expect(
       bytesToGroupedHex([
-        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
-        0x49, 0x48, 0x44, 0x52,
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+        0x52,
       ]),
     ).toBe('89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52');
   });
@@ -44,17 +44,7 @@ describe('bytesToGroupedHex', () => {
 
 describe('bytesToHexdump', () => {
   it('renders offset, grouped hex, and ASCII column', () => {
-    const bytes = [
-      ...PNG_SIGNATURE,
-      0x00,
-      0x00,
-      0x00,
-      0x0d,
-      0x49,
-      0x48,
-      0x44,
-      0x52,
-    ];
+    const bytes = [...PNG_SIGNATURE, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52];
     expect(bytesToHexdump(bytes)).toBe(
       '00000000  89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52  |.PNG........IHDR|',
     );
@@ -71,9 +61,7 @@ describe('bytesToHexdump', () => {
     const bytes = [0x41, 0x42, 0x43];
     const line = bytesToHexdump(bytes);
     // Hex section width must be exactly 48 chars before the "  |..." block.
-    expect(line).toBe(
-      '00000000  41 42 43                                          |ABC|',
-    );
+    expect(line).toBe('00000000  41 42 43                                          |ABC|');
   });
 
   it('renders non-printable bytes as dots in the ASCII column', () => {
@@ -159,21 +147,15 @@ describe('compactBufferPreview', () => {
   });
 
   it('omits the ellipsis when the buffer fits within maxBytes', () => {
-    expect(compactBufferPreview([0x89, 0x50, 0x4e, 0x47])).toBe(
-      '89 50 4E 47 4 B',
-    );
+    expect(compactBufferPreview([0x89, 0x50, 0x4e, 0x47])).toBe('89 50 4E 47 4 B');
   });
 
   it('includes an ellipsis when truncated', () => {
-    expect(compactBufferPreview(new Array(128).fill(0xab))).toBe(
-      'AB AB AB AB AB AB AB AB … 128 B',
-    );
+    expect(compactBufferPreview(new Array(128).fill(0xab))).toBe('AB AB AB AB AB AB AB AB … 128 B');
   });
 
   it('respects a custom maxBytes', () => {
-    expect(compactBufferPreview([0x01, 0x02, 0x03], { maxBytes: 2 })).toBe(
-      '01 02 … 3 B',
-    );
+    expect(compactBufferPreview([0x01, 0x02, 0x03], { maxBytes: 2 })).toBe('01 02 … 3 B');
   });
 });
 
@@ -194,14 +176,12 @@ describe('hexInputToBytes', () => {
 
   it('parses multiline grouped hex', () => {
     expect(
-      hexInputToBytes(
-        '89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52\n00 00 00 20 00 00 00 20',
-      ),
+      hexInputToBytes('89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52\n00 00 00 20 00 00 00 20'),
     ).toEqual({
       ok: true,
       value: [
-        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
-        0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20,
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+        0x52, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20,
       ],
     });
   });
@@ -214,9 +194,9 @@ describe('hexInputToBytes', () => {
     expect(hexInputToBytes(pasted)).toEqual({
       ok: true,
       value: [
-        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
-        0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20,
-        0x08, 0x06, 0x00, 0x00, 0x00, 0x73, 0x7a, 0x7a,
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+        0x52, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20, 0x08, 0x06, 0x00, 0x00, 0x00, 0x73,
+        0x7a, 0x7a,
       ],
     });
   });

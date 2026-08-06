@@ -1,5 +1,4 @@
-export const WELCOME_DISMISSAL_STORAGE_KEY =
-  '@rozenite/shell:welcome-dismissed-version';
+export const WELCOME_DISMISSAL_STORAGE_KEY = '@rozenite/shell:welcome-dismissed-version';
 
 export function shouldShowWelcomeDialog(
   runtimeVersion: string | undefined,

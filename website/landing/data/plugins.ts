@@ -44,8 +44,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'Performance Monitor',
     packageName: '@rozenite/performance-monitor-plugin',
-    exposes:
-      'Live marks, measures and metrics per session, exportable for offline analysis.',
+    exposes: 'Live marks, measures and metrics per session, exportable for offline analysis.',
     icon: Gauge,
     href: '/docs/official-plugins/performance-monitor',
     agentEnabled: false,
@@ -61,8 +60,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'TanStack Query',
     packageName: '@rozenite/tanstack-query-plugin',
-    exposes:
-      'Queries, mutations and cache entries, with refetch, invalidate and reset.',
+    exposes: 'Queries, mutations and cache entries, with refetch, invalidate and reset.',
     icon: MagnifyingGlass,
     href: '/docs/official-plugins/tanstack-query',
     agentEnabled: true,
@@ -70,8 +68,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'React Navigation',
     packageName: '@rozenite/react-navigation-plugin',
-    exposes:
-      'Action timeline with dispatch origins, time travel and deep link testing.',
+    exposes: 'Action timeline with dispatch origins, time travel and deep link testing.',
     icon: Signpost,
     href: '/docs/official-plugins/react-navigation',
     agentEnabled: true,
@@ -79,8 +76,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'Storage',
     packageName: '@rozenite/storage-plugin',
-    exposes:
-      'MMKV, AsyncStorage and SecureStore in one panel, with per-key blacklists.',
+    exposes: 'MMKV, AsyncStorage and SecureStore in one panel, with per-key blacklists.',
     icon: Database,
     href: '/docs/official-plugins/storage',
     agentEnabled: true,
@@ -88,8 +84,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'MMKV',
     packageName: '@rozenite/mmkv-plugin',
-    exposes:
-      'Every instance and key, typed and searchable, editable without a rebuild.',
+    exposes: 'Every instance and key, typed and searchable, editable without a rebuild.',
     icon: HardDrives,
     href: '/docs/official-plugins/mmkv',
     agentEnabled: true,
@@ -97,8 +92,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'SQLite',
     packageName: '@rozenite/sqlite-plugin',
-    exposes:
-      'Query-first inspector that derives tables and schema through SQL and PRAGMA.',
+    exposes: 'Query-first inspector that derives tables and schema through SQL and PRAGMA.',
     icon: Table,
     href: '/docs/official-plugins/sqlite',
     agentEnabled: false,
@@ -106,8 +100,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'File System',
     packageName: '@rozenite/file-system-plugin',
-    exposes:
-      'App directories with inline text and image previews, hex for binaries.',
+    exposes: 'App directories with inline text and image previews, hex for binaries.',
     icon: FolderOpen,
     href: '/docs/official-plugins/file-system',
     agentEnabled: true,
@@ -115,8 +108,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'Controls',
     packageName: '@rozenite/controls-plugin',
-    exposes:
-      'App-defined toggles, selects and actions, kept out of your product UI.',
+    exposes: 'App-defined toggles, selects and actions, kept out of your product UI.',
     icon: Faders,
     href: '/docs/official-plugins/controls',
     agentEnabled: true,
@@ -124,8 +116,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'Expo Atlas',
     packageName: '@rozenite/expo-atlas-plugin',
-    exposes:
-      'Metro bundle structure, per-module size and the dependency graph behind it.',
+    exposes: 'Metro bundle structure, per-module size and the dependency graph behind it.',
     icon: Stack,
     href: '/docs/official-plugins/expo-atlas',
     agentEnabled: false,
@@ -133,8 +124,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'Require Profiler',
     packageName: '@rozenite/require-profiler-plugin',
-    exposes:
-      'Flame graph of startup require() calls and what pushes out interactive.',
+    exposes: 'Flame graph of startup require() calls and what pushes out interactive.',
     icon: Flame,
     href: '/docs/official-plugins/require-profiler',
     agentEnabled: false,
@@ -142,8 +132,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'React Hook Form',
     packageName: '@rozenite/rhf-plugin',
-    exposes:
-      'Values, errors, dirty and touched state for every form currently mounted.',
+    exposes: 'Values, errors, dirty and touched state for every form currently mounted.',
     icon: Textbox,
     href: '/docs/official-plugins/react-hook-form',
     agentEnabled: false,
@@ -151,8 +140,7 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
   {
     name: 'Overlay',
     packageName: '@rozenite/overlay-plugin',
-    exposes:
-      'Grids and reference images over the running app, with a compare slider.',
+    exposes: 'Grids and reference images over the running app, with a compare slider.',
     icon: GridFour,
     href: '/docs/official-plugins/overlay',
     agentEnabled: false,
@@ -165,5 +153,4 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
  */
 export const FEATURED_PLUGINS = OFFICIAL_PLUGINS.slice(0, 6);
 
-export const REMAINING_PLUGIN_COUNT =
-  OFFICIAL_PLUGINS.length - FEATURED_PLUGINS.length;
+export const REMAINING_PLUGIN_COUNT = OFFICIAL_PLUGINS.length - FEATURED_PLUGINS.length;

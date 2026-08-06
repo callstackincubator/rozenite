@@ -1,10 +1,4 @@
-export type EditableValueKind =
-  | 'null'
-  | 'text'
-  | 'number'
-  | 'boolean'
-  | 'blob-ish'
-  | 'json';
+export type EditableValueKind = 'null' | 'text' | 'number' | 'boolean' | 'blob-ish' | 'json';
 
 export type EditableFieldDraft = {
   kind: EditableValueKind;
@@ -36,10 +30,7 @@ export const parseEditableFieldValue = (draft: EditableFieldDraft): unknown => {
     case 'blob-ish': {
       const parsed = JSON.parse(draft.rawValue);
 
-      if (
-        !Array.isArray(parsed) ||
-        !parsed.every((item) => typeof item === 'number')
-      ) {
+      if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'number')) {
         throw new Error('Blob values must be JSON arrays of numbers.');
       }
 

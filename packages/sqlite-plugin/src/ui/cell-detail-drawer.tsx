@@ -10,12 +10,7 @@ type CellDetailDrawerProps = {
   onClose: () => void;
 };
 
-export const CellDetailDrawer = ({
-  value,
-  title,
-  isOpen,
-  onClose,
-}: CellDetailDrawerProps) => {
+export const CellDetailDrawer = ({ value, title, isOpen, onClose }: CellDetailDrawerProps) => {
   const overlay = useOverlayState({
     isOpen,
     onOpenChange: (open: boolean) => {

@@ -4,14 +4,8 @@ import {
   type InferAgentToolResult,
 } from '@rozenite/agent-shared';
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import {
-  controlsTools,
-  type ControlsListSectionsResult,
-} from '@rozenite/controls-plugin/sdk';
-import {
-  fileSystemTools,
-  type FileSystemListRootsResult,
-} from '@rozenite/file-system-plugin/sdk';
+import { controlsTools, type ControlsListSectionsResult } from '@rozenite/controls-plugin/sdk';
+import { fileSystemTools, type FileSystemListRootsResult } from '@rozenite/file-system-plugin/sdk';
 import { mmkvTools, type MMKVReadEntryResult } from '@rozenite/mmkv-plugin/sdk';
 import {
   networkActivityTools,
@@ -19,18 +13,15 @@ import {
 } from '@rozenite/network-activity-plugin/sdk';
 import { reactNavigationTools } from '@rozenite/react-navigation-plugin/sdk';
 import { reduxDevToolsTools } from '@rozenite/redux-devtools-plugin/sdk';
-import {
-  storageTools,
-  type StorageReadEntryResult,
-} from '@rozenite/storage-plugin/sdk';
+import { storageTools, type StorageReadEntryResult } from '@rozenite/storage-plugin/sdk';
 import {
   tanstackQueryTools,
   type TanStackQueryListQueriesResult,
 } from '@rozenite/tanstack-query-plugin/sdk';
 
-type DescriptorCallTuple<
-  TDescriptor extends AgentToolDescriptor<unknown, unknown>,
-> = [InferAgentToolArgs<TDescriptor>] extends [undefined]
+type DescriptorCallTuple<TDescriptor extends AgentToolDescriptor<unknown, unknown>> = [
+  InferAgentToolArgs<TDescriptor>,
+] extends [undefined]
   ? [args?: InferAgentToolArgs<TDescriptor>]
   : Record<string, never> extends InferAgentToolArgs<TDescriptor>
     ? [args?: InferAgentToolArgs<TDescriptor>]
@@ -82,12 +73,8 @@ describe('official plugin sdk descriptors', () => {
   });
 
   it('type-checks representative zero-arg, required-arg, and paginated descriptor calls', () => {
-    expectTypeOf(
-      typedCall(controlsTools.listSections),
-    ).toEqualTypeOf<ControlsListSectionsResult>();
-    expectTypeOf(
-      typedCall(fileSystemTools.listRoots),
-    ).toEqualTypeOf<FileSystemListRootsResult>();
+    expectTypeOf(typedCall(controlsTools.listSections)).toEqualTypeOf<ControlsListSectionsResult>();
+    expectTypeOf(typedCall(fileSystemTools.listRoots)).toEqualTypeOf<FileSystemListRootsResult>();
     expectTypeOf(
       typedCall(storageTools.readEntry, {
         adapterId: 'mmkv',

@@ -18,10 +18,7 @@ export const resolveRozeniteDevConfigModuleId = (id: string) => {
   return null;
 };
 
-export const loadRozeniteDevConfigModule = (
-  id: string,
-  projectRoot: string,
-) => {
+export const loadRozeniteDevConfigModule = (id: string, projectRoot: string) => {
   if (id !== RESOLVED_ROZENITE_DEV_CONFIG_MODULE_ID) {
     return null;
   }

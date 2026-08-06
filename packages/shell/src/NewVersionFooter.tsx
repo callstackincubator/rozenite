@@ -8,9 +8,7 @@ type NewVersionFooterProps = {
   currentVersion?: string;
 };
 
-export function NewVersionFooter({
-  currentVersion,
-}: NewVersionFooterProps) {
+export function NewVersionFooter({ currentVersion }: NewVersionFooterProps) {
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
 
   useEffect(() => {

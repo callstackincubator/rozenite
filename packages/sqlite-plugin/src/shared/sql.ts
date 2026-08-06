@@ -324,9 +324,7 @@ export const getStatementAtCursor = (sql: string, cursor: number) => {
     return null;
   }
 
-  const match = segments.find(
-    (segment) => cursor >= segment.start && cursor <= segment.end + 1,
-  );
+  const match = segments.find((segment) => cursor >= segment.start && cursor <= segment.end + 1);
 
   return match ?? segments[0];
 };
@@ -413,8 +411,6 @@ export const statementReturnsRows = (statementType: SqliteStatementType) =>
   statementType === 'explain' ||
   statementType === 'with';
 
-export const quoteSqlIdentifier = (identifier: string) =>
-  `"${identifier.replace(/"/g, '""')}"`;
+export const quoteSqlIdentifier = (identifier: string) => `"${identifier.replace(/"/g, '""')}"`;
 
-export const escapeSqlString = (value: string) =>
-  `'${value.replace(/'/g, "''")}'`;
+export const escapeSqlString = (value: string) => `'${value.replace(/'/g, "''")}'`;

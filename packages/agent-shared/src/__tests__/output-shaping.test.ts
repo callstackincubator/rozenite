@@ -51,13 +51,7 @@ describe('agent output shaping', () => {
       'argsPreview',
       'context',
     ] as const;
-    const defaultFields = [
-      'seq',
-      'timestamp',
-      'level',
-      'source',
-      'text',
-    ] as const;
+    const defaultFields = ['seq', 'timestamp', 'level', 'source', 'text'] as const;
 
     const fields = parseFields(undefined, allFields, defaultFields, false);
 
@@ -77,13 +71,7 @@ describe('agent output shaping', () => {
       'argsPreview',
       'context',
     ] as const;
-    const defaultFields = [
-      'seq',
-      'timestamp',
-      'level',
-      'source',
-      'text',
-    ] as const;
+    const defaultFields = ['seq', 'timestamp', 'level', 'source', 'text'] as const;
 
     const fields = parseFields(undefined, allFields, defaultFields, true);
 
@@ -112,9 +100,9 @@ describe('agent output shaping', () => {
     expect(projected).toEqual([{ name: 'x', shortName: 'x' }]);
     expect(projected[0]).not.toHaveProperty('inputSchema');
 
-    expect(
-      projectRows([{ name: 'missing short name' }], ['shortName', 'name']),
-    ).toEqual([{ shortName: null, name: 'missing short name' }]);
+    expect(projectRows([{ name: 'missing short name' }], ['shortName', 'name'])).toEqual([
+      { shortName: null, name: 'missing short name' },
+    ]);
   });
 
   it('uses selected fields to encode two or more rows as columns', () => {
@@ -138,11 +126,7 @@ describe('agent output shaping', () => {
 
   it('keeps zero and one row listings expanded and omits terminal pagination', () => {
     expect(
-      shapePaginatedRows(
-        { items: [], page: { limit: 20, hasMore: false } },
-        ['id'],
-        undefined,
-      ),
+      shapePaginatedRows({ items: [], page: { limit: 20, hasMore: false } }, ['id'], undefined),
     ).toEqual({ items: [] });
     expect(
       shapePaginatedRows(
@@ -216,9 +200,7 @@ describe('agent output shaping', () => {
       items: [{ id: 'a' }, { id: 'b' }],
       page: { limit: 2, hasMore: false },
     };
-    expect(shapeToolResult(collidingResult, ['id'], undefined)).toBe(
-      collidingResult,
-    );
+    expect(shapeToolResult(collidingResult, ['id'], undefined)).toBe(collidingResult);
 
     const collidingNext = {
       next: 'tool-owned-value',
@@ -226,11 +208,7 @@ describe('agent output shaping', () => {
       page: { limit: 1, hasMore: true, nextCursor: 'cursor' },
     };
     expect(
-      shapeToolResult(
-        collidingNext,
-        ['id'],
-        'npx rozenite agent domains --cursor cursor',
-      ),
+      shapeToolResult(collidingNext, ['id'], 'npx rozenite agent domains --cursor cursor'),
     ).toBe(collidingNext);
   });
 

@@ -1,11 +1,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { FlameGraph, RawData } from 'react-flame-graph';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import {
-  RequireProfilerEventMap,
-  RequireChainMeta,
-  RequireChainData,
-} from '../shared';
+import { RequireProfilerEventMap, RequireChainMeta, RequireChainData } from '../shared';
 import {
   transformToFlameGraphData,
   calculateStats,
@@ -36,11 +32,8 @@ const App = () => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [chainsList, setChainsList] = useState<RequireChainMeta[]>([]);
   const [currentChainIndex, setCurrentChainIndex] = useState(0);
-  const [currentChainData, setCurrentChainData] =
-    useState<RequireChainData | null>(null);
-  const [chainDataCache, setChainDataCache] = useState<
-    Map<number, RequireChainData>
-  >(new Map());
+  const [currentChainData, setCurrentChainData] = useState<RequireChainData | null>(null);
+  const [chainDataCache, setChainDataCache] = useState<Map<number, RequireChainData>>(new Map());
   const [loading, setLoading] = useState(false);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [options, setOptions] = useState<ProfilerOptions>(DEFAULT_OPTIONS);
@@ -75,33 +68,27 @@ const App = () => {
     setLoading(true);
 
     // Listen for chains list responses
-    const chainsListSubscription = client.onMessage(
-      'chains-list-response',
-      (event) => {
-        setChainsList(event.chains);
-        setLoading(false);
+    const chainsListSubscription = client.onMessage('chains-list-response', (event) => {
+      setChainsList(event.chains);
+      setLoading(false);
 
-        // If we have chains, request the first one directly
-        if (event.chains.length > 0) {
-          setCurrentChainIndex(0);
-          setLoading(true);
-          client.send('request-chain-data', { chainIndex: 0 });
-        }
-      },
-    );
+      // If we have chains, request the first one directly
+      if (event.chains.length > 0) {
+        setCurrentChainIndex(0);
+        setLoading(true);
+        client.send('request-chain-data', { chainIndex: 0 });
+      }
+    });
 
     // Listen for chain data responses
-    const chainDataSubscription = client.onMessage(
-      'chain-data-response',
-      (event) => {
-        const data = event.data;
-        if (data) {
-          setChainDataCache((prev) => new Map(prev.set(data.index, data)));
-          setCurrentChainData(data);
-        }
-        setLoading(false);
-      },
-    );
+    const chainDataSubscription = client.onMessage('chain-data-response', (event) => {
+      const data = event.data;
+      if (data) {
+        setChainDataCache((prev) => new Map(prev.set(data.index, data)));
+        setCurrentChainData(data);
+      }
+      setLoading(false);
+    });
 
     // Listen for new chain notifications (lazy requires)
     const newChainSubscription = client.onMessage('new-chain', (event) => {
@@ -174,14 +161,11 @@ const App = () => {
 
           // Filter active - only include cached chains that meet the threshold
           const cachedData = chainDataCache.get(index);
-          return (
-            cachedData && cachedData.tree.value >= newOptions.minChainDurationMs
-          );
+          return cachedData && cachedData.tree.value >= newOptions.minChainDurationMs;
         });
 
       // Check if current chain is still valid under new filter
-      const currentChainStillValid =
-        validChainIndices.includes(currentChainIndex);
+      const currentChainStillValid = validChainIndices.includes(currentChainIndex);
 
       if (currentChainStillValid) {
         // Current chain passes the filter, ensure it's loaded/restored
@@ -286,9 +270,7 @@ const App = () => {
     }
     // If all times are 0, ensure minimum values so nodes are visible
     const dataToColor =
-      stats.totalTime === 0
-        ? ensureMinimumValues(transformedData)
-        : transformedData;
+      stats.totalTime === 0 ? ensureMinimumValues(transformedData) : transformedData;
     return applyColors(dataToColor, maxValue);
   }, [transformedData, maxValue, stats.totalTime]);
 
@@ -354,9 +336,7 @@ const App = () => {
         showSidebar={showSidebar}
         loading={loading}
         clientAvailable={!!client}
-        currentChainIndex={
-          currentFilteredPosition >= 0 ? currentFilteredPosition : 0
-        }
+        currentChainIndex={currentFilteredPosition >= 0 ? currentFilteredPosition : 0}
         totalChains={filteredChainIndices.length}
         onPrevChain={handlePrevChain}
         onNextChain={handleNextChain}
@@ -388,8 +368,7 @@ const App = () => {
                 message={
                   chainsList.length === 0
                     ? 'No require chains available. Click refresh to load require profiler data.'
-                    : filteredChainIndices.length === 0 &&
-                        options.minChainDurationMs > 0
+                    : filteredChainIndices.length === 0 && options.minChainDurationMs > 0
                       ? `No chains found with duration ≥ ${options.minChainDurationMs}ms. Try lowering the threshold in options.`
                       : 'No data available for this chain.'
                 }

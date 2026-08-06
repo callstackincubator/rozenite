@@ -63,16 +63,12 @@ export default {
         name: 'Initialize storage fixtures',
         autoRun: true,
         run: async ({ send, waitForMessage }: DevFlowContext) => {
-          await waitForMessage(
-            { type: 'get-snapshot', direction: 'out' },
-            { timeoutMs: 10000 },
-          );
+          await waitForMessage({ type: 'get-snapshot', direction: 'out' }, { timeoutMs: 10000 });
 
           storageFixtures.forEach((snapshot) => send('snapshot', snapshot));
 
           return {
-            message:
-              'Initialized AsyncStorage, Expo SecureStore, and MMKV fixtures.',
+            message: 'Initialized AsyncStorage, Expo SecureStore, and MMKV fixtures.',
             storages: storageFixtures.length,
             entries: storageFixtures.reduce(
               (total, snapshot) => total + snapshot.entries.length,

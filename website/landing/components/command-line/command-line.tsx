@@ -18,7 +18,7 @@ export const CommandLine = ({ command, className }: CommandLineProps) => {
         clearTimeout(timeout.current);
       }
     },
-    []
+    [],
   );
 
   const copy = useCallback(async () => {
@@ -47,9 +47,7 @@ export const CommandLine = ({ command, className }: CommandLineProps) => {
       <button
         type="button"
         onClick={copy}
-        className={[styles.copy, copied ? styles.copied : '']
-          .filter(Boolean)
-          .join(' ')}
+        className={[styles.copy, copied ? styles.copied : ''].filter(Boolean).join(' ')}
         aria-label={copied ? 'Command copied' : `Copy "${command}"`}
       >
         {copied ? <Check size={16} weight="bold" /> : <Copy size={16} />}

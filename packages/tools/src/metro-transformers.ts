@@ -3,12 +3,8 @@ import type { ConfigT as MetroConfig } from 'metro-config';
 type MetroConfigObject = MetroConfig;
 type MetroConfigPromise = Promise<MetroConfig>;
 type MetroConfigFunction = (baseConfig: MetroConfig) => MetroConfig;
-type MetroConfigAsyncFunction = (
-  baseConfig: MetroConfig,
-) => Promise<MetroConfig>;
-type MetroConfigPromiseOfFunction = Promise<
-  MetroConfigFunction | MetroConfigAsyncFunction
->;
+type MetroConfigAsyncFunction = (baseConfig: MetroConfig) => Promise<MetroConfig>;
+type MetroConfigPromiseOfFunction = Promise<MetroConfigFunction | MetroConfigAsyncFunction>;
 
 export type AnyMetroConfig =
   | MetroConfigObject
@@ -23,10 +19,7 @@ type Transformer<TOptions = void> = <T extends AnyMetroConfig>(
   options?: TOptions,
 ) => MutatedType<T>;
 
-type TransformerWithOptions<TOptions = unknown> = [
-  Transformer<TOptions>,
-  TOptions,
-];
+type TransformerWithOptions<TOptions = unknown> = [Transformer<TOptions>, TOptions];
 
 type TransformerEntry = Transformer<void> | TransformerWithOptions<unknown>;
 
@@ -40,9 +33,7 @@ export type MutatedType<T> = T extends MetroConfigObject
       : T extends MetroConfigAsyncFunction
         ? (baseConfig: MetroConfig) => Promise<MetroConfig> // Async function stays async function
         : T extends MetroConfigPromiseOfFunction
-          ? Promise<
-              (baseConfig: MetroConfig) => MetroConfig | Promise<MetroConfig>
-            > // Promise of function stays Promise of function
+          ? Promise<(baseConfig: MetroConfig) => MetroConfig | Promise<MetroConfig>> // Promise of function stays Promise of function
           : never;
 
 /**
@@ -59,15 +50,9 @@ export type MutatedType<T> = T extends MetroConfigObject
  * @returns A transformer function that accepts any Metro config format
  */
 export const createMetroConfigTransformer = <TOptions = void>(
-  mutate: (
-    config: MetroConfig,
-    options?: TOptions,
-  ) => MetroConfig | Promise<MetroConfig>,
+  mutate: (config: MetroConfig, options?: TOptions) => MetroConfig | Promise<MetroConfig>,
 ) => {
-  return <T extends AnyMetroConfig>(
-    input: T,
-    options?: TOptions,
-  ): MutatedType<T> => {
+  return <T extends AnyMetroConfig>(input: T, options?: TOptions): MutatedType<T> => {
     // 1. Handle function inputs (sync and async config functions)
     if (typeof input === 'function') {
       return ((baseConfig: MetroConfig) => {
@@ -125,9 +110,7 @@ export const createMetroConfigTransformer = <TOptions = void>(
  * module.exports = combinedTransformer(getDefaultConfig(__dirname));
  * ```
  */
-export const composeMetroConfigTransformers = (
-  ...entries: TransformerEntry[]
-) => {
+export const composeMetroConfigTransformers = (...entries: TransformerEntry[]) => {
   return <T extends AnyMetroConfig>(input: T): MutatedType<T> => {
     // Reduce through all transformers, chaining them together
     return entries.reduce<AnyMetroConfig>((acc, entry) => {

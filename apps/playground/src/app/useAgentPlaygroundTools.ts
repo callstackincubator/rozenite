@@ -1,8 +1,5 @@
 import { Alert } from 'react-native';
-import {
-  useRozeniteInAppAgentTool,
-  type AgentTool,
-} from '@rozenite/agent-bridge';
+import { useRozeniteInAppAgentTool, type AgentTool } from '@rozenite/agent-bridge';
 
 type ShowAlertInput = {
   title?: string;
@@ -67,10 +64,7 @@ export const useAgentPlaygroundTools = () => {
   useRozeniteInAppAgentTool<ShowAlertInput>({
     tool: showAlertTool,
     handler: ({ title, message }) => {
-      Alert.alert(
-        title || 'Agent Playground',
-        message || 'Alert from Agent tool.',
-      );
+      Alert.alert(title || 'Agent Playground', message || 'Alert from Agent tool.');
 
       return {
         ok: true,
@@ -83,8 +77,7 @@ export const useAgentPlaygroundTools = () => {
     handler: ({ min = 0, max = 100 }) => {
       const safeMin = Number.isFinite(min) ? min : 0;
       const safeMax = Number.isFinite(max) ? max : 100;
-      const [from, to] =
-        safeMin <= safeMax ? [safeMin, safeMax] : [safeMax, safeMin];
+      const [from, to] = safeMin <= safeMax ? [safeMin, safeMax] : [safeMax, safeMin];
       const random = Math.random() * (to - from) + from;
 
       return {

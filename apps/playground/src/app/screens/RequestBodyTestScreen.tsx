@@ -111,15 +111,11 @@ export const RequestBodyTestScreen: React.FC = () => {
   const [requestBodyType, setRequestBodyType] = React.useState<
     'string' | 'json' | 'formdata' | 'binary'
   >('string');
-  const [stringBodyData, setStringBodyData] = React.useState(
-    'Hello, this is a test string!',
-  );
+  const [stringBodyData, setStringBodyData] = React.useState('Hello, this is a test string!');
   const [jsonBodyData, setJsonBodyData] = React.useState(
     '{\n  "message": "Hello World",\n  "timestamp": "2024-01-01T00:00:00Z",\n  "user": {\n    "id": 123,\n    "name": "Test User"\n  }\n}',
   );
-  const [formDataFields, setFormDataFields] = React.useState<
-    Record<string, string>
-  >({
+  const [formDataFields, setFormDataFields] = React.useState<Record<string, string>>({
     name: 'John Doe',
     email: 'john@example.com',
     message: 'This is a form data test',
@@ -127,8 +123,7 @@ export const RequestBodyTestScreen: React.FC = () => {
   const [binaryData, setBinaryData] = React.useState(
     'Binary test data - this will be converted to Uint8Array',
   );
-  const [requestBodyResponse, setRequestBodyResponse] =
-    React.useState<any>(null);
+  const [requestBodyResponse, setRequestBodyResponse] = React.useState<any>(null);
 
   const requestBodyMutations = useRequestBodyTestMutations();
 
@@ -200,21 +195,13 @@ export const RequestBodyTestScreen: React.FC = () => {
     requestBodyMutations.binaryTest.error;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Request Body Test</Text>
-        <Text style={styles.subtitle}>
-          Test different request body types using {MIRROR_API}
-        </Text>
+        <Text style={styles.subtitle}>Test different request body types using {MIRROR_API}</Text>
       </View>
 
       <View style={styles.form}>
@@ -299,9 +286,7 @@ export const RequestBodyTestScreen: React.FC = () => {
                 <TextInput
                   style={[styles.textInput, styles.formDataValue]}
                   value={value}
-                  onChangeText={(newValue) =>
-                    updateFormDataField(key, newValue)
-                  }
+                  onChangeText={(newValue) => updateFormDataField(key, newValue)}
                   placeholder="Field value"
                   placeholderTextColor="#666666"
                 />
@@ -313,10 +298,7 @@ export const RequestBodyTestScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
             ))}
-            <TouchableOpacity
-              style={styles.addFieldButton}
-              onPress={addFormDataField}
-            >
+            <TouchableOpacity style={styles.addFieldButton} onPress={addFormDataField}>
               <Text style={styles.addFieldButtonText}>+ Add Field</Text>
             </TouchableOpacity>
           </View>
@@ -350,10 +332,7 @@ export const RequestBodyTestScreen: React.FC = () => {
             <ActivityIndicator size="small" color="#ffffff" />
           ) : (
             <Text style={styles.sendButtonText}>
-              Send{' '}
-              {requestBodyType.charAt(0).toUpperCase() +
-                requestBodyType.slice(1)}{' '}
-              Request
+              Send {requestBodyType.charAt(0).toUpperCase() + requestBodyType.slice(1)} Request
             </Text>
           )}
         </TouchableOpacity>

@@ -15,10 +15,7 @@ import {
 import { createDefaultFilter } from '../state/filter';
 import type { FilterState } from '../state/filter';
 import { matchesRequestFilter } from '../utils/requestFilters';
-import {
-  requestOverlapsTimelineRange,
-  type TimelineRangeSelection,
-} from '../utils/timelineModel';
+import { requestOverlapsTimelineRange, type TimelineRangeSelection } from '../utils/timelineModel';
 
 export type InspectorViewProps = {
   client: NetworkActivityDevToolsClient;
@@ -30,11 +27,8 @@ export const InspectorView = ({ client }: InspectorViewProps) => {
   const hasSelectedRequest = useHasSelectedRequest();
   const overrides = useOverrides();
   const processedRequests = useProcessedRequests();
-  const [filter, setFilter] = useState<FilterState>(() =>
-    createDefaultFilter(),
-  );
-  const [timelineSelection, setTimelineSelection] =
-    useState<TimelineRangeSelection | null>(null);
+  const [filter, setFilter] = useState<FilterState>(() => createDefaultFilter());
+  const [timelineSelection, setTimelineSelection] = useState<TimelineRangeSelection | null>(null);
 
   const filteredRequests = useMemo(() => {
     return processedRequests.filter((request) =>

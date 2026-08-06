@@ -29,9 +29,7 @@ type MultiStorageOptions = {
   adapterName?: string;
 };
 
-export type CreateAsyncStorageAdapterOptions =
-  | SingleStorageOptions
-  | MultiStorageOptions;
+export type CreateAsyncStorageAdapterOptions = SingleStorageOptions | MultiStorageOptions;
 
 const toStorageNode = (
   storageId: string,
@@ -113,5 +111,4 @@ export const createAsyncStorageAdapter = (
  * @deprecated Use createAsyncStorageAdapter instead.
  */
 export const createExpoAsyncStorageAdapter = createAsyncStorageAdapter;
-export type CreateExpoAsyncStorageAdapterOptions =
-  CreateAsyncStorageAdapterOptions;
+export type CreateExpoAsyncStorageAdapterOptions = CreateAsyncStorageAdapterOptions;

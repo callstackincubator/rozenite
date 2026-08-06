@@ -25,9 +25,7 @@ export const isSSEEvent = (type: string): type is keyof SSEEventMap => {
 export const getSSEInspector = (): SSEInspector => {
   const eventEmitter = createNanoEvents<NanoEventsMap>();
 
-  const getRequestId = (
-    eventSource: EventSourceWithInternals,
-  ): string | null => {
+  const getRequestId = (eventSource: EventSourceWithInternals): string | null => {
     const requestId = eventSource._xhr?._rozeniteRequestId;
 
     if (!requestId) {
@@ -101,8 +99,7 @@ export const getSSEInspector = (): SSEInspector => {
           timestamp: Date.now(),
           error: {
             type: errorEvent.type,
-            message:
-              errorEvent.type === 'timeout' ? 'Timeout' : errorEvent.message,
+            message: errorEvent.type === 'timeout' ? 'Timeout' : errorEvent.message,
           },
         };
         eventEmitter.emit('sse-error', event);

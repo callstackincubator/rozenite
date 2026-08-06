@@ -27,15 +27,11 @@ const columnHelper = createColumnHelper<WebSocketMessageRow>();
 
 export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
   const websocketMessages = useWebSocketMessages(selectedRequest.id);
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
-    null,
-  );
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
 
   const selectedMessage = useMemo(() => {
     if (!selectedMessageId) return null;
-    return (
-      websocketMessages.find((msg) => msg.id === selectedMessageId) || null
-    );
+    return websocketMessages.find((msg) => msg.id === selectedMessageId) || null;
   }, [selectedMessageId, websocketMessages]);
 
   const formatTimestamp = (timestamp: number) => {
@@ -85,21 +81,16 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
   };
 
   const tableData = useMemo(() => {
-    return websocketMessages.map(
-      (message): WebSocketMessageRow => ({
-        id: message.id,
-        direction: message.direction,
-        data: message.data,
-        messageType: message.messageType,
-        timestamp: message.timestamp,
-      }),
-    );
+    return websocketMessages.map((message): WebSocketMessageRow => ({
+      id: message.id,
+      direction: message.direction,
+      data: message.data,
+      messageType: message.messageType,
+      timestamp: message.timestamp,
+    }));
   }, [websocketMessages]);
 
-  const formatPreviewData = (
-    data: string,
-    messageType: WebSocketMessageType,
-  ) => {
+  const formatPreviewData = (data: string, messageType: WebSocketMessageType) => {
     if (messageType === 'binary') {
       return <span className="text-gray-400">Binary message</span>;
     }
@@ -117,11 +108,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
       cell: ({ getValue }) => {
         const direction = getValue();
         return (
-          <span
-            className={`flex items-center gap-1 ${getMessageTypeColor(
-              direction,
-            )}`}
-          >
+          <span className={`flex items-center gap-1 ${getMessageTypeColor(direction)}`}>
             <span className="text-xs">{getMessageTypeIcon(direction)}</span>
             <span className="capitalize">{direction}</span>
           </span>
@@ -140,9 +127,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
     }),
     columnHelper.accessor('timestamp', {
       header: 'Timestamp',
-      cell: ({ getValue }) => (
-        <div className="text-gray-400">{formatTimestamp(getValue())}</div>
-      ),
+      cell: ({ getValue }) => <div className="text-gray-400">{formatTimestamp(getValue())}</div>,
       size: 120,
     }),
   ];
@@ -157,8 +142,8 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
     return (
       <ScrollArea className="h-full min-h-0 p-4">
         <div className="text-sm text-gray-400">
-          No WebSocket messages available for this connection. Messages will
-          appear here when the WebSocket connection sends or receives data.
+          No WebSocket messages available for this connection. Messages will appear here when the
+          WebSocket connection sends or receives data.
         </div>
       </ScrollArea>
     );
@@ -182,10 +167,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
                       <div className="flex items-center gap-1">
                         {header.isPlaceholder
                           ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </div>
                     </th>
                   ))}
@@ -202,15 +184,8 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
                   onClick={() => setSelectedMessageId(row.original.id)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="p-2"
-                      style={{ width: cell.column.getSize() }}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                    <td key={cell.id} className="p-2" style={{ width: cell.column.getSize() }}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
                 </tr>
@@ -225,9 +200,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
         <div className="border-t border-gray-700 bg-gray-800">
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-gray-300">
-                Message Details
-              </h4>
+              <h4 className="text-sm font-medium text-gray-300">Message Details</h4>
               <button
                 onClick={() => setSelectedMessageId(null)}
                 className="text-gray-400 hover:text-blue-400 text-sm"
@@ -239,17 +212,13 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-400">Type: </span>
-                  <span
-                    className={getMessageTypeColor(selectedMessage.direction)}
-                  >
+                  <span className={getMessageTypeColor(selectedMessage.direction)}>
                     {selectedMessage.direction}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-400">Message Type: </span>
-                  <span className="text-blue-400 capitalize">
-                    {selectedMessage.messageType}
-                  </span>
+                  <span className="text-blue-400 capitalize">{selectedMessage.messageType}</span>
                 </div>
                 <div>
                   <span className="text-gray-400">Timestamp: </span>
@@ -261,10 +230,7 @@ export const MessagesTab = ({ selectedRequest }: MessagesTabProps) => {
               <div>
                 <span className="text-gray-400 text-sm">Content:</span>
                 <div className="mt-2 max-h-96 overflow-y-auto">
-                  {formatData(
-                    selectedMessage.data,
-                    selectedMessage.messageType,
-                  )}
+                  {formatData(selectedMessage.data, selectedMessage.messageType)}
                 </div>
               </div>
             </div>

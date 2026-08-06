@@ -18,9 +18,7 @@ const createRequest = (overrides?: Partial<Request>): Request => ({
 
 describe('network activity agent state', () => {
   it('exposes the expected fallback and realtime tool names', () => {
-    expect(
-      Object.values(networkActivityToolDefinitions).map((tool) => tool.name),
-    ).toEqual([
+    expect(Object.values(networkActivityToolDefinitions).map((tool) => tool.name)).toEqual([
       'startRecording',
       'stopRecording',
       'getRecordingStatus',
@@ -31,20 +29,17 @@ describe('network activity agent state', () => {
       'listRealtimeConnections',
       'getRealtimeConnectionDetails',
     ]);
-    expect(
-      networkActivityToolDefinitions.getRequestDetails.inputSchema.required,
-    ).toEqual(['requestId']);
-    expect(
-      networkActivityToolDefinitions.listRequests.pagination,
-    ).toMatchObject({
+    expect(networkActivityToolDefinitions.getRequestDetails.inputSchema.required).toEqual([
+      'requestId',
+    ]);
+    expect(networkActivityToolDefinitions.listRequests.pagination).toMatchObject({
       kind: 'cursor',
       fields: expect.arrayContaining(['requestId', 'url', 'status']),
     });
   });
 
   it('trims listRequests/listRealtimeConnections defaultFields narrower than the full field set', () => {
-    const listRequestsPagination =
-      networkActivityToolDefinitions.listRequests.pagination;
+    const listRequestsPagination = networkActivityToolDefinitions.listRequests.pagination;
     const listRealtimeConnectionsPagination =
       networkActivityToolDefinitions.listRealtimeConnections.pagination;
 
@@ -55,11 +50,10 @@ describe('network activity agent state', () => {
       expect(listRequestsPagination?.fields).toContain(field);
     }
 
-    expect(
-      listRealtimeConnectionsPagination?.defaultFields?.length,
-    ).toBeLessThan(listRealtimeConnectionsPagination?.fields.length ?? 0);
-    for (const field of listRealtimeConnectionsPagination?.defaultFields ??
-      []) {
+    expect(listRealtimeConnectionsPagination?.defaultFields?.length).toBeLessThan(
+      listRealtimeConnectionsPagination?.fields.length ?? 0,
+    );
+    for (const field of listRealtimeConnectionsPagination?.defaultFields ?? []) {
       expect(listRealtimeConnectionsPagination?.fields).toContain(field);
     }
   });
@@ -281,9 +275,7 @@ describe('network activity agent state', () => {
     const firstPage = state.listRequests({ limit: 1 });
     state.startRecording();
 
-    expect(() =>
-      state.listRequests({ limit: 1, cursor: firstPage.page.nextCursor }),
-    ).toThrow(
+    expect(() => state.listRequests({ limit: 1, cursor: firstPage.page.nextCursor })).toThrow(
       'Cursor does not match the requested listing. Run the command again.',
     );
   });

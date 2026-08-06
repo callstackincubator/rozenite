@@ -17,10 +17,7 @@ export type WaterfallViewProps = {
   onEntrySelect: (entry: SerializedPerformanceEntry, entryId?: string) => void;
 };
 
-const BAR_CLASS_BY_TYPE: Record<
-  SerializedPerformanceEntry['entryType'],
-  string
-> = {
+const BAR_CLASS_BY_TYPE: Record<SerializedPerformanceEntry['entryType'], string> = {
   measure: 'waterfall-bar-measure',
   mark: 'waterfall-bar-mark',
   metric: 'waterfall-bar-metric',
@@ -110,9 +107,7 @@ const WaterfallBar = ({ row }: { row: WaterfallRow }) => {
             left: `${phase.startPercent}%`,
             width: `${phase.widthPercent}%`,
           }}
-          title={`${phase.label} - ${formatDuration(
-            (phase.widthPercent / 100) * row.duration,
-          )}`}
+          title={`${phase.label} - ${formatDuration((phase.widthPercent / 100) * row.duration)}`}
         />
       ))}
     </div>
@@ -139,10 +134,7 @@ export const WaterfallView = ({
 }: WaterfallViewProps) => {
   const model = useMemo(() => buildWaterfallModel(entries), [entries]);
 
-  const handleKeyDown = (
-    event: KeyboardEvent<HTMLDivElement>,
-    row: WaterfallRow,
-  ) => {
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>, row: WaterfallRow) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       onEntrySelect(row.entry, row.id);
@@ -172,9 +164,7 @@ export const WaterfallView = ({
           <span className="waterfall-legend-resource">Resource</span>
           <span className="waterfall-legend-mark">Mark</span>
           <span className="waterfall-legend-metric">Metric</span>
-          <span className="waterfall-legend-react-native-mark">
-            React Native
-          </span>
+          <span className="waterfall-legend-react-native-mark">React Native</span>
         </div>
       </div>
 
@@ -183,9 +173,7 @@ export const WaterfallView = ({
         {model.rows.map((row, index) => (
           <span
             key={row.id}
-            className={`waterfall-overview-bar ${
-              BAR_CLASS_BY_TYPE[row.entry.entryType]
-            }`}
+            className={`waterfall-overview-bar ${BAR_CLASS_BY_TYPE[row.entry.entryType]}`}
             style={{
               left: `${row.offsetPercent}%`,
               width: `${Math.max(row.widthPercent, 0.18)}%`,
@@ -217,18 +205,12 @@ export const WaterfallView = ({
           data={model.rows}
           computeItemKey={(_, row) => row.id}
           itemContent={(_, row) => {
-            const isSelected = isRowSelected(
-              row,
-              selectedEntry,
-              selectedEntryId,
-            );
+            const isSelected = isRowSelected(row, selectedEntry, selectedEntryId);
             const domain = getDomain(row.entry);
 
             return (
               <div
-                className={`waterfall-row ${
-                  isSelected ? 'waterfall-row-selected' : ''
-                }`}
+                className={`waterfall-row ${isSelected ? 'waterfall-row-selected' : ''}`}
                 role="row"
                 tabIndex={0}
                 onClick={() => onEntrySelect(row.entry, row.id)}
@@ -237,9 +219,7 @@ export const WaterfallView = ({
                 <div className="waterfall-row-label" role="gridcell">
                   <span className="waterfall-row-index">{row.index + 1}</span>
                   <span className="waterfall-row-text">
-                    <strong title={row.entry.name}>
-                      {getDisplayName(row.entry)}
-                    </strong>
+                    <strong title={row.entry.name}>{getDisplayName(row.entry)}</strong>
                     {domain && <small>{domain}</small>}
                   </span>
                   <span className="waterfall-row-meta">
@@ -265,10 +245,7 @@ export const WaterfallView = ({
                     <span
                       className="waterfall-selected-duration"
                       style={{
-                        left: `${Math.min(
-                          98,
-                          row.offsetPercent + row.widthPercent,
-                        )}%`,
+                        left: `${Math.min(98, row.offsetPercent + row.widthPercent)}%`,
                       }}
                     >
                       {formatDuration(row.duration)}

@@ -29,8 +29,7 @@ export const useRozeniteDevToolsClient = <
 >({
   pluginId,
 }: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsRequestClient<TEventMap> | null => {
-  const [client, setClient] =
-    useState<RozeniteDevToolsRequestClient<TEventMap> | null>(null);
+  const [client, setClient] = useState<RozeniteDevToolsRequestClient<TEventMap> | null>(null);
   const [error, setError] = useState<unknown | null>(null);
 
   useEffect(() => {
@@ -56,16 +55,11 @@ export const useRozeniteDevToolsClient = <
         if (error instanceof UnsupportedPlatformError) {
           // We don't want to show an error for unsupported platforms.
           // It's expected that the client will be null.
-          console.warn(
-            `[Rozenite, ${pluginId}] Unsupported platform, skipping setup.`,
-          );
+          console.warn(`[Rozenite, ${pluginId}] Unsupported platform, skipping setup.`);
           return;
         }
 
-        console.error(
-          `[Rozenite, ${pluginId}] Error setting up client.`,
-          error,
-        );
+        console.error(`[Rozenite, ${pluginId}] Error setting up client.`, error);
 
         if (isMounted) {
           setError(error);
@@ -98,8 +92,7 @@ export const useRozeniteDevToolsClient = <
       return;
     }
 
-    const lifecycleClient =
-      client as unknown as RozeniteDevToolsClient<PluginLifecycleEventMap>;
+    const lifecycleClient = client as unknown as RozeniteDevToolsClient<PluginLifecycleEventMap>;
     const timer = setTimeout(() => {
       lifecycleClient.send('plugin-mounted', {
         pluginId,

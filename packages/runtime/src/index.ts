@@ -38,9 +38,7 @@ const main = async (): Promise<void> => {
 
   if (pluginDisplay === 'tabs') {
     addWelcomeView();
-    const loadedPlugins = await Promise.all(
-      plugins.map((plugin) => loadPlugin(plugin)),
-    );
+    const loadedPlugins = await Promise.all(plugins.map((plugin) => loadPlugin(plugin)));
 
     const addPluginPanels = (plugin: LoadedPlugin): void => {
       plugin.panels.forEach((panel) => {
@@ -87,9 +85,6 @@ const main = async (): Promise<void> => {
 
 void main().catch((error) => {
   console.group('❌ Rozenite Error');
-  console.error(
-    'Initialization failed. See the following error for more details:',
-    error,
-  );
+  console.error('Initialization failed. See the following error for more details:', error);
   console.groupEnd();
 });

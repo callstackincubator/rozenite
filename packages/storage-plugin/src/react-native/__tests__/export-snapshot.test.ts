@@ -89,9 +89,7 @@ describe('handleExportSnapshotRequest', () => {
   it('exports an empty storage as a valid empty snapshot', async () => {
     const { view } = createView({});
 
-    await expect(
-      handleExportSnapshotRequest([view], request()),
-    ).resolves.toMatchObject({
+    await expect(handleExportSnapshotRequest([view], request())).resolves.toMatchObject({
       type: 'export-snapshot-result',
       snapshot: { entries: [] },
     });
@@ -130,9 +128,7 @@ describe('handleExportSnapshotRequest', () => {
       },
     );
 
-    await expect(
-      handleExportSnapshotRequest([view], request()),
-    ).resolves.toEqual({
+    await expect(handleExportSnapshotRequest([view], request())).resolves.toEqual({
       type: 'storage-request-error',
       requestId: 'request-1',
       code: 'READ_FAILED',

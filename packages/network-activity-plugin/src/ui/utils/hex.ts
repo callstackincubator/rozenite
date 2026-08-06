@@ -9,13 +9,10 @@ export const BYTES_PER_GROUP = 8;
 const ASCII_PRINTABLE_MIN = 0x20;
 const ASCII_PRINTABLE_MAX = 0x7e;
 
-export const toHexPair = (byte: number): string =>
-  byte.toString(16).toUpperCase().padStart(2, '0');
+export const toHexPair = (byte: number): string => byte.toString(16).toUpperCase().padStart(2, '0');
 
 export const toAsciiChar = (byte: number): string =>
-  byte >= ASCII_PRINTABLE_MIN && byte <= ASCII_PRINTABLE_MAX
-    ? String.fromCharCode(byte)
-    : '.';
+  byte >= ASCII_PRINTABLE_MIN && byte <= ASCII_PRINTABLE_MAX ? String.fromCharCode(byte) : '.';
 
 export type HexRow = {
   offset: string;
@@ -23,11 +20,7 @@ export type HexRow = {
   ascii: string;
 };
 
-const sliceHexBytes = (
-  bytes: Uint8Array,
-  start: number,
-  end: number,
-): number[] => {
+const sliceHexBytes = (bytes: Uint8Array, start: number, end: number): number[] => {
   const out: number[] = [];
   const limit = Math.min(end, bytes.length);
   for (let i = start; i < limit; i++) {

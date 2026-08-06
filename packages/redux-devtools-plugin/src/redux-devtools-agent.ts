@@ -31,29 +31,22 @@ const DEFAULT_PAGE_LIMIT = 50;
 export const listStoresTool = reduxDevToolsToolDefinitions.listStores;
 export const getStoreStateTool = reduxDevToolsToolDefinitions.getStoreState;
 export const listActionsTool = reduxDevToolsToolDefinitions.listActions;
-export const getActionDetailsTool =
-  reduxDevToolsToolDefinitions.getActionDetails;
+export const getActionDetailsTool = reduxDevToolsToolDefinitions.getActionDetails;
 export const dispatchActionTool = reduxDevToolsToolDefinitions.dispatchAction;
 export const jumpToActionTool = reduxDevToolsToolDefinitions.jumpToAction;
 export const toggleActionTool = reduxDevToolsToolDefinitions.toggleAction;
 export const resetHistoryTool = reduxDevToolsToolDefinitions.resetHistory;
 export const rollbackStateTool = reduxDevToolsToolDefinitions.rollbackState;
-export const commitCurrentStateTool =
-  reduxDevToolsToolDefinitions.commitCurrentState;
-export const sweepSkippedActionsTool =
-  reduxDevToolsToolDefinitions.sweepSkippedActions;
-export const setRecordingPausedTool =
-  reduxDevToolsToolDefinitions.setRecordingPaused;
+export const commitCurrentStateTool = reduxDevToolsToolDefinitions.commitCurrentState;
+export const sweepSkippedActionsTool = reduxDevToolsToolDefinitions.sweepSkippedActions;
+export const setRecordingPausedTool = reduxDevToolsToolDefinitions.setRecordingPaused;
 export const setLockedTool = reduxDevToolsToolDefinitions.setLocked;
 
 const serializeForAgent = <T>(value: T): T => {
   return parse(stringify(value)) as T;
 };
 
-const getActionDisplayType = (
-  liftedState: ReduxDevToolsLiftedState,
-  actionId: number,
-) => {
+const getActionDisplayType = (liftedState: ReduxDevToolsLiftedState, actionId: number) => {
   const liftedAction = liftedState.actionsById[actionId];
   if (!liftedAction) {
     return '(unknown)';
@@ -78,8 +71,7 @@ const buildActionSummary = (
 ) => {
   const liftedAction = liftedState.actionsById[actionId];
   const stagedIndex = liftedState.stagedActionIds.indexOf(actionId);
-  const computedState =
-    stagedIndex >= 0 ? liftedState.computedStates[stagedIndex] : undefined;
+  const computedState = stagedIndex >= 0 ? liftedState.computedStates[stagedIndex] : undefined;
 
   return {
     instanceId: store.instanceId,
@@ -94,9 +86,7 @@ const buildActionSummary = (
 };
 
 const getVisibleActionIds = (liftedState: ReduxDevToolsLiftedState) => {
-  return liftedState.stagedActionIds
-    .filter((actionId) => actionId !== 0)
-    .reverse();
+  return liftedState.stagedActionIds.filter((actionId) => actionId !== 0).reverse();
 };
 
 const getKnownActionIds = (liftedState: ReduxDevToolsLiftedState) => {
@@ -151,9 +141,7 @@ const getStoreAndLiftedState = (instanceId?: string) => {
   const liftedState = store.getLiftedState();
 
   if (!enhancedStore || !liftedState) {
-    throw new Error(
-      `Redux DevTools store "${store.instanceId}" is not ready yet.`,
-    );
+    throw new Error(`Redux DevTools store "${store.instanceId}" is not ready yet.`);
   }
 
   return { store, enhancedStore, liftedState };
@@ -207,19 +195,11 @@ const isSerializable = (value: unknown): boolean => {
   }
 
   const valueType = typeof value;
-  if (
-    valueType === 'string' ||
-    valueType === 'number' ||
-    valueType === 'boolean'
-  ) {
+  if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') {
     return Number.isNaN(value as number) ? false : true;
   }
 
-  if (
-    valueType === 'undefined' ||
-    valueType === 'function' ||
-    valueType === 'symbol'
-  ) {
+  if (valueType === 'undefined' || valueType === 'function' || valueType === 'symbol') {
     return false;
   }
 
@@ -243,10 +223,7 @@ export const parseSerializableReduxAction = (action: unknown): AnyAction => {
     throw new Error('action must be a plain object.');
   }
 
-  if (
-    !('type' in action) ||
-    typeof (action as { type?: unknown }).type !== 'string'
-  ) {
+  if (!('type' in action) || typeof (action as { type?: unknown }).type !== 'string') {
     throw new Error('action.type must be a string.');
   }
 
@@ -259,20 +236,17 @@ export const parseSerializableReduxAction = (action: unknown): AnyAction => {
   return action as AnyAction;
 };
 
-export const listReduxDevToolsStoresResult =
-  (): ReduxDevToolsListStoresResult => {
-    return {
-      stores: listReduxDevToolsStores().map(buildStoreSummary),
-    };
+export const listReduxDevToolsStoresResult = (): ReduxDevToolsListStoresResult => {
+  return {
+    stores: listReduxDevToolsStores().map(buildStoreSummary),
   };
+};
 
 export const getReduxStoreStateResult = ({
   instanceId,
 }: StoreInput): ReduxDevToolsGetStoreStateResult => {
-  const { store, enhancedStore, liftedState } =
-    getStoreAndLiftedState(instanceId);
-  const currentActionId =
-    liftedState.stagedActionIds[liftedState.currentStateIndex] ?? null;
+  const { store, enhancedStore, liftedState } = getStoreAndLiftedState(instanceId);
+  const currentActionId = liftedState.stagedActionIds[liftedState.currentStateIndex] ?? null;
 
   return {
     store: buildStoreSummary(store),
@@ -301,9 +275,7 @@ export const listReduxActionsResult = ({
     total: actionIds.length,
     offset: safeOffset,
     limit: safeLimit,
-    items: selectedIds.map((actionId) =>
-      buildActionSummary(store, liftedState, actionId),
-    ),
+    items: selectedIds.map((actionId) => buildActionSummary(store, liftedState, actionId)),
   };
 };
 
@@ -348,8 +320,7 @@ const runLiftedStoreAction = (
   actionId: number | undefined,
   createAction: () => unknown,
 ): ReduxDevToolsApplyStoreActionResult => {
-  const { store, enhancedStore, liftedState } =
-    getStoreAndLiftedState(instanceId);
+  const { store, enhancedStore, liftedState } = getStoreAndLiftedState(instanceId);
 
   if (typeof actionId === 'number') {
     assertKnownAction(store, liftedState, actionId);
@@ -363,66 +334,39 @@ const runLiftedStoreAction = (
   };
 };
 
-export const jumpToReduxActionResult = ({
-  instanceId,
-  actionId,
-}: ActionInput) => {
-  return runLiftedStoreAction(instanceId, actionId, () =>
-    ActionCreators.jumpToAction(actionId),
-  );
+export const jumpToReduxActionResult = ({ instanceId, actionId }: ActionInput) => {
+  return runLiftedStoreAction(instanceId, actionId, () => ActionCreators.jumpToAction(actionId));
 };
 
-export const toggleReduxActionResult = ({
-  instanceId,
-  actionId,
-}: ActionInput) => {
-  return runLiftedStoreAction(instanceId, actionId, () =>
-    ActionCreators.toggleAction(actionId),
-  );
+export const toggleReduxActionResult = ({ instanceId, actionId }: ActionInput) => {
+  return runLiftedStoreAction(instanceId, actionId, () => ActionCreators.toggleAction(actionId));
 };
 
 export const resetReduxHistoryResult = ({ instanceId }: StoreInput) => {
-  return runLiftedStoreAction(instanceId, undefined, () =>
-    ActionCreators.reset(),
-  );
+  return runLiftedStoreAction(instanceId, undefined, () => ActionCreators.reset());
 };
 
 export const rollbackReduxStateResult = ({ instanceId }: StoreInput) => {
-  return runLiftedStoreAction(instanceId, undefined, () =>
-    ActionCreators.rollback(),
-  );
+  return runLiftedStoreAction(instanceId, undefined, () => ActionCreators.rollback());
 };
 
 export const commitReduxCurrentStateResult = ({ instanceId }: StoreInput) => {
-  return runLiftedStoreAction(instanceId, undefined, () =>
-    ActionCreators.commit(),
-  );
+  return runLiftedStoreAction(instanceId, undefined, () => ActionCreators.commit());
 };
 
 export const sweepReduxSkippedActionsResult = ({ instanceId }: StoreInput) => {
-  return runLiftedStoreAction(instanceId, undefined, () =>
-    ActionCreators.sweep(),
-  );
+  return runLiftedStoreAction(instanceId, undefined, () => ActionCreators.sweep());
 };
 
 export const setReduxRecordingPausedResult = ({
   instanceId,
   paused,
 }: ReduxDevToolsSetRecordingPausedInput) => {
-  return runLiftedStoreAction(instanceId, undefined, () =>
-    ActionCreators.pauseRecording(paused),
-  );
+  return runLiftedStoreAction(instanceId, undefined, () => ActionCreators.pauseRecording(paused));
 };
 
-export const setReduxLockedResult = ({
-  instanceId,
-  locked,
-}: ReduxDevToolsSetLockedInput) => {
-  return runLiftedStoreAction(instanceId, undefined, () =>
-    ActionCreators.lockChanges(locked),
-  );
+export const setReduxLockedResult = ({ instanceId, locked }: ReduxDevToolsSetLockedInput) => {
+  return runLiftedStoreAction(instanceId, undefined, () => ActionCreators.lockChanges(locked));
 };
 
-export const REDUX_DEVTOOLS_AGENT_TOOLS = Object.values(
-  reduxDevToolsToolDefinitions,
-);
+export const REDUX_DEVTOOLS_AGENT_TOOLS = Object.values(reduxDevToolsToolDefinitions);

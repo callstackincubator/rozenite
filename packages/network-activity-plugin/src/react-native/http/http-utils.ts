@@ -10,12 +10,7 @@ import type {
 } from '../../shared/client';
 import { safeStringify } from '../../utils/safeStringify';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
-import {
-  isBlob,
-  isArrayBuffer,
-  isFormData,
-  isNullOrUndefined,
-} from '../../utils/typeChecks';
+import { isBlob, isArrayBuffer, isFormData, isNullOrUndefined } from '../../utils/typeChecks';
 import { getContentType } from '../utils';
 import { isJsonContentType } from '../../utils/getContentTypeMimeType';
 import { getBlobName } from '../utils/getBlobName';
@@ -41,9 +36,7 @@ const getBinaryPostData = (body: Blob): RequestBinaryPostData => ({
   },
 });
 
-const getArrayBufferPostData = (
-  body: ArrayBuffer | ArrayBufferView,
-): RequestBinaryPostData => ({
+const getArrayBufferPostData = (body: ArrayBuffer | ArrayBufferView): RequestBinaryPostData => ({
   type: 'binary',
   value: {
     size: body.byteLength,
@@ -57,19 +50,20 @@ const getTextPostData = (body: unknown): RequestTextPostData => ({
 
 const getFormDataPostData = (body: FormData): RequestFormDataPostData => ({
   type: 'form-data',
-  value: Array.from(getFormDataEntries(body)).reduce<
-    RequestFormDataPostData['value']
-  >((acc, [key, value]) => {
-    if (isBlob(value)) {
-      acc[key] = getBinaryPostData(value);
-    } else if (isArrayBuffer(value)) {
-      acc[key] = getArrayBufferPostData(value);
-    } else {
-      acc[key] = getTextPostData(value);
-    }
+  value: Array.from(getFormDataEntries(body)).reduce<RequestFormDataPostData['value']>(
+    (acc, [key, value]) => {
+      if (isBlob(value)) {
+        acc[key] = getBinaryPostData(value);
+      } else if (isArrayBuffer(value)) {
+        acc[key] = getArrayBufferPostData(value);
+      } else {
+        acc[key] = getTextPostData(value);
+      }
 
-    return acc;
-  }, {}),
+      return acc;
+    },
+    {},
+  ),
 });
 
 export const getRequestBody = (body: XHRPostData): RequestPostData => {
@@ -123,9 +117,7 @@ export const getResponseSize = (request: XMLHttpRequest): number | null => {
   }
 };
 
-export const getResponseBody = async (
-  request: XMLHttpRequest,
-): Promise<ResponseBody> => {
+export const getResponseBody = async (request: XMLHttpRequest): Promise<ResponseBody> => {
   const responseType = request.responseType;
 
   // Response type is empty in certain cases, like when using axios.
@@ -139,9 +131,7 @@ export const getResponseBody = async (
   }
 
   if (responseType === 'arraybuffer') {
-    return captureResponseBodyFromArrayBuffer(
-      request.response as ArrayBuffer | null,
-    );
+    return captureResponseBodyFromArrayBuffer(request.response as ArrayBuffer | null);
   }
 
   if (responseType === 'json') {
@@ -222,9 +212,7 @@ const parseStackFrame = (line: string): InitiatorStackFrame | null => {
   };
 };
 
-const toGeneratedStackFrame = (
-  frame: InitiatorStackFrame,
-): InitiatorStackFrame => ({
+const toGeneratedStackFrame = (frame: InitiatorStackFrame): InitiatorStackFrame => ({
   functionName: frame.functionName,
   generatedUrl: frame.url,
   generatedLineNumber: frame.lineNumber,
@@ -238,19 +226,14 @@ const getGeneratedFrameLocation = (frame: InitiatorStackFrame) => ({
 });
 
 const canSymbolicateStack = (stack?: InitiatorStackFrame[]) =>
-  stack?.some((frame) =>
-    getGeneratedFrameLocation(frame).url?.startsWith('http'),
-  ) ?? false;
+  stack?.some((frame) => getGeneratedFrameLocation(frame).url?.startsWith('http')) ?? false;
 
 const getStackPreview = (frames: InitiatorStackFrame[]) => {
   // The first frames are this helper, the HTTP inspector callback and the XHR
   // wrapper. The caller starts after that fixed interception boundary.
   const callerFrames = frames.slice(INITIATOR_STACK_FRAME_OFFSET);
 
-  return (callerFrames.length > 0 ? callerFrames : frames).slice(
-    0,
-    STACK_PREVIEW_FRAME_LIMIT,
-  );
+  return (callerFrames.length > 0 ? callerFrames : frames).slice(0, STACK_PREVIEW_FRAME_LIMIT);
 };
 
 export const getInitiatorFromStack = (): Initiator => {
@@ -277,9 +260,7 @@ export const getInitiatorFromStack = (): Initiator => {
         generatedLineNumber: initiatorFrame.lineNumber,
         generatedColumnNumber: initiatorFrame.columnNumber,
         stack: generatedStackPreview,
-        symbolicationStatus: canSymbolicateStack(generatedStackPreview)
-          ? 'pending'
-          : 'unavailable',
+        symbolicationStatus: canSymbolicateStack(generatedStackPreview) ? 'pending' : 'unavailable',
       };
     }
 
@@ -289,9 +270,7 @@ export const getInitiatorFromStack = (): Initiator => {
       return {
         type: 'other',
         stack: fallbackStack,
-        symbolicationStatus: canSymbolicateStack(fallbackStack)
-          ? 'pending'
-          : 'unavailable',
+        symbolicationStatus: canSymbolicateStack(fallbackStack) ? 'pending' : 'unavailable',
       };
     }
   } catch {

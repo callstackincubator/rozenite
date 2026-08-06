@@ -306,9 +306,7 @@ describe('PageManager', () => {
         reactNativeMetadata: unknown;
         capabilities: unknown;
       }[] = [];
-      pm.on('added', (page) =>
-        addedEvents.push(page as (typeof addedEvents)[0]),
-      );
+      pm.on('added', (page) => addedEvents.push(page as (typeof addedEvents)[0]));
 
       await pm.onNavigationCompleted({
         tabId: 1,
@@ -385,9 +383,7 @@ describe('PageManager', () => {
       const addedEvents: { origin: string }[] = [];
       const removedEvents: { origin: string }[] = [];
       pm.on('added', (page) => addedEvents.push(page as { origin: string }));
-      pm.on('removed', (page) =>
-        removedEvents.push(page as { origin: string }),
-      );
+      pm.on('removed', (page) => removedEvents.push(page as { origin: string }));
 
       await pm.onNavigationCompleted({
         tabId: 1,
@@ -681,11 +677,7 @@ describe('PageManager', () => {
       const pages1 = pm.getAll();
       const pages2 = pm.getAll();
 
-      assert.notStrictEqual(
-        pages1,
-        pages2,
-        'Should return different array instances',
-      );
+      assert.notStrictEqual(pages1, pages2, 'Should return different array instances');
       assert.deepStrictEqual(pages1, pages2, 'But with same content');
     });
   });

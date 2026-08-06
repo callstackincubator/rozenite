@@ -26,10 +26,7 @@ describe('react devtools bridge', () => {
     });
 
     bridge.stopProfiling();
-    expect(sent.map((message) => message.event)).toEqual([
-      'startProfiling',
-      'stopProfiling',
-    ]);
+    expect(sent.map((message) => message.event)).toEqual(['startProfiling', 'stopProfiling']);
 
     bridge.ingest({
       event: 'profilingStatus',
