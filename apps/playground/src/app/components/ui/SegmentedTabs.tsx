@@ -23,6 +23,7 @@ export const SegmentedTabs = <T extends string>({
 
   return (
     <View
+      accessibilityRole="tablist"
       accessibilityLabel={accessibilityLabel}
       style={[
         styles.container,

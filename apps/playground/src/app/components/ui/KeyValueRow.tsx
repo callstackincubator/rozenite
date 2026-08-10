@@ -13,6 +13,7 @@ export const KeyValueRow = ({ label, value }: KeyValueRowProps) => {
 
   return (
     <View
+      accessible
       accessibilityLabel={label}
       accessibilityValue={{ text: value }}
       style={[styles.row, { borderColor: theme.colors.border, paddingVertical: theme.spacing.md }]}
