@@ -86,7 +86,7 @@ export const LandingScreen = () => {
 
               <TouchableOpacity
                 style={styles.configButton}
-                onPress={() => navigation.navigate('Config' as never)}
+                onPress={() => navigation.navigate('Settings' as never)}
               >
                 <Text style={styles.configButtonText}>⚙️ Settings</Text>
               </TouchableOpacity>
