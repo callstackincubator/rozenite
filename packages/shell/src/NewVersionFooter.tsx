@@ -1,6 +1,7 @@
-import { ArrowUpRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { Link } from '@rozenite/ui';
 import { getAvailableRuntimeVersion } from './new-version';
+import { getVersionOverridesRevision, subscribeToVersionOverrides } from './npm/registry';
 
 const RELEASES_URL = 'https://github.com/callstackincubator/rozenite/releases';
 
@@ -10,6 +11,10 @@ type NewVersionFooterProps = {
 
 export function NewVersionFooter({ currentVersion }: NewVersionFooterProps) {
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
+  const overridesRevision = useSyncExternalStore(
+    subscribeToVersionOverrides,
+    getVersionOverridesRevision,
+  );
 
   useEffect(() => {
     if (!currentVersion) {
@@ -31,7 +36,7 @@ export function NewVersionFooter({ currentVersion }: NewVersionFooterProps) {
     return () => {
       cancelled = true;
     };
-  }, [currentVersion]);
+  }, [currentVersion, overridesRevision]);
 
   const updateLabel = latestVersion ? `Update v${latestVersion}` : null;
 
@@ -40,17 +45,12 @@ export function NewVersionFooter({ currentVersion }: NewVersionFooterProps) {
   }
 
   return (
-    <a
-      className="group flex h-8 min-w-0 flex-1 items-center gap-1.5 px-2 text-xs font-medium text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+    <Link
       href={RELEASES_URL}
-      rel="noreferrer"
-      target="_blank"
+      external
+      className="h-8 min-w-0 flex-1 justify-start px-2 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:no-underline focus-visible:ring-sidebar-ring"
     >
       <span className="truncate">{updateLabel}</span>
-      <ArrowUpRight
-        aria-hidden="true"
-        className="size-3.5 shrink-0 text-sidebar-foreground/50 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-      />
-    </a>
+    </Link>
   );
 }
