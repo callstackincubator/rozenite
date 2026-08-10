@@ -39,7 +39,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
     getInitialSelectionState(plugins),
   );
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [hasRuntimeUpdate, setHasRuntimeUpdate] = useState(false);
+  const [runtimeUpdate, setRuntimeUpdate] = useState<string | null>(null);
   const contentFrames = useRef(new Map<string, HTMLIFrameElement>());
   const sidebarPanel = useRef<SplitPaneHandle>(null);
   const { outdated } = useOutdatedPlugins(plugins);
@@ -61,7 +61,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
 
     void getAvailableRuntimeVersion(runtimeVersion).then((version) => {
       if (!cancelled) {
-        setHasRuntimeUpdate(version !== null);
+        setRuntimeUpdate(version);
       }
     });
 
@@ -154,7 +154,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   // only otherwise surfaced on the Plugins screen; the runtime update link
   // is hidden while the sidebar is collapsed, so its dot keeps that signal
   // reachable too (expanding the sidebar reveals the link again).
-  const hasNotice = outdated.size > 0 || hasRuntimeUpdate;
+  const hasNotice = outdated.size > 0 || runtimeUpdate !== null;
 
   return (
     <PluginShell>
@@ -299,12 +299,16 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
                   </div>
                 )}
               </div>
+              {/* Flex column so PluginShell.Body's `flex-1` has a parent to
+                  resolve against; without it the body's height falls to auto
+                  and the screen's ScrollArea grows instead of scrolling. */}
               {isPluginsScreenOpen && (
-                <div className="absolute inset-0">
+                <div className="absolute inset-0 flex flex-col">
                   <PluginsScreen
                     plugins={plugins}
                     outdated={outdated}
                     runtimeVersion={runtimeVersion}
+                    runtimeUpdate={runtimeUpdate}
                   />
                 </div>
               )}

@@ -225,6 +225,12 @@ PluginShell.Body
 bare label/value pair because agent tools are a deferred second row and
 because the component is shared (see "`@rozenite/ui` changes").
 
+When the runtime itself is behind, a notice card precedes the plugin list with
+the installed version, the latest version, and a link to the release notes.
+That is the detail the cog's dot promises when the sidebar is collapsed and
+the footer link is out of reach. It is a single conditional row, not the
+About screen the non-goals rule out: it appears only when an update exists.
+
 Version and npm link are right-aligned; the title keeps the left edge. Most
 manifests set `name` to the package name, so the package id renders as a
 second title line only when the two actually differ.

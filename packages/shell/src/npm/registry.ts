@@ -1,4 +1,5 @@
 const ABBREVIATED_PACKUMENT_ACCEPT = 'application/vnd.npm.install-v1+json';
+const REQUEST_TIMEOUT_MS = 10_000;
 
 type AbbreviatedPackument = {
   'dist-tags'?: {
@@ -39,6 +40,10 @@ async function fetchLatestVersion(packageName: string): Promise<string | null> {
   try {
     const response = await fetch(`https://registry.npmjs.org/${encodeURIComponent(packageName)}`, {
       headers: { Accept: ABBREVIATED_PACKUMENT_ACCEPT },
+      // Without a deadline a stalled response leaves this request pending
+      // forever, and every later caller would join that dead promise through
+      // the in-flight map rather than retrying.
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {

@@ -58,9 +58,10 @@ describe('getLatestVersions', () => {
     expect(result.get('@rozenite/runtime')).toBe('2.0.0');
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'https://registry.npmjs.org/%40rozenite%2Fruntime',
-      {
+      expect.objectContaining({
         headers: { Accept: 'application/vnd.npm.install-v1+json' },
-      },
+        signal: expect.any(AbortSignal),
+      }),
     );
   });
 

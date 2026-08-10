@@ -8,9 +8,18 @@ type PluginsScreenProps = {
   /** pluginId -> latest published version, from `useOutdatedPlugins`. */
   outdated: Map<string, string>;
   runtimeVersion?: string;
+  /** Latest published runtime version when one is newer, otherwise null. */
+  runtimeUpdate: string | null;
 };
 
-export function PluginsScreen({ plugins, outdated, runtimeVersion }: PluginsScreenProps) {
+const RELEASES_URL = 'https://github.com/callstackincubator/rozenite/releases';
+
+export function PluginsScreen({
+  plugins,
+  outdated,
+  runtimeVersion,
+  runtimeUpdate,
+}: PluginsScreenProps) {
   return (
     <PluginShell.Body>
       <ScrollArea className="h-full">
@@ -19,6 +28,25 @@ export function PluginsScreen({ plugins, outdated, runtimeVersion }: PluginsScre
             <h1 className="text-lg font-semibold">Plugins</h1>
             <span className="text-sm text-muted-foreground">{plugins.length} installed</span>
           </div>
+          {/* The cog's dot covers runtime updates too, and the footer link is
+              hidden while the sidebar is collapsed, so the detail behind that
+              dot has to be reachable here. */}
+          {runtimeUpdate && (
+            <Card>
+              <Card.Header>
+                <span className="font-medium">Rozenite update available</span>
+                {runtimeVersion && (
+                  <span className="text-sm text-muted-foreground">Installed v{runtimeVersion}</span>
+                )}
+                <div className="ml-auto flex shrink-0 items-center gap-3">
+                  <Link href={RELEASES_URL} external className="text-xs">
+                    Release notes
+                  </Link>
+                  <Badge variant="secondary">v{runtimeUpdate}</Badge>
+                </div>
+              </Card.Header>
+            </Card>
+          )}
           <div className="flex flex-col gap-3">
             {plugins.map((plugin) => {
               const latestVersion = outdated.get(plugin.id);
