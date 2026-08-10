@@ -18,7 +18,7 @@ import { routes } from './navigation/routes';
 import { RootStackParamList } from './navigation/types';
 import { ConfigScreen } from './screens/ConfigScreen';
 import { ControlsPluginScreen } from './screens/ControlsPluginScreen';
-import { LandingScreen } from './screens/LandingScreen';
+import { HomeScreen } from './screens/HomeScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
 import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
 import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
@@ -87,7 +87,7 @@ const Wrapper = () => {
         contentStyle: { backgroundColor: theme.colors.background },
       }}
     >
-      <Stack.Screen name={routes.home.name} component={LandingScreen} />
+      <Stack.Screen name={routes.home.name} component={HomeScreen} />
       <Stack.Screen name={routes.controlsPlugin.name} component={ControlsPluginScreen} />
       <Stack.Screen name={routes.reactHookFormPlugin.name} component={ReactHookFormPluginScreen} />
       <Stack.Screen name={routes.storagePlugin.name} component={StoragePluginScreen} />
