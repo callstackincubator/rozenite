@@ -9,6 +9,7 @@ const Tab = createBottomTabNavigator<BottomTabParamList>();
 const HomeTabScreen = createNavDemoScreen({
   title: 'Home Tab',
   subtitle: 'Pass navigation parameters and push a stack of successive screens.',
+  edges: ['top'],
   actions: [
     {
       label: 'Show Parameter Screen',
@@ -29,6 +30,7 @@ const HomeTabScreen = createNavDemoScreen({
 const ProfileTabScreen = createNavDemoScreen({
   title: 'Profile Tab',
   subtitle: 'View profile information passed as a navigation parameter.',
+  edges: ['top'],
   actions: [
     {
       label: 'View Profile Details',
@@ -45,6 +47,7 @@ const ProfileTabScreen = createNavDemoScreen({
 const SettingsTabScreen = createNavDemoScreen({
   title: 'Settings Tab',
   subtitle: 'View app settings passed as a navigation parameter.',
+  edges: ['top'],
   actions: [
     {
       label: 'Configure Settings',

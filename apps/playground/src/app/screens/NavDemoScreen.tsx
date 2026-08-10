@@ -16,6 +16,12 @@ export type NavDemoConfig = {
   title: string;
   subtitle: string;
   actions: NavDemoAction[];
+  /**
+   * Safe-area edges the screen should pad for itself. Screens rendered
+   * inside BottomTabNavigator sit above a tab bar that already reserves the
+   * bottom inset, so those callers pass `['top']` to avoid double padding.
+   */
+  edges?: ('top' | 'bottom')[];
 };
 
 // Every "screen" in the React Navigation demo (the three bottom tabs and the
@@ -27,7 +33,7 @@ export const createNavDemoScreen = (config: NavDemoConfig) => {
     const navigation = useNavigation<GenericNavigationProp<Record<string, object | undefined>>>();
 
     return (
-      <Screen scroll={false}>
+      <Screen scroll={false} edges={config.edges ?? ['top', 'bottom']}>
         <Text
           accessibilityRole="header"
           style={{ color: theme.colors.foreground, fontSize: 20, fontWeight: '700' }}

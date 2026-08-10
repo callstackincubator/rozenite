@@ -10,7 +10,7 @@ export const ParameterDisplayScreen = () => {
   const { title, message, source } = route.params;
 
   return (
-    <Screen scroll={false}>
+    <Screen scroll={false} edges={['bottom']}>
       <Card>
         <KeyValueRow label="Title" value={title} />
         <KeyValueRow label="Message" value={message} />

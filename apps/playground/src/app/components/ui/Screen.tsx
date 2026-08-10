@@ -3,14 +3,23 @@ import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/useTheme';
 
+type ScreenEdge = 'top' | 'bottom';
+
 type ScreenProps = {
   children: ReactNode;
   scroll?: boolean;
   style?: ViewStyle;
   contentContainerStyle?: ViewStyle;
+  edges?: ScreenEdge[];
 };
 
-export const Screen = ({ children, scroll = true, style, contentContainerStyle }: ScreenProps) => {
+export const Screen = ({
+  children,
+  scroll = true,
+  style,
+  contentContainerStyle,
+  edges = ['top', 'bottom'],
+}: ScreenProps) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -19,8 +28,8 @@ export const Screen = ({ children, scroll = true, style, contentContainerStyle }
   const content = [
     styles.content,
     {
-      paddingTop: theme.spacing['2xl'],
-      paddingBottom: insets.bottom + theme.spacing['2xl'],
+      paddingTop: theme.spacing['2xl'] + (edges.includes('top') ? insets.top : 0),
+      paddingBottom: theme.spacing['2xl'] + (edges.includes('bottom') ? insets.bottom : 0),
       paddingHorizontal: theme.spacing['2xl'],
       gap: theme.spacing.lg,
     },
