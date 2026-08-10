@@ -16,7 +16,7 @@ import { BottomTabNavigator } from './navigation/BottomTabNavigator';
 import { SuccessiveScreensNavigator } from './navigation/SuccessiveScreensNavigator';
 import { routes } from './navigation/routes';
 import { RootStackParamList } from './navigation/types';
-import { ConfigScreen } from './screens/ConfigScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
 import { ControlsPluginScreen } from './screens/ControlsPluginScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
@@ -99,7 +99,7 @@ const Wrapper = () => {
       <Stack.Screen name={routes.fileSystemTest.name} component={FileSystemTestScreen} />
       <Stack.Screen
         name={routes.settings.name}
-        component={ConfigScreen}
+        component={SettingsScreen}
         options={{
           presentation: 'modal',
           headerShown: false,

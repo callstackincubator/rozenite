@@ -14,6 +14,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { usePlaygroundControlsSections } from './hooks/usePlaygroundControlsSections';
 import { storagePluginAdapters } from './storage-plugin-adapters';
+import { useTheme } from './theme/useTheme';
 
 const tanstackQueryClient = new QueryClient();
 
@@ -43,13 +44,20 @@ type PluginCardProps = {
 };
 
 const PluginCard = ({ title, packageName, description, notes, children }: PluginCardProps) => {
+  const { theme } = useTheme();
+
   return (
-    <View style={styles.card}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <Text style={styles.packageName}>{packageName}</Text>
-      <Text style={styles.cardText}>{description}</Text>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+      ]}
+    >
+      <Text style={[styles.sectionTitle, { color: theme.colors.foreground }]}>{title}</Text>
+      <Text style={[styles.packageName, { color: theme.colors.primary }]}>{packageName}</Text>
+      <Text style={[styles.cardText, { color: theme.colors.mutedForeground }]}>{description}</Text>
       {notes?.map((note) => (
-        <Text key={note} style={styles.note}>
+        <Text key={note} style={[styles.note, { color: theme.colors.mutedForeground }]}>
           {note}
         </Text>
       ))}
@@ -188,31 +196,25 @@ export const TanStackQueryPluginSection = () => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#111827',
-    borderRadius: 20,
+    borderRadius: 0,
     borderWidth: 1,
-    borderColor: '#1f2937',
     gap: 8,
     padding: 20,
   },
   sectionTitle: {
-    color: '#f8fafc',
     fontSize: 18,
     fontWeight: '700',
   },
   packageName: {
-    color: '#a78bfa',
     fontSize: 13,
     fontWeight: '600',
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   },
   cardText: {
-    color: '#cbd5e1',
     fontSize: 14,
     lineHeight: 22,
   },
   note: {
-    color: '#94a3b8',
     fontSize: 13,
     lineHeight: 20,
     marginTop: 4,
