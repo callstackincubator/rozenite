@@ -54,9 +54,7 @@ export const createControlsRegistry = () => {
     }
 
     return entries.map(([id, input]) =>
-      id === override.id
-        ? ([id, override.input] as const)
-        : ([id, input] as const),
+      id === override.id ? ([id, override.input] as const) : ([id, input] as const),
     );
   };
 
@@ -73,9 +71,7 @@ export const createControlsRegistry = () => {
       registrations.delete(id);
       notify();
     },
-    getOptions(
-      override?: ControlsRegistryOverride,
-    ): RozeniteControlsPluginOptions {
+    getOptions(override?: ControlsRegistryOverride): RozeniteControlsPluginOptions {
       return getRegistrationEntries(override)
         .map(([, input]) => input)
         .reduce(resolveOptionsInput, EMPTY_OPTIONS);

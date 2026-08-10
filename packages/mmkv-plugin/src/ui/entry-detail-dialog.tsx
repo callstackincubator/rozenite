@@ -55,44 +55,25 @@ const getTypeColorClass = (type: string) => {
 const formatValue = (entry: MMKVEntry) => {
   switch (entry.type) {
     case 'string':
-      return (
-        <span className="text-green-300 font-mono break-all">
-          "{entry.value as string}"
-        </span>
-      );
+      return <span className="text-green-300 font-mono break-all">"{entry.value as string}"</span>;
     case 'number':
-      return (
-        <span className="text-blue-300 font-mono">{entry.value as number}</span>
-      );
+      return <span className="text-blue-300 font-mono">{entry.value as number}</span>;
     case 'boolean':
       return (
-        <span
-          className={`font-mono ${
-            entry.value ? 'text-green-400' : 'text-red-400'
-          }`}
-        >
+        <span className={`font-mono ${entry.value ? 'text-green-400' : 'text-red-400'}`}>
           {entry.value ? 'true' : 'false'}
         </span>
       );
     case 'buffer': {
       const bufferArray = entry.value as number[];
-      return (
-        <span className="text-purple-300 font-mono">
-          [{bufferArray.join(', ')}]
-        </span>
-      );
+      return <span className="text-purple-300 font-mono">[{bufferArray.join(', ')}]</span>;
     }
     default:
       return <span className="text-gray-400">Unknown</span>;
   }
 };
 
-export const EntryDetailDialog = ({
-  isOpen,
-  onClose,
-  onEdit,
-  entry,
-}: EntryDetailDialogProps) => {
+export const EntryDetailDialog = ({ isOpen, onClose, onEdit, entry }: EntryDetailDialogProps) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       onClose();
@@ -121,9 +102,7 @@ export const EntryDetailDialog = ({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Info className="h-5 w-5 text-blue-400" />
-            <h2 className="text-lg font-semibold text-gray-100">
-              Entry Details
-            </h2>
+            <h2 className="text-lg font-semibold text-gray-100">Entry Details</h2>
           </div>
           <button
             onClick={onClose}
@@ -137,9 +116,7 @@ export const EntryDetailDialog = ({
         <div className="space-y-4 flex-1 overflow-auto">
           {/* Key Display */}
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1">
-              Key
-            </label>
+            <label className="block text-sm font-medium text-gray-200 mb-1">Key</label>
             <div className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded text-gray-100 font-mono break-all">
               {entry.key}
             </div>
@@ -147,9 +124,7 @@ export const EntryDetailDialog = ({
 
           {/* Type Display */}
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1">
-              Type
-            </label>
+            <label className="block text-sm font-medium text-gray-200 mb-1">Type</label>
             <div className="flex items-center">
               <span
                 className={`px-2 py-1 text-xs font-medium rounded text-white ${getTypeColorClass(
@@ -163,9 +138,7 @@ export const EntryDetailDialog = ({
 
           {/* Value Display */}
           <div className="flex-1 min-h-0 flex flex-col">
-            <label className="block text-sm font-medium text-gray-200 mb-1">
-              Value
-            </label>
+            <label className="block text-sm font-medium text-gray-200 mb-1">Value</label>
             <div className="max-h-96 overflow-auto bg-gray-700 border border-gray-600 rounded p-3">
               {jsonValue ? (
                 <JSONTree

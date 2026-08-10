@@ -36,10 +36,7 @@ export interface NpmPackageError {
   reason?: string;
 }
 
-async function fetchNpmPackage(
-  packageName: string,
-  version?: string,
-): Promise<NpmPackageInfo> {
+async function fetchNpmPackage(packageName: string, version?: string): Promise<NpmPackageInfo> {
   try {
     const registryUrl = 'https://registry.npmjs.org';
     const url = version
@@ -56,23 +53,17 @@ async function fetchNpmPackage(
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error(
-          `Package "${packageName}"${
-            version ? `@${version}` : ''
-          } not found in npm registry`,
+          `Package "${packageName}"${version ? `@${version}` : ''} not found in npm registry`,
         );
       }
 
-      throw new Error(
-        `Failed to fetch package ${packageName} ${version ? `@${version}` : ''}`,
-      );
+      throw new Error(`Failed to fetch package ${packageName} ${version ? `@${version}` : ''}`);
     }
 
     const data = await response.json();
     return data as NpmPackageInfo;
   } catch {
-    throw new Error(
-      `Failed to fetch package ${packageName} ${version ? `@${version}` : ''}`,
-    );
+    throw new Error(`Failed to fetch package ${packageName} ${version ? `@${version}` : ''}`);
   }
 }
 
@@ -94,7 +85,7 @@ export function extractPackageNameFromNpmUrl(npmUrl: string): string | null {
     }
 
     return null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -127,9 +118,7 @@ export async function getBasicPackageInfo(packageName: string): Promise<{
     version: latestVersion || 'unknown',
     description: latestPackage.description,
     author:
-      typeof latestPackage.author === 'string'
-        ? latestPackage.author
-        : latestPackage.author?.name,
+      typeof latestPackage.author === 'string' ? latestPackage.author : latestPackage.author?.name,
     homepage: latestPackage.homepage,
     repository:
       typeof latestPackage.repository === 'string'

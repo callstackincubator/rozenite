@@ -1,7 +1,4 @@
-import {
-  getRozeniteDevToolsClient,
-  type RozeniteDevToolsClient,
-} from '@rozenite/plugin-bridge';
+import { getRozeniteDevToolsClient, type RozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
   ReduxDevToolsBridgeEventMap,
   ReduxDevToolsPanelCommand,
@@ -42,30 +39,20 @@ const ensureClient = () => {
     return;
   }
 
-  initPromise = getRozeniteDevToolsClient<ReduxDevToolsBridgeEventMap>(
-    PLUGIN_ID,
-  )
-    .then(
-      (resolvedClient: RozeniteDevToolsClient<ReduxDevToolsBridgeEventMap>) => {
-        client = resolvedClient;
+  initPromise = getRozeniteDevToolsClient<ReduxDevToolsBridgeEventMap>(PLUGIN_ID)
+    .then((resolvedClient: RozeniteDevToolsClient<ReduxDevToolsBridgeEventMap>) => {
+      client = resolvedClient;
 
-        client.onMessage(
-          'panel-command',
-          (command: ReduxDevToolsPanelCommand) => {
-            commandListeners.forEach((listener) => {
-              listener(command);
-            });
-          },
-        );
+      client.onMessage('panel-command', (command: ReduxDevToolsPanelCommand) => {
+        commandListeners.forEach((listener) => {
+          listener(command);
+        });
+      });
 
-        flushQueue();
-      },
-    )
+      flushQueue();
+    })
     .catch((error: unknown) => {
-      console.warn(
-        '[Rozenite, redux-devtools] Failed to initialize bridge client.',
-        error,
-      );
+      console.warn('[Rozenite, redux-devtools] Failed to initialize bridge client.', error);
     })
     .finally(() => {
       initPromise = null;

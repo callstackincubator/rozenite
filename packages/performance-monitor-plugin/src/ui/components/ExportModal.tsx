@@ -1,12 +1,4 @@
-import {
-  Button,
-  Checkbox,
-  Flex,
-  Text,
-  Box,
-  Dialog,
-  Callout,
-} from '@radix-ui/themes';
+import { Button, Checkbox, Flex, Text, Box, Dialog, Callout } from '@radix-ui/themes';
 import { useState, useEffect } from 'react';
 import {
   SerializedPerformanceMeasure,
@@ -47,19 +39,12 @@ type DataTypeCardProps = {
   onToggle: () => void;
 };
 
-const DataTypeCard = ({
-  title,
-  count,
-  checked,
-  onToggle,
-}: DataTypeCardProps) => {
+const DataTypeCard = ({ title, count, checked, onToggle }: DataTypeCardProps) => {
   return (
     <Box
       style={{
         padding: '16px',
-        border: checked
-          ? '1px solid var(--accent-9)'
-          : '1px solid var(--gray-6)',
+        border: checked ? '1px solid var(--accent-9)' : '1px solid var(--gray-6)',
         borderRadius: 'var(--radius-3)',
         backgroundColor: checked ? 'var(--accent-2)' : 'var(--gray-2)',
         transition: 'all 0.2s ease',
@@ -114,8 +99,7 @@ export function ExportModal({
   sessionStartedAt,
   clockShift,
 }: ExportModalProps) {
-  const [exportOptions, setExportOptions] =
-    useState<ExportOptions>(ALL_OPTIONS_ON);
+  const [exportOptions, setExportOptions] = useState<ExportOptions>(ALL_OPTIONS_ON);
   const [isOpen, setIsOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState<AlertMessage>(null);
 
@@ -206,9 +190,7 @@ export function ExportModal({
       <Dialog.Content style={{ maxWidth: 500, padding: '32px' }}>
         {alertMessage && (
           <Box mb="4">
-            <Callout.Root
-              color={alertMessage.type === 'success' ? 'green' : 'red'}
-            >
+            <Callout.Root color={alertMessage.type === 'success' ? 'green' : 'red'}>
               <Callout.Text>{alertMessage.message}</Callout.Text>
             </Callout.Root>
           </Box>

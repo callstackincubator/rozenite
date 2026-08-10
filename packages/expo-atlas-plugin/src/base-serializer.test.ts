@@ -43,12 +43,8 @@ describe('createBaseSerializer', () => {
 
     expect(moduleLoader).toHaveBeenCalledWith(modernModulePaths.baseJSBundle);
     expect(moduleLoader).toHaveBeenCalledWith(modernModulePaths.bundleToString);
-    expect(moduleLoader).not.toHaveBeenCalledWith(
-      legacyModulePaths.baseJSBundle,
-    );
-    expect(serializer('entry', [], {} as never, {} as never)).toBe(
-      'serialized:bundle',
-    );
+    expect(moduleLoader).not.toHaveBeenCalledWith(legacyModulePaths.baseJSBundle);
+    expect(serializer('entry', [], {} as never, {} as never)).toBe('serialized:bundle');
   });
 
   it('uses legacy Metro paths when the modern paths cannot be resolved', () => {
@@ -77,16 +73,13 @@ describe('createBaseSerializer', () => {
       createModuleLoader(
         {
           [modernModulePaths.baseJSBundle]: () => 'bundle',
-          [modernModulePaths.bundleToString]: (bundle: string) =>
-            `serialized:${bundle}`,
+          [modernModulePaths.bundleToString]: (bundle: string) => `serialized:${bundle}`,
         },
         (id) => id,
       ),
     );
 
-    expect(serializer('entry', [], {} as never, {} as never)).toBe(
-      'serialized:bundle',
-    );
+    expect(serializer('entry', [], {} as never, {} as never)).toBe('serialized:bundle');
   });
 
   it('accepts default-wrapped CommonJS exports', () => {
@@ -102,9 +95,7 @@ describe('createBaseSerializer', () => {
       ),
     );
 
-    expect(serializer('entry', [], {} as never, {} as never)).toBe(
-      'serialized:bundle',
-    );
+    expect(serializer('entry', [], {} as never, {} as never)).toBe('serialized:bundle');
   });
 
   it('throws an actionable error when neither Metro path family is exported', () => {
@@ -134,22 +125,15 @@ describe('createBaseSerializer', () => {
     );
 
     expect(() => createBaseSerializer(moduleLoader)).toThrow(evaluationError);
-    expect(moduleLoader).not.toHaveBeenCalledWith(
-      legacyModulePaths.baseJSBundle,
-    );
+    expect(moduleLoader).not.toHaveBeenCalledWith(legacyModulePaths.baseJSBundle);
   });
 });
 
 const fixtureVersions = ['0.76', '0.82', '0.83', '0.84'] as const;
-const fixturesDirectory = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '../metro-fixtures',
-);
+const fixturesDirectory = join(dirname(fileURLToPath(import.meta.url)), '../metro-fixtures');
 
 const createFixtureLoader = (version: (typeof fixtureVersions)[number]) => {
-  const fixtureRequire = createRequire(
-    join(fixturesDirectory, `metro-${version}/package.json`),
-  );
+  const fixtureRequire = createRequire(join(fixturesDirectory, `metro-${version}/package.json`));
   const metroDirectory = dirname(fixtureRequire.resolve('metro/package.json'));
 
   return Object.assign((id: string) => fixtureRequire(id), {
@@ -189,9 +173,7 @@ describe.each(fixtureVersions)('Metro %s compatibility', (version) => {
   it('creates and invokes a serializer from the pinned fixture', () => {
     const serializer = createBaseSerializer(createFixtureLoader(version));
 
-    expect(
-      serializer('/entry.js', [], graph as never, bundleOptions as never),
-    ).toEqual({
+    expect(serializer('/entry.js', [], graph as never, bundleOptions as never)).toEqual({
       code: '',
       metadata: { modules: [], post: 0, pre: 0 },
     });

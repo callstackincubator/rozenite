@@ -11,11 +11,7 @@ const ctx: RenderCtx = {
   url: 'https://example.com/cat.png',
 };
 
-const renderImage = (
-  view: 'preview' | 'raw',
-  base64 = 'AQID',
-  override: Partial<RenderCtx> = {},
-) =>
+const renderImage = (view: 'preview' | 'raw', base64 = 'AQID', override: Partial<RenderCtx> = {}) =>
   render(
     imageRenderer.render({
       view,

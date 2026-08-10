@@ -86,10 +86,7 @@ const readStringTable = (
   };
 };
 
-const readStringById = (
-  table: Array<string | null>,
-  id: number,
-): string | null => {
+const readStringById = (table: Array<string | null>, id: number): string | null => {
   if (!isInteger(id) || id <= 0 || id >= table.length) {
     return null;
   }
@@ -199,17 +196,11 @@ export const parseTreeOperations = (
           index += 1;
         }
 
-        const parsedParentId =
-          isInteger(parentId) && parentId !== 0 ? parentId : undefined;
-        const rawDisplayName = readStringById(
-          stringTable.table,
-          displayNameStringId,
-        );
+        const parsedParentId = isInteger(parentId) && parentId !== 0 ? parentId : undefined;
+        const rawDisplayName = readStringById(stringTable.table, displayNameStringId);
         const displayName =
           rawDisplayName ||
-          (elementType === ELEMENT_TYPE_HOST
-            ? 'HostComponent'
-            : `Node ${nodeId}`);
+          (elementType === ELEMENT_TYPE_HOST ? 'HostComponent' : `Node ${nodeId}`);
         const key = readStringById(stringTable.table, keyStringId) ?? undefined;
 
         parsed.added.push({
@@ -225,10 +216,7 @@ export const parseTreeOperations = (
       }
 
       case TREE_OPERATION_REMOVE: {
-        if (
-          index + 1 >= numericOps.length ||
-          !isInteger(numericOps[index + 1])
-        ) {
+        if (index + 1 >= numericOps.length || !isInteger(numericOps[index + 1])) {
           return parsed;
         }
 

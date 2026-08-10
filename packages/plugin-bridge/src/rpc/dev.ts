@@ -12,5 +12,4 @@
 export const isDev = (): boolean =>
   typeof __DEV__ !== 'undefined'
     ? Boolean(__DEV__)
-    : typeof process !== 'undefined' &&
-      process.env?.['NODE_ENV'] !== 'production';
+    : typeof process !== 'undefined' && process.env?.['NODE_ENV'] !== 'production';

@@ -17,15 +17,14 @@ export function useFileSystemNavigation(
   requests: FileSystemRequests,
 ) {
   const [provider, setProvider] = useState<FileSystemProvider>('none');
-  const [fileTransfer, setFileTransfer] =
-    useState<FileSystemTransferCapabilities>({
+  const [fileTransfer, setFileTransfer] = useState<FileSystemTransferCapabilities>({
+    import: false,
+    export: false,
+    agent: {
       import: false,
       export: false,
-      agent: {
-        import: false,
-        export: false,
-      },
-    });
+    },
+  });
   const [roots, setRoots] = useState<FsRoots['roots']>([]);
   const [pathInput, setPathInput] = useState('');
   const [currentPath, setCurrentPath] = useState('');

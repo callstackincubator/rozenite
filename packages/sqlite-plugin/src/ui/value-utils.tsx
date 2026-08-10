@@ -1,9 +1,5 @@
 import { JSONTree } from 'react-json-tree';
-import type {
-  SqliteQueryMetadata,
-  SqliteQueryResult,
-  SqliteScriptResult,
-} from '../shared/types';
+import type { SqliteQueryMetadata, SqliteQueryResult, SqliteScriptResult } from '../shared/types';
 import { truncateText } from './utils';
 
 const jsonTreeTheme = {
@@ -25,9 +21,7 @@ const jsonTreeTheme = {
   base0F: '#f97316',
 };
 
-export const isStructuredValue = (
-  value: unknown,
-): value is Record<string, unknown> | unknown[] => {
+export const isStructuredValue = (value: unknown): value is Record<string, unknown> | unknown[] => {
   return Array.isArray(value) || (!!value && typeof value === 'object');
 };
 
@@ -37,9 +31,7 @@ export const getValueKind = (value: unknown) => {
   }
 
   if (Array.isArray(value)) {
-    return value.every((item) => typeof item === 'number')
-      ? 'blob-ish'
-      : 'array';
+    return value.every((item) => typeof item === 'number') ? 'blob-ish' : 'array';
   }
 
   return typeof value;

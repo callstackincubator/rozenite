@@ -17,10 +17,7 @@ describe('controlsRegistry', () => {
     registry.set(first, { sections: [section('app')] });
     registry.set(second, { sections: [section('locale')] });
 
-    expect(registry.getOptions().sections.map(({ id }) => id)).toEqual([
-      'app',
-      'locale',
-    ]);
+    expect(registry.getOptions().sections.map(({ id }) => id)).toEqual(['app', 'locale']);
   });
 
   it('lets updater registrations derive from previous options', () => {
@@ -33,10 +30,7 @@ describe('controlsRegistry', () => {
       sections: [...previousOptions.sections, section('locale')],
     }));
 
-    expect(registry.getOptions().sections.map(({ id }) => id)).toEqual([
-      'app',
-      'locale',
-    ]);
+    expect(registry.getOptions().sections.map(({ id }) => id)).toEqual(['app', 'locale']);
   });
 
   it('lets updater registrations replace previous options when needed', () => {
@@ -49,9 +43,7 @@ describe('controlsRegistry', () => {
       sections: [section('replacement')],
     }));
 
-    expect(registry.getOptions().sections.map(({ id }) => id)).toEqual([
-      'replacement',
-    ]);
+    expect(registry.getOptions().sections.map(({ id }) => id)).toEqual(['replacement']);
   });
 
   it('can include the current render input before the effect registers it', () => {

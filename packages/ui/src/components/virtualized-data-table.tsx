@@ -8,11 +8,7 @@ import {
   type Row,
   type SortingState,
 } from '@tanstack/react-table';
-import {
-  TableVirtuoso,
-  type ItemProps,
-  type TableComponents,
-} from 'react-virtuoso';
+import { TableVirtuoso, type ItemProps, type TableComponents } from 'react-virtuoso';
 import {
   useCallback,
   useMemo,
@@ -70,26 +66,13 @@ type TableRowComponentProps = ItemProps<unknown> & {
   context: VirtualizedTableContext<unknown>;
 };
 
-const VirtualizedTableElement = ({
-  children,
-  context,
-  style,
-}: TableComponentProps) => (
-  <table
-    aria-label={context.ariaLabel}
-    className={context.tableClassName}
-    style={style}
-  >
+const VirtualizedTableElement = ({ children, context, style }: TableComponentProps) => (
+  <table aria-label={context.ariaLabel} className={context.tableClassName} style={style}>
     {children}
   </table>
 );
 
-const VirtualizedTableRow = ({
-  children,
-  context,
-  item,
-  ...props
-}: TableRowComponentProps) => {
+const VirtualizedTableRow = ({ children, context, item, ...props }: TableRowComponentProps) => {
   const row = item as Row<unknown>;
   const isActionable = Boolean(context.onRowClick);
 
@@ -109,9 +92,7 @@ const VirtualizedTableRow = ({
   return (
     <tr
       {...props}
-      aria-label={
-        context.getRowTextValue?.(row.original, row.index) ?? String(row.id)
-      }
+      aria-label={context.getRowTextValue?.(row.original, row.index) ?? String(row.id)}
       className={`border-b border-border last:border-0 transition-colors hover:bg-accent/50 ${
         isActionable ? 'cursor-pointer' : ''
       }`}
@@ -124,11 +105,7 @@ const VirtualizedTableRow = ({
   );
 };
 
-const VirtualizedEmptyState = ({
-  context,
-}: {
-  context: VirtualizedTableContext<unknown>;
-}) => (
+const VirtualizedEmptyState = ({ context }: { context: VirtualizedTableContext<unknown> }) => (
   <tr>
     <td colSpan={context.columnCount}>
       {context.renderEmptyState?.() ?? (
@@ -144,10 +121,7 @@ const VirtualizedEmptyState = ({
 
 // Virtuoso requires component definitions to remain stable between renders.
 // Dynamic behavior travels through its `context` prop instead.
-const virtualizedTableComponents: TableComponents<
-  unknown,
-  VirtualizedTableContext<unknown>
-> = {
+const virtualizedTableComponents: TableComponents<unknown, VirtualizedTableContext<unknown>> = {
   EmptyPlaceholder: VirtualizedEmptyState,
   Table: VirtualizedTableElement,
   TableRow: VirtualizedTableRow,
@@ -173,15 +147,12 @@ export const VirtualizedDataTable = <TData,>({
   scrollClassName = 'h-full w-full overflow-auto',
   style = { height: 400 },
 }: VirtualizedDataTableProps<TData>) => {
-  const [uncontrolledSorting, setUncontrolledSorting] = useState<SortingState>(
-    [],
-  );
+  const [uncontrolledSorting, setUncontrolledSorting] = useState<SortingState>([]);
   const sorting = controlledSorting ?? uncontrolledSorting;
 
   const handleSortingChange = useCallback<OnChangeFn<SortingState>>(
     (updater) => {
-      const nextSorting =
-        typeof updater === 'function' ? updater(sorting) : updater;
+      const nextSorting = typeof updater === 'function' ? updater(sorting) : updater;
 
       if (controlledSorting === undefined) {
         setUncontrolledSorting(nextSorting);
@@ -262,19 +233,13 @@ export const VirtualizedDataTable = <TData,>({
                     onClick={header.column.getToggleSortingHandler()}
                     type="button"
                   >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
-                    )}
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                     <span aria-hidden="true">
                       <SortIcon direction={sortDirection} />
                     </span>
                   </button>
                 ) : (
-                  flexRender(
-                    header.column.columnDef.header,
-                    header.getContext(),
-                  )
+                  flexRender(header.column.columnDef.header, header.getContext())
                 )}
               </th>
             );
@@ -283,19 +248,13 @@ export const VirtualizedDataTable = <TData,>({
       )),
     [table],
   );
-  const computeItemKey = useCallback(
-    (_index: number, row: Row<TData>) => row.id,
-    [],
-  );
+  const computeItemKey = useCallback((_index: number, row: Row<TData>) => row.id, []);
 
   return (
     <TableVirtuoso<Row<TData>, VirtualizedTableContext<TData>>
       className={scrollClassName}
       components={
-        virtualizedTableComponents as TableComponents<
-          Row<TData>,
-          VirtualizedTableContext<TData>
-        >
+        virtualizedTableComponents as TableComponents<Row<TData>, VirtualizedTableContext<TData>>
       }
       computeItemKey={computeItemKey}
       context={context}

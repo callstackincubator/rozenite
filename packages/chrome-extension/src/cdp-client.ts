@@ -48,8 +48,7 @@ export const createCDPClient = (
   const patchEvent = ({ method, params }: CDPEvent): CDPEvent => {
     if (
       method === 'Runtime.executionContextCreated' &&
-      (params as { context?: { auxData?: { isDefault?: boolean } } })?.context
-        ?.auxData?.isDefault
+      (params as { context?: { auxData?: { isDefault?: boolean } } })?.context?.auxData?.isDefault
     ) {
       return {
         method,

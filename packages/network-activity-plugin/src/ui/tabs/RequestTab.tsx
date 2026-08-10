@@ -1,9 +1,5 @@
 import { ScrollArea } from '../components/ScrollArea';
-import {
-  HttpNetworkEntry,
-  HttpRequestData,
-  SSENetworkEntry,
-} from '../state/model';
+import { HttpNetworkEntry, HttpRequestData, SSENetworkEntry } from '../state/model';
 import { KeyValueGrid } from '../components/KeyValueGrid';
 import { Section } from '../components/Section';
 import { useMemo } from 'react';

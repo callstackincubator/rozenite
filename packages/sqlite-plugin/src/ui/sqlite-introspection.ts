@@ -54,13 +54,10 @@ export type SqliteIndexColumnInfo = {
 const buildQualifiedEntityName = (schemaName: string, entityName: string) =>
   `${quoteSqlIdentifier(schemaName)}.${quoteSqlIdentifier(entityName)}`;
 
-const buildPragmaPrefix = (schemaName: string) =>
-  `${quoteSqlIdentifier(schemaName)}.`;
+const buildPragmaPrefix = (schemaName: string) => `${quoteSqlIdentifier(schemaName)}.`;
 
-const asString = (value: unknown) =>
-  typeof value === 'string' ? value : String(value ?? '');
-const asNullableString = (value: unknown) =>
-  value == null ? null : String(value);
+const asString = (value: unknown) => (typeof value === 'string' ? value : String(value ?? ''));
+const asNullableString = (value: unknown) => (value == null ? null : String(value));
 const asNumber = (value: unknown) => {
   const parsed = Number(value ?? 0);
   return Number.isNaN(parsed) ? 0 : parsed;
@@ -93,10 +90,7 @@ export const buildBrowseEntitySql = (
 export const buildEntityCountSql = (schemaName: string, entityName: string) =>
   `SELECT COUNT(*) AS count FROM ${buildQualifiedEntityName(schemaName, entityName)}`;
 
-export const buildCreateSqlLookup = (
-  schemaName: string,
-  entityName: string,
-) => `
+export const buildCreateSqlLookup = (schemaName: string, entityName: string) => `
 SELECT sql
 FROM ${quoteSqlIdentifier(schemaName)}.sqlite_schema
 WHERE type IN ('table', 'view')
@@ -125,17 +119,12 @@ export const parseSchemas = (result: SqliteQueryResult): SqliteSchema[] =>
     }))
     .filter((schema) => !!schema.name);
 
-export const parseEntities = (
-  result: SqliteQueryResult,
-  schemaName: string,
-): SqliteEntity[] =>
+export const parseEntities = (result: SqliteQueryResult, schemaName: string): SqliteEntity[] =>
   result.rows
     .map((row) => ({
       schemaName,
       name: asString(row.name),
-      type: (asString(row.type) === 'view'
-        ? 'view'
-        : 'table') as SqliteEntityType,
+      type: (asString(row.type) === 'view' ? 'view' : 'table') as SqliteEntityType,
       sql: asNullableString(row.sql),
     }))
     .filter((entity) => !!entity.name);
@@ -151,9 +140,7 @@ export const parseColumns = (result: SqliteQueryResult): SqliteColumnInfo[] =>
     hidden: asNumber(row.hidden),
   }));
 
-export const parseForeignKeys = (
-  result: SqliteQueryResult,
-): SqliteForeignKeyInfo[] =>
+export const parseForeignKeys = (result: SqliteQueryResult): SqliteForeignKeyInfo[] =>
   result.rows.map((row) => ({
     id: asNumber(row.id),
     seq: asNumber(row.seq),
@@ -174,9 +161,7 @@ export const parseIndexes = (result: SqliteQueryResult): SqliteIndexInfo[] =>
     partial: asNumber(row.partial) === 1,
   }));
 
-export const parseIndexColumns = (
-  result: SqliteQueryResult,
-): SqliteIndexColumnInfo[] =>
+export const parseIndexColumns = (result: SqliteQueryResult): SqliteIndexColumnInfo[] =>
   result.rows
     .map((row) => ({
       seqno: asNumber(row.seqno),
@@ -185,5 +170,4 @@ export const parseIndexColumns = (
     }))
     .filter((column) => !!column.name);
 
-export const parseCount = (result: SqliteQueryResult) =>
-  asNumber(result.rows[0]?.count);
+export const parseCount = (result: SqliteQueryResult) => asNumber(result.rows[0]?.count);

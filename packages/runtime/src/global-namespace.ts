@@ -8,5 +8,4 @@ declare global {
   };
 }
 
-export const getGlobalNamespace = (): typeof globalThis.__ROZENITE__ =>
-  globalThis.__ROZENITE__;
+export const getGlobalNamespace = (): typeof globalThis.__ROZENITE__ => globalThis.__ROZENITE__;

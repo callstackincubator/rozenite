@@ -16,10 +16,7 @@ const safeDecodeURIComponent = (value: string): string => {
 
 export const formatSourcePath = (url: string): string => {
   const withoutQueryAndHash = url.split(/[?#]/)[0];
-  const decoded = safeDecodeURIComponent(withoutQueryAndHash).replace(
-    /^file:\/\//,
-    '',
-  );
+  const decoded = safeDecodeURIComponent(withoutQueryAndHash).replace(/^file:\/\//, '');
 
   // For Metro bundle URLs, the bundle filename is the meaningful suffix.
   const bundleMatch = decoded.match(/([^/]+\.bundle)(?:\/|$)/);
@@ -38,9 +35,7 @@ export const formatSourcePath = (url: string): string => {
   }
 };
 
-export const formatFrameLocation = (
-  frame: ActionStackFrame | undefined,
-): string | null => {
+export const formatFrameLocation = (frame: ActionStackFrame | undefined): string | null => {
   const url = frame?.url ?? frame?.generatedUrl;
   if (!url) return null;
 

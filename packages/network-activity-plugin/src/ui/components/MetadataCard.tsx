@@ -1,11 +1,6 @@
 import { Download } from 'lucide-react';
 import { KeyValueGrid } from './KeyValueGrid';
-import {
-  base64ToBlob,
-  deriveFilename,
-  downloadBlob,
-  readHeader,
-} from '../utils/download';
+import { base64ToBlob, deriveFilename, downloadBlob, readHeader } from '../utils/download';
 import type { RenderCtx } from '../response-renderers/types';
 
 export type MetadataCardBody =
@@ -35,8 +30,7 @@ const decodedByteCount = (base64: string): number => {
 };
 
 export const MetadataCard = ({ body, ctx }: MetadataCardProps) => {
-  const decodedSize =
-    body.kind === 'binary' ? decodedByteCount(body.base64) : body.size;
+  const decodedSize = body.kind === 'binary' ? decodedByteCount(body.base64) : body.size;
 
   const contentLengthHeader = readHeader(ctx.headers, 'Content-Length');
   const filename = deriveFilename({

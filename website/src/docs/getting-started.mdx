@@ -113,12 +113,9 @@ const customConfig = {
   // Your existing Metro configuration
 };
 
-module.exports = withRozenite(
-  withNxMetro(mergeConfig(defaultConfig, customConfig)),
-  {
-    enabled: process.env.WITH_ROZENITE === 'true',
-  },
-);
+module.exports = withRozenite(withNxMetro(mergeConfig(defaultConfig, customConfig)), {
+  enabled: process.env.WITH_ROZENITE === 'true',
+});
 ```
 
 ### Re.Pack Configuration
@@ -338,10 +335,7 @@ const customConfig = {
 
 module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
   enabled: process.env.WITH_ROZENITE === 'true',
-  destroyOnDetachPlugins: [
-    '@rozenite/network-activity-plugin',
-    '@rozenite/tanstack-query-plugin',
-  ],
+  destroyOnDetachPlugins: ['@rozenite/network-activity-plugin', '@rozenite/tanstack-query-plugin'],
 });
 ```
 

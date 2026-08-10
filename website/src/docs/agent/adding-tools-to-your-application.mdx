@@ -33,10 +33,7 @@ Use the `useRozeniteInAppAgentTool` hook inside a component that is mounted when
 ### Example: build info tool
 
 ```tsx
-import {
-  useRozeniteInAppAgentTool,
-  type AgentTool,
-} from '@rozenite/agent-bridge';
+import { useRozeniteInAppAgentTool, type AgentTool } from '@rozenite/agent-bridge';
 
 const buildInfoTool: AgentTool = {
   name: 'get-build-info',
@@ -74,10 +71,7 @@ Mount `AppAgentTools` (or your equivalent) somewhere in your app tree—for exam
 
 ```tsx
 import { Alert } from 'react-native';
-import {
-  useRozeniteInAppAgentTool,
-  type AgentTool,
-} from '@rozenite/agent-bridge';
+import { useRozeniteInAppAgentTool, type AgentTool } from '@rozenite/agent-bridge';
 
 const showAlertTool: AgentTool = {
   name: 'show-alert',

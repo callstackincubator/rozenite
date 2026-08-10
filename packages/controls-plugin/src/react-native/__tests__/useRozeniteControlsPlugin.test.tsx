@@ -88,11 +88,7 @@ function AppControls() {
   return null;
 }
 
-function LocaleControls({
-  onUpdate = vi.fn(),
-}: {
-  onUpdate?: (value: string) => void;
-}) {
+function LocaleControls({ onUpdate = vi.fn() }: { onUpdate?: (value: string) => void }) {
   useRozeniteControlsPlugin((previousOptions) => ({
     sections: [...previousOptions.sections, localeSection(onUpdate)],
   }));
@@ -140,12 +136,8 @@ const unmountControls = async (root: Root, container: HTMLDivElement) => {
 };
 
 const getLastSnapshotSectionIds = () => {
-  const snapshots = mocks.client.send.mock.calls.filter(
-    ([type]) => type === 'snapshot',
-  );
-  const lastSnapshot = snapshots.at(-1)?.[1] as
-    | ControlsEventMap['snapshot']
-    | undefined;
+  const snapshots = mocks.client.send.mock.calls.filter(([type]) => type === 'snapshot');
+  const lastSnapshot = snapshots.at(-1)?.[1] as ControlsEventMap['snapshot'] | undefined;
 
   return lastSnapshot?.sections.map((section) => section.id);
 };
@@ -183,9 +175,7 @@ describe('useRozeniteControlsPlugin', () => {
 
   it('routes updates to sections registered by another hook instance', async () => {
     const onUpdate = vi.fn();
-    const { root, container } = await renderControls(
-      <TestApp onUpdate={onUpdate} />,
-    );
+    const { root, container } = await renderControls(<TestApp onUpdate={onUpdate} />);
 
     await act(async () => {
       mocks.emit('update-request', {

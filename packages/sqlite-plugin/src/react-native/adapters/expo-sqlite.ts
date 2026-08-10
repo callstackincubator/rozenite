@@ -3,10 +3,7 @@ import {
   normalizeSingleStatementSql,
   statementReturnsRows,
 } from '../../shared/sql';
-import {
-  decodeSqliteBridgeValue,
-  formatSqliteError,
-} from '../../shared/bridge-values';
+import { decodeSqliteBridgeValue, formatSqliteError } from '../../shared/bridge-values';
 import type {
   SqliteAdapter,
   SqliteExecuteStatementsError,
@@ -14,10 +11,7 @@ import type {
   SqliteStatementInput,
   SqliteQueryResult,
 } from '../../shared/types';
-import {
-  createSqliteAdapter,
-  type CreateSqliteAdapterOptions,
-} from './generic';
+import { createSqliteAdapter, type CreateSqliteAdapterOptions } from './generic';
 
 export type ExpoSqliteLike = {
   getAllAsync: (...args: any[]) => Promise<Record<string, unknown>[]>;
@@ -35,17 +29,12 @@ type SingleDatabaseOptions = {
 };
 
 type MultiDatabaseOptions = {
-  databases: Record<
-    string,
-    ExpoSqliteLike | { database: ExpoSqliteLike; name?: string }
-  >;
+  databases: Record<string, ExpoSqliteLike | { database: ExpoSqliteLike; name?: string }>;
   adapterId?: string;
   adapterName?: string;
 };
 
-export type CreateExpoSqliteAdapterOptions =
-  | SingleDatabaseOptions
-  | MultiDatabaseOptions;
+export type CreateExpoSqliteAdapterOptions = SingleDatabaseOptions | MultiDatabaseOptions;
 
 const now = () =>
   typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -87,10 +76,7 @@ const toBridgeSafeValue = (value: unknown): unknown => {
 
   if (typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value).map(([key, nestedValue]) => [
-        key,
-        toBridgeSafeValue(nestedValue),
-      ]),
+      Object.entries(value).map(([key, nestedValue]) => [key, toBridgeSafeValue(nestedValue)]),
     );
   }
 
@@ -99,12 +85,7 @@ const toBridgeSafeValue = (value: unknown): unknown => {
 
 const normalizeRows = (rows: Record<string, unknown>[]) =>
   rows.map((row) =>
-    Object.fromEntries(
-      Object.entries(row).map(([key, value]) => [
-        key,
-        toBridgeSafeValue(value),
-      ]),
-    ),
+    Object.fromEntries(Object.entries(row).map(([key, value]) => [key, toBridgeSafeValue(value)])),
   );
 
 const executeSingleStatement = async (
@@ -114,8 +95,7 @@ const executeSingleStatement = async (
   const normalizedSql = normalizeSingleStatementSql(sql);
   const statementType = classifySqlStatement(normalizedSql);
   const startedAt = now();
-  const decodedParams =
-    params === undefined ? undefined : decodeSqliteBridgeValue(params);
+  const decodedParams = params === undefined ? undefined : decodeSqliteBridgeValue(params);
 
   if (statementReturnsRows(statementType)) {
     const rows = normalizeRows(
@@ -151,10 +131,7 @@ const executeSingleStatement = async (
       statementType,
       rowCount: 0,
       changes: typeof result.changes === 'number' ? result.changes : null,
-      lastInsertRowId:
-        typeof result.lastInsertRowId === 'number'
-          ? result.lastInsertRowId
-          : null,
+      lastInsertRowId: typeof result.lastInsertRowId === 'number' ? result.lastInsertRowId : null,
       durationMs,
     },
   };
@@ -186,9 +163,7 @@ const resolveDatabaseConfig = (
   config: ExpoSqliteLike | { database: ExpoSqliteLike; name?: string },
 ) => ('database' in config ? config : { database: config });
 
-export const createExpoSqliteAdapter = (
-  options: CreateExpoSqliteAdapterOptions,
-): SqliteAdapter => {
+export const createExpoSqliteAdapter = (options: CreateExpoSqliteAdapterOptions): SqliteAdapter => {
   const genericOptions: CreateSqliteAdapterOptions =
     'databases' in options
       ? {
@@ -202,9 +177,7 @@ export const createExpoSqliteAdapter = (
                 key,
                 {
                   name: resolved.name ?? key,
-                  executeStatements: createExpoExecuteStatementsRunner(
-                    resolved.database,
-                  ),
+                  executeStatements: createExpoExecuteStatementsRunner(resolved.database),
                 },
               ];
             }),
@@ -219,9 +192,7 @@ export const createExpoSqliteAdapter = (
 
             return {
               name: resolved.name ?? options.databaseName,
-              executeStatements: createExpoExecuteStatementsRunner(
-                resolved.database,
-              ),
+              executeStatements: createExpoExecuteStatementsRunner(resolved.database),
             };
           })(),
         };

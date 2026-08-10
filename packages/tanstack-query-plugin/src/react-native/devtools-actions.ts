@@ -2,10 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { DevToolsActionType } from '../shared/types';
 
 type QueryScopedActionInput = {
-  type: Exclude<
-    DevToolsActionType,
-    'CLEAR_MUTATION_CACHE' | 'CLEAR_QUERY_CACHE'
-  >;
+  type: Exclude<DevToolsActionType, 'CLEAR_MUTATION_CACHE' | 'CLEAR_QUERY_CACHE'>;
   queryHash: string;
   metadata?: {
     data?: unknown;
@@ -17,9 +14,7 @@ type CacheScopedActionInput = {
   queryHash?: string;
 };
 
-export type TanStackQueryDevtoolsActionInput =
-  | QueryScopedActionInput
-  | CacheScopedActionInput;
+export type TanStackQueryDevtoolsActionInput = QueryScopedActionInput | CacheScopedActionInput;
 
 const getActiveQuery = (queryClient: QueryClient, queryHash?: string) => {
   if (!queryHash) {
@@ -52,9 +47,7 @@ export const applyTanStackQueryDevtoolsAction = async (
     }
 
     case 'CLEAR_MUTATION_CACHE': {
-      const mutationCountBefore = queryClient
-        .getMutationCache()
-        .getAll().length;
+      const mutationCountBefore = queryClient.getMutationCache().getAll().length;
       queryClient.getMutationCache().clear();
       return {
         applied: true,

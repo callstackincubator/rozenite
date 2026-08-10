@@ -21,10 +21,7 @@ function TooltipTrigger(props: TooltipTriggerProps) {
 }
 
 export type TooltipContentProps = TooltipPrimitive.Popup.Props &
-  Pick<
-    TooltipPrimitive.Positioner.Props,
-    'side' | 'sideOffset' | 'align' | 'alignOffset'
-  >;
+  Pick<TooltipPrimitive.Positioner.Props, 'side' | 'sideOffset' | 'align' | 'alignOffset'>;
 
 function TooltipContent({
   className,

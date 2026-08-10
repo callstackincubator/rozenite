@@ -1,9 +1,6 @@
 import { isRozeniteWeb, isServer, isWeb } from '../../web.js';
 import { Channel } from '../types.js';
-import {
-  MissingRozeniteForWebError,
-  UnsupportedPlatformError,
-} from '../../errors.js';
+import { MissingRozeniteForWebError, UnsupportedPlatformError } from '../../errors.js';
 
 export type CdpMessageListener = (message: unknown) => void;
 
@@ -45,9 +42,7 @@ const waitForDomain = (): Promise<CdpDomain> => {
       }
     };
 
-    global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.addEventListener(
-      handler,
-    );
+    global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.addEventListener(handler);
   });
 };
 

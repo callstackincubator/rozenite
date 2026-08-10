@@ -2,26 +2,29 @@
   "name": "@rozenite/shell",
   "version": "2.0.0",
   "description": "Unified Rozenite panel shell for React Native DevTools.",
-  "type": "module",
   "keywords": [
-    "react-native",
     "devtools",
-    "shell",
-    "plugin"
+    "plugin",
+    "react-native",
+    "shell"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
     "url": "https://github.com/callstackincubator/rozenite/issues"
   },
+  "license": "MIT",
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
-  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
-  "license": "MIT",
   "files": [
     "dist"
   ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -36,6 +39,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.2",
+    "@testing-library/react": "^16.1.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "typescript": "~5.9.3",
@@ -44,8 +48,5 @@
   },
   "engines": {
     "node": ">=20"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

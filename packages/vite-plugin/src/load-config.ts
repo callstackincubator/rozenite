@@ -66,9 +66,7 @@ export type RozeniteConfig = {
   dev?: DevConfig;
 };
 
-export const loadConfig = async (
-  configPath: string,
-): Promise<RozeniteConfig> => {
+export const loadConfig = async (configPath: string): Promise<RozeniteConfig> => {
   const absoluteConfigPath = path.resolve(process.cwd(), configPath);
 
   if (!fs.existsSync(absoluteConfigPath)) {
@@ -76,20 +74,13 @@ export const loadConfig = async (
   }
 
   try {
-    const configContent = await fs.promises.readFile(
-      absoluteConfigPath,
-      'utf-8',
-    );
+    const configContent = await fs.promises.readFile(absoluteConfigPath, 'utf-8');
 
-    const result = await transformWithEsbuild(
-      configContent,
-      absoluteConfigPath,
-      {
-        loader: 'ts',
-        format: 'cjs',
-        target: 'esnext',
-      },
-    );
+    const result = await transformWithEsbuild(configContent, absoluteConfigPath, {
+      loader: 'ts',
+      format: 'cjs',
+      target: 'esnext',
+    });
 
     const moduleExports: { default?: unknown } = {};
     const module = { exports: moduleExports };
@@ -108,9 +99,7 @@ export const loadConfig = async (
     return config as RozeniteConfig;
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(
-        `Failed to load configuration from ${configPath}: ${error.message}`,
-      );
+      throw new Error(`Failed to load configuration from ${configPath}: ${error.message}`);
     }
     throw new Error(`Failed to load configuration from ${configPath}`);
   }

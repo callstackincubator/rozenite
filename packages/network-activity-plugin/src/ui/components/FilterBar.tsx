@@ -17,25 +17,14 @@ import { Button } from './Button';
 import { X, Filter, ChevronDown, Check } from 'lucide-react';
 import type { HttpMethod, NetworkEventSource } from '../../shared/client';
 import { createDefaultFilter, DEFAULT_REQUEST_TYPES } from '../state/filter';
-import type {
-  AdvancedFilterState,
-  FilterState,
-  RequestTypeFilter,
-} from '../state/filter';
+import type { AdvancedFilterState, FilterState, RequestTypeFilter } from '../state/filter';
 
 type FilterBarProps = {
   filter: FilterState;
   onFilterChange: (filter: FilterState) => void;
 };
 
-const HTTP_METHODS: HttpMethod[] = [
-  'GET',
-  'POST',
-  'PUT',
-  'PATCH',
-  'DELETE',
-  'HEAD',
-];
+const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'];
 const SOURCES: NetworkEventSource[] = ['builtin', 'expo', 'nitro'];
 
 const getTypeLabel = (type: RequestTypeFilter) => {
@@ -78,8 +67,7 @@ const getAdvancedFilterCount = (advanced: AdvancedFilterState) => {
 };
 
 const getActiveFilterCount = (filter: FilterState) => {
-  const typeFilterCount =
-    filter.types.size < DEFAULT_REQUEST_TYPES.length ? 1 : 0;
+  const typeFilterCount = filter.types.size < DEFAULT_REQUEST_TYPES.length ? 1 : 0;
 
   return typeFilterCount + getAdvancedFilterCount(filter.advanced);
 };
@@ -109,14 +97,10 @@ const FilterField = ({
 );
 
 const FilterPanelLabel = ({ children }: { children: string }) => (
-  <div className="px-2 py-1.5 text-xs font-semibold text-gray-400">
-    {children}
-  </div>
+  <div className="px-2 py-1.5 text-xs font-semibold text-gray-400">{children}</div>
 );
 
-const FilterPanelSeparator = () => (
-  <div className="-mx-1 my-1 h-px bg-gray-700" />
-);
+const FilterPanelSeparator = () => <div className="-mx-1 my-1 h-px bg-gray-700" />;
 
 const FilterCheckbox = ({
   checked,
@@ -162,11 +146,7 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
   const click = useClick(context);
   const dismiss = useDismiss(context);
   const role = useRole(context);
-  const { getReferenceProps, getFloatingProps } = useInteractions([
-    click,
-    dismiss,
-    role,
-  ]);
+  const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss, role]);
 
   const handleTextChange = (text: string) => {
     onFilterChange({ ...filter, text });
@@ -299,25 +279,19 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
             <FilterPanelSeparator />
             <FilterCheckbox
               checked={filter.advanced.failedOnly}
-              onCheckedChange={(checked) =>
-                updateAdvancedFilter({ failedOnly: checked })
-              }
+              onCheckedChange={(checked) => updateAdvancedFilter({ failedOnly: checked })}
             >
               Failed only
             </FilterCheckbox>
             <FilterCheckbox
               checked={filter.advanced.inFlightOnly}
-              onCheckedChange={(checked) =>
-                updateAdvancedFilter({ inFlightOnly: checked })
-              }
+              onCheckedChange={(checked) => updateAdvancedFilter({ inFlightOnly: checked })}
             >
               In-flight only
             </FilterCheckbox>
             <FilterCheckbox
               checked={filter.advanced.overriddenOnly}
-              onCheckedChange={(checked) =>
-                updateAdvancedFilter({ overriddenOnly: checked })
-              }
+              onCheckedChange={(checked) => updateAdvancedFilter({ overriddenOnly: checked })}
             >
               Overridden only
             </FilterCheckbox>
@@ -340,9 +314,7 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
                 label="MIME Type"
                 value={filter.advanced.contentType}
                 placeholder="json"
-                onChange={(contentType) =>
-                  updateAdvancedFilter({ contentType })
-                }
+                onChange={(contentType) => updateAdvancedFilter({ contentType })}
               />
               <FilterField
                 label="Min Size"
@@ -360,17 +332,13 @@ export const FilterBar = ({ filter, onFilterChange }: FilterBarProps) => {
                 label="Min Duration"
                 value={filter.advanced.minDuration}
                 placeholder="500"
-                onChange={(minDuration) =>
-                  updateAdvancedFilter({ minDuration })
-                }
+                onChange={(minDuration) => updateAdvancedFilter({ minDuration })}
               />
               <FilterField
                 label="Max Duration"
                 value={filter.advanced.maxDuration}
                 placeholder="2000"
-                onChange={(maxDuration) =>
-                  updateAdvancedFilter({ maxDuration })
-                }
+                onChange={(maxDuration) => updateAdvancedFilter({ maxDuration })}
               />
             </div>
           </div>

@@ -1,6 +1,4 @@
-export type PaginationErrorCode =
-  | 'PAGINATION_INVALID_CURSOR'
-  | 'PAGINATION_CURSOR_MISMATCH';
+export type PaginationErrorCode = 'PAGINATION_INVALID_CURSOR' | 'PAGINATION_CURSOR_MISMATCH';
 
 export class PaginationError extends Error {
   code: PaginationErrorCode;

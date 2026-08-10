@@ -31,10 +31,7 @@ export const withRozeniteRequireProfiler = createMetroConfigTransformer(
       ...config,
       serializer: {
         ...config.serializer,
-        getPolyfills: (...opts) => [
-          ...existingGetPolyfills(...opts),
-          require.resolve('./setup'),
-        ],
+        getPolyfills: (...opts) => [...existingGetPolyfills(...opts), require.resolve('./setup')],
         getRunModuleStatement: (...opts) => {
           const statement = existingGetRunModuleStatement(...opts);
           return `typeof __patchSystrace === "function" && __patchSystrace();\n${statement}`;

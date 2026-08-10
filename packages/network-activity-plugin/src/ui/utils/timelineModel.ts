@@ -57,27 +57,19 @@ export type TimelineModel = {
   hiddenRequestCount: number;
 };
 
-const ACTIVE_HTTP_STATUSES = new Set<ProcessedRequest['status']>([
-  'pending',
-  'loading',
-]);
+const ACTIVE_HTTP_STATUSES = new Set<ProcessedRequest['status']>(['pending', 'loading']);
 const ACTIVE_WEBSOCKET_STATUSES = new Set<ProcessedRequest['status']>([
   'connecting',
   'open',
   'closing',
 ]);
-const ACTIVE_SSE_STATUSES = new Set<ProcessedRequest['status']>([
-  'connecting',
-  'open',
-]);
+const ACTIVE_SSE_STATUSES = new Set<ProcessedRequest['status']>(['connecting', 'open']);
 
 const clamp = (value: number, minimum: number, maximum: number) => {
   return Math.min(Math.max(value, minimum), maximum);
 };
 
-export const getTimelineChartHeight = (
-  layout: TimelineLayout = TIMELINE_LAYOUT,
-) => {
+export const getTimelineChartHeight = (layout: TimelineLayout = TIMELINE_LAYOUT) => {
   return (
     layout.laneTopPx +
     layout.laneCount * layout.laneHeightPx +
@@ -86,26 +78,16 @@ export const getTimelineChartHeight = (
   );
 };
 
-export const getTimelineLaneTop = (
-  lane: number,
-  layout: TimelineLayout = TIMELINE_LAYOUT,
-) => {
+export const getTimelineLaneTop = (lane: number, layout: TimelineLayout = TIMELINE_LAYOUT) => {
   return lane * (layout.laneHeightPx + layout.laneGapPx) + layout.laneTopPx;
 };
 
-export const getTimelineTrackTop = (
-  lane: number,
-  layout: TimelineLayout = TIMELINE_LAYOUT,
-) => {
+export const getTimelineTrackTop = (lane: number, layout: TimelineLayout = TIMELINE_LAYOUT) => {
   const visualBarTop = getTimelineLaneTop(lane, layout);
-  return (
-    visualBarTop - (layout.laneHitTargetHeightPx - layout.laneHeightPx) / 2
-  );
+  return visualBarTop - (layout.laneHitTargetHeightPx - layout.laneHeightPx) / 2;
 };
 
-export const getTimelineBarTopOffset = (
-  layout: TimelineLayout = TIMELINE_LAYOUT,
-) => {
+export const getTimelineBarTopOffset = (layout: TimelineLayout = TIMELINE_LAYOUT) => {
   return (layout.laneHitTargetHeightPx - layout.laneHeightPx) / 2;
 };
 
@@ -158,10 +140,7 @@ export const getTimelineRequestEndTime = (
     return endTime;
   }
 
-  return Math.min(
-    endTime,
-    request.timestamp + layout.streamingRequestMaxDurationMs,
-  );
+  return Math.min(endTime, request.timestamp + layout.streamingRequestMaxDurationMs);
 };
 
 export const requestOverlapsTimelineRange = (
@@ -204,10 +183,7 @@ export const getTimelineTicks = (
     });
   }
 
-  if (
-    ticks.length === 0 ||
-    ticks[ticks.length - 1].offsetPercent < 100 - Number.EPSILON
-  ) {
+  if (ticks.length === 0 || ticks[ticks.length - 1].offsetPercent < 100 - Number.EPSILON) {
     const finalTick = {
       label: formatTimelineOffset(rangeDuration),
       offsetPercent: 100,
@@ -217,8 +193,7 @@ export const getTimelineTicks = (
     if (
       !previousTick ||
       (finalTick.label !== previousTick.label &&
-        finalTick.offsetPercent - previousTick.offsetPercent >=
-          layout.minTickLabelGapPercent)
+        finalTick.offsetPercent - previousTick.offsetPercent >= layout.minTickLabelGapPercent)
     ) {
       ticks.push(finalTick);
     }
@@ -227,11 +202,7 @@ export const getTimelineTicks = (
   return ticks;
 };
 
-const getTimelineBounds = (
-  requests: ProcessedRequest[],
-  now: number,
-  layout: TimelineLayout,
-) => {
+const getTimelineBounds = (requests: ProcessedRequest[], now: number, layout: TimelineLayout) => {
   return requests.reduce(
     (result, request) => {
       const endTime = getTimelineRequestEndTime(request, now, layout);
@@ -254,10 +225,7 @@ const getEarliestLaneIndex = (laneEndTimes: number[]) => {
   }, 0);
 };
 
-const getRenderableRequests = (
-  requests: ProcessedRequest[],
-  layout: TimelineLayout,
-) => {
+const getRenderableRequests = (requests: ProcessedRequest[], layout: TimelineLayout) => {
   if (requests.length <= layout.maxRenderedRequests) {
     return requests;
   }
@@ -288,10 +256,7 @@ export const getTimelineModel = (
   }
 
   const bounds = getTimelineBounds(renderableRequests, now, layout);
-  const rawRangeDuration = Math.max(
-    bounds.end - bounds.start,
-    layout.minRangeMs,
-  );
+  const rawRangeDuration = Math.max(bounds.end - bounds.start, layout.minRangeMs);
   const rangePadding = Math.max(
     rawRangeDuration * layout.rangePaddingRatio,
     layout.minRangePaddingMs,
@@ -318,13 +283,9 @@ export const getTimelineModel = (
       const ttfb = clamp(request.ttfb ?? 0, 0, duration);
       const ttfbPercent = duration === 0 ? 0 : (ttfb / duration) * 100;
       const receivePercent = Math.max(100 - ttfbPercent, 0);
-      const availableLane = laneEndTimes.findIndex(
-        (laneEndTime) => laneEndTime <= startTime,
-      );
+      const availableLane = laneEndTimes.findIndex((laneEndTime) => laneEndTime <= startTime);
       const isOverflowingLane = availableLane === -1;
-      const lane = isOverflowingLane
-        ? getEarliestLaneIndex(laneEndTimes)
-        : availableLane;
+      const lane = isOverflowingLane ? getEarliestLaneIndex(laneEndTimes) : availableLane;
       laneEndTimes[lane] = Math.max(laneEndTimes[lane], endTime);
 
       return {

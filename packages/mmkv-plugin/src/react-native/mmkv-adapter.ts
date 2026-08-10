@@ -24,8 +24,7 @@ const getMMKVAdapterV3 = (mmkv: MMKVV3): MMKVAdapter => {
     getBuffer: (key) => mmkv.getBuffer(key) as ArrayBuffer | undefined,
     delete: (key) => mmkv.delete(key),
     getAllKeys: () => mmkv.getAllKeys(),
-    addOnValueChangedListener: (callback) =>
-      mmkv.addOnValueChangedListener(callback),
+    addOnValueChangedListener: (callback) => mmkv.addOnValueChangedListener(callback),
   };
 };
 
@@ -38,8 +37,7 @@ const getMMKVAdapterV4 = (mmkv: MMKVV4): MMKVAdapter => {
     getBuffer: (key) => mmkv.getBuffer(key),
     delete: (key) => mmkv.remove(key),
     getAllKeys: () => mmkv.getAllKeys(),
-    addOnValueChangedListener: (callback) =>
-      mmkv.addOnValueChangedListener(callback),
+    addOnValueChangedListener: (callback) => mmkv.addOnValueChangedListener(callback),
   };
 };
 

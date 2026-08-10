@@ -44,9 +44,7 @@ export const MessageDetailsPane = ({
         <div className="dev-host-details">
           <div className="dev-host-detail-section">
             <span className="dev-host-label">Date</span>
-            <div className="dev-host-detail-value">
-              {formatMessageDate(selectedMessage.date)}
-            </div>
+            <div className="dev-host-detail-value">{formatMessageDate(selectedMessage.date)}</div>
           </div>
           <div className="dev-host-detail-section">
             <span className="dev-host-label">Type</span>
@@ -55,12 +53,8 @@ export const MessageDetailsPane = ({
           <div className="dev-host-detail-section">
             <span className="dev-host-label">Payload</span>
             <div className="dev-host-detail-payload">
-              {typeof selectedMessage.payload === 'object' &&
-              selectedMessage.payload !== null ? (
-                <JsonInspector
-                  data={selectedMessage.payload}
-                  defaultExpandedDepth={2}
-                />
+              {typeof selectedMessage.payload === 'object' && selectedMessage.payload !== null ? (
+                <JsonInspector data={selectedMessage.payload} defaultExpandedDepth={2} />
               ) : (
                 <pre className="m-0 whitespace-pre-wrap break-words">
                   {formatPayloadForCommandInput(selectedMessage.payload)}

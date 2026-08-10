@@ -12,10 +12,7 @@ export type DetailsSidebarProps = {
   onClose: () => void;
 };
 
-export const DetailsSidebar = ({
-  selectedItem,
-  onClose,
-}: DetailsSidebarProps) => {
+export const DetailsSidebar = ({ selectedItem, onClose }: DetailsSidebarProps) => {
   const renderDetails = () => {
     if (!selectedItem) return null;
 

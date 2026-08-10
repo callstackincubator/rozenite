@@ -1,10 +1,5 @@
 import { DEV_HOST_STATE_ELEMENT_ID } from './constants.js';
-import type {
-  DevHostPanelEntry,
-  DevHostState,
-  MessageEntry,
-  PluginMessage,
-} from './types.js';
+import type { DevHostPanelEntry, DevHostState, MessageEntry, PluginMessage } from './types.js';
 
 export const cn = (...parts: Array<string | false | null | undefined>) => {
   return parts.filter(Boolean).join(' ');
@@ -60,9 +55,7 @@ export const isPluginMessage = (value: unknown): value is PluginMessage => {
 };
 
 export const getInitialPanel = (panels: DevHostPanelEntry[]) => {
-  const requestedPanel = new URLSearchParams(window.location.search).get(
-    'panel',
-  );
+  const requestedPanel = new URLSearchParams(window.location.search).get('panel');
 
   if (requestedPanel) {
     const matchedPanel = panels.find((panel) => panel.label === requestedPanel);
@@ -74,9 +67,7 @@ export const getInitialPanel = (panels: DevHostPanelEntry[]) => {
   return panels[0] ?? null;
 };
 
-export const createMessageEntry = (
-  input: Omit<MessageEntry, 'id' | 'date'>,
-): MessageEntry => {
+export const createMessageEntry = (input: Omit<MessageEntry, 'id' | 'date'>): MessageEntry => {
   return {
     id: crypto.randomUUID(),
     date: new Date().toISOString(),

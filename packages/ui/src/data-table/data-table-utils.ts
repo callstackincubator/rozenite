@@ -8,7 +8,5 @@ export function updateCellValue<TRow extends Record<string, unknown>>(
   columnId: string,
   value: unknown,
 ): TRow[] {
-  return data.map((row, index) =>
-    index === rowIndex ? { ...row, [columnId]: value } : row,
-  );
+  return data.map((row, index) => (index === rowIndex ? { ...row, [columnId]: value } : row));
 }

@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type {
-  StorageAdapter,
-  StorageCapabilities,
-  StorageTarget,
-} from '../../shared/types';
+import type { StorageAdapter, StorageCapabilities, StorageTarget } from '../../shared/types';
 import { handleStorageDiscoveryRequest } from '../storage-discovery';
 import { createStorageViews, type StorageView } from '../storage-view';
 
@@ -92,13 +88,10 @@ describe('handleStorageDiscoveryRequest', () => {
 
   it('returns a correlated structured error for invalid requests', async () => {
     expect(
-      await handleStorageDiscoveryRequest(
-        createStorageViews([createAdapter()]),
-        {
-          type: 'discover-storages',
-          requestId: ' ',
-        },
-      ),
+      await handleStorageDiscoveryRequest(createStorageViews([createAdapter()]), {
+        type: 'discover-storages',
+        requestId: ' ',
+      }),
     ).toEqual({
       type: 'storage-request-error',
       requestId: ' ',
@@ -125,9 +118,7 @@ describe('handleStorageDiscoveryRequest', () => {
       watch: vi.fn(),
     });
 
-    expect(
-      await handleStorageDiscoveryRequest([view('One'), view('Two')], request),
-    ).toEqual({
+    expect(await handleStorageDiscoveryRequest([view('One'), view('Two')], request)).toEqual({
       type: 'storage-request-error',
       requestId: 'request-1',
       code: 'INVALID_REQUEST',
@@ -143,9 +134,7 @@ describe('handleStorageDiscoveryRequest', () => {
       },
     } as unknown as StorageView;
 
-    await expect(
-      handleStorageDiscoveryRequest([view], request),
-    ).resolves.toEqual({
+    await expect(handleStorageDiscoveryRequest([view], request)).resolves.toEqual({
       type: 'storage-request-error',
       requestId: 'request-1',
       code: 'READ_FAILED',

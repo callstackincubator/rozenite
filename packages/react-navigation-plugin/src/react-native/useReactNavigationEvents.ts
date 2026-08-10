@@ -32,9 +32,9 @@ export function useReactNavigationEvents(
   callback: (result: ActionDataEvent) => void,
 ) {
   const lastStateRef = useRef<NavigationState | undefined>(undefined);
-  const lastActionRef = useRef<
-    { action: NavigationAction; stack: string | undefined } | undefined
-  >(undefined);
+  const lastActionRef = useRef<{ action: NavigationAction; stack: string | undefined } | undefined>(
+    undefined,
+  );
   const callbackRef = useRef(callback);
   const lastResetRef = useRef<NavigationState | undefined>(undefined);
   const nextIdRef = useRef(1);
@@ -138,10 +138,7 @@ export function useReactNavigationEvents(
 
       unsubscribeState = navigation.addListener('state', (e) => {
         // Don't show the action in dev tools if the state is what we sent to reset earlier
-        if (
-          lastResetRef.current &&
-          deepEqual(lastResetRef.current, e.data.state)
-        ) {
+        if (lastResetRef.current && deepEqual(lastResetRef.current, e.data.state)) {
           lastStateRef.current = undefined;
           return;
         }

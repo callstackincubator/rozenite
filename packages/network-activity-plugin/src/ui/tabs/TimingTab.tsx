@@ -31,9 +31,7 @@ export const TimingTab = ({ selectedRequest }: TimingTabProps) => {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Start Time</span>
-              <span className="text-gray-300">
-                {formatTimestamp(startTime)}
-              </span>
+              <span className="text-gray-300">{formatTimestamp(startTime)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Time To First Byte (TTFB)</span>

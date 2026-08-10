@@ -10,10 +10,7 @@ export default defineConfig({
     passWithNoTests: true,
     setupFiles: ['./vitest.setup.ts'],
     alias: {
-      '@rozenite/agent-shared': resolve(
-        __dirname,
-        '../agent-shared/src/index.ts',
-      ),
+      '@rozenite/agent-shared': resolve(__dirname, '../agent-shared/src/index.ts'),
     },
   },
   base: './',

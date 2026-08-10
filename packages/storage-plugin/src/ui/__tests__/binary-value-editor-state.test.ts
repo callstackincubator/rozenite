@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  initialState,
-  reduce,
-  validate,
-  type EditorState,
-} from '../binary-value-editor-state';
+import { initialState, reduce, validate, type EditorState } from '../binary-value-editor-state';
 
 const hexState = (bytes?: number[]): EditorState =>
   initialState({ initialBytes: bytes, mode: 'hex' });
@@ -29,9 +24,7 @@ describe('initialState', () => {
   });
 
   it('encodes initial bytes as base64 when mode is base64', () => {
-    expect(
-      initialState({ initialBytes: [0x48, 0x69], mode: 'base64' }),
-    ).toEqual({
+    expect(initialState({ initialBytes: [0x48, 0x69], mode: 'base64' })).toEqual({
       mode: 'base64',
       text: 'SGk=',
       bytes: [0x48, 0x69],
@@ -101,13 +94,12 @@ describe('reduce: set-text', () => {
 
 describe('reduce: normalize-paste', () => {
   it('rewrites pasted hexdump into canonical grouped hex', () => {
-    const pasted =
-      '00000000  89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52  |.PNG........IHDR|';
+    const pasted = '00000000  89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52  |.PNG........IHDR|';
     const next = reduce(hexState(), { type: 'normalize-paste', text: pasted });
     expect(next.text).toBe('89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52');
     expect(next.bytes).toEqual([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
-      0x49, 0x48, 0x44, 0x52,
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+      0x52,
     ]);
     expect(next.error).toBeNull();
   });
@@ -178,9 +170,7 @@ describe('reduce: switch-mode', () => {
 
 describe('reduce: replace-bytes', () => {
   it('formats fetched bytes after the editor has had a chance to paint', () => {
-    expect(
-      reduce(hexState(), { type: 'replace-bytes', bytes: [0x48, 0x69] }),
-    ).toEqual({
+    expect(reduce(hexState(), { type: 'replace-bytes', bytes: [0x48, 0x69] })).toEqual({
       mode: 'hex',
       text: '48 69',
       bytes: [0x48, 0x69],

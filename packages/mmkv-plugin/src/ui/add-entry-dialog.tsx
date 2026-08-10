@@ -66,10 +66,7 @@ export const AddEntryDialog = ({
           break;
         case 'buffer':
           parsedValue = JSON.parse(newEntryValue);
-          if (
-            !Array.isArray(parsedValue) ||
-            !parsedValue.every((v) => typeof v === 'number')
-          ) {
+          if (!Array.isArray(parsedValue) || !parsedValue.every((v) => typeof v === 'number')) {
             throw new Error('Buffer must be an array of numbers');
           }
           break;
@@ -103,11 +100,7 @@ export const AddEntryDialog = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       resetForm();
-    } else if (
-      e.key === 'Enter' &&
-      newEntryKey.trim() &&
-      newEntryValue.trim()
-    ) {
+    } else if (e.key === 'Enter' && newEntryKey.trim() && newEntryValue.trim()) {
       handleAddEntry();
     }
   };
@@ -138,10 +131,7 @@ export const AddEntryDialog = ({
         <div className="space-y-4">
           {/* Key Input */}
           <div>
-            <label
-              htmlFor="new-entry-key"
-              className="block text-sm font-medium text-gray-200 mb-1"
-            >
+            <label htmlFor="new-entry-key" className="block text-sm font-medium text-gray-200 mb-1">
               Key
             </label>
             <input

@@ -1,9 +1,4 @@
-import type {
-  StorageDescriptor,
-  StorageEntry,
-  StorageEntryPreview,
-  StorageTarget,
-} from './types';
+import type { StorageDescriptor, StorageEntry, StorageEntryPreview, StorageTarget } from './types';
 import type { ImportPreview, StorageSnapshotV1 } from './snapshot';
 
 export type StorageSetEntryEvent = {
@@ -23,11 +18,7 @@ export type StoragePurgeEvent = {
   target: StorageTarget;
 };
 
-export type StorageInvalidationOperation =
-  | 'set'
-  | 'delete'
-  | 'import'
-  | 'purge';
+export type StorageInvalidationOperation = 'set' | 'delete' | 'import' | 'purge';
 
 export type StorageInvalidatedEvent = {
   type: 'storage-invalidated';

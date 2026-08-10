@@ -3,9 +3,7 @@ import { store } from './store';
 import type { NetworkActivityState } from './store';
 import { getProcessedRequests, getSelectedRequest } from './derived';
 
-export const useNetworkActivityStore = <T>(
-  selector: (state: NetworkActivityState) => T,
-): T => {
+export const useNetworkActivityStore = <T>(selector: (state: NetworkActivityState) => T): T => {
   return useStore(store, selector);
 };
 
@@ -38,9 +36,7 @@ export const useNetworkActivityClientManagement = () => {
 };
 
 export const useWebSocketMessages = (requestId: string) => {
-  return useNetworkActivityStore(
-    (state) => state.websocketMessages.get(requestId) || [],
-  );
+  return useNetworkActivityStore((state) => state.websocketMessages.get(requestId) || []);
 };
 
 export const useOverrides = () => {

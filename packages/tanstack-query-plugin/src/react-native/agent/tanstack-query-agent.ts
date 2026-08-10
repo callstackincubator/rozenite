@@ -32,17 +32,10 @@ type CursorState = {
 };
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
-  return (
-    !!value &&
-    typeof value === 'object' &&
-    Object.getPrototypeOf(value) === Object.prototype
-  );
+  return !!value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype;
 };
 
-export const serializeForAgent = (
-  value: unknown,
-  seen = new WeakSet<object>(),
-): AgentSafeValue => {
+export const serializeForAgent = (value: unknown, seen = new WeakSet<object>()): AgentSafeValue => {
   if (value == null) {
     return null;
   }
@@ -72,10 +65,7 @@ export const serializeForAgent = (
       name: value.name,
       message: value.message,
       stack: value.stack ?? null,
-      cause: serializeForAgent(
-        (value as Error & { cause?: unknown }).cause,
-        seen,
-      ),
+      cause: serializeForAgent((value as Error & { cause?: unknown }).cause, seen),
     };
   }
 
@@ -128,33 +118,21 @@ const sanitizeLimit = (limit?: number) => {
   return Math.min(limit, MAX_PAGE_LIMIT);
 };
 
-const encodeCursor = (
-  kind: CursorKind,
-  generation: number,
-  offset: number,
-): string => {
+const encodeCursor = (kind: CursorKind, generation: number, offset: number): string => {
   return `${kind}:${generation}:${offset}`;
 };
 
-const decodeCursor = (
-  cursor: string,
-  kind: CursorKind,
-  generation: number,
-): number => {
+const decodeCursor = (cursor: string, kind: CursorKind, generation: number): number => {
   const [cursorKind, rawGeneration, rawOffset] = cursor.split(':', 3);
   if (cursorKind !== kind || !rawGeneration || !rawOffset) {
-    throw new Error(
-      'Cursor does not match the requested listing. Run the command again.',
-    );
+    throw new Error('Cursor does not match the requested listing. Run the command again.');
   }
 
   const cursorGeneration = Number(rawGeneration);
   const offset = Number(rawOffset);
 
   if (!Number.isInteger(cursorGeneration) || cursorGeneration !== generation) {
-    throw new Error(
-      'Cursor does not match the requested listing. Run the command again.',
-    );
+    throw new Error('Cursor does not match the requested listing. Run the command again.');
   }
 
   if (!Number.isInteger(offset) || offset < 0) {
@@ -164,16 +142,9 @@ const decodeCursor = (
   return offset;
 };
 
-const paginate = <T>(
-  rows: T[],
-  kind: CursorKind,
-  generation: number,
-  input: PaginationInput,
-) => {
+const paginate = <T>(rows: T[], kind: CursorKind, generation: number, input: PaginationInput) => {
   const limit = sanitizeLimit(input.limit);
-  const startIndex = input.cursor
-    ? decodeCursor(input.cursor, kind, generation)
-    : 0;
+  const startIndex = input.cursor ? decodeCursor(input.cursor, kind, generation) : 0;
   const endIndex = Math.min(startIndex + limit, rows.length);
   const hasMore = endIndex < rows.length;
 
@@ -182,9 +153,7 @@ const paginate = <T>(
     page: {
       limit,
       hasMore,
-      ...(hasMore
-        ? { nextCursor: encodeCursor(kind, generation, endIndex) }
-        : {}),
+      ...(hasMore ? { nextCursor: encodeCursor(kind, generation, endIndex) } : {}),
     },
   };
 };
@@ -202,13 +171,9 @@ export const resetQueryTool = tanstackQueryToolDefinitions.resetQuery;
 export const removeQueryTool = tanstackQueryToolDefinitions.removeQuery;
 export const clearQueryCacheTool = tanstackQueryToolDefinitions.clearQueryCache;
 export const listMutationsTool = tanstackQueryToolDefinitions.listMutations;
-export const getMutationDetailsTool =
-  tanstackQueryToolDefinitions.getMutationDetails;
-export const clearMutationCacheTool =
-  tanstackQueryToolDefinitions.clearMutationCache;
-export const TANSTACK_QUERY_AGENT_TOOLS = Object.values(
-  tanstackQueryToolDefinitions,
-);
+export const getMutationDetailsTool = tanstackQueryToolDefinitions.getMutationDetails;
+export const clearMutationCacheTool = tanstackQueryToolDefinitions.clearMutationCache;
+export const TANSTACK_QUERY_AGENT_TOOLS = Object.values(tanstackQueryToolDefinitions);
 
 const pickObserverOptionsSummary = (
   options: Record<string, unknown> | undefined,
@@ -272,9 +237,7 @@ const compareMutations = (
   a: Mutation<unknown, Error, unknown, unknown>,
   b: Mutation<unknown, Error, unknown, unknown>,
 ) => {
-  return (
-    b.state.submittedAt - a.state.submittedAt || b.mutationId - a.mutationId
-  );
+  return b.state.submittedAt - a.state.submittedAt || b.mutationId - a.mutationId;
 };
 
 const getQuerySummary = (query: Query) => {
@@ -292,15 +255,11 @@ const getQuerySummary = (query: Query) => {
   };
 };
 
-const getMutationStatus = (
-  state: MutationState<unknown, Error, unknown, unknown>,
-) => {
+const getMutationStatus = (state: MutationState<unknown, Error, unknown, unknown>) => {
   return state.status;
 };
 
-const getMutationSummary = (
-  mutation: Mutation<unknown, Error, unknown, unknown>,
-) => {
+const getMutationSummary = (mutation: Mutation<unknown, Error, unknown, unknown>) => {
   return {
     mutationId: mutation.mutationId,
     mutationKey: serializeForAgent(mutation.options.mutationKey),
@@ -321,9 +280,7 @@ const resolveQuery = (queryClient: QueryClient, queryHash: string) => {
       .getAll()
       .map((entry) => entry.queryHash)
       .join(', ');
-    throw new Error(
-      `Unknown queryHash "${queryHash}". Available: ${available || '(none)'}`,
-    );
+    throw new Error(`Unknown queryHash "${queryHash}". Available: ${available || '(none)'}`);
   }
 
   return query;
@@ -341,9 +298,7 @@ const resolveMutation = (queryClient: QueryClient, mutationId: number) => {
       .getAll()
       .map((entry) => entry.mutationId)
       .join(', ');
-    throw new Error(
-      `Unknown mutationId "${mutationId}". Available: ${available || '(none)'}`,
-    );
+    throw new Error(`Unknown mutationId "${mutationId}". Available: ${available || '(none)'}`);
   }
 
   return mutation;
@@ -358,34 +313,23 @@ export const buildTanStackQueryCacheSummary = (queryClient: QueryClient) => {
     queries: {
       total: queries.length,
       active: queries.filter((query) => query.getObserversCount() > 0).length,
-      fetching: queries.filter(
-        (query) => query.state.fetchStatus === 'fetching',
-      ).length,
-      pending: queries.filter((query) => query.state.status === 'pending')
-        .length,
-      success: queries.filter((query) => query.state.status === 'success')
-        .length,
+      fetching: queries.filter((query) => query.state.fetchStatus === 'fetching').length,
+      pending: queries.filter((query) => query.state.status === 'pending').length,
+      success: queries.filter((query) => query.state.status === 'success').length,
       error: queries.filter((query) => query.state.status === 'error').length,
       invalidated: queries.filter((query) => query.state.isInvalidated).length,
     },
     mutations: {
       total: mutations.length,
-      pending: mutations.filter(
-        (mutation) => mutation.state.status === 'pending',
-      ).length,
-      success: mutations.filter(
-        (mutation) => mutation.state.status === 'success',
-      ).length,
-      error: mutations.filter((mutation) => mutation.state.status === 'error')
-        .length,
+      pending: mutations.filter((mutation) => mutation.state.status === 'pending').length,
+      success: mutations.filter((mutation) => mutation.state.status === 'success').length,
+      error: mutations.filter((mutation) => mutation.state.status === 'error').length,
       paused: mutations.filter((mutation) => mutation.state.isPaused).length,
     },
   };
 };
 
-export const createTanStackQueryAgentController = (
-  queryClient: QueryClient,
-) => {
+export const createTanStackQueryAgentController = (queryClient: QueryClient) => {
   const cursorState: CursorState = {
     queriesGeneration: 0,
     mutationsGeneration: 0,
@@ -422,18 +366,11 @@ export const createTanStackQueryAgentController = (
     },
 
     listQueries(input: PaginationInput = {}) {
-      const queries = [...queryClient.getQueryCache().getAll()].sort(
-        compareQueries,
-      );
+      const queries = [...queryClient.getQueryCache().getAll()].sort(compareQueries);
       return {
         ...buildTanStackQueryCacheSummary(queryClient),
         total: queries.length,
-        ...paginate(
-          queries.map(getQuerySummary),
-          'queries',
-          cursorState.queriesGeneration,
-          input,
-        ),
+        ...paginate(queries.map(getQuerySummary), 'queries', cursorState.queriesGeneration, input),
       };
     },
 
@@ -505,9 +442,7 @@ export const createTanStackQueryAgentController = (
     },
 
     listMutations(input: PaginationInput = {}) {
-      const mutations = [...queryClient.getMutationCache().getAll()].sort(
-        compareMutations,
-      );
+      const mutations = [...queryClient.getMutationCache().getAll()].sort(compareMutations);
 
       return {
         ...buildTanStackQueryCacheSummary(queryClient),
@@ -546,6 +481,4 @@ export const createTanStackQueryAgentController = (
   };
 };
 
-export type TanStackQueryAgentController = ReturnType<
-  typeof createTanStackQueryAgentController
->;
+export type TanStackQueryAgentController = ReturnType<typeof createTanStackQueryAgentController>;

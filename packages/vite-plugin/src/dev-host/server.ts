@@ -33,9 +33,7 @@ export const getDevHostSourceEntryFile = (packageDir: string) => {
   return path.join(packageDir, 'src', 'dev-host', 'main.tsx');
 };
 
-export const getBuiltDevHostAssets = (
-  packageDir: string,
-): DevHostBuiltAssets | null => {
+export const getBuiltDevHostAssets = (packageDir: string): DevHostBuiltAssets | null => {
   const devHostDistDir = path.join(packageDir, 'dist', 'dev-host');
   const manifestPath = path.join(devHostDistDir, 'manifest.json');
 
@@ -43,15 +41,11 @@ export const getBuiltDevHostAssets = (
     return null;
   }
 
-  const manifest = JSON.parse(
-    fs.readFileSync(manifestPath, 'utf8'),
-  ) as DevHostBuildManifest;
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as DevHostBuildManifest;
   const entry = manifest[DEV_HOST_BUILD_ENTRY_KEY];
 
   if (!entry?.file) {
-    throw new Error(
-      `Missing ${DEV_HOST_BUILD_ENTRY_KEY} entry in dev host manifest.`,
-    );
+    throw new Error(`Missing ${DEV_HOST_BUILD_ENTRY_KEY} entry in dev host manifest.`);
   }
 
   return {

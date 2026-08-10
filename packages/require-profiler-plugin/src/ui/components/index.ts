@@ -4,8 +4,4 @@ export { Legend } from './Legend';
 export { LoadingState } from './LoadingState';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { Sidebar, type SidebarProps } from './Sidebar';
-export {
-  OptionsModal,
-  type OptionsModalProps,
-  type ProfilerOptions,
-} from './OptionsModal';
+export { OptionsModal, type OptionsModalProps, type ProfilerOptions } from './OptionsModal';

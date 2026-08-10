@@ -14,28 +14,17 @@ export function ReleaseContent() {
   return (
     <div className="space-y-4">
       <div className="h-8">
-        <img
-          src={lightLogo}
-          alt="Rozenite"
-          className="h-8 w-auto dark:hidden"
-        />
-        <img
-          src={darkLogo}
-          alt="Rozenite"
-          className="hidden h-8 w-auto dark:block"
-        />
+        <img src={lightLogo} alt="Rozenite" className="h-8 w-auto dark:hidden" />
+        <img src={darkLogo} alt="Rozenite" className="hidden h-8 w-auto dark:block" />
       </div>
       <Dialog.Header>
         <Dialog.Title>We are changing</Dialog.Title>
-        <Dialog.Description>
-          The DevTools experience now uses a unified UI.
-        </Dialog.Description>
+        <Dialog.Description>The DevTools experience now uses a unified UI.</Dialog.Description>
       </Dialog.Header>
       <div className="space-y-4 text-sm text-muted-foreground">
         <p>
-          Plugin panels now live together in one place, with a consistent
-          layout and appearance. The goal is to make Rozenite easier to move
-          through and more comfortable to use day to day.
+          Plugin panels now live together in one place, with a consistent layout and appearance. The
+          goal is to make Rozenite easier to move through and more comfortable to use day to day.
         </p>
         <p>
           Prefer the previous layout? Set{' '}
@@ -58,8 +47,7 @@ export function ReleaseContent() {
           .
         </p>
         <p>
-          Please report UI issues, plugin improvements, and requests for new
-          plugins in the{' '}
+          Please report UI issues, plugin improvements, and requests for new plugins in the{' '}
           <a
             className="text-primary underline underline-offset-4 hover:text-primary/80"
             href={ISSUES_URL}

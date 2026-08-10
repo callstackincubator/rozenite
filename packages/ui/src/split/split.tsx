@@ -79,9 +79,7 @@ export type SplitPaneHandle = PanelImperativeHandle;
 // number means percent, which is the intuitive reading — so numbers are
 // converted to percentage strings before being handed to `Panel`. Strings
 // pass through untouched, letting an author opt into explicit units.
-export function toPanelSize(
-  size: number | string | undefined,
-): number | string | undefined {
+export function toPanelSize(size: number | string | undefined): number | string | undefined {
   return typeof size === 'number' ? `${size}%` : size;
 }
 
@@ -116,12 +114,7 @@ export type SplitHandleProps = {
   withHandle?: boolean;
 };
 
-function SplitHandle({
-  className,
-  withHandle = false,
-  children,
-  ...props
-}: SplitHandleProps) {
+function SplitHandle({ className, withHandle = false, children, ...props }: SplitHandleProps) {
   return (
     <Separator
       data-slot="split-handle"

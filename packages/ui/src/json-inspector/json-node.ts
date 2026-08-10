@@ -10,10 +10,7 @@ export type JsonNodeType =
   | 'symbol'
   | 'bigint';
 
-const EXPANDABLE_TYPES: ReadonlySet<JsonNodeType> = new Set([
-  'object',
-  'array',
-]);
+const EXPANDABLE_TYPES: ReadonlySet<JsonNodeType> = new Set(['object', 'array']);
 
 /** Classifies a value into the leaf/container type used to render it. */
 export function classifyValue(value: unknown): JsonNodeType {

@@ -78,18 +78,14 @@ describe('jsonRenderer', () => {
       const MALFORMED = '{ not valid json ]';
       renderJson('preview', MALFORMED);
       expect(screen.getByText(MALFORMED)).toBeInTheDocument();
-      expect(
-        screen.getByText(/Failed to parse as JSON, showing as raw text/),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Failed to parse as JSON, showing as raw text/)).toBeInTheDocument();
     });
 
     it('falls back to source + warning in raw view too (ignores active view)', () => {
       const MALFORMED = '{ not valid json ]';
       renderJson('raw', MALFORMED);
       expect(screen.getByText(MALFORMED)).toBeInTheDocument();
-      expect(
-        screen.getByText(/Failed to parse as JSON, showing as raw text/),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Failed to parse as JSON, showing as raw text/)).toBeInTheDocument();
     });
   });
 });

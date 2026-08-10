@@ -4,6 +4,7 @@ export type LoadedPlugin = {
   id: string;
   name: string;
   description: string;
+  version: string;
   panels: {
     id: string;
     name: string;
@@ -18,10 +19,7 @@ export const getPluginUrl = (pluginId: string) => {
   return url.toString();
 };
 
-export const loadPluginFromUrl = async (
-  url: string,
-  pluginId?: string,
-): Promise<LoadedPlugin> => {
+export const loadPluginFromUrl = async (url: string, pluginId?: string): Promise<LoadedPlugin> => {
   const manifest = await getManifest(url);
   const id = pluginId ?? manifest.name;
 
@@ -35,6 +33,7 @@ export const loadPluginFromUrl = async (
     id,
     name: manifest.name,
     description: manifest.description,
+    version: manifest.version,
     panels: manifest.panels.map((panel) => ({
       id: `${id}:${panel.name}`,
       name: panel.name,

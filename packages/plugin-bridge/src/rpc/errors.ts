@@ -54,9 +54,7 @@ export class RozeniteHandlerError extends Error {
 
 export type RozeniteRpcError = RozeniteProtocolError | RozeniteHandlerError;
 
-const hasKind = (
-  error: unknown,
-): error is { kind: unknown } & Record<string, unknown> =>
+const hasKind = (error: unknown): error is { kind: unknown } & Record<string, unknown> =>
   typeof error === 'object' && error !== null && 'kind' in error;
 
 /**
@@ -64,9 +62,7 @@ const hasKind = (
  * bundles, so `instanceof` only happens to work when the error was
  * constructed by the same bundle that's checking it.
  */
-export const isProtocolError = (
-  error: unknown,
-): error is RozeniteProtocolError =>
+export const isProtocolError = (error: unknown): error is RozeniteProtocolError =>
   hasKind(error) && error.kind === 'protocol';
 
 export const isHandlerError = (error: unknown): error is RozeniteHandlerError =>

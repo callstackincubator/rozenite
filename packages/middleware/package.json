@@ -2,33 +2,30 @@
   "name": "@rozenite/middleware",
   "version": "2.0.0",
   "description": "Middleware for Rozenite.",
-  "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
   "keywords": [
-    "react-native",
+    "bundler",
     "devtools",
     "middleware",
     "plugin",
-    "bundler"
+    "react-native"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
     "url": "https://github.com/callstackincubator/rozenite/issues"
   },
+  "license": "MIT",
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
-  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -37,6 +34,9 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "vite build",
@@ -55,12 +55,12 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
-    "vitest": "^4.0.18",
     "@react-native/dev-middleware": "~0.76.0",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",
     "@types/semver": "^7.7.0",
-    "@types/ws": "^8.18.1"
+    "@types/ws": "^8.18.1",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=20"

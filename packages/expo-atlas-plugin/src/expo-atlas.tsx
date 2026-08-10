@@ -44,9 +44,7 @@ export default function ExpoAtlasPanel() {
       <div className={styles.loadingContainer}>
         <div className={styles.loadingCard}>
           <div className={styles.spinner}></div>
-          <p className={styles.loadingMessage}>
-            Checking Expo Atlas availability...
-          </p>
+          <p className={styles.loadingMessage}>Checking Expo Atlas availability...</p>
         </div>
       </div>
     );
@@ -58,8 +56,8 @@ export default function ExpoAtlasPanel() {
         <div className={styles.errorCard}>
           <h3 className={styles.errorTitle}>Something went wrong</h3>
           <p className={styles.errorMessage}>
-            Unable to load Expo Atlas. Please make sure you followed the setup
-            guide in the Rozenite documentation.
+            Unable to load Expo Atlas. Please make sure you followed the setup guide in the Rozenite
+            documentation.
           </p>
           <a
             href="https://rozenite.dev/docs/plugins/expo-atlas"
@@ -74,10 +72,5 @@ export default function ExpoAtlasPanel() {
     );
   }
 
-  return (
-    <iframe
-      style={{ width: '100%', height: '100%', border: 0 }}
-      src="/_expo/atlas"
-    />
-  );
+  return <iframe style={{ width: '100%', height: '100%', border: 0 }} src="/_expo/atlas" />;
 }

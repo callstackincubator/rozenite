@@ -2,40 +2,40 @@
   "name": "@rozenite/plugin-bridge",
   "version": "2.0.0",
   "description": "Communication layer for React Native DevTools plugins across React Native and web environments",
-  "type": "module",
-  "sideEffects": false,
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
   "keywords": [
-    "react-native",
-    "devtools",
-    "plugin",
     "bridge",
-    "isomorphic"
+    "devtools",
+    "isomorphic",
+    "plugin",
+    "react-native"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
     "url": "https://github.com/callstackincubator/rozenite/issues"
   },
+  "license": "MIT",
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
-  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "vite build",

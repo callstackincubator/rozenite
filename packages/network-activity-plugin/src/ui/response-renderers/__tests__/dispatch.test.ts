@@ -38,9 +38,7 @@ describe('findRenderer', () => {
 
   it('routes JSON content-types to the json renderer', () => {
     expect(findRenderer('application/json', '{}').id).toBe('json');
-    expect(findRenderer('application/json; charset=utf-8', '{}').id).toBe(
-      'json',
-    );
+    expect(findRenderer('application/json; charset=utf-8', '{}').id).toBe('json');
     expect(findRenderer('application/ld+json', '{}').id).toBe('json');
   });
 
@@ -59,9 +57,7 @@ describe('findRenderer', () => {
     expect(findRenderer('text/xml', '<x/>').id).toBe('xml');
     expect(findRenderer('application/atom+xml', '<feed/>').id).toBe('xml');
     expect(findRenderer('application/rss+xml', '<rss/>').id).toBe('xml');
-    expect(findRenderer('application/soap+xml; charset=utf-8', '<e/>').id).toBe(
-      'xml',
-    );
+    expect(findRenderer('application/soap+xml; charset=utf-8', '<e/>').id).toBe('xml');
     expect(findRenderer('application/xhtml+xml', '<html/>').id).toBe('xml');
   });
 
@@ -73,15 +69,11 @@ describe('findRenderer', () => {
 
   it('routes text/plain, application/javascript to the text fallback', () => {
     expect(findRenderer('text/plain', 'hi').id).toBe('text-fallback');
-    expect(findRenderer('application/javascript', 'var a;').id).toBe(
-      'text-fallback',
-    );
+    expect(findRenderer('application/javascript', 'var a;').id).toBe('text-fallback');
   });
 
   it('routes string bodies with unknown content-types to the text fallback', () => {
-    expect(findRenderer('application/x-weird', 'hello').id).toBe(
-      'text-fallback',
-    );
+    expect(findRenderer('application/x-weird', 'hello').id).toBe('text-fallback');
     expect(findRenderer('', 'hello').id).toBe('text-fallback');
   });
 
@@ -89,9 +81,7 @@ describe('findRenderer', () => {
     // Build an off-union body shape to confirm the defensive last
     // resort fires — should never happen in practice.
     const offUnion = { kind: 'something-else' } as unknown as ResponseBody;
-    expect(findRenderer('application/octet-stream', offUnion).id).toBe(
-      'unknown',
-    );
+    expect(findRenderer('application/octet-stream', offUnion).id).toBe('unknown');
   });
 
   it('places more specific matchers ahead of more general ones in the array', () => {

@@ -25,9 +25,7 @@ export const ActionList = ({
   return (
     <div className="min-w-0 flex-1 overflow-auto">
       {actionHistory.length === 0 ? (
-        <div className="p-4 text-center text-gray-400">
-          No actions recorded yet
-        </div>
+        <div className="p-4 text-center text-gray-400">No actions recorded yet</div>
       ) : (
         <div className="p-2">
           {actionHistory.map((entry, index) => (

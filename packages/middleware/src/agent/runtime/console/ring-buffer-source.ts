@@ -1,8 +1,4 @@
-import type {
-  ListFromResult,
-  PaginatedSource,
-  SourceBounds,
-} from '../pagination/types.js';
+import type { ListFromResult, PaginatedSource, SourceBounds } from '../pagination/types.js';
 
 export interface RingBufferItem {
   seq: number;
@@ -12,17 +8,12 @@ const toArray = <T>(items: readonly T[]): T[] => {
   return Array.prototype.slice.call(items) as T[];
 };
 
-export const createRingBufferSource = <
-  TItem extends RingBufferItem,
-  TFilters,
->(input: {
+export const createRingBufferSource = <TItem extends RingBufferItem, TFilters>(input: {
   items: readonly TItem[];
   applyFilters: (items: readonly TItem[], filters: TFilters) => TItem[];
 }): PaginatedSource<number, TItem, TFilters> => {
   const getFiltered = (filters: TFilters): TItem[] => {
-    return input
-      .applyFilters(input.items, filters)
-      .sort((a, b) => a.seq - b.seq);
+    return input.applyFilters(input.items, filters).sort((a, b) => a.seq - b.seq);
   };
 
   const getBounds = (filters: TFilters): SourceBounds<number> => {

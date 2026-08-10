@@ -25,11 +25,7 @@ const createMockReactNativeAgent = (shouldHandleReturn = false) => {
       calls.push({ method: 'shouldHandle', event });
       return shouldHandleReturn;
     },
-    handleCommand: (
-      pageId: string,
-      event: unknown,
-      sendResponse: (response: unknown) => void,
-    ) => {
+    handleCommand: (pageId: string, event: unknown, sendResponse: (response: unknown) => void) => {
       calls.push({ method: 'handleCommand', pageId, event, sendResponse });
     },
     _getCalls: () => calls,
@@ -53,11 +49,7 @@ const createChromeStub = () => {
       detach: (target: unknown) => {
         calls.push({ method: 'detach', target });
       },
-      sendCommand: async (
-        target: unknown,
-        method: string,
-        params?: unknown,
-      ) => {
+      sendCommand: async (target: unknown, method: string, params?: unknown) => {
         calls.push({
           method: 'sendCommand',
           target,
@@ -111,14 +103,9 @@ describe('CDPClient', () => {
       const sent = connection._getSent();
       assert.strictEqual(sent.length, 1);
       assert.strictEqual(sent[0].event, 'wrappedEvent');
-      assert.strictEqual(
-        (sent[0].payload as { pageId: string }).pageId,
-        'page1',
-      );
+      assert.strictEqual((sent[0].payload as { pageId: string }).pageId, 'page1');
 
-      const parsed = JSON.parse(
-        (sent[0].payload as { wrappedEvent: string }).wrappedEvent,
-      );
+      const parsed = JSON.parse((sent[0].payload as { wrappedEvent: string }).wrappedEvent);
       assert.strictEqual(parsed.method, 'Runtime.evaluate');
     });
 
@@ -140,9 +127,7 @@ describe('CDPClient', () => {
       });
 
       const sent = connection._getSent();
-      const parsed = JSON.parse(
-        (sent[0].payload as { wrappedEvent: string }).wrappedEvent,
-      );
+      const parsed = JSON.parse((sent[0].payload as { wrappedEvent: string }).wrappedEvent);
       assert.strictEqual(parsed.params.context.name, 'main');
       assert.strictEqual(parsed.params.context.id, 1);
       assert.strictEqual(parsed.params.context.origin, 'http://localhost:8081');
@@ -171,13 +156,8 @@ describe('CDPClient', () => {
       });
 
       const sent = connection._getSent();
-      const parsed = JSON.parse(
-        (sent[0].payload as { wrappedEvent: string }).wrappedEvent,
-      );
-      assert.strictEqual(
-        parsed.params.context.name,
-        'content-script-extension',
-      );
+      const parsed = JSON.parse((sent[0].payload as { wrappedEvent: string }).wrappedEvent);
+      assert.strictEqual(parsed.params.context.name, 'content-script-extension');
     });
 
     it('passes through other events unmodified', () => {
@@ -192,9 +172,7 @@ describe('CDPClient', () => {
       });
 
       const sent = connection._getSent();
-      const parsed = JSON.parse(
-        (sent[0].payload as { wrappedEvent: string }).wrappedEvent,
-      );
+      const parsed = JSON.parse((sent[0].payload as { wrappedEvent: string }).wrappedEvent);
       assert.strictEqual(parsed.method, 'Runtime.executionContextDestroyed');
       assert.deepStrictEqual(parsed.params, params);
     });
@@ -252,14 +230,9 @@ describe('CDPClient', () => {
       const sent = connection._getSent();
       assert.strictEqual(sent.length, 1);
       assert.strictEqual(sent[0].event, 'wrappedEvent');
-      assert.strictEqual(
-        (sent[0].payload as { pageId: string }).pageId,
-        'page1',
-      );
+      assert.strictEqual((sent[0].payload as { pageId: string }).pageId, 'page1');
 
-      const response = JSON.parse(
-        (sent[0].payload as { wrappedEvent: string }).wrappedEvent,
-      );
+      const response = JSON.parse((sent[0].payload as { wrappedEvent: string }).wrappedEvent);
       assert.strictEqual(response.id, 5);
       assert.strictEqual(response.error.code, -32601);
       assert.ok(response.error.message.includes('Page.getResourceTree'));
@@ -308,9 +281,7 @@ describe('CDPClient', () => {
       assert.strictEqual(sent.length, 1);
       assert.strictEqual(sent[0].event, 'wrappedEvent');
 
-      const response = JSON.parse(
-        (sent[0].payload as { wrappedEvent: string }).wrappedEvent,
-      );
+      const response = JSON.parse((sent[0].payload as { wrappedEvent: string }).wrappedEvent);
       assert.strictEqual(response.id, 1);
       assert.deepStrictEqual(response.result, { result: 'success' });
     });
@@ -334,9 +305,7 @@ describe('CDPClient', () => {
       const sent = connection._getSent();
       assert.strictEqual(sent.length, 1);
 
-      const response = JSON.parse(
-        (sent[0].payload as { wrappedEvent: string }).wrappedEvent,
-      );
+      const response = JSON.parse((sent[0].payload as { wrappedEvent: string }).wrappedEvent);
       assert.strictEqual(response.id, 1);
       assert.ok(response.error);
     });
@@ -394,10 +363,7 @@ describe('CDPClient', () => {
       const sent = connection._getSent();
       assert.strictEqual(sent.length, 1);
       assert.strictEqual(sent[0].event, 'wrappedEvent');
-      assert.strictEqual(
-        (sent[0].payload as { pageId: string }).pageId,
-        'page1',
-      );
+      assert.strictEqual((sent[0].payload as { pageId: string }).pageId, 'page1');
     });
   });
 });

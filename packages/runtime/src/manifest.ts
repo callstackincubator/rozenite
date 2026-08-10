@@ -8,9 +8,7 @@ export type RozeniteManifest = {
   }[];
 };
 
-export const getManifest = async (
-  baseUrl: string,
-): Promise<RozeniteManifest> => {
+export const getManifest = async (baseUrl: string): Promise<RozeniteManifest> => {
   const response = await fetch(baseUrl + '/rozenite.json');
   return response.json();
 };

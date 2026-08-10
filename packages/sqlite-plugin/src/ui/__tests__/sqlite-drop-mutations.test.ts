@@ -70,9 +70,12 @@ describe('orderEntitiesForDrop', () => {
       { schemaName: 'main', name: 'd_view', type: 'view' },
     ];
 
-    expect(orderEntitiesForDrop(entities).map((entity) => entity.name)).toEqual(
-      ['b_view', 'd_view', 'a_table', 'c_table'],
-    );
+    expect(orderEntitiesForDrop(entities).map((entity) => entity.name)).toEqual([
+      'b_view',
+      'd_view',
+      'a_table',
+      'c_table',
+    ]);
   });
 
   it('returns an empty array for an empty database', () => {

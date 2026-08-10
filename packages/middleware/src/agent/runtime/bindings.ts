@@ -16,9 +16,7 @@ export type BindingPayload = {
   message?: unknown;
 };
 
-export const parseRozeniteBindingPayload = (
-  message: unknown,
-): BindingPayload | null => {
+export const parseRozeniteBindingPayload = (message: unknown): BindingPayload | null => {
   const record = getRecord(message);
   if (!record || record.method !== 'Runtime.bindingCalled') {
     return null;

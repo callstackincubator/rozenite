@@ -30,12 +30,7 @@ export const Section = ({
 }: SectionProps) => (
   <section
     id={id}
-    className={[
-      styles.section,
-      TINT_CLASS[tint],
-      bordered ? styles.bordered : '',
-      className,
-    ]
+    className={[styles.section, TINT_CLASS[tint], bordered ? styles.bordered : '', className]
       .filter(Boolean)
       .join(' ')}
   >
@@ -55,12 +50,7 @@ type SectionHeaderProps = {
   className?: string;
 };
 
-export const SectionHeader = ({
-  eyebrow,
-  title,
-  body,
-  className,
-}: SectionHeaderProps) => (
+export const SectionHeader = ({ eyebrow, title, body, className }: SectionHeaderProps) => (
   <Reveal>
     <div className={[styles.header, className].filter(Boolean).join(' ')}>
       {eyebrow ? <Eyebrow className={styles.eyebrow}>{eyebrow}</Eyebrow> : null}

@@ -28,13 +28,7 @@ export const NavigationNode = ({
   const StackWrapper = state.type === 'tab' ? TabContainer : React.Fragment;
 
   if (isClosed) {
-    return (
-      <ClosedNode
-        name={name}
-        color={color}
-        openNode={() => setIsClosed(false)}
-      />
-    );
+    return <ClosedNode name={name} color={color} openNode={() => setIsClosed(false)} />;
   }
 
   return (
@@ -59,15 +53,12 @@ export const NavigationNode = ({
               <Leaf
                 title={route.name}
                 subtitle={
-                  isParamsVisible &&
-                  route.params &&
-                  Object.keys(route.params).length > 0
+                  isParamsVisible && route.params && Object.keys(route.params).length > 0
                     ? `${JSON.stringify(route.params)}`
                     : undefined
                 }
                 isSelectedTab={
-                  state.type === 'tab' &&
-                  state.index === state.routes.length - 1 - index
+                  state.type === 'tab' && state.index === state.routes.length - 1 - index
                 }
                 color={color}
               />
@@ -142,9 +133,5 @@ export const NodeContainer = ({
 };
 
 const TabContainer = ({ children }: { children: ReactNode }) => {
-  return (
-    <div className="flex flex-1 flex-row items-center justify-around">
-      {children}
-    </div>
-  );
+  return <div className="flex flex-1 flex-row items-center justify-around">{children}</div>;
 };

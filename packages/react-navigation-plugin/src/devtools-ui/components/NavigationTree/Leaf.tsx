@@ -12,9 +12,7 @@ export const Leaf = ({
   return (
     <div
       className={`rounded-sm ${
-        isSelectedTab
-          ? `p-1 border-2 border-dashed border-${color}-600`
-          : 'px-1'
+        isSelectedTab ? `p-1 border-2 border-dashed border-${color}-600` : 'px-1'
       }`}
     >
       <button
@@ -23,9 +21,7 @@ export const Leaf = ({
           e.stopPropagation();
         }}
       >
-        <span className={`text-gray-100 ${isSelectedTab ? 'underline' : ''}`}>
-          {title}
-        </span>
+        <span className={`text-gray-100 ${isSelectedTab ? 'underline' : ''}`}>{title}</span>
         {subtitle ? <span className="text-gray-100">{subtitle}</span> : null}
       </button>
     </div>

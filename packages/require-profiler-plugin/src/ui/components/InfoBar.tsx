@@ -6,11 +6,7 @@ export type InfoBarProps = {
   entryName: string | undefined;
 };
 
-export const InfoBar = ({
-  totalTime,
-  totalModules,
-  entryName,
-}: InfoBarProps) => {
+export const InfoBar = ({ totalTime, totalModules, entryName }: InfoBarProps) => {
   return (
     <div className="info-bar">
       <div className="info-bar-left">
@@ -20,9 +16,7 @@ export const InfoBar = ({
         </div>
         <div className="info-item">
           <span>Modules:</span>
-          <span className="info-item-value">
-            {totalModules.toLocaleString()}
-          </span>
+          <span className="info-item-value">{totalModules.toLocaleString()}</span>
         </div>
         <div className="info-item">
           <span>Entry:</span>

@@ -7,12 +7,7 @@ export type ScrollAreaProps = ScrollAreaPrimitive.Root.Props & {
   viewportClassName?: string;
 };
 
-function ScrollAreaRoot({
-  className,
-  viewportClassName,
-  children,
-  ...props
-}: ScrollAreaProps) {
+function ScrollAreaRoot({ className, viewportClassName, children, ...props }: ScrollAreaProps) {
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
@@ -32,11 +27,7 @@ function ScrollAreaRoot({
   );
 }
 
-function ScrollAreaBar({
-  orientation,
-}: {
-  orientation: 'vertical' | 'horizontal';
-}) {
+function ScrollAreaBar({ orientation }: { orientation: 'vertical' | 'horizontal' }) {
   return (
     <ScrollAreaPrimitive.Scrollbar
       data-slot="scroll-area-scrollbar"

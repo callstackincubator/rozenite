@@ -23,14 +23,8 @@ export function PathDisplay({ path, label }: PathDisplayProps) {
     setTimeout(() => setCopyState('idle'), 2000);
   }, [path]);
 
-  const copyIcon =
-    copyState === 'copied' ? '✓' : copyState === 'error' ? '✕' : '⧉';
-  const copyLabel =
-    copyState === 'copied'
-      ? 'Copied!'
-      : copyState === 'error'
-        ? 'Failed'
-        : 'Copy';
+  const copyIcon = copyState === 'copied' ? '✓' : copyState === 'error' ? '✕' : '⧉';
+  const copyLabel = copyState === 'copied' ? 'Copied!' : copyState === 'error' ? 'Failed' : 'Copy';
 
   return (
     <View style={styles.pathDisplayContainer}>

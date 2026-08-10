@@ -12,9 +12,7 @@ export const withRozeniteExpoAtlasPlugin = createMetroConfigTransformer(
         ...config.serializer,
         customSerializer:
           config?.serializer?.customSerializer ??
-          (getBaseSerializer() as NonNullable<
-            MetroConfig['serializer']['customSerializer']
-          >),
+          (getBaseSerializer() as NonNullable<MetroConfig['serializer']['customSerializer']>),
       },
     };
     const instance = createExpoAtlasMiddleware(
@@ -27,12 +25,9 @@ export const withRozeniteExpoAtlasPlugin = createMetroConfigTransformer(
         ...basicConfig.server,
         enhanceMiddleware: (middleware, server) => {
           const prevMiddleware =
-            basicConfig.server?.enhanceMiddleware?.(middleware, server) ??
-            middleware;
+            basicConfig.server?.enhanceMiddleware?.(middleware, server) ?? middleware;
 
-          return connect()
-            .use(prevMiddleware)
-            .use('/_expo/atlas', instance.middleware);
+          return connect().use(prevMiddleware).use('/_expo/atlas', instance.middleware);
         },
       },
     };

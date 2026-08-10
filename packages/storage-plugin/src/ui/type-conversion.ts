@@ -15,8 +15,7 @@ const tryDecode = (bytes: readonly number[]): string => {
   }
 };
 
-const encode = (value: string): number[] =>
-  Array.from(textEncoder.encode(value));
+const encode = (value: string): number[] => Array.from(textEncoder.encode(value));
 
 // Convert a value between storage primitive types for the editor
 // switcher. The headline transition is `string` ↔ `buffer`, which
@@ -89,9 +88,7 @@ export const convertValue = (
 
 // Zero value for a type — used when seeding the add-entry dialog and
 // when conversion has no meaningful starting point.
-export const defaultValueForType = (
-  type: StorageEntryType,
-): StorageEntryValue => {
+export const defaultValueForType = (type: StorageEntryType): StorageEntryValue => {
   switch (type) {
     case 'string':
       return '';

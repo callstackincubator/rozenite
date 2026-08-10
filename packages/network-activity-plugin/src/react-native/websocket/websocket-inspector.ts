@@ -1,9 +1,6 @@
 import { createNanoEvents } from 'nanoevents';
 import { getWebSocketInterceptor } from './websocket-interceptor';
-import {
-  WebSocketEvent,
-  WebSocketEventMap,
-} from '../../shared/websocket-events';
+import { WebSocketEvent, WebSocketEventMap } from '../../shared/websocket-events';
 import type { Inspector } from '../inspector';
 import type { WebSocketInterceptor } from './websocket-interceptor';
 
@@ -23,9 +20,7 @@ export const WEBSOCKET_EVENTS: (keyof WebSocketEventMap)[] = [
   'websocket-connection-status-changed',
 ];
 
-export const isWebSocketEvent = (
-  type: string,
-): type is keyof WebSocketEventMap => {
+export const isWebSocketEvent = (type: string): type is keyof WebSocketEventMap => {
   return (WEBSOCKET_EVENTS as readonly string[]).includes(type);
 };
 
@@ -40,12 +35,7 @@ export const createWebSocketInspector = (
   return {
     enable: () => {
       webSocketInterceptor.setConnectCallback(
-        (
-          url: string,
-          protocols: string[] | null,
-          options: string[],
-          socketId: number,
-        ) => {
+        (url: string, protocols: string[] | null, options: string[], socketId: number) => {
           socketUrlMap.set(socketId, url);
           const event: WebSocketEvent = {
             type: 'websocket-connect',
@@ -82,46 +72,42 @@ export const createWebSocketInspector = (
         },
       );
 
-      webSocketInterceptor.setOnMessageCallback(
-        (data: string, socketId: number) => {
-          const url = socketUrlMap.get(socketId);
+      webSocketInterceptor.setOnMessageCallback((data: string, socketId: number) => {
+        const url = socketUrlMap.get(socketId);
 
-          if (!url) {
-            return;
-          }
+        if (!url) {
+          return;
+        }
 
-          const event: WebSocketEvent = {
-            type: 'websocket-message-received',
-            url,
-            socketId: toSocketId(socketId),
-            timestamp: Date.now(),
-            data,
-            messageType: typeof data === 'string' ? 'text' : 'binary',
-            source: 'builtin',
-          };
-          eventEmitter.emit('websocket-message-received', event);
-        },
-      );
+        const event: WebSocketEvent = {
+          type: 'websocket-message-received',
+          url,
+          socketId: toSocketId(socketId),
+          timestamp: Date.now(),
+          data,
+          messageType: typeof data === 'string' ? 'text' : 'binary',
+          source: 'builtin',
+        };
+        eventEmitter.emit('websocket-message-received', event);
+      });
 
-      webSocketInterceptor.setOnErrorCallback(
-        (error: string, socketId: number) => {
-          const url = socketUrlMap.get(socketId);
+      webSocketInterceptor.setOnErrorCallback((error: string, socketId: number) => {
+        const url = socketUrlMap.get(socketId);
 
-          if (!url) {
-            return;
-          }
+        if (!url) {
+          return;
+        }
 
-          const event: WebSocketEvent = {
-            type: 'websocket-error',
-            url,
-            socketId: toSocketId(socketId),
-            timestamp: Date.now(),
-            error,
-            source: 'builtin',
-          };
-          eventEmitter.emit('websocket-error', event);
-        },
-      );
+        const event: WebSocketEvent = {
+          type: 'websocket-error',
+          url,
+          socketId: toSocketId(socketId),
+          timestamp: Date.now(),
+          error,
+          source: 'builtin',
+        };
+        eventEmitter.emit('websocket-error', event);
+      });
 
       webSocketInterceptor.setSendCallback((data: string, socketId: number) => {
         const url = socketUrlMap.get(socketId);

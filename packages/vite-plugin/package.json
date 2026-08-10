@@ -2,34 +2,31 @@
   "name": "@rozenite/vite-plugin",
   "version": "2.0.0",
   "description": "Vite plugin for developing React Native DevTools plugins with hot reload and development tools",
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist",
-    "src",
-    "templates"
-  ],
   "keywords": [
-    "react-native",
     "devtools",
-    "vite",
-    "plugin"
+    "plugin",
+    "react-native",
+    "vite"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
     "url": "https://github.com/callstackincubator/rozenite/issues"
   },
+  "license": "MIT",
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
-  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
+  "files": [
+    "dist",
+    "src",
+    "templates"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -39,6 +36,9 @@
       "default": "./dist/index.cjs"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build && vite build --config src/dev-host/vite.config.mts",
     "test": "vitest run",
@@ -46,19 +46,14 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@rozenite/ui": "workspace:*",
     "@microsoft/api-extractor": "^7.50.1",
+    "@rozenite/ui": "workspace:*",
     "@tailwindcss/vite": "4.2.2",
     "@vitejs/plugin-react": "^4.3.4",
     "ejs": "^3.1.9",
+    "lucide-react": "^0.263.1",
     "vite-plugin-dts": "~4.5.0",
-    "vite-plugin-react-native-web": "^2.1.1",
-    "lucide-react": "^0.263.1"
-  },
-  "peerDependencies": {
-    "react": "*",
-    "react-dom": "*",
-    "vite": "catalog:"
+    "vite-plugin-react-native-web": "^2.1.1"
   },
   "devDependencies": {
     "@types/ejs": "^3.1.5",
@@ -66,6 +61,11 @@
     "@types/react-dom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*",
+    "vite": "catalog:"
   },
   "engines": {
     "node": ">=20"

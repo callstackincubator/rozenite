@@ -34,20 +34,14 @@ const getGeneratedFrameLocation = (frame: InitiatorStackFrame) => ({
   columnNumber: frame.generatedColumnNumber ?? frame.columnNumber,
 });
 
-const isGeneratedBundleUrl = (url: string) =>
-  /[^/]+\.bundle(?:[/?#]|$)/.test(url);
+const isGeneratedBundleUrl = (url: string) => /[^/]+\.bundle(?:[/?#]|$)/.test(url);
 
-const isMetroSymbolicatableUrl = (url?: string) =>
-  url?.startsWith('http') ?? false;
+const isMetroSymbolicatableUrl = (url?: string) => url?.startsWith('http') ?? false;
 
 const canSymbolicateStack = (stack?: InitiatorStackFrame[]) =>
-  stack?.some((frame) =>
-    isMetroSymbolicatableUrl(getGeneratedFrameLocation(frame).url),
-  ) ?? false;
+  stack?.some((frame) => isMetroSymbolicatableUrl(getGeneratedFrameLocation(frame).url)) ?? false;
 
-const toReactNativeStackFrame = (
-  frame: InitiatorStackFrame,
-): ReactNativeStackFrame | null => {
+const toReactNativeStackFrame = (frame: InitiatorStackFrame): ReactNativeStackFrame | null => {
   const generatedLocation = getGeneratedFrameLocation(frame);
 
   if (!isMetroSymbolicatableUrl(generatedLocation.url)) {
@@ -68,15 +62,12 @@ const fromSymbolicatedStackFrame = (
 ): InitiatorStackFrame => {
   const generatedLocation = getGeneratedFrameLocation(generatedFrame);
   const sourceUrl =
-    frame.file &&
-    frame.file !== generatedLocation.url &&
-    !isGeneratedBundleUrl(frame.file)
+    frame.file && frame.file !== generatedLocation.url && !isGeneratedBundleUrl(frame.file)
       ? frame.file
       : undefined;
 
   return {
-    functionName:
-      normalizeFunctionName(frame.methodName) ?? generatedFrame.functionName,
+    functionName: normalizeFunctionName(frame.methodName) ?? generatedFrame.functionName,
     url: sourceUrl,
     lineNumber: sourceUrl ? (frame.lineNumber ?? undefined) : undefined,
     columnNumber: sourceUrl ? (frame.column ?? undefined) : undefined,
@@ -87,8 +78,7 @@ const fromSymbolicatedStackFrame = (
   };
 };
 
-const getComparableSourcePath = (url?: string) =>
-  url?.split(/[?#]/)[0].replace(/^file:\/\//, '');
+const getComparableSourcePath = (url?: string) => url?.split(/[?#]/)[0].replace(/^file:\/\//, '');
 
 const ANSI_SEQUENCE_PATTERN = new RegExp(
   [
@@ -134,10 +124,7 @@ const getSourceFrameForCodeFrame = (
     return null;
   }
 
-  return (
-    stack.find((frame) => isSameSourcePath(codeFrame.fileName, frame.url)) ??
-    null
-  );
+  return stack.find((frame) => isSameSourcePath(codeFrame.fileName, frame.url)) ?? null;
 };
 
 const getCodeFrameForSourceFrame = (
@@ -168,9 +155,7 @@ const getSymbolicationEndpoint = () => {
   return new URL('/symbolicate', window.location.origin).toString();
 };
 
-export const symbolicateStackTraceWithMetro: SymbolicateStackTrace = async (
-  stack,
-) => {
+export const symbolicateStackTraceWithMetro: SymbolicateStackTrace = async (stack) => {
   const response = await fetch(getSymbolicationEndpoint(), {
     method: 'POST',
     headers: {
@@ -180,9 +165,7 @@ export const symbolicateStackTraceWithMetro: SymbolicateStackTrace = async (
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Metro symbolication failed with status ${response.status}`,
-    );
+    throw new Error(`Metro symbolication failed with status ${response.status}`);
   }
 
   return response.json() as Promise<SymbolicatedStackTrace>;
@@ -197,12 +180,10 @@ export const symbolicateInitiator = async (
   }
 
   const originalStack = initiator.stack ?? [];
-  const generatedStackFrames = originalStack.flatMap(
-    (originalFrame, originalIndex) => {
-      const frame = toReactNativeStackFrame(originalFrame);
-      return frame ? [{ frame, originalIndex }] : [];
-    },
-  );
+  const generatedStackFrames = originalStack.flatMap((originalFrame, originalIndex) => {
+    const frame = toReactNativeStackFrame(originalFrame);
+    return frame ? [{ frame, originalIndex }] : [];
+  });
 
   if (generatedStackFrames.length === 0) {
     return null;
@@ -213,10 +194,7 @@ export const symbolicateInitiator = async (
       generatedStackFrames.map((entry) => entry.frame),
     );
 
-    const symbolicatedFramesByOriginalIndex = new Map<
-      number,
-      InitiatorStackFrame
-    >();
+    const symbolicatedFramesByOriginalIndex = new Map<number, InitiatorStackFrame>();
 
     symbolicatedStackTrace.stack.forEach((frame, index) => {
       const generatedFrame = generatedStackFrames[index];
@@ -226,10 +204,7 @@ export const symbolicateInitiator = async (
 
       symbolicatedFramesByOriginalIndex.set(
         generatedFrame.originalIndex,
-        fromSymbolicatedStackFrame(
-          frame,
-          originalStack[generatedFrame.originalIndex],
-        ),
+        fromSymbolicatedStackFrame(frame, originalStack[generatedFrame.originalIndex]),
       );
     });
 
@@ -250,15 +225,10 @@ export const symbolicateInitiator = async (
       lineNumber: sourceFrame?.lineNumber,
       columnNumber: sourceFrame?.columnNumber,
       generatedUrl: sourceFrame?.generatedUrl ?? initiator.generatedUrl,
-      generatedLineNumber:
-        sourceFrame?.generatedLineNumber ?? initiator.generatedLineNumber,
-      generatedColumnNumber:
-        sourceFrame?.generatedColumnNumber ?? initiator.generatedColumnNumber,
+      generatedLineNumber: sourceFrame?.generatedLineNumber ?? initiator.generatedLineNumber,
+      generatedColumnNumber: sourceFrame?.generatedColumnNumber ?? initiator.generatedColumnNumber,
       stack: symbolicatedStack,
-      codeFrame: getCodeFrameForSourceFrame(
-        symbolicatedStackTrace.codeFrame,
-        sourceFrame,
-      ),
+      codeFrame: getCodeFrameForSourceFrame(symbolicatedStackTrace.codeFrame, sourceFrame),
       symbolicationStatus: hasSourceMappedFrame ? 'complete' : 'unavailable',
       symbolicationError: undefined,
     };
@@ -266,8 +236,7 @@ export const symbolicateInitiator = async (
     return {
       ...initiator,
       symbolicationStatus: 'failed',
-      symbolicationError:
-        error instanceof Error ? error.message : 'Unable to symbolicate stack',
+      symbolicationError: error instanceof Error ? error.message : 'Unable to symbolicate stack',
     };
   }
 };

@@ -2,20 +2,12 @@ import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { getRepository } from './repository/repository-factory';
 import { PluginDirectoryReference, RozenitePluginEntry } from './types';
-import {
-  getPackageNamesFromReferences,
-  extractPackageNameFromNpmUrl,
-} from './utils';
+import { getPackageNamesFromReferences, extractPackageNameFromNpmUrl } from './utils';
 
-export const getPluginReferences = async (): Promise<
-  PluginDirectoryReference[]
-> => {
+export const getPluginReferences = async (): Promise<PluginDirectoryReference[]> => {
   try {
     const plugins = JSON.parse(
-      fs.readFileSync(
-        path.join(__dirname, '../../../plugin-directory.json'),
-        'utf8',
-      ),
+      fs.readFileSync(path.join(__dirname, '../../../plugin-directory.json'), 'utf8'),
     );
 
     return plugins;
@@ -37,18 +29,14 @@ export const getPlugins = async (
 
     const cachedPlugins = await repository.getPlugins(packageNames);
     const cachedPackageNames = new Set(cachedPlugins.map((p) => p.packageName));
-    console.log(
-      `Found ${cachedPlugins.length} of ${packageNames.length} plugins in cache`,
-    );
+    console.log(`Found ${cachedPlugins.length} of ${packageNames.length} plugins in cache`);
 
     const pluginsToFetch = references.filter((ref) => {
       const packageName = extractPackageNameFromNpmUrl(ref.npmUrl);
       return packageName && !cachedPackageNames.has(packageName);
     });
 
-    console.log(
-      `Fetching missing ${pluginsToFetch.length} of ${packageNames.length} plugins`,
-    );
+    console.log(`Fetching missing ${pluginsToFetch.length} of ${packageNames.length} plugins`);
     const fetchedPlugins = await Promise.all(
       pluginsToFetch.map((ref) => repository.getPluginWithFallback(ref)),
     );
@@ -60,9 +48,7 @@ export const getPlugins = async (
     return allPlugins;
   } catch (error) {
     throw new Error(
-      `Failed to fetch plugins data: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`,
+      `Failed to fetch plugins data: ${error instanceof Error ? error.message : 'Unknown error'}`,
     );
   }
 };

@@ -30,11 +30,7 @@ const getErrorDetails = (error: unknown): string | null => {
   return error instanceof Error ? error.message : String(error);
 };
 
-const requestJson = async <T>(
-  host: string,
-  port: number,
-  pathname: string,
-): Promise<T> => {
+const requestJson = async <T>(host: string, port: number, pathname: string): Promise<T> => {
   const url = new URL(`http://${host}:${port}${pathname}`);
 
   return await new Promise<T>((resolve, reject) => {
@@ -77,15 +73,8 @@ const sortPages = (pages: JsonPageDescription[]): JsonPageDescription[] => {
   });
 };
 
-export const getMetroTargets = async (
-  host: string,
-  port: number,
-): Promise<MetroTarget[]> => {
-  const pages = await requestJson<JsonPageDescription[]>(
-    host,
-    port,
-    '/json/list',
-  );
+export const getMetroTargets = async (host: string, port: number): Promise<MetroTarget[]> => {
+  const pages = await requestJson<JsonPageDescription[]>(host, port, '/json/list');
   const byDevice = new Map<string, JsonPageDescription[]>();
 
   for (const page of pages) {
@@ -132,9 +121,7 @@ export const resolveMetroTarget = async (
     const selected = targets.find((target) => target.id === requestedDeviceId);
     if (!selected) {
       const validIds = targets.map((target) => target.id).join(', ');
-      throw new Error(
-        `Unknown deviceId "${requestedDeviceId}". Valid device IDs: ${validIds}`,
-      );
+      throw new Error(`Unknown deviceId "${requestedDeviceId}". Valid device IDs: ${validIds}`);
     }
     return selected;
   }

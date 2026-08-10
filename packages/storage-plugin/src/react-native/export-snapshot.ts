@@ -7,9 +7,7 @@ import type {
 import type { StorageTarget } from '../shared/types';
 import type { StorageView } from './storage-view';
 
-type ExportSnapshotResult =
-  | StorageExportSnapshotResponseEvent
-  | StorageRequestErrorEvent;
+type ExportSnapshotResult = StorageExportSnapshotResponseEvent | StorageRequestErrorEvent;
 
 const getRequestId = (payload: unknown) =>
   typeof payload === 'object' &&
@@ -31,9 +29,7 @@ const isTarget = (value: unknown): value is StorageTarget =>
 const isSameTarget = (left: StorageTarget, right: StorageTarget) =>
   left.adapterId === right.adapterId && left.storageId === right.storageId;
 
-const validateRequest = (
-  payload: unknown,
-): payload is StorageExportSnapshotRequestEvent =>
+const validateRequest = (payload: unknown): payload is StorageExportSnapshotRequestEvent =>
   typeof payload === 'object' &&
   payload != null &&
   !Array.isArray(payload) &&
@@ -56,9 +52,7 @@ export const handleExportSnapshotRequest = async (
     };
   }
 
-  const view = views.find((candidate) =>
-    isSameTarget(candidate.target, payload.target),
-  );
+  const view = views.find((candidate) => isSameTarget(candidate.target, payload.target));
   if (!view) {
     return {
       type: 'storage-request-error',

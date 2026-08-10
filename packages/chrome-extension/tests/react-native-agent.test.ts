@@ -29,28 +29,16 @@ describe('ReactNativeAgent', () => {
     const pageManager = createMockPageManager();
     const agent = createReactNativeAgent(pageManager);
 
-    assert.strictEqual(
-      agent.shouldHandle({ method: 'ReactNativeApplication.enable' }),
-      true,
-    );
-    assert.strictEqual(
-      agent.shouldHandle({ method: 'ReactNativeApplication.disable' }),
-      true,
-    );
-    assert.strictEqual(
-      agent.shouldHandle({ method: 'ReactNativeApplication.anything' }),
-      true,
-    );
+    assert.strictEqual(agent.shouldHandle({ method: 'ReactNativeApplication.enable' }), true);
+    assert.strictEqual(agent.shouldHandle({ method: 'ReactNativeApplication.disable' }), true);
+    assert.strictEqual(agent.shouldHandle({ method: 'ReactNativeApplication.anything' }), true);
   });
 
   it('shouldHandle returns false for other methods', () => {
     const pageManager = createMockPageManager();
     const agent = createReactNativeAgent(pageManager);
 
-    assert.strictEqual(
-      agent.shouldHandle({ method: 'Runtime.evaluate' }),
-      false,
-    );
+    assert.strictEqual(agent.shouldHandle({ method: 'Runtime.evaluate' }), false);
     assert.strictEqual(agent.shouldHandle({ method: 'Debugger.pause' }), false);
     assert.strictEqual(agent.shouldHandle({ method: 'Network.enable' }), false);
   });
@@ -82,11 +70,7 @@ describe('ReactNativeAgent', () => {
     const responses: unknown[] = [];
     const sendResponse = (response: unknown) => responses.push(response);
 
-    agent.handleCommand(
-      'page1',
-      { id: 1, method: 'ReactNativeApplication.enable' },
-      sendResponse,
-    );
+    agent.handleCommand('page1', { id: 1, method: 'ReactNativeApplication.enable' }, sendResponse);
 
     assert.strictEqual(agent.isEnabled(), true);
     assert.strictEqual(responses.length, 2);
@@ -98,39 +82,26 @@ describe('ReactNativeAgent', () => {
       'ReactNativeApplication.metadataUpdated',
     );
     assert.strictEqual(
-      (responses[1] as { params: { appDisplayName: string } }).params
-        .appDisplayName,
+      (responses[1] as { params: { appDisplayName: string } }).params.appDisplayName,
       'MyApp',
     );
     assert.strictEqual(
-      (responses[1] as { params: { reactNativeVersion: string } }).params
-        .reactNativeVersion,
+      (responses[1] as { params: { reactNativeVersion: string } }).params.reactNativeVersion,
       '0.73.0',
     );
-    assert.strictEqual(
-      (responses[1] as { params: { platform: string } }).params.platform,
-      'web',
-    );
+    assert.strictEqual((responses[1] as { params: { platform: string } }).params.platform, 'web');
   });
 
   it('handleCommand disables agent', () => {
     const pageManager = createMockPageManager();
     const agent = createReactNativeAgent(pageManager);
 
-    agent.handleCommand(
-      'page1',
-      { id: 1, method: 'ReactNativeApplication.enable' },
-      () => {},
-    );
+    agent.handleCommand('page1', { id: 1, method: 'ReactNativeApplication.enable' }, () => {});
 
     const responses: unknown[] = [];
     const sendResponse = (response: unknown) => responses.push(response);
 
-    agent.handleCommand(
-      'page1',
-      { id: 2, method: 'ReactNativeApplication.disable' },
-      sendResponse,
-    );
+    agent.handleCommand('page1', { id: 2, method: 'ReactNativeApplication.disable' }, sendResponse);
 
     assert.strictEqual(agent.isEnabled(), false);
     assert.strictEqual(responses.length, 1);
@@ -153,14 +124,9 @@ describe('ReactNativeAgent', () => {
     assert.strictEqual(responses.length, 1);
     assert.strictEqual((responses[0] as { id: number }).id, 1);
     assert.ok((responses[0] as { error: unknown }).error);
-    assert.strictEqual(
-      (responses[0] as { error: { code: number } }).error.code,
-      -32601,
-    );
+    assert.strictEqual((responses[0] as { error: { code: number } }).error.code, -32601);
     assert.ok(
-      (responses[0] as { error: { message: string } }).error.message.includes(
-        'unknownMethod',
-      ),
+      (responses[0] as { error: { message: string } }).error.message.includes('unknownMethod'),
     );
   });
 
@@ -194,11 +160,7 @@ describe('ReactNativeAgent', () => {
     const responses: unknown[] = [];
     const sendResponse = (response: unknown) => responses.push(response);
 
-    agent.handleCommand(
-      'page1',
-      { id: 1, method: 'ReactNativeApplication.enable' },
-      sendResponse,
-    );
+    agent.handleCommand('page1', { id: 1, method: 'ReactNativeApplication.enable' }, sendResponse);
 
     const metadata = (
       responses[1] as {
@@ -232,14 +194,9 @@ describe('ReactNativeAgent', () => {
     const responses: unknown[] = [];
     const sendResponse = (response: unknown) => responses.push(response);
 
-    agent.handleCommand(
-      'page1',
-      { id: 1, method: 'ReactNativeApplication.enable' },
-      sendResponse,
-    );
+    agent.handleCommand('page1', { id: 1, method: 'ReactNativeApplication.enable' }, sendResponse);
 
-    const metadata = (responses[1] as { params: Record<string, unknown> })
-      .params;
+    const metadata = (responses[1] as { params: Record<string, unknown> }).params;
     assert.strictEqual(metadata.appDisplayName, 'TestApp');
     assert.strictEqual(metadata.appIdentifier, '');
     assert.ok(metadata.deviceName);

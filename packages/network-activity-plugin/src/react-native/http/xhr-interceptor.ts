@@ -16,16 +16,9 @@ const originalXHROpen = XMLHttpRequest.prototype.open;
 const originalXHRSend = XMLHttpRequest.prototype.send;
 const originalXHRSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
 
-type XHRInterceptorOpenCallback = (
-  method: string,
-  url: string,
-  request: XMLHttpRequest,
-) => void;
+type XHRInterceptorOpenCallback = (method: string, url: string, request: XMLHttpRequest) => void;
 
-type XHRInterceptorSendCallback = (
-  data: XHRPostData,
-  request: XMLHttpRequest,
-) => void;
+type XHRInterceptorSendCallback = (data: XHRPostData, request: XMLHttpRequest) => void;
 
 type XHRInterceptorRequestHeaderCallback = (
   header: string,
@@ -134,10 +127,7 @@ export const XHRInterceptor = {
     // the request headers, then pass them through the `requestHeaderCallback`.
     // $FlowFixMe[cannot-write]
     // $FlowFixMe[missing-this-annot]
-    XMLHttpRequest.prototype.setRequestHeader = function (
-      header: string,
-      value: string,
-    ) {
+    XMLHttpRequest.prototype.setRequestHeader = function (header: string, value: string) {
       if (requestHeaderCallback) {
         requestHeaderCallback(header, value, this);
       }
@@ -165,8 +155,7 @@ export const XHRInterceptor = {
             }
             if (this.readyState === this.HEADERS_RECEIVED) {
               const contentTypeString = this.getResponseHeader('Content-Type');
-              const contentLengthString =
-                this.getResponseHeader('Content-Length');
+              const contentLengthString = this.getResponseHeader('Content-Length');
               let responseContentType, responseSize;
               if (contentTypeString) {
                 responseContentType = contentTypeString.split(';')[0];

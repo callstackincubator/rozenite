@@ -5,8 +5,7 @@ import type { ResponseRenderer } from './types';
 
 export const jsonRenderer: ResponseRenderer = {
   id: 'json',
-  matches: (contentType, body) =>
-    typeof body === 'string' && isJsonContentType(contentType),
+  matches: (contentType, body) => typeof body === 'string' && isJsonContentType(contentType),
   views: ['preview', 'raw'],
   defaultView: 'preview',
   supportsOverride: true,

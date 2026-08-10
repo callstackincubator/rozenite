@@ -13,20 +13,12 @@ import { bundleTargetDeclarations } from './bundle-dts.js';
 
 // vite-plugin-dts exports differently in CJS and ESM
 const dtsPlugin =
-  'default' in maybeDtsPlugin
-    ? (maybeDtsPlugin.default as typeof maybeDtsPlugin)
-    : maybeDtsPlugin;
+  'default' in maybeDtsPlugin ? (maybeDtsPlugin.default as typeof maybeDtsPlugin) : maybeDtsPlugin;
 
-const getDtsPlugin = (
-  target: 'react-native' | 'metro' | 'sdk',
-): PluginOption => {
+const getDtsPlugin = (target: 'react-native' | 'metro' | 'sdk'): PluginOption => {
   const projectRoot = process.cwd();
   const entryRoot =
-    target === 'react-native'
-      ? 'react-native.ts'
-      : target === 'metro'
-        ? 'metro.ts'
-        : 'sdk.ts';
+    target === 'react-native' ? 'react-native.ts' : target === 'metro' ? 'metro.ts' : 'sdk.ts';
   const distRoot = path.join(projectRoot, 'dist');
   const targetRoot = path.join(distRoot, target);
   const publicEntryPath = path.join(projectRoot, 'dist', target, 'index.d.ts');
@@ -94,9 +86,7 @@ export type RozenitePluginOptions = {
   tailwind?: boolean;
 };
 
-export const rozenitePlugin = ({
-  tailwind = true,
-}: RozenitePluginOptions = {}): PluginOption[] => {
+export const rozenitePlugin = ({ tailwind = true }: RozenitePluginOptions = {}): PluginOption[] => {
   const isServer = process.env.VITE_ROZENITE_TARGET === 'server';
   const isReactNative = process.env.VITE_ROZENITE_TARGET === 'react-native';
   const isSdk = process.env.VITE_ROZENITE_TARGET === 'sdk';

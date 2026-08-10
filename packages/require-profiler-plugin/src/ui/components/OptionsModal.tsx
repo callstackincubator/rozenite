@@ -11,12 +11,7 @@ export type OptionsModalProps = {
   onOptionsChange: (options: ProfilerOptions) => void;
 };
 
-export const OptionsModal = ({
-  isOpen,
-  onClose,
-  options,
-  onOptionsChange,
-}: OptionsModalProps) => {
+export const OptionsModal = ({ isOpen, onClose, options, onOptionsChange }: OptionsModalProps) => {
   const [localOptions, setLocalOptions] = useState<ProfilerOptions>(options);
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,10 +28,7 @@ export const OptionsModal = ({
   // Handle click outside to close
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        modalRef.current &&
-        !modalRef.current.contains(event.target as Node)
-      ) {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         onClose();
       }
     };
@@ -89,11 +81,7 @@ export const OptionsModal = ({
       <div className="modal" ref={modalRef}>
         <div className="modal-header">
           <h2 className="modal-title">Options</h2>
-          <button
-            className="btn btn-icon modal-close"
-            onClick={onClose}
-            aria-label="Close modal"
-          >
+          <button className="btn btn-icon modal-close" onClick={onClose} aria-label="Close modal">
             <svg
               width="14"
               height="14"
@@ -113,8 +101,8 @@ export const OptionsModal = ({
               Skip chains shorter than (ms)
             </label>
             <p className="option-description">
-              Hide require chains with total duration below this threshold.
-              Useful for filtering out fast modules to focus on slow ones.
+              Hide require chains with total duration below this threshold. Useful for filtering out
+              fast modules to focus on slow ones.
             </p>
             <input
               ref={inputRef}

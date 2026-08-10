@@ -97,11 +97,8 @@ describe('storage entry query hooks', () => {
       if (payload.cursor === undefined)
         return Promise.resolve(response(undefined, { next: 'next' }));
       if (payload.cursor === 'next')
-        return Promise.resolve(
-          response('next', { next: 'last', previous: 'first' }),
-        );
-      if (payload.cursor === 'last')
-        return Promise.resolve(response('last', { previous: 'next' }));
+        return Promise.resolve(response('next', { next: 'last', previous: 'first' }));
+      if (payload.cursor === 'last') return Promise.resolve(response('last', { previous: 'next' }));
       return Promise.resolve(response('first', { next: 'next' }));
     });
     const hook = await renderPreviewHook({
@@ -117,9 +114,11 @@ describe('storage entry query hooks', () => {
     });
     await act(async () => hook.result.fetchNextPage());
     await act(async () => hook.result.fetchNextPage());
-    expect(
-      request.mock.calls.map(([options]) => options.payload.cursor),
-    ).toEqual([undefined, 'next', 'last']);
+    expect(request.mock.calls.map(([options]) => options.payload.cursor)).toEqual([
+      undefined,
+      'next',
+      'last',
+    ]);
     const queryKey = storageEntryPreviewQueryKey(target, '', 'ascending');
     const pageKeys = () =>
       hook.queryClient
@@ -134,9 +133,7 @@ describe('storage entry query hooks', () => {
 
   it('cancels stale target requests and starts a new sequence at the first page', async () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-    let resolveFirst:
-      | ((value: ReturnType<typeof response>) => void)
-      | undefined;
+    let resolveFirst: ((value: ReturnType<typeof response>) => void) | undefined;
     const request = vi.fn(({ payload }) => {
       if (payload.target === target) {
         return new Promise((resolve) => {
@@ -171,8 +168,7 @@ describe('storage entry query hooks', () => {
       expect(
         hook.queryClient.getQueryData<{
           pages: Array<ReturnType<typeof response>>;
-        }>(storageEntryPreviewQueryKey(otherTarget, 'two', 'descending'))
-          ?.pages[0].target,
+        }>(storageEntryPreviewQueryKey(otherTarget, 'two', 'descending'))?.pages[0].target,
       ).toEqual(otherTarget),
     );
     await hook.unmount();
@@ -243,9 +239,7 @@ describe('storage entry query hooks', () => {
 
   it('resets every selected-storage preview variant but refetches only the active first page', async () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-    const request = vi.fn(({ payload }) =>
-      Promise.resolve(response(payload.cursor)),
-    );
+    const request = vi.fn(({ payload }) => Promise.resolve(response(payload.cursor)));
     const hook = await renderPreviewHook({
       client: asClient(request),
       target,
@@ -255,28 +249,22 @@ describe('storage entry query hooks', () => {
     await act(async () => {
       await vi.waitFor(() => expect(hook.result.isSuccess).toBe(true));
     });
-    hook.queryClient.setQueryData(
-      storageEntryPreviewQueryKey(target, 'inactive', 'ascending'),
-      { pages: [response(undefined)], pageParams: [undefined] },
-    );
+    hook.queryClient.setQueryData(storageEntryPreviewQueryKey(target, 'inactive', 'ascending'), {
+      pages: [response(undefined)],
+      pageParams: [undefined],
+    });
 
-    await act(async () =>
-      resetSelectedStorageQueries(hook.queryClient, target),
-    );
+    await act(async () => resetSelectedStorageQueries(hook.queryClient, target));
     expect(request).toHaveBeenCalledTimes(2);
     expect(
-      hook.queryClient.getQueryData(
-        storageEntryPreviewQueryKey(target, 'inactive', 'ascending'),
-      ),
+      hook.queryClient.getQueryData(storageEntryPreviewQueryKey(target, 'inactive', 'ascending')),
     ).toBeUndefined();
     await hook.unmount();
   });
 
   it('invalidates only the changed storage preview prefix and drops its stale full value', async () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-    const request = vi.fn(({ payload }) =>
-      Promise.resolve(response(payload.cursor)),
-    );
+    const request = vi.fn(({ payload }) => Promise.resolve(response(payload.cursor)));
     const hook = await renderPreviewHook({
       client: asClient(request),
       target,
@@ -286,11 +274,7 @@ describe('storage entry query hooks', () => {
     await act(async () => {
       await vi.waitFor(() => expect(hook.result.isSuccess).toBe(true));
     });
-    const otherQueryKey = storageEntryPreviewQueryKey(
-      otherTarget,
-      'other',
-      'ascending',
-    );
+    const otherQueryKey = storageEntryPreviewQueryKey(otherTarget, 'other', 'ascending');
     hook.queryClient.setQueryDefaults(otherQueryKey, { gcTime: Infinity });
     hook.queryClient.setQueryData(otherQueryKey, {
       pages: [response(undefined)],

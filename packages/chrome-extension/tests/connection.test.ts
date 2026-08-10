@@ -31,10 +31,7 @@ describe('Connection', () => {
     assert.strictEqual(FakeWebSocket.instances.length, 1);
     const ws = FakeWebSocket.instances[0];
     assert.ok(ws.url.includes('ws://localhost:8081/inspector/device'));
-    assert.ok(
-      ws.url.includes('device=chrome'),
-      'URL should contain device parameter',
-    );
+    assert.ok(ws.url.includes('device=chrome'), 'URL should contain device parameter');
     assert.ok(ws.url.includes('name=') && ws.url.includes('Test'));
     assert.ok(ws.url.includes('app=TestApp'));
     assert.ok(ws.url.includes('profiling=false'));

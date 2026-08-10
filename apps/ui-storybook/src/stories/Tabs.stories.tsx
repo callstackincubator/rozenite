@@ -1,8 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Tabs } from '@rozenite/ui';
-const meta = { component: Tabs, title: 'Components/Tabs' } satisfies Meta<
-  typeof Tabs
->;
+const meta = { component: Tabs, title: 'Components/Tabs' } satisfies Meta<typeof Tabs>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 /** Use to switch between related panels without changing route or context.

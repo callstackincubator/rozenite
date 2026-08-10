@@ -1,7 +1,4 @@
-import {
-  NavigationContainer,
-  NavigationContainerRef,
-} from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
@@ -17,10 +14,11 @@ import { Provider } from 'react-redux';
 import { usePlaygroundControlsSections } from './hooks/usePlaygroundControlsSections';
 import { BottomTabNavigator } from './navigation/BottomTabNavigator';
 import { SuccessiveScreensNavigator } from './navigation/SuccessiveScreensNavigator';
+import { routes } from './navigation/routes';
 import { RootStackParamList } from './navigation/types';
-import { ConfigScreen } from './screens/ConfigScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
 import { ControlsPluginScreen } from './screens/ControlsPluginScreen';
-import { LandingScreen } from './screens/LandingScreen';
+import { HomeScreen } from './screens/HomeScreen';
 import { NetworkTestScreen } from './screens/NetworkTestScreen';
 import { ParameterDisplayScreen } from './screens/ParameterDisplayScreen';
 import { PerformanceMonitorScreen } from './screens/PerformanceMonitorScreen';
@@ -40,11 +38,14 @@ import { useAgentPlaygroundTools } from './useAgentPlaygroundTools';
 import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 import { useFileSystemDevTools } from '@rozenite/file-system-plugin';
 import * as RNFS from '@dr.pogodin/react-native-fs';
+import { ThemeProvider } from './theme/ThemeContext';
+import { useTheme } from './theme/useTheme';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Wrapper = () => {
+  const { theme } = useTheme();
   const controlsSections = usePlaygroundControlsSections();
 
   useTanStackQueryDevTools(queryClient);
@@ -80,55 +81,46 @@ const Wrapper = () => {
 
   return (
     <Stack.Navigator
-      initialRouteName="Landing"
+      initialRouteName={routes.home.name}
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#0a0a0a' },
+        contentStyle: { backgroundColor: theme.colors.background },
       }}
     >
-      <Stack.Screen name="Landing" component={LandingScreen} />
-      <Stack.Screen name="ControlsPlugin" component={ControlsPluginScreen} />
+      <Stack.Screen name={routes.home.name} component={HomeScreen} />
+      <Stack.Screen name={routes.controlsPlugin.name} component={ControlsPluginScreen} />
+      <Stack.Screen name={routes.reactHookFormPlugin.name} component={ReactHookFormPluginScreen} />
+      <Stack.Screen name={routes.storagePlugin.name} component={StoragePluginScreen} />
+      <Stack.Screen name={routes.networkTest.name} component={NetworkTestScreen} />
+      <Stack.Screen name={routes.requestBodyTest.name} component={RequestBodyTestScreen} />
+      <Stack.Screen name={routes.reduxTest.name} component={ReduxTestScreen} />
+      <Stack.Screen name={routes.performanceMonitor.name} component={PerformanceMonitorScreen} />
+      <Stack.Screen name={routes.requireProfilerTest.name} component={RequireProfilerTestScreen} />
+      <Stack.Screen name={routes.fileSystemTest.name} component={FileSystemTestScreen} />
       <Stack.Screen
-        name="ReactHookFormPlugin"
-        component={ReactHookFormPluginScreen}
-      />
-      <Stack.Screen name="StoragePlugin" component={StoragePluginScreen} />
-      <Stack.Screen name="NetworkTest" component={NetworkTestScreen} />
-      <Stack.Screen name="RequestBodyTest" component={RequestBodyTestScreen} />
-      <Stack.Screen name="ReduxTest" component={ReduxTestScreen} />
-      <Stack.Screen
-        name="PerformanceMonitor"
-        component={PerformanceMonitorScreen}
-      />
-      <Stack.Screen
-        name="RequireProfilerTest"
-        component={RequireProfilerTestScreen}
-      />
-      <Stack.Screen name="FileSystemTest" component={FileSystemTestScreen} />
-      <Stack.Screen
-        name="Config"
-        component={ConfigScreen}
+        name={routes.settings.name}
+        component={SettingsScreen}
         options={{
           presentation: 'modal',
           headerShown: false,
         }}
       />
-      <Stack.Screen name="BottomTabs" component={BottomTabNavigator} />
+      <Stack.Screen name={routes.bottomTabs.name} component={BottomTabNavigator} />
       <Stack.Screen
-        name="ParameterDisplay"
+        name={routes.parameterDisplay.name}
         component={ParameterDisplayScreen}
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#1a1a1a' },
-          headerTintColor: '#8232FF',
-          headerTitle: 'Parameter Display',
+          headerStyle: { backgroundColor: theme.colors.card },
+          headerTintColor: theme.colors.primary,
+          headerTitle: routes.parameterDisplay.title,
         }}
       />
       <Stack.Screen
-        name="SuccessiveScreensStack"
+        name={routes.successiveScreensStack.name}
         component={SuccessiveScreensNavigator}
       />
-      <Stack.Screen name="PerfProblem" component={PerfProblemScreen} />
+      <Stack.Screen name={routes.perfProblem.name} component={PerfProblemScreen} />
     </Stack.Navigator>
   );
 };
@@ -137,19 +129,29 @@ const linking = {
   prefixes: ['playground://'],
   config: {
     screens: {
-      Landing: '',
-      ControlsPlugin: 'controls',
-      StoragePlugin: 'storage',
-      NetworkTest: 'network',
-      ReduxTest: 'redux',
-      PerformanceMonitor: 'performance',
-      RequireProfilerTest: 'require-profiler-test',
-      FileSystemTest: 'file-system-test',
-      Config: 'config',
-      BottomTabs: 'tabs',
-      PerfProblem: 'perf-problem',
-      SuccessiveScreensStack: {
-        path: 'successive',
+      [routes.home.name]: routes.home.path,
+      [routes.controlsPlugin.name]: routes.controlsPlugin.path,
+      [routes.reactHookFormPlugin.name]: routes.reactHookFormPlugin.path,
+      [routes.storagePlugin.name]: routes.storagePlugin.path,
+      [routes.networkTest.name]: routes.networkTest.path,
+      [routes.requestBodyTest.name]: routes.requestBodyTest.path,
+      [routes.reduxTest.name]: routes.reduxTest.path,
+      [routes.performanceMonitor.name]: routes.performanceMonitor.path,
+      [routes.requireProfilerTest.name]: routes.requireProfilerTest.path,
+      [routes.fileSystemTest.name]: routes.fileSystemTest.path,
+      [routes.settings.name]: routes.settings.path,
+      [routes.perfProblem.name]: routes.perfProblem.path,
+      [routes.bottomTabs.name]: {
+        path: routes.bottomTabs.path,
+        screens: {
+          Home: '',
+          Profile: 'profile',
+          Settings: 'tab-settings',
+        },
+      },
+      [routes.parameterDisplay.name]: routes.parameterDisplay.path,
+      [routes.successiveScreensStack.name]: {
+        path: routes.successiveScreensStack.path,
         screens: {
           SuccessiveScreens: '',
         },
@@ -166,16 +168,18 @@ export const App = () => {
   });
 
   return (
-    <Provider store={primaryStore}>
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider style={{ backgroundColor: '#0a0a0a' }}>
-          <NavigationContainer ref={navigationRef} linking={linking}>
-            <Wrapper />
-          </NavigationContainer>
-          <RozeniteOverlay />
-        </SafeAreaProvider>
-      </QueryClientProvider>
-    </Provider>
+    <ThemeProvider>
+      <Provider store={primaryStore}>
+        <QueryClientProvider client={queryClient}>
+          <SafeAreaProvider>
+            <NavigationContainer ref={navigationRef} linking={linking}>
+              <Wrapper />
+            </NavigationContainer>
+            <RozeniteOverlay />
+          </SafeAreaProvider>
+        </QueryClientProvider>
+      </Provider>
+    </ThemeProvider>
   );
 };
 

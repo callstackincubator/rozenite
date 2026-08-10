@@ -8,19 +8,13 @@ export default defineConfig({
   plugins: [rozenitePlugin()],
   resolve: {
     alias: {
-      '@redux-devtools/inspector-monitor-trace-tab': resolve(
-        __dirname,
-        './src/ui/trace-tab.tsx',
-      ),
+      '@redux-devtools/inspector-monitor-trace-tab': resolve(__dirname, './src/ui/trace-tab.tsx'),
     },
   },
   test: {
     passWithNoTests: true,
     alias: {
-      '@rozenite/agent-shared': resolve(
-        __dirname,
-        '../agent-shared/src/index.ts',
-      ),
+      '@rozenite/agent-shared': resolve(__dirname, '../agent-shared/src/index.ts'),
     },
   },
   base: './',

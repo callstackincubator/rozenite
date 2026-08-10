@@ -16,20 +16,14 @@ vi.mock('react-native', () => ({
   },
 }));
 
-import {
-  useReactNavigationEvents,
-  type ActionDataEvent,
-} from '../useReactNavigationEvents';
+import { useReactNavigationEvents, type ActionDataEvent } from '../useReactNavigationEvents';
 import { __resetMetroOriginCache } from '../symbolication/metro';
 
 type ListenerMap = Map<string, (event: unknown) => void>;
 
 type MockNavigation = {
   __listeners: ListenerMap;
-  addListener: (
-    event: string,
-    listener: (event: unknown) => void,
-  ) => () => void;
+  addListener: (event: string, listener: (event: unknown) => void) => () => void;
   getRootState: () => undefined;
   resetRoot: () => void;
   emit: (event: string, payload: unknown) => void;
@@ -96,13 +90,9 @@ describe('useReactNavigationEvents', () => {
         Parameters<typeof useReactNavigationEvents>[0]['current']
       >;
 
-      renderHook(() =>
-        useReactNavigationEvents(ref, (event) => events.push(event)),
-      );
+      renderHook(() => useReactNavigationEvents(ref, (event) => events.push(event)));
 
-      await waitFor(() =>
-        expect(nav.hasListener('__unsafe_action__')).toBe(true),
-      );
+      await waitFor(() => expect(nav.hasListener('__unsafe_action__')).toBe(true));
 
       nav.emit('__unsafe_action__', {
         data: {
@@ -146,12 +136,8 @@ describe('useReactNavigationEvents', () => {
         Parameters<typeof useReactNavigationEvents>[0]['current']
       >;
 
-      renderHook(() =>
-        useReactNavigationEvents(ref, (event) => events.push(event)),
-      );
-      await waitFor(() =>
-        expect(nav.hasListener('__unsafe_action__')).toBe(true),
-      );
+      renderHook(() => useReactNavigationEvents(ref, (event) => events.push(event)));
+      await waitFor(() => expect(nav.hasListener('__unsafe_action__')).toBe(true));
 
       const stack = sampleStack();
       nav.emit('__unsafe_action__', {
@@ -208,12 +194,8 @@ describe('useReactNavigationEvents', () => {
         Parameters<typeof useReactNavigationEvents>[0]['current']
       >;
 
-      renderHook(() =>
-        useReactNavigationEvents(ref, (event) => events.push(event)),
-      );
-      await waitFor(() =>
-        expect(nav.hasListener('__unsafe_action__')).toBe(true),
-      );
+      renderHook(() => useReactNavigationEvents(ref, (event) => events.push(event)));
+      await waitFor(() => expect(nav.hasListener('__unsafe_action__')).toBe(true));
 
       nav.emit('__unsafe_action__', {
         data: {

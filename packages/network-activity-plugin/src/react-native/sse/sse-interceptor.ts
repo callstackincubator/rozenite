@@ -12,10 +12,7 @@ import type {
 import { EventSourceWithInternals } from './types';
 import { getEventSource } from './event-source';
 
-export type SSEInterceptorConnectCallback = (
-  url: string,
-  request: EventSource,
-) => void;
+export type SSEInterceptorConnectCallback = (url: string, request: EventSource) => void;
 
 export type SSEInterceptorMessageCallback = (
   event: MessageEvent | CustomEvent<string>,
@@ -27,15 +24,9 @@ export type SSEInterceptorErrorCallback = (
   request: EventSource,
 ) => void;
 
-export type SSEInterceptorOpenEventCallback = (
-  event: OpenEvent,
-  request: EventSource,
-) => void;
+export type SSEInterceptorOpenEventCallback = (event: OpenEvent, request: EventSource) => void;
 
-export type SSEInterceptorCloseCallback = (
-  event: CloseEvent,
-  request: EventSource,
-) => void;
+export type SSEInterceptorCloseCallback = (event: CloseEvent, request: EventSource) => void;
 
 let connectCallback: SSEInterceptorConnectCallback | null;
 let messageCallback: SSEInterceptorMessageCallback | null;
@@ -105,9 +96,7 @@ export const SSEInterceptor = {
     }
 
     // Override EventSource open method to intercept SSE connections
-    eventSourceClass.prototype.open = function (
-      this: EventSourceWithInternals,
-    ) {
+    eventSourceClass.prototype.open = function (this: EventSourceWithInternals) {
       // Invoke connect callback
       if (connectCallback) {
         connectCallback(this.url, this);
@@ -120,14 +109,11 @@ export const SSEInterceptor = {
         }
       });
 
-      this.addEventListener(
-        'error',
-        (event: ErrorEvent | TimeoutEvent | ExceptionEvent) => {
-          if (errorCallback) {
-            errorCallback(event, this);
-          }
-        },
-      );
+      this.addEventListener('error', (event: ErrorEvent | TimeoutEvent | ExceptionEvent) => {
+        if (errorCallback) {
+          errorCallback(event, this);
+        }
+      });
 
       this.addEventListener('close', (event: CloseEvent) => {
         if (closeCallback) {

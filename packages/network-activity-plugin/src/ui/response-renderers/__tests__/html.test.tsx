@@ -45,9 +45,7 @@ describe('htmlRenderer', () => {
     it('prepends the CSP meta tag to the srcdoc before the body', () => {
       const { container } = renderHtml('preview');
       const srcdoc = getIframe(container).getAttribute('srcdoc') ?? '';
-      expect(
-        srcdoc.startsWith('<meta http-equiv="Content-Security-Policy"'),
-      ).toBe(true);
+      expect(srcdoc.startsWith('<meta http-equiv="Content-Security-Policy"')).toBe(true);
       expect(srcdoc).toContain("default-src 'none'");
       expect(srcdoc).toContain("style-src 'unsafe-inline'");
       expect(srcdoc).toContain('img-src data:');

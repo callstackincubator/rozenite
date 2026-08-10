@@ -14,13 +14,10 @@ export const buildCommand = async (targetDir: string) => {
   const { updatedFields, targets } = await syncPluginPackageJSON(targetDir);
 
   if (updatedFields.length > 0) {
-    logger.warn(
-      `Updated package.json builder-managed fields: ${updatedFields.join(', ')}`,
-    );
+    logger.warn(`Updated package.json builder-managed fields: ${updatedFields.join(', ')}`);
   }
 
-  const { hasReactNativeEntryPoint, hasMetroEntryPoint, hasSdkEntryPoint } =
-    targets;
+  const { hasReactNativeEntryPoint, hasMetroEntryPoint, hasSdkEntryPoint } = targets;
 
   await step(
     {

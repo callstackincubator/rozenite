@@ -19,12 +19,8 @@ describe('createExpoSqliteAdapter', () => {
       { sql: "INSERT INTO users(name) VALUES('Grace');" },
     ]);
 
-    expect(database.getAllAsync).toHaveBeenCalledWith(
-      'SELECT id, name FROM users',
-    );
-    expect(database.runAsync).toHaveBeenCalledWith(
-      "INSERT INTO users(name) VALUES('Grace')",
-    );
+    expect(database.getAllAsync).toHaveBeenCalledWith('SELECT id, name FROM users');
+    expect(database.runAsync).toHaveBeenCalledWith("INSERT INTO users(name) VALUES('Grace')");
     expect(results).toHaveLength(2);
     expect(results[0]?.metadata.statementType).toBe('select');
     expect(results[1]?.metadata.statementType).toBe('insert');
@@ -43,17 +39,11 @@ describe('createExpoSqliteAdapter', () => {
     });
     const [mainDatabase] = adapter.databases;
 
-    const results = await mainDatabase.executeStatements([
-      { sql: 'BEGIN;' },
-      { sql: 'ROLLBACK;' },
-    ]);
+    const results = await mainDatabase.executeStatements([{ sql: 'BEGIN;' }, { sql: 'ROLLBACK;' }]);
 
     expect(database.runAsync).toHaveBeenNthCalledWith(1, 'BEGIN');
     expect(database.runAsync).toHaveBeenNthCalledWith(2, 'ROLLBACK');
-    expect(results.map((result) => result.metadata.statementType)).toEqual([
-      'other',
-      'other',
-    ]);
+    expect(results.map((result) => result.metadata.statementType)).toEqual(['other', 'other']);
   });
 
   it('throws batch execution metadata when a later statement fails', async () => {

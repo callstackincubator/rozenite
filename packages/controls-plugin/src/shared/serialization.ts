@@ -94,9 +94,7 @@ const toSnapshotItem = (item: ControlsItem): ControlsItemSnapshot => {
   };
 };
 
-export const serializeSections = (
-  sections: ControlsSection[],
-): ControlsSectionSnapshot[] =>
+export const serializeSections = (sections: ControlsSection[]): ControlsSectionSnapshot[] =>
   sections.map((section) => ({
     id: section.id,
     title: section.title,
@@ -147,7 +145,6 @@ export const buildActionRegistry = (sections: ControlsSection[]) => {
   return registry;
 };
 
-export const getActionRegistryKey = (sectionId: string, itemId: string) =>
-  `${sectionId}:${itemId}`;
+export const getActionRegistryKey = (sectionId: string, itemId: string) => `${sectionId}:${itemId}`;
 
 export { validateValue };

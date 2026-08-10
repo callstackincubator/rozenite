@@ -15,12 +15,7 @@ export type PluginShellProps = ComponentProps<'div'> & {
   unstyled?: boolean;
 };
 
-function PluginShellRoot({
-  unstyled = false,
-  className,
-  children,
-  ...props
-}: PluginShellProps) {
+function PluginShellRoot({ unstyled = false, className, children, ...props }: PluginShellProps) {
   if (unstyled) {
     return (
       <div
@@ -42,11 +37,7 @@ function PluginShellRoot({
   );
 }
 
-function ThemedShell({
-  className,
-  children,
-  ...props
-}: Omit<PluginShellProps, 'unstyled'>) {
+function ThemedShell({ className, children, ...props }: Omit<PluginShellProps, 'unstyled'>) {
   const { theme } = usePluginTheme();
   const [rootElement, setRootElement] = useState<HTMLDivElement | null>(null);
 

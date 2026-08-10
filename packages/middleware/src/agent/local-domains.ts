@@ -1,8 +1,4 @@
-import type {
-  JSONSchema7,
-  AgentTool,
-  AgentToolPagination,
-} from '@rozenite/agent-shared';
+import type { JSONSchema7, AgentTool, AgentToolPagination } from '@rozenite/agent-shared';
 import { createReactTreeStore } from './runtime/react/store.js';
 import type { ArtifactBucket, ArtifactFileWriter } from './artifacts.js';
 import type {
@@ -32,13 +28,8 @@ type CDPCommandSender = (
   params?: Record<string, unknown>,
 ) => Promise<Record<string, unknown>>;
 
-type CDPEventListener = (
-  params: Record<string, unknown>,
-) => void | Promise<void>;
-type SubscribeToCDPEvent = (
-  method: string,
-  listener: CDPEventListener,
-) => () => void;
+type CDPEventListener = (params: Record<string, unknown>) => void | Promise<void>;
+type SubscribeToCDPEvent = (method: string, listener: CDPEventListener) => () => void;
 
 type SessionInfoReader = () => {
   sessionId: string;
@@ -191,8 +182,7 @@ export type LocalAgentToolService = {
 
 const NAME_HINT_SCHEMA: JSONSchema7 = {
   type: 'string',
-  description:
-    'Optional file naming hint used for the Metro-managed artifact filename.',
+  description: 'Optional file naming hint used for the Metro-managed artifact filename.',
 };
 
 const DEFAULT_DOMAIN_PAGE_LIMIT = 20;
@@ -216,16 +206,12 @@ const getOptionalStringArray = (value: unknown): string[] | undefined => {
     return undefined;
   }
 
-  const items = value.filter(
-    (item): item is string => typeof item === 'string',
-  );
+  const items = value.filter((item): item is string => typeof item === 'string');
   return items.length > 0 ? items : undefined;
 };
 
 const getOptionalNumber = (value: unknown): number | undefined => {
-  return typeof value === 'number' && Number.isFinite(value)
-    ? value
-    : undefined;
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 };
 
 const getOptionalBoolean = (value: unknown): boolean | undefined => {
@@ -240,9 +226,7 @@ const getOptionalPositiveInteger = (value: unknown): number | undefined => {
   return value;
 };
 
-const getOptionalRecord = (
-  value: unknown,
-): Record<string, unknown> | undefined => {
+const getOptionalRecord = (value: unknown): Record<string, unknown> | undefined => {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     return value as Record<string, unknown>;
   }
@@ -343,10 +327,7 @@ const paginateRows = <T>(
       );
     }
 
-    if (
-      options.generation !== undefined &&
-      decoded.generation !== options.generation
-    ) {
+    if (options.generation !== undefined && decoded.generation !== options.generation) {
       return {
         items: [],
         page: {
@@ -369,9 +350,7 @@ const paginateRows = <T>(
           v: 1,
           scope: options.scope,
           index: endIndex,
-          ...(options.generation !== undefined
-            ? { generation: options.generation }
-            : {}),
+          ...(options.generation !== undefined ? { generation: options.generation } : {}),
         }),
         'utf8',
       ).toString('base64url')
@@ -417,13 +396,8 @@ const createNetworkSummary = (record: NetworkRequestRecord) => ({
   endTimeMs: record.endTimeMs ?? null,
   durationMs: record.durationMs ?? null,
   transferSize: record.transferSize ?? null,
-  encodedDataLength:
-    record.encodedDataLength ?? record.response?.encodedDataLength ?? null,
-  outcome: record.loadingFailed
-    ? 'failed'
-    : record.loadingFinished
-      ? 'success'
-      : 'in-flight',
+  encodedDataLength: record.encodedDataLength ?? record.response?.encodedDataLength ?? null,
+  outcome: record.loadingFailed ? 'failed' : record.loadingFinished ? 'success' : 'in-flight',
 });
 
 type NetworkRequestSummary = ReturnType<typeof createNetworkSummary>;
@@ -442,9 +416,7 @@ const createNetworkStatus = (state: NetworkRecordingState) => ({
   },
 });
 
-const getCDPCommandResult = (
-  value: Record<string, unknown>,
-): Record<string, unknown> => {
+const getCDPCommandResult = (value: Record<string, unknown>): Record<string, unknown> => {
   return getOptionalRecord(value.result) || value;
 };
 
@@ -559,8 +531,7 @@ export const createPerformanceDomainService = (deps: {
   const tools: AgentTool[] = [
     {
       name: 'startTrace',
-      description:
-        'Start a CDP performance trace for the current session target.',
+      description: 'Start a CDP performance trace for the current session target.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -571,16 +542,14 @@ export const createPerformanceDomainService = (deps: {
           },
           options: {
             type: 'string',
-            description:
-              'Optional trace options string. Passed to Tracing.start.',
+            description: 'Optional trace options string. Passed to Tracing.start.',
           },
         },
       },
     },
     {
       name: 'stopTrace',
-      description:
-        'Stop the active trace and write the result to a Metro-managed artifact path.',
+      description: 'Stop the active trace and write the result to a Metro-managed artifact path.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -629,11 +598,7 @@ export const createPerformanceDomainService = (deps: {
 
     const input = getRecord(args);
     const startedAt = traceState.startedAt;
-    const writer = await deps.createArtifactWriter(
-      'traces',
-      'json',
-      getString(input.nameHint),
-    );
+    const writer = await deps.createArtifactWriter('traces', 'json', getString(input.nameHint));
     let pendingWrites = Promise.resolve();
     let wroteHeader = false;
     let isFirstEvent = true;
@@ -642,34 +607,31 @@ export const createPerformanceDomainService = (deps: {
       deps.subscribeToCDPEvent,
       'Tracing.tracingComplete',
     );
-    const unsubscribeDataCollected = deps.subscribeToCDPEvent(
-      'Tracing.dataCollected',
-      (params) => {
-        const values = Array.isArray(params.value) ? params.value : [];
-        pendingWrites = pendingWrites.then(async () => {
-          if (!wroteHeader) {
-            await writer.write('{"traceEvents":[');
-            wroteHeader = true;
-          }
+    const unsubscribeDataCollected = deps.subscribeToCDPEvent('Tracing.dataCollected', (params) => {
+      const values = Array.isArray(params.value) ? params.value : [];
+      pendingWrites = pendingWrites.then(async () => {
+        if (!wroteHeader) {
+          await writer.write('{"traceEvents":[');
+          wroteHeader = true;
+        }
 
-          for (const item of values) {
-            if (typeof item?.ts === 'number' && Number.isFinite(item.ts)) {
-              traceWindow = traceWindow
-                ? {
-                    min: Math.min(traceWindow.min, item.ts),
-                    max: Math.max(traceWindow.max, item.ts),
-                  }
-                : { min: item.ts, max: item.ts };
-            }
-            if (!isFirstEvent) {
-              await writer.write(',');
-            }
-            await writer.write(JSON.stringify(item));
-            isFirstEvent = false;
+        for (const item of values) {
+          if (typeof item?.ts === 'number' && Number.isFinite(item.ts)) {
+            traceWindow = traceWindow
+              ? {
+                  min: Math.min(traceWindow.min, item.ts),
+                  max: Math.max(traceWindow.max, item.ts),
+                }
+              : { min: item.ts, max: item.ts };
           }
-        });
-      },
-    );
+          if (!isFirstEvent) {
+            await writer.write(',');
+          }
+          await writer.write(JSON.stringify(item));
+          isFirstEvent = false;
+        }
+      });
+    });
 
     try {
       await deps.sendCommand('Tracing.end');
@@ -715,10 +677,7 @@ export const createPerformanceDomainService = (deps: {
 
 export const createReactDomainService = (deps: {
   sessionId: string;
-  sendReactDevToolsMessage: (message: {
-    event: string;
-    payload: unknown;
-  }) => void;
+  sendReactDevToolsMessage: (message: { event: string; payload: unknown }) => void;
 }): LocalAgentToolService => {
   const nodeIdentifierSchema = {
     oneOf: [{ type: 'integer' }, { type: 'string' }],
@@ -736,8 +695,7 @@ export const createReactDomainService = (deps: {
         properties: {
           root: {
             type: 'integer',
-            description:
-              'Optional root node ID to scope the tree to a subtree.',
+            description: 'Optional root node ID to scope the tree to a subtree.',
           },
           depth: {
             type: 'integer',
@@ -767,14 +725,7 @@ export const createReactDomainService = (deps: {
           'childIds',
           'depth',
         ],
-        defaultFields: [
-          'nodeId',
-          'label',
-          'displayName',
-          'elementType',
-          'childCount',
-          'depth',
-        ],
+        defaultFields: ['nodeId', 'label', 'displayName', 'elementType', 'childCount', 'depth'],
       }),
     },
     {
@@ -798,8 +749,7 @@ export const createReactDomainService = (deps: {
               type: 'string',
               enum: ['props', 'state', 'hooks'],
             },
-            description:
-              'Optional sections to include. Defaults to props, state, and hooks.',
+            description: 'Optional sections to include. Defaults to props, state, and hooks.',
           },
           valueDepth: {
             type: 'integer',
@@ -829,8 +779,7 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'getChildren',
-      description:
-        "Get a node's direct children by node ID or label with cursor-based pagination.",
+      description: "Get a node's direct children by node ID or label with cursor-based pagination.",
       inputSchema: {
         type: 'object',
         properties: {
@@ -864,19 +813,12 @@ export const createReactDomainService = (deps: {
           'parentId',
           'parentLabel',
         ],
-        defaultFields: [
-          'nodeId',
-          'label',
-          'displayName',
-          'elementType',
-          'childCount',
-        ],
+        defaultFields: ['nodeId', 'label', 'displayName', 'elementType', 'childCount'],
       }),
     },
     {
       name: 'getProps',
-      description:
-        'Get inspected props for a node with cursor-based pagination.',
+      description: 'Get inspected props for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -906,8 +848,7 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'getState',
-      description:
-        'Get inspected state for a node with cursor-based pagination.',
+      description: 'Get inspected state for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -937,8 +878,7 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'getHooks',
-      description:
-        'Get inspected hooks for a node with cursor-based pagination.',
+      description: 'Get inspected hooks for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -985,8 +925,7 @@ export const createReactDomainService = (deps: {
           },
           rootId: {
             ...nodeIdentifierSchema,
-            description:
-              'Optional root node ID or component label to scope search to a subtree.',
+            description: 'Optional root node ID or component label to scope search to a subtree.',
           },
           match: {
             type: 'string',
@@ -1027,23 +966,20 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'startProfiling',
-      description:
-        'Start React profiling or request reload-and-profile when supported.',
+      description: 'Start React profiling or request reload-and-profile when supported.',
       inputSchema: {
         type: 'object',
         properties: {
           shouldRestart: {
             type: 'boolean',
-            description:
-              'If true, requests reload-and-profile instead of starting immediately.',
+            description: 'If true, requests reload-and-profile instead of starting immediately.',
           },
         },
       },
     },
     {
       name: 'isProfilingStarted',
-      description:
-        'Get current React profiling status and recorded data availability.',
+      description: 'Get current React profiling status and recorded data availability.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -1051,8 +987,7 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'stopProfiling',
-      description:
-        'Stop React profiling and return a compact summary of the captured session.',
+      description: 'Stop React profiling and return a compact summary of the captured session.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1063,16 +998,14 @@ export const createReactDomainService = (deps: {
           },
           slowRenderThresholdMs: {
             type: 'number',
-            description:
-              'Threshold used to classify slow commits. Default 16ms.',
+            description: 'Threshold used to classify slow commits. Default 16ms.',
           },
         },
       },
     },
     {
       name: 'getRenderData',
-      description:
-        'Get a paged summary of a single React commit by rootId and commitIndex.',
+      description: 'Get a paged summary of a single React commit by rootId and commitIndex.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1099,26 +1032,14 @@ export const createReactDomainService = (deps: {
           },
           slowRenderThresholdMs: {
             type: 'number',
-            description:
-              'Threshold used to classify slow fibers. Default 16ms.',
+            description: 'Threshold used to classify slow fibers. Default 16ms.',
           },
         },
         required: ['rootId', 'commitIndex'],
       },
       pagination: cursorPagination<ReactRenderDataItem>({
-        fields: [
-          'fiberId',
-          'actualDurationMs',
-          'selfDurationMs',
-          'isSlow',
-          'changeTypeHints',
-        ],
-        defaultFields: [
-          'fiberId',
-          'actualDurationMs',
-          'selfDurationMs',
-          'isSlow',
-        ],
+        fields: ['fiberId', 'actualDurationMs', 'selfDurationMs', 'isSlow', 'changeTypeHints'],
+        defaultFields: ['fiberId', 'actualDurationMs', 'selfDurationMs', 'isSlow'],
       }),
     },
   ];
@@ -1182,8 +1103,7 @@ export const createMemoryDomainService = (deps: {
   const tools: AgentTool[] = [
     {
       name: 'takeHeapSnapshot',
-      description:
-        'Capture a heap snapshot and write it to a Metro-managed artifact path.',
+      description: 'Capture a heap snapshot and write it to a Metro-managed artifact path.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1193,8 +1113,7 @@ export const createMemoryDomainService = (deps: {
     },
     {
       name: 'startSampling',
-      description:
-        'Start heap allocation sampling for the current session target.',
+      description: 'Start heap allocation sampling for the current session target.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1231,9 +1150,7 @@ export const createMemoryDomainService = (deps: {
 
   const takeHeapSnapshot = async (args: unknown) => {
     if (heapSnapshotInProgress) {
-      throw new Error(
-        'A heap snapshot is already in progress for this session',
-      );
+      throw new Error('A heap snapshot is already in progress for this session');
     }
 
     const input = getRecord(args);
@@ -1252,9 +1169,7 @@ export const createMemoryDomainService = (deps: {
       (params) => {
         const chunk = getString(params.chunk);
         if (chunk) {
-          pendingChunkWrites = pendingChunkWrites.then(() =>
-            writer.write(chunk),
-          );
+          pendingChunkWrites = pendingChunkWrites.then(() => writer.write(chunk));
         }
       },
     );
@@ -1393,8 +1308,7 @@ export const createNetworkDomainService = (deps: {
   const tools: AgentTool[] = [
     {
       name: 'startRecording',
-      description:
-        'Start recording raw CDP network activity for the current session target.',
+      description: 'Start recording raw CDP network activity for the current session target.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -1402,8 +1316,7 @@ export const createNetworkDomainService = (deps: {
     },
     {
       name: 'stopRecording',
-      description:
-        'Stop recording network activity without clearing the captured request buffer.',
+      description: 'Stop recording network activity without clearing the captured request buffer.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -1411,8 +1324,7 @@ export const createNetworkDomainService = (deps: {
     },
     {
       name: 'getRecordingStatus',
-      description:
-        'Return network recording state and buffer metadata for the current session.',
+      description: 'Return network recording state and buffer metadata for the current session.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -1420,8 +1332,7 @@ export const createNetworkDomainService = (deps: {
     },
     {
       name: 'listRequests',
-      description:
-        'List captured network request summaries with cursor pagination.',
+      description: 'List captured network request summaries with cursor pagination.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1431,8 +1342,7 @@ export const createNetworkDomainService = (deps: {
           },
           cursor: {
             type: 'string',
-            description:
-              'Opaque pagination cursor from a previous listRequests call.',
+            description: 'Opaque pagination cursor from a previous listRequests call.',
           },
         },
       },
@@ -1450,20 +1360,12 @@ export const createNetworkDomainService = (deps: {
           'encodedDataLength',
           'outcome',
         ],
-        defaultFields: [
-          'requestId',
-          'method',
-          'url',
-          'status',
-          'durationMs',
-          'outcome',
-        ],
+        defaultFields: ['requestId', 'method', 'url', 'status', 'durationMs', 'outcome'],
       }),
     },
     {
       name: 'getRequestDetails',
-      description:
-        'Return detailed metadata for a captured network request without bodies.',
+      description: 'Return detailed metadata for a captured network request without bodies.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1601,27 +1503,19 @@ export const createNetworkDomainService = (deps: {
           redirectChain.push({
             url: getString(redirectResponse.url),
             status:
-              typeof redirectResponse.status === 'number'
-                ? redirectResponse.status
-                : undefined,
+              typeof redirectResponse.status === 'number' ? redirectResponse.status : undefined,
             statusText: getString(redirectResponse.statusText),
           });
           record.redirectChain = redirectChain;
         }
 
-        record.url =
-          getString(request?.url) ||
-          getString(params.documentURL) ||
-          record.url;
+        record.url = getString(request?.url) || getString(params.documentURL) || record.url;
         record.method = getString(request?.method) || record.method;
         record.type = getString(params.type) || record.type;
-        record.startTimeMs =
-          toMilliseconds(params.timestamp) ?? record.startTimeMs;
-        record.wallTimeMs =
-          toMilliseconds(params.wallTime) ?? record.wallTimeMs;
+        record.startTimeMs = toMilliseconds(params.timestamp) ?? record.startTimeMs;
+        record.wallTimeMs = toMilliseconds(params.wallTime) ?? record.wallTimeMs;
         record.initiator = params.initiator ?? record.initiator;
-        record.priority =
-          getString(request?.initialPriority) || record.priority;
+        record.priority = getString(request?.initialPriority) || record.priority;
         record.request = {
           url: getString(request?.url),
           method: getString(request?.method),
@@ -1633,29 +1527,22 @@ export const createNetworkDomainService = (deps: {
           postDataEntries: Array.isArray(request?.postDataEntries)
             ? request?.postDataEntries
             : undefined,
-          hasPostData: request
-            ? Boolean(request.hasPostData)
-            : record.request?.hasPostData,
+          hasPostData: request ? Boolean(request.hasPostData) : record.request?.hasPostData,
         };
       }),
-      deps.subscribeToCDPEvent(
-        'Network.requestWillBeSentExtraInfo',
-        (params) => {
-          const requestId = getString(params.requestId);
-          if (!requestId) {
-            return;
-          }
+      deps.subscribeToCDPEvent('Network.requestWillBeSentExtraInfo', (params) => {
+        const requestId = getString(params.requestId);
+        if (!requestId) {
+          return;
+        }
 
-          const record = ensureRecord(requestId);
-          record.requestHeadersExtra =
-            getOptionalRecord(params.headers) || record.requestHeadersExtra;
-          record.requestAssociatedCookies = Array.isArray(
-            params.associatedCookies,
-          )
-            ? params.associatedCookies
-            : record.requestAssociatedCookies;
-        },
-      ),
+        const record = ensureRecord(requestId);
+        record.requestHeadersExtra =
+          getOptionalRecord(params.headers) || record.requestHeadersExtra;
+        record.requestAssociatedCookies = Array.isArray(params.associatedCookies)
+          ? params.associatedCookies
+          : record.requestAssociatedCookies;
+      }),
       deps.subscribeToCDPEvent('Network.responseReceived', (params) => {
         const requestId = getString(params.requestId);
         if (!requestId) {
@@ -1666,33 +1553,22 @@ export const createNetworkDomainService = (deps: {
         const response = getOptionalRecord(params.response);
 
         record.type = getString(params.type) || record.type;
-        record.status =
-          typeof response?.status === 'number'
-            ? response.status
-            : record.status;
-        record.statusText =
-          getString(response?.statusText) || record.statusText;
+        record.status = typeof response?.status === 'number' ? response.status : record.status;
+        record.statusText = getString(response?.statusText) || record.statusText;
         record.mimeType = getString(response?.mimeType) || record.mimeType;
         record.protocol = getString(response?.protocol) || record.protocol;
-        record.remoteIPAddress =
-          getString(response?.remoteIPAddress) || record.remoteIPAddress;
-        record.remotePort =
-          getOptionalNumber(response?.remotePort) || record.remotePort;
-        record.fromDiskCache =
-          getOptionalBoolean(response?.fromDiskCache) ?? record.fromDiskCache;
+        record.remoteIPAddress = getString(response?.remoteIPAddress) || record.remoteIPAddress;
+        record.remotePort = getOptionalNumber(response?.remotePort) || record.remotePort;
+        record.fromDiskCache = getOptionalBoolean(response?.fromDiskCache) ?? record.fromDiskCache;
         record.fromMemoryCache =
-          getOptionalBoolean(response?.fromMemoryCache) ??
-          record.fromMemoryCache;
+          getOptionalBoolean(response?.fromMemoryCache) ?? record.fromMemoryCache;
         record.fromPrefetchCache =
-          getOptionalBoolean(response?.fromPrefetchCache) ??
-          record.fromPrefetchCache;
+          getOptionalBoolean(response?.fromPrefetchCache) ?? record.fromPrefetchCache;
         record.encodedDataLength =
-          getOptionalNumber(response?.encodedDataLength) ??
-          record.encodedDataLength;
+          getOptionalNumber(response?.encodedDataLength) ?? record.encodedDataLength;
         record.response = {
           url: getString(response?.url),
-          status:
-            typeof response?.status === 'number' ? response.status : undefined,
+          status: typeof response?.status === 'number' ? response.status : undefined,
           statusText: getString(response?.statusText),
           headers: getOptionalRecord(response?.headers),
           mimeType: getString(response?.mimeType),
@@ -1709,22 +1585,19 @@ export const createNetworkDomainService = (deps: {
           cacheStorageCacheName: getString(response?.cacheStorageCacheName),
         };
       }),
-      deps.subscribeToCDPEvent(
-        'Network.responseReceivedExtraInfo',
-        (params) => {
-          const requestId = getString(params.requestId);
-          if (!requestId) {
-            return;
-          }
+      deps.subscribeToCDPEvent('Network.responseReceivedExtraInfo', (params) => {
+        const requestId = getString(params.requestId);
+        if (!requestId) {
+          return;
+        }
 
-          const record = ensureRecord(requestId);
-          record.responseHeadersExtra =
-            getOptionalRecord(params.headers) || record.responseHeadersExtra;
-          record.responseBlockedCookies = Array.isArray(params.blockedCookies)
-            ? params.blockedCookies
-            : record.responseBlockedCookies;
-        },
-      ),
+        const record = ensureRecord(requestId);
+        record.responseHeadersExtra =
+          getOptionalRecord(params.headers) || record.responseHeadersExtra;
+        record.responseBlockedCookies = Array.isArray(params.blockedCookies)
+          ? params.blockedCookies
+          : record.responseBlockedCookies;
+      }),
       deps.subscribeToCDPEvent('Network.requestServedFromCache', (params) => {
         const requestId = getString(params.requestId);
         if (!requestId) {
@@ -1745,10 +1618,8 @@ export const createNetworkDomainService = (deps: {
         record.loadingFailed = false;
         record.endTimeMs = toMilliseconds(params.timestamp) ?? record.endTimeMs;
         record.encodedDataLength =
-          getOptionalNumber(params.encodedDataLength) ??
-          record.encodedDataLength;
-        record.transferSize =
-          getOptionalNumber(params.encodedDataLength) ?? record.transferSize;
+          getOptionalNumber(params.encodedDataLength) ?? record.encodedDataLength;
+        record.transferSize = getOptionalNumber(params.encodedDataLength) ?? record.transferSize;
         updateTiming(record);
       }),
       deps.subscribeToCDPEvent('Network.loadingFailed', (params) => {
@@ -1762,10 +1633,8 @@ export const createNetworkDomainService = (deps: {
         record.loadingFailed = true;
         record.endTimeMs = toMilliseconds(params.timestamp) ?? record.endTimeMs;
         record.failureText = getString(params.errorText) || record.failureText;
-        record.blockedReason =
-          getString(params.blockedReason) || record.blockedReason;
-        record.corsErrorStatus =
-          params.corsErrorStatus ?? record.corsErrorStatus;
+        record.blockedReason = getString(params.blockedReason) || record.blockedReason;
+        record.corsErrorStatus = params.corsErrorStatus ?? record.corsErrorStatus;
         updateTiming(record);
       }),
     );
@@ -1940,8 +1809,7 @@ export const createNetworkDomainService = (deps: {
       return {
         requestId,
         available: false,
-        reason:
-          'Response body is unavailable until the request finishes loading.',
+        reason: 'Response body is unavailable until the request finishes loading.',
       };
     }
 

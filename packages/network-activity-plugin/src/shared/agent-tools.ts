@@ -8,8 +8,7 @@ import type {
   NetworkActivityAgentState,
 } from '../react-native/agent/state';
 
-export const NETWORK_ACTIVITY_AGENT_PLUGIN_ID =
-  '@rozenite/network-activity-plugin';
+export const NETWORK_ACTIVITY_AGENT_PLUGIN_ID = '@rozenite/network-activity-plugin';
 
 export type NetworkActivityPaginationArgs = {
   limit?: number;
@@ -28,17 +27,15 @@ export type NetworkActivityGetRecordingStatusResult = ReturnType<
   NetworkActivityAgentState['getStatus']
 >;
 
-export type NetworkActivityStartRecordingResult =
-  NetworkActivityGetRecordingStatusResult & {
-    started: true;
-  };
+export type NetworkActivityStartRecordingResult = NetworkActivityGetRecordingStatusResult & {
+  started: true;
+};
 
 export type NetworkActivityStopRecordingArgs = undefined;
 
-export type NetworkActivityStopRecordingResult =
-  NetworkActivityGetRecordingStatusResult & {
-    stopped: true;
-  };
+export type NetworkActivityStopRecordingResult = NetworkActivityGetRecordingStatusResult & {
+  stopped: true;
+};
 
 export type NetworkActivityListRequestsArgs = NetworkActivityPaginationArgs;
 
@@ -54,23 +51,19 @@ export type NetworkActivityGetRequestDetailsResult = ReturnType<
 
 export type NetworkActivityGetRequestBodyArgs = NetworkActivityRequestIdArgs;
 
-export type NetworkActivityGetRequestBodyResult =
-  NetworkActivityAgentBodyResult;
+export type NetworkActivityGetRequestBodyResult = NetworkActivityAgentBodyResult;
 
 export type NetworkActivityGetResponseBodyArgs = NetworkActivityRequestIdArgs;
 
-export type NetworkActivityGetResponseBodyResult =
-  NetworkActivityAgentBodyResult;
+export type NetworkActivityGetResponseBodyResult = NetworkActivityAgentBodyResult;
 
-export type NetworkActivityListRealtimeConnectionsArgs =
-  NetworkActivityPaginationArgs;
+export type NetworkActivityListRealtimeConnectionsArgs = NetworkActivityPaginationArgs;
 
 export type NetworkActivityListRealtimeConnectionsResult = ReturnType<
   NetworkActivityAgentState['listRealtimeConnections']
 >;
 
-export type NetworkActivityGetRealtimeConnectionDetailsArgs =
-  NetworkActivityRequestIdArgs;
+export type NetworkActivityGetRealtimeConnectionDetailsArgs = NetworkActivityRequestIdArgs;
 
 export type NetworkActivityGetRealtimeConnectionDetailsResult = ReturnType<
   NetworkActivityAgentState['getRealtimeConnectionDetails']
@@ -82,8 +75,7 @@ export const networkActivityToolDefinitions = {
     NetworkActivityStartRecordingResult
   >({
     name: 'startRecording',
-    description:
-      'Start recording network activity in the fallback network activity plugin.',
+    description: 'Start recording network activity in the fallback network activity plugin.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -94,8 +86,7 @@ export const networkActivityToolDefinitions = {
     NetworkActivityStopRecordingResult
   >({
     name: 'stopRecording',
-    description:
-      'Stop recording network activity without clearing the captured plugin buffer.',
+    description: 'Stop recording network activity without clearing the captured plugin buffer.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -106,8 +97,7 @@ export const networkActivityToolDefinitions = {
     NetworkActivityGetRecordingStatusResult
   >({
     name: 'getRecordingStatus',
-    description:
-      'Return network activity plugin recording state and buffer metadata.',
+    description: 'Return network activity plugin recording state and buffer metadata.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -129,8 +119,7 @@ export const networkActivityToolDefinitions = {
         },
         cursor: {
           type: 'string',
-          description:
-            'Opaque pagination cursor from a previous listRequests call.',
+          description: 'Opaque pagination cursor from a previous listRequests call.',
         },
       },
     },
@@ -149,14 +138,7 @@ export const networkActivityToolDefinitions = {
         'encodedDataLength',
         'outcome',
       ],
-      defaultFields: [
-        'requestId',
-        'method',
-        'url',
-        'status',
-        'durationMs',
-        'outcome',
-      ],
+      defaultFields: ['requestId', 'method', 'url', 'status', 'durationMs', 'outcome'],
     },
   }),
   getRequestDetails: defineAgentToolContract<
@@ -218,20 +200,17 @@ export const networkActivityToolDefinitions = {
     NetworkActivityListRealtimeConnectionsResult
   >({
     name: 'listRealtimeConnections',
-    description:
-      'List captured WebSocket and SSE connections with cursor pagination.',
+    description: 'List captured WebSocket and SSE connections with cursor pagination.',
     inputSchema: {
       type: 'object',
       properties: {
         limit: {
           type: 'number',
-          description:
-            'Maximum number of realtime connections to return. Defaults to 20.',
+          description: 'Maximum number of realtime connections to return. Defaults to 20.',
         },
         cursor: {
           type: 'string',
-          description:
-            'Opaque pagination cursor from a previous listRealtimeConnections call.',
+          description: 'Opaque pagination cursor from a previous listRealtimeConnections call.',
         },
       },
     },
@@ -250,14 +229,7 @@ export const networkActivityToolDefinitions = {
         'closeCode',
         'httpStatus',
       ],
-      defaultFields: [
-        'requestId',
-        'kind',
-        'url',
-        'status',
-        'durationMs',
-        'messageCount',
-      ],
+      defaultFields: ['requestId', 'kind', 'url', 'status', 'durationMs', 'messageCount'],
     },
   }),
   getRealtimeConnectionDetails: defineAgentToolContract<

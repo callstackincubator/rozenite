@@ -18,8 +18,7 @@ export const resolveMetroOrigin = (): string | null => {
         getConstants?: () => { scriptURL?: string };
       }
     | undefined;
-  const scriptURL =
-    sourceCode?.scriptURL ?? sourceCode?.getConstants?.().scriptURL;
+  const scriptURL = sourceCode?.scriptURL ?? sourceCode?.getConstants?.().scriptURL;
   if (!scriptURL) {
     cachedMetroOrigin = null;
     return null;
@@ -54,8 +53,7 @@ const ANSI_SEQUENCE_PATTERN = new RegExp(
   'g',
 );
 
-const stripAnsi = (value: string): string =>
-  value.replace(ANSI_SEQUENCE_PATTERN, '');
+const stripAnsi = (value: string): string => value.replace(ANSI_SEQUENCE_PATTERN, '');
 
 type MetroSymbolicatedFrame = {
   methodName: string;
@@ -83,9 +81,7 @@ type MetroSymbolicateResponse = {
 const isGeneratedBundleUrl = (url: string | undefined): boolean =>
   !!url && /[^/]+\.bundle(?:[/?#]|$)/.test(url);
 
-const toMetroFrame = (
-  frame: ActionStackFrame,
-): MetroSymbolicatedFrame | null => {
+const toMetroFrame = (frame: ActionStackFrame): MetroSymbolicatedFrame | null => {
   if (!frame.generatedUrl) return null;
   return {
     methodName: frame.functionName ?? '<anonymous>',
@@ -128,9 +124,7 @@ const fromMetroFrame = (
   };
 };
 
-const toCodeFrame = (
-  raw: MetroCodeFrame | undefined,
-): ActionOriginCodeFrame | undefined => {
+const toCodeFrame = (raw: MetroCodeFrame | undefined): ActionOriginCodeFrame | undefined => {
   if (!raw) return undefined;
   const line = raw.location?.row ?? raw.line;
   const column = raw.location?.column ?? raw.column;
@@ -166,8 +160,7 @@ export const symbolicateFrames = async (
   frames: ActionStackFrame[],
   options: SymbolicateOptions = {},
 ): Promise<SymbolicationOutcome> => {
-  const origin =
-    options.origin !== undefined ? options.origin : resolveMetroOrigin();
+  const origin = options.origin !== undefined ? options.origin : resolveMetroOrigin();
   if (!origin) {
     return { status: 'unavailable', frames };
   }

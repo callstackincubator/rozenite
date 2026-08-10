@@ -1,7 +1,7 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type RootStackParamList = {
-  Landing: undefined;
+  Home: undefined;
   ControlsPlugin: undefined;
   ReactHookFormPlugin: undefined;
   StoragePlugin: undefined;
@@ -11,12 +11,11 @@ export type RootStackParamList = {
   PerformanceMonitor: undefined;
   RequireProfilerTest: undefined;
   FileSystemTest: undefined;
-  Config: undefined;
+  Settings: undefined;
   BottomTabs: undefined;
   ParameterDisplay: {
     title: string;
     message: string;
-    color: string;
     source: string;
   };
   SuccessiveScreensStack: undefined;

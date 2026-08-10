@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  getContentTypeMime,
-  isJsonContentType,
-  isXmlContentType,
-} from '../getContentTypeMimeType';
+import { getContentTypeMime, isJsonContentType, isXmlContentType } from '../getContentTypeMimeType';
 
 describe('getContentTypeMimeType', () => {
   it('recognizes application/json content types with parameters', () => {
@@ -11,9 +7,7 @@ describe('getContentTypeMimeType', () => {
   });
 
   it('recognizes RFC 6839 +json content types', () => {
-    expect(isJsonContentType('application/vnd.geo+json; charset=utf-8')).toBe(
-      true,
-    );
+    expect(isJsonContentType('application/vnd.geo+json; charset=utf-8')).toBe(true);
     expect(isJsonContentType('Application/LD+JSON')).toBe(true);
   });
 

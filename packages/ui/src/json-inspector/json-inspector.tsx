@@ -17,16 +17,9 @@ export type JsonInspectorProps = {
 };
 
 /** A collapsible tree for inspecting structured JSON-like values. */
-export function JsonInspector({
-  data,
-  className,
-  defaultExpandedDepth = 1,
-}: JsonInspectorProps) {
+export function JsonInspector({ data, className, defaultExpandedDepth = 1 }: JsonInspectorProps) {
   return (
-    <div
-      data-slot="json-inspector"
-      className={cn('font-mono text-xs', className)}
-    >
+    <div data-slot="json-inspector" className={cn('font-mono text-xs', className)}>
       <JsonNodeView
         label={null}
         value={data}
@@ -44,21 +37,14 @@ type JsonNodeViewProps = {
   defaultExpandedDepth: number;
 };
 
-function JsonNodeView({
-  label,
-  value,
-  depth,
-  defaultExpandedDepth,
-}: JsonNodeViewProps) {
+function JsonNodeView({ label, value, depth, defaultExpandedDepth }: JsonNodeViewProps) {
   const [expanded, setExpanded] = useState(depth < defaultExpandedDepth);
   const expandable = isExpandable(value);
 
   if (!expandable) {
     return (
       <div data-slot="json-inspector-leaf" className="flex gap-1">
-        {label !== null && (
-          <span className="text-muted-foreground">{label}:</span>
-        )}
+        {label !== null && <span className="text-muted-foreground">{label}:</span>}
         <LeafValue value={value} />
       </div>
     );
@@ -79,12 +65,8 @@ function JsonNodeView({
             expanded && 'rotate-90',
           )}
         />
-        {label !== null && (
-          <span className="text-muted-foreground">{label}:</span>
-        )}
-        <span className="text-muted-foreground">
-          {getContainerSummary(value)}
-        </span>
+        {label !== null && <span className="text-muted-foreground">{label}:</span>}
+        <span className="text-muted-foreground">{getContainerSummary(value)}</span>
       </button>
       {expanded && (
         <div className="ml-3.5 border-l border-border pl-2">
@@ -115,9 +97,5 @@ function LeafValue({ value }: { value: unknown }) {
   const type = classifyValue(value);
   const text = type === 'string' ? `"${value as string}"` : String(value);
 
-  return (
-    <span className={LEAF_COLOR_BY_TYPE[type] ?? 'text-foreground'}>
-      {text}
-    </span>
-  );
+  return <span className={LEAF_COLOR_BY_TYPE[type] ?? 'text-foreground'}>{text}</span>;
 }

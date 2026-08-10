@@ -1,11 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import {
-  base64ToBlob,
-  base64ToBytes,
-  deriveFilename,
-  readHeader,
-} from '../download';
+import { base64ToBlob, base64ToBytes, deriveFilename, readHeader } from '../download';
 
 describe('base64ToBytes', () => {
   it('decodes "AQID" to the 3-byte sequence [1, 2, 3]', () => {
@@ -33,15 +28,11 @@ describe('base64ToBlob', () => {
 describe('readHeader', () => {
   it('returns the value for a case-insensitive lookup', () => {
     expect(readHeader({ 'Content-Length': '42' }, 'content-length')).toBe('42');
-    expect(readHeader({ 'content-type': 'text/html' }, 'Content-Type')).toBe(
-      'text/html',
-    );
+    expect(readHeader({ 'content-type': 'text/html' }, 'Content-Type')).toBe('text/html');
   });
 
   it('returns the first value when the header carries an array', () => {
-    expect(readHeader({ 'Set-Cookie': ['a=1', 'b=2'] }, 'Set-Cookie')).toBe(
-      'a=1',
-    );
+    expect(readHeader({ 'Set-Cookie': ['a=1', 'b=2'] }, 'Set-Cookie')).toBe('a=1');
   });
 
   it('returns undefined for missing headers or missing headers map', () => {

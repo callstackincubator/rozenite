@@ -2,11 +2,7 @@ export function newRequestId(): string {
   return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
 }
 
-export async function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number,
-  message: string,
-): Promise<T> {
+export async function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   let timeout: ReturnType<typeof setTimeout> | null = null;
 
   try {

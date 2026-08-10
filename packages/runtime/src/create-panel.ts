@@ -33,13 +33,7 @@ export const createPanel = (
       return;
     }
 
-    const panelView = getPluginView(
-      pluginId,
-      panelId,
-      name,
-      url,
-      options.shellConfiguration,
-    );
+    const panelView = getPluginView(pluginId, panelId, name, url, options.shellConfiguration);
 
     UI.InspectorView.InspectorView.instance().addPanel(panelView);
 

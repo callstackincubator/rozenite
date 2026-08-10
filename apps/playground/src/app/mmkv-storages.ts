@@ -33,20 +33,14 @@ export const initializeMMKVStorages = () => {
   appSettings.set('version', '1.0.0');
   appSettings.set('debugMode', false);
   appSettings.set('maxCacheSize', 100);
-  appSettings.set(
-    'buffer',
-    new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).buffer,
-  );
+  appSettings.set('buffer', new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).buffer);
 
   // Add test data to cache storage (including buffer)
   cacheStorage.set(
     'apiResponse',
     JSON.stringify({ data: 'cached response', timestamp: Date.now() }),
   );
-  cacheStorage.set(
-    'userPreferences',
-    JSON.stringify({ theme: 'dark', language: 'en' }),
-  );
+  cacheStorage.set('userPreferences', JSON.stringify({ theme: 'dark', language: 'en' }));
   cacheStorage.set('timestamp', Date.now());
   cacheStorage.set('cacheSize', 1024);
   cacheStorage.set('lastSync', Date.now() - 3600000); // 1 hour ago

@@ -6,9 +6,7 @@ import type {
   PerformanceResourceTiming,
 } from 'react-native-performance';
 
-export function assertPerformanceMark(
-  entry: PerformanceEntry,
-): asserts entry is PerformanceMark {
+export function assertPerformanceMark(entry: PerformanceEntry): asserts entry is PerformanceMark {
   if (entry.entryType !== 'mark') {
     throw new Error('Entry is not a PerformanceMark');
   }

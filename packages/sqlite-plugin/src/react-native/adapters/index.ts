@@ -1,7 +1,4 @@
-export {
-  createSqliteAdapter,
-  type CreateSqliteAdapterOptions,
-} from './generic';
+export { createSqliteAdapter, type CreateSqliteAdapterOptions } from './generic';
 export {
   createExpoSqliteAdapter,
   type CreateExpoSqliteAdapterOptions,

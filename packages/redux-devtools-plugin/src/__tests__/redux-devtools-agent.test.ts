@@ -51,11 +51,7 @@ const createLiftedState = (
     skippedActionIds: [],
     committedState: { count: 0 },
     currentStateIndex: 2,
-    computedStates: [
-      { state: { count: 0 } },
-      { state: { count: 1 } },
-      { state: { count: 0 } },
-    ],
+    computedStates: [{ state: { count: 0 } }, { state: { count: 1 } }, { state: { count: 0 } }],
     isLocked: false,
     isPaused: false,
     ...overrides,
@@ -96,9 +92,7 @@ afterEach(() => {
 
 describe('redux devtools agent helpers', () => {
   it('keeps shared tool definitions aligned with the Redux agent surface', () => {
-    expect(
-      Object.values(reduxDevToolsToolDefinitions).map((tool) => tool.name),
-    ).toEqual([
+    expect(Object.values(reduxDevToolsToolDefinitions).map((tool) => tool.name)).toEqual([
       'list-stores',
       'get-store-state',
       'list-actions',
@@ -113,9 +107,9 @@ describe('redux devtools agent helpers', () => {
       'set-recording-paused',
       'set-locked',
     ]);
-    expect(
-      reduxDevToolsToolDefinitions.getActionDetails.inputSchema.required,
-    ).toEqual(['actionId']);
+    expect(reduxDevToolsToolDefinitions.getActionDetails.inputSchema.required).toEqual([
+      'actionId',
+    ]);
   });
 
   it('lists stores with derived status', () => {
@@ -145,9 +139,7 @@ describe('redux devtools agent helpers', () => {
     registerStore({ instanceId: 'store-1', name: 'One' });
     registerStore({ instanceId: 'store-2', name: 'Two' });
 
-    expect(() => resolveReduxDevToolsStore()).toThrow(
-      'Multiple Redux DevTools stores detected.',
-    );
+    expect(() => resolveReduxDevToolsStore()).toThrow('Multiple Redux DevTools stores detected.');
     expect(resolveReduxDevToolsStore('store-2').name).toBe('Two');
   });
 
@@ -285,34 +277,16 @@ describe('redux devtools agent helpers', () => {
     setReduxRecordingPausedResult({ paused: true });
     setReduxLockedResult({ locked: true });
 
-    expect(liftedDispatch).toHaveBeenNthCalledWith(
-      1,
-      ActionCreators.jumpToAction(2),
-    );
-    expect(liftedDispatch).toHaveBeenNthCalledWith(
-      2,
-      ActionCreators.toggleAction(1),
-    );
-    expect(liftedDispatch).toHaveBeenNthCalledWith(
-      3,
-      expect.objectContaining({ type: 'RESET' }),
-    );
+    expect(liftedDispatch).toHaveBeenNthCalledWith(1, ActionCreators.jumpToAction(2));
+    expect(liftedDispatch).toHaveBeenNthCalledWith(2, ActionCreators.toggleAction(1));
+    expect(liftedDispatch).toHaveBeenNthCalledWith(3, expect.objectContaining({ type: 'RESET' }));
     expect(liftedDispatch).toHaveBeenNthCalledWith(
       4,
       expect.objectContaining({ type: 'ROLLBACK' }),
     );
-    expect(liftedDispatch).toHaveBeenNthCalledWith(
-      5,
-      expect.objectContaining({ type: 'COMMIT' }),
-    );
+    expect(liftedDispatch).toHaveBeenNthCalledWith(5, expect.objectContaining({ type: 'COMMIT' }));
     expect(liftedDispatch).toHaveBeenNthCalledWith(6, ActionCreators.sweep());
-    expect(liftedDispatch).toHaveBeenNthCalledWith(
-      7,
-      ActionCreators.pauseRecording(true),
-    );
-    expect(liftedDispatch).toHaveBeenNthCalledWith(
-      8,
-      ActionCreators.lockChanges(true),
-    );
+    expect(liftedDispatch).toHaveBeenNthCalledWith(7, ActionCreators.pauseRecording(true));
+    expect(liftedDispatch).toHaveBeenNthCalledWith(8, ActionCreators.lockChanges(true));
   });
 });

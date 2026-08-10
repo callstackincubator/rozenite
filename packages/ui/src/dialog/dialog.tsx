@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useRef,
-  useState,
-  type ComponentProps,
-} from 'react';
+import { createContext, useContext, useRef, useState, type ComponentProps } from 'react';
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { X } from 'lucide-react';
 import { cn } from '../utils/cn';
@@ -15,9 +9,7 @@ export type DialogProps = DialogPrimitive.Root.Props;
 const DialogOpenContext = createContext<boolean | null>(null);
 
 function DialogRoot(props: DialogProps) {
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(
-    props.defaultOpen ?? false,
-  );
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(props.defaultOpen ?? false);
   const open = props.open ?? uncontrolledOpen;
 
   return (
@@ -114,11 +106,7 @@ export type DialogHeaderProps = ComponentProps<'div'>;
 
 function DialogHeader({ className, ...props }: DialogHeaderProps) {
   return (
-    <div
-      data-slot="dialog-header"
-      className={cn('flex flex-col gap-1.5', className)}
-      {...props}
-    />
+    <div data-slot="dialog-header" className={cn('flex flex-col gap-1.5', className)} {...props} />
   );
 }
 
@@ -128,10 +116,7 @@ function DialogFooter({ className, ...props }: DialogFooterProps) {
   return (
     <div
       data-slot="dialog-footer"
-      className={cn(
-        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
-        className,
-      )}
+      className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
       {...props}
     />
   );

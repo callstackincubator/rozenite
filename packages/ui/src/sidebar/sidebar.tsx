@@ -1,5 +1,6 @@
-import type { ComponentProps, ReactNode } from 'react';
+import type { ComponentProps } from 'react';
 import { cn } from '../utils/cn';
+import { List, type ListGroupProps, type ListItemProps } from '../list/list';
 
 export type SidebarProps = ComponentProps<'nav'>;
 
@@ -16,72 +17,40 @@ function SidebarRoot({ className, ...props }: SidebarProps) {
   );
 }
 
-export type SidebarGroupProps = ComponentProps<'div'> & {
-  label?: ReactNode;
-};
+export type SidebarGroupProps = ListGroupProps;
+export type SidebarItemProps = ListItemProps;
 
-function SidebarGroup({
-  className,
-  label,
-  children,
-  ...props
-}: SidebarGroupProps) {
+export type SidebarHeaderProps = ComponentProps<'header'>;
+
+function SidebarHeader({ className, ...props }: SidebarHeaderProps) {
   return (
-    <div
-      data-slot="sidebar-group"
-      className={cn('flex flex-col gap-0.5', className)}
-      {...props}
-    >
-      {label && (
-        <div
-          data-slot="sidebar-group-label"
-          className="px-2 py-1 text-xs font-medium text-sidebar-foreground/60"
-        >
-          {label}
-        </div>
-      )}
-      {children}
-    </div>
-  );
-}
-
-export type SidebarItemProps = ComponentProps<'button'> & {
-  selected?: boolean;
-  /** Rendered at the end of the row, e.g. a `Badge` with an entry count. */
-  trailing?: ReactNode;
-};
-
-function SidebarItem({
-  className,
-  selected = false,
-  trailing,
-  children,
-  type = 'button',
-  ...props
-}: SidebarItemProps) {
-  return (
-    <button
-      type={type}
-      data-slot="sidebar-item"
-      data-selected={selected || undefined}
-      aria-current={selected || undefined}
+    <header
+      data-slot="sidebar-header"
       className={cn(
-        'flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground',
-        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-        'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-        'data-[selected]:bg-sidebar-accent data-[selected]:text-sidebar-accent-foreground data-[selected]:font-medium',
+        'sticky top-0 z-10 flex h-12 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-3',
         className,
       )}
       {...props}
-    >
-      <span className="min-w-0 flex-1 truncate">{children}</span>
-      {trailing}
-    </button>
+    />
+  );
+}
+
+export type SidebarFooterProps = ComponentProps<'footer'>;
+
+function SidebarFooter({ className, ...props }: SidebarFooterProps) {
+  return (
+    <footer
+      data-slot="sidebar-footer"
+      className={cn('mt-auto flex shrink-0 gap-1 border-t border-sidebar-border p-2', className)}
+      {...props}
+    />
   );
 }
 
 /** A navigation rail with grouped, selectable items and optional trailing content. */
 export const Sidebar = Object.assign(SidebarRoot, {
-  Group: SidebarGroup,
-  Item: SidebarItem,
+  Group: List.Group,
+  Item: List.Item,
+  Header: SidebarHeader,
+  Footer: SidebarFooter,
 });

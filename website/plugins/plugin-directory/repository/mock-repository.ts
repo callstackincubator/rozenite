@@ -9,8 +9,7 @@ const MOCK_PLUGINS: RozenitePluginEntry[] = [
     githubUrl:
       'https://github.com/callstackincubator/rozenite/tree/main/packages/redux-devtools-plugin',
     npmUrl: 'https://www.npmjs.com/package/@rozenite/redux-devtools-plugin',
-    description:
-      'Redux DevTools integration for React Native development with Rozenite',
+    description: 'Redux DevTools integration for React Native development with Rozenite',
     stars: 156,
     isOfficial: true,
   },
@@ -20,16 +19,14 @@ const MOCK_PLUGINS: RozenitePluginEntry[] = [
     githubUrl:
       'https://github.com/callstackincubator/rozenite/tree/main/packages/network-activity-plugin',
     npmUrl: 'https://www.npmjs.com/package/@rozenite/network-activity-plugin',
-    description:
-      'Network activity monitoring and debugging for React Native apps',
+    description: 'Network activity monitoring and debugging for React Native apps',
     stars: 89,
     isOfficial: true,
   },
   {
     packageName: '@rozenite/mmkv-plugin',
     version: '1.0.5',
-    githubUrl:
-      'https://github.com/callstackincubator/rozenite/tree/main/packages/mmkv-plugin',
+    githubUrl: 'https://github.com/callstackincubator/rozenite/tree/main/packages/mmkv-plugin',
     npmUrl: 'https://www.npmjs.com/package/@rozenite/mmkv-plugin',
     description: 'MMKV storage debugging and inspection tools for React Native',
     stars: 234,
@@ -77,9 +74,7 @@ export class MockPluginRepository implements PluginRepository {
       .filter((plugin): plugin is RozenitePluginEntry => plugin !== undefined);
   }
 
-  async refreshPlugin(
-    plugin: PluginDirectoryReference,
-  ): Promise<RozenitePluginEntry> {
+  async refreshPlugin(plugin: PluginDirectoryReference): Promise<RozenitePluginEntry> {
     // Extract package name from npm URL
     const packageName = extractPackageNameFromNpmUrl(plugin.npmUrl);
 
@@ -97,9 +92,7 @@ export class MockPluginRepository implements PluginRepository {
     return existingPlugin;
   }
 
-  async getPluginWithFallback(
-    plugin: PluginDirectoryReference,
-  ): Promise<RozenitePluginEntry> {
+  async getPluginWithFallback(plugin: PluginDirectoryReference): Promise<RozenitePluginEntry> {
     const packageName = extractPackageNameFromNpmUrl(plugin.npmUrl);
 
     if (!packageName) {

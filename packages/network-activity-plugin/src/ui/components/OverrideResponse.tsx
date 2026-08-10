@@ -20,15 +20,9 @@ export const OverrideResponse = ({
   onClear,
 }: OverrideResponseProps) => {
   const actions = useNetworkActivityActions();
-  const [savedOverride, setSavedOverride] = useState<
-    RequestOverride | undefined
-  >(initialOverride);
-  const [editedBody, setEditedBody] = useState<string | undefined>(
-    initialOverride?.body,
-  );
-  const [editedStatus, setEditedStatus] = useState<number | undefined>(
-    initialOverride?.status,
-  );
+  const [savedOverride, setSavedOverride] = useState<RequestOverride | undefined>(initialOverride);
+  const [editedBody, setEditedBody] = useState<string | undefined>(initialOverride?.body);
+  const [editedStatus, setEditedStatus] = useState<number | undefined>(initialOverride?.status);
   const responseEditorRef = useRef<HTMLPreElement>(null);
   const responseBody = selectedRequest.response?.body;
 
@@ -52,18 +46,12 @@ export const OverrideResponse = ({
   };
 
   if (!responseBody || responseBody.data === null) {
-    return (
-      <div className="text-sm text-gray-400">
-        No response body available for this request
-      </div>
-    );
+    return <div className="text-sm text-gray-400">No response body available for this request</div>;
   }
 
   const { type } = responseBody;
 
-  const hasChanges =
-    editedBody !== savedOverride?.body ||
-    editedStatus !== savedOverride?.status;
+  const hasChanges = editedBody !== savedOverride?.body || editedStatus !== savedOverride?.status;
 
   const overrideActions = (
     <>
@@ -92,11 +80,7 @@ export const OverrideResponse = ({
 
   if (savedOverride !== undefined) {
     return (
-      <Section
-        title="Response Body"
-        collapsible={false}
-        action={overrideActions}
-      >
+      <Section title="Response Body" collapsible={false} action={overrideActions}>
         <div className="space-y-4">
           <KeyValueGrid
             items={[

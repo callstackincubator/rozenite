@@ -35,18 +35,14 @@ const normalizeDehydratedValue = (value: unknown): unknown => {
 
   const entries = Object.entries(record);
   return Object.fromEntries(
-    entries.map(
-      ([key, nested]) => [key, normalizeDehydratedValue(nested)] as const,
-    ),
+    entries.map(([key, nested]) => [key, normalizeDehydratedValue(nested)] as const),
   );
 };
 
 export const createInspectionStore = () => {
   const byNodeId = new Map<number, InspectedNodeRecord>();
 
-  const ingestInspectedElement = (
-    payload: unknown,
-  ): { nodeId: number; exists: boolean } | null => {
+  const ingestInspectedElement = (payload: unknown): { nodeId: number; exists: boolean } | null => {
     const source = getRecord(payload);
     if (!source || !Number.isInteger(source.id)) {
       return null;
@@ -60,22 +56,12 @@ export const createInspectionStore = () => {
 
     const value = getRecord(source.value) || source;
     const next: InspectedNodeRecord = {
-      ...(value.props !== undefined
-        ? { props: normalizeDehydratedValue(value.props) }
-        : {}),
-      ...(value.state !== undefined
-        ? { state: normalizeDehydratedValue(value.state) }
-        : {}),
-      ...(value.hooks !== undefined
-        ? { hooks: normalizeDehydratedValue(value.hooks) }
-        : {}),
+      ...(value.props !== undefined ? { props: normalizeDehydratedValue(value.props) } : {}),
+      ...(value.state !== undefined ? { state: normalizeDehydratedValue(value.state) } : {}),
+      ...(value.hooks !== undefined ? { hooks: normalizeDehydratedValue(value.hooks) } : {}),
     };
 
-    if (
-      next.props === undefined &&
-      next.state === undefined &&
-      next.hooks === undefined
-    ) {
+    if (next.props === undefined && next.state === undefined && next.hooks === undefined) {
       byNodeId.delete(nodeId);
       return { nodeId, exists: false };
     }

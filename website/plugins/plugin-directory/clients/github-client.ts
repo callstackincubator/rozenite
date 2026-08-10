@@ -19,9 +19,7 @@ interface GitHubError {
   documentation_url?: string;
 }
 
-async function getGitHubRepository(
-  repository: string,
-): Promise<GitHubRepository> {
+async function getGitHubRepository(repository: string): Promise<GitHubRepository> {
   const response = await fetch(`https://api.github.com/repos/${repository}`, {
     headers: {
       Accept: 'application/vnd.github.v3+json',
@@ -68,7 +66,7 @@ export function getRepositoryFromUrl(url: string): string | null {
     }
 
     return `${owner}/${repo}`;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

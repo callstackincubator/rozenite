@@ -1,8 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Field } from '@rozenite/ui';
-const meta = { component: Field, title: 'Components/Field' } satisfies Meta<
-  typeof Field
->;
+const meta = { component: Field, title: 'Components/Field' } satisfies Meta<typeof Field>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 /** Use to connect a form control with its label and supporting help text.

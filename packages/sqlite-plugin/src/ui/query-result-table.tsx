@@ -2,11 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import type { CellContext, ColumnDef, OnChangeFn } from '@tanstack/react-table';
 import type { SqliteQueryResult } from '../shared/types';
 import { formatDuration, formatNumber } from './utils';
-import {
-  getMetadataBadgeClassName,
-  getValueKind,
-  getValuePreview,
-} from './value-utils';
+import { getMetadataBadgeClassName, getValueKind, getValuePreview } from './value-utils';
 import { CellDetailDrawer } from './cell-detail-drawer';
 import { SqliteDataTable } from './sqlite-data-table';
 
@@ -44,9 +40,8 @@ type DrawerPayload = {
   value: Record<string, unknown>;
 } | null;
 
-const joinClassNames = (
-  ...classNames: Array<string | false | null | undefined>
-) => classNames.filter(Boolean).join(' ');
+const joinClassNames = (...classNames: Array<string | false | null | undefined>) =>
+  classNames.filter(Boolean).join(' ');
 
 const getColumnHeaderTitle = (
   column: string,
@@ -95,9 +90,7 @@ export const QueryResultTable = ({
   const handleInspectRow = (row: Record<string, unknown>, rowIndex: number) => {
     setDrawerPayload({
       title: `Row ${rowNumberOffset + rowIndex + 1}`,
-      value: Object.fromEntries(
-        visibleColumns.map((column) => [column, row[column]]),
-      ),
+      value: Object.fromEntries(visibleColumns.map((column) => [column, row[column]])),
     });
   };
 
@@ -106,9 +99,7 @@ export const QueryResultTable = ({
       ...visibleColumns.map((column) => ({
         id: column,
         header: () => (
-          <span title={getColumnHeaderTitle(column, columnMeta?.[column])}>
-            {column}
-          </span>
+          <span title={getColumnHeaderTitle(column, columnMeta?.[column])}>{column}</span>
         ),
         accessorFn: (row: Record<string, unknown>) => row[column],
         cell: ({ row }: CellContext<Record<string, unknown>, unknown>) => {
@@ -116,9 +107,7 @@ export const QueryResultTable = ({
 
           return (
             <div className="sqlite-cell-value">
-              <span className="sqlite-cell-preview">
-                {getValuePreview(value)}
-              </span>
+              <span className="sqlite-cell-preview">{getValuePreview(value)}</span>
               <span className="sqlite-cell-kind">{getValueKind(value)}</span>
             </div>
           );
@@ -145,12 +134,7 @@ export const QueryResultTable = ({
     <>
       {showMetadata && metadata ? (
         <div className="sqlite-inline-metadata">
-          <span
-            className={joinClassNames(
-              'sqlite-badge',
-              getMetadataBadgeClassName(metadata),
-            )}
-          >
+          <span className={joinClassNames('sqlite-badge', getMetadataBadgeClassName(metadata))}>
             {metadata.statementType}
           </span>
           <span className="sqlite-inline-stat sqlite-tabular">
@@ -183,9 +167,7 @@ export const QueryResultTable = ({
         showRowNumbers
         rowNumberOffset={rowNumberOffset}
         onRowClick={handleInspectRow}
-        getRowAriaLabel={(_, rowIndex) =>
-          `Inspect row ${rowNumberOffset + rowIndex + 1}`
-        }
+        getRowAriaLabel={(_, rowIndex) => `Inspect row ${rowNumberOffset + rowIndex + 1}`}
       />
 
       <CellDetailDrawer

@@ -1,11 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { Action } from 'redux';
 import type { TabComponentProps } from '@redux-devtools/inspector-monitor';
-import type {
-  ReduxActionTrace,
-  ReduxActionWithTrace,
-  ReduxTraceFrame,
-} from '../shared/trace';
+import type { ReduxActionTrace, ReduxActionWithTrace, ReduxTraceFrame } from '../shared/trace';
 
 type LiftedActionWithTrace<A extends Action<string>> = {
   action?: A;
@@ -85,9 +81,9 @@ const getLiftedAction = <A extends Action<string>>({
     return actions[selectedActionId] as LiftedActionWithTrace<A> | undefined;
   }
 
-  return Object.values(actions).find(
-    (liftedAction) => liftedAction.action === action,
-  ) as LiftedActionWithTrace<A> | undefined;
+  return Object.values(actions).find((liftedAction) => liftedAction.action === action) as
+    | LiftedActionWithTrace<A>
+    | undefined;
 };
 
 const parseRawStackFallback = (rawStack: string): ReduxTraceFrame[] =>
@@ -120,10 +116,7 @@ const getTrace = <A extends Action<string>>(
 
 const formatSourcePath = (url: string): string => {
   const withoutQueryAndHash = url.split(/[?#]/)[0];
-  const decoded = safeDecodeURIComponent(withoutQueryAndHash).replace(
-    /^file:\/\//,
-    '',
-  );
+  const decoded = safeDecodeURIComponent(withoutQueryAndHash).replace(/^file:\/\//, '');
   const workspaceMatch = decoded.match(/(?:^|\/)((?:apps|packages|src)\/.+)$/);
 
   if (workspaceMatch) {
@@ -199,13 +192,7 @@ const FrameList = ({
         return (
           <div key={`${formatLocation(frame)}-${index}`} style={frameStyle}>
             <div style={functionStyle}>{getFunctionName(frame)}</div>
-            <div
-              style={
-                dimLibraries && isLibrary
-                  ? libraryLocationStyle
-                  : appLocationStyle
-              }
-            >
+            <div style={dimLibraries && isLibrary ? libraryLocationStyle : appLocationStyle}>
               {formatLocation(frame)}
             </div>
           </div>
@@ -231,36 +218,22 @@ const CodeFrame = ({ trace }: { trace: ReduxActionTrace }) => {
 
 const Status = ({ trace }: { trace: ReduxActionTrace }) => {
   if (trace.status === 'pending') {
-    return (
-      <div style={statusStyle}>Symbolicating stack trace with Metro...</div>
-    );
+    return <div style={statusStyle}>Symbolicating stack trace with Metro...</div>;
   }
 
   if (trace.status === 'failed') {
-    return (
-      <div style={statusStyle}>
-        Could not source-map the stack via Metro: {trace.error}
-      </div>
-    );
+    return <div style={statusStyle}>Could not source-map the stack via Metro: {trace.error}</div>;
   }
 
   if (trace.status === 'unavailable') {
-    return (
-      <div style={statusStyle}>
-        Stack trace symbolication is unavailable for this action.
-      </div>
-    );
+    return <div style={statusStyle}>Stack trace symbolication is unavailable for this action.</div>;
   }
 
   return <div style={statusStyle}>Symbolicated stack trace</div>;
 };
 
-export const TraceTab = <S, A extends Action<string>>(
-  props: TabComponentProps<S, A>,
-) => {
-  const liftedAction = getLiftedAction(
-    props as unknown as TabComponentProps<unknown, A>,
-  );
+export const TraceTab = <S, A extends Action<string>>(props: TabComponentProps<S, A>) => {
+  const liftedAction = getLiftedAction(props as unknown as TabComponentProps<unknown, A>);
   const trace = getTrace(liftedAction);
 
   if (!trace) {
@@ -282,9 +255,7 @@ export const TraceTab = <S, A extends Action<string>>(
       <FrameList frames={preferredFrames} dimLibraries />
       {preferredFrames.length !== trace.frames.length && (
         <details style={detailsStyle}>
-          <summary style={summaryStyle}>
-            Full stack ({trace.frames.length} frames)
-          </summary>
+          <summary style={summaryStyle}>Full stack ({trace.frames.length} frames)</summary>
           <FrameList frames={trace.frames} dimLibraries />
         </details>
       )}

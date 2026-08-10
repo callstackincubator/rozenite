@@ -10,23 +10,15 @@ type CookieCardProps = {
 export const CookieCard = ({ cookie, keyClassName }: CookieCardProps) => (
   <div className="bg-gray-800 border border-gray-700 rounded p-3">
     <div className="flex items-center justify-between mb-2">
-      <span className={cn('text-sm font-medium', keyClassName)}>
-        {cookie.name}
-      </span>
+      <span className={cn('text-sm font-medium', keyClassName)}>{cookie.name}</span>
       <div className="flex items-center gap-2">
         {cookie.secure && (
-          <Badge
-            variant="outline"
-            className="text-xs text-yellow-400 border-yellow-400"
-          >
+          <Badge variant="outline" className="text-xs text-yellow-400 border-yellow-400">
             Secure
           </Badge>
         )}
         {cookie.httpOnly && (
-          <Badge
-            variant="outline"
-            className="text-xs text-purple-400 border-purple-400"
-          >
+          <Badge variant="outline" className="text-xs text-purple-400 border-purple-400">
             HttpOnly
           </Badge>
         )}

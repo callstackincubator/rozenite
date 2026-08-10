@@ -3,9 +3,7 @@ type QueuedMessage<TEventMap extends Record<string, unknown>> = {
   data: TEventMap[keyof TEventMap];
 };
 
-type SendFunction<TEventMap extends Record<string, unknown>> = <
-  K extends keyof TEventMap,
->(
+type SendFunction<TEventMap extends Record<string, unknown>> = <K extends keyof TEventMap>(
   type: K,
   data: TEventMap[K],
 ) => void;
@@ -17,9 +15,7 @@ type SendFunction<TEventMap extends Record<string, unknown>> = <
 export class EventsListener<TEventMap extends Record<string, unknown>> {
   private messageQueue: QueuedMessage<TEventMap>[] = [];
   private sendFunction: SendFunction<TEventMap> | null = null;
-  private filterFunction:
-    | ((message: QueuedMessage<TEventMap>) => boolean)
-    | null = null;
+  private filterFunction: ((message: QueuedMessage<TEventMap>) => boolean) | null = null;
   private maxQueueSize = 200;
   private isQueuing = false;
 
@@ -73,9 +69,7 @@ export class EventsListener<TEventMap extends Record<string, unknown>> {
     this.messageQueue.push(message);
   }
 
-  private flushQueue(
-    filterFn?: (message: QueuedMessage<TEventMap>) => boolean,
-  ): void {
+  private flushQueue(filterFn?: (message: QueuedMessage<TEventMap>) => boolean): void {
     if (!this.sendFunction) {
       return;
     }

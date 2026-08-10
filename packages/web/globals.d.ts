@@ -9,9 +9,7 @@ declare module 'react-devtools-core' {
     isProfiling: boolean,
     profilingSettings: unknown,
   ): void;
-  export function connectWithCustomMessagingProtocol(
-    options: unknown,
-  ): () => void;
+  export function connectWithCustomMessagingProtocol(options: unknown): () => void;
 }
 
 declare module 'react-native/Libraries/Components/View/ReactNativeStyleAttributes' {

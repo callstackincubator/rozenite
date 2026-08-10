@@ -4,11 +4,7 @@ import { EditorView, keymap } from '@codemirror/view';
 import { cn } from '@rozenite/ui';
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { compactAsciiPreview } from './binary';
-import {
-  initialState,
-  reduce,
-  type EditorMode,
-} from './binary-value-editor-state';
+import { initialState, reduce, type EditorMode } from './binary-value-editor-state';
 
 export type BinaryValueEditorProps = {
   initialBytes?: number[];
@@ -57,13 +53,8 @@ const ModeButton = ({
   </button>
 );
 
-export const BinaryValueEditor = ({
-  initialBytes,
-  onChange,
-}: BinaryValueEditorProps) => {
-  const [state, dispatch] = useReducer(reduce, undefined, () =>
-    initialState({}),
-  );
+export const BinaryValueEditor = ({ initialBytes, onChange }: BinaryValueEditorProps) => {
+  const [state, dispatch] = useReducer(reduce, undefined, () => initialState({}));
   const initialBytesRef = useRef(initialBytes);
   const [isPreparing, setIsPreparing] = useState(
     Boolean(initialBytesRef.current && initialBytesRef.current.length > 0),
@@ -108,9 +99,7 @@ export const BinaryValueEditor = ({
             if (!update.docChanged) return;
             const newText = update.state.doc.toString();
             if (newText === stateRef.current.text) return;
-            const isPaste = update.transactions.some((tr) =>
-              tr.isUserEvent('input.paste'),
-            );
+            const isPaste = update.transactions.some((tr) => tr.isUserEvent('input.paste'));
             dispatch({
               type: isPaste ? 'normalize-paste' : 'set-text',
               text: newText,
@@ -181,8 +170,7 @@ export const BinaryValueEditor = ({
         <div className="text-muted-foreground">{byteCount} bytes</div>
         {asciiPreview && (
           <div className="overflow-hidden text-ellipsis whitespace-nowrap text-muted-foreground">
-            ASCII:{' '}
-            <span className="font-mono text-foreground">{asciiPreview}</span>
+            ASCII: <span className="font-mono text-foreground">{asciiPreview}</span>
           </div>
         )}
         {state.error && <div className="text-destructive">{state.error}</div>}

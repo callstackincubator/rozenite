@@ -59,8 +59,7 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
 
           <div className="control-group">
             <label className="control-label">
-              Major grid every{' '}
-              {config.majorEvery > 0 ? `${config.majorEvery} cells` : 'Off'}
+              Major grid every {config.majorEvery > 0 ? `${config.majorEvery} cells` : 'Off'}
             </label>
             <input
               type="range"
@@ -68,9 +67,7 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
               max="20"
               step="1"
               value={config.majorEvery}
-              onChange={(e) =>
-                handleChange({ majorEvery: Number(e.target.value) })
-              }
+              onChange={(e) => handleChange({ majorEvery: Number(e.target.value) })}
               className="input-range"
             />
           </div>
@@ -94,9 +91,7 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
                   min="1"
                   max="10"
                   value={config.minorLineWidth}
-                  onChange={(e) =>
-                    handleChange({ minorLineWidth: Number(e.target.value) })
-                  }
+                  onChange={(e) => handleChange({ minorLineWidth: Number(e.target.value) })}
                   className="input-range"
                 />
               </div>
@@ -116,9 +111,7 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
                   min="1"
                   max="10"
                   value={config.majorLineWidth}
-                  onChange={(e) =>
-                    handleChange({ majorLineWidth: Number(e.target.value) })
-                  }
+                  onChange={(e) => handleChange({ majorLineWidth: Number(e.target.value) })}
                   className="input-range"
                 />
               </div>
@@ -146,9 +139,7 @@ export const GridSettings = ({ config, onConfigChange }: GridSettingsProps) => {
           </div>
 
           <div className="control-group">
-            <label className="control-label">
-              Opacity ({Math.round(localOpacity * 100)}%)
-            </label>
+            <label className="control-label">Opacity ({Math.round(localOpacity * 100)}%)</label>
             <input
               type="range"
               min="0"

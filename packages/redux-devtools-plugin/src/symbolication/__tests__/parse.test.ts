@@ -4,9 +4,7 @@ import { parseStack } from '../parse';
 describe('parseStack', () => {
   it('parses V8 function frames', () => {
     expect(
-      parseStack(
-        'Error\n    at dispatchAction (http://localhost:8081/index.bundle:123:45)',
-      ),
+      parseStack('Error\n    at dispatchAction (http://localhost:8081/index.bundle:123:45)'),
     ).toEqual([
       {
         functionName: 'dispatchAction',
@@ -19,9 +17,7 @@ describe('parseStack', () => {
 
   it('parses JavaScriptCore frames', () => {
     expect(
-      parseStack(
-        'dispatchAction@http://localhost:8081/index.bundle?platform=ios:123:45',
-      ),
+      parseStack('dispatchAction@http://localhost:8081/index.bundle?platform=ios:123:45'),
     ).toEqual([
       {
         functionName: 'dispatchAction',

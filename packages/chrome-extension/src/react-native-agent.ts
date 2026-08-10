@@ -29,9 +29,7 @@ export type ReactNativeAgent = {
   isEnabled: () => boolean;
 };
 
-export const createReactNativeAgent = (
-  pageManager: PageManager,
-): ReactNativeAgent => {
+export const createReactNativeAgent = (pageManager: PageManager): ReactNativeAgent => {
   let enabled = false;
 
   const getMetadata = (pageId: string): ReactNativeAgentMetadata => {

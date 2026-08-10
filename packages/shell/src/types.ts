@@ -8,6 +8,7 @@ export type ShellPlugin = {
   id: string;
   name: string;
   description: string;
+  version: string;
   panels: ShellPanel[];
 };
 

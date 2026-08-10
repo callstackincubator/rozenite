@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  SqliteColumnInfo,
-  SqliteEntity,
-  SqliteSchema,
-} from '../sqlite-introspection';
+import type { SqliteColumnInfo, SqliteEntity, SqliteSchema } from '../sqlite-introspection';
 import {
   buildSqlCompletionSchema,
   createSqlEditorColumnCache,

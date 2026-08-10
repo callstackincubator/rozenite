@@ -11,10 +11,7 @@ export const frontmatter = {
   sidebar: true,
 };
 
-const generatePageNumbers = (
-  currentPage: number,
-  totalPages: number,
-): (number | string)[] => {
+const generatePageNumbers = (currentPage: number, totalPages: number): (number | string)[] => {
   const pages: (number | string)[] = [];
   const maxVisiblePages = 5;
 
@@ -35,13 +32,7 @@ const generatePageNumbers = (
   return pages;
 };
 
-const PaginationControls = ({
-  page,
-  totalPages,
-}: {
-  page: number;
-  totalPages: number;
-}) => {
+const PaginationControls = ({ page, totalPages }: { page: number; totalPages: number }) => {
   const pageNumbers = generatePageNumbers(page, totalPages);
 
   return (
@@ -49,9 +40,7 @@ const PaginationControls = ({
       <div className={styles.pagination}>
         <a
           href={page > 1 ? `/plugin-directory/${page - 1}` : undefined}
-          className={`${styles.paginationButton} ${
-            page <= 1 ? styles.disabled : ''
-          }`}
+          className={`${styles.paginationButton} ${page <= 1 ? styles.disabled : ''}`}
           aria-disabled={page <= 1}
         >
           <ArrowLeft aria-hidden="true" size={16} weight="bold" />
@@ -68,22 +57,18 @@ const PaginationControls = ({
               <a
                 key={pageNum}
                 href={`/plugin-directory/${pageNum}`}
-                className={`${styles.pageNumber} ${
-                  pageNum === page ? styles.active : ''
-                }`}
+                className={`${styles.pageNumber} ${pageNum === page ? styles.active : ''}`}
                 aria-current={pageNum === page ? 'page' : undefined}
               >
                 {pageNum}
               </a>
-            )
+            ),
           )}
         </div>
 
         <a
           href={page < totalPages ? `/plugin-directory/${page + 1}` : undefined}
-          className={`${styles.paginationButton} ${
-            page >= totalPages ? styles.disabled : ''
-          }`}
+          className={`${styles.paginationButton} ${page >= totalPages ? styles.disabled : ''}`}
           aria-disabled={page >= totalPages}
         >
           Next
@@ -113,8 +98,8 @@ export default function DirectoryPage() {
             <p className={styles.eyebrow}>Plugin directory</p>
             <h1 className={styles.title}>Tools for the panels you need.</h1>
             <p className={styles.intro}>
-              Extend React Native DevTools with ready-made plugins for the state,
-              storage, and diagnostics your app depends on.
+              Extend React Native DevTools with ready-made plugins for the state, storage, and
+              diagnostics your app depends on.
             </p>
           </div>
         </section>
@@ -132,10 +117,7 @@ export default function DirectoryPage() {
 
             <div className={styles.grid}>
               {page.data.map((plugin, index) => (
-                <PluginCard
-                  key={`${plugin.packageName}-${index}`}
-                  plugin={plugin}
-                />
+                <PluginCard key={`${plugin.packageName}-${index}`} plugin={plugin} />
               ))}
             </div>
 

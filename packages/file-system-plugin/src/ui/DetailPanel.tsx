@@ -37,9 +37,7 @@ export function DetailPanel({
   onExport,
 }: DetailPanelProps) {
   const [imagePreviewUri, setImagePreviewUri] = useState<string | null>(null);
-  const [imagePreviewError, setImagePreviewError] = useState<string | null>(
-    null,
-  );
+  const [imagePreviewError, setImagePreviewError] = useState<string | null>(null);
   const [imagePreviewLoading, setImagePreviewLoading] = useState(false);
 
   const [textPreview, setTextPreview] = useState<string | null>(null);
@@ -124,33 +122,22 @@ export function DetailPanel({
           <Pressable
             style={(state: WebPressableState) => [
               styles.exportButton,
-              state.hovered &&
-                canExport &&
-                !exportLoading &&
-                styles.exportButtonHovered,
+              state.hovered && canExport && !exportLoading && styles.exportButtonHovered,
               (!canExport || exportLoading) && styles.exportButtonDisabled,
             ]}
             onPress={() => onExport(selected)}
             disabled={!canExport || exportLoading}
           >
-            <Text style={styles.exportButtonText}>
-              {exportLoading ? 'Exporting…' : 'Export'}
-            </Text>
+            <Text style={styles.exportButtonText}>{exportLoading ? 'Exporting…' : 'Export'}</Text>
           </Pressable>
           <PathDisplay path={selected.path} />
           <View style={styles.detailGrid}>
-            <DetailLine
-              label="Type"
-              value={selected.isDirectory ? 'Directory' : 'File'}
-            />
+            <DetailLine label="Type" value={selected.isDirectory ? 'Directory' : 'File'} />
             <DetailLine
               label="Size"
               value={selected.isDirectory ? '—' : formatBytes(selected.size)}
             />
-            <DetailLine
-              label="Modified"
-              value={formatDate(selected.modifiedAtMs)}
-            />
+            <DetailLine label="Modified" value={formatDate(selected.modifiedAtMs)} />
           </View>
 
           {!selected.isDirectory && isLikelyImageFile(selected.path) ? (
@@ -159,9 +146,7 @@ export function DetailPanel({
               {imagePreviewLoading ? (
                 <View style={styles.previewLoading}>
                   <ActivityIndicator />
-                  <Text style={styles.previewLoadingText}>
-                    Loading preview…
-                  </Text>
+                  <Text style={styles.previewLoadingText}>Loading preview…</Text>
                 </View>
               ) : imagePreviewError ? (
                 <Text style={styles.previewError}>{imagePreviewError}</Text>
@@ -185,17 +170,13 @@ export function DetailPanel({
               {textPreviewLoading ? (
                 <View style={styles.previewLoading}>
                   <ActivityIndicator />
-                  <Text style={styles.previewLoadingText}>
-                    Loading preview…
-                  </Text>
+                  <Text style={styles.previewLoadingText}>Loading preview…</Text>
                 </View>
               ) : textPreviewError ? (
                 <Text style={styles.previewError}>{textPreviewError}</Text>
               ) : textPreview ? (
                 <ScrollView style={styles.textPreviewScroll}>
-                  <Text style={styles.textPreviewContent}>
-                    {formatTextPreview(textPreview)}
-                  </Text>
+                  <Text style={styles.textPreviewContent}>{formatTextPreview(textPreview)}</Text>
                 </ScrollView>
               ) : (
                 <Text style={styles.previewHint}>

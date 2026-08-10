@@ -59,14 +59,11 @@ export const api = {
   },
 
   getTodos: async (): Promise<Todo[]> => {
-    const response = await fetch(
-      'https://jsonplaceholder.typicode.com/todos?_limit=15',
-      {
-        headers: {
-          'X-Rozenite-Test': 'true',
-        },
+    const response = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=15', {
+      headers: {
+        'X-Rozenite-Test': 'true',
       },
-    );
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -78,14 +75,11 @@ export const api = {
   getSlowData: async (): Promise<User[]> => {
     // Add artificial delay to simulate slow network
     await new Promise((resolve) => setTimeout(resolve, 3000));
-    const response = await fetch(
-      'https://jsonplaceholder.typicode.com/users?_limit=5',
-      {
-        headers: {
-          'X-Rozenite-Test': 'true',
-        },
+    const response = await fetch('https://jsonplaceholder.typicode.com/users?_limit=5', {
+      headers: {
+        'X-Rozenite-Test': 'true',
       },
-    );
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -99,14 +93,11 @@ export const api = {
     if (Math.random() < 0.2) {
       throw new Error('Random API failure - please try again');
     }
-    const response = await fetch(
-      'https://jsonplaceholder.typicode.com/posts?_limit=8',
-      {
-        headers: {
-          'X-Rozenite-Test': 'true',
-        },
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=8', {
+      headers: {
+        'X-Rozenite-Test': 'true',
       },
-    );
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -116,17 +107,14 @@ export const api = {
   },
 
   createPost: async (postData: Omit<Post, 'id'>): Promise<Post> => {
-    const response = await fetch(
-      'https://jsonplaceholder.typicode.com/posts?someParam=value',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Rozenite-Test': 'true',
-        },
-        body: JSON.stringify(postData),
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts?someParam=value', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Rozenite-Test': 'true',
       },
-    );
+      body: JSON.stringify(postData),
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -158,17 +146,14 @@ export const api = {
 
   getLargeFile: async (): Promise<ArrayBuffer> => {
     const cacheBuster = Date.now();
-    const response = await fetch(
-      `https://proof.ovh.net/files/10Mb.dat?cb=${cacheBuster}`,
-      {
-        headers: {
-          'X-Rozenite-Test': 'large-download',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          Pragma: 'no-cache',
-          Expires: '0',
-        },
+    const response = await fetch(`https://proof.ovh.net/files/10Mb.dat?cb=${cacheBuster}`, {
+      headers: {
+        'X-Rozenite-Test': 'large-download',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
       },
-    );
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

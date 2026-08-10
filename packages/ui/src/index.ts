@@ -10,10 +10,7 @@ export type {
 } from './split/split';
 
 export { PluginShell } from './plugin-shell/plugin-shell';
-export type {
-  PluginShellProps,
-  PluginShellBodyProps,
-} from './plugin-shell/plugin-shell';
+export type { PluginShellProps, PluginShellBodyProps } from './plugin-shell/plugin-shell';
 
 export { PluginHeader } from './plugin-header/plugin-header';
 export type {
@@ -65,12 +62,7 @@ export type {
 } from './tooltip/tooltip';
 
 export { Tabs } from './tabs/tabs';
-export type {
-  TabsProps,
-  TabsListProps,
-  TabsTabProps,
-  TabsPanelProps,
-} from './tabs/tabs';
+export type { TabsProps, TabsListProps, TabsTabProps, TabsPanelProps } from './tabs/tabs';
 
 export { ScrollArea } from './scroll-area/scroll-area';
 export type { ScrollAreaProps } from './scroll-area/scroll-area';
@@ -91,6 +83,24 @@ export type {
   ToolbarSeparatorProps,
   ToolbarGroupProps,
 } from './toolbar/toolbar';
+
+export { Separator } from './separator/separator';
+export type { SeparatorProps } from './separator/separator';
+
+export { Link } from './link/link';
+export type { LinkProps } from './link/link';
+
+export { IndicatorDot, indicatorDotVariants } from './indicator-dot/indicator-dot';
+export type { IndicatorDotProps } from './indicator-dot/indicator-dot';
+
+export { DescriptionList } from './description-list/description-list';
+export type {
+  DescriptionListProps,
+  DescriptionListItemProps,
+} from './description-list/description-list';
+
+export { Card } from './card/card';
+export type { CardProps, CardHeaderProps, CardBodyProps } from './card/card';
 
 export { Toast, useToast } from './toast/toast';
 export type { ToastProviderProps } from './toast/toast';
@@ -121,11 +131,19 @@ export { DataTableEditableCell } from './data-table/data-table-editable-cell';
 export type { DataTableEditableCellProps } from './data-table/data-table-editable-cell';
 export { updateCellValue } from './data-table/data-table-utils';
 
+export { List } from './list/list';
+export type { ListProps, ListGroupProps, ListItemProps } from './list/list';
+
+export { NestedList } from './list/nested-list';
+export type { NestedListProps, NestedListItemProps } from './list/nested-list';
+
 export { Sidebar } from './sidebar/sidebar';
 export type {
   SidebarProps,
   SidebarGroupProps,
   SidebarItemProps,
+  SidebarHeaderProps,
+  SidebarFooterProps,
 } from './sidebar/sidebar';
 
 export { EmptyState } from './empty-state/empty-state';

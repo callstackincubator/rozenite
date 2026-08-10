@@ -8,11 +8,7 @@ import type {
   StorageRequestErrorEvent,
 } from '../shared/messaging';
 import { computePreview, parseSnapshot } from '../shared/snapshot';
-import {
-  supportsType,
-  type StorageEntry,
-  type StorageTarget,
-} from '../shared/types';
+import { supportsType, type StorageEntry, type StorageTarget } from '../shared/types';
 import type { StorageView } from './storage-view';
 
 export type ImportEmittedEvent =
@@ -20,9 +16,7 @@ export type ImportEmittedEvent =
   | StorageImportResultEvent
   | StorageInvalidatedEvent;
 
-type ImportPreviewResult =
-  | StorageImportPreviewResponseEvent
-  | StorageRequestErrorEvent;
+type ImportPreviewResult = StorageImportPreviewResponseEvent | StorageRequestErrorEvent;
 
 const isSameTarget = (left: StorageTarget, right: StorageTarget) =>
   left.adapterId === right.adapterId && left.storageId === right.storageId;
@@ -58,11 +52,7 @@ const isEntry = (value: unknown): value is StorageEntry => {
     entry.type === 'buffer' &&
     Array.isArray(entry.value) &&
     entry.value.every(
-      (byte) =>
-        typeof byte === 'number' &&
-        Number.isInteger(byte) &&
-        byte >= 0 &&
-        byte <= 255,
+      (byte) => typeof byte === 'number' && Number.isInteger(byte) && byte >= 0 && byte <= 255,
     )
   );
 };
@@ -96,8 +86,7 @@ export const handleImportPreviewRequest = async (
       type: 'storage-request-error',
       requestId,
       code: 'INVALID_REQUEST',
-      message:
-        'Import preview requests require a valid target, request ID, and snapshot.',
+      message: 'Import preview requests require a valid target, request ID, and snapshot.',
     };
   }
 
@@ -154,9 +143,7 @@ export const handleImportEntries = async (
     emit({
       type: 'import-result',
       requestId,
-      target: isTarget(event.target)
-        ? event.target
-        : { adapterId: '', storageId: '' },
+      target: isTarget(event.target) ? event.target : { adapterId: '', storageId: '' },
       ok: false,
       written: 0,
       total: 0,
@@ -182,9 +169,7 @@ export const handleImportEntries = async (
 
   // Recheck policy at apply time so a preview cannot bypass a changed target.
   const entries = event.entries.filter(
-    (entry) =>
-      supportsType(view.capabilities, entry.type) &&
-      !isBlacklisted(view, entry.key),
+    (entry) => supportsType(view.capabilities, entry.type) && !isBlacklisted(view, entry.key),
   );
 
   for (let i = 0; i < entries.length; i++) {

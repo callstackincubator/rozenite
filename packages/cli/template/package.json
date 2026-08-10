@@ -2,6 +2,7 @@
   "name": "<%- name %>",
   "version": "0.0.1",
   "description": "<%- description %>",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "rozenite build",
@@ -11,19 +12,18 @@
     "@rozenite/plugin-bridge": "^1.2.0"
   },
   "devDependencies": {
-    "vite": "^7.3.1",
     "@rozenite/vite-plugin": "^1.2.0",
-    "typescript": "~5.9.3",
-    "rozenite": "^1.2.0",
-    "react-native-web": "^0.21.2",
+    "@types/react": "~19.1.10",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
-    "@types/react": "~19.1.10"
+    "react-native-web": "^0.21.2",
+    "rozenite": "^1.2.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1"
   },
   "peerDependencies": {
     "react": "*",
     "react-native": "*"
-  },
-  "license": "MIT"
+  }
 }

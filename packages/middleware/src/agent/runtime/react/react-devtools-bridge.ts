@@ -18,10 +18,7 @@ export interface ReactProfilingStatus {
 }
 
 export type ReactDevToolsBridge = {
-  ingest: (message: {
-    event: string;
-    payload: unknown;
-  }) => ReactTreeSyncPayload | null;
+  ingest: (message: { event: string; payload: unknown }) => ReactTreeSyncPayload | null;
   send: (event: string, payload: unknown) => void;
   startProfiling: () => void;
   stopProfiling: () => void;
@@ -52,9 +49,7 @@ const getRendererIdFromOperations = (payload: unknown): number | null => {
   return candidate;
 };
 
-const normalizeProfilingStatusEvent = (
-  payload: unknown,
-): NormalizedProfilingStatusEvent => {
+const normalizeProfilingStatusEvent = (payload: unknown): NormalizedProfilingStatusEvent => {
   if (typeof payload === 'boolean') {
     return {
       isProfiling: payload,
@@ -80,8 +75,7 @@ const normalizeProfilingStatusEvent = (
     update.supportsReloadAndProfile = record.supportsReloadAndProfile;
   }
   if (typeof record.recordChangeDescriptions === 'boolean') {
-    update.supportsProfiling =
-      update.supportsProfiling || record.recordChangeDescriptions;
+    update.supportsProfiling = update.supportsProfiling || record.recordChangeDescriptions;
   }
 
   return update;
@@ -116,10 +110,7 @@ export const createReactDevToolsBridge = async (options?: {
   };
 
   return {
-    ingest(message: {
-      event: string;
-      payload: unknown;
-    }): ReactTreeSyncPayload | null {
+    ingest(message: { event: string; payload: unknown }): ReactTreeSyncPayload | null {
       switch (message.event) {
         case 'operations': {
           const rendererId = getRendererIdFromOperations(message.payload);
@@ -136,18 +127,14 @@ export const createReactDevToolsBridge = async (options?: {
 
         case 'profilingStatus':
           profilingStore
-            .ingestProfilingStatus(
-              normalizeProfilingStatusEvent(message.payload),
-            )
+            .ingestProfilingStatus(normalizeProfilingStatusEvent(message.payload))
             .requestProfilingDataForRendererIds.forEach((rendererId) => {
               send('getProfilingData', { rendererID: rendererId });
             });
           return null;
 
         case 'profilingData':
-          profilingStore.ingestProfilingData(
-            normalizeProfilingDataEvent(message.payload),
-          );
+          profilingStore.ingestProfilingData(normalizeProfilingDataEvent(message.payload));
           return null;
 
         case 'renderer':
@@ -189,13 +176,9 @@ export const createReactDevToolsBridge = async (options?: {
     },
 
     reloadAndProfile(): void {
-      const status = profilingStore.getStatus(
-        componentTreeStore.getRootsCount(),
-      );
+      const status = profilingStore.getStatus(componentTreeStore.getRootsCount());
       if (status.supportsReloadAndProfile !== true) {
-        throw new Error(
-          'Reload-and-profile is not supported by this React DevTools connection.',
-        );
+        throw new Error('Reload-and-profile is not supported by this React DevTools connection.');
       }
 
       profilingStore.requestProfilingStart();

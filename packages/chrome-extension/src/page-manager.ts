@@ -1,11 +1,7 @@
 import { createEventEmitter } from './event-emitter.js';
 import { logger } from './logger.js';
 import { getDeviceName } from './device-utils.js';
-import {
-  checkForUpdates,
-  STORAGE_KEY_DISMISSED,
-  DISMISS_DURATION_MS,
-} from './update-checker.js';
+import { checkForUpdates, STORAGE_KEY_DISMISSED, DISMISS_DURATION_MS } from './update-checker.js';
 import { injectUpdateBanner } from './update-banner.js';
 
 const INSPECTABLE_URL_PREFIXES = [
@@ -65,9 +61,7 @@ export const createPageManager = (app: string): PageManager => {
     return INSPECTABLE_URL_PREFIXES.some((prefix) => url.startsWith(prefix));
   };
 
-  const getRozeniteMetadata = async (
-    tabId: number,
-  ): Promise<RozeniteMetadata | null> => {
+  const getRozeniteMetadata = async (tabId: number): Promise<RozeniteMetadata | null> => {
     try {
       const results = await chrome.scripting.executeScript({
         target: { tabId },
@@ -118,11 +112,7 @@ export const createPageManager = (app: string): PageManager => {
     try {
       const update = await checkForUpdates();
       if (update.hasUpdate) {
-        logger.info(
-          'Injecting update banner for tab',
-          tabId,
-          'v' + update.latestVersion,
-        );
+        logger.info('Injecting update banner for tab', tabId, 'v' + update.latestVersion);
         const logoUrl = chrome.runtime.getURL('icons/icon48.png');
         await chrome.scripting.executeScript({
           target: { tabId },
@@ -168,12 +158,7 @@ export const createPageManager = (app: string): PageManager => {
         if (existingIndex !== -1) {
           const oldPage = pages[existingIndex];
           if (oldPage.origin !== page.origin) {
-            logger.info(
-              'Page origin changed:',
-              oldPage.origin,
-              '->',
-              page.origin,
-            );
+            logger.info('Page origin changed:', oldPage.origin, '->', page.origin);
             emitter.emit('removed', oldPage);
             pages[existingIndex] = page;
             emitter.emit('added', page);
@@ -198,11 +183,9 @@ export const createPageManager = (app: string): PageManager => {
 
   const getAll = () => [...pages];
 
-  const getByOrigin = (origin: string) =>
-    pages.filter((page) => page.origin === origin);
+  const getByOrigin = (origin: string) => pages.filter((page) => page.origin === origin);
 
-  const hasPagesForOrigin = (origin: string) =>
-    pages.some((page) => page.origin === origin);
+  const hasPagesForOrigin = (origin: string) => pages.some((page) => page.origin === origin);
 
   const hasPages = () => pages.length > 0;
 

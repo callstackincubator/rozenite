@@ -8,14 +8,8 @@ export default defineConfig({
   cacheDir: '../../node_modules/.vite/agent-sdk',
   resolve: {
     alias: {
-      '@rozenite/controls-plugin/sdk': resolve(
-        __dirname,
-        '../controls-plugin/sdk.ts',
-      ),
-      '@rozenite/file-system-plugin/sdk': resolve(
-        __dirname,
-        '../file-system-plugin/sdk.ts',
-      ),
+      '@rozenite/controls-plugin/sdk': resolve(__dirname, '../controls-plugin/sdk.ts'),
+      '@rozenite/file-system-plugin/sdk': resolve(__dirname, '../file-system-plugin/sdk.ts'),
       '@rozenite/mmkv-plugin/sdk': resolve(__dirname, '../mmkv-plugin/sdk.ts'),
       '@rozenite/network-activity-plugin/sdk': resolve(
         __dirname,
@@ -25,18 +19,9 @@ export default defineConfig({
         __dirname,
         '../react-navigation-plugin/sdk.ts',
       ),
-      '@rozenite/redux-devtools-plugin/sdk': resolve(
-        __dirname,
-        '../redux-devtools-plugin/sdk.ts',
-      ),
-      '@rozenite/storage-plugin/sdk': resolve(
-        __dirname,
-        '../storage-plugin/sdk.ts',
-      ),
-      '@rozenite/tanstack-query-plugin/sdk': resolve(
-        __dirname,
-        '../tanstack-query-plugin/sdk.ts',
-      ),
+      '@rozenite/redux-devtools-plugin/sdk': resolve(__dirname, '../redux-devtools-plugin/sdk.ts'),
+      '@rozenite/storage-plugin/sdk': resolve(__dirname, '../storage-plugin/sdk.ts'),
+      '@rozenite/tanstack-query-plugin/sdk': resolve(__dirname, '../tanstack-query-plugin/sdk.ts'),
     },
   },
   base: './',

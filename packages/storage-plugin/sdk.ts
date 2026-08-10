@@ -5,11 +5,7 @@ import {
   storageToolDefinitions,
 } from './src/shared/agent-tools.js';
 
-export {
-  STORAGE_AGENT_ENTRY_TYPES,
-  STORAGE_AGENT_PLUGIN_ID,
-  storageToolDefinitions,
-};
+export { STORAGE_AGENT_ENTRY_TYPES, STORAGE_AGENT_PLUGIN_ID, storageToolDefinitions };
 
 export const storageTools = defineAgentToolDescriptors(
   STORAGE_AGENT_PLUGIN_ID,

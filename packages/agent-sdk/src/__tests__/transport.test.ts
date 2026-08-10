@@ -42,11 +42,7 @@ describe('agent transport', () => {
     }> = [];
 
     httpTestHarness.requestHandler.mockImplementation(
-      async ({
-        method,
-        pathname,
-        body,
-      }: MockHttpRequest): Promise<MockHttpResult> => {
+      async ({ method, pathname, body }: MockHttpRequest): Promise<MockHttpResult> => {
         requests.push({ method, pathname, body });
 
         if (method === 'GET' && pathname === AGENT_TARGETS_ROUTE) {
@@ -67,10 +63,7 @@ describe('agent transport', () => {
           };
         }
 
-        if (
-          method === 'GET' &&
-          pathname === getAgentSessionRoute('session-1')
-        ) {
+        if (method === 'GET' && pathname === getAgentSessionRoute('session-1')) {
           return {
             payload: {
               ok: true,
@@ -79,10 +72,7 @@ describe('agent transport', () => {
           };
         }
 
-        if (
-          method === 'DELETE' &&
-          pathname === getAgentSessionRoute('session-1')
-        ) {
+        if (method === 'DELETE' && pathname === getAgentSessionRoute('session-1')) {
           return {
             payload: {
               ok: true,
@@ -91,10 +81,7 @@ describe('agent transport', () => {
           };
         }
 
-        if (
-          method === 'GET' &&
-          pathname === getAgentSessionToolsRoute('session-1')
-        ) {
+        if (method === 'GET' && pathname === getAgentSessionToolsRoute('session-1')) {
           return {
             payload: {
               ok: true,
@@ -111,10 +98,7 @@ describe('agent transport', () => {
           };
         }
 
-        if (
-          method === 'POST' &&
-          pathname === getAgentSessionCallToolRoute('session-1')
-        ) {
+        if (method === 'POST' && pathname === getAgentSessionCallToolRoute('session-1')) {
           return {
             payload: {
               ok: true,
@@ -135,9 +119,7 @@ describe('agent transport', () => {
     await expect(transport.listTargets()).resolves.toEqual({
       targets: [{ id: 'device-1', name: 'Phone' }],
     });
-    await expect(
-      transport.createSession({ deviceId: 'device-1' }),
-    ).resolves.toEqual({
+    await expect(transport.createSession({ deviceId: 'device-1' })).resolves.toEqual({
       session: { id: 'session-1', deviceId: 'device-1' },
     });
     await expect(transport.getSession('session-1')).resolves.toEqual({

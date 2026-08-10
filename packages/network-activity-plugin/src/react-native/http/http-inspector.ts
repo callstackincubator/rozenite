@@ -34,9 +34,7 @@ type NanoEventsMap = {
 };
 
 export type HTTPInspector = Inspector<HttpEventMap> & {
-  getNetworkRequestsRegistry: () => ReturnType<
-    typeof getNetworkRequestsRegistry
-  >;
+  getNetworkRequestsRegistry: () => ReturnType<typeof getNetworkRequestsRegistry>;
 };
 
 const READY_STATE_HEADERS_RECEIVED = 2;
@@ -46,9 +44,7 @@ export const getHTTPInspector = (): HTTPInspector => {
   const networkRequestsRegistry = getNetworkRequestsRegistry();
 
   const overridesRegistry = getOverridesRegistry();
-  XHRInterceptor.setOverrideCallback((request) =>
-    setupRequestOverride(overridesRegistry, request),
-  );
+  XHRInterceptor.setOverrideCallback((request) => setupRequestOverride(overridesRegistry, request));
 
   return {
     enable: () => {
@@ -103,9 +99,7 @@ export const getHTTPInspector = (): HTTPInspector => {
                 url: request._url as string,
                 status: request.status,
                 statusText: request.statusText,
-                headers: applyReactNativeResponseHeadersLogic(
-                  request.responseHeaders || {},
-                ),
+                headers: applyReactNativeResponseHeadersLogic(request.responseHeaders || {}),
                 contentType: getContentType(request),
                 size: getResponseSize(request),
                 responseTime: Date.now(),
@@ -195,10 +189,7 @@ export const getHTTPInspector = (): HTTPInspector => {
     },
 
     isEnabled: () => {
-      return (
-        XHRInterceptor.isInterceptorEnabled() ||
-        FetchInterceptor.isInterceptorEnabled()
-      );
+      return XHRInterceptor.isInterceptorEnabled() || FetchInterceptor.isInterceptorEnabled();
     },
 
     dispose: () => {

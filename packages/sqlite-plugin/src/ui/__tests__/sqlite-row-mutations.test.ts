@@ -166,9 +166,7 @@ describe('sqlite row mutation helpers', () => {
   it('disables row mutations for WITHOUT ROWID tables that lack a primary key', () => {
     expect(
       getRowMutationDescriptor(
-        buildEntity(
-          'CREATE TABLE projects(title TEXT, slug TEXT) WITHOUT ROWID',
-        ),
+        buildEntity('CREATE TABLE projects(title TEXT, slug TEXT) WITHOUT ROWID'),
         [
           {
             cid: 0,

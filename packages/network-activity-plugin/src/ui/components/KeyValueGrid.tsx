@@ -14,11 +14,7 @@ export type KeyValueGridProps = {
   className?: string;
 };
 
-export const KeyValueGrid = ({
-  items = [],
-  emptyMessage,
-  className,
-}: KeyValueGridProps) => {
+export const KeyValueGrid = ({ items = [], emptyMessage, className }: KeyValueGridProps) => {
   const gridClassName = cn(
     'grid grid-cols-[minmax(7rem,25%)_minmax(3rem,1fr)] gap-x-2 gap-y-2 text-sm',
     className,
@@ -36,14 +32,8 @@ export const KeyValueGrid = ({
     <div className={gridClassName}>
       {items.map((item, index) => (
         <Fragment key={index}>
-          <span
-            className={cn('text-gray-400 wrap-anywhere', item.keyClassName)}
-          >
-            {item.key}
-          </span>
-          <span className={cn('wrap-anywhere', item.valueClassName)}>
-            {item.value}
-          </span>
+          <span className={cn('text-gray-400 wrap-anywhere', item.keyClassName)}>{item.key}</span>
+          <span className={cn('wrap-anywhere', item.valueClassName)}>{item.value}</span>
         </Fragment>
       ))}
     </div>

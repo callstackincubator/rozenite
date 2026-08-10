@@ -2,10 +2,7 @@ import { HttpRequestData } from '../state/model';
 import { KeyValueGrid, KeyValueItem } from './KeyValueGrid';
 import { CodeBlock } from './CodeBlock';
 import { JsonTree } from './JsonTree';
-import {
-  RequestBinaryPostData,
-  RequestFormDataPostData,
-} from '../../shared/client';
+import { RequestBinaryPostData, RequestFormDataPostData } from '../../shared/client';
 
 type RequestBodyProps = {
   data: HttpRequestData['data'];
@@ -28,9 +25,7 @@ const getFormDataBinaryEntries = (
   ];
 };
 
-const getBinaryEntries = (
-  value: RequestBinaryPostData['value'],
-): KeyValueItem[] => {
+const getBinaryEntries = (value: RequestBinaryPostData['value']): KeyValueItem[] => {
   const { size, type, name } = value;
 
   const items: KeyValueItem[] = [];

@@ -14,8 +14,7 @@ const rawRefName =
 const branch = normalizeRef(rawRefName);
 const remote = process.env.GIT_REMOTE ?? 'origin';
 const stableBranch = process.env.RELEASE_STABLE_BRANCH ?? 'main';
-const versionPackagePath =
-  process.env.RELEASE_VERSION_PACKAGE ?? 'packages/cli/package.json';
+const versionPackagePath = process.env.RELEASE_VERSION_PACKAGE ?? 'packages/cli/package.json';
 
 if (!['stable', 'rc', 'canary'].includes(mode)) {
   fail('RELEASE_MODE must be set to stable, rc, or canary');
@@ -71,25 +70,13 @@ function ensureCleanWorktree() {
 }
 
 function ensureRemoteBranch() {
-  if (
-    !commandSucceeds('git', [
-      'ls-remote',
-      '--exit-code',
-      '--heads',
-      remote,
-      branch,
-    ])
-  ) {
+  if (!commandSucceeds('git', ['ls-remote', '--exit-code', '--heads', remote, branch])) {
     fail(`branch ${branch} must exist on ${remote}`);
   }
 }
 
 function hasPrereleaseState() {
-  return commandSucceeds('git', [
-    'ls-files',
-    '--error-unmatch',
-    '.changeset/pre.json',
-  ]);
+  return commandSucceeds('git', ['ls-files', '--error-unmatch', '.changeset/pre.json']);
 }
 
 function updateLockfile() {
@@ -97,14 +84,7 @@ function updateLockfile() {
 }
 
 function commitVersionChanges() {
-  run('git', [
-    'add',
-    '.changeset',
-    'packages',
-    'package.json',
-    'pnpm-lock.yaml',
-    'CHANGELOG.md',
-  ]);
+  run('git', ['add', '.changeset', 'packages', 'package.json', 'pnpm-lock.yaml', 'CHANGELOG.md']);
 
   const staged = runOutput('git', ['diff', '--cached', '--name-only']);
 
@@ -123,10 +103,7 @@ function readVersion() {
   const filePath = path.join(cwd, versionPackagePath);
   const packageJson = JSON.parse(readFileSync(filePath, 'utf8'));
 
-  if (
-    typeof packageJson.version !== 'string' ||
-    packageJson.version.length === 0
-  ) {
+  if (typeof packageJson.version !== 'string' || packageJson.version.length === 0) {
     fail(`could not read version from ${versionPackagePath}`);
   }
 
@@ -140,15 +117,7 @@ function createAndPushTag(version) {
     fail(`tag ${tag} already exists locally`);
   }
 
-  if (
-    commandSucceeds('git', [
-      'ls-remote',
-      '--exit-code',
-      '--tags',
-      remote,
-      `refs/tags/${tag}`,
-    ])
-  ) {
+  if (commandSucceeds('git', ['ls-remote', '--exit-code', '--tags', remote, `refs/tags/${tag}`])) {
     fail(`tag ${tag} already exists on ${remote}`);
   }
 
@@ -184,9 +153,7 @@ function runRcRelease() {
   }
 
   if (!isReleaseBranch(branch)) {
-    fail(
-      `rc releases must run from a release/v<version> branch, received ${branch}`,
-    );
+    fail(`rc releases must run from a release/v<version> branch, received ${branch}`);
   }
 
   ensureRemoteBranch();

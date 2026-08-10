@@ -28,9 +28,7 @@ const isTarget = (value: unknown): value is StorageTarget =>
 const isSameTarget = (left: StorageTarget, right: StorageTarget) =>
   left.adapterId === right.adapterId && left.storageId === right.storageId;
 
-const validateRequest = (
-  payload: unknown,
-): payload is StorageGetEntryRequestEvent =>
+const validateRequest = (payload: unknown): payload is StorageGetEntryRequestEvent =>
   typeof payload === 'object' &&
   payload != null &&
   !Array.isArray(payload) &&
@@ -50,14 +48,11 @@ export const handleFullEntryRequest = async (
       type: 'storage-request-error',
       requestId,
       code: 'INVALID_REQUEST',
-      message:
-        'Full entry requests require a valid target, request ID, and string key.',
+      message: 'Full entry requests require a valid target, request ID, and string key.',
     };
   }
 
-  const view = views.find((candidate) =>
-    isSameTarget(candidate.target, payload.target),
-  );
+  const view = views.find((candidate) => isSameTarget(candidate.target, payload.target));
   if (!view) {
     return {
       type: 'storage-request-error',
