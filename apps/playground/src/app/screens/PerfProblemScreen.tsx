@@ -1,5 +1,6 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, Text } from 'react-native';
+import { ListItem, PluginHeader, Screen } from '../components/ui';
+import { useTheme } from '../theme/useTheme';
 
 const ITEM_COUNT = 16;
 const BLOCK_TIME_MS = 200;
@@ -25,71 +26,32 @@ const PerfItem = ({ index }: PerfItemProps) => {
   const renderDuration = Date.now() - startedAt;
 
   return (
-    <View style={styles.item}>
-      <Text style={styles.itemTitle}>Heavy Item {index + 1}</Text>
-      <Text style={styles.itemSubtitle}>Render blocked JS thread for {renderDuration}ms</Text>
-    </View>
+    <ListItem
+      label={`Heavy item ${index + 1}`}
+      description={`Render blocked JS thread for ${renderDuration}ms`}
+    />
   );
 };
 
 export const PerfProblemScreen = () => {
+  const { theme } = useTheme();
   const items = Array.from({ length: ITEM_COUNT }, (_, index) => index);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <Text style={styles.title}>PerfProblemScreen</Text>
-      <Text style={styles.subtitle}>
-        This screen intentionally renders 16 items that each block for over 50ms.
-      </Text>
+    <Screen scroll={false}>
+      <PluginHeader
+        title="Perf Problem"
+        subtitle="Renders 16 items that each block the JS thread for 200ms."
+      />
       <FlatList
+        style={{ flex: 1 }}
         data={items}
         keyExtractor={(item) => item.toString()}
-        contentContainerStyle={styles.listContent}
         renderItem={({ item }) => <PerfItem index={item} />}
       />
-    </SafeAreaView>
+      <Text style={{ color: theme.colors.mutedForeground, fontSize: theme.fontSize.xs }}>
+        Watch frame drops in the Performance Monitor DevTools while this list renders.
+      </Text>
+    </Screen>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#111111',
-    paddingTop: 24,
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 26,
-    fontWeight: '700',
-    paddingHorizontal: 20,
-  },
-  subtitle: {
-    color: '#bbbbbb',
-    fontSize: 14,
-    marginTop: 8,
-    marginBottom: 16,
-    paddingHorizontal: 20,
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-  },
-  item: {
-    backgroundColor: '#1e1e1e',
-    borderWidth: 1,
-    borderColor: '#2d2d2d',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  itemTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  itemSubtitle: {
-    color: '#9f9f9f',
-    fontSize: 13,
-    marginTop: 4,
-  },
-});
