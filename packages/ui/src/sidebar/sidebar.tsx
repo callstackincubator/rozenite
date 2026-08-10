@@ -20,8 +20,37 @@ function SidebarRoot({ className, ...props }: SidebarProps) {
 export type SidebarGroupProps = ListGroupProps;
 export type SidebarItemProps = ListItemProps;
 
+export type SidebarHeaderProps = ComponentProps<'header'>;
+
+function SidebarHeader({ className, ...props }: SidebarHeaderProps) {
+  return (
+    <header
+      data-slot="sidebar-header"
+      className={cn(
+        'sticky top-0 z-10 flex h-12 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-3',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export type SidebarFooterProps = ComponentProps<'footer'>;
+
+function SidebarFooter({ className, ...props }: SidebarFooterProps) {
+  return (
+    <footer
+      data-slot="sidebar-footer"
+      className={cn('mt-auto flex shrink-0 gap-1 border-t border-sidebar-border p-2', className)}
+      {...props}
+    />
+  );
+}
+
 /** A navigation rail with grouped, selectable items and optional trailing content. */
 export const Sidebar = Object.assign(SidebarRoot, {
   Group: List.Group,
   Item: List.Item,
+  Header: SidebarHeader,
+  Footer: SidebarFooter,
 });

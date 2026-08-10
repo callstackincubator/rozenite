@@ -84,6 +84,24 @@ export type {
   ToolbarGroupProps,
 } from './toolbar/toolbar';
 
+export { Separator } from './separator/separator';
+export type { SeparatorProps } from './separator/separator';
+
+export { Link } from './link/link';
+export type { LinkProps } from './link/link';
+
+export { IndicatorDot, indicatorDotVariants } from './indicator-dot/indicator-dot';
+export type { IndicatorDotProps } from './indicator-dot/indicator-dot';
+
+export { DescriptionList } from './description-list/description-list';
+export type {
+  DescriptionListProps,
+  DescriptionListItemProps,
+} from './description-list/description-list';
+
+export { Card } from './card/card';
+export type { CardProps, CardHeaderProps, CardBodyProps } from './card/card';
+
 export { Toast, useToast } from './toast/toast';
 export type { ToastProviderProps } from './toast/toast';
 
@@ -120,7 +138,13 @@ export { NestedList } from './list/nested-list';
 export type { NestedListProps, NestedListItemProps } from './list/nested-list';
 
 export { Sidebar } from './sidebar/sidebar';
-export type { SidebarProps, SidebarGroupProps, SidebarItemProps } from './sidebar/sidebar';
+export type {
+  SidebarProps,
+  SidebarGroupProps,
+  SidebarItemProps,
+  SidebarHeaderProps,
+  SidebarFooterProps,
+} from './sidebar/sidebar';
 
 export { EmptyState } from './empty-state/empty-state';
 export type { EmptyStateProps } from './empty-state/empty-state';

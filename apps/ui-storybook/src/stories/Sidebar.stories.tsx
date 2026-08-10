@@ -38,3 +38,30 @@ export const Default: Story = {
     </div>
   ),
 };
+
+/** Use `Sidebar.Header` and `Sidebar.Footer` for the sticky, bordered chrome
+ * around the scrollable item list.
+ * @summary Frame the item list with a sticky header and footer.
+ */
+export const WithHeaderAndFooter: Story = {
+  render: () => (
+    <div className="h-72">
+      <Sidebar className="gap-0 p-0">
+        <Sidebar.Header>
+          <span className="font-medium">Rozenite</span>
+        </Sidebar.Header>
+        <div className="min-h-0 flex-1 overflow-y-auto p-2">
+          <Sidebar.Group label="Workspace">
+            <Sidebar.Item selected adornment={<OverviewIcon />}>
+              Overview
+            </Sidebar.Item>
+            <Sidebar.Item>Network</Sidebar.Item>
+          </Sidebar.Group>
+        </div>
+        <Sidebar.Footer>
+          <span className="text-xs text-sidebar-foreground/60">v1.0.0</span>
+        </Sidebar.Footer>
+      </Sidebar>
+    </div>
+  ),
+};

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Settings } from 'lucide-react';
 import {
   Button,
+  cn,
   EmptyState,
+  IndicatorDot,
   PluginShell,
   Sidebar,
   Split,
@@ -11,37 +13,57 @@ import {
 import compactLogo from '../../../website/src/public/logo.svg';
 import lightLogo from '../../../website/src/public/logo-light.svg';
 import darkLogo from '../../../website/src/public/logo-dark.svg';
-import { getInitialSelection, type ShellSelection } from './selection';
+import {
+  closePluginsScreen,
+  getInitialSelectionState,
+  openPluginsScreen,
+  reconcileSelection,
+  selectPanel as selectPanelSelection,
+  type SelectionState,
+} from './selection';
 import { NewVersionFooter } from './NewVersionFooter';
 import { WelcomeDialog } from './WelcomeDialog';
+import { getAvailableRuntimeVersion } from './new-version';
+import { PluginsScreen } from './plugins/PluginsScreen';
+import { useOutdatedPlugins } from './plugins/use-outdated-plugins';
 import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
 const COLLAPSED_SIDEBAR_WIDTH = 48;
 const EXPANDED_SIDEBAR_WIDTH = 224;
 const SIDEBAR_SNAP_POINT = (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 2;
+
 export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: ShellConfiguration) {
-  const [selection, setSelection] = useState<ShellSelection>(() => getInitialSelection(plugins));
+  const [selectionState, setSelectionState] = useState<SelectionState>(() =>
+    getInitialSelectionState(plugins),
+  );
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [hasRuntimeUpdate, setHasRuntimeUpdate] = useState(false);
   const contentFrames = useRef(new Map<string, HTMLIFrameElement>());
   const sidebarPanel = useRef<SplitPaneHandle>(null);
+  const { outdated } = useOutdatedPlugins(plugins);
 
   useEffect(() => {
-    setSelection((current) => {
-      if (
-        current &&
-        plugins.some(
-          (plugin) =>
-            plugin.id === current.pluginId &&
-            plugin.panels.some((panel) => panel.id === current.panelId),
-        )
-      ) {
-        return current;
-      }
-
-      return getInitialSelection(plugins);
-    });
+    setSelectionState((current) => reconcileSelection(current, plugins));
   }, [plugins]);
+
+  useEffect(() => {
+    if (!runtimeVersion) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void getAvailableRuntimeVersion(runtimeVersion).then((version) => {
+      if (!cancelled) {
+        setHasRuntimeUpdate(version !== null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [runtimeVersion]);
 
   useEffect(() => {
     const forwardToPanels = (event: MessageEvent) => {
@@ -63,15 +85,35 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
     return () => window.removeEventListener('message', forwardToPanels);
   }, []);
 
+  const isPluginsScreenOpen = selectionState.selection?.kind === 'plugins';
+  const panelSelection =
+    selectionState.selection?.kind === 'panel' ? selectionState.selection : null;
   const activePlugin = useMemo(
-    () => plugins.find((plugin) => plugin.id === selection?.pluginId) ?? null,
-    [plugins, selection?.pluginId],
+    () => plugins.find((plugin) => plugin.id === panelSelection?.pluginId) ?? null,
+    [plugins, panelSelection?.pluginId],
   );
-  const activePanel = activePlugin?.panels.find((panel) => panel.id === selection?.panelId);
+  const activePanel =
+    activePlugin?.panels.find((panel) => panel.id === panelSelection?.panelId) ?? null;
+  // Distinct from `activePanel`: while the Plugins screen is open there is no
+  // active panel, but the panel selected before the screen opened must stay
+  // mounted (just hidden) so a `destroyOnDetach` plugin doesn't lose state on
+  // a visit to the screen.
+  const retainedPanelId =
+    panelSelection?.panelId ??
+    (isPluginsScreenOpen ? (selectionState.lastPanel?.panelId ?? null) : null);
   const destroyedPluginIds = new Set(destroyOnDetachPlugins);
   const panels = plugins.flatMap((plugin) => plugin.panels.map((panel) => ({ plugin, panel })));
+  const hasPlugins = plugins.length > 0;
+
   const selectPanel = (plugin: ShellPlugin, panel: ShellPanel) => {
-    setSelection({ pluginId: plugin.id, panelId: panel.id });
+    setSelectionState(selectPanelSelection(plugin.id, panel.id));
+  };
+  const togglePluginsScreen = () => {
+    setSelectionState((current) =>
+      current.selection?.kind === 'plugins'
+        ? closePluginsScreen(current, plugins)
+        : openPluginsScreen(current),
+    );
   };
   const resizeSidebar = (collapsed: boolean) => {
     sidebarPanel.current?.resize(
@@ -89,7 +131,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
     resizeSidebar(size < SIDEBAR_SNAP_POINT);
   };
 
-  if (!activePlugin || !activePanel) {
+  if (!hasPlugins) {
     return (
       <PluginShell>
         <WelcomeDialog runtimeVersion={runtimeVersion} />
@@ -102,6 +144,12 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
       </PluginShell>
     );
   }
+
+  // The cog's dot flags either kind of pending update. Plugin updates are
+  // only otherwise surfaced on the Plugins screen; the runtime update link
+  // is hidden while the sidebar is collapsed, so its dot keeps that signal
+  // reachable too (expanding the sidebar reveals the link again).
+  const hasNotice = outdated.size > 0 || hasRuntimeUpdate;
 
   return (
     <PluginShell>
@@ -126,7 +174,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
               aria-label="Rozenite panels"
               className="h-full w-full gap-0 overflow-hidden border-r-0 p-0"
             >
-              <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-3">
+              <Sidebar.Header>
                 {isSidebarCollapsed ? (
                   <img src={compactLogo} alt="Rozenite" className="h-6 w-6" />
                 ) : (
@@ -135,7 +183,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
                     <img src={darkLogo} alt="Rozenite" className="hidden h-6 w-auto dark:block" />
                   </>
                 )}
-              </header>
+              </Sidebar.Header>
               {!isSidebarCollapsed && (
                 <div className="min-h-0 flex-1 overflow-y-auto p-2">
                   <div className="flex flex-col gap-3">
@@ -150,7 +198,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
                         return (
                           <Sidebar.Item
                             key={panel.id}
-                            selected={panel.id === activePanel.id}
+                            selected={!isPluginsScreenOpen && panel.id === activePanel?.id}
                             onClick={() => selectPanel(plugin, panel)}
                           >
                             {panel.name}
@@ -163,7 +211,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
                           {plugin.panels.map((panel) => (
                             <Sidebar.Item
                               key={panel.id}
-                              selected={panel.id === activePanel.id}
+                              selected={!isPluginsScreenOpen && panel.id === activePanel?.id}
                               onClick={() => selectPanel(plugin, panel)}
                             >
                               {panel.name}
@@ -175,47 +223,79 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
                   </div>
                 </div>
               )}
-              <footer className="mt-auto flex shrink-0 gap-1 border-t border-sidebar-border p-2">
+              <Sidebar.Footer>
                 {!isSidebarCollapsed && <NewVersionFooter currentVersion={runtimeVersion} />}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="ml-auto"
+                  className={cn(
+                    'ml-auto',
+                    isPluginsScreenOpen && 'bg-sidebar-accent text-sidebar-accent-foreground',
+                  )}
+                  aria-label="Plugins"
+                  aria-pressed={isPluginsScreenOpen}
+                  onClick={togglePluginsScreen}
+                  adornment={hasNotice ? <IndicatorDot className="absolute top-1 right-1" /> : null}
+                >
+                  <Settings />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                   onClick={() => resizeSidebar(!isSidebarCollapsed)}
                 >
                   {isSidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
                 </Button>
-              </footer>
+              </Sidebar.Footer>
             </Sidebar>
           </Split.Pane>
           <Split.Handle className="bg-sidebar-border" />
           <Split.Pane>
-            <div className="h-full min-w-0">
-              {panels.map(({ plugin, panel }) => {
-                const isActive = panel.id === activePanel.id;
-                const shouldDestroy = destroyedPluginIds.has(plugin.id);
+            <div className="relative h-full min-w-0">
+              {/* Panel iframes stay mounted while the Plugins screen is open;
+                  it only covers this area visually so plugin state survives
+                  a visit. */}
+              <div className={cn('h-full min-w-0', isPluginsScreenOpen && 'hidden')}>
+                {panels.map(({ plugin, panel }) => {
+                  const isActive = panel.id === activePanel?.id;
+                  const isRetained = panel.id === retainedPanelId;
+                  const shouldDestroy = destroyedPluginIds.has(plugin.id);
 
-                if (shouldDestroy && !isActive) {
-                  return null;
-                }
+                  if (shouldDestroy && !isRetained) {
+                    return null;
+                  }
 
-                return (
-                  <iframe
-                    key={panel.id}
-                    ref={(frame) => {
-                      if (frame) {
-                        contentFrames.current.set(panel.id, frame);
-                      } else {
-                        contentFrames.current.delete(panel.id);
-                      }
-                    }}
-                    hidden={!isActive}
-                    title={`${plugin.name}: ${panel.name}`}
-                    src={panel.source}
-                  />
-                );
-              })}
+                  return (
+                    <iframe
+                      key={panel.id}
+                      ref={(frame) => {
+                        if (frame) {
+                          contentFrames.current.set(panel.id, frame);
+                        } else {
+                          contentFrames.current.delete(panel.id);
+                        }
+                      }}
+                      hidden={!isActive}
+                      title={`${plugin.name}: ${panel.name}`}
+                      src={panel.source}
+                    />
+                  );
+                })}
+                {!activePanel && (
+                  <div className="flex h-full items-center justify-center">
+                    <EmptyState
+                      title="No panel selected"
+                      description="Select a panel from the sidebar."
+                    />
+                  </div>
+                )}
+              </div>
+              {isPluginsScreenOpen && (
+                <div className="absolute inset-0">
+                  <PluginsScreen plugins={plugins} outdated={outdated} />
+                </div>
+              )}
             </div>
           </Split.Pane>
         </Split>

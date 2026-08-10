@@ -1,5 +1,6 @@
 import { Toolbar as ToolbarPrimitive } from '@base-ui/react/toolbar';
 import { cn } from '../utils/cn';
+import { Separator, type SeparatorProps } from '../separator/separator';
 
 export type ToolbarProps = ToolbarPrimitive.Root.Props;
 
@@ -34,13 +35,19 @@ function ToolbarButton({ className, ...props }: ToolbarButtonProps) {
   );
 }
 
-export type ToolbarSeparatorProps = ToolbarPrimitive.Separator.Props;
+export type ToolbarSeparatorProps = SeparatorProps;
 
-function ToolbarSeparator({ className, ...props }: ToolbarSeparatorProps) {
+/** An alias for `Separator`, styled for use inside a `Toolbar`. */
+function ToolbarSeparator({
+  orientation = 'vertical',
+  className,
+  ...props
+}: ToolbarSeparatorProps) {
   return (
-    <ToolbarPrimitive.Separator
+    <Separator
       data-slot="toolbar-separator"
-      className={cn('mx-1 h-4 w-px bg-border', className)}
+      orientation={orientation}
+      className={cn('mx-1', className)}
       {...props}
     />
   );

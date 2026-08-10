@@ -1,10 +1,10 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils/cn';
 
 export const buttonVariants = cva(
   cn(
-    'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium transition-colors',
+    'relative inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium transition-colors',
     'outline-none focus-visible:ring-2 focus-visible:ring-ring',
     'disabled:pointer-events-none disabled:opacity-50',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0',
@@ -32,16 +32,31 @@ export const buttonVariants = cva(
   },
 );
 
-export type ButtonProps = ComponentProps<'button'> & VariantProps<typeof buttonVariants>;
+export type ButtonProps = ComponentProps<'button'> &
+  VariantProps<typeof buttonVariants> & {
+    /** Rendered after `children`, e.g. an `IndicatorDot` flagging an update. */
+    adornment?: ReactNode;
+  };
 
 /** A styled button for actions that change state or submit work. */
-export function Button({ className, variant, size, type = 'button', ...props }: ButtonProps) {
+export function Button({
+  className,
+  variant,
+  size,
+  type = 'button',
+  adornment,
+  children,
+  ...props
+}: ButtonProps) {
   return (
     <button
       type={type}
       data-slot="button"
       className={cn(buttonVariants({ variant, size }), className)}
       {...props}
-    />
+    >
+      {children}
+      {adornment}
+    </button>
   );
 }

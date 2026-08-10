@@ -1,27 +1,14 @@
-const NPM_RUNTIME_URL = 'https://registry.npmjs.org/%40rozenite%2Fruntime/latest';
+import { getLatestVersions, isNewerVersion } from './npm/registry';
 
-type NpmPackageMetadata = {
-  version?: unknown;
-};
-
-async function fetchLatestRuntimeVersion(): Promise<string> {
-  const response = await fetch(NPM_RUNTIME_URL);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch the latest Rozenite version: ${response.status}`);
-  }
-
-  const metadata = (await response.json()) as NpmPackageMetadata;
-
-  if (typeof metadata.version !== 'string') {
-    throw new Error('The npm response did not contain a package version.');
-  }
-
-  return metadata.version;
-}
+const RUNTIME_PACKAGE_NAME = '@rozenite/runtime';
 
 export async function getAvailableRuntimeVersion(currentVersion: string): Promise<string | null> {
-  const latestVersion = await fetchLatestRuntimeVersion();
+  const latestVersions = await getLatestVersions([RUNTIME_PACKAGE_NAME]);
+  const latestVersion = latestVersions.get(RUNTIME_PACKAGE_NAME);
 
-  return latestVersion === currentVersion ? null : latestVersion;
+  if (!latestVersion || !isNewerVersion(currentVersion, latestVersion)) {
+    return null;
+  }
+
+  return latestVersion;
 }
