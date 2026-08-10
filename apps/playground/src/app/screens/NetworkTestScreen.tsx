@@ -1,6 +1,6 @@
 import { createSection, useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Text } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native';
 import EventSource from 'react-native-sse';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -129,6 +129,7 @@ export const NetworkTestScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const [transport, setTransport] = useState<Transport>('fetch');
   const [result, setResult] = useState<ActionResult | null>(null);
+  const [pending, setPending] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
   const [wsLastMessage, setWsLastMessage] = useState<string | null>(null);
   const [sseConnected, setSseConnected] = useState(false);
@@ -143,6 +144,8 @@ export const NetworkTestScreen = () => {
       return;
     }
 
+    setResult(null);
+    setPending(true);
     void action()
       .then(setResult)
       .catch((error) =>
@@ -151,7 +154,8 @@ export const NetworkTestScreen = () => {
           status: 0,
           body: error instanceof Error ? error.message : String(error),
         }),
-      );
+      )
+      .finally(() => setPending(false));
   }, []);
 
   const toggleWebSocket = useCallback(() => {
@@ -248,19 +252,38 @@ export const NetworkTestScreen = () => {
 
       <Card>
         <Row wrap>
-          <Button label="GET" onPress={() => run(actions.get)} />
-          <Button label="POST" disabled={!actions.post} onPress={() => run(actions.post)} />
-          <Button label="Slow" disabled={!actions.slow} onPress={() => run(actions.slow)} />
-          <Button label="Abort" disabled={!actions.abort} onPress={() => run(actions.abort)} />
+          <Button label="GET" disabled={pending} onPress={() => run(actions.get)} />
+          <Button
+            label="POST"
+            disabled={pending || !actions.post}
+            onPress={() => run(actions.post)}
+          />
+          <Button
+            label="Slow"
+            disabled={pending || !actions.slow}
+            onPress={() => run(actions.slow)}
+          />
+          <Button
+            label="Abort"
+            disabled={pending || !actions.abort}
+            onPress={() => run(actions.abort)}
+          />
           <Button
             label="Download"
-            disabled={!actions.download}
+            disabled={pending || !actions.download}
             onPress={() => run(actions.download)}
           />
         </Row>
       </Card>
 
-      {result ? (
+      {pending ? (
+        <Card>
+          <Row>
+            <KeyValueRow label="Request" value="In progress…" />
+            <ActivityIndicator color={theme.colors.primary} />
+          </Row>
+        </Card>
+      ) : result ? (
         <Card>
           <KeyValueRow label="Result" value={result.title} />
           <KeyValueRow label="Status" value={String(result.status)} />
