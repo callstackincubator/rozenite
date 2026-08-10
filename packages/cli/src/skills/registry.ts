@@ -63,8 +63,7 @@ const loadDoc = (docsDir: string, fileName: string): SkillDoc => {
 };
 
 /**
- * Loads every bundled doc under `docsDir`. Memoized per directory so
- * repeated CLI calls within the same process don't re-read from disk.
+ * Loads every bundled doc under `docsDir` from disk.
  */
 const loadAllDocs = (docsDir: string): SkillDoc[] => {
   const fileNames = fs

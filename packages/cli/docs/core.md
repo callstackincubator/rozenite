@@ -8,8 +8,9 @@ description: Ground truths for Rozenite for Agents shared by every workflow — 
 Rozenite for Agents is the agent-facing way to interact with React Native
 DevTools and Rozenite plugins on a running React Native app. It works through
 either the `rozenite agent` CLI or the `@rozenite/agent-sdk` package. Read
-this doc first, then read `cli` for shell-driven workflows or `sdk` for
-programmatic Node.js/TypeScript workflows.
+this doc first, then run `npx rozenite skills show cli` for shell-driven
+workflows or `npx rozenite skills show sdk` for programmatic
+Node.js/TypeScript workflows.
 
 Rozenite for Agents requires a project with Rozenite already installed and
 configured, Metro running, and at least one React Native target connected. It

@@ -11,7 +11,8 @@ export const registerSkillsCommand = (program: Command): void => {
     .command('list')
     .alias('ls')
     .description('List bundled skill docs (id and description)')
-    .action(() => {
+    .option('--pretty', 'Pretty-print JSON output')
+    .action((options: { pretty?: boolean }) => {
       const registry = new SkillsRegistry();
       const docs = registry.list();
       const payload = docs.map((doc) => ({
@@ -20,7 +21,8 @@ export const registerSkillsCommand = (program: Command): void => {
         ...(doc.domain ? { domain: doc.domain } : {}),
       }));
 
-      process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+      const json = options.pretty ? JSON.stringify(payload, null, 2) : JSON.stringify(payload);
+      process.stdout.write(`${json}\n`);
     });
 
   skillsCommand
