@@ -13,6 +13,9 @@ catalog:
   react-native: '0.86.0'
   vite: '^7.3.1'
 
+overrides:
+  vite: 'catalog:'
+
 onlyBuiltDependencies:
   - '@apollo/protobufjs'
   - '@swc/core'
@@ -22,3 +25,7 @@ onlyBuiltDependencies:
   - react-native-mmkv
   - react-native-nitro-modules
   - sqlite3
+
+allowBuilds:
+  lefthook: true
+  unrs-resolver: true
