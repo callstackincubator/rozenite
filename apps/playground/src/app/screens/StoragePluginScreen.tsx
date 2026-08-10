@@ -1,7 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, FlatList, Text } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { MMKV } from 'react-native-mmkv';
+import {
+  Button,
+  EmptyState,
+  Field,
+  Input,
+  ListItem,
+  PluginHeader,
+  Row,
+  Screen,
+  SegmentedTabs,
+} from '../components/ui';
 import { initializeMMKVStorages, mmkvStorages } from '../mmkv-storages';
 import {
   asyncStorageV2,
@@ -10,6 +21,7 @@ import {
   getKnownSecureStoreKeys,
   rememberSecureStoreKey,
 } from '../storage-plugin-adapters';
+import { useTheme } from '../theme/useTheme';
 
 type AdapterTab = 'mmkv' | 'async' | 'secure';
 type AsyncStorageMode = 'v2-default' | 'v3-auth' | 'v3-cache';
@@ -27,7 +39,7 @@ type Entry = {
   type: EntryType;
 };
 
-const mmkvIds = Object.keys(mmkvStorages) as Array<keyof typeof mmkvStorages>;
+const mmkvIds = Object.keys(mmkvStorages) as (keyof typeof mmkvStorages)[];
 
 const parseMMKVEntry = (storage: MMKV, key: string): Entry | null => {
   const stringValue = storage.getString(key);
@@ -58,6 +70,7 @@ const parseMMKVEntry = (storage: MMKV, key: string): Entry | null => {
 };
 
 export const StoragePluginScreen = () => {
+  const { theme } = useTheme();
   const [tab, setTab] = useState<AdapterTab>('mmkv');
   const [asyncStorageMode, setAsyncStorageMode] = useState<AsyncStorageMode>('v2-default');
   const [mmkvStorageId, setMmkvStorageId] = useState<keyof typeof mmkvStorages>('user-storage');
@@ -72,18 +85,6 @@ export const StoragePluginScreen = () => {
 
   const supportsTypedValues = tab === 'mmkv';
 
-  const title = useMemo(() => {
-    if (tab === 'mmkv') {
-      return 'MMKV Adapter';
-    }
-
-    if (tab === 'async') {
-      return 'AsyncStorage Adapter';
-    }
-
-    return 'SecureStore Adapter';
-  }, [tab]);
-
   const selectedAsyncStorage: AsyncStorageLike = useMemo(() => {
     if (asyncStorageMode === 'v3-auth') {
       return asyncStorageV3Instances.auth;
@@ -96,7 +97,7 @@ export const StoragePluginScreen = () => {
     return asyncStorageV2;
   }, [asyncStorageMode]);
 
-  const loadEntries = async () => {
+  const loadEntries = useCallback(async () => {
     if (tab === 'mmkv') {
       const storage = mmkvStorages[mmkvStorageId];
       const nextEntries = storage
@@ -141,11 +142,11 @@ export const StoragePluginScreen = () => {
           value: item.value,
         })),
     );
-  };
+  }, [mmkvStorageId, selectedAsyncStorage, tab]);
 
   useEffect(() => {
     void loadEntries();
-  }, [tab, mmkvStorageId, asyncStorageMode]);
+  }, [loadEntries]);
 
   const handleSet = async () => {
     if (!key.trim()) {
@@ -218,288 +219,121 @@ export const StoragePluginScreen = () => {
   const handleSelectEntry = (entry: Entry) => {
     setKey(entry.key);
     setValue(entry.value);
-
-    if (supportsTypedValues) {
-      setEntryType(entry.type);
-    } else {
-      setEntryType('string');
-    }
+    setEntryType(supportsTypedValues ? entry.type : 'string');
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Storage Plugin Testbed</Text>
-      <View style={styles.tabsRow}>
-        <TouchableOpacity
-          style={[styles.tabButton, tab === 'mmkv' && styles.tabButtonActive]}
-          onPress={() => setTab('mmkv')}
-        >
-          <Text style={styles.tabButtonText}>MMKV</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, tab === 'async' && styles.tabButtonActive]}
-          onPress={() => setTab('async')}
-        >
-          <Text style={styles.tabButtonText}>Async</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, tab === 'secure' && styles.tabButtonActive]}
-          onPress={() => setTab('secure')}
-        >
-          <Text style={styles.tabButtonText}>Secure</Text>
-        </TouchableOpacity>
-      </View>
+    <Screen scroll={false}>
+      <PluginHeader title="Storage" subtitle="MMKV, AsyncStorage, and SecureStore adapters." />
 
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <SegmentedTabs
+        accessibilityLabel="Storage adapter"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'mmkv', label: 'MMKV' },
+          { value: 'async', label: 'Async' },
+          { value: 'secure', label: 'Secure' },
+        ]}
+      />
 
-      {tab === 'mmkv' && (
-        <View style={styles.inlineRow}>
+      {tab === 'mmkv' ? (
+        <Row wrap>
           {mmkvIds.map((id) => (
-            <TouchableOpacity
+            <Button
               key={id}
-              style={[styles.storageChip, mmkvStorageId === id && styles.storageChipActive]}
+              label={id}
+              size="compact"
+              variant={mmkvStorageId === id ? 'default' : 'secondary'}
               onPress={() => setMmkvStorageId(id)}
-            >
-              <Text style={styles.storageChipText}>{id}</Text>
-            </TouchableOpacity>
+            />
           ))}
-        </View>
-      )}
+        </Row>
+      ) : null}
 
-      {tab === 'async' && (
-        <View style={styles.inlineRow}>
-          <TouchableOpacity
-            style={[
-              styles.storageChip,
-              asyncStorageMode === 'v2-default' && styles.storageChipActive,
-            ]}
-            onPress={() => setAsyncStorageMode('v2-default')}
-          >
-            <Text style={styles.storageChipText}>v2 default</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.storageChip, asyncStorageMode === 'v3-auth' && styles.storageChipActive]}
-            onPress={() => setAsyncStorageMode('v3-auth')}
-          >
-            <Text style={styles.storageChipText}>v3 auth</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.storageChip,
-              asyncStorageMode === 'v3-cache' && styles.storageChipActive,
-            ]}
-            onPress={() => setAsyncStorageMode('v3-cache')}
-          >
-            <Text style={styles.storageChipText}>v3 cache</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {tab === 'async' ? (
+        <Row wrap>
+          {(
+            [
+              ['v2-default', 'v2 default'],
+              ['v3-auth', 'v3 auth'],
+              ['v3-cache', 'v3 cache'],
+            ] as const
+          ).map(([modeValue, label]) => (
+            <Button
+              key={modeValue}
+              label={label}
+              size="compact"
+              variant={asyncStorageMode === modeValue ? 'default' : 'secondary'}
+              onPress={() => setAsyncStorageMode(modeValue)}
+            />
+          ))}
+        </Row>
+      ) : null}
 
-      <TextInput
-        value={key}
-        onChangeText={setKey}
-        placeholder="Key"
-        placeholderTextColor="#6b7280"
-        style={styles.input}
-      />
+      <Field label="Key">
+        <Input
+          accessibilityLabel="Storage key"
+          value={key}
+          onChangeText={setKey}
+          placeholder="Key"
+        />
+      </Field>
 
-      <View style={styles.inlineRow}>
-        {(['string', 'number', 'boolean', 'buffer'] as EntryType[]).map((type) => {
-          const disabled = !supportsTypedValues && type !== 'string';
-          return (
-            <TouchableOpacity
-              key={type}
-              disabled={disabled}
-              onPress={() => setEntryType(type)}
-              style={[
-                styles.typeChip,
-                entryType === type && styles.typeChipActive,
-                disabled && styles.typeChipDisabled,
-              ]}
-            >
-              <Text style={styles.typeChipText}>{type}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <Row wrap>
+        {(['string', 'number', 'boolean', 'buffer'] as EntryType[]).map((type) => (
+          <Button
+            key={type}
+            label={type}
+            size="compact"
+            disabled={!supportsTypedValues && type !== 'string'}
+            variant={entryType === type ? 'default' : 'secondary'}
+            onPress={() => setEntryType(type)}
+          />
+        ))}
+      </Row>
 
-      {!supportsTypedValues && (
-        <Text style={styles.note}>
-          AsyncStorage and SecureStore are string-only adapters in this demo.
-        </Text>
-      )}
+      <Field
+        label="Value"
+        helperText={
+          !supportsTypedValues
+            ? 'AsyncStorage and SecureStore are string-only in this demo.'
+            : undefined
+        }
+      >
+        <Input
+          accessibilityLabel="Storage value"
+          value={value}
+          onChangeText={setValue}
+          placeholder={entryType === 'buffer' ? 'JSON buffer, e.g. [1,2,3]' : 'Value'}
+        />
+      </Field>
 
-      <TextInput
-        value={value}
-        onChangeText={setValue}
-        placeholder={entryType === 'buffer' ? 'JSON buffer, e.g. [1,2,3]' : 'Value'}
-        placeholderTextColor="#6b7280"
-        style={styles.input}
-      />
-
-      <View style={styles.actionsRow}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => void handleSet()}>
-          <Text style={styles.actionButtonText}>Set</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.deleteButton]}
-          onPress={() => void handleDelete()}
-        >
-          <Text style={styles.actionButtonText}>Delete</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={() => void loadEntries()}>
-          <Text style={styles.actionButtonText}>Refresh</Text>
-        </TouchableOpacity>
-      </View>
+      <Row wrap>
+        <Button label="Set" onPress={() => void handleSet()} />
+        <Button label="Delete" variant="destructive" onPress={() => void handleDelete()} />
+        <Button label="Refresh" variant="secondary" onPress={() => void loadEntries()} />
+      </Row>
 
       <FlatList
+        style={{ flex: 1 }}
         data={entries}
         keyExtractor={(item) => `${item.key}:${item.type}`}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.entryRow}
+          <ListItem
+            label={item.key}
+            description={`${item.type} · ${item.value}`}
+            accessibilityLabel={`Storage entry ${item.key}`}
             onPress={() => handleSelectEntry(item)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.entryKey}>{item.key}</Text>
-            <Text style={styles.entryType}>{item.type}</Text>
-            <Text numberOfLines={1} style={styles.entryValue}>
-              {item.value}
-            </Text>
-          </TouchableOpacity>
+          />
         )}
-        ListEmptyComponent={<Text style={styles.emptyState}>No entries</Text>}
+        ListEmptyComponent={<EmptyState title="No entries" />}
       />
-    </View>
+      {entries.length === 0 ? null : (
+        <Text style={{ color: theme.colors.mutedForeground, fontSize: theme.fontSize.xs }}>
+          {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
+        </Text>
+      )}
+    </Screen>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-    paddingHorizontal: 16,
-    paddingTop: 24,
-    gap: 10,
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  tabsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: '#1f2937',
-  },
-  tabButtonActive: {
-    backgroundColor: '#8232FF',
-  },
-  tabButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  sectionTitle: {
-    color: '#d1d5db',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  inlineRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  storageChip: {
-    backgroundColor: '#1f2937',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  storageChipActive: {
-    backgroundColor: '#374151',
-    borderWidth: 1,
-    borderColor: '#8232FF',
-  },
-  storageChipText: {
-    color: '#e5e7eb',
-    fontSize: 12,
-  },
-  typeChip: {
-    backgroundColor: '#1f2937',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  typeChipActive: {
-    backgroundColor: '#8232FF',
-  },
-  typeChipDisabled: {
-    opacity: 0.45,
-  },
-  typeChipText: {
-    color: '#f9fafb',
-    fontSize: 12,
-  },
-  note: {
-    color: '#fbbf24',
-    fontSize: 12,
-  },
-  input: {
-    backgroundColor: '#111827',
-    borderWidth: 1,
-    borderColor: '#374151',
-    borderRadius: 10,
-    color: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  deleteButton: {
-    backgroundColor: '#dc2626',
-  },
-  actionButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  entryRow: {
-    backgroundColor: '#111827',
-    borderWidth: 1,
-    borderColor: '#1f2937',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 8,
-    gap: 4,
-  },
-  entryKey: {
-    color: '#f9fafb',
-    fontWeight: '700',
-  },
-  entryType: {
-    color: '#a78bfa',
-    fontSize: 12,
-  },
-  entryValue: {
-    color: '#93c5fd',
-  },
-  emptyState: {
-    color: '#6b7280',
-    textAlign: 'center',
-    marginTop: 24,
-  },
-});

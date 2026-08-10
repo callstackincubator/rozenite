@@ -1,7 +1,7 @@
 pre-commit:
   commands:
     oxfmt:
-      glob: '*.{js,ts,tsx,jsx,json,md,yaml,yml}'
+      glob: '*.{js,ts,tsx,jsx,json,yaml,yml}'
       run: pnpm exec oxfmt --check {staged_files}
     eslint:
       glob: '*.{js,ts,tsx,jsx}'
