@@ -63,11 +63,11 @@ Prefer the built-in `network` domain first when it is available. `@rozenite/netw
 
 Apps can also expose in-app custom tools. These are runtime tools registered directly by the app instead of by a separate Rozenite plugin package.
 
-If you want to give a coding agent this workflow directly, install the [`rozenite-agent` skill](/docs/agent/skills) for CLI workflows or `rozenite-agent-sdk` for SDK-driven scripts and automations.
+If you want to give a coding agent this workflow directly, install the [`rozenite` skill](/docs/agent/skills). It routes the agent to `npx rozenite skills list` and `npx rozenite skills show <id>` to discover and read the CLI and SDK workflow docs on demand.
 
 ## Next steps
 
-- Install the [Agent Skills](/docs/agent/skills) (`rozenite-agent` for CLI workflows, `rozenite-agent-sdk` for code-first SDK workflows) if you want Codex or another coding agent to use Rozenite effectively.
+- Install the [Agent Skill](/docs/agent/skills) (`rozenite`) if you want Codex or another coding agent to use Rozenite effectively.
 - [Adding tools to your application](/docs/agent/adding-tools-to-your-application) – expose custom tools from your app for agents to call.
 - [Making your plugin agent-enabled](/docs/agent/making-your-plugin-agent-enabled) – expose tools from your Rozenite plugin to agents.
 - [Agent SDK](/docs/agent/sdk) – build custom tooling or automation on top of the agent workflow.

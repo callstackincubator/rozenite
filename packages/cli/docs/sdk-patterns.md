@@ -1,4 +1,9 @@
-# Code Patterns
+---
+name: sdk-patterns
+description: Copy-pastable @rozenite/agent-sdk code patterns for session lifecycle, typed and dynamic tool calls, pagination, target selection, and manual session control.
+---
+
+# SDK Patterns
 
 Use these patterns as starting points for SDK-based Rozenite agent work.
 
@@ -199,7 +204,10 @@ const result = await client.withSession(
 );
 ```
 
-When more than one simulator, emulator, or device may be connected, use the `rozenite-agent` skill to enumerate and choose the live target first. Then pass the chosen `deviceId` into the SDK flow instead of duplicating target-discovery logic here.
+When more than one simulator, emulator, or device may be connected, run
+`npx rozenite agent targets` to enumerate and choose the live target first
+(see the `cli` doc). Then pass the chosen `deviceId` into the SDK flow
+instead of duplicating target-discovery logic here.
 
 ## Advanced: Manual Session Lifecycle
 

@@ -1,3 +1,9 @@
+---
+name: network-activity
+description: Fallback HTTP, WebSocket, and SSE network inspection via the Network Activity plugin when the built-in network domain is unavailable.
+domain: network-activity
+---
+
 # Network Activity Plugin Domain
 
 A Rozenite plugin for fallback network inspection when the built-in `network` domain is unavailable, such as on older React Native versions. It mirrors the built-in `network` API for HTTP request recording and inspection, and adds plugin-specific tools for WebSocket and SSE traffic.

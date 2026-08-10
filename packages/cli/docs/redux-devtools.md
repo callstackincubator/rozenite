@@ -1,3 +1,9 @@
+---
+name: redux-devtools
+description: Inspect Redux stores and action history, dispatch actions, and control curated DevTools history operations.
+domain: redux-devtools
+---
+
 # Redux DevTools Plugin Domain
 
 A Rozenite plugin for Redux state inspection and curated history control in React Native DevTools. It exposes store discovery, current state reads, action-history inspection, normal Redux action dispatch, and safe Redux DevTools history operations such as jump, toggle, reset, rollback, commit, sweep, pause, and lock.

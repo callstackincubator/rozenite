@@ -24,6 +24,7 @@
   },
   "files": [
     "dist",
+    "docs",
     "skills",
     "template",
     "bin.js"

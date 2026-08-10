@@ -1,3 +1,9 @@
+---
+name: storage
+description: Inspect and mutate entries across multiple storage backends (MMKV, AsyncStorage, Expo SecureStore) via adapters.
+domain: storage
+---
+
 # Storage Plugin Domain
 
 A Rozenite plugin for inspecting multiple storage backends in React Native DevTools. It provides a single inspector for sync and async storages, including MMKV, AsyncStorage, and Expo SecureStore via adapters. Use it for storage inspection and entry mutation across supported adapters.

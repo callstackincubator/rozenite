@@ -1,3 +1,9 @@
+---
+name: controls
+description: Read and mutate app-defined debug controls (text, toggle, select, input, button) exposed via the Controls plugin.
+domain: controls
+---
+
 # Controls Plugin Domain
 
 A Rozenite plugin for exposing app-defined controls in React Native DevTools. You get a custom control panel: read runtime values, flip toggles, switch options, submit text input, and trigger actions (e.g. reset, refetch) without building extra debug screens. Use this domain to list sections and items, read values, and mutate them via `set-value` or `press-button`.

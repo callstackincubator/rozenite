@@ -1,3 +1,9 @@
+---
+name: tanstack-query
+description: Inspect and manage TanStack Query caches — queries, mutations, refetch, invalidate, and cache clearing.
+domain: tanstack-query
+---
+
 # TanStack Query Plugin Domain
 
 A Rozenite plugin for inspecting and managing TanStack Query caches in React Native DevTools. Use it to inspect query and mutation state, paginate large caches, refetch or invalidate specific queries, and clear caches when needed.
