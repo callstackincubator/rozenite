@@ -15,6 +15,26 @@ const latestVersionCache = new Map<string, string>();
 // consumers asking about the same package concurrently share one request.
 const inFlightRequests = new Map<string, Promise<string | null>>();
 
+// Debug-only: pretend a package publishes a given version. Persisted in
+// sessionStorage so a reload keeps the emulated state, which is what makes
+// the initial-load and welcome-dialog paths testable.
+const OVERRIDES_STORAGE_KEY = 'rozenite.debug.versionOverrides';
+
+function loadVersionOverrides(): Map<string, string> {
+  try {
+    const stored = sessionStorage.getItem(OVERRIDES_STORAGE_KEY);
+    return stored
+      ? new Map(Object.entries(JSON.parse(stored) as Record<string, string>))
+      : new Map();
+  } catch {
+    return new Map();
+  }
+}
+
+const versionOverrides = loadVersionOverrides();
+const overrideListeners = new Set<() => void>();
+let overridesRevision = 0;
+
 async function fetchLatestVersion(packageName: string): Promise<string | null> {
   try {
     const response = await fetch(`https://registry.npmjs.org/${encodeURIComponent(packageName)}`, {
@@ -37,6 +57,13 @@ async function fetchLatestVersion(packageName: string): Promise<string | null> {
 }
 
 function getLatestVersion(packageName: string): Promise<string | null> {
+  // Debug overrides short-circuit both the cache and the network so that the
+  // emulated state travels the same path a real published version would.
+  const override = versionOverrides.get(packageName);
+  if (override !== undefined) {
+    return Promise.resolve(override);
+  }
+
   const cached = latestVersionCache.get(packageName);
   if (cached !== undefined) {
     return Promise.resolve(cached);
@@ -70,6 +97,45 @@ export async function getLatestVersions(packageNames: string[]): Promise<Map<str
   );
 
   return new Map(entries.filter((entry): entry is [string, string] => entry[1] !== null));
+}
+
+/** Debug only. Makes `packageName` resolve to `version` instead of hitting
+ *  the registry, or clears the override when `version` is null. */
+export function setVersionOverride(packageName: string, version: string | null): void {
+  if (version === null) {
+    versionOverrides.delete(packageName);
+  } else {
+    versionOverrides.set(packageName, version);
+  }
+
+  try {
+    sessionStorage.setItem(
+      OVERRIDES_STORAGE_KEY,
+      JSON.stringify(Object.fromEntries(versionOverrides)),
+    );
+  } catch {
+    // Overrides stay in memory for this document if storage is unavailable.
+  }
+
+  overridesRevision++;
+  for (const listener of overrideListeners) {
+    listener();
+  }
+}
+
+/** Debug only. The currently overridden packages. */
+export function getVersionOverrides(): ReadonlyMap<string, string> {
+  return versionOverrides;
+}
+
+/** Bumped whenever an override changes, so consumers can re-resolve. */
+export function getVersionOverridesRevision(): number {
+  return overridesRevision;
+}
+
+export function subscribeToVersionOverrides(listener: () => void): () => void {
+  overrideListeners.add(listener);
+  return () => overrideListeners.delete(listener);
 }
 
 function parseVersionCore(version: string): number[] {

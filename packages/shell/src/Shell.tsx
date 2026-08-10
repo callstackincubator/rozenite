@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { PanelLeftClose, PanelLeftOpen, Settings } from 'lucide-react';
 import {
   Button,
@@ -26,6 +26,7 @@ import { WelcomeDialog } from './WelcomeDialog';
 import { getAvailableRuntimeVersion } from './new-version';
 import { PluginsScreen } from './plugins/PluginsScreen';
 import { useOutdatedPlugins } from './plugins/use-outdated-plugins';
+import { getVersionOverridesRevision, subscribeToVersionOverrides } from './npm/registry';
 import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
@@ -42,6 +43,10 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   const contentFrames = useRef(new Map<string, HTMLIFrameElement>());
   const sidebarPanel = useRef<SplitPaneHandle>(null);
   const { outdated } = useOutdatedPlugins(plugins);
+  const overridesRevision = useSyncExternalStore(
+    subscribeToVersionOverrides,
+    getVersionOverridesRevision,
+  );
 
   useEffect(() => {
     setSelectionState((current) => reconcileSelection(current, plugins));
@@ -63,7 +68,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
     return () => {
       cancelled = true;
     };
-  }, [runtimeVersion]);
+  }, [runtimeVersion, overridesRevision]);
 
   useEffect(() => {
     const forwardToPanels = (event: MessageEvent) => {
@@ -223,13 +228,16 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
                   </div>
                 </div>
               )}
-              <Sidebar.Footer>
+              {/* Collapsed, the rail is too narrow for two icon buttons side by
+                  side; stacking keeps the expand button reachable instead of
+                  clipping it and stranding the user in the collapsed state. */}
+              <Sidebar.Footer className={cn(isSidebarCollapsed && 'flex-col items-center')}>
                 {!isSidebarCollapsed && <NewVersionFooter currentVersion={runtimeVersion} />}
                 <Button
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    'ml-auto',
+                    !isSidebarCollapsed && 'ml-auto',
                     isPluginsScreenOpen && 'bg-sidebar-accent text-sidebar-accent-foreground',
                   )}
                   aria-label="Plugins"
@@ -293,7 +301,11 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
               </div>
               {isPluginsScreenOpen && (
                 <div className="absolute inset-0">
-                  <PluginsScreen plugins={plugins} outdated={outdated} />
+                  <PluginsScreen
+                    plugins={plugins}
+                    outdated={outdated}
+                    runtimeVersion={runtimeVersion}
+                  />
                 </div>
               )}
             </div>

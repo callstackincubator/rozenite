@@ -1,5 +1,10 @@
-import { useEffect, useState } from 'react';
-import { getLatestVersions, isNewerVersion } from '../npm/registry';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import {
+  getLatestVersions,
+  getVersionOverridesRevision,
+  isNewerVersion,
+  subscribeToVersionOverrides,
+} from '../npm/registry';
 import type { ShellPlugin } from '../types';
 
 export type OutdatedPluginsResult = {
@@ -18,6 +23,11 @@ export function useOutdatedPlugins(plugins: ShellPlugin[]): OutdatedPluginsResul
     status: 'loading',
     outdated: new Map(),
   });
+  // Debug version overrides re-resolve through the same path as real data.
+  const overridesRevision = useSyncExternalStore(
+    subscribeToVersionOverrides,
+    getVersionOverridesRevision,
+  );
 
   useEffect(() => {
     if (plugins.length === 0) {
@@ -70,7 +80,7 @@ export function useOutdatedPlugins(plugins: ShellPlugin[]): OutdatedPluginsResul
     // `plugins` is derived fresh on every ShellConfiguration update; identity
     // rather than a stable id list would refetch on every render, but shell
     // config only changes when plugins actually change.
-  }, [plugins]);
+  }, [plugins, overridesRevision]);
 
   return result;
 }

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Link } from '@rozenite/ui';
 import { getAvailableRuntimeVersion } from './new-version';
+import { getVersionOverridesRevision, subscribeToVersionOverrides } from './npm/registry';
 
 const RELEASES_URL = 'https://github.com/callstackincubator/rozenite/releases';
 
@@ -10,6 +11,10 @@ type NewVersionFooterProps = {
 
 export function NewVersionFooter({ currentVersion }: NewVersionFooterProps) {
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
+  const overridesRevision = useSyncExternalStore(
+    subscribeToVersionOverrides,
+    getVersionOverridesRevision,
+  );
 
   useEffect(() => {
     if (!currentVersion) {
@@ -31,7 +36,7 @@ export function NewVersionFooter({ currentVersion }: NewVersionFooterProps) {
     return () => {
       cancelled = true;
     };
-  }, [currentVersion]);
+  }, [currentVersion, overridesRevision]);
 
   const updateLabel = latestVersion ? `Update v${latestVersion}` : null;
 

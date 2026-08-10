@@ -120,3 +120,53 @@ describe('getLatestVersions', () => {
     expect(secondResult.get('@rozenite/runtime')).toBe('2.0.0');
   });
 });
+
+describe('version overrides', () => {
+  it('short-circuits the network for an overridden package', async () => {
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock;
+
+    const { getLatestVersions, setVersionOverride } = await import('./registry');
+    setVersionOverride('@rozenite/runtime', '9.0.0');
+
+    const versions = await getLatestVersions(['@rozenite/runtime']);
+
+    expect(versions.get('@rozenite/runtime')).toBe('9.0.0');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the registry once an override is cleared', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ 'dist-tags': { latest: '1.0.0' } }),
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const { getLatestVersions, setVersionOverride } = await import('./registry');
+    setVersionOverride('@rozenite/runtime', '9.0.0');
+    setVersionOverride('@rozenite/runtime', null);
+
+    const versions = await getLatestVersions(['@rozenite/runtime']);
+
+    expect(versions.get('@rozenite/runtime')).toBe('1.0.0');
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('notifies subscribers and bumps the revision on change', async () => {
+    const { getVersionOverridesRevision, setVersionOverride, subscribeToVersionOverrides } =
+      await import('./registry');
+
+    const listener = vi.fn();
+    const unsubscribe = subscribeToVersionOverrides(listener);
+    const before = getVersionOverridesRevision();
+
+    setVersionOverride('@rozenite/runtime', '9.0.0');
+
+    expect(listener).toHaveBeenCalledOnce();
+    expect(getVersionOverridesRevision()).toBeGreaterThan(before);
+
+    unsubscribe();
+    setVersionOverride('@rozenite/runtime', null);
+    expect(listener).toHaveBeenCalledOnce();
+  });
+});

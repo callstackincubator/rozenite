@@ -114,6 +114,9 @@ collapsed:  [cog +dot] [collapse]
 - Today the runtime update link is hidden entirely when the sidebar collapses.
   That is a defect. When collapsed, the runtime update must remain reachable:
   the cog's dot covers both signals and the Plugins screen carries the detail.
+- The collapsed rail is 48px, too narrow for two icon buttons side by side.
+  The footer stacks vertically when collapsed. Laying them out in a row clips
+  the collapse button and strands the user with no way to expand again.
 
 ### npm version checking
 
@@ -176,6 +179,35 @@ Requirements:
 Do not generalize this into a notices abstraction. A second kind of notice
 does not exist yet.
 
+### Debug affordance
+
+The update states cannot otherwise be reached without a real npm release, so
+shell carries a debug panel that emulates them.
+
+Overrides are injected at the registry, not at the components:
+
+```ts
+// packages/shell/src/npm/registry.ts
+export function setVersionOverride(packageName: string, version: string | null): void;
+```
+
+`getLatestVersion` consults the override map before both its cache and the
+network. Everything above it — `useOutdatedPlugins`, the cog's dot,
+`NewVersionFooter`, the per-plugin npm link — therefore runs its production
+path against emulated data. A parallel "pretend" flag in the components would
+leave the real path unexercised and is not acceptable.
+
+Overrides persist in `sessionStorage` so a reload keeps the emulated state,
+which is what makes the initial-load path testable. Consumers re-resolve
+through `subscribeToVersionOverrides` / `getVersionOverridesRevision`.
+
+Gating lives in one module (`packages/shell/src/debug/debug-mode.ts`):
+`import.meta.env.DEV`, or `localStorage['rozenite.debug'] === '1'` so a
+released build can be driven into these states when reproducing a report.
+
+The panel renders as the last `Card` on the Plugins screen and is absent
+entirely when the flag is off.
+
 ### Screen layout
 
 ```
@@ -183,7 +215,7 @@ PluginShell.Body
   ScrollArea
     header: "Plugins" + "N installed"
     Card per plugin
-      title row:  <name>  [Badge: version]  [Link -> npm, when outdated]
+      title row:  <name>  ......  [Link -> npm, when outdated]  [Badge: version]
       description
       DescriptionList
         Panels      <panel names>
@@ -192,6 +224,10 @@ PluginShell.Body
 `DescriptionList` carries a single row today. It stays a list rather than a
 bare label/value pair because agent tools are a deferred second row and
 because the component is shared (see "`@rozenite/ui` changes").
+
+Version and npm link are right-aligned; the title keeps the left edge. Most
+manifests set `name` to the package name, so the package id renders as a
+second title line only when the two actually differ.
 
 Plugins are listed in the order shell receives them. No search, no sort, no
 filtering; the expected population is under thirty entries.
