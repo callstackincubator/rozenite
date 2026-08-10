@@ -16,7 +16,6 @@ export type RootStackParamList = {
   ParameterDisplay: {
     title: string;
     message: string;
-    color: string;
     source: string;
   };
   SuccessiveScreensStack: undefined;
