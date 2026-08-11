@@ -29,3 +29,9 @@ export const featureFlagsPluginAdapter = createCustomFlagsAdapter({
   listFlags: () => playgroundFlagDeclarations,
   overrides: featureFlagsOverrides,
 });
+
+// Hoisted to module scope, matching `storagePluginAdapters`/
+// `sqlitePluginAdapters` -- `useRozeniteFeatureFlagsPlugin` is robust to a
+// fresh array literal on every render, but a stable reference is still good
+// practice.
+export const featureFlagsPluginAdapters = [featureFlagsPluginAdapter];

@@ -32,7 +32,7 @@ import { ReactHookFormPluginScreen } from './screens/ReactHookFormPluginScreen';
 import { StoragePluginScreen } from './screens/StoragePluginScreen';
 import { storagePluginAdapters } from './storage-plugin-adapters';
 import { FeatureFlagsPluginScreen } from './screens/FeatureFlagsPluginScreen';
-import { featureFlagsPluginAdapter } from './feature-flags-plugin-adapters';
+import { featureFlagsPluginAdapters } from './feature-flags-plugin-adapters';
 import { sqlitePluginAdapters } from './sqlite-plugin-databases';
 import { primaryStore } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
@@ -64,7 +64,7 @@ const Wrapper = () => {
     storages: storagePluginAdapters,
   });
   useRozeniteFeatureFlagsPlugin({
-    providers: [featureFlagsPluginAdapter],
+    providers: featureFlagsPluginAdapters,
   });
   useRozeniteSqlitePlugin({
     adapters: sqlitePluginAdapters,

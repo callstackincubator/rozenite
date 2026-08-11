@@ -15,7 +15,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { usePlaygroundControlsSections } from './hooks/usePlaygroundControlsSections';
 import { storagePluginAdapters } from './storage-plugin-adapters';
-import { featureFlagsPluginAdapter } from './feature-flags-plugin-adapters';
+import { featureFlagsPluginAdapters } from './feature-flags-plugin-adapters';
 import { useTheme } from './theme/useTheme';
 
 const tanstackQueryClient = new QueryClient();
@@ -87,7 +87,7 @@ export const StoragePluginSection = () => {
 
 export const FeatureFlagsPluginSection = () => {
   useRozeniteFeatureFlagsPlugin({
-    providers: [featureFlagsPluginAdapter],
+    providers: featureFlagsPluginAdapters,
   });
 
   return (

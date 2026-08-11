@@ -35,20 +35,26 @@ import {
   useRozeniteFeatureFlagsPlugin,
 } from '@rozenite/feature-flags-plugin';
 
+// Module-level, like storage/sqlite adapters elsewhere in the docs. The
+// hook tracks `providers` by content, so a fresh array literal on every
+// render works too -- hoisting just avoids rebuilding provider state for
+// nothing.
+const featureFlagsProviders = [
+  createCustomFlagsAdapter({
+    id: 'app',
+    name: 'App flags',
+    listFlags: () => flagStore.getAll(),
+  }),
+];
+
 function App() {
-  useRozeniteFeatureFlagsPlugin({
-    providers: [
-      createCustomFlagsAdapter({
-        id: 'app',
-        name: 'App flags',
-        listFlags: () => flagStore.getAll(),
-      }),
-    ],
-  });
+  useRozeniteFeatureFlagsPlugin({ providers: featureFlagsProviders });
 
   return <YourApp />;
 }
 ```
+
+`setOverride` throws for a key not present in `listFlags()` — nothing is written for a typo'd or unknown key.
 
 Overrides default to an in-memory `Map`. Bring your own store to persist them across restarts:
 
@@ -76,9 +82,10 @@ import {
 
 const rawClient = new ReactNativeLDClient(LD_MOBILE_KEY, AutoEnvAttributes.Enabled);
 const { provider, client } = createLaunchDarklyFlagsAdapter({ client: rawClient });
+const featureFlagsProviders = [provider];
 
 function App() {
-  useRozeniteFeatureFlagsPlugin({ providers: [provider] });
+  useRozeniteFeatureFlagsPlugin({ providers: featureFlagsProviders });
 
   return <LDProvider client={client}>{/* ... */}</LDProvider>;
 }
@@ -106,21 +113,21 @@ const overrideAdapter = new LocalOverrideAdapter();
 const client = new StatsigClient(STATSIG_CLIENT_KEY, { userID: 'user-123' }, { overrideAdapter });
 await client.initializeAsync();
 
-function App() {
-  useRozeniteFeatureFlagsPlugin({
-    providers: [
-      createStatsigFlagsAdapter({
-        client,
-        overrideAdapter,
-        flags: [
-          { key: 'new-onboarding' }, // boolean gate (default type)
-          { key: 'checkout-copy', type: 'string' },
-          { key: 'max-items', type: 'number' },
-          { key: 'layout-config', type: 'json' },
-        ],
-      }),
+const featureFlagsProviders = [
+  createStatsigFlagsAdapter({
+    client,
+    overrideAdapter,
+    flags: [
+      { key: 'new-onboarding' }, // boolean gate (default type)
+      { key: 'checkout-copy', type: 'string' },
+      { key: 'max-items', type: 'number' },
+      { key: 'layout-config', type: 'json' },
     ],
-  });
+  }),
+];
+
+function App() {
+  useRozeniteFeatureFlagsPlugin({ providers: featureFlagsProviders });
 
   return <YourApp />;
 }
@@ -132,6 +139,7 @@ Notes:
 - `type: 'boolean'` (the default) maps to `checkGate`/`overrideGate`.
 - Dynamic configs hold a parameter map, not a single scalar. `string`/`number` flags read and write a single parameter named `value` within the config by convention — this is a convention of this adapter, not part of the Statsig API. `json` flags read/write the config's full parameter map instead.
 - There is no `refresh()` — the closest SDK method re-identifies the user rather than refetching specs, so this adapter doesn't invent one.
+- "Reset all overrides" only clears the flags declared in `flags`, not every override in the shared `LocalOverrideAdapter` — overrides for gates/configs this adapter doesn't declare (e.g. from other debug tooling) are left alone.
 
 ## Agent Tools (LLM Integration)
 
