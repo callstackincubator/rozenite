@@ -61,7 +61,13 @@
     "vite": "catalog:"
   },
   "peerDependencies": {
+    "@launchdarkly/react-native-client-sdk": "^10.0.0",
     "react": "*",
     "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "@launchdarkly/react-native-client-sdk": {
+      "optional": true
+    }
   }
 }
