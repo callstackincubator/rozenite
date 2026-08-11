@@ -8,6 +8,7 @@ import {
 import type { FeatureFlagsProvider } from '../shared/types';
 import { createFeatureFlagsHandlers } from './handlers';
 import { assertNoDuplicateProviderIds } from './provider-registry';
+import { useFeatureFlagsAgentTools } from './useFeatureFlagsAgentTools';
 
 export type RozeniteFeatureFlagsPluginOptions = {
   providers: FeatureFlagsProvider[];
@@ -21,6 +22,8 @@ export const useRozeniteFeatureFlagsPlugin = ({ providers }: RozeniteFeatureFlag
   useMemo(() => {
     assertNoDuplicateProviderIds(providers);
   }, [providers]);
+
+  useFeatureFlagsAgentTools(providers);
 
   const client = useRozeniteDevToolsClient<FeatureFlagsEventMap>({
     pluginId: FEATURE_FLAGS_PLUGIN_ID,
