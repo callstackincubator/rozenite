@@ -654,6 +654,61 @@ importers:
         specifier: 0.84.4
         version: 0.84.4
 
+  packages/feature-flags-plugin:
+    dependencies:
+      '@rozenite/agent-bridge':
+        specifier: workspace:*
+        version: link:../agent-bridge
+      '@rozenite/agent-shared':
+        specifier: workspace:*
+        version: link:../agent-shared
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      '@rozenite/vite-plugin':
+        specifier: workspace:*
+        version: link:../vite-plugin
+      '@tanstack/react-query':
+        specifier: ^5.0.0
+        version: 5.83.0(react@19.2.3)
+      '@tanstack/react-table':
+        specifier: ^8.21.3
+        version: 8.21.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+      lucide-react:
+        specifier: ^0.263.1
+        version: 0.263.1(react@19.2.3)
+      react:
+        specifier: 'catalog:'
+        version: 19.2.3
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.3(react@19.2.3)
+      react-native:
+        specifier: 'catalog:'
+        version: 0.86.0(@babel/core@7.29.0)(@react-native/metro-config@0.86.2)(@types/react@19.2.14)(react@19.2.3)
+      react-native-web:
+        specifier: ^0.21.2
+        version: 0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-virtuoso:
+        specifier: ^4.14.1
+        version: 4.18.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      rozenite:
+        specifier: workspace:*
+        version: link:../cli
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.5(@types/node@22.17.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+
   packages/file-system-plugin:
     dependencies:
       '@rozenite/agent-bridge':
@@ -10107,7 +10162,7 @@ packages:
   git-raw-commits@4.0.0:
     resolution: {integrity: sha512-ICsMM1Wk8xSGMowkOmPrzo2Fgmfo4bMHLNX6ytHjajRJUqvHOw/TFapQ+QG75c3X/tTDDhOSRPGC52dDbNM8FQ==}
     engines: {node: '>=16'}
-    deprecated: This package is no longer maintained. For the JavaScript API, please use @conventional-changelog/git-client instead.
+    deprecated: Deprecated and no longer maintained. Use @conventional-changelog/git-client instead.
     hasBin: true
 
   github-slugger@2.0.0:
@@ -13588,6 +13643,7 @@ packages:
 
   sliced@1.0.1:
     resolution: {integrity: sha512-VZBmZP8WU3sMOZm1bdgTadsQbcscK0UM8oKxKVBs4XAhUo2Xxzm/OFMGBkPusxw9xL3Uy8LrzEqGqJhclsr0yA==}
+    deprecated: Unsupported
 
   slugify@1.6.6:
     resolution: {integrity: sha512-h+z7HKHYXj6wJU+AnS/+IH8Uh9fdcX1Lrhg1/VMdf9PwoBQXFcXiAdsy2tSK0P6gKwJLXp02r90ahUCqHk9rrw==}
@@ -20639,7 +20695,9 @@ snapshots:
       metro-config: 0.84.4
       metro-runtime: 0.84.4
     transitivePeerDependencies:
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
