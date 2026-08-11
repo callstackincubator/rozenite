@@ -1,5 +1,5 @@
 import { createRozeniteRpc, useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   FEATURE_FLAGS_PLUGIN_ID,
   type FeatureFlagsEventMap,
@@ -29,14 +29,37 @@ export const useRozeniteFeatureFlagsPlugin = ({ providers }: RozeniteFeatureFlag
     pluginId: FEATURE_FLAGS_PLUGIN_ID,
   });
 
+  // Read by the RPC handlers on every call (see the effect below), so a
+  // fresh `providers` array literal on every render -- which is how the
+  // documented and playground call sites pass it -- never tears down and
+  // rebuilds the RPC layer, which would abort in-flight panel calls.
+  const providersRef = useRef(providers);
+  providersRef.current = providers;
+
+  // Stabilized by content: keeps the same array reference across renders
+  // unless a provider was actually added, removed, or reordered, so the
+  // subscription effect further below only tears down and re-subscribes
+  // when the set of providers genuinely changes, not on every render.
+  const previousProvidersRef = useRef<FeatureFlagsProvider[]>(providers);
+  const previousProviders = previousProvidersRef.current;
+  const providersChanged =
+    previousProviders.length !== providers.length ||
+    previousProviders.some((provider, index) => provider !== providers[index]);
+  if (providersChanged) {
+    previousProvidersRef.current = providers;
+  }
+  const stableProviders = providersChanged ? providers : previousProviders;
+
+  // RPC layer: created once per `client` and left alone across re-renders.
+  // Handlers always read `providersRef.current`, so they see the latest
+  // providers without needing this effect to rerun.
   useEffect(() => {
     if (!client) {
       return;
     }
 
-    let disposed = false;
     const rpc = createRozeniteRpc<FeatureFlagsMethods>(client);
-    const handlers = createFeatureFlagsHandlers(providers);
+    const handlers = createFeatureFlagsHandlers(() => providersRef.current);
 
     const handlerSubscriptions = [
       rpc.handle('getSnapshot', handlers.getSnapshot),
@@ -46,7 +69,22 @@ export const useRozeniteFeatureFlagsPlugin = ({ providers }: RozeniteFeatureFlag
       rpc.handle('refresh', handlers.refresh),
     ];
 
-    const providerSubscriptions = providers
+    return () => {
+      handlerSubscriptions.forEach((subscription) => subscription.remove());
+      rpc.close();
+    };
+  }, [client]);
+
+  // Provider subscriptions: re-established only when `stableProviders`
+  // changes, i.e. when the set of providers genuinely changes.
+  useEffect(() => {
+    if (!client) {
+      return;
+    }
+
+    let disposed = false;
+
+    const providerSubscriptions = stableProviders
       .filter((provider) => provider.subscribe)
       .map((provider) => {
         try {
@@ -77,10 +115,8 @@ export const useRozeniteFeatureFlagsPlugin = ({ providers }: RozeniteFeatureFlag
     return () => {
       disposed = true;
       providerSubscriptions.forEach((subscription) => subscription.remove());
-      handlerSubscriptions.forEach((subscription) => subscription.remove());
-      rpc.close();
     };
-  }, [client, providers]);
+  }, [client, stableProviders]);
 
   return client;
 };

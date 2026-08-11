@@ -1,6 +1,7 @@
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
 import { FEATURE_FLAGS_AGENT_PLUGIN_ID, featureFlagsToolDefinitions } from '../shared/agent-tools';
-import { isValueOfType, type FeatureFlag, type FeatureFlagsProvider } from '../shared/types';
+import type { FeatureFlag, FeatureFlagsProvider } from '../shared/types';
+import { setValidatedOverride } from './override-validation';
 import { resolveProvider } from './provider-registry';
 
 const findFlag = (flags: FeatureFlag[], key: string, providerId: string): FeatureFlag => {
@@ -55,17 +56,7 @@ export const createFeatureFlagsAgentToolHandlers = (providers: FeatureFlagsProvi
     value: unknown;
   }) => {
     const provider = resolveProvider(providers, providerId);
-    const flags = await provider.listFlags();
-    const existing = findFlag(flags, key, provider.id);
-
-    if (!isValueOfType(existing.type, value)) {
-      throw new Error(
-        `[Rozenite] Feature Flags Plugin: value does not match the declared type "${existing.type}" for flag "${key}" on provider "${provider.id}".`,
-      );
-    }
-
-    await provider.setOverride(key, value);
-    const updatedFlags = await provider.listFlags();
+    const updatedFlags = await setValidatedOverride(provider, key, value);
 
     return { providerId: provider.id, flag: findFlag(updatedFlags, key, provider.id) };
   },
