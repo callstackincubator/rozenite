@@ -17,6 +17,7 @@ export type { FlagOverrides, FlagOverridesOptions } from './src/react-native/ove
 
 export let createCustomFlagsAdapter: typeof import('./src/react-native/adapters').createCustomFlagsAdapter;
 export let createFlagOverrides: typeof import('./src/react-native/overrides').createFlagOverrides;
+export let useRozeniteFeatureFlagsPlugin: typeof import('./src/react-native/useRozeniteFeatureFlagsPlugin').useRozeniteFeatureFlagsPlugin;
 
 const isDev = process.env.NODE_ENV !== 'production';
 const isServer = typeof window === 'undefined';
@@ -39,9 +40,12 @@ if (!isDev || isServer) {
     clearAll: () => {},
     subscribe: () => ({ remove: () => {} }),
   })) as typeof createFlagOverrides;
+  useRozeniteFeatureFlagsPlugin = () => null;
 } else {
   // The custom adapter has no native dependency, so the web and native paths
   // are identical here.
   createCustomFlagsAdapter = require('./src/react-native/adapters').createCustomFlagsAdapter;
   createFlagOverrides = require('./src/react-native/overrides').createFlagOverrides;
+  useRozeniteFeatureFlagsPlugin =
+    require('./src/react-native/useRozeniteFeatureFlagsPlugin').useRozeniteFeatureFlagsPlugin;
 }
