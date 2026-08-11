@@ -6,7 +6,9 @@ import { parseNumberInput } from './value-parsing';
 export type FlagValueCellProps = {
   flag: FeatureFlag;
   disabled?: boolean;
-  onChange: (value: FeatureFlagValue) => Promise<void>;
+  /** Resolves `true`/`false` for success/failure; this cell doesn't act on
+   * the result (there's no draft to preserve here, unlike `JsonFlagDialog`). */
+  onChange: (value: FeatureFlagValue) => Promise<boolean>;
   onOpenJson: () => void;
 };
 
@@ -56,7 +58,7 @@ function TextValueCell({
 }: {
   flag: FeatureFlag;
   disabled: boolean;
-  onChange: (value: FeatureFlagValue) => Promise<void>;
+  onChange: (value: FeatureFlagValue) => Promise<boolean>;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(() => String(flag.value));
@@ -89,7 +91,12 @@ function TextValueCell({
       }
       setEditing(false);
       setError(null);
-      if (result.value !== flag.value) {
+      // The equality shortcut is only safe when the flag is already
+      // overridden to this value -- typing the *current effective* value of
+      // a non-overridden flag must still create an override, otherwise
+      // there's no way to pin a flag to its current value (it keeps
+      // following the next remote update).
+      if (!flag.overridden || result.value !== flag.value) {
         void onChange(result.value);
       }
       return;
@@ -97,7 +104,7 @@ function TextValueCell({
 
     setEditing(false);
     setError(null);
-    if (draft !== flag.value) {
+    if (!flag.overridden || draft !== flag.value) {
       void onChange(draft);
     }
   };

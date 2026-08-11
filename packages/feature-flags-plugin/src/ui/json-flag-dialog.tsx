@@ -1,5 +1,5 @@
 import { Button, Dialog, Field, Textarea } from '@rozenite/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { JsonValue } from '../shared/types';
 import { parseJsonInput } from './value-parsing';
 
@@ -8,7 +8,10 @@ export type JsonFlagDialogProps = {
   onOpenChange: (open: boolean) => void;
   flagKey: string | null;
   value: JsonValue | null;
-  onSave: (value: JsonValue) => Promise<void>;
+  /** Resolves `true` on a successful write, `false` on failure. The dialog
+   * stays open with the draft intact on `false` -- the caller is still
+   * responsible for surfacing the error (e.g. a toast). */
+  onSave: (value: JsonValue) => Promise<boolean>;
 };
 
 /** The `{…}` chip's editor for `json`-typed flags -- there's no right-hand
@@ -23,12 +26,20 @@ export function JsonFlagDialog({
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Read by the reset effect below without being a dependency of it, so a
+  // `flags-changed`-triggered snapshot refetch while the dialog is open
+  // (which changes `value`'s identity) doesn't clobber the user's draft.
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
   useEffect(() => {
     if (open) {
-      setDraft(JSON.stringify(value, null, 2));
+      setDraft(JSON.stringify(valueRef.current, null, 2));
       setSaving(false);
     }
-  }, [open, value]);
+    // Reset only when the dialog opens or the target flag changes, not on
+    // every new `value` identity -- see `valueRef` above.
+  }, [open, flagKey]);
 
   const result = parseJsonInput(draft);
   const error = result.ok ? null : result.error;
@@ -39,8 +50,10 @@ export function JsonFlagDialog({
     }
     setSaving(true);
     try {
-      await onSave(result.value as JsonValue);
-      onOpenChange(false);
+      const success = await onSave(result.value as JsonValue);
+      if (success) {
+        onOpenChange(false);
+      }
     } finally {
       setSaving(false);
     }

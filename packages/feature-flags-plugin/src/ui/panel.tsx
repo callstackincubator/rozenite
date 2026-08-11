@@ -13,7 +13,7 @@ import {
   useToast,
   VirtualizedDataTable,
 } from '@rozenite/ui';
-import { Flag, RefreshCw, RotateCcw } from 'lucide-react';
+import { Flag, Loader2, RefreshCw, RotateCcw } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import type { FeatureFlagsProviderSnapshot } from '../shared/messaging';
 import type { FeatureFlag, FeatureFlagValue, JsonValue } from '../shared/types';
@@ -74,12 +74,17 @@ function FeatureFlagsPanelContent() {
     });
   };
 
-  const handleSetOverride = async (flag: FeatureFlag, value: FeatureFlagValue) => {
-    if (!selectedProvider) return;
+  const handleSetOverride = async (
+    flag: FeatureFlag,
+    value: FeatureFlagValue,
+  ): Promise<boolean> => {
+    if (!selectedProvider) return false;
     try {
       await setOverride(selectedProvider.id, flag.key, value);
+      return true;
     } catch (error) {
       notifyError(`Could not override "${flag.key}"`, error);
+      return false;
     }
   };
 
@@ -255,7 +260,14 @@ function FeatureFlagsPanelContent() {
   return (
     <PluginShell>
       <PluginShell.Body>
-        {providers.length === 0 ? (
+        {!connected || isLoading ? (
+          <EmptyState
+            icon={(iconProps) => (
+              <Loader2 {...iconProps} className={`${iconProps.className ?? ''} animate-spin`} />
+            )}
+            title="Loading feature flags…"
+          />
+        ) : providers.length === 0 ? (
           <EmptyState
             icon={Flag}
             title="No providers registered"
@@ -309,8 +321,8 @@ function FeatureFlagsPanelContent() {
         flagKey={jsonDialogKey}
         value={(jsonDialogFlag?.value as JsonValue | null) ?? null}
         onSave={async (value) => {
-          if (!jsonDialogFlag) return;
-          await handleSetOverride(jsonDialogFlag, value);
+          if (!jsonDialogFlag) return false;
+          return handleSetOverride(jsonDialogFlag, value);
         }}
       />
       <ConfirmDialog
