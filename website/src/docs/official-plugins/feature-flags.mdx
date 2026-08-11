@@ -1,0 +1,151 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Feature Flags Plugin
+
+The Feature Flags plugin lets you list, inspect, and force-override feature flags on a running device from React Native DevTools. It supports a homegrown custom store, LaunchDarkly, and Statsig through adapters.
+
+## Tier A vs. Tier B: read this before picking an adapter
+
+Whether overriding a flag needs a code change depends on **who owns the override store**:
+
+- **Tier A — the provider owns the store.** The Statsig adapter points at a `LocalOverrideAdapter` you already construct for Statsig. **No call-site change** — overrides work as soon as the adapter is registered. The override lifetime is whatever that `LocalOverrideAdapter` instance's lifetime is; this plugin doesn't manage it.
+- **Tier B — the plugin owns the store.** The custom adapter and the LaunchDarkly adapter have no native override mechanism, so the plugin keeps its own in-memory override map. For LaunchDarkly this means passing a **wrapped client** to `<LDProvider>` instead of the raw SDK client — the one line you have to change. Overrides are in-memory and reset on app restart unless you wire persistence yourself.
+
+This is also why **"Reset all overrides" in the panel is durable on Tier A and ephemeral on Tier B** — restarting the app clears a Tier B reset's effect but not a Tier A one. Neither is a bug.
+
+## Installation
+
+Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
+
+<PackageManagerTabs command="install -D @rozenite/feature-flags-plugin" />
+
+Install the peer dependency for whichever adapter you use:
+
+<PackageManagerTabs command="install @launchdarkly/react-native-client-sdk" />
+
+<PackageManagerTabs command="install @statsig/js-client @statsig/react-native-bindings @statsig/js-local-overrides" />
+
+## Adapter: Custom / local (Tier B)
+
+For a homegrown flag store, or before wiring a real provider:
+
+```ts title="App.tsx"
+import {
+  createCustomFlagsAdapter,
+  useRozeniteFeatureFlagsPlugin,
+} from '@rozenite/feature-flags-plugin';
+
+function App() {
+  useRozeniteFeatureFlagsPlugin({
+    providers: [
+      createCustomFlagsAdapter({
+        id: 'app',
+        name: 'App flags',
+        listFlags: () => flagStore.getAll(),
+      }),
+    ],
+  });
+
+  return <YourApp />;
+}
+```
+
+Overrides default to an in-memory `Map`. Bring your own store to persist them across restarts:
+
+```ts title="App.tsx"
+import { createFlagOverrides } from '@rozenite/feature-flags-plugin';
+
+const overrides = createFlagOverrides({
+  initial: JSON.parse(storage.getString('flag-overrides') ?? '{}'),
+  onChange: (all) => storage.set('flag-overrides', JSON.stringify(all)),
+});
+
+createCustomFlagsAdapter({ id: 'app', name: 'App flags', listFlags, overrides });
+```
+
+## Adapter: LaunchDarkly (Tier B)
+
+`createLaunchDarklyFlagsAdapter` returns `{ provider, client }`. Pass `client` — not your raw `ReactNativeLDClient` — to `<LDProvider>`. Every LD hook (`useBoolVariation`, `useLDClient`, ...) reads through it from there automatically, because LD's own hooks are a thin read off the context client.
+
+```ts title="App.tsx"
+import { ReactNativeLDClient, AutoEnvAttributes, LDProvider } from '@launchdarkly/react-native-client-sdk';
+import {
+  createLaunchDarklyFlagsAdapter,
+  useRozeniteFeatureFlagsPlugin,
+} from '@rozenite/feature-flags-plugin';
+
+const rawClient = new ReactNativeLDClient(LD_MOBILE_KEY, AutoEnvAttributes.Enabled);
+const { provider, client } = createLaunchDarklyFlagsAdapter({ client: rawClient });
+
+function App() {
+  useRozeniteFeatureFlagsPlugin({ providers: [provider] });
+
+  return <LDProvider client={client}>{/* ... */}</LDProvider>;
+}
+```
+
+Notes:
+
+- Overrides are in-memory by default; pass `overrides: createFlagOverrides(...)` to persist them, same as the custom adapter.
+- There is no `refresh()` on this adapter — LD has no documented, version-stable way to force one client-side.
+- Anything holding a direct reference to the raw (unwrapped) client bypasses overrides.
+
+## Adapter: Statsig (Tier A)
+
+You construct `StatsigClient` and `LocalOverrideAdapter` yourself; the adapter only takes references.
+
+```ts title="App.tsx"
+import { StatsigClient } from '@statsig/js-client';
+import { LocalOverrideAdapter } from '@statsig/js-local-overrides';
+import {
+  createStatsigFlagsAdapter,
+  useRozeniteFeatureFlagsPlugin,
+} from '@rozenite/feature-flags-plugin';
+
+const overrideAdapter = new LocalOverrideAdapter();
+const client = new StatsigClient(STATSIG_CLIENT_KEY, { userID: 'user-123' }, { overrideAdapter });
+await client.initializeAsync();
+
+function App() {
+  useRozeniteFeatureFlagsPlugin({
+    providers: [
+      createStatsigFlagsAdapter({
+        client,
+        overrideAdapter,
+        flags: [
+          { key: 'new-onboarding' }, // boolean gate (default type)
+          { key: 'checkout-copy', type: 'string' },
+          { key: 'max-items', type: 'number' },
+          { key: 'layout-config', type: 'json' },
+        ],
+      }),
+    ],
+  });
+
+  return <YourApp />;
+}
+```
+
+Notes:
+
+- Statsig has no client-side way to enumerate gates or dynamic configs, so you declare which flags exist via `flags`. Reading or overriding an undeclared key throws.
+- `type: 'boolean'` (the default) maps to `checkGate`/`overrideGate`.
+- Dynamic configs hold a parameter map, not a single scalar. `string`/`number` flags read and write a single parameter named `value` within the config by convention — this is a convention of this adapter, not part of the Statsig API. `json` flags read/write the config's full parameter map instead.
+- There is no `refresh()` — the closest SDK method re-identifies the user rather than refetching specs, so this adapter doesn't invent one.
+
+## Agent Tools (LLM Integration)
+
+When this plugin is active, it registers agent tools under the `@rozenite/feature-flags-plugin` domain:
+
+- `list-flags` — list flags across providers, including type, effective value, and override state.
+- `get-flag` — read a single flag by key.
+- `override-flag` — force a flag to a value, useful for reproducing a bug report that only happens with a flag on.
+- `clear-overrides` — clear one override or every override for a provider.
+
+`providerId` is optional on every tool and resolves to the sole registered provider when there's only one.
+
+## Usage
+
+Once registered, a "Feature Flags" panel appears in DevTools showing every flag's key, type, effective value, and whether it's overridden. Flip a boolean with one click, edit strings and numbers inline, or open a dialog to edit a `json` flag. Overridden rows can be reset individually, or all at once from the toolbar (subject to the Tier A/Tier B lifetime difference above).
+
+**Next**: Explore other [Official Plugins](./overview.md) or learn how to build your own in the [Plugin Development guide](../plugin-development/plugin-development.md).

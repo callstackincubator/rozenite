@@ -1,6 +1,7 @@
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
+import { useRozeniteFeatureFlagsPlugin } from '@rozenite/feature-flags-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
@@ -30,6 +31,8 @@ import { FileSystemTestScreen } from './screens/FileSystemTestScreen';
 import { ReactHookFormPluginScreen } from './screens/ReactHookFormPluginScreen';
 import { StoragePluginScreen } from './screens/StoragePluginScreen';
 import { storagePluginAdapters } from './storage-plugin-adapters';
+import { FeatureFlagsPluginScreen } from './screens/FeatureFlagsPluginScreen';
+import { featureFlagsPluginAdapter } from './feature-flags-plugin-adapters';
 import { sqlitePluginAdapters } from './sqlite-plugin-databases';
 import { primaryStore } from './store';
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
@@ -59,6 +62,9 @@ const Wrapper = () => {
   });
   useRozeniteStoragePlugin({
     storages: storagePluginAdapters,
+  });
+  useRozeniteFeatureFlagsPlugin({
+    providers: [featureFlagsPluginAdapter],
   });
   useRozeniteSqlitePlugin({
     adapters: sqlitePluginAdapters,
@@ -91,6 +97,7 @@ const Wrapper = () => {
       <Stack.Screen name={routes.controlsPlugin.name} component={ControlsPluginScreen} />
       <Stack.Screen name={routes.reactHookFormPlugin.name} component={ReactHookFormPluginScreen} />
       <Stack.Screen name={routes.storagePlugin.name} component={StoragePluginScreen} />
+      <Stack.Screen name={routes.featureFlagsPlugin.name} component={FeatureFlagsPluginScreen} />
       <Stack.Screen name={routes.networkTest.name} component={NetworkTestScreen} />
       <Stack.Screen name={routes.requestBodyTest.name} component={RequestBodyTestScreen} />
       <Stack.Screen name={routes.reduxTest.name} component={ReduxTestScreen} />
@@ -133,6 +140,7 @@ const linking = {
       [routes.controlsPlugin.name]: routes.controlsPlugin.path,
       [routes.reactHookFormPlugin.name]: routes.reactHookFormPlugin.path,
       [routes.storagePlugin.name]: routes.storagePlugin.path,
+      [routes.featureFlagsPlugin.name]: routes.featureFlagsPlugin.path,
       [routes.networkTest.name]: routes.networkTest.path,
       [routes.requestBodyTest.name]: routes.requestBodyTest.path,
       [routes.reduxTest.name]: routes.reduxTest.path,

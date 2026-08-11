@@ -8,6 +8,7 @@ import { useTheme } from '../theme/useTheme';
 const GROUP_ORDER: RouteGroup[] = [
   'State',
   'Storage',
+  'Flags',
   'Network',
   'Performance',
   'Forms',

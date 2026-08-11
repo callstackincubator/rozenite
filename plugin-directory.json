@@ -40,6 +40,10 @@
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/storage-plugin"
   },
   {
+    "npmUrl": "https://www.npmjs.com/package/@rozenite/feature-flags-plugin",
+    "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/feature-flags-plugin"
+  },
+  {
     "npmUrl": "https://www.npmjs.com/package/@rozenite/sqlite-plugin",
     "githubUrl": "https://github.com/callstackincubator/rozenite/tree/main/packages/sqlite-plugin"
   },
