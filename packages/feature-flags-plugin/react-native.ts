@@ -37,34 +37,33 @@ const isDev = process.env.NODE_ENV !== 'production';
 const isServer = typeof window === 'undefined';
 
 if (!isDev || isServer) {
-  createCustomFlagsAdapter = ((options: { id: string; name: string }) => ({
-    id: options.id,
-    name: options.name,
+  // Stubs read their options defensively: a production build must never be the
+  // place a malformed call first crashes, so a missing options object degrades
+  // to a named inert provider rather than a TypeError.
+  const createNoopProvider = (
+    options: { id?: string; name?: string } | undefined,
+    defaultId: string,
+    defaultName: string,
+  ) => ({
+    id: options?.id ?? defaultId,
+    name: options?.name ?? defaultName,
     listFlags: () => [],
     setOverride: () => {},
     clearOverride: () => {},
     clearAllOverrides: () => {},
-  })) as typeof createCustomFlagsAdapter;
-  createLaunchDarklyFlagsAdapter = ((options: { client: unknown; id?: string; name?: string }) => ({
-    provider: {
-      id: options.id ?? 'launchdarkly',
-      name: options.name ?? 'LaunchDarkly',
-      listFlags: () => [],
-      setOverride: () => {},
-      clearOverride: () => {},
-      clearAllOverrides: () => {},
-    },
+  });
+
+  createCustomFlagsAdapter = ((options: { id?: string; name?: string } | undefined) =>
+    createNoopProvider(options, 'custom', 'Custom flags')) as typeof createCustomFlagsAdapter;
+  createLaunchDarklyFlagsAdapter = ((
+    options: { client?: unknown; id?: string; name?: string } | undefined,
+  ) => ({
+    provider: createNoopProvider(options, 'launchdarkly', 'LaunchDarkly'),
     // Identity passthrough: no `Proxy`, zero overhead in production.
-    client: options.client,
+    client: options?.client,
   })) as typeof createLaunchDarklyFlagsAdapter;
-  createStatsigFlagsAdapter = ((options: { id?: string; name?: string }) => ({
-    id: options.id ?? 'statsig',
-    name: options.name ?? 'Statsig',
-    listFlags: () => [],
-    setOverride: () => {},
-    clearOverride: () => {},
-    clearAllOverrides: () => {},
-  })) as typeof createStatsigFlagsAdapter;
+  createStatsigFlagsAdapter = ((options: { id?: string; name?: string } | undefined) =>
+    createNoopProvider(options, 'statsig', 'Statsig')) as typeof createStatsigFlagsAdapter;
   createFlagOverrides = (() => ({
     get: () => undefined,
     has: () => false,
