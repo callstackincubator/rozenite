@@ -10,3 +10,13 @@ export type {
   LDEvaluationReason,
   LDFlagSet,
 } from './launchdarkly';
+
+export { createStatsigFlagsAdapter } from './statsig';
+export type {
+  CreateStatsigFlagsAdapterOptions,
+  StatsigClientLike,
+  StatsigDynamicConfigLike,
+  StatsigFlagDeclaration,
+  StatsigOverrideAdapterLike,
+  StatsigOverrideStoreLike,
+} from './statsig';

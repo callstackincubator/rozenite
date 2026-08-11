@@ -11,18 +11,25 @@ export type {
 export type {
   CreateCustomFlagsAdapterOptions,
   CreateLaunchDarklyFlagsAdapterOptions,
+  CreateStatsigFlagsAdapterOptions,
   FeatureFlagInput,
   LaunchDarklyFlagsAdapter,
   LDClientLike,
   LDEvaluationDetailLike,
   LDEvaluationReason,
   LDFlagSet,
+  StatsigClientLike,
+  StatsigDynamicConfigLike,
+  StatsigFlagDeclaration,
+  StatsigOverrideAdapterLike,
+  StatsigOverrideStoreLike,
 } from './src/react-native/adapters';
 
 export type { FlagOverrides, FlagOverridesOptions } from './src/react-native/overrides';
 
 export let createCustomFlagsAdapter: typeof import('./src/react-native/adapters').createCustomFlagsAdapter;
 export let createLaunchDarklyFlagsAdapter: typeof import('./src/react-native/adapters').createLaunchDarklyFlagsAdapter;
+export let createStatsigFlagsAdapter: typeof import('./src/react-native/adapters').createStatsigFlagsAdapter;
 export let createFlagOverrides: typeof import('./src/react-native/overrides').createFlagOverrides;
 export let useRozeniteFeatureFlagsPlugin: typeof import('./src/react-native/useRozeniteFeatureFlagsPlugin').useRozeniteFeatureFlagsPlugin;
 
@@ -50,6 +57,14 @@ if (!isDev || isServer) {
     // Identity passthrough: no `Proxy`, zero overhead in production.
     client: options.client,
   })) as typeof createLaunchDarklyFlagsAdapter;
+  createStatsigFlagsAdapter = ((options: { id?: string; name?: string }) => ({
+    id: options.id ?? 'statsig',
+    name: options.name ?? 'Statsig',
+    listFlags: () => [],
+    setOverride: () => {},
+    clearOverride: () => {},
+    clearAllOverrides: () => {},
+  })) as typeof createStatsigFlagsAdapter;
   createFlagOverrides = (() => ({
     get: () => undefined,
     has: () => false,
@@ -61,12 +76,13 @@ if (!isDev || isServer) {
   })) as typeof createFlagOverrides;
   useRozeniteFeatureFlagsPlugin = () => null;
 } else {
-  // Neither adapter has a native dependency of its own (LaunchDarkly's SDK
-  // is only ever structurally typed against, never imported), so the web
-  // and native paths are identical here.
+  // None of the adapters have a native dependency of their own (LaunchDarkly's
+  // and Statsig's SDKs are only ever structurally typed against, never
+  // imported), so the web and native paths are identical here.
   createCustomFlagsAdapter = require('./src/react-native/adapters').createCustomFlagsAdapter;
   createLaunchDarklyFlagsAdapter =
     require('./src/react-native/adapters').createLaunchDarklyFlagsAdapter;
+  createStatsigFlagsAdapter = require('./src/react-native/adapters').createStatsigFlagsAdapter;
   createFlagOverrides = require('./src/react-native/overrides').createFlagOverrides;
   useRozeniteFeatureFlagsPlugin =
     require('./src/react-native/useRozeniteFeatureFlagsPlugin').useRozeniteFeatureFlagsPlugin;

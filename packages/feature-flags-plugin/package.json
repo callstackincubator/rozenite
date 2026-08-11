@@ -62,11 +62,23 @@
   },
   "peerDependencies": {
     "@launchdarkly/react-native-client-sdk": "^10.0.0",
+    "@statsig/js-client": "^3.0.0",
+    "@statsig/js-local-overrides": "^3.0.0",
+    "@statsig/react-native-bindings": "^3.0.0",
     "react": "*",
     "react-native": "*"
   },
   "peerDependenciesMeta": {
     "@launchdarkly/react-native-client-sdk": {
+      "optional": true
+    },
+    "@statsig/js-client": {
+      "optional": true
+    },
+    "@statsig/js-local-overrides": {
+      "optional": true
+    },
+    "@statsig/react-native-bindings": {
       "optional": true
     }
   }
