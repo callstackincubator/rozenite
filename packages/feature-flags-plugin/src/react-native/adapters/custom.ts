@@ -46,7 +46,15 @@ export const createCustomFlagsAdapter = (
         };
       });
     },
-    setOverride: (key, value) => {
+    setOverride: async (key, value) => {
+      const flags = await options.listFlags();
+
+      if (!flags.some((flag) => flag.key === key)) {
+        throw new Error(
+          `[Rozenite] Feature Flags Plugin: custom adapter "${options.id}" has no flag declared with key "${key}". Add it to listFlags(), or check for a typo.`,
+        );
+      }
+
       overrides.set(key, value);
     },
     clearOverride: (key) => {

@@ -202,7 +202,12 @@ const wrapClient = (rawClient: LDClientLike, overrides: FlagOverrides): LDClient
 
   return new Proxy(rawClient, {
     get(target, prop) {
-      if (typeof prop === 'string' && prop in intercepted) {
+      // `Object.prototype.hasOwnProperty` rather than `prop in intercepted`:
+      // `in` also matches inherited members (`toString`, `constructor`,
+      // `hasOwnProperty`, `valueOf`, ...), which would serve them from this
+      // plain `intercepted` object instead of the real client, making the
+      // wrapper look like a bare `Object` to anything that introspects it.
+      if (typeof prop === 'string' && Object.prototype.hasOwnProperty.call(intercepted, prop)) {
         return intercepted[prop];
       }
 

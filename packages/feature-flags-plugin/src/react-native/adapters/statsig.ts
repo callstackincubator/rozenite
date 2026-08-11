@@ -186,6 +186,19 @@ export const createStatsigFlagsAdapter = (
     return config.get(DYNAMIC_CONFIG_VALUE_PARAM, DEFAULT_VALUE_BY_TYPE[type]);
   };
 
+  const clearDeclaredOverride = (declaration: StatsigFlagDeclaration): void => {
+    const type = resolveType(declaration);
+
+    if (type === 'boolean') {
+      requireOverrideAdapterMethod(overrideAdapter, 'removeGateOverride');
+      overrideAdapter.removeGateOverride(declaration.key);
+      return;
+    }
+
+    requireOverrideAdapterMethod(overrideAdapter, 'removeDynamicConfigOverride');
+    overrideAdapter.removeDynamicConfigOverride(declaration.key);
+  };
+
   const provider: FeatureFlagsProvider = {
     id: options.id ?? 'statsig',
     name: options.name ?? 'Statsig',
@@ -244,20 +257,15 @@ export const createStatsigFlagsAdapter = (
     },
     clearOverride: (key) => {
       const declaration = requireDeclaration(key);
-      const type = resolveType(declaration);
-
-      if (type === 'boolean') {
-        requireOverrideAdapterMethod(overrideAdapter, 'removeGateOverride');
-        overrideAdapter.removeGateOverride(key);
-        return;
-      }
-
-      requireOverrideAdapterMethod(overrideAdapter, 'removeDynamicConfigOverride');
-      overrideAdapter.removeDynamicConfigOverride(key);
+      clearDeclaredOverride(declaration);
     },
+    // Scoped to this adapter's declared `flags` -- reusing the same
+    // per-type removal path as `clearOverride` -- rather than
+    // `overrideAdapter.removeAllOverrides()`, which would wipe every gate,
+    // dynamic config, experiment, and layer override in the shared
+    // `LocalOverrideAdapter`, including ones unrelated to this adapter.
     clearAllOverrides: () => {
-      requireOverrideAdapterMethod(overrideAdapter, 'removeAllOverrides');
-      overrideAdapter.removeAllOverrides();
+      flags.forEach(clearDeclaredOverride);
     },
     // `refresh` is intentionally omitted: `updateUserAsync`/`updateUserSync`
     // exist on the real SDK but re-identify the user rather than just

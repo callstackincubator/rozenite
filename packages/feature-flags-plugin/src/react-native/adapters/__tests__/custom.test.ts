@@ -100,18 +100,36 @@ describe('createCustomFlagsAdapter', () => {
     ]);
   });
 
-  it('subscribe delegates to the override store, so setOverride notifies it', () => {
+  it('subscribe delegates to the override store, so setOverride notifies it', async () => {
     const adapter = createCustomFlagsAdapter({
       id: 'app',
       name: 'App flags',
-      listFlags: () => [],
+      listFlags: () => [{ key: 'flag', value: false }],
     });
 
     const listener = vi.fn();
     adapter.subscribe?.(listener);
-    adapter.setOverride('flag', true);
+    await adapter.setOverride('flag', true);
 
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an override for a key not declared in listFlags(), and does not store it', async () => {
+    const overrides = createFlagOverrides();
+    const adapter = createCustomFlagsAdapter({
+      id: 'app',
+      name: 'App flags',
+      listFlags: () => [{ key: 'known', value: false }],
+      overrides,
+    });
+
+    await expect(adapter.setOverride('unknown', true)).rejects.toThrow(/unknown/);
+    expect(overrides.has('unknown')).toBe(false);
+
+    // The known flag is unaffected.
+    expect(await adapter.listFlags()).toEqual([
+      { key: 'known', type: 'boolean', value: false, overridden: false },
+    ]);
   });
 
   it('accepts a bring-your-own override store', async () => {

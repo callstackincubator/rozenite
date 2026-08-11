@@ -167,6 +167,32 @@ describe('createLaunchDarklyFlagsAdapter', () => {
       expect(rawClient.identify).toHaveBeenCalledTimes(1);
       expect(result).toBe(rawClient);
     });
+
+    it('serves inherited members (`constructor`, `toString`) from the raw client, not from the plain `intercepted` map', () => {
+      // A named class rather than a plain object literal: `intercepted` is
+      // itself a plain object, so its *inherited* `constructor`/`toString`
+      // are `Object`/`Object.prototype.toString` -- identical to a plain
+      // fake's, which wouldn't catch a `prop in intercepted` bug. A real LD
+      // client is a class instance, so this fake needs to be too.
+      class FakeLDClientClass {
+        toString() {
+          return '[FakeLDClient]';
+        }
+      }
+      const rawClient = Object.assign(
+        new FakeLDClientClass(),
+        createFakeLDClient({ flag: true }),
+      ) as unknown as LDClientLike;
+      const { client } = createLaunchDarklyFlagsAdapter({ client: rawClient });
+
+      // Pass-through members are bound to the raw client (see the
+      // "non-intercepted method" test above), so `constructor` -- also
+      // pass-through -- comes back bound too; what matters is that it's
+      // still `FakeLDClientClass`'s constructor, not the generic `Object`
+      // that a plain `intercepted` object would report.
+      expect(client.constructor.name).toContain('FakeLDClientClass');
+      expect(client.toString()).toBe('[FakeLDClient]');
+    });
   });
 
   describe('synthetic `change` multiplexing', () => {

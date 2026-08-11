@@ -216,6 +216,28 @@ describe('createStatsigFlagsAdapter', () => {
         { key: 'b', type: 'boolean', value: false, overridden: false },
       ]);
     });
+
+    it("clearAllOverrides only clears this adapter's declared flags, leaving unrelated overrides in the shared LocalOverrideAdapter alone", async () => {
+      const overrideAdapter = createFakeOverrideAdapter();
+      const client = createFakeClient(overrideAdapter, { a: true });
+      const provider = createStatsigFlagsAdapter({
+        client,
+        overrideAdapter,
+        flags: [{ key: 'a', type: 'boolean' }],
+      });
+
+      provider.setOverride('a', false);
+      // An override on a gate this adapter never declared -- e.g. set by
+      // other QA tooling sharing the same `LocalOverrideAdapter` instance.
+      overrideAdapter.overrideGate('unrelated-gate', true);
+
+      provider.clearAllOverrides();
+
+      expect(await provider.listFlags()).toEqual([
+        { key: 'a', type: 'boolean', value: true, overridden: false },
+      ]);
+      expect(overrideAdapter.getAllOverrides().gate).toEqual({ 'unrelated-gate': true });
+    });
   });
 
   describe('defensive error when a required override-adapter method is missing', () => {
