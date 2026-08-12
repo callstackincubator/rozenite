@@ -1,6 +1,37 @@
-import { createScopedMiddleware, initializeRozenite, RozeniteConfig } from '@rozenite/middleware';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import {
+  createScopedMiddleware,
+  initializeRozenite,
+  RozeniteConfig,
+  RozeniteMiddleware,
+} from '@rozenite/middleware';
 import { RepackRspackConfig, type RepackRspackConfigExport } from '@callstack/repack';
 import { assertSupportedRePackVersion } from './version-check.js';
+
+// Plugin discovery is async, but `setupMiddlewares` is only invoked by the
+// dev server (never for a plain `bundle`/production build) and must return
+// synchronously. So discovery is kicked off lazily here, memoized for the
+// lifetime of this dev server instance, and requests wait on it instead of
+// the config-resolution step blocking on it upfront.
+const createLazyRozeniteMiddleware = (rozeniteConfig: RozeniteConfig) => {
+  let middlewarePromise: Promise<RozeniteMiddleware> | null = null;
+
+  const getRozeniteMiddleware = (): Promise<RozeniteMiddleware> => {
+    middlewarePromise ??= initializeRozenite(rozeniteConfig).then(
+      (instance) => instance.middleware,
+    );
+    return middlewarePromise;
+  };
+
+  return async (req: IncomingMessage, res: ServerResponse, next: (error?: unknown) => void) => {
+    try {
+      const rozeniteMiddleware = await getRozeniteMiddleware();
+      createScopedMiddleware('/rozenite', rozeniteMiddleware)(req, res, next);
+    } catch (error) {
+      next(error);
+    }
+  };
+};
 
 const patchConfig = (
   config: RepackRspackConfig,
@@ -11,8 +42,7 @@ const patchConfig = (
     devServer: {
       ...config.devServer,
       setupMiddlewares: (middlewares) => {
-        const { middleware: rozeniteMiddleware } = initializeRozenite(rozeniteConfig);
-        middlewares.unshift(createScopedMiddleware('/rozenite', rozeniteMiddleware));
+        middlewares.unshift(createLazyRozeniteMiddleware(rozeniteConfig));
         return middlewares;
       },
     },

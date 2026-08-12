@@ -21,10 +21,10 @@ export type RozeniteInstance = {
 export { createScopedMiddleware };
 export type { MiddlewareHandler, MiddlewareNext, MiddlewareRequest } from './scoped-middleware.js';
 
-export const initializeRozenite = (
+export const initializeRozenite = async (
   options: RozeniteConfig,
   runtimeVersion?: string,
-): RozeniteInstance => {
+): Promise<RozeniteInstance> => {
   options.logLevel = process.env.ROZENITE_DEBUG === 'true' ? 'debug' : (options.logLevel ?? 'info');
   logger.setLevel(options.logLevel);
 
@@ -41,7 +41,7 @@ export const initializeRozenite = (
     logger.info(`Dev mode is enabled for package: ${devModePackage.name}`);
   }
 
-  const allInstalledPlugins = getInstalledPlugins(options);
+  const allInstalledPlugins = await getInstalledPlugins(options);
   const agentSessionManager = createAgentSessionManager({
     projectRoot: options.projectRoot,
     metroVersion: getPackageJSON().version,

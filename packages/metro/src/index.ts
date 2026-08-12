@@ -48,7 +48,7 @@ export const withRozenite = <T extends MetroConfig>(
       return resolvedConfig;
     }
 
-    const { devModePackage, middleware: rozeniteMiddleware } = initializeRozenite(
+    const { devModePackage, middleware: rozeniteMiddleware } = await initializeRozenite(
       {
         projectRoot,
         ...options,
