@@ -8,6 +8,7 @@ import { buildCommand } from './commands/build-command.js';
 import { devCommand } from './commands/dev-command.js';
 import { initCommand } from './commands/init-command.js';
 import { registerAgentCommand } from './commands/agent/register-agent-command.js';
+import { registerSkillsCommand } from './commands/register-skills-command.js';
 import { getErrorMessage } from './commands/agent/error-message.js';
 
 const packageJSON = getPackageJSON();
@@ -84,6 +85,7 @@ const main = async () => {
     });
 
   registerAgentCommand(program);
+  registerSkillsCommand(program);
 
   await program.parseAsync(process.argv);
 };

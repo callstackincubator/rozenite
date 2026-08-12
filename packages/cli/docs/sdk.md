@@ -1,13 +1,21 @@
 ---
-name: rozenite-agent-sdk
-description: Use Rozenite for Agents through `@rozenite/agent-sdk` in Node.js or TypeScript code. Trigger this skill when Codex needs to write or run scripts, wrappers, automations, benchmarks, or agent runtimes that call Rozenite programmatically instead of driving the `rozenite agent` CLI directly.
+name: sdk
+description: Programmatic `@rozenite/agent-sdk` usage in Node.js/TypeScript — session lifecycle, tool discovery, typed plugin calls, and pagination.
 ---
 
-# Rozenite Agent SDK
+# SDK
 
-Use this skill when the user wants code-first access to Rozenite for Agents.
+Use this doc for programmatic access to Rozenite for Agents through
+`@rozenite/agent-sdk` in Node.js or TypeScript code. Read the `core` doc
+first for ground truths shared with the CLI workflow (built-in domains,
+plugin domain tokens, and when live session data beats source code).
 
-Read `references/code-patterns.md` for copy-pastable examples.
+If the task is shell-driven, needs a reusable CLI session, operates directly
+through `rozenite agent ...`, or requires target enumeration before choosing
+a `deviceId`, use the `cli` doc instead.
+
+Read `sdk-patterns` for copy-pastable code examples covering everything
+below.
 
 ## Rules
 
@@ -21,9 +29,5 @@ Read `references/code-patterns.md` for copy-pastable examples.
 - Prefer stable SDK domain identifiers such as built-in domain IDs (`network`, `react`, `memory`) and plugin IDs (`@rozenite/storage-plugin`, `@rozenite/tanstack-query-plugin`) over the derived, CLI-facing domain token like `storage`.
 - For paged tools, make one call at a time and pass the returned `page.nextCursor` explicitly in the next call. The plugin owns its page envelope and cursor.
 - If a plugin only mounts after navigation, navigate first, then refresh the live view with `session.domains.list()` or `session.tools.list(...)` before calling the plugin tool.
-- For advanced session control with `client.openSession()` or `client.attachSession(sessionId)`, see the reference patterns.
+- For advanced session control with `client.openSession()` or `client.attachSession(sessionId)`, see `sdk-patterns`.
 - If a script encounters an unexpected runtime error, let the script fail clearly. Do not hide the failure by printing placeholder JSON.
-
-## Handoff
-
-- Use `rozenite-agent` instead when the task is shell-driven, needs a reusable CLI session, operates directly through `rozenite agent ...`, or requires target enumeration before choosing a `deviceId`.

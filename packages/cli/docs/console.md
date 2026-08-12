@@ -1,3 +1,9 @@
+---
+name: console
+description: Read, filter, and paginate React Native console messages from the app, and clear the log buffer when needed.
+domain: console
+---
+
 Read, filter, and paginate React Native console messages from the app, and clear the log buffer when needed.
 
 ## Tools

@@ -1,3 +1,9 @@
+---
+name: memory
+description: Capture heap snapshots or run allocation sampling over a reproduction, with artifacts written by Metro for offline analysis.
+domain: memory
+---
+
 Capture one-off heap snapshots or run allocation sampling over a reproduction. Metro writes artifacts under `.rozenite/agent/sessions/<deviceId>/memory` and `.rozenite/agent/sessions/<deviceId>/profiles` for offline analysis.
 
 ## Tools

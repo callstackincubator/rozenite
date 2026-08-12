@@ -12,7 +12,7 @@ The goal is not to copy its WebSocket transport. Rozenite already receives React
 - Rozenite React types: `packages/middleware/src/agent/runtime/react/types.ts`
 - Rozenite React domain registration: `packages/middleware/src/agent/local-domains.ts`
 - Static SDK domain tool list: `packages/agent-sdk/src/constants.ts`
-- Current CLI skill reference: `packages/cli/skills/rozenite-agent/domains/react.md`
+- Current CLI skill doc: `packages/cli/docs/react.md`
 - Mirrored CLI runtime copy: `packages/cli/src/commands/agent/runtime/react/*`
 
 When implementing, treat `packages/middleware` as the canonical runtime location. If the CLI copy is still intentionally maintained, mirror equivalent runtime/type changes there after changing middleware.

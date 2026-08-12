@@ -1,3 +1,9 @@
+---
+name: file-system
+description: Browse app files and preview file contents read-only via Expo FileSystem or an RNFS-compatible provider.
+domain: file-system
+---
+
 # File System Plugin Domain
 
 A Rozenite plugin for browsing app files and previewing file contents in React Native DevTools. It provides read-only filesystem inspection through either Expo FileSystem or an RNFS-compatible provider. Use it to discover roots, inspect directories, and preview files without mutating app data.

@@ -1,3 +1,9 @@
+---
+name: mmkv
+description: Inspect and manage react-native-mmkv storages and entries in real time via the MMKV plugin.
+domain: mmkv
+---
+
 # MMKV Plugin Domain
 
 A Rozenite plugin for MMKV storage inspection in React Native DevTools. It provides real-time inspection of MMKV instances, data visualization with type detection (string, number, boolean, buffer), and management: list storages and entries, read/create/edit/remove entries. Use it when the app uses `react-native-mmkv` and exposes instances via `useMMKVDevTools`.

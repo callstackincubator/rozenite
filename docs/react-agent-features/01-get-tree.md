@@ -111,7 +111,7 @@ Use `items` instead of `nodes` to match existing paginated Rozenite tool style.
 7. Expose `getTree` from `createReactTreeStore`.
 8. Register the tool in `createReactDomainService` in `packages/middleware/src/agent/local-domains.ts`.
 9. Add `getTree` to `STATIC_DOMAIN_TOOL_NAMES.react` in `packages/agent-sdk/src/constants.ts`.
-10. Update `packages/cli/skills/rozenite-agent/domains/react.md`.
+10. Update `packages/cli/docs/react.md`.
 11. If required by the repository structure, mirror runtime changes under `packages/cli/src/commands/agent/runtime/react/*`.
 
 ## Test Plan

@@ -1,3 +1,9 @@
+---
+name: react-navigation
+description: Inspect React Navigation state, action history, and dispatch navigation actions or deep links via the React Navigation plugin.
+domain: react-navigation
+---
+
 # React Navigation Plugin Domain
 
 A Rozenite plugin for React Navigation debugging and inspection in React Native DevTools. It provides real-time navigation state monitoring, action timeline inspection, and deep-link testing (React Navigation v7). Use this domain to read focused route and root state, navigate by route name, go back, open deep links, or dispatch low-level actions when needed.
