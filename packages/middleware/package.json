@@ -50,6 +50,7 @@
     "@rozenite/shell": "workspace:*",
     "@rozenite/tools": "workspace:*",
     "express": "^5.1.0",
+    "p-limit": "^7.3.1",
     "semver": "^7.7.2",
     "tslib": "^2.3.0",
     "ws": "^8.18.3"
@@ -63,6 +64,6 @@
     "vitest": "^4.0.18"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19.0"
   }
 }

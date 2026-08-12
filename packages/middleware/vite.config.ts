@@ -1,5 +1,6 @@
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
+import { configDefaults } from 'vitest/config';
 import path, { resolve } from 'node:path';
 import dts from 'vite-plugin-dts';
 
@@ -23,6 +24,9 @@ export default defineConfig({
   },
   test: {
     passWithNoTests: true,
+    // Benchmark files run only on demand (see their header comment), not
+    // as part of the regular suite.
+    exclude: [...configDefaults.exclude, '**/*.bench.test.ts'],
   },
   server: {
     port: 3000,

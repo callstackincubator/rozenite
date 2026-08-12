@@ -81,7 +81,7 @@ afterEach(() => {
 });
 
 describe('findPackageRoot', () => {
-  it('finds a package root for a classic node_modules path', () => {
+  it('finds a package root for a classic node_modules path', async () => {
     const root = createTempDir();
     const packageRoot = path.join(root, 'node_modules', '@rozenite', 'demo-plugin');
 
@@ -92,10 +92,10 @@ describe('findPackageRoot', () => {
 
     const resolvedPath = path.join(packageRoot, 'dist', 'react-native.cjs');
 
-    expect(findPackageRoot('@rozenite/demo-plugin', resolvedPath)).toBe(packageRoot);
+    await expect(findPackageRoot('@rozenite/demo-plugin', resolvedPath)).resolves.toBe(packageRoot);
   });
 
-  it('finds a package root for a Yarn virtual or unplugged path', () => {
+  it('finds a package root for a Yarn virtual or unplugged path', async () => {
     const root = createTempDir();
     const packageRoot = path.join(
       root,
@@ -115,10 +115,10 @@ describe('findPackageRoot', () => {
 
     const resolvedPath = path.join(packageRoot, 'dist', 'index.js');
 
-    expect(findPackageRoot('demo-plugin', resolvedPath)).toBe(packageRoot);
+    await expect(findPackageRoot('demo-plugin', resolvedPath)).resolves.toBe(packageRoot);
   });
 
-  it('finds a package root for a workspace path without node_modules', () => {
+  it('finds a package root for a workspace path without node_modules', async () => {
     const root = createTempDir();
     const packageRoot = path.join(root, 'packages', 'demo-plugin');
 
@@ -128,12 +128,12 @@ describe('findPackageRoot', () => {
 
     const resolvedPath = path.join(packageRoot, 'dist', 'index.js');
 
-    expect(findPackageRoot('demo-plugin', resolvedPath)).toBe(packageRoot);
+    await expect(findPackageRoot('demo-plugin', resolvedPath)).resolves.toBe(packageRoot);
   });
 });
 
 describe('getInstalledPlugins', () => {
-  it('includes declared dependencies that contain the manifest', () => {
+  it('includes declared dependencies that contain the manifest', async () => {
     const projectRoot = createProject({
       name: 'demo-app',
       dependencies: {
@@ -146,7 +146,7 @@ describe('getInstalledPlugins', () => {
     });
     const resolvedPluginRoot = fs.realpathSync(pluginRoot);
 
-    expect(getInstalledPlugins(createConfig(projectRoot))).toEqual([
+    await expect(getInstalledPlugins(createConfig(projectRoot))).resolves.toEqual([
       {
         name: 'demo-plugin',
         path: resolvedPluginRoot,
@@ -154,7 +154,7 @@ describe('getInstalledPlugins', () => {
     ]);
   });
 
-  it('ignores declared dependencies without the manifest', () => {
+  it('ignores declared dependencies without the manifest', async () => {
     const projectRoot = createProject({
       name: 'demo-app',
       dependencies: {
@@ -164,10 +164,10 @@ describe('getInstalledPlugins', () => {
 
     createNodeModulesPackage(projectRoot, 'demo-plugin');
 
-    expect(getInstalledPlugins(createConfig(projectRoot))).toEqual([]);
+    await expect(getInstalledPlugins(createConfig(projectRoot))).resolves.toEqual([]);
   });
 
-  it('applies exclude before including a valid plugin', () => {
+  it('applies exclude before including a valid plugin', async () => {
     const projectRoot = createProject({
       name: 'demo-app',
       dependencies: {
@@ -179,12 +179,12 @@ describe('getInstalledPlugins', () => {
       hasPluginManifest: true,
     });
 
-    expect(getInstalledPlugins(createConfig(projectRoot, { exclude: ['demo-plugin'] }))).toEqual(
-      [],
-    );
+    await expect(
+      getInstalledPlugins(createConfig(projectRoot, { exclude: ['demo-plugin'] })),
+    ).resolves.toEqual([]);
   });
 
-  it('deduplicates names declared in dependencies and devDependencies', () => {
+  it('deduplicates names declared in dependencies and devDependencies', async () => {
     const projectRoot = createProject({
       name: 'demo-app',
       dependencies: {
@@ -200,7 +200,7 @@ describe('getInstalledPlugins', () => {
     });
     const resolvedPluginRoot = fs.realpathSync(pluginRoot);
 
-    expect(getInstalledPlugins(createConfig(projectRoot))).toEqual([
+    await expect(getInstalledPlugins(createConfig(projectRoot))).resolves.toEqual([
       {
         name: 'demo-plugin',
         path: resolvedPluginRoot,
@@ -208,7 +208,7 @@ describe('getInstalledPlugins', () => {
     ]);
   });
 
-  it('skips unresolved dependencies without failing discovery', () => {
+  it('skips unresolved dependencies without failing discovery', async () => {
     const projectRoot = createProject({
       name: 'demo-app',
       dependencies: {
@@ -222,7 +222,7 @@ describe('getInstalledPlugins', () => {
     });
     const resolvedPluginRoot = fs.realpathSync(pluginRoot);
 
-    expect(getInstalledPlugins(createConfig(projectRoot))).toEqual([
+    await expect(getInstalledPlugins(createConfig(projectRoot))).resolves.toEqual([
       {
         name: 'demo-plugin',
         path: resolvedPluginRoot,
@@ -230,13 +230,13 @@ describe('getInstalledPlugins', () => {
     ]);
   });
 
-  it('throws in include mode when a plugin cannot be resolved', () => {
+  it('throws in include mode when a plugin cannot be resolved', async () => {
     const projectRoot = createProject({
       name: 'demo-app',
     });
 
-    expect(() =>
+    await expect(
       getInstalledPlugins(createConfig(projectRoot, { include: ['missing-plugin'] })),
-    ).toThrowError('Could not resolve plugin missing-plugin.');
+    ).rejects.toThrowError('Could not resolve plugin missing-plugin.');
   });
 });
