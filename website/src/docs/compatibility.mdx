@@ -1,0 +1,31 @@
+# Compatibility
+
+## Supported versions
+
+| Rozenite | Expo SDK | React Native | Re.Pack |
+| -------- | -------- | ------------ | ------- |
+| 1.x      | 52+      | 0.76+        | 5.2+    |
+
+Rozenite tracks Expo SDK releases as its primary compatibility baseline, since each
+Expo SDK pins a specific React Native version. If you're on bare React Native
+(no Expo), match your React Native version to the one shipped by the minimum
+supported Expo SDK above.
+
+## Bundlers
+
+- **Metro** — supported via `@rozenite/metro`, using whichever Metro version ships with
+  your React Native version. No separate Metro version requirement beyond the React
+  Native minimum above.
+- **Re.Pack** — supported via `@rozenite/repack` for Re.Pack 5.2 and above.
+
+## Platforms
+
+- iOS and Android, via React Native DevTools
+- Web, via [Rozenite for Web](/docs/rozenite-for-web) (experimental)
+
+## Notes
+
+- Older Expo SDK / React Native versions may work but are untested and unsupported.
+- Individual plugins may declare narrower compatibility (for example, a plugin
+  wrapping a native module with its own minimum React Native version). Check the
+  plugin's page under [Official Plugins](/docs/official-plugins/overview) for details.
