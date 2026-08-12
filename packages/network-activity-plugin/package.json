@@ -43,6 +43,7 @@
     "@rozenite/agent-bridge": "workspace:*",
     "@rozenite/agent-shared": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
+    "base64-js": "^1.5.1",
     "nanoevents": "^9.1.0"
   },
   "devDependencies": {
