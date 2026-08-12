@@ -33,6 +33,22 @@ pnpm build
 
 Output is written to `dist/`.
 
+## Release
+
+Signed `.crx` releases are packaged and published automatically by CI when a
+release is cut (`.github/workflows/release.yml`), using a private key stored
+as the `CHROME_EXTENSION_PEM_BASE64` GitHub Actions secret. To reproduce this
+locally (e.g. against a test key):
+
+```bash
+pnpm build
+CHROME_EXTENSION_PEM_PATH=/path/to/key.pem pnpm pack:crx
+```
+
+This signs `dist/` and writes `build/rozenite.crx`. Reusing the same private
+key across releases keeps the extension ID stable, which existing installs
+rely on for the in-extension update check (`src/update-checker.ts`).
+
 ## Test
 
 Run unit tests:
