@@ -141,6 +141,14 @@ function StoragePanelContent() {
   useEffect(() => {
     if (!client) return;
 
+    const requestDiscovery = () => {
+      discoveryRequestIdRef.current += 1;
+      client.send('discover-storages', {
+        type: 'discover-storages',
+        requestId: `discovery-${discoveryRequestIdRef.current}`,
+      });
+    };
+
     const descriptorsSubscription = client.onMessage(
       'storage-descriptors',
       (event: StorageDiscoverStoragesResponseEvent) => {
@@ -228,16 +236,21 @@ function StoragePanelContent() {
       },
     );
 
-    discoveryRequestIdRef.current += 1;
-    client.send('discover-storages', {
-      type: 'discover-storages',
-      requestId: `discovery-${discoveryRequestIdRef.current}`,
+    // The device announces itself once it is listening. It reconnects on every
+    // app reload, so discovery has to run again — the descriptors and cached
+    // entries the panel holds belong to the previous JS context.
+    const deviceReadySubscription = client.onMessage('device-ready', () => {
+      void queryClient.resetQueries();
+      requestDiscovery();
     });
+
+    requestDiscovery();
     return () => {
       descriptorsSubscription.remove();
       importProgressSubscription.remove();
       importResultSubscription.remove();
       invalidationSubscription.remove();
+      deviceReadySubscription.remove();
     };
   }, [client, queryClient]);
 

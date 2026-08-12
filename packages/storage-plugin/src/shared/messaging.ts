@@ -30,6 +30,16 @@ export type StorageInvalidatedEvent = {
   entryCount: number;
 };
 
+/**
+ * Announced by the device once it is listening for panel requests. The panel is
+ * recreated on every app reload and asks for storages immediately, which can
+ * land before the app's React tree has mounted the plugin; this lets the panel
+ * ask again instead of waiting forever on a dropped request.
+ */
+export type StorageDeviceReadyEvent = {
+  type: 'device-ready';
+};
+
 export type StorageDiscoverStoragesRequestEvent = {
   type: 'discover-storages';
   requestId: string;
@@ -149,6 +159,7 @@ export type StorageEvent =
   | StorageDeleteEntryEvent
   | StoragePurgeEvent
   | StorageInvalidatedEvent
+  | StorageDeviceReadyEvent
   | StorageDiscoverStoragesRequestEvent
   | StorageDiscoverStoragesResponseEvent
   | StorageListEntryPreviewsRequestEvent

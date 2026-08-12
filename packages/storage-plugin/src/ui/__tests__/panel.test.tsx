@@ -186,8 +186,10 @@ const renderPanel = async () => {
   await act(async () => root.render(<StoragePanel />));
   return { root, container };
 };
+const discoveryRequests = () =>
+  mocks.client.send.mock.calls.filter(([type]) => type === 'discover-storages');
 const discover = async () => {
-  const request = mocks.client.send.mock.calls.find(([type]) => type === 'discover-storages')?.[1];
+  const request = discoveryRequests().at(-1)?.[1];
   await act(async () =>
     mocks.emit('storage-descriptors', {
       type: 'storage-descriptors',
@@ -360,6 +362,21 @@ describe('StoragePanel preview query cutover', () => {
       });
     });
     await vi.waitFor(() => expect(mocks.client.request).toHaveBeenCalledTimes(2));
+    await act(async () => root.unmount());
+  });
+
+  // The panel is recreated on every app reload and asks for storages before the
+  // app's React tree has mounted the plugin, so its first request is dropped.
+  it('runs discovery again when the device announces itself', async () => {
+    const { root, container } = await renderPanel();
+    expect(discoveryRequests()).toHaveLength(1);
+    expect(container.textContent).toContain('Waiting for storages');
+
+    await act(async () => mocks.emit('device-ready', { type: 'device-ready' }));
+    expect(discoveryRequests()).toHaveLength(2);
+    await discover();
+
+    expect(container.textContent).toContain('First');
     await act(async () => root.unmount());
   });
 });
