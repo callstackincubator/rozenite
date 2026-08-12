@@ -6,39 +6,19 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 Rozenite for Web is an experimental feature. The API and behavior may change in future releases.
 :::
 
-Rozenite for Web lets you debug your React Native web app from React Native DevTools.
+Rozenite for Web lets you debug your React Native web app from React Native DevTools — the same plugin panels you use on iOS and Android, in the browser.
 
-To use it, you need:
+You'll need a Chromium-based browser, the Rozenite browser extension, and the `@rozenite/web` package in your app. It works whether Metro bundles your web app directly, or you use Webpack Dev Server for web.
 
-- the Rozenite browser extension
-- the `@rozenite/web` package in your app
-
-**Browser support:** Chromium-based browsers only.
-
-## Prerequisites
-
-- A React Native project with web support
-- A Chromium-based browser with the Rozenite extension installed
-
-Rozenite for Web supports these setups:
-
-- **Metro-only web**: Metro bundles both mobile and web
-- **Webpack for web**: Webpack Dev Server bundles and serves the web app
-
-## Chrome extension setup
-
-Download the latest extension from the [GitHub releases](https://github.com/callstackincubator/rozenite/releases).
-
-### Installation
+## Install the Chrome extension
 
 1. Download the latest extension from the [releases page](https://github.com/callstackincubator/rozenite/releases).
-2. Open Chrome and go to `chrome://extensions`.
-3. Enable **Developer mode** (toggle in the top-right corner).
-4. Install the extension.
+2. Open Chrome, go to `chrome://extensions`, and enable **Developer mode** (top-right toggle).
+3. Install the extension.
 
-If you need help with manual installation, see the [Chrome extension loading guide](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-an-unpacked-extension).
+If you get stuck, see Chrome's [extension loading guide](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-an-unpacked-extension).
 
-## @rozenite/web package setup
+## Add @rozenite/web to your app
 
 ### Installation
 
@@ -59,18 +39,11 @@ module.exports = withRozeniteWeb(config);
 
 ### Entry point
 
-Add `require('@rozenite/web')` to your web entry point.
-
-The package gates its runtime setup internally, so you do not need to wrap the import with `__DEV__` yourself.
+Add `require('@rozenite/web')` to your web entry point — commonly `main.tsx` or your Expo Router root `_layout.tsx`. It already gates itself to development, so there's no need to wrap it in `__DEV__` yourself.
 
 ```javascript
 require('@rozenite/web');
 ```
-
-Common places:
-
-- `main.tsx`
-- Expo Router root `_layout.tsx`
 
 ### Webpack configuration
 

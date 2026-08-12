@@ -4,51 +4,29 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 
 ![](/network-activity-plugin.png)
 
-The Network Activity plugin provides comprehensive network request monitoring for React Native applications, offering real-time network debugging capabilities similar to Chrome DevTools Network panel.
+The Network Activity plugin brings a Chrome-DevTools-style network inspector into React Native DevTools: every HTTP/HTTPS request, WebSocket connection, and Server-Sent Event your app makes, in real time.
 
-## What is Network Activity Plugin?
-
-The Network Activity plugin is a powerful debugging tool that helps you monitor and analyze all network requests in your React Native application. It provides:
-
-- **Real-time Network Monitoring**: Track all HTTP/HTTPS requests as they happen
-- **Request Details**: View request headers, method, URL, and timing information
-- **Response Inspection**: Examine response headers, status codes, and timing data
-- **Performance Analysis**: Analyze request duration, connection timing, and performance metrics
-- **Request History**: Maintain a searchable history of network activity
-- **Nitro Support**: Merge `react-native-nitro-fetch` HTTP and WebSocket traffic into the same inspector when available
-
-:::warning JavaScript Thread Only
-Built-in React Native inspectors only capture traffic coming from the JavaScript thread. If your app uses `react-native-nitro-fetch`, Rozenite also listens to nitro's inspector events and displays that traffic in the same panel. Other native networking stacks still won't appear automatically.
+:::warning JavaScript thread only
+Built-in React Native inspectors only see traffic from the JavaScript thread. If your app uses `react-native-nitro-fetch`, install it alongside this plugin and its traffic shows up in the same panel. Other native networking stacks won't appear automatically.
 :::
 
 ## Installation
 
-Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin
-
-Install the Network Activity plugin as a development dependency using your preferred package manager:
+Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
 
 <PackageManagerTabs command="install -D @rozenite/network-activity-plugin" />
-
-If your app uses nitro networking, install `react-native-nitro-fetch` as well:
-
-```bash
-npm install react-native-nitro-fetch
-```
-
-Add the DevTools hook to your React Native app to enable network monitoring:
 
 ```typescript title="App.tsx"
 import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 
 function App() {
-  // Enable Network Activity DevTools in development
   useNetworkActivityDevTools();
 
   return <YourApp />;
 }
 ```
 
-To capture network requests happening before your React Native app initialization, add this to your entrypoint:
+To also capture requests made before your app finishes initializing, add this to your entry point:
 
 ```typescript title="index.js"
 import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
@@ -56,105 +34,38 @@ import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-p
 withOnBootNetworkActivityRecording();
 ```
 
+If your app uses nitro networking, install it too, and its HTTP and WebSocket traffic merges into the same panel automatically:
+
+```bash
+npm install react-native-nitro-fetch
+```
+
 ## Usage
 
-Once configured, the Network Activity plugin will automatically appear in your React Native DevTools sidebar as "Network Activity". Click on it to access:
+Once configured, "Network Activity" appears in your React Native DevTools sidebar. The request list shows method, status, timing, and a `Built-in` / `Nitro` badge for where each request came from. Click any request for full details: headers, query parameters, and request/response bodies.
 
-### Network Request List
+### Viewing responses
 
-- **Real-time Updates**: See network requests as they happen in your app
-- **Request Status**: View request status (pending, completed, failed)
-- **HTTP Methods**: Identify GET, POST, PUT, DELETE, and other HTTP methods
-- **Response Codes**: See HTTP status codes and their meanings
-- **Request Timing**: Monitor request duration and performance
-- **Source Badges**: Distinguish built-in React Native traffic from nitro traffic with `Built-in` and `Nitro` badges
+The response body view adapts to the content type, with a Preview / Raw toggle when both are useful:
 
-### Request Details
-
-- **Headers**: Inspect request and response headers
-- **Query Parameters**: View URL parameters and their values
-- **Request Body**: Examine POST/PUT request payloads
-- **Response Body**: View response content and structure (see [Response Viewing](#response-viewing) below)
-- **Source Metadata**: See whether an entry came from the built-in inspector or the nitro inspector
-
-### Response Viewing
-
-The response body view adapts to the format of each captured response and exposes a Preview / Raw sub-tab when both views are useful:
-
-- **Images** (`image/png`, `image/jpeg`, `image/gif`, `image/webp`, ...) render inline in the Preview tab via a data URL. The Raw tab shows a **metadata card** (decoded size, `Content-Length` header when present, derived filename, Download button) and a **hex viewer** with offset / hex / ASCII columns.
-- **SVG** (`image/svg+xml`) renders inline in the Preview tab and shows the source XML in the Raw tab — SVG is text on the wire, not bytes, so there is no hex view for it.
-- **Non-image binary** (`application/pdf`, `application/zip`, `audio/*`, `video/*`, `font/*`, `application/octet-stream`, ...) shows the same metadata card + hex viewer pair. There is no Preview for these formats — the hex view _is_ the inspection surface, and the Preview / Raw toggle is hidden.
-- **JSON** renders as a collapsible tree with copy affordances on every key and value in the Preview tab. The Raw tab shows the body pretty-printed with 2-space indent, so minified JSON is readable without leaving the panel.
-- **HTML** (`text/html`) renders inside a sandboxed iframe in the Preview tab — scripts are blocked and external subresources (images, stylesheets, fonts) are disallowed via Content-Security-Policy, so the preview cannot make outbound requests on behalf of the captured response. The Raw tab shows the HTML source.
-- **XML** (`application/xml`, `text/xml`, and RFC 7303 composite types like `application/atom+xml`, `application/rss+xml`, `application/soap+xml`, `application/xhtml+xml`, ...) renders as a collapsible tree with copy affordances on elements, text, and CDATA values in the Preview tab. The Raw tab shows the XML source verbatim. Malformed XML falls back to source with a warning.
-- **Text and other source formats** (`text/plain`, `text/css`, `application/javascript`, ...) render as raw monospace text.
-- **Empty or oversized responses** show a clear placeholder. Binary responses above an in-capture 5 MB cap surface as "Response too large for preview" instead of crossing the bridge; the Download button is disabled for those entries with a tooltip explaining the cap.
-
-The Preview / Raw toggle remembers your choice across requests in a panel session — once you toggle to Raw, subsequent responses whose renderer supports Raw stay on Raw. Formats with only one meaningful view hide the toggle entirely.
-
-Text response bodies above 50 KB render inside a virtualized 500 px scrollable window so the panel stays responsive on multi-megabyte payloads (pretty-printed JSON, minified bundles served as text, large logs). Smaller bodies render as a flat block. No content is truncated.
-
-#### Downloading bytes
-
-Every binary response (image, PDF, font, audio, ...) ships with a Download button on its metadata card. The filename is derived in three tiers:
-
-1. `Content-Disposition` header's `filename` parameter (RFC 5987 `filename*` is preferred when both forms are present).
-2. The last path segment of the response URL.
-3. `response.<ext>` where the extension comes from a small content-type → extension map (e.g. `application/pdf` → `.pdf`, `font/woff2` → `.woff2`); unknown content-types fall back to `.bin`.
-
-## Nitro Behavior
-
-When `react-native-nitro-fetch` is installed, the plugin automatically subscribes to nitro's network inspector.
-
-- Nitro HTTP entries appear in the same request list as built-in requests
-- Nitro WebSocket entries use their original string IDs, so they line up naturally with message history
-- Nitro HTTP response bodies can be requested from the UI and from agent tools
-- HTTP response overrides are intentionally unavailable for nitro entries
-
-Nitro's inspector reports HTTP entries as snapshots, so Rozenite reconstructs the familiar request lifecycle from those updates. In practice that means nitro traffic appears in the same panel, but the underlying capture path is different from the built-in XHR interceptor.
+- **Images and SVGs** render inline; other binary formats (PDF, zip, audio, video, fonts) show a byte-level view instead, since there's nothing to preview.
+- **JSON and XML** render as a collapsible, copyable tree, with the raw body pretty-printed in the Raw tab.
+- **HTML** renders in a sandboxed preview that can't make outbound requests, with the source available in Raw.
+- **Text formats** (plain text, CSS, JS) render as monospace text.
+- Every binary response has a **Download** button; very large or empty responses show a placeholder instead of a preview.
 
 ## Configuration
 
-### Ignoring Certain Types of Traffic
-
-Sometimes you don't want certain types of traffic like WebSockets or server-side events to show up in the inspector for convenience or because of the performance penalty. You can disable them with the configuration property:
+By default all traffic types are monitored. Disable ones you don't need — useful when a type is noisy or expensive to capture:
 
 ```typescript title="App.tsx"
-import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
-
-function App() {
-  // Configure which network traffic types to monitor
-  useNetworkActivityDevTools({
-    inspectors: {
-      http: true, // Monitor HTTP/HTTPS requests
-      websocket: false, // Disable WebSocket monitoring
-      sse: false, // Disable Server-Sent Events monitoring
-    },
-  });
-
-  return <YourApp />;
-}
+useNetworkActivityDevTools({
+  inspectors: {
+    http: true,
+    websocket: false,
+    sse: false, // requires http to be enabled
+  },
+});
 ```
 
-#### Available Inspector Types
-
-- **`http`**: Monitor HTTP/HTTPS requests (fetch, XMLHttpRequest)
-- **`websocket`**: Monitor WebSocket connections and messages
-- **`sse`**: Monitor Server-Sent Events (requires `http` to be enabled)
-
-## Contributing
-
-The Network Activity plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
-
-## Support
-
-If you encounter issues with the Network Activity plugin:
-
-1. **Check Documentation**: Review this guide for common solutions
-2. **Search Issues**: Look for similar issues in the repository
-3. **Create Issue**: Report bugs or request features
-4. **Community**: Reach out to the Rozenite community for help
-
----
-
-**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md).
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md), or explore other [Official Plugins](./overview.md).
