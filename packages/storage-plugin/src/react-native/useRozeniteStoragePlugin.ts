@@ -196,6 +196,13 @@ export const useRozeniteStoragePlugin = ({ storages }: RozeniteStoragePluginOpti
       }),
     ];
 
+    // Sent last, so a panel that reacts to it is guaranteed to find the
+    // handlers above already listening. The panel is recreated on every app
+    // reload and asks for storages as soon as it boots, which usually beats the
+    // app's React tree to the punch; without this the panel's only request is
+    // dropped and it waits for storages forever.
+    client.send('device-ready', { type: 'device-ready' });
+
     return () => {
       disposed = true;
       viewSubscriptions.forEach((subscription) => subscription.remove());
