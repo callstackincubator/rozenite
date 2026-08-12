@@ -110,7 +110,7 @@ const VirtualizedEmptyState = ({ context }: { context: VirtualizedTableContext<u
     <td colSpan={context.columnCount}>
       {context.renderEmptyState?.() ?? (
         <div className="flex min-h-56 w-full items-center justify-center px-4 py-10 text-center">
-          <span className="text-sm text-muted">
+          <span className="text-sm text-muted-foreground">
             {context.isLoading ? 'Loading…' : context.emptyMessage}
           </span>
         </div>

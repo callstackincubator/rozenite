@@ -13,7 +13,7 @@ import {
   useToast,
   VirtualizedDataTable,
 } from '@rozenite/ui';
-import { Flag, Loader2, RefreshCw, RotateCcw } from 'lucide-react';
+import { Eraser, Flag, Loader2, RefreshCw } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import type { FeatureFlagsProviderSnapshot } from '../shared/messaging';
 import type { FeatureFlag, FeatureFlagValue, JsonValue } from '../shared/types';
@@ -167,7 +167,7 @@ function FeatureFlagsPanelContent() {
           aria-label={`Reset ${row.original.key} to its default value`}
           title={`Reset ${row.original.key} to its default value`}
         >
-          <RotateCcw className="h-3.5 w-3.5" />
+          <Eraser className="h-3.5 w-3.5" />
         </Button>
       ),
     },
@@ -234,7 +234,7 @@ function FeatureFlagsPanelContent() {
           aria-label="Reset all overrides"
           title="Reset all overrides"
         >
-          <RotateCcw className="h-3.5 w-3.5" />
+          <Eraser className="h-3.5 w-3.5" />
           Reset all
         </Toolbar.Button>
         <Toolbar.Button

@@ -14,3 +14,4 @@ export { Badge } from './Badge';
 export type { BadgeVariant } from './Badge';
 export { EmptyState } from './EmptyState';
 export { KeyValueRow } from './KeyValueRow';
+export { KeyValueList } from './KeyValueList';
