@@ -2,29 +2,15 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 
 # Overlay Plugin
 
-The Overlay plugin provides visual debugging overlays for React Native applications, including customizable grids and image comparison tools to help with UI alignment and visual testing.
-
-This plugin was inspired by [RocketSim](https://www.rocketsim.app/) - an enhanced iOS simulator.
-
-## What is Overlay Plugin?
-
-The Overlay plugin is a powerful debugging tool that helps you visualize and debug UI elements in your React Native application. It provides:
-
-- **Grid Overlay**: Display customizable grids over your app for pixel-perfect alignment and spacing verification
-- **Image Overlay**: Overlay images on your app for visual comparison and design validation
-- **Image Comparison**: Side-by-side image comparison with adjustable slider for A/B testing
-- **Real-time Configuration**: Adjust overlay settings in real-time through the DevTools interface
-- **Non-intrusive Design**: Overlays don't interfere with app interaction (pointerEvents: 'none')
+The Overlay plugin draws grids and reference images over your running app, so you can check spacing, alignment, and how closely your UI matches a design. It was inspired by [RocketSim](https://www.rocketsim.app/).
 
 ## Installation
 
 Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
 
-Install the Overlay plugin and its peer dependency `react-native-svg` as development dependencies:
-
 <PackageManagerTabs command="install -D @rozenite/overlay-plugin react-native-svg" />
 
-Add the DevTools hook to your React Native app to enable overlay functionality:
+Add the overlay component at the root of your app:
 
 ```typescript title="App.tsx"
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
@@ -42,70 +28,28 @@ function App() {
 
 ## Web (React Native for Web)
 
-With [Rozenite for Web](/docs/rozenite-for-web), this plugin is available when you debug your React Native web app.
+With [Rozenite for Web](/docs/rozenite-for-web), this plugin is also available when debugging your React Native web app.
 
 ## Usage
 
-Once configured, the Overlay plugin will automatically appear in your React Native DevTools sidebar as "Overlay". Click on it to access the overlay controls:
+Once configured, "Overlay" appears in your React Native DevTools sidebar with two controls:
 
-### Grid Overlay
+### Grid
 
-The grid overlay helps you verify spacing, alignment, and layout consistency:
+Toggle a grid over your app to check spacing and alignment. Adjust cell size (4–100px), line color, and opacity. Off by default; when enabled, starts at an 8px red grid at 70% opacity.
 
-- **Enable/Disable**: Toggle grid visibility on and off
-- **Grid Size**: Adjust grid cell size (in pixels) from 4px to 100px
-- **Color**: Choose grid line color using a color picker
-- **Opacity**: Control grid transparency from 0.1 to 1.0
+### Image overlay
 
-### Image Overlay
+Overlay a reference image over your app to compare it against a design — either as a plain overlay or as a slider you drag to reveal each side. Adjust the image URL, resize mode (cover, contain, stretch, center), and opacity.
 
-The image overlay allows you to superimpose reference images over your app:
+Settings persist for your development session but aren't saved between app restarts.
 
-- **Enable/Disable**: Toggle image overlay visibility
-- **Image URL**: Enter the URL of the image to overlay
-- **Overlay Mode**: Choose between simple overlay or slider comparison
-- **Resize Mode**: Select how the image fits (cover, contain, stretch, center)
-- **Opacity**: Adjust image transparency
-
-### Image Comparison Mode
-
-When using slider mode, you get an interactive comparison tool:
-
-- **Side-by-Side View**: Compare your app with a reference image
-- **Adjustable Slider**: Drag to reveal different portions of each image
-- **Real-time Adjustment**: Change slider position while the app is running
-
-### Default Settings
-
-- **Grid**: Disabled by default, 8px size, red color (#FF0000), 70% opacity
-- **Image**: Disabled by default, 70% opacity, overlay mode, contain resize mode
-
-All settings are controlled through the DevTools panel and persist during your development session.
-
-### Important Notes
-
-:::warning Overlay Positioning
-The `RozeniteOverlay` component should be placed at the root level of your app, after all other content, to ensure overlays appear on top of your entire application.
+:::warning Positioning
+Place `RozeniteOverlay` at the root of your app, after everything else, so overlays render on top.
 :::
 
-:::info Development Only
-The Overlay plugin components are automatically disabled in production builds. The overlay will not render in release builds of your app.
+:::info Development only
+The overlay never renders in production builds.
 :::
 
-## Contributing
-
-The Overlay plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
-
-## Support
-
-If you encounter issues with the Overlay plugin:
-
-1. **Check Documentation**: Review this guide for common solutions
-2. **Verify Setup**: Ensure the `RozeniteOverlay` component is properly placed in your app hierarchy
-3. **Search Issues**: Look for similar issues in the repository
-4. **Create Issue**: Report bugs or request features
-5. **Community**: Reach out to the Rozenite community for help
-
----
-
-**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md).
+**Next**: Explore other [Official Plugins](./overview.md), or learn to build your own in the [Plugin Development guide](../plugin-development/plugin-development.md).

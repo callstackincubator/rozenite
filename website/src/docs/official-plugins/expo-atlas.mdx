@@ -4,27 +4,15 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 
 ![](/expo-atlas-plugin.png)
 
-The Expo Atlas plugin integrates [Expo Atlas](https://github.com/expo/expo-atlas) directly into your React Native DevTools, providing powerful bundle analysis and optimization capabilities for your React Native applications.
-
-## What is Expo Atlas?
-
-Expo Atlas is a bundle analyzer and visualizer that helps you understand and optimize your React Native app's Metro bundle. It provides:
-
-- **Bundle Visualization**: Interactive view of your Metro bundle structure
-- **Module Analysis**: Detailed information about each module in your bundle
-- **Size Optimization**: Identify large dependencies and optimize bundle size
-- **Dependency Mapping**: Visualize module relationships and dependencies
-- **Performance Insights**: Understand how your bundle affects app performance
+The Expo Atlas plugin brings [Expo Atlas](https://github.com/expo/expo-atlas) into React Native DevTools, so you can explore your Metro bundle, see what's taking up space, and trace dependencies without leaving DevTools.
 
 ## Installation
 
 Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
 
-Install the Expo Atlas plugin as a development dependency using your preferred package manager:
-
 <PackageManagerTabs command="install -D @rozenite/expo-atlas-plugin" />
 
-Update your Metro configuration to enable the Expo Atlas plugin:
+Update your Metro configuration to enable the plugin:
 
 ```javascript title="metro.config.js"
 const { withRozenite } = require('@rozenite/metro');
@@ -42,44 +30,11 @@ module.exports = withRozenite(config, {
 
 ## Usage
 
-Once configured, the Expo Atlas plugin will automatically appear in your React Native DevTools sidebar as "Expo Atlas". Click on it to access:
+Once configured, "Expo Atlas" appears in your React Native DevTools sidebar. From there you can:
 
-### Bundle Overview
+- See total bundle size broken down by module and file type
+- Inspect an individual module's size, source, and dependency chain
+- Spot large dependencies, duplicated code, and unused code
+- Analyze your development bundle live, or export and analyze a production bundle
 
-- **Bundle Size Analysis**: View total bundle size and breakdown by module
-- **Module Distribution**: See how your bundle is distributed across different file types
-- **Entry Points**: Identify main entry points and their dependencies
-
-### Module Details
-
-- **Individual Module Sizes**: Analyze the size contribution of each module
-- **Source Code Inspection**: View the actual source code of modules in your bundle
-- **Dependency Chains**: Trace how modules depend on each other
-
-### Optimization Insights
-
-- **Large Dependencies**: Identify modules that significantly impact bundle size
-- **Duplicate Code**: Find potential code duplication across modules
-- **Unused Code**: Detect potentially unused dependencies
-
-### Development vs Production
-
-- **Development Bundle**: Analyze your development bundle in real-time
-- **Production Bundle**: Export and analyze production bundles for optimization
-
-## Contributing
-
-The Expo Atlas plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
-
-## Support
-
-If you encounter issues with the Expo Atlas plugin:
-
-1. **Check Documentation**: Review this guide for common solutions
-2. **Search Issues**: Look for similar issues in the repository
-3. **Create Issue**: Report bugs or request features
-4. **Community**: Reach out to the Rozenite community for help
-
----
-
-**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md).
+**Next**: Explore other [Official Plugins](./overview.md), or learn to build your own in the [Plugin Development guide](../plugin-development/plugin-development.md).

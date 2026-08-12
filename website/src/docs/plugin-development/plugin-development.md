@@ -6,8 +6,6 @@ This guide will walk you through the complete process of creating a React Native
 
 ## Quick Start
 
-Generate a new plugin in seconds:
-
 ```shell title="Terminal"
 npx rozenite generate
 cd my-awesome-plugin
@@ -51,11 +49,11 @@ my-plugin/
 
 ## Step 3: Creating Panels
 
-Panels are React components that appear in the DevTools interface. They're defined in your `rozenite.config.ts` file. **Plugin developers can leverage React Native APIs and libraries** to create powerful debugging tools that integrate deeply with the React Native runtime.
+Panels are React components that appear in the DevTools interface, defined in your `rozenite.config.ts` file. Your React Native side can use any React Native API or library, so a panel can integrate as deeply with the runtime as you need.
 
-### Type-Safe Plugin Development
+### Type-safe communication
 
-Rozenite provides full TypeScript support for plugin development. The `RozeniteDevToolsClient` uses an event-based API with full type safety:
+The `RozeniteDevToolsClient` uses an event-based API with full TypeScript support — compile-time checks and autocomplete for event names and payloads, and one client per plugin ID so events from different plugins never collide.
 
 #### Client API
 
@@ -70,14 +68,6 @@ client.send('event-name', payload); // Send typed event
 client.onMessage('event-name', callback); // Listen for typed event
 client.close(); // Clean up connection
 ```
-
-#### Type Safety Benefits
-
-- **Compile-time error checking** for event names and payloads
-- **IntelliSense support** for all event types and methods
-- **Type-safe event handling** between DevTools and React Native
-- **Automatic refactoring** when event interfaces change
-- **Plugin ID isolation** ensures events don't conflict between plugins
 
 ```typescript title="rozenite.config.ts"
 export default {
