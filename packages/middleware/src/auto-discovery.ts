@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert';
 import { createRequire } from 'node:module';
+import { createLimiter } from '@rozenite/tools';
 import { logger } from './logger.js';
 import { ROZENITE_MANIFEST } from './constants.js';
 import { RozeniteConfig } from './config.js';
@@ -17,35 +18,6 @@ const require = createRequire(import.meta.url);
 // report 2-4 cores, which would otherwise throttle exactly the
 // slow/network-filesystem case this is meant to help.
 const DISCOVERY_CONCURRENCY = Math.max(8, os.cpus().length);
-
-// Metro loads this package as CJS, so this can't depend on p-limit (ESM-only
-// since v3) without risking `ERR_REQUIRE_ESM` on Node versions that don't
-// support requiring ESM. A bounded-concurrency queue is small enough to own.
-const createLimiter = (concurrency: number) => {
-  let active = 0;
-  const queue: (() => void)[] = [];
-
-  const next = () => {
-    if (active >= concurrency || queue.length === 0) {
-      return;
-    }
-    active++;
-    queue.shift()?.();
-  };
-
-  return <T>(task: () => Promise<T>): Promise<T> =>
-    new Promise<T>((resolve, reject) => {
-      queue.push(() => {
-        task()
-          .then(resolve, reject)
-          .finally(() => {
-            active--;
-            next();
-          });
-      });
-      next();
-    });
-};
 
 export type InstalledPlugin = {
   name: string;

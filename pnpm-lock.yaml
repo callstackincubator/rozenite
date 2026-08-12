@@ -821,7 +821,7 @@ importers:
         version: 8.18.1
       vitest:
         specifier: ^4.0.18
-        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))(yaml@2.8.1)
 
   packages/mmkv-plugin:
     dependencies:
@@ -1407,7 +1407,7 @@ importers:
         version: 7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
       vitest:
         specifier: ^4.0.18
-        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))(yaml@2.8.1)
 
   packages/sqlite-plugin:
     dependencies:
@@ -1639,6 +1639,9 @@ importers:
       vite:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+      vitest:
+        specifier: ^4.0.18
+        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))(yaml@2.8.1)
 
   packages/ui:
     dependencies:
@@ -14749,6 +14752,7 @@ packages:
       '@vitest/ui': 4.1.0
       happy-dom: '*'
       jsdom: '*'
+      vite: ^7.3.1
     peerDependenciesMeta:
       '@edge-runtime/vm':
         optional: true
@@ -32767,7 +32771,7 @@ snapshots:
       - tsx
       - yaml
 
-  vitest@4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1):
+  vitest@4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))(yaml@2.8.1):
     dependencies:
       '@vitest/expect': 4.1.0
       '@vitest/mocker': 4.1.0(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
