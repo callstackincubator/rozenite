@@ -14,6 +14,12 @@
 - For welcome dialog release content, see @./agents/release-content.md.
 - When working on `@rozenite/ui`, follow @./agents/working-on-ui-components.md.
 - Before preparing or opening a pull request, see @./docs/agents/pull-requests.md.
+- Metro-related changes (Metro config, middleware loaded by Metro, plugin
+  discovery, anything reachable from `metro.config.js`) must be verified by
+  actually running Metro in `apps/playground` (e.g. `CI=1 pnpm --filter
+  playground start`), not just unit tests — Metro loads these as CJS, and
+  build/test suites won't catch runtime failures like requiring an ESM-only
+  dependency.
 - Preserve unrelated work already present in the working tree.
 - Keep changes focused; do not make opportunistic refactors.
 - Never commit credentials, secrets, generated build output, or local
