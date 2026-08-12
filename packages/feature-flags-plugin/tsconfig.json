@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@rozenite/agent-bridge": ["../agent-bridge/src/index.ts"],
+      "@rozenite/agent-shared": ["../agent-shared/src/index.ts"],
+      "@rozenite/plugin-bridge": ["../plugin-bridge/src/index.ts"],
+      "@rozenite/ui": ["../ui/src/index.ts"]
+    },
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*", "react-native.ts", "sdk.ts", "rozenite.config.ts"],
+  "exclude": ["node_modules", "dist", "build"],
+  "references": [
+    {
+      "path": "../plugin-bridge"
+    },
+    {
+      "path": "../cli"
+    },
+    {
+      "path": "../vite-plugin"
+    },
+    {
+      "path": "../ui"
+    }
+  ]
+}

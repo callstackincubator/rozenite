@@ -3,6 +3,7 @@ import { ThemeProvider } from './theme/ThemeContext';
 import { useTheme } from './theme/useTheme';
 import {
   ControlsPluginSection,
+  FeatureFlagsPluginSection,
   OverlayPluginSection,
   PerformanceMonitorPluginSection,
   ReactNavigationPluginSection,
@@ -26,6 +27,7 @@ const AppContent = () => {
         </Text>
 
         <StoragePluginSection />
+        <FeatureFlagsPluginSection />
         <ReactNavigationPluginSection />
         <ControlsPluginSection />
         <OverlayPluginSection />

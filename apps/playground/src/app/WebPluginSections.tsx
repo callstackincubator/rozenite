@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { QueryClient } from '@tanstack/react-query';
 import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
+import { useRozeniteFeatureFlagsPlugin } from '@rozenite/feature-flags-plugin';
 import { RozeniteOverlay } from '@rozenite/overlay-plugin';
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
@@ -14,6 +15,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { usePlaygroundControlsSections } from './hooks/usePlaygroundControlsSections';
 import { storagePluginAdapters } from './storage-plugin-adapters';
+import { featureFlagsPluginAdapters } from './feature-flags-plugin-adapters';
 import { useTheme } from './theme/useTheme';
 
 const tanstackQueryClient = new QueryClient();
@@ -78,6 +80,23 @@ export const StoragePluginSection = () => {
       description="Unified storage inspection for adapters you register. On web, Async Storage and Expo Secure Store paths are active; the MMKV adapter stays inert because MMKV does not run in the browser."
       notes={[
         'Use Async Storage or Expo Secure Store adapters in web playground code; MMKV remains native-only.',
+      ]}
+    />
+  );
+};
+
+export const FeatureFlagsPluginSection = () => {
+  useRozeniteFeatureFlagsPlugin({
+    providers: featureFlagsPluginAdapters,
+  });
+
+  return (
+    <PluginCard
+      title="Feature Flags"
+      packageName="@rozenite/feature-flags-plugin"
+      description="Inspect and override feature flags from DevTools. The custom/local adapter used here owns its own override store, so overrides work with zero call-site changes — unlike the LaunchDarkly adapter, which needs the wrapped client passed to its provider."
+      notes={[
+        'Only the custom/local adapter is wired here; LaunchDarkly and Statsig need their SDKs installed and are not part of this demo.',
       ]}
     />
   );

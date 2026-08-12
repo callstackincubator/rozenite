@@ -51,6 +51,11 @@
   },
   {
     "type": "file",
+    "name": "feature-flags",
+    "label": "Feature Flags"
+  },
+  {
+    "type": "file",
     "name": "sqlite",
     "label": "SQLite"
   },

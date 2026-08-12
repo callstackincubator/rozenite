@@ -1,0 +1,85 @@
+{
+  "name": "@rozenite/feature-flags-plugin",
+  "version": "2.0.0",
+  "description": "Feature Flags Inspector for Rozenite.",
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "type": "module",
+  "main": "./dist/react-native/index.cjs",
+  "module": "./dist/react-native/index.js",
+  "types": "./dist/react-native/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/react-native/index.d.ts",
+      "import": "./dist/react-native/index.js",
+      "require": "./dist/react-native/index.cjs"
+    },
+    "./sdk": {
+      "development": "./sdk.ts",
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js",
+      "require": "./dist/sdk/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rozenite build",
+    "dev": "rozenite dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
+  },
+  "dependencies": {
+    "@rozenite/agent-bridge": "workspace:*",
+    "@rozenite/agent-shared": "workspace:*",
+    "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@rozenite/vite-plugin": "workspace:*",
+    "@tanstack/react-query": "^5.0.0",
+    "@tanstack/react-table": "^8.21.3",
+    "@types/react": "catalog:",
+    "lucide-react": "^0.263.1",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-native": "catalog:",
+    "react-native-web": "^0.21.2",
+    "react-virtuoso": "^4.14.1",
+    "rozenite": "workspace:*",
+    "typescript": "~5.9.3",
+    "vite": "catalog:"
+  },
+  "peerDependencies": {
+    "@launchdarkly/react-native-client-sdk": "^10.0.0",
+    "@statsig/js-client": "^3.0.0",
+    "@statsig/js-local-overrides": "^3.0.0",
+    "@statsig/react-native-bindings": "^3.0.0",
+    "react": "*",
+    "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "@launchdarkly/react-native-client-sdk": {
+      "optional": true
+    },
+    "@statsig/js-client": {
+      "optional": true
+    },
+    "@statsig/js-local-overrides": {
+      "optional": true
+    },
+    "@statsig/react-native-bindings": {
+      "optional": true
+    }
+  }
+}

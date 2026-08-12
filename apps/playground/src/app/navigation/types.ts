@@ -5,6 +5,7 @@ export type RootStackParamList = {
   ControlsPlugin: undefined;
   ReactHookFormPlugin: undefined;
   StoragePlugin: undefined;
+  FeatureFlagsPlugin: undefined;
   NetworkTest: undefined;
   RequestBodyTest: undefined;
   ReduxTest: undefined;
