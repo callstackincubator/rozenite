@@ -1,9 +1,14 @@
 /**
  * This is a modified version of the setUpReactDevTools.js from react-native.
- * @see https://github.com/facebook/react-native/blob/main/packages/react-native/Libraries/Core/setUpReactDevTools.js
+ * @see https://github.com/facebook/react-native/blob/v0.86.0/packages/react-native/Libraries/Core/setUpReactDevTools.js
  *
  * Important: do NOT import from 'react-native' directly!
  * For some reason, it'll break the hook and React DevTools won't work.
+ *
+ * The Fusebox dispatcher setup, style-attribute list, and style flattener
+ * below are vendored from react-native's private modules (see the @see
+ * links on each) rather than imported, since those paths are blocked under
+ * react-native's Strict TypeScript API.
  */
 
 import type { FuseboxDomain } from './types.js';
@@ -13,10 +18,9 @@ import { getReloadAndProfileConfig, setReloadAndProfileConfig } from './storage/
 import { readReloadAndProfileConfig } from './reloadAndProfile.js';
 import { createFuseboxConnection } from './fuseboxConnection.js';
 import { initialize, connectWithCustomMessagingProtocol } from 'react-devtools-core';
-// Use subpath imports - do NOT import from 'react-native' directly (breaks React DevTools)
-import 'react-native/src/private/devsupport/rndevtools/setUpFuseboxReactDevToolsDispatcher';
-import ReactNativeStyleAttributes from 'react-native/Libraries/Components/View/ReactNativeStyleAttributes';
-import resolveRNStyle from 'react-native/Libraries/StyleSheet/flattenStyle';
+import './fuseboxReactDevToolsDispatcher.js';
+import { nativeStyleEditorValidAttributes } from './nativeStyleEditorValidAttributes.js';
+import resolveRNStyle from './flattenStyle.js';
 
 declare global {
   var __FUSEBOX_REACT_DEVTOOLS_DISPATCHER__: {
@@ -49,7 +53,7 @@ const bindingName = fuseboxDispatcher.BINDING_NAME;
 
 const { connect, disconnectIfNeeded } = createFuseboxConnection({
   sessionStore,
-  ReactNativeStyleAttributes,
+  nativeStyleEditorValidAttributes,
   resolveRNStyle,
   connectWithCustomMessagingProtocol,
   savePersistedHookSettings,
