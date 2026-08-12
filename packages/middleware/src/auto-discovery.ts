@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert';
 import { createRequire } from 'node:module';
-import pLimit from 'p-limit';
+import { createLimiter } from '@rozenite/tools';
 import { logger } from './logger.js';
 import { ROZENITE_MANIFEST } from './constants.js';
 import { RozeniteConfig } from './config.js';
@@ -252,7 +252,7 @@ const getInstalledPluginsFromDependencies = async (
     (dependency) => !options.exclude?.includes(dependency),
   );
 
-  const limit = pLimit(DISCOVERY_CONCURRENCY);
+  const limit = createLimiter(DISCOVERY_CONCURRENCY);
   const plugins = await Promise.all(
     dependencies.map((dependency) =>
       limit(() => resolveInstalledPlugin(options.projectRoot, dependency)),

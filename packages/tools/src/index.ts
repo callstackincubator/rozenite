@@ -7,6 +7,7 @@ export {
   UnknownBundlerType,
 } from './project-type.js';
 export { logger } from './logger.js';
+export { createLimiter, type Limiter } from './limiter.js';
 export {
   createMetroConfigTransformer,
   composeMetroConfigTransformers,
