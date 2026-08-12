@@ -28,6 +28,7 @@
     "@rozenite/agent-sdk": "workspace:*",
     "@rozenite/controls-plugin": "workspace:*",
     "@rozenite/expo-atlas-plugin": "workspace:*",
+    "@rozenite/feature-flags-plugin": "workspace:*",
     "@rozenite/file-system-plugin": "workspace:*",
     "@rozenite/metro": "workspace:*",
     "@rozenite/network-activity-plugin": "workspace:*",

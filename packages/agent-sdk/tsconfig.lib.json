@@ -5,6 +5,7 @@
     "paths": {
       "@rozenite/agent-shared": ["../agent-shared/src/index.ts"],
       "@rozenite/controls-plugin/sdk": ["../controls-plugin/dist/sdk/index.d.ts"],
+      "@rozenite/feature-flags-plugin/sdk": ["../feature-flags-plugin/dist/sdk/index.d.ts"],
       "@rozenite/file-system-plugin/sdk": ["../file-system-plugin/dist/sdk/index.d.ts"],
       "@rozenite/mmkv-plugin/sdk": ["../mmkv-plugin/dist/sdk/index.d.ts"],
       "@rozenite/network-activity-plugin/sdk": ["../network-activity-plugin/dist/sdk/index.d.ts"],

@@ -5,6 +5,10 @@ import {
 } from '@rozenite/agent-shared';
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { controlsTools, type ControlsListSectionsResult } from '@rozenite/controls-plugin/sdk';
+import {
+  featureFlagsTools,
+  type FeatureFlagsListFlagsResult,
+} from '@rozenite/feature-flags-plugin/sdk';
 import { fileSystemTools, type FileSystemListRootsResult } from '@rozenite/file-system-plugin/sdk';
 import { mmkvTools, type MMKVReadEntryResult } from '@rozenite/mmkv-plugin/sdk';
 import {
@@ -42,6 +46,10 @@ describe('official plugin sdk descriptors', () => {
       domain: '@rozenite/controls-plugin',
       name: 'list-sections',
     });
+    expect(featureFlagsTools.listFlags).toMatchObject({
+      domain: '@rozenite/feature-flags-plugin',
+      name: 'list-flags',
+    });
     expect(fileSystemTools.readTextFile).toMatchObject({
       domain: '@rozenite/file-system-plugin',
       name: 'read-text-file',
@@ -75,6 +83,9 @@ describe('official plugin sdk descriptors', () => {
   it('type-checks representative zero-arg, required-arg, and paginated descriptor calls', () => {
     expectTypeOf(typedCall(controlsTools.listSections)).toEqualTypeOf<ControlsListSectionsResult>();
     expectTypeOf(typedCall(fileSystemTools.listRoots)).toEqualTypeOf<FileSystemListRootsResult>();
+    expectTypeOf(
+      typedCall(featureFlagsTools.listFlags, {}),
+    ).toEqualTypeOf<FeatureFlagsListFlagsResult>();
     expectTypeOf(
       typedCall(storageTools.readEntry, {
         adapterId: 'mmkv',

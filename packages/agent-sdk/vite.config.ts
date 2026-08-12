@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@rozenite/controls-plugin/sdk': resolve(__dirname, '../controls-plugin/sdk.ts'),
+      '@rozenite/feature-flags-plugin/sdk': resolve(__dirname, '../feature-flags-plugin/sdk.ts'),
       '@rozenite/file-system-plugin/sdk': resolve(__dirname, '../file-system-plugin/sdk.ts'),
       '@rozenite/mmkv-plugin/sdk': resolve(__dirname, '../mmkv-plugin/sdk.ts'),
       '@rozenite/network-activity-plugin/sdk': resolve(

@@ -36,6 +36,7 @@ export default {
         'rhf-plugin',
         'ui',
         'shell',
+        'feature-flags-plugin',
         '',
       ],
     ],

@@ -34,6 +34,7 @@ export default {
         'file-system-plugin',
         'sqlite-plugin',
         'rhf-plugin',
+        'feature-flags-plugin',
         '',
       ],
     ],

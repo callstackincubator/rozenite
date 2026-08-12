@@ -5,6 +5,7 @@
 export type RouteGroup =
   | 'State'
   | 'Storage'
+  | 'Flags'
   | 'Network'
   | 'Performance'
   | 'Forms'
@@ -55,6 +56,13 @@ export const routes = {
     title: 'File System',
     accessibilityLabel: 'File system plugin',
     group: 'Storage',
+  },
+  featureFlagsPlugin: {
+    name: 'FeatureFlagsPlugin',
+    path: 'feature-flags',
+    title: 'Feature Flags',
+    accessibilityLabel: 'Feature flags plugin',
+    group: 'Flags',
   },
   networkTest: {
     name: 'NetworkTest',

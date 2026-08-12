@@ -15,6 +15,7 @@
         "^typecheck",
         "build",
         "@rozenite/controls-plugin#build",
+        "@rozenite/feature-flags-plugin#build",
         "@rozenite/file-system-plugin#build",
         "@rozenite/mmkv-plugin#build",
         "@rozenite/network-activity-plugin#build",
