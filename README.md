@@ -17,6 +17,14 @@ Rozenite brings plug-and-play panels to React Native DevTools. Install plugins, 
 - **Production-Safe Controls**: Plugins are automatically disabled in production builds — no plugin code ships to your users.
 - **Easy to Build Your Own**: When you need something custom, create your own panel with type-safe, isomorphic APIs and great DX.
 
+## Compatibility
+
+| Rozenite | Expo SDK | React Native | Re.Pack |
+| -------- | -------- | ------------- | ------- |
+| 1.x      | 52+      | 0.76+          | 5.2+    |
+
+Bare React Native projects are supported too — match your React Native version to the one shipped by the minimum supported Expo SDK above. See the [Compatibility](https://rozenite.dev/docs/compatibility) page for full details.
+
 ## Documentation
 
 The documentation is available at [rozenite.dev](https://rozenite.dev). You can also use the following links to jump to specific topics:
