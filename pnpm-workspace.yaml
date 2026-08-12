@@ -25,8 +25,8 @@ allowBuilds:
   core-js: true
   electron: true
   esbuild: true
-  lefthook: false
+  lefthook: true
   react-native-mmkv: true
   react-native-nitro-modules: true
   sqlite3: true
-  unrs-resolver: false
+  unrs-resolver: true
