@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { FeatureFlag } from '@rozenite/feature-flags-plugin';
-import { Button, KeyValueRow, List, PluginHeader, Row, Screen } from '../components/ui';
+import { Button, KeyValueList, PluginHeader, Row, Screen } from '../components/ui';
 import { featureFlagsOverrides, featureFlagsPluginAdapter } from '../feature-flags-plugin-adapters';
 import { useTheme } from '../theme/useTheme';
 
@@ -41,7 +41,6 @@ export const FeatureFlagsPluginScreen = () => {
 
   const newCheckoutEnabled = flagValue(flags, 'new-checkout-flow', false);
   const welcomeMessage = flagValue(flags, 'welcome-message', '');
-  const maxRetryCount = flagValue(flags, 'max-retry-count', 0);
   const themeConfig = flagValue<ThemeConfig>(flags, 'theme-config', {});
 
   return (
@@ -72,19 +71,14 @@ export const FeatureFlagsPluginScreen = () => {
         </Text>
       </View>
 
-      <Text style={[styles.retryText, { color: theme.colors.foreground }]}>
-        Retries on failure: {maxRetryCount}
-      </Text>
-
-      <List title="Effective flags">
-        {flags.map((flag) => (
-          <KeyValueRow
-            key={flag.key}
-            label={`${flag.key} (${flag.type}${flag.overridden ? ', overridden' : ''})`}
-            value={formatValue(flag)}
-          />
-        ))}
-      </List>
+      <KeyValueList
+        title="Effective flags"
+        items={flags.map((flag) => ({
+          key: flag.key,
+          label: `${flag.key} (${flag.type}${flag.overridden ? ', overridden' : ''})`,
+          value: formatValue(flag),
+        }))}
+      />
 
       <Row>
         <Button label="Refresh" variant="secondary" onPress={() => void refresh()} />
@@ -105,9 +99,5 @@ const styles = StyleSheet.create({
   },
   bannerSubtitle: {
     fontSize: 13,
-  },
-  retryText: {
-    fontSize: 13,
-    fontWeight: '500',
   },
 });

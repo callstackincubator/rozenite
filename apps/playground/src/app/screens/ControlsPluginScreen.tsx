@@ -5,7 +5,7 @@ import {
   Card,
   Field,
   Input,
-  KeyValueRow,
+  KeyValueList,
   PluginHeader,
   Row,
   Screen,
@@ -49,11 +49,7 @@ export const ControlsPluginScreen = () => {
         subtitle="Change state here or from DevTools — the panel mirrors the device."
       />
 
-      <Card>
-        {diagnostics.map(([label, value]) => (
-          <KeyValueRow key={label} label={label} value={value} />
-        ))}
-      </Card>
+      <KeyValueList items={diagnostics.map(([label, value]) => ({ label, value }))} />
 
       <Card>
         {(Object.entries(featureFlags) as [keyof typeof featureFlags, boolean][]).map(

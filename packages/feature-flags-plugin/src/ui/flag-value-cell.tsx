@@ -3,6 +3,18 @@ import { useState } from 'react';
 import type { FeatureFlag, FeatureFlagValue } from '../shared/types';
 import { parseNumberInput } from './value-parsing';
 
+const JSON_PREVIEW_MAX_LENGTH = 120;
+
+/** A one-line `JSON.stringify` preview, clipped with an ellipsis -- the
+ * `{…}` chip used to be a static placeholder that never reflected the
+ * flag's actual value, so two different json flags looked identical. */
+const previewJson = (value: FeatureFlagValue): string => {
+  const serialized = JSON.stringify(value) ?? String(value);
+  return serialized.length > JSON_PREVIEW_MAX_LENGTH
+    ? `${serialized.slice(0, JSON_PREVIEW_MAX_LENGTH)}…`
+    : serialized;
+};
+
 export type FlagValueCellProps = {
   flag: FeatureFlag;
   disabled?: boolean;
@@ -40,10 +52,11 @@ export function FlagValueCell({
         type="button"
         onClick={onOpenJson}
         disabled={disabled}
+        title={JSON.stringify(flag.value)}
         aria-label={`Edit JSON value for ${flag.key}`}
-        className="rounded-sm border border-border bg-muted px-2 py-0.5 font-mono text-xs text-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+        className="max-w-md truncate rounded-sm border border-border bg-muted px-2 py-0.5 font-mono text-xs text-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
       >
-        {'{…}'}
+        {previewJson(flag.value)}
       </button>
     );
   }
@@ -75,7 +88,8 @@ function TextValueCell({
           setEditing(true);
         }}
         aria-label={`Edit value for ${flag.key}`}
-        className="w-full rounded-sm px-1 py-0.5 text-left font-mono text-sm text-foreground hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50"
+        title={String(flag.value)}
+        className="block w-full truncate rounded-sm px-1 py-0.5 text-left font-mono text-sm text-foreground hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50"
       >
         {String(flag.value)}
       </button>
