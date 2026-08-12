@@ -19,6 +19,13 @@ export type TanStackQueryPluginEventMap = {
       data?: unknown;
     };
   };
+  /**
+   * Announced by the device once it is listening for panel messages. The panel
+   * is recreated on every app reload and asks for the cache immediately, which
+   * can land before the app's React tree has mounted the plugin; this lets the
+   * panel ask again instead of staying empty until the app is restarted.
+   */
+  'device-ready': unknown;
   'request-initial-data': unknown;
   'sync-data': {
     data: SerializableQueryClient;
