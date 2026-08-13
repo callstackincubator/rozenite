@@ -1,22 +1,39 @@
 import { useRozeniteRHFPlugin } from '@rozenite/rhf-plugin';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert } from 'react-native';
+import { Alert, Text } from 'react-native';
 import { Button, Card, Field, Input, PluginHeader, Row, Screen, Switch } from '../components/ui';
+import { useTheme } from '../theme/useTheme';
 
 type ProfileFormValues = {
   firstName: string;
   email: string;
   newsletter: boolean;
+  address: {
+    street: string;
+    // Two levels of nesting under `address`: `address.location.city` and
+    // `address.location.zip` exercise the DevTools panel's field tree.
+    location: {
+      city: string;
+      zip: string;
+    };
+  };
 };
 
 export const ReactHookFormPluginScreen = () => {
+  const { theme } = useTheme();
   const { control, handleSubmit, reset, formState } = useForm<ProfileFormValues>({
-    defaultValues: { firstName: '', email: '', newsletter: false },
+    defaultValues: {
+      firstName: '',
+      email: '',
+      newsletter: false,
+      address: { street: '', location: { city: '', zip: '' } },
+    },
     mode: 'onChange',
   });
 
   // Required plugin form id — keep this id stable for the RHF DevTools panel.
-  useRozeniteRHFPlugin({ control, id: 'profile-form' });
+  // `reset` lets the DevTools panel revert this form remotely.
+  useRozeniteRHFPlugin({ control, id: 'profile-form', reset });
 
   const onSubmit = (data: ProfileFormValues) => {
     Alert.alert('Submitted', JSON.stringify(data, null, 2));
@@ -92,6 +109,64 @@ export const ReactHookFormPluginScreen = () => {
           <Button label="Reset" variant="secondary" onPress={() => reset()} />
           <Button label="Submit" disabled={!formState.isValid} onPress={handleSubmit(onSubmit)} />
         </Row>
+      </Card>
+
+      <Card>
+        <Text style={{ color: theme.colors.mutedForeground, fontSize: theme.fontSize.xs }}>
+          Address (nested fields)
+        </Text>
+
+        <Controller
+          control={control}
+          name="address.street"
+          render={({ field, fieldState }) => (
+            <Field label="Street" error={fieldState.error?.message}>
+              <Input
+                accessibilityLabel="Street"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="123 Main St"
+              />
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="address.location.city"
+          render={({ field, fieldState }) => (
+            <Field label="City" error={fieldState.error?.message}>
+              <Input
+                accessibilityLabel="City"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="Springfield"
+              />
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="address.location.zip"
+          rules={{
+            pattern: { value: /^\d{5}$/, message: '5 digits' },
+          }}
+          render={({ field, fieldState }) => (
+            <Field label="ZIP" error={fieldState.error?.message}>
+              <Input
+                accessibilityLabel="ZIP"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="12345"
+                keyboardType="number-pad"
+              />
+            </Field>
+          )}
+        />
       </Card>
     </Screen>
   );
