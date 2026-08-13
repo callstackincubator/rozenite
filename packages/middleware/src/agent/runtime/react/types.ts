@@ -149,12 +149,36 @@ export interface ReactStopProfilingResult {
 
 export type ReactRenderDataSort = 'duration-desc' | 'name-asc';
 
+export interface ReactRenderDataChangedKeys {
+  /** True when this fiber rendered for the first time (initial mount). */
+  isFirstMount?: true;
+  /** Names of the props that changed. */
+  props?: string[];
+  /** Names of the state keys that changed (class components / useState). */
+  state?: string[];
+  /**
+   * Context that changed: `true` when React only reported that some context
+   * changed, or the list of context display names when available.
+   */
+  context?: string[] | true;
+  /** True when at least one hook value changed. */
+  hooks?: true;
+}
+
 export interface ReactRenderDataItem {
   fiberId: number;
+  /** Resolved component display name, or `Fiber <id>` when unknown. */
+  displayName: string;
   actualDurationMs: number;
   selfDurationMs: number;
   isSlow: boolean;
   changeTypeHints?: string[];
+  /**
+   * The specific changed keys behind `changeTypeHints`: the exact prop / state /
+   * context key names plus hooks/mount flags. Present only when React recorded
+   * change descriptions for this fiber (updates observed while profiling).
+   */
+  changedKeys?: ReactRenderDataChangedKeys;
 }
 
 export interface ReactGetRenderDataResult {
