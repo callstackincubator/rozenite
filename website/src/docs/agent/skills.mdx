@@ -2,11 +2,9 @@
 
 If you use Codex or another coding agent that supports the Vercel `skills` CLI, you can install the Rozenite skill so the agent can use Rozenite for Agents efficiently.
 
-Rozenite ships a single skill, `rozenite`. It is a thin router: the installed skill contains no workflow content of its own, only a pointer telling the agent to discover and read the real content through the `rozenite skills` CLI command.
+Rozenite ships a single skill, `rozenite`. It's a thin router — installing it just points your agent at the `rozenite skills` CLI command, which serves the actual guidance (ground truths, CLI and SDK workflows, one doc per plugin domain) straight from the `rozenite` package. That guarantees the content always matches the version of Rozenite installed in your project.
 
-The actual guidance — ground truths, CLI and SDK workflows, and one doc per plugin domain — lives inside the `rozenite` CLI package itself and is versioned together with it. That's why the content moved out of the skill: whatever the agent reads through `rozenite skills` always matches the version of Rozenite actually installed in the project, instead of drifting out of sync with a separately-installed skill.
-
-Because of that, installing the skill is a convenience, not a requirement. If your coding agent doesn't use a skills CLI at all, you can point it straight at `npx rozenite skills list` and `npx rozenite skills show <id>` and it gets the exact same content.
+Because of that, installing the skill is a convenience, not a requirement. If your coding agent doesn't use a skills CLI at all, point it straight at `npx rozenite skills list` and `npx rozenite skills show <id>` and it gets the exact same content.
 
 This skill complements Rozenite; it does not replace it. Your app still needs Rozenite installed and configured because the agent ultimately talks to the running app through the Rozenite agent runtime.
 

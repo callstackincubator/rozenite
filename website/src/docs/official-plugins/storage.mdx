@@ -2,21 +2,19 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 
 # Storage Plugin
 
-The Storage plugin provides a generic storage inspector for React Native DevTools. It supports multiple adapters and multiple storages per adapter, so you can inspect MMKV, AsyncStorage, and SecureStore in one panel.
+The Storage plugin is a single DevTools panel for MMKV, AsyncStorage, and Expo SecureStore. Register whichever adapters your app uses and inspect them all from one place.
 
 ## Installation
 
 Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
 
-Install the plugin:
-
 <PackageManagerTabs command="install -D @rozenite/storage-plugin" />
 
-Install adapter peer dependencies for the storages you use:
+Install the peer dependencies for the storages you use:
 
 <PackageManagerTabs command="install -D react-native-mmkv @react-native-async-storage/async-storage expo-secure-store" />
 
-## Base Setup
+## Setup
 
 ```ts title="App.tsx"
 import {
@@ -28,10 +26,7 @@ import {
 
 const storages = [
   createMMKVStorageAdapter({
-    storages: {
-      user: userStorage,
-      cache: cacheStorage,
-    },
+    storages: { user: userStorage, cache: cacheStorage },
   }),
   createAsyncStorageAdapter({
     storage: AsyncStorage,
@@ -50,53 +45,37 @@ function App() {
 
 ## Web (React Native for Web)
 
-With [Rozenite for Web](/docs/rozenite-for-web), this plugin is available when you debug your React Native web app.
+With [Rozenite for Web](/docs/rozenite-for-web), this plugin is also available when debugging your React Native web app — showing entries from whichever Async Storage / Expo Secure Store adapters you configure for the browser.
 
-On web, the inspector shows entries from Async Storage and Expo Secure Store adapters you configure for the browser.
+## Adapters
 
-## Adapter: MMKV
+### MMKV
 
 ```ts title="App.tsx"
 createMMKVStorageAdapter({
-  adapterId: 'mmkv',
-  adapterName: 'MMKV',
-  storages: {
-    'user-storage': userStorage,
-    'settings-storage': settingsStorage,
-  },
-  blacklist: {
-    'user-storage': /token|secret|password/,
-  },
+  storages: { 'user-storage': userStorage, 'settings-storage': settingsStorage },
+  blacklist: { 'user-storage': /token|secret|password/ },
 });
 ```
 
-### Limitations
+MMKV v4 arrays aren't supported — pass a record (`{ id: instance }`) instead.
 
-- MMKV v4 arrays are not supported because storage IDs are not readable from instances; pass a record (`{ id: instance }`) instead.
-- Buffer support depends on MMKV runtime behavior and value decoding heuristics.
-
-## Adapter: AsyncStorage
+### AsyncStorage
 
 ```ts title="App.tsx"
 // v2 style
-createAsyncStorageAdapter({
-  storage: AsyncStorage,
-});
+createAsyncStorageAdapter({ storage: AsyncStorage });
 
 // v3 style (instance-based)
 createAsyncStorageAdapter({
   storages: {
     auth: authStorageInstance,
-    cache: {
-      storage: cacheStorageInstance,
-      name: 'Cache Instance',
-      blacklist: /debug|temp/,
-    },
+    cache: { storage: cacheStorageInstance, name: 'Cache Instance', blacklist: /debug|temp/ },
   },
 });
 ```
 
-## Adapter: Expo SecureStore
+### Expo SecureStore
 
 ```ts title="App.tsx"
 createExpoSecureStorageAdapter({
@@ -106,186 +85,39 @@ createExpoSecureStorageAdapter({
 });
 ```
 
-### Limitations
+SecureStore doesn't support key enumeration, so you provide known keys via `keys`.
 
-- SecureStore does not provide key enumeration; you must provide known keys via `keys`.
+## Binary values
 
-## Binary entries (`buffer` type)
+MMKV storages that hold binary values render and edit them through a hex viewer with a Base64 mode for copy/paste. AsyncStorage and Expo SecureStore don't support binary values.
 
-Storages that support binary values — MMKV with its `getBuffer/set(ArrayBuffer)` APIs today — render and edit those values through a hex-first UI. The internal protocol is unchanged: a `buffer` is still a `number[]` of byte values; the new UI is purely a presentation and editing layer on top.
+## Hiding sensitive keys
 
-### Table view
-
-Buffer entries render as a short hex preview plus the total byte length:
-
-```text
-89 50 4E 47 0D 0A 1A 0A … 128 B
-```
-
-The first 8 bytes are shown. Smaller buffers omit the ellipsis.
-
-### Detail dialog
-
-Opening a `buffer` entry shows a standard hexdump with offsets, grouped hex bytes, and an ASCII column. The total byte length is shown above the dump.
-
-```text
-00000000  89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52  |.PNG........IHDR|
-00000010  00 00 00 20 00 00 00 20  08 06 00 00 00 73 7A 7A  |... ... .....szz|
-```
-
-ASCII bytes in the range `0x20–0x7E` render as themselves; everything else (control bytes, tabs, newlines, high bytes) renders as `.`.
-
-### Add / Edit dialogs
-
-The buffer editor opens in **Hex** mode by default. **Base64** is available as a secondary mode for copy/paste workflows. Bytes are the source of truth: switching modes converts the current input in place, or clears the editor if the input was incomplete.
-
-#### Hex mode
-
-A CodeMirror editor renders bytes in a canonical grouped-hex layout:
-
-```text
-89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52
-00 00 00 20 00 00 00 20  08 06 00 00 00 73 7A 7A
-```
-
-Rules:
-
-- 16 bytes per line; single spaces between bytes; an extra space between bytes 8 and 9.
-- Bytes are uppercase. Whitespace is not significant.
-- Typing leaves the surrounding text alone — single-byte edits do not reflow the document.
-- **Pasted content is normalized immediately.** The parser accepts:
-  - raw continuous hex (`deadbeef`)
-  - grouped hex with whitespace (`DE AD BE EF`)
-  - multiline grouped hex
-  - hexdump rows pasted from external tools — leading offsets and trailing `|ascii|` columns are stripped automatically
-  - optional `0x` prefixes per token
-- Incomplete intermediate input (e.g. a trailing single nibble) is allowed in the editor; save remains disabled until the value is valid.
-
-#### Base64 mode
-
-A plain editor accepting multiline base64. Surrounding and internal whitespace is trimmed before decoding.
-
-#### Validation messages
-
-Below the editor:
-
-- byte count
-- ASCII preview of the current bytes
-- the active error, if any
-
-Errors mirror what the parser surfaces:
-
-- `Enter at least one byte.`
-- `Hex input contains invalid characters.`
-- `Hex input must contain complete bytes.`
-- `Base64 input is invalid.`
-
-Save is disabled while the input is invalid.
-
-### Cross-adapter compatibility
-
-| Adapter          | Supports `buffer` |
-| ---------------- | :---------------: |
-| MMKV             |         ✓         |
-| AsyncStorage     |         —         |
-| Expo SecureStore |         —         |
-
-The dropdown's `Buffer (Array)` option is disabled in the Add Entry dialog for string-only storages.
-
-## Per-Storage Blacklist
-
-Blacklist is configured per storage and matched against the key in that storage.
+`blacklist` is configured per storage and matched against the key in that storage:
 
 ```ts title="App.tsx"
 createAsyncStorageAdapter({
   storages: {
-    cache: {
-      storage: cacheStorageInstance,
-      blacklist: /temp|debug|internal/,
-    },
+    cache: { storage: cacheStorageInstance, blacklist: /temp|debug|internal/ },
   },
 });
 ```
 
 ## Large storages
 
-The panel discovers configured storages without reading their entries. After
-you select a storage, it loads bounded, key-sorted pages containing value
-previews only. Search applies to keys on the device before pagination.
+The panel loads entries in bounded, key-sorted pages with value previews only — it doesn't read your whole storage up front. Search runs on the device before pagination. Open an entry to load its full value; closing it, switching storage, or refreshing discards that loaded value again.
 
-Open or edit an entry to load its complete value. Closing that interaction,
-switching storage, or using Refresh discards the loaded full value. The table
-keeps only a bounded working set of preview pages while scrolling.
+Storages with native subscriptions (like MMKV) update live. Others don't poll — use **Refresh** to pick up external changes.
 
-Storages with native subscriptions send key-only invalidations to keep the
-active view current. Storages without native subscriptions do not poll; use
-**Refresh** to see external changes.
+## Import / export
 
-## Import / Export
+Export the currently selected storage to a JSON snapshot, and import one back — handy for reproducing a bug from a captured state or sharing a scenario with a teammate.
 
-The panel can export the currently selected storage to a JSON snapshot and import a snapshot back. Use this to reproduce bugs from a captured state, share state between teammates, or seed known test scenarios without writing one-off app code.
+- Import and export always target the **currently selected storage** — switch the dropdown first to target a different one.
+- Import is an upsert: existing keys are overwritten, missing keys are created, keys not in the file are left alone. There's no "replace all".
+- The file is validated before anything is written. If validation fails, nothing changes.
+- Keys matching the target storage's `blacklist` are skipped, and the preview shows you which ones before you apply.
 
-### Behavior
-
-- **Scope**: Import and Export always operate on the **currently selected storage** only. Importing into a different storage requires switching the dropdown first; the file's metadata is never used to redirect the target.
-- **Upsert**: Import overwrites existing keys and creates missing ones. Keys not present in the file are left untouched. There is no "replace all" mode.
-- **Validate before write**: The file is fully parsed and validated before any entries are applied. If validation fails, nothing is written and the error points at the offending path (for example, `entries[3].value`).
-- **Stop on first error**: If a write fails mid-import (rare — most failures are caught up-front), the import stops and reports which key failed. Already-written entries stay; rerunning import is safe because writes are idempotent.
-- **Skipped keys**: Keys matching the target storage's `blacklist` are skipped during write. The preview shows the count and the keys before you apply.
-- **Live updates**: Completion invalidates the selected storage once, then the
-  table reloads authoritative preview pages. Progress events contain counts,
-  not imported values.
-
-### JSON snapshot schema
-
-Exports use a stable, versioned format:
-
-```json title="rozenite-storage-mmkv-user-20260511-104643.json"
-{
-  "version": 1,
-  "plugin": "@rozenite/storage-plugin",
-  "createdAt": "2026-05-11T10:46:43.000Z",
-  "storage": {
-    "adapterId": "mmkv",
-    "storageId": "user",
-    "adapterName": "MMKV",
-    "storageName": "user",
-    "capabilities": {
-      "supportedTypes": ["string", "number", "boolean", "buffer"]
-    }
-  },
-  "entries": [
-    { "key": "token", "type": "string", "value": "abc" },
-    { "key": "launchCount", "type": "number", "value": 3 },
-    { "key": "seenOnboarding", "type": "boolean", "value": true },
-    { "key": "blob", "type": "buffer", "value": [1, 2, 255] }
-  ]
-}
-```
-
-Fields:
-
-- `version` (number, required) — load-bearing. The current build accepts `1` only.
-- `plugin` (string, required) — informational. Always `@rozenite/storage-plugin` for files this plugin produces.
-- `createdAt` (string, required) — ISO-8601 timestamp of the export. Informational.
-- `storage` (object, required) — describes the source storage. Used for the preview's "imported from" label and the metadata-mismatch warning when the target storage differs. **Never used to redirect the import.**
-- `entries` (array, required) — typed entry list. Each entry has `key` (string), `type` (`"string" | "number" | "boolean" | "buffer"`), and `value` matching the type. Buffer values are `number[]` of integers in `0–255`. Empty arrays are allowed (a no-op import).
-- Unknown top-level fields are ignored for forward compatibility.
-
-### Cross-adapter compatibility
-
-The schema is portable across adapters, but each adapter only stores types it supports:
-
-| Adapter          | string | number | boolean | buffer |
-| ---------------- | :----: | :----: | :-----: | :----: |
-| MMKV             |   ✓    |   ✓    |    ✓    |   ✓    |
-| AsyncStorage     |   ✓    |   ✓    |    ✓    |   —    |
-| Expo SecureStore |   ✓    |   —    |    —    |   —    |
-
-If a file contains an entry whose `type` is not supported by the selected target, the preview disables **Apply** and lists the offending keys. Remove them from the file (or import into a more capable storage) and retry.
-
-### Versioning
-
-The current build accepts `version: 1` snapshots. Any other value is rejected with a clear error. Future schema bumps will either be backward-compatible additions or documented as breaking — but `version !== 1` is never silently coerced.
+Exports are versioned (`version: 1` today); a mismatched version is rejected rather than silently coerced.
 
 **Next**: See [MMKV](./mmkv.md), [Network Activity](./network-activity.md), and [Plugin Development](../plugin-development/plugin-development.md).

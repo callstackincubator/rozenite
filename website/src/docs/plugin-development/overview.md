@@ -1,40 +1,17 @@
 # Plugin Development Overview
 
-Plugins are the way to add new panels and functionalities to React Native DevTools through Rozenite. They allow you to extend the DevTools with custom debugging tools, performance monitors, and development utilities.
+Plugins add new panels to React Native DevTools through Rozenite — custom debugging tools, performance monitors, and development utilities tailored to your app.
 
-## What are Plugins?
+## How plugins work
 
-Plugins are packages that integrate seamlessly with Rozenite to add custom panels and functionality to React Native DevTools. They provide a powerful way to extend the development experience with tools tailored to your specific needs.
+A plugin has two parts that talk to each other over a type-safe, event-based bridge:
 
-### Key Characteristics
+1. **React Native side** — code that runs in your app.
+2. **DevTools side** — the panel UI shown in DevTools.
 
-- **Production Ready**: Tested and optimized for real-world use
-- **Type Safe**: Built with full TypeScript support
-- **Well Documented**: Comprehensive guides and examples
-- **Actively Maintained**: Regular updates and bug fixes
+Changes on either side are reflected on the other in real time, and both sides can send data or commands.
 
-## How Plugins Work
-
-### Architecture Overview
-
-Plugins consist of two main parts:
-
-1. **React Native Side**: Code that runs in your React Native app
-2. **DevTools Side**: UI components that appear in the DevTools interface
-
-### Communication Flow
-
-```
-React Native App ←→ Plugin Bridge ←→ DevTools Interface
-```
-
-- **Event-based Communication**: Plugins use a type-safe event system
-- **Real-time Updates**: Changes in your app are reflected immediately in DevTools
-- **Bidirectional**: Both sending data to DevTools and receiving commands from it
-
-### Plugin Structure
-
-A typical plugin has this structure:
+## Plugin structure
 
 ```
 my-plugin/
@@ -47,30 +24,16 @@ my-plugin/
 └── tsconfig.json          # TypeScript configuration
 ```
 
-## Plugin Capabilities
+## What you can build
 
-### What You Can Build
+Anything that benefits from a live view into your running app: custom debugging tools, performance monitors, state inspectors, network tools, storage inspectors, or development-time analytics.
 
-- **Custom Debugging Tools**: Create specialized debugging panels
-- **Performance Monitors**: Track app performance metrics
-- **State Inspectors**: Visualize and manipulate app state
-- **Network Tools**: Monitor and analyze network requests
-- **Storage Inspectors**: View and edit local storage
-- **Custom Analytics**: Build development-time analytics tools
+To develop without wiring up a playground app first, `rozenite dev` opens an in-browser dev host where you can preview panels, read the message log, and dispatch commands — see the [Plugin Development guide](./plugin-development.md#step-5-local-development-workflow). You can also define reusable presets and scripted dev flows in `rozenite.config.ts` to speed up local iteration.
 
-### Technical Features
+## Getting started
 
-- **React Native API Access**: Leverage React Native APIs and libraries
-- **Type Safety**: Full TypeScript support with compile-time checking
-- **Hot Reloading**: See changes instantly during development
-- **In-browser dev host**: `rozenite dev` opens a small test shell where you can preview panels, read the message log, and dispatch commands—without wiring up a playground app first (see the [Plugin Development guide](./plugin-development.md#step-5-local-development-workflow))
-- **Dev host presets and flows**: Define reusable commands and scripted dev routines in `rozenite.config.ts` to speed up local panel development
-- **Production Builds**: Optimized builds for distribution
-
-## Getting Started
-
-Ready to create your first plugin? Check out the [Plugin Development Guide](./plugin-development.md) for a complete walkthrough, or explore the [Official Plugins](../official-plugins/overview.md) to see examples of what's possible.
+Ready to build one? Follow the [Plugin Development Guide](./plugin-development.md) for a full walkthrough, or browse the [Official Plugins](../official-plugins/overview.md) for examples of what's possible.
 
 ## Contributing
 
-Want to contribute to the plugin ecosystem? We welcome contributions to both our maintained plugins and community plugins. Check out our [Plugin Development Guide](./plugin-development.md) to learn how to create plugins, or reach out to the community to discuss your ideas.
+We welcome contributions to both our maintained plugins and the community ecosystem. See the [Plugin Development Guide](./plugin-development.md) to get started, or reach out to the community to discuss an idea.

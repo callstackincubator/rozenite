@@ -4,17 +4,7 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 
 ![](/controls-plugin.png)
 
-The Controls plugin lets you expose app-defined runtime controls inside React Native DevTools. Instead of adding temporary debug screens or hidden menus, you can give your team a dedicated panel for toggles, pickers, inputs, actions, and read-only status values.
-
-## What is Controls Plugin?
-
-The Controls plugin is a lightweight way to build a custom DevTools surface for your app. It provides:
-
-- **Read-only Status Fields**: Show current runtime values such as environment, build label, counters, or sync state
-- **Toggles**: Turn feature flags and boolean options on or off from DevTools
-- **Select Menus**: Switch between predefined options such as local, staging, and production
-- **Text Inputs**: Update text-based settings without changing in-app UI
-- **Action Buttons**: Trigger one-off actions such as reset, sync, refetch, or checkpoint creation
+The Controls plugin lets you build your own DevTools panel out of app-defined controls — status fields, toggles, selects, text inputs, and buttons — instead of adding temporary debug screens or hidden menus to your app.
 
 ## Installation
 
@@ -104,61 +94,22 @@ With [Rozenite for Web](/docs/rozenite-for-web), this plugin is available when y
 
 ## Usage
 
-Once configured, the Controls plugin appears in your React Native DevTools sidebar as `Controls`.
+Once configured, the Controls plugin appears in your React Native DevTools sidebar as `Controls`. Typical uses: flipping feature flags during manual testing, switching between local/staging/production, resetting temporary app state, or triggering checkpoints for demos and QA — all without adding a debug screen to your app.
 
-Use it when you want to:
+## Control types
 
-- flip feature flags without building dedicated debug UI
-- change runtime targets such as environment or API variant
-- submit text values like labels, tokens, or test identifiers
-- trigger app actions directly from DevTools
-- keep read-only status values visible while testing flows
+- **`text`** — a read-only value you want to observe, like status, counters, or a timestamp.
+- **`toggle`** — a boolean setting, like a feature flag or logging switch.
+- **`select`** — a choice from a fixed list of options.
+- **`input`** — an editable text value, like a release label or test ID.
+- **`button`** — a one-off action, like reset, sync, or retry.
 
-## Control Types
+## Organizing sections
 
-### Text
+Keep diagnostics and editable controls in separate sections, use short titles, and add a description when a control has side effects. Keep section and item IDs stable across reloads so the panel doesn't jump around.
 
-Use `text` items for values you want to observe but not edit, such as status, counters, or last action timestamps.
+## Validation
 
-### Toggle
-
-Use `toggle` items for boolean settings such as feature flags, logging switches, and debug modes.
-
-### Select
-
-Use `select` items when the user must choose from a fixed list of options.
-
-### Input
-
-Use `input` items for text-based values. This is useful for release labels, test IDs, user identifiers, or other string settings you want to edit from DevTools.
-
-### Button
-
-Use `button` items for single actions. Good examples are reset, sync, refresh, retry, and seed actions.
-
-## Organizing Sections
-
-Sections help keep the panel understandable:
-
-- Put diagnostics and editable controls in separate sections.
-- Prefer short titles so the panel stays easy to scan.
-- Add descriptions when a control has side effects or temporary constraints.
-- Keep section and item IDs stable across reloads.
-
-## Validation and Availability
-
-You can shape the user experience without exposing implementation details in the panel:
-
-- Use `validate` to reject invalid values with a clear message.
-- Use `disabled` when a control should stay visible but unavailable.
-- Use `applyLabel` on text inputs when a custom action label reads better than the default.
-
-## Common Uses
-
-- feature flag management during manual testing
-- switching between local, staging, and production services
-- resetting temporary app state
-- triggering checkpoints for demos or QA flows
-- exposing internal diagnostics without adding a screen to the app
+Use `validate` to reject invalid input with a clear message, `disabled` to keep a control visible but unavailable, and `applyLabel` to customize a text input's action label.
 
 **Next**: Explore other [Official Plugins](./overview.md) or learn how to build your own in the [Plugin Development guide](../plugin-development/plugin-development.md).

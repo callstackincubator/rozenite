@@ -4,32 +4,17 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 
 ![](/redux-devtools-plugin.png)
 
-The Redux DevTools plugin integrates Redux DevTools directly into your React Native DevTools, providing powerful state inspection and debugging capabilities for your Redux-powered React Native applications.
-
-## What is Redux DevTools?
-
-Redux DevTools is a powerful debugging tool for Redux applications that provides:
-
-- **State Inspection**: View and explore your Redux store state in real-time
-- **Action History**: Track all dispatched actions with timestamps and payloads
-- **State Diff Viewing**: See exactly how each action changes your state
-- **Agent Tools**: Let coding agents inspect stores and drive safe Redux DevTools history actions
+The Redux DevTools plugin brings the familiar Redux DevTools experience into React Native DevTools: state inspection, action history, and state diffs for your store.
 
 ## Installation
 
 Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
 
-### Install dependencies
-
-Install the Redux DevTools plugin as a development dependency:
-
 <PackageManagerTabs command="install -D @rozenite/redux-devtools-plugin" />
 
-### Instrument Redux store
+Add the enhancer to your store:
 
-Add the Redux DevTools enhancer to your Redux store:
-
-#### For Redux Toolkit (Recommended)
+#### Redux Toolkit (recommended)
 
 ```typescript title="store.ts"
 import { configureStore } from '@reduxjs/toolkit';
@@ -44,7 +29,7 @@ const store = configureStore({
 export default store;
 ```
 
-#### For Classic Redux
+#### Classic Redux
 
 ```typescript title="store.ts"
 import { createStore, applyMiddleware } from 'redux';
@@ -60,9 +45,9 @@ const store = createStore(
 export default store;
 ```
 
-#### For Rematch
+#### Rematch
 
-If you're using Rematch, follow the [Rematch documentation](https://rematchjs.org/docs/guides/devtools/) and use `composeWithRozeniteDevTools` as the `devtoolComposer`:
+Follow the [Rematch documentation](https://rematchjs.org/docs/guides/devtools/) and use `composeWithRozeniteDevTools` as the `devtoolComposer`:
 
 ```typescript title="store.ts"
 import { init } from '@rematch/core';
@@ -82,19 +67,55 @@ export default store;
 
 ## Web (React Native for Web)
 
-With [Rozenite for Web](/docs/rozenite-for-web), this plugin is available when you debug your React Native web app.
+With [Rozenite for Web](/docs/rozenite-for-web), this plugin is also available when debugging your React Native web app.
 
 ## Usage
 
-Once configured, the Redux DevTools plugin will automatically appear in your React Native DevTools sidebar as "Redux DevTools".
+Once configured, "Redux DevTools" appears in your React Native DevTools sidebar.
+
+### Multiple stores
+
+Give each store a distinct name so you can tell them apart in the panel:
+
+```ts
+const appStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'app-store' });
+const sessionStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'session-store' });
+```
+
+### Large stores
+
+State is serialized and sent to DevTools over the device bridge, so a large store combined with a lot of action history can use a lot of memory — on Android this can even crash the app when you open the panel. If your store is large (RTK Query caches, big entity maps), lower `maxAge` (default `50`) and strip bulky slices with `stateSanitizer` / `actionSanitizer`:
+
+```ts
+rozeniteDevToolsEnhancer({
+  maxAge: 20,
+  stateSanitizer: (state) => ({
+    ...(state as Record<string, unknown>),
+    api: '[omitted]',
+  }),
+  actionSanitizer: (action) => ({
+    ...action,
+    payload: action.type === 'large/payload' ? '[omitted]' : action.payload,
+  }),
+});
+```
+
+### Dispatch traces
+
+Set `trace: true` to capture where each action was dispatched from, symbolicated back to your source files through Metro:
+
+```ts
+rozeniteDevToolsEnhancer({
+  trace: true,
+  traceLimit: 25,
+});
+```
+
+Pass `traceSymbolication: false` to keep raw stacks without the Metro round-trip.
 
 ## Agent Integration
 
-This plugin can also expose agent tools under the `@rozenite/redux-devtools-plugin` domain.
-
-This is a separate manual integration step. Instrumenting the Redux store with `rozeniteDevToolsEnhancer` or `composeWithRozeniteDevTools` does not automatically register agent tools.
-
-If you want agent access, mount the hook once near your app root by hand:
+Agent tools are a separate, manual step — instrumenting your store with the enhancer doesn't register them on its own. Mount this once near your app root:
 
 ```tsx title="App.tsx"
 import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
@@ -106,79 +127,6 @@ function App() {
 }
 ```
 
-Without this hook, the Redux DevTools panel still works, but the Redux plugin domain will not be available through `rozenite agent`.
+This registers curated tools under the `@rozenite/redux-devtools-plugin` domain for listing stores/actions, dispatching actions, and driving history (jump/rollback/commit) — rather than exposing raw eval-based commands.
 
-Available tools:
-
-- `list-stores`
-- `get-store-state`
-- `list-actions`
-- `get-action-details`
-- `dispatch-action`
-- `jump-to-action`
-- `toggle-action`
-- `reset-history`
-- `rollback-state`
-- `commit-current-state`
-- `sweep-skipped-actions`
-- `set-recording-paused`
-- `set-locked`
-
-The agent API intentionally exposes curated store and history operations rather than raw eval-based Redux DevTools commands.
-
-#### Configuration Options
-
-To distinguish multiple stores, set a custom `name` per store:
-
-```ts
-const appStoreEnhancer = rozeniteDevToolsEnhancer({ name: 'app-store' });
-const sessionStoreEnhancer = rozeniteDevToolsEnhancer({
-  name: 'session-store',
-});
-```
-
-`maxAge` controls how many actions Redux DevTools keeps in history. The default is `50`.
-
-On React Native, state is serialized and sent to DevTools over the device bridge. Large stores combined with a high `maxAge` can use a lot of memory — on Android this may cause an out-of-memory crash when opening the Redux DevTools panel. If your store is large (for example, it includes RTK Query caches or big entity maps), keep `maxAge` low and use `stateSanitizer` or `actionSanitizer` to strip bulky slices before they are sent to DevTools.
-
-```ts
-rozeniteDevToolsEnhancer({
-  maxAge: 20,
-  stateSanitizer: (state, index) => ({
-    ...(state as Record<string, unknown>),
-    api: '[omitted]',
-  }),
-  actionSanitizer: (action, id) => ({
-    ...action,
-    payload: action.type === 'large/payload' ? '[omitted]' : action.payload,
-  }),
-});
-```
-
-Set `trace: true` to capture the dispatch stack for each action and enable the Trace tab. Rozenite attempts to symbolicate captured stacks through Metro so frames point to source files instead of generated bundle locations.
-
-```ts
-rozeniteDevToolsEnhancer({
-  trace: true,
-  traceLimit: 25,
-});
-```
-
-Use `traceSymbolication: false` if you want to keep raw stacks without calling Metro's `/symbolicate` endpoint.
-
-## Contributing
-
-The Redux DevTools plugin is open source and welcomes contributions! Check out the [Plugin Development Guide](../plugin-development/plugin-development.md) to learn how to contribute or create your own plugins.
-
-## Support
-
-If you encounter issues with the Redux DevTools plugin:
-
-1. **Check Documentation**: Review this guide for common solutions
-2. **Search Issues**: Look for similar issues in the repository
-3. **Create Issue**: Report bugs or request features
-4. **Community**: Reach out to the Rozenite community for help
-
----
-
-**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md) to create your own plugins, or explore other [Official Plugins](./overview.md).
+**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md), or explore other [Official Plugins](./overview.md).

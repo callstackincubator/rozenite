@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -83,6 +84,62 @@ function updateLockfile() {
   run('pnpm', ['install', '--lockfile-only']);
 }
 
+function syncChromeExtensionManifestVersion() {
+  const pkgPath = path.join(cwd, 'packages/chrome-extension/package.json');
+  const manifestPath = path.join(cwd, 'packages/chrome-extension/manifest.json');
+  const version = JSON.parse(readFileSync(pkgPath, 'utf8')).version;
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+
+  // Chrome extension manifest versions must be 1-4 dot-separated integers
+  // (no semver prerelease suffix like "-rc.0"), so strip anything past that.
+  const manifestVersion = version.match(/^\d+(?:\.\d+){0,3}/)?.[0];
+
+  if (!manifestVersion) {
+    fail(`could not derive a valid manifest version from ${version}`);
+  }
+
+  manifest.version = manifestVersion;
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+}
+
+function publishChromeExtensionRelease(tag) {
+  const pemBase64 = process.env.CHROME_EXTENSION_PEM_BASE64;
+
+  if (!pemBase64) {
+    fail('CHROME_EXTENSION_PEM_BASE64 is required to sign the chrome extension');
+  }
+
+  const tmpDir = mkdtempSync(path.join(os.tmpdir(), 'chrome-extension-key-'));
+  const pemPath = path.join(tmpDir, 'extension.pem');
+
+  try {
+    writeFileSync(pemPath, Buffer.from(pemBase64, 'base64'));
+    run('pnpm', ['--filter', '@rozenite/chrome-extension', 'pack:crx'], {
+      env: { ...process.env, CHROME_EXTENSION_PEM_PATH: pemPath },
+    });
+
+    const prerelease = tag.includes('-');
+    const crxPath = 'packages/chrome-extension/build/rozenite.crx';
+
+    if (commandSucceeds('gh', ['release', 'view', tag])) {
+      run('gh', ['release', 'upload', tag, crxPath, '--clobber']);
+    } else {
+      run('gh', [
+        'release',
+        'create',
+        tag,
+        '--title',
+        tag,
+        '--generate-notes',
+        ...(prerelease ? ['--prerelease'] : []),
+        crxPath,
+      ]);
+    }
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
 function commitVersionChanges() {
   run('git', ['add', '.changeset', 'packages', 'package.json', 'pnpm-lock.yaml', 'CHANGELOG.md']);
 
@@ -138,13 +195,16 @@ function runStableRelease() {
   }
 
   run('pnpm', ['changeset', 'version']);
+  syncChromeExtensionManifestVersion();
   updateLockfile();
   commitVersionChanges();
   pushBranch();
   run('pnpm', ['release:check']);
   run('pnpm', ['release:build']);
   run('pnpm', ['release:publish']);
-  createAndPushTag(readVersion());
+  const version = readVersion();
+  createAndPushTag(version);
+  publishChromeExtensionRelease(`v${version}`);
 }
 
 function runRcRelease() {
@@ -164,13 +224,16 @@ function runRcRelease() {
   }
 
   run('pnpm', ['changeset', 'version']);
+  syncChromeExtensionManifestVersion();
   updateLockfile();
   commitVersionChanges();
   pushBranch();
   run('pnpm', ['release:check']);
   run('pnpm', ['release:build']);
   run('pnpm', ['release:publish']);
-  createAndPushTag(readVersion());
+  const version = readVersion();
+  createAndPushTag(version);
+  publishChromeExtensionRelease(`v${version}`);
 }
 
 function runCanaryRelease() {
