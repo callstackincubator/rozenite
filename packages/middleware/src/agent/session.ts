@@ -31,6 +31,11 @@ const PLUGIN_READINESS_QUIET_WINDOW_MS = 50;
 const PLUGIN_READINESS_MAX_WAIT_MS = 250;
 const RECOVERY_RETRY_DELAY_MS = 500;
 const RECOVERY_MAX_ATTEMPTS = 16;
+// A malformed outgoing frame (e.g. one containing an unpaired UTF-16 surrogate,
+// see `sanitizeUnpairedSurrogates`) can come back from the device with `"id": null`,
+// which cannot be correlated to the pending command that caused it. Without a
+// timeout, that command's entry in `pendingCommands` would never resolve.
+const COMMAND_TIMEOUT_MS = 10_000;
 
 const RECOVERABLE_CLOSE_REASONS = new Set([
   '[RECREATING_DEVICE]',
@@ -49,9 +54,51 @@ const getDebuggerWebSocketOrigin = (webSocketDebuggerUrl: string): string => {
   return `${protocol}//${url.host}`;
 };
 
+// Matches a `\uXXXX` escape sequence for either half of a surrogate pair
+// (D800-DFFF), capturing a *pair* of such escapes (high immediately followed
+// by low) before falling back to matching a single one.
+const SURROGATE_ESCAPE_SEQUENCE =
+  /\\u[dD][89a-fA-F][0-9a-fA-F]{2}\\u[dD][c-fC-F][0-9a-fA-F]{2}|\\u[dD][89a-fA-F][0-9a-fA-F]{2}/g;
+
+// Replaces an unpaired UTF-16 surrogate half with U+FFFD.
+//
+// Verified against a real device: modern `JSON.stringify` (ES2019+
+// "well-formed" `JSON.stringify`) never emits a lone surrogate as a raw code
+// unit -- it always escapes it to a literal six-character `\uXXXX` sequence,
+// so a real lone surrogate in `message` is already gone as a raw code unit by
+// the time `JSON.stringify(message)` returns. The device's own JSON parser is
+// stricter than the JSON grammar and rejects that escape sequence outright
+// (`"json parse error ... expected another unicode escape for second half of
+// surrogate pair"`), which comes back as an error response with `"id": null"`
+// -- uncorrelatable to the request that caused it. This function operates on
+// the *already-stringified* text, replacing an unpaired `\uXXXX` escape
+// sequence (not a raw code unit -- there won't be one).
+//
+// A raw surrogate *pair* (e.g. ordinary emoji) is not affected by any of
+// this: `JSON.stringify` does not escape it at all, so it survives as two
+// ordinary UTF-16 code units in the string and this function never matches
+// it. U+2028/U+2029 are likewise untouched (not surrogates, and
+// `JSON.stringify` does not escape them either).
+export const sanitizeUnpairedSurrogates = (jsonText: string): string => {
+  let mutated = false;
+
+  const sanitized = jsonText.replace(SURROGATE_ESCAPE_SEQUENCE, (match) => {
+    if (match.length === 12) {
+      // A high escape immediately followed by a low escape -- a valid pair.
+      return match;
+    }
+
+    mutated = true;
+    return '\uFFFD';
+  });
+
+  return mutated ? sanitized : jsonText;
+};
+
 type PendingCommand = {
   resolve: (value: Record<string, unknown>) => void;
   reject: (error: Error) => void;
+  timeout: NodeJS.Timeout | null;
 };
 
 type StartReadiness = {
@@ -115,6 +162,7 @@ export const createAgentSession = (options: {
   let nextCommandId = 1;
   let bootstrapTimer: NodeJS.Timeout | null = null;
   let bindingName: string | null = null;
+  let mainExecutionContextId: number | null = null;
   let bootstrapped = false;
   let terminationNotified = false;
   let disconnectLogged = false;
@@ -295,6 +343,7 @@ export const createAgentSession = (options: {
   const sendCommand = (
     method: string,
     params?: Record<string, unknown>,
+    options?: { timeoutMs?: number },
   ): Promise<Record<string, unknown>> => {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       return markPromiseAsHandled(Promise.reject(new Error('CDP websocket is not connected')));
@@ -305,13 +354,36 @@ export const createAgentSession = (options: {
     touch();
 
     const promise = new Promise<Record<string, unknown>>((resolve, reject) => {
-      pendingCommands.set(commandId, { resolve, reject });
+      // A malformed outgoing frame can come back as an error keyed by `"id":
+      // null` (see `sanitizeUnpairedSurrogates`), which `handleSocketMessage`
+      // cannot match back to this command. Without a timeout, such a command
+      // would stay pending forever. This is opt-in (via `options.timeoutMs`)
+      // rather than applied to every command: some CDP commands (e.g.
+      // `HeapProfiler.takeHeapSnapshot`, `Network.getResponseBody` for large
+      // bodies) are legitimately long-running and must not be cut off.
+      let timeout: NodeJS.Timeout | null = null;
+      if (options?.timeoutMs !== undefined) {
+        timeout = setTimeout(() => {
+          if (pendingCommands.delete(commandId)) {
+            reject(new Error(`CDP command "${method}" timed out after ${options.timeoutMs}ms`));
+          }
+        }, options.timeoutMs);
+        timeout.unref?.();
+      }
+
+      pendingCommands.set(commandId, { resolve, reject, timeout });
       ws!.send(payload, (error) => {
         if (!error) {
           return;
         }
 
-        pendingCommands.delete(commandId);
+        const pending = pendingCommands.get(commandId);
+        if (pending) {
+          if (pending.timeout) {
+            clearTimeout(pending.timeout);
+          }
+          pendingCommands.delete(commandId);
+        }
         reject(error);
       });
     });
@@ -365,12 +437,82 @@ export const createAgentSession = (options: {
   };
 
   const sendDomainMessage = (domain: string, message: unknown): Promise<void> => {
-    const serializedMessage = JSON.stringify(message);
-    const escapedMessage = JSON.stringify(serializedMessage);
+    // `Runtime.evaluate` requires interpolating the payload into a JS source string
+    // that Hermes has to recompile. A single stringify + string-literal interpolation
+    // is not reversible for arbitrary strings -- it silently drops messages
+    // containing astral-plane characters, since Hermes' source parser can't accept a
+    // lone UTF-16 surrogate half in source text. `Runtime.callFunctionOn` with a
+    // by-value argument instead ships the string through CDP's own (correct) value
+    // serialization, so it round-trips byte-for-byte.
+    const serializedMessage = sanitizeUnpairedSurrogates(JSON.stringify(message));
+
+    // Scoped to this send path, not every CDP command (see `sendCommand`'s own
+    // comment): a malformed frame can come back uncorrelatably as `"id": null"`,
+    // which only this path is at risk of after `sanitizeUnpairedSurrogates`.
+    const commandPromise =
+      mainExecutionContextId !== null
+        ? sendCommand(
+            'Runtime.callFunctionOn',
+            {
+              executionContextId: mainExecutionContextId,
+              functionDeclaration: `function(m) { ${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify(
+                domain,
+              )}, m) }`,
+              arguments: [{ value: serializedMessage }],
+            },
+            { timeoutMs: COMMAND_TIMEOUT_MS },
+          )
+        : // No main execution context captured yet (e.g. sent before the first
+          // `Runtime.executionContextCreated` event arrived). Fall back to the
+          // legacy path rather than dropping the message outright; this is a rare
+          // startup race, not the steady-state path.
+          sendCommand(
+            'Runtime.evaluate',
+            {
+              expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify(domain)}, ${JSON.stringify(
+                serializedMessage,
+              )})`,
+            },
+            { timeoutMs: COMMAND_TIMEOUT_MS },
+          );
+
+    // We deliberately do not block the *caller* on the round trip -- CDP requests
+    // are ordered and execute in order on the device's JS thread, so message
+    // ordering is preserved regardless of whether anyone awaits this promise.
+    // Fire-and-forget call sites (`void sendDomainMessage(...)`) therefore pay no
+    // latency cost. But this function still returns the real promise chain (rather
+    // than an already-resolved one) so that the one call site that legitimately
+    // needs to know about failure -- `sendAgentSessionReady`, awaited from
+    // `bootstrap()` so a failed send retries the whole bootstrap sequence -- keeps
+    // working. `markPromiseAsHandled` prevents that same rejection from surfacing
+    // as an unhandled rejection for the `void`-calling sites.
+    const reported = commandPromise.then((response) => {
+      const exceptionText = (response as CDPEvaluateResponse).exceptionDetails?.text;
+      if (exceptionText) {
+        // Logged uniformly with the protocol-rejection case below, rather than
+        // here, so there is exactly one log line per failed send.
+        throw new Error(exceptionText);
+      }
+    });
+
     return markPromiseAsHandled(
-      sendCommand('Runtime.evaluate', {
-        expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify(domain)}, ${escapedMessage})`,
-      }).then(() => undefined),
+      reported.catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        // A send racing an intentional teardown (reload, recovery, session stop)
+        // is expected operational churn, not an actionable failure -- downgrade it
+        // so it doesn't read as a real fault. Everything else (a stale execution
+        // context, a malformed-frame timeout, an actual runtime exception surfaced
+        // above) is logged at error level.
+        if (
+          message.includes('CDP connection closed') ||
+          message.includes('CDP websocket is not connected')
+        ) {
+          logger.warn(`Failed to send message to domain "${domain}": ${message}`);
+        } else {
+          logger.error(`Failed to send message to domain "${domain}": ${message}`);
+        }
+        throw error;
+      }),
     );
   };
 
@@ -558,6 +700,7 @@ export const createAgentSession = (options: {
 
   const teardownConnection = (): void => {
     bindingName = null;
+    mainExecutionContextId = null;
     bootstrapped = false;
     connectedAt = undefined;
     rejectStartReadiness(new Error('CDP connection closed before bootstrap completed'));
@@ -567,6 +710,9 @@ export const createAgentSession = (options: {
     }
     for (const [commandId, pending] of pendingCommands.entries()) {
       pendingCommands.delete(commandId);
+      if (pending.timeout) {
+        clearTimeout(pending.timeout);
+      }
       pending.reject(new Error('CDP connection closed'));
     }
     clearBootstrapTimer();
@@ -658,6 +804,7 @@ export const createAgentSession = (options: {
     }
     logDisconnected();
     bindingName = null;
+    mainExecutionContextId = null;
     bootstrapped = false;
     connectedAt = undefined;
     rejectStartReadiness(new Error('CDP connection closed before bootstrap completed'));
@@ -673,6 +820,9 @@ export const createAgentSession = (options: {
 
     for (const [commandId, pending] of pendingCommands.entries()) {
       pendingCommands.delete(commandId);
+      if (pending.timeout) {
+        clearTimeout(pending.timeout);
+      }
       pending.reject(new Error('CDP connection closed'));
     }
 
@@ -728,6 +878,9 @@ export const createAgentSession = (options: {
       }
 
       pendingCommands.delete(message.id);
+      if (pending.timeout) {
+        clearTimeout(pending.timeout);
+      }
       if (message.error) {
         pending.reject(new Error(JSON.stringify(message.error)));
         return;
@@ -745,16 +898,28 @@ export const createAgentSession = (options: {
       emitCDPEvent(message.method, (message.params as Record<string, unknown> | undefined) || {});
     }
 
-    if (
-      message.method === 'Runtime.executionContextCreated' &&
-      (message.params as { context?: { name?: string } } | undefined)?.context?.name ===
-        MAIN_EXECUTION_CONTEXT_NAME
-    ) {
-      bootstrapped = false;
-      scheduleBootstrap();
+    if (message.method === 'Runtime.executionContextCreated') {
+      const context = (message.params as { context?: { name?: string; id?: number } } | undefined)
+        ?.context;
+      if (context?.name === MAIN_EXECUTION_CONTEXT_NAME) {
+        if (typeof context.id === 'number') {
+          mainExecutionContextId = context.id;
+        }
+        bootstrapped = false;
+        scheduleBootstrap();
+      }
+    }
+
+    if (message.method === 'Runtime.executionContextDestroyed') {
+      const destroyedId = (message.params as { executionContextId?: number } | undefined)
+        ?.executionContextId;
+      if (destroyedId !== undefined && destroyedId === mainExecutionContextId) {
+        mainExecutionContextId = null;
+      }
     }
 
     if (message.method === 'Runtime.executionContextsCleared') {
+      mainExecutionContextId = null;
       bootstrapped = false;
       scheduleBootstrap();
     }

@@ -186,6 +186,11 @@ declare module '/rozenite/models/react_native/react_native.js' {
       };
     };
 
+    export interface ExecutionContext {
+      id: number;
+      name: string;
+    }
+
     export class RuntimeModel extends SDKModel.SDKModel {
       addEventListener<T>(
         event: string,
@@ -197,6 +202,10 @@ declare module '/rozenite/models/react_native/react_native.js' {
         callback: (message: RuntimeEvent<T>) => void,
         thisArg: unknown,
       ): void;
+      // Returns the execution contexts currently known to the frontend. Used to
+      // resolve the "main" context id at binding-model enable time, in case its
+      // creation event was dispatched before our listeners were attached.
+      executionContexts(): ExecutionContext[];
       agent: {
         invoke_evaluate: (params: {
           expression: string;
@@ -205,6 +214,27 @@ declare module '/rozenite/models/react_native/react_native.js' {
         invoke_addBinding: (params: {
           name: string;
         }) => Promise<RuntimeModel.ProtocolResponseWithError>;
+        // Same underlying CDP `Runtime.callFunctionOn` command as `invoke_evaluate`
+        // wraps `Runtime.evaluate`; verified present on the RuntimeAgent served by
+        // `@react-native/debugger-frontend` (core/sdk/sdk.js registers
+        // "Runtime.callFunctionOn" via protocol_client.js, and the module's
+        // RemoteObject helpers already call `agent.invoke_callFunctionOn(...)`).
+        //
+        // Every generated `invoke_*` method (verified directly in the vendored
+        // `protocol_client.js`) resolves -- it never rejects -- and always carries
+        // `getError()`, the same as `invoke_addBinding` below: a protocol-level
+        // failure (e.g. a stale `executionContextId` after a reload) surfaces only
+        // through `getError()`, not through `exceptionDetails` (which is specific
+        // to a JS-level exception thrown *during* the evaluated function, a
+        // different failure mode). Both must be checked.
+        invoke_callFunctionOn: (params: {
+          functionDeclaration: string;
+          executionContextId?: number;
+          objectId?: string;
+          arguments?: Array<{ value?: unknown }>;
+          returnByValue?: boolean;
+          silent?: boolean;
+        }) => Promise<RuntimeModel.EvaluateResponse & RuntimeModel.ProtocolResponseWithError>;
       };
     }
   }

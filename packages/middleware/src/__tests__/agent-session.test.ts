@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => {
   const loggerInfo = vi.fn();
   const loggerWarn = vi.fn();
   const loggerDebug = vi.fn();
+  const loggerError = vi.fn();
   const handler = {
     connectDevice: vi.fn(),
     disconnectDevice: vi.fn(),
@@ -38,6 +39,10 @@ const mocks = vi.hoisted(() => {
   const wsInstances: MockWebSocket[] = [];
   let bindingName = 'rozenite-binding';
   let stalledRuntimeExpression: string | null = null;
+  let stalledCallFunctionOn = false;
+  let forcedCallFunctionOnExceptionText: string | null = null;
+  let forcedCallFunctionOnProtocolError: string | null = null;
+  let forcedCallFunctionOnMessageError: string | null = null;
 
   class MockWebSocket {
     static readonly CONNECTING = 0;
@@ -95,6 +100,12 @@ const mocks = vi.hoisted(() => {
         method: payload.method,
         params: payload.params,
       });
+
+      if (payload.method === 'Runtime.callFunctionOn' && forcedCallFunctionOnProtocolError) {
+        callback?.(new Error(forcedCallFunctionOnProtocolError));
+        return;
+      }
+
       callback?.();
 
       if (
@@ -105,7 +116,25 @@ const mocks = vi.hoisted(() => {
         return;
       }
 
+      if (payload.method === 'Runtime.callFunctionOn' && stalledCallFunctionOn) {
+        return;
+      }
+
       queueMicrotask(() => {
+        if (payload.method === 'Runtime.callFunctionOn' && forcedCallFunctionOnMessageError) {
+          // A genuine CDP protocol-level error response
+          // (`{"id": ..., "error": {...}}`), as opposed to a socket-write failure
+          // or a successful response carrying `exceptionDetails`.
+          this.emit(
+            'message',
+            JSON.stringify({
+              id: payload.id,
+              error: { message: forcedCallFunctionOnMessageError, code: -32000 },
+            }),
+          );
+          return;
+        }
+
         this.emit(
           'message',
           JSON.stringify({
@@ -128,6 +157,13 @@ const mocks = vi.hoisted(() => {
   }
 
   const getCommandResult = (method: string, params?: Record<string, unknown>) => {
+    if (method === 'Runtime.callFunctionOn' && forcedCallFunctionOnExceptionText) {
+      return {
+        result: {},
+        exceptionDetails: { text: forcedCallFunctionOnExceptionText },
+      };
+    }
+
     if (method !== 'Runtime.evaluate') {
       return {};
     }
@@ -158,6 +194,7 @@ const mocks = vi.hoisted(() => {
     loggerInfo,
     loggerWarn,
     loggerDebug,
+    loggerError,
     MockWebSocket,
     handler,
     createAgentMessageHandler: vi.fn(() => handler),
@@ -174,11 +211,28 @@ const mocks = vi.hoisted(() => {
     stallRuntimeEvaluationContaining: (expression: string) => {
       stalledRuntimeExpression = expression;
     },
+    stallCallFunctionOn: () => {
+      stalledCallFunctionOn = true;
+    },
+    forceCallFunctionOnException: (text: string | null) => {
+      forcedCallFunctionOnExceptionText = text;
+    },
+    forceCallFunctionOnProtocolError: (message: string | null) => {
+      forcedCallFunctionOnProtocolError = message;
+    },
+    forceCallFunctionOnMessageError: (message: string | null) => {
+      forcedCallFunctionOnMessageError = message;
+    },
     reset: () => {
       commandLog.length = 0;
       loggerInfo.mockReset();
       loggerWarn.mockReset();
       loggerDebug.mockReset();
+      loggerError.mockReset();
+      stalledCallFunctionOn = false;
+      forcedCallFunctionOnExceptionText = null;
+      forcedCallFunctionOnProtocolError = null;
+      forcedCallFunctionOnMessageError = null;
       handler.connectDevice.mockReset();
       handler.disconnectDevice.mockReset();
       handler.handleDeviceMessage.mockReset();
@@ -232,6 +286,7 @@ vi.mock('../logger.js', () => ({
     info: mocks.loggerInfo,
     warn: mocks.loggerWarn,
     debug: mocks.loggerDebug,
+    error: mocks.loggerError,
   },
 }));
 
@@ -493,6 +548,238 @@ describe('agent session', () => {
     );
 
     expect(readyExpressions).toHaveLength(2);
+  });
+
+  it('sends domain messages via Runtime.callFunctionOn with a single-stringified by-value argument once a main execution context id is known', async () => {
+    const { socket } = await bootstrapSession();
+
+    // Re-capture the main execution context id, as would happen on reload.
+    socket.emit(
+      'message',
+      JSON.stringify({
+        method: 'Runtime.executionContextCreated',
+        params: { context: { name: 'main', id: 42 } },
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    const callFunctionOnCommands = mocks.commandLog.filter(
+      (command) => command.method === 'Runtime.callFunctionOn',
+    );
+    const readyCommand = callFunctionOnCommands.find((command) => {
+      const args = command.params?.arguments as Array<{ value: unknown }> | undefined;
+      return typeof args?.[0]?.value === 'string' && args[0].value.includes('agent-session-ready');
+    });
+
+    expect(readyCommand).toBeDefined();
+    expect(readyCommand?.params?.executionContextId).toBe(42);
+    expect(readyCommand?.params?.functionDeclaration).toContain('sendMessage("rozenite", m)');
+
+    // The by-value argument must be the JSON string of the message -- a single
+    // stringify, not the "stringify the stringified string" that `Runtime.evaluate`
+    // needed to embed the payload into JS source text.
+    const argValue = (readyCommand?.params?.arguments as Array<{ value: unknown }>)[0].value;
+    expect(typeof argValue).toBe('string');
+    const parsed = JSON.parse(argValue as string);
+    expect(typeof parsed).toBe('object');
+    expect(parsed).toMatchObject({ type: 'agent-session-ready' });
+
+    // No more Runtime.evaluate-based sends for this domain once the context id
+    // is known -- the legacy double-stringify path is no longer used.
+    const readyExpressions = getExpressions().filter(
+      (expression) =>
+        expression.includes('sendMessage("rozenite"') && expression.includes('agent-session-ready'),
+    );
+    expect(readyExpressions).toHaveLength(1); // only the first send, before the id was known
+  });
+
+  it('reports a failed send instead of swallowing it, both for a runtime exception and a rejected command', async () => {
+    const { socket } = await bootstrapSession();
+
+    socket.emit(
+      'message',
+      JSON.stringify({
+        method: 'Runtime.executionContextCreated',
+        params: { context: { name: 'main', id: 7 } },
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+    mocks.loggerError.mockClear();
+
+    // Case 1: the command succeeds at the protocol level but the evaluated
+    // function throws (surfaced as `exceptionDetails`, exactly what `sendMessage`
+    // silently ignored before this fix).
+    mocks.forceCallFunctionOnException('stale execution context');
+
+    socket.emit(
+      'message',
+      JSON.stringify({
+        method: 'Runtime.executionContextCreated',
+        params: { context: { name: 'main', id: 7 } },
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.stringContaining('stale execution context'),
+    );
+
+    // Case 2: the underlying socket write itself fails outright (distinct from
+    // case 3 below: this is `ws.send`'s own callback reporting an error, before
+    // any CDP response is ever received).
+    mocks.loggerError.mockClear();
+    mocks.forceCallFunctionOnException(null); // clear case-1 forcing via exceptionDetails
+    mocks.forceCallFunctionOnProtocolError('Cannot find context with specified id');
+
+    socket.emit(
+      'message',
+      JSON.stringify({
+        method: 'Runtime.executionContextCreated',
+        params: { context: { name: 'main', id: 7 } },
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.stringContaining('Cannot find context with specified id'),
+    );
+
+    // Case 3: the device replies with a genuine CDP protocol-level error
+    // (`{"id": ..., "error": {...}}`) -- e.g. a stale execution context id the
+    // device no longer recognizes after a reload. This is the path
+    // `handleSocketMessage`'s `message.error` branch handles, distinct from both
+    // cases above.
+    mocks.loggerError.mockClear();
+    mocks.forceCallFunctionOnProtocolError(null);
+    mocks.forceCallFunctionOnMessageError('Cannot find context with specified id');
+
+    socket.emit(
+      'message',
+      JSON.stringify({
+        method: 'Runtime.executionContextCreated',
+        params: { context: { name: 'main', id: 7 } },
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.stringContaining('Cannot find context with specified id'),
+    );
+  });
+
+  it('retries bootstrap when the agent-session-ready send fails', async () => {
+    // `sendDomainMessage` no longer blocks the caller on the CDP round trip, but
+    // `sendAgentSessionReady` still `await`s it -- a failed send must still
+    // propagate so `bootstrap()`'s own retry logic (its `catch` calling
+    // `scheduleBootstrap()`) keeps working, exactly as it did when this call was
+    // fully awaited.
+    const { socket } = await bootstrapSession();
+
+    socket.emit(
+      'message',
+      JSON.stringify({
+        method: 'Runtime.executionContextCreated',
+        params: { context: { name: 'main', id: 7 } },
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    const readySendsBefore = mocks.commandLog.filter(
+      (command) =>
+        command.method === 'Runtime.callFunctionOn' &&
+        JSON.stringify(
+          (command.params?.arguments as Array<{ value: unknown }> | undefined)?.[0]?.value,
+        ).includes('agent-session-ready'),
+    ).length;
+
+    mocks.forceCallFunctionOnMessageError('Cannot find context with specified id');
+    socket.emit(
+      'message',
+      JSON.stringify({
+        method: 'Runtime.executionContextCreated',
+        params: { context: { name: 'main', id: 7 } },
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    // Stop forcing the failure and let the retried bootstrap succeed.
+    mocks.forceCallFunctionOnMessageError(null);
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    const readySendsAfter = mocks.commandLog.filter(
+      (command) =>
+        command.method === 'Runtime.callFunctionOn' &&
+        JSON.stringify(
+          (command.params?.arguments as Array<{ value: unknown }> | undefined)?.[0]?.value,
+        ).includes('agent-session-ready'),
+    ).length;
+
+    // More than one additional attempt: the failed send (which did not itself
+    // reach the device) plus at least one retry that succeeded.
+    expect(readySendsAfter).toBeGreaterThan(readySendsBefore + 1);
+  });
+
+  it('times out a pending CDP command instead of hanging forever', async () => {
+    const { socket } = await bootstrapSession();
+    mocks.stallCallFunctionOn();
+
+    socket.emit(
+      'message',
+      JSON.stringify({
+        method: 'Runtime.executionContextCreated',
+        params: { context: { name: 'main', id: 7 } },
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    const callFunctionOnCommand = mocks.commandLog.find(
+      (command) => command.method === 'Runtime.callFunctionOn',
+    );
+    expect(callFunctionOnCommand).toBeDefined();
+    mocks.loggerError.mockClear();
+
+    // The command was sent but the device never responds -- without the pending
+    // command timeout this would hang forever.
+    await vi.advanceTimersByTimeAsync(10_000);
+    await flushMicrotasks();
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(expect.stringContaining('timed out'));
+  });
+
+  it('does not time out CDP commands outside the message-send path', async () => {
+    // The pending-command timeout exists specifically to bound the message-send
+    // path (see the previous test) -- it must not apply to `sendCommand` in
+    // general, or legitimately long-running commands (e.g.
+    // `HeapProfiler.takeHeapSnapshot`, large `Network.getResponseBody` calls)
+    // issued by the local domain services would be cut off after 10s.
+    const { socket } = await bootstrapSession();
+
+    // Stall an ordinary (non-message-send) `Runtime.evaluate` call -- the
+    // dispatcher-liveness check bootstrap issues on every rerun -- standing in
+    // for a slow, unrelated CDP command that must be allowed to run past the
+    // send-path's timeout window without being rejected.
+    mocks.stallRuntimeEvaluationContaining(`globalThis.${RUNTIME_GLOBAL}`);
+    mocks.loggerError.mockClear();
+
+    socket.emit('message', JSON.stringify({ method: 'Runtime.executionContextsCleared' }));
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    // Advance well past COMMAND_TIMEOUT_MS (10s): a scoped timeout would have
+    // fired and rejected this pending command by now.
+    await vi.advanceTimersByTimeAsync(15_000);
+    await flushMicrotasks();
+
+    expect(mocks.loggerError).not.toHaveBeenCalledWith(expect.stringContaining('timed out'));
   });
 
   it('heals a relaunched app with the same device id and a new page id', async () => {
