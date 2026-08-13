@@ -31,10 +31,12 @@ import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
 
-// Mirrors the shape `@rozenite/plugin-bridge` treats as a routable plugin
-// message. Anything that doesn't match this shape (e.g. shell configuration
-// messages) is broadcast to every panel, same as before this message was
-// singled out for routing.
+// A conservative subset of the shape `@rozenite/plugin-bridge` treats as a
+// routable plugin message (a stricter, string-typed `pluginId` check, on
+// top of the `type`/`payload` keys it also requires). Anything that doesn't
+// match — including shell configuration messages — is broadcast to every
+// panel, same as before this message was singled out for routing, so being
+// stricter here only risks over-broadcasting, never under-delivering.
 type RoutablePluginMessage = {
   pluginId: string;
   type: string;
@@ -65,11 +67,11 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   );
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [runtimeUpdate, setRuntimeUpdate] = useState<string | null>(null);
-  const contentFrames = useRef(new Map<string, HTMLIFrameElement>());
-  // panel id -> owning plugin id, kept fresh whenever `plugins` changes so
-  // the message-forwarding effect below (which subscribes once) can still
-  // route to the current set of panels without reinstalling its listener.
-  const pluginIdByPanelId = useRef(new Map<string, string>());
+  // Keyed by panel id. The plugin id travels with the frame itself (set in
+  // the same ref callback that mounts it) so the message-forwarding effect
+  // below can route by plugin without depending on a separately-synced copy
+  // of the `plugins` prop.
+  const contentFrames = useRef(new Map<string, { frame: HTMLIFrameElement; pluginId: string }>());
   const sidebarPanel = useRef<SplitPaneHandle>(null);
   const { outdated } = useOutdatedPlugins(plugins);
   const overridesRevision = useSyncExternalStore(
@@ -79,16 +81,6 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
 
   useEffect(() => {
     setSelectionState((current) => reconcileSelection(current, plugins));
-  }, [plugins]);
-
-  useEffect(() => {
-    const map = new Map<string, string>();
-    for (const plugin of plugins) {
-      for (const panel of plugin.panels) {
-        map.set(panel.id, plugin.id);
-      }
-    }
-    pluginIdByPanelId.current = map;
   }, [plugins]);
 
   useEffect(() => {
@@ -117,11 +109,8 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
         // keeps being broadcast to every mounted panel, as before.
         const routedPluginId = getRoutablePluginId(event.data);
 
-        for (const [panelId, frame] of contentFrames.current.entries()) {
-          if (
-            routedPluginId !== null &&
-            pluginIdByPanelId.current.get(panelId) !== routedPluginId
-          ) {
+        for (const { frame, pluginId } of contentFrames.current.values()) {
+          if (routedPluginId !== null && pluginId !== routedPluginId) {
             continue;
           }
 
@@ -131,7 +120,9 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
       }
 
       if (
-        [...contentFrames.current.values()].some((frame) => event.source === frame.contentWindow)
+        [...contentFrames.current.values()].some(
+          ({ frame }) => event.source === frame.contentWindow,
+        )
       ) {
         window.parent.postMessage(event.data, '*');
       }
@@ -330,7 +321,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
                       key={panel.id}
                       ref={(frame) => {
                         if (frame) {
-                          contentFrames.current.set(panel.id, frame);
+                          contentFrames.current.set(panel.id, { frame, pluginId: plugin.id });
                         } else {
                           contentFrames.current.delete(panel.id);
                         }

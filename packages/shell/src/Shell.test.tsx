@@ -5,6 +5,7 @@ import { Shell } from './Shell';
 import type { ShellPlugin } from './types';
 
 const originalFetch = globalThis.fetch;
+const originalResizeObserver = globalThis.ResizeObserver;
 
 const pluginA: ShellPlugin = {
   id: 'plugin-a',
@@ -45,6 +46,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   globalThis.fetch = originalFetch;
+  globalThis.ResizeObserver = originalResizeObserver;
   vi.restoreAllMocks();
 });
 
@@ -151,5 +153,38 @@ describe('Shell message forwarding', () => {
     );
 
     expect(postMessageSpy).toHaveBeenCalledWith(message, '*');
+  });
+
+  it('routes to a plugin whose panel mounts after the initial render', async () => {
+    const { rerender } = render(
+      <Shell plugins={[pluginA]} destroyOnDetachPlugins={[]} runtimeVersion={undefined} />,
+    );
+
+    rerender(
+      <Shell plugins={[pluginA, pluginB]} destroyOnDetachPlugins={[]} runtimeVersion={undefined} />,
+    );
+
+    const iframe = await waitFor(() => {
+      const el = document.querySelector<HTMLIFrameElement>(
+        `iframe[title="${pluginB.name}: ${pluginB.panels[0].name}"]`,
+      );
+      if (!el) {
+        throw new Error('iframe for the newly added plugin was not mounted');
+      }
+      return el;
+    });
+
+    const postMessage = vi.fn();
+    Object.defineProperty(iframe, 'contentWindow', {
+      configurable: true,
+      value: { postMessage },
+    });
+
+    dispatchFromHost({ pluginId: 'plugin-b', type: 'ping', payload: null });
+
+    expect(postMessage).toHaveBeenCalledWith(
+      { pluginId: 'plugin-b', type: 'ping', payload: null },
+      '*',
+    );
   });
 });
