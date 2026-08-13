@@ -7,7 +7,7 @@ import type { FuseboxDomain } from './types.js';
 
 export type FuseboxConnectionDeps = {
   sessionStore: SessionStore;
-  ReactNativeStyleAttributes: Record<string, unknown>;
+  nativeStyleEditorValidAttributes: string[];
   resolveRNStyle: (style: unknown) => unknown;
   connectWithCustomMessagingProtocol: (options: {
     onSubscribe: (listener: (event: unknown) => void) => void;
@@ -28,7 +28,7 @@ export type FuseboxConnectionDeps = {
 export const createFuseboxConnection = (deps: FuseboxConnectionDeps) => {
   const {
     sessionStore,
-    ReactNativeStyleAttributes,
+    nativeStyleEditorValidAttributes,
     resolveRNStyle,
     connectWithCustomMessagingProtocol,
     savePersistedHookSettings,
@@ -71,7 +71,7 @@ export const createFuseboxConnection = (deps: FuseboxConnectionDeps) => {
       onMessage: (event, payload) => {
         domain.sendMessage({ event, payload });
       },
-      nativeStyleEditorValidAttributes: Object.keys(ReactNativeStyleAttributes),
+      nativeStyleEditorValidAttributes,
       resolveRNStyle,
       onSettingsUpdated: handleSettingsUpdate,
       isReloadAndProfileSupported,
