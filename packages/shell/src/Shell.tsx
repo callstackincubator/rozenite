@@ -28,34 +28,9 @@ import { PluginsScreen } from './plugins/PluginsScreen';
 import { useOutdatedPlugins } from './plugins/use-outdated-plugins';
 import { getVersionOverridesRevision, subscribeToVersionOverrides } from './npm/registry';
 import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
+import { getDevToolsMessage } from '@rozenite/plugin-bridge';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
-
-// A conservative subset of the shape `@rozenite/plugin-bridge` treats as a
-// routable plugin message (a stricter, string-typed `pluginId` check, on
-// top of the `type`/`payload` keys it also requires). Anything that doesn't
-// match — including shell configuration messages — is broadcast to every
-// panel, same as before this message was singled out for routing, so being
-// stricter here only risks over-broadcasting, never under-delivering.
-type RoutablePluginMessage = {
-  pluginId: string;
-  type: string;
-  payload: unknown;
-};
-
-const getRoutablePluginId = (data: unknown): string | null => {
-  if (
-    typeof data !== 'object' ||
-    data === null ||
-    typeof (data as { pluginId?: unknown }).pluginId !== 'string' ||
-    !('type' in data) ||
-    !('payload' in data)
-  ) {
-    return null;
-  }
-
-  return (data as RoutablePluginMessage).pluginId;
-};
 
 const COLLAPSED_SIDEBAR_WIDTH = 48;
 const EXPANDED_SIDEBAR_WIDTH = 224;
@@ -107,7 +82,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
         // Messages that identify a target plugin only need to reach that
         // plugin's frame(s); everything else (e.g. shell configuration)
         // keeps being broadcast to every mounted panel, as before.
-        const routedPluginId = getRoutablePluginId(event.data);
+        const routedPluginId = getDevToolsMessage(event.data)?.pluginId ?? null;
 
         for (const { frame, pluginId } of contentFrames.current.values()) {
           if (routedPluginId !== null && pluginId !== routedPluginId) {

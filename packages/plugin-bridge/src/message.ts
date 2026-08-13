@@ -8,9 +8,9 @@ export const getDevToolsMessage = (message: unknown): DevToolsPluginMessage | nu
   if (
     typeof message !== 'object' ||
     message === null ||
+    typeof (message as { pluginId?: unknown }).pluginId !== 'string' ||
     !('type' in message) ||
-    !('payload' in message) ||
-    !('pluginId' in message)
+    !('payload' in message)
   ) {
     return null;
   }
