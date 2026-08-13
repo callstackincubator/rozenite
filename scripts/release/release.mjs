@@ -100,6 +100,7 @@ function syncChromeExtensionManifestVersion() {
 
   manifest.version = manifestVersion;
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  run('pnpm', ['exec', 'oxfmt', '--write', manifestPath]);
 }
 
 function publishChromeExtensionRelease(tag) {
