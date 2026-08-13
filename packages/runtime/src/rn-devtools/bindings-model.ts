@@ -48,6 +48,32 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     }
 
     const serializedMessage = event.data.payload;
+
+    // Rozenite piggybacks React Native's Fusebox dispatcher and shares the single
+    // `__CHROME_DEVTOOLS_FRONTEND_BINDING__` binding with React Native's own React
+    // DevTools integration. Because the binding name is shared, the `name` check above
+    // does not filter out React DevTools traffic, so this handler also receives every
+    // React DevTools bridge message (which can carry full component trees and be very
+    // large). Those messages are for the `react-devtools` domain, not ours, and would
+    // otherwise be JSON.parse'd here only to be discarded a few lines down once we see
+    // `parsedMessage.domain !== DOMAIN_NAME`.
+    //
+    // As a cheap pre-parse fast path, bail out without parsing if the raw string cannot
+    // possibly contain our domain marker. This is intentionally a conservative substring
+    // search, not a prefix/structure check: it must never rely on where `"rozenite"`
+    // appears in the payload (e.g. key ordering of `{domain, message}`), only on whether
+    // it appears at all. A message that happens to contain the substring elsewhere still
+    // falls through to the real parse + domain check below, which is authoritative -- so
+    // a false positive here is harmless. A false negative would require the payload to be
+    // serialized with the domain's ASCII letters escaped as JSON unicode escape sequences
+    // (i.e. spelling the domain name out as a run of `\uXXXX` codepoint escapes instead of
+    // the plain letters), which `JSON.stringify` -- used on the React Native side to build
+    // this payload -- never does. So in practice a message with domain "rozenite" always
+    // contains that literal substring in the raw payload.
+    if (!serializedMessage.includes(DOMAIN_NAME)) {
+      return;
+    }
+
     let parsedMessage = null;
 
     try {

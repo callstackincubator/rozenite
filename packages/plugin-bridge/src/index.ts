@@ -5,6 +5,8 @@ export type {
   RozeniteDevToolsRequestOptions,
 } from './client';
 export type { Subscription } from './types';
+export type { DevToolsPluginMessage } from './message';
+export { getDevToolsMessage } from './message';
 export type { UseRozeniteDevToolsClientOptions } from './useRozeniteDevToolsClient';
 export { getRozeniteDevToolsClient } from './client';
 export {
