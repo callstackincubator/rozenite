@@ -1,5 +1,15 @@
 # @rozenite/web
 
+## 2.1.0
+
+### Patch Changes
+
+- [#399](https://github.com/callstackincubator/rozenite/pull/399) [`e179e49`](https://github.com/callstackincubator/rozenite/commit/e179e49f8941bf41ac04eece92a6e5fa4a293079) Thanks [@V3RON](https://github.com/V3RON)! - Replace private `react-native/src/private/...` and `react-native/Libraries/...` imports in the React DevTools Fusebox bootstrap with local, vendored equivalents, so the package no longer depends on React Native's internal module paths (compatible with [Strict TypeScript API](https://reactnative.dev/docs/strict-typescript-api)).
+
+- Updated dependencies [[`af2d6a0`](https://github.com/callstackincubator/rozenite/commit/af2d6a06c4f716200affe876af8d8f8c767d5acd), [`96c9ed7`](https://github.com/callstackincubator/rozenite/commit/96c9ed7f938e84a7b5045da602698e878325a05e)]:
+  - @rozenite/middleware@2.1.0
+  - @rozenite/tools@2.1.0
+
 ## 2.0.0
 
 ### Patch Changes

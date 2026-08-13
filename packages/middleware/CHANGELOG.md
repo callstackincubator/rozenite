@@ -1,5 +1,23 @@
 # @rozenite/middleware
 
+## 2.1.0
+
+### Minor Changes
+
+- [#403](https://github.com/callstackincubator/rozenite/pull/403) [`96c9ed7`](https://github.com/callstackincubator/rozenite/commit/96c9ed7f938e84a7b5045da602698e878325a05e) Thanks [@AndreiCalazans](https://github.com/AndreiCalazans)! - Enrich the `getRenderData` agent tool so each rendered fiber also reports its resolved `displayName` and a `changedKeys` object — the exact changed prop/state/context key names plus `hooks`/`isFirstMount` flags — alongside the existing category-level `changeTypeHints`. This lets a coding agent (or a human) see not just that a component re-rendered, but which specific props/state/context/hooks invalidated it, without a second round-trip to resolve fiber IDs to component names.
+
+### Patch Changes
+
+- [#388](https://github.com/callstackincubator/rozenite/pull/388) [`af2d6a0`](https://github.com/callstackincubator/rozenite/commit/af2d6a06c4f716200affe876af8d8f8c767d5acd) Thanks [@V3RON](https://github.com/V3RON)! - Fix Metro/Re.Pack dev server startup stalling on slow or network-backed
+  filesystems. Plugin auto-discovery now resolves dependencies concurrently
+  instead of scanning them one at a time, and resolves hoisted packages
+  directly instead of always paying for full module resolution.
+- Updated dependencies [[`629df05`](https://github.com/callstackincubator/rozenite/commit/629df051e4ef08775a9a4e1a008aba819d7be05d)]:
+  - @rozenite/shell@2.1.0
+  - @rozenite/runtime@2.1.0
+  - @rozenite/agent-shared@2.1.0
+  - @rozenite/tools@2.1.0
+
 ## 2.0.0
 
 ### Minor Changes

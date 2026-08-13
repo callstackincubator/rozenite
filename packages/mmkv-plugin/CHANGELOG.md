@@ -1,5 +1,14 @@
 # @rozenite/mmkv-plugin
 
+## 2.1.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@2.1.0
+  - @rozenite/agent-shared@2.1.0
+  - @rozenite/plugin-bridge@2.1.0
+
 ## 2.0.0
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @rozenite/ui
 
+## 2.1.0
+
+### Minor Changes
+
+- [#378](https://github.com/callstackincubator/rozenite/pull/378) [`3ec6730`](https://github.com/callstackincubator/rozenite/commit/3ec673095da118cd0ac52c33cae0d8b03b0e162a) Thanks [@V3RON](https://github.com/V3RON)! - Add `List` and `NestedList` components — a shared, extensible list primitive with grouped, selectable items and an adornment slot for leading icons, plus a collapsible tree variant that nests to an arbitrary depth with automatic left indentation. `Sidebar` now shares its item/group rendering with `List`, and its items support the new `adornment` prop.
+
+- [#381](https://github.com/callstackincubator/rozenite/pull/381) [`629df05`](https://github.com/callstackincubator/rozenite/commit/629df051e4ef08775a9a4e1a008aba819d7be05d) Thanks [@V3RON](https://github.com/V3RON)! - Add a Plugins screen to shell mode, opened from a new cog button in the sidebar footer. It lists every loaded plugin with its package id, description, installed version, panels, and a link to npm when a newer version is published. The cog shows a dot when any plugin or the runtime itself has an update available. Panel state is preserved while the screen is open. Also fixes the npm version check to use the CDN-cached registry endpoint instead of the rate-limited `/latest` endpoint, and to correctly ignore local builds ahead of npm.
+
 ## 2.0.0
 
 ### Minor Changes

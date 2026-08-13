@@ -1,5 +1,22 @@
 # @rozenite/storage-plugin
 
+## 2.1.0
+
+### Patch Changes
+
+- [#369](https://github.com/callstackincubator/rozenite/pull/369) [`9d9d8cd`](https://github.com/callstackincubator/rozenite/commit/9d9d8cdf9d61fb40b0bddbebf7ae2b54d3053ce8) Thanks [@V3RON](https://github.com/V3RON)! - Fix storage entry count becoming stale after invalidation. The entry count is now
+  included in the storage invalidation event and updated on the DevTools panel for
+  both local and external device-side mutations.
+
+- [#390](https://github.com/callstackincubator/rozenite/pull/390) [`bdafd53`](https://github.com/callstackincubator/rozenite/commit/bdafd534d359dd1bd80fa047d4c25e4ece9a4694) Thanks [@V3RON](https://github.com/V3RON)! - Fix the Storage panel losing its storages after an app reload. The device now
+  announces itself once it is listening, so the panel runs discovery again instead
+  of waiting forever on a request that was sent before the app finished mounting.
+- Updated dependencies [[`3ec6730`](https://github.com/callstackincubator/rozenite/commit/3ec673095da118cd0ac52c33cae0d8b03b0e162a), [`629df05`](https://github.com/callstackincubator/rozenite/commit/629df051e4ef08775a9a4e1a008aba819d7be05d)]:
+  - @rozenite/ui@2.1.0
+  - @rozenite/agent-bridge@2.1.0
+  - @rozenite/agent-shared@2.1.0
+  - @rozenite/plugin-bridge@2.1.0
+
 ## 2.0.0
 
 ### Minor Changes
@@ -164,6 +181,7 @@
 - [#184](https://github.com/callstackincubator/rozenite/pull/184) [`c447f1e`](https://github.com/callstackincubator/rozenite/commit/c447f1ebe2065b9700de6b4e9d3c4b2b4310b00f) Thanks [@V3RON](https://github.com/V3RON)! - Introduce `@rozenite/storage-plugin` as a generic storage inspector for React Native devtools.
 
   User-facing changes:
+
   - Add `useRozeniteStoragePlugin({ storages })` API for registering one or more adapters.
   - Support named storages across adapters so multiple independent stores can be inspected in a single plugin panel.
   - Provide built-in adapters for MMKV, AsyncStorage (including v2 and v3-style usage), and Expo SecureStore.

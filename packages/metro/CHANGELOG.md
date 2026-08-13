@@ -1,5 +1,18 @@
 # @rozenite/metro
 
+## 2.1.0
+
+### Patch Changes
+
+- [#388](https://github.com/callstackincubator/rozenite/pull/388) [`af2d6a0`](https://github.com/callstackincubator/rozenite/commit/af2d6a06c4f716200affe876af8d8f8c767d5acd) Thanks [@V3RON](https://github.com/V3RON)! - Fix Metro/Re.Pack dev server startup stalling on slow or network-backed
+  filesystems. Plugin auto-discovery now resolves dependencies concurrently
+  instead of scanning them one at a time, and resolves hoisted packages
+  directly instead of always paying for full module resolution.
+- Updated dependencies [[`af2d6a0`](https://github.com/callstackincubator/rozenite/commit/af2d6a06c4f716200affe876af8d8f8c767d5acd), [`629df05`](https://github.com/callstackincubator/rozenite/commit/629df051e4ef08775a9a4e1a008aba819d7be05d), [`96c9ed7`](https://github.com/callstackincubator/rozenite/commit/96c9ed7f938e84a7b5045da602698e878325a05e)]:
+  - @rozenite/middleware@2.1.0
+  - @rozenite/runtime@2.1.0
+  - @rozenite/tools@2.1.0
+
 ## 2.0.0
 
 ### Patch Changes

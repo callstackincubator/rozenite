@@ -1,5 +1,11 @@
 # @rozenite/chrome-extension
 
+## 2.1.0
+
+### Patch Changes
+
+- [#394](https://github.com/callstackincubator/rozenite/pull/394) [`eabe827`](https://github.com/callstackincubator/rozenite/commit/eabe82763b1db1c0bb42c4fd29aadb066da6f67a) Thanks [@V3RON](https://github.com/V3RON)! - Automate building, signing, and publishing the Chrome extension as part of the release pipeline. On stable and rc releases, the extension's `manifest.json` version is now kept in sync with the package version, and CI signs a `.crx` (using a key stored as a GitHub Actions secret) and attaches it to the created GitHub Release.
+
 ## 2.0.0
 
 ## 1.13.0

@@ -1,5 +1,18 @@
 # rozenite
 
+## 2.1.0
+
+### Minor Changes
+
+- [#382](https://github.com/callstackincubator/rozenite/pull/382) [`55369c4`](https://github.com/callstackincubator/rozenite/commit/55369c4c54c7c2d548fb38472e3907797e938bc9) Thanks [@V3RON](https://github.com/V3RON)! - Restructure Rozenite for Agents skills so the CLI bundles all content and the installable skill becomes a thin router. Add `rozenite skills list` and `rozenite skills show <id>` to list and read the bundled docs (ground truths, CLI workflow, SDK workflow, SDK code patterns, and one doc per agent-enabled domain). The `rozenite-agent` and `rozenite-agent-sdk` skills are replaced by a single `rozenite` skill that discovers docs through `rozenite skills` instead of hardcoding them, so the skill can no longer go stale.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/agent-sdk@2.1.0
+  - @rozenite/agent-shared@2.1.0
+  - @rozenite/tools@2.1.0
+
 ## 2.0.0
 
 ### Major Changes

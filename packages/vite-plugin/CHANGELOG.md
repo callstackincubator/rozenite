@@ -1,5 +1,12 @@
 # @rozenite/vite-plugin
 
+## 2.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`3ec6730`](https://github.com/callstackincubator/rozenite/commit/3ec673095da118cd0ac52c33cae0d8b03b0e162a), [`629df05`](https://github.com/callstackincubator/rozenite/commit/629df051e4ef08775a9a4e1a008aba819d7be05d)]:
+  - @rozenite/ui@2.1.0
+
 ## 2.0.0
 
 ### Minor Changes

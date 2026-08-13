@@ -1,5 +1,18 @@
 # @rozenite/tanstack-query-plugin
 
+## 2.1.0
+
+### Patch Changes
+
+- [#392](https://github.com/callstackincubator/rozenite/pull/392) [`55e47d0`](https://github.com/callstackincubator/rozenite/commit/55e47d09f69e5c188ad1b864c5688242a4725d8e) Thanks [@V3RON](https://github.com/V3RON)! - Fix the TanStack Query panel staying empty after an app reload. The device now
+  announces itself once it is listening, so the panel pulls the cache again
+  instead of waiting forever on a request that was sent before the app finished
+  mounting.
+- Updated dependencies []:
+  - @rozenite/agent-bridge@2.1.0
+  - @rozenite/agent-shared@2.1.0
+  - @rozenite/plugin-bridge@2.1.0
+
 ## 2.0.0
 
 ### Patch Changes

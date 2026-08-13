@@ -1,5 +1,16 @@
 # @rozenite/network-activity-plugin
 
+## 2.1.0
+
+### Patch Changes
+
+- [#398](https://github.com/callstackincubator/rozenite/pull/398) [`bb45bb6`](https://github.com/callstackincubator/rozenite/commit/bb45bb6bbba2c896f2856ded3a8501c2ee527bf8) Thanks [@V3RON](https://github.com/V3RON)! - Replace the private `react-native/Libraries/WebSocket/WebSocketInterceptor` import with a self-contained implementation built on the public `TurboModuleRegistry` and `NativeEventEmitter` APIs, so the plugin no longer depends on React Native's internal module paths (compatible with [Strict TypeScript API](https://reactnative.dev/docs/strict-typescript-api)).
+
+- Updated dependencies []:
+  - @rozenite/agent-bridge@2.1.0
+  - @rozenite/agent-shared@2.1.0
+  - @rozenite/plugin-bridge@2.1.0
+
 ## 2.0.0
 
 ### Minor Changes

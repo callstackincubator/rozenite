@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/controls-plugin",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A Rozenite plugin for exposing app-defined controls directly in React Native DevTools.",
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
