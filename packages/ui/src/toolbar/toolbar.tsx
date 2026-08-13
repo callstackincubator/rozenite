@@ -27,7 +27,7 @@ function ToolbarButton({ className, ...props }: ToolbarButtonProps) {
         'inline-flex h-7 items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium text-foreground',
         'hover:bg-accent hover:text-accent-foreground',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        'disabled:pointer-events-none disabled:opacity-50',
+        'aria-disabled:pointer-events-none aria-disabled:opacity-50',
         className,
       )}
       {...props}

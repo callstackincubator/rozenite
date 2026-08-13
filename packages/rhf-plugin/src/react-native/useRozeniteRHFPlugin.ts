@@ -1,10 +1,10 @@
 import get from 'lodash/get';
 import { useEffect, useId, useRef, useState } from 'react';
-import type { Control, FieldValues } from 'react-hook-form';
+import type { Control, FieldValues, UseFormReset } from 'react-hook-form';
 import { useFormState, useWatch } from 'react-hook-form';
 import equal from 'fast-deep-equal';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import type { RHFEventMap } from '../shared/messaging';
+import type { RHFEventMap, RHFResetFormRequestEvent } from '../shared/messaging';
 import type { FieldError, FormSnapshot } from '../shared/types';
 import { nestToFlat, proxyToObject } from './utils';
 
@@ -13,11 +13,17 @@ const PLUGIN_ID = '@rozenite/rhf-plugin';
 export type UseRozeniteRHFPluginOptions<T extends FieldValues> = {
   control: Control<T>;
   id?: string;
+  /**
+   * Pass the `reset` function from `useForm()` to let the DevTools panel
+   * revert this form to its default values remotely.
+   */
+  reset?: UseFormReset<T>;
 };
 
 export const useRozeniteRHFPlugin = <T extends FieldValues>({
   control,
   id: providedId,
+  reset,
 }: UseRozeniteRHFPluginOptions<T>) => {
   const generatedId = useId();
   const id = providedId ?? generatedId;
@@ -131,4 +137,34 @@ export const useRozeniteRHFPlugin = <T extends FieldValues>({
       sub.remove();
     };
   }, [client]);
+
+  useEffect(() => {
+    if (!client) {
+      return;
+    }
+    const sub = client.onMessage('reset-form', (event: RHFResetFormRequestEvent) => {
+      if (event.id !== id) {
+        return;
+      }
+      if (!reset) {
+        client.send('rhf-request-error', {
+          type: 'rhf-request-error',
+          requestId: event.requestId,
+          id,
+          code: 'RESET_NOT_SUPPORTED',
+          message: 'Pass `reset` to useRozeniteRHFPlugin to enable remote reset.',
+        });
+        return;
+      }
+      reset();
+      client.send('reset-form-result', {
+        type: 'reset-form-result',
+        requestId: event.requestId,
+        id,
+      });
+    });
+    return () => {
+      sub.remove();
+    };
+  }, [client, id, reset]);
 };
