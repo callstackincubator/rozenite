@@ -32,6 +32,7 @@
     "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
+    "@rozenite/plugin-bridge": "workspace:*",
     "@rozenite/ui": "workspace:*",
     "lucide-react": "^0.263.1",
     "react": "catalog:",

@@ -28,8 +28,10 @@ import { PluginsScreen } from './plugins/PluginsScreen';
 import { useOutdatedPlugins } from './plugins/use-outdated-plugins';
 import { getVersionOverridesRevision, subscribeToVersionOverrides } from './npm/registry';
 import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
+import { getDevToolsMessage } from '@rozenite/plugin-bridge';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
+
 const COLLAPSED_SIDEBAR_WIDTH = 48;
 const EXPANDED_SIDEBAR_WIDTH = 224;
 const SIDEBAR_SNAP_POINT = (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 2;
@@ -40,7 +42,11 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   );
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [runtimeUpdate, setRuntimeUpdate] = useState<string | null>(null);
-  const contentFrames = useRef(new Map<string, HTMLIFrameElement>());
+  // Keyed by panel id. The plugin id travels with the frame itself (set in
+  // the same ref callback that mounts it) so the message-forwarding effect
+  // below can route by plugin without depending on a separately-synced copy
+  // of the `plugins` prop.
+  const contentFrames = useRef(new Map<string, { frame: HTMLIFrameElement; pluginId: string }>());
   const sidebarPanel = useRef<SplitPaneHandle>(null);
   const { outdated } = useOutdatedPlugins(plugins);
   const overridesRevision = useSyncExternalStore(
@@ -73,14 +79,25 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   useEffect(() => {
     const forwardToPanels = (event: MessageEvent) => {
       if (event.source === window.parent) {
-        for (const frame of contentFrames.current.values()) {
+        // Messages that identify a target plugin only need to reach that
+        // plugin's frame(s); everything else (e.g. shell configuration)
+        // keeps being broadcast to every mounted panel, as before.
+        const routedPluginId = getDevToolsMessage(event.data)?.pluginId ?? null;
+
+        for (const { frame, pluginId } of contentFrames.current.values()) {
+          if (routedPluginId !== null && pluginId !== routedPluginId) {
+            continue;
+          }
+
           frame.contentWindow?.postMessage(event.data, '*');
         }
         return;
       }
 
       if (
-        [...contentFrames.current.values()].some((frame) => event.source === frame.contentWindow)
+        [...contentFrames.current.values()].some(
+          ({ frame }) => event.source === frame.contentWindow,
+        )
       ) {
         window.parent.postMessage(event.data, '*');
       }
@@ -279,7 +296,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
                       key={panel.id}
                       ref={(frame) => {
                         if (frame) {
-                          contentFrames.current.set(panel.id, frame);
+                          contentFrames.current.set(panel.id, { frame, pluginId: plugin.id });
                         } else {
                           contentFrames.current.delete(panel.id);
                         }
