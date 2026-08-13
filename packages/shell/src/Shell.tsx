@@ -30,6 +30,31 @@ import { getVersionOverridesRevision, subscribeToVersionOverrides } from './npm/
 import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
+
+// Mirrors the shape `@rozenite/plugin-bridge` treats as a routable plugin
+// message. Anything that doesn't match this shape (e.g. shell configuration
+// messages) is broadcast to every panel, same as before this message was
+// singled out for routing.
+type RoutablePluginMessage = {
+  pluginId: string;
+  type: string;
+  payload: unknown;
+};
+
+const getRoutablePluginId = (data: unknown): string | null => {
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    typeof (data as { pluginId?: unknown }).pluginId !== 'string' ||
+    !('type' in data) ||
+    !('payload' in data)
+  ) {
+    return null;
+  }
+
+  return (data as RoutablePluginMessage).pluginId;
+};
+
 const COLLAPSED_SIDEBAR_WIDTH = 48;
 const EXPANDED_SIDEBAR_WIDTH = 224;
 const SIDEBAR_SNAP_POINT = (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 2;
@@ -41,6 +66,10 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [runtimeUpdate, setRuntimeUpdate] = useState<string | null>(null);
   const contentFrames = useRef(new Map<string, HTMLIFrameElement>());
+  // panel id -> owning plugin id, kept fresh whenever `plugins` changes so
+  // the message-forwarding effect below (which subscribes once) can still
+  // route to the current set of panels without reinstalling its listener.
+  const pluginIdByPanelId = useRef(new Map<string, string>());
   const sidebarPanel = useRef<SplitPaneHandle>(null);
   const { outdated } = useOutdatedPlugins(plugins);
   const overridesRevision = useSyncExternalStore(
@@ -50,6 +79,16 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
 
   useEffect(() => {
     setSelectionState((current) => reconcileSelection(current, plugins));
+  }, [plugins]);
+
+  useEffect(() => {
+    const map = new Map<string, string>();
+    for (const plugin of plugins) {
+      for (const panel of plugin.panels) {
+        map.set(panel.id, plugin.id);
+      }
+    }
+    pluginIdByPanelId.current = map;
   }, [plugins]);
 
   useEffect(() => {
@@ -73,7 +112,19 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   useEffect(() => {
     const forwardToPanels = (event: MessageEvent) => {
       if (event.source === window.parent) {
-        for (const frame of contentFrames.current.values()) {
+        // Messages that identify a target plugin only need to reach that
+        // plugin's frame(s); everything else (e.g. shell configuration)
+        // keeps being broadcast to every mounted panel, as before.
+        const routedPluginId = getRoutablePluginId(event.data);
+
+        for (const [panelId, frame] of contentFrames.current.entries()) {
+          if (
+            routedPluginId !== null &&
+            pluginIdByPanelId.current.get(panelId) !== routedPluginId
+          ) {
+            continue;
+          }
+
           frame.contentWindow?.postMessage(event.data, '*');
         }
         return;
