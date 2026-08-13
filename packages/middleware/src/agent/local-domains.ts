@@ -1005,7 +1005,10 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'getRenderData',
-      description: 'Get a paged summary of a single React commit by rootId and commitIndex.',
+      description:
+        'Get a paged summary of a single React commit by rootId and commitIndex. Each ' +
+        'item is a fiber that rendered, with its displayName, timing, and why it rendered ' +
+        '(changeTypeHints plus the specific changed prop/state/context key names in changedKeys).',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1038,8 +1041,16 @@ export const createReactDomainService = (deps: {
         required: ['rootId', 'commitIndex'],
       },
       pagination: cursorPagination<ReactRenderDataItem>({
-        fields: ['fiberId', 'actualDurationMs', 'selfDurationMs', 'isSlow', 'changeTypeHints'],
-        defaultFields: ['fiberId', 'actualDurationMs', 'selfDurationMs', 'isSlow'],
+        fields: [
+          'fiberId',
+          'displayName',
+          'actualDurationMs',
+          'selfDurationMs',
+          'isSlow',
+          'changeTypeHints',
+          'changedKeys',
+        ],
+        defaultFields: ['fiberId', 'displayName', 'actualDurationMs', 'selfDurationMs', 'isSlow'],
       }),
     },
   ];

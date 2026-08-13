@@ -10,6 +10,7 @@ import type {
   ReactInspectedNodeRecord,
   ReactProfilingCursorPayload,
   ReactProfilingStatusResult,
+  ReactRenderDataChangedKeys,
   ReactRenderDataItem,
   ReactRenderDataSort,
   ReactNodeRecord,
@@ -67,6 +68,72 @@ type ReactChangeDescription = {
   isFirstMount: boolean;
   props: string[] | null;
   state: string[] | null;
+};
+
+/**
+ * Collapse a React change description into a short list of category hints
+ * ("mount" | "props" | "state" | "context" | "hooks") describing WHY a fiber
+ * re-rendered in a commit.
+ */
+export const toChangeTypeHints = (changeDescription: ReactChangeDescription): string[] => {
+  const hints: string[] = [];
+
+  if (changeDescription.isFirstMount) {
+    hints.push('mount');
+  }
+  if (Array.isArray(changeDescription.props) && changeDescription.props.length > 0) {
+    hints.push('props');
+  }
+  if (Array.isArray(changeDescription.state) && changeDescription.state.length > 0) {
+    hints.push('state');
+  }
+  if (
+    changeDescription.context === true ||
+    (Array.isArray(changeDescription.context) && changeDescription.context.length > 0)
+  ) {
+    hints.push('context');
+  }
+  if (changeDescription.didHooksChange) {
+    hints.push('hooks');
+  }
+
+  return hints;
+};
+
+/**
+ * Expand a React change description into the specific changed keys behind the
+ * hints: the exact prop / state / context key names, plus hooks/mount flags.
+ * Returns `undefined` when nothing meaningful changed (so the field can be
+ * omitted from the response).
+ */
+export const toChangedKeys = (
+  changeDescription: ReactChangeDescription | null | undefined,
+): ReactRenderDataChangedKeys | undefined => {
+  if (!changeDescription) {
+    return undefined;
+  }
+
+  const changed: ReactRenderDataChangedKeys = {};
+
+  if (changeDescription.isFirstMount) {
+    changed.isFirstMount = true;
+  }
+  if (Array.isArray(changeDescription.props) && changeDescription.props.length > 0) {
+    changed.props = changeDescription.props;
+  }
+  if (Array.isArray(changeDescription.state) && changeDescription.state.length > 0) {
+    changed.state = changeDescription.state;
+  }
+  if (changeDescription.context === true) {
+    changed.context = true;
+  } else if (Array.isArray(changeDescription.context) && changeDescription.context.length > 0) {
+    changed.context = changeDescription.context;
+  }
+  if (changeDescription.didHooksChange) {
+    changed.hooks = true;
+  }
+
+  return Object.keys(changed).length > 0 ? changed : undefined;
 };
 
 type DeviceReactTreeState = {
@@ -1397,31 +1464,6 @@ export const createReactTreeStore = (options?: {
     };
   };
 
-  const toChangeTypeHints = (changeDescription: ReactChangeDescription): string[] => {
-    const hints: string[] = [];
-
-    if (changeDescription.isFirstMount) {
-      hints.push('mount');
-    }
-    if (Array.isArray(changeDescription.props) && changeDescription.props.length > 0) {
-      hints.push('props');
-    }
-    if (Array.isArray(changeDescription.state) && changeDescription.state.length > 0) {
-      hints.push('state');
-    }
-    if (
-      changeDescription.context === true ||
-      (Array.isArray(changeDescription.context) && changeDescription.context.length > 0)
-    ) {
-      hints.push('context');
-    }
-    if (changeDescription.didHooksChange) {
-      hints.push('hooks');
-    }
-
-    return hints;
-  };
-
   const getRenderData = async (
     deviceId: string,
     rawRequest: unknown,
@@ -1467,13 +1509,16 @@ export const createReactTreeStore = (options?: {
       const rawChangeDescription =
         changeDescriptions instanceof Map ? changeDescriptions.get(fiberId) : null;
       const changeTypeHints = rawChangeDescription ? toChangeTypeHints(rawChangeDescription) : [];
+      const changedKeys = toChangedKeys(rawChangeDescription);
       const displayName = state.nodesById.get(fiberId)?.displayName ?? `Fiber ${fiberId}`;
       allItems.push({
         fiberId,
+        displayName,
         actualDurationMs: Number(actualDurationMs) || 0,
         selfDurationMs: Number(selfDurationMs) || 0,
         isSlow: (Number(actualDurationMs) || 0) > slowRenderThresholdMs,
         ...(changeTypeHints.length > 0 ? { changeTypeHints } : {}),
+        ...(changedKeys ? { changedKeys } : {}),
         sortName: displayName.toLowerCase(),
       });
     });

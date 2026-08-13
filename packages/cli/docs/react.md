@@ -29,6 +29,11 @@ Search and inspect:
 Profile:
 `startProfiling` -> reproduce interaction -> `stopProfiling` -> `getRenderData`.
 
+`getRenderData` rows carry `displayName` and timing by default. Add
+`--fields ...,changedKeys` for the exact changed prop, state, and context key
+names behind `changeTypeHints`, which attributes a re-render without a
+follow-up `getComponent` call per fiber.
+
 CLI discovery listings and paginated React calls (`getTree`, `searchNodes`,
 `getChildren`, `getProps`, `getState`, `getHooks`, and `getRenderData`) use
 columnar `cols` and `rows` output when two or more rows are returned. Their
@@ -37,6 +42,6 @@ when another page is available.
 
 `getTree`, `getChildren`, `searchNodes`, and `getRenderData` return a trimmed
 default column set (identifiers and labels, not every field such as `key`,
-`parentId`, or `changeTypeHints`). Pass `--fields` or `--verbose` to widen the
-projection. `getProps`, `getState`, and `getHooks` always return both of their
-only two fields (`name`, `value`).
+`parentId`, `changeTypeHints`, or `changedKeys`). Pass `--fields` or
+`--verbose` to widen the projection. `getProps`, `getState`, and `getHooks`
+always return both of their only two fields (`name`, `value`).
