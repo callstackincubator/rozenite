@@ -1,0 +1,23 @@
+@import '@rozenite/ui/styles.css';
+
+/* The shell's stylesheet carries its own `@source` directive (resolved
+   relative to that file), which points Tailwind at the shell's sources.
+   Importing it here is what makes Tailwind also scan `Shell` and its
+   children for utility classes — without it, classes that only the shell
+   uses would be missing from this app's build. Confirmed by building this
+   package and checking that shell-only classes (e.g. `dark:block` from
+   `Shell.tsx`) show up in the emitted CSS. */
+@import '@rozenite/shell/styles.css';
+
+@source "./**/*.{ts,tsx}";
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}

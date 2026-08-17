@@ -473,6 +473,46 @@ importers:
         specifier: ^2.3.0
         version: 2.8.1
 
+  packages/app:
+    dependencies:
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      '@rozenite/shell':
+        specifier: workspace:*
+        version: link:../shell
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
+      react:
+        specifier: 'catalog:'
+        version: 19.2.3
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.3(react@19.2.3)
+    devDependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.2.2
+        version: 4.2.2(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
+      '@testing-library/react':
+        specifier: ^16.1.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.4(@types/react@19.2.18)
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+      vitest:
+        specifier: ^4.0.18
+        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
+
   packages/chrome-extension:
     dependencies:
       tslib:
@@ -781,7 +821,7 @@ importers:
         version: 0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1)
       vitest:
         specifier: ^4.0.18
-        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
 
   packages/middleware:
     dependencies:
@@ -827,7 +867,7 @@ importers:
         version: 8.18.1
       vitest:
         specifier: ^4.0.18
-        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
 
   packages/mmkv-plugin:
     dependencies:
@@ -1422,7 +1462,7 @@ importers:
         version: 7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
       vitest:
         specifier: ^4.0.18
-        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
 
   packages/sqlite-plugin:
     dependencies:
@@ -1656,7 +1696,7 @@ importers:
         version: 7.3.1(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
       vitest:
         specifier: ^4.0.18
-        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.1(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
 
   packages/ui:
     dependencies:
@@ -14777,6 +14817,7 @@ packages:
       '@vitest/ui': 4.1.0
       happy-dom: '*'
       jsdom: '*'
+      vite: ^7.3.1
     peerDependenciesMeta:
       '@edge-runtime/vm':
         optional: true
@@ -18193,14 +18234,14 @@ snapshots:
 
   '@manypkg/find-root@1.1.0':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@types/node': 12.20.55
       find-up: 4.1.0
       fs-extra: 8.1.0
 
   '@manypkg/get-packages@1.1.3':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@changesets/types': 4.1.0
       '@manypkg/find-root': 1.1.0
       fs-extra: 8.1.0
@@ -21397,7 +21438,7 @@ snapshots:
 
   '@redux-devtools/app-core@1.1.2(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(@reduxjs/toolkit@2.8.2(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3))(@types/react@19.2.18)(@types/styled-components@5.1.34)(react-dom@19.2.3(react@19.2.3))(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux-persist@6.0.0(react@19.2.3)(redux@5.0.1))(redux@5.0.1)(styled-components@5.3.11(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-is@19.2.4)(react@19.2.3))(supports-color@8.1.1)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)
       '@redux-devtools/chart-monitor': 5.1.1(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1)
       '@redux-devtools/core': 4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1)
@@ -21450,7 +21491,7 @@ snapshots:
 
   '@redux-devtools/chart-monitor@5.1.1(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@redux-devtools/core': 4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1)
       '@types/react': 19.2.18
       d3-state-visualizer: 3.0.0
@@ -21461,7 +21502,7 @@ snapshots:
 
   '@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@redux-devtools/instrument': 2.2.0(redux@5.0.1)
       react: 19.2.3
       react-redux: 9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1)
@@ -21469,7 +21510,7 @@ snapshots:
 
   '@redux-devtools/inspector-monitor-test-tab@4.1.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(@redux-devtools/inspector-monitor@6.1.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(@types/styled-components@5.1.34)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(redux@5.0.1)(styled-components@5.3.11(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-is@19.2.4)(react@19.2.3))(supports-color@8.1.1)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)
       '@redux-devtools/inspector-monitor': 6.1.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(redux@5.0.1)
       '@redux-devtools/ui': 1.4.0(@types/react@19.2.18)(@types/styled-components@5.1.34)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(styled-components@5.3.11(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-is@19.2.4)(react@19.2.3))(supports-color@8.1.1)
@@ -21491,7 +21532,7 @@ snapshots:
   '@redux-devtools/inspector-monitor-trace-tab@4.1.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(@redux-devtools/inspector-monitor@6.1.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(redux@5.0.1)':
     dependencies:
       '@babel/code-frame': 8.0.0-beta.1
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)
       '@redux-devtools/inspector-monitor': 6.1.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(redux@5.0.1)
       '@types/chrome': 0.0.306
@@ -21507,7 +21548,7 @@ snapshots:
 
   '@redux-devtools/inspector-monitor@6.1.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(redux@5.0.1)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@dnd-kit/core': 6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@dnd-kit/modifiers': 7.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       '@dnd-kit/sortable': 8.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
@@ -21536,7 +21577,7 @@ snapshots:
 
   '@redux-devtools/log-monitor@5.1.1(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@redux-devtools/core': 4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1)
       '@types/lodash.debounce': 4.0.9
       '@types/react': 19.2.18
@@ -21548,7 +21589,7 @@ snapshots:
 
   '@redux-devtools/rtk-query-monitor@5.2.0(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1))(@reduxjs/toolkit@2.8.2(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3))(@types/react@19.2.18)(@types/styled-components@5.1.34)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(redux@5.0.1)(styled-components@5.3.11(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-is@19.2.4)(react@19.2.3))(supports-color@8.1.1)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)
       '@redux-devtools/core': 4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1)
       '@redux-devtools/ui': 1.4.0(@types/react@19.2.18)(@types/styled-components@5.1.34)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(styled-components@5.3.11(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-is@19.2.4)(react@19.2.3))(supports-color@8.1.1)
@@ -21570,13 +21611,13 @@ snapshots:
 
   '@redux-devtools/serialize@0.4.2(immutable@4.3.7)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       immutable: 4.3.7
       jsan: 3.1.14
 
   '@redux-devtools/slider-monitor@5.1.1(@redux-devtools/core@4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1))(@types/react@19.2.18)(@types/styled-components@5.1.34)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(redux@5.0.1)(styled-components@5.3.11(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-is@19.2.4)(react@19.2.3))(supports-color@8.1.1)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@redux-devtools/core': 4.1.1(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)(redux@5.0.1)
       '@redux-devtools/ui': 1.4.0(@types/react@19.2.18)(@types/styled-components@5.1.34)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(styled-components@5.3.11(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-is@19.2.4)(react@19.2.3))(supports-color@8.1.1)
       '@types/react': 19.2.18
@@ -21591,7 +21632,7 @@ snapshots:
 
   '@redux-devtools/ui@1.4.0(@types/react@19.2.18)(@types/styled-components@5.1.34)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(styled-components@5.3.11(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-is@19.2.4)(react@19.2.3))(supports-color@8.1.1)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@rjsf/core': 5.24.12(@rjsf/utils@5.24.12(react@19.2.3))(react@19.2.3)
       '@rjsf/utils': 5.24.12(react@19.2.3)
       '@rjsf/validator-ajv8': 5.24.12(@rjsf/utils@5.24.12(react@19.2.3))
@@ -22449,7 +22490,7 @@ snapshots:
 
   '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@testing-library/dom': 10.4.1
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
@@ -23374,6 +23415,14 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+
+  '@vitest/mocker@4.1.0(vite@7.3.1(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))':
+    dependencies:
+      '@vitest/spy': 4.1.0
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 7.3.1(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
 
   '@vitest/mocker@4.1.0(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))':
     dependencies:
@@ -28547,12 +28596,12 @@ snapshots:
 
   metro-runtime@0.76.9:
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       react-refresh: 0.4.3
 
   metro-runtime@0.81.5:
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       flow-enums-runtime: 0.0.6
 
   metro-runtime@0.82.5:
@@ -28562,7 +28611,7 @@ snapshots:
 
   metro-runtime@0.83.3:
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       flow-enums-runtime: 0.0.6
 
   metro-runtime@0.84.4:
@@ -30884,7 +30933,7 @@ snapshots:
 
   react-select@5.10.2(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1):
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       '@emotion/cache': 11.14.0
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1)
       '@floating-ui/dom': 1.7.2
@@ -30964,7 +31013,7 @@ snapshots:
 
   react-window@1.8.11(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
-      '@babel/runtime': 7.26.10
+      '@babel/runtime': 7.29.7
       memoize-one: 5.2.1
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
@@ -32807,7 +32856,36 @@ snapshots:
       - tsx
       - yaml
 
-  vitest@4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1):
+  vitest@4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.1(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)):
+    dependencies:
+      '@vitest/expect': 4.1.0
+      '@vitest/mocker': 4.1.0(vite@7.3.1(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
+      '@vitest/pretty-format': 4.1.0
+      '@vitest/runner': 4.1.0
+      '@vitest/snapshot': 4.1.0
+      '@vitest/spy': 4.1.0
+      '@vitest/utils': 4.1.0
+      es-module-lexer: 2.0.0
+      expect-type: 1.3.0
+      magic-string: 0.30.21
+      obug: 2.1.1
+      pathe: 2.0.3
+      picomatch: 4.0.4
+      std-env: 4.0.0
+      tinybench: 2.9.0
+      tinyexec: 1.0.4
+      tinyglobby: 0.2.17
+      tinyrainbow: 3.0.3
+      vite: 7.3.1(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 18.16.9
+      '@vitest/ui': 3.2.4(vitest@3.2.4)
+      jsdom: 22.1.0(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - msw
+
+  vitest@4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)):
     dependencies:
       '@vitest/expect': 4.1.0
       '@vitest/mocker': 4.1.0(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
@@ -32834,17 +32912,7 @@ snapshots:
       '@vitest/ui': 3.2.4(vitest@3.2.4)
       jsdom: 22.1.0(supports-color@8.1.1)
     transitivePeerDependencies:
-      - jiti
-      - less
-      - lightningcss
       - msw
-      - sass
-      - sass-embedded
-      - stylus
-      - sugarss
-      - terser
-      - tsx
-      - yaml
 
   vlq@0.2.3: {}
 
