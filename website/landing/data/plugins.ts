@@ -6,7 +6,6 @@ import {
   Flame,
   FolderOpen,
   Gauge,
-  HardDrives,
   GridFour,
   MagnifyingGlass,
   Signpost,
@@ -79,14 +78,6 @@ export const OFFICIAL_PLUGINS: OfficialPlugin[] = [
     exposes: 'MMKV, AsyncStorage and SecureStore in one panel, with per-key blacklists.',
     icon: Database,
     href: '/docs/official-plugins/storage',
-    agentEnabled: true,
-  },
-  {
-    name: 'MMKV',
-    packageName: '@rozenite/mmkv-plugin',
-    exposes: 'Every instance and key, typed and searchable, editable without a rebuild.',
-    icon: HardDrives,
-    href: '/docs/official-plugins/mmkv',
     agentEnabled: true,
   },
   {

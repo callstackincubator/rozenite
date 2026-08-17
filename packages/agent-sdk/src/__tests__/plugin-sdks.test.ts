@@ -10,7 +10,6 @@ import {
   type FeatureFlagsListFlagsResult,
 } from '@rozenite/feature-flags-plugin/sdk';
 import { fileSystemTools, type FileSystemListRootsResult } from '@rozenite/file-system-plugin/sdk';
-import { mmkvTools, type MMKVReadEntryResult } from '@rozenite/mmkv-plugin/sdk';
 import {
   networkActivityTools,
   type NetworkActivityListRequestsResult,
@@ -54,10 +53,6 @@ describe('official plugin sdk descriptors', () => {
       domain: '@rozenite/file-system-plugin',
       name: 'read-text-file',
     });
-    expect(mmkvTools.readEntry).toMatchObject({
-      domain: '@rozenite/mmkv-plugin',
-      name: 'read-entry',
-    });
     expect(networkActivityTools.listRequests).toMatchObject({
       domain: '@rozenite/network-activity-plugin',
       name: 'listRequests',
@@ -93,12 +88,6 @@ describe('official plugin sdk descriptors', () => {
         key: 'username',
       }),
     ).toEqualTypeOf<StorageReadEntryResult>();
-    expectTypeOf(
-      typedCall(mmkvTools.readEntry, {
-        storageId: 'user-storage',
-        key: 'username',
-      }),
-    ).toEqualTypeOf<MMKVReadEntryResult>();
     expectTypeOf(
       typedCall(networkActivityTools.listRequests, { limit: 20 }),
     ).toEqualTypeOf<NetworkActivityListRequestsResult>();

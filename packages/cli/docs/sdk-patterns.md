@@ -49,7 +49,6 @@ Official agent-enabled plugin SDK entrypoints include:
 
 - `@rozenite/controls-plugin/sdk`
 - `@rozenite/file-system-plugin/sdk`
-- `@rozenite/mmkv-plugin/sdk`
 - `@rozenite/network-activity-plugin/sdk`
 - `@rozenite/react-navigation-plugin/sdk`
 - `@rozenite/redux-devtools-plugin/sdk`
