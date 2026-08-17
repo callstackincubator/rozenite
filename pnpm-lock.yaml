@@ -726,6 +726,9 @@ importers:
       '@rozenite/plugin-bridge':
         specifier: workspace:*
         version: link:../plugin-bridge
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
     devDependencies:
       '@rozenite/vite-plugin':
         specifier: workspace:*
