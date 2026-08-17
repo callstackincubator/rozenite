@@ -7,10 +7,7 @@
     "lib": ["dom", "es2022"],
     "jsx": "react-jsx",
     "module": "esnext",
-    "moduleResolution": "bundler",
-    "paths": {
-      "@rozenite/ui": ["../ui/src/index.ts"]
-    }
+    "moduleResolution": "bundler"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
   "references": [
