@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Text } from '@radix-ui/themes';
-import { formatTime } from '../utils';
 
 export type SessionDurationProps = {
   isActive: boolean;
   sessionStartedAt: number;
 };
 
+// Renders next to the toolbar's `IndicatorDot`, so it only needs the ticking
+// elapsed time — not the absolute session-start timestamp `StartupTab` used
+// to show alongside it.
 export const SessionDuration = ({ isActive, sessionStartedAt }: SessionDurationProps) => {
   const [currentTime, setCurrentTime] = useState<number | null>(null);
 
@@ -23,25 +24,15 @@ export const SessionDuration = ({ isActive, sessionStartedAt }: SessionDurationP
     return () => clearInterval(interval);
   }, [isActive]);
 
-  const formatDuration = (duration: number) => {
-    return `${Math.round(duration)}s`;
-  };
+  if (!sessionStartedAt) {
+    return <span className="text-xs text-muted-foreground">Not started</span>;
+  }
 
-  const getSessionDuration = () => {
-    if (!currentTime || !sessionStartedAt) return 0;
-    return currentTime - sessionStartedAt;
-  };
+  const elapsedSeconds = currentTime ? Math.round((currentTime - sessionStartedAt) / 1000) : 0;
 
   return (
-    <>
-      <Text size="2" color="gray">
-        Session started: {sessionStartedAt ? formatTime(sessionStartedAt) : 'Not started'}
-      </Text>
-      {!!sessionStartedAt && (
-        <Text size="2" color="gray">
-          Duration: {formatDuration(getSessionDuration() / 1000)}
-        </Text>
-      )}
-    </>
+    <span className="text-xs tabular-nums text-muted-foreground">
+      {isActive ? 'Active' : 'Stopped'} · {elapsedSeconds}s
+    </span>
   );
 };
