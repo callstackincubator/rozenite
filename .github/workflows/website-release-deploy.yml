@@ -6,6 +6,16 @@ on:
       - 'v*'
   workflow_dispatch:
   workflow_call:
+    secrets:
+      VERCEL_TOKEN:
+        required: true
+      VERCEL_ORG_ID:
+        required: true
+      VERCEL_PROJECT_ID:
+        required: true
+
+permissions:
+  contents: read
 
 concurrency:
   group: website-deploy-${{ github.ref }}
@@ -35,7 +45,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Vercel CLI
-        run: pnpm install --global vercel@latest
+        # Pinned deliberately: this job runs unattended on every stable release
+        # with the Vercel deploy token in scope, so the CLI must not float.
+        run: pnpm install --global vercel@59.1.3
 
       - name: Pull Vercel environment information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
