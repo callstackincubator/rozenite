@@ -1,3 +1,5 @@
+import type { ShellHost } from './host';
+
 export type ShellPanel = {
   id: string;
   name: string;
@@ -17,3 +19,5 @@ export type ShellConfiguration = {
   destroyOnDetachPlugins: string[];
   runtimeVersion?: string;
 };
+
+export type ShellProps = ShellConfiguration & { host: ShellHost };

@@ -2,6 +2,8 @@
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Shell } from './Shell';
+import { createParentWindowHost } from './host';
+import type { ShellHost } from './host';
 import type { ShellPlugin } from './types';
 
 const originalFetch = globalThis.fetch;
@@ -50,11 +52,21 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+// `createParentWindowHost` is stateless (it always operates on the global
+// `window`), so reusing one instance across tests/renders is safe and
+// mirrors how `main.tsx` creates it once at module scope.
+const host = createParentWindowHost();
+
 /** Renders Shell with both fixture plugins and returns a postMessage spy for
  *  every mounted panel iframe, keyed by panel id. */
 const renderShellWithFrames = async () => {
   render(
-    <Shell plugins={[pluginA, pluginB]} destroyOnDetachPlugins={[]} runtimeVersion={undefined} />,
+    <Shell
+      plugins={[pluginA, pluginB]}
+      destroyOnDetachPlugins={[]}
+      runtimeVersion={undefined}
+      host={host}
+    />,
   );
 
   const frameSpies = new Map<string, ReturnType<typeof vi.fn>>();
@@ -86,6 +98,27 @@ const renderShellWithFrames = async () => {
 
 const dispatchFromHost = (data: unknown) => {
   window.dispatchEvent(new MessageEvent('message', { data, source: window.parent }));
+};
+
+/** A minimal `ShellHost` fake that lets a test deliver messages and inspect
+ *  what got sent, decoupled from `window.parent` entirely. Proves `Shell`
+ *  depends only on the `ShellHost` interface. */
+const createFakeHost = () => {
+  const listeners = new Set<(message: unknown) => void>();
+  const sentMessages: unknown[] = [];
+  const fakeHost: ShellHost = {
+    send: (message) => sentMessages.push(message),
+    onMessage: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+
+  return {
+    host: fakeHost,
+    sentMessages,
+    deliver: (message: unknown) => listeners.forEach((listener) => listener(message)),
+  };
 };
 
 describe('Shell message forwarding', () => {
@@ -157,11 +190,21 @@ describe('Shell message forwarding', () => {
 
   it('routes to a plugin whose panel mounts after the initial render', async () => {
     const { rerender } = render(
-      <Shell plugins={[pluginA]} destroyOnDetachPlugins={[]} runtimeVersion={undefined} />,
+      <Shell
+        plugins={[pluginA]}
+        destroyOnDetachPlugins={[]}
+        runtimeVersion={undefined}
+        host={host}
+      />,
     );
 
     rerender(
-      <Shell plugins={[pluginA, pluginB]} destroyOnDetachPlugins={[]} runtimeVersion={undefined} />,
+      <Shell
+        plugins={[pluginA, pluginB]}
+        destroyOnDetachPlugins={[]}
+        runtimeVersion={undefined}
+        host={host}
+      />,
     );
 
     const iframe = await waitFor(() => {
@@ -186,5 +229,49 @@ describe('Shell message forwarding', () => {
       { pluginId: 'plugin-b', type: 'ping', payload: null },
       '*',
     );
+  });
+
+  it('routes messages delivered via a custom host, and forwards the panel envelope back to it verbatim', async () => {
+    const fakeHost = createFakeHost();
+    render(
+      <Shell
+        plugins={[pluginA]}
+        destroyOnDetachPlugins={[]}
+        runtimeVersion={undefined}
+        host={fakeHost.host}
+      />,
+    );
+
+    const iframe = await waitFor(() => {
+      const el = document.querySelector<HTMLIFrameElement>(
+        `iframe[title="${pluginA.name}: ${pluginA.panels[0].name}"]`,
+      );
+      if (!el) {
+        throw new Error('iframe for plugin-a not mounted');
+      }
+      return el;
+    });
+    const postMessage = vi.fn();
+    Object.defineProperty(iframe, 'contentWindow', {
+      configurable: true,
+      value: { postMessage },
+    });
+
+    const hostMessage = { pluginId: 'plugin-a', type: 'ping', payload: null };
+    fakeHost.deliver(hostMessage);
+    expect(postMessage).toHaveBeenCalledWith(hostMessage, '*');
+
+    // Panel iframes wrap outgoing messages in a `rozenite-message` envelope
+    // (see `panel-channel.ts`); the shell must forward it to the host
+    // unwrapped-of-nothing, i.e. verbatim, not peel off `.payload` itself.
+    const panelEnvelope = { type: 'rozenite-message', payload: { pluginId: 'plugin-a' } };
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: panelEnvelope,
+        source: iframe.contentWindow as Window,
+      }),
+    );
+
+    expect(fakeHost.sentMessages).toEqual([panelEnvelope]);
   });
 });

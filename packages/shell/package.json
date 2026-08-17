@@ -19,9 +19,18 @@
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "type": "module",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css",
+    "./testing": "./src/testing/host-conformance.ts"
+  },
   "publishConfig": {
     "access": "public"
   },
