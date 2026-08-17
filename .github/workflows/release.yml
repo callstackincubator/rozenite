@@ -56,3 +56,10 @@ jobs:
 
       - name: Run release
         run: pnpm release:run
+
+  deploy-website:
+    name: Deploy website
+    needs: release
+    if: github.event.inputs.mode != 'canary'
+    uses: ./.github/workflows/website-release-deploy.yml
+    secrets: inherit

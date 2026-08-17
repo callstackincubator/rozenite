@@ -5,6 +5,7 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: website-deploy-${{ github.ref }}
