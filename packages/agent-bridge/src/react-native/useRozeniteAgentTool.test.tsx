@@ -3,9 +3,8 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
-import { defineAgentToolContract } from '@rozenite/agent-shared';
-import { definePaginatedAgentToolContract, type PageResult } from './index.js';
-import type { AgentTool } from './types.js';
+import { defineAgentToolContract, definePaginatedAgentToolContract } from '@rozenite/agent-shared';
+import type { AgentTool, PageResult } from '../types.js';
 import {
   type UseRozeniteInAppAgentToolOptions,
   useRozeniteInAppAgentTool,

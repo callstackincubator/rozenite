@@ -9,7 +9,7 @@ import {
   type UnregisterToolMessage,
   type ToolCallMessage,
   type ToolResultMessage,
-} from './types.js';
+} from '../types.js';
 
 type MaybePromise<T> = Promise<T> | T;
 
