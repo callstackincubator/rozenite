@@ -1,6 +1,8 @@
 import type { ComponentProps, ElementType } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils/cn';
+import { textTone } from '../tokens/tone-variants';
+import type { Tone } from '../tokens/tone';
 
 export const textVariants = cva('text-foreground', {
   variants: {
@@ -18,11 +20,21 @@ export const textVariants = cva('text-foreground', {
   },
 });
 
-export type TextProps = ComponentProps<'span'> & VariantProps<typeof textVariants>;
+export type TextProps = ComponentProps<'span'> &
+  VariantProps<typeof textVariants> & {
+    /** Overrides the variant's default color. */
+    tone?: Tone;
+  };
 
 /** Typography for everything that isn't a page or section heading. */
-export function Text({ className, variant, ...props }: TextProps) {
-  return <span data-slot="text" className={cn(textVariants({ variant }), className)} {...props} />;
+export function Text({ className, variant, tone, ...props }: TextProps) {
+  return (
+    <span
+      data-slot="text"
+      className={cn(textVariants({ variant }), tone && textTone({ tone }), className)}
+      {...props}
+    />
+  );
 }
 
 const headingLevelTag = {
@@ -34,20 +46,37 @@ const headingLevelTag = {
   6: 'h6',
 } as const satisfies Record<number, ElementType>;
 
+const headingLevelClass = {
+  1: 'text-lg font-bold',
+  2: 'text-base font-semibold',
+  3: 'text-sm font-semibold',
+  4: 'text-sm font-medium',
+  5: 'text-xs font-semibold',
+  6: 'text-xs font-medium',
+} as const satisfies Record<1 | 2 | 3 | 4 | 5 | 6, string>;
+
 export type HeadingProps = ComponentProps<'h1'> & {
-  /** Which heading element to render.
+  /** Which heading element to render, and its type size.
    * @default 2 */
   level?: 1 | 2 | 3 | 4 | 5 | 6;
+  /** Overrides the default foreground color. */
+  tone?: Tone;
 };
 
-/** A semantic page or section heading, styled with the `title` type scale. */
-export function Heading({ level = 2, className, ...props }: HeadingProps) {
+/** A semantic page or section heading. `level` controls both the rendered
+ *  element (`h1`-`h6`) and its type size. */
+export function Heading({ level = 2, tone, className, ...props }: HeadingProps) {
   const Tag = headingLevelTag[level];
 
   return (
     <Tag
       data-slot="heading"
-      className={cn(textVariants({ variant: 'title' }), className)}
+      className={cn(
+        textVariants({ variant: 'title' }),
+        headingLevelClass[level],
+        tone && textTone({ tone }),
+        className,
+      )}
       {...props}
     />
   );

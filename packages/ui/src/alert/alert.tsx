@@ -11,13 +11,15 @@ export type AlertProps = ComponentProps<'div'> & {
 function AlertRoot({ tone = 'neutral', className, ...props }: AlertProps) {
   return (
     <div
-      role="alert"
+      // `danger` interrupts and needs an assertive announcement; other tones
+      // are informational and should announce politely, like `role="status"`.
+      role={tone === 'danger' ? 'alert' : 'status'}
       data-slot="alert"
       className={cn(
         surfaceTone({
           tone,
           variant: 'soft',
-          class: 'flex items-start gap-2 rounded-md border border-current/15 p-3 text-sm',
+          class: 'flex flex-col gap-1 rounded-md border border-current/15 p-3 text-sm',
         }),
         className,
       )}

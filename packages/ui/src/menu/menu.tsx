@@ -6,7 +6,7 @@ import { usePluginPortalContainer } from '../theme/theme-context';
 export type MenuProps = MenuPrimitive.Root.Props;
 
 function MenuRoot(props: MenuProps) {
-  return <MenuPrimitive.Root {...props} />;
+  return <MenuPrimitive.Root data-slot="menu" {...props} />;
 }
 
 export type MenuTriggerProps = MenuPrimitive.Trigger.Props;
@@ -16,13 +16,14 @@ function MenuTrigger(props: MenuTriggerProps) {
 }
 
 export type MenuContentProps = MenuPrimitive.Popup.Props &
-  Pick<MenuPrimitive.Positioner.Props, 'side' | 'sideOffset' | 'align'>;
+  Pick<MenuPrimitive.Positioner.Props, 'side' | 'sideOffset' | 'align' | 'alignOffset'>;
 
 function MenuContent({
   className,
   side = 'bottom',
   sideOffset = 4,
   align = 'start',
+  alignOffset = 0,
   children,
   ...props
 }: MenuContentProps) {
@@ -30,11 +31,17 @@ function MenuContent({
 
   return (
     <MenuPrimitive.Portal container={container}>
-      <MenuPrimitive.Positioner side={side} sideOffset={sideOffset} align={align} className="z-50">
+      <MenuPrimitive.Positioner
+        side={side}
+        sideOffset={sideOffset}
+        align={align}
+        alignOffset={alignOffset}
+        className="z-50"
+      >
         <MenuPrimitive.Popup
           data-slot="menu-content"
           className={cn(
-            'min-w-40 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md',
+            'max-h-(--available-height) min-w-40 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md',
             'origin-(--transform-origin) transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
             className,
           )}

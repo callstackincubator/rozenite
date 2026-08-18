@@ -44,7 +44,7 @@ export function Column({
         justify && flexJustifyClass[justify],
         wrap && 'flex-wrap',
         fill && 'min-h-0 flex-1',
-        scroll && 'overflow-auto',
+        scroll && 'overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-ring',
         className,
       )}
       {...props}
