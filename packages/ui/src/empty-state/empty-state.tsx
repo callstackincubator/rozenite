@@ -31,16 +31,13 @@ export function EmptyState({
     ref,
     props: {
       'data-slot': 'empty-state',
-      className: cn(
-        'flex flex-1 flex-col items-center justify-center gap-1.5 p-8 text-center',
-        className,
-      ),
+      className: cn('flex flex-col items-center justify-center gap-3 p-8 text-center', className),
       children: (
         <>
-          {Icon && <Icon className="mb-2 h-8 w-8 text-muted-foreground" />}
+          {Icon && <Icon className="h-8 w-8 text-muted-foreground" />}
           <p className="text-sm font-medium text-foreground">{title}</p>
           {description && <p className="max-w-sm text-sm text-muted-foreground">{description}</p>}
-          {action && <div className="mt-3">{action}</div>}
+          {action}
         </>
       ),
       ...props,

@@ -15,7 +15,7 @@ function PluginHeaderRoot({ className, render, ref, ...props }: PluginHeaderProp
     props: {
       'data-slot': 'plugin-header',
       className: cn(
-        'flex shrink-0 items-center gap-3 border-b border-border bg-card px-4 py-3',
+        'flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-4 py-3',
         className,
       ),
       ...props,
@@ -65,7 +65,7 @@ function PluginHeaderActions({ className, render, ref, ...props }: PluginHeaderA
     ref,
     props: {
       'data-slot': 'plugin-header-actions',
-      className: cn('ml-auto flex items-center gap-2', className),
+      className: cn('flex items-center gap-2', className),
       ...props,
     },
   });

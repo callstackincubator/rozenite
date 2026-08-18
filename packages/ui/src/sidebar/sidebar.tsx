@@ -16,7 +16,7 @@ function SidebarRoot({ className, ...props }: SidebarProps) {
     <nav
       data-slot="sidebar"
       className={cn(
-        'flex h-full w-56 shrink-0 flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar p-2 text-sidebar-foreground',
+        'flex h-full shrink-0 flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar p-2 text-sidebar-foreground',
         className,
       )}
       {...props}
@@ -123,7 +123,7 @@ function SidebarFooter({ className, ...props }: SidebarFooterProps) {
   return (
     <footer
       data-slot="sidebar-footer"
-      className={cn('mt-auto flex shrink-0 gap-1 border-t border-sidebar-border p-2', className)}
+      className={cn('flex shrink-0 gap-1 border-t border-sidebar-border p-2', className)}
       {...props}
     />
   );

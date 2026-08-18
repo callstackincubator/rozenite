@@ -22,7 +22,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   render: () => (
     <div className="h-72">
-      <Sidebar>
+      <Sidebar className="w-56">
         <Sidebar.Group label="Workspace">
           <Sidebar.Item
             selected
@@ -46,7 +46,7 @@ export const Default: Story = {
 export const WithHeaderAndFooter: Story = {
   render: () => (
     <div className="h-72">
-      <Sidebar className="gap-0 p-0">
+      <Sidebar className="w-56 gap-0 p-0">
         <Sidebar.Header>
           <span className="font-medium">Rozenite</span>
         </Sidebar.Header>

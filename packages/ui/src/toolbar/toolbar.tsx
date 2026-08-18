@@ -48,7 +48,8 @@ function ToolbarButton({ className, size = 'sm', ...props }: ToolbarButtonProps)
 
 export type ToolbarSeparatorProps = SeparatorProps;
 
-/** An alias for `Separator`, styled for use inside a `Toolbar`. */
+/** An alias for `Separator`, styled for use inside a `Toolbar`. Spacing comes
+ *  from the toolbar's own `gap-1` — pass `className` for extra breathing room. */
 function ToolbarSeparator({
   orientation = 'vertical',
   className,
@@ -58,7 +59,7 @@ function ToolbarSeparator({
     <Separator
       data-slot="toolbar-separator"
       orientation={orientation}
-      className={cn('mx-1', className)}
+      className={className}
       {...props}
     />
   );

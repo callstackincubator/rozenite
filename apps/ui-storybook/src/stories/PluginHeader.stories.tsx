@@ -14,8 +14,10 @@ export const Default: Story = {
   render: () => (
     <PluginShell className="w-[40rem]">
       <PluginHeader>
-        <PluginHeader.Title>Storage</PluginHeader.Title>
-        <PluginHeader.Subtitle>Manage persisted values</PluginHeader.Subtitle>
+        <div>
+          <PluginHeader.Title>Storage</PluginHeader.Title>
+          <PluginHeader.Subtitle>Manage persisted values</PluginHeader.Subtitle>
+        </div>
         <PluginHeader.Actions>
           <Button size="sm" tone="neutral" variant="outline">
             Refresh
