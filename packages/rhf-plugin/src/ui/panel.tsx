@@ -1,14 +1,13 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
   Badge,
-  ConfirmDialog,
   EmptyState,
   PluginShell,
   SearchField,
   Sidebar,
   Split,
-  Toast,
   Toolbar,
+  useConfirmDialog,
   useToast,
 } from '@rozenite/ui';
 import { useEffect, useMemo, useState } from 'react';
@@ -205,9 +204,9 @@ function ReactHookFormPanelContent() {
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFieldName, setSelectedFieldName] = useState<string | null>(null);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const toast = useToast();
+  const confirm = useConfirmDialog();
   const client = useRozeniteDevToolsClient<RHFEventMap>({
     pluginId: PLUGIN_ID,
   });
@@ -273,9 +272,15 @@ function ReactHookFormPanelContent() {
 
   const canResetForm = Boolean(selectedFormId) && !staleIds.has(selectedFormId ?? '');
 
-  const handleResetForm = async () => {
+  const handleResetFormClick = async () => {
     if (!client || !selectedFormId) return;
-    setShowResetConfirm(false);
+    const confirmed = await confirm({
+      title: 'Reset Form',
+      description: `Are you sure you want to reset "${selectedFormId}" to its default values? This action cannot be undone.`,
+      tone: 'danger',
+      confirmLabel: 'Reset',
+    });
+    if (!confirmed) return;
     try {
       await client.request({
         requestType: 'reset-form',
@@ -332,7 +337,7 @@ function ReactHookFormPanelContent() {
                 <Toolbar>
                   <Toolbar.Group>
                     <Toolbar.Button
-                      onClick={() => setShowResetConfirm(true)}
+                      onClick={() => void handleResetFormClick()}
                       disabled={!canResetForm}
                       aria-label="Reset form"
                       title="Reset form"
@@ -403,29 +408,10 @@ function ReactHookFormPanelContent() {
         name={selectedFieldName}
         snapshot={selectedSnapshot}
       />
-
-      <ConfirmDialog
-        open={showResetConfirm}
-        onOpenChange={setShowResetConfirm}
-        variant="confirm"
-        tone="danger"
-        title="Reset Form"
-        description={
-          selectedFormId
-            ? `Are you sure you want to reset "${selectedFormId}" to its default values? This action cannot be undone.`
-            : undefined
-        }
-        confirmLabel="Reset"
-        onConfirm={handleResetForm}
-      />
     </PluginShell>
   );
 }
 
 export default function ReactHookFormPanel() {
-  return (
-    <Toast.Provider>
-      <ReactHookFormPanelContent />
-    </Toast.Provider>
-  );
+  return <ReactHookFormPanelContent />;
 }
