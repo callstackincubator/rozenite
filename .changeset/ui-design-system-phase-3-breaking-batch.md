@@ -22,8 +22,7 @@ Unify the size scale, split tone from emphasis, and remove layout-leakage margin
 | `text-destructive` / `bg-destructive` / `border-destructive` classes | `text-danger` / `bg-danger` / `border-danger` |
 | `PluginHeader.Actions` relying on its own `ml-auto` | `PluginHeader` root now uses `justify-between` — group leading content (e.g. `Title` + `Subtitle`) in one wrapper so actions still sit at the end |
 | `Sidebar` default width (`w-56`) | pass `className="w-56"` (or any width) explicitly |
-| `PluginShell` default height (`h-screen`) | pass `className="h-screen"` (or any height) explicitly |
-| `EmptyState` default `flex-1` | pass `className="flex-1"` explicitly, or wrap in `Column fill` |
+| `Toolbar.Separator`'s own `mx-1` | removed — spacing now comes from `Toolbar`'s `gap-1` |
 
 **New capability:** `Toast` gains a `viewportClassName` prop to reposition the notification viewport (previously hardcoded to `fixed right-4 bottom-4`).
 
