@@ -17,7 +17,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
-import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
+import { SortIcon } from '../utils/sort-icon';
 
 export type VirtualizedDataTableProps<TData> = {
   ariaLabel: string;
@@ -267,15 +267,3 @@ export const VirtualizedDataTable = <TData,>({
     />
   );
 };
-
-function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
-  if (direction === 'asc') {
-    return <ChevronUp className="h-3 w-3" />;
-  }
-
-  if (direction === 'desc') {
-    return <ChevronDown className="h-3 w-3" />;
-  }
-
-  return <ChevronsUpDown className="h-3 w-3 text-muted-foreground/60" />;
-}

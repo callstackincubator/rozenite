@@ -3,6 +3,7 @@ import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { usePluginPortalContainer } from '../theme/theme-context';
+import { fieldSurface, optionRow, popoverSurface } from '../utils/control-surfaces';
 
 export type ComboboxProps<
   Value,
@@ -25,12 +26,7 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
     >
       <ComboboxPrimitive.Input
         data-slot="combobox-input"
-        className={cn(
-          'h-8 w-full rounded-md border border-input bg-transparent px-3 pr-14 text-sm text-foreground shadow-xs',
-          'outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
-          'placeholder:text-muted-foreground disabled:pointer-events-none disabled:opacity-50',
-          className,
-        )}
+        className={cn(fieldSurface(), 'h-8 px-3 pr-14', className)}
         {...props}
       />
       <div className="absolute right-1.5 flex items-center gap-0.5">
@@ -75,11 +71,7 @@ function ComboboxContent({
       >
         <ComboboxPrimitive.Popup
           data-slot="combobox-content"
-          className={cn(
-            'max-h-64 min-w-[--anchor-width] overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md',
-            'origin-(--transform-origin) transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
-            className,
-          )}
+          className={cn(popoverSurface(), className)}
           {...props}
         >
           <ComboboxPrimitive.Empty
@@ -101,12 +93,7 @@ function ComboboxItem({ className, children, ...props }: ComboboxItemProps) {
   return (
     <ComboboxPrimitive.Item
       data-slot="combobox-item"
-      className={cn(
-        'flex cursor-default items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-sm text-foreground select-none',
-        'data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground',
-        'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-        className,
-      )}
+      className={cn(optionRow(), className)}
       {...props}
     >
       {children}

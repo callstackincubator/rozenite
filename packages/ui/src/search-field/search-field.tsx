@@ -1,6 +1,7 @@
 import type { ComponentProps } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { fieldSurface } from '../utils/control-surfaces';
 
 export type SearchFieldProps = Omit<ComponentProps<'input'>, 'type'> & {
   /** Called when the clear button is pressed. Omit to hide the clear affordance. */
@@ -27,10 +28,9 @@ export function SearchField({
         type="search"
         value={value}
         className={cn(
-          'h-8 w-full min-w-0 rounded-md border border-input bg-transparent pl-8 text-sm text-foreground shadow-xs transition-colors',
+          fieldSurface(),
+          'h-8 min-w-0 pl-8',
           showClear ? 'pr-8' : 'pr-3',
-          'outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
-          'placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
           '[&::-webkit-search-cancel-button]:appearance-none',
           className,
         )}

@@ -7,8 +7,8 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { SortIcon } from '../utils/sort-icon';
 
 declare module '@tanstack/react-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- required by the RowData constraint of TableMeta
@@ -135,16 +135,4 @@ export function DataTable<TRow>({
       </tbody>
     </table>
   );
-}
-
-function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
-  if (direction === 'asc') {
-    return <ChevronUp className="h-3 w-3" />;
-  }
-
-  if (direction === 'desc') {
-    return <ChevronDown className="h-3 w-3" />;
-  }
-
-  return <ChevronsUpDown className="h-3 w-3 text-muted-foreground/60" />;
 }
