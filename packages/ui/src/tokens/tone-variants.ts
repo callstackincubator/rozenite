@@ -1,4 +1,14 @@
 import { cva } from 'class-variance-authority';
+import type { Tone } from './tone';
+
+const toneKeys = {
+  neutral: '',
+  primary: '',
+  success: '',
+  warning: '',
+  danger: '',
+  info: '',
+} as const satisfies Record<Tone, string>;
 
 /**
  * Crosses `tone` with `variant` (solid | soft | outline | ghost) for
@@ -6,14 +16,7 @@ import { cva } from 'class-variance-authority';
  */
 export const surfaceTone = cva('', {
   variants: {
-    tone: {
-      neutral: '',
-      primary: '',
-      success: '',
-      warning: '',
-      danger: '',
-      info: '',
-    },
+    tone: toneKeys,
     variant: {
       solid: '',
       soft: '',
@@ -107,7 +110,7 @@ export const surfaceTone = cva('', {
       variant: 'solid',
       class: 'bg-danger text-danger-foreground',
     },
-    { tone: 'danger', variant: 'soft', class: 'bg-danger/10 text-danger' },
+    { tone: 'danger', variant: 'soft', class: 'bg-danger-soft text-danger' },
     {
       tone: 'danger',
       variant: 'outline',
@@ -116,7 +119,7 @@ export const surfaceTone = cva('', {
     {
       tone: 'danger',
       variant: 'ghost',
-      class: 'text-danger hover:bg-danger/10',
+      class: 'text-danger hover:bg-danger-soft',
     },
 
     { tone: 'info', variant: 'solid', class: 'bg-info text-info-foreground' },
@@ -147,7 +150,7 @@ export const textTone = cva('', {
       warning: 'text-warning',
       danger: 'text-danger',
       info: 'text-info',
-    },
+    } as const satisfies Record<Tone, string>,
   },
   defaultVariants: {
     tone: 'neutral',

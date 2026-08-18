@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { surfaceTone, textTone, type Tone } from '@rozenite/ui';
+import { surfaceTone, textTone, sizeHeight, sizeIcon, type Tone, type Size } from '@rozenite/ui';
 
 const TONES: Tone[] = ['neutral', 'primary', 'success', 'warning', 'danger', 'info'];
 const VARIANTS = ['solid', 'soft', 'outline', 'ghost'] as const;
@@ -83,6 +83,31 @@ export const ToneVariantMatrix: Story = {
   ),
 };
 
+const SIZES: Size[] = ['sm', 'md', 'lg'];
+
+/**
+ * The `sm | md | lg` control-height scale from `sizeHeight`, each paired
+ * with its `sizeIcon` step.
+ * @summary Compare every control size step.
+ */
+export const SizeScale: Story = {
+  render: () => (
+    <div className="flex items-end gap-4 p-4">
+      {SIZES.map((size) => (
+        <div key={size} className="flex flex-col items-center gap-2">
+          <div
+            className={`bg-secondary flex items-center gap-1 border border-border px-2 text-xs ${sizeHeight[size]}`}
+          >
+            <span className={`bg-foreground ${sizeIcon[size]}`} />
+            {size}
+          </div>
+          <span className="text-muted-foreground text-xs">{sizeHeight[size]}</span>
+        </div>
+      ))}
+    </div>
+  ),
+};
+
 /**
  * `--radius` is `0` on purpose — this design system is square by design, not
  * an unfinished default. The `--radius-{sm,md,lg,xl}` scale stays wired
@@ -92,7 +117,6 @@ export const ToneVariantMatrix: Story = {
  * @summary Document why every corner is square by default.
  */
 export const SquareByDesign: Story = {
-  parameters: { withPluginShell: false },
   render: () => (
     <div className="flex flex-wrap items-center gap-4 p-4">
       <div className="flex flex-col items-center gap-2">

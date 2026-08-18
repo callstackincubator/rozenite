@@ -24,6 +24,7 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
+  --color-danger-soft: var(--danger-soft);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-success-soft: var(--success-soft);
@@ -73,6 +74,7 @@
   --destructive-foreground: #201f24;
   --danger: var(--destructive);
   --danger-foreground: var(--destructive-foreground);
+  --danger-soft: color-mix(in srgb, var(--destructive) 10%, transparent);
   --success: #15803d;
   --success-foreground: #ffffff;
   --success-soft: #16a34a1f;
@@ -114,6 +116,7 @@
   --destructive-foreground: #201f24;
   --danger: var(--destructive);
   --danger-foreground: var(--destructive-foreground);
+  --danger-soft: color-mix(in srgb, var(--destructive) 15%, transparent);
   --success: #4ade80;
   --success-foreground: #201f24;
   --success-soft: #22c55e33;
