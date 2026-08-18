@@ -45,10 +45,14 @@ export const AllVariants: Story = {
   render: () => (
     <div className="flex flex-wrap gap-2">
       <Button>Default</Button>
-      <Button variant="secondary">Secondary</Button>
-      <Button variant="destructive">Delete</Button>
-      <Button variant="outline">Outline</Button>
-      <Button variant="ghost">Ghost</Button>
+      <Button tone="neutral">Secondary</Button>
+      <Button tone="danger">Delete</Button>
+      <Button tone="neutral" variant="outline">
+        Outline
+      </Button>
+      <Button tone="neutral" variant="ghost">
+        Ghost
+      </Button>
     </div>
   ),
 };
@@ -60,7 +64,11 @@ export const AllVariants: Story = {
  */
 export const AsAnchor: Story = {
   render: () => (
-    <Button variant="outline" render={<a href="https://rozenite.dev" target="_blank" />}>
+    <Button
+      tone="neutral"
+      variant="outline"
+      render={<a href="https://rozenite.dev" target="_blank" />}
+    >
       Visit docs
     </Button>
   ),
@@ -80,7 +88,7 @@ export const WithAdornment: Story = {
     },
   },
   render: () => (
-    <Button variant="secondary" trailing={<IndicatorDot />}>
+    <Button tone="neutral" trailing={<IndicatorDot />}>
       <SettingsIcon className="size-4" />
       Plugins
     </Button>

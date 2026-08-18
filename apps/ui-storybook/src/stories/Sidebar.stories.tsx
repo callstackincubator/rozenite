@@ -27,7 +27,7 @@ export const Default: Story = {
           <Sidebar.Item
             selected
             leading={<OverviewIcon />}
-            trailing={<Badge variant="secondary">3</Badge>}
+            trailing={<Badge tone="neutral">3</Badge>}
           >
             Overview
           </Sidebar.Item>

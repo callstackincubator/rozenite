@@ -43,7 +43,7 @@ function Toaster({ dismissLabel }: { dismissLabel: string }) {
             className={cn(
               'relative flex items-start gap-2 rounded-md border border-border bg-card p-3 text-card-foreground shadow-md',
               'transition-[transform,opacity] data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
-              toast.type === 'error' && 'border-destructive/50 text-destructive',
+              toast.type === 'error' && 'border-danger/50 text-danger',
             )}
           >
             <ToastPrimitive.Content

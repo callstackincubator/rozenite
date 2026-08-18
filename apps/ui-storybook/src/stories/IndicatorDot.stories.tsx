@@ -15,8 +15,8 @@ export const Variants: Story = {
   render: () => (
     <div className="flex items-center gap-4">
       <IndicatorDot />
-      <IndicatorDot variant="destructive" />
-      <IndicatorDot className="size-2.5" />
+      <IndicatorDot tone="danger" />
+      <IndicatorDot size="lg" />
     </div>
   ),
 };

@@ -20,8 +20,6 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
   --color-danger-soft: var(--danger-soft);
@@ -70,11 +68,9 @@
   --muted-foreground: #838289;
   --accent: #8232ff29;
   --accent-foreground: #201f24;
-  --destructive: #fa7171;
-  --destructive-foreground: #201f24;
-  --danger: var(--destructive);
-  --danger-foreground: var(--destructive-foreground);
-  --danger-soft: color-mix(in srgb, var(--destructive) 10%, transparent);
+  --danger: #fa7171;
+  --danger-foreground: #201f24;
+  --danger-soft: color-mix(in srgb, var(--danger) 10%, transparent);
   --success: #15803d;
   --success-foreground: #ffffff;
   --success-soft: #16a34a1f;
@@ -112,11 +108,9 @@
   --muted-foreground: #cfced5;
   --accent: #8232ff33;
   --accent-foreground: #ffffff;
-  --destructive: #fa7171;
-  --destructive-foreground: #201f24;
-  --danger: var(--destructive);
-  --danger-foreground: var(--destructive-foreground);
-  --danger-soft: color-mix(in srgb, var(--destructive) 15%, transparent);
+  --danger: #fa7171;
+  --danger-foreground: #201f24;
+  --danger-soft: color-mix(in srgb, var(--danger) 15%, transparent);
   --success: #4ade80;
   --success-foreground: #201f24;
   --success-soft: #22c55e33;
