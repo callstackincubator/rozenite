@@ -115,7 +115,7 @@ export const EditEntryDialog = ({
                 autoFocus
               />
               {!isCurrentTypeSupported && (
-                <Field.Description className="text-destructive">
+                <Field.Description className="text-danger">
                   This storage does not support {currentType} values.
                 </Field.Description>
               )}
@@ -123,7 +123,7 @@ export const EditEntryDialog = ({
           </div>
 
           <Dialog.Footer>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button tone="neutral" variant="outline" onClick={resetAndClose}>
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaveDisabled}>

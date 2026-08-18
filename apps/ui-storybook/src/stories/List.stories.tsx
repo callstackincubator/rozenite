@@ -22,17 +22,13 @@ export const Default: Story = {
     <div className="h-72 w-56 border border-border p-2">
       <List>
         <List.Group label="Local Storage">
-          <List.Item
-            selected
-            adornment={<DatabaseIcon />}
-            trailing={<Badge variant="secondary">3</Badge>}
-          >
+          <List.Item selected leading={<DatabaseIcon />} trailing={<Badge tone="neutral">3</Badge>}>
             auth-token
           </List.Item>
-          <List.Item adornment={<DatabaseIcon />}>user-preferences</List.Item>
+          <List.Item leading={<DatabaseIcon />}>user-preferences</List.Item>
         </List.Group>
         <List.Group label="Session Storage">
-          <List.Item adornment={<DatabaseIcon />}>draft-form</List.Item>
+          <List.Item leading={<DatabaseIcon />}>draft-form</List.Item>
         </List.Group>
       </List>
     </div>
@@ -47,7 +43,7 @@ export const AsAnchor: Story = {
   render: () => (
     <div className="w-56 border border-border p-2">
       <List>
-        <List.Item adornment={<DatabaseIcon />} render={<a href="#docs" />}>
+        <List.Item leading={<DatabaseIcon />} render={<a href="#docs" />}>
           View documentation
         </List.Item>
       </List>

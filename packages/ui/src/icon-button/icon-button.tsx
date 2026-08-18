@@ -1,19 +1,22 @@
 import type { ComponentProps } from 'react';
 import { useRender } from '@base-ui/react/use-render';
 import type { VariantProps } from 'class-variance-authority';
-import { buttonVariants } from '../button/button';
 import { cn } from '../utils/cn';
 import { Tooltip } from '../tooltip/tooltip';
 import type { Size } from '../tokens/size';
+import { surfaceTone } from '../tokens/tone-variants';
+import type { Tone } from '../tokens/tone';
 
 const iconButtonSize = {
-  sm: 'size-6 [&_svg]:size-3.5',
-  md: 'size-8 [&_svg]:size-4',
-  lg: 'size-10 [&_svg]:size-5',
+  sm: 'size-6 p-0 [&_svg]:size-3.5',
+  md: 'size-8 p-0 [&_svg]:size-4',
+  lg: 'size-10 p-0 [&_svg]:size-5',
 } as const satisfies Record<Size, string>;
 
 export type IconButtonProps = ComponentProps<'button'> &
-  Pick<VariantProps<typeof buttonVariants>, 'variant'> & {
+  Pick<VariantProps<typeof surfaceTone>, 'variant'> & {
+    /** @default 'primary' */
+    tone?: Tone;
     /** @default 'md' */
     size?: Size;
     /** Accessible name, also shown as the button's tooltip. An unlabelled icon button is a type error. */
@@ -26,6 +29,7 @@ export type IconButtonProps = ComponentProps<'button'> &
  *  accessible name and the tooltip text. */
 export function IconButton({
   className,
+  tone = 'primary',
   variant,
   size = 'md',
   label,
@@ -41,7 +45,15 @@ export function IconButton({
     props: {
       'aria-label': label,
       'data-slot': 'icon-button',
-      className: cn(buttonVariants({ variant, size: 'icon' }), iconButtonSize[size], className),
+      className: cn(
+        'relative inline-flex shrink-0 items-center justify-center rounded-md transition-colors',
+        'outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'disabled:pointer-events-none disabled:opacity-50',
+        '[&_svg]:pointer-events-none [&_svg]:shrink-0',
+        surfaceTone({ tone, variant, interactive: true }),
+        iconButtonSize[size],
+        className,
+      ),
       children,
       ...props,
     },

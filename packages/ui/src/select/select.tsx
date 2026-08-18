@@ -3,6 +3,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { usePluginPortalContainer } from '../theme/theme-context';
 import { fieldSurface, optionRow, popoverSurface } from '../utils/control-surfaces';
+import type { Size } from '../tokens/size';
 
 export type SelectProps<
   Value,
@@ -15,13 +16,16 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>(
   return <SelectPrimitive.Root {...props} />;
 }
 
-export type SelectTriggerProps = SelectPrimitive.Trigger.Props;
+export type SelectTriggerProps = SelectPrimitive.Trigger.Props & {
+  /** @default 'md' */
+  size?: Size;
+};
 
-function SelectTrigger({ className, children, ...props }: SelectTriggerProps) {
+function SelectTrigger({ className, children, size = 'md', ...props }: SelectTriggerProps) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
-      className={cn(fieldSurface(), 'flex h-8 items-center justify-between gap-2 px-3', className)}
+      className={cn(fieldSurface({ size }), 'flex items-center justify-between gap-2', className)}
       {...props}
     >
       {children}

@@ -11,7 +11,13 @@ export const Default: Story = {
   render: () => (
     <Tooltip.Provider>
       <Tooltip>
-        <Tooltip.Trigger render={<Button variant="outline">Hover me</Button>} />
+        <Tooltip.Trigger
+          render={
+            <Button tone="neutral" variant="outline">
+              Hover me
+            </Button>
+          }
+        />
         <Tooltip.Content>Helpful context appears here.</Tooltip.Content>
       </Tooltip>
     </Tooltip.Provider>

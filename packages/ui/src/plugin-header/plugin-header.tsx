@@ -15,7 +15,7 @@ function PluginHeaderRoot({ className, render, ref, ...props }: PluginHeaderProp
     props: {
       'data-slot': 'plugin-header',
       className: cn(
-        'flex shrink-0 items-center gap-3 border-b border-border bg-card px-4 py-3',
+        'flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-4 py-3',
         className,
       ),
       ...props,
@@ -65,7 +65,7 @@ function PluginHeaderActions({ className, render, ref, ...props }: PluginHeaderA
     ref,
     props: {
       'data-slot': 'plugin-header-actions',
-      className: cn('ml-auto flex items-center gap-2', className),
+      className: cn('flex items-center gap-2', className),
       ...props,
     },
   });
@@ -101,13 +101,14 @@ function PluginHeaderThemeSwitcher({
       'aria-label': theme === 'dark' ? lightLabel : darkLabel,
       onClick: toggleTheme,
       className: cn(
-        'inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground',
+        'inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground',
         'hover:bg-accent hover:text-accent-foreground',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'transition-colors',
         className,
       ),
-      children: theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />,
+      children:
+        theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />,
       ...props,
     },
   });

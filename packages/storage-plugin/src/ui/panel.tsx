@@ -3,9 +3,9 @@ import type { ColumnDef, OnChangeFn, SortingState } from '@tanstack/react-table'
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
   Badge,
-  Button,
   ConfirmDialog,
   EmptyState,
+  IconButton,
   PluginShell,
   SearchField,
   Sidebar,
@@ -462,7 +462,11 @@ function StoragePanelContent() {
         accessorKey: 'type',
         header: 'Type',
         enableSorting: false,
-        cell: ({ row }) => <Badge variant="outline">{row.original.type}</Badge>,
+        cell: ({ row }) => (
+          <Badge tone="neutral" variant="outline">
+            {row.original.type}
+          </Badge>
+        ),
       },
       {
         id: 'preview',
@@ -493,23 +497,23 @@ function StoragePanelContent() {
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
-            <Button
+            <IconButton
+              tone="neutral"
               variant="ghost"
-              size="icon"
               onClick={() => setInteraction({ key: row.original.key, mode: 'edit' })}
-              aria-label={`Edit value for ${row.original.key}`}
+              label={`Edit value for ${row.original.key}`}
             >
               <Edit3 className="h-3.5 w-3.5" />
-            </Button>
-            <Button
+            </IconButton>
+            <IconButton
+              tone="neutral"
               variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-destructive"
+              className="text-muted-foreground hover:text-danger"
               onClick={() => setDeleteKey(row.original.key)}
-              aria-label={`Delete entry ${row.original.key}`}
+              label={`Delete entry ${row.original.key}`}
             >
               <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+            </IconButton>
           </div>
         ),
       },
@@ -567,8 +571,8 @@ function StoragePanelContent() {
                       <Sidebar.Item
                         key={item.viewId}
                         selected={item.viewId === selectedStorageViewId}
-                        adornment={<Database />}
-                        trailing={<Badge variant="secondary">{item.entryCount}</Badge>}
+                        leading={<Database />}
+                        trailing={<Badge tone="neutral">{item.entryCount}</Badge>}
                         onClick={() => {
                           const descriptor = descriptors.find(
                             (candidate) => getStorageViewId(candidate.target) === item.viewId,
@@ -594,7 +598,7 @@ function StoragePanelContent() {
                     disabled={!selectedDescriptor}
                     aria-label="Add entry"
                     title="Add entry"
-                    className="w-7 px-0"
+                    className="w-6 px-0"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </Toolbar.Button>
@@ -603,7 +607,7 @@ function StoragePanelContent() {
                     disabled={!client || !selectedTarget || previews.isFetching}
                     aria-label="Purge storage"
                     title="Purge storage"
-                    className="w-7 px-0 text-muted-foreground hover:text-destructive"
+                    className="w-6 px-0 text-muted-foreground hover:text-danger"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Toolbar.Button>
@@ -615,7 +619,7 @@ function StoragePanelContent() {
                     disabled={!selectedTarget || previews.isFetching}
                     aria-label="Refresh storage"
                     title="Refresh storage"
-                    className="w-7 px-0"
+                    className="w-6 px-0"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
                   </Toolbar.Button>
@@ -627,7 +631,7 @@ function StoragePanelContent() {
                     disabled={!selectedDescriptor}
                     aria-label="Import storage"
                     title="Import storage"
-                    className="w-7 px-0"
+                    className="w-6 px-0"
                   >
                     <Upload className="h-3.5 w-3.5" />
                   </Toolbar.Button>
@@ -640,7 +644,7 @@ function StoragePanelContent() {
                     title={
                       exportState.status === 'loading' ? 'Exporting storage' : 'Export storage'
                     }
-                    className="w-7 px-0"
+                    className="w-6 px-0"
                   >
                     <Download className="h-3.5 w-3.5" />
                   </Toolbar.Button>
@@ -656,7 +660,7 @@ function StoragePanelContent() {
                   />
                 </div>
                 {exportState.status === 'error' ? (
-                  <span role="alert" className="text-xs text-destructive">
+                  <span role="alert" className="text-xs text-danger">
                     {exportState.message}
                   </span>
                 ) : null}
@@ -738,7 +742,7 @@ function StoragePanelContent() {
           if (!open) setDeleteKey(null);
         }}
         variant="confirm"
-        destructive
+        tone="danger"
         title="Delete Entry"
         description={
           deleteKey ? `Are you sure you want to delete the entry "${deleteKey}"?` : undefined
@@ -750,7 +754,7 @@ function StoragePanelContent() {
         open={showPurgeDialog}
         onOpenChange={setShowPurgeDialog}
         variant="confirm"
-        destructive
+        tone="danger"
         title="Purge Storage"
         description={
           selectedDescriptor

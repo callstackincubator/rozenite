@@ -22,7 +22,13 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   render: () => (
     <Menu>
-      <Menu.Trigger render={<Button variant="outline">Actions</Button>} />
+      <Menu.Trigger
+        render={
+          <Button tone="neutral" variant="outline">
+            Actions
+          </Button>
+        }
+      />
       <Menu.Content>
         <Menu.Group>
           <Menu.GroupLabel>Panel</Menu.GroupLabel>

@@ -28,7 +28,7 @@ export const AllVariants: Story = {
       <IconButton label="Settings">
         <Settings />
       </IconButton>
-      <IconButton label="Delete" variant="destructive">
+      <IconButton label="Delete" tone="danger">
         <Trash2 />
       </IconButton>
       <IconButton label="Settings" size="sm">

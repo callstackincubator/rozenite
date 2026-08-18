@@ -62,11 +62,14 @@ export const ActionItem = ({
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Badge variant="outline">{action.type}</Badge>
+          <Badge tone="neutral" variant="outline">
+            {action.type}
+          </Badge>
           <span className="text-xs text-muted-foreground">#{index}</span>
         </div>
         <Button
-          size="compact"
+          size="sm"
+          tone="neutral"
           variant="outline"
           onClick={(e) => {
             e.stopPropagation();

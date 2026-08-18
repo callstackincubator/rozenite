@@ -1,9 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button, IndicatorDot } from '@rozenite/ui';
 
-function SettingsIcon() {
+function SettingsIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      className={className}
+    >
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
     </svg>
@@ -39,10 +45,14 @@ export const AllVariants: Story = {
   render: () => (
     <div className="flex flex-wrap gap-2">
       <Button>Default</Button>
-      <Button variant="secondary">Secondary</Button>
-      <Button variant="destructive">Delete</Button>
-      <Button variant="outline">Outline</Button>
-      <Button variant="ghost">Ghost</Button>
+      <Button tone="neutral">Secondary</Button>
+      <Button tone="danger">Delete</Button>
+      <Button tone="neutral" variant="outline">
+        Outline
+      </Button>
+      <Button tone="neutral" variant="ghost">
+        Ghost
+      </Button>
     </div>
   ),
 };
@@ -54,33 +64,33 @@ export const AllVariants: Story = {
  */
 export const AsAnchor: Story = {
   render: () => (
-    <Button variant="outline" render={<a href="https://rozenite.dev" target="_blank" />}>
+    <Button
+      tone="neutral"
+      variant="outline"
+      render={<a href="https://rozenite.dev" target="_blank" />}
+    >
       Visit docs
     </Button>
   ),
 };
 
 /**
- * Use `adornment` to host a status affordance, e.g. an `IndicatorDot`
+ * Use `trailing` to host a status affordance, e.g. an `IndicatorDot`
  * flagging an available update, without a dedicated prop for it.
- * @summary Host an indicator dot via the adornment slot.
+ * @summary Host an indicator dot via the trailing slot.
  */
-export const WithAdornment: Story = {
+export const WithTrailing: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Use `adornment` to host a status affordance next to the button content.',
+        story: 'Use `trailing` to host a status affordance next to the button content.',
       },
     },
   },
   render: () => (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label="Plugins"
-      adornment={<IndicatorDot className="absolute top-1 right-1" />}
-    >
-      <SettingsIcon />
+    <Button tone="neutral" trailing={<IndicatorDot />}>
+      <SettingsIcon className="size-4" />
+      Plugins
     </Button>
   ),
 };

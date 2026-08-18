@@ -1,5 +1,18 @@
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs';
 import { cn } from '../utils/cn';
+import type { Size } from '../tokens/size';
+
+const tabsListSize = {
+  sm: 'h-6 p-0.5',
+  md: 'h-8 p-1',
+  lg: 'h-10 p-1',
+} as const satisfies Record<Size, string>;
+
+const tabsTabSize = {
+  sm: 'h-5 px-2 text-xs',
+  md: 'h-6 px-2.5 text-sm',
+  lg: 'h-8 px-3 text-base',
+} as const satisfies Record<Size, string>;
 
 export type TabsProps = TabsPrimitive.Root.Props;
 
@@ -7,14 +20,18 @@ function TabsRoot(props: TabsProps) {
   return <TabsPrimitive.Root data-slot="tabs" {...props} />;
 }
 
-export type TabsListProps = TabsPrimitive.List.Props;
+export type TabsListProps = TabsPrimitive.List.Props & {
+  /** @default 'md' */
+  size?: Size;
+};
 
-function TabsList({ className, ...props }: TabsListProps) {
+function TabsList({ className, size = 'md', ...props }: TabsListProps) {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        'inline-flex h-8 items-center gap-1 rounded-md bg-muted p-1 text-muted-foreground',
+        'inline-flex items-center gap-1 rounded-md bg-muted text-muted-foreground',
+        tabsListSize[size],
         className,
       )}
       {...props}
@@ -22,17 +39,21 @@ function TabsList({ className, ...props }: TabsListProps) {
   );
 }
 
-export type TabsTabProps = TabsPrimitive.Tab.Props;
+export type TabsTabProps = TabsPrimitive.Tab.Props & {
+  /** @default 'md' */
+  size?: Size;
+};
 
-function TabsTab({ className, ...props }: TabsTabProps) {
+function TabsTab({ className, size = 'md', ...props }: TabsTabProps) {
   return (
     <TabsPrimitive.Tab
       data-slot="tabs-tab"
       className={cn(
-        'inline-flex h-6 items-center justify-center rounded-sm px-2.5 text-sm font-medium whitespace-nowrap text-muted-foreground',
+        'inline-flex items-center justify-center rounded-sm font-medium whitespace-nowrap text-muted-foreground',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'data-[selected]:bg-background data-[selected]:text-foreground data-[selected]:shadow-xs',
         'disabled:pointer-events-none disabled:opacity-50',
+        tabsTabSize[size],
         className,
       )}
       {...props}

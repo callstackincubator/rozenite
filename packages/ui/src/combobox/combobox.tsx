@@ -4,6 +4,7 @@ import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { usePluginPortalContainer } from '../theme/theme-context';
 import { fieldSurface, optionRow, popoverSurface } from '../utils/control-surfaces';
+import type { Size } from '../tokens/size';
 
 export type ComboboxProps<
   Value,
@@ -16,9 +17,20 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false>(
   return <ComboboxPrimitive.Root {...props} />;
 }
 
-export type ComboboxInputProps = ComboboxPrimitive.Input.Props;
+const comboboxInputSize = {
+  sm: { pad: 'pr-11', cluster: 'right-1', control: 'size-4', icon: 'size-3' },
+  md: { pad: 'pr-14', cluster: 'right-1.5', control: 'size-5', icon: 'size-3.5' },
+  lg: { pad: 'pr-16', cluster: 'right-2', control: 'size-6', icon: 'size-4' },
+} as const satisfies Record<Size, unknown>;
 
-function ComboboxInput({ className, ...props }: ComboboxInputProps) {
+export type ComboboxInputProps = Omit<ComboboxPrimitive.Input.Props, 'size'> & {
+  /** @default 'md' */
+  size?: Size;
+};
+
+function ComboboxInput({ className, size = 'md', ...props }: ComboboxInputProps) {
+  const sizing = comboboxInputSize[size];
+
   return (
     <ComboboxPrimitive.InputGroup
       data-slot="combobox-input-group"
@@ -26,18 +38,21 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
     >
       <ComboboxPrimitive.Input
         data-slot="combobox-input"
-        className={cn(fieldSurface(), 'h-8 px-3 pr-14', className)}
+        className={cn(fieldSurface({ size }), sizing.pad, className)}
         {...props}
       />
-      <div className="absolute right-1.5 flex items-center gap-0.5">
+      <div className={cn('absolute flex items-center gap-0.5', sizing.cluster)}>
         <ComboboxPrimitive.Clear
           data-slot="combobox-clear"
-          className="inline-flex h-5 w-5 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+          className={cn(
+            'inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground',
+            sizing.control,
+          )}
         >
-          <X className="h-3.5 w-3.5" />
+          <X className={sizing.icon} />
         </ComboboxPrimitive.Clear>
         <ComboboxPrimitive.Icon data-slot="combobox-icon">
-          <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+          <ChevronsUpDown className={cn('text-muted-foreground', sizing.icon)} />
         </ComboboxPrimitive.Icon>
       </div>
     </ComboboxPrimitive.InputGroup>
