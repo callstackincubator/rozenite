@@ -151,11 +151,6 @@ export const WaterfallView = ({
   return (
     <div className="waterfall-shell">
       <div className="waterfall-topbar">
-        <div className="waterfall-summary">
-          <strong>{model.rows.length}</strong> events
-          <span>{formatTimelineTime(model.timelineDuration)} timeline</span>
-          {model.hasCompressedGaps && <span>gaps normalized</span>}
-        </div>
         <div className="waterfall-legend" aria-hidden="true">
           <span className="waterfall-legend-measure">Measure</span>
           <span className="waterfall-legend-resource">Resource</span>

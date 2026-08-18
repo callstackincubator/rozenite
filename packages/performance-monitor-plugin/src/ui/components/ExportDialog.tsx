@@ -105,14 +105,10 @@ export const ExportDialog = ({
         </Dialog.Header>
 
         <div className="flex items-center gap-2">
-          <Button size="compact" variant="outline" onClick={() => setExportOptions(ALL_OPTIONS_ON)}>
+          <Button size="sm" variant="outline" onClick={() => setExportOptions(ALL_OPTIONS_ON)}>
             Select All
           </Button>
-          <Button
-            size="compact"
-            variant="outline"
-            onClick={() => setExportOptions(ALL_OPTIONS_OFF)}
-          >
+          <Button size="sm" variant="outline" onClick={() => setExportOptions(ALL_OPTIONS_OFF)}>
             Select None
           </Button>
         </div>

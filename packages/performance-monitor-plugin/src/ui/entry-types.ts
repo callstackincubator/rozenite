@@ -1,7 +1,7 @@
 import type { SerializedPerformanceEntry } from '../shared/types';
 
-// Drives the toolbar's entryType filter (`Select`) and the unified table's
-// Type column/badge. 'all' is UI-only and never appears on a real entry.
+// Drives the toolbar's entryType filter (`Select`) and the waterfall/detail
+// pane's Type badge. 'all' is UI-only and never appears on a real entry.
 export type EntryTypeFilter = 'all' | SerializedPerformanceEntry['entryType'];
 
 export const ENTRY_TYPE_OPTIONS: Array<{ value: EntryTypeFilter; label: string }> = [

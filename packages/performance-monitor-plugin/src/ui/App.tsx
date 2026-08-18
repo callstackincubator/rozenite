@@ -1,14 +1,6 @@
 import { useRozeniteDevToolsClient, Subscription } from '@rozenite/plugin-bridge';
-import {
-  Button,
-  IndicatorDot,
-  PluginShell,
-  SearchField,
-  Select,
-  Split,
-  Toolbar,
-} from '@rozenite/ui';
-import { Download, Play, Square, Trash2 } from 'lucide-react';
+import { IconButton, PluginShell, SearchField, Select, Toolbar } from '@rozenite/ui';
+import { Download, Play, Square, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   PerformanceMonitorEventMap,
@@ -20,10 +12,7 @@ import {
   SerializedPerformanceEntry,
 } from '../shared/types';
 import { DetailPane } from './components/DetailPane';
-import { EntriesTable } from './components/EntriesTable';
 import { ExportDialog } from './components/ExportDialog';
-import { SessionDuration } from './components/SessionDuration';
-import { StartupSummaryCard } from './components/StartupSummaryCard';
 import { WaterfallView } from './components/WaterfallView';
 import { deriveStartupPhases } from './derive-startup-phases';
 import { ENTRY_TYPE_OPTIONS, type EntryTypeFilter } from './entry-types';
@@ -178,9 +167,22 @@ export default function PerformanceMonitorPanel() {
     }
   };
 
+  const handleToggleSession = () => {
+    if (isSessionActive) {
+      handleStopSession();
+    } else {
+      handleStartSession();
+    }
+  };
+
   const handleEntryClick = (entry: SerializedPerformanceEntry, entryId?: string) => {
     setSelectedItem(entry);
     setSelectedEntryId(entryId ?? null);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedItem(null);
+    setSelectedEntryId(null);
   };
 
   const handleClear = () => {
@@ -194,8 +196,8 @@ export default function PerformanceMonitorPanel() {
 
   // Derived measures live only in the UI: paired Start/End RN marks are
   // shown alongside user-created measures (with an "RN" badge) so the
-  // unified table reflects startup phases without forcing manual
-  // subtraction. The export still emits raw session data (see ExportDialog).
+  // waterfall reflects startup phases without forcing manual subtraction.
+  // The export still emits raw session data (see ExportDialog).
   const startupPhases = deriveStartupPhases(session.reactNativeMarks);
   const allMeasures = [...startupPhases, ...session.measures];
   const waterfallEntries: SerializedPerformanceEntry[] = [
@@ -224,35 +226,28 @@ export default function PerformanceMonitorPanel() {
       <PluginShell.Body>
         <Toolbar>
           <Toolbar.Group>
-            <Button
-              size="compact"
-              variant="outline"
-              onClick={handleStartSession}
-              disabled={isSessionActive}
+            <Toolbar.Button
+              onClick={handleToggleSession}
+              aria-label={isSessionActive ? 'Stop' : 'Start'}
+              title={isSessionActive ? 'Stop' : 'Start'}
+              className="w-6 px-0"
             >
-              <Play className="h-3.5 w-3.5" />
-              Start
-            </Button>
-            <Button
-              size="compact"
-              variant="outline"
-              onClick={handleStopSession}
-              disabled={!isSessionActive}
+              {isSessionActive ? (
+                <Square className="h-3.5 w-3.5" />
+              ) : (
+                <Play className="h-3.5 w-3.5" />
+              )}
+            </Toolbar.Button>
+            <Toolbar.Button
+              onClick={handleClear}
+              disabled={!hasData}
+              aria-label="Clear"
+              title="Clear"
+              className="w-6 px-0"
             >
-              <Square className="h-3.5 w-3.5" />
-              Stop
-            </Button>
+              <Trash2 className="h-3.5 w-3.5" />
+            </Toolbar.Button>
           </Toolbar.Group>
-
-          <Toolbar.Separator />
-
-          <div className="flex items-center gap-1.5">
-            <IndicatorDot variant={isSessionActive ? 'default' : 'destructive'} />
-            <SessionDuration
-              isActive={isSessionActive}
-              sessionStartedAt={session.sessionStartedAt}
-            />
-          </div>
 
           <Toolbar.Separator />
 
@@ -265,7 +260,11 @@ export default function PerformanceMonitorPanel() {
             }}
           >
             <Select.Trigger className="w-32">
-              <Select.Value />
+              <Select.Value>
+                {(value: EntryTypeFilter) =>
+                  ENTRY_TYPE_OPTIONS.find((option) => option.value === value)?.label ?? value
+                }
+              </Select.Value>
             </Select.Trigger>
             <Select.Content>
               {ENTRY_TYPE_OPTIONS.map((option) => (
@@ -286,53 +285,52 @@ export default function PerformanceMonitorPanel() {
           </div>
 
           <Toolbar.Group>
-            <Button
-              size="compact"
-              variant="outline"
+            <Toolbar.Button
               onClick={() => setIsExportDialogOpen(true)}
               disabled={!hasData}
+              aria-label="Export"
+              title="Export"
+              className="w-6 px-0"
             >
               <Download className="h-3.5 w-3.5" />
-              Export
-            </Button>
-            <Button size="compact" variant="outline" onClick={handleClear} disabled={!hasData}>
-              <Trash2 className="h-3.5 w-3.5" />
-              Clear
-            </Button>
+            </Toolbar.Button>
           </Toolbar.Group>
         </Toolbar>
 
-        <div className="min-h-0 flex-1">
-          <Split direction="vertical" autoSaveId="performance-monitor">
-            <Split.Pane defaultSize={45} minSize={20}>
-              <div className="flex h-full min-h-0 flex-col">
-                <StartupSummaryCard reactNativeMarks={session.reactNativeMarks} />
-                <div className="min-h-0 flex-1 overflow-hidden">
-                  <WaterfallView
-                    entries={filteredEntries}
-                    selectedEntry={selectedItem}
-                    selectedEntryId={selectedEntryId}
-                    onEntrySelect={handleEntryClick}
-                  />
-                </div>
+        <div className="flex min-h-0 flex-1">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <WaterfallView
+              entries={filteredEntries}
+              selectedEntry={selectedItem}
+              selectedEntryId={selectedEntryId}
+              onEntrySelect={handleEntryClick}
+            />
+          </div>
+
+          {selectedItem && (
+            <div className="flex w-[360px] shrink-0 flex-col border-l border-border bg-card">
+              <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
+                <span
+                  className="truncate text-sm font-medium text-foreground"
+                  title={selectedItem.name}
+                >
+                  {selectedItem.name}
+                </span>
+                <IconButton
+                  label="Close details"
+                  tone="neutral"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseDetail}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </IconButton>
               </div>
-            </Split.Pane>
-            <Split.Handle />
-            <Split.Pane defaultSize={55} minSize={20}>
-              <Split direction="horizontal">
-                <Split.Pane defaultSize={62} minSize={30}>
-                  <EntriesTable
-                    entries={filteredEntries}
-                    onRowClick={(entry) => handleEntryClick(entry)}
-                  />
-                </Split.Pane>
-                <Split.Handle />
-                <Split.Pane defaultSize={38} minSize={25}>
-                  <DetailPane entry={selectedItem} />
-                </Split.Pane>
-              </Split>
-            </Split.Pane>
-          </Split>
+              <div className="min-h-0 flex-1">
+                <DetailPane entry={selectedItem} />
+              </div>
+            </div>
+          )}
         </div>
       </PluginShell.Body>
 
