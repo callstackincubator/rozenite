@@ -34,4 +34,13 @@ export type ShellProps = ShellConfiguration & {
    * full viewport.
    */
   className?: string;
+  /**
+   * Merged onto the sidebar's header (the one showing the Rozenite logo),
+   * via `cn`/`tailwind-merge`. For an embedder whose window has its own
+   * traffic lights/caption buttons overlapping that corner (e.g.
+   * `@rozenite/app`'s Electron shell) — lets it reserve space for them and
+   * mark the header as a drag handle without `Shell` itself knowing
+   * anything about Electron.
+   */
+  sidebarHeaderClassName?: string;
 };

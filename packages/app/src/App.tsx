@@ -15,6 +15,7 @@ import { fetchConfig } from './config';
 import { loadPlugins } from './plugins';
 import type { DeviceConnection, DeviceState } from './connection/device-connection';
 import { TargetUrlError } from './connection/target-from-url';
+import { getTitleBarRegionClassName, WindowDragHandle } from './window-controls';
 
 /** Where the "app running but Rozenite isn't installed" state points
  * people to install/initialize it. From the repo README's doc links. */
@@ -221,17 +222,24 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
           // must size to the space that column leaves it (`min-h-0
           // flex-1`) instead of claiming the full viewport itself.
           className="h-full min-h-0 flex-1"
+          // Reserves space for the Electron window's traffic lights in the
+          // sidebar's own header instead of a full-width bar above
+          // everything — see `getTitleBarRegionClassName`.
+          sidebarHeaderClassName={getTitleBarRegionClassName()}
         />
       ) : (
         !configFailed && (
-          <PluginShell.Body className="items-center justify-center">
-            <EmptyState
-              title={
-                configState.status === 'loading' ? 'Loading plugins…' : 'Connecting to device…'
-              }
-              description={targetName || undefined}
-            />
-          </PluginShell.Body>
+          <>
+            <WindowDragHandle />
+            <PluginShell.Body className="items-center justify-center">
+              <EmptyState
+                title={
+                  configState.status === 'loading' ? 'Loading plugins…' : 'Connecting to device…'
+                }
+                description={targetName || undefined}
+              />
+            </PluginShell.Body>
+          </>
         )
       )}
 
@@ -288,6 +296,7 @@ export function App({ target }: { target: AppTarget }) {
   if (target.kind === 'error') {
     return (
       <PluginShell>
+        <WindowDragHandle />
         <PluginShell.Body className="items-center justify-center">
           <EmptyState
             title="No device to connect to"

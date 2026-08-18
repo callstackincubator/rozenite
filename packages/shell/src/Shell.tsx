@@ -22,6 +22,7 @@ import {
   type SelectionState,
 } from './selection';
 import { NewVersionFooter } from './NewVersionFooter';
+import { PluginFrame } from './PluginFrame';
 import { WelcomeDialog } from './WelcomeDialog';
 import { getAvailableRuntimeVersion } from './new-version';
 import { PluginsScreen } from './plugins/PluginsScreen';
@@ -45,6 +46,7 @@ export function Shell({
   runtimeVersion,
   host,
   className,
+  sidebarHeaderClassName,
 }: ShellProps) {
   const [selectionState, setSelectionState] = useState<SelectionState>(() =>
     getInitialSelectionState(plugins),
@@ -209,7 +211,7 @@ export function Shell({
               aria-label="Rozenite panels"
               className="h-full w-full gap-0 overflow-hidden border-r-0 p-0"
             >
-              <Sidebar.Header>
+              <Sidebar.Header className={sidebarHeaderClassName}>
                 {isSidebarCollapsed ? (
                   <img src={compactLogo} alt="Rozenite" className="h-6 w-6" />
                 ) : (
@@ -305,18 +307,18 @@ export function Shell({
                   }
 
                   return (
-                    <iframe
+                    <PluginFrame
                       key={panel.id}
-                      ref={(frame) => {
+                      plugin={plugin}
+                      panel={panel}
+                      isActive={isActive}
+                      frameRef={(frame) => {
                         if (frame) {
                           contentFrames.current.set(panel.id, { frame, pluginId: plugin.id });
                         } else {
                           contentFrames.current.delete(panel.id);
                         }
                       }}
-                      hidden={!isActive}
-                      title={`${plugin.name}: ${panel.name}`}
-                      src={panel.source}
                     />
                   );
                 })}
