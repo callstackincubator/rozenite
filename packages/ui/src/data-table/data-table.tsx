@@ -7,8 +7,8 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { SortIcon } from '../utils/sort-icon';
 
 declare module '@tanstack/react-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- required by the RowData constraint of TableMeta
@@ -23,6 +23,8 @@ export type DataTableColumn<TRow> = ColumnDef<TRow, any>;
 export type DataTableProps<TRow> = {
   columns: DataTableColumn<TRow>[];
   data: TRow[];
+  /** Accessible name for the table. */
+  ariaLabel?: string;
   className?: string;
   /** Shows a loading row in place of the table body. */
   loading?: boolean;
@@ -42,6 +44,7 @@ export type DataTableProps<TRow> = {
 export function DataTable<TRow>({
   columns,
   data,
+  ariaLabel,
   className,
   loading = false,
   emptyMessage = 'No data.',
@@ -69,7 +72,11 @@ export function DataTable<TRow>({
   const columnCount = columns.length;
 
   return (
-    <table data-slot="data-table" className={cn('w-full border-collapse text-sm', className)}>
+    <table
+      aria-label={ariaLabel}
+      data-slot="data-table"
+      className={cn('w-full border-collapse text-sm', className)}
+    >
       <thead data-slot="data-table-head">
         {table.getHeaderGroups().map((headerGroup) => (
           <tr key={headerGroup.id} className="border-b border-border">
@@ -80,8 +87,18 @@ export function DataTable<TRow>({
               return (
                 <th
                   key={header.id}
+                  aria-sort={
+                    canSort
+                      ? sortDirection === 'asc'
+                        ? 'ascending'
+                        : sortDirection === 'desc'
+                          ? 'descending'
+                          : 'none'
+                      : undefined
+                  }
                   colSpan={header.colSpan}
                   className="h-8 px-3 text-left text-xs font-medium text-muted-foreground"
+                  scope="col"
                 >
                   {header.isPlaceholder ? null : canSort ? (
                     <button
@@ -135,16 +152,4 @@ export function DataTable<TRow>({
       </tbody>
     </table>
   );
-}
-
-function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
-  if (direction === 'asc') {
-    return <ChevronUp className="h-3 w-3" />;
-  }
-
-  if (direction === 'desc') {
-    return <ChevronDown className="h-3 w-3" />;
-  }
-
-  return <ChevronsUpDown className="h-3 w-3 text-muted-foreground/60" />;
 }

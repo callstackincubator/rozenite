@@ -10,18 +10,19 @@ function ToastDemo() {
   );
 }
 const meta = {
-  component: Toast.Provider,
+  component: Toast,
   title: 'Components/Toast',
-} satisfies Meta<typeof Toast.Provider>;
+} satisfies Meta<typeof Toast>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 /** Use for transient feedback after a non-blocking action completes.
+ * `Toast` itself is callable — `Toast.Provider` is a deprecated alias.
  * @summary Show transient action feedback.
  */
 export const Interactive: Story = {
   render: () => (
-    <Toast.Provider>
+    <Toast>
       <ToastDemo />
-    </Toast.Provider>
+    </Toast>
   ),
 };

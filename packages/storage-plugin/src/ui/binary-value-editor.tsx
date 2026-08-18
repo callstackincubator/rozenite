@@ -173,7 +173,7 @@ export const BinaryValueEditor = ({ initialBytes, onChange }: BinaryValueEditorP
             ASCII: <span className="font-mono text-foreground">{asciiPreview}</span>
           </div>
         )}
-        {state.error && <div className="text-destructive">{state.error}</div>}
+        {state.error && <div className="text-danger">{state.error}</div>}
       </div>
     </div>
   );

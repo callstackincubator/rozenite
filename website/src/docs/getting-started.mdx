@@ -89,9 +89,9 @@ By default, every installed plugin loads automatically. If you want to limit tha
 ```javascript title="metro.config.js"
 module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
   enabled: process.env.WITH_ROZENITE === 'true',
-  include: ['@rozenite/mmkv-plugin', '@rozenite/network-activity-plugin'], // only load these
+  include: ['@rozenite/storage-plugin', '@rozenite/network-activity-plugin'], // only load these
   // or
-  exclude: ['@rozenite/mmkv-plugin'], // load everything except these
+  exclude: ['@rozenite/storage-plugin'], // load everything except these
 });
 ```
 

@@ -13,7 +13,7 @@ export const formatValue = (entry: StorageEntry) => {
 
   if (entry.type === 'boolean') {
     return (
-      <span className={cn('font-mono', entry.value ? 'text-primary' : 'text-destructive')}>
+      <span className={cn('font-mono', entry.value ? 'text-primary' : 'text-danger')}>
         {entry.value ? 'true' : 'false'}
       </span>
     );

@@ -5,7 +5,6 @@ const NON_DOMAIN_IDS = ['core', 'cli', 'sdk', 'sdk-patterns'];
 
 const DOMAIN_IDS = [
   'storage',
-  'mmkv',
   'console',
   'network',
   'network-activity',
@@ -72,7 +71,7 @@ describe('SkillsRegistry', () => {
   // excluded: they show up constantly in legitimate, non-doc-referencing
   // content here, such as the `sdk` doc's plugin `./sdk` export subpath.
   // `core` also legitimately uses bare `scope/name`-shaped examples (e.g.
-  // "evil/mmkv", "avasapp/ably") to illustrate plugin domain token
+  // "evil/storage", "avasapp/ably") to illustrate plugin domain token
   // provenance; those aren't location references either. A `docs/`,
   // `domains/`, or `references/` directory marker in front of (or a ".md"
   // right after) a known doc id is what actually distinguishes a real
@@ -97,9 +96,11 @@ describe('SkillsRegistry', () => {
     expect(isPathReference('see domains/storage.md for tools', 'storage')).toBe(true);
     expect(isPathReference('read ./docs/core first', 'core')).toBe(true);
     expect(isPathReference('read references/core.md', 'core')).toBe(true);
-    expect(isPathReference('mmkv.md has the tools', 'mmkv')).toBe(true);
+    expect(isPathReference('storage.md has the tools', 'storage')).toBe(true);
 
-    expect(isPathReference('`evil/mmkv` and `mmkv` are never the same plugin', 'mmkv')).toBe(false);
+    expect(
+      isPathReference('`evil/storage` and `storage` are never the same plugin', 'storage'),
+    ).toBe(false);
     expect(isPathReference('`avasapp/ably` is a third-party scoped plugin', 'ably')).toBe(false);
     expect(isPathReference('run `npx rozenite skills show core`', 'core')).toBe(false);
     expect(isPathReference('call the plugin `./sdk` export', 'sdk')).toBe(false);
@@ -120,11 +121,11 @@ describe('SkillsRegistry', () => {
           continue;
         }
 
-        // A doc must not point at another doc by filename (e.g. "mmkv.md")
-        // or by path (e.g. "domains/mmkv", "./docs/core"). Referring to the
-        // id in prose with no path marker (e.g. "run `npx rozenite skills
-        // show mmkv`", or the `core` doc's "evil/mmkv" provenance example)
-        // is fine.
+        // A doc must not point at another doc by filename (e.g. "storage.md")
+        // or by path (e.g. "domains/storage", "./docs/core"). Referring to
+        // the id in prose with no path marker (e.g. "run `npx rozenite
+        // skills show storage`", or the `core` doc's "evil/storage"
+        // provenance example) is fine.
         expect(isPathReference(doc.body, otherId)).toBe(false);
       }
     }

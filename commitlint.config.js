@@ -10,7 +10,6 @@ export default {
         'electron-app',
         'expo-atlas-plugin',
         'metro',
-        'mmkv-plugin',
         'network-activity-plugin',
         'plugin-bridge',
         'runtime',

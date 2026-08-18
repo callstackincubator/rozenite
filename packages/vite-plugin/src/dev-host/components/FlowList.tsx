@@ -52,7 +52,8 @@ export const FlowList = ({
             return (
               <Button
                 key={flow.name}
-                variant={isRunning ? 'secondary' : 'outline'}
+                tone="neutral"
+                variant={isRunning ? 'solid' : 'outline'}
                 className="dev-host-flow-button"
                 onClick={() => onRunFlow(flow)}
                 aria-label={`Run ${flow.displayName}`}
@@ -60,7 +61,11 @@ export const FlowList = ({
                 <span className="dev-host-flow-name">
                   <Play />
                   {flow.displayName}
-                  {flow.autoRun ? <Badge variant="outline">Auto</Badge> : null}
+                  {flow.autoRun ? (
+                    <Badge tone="neutral" variant="outline">
+                      Auto
+                    </Badge>
+                  ) : null}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {isRunning ? 'Running' : 'Run'}
@@ -80,10 +85,19 @@ export const FlowList = ({
                 <div className="dev-host-flow-state-header">
                   <span className="dev-host-flow-title">
                     {flowRun.flowDisplayName}
-                    {flowRun.autoRun ? <Badge variant="outline">Auto</Badge> : null}
+                    {flowRun.autoRun ? (
+                      <Badge tone="neutral" variant="outline">
+                        Auto
+                      </Badge>
+                    ) : null}
                   </span>
                   {flowRun.status === 'running' ? (
-                    <Button variant="ghost" size="compact" onClick={() => onStopFlow(flowRun.id)}>
+                    <Button
+                      tone="neutral"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onStopFlow(flowRun.id)}
+                    >
                       <Square />
                       Stop
                     </Button>

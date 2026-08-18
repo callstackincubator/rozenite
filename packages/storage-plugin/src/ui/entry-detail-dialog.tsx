@@ -69,7 +69,9 @@ export const EntryDetailDialog = ({
 
             <div>
               <div className="mb-1 text-sm font-medium text-foreground">Type</div>
-              <Badge variant="outline">{entry.type}</Badge>
+              <Badge tone="neutral" variant="outline">
+                {entry.type}
+              </Badge>
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col">
@@ -96,7 +98,7 @@ export const EntryDetailDialog = ({
 
         <Dialog.Footer>
           {entry && onEdit && (
-            <Button variant="outline" onClick={() => onEdit(entry)}>
+            <Button tone="neutral" variant="outline" onClick={() => onEdit(entry)}>
               <Edit3 className="h-3.5 w-3.5" />
               Edit
             </Button>

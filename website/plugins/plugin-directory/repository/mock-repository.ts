@@ -24,15 +24,6 @@ const MOCK_PLUGINS: RozenitePluginEntry[] = [
     isOfficial: true,
   },
   {
-    packageName: '@rozenite/mmkv-plugin',
-    version: '1.0.5',
-    githubUrl: 'https://github.com/callstackincubator/rozenite/tree/main/packages/mmkv-plugin',
-    npmUrl: 'https://www.npmjs.com/package/@rozenite/mmkv-plugin',
-    description: 'MMKV storage debugging and inspection tools for React Native',
-    stars: 234,
-    isOfficial: true,
-  },
-  {
     packageName: '@rozenite/tanstack-query-plugin',
     version: '1.8.2',
     githubUrl:

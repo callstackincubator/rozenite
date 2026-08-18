@@ -8,18 +8,39 @@ export const useToast = ToastPrimitive.useToastManager;
 
 export type ToastProviderProps = ToastPrimitive.Provider.Props & {
   children?: ReactNode;
+  /** Accessible name for each toast's dismiss button.
+   * @default 'Dismiss' */
+  dismissLabel?: string;
+  /** Overrides the viewport's position and size, e.g. to dock it elsewhere
+   * than the bottom-right corner.
+   * @default 'fixed right-4 bottom-4 z-50 flex w-80 flex-col gap-2' */
+  viewportClassName?: string;
 };
 
-function ToastProviderRoot({ children, ...props }: ToastProviderProps) {
+/** Alias for `ToastProviderProps` — `Toast` itself is callable, so this is the props type most callers want. */
+export type ToastProps = ToastProviderProps;
+
+function ToastProviderRoot({
+  children,
+  dismissLabel = 'Dismiss',
+  viewportClassName,
+  ...props
+}: ToastProviderProps) {
   return (
     <ToastPrimitive.Provider data-slot="toast-provider" {...props}>
       {children}
-      <Toaster />
+      <Toaster dismissLabel={dismissLabel} viewportClassName={viewportClassName} />
     </ToastPrimitive.Provider>
   );
 }
 
-function Toaster() {
+function Toaster({
+  dismissLabel,
+  viewportClassName,
+}: {
+  dismissLabel: string;
+  viewportClassName?: string;
+}) {
   const { toasts } = ToastPrimitive.useToastManager();
   const container = usePluginPortalContainer();
 
@@ -27,7 +48,7 @@ function Toaster() {
     <ToastPrimitive.Portal container={container}>
       <ToastPrimitive.Viewport
         data-slot="toast-viewport"
-        className="fixed right-4 bottom-4 z-50 flex w-80 flex-col gap-2"
+        className={cn('fixed right-4 bottom-4 z-50 flex w-80 flex-col gap-2', viewportClassName)}
       >
         {toasts.map((toast) => (
           <ToastPrimitive.Root
@@ -37,7 +58,7 @@ function Toaster() {
             className={cn(
               'relative flex items-start gap-2 rounded-md border border-border bg-card p-3 text-card-foreground shadow-md',
               'transition-[transform,opacity] data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
-              toast.type === 'error' && 'border-destructive/50 text-destructive',
+              toast.type === 'error' && 'border-danger/50 text-danger',
             )}
           >
             <ToastPrimitive.Content
@@ -56,7 +77,7 @@ function Toaster() {
             </ToastPrimitive.Content>
             <ToastPrimitive.Close
               data-slot="toast-close"
-              aria-label="Dismiss"
+              aria-label={dismissLabel}
               className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
@@ -69,4 +90,7 @@ function Toaster() {
 }
 
 /** A provider for transient notifications that appear above the current view. */
-export const Toast = { Provider: ToastProviderRoot };
+export const Toast = Object.assign(ToastProviderRoot, {
+  /** @deprecated Use `Toast` directly — the root itself is now callable, like every other namespace in this package. Removed in a future minor. */
+  Provider: ToastProviderRoot,
+});

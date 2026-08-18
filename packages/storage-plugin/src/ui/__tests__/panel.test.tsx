@@ -93,6 +93,19 @@ vi.mock('@rozenite/ui', async () => {
     Button: ({ children, onClick }: { children?: ReactNode; onClick?: () => void }) => (
       <button onClick={onClick}>{children}</button>
     ),
+    IconButton: ({
+      children,
+      onClick,
+      label,
+    }: {
+      children?: ReactNode;
+      onClick?: () => void;
+      label: string;
+    }) => (
+      <button onClick={onClick} aria-label={label}>
+        {children}
+      </button>
+    ),
     ConfirmDialog: () => null,
     EmptyState: () => <div />,
     PluginShell,

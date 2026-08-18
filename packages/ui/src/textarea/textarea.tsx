@@ -1,19 +1,19 @@
 import type { ComponentProps } from 'react';
 import { cn } from '../utils/cn';
+import { textareaSurface } from '../utils/control-surfaces';
+import type { Size } from '../tokens/size';
 
-export type TextareaProps = ComponentProps<'textarea'>;
+export type TextareaProps = ComponentProps<'textarea'> & {
+  /** @default 'md' */
+  size?: Size;
+};
 
 /** A multiline text input styled for the Rozenite UI. */
-export function Textarea({ className, ...props }: TextareaProps) {
+export function Textarea({ className, size = 'md', ...props }: TextareaProps) {
   return (
     <textarea
       data-slot="textarea"
-      className={cn(
-        'min-h-28 w-full min-w-0 resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground shadow-xs transition-colors',
-        'outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
-        'placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
-        className,
-      )}
+      className={cn(textareaSurface({ size }), 'min-w-0 resize-y', className)}
       {...props}
     />
   );
