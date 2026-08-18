@@ -1,8 +1,13 @@
 import { createRoot } from 'react-dom/client';
 import { useEffect, useState } from 'react';
 import { Shell, SHELL_CONFIGURATION_TYPE } from './Shell';
+import { createParentWindowHost } from './host';
 import type { ShellConfiguration } from './types';
 import './styles.css';
+
+// Created once at module scope: `Shell`'s forwarding effect resubscribes
+// whenever the `host` reference changes, so this must stay stable.
+const host = createParentWindowHost();
 
 function App() {
   const [configuration, setConfiguration] = useState<ShellConfiguration>({
@@ -23,7 +28,7 @@ function App() {
     return () => window.removeEventListener('message', receiveConfiguration);
   }, []);
 
-  return <Shell {...configuration} />;
+  return <Shell {...configuration} host={host} />;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);

@@ -1,0 +1,42 @@
+@import '@rozenite/ui/styles.css';
+
+/* The shell's stylesheet carries its own `@source` directive (resolved
+   relative to that file), which points Tailwind at the shell's sources.
+   Importing it here is what makes Tailwind also scan `Shell` and its
+   children for utility classes — without it, classes that only the shell
+   uses would be missing from this app's build. Confirmed by building this
+   package and checking that shell-only classes (e.g. `dark:block` from
+   `Shell.tsx`) show up in the emitted CSS. */
+@import '@rozenite/shell/styles.css';
+
+@source "./**/*.{ts,tsx}";
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  /* This app is a window, not a document: there is nothing above or below
+     the viewport to reveal, so the trackpad rubber-banding Chromium does
+     by default reads as a web page inside the Electron shell. */
+  overscroll-behavior: none;
+  /* Native app chrome isn't selectable — dragging across the sidebar,
+     footer, or a panel label shouldn't paint a text selection. Scoped to
+     this app's stylesheet rather than `@rozenite/ui`, so it applies to the
+     standalone app's own chrome and not to every plugin: panels are
+     iframes, i.e. separate documents this rule can't reach anyway. */
+  user-select: none;
+}
+
+/* Back on wherever selecting text is the point: form fields, and the prose
+   in dialogs (the welcome dialog's release notes, connection errors). */
+input,
+textarea,
+[contenteditable],
+[data-slot='dialog-content'] {
+  user-select: text;
+}

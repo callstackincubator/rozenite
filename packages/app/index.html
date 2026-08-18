@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rozenite</title>
+    <!--
+      Paints the right background before the built stylesheet has even
+      loaded over the network, let alone before React mounts — otherwise
+      there's a brief default-white flash first (most visible in the
+      Electron shell, whose own window canvas is themed via
+      `backgroundColor` in packages/electron-app/src/main.js for the same
+      reason). Mirrors `--background`'s light/dark values in
+      packages/ui/styles.css exactly, so this handoff is invisible.
+    -->
+    <style>
+      html,
+      body {
+        background: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        html,
+        body {
+          background: #201f24;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

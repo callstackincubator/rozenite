@@ -1,7 +1,14 @@
 import { createServer, get } from 'node:http';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getNormalizedRequestUrl } from '../middleware.js';
+import { getMiddleware, getNormalizedRequestUrl } from '../middleware.js';
 import { createScopedMiddleware, type MiddlewareHandler } from '../scoped-middleware.js';
+import { createAgentSessionManager } from '../agent/index.js';
+import type { InstalledPlugin } from '../auto-discovery.js';
+import type { RozeniteConfig } from '../config.js';
 
 let activeServer: ReturnType<typeof createServer> | null = null;
 
@@ -145,5 +152,95 @@ describe('scoped middleware', () => {
 
     expect(response).toEqual({ status: 204, body: '' });
     expect(downstream).not.toHaveBeenCalled();
+  });
+});
+
+describe('standalone app', () => {
+  // Resolving the debugger frontend needs a real react-native install, so
+  // point at this package's own directory: it sits inside the monorepo,
+  // where react-native and @react-native/dev-middleware are hoisted and
+  // resolvable, without depending on any particular project fixture.
+  const projectRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
+
+  const createApp = (
+    installedPlugins: InstalledPlugin[],
+    destroyOnDetachPlugins: string[],
+    runtimeVersion?: string,
+  ): MiddlewareHandler => {
+    const config: RozeniteConfig = { projectRoot };
+    const agentSessionManager = createAgentSessionManager({ projectRoot });
+
+    return getMiddleware(
+      config,
+      installedPlugins,
+      destroyOnDetachPlugins,
+      agentSessionManager,
+      runtimeVersion,
+    ) as unknown as MiddlewareHandler;
+  };
+
+  it('serves the config endpoint with the installed plugin names and runtime version', async () => {
+    const app = createApp(
+      [{ name: '@rozenite/network-activity-plugin', path: '/plugins/network-activity' }],
+      ['@rozenite/some-plugin'],
+      '2.1.0',
+    );
+
+    const response = await runRequest(app, '/rozenite/app/config');
+
+    expect(response.status).toBe(200);
+    expect(JSON.parse(response.body)).toEqual({
+      installedPlugins: ['@rozenite/network-activity-plugin'],
+      destroyOnDetachPlugins: ['@rozenite/some-plugin'],
+      runtimeVersion: '2.1.0',
+    });
+  });
+
+  it('omits runtimeVersion from the config payload when it is not provided', async () => {
+    const app = createApp([], []);
+
+    const response = await runRequest(app, '/rozenite/app/config');
+    const payload = JSON.parse(response.body);
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ installedPlugins: [], destroyOnDetachPlugins: [] });
+    expect('runtimeVersion' in payload).toBe(false);
+  });
+
+  it('serves the app HTML for both /rozenite/app and /rozenite/app/ without redirecting', async () => {
+    const app = createApp([], []);
+
+    const withoutTrailingSlash = await runRequest(app, '/rozenite/app?ws=abc&appId=123');
+    const withTrailingSlash = await runRequest(app, '/rozenite/app/?ws=abc&appId=123');
+
+    for (const response of [withoutTrailingSlash, withTrailingSlash]) {
+      expect(response.status).toBe(200);
+      expect(response.body).toContain('<div id="root"></div>');
+    }
+  });
+
+  it('registers the config route ahead of the static app mount so it cannot be shadowed', async () => {
+    // Proves the ordering actually matters in the real middleware: the built
+    // app's own directory gets a file literally named "config" (unlikely in
+    // practice, but not impossible), which would shadow the JSON route if
+    // `app.use('/app', express.static(appPath))` were registered before
+    // `app.get('/app/config', ...)`.
+    const require = createRequire(import.meta.url);
+    const appPath = path.join(path.dirname(require.resolve('@rozenite/app/package.json')), 'dist');
+    const shadowFile = path.join(appPath, 'config');
+    fs.writeFileSync(shadowFile, 'not json');
+
+    try {
+      const app = createApp([], []);
+      const response = await runRequest(app, '/rozenite/app/config');
+
+      expect(response.status).toBe(200);
+      expect(JSON.parse(response.body)).toEqual({
+        installedPlugins: [],
+        destroyOnDetachPlugins: [],
+      });
+    } finally {
+      fs.rmSync(shadowFile, { force: true });
+    }
   });
 });

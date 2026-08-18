@@ -1,0 +1,53 @@
+{
+  "name": "@rozenite/app",
+  "version": "2.1.0",
+  "description": "Standalone Rozenite DevTools application, served directly by Metro and connected to a device over its own CDP WebSocket.",
+  "keywords": [
+    "app",
+    "devtools",
+    "plugin",
+    "react-native"
+  ],
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "license": "MIT",
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
+  },
+  "dependencies": {
+    "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/shell": "workspace:*",
+    "@rozenite/ui": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "~5.9.3",
+    "vite": "catalog:",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

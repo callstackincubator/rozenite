@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { type PluginTheme, resolveInitialTheme } from './resolve-theme';
 
 const STORAGE_KEY = '@rozenite/ui:theme';
@@ -44,6 +52,35 @@ export function PluginThemeProvider({ children }: PluginThemeProviderProps) {
   const [theme, setThemeState] = useState<PluginTheme>(() =>
     resolveInitialTheme(readStoredTheme(), prefersDarkColorScheme()),
   );
+
+  // The initial resolution above can be made against the wrong preference:
+  // Chromium reports `prefers-color-scheme: dark` as `false` inside a frame
+  // that isn't being rendered, so a plugin panel that boots hidden reads
+  // light no matter what the OS says, and would stay light for the rest of
+  // the session. Following the query keeps that recoverable — and picks up
+  // the OS switching appearance mid-session, which is the same fix.
+  //
+  // Only while nothing is stored: an explicit choice outranks the OS, which
+  // is what `resolveInitialTheme` already encodes.
+  useEffect(() => {
+    if (readStoredTheme() !== null) {
+      return;
+    }
+
+    let query: MediaQueryList;
+    try {
+      query = window.matchMedia('(prefers-color-scheme: dark)');
+    } catch {
+      return;
+    }
+
+    const apply = () => setThemeState(query.matches ? 'dark' : 'light');
+
+    apply();
+    query.addEventListener('change', apply);
+
+    return () => query.removeEventListener('change', apply);
+  }, []);
 
   const setTheme = useCallback((next: PluginTheme) => {
     setThemeState(next);

@@ -5,7 +5,9 @@ export default {
       2,
       'always',
       [
+        'app',
         'cli',
+        'electron-app',
         'expo-atlas-plugin',
         'metro',
         'network-activity-plugin',
