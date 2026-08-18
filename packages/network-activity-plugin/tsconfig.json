@@ -21,6 +21,9 @@
   "exclude": ["node_modules", "dist", "build"],
   "references": [
     {
+      "path": "../agent-bridge"
+    },
+    {
       "path": "../plugin-bridge"
     },
     {

@@ -36,8 +36,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "test": "vitest --run --passWithNoTests",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -45,7 +46,6 @@
     "@rozenite/plugin-bridge": "workspace:*",
     "tslib": "^2.3.0"
   },
-  "devDependencies": {},
   "peerDependencies": {
     "react": ">=17"
   },
