@@ -295,8 +295,11 @@ export function Shell({
             <div className="relative h-full min-w-0">
               {/* Panel iframes stay mounted while the Plugins screen is open;
                   it only covers this area visually so plugin state survives
-                  a visit. */}
-              <div className={cn('h-full min-w-0', isPluginsScreenOpen && 'hidden')}>
+                  a visit. `relative` anchors the panels, which stack on top
+                  of each other rather than sitting in flow — see
+                  `PluginFrame` for why they can't be hidden with
+                  `display: none`. */}
+              <div className={cn('relative h-full min-w-0', isPluginsScreenOpen && 'hidden')}>
                 {panels.map(({ plugin, panel }) => {
                   const isActive = panel.id === activePanel?.id;
                   const isRetained = panel.id === retainedPanelId;

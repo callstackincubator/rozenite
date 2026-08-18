@@ -301,6 +301,37 @@ describe('Shell root className (finding 18)', () => {
     expect(root.className).toMatch(/\bflex-1\b/);
   });
 
+  // Regression guard for the panel theme bug: Chromium reports
+  // `prefers-color-scheme: dark` as `false` inside a frame that isn't being
+  // rendered, so a panel booting under `display: none` resolves its theme
+  // against a light preference and stays light for the session. Inactive
+  // panels must therefore be hidden with `visibility`, never `display`.
+  it('hides inactive panels without display: none, so they boot with the real color scheme', async () => {
+    await renderShellWithFrames();
+
+    const wrappers = Array.from(document.querySelectorAll('iframe')).map((frame) => {
+      const wrapper = frame.parentElement!;
+      return { title: frame.title, wrapper };
+    });
+
+    expect(wrappers.length).toBeGreaterThan(1);
+
+    for (const { wrapper } of wrappers) {
+      expect(wrapper.hasAttribute('hidden')).toBe(false);
+      expect(wrapper.className).not.toMatch(/\bhidden\b/);
+    }
+
+    const inactive = wrappers.filter(({ wrapper }) => wrapper.className.includes('invisible'));
+    const active = wrappers.filter(({ wrapper }) => !wrapper.className.includes('invisible'));
+
+    expect(active).toHaveLength(1);
+    expect(inactive).toHaveLength(wrappers.length - 1);
+    // `display: none` used to keep these out of the tab order for free.
+    for (const { wrapper } of inactive) {
+      expect(wrapper.hasAttribute('inert')).toBe(true);
+    }
+  });
+
   it('applies the same className override to the empty (no plugins) root', () => {
     render(
       <Shell
