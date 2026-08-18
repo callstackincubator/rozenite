@@ -7,7 +7,6 @@ import { buildAppOpenUrl } from './open-url.js';
 import { isInteractive } from '../utils/isInteractive.js';
 import { intro, outro, promptSelect } from '../utils/prompts.js';
 import { logger } from '../utils/logger.js';
-import { spawn } from '../utils/spawn.js';
 
 const require = createRequire(import.meta.url);
 
@@ -39,39 +38,6 @@ const promptForTarget = async (targets: MetroTarget[]): Promise<MetroTarget> => 
       label: `${target.name} (${target.appId || target.title})`,
     })),
   });
-};
-
-export const getBrowserOpenerCommand = (): string => {
-  switch (process.platform) {
-    case 'darwin':
-      return 'open';
-    case 'win32':
-      return 'start';
-    default:
-      return 'xdg-open';
-  }
-};
-
-export const getBrowserOpenerArgs = (url: string): string[] => {
-  if (process.platform === 'win32') {
-    // `start` is a cmd.exe builtin, and nano-spawn runs it via `cmd /c
-    // start ...` on win32 with the URL quoted. cmd treats a leading quoted
-    // argument as the new window's title rather than as something to open,
-    // so without an explicit (empty) title argument this opens an empty
-    // console window instead of a browser.
-    return ['', url];
-  }
-
-  return [url];
-};
-
-const tryOpenBrowser = async (url: string): Promise<boolean> => {
-  try {
-    await spawn(getBrowserOpenerCommand(), getBrowserOpenerArgs(url), { handleSignals: false });
-    return true;
-  } catch {
-    return false;
-  }
 };
 
 export const resolveElectronAppLauncher = (): string | undefined => {
@@ -137,24 +103,15 @@ export const openCommand = async (options: OpenCommandOptions): Promise<void> =>
 
   const url = buildAppOpenUrl(options.host, options.port, target);
 
-  if (tryOpenElectron(url)) {
-    logger.success(`Opened Rozenite DevTools for ${target.name}`);
-    logger.info(url);
+  if (!tryOpenElectron(url)) {
+    logger.error(
+      'Could not launch the Rozenite standalone app. It requires `@rozenite/electron-app`, which is installed alongside the CLI — try reinstalling `rozenite`.',
+    );
+    process.exitCode = 1;
     outro('Done');
     return;
   }
 
-  const opened = await tryOpenBrowser(url);
-
-  if (opened) {
-    logger.success(`Opened Rozenite DevTools for ${target.name} in your browser`);
-  } else {
-    logger.warn(
-      `Could not open Electron or a browser automatically for ${target.name}. Open this URL manually:`,
-    );
-  }
-
-  logger.info(url);
-
+  logger.success(`Opened Rozenite DevTools for ${target.name}`);
   outro('Done');
 };

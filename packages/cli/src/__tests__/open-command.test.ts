@@ -5,7 +5,6 @@ const mocks = vi.hoisted(() => ({
   isInteractive: vi.fn(),
   getMetroTargets: vi.fn(),
   promptSelect: vi.fn(),
-  spawn: vi.fn(),
   intro: vi.fn(),
   outro: vi.fn(),
   childProcessSpawn: vi.fn(),
@@ -29,10 +28,6 @@ vi.mock('../utils/prompts.js', () => ({
   promptSelect: mocks.promptSelect,
 }));
 
-vi.mock('../utils/spawn.js', () => ({
-  spawn: mocks.spawn,
-}));
-
 vi.mock('../utils/logger.js', () => ({
   logger: {
     success: vi.fn(),
@@ -46,13 +41,8 @@ vi.mock('../utils/logger.js', () => ({
   },
 }));
 
-const {
-  openCommand,
-  selectTargetById,
-  getBrowserOpenerCommand,
-  getBrowserOpenerArgs,
-  NON_INTERACTIVE_MESSAGE,
-} = await import('../commands/open-command.js');
+const { openCommand, selectTargetById, NON_INTERACTIVE_MESSAGE } =
+  await import('../commands/open-command.js');
 const { logger } = await import('../utils/logger.js');
 
 const targetA: MetroTarget = {
@@ -126,21 +116,18 @@ describe('openCommand target selection', () => {
     expect(mocks.outro).toHaveBeenCalledTimes(1);
   });
 
-  it('selects the target matching --deviceId and falls back to the browser when Electron is unavailable', async () => {
+  it('selects the target matching --deviceId and spawns Electron for it', async () => {
     mocks.isInteractive.mockReturnValue(true);
     mocks.getMetroTargets.mockResolvedValue([targetA, targetB]);
-    mocks.childProcessSpawn.mockImplementation(() => {
-      throw new Error('spawn ENOENT');
-    });
-    mocks.spawn.mockResolvedValue(undefined);
+    mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
 
     await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-b' });
 
     expect(mocks.promptSelect).not.toHaveBeenCalled();
-    expect(mocks.spawn).toHaveBeenCalledWith(
-      expect.any(String),
-      [expect.stringContaining('appId=com.example.b')],
-      expect.any(Object),
+    expect(mocks.childProcessSpawn).toHaveBeenCalledWith(
+      process.execPath,
+      [expect.any(String), expect.stringContaining('appId=com.example.b')],
+      expect.objectContaining({ detached: true }),
     );
     expect(process.exitCode).toBeUndefined();
   });
@@ -157,7 +144,7 @@ describe('openCommand target selection', () => {
       'Unknown deviceId "nope". Valid device IDs: device-a, device-b',
     );
     expect(process.exitCode).toBe(1);
-    expect(mocks.spawn).not.toHaveBeenCalled();
+    expect(mocks.childProcessSpawn).not.toHaveBeenCalled();
     expect(mocks.intro).toHaveBeenCalledTimes(1);
     expect(mocks.outro).toHaveBeenCalledTimes(1);
   });
@@ -180,34 +167,31 @@ describe('openCommand target selection', () => {
     );
   });
 
-  it('prints the URL when neither Electron nor the browser can be opened', async () => {
+  it('errors out when Electron cannot be launched, without any browser fallback', async () => {
     mocks.isInteractive.mockReturnValue(true);
     mocks.getMetroTargets.mockResolvedValue([targetA]);
     mocks.childProcessSpawn.mockImplementation(() => {
       throw new Error('spawn ENOENT');
     });
-    mocks.spawn.mockRejectedValue(new Error('spawn ENOENT'));
 
     await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-a' });
 
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining('Could not open Electron or a browser'),
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Could not launch the Rozenite standalone app'),
     );
-    expect(logger.info).toHaveBeenCalledWith(
-      expect.stringContaining('http://127.0.0.1:8081/rozenite/app/'),
-    );
+    expect(process.exitCode).toBe(1);
+    expect(logger.success).not.toHaveBeenCalled();
   });
 });
 
 describe('openCommand Electron opening (default)', () => {
-  it('spawns the @rozenite/electron-app launcher and never falls back to the browser opener', async () => {
+  it('spawns the @rozenite/electron-app launcher', async () => {
     mocks.isInteractive.mockReturnValue(true);
     mocks.getMetroTargets.mockResolvedValue([targetA]);
     mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
 
     await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-a' });
 
-    expect(mocks.spawn).not.toHaveBeenCalled();
     expect(mocks.childProcessSpawn).toHaveBeenCalledWith(
       process.execPath,
       [expect.stringContaining('launch.js'), expect.stringContaining('appId=com.example.a')],
@@ -215,78 +199,6 @@ describe('openCommand Electron opening (default)', () => {
     );
     expect(logger.success).toHaveBeenCalledWith(expect.stringContaining('iPhone 15'));
     expect(process.exitCode).toBeUndefined();
-  });
-
-  it('falls back to the browser opener when @rozenite/electron-app cannot be resolved or spawned', async () => {
-    mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockResolvedValue([targetA]);
-    mocks.childProcessSpawn.mockImplementation(() => {
-      throw new Error('spawn ENOENT');
-    });
-    mocks.spawn.mockResolvedValue(undefined);
-
-    await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-a' });
-
-    expect(mocks.spawn).toHaveBeenCalledWith(
-      expect.any(String),
-      [expect.stringContaining('appId=com.example.a')],
-      expect.any(Object),
-    );
-    expect(logger.success).toHaveBeenCalledWith(expect.stringContaining('in your browser'));
-  });
-});
-
-describe('getBrowserOpenerCommand', () => {
-  const originalPlatform = process.platform;
-
-  afterEach(() => {
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
-  });
-
-  it('uses "open" on darwin', () => {
-    Object.defineProperty(process, 'platform', { value: 'darwin' });
-    expect(getBrowserOpenerCommand()).toBe('open');
-  });
-
-  it('uses "start" on win32', () => {
-    Object.defineProperty(process, 'platform', { value: 'win32' });
-    expect(getBrowserOpenerCommand()).toBe('start');
-  });
-
-  it('uses "xdg-open" on linux and other platforms', () => {
-    Object.defineProperty(process, 'platform', { value: 'linux' });
-    expect(getBrowserOpenerCommand()).toBe('xdg-open');
-
-    Object.defineProperty(process, 'platform', { value: 'freebsd' });
-    expect(getBrowserOpenerCommand()).toBe('xdg-open');
-  });
-});
-
-describe('getBrowserOpenerArgs', () => {
-  const originalPlatform = process.platform;
-
-  afterEach(() => {
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
-  });
-
-  it('passes the URL alone on darwin and linux', () => {
-    Object.defineProperty(process, 'platform', { value: 'darwin' });
-    expect(getBrowserOpenerArgs('http://localhost:8081/rozenite/app/')).toEqual([
-      'http://localhost:8081/rozenite/app/',
-    ]);
-
-    Object.defineProperty(process, 'platform', { value: 'linux' });
-    expect(getBrowserOpenerArgs('http://localhost:8081/rozenite/app/')).toEqual([
-      'http://localhost:8081/rozenite/app/',
-    ]);
-  });
-
-  it('prefixes an empty title on win32 so "start" does not treat the URL as the window title', () => {
-    Object.defineProperty(process, 'platform', { value: 'win32' });
-    expect(getBrowserOpenerArgs('http://localhost:8081/rozenite/app/')).toEqual([
-      '',
-      'http://localhost:8081/rozenite/app/',
-    ]);
   });
 });
 
