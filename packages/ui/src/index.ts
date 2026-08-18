@@ -164,7 +164,7 @@ export { Card } from './card/card';
 export type { CardProps, CardHeaderProps, CardBodyProps } from './card/card';
 
 export { Toast, useToast } from './toast/toast';
-export type { ToastProviderProps } from './toast/toast';
+export type { ToastProviderProps, ToastProps } from './toast/toast';
 
 export { Button, buttonVariants } from './button/button';
 export type { ButtonProps } from './button/button';

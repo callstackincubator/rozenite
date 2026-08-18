@@ -87,6 +87,8 @@ function PluginHeaderThemeSwitcher({
   darkLabel = 'Switch to dark theme',
   render,
   ref,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- discarded so it can't override the Sun/Moon icon below via ...props
+  children: _children,
   ...props
 }: PluginHeaderThemeSwitcherProps) {
   const { theme, toggleTheme } = usePluginTheme();

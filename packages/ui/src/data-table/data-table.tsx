@@ -88,11 +88,13 @@ export function DataTable<TRow>({
                 <th
                   key={header.id}
                   aria-sort={
-                    sortDirection === 'asc'
-                      ? 'ascending'
-                      : sortDirection === 'desc'
-                        ? 'descending'
-                        : 'none'
+                    canSort
+                      ? sortDirection === 'asc'
+                        ? 'ascending'
+                        : sortDirection === 'desc'
+                          ? 'descending'
+                          : 'none'
+                      : undefined
                   }
                   colSpan={header.colSpan}
                   className="h-8 px-3 text-left text-xs font-medium text-muted-foreground"

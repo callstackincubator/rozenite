@@ -22,6 +22,8 @@ export function EmptyState({
   action,
   render,
   ref,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- discarded so it can't override the composed children below via ...props
+  children: _children,
   ...props
 }: EmptyStateProps) {
   return useRender({

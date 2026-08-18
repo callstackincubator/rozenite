@@ -22,6 +22,7 @@ import { SortIcon } from '../utils/sort-icon';
 
 const DEFAULT_TABLE_CLASSNAME = 'w-full border-collapse text-sm';
 const DEFAULT_SCROLL_CLASSNAME = 'h-full w-full overflow-auto';
+const DEFAULT_STYLE: CSSProperties = { height: 400 };
 
 export type VirtualizedDataTableProps<TData> = {
   ariaLabel: string;
@@ -150,7 +151,7 @@ export const VirtualizedDataTable = <TData,>({
   renderEmptyState,
   className,
   scrollClassName,
-  style = { height: 400 },
+  style,
 }: VirtualizedDataTableProps<TData>) => {
   const [uncontrolledSorting, setUncontrolledSorting] = useState<SortingState>([]);
   const sorting = controlledSorting ?? uncontrolledSorting;
@@ -222,11 +223,13 @@ export const VirtualizedDataTable = <TData,>({
               <th
                 key={header.id}
                 aria-sort={
-                  sortDirection === 'asc'
-                    ? 'ascending'
-                    : sortDirection === 'desc'
-                      ? 'descending'
-                      : 'none'
+                  canSort
+                    ? sortDirection === 'asc'
+                      ? 'ascending'
+                      : sortDirection === 'desc'
+                        ? 'descending'
+                        : 'none'
+                    : undefined
                 }
                 colSpan={header.colSpan}
                 className="h-8 px-3 text-left text-xs font-medium text-muted-foreground"
@@ -268,7 +271,7 @@ export const VirtualizedDataTable = <TData,>({
       fixedHeaderContent={fixedHeaderContent}
       itemContent={itemContent}
       startReached={onStartReached}
-      style={style}
+      style={style ? { ...DEFAULT_STYLE, ...style } : DEFAULT_STYLE}
     />
   );
 };

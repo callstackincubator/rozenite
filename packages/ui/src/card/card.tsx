@@ -39,6 +39,16 @@ function CardRoot({
 }: CardProps) {
   const [open, setOpen] = useState(defaultOpen);
 
+  const element = useRender({
+    render: render ?? <div />,
+    ref,
+    props: {
+      'data-slot': 'card',
+      className: cn('rounded-lg border border-border bg-card text-card-foreground', className),
+      ...props,
+    },
+  });
+
   return (
     <CardContext.Provider
       value={{
@@ -49,15 +59,7 @@ function CardRoot({
         expandLabel,
       }}
     >
-      {useRender({
-        render: render ?? <div />,
-        ref,
-        props: {
-          'data-slot': 'card',
-          className: cn('rounded-lg border border-border bg-card text-card-foreground', className),
-          ...props,
-        },
-      })}
+      {element}
     </CardContext.Provider>
   );
 }

@@ -13,6 +13,9 @@ export type ToastProviderProps = ToastPrimitive.Provider.Props & {
   dismissLabel?: string;
 };
 
+/** Alias for `ToastProviderProps` — `Toast` itself is callable, so this is the props type most callers want. */
+export type ToastProps = ToastProviderProps;
+
 function ToastProviderRoot({ children, dismissLabel = 'Dismiss', ...props }: ToastProviderProps) {
   return (
     <ToastPrimitive.Provider data-slot="toast-provider" {...props}>
