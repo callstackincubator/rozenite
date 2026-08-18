@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils/cn';
 
@@ -18,11 +19,21 @@ export const badgeVariants = cva(
   },
 );
 
-export type BadgeProps = ComponentProps<'span'> & VariantProps<typeof badgeVariants>;
+export type BadgeProps = ComponentProps<'span'> &
+  VariantProps<typeof badgeVariants> & {
+    /** Replace the rendered element, e.g. `render={<a href="..." />}`. */
+    render?: useRender.RenderProp;
+  };
 
 /** A compact status label for categorizing or highlighting content. */
-export function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <span data-slot="badge" className={cn(badgeVariants({ variant }), className)} {...props} />
-  );
+export function Badge({ className, variant, render, ref, ...props }: BadgeProps) {
+  return useRender({
+    render: render ?? <span />,
+    ref,
+    props: {
+      'data-slot': 'badge',
+      className: cn(badgeVariants({ variant }), className),
+      ...props,
+    },
+  });
 }

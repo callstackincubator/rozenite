@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { useRender } from '@base-ui/react/use-render';
 import { cn } from '../utils/cn';
 import { surfaceTone } from '../tokens/tone-variants';
 import type { Tone } from '../tokens/tone';
@@ -6,26 +7,30 @@ import type { Tone } from '../tokens/tone';
 export type AlertProps = ComponentProps<'div'> & {
   /** @default 'neutral' */
   tone?: Tone;
+  /** Replace the rendered element. */
+  render?: useRender.RenderProp;
 };
 
-function AlertRoot({ tone = 'neutral', className, ...props }: AlertProps) {
-  return (
-    <div
+function AlertRoot({ tone = 'neutral', className, render, ref, ...props }: AlertProps) {
+  return useRender({
+    render: render ?? <div />,
+    ref,
+    props: {
       // `danger` interrupts and needs an assertive announcement; other tones
       // are informational and should announce politely, like `role="status"`.
-      role={tone === 'danger' ? 'alert' : 'status'}
-      data-slot="alert"
-      className={cn(
+      role: tone === 'danger' ? 'alert' : 'status',
+      'data-slot': 'alert',
+      className: cn(
         surfaceTone({
           tone,
           variant: 'soft',
           class: 'flex flex-col gap-1 rounded-md border border-current/15 p-3 text-sm',
         }),
         className,
-      )}
-      {...props}
-    />
-  );
+      ),
+      ...props,
+    },
+  });
 }
 
 export type AlertTitleProps = ComponentProps<'div'>;

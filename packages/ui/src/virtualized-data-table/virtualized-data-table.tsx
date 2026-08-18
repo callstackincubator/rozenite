@@ -17,7 +17,12 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
-import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
+import { cn } from '../utils/cn';
+import { SortIcon } from '../utils/sort-icon';
+
+const DEFAULT_TABLE_CLASSNAME = 'w-full border-collapse text-sm';
+const DEFAULT_SCROLL_CLASSNAME = 'h-full w-full overflow-auto';
+const DEFAULT_STYLE: CSSProperties = { height: 400 };
 
 export type VirtualizedDataTableProps<TData> = {
   ariaLabel: string;
@@ -93,9 +98,10 @@ const VirtualizedTableRow = ({ children, context, item, ...props }: TableRowComp
     <tr
       {...props}
       aria-label={context.getRowTextValue?.(row.original, row.index) ?? String(row.id)}
-      className={`border-b border-border last:border-0 transition-colors hover:bg-accent/50 ${
-        isActionable ? 'cursor-pointer' : ''
-      }`}
+      className={cn(
+        'border-b border-border last:border-0 transition-colors hover:bg-accent/50',
+        isActionable && 'cursor-pointer',
+      )}
       onClick={isActionable ? activateRow : undefined}
       onKeyDown={handleKeyDown}
       tabIndex={isActionable ? 0 : undefined}
@@ -141,11 +147,11 @@ export const VirtualizedDataTable = <TData,>({
   onSortingChange,
   manualSorting = false,
   loading = false,
-  emptyMessage = 'No data available',
+  emptyMessage = 'No data.',
   renderEmptyState,
-  className = 'w-full border-collapse text-sm',
-  scrollClassName = 'h-full w-full overflow-auto',
-  style = { height: 400 },
+  className,
+  scrollClassName,
+  style,
 }: VirtualizedDataTableProps<TData>) => {
   const [uncontrolledSorting, setUncontrolledSorting] = useState<SortingState>([]);
   const sorting = controlledSorting ?? uncontrolledSorting;
@@ -183,7 +189,7 @@ export const VirtualizedDataTable = <TData,>({
       isLoading: loading,
       onRowClick,
       renderEmptyState,
-      tableClassName: className,
+      tableClassName: cn(DEFAULT_TABLE_CLASSNAME, className),
     }),
     [
       ariaLabel,
@@ -217,11 +223,13 @@ export const VirtualizedDataTable = <TData,>({
               <th
                 key={header.id}
                 aria-sort={
-                  sortDirection === 'asc'
-                    ? 'ascending'
-                    : sortDirection === 'desc'
-                      ? 'descending'
-                      : 'none'
+                  canSort
+                    ? sortDirection === 'asc'
+                      ? 'ascending'
+                      : sortDirection === 'desc'
+                        ? 'descending'
+                        : 'none'
+                    : undefined
                 }
                 colSpan={header.colSpan}
                 className="h-8 px-3 text-left text-xs font-medium text-muted-foreground"
@@ -252,7 +260,7 @@ export const VirtualizedDataTable = <TData,>({
 
   return (
     <TableVirtuoso<Row<TData>, VirtualizedTableContext<TData>>
-      className={scrollClassName}
+      className={cn(DEFAULT_SCROLL_CLASSNAME, scrollClassName)}
       components={
         virtualizedTableComponents as TableComponents<Row<TData>, VirtualizedTableContext<TData>>
       }
@@ -263,19 +271,7 @@ export const VirtualizedDataTable = <TData,>({
       fixedHeaderContent={fixedHeaderContent}
       itemContent={itemContent}
       startReached={onStartReached}
-      style={style}
+      style={style ? { ...DEFAULT_STYLE, ...style } : DEFAULT_STYLE}
     />
   );
 };
-
-function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
-  if (direction === 'asc') {
-    return <ChevronUp className="h-3 w-3" />;
-  }
-
-  if (direction === 'desc') {
-    return <ChevronDown className="h-3 w-3" />;
-  }
-
-  return <ChevronsUpDown className="h-3 w-3 text-muted-foreground/60" />;
-}

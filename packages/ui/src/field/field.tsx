@@ -1,5 +1,6 @@
 import { Field as FieldPrimitive } from '@base-ui/react/field';
 import { cn } from '../utils/cn';
+import { fieldSurface } from '../utils/control-surfaces';
 
 export type FieldProps = FieldPrimitive.Root.Props;
 
@@ -31,12 +32,7 @@ function FieldControl({ className, ...props }: FieldControlProps) {
   return (
     <FieldPrimitive.Control
       data-slot="field-control"
-      className={cn(
-        'h-8 w-full rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-xs',
-        'outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
-        'placeholder:text-muted-foreground disabled:pointer-events-none disabled:opacity-50',
-        className,
-      )}
+      className={cn(fieldSurface(), 'h-8 px-3', className)}
       {...props}
     />
   );

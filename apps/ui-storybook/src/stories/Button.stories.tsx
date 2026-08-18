@@ -48,6 +48,19 @@ export const AllVariants: Story = {
 };
 
 /**
+ * Pass `render` to render as something other than a `<button>`, e.g. an
+ * anchor styled as a button.
+ * @summary Render a Button as an anchor.
+ */
+export const AsAnchor: Story = {
+  render: () => (
+    <Button variant="outline" render={<a href="https://rozenite.dev" target="_blank" />}>
+      Visit docs
+    </Button>
+  ),
+};
+
+/**
  * Use `adornment` to host a status affordance, e.g. an `IndicatorDot`
  * flagging an available update, without a dedicated prop for it.
  * @summary Host an indicator dot via the adornment slot.

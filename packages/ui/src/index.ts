@@ -164,7 +164,7 @@ export { Card } from './card/card';
 export type { CardProps, CardHeaderProps, CardBodyProps } from './card/card';
 
 export { Toast, useToast } from './toast/toast';
-export type { ToastProviderProps } from './toast/toast';
+export type { ToastProviderProps, ToastProps } from './toast/toast';
 
 export { Button, buttonVariants } from './button/button';
 export type { ButtonProps } from './button/button';
@@ -186,8 +186,8 @@ export type { SearchFieldProps } from './search-field/search-field';
 
 export { DataTable } from './data-table/data-table';
 export type { DataTableProps, DataTableColumn } from './data-table/data-table';
-export { VirtualizedDataTable } from './components/virtualized-data-table';
-export type { VirtualizedDataTableProps } from './components/virtualized-data-table';
+export { VirtualizedDataTable } from './virtualized-data-table/virtualized-data-table';
+export type { VirtualizedDataTableProps } from './virtualized-data-table/virtualized-data-table';
 export { DataTableEditableCell } from './data-table/data-table-editable-cell';
 export type { DataTableEditableCellProps } from './data-table/data-table-editable-cell';
 export { updateCellValue } from './data-table/data-table-utils';

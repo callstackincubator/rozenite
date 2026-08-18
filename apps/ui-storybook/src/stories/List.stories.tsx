@@ -38,3 +38,19 @@ export const Default: Story = {
     </div>
   ),
 };
+
+/** Pass `render` to render an item as something other than a `<button>`,
+ * e.g. an anchor for a navigable entry.
+ * @summary Render a List.Item as an anchor.
+ */
+export const AsAnchor: Story = {
+  render: () => (
+    <div className="w-56 border border-border p-2">
+      <List>
+        <List.Item adornment={<DatabaseIcon />} render={<a href="#docs" />}>
+          View documentation
+        </List.Item>
+      </List>
+    </div>
+  ),
+};

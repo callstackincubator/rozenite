@@ -1,4 +1,5 @@
-import type { ComponentProps, ElementType } from 'react';
+import { createElement, type ComponentProps, type ElementType } from 'react';
+import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils/cn';
 import { textTone } from '../tokens/tone-variants';
@@ -24,17 +25,21 @@ export type TextProps = ComponentProps<'span'> &
   VariantProps<typeof textVariants> & {
     /** Overrides the variant's default color. */
     tone?: Tone;
+    /** Replace the rendered element, e.g. `render={<label />}`. */
+    render?: useRender.RenderProp;
   };
 
 /** Typography for everything that isn't a page or section heading. */
-export function Text({ className, variant, tone, ...props }: TextProps) {
-  return (
-    <span
-      data-slot="text"
-      className={cn(textVariants({ variant }), tone && textTone({ tone }), className)}
-      {...props}
-    />
-  );
+export function Text({ className, variant, tone, render, ref, ...props }: TextProps) {
+  return useRender({
+    render: render ?? <span />,
+    ref,
+    props: {
+      'data-slot': 'text',
+      className: cn(textVariants({ variant }), tone && textTone({ tone }), className),
+      ...props,
+    },
+  });
 }
 
 const headingLevelTag = {
@@ -61,23 +66,25 @@ export type HeadingProps = ComponentProps<'h1'> & {
   level?: 1 | 2 | 3 | 4 | 5 | 6;
   /** Overrides the default foreground color. */
   tone?: Tone;
+  /** Replace the rendered element, keeping the `level` type size. */
+  render?: useRender.RenderProp;
 };
 
 /** A semantic page or section heading. `level` controls both the rendered
  *  element (`h1`-`h6`) and its type size. */
-export function Heading({ level = 2, tone, className, ...props }: HeadingProps) {
-  const Tag = headingLevelTag[level];
-
-  return (
-    <Tag
-      data-slot="heading"
-      className={cn(
+export function Heading({ level = 2, tone, className, render, ref, ...props }: HeadingProps) {
+  return useRender({
+    render: render ?? createElement(headingLevelTag[level]),
+    ref,
+    props: {
+      'data-slot': 'heading',
+      className: cn(
         textVariants({ variant: 'title' }),
         headingLevelClass[level],
         tone && textTone({ tone }),
         className,
-      )}
-      {...props}
-    />
-  );
+      ),
+      ...props,
+    },
+  });
 }

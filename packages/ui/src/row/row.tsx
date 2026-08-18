@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { useRender } from '@base-ui/react/use-render';
 import { cn } from '../utils/cn';
 import {
   flexAlignClass,
@@ -18,6 +19,8 @@ export type RowProps = ComponentProps<'div'> & {
   fill?: boolean;
   /** `overflow-auto`, typically paired with `fill`. */
   scroll?: boolean;
+  /** Replace the rendered element, e.g. `render={<ul />}`. */
+  render?: useRender.RenderProp;
 };
 
 /** A horizontal flex layout primitive. */
@@ -30,14 +33,18 @@ export function Row({
   fill,
   scroll,
   tabIndex,
+  render,
+  ref,
   ...props
 }: RowProps) {
-  return (
-    <div
-      data-slot="row"
+  return useRender({
+    render: render ?? <div />,
+    ref,
+    props: {
+      'data-slot': 'row',
       // Keyboard-focusable when scrollable, so it's reachable without a mouse.
-      tabIndex={scroll ? (tabIndex ?? 0) : tabIndex}
-      className={cn(
+      tabIndex: scroll ? (tabIndex ?? 0) : tabIndex,
+      className: cn(
         'flex flex-row',
         gap !== undefined && flexGapClass[gap],
         align && flexAlignClass[align],
@@ -46,8 +53,8 @@ export function Row({
         fill && 'min-w-0 flex-1',
         scroll && 'overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-ring',
         className,
-      )}
-      {...props}
-    />
-  );
+      ),
+      ...props,
+    },
+  });
 }

@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { useRender } from '@base-ui/react/use-render';
 import type { VariantProps } from 'class-variance-authority';
 import { buttonVariants } from '../button/button';
 import { cn } from '../utils/cn';
@@ -17,6 +18,8 @@ export type IconButtonProps = ComponentProps<'button'> &
     size?: Size;
     /** Accessible name, also shown as the button's tooltip. An unlabelled icon button is a type error. */
     label: string;
+    /** Replace the rendered element, e.g. `render={<a href="..." />}`. */
+    render?: useRender.RenderProp;
   };
 
 /** A square, icon-only button. Always labelled — `label` doubles as the
@@ -28,27 +31,25 @@ export function IconButton({
   label,
   type = 'button',
   children,
+  render,
+  ref,
   ...props
 }: IconButtonProps) {
+  const element = useRender({
+    render: render ?? <button type={type} />,
+    ref,
+    props: {
+      'aria-label': label,
+      'data-slot': 'icon-button',
+      className: cn(buttonVariants({ variant, size: 'icon' }), iconButtonSize[size], className),
+      children,
+      ...props,
+    },
+  });
+
   return (
     <Tooltip>
-      <Tooltip.Trigger
-        render={
-          <button
-            type={type}
-            aria-label={label}
-            data-slot="icon-button"
-            className={cn(
-              buttonVariants({ variant, size: 'icon' }),
-              iconButtonSize[size],
-              className,
-            )}
-            {...props}
-          >
-            {children}
-          </button>
-        }
-      />
+      <Tooltip.Trigger render={element} />
       <Tooltip.Content>{label}</Tooltip.Content>
     </Tooltip>
   );
