@@ -13,7 +13,7 @@ export type ToastProviderProps = ToastPrimitive.Provider.Props & {
   dismissLabel?: string;
   /** Overrides the viewport's position and size, e.g. to dock it elsewhere
    * than the bottom-right corner.
-   * @default 'fixed right-4 bottom-4 w-80' */
+   * @default 'fixed right-4 bottom-4 z-50 flex w-80 flex-col gap-2' */
   viewportClassName?: string;
 };
 

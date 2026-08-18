@@ -61,13 +61,21 @@ export const surfaceTone = cva('', {
     { tone: 'info', variant: 'outline', class: 'border border-info text-info' },
     { tone: 'info', variant: 'ghost', class: 'text-info' },
 
-    // Hover states, opt-in via `interactive: true`. `soft` gets no hover —
-    // Alert is the only `soft` consumer today and it's a static status strip.
+    // Hover states, opt-in via `interactive: true` — safe to give every
+    // variant (including `soft`) an interactive hover now that it's gated:
+    // static consumers like Alert never pass `interactive`, so they never
+    // see it.
     {
       tone: 'neutral',
       variant: 'solid',
       interactive: true,
       class: 'hover:bg-secondary/80',
+    },
+    {
+      tone: 'neutral',
+      variant: 'soft',
+      interactive: true,
+      class: 'hover:bg-muted/80',
     },
     {
       tone: 'neutral',
@@ -83,10 +91,17 @@ export const surfaceTone = cva('', {
     },
 
     { tone: 'primary', variant: 'solid', interactive: true, class: 'hover:bg-primary/90' },
+    { tone: 'primary', variant: 'soft', interactive: true, class: 'hover:bg-accent/80' },
     { tone: 'primary', variant: 'outline', interactive: true, class: 'hover:bg-accent' },
     { tone: 'primary', variant: 'ghost', interactive: true, class: 'hover:bg-accent' },
 
     { tone: 'success', variant: 'solid', interactive: true, class: 'hover:bg-success/90' },
+    {
+      tone: 'success',
+      variant: 'soft',
+      interactive: true,
+      class: 'hover:bg-success-soft/70',
+    },
     {
       tone: 'success',
       variant: 'outline',
@@ -98,6 +113,12 @@ export const surfaceTone = cva('', {
     { tone: 'warning', variant: 'solid', interactive: true, class: 'hover:bg-warning/90' },
     {
       tone: 'warning',
+      variant: 'soft',
+      interactive: true,
+      class: 'hover:bg-warning-soft/70',
+    },
+    {
+      tone: 'warning',
       variant: 'outline',
       interactive: true,
       class: 'hover:bg-warning-soft',
@@ -105,10 +126,17 @@ export const surfaceTone = cva('', {
     { tone: 'warning', variant: 'ghost', interactive: true, class: 'hover:bg-warning-soft' },
 
     { tone: 'danger', variant: 'solid', interactive: true, class: 'hover:bg-danger/90' },
+    {
+      tone: 'danger',
+      variant: 'soft',
+      interactive: true,
+      class: 'hover:bg-danger-soft/70',
+    },
     { tone: 'danger', variant: 'outline', interactive: true, class: 'hover:bg-danger-soft' },
     { tone: 'danger', variant: 'ghost', interactive: true, class: 'hover:bg-danger-soft' },
 
     { tone: 'info', variant: 'solid', interactive: true, class: 'hover:bg-info/90' },
+    { tone: 'info', variant: 'soft', interactive: true, class: 'hover:bg-info-soft/70' },
     { tone: 'info', variant: 'outline', interactive: true, class: 'hover:bg-info-soft' },
     { tone: 'info', variant: 'ghost', interactive: true, class: 'hover:bg-info-soft' },
   ],
