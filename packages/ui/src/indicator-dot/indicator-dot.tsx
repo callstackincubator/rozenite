@@ -17,7 +17,7 @@ export const indicatorDotVariants = cva('size-1.5 shrink-0 rounded-full', {
 export type IndicatorDotProps = ComponentProps<'span'> & VariantProps<typeof indicatorDotVariants>;
 
 /** A small dot for flagging that something needs attention. Composes into
- *  any adornment slot, e.g. `Button`'s `adornment` prop. Size via `className`. */
+ *  any leading/trailing slot, e.g. `Button`'s `trailing` prop. Size via `className`. */
 export function IndicatorDot({ className, variant, ...props }: IndicatorDotProps) {
   return (
     <span

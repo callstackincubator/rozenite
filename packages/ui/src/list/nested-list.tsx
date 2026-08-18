@@ -27,7 +27,7 @@ function NestedListRoot({ className, children, ...props }: NestedListProps) {
 export type NestedListItemProps = Omit<ComponentProps<'button'>, 'children'> & {
   label: ReactNode;
   /** Rendered after the disclosure chevron, before the label. Typically an icon. */
-  adornment?: ReactNode;
+  leading?: ReactNode;
   /** Rendered at the end of the row, e.g. a `Badge` with a count. */
   trailing?: ReactNode;
   selected?: boolean;
@@ -43,7 +43,7 @@ export type NestedListItemProps = Omit<ComponentProps<'button'>, 'children'> & {
 function NestedListItem({
   className,
   label,
-  adornment,
+  leading,
   trailing,
   selected = false,
   defaultExpanded = false,
@@ -97,12 +97,12 @@ function NestedListItem({
         ) : (
           <span className="h-3.5 w-3.5 shrink-0" />
         )}
-        {adornment && (
+        {leading && (
           <span
-            data-slot="list-item-adornment"
+            data-slot="list-item-leading"
             className="flex h-3.5 w-3.5 shrink-0 items-center justify-center [&_svg]:h-3.5 [&_svg]:w-3.5"
           >
-            {adornment}
+            {leading}
           </span>
         )}
         <span className="flex-1 whitespace-nowrap">{label}</span>

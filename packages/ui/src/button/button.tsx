@@ -36,7 +36,7 @@ export const buttonVariants = cva(
 export type ButtonProps = ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     /** Rendered after `children`, e.g. an `IndicatorDot` flagging an update. */
-    adornment?: ReactNode;
+    trailing?: ReactNode;
     /** Replace the rendered element, e.g. `render={<a href="..." />}` for a link styled as a button. */
     render?: useRender.RenderProp;
   };
@@ -48,7 +48,7 @@ export function Button({
   variant,
   size,
   type = 'button',
-  adornment,
+  trailing,
   children,
   render,
   ref,
@@ -63,7 +63,7 @@ export function Button({
       children: (
         <>
           {children}
-          {adornment}
+          {trailing}
         </>
       ),
       ...props,

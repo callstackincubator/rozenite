@@ -31,7 +31,7 @@ function ListGroup({ className, label, children, ...props }: ListGroupProps) {
 export type ListItemProps = ComponentProps<'button'> & {
   selected?: boolean;
   /** Rendered at the start of the row, before the label. Typically an icon. */
-  adornment?: ReactNode;
+  leading?: ReactNode;
   /** Rendered at the end of the row, e.g. a `Badge` with an entry count. */
   trailing?: ReactNode;
   /** Replace the rendered element, e.g. `render={<a href="..." />}` for a navigable item. */
@@ -41,7 +41,7 @@ export type ListItemProps = ComponentProps<'button'> & {
 function ListItem({
   className,
   selected = false,
-  adornment,
+  leading,
   trailing,
   children,
   type = 'button',
@@ -65,12 +65,12 @@ function ListItem({
       ),
       children: (
         <>
-          {adornment && (
+          {leading && (
             <span
-              data-slot="list-item-adornment"
+              data-slot="list-item-leading"
               className="flex h-3.5 w-3.5 shrink-0 items-center justify-center [&_svg]:h-3.5 [&_svg]:w-3.5"
             >
-              {adornment}
+              {leading}
             </span>
           )}
           <span className="min-w-0 flex-1 truncate">{children}</span>

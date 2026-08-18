@@ -26,7 +26,7 @@ export const Default: Story = {
         <Sidebar.Group label="Workspace">
           <Sidebar.Item
             selected
-            adornment={<OverviewIcon />}
+            leading={<OverviewIcon />}
             trailing={<Badge variant="secondary">3</Badge>}
           >
             Overview
@@ -52,7 +52,7 @@ export const WithHeaderAndFooter: Story = {
         </Sidebar.Header>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           <Sidebar.Group label="Workspace">
-            <Sidebar.Item selected adornment={<OverviewIcon />}>
+            <Sidebar.Item selected leading={<OverviewIcon />}>
               Overview
             </Sidebar.Item>
             <Sidebar.Item>Network</Sidebar.Item>

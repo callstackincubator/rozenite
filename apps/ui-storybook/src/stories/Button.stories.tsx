@@ -61,15 +61,15 @@ export const AsAnchor: Story = {
 };
 
 /**
- * Use `adornment` to host a status affordance, e.g. an `IndicatorDot`
+ * Use `trailing` to host a status affordance, e.g. an `IndicatorDot`
  * flagging an available update, without a dedicated prop for it.
- * @summary Host an indicator dot via the adornment slot.
+ * @summary Host an indicator dot via the trailing slot.
  */
 export const WithAdornment: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Use `adornment` to host a status affordance next to the button content.',
+        story: 'Use `trailing` to host a status affordance next to the button content.',
       },
     },
   },
@@ -78,7 +78,7 @@ export const WithAdornment: Story = {
       variant="ghost"
       size="icon"
       aria-label="Plugins"
-      adornment={<IndicatorDot className="absolute top-1 right-1" />}
+      trailing={<IndicatorDot className="absolute top-1 right-1" />}
     >
       <SettingsIcon />
     </Button>

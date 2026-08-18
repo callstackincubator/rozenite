@@ -40,7 +40,7 @@ function SidebarGroup({ className, label, children, ...props }: SidebarGroupProp
 export type SidebarItemProps = ComponentProps<'button'> & {
   selected?: boolean;
   /** Rendered at the start of the row, before the label. Typically an icon. */
-  adornment?: ReactNode;
+  leading?: ReactNode;
   /** Rendered at the end of the row, e.g. a `Badge` with an entry count. */
   trailing?: ReactNode;
   /** Replace the rendered element, e.g. `render={<a href="..." />}` for a navigable item. */
@@ -50,7 +50,7 @@ export type SidebarItemProps = ComponentProps<'button'> & {
 function SidebarItem({
   className,
   selected = false,
-  adornment,
+  leading,
   trailing,
   children,
   type = 'button',
@@ -74,12 +74,12 @@ function SidebarItem({
       ),
       children: (
         <>
-          {adornment && (
+          {leading && (
             <span
-              data-slot="sidebar-item-adornment"
+              data-slot="sidebar-item-leading"
               className="flex h-3.5 w-3.5 shrink-0 items-center justify-center [&_svg]:h-3.5 [&_svg]:w-3.5"
             >
-              {adornment}
+              {leading}
             </span>
           )}
           <span className="min-w-0 flex-1 truncate">{children}</span>

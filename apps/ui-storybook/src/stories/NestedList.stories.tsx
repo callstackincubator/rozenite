@@ -31,14 +31,14 @@ export const Default: Story = {
   render: () => (
     <div className="h-72 w-64 border border-border p-2">
       <NestedList>
-        <NestedList.Item label="src" adornment={<FolderIcon />} defaultExpanded>
-          <NestedList.Item label="index.ts" adornment={<FileIcon />} />
-          <NestedList.Item label="components" adornment={<FolderIcon />} defaultExpanded>
-            <NestedList.Item label="Button.tsx" adornment={<FileIcon />} selected />
-            <NestedList.Item label="List.tsx" adornment={<FileIcon />} />
+        <NestedList.Item label="src" leading={<FolderIcon />} defaultExpanded>
+          <NestedList.Item label="index.ts" leading={<FileIcon />} />
+          <NestedList.Item label="components" leading={<FolderIcon />} defaultExpanded>
+            <NestedList.Item label="Button.tsx" leading={<FileIcon />} selected />
+            <NestedList.Item label="List.tsx" leading={<FileIcon />} />
           </NestedList.Item>
         </NestedList.Item>
-        <NestedList.Item label="package.json" adornment={<FileIcon />} />
+        <NestedList.Item label="package.json" leading={<FileIcon />} />
       </NestedList>
     </div>
   ),
@@ -53,12 +53,12 @@ export const DeepNestingWithHorizontalScroll: Story = {
     <ScrollArea className="h-72 w-64 border border-border">
       <div className="p-2">
         <NestedList>
-          <NestedList.Item label="src" adornment={<FolderIcon />} defaultExpanded>
-            <NestedList.Item label="components" adornment={<FolderIcon />} defaultExpanded>
-              <NestedList.Item label="storage-adapters" adornment={<FolderIcon />} defaultExpanded>
+          <NestedList.Item label="src" leading={<FolderIcon />} defaultExpanded>
+            <NestedList.Item label="components" leading={<FolderIcon />} defaultExpanded>
+              <NestedList.Item label="storage-adapters" leading={<FolderIcon />} defaultExpanded>
                 <NestedList.Item
                   label="async-storage-adapter-implementation.ts"
-                  adornment={<FileIcon />}
+                  leading={<FileIcon />}
                   selected
                 />
               </NestedList.Item>
