@@ -1,3 +1,6 @@
+import { spawn as spawnChildProcess } from 'node:child_process';
+import { createRequire } from 'node:module';
+import path from 'node:path';
 import type { MetroTarget } from '@rozenite/agent-shared';
 import { getMetroTargets } from './metro-discovery.js';
 import { buildAppOpenUrl } from './open-url.js';
@@ -6,6 +9,8 @@ import { intro, outro, promptSelect } from '../utils/prompts.js';
 import { logger } from '../utils/logger.js';
 import { spawn } from '../utils/spawn.js';
 
+const require = createRequire(import.meta.url);
+
 export type OpenCommandOptions = {
   host: string;
   port: number;
@@ -13,7 +18,7 @@ export type OpenCommandOptions = {
 };
 
 export const NON_INTERACTIVE_MESSAGE =
-  '`rozenite open` must be run in an interactive terminal: it opens a browser window and picks a debugging target, which requires a terminal a person can respond to. Run it directly in a terminal instead of in CI or a piped/non-TTY shell.';
+  '`rozenite open` must be run in an interactive terminal: it opens an app window and picks a debugging target, which requires a terminal a person can respond to. Run it directly in a terminal instead of in CI or a piped/non-TTY shell.';
 
 export const selectTargetById = (targets: MetroTarget[], deviceId: string): MetroTarget => {
   const target = targets.find((candidate) => candidate.id === deviceId);
@@ -69,6 +74,34 @@ const tryOpenBrowser = async (url: string): Promise<boolean> => {
   }
 };
 
+export const resolveElectronAppLauncher = (): string | undefined => {
+  try {
+    const packageJsonPath = require.resolve('@rozenite/electron-app/package.json');
+    return path.join(path.dirname(packageJsonPath), 'bin', 'launch.js');
+  } catch {
+    return undefined;
+  }
+};
+
+const tryOpenElectron = (url: string): boolean => {
+  const launcherPath = resolveElectronAppLauncher();
+
+  if (!launcherPath) {
+    return false;
+  }
+
+  try {
+    const child = spawnChildProcess(process.execPath, [launcherPath, url], {
+      detached: true,
+      stdio: 'ignore',
+    });
+    child.unref();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const openCommand = async (options: OpenCommandOptions): Promise<void> => {
   if (!isInteractive()) {
     logger.error(NON_INTERACTIVE_MESSAGE);
@@ -103,13 +136,21 @@ export const openCommand = async (options: OpenCommandOptions): Promise<void> =>
   }
 
   const url = buildAppOpenUrl(options.host, options.port, target);
+
+  if (tryOpenElectron(url)) {
+    logger.success(`Opened Rozenite DevTools for ${target.name}`);
+    logger.info(url);
+    outro('Done');
+    return;
+  }
+
   const opened = await tryOpenBrowser(url);
 
   if (opened) {
-    logger.success(`Opened Rozenite DevTools for ${target.name}`);
+    logger.success(`Opened Rozenite DevTools for ${target.name} in your browser`);
   } else {
     logger.warn(
-      `Could not open a browser automatically for ${target.name}. Open this URL manually:`,
+      `Could not open Electron or a browser automatically for ${target.name}. Open this URL manually:`,
     );
   }
 

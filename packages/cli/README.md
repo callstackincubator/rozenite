@@ -124,11 +124,12 @@ rozenite dev ./my-plugin
 
 ### `rozenite open`
 
-Open the standalone Rozenite DevTools app in a browser for a device
-connected to Metro. Unlike the embedded DevTools panel, this app keeps
-installed plugin panels mounted across a JS-VM reload. This command is
-**interactive only** — it prompts you to pick a device, so it cannot be run
-in CI or a non-interactive shell.
+Open the standalone Rozenite DevTools app in its own Electron window for a
+device connected to Metro (falling back to your default browser if
+Electron isn't available). Unlike the embedded DevTools panel, this app
+keeps installed plugin panels mounted across a JS-VM reload. This command
+is **interactive only** — it prompts you to pick a device, so it cannot be
+run in CI or a non-interactive shell.
 
 **Options:**
 

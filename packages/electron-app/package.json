@@ -1,0 +1,39 @@
+{
+  "name": "@rozenite/electron-app",
+  "version": "2.1.0",
+  "description": "Experimental Electron shell that opens the Rozenite standalone app in a native window instead of a browser tab.",
+  "keywords": [
+    "app",
+    "devtools",
+    "electron",
+    "plugin",
+    "react-native"
+  ],
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "license": "MIT",
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "bin": {
+    "rozenite-electron-app": "./bin/launch.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "electron": "^33.4.11"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

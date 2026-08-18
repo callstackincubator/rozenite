@@ -8,6 +8,11 @@ const mocks = vi.hoisted(() => ({
   spawn: vi.fn(),
   intro: vi.fn(),
   outro: vi.fn(),
+  childProcessSpawn: vi.fn(),
+}));
+
+vi.mock('node:child_process', () => ({
+  spawn: mocks.childProcessSpawn,
 }));
 
 vi.mock('../utils/isInteractive.js', () => ({
@@ -121,9 +126,12 @@ describe('openCommand target selection', () => {
     expect(mocks.outro).toHaveBeenCalledTimes(1);
   });
 
-  it('selects the target matching --deviceId and opens the browser', async () => {
+  it('selects the target matching --deviceId and falls back to the browser when Electron is unavailable', async () => {
     mocks.isInteractive.mockReturnValue(true);
     mocks.getMetroTargets.mockResolvedValue([targetA, targetB]);
+    mocks.childProcessSpawn.mockImplementation(() => {
+      throw new Error('spawn ENOENT');
+    });
     mocks.spawn.mockResolvedValue(undefined);
 
     await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-b' });
@@ -158,7 +166,7 @@ describe('openCommand target selection', () => {
     mocks.isInteractive.mockReturnValue(true);
     mocks.getMetroTargets.mockResolvedValue([targetA, targetB]);
     mocks.promptSelect.mockResolvedValue(targetA);
-    mocks.spawn.mockResolvedValue(undefined);
+    mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
 
     await openCommand({ host: '127.0.0.1', port: 8081 });
 
@@ -172,17 +180,59 @@ describe('openCommand target selection', () => {
     );
   });
 
-  it('prints the URL when the browser fails to open', async () => {
+  it('prints the URL when neither Electron nor the browser can be opened', async () => {
     mocks.isInteractive.mockReturnValue(true);
     mocks.getMetroTargets.mockResolvedValue([targetA]);
+    mocks.childProcessSpawn.mockImplementation(() => {
+      throw new Error('spawn ENOENT');
+    });
     mocks.spawn.mockRejectedValue(new Error('spawn ENOENT'));
 
     await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-a' });
 
-    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Could not open a browser'));
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Could not open Electron or a browser'),
+    );
     expect(logger.info).toHaveBeenCalledWith(
       expect.stringContaining('http://127.0.0.1:8081/rozenite/app/'),
     );
+  });
+});
+
+describe('openCommand Electron opening (default)', () => {
+  it('spawns the @rozenite/electron-app launcher and never falls back to the browser opener', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    mocks.getMetroTargets.mockResolvedValue([targetA]);
+    mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
+
+    await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-a' });
+
+    expect(mocks.spawn).not.toHaveBeenCalled();
+    expect(mocks.childProcessSpawn).toHaveBeenCalledWith(
+      process.execPath,
+      [expect.stringContaining('launch.js'), expect.stringContaining('appId=com.example.a')],
+      expect.objectContaining({ detached: true }),
+    );
+    expect(logger.success).toHaveBeenCalledWith(expect.stringContaining('iPhone 15'));
+    expect(process.exitCode).toBeUndefined();
+  });
+
+  it('falls back to the browser opener when @rozenite/electron-app cannot be resolved or spawned', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    mocks.getMetroTargets.mockResolvedValue([targetA]);
+    mocks.childProcessSpawn.mockImplementation(() => {
+      throw new Error('spawn ENOENT');
+    });
+    mocks.spawn.mockResolvedValue(undefined);
+
+    await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-a' });
+
+    expect(mocks.spawn).toHaveBeenCalledWith(
+      expect.any(String),
+      [expect.stringContaining('appId=com.example.a')],
+      expect.any(Object),
+    );
+    expect(logger.success).toHaveBeenCalledWith(expect.stringContaining('in your browser'));
   });
 });
 

@@ -88,7 +88,7 @@ const main = async () => {
 
   program
     .command('open')
-    .description('Open Rozenite DevTools in a browser for a connected device')
+    .description('Open Rozenite DevTools for a connected device')
     .option('--host <host>', 'Metro host', DEFAULT_AGENT_HOST)
     .option('--port <port>', 'Metro port', String(DEFAULT_AGENT_PORT))
     .option('--deviceId <id>', 'Target device ID (skips the picker)')

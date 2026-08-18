@@ -42,8 +42,9 @@ run:
 npx rozenite open
 ```
 
-This lists the devices currently connected to Metro and opens this app in
-your default browser for the one you pick.
+This lists the devices currently connected to Metro and opens this app,
+in an Electron window (via `@rozenite/electron-app`) for the one you
+pick, or your default browser if Electron isn't available.
 
 ## Current limitations
 
