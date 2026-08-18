@@ -211,7 +211,11 @@ export { EmptyState } from './empty-state/empty-state';
 export type { EmptyStateProps } from './empty-state/empty-state';
 
 export { ConfirmDialog, useConfirmDialog } from './confirm-dialog/confirm-dialog';
-export type { ConfirmDialogProps, ConfirmDialogOptions } from './confirm-dialog/confirm-dialog';
+export type {
+  ConfirmDialogProps,
+  ConfirmDialogOptions,
+  ConfirmDialogProviderProps,
+} from './confirm-dialog/confirm-dialog';
 
 export { JsonInspector } from './json-inspector/json-inspector';
 export type { JsonInspectorProps } from './json-inspector/json-inspector';

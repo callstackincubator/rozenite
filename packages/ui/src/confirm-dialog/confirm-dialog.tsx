@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Dialog } from '../dialog/dialog';
 import { Button } from '../button/button';
 import type { Tone } from '../tokens/tone';
@@ -86,6 +94,8 @@ export type ConfirmDialogProviderProps = {
  */
 function ConfirmDialogProvider({ children }: ConfirmDialogProviderProps) {
   const [queue, setQueue] = useState<PendingConfirm[]>([]);
+  const queueRef = useRef(queue);
+  queueRef.current = queue;
   const nextIdRef = useRef(0);
 
   const confirm = useCallback<ConfirmFn>((options) => {
@@ -93,6 +103,14 @@ function ConfirmDialogProvider({ children }: ConfirmDialogProviderProps) {
       const id = nextIdRef.current++;
       setQueue((current) => [...current, { id, options, resolve }]);
     });
+  }, []);
+
+  // Resolve `false` for any confirmation still awaiting an answer when the
+  // provider unmounts, so callers don't hang forever on an abandoned panel.
+  useEffect(() => {
+    return () => {
+      queueRef.current.forEach((entry) => entry.resolve(false));
+    };
   }, []);
 
   const pending = queue[0] ?? null;
@@ -108,6 +126,7 @@ function ConfirmDialogProvider({ children }: ConfirmDialogProviderProps) {
       {children}
       {pending && (
         <ConfirmDialogRoot
+          key={pending.id}
           {...pending.options}
           open
           onOpenChange={(open) => {
