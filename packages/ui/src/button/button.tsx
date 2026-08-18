@@ -57,7 +57,11 @@ export function Button({
     ref,
     props: {
       'data-slot': 'button',
-      className: cn(buttonVariants({ size }), surfaceTone({ tone, variant }), className),
+      className: cn(
+        buttonVariants({ size }),
+        surfaceTone({ tone, variant, interactive: true }),
+        className,
+      ),
       children: (
         <>
           {children}

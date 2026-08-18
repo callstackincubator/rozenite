@@ -38,7 +38,7 @@ export type NestedListItemProps = Omit<ComponentProps<'button'>, 'children'> & {
   /** Rendered at the end of the row, e.g. a `Badge` with a count. */
   trailing?: ReactNode;
   selected?: boolean;
-  /** @default 'sm' */
+  /** @default 'md' */
   size?: Size;
   /** Initial expanded state when uncontrolled. @default false */
   defaultExpanded?: boolean;
@@ -55,7 +55,7 @@ function NestedListItem({
   leading,
   trailing,
   selected = false,
-  size = 'sm',
+  size = 'md',
   defaultExpanded = false,
   expanded: expandedProp,
   onExpandedChange,

@@ -50,7 +50,7 @@ export function IconButton({
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'disabled:pointer-events-none disabled:opacity-50',
         '[&_svg]:pointer-events-none [&_svg]:shrink-0',
-        surfaceTone({ tone, variant }),
+        surfaceTone({ tone, variant, interactive: true }),
         iconButtonSize[size],
         className,
       ),

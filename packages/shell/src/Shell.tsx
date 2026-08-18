@@ -155,7 +155,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
 
   if (!hasPlugins) {
     return (
-      <PluginShell className="h-screen">
+      <PluginShell>
         <WelcomeDialog runtimeVersion={runtimeVersion} />
         <PluginShell.Body className="items-center justify-center">
           <EmptyState
@@ -174,7 +174,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   const hasNotice = outdated.size > 0 || runtimeUpdate !== null;
 
   return (
-    <PluginShell className="h-screen">
+    <PluginShell>
       <WelcomeDialog runtimeVersion={runtimeVersion} />
       <PluginShell.Body className="flex-row overflow-hidden">
         <Split
@@ -248,7 +248,9 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
               {/* Collapsed, the rail is too narrow for two icon buttons side by
                   side; stacking keeps the expand button reachable instead of
                   clipping it and stranding the user in the collapsed state. */}
-              <Sidebar.Footer className={cn(isSidebarCollapsed && 'flex-col items-center')}>
+              <Sidebar.Footer
+                className={cn('mt-auto', isSidebarCollapsed && 'flex-col items-center')}
+              >
                 {!isSidebarCollapsed && <NewVersionFooter currentVersion={runtimeVersion} />}
                 <IconButton
                   tone="neutral"

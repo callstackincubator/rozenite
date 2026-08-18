@@ -79,7 +79,7 @@ export const AsAnchor: Story = {
  * flagging an available update, without a dedicated prop for it.
  * @summary Host an indicator dot via the trailing slot.
  */
-export const WithAdornment: Story = {
+export const WithTrailing: Story = {
   parameters: {
     docs: {
       description: {

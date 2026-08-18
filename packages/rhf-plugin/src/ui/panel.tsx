@@ -293,7 +293,7 @@ function ReactHookFormPanelContent() {
   };
 
   return (
-    <PluginShell className="h-screen">
+    <PluginShell>
       <PluginShell.Body>
         <Split direction="horizontal" autoSaveId="rhf">
           <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
@@ -336,7 +336,7 @@ function ReactHookFormPanelContent() {
                       disabled={!canResetForm}
                       aria-label="Reset form"
                       title="Reset form"
-                      className="w-7 px-0 text-muted-foreground hover:text-danger"
+                      className="w-6 px-0 text-muted-foreground hover:text-danger"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Toolbar.Button>
@@ -355,7 +355,6 @@ function ReactHookFormPanelContent() {
               <div className="min-h-0 flex-1 overflow-auto">
                 {!selectedSnapshot ? (
                   <EmptyState
-                    className="flex-1"
                     icon={ClipboardList}
                     title="No form connected"
                     description={
@@ -370,7 +369,6 @@ function ReactHookFormPanelContent() {
                   />
                 ) : fieldRows.length === 0 ? (
                   <EmptyState
-                    className="flex-1"
                     icon={ClipboardList}
                     title="No fields found"
                     description={

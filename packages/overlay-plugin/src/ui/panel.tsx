@@ -67,7 +67,7 @@ export default function OverlayPanel() {
 
   if (loading) {
     return (
-      <PluginShell className="h-screen dark">
+      <PluginShell className="dark">
         <PluginShell.Body className="items-center justify-center">
           <div className="text-sm text-muted-foreground">Loading overlay…</div>
         </PluginShell.Body>
@@ -76,7 +76,7 @@ export default function OverlayPanel() {
   }
 
   return (
-    <PluginShell className="h-screen dark">
+    <PluginShell className="dark">
       <PluginShell.Body>
         <Split direction="horizontal" autoSaveId="overlay-settings">
           <Split.Pane defaultSize={18} minSize={14} maxSize={28}>

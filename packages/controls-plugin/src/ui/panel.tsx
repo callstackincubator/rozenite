@@ -405,13 +405,12 @@ export default function ControlsPanel() {
   const selectedSection = sections.find((section) => section.id === selectedSectionId);
 
   return (
-    <PluginShell className="h-screen dark">
+    <PluginShell className="dark">
       <PluginShell.Body>
-        {loading ? <EmptyState className="flex-1" title="Loading controls…" /> : null}
+        {loading ? <EmptyState title="Loading controls…" /> : null}
 
         {!loading && sections.length === 0 ? (
           <EmptyState
-            className="flex-1"
             title="No controls registered"
             description="Register controls in the app to manage them here."
           />

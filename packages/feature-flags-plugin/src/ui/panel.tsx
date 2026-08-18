@@ -164,11 +164,11 @@ function FeatureFlagsPanelContent() {
       enableSorting: false,
       cell: ({ row }) => (
         <IconButton
+          tone="neutral"
           variant="ghost"
           disabled={!connected || !row.original.overridden}
           onClick={() => handleClearOverride(row.original)}
           label={`Reset ${row.original.key} to its default value`}
-          title={`Reset ${row.original.key} to its default value`}
         >
           <Eraser className="h-3.5 w-3.5" />
         </IconButton>
@@ -245,7 +245,7 @@ function FeatureFlagsPanelContent() {
           disabled={!connected || !selectedProvider}
           aria-label="Refresh flags"
           title="Refresh flags"
-          className="w-7 px-0"
+          className="w-6 px-0"
         >
           <RefreshCw className="h-3.5 w-3.5" />
         </Toolbar.Button>
@@ -261,11 +261,10 @@ function FeatureFlagsPanelContent() {
   );
 
   return (
-    <PluginShell className="h-screen">
+    <PluginShell>
       <PluginShell.Body>
         {!connected || isLoading ? (
           <EmptyState
-            className="flex-1"
             icon={(iconProps) => (
               <Loader2 {...iconProps} className={`${iconProps.className ?? ''} animate-spin`} />
             )}
@@ -273,7 +272,6 @@ function FeatureFlagsPanelContent() {
           />
         ) : providers.length === 0 ? (
           <EmptyState
-            className="flex-1"
             icon={Flag}
             title="No providers registered"
             description={

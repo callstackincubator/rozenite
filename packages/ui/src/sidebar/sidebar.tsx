@@ -50,7 +50,7 @@ export type SidebarItemProps = ComponentProps<'button'> & {
   leading?: ReactNode;
   /** Rendered at the end of the row, e.g. a `Badge` with an entry count. */
   trailing?: ReactNode;
-  /** @default 'sm' */
+  /** @default 'md' */
   size?: Size;
   /** Replace the rendered element, e.g. `render={<a href="..." />}` for a navigable item. */
   render?: useRender.RenderProp;
@@ -61,7 +61,7 @@ function SidebarItem({
   selected = false,
   leading,
   trailing,
-  size = 'sm',
+  size = 'md',
   children,
   type = 'button',
   render,

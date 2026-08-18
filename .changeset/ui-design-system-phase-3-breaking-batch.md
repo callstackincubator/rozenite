@@ -22,8 +22,11 @@ Unify the size scale, split tone from emphasis, and remove layout-leakage margin
 | `text-destructive` / `bg-destructive` / `border-destructive` classes | `text-danger` / `bg-danger` / `border-danger` |
 | `PluginHeader.Actions` relying on its own `ml-auto` | `PluginHeader` root now uses `justify-between` — group leading content (e.g. `Title` + `Subtitle`) in one wrapper so actions still sit at the end |
 | `Sidebar` default width (`w-56`) | pass `className="w-56"` (or any width) explicitly |
+| `Sidebar.Footer`'s own `mt-auto` | removed — pin it to the bottom via a `flex-1` scrollable middle section (see `Sidebar` stories), or pass `className="mt-auto"` explicitly |
 | `Toolbar.Separator`'s own `mx-1` | removed — spacing now comes from `Toolbar`'s `gap-1` |
 
 **New capability:** `Toast` gains a `viewportClassName` prop to reposition the notification viewport (previously hardcoded to `fixed right-4 bottom-4`).
 
-**Also fixed:** `Input`, `Textarea`, `Select.Trigger`, `Combobox.Input`, `SearchField`, `Field.Control`, `Toolbar.Button`, `Tabs.List`, `Tabs.Tab`, `List.Item`, `NestedList.Item`, `Sidebar.Item`, and `Badge` now share one `sm | md | lg` size scale, replacing inconsistent hardcoded heights (previously `h-8`/`h-7`/`h-6` mismatches across otherwise-equivalent controls). `Badge` gains the full `Tone` scale (previously had no `danger` tone at all).
+**Also fixed:** `Input`, `Textarea`, `Select.Trigger`, `Combobox.Input`, `SearchField`, `Field.Control`, `Toolbar.Button`, `Tabs.List`, `Tabs.Tab`, `List.Item`, `NestedList.Item`, `Sidebar.Item`, and `Badge` now share one `sm | md | lg` size scale, replacing inconsistent hardcoded heights (previously `h-8`/`h-7`/`h-6` mismatches across otherwise-equivalent controls). `List.Item`/`NestedList.Item`/`Sidebar.Item` default to `md` (`h-8`), matching their previous `h-7` more closely than `sm` would. `Badge` gains the full `Tone` scale (previously had no `danger` tone at all).
+
+`surfaceTone` (the shared recipe behind `Button`/`Badge`/`IconButton`) only adds hover states when a caller opts in with `interactive: true` — `Button`/`IconButton` do; `Badge`/`Alert` don't, since neither is clickable.

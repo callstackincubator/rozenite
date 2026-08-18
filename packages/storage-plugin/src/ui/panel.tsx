@@ -555,7 +555,7 @@ function StoragePanelContent() {
   const selectedStorageViewId = selectedTarget ? getStorageViewId(selectedTarget) : '';
 
   return (
-    <PluginShell className="h-screen">
+    <PluginShell>
       <PluginShell.Body>
         <Split direction="horizontal" autoSaveId="storage">
           <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
@@ -598,7 +598,7 @@ function StoragePanelContent() {
                     disabled={!selectedDescriptor}
                     aria-label="Add entry"
                     title="Add entry"
-                    className="w-7 px-0"
+                    className="w-6 px-0"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </Toolbar.Button>
@@ -607,7 +607,7 @@ function StoragePanelContent() {
                     disabled={!client || !selectedTarget || previews.isFetching}
                     aria-label="Purge storage"
                     title="Purge storage"
-                    className="w-7 px-0 text-muted-foreground hover:text-danger"
+                    className="w-6 px-0 text-muted-foreground hover:text-danger"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Toolbar.Button>
@@ -619,7 +619,7 @@ function StoragePanelContent() {
                     disabled={!selectedTarget || previews.isFetching}
                     aria-label="Refresh storage"
                     title="Refresh storage"
-                    className="w-7 px-0"
+                    className="w-6 px-0"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
                   </Toolbar.Button>
@@ -631,7 +631,7 @@ function StoragePanelContent() {
                     disabled={!selectedDescriptor}
                     aria-label="Import storage"
                     title="Import storage"
-                    className="w-7 px-0"
+                    className="w-6 px-0"
                   >
                     <Upload className="h-3.5 w-3.5" />
                   </Toolbar.Button>
@@ -644,7 +644,7 @@ function StoragePanelContent() {
                     title={
                       exportState.status === 'loading' ? 'Exporting storage' : 'Export storage'
                     }
-                    className="w-7 px-0"
+                    className="w-6 px-0"
                   >
                     <Download className="h-3.5 w-3.5" />
                   </Toolbar.Button>
@@ -696,7 +696,6 @@ function StoragePanelContent() {
                   />
                 ) : (
                   <EmptyState
-                    className="flex-1"
                     icon={Database}
                     title="No storage selected"
                     description="Choose a storage from the sidebar to inspect its entries."
