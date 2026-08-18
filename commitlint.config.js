@@ -7,6 +7,7 @@ export default {
       [
         'app',
         'cli',
+        'electron-app',
         'expo-atlas-plugin',
         'metro',
         'mmkv-plugin',

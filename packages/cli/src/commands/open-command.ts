@@ -105,7 +105,7 @@ export const openCommand = async (options: OpenCommandOptions): Promise<void> =>
 
   if (!tryOpenElectron(url)) {
     logger.error(
-      'Could not launch the Rozenite standalone app. It requires `@rozenite/electron-app`, which is installed alongside the CLI — try reinstalling `rozenite`.',
+      'Could not launch the Rozenite standalone app. It requires `@rozenite/electron-app` to be installed in your project. Install it separately in addition to the CLI.',
     );
     process.exitCode = 1;
     outro('Done');
