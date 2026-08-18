@@ -42,7 +42,7 @@ export function PluginsScreen({
                   <Link href={RELEASES_URL} external className="text-xs">
                     Release notes
                   </Link>
-                  <Badge variant="secondary">v{runtimeUpdate}</Badge>
+                  <Badge tone="neutral">v{runtimeUpdate}</Badge>
                 </div>
               </Card.Header>
             </Card>
@@ -74,7 +74,7 @@ export function PluginsScreen({
                           Update to v{latestVersion}
                         </Link>
                       )}
-                      <Badge variant="secondary">{plugin.version}</Badge>
+                      <Badge tone="neutral">{plugin.version}</Badge>
                     </div>
                   </Card.Header>
                   <Card.Body className="flex flex-col gap-3">

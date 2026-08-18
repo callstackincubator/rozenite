@@ -145,7 +145,7 @@ function TextValueCell({
         className="w-full rounded-sm border border-ring bg-transparent px-1 py-0.5 font-mono text-sm outline-none"
       />
       {error && (
-        <span role="alert" className="text-xs text-destructive">
+        <span role="alert" className="text-xs text-danger">
           {error}
         </span>
       )}

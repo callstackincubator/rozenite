@@ -20,8 +20,9 @@ export const ActionSidebar = ({
     <div className="flex h-full min-w-0 flex-col bg-background">
       <Toolbar>
         <Button
+          tone="danger"
           variant="outline"
-          className="w-full border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
+          className="w-full"
           onClick={onClearActions}
           title="Clear all actions and request initial state"
         >

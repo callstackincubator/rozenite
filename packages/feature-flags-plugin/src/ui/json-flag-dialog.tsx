@@ -77,7 +77,7 @@ export function JsonFlagDialog({
           {error && <Field.Error match>{error}</Field.Error>}
         </Field>
         <Dialog.Footer>
-          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+          <Dialog.Close render={<Button tone="neutral" variant="outline" />}>Cancel</Dialog.Close>
           <Button onClick={handleSave} disabled={!result.ok || saving}>
             {saving ? 'Saving…' : 'Save override'}
           </Button>

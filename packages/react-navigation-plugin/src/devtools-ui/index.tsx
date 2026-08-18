@@ -111,7 +111,7 @@ export default function ReactNavigationPanel() {
   ];
 
   return (
-    <PluginShell className="dark">
+    <PluginShell className="h-screen dark">
       <Tabs tabs={tabs} activeTabId={activeTabId} onTabChange={setActiveTabId} />
     </PluginShell>
   );

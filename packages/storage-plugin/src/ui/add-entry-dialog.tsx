@@ -137,7 +137,7 @@ export const AddEntryDialog = ({
                 inputId="new-entry-value"
               />
               {!isCurrentTypeSupported && (
-                <Field.Description className="text-destructive">
+                <Field.Description className="text-danger">
                   Selected type is not supported by this storage.
                 </Field.Description>
               )}
@@ -145,7 +145,7 @@ export const AddEntryDialog = ({
           </div>
 
           <Dialog.Footer>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button tone="neutral" variant="outline" onClick={resetAndClose}>
               Cancel
             </Button>
             <Button onClick={handleAdd} disabled={isAddDisabled}>

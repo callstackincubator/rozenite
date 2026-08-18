@@ -36,21 +36,16 @@ function FormStateBadges({ formState }: { formState: FormSnapshot['formState'] }
   const badges: {
     label: string;
     active: boolean;
-    variant: 'default' | 'secondary' | 'outline';
-    className?: string;
+    tone: 'primary' | 'neutral' | 'danger';
+    variant?: 'solid' | 'outline';
   }[] = [
-    {
-      label: 'invalid',
-      active: !formState.isValid,
-      variant: 'outline',
-      className: 'border-destructive/50 text-destructive',
-    },
-    { label: 'valid', active: formState.isValid, variant: 'default' },
-    { label: 'dirty', active: formState.isDirty, variant: 'secondary' },
-    { label: 'validating', active: formState.isValidating, variant: 'secondary' },
-    { label: 'submitting', active: formState.isSubmitting, variant: 'secondary' },
-    { label: 'submitted', active: formState.isSubmitted, variant: 'outline' },
-    { label: 'submitSuccessful', active: formState.isSubmitSuccessful, variant: 'default' },
+    { label: 'invalid', active: !formState.isValid, tone: 'danger', variant: 'outline' },
+    { label: 'valid', active: formState.isValid, tone: 'primary' },
+    { label: 'dirty', active: formState.isDirty, tone: 'neutral' },
+    { label: 'validating', active: formState.isValidating, tone: 'neutral' },
+    { label: 'submitting', active: formState.isSubmitting, tone: 'neutral' },
+    { label: 'submitted', active: formState.isSubmitted, tone: 'neutral', variant: 'outline' },
+    { label: 'submitSuccessful', active: formState.isSubmitSuccessful, tone: 'primary' },
   ];
 
   return (
@@ -58,7 +53,7 @@ function FormStateBadges({ formState }: { formState: FormSnapshot['formState'] }
       {badges
         .filter((b) => b.active)
         .map((b) => (
-          <Badge key={b.label} variant={b.variant} className={b.className}>
+          <Badge key={b.label} tone={b.tone} variant={b.variant}>
             {b.label}
           </Badge>
         ))}
@@ -102,11 +97,11 @@ function GroupRow({
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs font-medium text-foreground">{row.segment}</span>
           {errorCount > 0 && (
-            <Badge variant="outline" className="border-destructive/50 text-destructive">
+            <Badge tone="danger" variant="outline">
               {errorCount} error{errorCount === 1 ? '' : 's'}
             </Badge>
           )}
-          {dirtyCount > 0 && <Badge variant="secondary">{dirtyCount} dirty</Badge>}
+          {dirtyCount > 0 && <Badge tone="neutral">{dirtyCount} dirty</Badge>}
         </div>
       </td>
     </tr>
@@ -150,13 +145,17 @@ function LeafRow({
       </td>
       <td className="px-3 py-1.5">
         <div className="flex flex-wrap gap-1">
-          {dirty && <Badge variant="secondary">dirty</Badge>}
-          {touched && <Badge variant="outline">touched</Badge>}
+          {dirty && <Badge tone="neutral">dirty</Badge>}
+          {touched && (
+            <Badge tone="neutral" variant="outline">
+              touched
+            </Badge>
+          )}
         </div>
       </td>
       <td className="px-3 py-1.5">
         {hasError && (
-          <Badge variant="outline" className="border-destructive/50 text-destructive">
+          <Badge tone="danger" variant="outline">
             {error?.type ?? 'error'}
           </Badge>
         )}
@@ -294,7 +293,7 @@ function ReactHookFormPanelContent() {
   };
 
   return (
-    <PluginShell>
+    <PluginShell className="h-screen">
       <PluginShell.Body>
         <Split direction="horizontal" autoSaveId="rhf">
           <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
@@ -309,10 +308,12 @@ function ReactHookFormPanelContent() {
                     <Sidebar.Item
                       key={option.id}
                       selected={option.id === selectedFormId}
-                      adornment={<FormInput />}
+                      leading={<FormInput />}
                       trailing={
                         staleIds.has(option.id) ? (
-                          <Badge variant="outline">unmounted</Badge>
+                          <Badge tone="neutral" variant="outline">
+                            unmounted
+                          </Badge>
                         ) : undefined
                       }
                       onClick={() => setSelectedFormId(option.id)}
@@ -335,7 +336,7 @@ function ReactHookFormPanelContent() {
                       disabled={!canResetForm}
                       aria-label="Reset form"
                       title="Reset form"
-                      className="w-7 px-0 text-muted-foreground hover:text-destructive"
+                      className="w-7 px-0 text-muted-foreground hover:text-danger"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Toolbar.Button>
@@ -354,6 +355,7 @@ function ReactHookFormPanelContent() {
               <div className="min-h-0 flex-1 overflow-auto">
                 {!selectedSnapshot ? (
                   <EmptyState
+                    className="flex-1"
                     icon={ClipboardList}
                     title="No form connected"
                     description={
@@ -368,6 +370,7 @@ function ReactHookFormPanelContent() {
                   />
                 ) : fieldRows.length === 0 ? (
                   <EmptyState
+                    className="flex-1"
                     icon={ClipboardList}
                     title="No fields found"
                     description={
@@ -407,7 +410,7 @@ function ReactHookFormPanelContent() {
         open={showResetConfirm}
         onOpenChange={setShowResetConfirm}
         variant="confirm"
-        destructive
+        tone="danger"
         title="Reset Form"
         description={
           selectedFormId

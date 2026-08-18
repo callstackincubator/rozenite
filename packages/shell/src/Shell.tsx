@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { PanelLeftClose, PanelLeftOpen, Settings } from 'lucide-react';
 import {
-  Button,
   cn,
   EmptyState,
+  IconButton,
   IndicatorDot,
   PluginShell,
   Sidebar,
@@ -155,7 +155,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
 
   if (!hasPlugins) {
     return (
-      <PluginShell>
+      <PluginShell className="h-screen">
         <WelcomeDialog runtimeVersion={runtimeVersion} />
         <PluginShell.Body className="items-center justify-center">
           <EmptyState
@@ -174,7 +174,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   const hasNotice = outdated.size > 0 || runtimeUpdate !== null;
 
   return (
-    <PluginShell>
+    <PluginShell className="h-screen">
       <WelcomeDialog runtimeVersion={runtimeVersion} />
       <PluginShell.Body className="flex-row overflow-hidden">
         <Split
@@ -250,28 +250,28 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
                   clipping it and stranding the user in the collapsed state. */}
               <Sidebar.Footer className={cn(isSidebarCollapsed && 'flex-col items-center')}>
                 {!isSidebarCollapsed && <NewVersionFooter currentVersion={runtimeVersion} />}
-                <Button
+                <IconButton
+                  tone="neutral"
                   variant="ghost"
-                  size="icon"
                   className={cn(
                     !isSidebarCollapsed && 'ml-auto',
                     isPluginsScreenOpen && 'bg-sidebar-accent text-sidebar-accent-foreground',
                   )}
-                  aria-label="Plugins"
+                  label="Plugins"
                   aria-pressed={isPluginsScreenOpen}
                   onClick={togglePluginsScreen}
-                  adornment={hasNotice ? <IndicatorDot className="absolute top-1 right-1" /> : null}
                 >
                   <Settings />
-                </Button>
-                <Button
+                  {hasNotice && <IndicatorDot className="absolute top-1 right-1" />}
+                </IconButton>
+                <IconButton
+                  tone="neutral"
                   variant="ghost"
-                  size="icon"
-                  aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                  label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                   onClick={() => resizeSidebar(!isSidebarCollapsed)}
                 >
                   {isSidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
-                </Button>
+                </IconButton>
               </Sidebar.Footer>
             </Sidebar>
           </Split.Pane>
