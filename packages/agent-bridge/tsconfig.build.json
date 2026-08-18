@@ -7,8 +7,9 @@
     },
     "rootDir": ".",
     "outDir": "dist",
-    "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
+    "tsBuildInfoFile": "dist/tsconfig.build.tsbuildinfo",
     "declaration": true,
+    "declarationMap": false,
     "emitDeclarationOnly": false,
     "forceConsistentCasingInFileNames": true,
     "types": ["node"],
@@ -16,7 +17,8 @@
     "jsx": "react-jsx",
     "esModuleInterop": true
   },
-  "include": ["react-native.ts", "react-native.test.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "include": ["react-native.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"],
   "references": [
     {
       "path": "../agent-shared/tsconfig.lib.json"
