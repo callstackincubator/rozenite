@@ -90,7 +90,7 @@ function StatusBadge({ status }: { status: DeviceState['status'] }) {
 
   return (
     <div className="flex items-center gap-2">
-      <IndicatorDot variant={isProblem ? 'destructive' : 'default'} />
+      <IndicatorDot tone={isProblem ? 'danger' : 'primary'} />
       <Badge variant={isProblem ? 'outline' : 'soft'}>{STATUS_LABEL[status]}</Badge>
     </div>
   );
