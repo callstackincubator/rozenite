@@ -17,7 +17,11 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
+import { cn } from '../utils/cn';
 import { SortIcon } from '../utils/sort-icon';
+
+const DEFAULT_TABLE_CLASSNAME = 'w-full border-collapse text-sm';
+const DEFAULT_SCROLL_CLASSNAME = 'h-full w-full overflow-auto';
 
 export type VirtualizedDataTableProps<TData> = {
   ariaLabel: string;
@@ -93,9 +97,10 @@ const VirtualizedTableRow = ({ children, context, item, ...props }: TableRowComp
     <tr
       {...props}
       aria-label={context.getRowTextValue?.(row.original, row.index) ?? String(row.id)}
-      className={`border-b border-border last:border-0 transition-colors hover:bg-accent/50 ${
-        isActionable ? 'cursor-pointer' : ''
-      }`}
+      className={cn(
+        'border-b border-border last:border-0 transition-colors hover:bg-accent/50',
+        isActionable && 'cursor-pointer',
+      )}
       onClick={isActionable ? activateRow : undefined}
       onKeyDown={handleKeyDown}
       tabIndex={isActionable ? 0 : undefined}
@@ -141,10 +146,10 @@ export const VirtualizedDataTable = <TData,>({
   onSortingChange,
   manualSorting = false,
   loading = false,
-  emptyMessage = 'No data available',
+  emptyMessage = 'No data.',
   renderEmptyState,
-  className = 'w-full border-collapse text-sm',
-  scrollClassName = 'h-full w-full overflow-auto',
+  className,
+  scrollClassName,
   style = { height: 400 },
 }: VirtualizedDataTableProps<TData>) => {
   const [uncontrolledSorting, setUncontrolledSorting] = useState<SortingState>([]);
@@ -183,7 +188,7 @@ export const VirtualizedDataTable = <TData,>({
       isLoading: loading,
       onRowClick,
       renderEmptyState,
-      tableClassName: className,
+      tableClassName: cn(DEFAULT_TABLE_CLASSNAME, className),
     }),
     [
       ariaLabel,
@@ -252,7 +257,7 @@ export const VirtualizedDataTable = <TData,>({
 
   return (
     <TableVirtuoso<Row<TData>, VirtualizedTableContext<TData>>
-      className={scrollClassName}
+      className={cn(DEFAULT_SCROLL_CLASSNAME, scrollClassName)}
       components={
         virtualizedTableComponents as TableComponents<Row<TData>, VirtualizedTableContext<TData>>
       }

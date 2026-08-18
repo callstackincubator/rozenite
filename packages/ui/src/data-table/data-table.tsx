@@ -23,6 +23,8 @@ export type DataTableColumn<TRow> = ColumnDef<TRow, any>;
 export type DataTableProps<TRow> = {
   columns: DataTableColumn<TRow>[];
   data: TRow[];
+  /** Accessible name for the table. */
+  ariaLabel?: string;
   className?: string;
   /** Shows a loading row in place of the table body. */
   loading?: boolean;
@@ -42,6 +44,7 @@ export type DataTableProps<TRow> = {
 export function DataTable<TRow>({
   columns,
   data,
+  ariaLabel,
   className,
   loading = false,
   emptyMessage = 'No data.',
@@ -69,7 +72,11 @@ export function DataTable<TRow>({
   const columnCount = columns.length;
 
   return (
-    <table data-slot="data-table" className={cn('w-full border-collapse text-sm', className)}>
+    <table
+      aria-label={ariaLabel}
+      data-slot="data-table"
+      className={cn('w-full border-collapse text-sm', className)}
+    >
       <thead data-slot="data-table-head">
         {table.getHeaderGroups().map((headerGroup) => (
           <tr key={headerGroup.id} className="border-b border-border">
@@ -80,8 +87,16 @@ export function DataTable<TRow>({
               return (
                 <th
                   key={header.id}
+                  aria-sort={
+                    sortDirection === 'asc'
+                      ? 'ascending'
+                      : sortDirection === 'desc'
+                        ? 'descending'
+                        : 'none'
+                  }
                   colSpan={header.colSpan}
                   className="h-8 px-3 text-left text-xs font-medium text-muted-foreground"
+                  scope="col"
                 >
                   {header.isPlaceholder ? null : canSort ? (
                     <button
