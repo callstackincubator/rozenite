@@ -1,0 +1,276 @@
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Shell, type ShellPlugin } from '@rozenite/shell';
+import {
+  Badge,
+  Button,
+  Dialog,
+  EmptyState,
+  IndicatorDot,
+  Link,
+  PluginShell,
+  Separator,
+} from '@rozenite/ui';
+import { createDeviceShellHost } from './shell-host';
+import { fetchConfig } from './config';
+import { loadPlugins } from './plugins';
+import type { DeviceConnection, DeviceState } from './connection/device-connection';
+import { TargetUrlError } from './connection/target-from-url';
+
+/** Where the "app running but Rozenite isn't installed" state points
+ * people to install/initialize it. From the repo README's doc links. */
+const SETUP_DOCS_URL = 'https://rozenite.dev/docs/getting-started';
+
+type ConfigState =
+  | { status: 'loading' }
+  | {
+      status: 'ready';
+      plugins: ShellPlugin[];
+      destroyOnDetachPlugins: string[];
+      runtimeVersion?: string;
+    }
+  | { status: 'error' };
+
+/**
+ * Loads `/rozenite/app/config` and the plugins it lists, once. Exposes a
+ * `retry` to redo both after a failure (e.g. the dev server was down and is
+ * now up).
+ */
+function useConfig(): [ConfigState, () => void] {
+  const [state, setState] = useState<ConfigState>({ status: 'loading' });
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setState({ status: 'loading' });
+
+    void (async () => {
+      try {
+        const config = await fetchConfig();
+        const plugins = await loadPlugins(config.installedPlugins);
+        if (!cancelled) {
+          setState({
+            status: 'ready',
+            plugins,
+            destroyOnDetachPlugins: config.destroyOnDetachPlugins,
+            runtimeVersion: config.runtimeVersion,
+          });
+        }
+      } catch (error) {
+        console.error('[rozenite] Failed to load app configuration.', error);
+        if (!cancelled) {
+          setState({ status: 'error' });
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // Both a `ConfigFetchError` from `fetchConfig` and a plugin-loading
+    // failure collapse to the same `status: 'error'` here, since either is
+    // equally fatal to mounting the shell.
+  }, [attempt]);
+
+  return [state, () => setAttempt((current) => current + 1)];
+}
+
+const STATUS_LABEL: Record<DeviceState['status'], string> = {
+  connecting: 'Connecting…',
+  connected: 'Connected',
+  reloading: 'Reloading…',
+  disconnected: 'Disconnected',
+  rozeniteMissing: 'Rozenite not found',
+  metroUnreachable: 'Dev server unreachable',
+};
+
+function StatusBadge({ status }: { status: DeviceState['status'] }) {
+  const isProblem =
+    status === 'disconnected' || status === 'rozeniteMissing' || status === 'metroUnreachable';
+
+  return (
+    <div className="flex items-center gap-2">
+      <IndicatorDot variant={isProblem ? 'destructive' : 'default'} />
+      <Badge variant={isProblem ? 'outline' : 'secondary'}>{STATUS_LABEL[status]}</Badge>
+    </div>
+  );
+}
+
+function Footer({
+  deviceState,
+  targetName,
+  runtimeVersion,
+}: {
+  deviceState: DeviceState;
+  targetName: string;
+  runtimeVersion?: string;
+}) {
+  return (
+    // Fixed rather than stacked in normal flow: `Shell` fixes its own root
+    // to `h-screen` (it's designed to fill a whole page on its own), so a
+    // footer sharing the flex column beneath it would be pushed off the
+    // bottom of the viewport. Anchoring it to the viewport instead means it
+    // overlays the last sliver of `Shell`'s content, like a status bar.
+    <footer className="fixed inset-x-0 bottom-0 z-20 flex h-9 shrink-0 items-center gap-3 border-t border-border bg-card px-3 text-sm text-muted-foreground">
+      <StatusBadge status={deviceState.status} />
+      {(deviceState.status === 'connected' || deviceState.status === 'reloading') && targetName && (
+        <>
+          <Separator orientation="vertical" className="h-4" />
+          <span className="truncate">{targetName}</span>
+        </>
+      )}
+      {runtimeVersion && (
+        <>
+          <div className="flex-1" />
+          <span>v{runtimeVersion}</span>
+        </>
+      )}
+    </footer>
+  );
+}
+
+/**
+ * A dialog for a condition that needs the person's attention and, usually,
+ * an action from them. Always rendered *over* whatever else is on screen —
+ * including a mounted `Shell` — never in its place. See the comment above
+ * `shellMounted` in `ConnectedApp` for why that matters.
+ */
+function StatusDialog({
+  open,
+  title,
+  description,
+  action,
+}: {
+  open: boolean;
+  title: string;
+  description: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={() => {}}>
+      <Dialog.Content showCloseButton={false}>
+        <Dialog.Header>
+          <Dialog.Title>{title}</Dialog.Title>
+          <Dialog.Description>{description}</Dialog.Description>
+        </Dialog.Header>
+        {action && <Dialog.Footer>{action}</Dialog.Footer>}
+      </Dialog.Content>
+    </Dialog>
+  );
+}
+
+function ConnectedApp({ connection }: { connection: DeviceConnection }) {
+  const deviceState = useSyncExternalStore(connection.subscribe, connection.getState);
+  const target = connection.getTarget();
+  // `host` must stay referentially stable for as long as `connection` does —
+  // `Shell` resubscribes from it whenever the reference changes.
+  const host = useMemo(() => createDeviceShellHost(connection), [connection]);
+  const [configState, retryConfig] = useConfig();
+
+  // Sticky latch: once the shell has mounted, it stays mounted forever,
+  // regardless of what `deviceState` or `configState` do afterwards.
+  //
+  // Panels surviving a JS-VM reload is the entire headline feature of this
+  // app — people have been asking for exactly this. Unmounting `Shell` on
+  // `reloading` or `disconnected` (or on `metroUnreachable`/`rozeniteMissing`
+  // surfacing mid-session, e.g. because the dispatcher didn't come back
+  // after a reload) would destroy every panel's state right when surviving
+  // that is the point. So every non-connected state below is rendered as a
+  // dialog *over* the still-mounted shell, never in its place.
+  const [shellMounted, setShellMounted] = useState(false);
+  useEffect(() => {
+    if (deviceState.status === 'connected' && configState.status === 'ready') {
+      setShellMounted(true);
+    }
+  }, [deviceState.status, configState.status]);
+
+  const configFailed = configState.status === 'error';
+
+  return (
+    // `PluginShell` supplies both the design tokens (dark mode, background,
+    // etc.) and the portal container `Dialog` needs to render into
+    // (`usePluginPortalContainer`) — without it, a `Dialog` here would have
+    // nowhere to portal to and would render nothing. `Shell` below brings
+    // its own nested `PluginShell` for its own children; this outer one is
+    // for everything *around* `Shell` (the dialogs and footer below).
+    <PluginShell>
+      {shellMounted && configState.status === 'ready' ? (
+        <Shell
+          plugins={configState.plugins}
+          destroyOnDetachPlugins={configState.destroyOnDetachPlugins}
+          runtimeVersion={configState.runtimeVersion}
+          host={host}
+        />
+      ) : (
+        !configFailed && (
+          <PluginShell.Body className="items-center justify-center">
+            <EmptyState
+              title={
+                configState.status === 'loading' ? 'Loading plugins…' : 'Connecting to device…'
+              }
+              description={target.name || undefined}
+            />
+          </PluginShell.Body>
+        )
+      )}
+
+      <StatusDialog
+        open={configFailed}
+        title="Can't reach the dev server"
+        description="The dev server this app is served by isn't responding. Make sure Metro is still running, then retry."
+        action={<Button onClick={retryConfig}>Retry</Button>}
+      />
+      <StatusDialog
+        open={!configFailed && deviceState.status === 'metroUnreachable'}
+        title="Can't reach the dev server"
+        description="Metro isn't responding right now. Make sure it's still running, then retry."
+        action={<Button onClick={() => connection.reconnect()}>Retry</Button>}
+      />
+      <StatusDialog
+        open={!configFailed && deviceState.status === 'rozeniteMissing'}
+        title="Rozenite isn't set up in this app"
+        description="The app is running, but the Rozenite runtime wasn't found in it. Follow the setup guide, then check again."
+        action={
+          <>
+            <Link href={SETUP_DOCS_URL} external>
+              Setup guide
+            </Link>
+            <Button onClick={() => connection.reconnect()}>Check again</Button>
+          </>
+        }
+      />
+      <StatusDialog
+        open={!configFailed && deviceState.status === 'disconnected'}
+        title="Connection lost"
+        description="The connection to the device was lost. This can happen for a number of reasons; reconnect to try again."
+        action={<Button onClick={() => connection.reconnect()}>Reconnect</Button>}
+      />
+
+      <Footer
+        deviceState={deviceState}
+        targetName={target.name}
+        runtimeVersion={configState.status === 'ready' ? configState.runtimeVersion : undefined}
+      />
+    </PluginShell>
+  );
+}
+
+export type AppTarget =
+  | { kind: 'error'; error: TargetUrlError }
+  | { kind: 'connection'; connection: DeviceConnection };
+
+export function App({ target }: { target: AppTarget }) {
+  if (target.kind === 'error') {
+    return (
+      <PluginShell>
+        <PluginShell.Body className="items-center justify-center">
+          <EmptyState
+            title="No device to connect to"
+            description={`${target.error.message} This app is meant to be launched with \`rozenite open\`, which fills in that connection for you — try that instead of opening this URL directly.`}
+          />
+        </PluginShell.Body>
+      </PluginShell>
+    );
+  }
+
+  return <ConnectedApp connection={target.connection} />;
+}

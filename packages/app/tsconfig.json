@@ -2,6 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
     "noEmit": true,
     "types": ["vite/client"],
     "lib": ["dom", "es2022"],
@@ -13,10 +17,5 @@
       "@rozenite/shell": ["../shell/src/index.ts"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
-  "references": [
-    {
-      "path": "../ui/tsconfig.lib.json"
-    }
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"]
 }
