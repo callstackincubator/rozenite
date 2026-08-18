@@ -27,6 +27,7 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
+      "development": "./react-native.ts",
       "types": "./dist/react-native.d.ts",
       "import": "./dist/react-native.js",
       "require": "./dist/react-native.js"
