@@ -5,6 +5,62 @@ export type { Size } from './tokens/size';
 export { sizeHeight, sizePaddingX, sizeIcon } from './tokens/size';
 export { surfaceTone, textTone } from './tokens/tone-variants';
 
+export { Text, Heading, textVariants } from './text/text';
+export type { TextProps, HeadingProps } from './text/text';
+
+export { Row } from './row/row';
+export type { RowProps } from './row/row';
+
+export { Column } from './column/column';
+export type { ColumnProps } from './column/column';
+
+export { Icon } from './icon/icon';
+export type { IconProps } from './icon/icon';
+export {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  ChevronsUpDown,
+  Copy,
+  ExternalLink,
+  Info,
+  Minus,
+  MoreHorizontal,
+  MoreVertical,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings,
+  Trash2,
+  X,
+  XCircle,
+} from './icon/icon';
+
+export { IconButton } from './icon-button/icon-button';
+export type { IconButtonProps } from './icon-button/icon-button';
+
+export { Menu } from './menu/menu';
+export type {
+  MenuProps,
+  MenuTriggerProps,
+  MenuContentProps,
+  MenuItemProps,
+  MenuCheckboxItemProps,
+  MenuSeparatorProps,
+  MenuGroupProps,
+  MenuGroupLabelProps,
+} from './menu/menu';
+
+export { Alert } from './alert/alert';
+export type { AlertProps, AlertTitleProps, AlertDescriptionProps } from './alert/alert';
+
+export { Kbd } from './kbd/kbd';
+export type { KbdProps } from './kbd/kbd';
+
 export { Split } from './split/split';
 export type {
   SplitDirection,
