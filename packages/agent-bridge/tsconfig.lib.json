@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@rozenite/agent-shared": ["../agent-shared/src/index.ts"]
+    },
+    "rootDir": ".",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"],
+    "lib": ["dom", "ES2022"],
+    "jsx": "react-jsx",
+    "esModuleInterop": true
+  },
+  "include": ["react-native.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+  "references": [
+    {
+      "path": "../agent-shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../plugin-bridge/tsconfig.lib.json"
+    }
+  ]
+}

@@ -4,6 +4,7 @@
   "include": [],
   "references": [
     { "path": "../../packages/cli" },
+    { "path": "../../packages/agent-bridge" },
     { "path": "../../packages/metro" },
     { "path": "./tsconfig.app.json" }
   ]

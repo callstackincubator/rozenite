@@ -21,24 +21,23 @@
   "files": [
     "dist"
   ],
-  "type": "module",
-  "main": "./dist/react-native/index.cjs",
-  "module": "./dist/react-native/index.js",
-  "types": "./dist/react-native/index.d.ts",
+  "type": "commonjs",
+  "main": "./dist/react-native.js",
+  "types": "./dist/react-native.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/react-native/index.d.ts",
-      "import": "./dist/react-native/index.js",
-      "require": "./dist/react-native/index.cjs"
+      "types": "./dist/react-native.d.ts",
+      "import": "./dist/react-native.js",
+      "require": "./dist/react-native.js"
     }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "VITE_ROZENITE_TARGET=react-native vite build",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.lib.json",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -46,9 +45,7 @@
     "@rozenite/plugin-bridge": "workspace:*",
     "tslib": "^2.3.0"
   },
-  "devDependencies": {
-    "@rozenite/vite-plugin": "workspace:*"
-  },
+  "devDependencies": {},
   "peerDependencies": {
     "react": ">=17"
   },
