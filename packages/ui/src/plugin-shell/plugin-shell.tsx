@@ -9,7 +9,7 @@ import {
 export type PluginShellProps = ComponentProps<'div'> & {
   /**
    * Skip the theme provider and design tokens entirely, rendering a bare
-   * flex-column wrapper. For panels that bring their own styling story
+   * `h-screen` wrapper. For panels that bring their own styling story
    * (e.g. styled-components, or a third-party panel with its own theme).
    */
   unstyled?: boolean;
@@ -18,7 +18,11 @@ export type PluginShellProps = ComponentProps<'div'> & {
 function PluginShellRoot({ unstyled = false, className, children, ...props }: PluginShellProps) {
   if (unstyled) {
     return (
-      <div data-slot="plugin-shell" className={cn('flex min-h-0 flex-col', className)} {...props}>
+      <div
+        data-slot="plugin-shell"
+        className={cn('flex h-screen min-h-0 flex-col', className)}
+        {...props}
+      >
         {children}
       </div>
     );
@@ -43,7 +47,7 @@ function ThemedShell({ className, children, ...props }: Omit<PluginShellProps, '
       data-slot="plugin-shell"
       className={cn(
         theme === 'dark' && 'dark',
-        'flex min-h-0 flex-col bg-background text-foreground',
+        'flex h-screen min-h-0 flex-col bg-background text-foreground',
         className,
       )}
       {...props}

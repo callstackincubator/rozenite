@@ -31,7 +31,10 @@ export function EmptyState({
     ref,
     props: {
       'data-slot': 'empty-state',
-      className: cn('flex flex-col items-center justify-center gap-3 p-8 text-center', className),
+      className: cn(
+        'flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center',
+        className,
+      ),
       children: (
         <>
           {Icon && <Icon className="h-8 w-8 text-muted-foreground" />}
