@@ -1,15 +1,14 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Badge,
-  ConfirmDialog,
   EmptyState,
   IconButton,
   PluginShell,
   SearchField,
   Sidebar,
   Split,
-  Toast,
   Toolbar,
+  useConfirmDialog,
   useToast,
   VirtualizedDataTable,
 } from '@rozenite/ui';
@@ -47,12 +46,12 @@ function FeatureFlagsPanelContent() {
     refresh,
   } = useFeatureFlags();
   const toast = useToast();
+  const confirm = useConfirmDialog();
   const providers = snapshot?.providers ?? [];
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [overriddenOnly, setOverriddenOnly] = useState(false);
   const [jsonDialogKey, setJsonDialogKey] = useState<string | null>(null);
-  const [showResetAllDialog, setShowResetAllDialog] = useState(false);
 
   useEffect(() => {
     setSelectedProviderId((current) =>
@@ -97,9 +96,15 @@ function FeatureFlagsPanelContent() {
     }
   };
 
-  const handleClearAllOverrides = async () => {
+  const handleResetAllClick = async () => {
     if (!selectedProvider) return;
-    setShowResetAllDialog(false);
+    const confirmed = await confirm({
+      title: 'Reset all overrides',
+      description: `Are you sure you want to clear every override for "${selectedProvider.name}"? This action cannot be undone.`,
+      tone: 'danger',
+      confirmLabel: 'Reset all',
+    });
+    if (!confirmed) return;
     try {
       await clearAllOverrides(selectedProvider.id);
     } catch (error) {
@@ -232,7 +237,7 @@ function FeatureFlagsPanelContent() {
       <Toolbar.Separator />
       <Toolbar.Group>
         <Toolbar.Button
-          onClick={() => setShowResetAllDialog(true)}
+          onClick={() => void handleResetAllClick()}
           disabled={!connected || !selectedProvider || !hasOverrides}
           aria-label="Reset all overrides"
           title="Reset all overrides"
@@ -261,7 +266,7 @@ function FeatureFlagsPanelContent() {
   );
 
   return (
-    <PluginShell>
+    <>
       <PluginShell.Body>
         {!connected || isLoading ? (
           <EmptyState
@@ -328,30 +333,16 @@ function FeatureFlagsPanelContent() {
           return handleSetOverride(jsonDialogFlag, value);
         }}
       />
-      <ConfirmDialog
-        open={showResetAllDialog}
-        onOpenChange={setShowResetAllDialog}
-        variant="confirm"
-        tone="danger"
-        title="Reset all overrides"
-        description={
-          selectedProvider
-            ? `Are you sure you want to clear every override for "${selectedProvider.name}"? This action cannot be undone.`
-            : undefined
-        }
-        confirmLabel="Reset all"
-        onConfirm={handleClearAllOverrides}
-      />
-    </PluginShell>
+    </>
   );
 }
 
 export default function FeatureFlagsPanel() {
   return (
     <FeatureFlagsQueryClientProvider>
-      <Toast.Provider>
+      <PluginShell>
         <FeatureFlagsPanelContent />
-      </Toast.Provider>
+      </PluginShell>
     </FeatureFlagsQueryClientProvider>
   );
 }

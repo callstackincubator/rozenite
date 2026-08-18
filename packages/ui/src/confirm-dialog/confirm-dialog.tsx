@@ -1,4 +1,12 @@
-import type { ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Dialog } from '../dialog/dialog';
 import { Button } from '../button/button';
 import type { Tone } from '../tokens/tone';
@@ -24,7 +32,7 @@ export type ConfirmDialogProps = {
 };
 
 /** A confirmation or acknowledgement dialog for destructive or important actions. */
-export function ConfirmDialog({
+function ConfirmDialogRoot({
   open,
   onOpenChange,
   title,
@@ -59,3 +67,89 @@ export function ConfirmDialog({
     </Dialog>
   );
 }
+
+export type ConfirmDialogOptions = Pick<
+  ConfirmDialogProps,
+  'title' | 'description' | 'variant' | 'tone' | 'confirmLabel' | 'cancelLabel'
+>;
+
+type ConfirmFn = (options: ConfirmDialogOptions) => Promise<boolean>;
+
+type PendingConfirm = {
+  id: number;
+  options: ConfirmDialogOptions;
+  resolve: (confirmed: boolean) => void;
+};
+
+const ConfirmDialogContext = createContext<ConfirmFn | null>(null);
+
+export type ConfirmDialogProviderProps = {
+  children?: ReactNode;
+};
+
+/**
+ * Renders at most one queued confirmation at a time — a second `confirm()`
+ * call while one is already showing waits its turn rather than stacking
+ * dialogs.
+ */
+function ConfirmDialogProvider({ children }: ConfirmDialogProviderProps) {
+  const [queue, setQueue] = useState<PendingConfirm[]>([]);
+  const queueRef = useRef(queue);
+  queueRef.current = queue;
+  const nextIdRef = useRef(0);
+
+  const confirm = useCallback<ConfirmFn>((options) => {
+    return new Promise<boolean>((resolve) => {
+      const id = nextIdRef.current++;
+      setQueue((current) => [...current, { id, options, resolve }]);
+    });
+  }, []);
+
+  // Resolve `false` for any confirmation still awaiting an answer when the
+  // provider unmounts, so callers don't hang forever on an abandoned panel.
+  useEffect(() => {
+    return () => {
+      queueRef.current.forEach((entry) => entry.resolve(false));
+    };
+  }, []);
+
+  const pending = queue[0] ?? null;
+
+  const settle = (confirmed: boolean) => {
+    if (!pending) return;
+    pending.resolve(confirmed);
+    setQueue((current) => current.filter((entry) => entry.id !== pending.id));
+  };
+
+  return (
+    <ConfirmDialogContext.Provider value={confirm}>
+      {children}
+      {pending && (
+        <ConfirmDialogRoot
+          key={pending.id}
+          {...pending.options}
+          open
+          onOpenChange={(open) => {
+            if (!open) settle(false);
+          }}
+          onConfirm={() => settle(true)}
+        />
+      )}
+    </ConfirmDialogContext.Provider>
+  );
+}
+
+/** Imperatively show a confirmation or acknowledgement dialog. Must be used within a `ConfirmDialog.Provider` (which `PluginShell` mounts automatically). */
+export function useConfirmDialog(): ConfirmFn {
+  const context = useContext(ConfirmDialogContext);
+
+  if (!context) {
+    throw new Error('useConfirmDialog must be used within a ConfirmDialog.Provider');
+  }
+
+  return context;
+}
+
+export const ConfirmDialog = Object.assign(ConfirmDialogRoot, {
+  Provider: ConfirmDialogProvider,
+});

@@ -1,4 +1,4 @@
-import { Button, ConfirmDialog, Dialog, Field } from '@rozenite/ui';
+import { Button, Dialog, Field, useConfirmDialog } from '@rozenite/ui';
 import { useEffect, useRef, useState } from 'react';
 import type { StorageEntry, StorageEntryType, StorageEntryValue } from '../shared/types';
 import { TypedValueEditor } from './typed-value-editor';
@@ -28,7 +28,7 @@ export const EditEntryDialog = ({
   const [currentValue, setCurrentValue] = useState<StorageEntryValue | null>(
     defaultValueForType('string'),
   );
-  const [alert, setAlert] = useState<{ title: string; message: string } | null>(null);
+  const confirm = useConfirmDialog();
 
   useEffect(() => {
     if (entry && isOpen) {
@@ -48,13 +48,14 @@ export const EditEntryDialog = ({
     onClose();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!entry || currentValue === null) return;
 
     if (!isCurrentTypeSupported) {
-      setAlert({
+      await confirm({
+        variant: 'alert',
         title: 'Unsupported Type',
-        message: 'This storage does not support the selected type.',
+        description: 'This storage does not support the selected type.',
       });
       return;
     }
@@ -65,7 +66,7 @@ export const EditEntryDialog = ({
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && currentType !== 'buffer') {
-      handleSave();
+      void handleSave();
     }
   };
 
@@ -79,69 +80,57 @@ export const EditEntryDialog = ({
   const isSaveDisabled = !isCurrentTypeSupported || currentValue === null;
 
   return (
-    <>
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          if (!open) resetAndClose();
-        }}
-      >
-        <Dialog.Content onKeyDown={handleKeyDown}>
-          <Dialog.Header>
-            <Dialog.Title>Edit Entry</Dialog.Title>
-          </Dialog.Header>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) resetAndClose();
+      }}
+    >
+      <Dialog.Content onKeyDown={handleKeyDown}>
+        <Dialog.Header>
+          <Dialog.Title>Edit Entry</Dialog.Title>
+        </Dialog.Header>
 
-          <div className="flex flex-col gap-4">
-            <Field>
-              <Field.Label>Key</Field.Label>
-              <div className="h-8 w-full truncate rounded-md border border-input bg-muted px-3 py-1.5 font-mono text-sm text-foreground">
-                {entryForDisplay.key}
-              </div>
-              <Field.Description>Key cannot be changed during editing</Field.Description>
-            </Field>
+        <div className="flex flex-col gap-4">
+          <Field>
+            <Field.Label>Key</Field.Label>
+            <div className="h-8 w-full truncate rounded-md border border-input bg-muted px-3 py-1.5 font-mono text-sm text-foreground">
+              {entryForDisplay.key}
+            </div>
+            <Field.Description>Key cannot be changed during editing</Field.Description>
+          </Field>
 
-            <Field>
-              <Field.Label htmlFor="edit-entry-value">Value</Field.Label>
-              <TypedValueEditor
-                key={entryForDisplay.key}
-                supportedTypes={supportedTypes}
-                type={currentType}
-                value={currentValue}
-                onChange={(nextType, nextValue) => {
-                  setCurrentType(nextType);
-                  setCurrentValue(nextValue);
-                }}
-                inputId="edit-entry-value"
-                autoFocus
-              />
-              {!isCurrentTypeSupported && (
-                <Field.Description className="text-danger">
-                  This storage does not support {currentType} values.
-                </Field.Description>
-              )}
-            </Field>
-          </div>
+          <Field>
+            <Field.Label htmlFor="edit-entry-value">Value</Field.Label>
+            <TypedValueEditor
+              key={entryForDisplay.key}
+              supportedTypes={supportedTypes}
+              type={currentType}
+              value={currentValue}
+              onChange={(nextType, nextValue) => {
+                setCurrentType(nextType);
+                setCurrentValue(nextValue);
+              }}
+              inputId="edit-entry-value"
+              autoFocus
+            />
+            {!isCurrentTypeSupported && (
+              <Field.Description className="text-danger">
+                This storage does not support {currentType} values.
+              </Field.Description>
+            )}
+          </Field>
+        </div>
 
-          <Dialog.Footer>
-            <Button tone="neutral" variant="outline" onClick={resetAndClose}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={isSaveDisabled}>
-              Save Changes
-            </Button>
-          </Dialog.Footer>
-        </Dialog.Content>
-      </Dialog>
-
-      <ConfirmDialog
-        open={alert !== null}
-        onOpenChange={(open) => {
-          if (!open) setAlert(null);
-        }}
-        variant="alert"
-        title={alert?.title ?? ''}
-        description={alert?.message}
-      />
-    </>
+        <Dialog.Footer>
+          <Button tone="neutral" variant="outline" onClick={resetAndClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => void handleSave()} disabled={isSaveDisabled}>
+            Save Changes
+          </Button>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog>
   );
 };

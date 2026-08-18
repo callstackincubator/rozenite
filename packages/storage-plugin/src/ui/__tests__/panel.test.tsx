@@ -109,6 +109,7 @@ vi.mock('@rozenite/ui', async () => {
     ConfirmDialog: () => null,
     EmptyState: () => <div />,
     PluginShell,
+    useConfirmDialog: () => async () => true,
     SearchField: ({
       value,
       onChange,

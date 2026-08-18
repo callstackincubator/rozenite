@@ -3,7 +3,6 @@ import type { ColumnDef, OnChangeFn, SortingState } from '@tanstack/react-table'
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
   Badge,
-  ConfirmDialog,
   EmptyState,
   IconButton,
   PluginShell,
@@ -11,9 +10,10 @@ import {
   Sidebar,
   Split,
   Toolbar,
+  useConfirmDialog,
   VirtualizedDataTable,
 } from '@rozenite/ui';
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { Database, Download, Edit3, Plus, RefreshCw, Trash2, Upload } from 'lucide-react';
 import type {
   StorageDiscoverStoragesResponseEvent,
@@ -48,7 +48,6 @@ import {
 import { buildExportFilename, downloadJson } from './utils';
 import './globals.css';
 
-type AlertState = { title: string; message: string };
 type FullEntryInteraction = { key: string; mode: 'detail' | 'edit' };
 
 const sameTarget = (a: StorageTarget, b: StorageTarget) =>
@@ -79,14 +78,12 @@ function StoragePanelContent() {
   const [keySortDirection, setKeySortDirection] = useState<'ascending' | 'descending'>('ascending');
   const [interaction, setInteraction] = useState<FullEntryInteraction | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [deleteKey, setDeleteKey] = useState<string | null>(null);
-  const [showPurgeDialog, setShowPurgeDialog] = useState(false);
   const [virtualListVersion, setVirtualListVersion] = useState(0);
   const [exportState, setExportState] = useState<
     { status: 'idle' } | { status: 'loading' } | { status: 'error'; message: string }
   >({ status: 'idle' });
   const [importFlight, setImportFlight] = useState<ImportFlightState | null>(null);
-  const [alertState, setAlertState] = useState<AlertState | null>(null);
+  const confirm = useConfirmDialog();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const selectedTargetRef = useRef<StorageTarget | null>(null);
   const discoveryRequestIdRef = useRef(0);
@@ -262,8 +259,6 @@ function StoragePanelContent() {
     importPreviewAbortControllerRef.current = null;
     activeImportRequestIdRef.current = null;
     setExportState({ status: 'idle' });
-    setDeleteKey(null);
-    setShowPurgeDialog(false);
     setInteraction(null);
     setImportFlight(null);
   }, [selectedTarget]);
@@ -312,29 +307,47 @@ function StoragePanelContent() {
     );
   };
 
-  const handleDeleteEntry = () => {
-    if (!client || !selectedTarget || !deleteKey) return;
-    const key = deleteKey;
-    setDeleteKey(null);
-    mutateSelectedStorage(() =>
-      client.send('delete-entry', {
-        type: 'delete-entry',
-        target: selectedTarget,
-        key,
-      }),
-    );
-  };
+  const handleDeleteClick = useCallback(
+    async (key: string) => {
+      if (!client || !selectedTarget) return;
+      const confirmed = await confirm({
+        title: 'Delete Entry',
+        description: `Are you sure you want to delete the entry "${key}"?`,
+        tone: 'danger',
+        confirmLabel: 'Delete',
+      });
+      if (!confirmed) return;
+      mutateSelectedStorage(() =>
+        client.send('delete-entry', {
+          type: 'delete-entry',
+          target: selectedTarget,
+          key,
+        }),
+      );
+    },
+    [client, selectedTarget, confirm],
+  );
 
-  const handlePurgeStorage = () => {
+  const handlePurgeClick = async () => {
     if (!client || !selectedTarget) return;
-    setShowPurgeDialog(false);
+    const confirmed = await confirm({
+      title: 'Purge Storage',
+      description: selectedDescriptor
+        ? `Are you sure you want to remove all entries from "${selectedDescriptor.storageName}"? This action cannot be undone.`
+        : 'Are you sure you want to remove all entries from this storage? This action cannot be undone.',
+      tone: 'danger',
+      confirmLabel: 'Purge',
+    });
+    if (!confirmed) return;
     client.send('purge-storage', {
       type: 'purge-storage',
       target: selectedTarget,
     });
   };
 
-  const showAlert = (title: string, message: string) => setAlertState({ title, message });
+  const showAlert = async (title: string, message: string) => {
+    await confirm({ variant: 'alert', title, description: message });
+  };
 
   const handleImportClick = () => {
     if (fileInputRef.current) {
@@ -350,12 +363,12 @@ function StoragePanelContent() {
     try {
       raw = JSON.parse(await file.text());
     } catch (error) {
-      showAlert('Could not read file', error instanceof Error ? error.message : String(error));
+      void showAlert('Could not read file', error instanceof Error ? error.message : String(error));
       return;
     }
     const parsed = parseSnapshot(raw);
     if (!parsed.ok) {
-      showAlert('Invalid snapshot', `${parsed.error.path}: ${parsed.error.message}`);
+      void showAlert('Invalid snapshot', `${parsed.error.path}: ${parsed.error.message}`);
       return;
     }
     importPreviewAbortControllerRef.current?.abort();
@@ -386,7 +399,7 @@ function StoragePanelContent() {
       });
     } catch {
       if (!controller.signal.aborted && sameTarget(target, selectedTargetRef.current ?? target)) {
-        showAlert(
+        void showAlert(
           'Could not preview import',
           'Could not inspect the selected storage. Please try again.',
         );
@@ -509,7 +522,7 @@ function StoragePanelContent() {
               tone="neutral"
               variant="ghost"
               className="text-muted-foreground hover:text-danger"
-              onClick={() => setDeleteKey(row.original.key)}
+              onClick={() => void handleDeleteClick(row.original.key)}
               label={`Delete entry ${row.original.key}`}
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -518,7 +531,7 @@ function StoragePanelContent() {
         ),
       },
     ],
-    [],
+    [handleDeleteClick],
   );
   const sorting: SortingState = [{ id: 'key', desc: keySortDirection === 'descending' }];
   const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
@@ -555,7 +568,7 @@ function StoragePanelContent() {
   const selectedStorageViewId = selectedTarget ? getStorageViewId(selectedTarget) : '';
 
   return (
-    <PluginShell>
+    <>
       <PluginShell.Body>
         <Split direction="horizontal" autoSaveId="storage">
           <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
@@ -603,7 +616,7 @@ function StoragePanelContent() {
                     <Plus className="h-3.5 w-3.5" />
                   </Toolbar.Button>
                   <Toolbar.Button
-                    onClick={() => setShowPurgeDialog(true)}
+                    onClick={() => void handlePurgeClick()}
                     disabled={!client || !selectedTarget || previews.isFetching}
                     aria-label="Purge storage"
                     title="Purge storage"
@@ -736,51 +749,16 @@ function StoragePanelContent() {
         onCancel={() => setImportFlight(null)}
         onClose={() => setImportFlight(null)}
       />
-      <ConfirmDialog
-        open={deleteKey !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeleteKey(null);
-        }}
-        variant="confirm"
-        tone="danger"
-        title="Delete Entry"
-        description={
-          deleteKey ? `Are you sure you want to delete the entry "${deleteKey}"?` : undefined
-        }
-        confirmLabel="Delete"
-        onConfirm={handleDeleteEntry}
-      />
-      <ConfirmDialog
-        open={showPurgeDialog}
-        onOpenChange={setShowPurgeDialog}
-        variant="confirm"
-        tone="danger"
-        title="Purge Storage"
-        description={
-          selectedDescriptor
-            ? `Are you sure you want to remove all entries from "${selectedDescriptor.storageName}"? This action cannot be undone.`
-            : 'Are you sure you want to remove all entries from this storage? This action cannot be undone.'
-        }
-        confirmLabel="Purge"
-        onConfirm={handlePurgeStorage}
-      />
-      <ConfirmDialog
-        open={alertState !== null}
-        onOpenChange={(open) => {
-          if (!open) setAlertState(null);
-        }}
-        variant="alert"
-        title={alertState?.title ?? ''}
-        description={alertState?.message}
-      />
-    </PluginShell>
+    </>
   );
 }
 
 export default function StoragePanel() {
   return (
     <StorageQueryClientProvider>
-      <StoragePanelContent />
+      <PluginShell>
+        <StoragePanelContent />
+      </PluginShell>
     </StorageQueryClientProvider>
   );
 }
