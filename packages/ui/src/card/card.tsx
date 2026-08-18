@@ -7,6 +7,8 @@ type CardContextValue = {
   collapsible: boolean;
   open: boolean;
   toggle: () => void;
+  collapseLabel: string;
+  expandLabel: string;
 };
 
 const CardContext = createContext<CardContextValue | null>(null);
@@ -15,6 +17,12 @@ export type CardProps = ComponentProps<'div'> & {
   /** Whether `Card.Body` can be collapsed via a toggle in `Card.Header`. */
   collapsible?: boolean;
   defaultOpen?: boolean;
+  /** Accessible name for the collapse toggle when open.
+   * @default 'Collapse' */
+  collapseLabel?: string;
+  /** Accessible name for the collapse toggle when closed.
+   * @default 'Expand' */
+  expandLabel?: string;
   /** Replace the rendered element, e.g. `render={<section />}`. */
   render?: useRender.RenderProp;
 };
@@ -22,6 +30,8 @@ export type CardProps = ComponentProps<'div'> & {
 function CardRoot({
   collapsible = false,
   defaultOpen = true,
+  collapseLabel = 'Collapse',
+  expandLabel = 'Expand',
   className,
   render,
   ref,
@@ -31,7 +41,13 @@ function CardRoot({
 
   return (
     <CardContext.Provider
-      value={{ collapsible, open, toggle: () => setOpen((current) => !current) }}
+      value={{
+        collapsible,
+        open,
+        toggle: () => setOpen((current) => !current),
+        collapseLabel,
+        expandLabel,
+      }}
     >
       {useRender({
         render: render ?? <div />,
@@ -62,7 +78,7 @@ function CardHeader({ className, children, ...props }: CardHeaderProps) {
           type="button"
           data-slot="card-collapse-toggle"
           aria-expanded={context.open}
-          aria-label={context.open ? 'Collapse' : 'Expand'}
+          aria-label={context.open ? context.collapseLabel : context.expandLabel}
           className={cn(
             'flex size-5 shrink-0 items-center justify-center rounded outline-none',
             'text-muted-foreground hover:bg-accent hover:text-accent-foreground',

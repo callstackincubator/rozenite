@@ -5,10 +5,19 @@ import { cn } from '../utils/cn';
 export type SearchFieldProps = Omit<ComponentProps<'input'>, 'type'> & {
   /** Called when the clear button is pressed. Omit to hide the clear affordance. */
   onClear?: () => void;
+  /** Accessible name for the clear button.
+   * @default 'Clear search' */
+  clearLabel?: string;
 };
 
 /** A search input with a leading search icon and clear affordance. */
-export function SearchField({ className, value, onClear, ...props }: SearchFieldProps) {
+export function SearchField({
+  className,
+  value,
+  onClear,
+  clearLabel = 'Clear search',
+  ...props
+}: SearchFieldProps) {
   const showClear = Boolean(onClear) && Boolean(value);
 
   return (
@@ -31,7 +40,7 @@ export function SearchField({ className, value, onClear, ...props }: SearchField
         <button
           type="button"
           onClick={onClear}
-          aria-label="Clear search"
+          aria-label={clearLabel}
           className="absolute right-2 inline-flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
         >
           <X className="h-3.5 w-3.5" />

@@ -72,11 +72,19 @@ function PluginHeaderActions({ className, render, ref, ...props }: PluginHeaderA
 }
 
 export type PluginHeaderThemeSwitcherProps = ComponentProps<'button'> & {
+  /** Accessible name shown while in dark theme (switches to light).
+   * @default 'Switch to light theme' */
+  lightLabel?: string;
+  /** Accessible name shown while in light theme (switches to dark).
+   * @default 'Switch to dark theme' */
+  darkLabel?: string;
   render?: useRender.RenderProp;
 };
 
 function PluginHeaderThemeSwitcher({
   className,
+  lightLabel = 'Switch to light theme',
+  darkLabel = 'Switch to dark theme',
   render,
   ref,
   ...props
@@ -88,7 +96,7 @@ function PluginHeaderThemeSwitcher({
     ref,
     props: {
       'data-slot': 'plugin-header-theme-switcher',
-      'aria-label': theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme',
+      'aria-label': theme === 'dark' ? lightLabel : darkLabel,
       onClick: toggleTheme,
       className: cn(
         'inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground',

@@ -8,18 +8,21 @@ export const useToast = ToastPrimitive.useToastManager;
 
 export type ToastProviderProps = ToastPrimitive.Provider.Props & {
   children?: ReactNode;
+  /** Accessible name for each toast's dismiss button.
+   * @default 'Dismiss' */
+  dismissLabel?: string;
 };
 
-function ToastProviderRoot({ children, ...props }: ToastProviderProps) {
+function ToastProviderRoot({ children, dismissLabel = 'Dismiss', ...props }: ToastProviderProps) {
   return (
     <ToastPrimitive.Provider data-slot="toast-provider" {...props}>
       {children}
-      <Toaster />
+      <Toaster dismissLabel={dismissLabel} />
     </ToastPrimitive.Provider>
   );
 }
 
-function Toaster() {
+function Toaster({ dismissLabel }: { dismissLabel: string }) {
   const { toasts } = ToastPrimitive.useToastManager();
   const container = usePluginPortalContainer();
 
@@ -56,7 +59,7 @@ function Toaster() {
             </ToastPrimitive.Content>
             <ToastPrimitive.Close
               data-slot="toast-close"
-              aria-label="Dismiss"
+              aria-label={dismissLabel}
               className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
@@ -69,4 +72,7 @@ function Toaster() {
 }
 
 /** A provider for transient notifications that appear above the current view. */
-export const Toast = { Provider: ToastProviderRoot };
+export const Toast = Object.assign(ToastProviderRoot, {
+  /** @deprecated Use `Toast` directly — the root itself is now callable, like every other namespace in this package. Removed in a future minor. */
+  Provider: ToastProviderRoot,
+});
