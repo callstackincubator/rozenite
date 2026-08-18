@@ -298,7 +298,7 @@ function ReactHookFormPanelContent() {
   };
 
   return (
-    <PluginShell>
+    <>
       <PluginShell.Body>
         <Split direction="horizontal" autoSaveId="rhf">
           <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
@@ -408,10 +408,14 @@ function ReactHookFormPanelContent() {
         name={selectedFieldName}
         snapshot={selectedSnapshot}
       />
-    </PluginShell>
+    </>
   );
 }
 
 export default function ReactHookFormPanel() {
-  return <ReactHookFormPanelContent />;
+  return (
+    <PluginShell>
+      <ReactHookFormPanelContent />
+    </PluginShell>
+  );
 }

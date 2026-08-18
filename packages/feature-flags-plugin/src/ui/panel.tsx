@@ -266,7 +266,7 @@ function FeatureFlagsPanelContent() {
   );
 
   return (
-    <PluginShell>
+    <>
       <PluginShell.Body>
         {!connected || isLoading ? (
           <EmptyState
@@ -333,14 +333,16 @@ function FeatureFlagsPanelContent() {
           return handleSetOverride(jsonDialogFlag, value);
         }}
       />
-    </PluginShell>
+    </>
   );
 }
 
 export default function FeatureFlagsPanel() {
   return (
     <FeatureFlagsQueryClientProvider>
-      <FeatureFlagsPanelContent />
+      <PluginShell>
+        <FeatureFlagsPanelContent />
+      </PluginShell>
     </FeatureFlagsQueryClientProvider>
   );
 }

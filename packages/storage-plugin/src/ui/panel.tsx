@@ -13,7 +13,7 @@ import {
   useConfirmDialog,
   VirtualizedDataTable,
 } from '@rozenite/ui';
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { Database, Download, Edit3, Plus, RefreshCw, Trash2, Upload } from 'lucide-react';
 import type {
   StorageDiscoverStoragesResponseEvent,
@@ -307,23 +307,26 @@ function StoragePanelContent() {
     );
   };
 
-  const handleDeleteClick = async (key: string) => {
-    if (!client || !selectedTarget) return;
-    const confirmed = await confirm({
-      title: 'Delete Entry',
-      description: `Are you sure you want to delete the entry "${key}"?`,
-      tone: 'danger',
-      confirmLabel: 'Delete',
-    });
-    if (!confirmed) return;
-    mutateSelectedStorage(() =>
-      client.send('delete-entry', {
-        type: 'delete-entry',
-        target: selectedTarget,
-        key,
-      }),
-    );
-  };
+  const handleDeleteClick = useCallback(
+    async (key: string) => {
+      if (!client || !selectedTarget) return;
+      const confirmed = await confirm({
+        title: 'Delete Entry',
+        description: `Are you sure you want to delete the entry "${key}"?`,
+        tone: 'danger',
+        confirmLabel: 'Delete',
+      });
+      if (!confirmed) return;
+      mutateSelectedStorage(() =>
+        client.send('delete-entry', {
+          type: 'delete-entry',
+          target: selectedTarget,
+          key,
+        }),
+      );
+    },
+    [client, selectedTarget, confirm],
+  );
 
   const handlePurgeClick = async () => {
     if (!client || !selectedTarget) return;
@@ -360,12 +363,12 @@ function StoragePanelContent() {
     try {
       raw = JSON.parse(await file.text());
     } catch (error) {
-      showAlert('Could not read file', error instanceof Error ? error.message : String(error));
+      void showAlert('Could not read file', error instanceof Error ? error.message : String(error));
       return;
     }
     const parsed = parseSnapshot(raw);
     if (!parsed.ok) {
-      showAlert('Invalid snapshot', `${parsed.error.path}: ${parsed.error.message}`);
+      void showAlert('Invalid snapshot', `${parsed.error.path}: ${parsed.error.message}`);
       return;
     }
     importPreviewAbortControllerRef.current?.abort();
@@ -396,7 +399,7 @@ function StoragePanelContent() {
       });
     } catch {
       if (!controller.signal.aborted && sameTarget(target, selectedTargetRef.current ?? target)) {
-        showAlert(
+        void showAlert(
           'Could not preview import',
           'Could not inspect the selected storage. Please try again.',
         );
@@ -565,7 +568,7 @@ function StoragePanelContent() {
   const selectedStorageViewId = selectedTarget ? getStorageViewId(selectedTarget) : '';
 
   return (
-    <PluginShell>
+    <>
       <PluginShell.Body>
         <Split direction="horizontal" autoSaveId="storage">
           <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
@@ -746,14 +749,16 @@ function StoragePanelContent() {
         onCancel={() => setImportFlight(null)}
         onClose={() => setImportFlight(null)}
       />
-    </PluginShell>
+    </>
   );
 }
 
 export default function StoragePanel() {
   return (
     <StorageQueryClientProvider>
-      <StoragePanelContent />
+      <PluginShell>
+        <StoragePanelContent />
+      </PluginShell>
     </StorageQueryClientProvider>
   );
 }
