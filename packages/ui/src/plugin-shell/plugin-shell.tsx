@@ -5,6 +5,8 @@ import {
   PluginThemeProvider,
   usePluginTheme,
 } from '../theme/theme-context';
+import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
+import { Toast } from '../toast/toast';
 
 export type PluginShellProps = ComponentProps<'div'> & {
   /**
@@ -23,7 +25,9 @@ function PluginShellRoot({ unstyled = false, className, children, ...props }: Pl
         className={cn('flex h-screen min-h-0 flex-col', className)}
         {...props}
       >
-        {children}
+        <Toast>
+          <ConfirmDialog.Provider>{children}</ConfirmDialog.Provider>
+        </Toast>
       </div>
     );
   }
@@ -53,7 +57,9 @@ function ThemedShell({ className, children, ...props }: Omit<PluginShellProps, '
       {...props}
     >
       <PluginPortalContainerContext.Provider value={rootElement}>
-        {children}
+        <Toast>
+          <ConfirmDialog.Provider>{children}</ConfirmDialog.Provider>
+        </Toast>
       </PluginPortalContainerContext.Provider>
     </div>
   );
