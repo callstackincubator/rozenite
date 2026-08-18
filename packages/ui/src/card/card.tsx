@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ComponentProps } from 'react';
+import { useRender } from '@base-ui/react/use-render';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '../utils/cn';
 
@@ -14,20 +15,33 @@ export type CardProps = ComponentProps<'div'> & {
   /** Whether `Card.Body` can be collapsed via a toggle in `Card.Header`. */
   collapsible?: boolean;
   defaultOpen?: boolean;
+  /** Replace the rendered element, e.g. `render={<section />}`. */
+  render?: useRender.RenderProp;
 };
 
-function CardRoot({ collapsible = false, defaultOpen = true, className, ...props }: CardProps) {
+function CardRoot({
+  collapsible = false,
+  defaultOpen = true,
+  className,
+  render,
+  ref,
+  ...props
+}: CardProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
     <CardContext.Provider
       value={{ collapsible, open, toggle: () => setOpen((current) => !current) }}
     >
-      <div
-        data-slot="card"
-        className={cn('rounded-lg border border-border bg-card text-card-foreground', className)}
-        {...props}
-      />
+      {useRender({
+        render: render ?? <div />,
+        ref,
+        props: {
+          'data-slot': 'card',
+          className: cn('rounded-lg border border-border bg-card text-card-foreground', className),
+          ...props,
+        },
+      })}
     </CardContext.Provider>
   );
 }

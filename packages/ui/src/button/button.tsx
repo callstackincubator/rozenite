@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react';
+import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils/cn';
 
@@ -36,9 +37,12 @@ export type ButtonProps = ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     /** Rendered after `children`, e.g. an `IndicatorDot` flagging an update. */
     adornment?: ReactNode;
+    /** Replace the rendered element, e.g. `render={<a href="..." />}` for a link styled as a button. */
+    render?: useRender.RenderProp;
   };
 
-/** A styled button for actions that change state or submit work. */
+/** A styled button for actions that change state or submit work. Renders a
+ *  `<button>` by default; pass `render` to render as something else, e.g. an anchor. */
 export function Button({
   className,
   variant,
@@ -46,17 +50,23 @@ export function Button({
   type = 'button',
   adornment,
   children,
+  render,
+  ref,
   ...props
 }: ButtonProps) {
-  return (
-    <button
-      type={type}
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size }), className)}
-      {...props}
-    >
-      {children}
-      {adornment}
-    </button>
-  );
+  return useRender({
+    render: render ?? <button type={type} />,
+    ref,
+    props: {
+      'data-slot': 'button',
+      className: cn(buttonVariants({ variant, size }), className),
+      children: (
+        <>
+          {children}
+          {adornment}
+        </>
+      ),
+      ...props,
+    },
+  });
 }
