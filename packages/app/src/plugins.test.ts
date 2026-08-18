@@ -18,10 +18,17 @@ const jsonResponse = (body: unknown, ok = true): Response =>
   }) as Response;
 
 describe('getPluginBaseUrl', () => {
-  it('points at /rozenite/plugins/<id>, with "/" replaced by "_"', () => {
+  it('points at "<mount root>/plugins/<id>", with "/" replaced by "_", derived from BASE_URL', () => {
     const baseUrl = getPluginBaseUrl('@rozenite/network-activity-plugin');
+    // The mount root one level up from `import.meta.env.BASE_URL` (finding
+    // 24) — asserted via the same derivation rather than a hardcoded
+    // '/rozenite/' so this doesn't drift independently of the production
+    // code it's checking.
+    const expectedRoot = new URL('..', new URL(import.meta.env.BASE_URL, location.href)).pathname;
 
-    expect(new URL(baseUrl).pathname).toBe('/rozenite/plugins/@rozenite_network-activity-plugin');
+    expect(new URL(baseUrl).pathname).toBe(
+      `${expectedRoot}plugins/@rozenite_network-activity-plugin`,
+    );
   });
 });
 
@@ -68,10 +75,10 @@ describe('loadPlugins', () => {
     globalThis.fetch = vi.fn(async (input: string | URL | Request) => {
       const url = String(input);
 
-      if (url.includes('/rozenite/plugins/good/')) {
+      if (url.includes(getPluginBaseUrl('good'))) {
         return jsonResponse({ name: 'Good Plugin', version: '1.0.0', description: '', panels: [] });
       }
-      if (url.includes('/rozenite/plugins/bad/')) {
+      if (url.includes(getPluginBaseUrl('bad'))) {
         return jsonResponse(null, false);
       }
       if (url.startsWith('http://localhost:8888/')) {

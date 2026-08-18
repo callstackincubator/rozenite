@@ -33,10 +33,14 @@ const isRozeniteMessageEnvelope = (message: unknown): message is RozeniteMessage
  *   }`. This unwraps `.payload` and forwards only that to the device,
  *   mirroring what `packages/runtime/src/rn-devtools/plugin-view.ts` does on
  *   the embedded side (`model.sendMessage(event.data.payload)`). A message
- *   that isn't in that shape is forwarded through unchanged rather than
- *   dropped — nothing in this app's `Shell` usage ever produces one, but a
- *   generic `ShellHost` still has to behave like a well-defined channel for
- *   whatever it's handed (see `runShellHostConformance`).
+ *   that isn't in that shape is dropped rather than forwarded through
+ *   as-is: nothing in this app's `Shell` usage ever produces one (every
+ *   outgoing message a mounted panel iframe posts is wrapped by
+ *   `packages/plugin-bridge/src/channel/browser/panel-channel.ts`'s
+ *   `send`), so it's not a real device payload — forwarding it anyway
+ *   would ship something the device-side dispatcher was never meant to
+ *   receive. `runShellHostConformance`'s generic `send` case is told about
+ *   this via its `expectedSent` hook rather than dictating the behavior.
  * - Incoming (`onMessage`): messages arriving from the device are already
  *   raw `DevToolsPluginMessage` objects (`{ pluginId, type, payload }`) —
  *   there is no envelope to undo. They're passed to the listener unchanged;
@@ -49,7 +53,9 @@ const isRozeniteMessageEnvelope = (message: unknown): message is RozeniteMessage
 export const createDeviceShellHost = (connection: DeviceConnection): ShellHost => {
   return {
     send: (message: unknown) => {
-      connection.send(isRozeniteMessageEnvelope(message) ? message.payload : message);
+      if (isRozeniteMessageEnvelope(message)) {
+        connection.send(message.payload);
+      }
     },
     onMessage: (listener: (message: unknown) => void) => connection.onMessage(listener),
   };

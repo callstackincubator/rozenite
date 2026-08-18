@@ -13,6 +13,13 @@ let target: AppTarget;
 try {
   const connection: DeviceConnection = createDeviceConnection(parseTargetFromUrl());
   target = { kind: 'connection', connection };
+  // The connection is otherwise never explicitly torn down (this is a
+  // single-page app with one root that's never unmounted) — without this,
+  // its socket, listeners, and send queue would just be abandoned on
+  // navigation/reload instead of closed.
+  window.addEventListener('beforeunload', () => {
+    connection.close();
+  });
 } catch (error) {
   target = {
     kind: 'error',

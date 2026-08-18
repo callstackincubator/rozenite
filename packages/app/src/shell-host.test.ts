@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runShellHostConformance } from '@rozenite/shell/testing';
+import { DROPPED, runShellHostConformance } from '@rozenite/shell/testing';
 import { createDeviceShellHost } from './shell-host';
 import type { DeviceConnection } from './connection/device-connection';
 
@@ -47,6 +47,11 @@ runShellHostConformance('createDeviceShellHost', () => {
     host: createDeviceShellHost(connection),
     sent: () => sentMessages,
     deliver,
+    // The suite's generic `send` case exercises a plain, non-envelope
+    // message — a shape this host never actually receives from `Shell`
+    // (see the module doc comment) and, on its own merits, drops rather
+    // than forwards.
+    expectedSent: () => DROPPED,
   };
 });
 
@@ -59,6 +64,15 @@ describe('createDeviceShellHost unwrap direction', () => {
     host.send({ type: 'rozenite-message', payload: panelMessage });
 
     expect(sentMessages).toEqual([panelMessage]);
+  });
+
+  it('drops a message that is not a rozenite-message envelope instead of forwarding it as-is', () => {
+    const { connection, sentMessages } = createFakeConnection();
+    const host = createDeviceShellHost(connection);
+
+    host.send({ hello: 'world' });
+
+    expect(sentMessages).toEqual([]);
   });
 
   it('passes incoming device messages to listeners unchanged, with no wrapping to undo', () => {

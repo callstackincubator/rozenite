@@ -20,7 +20,9 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
   ],
   "type": "module",
   "module": "./src/index.ts",
@@ -55,6 +57,14 @@
     "typescript": "~5.9.3",
     "vite": "catalog:",
     "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "vitest": "^4.0.18"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=20"

@@ -76,7 +76,15 @@ class FakeWebSocket {
       return;
     }
     this.readyState = FakeWebSocket.CLOSED;
-    this.onclose?.({ reason });
+    // Real browsers dispatch `close` as a later *task*, after any
+    // already-pending microtasks (e.g. a promise rejection scheduled by
+    // the same code path that called `close()`) have drained. Firing it
+    // synchronously here would invert that ordering and hide bugs that
+    // only show up when `onclose` runs *after* such a microtask — see the
+    // `rozeniteMissing` vs. `disconnected` ordering test below.
+    setTimeout(() => {
+      this.onclose?.({ reason });
+    }, 0);
   }
 }
 
@@ -201,6 +209,57 @@ describe('createDeviceConnection', () => {
       expect(dispatcherPolls).toHaveLength(19);
       expect(socket.sent.some((command) => command.method === 'Runtime.addBinding')).toBe(false);
     });
+
+    it('stays rozeniteMissing instead of being overwritten by the disconnected the bootstrap-failure close event causes', async () => {
+      // The exhausted-poll path settles `rozeniteMissing` (a microtask, via
+      // the promise rejection) and only *then* calls `socket.close()`
+      // (whose `close` event is a later task) — a real close reason of ''
+      // would otherwise be read as "unrecognized" and overwrite the state
+      // the person is actually meant to see with `disconnected`.
+      const connection = createDeviceConnection(TARGET);
+      const socket = FakeWebSocket.instances[0];
+      socket.responder = (method, params) => {
+        const expression = String(params?.expression ?? '');
+        if (method === 'Runtime.evaluate' && expression.includes(`globalThis.${RUNTIME_GLOBAL}`)) {
+          return { result: { value: false } };
+        }
+        return defaultResponder(method, params);
+      };
+
+      socket.open();
+      await waitUntil(() => connection.getState().status === 'rozeniteMissing', {
+        stepMs: 250,
+        maxSteps: 40,
+      });
+
+      // Let the socket's own (now-async) close event actually arrive and
+      // be processed — this is exactly the moment the bug would overwrite
+      // the state.
+      await vi.advanceTimersByTimeAsync(50);
+
+      expect(connection.getState()).toEqual({ status: 'rozeniteMissing' });
+    });
+
+    it('fails fast on an evaluate exception instead of grinding through all dispatcher polls', async () => {
+      const connection = createDeviceConnection(TARGET);
+      const socket = FakeWebSocket.instances[0];
+      socket.responder = (method, params) => {
+        const expression = String(params?.expression ?? '');
+        if (method === 'Runtime.evaluate' && expression.includes(`globalThis.${RUNTIME_GLOBAL}`)) {
+          return { exceptionDetails: { text: 'ReferenceError: boom' } };
+        }
+        return defaultResponder(method, params);
+      };
+
+      socket.open();
+      await vi.advanceTimersByTimeAsync(50);
+
+      const dispatcherPolls = getExpressions(socket).filter((expression) =>
+        expression.includes(`globalThis.${RUNTIME_GLOBAL} != undefined`),
+      );
+      expect(dispatcherPolls).toHaveLength(1); // failed on the first evaluate, not all 19
+      expect(connection.getState().status).not.toBe('rozeniteMissing');
+    });
   });
 
   describe('send queueing', () => {
@@ -279,11 +338,36 @@ describe('createDeviceConnection', () => {
   });
 
   describe('execution context churn (reload survival)', () => {
-    it('goes to reloading on context destruction, then re-bootstraps on the same socket', async () => {
+    it('ignores executionContextDestroyed for a context that was never registered as main', async () => {
       const { connection, socket } = await connectAndBootstrap();
+
+      // No prior `executionContextCreated` ever told us this id was main
+      // (e.g. a worker context tearing down) — must not wedge us into
+      // `reloading` with nothing that will ever bring it back.
+      socket.emitEvent('Runtime.executionContextDestroyed', { executionContextId: 999 });
+      await vi.advanceTimersByTimeAsync(10);
+
+      expect(connection.getState()).toEqual({ status: 'connected' });
+    });
+
+    it('goes to reloading only when the tracked main execution context is destroyed, then re-bootstraps on the same socket', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+
+      // CDP announces the existing "main" context once Runtime is enabled;
+      // this is what teaches the connection which id to watch for. The
+      // connection is already `connected`, so wait out the debounce
+      // explicitly rather than via `waitUntil` (which would otherwise see
+      // "already connected" and return before the timer ever fires).
+      socket.emitEvent('Runtime.executionContextCreated', { context: { id: 7, name: 'main' } });
+      await vi.advanceTimersByTimeAsync(600);
       const sentBeforeReload = socket.sent.length;
 
-      socket.emitEvent('Runtime.executionContextDestroyed', {});
+      // A non-main context's destruction (e.g. a worker) must not react.
+      socket.emitEvent('Runtime.executionContextDestroyed', { executionContextId: 123 });
+      await vi.advanceTimersByTimeAsync(10);
+      expect(connection.getState()).toEqual({ status: 'connected' });
+
+      socket.emitEvent('Runtime.executionContextDestroyed', { executionContextId: 7 });
       expect(connection.getState()).toEqual({ status: 'reloading' });
 
       // Sends made mid-reload must queue, not fire against the torn-down
@@ -292,7 +376,7 @@ describe('createDeviceConnection', () => {
       await vi.advanceTimersByTimeAsync(10);
       expect(socket.sent.length).toBe(sentBeforeReload);
 
-      socket.emitEvent('Runtime.executionContextCreated', { context: { name: 'main' } });
+      socket.emitEvent('Runtime.executionContextCreated', { context: { id: 8, name: 'main' } });
       await waitUntil(() => connection.getState().status === 'connected');
 
       expect(FakeWebSocket.instances).toHaveLength(1); // socket was never torn down
@@ -300,7 +384,9 @@ describe('createDeviceConnection', () => {
       const addBindingCalls = socket.sent.filter(
         (command) => command.method === 'Runtime.addBinding',
       );
-      expect(addBindingCalls).toHaveLength(2); // re-added after the reload
+      // Initial connect, the post-enable "main" announcement, and the
+      // reload — three re-adds in all.
+      expect(addBindingCalls).toHaveLength(3);
 
       const queuedSend = getExpressions(socket).some((expression) =>
         expression.includes(JSON.stringify(JSON.stringify({ hello: 'during-reload' }))),
@@ -310,11 +396,51 @@ describe('createDeviceConnection', () => {
 
     it('ignores executionContextCreated events for non-main contexts', async () => {
       const { connection, socket } = await connectAndBootstrap();
-      socket.emitEvent('Runtime.executionContextDestroyed', {});
+      socket.emitEvent('Runtime.executionContextCreated', { context: { id: 7, name: 'main' } });
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      socket.emitEvent('Runtime.executionContextDestroyed', { executionContextId: 7 });
       socket.emitEvent('Runtime.executionContextCreated', { context: { name: 'isolated' } });
       await vi.advanceTimersByTimeAsync(10);
 
       expect(connection.getState()).toEqual({ status: 'reloading' });
+    });
+
+    it('goes to reloading on Runtime.executionContextsCleared and re-bootstraps once a new main context appears', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+
+      socket.emitEvent('Runtime.executionContextsCleared', {});
+      expect(connection.getState()).toEqual({ status: 'reloading' });
+
+      connection.send({ hello: 'during-clear' });
+      await vi.advanceTimersByTimeAsync(10);
+
+      socket.emitEvent('Runtime.executionContextCreated', { context: { id: 9, name: 'main' } });
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      const queuedSend = getExpressions(socket).some((expression) =>
+        expression.includes(JSON.stringify(JSON.stringify({ hello: 'during-clear' }))),
+      );
+      expect(queuedSend).toBe(true);
+    });
+
+    it('debounces a burst of executionContextCreated(main) events into a single re-bootstrap', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+
+      socket.emitEvent('Runtime.executionContextCreated', { context: { id: 1, name: 'main' } });
+      socket.emitEvent('Runtime.executionContextCreated', { context: { id: 1, name: 'main' } });
+      socket.emitEvent('Runtime.executionContextCreated', { context: { id: 1, name: 'main' } });
+
+      // Already `connected`, so wait out the debounce explicitly.
+      await vi.advanceTimersByTimeAsync(600);
+      expect(connection.getState()).toEqual({ status: 'connected' });
+
+      const addBindingCalls = socket.sent.filter(
+        (command) => command.method === 'Runtime.addBinding',
+      );
+      // One from the initial connect, plus exactly one more from the three
+      // coalesced events — not one re-bootstrap per event.
+      expect(addBindingCalls).toHaveLength(2);
     });
   });
 
@@ -332,7 +458,7 @@ describe('createDeviceConnection', () => {
       ]);
 
       socket.close('[CONNECTION_LOST]');
-      expect(connection.getState()).toEqual({ status: 'connecting' });
+      await waitUntil(() => connection.getState().status === 'connecting');
 
       await waitUntil(() => FakeWebSocket.instances.length === 2);
       const newSocket = FakeWebSocket.instances[1];
@@ -389,6 +515,63 @@ describe('createDeviceConnection', () => {
     });
   });
 
+  describe('initial connection retries', () => {
+    it('retries a socket-level failure on the very first connection attempt instead of giving up after one', async () => {
+      const connection = createDeviceConnection(TARGET);
+      mockMetroList([
+        {
+          id: 'page-1',
+          deviceName: 'device-1',
+          webSocketDebuggerUrl: TARGET.webSocketDebuggerUrl,
+          reactNative: { logicalDeviceId: 'device-1' },
+        },
+      ]);
+
+      // The very first socket never even opens (e.g. Metro published the
+      // target a moment before the debugger endpoint was actually ready)
+      // and closes with a reason unrecognized as either terminal or
+      // recoverable.
+      FakeWebSocket.instances[0].close('');
+      await waitUntil(() => FakeWebSocket.instances.length === 2, { stepMs: 500, maxSteps: 40 });
+
+      expect(connection.getState()).toEqual({ status: 'connecting' }); // not disconnected after one try
+
+      FakeWebSocket.instances[1].open();
+      await waitUntil(() => connection.getState().status === 'connected');
+    });
+
+    it('still gives up after RECOVERY_MAX_ATTEMPTS if every initial-connection socket fails', async () => {
+      const connection = createDeviceConnection(TARGET);
+      mockMetroList([
+        {
+          id: 'page-1',
+          deviceName: 'device-1',
+          webSocketDebuggerUrl: TARGET.webSocketDebuggerUrl,
+          reactNative: { logicalDeviceId: 'device-1' },
+        },
+      ]);
+
+      const failEveryNewSocket = () => {
+        for (const socket of FakeWebSocket.instances) {
+          if (socket.readyState === FakeWebSocket.CONNECTING) {
+            socket.close('');
+          }
+        }
+      };
+      failEveryNewSocket();
+
+      await waitUntil(
+        () => {
+          failEveryNewSocket();
+          return connection.getState().status === 'disconnected';
+        },
+        { stepMs: 500, maxSteps: 40 },
+      );
+
+      expect(FakeWebSocket.instances).toHaveLength(16);
+    });
+  });
+
   describe('reconnect and close', () => {
     it('reconnect() re-resolves the target and opens a fresh socket', async () => {
       const { connection, socket } = await connectAndBootstrap();
@@ -425,6 +608,30 @@ describe('createDeviceConnection', () => {
       expect(FakeWebSocket.instances).toHaveLength(1);
       expect(connection.getState()).toEqual({ status: 'disconnected' });
     });
+
+    it('close() clears existing listeners so a later reconnect does not notify them', async () => {
+      const { connection } = await connectAndBootstrap();
+      const receivedBeforeClose: DeviceState[] = [];
+      connection.subscribe((s) => receivedBeforeClose.push(s));
+
+      connection.close();
+      receivedBeforeClose.length = 0; // drop the 'disconnected' notification from close() itself
+
+      mockMetroList([
+        {
+          id: 'page-9',
+          deviceName: 'iPhone 16',
+          webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=9',
+          reactNative: { logicalDeviceId: 'device-1' },
+        },
+      ]);
+      connection.reconnect();
+      await waitUntil(() => FakeWebSocket.instances.length === 2);
+      FakeWebSocket.instances[1].open();
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      expect(receivedBeforeClose).toEqual([]); // the pre-close subscriber was dropped
+    });
   });
 
   describe('subscribe', () => {
@@ -444,6 +651,218 @@ describe('createDeviceConnection', () => {
       await vi.advanceTimersByTimeAsync(10);
 
       expect(states).toEqual([{ status: 'connected' }]);
+    });
+  });
+
+  describe('device name resolution', () => {
+    it('best-effort resolves the friendly device name on the very first connection attempt', async () => {
+      mockMetroList([
+        {
+          id: 'page-1',
+          deviceName: 'iPhone 15',
+          webSocketDebuggerUrl: TARGET.webSocketDebuggerUrl,
+          reactNative: { logicalDeviceId: 'device-1' },
+        },
+      ]);
+      const connection = createDeviceConnection(TARGET);
+      expect(connection.getTarget().name).toBe('device-1'); // starts as the raw id
+
+      const socket = FakeWebSocket.instances[0];
+      socket.open();
+      await waitUntil(() => connection.getState().status === 'connected');
+      await waitUntil(() => connection.getTarget().name === 'iPhone 15');
+
+      expect(FakeWebSocket.instances).toHaveLength(1); // never opened a second socket to get the name
+    });
+
+    it('does not block or delay connecting when the best-effort name lookup fails', async () => {
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('network down'));
+      const connection = createDeviceConnection(TARGET);
+      const socket = FakeWebSocket.instances[0];
+      socket.open();
+
+      await waitUntil(() => connection.getState().status === 'connected');
+      expect(connection.getTarget().name).toBe('device-1');
+    });
+  });
+
+  describe('send queue bounds', () => {
+    it('caps the queue and drops the oldest messages once it is full', async () => {
+      const connection = createDeviceConnection(TARGET);
+      const socket = FakeWebSocket.instances[0];
+
+      for (let i = 0; i < 105; i++) {
+        connection.send({ n: i });
+      }
+
+      socket.open();
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      const sendMessageCalls = getExpressions(socket).filter((expression) =>
+        expression.includes(`${RUNTIME_GLOBAL}.sendMessage("rozenite"`),
+      );
+      expect(sendMessageCalls).toHaveLength(100);
+      expect(sendMessageCalls[0]).toContain(JSON.stringify(JSON.stringify({ n: 5 })));
+      expect(sendMessageCalls[99]).toContain(JSON.stringify(JSON.stringify({ n: 104 })));
+    });
+
+    it('clears queued sends on a terminal disconnect instead of replaying them after reconnect', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+      socket.close(''); // unrecognized reason -> disconnected (terminal)
+      await waitUntil(() => connection.getState().status === 'disconnected');
+
+      for (let i = 0; i < 5; i++) {
+        connection.send({ n: i });
+      }
+
+      mockMetroList([
+        {
+          id: 'page-2',
+          deviceName: 'iPhone 16',
+          webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=2',
+          reactNative: { logicalDeviceId: 'device-1' },
+        },
+      ]);
+      connection.reconnect();
+      await waitUntil(() => FakeWebSocket.instances.length === 2);
+      FakeWebSocket.instances[1].open();
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      const sendMessageCalls = getExpressions(FakeWebSocket.instances[1]).filter((expression) =>
+        expression.includes(`${RUNTIME_GLOBAL}.sendMessage("rozenite"`),
+      );
+      expect(sendMessageCalls).toHaveLength(0);
+    });
+
+    it('keeps queued sends across reloading (not a terminal state)', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+      socket.emitEvent('Runtime.executionContextsCleared', {});
+      expect(connection.getState()).toEqual({ status: 'reloading' });
+
+      connection.send({ hello: 'during-reload' });
+      socket.emitEvent('Runtime.executionContextCreated', { context: { id: 1, name: 'main' } });
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      const queuedSend = getExpressions(socket).some((expression) =>
+        expression.includes(JSON.stringify(JSON.stringify({ hello: 'during-reload' }))),
+      );
+      expect(queuedSend).toBe(true);
+    });
+  });
+
+  describe('unhandled rejections (finding 5)', () => {
+    it('does not produce an unhandled rejection when the socket closes with commands still in flight', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+      socket.responder = () => SKIP; // leave every command pending
+
+      const unhandled: unknown[] = [];
+      const onUnhandledRejection = (reason: unknown) => unhandled.push(reason);
+      process.on('unhandledRejection', onUnhandledRejection);
+
+      try {
+        connection.send({ hello: 'in-flight' }); // -> a detached `sendDomainMessage` call
+        socket.close(''); // rejects it via `rejectAllPending()`
+
+        // Let the close (a fake-timer task) and the rejection (a real
+        // microtask) both actually settle, including Node's own check for
+        // unhandled rejections, which runs after the real event loop
+        // turns — not something fake timers alone advance.
+        await vi.advanceTimersByTimeAsync(10);
+        // Flush real microtasks/nextTicks (unaffected by fake timers) a
+        // few times over — this is when Node's own unhandled-rejection
+        // check actually runs.
+        for (let i = 0; i < 5; i++) {
+          await new Promise((resolve) => process.nextTick(resolve));
+        }
+      } finally {
+        process.off('unhandledRejection', onUnhandledRejection);
+      }
+
+      expect(unhandled).toEqual([]);
+    });
+  });
+
+  describe('pending command timeout', () => {
+    it('times out a pending command instead of hanging forever when the device never responds', async () => {
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('no metro'));
+      const connection = createDeviceConnection(TARGET);
+      const socket = FakeWebSocket.instances[0];
+      socket.responder = () => SKIP; // the device never answers anything
+      socket.open();
+
+      // Command timeout (10s) + one retry backoff, well within this budget.
+      await waitUntil(() => connection.getState().status === 'metroUnreachable', {
+        stepMs: 1000,
+        maxSteps: 60,
+      });
+    });
+  });
+
+  describe('recovery epoch scoping (finding A)', () => {
+    it('a stale recovery attempt for a superseded epoch does not clear the in-flight flag for the current epoch', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+
+      let resolveStaleFetch!: (value: unknown) => void;
+      const staleFetch = new Promise((resolve) => {
+        resolveStaleFetch = resolve;
+      });
+
+      let fetchCall = 0;
+      globalThis.fetch = vi.fn(() => {
+        fetchCall += 1;
+        if (fetchCall === 1) {
+          // Epoch 0's own recoverable-close recovery loop: hangs.
+          return staleFetch;
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve([
+              {
+                id: `page-${fetchCall}`,
+                deviceName: 'iPhone 16',
+                webSocketDebuggerUrl: `ws://localhost:8081/inspector/debug?device=device-1&page=${fetchCall}`,
+                reactNative: { logicalDeviceId: 'device-1' },
+              },
+            ]),
+        });
+      }) as unknown as typeof fetch;
+
+      // Epoch 0's recovery loop starts and hangs resolving the target.
+      socket.close('[CONNECTION_LOST]');
+      await waitUntil(() => connection.getState().status === 'connecting');
+
+      // Supersede it: epoch bumps to 1 and starts its own loop, whose
+      // target resolves immediately (the 2nd fetch call).
+      connection.reconnect();
+      await waitUntil(() => FakeWebSocket.instances.length === 2);
+      const epoch1Socket = FakeWebSocket.instances[1];
+
+      // Epoch 1 is now in flight (socket open, not yet bootstrapped). Let
+      // epoch 0's long-stale fetch resolve now, while epoch 1 is still
+      // mid-flight — this is the moment a non-epoch-scoped flag would be
+      // wrongly cleared.
+      resolveStaleFetch({ ok: true, status: 200, json: () => Promise.resolve([]) });
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Epoch 1's socket now closes recoverably before it ever finished
+      // connecting — exactly the case `runConnectLoop`'s own guard comment
+      // describes ("this close fired for the socket that loop itself just
+      // opened"). If epoch 0's stale `finally` wrongly cleared the
+      // in-flight flag, this would start a second, duplicate loop for
+      // epoch 1 racing the first one.
+      epoch1Socket.close('[CONNECTION_LOST]');
+      await waitUntil(() => FakeWebSocket.instances.length === 3, { stepMs: 500, maxSteps: 40 });
+
+      // Give any wrongly-started duplicate attempt a chance to also open a
+      // socket before asserting there isn't one.
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(FakeWebSocket.instances).toHaveLength(3); // exactly one recovery re-opened, not two racing
+
+      FakeWebSocket.instances[2].open();
+      await waitUntil(() => connection.getState().status === 'connected');
     });
   });
 });

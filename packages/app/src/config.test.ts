@@ -21,7 +21,10 @@ describe('fetchConfig', () => {
     }) as unknown as typeof fetch;
 
     await expect(fetchConfig()).resolves.toEqual(config);
-    expect(globalThis.fetch).toHaveBeenCalledWith('/rozenite/app/config');
+    // Derived from `import.meta.env.BASE_URL` (finding 24) rather than a
+    // separately hardcoded path — assert the derivation, not a literal
+    // that could silently drift from `vite.config.ts`'s `base`.
+    expect(globalThis.fetch).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}config`);
   });
 
   it('throws ConfigFetchError on a non-2xx response — the metroUnreachable condition', async () => {

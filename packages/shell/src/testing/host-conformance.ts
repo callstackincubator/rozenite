@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { ShellHost } from '../host';
 
+/** Sentinel `expectedSent` can return to mean "this host is expected to
+ * not forward this message to the transport at all" — see `expectedSent`
+ * below. */
+export const DROPPED = Symbol('shell-host-conformance-dropped');
+
 export type ShellHostConformanceSetup = {
   /** The host implementation under test. */
   host: ShellHost;
@@ -12,6 +17,17 @@ export type ShellHostConformanceSetup = {
   deliver: (message: unknown) => void;
   /** Messages `host.send` has handed to the underlying transport so far, in order. */
   sent: () => unknown[];
+  /**
+   * Maps a message passed to `host.send` to what `sent()` is expected to
+   * contain for it — most hosts forward it unchanged, which is the
+   * default (identity). A host that transforms or conditionally drops
+   * outgoing messages (e.g. unwrapping an envelope, or dropping a shape it
+   * never expects to see in practice) can supply this to assert its own
+   * real contract instead of the suite forcing every host through the
+   * same literal-equality check. Return `DROPPED` to assert the message
+   * was not forwarded at all.
+   */
+  expectedSent?: (message: unknown) => unknown;
 };
 
 /**
@@ -36,13 +52,14 @@ export const runShellHostConformance = (
   setup: () => ShellHostConformanceSetup,
 ): void => {
   describe(`ShellHost conformance: ${name}`, () => {
-    it('delivers messages sent via `send`', () => {
-      const { host, sent } = setup();
+    it('delivers messages sent via `send`, as this host defines "delivers"', () => {
+      const { host, sent, expectedSent = (message) => message } = setup();
       const message = { hello: 'world' };
 
+      const expected = expectedSent(message);
       host.send(message);
 
-      expect(sent()).toEqual([message]);
+      expect(sent()).toEqual(expected === DROPPED ? [] : [expected]);
     });
 
     it('delivers incoming messages to a subscribed listener', () => {

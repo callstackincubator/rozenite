@@ -23,6 +23,15 @@ const DISPATCHER_INIT_MAX_ATTEMPTS = 20;
 const DISPATCHER_INIT_RETRY_MS = 250;
 const RECOVERY_MAX_ATTEMPTS = 16;
 const RECOVERY_RETRY_DELAY_MS = 500;
+/** Mirrors `session.ts`'s `BOOTSTRAP_DELAY_MS`: coalesces a burst of
+ * `executionContextCreated("main")` events into a single re-bootstrap. */
+const BOOTSTRAP_DEBOUNCE_MS = 500;
+/** A command the device never answers (a wedged JS thread) must not leave
+ * `waitForDispatcher`/`getBindingName` awaiting forever. */
+const COMMAND_TIMEOUT_MS = 10_000;
+/** Bounds `sendQueue` so a long offline stretch can't accumulate an
+ * unbounded backlog; oldest queued messages are dropped first. */
+const SEND_QUEUE_MAX_SIZE = 100;
 
 const RECOVERABLE_CLOSE_REASONS = ['[RECREATING_DEVICE]', '[PAGE_NOT_FOUND]', '[CONNECTION_LOST]'];
 // Something else took the device (e.g. React Native DevTools, another
@@ -77,6 +86,16 @@ type CDPEvaluateResult = {
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** A detached `void sendCommand(...)` (queue flushing, fire-and-forget
+ * sends) has nothing else attached to observe its rejection. Ported from
+ * `session.ts`'s `markPromiseAsHandled` so a socket dying mid-send surfaces
+ * as a normal, already-handled rejection instead of an
+ * `unhandledrejection`. */
+const markPromiseAsHandled = <T>(promise: Promise<T>): Promise<T> => {
+  void promise.catch(() => undefined);
+  return promise;
+};
+
 export const createDeviceConnection = (target: ParsedTarget): DeviceConnection => {
   let state: DeviceState = { status: 'connecting' };
   const stateListeners = new Set<(state: DeviceState) => void>();
@@ -87,23 +106,69 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
 
   let ws: WebSocket | null = null;
   let epoch = 0;
-  let recoveryInFlight = false;
+  // Epoch-scoped rather than a plain boolean: a superseded loop's own
+  // `finally` must not be able to clear the *current* loop's in-flight
+  // marker just because it happens to settle later. See finding "A" in the
+  // review this hardens against — `reconnect()` no longer force-clears
+  // this, and a stray clear from an old epoch can't unblock a duplicate
+  // `runConnectLoop` call for the epoch that superseded it.
+  let recoveryEpoch: number | null = null;
   let bindingName: string | null = null;
   let bootstrapped = false;
+  // The execution context CDP has told us is "main", if any. Only its
+  // destruction means the JS VM reloaded — an unrelated (e.g. worker)
+  // context tearing down must not wedge the connection in `reloading`.
+  let mainExecutionContextId: number | null = null;
+  let bootstrapTimer: ReturnType<typeof setTimeout> | null = null;
   let nextCommandId = 1;
   const pendingCommands = new Map<number, PendingCommand>();
   let sendQueue: unknown[] = [];
 
   const isCurrentEpoch = (attemptEpoch: number): boolean => attemptEpoch === epoch;
 
-  const setState = (next: DeviceState): void => {
-    if (state.status === next.status) {
+  const clearBootstrapTimer = (): void => {
+    if (bootstrapTimer) {
+      clearTimeout(bootstrapTimer);
+      bootstrapTimer = null;
+    }
+  };
+
+  // `reloading` and `connected` are the only statuses under which a queued
+  // send still makes sense to keep around — `reloading` because it's
+  // expected to resolve back to `connected` on the same socket (the whole
+  // point of this state), and `connected` because the queue is always
+  // empty by the time this fires (flushed synchronously beforehand). Every
+  // other status means the previous attempt's queued messages are stale.
+  const QUEUE_PRESERVING_STATUSES = new Set<DeviceState['status']>(['connected', 'reloading']);
+
+  const setState = (nextStatus: DeviceState['status']): void => {
+    if (state.status === nextStatus) {
       return;
     }
-    state = next;
+    state = { status: nextStatus };
+    if (!QUEUE_PRESERVING_STATUSES.has(nextStatus)) {
+      sendQueue = [];
+    }
     for (const listener of stateListeners) {
       listener(state);
     }
+  };
+
+  /** Notifies state subscribers without a status change — used for a
+   * display-only `deviceName` update, so `useSyncExternalStore` callers
+   * relying on the same `subscribe` (see `getTarget`) pick it up. */
+  const notifyStateListeners = (): void => {
+    for (const listener of stateListeners) {
+      listener(state);
+    }
+  };
+
+  const setDeviceName = (name: string): void => {
+    if (deviceName === name) {
+      return;
+    }
+    deviceName = name;
+    notifyStateListeners();
   };
 
   const rejectAllPending = (): void => {
@@ -119,27 +184,51 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     params?: Record<string, unknown>,
   ): Promise<Record<string, unknown>> => {
     if (socket.readyState !== WebSocket.OPEN) {
-      return Promise.reject(new Error('Device connection is not open.'));
+      return markPromiseAsHandled(Promise.reject(new Error('Device connection is not open.')));
     }
 
     const id = nextCommandId++;
-    return new Promise((resolve, reject) => {
-      pendingCommands.set(id, { resolve, reject });
-      try {
-        socket.send(JSON.stringify({ id, method, params }));
-      } catch (error) {
-        pendingCommands.delete(id);
-        reject(error instanceof Error ? error : new Error(String(error)));
-      }
-    });
+    return markPromiseAsHandled(
+      new Promise((resolve, reject) => {
+        // A wedged JS thread on the device never answers: without this, a
+        // caller awaiting the response (`waitForDispatcher` in particular)
+        // hangs on `connecting` forever instead of eventually failing and
+        // letting the close/retry machinery take over.
+        const timeoutId = setTimeout(() => {
+          if (pendingCommands.delete(id)) {
+            reject(new Error(`Device connection command "${method}" timed out.`));
+          }
+        }, COMMAND_TIMEOUT_MS);
+
+        pendingCommands.set(id, {
+          resolve: (result) => {
+            clearTimeout(timeoutId);
+            resolve(result);
+          },
+          reject: (error) => {
+            clearTimeout(timeoutId);
+            reject(error);
+          },
+        });
+        try {
+          socket.send(JSON.stringify({ id, method, params }));
+        } catch (error) {
+          clearTimeout(timeoutId);
+          pendingCommands.delete(id);
+          reject(error instanceof Error ? error : new Error(String(error)));
+        }
+      }),
+    );
   };
 
   const sendDomainMessage = (socket: WebSocket, message: unknown): Promise<void> => {
     const serializedMessage = JSON.stringify(message);
     const escapedMessage = JSON.stringify(serializedMessage);
-    return sendCommand(socket, 'Runtime.evaluate', {
-      expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify('rozenite')}, ${escapedMessage})`,
-    }).then(() => undefined);
+    return markPromiseAsHandled(
+      sendCommand(socket, 'Runtime.evaluate', {
+        expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify('rozenite')}, ${escapedMessage})`,
+      }).then(() => undefined),
+    );
   };
 
   const flushQueue = (): void => {
@@ -155,10 +244,11 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   };
 
   // Polls for the dispatcher global exactly as session.ts does: up to
-  // DISPATCHER_INIT_MAX_ATTEMPTS (20) "attempts", of which the first 19
-  // actually evaluate (the 20th only exists to make the final wait a no-op
-  // and throw) — ported as-is rather than rounded off, to keep the retry
-  // budget identical between the Node agent and this app.
+  // DISPATCHER_INIT_MAX_ATTEMPTS (20) attempts, each of which evaluates
+  // once and then (if not yet found) waits — so the loop performs 19
+  // evaluates and 19 waits before throwing — ported as-is rather than
+  // rounded off, to keep the retry budget identical between the Node agent
+  // and this app.
   const waitForDispatcher = async (socket: WebSocket, attemptEpoch: number): Promise<void> => {
     for (let attempt = 1; attempt < DISPATCHER_INIT_MAX_ATTEMPTS; attempt++) {
       if (ws !== socket || !isCurrentEpoch(attemptEpoch)) {
@@ -169,6 +259,13 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
         expression: `globalThis.${RUNTIME_GLOBAL} != undefined`,
         returnByValue: true,
       })) as CDPEvaluateResult;
+
+      if (response.exceptionDetails) {
+        throw new Error(
+          'Failed to wait for React DevTools dispatcher initialization: ' +
+            (response.exceptionDetails.text ?? 'unknown error'),
+        );
+      }
 
       if (response.result?.value === true) {
         return;
@@ -184,6 +281,13 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     const response = (await sendCommand(socket, 'Runtime.evaluate', {
       expression: `${RUNTIME_GLOBAL}.BINDING_NAME`,
     })) as CDPEvaluateResult;
+
+    if (response.exceptionDetails) {
+      throw new Error(
+        'Failed to get binding name for the Rozenite dispatcher: ' +
+          (response.exceptionDetails.text ?? 'unknown error'),
+      );
+    }
 
     const value = response.result?.value;
     if (typeof value !== 'string' || value === '') {
@@ -209,13 +313,23 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     });
   };
 
+  // Guards against two overlapping re-bootstraps: without it, two
+  // `executionContextCreated("main")` events in quick succession would each
+  // start their own `runBootstrap`, both resetting `bindingName` and both
+  // issuing `Runtime.addBinding`/`initializeDomain`. `bootstrapTimer`
+  // (`scheduleMainContextRecreated`) already coalesces most bursts by
+  // debouncing the *call*; this also guards the async work itself in case
+  // a call is already in flight when another one lands.
+  let bootstrapInFlight = false;
+
   const handleMainContextRecreated = async (
     socket: WebSocket,
     attemptEpoch: number,
   ): Promise<void> => {
-    if (ws !== socket || !isCurrentEpoch(attemptEpoch)) {
+    if (ws !== socket || !isCurrentEpoch(attemptEpoch) || bootstrapInFlight) {
       return;
     }
+    bootstrapInFlight = true;
 
     // A fresh execution context means the binding is gone too: force
     // `Runtime.addBinding` to run again rather than trusting the cached name.
@@ -228,20 +342,34 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
         return;
       }
       bootstrapped = true;
-      setState({ status: 'connected' });
+      setState('connected');
       flushQueue();
     } catch (error) {
       if (ws !== socket || !isCurrentEpoch(attemptEpoch)) {
         return;
       }
       if (error instanceof RozeniteMissingSignal) {
-        setState({ status: 'rozeniteMissing' });
+        setState('rozeniteMissing');
         return;
       }
       // Any other bootstrap failure here is left for the socket's own close
       // handling to resolve — the app may still send another context event.
       console.error('[rozenite] Failed to re-bootstrap after a reload.', error);
+    } finally {
+      bootstrapInFlight = false;
     }
+  };
+
+  /** Debounces `handleMainContextRecreated` (500ms, mirroring
+   * `session.ts`'s `scheduleBootstrap`) so a burst of `main` context
+   * announcements collapses into a single re-bootstrap instead of one per
+   * event. */
+  const scheduleMainContextRecreated = (socket: WebSocket, attemptEpoch: number): void => {
+    clearBootstrapTimer();
+    bootstrapTimer = setTimeout(() => {
+      bootstrapTimer = null;
+      void handleMainContextRecreated(socket, attemptEpoch);
+    }, BOOTSTRAP_DEBOUNCE_MS);
   };
 
   const handleSocketMessage = (socket: WebSocket, raw: string, attemptEpoch: number): void => {
@@ -270,18 +398,40 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
       return;
     }
 
+    // A page can have execution contexts besides "main" (e.g. workers);
+    // only the destruction of the one we've identified as main means the
+    // JS VM reloaded. Reacting to any destroyed context, regardless of id,
+    // would wedge the connection in `reloading` forever whenever an
+    // unrelated context tears down and no matching "main" ever reappears.
     if (message.method === 'Runtime.executionContextDestroyed') {
-      bootstrapped = false;
-      setState({ status: 'reloading' });
+      const destroyedId = (message.params as { executionContextId?: number } | undefined)
+        ?.executionContextId;
+      if (destroyedId !== undefined && destroyedId === mainExecutionContextId) {
+        mainExecutionContextId = null;
+        bootstrapped = false;
+        setState('reloading');
+      }
       return;
     }
 
-    if (
-      message.method === 'Runtime.executionContextCreated' &&
-      (message.params as { context?: { name?: string } } | undefined)?.context?.name ===
-        MAIN_EXECUTION_CONTEXT_NAME
-    ) {
-      void handleMainContextRecreated(socket, attemptEpoch);
+    // CDP emits this instead of individual `executionContextDestroyed`
+    // events on some reloads — session.ts keys its own re-bootstrap off of
+    // this event rather than the per-context one for exactly that reason.
+    // Unlike a targeted destroy, this always means main is gone too.
+    if (message.method === 'Runtime.executionContextsCleared') {
+      mainExecutionContextId = null;
+      bootstrapped = false;
+      setState('reloading');
+      return;
+    }
+
+    if (message.method === 'Runtime.executionContextCreated') {
+      const context = (message.params as { context?: { id?: number; name?: string } } | undefined)
+        ?.context;
+      if (context?.name === MAIN_EXECUTION_CONTEXT_NAME) {
+        mainExecutionContextId = typeof context.id === 'number' ? context.id : null;
+        scheduleMainContextRecreated(socket, attemptEpoch);
+      }
       return;
     }
 
@@ -349,7 +499,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
               return;
             }
             bootstrapped = true;
-            setState({ status: 'connected' });
+            setState('connected');
             flushQueue();
             settleResolve();
           } catch (error) {
@@ -383,11 +533,15 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   };
 
   const runConnectLoop = (loopEpoch: number, resolveBeforeFirstAttempt: boolean): void => {
-    if (recoveryInFlight) {
+    // Guards against a duplicate loop for *this exact epoch* only — a
+    // `reconnect()` call bumping to a new epoch must still be able to
+    // start its own loop immediately, even while an old one is technically
+    // still unwinding. See the `recoveryEpoch` declaration above.
+    if (recoveryEpoch === loopEpoch) {
       return;
     }
-    recoveryInFlight = true;
-    setState({ status: 'connecting' });
+    recoveryEpoch = loopEpoch;
+    setState('connecting');
 
     void (async () => {
       try {
@@ -406,7 +560,22 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
                 ...currentTarget,
                 webSocketDebuggerUrl: resolved.webSocketDebuggerUrl,
               };
-              deviceName = resolved.name;
+              setDeviceName(resolved.name);
+            } else {
+              // The very first attempt of the very first connection uses
+              // the exact target the URL gave us (see the comment at the
+              // bottom of this module) — but the footer would otherwise
+              // show the raw device id for that entire first session. This
+              // resolves the friendly name best-effort, in the background:
+              // it never blocks or delays connecting, and a failure here
+              // is silently ignored (the id just stays as the fallback).
+              void resolveMetroTarget(currentTarget.deviceId)
+                .then((resolved) => {
+                  if (isCurrentEpoch(loopEpoch)) {
+                    setDeviceName(resolved.name);
+                  }
+                })
+                .catch(() => undefined);
             }
 
             await connectOnce(loopEpoch);
@@ -416,11 +585,11 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
               return;
             }
             if (error instanceof RozeniteMissingSignal) {
-              setState({ status: 'rozeniteMissing' });
+              setState('rozeniteMissing');
               return;
             }
             if (error instanceof MetroUnreachableError) {
-              setState({ status: 'metroUnreachable' });
+              setState('metroUnreachable');
               return;
             }
             if (state.status !== 'connecting') {
@@ -429,14 +598,20 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
               return;
             }
             if (attempt === RECOVERY_MAX_ATTEMPTS) {
-              setState({ status: 'disconnected' });
+              setState('disconnected');
               return;
             }
             await wait(RECOVERY_RETRY_DELAY_MS);
           }
         }
       } finally {
-        recoveryInFlight = false;
+        // Only clear the marker if it's still ours — a superseded loop
+        // (an older epoch, or a duplicate call for the same epoch that
+        // never got past the guard above) must not clear a newer loop's
+        // in-flight marker just because it happens to settle later.
+        if (recoveryEpoch === loopEpoch) {
+          recoveryEpoch = null;
+        }
       }
     })();
   };
@@ -451,8 +626,19 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
       return;
     }
 
+    // This attempt already reached a definitive, non-retryable outcome
+    // (rozeniteMissing / metroUnreachable) via its own catch handler,
+    // which runs as a microtask *before* this close event (a later task,
+    // scheduled by that same handler's own `socket.close()`) can arrive.
+    // The close here is just that decision's side effect, not new
+    // information — without this check it would immediately overwrite the
+    // state the person is actually meant to see with `disconnected`.
+    if (state.status === 'rozeniteMissing' || state.status === 'metroUnreachable') {
+      return;
+    }
+
     if (reason.includes(DEVTOOLS_TOOK_CONNECTION_REASON)) {
-      setState({ status: 'disconnected' });
+      setState('disconnected');
       return;
     }
 
@@ -464,7 +650,20 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
       return;
     }
 
-    setState({ status: 'disconnected' });
+    if (state.status === 'connecting') {
+      // This close happened mid-attempt, before `connectOnce` ever
+      // resolved (e.g. the socket never opened, or bootstrap failed for a
+      // reason other than the two handled above). Don't finalize
+      // `disconnected` here — `runConnectLoop`'s own catch (driven by
+      // `connectOnce`'s rejection, which this same close event causes) is
+      // what applies the attempt counter and `RECOVERY_MAX_ATTEMPTS`
+      // budget, exactly as it does for a `resolveMetroTarget` failure.
+      // Finalizing here instead would let a single failed socket end the
+      // whole connection after just one attempt.
+      return;
+    }
+
+    setState('disconnected');
   };
 
   const getState = (): DeviceState => state;
@@ -480,6 +679,9 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     if (bootstrapped && ws) {
       void sendDomainMessage(ws, message);
     } else {
+      if (sendQueue.length >= SEND_QUEUE_MAX_SIZE) {
+        sendQueue.shift();
+      }
       sendQueue.push(message);
     }
   };
@@ -499,6 +701,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   const reconnect = (): void => {
     epoch += 1;
     const nextEpoch = epoch;
+    clearBootstrapTimer();
     if (ws) {
       const socket = ws;
       ws = null;
@@ -506,12 +709,17 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     }
     bindingName = null;
     bootstrapped = false;
-    recoveryInFlight = false;
+    mainExecutionContextId = null;
+    // No force-clear of `recoveryEpoch` here (that was the finding "A"
+    // bug): the epoch bump above already means `runConnectLoop`'s guard
+    // (`recoveryEpoch === loopEpoch`) can't mistake a stale in-flight
+    // marker from the *old* epoch for one blocking this new one.
     runConnectLoop(nextEpoch, true);
   };
 
   const close = (): void => {
     epoch += 1;
+    clearBootstrapTimer();
     if (ws) {
       const socket = ws;
       ws = null;
@@ -519,7 +727,13 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     }
     rejectAllPending();
     bootstrapped = false;
-    setState({ status: 'disconnected' });
+    setState('disconnected');
+    // Nothing in this app calls `close()` outside of `beforeunload` (see
+    // `main.tsx`) and tests, but leaving subscribers and the send queue
+    // behind regardless would be a real leak if that ever changes.
+    sendQueue = [];
+    stateListeners.clear();
+    messageListeners.clear();
   };
 
   // Kick off the initial connection. Unlike a recovery, this uses the

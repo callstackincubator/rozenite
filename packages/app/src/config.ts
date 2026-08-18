@@ -12,7 +12,10 @@ export type RozeniteAppConfig = {
   runtimeVersion?: string;
 };
 
-const CONFIG_URL = '/rozenite/app/config';
+// Derived from `import.meta.env.BASE_URL` (Vite bakes it in from
+// `vite.config.ts`'s `base`) rather than a second hardcoded copy of the
+// mount path — see also `plugins.ts`'s `getPluginBaseUrl`.
+const CONFIG_URL = `${import.meta.env.BASE_URL}config`;
 
 /** A failure here — network error or non-2xx response — means Metro isn't
  * reachable at all: the `metroUnreachable` condition. */

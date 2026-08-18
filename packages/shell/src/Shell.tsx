@@ -39,7 +39,13 @@ const SIDEBAR_SNAP_POINT = (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 
 // Consumers must pass a stable `host` reference (a module-level constant or
 // a memoised value) — the forwarding effect below resubscribes from `host`
 // whenever the reference changes.
-export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion, host }: ShellProps) {
+export function Shell({
+  plugins,
+  destroyOnDetachPlugins,
+  runtimeVersion,
+  host,
+  className,
+}: ShellProps) {
   const [selectionState, setSelectionState] = useState<SelectionState>(() =>
     getInitialSelectionState(plugins),
   );
@@ -162,7 +168,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion, host }:
 
   if (!hasPlugins) {
     return (
-      <PluginShell>
+      <PluginShell className={className}>
         <WelcomeDialog runtimeVersion={runtimeVersion} />
         <PluginShell.Body className="items-center justify-center">
           <EmptyState
@@ -181,7 +187,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion, host }:
   const hasNotice = outdated.size > 0 || runtimeUpdate !== null;
 
   return (
-    <PluginShell>
+    <PluginShell className={className}>
       <WelcomeDialog runtimeVersion={runtimeVersion} />
       <PluginShell.Body className="flex-row overflow-hidden">
         <Split

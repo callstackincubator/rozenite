@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App, type AppTarget } from './App';
 import { TargetUrlError } from './connection/target-from-url';
 import type { DeviceConnection, DeviceState, DeviceTarget } from './connection/device-connection';
+import { getPluginBaseUrl } from './plugins';
 
 const originalFetch = globalThis.fetch;
 const originalResizeObserver = globalThis.ResizeObserver;
@@ -27,10 +28,10 @@ beforeEach(() => {
   globalThis.fetch = vi.fn(async (input: string | URL | Request) => {
     const url = String(input);
 
-    if (url.endsWith('/rozenite/app/config')) {
+    if (url.endsWith(`${import.meta.env.BASE_URL}config`)) {
       return { ok: true, json: async () => CONFIG_OK } as Response;
     }
-    if (url.includes('/rozenite/plugins/plugin-a/')) {
+    if (url.includes(getPluginBaseUrl('plugin-a'))) {
       return { ok: true, json: async () => MANIFEST_A } as Response;
     }
     // Everything else (including the dev-mode server probe) "fails" —
@@ -76,14 +77,26 @@ function createFakeConnection(
     close: () => {},
   };
 
+  const notify = () => {
+    for (const listener of listeners) {
+      listener(state);
+    }
+  };
+
   return {
     connection,
     reconnect,
     setState: (next: DeviceState) => {
       state = next;
-      for (const listener of listeners) {
-        listener(state);
-      }
+      notify();
+    },
+    // Mutates the target `getTarget()` returns and notifies through the
+    // same `subscribe` connection.getState uses, without a status change —
+    // mirrors how the real `device-connection.ts` reports a resolved
+    // friendly device name (`setDeviceName`).
+    setTargetName: (name: string) => {
+      target = { ...target, name };
+      notify();
     },
   };
 }
@@ -130,6 +143,45 @@ describe('App', () => {
 
     await findPanelIframe();
     expect(screen.getByText('Pixel 8')).toBeTruthy();
+  });
+
+  it('reflects a resolved device name even when the connection status does not change (finding 9)', async () => {
+    const { connection, setState, setTargetName } = createFakeConnection({
+      name: 'device-hash-abc123',
+      appId: 'com.example.app',
+    });
+    setState({ status: 'connected' });
+
+    render(<App target={{ kind: 'connection', connection }} />);
+
+    await findPanelIframe();
+    expect(screen.getByText('device-hash-abc123')).toBeTruthy();
+
+    // No status transition here — only the display name resolves, as
+    // `device-connection.ts`'s best-effort first-attempt name lookup does.
+    setTargetName('Pixel 8');
+
+    expect(await screen.findByText('Pixel 8')).toBeTruthy();
+    expect(screen.queryByText('device-hash-abc123')).toBeNull();
+  });
+
+  it('sizes Shell to share the column with the footer instead of overlaying it (finding 18)', async () => {
+    const { connection, setState } = createFakeConnection();
+    setState({ status: 'connected' });
+
+    render(<App target={{ kind: 'connection', connection }} />);
+    await findPanelIframe();
+
+    // `Shell`'s root is the `PluginShell` wrapping the panel iframe.
+    const shellRoot = document.querySelector('iframe')?.closest('[data-slot="plugin-shell"]');
+    expect(shellRoot).toBeTruthy();
+    expect(shellRoot?.className).not.toMatch(/\bh-screen\b/);
+    expect(shellRoot?.className).toMatch(/\bflex-1\b/);
+
+    // The footer is a normal flex sibling now, not fixed over the content.
+    const footer = document.querySelector('footer');
+    expect(footer).toBeTruthy();
+    expect(footer?.className).not.toMatch(/\bfixed\b/);
   });
 
   it('keeps the shell and its panel iframes mounted through reloading and disconnected — the headline persistence rule', async () => {

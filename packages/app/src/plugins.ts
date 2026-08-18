@@ -25,13 +25,20 @@ type RozeniteManifest = {
  * on. */
 const DEV_SERVER_URL = 'http://localhost:8888';
 
+// The middleware mounts this app at `/rozenite/app/` (`vite.config.ts`'s
+// `base`) and plugin assets one level up, at `/rozenite/plugins/...`.
+// Derived from `import.meta.env.BASE_URL` — which Vite bakes in from that
+// same `base` — by going up one path segment, so there's exactly one
+// literal copy of the mount path (`vite.config.ts`) instead of two.
+const ROZENITE_ROOT = new URL('..', new URL(import.meta.env.BASE_URL, location.href)).pathname;
+
 /** Mirrors `packages/runtime/src/plugin-loader.ts`'s `getPluginUrl`,
  * including its non-global `replace('/', '_')` (a scoped package name has
  * exactly one `/`, so this is deliberate parity, not an oversight). */
 export const getPluginBaseUrl = (pluginId: string): string => {
   const url = new URL(location.href);
   url.search = '';
-  url.pathname = '/rozenite/plugins/' + pluginId.replace('/', '_');
+  url.pathname = ROZENITE_ROOT + 'plugins/' + pluginId.replace('/', '_');
   return url.toString();
 };
 

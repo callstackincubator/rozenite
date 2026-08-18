@@ -40,6 +40,16 @@ If you are building a custom integration, `@rozenite/middleware` serves the
 compiled shell assets and wires its configuration to the React Native DevTools
 frontend.
 
+### A note for anyone importing this package directly
+
+This package has no `main`/compiled library build — its `.` export
+(`./src/index.ts`) and `./styles.css` point at source, not `dist`. That's a
+deliberate choice, not an oversight: `Shell.tsx` imports SVGs from outside the
+package, and `styles.css` relies on Tailwind's `@source` scanning real source
+files, so a pre-compiled build isn't viable here. Any consumer importing `.`
+directly (as `@rozenite/app` does) needs its own bundler (Vite, Metro, etc.)
+to compile this package's source — it isn't published pre-built.
+
 ## Made with ❤️ at Callstack
 
 `rozenite` is an open source project and will always remain free to use. If you think it's cool, please star it 🌟.

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Shell, type ShellPlugin } from '@rozenite/shell';
 import {
   Badge,
@@ -105,12 +105,11 @@ function Footer({
   runtimeVersion?: string;
 }) {
   return (
-    // Fixed rather than stacked in normal flow: `Shell` fixes its own root
-    // to `h-screen` (it's designed to fill a whole page on its own), so a
-    // footer sharing the flex column beneath it would be pushed off the
-    // bottom of the viewport. Anchoring it to the viewport instead means it
-    // overlays the last sliver of `Shell`'s content, like a status bar.
-    <footer className="fixed inset-x-0 bottom-0 z-20 flex h-9 shrink-0 items-center gap-3 border-t border-border bg-card px-3 text-sm text-muted-foreground">
+    // A normal flex sibling below `Shell`, not an overlay: `Shell` is
+    // given `className="min-h-0 flex-1"` below so it shares this column
+    // with the footer instead of claiming the full viewport on its own —
+    // see `ShellProps.className` in `@rozenite/shell`.
+    <footer className="flex h-9 shrink-0 items-center gap-3 border-t border-border bg-card px-3 text-sm text-muted-foreground">
       <StatusBadge status={deviceState.status} />
       {(deviceState.status === 'connected' || deviceState.status === 'reloading') && targetName && (
         <>
@@ -160,7 +159,12 @@ function StatusDialog({
 
 function ConnectedApp({ connection }: { connection: DeviceConnection }) {
   const deviceState = useSyncExternalStore(connection.subscribe, connection.getState);
-  const target = connection.getTarget();
+  // Reactive despite `getTarget()` not itself being part of `DeviceState`:
+  // it's driven through the very same `subscribe` connection.getState is,
+  // so a display-only name update (see `device-connection.ts`'s
+  // `setDeviceName`) reaches this render even when `deviceState` itself
+  // doesn't change.
+  const targetName = useSyncExternalStore(connection.subscribe, () => connection.getTarget().name);
   // `host` must stay referentially stable for as long as `connection` does —
   // `Shell` resubscribes from it whenever the reference changes.
   const host = useMemo(() => createDeviceShellHost(connection), [connection]);
@@ -176,12 +180,22 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
   // after a reload) would destroy every panel's state right when surviving
   // that is the point. So every non-connected state below is rendered as a
   // dialog *over* the still-mounted shell, never in its place.
+  //
+  // The config used to render `Shell` is latched alongside the boolean, in
+  // a ref rather than read live off `configState`: `retryConfig` can put
+  // `configState` back into `loading`/`error` (today only reachable from a
+  // dialog that's unmounted while the shell is up, but the guarantee below
+  // must not depend on that staying true) and the render condition must
+  // not re-check `configState.status` at that point, or it would unmount
+  // `Shell` right when the whole point is that it never does.
   const [shellMounted, setShellMounted] = useState(false);
+  const mountedConfigRef = useRef<Extract<ConfigState, { status: 'ready' }> | null>(null);
   useEffect(() => {
     if (deviceState.status === 'connected' && configState.status === 'ready') {
+      mountedConfigRef.current = configState;
       setShellMounted(true);
     }
-  }, [deviceState.status, configState.status]);
+  }, [deviceState.status, configState]);
 
   const configFailed = configState.status === 'error';
 
@@ -193,12 +207,20 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
     // its own nested `PluginShell` for its own children; this outer one is
     // for everything *around* `Shell` (the dialogs and footer below).
     <PluginShell>
-      {shellMounted && configState.status === 'ready' ? (
+      {shellMounted && mountedConfigRef.current ? (
         <Shell
-          plugins={configState.plugins}
-          destroyOnDetachPlugins={configState.destroyOnDetachPlugins}
-          runtimeVersion={configState.runtimeVersion}
+          plugins={mountedConfigRef.current.plugins}
+          destroyOnDetachPlugins={mountedConfigRef.current.destroyOnDetachPlugins}
+          runtimeVersion={mountedConfigRef.current.runtimeVersion}
           host={host}
+          // `Shell`'s own root defaults to `h-screen` (right for the
+          // embedded DevTools case, where it's the whole page) — `h-full`
+          // is in the same `tailwind-merge` group, so it wins over that
+          // default instead of stacking with it. Here `Shell` shares this
+          // outer `PluginShell`'s flex column with the footer below, so it
+          // must size to the space that column leaves it (`min-h-0
+          // flex-1`) instead of claiming the full viewport itself.
+          className="h-full min-h-0 flex-1"
         />
       ) : (
         !configFailed && (
@@ -207,7 +229,7 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
               title={
                 configState.status === 'loading' ? 'Loading plugins…' : 'Connecting to device…'
               }
-              description={target.name || undefined}
+              description={targetName || undefined}
             />
           </PluginShell.Body>
         )
@@ -247,8 +269,12 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
 
       <Footer
         deviceState={deviceState}
-        targetName={target.name}
-        runtimeVersion={configState.status === 'ready' ? configState.runtimeVersion : undefined}
+        targetName={targetName}
+        runtimeVersion={
+          configState.status === 'ready'
+            ? configState.runtimeVersion
+            : mountedConfigRef.current?.runtimeVersion
+        }
       />
     </PluginShell>
   );

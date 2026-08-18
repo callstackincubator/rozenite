@@ -275,3 +275,46 @@ describe('Shell message forwarding', () => {
     expect(fakeHost.sentMessages).toEqual([panelEnvelope]);
   });
 });
+
+describe('Shell root className (finding 18)', () => {
+  it('merges a passed className onto the root, overriding the default h-screen sizing', async () => {
+    render(
+      <Shell
+        plugins={[pluginA]}
+        destroyOnDetachPlugins={[]}
+        runtimeVersion={undefined}
+        host={host}
+        className="h-full flex-1"
+      />,
+    );
+
+    const root = await waitFor(() => {
+      const el = document.querySelector('[data-slot="plugin-shell"]');
+      if (!el) {
+        throw new Error('Shell root not mounted');
+      }
+      return el;
+    });
+
+    expect(root.className).not.toMatch(/\bh-screen\b/);
+    expect(root.className).toMatch(/\bh-full\b/);
+    expect(root.className).toMatch(/\bflex-1\b/);
+  });
+
+  it('applies the same className override to the empty (no plugins) root', () => {
+    render(
+      <Shell
+        plugins={[]}
+        destroyOnDetachPlugins={[]}
+        runtimeVersion={undefined}
+        host={host}
+        className="h-full flex-1"
+      />,
+    );
+
+    const root = document.querySelector('[data-slot="plugin-shell"]');
+    expect(root).toBeTruthy();
+    expect(root?.className).not.toMatch(/\bh-screen\b/);
+    expect(root?.className).toMatch(/\bh-full\b/);
+  });
+});
