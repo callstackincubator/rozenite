@@ -7,9 +7,9 @@ import { Tooltip } from '../tooltip/tooltip';
 import type { Size } from '../tokens/size';
 
 const iconButtonSize = {
-  sm: 'size-6 [&_svg]:size-3.5',
-  md: 'size-8 [&_svg]:size-4',
-  lg: 'size-10 [&_svg]:size-5',
+  sm: 'size-6 p-0 [&_svg]:size-3.5',
+  md: 'size-8 p-0 [&_svg]:size-4',
+  lg: 'size-10 p-0 [&_svg]:size-5',
 } as const satisfies Record<Size, string>;
 
 export type IconButtonProps = ComponentProps<'button'> &
@@ -41,7 +41,7 @@ export function IconButton({
     props: {
       'aria-label': label,
       'data-slot': 'icon-button',
-      className: cn(buttonVariants({ variant, size: 'icon' }), iconButtonSize[size], className),
+      className: cn(buttonVariants({ variant }), iconButtonSize[size], className),
       children,
       ...props,
     },

@@ -1,18 +1,46 @@
 import { cva } from 'class-variance-authority';
 import { cn } from './cn';
+import type { Size } from '../tokens/size';
+
+const fieldSurfaceBase = cn(
+  'w-full rounded-md border border-input bg-transparent text-foreground shadow-xs transition-colors',
+  'outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
+  'placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
+);
 
 /**
- * The shared chrome for form control shells — input, textarea, search
- * field, field control, select trigger, combobox input. Callers layer their
- * own height/padding on top, e.g. `cn(fieldSurface(), 'h-8 px-3')`.
+ * The shared chrome for form control shells — input, search field, field
+ * control, select trigger, combobox input. `size` covers height and
+ * horizontal padding; textarea sizes itself separately since it has no
+ * fixed height (see `textareaSurface`).
  */
-export const fieldSurface = cva(
-  cn(
-    'w-full rounded-md border border-input bg-transparent text-sm text-foreground shadow-xs transition-colors',
-    'outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
-    'placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
-  ),
-);
+export const fieldSurface = cva(fieldSurfaceBase, {
+  variants: {
+    size: {
+      sm: 'h-6 px-2 text-xs',
+      md: 'h-8 px-3 text-sm',
+      lg: 'h-10 px-4 text-base',
+    } as const satisfies Record<Size, string>,
+  },
+  defaultVariants: {
+    size: 'md',
+  },
+});
+
+/** The same chrome as `fieldSurface`, sized for `Textarea` — padding and
+ *  minimum height scale, but not a fixed height. */
+export const textareaSurface = cva(fieldSurfaceBase, {
+  variants: {
+    size: {
+      sm: 'min-h-20 px-2 py-1.5 text-xs',
+      md: 'min-h-28 px-3 py-2 text-sm',
+      lg: 'min-h-36 px-4 py-2.5 text-base',
+    } as const satisfies Record<Size, string>,
+  },
+  defaultVariants: {
+    size: 'md',
+  },
+});
 
 /** The shared popup surface for select and combobox dropdowns. */
 export const popoverSurface = cva(

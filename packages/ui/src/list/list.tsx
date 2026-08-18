@@ -1,6 +1,13 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { useRender } from '@base-ui/react/use-render';
 import { cn } from '../utils/cn';
+import type { Size } from '../tokens/size';
+
+const listItemSize = {
+  sm: 'h-6 text-xs',
+  md: 'h-8 text-sm',
+  lg: 'h-10 text-base',
+} as const satisfies Record<Size, string>;
 
 export type ListProps = ComponentProps<'div'>;
 
@@ -34,6 +41,8 @@ export type ListItemProps = ComponentProps<'button'> & {
   leading?: ReactNode;
   /** Rendered at the end of the row, e.g. a `Badge` with an entry count. */
   trailing?: ReactNode;
+  /** @default 'sm' */
+  size?: Size;
   /** Replace the rendered element, e.g. `render={<a href="..." />}` for a navigable item. */
   render?: useRender.RenderProp;
 };
@@ -43,6 +52,7 @@ function ListItem({
   selected = false,
   leading,
   trailing,
+  size = 'sm',
   children,
   type = 'button',
   render,
@@ -57,10 +67,11 @@ function ListItem({
       'data-selected': selected || undefined,
       'aria-current': selected || undefined,
       className: cn(
-        'flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground',
+        'flex w-full items-center gap-2 rounded-md px-2 text-left text-sidebar-foreground',
         'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
         'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
         'data-[selected]:bg-sidebar-accent data-[selected]:text-sidebar-accent-foreground data-[selected]:font-medium',
+        listItemSize[size],
         className,
       ),
       children: (

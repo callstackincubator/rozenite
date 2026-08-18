@@ -4,6 +4,7 @@ import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { usePluginPortalContainer } from '../theme/theme-context';
 import { fieldSurface, optionRow, popoverSurface } from '../utils/control-surfaces';
+import type { Size } from '../tokens/size';
 
 export type ComboboxProps<
   Value,
@@ -16,9 +17,12 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false>(
   return <ComboboxPrimitive.Root {...props} />;
 }
 
-export type ComboboxInputProps = ComboboxPrimitive.Input.Props;
+export type ComboboxInputProps = Omit<ComboboxPrimitive.Input.Props, 'size'> & {
+  /** @default 'md' */
+  size?: Size;
+};
 
-function ComboboxInput({ className, ...props }: ComboboxInputProps) {
+function ComboboxInput({ className, size = 'md', ...props }: ComboboxInputProps) {
   return (
     <ComboboxPrimitive.InputGroup
       data-slot="combobox-input-group"
@@ -26,7 +30,7 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
     >
       <ComboboxPrimitive.Input
         data-slot="combobox-input"
-        className={cn(fieldSurface(), 'h-8 px-3 pr-14', className)}
+        className={cn(fieldSurface({ size }), 'pr-14', className)}
         {...props}
       />
       <div className="absolute right-1.5 flex items-center gap-0.5">

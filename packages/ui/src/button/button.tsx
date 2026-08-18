@@ -21,14 +21,14 @@ export const buttonVariants = cva(
         ghost: 'text-foreground hover:bg-accent hover:text-accent-foreground',
       },
       size: {
-        default: 'h-8 px-3 [&_svg]:size-4',
-        compact: 'h-6 px-2 text-xs [&_svg]:size-3.5',
-        icon: 'h-8 w-8 [&_svg]:size-4',
+        sm: 'h-6 px-2 text-xs [&_svg]:size-3.5',
+        md: 'h-8 px-3 [&_svg]:size-4',
+        lg: 'h-10 px-4 [&_svg]:size-5',
       },
     },
     defaultVariants: {
       variant: 'default',
-      size: 'default',
+      size: 'md',
     },
   },
 );

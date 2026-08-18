@@ -17,7 +17,7 @@ export const Default: Story = {
         <PluginHeader.Title>Storage</PluginHeader.Title>
         <PluginHeader.Subtitle>Manage persisted values</PluginHeader.Subtitle>
         <PluginHeader.Actions>
-          <Button size="compact" variant="outline">
+          <Button size="sm" variant="outline">
             Refresh
           </Button>
           <PluginHeader.ThemeSwitcher />

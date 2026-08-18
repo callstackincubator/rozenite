@@ -8,11 +8,18 @@ import {
 } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '../utils/cn';
+import type { Size } from '../tokens/size';
 
 const NestedListDepthContext = createContext(0);
 
 const INDENT_PER_DEPTH_PX = 16;
 const BASE_PADDING_PX = 8;
+
+const nestedListItemSize = {
+  sm: 'h-6 text-xs',
+  md: 'h-8 text-sm',
+  lg: 'h-10 text-base',
+} as const satisfies Record<Size, string>;
 
 export type NestedListProps = ComponentProps<'div'>;
 
@@ -31,6 +38,8 @@ export type NestedListItemProps = Omit<ComponentProps<'button'>, 'children'> & {
   /** Rendered at the end of the row, e.g. a `Badge` with a count. */
   trailing?: ReactNode;
   selected?: boolean;
+  /** @default 'sm' */
+  size?: Size;
   /** Initial expanded state when uncontrolled. @default false */
   defaultExpanded?: boolean;
   /** Controlled expanded state. Omit to let the item manage its own state. */
@@ -46,6 +55,7 @@ function NestedListItem({
   leading,
   trailing,
   selected = false,
+  size = 'sm',
   defaultExpanded = false,
   expanded: expandedProp,
   onExpandedChange,
@@ -77,10 +87,11 @@ function NestedListItem({
         aria-expanded={hasChildren ? expanded : undefined}
         style={{ paddingLeft: BASE_PADDING_PX + depth * INDENT_PER_DEPTH_PX }}
         className={cn(
-          'flex h-7 min-w-full items-center gap-1.5 rounded-md pr-2 text-left text-sm text-sidebar-foreground',
+          'flex min-w-full items-center gap-1.5 rounded-md pr-2 text-left text-sidebar-foreground',
           'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
           'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
           'data-[selected]:bg-sidebar-accent data-[selected]:text-sidebar-accent-foreground data-[selected]:font-medium',
+          nestedListItemSize[size],
           className,
         )}
         onClick={hasChildren ? toggleExpanded : onClick}
