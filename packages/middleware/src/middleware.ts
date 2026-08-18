@@ -132,8 +132,16 @@ export const getMiddleware = (
   // non-strict routing matches this for both "/app" and "/app/", and leaving
   // the request untouched keeps its query string (e.g. ?ws=...&appId=...)
   // intact for the client to read.
+  //
+  // `root` must be passed explicitly: without it, `send` (which backs
+  // `res.sendFile`) checks *every* segment of the absolute path for a
+  // leading dot to decide whether to treat it as a dotfile — including
+  // ancestor directories that have nothing to do with this app, like a
+  // hidden checkout folder (e.g. `~/.herdr/worktrees/...`). With `root`
+  // set, only the relative path under it is checked, matching the
+  // `express.static(appPath)` call below.
   app.get('/app', (_, res) => {
-    res.sendFile(path.join(appPath, 'index.html'));
+    res.sendFile('index.html', { root: appPath });
   });
 
   app.use('/app', express.static(appPath));
