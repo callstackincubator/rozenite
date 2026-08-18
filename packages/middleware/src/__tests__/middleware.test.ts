@@ -1,7 +1,15 @@
 import { createServer, get } from 'node:http';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import express from 'express';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getNormalizedRequestUrl } from '../middleware.js';
+import { getMiddleware, getNormalizedRequestUrl } from '../middleware.js';
 import { createScopedMiddleware, type MiddlewareHandler } from '../scoped-middleware.js';
+import { createAgentSessionManager } from '../agent/index.js';
+import type { InstalledPlugin } from '../auto-discovery.js';
+import type { RozeniteConfig } from '../config.js';
 
 let activeServer: ReturnType<typeof createServer> | null = null;
 
@@ -145,5 +153,110 @@ describe('scoped middleware', () => {
 
     expect(response).toEqual({ status: 204, body: '' });
     expect(downstream).not.toHaveBeenCalled();
+  });
+});
+
+describe('standalone app', () => {
+  // Resolving the debugger frontend needs a real react-native install, so
+  // point at this package's own directory: it sits inside the monorepo,
+  // where react-native and @react-native/dev-middleware are hoisted and
+  // resolvable, without depending on any particular project fixture.
+  const projectRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
+
+  const createApp = (
+    installedPlugins: InstalledPlugin[],
+    destroyOnDetachPlugins: string[],
+    runtimeVersion?: string,
+  ): MiddlewareHandler => {
+    const config: RozeniteConfig = { projectRoot };
+    const agentSessionManager = createAgentSessionManager({ projectRoot });
+
+    return getMiddleware(
+      config,
+      installedPlugins,
+      destroyOnDetachPlugins,
+      agentSessionManager,
+      runtimeVersion,
+    ) as unknown as MiddlewareHandler;
+  };
+
+  it('serves the config endpoint with the installed plugin names and runtime version', async () => {
+    const app = createApp(
+      [{ name: '@rozenite/network-activity-plugin', path: '/plugins/network-activity' }],
+      ['@rozenite/some-plugin'],
+      '2.1.0',
+    );
+
+    const response = await runRequest(app, '/rozenite/app/config');
+
+    expect(response.status).toBe(200);
+    expect(JSON.parse(response.body)).toEqual({
+      installedPlugins: ['@rozenite/network-activity-plugin'],
+      destroyOnDetachPlugins: ['@rozenite/some-plugin'],
+      runtimeVersion: '2.1.0',
+    });
+  });
+
+  it('omits runtimeVersion from the config payload when it is not provided', async () => {
+    const app = createApp([], []);
+
+    const response = await runRequest(app, '/rozenite/app/config');
+    const payload = JSON.parse(response.body);
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ installedPlugins: [], destroyOnDetachPlugins: [] });
+    expect('runtimeVersion' in payload).toBe(false);
+  });
+
+  it('serves the app HTML for both /rozenite/app and /rozenite/app/ without redirecting', async () => {
+    const app = createApp([], []);
+
+    const withoutTrailingSlash = await runRequest(app, '/rozenite/app?ws=abc&appId=123');
+    const withTrailingSlash = await runRequest(app, '/rozenite/app/?ws=abc&appId=123');
+
+    for (const response of [withoutTrailingSlash, withTrailingSlash]) {
+      expect(response.status).toBe(200);
+      expect(response.body).toContain('<div id="root"></div>');
+    }
+  });
+
+  it('registers the config route ahead of the static app mount so it cannot be shadowed', async () => {
+    // Proves the ordering actually matters: a built app could ship a file
+    // literally named "config" (unlikely, but not impossible), which would
+    // shadow the JSON route if the static mount were registered first.
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rozenite-app-'));
+    fs.writeFileSync(path.join(tempDir, 'config'), 'not json');
+
+    try {
+      const buildApp = (registerConfigFirst: boolean): MiddlewareHandler => {
+        const router = express();
+        const registerConfig = () => {
+          router.get('/app/config', (_, res) => {
+            res.json({ ok: true });
+          });
+        };
+        const registerStatic = () => {
+          router.use('/app', express.static(tempDir));
+        };
+
+        if (registerConfigFirst) {
+          registerConfig();
+          registerStatic();
+        } else {
+          registerStatic();
+          registerConfig();
+        }
+
+        return router as unknown as MiddlewareHandler;
+      };
+
+      const shadowed = await runRequest(buildApp(false), '/app/config');
+      const notShadowed = await runRequest(buildApp(true), '/app/config');
+
+      expect(shadowed.body).toBe('not json');
+      expect(JSON.parse(notShadowed.body)).toEqual({ ok: true });
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 });

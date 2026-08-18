@@ -17,6 +17,18 @@ export type MiddlewareConfig = {
   destroyOnDetachPlugins?: string[];
 };
 
+/**
+ * The JSON counterpart of the `__ROZENITE__` global that `getEntryPointHTML`
+ * injects into Fusebox's HTML for the embedded shell. Served as JSON for
+ * `@rozenite/app`, which isn't server-rendered. Keep in sync with
+ * `RozeniteAppConfig` in `packages/app/src/config.ts`.
+ */
+export type RozeniteAppConfigResponse = {
+  installedPlugins: string[];
+  destroyOnDetachPlugins: string[];
+  runtimeVersion?: string;
+};
+
 export const getNormalizedRequestUrl = (url: string): string => {
   if (url === '/agent' || url.startsWith('/agent/')) {
     return `/rozenite${url}`;
@@ -48,6 +60,7 @@ export const getMiddleware = (
     path.dirname(require.resolve('@rozenite/shell/package.json')),
     'dist',
   );
+  const appPath = path.join(path.dirname(require.resolve('@rozenite/app/package.json')), 'dist');
 
   logger.debug(`Debugger frontend path: ${debuggerFrontend}`);
   logger.debug(`Framework path: ${frameworkPath}`);
@@ -100,6 +113,30 @@ export const getMiddleware = (
   });
 
   app.use('/shell', express.static(shellPath));
+
+  app.get('/app/config', (_, res) => {
+    const config: RozeniteAppConfigResponse = {
+      installedPlugins: installedPlugins.map((plugin) => plugin.name),
+      destroyOnDetachPlugins,
+      runtimeVersion,
+    };
+
+    res.json(config);
+  });
+
+  // express.static would 301-redirect a bare "/app" request to "/app/" to
+  // canonicalize it as a directory. That redirect target is computed from
+  // the already-normalized URL (the /rozenite prefix stripped above), so it
+  // would send the browser to "/app/" — outside the /rozenite namespace this
+  // middleware is mounted under. Serve index.html directly instead; Express's
+  // non-strict routing matches this for both "/app" and "/app/", and leaving
+  // the request untouched keeps its query string (e.g. ?ws=...&appId=...)
+  // intact for the client to read.
+  app.get('/app', (_, res) => {
+    res.sendFile(path.join(appPath, 'index.html'));
+  });
+
+  app.use('/app', express.static(appPath));
 
   app.use(createAgentRoutes(agentSessionManager));
 

@@ -828,6 +828,9 @@ importers:
       '@rozenite/agent-shared':
         specifier: workspace:*
         version: link:../agent-shared
+      '@rozenite/app':
+        specifier: workspace:*
+        version: link:../app
       '@rozenite/runtime':
         specifier: workspace:*
         version: link:../runtime
