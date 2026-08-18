@@ -1,6 +1,13 @@
 import { Toolbar as ToolbarPrimitive } from '@base-ui/react/toolbar';
 import { cn } from '../utils/cn';
 import { Separator, type SeparatorProps } from '../separator/separator';
+import type { Size } from '../tokens/size';
+
+const toolbarButtonSize = {
+  sm: 'h-6 px-2 text-xs [&_svg]:size-3.5',
+  md: 'h-8 px-3 text-sm [&_svg]:size-4',
+  lg: 'h-10 px-4 text-base [&_svg]:size-5',
+} as const satisfies Record<Size, string>;
 
 export type ToolbarProps = ToolbarPrimitive.Root.Props;
 
@@ -17,17 +24,21 @@ function ToolbarRoot({ className, ...props }: ToolbarProps) {
   );
 }
 
-export type ToolbarButtonProps = ToolbarPrimitive.Button.Props;
+export type ToolbarButtonProps = ToolbarPrimitive.Button.Props & {
+  /** @default 'sm' */
+  size?: Size;
+};
 
-function ToolbarButton({ className, ...props }: ToolbarButtonProps) {
+function ToolbarButton({ className, size = 'sm', ...props }: ToolbarButtonProps) {
   return (
     <ToolbarPrimitive.Button
       data-slot="toolbar-button"
       className={cn(
-        'inline-flex h-7 items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium text-foreground',
+        'inline-flex items-center justify-center gap-1.5 rounded-md font-medium text-foreground',
         'hover:bg-accent hover:text-accent-foreground',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'aria-disabled:pointer-events-none aria-disabled:opacity-50',
+        toolbarButtonSize[size],
         className,
       )}
       {...props}
@@ -37,7 +48,8 @@ function ToolbarButton({ className, ...props }: ToolbarButtonProps) {
 
 export type ToolbarSeparatorProps = SeparatorProps;
 
-/** An alias for `Separator`, styled for use inside a `Toolbar`. */
+/** An alias for `Separator`, styled for use inside a `Toolbar`. Spacing comes
+ *  from the toolbar's own `gap-1` — pass `className` for extra breathing room. */
 function ToolbarSeparator({
   orientation = 'vertical',
   className,
@@ -47,7 +59,7 @@ function ToolbarSeparator({
     <Separator
       data-slot="toolbar-separator"
       orientation={orientation}
-      className={cn('mx-1', className)}
+      className={className}
       {...props}
     />
   );

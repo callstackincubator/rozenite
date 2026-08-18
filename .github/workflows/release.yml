@@ -56,3 +56,19 @@ jobs:
 
       - name: Run release
         run: pnpm release:run
+
+  deploy-website:
+    name: Deploy website
+    needs: release
+    # Only stable releases deploy production docs. Canary pushes no tag, and rc
+    # runs from a release/v* branch, which must not become the production site.
+    if: github.event.inputs.mode == 'stable'
+    uses: ./.github/workflows/website-release-deploy.yml
+    # Do not inherit id-token: write from this workflow — the deploy job must not
+    # be able to mint an npm trusted-publishing token.
+    permissions:
+      contents: read
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

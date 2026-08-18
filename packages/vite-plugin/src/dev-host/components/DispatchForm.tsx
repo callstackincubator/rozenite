@@ -1,4 +1,4 @@
-import { Button, Input, Select, Tabs, Textarea } from '@rozenite/ui';
+import { IconButton, Input, Select, Tabs, Textarea } from '@rozenite/ui';
 import { RotateCcw, Send } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import type { DevHostFlowEntry, DevHostFlowRunState, DevHostPresetEntry } from '../types.js';
@@ -108,24 +108,17 @@ export const DispatchForm = ({
             </label>
 
             <div className="dev-host-actions">
-              <Button
+              <IconButton
+                tone="neutral"
                 variant="outline"
-                size="icon"
                 onClick={onReset}
-                aria-label="Reset dispatcher"
-                title="Reset dispatcher"
+                label="Reset dispatcher"
               >
                 <RotateCcw />
-              </Button>
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!canDispatch}
-                aria-label="Dispatch message"
-                title="Dispatch message"
-              >
+              </IconButton>
+              <IconButton type="submit" disabled={!canDispatch} label="Dispatch message">
                 <Send />
-              </Button>
+              </IconButton>
             </div>
           </form>
         </Tabs.Panel>

@@ -51,10 +51,13 @@ export function FieldDetailDialog({ open, onOpenChange, name, snapshot }: FieldD
               </DescriptionList.Item>
               <DescriptionList.Item label="State">
                 <div className="flex flex-wrap gap-1.5">
-                  <Badge variant={dirty ? 'default' : 'outline'}>
+                  <Badge tone={dirty ? 'primary' : 'neutral'} variant={dirty ? 'solid' : 'outline'}>
                     {dirty ? 'dirty' : 'pristine'}
                   </Badge>
-                  <Badge variant={touched ? 'default' : 'outline'}>
+                  <Badge
+                    tone={touched ? 'primary' : 'neutral'}
+                    variant={touched ? 'solid' : 'outline'}
+                  >
                     {touched ? 'touched' : 'untouched'}
                   </Badge>
                 </div>
@@ -62,10 +65,8 @@ export function FieldDetailDialog({ open, onOpenChange, name, snapshot }: FieldD
               <DescriptionList.Item label="Error">
                 {error?.type || error?.message ? (
                   <div className="flex flex-col gap-1">
-                    {error.type && <Badge variant="secondary">{error.type}</Badge>}
-                    {error.message && (
-                      <span className="text-sm text-destructive">{error.message}</span>
-                    )}
+                    {error.type && <Badge tone="neutral">{error.type}</Badge>}
+                    {error.message && <span className="text-sm text-danger">{error.message}</span>}
                   </div>
                 ) : (
                   <span className="text-muted-foreground">none</span>

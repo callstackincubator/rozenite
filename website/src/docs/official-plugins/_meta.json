@@ -41,11 +41,6 @@
   },
   {
     "type": "file",
-    "name": "mmkv",
-    "label": "MMKV"
-  },
-  {
-    "type": "file",
     "name": "storage",
     "label": "Storage"
   },

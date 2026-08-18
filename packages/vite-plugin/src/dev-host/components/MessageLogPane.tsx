@@ -1,4 +1,4 @@
-import { Button, DataTable, ScrollArea } from '@rozenite/ui';
+import { DataTable, IconButton, ScrollArea } from '@rozenite/ui';
 import { Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 import type { DataTableColumn } from '@rozenite/ui';
@@ -66,16 +66,15 @@ export const MessageLogPane = ({
     <section className="dev-host-pane">
       <header className="dev-host-pane-header">
         <h2 className="dev-host-pane-title">Message Log</h2>
-        <Button
+        <IconButton
+          tone="neutral"
           variant="ghost"
-          size="icon"
           onClick={onClearMessages}
           disabled={messages.length === 0}
-          aria-label="Clear message log"
-          title="Clear message log"
+          label="Clear message log"
         >
           <Trash2 />
-        </Button>
+        </IconButton>
       </header>
 
       <ScrollArea className="dev-host-scroll" viewportClassName="dev-host-scroll-viewport">

@@ -1,5 +1,66 @@
 export { cn } from './utils/cn';
 
+export type { Tone } from './tokens/tone';
+export type { Size } from './tokens/size';
+export { sizeHeight, sizePaddingX, sizeIcon } from './tokens/size';
+export { surfaceTone, textTone } from './tokens/tone-variants';
+
+export { Text, Heading, textVariants } from './text/text';
+export type { TextProps, HeadingProps } from './text/text';
+
+export { Row } from './row/row';
+export type { RowProps } from './row/row';
+
+export { Column } from './column/column';
+export type { ColumnProps } from './column/column';
+
+export { Icon } from './icon/icon';
+export type { IconProps } from './icon/icon';
+export {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  ChevronsUpDown,
+  Copy,
+  ExternalLink,
+  Info,
+  Minus,
+  MoreHorizontal,
+  MoreVertical,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings,
+  Trash2,
+  X,
+  XCircle,
+} from './icon/icon';
+
+export { IconButton } from './icon-button/icon-button';
+export type { IconButtonProps } from './icon-button/icon-button';
+
+export { Menu } from './menu/menu';
+export type {
+  MenuProps,
+  MenuTriggerProps,
+  MenuContentProps,
+  MenuItemProps,
+  MenuCheckboxItemProps,
+  MenuSeparatorProps,
+  MenuGroupProps,
+  MenuGroupLabelProps,
+} from './menu/menu';
+
+export { Alert } from './alert/alert';
+export type { AlertProps, AlertTitleProps, AlertDescriptionProps } from './alert/alert';
+
+export { Kbd } from './kbd/kbd';
+export type { KbdProps } from './kbd/kbd';
+
 export { Split } from './split/split';
 export type {
   SplitDirection,
@@ -103,7 +164,7 @@ export { Card } from './card/card';
 export type { CardProps, CardHeaderProps, CardBodyProps } from './card/card';
 
 export { Toast, useToast } from './toast/toast';
-export type { ToastProviderProps } from './toast/toast';
+export type { ToastProviderProps, ToastProps } from './toast/toast';
 
 export { Button, buttonVariants } from './button/button';
 export type { ButtonProps } from './button/button';
@@ -125,8 +186,8 @@ export type { SearchFieldProps } from './search-field/search-field';
 
 export { DataTable } from './data-table/data-table';
 export type { DataTableProps, DataTableColumn } from './data-table/data-table';
-export { VirtualizedDataTable } from './components/virtualized-data-table';
-export type { VirtualizedDataTableProps } from './components/virtualized-data-table';
+export { VirtualizedDataTable } from './virtualized-data-table/virtualized-data-table';
+export type { VirtualizedDataTableProps } from './virtualized-data-table/virtualized-data-table';
 export { DataTableEditableCell } from './data-table/data-table-editable-cell';
 export type { DataTableEditableCellProps } from './data-table/data-table-editable-cell';
 export { updateCellValue } from './data-table/data-table-utils';
@@ -149,8 +210,12 @@ export type {
 export { EmptyState } from './empty-state/empty-state';
 export type { EmptyStateProps } from './empty-state/empty-state';
 
-export { ConfirmDialog } from './confirm-dialog/confirm-dialog';
-export type { ConfirmDialogProps } from './confirm-dialog/confirm-dialog';
+export { ConfirmDialog, useConfirmDialog } from './confirm-dialog/confirm-dialog';
+export type {
+  ConfirmDialogProps,
+  ConfirmDialogOptions,
+  ConfirmDialogProviderProps,
+} from './confirm-dialog/confirm-dialog';
 
 export { JsonInspector } from './json-inspector/json-inspector';
 export type { JsonInspectorProps } from './json-inspector/json-inspector';

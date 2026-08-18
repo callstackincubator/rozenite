@@ -60,7 +60,7 @@ export function DebugCard({ plugins, runtimeVersion }: DebugCardProps) {
         <span className="text-xs text-muted-foreground">
           Emulated states, not real registry data
         </span>
-        <Button variant="ghost" size="compact" className="ml-auto" onClick={reset}>
+        <Button variant="ghost" tone="neutral" size="sm" className="ml-auto" onClick={reset}>
           Reset
         </Button>
       </Card.Header>

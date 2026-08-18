@@ -45,3 +45,23 @@ export const Collapsible: Story = {
     </Card>
   ),
 };
+
+/** Override `collapseLabel`/`expandLabel` to localize the collapse toggle's
+ * accessible name.
+ * @summary Localize the collapse toggle's accessible name.
+ */
+export const LocalizedCollapseLabel: Story = {
+  render: () => (
+    <Card className="w-96" collapsible collapseLabel="Réduire" expandLabel="Développer">
+      <Card.Header>
+        <span className="font-medium">@rozenite/storage-plugin</span>
+        <Badge>2.0.1</Badge>
+      </Card.Header>
+      <Card.Body>
+        <DescriptionList>
+          <DescriptionList.Item label="Panels">Storage</DescriptionList.Item>
+        </DescriptionList>
+      </Card.Body>
+    </Card>
+  ),
+};

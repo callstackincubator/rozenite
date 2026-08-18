@@ -21,25 +21,25 @@
   "files": [
     "dist"
   ],
-  "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "type": "commonjs",
+  "main": "./dist/react-native.js",
+  "types": "./dist/react-native.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "development": "./src/index.ts",
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "development": "./react-native.ts",
+      "types": "./dist/react-native.d.ts",
+      "import": "./dist/react-native.js",
+      "require": "./dist/react-native.js"
     }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "test": "vitest --run --passWithNoTests",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -47,7 +47,6 @@
     "@rozenite/plugin-bridge": "workspace:*",
     "tslib": "^2.3.0"
   },
-  "devDependencies": {},
   "peerDependencies": {
     "react": ">=17"
   },

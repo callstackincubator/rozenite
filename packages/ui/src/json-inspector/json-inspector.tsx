@@ -89,8 +89,8 @@ const LEAF_COLOR_BY_TYPE: Partial<Record<JsonNodeType, string>> = {
   string: 'text-primary',
   number: 'text-accent-foreground',
   boolean: 'text-secondary-foreground',
-  null: 'text-destructive',
-  undefined: 'text-destructive',
+  null: 'text-danger',
+  undefined: 'text-danger',
 };
 
 function LeafValue({ value }: { value: unknown }) {

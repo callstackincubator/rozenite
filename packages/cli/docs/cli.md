@@ -102,7 +102,7 @@ retain their existing shapes.
 - Always invoke domain tools with `npx rozenite agent <domain> call --tool <toolName> --args '<json>' --session <id>`.
 - Continue a paginated domain tool call by passing its returned cursor inside `--args`; `--cursor` is only for CLI-owned domain and tool listings.
 - If a domain doc lists only tool names, treat them as tool names, not CLI actions.
-- Example: `npx rozenite agent mmkv call --tool list-storages --args '{}' --session <id>`.
+- Example: `npx rozenite agent storage call --tool list-storages --args '{}' --session <id>`.
 - If a command fails with `Unknown domain action`, check the CLI syntax and retry with `call --tool <toolName> --session <id>`.
 
 ## Flow

@@ -89,7 +89,7 @@ const PreviewBody = ({
         )}
 
         {hasUnsupported && (
-          <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+          <div className="flex items-start gap-2 rounded-md border border-danger/40 bg-danger/10 p-2 text-xs text-danger">
             <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
               {preview.unsupportedTypes.length}{' '}
@@ -117,7 +117,7 @@ const PreviewBody = ({
       </div>
 
       <Dialog.Footer>
-        <Button variant="outline" onClick={onCancel}>
+        <Button tone="neutral" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button onClick={onApply} disabled={hasUnsupported}>
@@ -158,7 +158,7 @@ const ResultBody = ({
       </div>
     ) : (
       <div className="flex flex-col gap-2 py-2">
-        <div className="flex items-center gap-2 text-destructive">
+        <div className="flex items-center gap-2 text-danger">
           <XCircle className="h-5 w-5" />
           <div className="text-sm font-medium">
             Import failed after {state.written} of {state.total}.
@@ -167,12 +167,12 @@ const ResultBody = ({
         {state.failedKey && (
           <div className="text-xs text-muted-foreground">
             Failed at key:{' '}
-            <Badge variant="outline" className="font-mono">
+            <Badge tone="neutral" variant="outline" className="font-mono">
               {state.failedKey}
             </Badge>
           </div>
         )}
-        <div className="rounded-md bg-muted px-2 py-1 font-mono text-xs text-destructive">
+        <div className="rounded-md bg-muted px-2 py-1 font-mono text-xs text-danger">
           {state.error}
         </div>
       </div>

@@ -8,7 +8,7 @@
   --color-text-muted: var(--muted-foreground);
   --color-accent: var(--primary);
   --color-accent-hover: var(--primary);
-  --color-danger: var(--destructive);
+  --color-danger: var(--danger);
   --border-radius: var(--radius-md);
   --transition-speed: 150ms;
 }
@@ -23,7 +23,7 @@
   --color-text-muted: var(--muted-foreground);
   --color-accent: var(--primary);
   --color-accent-hover: var(--primary);
-  --color-danger: var(--destructive);
+  --color-danger: var(--danger);
   --border-radius: var(--radius-md);
   --transition-speed: 150ms;
 }

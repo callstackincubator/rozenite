@@ -8,7 +8,6 @@ export default {
         'cli',
         'expo-atlas-plugin',
         'metro',
-        'mmkv-plugin',
         'network-activity-plugin',
         'plugin-bridge',
         'runtime',

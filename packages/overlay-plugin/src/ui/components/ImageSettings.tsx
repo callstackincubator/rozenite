@@ -122,6 +122,7 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
               </div>
               {isPasteSupported && (
                 <Button
+                  tone="neutral"
                   variant="outline"
                   onClick={handlePaste}
                   style={{ justifyContent: 'center', width: '100%' }}
@@ -134,7 +135,7 @@ export const ImageSettings = ({ config, onConfigChange }: ImageSettingsProps) =>
           ) : (
             <div className="control-group">
               <div className="control-row" style={{ justifyContent: 'flex-end' }}>
-                <Button variant="destructive" onClick={handleRemoveImage}>
+                <Button tone="danger" onClick={handleRemoveImage}>
                   <X size={14} />
                   Remove
                 </Button>
