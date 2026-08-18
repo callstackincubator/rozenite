@@ -1,9 +1,8 @@
 import { createServer, get } from 'node:http';
 import fs from 'node:fs';
-import os from 'node:os';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import express from 'express';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getMiddleware, getNormalizedRequestUrl } from '../middleware.js';
 import { createScopedMiddleware, type MiddlewareHandler } from '../scoped-middleware.js';
@@ -221,42 +220,27 @@ describe('standalone app', () => {
   });
 
   it('registers the config route ahead of the static app mount so it cannot be shadowed', async () => {
-    // Proves the ordering actually matters: a built app could ship a file
-    // literally named "config" (unlikely, but not impossible), which would
-    // shadow the JSON route if the static mount were registered first.
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rozenite-app-'));
-    fs.writeFileSync(path.join(tempDir, 'config'), 'not json');
+    // Proves the ordering actually matters in the real middleware: the built
+    // app's own directory gets a file literally named "config" (unlikely in
+    // practice, but not impossible), which would shadow the JSON route if
+    // `app.use('/app', express.static(appPath))` were registered before
+    // `app.get('/app/config', ...)`.
+    const require = createRequire(import.meta.url);
+    const appPath = path.join(path.dirname(require.resolve('@rozenite/app/package.json')), 'dist');
+    const shadowFile = path.join(appPath, 'config');
+    fs.writeFileSync(shadowFile, 'not json');
 
     try {
-      const buildApp = (registerConfigFirst: boolean): MiddlewareHandler => {
-        const router = express();
-        const registerConfig = () => {
-          router.get('/app/config', (_, res) => {
-            res.json({ ok: true });
-          });
-        };
-        const registerStatic = () => {
-          router.use('/app', express.static(tempDir));
-        };
+      const app = createApp([], []);
+      const response = await runRequest(app, '/rozenite/app/config');
 
-        if (registerConfigFirst) {
-          registerConfig();
-          registerStatic();
-        } else {
-          registerStatic();
-          registerConfig();
-        }
-
-        return router as unknown as MiddlewareHandler;
-      };
-
-      const shadowed = await runRequest(buildApp(false), '/app/config');
-      const notShadowed = await runRequest(buildApp(true), '/app/config');
-
-      expect(shadowed.body).toBe('not json');
-      expect(JSON.parse(notShadowed.body)).toEqual({ ok: true });
+      expect(response.status).toBe(200);
+      expect(JSON.parse(response.body)).toEqual({
+        installedPlugins: [],
+        destroyOnDetachPlugins: [],
+      });
     } finally {
-      fs.rmSync(tempDir, { recursive: true, force: true });
+      fs.rmSync(shadowFile, { force: true });
     }
   });
 });

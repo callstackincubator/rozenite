@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   getMetroTargets: vi.fn(),
   promptSelect: vi.fn(),
   spawn: vi.fn(),
+  intro: vi.fn(),
+  outro: vi.fn(),
 }));
 
 vi.mock('../utils/isInteractive.js', () => ({
@@ -17,8 +19,8 @@ vi.mock('../commands/metro-discovery.js', () => ({
 }));
 
 vi.mock('../utils/prompts.js', () => ({
-  intro: vi.fn(),
-  outro: vi.fn(),
+  intro: mocks.intro,
+  outro: mocks.outro,
   promptSelect: mocks.promptSelect,
 }));
 
@@ -39,8 +41,13 @@ vi.mock('../utils/logger.js', () => ({
   },
 }));
 
-const { openCommand, selectTargetById, NON_INTERACTIVE_MESSAGE } =
-  await import('../commands/open-command.js');
+const {
+  openCommand,
+  selectTargetById,
+  getBrowserOpenerCommand,
+  getBrowserOpenerArgs,
+  NON_INTERACTIVE_MESSAGE,
+} = await import('../commands/open-command.js');
 const { logger } = await import('../utils/logger.js');
 
 const targetA: MetroTarget = {
@@ -110,6 +117,8 @@ describe('openCommand target selection', () => {
     expect(process.exitCode).toBe(1);
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('No connected device'));
     expect(mocks.promptSelect).not.toHaveBeenCalled();
+    expect(mocks.intro).toHaveBeenCalledTimes(1);
+    expect(mocks.outro).toHaveBeenCalledTimes(1);
   });
 
   it('selects the target matching --deviceId and opens the browser', async () => {
@@ -128,13 +137,21 @@ describe('openCommand target selection', () => {
     expect(process.exitCode).toBeUndefined();
   });
 
-  it('fails listing valid ids for an unknown --deviceId', async () => {
+  it('fails gracefully, listing valid ids, for an unknown --deviceId', async () => {
     mocks.isInteractive.mockReturnValue(true);
     mocks.getMetroTargets.mockResolvedValue([targetA, targetB]);
 
-    await expect(openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'nope' })).rejects.toThrow(
+    await expect(
+      openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'nope' }),
+    ).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalledWith(
       'Unknown deviceId "nope". Valid device IDs: device-a, device-b',
     );
+    expect(process.exitCode).toBe(1);
+    expect(mocks.spawn).not.toHaveBeenCalled();
+    expect(mocks.intro).toHaveBeenCalledTimes(1);
+    expect(mocks.outro).toHaveBeenCalledTimes(1);
   });
 
   it('prompts when there is no --deviceId', async () => {
@@ -166,6 +183,60 @@ describe('openCommand target selection', () => {
     expect(logger.info).toHaveBeenCalledWith(
       expect.stringContaining('http://127.0.0.1:8081/rozenite/app/'),
     );
+  });
+});
+
+describe('getBrowserOpenerCommand', () => {
+  const originalPlatform = process.platform;
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+  });
+
+  it('uses "open" on darwin', () => {
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    expect(getBrowserOpenerCommand()).toBe('open');
+  });
+
+  it('uses "start" on win32', () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    expect(getBrowserOpenerCommand()).toBe('start');
+  });
+
+  it('uses "xdg-open" on linux and other platforms', () => {
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    expect(getBrowserOpenerCommand()).toBe('xdg-open');
+
+    Object.defineProperty(process, 'platform', { value: 'freebsd' });
+    expect(getBrowserOpenerCommand()).toBe('xdg-open');
+  });
+});
+
+describe('getBrowserOpenerArgs', () => {
+  const originalPlatform = process.platform;
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+  });
+
+  it('passes the URL alone on darwin and linux', () => {
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    expect(getBrowserOpenerArgs('http://localhost:8081/rozenite/app/')).toEqual([
+      'http://localhost:8081/rozenite/app/',
+    ]);
+
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    expect(getBrowserOpenerArgs('http://localhost:8081/rozenite/app/')).toEqual([
+      'http://localhost:8081/rozenite/app/',
+    ]);
+  });
+
+  it('prefixes an empty title on win32 so "start" does not treat the URL as the window title', () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    expect(getBrowserOpenerArgs('http://localhost:8081/rozenite/app/')).toEqual([
+      '',
+      'http://localhost:8081/rozenite/app/',
+    ]);
   });
 });
 

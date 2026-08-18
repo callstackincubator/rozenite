@@ -36,7 +36,7 @@ const promptForTarget = async (targets: MetroTarget[]): Promise<MetroTarget> => 
   });
 };
 
-const getBrowserOpenerCommand = (): string => {
+export const getBrowserOpenerCommand = (): string => {
   switch (process.platform) {
     case 'darwin':
       return 'open';
@@ -47,9 +47,22 @@ const getBrowserOpenerCommand = (): string => {
   }
 };
 
+export const getBrowserOpenerArgs = (url: string): string[] => {
+  if (process.platform === 'win32') {
+    // `start` is a cmd.exe builtin, and nano-spawn runs it via `cmd /c
+    // start ...` on win32 with the URL quoted. cmd treats a leading quoted
+    // argument as the new window's title rather than as something to open,
+    // so without an explicit (empty) title argument this opens an empty
+    // console window instead of a browser.
+    return ['', url];
+  }
+
+  return [url];
+};
+
 const tryOpenBrowser = async (url: string): Promise<boolean> => {
   try {
-    await spawn(getBrowserOpenerCommand(), [url], { handleSignals: false });
+    await spawn(getBrowserOpenerCommand(), getBrowserOpenerArgs(url), { handleSignals: false });
     return true;
   } catch {
     return false;
@@ -72,12 +85,22 @@ export const openCommand = async (options: OpenCommandOptions): Promise<void> =>
       `No connected device found at http://${options.host}:${options.port}. Open the Rozenite-enabled app on a device or simulator so it registers with Metro, then try again.`,
     );
     process.exitCode = 1;
+    outro('Done');
     return;
   }
 
-  const target = options.deviceId
-    ? selectTargetById(targets, options.deviceId)
-    : await promptForTarget(targets);
+  let target: MetroTarget;
+
+  try {
+    target = options.deviceId
+      ? selectTargetById(targets, options.deviceId)
+      : await promptForTarget(targets);
+  } catch (error) {
+    logger.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+    outro('Done');
+    return;
+  }
 
   const url = buildAppOpenUrl(options.host, options.port, target);
   const opened = await tryOpenBrowser(url);
