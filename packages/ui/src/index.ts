@@ -1,5 +1,10 @@
 export { cn } from './utils/cn';
 
+export type { Tone } from './tokens/tone';
+export type { Size } from './tokens/size';
+export { sizeHeight, sizePaddingX, sizeIcon } from './tokens/size';
+export { surfaceTone, textTone } from './tokens/tone-variants';
+
 export { Split } from './split/split';
 export type {
   SplitDirection,
