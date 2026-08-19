@@ -1,116 +1,10 @@
-/* Custom scrollbar for dark theme */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+@import '@rozenite/ui/styles.css';
 
-::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #333333;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a0a0a0;
-}
-
-.radix-themes {
-  --cursor-button: pointer;
-  --cursor-checkbox: pointer;
-  --cursor-link: pointer;
-  --cursor-menu-item: pointer;
-  --cursor-radio: pointer;
-  --cursor-slider-thumb: grab;
-  --cursor-slider-thumb-active: grabbing;
-  --cursor-switch: pointer;
-}
-
-.table-row-hover:hover {
-  background-color: hsl(0 0% 16%) !important;
-}
-
-/* Data Table Styles */
-.data-table-container {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  background: hsl(0 0% 3.9%);
-  color: hsl(0 0% 98%);
-}
-
-.data-table-header-row {
-  background: hsl(0 0% 3.9%);
-  border-bottom: 1px solid hsl(0 0% 14.9%);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.data-table-header-cell {
-  padding: 8px 12px;
-  text-align: left;
-  font-weight: 600;
-  color: hsl(0 0% 98%);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid hsl(0 0% 14.9%);
-  transition: background-color 0.15s ease;
-}
-
-.data-table-header-cell:hover {
-  background-color: hsl(0 0% 16%);
-}
-
-.data-table-row {
-  border-bottom: 1px solid hsl(0 0% 14.9%);
-  transition: background-color 0.15s ease;
-}
-
-.data-table-row:hover {
-  background-color: hsl(0 0% 16%);
-}
-
-.data-table-cell {
-  padding: 8px 12px;
-  vertical-align: top;
-  border-bottom: 1px solid hsl(0 0% 14.9%);
-  color: hsl(0 0% 98%);
-}
-
-.index-cell,
-.index-header {
-  width: 40px;
-  text-align: center;
-  font-weight: 600;
-  color: hsl(0 0% 63.9%);
-  font-size: 11px;
-}
-
-.details-sidebar-backdrop {
-  display: none;
-}
-
-.details-sidebar {
-  width: min(38vw, 520px);
-  min-width: 360px;
-  height: 100%;
-  flex-shrink: 0;
-  border-left: 1px solid #333333;
-  background-color: #1a1a1a;
-  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.18);
-}
-
-/* Waterfall View */
+/* Waterfall view. Kept as hand-rolled CSS (percent-positioned bars, ticks,
+ * gaps) rather than Tailwind utility classes — the positions are computed
+ * numbers from `waterfall.ts`, not fixed design-system values. Colors and
+ * spacing reuse @rozenite/ui's theme tokens so the view follows the active
+ * light/dark theme instead of a hardcoded palette. */
 .waterfall-shell {
   display: flex;
   flex-direction: column;
@@ -118,8 +12,8 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  background: hsl(0 0% 3.9%);
-  color: hsl(0 0% 98%);
+  background: var(--background);
+  color: var(--foreground);
   font-size: 12px;
 }
 
@@ -127,29 +21,20 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   min-height: 36px;
   padding: 8px 12px;
-  border-bottom: 1px solid hsl(0 0% 14.9%);
-  color: hsl(0 0% 63.9%);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
 }
 
-.waterfall-summary,
 .waterfall-legend {
   display: flex;
   align-items: center;
   gap: 12px;
   min-width: 0;
-}
-
-.waterfall-summary strong {
-  color: hsl(0 0% 98%);
-}
-
-.waterfall-legend {
   flex-wrap: wrap;
-  justify-content: flex-end;
   font-size: 11px;
 }
 
@@ -164,29 +49,28 @@
   left: 0;
   width: 7px;
   height: 7px;
-  border-radius: 1px;
   content: '';
   transform: translateY(-50%);
 }
 
 .waterfall-legend-measure::before {
-  background: #4f8cff;
+  background: var(--primary);
 }
 
 .waterfall-legend-resource::before {
-  background: #60a5fa;
+  background: var(--info);
 }
 
 .waterfall-legend-mark::before {
-  background: #f59e0b;
+  background: var(--warning);
 }
 
 .waterfall-legend-metric::before {
-  background: #a78bfa;
+  background: var(--danger);
 }
 
 .waterfall-legend-react-native-mark::before {
-  background: #22c55e;
+  background: var(--success);
 }
 
 .waterfall-overview {
@@ -194,16 +78,14 @@
   flex-shrink: 0;
   height: 52px;
   margin-left: 280px;
-  border-bottom: 1px solid hsl(0 0% 14.9%);
-  background:
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.045), transparent 50%), hsl(0 0% 5.8%);
+  border-bottom: 1px solid var(--border);
+  background: var(--muted);
 }
 
 .waterfall-overview-bar {
   position: absolute;
   min-width: 2px;
   height: 6px;
-  border-radius: 1px;
   opacity: 0.9;
 }
 
@@ -212,8 +94,8 @@
   grid-template-columns: 280px minmax(420px, 1fr);
   flex-shrink: 0;
   min-height: 30px;
-  border-bottom: 1px solid hsl(0 0% 14.9%);
-  color: hsl(0 0% 63.9%);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
   font-size: 11px;
 }
 
@@ -221,7 +103,7 @@
   display: flex;
   align-items: center;
   padding: 0 12px;
-  border-right: 1px solid hsl(0 0% 12%);
+  border-right: 1px solid var(--border);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -236,7 +118,7 @@
   position: absolute;
   top: 8px;
   transform: translateX(-50%);
-  color: hsl(0 0% 63.9%);
+  color: var(--muted-foreground);
   font-size: 10px;
   letter-spacing: 0;
   text-transform: none;
@@ -261,27 +143,39 @@
   height: 100%;
 }
 
+/* Virtuoso inline-styles both its item-list wrapper and every row wrapper to
+ * `width: 100%`, capping them at the scroller's own width. Rows need to be
+ * able to grow past that (the 280px label column + 420px-min lane can exceed
+ * the pane), so this overrides them to size to content instead — otherwise
+ * the scroller never reports the true content width and row borders/grid
+ * lines get clipped before reaching the actual right edge. */
+.waterfall-virtual-list > div,
+.waterfall-virtual-list [data-index] {
+  width: auto !important;
+  min-width: 100%;
+}
+
 .waterfall-row {
   display: grid;
   grid-template-columns: 280px minmax(420px, 1fr);
   min-height: 34px;
-  border-bottom: 1px solid hsl(0 0% 13%);
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
   outline: none;
 }
 
 .waterfall-row:hover,
 .waterfall-row:focus-visible {
-  background: hsl(0 0% 12%);
+  background: var(--muted);
 }
 
 .waterfall-row-selected {
-  background: rgba(45, 114, 210, 0.22);
+  background: var(--accent);
 }
 
 .waterfall-row-selected:hover,
 .waterfall-row-selected:focus-visible {
-  background: rgba(45, 114, 210, 0.3);
+  background: var(--accent);
 }
 
 .waterfall-row-label {
@@ -291,12 +185,12 @@
   align-items: center;
   min-width: 0;
   padding: 6px 10px 6px 0;
-  border-right: 1px solid hsl(0 0% 12%);
+  border-right: 1px solid var(--border);
 }
 
 .waterfall-row-index {
   grid-row: 1 / 3;
-  color: hsl(0 0% 63.9%);
+  color: var(--muted-foreground);
   font-weight: 600;
   text-align: center;
 }
@@ -317,12 +211,12 @@
 }
 
 .waterfall-row-text strong {
-  color: hsl(0 0% 92%);
+  color: var(--foreground);
   font-weight: 600;
 }
 
 .waterfall-row-text small {
-  color: hsl(0 0% 46%);
+  color: var(--muted-foreground);
   font-size: 10px;
 }
 
@@ -331,7 +225,7 @@
   min-width: 0;
   gap: 8px;
   overflow: hidden;
-  color: hsl(0 0% 58%);
+  color: var(--muted-foreground);
   font-size: 10px;
   white-space: nowrap;
 }
@@ -352,7 +246,7 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border);
   pointer-events: none;
 }
 
@@ -361,8 +255,7 @@
   top: 6px;
   bottom: 6px;
   min-width: 10px;
-  border-inline: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.025);
+  border-inline: 1px solid var(--border);
   pointer-events: none;
 }
 
@@ -372,7 +265,7 @@
   top: 50%;
   width: 10px;
   height: 1px;
-  background: rgba(255, 255, 255, 0.32);
+  background: var(--muted-foreground);
   content: '';
 }
 
@@ -392,7 +285,7 @@
   bottom: 0;
   z-index: 3;
   width: 1px;
-  background: rgba(147, 197, 253, 0.88);
+  background: var(--primary);
   pointer-events: none;
 }
 
@@ -401,10 +294,9 @@
   top: 50%;
   z-index: 5;
   margin-left: 6px;
-  color: hsl(0 0% 92%);
+  color: var(--foreground);
   font-size: 10px;
   line-height: 1;
-  text-shadow: 0 1px 2px #000;
   transform: translateY(-50%);
   pointer-events: none;
 }
@@ -415,11 +307,8 @@
   z-index: 4;
   min-width: 8px;
   height: 14px;
-  border-radius: 2px;
   overflow: hidden;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.22),
-    0 1px 4px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
   transform: translateY(-50%);
 }
 
@@ -429,23 +318,23 @@
 }
 
 .waterfall-bar-measure {
-  background: #4f8cff;
+  background: var(--primary);
 }
 
 .waterfall-bar-mark {
-  background: #f59e0b;
+  background: var(--warning);
 }
 
 .waterfall-bar-metric {
-  background: #a78bfa;
+  background: var(--danger);
 }
 
 .waterfall-bar-react-native-mark {
-  background: #22c55e;
+  background: var(--success);
 }
 
 .waterfall-bar-resource {
-  background: rgba(59, 130, 246, 0.42);
+  background: color-mix(in srgb, var(--info) 55%, transparent);
 }
 
 .waterfall-phase {
@@ -481,26 +370,4 @@
 
 .waterfall-phase-response {
   background: #60a5fa;
-}
-
-@media (max-width: 1120px) {
-  .details-sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 999;
-    display: block;
-    background-color: rgba(0, 0, 0, 0.5);
-  }
-
-  .details-sidebar {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1000;
-    width: min(420px, calc(100vw - 24px));
-    min-width: 0;
-    height: 100vh;
-    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.3);
-  }
 }

@@ -165,4 +165,8 @@
   ::-webkit-scrollbar-thumb:hover {
     background-color: var(--muted-foreground);
   }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }

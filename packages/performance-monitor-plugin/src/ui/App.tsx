@@ -1,5 +1,16 @@
 import { useRozeniteDevToolsClient, Subscription } from '@rozenite/plugin-bridge';
 import {
+  IconButton,
+  PluginShell,
+  SearchField,
+  Select,
+  Sidebar,
+  Split,
+  Toolbar,
+} from '@rozenite/ui';
+import { Download, Play, Square, Trash2, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
   PerformanceMonitorEventMap,
   SerializedPerformanceMeasure,
   SerializedPerformanceMark,
@@ -8,21 +19,20 @@ import {
   SerializedPerformanceResource,
   SerializedPerformanceEntry,
 } from '../shared/types';
-import { useEffect, useState } from 'react';
-import { Theme, Tabs, Button, Heading, Text, Flex, Box } from '@radix-ui/themes';
-import '@radix-ui/themes/styles.css';
-import './App.css';
-import { MeasuresTable } from './components/MeasuresTable';
-import { MetricsTable } from './components/MetricsTable';
-import { MarksTable } from './components/MarksTable';
-import { ReactNativeMarksTable } from './components/ReactNativeMarksTable';
-import { ResourcesTable } from './components/ResourcesTable';
+import { DetailPane } from './components/DetailPane';
+import { ExportDialog } from './components/ExportDialog';
+import { StartupInsightsView } from './components/StartupInsightsView';
 import { WaterfallView } from './components/WaterfallView';
-import { DetailsSidebar } from './components/DetailsSidebar';
-import { SessionDuration } from './components/SessionDuration';
-import { ExportModal } from './components/ExportModal';
 import { deriveStartupPhases } from './derive-startup-phases';
-import { StartupTab } from './components/StartupTab';
+import { ENTRY_TYPE_OPTIONS, type EntryTypeFilter } from './entry-types';
+import './globals.css';
+
+type PanelView = 'timeline' | 'startup-insights';
+
+const PANEL_VIEWS: Array<{ id: PanelView; label: string }> = [
+  { id: 'timeline', label: 'Timeline' },
+  { id: 'startup-insights', label: 'Startup insights' },
+];
 
 type PerformanceMonitorSession = {
   sessionStartedAt: number;
@@ -34,6 +44,14 @@ type PerformanceMonitorSession = {
   resources: SerializedPerformanceResource[];
 };
 
+const createEmptySessionData = () => ({
+  measures: [] as SerializedPerformanceMeasure[],
+  marks: [] as SerializedPerformanceMark[],
+  metrics: [] as SerializedPerformanceMetric[],
+  reactNativeMarks: [] as SerializedPerformanceReactNativeMark[],
+  resources: [] as SerializedPerformanceResource[],
+});
+
 export default function PerformanceMonitorPanel() {
   const client = useRozeniteDevToolsClient<PerformanceMonitorEventMap>({
     pluginId: '@rozenite/performance-monitor-plugin',
@@ -41,15 +59,15 @@ export default function PerformanceMonitorPanel() {
   const [session, setSession] = useState<PerformanceMonitorSession>({
     sessionStartedAt: 0,
     clockShift: 0,
-    measures: [],
-    marks: [],
-    metrics: [],
-    reactNativeMarks: [],
-    resources: [],
+    ...createEmptySessionData(),
   });
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [selectedItem, setSelectedItem] = useState<SerializedPerformanceEntry | null>(null);
-  const [selectedWaterfallRowId, setSelectedWaterfallRowId] = useState<string | null>(null);
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [entryTypeFilter, setEntryTypeFilter] = useState<EntryTypeFilter>('all');
+  const [search, setSearch] = useState('');
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [activeView, setActiveView] = useState<PanelView>('timeline');
 
   useEffect(() => {
     if (!client) {
@@ -65,11 +83,7 @@ export default function PerformanceMonitorPanel() {
           sessionStartedAt: receivedAt,
           // It's likely that there is a small clock shift between the device and the DevTools.
           clockShift: receivedAt - sessionStartedAt,
-          measures: [],
-          marks: [],
-          metrics: [],
-          reactNativeMarks: [],
-          resources: [],
+          ...createEmptySessionData(),
         });
         setIsSessionActive(true);
       }),
@@ -170,20 +184,37 @@ export default function PerformanceMonitorPanel() {
     }
   };
 
-  const handleEntryClick = (entry: SerializedPerformanceEntry, waterfallRowId?: string) => {
+  const handleToggleSession = () => {
+    if (isSessionActive) {
+      handleStopSession();
+    } else {
+      handleStartSession();
+    }
+  };
+
+  const handleEntryClick = (entry: SerializedPerformanceEntry, entryId?: string) => {
     setSelectedItem(entry);
-    setSelectedWaterfallRowId(waterfallRowId ?? null);
+    setSelectedEntryId(entryId ?? null);
   };
 
-  const handleCloseSidebar = () => {
+  const handleCloseDetail = () => {
     setSelectedItem(null);
-    setSelectedWaterfallRowId(null);
+    setSelectedEntryId(null);
   };
 
-  // Derived measures live only in the UI: paired Start/End RN marks
-  // are shown alongside user-created measures so the Measures tab
-  // reflects startup phases without forcing manual subtraction. The
-  // export still emits raw session data (see ExportModal below).
+  const handleClear = () => {
+    setSession((oldSession) => ({
+      ...oldSession,
+      ...createEmptySessionData(),
+    }));
+    setSelectedItem(null);
+    setSelectedEntryId(null);
+  };
+
+  // Derived measures live only in the UI: paired Start/End RN marks are
+  // shown alongside user-created measures (with an "RN" badge) so the
+  // waterfall reflects startup phases without forcing manual subtraction.
+  // The export still emits raw session data (see ExportDialog).
   const startupPhases = deriveStartupPhases(session.reactNativeMarks);
   const allMeasures = [...startupPhases, ...session.measures];
   const waterfallEntries: SerializedPerformanceEntry[] = [
@@ -194,168 +225,172 @@ export default function PerformanceMonitorPanel() {
     ...session.resources,
   ];
 
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredEntries = waterfallEntries.filter((entry) => {
+    if (entryTypeFilter !== 'all' && entry.entryType !== entryTypeFilter) {
+      return false;
+    }
+    if (normalizedSearch && !entry.name.toLowerCase().includes(normalizedSearch)) {
+      return false;
+    }
+    return true;
+  });
+
+  const hasData = waterfallEntries.length > 0;
+
   return (
-    <Theme appearance="dark" accentColor="blue" radius="medium">
-      <Box p="4" height="100vh" style={{ display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
-        <Box mb="4" style={{ flexShrink: 0 }}>
-          <Heading size="6" mb="2">
-            Performance Monitor
-          </Heading>
-          <Flex gap="4" align="center">
-            <SessionDuration
-              isActive={isSessionActive}
-              sessionStartedAt={session.sessionStartedAt}
-            />
-          </Flex>
-        </Box>
-
-        {/* Toolbar */}
-        <Flex gap="3" align="center" mb="4" style={{ flexShrink: 0 }}>
-          <Button onClick={handleStartSession} disabled={isSessionActive} color="green">
-            Start Session
-          </Button>
-          <Button onClick={handleStopSession} disabled={!isSessionActive} color="red">
-            Stop Session
-          </Button>
-          <ExportModal
-            measures={session.measures}
-            metrics={session.metrics}
-            marks={session.marks}
-            reactNativeMarks={session.reactNativeMarks}
-            resources={session.resources}
-            sessionStartedAt={session.sessionStartedAt}
-            clockShift={session.clockShift}
-          />
-          <Flex gap="2" align="center" ml="auto">
-            <Box
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: isSessionActive ? '#10b981' : '#ef4444',
-              }}
-            />
-            <Text size="2" color="gray">
-              {isSessionActive ? 'Session Active' : 'Session Inactive'}
-            </Text>
-          </Flex>
-        </Flex>
-
-        {/* Tabs and details */}
-        <Box
-          style={{
-            flex: '1',
-            display: 'flex',
-            minHeight: 0,
-          }}
-        >
-          <Box style={{ flex: '1', minWidth: 0 }}>
-            <Tabs.Root
-              defaultValue="waterfall"
-              style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
+    <PluginShell>
+      <PluginShell.Body>
+        <Toolbar>
+          <Toolbar.Group>
+            <Toolbar.Button
+              onClick={handleToggleSession}
+              aria-label={isSessionActive ? 'Stop' : 'Start'}
+              title={isSessionActive ? 'Stop' : 'Start'}
+              className="w-6 px-0"
             >
-              <Tabs.List style={{ flexShrink: 0 }}>
-                <Tabs.Trigger value="waterfall">Waterfall ({waterfallEntries.length})</Tabs.Trigger>
-                <Tabs.Trigger value="startup">Startup</Tabs.Trigger>
-                <Tabs.Trigger value="measures">Measures ({allMeasures.length})</Tabs.Trigger>
-                <Tabs.Trigger value="metrics">Metrics ({session.metrics.length})</Tabs.Trigger>
-                <Tabs.Trigger value="marks">Marks ({session.marks.length})</Tabs.Trigger>
-                <Tabs.Trigger value="reactNativeMarks">
-                  React Native Marks ({session.reactNativeMarks.length})
-                </Tabs.Trigger>
-                <Tabs.Trigger value="resources">
-                  Resources ({session.resources.length})
-                </Tabs.Trigger>
-              </Tabs.List>
+              {isSessionActive ? (
+                <Square className="h-3.5 w-3.5" />
+              ) : (
+                <Play className="h-3.5 w-3.5" />
+              )}
+            </Toolbar.Button>
+            <Toolbar.Button
+              onClick={handleClear}
+              disabled={!hasData}
+              aria-label="Clear"
+              title="Clear"
+              className="w-6 px-0"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Toolbar.Button>
+          </Toolbar.Group>
 
-              <Box
-                style={{
-                  flexGrow: '1',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minHeight: 0,
-                }}
-              >
-                <Tabs.Content
-                  value="waterfall"
-                  style={{
-                    display: 'contents',
-                  }}
-                >
+          <Toolbar.Separator />
+
+          <Select
+            value={entryTypeFilter}
+            onValueChange={(value) => {
+              if (value) {
+                setEntryTypeFilter(value as EntryTypeFilter);
+              }
+            }}
+          >
+            <Select.Trigger className="w-32">
+              <Select.Value>
+                {(value: EntryTypeFilter) =>
+                  ENTRY_TYPE_OPTIONS.find((option) => option.value === value)?.label ?? value
+                }
+              </Select.Value>
+            </Select.Trigger>
+            <Select.Content>
+              {ENTRY_TYPE_OPTIONS.map((option) => (
+                <Select.Item key={option.value} value={option.value}>
+                  {option.label}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select>
+
+          <div className="min-w-40 flex-1">
+            <SearchField
+              placeholder="Search by name…"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onClear={() => setSearch('')}
+            />
+          </div>
+
+          <Toolbar.Group>
+            <Toolbar.Button
+              onClick={() => setIsExportDialogOpen(true)}
+              disabled={!hasData}
+              aria-label="Export"
+              title="Export"
+              className="w-6 px-0"
+            >
+              <Download className="h-3.5 w-3.5" />
+            </Toolbar.Button>
+          </Toolbar.Group>
+        </Toolbar>
+
+        <Split direction="horizontal" autoSaveId="performance-monitor" className="min-h-0 flex-1">
+          <Split.Pane defaultSize={16} minSize={12} maxSize={28}>
+            <Sidebar className="w-full border-r-0">
+              <Sidebar.Group>
+                {PANEL_VIEWS.map((view) => (
+                  <Sidebar.Item
+                    key={view.id}
+                    selected={view.id === activeView}
+                    onClick={() => setActiveView(view.id)}
+                  >
+                    {view.label}
+                  </Sidebar.Item>
+                ))}
+              </Sidebar.Group>
+            </Sidebar>
+          </Split.Pane>
+          <Split.Handle />
+          <Split.Pane>
+            {activeView === 'timeline' ? (
+              <Split direction="horizontal" autoSaveId="performance-monitor-timeline">
+                <Split.Pane>
                   <WaterfallView
-                    entries={waterfallEntries}
+                    entries={filteredEntries}
                     selectedEntry={selectedItem}
-                    selectedEntryId={selectedWaterfallRowId}
+                    selectedEntryId={selectedEntryId}
                     onEntrySelect={handleEntryClick}
                   />
-                </Tabs.Content>
+                </Split.Pane>
 
-                <Tabs.Content value="startup" style={{ display: 'contents' }}>
-                  <StartupTab
-                    reactNativeMarks={session.reactNativeMarks}
-                    isSessionActive={isSessionActive}
-                  />
-                </Tabs.Content>
+                {selectedItem && (
+                  <>
+                    <Split.Handle />
+                    <Split.Pane defaultSize={30} minSize={20} maxSize={50}>
+                      <div className="flex h-full min-h-0 flex-col border-l border-border bg-card">
+                        <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
+                          <span
+                            className="truncate text-sm font-medium text-foreground"
+                            title={selectedItem.name}
+                          >
+                            {selectedItem.name}
+                          </span>
+                          <IconButton
+                            label="Close details"
+                            tone="neutral"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCloseDetail}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </IconButton>
+                        </div>
+                        <div className="min-h-0 flex-1">
+                          <DetailPane entry={selectedItem} />
+                        </div>
+                      </div>
+                    </Split.Pane>
+                  </>
+                )}
+              </Split>
+            ) : (
+              <StartupInsightsView reactNativeMarks={session.reactNativeMarks} />
+            )}
+          </Split.Pane>
+        </Split>
+      </PluginShell.Body>
 
-                <Tabs.Content
-                  value="measures"
-                  style={{
-                    display: 'contents',
-                  }}
-                >
-                  <MeasuresTable measures={allMeasures} onRowClick={handleEntryClick} />
-                </Tabs.Content>
-
-                <Tabs.Content
-                  value="metrics"
-                  style={{
-                    display: 'contents',
-                  }}
-                >
-                  <MetricsTable metrics={session.metrics} onRowClick={handleEntryClick} />
-                </Tabs.Content>
-
-                <Tabs.Content
-                  value="marks"
-                  style={{
-                    display: 'contents',
-                  }}
-                >
-                  <MarksTable marks={session.marks} onRowClick={handleEntryClick} />
-                </Tabs.Content>
-
-                <Tabs.Content
-                  value="reactNativeMarks"
-                  style={{
-                    display: 'contents',
-                  }}
-                >
-                  <ReactNativeMarksTable
-                    reactNativeMarks={session.reactNativeMarks}
-                    onRowClick={handleEntryClick}
-                  />
-                </Tabs.Content>
-
-                <Tabs.Content
-                  value="resources"
-                  style={{
-                    display: 'contents',
-                  }}
-                >
-                  <ResourcesTable resources={session.resources} onRowClick={handleEntryClick} />
-                </Tabs.Content>
-              </Box>
-            </Tabs.Root>
-          </Box>
-
-          <DetailsSidebar selectedItem={selectedItem} onClose={handleCloseSidebar} />
-        </Box>
-      </Box>
-    </Theme>
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        measures={session.measures}
+        metrics={session.metrics}
+        marks={session.marks}
+        reactNativeMarks={session.reactNativeMarks}
+        resources={session.resources}
+        sessionStartedAt={session.sessionStartedAt}
+        clockShift={session.clockShift}
+      />
+    </PluginShell>
   );
 }

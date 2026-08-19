@@ -451,15 +451,22 @@ const createTicks = (scale: WaterfallScale): WaterfallTick[] => {
   };
 
   for (const cluster of scale.clusters) {
-    const step = getNiceTickStep(cluster.end - cluster.start);
-    const tickCount = Math.max(1, Math.floor((cluster.end - cluster.start) / step));
+    const clusterDuration = cluster.end - cluster.start;
+    const step = getNiceTickStep(clusterDuration);
+    const tickCount = Math.max(1, Math.floor(clusterDuration / step));
 
     for (let index = 0; index <= tickCount; index += 1) {
-      const localTime = Math.min(index * step, cluster.end - cluster.start);
+      const localTime = Math.min(index * step, clusterDuration);
       const visualTime = cluster.visualStart + localTime;
 
       addTick(visualTime);
     }
+
+    // `step` rarely divides `clusterDuration` evenly, so the loop above
+    // usually stops short of the cluster's true end — leaving the grid
+    // lines visibly short of the lane's right edge. Force a tick there so
+    // the ruler/grid always reaches it.
+    addTick(cluster.visualStart + clusterDuration);
   }
 
   return ticks;

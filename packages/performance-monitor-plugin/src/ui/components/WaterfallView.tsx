@@ -1,5 +1,4 @@
 import { useMemo, type KeyboardEvent } from 'react';
-import { Box, Text } from '@radix-ui/themes';
 import { Virtuoso } from 'react-virtuoso';
 import type { SerializedPerformanceEntry } from '../../shared/types';
 import { formatDuration, formatTime } from '../utils';
@@ -143,22 +142,15 @@ export const WaterfallView = ({
 
   if (model.rows.length === 0) {
     return (
-      <Box pt="3" pl="3">
-        <Text size="2" color="gray">
-          No performance entries recorded
-        </Text>
-      </Box>
+      <div className="pt-3 pl-3">
+        <span className="text-sm text-muted-foreground">No performance entries recorded</span>
+      </div>
     );
   }
 
   return (
     <div className="waterfall-shell">
       <div className="waterfall-topbar">
-        <div className="waterfall-summary">
-          <strong>{model.rows.length}</strong> events
-          <span>{formatTimelineTime(model.timelineDuration)} timeline</span>
-          {model.hasCompressedGaps && <span>gaps normalized</span>}
-        </div>
         <div className="waterfall-legend" aria-hidden="true">
           <span className="waterfall-legend-measure">Measure</span>
           <span className="waterfall-legend-resource">Resource</span>

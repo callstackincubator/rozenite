@@ -22,7 +22,7 @@ function ScrollAreaRoot({ className, viewportClassName, children, ...props }: Sc
       </ScrollAreaPrimitive.Viewport>
       <ScrollAreaBar orientation="vertical" />
       <ScrollAreaBar orientation="horizontal" />
-      <ScrollAreaPrimitive.Corner data-slot="scroll-area-corner" />
+      <ScrollAreaPrimitive.Corner data-slot="scroll-area-corner" className="bg-background" />
     </ScrollAreaPrimitive.Root>
   );
 }
