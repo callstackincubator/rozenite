@@ -30,13 +30,15 @@
     "build": "rozenite build",
     "dev": "rozenite dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
     "@rozenite/ui": "workspace:*"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
     "@types/react": "catalog:",
     "lucide-react": "^0.263.1",

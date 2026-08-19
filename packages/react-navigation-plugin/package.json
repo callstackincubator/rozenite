@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@react-navigation/core": "^7.12.1",
+    "@rozenite/test-utils": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
