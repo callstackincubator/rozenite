@@ -1,13 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Copy, Download, FileQuestion } from 'lucide-react';
-import {
-  Button,
-  Card,
-  DescriptionList,
-  EmptyState,
-  ScrollArea,
-  useCopyToClipboard,
-} from '@rozenite/ui';
+import { Check, Copy, Download, X } from 'lucide-react';
+import { Button, Card, DescriptionList, ScrollArea, useCopyToClipboard } from '@rozenite/ui';
 import type { FsEntry } from '../shared/protocol';
 import { isLikelyImageFile } from '../shared/path';
 import { formatBytes, formatDate } from '../utils';
@@ -17,18 +10,22 @@ import type { useFileSystemRequests } from '../use-file-system-requests';
 type FileSystemRequests = ReturnType<typeof useFileSystemRequests>;
 
 type DetailPaneProps = {
-  selected: FsEntry | null;
+  selected: FsEntry;
   canExport: boolean;
   exporting: boolean;
   requestImagePreview: FileSystemRequests['requestImagePreview'];
   requestTextPreview: FileSystemRequests['requestTextPreview'];
   onExport: (entry: FsEntry) => void;
+  onClose: () => void;
 };
 
 /**
  * File/directory detail pane (Feature 2, Version B "sticky path bar" +
  * Feature 3, Version A "single scroll region"): a sticky path/export strip
  * above a scrollable metadata card and content preview.
+ *
+ * Only rendered while something is selected — the caller unmounts the whole
+ * pane otherwise rather than showing an empty placeholder.
  */
 export function DetailPane({
   selected,
@@ -37,18 +34,9 @@ export function DetailPane({
   requestImagePreview,
   requestTextPreview,
   onExport,
+  onClose,
 }: DetailPaneProps) {
   const { copy, copied } = useCopyToClipboard();
-
-  if (!selected) {
-    return (
-      <EmptyState
-        icon={FileQuestion}
-        title="No file selected"
-        description="Select a file or directory to see its details."
-      />
-    );
-  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -78,6 +66,15 @@ export function DetailPane({
         >
           <Download className="h-3.5 w-3.5" />
           {exporting ? 'Exporting…' : 'Export'}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          aria-label="Close details"
+          title="Close details"
+        >
+          <X className="h-3.5 w-3.5" />
         </Button>
       </div>
       <ScrollArea className="min-h-0 flex-1">

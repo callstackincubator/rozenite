@@ -34,6 +34,27 @@ export function FileTree({ roots, activePath, tree, onSelectDir }: FileTreeProps
   );
 }
 
+/**
+ * A non-interactive row used for a directory's "empty" and "failed" states.
+ * It's a `NestedList.Item` rather than a bare `<div>` so it picks up the
+ * list's automatic depth indentation and lines up with sibling directories;
+ * the blank adornment reserves the space a folder icon would take.
+ */
+function FileTreeMessage({ children, tone }: { children: string; tone?: 'destructive' }) {
+  return (
+    <NestedList.Item
+      label={children}
+      adornment={<span />}
+      disabled
+      className={
+        tone === 'destructive'
+          ? 'pointer-events-none text-destructive'
+          : 'pointer-events-none text-sidebar-foreground/60'
+      }
+    />
+  );
+}
+
 type FileTreeNodeProps = {
   path: string;
   label: string;
@@ -58,9 +79,13 @@ function FileTreeNode({ path, label, activePath, tree, onSelectDir }: FileTreeNo
       title={path}
     >
       {cache === 'loading' ? (
-        <div className="px-2 py-1 text-xs text-sidebar-foreground/60">Loading…</div>
+        // Listing a directory is fast enough that a spinner only reads as a
+        // flicker, but the node still has to render *something*: `NestedList`
+        // derives the disclosure chevron and the expand/collapse handler from
+        // whether it was given children.
+        <span className="hidden" aria-hidden />
       ) : cache === 'error' ? (
-        <div className="px-2 py-1 text-xs text-destructive">Failed to load</div>
+        <FileTreeMessage tone="destructive">Failed to load</FileTreeMessage>
       ) : dirChildren && dirChildren.length > 0 ? (
         dirChildren.map((child) => (
           <FileTreeNode
@@ -73,7 +98,7 @@ function FileTreeNode({ path, label, activePath, tree, onSelectDir }: FileTreeNo
           />
         ))
       ) : (
-        <div className="px-2 py-1 text-xs text-sidebar-foreground/60">No subfolders</div>
+        <FileTreeMessage>No subfolders</FileTreeMessage>
       )}
     </NestedList.Item>
   );

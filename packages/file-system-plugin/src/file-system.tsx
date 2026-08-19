@@ -10,8 +10,11 @@ import {
   Split,
   Toolbar,
   VirtualizedDataTable,
+  useCopyToClipboard,
 } from '@rozenite/ui';
 import {
+  Check,
+  Copy,
   Download,
   File as FileIcon,
   FileText,
@@ -57,6 +60,7 @@ function FileSystemPanelContent() {
   const [transferError, setTransferError] = useState<string | null>(null);
   const [pendingOverwrite, setPendingOverwrite] = useState<PendingOverwrite | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { copy: copyPath, copied: pathCopied } = useCopyToClipboard();
 
   // Clear selection when the directory changes (preserves original loadDir behavior).
   useEffect(() => {
@@ -343,6 +347,19 @@ function FileSystemPanelContent() {
                   >
                     {nav.currentPath || '—'}
                   </span>
+                  <Toolbar.Button
+                    onClick={() => void copyPath(nav.currentPath)}
+                    disabled={!nav.currentPath}
+                    aria-label={pathCopied ? 'Path copied' : 'Copy path'}
+                    title={pathCopied ? 'Copied!' : 'Copy path'}
+                    className="w-7 px-0"
+                  >
+                    {pathCopied ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </Toolbar.Button>
                   <Toolbar.Separator />
                   <Toolbar.Group>
                     <Toolbar.Button
@@ -350,9 +367,9 @@ function FileSystemPanelContent() {
                       disabled={!canImport}
                       aria-label={importLoading ? 'Importing file' : 'Import file'}
                       title={importLoading ? 'Importing file' : 'Import file'}
+                      className="w-7 px-0"
                     >
                       <Upload className="h-3.5 w-3.5" />
-                      {importLoading ? 'Importing…' : 'Import'}
                     </Toolbar.Button>
                   </Toolbar.Group>
                   <input
@@ -386,17 +403,22 @@ function FileSystemPanelContent() {
                 </div>
               </div>
             </Split.Pane>
-            <Split.Handle />
-            <Split.Pane defaultSize={30} minSize={20} maxSize={50}>
-              <DetailPane
-                selected={selected}
-                canExport={Boolean(selected) && !selected?.isDirectory && nav.fileTransfer.export}
-                exporting={Boolean(selected && exportingPaths.has(selected.path))}
-                requestImagePreview={requests.requestImagePreview}
-                requestTextPreview={requests.requestTextPreview}
-                onExport={onExport}
-              />
-            </Split.Pane>
+            {selected ? (
+              <>
+                <Split.Handle />
+                <Split.Pane defaultSize={30} minSize={20} maxSize={50}>
+                  <DetailPane
+                    selected={selected}
+                    canExport={!selected.isDirectory && nav.fileTransfer.export}
+                    exporting={exportingPaths.has(selected.path)}
+                    requestImagePreview={requests.requestImagePreview}
+                    requestTextPreview={requests.requestTextPreview}
+                    onExport={onExport}
+                    onClose={() => setSelected(null)}
+                  />
+                </Split.Pane>
+              </>
+            ) : null}
           </Split>
         )}
       </PluginShell.Body>
