@@ -57,15 +57,14 @@ export function DetailPane({
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
         </Button>
         <Button
-          variant="outline"
-          size="compact"
+          variant="ghost"
+          size="icon"
           onClick={() => onExport(selected)}
           disabled={!canExport || exporting}
           aria-label={exporting ? 'Exporting file' : 'Export file'}
           title={exporting ? 'Exporting file' : 'Export file'}
         >
           <Download className="h-3.5 w-3.5" />
-          {exporting ? 'Exporting…' : 'Export'}
         </Button>
         <Button
           variant="ghost"
