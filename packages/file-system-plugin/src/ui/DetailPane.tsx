@@ -5,6 +5,7 @@ import type { FsEntry } from '../shared/protocol';
 import { isLikelyImageFile } from '../shared/path';
 import { formatBytes, formatDate } from '../utils';
 import { formatTextPreview } from '../formatters';
+import { PathLabel } from './PathLabel';
 import type { useFileSystemRequests } from '../use-file-system-requests';
 
 type FileSystemRequests = ReturnType<typeof useFileSystemRequests>;
@@ -41,12 +42,7 @@ export function DetailPane({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center gap-1 border-b border-border px-2 py-1.5">
-        <span
-          className="min-w-0 flex-1 truncate px-1 font-mono text-xs text-muted-foreground"
-          title={selected.path}
-        >
-          {selected.path}
-        </span>
+        <PathLabel path={selected.path} />
         <Button
           variant="ghost"
           size="icon"

@@ -33,6 +33,7 @@ import { useFileSystemNavigation } from './use-file-system-navigation';
 import { useFileSystemTree } from './use-file-system-tree';
 import { FileTree } from './ui/FileTree';
 import { DetailPane } from './ui/DetailPane';
+import { PathLabel } from './ui/PathLabel';
 import { downloadBase64File, formatBytes, formatDate, readFileAsBase64 } from './utils';
 import './ui/globals.css';
 
@@ -341,12 +342,13 @@ function FileSystemPanelContent() {
                     </Toolbar.Button>
                   </Toolbar.Group>
                   <Toolbar.Separator />
-                  <span
-                    className="min-w-0 flex-1 truncate px-1 font-mono text-xs text-muted-foreground"
-                    title={nav.currentPath}
-                  >
-                    {nav.currentPath || '—'}
-                  </span>
+                  {nav.currentPath ? (
+                    <PathLabel path={nav.currentPath} />
+                  ) : (
+                    <span className="min-w-0 flex-1 px-1 font-mono text-xs text-muted-foreground">
+                      —
+                    </span>
+                  )}
                   <Toolbar.Button
                     onClick={() => void copyPath(nav.currentPath)}
                     disabled={!nav.currentPath}
