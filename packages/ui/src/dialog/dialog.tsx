@@ -42,12 +42,16 @@ function DialogClose(props: DialogCloseProps) {
 export type DialogContentProps = DialogPrimitive.Popup.Props & {
   /** Hides the built-in close button in the top-right corner. */
   showCloseButton?: boolean;
+  /** Accessible name for the built-in close button.
+   * @default 'Close' */
+  closeLabel?: string;
 };
 
 function DialogContent({
   className,
   children,
   showCloseButton = true,
+  closeLabel = 'Close',
   ...props
 }: DialogContentProps) {
   const container = usePluginPortalContainer();
@@ -86,7 +90,7 @@ function DialogContent({
           {showCloseButton && (
             <DialogPrimitive.Close
               data-slot="dialog-close"
-              aria-label="Close"
+              aria-label={closeLabel}
               className={cn(
                 'absolute top-4 right-4 inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground',
                 'hover:bg-accent hover:text-accent-foreground',

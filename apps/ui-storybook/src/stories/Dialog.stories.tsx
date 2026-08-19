@@ -17,7 +17,7 @@ export const Default: Story = {
           <Dialog.Description>Manage your project configuration.</Dialog.Description>
         </Dialog.Header>
         <Dialog.Footer>
-          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+          <Dialog.Close render={<Button tone="neutral" variant="outline" />}>Cancel</Dialog.Close>
           <Button>Save changes</Button>
         </Dialog.Footer>
       </Dialog.Content>

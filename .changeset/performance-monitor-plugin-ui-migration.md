@@ -1,0 +1,5 @@
+---
+'@rozenite/performance-monitor-plugin': minor
+---
+
+Rebuild the Performance Monitor DevTools panel on `@rozenite/ui` with a resizable `Split` sidebar/content layout, matching the pattern used by other Rozenite plugin panels. The sidebar switches between "Timeline" — a full-height waterfall (Measures/Metrics/Marks/RN Marks/Resources, filterable by entryType and name), with startup timing also folded into it as derived measures — and "Startup insights", the dedicated startup summary (total startup duration and a per-phase duration breakdown with proportional bars) rebuilt on `@rozenite/ui` primitives. Like Timeline, Startup insights only shows data from an explicitly started session — it never enables recording on its own — and displays a plain "No startup insights recorded" note otherwise. Selecting a waterfall entry opens a resizable detail panel docked to the right, also via `Split`, instead of a separate table row. The toolbar leads with a start/stop toggle next to Clear, and export is a dialog with per-type include toggles, live counts, and toast feedback on success or failure.

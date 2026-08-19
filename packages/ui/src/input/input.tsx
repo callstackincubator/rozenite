@@ -1,20 +1,20 @@
 import type { ComponentProps } from 'react';
 import { cn } from '../utils/cn';
+import { fieldSurface } from '../utils/control-surfaces';
+import type { Size } from '../tokens/size';
 
-export type InputProps = ComponentProps<'input'>;
+export type InputProps = Omit<ComponentProps<'input'>, 'size'> & {
+  /** @default 'md' */
+  size?: Size;
+};
 
 /** A single-line text input styled for the Rozenite UI. */
-export function Input({ className, type = 'text', ...props }: InputProps) {
+export function Input({ className, type = 'text', size = 'md', ...props }: InputProps) {
   return (
     <input
       type={type}
       data-slot="input"
-      className={cn(
-        'h-8 w-full min-w-0 rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-xs transition-colors',
-        'outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
-        'placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
-        className,
-      )}
+      className={cn(fieldSurface({ size }), 'min-w-0', className)}
       {...props}
     />
   );

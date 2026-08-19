@@ -219,7 +219,7 @@
 }
 
 .dev-host-flow-state[data-status='failed'] {
-  border-color: var(--destructive);
+  border-color: var(--danger);
 }
 
 .dev-host-flow-state-header {
@@ -246,7 +246,7 @@
 }
 
 .dev-host-flow-state-error {
-  color: var(--destructive);
+  color: var(--danger);
 }
 
 .dev-host-detail-section {

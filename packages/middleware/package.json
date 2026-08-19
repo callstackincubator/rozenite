@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",
+    "@rozenite/app": "workspace:*",
     "@rozenite/runtime": "workspace:*",
     "@rozenite/shell": "workspace:*",
     "@rozenite/tools": "workspace:*",

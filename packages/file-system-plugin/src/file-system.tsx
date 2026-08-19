@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } f
 import type { ColumnDef } from '@tanstack/react-table';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
-  Button,
   ConfirmDialog,
   EmptyState,
+  IconButton,
   PluginShell,
   Sidebar,
   Split,
@@ -273,16 +273,16 @@ function FileSystemPanelContent() {
           const exporting = exportingPaths.has(entry.path);
           return (
             <div onClick={(event) => event.stopPropagation()}>
-              <Button
+              <IconButton
                 variant="ghost"
-                size="icon"
+                tone="neutral"
+                size="sm"
                 onClick={() => onExport(entry)}
                 disabled={!nav.fileTransfer.export || exporting}
-                aria-label={exporting ? `Exporting ${entry.name}` : `Export ${entry.name}`}
-                title={exporting ? 'Exporting…' : 'Export'}
+                label={exporting ? `Exporting ${entry.name}` : `Export ${entry.name}`}
               >
-                <Download className="h-3.5 w-3.5" />
-              </Button>
+                <Download />
+              </IconButton>
             </div>
           );
         },
@@ -336,7 +336,7 @@ function FileSystemPanelContent() {
                       disabled={!nav.currentPath || nav.loading}
                       aria-label="Reload directory"
                       title="Reload directory"
-                      className="w-7 px-0"
+                      className="size-6 px-0"
                     >
                       <RefreshCw className="h-3.5 w-3.5" />
                     </Toolbar.Button>
@@ -354,7 +354,7 @@ function FileSystemPanelContent() {
                     disabled={!nav.currentPath}
                     aria-label={pathCopied ? 'Path copied' : 'Copy path'}
                     title={pathCopied ? 'Copied!' : 'Copy path'}
-                    className="w-7 px-0"
+                    className="size-6 px-0"
                   >
                     {pathCopied ? (
                       <Check className="h-3.5 w-3.5" />
@@ -369,7 +369,7 @@ function FileSystemPanelContent() {
                       disabled={!canImport}
                       aria-label={importLoading ? 'Importing file' : 'Import file'}
                       title={importLoading ? 'Importing file' : 'Import file'}
-                      className="w-7 px-0"
+                      className="size-6 px-0"
                     >
                       <Upload className="h-3.5 w-3.5" />
                     </Toolbar.Button>
@@ -382,10 +382,7 @@ function FileSystemPanelContent() {
                   />
                 </Toolbar>
                 {nav.error || transferError ? (
-                  <p
-                    role="alert"
-                    className="border-b border-border px-3 py-2 text-xs text-destructive"
-                  >
+                  <p role="alert" className="border-b border-border px-3 py-2 text-xs text-danger">
                     {nav.error ?? transferError}
                   </p>
                 ) : null}

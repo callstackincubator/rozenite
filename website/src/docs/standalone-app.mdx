@@ -1,0 +1,77 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Standalone App
+
+:::warning Experimental
+The standalone app is an experiment in alternative DevTools workflows. It may change in future releases.
+:::
+
+The standalone Rozenite app runs your plugin panels in their own window instead of inside React Native DevTools. This is useful if you primarily work with Rozenite plugins and want to keep your plugin state intact when your app reloads — instead of losing everything when React Native DevTools tears down its panel on a Fast Refresh or crash.
+
+## Before you start
+
+You need to install the optional `@rozenite/electron-app` package separately:
+
+<PackageManagerTabs command="install -D @rozenite/electron-app" />
+
+If you skip this step, `rozenite open` tells you to install it when you run the command.
+
+## Why use it
+
+React Native DevTools reloads its Rozenite panel whenever your app's JS VM reloads (on a Fast Refresh that touches native code, a crash, or a manual reload). That wipes out any panel state — you're back to the default view every time.
+
+The standalone app keeps your plugins connected through those reloads. Since it connects directly to the device instead of going through React Native DevTools, your plugin panels stay open and preserve their state. This is helpful if you spend most of your debugging time in Rozenite and don't need the full React Native DevTools feature set.
+
+## Launching it
+
+Run `rozenite open` in your project:
+
+<PackageManagerTabs
+  command={{
+    npm: 'npx rozenite open',
+    pnpm: 'pnpm dlx rozenite open',
+    yarn: 'yarn dlx rozenite open',
+    bun: 'bunx rozenite open',
+  }}
+/>
+
+This lists all devices currently connected to Metro and opens the standalone app in an Electron window for the one you pick.
+
+### Options
+
+- `--host <host>` — Metro host to connect to (default `127.0.0.1`).
+- `--port <port>` — Metro port to connect to (default `8081`).
+- `--deviceId <id>` — Open a specific device directly, skipping the picker prompt.
+
+**Examples:**
+
+<PackageManagerTabs
+  command={{
+    npm: 'npx rozenite open --deviceId <id>',
+    pnpm: 'pnpm dlx rozenite open --deviceId <id>',
+    yarn: 'yarn dlx rozenite open --deviceId <id>',
+    bun: 'bunx rozenite open --deviceId <id>',
+  }}
+/>
+
+<PackageManagerTabs
+  command={{
+    npm: 'npx rozenite open --host 192.168.1.10 --port 8081',
+    pnpm: 'pnpm dlx rozenite open --host 192.168.1.10 --port 8081',
+    yarn: 'yarn dlx rozenite open --host 192.168.1.10 --port 8081',
+    bun: 'bunx rozenite open --host 192.168.1.10 --port 8081',
+  }}
+/>
+
+`rozenite open` requires an interactive terminal — it opens an Electron window and (without `--deviceId`) prompts you to pick a device, so it refuses to run in CI or a piped/non-TTY shell.
+
+## Limitations
+
+- **Metro must be running.** `rozenite open` discovers devices through Metro's own device list, and the app itself is served by Metro. If Metro stops after you've opened the app, it shows a "dev server unreachable" state until Metro is back.
+- **It competes for the single debugger slot.** The standalone app connects directly to the device the same way React Native DevTools and `rozenite agent` do. Only one of these can be attached to a given device at a time — the last one to connect wins, disconnecting whichever was attached before it.
+
+## Troubleshooting
+
+**"Could not launch the Rozenite standalone app. It requires `@rozenite/electron-app` to be installed in your project."**
+
+This error means you haven't installed the optional `@rozenite/electron-app` package. Go back to [Before you start](#before-you-start) and install it, then try `rozenite open` again.

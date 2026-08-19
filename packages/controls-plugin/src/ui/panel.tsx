@@ -44,7 +44,7 @@ const RowShell = ({
     <div className="min-w-0">
       <div className="text-sm font-medium text-foreground">{title}</div>
       {description ? <div className="mt-1 text-xs text-muted-foreground">{description}</div> : null}
-      {errorMessage ? <div className="mt-1 text-xs text-destructive">{errorMessage}</div> : null}
+      {errorMessage ? <div className="mt-1 text-xs text-danger">{errorMessage}</div> : null}
     </div>
     {children}
   </div>
@@ -87,7 +87,8 @@ const ButtonRow = ({
   return (
     <RowShell title={item.title} description={item.description} errorMessage={uiState?.message}>
       <Button
-        size="compact"
+        size="sm"
+        tone="neutral"
         variant="outline"
         disabled={item.disabled || uiState?.pending}
         onClick={() => onPress(sectionId, item.id)}
@@ -174,7 +175,8 @@ const InputRow = ({
           onChange={(event) => onDraftChange(sectionId, item.id, event.target.value)}
         />
         <Button
-          size="compact"
+          size="sm"
+          tone="neutral"
           variant="outline"
           disabled={!isChanged || item.disabled || uiState?.pending}
           onClick={() => onApply(sectionId, item.id)}

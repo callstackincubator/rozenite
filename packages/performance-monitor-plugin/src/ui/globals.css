@@ -1,0 +1,373 @@
+@import '@rozenite/ui/styles.css';
+
+/* Waterfall view. Kept as hand-rolled CSS (percent-positioned bars, ticks,
+ * gaps) rather than Tailwind utility classes — the positions are computed
+ * numbers from `waterfall.ts`, not fixed design-system values. Colors and
+ * spacing reuse @rozenite/ui's theme tokens so the view follows the active
+ * light/dark theme instead of a hardcoded palette. */
+.waterfall-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 12px;
+}
+
+.waterfall-topbar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+
+.waterfall-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+  font-size: 11px;
+}
+
+.waterfall-legend span {
+  position: relative;
+  padding-left: 12px;
+}
+
+.waterfall-legend span::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  content: '';
+  transform: translateY(-50%);
+}
+
+.waterfall-legend-measure::before {
+  background: var(--primary);
+}
+
+.waterfall-legend-resource::before {
+  background: var(--info);
+}
+
+.waterfall-legend-mark::before {
+  background: var(--warning);
+}
+
+.waterfall-legend-metric::before {
+  background: var(--danger);
+}
+
+.waterfall-legend-react-native-mark::before {
+  background: var(--success);
+}
+
+.waterfall-overview {
+  position: relative;
+  flex-shrink: 0;
+  height: 52px;
+  margin-left: 280px;
+  border-bottom: 1px solid var(--border);
+  background: var(--muted);
+}
+
+.waterfall-overview-bar {
+  position: absolute;
+  min-width: 2px;
+  height: 6px;
+  opacity: 0.9;
+}
+
+.waterfall-ruler {
+  display: grid;
+  grid-template-columns: 280px minmax(420px, 1fr);
+  flex-shrink: 0;
+  min-height: 30px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.waterfall-label-header {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-right: 1px solid var(--border);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.waterfall-ruler-track {
+  position: relative;
+  overflow: hidden;
+}
+
+.waterfall-tick-label {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  color: var(--muted-foreground);
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.waterfall-tick-label:first-child {
+  transform: translateX(0);
+}
+
+.waterfall-tick-label:last-child {
+  transform: translateX(-100%);
+}
+
+.waterfall-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.waterfall-virtual-list {
+  height: 100%;
+}
+
+/* Virtuoso inline-styles both its item-list wrapper and every row wrapper to
+ * `width: 100%`, capping them at the scroller's own width. Rows need to be
+ * able to grow past that (the 280px label column + 420px-min lane can exceed
+ * the pane), so this overrides them to size to content instead — otherwise
+ * the scroller never reports the true content width and row borders/grid
+ * lines get clipped before reaching the actual right edge. */
+.waterfall-virtual-list > div,
+.waterfall-virtual-list [data-index] {
+  width: auto !important;
+  min-width: 100%;
+}
+
+.waterfall-row {
+  display: grid;
+  grid-template-columns: 280px minmax(420px, 1fr);
+  min-height: 34px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  outline: none;
+}
+
+.waterfall-row:hover,
+.waterfall-row:focus-visible {
+  background: var(--muted);
+}
+
+.waterfall-row-selected {
+  background: var(--accent);
+}
+
+.waterfall-row-selected:hover,
+.waterfall-row-selected:focus-visible {
+  background: var(--accent);
+}
+
+.waterfall-row-label {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 10px 6px 0;
+  border-right: 1px solid var(--border);
+}
+
+.waterfall-row-index {
+  grid-row: 1 / 3;
+  color: var(--muted-foreground);
+  font-weight: 600;
+  text-align: center;
+}
+
+.waterfall-row-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.waterfall-row-text strong,
+.waterfall-row-text small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.waterfall-row-text strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.waterfall-row-text small {
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.waterfall-row-meta {
+  display: flex;
+  min-width: 0;
+  gap: 8px;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.waterfall-row-meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.waterfall-lane {
+  position: relative;
+  min-width: 420px;
+  overflow: hidden;
+}
+
+.waterfall-grid-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
+
+.waterfall-gap-break {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  min-width: 10px;
+  border-inline: 1px solid var(--border);
+  pointer-events: none;
+}
+
+.waterfall-gap-break::before,
+.waterfall-gap-break::after {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background: var(--muted-foreground);
+  content: '';
+}
+
+.waterfall-gap-break::before {
+  left: 6px;
+  transform: rotate(-55deg);
+}
+
+.waterfall-gap-break::after {
+  right: 6px;
+  transform: rotate(-55deg);
+}
+
+.waterfall-selected-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 1px;
+  background: var(--primary);
+  pointer-events: none;
+}
+
+.waterfall-selected-duration {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+  margin-left: 6px;
+  color: var(--foreground);
+  font-size: 10px;
+  line-height: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.waterfall-bar {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  min-width: 8px;
+  height: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transform: translateY(-50%);
+}
+
+.waterfall-bar-instant {
+  width: 3px !important;
+  min-width: 3px;
+}
+
+.waterfall-bar-measure {
+  background: var(--primary);
+}
+
+.waterfall-bar-mark {
+  background: var(--warning);
+}
+
+.waterfall-bar-metric {
+  background: var(--danger);
+}
+
+.waterfall-bar-react-native-mark {
+  background: var(--success);
+}
+
+.waterfall-bar-resource {
+  background: color-mix(in srgb, var(--info) 55%, transparent);
+}
+
+.waterfall-phase {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 1px;
+}
+
+.waterfall-phase-redirect {
+  background: #9ca3af;
+}
+
+.waterfall-phase-worker {
+  background: #14b8a6;
+}
+
+.waterfall-phase-dns {
+  background: #34d399;
+}
+
+.waterfall-phase-connect {
+  background: #f97316;
+}
+
+.waterfall-phase-tls {
+  background: #c084fc;
+}
+
+.waterfall-phase-request {
+  background: #facc15;
+}
+
+.waterfall-phase-response {
+  background: #60a5fa;
+}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check, Copy, Download, X } from 'lucide-react';
-import { Button, Card, DescriptionList, ScrollArea, useCopyToClipboard } from '@rozenite/ui';
+import { Card, DescriptionList, IconButton, ScrollArea, useCopyToClipboard } from '@rozenite/ui';
 import type { FsEntry } from '../shared/protocol';
 import { isLikelyImageFile } from '../shared/path';
 import { formatBytes, formatDate } from '../utils';
@@ -43,34 +43,34 @@ export function DetailPane({
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center gap-1 border-b border-border px-2 py-1.5">
         <PathLabel path={selected.path} />
-        <Button
+        <IconButton
           variant="ghost"
-          size="icon"
+          tone="neutral"
+          size="sm"
           onClick={() => void copy(selected.path)}
-          aria-label={copied ? 'Path copied' : 'Copy path'}
-          title={copied ? 'Copied!' : 'Copy path'}
+          label={copied ? 'Copied!' : 'Copy path'}
         >
-          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-        </Button>
-        <Button
+          {copied ? <Check /> : <Copy />}
+        </IconButton>
+        <IconButton
           variant="ghost"
-          size="icon"
+          tone="neutral"
+          size="sm"
           onClick={() => onExport(selected)}
           disabled={!canExport || exporting}
-          aria-label={exporting ? 'Exporting file' : 'Export file'}
-          title={exporting ? 'Exporting file' : 'Export file'}
+          label={exporting ? 'Exporting file' : 'Export file'}
         >
-          <Download className="h-3.5 w-3.5" />
-        </Button>
-        <Button
+          <Download />
+        </IconButton>
+        <IconButton
           variant="ghost"
-          size="icon"
+          tone="neutral"
+          size="sm"
           onClick={onClose}
-          aria-label="Close details"
-          title="Close details"
+          label="Close details"
         >
-          <X className="h-3.5 w-3.5" />
-        </Button>
+          <X />
+        </IconButton>
       </div>
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-3 p-3">
@@ -179,7 +179,7 @@ function FilePreview({ entry, requestImagePreview, requestTextPreview }: FilePre
         {imagePreviewLoading ? (
           <span className="text-xs text-muted-foreground">Loading preview…</span>
         ) : imagePreviewError ? (
-          <p role="alert" className="text-xs text-destructive">
+          <p role="alert" className="text-xs text-danger">
             {imagePreviewError}
           </p>
         ) : imagePreviewUri ? (
@@ -199,7 +199,7 @@ function FilePreview({ entry, requestImagePreview, requestTextPreview }: FilePre
       {textPreviewLoading ? (
         <span className="text-xs text-muted-foreground">Loading preview…</span>
       ) : textPreviewError ? (
-        <p role="alert" className="text-xs text-destructive">
+        <p role="alert" className="text-xs text-danger">
           {textPreviewError}
         </p>
       ) : textPreview ? (

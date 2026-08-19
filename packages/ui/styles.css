@@ -20,8 +20,18 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-soft: var(--info-soft);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -40,6 +50,9 @@
 }
 
 :root {
+  /* Square is by design, not a bug — see the Storybook tokens page. The
+     --radius-{sm,md,lg,xl} scale below stays wired so `rounded-*` remains a
+     live re-theming seam even while --radius is 0. */
   --radius: 0;
   --background: #ffffff;
   --foreground: #201f24;
@@ -55,8 +68,18 @@
   --muted-foreground: #838289;
   --accent: #8232ff29;
   --accent-foreground: #201f24;
-  --destructive: #fa7171;
-  --destructive-foreground: #201f24;
+  --danger: #fa7171;
+  --danger-foreground: #201f24;
+  --danger-soft: color-mix(in srgb, var(--danger) 10%, transparent);
+  --success: #15803d;
+  --success-foreground: #ffffff;
+  --success-soft: #16a34a1f;
+  --warning: #b45309;
+  --warning-foreground: #ffffff;
+  --warning-soft: #d977061f;
+  --info: #1d4ed8;
+  --info-foreground: #ffffff;
+  --info-soft: #2563eb1f;
   --border: #cfced5;
   --input: #cfced5;
   --ring: #8232ff;
@@ -85,8 +108,18 @@
   --muted-foreground: #cfced5;
   --accent: #8232ff33;
   --accent-foreground: #ffffff;
-  --destructive: #fa7171;
-  --destructive-foreground: #201f24;
+  --danger: #fa7171;
+  --danger-foreground: #201f24;
+  --danger-soft: color-mix(in srgb, var(--danger) 15%, transparent);
+  --success: #4ade80;
+  --success-foreground: #201f24;
+  --success-soft: #22c55e33;
+  --warning: #fbbf24;
+  --warning-foreground: #201f24;
+  --warning-soft: #f59e0b33;
+  --info: #60a5fa;
+  --info-foreground: #201f24;
+  --info-soft: #3b82f633;
   --border: #424145;
   --input: #424145;
   --ring: #8232ff;
@@ -131,5 +164,9 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background-color: var(--muted-foreground);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }

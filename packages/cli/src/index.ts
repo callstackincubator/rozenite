@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { DEFAULT_AGENT_HOST, DEFAULT_AGENT_PORT } from '@rozenite/agent-shared';
 import { color } from './utils/color.js';
 import { outro } from './utils/prompts.js';
 import { getPackageJSON } from './package-json.js';
@@ -7,6 +8,7 @@ import { generateCommand } from './commands/generate/generate-command.js';
 import { buildCommand } from './commands/build-command.js';
 import { devCommand } from './commands/dev-command.js';
 import { initCommand } from './commands/init-command.js';
+import { openCommand } from './commands/open-command.js';
 import { registerAgentCommand } from './commands/agent/register-agent-command.js';
 import { registerSkillsCommand } from './commands/register-skills-command.js';
 import { getErrorMessage } from './commands/agent/error-message.js';
@@ -82,6 +84,20 @@ const main = async () => {
     .action(async (path) => {
       const targetDir = path ?? process.cwd();
       await initCommand(targetDir);
+    });
+
+  program
+    .command('open')
+    .description('Open Rozenite DevTools for a connected device')
+    .option('--host <host>', 'Metro host', DEFAULT_AGENT_HOST)
+    .option('--port <port>', 'Metro port', String(DEFAULT_AGENT_PORT))
+    .option('--deviceId <id>', 'Target device ID (skips the picker)')
+    .action(async (options: { host: string; port: string; deviceId?: string }) => {
+      await openCommand({
+        host: options.host,
+        port: Number(options.port),
+        deviceId: options.deviceId,
+      });
     });
 
   registerAgentCommand(program);

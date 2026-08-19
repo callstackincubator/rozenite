@@ -1,15 +1,14 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Badge,
-  Button,
-  ConfirmDialog,
   EmptyState,
+  IconButton,
   PluginShell,
   SearchField,
   Sidebar,
   Split,
-  Toast,
   Toolbar,
+  useConfirmDialog,
   useToast,
   VirtualizedDataTable,
 } from '@rozenite/ui';
@@ -47,12 +46,12 @@ function FeatureFlagsPanelContent() {
     refresh,
   } = useFeatureFlags();
   const toast = useToast();
+  const confirm = useConfirmDialog();
   const providers = snapshot?.providers ?? [];
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [overriddenOnly, setOverriddenOnly] = useState(false);
   const [jsonDialogKey, setJsonDialogKey] = useState<string | null>(null);
-  const [showResetAllDialog, setShowResetAllDialog] = useState(false);
 
   useEffect(() => {
     setSelectedProviderId((current) =>
@@ -97,9 +96,15 @@ function FeatureFlagsPanelContent() {
     }
   };
 
-  const handleClearAllOverrides = async () => {
+  const handleResetAllClick = async () => {
     if (!selectedProvider) return;
-    setShowResetAllDialog(false);
+    const confirmed = await confirm({
+      title: 'Reset all overrides',
+      description: `Are you sure you want to clear every override for "${selectedProvider.name}"? This action cannot be undone.`,
+      tone: 'danger',
+      confirmLabel: 'Reset all',
+    });
+    if (!confirmed) return;
     try {
       await clearAllOverrides(selectedProvider.id);
     } catch (error) {
@@ -130,7 +135,7 @@ function FeatureFlagsPanelContent() {
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate font-mono text-sm text-foreground">{row.original.key}</span>
-          {row.original.overridden && <Badge variant="secondary">Overridden</Badge>}
+          {row.original.overridden && <Badge tone="neutral">Overridden</Badge>}
         </div>
       ),
     },
@@ -139,7 +144,11 @@ function FeatureFlagsPanelContent() {
       accessorKey: 'type',
       header: 'Type',
       enableSorting: false,
-      cell: ({ row }) => <Badge variant="outline">{row.original.type}</Badge>,
+      cell: ({ row }) => (
+        <Badge tone="neutral" variant="outline">
+          {row.original.type}
+        </Badge>
+      ),
     },
     {
       id: 'value',
@@ -159,16 +168,15 @@ function FeatureFlagsPanelContent() {
       header: '',
       enableSorting: false,
       cell: ({ row }) => (
-        <Button
+        <IconButton
+          tone="neutral"
           variant="ghost"
-          size="icon"
           disabled={!connected || !row.original.overridden}
           onClick={() => handleClearOverride(row.original)}
-          aria-label={`Reset ${row.original.key} to its default value`}
-          title={`Reset ${row.original.key} to its default value`}
+          label={`Reset ${row.original.key} to its default value`}
         >
           <Eraser className="h-3.5 w-3.5" />
-        </Button>
+        </IconButton>
       ),
     },
   ];
@@ -229,7 +237,7 @@ function FeatureFlagsPanelContent() {
       <Toolbar.Separator />
       <Toolbar.Group>
         <Toolbar.Button
-          onClick={() => setShowResetAllDialog(true)}
+          onClick={() => void handleResetAllClick()}
           disabled={!connected || !selectedProvider || !hasOverrides}
           aria-label="Reset all overrides"
           title="Reset all overrides"
@@ -242,7 +250,7 @@ function FeatureFlagsPanelContent() {
           disabled={!connected || !selectedProvider}
           aria-label="Refresh flags"
           title="Refresh flags"
-          className="w-7 px-0"
+          className="w-6 px-0"
         >
           <RefreshCw className="h-3.5 w-3.5" />
         </Toolbar.Button>
@@ -258,7 +266,7 @@ function FeatureFlagsPanelContent() {
   );
 
   return (
-    <PluginShell>
+    <>
       <PluginShell.Body>
         {!connected || isLoading ? (
           <EmptyState
@@ -291,9 +299,9 @@ function FeatureFlagsPanelContent() {
                     <Sidebar.Item
                       selected={item.id === selectedProvider?.id}
                       onClick={() => setSelectedProviderId(item.id)}
-                      adornment={<Flag />}
+                      leading={<Flag />}
                       trailing={
-                        <Badge variant="secondary">
+                        <Badge tone="neutral">
                           {item.overriddenCount > 0
                             ? `${item.overriddenCount}/${item.flagCount}`
                             : item.flagCount}
@@ -325,30 +333,16 @@ function FeatureFlagsPanelContent() {
           return handleSetOverride(jsonDialogFlag, value);
         }}
       />
-      <ConfirmDialog
-        open={showResetAllDialog}
-        onOpenChange={setShowResetAllDialog}
-        variant="confirm"
-        destructive
-        title="Reset all overrides"
-        description={
-          selectedProvider
-            ? `Are you sure you want to clear every override for "${selectedProvider.name}"? This action cannot be undone.`
-            : undefined
-        }
-        confirmLabel="Reset all"
-        onConfirm={handleClearAllOverrides}
-      />
-    </PluginShell>
+    </>
   );
 }
 
 export default function FeatureFlagsPanel() {
   return (
     <FeatureFlagsQueryClientProvider>
-      <Toast.Provider>
+      <PluginShell>
         <FeatureFlagsPanelContent />
-      </Toast.Provider>
+      </PluginShell>
     </FeatureFlagsQueryClientProvider>
   );
 }

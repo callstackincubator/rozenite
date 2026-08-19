@@ -15,8 +15,10 @@ export const WithHeader: Story = {
   render: () => (
     <PluginShell className="h-96 w-[40rem]">
       <PluginHeader>
-        <PluginHeader.Title>Network activity</PluginHeader.Title>
-        <PluginHeader.Subtitle>Live requests</PluginHeader.Subtitle>
+        <div>
+          <PluginHeader.Title>Network activity</PluginHeader.Title>
+          <PluginHeader.Subtitle>Live requests</PluginHeader.Subtitle>
+        </div>
         <PluginHeader.Actions>
           <PluginHeader.ThemeSwitcher />
         </PluginHeader.Actions>

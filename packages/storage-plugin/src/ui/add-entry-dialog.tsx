@@ -1,4 +1,4 @@
-import { Button, ConfirmDialog, Dialog, Field, Input } from '@rozenite/ui';
+import { Button, Dialog, Field, Input, useConfirmDialog } from '@rozenite/ui';
 import { useEffect, useState } from 'react';
 import type { StorageEntry, StorageEntryType, StorageEntryValue } from '../shared/types';
 import { TypedValueEditor } from './typed-value-editor';
@@ -45,7 +45,7 @@ export const AddEntryDialog = ({
   const [currentValue, setCurrentValue] = useState<StorageEntryValue | null>(
     defaultValueForType(initialType),
   );
-  const [alert, setAlert] = useState<{ title: string; message: string } | null>(null);
+  const confirm = useConfirmDialog();
 
   // Reset state every time the dialog opens, so a previous session's
   // type / value doesn't bleed in.
@@ -66,21 +66,23 @@ export const AddEntryDialog = ({
     onClose();
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newEntryKey.trim() || currentValue === null) return;
 
     if (!isCurrentTypeSupported) {
-      setAlert({
+      await confirm({
+        variant: 'alert',
         title: 'Unsupported Type',
-        message: 'Selected type is not supported by this storage.',
+        description: 'Selected type is not supported by this storage.',
       });
       return;
     }
 
     if (existingKeys.includes(newEntryKey)) {
-      setAlert({
+      await confirm({
+        variant: 'alert',
         title: 'Key Already Exists',
-        message: 'An entry with this key already exists.',
+        description: 'An entry with this key already exists.',
       });
       return;
     }
@@ -91,7 +93,7 @@ export const AddEntryDialog = ({
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && newEntryKey.trim() && currentType !== 'buffer') {
-      handleAdd();
+      void handleAdd();
     }
   };
 
@@ -100,70 +102,58 @@ export const AddEntryDialog = ({
   const isAddDisabled = !newEntryKey.trim() || !isCurrentTypeSupported || currentValue === null;
 
   return (
-    <>
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          if (!open) resetAndClose();
-        }}
-      >
-        <Dialog.Content onKeyDown={handleKeyDown}>
-          <Dialog.Header>
-            <Dialog.Title>Add New Entry</Dialog.Title>
-          </Dialog.Header>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) resetAndClose();
+      }}
+    >
+      <Dialog.Content onKeyDown={handleKeyDown}>
+        <Dialog.Header>
+          <Dialog.Title>Add New Entry</Dialog.Title>
+        </Dialog.Header>
 
-          <div className="flex flex-col gap-4">
-            <Field>
-              <Field.Label htmlFor="new-entry-key">Key</Field.Label>
-              <Input
-                id="new-entry-key"
-                value={newEntryKey}
-                onChange={(event) => setNewEntryKey(event.target.value)}
-                placeholder="Enter key name"
-                autoFocus
-              />
-            </Field>
+        <div className="flex flex-col gap-4">
+          <Field>
+            <Field.Label htmlFor="new-entry-key">Key</Field.Label>
+            <Input
+              id="new-entry-key"
+              value={newEntryKey}
+              onChange={(event) => setNewEntryKey(event.target.value)}
+              placeholder="Enter key name"
+              autoFocus
+            />
+          </Field>
 
-            <Field>
-              <Field.Label htmlFor="new-entry-value">Value</Field.Label>
-              <TypedValueEditor
-                supportedTypes={supportedTypes}
-                type={currentType}
-                value={currentValue}
-                onChange={(nextType, nextValue) => {
-                  setCurrentType(nextType);
-                  setCurrentValue(nextValue);
-                }}
-                inputId="new-entry-value"
-              />
-              {!isCurrentTypeSupported && (
-                <Field.Description className="text-destructive">
-                  Selected type is not supported by this storage.
-                </Field.Description>
-              )}
-            </Field>
-          </div>
+          <Field>
+            <Field.Label htmlFor="new-entry-value">Value</Field.Label>
+            <TypedValueEditor
+              supportedTypes={supportedTypes}
+              type={currentType}
+              value={currentValue}
+              onChange={(nextType, nextValue) => {
+                setCurrentType(nextType);
+                setCurrentValue(nextValue);
+              }}
+              inputId="new-entry-value"
+            />
+            {!isCurrentTypeSupported && (
+              <Field.Description className="text-danger">
+                Selected type is not supported by this storage.
+              </Field.Description>
+            )}
+          </Field>
+        </div>
 
-          <Dialog.Footer>
-            <Button variant="outline" onClick={resetAndClose}>
-              Cancel
-            </Button>
-            <Button onClick={handleAdd} disabled={isAddDisabled}>
-              Add Entry
-            </Button>
-          </Dialog.Footer>
-        </Dialog.Content>
-      </Dialog>
-
-      <ConfirmDialog
-        open={alert !== null}
-        onOpenChange={(open) => {
-          if (!open) setAlert(null);
-        }}
-        variant="alert"
-        title={alert?.title ?? ''}
-        description={alert?.message}
-      />
-    </>
+        <Dialog.Footer>
+          <Button tone="neutral" variant="outline" onClick={resetAndClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => void handleAdd()} disabled={isAddDisabled}>
+            Add Entry
+          </Button>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog>
   );
 };

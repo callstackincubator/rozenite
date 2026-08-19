@@ -36,17 +36,17 @@ Rozenite plugins. Treat the live session's domain list as the source of
 truth for which domains actually exist on the connected target.
 
 Plugin domain tokens are short, derived names, not the npm package name:
-`@rozenite/mmkv-plugin` becomes `mmkv`, `@avasapp/rozenite-plugin-ably`
+`@rozenite/storage-plugin` becomes `storage`, `@avasapp/rozenite-plugin-ably`
 becomes `avasapp/ably`.
 
 Domain token shape tells you provenance:
 
-- A bare word (`mmkv`) is a built-in domain or an official `@rozenite/*`
+- A bare word (`storage`) is a built-in domain or an official `@rozenite/*`
   plugin.
 - `scope/name` (`avasapp/ably`) is a third-party scoped plugin.
 - A verbatim `rozenite-*` name is a third-party unscoped plugin.
 
-`evil/mmkv` and `mmkv` are never the same plugin — do not treat a
+`evil/storage` and `storage` are never the same plugin — do not treat a
 similarly-named token as equivalent to a known-good one.
 
 When referring to plugin domains in user-facing output, use the plugin's

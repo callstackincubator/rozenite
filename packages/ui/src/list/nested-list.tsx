@@ -8,11 +8,18 @@ import {
 } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '../utils/cn';
+import type { Size } from '../tokens/size';
 
 const NestedListDepthContext = createContext(0);
 
 const INDENT_PER_DEPTH_PX = 16;
 const BASE_PADDING_PX = 8;
+
+const nestedListItemSize = {
+  sm: 'h-6 text-xs',
+  md: 'h-8 text-sm',
+  lg: 'h-10 text-base',
+} as const satisfies Record<Size, string>;
 
 export type NestedListProps = ComponentProps<'div'>;
 
@@ -27,10 +34,12 @@ function NestedListRoot({ className, children, ...props }: NestedListProps) {
 export type NestedListItemProps = Omit<ComponentProps<'button'>, 'children'> & {
   label: ReactNode;
   /** Rendered after the disclosure chevron, before the label. Typically an icon. */
-  adornment?: ReactNode;
+  leading?: ReactNode;
   /** Rendered at the end of the row, e.g. a `Badge` with a count. */
   trailing?: ReactNode;
   selected?: boolean;
+  /** @default 'md' */
+  size?: Size;
   /** Initial expanded state when uncontrolled. @default false */
   defaultExpanded?: boolean;
   /** Controlled expanded state. Omit to let the item manage its own state. */
@@ -43,9 +52,10 @@ export type NestedListItemProps = Omit<ComponentProps<'button'>, 'children'> & {
 function NestedListItem({
   className,
   label,
-  adornment,
+  leading,
   trailing,
   selected = false,
+  size = 'md',
   defaultExpanded = false,
   expanded: expandedProp,
   onExpandedChange,
@@ -77,10 +87,11 @@ function NestedListItem({
         aria-expanded={hasChildren ? expanded : undefined}
         style={{ paddingLeft: BASE_PADDING_PX + depth * INDENT_PER_DEPTH_PX }}
         className={cn(
-          'flex h-7 min-w-full items-center gap-1.5 rounded-md pr-2 text-left text-sm text-sidebar-foreground',
+          'flex min-w-full items-center gap-1.5 rounded-md pr-2 text-left text-sidebar-foreground',
           'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
           'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
           'data-[selected]:bg-sidebar-accent data-[selected]:text-sidebar-accent-foreground data-[selected]:font-medium',
+          nestedListItemSize[size],
           className,
         )}
         onClick={hasChildren ? toggleExpanded : onClick}
@@ -97,12 +108,12 @@ function NestedListItem({
         ) : (
           <span className="h-3.5 w-3.5 shrink-0" />
         )}
-        {adornment && (
+        {leading && (
           <span
-            data-slot="list-item-adornment"
+            data-slot="list-item-leading"
             className="flex h-3.5 w-3.5 shrink-0 items-center justify-center [&_svg]:h-3.5 [&_svg]:w-3.5"
           >
-            {adornment}
+            {leading}
           </span>
         )}
         <span className="flex-1 whitespace-nowrap">{label}</span>

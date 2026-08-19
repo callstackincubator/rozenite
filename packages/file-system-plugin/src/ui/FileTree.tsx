@@ -38,17 +38,17 @@ export function FileTree({ roots, activePath, tree, onSelectDir }: FileTreeProps
  * A non-interactive row used for a directory's "empty" and "failed" states.
  * It's a `NestedList.Item` rather than a bare `<div>` so it picks up the
  * list's automatic depth indentation and lines up with sibling directories;
- * the blank adornment reserves the space a folder icon would take.
+ * the blank leading slot reserves the space a folder icon would take.
  */
-function FileTreeMessage({ children, tone }: { children: string; tone?: 'destructive' }) {
+function FileTreeMessage({ children, tone }: { children: string; tone?: 'danger' }) {
   return (
     <NestedList.Item
       label={children}
-      adornment={<span />}
+      leading={<span />}
       disabled
       className={
-        tone === 'destructive'
-          ? 'pointer-events-none text-destructive'
+        tone === 'danger'
+          ? 'pointer-events-none text-danger'
           : 'pointer-events-none text-sidebar-foreground/60'
       }
     />
@@ -71,7 +71,7 @@ function FileTreeNode({ path, label, activePath, tree, onSelectDir }: FileTreeNo
   return (
     <NestedList.Item
       label={label}
-      adornment={<Folder />}
+      leading={<Folder />}
       selected={path === activePath}
       expanded={expanded}
       onExpandedChange={(next) => tree.setExpanded(path, next)}
@@ -85,7 +85,7 @@ function FileTreeNode({ path, label, activePath, tree, onSelectDir }: FileTreeNo
         // whether it was given children.
         <span className="hidden" aria-hidden />
       ) : cache === 'error' ? (
-        <FileTreeMessage tone="destructive">Failed to load</FileTreeMessage>
+        <FileTreeMessage tone="danger">Failed to load</FileTreeMessage>
       ) : dirChildren && dirChildren.length > 0 ? (
         dirChildren.map((child) => (
           <FileTreeNode

@@ -1,4 +1,4 @@
-import { Button, JsonInspector, ScrollArea } from '@rozenite/ui';
+import { IconButton, JsonInspector, ScrollArea } from '@rozenite/ui';
 import { Send, X } from 'lucide-react';
 import type { MessageEntry } from '../types.js';
 import { formatMessageDate, formatPayloadForCommandInput } from '../utils.js';
@@ -19,24 +19,22 @@ export const MessageDetailsPane = ({
       <header className="dev-host-pane-header">
         <h2 className="dev-host-pane-title">Message Details</h2>
         <div className="dev-host-pane-actions">
-          <Button
+          <IconButton
+            tone="neutral"
             variant="ghost"
-            size="icon"
             onClick={() => onUseMessage(selectedMessage)}
-            aria-label="Use message in dispatcher"
-            title="Use message in dispatcher"
+            label="Use message in dispatcher"
           >
             <Send />
-          </Button>
-          <Button
+          </IconButton>
+          <IconButton
+            tone="neutral"
             variant="ghost"
-            size="icon"
             onClick={onClose}
-            aria-label="Close message details"
-            title="Close message details"
+            label="Close message details"
           >
             <X />
-          </Button>
+          </IconButton>
         </div>
       </header>
 

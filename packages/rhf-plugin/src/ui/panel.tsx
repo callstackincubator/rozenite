@@ -1,14 +1,13 @@
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
   Badge,
-  ConfirmDialog,
   EmptyState,
   PluginShell,
   SearchField,
   Sidebar,
   Split,
-  Toast,
   Toolbar,
+  useConfirmDialog,
   useToast,
 } from '@rozenite/ui';
 import { useEffect, useMemo, useState } from 'react';
@@ -36,21 +35,16 @@ function FormStateBadges({ formState }: { formState: FormSnapshot['formState'] }
   const badges: {
     label: string;
     active: boolean;
-    variant: 'default' | 'secondary' | 'outline';
-    className?: string;
+    tone: 'primary' | 'neutral' | 'danger';
+    variant?: 'solid' | 'outline';
   }[] = [
-    {
-      label: 'invalid',
-      active: !formState.isValid,
-      variant: 'outline',
-      className: 'border-destructive/50 text-destructive',
-    },
-    { label: 'valid', active: formState.isValid, variant: 'default' },
-    { label: 'dirty', active: formState.isDirty, variant: 'secondary' },
-    { label: 'validating', active: formState.isValidating, variant: 'secondary' },
-    { label: 'submitting', active: formState.isSubmitting, variant: 'secondary' },
-    { label: 'submitted', active: formState.isSubmitted, variant: 'outline' },
-    { label: 'submitSuccessful', active: formState.isSubmitSuccessful, variant: 'default' },
+    { label: 'invalid', active: !formState.isValid, tone: 'danger', variant: 'outline' },
+    { label: 'valid', active: formState.isValid, tone: 'primary' },
+    { label: 'dirty', active: formState.isDirty, tone: 'neutral' },
+    { label: 'validating', active: formState.isValidating, tone: 'neutral' },
+    { label: 'submitting', active: formState.isSubmitting, tone: 'neutral' },
+    { label: 'submitted', active: formState.isSubmitted, tone: 'neutral', variant: 'outline' },
+    { label: 'submitSuccessful', active: formState.isSubmitSuccessful, tone: 'primary' },
   ];
 
   return (
@@ -58,7 +52,7 @@ function FormStateBadges({ formState }: { formState: FormSnapshot['formState'] }
       {badges
         .filter((b) => b.active)
         .map((b) => (
-          <Badge key={b.label} variant={b.variant} className={b.className}>
+          <Badge key={b.label} tone={b.tone} variant={b.variant}>
             {b.label}
           </Badge>
         ))}
@@ -102,11 +96,11 @@ function GroupRow({
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs font-medium text-foreground">{row.segment}</span>
           {errorCount > 0 && (
-            <Badge variant="outline" className="border-destructive/50 text-destructive">
+            <Badge tone="danger" variant="outline">
               {errorCount} error{errorCount === 1 ? '' : 's'}
             </Badge>
           )}
-          {dirtyCount > 0 && <Badge variant="secondary">{dirtyCount} dirty</Badge>}
+          {dirtyCount > 0 && <Badge tone="neutral">{dirtyCount} dirty</Badge>}
         </div>
       </td>
     </tr>
@@ -150,13 +144,17 @@ function LeafRow({
       </td>
       <td className="px-3 py-1.5">
         <div className="flex flex-wrap gap-1">
-          {dirty && <Badge variant="secondary">dirty</Badge>}
-          {touched && <Badge variant="outline">touched</Badge>}
+          {dirty && <Badge tone="neutral">dirty</Badge>}
+          {touched && (
+            <Badge tone="neutral" variant="outline">
+              touched
+            </Badge>
+          )}
         </div>
       </td>
       <td className="px-3 py-1.5">
         {hasError && (
-          <Badge variant="outline" className="border-destructive/50 text-destructive">
+          <Badge tone="danger" variant="outline">
             {error?.type ?? 'error'}
           </Badge>
         )}
@@ -206,9 +204,9 @@ function ReactHookFormPanelContent() {
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFieldName, setSelectedFieldName] = useState<string | null>(null);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const toast = useToast();
+  const confirm = useConfirmDialog();
   const client = useRozeniteDevToolsClient<RHFEventMap>({
     pluginId: PLUGIN_ID,
   });
@@ -274,9 +272,15 @@ function ReactHookFormPanelContent() {
 
   const canResetForm = Boolean(selectedFormId) && !staleIds.has(selectedFormId ?? '');
 
-  const handleResetForm = async () => {
+  const handleResetFormClick = async () => {
     if (!client || !selectedFormId) return;
-    setShowResetConfirm(false);
+    const confirmed = await confirm({
+      title: 'Reset Form',
+      description: `Are you sure you want to reset "${selectedFormId}" to its default values? This action cannot be undone.`,
+      tone: 'danger',
+      confirmLabel: 'Reset',
+    });
+    if (!confirmed) return;
     try {
       await client.request({
         requestType: 'reset-form',
@@ -294,7 +298,7 @@ function ReactHookFormPanelContent() {
   };
 
   return (
-    <PluginShell>
+    <>
       <PluginShell.Body>
         <Split direction="horizontal" autoSaveId="rhf">
           <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
@@ -309,10 +313,12 @@ function ReactHookFormPanelContent() {
                     <Sidebar.Item
                       key={option.id}
                       selected={option.id === selectedFormId}
-                      adornment={<FormInput />}
+                      leading={<FormInput />}
                       trailing={
                         staleIds.has(option.id) ? (
-                          <Badge variant="outline">unmounted</Badge>
+                          <Badge tone="neutral" variant="outline">
+                            unmounted
+                          </Badge>
                         ) : undefined
                       }
                       onClick={() => setSelectedFormId(option.id)}
@@ -331,11 +337,11 @@ function ReactHookFormPanelContent() {
                 <Toolbar>
                   <Toolbar.Group>
                     <Toolbar.Button
-                      onClick={() => setShowResetConfirm(true)}
+                      onClick={() => void handleResetFormClick()}
                       disabled={!canResetForm}
                       aria-label="Reset form"
                       title="Reset form"
-                      className="w-7 px-0 text-muted-foreground hover:text-destructive"
+                      className="w-6 px-0 text-muted-foreground hover:text-danger"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Toolbar.Button>
@@ -402,29 +408,14 @@ function ReactHookFormPanelContent() {
         name={selectedFieldName}
         snapshot={selectedSnapshot}
       />
-
-      <ConfirmDialog
-        open={showResetConfirm}
-        onOpenChange={setShowResetConfirm}
-        variant="confirm"
-        destructive
-        title="Reset Form"
-        description={
-          selectedFormId
-            ? `Are you sure you want to reset "${selectedFormId}" to its default values? This action cannot be undone.`
-            : undefined
-        }
-        confirmLabel="Reset"
-        onConfirm={handleResetForm}
-      />
-    </PluginShell>
+    </>
   );
 }
 
 export default function ReactHookFormPanel() {
   return (
-    <Toast.Provider>
+    <PluginShell>
       <ReactHookFormPanelContent />
-    </Toast.Provider>
+    </PluginShell>
   );
 }

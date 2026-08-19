@@ -42,6 +42,7 @@ export const ActionTimeline = ({
           />
         ) : (
           <EmptyState
+            className="h-full"
             title="No action selected"
             description="Select an action from the timeline to inspect its details."
           />

@@ -22,12 +22,12 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   render: () => (
     <div className="h-72">
-      <Sidebar>
+      <Sidebar className="w-56">
         <Sidebar.Group label="Workspace">
           <Sidebar.Item
             selected
-            adornment={<OverviewIcon />}
-            trailing={<Badge variant="secondary">3</Badge>}
+            leading={<OverviewIcon />}
+            trailing={<Badge tone="neutral">3</Badge>}
           >
             Overview
           </Sidebar.Item>
@@ -46,13 +46,13 @@ export const Default: Story = {
 export const WithHeaderAndFooter: Story = {
   render: () => (
     <div className="h-72">
-      <Sidebar className="gap-0 p-0">
+      <Sidebar className="w-56 gap-0 p-0">
         <Sidebar.Header>
           <span className="font-medium">Rozenite</span>
         </Sidebar.Header>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           <Sidebar.Group label="Workspace">
-            <Sidebar.Item selected adornment={<OverviewIcon />}>
+            <Sidebar.Item selected leading={<OverviewIcon />}>
               Overview
             </Sidebar.Item>
             <Sidebar.Item>Network</Sidebar.Item>

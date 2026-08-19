@@ -1,5 +1,7 @@
 import { Field as FieldPrimitive } from '@base-ui/react/field';
 import { cn } from '../utils/cn';
+import { fieldSurface } from '../utils/control-surfaces';
+import type { Size } from '../tokens/size';
 
 export type FieldProps = FieldPrimitive.Root.Props;
 
@@ -25,18 +27,16 @@ function FieldLabel({ className, ...props }: FieldLabelProps) {
   );
 }
 
-export type FieldControlProps = FieldPrimitive.Control.Props;
+export type FieldControlProps = Omit<FieldPrimitive.Control.Props, 'size'> & {
+  /** @default 'md' */
+  size?: Size;
+};
 
-function FieldControl({ className, ...props }: FieldControlProps) {
+function FieldControl({ className, size = 'md', ...props }: FieldControlProps) {
   return (
     <FieldPrimitive.Control
       data-slot="field-control"
-      className={cn(
-        'h-8 w-full rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-xs',
-        'outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
-        'placeholder:text-muted-foreground disabled:pointer-events-none disabled:opacity-50',
-        className,
-      )}
+      className={cn(fieldSurface({ size }), className)}
       {...props}
     />
   );
@@ -60,7 +60,7 @@ function FieldError({ className, ...props }: FieldErrorProps) {
   return (
     <FieldPrimitive.Error
       data-slot="field-error"
-      className={cn('text-xs text-destructive', className)}
+      className={cn('text-xs text-danger', className)}
       {...props}
     />
   );
