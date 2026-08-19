@@ -164,14 +164,6 @@ export default function PerformanceMonitorPanel() {
       }),
     );
 
-    // Recording starts automatically on connect: startup marks (native
-    // launch, JS bundle load, initial mount) fire early, often before a user
-    // could react and click Start, but the native side buffers them and
-    // replays on enable — so auto-enabling here is enough to surface Startup
-    // insights immediately instead of requiring a manual toggle first.
-    client.send('setEnabled', { enabled: true });
-    setIsSessionActive(true);
-
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
       client.send('setEnabled', { enabled: false });
@@ -199,6 +191,16 @@ export default function PerformanceMonitorPanel() {
       handleStartSession();
     }
   };
+
+  // Startup insights pulls its own data: recording is enabled the moment the
+  // user switches into this view (rather than automatically on connect), so
+  // landing on Timeline first doesn't silently start capturing everything.
+  useEffect(() => {
+    if (activeView === 'startup-insights' && client && !isSessionActive) {
+      client.send('setEnabled', { enabled: true });
+      setIsSessionActive(true);
+    }
+  }, [activeView, client, isSessionActive]);
 
   const handleEntryClick = (entry: SerializedPerformanceEntry, entryId?: string) => {
     setSelectedItem(entry);
