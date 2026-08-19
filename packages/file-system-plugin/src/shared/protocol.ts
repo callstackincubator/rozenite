@@ -1,4 +1,4 @@
-export const PLUGIN_ID = 'file-system';
+export const PLUGIN_ID = '@rozenite/file-system-plugin';
 
 export type FileSystemProvider = 'expo' | 'rnfs' | 'none';
 
