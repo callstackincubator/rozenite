@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/electron-app",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Experimental Electron shell that opens the Rozenite standalone app in a native window instead of a browser tab.",
   "keywords": [
     "app",

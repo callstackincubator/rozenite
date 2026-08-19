@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/agent-bridge",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "React hook API for registering agent tools in React Native",
   "keywords": [
     "agent",

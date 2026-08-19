@@ -1,5 +1,17 @@
 # @rozenite/performance-monitor-plugin
 
+## 2.2.0
+
+### Minor Changes
+
+- [#417](https://github.com/callstackincubator/rozenite/pull/417) [`db0a792`](https://github.com/callstackincubator/rozenite/commit/db0a79283562dfd889e8e0f478b384ba21cfe5bf) Thanks [@V3RON](https://github.com/V3RON)! - Rebuild the Performance Monitor DevTools panel on `@rozenite/ui` with a resizable `Split` sidebar/content layout, matching the pattern used by other Rozenite plugin panels. The sidebar switches between "Timeline" — a full-height waterfall (Measures/Metrics/Marks/RN Marks/Resources, filterable by entryType and name), with startup timing also folded into it as derived measures — and "Startup insights", the dedicated startup summary (total startup duration and a per-phase duration breakdown with proportional bars) rebuilt on `@rozenite/ui` primitives. Like Timeline, Startup insights only shows data from an explicitly started session — it never enables recording on its own — and displays a plain "No startup insights recorded" note otherwise. Selecting a waterfall entry opens a resizable detail panel docked to the right, also via `Split`, instead of a separate table row. The toolbar leads with a start/stop toggle next to Clear, and export is a dialog with per-type include toggles, live counts, and toast feedback on success or failure.
+
+### Patch Changes
+
+- Updated dependencies [[`8b373d9`](https://github.com/callstackincubator/rozenite/commit/8b373d929f7bb64438bc63e516e8ad31966f61ba), [`4f5fe74`](https://github.com/callstackincubator/rozenite/commit/4f5fe747ca0c6e93d0bf05076c7e2e2ad25fd744), [`db0a792`](https://github.com/callstackincubator/rozenite/commit/db0a79283562dfd889e8e0f478b384ba21cfe5bf), [`b409250`](https://github.com/callstackincubator/rozenite/commit/b409250480260b793c504d536755a5ba933de4fe), [`850e455`](https://github.com/callstackincubator/rozenite/commit/850e45576c41d52e24d6c239ff2947a612406fae), [`0565227`](https://github.com/callstackincubator/rozenite/commit/0565227761c0f52df0f7fbf30d0ac5833ccc4039), [`15f31f0`](https://github.com/callstackincubator/rozenite/commit/15f31f0091c0bf3bbf48a192925f57c20efd8951), [`9f7581e`](https://github.com/callstackincubator/rozenite/commit/9f7581e8a1e4d506a93c30876231fbe21147c0de)]:
+  - @rozenite/ui@2.2.0
+  - @rozenite/plugin-bridge@2.2.0
+
 ## 2.1.0
 
 ### Patch Changes

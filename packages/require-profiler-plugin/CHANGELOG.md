@@ -1,5 +1,13 @@
 # @rozenite/require-profiler-plugin
 
+## 2.2.0
+
+### Patch Changes
+
+- Updated dependencies [[`4f5fe74`](https://github.com/callstackincubator/rozenite/commit/4f5fe747ca0c6e93d0bf05076c7e2e2ad25fd744)]:
+  - @rozenite/plugin-bridge@2.2.0
+  - @rozenite/tools@2.2.0
+
 ## 2.1.0
 
 ### Patch Changes

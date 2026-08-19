@@ -1,5 +1,23 @@
 # @rozenite/file-system-plugin
 
+## 2.2.0
+
+### Minor Changes
+
+- [#418](https://github.com/callstackincubator/rozenite/pull/418) [`7d357c3`](https://github.com/callstackincubator/rozenite/commit/7d357c300c8e73751778914a515ca03b5746d1b9) Thanks [@V3RON](https://github.com/V3RON)! - Rebuild the File System DevTools panel on `@rozenite/ui`: a sidebar shows a persistent, lazily-loaded directory tree per root, and the content pane lists the selected directory's entries in a sortable table with a per-row export action, above a toolbar carrying the current path with copy-to-clipboard alongside reload and import. Selecting a file opens a detail pane with a sticky path bar (copy, export, and close), a collapsible metadata card, and the image/text preview in one scroll region; the pane stays hidden until something is selected. Importing a file now confirms overwrites with a themed dialog instead of a native browser prompt, and the connecting/no-roots states use a consistent empty-state layout.
+
+### Patch Changes
+
+- [#418](https://github.com/callstackincubator/rozenite/pull/418) [`7d357c3`](https://github.com/callstackincubator/rozenite/commit/7d357c300c8e73751778914a515ca03b5746d1b9) Thanks [@V3RON](https://github.com/V3RON)! - Fix the File System panel showing no roots and no files. The plugin's message channel used `file-system` as its `pluginId`, while every other plugin uses its package name — the id the DevTools runtime derives panels from. Once `@rozenite/shell` started routing `pluginId` messages to only that plugin's panels, every `fs:*` reply from the device was addressed to a plugin id no mounted panel claimed and was dropped, so the panel sat on "No file system roots" forever. The channel now uses `@rozenite/file-system-plugin`, matching the package name and the plugin's agent tools.
+
+  Also stop re-announcing `fs:ready` on every render of the host component. The `useFileSystemDevTools` subscription effect depended on the whole `options` object, which is a new value each render for the usual inline-literal call site; each teardown/re-announce made the panel wipe its roots and entries and refetch them.
+
+- Updated dependencies [[`dffeda5`](https://github.com/callstackincubator/rozenite/commit/dffeda53c57f491a303108937d4b4ce68054226f), [`8b373d9`](https://github.com/callstackincubator/rozenite/commit/8b373d929f7bb64438bc63e516e8ad31966f61ba), [`4f5fe74`](https://github.com/callstackincubator/rozenite/commit/4f5fe747ca0c6e93d0bf05076c7e2e2ad25fd744), [`db0a792`](https://github.com/callstackincubator/rozenite/commit/db0a79283562dfd889e8e0f478b384ba21cfe5bf), [`b409250`](https://github.com/callstackincubator/rozenite/commit/b409250480260b793c504d536755a5ba933de4fe), [`850e455`](https://github.com/callstackincubator/rozenite/commit/850e45576c41d52e24d6c239ff2947a612406fae), [`0565227`](https://github.com/callstackincubator/rozenite/commit/0565227761c0f52df0f7fbf30d0ac5833ccc4039), [`15f31f0`](https://github.com/callstackincubator/rozenite/commit/15f31f0091c0bf3bbf48a192925f57c20efd8951), [`9f7581e`](https://github.com/callstackincubator/rozenite/commit/9f7581e8a1e4d506a93c30876231fbe21147c0de)]:
+  - @rozenite/agent-bridge@2.2.0
+  - @rozenite/ui@2.2.0
+  - @rozenite/plugin-bridge@2.2.0
+  - @rozenite/agent-shared@2.2.0
+
 ## 2.1.0
 
 ### Patch Changes

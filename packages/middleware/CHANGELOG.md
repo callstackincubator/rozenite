@@ -1,5 +1,22 @@
 # @rozenite/middleware
 
+## 2.2.0
+
+### Minor Changes
+
+- [#422](https://github.com/callstackincubator/rozenite/pull/422) [`2d9ad00`](https://github.com/callstackincubator/rozenite/commit/2d9ad00a225663d300bddc7cd4236f3665443bcb) Thanks [@V3RON](https://github.com/V3RON)! - Add a standalone Rozenite app that runs the DevTools panel UI in its own browser window instead of inside React Native DevTools. Run `rozenite open` to pick a connected device and open it. Because panels live outside the DevTools frontend, they stay mounted across a JS-VM reload instead of being torn down and recreated — the app reconnects to the device in the background while your panels keep their state.
+
+  The standalone app is opt-in and connects directly to the device, so it competes with React Native DevTools and `rozenite agent` for the same debugger connection; only one can be attached at a time.
+
+### Patch Changes
+
+- Updated dependencies [[`4f5fe74`](https://github.com/callstackincubator/rozenite/commit/4f5fe747ca0c6e93d0bf05076c7e2e2ad25fd744), [`485df5b`](https://github.com/callstackincubator/rozenite/commit/485df5bf6d5714246bd9ee8f691d52f408214e82), [`2d9ad00`](https://github.com/callstackincubator/rozenite/commit/2d9ad00a225663d300bddc7cd4236f3665443bcb)]:
+  - @rozenite/shell@2.2.0
+  - @rozenite/runtime@2.2.0
+  - @rozenite/app@2.2.0
+  - @rozenite/agent-shared@2.2.0
+  - @rozenite/tools@2.2.0
+
 ## 2.1.0
 
 ### Minor Changes

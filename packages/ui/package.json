@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/ui",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Shared UI foundation and layout primitives for Rozenite DevTools plugin panels",
   "keywords": [
     "design-system",

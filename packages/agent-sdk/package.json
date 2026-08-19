@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/agent-sdk",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Programmatic SDK for Rozenite agent sessions and domain tools",
   "keywords": [
     "agent",

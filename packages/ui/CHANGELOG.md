@@ -1,5 +1,62 @@
 # @rozenite/ui
 
+## 2.2.0
+
+### Minor Changes
+
+- [#425](https://github.com/callstackincubator/rozenite/pull/425) [`8b373d9`](https://github.com/callstackincubator/rozenite/commit/8b373d929f7bb64438bc63e516e8ad31966f61ba) Thanks [@V3RON](https://github.com/V3RON)! - Add `useConfirmDialog()` to `@rozenite/ui`: an imperative alternative to `ConfirmDialog` that resolves a promise with the user's choice instead of driving `open` from local state. `PluginShell` now mounts `Toast` and `ConfirmDialog.Provider` automatically, so plugin panels no longer need to wrap themselves in `<Toast.Provider>` to use `useToast()`.
+
+  Migrate the feature-flags, storage, and React Hook Form DevTools panels to `useConfirmDialog()`, replacing their declarative confirm/alert dialogs.
+
+- [#419](https://github.com/callstackincubator/rozenite/pull/419) [`850e455`](https://github.com/callstackincubator/rozenite/commit/850e45576c41d52e24d6c239ff2947a612406fae) Thanks [@V3RON](https://github.com/V3RON)! - Add tone tokens for `success`, `warning`, and `info`, plus a `--danger` alias for the existing `--destructive` pair. Export the `Tone` and `Size` unions and the `surfaceTone`/`textTone` cva recipes so components can compose consistent tone-aware styling. No existing component's behavior changes.
+
+- [#420](https://github.com/callstackincubator/rozenite/pull/420) [`0565227`](https://github.com/callstackincubator/rozenite/commit/0565227761c0f52df0f7fbf30d0ac5833ccc4039) Thanks [@V3RON](https://github.com/V3RON)! - Add seven new `@rozenite/ui` primitives: `Text`/`Heading` for typography, `Row`/`Column` for flex layout (including the `fill`+`scroll` idiom for scrollable panes), `Icon` for rendering any icon component at a shared size scale plus a curated lucide re-export, `IconButton` for a labelled, tooltip-carrying icon-only button, `Menu` for dropdown actions, `Alert` for tone-aware inline status strips, and `Kbd` for keyboard shortcut hints. All additive — no existing component's behavior changes.
+
+- [#421](https://github.com/callstackincubator/rozenite/pull/421) [`15f31f0`](https://github.com/callstackincubator/rozenite/commit/15f31f0091c0bf3bbf48a192925f57c20efd8951) Thanks [@V3RON](https://github.com/V3RON)! - Add `render` polymorphism (via Base UI's `useRender`) to `Button`, `Badge`, `Link`, `List.Item`, `Card`, `EmptyState`, `PluginHeader.*`, and the Phase 1 primitives (`Text`, `Heading`, `Row`, `Column`, `IconButton`, `Alert`, `Kbd`), so they can render as anything (an anchor, a router link, a custom element) instead of only their default tag.
+
+  Make `Toast` itself callable, matching every other namespace in the package — `Toast.Provider` remains as a deprecated alias. Give `Sidebar.Group`/`Sidebar.Item` their own `data-slot`s instead of aliasing `List.Group`/`List.Item`. Add label override props (`closeLabel`, `clearLabel`, `dismissLabel`, `collapseLabel`/`expandLabel`, `lightLabel`/`darkLabel`) to `Dialog.Content`, `SearchField`, `Toast`, `Card`, and `PluginHeader.ThemeSwitcher` for localization.
+
+  Fix a real bug in `VirtualizedDataTable`: its `className`/`scrollClassName` props previously replaced the component's base styling instead of extending it. Align its accessibility and empty-state copy with `DataTable`, and move it into a name-matched folder.
+
+- [#423](https://github.com/callstackincubator/rozenite/pull/423) [`9f7581e`](https://github.com/callstackincubator/rozenite/commit/9f7581e8a1e4d506a93c30876231fbe21147c0de) Thanks [@V3RON](https://github.com/V3RON)! - Unify the size scale, split tone from emphasis, and remove layout-leakage margins across `@rozenite/ui` components. `@rozenite/ui` is mainly consumed internally by Rozenite's own plugin panels, so the blast radius of these changes is small; released as `minor` rather than `major` on that basis. All `@rozenite/*` packages bump together.
+
+  **Migration table:**
+
+  | Before                                                               | After                                                                                                                                             |
+  | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `Button`'s `adornment` prop                                          | `trailing`                                                                                                                                        |
+  | `List.Item`/`NestedList.Item`/`Sidebar.Item`'s `adornment` prop      | `leading`                                                                                                                                         |
+  | `Button` `size="default"`                                            | `size="md"`                                                                                                                                       |
+  | `Button` `size="compact"`                                            | `size="sm"`                                                                                                                                       |
+  | `Button` `size="icon"`                                               | Use `IconButton` instead                                                                                                                          |
+  | `Button`/`Badge`/`IconButton` `variant="secondary"`                  | `tone="neutral"`                                                                                                                                  |
+  | `Button`/`Badge`/`IconButton` `variant="outline"` / `"ghost"`        | add `tone="neutral"` alongside                                                                                                                    |
+  | `Button`/`Badge`/`IconButton` `variant="destructive"`                | `tone="danger"` (drop `variant`)                                                                                                                  |
+  | `IndicatorDot` `variant="default"` / `"destructive"`                 | `tone="primary"` / `tone="danger"`                                                                                                                |
+  | `ConfirmDialog`'s `destructive` boolean                              | `tone="danger"`                                                                                                                                   |
+  | `--destructive` / `--destructive-foreground` CSS vars                | `--danger` / `--danger-foreground`                                                                                                                |
+  | `text-destructive` / `bg-destructive` / `border-destructive` classes | `text-danger` / `bg-danger` / `border-danger`                                                                                                     |
+  | `PluginHeader.Actions` relying on its own `ml-auto`                  | `PluginHeader` root now uses `justify-between` — group leading content (e.g. `Title` + `Subtitle`) in one wrapper so actions still sit at the end |
+  | `Sidebar` default width (`w-56`)                                     | pass `className="w-56"` (or any width) explicitly                                                                                                 |
+  | `Sidebar.Footer`'s own `mt-auto`                                     | removed — pin it to the bottom via a `flex-1` scrollable middle section (see `Sidebar` stories), or pass `className="mt-auto"` explicitly         |
+  | `Toolbar.Separator`'s own `mx-1`                                     | removed — spacing now comes from `Toolbar`'s `gap-1`                                                                                              |
+
+  **New capability:** `Toast` gains a `viewportClassName` prop to reposition the notification viewport (previously hardcoded to `fixed right-4 bottom-4`).
+
+  **Also fixed:** `Input`, `Textarea`, `Select.Trigger`, `Combobox.Input`, `SearchField`, `Field.Control`, `Toolbar.Button`, `Tabs.List`, `Tabs.Tab`, `List.Item`, `NestedList.Item`, `Sidebar.Item`, and `Badge` now share one `sm | md | lg` size scale, replacing inconsistent hardcoded heights (previously `h-8`/`h-7`/`h-6` mismatches across otherwise-equivalent controls). `List.Item`/`NestedList.Item`/`Sidebar.Item` default to `md` (`h-8`), matching their previous `h-7` more closely than `sm` would. `Toolbar.Button` defaults to `sm` (`h-6`/`text-xs`), down from its previous `h-7`/`text-sm` — square icon-only toolbar buttons should size to `size-6`. `PluginHeader.ThemeSwitcher` shrank from `h-7 w-7` to `h-6 w-6` to match. `Badge` gains the full `Tone` scale (previously had no `danger` tone at all), and its own `sm` size now scales the trigger's icon/padding, not just height. `EmptyState`'s internal spacing is now a uniform `gap-3` between icon/title/description/action, replacing bespoke per-child margins.
+
+  `surfaceTone` (the shared recipe behind `Button`/`Badge`/`IconButton`) only adds hover states when a caller opts in with `interactive: true` — `Button`/`IconButton` do; `Badge`/`Alert` don't, since neither is clickable.
+
+  **Breaking for direct consumers of the exported recipes:** `buttonVariants()` and `badgeVariants()` no longer include color — they cover shape/size only. Color comes from `surfaceTone()`, composed alongside them. A bare `buttonVariants()` call now yields a colorless button.
+
+  **Also additive:** `Button` gains a `size="lg"` step; `IndicatorDot` gains a `size` prop (`sm | md | lg`); `ConfirmDialog` now accepts `className`.
+
+### Patch Changes
+
+- [#417](https://github.com/callstackincubator/rozenite/pull/417) [`db0a792`](https://github.com/callstackincubator/rozenite/commit/db0a79283562dfd889e8e0f478b384ba21cfe5bf) Thanks [@V3RON](https://github.com/V3RON)! - Fix `ScrollArea`'s corner (where the vertical and horizontal scrollbars meet) rendering as an unstyled white square instead of matching the surrounding background. Also style the native `::-webkit-scrollbar-corner` for scrollable elements that don't use `ScrollArea`.
+
+- [#409](https://github.com/callstackincubator/rozenite/pull/409) [`b409250`](https://github.com/callstackincubator/rozenite/commit/b409250480260b793c504d536755a5ba933de4fe) Thanks [@V3RON](https://github.com/V3RON)! - Fix `Toolbar.Button` not visually dimming or disabling hover/pointer interaction when `disabled`. The component only ever set `aria-disabled` (not the native `disabled` attribute or `data-disabled`), so its styles were targeting a selector that never matched.
+
 ## 2.1.0
 
 ### Minor Changes

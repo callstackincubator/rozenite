@@ -1,5 +1,15 @@
 # @rozenite/runtime
 
+## 2.2.0
+
+### Patch Changes
+
+- [#405](https://github.com/callstackincubator/rozenite/pull/405) [`485df5b`](https://github.com/callstackincubator/rozenite/commit/485df5bf6d5714246bd9ee8f691d52f408214e82) Thanks [@V3RON](https://github.com/V3RON)! - Reduce DevTools frontend overhead by skipping `JSON.parse` for binding
+  messages that cannot be for the `rozenite` domain. Rozenite shares its
+  binding with React Native's own React DevTools integration, so every React
+  DevTools bridge message (which can carry full component trees) was
+  previously parsed and discarded on every call.
+
 ## 2.1.0
 
 ### Minor Changes

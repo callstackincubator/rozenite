@@ -1,5 +1,15 @@
 # @rozenite/agent-bridge
 
+## 2.2.0
+
+### Patch Changes
+
+- [#412](https://github.com/callstackincubator/rozenite/pull/412) [`dffeda5`](https://github.com/callstackincubator/rozenite/commit/dffeda53c57f491a303108937d4b4ce68054226f) Thanks [@V3RON](https://github.com/V3RON)! - Fix `@rozenite/agent-bridge` shipping its real implementation (and its `@rozenite/plugin-bridge` RPC dependency) in production Metro bundles. The package now builds with `tsc` instead of bundling through `@rozenite/vite-plugin` (which is meant for devtools plugins with a web panel, not a plain hook library), so the `NODE_ENV`-gated `require()` in its entry point stays untouched and Metro can dead-code-eliminate it in release builds as intended.
+
+- Updated dependencies [[`4f5fe74`](https://github.com/callstackincubator/rozenite/commit/4f5fe747ca0c6e93d0bf05076c7e2e2ad25fd744)]:
+  - @rozenite/plugin-bridge@2.2.0
+  - @rozenite/agent-shared@2.2.0
+
 ## 2.1.0
 
 ### Patch Changes
