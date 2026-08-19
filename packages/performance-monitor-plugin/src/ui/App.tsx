@@ -8,7 +8,7 @@ import {
   Split,
   Toolbar,
 } from '@rozenite/ui';
-import { Activity, Download, Play, Rocket, Square, Trash2, X } from 'lucide-react';
+import { Download, Play, Square, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   PerformanceMonitorEventMap,
@@ -29,9 +29,9 @@ import './globals.css';
 
 type PanelView = 'timeline' | 'startup-insights';
 
-const PANEL_VIEWS: Array<{ id: PanelView; label: string; icon: typeof Activity }> = [
-  { id: 'timeline', label: 'Timeline', icon: Activity },
-  { id: 'startup-insights', label: 'Startup insights', icon: Rocket },
+const PANEL_VIEWS: Array<{ id: PanelView; label: string }> = [
+  { id: 'timeline', label: 'Timeline' },
+  { id: 'startup-insights', label: 'Startup insights' },
 ];
 
 type PerformanceMonitorSession = {
@@ -192,16 +192,6 @@ export default function PerformanceMonitorPanel() {
     }
   };
 
-  // Startup insights pulls its own data: recording is enabled the moment the
-  // user switches into this view (rather than automatically on connect), so
-  // landing on Timeline first doesn't silently start capturing everything.
-  useEffect(() => {
-    if (activeView === 'startup-insights' && client && !isSessionActive) {
-      client.send('setEnabled', { enabled: true });
-      setIsSessionActive(true);
-    }
-  }, [activeView, client, isSessionActive]);
-
   const handleEntryClick = (entry: SerializedPerformanceEntry, entryId?: string) => {
     setSelectedItem(entry);
     setSelectedEntryId(entryId ?? null);
@@ -332,7 +322,6 @@ export default function PerformanceMonitorPanel() {
                   <Sidebar.Item
                     key={view.id}
                     selected={view.id === activeView}
-                    leading={<view.icon />}
                     onClick={() => setActiveView(view.id)}
                   >
                     {view.label}
@@ -385,10 +374,7 @@ export default function PerformanceMonitorPanel() {
                 )}
               </Split>
             ) : (
-              <StartupInsightsView
-                reactNativeMarks={session.reactNativeMarks}
-                isSessionActive={isSessionActive}
-              />
+              <StartupInsightsView reactNativeMarks={session.reactNativeMarks} />
             )}
           </Split.Pane>
         </Split>

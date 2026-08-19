@@ -1,5 +1,4 @@
-import { Column, EmptyState, Row, Text } from '@rozenite/ui';
-import { Rocket } from 'lucide-react';
+import { Column, Row, Text } from '@rozenite/ui';
 import type { SerializedPerformanceReactNativeMark } from '../../shared/types';
 import {
   deriveStartupSummary,
@@ -10,7 +9,6 @@ import { formatDuration } from '../utils';
 
 export type StartupInsightsViewProps = {
   reactNativeMarks: SerializedPerformanceReactNativeMark[];
-  isSessionActive: boolean;
 };
 
 const DurationCell = ({ phase }: { phase: StartupPhase | StartupTotal }) => {
@@ -49,17 +47,12 @@ const PhaseBar = ({
   );
 };
 
-export const StartupInsightsView = ({
-  reactNativeMarks,
-  isSessionActive,
-}: StartupInsightsViewProps) => {
-  if (!isSessionActive && reactNativeMarks.length === 0) {
+export const StartupInsightsView = ({ reactNativeMarks }: StartupInsightsViewProps) => {
+  if (reactNativeMarks.length === 0) {
     return (
-      <EmptyState
-        icon={Rocket}
-        title="No startup data"
-        description="Start a session to see startup insights."
-      />
+      <div className="pt-3 pl-3">
+        <span className="text-sm text-muted-foreground">No startup insights recorded</span>
+      </div>
     );
   }
 
