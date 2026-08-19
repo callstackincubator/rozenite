@@ -1,6 +1,14 @@
 import { useRozeniteDevToolsClient, Subscription } from '@rozenite/plugin-bridge';
-import { IconButton, PluginShell, SearchField, Select, Toolbar } from '@rozenite/ui';
-import { Download, Play, Square, Trash2, X } from 'lucide-react';
+import {
+  IconButton,
+  PluginShell,
+  SearchField,
+  Select,
+  Sidebar,
+  Split,
+  Toolbar,
+} from '@rozenite/ui';
+import { Activity, Download, Play, Rocket, Square, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   PerformanceMonitorEventMap,
@@ -13,10 +21,18 @@ import {
 } from '../shared/types';
 import { DetailPane } from './components/DetailPane';
 import { ExportDialog } from './components/ExportDialog';
+import { StartupInsightsView } from './components/StartupInsightsView';
 import { WaterfallView } from './components/WaterfallView';
 import { deriveStartupPhases } from './derive-startup-phases';
 import { ENTRY_TYPE_OPTIONS, type EntryTypeFilter } from './entry-types';
 import './globals.css';
+
+type PanelView = 'timeline' | 'startup-insights';
+
+const PANEL_VIEWS: Array<{ id: PanelView; label: string; icon: typeof Activity }> = [
+  { id: 'timeline', label: 'Timeline', icon: Activity },
+  { id: 'startup-insights', label: 'Startup insights', icon: Rocket },
+];
 
 type PerformanceMonitorSession = {
   sessionStartedAt: number;
@@ -51,6 +67,7 @@ export default function PerformanceMonitorPanel() {
   const [entryTypeFilter, setEntryTypeFilter] = useState<EntryTypeFilter>('all');
   const [search, setSearch] = useState('');
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [activeView, setActiveView] = useState<PanelView>('timeline');
 
   useEffect(() => {
     if (!client) {
@@ -146,6 +163,14 @@ export default function PerformanceMonitorPanel() {
         }));
       }),
     );
+
+    // Recording starts automatically on connect: startup marks (native
+    // launch, JS bundle load, initial mount) fire early, often before a user
+    // could react and click Start, but the native side buffers them and
+    // replays on enable — so auto-enabling here is enough to surface Startup
+    // insights immediately instead of requiring a manual toggle first.
+    client.send('setEnabled', { enabled: true });
+    setIsSessionActive(true);
 
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
@@ -297,41 +322,74 @@ export default function PerformanceMonitorPanel() {
           </Toolbar.Group>
         </Toolbar>
 
-        <div className="flex min-h-0 flex-1">
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <WaterfallView
-              entries={filteredEntries}
-              selectedEntry={selectedItem}
-              selectedEntryId={selectedEntryId}
-              onEntrySelect={handleEntryClick}
-            />
-          </div>
+        <Split direction="horizontal" autoSaveId="performance-monitor" className="min-h-0 flex-1">
+          <Split.Pane defaultSize={16} minSize={12} maxSize={28}>
+            <Sidebar className="w-full border-r-0">
+              <Sidebar.Group>
+                {PANEL_VIEWS.map((view) => (
+                  <Sidebar.Item
+                    key={view.id}
+                    selected={view.id === activeView}
+                    leading={<view.icon />}
+                    onClick={() => setActiveView(view.id)}
+                  >
+                    {view.label}
+                  </Sidebar.Item>
+                ))}
+              </Sidebar.Group>
+            </Sidebar>
+          </Split.Pane>
+          <Split.Handle />
+          <Split.Pane>
+            {activeView === 'timeline' ? (
+              <Split direction="horizontal" autoSaveId="performance-monitor-timeline">
+                <Split.Pane>
+                  <WaterfallView
+                    entries={filteredEntries}
+                    selectedEntry={selectedItem}
+                    selectedEntryId={selectedEntryId}
+                    onEntrySelect={handleEntryClick}
+                  />
+                </Split.Pane>
 
-          {selectedItem && (
-            <div className="flex w-[360px] shrink-0 flex-col border-l border-border bg-card">
-              <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
-                <span
-                  className="truncate text-sm font-medium text-foreground"
-                  title={selectedItem.name}
-                >
-                  {selectedItem.name}
-                </span>
-                <IconButton
-                  label="Close details"
-                  tone="neutral"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCloseDetail}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </IconButton>
-              </div>
-              <div className="min-h-0 flex-1">
-                <DetailPane entry={selectedItem} />
-              </div>
-            </div>
-          )}
-        </div>
+                {selectedItem && (
+                  <>
+                    <Split.Handle />
+                    <Split.Pane defaultSize={30} minSize={20} maxSize={50}>
+                      <div className="flex h-full min-h-0 flex-col border-l border-border bg-card">
+                        <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
+                          <span
+                            className="truncate text-sm font-medium text-foreground"
+                            title={selectedItem.name}
+                          >
+                            {selectedItem.name}
+                          </span>
+                          <IconButton
+                            label="Close details"
+                            tone="neutral"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCloseDetail}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </IconButton>
+                        </div>
+                        <div className="min-h-0 flex-1">
+                          <DetailPane entry={selectedItem} />
+                        </div>
+                      </div>
+                    </Split.Pane>
+                  </>
+                )}
+              </Split>
+            ) : (
+              <StartupInsightsView
+                reactNativeMarks={session.reactNativeMarks}
+                isSessionActive={isSessionActive}
+              />
+            )}
+          </Split.Pane>
+        </Split>
       </PluginShell.Body>
 
       <ExportDialog

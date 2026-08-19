@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Dialog, List, Switch } from '@rozenite/ui';
+import { Button, Dialog, List, Switch, useToast } from '@rozenite/ui';
 import type {
   SerializedPerformanceMark,
   SerializedPerformanceMeasure,
@@ -56,6 +56,7 @@ export const ExportDialog = ({
   clockShift,
 }: ExportDialogProps) => {
   const [exportOptions, setExportOptions] = useState<ExportOptions>(ALL_OPTIONS_ON);
+  const toast = useToast();
 
   const handleExport = async () => {
     const exportData: Record<string, unknown> = {
@@ -77,8 +78,20 @@ export const ExportDialog = ({
     if (exportOptions.reactNativeMarks) exportData.reactNativeMarks = reactNativeMarks;
     if (exportOptions.resources) exportData.resources = resources;
 
-    await downloadFile(exportData, 'performance-data.json');
-    onOpenChange(false);
+    try {
+      await downloadFile(exportData, 'performance-data.json');
+      onOpenChange(false);
+      toast.add({
+        title: 'Performance data exported',
+        type: 'success',
+      });
+    } catch (error) {
+      toast.add({
+        title: 'Could not export performance data',
+        description: error instanceof Error ? error.message : String(error),
+        type: 'error',
+      });
+    }
   };
 
   const toggle = (key: ExportOptionKey) =>
