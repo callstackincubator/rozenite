@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } f
 import type { ColumnDef } from '@tanstack/react-table';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
-  ConfirmDialog,
   EmptyState,
   IconButton,
   PluginShell,
@@ -10,6 +9,7 @@ import {
   Split,
   Toolbar,
   VirtualizedDataTable,
+  useConfirmDialog,
   useCopyToClipboard,
 } from '@rozenite/ui';
 import {
@@ -37,8 +37,6 @@ import { PathLabel } from './ui/PathLabel';
 import { downloadBase64File, formatBytes, formatDate, readFileAsBase64 } from './utils';
 import './ui/globals.css';
 
-type PendingOverwrite = { file: File; base64: string };
-
 function getEntryIcon(entry: FsEntry) {
   if (entry.isDirectory) return Folder;
   if (isLikelyImageFile(entry.path)) return ImageIcon;
@@ -59,9 +57,9 @@ function FileSystemPanelContent() {
   const [importLoading, setImportLoading] = useState(false);
   const [exportingPaths, setExportingPaths] = useState<Set<string>>(new Set());
   const [transferError, setTransferError] = useState<string | null>(null);
-  const [pendingOverwrite, setPendingOverwrite] = useState<PendingOverwrite | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { copy: copyPath, copied: pathCopied } = useCopyToClipboard();
+  const confirm = useConfirmDialog();
 
   // Clear selection when the directory changes (preserves original loadDir behavior).
   useEffect(() => {
@@ -77,7 +75,6 @@ function FileSystemPanelContent() {
       setImportLoading(false);
       setExportingPaths(new Set());
       setTransferError(null);
-      setPendingOverwrite(null);
     });
     return () => {
       subscription.remove();
@@ -114,18 +111,29 @@ function FileSystemPanelContent() {
   const importSelectedFile = useCallback(
     async (file: File) => {
       if (!nav.currentPath) return;
+      // Pinned for the whole flow: the overwrite confirmation below is
+      // awaited, and the user can navigate elsewhere while it's open.
+      const directoryPath = nav.currentPath;
 
       setTransferError(null);
       setImportLoading(true);
 
       try {
         const base64 = await readFileAsBase64(file);
-        const res = await requests.requestImportFile(nav.currentPath, file.name, base64, false);
+        let res = await requests.requestImportFile(directoryPath, file.name, base64, false);
         if (!res) return;
 
         if (res.overwriteRequired) {
-          setPendingOverwrite({ file, base64 });
-          return;
+          const confirmed = await confirm({
+            title: 'Overwrite file?',
+            description: `"${file.name}" already exists in this folder. Overwrite it?`,
+            confirmLabel: 'Overwrite',
+            tone: 'danger',
+          });
+          if (!confirmed) return;
+
+          res = await requests.requestImportFile(directoryPath, file.name, base64, true);
+          if (!res) return;
         }
 
         if (res.error) {
@@ -134,7 +142,7 @@ function FileSystemPanelContent() {
         }
 
         nav.onReload();
-        tree.invalidate(nav.currentPath);
+        tree.invalidate(directoryPath);
         if (res.entry) {
           setSelected(res.entry);
         }
@@ -144,36 +152,8 @@ function FileSystemPanelContent() {
         setImportLoading(false);
       }
     },
-    [nav, requests.requestImportFile, tree],
+    [confirm, nav, requests.requestImportFile, tree],
   );
-
-  const confirmOverwrite = useCallback(async () => {
-    if (!pendingOverwrite || !nav.currentPath) return;
-    const { file, base64 } = pendingOverwrite;
-    setPendingOverwrite(null);
-    setTransferError(null);
-    setImportLoading(true);
-
-    try {
-      const res = await requests.requestImportFile(nav.currentPath, file.name, base64, true);
-      if (!res) return;
-
-      if (res.error) {
-        setTransferError(res.error);
-        return;
-      }
-
-      nav.onReload();
-      tree.invalidate(nav.currentPath);
-      if (res.entry) {
-        setSelected(res.entry);
-      }
-    } catch (e) {
-      setTransferError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setImportLoading(false);
-    }
-  }, [pendingOverwrite, nav, requests.requestImportFile, tree]);
 
   const canImport = Boolean(nav.fileTransfer.import && nav.currentPath && !importLoading);
 
@@ -293,153 +273,138 @@ function FileSystemPanelContent() {
 
   if (!client) {
     return (
-      <PluginShell>
-        <PluginShell.Body>
-          <EmptyState
-            icon={HardDrive}
-            title="Connecting to device…"
-            description="Waiting for the app to report its file system."
-          />
-        </PluginShell.Body>
-      </PluginShell>
+      <PluginShell.Body>
+        <EmptyState
+          icon={HardDrive}
+          title="Connecting to device…"
+          description="Waiting for the app to report its file system."
+        />
+      </PluginShell.Body>
     );
   }
 
   return (
-    <PluginShell>
-      <PluginShell.Body>
-        {nav.roots.length === 0 ? (
-          <EmptyState
-            icon={FolderX}
-            title="No file system roots"
-            description={nav.error ?? 'Waiting for the app to report its file system roots.'}
-          />
-        ) : (
-          <Split direction="horizontal" autoSaveId="file-system">
-            <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
-              <Sidebar className="w-full border-r-0">
-                <FileTree
-                  roots={nav.roots}
-                  activePath={nav.currentPath}
-                  tree={tree}
-                  onSelectDir={onSelectTreeDir}
-                />
-              </Sidebar>
-            </Split.Pane>
-            <Split.Handle />
-            <Split.Pane defaultSize={48} minSize={25}>
-              <div className="flex h-full min-h-0 flex-col">
-                <Toolbar>
-                  <Toolbar.Group>
-                    <Toolbar.Button
-                      onClick={onReload}
-                      disabled={!nav.currentPath || nav.loading}
-                      aria-label="Reload directory"
-                      title="Reload directory"
-                      className="size-6 px-0"
-                    >
-                      <RefreshCw className="h-3.5 w-3.5" />
-                    </Toolbar.Button>
-                  </Toolbar.Group>
-                  <Toolbar.Separator />
-                  {nav.currentPath ? (
-                    <PathLabel path={nav.currentPath} />
-                  ) : (
-                    <span className="min-w-0 flex-1 px-1 font-mono text-xs text-muted-foreground">
-                      —
-                    </span>
-                  )}
+    <PluginShell.Body>
+      {nav.roots.length === 0 ? (
+        <EmptyState
+          icon={FolderX}
+          title="No file system roots"
+          description={nav.error ?? 'Waiting for the app to report its file system roots.'}
+        />
+      ) : (
+        <Split direction="horizontal" autoSaveId="file-system">
+          <Split.Pane defaultSize={22} minSize={15} maxSize={40}>
+            <Sidebar className="w-full border-r-0">
+              <FileTree
+                roots={nav.roots}
+                activePath={nav.currentPath}
+                tree={tree}
+                onSelectDir={onSelectTreeDir}
+              />
+            </Sidebar>
+          </Split.Pane>
+          <Split.Handle />
+          <Split.Pane defaultSize={48} minSize={25}>
+            <div className="flex h-full min-h-0 flex-col">
+              <Toolbar>
+                <Toolbar.Group>
                   <Toolbar.Button
-                    onClick={() => void copyPath(nav.currentPath)}
-                    disabled={!nav.currentPath}
-                    aria-label={pathCopied ? 'Path copied' : 'Copy path'}
-                    title={pathCopied ? 'Copied!' : 'Copy path'}
+                    onClick={onReload}
+                    disabled={!nav.currentPath || nav.loading}
+                    aria-label="Reload directory"
+                    title="Reload directory"
                     className="size-6 px-0"
                   >
-                    {pathCopied ? (
-                      <Check className="h-3.5 w-3.5" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
+                    <RefreshCw className="h-3.5 w-3.5" />
                   </Toolbar.Button>
-                  <Toolbar.Separator />
-                  <Toolbar.Group>
-                    <Toolbar.Button
-                      onClick={onImportClick}
-                      disabled={!canImport}
-                      aria-label={importLoading ? 'Importing file' : 'Import file'}
-                      title={importLoading ? 'Importing file' : 'Import file'}
-                      className="size-6 px-0"
-                    >
-                      <Upload className="h-3.5 w-3.5" />
-                    </Toolbar.Button>
-                  </Toolbar.Group>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    onChange={onFileInputChange}
-                  />
-                </Toolbar>
-                {nav.error || transferError ? (
-                  <p role="alert" className="border-b border-border px-3 py-2 text-xs text-danger">
-                    {nav.error ?? transferError}
-                  </p>
-                ) : null}
-                <div className="min-h-0 flex-1 overflow-auto">
-                  <VirtualizedDataTable
-                    ariaLabel="Directory entries"
-                    columns={columns}
-                    data={nav.entries}
-                    getRowId={(entry) => entry.path}
-                    getRowTextValue={(entry) => entry.name}
-                    loading={nav.loading}
-                    emptyMessage="This directory is empty."
-                    onRowClick={onSelectEntry}
-                    scrollClassName="h-full w-full overflow-auto"
-                    style={{ height: '100%' }}
-                  />
-                </div>
+                </Toolbar.Group>
+                <Toolbar.Separator />
+                {nav.currentPath ? (
+                  <PathLabel path={nav.currentPath} />
+                ) : (
+                  <span className="min-w-0 flex-1 px-1 font-mono text-xs text-muted-foreground">
+                    —
+                  </span>
+                )}
+                <Toolbar.Button
+                  onClick={() => void copyPath(nav.currentPath)}
+                  disabled={!nav.currentPath}
+                  aria-label={pathCopied ? 'Path copied' : 'Copy path'}
+                  title={pathCopied ? 'Copied!' : 'Copy path'}
+                  className="size-6 px-0"
+                >
+                  {pathCopied ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                </Toolbar.Button>
+                <Toolbar.Separator />
+                <Toolbar.Group>
+                  <Toolbar.Button
+                    onClick={onImportClick}
+                    disabled={!canImport}
+                    aria-label={importLoading ? 'Importing file' : 'Import file'}
+                    title={importLoading ? 'Importing file' : 'Import file'}
+                    className="size-6 px-0"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                  </Toolbar.Button>
+                </Toolbar.Group>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={onFileInputChange}
+                />
+              </Toolbar>
+              {nav.error || transferError ? (
+                <p role="alert" className="border-b border-border px-3 py-2 text-xs text-danger">
+                  {nav.error ?? transferError}
+                </p>
+              ) : null}
+              <div className="min-h-0 flex-1 overflow-auto">
+                <VirtualizedDataTable
+                  ariaLabel="Directory entries"
+                  columns={columns}
+                  data={nav.entries}
+                  getRowId={(entry) => entry.path}
+                  getRowTextValue={(entry) => entry.name}
+                  loading={nav.loading}
+                  emptyMessage="This directory is empty."
+                  onRowClick={onSelectEntry}
+                  scrollClassName="h-full w-full overflow-auto"
+                  style={{ height: '100%' }}
+                />
               </div>
-            </Split.Pane>
-            {selected ? (
-              <>
-                <Split.Handle />
-                <Split.Pane defaultSize={30} minSize={20} maxSize={50}>
-                  <DetailPane
-                    selected={selected}
-                    canExport={!selected.isDirectory && nav.fileTransfer.export}
-                    exporting={exportingPaths.has(selected.path)}
-                    requestImagePreview={requests.requestImagePreview}
-                    requestTextPreview={requests.requestTextPreview}
-                    onExport={onExport}
-                    onClose={() => setSelected(null)}
-                  />
-                </Split.Pane>
-              </>
-            ) : null}
-          </Split>
-        )}
-      </PluginShell.Body>
-      <ConfirmDialog
-        open={pendingOverwrite !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingOverwrite(null);
-        }}
-        variant="confirm"
-        title="Overwrite file?"
-        description={
-          pendingOverwrite
-            ? `"${pendingOverwrite.file.name}" already exists in this folder. Overwrite it?`
-            : undefined
-        }
-        confirmLabel="Overwrite"
-        onConfirm={() => void confirmOverwrite()}
-      />
-    </PluginShell>
+            </div>
+          </Split.Pane>
+          {selected ? (
+            <>
+              <Split.Handle />
+              <Split.Pane defaultSize={30} minSize={20} maxSize={50}>
+                <DetailPane
+                  selected={selected}
+                  canExport={!selected.isDirectory && nav.fileTransfer.export}
+                  exporting={exportingPaths.has(selected.path)}
+                  requestImagePreview={requests.requestImagePreview}
+                  requestTextPreview={requests.requestTextPreview}
+                  onExport={onExport}
+                  onClose={() => setSelected(null)}
+                />
+              </Split.Pane>
+            </>
+          ) : null}
+        </Split>
+      )}
+    </PluginShell.Body>
   );
 }
 
 export default function FileSystemPanel() {
-  return <FileSystemPanelContent />;
+  return (
+    <PluginShell>
+      <FileSystemPanelContent />
+    </PluginShell>
+  );
 }
