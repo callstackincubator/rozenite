@@ -5,6 +5,7 @@
   { "type": "file", "name": "compatibility", "label": "Compatibility" },
   { "type": "dir", "name": "agent", "label": "Rozenite for Agents" },
   { "type": "file", "name": "rozenite-for-web", "label": "Rozenite for Web" },
+  { "type": "file", "name": "standalone-app", "label": "Standalone App" },
   {
     "type": "dir",
     "name": "plugin-development",

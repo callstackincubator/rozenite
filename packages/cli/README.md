@@ -122,6 +122,34 @@ rozenite dev
 rozenite dev ./my-plugin
 ```
 
+### `rozenite open`
+
+Open the standalone Rozenite DevTools app in its own Electron window for a
+device connected to Metro (falling back to your default browser if
+Electron isn't available). Unlike the embedded DevTools panel, this app
+keeps installed plugin panels mounted across a JS-VM reload. This command
+is **interactive only** — it prompts you to pick a device, so it cannot be
+run in CI or a non-interactive shell.
+
+**Options:**
+
+- `--host <host>` - Metro host (defaults to `127.0.0.1`)
+- `--port <port>` - Metro port (defaults to `8081`)
+- `--deviceId <id>` - Target device ID; skips the interactive picker
+
+**Examples:**
+
+```bash
+# Pick a device interactively
+rozenite open
+
+# Open a specific device without the picker
+rozenite open --deviceId <id>
+
+# Point at a Metro server on a non-default host/port
+rozenite open --host 192.168.1.10 --port 8082
+```
+
 ## Plugin Structure
 
 When you generate a new plugin, the CLI creates the following structure:

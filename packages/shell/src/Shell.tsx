@@ -22,12 +22,13 @@ import {
   type SelectionState,
 } from './selection';
 import { NewVersionFooter } from './NewVersionFooter';
+import { PluginFrame } from './PluginFrame';
 import { WelcomeDialog } from './WelcomeDialog';
 import { getAvailableRuntimeVersion } from './new-version';
 import { PluginsScreen } from './plugins/PluginsScreen';
 import { useOutdatedPlugins } from './plugins/use-outdated-plugins';
 import { getVersionOverridesRevision, subscribeToVersionOverrides } from './npm/registry';
-import type { ShellConfiguration, ShellPanel, ShellPlugin } from './types';
+import type { ShellPanel, ShellPlugin, ShellProps } from './types';
 import { getDevToolsMessage } from '@rozenite/plugin-bridge';
 
 const SHELL_CONFIGURATION_TYPE = 'rozenite-shell-configuration';
@@ -36,7 +37,17 @@ const COLLAPSED_SIDEBAR_WIDTH = 48;
 const EXPANDED_SIDEBAR_WIDTH = 224;
 const SIDEBAR_SNAP_POINT = (COLLAPSED_SIDEBAR_WIDTH + EXPANDED_SIDEBAR_WIDTH) / 2;
 
-export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: ShellConfiguration) {
+// Consumers must pass a stable `host` reference (a module-level constant or
+// a memoised value) — the forwarding effect below resubscribes from `host`
+// whenever the reference changes.
+export function Shell({
+  plugins,
+  destroyOnDetachPlugins,
+  runtimeVersion,
+  host,
+  className,
+  sidebarHeaderClassName,
+}: ShellProps) {
   const [selectionState, setSelectionState] = useState<SelectionState>(() =>
     getInitialSelectionState(plugins),
   );
@@ -77,35 +88,39 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   }, [runtimeVersion, overridesRevision]);
 
   useEffect(() => {
-    const forwardToPanels = (event: MessageEvent) => {
-      if (event.source === window.parent) {
-        // Messages that identify a target plugin only need to reach that
-        // plugin's frame(s); everything else (e.g. shell configuration)
-        // keeps being broadcast to every mounted panel, as before.
-        const routedPluginId = getDevToolsMessage(event.data)?.pluginId ?? null;
-
-        for (const { frame, pluginId } of contentFrames.current.values()) {
-          if (routedPluginId !== null && pluginId !== routedPluginId) {
-            continue;
-          }
-
-          frame.contentWindow?.postMessage(event.data, '*');
-        }
-        return;
-      }
-
+    const forwardToHost = (event: MessageEvent) => {
       if (
         [...contentFrames.current.values()].some(
           ({ frame }) => event.source === frame.contentWindow,
         )
       ) {
-        window.parent.postMessage(event.data, '*');
+        host.send(event.data);
       }
     };
 
-    window.addEventListener('message', forwardToPanels);
-    return () => window.removeEventListener('message', forwardToPanels);
-  }, []);
+    const forwardToPanels = (message: unknown) => {
+      // Messages that identify a target plugin only need to reach that
+      // plugin's frame(s); everything else (e.g. shell configuration)
+      // keeps being broadcast to every mounted panel, as before.
+      const routedPluginId = getDevToolsMessage(message)?.pluginId ?? null;
+
+      for (const { frame, pluginId } of contentFrames.current.values()) {
+        if (routedPluginId !== null && pluginId !== routedPluginId) {
+          continue;
+        }
+
+        frame.contentWindow?.postMessage(message, '*');
+      }
+    };
+
+    window.addEventListener('message', forwardToHost);
+    const unsubscribe = host.onMessage(forwardToPanels);
+
+    return () => {
+      window.removeEventListener('message', forwardToHost);
+      unsubscribe();
+    };
+  }, [host]);
 
   const isPluginsScreenOpen = selectionState.selection?.kind === 'plugins';
   const panelSelection =
@@ -155,7 +170,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
 
   if (!hasPlugins) {
     return (
-      <PluginShell>
+      <PluginShell className={className}>
         <WelcomeDialog runtimeVersion={runtimeVersion} />
         <PluginShell.Body className="items-center justify-center">
           <EmptyState
@@ -174,7 +189,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
   const hasNotice = outdated.size > 0 || runtimeUpdate !== null;
 
   return (
-    <PluginShell>
+    <PluginShell className={className}>
       <WelcomeDialog runtimeVersion={runtimeVersion} />
       <PluginShell.Body className="flex-row overflow-hidden">
         <Split
@@ -196,7 +211,7 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
               aria-label="Rozenite panels"
               className="h-full w-full gap-0 overflow-hidden border-r-0 p-0"
             >
-              <Sidebar.Header>
+              <Sidebar.Header className={sidebarHeaderClassName}>
                 {isSidebarCollapsed ? (
                   <img src={compactLogo} alt="Rozenite" className="h-6 w-6" />
                 ) : (
@@ -282,8 +297,11 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
             <div className="relative h-full min-w-0">
               {/* Panel iframes stay mounted while the Plugins screen is open;
                   it only covers this area visually so plugin state survives
-                  a visit. */}
-              <div className={cn('h-full min-w-0', isPluginsScreenOpen && 'hidden')}>
+                  a visit. `relative` anchors the panels, which stack on top
+                  of each other rather than sitting in flow — see
+                  `PluginFrame` for why they can't be hidden with
+                  `display: none`. */}
+              <div className={cn('relative h-full min-w-0', isPluginsScreenOpen && 'hidden')}>
                 {panels.map(({ plugin, panel }) => {
                   const isActive = panel.id === activePanel?.id;
                   const isRetained = panel.id === retainedPanelId;
@@ -294,18 +312,18 @@ export function Shell({ plugins, destroyOnDetachPlugins, runtimeVersion }: Shell
                   }
 
                   return (
-                    <iframe
+                    <PluginFrame
                       key={panel.id}
-                      ref={(frame) => {
+                      plugin={plugin}
+                      panel={panel}
+                      isActive={isActive}
+                      frameRef={(frame) => {
                         if (frame) {
                           contentFrames.current.set(panel.id, { frame, pluginId: plugin.id });
                         } else {
                           contentFrames.current.delete(panel.id);
                         }
                       }}
-                      hidden={!isActive}
-                      title={`${plugin.name}: ${panel.name}`}
-                      src={panel.source}
                     />
                   );
                 })}

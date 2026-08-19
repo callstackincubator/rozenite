@@ -1,8 +1,8 @@
 ---
-'@rozenite/ui': major
+'@rozenite/ui': minor
 ---
 
-Unify the size scale, split tone from emphasis, and remove layout-leakage margins across `@rozenite/ui` components. All `@rozenite/*` packages bump together since this is a breaking release.
+Unify the size scale, split tone from emphasis, and remove layout-leakage margins across `@rozenite/ui` components. `@rozenite/ui` is mainly consumed internally by Rozenite's own plugin panels, so the blast radius of these changes is small; released as `minor` rather than `major` on that basis. All `@rozenite/*` packages bump together.
 
 **Migration table:**
 

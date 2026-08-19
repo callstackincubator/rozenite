@@ -19,9 +19,20 @@
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
   ],
   "type": "module",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css",
+    "./testing": "./src/testing/host-conformance.ts"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -46,6 +57,14 @@
     "typescript": "~5.9.3",
     "vite": "catalog:",
     "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "vitest": "^4.0.18"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=20"
