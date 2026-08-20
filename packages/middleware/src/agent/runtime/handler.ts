@@ -9,7 +9,7 @@ import type {
   ToolResultPayload,
 } from './types.js';
 import { createConsoleLogStore } from './console/store.js';
-import type { ConsoleMessageInput, ConsoleLogEntry } from './console/types.js';
+import type { ConsoleMessageInput, ConsoleLogRow } from './console/types.js';
 
 /**
  * Ties a tool's declared pagination `fields`/`defaultFields` to the keys of
@@ -81,12 +81,22 @@ const CONSOLE_TOOLS: AgentTool[] = [
           type: 'number',
           description: 'Optional minimum timestamp in milliseconds.',
         },
+        before: {
+          type: 'string',
+          description:
+            'Anchor cursor from an item\'s "cursor" field. Returns only entries older than it, so pairing it with order "desc" reads the entries leading up to that item.',
+        },
+        after: {
+          type: 'string',
+          description:
+            'Anchor cursor from an item\'s "cursor" field. Returns only entries newer than it, so pairing it with order "asc" reads the entries that followed it.',
+        },
       },
     },
-    pagination: cursorPagination<ConsoleLogEntry>({
-      fields: ['seq', 'timestamp', 'level', 'source', 'text', 'argsPreview', 'context'],
-      // Drop the two heaviest columns from the default projection; they
-      // remain available via --fields/--verbose.
+    pagination: cursorPagination<ConsoleLogRow>({
+      fields: ['seq', 'timestamp', 'level', 'source', 'text', 'context', 'cursor'],
+      // Drop the heaviest column from the default projection; it remains
+      // available via --fields/--verbose.
       defaultFields: ['seq', 'timestamp', 'level', 'source', 'text'],
     }),
   },

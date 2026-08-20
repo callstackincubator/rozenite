@@ -1,34 +1,30 @@
-import { decodeCursor, encodeCursor, hashFilters, validateCursorContext } from './cursor.js';
+import { decodeCursor, encodeCursor } from './cursor.js';
 import { normalizePageLimit } from './limits.js';
-import type { CursorPayload, PageOrder, PageResult, PaginatedSource } from './types.js';
+import type { PageOrder, PageResult, PaginatedSource } from './types.js';
 
-export const paginateSource = <TCheckpoint extends string | number, TItem, TFilters>(
-  source: PaginatedSource<TCheckpoint, TItem, TFilters>,
+export const paginateSource = <TItem, TFilters>(
+  source: PaginatedSource<number, TItem, TFilters>,
   input: {
-    tool: string;
-    deviceId: string;
     request: {
       limit?: unknown;
       cursor?: unknown;
       order?: unknown;
       filters: TFilters;
+      /**
+       * Where to start when no cursor is supplied, so a range bounded by an
+       * anchor seeks straight to it instead of scanning from the edge. Ignored
+       * once the caller is paging, since the cursor then owns the position.
+       */
+      seedCheckpoint?: number;
     };
   },
 ): PageResult<TItem> => {
   const limit = normalizePageLimit(input.request.limit);
   const order: PageOrder = input.request.order === 'asc' ? 'asc' : 'desc';
-  const filtersHash = hashFilters(input.request.filters);
 
-  let checkpoint: TCheckpoint | undefined;
+  let checkpoint: number | undefined = input.request.seedCheckpoint;
   if (typeof input.request.cursor === 'string' && input.request.cursor.trim().length > 0) {
-    const payload = decodeCursor<TCheckpoint>(input.request.cursor);
-    validateCursorContext(payload as CursorPayload<unknown>, {
-      tool: input.tool,
-      deviceId: input.deviceId,
-      filtersHash,
-      order,
-    });
-    checkpoint = payload.position;
+    checkpoint = decodeCursor(input.request.cursor);
   }
 
   let result = source.listFrom({
@@ -51,14 +47,7 @@ export const paginateSource = <TCheckpoint extends string | number, TItem, TFilt
 
   const nextCursor =
     result.hasMore && result.nextCheckpoint !== undefined
-      ? encodeCursor<TCheckpoint>({
-          v: 1,
-          tool: input.tool,
-          deviceId: input.deviceId,
-          position: result.nextCheckpoint,
-          filtersHash,
-          order,
-        })
+      ? encodeCursor(result.nextCheckpoint)
       : undefined;
 
   return {
