@@ -12,7 +12,7 @@
     "web:webpack": "webpack serve --config webpack.config.js --mode development",
     "web:webpack:build": "webpack --config webpack.config.js --mode production",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "lint": "expo lint"
+    "lint": "expo lint --no-cache"
   },
   "dependencies": {
     "@dr.pogodin/react-native-fs": "^2.36.2",
