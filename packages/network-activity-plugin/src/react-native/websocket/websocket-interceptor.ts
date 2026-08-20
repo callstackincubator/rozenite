@@ -99,10 +99,7 @@ export const getWebSocketInterceptor = (): WebSocketInterceptor => {
       eventEmitter.addListener(
         'websocketMessage',
         (ev: { type?: 'binary' | 'text'; data: string; id: number }) => {
-          onMessageCallback?.(
-            ev.type === 'binary' ? arrayBufferToString(ev.data) : ev.data,
-            ev.id,
-          );
+          onMessageCallback?.(ev.type === 'binary' ? arrayBufferToString(ev.data) : ev.data, ev.id);
         },
       ),
       eventEmitter.addListener('websocketOpen', (ev: { id: number }) => {
