@@ -12,13 +12,7 @@
 
 import type { FuseboxDomain } from './types.js';
 
-type JSONValue =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: JSONValue }
-  | JSONValue[];
+type JSONValue = string | number | boolean | null | { [key: string]: JSONValue } | JSONValue[];
 type DomainName = 'react-devtools';
 
 class EventScope<T> {
@@ -45,9 +39,7 @@ class Domain implements FuseboxDomain {
   onMessage: EventScope<JSONValue>;
 
   constructor(name: DomainName) {
-    if (
-      (global as Record<string, unknown>)[FuseboxReactDevToolsDispatcher.BINDING_NAME] == null
-    ) {
+    if ((global as Record<string, unknown>)[FuseboxReactDevToolsDispatcher.BINDING_NAME] == null) {
       throw new Error(`Could not create domain ${name}: receiving end doesn't exist`);
     }
 
@@ -60,9 +52,9 @@ class Domain implements FuseboxDomain {
     const serializedMessageWithDomain = JSON.stringify(messageWithDomain);
 
     (
-      (global as Record<string, unknown>)[
-        FuseboxReactDevToolsDispatcher.BINDING_NAME
-      ] as (message: string) => void
+      (global as Record<string, unknown>)[FuseboxReactDevToolsDispatcher.BINDING_NAME] as (
+        message: string,
+      ) => void
     )(serializedMessageWithDomain);
   }
 }

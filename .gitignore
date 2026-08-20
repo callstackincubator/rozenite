@@ -129,3 +129,7 @@ yarn-error.log
 
 # Vercel
 .vercel
+
+# Claude Code local state (shared config under .claude/ is intentionally tracked)
+.claude/settings.local.json
+.claude/worktrees/
