@@ -39,6 +39,7 @@
     "expo-atlas": "^0.4.0"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "@rozenite/tools": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
     "@types/connect": "^3.4.38",

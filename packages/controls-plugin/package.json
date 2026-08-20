@@ -45,6 +45,7 @@
     "@rozenite/ui": "workspace:*"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

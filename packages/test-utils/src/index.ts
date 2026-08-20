@@ -1,0 +1,20 @@
+export { bundleForRelease } from './metro/bundle-for-release.js';
+export type {
+  BundleForReleaseOptions,
+  ConfigureMetroResult,
+  MetroConfig,
+  MetroProjectType,
+  ReleaseBundle,
+} from './metro/bundle-for-release.js';
+export {
+  isRozeniteModule,
+  getRozeniteModules,
+  isPanelModule,
+  getPanelModules,
+} from './metro/rozenite-modules.js';
+
+/**
+ * A cold Metro release build takes a few seconds; give suites using
+ * {@link bundleForRelease} a timeout that survives a loaded CI runner.
+ */
+export const RELEASE_BUNDLE_TIMEOUT = 120_000;
