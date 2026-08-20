@@ -21,7 +21,7 @@ type Handlers = {
   onEnd: () => void;
 };
 
-describe('rozenite tap', () => {
+describe('rozenite agent tap', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
@@ -82,7 +82,10 @@ describe('rozenite tap', () => {
       return { close: vi.fn() };
     });
 
-    const done = runTapCommand({ ...baseOptions, plugin: '@acme/sqlite-plugin' });
+    const done = runTapCommand({
+      ...baseOptions,
+      plugin: '@acme/sqlite-plugin',
+    });
     await vi.waitFor(() => expect(mocks.transport.openSessionTap).toHaveBeenCalled());
 
     expect(mocks.transport.openSessionTap).toHaveBeenCalledWith(
@@ -238,7 +241,7 @@ describe('rozenite tap', () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
-  it('wires --session as required and passes host/port through to the transport', async () => {
+  it('registers under `agent` and inherits its host/port globals', async () => {
     setupTransport();
     mocks.transport.openSessionTap.mockImplementation((_sessionId, _filter, h: Handlers) => {
       // End the stream immediately so `parseAsync` (which awaits the action)
@@ -248,16 +251,37 @@ describe('rozenite tap', () => {
     });
 
     const program = new Command();
-    registerTapCommand(program);
+    const agentCommand = program
+      .command('agent')
+      .option('--host <host>', 'Metro host', '127.0.0.1')
+      .option('--port <port>', 'Metro port', '8081');
+    registerTapCommand(agentCommand);
 
-    const tapCommand = program.commands.find((command) => command.name() === 'tap');
+    const tapCommand = agentCommand.commands.find((command) => command.name() === 'tap');
+    expect(tapCommand).toBeDefined();
+    expect(program.commands.some((command) => command.name() === 'tap')).toBe(false);
     expect(tapCommand?.options.some((option) => option.long === '--payload')).toBe(true);
     expect(tapCommand?.options.find((option) => option.long === '--payload')?.defaultValue).toBe(
       '{}',
     );
+    // `--host`/`--port` come from the parent `agent` command, so `tap` must
+    // not redeclare them.
+    expect(tapCommand?.options.some((option) => option.long === '--host')).toBe(false);
+    expect(tapCommand?.options.some((option) => option.long === '--port')).toBe(false);
 
     await program.parseAsync(
-      ['node', 'test', 'tap', '--session', 'session-1', '--host', '10.0.0.5', '--port', '9090'],
+      [
+        'node',
+        'test',
+        'agent',
+        '--host',
+        '10.0.0.5',
+        '--port',
+        '9090',
+        'tap',
+        '--session',
+        'session-1',
+      ],
       { from: 'node' },
     );
 

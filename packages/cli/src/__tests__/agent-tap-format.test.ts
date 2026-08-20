@@ -46,22 +46,26 @@ describe('tap output formatting', () => {
     });
 
     it('starts the payload at the same column for a short and a long type', () => {
+      const timestamp = new Date(2024, 0, 1, 12, 4, 31, 220).getTime();
       const short = formatTapEventLine({
         direction: 'in',
-        timestamp: 0,
+        timestamp,
         pluginId: 'p',
         type: 'a',
-        payload: 1,
+        payload: 'short-payload',
       });
       const long = formatTapEventLine({
         direction: 'in',
-        timestamp: 0,
+        timestamp,
         pluginId: 'p',
-        type: 'b',
-        payload: 2,
+        type: 'a-longer-type',
+        payload: 'long-payload',
       });
 
-      expect(short.indexOf('1')).toBe(long.indexOf('2'));
+      // Search for the payload rather than a bare digit: the timestamp is
+      // local, so a digit-based search finds a different column depending on
+      // the machine's time zone.
+      expect(short.indexOf('"short-payload"')).toBe(long.indexOf('"long-payload"'));
     });
 
     it('does not truncate a type longer than the padded column width', () => {

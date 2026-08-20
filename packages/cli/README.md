@@ -14,7 +14,7 @@ The Rozenite CLI is the primary tool for scaffolding, building, and developing R
 - **Development Server**: Hot-reload development environment with file watchers
 - **Template System**: Pre-configured templates with TypeScript, Vite, and Rozenite integration
 - **Rozenite for Agents**: Agent-facing CLI for inspecting running apps, discovering domains, and calling tools via `rozenite agent`
-- **Tap**: Stream a plugin's messages to the terminal in both directions, and optionally poke one, via `rozenite tap`
+- **Tap**: Stream a plugin's messages to the terminal in both directions, and optionally poke one, via `rozenite agent tap`
 
 ## Installation
 
@@ -151,7 +151,7 @@ rozenite open --deviceId <id>
 rozenite open --host 192.168.1.10 --port 8082
 ```
 
-### `rozenite tap`
+### `rozenite agent tap`
 
 Stream a Rozenite Agent session's plugin messages to stdout, in both
 directions, without opening a browser or React Native DevTools. Because it's
@@ -170,19 +170,19 @@ back up. Requires an existing session; create one with
 - `-t, --type <name>` - Send one message of this type before watching (requires `--plugin`)
 - `-a, --payload <json>` - JSON payload for the sent message (defaults to `{}`)
 - `--json` - Newline-delimited JSON output, one message per line
-- `--host <host>` / `--port <port>` - Metro host/port (defaults to `127.0.0.1:8081`)
+- `--host <host>` / `--port <port>` - Metro host/port, inherited from `rozenite agent`, so they go before `tap` (defaults to `127.0.0.1:8081`)
 
 **Examples:**
 
 ```bash
 # Watch a plugin's traffic
-rozenite tap --session <id> --plugin @acme/sqlite-plugin
+rozenite agent tap --session <id> --plugin @acme/sqlite-plugin
 
 # Poke a plugin and watch what comes back
-rozenite tap --session <id> --plugin @acme/sqlite-plugin --type sqlite:query --payload '{"sql":"select 1"}'
+rozenite agent tap --session <id> --plugin @acme/sqlite-plugin --type sqlite:query --payload '{"sql":"select 1"}'
 
 # Newline-delimited JSON, for scripts and agents
-rozenite tap --session <id> --json
+rozenite agent tap --session <id> --json
 ```
 
 See the [Tap docs](https://rozenite.dev/docs/agent/tap) for the full output

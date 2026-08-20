@@ -1,6 +1,6 @@
 # Tap
 
-`rozenite tap` connects to a device and prints Rozenite plugin messages as they flow, in both directions, without opening a browser or React Native DevTools.
+`rozenite agent tap` connects to a device and prints Rozenite plugin messages as they flow, in both directions, without opening a browser or React Native DevTools.
 
 The full loop for checking that a plugin's native side behaves — Metro, a simulator, the app, a browser running React Native DevTools, the shell, and the panel — is a lot of overhead just to watch a handful of messages when the thing you're testing lives on the device. `tap` skips the browser half entirely.
 
@@ -11,7 +11,7 @@ Rozenite for Agents (including `tap`) is experimental and may change. If you run
 ## Watch a plugin's traffic
 
 ```bash
-npx rozenite tap --session <id> --plugin @acme/sqlite-plugin
+npx rozenite agent tap --session <id> --plugin @acme/sqlite-plugin
 ```
 
 ```
@@ -31,7 +31,7 @@ Omit `--plugin` to watch every plugin's traffic on the session. `tap` keeps runn
 Because the stream is bidirectional, `tap` doubles as a minimal stand-in for DevTools: send one message from the terminal, then keep watching for whatever comes back.
 
 ```bash
-npx rozenite tap --session <id> --plugin @acme/sqlite-plugin --type sqlite:query --payload '{"sql":"select 1"}'
+npx rozenite agent tap --session <id> --plugin @acme/sqlite-plugin --type sqlite:query --payload '{"sql":"select 1"}'
 ```
 
 `--plugin`, `--type`, and `--payload` map directly onto the three fields of the message sent to the device (`pluginId`, `type`, `payload`). `--payload` defaults to `{}` and is validated as JSON on its own, so a malformed payload is reported against `--payload`, not against a blended argument. `--type` requires `--plugin`, since a message needs to know which plugin it's addressed to.
@@ -43,7 +43,7 @@ npx rozenite tap --session <id> --plugin @acme/sqlite-plugin --type sqlite:query
 Pass `--json` for newline-delimited JSON, one message per line, so another program or agent can consume the stream directly instead of screenshotting a terminal:
 
 ```bash
-npx rozenite tap --session <id> --json
+npx rozenite agent tap --session <id> --json
 ```
 
 ```json
@@ -73,7 +73,7 @@ Each line has this shape:
 - `-t, --type <name>` — send one message of this type before watching. Requires `--plugin`.
 - `-a, --payload <json>` — JSON payload for the sent message. Defaults to `{}`.
 - `--json` — newline-delimited JSON output instead of the human-readable format.
-- `--host <host>` / `--port <port>` — Metro host and port (defaults to `127.0.0.1:8081`).
+- `--host <host>` / `--port <port>` — Metro host and port, inherited from `rozenite agent`, so they go before `tap`: `npx rozenite agent --host 192.168.1.10 --port 8082 tap --session <id>` (defaults to `127.0.0.1:8081`).
 
 ## `tap` replaces React Native DevTools
 

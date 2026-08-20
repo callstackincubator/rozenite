@@ -14,6 +14,7 @@ import {
 import { printOutput } from './output.js';
 import { formatAgentCommand, paginateRows } from './output-shaping.js';
 import { getErrorMessage } from './error-message.js';
+import { registerTapCommand } from './register-tap-command.js';
 import { getPackageJSON } from '../../package-json.js';
 
 const REMOVED_ROZENITE_DOMAIN_HINT =
@@ -456,6 +457,8 @@ export const registerAgentCommand = (program: Command): void => {
         printOutput(payload, true, !!options.pretty);
       });
     });
+
+  registerTapCommand(mcpCommand);
 
   const sessionCommand = mcpCommand
     .command('session')

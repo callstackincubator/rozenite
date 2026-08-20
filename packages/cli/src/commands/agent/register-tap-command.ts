@@ -5,14 +5,17 @@ import { DEFAULT_AGENT_HOST, DEFAULT_AGENT_PORT } from '@rozenite/agent-shared';
 import { formatTapEventLine, formatTapEventNdjson } from './tap-format.js';
 import { getErrorMessage } from './error-message.js';
 
-type TapCommandOptions = {
-  host: string;
-  port: string;
+type TapOptions = {
   session: string;
   plugin?: string;
   type?: string;
   payload: string;
   json?: boolean;
+};
+
+type TapCommandOptions = TapOptions & {
+  host: string;
+  port: string;
 };
 
 export const parseTapPayload = (raw: string): unknown => {
@@ -116,14 +119,12 @@ export const runTapCommand = async (options: TapCommandOptions): Promise<void> =
   });
 };
 
-export const registerTapCommand = (program: Command): void => {
-  program
+export const registerTapCommand = (agentCommand: Command): void => {
+  agentCommand
     .command('tap')
     .description(
       "Stream a session's Rozenite plugin messages to stdout in both directions, and optionally send one",
     )
-    .option('--host <host>', 'Metro host', DEFAULT_AGENT_HOST)
-    .option('--port <port>', 'Metro port', String(DEFAULT_AGENT_PORT))
     .requiredOption('-s, --session <id>', 'Target Agent session ID')
     .option('-p, --plugin <id>', 'Filter the stream to this plugin ID; required with --type')
     .option(
@@ -132,7 +133,17 @@ export const registerTapCommand = (program: Command): void => {
     )
     .option('-a, --payload <json>', 'JSON payload for the sent message', '{}')
     .option('--json', 'Newline-delimited JSON output, one message per line')
-    .action(async (options: TapCommandOptions) => {
-      await runTapCommand(options);
+    // `--host`/`--port` are inherited from `rozenite agent`, the same way
+    // `rozenite agent targets` reads them, rather than redeclared here.
+    .action(async (options: TapOptions, command: Command) => {
+      const globals = command.optsWithGlobals<{
+        host?: string;
+        port?: string;
+      }>();
+      await runTapCommand({
+        ...options,
+        host: globals.host ?? DEFAULT_AGENT_HOST,
+        port: String(globals.port ?? DEFAULT_AGENT_PORT),
+      });
     });
 };
