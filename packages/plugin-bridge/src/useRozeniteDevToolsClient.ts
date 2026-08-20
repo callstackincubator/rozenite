@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Channel } from './channel/types';
 import {
   RozeniteDevToolsClient,
   RozeniteDevToolsRequestClient,
@@ -11,6 +12,18 @@ export type UseRozeniteDevToolsClientOptions<
 > = {
   pluginId: string;
   eventMap?: TEventMap;
+  /**
+   * Use this `Channel` instead of resolving one from the environment. See
+   * `RozeniteDevToolsClientOptions['channel']` in `./client.ts` — intended
+   * for `@rozenite/testing`'s fake pairs, not for production use.
+   *
+   * Note this only substitutes the channel; it does not affect
+   * `isPanelClient()` below, which still reads the real `__ROZENITE_PANEL__`
+   * global. A test standing in for the panel side that wants to suppress
+   * the device-only `plugin-mounted` lifecycle message should set that
+   * global itself.
+   */
+  channel?: Channel;
 };
 
 type PluginLifecycleEventMap = {
@@ -28,6 +41,7 @@ export const useRozeniteDevToolsClient = <
   TEventMap extends Record<string, unknown> = Record<string, unknown>,
 >({
   pluginId,
+  channel,
 }: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsRequestClient<TEventMap> | null => {
   const [client, setClient] = useState<RozeniteDevToolsRequestClient<TEventMap> | null>(null);
   const [error, setError] = useState<unknown | null>(null);
@@ -38,7 +52,12 @@ export const useRozeniteDevToolsClient = <
 
     const setup = async () => {
       try {
-        client = await getRozeniteDevToolsClient<TEventMap>(pluginId);
+        // Only pass `options` when a channel was actually supplied, so
+        // production call sites keep calling `getRozeniteDevToolsClient`
+        // with the same single argument as before.
+        client = channel
+          ? await getRozeniteDevToolsClient<TEventMap>(pluginId, { channel })
+          : await getRozeniteDevToolsClient<TEventMap>(pluginId);
 
         if (isMounted) {
           setClient(client);
@@ -81,7 +100,7 @@ export const useRozeniteDevToolsClient = <
       isMounted = false;
       teardown();
     };
-  }, [pluginId]);
+  }, [pluginId, channel]);
 
   if (error != null) {
     throw error;

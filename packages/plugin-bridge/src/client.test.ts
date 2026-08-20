@@ -13,20 +13,25 @@ type EventMap = {
   failure: { requestId: string; message: string };
 };
 
-const mocks = vi.hoisted(() => {
+// Built directly on the `channel` injection seam (`RozeniteDevToolsClientOptions`)
+// instead of `vi.mock('./channel/factory.js', ...)` — the seam makes mocking
+// the module unnecessary, since a fake `Channel` can just be passed in.
+const mocks = (() => {
   const listeners = new Set<(message: unknown) => void>();
   const send = vi.fn();
   const close = vi.fn();
 
-  return {
-    channel: {
-      send,
-      onMessage: (listener: (message: unknown) => void) => {
-        listeners.add(listener);
-        return { remove: () => listeners.delete(listener) };
-      },
-      close,
+  const channel = {
+    send,
+    onMessage: (listener: (message: unknown) => void) => {
+      listeners.add(listener);
+      return { remove: () => listeners.delete(listener) };
     },
+    close,
+  };
+
+  return {
+    channel,
     emit: (type: string, payload: unknown) => {
       listeners.forEach((listener) => {
         listener({ pluginId: 'test-plugin', type, payload });
@@ -38,13 +43,10 @@ const mocks = vi.hoisted(() => {
       close.mockReset();
     },
   };
-});
+})();
 
-vi.mock('./channel/factory.js', () => ({
-  getChannel: vi.fn(async () => mocks.channel),
-}));
-
-const createClient = () => getRozeniteDevToolsClient<EventMap>('test-plugin');
+const createClient = () =>
+  getRozeniteDevToolsClient<EventMap>('test-plugin', { channel: mocks.channel });
 
 describe('RozeniteDevToolsClient request', () => {
   afterEach(() => {

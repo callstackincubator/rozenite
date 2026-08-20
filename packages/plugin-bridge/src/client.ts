@@ -1,4 +1,5 @@
 import { getChannel } from './channel/factory.js';
+import { Channel } from './channel/types.js';
 import { getDevToolsMessage } from './message';
 import { Subscription } from './types';
 
@@ -83,6 +84,23 @@ export type RozeniteDevToolsRequestClient<
   ) => Promise<TEventMap[TResponseType]>;
 };
 
+export type RozeniteDevToolsClientOptions = {
+  /**
+   * Use this `Channel` instead of resolving one via `getChannel()`.
+   *
+   * This is the injection seam that lets `@rozenite/testing` run both
+   * halves of a plugin (panel and device) against each other in-process,
+   * over a real `Channel` implementation, without touching the module-scoped
+   * channel cache in `./channel/factory.js` — which is shared across every
+   * caller in the process and would otherwise make a panel client and a
+   * device client in the same Node test process collide onto one channel.
+   *
+   * Production callers should never need this: leave it unset and a real
+   * channel is resolved and cached as before.
+   */
+  channel?: Channel;
+};
+
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
 let requestSequence = 0;
@@ -100,8 +118,9 @@ const createRozeniteDevToolsClient = async <
   TEventMap extends Record<string, unknown> = Record<string, unknown>,
 >(
   pluginId: string,
+  options: RozeniteDevToolsClientOptions = {},
 ): Promise<RozeniteDevToolsRequestClient<TEventMap>> => {
-  const channel = await getChannel();
+  const channel = options.channel ?? (await getChannel());
   const listeners = new Map<string, Set<MessageListener>>();
   const pendingRequests = new Set<() => void>();
   let isClosed = false;
@@ -262,6 +281,7 @@ export const getRozeniteDevToolsClient = async <
   TEventMap extends Record<string, unknown> = Record<string, unknown>,
 >(
   pluginId: string,
+  options: RozeniteDevToolsClientOptions = {},
 ): Promise<RozeniteDevToolsRequestClient<TEventMap>> => {
-  return createRozeniteDevToolsClient<TEventMap>(pluginId);
+  return createRozeniteDevToolsClient<TEventMap>(pluginId, options);
 };

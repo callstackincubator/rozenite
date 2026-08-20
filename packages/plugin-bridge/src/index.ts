@@ -5,9 +5,11 @@ export type {
   RozeniteDevToolsRequestOptions,
 } from './client';
 export type { Subscription } from './types';
+export type { Channel } from './channel/types';
 export type { DevToolsPluginMessage } from './message';
 export { getDevToolsMessage } from './message';
 export type { UseRozeniteDevToolsClientOptions } from './useRozeniteDevToolsClient';
+export type { RozeniteDevToolsClientOptions } from './client';
 export { getRozeniteDevToolsClient } from './client';
 export {
   RozeniteDevToolsRequestAbortedError,

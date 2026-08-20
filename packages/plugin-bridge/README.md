@@ -84,6 +84,16 @@ async function setupClient() {
 }
 ```
 
+### Testing
+
+Both `getRozeniteDevToolsClient` and `useRozeniteDevToolsClient` accept an optional `channel`, letting a test supply its own `Channel` instead of resolving one from the environment. This is the seam [`@rozenite/testing`](https://www.npmjs.com/package/@rozenite/testing) builds on to run a plugin's panel and device code against each other in Node, without Metro or a simulator:
+
+```typescript
+const client = await getRozeniteDevToolsClient('my-plugin', { channel: fakeChannel });
+```
+
+Production callers should never need this — leave it unset and a real channel is resolved and cached as before.
+
 ## Made with ❤️ at Callstack
 
 `rozenite` is an open source project and will always remain free to use. If you think it's cool, please star it 🌟.
