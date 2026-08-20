@@ -125,6 +125,9 @@ export type {
 export { Tabs } from './tabs/tabs';
 export type { TabsProps, TabsListProps, TabsTabProps, TabsPanelProps } from './tabs/tabs';
 
+export { ToggleGroup } from './toggle-group/toggle-group';
+export type { ToggleGroupProps, ToggleGroupItemProps } from './toggle-group/toggle-group';
+
 export { ScrollArea } from './scroll-area/scroll-area';
 export type { ScrollAreaProps } from './scroll-area/scroll-area';
 
