@@ -19,7 +19,7 @@ export default defineConfig({
       formats: ['es', 'cjs'],
     },
     rollupOptions: {
-      external: ['@rozenite/plugin-bridge'],
+      external: ['@rozenite/plugin-bridge', 'react', 'react/jsx-runtime'],
     },
   },
   test: {

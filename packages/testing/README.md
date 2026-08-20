@@ -11,6 +11,7 @@ Testing a plugin change today usually means running Metro, a simulator, the play
 ## Features
 
 - **In-process fake channel pair** — `connectFakePair()` gives you the two ends of a real `Channel`; hand one to the device side and one to the panel side via `getRozeniteDevToolsClient`/`useRozeniteDevToolsClient`'s `channel` option, and both run their actual protocol code.
+- **Render the real components** — `RozeniteChannelProvider` hands a channel to every `useRozeniteDevToolsClient()` in a subtree, so a plugin's own panel components can be rendered with React Testing Library (or any renderer) unmodified — no `channel` prop threaded through them for tests only.
 - **Transport simulation** — drop or delay messages in either direction, to test a side that never mounts or a slow transport.
 - **`waitFor` helpers with a deadline** — `waitForMessage`, `waitForChannelMessage`, and the RPC-aware `waitForRpcFrame` all take a required `timeoutMs` and reject with a clear `WaitForTimeoutError` on expiry, instead of hanging your test suite forever.
 - **Runner-agnostic** — no dependency on Vitest, Jest, or any runner globals. Everything here returns plain values and promises; keep using your own runner's assertions.
@@ -60,6 +61,47 @@ deviceRpc.handle('getSnapshot', async () => ({ items: [] }));
 
 const snapshot = await panelRpc.method('getSnapshot').invoke();
 ```
+
+## Rendering a panel with React Testing Library
+
+Plugin components call `useRozeniteDevToolsClient({ pluginId })` themselves and take no `channel` prop — so to render one in a test, wrap it in `RozeniteChannelProvider` and give it one end of a fake pair. Every `useRozeniteDevToolsClient()` below the provider uses that channel instead of resolving a real one from the environment.
+
+```tsx
+import { render, screen } from '@testing-library/react';
+import { getRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { connectFakePair, RozeniteChannelProvider } from '@rozenite/testing';
+import { MyPluginPanel } from '../src/panel';
+
+const { device, panel } = connectFakePair();
+
+// The device side, wired up exactly as `react-native.ts` wires it.
+const deviceClient = await getRozeniteDevToolsClient('my-plugin', { channel: device });
+deviceClient.onMessage('get-items', () => {
+  deviceClient.send('items', { items: ['alpha', 'beta'] });
+});
+
+render(
+  <RozeniteChannelProvider channel={panel} role="panel">
+    <MyPluginPanel />
+  </RozeniteChannelProvider>,
+);
+
+expect(await screen.findByText('alpha')).toBeTruthy();
+```
+
+`role` tells the provider which side of the protocol the subtree stands in for. Only the device side announces itself with the `plugin-mounted` lifecycle message, so `role="panel"` keeps that message off the wire (and `role="device"` puts it there) without your test having to set the process-wide `__ROZENITE_PANEL__` global. Leave `role` unset to keep the global's behavior.
+
+The device side can be rendered the same way when it lives in a hook rather than in plain functions:
+
+```tsx
+render(
+  <RozeniteChannelProvider channel={device} role="device">
+    <DeviceSide />
+  </RozeniteChannelProvider>,
+);
+```
+
+A `channel` passed directly to `useRozeniteDevToolsClient({ pluginId, channel })` still wins over the provider, and there is no provider in production — plugins render without one and resolve a real channel as before.
 
 ## Transport simulation
 

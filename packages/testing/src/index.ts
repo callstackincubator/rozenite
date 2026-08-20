@@ -7,3 +7,5 @@ export {
   WaitForTimeoutError,
 } from './wait-for.js';
 export type { WaitForOptions } from './wait-for.js';
+export { RozeniteChannelProvider } from '@rozenite/plugin-bridge';
+export type { RozeniteChannelProviderProps, RozeniteClientRole } from '@rozenite/plugin-bridge';

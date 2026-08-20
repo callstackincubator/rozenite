@@ -19,7 +19,7 @@ export default defineConfig({
       formats: ['es', 'cjs'],
     },
     rollupOptions: {
-      external: ['react'],
+      external: ['react', 'react/jsx-runtime'],
     },
   },
   test: {

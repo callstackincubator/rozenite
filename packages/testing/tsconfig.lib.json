@@ -8,8 +8,10 @@
     "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["node", "vite/client"],
+    "lib": ["dom"],
+    "jsx": "react-jsx",
     "module": "esnext",
     "moduleResolution": "bundler"
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
