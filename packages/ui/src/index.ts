@@ -191,6 +191,8 @@ export { DataTable } from './data-table/data-table';
 export type { DataTableProps, DataTableColumn } from './data-table/data-table';
 export { VirtualizedDataTable } from './virtualized-data-table/virtualized-data-table';
 export type { VirtualizedDataTableProps } from './virtualized-data-table/virtualized-data-table';
+export { VirtualizedList } from './virtualized-list/virtualized-list';
+export type { VirtualizedListProps } from './virtualized-list/virtualized-list';
 export { DataTableEditableCell } from './data-table/data-table-editable-cell';
 export type { DataTableEditableCellProps } from './data-table/data-table-editable-cell';
 export { updateCellValue } from './data-table/data-table-utils';
