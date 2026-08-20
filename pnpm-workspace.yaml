@@ -19,6 +19,7 @@ overrides:
 nodeLinker: hoisted
 autoInstallPeers: false
 strictPeerDependencies: false
+loglevel: warn
 allowBuilds:
   '@apollo/protobufjs': true
   '@swc/core': true

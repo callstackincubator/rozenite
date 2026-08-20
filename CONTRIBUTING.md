@@ -23,9 +23,14 @@ You'll find a playground app in the 'apps' directory. You can use it to easily t
 
 You should also run the following checks before opening a pull request:
 
-1. linting via `pnpm lint:all`
-2. formatting via `pnpm format:all`
-3. typechecking via `pnpm typecheck:all`
+1. typechecking, linting and formatting via `pnpm checks:affected`
+2. tests via `pnpm test:affected`
+
+The `:affected` scripts only check the packages your branch actually touches.
+They diff against the base branch, so run `git fetch origin main` first —
+without that ref Turborepo treats every package as affected. Use the `:all`
+variants (`pnpm checks:all`, `pnpm test:all`) when your change is repo-wide,
+such as an edit to a root config file.
 
 All checks are also run in CI, but by running them locally you can quickly fix any outstanding issues.
 

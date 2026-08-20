@@ -11,8 +11,18 @@ Read this guide before preparing or opening a pull request.
    behavior; see `docs/agents/version-plans.md`.
 3. Update the relevant package or `website/` documentation if the change adds
    or alters user-facing behavior.
-4. Run and report validation proportionate to the change: `pnpm lint:all`,
-   `pnpm format:all`, `pnpm typecheck:all`, and any affected package's tests.
+4. Run and report validation proportionate to the change. From the repository
+   root, after making sure the base branch ref is present locally:
+
+   ```
+   git fetch origin main
+   pnpm checks:affected && pnpm test:affected
+   ```
+
+   `--affected` needs that ref to diff against; without it Turborepo treats every
+   package as affected and rebuilds the whole monorepo. Reach for the `:all`
+   variants only when the change is genuinely repo-wide, such as a release or an
+   edit to a root config file. See `docs/agents/validation.md`.
 5. Ensure the pull request title follows
    [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary)
    (e.g. `feat(redux-devtools): add some new feature`) — it becomes the squash

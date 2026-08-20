@@ -1,13 +1,18 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["tsconfig.base.json", "eslint.config.mjs"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "build/**"]
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
+      "outputs": ["dist/**", "build/**"],
+      "outputLogs": "errors-only"
     },
     "typecheck": {
       "dependsOn": ["^build", "^typecheck", "build"],
-      "outputs": []
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "@rozenite/agent-sdk#typecheck": {
       "dependsOn": [
@@ -23,15 +28,26 @@
         "@rozenite/storage-plugin#build",
         "@rozenite/tanstack-query-plugin#build"
       ],
-      "outputs": []
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "lint": {
-      "dependsOn": ["^build", "build"],
-      "outputs": []
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "@rozenite/playground#lint": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
     },
     "test": {
       "dependsOn": ["^build", "build"],
-      "outputs": []
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
     },
     "dev": {
       "cache": false,

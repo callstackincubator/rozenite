@@ -5,6 +5,8 @@
   `packages/`; the test app lives in `apps/playground`.
 - Read `CONTRIBUTING.md` and the relevant source, tests, and agent guide before
   making a change.
+- For running checks (use the `:affected` scripts, not `:all`), see
+  @./docs/agents/validation.md.
 - For unit-testing guidance, see @./docs/agents/unit-testing.md.
 - For end-to-end testing guidance, see @./docs/agents/e2e-testing.md.
 - For playground testing and navigation (routes, deep links, accessibility), see @./docs/agents/playground-testing.md.
@@ -19,4 +21,6 @@
 - Keep changes focused; do not make opportunistic refactors.
 - Never commit credentials, secrets, generated build output, or local
   environment files.
-- Run validation proportionate to the change and report what was run.
+- Run validation proportionate to the change and report what was run; from
+  the repository root that is `pnpm checks:affected && pnpm test:affected`
+  after `git fetch origin main`.
