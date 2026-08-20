@@ -51,6 +51,10 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
 
+      # Deliberately no build or dependency cache in this job. It holds
+      # id-token: write and publishes to npm, so a restored artifact would be
+      # published with provenance attesting to something that was never built
+      # from this source. Everything here must be built from a clean checkout.
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
