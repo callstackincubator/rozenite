@@ -12,7 +12,7 @@ import { withRozeniteReduxDevTools } from '../metro.js';
 // source into this package's TypeScript program through the `development`
 // condition. See docs/agents/release-bundle-testing.md.
 const packageRoot = path.resolve(fileURLToPath(import.meta.url), '../../..');
-const reactNativeEntry = path.join(packageRoot, 'dist/react-native/index.cjs');
+const reactNativeEntry = path.join(packageRoot, 'dist/react-native/cjs/react-native.js');
 
 describe('withRozeniteReduxDevTools', () => {
   it(
@@ -42,7 +42,7 @@ describe('@rozenite/redux-devtools-plugin in a release bundle', () => {
 
       // Keeps the check below honest: the entry really did get bundled.
       expect(result.rozeniteModules).toContain(
-        'packages/redux-devtools-plugin/dist/react-native/index.cjs',
+        'packages/redux-devtools-plugin/dist/react-native/cjs/react-native.js',
       );
       expect(result.panelModules).toEqual([]);
     },

@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 // panel: the DevTools UI, its React DOM tree and `@rozenite/ui`.
 // See docs/agents/release-bundle-testing.md.
 const packageRoot = path.resolve(fileURLToPath(import.meta.url), '../../..');
-const reactNativeEntry = path.join(packageRoot, 'dist/react-native/index.cjs');
+const reactNativeEntry = path.join(packageRoot, 'dist/react-native/cjs/react-native.js');
 
 describe('@rozenite/rhf-plugin in a release bundle', () => {
   it(
@@ -22,7 +22,9 @@ describe('@rozenite/rhf-plugin in a release bundle', () => {
       });
 
       // Keeps the check below honest: the entry really did get bundled.
-      expect(result.rozeniteModules).toContain('packages/rhf-plugin/dist/react-native/index.cjs');
+      expect(result.rozeniteModules).toContain(
+        'packages/rhf-plugin/dist/react-native/cjs/react-native.js',
+      );
       expect(result.panelModules).toEqual([]);
     },
     RELEASE_BUNDLE_TIMEOUT,
