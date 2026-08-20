@@ -8,7 +8,6 @@ export interface ConsoleLogEntry {
   level: ConsoleLogLevel;
   text: string;
   source: 'console' | 'exception' | 'log';
-  argsPreview?: string[];
   context?: Record<string, unknown>;
 }
 
@@ -16,10 +15,30 @@ export interface ConsoleLogFilters {
   levels?: ConsoleLogLevel[];
   text?: string;
   since?: number;
+  /** Exclusive upper bound, decoded from the `before` anchor cursor. */
+  beforePosition?: number;
+  /** Exclusive lower bound, decoded from the `after` anchor cursor. */
+  afterPosition?: number;
 }
 
-export interface ConsoleMessagesRequest extends PageRequest, ConsoleLogFilters {
+/**
+ * A returned entry carries an anchor cursor so any row can bound a later range,
+ * which is what makes "the ten entries before this error" a single follow-up
+ * call rather than a scan.
+ */
+export interface ConsoleLogRow extends ConsoleLogEntry {
+  cursor: string;
+}
+
+export interface ConsoleMessagesRequest extends PageRequest {
   order?: PageOrder;
+  levels?: ConsoleLogLevel[];
+  text?: string;
+  since?: number;
+  /** Anchor cursor from a previous row; returns entries strictly older than it. */
+  before?: string;
+  /** Anchor cursor from a previous row; returns entries strictly newer than it. */
+  after?: string;
 }
 
 export interface ConsoleMessagesMeta {
@@ -28,13 +47,12 @@ export interface ConsoleMessagesMeta {
   bufferSize: number;
 }
 
-export type ConsoleMessagesResult = PageResult<ConsoleLogEntry, ConsoleMessagesMeta>;
+export type ConsoleMessagesResult = PageResult<ConsoleLogRow, ConsoleMessagesMeta>;
 
 export interface ConsoleMessageInput {
   timestamp?: number;
   level?: ConsoleLogLevel;
   text: string;
   source?: 'console' | 'exception' | 'log';
-  argsPreview?: string[];
   context?: Record<string, unknown>;
 }

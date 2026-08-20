@@ -1,5 +1,8 @@
-import { createRingBufferSource } from './ring-buffer-source.js';
+import { CircularBuffer } from '../collections/circular-buffer.js';
+import { createCircularBufferSource } from '../pagination/circular-buffer-source.js';
+import { decodeCursor, encodeCursor } from '../pagination/cursor.js';
 import { paginateSource } from '../pagination/paginate.js';
+import type { PaginatedSource } from '../pagination/types.js';
 import type {
   ConsoleLogEntry,
   ConsoleMessageInput,
@@ -9,9 +12,12 @@ import type {
 
 const DEFAULT_CONSOLE_BUFFER_CAPACITY = 5000;
 
+/** `seq` is the buffer index shifted so the first entry reads as 1 rather than 0. */
+const SEQ_OFFSET = 1;
+
 type DeviceLogState = {
-  entries: ConsoleLogEntry[];
-  nextSeq: number;
+  buffer: CircularBuffer<ConsoleLogEntry>;
+  source: PaginatedSource<number, ConsoleLogEntry, ConsoleLogFilters>;
   droppedCount: number;
 };
 
@@ -51,10 +57,9 @@ const normalizeSource = (value: unknown): ConsoleLogEntry['source'] => {
   return 'console';
 };
 
-const applyConsoleFilters = (
-  items: readonly ConsoleLogEntry[],
+const createConsoleFilterPredicate = (
   filters: ConsoleLogFilters,
-): ConsoleLogEntry[] => {
+): ((entry: ConsoleLogEntry) => boolean) => {
   const hasLevels = Array.isArray(filters.levels) && filters.levels.length > 0;
   const levelSet = hasLevels ? new Set(filters.levels) : null;
   const text = typeof filters.text === 'string' ? filters.text.trim().toLowerCase() : '';
@@ -62,22 +67,32 @@ const applyConsoleFilters = (
     typeof filters.since === 'number' && Number.isFinite(filters.since)
       ? Math.round(filters.since)
       : undefined;
+  const { beforePosition, afterPosition } = filters;
 
-  return items.filter((item) => {
-    if (levelSet && !levelSet.has(item.level)) {
+  return (entry) => {
+    if (levelSet && !levelSet.has(entry.level)) {
       return false;
     }
 
-    if (text && !item.text.toLowerCase().includes(text)) {
+    if (text && !entry.text.toLowerCase().includes(text)) {
       return false;
     }
 
-    if (since !== undefined && item.timestamp < since) {
+    if (since !== undefined && entry.timestamp < since) {
+      return false;
+    }
+
+    const position = entry.seq - SEQ_OFFSET;
+    if (beforePosition !== undefined && position >= beforePosition) {
+      return false;
+    }
+
+    if (afterPosition !== undefined && position <= afterPosition) {
       return false;
     }
 
     return true;
-  });
+  };
 };
 
 const getRecord = (value: unknown): Record<string, unknown> | null => {
@@ -102,9 +117,13 @@ export const createConsoleLogStore = (capacity = DEFAULT_CONSOLE_BUFFER_CAPACITY
       return existing;
     }
 
+    const buffer = new CircularBuffer<ConsoleLogEntry>(normalizedCapacity);
     const created: DeviceLogState = {
-      entries: [],
-      nextSeq: 1,
+      buffer,
+      source: createCircularBufferSource<ConsoleLogEntry, ConsoleLogFilters>({
+        buffer,
+        createPredicate: createConsoleFilterPredicate,
+      }),
       droppedCount: 0,
     };
     states.set(deviceId, created);
@@ -121,38 +140,40 @@ export const createConsoleLogStore = (capacity = DEFAULT_CONSOLE_BUFFER_CAPACITY
 
   const clear = (deviceId: string): { cleared: number } => {
     const state = getOrCreateState(deviceId);
-    const cleared = state.entries.length;
-    state.entries = [];
+    const cleared = state.buffer.size;
+    state.buffer.clear();
     return { cleared };
   };
 
   const append = (deviceId: string, input: ConsoleMessageInput): void => {
     const state = getOrCreateState(deviceId);
     const entry: ConsoleLogEntry = {
-      seq: state.nextSeq,
+      seq: state.buffer.next + SEQ_OFFSET,
       timestamp: normalizeTimestamp(input.timestamp),
       level: normalizeLevel(input.level),
       text: input.text,
       source: normalizeSource(input.source),
-      ...(Array.isArray(input.argsPreview) && input.argsPreview.length > 0
-        ? { argsPreview: input.argsPreview.slice(0, 20) }
-        : {}),
       ...(input.context ? { context: input.context } : {}),
     };
 
-    state.nextSeq += 1;
-    state.entries.push(entry);
+    const evictedBefore = state.buffer.first;
+    state.buffer.append(entry);
+    state.droppedCount += state.buffer.first - evictedBefore;
+  };
 
-    const overflow = state.entries.length - normalizedCapacity;
-    if (overflow > 0) {
-      state.entries.splice(0, overflow);
-      state.droppedCount += overflow;
+  const readAnchor = (value: unknown, field: string): number | undefined => {
+    if (typeof value !== 'string' || value.trim().length === 0) {
+      return undefined;
     }
+
+    return decodeCursor(value, field);
   };
 
   const getMessages = (deviceId: string, rawRequest: unknown): ConsoleMessagesResult => {
     const request = getRecord(rawRequest) || {};
     const state = getOrCreateState(deviceId);
+    const beforePosition = readAnchor(request.before, 'before');
+    const afterPosition = readAnchor(request.after, 'after');
     const filters: ConsoleLogFilters = {
       ...(Array.isArray(request.levels)
         ? {
@@ -166,30 +187,38 @@ export const createConsoleLogStore = (capacity = DEFAULT_CONSOLE_BUFFER_CAPACITY
       ...(typeof request.since === 'number' && Number.isFinite(request.since)
         ? { since: Math.round(request.since) }
         : {}),
+      ...(beforePosition !== undefined ? { beforePosition } : {}),
+      ...(afterPosition !== undefined ? { afterPosition } : {}),
     };
 
-    const source = createRingBufferSource({
-      items: state.entries,
-      applyFilters: applyConsoleFilters,
-    });
+    const order = request.order === 'asc' ? 'asc' : 'desc';
+    // Checkpoints are exclusive, so the bound the walk heads away from doubles
+    // as the starting position: seek straight to it instead of scanning in from
+    // the edge of the buffer.
+    const seedCheckpoint = order === 'desc' ? beforePosition : afterPosition;
 
-    const paged = paginateSource(source, {
-      tool: 'getMessages',
-      deviceId,
+    const paged = paginateSource(state.source, {
       request: {
         limit: request.limit,
         cursor: request.cursor,
         order: request.order,
         filters,
+        ...(seedCheckpoint !== undefined ? { seedCheckpoint } : {}),
       },
     });
 
     return {
       ...paged,
+      items: paged.items.map((entry) => ({
+        ...entry,
+        // Identical in shape and meaning to the cursor `next` hands back, so an
+        // item's cursor can resume a listing just as a page cursor can bound one.
+        cursor: encodeCursor(entry.seq - SEQ_OFFSET),
+      })),
       meta: {
         droppedCount: state.droppedCount,
-        lastSeq: Math.max(0, state.nextSeq - 1),
-        bufferSize: state.entries.length,
+        lastSeq: state.buffer.next,
+        bufferSize: state.buffer.size,
       },
     };
   };

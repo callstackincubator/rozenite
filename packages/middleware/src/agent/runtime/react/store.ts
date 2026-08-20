@@ -1,4 +1,4 @@
-import { hashFilters } from '../pagination/cursor.js';
+import { hashFilters } from '../pagination/filters-hash.js';
 import type {
   ReactComponentSection,
   ReactDevToolsBridgeMessage,
