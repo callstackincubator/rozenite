@@ -5,9 +5,11 @@ import {
   type AgentSessionInfo,
   type AgentTool,
   type CreateAgentSessionRequest,
+  type DevToolsPluginMessage,
 } from '@rozenite/agent-shared';
 import { getMetroTargets, resolveMetroTarget } from './metro-discovery.js';
 import { createAgentSession, type AgentSession } from './session.js';
+import type { TapListener } from './tap.js';
 
 export type AgentSessionManager = ReturnType<typeof createAgentSessionManager>;
 
@@ -145,6 +147,17 @@ export const createAgentSessionManager = (options: {
     return await getSessionOrThrow(sessionId).callTool(toolName, args);
   };
 
+  const subscribeSessionTap = (sessionId: string, listener: TapListener): (() => void) => {
+    return getSessionOrThrow(sessionId).subscribeTap(listener);
+  };
+
+  const sendSessionTapMessage = async (
+    sessionId: string,
+    message: DevToolsPluginMessage,
+  ): Promise<void> => {
+    await getSessionOrThrow(sessionId).sendTapMessage(message);
+  };
+
   const dispose = async (): Promise<void> => {
     const activeSessions = Array.from(sessions.values());
     sessions.clear();
@@ -161,6 +174,8 @@ export const createAgentSessionManager = (options: {
     stopSession,
     getSessionTools,
     callSessionTool,
+    subscribeSessionTap,
+    sendSessionTapMessage,
     dispose,
   };
 };

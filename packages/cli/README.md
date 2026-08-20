@@ -14,6 +14,7 @@ The Rozenite CLI is the primary tool for scaffolding, building, and developing R
 - **Development Server**: Hot-reload development environment with file watchers
 - **Template System**: Pre-configured templates with TypeScript, Vite, and Rozenite integration
 - **Rozenite for Agents**: Agent-facing CLI for inspecting running apps, discovering domains, and calling tools via `rozenite agent`
+- **Tap**: Stream a plugin's messages to the terminal in both directions, and optionally poke one, via `rozenite tap`
 
 ## Installation
 
@@ -149,6 +150,43 @@ rozenite open --deviceId <id>
 # Point at a Metro server on a non-default host/port
 rozenite open --host 192.168.1.10 --port 8082
 ```
+
+### `rozenite tap`
+
+Stream a Rozenite Agent session's plugin messages to stdout, in both
+directions, without opening a browser or React Native DevTools. Because it's
+bidirectional, it also doubles as a minimal stand-in for DevTools: send one
+message from the terminal with `--type`/`--payload`, then keep watching for
+what comes back. A device serves only one debugger connection at a time, so
+a tap **replaces** React Native DevTools if it's already attached — the same
+tradeoff `rozenite agent` makes. Stop the tap (Ctrl-C) to free the connection
+back up. Requires an existing session; create one with
+`rozenite agent session create`.
+
+**Options:**
+
+- `-s, --session <id>` - Target Agent session ID (required)
+- `-p, --plugin <id>` - Filter the stream to this plugin ID; required with `--type`
+- `-t, --type <name>` - Send one message of this type before watching (requires `--plugin`)
+- `-a, --payload <json>` - JSON payload for the sent message (defaults to `{}`)
+- `--json` - Newline-delimited JSON output, one message per line
+- `--host <host>` / `--port <port>` - Metro host/port (defaults to `127.0.0.1:8081`)
+
+**Examples:**
+
+```bash
+# Watch a plugin's traffic
+rozenite tap --session <id> --plugin @acme/sqlite-plugin
+
+# Poke a plugin and watch what comes back
+rozenite tap --session <id> --plugin @acme/sqlite-plugin --type sqlite:query --payload '{"sql":"select 1"}'
+
+# Newline-delimited JSON, for scripts and agents
+rozenite tap --session <id> --json
+```
+
+See the [Tap docs](https://rozenite.dev/docs/agent/tap) for the full output
+contract.
 
 ## Plugin Structure
 

@@ -18,6 +18,9 @@ import type {
   JSONSchema7,
   ListAgentSessionsResponse,
   MetroTarget,
+  SendAgentSessionTapMessageRequest,
+  SendAgentSessionTapMessageResponse,
+  TapEvent,
 } from '@rozenite/agent-shared';
 
 export interface DomainDefinition {
@@ -104,6 +107,29 @@ export interface AgentSessionClient {
 
 export type AgentSessionCallback<T> = (session: AgentSessionClient) => Promise<T> | T;
 
+export interface AgentTapStreamHandle {
+  /** Aborts the underlying HTTP request and releases the tap subscription. */
+  close: () => void;
+}
+
+export interface AgentTapFilter {
+  pluginId?: string;
+  type?: string;
+}
+
+export interface AgentTapStreamHandlers {
+  /**
+   * Called once the server has accepted the stream and subscribed to the
+   * session's tap — the earliest point at which sending a message is
+   * guaranteed not to race the subscription.
+   */
+  onOpen?: () => void;
+  onEvent: (event: TapEvent) => void;
+  onError: (error: Error) => void;
+  /** Called when the server ends the response (e.g. the session stopped). */
+  onEnd: () => void;
+}
+
 export interface AgentTransport {
   host: string;
   port: number;
@@ -118,6 +144,16 @@ export interface AgentTransport {
     sessionId: string,
     body: CallAgentSessionToolRequest,
   ) => Promise<CallAgentSessionToolResponse>;
+  /** Opens the tap event stream for a session; call `.close()` to stop it. */
+  openSessionTap: (
+    sessionId: string,
+    filter: AgentTapFilter,
+    handlers: AgentTapStreamHandlers,
+  ) => AgentTapStreamHandle;
+  sendSessionTapMessage: (
+    sessionId: string,
+    body: SendAgentSessionTapMessageRequest,
+  ) => Promise<SendAgentSessionTapMessageResponse>;
 }
 
 export interface AgentClient {

@@ -20,6 +20,7 @@ export const AGENT_SESSIONS_ROUTE = `${AGENT_ROUTE_BASE}/sessions`;
 export const AGENT_SESSION_ROUTE_PATTERN = `${AGENT_SESSIONS_ROUTE}/:sessionId`;
 export const AGENT_SESSION_TOOLS_ROUTE_PATTERN = `${AGENT_SESSION_ROUTE_PATTERN}/tools`;
 export const AGENT_SESSION_CALL_TOOL_ROUTE_PATTERN = `${AGENT_SESSION_ROUTE_PATTERN}/call-tool`;
+export const AGENT_SESSION_TAP_ROUTE_PATTERN = `${AGENT_SESSION_ROUTE_PATTERN}/tap`;
 
 export const getAgentSessionRoute = (sessionId: string): string => {
   return `${AGENT_SESSIONS_ROUTE}/${encodeURIComponent(sessionId)}`;
@@ -31,6 +32,10 @@ export const getAgentSessionToolsRoute = (sessionId: string): string => {
 
 export const getAgentSessionCallToolRoute = (sessionId: string): string => {
   return `${getAgentSessionRoute(sessionId)}/call-tool`;
+};
+
+export const getAgentSessionTapRoute = (sessionId: string): string => {
+  return `${getAgentSessionRoute(sessionId)}/tap`;
 };
 
 export interface JSONSchema7 {
@@ -326,6 +331,28 @@ export type DevToolsPluginMessage = {
   pluginId: string;
   type: string;
   payload: unknown;
+};
+
+/** Direction of a tapped message relative to this machine: `in` was received
+ * from the device, `out` was sent to it. */
+export type TapDirection = 'in' | 'out';
+
+export type TapEvent = {
+  direction: TapDirection;
+  timestamp: number;
+  pluginId: string;
+  type: string;
+  payload: unknown;
+};
+
+export type SendAgentSessionTapMessageRequest = {
+  pluginId: string;
+  type: string;
+  payload: unknown;
+};
+
+export type SendAgentSessionTapMessageResponse = {
+  sent: true;
 };
 
 export type RegisterToolPayload = {
