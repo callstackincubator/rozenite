@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useRozeniteChannelContext } from './channel/provider.js';
+import { Channel } from './channel/types';
 import {
   RozeniteDevToolsClient,
   RozeniteDevToolsRequestClient,
@@ -11,6 +13,22 @@ export type UseRozeniteDevToolsClientOptions<
 > = {
   pluginId: string;
   eventMap?: TEventMap;
+  /**
+   * Use this `Channel` instead of resolving one from the environment. See
+   * `RozeniteDevToolsClientOptions['channel']` in `./client.ts` — intended
+   * for `@rozenite/testing`'s fake pairs, not for production use.
+   *
+   * A `RozeniteChannelProvider` above this hook supplies the same thing for
+   * a whole subtree, for callers that cannot thread an option in (a plugin's
+   * own components, rendered as-is by a test). This explicit option wins
+   * over the provider when both are present.
+   *
+   * Note this only substitutes the channel; it does not by itself affect
+   * `isPanelClient()` below, which still reads the real `__ROZENITE_PANEL__`
+   * global. Set the provider's `role` (or that global) to stand in for the
+   * panel side and suppress the device-only `plugin-mounted` message.
+   */
+  channel?: Channel;
 };
 
 type PluginLifecycleEventMap = {
@@ -28,7 +46,11 @@ export const useRozeniteDevToolsClient = <
   TEventMap extends Record<string, unknown> = Record<string, unknown>,
 >({
   pluginId,
+  channel,
 }: UseRozeniteDevToolsClientOptions<TEventMap>): RozeniteDevToolsRequestClient<TEventMap> | null => {
+  const channelContext = useRozeniteChannelContext();
+  const resolvedChannel = channel ?? channelContext?.channel;
+  const role = channelContext?.role;
   const [client, setClient] = useState<RozeniteDevToolsRequestClient<TEventMap> | null>(null);
   const [error, setError] = useState<unknown | null>(null);
 
@@ -38,7 +60,12 @@ export const useRozeniteDevToolsClient = <
 
     const setup = async () => {
       try {
-        client = await getRozeniteDevToolsClient<TEventMap>(pluginId);
+        // Only pass `options` when a channel was actually supplied, so
+        // production call sites keep calling `getRozeniteDevToolsClient`
+        // with the same single argument as before.
+        client = resolvedChannel
+          ? await getRozeniteDevToolsClient<TEventMap>(pluginId, { channel: resolvedChannel })
+          : await getRozeniteDevToolsClient<TEventMap>(pluginId);
 
         if (isMounted) {
           setClient(client);
@@ -81,14 +108,16 @@ export const useRozeniteDevToolsClient = <
       isMounted = false;
       teardown();
     };
-  }, [pluginId]);
+  }, [pluginId, resolvedChannel]);
 
   if (error != null) {
     throw error;
   }
 
   useEffect(() => {
-    if (!client || isPanelClient()) {
+    const isPanel = role != null ? role === 'panel' : isPanelClient();
+
+    if (!client || isPanel) {
       return;
     }
 
@@ -102,7 +131,7 @@ export const useRozeniteDevToolsClient = <
     return () => {
       clearTimeout(timer);
     };
-  }, [client, pluginId]);
+  }, [client, pluginId, role]);
 
   return client;
 };

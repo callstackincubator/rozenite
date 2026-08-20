@@ -325,12 +325,14 @@ Your development workflow supports automatic hot reloading:
 - **New panels**: If you add a new panel to your `rozenite.config.ts`, restart React Native DevTools by pressing `Ctrl+R` (or `Cmd+R` on Mac)
 - **Configuration changes**: Most changes to `rozenite.config.ts` require a DevTools restart
 
-### Testing Your Plugin
+### Checking Your Plugin By Hand
 
 1. Make changes to your panel components - they should update instantly
 2. Modify your React Native integration code - changes should be reflected immediately
 3. Add new panels - remember to restart DevTools with `Ctrl+R`
 4. Test communication between your panels and React Native code
+
+To cover the last one with automated tests instead - running your panel and your `react-native.ts` code against each other in Node, without Metro or a simulator - see [Testing](./testing.md).
 
 ## Step 6: Building for Production
 
@@ -357,5 +359,6 @@ The build creates a `dist/` directory with:
 
 ## Next Steps
 
+- Write tests for your plugin's communication with [Testing](./testing.md)
 - Check out [Official Plugins](../official-plugins/overview.md) to see available plugins
 - Join the community to share your plugins and get help

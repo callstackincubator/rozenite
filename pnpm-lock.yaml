@@ -725,6 +725,9 @@ importers:
         specifier: workspace:*
         version: link:../ui
     devDependencies:
+      '@rozenite/testing':
+        specifier: workspace:*
+        version: link:../testing
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1625,6 +1628,34 @@ importers:
       vite:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+
+  packages/testing:
+    dependencies:
+      '@rozenite/plugin-bridge':
+        specifier: workspace:*
+        version: link:../plugin-bridge
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@testing-library/dom':
+        specifier: ^10.4.0
+        version: 10.4.1
+      '@testing-library/react':
+        specifier: ^16.1.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.4(@types/react@19.2.18)
+      react:
+        specifier: 'catalog:'
+        version: 19.2.3
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.3(react@19.2.3)
 
   packages/tools:
     devDependencies:

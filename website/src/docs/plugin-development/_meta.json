@@ -15,6 +15,11 @@
     "label": "RPC"
   },
   {
+    "type": "file",
+    "name": "testing",
+    "label": "Testing"
+  },
+  {
     "type": "custom-link",
     "label": "Rozenite UI Storybook",
     "link": "/storybook"

@@ -10,7 +10,7 @@ export default defineConfig({
     }),
   ],
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/communication',
+  cacheDir: '../../node_modules/.vite/testing',
   base: './',
   build: {
     lib: {
@@ -19,14 +19,10 @@ export default defineConfig({
       formats: ['es', 'cjs'],
     },
     rollupOptions: {
-      external: ['react', 'react/jsx-runtime'],
+      external: ['@rozenite/plugin-bridge', 'react', 'react/jsx-runtime'],
     },
   },
   test: {
     passWithNoTests: true,
-  },
-  server: {
-    port: 3000,
-    open: true,
   },
 });

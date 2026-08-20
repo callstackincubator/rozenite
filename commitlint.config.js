@@ -38,6 +38,7 @@ export default {
         'ui',
         'shell',
         'feature-flags-plugin',
+        'testing',
         '',
       ],
     ],
