@@ -9,7 +9,7 @@ export function useThrottledCallback<A extends any[]>(
   callback: (...args: A) => void,
   delay: number,
 ) {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const argsRef = useRef<A | null>(null);
   const lastRunRef = useRef<number>(0);
 
