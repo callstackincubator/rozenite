@@ -1,15 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Plugin } from 'vite';
 import { rozenitePlugin } from '../src/index.js';
 
-afterEach(() => {
-  vi.unstubAllEnvs();
-});
-
 describe('rozenitePlugin', () => {
   it('configures Tailwind CSS for client panels', () => {
-    vi.stubEnv('VITE_ROZENITE_TARGET', '');
-
     const [tailwindPlugins] = rozenitePlugin();
 
     expect(Array.isArray(tailwindPlugins)).toBe(true);
@@ -21,8 +15,6 @@ describe('rozenitePlugin', () => {
   });
 
   it('allows Tailwind CSS to be disabled for client panels', () => {
-    vi.stubEnv('VITE_ROZENITE_TARGET', '');
-
     const plugins = rozenitePlugin({ tailwind: false });
 
     expect(plugins.flat(Infinity)).not.toEqual(

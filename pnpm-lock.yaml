@@ -1698,9 +1698,6 @@ importers:
 
   packages/vite-plugin:
     dependencies:
-      '@microsoft/api-extractor':
-        specifier: 7.48.1
-        version: 7.48.1(@types/node@18.16.9)
       '@rozenite/ui':
         specifier: workspace:*
         version: link:../ui
@@ -1716,9 +1713,6 @@ importers:
       lucide-react:
         specifier: ^0.263.1
         version: 0.263.1(react@19.2.3)
-      vite-plugin-dts:
-        specifier: ~4.5.0
-        version: 4.5.4(@types/node@18.16.9)(rollup@4.62.2)(supports-color@8.1.1)(typescript@5.8.3)(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
       vite-plugin-react-native-web:
         specifier: ^2.1.1
         version: 2.1.1
@@ -1738,6 +1732,9 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.3(react@19.2.3)
+      vite-plugin-dts:
+        specifier: ~4.5.0
+        version: 4.5.4(@types/node@18.16.9)(rollup@4.62.2)(supports-color@8.1.1)(typescript@5.8.3)(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
 
   packages/web:
     dependencies:

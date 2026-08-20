@@ -55,6 +55,11 @@ const isVerbose = () => {
   return !isInteractive() || verbose;
 };
 
+// Whether verbose output was explicitly asked for, as opposed to `isVerbose()`
+// which also covers non-interactive environments. Build tools are chatty on
+// success, so streaming their output should require an actual opt-in.
+const isVerboseRequested = () => verbose;
+
 export const logger = {
   success,
   info,
@@ -64,6 +69,7 @@ export const logger = {
   log,
   setVerbose,
   isVerbose,
+  isVerboseRequested,
 };
 
 function mapLines(text: string, colorFn: (line: string) => string) {

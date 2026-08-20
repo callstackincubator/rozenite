@@ -13,8 +13,9 @@ type PackageJSON = {
 type PackageExportsEntry = {
   development?: string;
   types: string;
-  import: string;
-  require: string;
+  import?: string;
+  require?: string;
+  default?: string;
 };
 
 type PackageExports = Record<string, string | PackageExportsEntry>;
@@ -40,34 +41,41 @@ const buildPackageContract = (targets: PluginTargets): PluginPackageContract | n
     return null;
   }
 
+  // Output file names follow the entry point file names, because tsc emits a
+  // file tree rooted at the plugin directory rather than a single bundle.
   const contract: PluginPackageContract = {
-    main: './dist/react-native/index.cjs',
-    module: './dist/react-native/index.js',
-    types: './dist/react-native/index.d.ts',
+    // React Native 0.76-0.78 ship Metro 0.81, which does not enable
+    // `package.json` exports by default and resolves this entry through
+    // `main`. `@rozenite/middleware` also resolves plugins with
+    // `require.resolve`, which needs a `require`-satisfiable condition.
+    main: './dist/react-native/cjs/react-native.js',
+    module: './dist/react-native/react-native.js',
+    types: './dist/react-native/react-native.d.ts',
     exports: {
       '.': {
-        types: './dist/react-native/index.d.ts',
-        import: './dist/react-native/index.js',
-        require: './dist/react-native/index.cjs',
+        types: './dist/react-native/react-native.d.ts',
+        import: './dist/react-native/react-native.js',
+        require: './dist/react-native/cjs/react-native.js',
       },
       './package.json': './package.json',
     },
   };
 
+  // Node-facing entry points ship as CommonJS only. `default` (rather than
+  // `require`) is what lets both `require()` in a metro.config.js and `import`
+  // in a metro.config.mjs resolve the same file.
   if (targets.hasMetroEntryPoint) {
     contract.exports['./metro'] = {
-      types: './dist/metro/index.d.ts',
-      import: './dist/metro/index.js',
-      require: './dist/metro/index.cjs',
+      types: './dist/metro/metro.d.ts',
+      default: './dist/metro/metro.js',
     };
   }
 
   if (targets.hasSdkEntryPoint) {
     contract.exports['./sdk'] = {
       development: './sdk.ts',
-      types: './dist/sdk/index.d.ts',
-      import: './dist/sdk/index.js',
-      require: './dist/sdk/index.cjs',
+      types: './dist/sdk/sdk.d.ts',
+      default: './dist/sdk/sdk.js',
     };
   }
 
