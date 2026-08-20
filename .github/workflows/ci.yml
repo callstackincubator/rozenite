@@ -44,6 +44,23 @@ jobs:
       - name: Check formatting
         run: pnpm format:all
 
+      # Rotates weekly. There is deliberately no fallback to the previous
+      # period's key: falling back would carry the accumulated cache forward and
+      # defeat the reset. Turborepo never prunes .turbo/cache, so without this it
+      # grows with every artifact ever built and eventually hits the 10GB
+      # per-repository cache limit. The cost is one cold run per week, which is
+      # no worse than today's behaviour.
+      - name: Compute cache period
+        id: cache-period
+        run: echo "value=$(date -u +%Y-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Turborepo cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ steps.cache-period.outputs.value }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-${{ steps.cache-period.outputs.value }}-
+
       - name: Fetch base branch
         if: github.event_name == 'pull_request'
         run: git fetch origin ${{ github.event.pull_request.base.ref }}
@@ -52,3 +69,17 @@ jobs:
         env:
           TURBO_SCM_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.event.pull_request.base.ref) || 'HEAD~1' }}
         run: pnpm turbo run typecheck build lint test --affected
+
+      # Only pushes to main write the cache. A pull request run cannot write to
+      # main's cache scope anyway, but this also stops a run from writing a cache
+      # that a later re-run of the same pull request would restore. A poisoned
+      # Turborepo artifact makes tasks report a cache hit without executing and
+      # replays their stored logs, so a fork pull request could otherwise forge a
+      # green check. Saving only from main means every cached artifact was
+      # produced by already-merged, reviewed code.
+      - name: Save Turborepo cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ steps.cache-period.outputs.value }}-${{ github.sha }}
