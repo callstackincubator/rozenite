@@ -1,0 +1,85 @@
+# Tap
+
+`rozenite agent tap` connects to a device and prints Rozenite plugin messages as they flow, in both directions, without opening a browser or React Native DevTools.
+
+The full loop for checking that a plugin's native side behaves — Metro, a simulator, the app, a browser running React Native DevTools, the shell, and the panel — is a lot of overhead just to watch a handful of messages when the thing you're testing lives on the device. `tap` skips the browser half entirely.
+
+:::warning Experimental
+Rozenite for Agents (including `tap`) is experimental and may change. If you run into a bug, please [open an issue](https://github.com/callstackincubator/rozenite/issues).
+:::
+
+## Watch a plugin's traffic
+
+```bash
+npx rozenite agent tap --session <id> --plugin @acme/sqlite-plugin
+```
+
+```
+← 12:04:31.220  sqlite:list-tables-request   {"requestId":"a1"}
+→ 12:04:31.244  sqlite:list-tables-response  {"requestId":"a1","tables":["users","posts"]}
+```
+
+Each line is a direction arrow, a local timestamp, the message type, and the JSON payload:
+
+- `←` — received from the device.
+- `→` — sent to the device.
+
+Omit `--plugin` to watch every plugin's traffic on the session. `tap` keeps running until you stop it with Ctrl-C, closing the underlying connection cleanly.
+
+## Poke a plugin and watch what comes back
+
+Because the stream is bidirectional, `tap` doubles as a minimal stand-in for DevTools: send one message from the terminal, then keep watching for whatever comes back.
+
+```bash
+npx rozenite agent tap --session <id> --plugin @acme/sqlite-plugin --type sqlite:query --payload '{"sql":"select 1"}'
+```
+
+`--plugin`, `--type`, and `--payload` map directly onto the three fields of the message sent to the device (`pluginId`, `type`, `payload`). `--payload` defaults to `{}` and is validated as JSON on its own, so a malformed payload is reported against `--payload`, not against a blended argument. `--type` requires `--plugin`, since a message needs to know which plugin it's addressed to.
+
+`--plugin` also filters the stream — `--type` does not, since filtering on it would hide the very response your poke is meant to surface.
+
+## Machine-readable output
+
+Pass `--json` for newline-delimited JSON, one message per line, so another program or agent can consume the stream directly instead of screenshotting a terminal:
+
+```bash
+npx rozenite agent tap --session <id> --json
+```
+
+```json
+{
+  "direction": "in",
+  "timestamp": 1700000000000,
+  "pluginId": "@acme/sqlite-plugin",
+  "type": "list-tables-request",
+  "payload": { "requestId": "a1" }
+}
+```
+
+Each line has this shape:
+
+| Field       | Description                                                        |
+| ----------- | ------------------------------------------------------------------ |
+| `direction` | `"in"` (received from the device) or `"out"` (sent to the device). |
+| `timestamp` | Milliseconds since the Unix epoch.                                 |
+| `pluginId`  | The plugin the message belongs to.                                 |
+| `type`      | The message type.                                                  |
+| `payload`   | The message payload, unmodified.                                   |
+
+## Options
+
+- `-s, --session <id>` — target Agent session ID (required). Create one with `npx rozenite agent session create`.
+- `-p, --plugin <id>` — filter the stream to this plugin ID; required together with `--type`.
+- `-t, --type <name>` — send one message of this type before watching. Requires `--plugin`.
+- `-a, --payload <json>` — JSON payload for the sent message. Defaults to `{}`.
+- `--json` — newline-delimited JSON output instead of the human-readable format.
+- `--host <host>` / `--port <port>` — Metro host and port, inherited from `rozenite agent`, so they go before `tap`: `npx rozenite agent --host 192.168.1.10 --port 8082 tap --session <id>` (defaults to `127.0.0.1:8081`).
+
+## `tap` replaces React Native DevTools
+
+A device serves only one debugger connection at a time. `tap` rides the same connection `rozenite agent` uses, so starting a tap — like starting an agent session — disconnects React Native DevTools if it's already attached, and a tap keeps that same device from being opened in DevTools while it's running. This matches the point of `tap` (working entirely from the terminal), but it will surprise you if you don't expect it. Stop the tap (Ctrl-C) to free the connection back up.
+
+## Next steps
+
+- [Rozenite for Agents](/docs/agent/overview) — the wider agent-facing workflow `tap` is part of.
+- [Agent SDK](/docs/agent/sdk) — build custom tooling on top of the same session `tap` uses.

@@ -7,6 +7,7 @@ import {
   DEFAULT_AGENT_PORT,
   getAgentSessionCallToolRoute,
   getAgentSessionRoute,
+  getAgentSessionTapRoute,
   getAgentSessionToolsRoute,
 } from '@rozenite/agent-shared';
 import { createAgentSessionManager } from '../agent/session-manager.js';
@@ -20,6 +21,8 @@ const mocks = vi.hoisted(() => {
   const getTools = vi.fn();
   const callTool = vi.fn();
   const isReusable = vi.fn(() => true);
+  const subscribeTap = vi.fn(() => vi.fn());
+  const sendTapMessage = vi.fn(async () => undefined);
   const createAgentSession = vi.fn(() => ({
     id: 'device-1',
     start,
@@ -27,6 +30,8 @@ const mocks = vi.hoisted(() => {
     getInfo,
     getTools,
     callTool,
+    subscribeTap,
+    sendTapMessage,
     isReusable,
   }));
 
@@ -38,6 +43,8 @@ const mocks = vi.hoisted(() => {
     getInfo,
     getTools,
     callTool,
+    subscribeTap,
+    sendTapMessage,
     isReusable,
     createAgentSession,
   };
@@ -58,6 +65,10 @@ describe('agent session manager', () => {
     mocks.start.mockReset();
     mocks.start.mockResolvedValue(undefined);
     mocks.isReusable.mockReturnValue(true);
+    mocks.subscribeTap.mockReset();
+    mocks.subscribeTap.mockReturnValue(vi.fn());
+    mocks.sendTapMessage.mockReset();
+    mocks.sendTapMessage.mockResolvedValue(undefined);
   });
 
   const target = {
@@ -79,6 +90,7 @@ describe('agent session manager', () => {
     expect(getAgentSessionCallToolRoute('device-1')).toBe(
       '/rozenite/agent/sessions/device-1/call-tool',
     );
+    expect(getAgentSessionTapRoute('device-1')).toBe('/rozenite/agent/sessions/device-1/tap');
   });
 
   it('uses default loopback Metro endpoint', () => {
@@ -212,6 +224,36 @@ describe('agent session manager', () => {
     await expect(manager.callSessionTool('device-1', 'startTrace', {})).resolves.toEqual({
       ok: true,
     });
+  });
+
+  it('delegates tap subscription and sending to the session instance', async () => {
+    mocks.resolveMetroTarget.mockResolvedValue(target);
+    mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
+    const listener = vi.fn();
+    const unsubscribe = vi.fn();
+    mocks.subscribeTap.mockReturnValue(unsubscribe);
+
+    const manager = createAgentSessionManager({ projectRoot: '/app' });
+    await manager.createSession({ deviceId: 'device-1' });
+
+    const returnedUnsubscribe = manager.subscribeSessionTap('device-1', listener);
+    expect(mocks.subscribeTap).toHaveBeenCalledWith(listener);
+    expect(returnedUnsubscribe).toBe(unsubscribe);
+
+    const message = { pluginId: 'p', type: 't', payload: { a: 1 } };
+    await manager.sendSessionTapMessage('device-1', message);
+    expect(mocks.sendTapMessage).toHaveBeenCalledWith(message);
+  });
+
+  it('throws for tap operations against an unknown session', async () => {
+    const manager = createAgentSessionManager({ projectRoot: '/app' });
+
+    expect(() => manager.subscribeSessionTap('missing', vi.fn())).toThrow(
+      'Unknown session "missing"',
+    );
+    await expect(
+      manager.sendSessionTapMessage('missing', { pluginId: 'p', type: 't', payload: {} }),
+    ).rejects.toThrow('Unknown session "missing"');
   });
 
   it('waits for session startup before resolving createSession', async () => {

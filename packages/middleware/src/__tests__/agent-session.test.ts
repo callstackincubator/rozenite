@@ -702,4 +702,124 @@ describe('agent session', () => {
     socket.close();
     await rejection;
   });
+
+  describe('tap', () => {
+    it('tees an inbound rozenite-domain plugin message to subscribers', async () => {
+      const { session } = await bootstrapSession();
+      const listener = vi.fn();
+      session.subscribeTap(listener);
+
+      await emitRozeniteBindingPayload(mocks.wsInstances[0], {
+        pluginId: '@acme/sqlite-plugin',
+        type: 'list-tables-request',
+        payload: { requestId: 'a1' },
+      });
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          direction: 'in',
+          pluginId: '@acme/sqlite-plugin',
+          type: 'list-tables-request',
+          payload: { requestId: 'a1' },
+        }),
+      );
+    });
+
+    it('tees a message sent through the device sender as outbound', async () => {
+      const { session } = await bootstrapSession();
+      const listener = vi.fn();
+      session.subscribeTap(listener);
+
+      const sender = mocks.handler.connectDevice.mock.calls[0]?.[2] as
+        | { sendMessage: (message: unknown) => void }
+        | undefined;
+      expect(sender).toBeDefined();
+
+      sender?.sendMessage({
+        pluginId: 'rozenite-agent',
+        type: 'tool-call',
+        payload: { callId: '1', toolName: 'echo', arguments: {} },
+      });
+      await flushMicrotasks();
+
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          direction: 'out',
+          pluginId: 'rozenite-agent',
+          type: 'tool-call',
+        }),
+      );
+    });
+
+    it('does not tee a malformed outbound message missing pluginId/type', async () => {
+      const { session } = await bootstrapSession();
+      const listener = vi.fn();
+      session.subscribeTap(listener);
+
+      const sender = mocks.handler.connectDevice.mock.calls[0]?.[2] as
+        | { sendMessage: (message: unknown) => void }
+        | undefined;
+
+      sender?.sendMessage({ marker: 'not-a-plugin-message' });
+      await flushMicrotasks();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('stops delivering to a subscriber that unsubscribed', async () => {
+      const { session } = await bootstrapSession();
+      const listener = vi.fn();
+      const unsubscribe = session.subscribeTap(listener);
+      unsubscribe();
+
+      await emitRozeniteBindingPayload(mocks.wsInstances[0], {
+        pluginId: '@acme/sqlite-plugin',
+        type: 'list-tables-request',
+        payload: {},
+      });
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('sends and tees a message via sendTapMessage while connected', async () => {
+      const { session } = await bootstrapSession();
+      const listener = vi.fn();
+      session.subscribeTap(listener);
+
+      await session.sendTapMessage({
+        pluginId: '@acme/sqlite-plugin',
+        type: 'query',
+        payload: { sql: 'select 1' },
+      });
+
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          direction: 'out',
+          pluginId: '@acme/sqlite-plugin',
+          type: 'query',
+          payload: { sql: 'select 1' },
+        }),
+      );
+
+      // The Runtime.evaluate expression embeds the message as a JSON string
+      // literal, so its own quotes come through backslash-escaped.
+      const expressions = getExpressions();
+      expect(
+        expressions.some(
+          (expression) =>
+            expression.includes('sendMessage("rozenite"') &&
+            expression.includes('\\"type\\":\\"query\\"'),
+        ),
+      ).toBe(true);
+    });
+
+    it('rejects sendTapMessage when the session is not connected', async () => {
+      const { session } = createStartedSession();
+
+      await expect(
+        session.sendTapMessage({ pluginId: 'plugin', type: 'type', payload: {} }),
+      ).rejects.toThrow('is not connected to a device');
+    });
+  });
 });

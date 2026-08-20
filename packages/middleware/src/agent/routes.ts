@@ -3,6 +3,7 @@ import {
   AGENT_INFO_ROUTE,
   AGENT_SESSION_CALL_TOOL_ROUTE_PATTERN,
   AGENT_SESSION_ROUTE_PATTERN,
+  AGENT_SESSION_TAP_ROUTE_PATTERN,
   AGENT_SESSION_TOOLS_ROUTE_PATTERN,
   AGENT_SESSIONS_ROUTE,
   AGENT_TARGETS_ROUTE,
@@ -16,8 +17,10 @@ import {
   type CreateAgentSessionResponse,
   type DeleteAgentSessionResponse,
   type CallAgentSessionToolResponse,
+  type SendAgentSessionTapMessageResponse,
 } from '@rozenite/agent-shared';
 import type { AgentSessionManager } from './session-manager.js';
+import { matchesTapFilter } from './tap.js';
 
 const getRequestHost = (req: Request): string => {
   const hostHeader = req.headers.host;
@@ -173,6 +176,77 @@ export const createAgentRoutes = (manager: AgentSessionManager): Router => {
       sendResult<CallAgentSessionToolResponse>(res, {
         result,
       } satisfies CallAgentSessionToolResponse);
+    } catch (error) {
+      sendError(res, error);
+    }
+  });
+
+  // GET streams tapped `rozenite`-domain messages for this session as
+  // newline-delimited JSON (chunked transfer encoding) until the client
+  // disconnects. There's no other streaming route on this server to match a
+  // house style against, so this follows the same shape as every other
+  // route here — a plain Express handler on the existing Metro-owned HTTP
+  // server — rather than introducing a WebSocket upgrade path this server
+  // doesn't otherwise own.
+  router.get(AGENT_SESSION_TAP_ROUTE_PATTERN, (req, res) => {
+    syncEndpoint(manager, req);
+
+    let sessionId: string;
+    try {
+      sessionId = getSessionId(req);
+      // Resolve the session before flushing headers: once a chunked
+      // response starts, a 404 can no longer be reported through the usual
+      // JSON error envelope.
+      manager.getSession(sessionId);
+    } catch (error) {
+      sendError(res, error);
+      return;
+    }
+
+    const pluginId = typeof req.query.pluginId === 'string' ? req.query.pluginId : undefined;
+    const type = typeof req.query.type === 'string' ? req.query.type : undefined;
+
+    res.status(200);
+    res.setHeader('Content-Type', 'application/x-ndjson');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const unsubscribe = manager.subscribeSessionTap(sessionId, (event) => {
+      if (!matchesTapFilter(event, { pluginId, type })) {
+        return;
+      }
+      res.write(`${JSON.stringify(event)}\n`);
+    });
+
+    const cleanup = (): void => {
+      unsubscribe();
+    };
+
+    req.on('close', cleanup);
+    res.on('close', cleanup);
+  });
+
+  // POST injects one message into the same tap channel a GET on this route
+  // streams — the CLI's `--type`/`--payload` "poke" path.
+  router.post(AGENT_SESSION_TAP_ROUTE_PATTERN, async (req, res) => {
+    syncEndpoint(manager, req);
+    try {
+      const body = getBodyRecord(req);
+      if (typeof body.pluginId !== 'string' || body.pluginId.length === 0) {
+        throw new Error('"pluginId" is required');
+      }
+      if (typeof body.type !== 'string' || body.type.length === 0) {
+        throw new Error('"type" is required');
+      }
+
+      await manager.sendSessionTapMessage(getSessionId(req), {
+        pluginId: body.pluginId,
+        type: body.type,
+        payload: body.payload,
+      });
+
+      sendResult<SendAgentSessionTapMessageResponse>(res, { sent: true });
     } catch (error) {
       sendError(res, error);
     }

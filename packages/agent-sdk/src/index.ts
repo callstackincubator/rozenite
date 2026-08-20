@@ -9,6 +9,9 @@ export type {
   AgentSessionClient,
   AgentSessionDomains,
   AgentSessionTools,
+  AgentTapFilter,
+  AgentTapStreamHandle,
+  AgentTapStreamHandlers,
   AgentToolSchema,
   DomainDefinition,
 } from './types.js';
@@ -22,4 +25,8 @@ export type {
   AgentToolTraits,
   JSONSchema7,
   MetroTarget,
+  SendAgentSessionTapMessageRequest,
+  SendAgentSessionTapMessageResponse,
+  TapDirection,
+  TapEvent,
 } from '@rozenite/agent-shared';

@@ -10,6 +10,7 @@ import { createAgentArtifacts } from './artifacts.js';
 import { createAgentMessageHandler } from './runtime/handler.js';
 import { extractConsoleMessage } from './runtime/console/extract.js';
 import { parseRozeniteBindingPayload } from './runtime/bindings.js';
+import { createTapEmitter, isDevToolsPluginMessage, type TapListener } from './tap.js';
 import type { DevToolsPluginMessage } from './runtime/types.js';
 import {
   createMemoryDomainService,
@@ -104,6 +105,7 @@ export const createAgentSession = (options: {
   let target = options.target;
   const handler = createAgentMessageHandler();
   const artifacts = createAgentArtifacts(options.projectRoot, options.target.id);
+  const tap = createTapEmitter();
   const createdAt = Date.now();
 
   let lastActivityAt = createdAt;
@@ -776,6 +778,12 @@ export const createAgentSession = (options: {
       }
 
       const devToolsMessage = bindingPayload.message as DevToolsPluginMessage;
+      // Tee every rozenite-domain message — not just the ones the built-in
+      // handler understands (AGENT_PLUGIN_ID) — so a tap can observe
+      // arbitrary third-party plugin traffic too.
+      if (isDevToolsPluginMessage(devToolsMessage)) {
+        tap.emit('in', devToolsMessage);
+      }
       handler.handleDeviceMessage(options.target.id, devToolsMessage);
       if (devToolsMessage.type === 'register-tool') {
         notePluginReadinessActivity();
@@ -815,6 +823,9 @@ export const createAgentSession = (options: {
         touch();
         handler.connectDevice(options.target.id, options.target.name, {
           sendMessage: (message: unknown) => {
+            if (isDevToolsPluginMessage(message)) {
+              tap.emit('out', message);
+            }
             void sendDomainMessage('rozenite', message);
           },
         });
@@ -901,6 +912,19 @@ export const createAgentSession = (options: {
       ...handler.getTools(options.target.id),
       ...localServices.flatMap((service) => service.getTools()),
     ];
+  };
+
+  const subscribeTap: (listener: TapListener) => () => void = tap.subscribe;
+
+  const sendTapMessage = async (message: DevToolsPluginMessage): Promise<void> => {
+    if (status !== 'connected') {
+      throw new Error(`Session "${options.target.id}" is not connected to a device`);
+    }
+
+    // Injected the same way `handler`-originated messages are: teed for
+    // observers, then handed to the device over the existing CDP socket.
+    tap.emit('out', message);
+    await sendDomainMessage('rozenite', message);
   };
 
   const callTool = async (toolName: string, args: unknown): Promise<unknown> => {
@@ -1017,6 +1041,8 @@ export const createAgentSession = (options: {
     getInfo,
     getTools,
     callTool,
+    subscribeTap,
+    sendTapMessage,
     isReusable: (nextTarget: MetroTarget) =>
       status === 'connected' && target.pageId === nextTarget.pageId,
   };
