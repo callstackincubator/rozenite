@@ -4,17 +4,19 @@
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
-The Rozenite Vite Plugin provides a complete development environment for React Native DevTools plugins. It handles multiple build targets (client panels and React Native entry points), provides hot reload during development, and generates optimized production builds with proper manifest files.
+The Rozenite Vite Plugin builds the DevTools panels of a React Native DevTools plugin. It provides hot reload during development, and generates optimized production bundles with proper manifest files.
+
+Panels are the only part of a plugin that needs bundling, because they ship as a browser bundle rather than as a resolvable package entry point. The React Native, Metro and SDK entry points are compiled with `tsc` by [`rozenite build`](https://www.npmjs.com/package/rozenite).
 
 ## Features
 
-- **Multi-Target Building**: Build for client panels and React Native
+- **Panel Building**: Bundles plugin panels for the DevTools frontend
 - **Hot Reload Development**: Instant updates during plugin development
 - **React Native Web Support**: Seamless React Native component development
 - **Tailwind CSS Support**: Processes Tailwind CSS v4 in client panels without additional Vite or PostCSS configuration
 - **Automatic Manifest Generation**: Creates `rozenite.json` manifest files
 - **Panel HTML Generation**: Automatically generates HTML for plugin panels
-- **TypeScript Support**: Full TypeScript support with type generation
+- **TypeScript Support**: Full TypeScript support
 - **Development Server**: Built-in development server with CORS support
 - **Production Optimization**: Optimized builds for production deployment
 
@@ -55,24 +57,11 @@ export default defineConfig({
 
 ## Build Targets
 
-The Vite plugin automatically handles different build targets based on environment variables:
-
-### Client Panels (Default)
-
-For plugin panels that run in the browser:
+This plugin builds the panels only. Run it through the Rozenite CLI, which also
+compiles the `react-native.ts`, `metro.ts` and `sdk.ts` entry points with `tsc`:
 
 ```bash
-# Build panels
-npm run build
-```
-
-### React Native Entry Points
-
-For React Native integration:
-
-```bash
-# Build React Native target
-VITE_ROZENITE_TARGET=react-native npm run build
+npx rozenite build
 ```
 
 ## Made with ❤️ at Callstack

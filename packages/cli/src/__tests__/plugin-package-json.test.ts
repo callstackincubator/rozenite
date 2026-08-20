@@ -61,25 +61,23 @@ describe('syncPluginPackageJSON', () => {
     );
 
     expect(result.updatedFields).toEqual(['main', 'module', 'types', 'exports']);
-    expect(packageJson.main).toBe('./dist/react-native/index.cjs');
-    expect(packageJson.module).toBe('./dist/react-native/index.js');
-    expect(packageJson.types).toBe('./dist/react-native/index.d.ts');
+    expect(packageJson.main).toBe('./dist/react-native/cjs/react-native.js');
+    expect(packageJson.module).toBe('./dist/react-native/react-native.js');
+    expect(packageJson.types).toBe('./dist/react-native/react-native.d.ts');
     expect(packageJson.exports).toEqual({
       '.': {
-        types: './dist/react-native/index.d.ts',
-        import: './dist/react-native/index.js',
-        require: './dist/react-native/index.cjs',
+        types: './dist/react-native/react-native.d.ts',
+        import: './dist/react-native/react-native.js',
+        require: './dist/react-native/cjs/react-native.js',
       },
       './metro': {
-        types: './dist/metro/index.d.ts',
-        import: './dist/metro/index.js',
-        require: './dist/metro/index.cjs',
+        types: './dist/metro/metro.d.ts',
+        default: './dist/metro/metro.js',
       },
       './sdk': {
         development: './sdk.ts',
-        types: './dist/sdk/index.d.ts',
-        import: './dist/sdk/index.js',
-        require: './dist/sdk/index.cjs',
+        types: './dist/sdk/sdk.d.ts',
+        default: './dist/sdk/sdk.js',
       },
       './custom': './src/custom.ts',
       './package.json': './package.json',
@@ -92,25 +90,23 @@ describe('syncPluginPackageJSON', () => {
     await writeJson(path.join(projectRoot, 'package.json'), {
       name: 'demo-plugin',
       type: 'module',
-      main: './dist/react-native/index.cjs',
-      module: './dist/react-native/index.js',
-      types: './dist/react-native/index.d.ts',
+      main: './dist/react-native/cjs/react-native.js',
+      module: './dist/react-native/react-native.js',
+      types: './dist/react-native/react-native.d.ts',
       exports: {
         '.': {
-          types: './dist/react-native/index.d.ts',
-          import: './dist/react-native/index.js',
-          require: './dist/react-native/index.cjs',
+          types: './dist/react-native/react-native.d.ts',
+          import: './dist/react-native/react-native.js',
+          require: './dist/react-native/cjs/react-native.js',
         },
         './metro': {
-          types: './dist/metro/index.d.ts',
-          import: './dist/metro/index.js',
-          require: './dist/metro/index.cjs',
+          types: './dist/metro/metro.d.ts',
+          default: './dist/metro/metro.js',
         },
         './sdk': {
           development: './sdk.ts',
-          types: './dist/sdk/index.d.ts',
-          import: './dist/sdk/index.js',
-          require: './dist/sdk/index.cjs',
+          types: './dist/sdk/sdk.d.ts',
+          default: './dist/sdk/sdk.js',
         },
         './custom': './src/custom.ts',
       },
@@ -126,9 +122,9 @@ describe('syncPluginPackageJSON', () => {
     expect(result.updatedFields).toEqual(['exports']);
     expect(packageJson.exports).toEqual({
       '.': {
-        types: './dist/react-native/index.d.ts',
-        import: './dist/react-native/index.js',
-        require: './dist/react-native/index.cjs',
+        types: './dist/react-native/react-native.d.ts',
+        import: './dist/react-native/react-native.js',
+        require: './dist/react-native/cjs/react-native.js',
       },
       './custom': './src/custom.ts',
       './package.json': './package.json',
@@ -157,15 +153,14 @@ describe('syncPluginPackageJSON', () => {
     expect(result.updatedFields).toEqual(['main', 'module', 'types', 'exports']);
     expect(packageJson.exports).toEqual({
       '.': {
-        types: './dist/react-native/index.d.ts',
-        import: './dist/react-native/index.js',
-        require: './dist/react-native/index.cjs',
+        types: './dist/react-native/react-native.d.ts',
+        import: './dist/react-native/react-native.js',
+        require: './dist/react-native/cjs/react-native.js',
       },
       './sdk': {
         development: './sdk.ts',
-        types: './dist/sdk/index.d.ts',
-        import: './dist/sdk/index.js',
-        require: './dist/sdk/index.cjs',
+        types: './dist/sdk/sdk.d.ts',
+        default: './dist/sdk/sdk.js',
       },
       './custom': './src/custom.ts',
       './package.json': './package.json',

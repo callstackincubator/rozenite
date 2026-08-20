@@ -12,14 +12,14 @@
     "url": "https://github.com/callstackincubator/rozenite.git"
   },
   "type": "module",
-  "main": "./dist/react-native/index.cjs",
-  "module": "./dist/react-native/index.js",
-  "types": "./dist/react-native/index.d.ts",
+  "main": "./dist/react-native/cjs/react-native.js",
+  "module": "./dist/react-native/react-native.js",
+  "types": "./dist/react-native/react-native.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/react-native/index.d.ts",
-      "import": "./dist/react-native/index.js",
-      "require": "./dist/react-native/index.cjs"
+      "types": "./dist/react-native/react-native.d.ts",
+      "import": "./dist/react-native/react-native.js",
+      "require": "./dist/react-native/cjs/react-native.js"
     },
     "./package.json": "./package.json"
   },

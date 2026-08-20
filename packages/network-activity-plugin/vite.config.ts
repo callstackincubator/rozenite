@@ -20,26 +20,6 @@ export default defineConfig({
     reportCompressedSize: false,
     minify: false,
     sourcemap: false,
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          // Mitigate https://github.com/facebook/metro/issues/836
-          if (id.includes('event-source.ts')) {
-            return 'event-source';
-          }
-
-          if (id.includes('get-nitro-module.ts')) {
-            return 'get-nitro-module';
-          }
-
-          if (id.includes('get-expo-fetch-module.ts')) {
-            return 'get-expo-fetch-module';
-          }
-
-          return undefined;
-        },
-      },
-    },
   },
   server: {
     port: 3000,

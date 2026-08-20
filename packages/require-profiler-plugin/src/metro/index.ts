@@ -1,8 +1,17 @@
 import type { ConfigT as MetroConfig } from 'metro-config';
-import { createRequire } from 'node:module';
+import path from 'node:path';
 import { createMetroConfigTransformer } from '@rozenite/tools';
 
-const require = createRequire(import.meta.url);
+// `setup.js` is a Metro polyfill: Metro injects it into the app bundle and
+// executes it verbatim, so it must never be compiled, bundled or otherwise
+// processed. It is therefore referenced straight out of the published `src`
+// directory rather than copied through the build.
+//
+// The Metro entry point is emitted as CommonJS at dist/metro/src/metro/, so
+// four levels up from this file is the package root. Guarded by
+// `metro-polyfill.test.ts`, which runs against the built output.
+const PACKAGE_ROOT = path.join(__dirname, '..', '..', '..', '..');
+const SETUP_POLYFILL_PATH = path.join(PACKAGE_ROOT, 'src', 'metro', 'setup.js');
 
 /**
  * Metro config wrapper for require profiling instrumentation.
@@ -31,7 +40,7 @@ export const withRozeniteRequireProfiler = createMetroConfigTransformer(
       ...config,
       serializer: {
         ...config.serializer,
-        getPolyfills: (...opts) => [...existingGetPolyfills(...opts), require.resolve('./setup')],
+        getPolyfills: (...opts) => [...existingGetPolyfills(...opts), SETUP_POLYFILL_PATH],
         getRunModuleStatement: (...opts) => {
           const statement = existingGetRunModuleStatement(...opts);
           return `typeof __patchSystrace === "function" && __patchSystrace();\n${statement}`;

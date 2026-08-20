@@ -12,6 +12,7 @@ import { openCommand } from './commands/open-command.js';
 import { registerAgentCommand } from './commands/agent/register-agent-command.js';
 import { registerSkillsCommand } from './commands/register-skills-command.js';
 import { getErrorMessage } from './commands/agent/error-message.js';
+import { BuildToolError } from './utils/spawn.js';
 
 const packageJSON = getPackageJSON();
 
@@ -58,9 +59,11 @@ const main = async () => {
     .alias('b')
     .description('Build a React Native DevTools plugin')
     .arguments('[path]')
+    .option('-v, --verbose', 'Stream the output of the underlying build tools')
     .usage(`[options] ${color.green('[path]')}`)
-    .action(async (path) => {
+    .action(async (path, options) => {
       const targetDir = path ?? process.cwd();
+      logger.setVerbose(!!options.verbose);
       await buildCommand(targetDir);
     });
 
@@ -109,6 +112,15 @@ const main = async () => {
 main().catch((error) => {
   if (isJsonMode(process.argv) || isAgentMode(process.argv)) {
     writeJsonError(error, isPrettyJsonMode(process.argv));
+    process.exit(1);
+  }
+
+  // A build tool that exited non-zero has already said what went wrong, and
+  // the fault is in the plugin rather than in Rozenite. Print its output as-is
+  // instead of burying it under a stack trace and a bug report link.
+  if (error instanceof BuildToolError) {
+    logger.error(error.message);
+    outro('Build failed');
     process.exit(1);
   }
 

@@ -3,6 +3,13 @@ import { intro, outro } from '../utils/prompts.js';
 import { logger } from '../utils/logger.js';
 import { syncPluginPackageJSON } from '../utils/plugin-package-json.js';
 import { isInteractive } from '../utils/isInteractive.js';
+import {
+  assertTsconfigExists,
+  getTscEmits,
+  PluginTarget,
+  prepareEmit,
+  spawnTscWatch,
+} from '../utils/tsc-build.js';
 
 const getLocalUrl = async (process: Subprocess) => {
   const childProcess = await process.nodeChildProcess;
@@ -67,38 +74,29 @@ export const devCommand = async (targetDir: string) => {
 
   const { hasReactNativeEntryPoint, hasMetroEntryPoint } = targets;
 
+  const watchTargets: PluginTarget[] = [
+    ...(hasReactNativeEntryPoint ? (['react-native'] as const) : []),
+    ...(hasMetroEntryPoint ? (['metro'] as const) : []),
+  ];
+
+  if (watchTargets.length > 0) {
+    await assertTsconfigExists(targetDir);
+  }
+
   try {
     const processes: Subprocess[] = [];
 
-    if (hasReactNativeEntryPoint) {
-      const rnProcess = spawn('vite', ['build', '--watch'], {
-        cwd: targetDir,
-        handleSignals: false,
-        env: {
-          VITE_ROZENITE_TARGET: 'react-native',
-        },
-      });
-      processes.push(rnProcess);
-    }
-
-    if (hasMetroEntryPoint) {
-      const metroProcess = spawn('vite', ['build', '--watch'], {
-        cwd: targetDir,
-        handleSignals: false,
-        env: {
-          VITE_ROZENITE_TARGET: 'server',
-        },
-      });
-      processes.push(metroProcess);
+    for (const target of watchTargets) {
+      for (const emit of getTscEmits(target)) {
+        const configPath = await prepareEmit(targetDir, emit);
+        processes.push(spawnTscWatch(targetDir, configPath));
+      }
     }
 
     const clientProcess = spawn('vite', ['dev', isInteractive() ? '--open' : '--no-open'], {
       cwd: targetDir,
       handleSignals: false,
       stdout: 'pipe',
-      env: {
-        VITE_ROZENITE_TARGET: 'client',
-      },
     });
     processes.push(clientProcess);
 

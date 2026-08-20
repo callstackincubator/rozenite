@@ -3,7 +3,8 @@ import { spinner } from './prompts.js';
 export type StepOptions = {
   start: string;
   stop: string;
-  error: string;
+  /** A function can tell a genuine failure apart from a cancelled step. */
+  error: string | ((error: unknown) => string);
 };
 
 export const step = async ({ start, stop, error }: StepOptions, fn: () => Promise<void>) => {
@@ -14,7 +15,7 @@ export const step = async ({ start, stop, error }: StepOptions, fn: () => Promis
     await fn();
     step.stop(stop);
   } catch (err) {
-    step.stop(error, 1);
+    step.stop(typeof error === 'string' ? error : error(err), 1);
     throw err;
   }
 };
