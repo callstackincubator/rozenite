@@ -1,11 +1,18 @@
+import type { AgentTargetPlatform } from '@rozenite/agent-shared';
 import { type ProjectType } from '@rozenite/tools';
 import { RozeniteLogLevel } from './logger.js';
 
 /** Controls whether plugins are shown as individual tabs or in one sidebar. */
 export type RozenitePluginDisplay = 'tabs' | 'sidebar';
 
-/** Which host platform the dev server serves. See `RozeniteConfig.platform`. */
-export type RozenitePlatform = 'react-native' | 'lynx';
+/**
+ * Which host platform the dev server serves. See `RozeniteConfig.platform`.
+ *
+ * Aliases `AgentTargetPlatform` rather than restating the union: the agent
+ * subsystem resolves a capability profile from this same value, and the two
+ * must never be able to drift apart.
+ */
+export type RozenitePlatform = AgentTargetPlatform;
 
 export type RozeniteConfig = {
   projectRoot: string;

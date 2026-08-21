@@ -1,5 +1,5 @@
 import { request as httpRequest } from 'node:http';
-import type { MetroTarget } from '@rozenite/agent-shared';
+import type { AgentTargetPlatform, MetroTarget } from '@rozenite/agent-shared';
 
 type JsonPageDescription = {
   id: string;
@@ -13,6 +13,15 @@ type JsonPageDescription = {
     capabilities?: {
       prefersFuseboxFrontend?: boolean;
     };
+  };
+  /**
+   * Rozenite's own extension to Metro's page shape, served by dev servers
+   * that front a non-React-Native runtime (`@rozenite/lynx-dev` sets it).
+   * Metro itself never emits it, and every other consumer ignores unknown
+   * keys, so this is additive.
+   */
+  rozenite?: {
+    platform?: AgentTargetPlatform;
   };
 };
 
@@ -125,6 +134,7 @@ export const getMetroTargets = async (host: string, port: number): Promise<Metro
             title: page.title,
             description: page.description,
             webSocketDebuggerUrl: page.webSocketDebuggerUrl,
+            ...(page.rozenite?.platform ? { platform: page.rozenite.platform } : {}),
           }) satisfies MetroTarget,
       ),
     )

@@ -315,11 +315,16 @@ describe('agent command output', () => {
         kind: 'static',
         description:
           'CDP memory inspection and heap profiling tools with Metro-managed artifact exports.',
+        availability: 'degraded',
+        unavailableReason: 'Allocation sampling is unavailable on this target.',
       },
       {
         id: 'network',
         kind: 'static',
         description: 'Raw CDP network recording tools with paginated request browsing.',
+        availability: 'unsupported',
+        unavailableReason: 'Lynx registers no CDP Network domain.',
+        fallback: '@rozenite/network-activity-plugin',
       },
       {
         id: 'performance',
@@ -343,7 +348,7 @@ describe('agent command output', () => {
     });
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"cols":["id","kind"],"rows":[["app","plugin"],["console","static"],["memory","static"],["network","static"],["performance","static"],["react","static"]]}\n',
+      '{"cols":["id","kind","availability","fallback"],"rows":[["app","plugin","supported",null],["console","static","supported",null],["memory","static","degraded",null],["network","static","unsupported","@rozenite/network-activity-plugin"],["performance","static","supported",null],["react","static","supported",null]]}\n',
     );
   });
 
@@ -364,7 +369,7 @@ describe('agent command output', () => {
     );
 
     expect(stdoutWrite).toHaveBeenCalledWith(
-      '{"items":[{"id":"app","kind":"plugin"}],"next":"npx rozenite agent domains --host 127.0.0.1 --port 8081 --session \'session 1\' --limit 1 --cursor eyJ2IjoxLCJraW5kIjoiZG9tYWlucyIsInNjb3BlIjoiYWxsIiwiaW5kZXgiOjF9"}\n',
+      '{"items":[{"id":"app","kind":"plugin","availability":"supported"}],"next":"npx rozenite agent domains --host 127.0.0.1 --port 8081 --session \'session 1\' --limit 1 --cursor eyJ2IjoxLCJraW5kIjoiZG9tYWlucyIsInNjb3BlIjoiYWxsIiwiaW5kZXgiOjF9"}\n',
     );
   });
 

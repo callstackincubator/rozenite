@@ -8,6 +8,14 @@ export type SkillDoc = {
   id: string;
   description: string;
   domain?: string;
+  /**
+   * Platforms this doc applies to, as written in the frontmatter (for
+   * example `react-native, lynx`). Advisory: docs are annotated rather
+   * than filtered, because one repository can hold a React Native app and
+   * a Lynx app, and hiding a doc from the list would just make the
+   * platform difference invisible again.
+   */
+  platforms?: string;
   body: string;
 };
 
@@ -15,6 +23,7 @@ type Frontmatter = {
   name?: string;
   description?: string;
   domain?: string;
+  platforms?: string;
 };
 
 const parseFrontmatter = (raw: string): { frontmatter: Frontmatter; body: string } => {
@@ -36,7 +45,7 @@ const parseFrontmatter = (raw: string): { frontmatter: Frontmatter; body: string
     const [, key, value] = lineMatch;
     const trimmedValue = value.trim().replace(/^['"]|['"]$/g, '');
 
-    if (key === 'name' || key === 'description' || key === 'domain') {
+    if (key === 'name' || key === 'description' || key === 'domain' || key === 'platforms') {
       frontmatter[key] = trimmedValue;
     }
   }
@@ -58,6 +67,7 @@ const loadDoc = (docsDir: string, fileName: string): SkillDoc => {
     id,
     description: frontmatter.description,
     domain: frontmatter.domain,
+    ...(frontmatter.platforms ? { platforms: frontmatter.platforms } : {}),
     body,
   };
 };
