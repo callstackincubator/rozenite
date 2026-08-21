@@ -59,6 +59,25 @@ export type LynxTransportOptions = {
 const SESSION_LIST_REFRESH_INTERVAL_MS = 5_000;
 /** `connectDevices` timeout: long enough to catch an already-plugged-in device, short enough not to block startup. */
 const DEVICE_DISCOVERY_TIMEOUT_MS = 3_000;
+/**
+ * How often device discovery is retried after the one at startup.
+ *
+ * `connectDevices` enumerates whatever is attached *right now* and then
+ * stops; the connector only watches clients on devices it already knows.
+ * Anything missed in that one window is therefore invisible until the dev
+ * server is restarted -- and the window is easy to miss, because it is
+ * capped at `DEVICE_DISCOVERY_TIMEOUT_MS` and enumeration slows down with
+ * every attached device. Observed with three attached (a phone and two
+ * emulators): the phone was never discovered, `/json/list` stayed empty
+ * with no error logged, while a connector started seconds later found it
+ * immediately.
+ *
+ * Retrying on a timer also covers the ordinary case of plugging a device
+ * in, or booting an emulator, after the dev server is already running.
+ * Slower than the session-list refresh because enumerating devices costs
+ * more than asking a known client for its cards.
+ */
+const DEVICE_DISCOVERY_RETRY_INTERVAL_MS = 15_000;
 
 const noopLogger: LynxTransportLogger = {
   debug: () => {},
@@ -200,6 +219,21 @@ export const createLynxTransport = async (
 
   const onClientConnected = (client: ClientLike): void => {
     const info = mapClientToLynxClient(client);
+    const existing = clients.get(info.clientId);
+
+    // A client already known is one the periodic re-discovery sweep has
+    // re-reported, not a new one. Keep the cards already recorded for it:
+    // starting from `sessions: []` again would blank its targets out of
+    // `/json/list` until the next session list came back, making them
+    // blink on every sweep. Nothing is logged either, since nothing
+    // connected.
+    if (existing) {
+      existing.client = client;
+      existing.info = info;
+      requestSessionList(existing);
+      return;
+    }
+
     const entry: ClientEntry = { client, info, sessions: [] };
     clients.set(info.clientId, entry);
     logger.info(
@@ -269,16 +303,39 @@ export const createLynxTransport = async (
 
   // An unplugged phone is the normal state at startup: discovery failures
   // are logged, never thrown, so they cannot take the dev server down.
-  try {
-    await connector.connectDevices(DEVICE_DISCOVERY_TIMEOUT_MS, options.deviceSerial ?? null, true);
-  } catch (error) {
-    logger.warn(`[lynx-dev] Lynx device discovery failed (will keep watching): ${String(error)}`);
-  }
-  try {
-    connector.startWatchAllClients();
-  } catch (error) {
-    logger.warn(`[lynx-dev] Failed to start watching Lynx clients: ${String(error)}`);
-  }
+  const discoverDevices = async (): Promise<void> => {
+    try {
+      await connector.connectDevices(
+        DEVICE_DISCOVERY_TIMEOUT_MS,
+        options.deviceSerial ?? null,
+        true,
+      );
+    } catch (error) {
+      logger.warn(`[lynx-dev] Lynx device discovery failed (will keep watching): ${String(error)}`);
+    }
+
+    try {
+      connector.startWatchAllClients();
+    } catch (error) {
+      logger.warn(`[lynx-dev] Failed to start watching Lynx clients: ${String(error)}`);
+    }
+  };
+
+  await discoverDevices();
+
+  // Devices already connected are re-reported by `connectDevices` as
+  // clients that are already in `clients` -- `onClientConnected` keys on
+  // `client.clientId()`, so a repeat is an in-place update, not a
+  // duplicate target.
+  const discoveryTimer: ReturnType<typeof setInterval> = setInterval(() => {
+    if (disposed) {
+      return;
+    }
+
+    void discoverDevices();
+  }, DEVICE_DISCOVERY_RETRY_INTERVAL_MS);
+  // Never keep a host process alive solely for this retry.
+  discoveryTimer.unref?.();
 
   const refreshTimer: ReturnType<typeof setInterval> = setInterval(() => {
     for (const entry of clients.values()) {
@@ -322,6 +379,7 @@ export const createLynxTransport = async (
       disposed = true;
 
       clearInterval(refreshTimer);
+      clearInterval(discoveryTimer);
       connector.off('client-connected', onClientConnected);
       connector.off('client-disconnected', onClientDisconnected);
       connector.off('usb-client-message', onUsbClientMessage);

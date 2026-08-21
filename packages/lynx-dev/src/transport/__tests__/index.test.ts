@@ -71,6 +71,63 @@ describe('createLynxTransport', () => {
     expect(connector.startWatchAllClients).toHaveBeenCalledTimes(1);
   });
 
+  describe('device discovery retries', () => {
+    // `connectDevices` enumerates what is attached at that instant and
+    // stops. Without a retry, a device missed in that one window -- which
+    // is capped at three seconds and gets slower with every attached
+    // device -- stays invisible until the dev server is restarted.
+    it('keeps re-running discovery, so a device missed at startup is still found', async () => {
+      vi.useFakeTimers();
+
+      try {
+        const connector = new FakeConnector();
+        const transport = await createLynxTransport({
+          createConnector: () => connector,
+          logger: { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+        });
+
+        expect(connector.connectDevices).toHaveBeenCalledTimes(1);
+
+        await vi.advanceTimersByTimeAsync(15_000);
+        expect(connector.connectDevices).toHaveBeenCalledTimes(2);
+
+        await vi.advanceTimersByTimeAsync(15_000);
+        expect(connector.connectDevices).toHaveBeenCalledTimes(3);
+
+        await transport.dispose();
+
+        // A disposed transport must stop touching the connector.
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(connector.connectDevices).toHaveBeenCalledTimes(3);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('does not blank a known client out when discovery re-reports it', async () => {
+      const { connector, transport } = await setup();
+      const client = makeFakeClient(7);
+
+      connector.emit('client-connected', client);
+      connector.emit('usb-client-message', {
+        id: 7,
+        message: sessionListEnvelope(7, [
+          { session_id: 1, url: 'http://localhost:3000/main', type: '' },
+        ]),
+      });
+
+      expect(transport.listSessions(7)).toHaveLength(1);
+
+      // The same client, reported again by a later sweep. Starting it from
+      // scratch would empty its cards until the next session list arrived,
+      // making its targets blink out of `/json/list` on every retry.
+      connector.emit('client-connected', client);
+
+      expect(transport.listClients()).toHaveLength(1);
+      expect(transport.listSessions(7)).toHaveLength(1);
+    });
+  });
+
   it('scans localhost by default, so simulators are discovered', async () => {
     // `enableAndroid`/`enableIOS` only reach *physical* devices, over adb
     // and usbmux. A simulator is an ordinary process on the dev machine,
