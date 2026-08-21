@@ -225,3 +225,6 @@ export type {
   UseCopyToClipboardOptions,
   UseCopyToClipboardResult,
 } from './use-copy-to-clipboard/use-copy-to-clipboard';
+
+export { RozeniteLoader } from './rozenite-loader/rozenite-loader';
+export type { RozeniteLoaderProps } from './rozenite-loader/rozenite-loader';
