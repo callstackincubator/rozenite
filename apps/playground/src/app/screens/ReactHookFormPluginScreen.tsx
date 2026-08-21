@@ -1,4 +1,7 @@
-import { useRozeniteRHFPlugin } from '@rozenite/rhf-plugin';
+// Called beside useForm() below and needs that form's control/reset, so it
+// cannot be hoisted into the dev entry — `/register` is the declared
+// production entry the build-time guard permits here.
+import { useRozeniteRHFPlugin } from '@rozenite/rhf-plugin/register';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Text } from 'react-native';
 import { Button, Card, Field, Input, PluginHeader, Row, Screen, Switch } from '../components/ui';

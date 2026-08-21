@@ -12,18 +12,29 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 <PackageManagerTabs command="install -D @rozenite/react-navigation-plugin" />
 
+The DevTools hook needs the exact same ref instance that's attached to your navigator, but it's now
+called from `rozenite.dev.tsx` — a different component than the one that renders your navigator. Create
+the ref once, at module scope, in a file both sides can import:
+
 ### With react-navigation
 
+Create the ref with plain `createRef` from `react`, not React Navigation's own
+`createNavigationContainerRef` — its return type doesn't satisfy
+`useReactNavigationDevTools`'s `ref` parameter, so `NavigationContainer` would accept it but the hook
+wouldn't:
+
+```typescript title="navigation.ts"
+import { createRef } from 'react';
+import type { NavigationContainerRef } from '@react-navigation/native';
+
+export const navigationRef = createRef<NavigationContainerRef<any>>();
+```
+
 ```typescript title="App.tsx"
-import React, { useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+import { navigationRef } from './navigation';
 
 function App() {
-  const navigationRef = useRef(null);
-
-  useReactNavigationDevTools({ ref: navigationRef });
-
   return (
     <NavigationContainer ref={navigationRef}>
       <YourAppNavigator />
@@ -32,18 +43,47 @@ function App() {
 }
 ```
 
+```typescript title="rozenite.dev.tsx"
+import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+import { navigationRef } from './navigation';
+
+export default function RozeniteDevTools() {
+  // useReactNavigationDevTools's `ref` type doesn't infer from a
+  // route-typed ref -- it always checks against the untyped default, so
+  // even a correctly-typed ref needs this cast at the call site.
+  useReactNavigationDevTools({ ref: navigationRef as any });
+  return null;
+}
+```
+
 ### With expo-router
 
-```typescript title="_layout.tsx"
-import { Stack, useNavigationContainerRef } from 'expo-router';
+`expo-router`'s `useNavigationContainerRef` reads from the router's own context rather than creating a
+new ref, so it works from `rozenite.dev.tsx` directly, as long as `<Rozenite />` is mounted inside your
+root layout — which is already inside the router's tree:
+
+```typescript title="app/_layout.tsx"
+import { Stack } from 'expo-router';
+import Rozenite from '@rozenite/react-native';
+
+export default function RootLayout() {
+  return (
+    <>
+      <Stack />
+      <Rozenite />
+    </>
+  );
+}
+```
+
+```typescript title="rozenite.dev.tsx"
+import { useNavigationContainerRef } from 'expo-router';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 
-function App() {
+export default function RozeniteDevTools() {
   const navigationRef = useNavigationContainerRef();
-
   useReactNavigationDevTools({ ref: navigationRef });
-
-  return <Stack />;
+  return null;
 }
 ```
 

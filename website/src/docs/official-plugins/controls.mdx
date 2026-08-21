@@ -16,11 +16,11 @@ Install the Controls plugin as a development dependency:
 
 ## Base Setup
 
-```ts title="App.tsx"
+```ts title="rozenite.dev.tsx"
 import { createSection, useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 import { useMemo, useState } from 'react';
 
-function App() {
+export default function RozeniteDevTools() {
   const [verboseLogging, setVerboseLogging] = useState(false);
   const [environment, setEnvironment] = useState('local');
   const [releaseLabel, setReleaseLabel] = useState('build-001');
@@ -79,12 +79,12 @@ function App() {
         ],
       }),
     ],
-    [environment, releaseLabel, verboseLogging]
+    [environment, releaseLabel, verboseLogging],
   );
 
   useRozeniteControlsPlugin({ sections });
 
-  return <YourApp />;
+  return null;
 }
 ```
 

@@ -56,19 +56,14 @@ module.exports = withRozenite(
 );
 ```
 
-### 3. Integrate with Your App
+### 3. Wire It Up in `rozenite.dev.tsx`
 
-Add the DevTools hook to your React Native app:
-
-```typescript
-// App.tsx
+```typescript title="rozenite.dev.tsx"
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 
-function App() {
-  // Enable Require Profiler DevTools
+export default function RozeniteDevTools() {
   useRequireProfilerDevTools();
-
-  return <YourApp />;
+  return null;
 }
 ```
 

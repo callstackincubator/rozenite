@@ -13,6 +13,14 @@ export type TscEmit = {
   /** Output directory, relative to the project root. */
   outDir: string;
   declaration: boolean;
+  /**
+   * Extra root entry files, relative to the project root, compiled into the
+   * SAME emit as `TARGET_ENTRY_FILE[target]` rather than a target of their
+   * own. `register.ts` is the only current use: it must share the
+   * `react-native` target's single `dist/react-native/src/**` tree, not emit
+   * a second copy of it under a separate outDir.
+   */
+  extraEntryFiles?: string[];
 };
 
 export const TARGET_ENTRY_FILE: Record<PluginTarget, string> = {
@@ -26,6 +34,14 @@ export const TARGET_LABEL: Record<PluginTarget, string> = {
   metro: 'Metro',
   sdk: 'SDK',
 };
+
+/**
+ * The conventional production entry point. Unlike `TARGET_ENTRY_FILE`, this
+ * is not a `PluginTarget` of its own - it is compiled as an extra file inside
+ * the `react-native` target's emits (see `TscEmit['extraEntryFiles']`), so it
+ * shares that target's single output tree instead of duplicating it.
+ */
+export const REGISTER_ENTRY_FILE = 'register.ts';
 
 // Generated tsconfig files live in the project so `extends` and the relative
 // entry paths stay simple, and so a failing build leaves the exact config
@@ -42,11 +58,21 @@ const GENERATED_CONFIG_DIR = '.rozenite';
  * the `default` condition serves `require()` and `import` alike. Emitting only
  * CommonJS also keeps `__dirname` and friends available to config authors.
  */
-export const getTscEmits = (target: PluginTarget): TscEmit[] => {
+export type GetTscEmitsOptions = {
+  /** See `TscEmit['extraEntryFiles']`. Only meaningful for the `react-native` target. */
+  extraEntryFiles?: string[];
+};
+
+export const getTscEmits = (
+  target: PluginTarget,
+  { extraEntryFiles }: GetTscEmitsOptions = {},
+): TscEmit[] => {
+  const extra = extraEntryFiles?.length ? { extraEntryFiles } : {};
+
   if (target === 'react-native') {
     return [
-      { target, format: 'esm', outDir: 'dist/react-native', declaration: true },
-      { target, format: 'cjs', outDir: 'dist/react-native/cjs', declaration: false },
+      { target, format: 'esm', outDir: 'dist/react-native', declaration: true, ...extra },
+      { target, format: 'cjs', outDir: 'dist/react-native/cjs', declaration: false, ...extra },
     ];
   }
 
@@ -88,7 +114,10 @@ const createTsconfig = (emit: TscEmit) => {
       rootDir: '..',
       outDir: path.posix.join('..', emit.outDir),
     },
-    files: [path.posix.join('..', TARGET_ENTRY_FILE[emit.target])],
+    files: [
+      path.posix.join('..', TARGET_ENTRY_FILE[emit.target]),
+      ...(emit.extraEntryFiles ?? []).map((file) => path.posix.join('..', file)),
+    ],
     // The entry graph alone would miss ambient declarations - global
     // augmentations and module shims are never imported, only declared.
     include: ['../*.d.ts', '../src/**/*.d.ts'],
@@ -186,13 +215,15 @@ export const prepareEmit = async (projectRoot: string, emit: TscEmit): Promise<s
   return configPath;
 };
 
+export type BuildTargetOptions = RunTscOptions & GetTscEmitsOptions;
+
 export const buildTarget = async (
   projectRoot: string,
   target: PluginTarget,
-  { signal }: RunTscOptions = {},
+  { signal, extraEntryFiles }: BuildTargetOptions = {},
 ): Promise<void> => {
   await Promise.all(
-    getTscEmits(target).map(async (emit) => {
+    getTscEmits(target, { extraEntryFiles }).map(async (emit) => {
       const configPath = await prepareEmit(projectRoot, emit);
       await runTsc(projectRoot, configPath, { signal });
     }),

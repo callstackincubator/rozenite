@@ -51,6 +51,11 @@ export default withRozenite(
 
 Start your development server and open React Native DevTools. You'll find the "Expo Atlas" panel in the DevTools interface.
 
+This plugin's public surface is a Metro config transformer, not app code, so there's nothing to wire
+up in `rozenite.dev.tsx` — the `metro.config.js` setup above is everything it needs. See the
+[Production Guarantee](https://www.rozenite.dev/docs/production-guarantee) docs for why other plugins'
+app-facing code lives there instead.
+
 ## Made with ❤️ at Callstack
 
 `rozenite` is an open source project and will always remain free to use. If you think it's cool, please star it 🌟.

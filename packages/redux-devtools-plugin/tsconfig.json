@@ -17,7 +17,7 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*", "react-native.ts", "sdk.ts", "metro.ts"],
+  "include": ["src/**/*", "react-native.ts", "register.ts", "sdk.ts", "metro.ts"],
   "exclude": ["node_modules", "dist", "build"],
   "references": [
     {

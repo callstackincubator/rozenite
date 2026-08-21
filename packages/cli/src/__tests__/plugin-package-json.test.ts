@@ -84,6 +84,82 @@ describe('syncPluginPackageJSON', () => {
     });
   });
 
+  it('adds the managed register export when register.ts exists', async () => {
+    const projectRoot = await createTempDir();
+
+    await writeJson(path.join(projectRoot, 'package.json'), {
+      name: 'demo-plugin',
+      type: 'module',
+      exports: {
+        './custom': './src/custom.ts',
+      },
+    });
+
+    await fs.writeFile(path.join(projectRoot, 'react-native.ts'), 'export {}\n');
+    await fs.writeFile(path.join(projectRoot, 'register.ts'), 'export {}\n');
+
+    const result = await syncPluginPackageJSON(projectRoot);
+    const packageJson = JSON.parse(
+      await fs.readFile(path.join(projectRoot, 'package.json'), 'utf8'),
+    );
+
+    expect(result.targets.hasRegisterEntryPoint).toBe(true);
+    expect(packageJson.exports).toEqual({
+      '.': {
+        types: './dist/react-native/react-native.d.ts',
+        import: './dist/react-native/react-native.js',
+        require: './dist/react-native/cjs/react-native.js',
+      },
+      './register': {
+        types: './dist/react-native/register.d.ts',
+        import: './dist/react-native/register.js',
+        require: './dist/react-native/cjs/register.js',
+      },
+      './custom': './src/custom.ts',
+      './package.json': './package.json',
+    });
+  });
+
+  it('removes the managed register export when register.ts no longer exists', async () => {
+    const projectRoot = await createTempDir();
+
+    await writeJson(path.join(projectRoot, 'package.json'), {
+      name: 'demo-plugin',
+      type: 'module',
+      exports: {
+        '.': {
+          types: './dist/react-native/react-native.d.ts',
+          import: './dist/react-native/react-native.js',
+          require: './dist/react-native/cjs/react-native.js',
+        },
+        './register': {
+          types: './dist/react-native/register.d.ts',
+          import: './dist/react-native/register.js',
+          require: './dist/react-native/cjs/register.js',
+        },
+        './custom': './src/custom.ts',
+      },
+    });
+
+    await fs.writeFile(path.join(projectRoot, 'react-native.ts'), 'export {}\n');
+
+    const result = await syncPluginPackageJSON(projectRoot);
+    const packageJson = JSON.parse(
+      await fs.readFile(path.join(projectRoot, 'package.json'), 'utf8'),
+    );
+
+    expect(result.targets.hasRegisterEntryPoint).toBe(false);
+    expect(packageJson.exports).toEqual({
+      '.': {
+        types: './dist/react-native/react-native.d.ts',
+        import: './dist/react-native/react-native.js',
+        require: './dist/react-native/cjs/react-native.js',
+      },
+      './custom': './src/custom.ts',
+      './package.json': './package.json',
+    });
+  });
+
   it('removes only the managed metro export when no metro target exists', async () => {
     const projectRoot = await createTempDir();
 

@@ -7,15 +7,20 @@ import {
   type MiddlewareRequest,
   type RozeniteConfig,
 } from '@rozenite/middleware';
-import { logger } from '@rozenite/tools';
+import { isBundling, logger } from '@rozenite/tools';
 import runtimePackage from '@rozenite/runtime/package.json' with { type: 'json' };
 import path from 'node:path';
-import { isBundling } from './is-bundling.js';
+import { createRozeniteResolveRequest } from './resolver.js';
 
 export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<RozeniteConfig, 'projectRoot'> & {
   /**
    * Whether to enable Rozenite.
-   * If false, Rozenite will not be initialized and the config will be returned as is.
+   *
+   * If false, Rozenite starts no dev server and adds no middleware -- but the
+   * production guard stays installed, so importing a Rozenite plugin from app
+   * code still fails a production build. Turning Rozenite off is not a way to
+   * opt out of the guarantee.
+   *
    * @default false
    */
   enabled?: boolean;
@@ -24,6 +29,19 @@ export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<RozeniteConfig, '
    * This option allows you to modify the Metro config in a way that is safe to do when bundling.
    */
   enhanceMetroConfig?: (config: TMetroConfig) => Promise<TMetroConfig> | TMetroConfig;
+  /**
+   * Rozenite plugin packages that are allowed to reach a production bundle.
+   *
+   * By default, Rozenite's Metro resolver throws when a production build
+   * resolves into a Rozenite plugin package through anything other than
+   * that plugin's declared `productionEntries`. This is an escape hatch,
+   * not a fix: listing a package here defeats that guarantee for it, and
+   * its code -- devtools UI, agent wiring, whatever it ships -- can end up
+   * in what you ship to users. Prefer declaring `productionEntries` in the
+   * plugin's `rozenite.config.ts` instead. Every package listed here is
+   * logged loudly once per build.
+   */
+  allowInProduction?: string[];
 };
 
 export const withRozenite = <T extends MetroConfig>(
@@ -33,6 +51,33 @@ export const withRozenite = <T extends MetroConfig>(
   return async () => {
     const resolvedConfig = await config;
     const projectRoot = resolvedConfig.projectRoot ?? process.cwd();
+    const allowInProduction = options.allowInProduction ?? [];
+
+    if (allowInProduction.length > 0) {
+      logger.warn(
+        `allowInProduction is set for: ${allowInProduction.join(', ')}. ` +
+          'Code from these Rozenite plugin package(s) may reach your production bundle -- ' +
+          'this defeats the production guarantee for them. Prefer declaring productionEntries ' +
+          "in the plugin's rozenite.config.ts instead.",
+      );
+    }
+
+    // The guard-only config: no dev server, no middleware, no
+    // watchFolders/extraNodeModules, no dev-entry redirect. Everything the
+    // `enabled === false` and bundling paths need, and nothing more.
+    const withGuardOnly = (): T =>
+      ({
+        ...resolvedConfig,
+        resolver: {
+          ...resolvedConfig.resolver,
+          resolveRequest: createRozeniteResolveRequest({
+            projectRoot,
+            allowInProduction,
+            installDevEntryRedirect: false,
+            previousResolveRequest: resolvedConfig.resolver?.resolveRequest,
+          }),
+        },
+      }) satisfies MetroConfig as T;
 
     if (options.enabled === undefined) {
       logger.info('Rozenite will no longer be enabled by default in the next version.');
@@ -40,12 +85,12 @@ export const withRozenite = <T extends MetroConfig>(
       logger.info('Remember to make it conditional to avoid bundling issues.');
 
       if (isBundling(projectRoot)) {
-        return resolvedConfig;
+        return withGuardOnly();
       }
     }
 
     if (options.enabled === false) {
-      return resolvedConfig;
+      return withGuardOnly();
     }
 
     const { devModePackage, middleware: rozeniteMiddleware } = await initializeRozenite(
@@ -80,23 +125,12 @@ export const withRozenite = <T extends MetroConfig>(
               ),
             }
           : resolvedConfig.resolver?.extraNodeModules,
-        resolveRequest: (context, moduleName, platform) => {
-          // Unfortunately, 'web' doesn't include certain internal modules like 'react-native/Libraries/WebSocket/WebSocketInterceptor'.
-          // This is currently the only module that we need to mock, but it may change in the future.
-          if (
-            platform === 'web' &&
-            moduleName === 'react-native/Libraries/WebSocket/WebSocketInterceptor'
-          ) {
-            return {
-              type: 'empty',
-            };
-          }
-
-          return (
-            resolvedConfig.resolver?.resolveRequest?.(context, moduleName, platform) ??
-            context.resolveRequest(context, moduleName, platform)
-          );
-        },
+        resolveRequest: createRozeniteResolveRequest({
+          projectRoot,
+          allowInProduction,
+          installDevEntryRedirect: true,
+          previousResolveRequest: resolvedConfig.resolver?.resolveRequest,
+        }),
       },
       server: {
         ...resolvedConfig.server,

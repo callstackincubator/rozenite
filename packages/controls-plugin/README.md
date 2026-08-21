@@ -14,11 +14,14 @@ npm install @rozenite/controls-plugin
 
 ## Usage
 
-```ts
+Wire the plugin up in `rozenite.dev.tsx`, next to your Metro or Re.Pack config — see the
+[Production Guarantee](https://www.rozenite.dev/docs/production-guarantee) docs for why:
+
+```ts title="rozenite.dev.tsx"
 import { createSection, useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 import { useMemo, useState } from 'react';
 
-function App() {
+export default function RozeniteDevTools() {
   const [verboseLogging, setVerboseLogging] = useState(false);
   const [environment, setEnvironment] = useState('local');
   const [releaseLabel, setReleaseLabel] = useState('build-001');
@@ -82,13 +85,13 @@ function App() {
 
   useRozeniteControlsPlugin({ sections });
 
-  return <YourApp />;
+  return null;
 }
 ```
 
-You can also call the hook from multiple components. Each active hook instance contributes sections to the same panel:
+You can also call the hook from multiple components. Each active hook instance contributes sections to the same panel — for example, from a second component rendered alongside the first inside your `rozenite.dev.tsx` default export:
 
-```ts
+```ts title="rozenite.dev.tsx"
 function LocaleControls() {
   useRozeniteControlsPlugin((previousOptions) => ({
     sections: [
@@ -148,4 +151,4 @@ Controls can guide users toward safe actions:
 
 - The panel appears in React Native DevTools as `Controls`.
 - Updates flow both ways: local state changes are reflected in DevTools, and DevTools actions update the device.
-- The hook is disabled in production builds.
+- Call the hook from `rozenite.dev.tsx`, not from your app's own components — importing it anywhere else is a production build error. See the [Production Guarantee](https://www.rozenite.dev/docs/production-guarantee) docs.

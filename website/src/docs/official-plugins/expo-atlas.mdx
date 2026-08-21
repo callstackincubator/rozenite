@@ -28,6 +28,14 @@ module.exports = withRozenite(config, {
 });
 ```
 
+:::info No app code, no `rozenite.dev.tsx`
+This plugin's public surface is a Metro config transformer, not app code — there's nothing to import
+from your app or wire up in `rozenite.dev.tsx`. The setup above, in `metro.config.js`, is everything
+it needs. See the [Production Guarantee](/docs/production-guarantee) page for why plugin app code
+belongs in `rozenite.dev.tsx` — it doesn't apply here since none of this plugin's code runs as part of
+your app.
+:::
+
 ## Usage
 
 Once configured, "Expo Atlas" appears in your React Native DevTools sidebar. From there you can:

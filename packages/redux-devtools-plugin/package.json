@@ -30,6 +30,11 @@
       "development": "./sdk.ts",
       "types": "./dist/sdk/sdk.d.ts",
       "default": "./dist/sdk/sdk.js"
+    },
+    "./register": {
+      "types": "./dist/react-native/register.d.ts",
+      "import": "./dist/react-native/register.js",
+      "require": "./dist/react-native/cjs/register.js"
     }
   },
   "publishConfig": {
@@ -39,7 +44,8 @@
     "build": "rozenite build",
     "dev": "rozenite dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "@redux-devtools/instrument": "^2.2.0",
@@ -67,7 +73,8 @@
     "rozenite": "workspace:*",
     "styled-components": "^5.3.11",
     "typescript": "~5.9.3",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "^4.0.18"
   },
   "peerDependencies": {
     "react": "*",

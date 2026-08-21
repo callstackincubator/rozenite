@@ -1,7 +1,12 @@
 import { createSection } from '@rozenite/controls-plugin';
 import { useMemo } from 'react';
-import { useControlsPluginStore } from '../stores/controlsPluginStore';
+import { useControlsPluginStore } from '../src/app/stores/controlsPluginStore';
 
+// Moved out of app code wholesale (was
+// src/app/hooks/usePlaygroundControlsSections.ts): it only builds a
+// dev-tools section descriptor from app state, it reads (never writes)
+// `useControlsPluginStore`, which stays in app code. Registered from both
+// rozenite.dev/index.tsx (native) and rozenite.dev/index.web.tsx.
 export const usePlaygroundControlsSections = () => {
   const counter = useControlsPluginStore((state) => state.counter);
   const releaseLabel = useControlsPluginStore((state) => state.releaseLabel);

@@ -14,11 +14,10 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 <PackageManagerTabs command="install -D @rozenite/tanstack-query-plugin" />
 
-```typescript title="App.tsx"
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
+```typescript title="query-client.ts"
+import { QueryClient } from '@tanstack/react-query';
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -26,15 +25,31 @@ const queryClient = new QueryClient({
     },
   },
 });
+```
+
+Your `queryClient` still needs to reach `<QueryClientProvider>` in your app, and the DevTools hook still
+needs the same instance — a module-level export shared between the two is the simplest way to do that:
+
+```typescript title="App.tsx"
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './query-client';
 
 function App() {
-  useTanStackQueryDevTools(queryClient);
-
   return (
     <QueryClientProvider client={queryClient}>
       {/* Your app components */}
     </QueryClientProvider>
   );
+}
+```
+
+```typescript title="rozenite.dev.tsx"
+import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
+import { queryClient } from './query-client';
+
+export default function RozeniteDevTools() {
+  useTanStackQueryDevTools(queryClient);
+  return null;
 }
 ```
 

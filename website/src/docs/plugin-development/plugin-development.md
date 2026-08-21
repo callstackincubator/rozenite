@@ -256,6 +256,81 @@ export default function setupPlugin(
 }
 ```
 
+### Production entry points
+
+App code only ever calls into your plugin from `rozenite.dev.tsx`, so `react-native.ts` never reaches
+a production bundle — a build that resolves into your plugin package from anywhere else fails with a
+build error naming your package and the offending import (see the
+[Production Guarantee](../production-guarantee) page for the app-author side of this).
+
+Most plugins are done at that point. But if your plugin has a genuine touchpoint that has to run in
+production — a store enhancer applied where the app creates its store, a per-form hook called from
+inside app screens, an override lookup consulted at flag-evaluation time — declare it as a
+**production entry point** in `rozenite.config.ts`:
+
+```typescript title="rozenite.config.ts"
+export default {
+  panels: [
+    /* ... */
+  ],
+  productionEntries: ['./register'],
+};
+```
+
+and add the corresponding file at your plugin's root:
+
+```typescript title="register.ts"
+// Re-exported through ./react-native.ts, which already resolves this to a
+// noop once `process.env.NODE_ENV` is folded. `register.js` is emitted into
+// the same output tree as `react-native.js`, so both entry points share one
+// module instance.
+export { useMyPluginRuntimeHook } from './react-native';
+```
+
+The build picks up `productionEntries` automatically and exposes `register.ts` as your package's
+`./register` subpath export. App code that needs the production-safe piece imports it from there
+instead of your plugin's main entry point:
+
+```typescript title="store.ts"
+import { useMyPluginRuntimeHook } from '@acme/my-plugin/register';
+```
+
+Everything else your plugin exports keeps living behind the main entry point, dev-only, and is meant
+to be called from `rozenite.dev.tsx`.
+
+#### A production entry point must be inert in production
+
+This is the one part of your plugin the guarantee cannot cover for you. The resolver permits the
+import because you declared it, so whatever `register.ts` exports is what actually runs in someone's
+shipped app — and a hook that subscribes and serializes, an enhancer that retains an action history,
+or an interceptor that patches `fetch` with nothing draining its buffer is exactly the harm keeping
+plugins out of production is meant to prevent.
+
+Reachable is not the same as active. Export the same production behaviour your main entry point
+already defines — which is why the official plugins re-export through `react-native.ts` rather than
+reaching into `src/**` — so there is one definition of what your plugin does in a release build
+instead of a second copy that can silently drift from it. A wrong stub here fails the way the old
+hand-written shims did: quietly, in someone else's production app.
+
+Write a test that pins it. Set `process.env.NODE_ENV` to `'production'`, import your `register`
+entry, and assert the inert behaviour directly — that the enhancer passes `createStore` through
+untouched, that the interceptor leaves `globalThis.fetch` identical, that the hook returns without
+touching what it was handed.
+
+:::info The declaration is not verified
+Rozenite does not walk `register.ts`'s import graph to confirm it's "really" safe for production —
+safety isn't a property of an import graph. `productionEntries` is your explicit, attributable
+statement about what you intend to ship; Rozenite holds you to exactly that declaration and does not
+audit what it reaches. The one thing that is checked is that each declared entry actually resolves to
+a real file, so a typo surfaces as its own clear error rather than silently behaving as "nothing
+declared".
+:::
+
+Keep `register.ts` importing only from your plugin's own `src/**` modules, never from
+`react-native.ts` — that file is the dev-only shim your `rozenite.dev.tsx` consumers import, and
+re-exporting through it from `register.ts` would drag your whole dev surface (DevTools client
+connection, panel bridge, everything) into every app that uses your production entry.
+
 ## Step 5: Local Development Workflow
 
 ### Complete Development Setup

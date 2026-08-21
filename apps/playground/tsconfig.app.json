@@ -7,7 +7,6 @@
     "emitDeclarationOnly": false,
     "noEmit": true,
     "outDir": "dist",
-    "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "jsx": "react-jsx",
     "module": "esnext",
@@ -26,7 +25,9 @@
     "src/**/*.js",
     "src/**/*.jsx",
     "app/**/*.ts",
-    "app/**/*.tsx"
+    "app/**/*.tsx",
+    "rozenite.dev/**/*.ts",
+    "rozenite.dev/**/*.tsx"
   ],
   "exclude": [
     "out-tsc",

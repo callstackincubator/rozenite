@@ -86,6 +86,10 @@ export default {
       source: './src/ui/panel.tsx',
     },
   ],
+  // `useRozeniteRHFPlugin` is called once per form inside ordinary screen
+  // components, so it needs a touchpoint that survives a production build.
+  // See `register.ts`.
+  productionEntries: ['./register'],
   dev: {
     flows: [
       {

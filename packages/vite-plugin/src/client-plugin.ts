@@ -88,6 +88,28 @@ export const rozeniteClientPlugin = (): Plugin => {
     }));
   };
 
+  // Validated where it's read, not where it's declared: a bad entry should
+  // fail the plugin author's own build with a message naming the offender,
+  // rather than surface later as a confusing resolver error downstream.
+  const getProductionEntries = (): string[] => {
+    const productionEntries = getRozeniteConfig().productionEntries;
+
+    if (!productionEntries) {
+      return [];
+    }
+
+    for (const entry of productionEntries) {
+      if (typeof entry !== 'string' || !entry.startsWith('./')) {
+        throw new Error(
+          `Invalid "productionEntries" entry in rozenite.config.ts: ${JSON.stringify(entry)}. ` +
+            'Each entry must be a string export subpath starting with "./" (e.g. "./register").',
+        );
+      }
+    }
+
+    return productionEntries;
+  };
+
   const getDevHostPanels = (): DevHostPanelEntry[] => {
     return getPanels().map((panel) => ({
       label: panel.label,
@@ -297,6 +319,8 @@ export const rozeniteClientPlugin = (): Plugin => {
         }
 
         if (url === '/rozenite.json') {
+          const productionEntries = getProductionEntries();
+
           res.setHeader('Content-Type', 'application/json');
           res.end(
             JSON.stringify(
@@ -305,6 +329,7 @@ export const rozeniteClientPlugin = (): Plugin => {
                 version: packageJSON.version,
                 description: packageJSON.description,
                 panels: getManifestPanels(),
+                ...(productionEntries.length > 0 ? { productionEntries } : {}),
               },
               null,
               2,
@@ -353,6 +378,7 @@ export const rozeniteClientPlugin = (): Plugin => {
 
     async generateBundle() {
       const packageJSON = await getPackageJSON(projectRoot);
+      const productionEntries = getProductionEntries();
 
       this.emitFile({
         type: 'asset',
@@ -362,6 +388,7 @@ export const rozeniteClientPlugin = (): Plugin => {
           version: packageJSON.version,
           description: packageJSON.description,
           panels: getManifestPanels(),
+          ...(productionEntries.length > 0 ? { productionEntries } : {}),
         }),
       });
     },

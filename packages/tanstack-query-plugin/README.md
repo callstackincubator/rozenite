@@ -19,7 +19,7 @@ This plugin was inspired by the excellent work of Austin Johnson and his [react-
 - **Mutation Tracking**: Monitor mutation states and progress
 - **Agent Tools**: Expose query and mutation inspection plus cache-management tools to coding agents
 - **Bidirectional Communication**: Real-time sync between device and DevTools
-- **Production Safety**: Automatically disabled in production builds
+- **Production Safety**: Wired up only in `rozenite.dev.tsx`, so its code never reaches a production bundle -- importing it anywhere else is a build error
 
 ## Installation
 
@@ -39,24 +39,37 @@ npm install @rozenite/tanstack-query-plugin
 
 ### 2. Integrate with Your Query Client
 
-Add the DevTools hook to your React Native app:
+Your `queryClient` needs to reach both `<QueryClientProvider>` in your app and the DevTools hook in
+`rozenite.dev.tsx` — a module-level export shared between the two is the simplest way to do that:
+
+```typescript
+// query-client.ts
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient();
+```
 
 ```typescript
 // App.tsx
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
-
-const queryClient = new QueryClient();
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './query-client';
 
 function App() {
-  // Enable DevTools in development
-  useTanStackQueryDevTools(queryClient);
-
   return (
     <QueryClientProvider client={queryClient}>
       {/* Your app components */}
     </QueryClientProvider>
   );
+}
+```
+
+```typescript title="rozenite.dev.tsx"
+import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
+import { queryClient } from './query-client';
+
+export default function RozeniteDevTools() {
+  useTanStackQueryDevTools(queryClient);
+  return null;
 }
 ```
 
@@ -89,31 +102,7 @@ Available tools:
 
 ### Basic Integration
 
-The plugin automatically integrates with your existing TanStack Query setup:
-
-```typescript
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
-
-function App() {
-  // DevTools are automatically enabled in development
-  useTanStackQueryDevTools(queryClient);
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <YourApp />
-    </QueryClientProvider>
-  );
-}
-```
+The plugin automatically integrates with your existing TanStack Query setup once wired up as shown above — no further configuration needed.
 
 ## Made with ❤️ at Callstack
 
