@@ -25,7 +25,33 @@ type LynxGlobal = {
   getDevtool?: () => DevtoolContextProxy;
 };
 
+/**
+ * Module-scoped ambient declaration for Lynx's `lynx` binding.
+ *
+ * Declared here rather than in `./global.d.ts` on purpose: inside a module
+ * (this file has imports/exports) a `declare const` is local to the file,
+ * so it never reaches this package's shipped `dist/index.d.ts` and cannot
+ * collide with `@lynx-js/types`'s own global declaration in a consuming
+ * app. It exists only so the `typeof lynx` guard below type-checks.
+ */
+declare const lynx: LynxGlobal | undefined;
+
 const getLynxGlobal = (): LynxGlobal | undefined => {
+  // `lynx` is NOT a property of `globalThis` in Lynx's background (BTS)
+  // runtime -- it is injected as a free binding into each bundle's module
+  // scope, the same way Node injects `require`/`module`. Verified on
+  // LynxExplorer/iOS (Lynx engine 4.0, PrimJS): inside a background bundle
+  // `typeof lynx === 'object'` and `lynx.getDevtool === 'function'`, while
+  // `globalThis.lynx === undefined`. Reading it off `globalThis` (as this
+  // did originally) therefore always failed on a real device.
+  //
+  // `typeof` on an undeclared identifier is defined to return 'undefined'
+  // rather than throwing, so this stays safe on every non-Lynx host.
+  if (typeof lynx !== 'undefined' && lynx !== null) {
+    return lynx;
+  }
+
+  // Kept as a fallback for any host that does expose it as a property.
   return (globalThis as { lynx?: LynxGlobal }).lynx;
 };
 
