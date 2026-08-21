@@ -3,24 +3,20 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 # Rozenite for Lynx
 
 :::warning Experimental
-Rozenite for Lynx is experimental. It has not yet been exercised across the full range of LynxSDK versions, and the API may change in future releases.
+Rozenite for Lynx is experimental. It has been verified against LynxExplorer on the iOS Simulator, not across the full range of LynxSDK versions and platforms, and the API may change in future releases.
 :::
 
 Rozenite for Lynx lets you debug a [Lynx](https://lynxjs.org) app with the same DevTools panels, the same plugin catalogue and the same `rozenite` CLI you use for React Native.
 
-You need two packages: `@rozenite/lynx` in the app, and `@rozenite/lynx-dev` in the dev server.
+You need three things: `@rozenite/lynx-dev` in your dev server, `@rozenite/lynx` in your app, and **Lynx DevTool turned on in the app itself** — that last one is off by default and nothing works without it. Start there.
 
-## How it works
+## Turn on Lynx DevTool
 
-Rozenite's DevTools app talks to a device over the inspector protocol React Native's Metro serves — a `/json/list` target list and a CDP WebSocket per target. Lynx debugging is shaped differently: it runs over **DebugRouter**, a room-based bus reached over USB, which carries CDP inside its own envelopes and does not implement every CDP method Rozenite uses.
+Lynx ships its DevTool component switched off. With it off, your app never registers a debuggable session, so Rozenite finds nothing to connect to and your target list stays empty.
 
-`@rozenite/lynx-dev` closes that gap on the dev-server side, so nothing in the browser has to know Lynx exists:
+**In LynxExplorer**, open the Settings tab → **Lynx DevTool Switches**, turn **Lynx DevTool** on, then quit and reopen the app. The switch only takes effect on a fresh launch.
 
-- It serves `/json/list`, synthesised from the Lynx apps DebugRouter can currently see.
-- It serves `/inspector/debug`, translating each frame to and from DebugRouter's envelopes.
-- It answers `Runtime.addBinding` and `ReactNativeApplication.enable` itself, since Lynx implements neither.
-
-`@rozenite/lynx` closes it on the device side. It installs the dispatcher Rozenite plugins send messages through, backed by `lynx.getDevtool()` — Lynx's own devtool channel — instead of the CDP binding React Native uses.
+**In your own app**, enable it where you initialise the Lynx environment — `LynxEnv.inst().enableDevtool(true)` on Android, `devtoolEnabled = YES` on iOS. On iOS you also need `enableAllSessions` on `LynxServiceDevToolProtocol`, or your cards won't be offered for debugging. Lynx's [Integrate Lynx DevTool](https://lynxjs.org/guide/start/integrate-lynx-devtool.html) guide has the full setup for each platform.
 
 ## Add @rozenite/lynx-dev to your dev server
 
@@ -54,7 +50,7 @@ Rozenite plugins are discovered from your project's `package.json` exactly as th
 
 ### Entry point
 
-Import it once, as early as possible in your app's entry point. It must run before any plugin's `useRozeniteDevToolsClient` does.
+Import it once, as early as possible in your app's entry point. It has to run before any plugin's `useRozeniteDevToolsClient` does.
 
 ```typescript
 if (__DEV__) {
@@ -62,16 +58,19 @@ if (__DEV__) {
 }
 ```
 
-It only installs itself in Lynx's background runtime, where `lynx.getDevtool()` exists, and is a no-op everywhere else.
+It installs itself only in Lynx's background runtime and is a no-op everywhere else.
 
-## Device discovery
+## Open DevTools
 
-Rozenite finds Lynx apps through DebugRouter, which reaches them two different ways:
+1. Connect your device over USB, or start your simulator, and open your app.
+2. Start the dev server and load your bundle in the app.
+3. The dev server prints a DevTools URL for every card it finds. Open the one for your card in a browser.
 
-- **Physical devices** over adb (Android) and usbmux (iOS) — `enableAndroid` and `enableIOS`, both on by default.
-- **Simulators, emulators and anything else on your machine** over `127.0.0.1:8901-8919` — `enableDesktop`, also on by default. A simulator is an ordinary local process, so it is not reachable over adb or usbmux; this is the path that finds it.
+Each Lynx card is its own target, so you get one URL per card rather than one per app. In LynxExplorer that includes LynxExplorer's own home screen — pick the entry whose title is your bundle URL.
 
-All three are on out of the box, so the common cases need no configuration. Narrow them if you want to pin discovery to one kind of target:
+## Pin discovery to one device
+
+Rozenite reaches physical devices over adb and usbmux, and simulators and emulators over `127.0.0.1:8901-8919`. All of that is on by default, so the common cases need no configuration. Narrow it if you want:
 
 ```typescript
 rozeniteLynxPlugin({
@@ -80,19 +79,19 @@ rozeniteLynxPlugin({
 });
 ```
 
-## How to use it
-
-1. Connect your device over USB, or start your simulator, and start your app in development mode.
-2. Start the dev server. Once a Lynx app registers, the dev server prints a DevTools URL for each card it finds.
-3. Open that URL in your browser.
-
 ## Troubleshooting
 
-- **No targets appear.** For a physical device, check it is visible over USB (`adb devices` on Android). For a simulator, check `enableDesktop` has not been turned off. Either way, the app must be a debuggable build with DebugRouter enabled.
-- **Targets appear but the panels stay disconnected.** The app is reachable but Rozenite is not installed in it — check that `@rozenite/lynx` is imported at the entry point, and that the import runs in a development build.
-- **`lynx.getDevtool is not a function`.** Your LynxSDK predates the devtool event channel. Upgrade it.
+**Your target list is empty.** Nine times out of ten, Lynx DevTool is off — see [Turn on Lynx DevTool](#turn-on-lynx-devtool), and remember it needs an app restart. Otherwise: check the app is a development build, that a card is actually open (an app sitting on a native screen has no cards to debug), and that the device is visible over USB (`adb devices` on Android). For a simulator, check you haven't turned `enableDesktop` off.
 
-## Limitations
+**Your card shows up but panels stay disconnected.** The app is reachable but Rozenite isn't running inside it. Check `@rozenite/lynx` is imported at the entry point and that the import actually runs in your development build.
 
-- Plugins whose device half is written against React Native APIs — network activity, storage, file system, performance monitor, require profiler, Expo Atlas — do not work on Lynx yet. Plugins that only move state around, such as Redux DevTools, TanStack Query, React Hook Form, feature flags and controls, are expected to work.
-- Only apps DebugRouter can reach are discovered — physical devices over USB, and simulators over localhost.
+**A panel connects but never receives anything.** Most likely the plugin's device half is written against React Native APIs — see [What doesn't work yet](#what-doesnt-work-yet).
+
+**`lynx.getDevtool is not a function`.** Your LynxSDK predates the devtool event channel. Upgrade it.
+
+**The card renders blank.** Usually a bad bundle URL rather than anything to do with Rozenite. Check the scheme is lowercase `http://` — some on-screen keyboards autocapitalise the first letter, and Lynx won't load `Http://`.
+
+## What doesn't work yet
+
+- Plugins whose device half is written against React Native APIs don't work on Lynx: network activity, storage, file system, performance monitor, require profiler and Expo Atlas. Plugins that only move state around do work — Redux DevTools, TanStack Query, React Hook Form, feature flags and controls.
+- Only apps DebugRouter can reach are discovered: physical devices over USB, and simulators and emulators over localhost.
