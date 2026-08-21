@@ -1,3 +1,21 @@
+import type { AgentTargetPlatform, UnsupportedDomainInfo } from './capabilities.js';
+
+export {
+  createEmptyCapabilityProfile,
+  DEFAULT_AGENT_TARGET_PLATFORM,
+  getUnsupportedDomains,
+  getUnsupportedToolReason,
+  isToolSupported,
+} from './capabilities.js';
+export type {
+  AgentTargetPlatform,
+  CapabilityProfile,
+  DomainCapability,
+  ToolAvailability,
+  ToolCapability,
+  UnsupportedDomainInfo,
+} from './capabilities.js';
+
 export {
   DEFAULT_PAGE_LIMIT,
   MAX_PAGE_LIMIT,
@@ -255,6 +273,13 @@ export type MetroTarget = {
   title: string;
   description: string;
   webSocketDebuggerUrl: string;
+  /**
+   * The platform this page's runtime is. Sourced from the dev server's
+   * own `/json/list` entry when it declares one, so a server fronting
+   * more than one kind of target still describes each correctly.
+   * Defaults to `react-native` when nothing declares otherwise.
+   */
+  platform?: AgentTargetPlatform;
 };
 
 export type AgentServerInfo = {
@@ -273,6 +298,8 @@ export type AgentSessionInfo = {
   appId: string;
   pageId: string;
   status: AgentSessionStatus;
+  /** The capability profile this session resolved to. */
+  platform: AgentTargetPlatform;
   createdAt: number;
   lastActivityAt: number;
   connectedAt?: number;
@@ -329,6 +356,14 @@ export type DeleteAgentSessionResponse = {
 
 export type GetAgentSessionToolsResponse = {
   tools: AgentTool[];
+  /**
+   * Both fields are optional on purpose. An older CLI against a newer
+   * server ignores them; a newer CLI against an older server reads
+   * `undefined` and falls back to treating every domain as supported,
+   * which is exactly the pre-capability behaviour. No lockstep upgrade.
+   */
+  platform?: AgentTargetPlatform;
+  unsupported?: UnsupportedDomainInfo[];
 };
 
 export type CallAgentSessionToolRequest = {

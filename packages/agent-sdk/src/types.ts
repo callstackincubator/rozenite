@@ -21,6 +21,7 @@ import type {
   SendAgentSessionTapMessageRequest,
   SendAgentSessionTapMessageResponse,
   TapEvent,
+  ToolAvailability,
 } from '@rozenite/agent-shared';
 
 export interface DomainDefinition {
@@ -30,6 +31,17 @@ export interface DomainDefinition {
   pluginId?: string;
   slug?: string;
   actions: Array<'list-tools' | 'get-tool-schema' | 'call-tool'>;
+  /**
+   * How much of this domain the connected target can actually do.
+   * `undefined` means the server sent no capability data at all -- an
+   * older Metro -- and is treated as `supported`, which is exactly the
+   * behaviour before profiles existed.
+   */
+  availability?: ToolAvailability;
+  /** Why the domain is unavailable or degraded, written for an agent. */
+  unavailableReason?: string;
+  /** A domain token to try instead. */
+  fallback?: string;
 }
 
 export interface AgentDomainTool extends AgentTool {

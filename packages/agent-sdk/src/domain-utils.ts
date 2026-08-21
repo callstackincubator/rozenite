@@ -1,4 +1,4 @@
-import type { AgentTool } from '@rozenite/agent-shared';
+import type { AgentTargetPlatform, AgentTool, UnsupportedDomainInfo } from '@rozenite/agent-shared';
 import {
   RESERVED_DOMAIN_NAMES,
   STATIC_DOMAIN_TOOL_NAMES,
@@ -284,6 +284,60 @@ export const formatUnknownDomainError = (token: string, domains: DomainDefinitio
   return new Error(
     `Unknown domain "${token}".${suggestionsText} Run \`rozenite agent domains\` to list available domains.`,
   );
+};
+
+/**
+ * Folds a session's capability gaps onto the domain list.
+ *
+ * Unavailable domains stay in the list on purpose. Dropping `network`
+ * outright would make `rozenite agent network listRequests` fail with
+ * `Unknown domain "network". Did you mean...?`, which reads to an agent
+ * as a typo it should correct rather than a platform limit it should
+ * route around.
+ */
+export const applyCapabilities = (
+  domains: DomainDefinition[],
+  unsupported: UnsupportedDomainInfo[],
+): DomainDefinition[] => {
+  if (unsupported.length === 0) {
+    return domains;
+  }
+
+  const byDomain = new Map(unsupported.map((entry) => [entry.domain, entry]));
+
+  return domains.map((domain) => {
+    const gap = byDomain.get(domain.id);
+    if (!gap) {
+      return domain;
+    }
+
+    return {
+      ...domain,
+      // A gap listing specific tools leaves the rest of the domain
+      // usable; a gap without one takes the whole domain out.
+      availability: gap.tools ? ('degraded' as const) : ('unsupported' as const),
+      unavailableReason: gap.reason,
+      ...(gap.fallback ? { fallback: gap.fallback } : {}),
+    };
+  });
+};
+
+/**
+ * The error an agent gets instead of a protocol failure. Thrown during
+ * resolution, before anything reaches the wire, so the agent spends no
+ * turn discovering it -- and it names something to do next rather than
+ * just what went wrong.
+ */
+export const formatUnsupportedToolError = (
+  domain: DomainDefinition,
+  toolName: string,
+  platform?: AgentTargetPlatform,
+): Error => {
+  const target = platform ? `this ${platform} target` : 'this target';
+  const reason = domain.unavailableReason ? ` ${domain.unavailableReason}` : '';
+  const fallback = domain.fallback ? ` Use the \`${domain.fallback}\` domain instead.` : '';
+
+  return new Error(`Tool "${toolName}" is not supported on ${target}.${reason}${fallback}`);
 };
 
 export const resolveDomainTool = (

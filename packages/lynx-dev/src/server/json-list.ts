@@ -26,6 +26,16 @@ type JsonPageDescription = {
       prefersFuseboxFrontend: boolean;
     };
   };
+  /**
+   * Rozenite's own extension, not part of Metro's shape. Lets a consumer
+   * that cares -- today only `rozenite agent`, which resolves a CDP
+   * capability profile from it -- tell a Lynx page apart from a React
+   * Native one. Every other `/json/list` consumer ignores unknown keys,
+   * so declaring it costs nothing.
+   */
+  rozenite: {
+    platform: 'lynx';
+  };
 };
 
 const buildPage = (target: InspectorTarget, origin: string): JsonPageDescription => {
@@ -53,6 +63,9 @@ const buildPage = (target: InspectorTarget, origin: string): JsonPageDescription
         // `logicalDeviceId` with a given `page` (session) id anyway.
         prefersFuseboxFrontend: true,
       },
+    },
+    rozenite: {
+      platform: 'lynx',
     },
   };
 };

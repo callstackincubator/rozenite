@@ -156,9 +156,7 @@ export const createAgentRoutes = (manager: AgentSessionManager): Router => {
   router.get(AGENT_SESSION_TOOLS_ROUTE_PATTERN, (req, res) => {
     syncEndpoint(manager, req);
     try {
-      sendResult<GetAgentSessionToolsResponse>(res, {
-        tools: manager.getSessionTools(getSessionId(req)),
-      });
+      sendResult<GetAgentSessionToolsResponse>(res, manager.getSessionTools(getSessionId(req)));
     } catch (error) {
       sendError(res, error);
     }
