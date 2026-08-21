@@ -1,6 +1,6 @@
 import type { ConfigT as MetroConfig } from 'metro-config';
 import path from 'node:path';
-import { createMetroConfigTransformer } from '@rozenite/tools';
+import { createMetroConfigTransformer, isBundling } from '@rozenite/tools';
 
 // `setup.js` is a Metro polyfill: Metro injects it into the app bundle and
 // executes it verbatim, so it must never be compiled, bundled or otherwise
@@ -56,7 +56,14 @@ export const withRozeniteRequireProfiler =
     (config: MetroConfig, options): MetroConfig => {
       const enabled = options?.enabled ?? process.env.NODE_ENV !== 'production';
 
-      if (!enabled) {
+      // Metro adds `getPolyfills` entries to the graph by absolute path, not
+      // through module resolution, so Rozenite's production resolver guard never
+      // sees this one. This check is the only thing keeping the instrumentation
+      // out of a release bundle when `enabled` folds to `true` regardless (e.g.
+      // `NODE_ENV` unset) -- the profiler reports over the DevTools bridge and
+      // does nothing without a dev server anyway, so a bundle run has no use for
+      // it either way.
+      if (!enabled || isBundling(config.projectRoot ?? process.cwd())) {
         return config;
       }
 

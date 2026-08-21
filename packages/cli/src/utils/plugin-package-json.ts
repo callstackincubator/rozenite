@@ -31,6 +31,7 @@ type PluginTargets = {
   hasReactNativeEntryPoint: boolean;
   hasMetroEntryPoint: boolean;
   hasSdkEntryPoint: boolean;
+  hasRegisterEntryPoint: boolean;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -79,6 +80,17 @@ const buildPackageContract = (targets: PluginTargets): PluginPackageContract | n
     };
   }
 
+  // `register.ts` compiles as an extra file inside the `react-native` target
+  // (see `getTscEmits`'s `extraEntryFiles`), so its output sits alongside
+  // `react-native.js` in the same emitted tree - same shape as the `.` entry.
+  if (targets.hasRegisterEntryPoint) {
+    contract.exports['./register'] = {
+      types: './dist/react-native/register.d.ts',
+      import: './dist/react-native/register.js',
+      require: './dist/react-native/cjs/register.js',
+    };
+  }
+
   return contract;
 };
 
@@ -116,6 +128,12 @@ const mergeManagedExports = (
     delete mergedExports['./sdk'];
   }
 
+  if (targets.hasRegisterEntryPoint) {
+    mergedExports['./register'] = contract.exports['./register'];
+  } else {
+    delete mergedExports['./register'];
+  }
+
   return mergedExports;
 };
 
@@ -133,6 +151,7 @@ export const detectPluginTargets = async (projectRoot: string): Promise<PluginTa
     hasReactNativeEntryPoint: await fileExists(path.join(projectRoot, 'react-native.ts')),
     hasMetroEntryPoint: await fileExists(path.join(projectRoot, 'metro.ts')),
     hasSdkEntryPoint: await fileExists(path.join(projectRoot, 'sdk.ts')),
+    hasRegisterEntryPoint: await fileExists(path.join(projectRoot, 'register.ts')),
   };
 };
 
@@ -176,11 +195,14 @@ export const syncPluginPackageJSON = async (
   } else if (
     updatedPackageJson.exports !== undefined &&
     isPackageExports(updatedPackageJson.exports) &&
-    ('./metro' in updatedPackageJson.exports || './sdk' in updatedPackageJson.exports)
+    ('./metro' in updatedPackageJson.exports ||
+      './sdk' in updatedPackageJson.exports ||
+      './register' in updatedPackageJson.exports)
   ) {
     const nextExports = { ...updatedPackageJson.exports };
     delete nextExports['./metro'];
     delete nextExports['./sdk'];
+    delete nextExports['./register'];
     updateField('exports', nextExports);
   }
 
