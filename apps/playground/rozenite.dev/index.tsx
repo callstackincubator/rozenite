@@ -12,11 +12,12 @@ import { useRozeniteSqlitePlugin } from '@rozenite/sqlite-plugin';
 import { useRozeniteStoragePlugin } from '@rozenite/storage-plugin';
 import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
 import { featureFlagsPluginAdapters } from '../src/app/feature-flags-plugin-adapters';
+import { useNetworkTestStore } from '../src/app/stores/networkTestStore';
 import { navigationRef } from '../src/app/navigation/navigationRef';
 import { queryClient } from '../src/app/query-client';
 import { useAgentPlaygroundTools } from './agent-tools';
 import { usePlaygroundControlsSections } from './controls-sections';
-import { useNetworkControlsSections } from './network-controls';
+import { NetworkPlaygroundControls } from './network-controls';
 import { sqlitePluginAdapters } from './sqlite-adapters';
 import { storagePluginAdapters } from './storage-adapters';
 
@@ -27,18 +28,11 @@ import { storagePluginAdapters } from './storage-adapters';
  */
 export default function RozeniteDevTools() {
   const controlsSections = usePlaygroundControlsSections();
-  const networkControlsSections = useNetworkControlsSections();
+  const isNetworkScreenMounted = useNetworkTestStore((state) => state.isScreenMounted);
 
   useTanStackQueryDevTools(queryClient);
-  // Two independent calls, mirroring the two independent callers that
-  // existed before this migration (App-level Controls sections and the
-  // Network screen's local section) — useRozeniteControlsPlugin merges
-  // sections from every caller, so this keeps both mounted side by side.
   useRozeniteControlsPlugin({
     sections: controlsSections,
-  });
-  useRozeniteControlsPlugin({
-    sections: networkControlsSections,
   });
   useNetworkActivityDevTools({
     clientUISettings: {
@@ -80,5 +74,17 @@ export default function RozeniteDevTools() {
     ref: navigationRef as any,
   });
 
-  return <RozeniteOverlay />;
+  return (
+    <>
+      {/*
+        The Network screen's own Controls section, registered as a second,
+        independent `useRozeniteControlsPlugin` caller and mounted only while
+        that screen is — exactly as it behaved when the screen called the
+        hook itself. `controlsRegistry` merges every caller's sections, so
+        this appears alongside the app-level ones rather than replacing them.
+      */}
+      {isNetworkScreenMounted && <NetworkPlaygroundControls />}
+      <RozeniteOverlay />
+    </>
+  );
 }

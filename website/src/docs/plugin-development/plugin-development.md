@@ -280,10 +280,11 @@ export default {
 and add the corresponding file at your plugin's root:
 
 ```typescript title="register.ts"
-// Import from your own src/** modules directly -- never from ./react-native.ts.
-// That shim pulls in your plugin's whole dev surface, which is exactly what
-// this entry point exists to keep out of the production bundle.
-export { useMyPluginRuntimeHook } from './src/react-native/useMyPluginRuntimeHook';
+// Re-exported through ./react-native.ts, which already resolves this to a
+// noop once `process.env.NODE_ENV` is folded. `register.js` is emitted into
+// the same output tree as `react-native.js`, so both entry points share one
+// module instance.
+export { useMyPluginRuntimeHook } from './react-native';
 ```
 
 The build picks up `productionEntries` automatically and exposes `register.ts` as your package's
@@ -296,6 +297,25 @@ import { useMyPluginRuntimeHook } from '@acme/my-plugin/register';
 
 Everything else your plugin exports keeps living behind the main entry point, dev-only, and is meant
 to be called from `rozenite.dev.tsx`.
+
+#### A production entry point must be inert in production
+
+This is the one part of your plugin the guarantee cannot cover for you. The resolver permits the
+import because you declared it, so whatever `register.ts` exports is what actually runs in someone's
+shipped app — and a hook that subscribes and serializes, an enhancer that retains an action history,
+or an interceptor that patches `fetch` with nothing draining its buffer is exactly the harm keeping
+plugins out of production is meant to prevent.
+
+Reachable is not the same as active. Export the same production behaviour your main entry point
+already defines — which is why the official plugins re-export through `react-native.ts` rather than
+reaching into `src/**` — so there is one definition of what your plugin does in a release build
+instead of a second copy that can silently drift from it. A wrong stub here fails the way the old
+hand-written shims did: quietly, in someone else's production app.
+
+Write a test that pins it. Set `process.env.NODE_ENV` to `'production'`, import your `register`
+entry, and assert the inert behaviour directly — that the enhancer passes `createStore` through
+untouched, that the interceptor leaves `globalThis.fetch` identical, that the hook returns without
+touching what it was handed.
 
 :::info The declaration is not verified
 Rozenite does not walk `register.ts`'s import graph to confirm it's "really" safe for production —
