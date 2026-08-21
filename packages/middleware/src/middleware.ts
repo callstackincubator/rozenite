@@ -53,7 +53,11 @@ export const getMiddleware = (
   runtimeVersion?: string,
 ): Application => {
   const app = express();
-  const debuggerFrontend = require(getReactNativeDebuggerFrontendPath(options));
+  const isLynx = options.platform === 'lynx';
+  // Lynx has no react-native install to resolve the Fusebox debugger
+  // frontend from, and doesn't need it: `@rozenite/app` is loaded
+  // standalone there instead of embedded in Fusebox's HTML.
+  const debuggerFrontend = isLynx ? null : require(getReactNativeDebuggerFrontendPath(options));
 
   const frameworkPath = path.resolve(require.resolve('@rozenite/runtime'), '..');
   const shellPath = path.join(
@@ -62,7 +66,9 @@ export const getMiddleware = (
   );
   const appPath = path.join(path.dirname(require.resolve('@rozenite/app/package.json')), 'dist');
 
-  logger.debug(`Debugger frontend path: ${debuggerFrontend}`);
+  if (!isLynx) {
+    logger.debug(`Debugger frontend path: ${debuggerFrontend}`);
+  }
   logger.debug(`Framework path: ${frameworkPath}`);
 
   app.use((req, _, next) => {
@@ -94,18 +100,22 @@ export const getMiddleware = (
     res.end('');
   });
 
-  app.get('/rn_fusebox.html', (_, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    res.send(
-      getEntryPointHTML(
-        debuggerFrontend,
-        installedPlugins.map((plugin) => plugin.name),
-        destroyOnDetachPlugins,
-        options.pluginDisplay ?? 'sidebar',
-        runtimeVersion,
-      ),
-    );
-  });
+  // Fusebox-only route: Lynx never requests this, so it's skipped rather
+  // than served with a null debugger frontend.
+  if (!isLynx) {
+    app.get('/rn_fusebox.html', (_, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.send(
+        getEntryPointHTML(
+          debuggerFrontend,
+          installedPlugins.map((plugin) => plugin.name),
+          destroyOnDetachPlugins,
+          options.pluginDisplay ?? 'sidebar',
+          runtimeVersion,
+        ),
+      );
+    });
+  }
 
   app.get('/host.js', (_, res) => {
     res.setHeader('Content-Type', 'application/javascript');
@@ -148,7 +158,9 @@ export const getMiddleware = (
 
   app.use(createAgentRoutes(agentSessionManager));
 
-  app.use(express.static(debuggerFrontend));
+  if (!isLynx) {
+    app.use(express.static(debuggerFrontend));
+  }
 
   return app;
 };

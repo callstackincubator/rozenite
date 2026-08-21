@@ -5,7 +5,7 @@ import { logger } from './logger.js';
 import { getPackageJSON } from './package-json.js';
 import { getInstalledPlugins } from './auto-discovery.js';
 import { createScopedMiddleware } from './scoped-middleware.js';
-import type { RozeniteConfig, RozenitePluginDisplay } from './config.js';
+import type { RozeniteConfig, RozenitePlatform, RozenitePluginDisplay } from './config.js';
 import { getDevModePackage } from './dev-mode.js';
 import { verifyReactNativeVersion } from './verify-react-native-version.js';
 import { getReactNativePackagePath } from './resolve.js';
@@ -28,11 +28,18 @@ export const initializeRozenite = async (
   options.logLevel = process.env.ROZENITE_DEBUG === 'true' ? 'debug' : (options.logLevel ?? 'info');
   logger.setLevel(options.logLevel);
 
-  verifyReactNativeVersion(options.projectRoot);
+  const isLynx = options.platform === 'lynx';
+
+  if (!isLynx) {
+    verifyReactNativeVersion(options.projectRoot);
+  }
 
   logger.debug('Rozenite is running in debug mode.');
   logger.debug(`Resolution root: ${options.projectRoot}`);
-  logger.debug(`Resolved react-native to: ${getReactNativePackagePath(options.projectRoot)}`);
+
+  if (!isLynx) {
+    logger.debug(`Resolved react-native to: ${getReactNativePackagePath(options.projectRoot)}`);
+  }
 
   const devModePackage = getDevModePackage(options.projectRoot);
 
@@ -56,7 +63,9 @@ export const initializeRozenite = async (
     });
   }
 
-  patchDevtoolsFrontendUrl(options);
+  if (!isLynx) {
+    patchDevtoolsFrontendUrl(options);
+  }
 
   return {
     middleware: getMiddleware(
@@ -73,4 +82,4 @@ export const initializeRozenite = async (
   };
 };
 
-export type { RozeniteConfig, RozenitePluginDisplay };
+export type { RozeniteConfig, RozenitePlatform, RozenitePluginDisplay };

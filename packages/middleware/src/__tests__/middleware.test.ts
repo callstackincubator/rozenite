@@ -244,3 +244,45 @@ describe('standalone app', () => {
     }
   });
 });
+
+describe('lynx platform', () => {
+  // Unlike the "standalone app" suite above, this must not resolve
+  // react-native or @react-native/dev-middleware at all, so any project
+  // root works — it's never used to resolve anything React Native-specific.
+  const projectRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
+
+  const createApp = (): MiddlewareHandler => {
+    const config: RozeniteConfig = { projectRoot, platform: 'lynx' };
+    const agentSessionManager = createAgentSessionManager({ projectRoot });
+
+    return getMiddleware(config, [], [], agentSessionManager) as unknown as MiddlewareHandler;
+  };
+
+  it('serves /app/config without touching react-native', async () => {
+    const app = createApp();
+
+    const response = await runRequest(app, '/rozenite/app/config');
+
+    expect(response.status).toBe(200);
+    expect(JSON.parse(response.body)).toEqual({
+      installedPlugins: [],
+      destroyOnDetachPlugins: [],
+    });
+  });
+
+  it('serves /shell without touching react-native', async () => {
+    const app = createApp();
+
+    const response = await runRequest(app, '/rozenite/shell/index.html');
+
+    expect(response.status).toBe(200);
+  });
+
+  it('404s on /rn_fusebox.html instead of crashing', async () => {
+    const app = createApp();
+
+    const response = await runRequest(app, '/rozenite/rn_fusebox.html');
+
+    expect(response.status).toBe(404);
+  });
+});

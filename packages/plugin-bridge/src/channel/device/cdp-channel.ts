@@ -1,4 +1,4 @@
-import { isRozeniteWeb, isServer, isWeb } from '../../web.js';
+import { isLynx, isLynxMainThread, isRozeniteWeb, isServer, isWeb } from '../../web.js';
 import { Channel } from '../types.js';
 import { MissingRozeniteForWebError, UnsupportedPlatformError } from '../../errors.js';
 
@@ -17,9 +17,14 @@ export type CdpDomain = {
 const DOMAIN_NAME = 'rozenite';
 
 const getInitialCdpDomain = (): CdpDomain | null => {
-  const dispatcher = global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__;
+  const dispatcher = globalThis.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__;
   const bindingName = dispatcher.BINDING_NAME;
-  const globalBinding = (global as Record<string, unknown>)[bindingName];
+  // On Lynx this binding never exists -- Lynx's CDP `Runtime` domain has no
+  // `addBinding` -- so every Lynx client falls through to `waitForDomain()`
+  // below instead of initializing synchronously here. That still works: the
+  // host calls `initializeDomain('rozenite')` during its bootstrap
+  // handshake and `onDomainInitialization` fires.
+  const globalBinding = (globalThis as Record<string, unknown>)[bindingName];
 
   if (globalBinding != null) {
     return dispatcher.initializeDomain(DOMAIN_NAME);
@@ -32,7 +37,7 @@ const waitForDomain = (): Promise<CdpDomain> => {
   return new Promise((resolve) => {
     const handler = (domain: CdpDomain) => {
       if (domain.name === DOMAIN_NAME) {
-        global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.removeEventListener(
+        globalThis.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.removeEventListener(
           handler,
         );
 
@@ -42,7 +47,9 @@ const waitForDomain = (): Promise<CdpDomain> => {
       }
     };
 
-    global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.addEventListener(handler);
+    globalThis.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.addEventListener(
+      handler,
+    );
   });
 };
 
@@ -79,12 +86,12 @@ const getCdpDomainProxy = async (): Promise<Channel> => {
     }
   };
 
-  global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.addEventListener(
+  globalThis.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.addEventListener(
     reinitHandler,
   );
 
   const close = () => {
-    global.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.removeEventListener(
+    globalThis.__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.onDomainInitialization.removeEventListener(
       reinitHandler,
     );
   };
@@ -117,6 +124,23 @@ const getCdpDomainProxy = async (): Promise<Channel> => {
 };
 
 export const getCdpChannel = async (): Promise<Channel> => {
+  // Lynx's background runtime has no `window`, so `isServer()` (which is
+  // `typeof window === 'undefined'`) would otherwise misidentify it as a
+  // server and throw. Check `isLynx()` before both guards so it falls
+  // through to `getCdpDomainProxy()` like React Native does.
+  if (isLynx()) {
+    return getCdpDomainProxy();
+  }
+
+  // Lynx evaluates the entry module in its main-thread runtime too, where
+  // `@rozenite/lynx` deliberately installs nothing. Reject with a platform
+  // that names what actually happened rather than falling through to
+  // `isServer()` -- true here as well, since neither Lynx runtime has a
+  // `window` -- which would report this as "server".
+  if (isLynxMainThread()) {
+    throw new UnsupportedPlatformError('lynx-main-thread');
+  }
+
   if (isWeb() && !isRozeniteWeb()) {
     throw new MissingRozeniteForWebError();
   }

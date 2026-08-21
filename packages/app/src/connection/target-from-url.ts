@@ -19,6 +19,15 @@ export type ParsedTarget = {
    * change underneath a live connection.
    */
   deviceId: string;
+  /**
+   * Page id from the `ws` parameter's `page` query param, when it has one.
+   *
+   * A device can host several pages -- every Lynx card is one, and a React
+   * Native app gains one per extra VM -- so re-resolving by `deviceId`
+   * alone can land on a different page than the one being debugged. Kept
+   * so reconnection can go back to the same page.
+   */
+  pageId: string | null;
   /** Passed straight through from the `appId` query parameter. */
   appId: string;
 };
@@ -57,8 +66,11 @@ export const parseTargetFromUrl = (url: URL = new URL(window.location.href)): Pa
   const webSocketDebuggerUrl = resolveWebSocketUrl(wsParam, url);
 
   let deviceId: string | null;
+  let pageId: string | null;
   try {
-    deviceId = new URL(webSocketDebuggerUrl).searchParams.get('device');
+    const params = new URL(webSocketDebuggerUrl).searchParams;
+    deviceId = params.get('device');
+    pageId = params.get('page');
   } catch {
     throw new TargetUrlError(`The "ws" query parameter is not a valid URL: "${wsParam}".`);
   }
@@ -70,6 +82,7 @@ export const parseTargetFromUrl = (url: URL = new URL(window.location.href)): Pa
   return {
     webSocketDebuggerUrl,
     deviceId,
+    pageId,
     appId: url.searchParams.get('appId') ?? '',
   };
 };

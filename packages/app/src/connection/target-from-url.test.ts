@@ -10,6 +10,7 @@ describe('parseTargetFromUrl', () => {
     expect(parseTargetFromUrl(url)).toEqual({
       webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc123&page=1',
       deviceId: 'abc123',
+      pageId: '1',
       appId: 'com.example.app',
     });
   });
@@ -32,6 +33,7 @@ describe('parseTargetFromUrl', () => {
     expect(parseTargetFromUrl(url)).toEqual({
       webSocketDebuggerUrl: 'ws://127.0.0.1:8081/inspector/debug?device=abc123&page=2',
       deviceId: 'abc123',
+      pageId: '2',
       appId: 'com.example.app',
     });
   });

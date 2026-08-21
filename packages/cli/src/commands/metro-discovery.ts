@@ -71,6 +71,30 @@ const sortPages = (pages: JsonPageDescription[]): JsonPageDescription[] => {
   });
 };
 
+const prefersFusebox = (page: JsonPageDescription): boolean =>
+  page.reactNative?.capabilities?.prefersFuseboxFrontend === true;
+
+/**
+ * The pages of one device that are worth offering, in order.
+ *
+ * Two different things can put several pages on one device, and they need
+ * opposite treatment. Metro serves a modern Fusebox page *and* a legacy
+ * page for the same runtime -- those are one target described twice, so
+ * the legacy one is dropped. But a device can also host genuinely
+ * separate runtimes, each with its own page: every Lynx card is one, and
+ * so is a React Native app's extra VM (a Reanimated worklet runtime, for
+ * instance). Those are not duplicates and must all survive, or they are
+ * simply unreachable -- which is what used to happen, since only
+ * `sortPages(...)[0]` was ever returned. In LynxExplorer that meant the
+ * lowest page id won every time, and the lowest page id is LynxExplorer's
+ * own home screen, so a developer's card could not be opened at all.
+ */
+const selectDevicePages = (pages: JsonPageDescription[]): JsonPageDescription[] => {
+  const fuseboxPages = pages.filter(prefersFusebox);
+
+  return sortPages(fuseboxPages.length > 0 ? fuseboxPages : pages);
+};
+
 export const getMetroTargets = async (host: string, port: number): Promise<MetroTarget[]> => {
   const pages = await fetchJsonList(host, port);
   const byDevice = new Map<string, JsonPageDescription[]>();
@@ -87,17 +111,20 @@ export const getMetroTargets = async (host: string, port: number): Promise<Metro
   }
 
   return Array.from(byDevice.entries())
-    .map(([deviceId, devicePages]) => {
-      const selectedPage = sortPages(devicePages)[0];
-      return {
-        id: deviceId,
-        name: selectedPage.deviceName || deviceId,
-        appId: selectedPage.appId,
-        pageId: selectedPage.id,
-        title: selectedPage.title,
-        description: selectedPage.description,
-        webSocketDebuggerUrl: selectedPage.webSocketDebuggerUrl,
-      } satisfies MetroTarget;
-    })
+    .flatMap(([deviceId, devicePages]) =>
+      selectDevicePages(devicePages).map(
+        (page) =>
+          ({
+            id: page.id,
+            deviceId,
+            name: page.deviceName || deviceId,
+            appId: page.appId,
+            pageId: page.id,
+            title: page.title,
+            description: page.description,
+            webSocketDebuggerUrl: page.webSocketDebuggerUrl,
+          }) satisfies MetroTarget,
+      ),
+    )
     .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 };

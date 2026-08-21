@@ -64,6 +64,56 @@ describe('resolveMetroTarget', () => {
     });
   });
 
+  describe('reconnecting to a device that hosts several pages', () => {
+    // Every Lynx card is its own page, and LynxExplorer's own home screen
+    // is page 1. Re-resolving by device id alone therefore used to move a
+    // live session off the card being debugged and onto the home screen,
+    // which has no Rozenite in it -- surfacing as a "Rozenite isn't set up
+    // in this app" that no amount of reloading could clear.
+    const twoCards = () =>
+      jsonResponse([
+        {
+          id: 'abc-1',
+          deviceName: 'iPhone',
+          webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
+          reactNative: { logicalDeviceId: 'abc', capabilities: { prefersFuseboxFrontend: true } },
+        },
+        {
+          id: 'abc-2',
+          deviceName: 'iPhone',
+          webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=2',
+          reactNative: { logicalDeviceId: 'abc', capabilities: { prefersFuseboxFrontend: true } },
+        },
+      ]);
+
+    it('returns to the page that was being debugged', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(twoCards());
+
+      await expect(resolveMetroTarget('abc', '2')).resolves.toEqual({
+        webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=2',
+        name: 'iPhone',
+      });
+    });
+
+    it('falls back to the usual order when that page is gone', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(twoCards());
+
+      await expect(resolveMetroTarget('abc', '7')).resolves.toEqual({
+        webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
+        name: 'iPhone',
+      });
+    });
+
+    it('keeps the previous behaviour when no page is remembered', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(twoCards());
+
+      await expect(resolveMetroTarget('abc', null)).resolves.toEqual({
+        webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
+        name: 'iPhone',
+      });
+    });
+  });
+
   it('falls back to the device id when Metro reports no device name', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
       jsonResponse([

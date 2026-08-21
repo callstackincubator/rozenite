@@ -19,25 +19,77 @@ export type OpenCommandOptions = {
 export const NON_INTERACTIVE_MESSAGE =
   '`rozenite open` must be run in an interactive terminal: it opens an app window and picks a debugging target, which requires a terminal a person can respond to. Run it directly in a terminal instead of in CI or a piped/non-TTY shell.';
 
-export const selectTargetById = (targets: MetroTarget[], deviceId: string): MetroTarget => {
-  const target = targets.find((candidate) => candidate.id === deviceId);
+/**
+ * The tail of a page title, when the title is a URL or file path.
+ *
+ * Lynx names a card by the bundle URL it was opened with, which is far too
+ * long to put in a picker but whose last segment
+ * (`main.lynx.bundle`, `homepage.lynx.bundle`) is exactly what tells two
+ * cards apart. Titles that are not paths (React Native's own page names)
+ * are left alone.
+ */
+const shortenTitle = (title: string): string => {
+  const withoutQuery = title.split('?')[0];
 
-  if (!target) {
-    const validIds = targets.map((candidate) => candidate.id).join(', ');
-    throw new Error(`Unknown deviceId "${deviceId}". Valid device IDs: ${validIds}`);
+  if (!withoutQuery.includes('/')) {
+    return title;
   }
 
-  return target;
+  const lastSegment = withoutQuery.split('/').filter(Boolean).pop();
+
+  return lastSegment && lastSegment.length > 0 ? lastSegment : title;
+};
+
+/**
+ * A device can offer several targets, so the label has to say which page
+ * each one is -- the device name alone is the same for all of them.
+ */
+const formatTargetLabel = (target: MetroTarget): string => {
+  const base = `${target.name} (${target.appId || target.title})`;
+  const detail = shortenTitle(target.title);
+
+  return detail.length > 0 && detail !== target.appId ? `${base} — ${detail}` : base;
 };
 
 const promptForTarget = async (targets: MetroTarget[]): Promise<MetroTarget> => {
   return promptSelect({
-    message: 'Select a device to open Rozenite DevTools for',
+    message: 'Select a debugging target to open Rozenite DevTools for',
     options: targets.map((target) => ({
       value: target,
-      label: `${target.name} (${target.appId || target.title})`,
+      label: formatTargetLabel(target),
     })),
   });
+};
+
+/**
+ * Resolves `--deviceId`, which is accepted as either a target id (one
+ * page) or a device id (every page on that device). The device form is
+ * what the flag meant before targets became per-page, and is still the id
+ * a person is most likely to have to hand -- so it keeps working, and only
+ * asks which page when the device actually has more than one.
+ */
+export const selectTargetById = async (
+  targets: MetroTarget[],
+  deviceId: string,
+): Promise<MetroTarget> => {
+  const exactTarget = targets.find((candidate) => candidate.id === deviceId);
+
+  if (exactTarget) {
+    return exactTarget;
+  }
+
+  const targetsOnDevice = targets.filter((candidate) => candidate.deviceId === deviceId);
+
+  if (targetsOnDevice.length === 1) {
+    return targetsOnDevice[0];
+  }
+
+  if (targetsOnDevice.length > 1) {
+    return promptForTarget(targetsOnDevice);
+  }
+
+  const validIds = targets.map((candidate) => candidate.id).join(', ');
+  throw new Error(`Unknown deviceId "${deviceId}". Valid device IDs: ${validIds}`);
 };
 
 export const resolveElectronAppLauncher = (): string | undefined => {
@@ -92,7 +144,7 @@ export const openCommand = async (options: OpenCommandOptions): Promise<void> =>
 
   try {
     target = options.deviceId
-      ? selectTargetById(targets, options.deviceId)
+      ? await selectTargetById(targets, options.deviceId)
       : await promptForTarget(targets);
   } catch (error) {
     logger.error(error instanceof Error ? error.message : String(error));
