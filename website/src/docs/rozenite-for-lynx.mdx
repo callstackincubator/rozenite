@@ -1,0 +1,82 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# Rozenite for Lynx
+
+:::warning Experimental
+Rozenite for Lynx is experimental. It has not yet been exercised across the full range of LynxSDK versions, and the API may change in future releases.
+:::
+
+Rozenite for Lynx lets you debug a [Lynx](https://lynxjs.org) app with the same DevTools panels, the same plugin catalogue and the same `rozenite` CLI you use for React Native.
+
+You need two packages: `@rozenite/lynx` in the app, and `@rozenite/lynx-dev` in the dev server.
+
+## How it works
+
+Rozenite's DevTools app talks to a device over the inspector protocol React Native's Metro serves — a `/json/list` target list and a CDP WebSocket per target. Lynx debugging is shaped differently: it runs over **DebugRouter**, a room-based bus reached over USB, which carries CDP inside its own envelopes and does not implement every CDP method Rozenite uses.
+
+`@rozenite/lynx-dev` closes that gap on the dev-server side, so nothing in the browser has to know Lynx exists:
+
+- It serves `/json/list`, synthesised from the Lynx apps DebugRouter can currently see.
+- It serves `/inspector/debug`, translating each frame to and from DebugRouter's envelopes.
+- It answers `Runtime.addBinding` and `ReactNativeApplication.enable` itself, since Lynx implements neither.
+
+`@rozenite/lynx` closes it on the device side. It installs the dispatcher Rozenite plugins send messages through, backed by `lynx.getDevtool()` — Lynx's own devtool channel — instead of the CDP binding React Native uses.
+
+## Add @rozenite/lynx-dev to your dev server
+
+### Installation
+
+<PackageManagerTabs command="install -D @rozenite/lynx-dev" />
+
+### Configuration
+
+Add the plugin to your `lynx.config.ts`:
+
+```typescript
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+import { rozeniteLynxPlugin } from '@rozenite/lynx-dev';
+
+export default defineConfig({
+  plugins: [pluginReactLynx(), rozeniteLynxPlugin()],
+});
+```
+
+The plugin is inert in production builds. Pass `enabled` explicitly if you want to control that yourself.
+
+Rozenite plugins are discovered from your project's `package.json` exactly as they are for React Native — install a plugin as a dependency and it shows up.
+
+## Add @rozenite/lynx to your app
+
+### Installation
+
+<PackageManagerTabs command="install -D @rozenite/lynx" />
+
+### Entry point
+
+Import it once, as early as possible in your app's entry point. It must run before any plugin's `useRozeniteDevToolsClient` does.
+
+```typescript
+if (__DEV__) {
+  require('@rozenite/lynx');
+}
+```
+
+It only installs itself in Lynx's background runtime, where `lynx.getDevtool()` exists, and is a no-op everywhere else.
+
+## How to use it
+
+1. Connect your device over USB and start your app in development mode.
+2. Start the dev server. Once a Lynx app registers, the dev server prints a DevTools URL for each card it finds.
+3. Open that URL in your browser.
+
+## Troubleshooting
+
+- **No targets appear.** Check that the device is visible over USB (`adb devices` on Android), and that the app is a debuggable build with DebugRouter enabled.
+- **Targets appear but the panels stay disconnected.** The app is reachable but Rozenite is not installed in it — check that `@rozenite/lynx` is imported at the entry point, and that the import runs in a development build.
+- **`lynx.getDevtool is not a function`.** Your LynxSDK predates the devtool event channel. Upgrade it.
+
+## Limitations
+
+- Plugins whose device half is written against React Native APIs — network activity, storage, file system, performance monitor, require profiler, Expo Atlas — do not work on Lynx yet. Plugins that only move state around, such as Redux DevTools, TanStack Query, React Hook Form, feature flags and controls, are expected to work.
+- Only apps reachable over USB are discovered.
