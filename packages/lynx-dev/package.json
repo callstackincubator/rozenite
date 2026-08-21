@@ -1,0 +1,64 @@
+{
+  "name": "@rozenite/lynx-dev",
+  "version": "2.2.0",
+  "description": "Rozenite dev-server integration for Lynx: a DebugRouter to CDP bridge and an rspeedy plugin.",
+  "keywords": [
+    "bundler",
+    "devtools",
+    "lynx",
+    "rozenite",
+    "rspeedy"
+  ],
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "license": "MIT",
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest --run --passWithNoTests"
+  },
+  "dependencies": {
+    "@lynx-js/debug-router-connector": "^0.0.15",
+    "@rozenite/middleware": "workspace:*",
+    "@rozenite/tools": "workspace:*",
+    "express": "^5.1.0",
+    "tslib": "^2.3.0",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "2.1.10",
+    "@types/express": "^5.0.3",
+    "@types/ws": "^8.18.1",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

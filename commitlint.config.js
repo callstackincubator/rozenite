@@ -39,6 +39,8 @@ export default {
         'shell',
         'feature-flags-plugin',
         'testing',
+        'lynx',
+        'lynx-dev',
         '',
       ],
     ],
