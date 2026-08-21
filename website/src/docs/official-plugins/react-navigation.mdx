@@ -18,10 +18,16 @@ the ref once, at module scope, in a file both sides can import:
 
 ### With react-navigation
 
-```typescript title="navigation.ts"
-import { createNavigationContainerRef } from '@react-navigation/native';
+Create the ref with plain `createRef` from `react`, not React Navigation's own
+`createNavigationContainerRef` — its return type doesn't satisfy
+`useReactNavigationDevTools`'s `ref` parameter, so `NavigationContainer` would accept it but the hook
+wouldn't:
 
-export const navigationRef = createNavigationContainerRef();
+```typescript title="navigation.ts"
+import { createRef } from 'react';
+import type { NavigationContainerRef } from '@react-navigation/native';
+
+export const navigationRef = createRef<NavigationContainerRef<any>>();
 ```
 
 ```typescript title="App.tsx"
@@ -42,7 +48,10 @@ import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 import { navigationRef } from './navigation';
 
 export default function RozeniteDevTools() {
-  useReactNavigationDevTools({ ref: navigationRef });
+  // useReactNavigationDevTools's `ref` type doesn't infer from a
+  // route-typed ref -- it always checks against the untyped default, so
+  // even a correctly-typed ref needs this cast at the call site.
+  useReactNavigationDevTools({ ref: navigationRef as any });
   return null;
 }
 ```

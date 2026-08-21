@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text } from 'react-native';
 import EventSource from 'react-native-sse';
 import { useNavigation } from '@react-navigation/native';
@@ -135,6 +135,17 @@ export const NetworkTestScreen = () => {
   const [sseLastMessage, setSseLastMessage] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const sseRef = useRef<EventSource | null>(null);
+
+  // Registering the Network Playground controls section is dev-only work and
+  // lives in rozenite.dev, but *when* it is registered is this screen's
+  // behaviour to define, so the screen still owns the mounted flag.
+  const setScreenMounted = useNetworkTestStore((state) => state.setScreenMounted);
+
+  useEffect(() => {
+    setScreenMounted(true);
+
+    return () => setScreenMounted(false);
+  }, [setScreenMounted]);
 
   const actions = TRANSPORT_ACTIONS[transport];
 
