@@ -11,8 +11,22 @@ export const isRozeniteWeb = (): boolean => {
   return isWeb() && typeof window.__ROZENITE_WEB__ !== 'undefined';
 };
 
+/**
+ * A server-side (SSR) runtime, where there is no device bridge to talk to.
+ *
+ * Neither of Lynx's runtimes has a `window`, so the bare
+ * `typeof window === 'undefined'` this used to be reported every Lynx app
+ * as a server and made every plugin's device half no-op. Both Lynx
+ * runtimes are excluded here -- the main thread included, so a plugin
+ * entry point loads its device module in both and fails (if at all) with
+ * a precise error from the channel rather than silently doing nothing.
+ *
+ * The two helpers are defined further down the module; that is fine
+ * because they are only ever called from inside this function, never
+ * while the module itself is being evaluated.
+ */
 export const isServer = (): boolean => {
-  return typeof window === 'undefined';
+  return typeof window === 'undefined' && !isLynx() && !isLynxMainThread();
 };
 
 // Structural types for Lynx's devtool channel (`lynx.getDevtool()`), kept
@@ -38,7 +52,13 @@ type LynxGlobal = {
  */
 declare const lynx: LynxGlobal | undefined;
 
-export const isLynx = (): boolean => {
+/**
+ * Module-scoped ambient declaration for Lynx's `__BACKGROUND__` build-time
+ * flag, declared the same way and for the same reason as `lynx` above.
+ */
+declare const __BACKGROUND__: boolean | undefined;
+
+const hasLynxDevtool = (): boolean => {
   // Lynx's background runtime (BTS) has no `window`/`document`, so this
   // can't reuse `isWeb`'s check. `lynx.getDevtool` is Lynx's own devtool
   // channel -- the same capability `@lynx-js/preact-devtools` keys off --
@@ -65,4 +85,57 @@ export const isLynx = (): boolean => {
     candidate !== null &&
     typeof candidate.getDevtool === 'function'
   );
+};
+
+/**
+ * Whether this is Lynx's background (BTS) runtime rather than its
+ * main-thread (scripting/Lepus) one.
+ *
+ * Lynx evaluates an app's entry module in *both* runtimes, and `lynx`
+ * -- `getDevtool` included -- exists in both, so `hasLynxDevtool()` alone
+ * cannot tell them apart. `@rozenite/lynx` deliberately installs
+ * `__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__` in the background runtime only
+ * (see its `setupRozenite`), because that is where app JS and plugin
+ * device code run. Treating the main thread as Lynx therefore sent it into
+ * `getCdpDomainProxy()`, which dereferenced the dispatcher that is never
+ * installed there and threw `cannot read property 'BINDING_NAME' of
+ * undefined` on every app start -- verified on LynxExplorer/Android
+ * (Lynx engine 4.0), where the two runtimes probe as
+ * `getDevtool=function background=true` and
+ * `getDevtool=function background=false` respectively.
+ *
+ * `__BACKGROUND__` is a build-time constant that Lynx's bundler
+ * substitutes, so it is read through `typeof` (and via `globalThis` as a
+ * fallback) to stay safe on hosts that never define it. When nothing
+ * defines it there is no second runtime to confuse this with, so the
+ * answer is "background" -- keeping React Native and web behaviour
+ * exactly as it was.
+ */
+const isLynxBackgroundRuntime = (): boolean => {
+  if (typeof __BACKGROUND__ !== 'undefined') {
+    return __BACKGROUND__ === true;
+  }
+
+  const fromGlobal = (globalThis as { __BACKGROUND__?: unknown }).__BACKGROUND__;
+
+  if (typeof fromGlobal === 'boolean') {
+    return fromGlobal;
+  }
+
+  return true;
+};
+
+export const isLynx = (): boolean => {
+  return hasLynxDevtool() && isLynxBackgroundRuntime();
+};
+
+/**
+ * Lynx's main-thread runtime, where Rozenite's device runtime is absent by
+ * design. Callers use this to fail with a clear
+ * `UnsupportedPlatformError` instead of falling through to `isServer()`,
+ * which would also be true here (Lynx has no `window` in either runtime)
+ * but would report the platform as "server".
+ */
+export const isLynxMainThread = (): boolean => {
+  return hasLynxDevtool() && !isLynxBackgroundRuntime();
 };

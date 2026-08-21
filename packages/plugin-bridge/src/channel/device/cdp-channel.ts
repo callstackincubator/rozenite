@@ -1,4 +1,4 @@
-import { isLynx, isRozeniteWeb, isServer, isWeb } from '../../web.js';
+import { isLynx, isLynxMainThread, isRozeniteWeb, isServer, isWeb } from '../../web.js';
 import { Channel } from '../types.js';
 import { MissingRozeniteForWebError, UnsupportedPlatformError } from '../../errors.js';
 
@@ -130,6 +130,15 @@ export const getCdpChannel = async (): Promise<Channel> => {
   // through to `getCdpDomainProxy()` like React Native does.
   if (isLynx()) {
     return getCdpDomainProxy();
+  }
+
+  // Lynx evaluates the entry module in its main-thread runtime too, where
+  // `@rozenite/lynx` deliberately installs nothing. Reject with a platform
+  // that names what actually happened rather than falling through to
+  // `isServer()` -- true here as well, since neither Lynx runtime has a
+  // `window` -- which would report this as "server".
+  if (isLynxMainThread()) {
+    throw new UnsupportedPlatformError('lynx-main-thread');
   }
 
   if (isWeb() && !isRozeniteWeb()) {

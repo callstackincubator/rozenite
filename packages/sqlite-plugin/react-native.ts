@@ -1,3 +1,5 @@
+import { isServer as isServerRuntime } from '@rozenite/plugin-bridge';
+
 export type {
   SqliteAdapter,
   SqliteDatabaseInfo,
@@ -35,7 +37,7 @@ export let formatSqliteError: typeof import('./src/shared/bridge-values').format
 
 const isDev = process.env.NODE_ENV !== 'production';
 const isWeb = typeof window !== 'undefined' && window.navigator.product !== 'ReactNative';
-const isServer = typeof window === 'undefined';
+const isServer = isServerRuntime();
 
 if (isDev && !isWeb && !isServer) {
   createSqliteAdapter = require('./src/react-native/adapters').createSqliteAdapter;

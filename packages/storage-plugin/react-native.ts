@@ -1,3 +1,5 @@
+import { isServer as isServerRuntime } from '@rozenite/plugin-bridge';
+
 export type {
   AsyncStorageInstanceConfig,
   AsyncStorageLike,
@@ -27,7 +29,7 @@ export let useRozeniteStoragePlugin: typeof import('./src/react-native/useRozeni
 
 const isWeb = typeof window !== 'undefined' && window.navigator.product !== 'ReactNative';
 const isDev = process.env.NODE_ENV !== 'production';
-const isServer = typeof window === 'undefined';
+const isServer = isServerRuntime();
 
 const createNoopStorageAdapter = (
   options: { adapterId?: string; adapterName?: string } | undefined,

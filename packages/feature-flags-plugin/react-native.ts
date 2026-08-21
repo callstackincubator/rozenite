@@ -1,3 +1,5 @@
+import { isServer as isServerRuntime } from '@rozenite/plugin-bridge';
+
 export type {
   FeatureFlag,
   FeatureFlagsProvider,
@@ -34,7 +36,7 @@ export let createFlagOverrides: typeof import('./src/react-native/overrides').cr
 export let useRozeniteFeatureFlagsPlugin: typeof import('./src/react-native/useRozeniteFeatureFlagsPlugin').useRozeniteFeatureFlagsPlugin;
 
 const isDev = process.env.NODE_ENV !== 'production';
-const isServer = typeof window === 'undefined';
+const isServer = isServerRuntime();
 
 if (!isDev || isServer) {
   // Stubs read their options defensively: a production build must never be the

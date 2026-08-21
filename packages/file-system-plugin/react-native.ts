@@ -1,3 +1,5 @@
+import { isServer as isServerRuntime } from '@rozenite/plugin-bridge';
+
 import type { FileSystemProvider, FsEntry } from './src/shared/protocol';
 export type {
   CreateExpoFileSystemAdapterOptions,
@@ -48,7 +50,7 @@ export let useFileSystemDevTools: typeof import('./src/react-native/useFileSyste
 
 const isWeb = typeof window !== 'undefined' && window.navigator.product !== 'ReactNative';
 const isDev = process.env.NODE_ENV !== 'production';
-const isServer = typeof window === 'undefined';
+const isServer = isServerRuntime();
 
 if (isDev && !isWeb && !isServer) {
   createExpoFileSystemAdapter =

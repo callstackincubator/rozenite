@@ -1,3 +1,5 @@
+import { isServer as isServerRuntime } from '@rozenite/plugin-bridge';
+
 export type {
   UseRozeniteAgentToolOptions,
   UseRozenitePluginAgentToolOptions,
@@ -24,7 +26,7 @@ export let useRozenitePluginAgentTool: typeof import('./src/react-native/useRoze
 export let useRozeniteInAppAgentTool: typeof import('./src/react-native/useRozeniteAgentTool').useRozeniteInAppAgentTool;
 
 const isDev = process.env.NODE_ENV !== 'production';
-const isServer = typeof window === 'undefined';
+const isServer = isServerRuntime();
 
 if (isDev && !isServer) {
   useRozenitePluginAgentTool =

@@ -1,3 +1,5 @@
+import { isServer as isServerRuntime } from '@rozenite/plugin-bridge';
+
 export {
   createSection,
   type ControlsButtonItem,
@@ -17,7 +19,7 @@ export {
 export let useRozeniteControlsPlugin: typeof import('./src/react-native/useRozeniteControlsPlugin').useRozeniteControlsPlugin;
 
 const isDev = process.env.NODE_ENV !== 'production';
-const isServer = typeof window === 'undefined';
+const isServer = isServerRuntime();
 
 if (isDev && !isServer) {
   useRozeniteControlsPlugin =

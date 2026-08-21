@@ -1,3 +1,5 @@
+import { isServer as isServerRuntime } from '@rozenite/plugin-bridge';
+
 export type { RozeniteDevToolsOptions } from './src/runtime';
 
 export let rozeniteDevToolsEnhancer: typeof import('./src/runtime').rozeniteDevToolsEnhancer;
@@ -5,7 +7,7 @@ export let composeWithRozeniteDevTools: typeof import('./src/runtime').composeWi
 export let useReduxDevToolsAgentTools: typeof import('./src/useReduxDevToolsAgentTools').useReduxDevToolsAgentTools;
 
 const isDev = process.env.NODE_ENV !== 'production';
-const isServer = typeof window === 'undefined';
+const isServer = isServerRuntime();
 
 if (isDev && !isServer) {
   rozeniteDevToolsEnhancer = require('./src/runtime').rozeniteDevToolsEnhancer;
