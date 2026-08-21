@@ -15,7 +15,12 @@ import { createRozeniteResolveRequest } from './resolver.js';
 export type RozeniteMetroConfig<TMetroConfig = unknown> = Omit<RozeniteConfig, 'projectRoot'> & {
   /**
    * Whether to enable Rozenite.
-   * If false, Rozenite will not be initialized and the config will be returned as is.
+   *
+   * If false, Rozenite starts no dev server and adds no middleware -- but the
+   * production guard stays installed, so importing a Rozenite plugin from app
+   * code still fails a production build. Turning Rozenite off is not a way to
+   * opt out of the guarantee.
+   *
    * @default false
    */
   enabled?: boolean;

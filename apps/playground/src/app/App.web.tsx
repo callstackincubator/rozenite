@@ -1,3 +1,4 @@
+import Rozenite from '@rozenite/react-native';
 import { SafeAreaView, ScrollView, StyleSheet, Text } from 'react-native';
 import { ThemeProvider } from './theme/ThemeContext';
 import { useTheme } from './theme/useTheme';
@@ -36,6 +37,7 @@ const AppContent = () => {
         <SqlitePluginSection />
         <TanStackQueryPluginSection />
       </ScrollView>
+      <Rozenite />
     </SafeAreaView>
   );
 };

@@ -1,4 +1,3 @@
-import path from 'node:path';
 import type { CustomResolutionContext, CustomResolver, Resolution } from 'metro-resolver';
 import {
   findRozenitePluginForFile,
@@ -21,6 +20,19 @@ const WEB_SOCKET_INTERCEPTOR_MODULE = 'react-native/Libraries/WebSocket/WebSocke
 // a legitimate import into a false build failure. Memoized per
 // (pluginRoot, platform).
 const declaredEntriesCache = new Map<string, Set<string>>();
+
+/**
+ * A declared entry is an *export subpath*, so it has to be resolved as the
+ * bare specifier a consumer would actually write -- `./register` becomes
+ * `@acme/some-plugin/register`. Resolving `./register` as a literal relative
+ * path instead would walk the plugin's own directory and land on its source
+ * `register.ts`, while the consumer's import goes through the `exports` map
+ * to `dist/react-native/register.js`. The two never match, so a correctly
+ * declared entry would fail the guard.
+ */
+const getEntrySpecifier = (pluginName: string, entry: string): string => {
+  return entry === '.' ? pluginName : `${pluginName}/${entry.replace(/^\.\//, '')}`;
+};
 
 // Re-entrancy flag: resolving declared entries below re-enters
 // `context.resolveRequest`, which per Metro's design is the built-in
@@ -52,9 +64,14 @@ const resolveDeclaredEntries = (
         let resolution: Resolution;
 
         try {
+          // Resolved from the importing module, not from the plugin root or
+          // the project root: that is the exact context the import being
+          // checked resolved in, so the two cannot disagree. The plugin is
+          // already known to be reachable from here -- we only got this far
+          // because a resolution landed inside it.
           resolution = context.resolveRequest(
-            { ...context, originModulePath: path.join(plugin.root, 'package.json') },
-            entry,
+            context,
+            getEntrySpecifier(plugin.name, entry),
             platform,
           );
         } catch (error) {

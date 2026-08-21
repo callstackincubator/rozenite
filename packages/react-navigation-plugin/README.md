@@ -15,7 +15,7 @@ The Rozenite React Navigation Plugin provides real-time navigation state monitor
 - **Time Travel Debugging**: Jump back to any previous navigation state
 - **Deep Link Testing**: Test and validate deep links directly from DevTools
 - **Real-time Updates**: See navigation changes as they happen in your app
-- **Production Safety**: Automatically disabled in production builds
+- **Production Safety**: Wired up only in `rozenite.dev.tsx`, so its code never reaches a production bundle -- importing it anywhere else is a build error
 
 ## Installation
 
@@ -33,24 +33,26 @@ npm install @rozenite/react-navigation-plugin
 npm install @rozenite/react-navigation-plugin
 ```
 
-### 2. Integrate with Your App
+### 2. Wire It Up in `rozenite.dev.tsx`
+
+The DevTools hook needs the exact same ref instance that's attached to your navigator, but it now runs
+from `rozenite.dev.tsx` — a different component than the one rendering your navigator. Create the ref
+once, at module scope, in a file both sides import.
 
 #### With react-navigation
 
-Add the DevTools hook to your React Native app with a reference to your NavigationContainer:
+```typescript title="navigation.ts"
+import { createNavigationContainerRef } from '@react-navigation/native';
+
+export const navigationRef = createNavigationContainerRef();
+```
 
 ```typescript
 // App.tsx
-import React, { useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+import { navigationRef } from './navigation';
 
 function App() {
-  const navigationRef = useRef(null);
-
-  // Enable React Navigation DevTools in development
-  useReactNavigationDevTools({ ref: navigationRef });
-
   return (
     <NavigationContainer ref={navigationRef}>
       <YourAppNavigator />
@@ -59,22 +61,45 @@ function App() {
 }
 ```
 
+```typescript title="rozenite.dev.tsx"
+import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
+import { navigationRef } from './navigation';
+
+export default function RozeniteDevTools() {
+  useReactNavigationDevTools({ ref: navigationRef });
+  return null;
+}
+```
+
 #### With expo-router
 
-Add the DevTools hook to your root \_layout file with a reference to your NavigationContainer:
+`expo-router`'s `useNavigationContainerRef` reads from the router's own context instead of creating a
+new ref, so it works from `rozenite.dev.tsx` directly, as long as `<Rozenite />` is mounted inside your
+root layout:
 
 ```typescript
-// _layout.tsx
-import { Stack, useNavigationContainerRef } from 'expo-router';
+// app/_layout.tsx
+import { Stack } from 'expo-router';
+import Rozenite from '@rozenite/react-native';
+
+export default function RootLayout() {
+  return (
+    <>
+      <Stack />
+      <Rozenite />
+    </>
+  );
+}
+```
+
+```typescript title="rozenite.dev.tsx"
+import { useNavigationContainerRef } from 'expo-router';
 import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
 
-function App() {
+export default function RozeniteDevTools() {
   const navigationRef = useNavigationContainerRef();
-
-  // Enable React Navigation DevTools in development
   useReactNavigationDevTools({ ref: navigationRef });
-
-  return <Stack />;
+  return null;
 }
 ```
 

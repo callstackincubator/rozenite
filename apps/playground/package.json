@@ -12,7 +12,7 @@
     "web:webpack": "webpack serve --config webpack.config.js --mode development",
     "web:webpack:build": "webpack --config webpack.config.js --mode production",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "lint": "expo lint --no-cache"
+    "lint": "expo lint --no-cache src rozenite.dev"
   },
   "dependencies": {
     "@dr.pogodin/react-native-fs": "^2.36.2",
@@ -35,6 +35,7 @@
     "@rozenite/overlay-plugin": "workspace:*",
     "@rozenite/performance-monitor-plugin": "workspace:*",
     "@rozenite/plugin-bridge": "workspace:*",
+    "@rozenite/react-native": "workspace:*",
     "@rozenite/react-navigation-plugin": "workspace:*",
     "@rozenite/redux-devtools-plugin": "workspace:*",
     "@rozenite/require-profiler-plugin": "workspace:*",

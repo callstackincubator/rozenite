@@ -74,7 +74,8 @@
     "rozenite": "workspace:*",
     "styled-components": "^5.3.11",
     "typescript": "~5.9.3",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "^4.0.18"
   },
   "peerDependencies": {
     "react": "*",

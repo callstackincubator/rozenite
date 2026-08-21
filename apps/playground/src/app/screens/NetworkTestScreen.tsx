@@ -1,5 +1,4 @@
-import { createSection, useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Text } from 'react-native';
 import EventSource from 'react-native-sse';
 import { useNavigation } from '@react-navigation/native';
@@ -13,12 +12,11 @@ import {
   SegmentedTabs,
 } from '../components/ui';
 import { NavigationProp } from '../navigation/types';
+import { type Transport, useNetworkTestStore } from '../stores/networkTestStore';
 import { useTheme } from '../theme/useTheme';
 import { api } from '../utils/network-activity/api';
 import { expoFetchApi } from '../utils/network-activity/expo';
 import { nitroApi } from '../utils/network-activity/nitro';
-
-type Transport = 'fetch' | 'expo' | 'nitro';
 
 type ActionResult = {
   title: string;
@@ -127,7 +125,8 @@ const SSE_URL = 'https://stream.wikimedia.org/v2/stream/recentchange';
 export const NetworkTestScreen = () => {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
-  const [transport, setTransport] = useState<Transport>('fetch');
+  const transport = useNetworkTestStore((state) => state.transport);
+  const setTransport = useNetworkTestStore((state) => state.setTransport);
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, setPending] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
@@ -187,42 +186,6 @@ export const NetworkTestScreen = () => {
     es.addEventListener('error', () => setSseConnected(false));
     sseRef.current = es;
   }, []);
-
-  const networkControlsSections = useMemo(
-    () => [
-      createSection({
-        id: 'network-playground',
-        title: 'Network Playground',
-        description:
-          'Local controls registered from the Network screen, mounted alongside the app-level Controls sections.',
-        items: [
-          {
-            id: 'active-transport',
-            type: 'text' as const,
-            title: 'Active Transport',
-            value: transport,
-          },
-          {
-            id: 'reset-transport',
-            type: 'button' as const,
-            title: 'Reset to fetch',
-            actionLabel: 'Reset',
-            onPress: () => setTransport('fetch'),
-          },
-          {
-            id: 'request-body-test',
-            type: 'button' as const,
-            title: 'Open Request Body Test',
-            actionLabel: 'Open',
-            onPress: () => navigation.navigate('RequestBodyTest'),
-          },
-        ],
-      }),
-    ],
-    [navigation, transport],
-  );
-
-  useRozeniteControlsPlugin({ sections: networkControlsSections });
 
   return (
     <Screen>

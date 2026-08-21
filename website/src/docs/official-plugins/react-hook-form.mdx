@@ -14,11 +14,15 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 ## Setup
 
-Call `useRozeniteRHFPlugin` inside any component that has access to a `react-hook-form` `control` object:
+Call `useRozeniteRHFPlugin` inside any component that has access to a `react-hook-form` `control`
+object. It's called once per form, from inside ordinary screen components — it can't be hoisted to a
+single `rozenite.dev.tsx` mount point — so this plugin ships it as a
+[production entry point](/docs/production-guarantee#productionentries-and-register): import it from
+`@rozenite/rhf-plugin/register`, not the plugin's main entry point:
 
 ```typescript title="MyForm.tsx"
 import { useForm } from 'react-hook-form';
-import { useRozeniteRHFPlugin } from '@rozenite/rhf-plugin';
+import { useRozeniteRHFPlugin } from '@rozenite/rhf-plugin/register';
 
 function MyForm() {
   const { control, handleSubmit } = useForm();
