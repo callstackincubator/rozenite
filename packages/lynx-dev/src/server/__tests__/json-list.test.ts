@@ -138,7 +138,14 @@ describe('createJsonListMiddleware', () => {
     expect(idFor()).toBe(idBeforeReconnect);
   });
 
-  it('falls back to a single page=-1 entry when a client has no known sessions yet, and drops it once sessions arrive', () => {
+  it('lists nothing for a client with no known sessions yet — page=-1 is never emitted, since the device has no CDP Runtime agent registered for it', () => {
+    // Session `-1` ("the whole app") only ever runs DebugRouter's
+    // app-global CDP dispatcher on-device, which never registers a
+    // `Runtime` domain agent (only a per-card `Attach()`ed session does —
+    // see the comment on `GLOBAL_SESSION_ID` in `../inspector-targets.ts`).
+    // A page for it would connect and then immediately die on the very
+    // first command `device-connection.ts` sends, so `/json/list` must
+    // never offer one — an empty list while no card is open is correct.
     const transport = new FakeLynxTransport();
     const client = makeClient({ clientId: 1 });
     transport.setClients([client]);
@@ -150,12 +157,7 @@ describe('createJsonListMiddleware', () => {
       const { res, captured } = fakeResponse();
       middleware(fakeRequest('/json/list', { host: 'localhost' }), res, vi.fn());
       const pages = JSON.parse(captured.body) as Array<Record<string, unknown>>;
-      expect(pages).toHaveLength(1);
-      expect(pages[0]).toMatchObject({
-        id: `${logicalDeviceId}--1`,
-        webSocketDebuggerUrl: `ws://localhost/inspector/debug?device=${logicalDeviceId}&page=-1`,
-      });
-      expect(pages[0]?.title).toContain('com.example.app');
+      expect(pages).toEqual([]);
     }
 
     transport.setSessions(1, [{ sessionId: 7, url: '', type: '' }]);
