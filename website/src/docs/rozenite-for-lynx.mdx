@@ -64,19 +64,35 @@ if (__DEV__) {
 
 It only installs itself in Lynx's background runtime, where `lynx.getDevtool()` exists, and is a no-op everywhere else.
 
+## Device discovery
+
+Rozenite finds Lynx apps through DebugRouter, which reaches them two different ways:
+
+- **Physical devices** over adb (Android) and usbmux (iOS) — `enableAndroid` and `enableIOS`, both on by default.
+- **Simulators, emulators and anything else on your machine** over `127.0.0.1:8901-8919` — `enableDesktop`, also on by default. A simulator is an ordinary local process, so it is not reachable over adb or usbmux; this is the path that finds it.
+
+All three are on out of the box, so the common cases need no configuration. Narrow them if you want to pin discovery to one kind of target:
+
+```typescript
+rozeniteLynxPlugin({
+  enableDesktop: false, // stop scanning localhost — simulators disappear
+  deviceSerial: 'ABC123', // only this physical device
+});
+```
+
 ## How to use it
 
-1. Connect your device over USB and start your app in development mode.
+1. Connect your device over USB, or start your simulator, and start your app in development mode.
 2. Start the dev server. Once a Lynx app registers, the dev server prints a DevTools URL for each card it finds.
 3. Open that URL in your browser.
 
 ## Troubleshooting
 
-- **No targets appear.** Check that the device is visible over USB (`adb devices` on Android), and that the app is a debuggable build with DebugRouter enabled.
+- **No targets appear.** For a physical device, check it is visible over USB (`adb devices` on Android). For a simulator, check `enableDesktop` has not been turned off. Either way, the app must be a debuggable build with DebugRouter enabled.
 - **Targets appear but the panels stay disconnected.** The app is reachable but Rozenite is not installed in it — check that `@rozenite/lynx` is imported at the entry point, and that the import runs in a development build.
 - **`lynx.getDevtool is not a function`.** Your LynxSDK predates the devtool event channel. Upgrade it.
 
 ## Limitations
 
 - Plugins whose device half is written against React Native APIs — network activity, storage, file system, performance monitor, require profiler, Expo Atlas — do not work on Lynx yet. Plugins that only move state around, such as Redux DevTools, TanStack Query, React Hook Form, feature flags and controls, are expected to work.
-- Only apps reachable over USB are discovered.
+- Only apps DebugRouter can reach are discovered — physical devices over USB, and simulators over localhost.

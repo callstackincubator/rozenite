@@ -71,6 +71,47 @@ describe('createLynxTransport', () => {
     expect(connector.startWatchAllClients).toHaveBeenCalledTimes(1);
   });
 
+  it('scans localhost by default, so simulators are discovered', async () => {
+    // `enableAndroid`/`enableIOS` only reach *physical* devices, over adb
+    // and usbmux. A simulator is an ordinary process on the dev machine,
+    // so DebugRouter inside it is reachable on 127.0.0.1:8901-8919 — the
+    // connector's desktop path. Defaulting `enableDesktop` off silently
+    // makes every simulator invisible, which is the common case for a dev
+    // server, so it defaults on and this test pins that down.
+    const connector = new FakeConnector();
+    let received: unknown;
+    const transport = await createLynxTransport({
+      createConnector: (connectorOptions) => {
+        received = connectorOptions;
+        return connector;
+      },
+    });
+    harnesses.push({ connector, transport });
+
+    expect(received).toEqual({
+      enableAndroid: true,
+      enableIOS: true,
+      enableHarmony: false,
+      enableDesktop: true,
+    });
+  });
+
+  it('lets a caller turn any discovery path off', async () => {
+    const connector = new FakeConnector();
+    let received: unknown;
+    const transport = await createLynxTransport({
+      enableDesktop: false,
+      enableHarmony: true,
+      createConnector: (connectorOptions) => {
+        received = connectorOptions;
+        return connector;
+      },
+    });
+    harnesses.push({ connector, transport });
+
+    expect(received).toMatchObject({ enableDesktop: false, enableHarmony: true });
+  });
+
   it('never throws when discovery fails, and keeps watching', async () => {
     const connector = new FakeConnector();
     connector.connectDevices.mockRejectedValueOnce(new Error('no device plugged in'));

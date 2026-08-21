@@ -26,7 +26,20 @@ export type LynxTransportLogger = {
 export type LynxTransportOptions = {
   /** Restrict discovery to one device serial/udid. */
   deviceSerial?: string;
-  /** Platform toggles, forwarded to DebugRouterConnector. Default: Android + iOS on. */
+  /**
+   * Platform toggles, forwarded to DebugRouterConnector. Android, iOS and
+   * desktop are on by default; Harmony is opt-in.
+   *
+   * `enableDesktop` covers more than its name suggests, and turning it off
+   * is how you lose simulators. The Android and iOS paths discover
+   * *physical* devices only, over adb and usbmux respectively. An iOS
+   * Simulator is an ordinary macOS process, so DebugRouter inside it is
+   * reachable on `127.0.0.1:8901-8919` — which is exactly what the
+   * connector's desktop path scans (`DesktopDeviceManager` registers a
+   * `MacDevice` whose `getHost()` is `127.0.0.1`, and `ClientAdapter`
+   * opens a plain TCP socket to it). Simulators and emulators are the
+   * common case for a dev server, so this defaults to on.
+   */
   enableAndroid?: boolean;
   enableIOS?: boolean;
   enableHarmony?: boolean;
@@ -94,7 +107,7 @@ export const createLynxTransport = async (
     enableAndroid: options.enableAndroid ?? true,
     enableIOS: options.enableIOS ?? true,
     enableHarmony: options.enableHarmony ?? false,
-    enableDesktop: options.enableDesktop ?? false,
+    enableDesktop: options.enableDesktop ?? true,
   });
 
   const clients = new Map<number, ClientEntry>();

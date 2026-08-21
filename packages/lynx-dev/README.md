@@ -80,10 +80,10 @@ type RozeniteLynxOptions = {
   destroyOnDetachPlugins?: string[]; // Plugins that should be destroyed when switching panels
   pluginDisplay?: 'sidebar' | 'tabs'; // How plugins are displayed in DevTools
   deviceSerial?: string; // Restrict device discovery to one physical device serial/udid
-  enableAndroid?: boolean; // Discover Android devices. Default: true
-  enableIOS?: boolean; // Discover iOS devices. Default: true
-  enableHarmony?: boolean; // Discover HarmonyOS devices. Default: false
-  enableDesktop?: boolean; // Discover desktop targets. Default: false
+  enableAndroid?: boolean; // Discover physical Android devices over adb. Default: true
+  enableIOS?: boolean; // Discover physical iOS devices over usbmux. Default: true
+  enableHarmony?: boolean; // Discover physical HarmonyOS devices. Default: false
+  enableDesktop?: boolean; // Discover targets on localhost, including simulators. Default: true
 };
 ```
 
@@ -95,6 +95,8 @@ type RozeniteLynxOptions = {
 - `destroyOnDetachPlugins` - Array of package names that should be destroyed when switching panels instead of maintaining their state (optional, by default all plugins persist their state)
 - `pluginDisplay` - Use `'sidebar'` (default) to show all plugin panels in one Rozenite tab, or `'tabs'` to retain a separate DevTools tab for every plugin panel
 - `deviceSerial`, `enableAndroid`, `enableIOS`, `enableHarmony`, `enableDesktop` - Control which devices DebugRouter discovers
+
+`enableAndroid` and `enableIOS` cover **physical** devices only, over adb and usbmux. Simulators and emulators are ordinary processes on your machine, so DebugRouter inside them is reachable on `127.0.0.1:8901-8919` — which is what `enableDesktop` scans. That is why it defaults to on; turning it off is how you stop seeing simulators.
 
 ## Plugin Discovery
 
