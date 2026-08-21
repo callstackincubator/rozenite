@@ -20,7 +20,6 @@ export {
   RozeniteDevToolsRequestTimeoutError,
 } from './client';
 export { UnsupportedPlatformError, MissingRozeniteForWebError } from './errors';
-export { isLynx, isLynxMainThread, isServer, isWeb } from './web.js';
 export { createRozeniteRpc } from './rpc/index.js';
 export {
   isProtocolError,

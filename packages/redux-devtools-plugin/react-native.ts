@@ -1,13 +1,18 @@
-import { isServer as isServerRuntime } from '@rozenite/plugin-bridge';
-
 export type { RozeniteDevToolsOptions } from './src/runtime';
 
 export let rozeniteDevToolsEnhancer: typeof import('./src/runtime').rozeniteDevToolsEnhancer;
 export let composeWithRozeniteDevTools: typeof import('./src/runtime').composeWithRozeniteDevTools;
 export let useReduxDevToolsAgentTools: typeof import('./src/useReduxDevToolsAgentTools').useReduxDevToolsAgentTools;
 
+// Neither Lynx runtime has a `window`, so `typeof window` alone reported
+// every Lynx app as a server and installed the no-op stub below. `lynx` is
+// a free binding in module scope, not a property of `globalThis`. Kept
+// inline rather than imported so this stays a foldable expression and the
+// `require`s below can still be dropped from production bundles.
+declare const lynx: unknown;
+
 const isDev = process.env.NODE_ENV !== 'production';
-const isServer = isServerRuntime();
+const isServer = typeof window === 'undefined' && typeof lynx === 'undefined';
 
 if (isDev && !isServer) {
   rozeniteDevToolsEnhancer = require('./src/runtime').rozeniteDevToolsEnhancer;

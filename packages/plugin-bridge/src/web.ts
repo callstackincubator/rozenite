@@ -12,21 +12,14 @@ export const isRozeniteWeb = (): boolean => {
 };
 
 /**
- * A server-side (SSR) runtime, where there is no device bridge to talk to.
+ * A server-side (SSR) runtime.
  *
- * Neither of Lynx's runtimes has a `window`, so the bare
- * `typeof window === 'undefined'` this used to be reported every Lynx app
- * as a server and made every plugin's device half no-op. Both Lynx
- * runtimes are excluded here -- the main thread included, so a plugin
- * entry point loads its device module in both and fails (if at all) with
- * a precise error from the channel rather than silently doing nothing.
- *
- * The two helpers are defined further down the module; that is fine
- * because they are only ever called from inside this function, never
- * while the module itself is being evaluated.
+ * Check `isLynx`/`isLynxMainThread` before trusting this: neither Lynx
+ * runtime has a `window`, so both answer `true` here. Every caller in this
+ * package handles Lynx first, which is why this stays the plain check.
  */
 export const isServer = (): boolean => {
-  return typeof window === 'undefined' && !isLynx() && !isLynxMainThread();
+  return typeof window === 'undefined';
 };
 
 // Structural types for Lynx's devtool channel (`lynx.getDevtool()`), kept
