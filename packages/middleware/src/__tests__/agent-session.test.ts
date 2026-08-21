@@ -239,6 +239,7 @@ import { createAgentSession } from '../agent/session.js';
 
 const createTarget = (overrides: Partial<MetroTarget> = {}): MetroTarget => ({
   id: 'device-1',
+  deviceId: 'device-1',
   pageId: 'page-1',
   appId: 'com.example.app',
   name: 'iPhone 16',

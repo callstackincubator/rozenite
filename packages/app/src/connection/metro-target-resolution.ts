@@ -45,7 +45,10 @@ const sortPages = (pages: JsonPageDescription[]): JsonPageDescription[] => {
   });
 };
 
-export const resolveMetroTarget = async (deviceId: string): Promise<ResolvedMetroTarget> => {
+export const resolveMetroTarget = async (
+  deviceId: string,
+  preferredPageId?: string | null,
+): Promise<ResolvedMetroTarget> => {
   let response: Response;
   try {
     response = await fetch(`${window.location.origin}/json/list`);
@@ -71,7 +74,28 @@ export const resolveMetroTarget = async (deviceId: string): Promise<ResolvedMetr
     throw new Error(`No Metro target is currently available for device "${deviceId}".`);
   }
 
-  const [selected] = sortPages(matching);
+  // Go back to the page that was actually being debugged, if it is still
+  // there. A device can host several pages -- every Lynx card is one -- and
+  // `sortPages` only knows how to prefer Fusebox and then the lowest id,
+  // so without this a reconnect silently lands on a different page than
+  // the one the user opened. In LynxExplorer that page is its own home
+  // screen, which has no Rozenite in it, so the reconnect surfaced as a
+  // permanent "Rozenite isn't set up in this app" that reloading could not
+  // clear.
+  const pageIdOf = (page: JsonPageDescription): string | null => {
+    try {
+      return new URL(page.webSocketDebuggerUrl).searchParams.get('page');
+    } catch {
+      return null;
+    }
+  };
+
+  const preferred =
+    preferredPageId != null
+      ? matching.find((page) => pageIdOf(page) === preferredPageId)
+      : undefined;
+
+  const [selected] = preferred ? [preferred] : sortPages(matching);
 
   return {
     webSocketDebuggerUrl: selected.webSocketDebuggerUrl,

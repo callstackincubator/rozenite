@@ -235,7 +235,20 @@ export type AgentSessionHealingOutcome = {
 };
 
 export type MetroTarget = {
+  /**
+   * Unique id for this target, which is one *page* (one debuggable
+   * runtime), not one device. A device can host several: Lynx apps open a
+   * card per screen, and a React Native app gains a page per extra VM (a
+   * Reanimated worklet runtime, for instance). Each is separately
+   * connectable, so each gets its own target and its own id.
+   */
   id: string;
+  /**
+   * The device the page belongs to (Metro's `logicalDeviceId`). Several
+   * targets share one of these whenever a device hosts more than one
+   * page, which is why it cannot be `id`.
+   */
+  deviceId: string;
   name: string;
   appId: string;
   pageId: string;
