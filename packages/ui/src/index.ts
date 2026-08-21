@@ -187,6 +187,9 @@ export type { SwitchProps } from './switch/switch';
 export { SearchField } from './search-field/search-field';
 export type { SearchFieldProps } from './search-field/search-field';
 
+export { QueryField } from './query-field/query-field';
+export type { QueryFieldProps, QueryToken, QueryTokenKind } from './query-field/query-field';
+
 export { DataTable } from './data-table/data-table';
 export type { DataTableProps, DataTableColumn } from './data-table/data-table';
 export { VirtualizedDataTable } from './virtualized-data-table/virtualized-data-table';
