@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SkillsRegistry } from '../skills/registry.js';
 
-const NON_DOMAIN_IDS = ['core', 'cli', 'sdk', 'sdk-patterns'];
+const NON_DOMAIN_IDS = ['core', 'cli', 'sdk', 'sdk-patterns', 'lynx'];
 
 const DOMAIN_IDS = [
   'storage',
