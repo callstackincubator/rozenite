@@ -206,6 +206,20 @@ export const createInspectorSocketRoute = (
         continue;
       }
 
+      // The same logical device came back under a different DebugRouter
+      // registration. `entry.clientId` is a snapshot (see `SocketEntry`),
+      // so this socket would otherwise keep addressing a client that no
+      // longer exists and silently go deaf. In practice a reconnect
+      // always tears the old registration down first, which the branch
+      // above already turns into a close — this is the belt to that
+      // braces, and it closes with the same recoverable reason so the
+      // host re-resolves through `/json/list` and reconnects.
+      if (client.clientId !== entry.clientId) {
+        sockets.delete(socketKey(entry.logicalDeviceId, entry.sessionId));
+        closeEntry(entry, 'client-disconnected');
+        continue;
+      }
+
       // A `-1` socket addresses the client as a whole — there is no card
       // to go missing, only the client itself, already handled above.
       if (entry.sessionId === GLOBAL_SESSION_ID) {

@@ -72,6 +72,16 @@ const buildDevToolsUrl = (
   return `http://${host}:${port}/rozenite/app?${query.toString()}`;
 };
 
+/**
+ * Rsbuild's default `server.host` is `0.0.0.0` (and it may be `::`), which
+ * is a valid bind address but not something a browser can usefully open.
+ * The printed URL has to be clickable, so a wildcard bind is reported as
+ * `localhost`; an explicitly configured host is left alone.
+ */
+const WILDCARD_HOSTS = new Set(['0.0.0.0', '::', '[::]', '']);
+
+const toBrowsableHost = (host: string): string => (WILDCARD_HOSTS.has(host) ? 'localhost' : host);
+
 export const rozeniteLynxPlugin = (options: RozeniteLynxOptions = {}): RsbuildPlugin => {
   return {
     name: PLUGIN_NAME,
@@ -230,7 +240,7 @@ export const rozeniteLynxPlugin = (options: RozeniteLynxOptions = {}): RsbuildPl
       const unsubscribeTopologyLogging = transport.onTopologyChanged(logNewTargets);
 
       api.onAfterStartDevServer(({ port }) => {
-        devServerAddress = { host: api.getNormalizedConfig().server.host, port };
+        devServerAddress = { host: toBrowsableHost(api.getNormalizedConfig().server.host), port };
         // Devices discovered before the server finished starting (USB
         // discovery in `createLynxTransport` begins immediately, on its
         // own schedule) would otherwise never get logged: their

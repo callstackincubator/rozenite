@@ -274,6 +274,28 @@ describe('createRozeniteLynxServer: the /inspector/debug WebSocket route', () =>
     expect(closed.reason).toContain('[RECREATING_DEVICE]');
   });
 
+  it('closes the socket when the same logical device comes back under a new DebugRouter client id', async () => {
+    const { transport, logicalDeviceId, sessionId } = setupClientWithSession();
+    const { port } = await startServer(transport);
+
+    const ws = connectInspector(port, logicalDeviceId, sessionId);
+    await waitForOpen(ws);
+    const closedPromise = waitForClose(ws);
+
+    // A reload normally disconnects the old client before the new one
+    // registers, and the branch above closes the socket then. This covers
+    // the case where only the reconnection is observed: the socket's
+    // snapshotted clientId is now stale, so it must not be left open
+    // silently addressing a client that no longer exists.
+    const reconnected = makeClient({ clientId: 2 });
+    transport.setClients([reconnected]);
+    transport.setSessions(2, [{ sessionId, url: '', type: '' }]);
+    transport.emitTopologyChanged();
+
+    const closed = await closedPromise;
+    expect(closed.reason).toContain('[RECREATING_DEVICE]');
+  });
+
   it('closes the socket with [PAGE_NOT_FOUND] when its session disappears but the client is still there', async () => {
     const { transport, logicalDeviceId, clientId, sessionId } = setupClientWithSession();
     const { port } = await startServer(transport);
