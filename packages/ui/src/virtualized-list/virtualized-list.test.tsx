@@ -11,6 +11,8 @@ declare global {
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
+const virtuosoProps: Record<string, unknown>[] = [];
+
 vi.mock('react-virtuoso', async () => {
   const React = await import('react');
 
@@ -23,7 +25,18 @@ vi.mock('react-virtuoso', async () => {
       startReached,
       endReached,
       computeItemKey,
+      ...rest
     }: Record<string, any>) => {
+      virtuosoProps.push({
+        components,
+        context,
+        data,
+        itemContent,
+        startReached,
+        endReached,
+        computeItemKey,
+        ...rest,
+      });
       const List = components.List;
       const Item = components.Item;
       const EmptyPlaceholder = components.EmptyPlaceholder;
@@ -79,6 +92,7 @@ let root: Root | undefined;
 let container: HTMLDivElement | undefined;
 
 afterEach(() => {
+  virtuosoProps.length = 0;
   act(() => root?.unmount());
   container?.remove();
   root = undefined;
@@ -116,6 +130,22 @@ describe('VirtualizedList', () => {
     expect(rows[0]?.textContent).toBe('message-0');
     expect(view.querySelector('[role="list"]')?.getAttribute('aria-label')).toBe('Log entries');
     expect(rows[0]?.className).toContain('border-b border-border');
+  });
+
+  // Regression guard: Virtuoso reads initialTopMostItemIndex as
+  // `typeof v === 'number' ? v : v.index`, so passing an explicit `undefined`
+  // threw and the real list rendered no rows. jsdom computes no layout, so
+  // only the prop contract is checkable here.
+  it('omits initialTopMostItemIndex entirely unless a caller supplies one', () => {
+    renderList();
+
+    expect(virtuosoProps.at(-1)).not.toHaveProperty('initialTopMostItemIndex');
+  });
+
+  it('forwards initialTopMostItemIndex when a caller supplies one', () => {
+    renderList({ initialTopMostItemIndex: 12 });
+
+    expect(virtuosoProps.at(-1)?.initialTopMostItemIndex).toBe(12);
   });
 
   it('uses getItemTextValue for the accessible label when provided', () => {

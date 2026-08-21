@@ -5,6 +5,7 @@ import {
   type CSSProperties,
   type KeyboardEvent,
   type ReactNode,
+  type Ref,
 } from 'react';
 import { cn } from '../utils/cn';
 
@@ -58,6 +59,12 @@ type VirtualizedListContext<TItem> = {
 type ListComponentProps = {
   children?: ReactNode;
   context: VirtualizedListContext<unknown>;
+  /**
+   * Virtuoso measures the list through this ref (see `ListProps` in
+   * react-virtuoso). Dropping it leaves the list unmeasured: it collapses to
+   * a single probe row instead of filling the viewport.
+   */
+  ref?: Ref<HTMLDivElement>;
   style?: CSSProperties;
 };
 
@@ -65,10 +72,11 @@ type ListItemComponentProps = ItemProps<unknown> & {
   context: VirtualizedListContext<unknown>;
 };
 
-const VirtualizedListElement = ({ children, context, style }: ListComponentProps) => (
+const VirtualizedListElement = ({ children, context, ref, style }: ListComponentProps) => (
   <div
     aria-label={context.ariaLabel}
     className={cn(context.listClassName)}
+    ref={ref}
     role="list"
     style={style}
   >
@@ -196,7 +204,11 @@ export const VirtualizedList = <TItem,>({
       data={data}
       endReached={onEndReached}
       followOutput={followOutput}
-      initialTopMostItemIndex={initialTopMostItemIndex}
+      // Spread conditionally rather than passing `undefined`: Virtuoso reads
+      // this prop as `typeof value === 'number' ? value : value.index`, so an
+      // explicit `undefined` throws instead of falling back to its default,
+      // and the list renders no rows at all.
+      {...(initialTopMostItemIndex === undefined ? {} : { initialTopMostItemIndex })}
       itemContent={itemContent}
       startReached={onStartReached}
       style={style ? { ...DEFAULT_STYLE, ...style } : DEFAULT_STYLE}
