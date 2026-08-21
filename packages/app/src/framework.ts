@@ -1,5 +1,3 @@
-import type { RozenitePlatform } from './config';
-
 /**
  * The frameworks this app can be pointed at. Rozenite for Web is debugged
  * in React Native DevTools rather than here, so it never appears — but the
@@ -31,7 +29,10 @@ type ApplicationMetadata = {
 
 /**
  * The framework a connected target belongs to, from its
- * `ReactNativeApplication.metadataUpdated` payload.
+ * `ReactNativeApplication.metadataUpdated` payload — the only source for
+ * it. The dev server is not asked: it knows which platform *it* serves,
+ * but that describes the server rather than the target, so the label
+ * appears once the handshake has produced this event and not before.
  *
  * Two readings, in precedence order: an explicit `integrationName` this
  * build knows, then `platform === 'web'` (what
@@ -50,27 +51,3 @@ export const getFrameworkFromMetadata = (metadata: ApplicationMetadata): Framewo
 
   return metadata.platform === 'web' ? 'Web' : 'React Native';
 };
-
-/**
- * How each host platform the dev server can report is named in the UI.
- *
- * Only the two the standalone app can be launched for: `rozenite open`
- * (React Native, via Metro) and `@rozenite/lynx-dev`'s printed URL (Lynx).
- */
-const FRAMEWORK_BY_PLATFORM: Record<RozenitePlatform, Framework> = {
-  'react-native': 'React Native',
-  lynx: 'Lynx',
-};
-
-/**
- * The framework the *dev server* serves, from `/rozenite/app/config`.
- *
- * A coarser answer than the metadata above — it describes the server, not
- * the target — but it is available before a device connects, which is what
- * makes the footer readable while connecting. Returns `null` when the
- * server named a platform this build doesn't know: `fetchConfig` does no
- * validation, so an unknown value is dropped rather than shown raw.
- */
-export const getFrameworkFromPlatform = (
-  platform: RozenitePlatform | undefined,
-): Framework | null => (platform ? (FRAMEWORK_BY_PLATFORM[platform] ?? null) : null);

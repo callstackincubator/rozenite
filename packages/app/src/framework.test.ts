@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getFrameworkFromMetadata, getFrameworkFromPlatform } from './framework';
+import { getFrameworkFromMetadata } from './framework';
 
 describe('getFrameworkFromMetadata', () => {
   it('reads Lynx from the integration name the lynx-dev bridge sends', () => {
@@ -29,22 +29,5 @@ describe('getFrameworkFromMetadata', () => {
   it('falls back to React Native for metadata it cannot read at all', () => {
     expect(getFrameworkFromMetadata({})).toBe('React Native');
     expect(getFrameworkFromMetadata({ integrationName: 42, platform: null })).toBe('React Native');
-  });
-});
-
-describe('getFrameworkFromPlatform', () => {
-  it('names each platform a dev server can report', () => {
-    expect(getFrameworkFromPlatform('react-native')).toBe('React Native');
-    expect(getFrameworkFromPlatform('lynx')).toBe('Lynx');
-  });
-
-  it('drops a platform this build does not know instead of showing it raw', () => {
-    // `fetchConfig` doesn't validate the payload, so the served value is
-    // whatever the dev server sent.
-    expect(getFrameworkFromPlatform('lynx-web' as never)).toBeNull();
-  });
-
-  it('drops a missing platform, as an older dev server would send', () => {
-    expect(getFrameworkFromPlatform(undefined)).toBeNull();
   });
 });

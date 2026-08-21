@@ -6,19 +6,10 @@
  * inline script.
  */
 
-/**
- * Which host platform the dev server serving this app runs. The server is
- * the only side that knows: `@rozenite/lynx-dev` answers `/json/list` in
- * Metro's own dialect on purpose, so nothing about the connection itself
- * gives a Lynx target away.
- */
-export type RozenitePlatform = 'react-native' | 'lynx';
-
 export type RozeniteAppConfig = {
   installedPlugins: string[];
   destroyOnDetachPlugins: string[];
   runtimeVersion?: string;
-  platform: RozenitePlatform;
 };
 
 // Derived from `import.meta.env.BASE_URL` (Vite bakes it in from
