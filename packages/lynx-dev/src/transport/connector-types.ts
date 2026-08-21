@@ -9,7 +9,65 @@
  * `DebugRouterConnector` into this shape.
  */
 
-/** The fields of `UsbClient.info.query` this package reads. */
+/**
+ * The device's own registration payload, forwarded verbatim by the
+ * connector as `query.raw_info` (`usb/ClientAdapter.js`'s
+ * `handleConnection`: `raw_info: result`, where `result` is the
+ * `Register` message's `info` object straight off the wire).
+ *
+ * This is the only part of `ClientQueryLike` the *device* actually
+ * authored, and it is therefore the authoritative source for what the app
+ * and its host are -- see `ClientQueryLike` below for why the flat fields
+ * are not. Every field is optional: `raw_info` is typed `any` by the
+ * connector, an older LynxSDK may not send all of these, and a fake in a
+ * unit test should not have to fill in fields it does not exercise.
+ */
+export type ClientRawInfoLike = {
+  /** App name, e.g. `LynxExplorer`. Mirrored into `query.app`. */
+  readonly App?: string;
+  /** Application bundle/package id, e.g. `com.lynx.LynxExplorer`. */
+  readonly bundleId?: string;
+  /**
+   * A UUID DebugRouter mints on the device.
+   *
+   * Deliberately NOT used as a device identity anywhere in this package.
+   * Measured on LynxExplorer/iOS (DebugRouter 2.0.0): it is stable for the
+   * lifetime of one app *process* -- two successive connections from the
+   * same launch report the same value -- and a fresh UUID on every
+   * relaunch. That is the identity of a run of the app, not of a device,
+   * and it is exactly the lifetime `computeLogicalDeviceId`
+   * (`../server/logical-device-id.ts`) must not depend on.
+   */
+  readonly debugRouterId?: string;
+  readonly debugRouterVersion?: string;
+  /** Real device model as the device reports it, e.g. `iPhone`, `Pixel 7`. */
+  readonly deviceModel?: string;
+  /** Real OS as the device reports it: `iOS`, `Android`, `Harmony`. */
+  readonly osType?: string;
+  /** e.g. `26.4.1`. */
+  readonly osVersion?: string;
+  /** LynxSDK version. Mirrored into `query.sdk_version`. */
+  readonly sdkVersion?: string;
+};
+
+/**
+ * The fields of `UsbClient.info.query` this package reads.
+ *
+ * Note which of these describe the *device* and which describe the
+ * *transport that found it*. `os`, `device`, `device_id` and
+ * `device_model` are assembled by the connector's device manager, not by
+ * the app: `usb/ClientAdapter.js` sets `os: this.type`, `device:
+ * this.device`, `device_id: this.device_id` from whichever manager owns
+ * the connection. On the physical iOS/Android paths those are the real
+ * udid/serial, but a Simulator or emulator is reached over the *desktop*
+ * path (`DesktopDeviceManager` -> `MacDevice`), where all three become
+ * the host machine -- literally `"Mac"` on macOS. The connector itself
+ * knows this is lossy and patches around it in one place, appending
+ * `_FromMac` to `device_model` when a `Mac` manager reports an `iPhone`.
+ *
+ * So: prefer `raw_info` for anything describing the app or its device,
+ * and fall back to these only when `raw_info` is missing.
+ */
 export type ClientQueryLike = {
   readonly app: string;
   readonly os: string;
@@ -17,6 +75,7 @@ export type ClientQueryLike = {
   readonly device_model: string;
   readonly device_id: string;
   readonly sdk_version?: string;
+  readonly raw_info?: ClientRawInfoLike;
 };
 
 /** The slice of DebugRouter's `UsbClient` this package calls. */

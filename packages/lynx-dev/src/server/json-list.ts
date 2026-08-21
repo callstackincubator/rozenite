@@ -36,7 +36,10 @@ const buildPage = (target: InspectorTarget, origin: string): JsonPageDescription
     description: client.appName,
     appId: client.appName,
     type: 'node',
-    deviceName: `${client.deviceName} (${client.os})`,
+    // e.g. "iPhone (iOS 26.4.1)", or "iPhone (iOS)" when the device
+    // reports no version. Built from the device's own `raw_info`, so a
+    // simulator no longer shows up as the host machine ("Mac (Mac)").
+    deviceName: `${client.deviceName} (${[client.os, client.osVersion].filter(Boolean).join(' ')})`,
     webSocketDebuggerUrl: `${origin}/inspector/debug?device=${logicalDeviceId}&page=${sessionId}`,
     reactNative: {
       logicalDeviceId,

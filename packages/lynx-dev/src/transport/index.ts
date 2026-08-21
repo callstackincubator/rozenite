@@ -61,15 +61,57 @@ const noopLogger: LynxTransportLogger = {
   error: () => {},
 };
 
+/** First non-empty string, or `undefined` if there isn't one. */
+const firstNonEmpty = (...values: Array<string | undefined>): string | undefined =>
+  values.find((value) => typeof value === 'string' && value.length > 0);
+
+/**
+ * Maps a connector client onto this package's vocabulary, preferring the
+ * device's own `raw_info` over the connector's flat `query` fields
+ * wherever the two describe the same thing.
+ *
+ * The flat fields describe *the transport that found the client*, not the
+ * client -- see `ClientQueryLike`'s doc comment. On the desktop path
+ * (every iOS Simulator and Android emulator) `query.os`, `query.device`
+ * and `query.device_id` are all the host machine, so a simulator-hosted
+ * iOS app reports as `Mac (Mac)`. `raw_info` is the device's own
+ * registration payload and says `iOS` / `iPhone` / `26.4.1`.
+ *
+ * `deviceId` keeps `query.device_id` as its base: on a physical device
+ * that is the real udid/serial, and `raw_info` carries no equivalent
+ * (`debugRouterId` is per-app-process, not per-device -- see its doc
+ * comment). To keep two simulators on one machine from collapsing onto a
+ * single `deviceId` of `"Mac"`, the connector's TCP port is appended when
+ * it is the only thing telling them apart: `DesktopDeviceManager` scans
+ * `127.0.0.1:8901-8919` and each running simulator/emulator owns one
+ * port, which -- unlike `debugRouterId` or the connector's own numeric
+ * client id -- is stable across app relaunches (verified across four
+ * successive relaunches on one simulator: port `8901` throughout, while
+ * the client id went 2, 3, 4, 5).
+ */
 const mapClientToLynxClient = (client: ClientLike): LynxClient => {
-  const { query } = client.info;
+  const { query, port } = client.info;
+  const rawInfo = query.raw_info ?? {};
+
+  const os = firstNonEmpty(rawInfo.osType, query.os) ?? 'unknown';
+  const isHostReportedAsDevice = os !== query.os;
+
   return {
     clientId: client.clientId(),
-    deviceId: query.device_id,
-    appName: query.app,
-    deviceName: query.device || query.device_model,
-    os: query.os,
-    sdkVersion: query.sdk_version ?? '0.0.0',
+    // Disambiguate only when the connector reported the *host* rather than
+    // the device (the desktop/simulator path); on a physical device
+    // `query.device_id` is already a real, unique serial and is left alone
+    // so a saved DevTools URL stays valid.
+    deviceId: isHostReportedAsDevice ? `${query.device_id}:${port}` : query.device_id,
+    appName: firstNonEmpty(rawInfo.App, query.app) ?? 'unknown',
+    // `raw_info.deviceModel` first (the device's own answer), then the
+    // connector's original `device || device_model` order, unchanged, so
+    // a physical device with no `raw_info` reports exactly as before.
+    deviceName: firstNonEmpty(rawInfo.deviceModel, query.device, query.device_model) ?? 'unknown',
+    os,
+    osVersion: rawInfo.osVersion,
+    sdkVersion: firstNonEmpty(rawInfo.sdkVersion, query.sdk_version) ?? '0.0.0',
+    bundleId: rawInfo.bundleId,
   };
 };
 

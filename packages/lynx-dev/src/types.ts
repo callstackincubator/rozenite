@@ -11,18 +11,28 @@
 
 /** A connected Lynx application (DebugRouter calls this a "client"). */
 export type LynxClient = {
-  /** DebugRouter's `client_id`. Surfaces to Rozenite as a device id. */
+  /** DebugRouter's `client_id`. Transient: a fresh one on every reconnect. */
   clientId: number;
-  /** Physical device serial/udid the client was discovered on. */
+  /**
+   * Stable identity of the device the client runs on. The physical
+   * serial/udid where DebugRouter discovered one; on the desktop path
+   * (simulators and emulators) the host plus the connector's TCP port,
+   * which is what distinguishes two simulators on one machine. See
+   * `mapClientToLynxClient` in `transport/index.ts`.
+   */
   deviceId: string;
-  /** Application identifier reported at registration. */
+  /** Application name reported by the device, e.g. "LynxExplorer". */
   appName: string;
-  /** Human-readable device name, e.g. "Pixel 7". */
+  /** Device model the device reports, e.g. "iPhone", "Pixel 7". */
   deviceName: string;
-  /** `Android` | `iOS` | `Harmony` | `Mac` | ... */
+  /** The OS the *device* runs: `iOS` | `Android` | `Harmony` | ... */
   os: string;
+  /** OS version the device reports, e.g. "26.4.1", when it reports one. */
+  osVersion?: string;
   /** LynxSDK version reported at registration. */
   sdkVersion: string;
+  /** Application bundle/package id, when the device reports one. */
+  bundleId?: string;
 };
 
 /** A LynxView inside a client. DebugRouter and the Lynx docs call it a "card". */

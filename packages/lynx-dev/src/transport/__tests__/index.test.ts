@@ -142,10 +142,115 @@ describe('createLynxTransport', () => {
         appName: 'com.example.app',
         deviceName: 'Pixel 7',
         os: 'Android',
+        osVersion: undefined,
         sdkVersion: '3.2.1',
+        bundleId: undefined,
       },
     ]);
     expect(onTopologyChanged).toHaveBeenCalledTimes(1);
+  });
+
+  describe("raw_info (the device's own registration payload)", () => {
+    // The connector's flat `query` fields describe the transport that
+    // found the client, not the client. On the desktop path -- every iOS
+    // Simulator and Android emulator -- they are the *host machine*.
+    // Measured on LynxExplorer/iOS via `DesktopDeviceManager`.
+    const simulatorQuery = {
+      app: 'LynxExplorer',
+      os: 'Mac',
+      device: 'Mac',
+      device_model: 'iPhone_FromMac',
+      device_id: 'Mac',
+      sdk_version: '1.4.0',
+      raw_info: {
+        App: 'LynxExplorer',
+        bundleId: 'com.lynx.LynxExplorer',
+        debugRouterId: 'D376EE65-8F30-4F4A-97E7-EC753C3C2429',
+        deviceModel: 'iPhone',
+        osType: 'iOS',
+        osVersion: '26.4.1',
+        sdkVersion: '1.4.0',
+      },
+    };
+
+    it('reports the device, not the host, for a simulator-hosted app', async () => {
+      const { connector, transport } = await setup();
+      connector.emit('client-connected', makeFakeClient(3, simulatorQuery));
+
+      expect(transport.listClients()).toEqual([
+        {
+          clientId: 3,
+          // Host id plus the connector's TCP port: two simulators on one
+          // machine both report `device_id: 'Mac'` and must not collide.
+          deviceId: 'Mac:12345',
+          appName: 'LynxExplorer',
+          deviceName: 'iPhone',
+          os: 'iOS',
+          osVersion: '26.4.1',
+          sdkVersion: '1.4.0',
+          bundleId: 'com.lynx.LynxExplorer',
+        },
+      ]);
+    });
+
+    it('keeps a physical device serial untouched when raw_info agrees on the os', async () => {
+      const { connector, transport } = await setup();
+      connector.emit(
+        'client-connected',
+        makeFakeClient(4, {
+          os: 'Android',
+          device_id: 'serial-xyz',
+          raw_info: { osType: 'Android', deviceModel: 'Pixel 7', osVersion: '15' },
+        }),
+      );
+
+      // No port suffix: `serial-xyz` is already unique, and appending
+      // anything would invalidate a DevTools URL saved before this change.
+      expect(transport.listClients()[0].deviceId).toBe('serial-xyz');
+    });
+
+    it('never derives identity from debugRouterId, which changes on every app launch', async () => {
+      const { connector, transport } = await setup();
+      const withDebugRouterId = (debugRouterId: string) => ({
+        ...simulatorQuery,
+        raw_info: { ...simulatorQuery.raw_info, debugRouterId },
+      });
+
+      connector.emit('client-connected', makeFakeClient(5, withDebugRouterId('uuid-launch-one')));
+      const first = transport.listClients()[0];
+      connector.emit('client-disconnected', 5);
+
+      connector.emit('client-connected', makeFakeClient(6, withDebugRouterId('uuid-launch-two')));
+      const second = transport.listClients()[0];
+
+      // Same device, same app, different app process: identity must hold.
+      expect(second.deviceId).toBe(first.deviceId);
+      expect(second.appName).toBe(first.appName);
+      expect(second.os).toBe(first.os);
+    });
+
+    it('falls back to the flat fields when raw_info is absent or empty', async () => {
+      const { connector, transport } = await setup();
+      connector.emit(
+        'client-connected',
+        makeFakeClient(8, {
+          app: 'com.example.app',
+          os: 'Android',
+          device: 'Pixel 7',
+          device_id: 'serial-abc',
+          sdk_version: '3.2.1',
+          raw_info: {},
+        }),
+      );
+
+      expect(transport.listClients()[0]).toMatchObject({
+        deviceId: 'serial-abc',
+        appName: 'com.example.app',
+        deviceName: 'Pixel 7',
+        os: 'Android',
+        sdkVersion: '3.2.1',
+      });
+    });
   });
 
   it('falls back to device_model when device is empty, and 0.0.0 when sdk_version is missing', async () => {
