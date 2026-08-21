@@ -132,6 +132,43 @@ describe('App', () => {
     expect(document.querySelector('iframe')).toBeNull();
   });
 
+  it('covers the connecting state with the splash, then fades it off once the shell mounts', async () => {
+    const { connection, setState } = createFakeConnection();
+
+    render(<App target={{ kind: 'connection', connection }} />);
+
+    const splash = () => document.querySelector('[data-slot="splash"]');
+    expect(splash()).toBeTruthy();
+    // Opaque and over everything while the handshake is in flight.
+    expect(splash()?.className).toMatch(/\bopacity-100\b/);
+    expect(splash()?.className).toMatch(/\bfixed\b/);
+    // Purely visual: the status underneath it is what AT announces.
+    expect(splash()?.getAttribute('aria-hidden')).toBe('true');
+
+    setState({ status: 'connected' });
+    await findPanelIframe();
+
+    // Fades out (`opacity-0`) before it unmounts, rather than popping off.
+    await waitFor(() => expect(splash()?.className).toMatch(/\bopacity-0\b/), { timeout: 3000 });
+    await waitFor(() => expect(splash()).toBeNull(), { timeout: 3000 });
+  });
+
+  it('keeps the splash up behind a pre-connection status dialog', async () => {
+    const { connection, setState } = createFakeConnection();
+
+    render(<App target={{ kind: 'connection', connection }} />);
+    expect(document.querySelector('[data-slot="splash"]')).toBeTruthy();
+
+    setState({ status: 'rozeniteMissing' });
+
+    expect(await screen.findByText(/rozenite isn't set up/i)).toBeTruthy();
+    const splash = document.querySelector('[data-slot="splash"]');
+    // Still there, still opaque — it's the backdrop the dialog sits on —
+    // and under `Dialog`'s own `z-50` so it can't cover it.
+    expect(splash?.className).toMatch(/\bopacity-100\b/);
+    expect(splash?.className).toMatch(/\bz-40\b/);
+  });
+
   it('mounts the shell and shows the target name once connected', async () => {
     const { connection, setState } = createFakeConnection({
       name: 'Pixel 8',

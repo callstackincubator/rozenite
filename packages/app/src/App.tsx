@@ -13,6 +13,7 @@ import {
 import { createDeviceShellHost } from './shell-host';
 import { fetchConfig } from './config';
 import { loadPlugins } from './plugins';
+import { Splash } from './splash';
 import type { DeviceConnection, DeviceState } from './connection/device-connection';
 import { TargetUrlError } from './connection/target-from-url';
 import { getTitleBarRegionClassName, WindowDragHandle } from './window-controls';
@@ -228,19 +229,10 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
           sidebarHeaderClassName={getTitleBarRegionClassName()}
         />
       ) : (
-        !configFailed && (
-          <>
-            <WindowDragHandle />
-            <PluginShell.Body className="items-center justify-center">
-              <EmptyState
-                title={
-                  configState.status === 'loading' ? 'Loading plugins…' : 'Connecting to device…'
-                }
-                description={targetName || undefined}
-              />
-            </PluginShell.Body>
-          </>
-        )
+        // Everything the pre-shell window needs beyond the `Splash`
+        // covering it below: with the title bar hidden and no `Sidebar`
+        // yet to carry a drag region, the window couldn't be moved at all.
+        <WindowDragHandle />
       )}
 
       <StatusDialog
@@ -274,6 +266,14 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
         description="The connection to the device was lost. This can happen for a number of reasons; reconnect to try again."
         action={<Button onClick={() => connection.reconnect()}>Reconnect</Button>}
       />
+
+      {/* Last child, but `fixed`: it covers the whole window, footer
+          included, until the handshake lands. It stays up behind the
+          dialogs above — those are all pre-connection states, so there is
+          nothing else to show underneath them — and never comes back once
+          the shell is mounted, which is what `shellMounted` being a sticky
+          latch guarantees. */}
+      <Splash visible={!shellMounted} />
 
       <Footer
         deviceState={deviceState}
