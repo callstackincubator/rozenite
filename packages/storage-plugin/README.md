@@ -18,7 +18,9 @@ npm install react-native-mmkv @react-native-async-storage/async-storage expo-sec
 
 ## Usage
 
-```ts
+Wire the plugin up in `rozenite.dev.tsx`:
+
+```ts title="rozenite.dev.tsx"
 import {
   createAsyncStorageAdapter,
   createMMKVStorageAdapter,
@@ -43,7 +45,10 @@ const storages = [
   }),
 ];
 
-useRozeniteStoragePlugin({ storages });
+export default function RozeniteDevTools() {
+  useRozeniteStoragePlugin({ storages });
+  return null;
+}
 ```
 
 ### MMKV v3 and v4

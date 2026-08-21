@@ -1,0 +1,184 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# The Production Guarantee
+
+Rozenite plugins add real weight to your app: DevTools UI, bridge wiring, sometimes a native
+dependency. None of that should ever reach the app your users install. This page explains how
+Rozenite makes that a structural guarantee instead of a convention you have to remember.
+
+## The model
+
+Your app has exactly one Rozenite import that is always there, unconditionally:
+
+```tsx title="App.tsx"
+import Rozenite from '@rozenite/react-native';
+
+export default function App() {
+  return (
+    <>
+      <Rozenite />
+      {/* your app */}
+    </>
+  );
+}
+```
+
+There is nothing to guard here — no `__DEV__` check, no build flag. `<Rozenite />` itself never
+imports anything besides `react`. What it renders depends on how the bundler resolves it:
+
+- In **development**, `withRozenite()` (from `@rozenite/metro` or `@rozenite/repack`) redirects it
+  to your project's `rozenite.dev` file — an ordinary project file, next to `metro.config.js`,
+  where all of your plugin wiring lives.
+- In **production**, it resolves to a shipped noop. No plugin code is reachable from it at all.
+
+```tsx title="rozenite.dev.tsx"
+import { useRozeniteStoragePlugin, createMMKVStorageAdapter } from '@rozenite/storage-plugin';
+import { storage } from './src/storage';
+
+export default function RozeniteDevTools() {
+  useRozeniteStoragePlugin({ adapters: [createMMKVStorageAdapter({ mmkv: storage })] });
+  return null;
+}
+```
+
+`rozenite.dev.tsx` can grow into as many files as you need — a `rozenite.dev/` directory with an
+`index.tsx` works too, and platform extensions (`rozenite.dev.ios.tsx`, `rozenite.dev/index.web.tsx`)
+apply for free, the same as anywhere else in your project. `rozenite init` scaffolds the flat file
+for you. Because it's an ordinary project file, Fast Refresh works on it like on anything else — and
+because nothing outside it ever imports it, nothing reachable from it can end up in a production
+bundle.
+
+If no `rozenite.dev` file exists yet, `<Rozenite />` just renders nothing and logs once — a missing
+file is never a build failure.
+
+## Why this needed to be structural
+
+Before this, a plugin's `react-native.ts` was a hand-written shim that checked `__DEV__` (or
+`process.env.NODE_ENV`) and no-op'd itself outside development. That makes shipping a plugin's code
+_survivable_ — the hook does nothing at runtime — but the code itself, and everything it imports, is
+still sitting in your bundle. It only worked at all for plugins that bothered to write that shim, and
+it depended on every app author remembering to call the hook the right way.
+
+Rozenite now enforces this at the bundler's resolver instead, so it applies to every plugin, in every
+app, with no cooperation required beyond the plugin manifest a plugin already ships.
+
+## The build error
+
+If a production build resolves an import into a Rozenite plugin package, and that import is not one
+of the plugin's declared production entry points, the build fails with a message naming both the
+plugin and the file that imported it:
+
+```
+@acme/some-plugin is a Rozenite plugin and declares no production entry points.
+Imported from: src/screens/Settings.tsx
+Move plugin wiring into rozenite.dev.tsx, or declare this file in productionEntries in rozenite.config.ts. To bypass this check for @acme/some-plugin only, pass allowInProduction: ['@acme/some-plugin'] to withRozenite().
+```
+
+This is a **structural** check, not a heuristic: it looks at where the import actually resolves, not
+at where you wrote it from, so it catches every route into the plugin's code, including one buried a
+few modules deep. To fix it, do one of:
+
+- Move the offending import into `rozenite.dev.tsx` (or a file inside a `rozenite.dev/` directory) —
+  the right fix for the vast majority of plugin usage, which has no reason to run in production at
+  all.
+- If the plugin genuinely needs this touchpoint in production — see
+  [`productionEntries` / `./register`](#productionentries-and-register) below — check whether the
+  plugin already ships one and, if so, import from `<plugin>/register` instead of the plugin's main
+  entry point.
+- As a last resort, [`allowInProduction`](#allowinproduction-the-escape-hatch).
+
+:::info `enabled: false` still enforces this
+`withRozenite(config, { enabled: false })` used to mean "do nothing" — no dev server, but also no
+guard, so a stray plugin import would silently ship. It now means "no dev server, guard still
+active": the build error above still fires. If you relied on `enabled: false` as a way to keep
+Rozenite out of a build entirely, audit that build for plugin imports outside `rozenite.dev.tsx`
+before you rely on this.
+:::
+
+## The dev-time warning
+
+Waiting for a release build to catch a stray import is late. In development, the same mistake prints
+a warning instead of failing anything:
+
+```
+warning: @acme/some-plugin imported from src/screens/Settings.tsx.
+         Plugin imports belong in rozenite.dev.tsx. This will fail your production build.
+```
+
+Unlike the production error, this warning is a **path heuristic**: it's suppressed for any file whose
+name starts with `rozenite.dev`, or that sits inside a `rozenite.dev` directory, on the assumption
+that those files are the dev entry itself. If your project has an unusual layout the heuristic doesn't
+recognize, you might see a spurious warning on a file that's actually fine — that's a false positive
+in a warning, never a broken build, so the convention it nudges you toward never becomes
+load-bearing. The production check above is what actually enforces the guarantee; this warning only
+tries to surface the same mistake earlier, while it's cheap to fix. It also fires at most once per
+`(file, plugin)` pair, and independently for every offending import — so five bad imports get five
+warnings, not one failure that stops at the first.
+
+## `productionEntries` and `./register`
+
+Most plugin code has no business running in production — a DevTools panel connection is only useful
+while DevTools is open. But a few plugins have a genuine touchpoint that has to survive into your
+shipped app: a store enhancer applied where you create your Redux store, a per-form hook called from
+inside your screens, a feature-flag override lookup consulted at evaluation time. For those, the
+plugin author declares a **production entry point** in `rozenite.config.ts`:
+
+```typescript title="rozenite.config.ts"
+export default {
+  panels: [/* ... */],
+  productionEntries: ['./register'],
+};
+```
+
+and ships the corresponding `register.ts` at the plugin's root. The build picks this up automatically
+and the plugin exposes it as a `./register` subpath export — so app code imports the production-safe
+pieces from `<plugin>/register` instead of the plugin's main entry point:
+
+```typescript title="store.ts"
+import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin/register';
+```
+
+Everything else that plugin exports — its DevTools connection hook, for instance — still only exists
+on the main entry point, and still belongs in `rozenite.dev.tsx`. Check the plugin's own docs for
+which pieces, if any, ship a `./register` entry; most official plugins don't need one at all.
+
+:::info The declaration is not verified
+Rozenite does not traverse a declared entry's import graph to confirm it's "really" safe — safety
+isn't a property of an import graph, and trying to prove it would be both expensive and wrong most of
+the time. `productionEntries` is the plugin author's explicit, attributable statement about what they
+intend to ship to production, and the framework holds them to exactly that declaration. The one thing
+Rozenite does check is that a declared entry actually resolves to a real file — a typo in
+`productionEntries` gets its own distinct error naming the plugin and the bad entry, instead of
+silently behaving as if nothing had been declared.
+:::
+
+If you're building a plugin and want to add a production entry point, see
+[Plugin Development](/docs/plugin-development/plugin-development#production-entry-points).
+
+## `allowInProduction`, the escape hatch
+
+Sometimes you need to unblock a build right now, before you've had a chance to restructure an import
+or wait on a plugin author to add a `productionEntries` declaration. `withRozenite` accepts
+`allowInProduction` for exactly that:
+
+```javascript title="metro.config.js"
+module.exports = withRozenite(config, {
+  allowInProduction: ['@acme/some-plugin'],
+});
+```
+
+Every package listed here is exempted from the guard entirely — its code can end up in your
+production bundle through any import path, not just a declared one. This is printed loudly once per
+build (not once per resolution) specifically so it can't sit forgotten in a config file:
+
+```
+allowInProduction is set for: @acme/some-plugin. Code from these Rozenite plugin package(s) may reach your production bundle -- this defeats the production guarantee for them. Prefer declaring productionEntries in the plugin's rozenite.config.ts instead.
+```
+
+Treat this as a last resort, not a fix. It exists so the first person the guard blocks incorrectly has
+a way out that doesn't mean forking `@rozenite/metro`/`@rozenite/repack` and losing the guarantee for
+every plugin, everywhere. If you reach for it, follow up with the plugin author about declaring a
+proper `productionEntries` entry.
+
+**Next**: back to [Getting Started](./getting-started), or the
+[Plugin Development guide](./plugin-development/plugin-development) if you're building a plugin.

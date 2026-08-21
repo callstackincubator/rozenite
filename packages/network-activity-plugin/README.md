@@ -80,11 +80,11 @@ function App() {
 }
 ```
 
-Optional: To capture network requests before your React Native app initialization, add this to your entrypoint:
+Optional: To capture network requests before your React Native app initialization, add this to your entrypoint. `index.js` always ships in production, so this is imported from `@rozenite/network-activity-plugin/register`, the plugin's declared production entry point:
 
 ```ts
 // index.js
-import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
+import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin/register';
 
 withOnBootNetworkActivityRecording();
 ```

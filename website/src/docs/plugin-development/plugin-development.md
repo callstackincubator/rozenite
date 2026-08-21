@@ -292,6 +292,61 @@ export default function setupPlugin(
 }
 ```
 
+### Production entry points
+
+App code only ever calls into your plugin from `rozenite.dev.tsx`, so `react-native.ts` never reaches
+a production bundle — a build that resolves into your plugin package from anywhere else fails with a
+build error naming your package and the offending import (see the
+[Production Guarantee](../production-guarantee) page for the app-author side of this).
+
+Most plugins are done at that point. But if your plugin has a genuine touchpoint that has to run in
+production — a store enhancer applied where the app creates its store, a per-form hook called from
+inside app screens, an override lookup consulted at flag-evaluation time — declare it as a
+**production entry point** in `rozenite.config.ts`:
+
+```typescript title="rozenite.config.ts"
+export default {
+  panels: [
+    /* ... */
+  ],
+  productionEntries: ['./register'],
+};
+```
+
+and add the corresponding file at your plugin's root:
+
+```typescript title="register.ts"
+// Import from your own src/** modules directly -- never from ./react-native.ts.
+// That shim pulls in your plugin's whole dev surface, which is exactly what
+// this entry point exists to keep out of the production bundle.
+export { useMyPluginRuntimeHook } from './src/react-native/useMyPluginRuntimeHook';
+```
+
+The build picks up `productionEntries` automatically and exposes `register.ts` as your package's
+`./register` subpath export. App code that needs the production-safe piece imports it from there
+instead of your plugin's main entry point:
+
+```typescript title="store.ts"
+import { useMyPluginRuntimeHook } from '@acme/my-plugin/register';
+```
+
+Everything else your plugin exports keeps living behind the main entry point, dev-only, and is meant
+to be called from `rozenite.dev.tsx`.
+
+:::info The declaration is not verified
+Rozenite does not walk `register.ts`'s import graph to confirm it's "really" safe for production —
+safety isn't a property of an import graph. `productionEntries` is your explicit, attributable
+statement about what you intend to ship; Rozenite holds you to exactly that declaration and does not
+audit what it reaches. The one thing that is checked is that each declared entry actually resolves to
+a real file, so a typo surfaces as its own clear error rather than silently behaving as "nothing
+declared".
+:::
+
+Keep `register.ts` importing only from your plugin's own `src/**` modules, never from
+`react-native.ts` — that file is the dev-only shim your `rozenite.dev.tsx` consumers import, and
+re-exporting through it from `register.ts` would drag your whole dev surface (DevTools client
+connection, panel bridge, everything) into every app that uses your production entry.
+
 ## Step 5: Local Development Workflow
 
 ### Complete Development Setup

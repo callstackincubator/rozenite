@@ -16,7 +16,7 @@ Install the peer dependencies for the storages you use:
 
 ## Setup
 
-```ts title="App.tsx"
+```ts title="rozenite.dev.tsx"
 import {
   createAsyncStorageAdapter,
   createExpoSecureStorageAdapter,
@@ -37,9 +37,9 @@ const storages = [
   }),
 ];
 
-function App() {
+export default function RozeniteDevTools() {
   useRozeniteStoragePlugin({ storages });
-  return <YourApp />;
+  return null;
 }
 ```
 
@@ -51,7 +51,7 @@ With [Rozenite for Web](/docs/targets/rozenite-for-web), this plugin is also ava
 
 ### MMKV
 
-```ts title="App.tsx"
+```ts title="rozenite.dev.tsx"
 createMMKVStorageAdapter({
   storages: { 'user-storage': userStorage, 'settings-storage': settingsStorage },
   blacklist: { 'user-storage': /token|secret|password/ },
@@ -62,7 +62,7 @@ MMKV v4 arrays aren't supported — pass a record (`{ id: instance }`) instead.
 
 ### AsyncStorage
 
-```ts title="App.tsx"
+```ts title="rozenite.dev.tsx"
 // v2 style
 createAsyncStorageAdapter({ storage: AsyncStorage });
 
@@ -77,7 +77,7 @@ createAsyncStorageAdapter({
 
 ### Expo SecureStore
 
-```ts title="App.tsx"
+```ts title="rozenite.dev.tsx"
 createExpoSecureStorageAdapter({
   storage: SecureStore,
   keys: async () => ['token', 'session', 'refreshToken'],
@@ -95,7 +95,7 @@ MMKV storages that hold binary values render and edit them through a hex viewer 
 
 `blacklist` is configured per storage and matched against the key in that storage:
 
-```ts title="App.tsx"
+```ts title="rozenite.dev.tsx"
 createAsyncStorageAdapter({
   storages: {
     cache: { storage: cacheStorageInstance, blacklist: /temp|debug|internal/ },

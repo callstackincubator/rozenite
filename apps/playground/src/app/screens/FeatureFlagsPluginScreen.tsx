@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { FeatureFlag } from '@rozenite/feature-flags-plugin';
 import { Button, KeyValueList, PluginHeader, Row, Screen } from '../components/ui';
 import { featureFlagsOverrides, featureFlagsPluginAdapter } from '../feature-flags-plugin-adapters';
 import { useTheme } from '../theme/useTheme';
+
+// `/register` (feature-flags-plugin-adapters.ts's import) deliberately
+// doesn't export the general-purpose `FeatureFlag` result type — only the
+// adapter/override constructors it needs to declare production-safe. Derive
+// the same type from the adapter instance instead of reaching for the
+// plugin's dev-only entry point just for a type.
+type FeatureFlag = Awaited<ReturnType<typeof featureFlagsPluginAdapter.listFlags>>[number];
 
 type ThemeConfig = {
   accentColor?: string;

@@ -99,13 +99,12 @@ describe('findRozenitePluginForFile', () => {
     });
 
     const filePath = path.join(packageRoot, 'src', 'index.ts');
-    let plugin: ReturnType<typeof findRozenitePluginForFile> = null;
 
-    expect(() => {
-      plugin = findRozenitePluginForFile(filePath);
-    }).not.toThrow();
+    expect(() => findRozenitePluginForFile(filePath)).not.toThrow();
+
     // A malformed manifest still exists on disk, so the package is still a
     // plugin -- just one that has declared nothing.
+    const plugin = findRozenitePluginForFile(filePath);
     expect(plugin).not.toBeNull();
     expect(plugin?.productionEntries).toEqual([]);
   });

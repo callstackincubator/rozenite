@@ -1,10 +1,12 @@
 import * as SQLite from 'expo-sqlite';
-import { createExpoSqliteAdapter } from '@rozenite/sqlite-plugin';
 
-const appDatabase = SQLite.openDatabaseSync('rozenite-app.db');
-const analyticsDatabase = SQLite.openDatabaseSync('rozenite-analytics.db');
-const testingDatabase = SQLite.openDatabaseSync('rozenite-testing.db');
-const binaryDatabase = SQLite.openDatabaseSync('rozenite-binary.db');
+// Real app resources: the database handles and their seed data. The
+// Rozenite SQLite adapter built on top of these lives in
+// rozenite.dev/sqlite-adapters.ts, so this file has no `@rozenite/*` import.
+export const appDatabase = SQLite.openDatabaseSync('rozenite-app.db');
+export const analyticsDatabase = SQLite.openDatabaseSync('rozenite-analytics.db');
+export const testingDatabase = SQLite.openDatabaseSync('rozenite-testing.db');
+export const binaryDatabase = SQLite.openDatabaseSync('rozenite-binary.db');
 const TESTING_ROWS_COUNT = 500;
 const BINARY_ASSET_ROWS_COUNT = 3;
 const BINARY_PACKET_ROWS_COUNT = 3;
@@ -313,28 +315,3 @@ initializeAppDatabase();
 initializeAnalyticsDatabase();
 initializeTestingDatabase();
 initializeBinaryDatabase();
-
-export const sqlitePluginAdapters = [
-  createExpoSqliteAdapter({
-    adapterId: 'expo-sqlite',
-    adapterName: 'Expo SQLite',
-    databases: {
-      app: {
-        name: 'rozenite-app.db',
-        database: appDatabase,
-      },
-      analytics: {
-        name: 'rozenite-analytics.db',
-        database: analyticsDatabase,
-      },
-      testing: {
-        name: 'rozenite-testing.db',
-        database: testingDatabase,
-      },
-      binary: {
-        name: 'rozenite-binary.db',
-        database: binaryDatabase,
-      },
-    },
-  }),
-];

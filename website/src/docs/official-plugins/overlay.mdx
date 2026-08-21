@@ -10,17 +10,29 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 <PackageManagerTabs command="install -D @rozenite/overlay-plugin react-native-svg" />
 
-Add the overlay component at the root of your app:
+`@rozenite/overlay-plugin`'s public surface is a rendered component, not a hook, so its dev entry
+returns it instead of `null`:
+
+```typescript title="rozenite.dev.tsx"
+import { RozeniteOverlay } from '@rozenite/overlay-plugin';
+
+export default function RozeniteDevTools() {
+  return <RozeniteOverlay />;
+}
+```
+
+Wherever `<Rozenite />` sits in your app tree is where the overlay renders, so place it after
+everything else, the same way you would have placed `<RozeniteOverlay />` directly:
 
 ```typescript title="App.tsx"
-import { RozeniteOverlay } from '@rozenite/overlay-plugin';
+import Rozenite from '@rozenite/react-native';
 
 function App() {
   return (
     <>
       <YourApp />
-      {/* Add the overlay component at the root level */}
-      <RozeniteOverlay />
+      {/* Overlays render wherever <Rozenite /> sits in the tree */}
+      <Rozenite />
     </>
   );
 }
@@ -45,7 +57,7 @@ Overlay a reference image over your app to compare it against a design — eithe
 Settings persist for your development session but aren't saved between app restarts.
 
 :::warning Positioning
-Place `RozeniteOverlay` at the root of your app, after everything else, so overlays render on top.
+Place `<Rozenite />` at the root of your app, after everything else, so overlays render on top.
 :::
 
 :::info Development only

@@ -65,27 +65,22 @@ module.exports = withRozenite(
 Keep `withRozenite`'s `enabled` option conditional as above — when it is false,
 `enhanceMetroConfig` never runs and nothing is instrumented. The profiler also
 defends itself for the cases that sit outside that gate: it skips instrumentation
-when `process.env.NODE_ENV` is `production`, and the polyfill it injects is wrapped
-in `__DEV__`, which Metro strips from release bundles. Pass `enabled` to decide for
-yourself:
+when `process.env.NODE_ENV` is `production` or when Metro is bundling for
+release, and the polyfill it injects is wrapped in `__DEV__`, which Metro strips
+from release bundles. Pass `enabled` to decide for yourself:
 
 ```javascript
 withRozeniteRequireProfiler(config, { enabled: process.env.PROFILE_REQUIRES === 'true' });
 ```
 
-### 3. Integrate with Your App
+### 3. Wire It Up in `rozenite.dev.tsx`
 
-Add the DevTools hook to your React Native app:
-
-```typescript
-// App.tsx
+```typescript title="rozenite.dev.tsx"
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 
-function App() {
-  // Enable Require Profiler DevTools
+export default function RozeniteDevTools() {
   useRequireProfilerDevTools();
-
-  return <YourApp />;
+  return null;
 }
 ```
 
