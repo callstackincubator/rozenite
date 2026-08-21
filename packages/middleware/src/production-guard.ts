@@ -62,8 +62,22 @@ const readPackageNameOrNull = (packageJsonPath: string): string | null => {
   return typeof name === 'string' ? name : null;
 };
 
-const readPackageName = (packageJsonPath: string, fallback: string): string => {
-  return readPackageNameOrNull(packageJsonPath) ?? fallback;
+/**
+ * A package root is a directory whose `package.json` names a package.
+ *
+ * The `name` check is load-bearing, not defensive. tsc cannot emit `.cjs`/
+ * `.mjs`, so the plugin build drops a bare `{"type": "module"}` /
+ * `{"type": "commonjs"}` marker into each output directory to tell Node how
+ * to read the plain `.js` files next to it. Those markers sit between a
+ * resolved file and its real package root - a plugin entry resolves to
+ * `<plugin>/dist/react-native/react-native.js`, and
+ * `dist/react-native/package.json` is the first `package.json` above it.
+ * Treating one as a package root stops the walk two directories short of
+ * `<plugin>/dist/rozenite.json`, so every plugin reads as "not a Rozenite
+ * plugin" and the guard silently permits everything.
+ */
+const isPackageRoot = (dir: string): boolean => {
+  return readPackageNameOrNull(path.join(dir, 'package.json')) !== null;
 };
 
 const realpathSafe = (dir: string): string => {
@@ -82,7 +96,11 @@ const readPluginAtPackageRoot = (packageRoot: string): PluginLookupResult => {
     return null;
   }
 
-  const name = readPackageName(path.join(packageRoot, 'package.json'), packageRoot);
+  const name = readPackageNameOrNull(path.join(packageRoot, 'package.json'));
+
+  if (name === null) {
+    return null;
+  }
 
   return {
     name,
@@ -98,12 +116,11 @@ const findPluginForDirectory = (dir: string): PluginLookupResult => {
     return cached;
   }
 
-  const packageJsonPath = path.join(dir, 'package.json');
   let result: PluginLookupResult;
 
-  if (fs.existsSync(packageJsonPath)) {
-    // The first package.json found going up is the package root, whether or
-    // not it turns out to be a Rozenite plugin -- we never look past it.
+  if (isPackageRoot(dir)) {
+    // The first *named* package.json going up is the package root, whether
+    // or not it turns out to be a Rozenite plugin -- we never look past it.
     result = readPluginAtPackageRoot(dir);
   } else {
     const parentDir = path.dirname(dir);
@@ -220,11 +237,15 @@ const findPackageNameForDirectory = (dir: string): string | null => {
     return cached;
   }
 
-  const packageJsonPath = path.join(dir, 'package.json');
+  // Same module-type-marker hazard as `findPluginForDirectory`: the seam's
+  // own CommonJS output carries a nameless `{"type": "commonjs"}` marker, so
+  // stopping at the first package.json would fail to recognise the seam and
+  // silently skip the dev-entry redirect for CJS consumers.
+  const name = readPackageNameOrNull(path.join(dir, 'package.json'));
   let result: string | null;
 
-  if (fs.existsSync(packageJsonPath)) {
-    result = readPackageNameOrNull(packageJsonPath);
+  if (name !== null) {
+    result = name;
   } else {
     const parentDir = path.dirname(dir);
     result = parentDir === dir ? null : findPackageNameForDirectory(parentDir);

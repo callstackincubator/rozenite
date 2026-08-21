@@ -57,6 +57,30 @@ afterEach(() => {
 });
 
 describe('findRozenitePluginForFile', () => {
+  // Regression: tsc cannot emit .cjs/.mjs, so the plugin build drops a bare
+  // `{"type": "module"}` marker into every output directory. That marker is
+  // the first package.json above a resolved plugin entry, and treating it as
+  // the package root stops the walk two directories short of
+  // dist/rozenite.json -- which made the guard read every plugin as "not a
+  // plugin" and permit everything, in a real production bundle, silently.
+  it('walks past the nameless module-type markers the build emits', () => {
+    const packageRoot = createTempDir();
+    writeJson(path.join(packageRoot, 'package.json'), { name: '@acme/some-plugin' });
+    writeJson(path.join(packageRoot, 'dist', 'rozenite.json'), {});
+    writeJson(path.join(packageRoot, 'dist', 'react-native', 'package.json'), {
+      type: 'module',
+    });
+    writeJson(path.join(packageRoot, 'dist', 'react-native', 'cjs', 'package.json'), {
+      type: 'commonjs',
+    });
+
+    const esmEntry = path.join(packageRoot, 'dist', 'react-native', 'react-native.js');
+    const cjsEntry = path.join(packageRoot, 'dist', 'react-native', 'cjs', 'react-native.js');
+
+    expect(findRozenitePluginForFile(esmEntry)?.name).toBe('@acme/some-plugin');
+    expect(findRozenitePluginForFile(cjsEntry)?.name).toBe('@acme/some-plugin');
+  });
+
   it('detects a package with dist/rozenite.json', () => {
     const packageRoot = createTempDir();
     createPackage(packageRoot, '@acme/some-plugin', { hasManifest: true });
