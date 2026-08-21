@@ -193,6 +193,7 @@ describe('standalone app', () => {
       installedPlugins: ['@rozenite/network-activity-plugin'],
       destroyOnDetachPlugins: ['@rozenite/some-plugin'],
       runtimeVersion: '2.1.0',
+      platform: 'react-native',
     });
   });
 
@@ -203,7 +204,11 @@ describe('standalone app', () => {
     const payload = JSON.parse(response.body);
 
     expect(response.status).toBe(200);
-    expect(payload).toEqual({ installedPlugins: [], destroyOnDetachPlugins: [] });
+    expect(payload).toEqual({
+      installedPlugins: [],
+      destroyOnDetachPlugins: [],
+      platform: 'react-native',
+    });
     expect('runtimeVersion' in payload).toBe(false);
   });
 
@@ -238,6 +243,7 @@ describe('standalone app', () => {
       expect(JSON.parse(response.body)).toEqual({
         installedPlugins: [],
         destroyOnDetachPlugins: [],
+        platform: 'react-native',
       });
     } finally {
       fs.rmSync(shadowFile, { force: true });
@@ -258,7 +264,7 @@ describe('lynx platform', () => {
     return getMiddleware(config, [], [], agentSessionManager) as unknown as MiddlewareHandler;
   };
 
-  it('serves /app/config without touching react-native', async () => {
+  it('serves /app/config without touching react-native, naming the platform so the app can label the framework', async () => {
     const app = createApp();
 
     const response = await runRequest(app, '/rozenite/app/config');
@@ -267,6 +273,7 @@ describe('lynx platform', () => {
     expect(JSON.parse(response.body)).toEqual({
       installedPlugins: [],
       destroyOnDetachPlugins: [],
+      platform: 'lynx',
     });
   });
 

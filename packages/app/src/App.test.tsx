@@ -12,6 +12,7 @@ const originalResizeObserver = globalThis.ResizeObserver;
 const CONFIG_OK = {
   installedPlugins: ['plugin-a'],
   destroyOnDetachPlugins: [],
+  platform: 'react-native',
   // No `runtimeVersion` on purpose: passing one makes `Shell` show its
   // first-run `WelcomeDialog` (unrelated to anything under test here, and
   // it renders a `ScrollArea` that jsdom can't fully back).
@@ -24,12 +25,17 @@ const MANIFEST_A = {
   panels: [{ name: 'Panel 1', source: '/index.html' }],
 };
 
+/** What `/rozenite/app/config` answers for the test at hand; reset to
+ * `CONFIG_OK` before each one. */
+let servedConfig: Record<string, unknown> = CONFIG_OK;
+
 beforeEach(() => {
+  servedConfig = CONFIG_OK;
   globalThis.fetch = vi.fn(async (input: string | URL | Request) => {
     const url = String(input);
 
     if (url.endsWith(`${import.meta.env.BASE_URL}config`)) {
-      return { ok: true, json: async () => CONFIG_OK } as Response;
+      return { ok: true, json: async () => servedConfig } as Response;
     }
     if (url.includes(getPluginBaseUrl('plugin-a'))) {
       return { ok: true, json: async () => MANIFEST_A } as Response;
@@ -143,6 +149,28 @@ describe('App', () => {
 
     await findPanelIframe();
     expect(screen.getByText('Pixel 8')).toBeTruthy();
+  });
+
+  it('names the framework the dev server serves in the footer', async () => {
+    const { connection, setState } = createFakeConnection();
+    setState({ status: 'connected' });
+
+    render(<App target={{ kind: 'connection', connection }} />);
+
+    await findPanelIframe();
+    expect(screen.getByText('React Native')).toBeTruthy();
+  });
+
+  it('names Lynx in the footer when the dev server serves Lynx', async () => {
+    servedConfig = { ...CONFIG_OK, platform: 'lynx' };
+    const { connection, setState } = createFakeConnection();
+    setState({ status: 'connected' });
+
+    render(<App target={{ kind: 'connection', connection }} />);
+
+    await findPanelIframe();
+    expect(screen.getByText('Lynx')).toBeTruthy();
+    expect(screen.queryByText('React Native')).toBeNull();
   });
 
   it('reflects a resolved device name even when the connection status does not change (finding 9)', async () => {

@@ -11,7 +11,8 @@ import {
   Separator,
 } from '@rozenite/ui';
 import { createDeviceShellHost } from './shell-host';
-import { fetchConfig } from './config';
+import { fetchConfig, type RozenitePlatform } from './config';
+import { getFrameworkLabel } from './framework';
 import { loadPlugins } from './plugins';
 import type { DeviceConnection, DeviceState } from './connection/device-connection';
 import { TargetUrlError } from './connection/target-from-url';
@@ -28,6 +29,7 @@ type ConfigState =
       plugins: ShellPlugin[];
       destroyOnDetachPlugins: string[];
       runtimeVersion?: string;
+      platform?: RozenitePlatform;
     }
   | { status: 'error' };
 
@@ -54,6 +56,7 @@ function useConfig(): [ConfigState, () => void] {
             plugins,
             destroyOnDetachPlugins: config.destroyOnDetachPlugins,
             runtimeVersion: config.runtimeVersion,
+            platform: config.platform,
           });
         }
       } catch (error) {
@@ -99,12 +102,16 @@ function StatusBadge({ status }: { status: DeviceState['status'] }) {
 function Footer({
   deviceState,
   targetName,
+  platform,
   runtimeVersion,
 }: {
   deviceState: DeviceState;
   targetName: string;
+  platform?: RozenitePlatform;
   runtimeVersion?: string;
 }) {
+  const framework = getFrameworkLabel(platform);
+
   return (
     // A normal flex sibling below `Shell`, not an overlay: `Shell` is
     // given `className="min-h-0 flex-1"` below so it shares this column
@@ -112,6 +119,15 @@ function Footer({
     // see `ShellProps.className` in `@rozenite/shell`.
     <footer className="flex h-9 shrink-0 items-center gap-3 border-t border-border bg-card px-3 text-sm text-muted-foreground">
       <StatusBadge status={deviceState.status} />
+      {/* Independent of the connection: which framework this dev server
+          serves comes from its config, so it stays readable while the app
+          is connecting, reloading or disconnected. */}
+      {framework && (
+        <>
+          <Separator orientation="vertical" className="h-4" />
+          <span>{framework}</span>
+        </>
+      )}
       {(deviceState.status === 'connected' || deviceState.status === 'reloading') && targetName && (
         <>
           <Separator orientation="vertical" className="h-4" />
@@ -278,6 +294,9 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
       <Footer
         deviceState={deviceState}
         targetName={targetName}
+        platform={
+          configState.status === 'ready' ? configState.platform : mountedConfigRef.current?.platform
+        }
         runtimeVersion={
           configState.status === 'ready'
             ? configState.runtimeVersion

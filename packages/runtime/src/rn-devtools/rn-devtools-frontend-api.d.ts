@@ -209,27 +209,6 @@ declare module '/rozenite/models/react_native/react_native.js' {
     }
   }
 
-  export namespace ReactNativeApplicationModel {
-    export interface EventTypes {
-      MetadataUpdated: Protocol.ReactNativeApplication.MetadataUpdatedEvent;
-    }
-
-    export class ReactNativeApplicationModel extends SDKModel.SDKModel {
-      ensureEnabled(): void;
-      metadataCached?: MetadataUpdatedEvent;
-      addEventListener<T extends keyof EventTypes>(
-        event: T,
-        callback: (event: Common.EventTarget.EventTargetEvent<EventTypes[T]>) => void,
-        thisArg: unknown,
-      ): void;
-      removeEventListener(
-        event: keyof EventTypes,
-        callback: (event: any) => void,
-        thisArg: unknown,
-      ): void;
-    }
-  }
-
   export namespace ReactDevToolsBindingsModel {
     export class ReactDevToolsBindingsModel {
       initializeDomain(domain: string): Promise<void>;
@@ -270,6 +249,28 @@ declare module '/rozenite/core/sdk/sdk.js' {
       removeEventListener<T>(
         event: string,
         callback: (message: RuntimeEvent<T>) => void,
+        thisArg: unknown,
+      ): void;
+    }
+  }
+
+  export namespace ReactNativeApplicationModel {
+    export interface EventTypes {
+      MetadataUpdated: Protocol.ReactNativeApplication.MetadataUpdatedEvent;
+    }
+
+    export class ReactNativeApplicationModel extends SDKModel.SDKModel {
+      ensureEnabled(): void;
+      /** `null`, not absent, until the first `metadataUpdated`. */
+      metadataCached: Protocol.ReactNativeApplication.MetadataUpdatedEvent | null;
+      addEventListener<T extends keyof EventTypes>(
+        event: T,
+        callback: (event: Common.EventTarget.EventTargetEvent<EventTypes[T]>) => void,
+        thisArg: unknown,
+      ): void;
+      removeEventListener(
+        event: keyof EventTypes,
+        callback: (event: any) => void,
         thisArg: unknown,
       ): void;
     }

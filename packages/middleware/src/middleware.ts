@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { getEntryPointHTML } from './entry-point.js';
 import { InstalledPlugin } from './auto-discovery.js';
 import { getReactNativeDebuggerFrontendPath } from './resolve.js';
-import { RozeniteConfig } from './config.js';
+import { RozeniteConfig, RozenitePlatform } from './config.js';
 import { logger } from './logger.js';
 import type { AgentSessionManager } from './agent/index.js';
 import { createAgentRoutes } from './agent/index.js';
@@ -27,6 +27,15 @@ export type RozeniteAppConfigResponse = {
   installedPlugins: string[];
   destroyOnDetachPlugins: string[];
   runtimeVersion?: string;
+  /**
+   * The dev server's host platform, so the app can name the framework it
+   * is debugging in its status footer. Always sent (defaulted here rather
+   * than in the client) — the server is the only side that knows it: a
+   * Lynx dev server and a Metro one are deliberately indistinguishable
+   * over `/json/list`, which `@rozenite/lynx-dev` answers in Metro's own
+   * dialect.
+   */
+  platform: RozenitePlatform;
 };
 
 export const getNormalizedRequestUrl = (url: string): string => {
@@ -129,6 +138,7 @@ export const getMiddleware = (
       installedPlugins: installedPlugins.map((plugin) => plugin.name),
       destroyOnDetachPlugins,
       runtimeVersion,
+      platform: options.platform ?? 'react-native',
     };
 
     res.json(config);
