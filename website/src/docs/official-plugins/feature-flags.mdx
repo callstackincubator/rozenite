@@ -27,67 +27,93 @@ Install the peer dependency for whichever adapter you use:
 
 ## Adapter: Custom / local (Tier B)
 
-For a homegrown flag store, or before wiring a real provider:
+For a homegrown flag store, Tier B's override map is what has to survive into production — it's the
+only thing a forced override lives in — so the adapter is constructed in a shared module, imported
+from [`@rozenite/feature-flags-plugin/register`](/docs/production-guarantee#productionentries-and-register).
+The DevTools connection itself has no reason to run in production, so it stays in `rozenite.dev.tsx`,
+imported from the plugin's main entry point:
 
-```ts title="App.tsx"
-import {
-  createCustomFlagsAdapter,
-  useRozeniteFeatureFlagsPlugin,
-} from '@rozenite/feature-flags-plugin';
+```ts title="flags.ts"
+import { createCustomFlagsAdapter } from '@rozenite/feature-flags-plugin/register';
 
-// Module-level, like storage/sqlite adapters elsewhere in the docs. The
-// hook tracks `providers` by content, so a fresh array literal on every
-// render works too -- hoisting just avoids rebuilding provider state for
-// nothing.
-const featureFlagsProviders = [
-  createCustomFlagsAdapter({
-    id: 'app',
-    name: 'App flags',
-    listFlags: () => flagStore.getAll(),
-  }),
-];
+// Module-level, like storage/sqlite adapters elsewhere in the docs.
+export const appFlagsAdapter = createCustomFlagsAdapter({
+  id: 'app',
+  name: 'App flags',
+  listFlags: () => flagStore.getAll(),
+});
+```
 
-function App() {
-  useRozeniteFeatureFlagsPlugin({ providers: featureFlagsProviders });
+```ts title="rozenite.dev.tsx"
+import { useRozeniteFeatureFlagsPlugin } from '@rozenite/feature-flags-plugin';
+import { appFlagsAdapter } from './flags';
 
-  return <YourApp />;
+export default function RozeniteDevTools() {
+  useRozeniteFeatureFlagsPlugin({ providers: [appFlagsAdapter] });
+  return null;
 }
 ```
 
 `setOverride` throws for a key not present in `listFlags()` — nothing is written for a typo'd or unknown key.
 
-Overrides default to an in-memory `Map`. Bring your own store to persist them across restarts:
+Overrides default to an in-memory `Map`. Bring your own store to persist them across restarts, and
+construct it alongside the adapter so both survive into production:
 
-```ts title="App.tsx"
-import { createFlagOverrides } from '@rozenite/feature-flags-plugin';
+```ts title="flags.ts"
+import {
+  createCustomFlagsAdapter,
+  createFlagOverrides,
+} from '@rozenite/feature-flags-plugin/register';
 
 const overrides = createFlagOverrides({
   initial: JSON.parse(storage.getString('flag-overrides') ?? '{}'),
   onChange: (all) => storage.set('flag-overrides', JSON.stringify(all)),
 });
 
-createCustomFlagsAdapter({ id: 'app', name: 'App flags', listFlags, overrides });
+export const appFlagsAdapter = createCustomFlagsAdapter({
+  id: 'app',
+  name: 'App flags',
+  listFlags: () => flagStore.getAll(),
+  overrides,
+});
+
+// Wherever your app actually reads this flag, check for a forced override
+// first -- this is ordinary production code, and `overrides` is the same
+// instance the adapter above reports to DevTools.
+export const isDarkModeEnabled = () =>
+  (overrides.get('dark-mode') as boolean | undefined) ?? flagStore.get('dark-mode');
 ```
 
 ## Adapter: LaunchDarkly (Tier B)
 
-`createLaunchDarklyFlagsAdapter` returns `{ provider, client }`. Pass `client` — not your raw `ReactNativeLDClient` — to `<LDProvider>`. Every LD hook (`useBoolVariation`, `useLDClient`, ...) reads through it from there automatically, because LD's own hooks are a thin read off the context client.
+`createLaunchDarklyFlagsAdapter` returns `{ provider, client }`. Pass `client` — not your raw `ReactNativeLDClient` — to `<LDProvider>`. Every LD hook (`useBoolVariation`, `useLDClient`, ...) reads through it from there automatically, because LD's own hooks are a thin read off the context client. `<LDProvider>` is ordinary production code, so the wrapped client comes from
+[`@rozenite/feature-flags-plugin/register`](/docs/production-guarantee#productionentries-and-register):
 
-```ts title="App.tsx"
-import { ReactNativeLDClient, AutoEnvAttributes, LDProvider } from '@launchdarkly/react-native-client-sdk';
-import {
-  createLaunchDarklyFlagsAdapter,
-  useRozeniteFeatureFlagsPlugin,
-} from '@rozenite/feature-flags-plugin';
+```ts title="flags.ts"
+import { ReactNativeLDClient, AutoEnvAttributes } from '@launchdarkly/react-native-client-sdk';
+import { createLaunchDarklyFlagsAdapter } from '@rozenite/feature-flags-plugin/register';
 
 const rawClient = new ReactNativeLDClient(LD_MOBILE_KEY, AutoEnvAttributes.Enabled);
-const { provider, client } = createLaunchDarklyFlagsAdapter({ client: rawClient });
-const featureFlagsProviders = [provider];
+export const { provider: launchDarklyProvider, client: launchDarklyClient } =
+  createLaunchDarklyFlagsAdapter({ client: rawClient });
+```
+
+```tsx title="App.tsx"
+import { LDProvider } from '@launchdarkly/react-native-client-sdk';
+import { launchDarklyClient } from './flags';
 
 function App() {
-  useRozeniteFeatureFlagsPlugin({ providers: featureFlagsProviders });
+  return <LDProvider client={launchDarklyClient}>{/* ... */}</LDProvider>;
+}
+```
 
-  return <LDProvider client={client}>{/* ... */}</LDProvider>;
+```ts title="rozenite.dev.tsx"
+import { useRozeniteFeatureFlagsPlugin } from '@rozenite/feature-flags-plugin';
+import { launchDarklyProvider } from './flags';
+
+export default function RozeniteDevTools() {
+  useRozeniteFeatureFlagsPlugin({ providers: [launchDarklyProvider] });
+  return null;
 }
 ```
 
@@ -99,37 +125,51 @@ Notes:
 
 ## Adapter: Statsig (Tier A)
 
-You construct `StatsigClient` and `LocalOverrideAdapter` yourself; the adapter only takes references.
+You construct `StatsigClient` and `LocalOverrideAdapter` yourself, using Statsig's own SDK — that part
+is ordinary production code and has nothing to do with Rozenite, so it's unaffected by any of this.
+`createStatsigFlagsAdapter` only takes references to what you already built, and — unlike the custom
+and LaunchDarkly adapters — it has no production call site of its own: Tier A's override store lives in
+Statsig's `LocalOverrideAdapter`, not in anything Rozenite owns, so the adapter is only ever consumed
+by the DevTools connection. It stays in `rozenite.dev.tsx`, imported from the plugin's main entry
+point:
 
-```ts title="App.tsx"
+```ts title="flags.ts"
 import { StatsigClient } from '@statsig/js-client';
 import { LocalOverrideAdapter } from '@statsig/js-local-overrides';
+
+export const overrideAdapter = new LocalOverrideAdapter();
+export const statsigClient = new StatsigClient(
+  STATSIG_CLIENT_KEY,
+  { userID: 'user-123' },
+  { overrideAdapter },
+);
+await statsigClient.initializeAsync();
+```
+
+```ts title="rozenite.dev.tsx"
 import {
   createStatsigFlagsAdapter,
   useRozeniteFeatureFlagsPlugin,
 } from '@rozenite/feature-flags-plugin';
+import { statsigClient, overrideAdapter } from './flags';
 
-const overrideAdapter = new LocalOverrideAdapter();
-const client = new StatsigClient(STATSIG_CLIENT_KEY, { userID: 'user-123' }, { overrideAdapter });
-await client.initializeAsync();
-
-const featureFlagsProviders = [
-  createStatsigFlagsAdapter({
-    client,
-    overrideAdapter,
-    flags: [
-      { key: 'new-onboarding' }, // boolean gate (default type)
-      { key: 'checkout-copy', type: 'string' },
-      { key: 'max-items', type: 'number' },
-      { key: 'layout-config', type: 'json' },
+export default function RozeniteDevTools() {
+  useRozeniteFeatureFlagsPlugin({
+    providers: [
+      createStatsigFlagsAdapter({
+        client: statsigClient,
+        overrideAdapter,
+        flags: [
+          { key: 'new-onboarding' }, // boolean gate (default type)
+          { key: 'checkout-copy', type: 'string' },
+          { key: 'max-items', type: 'number' },
+          { key: 'layout-config', type: 'json' },
+        ],
+      }),
     ],
-  }),
-];
+  });
 
-function App() {
-  useRozeniteFeatureFlagsPlugin({ providers: featureFlagsProviders });
-
-  return <YourApp />;
+  return null;
 }
 ```
 

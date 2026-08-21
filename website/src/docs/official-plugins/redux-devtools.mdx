@@ -12,13 +12,15 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 <PackageManagerTabs command="install -D @rozenite/redux-devtools-plugin" />
 
-Add the enhancer to your store:
+Add the enhancer to your store. Your store is created in ordinary app code that runs in production, so
+this plugin ships the enhancer as a [production entry point](/docs/production-guarantee#productionentries-and-register) —
+import it from `@rozenite/redux-devtools-plugin/register`, not the plugin's main entry point:
 
 #### Redux Toolkit (recommended)
 
 ```typescript title="store.ts"
 import { configureStore } from '@reduxjs/toolkit';
-import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin';
+import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin/register';
 import rootReducer from './reducers';
 
 const store = configureStore({
@@ -33,7 +35,7 @@ export default store;
 
 ```typescript title="store.ts"
 import { createStore, applyMiddleware } from 'redux';
-import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin';
+import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin/register';
 import rootReducer from './reducers';
 
 const store = createStore(
@@ -51,7 +53,7 @@ Follow the [Rematch documentation](https://rematchjs.org/docs/guides/devtools/) 
 
 ```typescript title="store.ts"
 import { init } from '@rematch/core';
-import { composeWithRozeniteDevTools } from '@rozenite/redux-devtools-plugin';
+import { composeWithRozeniteDevTools } from '@rozenite/redux-devtools-plugin/register';
 
 export const store = init({
   models: {
@@ -115,15 +117,14 @@ Pass `traceSymbolication: false` to keep raw stacks without the Metro round-trip
 
 ## Agent Integration
 
-Agent tools are a separate, manual step — instrumenting your store with the enhancer doesn't register them on its own. Mount this once near your app root:
+Agent tools are a separate, manual step — instrumenting your store with the enhancer doesn't register them on its own. Unlike the enhancer, this hook has no reason to run in production, so it belongs in `rozenite.dev.tsx`, imported from the plugin's main entry point:
 
-```tsx title="App.tsx"
+```tsx title="rozenite.dev.tsx"
 import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
 
-function App() {
+export default function RozeniteDevTools() {
   useReduxDevToolsAgentTools();
-
-  return <YourApp />;
+  return null;
 }
 ```
 

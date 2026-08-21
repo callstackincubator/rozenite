@@ -32,15 +32,15 @@ module.exports = withRozenite(
 );
 ```
 
-Add the DevTools hook to your app:
+Add the DevTools hook in `rozenite.dev.tsx`:
 
-```typescript title="App.tsx"
+```typescript title="rozenite.dev.tsx"
 import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
 
-function App() {
+export default function RozeniteDevTools() {
   useRequireProfilerDevTools();
 
-  return <YourApp />;
+  return null;
 }
 ```
 

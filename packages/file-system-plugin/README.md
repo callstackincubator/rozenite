@@ -42,41 +42,41 @@ npm install @dr.pogodin/react-native-fs
 npm install @rozenite/file-system-plugin
 ```
 
-### 2. Integrate with Your App
+### 2. Wire It Up in `rozenite.dev.tsx`
 
 #### With Expo FileSystem
 
-```typescript
+```typescript title="rozenite.dev.tsx"
 import * as FileSystem from 'expo-file-system';
 import {
   createExpoFileSystemAdapter,
   useFileSystemDevTools,
 } from '@rozenite/file-system-plugin';
 
-function App() {
+export default function RozeniteDevTools() {
   useFileSystemDevTools({
     adapter: createExpoFileSystemAdapter(FileSystem),
   });
 
-  return <YourApp />;
+  return null;
 }
 ```
 
 #### With RNFS
 
-```typescript
+```typescript title="rozenite.dev.tsx"
 import RNFS from '@dr.pogodin/react-native-fs';
 import {
   createRNFSAdapter,
   useFileSystemDevTools,
 } from '@rozenite/file-system-plugin';
 
-function App() {
+export default function RozeniteDevTools() {
   useFileSystemDevTools({
     adapter: createRNFSAdapter(RNFS),
   });
 
-  return <YourApp />;
+  return null;
 }
 ```
 
@@ -99,7 +99,7 @@ Start your development server and open React Native DevTools. You’ll find the 
 
 To enable file transfer in the DevTools panel, opt in explicitly:
 
-```typescript
+```typescript title="rozenite.dev.tsx"
 useFileSystemDevTools({
   adapter: createRNFSAdapter(RNFS),
   fileTransfer: {
@@ -111,7 +111,7 @@ useFileSystemDevTools({
 
 To enable agent-triggered file transfer, opt in separately:
 
-```typescript
+```typescript title="rozenite.dev.tsx"
 useFileSystemDevTools({
   adapter: createRNFSAdapter(RNFS),
   fileTransfer: {

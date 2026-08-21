@@ -34,11 +34,11 @@ npm install @statsig/js-client @statsig/react-native-bindings @statsig/js-local-
 
 For a homegrown flag store, or as a placeholder before wiring a real provider. **No call-site change** beyond registering the adapter — flags are read straight from your own `listFlags()`.
 
+The app consults the override store at flag-evaluation time, which is ordinary app code that ships in production - so `createCustomFlagsAdapter` is imported from `@rozenite/feature-flags-plugin/register`, the plugin's declared production entry point. `useRozeniteFeatureFlagsPlugin` stays dev-only and is imported from the package root as before.
+
 ```ts
-import {
-  createCustomFlagsAdapter,
-  useRozeniteFeatureFlagsPlugin,
-} from '@rozenite/feature-flags-plugin';
+import { createCustomFlagsAdapter } from '@rozenite/feature-flags-plugin/register';
+import { useRozeniteFeatureFlagsPlugin } from '@rozenite/feature-flags-plugin';
 
 // Module-level, like `storagePluginAdapters` in the playground app. The hook
 // tracks `providers` by content, so a fresh array literal on every render
@@ -59,7 +59,7 @@ useRozeniteFeatureFlagsPlugin({ providers: featureFlagsProviders });
 Overrides are an in-memory `Map`, gone on app restart by default. Wire persistence with `createFlagOverrides`:
 
 ```ts
-import { createCustomFlagsAdapter, createFlagOverrides } from '@rozenite/feature-flags-plugin';
+import { createCustomFlagsAdapter, createFlagOverrides } from '@rozenite/feature-flags-plugin/register';
 
 const overrides = createFlagOverrides({
   initial: JSON.parse(storage.getString('flag-overrides') ?? '{}'),
@@ -73,12 +73,12 @@ createCustomFlagsAdapter({ id: 'app', name: 'App flags', listFlags, overrides })
 
 `createLaunchDarklyFlagsAdapter` returns a `provider` for the hook and a `client` you must pass to `<LDProvider>` in place of the raw SDK client — **the one changed line**. Every LD hook (`useBoolVariation`, `useLDClient`, ...) then reads through it automatically, since LD's hooks are a thin read off the context client.
 
+Passing the wrapped `client` to `<LDProvider>` is ordinary app code that ships in production, so `createLaunchDarklyFlagsAdapter` is imported from `@rozenite/feature-flags-plugin/register`, the plugin's declared production entry point. `useRozeniteFeatureFlagsPlugin` stays dev-only and is imported from the package root as before.
+
 ```ts
 import { ReactNativeLDClient, AutoEnvAttributes, LDProvider } from '@launchdarkly/react-native-client-sdk';
-import {
-  createLaunchDarklyFlagsAdapter,
-  useRozeniteFeatureFlagsPlugin,
-} from '@rozenite/feature-flags-plugin';
+import { createLaunchDarklyFlagsAdapter } from '@rozenite/feature-flags-plugin/register';
+import { useRozeniteFeatureFlagsPlugin } from '@rozenite/feature-flags-plugin';
 
 const rawClient = new ReactNativeLDClient(LD_MOBILE_KEY, AutoEnvAttributes.Enabled);
 const { provider, client } = createLaunchDarklyFlagsAdapter({ client: rawClient });

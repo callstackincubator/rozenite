@@ -6,7 +6,36 @@ const { withRozeniteWeb } = require('@rozenite/web/webpack');
 const appDirectory = __dirname;
 const workspaceRoot = path.resolve(appDirectory, '../..');
 const entryFile = path.resolve(appDirectory, 'src/main.tsx');
+
+// `web:webpack` is plain webpack — neither @rozenite/metro nor @rozenite/repack
+// covers it, so <Rozenite /> would silently resolve to the seam's shipped noop
+// here and every web plugin demo would go dead. Redirect its internal dev-entry
+// request to this project's rozenite.dev, the same way withRozenite() does for
+// Metro and Re.Pack.
+//
+// The naive check is `resource.context.includes('@rozenite/react-native')`,
+// on the assumption that pnpm's `nodeLinker: hoisted` puts a real directory at
+// `node_modules/@rozenite/react-native`. That assumption doesn't hold here:
+// even in hoisted mode, pnpm still symlinks workspace-local packages
+// (`node_modules/@rozenite/react-native -> ../../../../packages/react-native`),
+// and webpack's default `resolve.symlinks: true` resolves the *real* path
+// before this hook ever sees it — verified empirically with a scratch webpack
+// build using a symlinked workspace-style package: `resource.context` came back
+// as the symlink target (`.../packages/<name>`), which does not contain the
+// substring `@rozenite/react-native` at all. So instead of a substring check,
+// resolve the seam package's real root once (mirroring how the Metro/Re.Pack
+// guard identifies its own seam) and compare directories directly.
+const seamPackageDir = (() => {
+  try {
+    return path.dirname(
+      require.resolve('@rozenite/react-native/package.json', { paths: [appDirectory] }),
+    );
+  } catch {
+    return null;
+  }
+})();
 const srcDirectory = path.resolve(appDirectory, 'src');
+const rozeniteDevDirectory = path.resolve(appDirectory, 'rozenite.dev');
 const distDirectory = path.resolve(appDirectory, 'dist');
 const reactNativeDirectory = path.resolve(workspaceRoot, 'node_modules/react-native');
 const localReactNativeDirectory = path.resolve(appDirectory, 'node_modules/react-native');
@@ -36,7 +65,13 @@ const htmlTemplate = ({ htmlWebpackPlugin }) => `<!DOCTYPE html>
 
 const babelLoaderConfiguration = {
   test: /\.[jt]sx?$/,
-  include: [entryFile, srcDirectory, reactNativeDirectory, localReactNativeDirectory],
+  include: [
+    entryFile,
+    srcDirectory,
+    rozeniteDevDirectory,
+    reactNativeDirectory,
+    localReactNativeDirectory,
+  ],
   use: {
     loader: 'babel-loader',
     options: {
@@ -98,6 +133,16 @@ module.exports = (_, argv = {}) => {
       new webpack.DefinePlugin({
         __DEV__: JSON.stringify(!isProduction),
         'process.env.NODE_ENV': JSON.stringify(mode),
+      }),
+      new webpack.NormalModuleReplacementPlugin(/^\.\/dev-entry(\.js)?$/, (resource) => {
+        if (
+          seamPackageDir &&
+          resource.context &&
+          (resource.context === seamPackageDir ||
+            resource.context.startsWith(seamPackageDir + path.sep))
+        ) {
+          resource.request = path.resolve(appDirectory, 'rozenite.dev');
+        }
       }),
     ],
     devServer: {

@@ -20,37 +20,31 @@ Install whichever filesystem library your app already uses:
 
 ### With Expo FileSystem
 
-```ts title="App.tsx"
+```ts title="rozenite.dev.tsx"
 import * as FileSystem from 'expo-file-system';
-import {
-  createExpoFileSystemAdapter,
-  useFileSystemDevTools,
-} from '@rozenite/file-system-plugin';
+import { createExpoFileSystemAdapter, useFileSystemDevTools } from '@rozenite/file-system-plugin';
 
-function App() {
+export default function RozeniteDevTools() {
   useFileSystemDevTools({
     adapter: createExpoFileSystemAdapter(FileSystem),
   });
 
-  return <YourApp />;
+  return null;
 }
 ```
 
 ### With RNFS
 
-```ts title="App.tsx"
+```ts title="rozenite.dev.tsx"
 import RNFS from '@dr.pogodin/react-native-fs';
-import {
-  createRNFSAdapter,
-  useFileSystemDevTools,
-} from '@rozenite/file-system-plugin';
+import { createRNFSAdapter, useFileSystemDevTools } from '@rozenite/file-system-plugin';
 
-function App() {
+export default function RozeniteDevTools() {
   useFileSystemDevTools({
     adapter: createRNFSAdapter(RNFS),
   });
 
-  return <YourApp />;
+  return null;
 }
 ```
 
@@ -60,7 +54,7 @@ Once configured, the plugin appears in DevTools as "File System". You can jump b
 
 Importing and exporting files is off by default. Turn it on with `fileTransfer` when you want the panel to move files in or out of your app:
 
-```ts title="App.tsx"
+```ts title="rozenite.dev.tsx"
 useFileSystemDevTools({
   adapter: createRNFSAdapter(RNFS),
   fileTransfer: {
@@ -74,7 +68,7 @@ Imports keep the original filename and ask before overwriting an existing file.
 
 If you also want coding agents to import or export files through Rozenite for Agents, opt in separately:
 
-```ts title="App.tsx"
+```ts title="rozenite.dev.tsx"
 useFileSystemDevTools({
   adapter: createRNFSAdapter(RNFS),
   fileTransfer: {

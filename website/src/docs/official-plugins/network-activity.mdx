@@ -16,20 +16,22 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 <PackageManagerTabs command="install -D @rozenite/network-activity-plugin" />
 
-```typescript title="App.tsx"
+```typescript title="rozenite.dev.tsx"
 import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 
-function App() {
+export default function RozeniteDevTools() {
   useNetworkActivityDevTools();
-
-  return <YourApp />;
+  return null;
 }
 ```
 
-To also capture requests made before your app finishes initializing, add this to your entry point:
+To also capture requests made before your app finishes initializing, add this to your entry point.
+This runs before any other code in your app, in a file that always ships in production, so it's
+declared as a [production entry point](/docs/production-guarantee#productionentries-and-register) —
+import it from `@rozenite/network-activity-plugin/register`, not the plugin's main entry point:
 
 ```typescript title="index.js"
-import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
+import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin/register';
 
 withOnBootNetworkActivityRecording();
 ```
@@ -58,7 +60,7 @@ The response body view adapts to the content type, with a Preview / Raw toggle w
 
 By default all traffic types are monitored. Disable ones you don't need — useful when a type is noisy or expensive to capture:
 
-```typescript title="App.tsx"
+```typescript title="rozenite.dev.tsx"
 useNetworkActivityDevTools({
   inspectors: {
     http: true,

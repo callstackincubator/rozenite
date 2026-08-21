@@ -17,6 +17,25 @@ This package is primarily used internally by Metro and Re.pack integrations. You
 - **Express Middleware**: Provides custom Express middleware for plugin routing and serving
 - **Configuration Options**: Flexible configuration for including/excluding specific plugins
 
+## Production guard core
+
+This package also owns the bundler-agnostic logic behind Rozenite's
+[production guarantee](https://www.rozenite.dev/docs/production-guarantee) — the check that keeps
+plugin code out of production bundles — so `@rozenite/metro` and `@rozenite/repack` share one
+implementation instead of two that could drift. It's exported for those integrations to build their
+resolver hooks on top of; you won't need it directly unless you're writing a new bundler integration:
+
+- `findRozenitePluginForFile` — resolves a file path to the Rozenite plugin package containing it (by
+  walking up to the nearest `package.json` with a `dist/rozenite.json` marker), or `null`. Memoized per
+  directory, including negative results, since bundler resolvers call this synchronously and
+  constantly.
+- `formatProductionGuardError` / `formatDevAdvisory` — the exact user-facing messages for the
+  production build error and the development warning, respectively, so both integrations print
+  identical wording.
+- `isDevEntryOrigin`, `getDevEntrySpecifier`, `isSeamDevEntryRequest`, `warnOnceForImport` — supporting
+  helpers for locating a project's `rozenite.dev` file and recognizing `@rozenite/react-native`'s own
+  dev-entry request.
+
 ## Plugin Discovery
 
 The middleware automatically discovers Rozenite plugins by:
