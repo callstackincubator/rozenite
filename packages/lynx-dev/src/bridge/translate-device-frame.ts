@@ -80,6 +80,73 @@ const HOST_MAIN_CONTEXT_NAME = 'main';
  * name: string } } }` falls through to a plain, unmodified message rather
  * than throwing.
  */
+/**
+ * The CDP event Lynx actually delivers `lynx.getDevtool().dispatchEvent()`
+ * on. Verified on LynxExplorer/iOS (Lynx engine 4.0, PrimJS): a device-side
+ * `dispatchEvent({ type: 'rozenite', data })` does NOT arrive as a
+ * DebugRouter `Customized` frame of type `rozenite` — it arrives as an
+ * ordinary CDP event on the session:
+ *
+ * ```json
+ * { "method": "Lynx.onVMEvent",
+ *   "params": { "event": "rozenite", "vmType": "JSContext",
+ *               "data": "{\"domain\":\"rozenite\",\"message\":{...}}" } }
+ * ```
+ *
+ * The `Customized`-frame path below is kept as well: it costs nothing and
+ * covers any Lynx version (or web `@lynx-js/web-core` host) that does
+ * surface the channel that way. This is the path a real device takes.
+ */
+const LYNX_VM_EVENT_METHOD = 'Lynx.onVMEvent';
+
+/** Builds the `Runtime.bindingCalled` event the host's binding parser
+ * (`packages/app/src/connection/bindings.ts`) understands, from the raw
+ * JSON string the device sent. Shared by both device -> host paths so they
+ * can never drift apart. */
+const buildBindingCalled = (payload: string) => ({
+  method: 'Runtime.bindingCalled',
+  params: {
+    name: BINDING_NAME,
+    executionContextId: EXECUTION_CONTEXT_ID,
+    // The device's raw string, passed through untouched. Do not
+    // parse-and-restringify: that would silently normalise key order
+    // (and any other formatting) and lose fidelity with what the device
+    // actually sent.
+    payload,
+  },
+});
+
+/**
+ * Recognises a `Lynx.onVMEvent` carrying a Rozenite devtool-channel
+ * payload and returns its `data` string, or `null` for anything else
+ * (other VM events pass through to the host untouched).
+ *
+ * Defensive like the rest of this module: any shape that is not exactly
+ * `{ method, params: { event: 'rozenite', data: string } }` returns
+ * `null` rather than throwing.
+ */
+const readRozeniteVmEventPayload = (message: unknown): string | null => {
+  if (message === null || typeof message !== 'object' || Array.isArray(message)) {
+    return null;
+  }
+  const record = message as Record<string, unknown>;
+  if (record.method !== LYNX_VM_EVENT_METHOD) {
+    return null;
+  }
+
+  const params = record.params;
+  if (params === null || typeof params !== 'object' || Array.isArray(params)) {
+    return null;
+  }
+  const paramsRecord = params as Record<string, unknown>;
+
+  if (paramsRecord.event !== ROZENITE_CUSTOMIZED_TYPE || typeof paramsRecord.data !== 'string') {
+    return null;
+  }
+
+  return paramsRecord.data;
+};
+
 const rewriteBackgroundContextAsMain = (message: unknown): unknown => {
   if (message === null || typeof message !== 'object' || Array.isArray(message)) {
     return message;
@@ -136,6 +203,16 @@ export const translateDeviceFrame = (frame: DeviceFrame): DeviceAction => {
   }
 
   if (frame.kind === 'cdp') {
+    // Lynx delivers the device -> host devtool channel as a
+    // `Lynx.onVMEvent` CDP event rather than a `Customized` frame (see
+    // `readRozeniteVmEventPayload`), so it is turned into the
+    // `Runtime.bindingCalled` the host expects here, before the generic
+    // pass-through below.
+    const vmEventPayload = readRozeniteVmEventPayload(frame.message);
+    if (vmEventPayload !== null) {
+      return { kind: 'send', message: buildBindingCalled(vmEventPayload) };
+    }
+
     // A CDP response or event — forwarded to the host, save for the one
     // rewrite `rewriteBackgroundContextAsMain` performs (see its doc
     // comment); every other message passes through that call unchanged.
@@ -154,21 +231,7 @@ export const translateDeviceFrame = (frame: DeviceFrame): DeviceAction => {
       };
     }
 
-    return {
-      kind: 'send',
-      message: {
-        method: 'Runtime.bindingCalled',
-        params: {
-          name: BINDING_NAME,
-          executionContextId: EXECUTION_CONTEXT_ID,
-          // The device's raw string, passed through untouched. Do not
-          // parse-and-restringify: that would silently normalise key
-          // order (and any other formatting) and lose fidelity with what
-          // the device actually sent.
-          payload: frame.data,
-        },
-      },
-    };
+    return { kind: 'send', message: buildBindingCalled(frame.data) };
   }
 
   return {

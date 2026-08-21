@@ -100,6 +100,76 @@ describe('translateDeviceFrame', () => {
     });
   });
 
+  describe('Lynx.onVMEvent (how a real device delivers the devtool channel)', () => {
+    // Verified on LynxExplorer/iOS (Lynx engine 4.0, PrimJS): a device-side
+    // `lynx.getDevtool().dispatchEvent({ type: 'rozenite', data })` arrives
+    // as this CDP event, NOT as a `Customized` frame of type `rozenite`.
+    const vmEvent = (event: unknown, data: unknown) => ({
+      method: 'Lynx.onVMEvent',
+      params: { event, vmType: 'JSContext', data },
+    });
+
+    const payload = JSON.stringify({
+      domain: 'rozenite',
+      message: { pluginId: 'demo-plugin', type: 'pong', payload: { ok: true } },
+    });
+
+    it('translates a rozenite VM event into Runtime.bindingCalled', () => {
+      const frame: DeviceFrame = {
+        kind: 'cdp',
+        clientId: 1,
+        sessionId: 2,
+        message: vmEvent('rozenite', payload),
+      };
+
+      expect(translateDeviceFrame(frame)).toEqual({
+        kind: 'send',
+        message: {
+          method: 'Runtime.bindingCalled',
+          params: {
+            name: '__CHROME_DEVTOOLS_FRONTEND_BINDING__',
+            executionContextId: 0,
+            payload,
+          },
+        },
+      });
+    });
+
+    it('passes the payload string through byte-for-byte', () => {
+      const oddlyOrdered = '{"message":{"type":"pong"},"domain":"rozenite"}';
+      const frame: DeviceFrame = {
+        kind: 'cdp',
+        clientId: 1,
+        sessionId: 2,
+        message: vmEvent('rozenite', oddlyOrdered),
+      };
+
+      const action = translateDeviceFrame(frame);
+      expect(action).toMatchObject({ kind: 'send' });
+      expect((action as { message: { params: { payload: string } } }).message.params.payload).toBe(
+        oddlyOrdered,
+      );
+    });
+
+    it('forwards a VM event for another channel untouched', () => {
+      const message = vmEvent('preact-devtools', payload);
+      const frame: DeviceFrame = { kind: 'cdp', clientId: 1, sessionId: 2, message };
+      expect(translateDeviceFrame(frame)).toEqual({ kind: 'send', message });
+    });
+
+    it('forwards a rozenite VM event with a non-string data field untouched', () => {
+      const message = vmEvent('rozenite', { not: 'a string' });
+      const frame: DeviceFrame = { kind: 'cdp', clientId: 1, sessionId: 2, message };
+      expect(translateDeviceFrame(frame)).toEqual({ kind: 'send', message });
+    });
+
+    it('forwards a Lynx.onVMEvent with no params untouched', () => {
+      const message = { method: 'Lynx.onVMEvent' };
+      const frame: DeviceFrame = { kind: 'cdp', clientId: 1, sessionId: 2, message };
+      expect(translateDeviceFrame(frame)).toEqual({ kind: 'send', message });
+    });
+  });
+
   describe('customized "rozenite" frames', () => {
     it('rewrites into a Runtime.bindingCalled event carrying the payload verbatim', () => {
       const frame: DeviceFrame = {
