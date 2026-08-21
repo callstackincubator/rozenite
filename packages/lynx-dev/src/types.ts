@@ -15,9 +15,10 @@ export type LynxClient = {
   clientId: number;
   /**
    * Stable identity of the device the client runs on. The physical
-   * serial/udid where DebugRouter discovered one; on the desktop path
-   * (simulators and emulators) the host plus the connector's TCP port,
-   * which is what distinguishes two simulators on one machine. See
+   * serial/udid where DebugRouter discovered one -- including an Android
+   * emulator, which adb reports as `emulator-5554`; on the desktop path
+   * (the iOS Simulator) the host plus the connector's TCP port, which is
+   * what distinguishes two simulators on one machine. See
    * `mapClientToLynxClient` in `transport/index.ts`.
    */
   deviceId: string;

@@ -58,8 +58,9 @@ export type ClientRawInfoLike = {
  * `device_model` are assembled by the connector's device manager, not by
  * the app: `usb/ClientAdapter.js` sets `os: this.type`, `device:
  * this.device`, `device_id: this.device_id` from whichever manager owns
- * the connection. On the physical iOS/Android paths those are the real
- * udid/serial, but a Simulator or emulator is reached over the *desktop*
+ * the connection. On the adb and usbmux paths those are the real
+ * udid/serial (an Android emulator included -- adb lists it like any
+ * other device), but an iOS *Simulator* is reached over the *desktop*
  * path (`DesktopDeviceManager` -> `MacDevice`), where all three become
  * the host machine -- literally `"Mac"` on macOS. The connector itself
  * knows this is lossy and patches around it in one place, appending

@@ -31,14 +31,20 @@ export type LynxTransportOptions = {
    * desktop are on by default; Harmony is opt-in.
    *
    * `enableDesktop` covers more than its name suggests, and turning it off
-   * is how you lose simulators. The Android and iOS paths discover
-   * *physical* devices only, over adb and usbmux respectively. An iOS
-   * Simulator is an ordinary macOS process, so DebugRouter inside it is
-   * reachable on `127.0.0.1:8901-8919` — which is exactly what the
-   * connector's desktop path scans (`DesktopDeviceManager` registers a
-   * `MacDevice` whose `getHost()` is `127.0.0.1`, and `ClientAdapter`
-   * opens a plain TCP socket to it). Simulators and emulators are the
-   * common case for a dev server, so this defaults to on.
+   * is how you lose the *iOS Simulator* specifically. An iOS Simulator is
+   * an ordinary macOS process, so DebugRouter inside it is reachable on
+   * `127.0.0.1:8901-8919` — which is exactly what the connector's desktop
+   * path scans (`DesktopDeviceManager` registers a `MacDevice` whose
+   * `getHost()` is `127.0.0.1`, and `ClientAdapter` opens a plain TCP
+   * socket to it). Simulators are the common case for a dev server, so
+   * this defaults to on.
+   *
+   * An Android *emulator* is not on that path: adb lists it exactly like a
+   * physical device, so `enableAndroid` finds it and reports its real
+   * `emulator-5554`-style serial. Measured by running the connector with
+   * one platform enabled at a time against a booted iPhone Simulator and a
+   * booted Android emulator: `enableAndroid` alone found
+   * `Android/emulator-5554`, `enableDesktop` alone found `Mac/Mac:8901`.
    */
   enableAndroid?: boolean;
   enableIOS?: boolean;
@@ -71,11 +77,16 @@ const firstNonEmpty = (...values: Array<string | undefined>): string | undefined
  * wherever the two describe the same thing.
  *
  * The flat fields describe *the transport that found the client*, not the
- * client -- see `ClientQueryLike`'s doc comment. On the desktop path
- * (every iOS Simulator and Android emulator) `query.os`, `query.device`
- * and `query.device_id` are all the host machine, so a simulator-hosted
- * iOS app reports as `Mac (Mac)`. `raw_info` is the device's own
- * registration payload and says `iOS` / `iPhone` / `26.4.1`.
+ * client -- see `ClientQueryLike`'s doc comment. On the desktop path (the
+ * iOS Simulator) `query.os`, `query.device` and `query.device_id` are all
+ * the host machine, so a simulator-hosted iOS app reports as `Mac (Mac)`.
+ * `raw_info` is the device's own registration payload and says `iOS` /
+ * `iPhone` / `26.4.1`.
+ *
+ * The adb path (Android, emulators included) does not have this problem:
+ * `query.os` is already `Android` and `query.device_id` the real serial.
+ * Android's `raw_info` carries no `osType`, so `os` falls back to
+ * `query.os` there -- which is why the fallback order matters.
  *
  * `deviceId` keeps `query.device_id` as its base: on a physical device
  * that is the real udid/serial, and `raw_info` carries no equivalent
@@ -83,7 +94,7 @@ const firstNonEmpty = (...values: Array<string | undefined>): string | undefined
  * comment). To keep two simulators on one machine from collapsing onto a
  * single `deviceId` of `"Mac"`, the connector's TCP port is appended when
  * it is the only thing telling them apart: `DesktopDeviceManager` scans
- * `127.0.0.1:8901-8919` and each running simulator/emulator owns one
+ * `127.0.0.1:8901-8919` and each running simulator owns one
  * port, which -- unlike `debugRouterId` or the connector's own numeric
  * client id -- is stable across app relaunches (verified across four
  * successive relaunches on one simulator: port `8901` throughout, while
