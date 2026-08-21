@@ -3,23 +3,37 @@ import { RuntimeEvent, SDK } from './rn-devtools-frontend.js';
 /**
  * The framework a React Native DevTools window is attached to.
  *
- * Only two are reachable here. Rozenite for Web debugs a browser page
- * through this very frontend (see `@rozenite/chrome-extension`), so a
- * window titled "React Native DevTools" can just as easily be showing a
- * web app as a native one — which is exactly what this disambiguates.
- * Lynx never reaches this code at all: its dev server serves no Fusebox
- * frontend (`packages/middleware/src/middleware.ts` skips
- * `/rn_fusebox.html` on `platform: 'lynx'`), so a Lynx developer sees the
- * standalone `@rozenite/app` instead, which names the framework in its own
- * footer.
+ * Rozenite for Web debugs a browser page through this very frontend (see
+ * `@rozenite/chrome-extension`), so a window titled "React Native
+ * DevTools" can just as easily be showing a web app as a native one —
+ * which is exactly what this disambiguates. Lynx is listed for symmetry
+ * with `@rozenite/app`'s `src/framework.ts` (keep the two readers in
+ * sync) but is unreachable here: a Lynx dev server serves no Fusebox
+ * frontend at all — `packages/middleware/src/middleware.ts` skips
+ * `/rn_fusebox.html` on `platform: 'lynx'` — so a Lynx developer sees the
+ * standalone app instead, which names the framework in its own footer.
  */
-export type Framework = 'React Native' | 'Web';
+export type Framework = 'React Native' | 'Web' | 'Lynx';
 
-const FRAMEWORKS: readonly Framework[] = ['React Native', 'Web'];
+const FRAMEWORKS: readonly Framework[] = ['React Native', 'Web', 'Lynx'];
+
+/**
+ * Framework names as they appear in `ReactNativeApplication`'s
+ * `integrationName`.
+ *
+ * That field is free-form — React Native's own values are host
+ * integrations like "iOS Bridge (RCTBridge)" — so this recognises the
+ * values Rozenite itself sends and lets everything else fall through to
+ * the `platform` reading in `getFramework`.
+ */
+const FRAMEWORK_BY_INTEGRATION: Record<string, Framework> = {
+  Lynx: 'Lynx',
+};
 
 const SEPARATOR = ' · ';
 
 type ApplicationMetadata = {
+  integrationName?: string;
   platform?: string;
 };
 
@@ -30,14 +44,25 @@ type ApplicationModel = SDK.ReactNativeApplicationModel.ReactNativeApplicationMo
  * `ReactNativeApplication.metadataUpdated` payload the frontend already
  * subscribes to for its own title.
  *
- * React Native reports the device OS here (`ios`/`android`);
- * `@rozenite/chrome-extension`, which answers the whole
- * `ReactNativeApplication` domain on behalf of a browser page, reports
- * `web`. Anything else is treated as React Native rather than dropped, so
- * a future OS never silently loses the label.
+ * Two readings, in precedence order: an explicit `integrationName` this
+ * build knows, then `platform === 'web'` — what
+ * `@rozenite/chrome-extension` reports, and the only framework that *is*
+ * a platform. Anything else is React Native rather than nothing:
+ * `platform` is the device OS there (`ios`/`android`), so a future OS
+ * must not silently cost the label.
  */
-export const getFramework = (metadata: ApplicationMetadata): Framework =>
-  metadata.platform === 'web' ? 'Web' : 'React Native';
+export const getFramework = (metadata: ApplicationMetadata): Framework => {
+  const known =
+    metadata.integrationName !== undefined
+      ? FRAMEWORK_BY_INTEGRATION[metadata.integrationName]
+      : undefined;
+
+  if (known) {
+    return known;
+  }
+
+  return metadata.platform === 'web' ? 'Web' : 'React Native';
+};
 
 const withoutFramework = (title: string): string => {
   const known = FRAMEWORKS.find((framework) => title.startsWith(`${framework}${SEPARATOR}`));

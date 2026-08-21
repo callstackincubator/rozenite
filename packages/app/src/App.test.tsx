@@ -64,7 +64,7 @@ afterEach(() => {
 /** A controllable `DeviceConnection` double: `setState` drives
  * `useSyncExternalStore` the same way a real device event would. */
 function createFakeConnection(
-  target: DeviceTarget = { name: 'Pixel 8', appId: 'com.example.app' },
+  target: DeviceTarget = { name: 'Pixel 8', appId: 'com.example.app', framework: null },
 ) {
   let state: DeviceState = { status: 'connecting' };
   const listeners = new Set<(state: DeviceState) => void>();
@@ -102,6 +102,12 @@ function createFakeConnection(
     // friendly device name (`setDeviceName`).
     setTargetName: (name: string) => {
       target = { ...target, name };
+      notify();
+    },
+    // Same shape as `setTargetName`: how the real connection reports a
+    // framework read off `ReactNativeApplication.metadataUpdated`.
+    setFramework: (framework: DeviceTarget['framework']) => {
+      target = { ...target, framework };
       notify();
     },
   };
@@ -142,6 +148,7 @@ describe('App', () => {
     const { connection, setState } = createFakeConnection({
       name: 'Pixel 8',
       appId: 'com.example.app',
+      framework: null,
     });
     setState({ status: 'connected' });
 
@@ -161,6 +168,23 @@ describe('App', () => {
     expect(screen.getByText('React Native')).toBeTruthy();
   });
 
+  it("prefers the device's own framework over the dev server's", async () => {
+    // A Lynx dev server is not the only way to end up debugging Lynx, and
+    // the target is the more specific answer — see `Footer` in `App.tsx`.
+    const { connection, setState, setFramework } = createFakeConnection();
+    setState({ status: 'connected' });
+
+    render(<App target={{ kind: 'connection', connection }} />);
+
+    await findPanelIframe();
+    expect(screen.getByText('React Native')).toBeTruthy();
+
+    setFramework('Lynx');
+
+    expect(await screen.findByText('Lynx')).toBeTruthy();
+    expect(screen.queryByText('React Native')).toBeNull();
+  });
+
   it('names Lynx in the footer when the dev server serves Lynx', async () => {
     servedConfig = { ...CONFIG_OK, platform: 'lynx' };
     const { connection, setState } = createFakeConnection();
@@ -177,6 +201,7 @@ describe('App', () => {
     const { connection, setState, setTargetName } = createFakeConnection({
       name: 'device-hash-abc123',
       appId: 'com.example.app',
+      framework: null,
     });
     setState({ status: 'connected' });
 

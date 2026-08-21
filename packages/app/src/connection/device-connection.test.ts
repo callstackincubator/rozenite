@@ -467,7 +467,11 @@ describe('createDeviceConnection', () => {
 
       newSocket.open();
       await waitUntil(() => connection.getState().status === 'connected');
-      expect(connection.getTarget()).toEqual({ name: 'iPhone 16', appId: 'com.example.app' });
+      expect(connection.getTarget()).toEqual({
+        name: 'iPhone 16',
+        appId: 'com.example.app',
+        framework: null,
+      });
     });
 
     it('goes straight to disconnected when another debugger took the device', async () => {
@@ -684,6 +688,56 @@ describe('createDeviceConnection', () => {
 
       await waitUntil(() => connection.getState().status === 'connected');
       expect(connection.getTarget().name).toBe('device-1');
+    });
+  });
+
+  describe('framework reporting', () => {
+    it('reads the framework off ReactNativeApplication.metadataUpdated', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+      expect(connection.getTarget().framework).toBeNull();
+
+      socket.emitEvent('ReactNativeApplication.metadataUpdated', {
+        integrationName: 'iOS Bridge (RCTBridge)',
+        platform: 'ios',
+        appDisplayName: 'MyApp',
+      });
+
+      expect(connection.getTarget().framework).toBe('React Native');
+    });
+
+    it('reads Lynx from the integration name the lynx-dev bridge answers with', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+
+      socket.emitEvent('ReactNativeApplication.metadataUpdated', {
+        integrationName: 'Lynx',
+        platform: 'android',
+        appDisplayName: 'LynxExplorer',
+      });
+
+      expect(connection.getTarget().framework).toBe('Lynx');
+    });
+
+    it('notifies subscribers without a status change, like the device name does', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+      const listener = vi.fn();
+      connection.subscribe(listener);
+
+      socket.emitEvent('ReactNativeApplication.metadataUpdated', { integrationName: 'Lynx' });
+
+      expect(listener).toHaveBeenCalledWith({ status: 'connected' });
+      expect(connection.getTarget().framework).toBe('Lynx');
+    });
+
+    it('keeps the last known framework across a reconnect', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+      socket.emitEvent('ReactNativeApplication.metadataUpdated', { integrationName: 'Lynx' });
+
+      socket.close('[CONNECTION_LOST]');
+      await waitUntil(() => connection.getState().status !== 'connected');
+
+      // The label describes the target, not the socket — it must not blink
+      // away while the connection is being re-established.
+      expect(connection.getTarget().framework).toBe('Lynx');
     });
   });
 

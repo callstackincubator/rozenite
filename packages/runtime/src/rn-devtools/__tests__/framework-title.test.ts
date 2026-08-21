@@ -29,10 +29,12 @@ vi.mock('../rn-devtools-frontend.js', () => ({
 
 const { getFramework, trackFrameworkTitle, withFramework } = await import('../framework-title.js');
 
-type MetadataListener = (event: { data: { platform?: string } }) => void;
+type Metadata = { integrationName?: string; platform?: string };
+
+type MetadataListener = (event: { data: Metadata }) => void;
 
 class FakeModel {
-  metadataCached: { platform?: string } | null = null;
+  metadataCached: Metadata | null = null;
   enabled = false;
   readonly listeners = new Set<MetadataListener>();
 
@@ -48,7 +50,7 @@ class FakeModel {
     this.listeners.delete(listener);
   }
 
-  emitMetadata(metadata: { platform?: string }): void {
+  emitMetadata(metadata: Metadata): void {
     this.metadataCached = metadata;
     this.listeners.forEach((listener) => listener({ data: metadata }));
   }
@@ -83,6 +85,18 @@ describe('getFramework', () => {
   it('reads a device OS as React Native', () => {
     expect(getFramework({ platform: 'ios' })).toBe('React Native');
     expect(getFramework({ platform: 'android' })).toBe('React Native');
+  });
+
+  it("reads React Native's own host integrations as React Native", () => {
+    expect(getFramework({ integrationName: 'iOS Bridge (RCTBridge)', platform: 'ios' })).toBe(
+      'React Native',
+    );
+  });
+
+  it('reads Lynx from the integration name, even though it cannot reach this frontend', () => {
+    // Unreachable in practice (a Lynx dev server serves no Fusebox
+    // frontend), but this reader must stay identical to `@rozenite/app`'s.
+    expect(getFramework({ integrationName: 'Lynx', platform: 'android' })).toBe('Lynx');
   });
 
   it('falls back to React Native for metadata without a platform', () => {

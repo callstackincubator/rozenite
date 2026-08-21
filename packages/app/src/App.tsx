@@ -12,7 +12,7 @@ import {
 } from '@rozenite/ui';
 import { createDeviceShellHost } from './shell-host';
 import { fetchConfig, type RozenitePlatform } from './config';
-import { getFrameworkLabel } from './framework';
+import { getFrameworkFromPlatform, type Framework } from './framework';
 import { loadPlugins } from './plugins';
 import type { DeviceConnection, DeviceState } from './connection/device-connection';
 import { TargetUrlError } from './connection/target-from-url';
@@ -102,15 +102,20 @@ function StatusBadge({ status }: { status: DeviceState['status'] }) {
 function Footer({
   deviceState,
   targetName,
+  framework,
   platform,
   runtimeVersion,
 }: {
   deviceState: DeviceState;
   targetName: string;
+  framework: Framework | null;
   platform?: RozenitePlatform;
   runtimeVersion?: string;
 }) {
-  const framework = getFrameworkLabel(platform);
+  // The device's own answer wins; the dev server's is the fallback that
+  // fills the gap before the first `metadataUpdated` arrives (and for a
+  // device that never sends one).
+  const label = framework ?? getFrameworkFromPlatform(platform);
 
   return (
     // A normal flex sibling below `Shell`, not an overlay: `Shell` is
@@ -119,13 +124,13 @@ function Footer({
     // see `ShellProps.className` in `@rozenite/shell`.
     <footer className="flex h-9 shrink-0 items-center gap-3 border-t border-border bg-card px-3 text-sm text-muted-foreground">
       <StatusBadge status={deviceState.status} />
-      {/* Independent of the connection: which framework this dev server
-          serves comes from its config, so it stays readable while the app
-          is connecting, reloading or disconnected. */}
-      {framework && (
+      {/* Not gated on the connection status: with the server's config as a
+          fallback this is known before a device connects, and stays
+          readable while reloading or disconnected. */}
+      {label && (
         <>
           <Separator orientation="vertical" className="h-4" />
-          <span>{framework}</span>
+          <span>{label}</span>
         </>
       )}
       {(deviceState.status === 'connected' || deviceState.status === 'reloading') && targetName && (
@@ -182,6 +187,12 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
   // `setDeviceName`) reaches this render even when `deviceState` itself
   // doesn't change.
   const targetName = useSyncExternalStore(connection.subscribe, () => connection.getTarget().name);
+  // Same store, same reason as `targetName` above: the framework arrives
+  // from the device mid-session, without a status change.
+  const framework = useSyncExternalStore(
+    connection.subscribe,
+    () => connection.getTarget().framework,
+  );
   // `host` must stay referentially stable for as long as `connection` does —
   // `Shell` resubscribes from it whenever the reference changes.
   const host = useMemo(() => createDeviceShellHost(connection), [connection]);
@@ -294,6 +305,7 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
       <Footer
         deviceState={deviceState}
         targetName={targetName}
+        framework={framework}
         platform={
           configState.status === 'ready' ? configState.platform : mountedConfigRef.current?.platform
         }
