@@ -1,0 +1,52 @@
+{
+  "name": "@rozenite/react-native",
+  "version": "2.2.0",
+  "description": "React Native entry point for Rozenite.",
+  "homepage": "https://github.com/callstackincubator/rozenite#readme",
+  "bugs": {
+    "url": "https://github.com/callstackincubator/rozenite/issues"
+  },
+  "license": "MIT",
+  "author": "Szymon Chmal <szymon.chmal@callstack.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callstackincubator/rozenite.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm run build:esm & pnpm run build:cjs & pnpm run build:types & wait",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json && cp scripts/cjs-package.json dist/cjs/package.json",
+    "build:types": "tsc -p tsconfig.types.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "react": "catalog:",
+    "typescript": "~5.9.3"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

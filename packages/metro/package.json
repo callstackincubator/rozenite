@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "@react-native/metro-config": "~0.86.0",
+    "metro-resolver": "*",
     "vitest": "^4.0.18"
   },
   "engines": {

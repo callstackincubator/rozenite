@@ -78,6 +78,13 @@ export type RozeniteConfig = {
    * @default ['react-native']
    */
   integrations?: RozeniteIntegration[];
+  /**
+   * Export subpaths of this plugin (e.g. `['./register']`) that the author
+   * declares safe to reach a production bundle. Everything else the plugin
+   * exports becomes a production build error for consumers, enforced by the
+   * bundler's resolver.
+   */
+  productionEntries?: string[];
 };
 
 /**

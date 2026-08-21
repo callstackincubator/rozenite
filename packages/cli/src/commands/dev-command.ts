@@ -8,6 +8,7 @@ import {
   getTscEmits,
   PluginTarget,
   prepareEmit,
+  REGISTER_ENTRY_FILE,
   spawnTscWatch,
 } from '../utils/tsc-build.js';
 
@@ -72,7 +73,7 @@ export const devCommand = async (targetDir: string) => {
     logger.warn(`Updated package.json builder-managed fields: ${updatedFields.join(', ')}`);
   }
 
-  const { hasReactNativeEntryPoint, hasMetroEntryPoint } = targets;
+  const { hasReactNativeEntryPoint, hasMetroEntryPoint, hasRegisterEntryPoint } = targets;
 
   const watchTargets: PluginTarget[] = [
     ...(hasReactNativeEntryPoint ? (['react-native'] as const) : []),
@@ -87,7 +88,13 @@ export const devCommand = async (targetDir: string) => {
     const processes: Subprocess[] = [];
 
     for (const target of watchTargets) {
-      for (const emit of getTscEmits(target)) {
+      // `register.ts`, when present, compiles as an extra file inside the
+      // `react-native` target's emits rather than as a target of its own -
+      // see the `extraEntryFiles` doc on `TscEmit`.
+      const extraEntryFiles =
+        target === 'react-native' && hasRegisterEntryPoint ? [REGISTER_ENTRY_FILE] : undefined;
+
+      for (const emit of getTscEmits(target, { extraEntryFiles })) {
         const configPath = await prepareEmit(targetDir, emit);
         processes.push(spawnTscWatch(targetDir, configPath));
       }

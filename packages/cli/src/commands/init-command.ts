@@ -1,10 +1,17 @@
+import path from 'node:path';
 import { getProjectType, type BundlerType } from '@rozenite/tools';
 import { getAvailableBundlerTypes } from '@rozenite/tools';
 import { wrapConfigFile } from '../utils/config-wrapper.js';
+import { getMountInstructions, scaffoldDevEntryFile } from '../utils/dev-entry-scaffold.js';
 import { isGitRepositoryClean } from '../utils/git.js';
 import { logger } from '../utils/logger.js';
-import { getExecForPackageManager, installDevDependency, isProject } from '../utils/packages.js';
-import { intro, outro, promptConfirm } from '../utils/prompts.js';
+import {
+  getExecForPackageManager,
+  installDependency,
+  installDevDependency,
+  isProject,
+} from '../utils/packages.js';
+import { intro, note, outro, promptConfirm } from '../utils/prompts.js';
 import { spawn } from '../utils/spawn.js';
 import { step } from '../utils/steps.js';
 
@@ -86,6 +93,40 @@ export const initCommand = async (projectRoot: string) => {
       },
     );
   }
+
+  // Install the app-side seam. Unlike @rozenite/metro / @rozenite/repack,
+  // this is the one Rozenite package that ships to production, so it is a
+  // normal dependency rather than a dev one.
+  await step(
+    {
+      start: 'Installing @rozenite/react-native...',
+      stop: '@rozenite/react-native installed',
+      error: 'Failed to install @rozenite/react-native',
+    },
+    async () => {
+      await installDependency(projectRoot, '@rozenite/react-native');
+    },
+  );
+
+  // Scaffold the dev entry. This is best-effort: the bundler config wrapped
+  // above is what actually matters, so a scaffold failure is reported and
+  // swallowed rather than aborting a mostly-successful init.
+  try {
+    const result = await scaffoldDevEntryFile(projectRoot);
+    const relativePath = path.relative(projectRoot, result.filePath);
+
+    if (result.status === 'created') {
+      logger.success(`Created ${relativePath}`);
+    } else {
+      logger.info(`Found existing ${relativePath}, leaving it untouched`);
+    }
+  } catch (err) {
+    logger.warn(
+      `Could not create rozenite.dev.tsx: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  note(getMountInstructions());
 
   outro('You are now ready to use Rozenite!');
 };
