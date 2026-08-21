@@ -5,4 +5,7 @@ export default {
       source: './src/ui/panel.tsx',
     },
   ],
+  // The store enhancer runs in ordinary app code, so it needs a touchpoint
+  // that survives a production build. See `register.ts`.
+  productionEntries: ['./register'],
 };

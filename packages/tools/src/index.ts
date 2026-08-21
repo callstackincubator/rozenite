@@ -12,3 +12,5 @@ export {
   createMetroConfigTransformer,
   composeMetroConfigTransformers,
 } from './metro-transformers.js';
+export { isBundling } from './is-bundling.js';
+export { getBinaryRelativePath } from './packages.js';

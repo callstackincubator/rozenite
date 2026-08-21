@@ -46,6 +46,34 @@ describe('getTscEmits', () => {
       expect(getTscEmits(target).filter((emit) => emit.declaration)).toHaveLength(1);
     }
   });
+
+  it('adds register.ts to both react-native emits, not a target of its own', () => {
+    // `register.ts` must share the react-native target's single output tree
+    // rather than emit a second copy of `dist/react-native/src/**` under a
+    // separate outDir.
+    expect(getTscEmits('react-native', { extraEntryFiles: ['register.ts'] })).toEqual([
+      {
+        target: 'react-native',
+        format: 'esm',
+        outDir: 'dist/react-native',
+        declaration: true,
+        extraEntryFiles: ['register.ts'],
+      },
+      {
+        target: 'react-native',
+        format: 'cjs',
+        outDir: 'dist/react-native/cjs',
+        declaration: false,
+        extraEntryFiles: ['register.ts'],
+      },
+    ]);
+  });
+
+  it('ignores extraEntryFiles for targets other than react-native', () => {
+    expect(getTscEmits('metro', { extraEntryFiles: ['register.ts'] })).toEqual([
+      { target: 'metro', format: 'cjs', outDir: 'dist/metro', declaration: true },
+    ]);
+  });
 });
 
 describe('writeModuleTypeMarker', () => {
@@ -106,5 +134,18 @@ describe('prepareEmit', () => {
       moduleResolution: 'node10',
       outDir: '../dist/metro',
     });
+  });
+
+  it('compiles register.ts into the same react-native emit as react-native.ts', async () => {
+    const projectRoot = await createTempDir();
+    const [esm, cjs] = getTscEmits('react-native', { extraEntryFiles: ['register.ts'] });
+
+    const esmConfig = await readJson(await prepareEmit(projectRoot, esm));
+    const cjsConfig = await readJson(await prepareEmit(projectRoot, cjs));
+
+    expect(esmConfig.files).toEqual(['../react-native.ts', '../register.ts']);
+    expect(esmConfig.compilerOptions.outDir).toBe('../dist/react-native');
+    expect(cjsConfig.files).toEqual(['../react-native.ts', '../register.ts']);
+    expect(cjsConfig.compilerOptions.outDir).toBe('../dist/react-native/cjs');
   });
 });
