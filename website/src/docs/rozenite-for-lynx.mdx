@@ -3,7 +3,7 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 # Rozenite for Lynx
 
 :::warning Experimental
-Rozenite for Lynx is experimental. It has been verified against LynxExplorer on the iOS Simulator, the Android emulator and a physical Android phone, not across the full range of LynxSDK versions and platforms, and the API may change in future releases.
+Rozenite for Lynx is experimental. It has been verified against LynxExplorer on the iOS Simulator, the Android emulator, and a physical Android phone over USB. A physical iPhone should work the same way, over DebugRouter's usbmux transport, but that path hasn't been tested yet. It has not been verified across the full range of LynxSDK versions, and the API may change in future releases.
 :::
 
 Rozenite for Lynx lets you debug a [Lynx](https://lynxjs.org) app with the same DevTools panels, the same plugin catalogue and the same `rozenite` CLI you use for React Native.
@@ -88,8 +88,6 @@ Note that `enableDesktop` is an iOS Simulator concern only. An Android emulator 
 **Your card shows up but panels stay disconnected.** The app is reachable but Rozenite isn't running inside it. Check `@rozenite/lynx` is imported at the entry point and that the import actually runs in your development build.
 
 **A panel connects but never receives anything.** Most likely the plugin's device half is written against React Native APIs — see [What doesn't work yet](#what-doesnt-work-yet).
-
-**Your targets all disappear at once, and stay gone.** Something else attached to DebugRouter and took the connections — a second Rozenite dev server is the usual culprit. Only one tool can talk to a device's DebugRouter at a time. Reloading the app won't bring the targets back; close the other tool and restart the dev server.
 
 **`lynx.getDevtool is not a function`.** Your LynxSDK predates the devtool event channel. Upgrade it.
 
