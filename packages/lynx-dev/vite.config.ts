@@ -2,7 +2,7 @@
 import { defineConfig } from 'vite';
 import path, { resolve } from 'node:path';
 import dts from 'vite-plugin-dts';
-import packageJson from './package.json' assert { type: 'json' };
+import packageJson from './package.json' with { type: 'json' };
 
 const dependencies = Object.keys(packageJson.dependencies || {});
 
