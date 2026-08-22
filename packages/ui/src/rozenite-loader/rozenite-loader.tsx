@@ -6,9 +6,10 @@ export interface RozeniteLoaderProps {
   size?: number;
   /** Grid cells across the logo width. Default 16 (good for ≤64 px). */
   cols?: number;
-  /** Frames per loop. Default 48 (≈13 fps of visible flips). */
+  /** Frames per loop. Default 48 (≈24 fps of visible flips at the default
+   * `period`). */
   frames?: number;
-  /** Loop duration in ms. Default 3600. */
+  /** Loop duration in ms — lower is faster. Default 2000. */
   period?: number;
   /** Organic grain amount, 0–1.4. Default 0.8. */
   noise?: number;
@@ -82,7 +83,7 @@ export function RozeniteLoader({
   size = 48,
   cols = 16,
   frames = 48,
-  period = 3600,
+  period = 2000,
   noise = 0.8,
   fg = '#8232ff',
   bg = 'transparent',
