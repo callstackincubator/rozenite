@@ -13,6 +13,14 @@ import { createMetroConfigTransformer } from '@rozenite/tools';
 const PACKAGE_ROOT = path.join(__dirname, '..', '..', '..', '..');
 const SETUP_POLYFILL_PATH = path.join(PACKAGE_ROOT, 'src', 'metro', 'setup.js');
 
+export type RozeniteRequireProfilerOptions = {
+  /**
+   * Whether to instrument the bundle.
+   * @default process.env.NODE_ENV !== 'production'
+   */
+  enabled?: boolean;
+};
+
 /**
  * Metro config wrapper for require profiling instrumentation.
  *
@@ -28,24 +36,45 @@ const SETUP_POLYFILL_PATH = path.join(PACKAGE_ROOT, 'src', 'metro', 'setup.js');
 /**
  * Wraps an existing Metro config to enable require profiling instrumentation.
  * This adds timing instrumentation to track module require() calls.
+ *
+ * Instrumentation is dev-only. The primary gate is `withRozenite`'s own
+ * `enabled` option: when it is false, `enhanceMetroConfig` never runs and
+ * this transformer is never reached. Two further layers cover the cases that
+ * sit outside it — a config that enables Rozenite unconditionally, and using
+ * this wrapper standalone, without `withRozenite` at all:
+ *
+ * - Config time (here): `enabled` defaults to `NODE_ENV !== 'production'`,
+ *   and when disabled the config is returned untouched.
+ * - Runtime: `setup.js` is guarded by `__DEV__`, which Metro's transformer
+ *   inlines to `false` and then dead-code-eliminates in a production build.
+ *   Should the polyfill ship anyway it defines nothing, which leaves the
+ *   `__patchSystrace` prepend below a no-op — it already guards with
+ *   `typeof __patchSystrace === "function"`.
  */
-export const withRozeniteRequireProfiler = createMetroConfigTransformer(
-  (config: MetroConfig): MetroConfig => {
-    const existingGetPolyfills = config.serializer?.getPolyfills ?? (() => []);
-    const existingGetRunModuleStatement =
-      config.serializer?.getRunModuleStatement ??
-      ((moduleId: string | number) => `__r(${JSON.stringify(moduleId)});`);
+export const withRozeniteRequireProfiler =
+  createMetroConfigTransformer<RozeniteRequireProfilerOptions>(
+    (config: MetroConfig, options): MetroConfig => {
+      const enabled = options?.enabled ?? process.env.NODE_ENV !== 'production';
 
-    return {
-      ...config,
-      serializer: {
-        ...config.serializer,
-        getPolyfills: (...opts) => [...existingGetPolyfills(...opts), SETUP_POLYFILL_PATH],
-        getRunModuleStatement: (...opts) => {
-          const statement = existingGetRunModuleStatement(...opts);
-          return `typeof __patchSystrace === "function" && __patchSystrace();\n${statement}`;
+      if (!enabled) {
+        return config;
+      }
+
+      const existingGetPolyfills = config.serializer?.getPolyfills ?? (() => []);
+      const existingGetRunModuleStatement =
+        config.serializer?.getRunModuleStatement ??
+        ((moduleId: string | number) => `__r(${JSON.stringify(moduleId)});`);
+
+      return {
+        ...config,
+        serializer: {
+          ...config.serializer,
+          getPolyfills: (...opts) => [...existingGetPolyfills(...opts), SETUP_POLYFILL_PATH],
+          getRunModuleStatement: (...opts) => {
+            const statement = existingGetRunModuleStatement(...opts);
+            return `typeof __patchSystrace === "function" && __patchSystrace();\n${statement}`;
+          },
         },
-      },
-    };
-  },
-);
+      };
+    },
+  );

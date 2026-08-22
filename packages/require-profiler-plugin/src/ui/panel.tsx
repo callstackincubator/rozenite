@@ -1,99 +1,100 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { FlameGraph, RawData } from 'react-flame-graph';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { RequireProfilerEventMap, RequireChainMeta, RequireChainData } from '../shared';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Flame, Layers, RefreshCw } from 'lucide-react';
 import {
-  transformToFlameGraphData,
-  calculateStats,
-  findMaxValue,
-  applyColors,
-  ensureMinimumValues,
-} from './transformations';
-import {
-  Header,
-  InfoBar,
-  Legend,
-  LoadingState,
+  Badge,
+  DescriptionList,
   EmptyState,
+  FlameGraph,
+  IconButton,
+  PluginShell,
+  RozeniteLoader,
+  SearchField,
+  Select,
   Sidebar,
-  OptionsModal,
-  ProfilerOptions,
-} from './components';
+  Split,
+  Tabs,
+  Text,
+  VirtualizedDataTable,
+  type FlameGraphNode,
+} from '@rozenite/ui';
+import type { RequireChainData, RequireChainMeta, RequireProfilerEventMap } from '../shared';
+import {
+  aggregateModules,
+  filterChains,
+  matchesQuery,
+  toFlameGraphNode,
+  type ModuleStat,
+} from './aggregations';
+import { formatCount, formatDuration, formatOffset } from './format';
 
-import './styles.css';
+import './globals.css';
 
-const DEFAULT_OPTIONS: ProfilerOptions = {
-  minChainDurationMs: 0,
+const DURATION_THRESHOLDS = [
+  { value: '0', label: 'All chains' },
+  { value: '1', label: '≥ 1ms' },
+  { value: '10', label: '≥ 10ms' },
+  { value: '50', label: '≥ 50ms' },
+  { value: '100', label: '≥ 100ms' },
+] as const;
+
+type SelectedModule = {
+  name: string;
+  path: string;
+  selfTime: number;
+  totalTime: number;
+  /** Direct dependencies, when the selection came from the flame graph. */
+  dependencies?: number;
+  occurrences?: number;
 };
 
-const App = () => {
-  const [selectedNode, setSelectedNode] = useState<RawData | null>(null);
-  const [showSidebar, setShowSidebar] = useState(() => window.innerWidth > 768);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [chainsList, setChainsList] = useState<RequireChainMeta[]>([]);
-  const [currentChainIndex, setCurrentChainIndex] = useState(0);
-  const [currentChainData, setCurrentChainData] = useState<RequireChainData | null>(null);
-  const [chainDataCache, setChainDataCache] = useState<Map<number, RequireChainData>>(new Map());
-  const [loading, setLoading] = useState(false);
-  const [showOptionsModal, setShowOptionsModal] = useState(false);
-  const [options, setOptions] = useState<ProfilerOptions>(DEFAULT_OPTIONS);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Auto-hide sidebar on small screens (only on resize)
-  useEffect(() => {
-    const checkScreenSize = () => {
-      const isSmallScreen = window.innerWidth <= 768;
-      if (isSmallScreen && !selectedNode) {
-        setShowSidebar(false);
-      }
-    };
-
-    window.addEventListener('resize', checkScreenSize);
-
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, [selectedNode]);
-
+const RequireProfilerContent = () => {
   const client = useRozeniteDevToolsClient<RequireProfilerEventMap>({
     pluginId: '@rozenite/require-profiler-plugin',
   });
 
-  // Request chains list on mount and when client becomes available
+  const [chains, setChains] = useState<RequireChainMeta[]>([]);
+  const [chainData, setChainData] = useState<Map<number, RequireChainData>>(new Map());
+  const [selectedChainIndex, setSelectedChainIndex] = useState<number | null>(null);
+  const [pendingChainIndex, setPendingChainIndex] = useState<number | null>(null);
+  const [listLoading, setListLoading] = useState(true);
+  const [minDuration, setMinDuration] = useState('0');
+  const [query, setQuery] = useState('');
+  const [view, setView] = useState('flame-graph');
+  const [selectedModule, setSelectedModule] = useState<SelectedModule | null>(null);
+  const [selectedFrameKey, setSelectedFrameKey] = useState<string | undefined>(undefined);
+
   useEffect(() => {
     if (!client) {
       return;
     }
 
-    // Request chains list
-    client.send('request-chains-list', {});
-    setLoading(true);
-
-    // Listen for chains list responses
     const chainsListSubscription = client.onMessage('chains-list-response', (event) => {
-      setChainsList(event.chains);
-      setLoading(false);
-
-      // If we have chains, request the first one directly
-      if (event.chains.length > 0) {
-        setCurrentChainIndex(0);
-        setLoading(true);
-        client.send('request-chain-data', { chainIndex: 0 });
-      }
+      setChains(event.chains);
+      setListLoading(false);
     });
 
-    // Listen for chain data responses
     const chainDataSubscription = client.onMessage('chain-data-response', (event) => {
-      const data = event.data;
+      const { data } = event;
+      setPendingChainIndex(null);
+
       if (data) {
-        setChainDataCache((prev) => new Map(prev.set(data.index, data)));
-        setCurrentChainData(data);
+        setChainData((previous) => new Map(previous).set(data.index, data));
       }
-      setLoading(false);
     });
 
-    // Listen for new chain notifications (lazy requires)
     const newChainSubscription = client.onMessage('new-chain', (event) => {
-      setChainsList((prev) => [...prev, event.chain]);
+      setChains((previous) => {
+        if (previous.some((chain) => chain.index === event.chain.index)) {
+          return previous;
+        }
+        return [...previous, event.chain];
+      });
     });
+
+    setListLoading(true);
+    client.send('request-chains-list', {});
 
     return () => {
       chainsListSubscription.remove();
@@ -102,297 +103,348 @@ const App = () => {
     };
   }, [client]);
 
-  const loadChainData = useCallback(
-    (chainIndex: number) => {
-      // Check cache first
-      const cachedData = chainDataCache.get(chainIndex);
-      if (cachedData) {
-        setCurrentChainData(cachedData);
+  const visibleChains = useMemo(
+    () => filterChains(chains, Number(minDuration)),
+    [chains, minDuration],
+  );
+
+  const firstStartedAt = chains[0]?.startedAt ?? 0;
+
+  const selectChain = useCallback(
+    (index: number) => {
+      setSelectedChainIndex(index);
+      setSelectedModule(null);
+      setSelectedFrameKey(undefined);
+
+      if (!client || chainData.has(index)) {
         return;
       }
 
-      // Request from client
-      if (client) {
-        setLoading(true);
-        client.send('request-chain-data', { chainIndex });
-      }
+      setPendingChainIndex(index);
+      client.send('request-chain-data', { chainIndex: index });
     },
-    [client, chainDataCache],
+    [client, chainData],
   );
 
-  const handleRefresh = useCallback(() => {
+  // Keep a chain selected as chains arrive, and step off one the filter hides.
+  useEffect(() => {
+    const stillVisible =
+      selectedChainIndex !== null &&
+      visibleChains.some((chain) => chain.index === selectedChainIndex);
+
+    if (stillVisible || visibleChains.length === 0) {
+      return;
+    }
+
+    selectChain(visibleChains[0].index);
+  }, [visibleChains, selectedChainIndex, selectChain]);
+
+  const handleReload = useCallback(() => {
     if (!client) {
       return;
     }
-    setLoading(true);
-    setChainsList([]);
-    setCurrentChainIndex(0);
-    setCurrentChainData(null);
-    setChainDataCache(new Map());
+
+    setChains([]);
+    setChainData(new Map());
+    setSelectedChainIndex(null);
+    setPendingChainIndex(null);
+    setSelectedModule(null);
+    setSelectedFrameKey(undefined);
+    setListLoading(true);
     client.send('reload-and-profile', {});
   }, [client]);
 
-  const handleToggleSidebar = useCallback(() => {
-    setShowSidebar((prev) => !prev);
-  }, []);
+  const currentChain = selectedChainIndex === null ? null : chainData.get(selectedChainIndex);
+  const currentChainMeta = chains.find((chain) => chain.index === selectedChainIndex) ?? null;
+  const chainLoading = pendingChainIndex !== null && pendingChainIndex === selectedChainIndex;
 
-  const handleOpenOptions = useCallback(() => {
-    setShowOptionsModal(true);
-  }, []);
-
-  const handleCloseOptions = useCallback(() => {
-    setShowOptionsModal(false);
-  }, []);
-
-  const handleOptionsChange = useCallback(
-    (newOptions: ProfilerOptions) => {
-      setOptions(newOptions);
-
-      const noFilter = newOptions.minChainDurationMs <= 0;
-
-      // Determine which chains pass the new filter
-      const validChainIndices = chainsList
-        .map((_, index) => index)
-        .filter((index) => {
-          if (noFilter) {
-            // No filter - all chains are valid
-            return true;
-          }
-
-          // Filter active - only include cached chains that meet the threshold
-          const cachedData = chainDataCache.get(index);
-          return cachedData && cachedData.tree.value >= newOptions.minChainDurationMs;
-        });
-
-      // Check if current chain is still valid under new filter
-      const currentChainStillValid = validChainIndices.includes(currentChainIndex);
-
-      if (currentChainStillValid) {
-        // Current chain passes the filter, ensure it's loaded/restored
-        loadChainData(currentChainIndex);
-      } else if (validChainIndices.length > 0) {
-        // Current chain doesn't pass filter, navigate to first valid chain
-        const firstValidIndex = validChainIndices[0];
-        setCurrentChainIndex(firstValidIndex);
-        loadChainData(firstValidIndex);
-      } else {
-        // No valid chains available
-        setCurrentChainData(null);
-      }
-    },
-    [chainsList, chainDataCache, currentChainIndex, loadChainData],
+  const flameGraphData = useMemo(
+    () => toFlameGraphNode(currentChain?.tree ?? null),
+    [currentChain],
   );
 
-  // Filter chains based on minimum duration threshold
-  // When filter is active, only include chains that have been loaded AND pass the threshold
-  // When filter is not active (0), include all chains
-  const filteredChainIndices = useMemo(() => {
-    if (options.minChainDurationMs <= 0) {
-      // No filter - show all chains
-      return chainsList.map((_, index) => index);
+  const moduleStats = useMemo(() => aggregateModules(currentChain?.tree ?? null), [currentChain]);
+
+  const filteredModuleStats = useMemo(() => {
+    if (!query) {
+      return moduleStats;
     }
+    return moduleStats.filter((stat) => matchesQuery(stat.path, query));
+  }, [moduleStats, query]);
 
-    // Filter active - only include chains that are cached AND pass the duration threshold
-    return chainsList
-      .map((_, index) => index)
-      .filter((index) => {
-        const cachedData = chainDataCache.get(index);
-        // Only include if cached and passes filter
-        if (!cachedData) {
-          return false;
-        }
-        return cachedData.tree.value >= options.minChainDurationMs;
-      });
-  }, [chainsList, chainDataCache, options.minChainDurationMs]);
-
-  // Find the current position in filtered list
-  const currentFilteredPosition = useMemo(() => {
-    return filteredChainIndices.indexOf(currentChainIndex);
-  }, [filteredChainIndices, currentChainIndex]);
-
-  // Check if current chain passes the filter
-  const currentChainPassesFilter = useMemo(() => {
-    if (options.minChainDurationMs <= 0) {
-      return true;
-    }
-    const cachedData = chainDataCache.get(currentChainIndex);
-    if (!cachedData) {
-      return true; // Not loaded yet, assume it passes
-    }
-    return cachedData.tree.value >= options.minChainDurationMs;
-  }, [currentChainIndex, chainDataCache, options.minChainDurationMs]);
-
-  const handlePrevChain = useCallback(() => {
-    if (currentFilteredPosition > 0) {
-      const newIndex = filteredChainIndices[currentFilteredPosition - 1];
-      setCurrentChainIndex(newIndex);
-      loadChainData(newIndex);
-    }
-  }, [currentFilteredPosition, filteredChainIndices, loadChainData]);
-
-  const handleNextChain = useCallback(() => {
-    if (currentFilteredPosition < filteredChainIndices.length - 1) {
-      const newIndex = filteredChainIndices[currentFilteredPosition + 1];
-      setCurrentChainIndex(newIndex);
-      loadChainData(newIndex);
-    }
-  }, [currentFilteredPosition, filteredChainIndices, loadChainData]);
-
-  // Auto-show sidebar when node is selected on small screens
-  useEffect(() => {
-    if (selectedNode && window.innerWidth <= 768) {
-      setShowSidebar(true);
-    }
-  }, [selectedNode]);
-
-  // Transform RequireTimingNode to RawData format
-  const transformedData = useMemo(() => {
-    return transformToFlameGraphData(currentChainData?.tree || null);
-  }, [currentChainData]);
-
-  const stats = useMemo(() => {
-    if (!transformedData) {
-      return { totalModules: 0, totalTime: 0 };
-    }
-    return calculateStats(transformedData);
-  }, [transformedData]);
-
-  const maxValue = useMemo(() => {
-    if (!transformedData) {
-      return 0;
-    }
-    return findMaxValue(transformedData);
-  }, [transformedData]);
-
-  const coloredData = useMemo(() => {
-    if (!transformedData) {
-      return null;
-    }
-    // If all times are 0, ensure minimum values so nodes are visible
-    const dataToColor =
-      stats.totalTime === 0 ? ensureMinimumValues(transformedData) : transformedData;
-    return applyColors(dataToColor, maxValue);
-  }, [transformedData, maxValue, stats.totalTime]);
-
-  // Update dimensions when container size changes
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setDimensions({
-          width: rect.width,
-          height: rect.height,
-        });
-      }
-    };
-
-    // Initial measurement
-    updateDimensions();
-
-    // Listen for window resize
-    window.addEventListener('resize', updateDimensions);
-
-    // Use ResizeObserver for more accurate container size tracking
-    const resizeObserver = new ResizeObserver(updateDimensions);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-
-    return () => {
-      window.removeEventListener('resize', updateDimensions);
-      resizeObserver.disconnect();
-    };
-  }, [showSidebar]); // Re-measure when sidebar toggles
-
-  const handleChange = useCallback((node: RawData | { source: RawData }) => {
-    setSelectedNode('source' in node ? (node.source as RawData) : node);
+  const handleFrameSelect = useCallback((key: string, node: FlameGraphNode) => {
+    setSelectedFrameKey(key);
+    setSelectedModule({
+      name: node.name,
+      path: node.tooltip ?? node.name,
+      selfTime: node.selfValue ?? node.value,
+      totalTime: node.value,
+      dependencies: node.children?.length ?? 0,
+    });
   }, []);
 
-  const handleReset = useCallback(() => {
-    setSelectedNode(null);
+  const handleModuleRowClick = useCallback((stat: ModuleStat) => {
+    setSelectedModule({
+      name: stat.name,
+      path: stat.path,
+      selfTime: stat.selfTime,
+      totalTime: stat.totalTime,
+      occurrences: stat.occurrences,
+    });
   }, []);
 
-  // Handle ESC key to reset zoom
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        handleReset();
-      }
-    };
+  const moduleColumns = useMemo<ColumnDef<ModuleStat>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Module',
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <div className="truncate">{row.original.name}</div>
+            <div className="truncate text-xs text-muted-foreground">{row.original.path}</div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'selfTime',
+        header: 'Self',
+        cell: ({ row }) => <Text variant="numeric">{formatDuration(row.original.selfTime)}</Text>,
+      },
+      {
+        accessorKey: 'totalTime',
+        header: 'Total',
+        cell: ({ row }) => <Text variant="numeric">{formatDuration(row.original.totalTime)}</Text>,
+      },
+      {
+        accessorKey: 'occurrences',
+        header: 'Evaluations',
+        cell: ({ row }) => <Text variant="numeric">{row.original.occurrences}</Text>,
+      },
+    ],
+    [],
+  );
 
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleReset]);
+  if (!client) {
+    return (
+      <EmptyState
+        icon={Flame}
+        title="Connecting to the device…"
+        description="Waiting for the app to report its require timings."
+      />
+    );
+  }
 
   return (
-    <div className="app-container">
-      <Header
-        onRefresh={handleRefresh}
-        onToggleSidebar={handleToggleSidebar}
-        onOpenOptions={handleOpenOptions}
-        showSidebar={showSidebar}
-        loading={loading}
-        clientAvailable={!!client}
-        currentChainIndex={currentFilteredPosition >= 0 ? currentFilteredPosition : 0}
-        totalChains={filteredChainIndices.length}
-        onPrevChain={handlePrevChain}
-        onNextChain={handleNextChain}
-      />
+    <Split direction="horizontal" autoSaveId="require-profiler">
+      <Split.Pane defaultSize={24} minSize={16} maxSize={40}>
+        <Sidebar className="w-full gap-2 border-r-0 p-0">
+          <Sidebar.Header className="gap-2 px-2">
+            <span className="flex-1 text-xs font-medium">Require chains</span>
+            <IconButton
+              label="Reload and profile"
+              size="sm"
+              variant="ghost"
+              tone="neutral"
+              onClick={handleReload}
+            >
+              <RefreshCw />
+            </IconButton>
+          </Sidebar.Header>
 
-      <OptionsModal
-        isOpen={showOptionsModal}
-        onClose={handleCloseOptions}
-        options={options}
-        onOptionsChange={handleOptionsChange}
-      />
+          <div className="px-2">
+            <Select value={minDuration} onValueChange={(value) => setMinDuration(String(value))}>
+              <Select.Trigger className="w-full" aria-label="Minimum chain duration">
+                <Select.Value />
+              </Select.Trigger>
+              <Select.Content>
+                {DURATION_THRESHOLDS.map((threshold) => (
+                  <Select.Item key={threshold.value} value={threshold.value}>
+                    {threshold.label}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select>
+          </div>
 
-      <InfoBar
-        totalTime={stats.totalTime}
-        totalModules={stats.totalModules}
-        entryName={currentChainData?.rootModuleName || transformedData?.name}
-      />
-
-      <div className="main-content">
-        <div className="flame-graph-container">
-          <div className="flame-graph-wrapper" ref={containerRef}>
-            {loading ? (
-              <LoadingState />
-            ) : !transformedData ||
-              !coloredData ||
-              !currentChainPassesFilter ||
-              filteredChainIndices.length === 0 ? (
-              <EmptyState
-                message={
-                  chainsList.length === 0
-                    ? 'No require chains available. Click refresh to load require profiler data.'
-                    : filteredChainIndices.length === 0 && options.minChainDurationMs > 0
-                      ? `No chains found with duration ≥ ${options.minChainDurationMs}ms. Try lowering the threshold in options.`
-                      : 'No data available for this chain.'
-                }
-              />
+          <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
+            {listLoading ? (
+              <div className="flex flex-1 items-center justify-center p-4">
+                <RozeniteLoader />
+              </div>
+            ) : visibleChains.length === 0 ? (
+              <p className="p-3 text-center text-xs text-sidebar-foreground/60">
+                {chains.length === 0
+                  ? 'No require chains recorded yet. Reload the app to profile startup.'
+                  : 'No chain is longer than the selected threshold.'}
+              </p>
             ) : (
-              dimensions.width > 0 &&
-              dimensions.height > 0 && (
-                <FlameGraph
-                  data={coloredData}
-                  height={dimensions.height}
-                  width={dimensions.width}
-                  onChange={handleChange}
-                />
-              )
+              <Sidebar.Group
+                label={
+                  visibleChains.length === chains.length
+                    ? `${formatCount(chains.length)} chains`
+                    : `${formatCount(visibleChains.length)} of ${formatCount(chains.length)} chains`
+                }
+              >
+                {visibleChains.map((chain) => (
+                  <Sidebar.Item
+                    key={chain.index}
+                    size="sm"
+                    selected={chain.index === selectedChainIndex}
+                    onClick={() => selectChain(chain.index)}
+                    title={`${chain.rootModuleName} · ${formatCount(
+                      chain.moduleCount,
+                    )} modules · ${formatOffset(chain.startedAt, firstStartedAt)}`}
+                    trailing={
+                      <Badge size="sm" tone="neutral" variant="soft">
+                        {formatDuration(chain.duration)}
+                      </Badge>
+                    }
+                  >
+                    {chain.rootModuleName}
+                  </Sidebar.Item>
+                ))}
+              </Sidebar.Group>
+            )}
+          </div>
+        </Sidebar>
+      </Split.Pane>
+
+      <Split.Handle />
+
+      <Split.Pane>
+        <Tabs
+          value={view}
+          onValueChange={(value) => setView(String(value))}
+          className="flex h-full min-h-0 flex-col"
+        >
+          {/* A plain bar rather than `Toolbar`: a tab list inside a toolbar
+              would nest two composite keyboard-navigation roots. */}
+          <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card px-2 py-1.5">
+            <Tabs.List size="sm">
+              <Tabs.Tab size="sm" value="flame-graph">
+                Flame graph
+              </Tabs.Tab>
+              <Tabs.Tab size="sm" value="top-modules">
+                Top modules
+              </Tabs.Tab>
+            </Tabs.List>
+            <div className="min-w-32 flex-1">
+              <SearchField
+                size="sm"
+                placeholder="Filter modules…"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onClear={() => setQuery('')}
+              />
+            </div>
+            {currentChainMeta && (
+              <div className="flex shrink-0 items-center gap-3 pr-1 text-xs text-muted-foreground">
+                <span>
+                  Total <Text variant="numeric">{formatDuration(currentChainMeta.duration)}</Text>
+                </span>
+                <span>
+                  Modules <Text variant="numeric">{formatCount(currentChainMeta.moduleCount)}</Text>
+                </span>
+              </div>
             )}
           </div>
 
-          <Legend />
-        </div>
+          <Tabs.Panel value="flame-graph" className="flex min-h-0 flex-1 flex-col">
+            {chainLoading ? (
+              <div className="flex flex-1 items-center justify-center">
+                <RozeniteLoader />
+              </div>
+            ) : (
+              <>
+                <FlameGraph
+                  key={selectedChainIndex ?? 'none'}
+                  aria-label="Require timings"
+                  className="min-h-0 flex-1"
+                  data={flameGraphData}
+                  selectedKey={selectedFrameKey}
+                  onSelect={handleFrameSelect}
+                  highlight={query}
+                  formatValue={formatDuration}
+                  emptyState={
+                    <EmptyState
+                      icon={Flame}
+                      title="No require timings for this chain"
+                      description="Reload the app to record startup timings, then pick a chain on the left."
+                    />
+                  }
+                />
+                <FlameGraph.Legend className="shrink-0 border-t border-border" />
+              </>
+            )}
+          </Tabs.Panel>
 
-        {showSidebar && <Sidebar selectedNode={selectedNode} />}
-      </div>
-    </div>
+          <Tabs.Panel value="top-modules" className="min-h-0 flex-1 overflow-hidden">
+            <VirtualizedDataTable
+              ariaLabel="Modules by self time"
+              columns={moduleColumns}
+              data={filteredModuleStats}
+              getRowId={(stat) => stat.path}
+              getRowTextValue={(stat) => stat.path}
+              loading={chainLoading}
+              emptyMessage={
+                query ? 'No module matches your filter.' : 'No modules recorded for this chain yet.'
+              }
+              onRowClick={handleModuleRowClick}
+              scrollClassName="h-full w-full overflow-auto"
+              style={{ height: '100%' }}
+            />
+          </Tabs.Panel>
+        </Tabs>
+      </Split.Pane>
+
+      {selectedModule && (
+        <>
+          <Split.Handle />
+          <Split.Pane defaultSize={26} minSize={18} maxSize={45}>
+            <div className="flex h-full min-h-0 flex-col overflow-y-auto border-l border-border bg-card">
+              <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
+                <Layers className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 flex-1 truncate text-xs font-medium">
+                  {selectedModule.name}
+                </span>
+              </div>
+              <DescriptionList className="p-3">
+                <DescriptionList.Item label="Self time">
+                  <Text variant="numeric">{formatDuration(selectedModule.selfTime)}</Text>
+                </DescriptionList.Item>
+                <DescriptionList.Item label="Total time">
+                  <Text variant="numeric">{formatDuration(selectedModule.totalTime)}</Text>
+                </DescriptionList.Item>
+                {selectedModule.dependencies !== undefined && (
+                  <DescriptionList.Item label="Dependencies">
+                    <Text variant="numeric">{formatCount(selectedModule.dependencies)}</Text>
+                  </DescriptionList.Item>
+                )}
+                {selectedModule.occurrences !== undefined && (
+                  <DescriptionList.Item label="Evaluations">
+                    <Text variant="numeric">{formatCount(selectedModule.occurrences)}</Text>
+                  </DescriptionList.Item>
+                )}
+                <DescriptionList.Item label="Path">
+                  <span className="font-mono text-xs break-all">{selectedModule.path}</span>
+                </DescriptionList.Item>
+              </DescriptionList>
+            </div>
+          </Split.Pane>
+        </>
+      )}
+    </Split>
   );
 };
 
-export default App;
+const RequireProfilerPanel = () => {
+  return (
+    <PluginShell>
+      <PluginShell.Body>
+        <RequireProfilerContent />
+      </PluginShell.Body>
+    </PluginShell>
+  );
+};
+
+export default RequireProfilerPanel;

@@ -220,6 +220,14 @@ export type {
 export { JsonInspector } from './json-inspector/json-inspector';
 export type { JsonInspectorProps } from './json-inspector/json-inspector';
 
+export { FlameGraph } from './flame-graph/flame-graph';
+export type {
+  FlameGraphProps,
+  FlameGraphNode,
+  FlameGraphFrame,
+  FlameGraphLegendProps,
+} from './flame-graph/flame-graph';
+
 export { useCopyToClipboard } from './use-copy-to-clipboard/use-copy-to-clipboard';
 export type {
   UseCopyToClipboardOptions,
