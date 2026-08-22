@@ -6,7 +6,7 @@ const PACKAGE_ROOT = path.resolve(__dirname, '..', '..');
 const SETUP_SOURCE_PATH = path.join(PACKAGE_ROOT, 'src', 'metro', 'setup.js');
 const SETUP_SOURCE = fs.readFileSync(SETUP_SOURCE_PATH, 'utf8');
 
-type FakeModule = { verboseName: string };
+type FakeModule = { verboseName?: string; isInitialized?: boolean };
 
 type FakeGlobal = {
   performance?: { now: () => number };
@@ -20,6 +20,10 @@ type FakeGlobal = {
   __patchSystrace?: () => void;
   getRequireChainsList?: () => unknown[];
   getRequireChainData?: (index: number) => unknown;
+  getBundleModules?: () => {
+    modules: Array<{ id: number | string; name: string; evaluated: boolean }>;
+    capturedAt: number;
+  };
 };
 
 type Systrace = {
@@ -42,6 +46,7 @@ const DEV_ONLY_GLOBALS = [
   'getRequireChainData',
   '__patchSystrace',
   '__onRequireChainComplete',
+  'getBundleModules',
 ] as const;
 
 describe('Metro polyfill __DEV__ guard', () => {
@@ -237,5 +242,57 @@ describe('Metro polyfill require chain recorder', () => {
 
     expect(() => systrace.endEvent()).not.toThrow();
     expect(fakeGlobal.getRequireChainsList!()).toHaveLength(1);
+  });
+});
+
+describe('Metro polyfill getBundleModules', () => {
+  it('reads the full module registry, mapping id/name/evaluated for each entry', () => {
+    const modules = new Map<number, FakeModule>([
+      [1, { verboseName: '/app/RootModule.js', isInitialized: true }],
+      [2, { verboseName: '/app/ChildModule.js', isInitialized: false }],
+      [3, { isInitialized: true }], // no verboseName - falls back to the id
+    ]);
+
+    const fakeGlobal: FakeGlobal = {
+      performance: { now: () => 0 },
+      __r: { getModules: () => modules },
+    };
+
+    runSetupInSandbox(fakeGlobal, true);
+
+    const before = Date.now();
+    const result = fakeGlobal.getBundleModules!();
+    const after = Date.now();
+
+    expect(result.modules).toHaveLength(3);
+    expect(result.modules).toEqual(
+      expect.arrayContaining([
+        { id: 1, name: '/app/RootModule.js', evaluated: true },
+        { id: 2, name: '/app/ChildModule.js', evaluated: false },
+        { id: 3, name: '3', evaluated: true },
+      ]),
+    );
+    expect(result.capturedAt).toBeGreaterThanOrEqual(before);
+    expect(result.capturedAt).toBeLessThanOrEqual(after);
+  });
+
+  it('returns an empty module list without throwing when __r is unavailable', () => {
+    const fakeGlobal: FakeGlobal = { performance: { now: () => 0 } };
+
+    runSetupInSandbox(fakeGlobal, true);
+
+    expect(() => fakeGlobal.getBundleModules!()).not.toThrow();
+    expect(fakeGlobal.getBundleModules!()).toEqual({
+      modules: [],
+      capturedAt: expect.any(Number),
+    });
+  });
+
+  it('is not defined when __DEV__ is false', () => {
+    const fakeGlobal: FakeGlobal = {};
+
+    runSetupInSandbox(fakeGlobal, false);
+
+    expect(fakeGlobal.getBundleModules).toBeUndefined();
   });
 });

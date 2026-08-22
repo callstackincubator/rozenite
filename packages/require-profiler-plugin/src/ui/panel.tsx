@@ -5,6 +5,7 @@ import { Flame, Layers, Package, RefreshCw, X } from 'lucide-react';
 import {
   Alert,
   Badge,
+  Button,
   ChevronRight,
   Column,
   DescriptionList,
@@ -23,7 +24,12 @@ import {
   VirtualizedDataTable,
   type FlameGraphNode,
 } from '@rozenite/ui';
-import type { RequireChainData, RequireChainMeta, RequireProfilerEventMap } from '../shared';
+import type {
+  BundleCoverage,
+  RequireChainData,
+  RequireChainMeta,
+  RequireProfilerEventMap,
+} from '../shared';
 import {
   aggregateModules,
   filterChains,
@@ -31,6 +37,7 @@ import {
   toFlameGraphNode,
   type ModuleStat,
 } from './aggregations';
+import { summarizeCoverage, type PackageCoverage } from './analysis/coverage';
 import { aggregatePackages, findDuplicatePackages, type PackageStat } from './analysis/packages';
 import { findRequirePath } from './analysis/require-path';
 import { EllipsisStart } from './ellipsis-start';
@@ -93,6 +100,9 @@ const RequireProfilerContent = () => {
   const [grouping, setGrouping] = useState<Grouping>('modules');
   const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null);
   const [selectedFrameKey, setSelectedFrameKey] = useState<string | undefined>(undefined);
+  const [coverage, setCoverage] = useState<BundleCoverage | null>(null);
+  const [coverageRequested, setCoverageRequested] = useState(false);
+  const [coverageLoading, setCoverageLoading] = useState(false);
 
   useEffect(() => {
     if (!client) {
@@ -122,6 +132,11 @@ const RequireProfilerContent = () => {
       });
     });
 
+    const bundleCoverageSubscription = client.onMessage('bundle-coverage-response', (event) => {
+      setCoverage(event.coverage);
+      setCoverageLoading(false);
+    });
+
     setListLoading(true);
     client.send('request-chains-list', {});
 
@@ -129,6 +144,7 @@ const RequireProfilerContent = () => {
       chainsListSubscription.remove();
       chainDataSubscription.remove();
       newChainSubscription.remove();
+      bundleCoverageSubscription.remove();
     };
   }, [client]);
 
@@ -182,6 +198,48 @@ const RequireProfilerContent = () => {
     setListLoading(true);
     client.send('reload-and-profile', {});
   }, [client]);
+
+  const loadCoverage = useCallback(() => {
+    if (!client) {
+      return;
+    }
+
+    setCoverageRequested(true);
+    setCoverageLoading(true);
+    client.send('request-bundle-coverage', {});
+  }, [client]);
+
+  const handleViewChange = useCallback(
+    (value: string) => {
+      setView(value);
+
+      // Fetch lazily: the bundle registry is far bigger than a chain tree,
+      // so only pay for it once the coverage tab is actually opened.
+      if (value === 'coverage' && !coverageRequested) {
+        loadCoverage();
+      }
+    },
+    [coverageRequested, loadCoverage],
+  );
+
+  const coverageSummary = useMemo(() => summarizeCoverage(coverage?.modules ?? []), [coverage]);
+
+  const coveragePercent =
+    coverageSummary.total === 0
+      ? 0
+      : Math.round((coverageSummary.evaluated / coverageSummary.total) * 100);
+
+  const filteredCoveragePackages = useMemo(() => {
+    if (!query) {
+      return coverageSummary.packages;
+    }
+    return coverageSummary.packages.filter((stat) => matchesQuery(stat.name, query));
+  }, [coverageSummary, query]);
+
+  const coverageDuplicatePackages = useMemo(
+    () => findDuplicatePackages((coverage?.modules ?? []).map((module) => module.name)),
+    [coverage],
+  );
 
   const currentChain = selectedChainIndex === null ? null : chainData.get(selectedChainIndex);
   const chainLoading = pendingChainIndex !== null && pendingChainIndex === selectedChainIndex;
@@ -336,6 +394,34 @@ const RequireProfilerContent = () => {
     [],
   );
 
+  const coverageColumns = useMemo<ColumnDef<PackageCoverage>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Package',
+        cell: ({ row }) => <div className="min-w-0 truncate">{row.original.name}</div>,
+      },
+      {
+        accessorKey: 'evaluated',
+        header: 'Evaluated',
+        cell: ({ row }) => <Text variant="numeric">{formatCount(row.original.evaluated)}</Text>,
+      },
+      {
+        accessorKey: 'total',
+        header: 'Total',
+        cell: ({ row }) => <Text variant="numeric">{formatCount(row.original.total)}</Text>,
+      },
+      {
+        id: 'notEvaluated',
+        header: 'Not yet evaluated',
+        cell: ({ row }) => (
+          <Text variant="numeric">{formatCount(row.original.total - row.original.evaluated)}</Text>
+        ),
+      },
+    ],
+    [],
+  );
+
   if (!client) {
     return (
       <EmptyState
@@ -431,7 +517,7 @@ const RequireProfilerContent = () => {
       <Split.Pane>
         <Tabs
           value={view}
-          onValueChange={(value) => setView(String(value))}
+          onValueChange={(value) => handleViewChange(String(value))}
           className="flex h-full min-h-0 flex-col"
         >
           {/* A plain bar rather than `Toolbar`: a tab list inside a toolbar
@@ -444,12 +530,15 @@ const RequireProfilerContent = () => {
               <Tabs.Tab size="sm" value="top-modules">
                 Top modules
               </Tabs.Tab>
+              <Tabs.Tab size="sm" value="coverage">
+                Coverage
+              </Tabs.Tab>
             </Tabs.List>
             <div className="min-w-32 flex-1">
               <SearchField
                 size="sm"
                 placeholder={
-                  view === 'top-modules' && grouping === 'packages'
+                  view === 'coverage' || (view === 'top-modules' && grouping === 'packages')
                     ? 'Filter packages…'
                     : 'Filter modules…'
                 }
@@ -458,6 +547,18 @@ const RequireProfilerContent = () => {
                 onClear={() => setQuery('')}
               />
             </div>
+            {view === 'coverage' && (
+              <IconButton
+                label="Refresh bundle coverage"
+                size="sm"
+                variant="ghost"
+                tone="neutral"
+                disabled={coverageLoading}
+                onClick={loadCoverage}
+              >
+                <RefreshCw />
+              </IconButton>
+            )}
             {view === 'top-modules' && (
               <Select value={grouping} onValueChange={(value) => setGrouping(value as Grouping)}>
                 <Select.Trigger
@@ -568,6 +669,81 @@ const RequireProfilerContent = () => {
                 scrollClassName="h-full w-full overflow-auto"
                 style={{ height: '100%' }}
               />
+            )}
+          </Tabs.Panel>
+
+          <Tabs.Panel value="coverage" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {!coverageRequested ? (
+              <EmptyState
+                icon={Package}
+                title="Bundle coverage not loaded"
+                description="Shows every module currently shipped in the bundle and flags the ones that have not been evaluated yet — the code-splitting or lazy-loading candidates. This reads the module registry once, on demand, since it can be far larger than a require chain."
+                action={<Button onClick={loadCoverage}>Load bundle coverage</Button>}
+              />
+            ) : coverageLoading && !coverage ? (
+              <div className="flex flex-1 items-center justify-center">
+                <RozeniteLoader />
+              </div>
+            ) : (
+              <>
+                {coverage && (
+                  <div className="shrink-0 border-b border-border p-3">
+                    <Text variant="body" className="font-medium">
+                      {formatCount(coverageSummary.evaluated)} of{' '}
+                      {formatCount(coverageSummary.total)} modules evaluated ({coveragePercent}%)
+                    </Text>
+                    <Text variant="caption" className="mt-1 block">
+                      As of {new Date(coverage.capturedAt).toLocaleTimeString()} — this reflects the
+                      module registry at the moment it was read, not at profiling time. A module
+                      evaluated after this snapshot will show as evaluated the next time you load
+                      coverage. Counts only modules currently defined in the bundle, so with RAM
+                      bundles or lazy segments the total can grow as more modules are shipped later.
+                    </Text>
+                  </div>
+                )}
+                {coverageDuplicatePackages.length > 0 && (
+                  <Alert
+                    tone="warning"
+                    className="m-2 max-h-40 shrink-0 overflow-y-auto rounded-md"
+                  >
+                    <Alert.Title>
+                      {formatCount(coverageDuplicatePackages.length)}{' '}
+                      {coverageDuplicatePackages.length === 1 ? 'package' : 'packages'} bundled from
+                      more than one install location
+                    </Alert.Title>
+                    <Alert.Description>
+                      <Column gap={1}>
+                        {coverageDuplicatePackages.map((duplicate) => (
+                          <div key={duplicate.name}>
+                            <span className="font-medium">{duplicate.name}</span>
+                            <span className="text-xs">
+                              {' — '}
+                              {duplicate.roots.join(', ')}
+                            </span>
+                          </div>
+                        ))}
+                      </Column>
+                    </Alert.Description>
+                  </Alert>
+                )}
+                <div className="min-h-0 flex-1">
+                  <VirtualizedDataTable
+                    ariaLabel="Bundle coverage by package"
+                    columns={coverageColumns}
+                    data={filteredCoveragePackages}
+                    getRowId={(stat) => stat.name}
+                    getRowTextValue={(stat) => stat.name}
+                    loading={coverageLoading}
+                    emptyMessage={
+                      query
+                        ? 'No package matches your filter.'
+                        : 'No modules found in the bundle registry.'
+                    }
+                    scrollClassName="h-full w-full overflow-auto"
+                    style={{ height: '100%' }}
+                  />
+                </div>
+              </>
             )}
           </Tabs.Panel>
         </Tabs>

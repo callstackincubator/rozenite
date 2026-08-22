@@ -309,7 +309,35 @@ if (typeof __DEV__ !== 'undefined' && __DEV__) {
     };
   };
 
+  /**
+   * Reads the full module registry as it stands right now: every module
+   * `define()`d into the bundle so far, evaluated or not. This is a single
+   * pass with no tree walking or sorting - that analysis happens in the
+   * DevTools panel, not on the device.
+   *
+   * @returns {{ modules: Array<{ id: number|string, name: string, evaluated: boolean }>, capturedAt: number }}
+   */
+  const getBundleModules = () => {
+    const modules = global.__r?.getModules();
+
+    if (!modules) {
+      return { modules: [], capturedAt: Date.now() };
+    }
+
+    const result = [];
+    modules.forEach((module, id) => {
+      result.push({
+        id,
+        name: module.verboseName || String(id),
+        evaluated: !!module.isInitialized,
+      });
+    });
+
+    return { modules: result, capturedAt: Date.now() };
+  };
+
   // Export for use
   global.getRequireChainsList = getRequireChainsList;
   global.getRequireChainData = getRequireChainData;
+  global.getBundleModules = getBundleModules;
 }
