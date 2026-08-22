@@ -7,4 +7,4 @@ Rebuild the Require Profiler DevTools panel on `@rozenite/ui`, so it follows the
 
 The Metro instrumentation now defends its own dev-only boundary, underneath `withRozenite`'s `enabled` gate rather than relying on it alone. `withRozeniteRequireProfiler` accepts an `enabled` option that defaults to `process.env.NODE_ENV !== 'production'`, and the polyfill it injects is guarded by `__DEV__` so Metro strips it from release bundles — covering configs that enable Rozenite unconditionally and setups that apply the wrapper without `withRozenite`.
 
-`@rozenite/ui` gains a `FlameGraph` component — a themed, responsive flame graph with zooming, selection, highlighting, and a heat legend.
+`@rozenite/ui` gains a `FlameGraph` component — a themed, responsive flame graph with animated zooming, selection, search highlighting, and a heat legend.

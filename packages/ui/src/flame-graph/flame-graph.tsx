@@ -5,7 +5,9 @@ import { Text } from '../text/text';
 import {
   getHeatBucket,
   heatBucketClassName,
+  heatBucketMutedClassName,
   layoutFlameGraph,
+  matchesHighlight,
   type FlameGraphFrame,
   type FlameGraphHeatBucket,
   type FlameGraphNode,
@@ -42,7 +44,8 @@ export type FlameGraphProps = Omit<ComponentProps<'div'>, 'onSelect'> & {
   rowHeight?: number;
   /** Formats a value for labels and hover text. @default String */
   formatValue?: (value: number) => string;
-  /** Case-insensitive substring; matching frames stay opaque, others dim. */
+  /** Case-insensitive substring matched against each frame's name and
+   *  tooltip. Matching frames are outlined, the rest are washed out. */
   highlight?: string;
   /** Frames narrower than this percentage of the viewport are not rendered. @default 0.08 */
   minFrameWidth?: number;
@@ -125,7 +128,10 @@ function FlameGraphRoot({
       onKeyDown={handleKeyDown}
       {...props}
     >
-      <div style={{ height: depthCount * rowHeight }} className="relative w-full">
+      <div
+        style={{ height: depthCount * rowHeight }}
+        className="relative w-full transition-[height] duration-150 ease-out motion-reduce:transition-none"
+      >
         {rows.map((rowFrames, depth) => (
           <div key={depth} className="relative" style={{ height: rowHeight }}>
             {rowFrames.map((frame) => (
@@ -163,7 +169,7 @@ function FlameGraphFrameButton({
   const { node, left, width, heat } = frame;
   const bucket = getHeatBucket(heat);
   const formattedValue = formatValue(node.value);
-  const matchesHighlight = !highlight || node.name.toLowerCase().includes(highlight.toLowerCase());
+  const matched = matchesHighlight(node, highlight);
 
   return (
     <button
@@ -178,14 +184,28 @@ function FlameGraphFrameButton({
       style={{ left: `${left}%`, width: `${width}%` }}
       className={cn(
         'absolute inset-y-0 overflow-hidden border-r border-background/50 px-1 text-left',
+        // Zooming only changes a surviving frame's position and width, so
+        // transitioning them animates the whole graph with no extra
+        // dependency and nothing to tear down.
+        'transition-[left,width] duration-150 ease-out motion-reduce:transition-none',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
-        heatBucketClassName[bucket],
+        matched ? heatBucketClassName[bucket] : heatBucketMutedClassName[bucket],
+        // A match is outlined rather than merely left undimmed: a matching
+        // frame with no self time sits in the palest bucket, so on its own
+        // "not washed out" reads as less prominent than the frames around it.
+        highlight && matched && 'ring-1 ring-primary ring-inset',
         selected && 'ring-2 ring-ring ring-inset',
-        highlight && !matchesHighlight && 'opacity-30',
       )}
     >
       {width > MIN_LABEL_WIDTH_PERCENT && (
-        <span className="block truncate text-[11px] leading-none">{node.name}</span>
+        <span
+          className={cn(
+            'block truncate text-[11px] leading-none',
+            highlight && matched && 'font-medium',
+          )}
+        >
+          {node.name}
+        </span>
       )}
     </button>
   );

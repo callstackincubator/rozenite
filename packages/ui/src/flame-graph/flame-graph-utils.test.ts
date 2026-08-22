@@ -5,6 +5,7 @@ import {
   getHeatBucket,
   getSelfValue,
   layoutFlameGraph,
+  matchesHighlight,
   type FlameGraphNode,
 } from './flame-graph-utils';
 
@@ -242,5 +243,33 @@ describe('layoutFlameGraph', () => {
 
     expect(focusedNode).toBeNull();
     expect(frames.map((frame) => frame.key)).toContain('0:root/1:b');
+  });
+});
+
+describe('matchesHighlight', () => {
+  const node: FlameGraphNode = {
+    name: 'HomeScreen.tsx',
+    value: 10,
+    tooltip: 'src/screens/HomeScreen.tsx',
+  };
+
+  it('matches every frame when no term is given', () => {
+    expect(matchesHighlight(node, undefined)).toBe(true);
+    expect(matchesHighlight(node, '')).toBe(true);
+  });
+
+  it('matches the name case-insensitively', () => {
+    expect(matchesHighlight(node, 'homescreen')).toBe(true);
+    expect(matchesHighlight(node, 'SETTINGS')).toBe(false);
+  });
+
+  // The name is usually a basename, so a path query has to reach the tooltip
+  // to agree with a list view filtering on the full path.
+  it('matches the tooltip when the name alone would not', () => {
+    expect(matchesHighlight(node, 'src/screens')).toBe(true);
+  });
+
+  it('does not match on a tooltip that is absent', () => {
+    expect(matchesHighlight({ name: 'a.ts', value: 1 }, 'src/')).toBe(false);
   });
 });

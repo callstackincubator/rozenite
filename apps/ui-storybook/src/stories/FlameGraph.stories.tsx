@@ -95,9 +95,13 @@ export const WithLegend: Story = {
   ),
 };
 
-/** Use `highlight` to dim every frame whose name doesn't match a
- * case-insensitive substring, e.g. while searching for a specific module.
- * @summary Dim frames that don't match a search term.
+/** Use `highlight` while searching: matching frames keep their heat color and
+ * gain an outline, and the rest wash out. The term is matched against each
+ * frame's name and its `tooltip`, so path queries work too. Matches are
+ * outlined rather than just left undimmed, because a matching frame with no
+ * self time sits in the palest bucket and would otherwise read as quieter
+ * than the frames around it.
+ * @summary Pick out frames matching a search term.
  */
 export const Highlighted: Story = {
   args: {

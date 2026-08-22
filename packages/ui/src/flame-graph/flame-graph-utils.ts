@@ -91,6 +91,43 @@ export const heatBucketClassName: Record<FlameGraphHeatBucket, string> = {
   none: 'bg-muted text-muted-foreground',
 };
 
+/**
+ * Classes for a frame that a `highlight` search pushed into the background.
+ *
+ * The background alpha is lowered rather than the whole element's `opacity`,
+ * which would fade the label with it and leave the frame unreadable. Keeping
+ * a washed-out version of the heat color (instead of flattening everything to
+ * grey) means the graph's shape and rough weighting survive the search.
+ */
+export const heatBucketMutedClassName: Record<FlameGraphHeatBucket, string> = {
+  heaviest: 'bg-danger/20 text-muted-foreground',
+  heavy: 'bg-warning/20 text-muted-foreground',
+  moderate: 'bg-info/20 text-muted-foreground',
+  light: 'bg-success/20 text-muted-foreground',
+  none: 'bg-muted/40 text-muted-foreground',
+};
+
+/**
+ * Whether a frame matches a `highlight` search term, case-insensitively.
+ *
+ * Both the label and the `tooltip` are searched: the label is often only a
+ * basename, so matching it alone would miss path queries that callers
+ * reasonably expect to work (and that any accompanying list view, filtering
+ * on the full path, would match).
+ */
+export function matchesHighlight(node: FlameGraphNode, highlight: string | undefined): boolean {
+  if (!highlight) {
+    return true;
+  }
+
+  const needle = highlight.toLowerCase();
+
+  return (
+    node.name.toLowerCase().includes(needle) ||
+    (node.tooltip?.toLowerCase().includes(needle) ?? false)
+  );
+}
+
 export type LayoutFlameGraphOptions = {
   /** Key of the node to zoom into. `null`/omitted renders the whole tree. */
   focusedKey?: string | null;
