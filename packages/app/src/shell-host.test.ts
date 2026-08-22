@@ -25,7 +25,7 @@ const createFakeConnection = (): {
         messageListeners.delete(listener);
       };
     },
-    getTarget: () => ({ name: 'Fake Device', appId: 'com.example.app' }),
+    getTarget: () => ({ name: 'Fake Device', appId: 'com.example.app', framework: null }),
     reconnect: () => {},
     close: () => {},
   };

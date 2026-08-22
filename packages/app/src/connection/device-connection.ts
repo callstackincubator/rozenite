@@ -14,6 +14,7 @@
  * need.
  */
 import { parseRozeniteBindingPayload } from './bindings';
+import { getFrameworkFromMetadata, type Framework } from '../framework';
 import { MetroUnreachableError, resolveMetroTarget } from './metro-target-resolution';
 import type { ParsedTarget } from './target-from-url';
 
@@ -52,6 +53,13 @@ export type DeviceState =
 export type DeviceTarget = {
   name: string;
   appId: string;
+  /**
+   * Which framework this target runs, as the device itself reported it
+   * (`ReactNativeApplication.metadataUpdated`). `null` until that arrives
+   * — the domain is enabled during the handshake, so on a device that
+   * implements it this is answered within the first round trip.
+   */
+  framework: Framework | null;
 };
 
 export type DeviceConnection = {
@@ -103,6 +111,10 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
 
   let currentTarget = target;
   let deviceName = target.deviceId;
+  // Sticky across reconnects on purpose: a target does not change
+  // framework mid-session, and keeping the last known one means the
+  // footer's label doesn't blink away while reconnecting.
+  let framework: Framework | null = null;
 
   let ws: WebSocket | null = null;
   let epoch = 0;
@@ -168,6 +180,17 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
       return;
     }
     deviceName = name;
+    notifyStateListeners();
+  };
+
+  /** Display-only, like `setDeviceName` — same notification path, so a
+   * `useSyncExternalStore` reader of `getTarget()` sees it without any
+   * status change. */
+  const setFramework = (next: Framework): void => {
+    if (framework === next) {
+      return;
+    }
+    framework = next;
     notifyStateListeners();
   };
 
@@ -395,6 +418,15 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
       } else {
         pending.resolve((message.result as Record<string, unknown>) ?? {});
       }
+      return;
+    }
+
+    // Sent unprompted by any device implementing the domain once it is
+    // enabled (React Native does; `@rozenite/lynx-dev`'s bridge answers
+    // for the Lynx apps that don't). Everything in it except the
+    // framework is already known from `/json/list`, so only that is read.
+    if (message.method === 'ReactNativeApplication.metadataUpdated') {
+      setFramework(getFrameworkFromMetadata((message.params ?? {}) as Record<string, unknown>));
       return;
     }
 
@@ -699,6 +731,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   const getTarget = (): DeviceTarget => ({
     name: deviceName,
     appId: currentTarget.appId,
+    framework,
   });
 
   const reconnect = (): void => {

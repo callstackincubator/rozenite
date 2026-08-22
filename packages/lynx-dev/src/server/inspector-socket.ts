@@ -153,9 +153,16 @@ export const createInspectorSocketRoute = (
         logger.debug('[lynx-dev] Dropped binary host message.');
         return;
       }
-      const action = translateHostMessage(data.toString());
+      // Resolved per message rather than captured when the socket opened:
+      // a reload mints a fresh DebugRouter client, and the app describes
+      // *the client that is connected now*.
+      const client = findClientByLogicalDeviceId(transport.listClients(), entry.logicalDeviceId);
+      const action = translateHostMessage(data.toString(), client);
       if (action.kind === 'reply') {
         ws.send(JSON.stringify(action.message));
+        for (const event of action.events ?? []) {
+          ws.send(JSON.stringify(event));
+        }
       } else if (action.kind === 'forward') {
         transport.sendCdpMessage(entry.clientId, entry.sessionId, action.message);
       } else {
