@@ -13,6 +13,7 @@ import {
 import { createDeviceShellHost } from './shell-host';
 import { fetchConfig } from './config';
 import { loadPlugins } from './plugins';
+import { Splash } from './splash';
 import type { DeviceConnection, DeviceState } from './connection/device-connection';
 import { TargetUrlError } from './connection/target-from-url';
 import { getTitleBarRegionClassName, WindowDragHandle } from './window-controls';
@@ -228,19 +229,7 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
           sidebarHeaderClassName={getTitleBarRegionClassName()}
         />
       ) : (
-        !configFailed && (
-          <>
-            <WindowDragHandle />
-            <PluginShell.Body className="items-center justify-center">
-              <EmptyState
-                title={
-                  configState.status === 'loading' ? 'Loading plugins…' : 'Connecting to device…'
-                }
-                description={targetName || undefined}
-              />
-            </PluginShell.Body>
-          </>
-        )
+        <WindowDragHandle />
       )}
 
       <StatusDialog
@@ -274,6 +263,10 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
         description="The connection to the device was lost. This can happen for a number of reasons; reconnect to try again."
         action={<Button onClick={() => connection.reconnect()}>Reconnect</Button>}
       />
+
+      {/* `fixed`, so it covers the footer below too. Latched on
+          `shellMounted`, so it never returns over a mounted shell. */}
+      <Splash visible={!shellMounted} />
 
       <Footer
         deviceState={deviceState}
