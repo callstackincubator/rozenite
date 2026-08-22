@@ -3,7 +3,6 @@ import { getGlobalNamespace } from './global-namespace.js';
 import { createPanel } from './create-panel.js';
 import { loadPlugin, type LoadedPlugin } from './plugin-loader.js';
 import { addWelcomeView } from './rn-devtools/rozenite-welcome-view.js';
-import { trackFrameworkTitle } from './rn-devtools/framework-title.js';
 import {
   trackPanelSelection,
   switchToSelectedPanel,
@@ -27,10 +26,6 @@ const waitForInitialization = async (): Promise<void> => {
 
 const main = async (): Promise<void> => {
   await waitForInitialization();
-
-  // Names the framework in the window title, so a Rozenite for Web window
-  // is tellable from a React Native one at a glance.
-  trackFrameworkTitle();
 
   const plugins = getGlobalNamespace().installedPlugins;
 

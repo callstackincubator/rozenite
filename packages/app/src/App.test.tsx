@@ -152,6 +152,22 @@ describe('App', () => {
     expect(screen.getByText('Pixel 8')).toBeTruthy();
   });
 
+  it('names the framework and device in the window title, which this app owns', async () => {
+    // Unlike the panel embedded in React Native DevTools, where the
+    // frontend owns `document.title` and Rozenite leaves it alone.
+    const { connection, setState, setFramework } = createFakeConnection();
+    setState({ status: 'connected' });
+
+    render(<App target={{ kind: 'connection', connection }} />);
+
+    await findPanelIframe();
+    expect(document.title).toBe('Pixel 8 - Rozenite');
+
+    setFramework('Lynx');
+
+    await waitFor(() => expect(document.title).toBe('Lynx · Pixel 8 - Rozenite'));
+  });
+
   it('names the framework in the footer once the device reports it, and not before', async () => {
     // The target is the only source: nothing is shown until the handshake
     // has produced a `ReactNativeApplication.metadataUpdated`.

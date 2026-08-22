@@ -12,6 +12,7 @@ import {
 } from '@rozenite/ui';
 import { createDeviceShellHost } from './shell-host';
 import { fetchConfig } from './config';
+import { buildDocumentTitle } from './document-title';
 import type { Framework } from './framework';
 import { loadPlugins } from './plugins';
 import type { DeviceConnection, DeviceState } from './connection/device-connection';
@@ -188,6 +189,13 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
   // `Shell` resubscribes from it whenever the reference changes.
   const host = useMemo(() => createDeviceShellHost(connection), [connection]);
   const [configState, retryConfig] = useConfig();
+
+  // This app owns its window title, unlike the panel embedded in React
+  // Native DevTools (where the frontend owns it) — see
+  // `document-title.ts`.
+  useEffect(() => {
+    document.title = buildDocumentTitle({ framework, targetName });
+  }, [framework, targetName]);
 
   // Sticky latch: once the shell has mounted, it stays mounted forever,
   // regardless of what `deviceState` or `configState` do afterwards.
