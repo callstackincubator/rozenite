@@ -71,6 +71,51 @@ export const getPackageRoot = (path: string): string | null => {
   return match ? match.root.join('/') : null;
 };
 
+export type DuplicatePackage = {
+  name: string;
+  /** Distinct install locations, sorted for stable rendering. */
+  roots: string[];
+};
+
+/**
+ * Packages evaluated from more than one install location, e.g. a top-level
+ * `node_modules/lodash` alongside a nested `node_modules/a/node_modules/lodash`.
+ *
+ * Takes a plain iterable of module paths rather than a require tree, so the
+ * same grouping logic can run over the evaluated module set (today) or a
+ * full bundle registry (once bundle coverage lands), without reimplementing
+ * path parsing at either call site. Application code (`getPackageRoot`
+ * returns `null`) is never reported, and duplicate paths in the input never
+ * inflate the result: only distinct roots count.
+ */
+export const findDuplicatePackages = (paths: Iterable<string>): DuplicatePackage[] => {
+  const rootsByName = new Map<string, Set<string>>();
+
+  for (const path of paths) {
+    const root = getPackageRoot(path);
+    if (root === null) {
+      continue;
+    }
+
+    const name = getPackageName(path);
+    let roots = rootsByName.get(name);
+    if (!roots) {
+      roots = new Set();
+      rootsByName.set(name, roots);
+    }
+    roots.add(root);
+  }
+
+  const duplicates: DuplicatePackage[] = [];
+  for (const [name, roots] of rootsByName) {
+    if (roots.size > 1) {
+      duplicates.push({ name, roots: [...roots].sort() });
+    }
+  }
+
+  return duplicates.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+};
+
 export type PackageStat = {
   name: string;
   /** Sum of member modules' own evaluation time. Exactly additive. */

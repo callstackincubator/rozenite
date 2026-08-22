@@ -3,6 +3,7 @@ import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Flame, Layers, Package, RefreshCw } from 'lucide-react';
 import {
+  Alert,
   Badge,
   ChevronRight,
   Column,
@@ -30,7 +31,7 @@ import {
   toFlameGraphNode,
   type ModuleStat,
 } from './aggregations';
-import { aggregatePackages, type PackageStat } from './analysis/packages';
+import { aggregatePackages, findDuplicatePackages, type PackageStat } from './analysis/packages';
 import { findRequirePath } from './analysis/require-path';
 import { formatCount, formatDuration, formatOffset } from './format';
 
@@ -188,6 +189,10 @@ const RequireProfilerContent = () => {
 
   const moduleStats = useMemo(() => aggregateModules(currentChain?.tree ?? null), [currentChain]);
   const packageStats = useMemo(() => aggregatePackages(currentChain?.tree ?? null), [currentChain]);
+  const duplicatePackages = useMemo(
+    () => findDuplicatePackages(moduleStats.map((stat) => stat.path)),
+    [moduleStats],
+  );
 
   const filteredModuleStats = useMemo(() => {
     if (!query) {
@@ -500,24 +505,53 @@ const RequireProfilerContent = () => {
             )}
           </Tabs.Panel>
 
-          <Tabs.Panel value="top-modules" className="min-h-0 flex-1 overflow-hidden">
+          <Tabs.Panel value="top-modules" className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {grouping === 'packages' ? (
-              <VirtualizedDataTable
-                ariaLabel="Packages by self time"
-                columns={packageColumns}
-                data={filteredPackageStats}
-                getRowId={(stat) => stat.name}
-                getRowTextValue={(stat) => stat.name}
-                loading={chainLoading}
-                emptyMessage={
-                  query
-                    ? 'No package matches your filter.'
-                    : 'No packages recorded for this chain yet.'
-                }
-                onRowClick={handlePackageRowClick}
-                scrollClassName="h-full w-full overflow-auto"
-                style={{ height: '100%' }}
-              />
+              <>
+                {duplicatePackages.length > 0 && (
+                  <Alert
+                    tone="warning"
+                    className="m-2 max-h-40 shrink-0 overflow-y-auto rounded-md"
+                  >
+                    <Alert.Title>
+                      {formatCount(duplicatePackages.length)}{' '}
+                      {duplicatePackages.length === 1 ? 'package' : 'packages'} evaluated from more
+                      than one install location in this chain
+                    </Alert.Title>
+                    <Alert.Description>
+                      <Column gap={1}>
+                        {duplicatePackages.map((duplicate) => (
+                          <div key={duplicate.name}>
+                            <span className="font-medium">{duplicate.name}</span>
+                            <span className="text-xs">
+                              {' — '}
+                              {duplicate.roots.join(', ')}
+                            </span>
+                          </div>
+                        ))}
+                      </Column>
+                    </Alert.Description>
+                  </Alert>
+                )}
+                <div className="min-h-0 flex-1">
+                  <VirtualizedDataTable
+                    ariaLabel="Packages by self time"
+                    columns={packageColumns}
+                    data={filteredPackageStats}
+                    getRowId={(stat) => stat.name}
+                    getRowTextValue={(stat) => stat.name}
+                    loading={chainLoading}
+                    emptyMessage={
+                      query
+                        ? 'No package matches your filter.'
+                        : 'No packages recorded for this chain yet.'
+                    }
+                    onRowClick={handlePackageRowClick}
+                    scrollClassName="h-full w-full overflow-auto"
+                    style={{ height: '100%' }}
+                  />
+                </div>
+              </>
             ) : (
               <VirtualizedDataTable
                 ariaLabel="Modules by self time"

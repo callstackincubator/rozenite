@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   APPLICATION_PACKAGE,
   aggregatePackages,
+  findDuplicatePackages,
   getPackageName,
   getPackageRoot,
 } from '../packages';
@@ -163,6 +164,76 @@ describe('aggregatePackages', () => {
       'slow-pkg',
       'fast-pkg',
       APPLICATION_PACKAGE,
+    ]);
+  });
+});
+
+describe('findDuplicatePackages', () => {
+  it('reports a package installed at two locations once, with both roots sorted', () => {
+    const paths = ['node_modules/lodash/lodash.js', 'node_modules/a/node_modules/lodash/x.js'];
+
+    expect(findDuplicatePackages(paths)).toEqual([
+      {
+        name: 'lodash',
+        roots: ['node_modules/a/node_modules/lodash', 'node_modules/lodash'],
+      },
+    ]);
+  });
+
+  it('does not report a package installed at a single location', () => {
+    const paths = ['node_modules/lodash/a.js', 'node_modules/lodash/b.js'];
+
+    expect(findDuplicatePackages(paths)).toEqual([]);
+  });
+
+  it('never reports application code, even when several paths share a name-like segment', () => {
+    const paths = ['src/lodash/a.tsx', 'src/screens/lodash/b.tsx', 'lib/lodash/c.tsx'];
+
+    expect(findDuplicatePackages(paths)).toEqual([]);
+  });
+
+  it('does not create a false duplicate from a path repeated many times', () => {
+    const paths = [
+      'node_modules/lodash/a.js',
+      'node_modules/lodash/a.js',
+      'node_modules/lodash/a.js',
+    ];
+
+    expect(findDuplicatePackages(paths)).toEqual([]);
+  });
+
+  it('detects a scoped package duplicated across locations', () => {
+    const paths = [
+      'node_modules/@react-navigation/native/lib/index.js',
+      'node_modules/a/node_modules/@react-navigation/native/lib/index.js',
+    ];
+
+    expect(findDuplicatePackages(paths)).toEqual([
+      {
+        name: '@react-navigation/native',
+        roots: [
+          'node_modules/@react-navigation/native',
+          'node_modules/a/node_modules/@react-navigation/native',
+        ],
+      },
+    ]);
+  });
+
+  it('returns an empty result for an empty iterable', () => {
+    expect(findDuplicatePackages([])).toEqual([]);
+  });
+
+  it('sorts results by package name when several packages are duplicated', () => {
+    const paths = [
+      'node_modules/zeta/a.js',
+      'node_modules/a/node_modules/zeta/a.js',
+      'node_modules/alpha/a.js',
+      'node_modules/b/node_modules/alpha/a.js',
+    ];
+
+    expect(findDuplicatePackages(paths).map((duplicate) => duplicate.name)).toEqual([
+      'alpha',
+      'zeta',
     ]);
   });
 });
