@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { type RozeniteHostIntegration } from '@rozenite/tools';
 
 const updateCSP = (html: string, nonce: string): string => {
   const cspRegex = /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/;
@@ -31,6 +32,7 @@ const appendScripts = (
   installedPlugins: string[],
   destroyOnDetachPlugins: string[],
   pluginDisplay: 'tabs' | 'sidebar',
+  integration: RozeniteHostIntegration,
   runtimeVersion?: string,
 ): string => {
   const bodyTagRegex = /<body[^>]*>/;
@@ -43,6 +45,7 @@ const appendScripts = (
         installedPlugins: ${JSON.stringify(installedPlugins)},
         destroyOnDetachPlugins: ${JSON.stringify(destroyOnDetachPlugins)},
         pluginDisplay: ${JSON.stringify(pluginDisplay)},
+        integration: ${JSON.stringify(integration)},
         runtimeVersion: ${JSON.stringify(runtimeVersion)},
       };
     </script>
@@ -63,6 +66,7 @@ export const getEntryPointHTML = (
   installedPlugins: string[],
   destroyOnDetachPlugins: string[],
   pluginDisplay: 'tabs' | 'sidebar' = 'sidebar',
+  integration: RozeniteHostIntegration = 'react-native',
   runtimeVersion?: string,
 ): string => {
   const nonce = crypto.randomUUID();
@@ -77,6 +81,7 @@ export const getEntryPointHTML = (
     installedPlugins,
     destroyOnDetachPlugins,
     pluginDisplay,
+    integration,
     runtimeVersion,
   );
 };

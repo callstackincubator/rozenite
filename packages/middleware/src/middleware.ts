@@ -3,6 +3,7 @@ import assert from 'node:assert';
 import path from 'node:path';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import { type RozeniteHostIntegration } from '@rozenite/tools';
 import { getEntryPointHTML } from './entry-point.js';
 import { InstalledPlugin } from './auto-discovery.js';
 import { getReactNativeDebuggerFrontendPath } from './resolve.js';
@@ -27,6 +28,15 @@ export type RozeniteAppConfigResponse = {
   installedPlugins: string[];
   destroyOnDetachPlugins: string[];
   runtimeVersion?: string;
+  /**
+   * The pre-handshake default: which host this dev server serves. Used by
+   * the client when the `Rozenite.getEnvironment` CDP domain is
+   * unavailable (an older dev-middleware, or the patch in
+   * `integration-domain.ts` failed) - the domain's per-target answer wins
+   * over this when it's there, since it also knows whether the target is
+   * web.
+   */
+  integration: RozeniteHostIntegration;
 };
 
 export const getNormalizedRequestUrl = (url: string): string => {
@@ -53,7 +63,8 @@ export const getMiddleware = (
   runtimeVersion?: string,
 ): Application => {
   const app = express();
-  const isLynx = options.platform === 'lynx';
+  const hostIntegration: RozeniteHostIntegration = options.integration ?? 'react-native';
+  const isLynx = hostIntegration === 'lynx';
   // Lynx has no react-native install to resolve the Fusebox debugger
   // frontend from, and doesn't need it: `@rozenite/app` is loaded
   // standalone there instead of embedded in Fusebox's HTML.
@@ -111,6 +122,7 @@ export const getMiddleware = (
           installedPlugins.map((plugin) => plugin.name),
           destroyOnDetachPlugins,
           options.pluginDisplay ?? 'sidebar',
+          hostIntegration,
           runtimeVersion,
         ),
       );
@@ -129,6 +141,7 @@ export const getMiddleware = (
       installedPlugins: installedPlugins.map((plugin) => plugin.name),
       destroyOnDetachPlugins,
       runtimeVersion,
+      integration: hostIntegration,
     };
 
     res.json(config);

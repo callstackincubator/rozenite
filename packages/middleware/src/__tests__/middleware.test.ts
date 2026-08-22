@@ -193,6 +193,7 @@ describe('standalone app', () => {
       installedPlugins: ['@rozenite/network-activity-plugin'],
       destroyOnDetachPlugins: ['@rozenite/some-plugin'],
       runtimeVersion: '2.1.0',
+      integration: 'react-native',
     });
   });
 
@@ -203,7 +204,11 @@ describe('standalone app', () => {
     const payload = JSON.parse(response.body);
 
     expect(response.status).toBe(200);
-    expect(payload).toEqual({ installedPlugins: [], destroyOnDetachPlugins: [] });
+    expect(payload).toEqual({
+      installedPlugins: [],
+      destroyOnDetachPlugins: [],
+      integration: 'react-native',
+    });
     expect('runtimeVersion' in payload).toBe(false);
   });
 
@@ -238,6 +243,7 @@ describe('standalone app', () => {
       expect(JSON.parse(response.body)).toEqual({
         installedPlugins: [],
         destroyOnDetachPlugins: [],
+        integration: 'react-native',
       });
     } finally {
       fs.rmSync(shadowFile, { force: true });
@@ -252,7 +258,7 @@ describe('lynx platform', () => {
   const projectRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 
   const createApp = (): MiddlewareHandler => {
-    const config: RozeniteConfig = { projectRoot, platform: 'lynx' };
+    const config: RozeniteConfig = { projectRoot, integration: 'lynx' };
     const agentSessionManager = createAgentSessionManager({ projectRoot });
 
     return getMiddleware(config, [], [], agentSessionManager) as unknown as MiddlewareHandler;
@@ -267,6 +273,7 @@ describe('lynx platform', () => {
     expect(JSON.parse(response.body)).toEqual({
       installedPlugins: [],
       destroyOnDetachPlugins: [],
+      integration: 'lynx',
     });
   });
 

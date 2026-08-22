@@ -6,10 +6,23 @@
  * inline script.
  */
 
+// Mirrors `RozeniteHostIntegration` in `@rozenite/tools`, not imported: this
+// package isn't otherwise a consumer of that package, and the field is
+// plumbing only here (see `integration` below) — nothing in this package
+// resolves or branches on it yet.
+type RozeniteHostIntegration = 'react-native' | 'lynx';
+
 export type RozeniteAppConfig = {
   installedPlugins: string[];
   destroyOnDetachPlugins: string[];
   runtimeVersion?: string;
+  /**
+   * The pre-handshake default host integration, mirroring
+   * `RozeniteAppConfigResponse.integration` in
+   * `packages/middleware/src/middleware.ts`. Plumbing only for now — no
+   * consumer reads this yet; see that type's doc comment for why it exists.
+   */
+  integration: RozeniteHostIntegration;
 };
 
 // Derived from `import.meta.env.BASE_URL` (Vite bakes it in from

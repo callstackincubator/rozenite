@@ -1842,6 +1842,9 @@ importers:
 
   packages/vite-plugin:
     dependencies:
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       '@rozenite/ui':
         specifier: workspace:*
         version: link:../ui

@@ -5,7 +5,8 @@ import process from 'node:process';
 import ejs from 'ejs';
 import { fileURLToPath } from 'node:url';
 import { normalizePath } from 'vite';
-import { loadConfig, RozeniteConfig } from './load-config.js';
+import type { RozeniteIntegration } from '@rozenite/tools';
+import { loadConfig, resolveIntegrations, RozeniteConfig } from './load-config.js';
 import { getPackageJSON } from './package-json.js';
 import { DEV_HOST_CONFIG_GLOBAL_KEY, DEV_HOST_STATE_ELEMENT_ID } from './dev-host/constants.js';
 import {
@@ -88,6 +89,14 @@ export const rozeniteClientPlugin = (): Plugin => {
     }));
   };
 
+  // Derived at emission time from the loaded config, like `getManifestPanels`
+  // above, rather than cached into plugin state by the `config` hook: a
+  // cached value would silently emit a manifest claiming the plugin supports
+  // nothing if that hook were ever skipped or reordered.
+  const getManifestIntegrations = (): RozeniteIntegration[] => {
+    return resolveIntegrations(getRozeniteConfig());
+  };
+
   const getDevHostPanels = (): DevHostPanelEntry[] => {
     return getPanels().map((panel) => ({
       label: panel.label,
@@ -166,6 +175,10 @@ export const rozeniteClientPlugin = (): Plugin => {
       }
 
       rozeniteConfig = await loadConfig(getRozeniteConfigPath(projectRoot));
+      // Called for its validation only: a typo'd integration id must fail
+      // the build here, at config-load time, rather than quietly shipping a
+      // manifest that makes the plugin unloadable everywhere.
+      resolveIntegrations(rozeniteConfig);
       const panels = getPanels();
 
       config.server ??= {};
@@ -305,6 +318,7 @@ export const rozeniteClientPlugin = (): Plugin => {
                 version: packageJSON.version,
                 description: packageJSON.description,
                 panels: getManifestPanels(),
+                integrations: getManifestIntegrations(),
               },
               null,
               2,
@@ -362,6 +376,7 @@ export const rozeniteClientPlugin = (): Plugin => {
           version: packageJSON.version,
           description: packageJSON.description,
           panels: getManifestPanels(),
+          integrations: getManifestIntegrations(),
         }),
       });
     },
