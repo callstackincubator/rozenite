@@ -12,14 +12,10 @@
  * `patchRozeniteIntegrationDomain` below for the mechanics and the ordering
  * hazard that makes this safe.
  */
-import path from 'node:path';
-import { createRequire } from 'node:module';
 import { resolveIntegration, type RozeniteHostIntegration } from '@rozenite/tools';
-import { getDevMiddlewarePath } from './resolve.js';
+import { requireDevMiddlewareInternal } from './resolve.js';
 import { logger } from './logger.js';
 import { RozeniteConfig } from './index.js';
-
-const require = createRequire(import.meta.url);
 
 const GET_ENVIRONMENT_METHOD = 'Rozenite.getEnvironment';
 
@@ -31,16 +27,13 @@ const GET_ENVIRONMENT_METHOD = 'Rozenite.getEnvironment';
 // fields, which is why every access below goes through `asRecord`.
 type JSONRecord = { [key: string]: unknown };
 
+// Narrowed to the one member this file touches. The real connection
+// upstream also carries `page` and `device` (and the debugger's user
+// agent); structural typing means the real object still satisfies this,
+// and declaring only what is read keeps the mirror from having to track
+// fields whose shape we never depend on.
 type CustomMessageHandlerConnection = {
-  page: unknown;
-  device: {
-    appId: string;
-    id: string;
-    name: string;
-    sendMessage: (message: unknown) => void;
-  };
   debugger: {
-    userAgent: string | null;
     sendMessage: (message: unknown) => void;
   };
 };
@@ -64,8 +57,10 @@ const asRecord = (value: unknown): JSONRecord | undefined =>
  * dev-middleware instance.
  *
  * A malformed or unexpectedly-shaped frame must never crash the inspector
- * proxy, so every read/write below is wrapped in its own try/catch and
- * logged at debug level rather than allowed to throw out of a handler.
+ * proxy. Reading one is total on its own — `asRecord` narrows anything the
+ * wire can carry and every access after it is optional-chained — so the
+ * try/catches below guard only the two things that can genuinely throw:
+ * code we don't own (the embedder's handlers) and the reply send.
  */
 export const createRozeniteIntegrationMessageHandlerFactory = (
   hostIntegration: RozeniteHostIntegration,
@@ -91,13 +86,9 @@ export const createRozeniteIntegrationMessageHandlerFactory = (
 
     return {
       handleDeviceMessage(message) {
-        try {
-          const record = asRecord(message);
-          if (record?.method === 'ReactNativeApplication.metadataUpdated') {
-            targetPlatform = asRecord(record.params)?.platform;
-          }
-        } catch (error) {
-          logger.debug('Rozenite: failed to snoop a device message for its platform.', error);
+        const record = asRecord(message);
+        if (record?.method === 'ReactNativeApplication.metadataUpdated') {
+          targetPlatform = asRecord(record.params)?.platform;
         }
 
         // Snoop only - never claim the message, so it still reaches the
@@ -111,27 +102,21 @@ export const createRozeniteIntegrationMessageHandlerFactory = (
       },
 
       handleDebuggerMessage(message) {
-        try {
-          const record = asRecord(message);
-          if (record?.method === GET_ENVIRONMENT_METHOD) {
-            try {
-              connection.debugger.sendMessage({
-                id: record.id,
-                result: { integration: resolveIntegration(hostIntegration, targetPlatform) },
-              });
-            } catch (error) {
-              logger.debug('Rozenite: failed to reply to Rozenite.getEnvironment.', error);
-            }
-
-            // Handled regardless of whether the reply above succeeded: a
-            // real device has no `Rozenite` domain and would answer
-            // -32601, breaking the connection, so this must never be
-            // forwarded to it.
-            return true;
+        const record = asRecord(message);
+        if (record?.method === GET_ENVIRONMENT_METHOD) {
+          try {
+            connection.debugger.sendMessage({
+              id: record.id,
+              result: { integration: resolveIntegration(hostIntegration, targetPlatform) },
+            });
+          } catch (error) {
+            logger.debug('Rozenite: failed to reply to Rozenite.getEnvironment.', error);
           }
-        } catch (error) {
-          logger.debug('Rozenite: failed to handle a debugger message.', error);
-          return undefined;
+
+          // Handled regardless of whether the reply above succeeded: a
+          // real device has no `Rozenite` domain and would answer -32601,
+          // breaking the connection, so this must never be forwarded to it.
+          return true;
         }
 
         try {
@@ -170,9 +155,9 @@ type PatchableCreateDevMiddleware = ((options: JSONRecord) => unknown) & {
  *
  * - Its `exports` map only allows `.` and `./package.json`, so a deep
  *   specifier like `@react-native/dev-middleware/createDevMiddleware` throws
- *   `ERR_PACKAGE_PATH_NOT_EXPORTED`. The entry has to be resolved through
- *   the existing `getDevMiddlewarePath` and the sibling file joined by hand
- *   - mirrors `dev-tools-url-patch.ts`.
+ *   `ERR_PACKAGE_PATH_NOT_EXPORTED` - hence `requireDevMiddlewareInternal`,
+ *   shared with `dev-tools-url-patch.ts`, which reaches the module by path
+ *   instead.
  * - The package index re-exports `createDevMiddleware` as a GETTER that
  *   re-reads the inner module's `exports.default` on every access, but the
  *   getter itself is not writable - only the inner module's `default` is.
@@ -191,11 +176,7 @@ type PatchableCreateDevMiddleware = ((options: JSONRecord) => unknown) & {
 export const patchRozeniteIntegrationDomain = (options: RozeniteConfig): void => {
   try {
     const hostIntegration: RozeniteHostIntegration = options.integration ?? 'react-native';
-    const innerModulePath = path.join(
-      path.dirname(getDevMiddlewarePath(options)),
-      'createDevMiddleware.js',
-    );
-    const innerModule = require(innerModulePath);
+    const innerModule = requireDevMiddlewareInternal(options, 'createDevMiddleware.js');
     const original = innerModule.default as PatchableCreateDevMiddleware | undefined;
 
     if (typeof original !== 'function') {

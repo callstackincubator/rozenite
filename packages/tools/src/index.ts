@@ -12,7 +12,6 @@ export {
   type RozeniteHostIntegration,
   ROZENITE_INTEGRATIONS,
   isRozeniteIntegration,
-  ROZENITE_INTEGRATION_LABEL,
   DEFAULT_PLUGIN_INTEGRATIONS,
   resolveIntegration,
 } from './integration.js';

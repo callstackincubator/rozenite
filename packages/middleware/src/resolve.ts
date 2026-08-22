@@ -114,6 +114,26 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
   return getDevMiddlewarePathFromReactNative(options.projectRoot);
 };
 
+/**
+ * Requires one of `@react-native/dev-middleware`'s own internal modules,
+ * by path relative to the package entry point's directory.
+ *
+ * Both places Rozenite patches that package (`dev-tools-url-patch.ts` and
+ * `integration-domain.ts`) need this, and neither can use a plain deep
+ * import: the package's `exports` map allows only `.` and
+ * `./package.json`, so `@react-native/dev-middleware/dist/...` throws
+ * `ERR_PACKAGE_PATH_NOT_EXPORTED`. Resolving the entry and joining the
+ * sibling path by hand is the way around that — kept here, in one place,
+ * because reaching into another package's internals is the
+ * version-sensitive part of both patches and should move as one.
+ */
+export const requireDevMiddlewareInternal = (
+  options: RozeniteConfig,
+  relativePath: string,
+): Record<string, unknown> => {
+  return require(path.join(path.dirname(getDevMiddlewarePath(options)), relativePath));
+};
+
 export const getReactNativeDebuggerFrontendPath = (options: RozeniteConfig): string => {
   const devMiddlewarePath = getDevMiddlewarePath(options);
 

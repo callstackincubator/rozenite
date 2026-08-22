@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   ROZENITE_INTEGRATIONS,
-  ROZENITE_INTEGRATION_LABEL,
   DEFAULT_PLUGIN_INTEGRATIONS,
   isRozeniteIntegration,
   resolveIntegration,
@@ -21,17 +20,6 @@ describe('isRozeniteIntegration', () => {
     expect(isRozeniteIntegration(null)).toBe(false);
     expect(isRozeniteIntegration(42)).toBe(false);
     expect(isRozeniteIntegration({})).toBe(false);
-  });
-});
-
-describe('ROZENITE_INTEGRATION_LABEL', () => {
-  it('labels every declared integration', () => {
-    expect(ROZENITE_INTEGRATION_LABEL).toEqual({
-      'react-native': 'React Native',
-      'react-native-web': 'React Native Web',
-      lynx: 'Lynx',
-      'lynx-web': 'Lynx for Web',
-    });
   });
 });
 
