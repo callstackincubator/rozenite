@@ -2,20 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { QueryField, type QueryToken } from '@rozenite/ui';
 
-// QueryField is presentation-only — it has no query grammar. Tokenizing
-// `level>=warn tag:auth -"retry"` is entirely the story's (the consumer's)
-// job; QueryField only paints the ranges it's handed.
+// QueryField highlights its built-in filter grammar out of the box, so these
+// stories pass a value and nothing else — edit the field and the colors
+// follow the text. `CustomGrammar` below shows the escape hatch for a panel
+// that brings its own query language.
 const realisticQuery = 'level>=warn tag:auth -"retry"';
-const realisticTokens: QueryToken[] = [
-  { start: 0, end: 5, kind: 'field' }, // level
-  { start: 5, end: 7, kind: 'operator' }, // >=
-  { start: 7, end: 11, kind: 'value' }, // warn
-  { start: 12, end: 15, kind: 'field' }, // tag
-  { start: 15, end: 16, kind: 'operator' }, // :
-  { start: 16, end: 20, kind: 'value' }, // auth
-  { start: 21, end: 22, kind: 'negation' }, // -
-  { start: 22, end: 29, kind: 'value' }, // "retry"
-];
 
 const meta = {
   component: QueryField,
@@ -26,7 +17,7 @@ type Story = StoryObj<typeof meta>;
 
 function ControlledQueryField(props: {
   initialValue: string;
-  tokens: QueryToken[];
+  tokens?: QueryToken[];
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   placeholder?: string;
@@ -46,36 +37,28 @@ function ControlledQueryField(props: {
   );
 }
 
-/** A realistic pre-tokenized log query, showing field/operator/value/negation
- * painted over plain text as the user would type it into a log panel.
+/** A realistic log query painted by the built-in grammar — field, operator,
+ * value, and negation. Type into it: the highlighting is recomputed from the
+ * text on every keystroke, so it tracks edits of any length.
  * @summary A log query with field, operator, value, and negation highlighted.
  */
 export const Default: Story = {
   render: () => (
     <div className="w-96">
-      <ControlledQueryField initialValue={realisticQuery} tokens={realisticTokens} />
+      <ControlledQueryField initialValue={realisticQuery} />
     </div>
   ),
 };
 
-/** The caller marks a malformed fragment as `error`; QueryField only applies
- * the danger/wavy-underline treatment — it never judges validity itself.
- * @summary An unterminated quote flagged as an error token.
+/** An unterminated quote is the one thing the built-in grammar calls a
+ * mistake, and it gets the danger/wavy-underline treatment. A half-typed
+ * clause like `level>=` is left alone — it is a query in progress.
+ * @summary An unterminated quote flagged as an error.
  */
 export const ErrorToken: Story = {
   render: () => (
     <div className="w-96">
-      <ControlledQueryField
-        initialValue='level=warn tag:"auth'
-        tokens={[
-          { start: 0, end: 5, kind: 'field' },
-          { start: 5, end: 6, kind: 'operator' },
-          { start: 6, end: 10, kind: 'value' },
-          { start: 11, end: 14, kind: 'field' },
-          { start: 14, end: 15, kind: 'operator' },
-          { start: 15, end: 20, kind: 'error' },
-        ]}
-      />
+      <ControlledQueryField initialValue={'level=warn tag:"auth'} />
     </div>
   ),
 };
@@ -87,7 +70,7 @@ export const ErrorToken: Story = {
 export const Empty: Story = {
   render: () => (
     <div className="w-96">
-      <ControlledQueryField initialValue="" tokens={[]} placeholder="level>=warn tag:auth…" />
+      <ControlledQueryField initialValue="" placeholder="level>=warn tag:auth…" />
     </div>
   ),
 };
@@ -98,54 +81,49 @@ export const Empty: Story = {
 export const Sizes: Story = {
   render: () => (
     <div className="flex w-96 flex-col gap-3">
-      <ControlledQueryField initialValue={realisticQuery} tokens={realisticTokens} size="sm" />
-      <ControlledQueryField initialValue={realisticQuery} tokens={realisticTokens} size="md" />
-      <ControlledQueryField initialValue={realisticQuery} tokens={realisticTokens} size="lg" />
+      <ControlledQueryField initialValue={realisticQuery} size="sm" />
+      <ControlledQueryField initialValue={realisticQuery} size="md" />
+      <ControlledQueryField initialValue={realisticQuery} size="lg" />
     </div>
   ),
 };
 
 const longQuery =
   'level>=warn tag:auth service:checkout region:us-east-1 -"retry" -"heartbeat" status:failed duration>1500 user.id:8231';
-const longQueryTokens: QueryToken[] = [
-  { start: 0, end: 5, kind: 'field' },
-  { start: 5, end: 7, kind: 'operator' },
-  { start: 7, end: 11, kind: 'value' },
-  { start: 12, end: 15, kind: 'field' },
-  { start: 15, end: 16, kind: 'operator' },
-  { start: 16, end: 20, kind: 'value' },
-  { start: 21, end: 28, kind: 'field' },
-  { start: 28, end: 29, kind: 'operator' },
-  { start: 29, end: 37, kind: 'value' },
-  { start: 38, end: 44, kind: 'field' },
-  { start: 44, end: 45, kind: 'operator' },
-  { start: 45, end: 54, kind: 'value' },
-  { start: 55, end: 56, kind: 'negation' },
-  { start: 56, end: 63, kind: 'value' },
-  { start: 64, end: 65, kind: 'negation' },
-  { start: 65, end: 76, kind: 'value' },
-  { start: 77, end: 83, kind: 'field' },
-  { start: 83, end: 84, kind: 'operator' },
-  { start: 84, end: 90, kind: 'value' },
-  { start: 91, end: 99, kind: 'field' },
-  { start: 99, end: 100, kind: 'operator' },
-  { start: 100, end: 104, kind: 'value' },
-  { start: 105, end: 112, kind: 'field' },
-  { start: 112, end: 113, kind: 'operator' },
-  { start: 113, end: 117, kind: 'value' },
-];
 
-/** The value is wider than the field, so the input scrolls horizontally.
- * QueryField syncs the mirror's `scrollLeft` to the input's on every scroll
- * event so the painted colors never drift from the caret. Click into the
- * field and use the arrow keys or End to scroll it and see the highlight
- * track along.
- * @summary A long query demonstrating horizontal scroll stays in sync.
+/** The value is wider than the field, so the text scrolls horizontally inside
+ * its lane. The lane stops where the clear button begins, so the button stays
+ * legible on the field's own background no matter how long the query gets,
+ * and the mirror's `scrollLeft` follows the input's so the colors never drift
+ * from the caret. Click into the field and press End to scroll it.
+ * @summary A long query scrolling under a clear button that stays visible.
  */
 export const LongQueryScrollSync: Story = {
   render: () => (
     <div className="w-72">
-      <ControlledQueryField initialValue={longQuery} tokens={longQueryTokens} />
+      <ControlledQueryField initialValue={longQuery} />
+    </div>
+  ),
+};
+
+/** A panel with its own query language passes `tokens` and the built-in
+ * grammar is bypassed entirely — here a SQL-ish dialect the grammar knows
+ * nothing about, tokenized by the caller.
+ * @summary Caller-supplied token ranges replacing the built-in grammar.
+ */
+export const CustomGrammar: Story = {
+  render: () => (
+    <div className="w-96">
+      <ControlledQueryField
+        initialValue="SELECT * WHERE level IN (warn, error)"
+        tokens={[
+          { start: 0, end: 6, kind: 'operator' }, // SELECT
+          { start: 9, end: 14, kind: 'operator' }, // WHERE
+          { start: 15, end: 20, kind: 'field' }, // level
+          { start: 21, end: 23, kind: 'operator' }, // IN
+          { start: 24, end: 37, kind: 'value' }, // (warn, error)
+        ]}
+      />
     </div>
   ),
 };

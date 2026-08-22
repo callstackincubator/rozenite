@@ -1,9 +1,9 @@
-import type { ChangeEvent, ComponentProps, UIEvent } from 'react';
+import type { ChangeEvent, ComponentProps, MouseEvent, UIEvent } from 'react';
 import { useMemo, useRef } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { fieldSurface } from '../utils/control-surfaces';
-import { sizeHeight } from '../tokens/size';
+import { tokenizeQuery } from './query-grammar';
 import type { Size } from '../tokens/size';
 
 export type QueryTokenKind = 'field' | 'operator' | 'value' | 'negation' | 'text' | 'error';
@@ -94,14 +94,20 @@ const queryTokenKindClass = {
 } as const satisfies Record<QueryTokenKind, string>;
 
 const queryFieldSize = {
-  sm: { clearPad: 'pr-6', clear: 'right-1 size-3.5', clearIcon: 'size-3' },
-  md: { clearPad: 'pr-8', clear: 'right-2 size-4', clearIcon: 'size-3.5' },
-  lg: { clearPad: 'pr-10', clear: 'right-2.5 size-5', clearIcon: 'size-4' },
+  // `text` mirrors `fieldSurface`'s own size scale. It is applied to both
+  // layers from this one place so the painted text and the caret can never
+  // end up at different font sizes.
+  sm: { text: 'text-xs', gap: 'gap-1', clear: 'size-3.5', clearIcon: 'size-3' },
+  md: { text: 'text-sm', gap: 'gap-1.5', clear: 'size-4', clearIcon: 'size-3.5' },
+  lg: { text: 'text-base', gap: 'gap-2', clear: 'size-5', clearIcon: 'size-4' },
 } as const satisfies Record<Size, unknown>;
 
 export type QueryFieldProps = Omit<ComponentProps<'input'>, 'size'> & {
-  /** Ranges to highlight. Ranges outside the value, or overlapping an earlier
-   *  token, are ignored. Unclaimed spans render as plain text. */
+  /** Ranges to highlight, for a caller that owns its own query language.
+   *  Ranges outside the value, or overlapping an earlier token, are ignored;
+   *  unclaimed spans render as plain text. Omit to highlight with the
+   *  built-in grammar (`tokenizeQuery`), which re-reads the value on every
+   *  keystroke. Pass `[]` for no highlighting at all. */
   tokens?: readonly QueryToken[];
   /** Convenience over onChange for the common controlled case. */
   onValueChange?: (value: string) => void;
@@ -115,19 +121,27 @@ export type QueryFieldProps = Omit<ComponentProps<'input'>, 'size'> & {
 };
 
 /**
- * A query input that paints caller-supplied token ranges over the raw text —
- * field names, operators, values, negation, free text, malformed fragments —
- * without knowing anything about the grammar itself. `QueryField` holds no
- * parser and no operator vocabulary; the caller (a plugin that owns a query
- * language) tokenizes and hands over ranges, `QueryField` only paints them.
+ * A query input that highlights the parts of a query as the reader types —
+ * field names, operators, values, negation, free text, malformed fragments.
+ *
+ * Out of the box it highlights the small filter grammar `tokenizeQuery`
+ * understands (`level>=warn tag:auth -"retry"`), re-tokenizing the value on
+ * every keystroke so the colors follow the text as it is edited. A panel that
+ * owns a different query language passes its own `tokens` instead, and the
+ * built-in grammar is bypassed — `QueryField` then only paints the ranges it
+ * is handed.
  *
  * Built with the overlay-mirror technique: an `aria-hidden` mirror underneath
  * paints the colored spans, and the real `<input>` sits on top with
  * transparent text and a visible caret, so typing, selection, and IME
- * composition all behave like a normal input. Both layers share the same
- * `fieldSurface` box metrics and a monospace font so the painted text never
- * drifts from the caret; a `scroll` listener keeps the mirror in sync when
- * the value is wider than the field.
+ * composition all behave like a normal input. Both layers are absolutely
+ * positioned inside the same box and share one monospace font size, so the
+ * painted text never drifts from the caret; a `scroll` listener keeps the
+ * mirror in sync when the value is wider than the field.
+ *
+ * The field surface — border, focus ring, height, padding — lives on the
+ * wrapper rather than on the `<input>`, so `className` styles the field as a
+ * whole. Every other prop goes to the input.
  */
 export function QueryField({
   className,
@@ -145,7 +159,10 @@ export function QueryField({
   const text = typeof value === 'string' ? value : (value?.toString() ?? '');
   const showClear = Boolean(onClear) && text.length > 0;
   const sizing = queryFieldSize[size];
-  const segments = useMemo(() => normalizeQueryTokens(text, tokens), [text, tokens]);
+  const segments = useMemo(
+    () => normalizeQueryTokens(text, tokens ?? tokenizeQuery(text)),
+    [text, tokens],
+  );
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange?.(event);
@@ -158,52 +175,76 @@ export function QueryField({
     }
   };
 
+  // The input spans the text lane, not the whole field, so a press on the
+  // surface's padding lands on the wrapper instead of the input. A native
+  // input focuses when its padding is clicked; match that. Reading the input
+  // off the event keeps a caller-supplied `ref` free for the caller.
+  const handleSurfaceMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.querySelector('input')?.focus();
+  };
+
   return (
-    // `flex items-center` carries no in-flow children here — every layer is
-    // absolutely positioned. It sets the *static position* of the clear
-    // button so it centers vertically without a `top`, the same way
-    // `SearchField` positions its own clear affordance.
+    // The surface lives here, so the text lane can stop short of the clear
+    // button: an overflowing query then scrolls *inside* the lane instead of
+    // running underneath the button and burying it.
     <div
       data-slot="query-field"
-      className={cn('relative flex w-full items-center', sizeHeight[size])}
+      onMouseDown={handleSurfaceMouseDown}
+      className={cn(
+        fieldSurface({ size }),
+        'flex items-center',
+        sizing.gap,
+        // The chrome reacts to the input it wraps, since the input itself no
+        // longer carries the border or the ring.
+        'has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring/50',
+        'has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-50',
+        className,
+      )}
     >
-      <div
-        aria-hidden="true"
-        data-slot="query-field-mirror"
-        ref={mirrorRef}
-        className={cn(
-          fieldSurface({ size }),
-          // `items-center` is load-bearing: an input centers its single line of
-          // text vertically, a block box does not, so a block mirror paints the
-          // text several pixels above the caret. Centering with flex keeps the
-          // two layers aligned without hardcoding a line height per size.
-          'pointer-events-none absolute inset-0 flex items-center overflow-hidden border-transparent bg-transparent font-mono whitespace-pre shadow-none',
-          showClear && sizing.clearPad,
-        )}
-      >
-        {segments.map((segment) => (
-          <span
-            key={`${segment.start}-${segment.end}`}
-            className={segment.kind ? queryTokenKindClass[segment.kind] : undefined}
-          >
-            {text.slice(segment.start, segment.end)}
-          </span>
-        ))}
+      <div data-slot="query-field-lane" className="relative h-full min-w-0 flex-1">
+        <div
+          aria-hidden="true"
+          data-slot="query-field-mirror"
+          ref={mirrorRef}
+          className={cn(
+            // `items-center` is load-bearing: an input centers its single line
+            // of text vertically, a block box does not, so a block mirror
+            // paints the text several pixels above the caret. Centering with
+            // flex keeps the two layers aligned without hardcoding a line
+            // height per size.
+            'pointer-events-none absolute inset-0 flex items-center overflow-hidden font-mono whitespace-pre',
+            sizing.text,
+          )}
+        >
+          {segments.map((segment) => (
+            <span
+              key={`${segment.start}-${segment.end}`}
+              className={segment.kind ? queryTokenKindClass[segment.kind] : undefined}
+            >
+              {text.slice(segment.start, segment.end)}
+            </span>
+          ))}
+        </div>
+        <input
+          type={type}
+          data-slot="query-field-input"
+          value={value}
+          onChange={handleChange}
+          onScroll={handleScroll}
+          className={cn(
+            'absolute inset-0 border-0 bg-transparent p-0 font-mono text-transparent outline-none',
+            'caret-foreground selection:bg-primary/30 placeholder:text-muted-foreground',
+            'disabled:pointer-events-none disabled:cursor-not-allowed',
+            sizing.text,
+          )}
+          {...props}
+        />
       </div>
-      <input
-        type={type}
-        data-slot="query-field-input"
-        value={value}
-        onChange={handleChange}
-        onScroll={handleScroll}
-        className={cn(
-          fieldSurface({ size }),
-          'absolute inset-0 min-w-0 font-mono text-transparent caret-foreground selection:bg-primary/30',
-          showClear && sizing.clearPad,
-          className,
-        )}
-        {...props}
-      />
       {showClear && (
         <button
           type="button"
@@ -211,7 +252,7 @@ export function QueryField({
           onClick={onClear}
           aria-label={clearLabel}
           className={cn(
-            'absolute inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground',
+            'inline-flex shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground',
             sizing.clear,
           )}
         >

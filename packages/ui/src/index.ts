@@ -189,6 +189,7 @@ export type { SearchFieldProps } from './search-field/search-field';
 
 export { QueryField } from './query-field/query-field';
 export type { QueryFieldProps, QueryToken, QueryTokenKind } from './query-field/query-field';
+export { tokenizeQuery } from './query-field/query-grammar';
 
 export { DataTable } from './data-table/data-table';
 export type { DataTableProps, DataTableColumn } from './data-table/data-table';

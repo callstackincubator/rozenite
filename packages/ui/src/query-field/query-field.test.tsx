@@ -264,6 +264,105 @@ describe('QueryField', () => {
     expect(onValueChange).toHaveBeenCalledExactlyOnceWith('level');
   });
 
+  it('highlights with the built-in grammar when no tokens are given', () => {
+    const view = renderField({ value: 'level>=warn -"retry"' });
+    const spans = Array.from(view.querySelectorAll('[data-slot="query-field-mirror"] span'));
+
+    expect(spans.map((span) => span.textContent)).toEqual([
+      'level',
+      '>=',
+      'warn',
+      ' ',
+      '-',
+      '"retry"',
+    ]);
+    expect(spans[0]?.className).toContain('text-primary');
+    expect(spans[1]?.className).toContain('text-muted-foreground');
+    expect(spans[4]?.className).toContain('text-warning');
+  });
+
+  it('re-tokenizes on every value, so highlighting follows an edited query', () => {
+    // The bug this guards: token ranges computed once for the initial value
+    // keep painting the same offsets after the text around them changes.
+    const view = renderField({ value: 'level:warn' });
+    const fieldSpan = () => view.querySelector('[data-slot="query-field-mirror"] span');
+
+    expect(fieldSpan()?.textContent).toBe('level');
+
+    act(() => {
+      root?.render(<QueryField value="lvl:warn" onChange={() => {}} />);
+    });
+
+    expect(fieldSpan()?.textContent).toBe('lvl');
+  });
+
+  it('lets caller tokens replace the built-in grammar, and [] disable it', () => {
+    const overridden = renderField({
+      value: 'level:warn',
+      tokens: [{ start: 0, end: 10, kind: 'error' }],
+    });
+    const overriddenSpans = overridden.querySelectorAll('[data-slot="query-field-mirror"] span');
+
+    expect(overriddenSpans).toHaveLength(1);
+    expect(overriddenSpans[0]?.className).toContain('text-danger');
+
+    act(() => root?.unmount());
+    container?.remove();
+
+    const bare = renderField({ value: 'level:warn', tokens: [] });
+    const bareSpans = bare.querySelectorAll('[data-slot="query-field-mirror"] span');
+
+    expect(bareSpans).toHaveLength(1);
+    expect(bareSpans[0]?.textContent).toBe('level:warn');
+    expect(bareSpans[0]?.className).toBe('');
+  });
+
+  // jsdom computes no layout, so the overflow fix can only be guarded
+  // structurally. The bug: with the input spanning the whole field, a long
+  // query scrolled straight under the clear button and buried it.
+  it('scrolls the text inside a lane that stops short of the clear button', () => {
+    const view = renderField({ value: 'level>=warn tag:auth', onClear: () => {} });
+    const lane = view.querySelector('[data-slot="query-field-lane"]') as HTMLElement;
+    const input = view.querySelector('[data-slot="query-field-input"]') as HTMLInputElement;
+    const mirror = view.querySelector('[data-slot="query-field-mirror"]') as HTMLElement;
+    const clear = view.querySelector('[data-slot="query-field-clear"]') as HTMLElement;
+
+    // Both layers live in the lane, and the button is the lane's sibling in
+    // flow — not an overlay on top of the scrolling text.
+    expect(lane.contains(input)).toBe(true);
+    expect(lane.contains(mirror)).toBe(true);
+    expect(clear.parentElement).toBe(view.querySelector('[data-slot="query-field"]'));
+    expect(clear.className).not.toContain('absolute');
+    // No reserved padding to scroll into: the lane itself is the clip.
+    expect(input.className).not.toMatch(/(^|[\s:])pr-/);
+    expect(mirror.className).not.toMatch(/(^|[\s:])pr-/);
+  });
+
+  it('keeps the mirror scrolled to the input as the caret moves past the edge', () => {
+    const view = renderField({ value: 'level>=warn tag:auth service:checkout' });
+    const input = view.querySelector('[data-slot="query-field-input"]') as HTMLInputElement;
+    const mirror = view.querySelector('[data-slot="query-field-mirror"]') as HTMLElement;
+
+    input.scrollLeft = 120;
+    act(() => {
+      input.dispatchEvent(new Event('scroll', { bubbles: true }));
+    });
+
+    expect(mirror.scrollLeft).toBe(120);
+  });
+
+  it('focuses the input when the surface padding is pressed', () => {
+    const view = renderField({ value: 'level' });
+    const surface = view.querySelector('[data-slot="query-field"]') as HTMLElement;
+    const input = view.querySelector('[data-slot="query-field-input"]') as HTMLInputElement;
+
+    act(() => {
+      surface.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    });
+
+    expect(document.activeElement).toBe(input);
+  });
+
   it('shows the clear button only when onClear and a non-empty value are both present', () => {
     const withoutOnClear = renderField({ value: 'level' });
     expect(withoutOnClear.querySelector('[data-slot="query-field-clear"]')).toBeNull();

@@ -16,7 +16,10 @@ row while entries stream in, releasing as soon as the reader scrolls away —
 the affordance a live log tail needs.
 
 `QueryField` is a query input that highlights the parts of a query as the
-reader types. It owns no grammar and no operator vocabulary: the caller
-tokenizes its own query language and hands over ranges, and `QueryField`
-paints them, so a panel can bring any query syntax. Malformed fragments can
-be marked so a typo is visible before the query is run.
+reader types. It understands a small filter grammar out of the box —
+`level>=warn tag:auth -"retry"` — and re-reads the text on every keystroke,
+so the colors follow an edit of any length and an unterminated quote shows
+as a typo before the query is run. A panel that owns a different query
+language passes its own token ranges instead and `QueryField` paints those,
+so any syntax can be brought to it. The exported `tokenizeQuery` is the
+built-in grammar on its own, for callers that want to reuse it.
