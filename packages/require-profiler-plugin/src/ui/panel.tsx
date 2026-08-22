@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Flame, Layers, RefreshCw } from 'lucide-react';
+import { Flame, Layers, Package, RefreshCw } from 'lucide-react';
 import {
   Badge,
   DescriptionList,
@@ -27,6 +27,7 @@ import {
   toFlameGraphNode,
   type ModuleStat,
 } from './aggregations';
+import { aggregatePackages, type PackageStat } from './analysis/packages';
 import { formatCount, formatDuration, formatOffset } from './format';
 
 import './globals.css';
@@ -39,15 +40,32 @@ const DURATION_THRESHOLDS = [
   { value: '100', label: '≥ 100ms' },
 ] as const;
 
-type SelectedModule = {
-  name: string;
-  path: string;
-  selfTime: number;
-  totalTime: number;
-  /** Direct dependencies, when the selection came from the flame graph. */
-  dependencies?: number;
-  occurrences?: number;
-};
+const GROUPINGS = [
+  { value: 'modules', label: 'Modules' },
+  { value: 'packages', label: 'Packages' },
+] as const;
+
+type Grouping = (typeof GROUPINGS)[number]['value'];
+
+type SelectedItem =
+  | {
+      kind: 'module';
+      name: string;
+      path: string;
+      selfTime: number;
+      totalTime: number;
+      /** Direct dependencies, when the selection came from the flame graph. */
+      dependencies?: number;
+      occurrences?: number;
+    }
+  | {
+      kind: 'package';
+      name: string;
+      selfTime: number;
+      inclusiveTime: number;
+      moduleCount: number;
+      entryCount: number;
+    };
 
 const RequireProfilerContent = () => {
   const client = useRozeniteDevToolsClient<RequireProfilerEventMap>({
@@ -62,7 +80,8 @@ const RequireProfilerContent = () => {
   const [minDuration, setMinDuration] = useState('0');
   const [query, setQuery] = useState('');
   const [view, setView] = useState('flame-graph');
-  const [selectedModule, setSelectedModule] = useState<SelectedModule | null>(null);
+  const [grouping, setGrouping] = useState<Grouping>('modules');
+  const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null);
   const [selectedFrameKey, setSelectedFrameKey] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -113,7 +132,7 @@ const RequireProfilerContent = () => {
   const selectChain = useCallback(
     (index: number) => {
       setSelectedChainIndex(index);
-      setSelectedModule(null);
+      setSelectedItem(null);
       setSelectedFrameKey(undefined);
 
       if (!client || chainData.has(index)) {
@@ -148,7 +167,7 @@ const RequireProfilerContent = () => {
     setChainData(new Map());
     setSelectedChainIndex(null);
     setPendingChainIndex(null);
-    setSelectedModule(null);
+    setSelectedItem(null);
     setSelectedFrameKey(undefined);
     setListLoading(true);
     client.send('reload-and-profile', {});
@@ -164,6 +183,7 @@ const RequireProfilerContent = () => {
   );
 
   const moduleStats = useMemo(() => aggregateModules(currentChain?.tree ?? null), [currentChain]);
+  const packageStats = useMemo(() => aggregatePackages(currentChain?.tree ?? null), [currentChain]);
 
   const filteredModuleStats = useMemo(() => {
     if (!query) {
@@ -172,9 +192,17 @@ const RequireProfilerContent = () => {
     return moduleStats.filter((stat) => matchesQuery(stat.path, query));
   }, [moduleStats, query]);
 
+  const filteredPackageStats = useMemo(() => {
+    if (!query) {
+      return packageStats;
+    }
+    return packageStats.filter((stat) => matchesQuery(stat.name, query));
+  }, [packageStats, query]);
+
   const handleFrameSelect = useCallback((key: string, node: FlameGraphNode) => {
     setSelectedFrameKey(key);
-    setSelectedModule({
+    setSelectedItem({
+      kind: 'module',
       name: node.name,
       path: node.tooltip ?? node.name,
       selfTime: node.selfValue ?? node.value,
@@ -184,12 +212,24 @@ const RequireProfilerContent = () => {
   }, []);
 
   const handleModuleRowClick = useCallback((stat: ModuleStat) => {
-    setSelectedModule({
+    setSelectedItem({
+      kind: 'module',
       name: stat.name,
       path: stat.path,
       selfTime: stat.selfTime,
       totalTime: stat.totalTime,
       occurrences: stat.occurrences,
+    });
+  }, []);
+
+  const handlePackageRowClick = useCallback((stat: PackageStat) => {
+    setSelectedItem({
+      kind: 'package',
+      name: stat.name,
+      selfTime: stat.selfTime,
+      inclusiveTime: stat.inclusiveTime,
+      moduleCount: stat.moduleCount,
+      entryCount: stat.entryCount,
     });
   }, []);
 
@@ -219,6 +259,34 @@ const RequireProfilerContent = () => {
         accessorKey: 'occurrences',
         header: 'Evaluations',
         cell: ({ row }) => <Text variant="numeric">{row.original.occurrences}</Text>,
+      },
+    ],
+    [],
+  );
+
+  const packageColumns = useMemo<ColumnDef<PackageStat>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Package',
+        cell: ({ row }) => <div className="min-w-0 truncate">{row.original.name}</div>,
+      },
+      {
+        accessorKey: 'selfTime',
+        header: 'Self',
+        cell: ({ row }) => <Text variant="numeric">{formatDuration(row.original.selfTime)}</Text>,
+      },
+      {
+        accessorKey: 'inclusiveTime',
+        header: 'Inclusive',
+        cell: ({ row }) => (
+          <Text variant="numeric">{formatDuration(row.original.inclusiveTime)}</Text>
+        ),
+      },
+      {
+        accessorKey: 'moduleCount',
+        header: 'Modules',
+        cell: ({ row }) => <Text variant="numeric">{formatCount(row.original.moduleCount)}</Text>,
       },
     ],
     [],
@@ -331,12 +399,34 @@ const RequireProfilerContent = () => {
             <div className="min-w-32 flex-1">
               <SearchField
                 size="sm"
-                placeholder="Filter modules…"
+                placeholder={
+                  view === 'top-modules' && grouping === 'packages'
+                    ? 'Filter packages…'
+                    : 'Filter modules…'
+                }
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 onClear={() => setQuery('')}
               />
             </div>
+            {view === 'top-modules' && (
+              <Select value={grouping} onValueChange={(value) => setGrouping(value as Grouping)}>
+                <Select.Trigger
+                  className="w-32 shrink-0"
+                  size="sm"
+                  aria-label="Group top modules by"
+                >
+                  <Select.Value />
+                </Select.Trigger>
+                <Select.Content>
+                  {GROUPINGS.map((option) => (
+                    <Select.Item key={option.value} value={option.value}>
+                      {option.label}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            )}
             {currentChainMeta && (
               <div className="flex shrink-0 items-center gap-3 pr-1 text-xs text-muted-foreground">
                 <span>
@@ -379,56 +469,98 @@ const RequireProfilerContent = () => {
           </Tabs.Panel>
 
           <Tabs.Panel value="top-modules" className="min-h-0 flex-1 overflow-hidden">
-            <VirtualizedDataTable
-              ariaLabel="Modules by self time"
-              columns={moduleColumns}
-              data={filteredModuleStats}
-              getRowId={(stat) => stat.path}
-              getRowTextValue={(stat) => stat.path}
-              loading={chainLoading}
-              emptyMessage={
-                query ? 'No module matches your filter.' : 'No modules recorded for this chain yet.'
-              }
-              onRowClick={handleModuleRowClick}
-              scrollClassName="h-full w-full overflow-auto"
-              style={{ height: '100%' }}
-            />
+            {grouping === 'packages' ? (
+              <VirtualizedDataTable
+                ariaLabel="Packages by self time"
+                columns={packageColumns}
+                data={filteredPackageStats}
+                getRowId={(stat) => stat.name}
+                getRowTextValue={(stat) => stat.name}
+                loading={chainLoading}
+                emptyMessage={
+                  query
+                    ? 'No package matches your filter.'
+                    : 'No packages recorded for this chain yet.'
+                }
+                onRowClick={handlePackageRowClick}
+                scrollClassName="h-full w-full overflow-auto"
+                style={{ height: '100%' }}
+              />
+            ) : (
+              <VirtualizedDataTable
+                ariaLabel="Modules by self time"
+                columns={moduleColumns}
+                data={filteredModuleStats}
+                getRowId={(stat) => stat.path}
+                getRowTextValue={(stat) => stat.path}
+                loading={chainLoading}
+                emptyMessage={
+                  query
+                    ? 'No module matches your filter.'
+                    : 'No modules recorded for this chain yet.'
+                }
+                onRowClick={handleModuleRowClick}
+                scrollClassName="h-full w-full overflow-auto"
+                style={{ height: '100%' }}
+              />
+            )}
           </Tabs.Panel>
         </Tabs>
       </Split.Pane>
 
-      {selectedModule && (
+      {selectedItem && (
         <>
           <Split.Handle />
           <Split.Pane defaultSize={26} minSize={18} maxSize={45}>
             <div className="flex h-full min-h-0 flex-col overflow-y-auto border-l border-border bg-card">
               <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
-                <Layers className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                {selectedItem.kind === 'package' ? (
+                  <Package className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                ) : (
+                  <Layers className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                )}
                 <span className="min-w-0 flex-1 truncate text-xs font-medium">
-                  {selectedModule.name}
+                  {selectedItem.name}
                 </span>
               </div>
-              <DescriptionList className="p-3">
-                <DescriptionList.Item label="Self time">
-                  <Text variant="numeric">{formatDuration(selectedModule.selfTime)}</Text>
-                </DescriptionList.Item>
-                <DescriptionList.Item label="Total time">
-                  <Text variant="numeric">{formatDuration(selectedModule.totalTime)}</Text>
-                </DescriptionList.Item>
-                {selectedModule.dependencies !== undefined && (
-                  <DescriptionList.Item label="Dependencies">
-                    <Text variant="numeric">{formatCount(selectedModule.dependencies)}</Text>
+              {selectedItem.kind === 'package' ? (
+                <DescriptionList className="p-3">
+                  <DescriptionList.Item label="Self time">
+                    <Text variant="numeric">{formatDuration(selectedItem.selfTime)}</Text>
                   </DescriptionList.Item>
-                )}
-                {selectedModule.occurrences !== undefined && (
-                  <DescriptionList.Item label="Evaluations">
-                    <Text variant="numeric">{formatCount(selectedModule.occurrences)}</Text>
+                  <DescriptionList.Item label="Inclusive time">
+                    <Text variant="numeric">{formatDuration(selectedItem.inclusiveTime)}</Text>
                   </DescriptionList.Item>
-                )}
-                <DescriptionList.Item label="Path">
-                  <span className="font-mono text-xs break-all">{selectedModule.path}</span>
-                </DescriptionList.Item>
-              </DescriptionList>
+                  <DescriptionList.Item label="Modules">
+                    <Text variant="numeric">{formatCount(selectedItem.moduleCount)}</Text>
+                  </DescriptionList.Item>
+                  <DescriptionList.Item label="Entries">
+                    <Text variant="numeric">{formatCount(selectedItem.entryCount)}</Text>
+                  </DescriptionList.Item>
+                </DescriptionList>
+              ) : (
+                <DescriptionList className="p-3">
+                  <DescriptionList.Item label="Self time">
+                    <Text variant="numeric">{formatDuration(selectedItem.selfTime)}</Text>
+                  </DescriptionList.Item>
+                  <DescriptionList.Item label="Total time">
+                    <Text variant="numeric">{formatDuration(selectedItem.totalTime)}</Text>
+                  </DescriptionList.Item>
+                  {selectedItem.dependencies !== undefined && (
+                    <DescriptionList.Item label="Dependencies">
+                      <Text variant="numeric">{formatCount(selectedItem.dependencies)}</Text>
+                    </DescriptionList.Item>
+                  )}
+                  {selectedItem.occurrences !== undefined && (
+                    <DescriptionList.Item label="Evaluations">
+                      <Text variant="numeric">{formatCount(selectedItem.occurrences)}</Text>
+                    </DescriptionList.Item>
+                  )}
+                  <DescriptionList.Item label="Path">
+                    <span className="font-mono text-xs break-all">{selectedItem.path}</span>
+                  </DescriptionList.Item>
+                </DescriptionList>
+              )}
             </div>
           </Split.Pane>
         </>
