@@ -106,8 +106,16 @@ describe('getFramework', () => {
 
 describe('withFramework', () => {
   it('puts the framework in front of the title the frontend built', () => {
+    expect(withFramework('MyApp (Chrome) - React Native DevTools', 'Web')).toBe(
+      'Web · MyApp (Chrome) - React Native DevTools',
+    );
+  });
+
+  it('leaves a React Native title exactly as the frontend built it', () => {
+    // The window is already called "React Native DevTools" — naming the
+    // framework again there says nothing.
     expect(withFramework('MyApp (iPhone) - React Native DevTools', 'React Native')).toBe(
-      'React Native · MyApp (iPhone) - React Native DevTools',
+      'MyApp (iPhone) - React Native DevTools',
     );
   });
 
@@ -118,11 +126,15 @@ describe('withFramework', () => {
   });
 
   it('replaces a previous label rather than prefixing it', () => {
+    const asWeb = withFramework('MyApp - React Native DevTools', 'Lynx');
+
+    expect(withFramework(asWeb, 'Web')).toBe('Web · MyApp - React Native DevTools');
+  });
+
+  it('strips a stale label when relabelling to React Native', () => {
     const asWeb = withFramework('MyApp - React Native DevTools', 'Web');
 
-    expect(withFramework(asWeb, 'React Native')).toBe(
-      'React Native · MyApp - React Native DevTools',
-    );
+    expect(withFramework(asWeb, 'React Native')).toBe('MyApp - React Native DevTools');
   });
 });
 
@@ -148,30 +160,40 @@ describe('trackFrameworkTitle', () => {
     expect(document.title).toBe('Web · React Native DevTools');
   });
 
-  it('re-applies the label when the frontend rewrites the title', async () => {
+  it('never touches the title of a React Native target', async () => {
     trackFrameworkTitle();
-    attachModel().emitMetadata({ platform: 'ios' });
+    attachModel().emitMetadata({ integrationName: 'iOS Bridge (RCTBridge)', platform: 'ios' });
 
-    // What the frontend does on every metadata/system-state change: it
-    // rebuilds the title from its own parts, dropping anything else.
+    expect(document.title).toBe('React Native DevTools');
+
     document.title = 'MyApp (iPhone) [PROFILING] - React Native DevTools';
     await flush();
 
-    expect(document.title).toBe(
-      'React Native · MyApp (iPhone) [PROFILING] - React Native DevTools',
-    );
+    expect(document.title).toBe('MyApp (iPhone) [PROFILING] - React Native DevTools');
+  });
+
+  it('re-applies the label when the frontend rewrites the title', async () => {
+    trackFrameworkTitle();
+    attachModel().emitMetadata({ platform: 'web' });
+
+    // What the frontend does on every metadata/system-state change: it
+    // rebuilds the title from its own parts, dropping anything else.
+    document.title = 'MyApp (Chrome) [PROFILING] - React Native DevTools';
+    await flush();
+
+    expect(document.title).toBe('Web · MyApp (Chrome) [PROFILING] - React Native DevTools');
   });
 
   it('settles instead of looping on its own write', async () => {
     trackFrameworkTitle();
-    attachModel().emitMetadata({ platform: 'ios' });
+    attachModel().emitMetadata({ platform: 'web' });
 
     document.title = 'MyApp - React Native DevTools';
     await flush();
     await flush();
     await flush();
 
-    expect(document.title).toBe('React Native · MyApp - React Native DevTools');
+    expect(document.title).toBe('Web · MyApp - React Native DevTools');
   });
 
   it('leaves the title alone until a framework is known', async () => {

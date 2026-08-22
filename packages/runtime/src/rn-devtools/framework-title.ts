@@ -18,6 +18,15 @@ export type Framework = 'React Native' | 'Web' | 'Lynx';
 const FRAMEWORKS: readonly Framework[] = ['React Native', 'Web', 'Lynx'];
 
 /**
+ * The framework this frontend is named after, and therefore the one it
+ * says nothing extra about: a "React Native · ..." prefix inside a window
+ * already titled "React Native DevTools" is noise. A React Native
+ * developer's title is left exactly as the frontend built it, and the
+ * label appears only when the target is something else.
+ */
+const IMPLIED_FRAMEWORK: Framework = 'React Native';
+
+/**
  * Framework names as they appear in `ReactNativeApplication`'s
  * `integrationName`.
  *
@@ -72,7 +81,9 @@ const withoutFramework = (title: string): string => {
 
 /**
  * The window title, with the framework in front of whatever the frontend
- * put there ("Web · MyApp (Chrome) - React Native DevTools").
+ * put there ("Web · MyApp (Chrome) - React Native DevTools") — or that
+ * title untouched when the framework is the one this frontend already
+ * implies (see `IMPLIED_FRAMEWORK`).
  *
  * A prefix rather than a suffix on purpose: several DevTools windows open
  * at once is the case this exists for, and a browser/OS window list
@@ -83,12 +94,16 @@ const withoutFramework = (title: string): string => {
  * stacking a second one. Both matter: this runs again on every title
  * change, including the ones it makes itself.
  */
-export const withFramework = (title: string, framework: Framework): string =>
-  `${framework}${SEPARATOR}${withoutFramework(title)}`;
+export const withFramework = (title: string, framework: Framework): string => {
+  const base = withoutFramework(title);
+
+  return framework === IMPLIED_FRAMEWORK ? base : `${framework}${SEPARATOR}${base}`;
+};
 
 /**
  * Keeps the framework in `document.title` for as long as the frontend is
- * open.
+ * open — for the frameworks that need naming. A React Native target's
+ * title is never written to at all.
  *
  * The frontend owns that title: it rebuilds it from scratch (app display
  * name, device name, a `[PROFILING]` suffix) on every metadata or
