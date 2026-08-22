@@ -32,6 +32,17 @@ module.exports = withRozenite(
 );
 ```
 
+Keep `withRozenite`'s `enabled` option conditional as above — when it is false,
+`enhanceMetroConfig` never runs and nothing is instrumented. The profiler also
+defends itself for the cases outside that gate: it skips instrumentation when
+`process.env.NODE_ENV` is `production`, and the polyfill it injects is guarded by
+`__DEV__`, which Metro strips from release bundles. Pass `enabled` to override the
+default:
+
+```javascript
+withRozeniteRequireProfiler(config, { enabled: process.env.PROFILE_REQUIRES === 'true' });
+```
+
 Add the DevTools hook to your app:
 
 ```typescript title="App.tsx"
@@ -48,10 +59,11 @@ function App() {
 
 Once configured, "Metro Require Profiler" appears in your React Native DevTools sidebar, showing a flame graph of every module loaded during startup.
 
-- **Color** reflects timing: red modules took over 70% of the slowest module's time; blue modules were fast.
-- **Click** a module to zoom into that part of the tree, or open its detail panel for evaluation time, path, dependency count, and importing modules.
-- The header shows total initialization time, module count, and the entry point.
-- Use the filter (⚙️ in the header) to hide chains under a duration threshold — start around 100ms to focus on what actually matters for startup time.
+- **Color** reflects self time: red modules spent over 70% of the heaviest module's own time; grey modules have no own time at all.
+- **Click** a frame to zoom into that part of the tree, and press `Escape` to zoom back out. The detail panel shows self time, total time, dependency count, and the full path.
+- **Top modules** shows the same chain as a table ranked by self time — usually the fastest way to find the module worth fixing.
+- **Filter modules** highlights matching frames in the graph and narrows the table.
+- The sidebar lists every recorded chain with its duration and module count. Use the threshold selector to hide short chains — start around 100ms to focus on what actually matters for startup time.
 
 ## What to look for
 
