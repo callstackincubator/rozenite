@@ -1,7 +1,12 @@
 import { useEffect } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { RequireProfilerEventMap } from '../shared';
-import { getRequireChainsList, getRequireChainData, onRequireChainComplete } from './timings';
+import {
+  getRequireChainsList,
+  getRequireChainData,
+  getBundleModules,
+  onRequireChainComplete,
+} from './timings';
 import { DevSettings } from 'react-native';
 
 export const useRequireProfilerDevTools = () => {
@@ -42,6 +47,19 @@ export const useRequireProfilerDevTools = () => {
       }
     });
 
+    // Listen for bundle coverage requests
+    const bundleCoverageSubscription = client.onMessage('request-bundle-coverage', () => {
+      try {
+        const coverage = getBundleModules();
+        client.send('bundle-coverage-response', { coverage });
+      } catch (error) {
+        console.error('[Rozenite] Require Profiler: Error getting bundle coverage', error);
+        client.send('bundle-coverage-response', {
+          coverage: { modules: [], capturedAt: Date.now() },
+        });
+      }
+    });
+
     // Subscribe to new chain completion events
     const unsubscribeChainComplete = onRequireChainComplete((chain) => {
       client.send('new-chain', { chain });
@@ -51,6 +69,7 @@ export const useRequireProfilerDevTools = () => {
       reloadSubscription.remove();
       chainsListSubscription.remove();
       chainDataSubscription.remove();
+      bundleCoverageSubscription.remove();
       unsubscribeChainComplete();
     };
   }, [client]);
