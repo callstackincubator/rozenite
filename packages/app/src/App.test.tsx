@@ -139,7 +139,6 @@ describe('App', () => {
 
     const splash = () => document.querySelector('[data-slot="splash"]');
     expect(splash()).toBeTruthy();
-    // Opaque and over everything while the handshake is in flight.
     expect(splash()?.className).toMatch(/\bopacity-100\b/);
     expect(splash()?.className).toMatch(/\bfixed\b/);
     // Purely visual: the status underneath it is what AT announces.
@@ -148,7 +147,7 @@ describe('App', () => {
     setState({ status: 'connected' });
     await findPanelIframe();
 
-    // Fades out (`opacity-0`) before it unmounts, rather than popping off.
+    // Fades out before it unmounts, rather than popping off.
     await waitFor(() => expect(splash()?.className).toMatch(/\bopacity-0\b/), { timeout: 3000 });
     await waitFor(() => expect(splash()).toBeNull(), { timeout: 3000 });
   });
@@ -162,9 +161,8 @@ describe('App', () => {
     setState({ status: 'rozeniteMissing' });
 
     expect(await screen.findByText(/rozenite isn't set up/i)).toBeTruthy();
+    // Still the backdrop the dialog sits on, and under `Dialog`'s `z-50`.
     const splash = document.querySelector('[data-slot="splash"]');
-    // Still there, still opaque — it's the backdrop the dialog sits on —
-    // and under `Dialog`'s own `z-50` so it can't cover it.
     expect(splash?.className).toMatch(/\bopacity-100\b/);
     expect(splash?.className).toMatch(/\bz-40\b/);
   });

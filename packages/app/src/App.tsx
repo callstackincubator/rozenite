@@ -229,9 +229,6 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
           sidebarHeaderClassName={getTitleBarRegionClassName()}
         />
       ) : (
-        // Everything the pre-shell window needs beyond the `Splash`
-        // covering it below: with the title bar hidden and no `Sidebar`
-        // yet to carry a drag region, the window couldn't be moved at all.
         <WindowDragHandle />
       )}
 
@@ -267,12 +264,8 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
         action={<Button onClick={() => connection.reconnect()}>Reconnect</Button>}
       />
 
-      {/* Last child, but `fixed`: it covers the whole window, footer
-          included, until the handshake lands. It stays up behind the
-          dialogs above — those are all pre-connection states, so there is
-          nothing else to show underneath them — and never comes back once
-          the shell is mounted, which is what `shellMounted` being a sticky
-          latch guarantees. */}
+      {/* `fixed`, so it covers the footer below too. Latched on
+          `shellMounted`, so it never returns over a mounted shell. */}
       <Splash visible={!shellMounted} />
 
       <Footer

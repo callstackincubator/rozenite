@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { cn, RozeniteLoader } from '@rozenite/ui';
 
-/**
- * How long the splash stays up at minimum, even once the handshake has
- * completed. A device on the same machine can connect in a couple of
- * hundred milliseconds, and a splash that blinks in and straight back out
- * reads as a glitch rather than as loading.
- */
+/** A device on the same machine can connect in a couple of hundred
+ * milliseconds, and a splash that blinks in and straight back out reads as
+ * a glitch rather than as loading. */
 const MIN_VISIBLE_MS = 450;
 
 /** Must stay in sync with `duration-[400ms]` below, which has to be a
@@ -20,17 +17,10 @@ export interface SplashProps {
 }
 
 /**
- * The startup splash: the Rozenite loader centered on the app's own
- * background, covering the window while the device handshake is in flight,
- * then fading off once it lands.
- *
- * `aria-hidden` because it's a purely visual cover — what it hides (the
- * "Connecting to device…" empty state, the footer's status badge) stays in
- * the accessibility tree underneath and is what assistive tech announces,
- * so the loader must not duplicate that as a second status.
- *
- * `z-40` keeps it under `Dialog`'s `z-50`, so a dialog that comes up
- * mid-fade isn't covered by the tail of the animation.
+ * `aria-hidden` because it's a purely visual cover: the footer's status
+ * badge stays in the accessibility tree underneath, so the loader must not
+ * duplicate it as a second status. `z-40` keeps it under `Dialog`'s
+ * `z-50`, which is what lets a status dialog sit on top of it.
  */
 export function Splash({ visible }: SplashProps) {
   const [phase, setPhase] = useState<Phase>(visible ? 'visible' : 'hidden');
@@ -55,10 +45,9 @@ export function Splash({ visible }: SplashProps) {
       clearTimeout(fadeTimer);
       clearTimeout(doneTimer);
     };
-    // `phase` is a dependency so the `hidden` guard above sees the phase
-    // the timers put it in. Re-running on the `visible` → `fading` step is
-    // harmless: the hold has elapsed by then, so it only re-arms the
-    // unmount a full fade after the fade actually started.
+    // `phase` is a dependency so the guard above sees what the timers set.
+    // Re-running on `visible` → `fading` only re-arms the unmount a full
+    // fade after the fade actually started, which is what we want anyway.
   }, [visible, phase]);
 
   if (phase === 'hidden') {
