@@ -1,4 +1,4 @@
-import { type ProjectType, type RozeniteHostIntegration } from '@rozenite/tools';
+import { type ProjectType } from '@rozenite/tools';
 import { RozeniteLogLevel } from './logger.js';
 
 /** Controls whether plugins are shown as individual tabs or in one sidebar. */
@@ -34,23 +34,4 @@ export type RozeniteConfig = {
    * @default 'sidebar'
    */
   pluginDisplay?: RozenitePluginDisplay;
-
-  /**
-   * Which host this dev server serves.
-   *
-   * `react-native` (the default) resolves React Native and serves the
-   * Fusebox debugger frontend. `lynx` skips every React Native lookup:
-   * Lynx apps have no `react-native` dependency, and `@rozenite/app` is
-   * loaded standalone there rather than embedded in Fusebox's HTML.
-   *
-   * Named `integration`, not `platform`: `platform` means the device OS
-   * everywhere else in this system (`ReactNativeApplication.metadataUpdated`'s
-   * `platform` is `ios`/`android`/`web`), so reusing it here would collide —
-   * especially in `resolveIntegration` (`@rozenite/tools`), which reads both
-   * this value and that device-reported one to answer "which integration is
-   * this target".
-   *
-   * @default 'react-native'
-   */
-  integration?: RozeniteHostIntegration;
 };

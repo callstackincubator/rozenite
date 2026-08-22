@@ -6,7 +6,7 @@ export {
   UnknownProjectType,
   UnknownBundlerType,
 } from './project-type.js';
-export { logger } from './logger.js';
+export { logger, type RozeniteLogLevel } from './logger.js';
 export {
   type RozeniteIntegration,
   type RozeniteHostIntegration,

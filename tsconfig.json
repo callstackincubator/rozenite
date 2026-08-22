@@ -25,6 +25,9 @@
       "path": "./packages/middleware"
     },
     {
+      "path": "./packages/integration"
+    },
+    {
       "path": "./packages/repack"
     },
     {

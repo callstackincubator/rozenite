@@ -1,10 +1,22 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { getProjectType } from '@rozenite/tools';
-import { logger } from './logger.js';
-import { RozeniteConfig } from './config.js';
+import { getProjectType, type ProjectType } from '@rozenite/tools';
+import { logger } from '@rozenite/tools';
 
 const require = createRequire(import.meta.url);
+
+/**
+ * The subset of `RozeniteConfig` that resolving React Native and
+ * `@react-native/dev-middleware` actually needs. Importing the whole config
+ * type from `@rozenite/middleware` would be circular - this package is a
+ * dependency of the middleware, not the other way around - so callers
+ * (`@rozenite/middleware`'s `createReactNativeIntegration` wiring) pass just
+ * these two values instead.
+ */
+export type ProjectResolutionOptions = {
+  projectRoot: string;
+  projectType?: ProjectType;
+};
 
 export const getReactNativePackagePath = (projectRoot: string): string => {
   const input = require.resolve('react-native', { paths: [projectRoot] });
@@ -58,7 +70,7 @@ const getDevMiddlewarePathFromReactNative = (projectRoot: string): string => {
   });
 };
 
-export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
+export const getDevMiddlewarePath = (options: ProjectResolutionOptions): string => {
   if (options.projectType) {
     if (options.projectType === 'expo') {
       logger.debug(
@@ -128,13 +140,13 @@ export const getDevMiddlewarePath = (options: RozeniteConfig): string => {
  * version-sensitive part of both patches and should move as one.
  */
 export const requireDevMiddlewareInternal = (
-  options: RozeniteConfig,
+  options: ProjectResolutionOptions,
   relativePath: string,
 ): Record<string, unknown> => {
   return require(path.join(path.dirname(getDevMiddlewarePath(options)), relativePath));
 };
 
-export const getReactNativeDebuggerFrontendPath = (options: RozeniteConfig): string => {
+export const getReactNativeDebuggerFrontendPath = (options: ProjectResolutionOptions): string => {
   const devMiddlewarePath = getDevMiddlewarePath(options);
 
   return require.resolve('@react-native/debugger-frontend', {

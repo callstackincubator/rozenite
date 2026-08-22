@@ -1,5 +1,4 @@
-import { requireDevMiddlewareInternal } from './resolve.js';
-import { RozeniteConfig } from './index.js';
+import { requireDevMiddlewareInternal, type ProjectResolutionOptions } from './resolve.js';
 
 type GetDevToolsFrontendUrl = (
   experiments: unknown,
@@ -8,7 +7,7 @@ type GetDevToolsFrontendUrl = (
   runtimeOptions: unknown,
 ) => string;
 
-export const patchDevtoolsFrontendUrl = (options: RozeniteConfig): void => {
+export const patchDevtoolsFrontendUrl = (options: ProjectResolutionOptions): void => {
   const getDevToolsFrontendUrlModule = requireDevMiddlewareInternal(
     options,
     'utils/getDevToolsFrontendUrl',

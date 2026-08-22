@@ -20,6 +20,7 @@ import {
 import { logger } from '@rozenite/tools';
 import { createLynxTransport } from './transport/index.js';
 import { createRozeniteLynxServer, listInspectorTargets } from './server/index.js';
+import { lynxIntegration } from './integration.js';
 
 export type { LynxClient, LynxSession, DeviceFrame, LynxTransport } from './types.js';
 export {
@@ -38,7 +39,7 @@ export {
   type RozeniteLynxServerOptions,
 } from './server/index.js';
 
-export type RozeniteLynxOptions = Omit<RozeniteConfig, 'projectRoot' | 'integration'> & {
+export type RozeniteLynxOptions = Omit<RozeniteConfig, 'projectRoot'> & {
   /**
    * Whether to enable Rozenite.
    *
@@ -108,7 +109,7 @@ export const rozeniteLynxPlugin = (options: RozeniteLynxOptions = {}): RsbuildPl
       const rozenite = await initializeRozenite(
         {
           projectRoot: api.context.rootPath,
-          integration: 'lynx',
+          integration: lynxIntegration(),
           include: options.include,
           exclude: options.exclude,
           destroyOnDetachPlugins: options.destroyOnDetachPlugins,
