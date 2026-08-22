@@ -4,11 +4,14 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Flame, Layers, Package, RefreshCw, X } from 'lucide-react';
 import {
   Badge,
+  ChevronRight,
+  Column,
   DescriptionList,
   EmptyState,
   FlameGraph,
   IconButton,
   PluginShell,
+  Row,
   RozeniteLoader,
   SearchField,
   Select,
@@ -28,6 +31,7 @@ import {
   type ModuleStat,
 } from './aggregations';
 import { aggregatePackages, type PackageStat } from './analysis/packages';
+import { findRequirePath } from './analysis/require-path';
 import { EllipsisStart } from './ellipsis-start';
 import { formatCount, formatDuration, formatOffset } from './format';
 
@@ -236,6 +240,34 @@ const RequireProfilerContent = () => {
       entryCount: stat.entryCount,
     });
   }, []);
+
+  // Keyed by full path so an ancestor in the require-path chain can be
+  // resolved back to the stat `handleModuleRowClick` expects, keeping
+  // ancestor clicks on the same selection path as the top-modules table.
+  const moduleStatsByPath = useMemo(() => {
+    const map = new Map<string, ModuleStat>();
+    for (const stat of moduleStats) {
+      map.set(stat.path, stat);
+    }
+    return map;
+  }, [moduleStats]);
+
+  const handleAncestorSelect = useCallback(
+    (path: string) => {
+      const stat = moduleStatsByPath.get(path);
+      if (stat) {
+        handleModuleRowClick(stat);
+      }
+    },
+    [moduleStatsByPath, handleModuleRowClick],
+  );
+
+  const requirePathResult = useMemo(() => {
+    if (!currentChain?.tree || !selectedItem || selectedItem.kind !== 'module') {
+      return null;
+    }
+    return findRequirePath(currentChain.tree, selectedItem.path);
+  }, [currentChain, selectedItem]);
 
   const moduleColumns = useMemo<ColumnDef<ModuleStat>[]>(
     () => [
@@ -547,27 +579,79 @@ const RequireProfilerContent = () => {
                   </DescriptionList.Item>
                 </DescriptionList>
               ) : (
-                <DescriptionList className="p-3">
-                  <DescriptionList.Item label="Self time">
-                    <Text variant="numeric">{formatDuration(selectedItem.selfTime)}</Text>
-                  </DescriptionList.Item>
-                  <DescriptionList.Item label="Total time">
-                    <Text variant="numeric">{formatDuration(selectedItem.totalTime)}</Text>
-                  </DescriptionList.Item>
-                  {selectedItem.dependencies !== undefined && (
-                    <DescriptionList.Item label="Dependencies">
-                      <Text variant="numeric">{formatCount(selectedItem.dependencies)}</Text>
-                    </DescriptionList.Item>
+                <>
+                  {requirePathResult && requirePathResult.entries.length > 0 && (
+                    <div className="border-b border-border p-3">
+                      <Text variant="caption" className="mb-2 block">
+                        Required by
+                      </Text>
+                      <Column gap={1}>
+                        {requirePathResult.entries.map((entry, index) => {
+                          const isTarget = index === requirePathResult.entries.length - 1;
+
+                          return (
+                            <Row
+                              key={`${entry.path}-${index}`}
+                              align="center"
+                              gap={1}
+                              style={{ paddingLeft: index * 12 }}
+                            >
+                              {index > 0 && (
+                                <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                              )}
+                              {isTarget ? (
+                                <Text
+                                  variant="body"
+                                  className="min-w-0 truncate font-medium"
+                                  title={entry.path}
+                                >
+                                  {entry.name}
+                                </Text>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="min-w-0 truncate text-left text-sm text-muted-foreground hover:text-foreground hover:underline"
+                                  title={entry.path}
+                                  onClick={() => handleAncestorSelect(entry.path)}
+                                >
+                                  {entry.name}
+                                </button>
+                              )}
+                            </Row>
+                          );
+                        })}
+                      </Column>
+                      {requirePathResult.occurrences > 1 && (
+                        <Text variant="caption" className="mt-2 block">
+                          Also evaluated at {requirePathResult.occurrences - 1} other{' '}
+                          {requirePathResult.occurrences - 1 === 1 ? 'point' : 'points'} in this
+                          chain
+                        </Text>
+                      )}
+                    </div>
                   )}
-                  {selectedItem.occurrences !== undefined && (
-                    <DescriptionList.Item label="Evaluations">
-                      <Text variant="numeric">{formatCount(selectedItem.occurrences)}</Text>
+                  <DescriptionList className="p-3">
+                    <DescriptionList.Item label="Self time">
+                      <Text variant="numeric">{formatDuration(selectedItem.selfTime)}</Text>
                     </DescriptionList.Item>
-                  )}
-                  <DescriptionList.Item label="Path">
-                    <span className="font-mono text-xs break-all">{selectedItem.path}</span>
-                  </DescriptionList.Item>
-                </DescriptionList>
+                    <DescriptionList.Item label="Total time">
+                      <Text variant="numeric">{formatDuration(selectedItem.totalTime)}</Text>
+                    </DescriptionList.Item>
+                    {selectedItem.dependencies !== undefined && (
+                      <DescriptionList.Item label="Dependencies">
+                        <Text variant="numeric">{formatCount(selectedItem.dependencies)}</Text>
+                      </DescriptionList.Item>
+                    )}
+                    {selectedItem.occurrences !== undefined && (
+                      <DescriptionList.Item label="Evaluations">
+                        <Text variant="numeric">{formatCount(selectedItem.occurrences)}</Text>
+                      </DescriptionList.Item>
+                    )}
+                    <DescriptionList.Item label="Path">
+                      <span className="font-mono text-xs break-all">{selectedItem.path}</span>
+                    </DescriptionList.Item>
+                  </DescriptionList>
+                </>
               )}
             </div>
           </Split.Pane>
