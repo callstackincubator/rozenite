@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Flame, Layers, RefreshCw } from 'lucide-react';
+import { Flame, Layers, Package, RefreshCw } from 'lucide-react';
 import {
+  Alert,
   Badge,
+  Button,
+  ChevronRight,
+  Column,
   DescriptionList,
   EmptyState,
   FlameGraph,
   IconButton,
   PluginShell,
+  Row,
   RozeniteLoader,
   SearchField,
   Select,
@@ -19,7 +24,12 @@ import {
   VirtualizedDataTable,
   type FlameGraphNode,
 } from '@rozenite/ui';
-import type { RequireChainData, RequireChainMeta, RequireProfilerEventMap } from '../shared';
+import type {
+  BundleCoverage,
+  RequireChainData,
+  RequireChainMeta,
+  RequireProfilerEventMap,
+} from '../shared';
 import {
   aggregateModules,
   filterChains,
@@ -27,6 +37,9 @@ import {
   toFlameGraphNode,
   type ModuleStat,
 } from './aggregations';
+import { summarizeCoverage, type PackageCoverage } from './analysis/coverage';
+import { aggregatePackages, findDuplicatePackages, type PackageStat } from './analysis/packages';
+import { findRequirePath } from './analysis/require-path';
 import { formatCount, formatDuration, formatOffset } from './format';
 
 import './globals.css';
@@ -39,15 +52,32 @@ const DURATION_THRESHOLDS = [
   { value: '100', label: '≥ 100ms' },
 ] as const;
 
-type SelectedModule = {
-  name: string;
-  path: string;
-  selfTime: number;
-  totalTime: number;
-  /** Direct dependencies, when the selection came from the flame graph. */
-  dependencies?: number;
-  occurrences?: number;
-};
+const GROUPINGS = [
+  { value: 'modules', label: 'Modules' },
+  { value: 'packages', label: 'Packages' },
+] as const;
+
+type Grouping = (typeof GROUPINGS)[number]['value'];
+
+type SelectedItem =
+  | {
+      kind: 'module';
+      name: string;
+      path: string;
+      selfTime: number;
+      totalTime: number;
+      /** Direct dependencies, when the selection came from the flame graph. */
+      dependencies?: number;
+      occurrences?: number;
+    }
+  | {
+      kind: 'package';
+      name: string;
+      selfTime: number;
+      inclusiveTime: number;
+      moduleCount: number;
+      entryCount: number;
+    };
 
 const RequireProfilerContent = () => {
   const client = useRozeniteDevToolsClient<RequireProfilerEventMap>({
@@ -62,8 +92,12 @@ const RequireProfilerContent = () => {
   const [minDuration, setMinDuration] = useState('0');
   const [query, setQuery] = useState('');
   const [view, setView] = useState('flame-graph');
-  const [selectedModule, setSelectedModule] = useState<SelectedModule | null>(null);
+  const [grouping, setGrouping] = useState<Grouping>('modules');
+  const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null);
   const [selectedFrameKey, setSelectedFrameKey] = useState<string | undefined>(undefined);
+  const [coverage, setCoverage] = useState<BundleCoverage | null>(null);
+  const [coverageRequested, setCoverageRequested] = useState(false);
+  const [coverageLoading, setCoverageLoading] = useState(false);
 
   useEffect(() => {
     if (!client) {
@@ -93,6 +127,11 @@ const RequireProfilerContent = () => {
       });
     });
 
+    const bundleCoverageSubscription = client.onMessage('bundle-coverage-response', (event) => {
+      setCoverage(event.coverage);
+      setCoverageLoading(false);
+    });
+
     setListLoading(true);
     client.send('request-chains-list', {});
 
@@ -100,6 +139,7 @@ const RequireProfilerContent = () => {
       chainsListSubscription.remove();
       chainDataSubscription.remove();
       newChainSubscription.remove();
+      bundleCoverageSubscription.remove();
     };
   }, [client]);
 
@@ -113,7 +153,7 @@ const RequireProfilerContent = () => {
   const selectChain = useCallback(
     (index: number) => {
       setSelectedChainIndex(index);
-      setSelectedModule(null);
+      setSelectedItem(null);
       setSelectedFrameKey(undefined);
 
       if (!client || chainData.has(index)) {
@@ -148,11 +188,53 @@ const RequireProfilerContent = () => {
     setChainData(new Map());
     setSelectedChainIndex(null);
     setPendingChainIndex(null);
-    setSelectedModule(null);
+    setSelectedItem(null);
     setSelectedFrameKey(undefined);
     setListLoading(true);
     client.send('reload-and-profile', {});
   }, [client]);
+
+  const loadCoverage = useCallback(() => {
+    if (!client) {
+      return;
+    }
+
+    setCoverageRequested(true);
+    setCoverageLoading(true);
+    client.send('request-bundle-coverage', {});
+  }, [client]);
+
+  const handleViewChange = useCallback(
+    (value: string) => {
+      setView(value);
+
+      // Fetch lazily: the bundle registry is far bigger than a chain tree,
+      // so only pay for it once the coverage tab is actually opened.
+      if (value === 'coverage' && !coverageRequested) {
+        loadCoverage();
+      }
+    },
+    [coverageRequested, loadCoverage],
+  );
+
+  const coverageSummary = useMemo(() => summarizeCoverage(coverage?.modules ?? []), [coverage]);
+
+  const coveragePercent =
+    coverageSummary.total === 0
+      ? 0
+      : Math.round((coverageSummary.evaluated / coverageSummary.total) * 100);
+
+  const filteredCoveragePackages = useMemo(() => {
+    if (!query) {
+      return coverageSummary.packages;
+    }
+    return coverageSummary.packages.filter((stat) => matchesQuery(stat.name, query));
+  }, [coverageSummary, query]);
+
+  const coverageDuplicatePackages = useMemo(
+    () => findDuplicatePackages((coverage?.modules ?? []).map((module) => module.name)),
+    [coverage],
+  );
 
   const currentChain = selectedChainIndex === null ? null : chainData.get(selectedChainIndex);
   const currentChainMeta = chains.find((chain) => chain.index === selectedChainIndex) ?? null;
@@ -164,6 +246,11 @@ const RequireProfilerContent = () => {
   );
 
   const moduleStats = useMemo(() => aggregateModules(currentChain?.tree ?? null), [currentChain]);
+  const packageStats = useMemo(() => aggregatePackages(currentChain?.tree ?? null), [currentChain]);
+  const duplicatePackages = useMemo(
+    () => findDuplicatePackages(moduleStats.map((stat) => stat.path)),
+    [moduleStats],
+  );
 
   const filteredModuleStats = useMemo(() => {
     if (!query) {
@@ -172,9 +259,17 @@ const RequireProfilerContent = () => {
     return moduleStats.filter((stat) => matchesQuery(stat.path, query));
   }, [moduleStats, query]);
 
+  const filteredPackageStats = useMemo(() => {
+    if (!query) {
+      return packageStats;
+    }
+    return packageStats.filter((stat) => matchesQuery(stat.name, query));
+  }, [packageStats, query]);
+
   const handleFrameSelect = useCallback((key: string, node: FlameGraphNode) => {
     setSelectedFrameKey(key);
-    setSelectedModule({
+    setSelectedItem({
+      kind: 'module',
       name: node.name,
       path: node.tooltip ?? node.name,
       selfTime: node.selfValue ?? node.value,
@@ -184,7 +279,8 @@ const RequireProfilerContent = () => {
   }, []);
 
   const handleModuleRowClick = useCallback((stat: ModuleStat) => {
-    setSelectedModule({
+    setSelectedItem({
+      kind: 'module',
       name: stat.name,
       path: stat.path,
       selfTime: stat.selfTime,
@@ -192,6 +288,45 @@ const RequireProfilerContent = () => {
       occurrences: stat.occurrences,
     });
   }, []);
+
+  const handlePackageRowClick = useCallback((stat: PackageStat) => {
+    setSelectedItem({
+      kind: 'package',
+      name: stat.name,
+      selfTime: stat.selfTime,
+      inclusiveTime: stat.inclusiveTime,
+      moduleCount: stat.moduleCount,
+      entryCount: stat.entryCount,
+    });
+  }, []);
+
+  // Keyed by full path so an ancestor in the require-path chain can be
+  // resolved back to the stat `handleModuleRowClick` expects, keeping
+  // ancestor clicks on the same selection path as the top-modules table.
+  const moduleStatsByPath = useMemo(() => {
+    const map = new Map<string, ModuleStat>();
+    for (const stat of moduleStats) {
+      map.set(stat.path, stat);
+    }
+    return map;
+  }, [moduleStats]);
+
+  const handleAncestorSelect = useCallback(
+    (path: string) => {
+      const stat = moduleStatsByPath.get(path);
+      if (stat) {
+        handleModuleRowClick(stat);
+      }
+    },
+    [moduleStatsByPath, handleModuleRowClick],
+  );
+
+  const requirePathResult = useMemo(() => {
+    if (!currentChain?.tree || !selectedItem || selectedItem.kind !== 'module') {
+      return null;
+    }
+    return findRequirePath(currentChain.tree, selectedItem.path);
+  }, [currentChain, selectedItem]);
 
   const moduleColumns = useMemo<ColumnDef<ModuleStat>[]>(
     () => [
@@ -219,6 +354,62 @@ const RequireProfilerContent = () => {
         accessorKey: 'occurrences',
         header: 'Evaluations',
         cell: ({ row }) => <Text variant="numeric">{row.original.occurrences}</Text>,
+      },
+    ],
+    [],
+  );
+
+  const packageColumns = useMemo<ColumnDef<PackageStat>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Package',
+        cell: ({ row }) => <div className="min-w-0 truncate">{row.original.name}</div>,
+      },
+      {
+        accessorKey: 'selfTime',
+        header: 'Self',
+        cell: ({ row }) => <Text variant="numeric">{formatDuration(row.original.selfTime)}</Text>,
+      },
+      {
+        accessorKey: 'inclusiveTime',
+        header: 'Inclusive',
+        cell: ({ row }) => (
+          <Text variant="numeric">{formatDuration(row.original.inclusiveTime)}</Text>
+        ),
+      },
+      {
+        accessorKey: 'moduleCount',
+        header: 'Modules',
+        cell: ({ row }) => <Text variant="numeric">{formatCount(row.original.moduleCount)}</Text>,
+      },
+    ],
+    [],
+  );
+
+  const coverageColumns = useMemo<ColumnDef<PackageCoverage>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Package',
+        cell: ({ row }) => <div className="min-w-0 truncate">{row.original.name}</div>,
+      },
+      {
+        accessorKey: 'evaluated',
+        header: 'Evaluated',
+        cell: ({ row }) => <Text variant="numeric">{formatCount(row.original.evaluated)}</Text>,
+      },
+      {
+        accessorKey: 'total',
+        header: 'Total',
+        cell: ({ row }) => <Text variant="numeric">{formatCount(row.original.total)}</Text>,
+      },
+      {
+        id: 'notEvaluated',
+        header: 'Not yet evaluated',
+        cell: ({ row }) => (
+          <Text variant="numeric">{formatCount(row.original.total - row.original.evaluated)}</Text>
+        ),
       },
     ],
     [],
@@ -314,7 +505,7 @@ const RequireProfilerContent = () => {
       <Split.Pane>
         <Tabs
           value={view}
-          onValueChange={(value) => setView(String(value))}
+          onValueChange={(value) => handleViewChange(String(value))}
           className="flex h-full min-h-0 flex-col"
         >
           {/* A plain bar rather than `Toolbar`: a tab list inside a toolbar
@@ -327,17 +518,54 @@ const RequireProfilerContent = () => {
               <Tabs.Tab size="sm" value="top-modules">
                 Top modules
               </Tabs.Tab>
+              <Tabs.Tab size="sm" value="coverage">
+                Coverage
+              </Tabs.Tab>
             </Tabs.List>
             <div className="min-w-32 flex-1">
               <SearchField
                 size="sm"
-                placeholder="Filter modules…"
+                placeholder={
+                  view === 'coverage' || (view === 'top-modules' && grouping === 'packages')
+                    ? 'Filter packages…'
+                    : 'Filter modules…'
+                }
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 onClear={() => setQuery('')}
               />
             </div>
-            {currentChainMeta && (
+            {view === 'coverage' && (
+              <IconButton
+                label="Refresh bundle coverage"
+                size="sm"
+                variant="ghost"
+                tone="neutral"
+                disabled={coverageLoading}
+                onClick={loadCoverage}
+              >
+                <RefreshCw />
+              </IconButton>
+            )}
+            {view === 'top-modules' && (
+              <Select value={grouping} onValueChange={(value) => setGrouping(value as Grouping)}>
+                <Select.Trigger
+                  className="w-32 shrink-0"
+                  size="sm"
+                  aria-label="Group top modules by"
+                >
+                  <Select.Value />
+                </Select.Trigger>
+                <Select.Content>
+                  {GROUPINGS.map((option) => (
+                    <Select.Item key={option.value} value={option.value}>
+                      {option.label}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            )}
+            {view !== 'coverage' && currentChainMeta && (
               <div className="flex shrink-0 items-center gap-3 pr-1 text-xs text-muted-foreground">
                 <span>
                   Total <Text variant="numeric">{formatDuration(currentChainMeta.duration)}</Text>
@@ -378,57 +606,255 @@ const RequireProfilerContent = () => {
             )}
           </Tabs.Panel>
 
-          <Tabs.Panel value="top-modules" className="min-h-0 flex-1 overflow-hidden">
-            <VirtualizedDataTable
-              ariaLabel="Modules by self time"
-              columns={moduleColumns}
-              data={filteredModuleStats}
-              getRowId={(stat) => stat.path}
-              getRowTextValue={(stat) => stat.path}
-              loading={chainLoading}
-              emptyMessage={
-                query ? 'No module matches your filter.' : 'No modules recorded for this chain yet.'
-              }
-              onRowClick={handleModuleRowClick}
-              scrollClassName="h-full w-full overflow-auto"
-              style={{ height: '100%' }}
-            />
+          <Tabs.Panel value="top-modules" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {grouping === 'packages' ? (
+              <>
+                {duplicatePackages.length > 0 && (
+                  <Alert
+                    tone="warning"
+                    className="m-2 max-h-40 shrink-0 overflow-y-auto rounded-md"
+                  >
+                    <Alert.Title>
+                      {formatCount(duplicatePackages.length)}{' '}
+                      {duplicatePackages.length === 1 ? 'package' : 'packages'} evaluated from more
+                      than one install location in this chain
+                    </Alert.Title>
+                    <Alert.Description>
+                      <Column gap={1}>
+                        {duplicatePackages.map((duplicate) => (
+                          <div key={duplicate.name}>
+                            <span className="font-medium">{duplicate.name}</span>
+                            <span className="text-xs">
+                              {' — '}
+                              {duplicate.roots.join(', ')}
+                            </span>
+                          </div>
+                        ))}
+                      </Column>
+                    </Alert.Description>
+                  </Alert>
+                )}
+                <div className="min-h-0 flex-1">
+                  <VirtualizedDataTable
+                    ariaLabel="Packages by self time"
+                    columns={packageColumns}
+                    data={filteredPackageStats}
+                    getRowId={(stat) => stat.name}
+                    getRowTextValue={(stat) => stat.name}
+                    loading={chainLoading}
+                    emptyMessage={
+                      query
+                        ? 'No package matches your filter.'
+                        : 'No packages recorded for this chain yet.'
+                    }
+                    onRowClick={handlePackageRowClick}
+                    scrollClassName="h-full w-full overflow-auto"
+                    style={{ height: '100%' }}
+                  />
+                </div>
+              </>
+            ) : (
+              <VirtualizedDataTable
+                ariaLabel="Modules by self time"
+                columns={moduleColumns}
+                data={filteredModuleStats}
+                getRowId={(stat) => stat.path}
+                getRowTextValue={(stat) => stat.path}
+                loading={chainLoading}
+                emptyMessage={
+                  query
+                    ? 'No module matches your filter.'
+                    : 'No modules recorded for this chain yet.'
+                }
+                onRowClick={handleModuleRowClick}
+                scrollClassName="h-full w-full overflow-auto"
+                style={{ height: '100%' }}
+              />
+            )}
+          </Tabs.Panel>
+
+          <Tabs.Panel value="coverage" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {!coverageRequested ? (
+              <EmptyState
+                icon={Package}
+                title="Bundle coverage not loaded"
+                description="Shows every module currently shipped in the bundle and flags the ones that have not been evaluated yet — the code-splitting or lazy-loading candidates. This reads the module registry once, on demand, since it can be far larger than a require chain."
+                action={<Button onClick={loadCoverage}>Load bundle coverage</Button>}
+              />
+            ) : coverageLoading && !coverage ? (
+              <div className="flex flex-1 items-center justify-center">
+                <RozeniteLoader />
+              </div>
+            ) : (
+              <>
+                {coverage && (
+                  <div className="shrink-0 border-b border-border p-3">
+                    <Text variant="body" className="font-medium">
+                      {formatCount(coverageSummary.evaluated)} of{' '}
+                      {formatCount(coverageSummary.total)} modules evaluated ({coveragePercent}%)
+                    </Text>
+                    <Text variant="caption" className="mt-1 block">
+                      As of {new Date(coverage.capturedAt).toLocaleTimeString()} — this reflects the
+                      module registry at the moment it was read, not at profiling time. A module
+                      evaluated after this snapshot will show as evaluated the next time you load
+                      coverage. Counts only modules currently defined in the bundle, so with RAM
+                      bundles or lazy segments the total can grow as more modules are shipped later.
+                    </Text>
+                  </div>
+                )}
+                {coverageDuplicatePackages.length > 0 && (
+                  <Alert
+                    tone="warning"
+                    className="m-2 max-h-40 shrink-0 overflow-y-auto rounded-md"
+                  >
+                    <Alert.Title>
+                      {formatCount(coverageDuplicatePackages.length)}{' '}
+                      {coverageDuplicatePackages.length === 1 ? 'package' : 'packages'} bundled from
+                      more than one install location
+                    </Alert.Title>
+                    <Alert.Description>
+                      <Column gap={1}>
+                        {coverageDuplicatePackages.map((duplicate) => (
+                          <div key={duplicate.name}>
+                            <span className="font-medium">{duplicate.name}</span>
+                            <span className="text-xs">
+                              {' — '}
+                              {duplicate.roots.join(', ')}
+                            </span>
+                          </div>
+                        ))}
+                      </Column>
+                    </Alert.Description>
+                  </Alert>
+                )}
+                <div className="min-h-0 flex-1">
+                  <VirtualizedDataTable
+                    ariaLabel="Bundle coverage by package"
+                    columns={coverageColumns}
+                    data={filteredCoveragePackages}
+                    getRowId={(stat) => stat.name}
+                    getRowTextValue={(stat) => stat.name}
+                    loading={coverageLoading}
+                    emptyMessage={
+                      query
+                        ? 'No package matches your filter.'
+                        : 'No modules found in the bundle registry.'
+                    }
+                    scrollClassName="h-full w-full overflow-auto"
+                    style={{ height: '100%' }}
+                  />
+                </div>
+              </>
+            )}
           </Tabs.Panel>
         </Tabs>
       </Split.Pane>
 
-      {selectedModule && (
+      {selectedItem && (
         <>
           <Split.Handle />
           <Split.Pane defaultSize={26} minSize={18} maxSize={45}>
             <div className="flex h-full min-h-0 flex-col overflow-y-auto border-l border-border bg-card">
               <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
-                <Layers className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                {selectedItem.kind === 'package' ? (
+                  <Package className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                ) : (
+                  <Layers className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                )}
                 <span className="min-w-0 flex-1 truncate text-xs font-medium">
-                  {selectedModule.name}
+                  {selectedItem.name}
                 </span>
               </div>
-              <DescriptionList className="p-3">
-                <DescriptionList.Item label="Self time">
-                  <Text variant="numeric">{formatDuration(selectedModule.selfTime)}</Text>
-                </DescriptionList.Item>
-                <DescriptionList.Item label="Total time">
-                  <Text variant="numeric">{formatDuration(selectedModule.totalTime)}</Text>
-                </DescriptionList.Item>
-                {selectedModule.dependencies !== undefined && (
-                  <DescriptionList.Item label="Dependencies">
-                    <Text variant="numeric">{formatCount(selectedModule.dependencies)}</Text>
+              {selectedItem.kind === 'package' ? (
+                <DescriptionList className="p-3">
+                  <DescriptionList.Item label="Self time">
+                    <Text variant="numeric">{formatDuration(selectedItem.selfTime)}</Text>
                   </DescriptionList.Item>
-                )}
-                {selectedModule.occurrences !== undefined && (
-                  <DescriptionList.Item label="Evaluations">
-                    <Text variant="numeric">{formatCount(selectedModule.occurrences)}</Text>
+                  <DescriptionList.Item label="Inclusive time">
+                    <Text variant="numeric">{formatDuration(selectedItem.inclusiveTime)}</Text>
                   </DescriptionList.Item>
-                )}
-                <DescriptionList.Item label="Path">
-                  <span className="font-mono text-xs break-all">{selectedModule.path}</span>
-                </DescriptionList.Item>
-              </DescriptionList>
+                  <DescriptionList.Item label="Modules">
+                    <Text variant="numeric">{formatCount(selectedItem.moduleCount)}</Text>
+                  </DescriptionList.Item>
+                  <DescriptionList.Item label="Entries">
+                    <Text variant="numeric">{formatCount(selectedItem.entryCount)}</Text>
+                  </DescriptionList.Item>
+                </DescriptionList>
+              ) : (
+                <>
+                  {requirePathResult && requirePathResult.entries.length > 0 && (
+                    <div className="border-b border-border p-3">
+                      <Text variant="caption" className="mb-2 block">
+                        Required by
+                      </Text>
+                      <Column gap={1}>
+                        {requirePathResult.entries.map((entry, index) => {
+                          const isTarget = index === requirePathResult.entries.length - 1;
+
+                          return (
+                            <Row
+                              key={`${entry.path}-${index}`}
+                              align="center"
+                              gap={1}
+                              style={{ paddingLeft: index * 12 }}
+                            >
+                              {index > 0 && (
+                                <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                              )}
+                              {isTarget ? (
+                                <Text
+                                  variant="body"
+                                  className="min-w-0 truncate font-medium"
+                                  title={entry.path}
+                                >
+                                  {entry.name}
+                                </Text>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="min-w-0 truncate text-left text-sm text-muted-foreground hover:text-foreground hover:underline"
+                                  title={entry.path}
+                                  onClick={() => handleAncestorSelect(entry.path)}
+                                >
+                                  {entry.name}
+                                </button>
+                              )}
+                            </Row>
+                          );
+                        })}
+                      </Column>
+                      {requirePathResult.occurrences > 1 && (
+                        <Text variant="caption" className="mt-2 block">
+                          Also evaluated at {requirePathResult.occurrences - 1} other{' '}
+                          {requirePathResult.occurrences - 1 === 1 ? 'point' : 'points'} in this
+                          chain
+                        </Text>
+                      )}
+                    </div>
+                  )}
+                  <DescriptionList className="p-3">
+                    <DescriptionList.Item label="Self time">
+                      <Text variant="numeric">{formatDuration(selectedItem.selfTime)}</Text>
+                    </DescriptionList.Item>
+                    <DescriptionList.Item label="Total time">
+                      <Text variant="numeric">{formatDuration(selectedItem.totalTime)}</Text>
+                    </DescriptionList.Item>
+                    {selectedItem.dependencies !== undefined && (
+                      <DescriptionList.Item label="Dependencies">
+                        <Text variant="numeric">{formatCount(selectedItem.dependencies)}</Text>
+                      </DescriptionList.Item>
+                    )}
+                    {selectedItem.occurrences !== undefined && (
+                      <DescriptionList.Item label="Evaluations">
+                        <Text variant="numeric">{formatCount(selectedItem.occurrences)}</Text>
+                      </DescriptionList.Item>
+                    )}
+                    <DescriptionList.Item label="Path">
+                      <span className="font-mono text-xs break-all">{selectedItem.path}</span>
+                    </DescriptionList.Item>
+                  </DescriptionList>
+                </>
+              )}
             </div>
           </Split.Pane>
         </>
