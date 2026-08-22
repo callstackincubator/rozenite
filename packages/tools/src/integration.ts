@@ -20,13 +20,6 @@ export const ROZENITE_INTEGRATIONS: readonly RozeniteIntegration[] = [
 export const isRozeniteIntegration = (value: unknown): value is RozeniteIntegration =>
   typeof value === 'string' && (ROZENITE_INTEGRATIONS as readonly string[]).includes(value);
 
-export const ROZENITE_INTEGRATION_LABEL: Record<RozeniteIntegration, string> = {
-  'react-native': 'React Native',
-  'react-native-web': 'React Native Web',
-  lynx: 'Lynx',
-  'lynx-web': 'Lynx for Web',
-};
-
 /**
  * Plugins published before this feature declared nothing; they all target
  * React Native, so that's the assumed compatibility for an unlabeled plugin.

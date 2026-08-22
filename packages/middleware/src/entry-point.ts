@@ -26,14 +26,31 @@ const updateCSP = (html: string, nonce: string): string => {
   );
 };
 
+/**
+ * Everything `__ROZENITE__` carries into the Fusebox-embedded host. An
+ * options object rather than a parameter list: this is the third field
+ * added to that global, and each one otherwise lands in the middle of a
+ * run of same-typed positional arguments, where a transposition still
+ * type-checks.
+ */
+export type EntryPointOptions = {
+  installedPlugins: string[];
+  destroyOnDetachPlugins: string[];
+  pluginDisplay?: 'tabs' | 'sidebar';
+  integration?: RozeniteHostIntegration;
+  runtimeVersion?: string;
+};
+
 const appendScripts = (
   html: string,
   nonce: string,
-  installedPlugins: string[],
-  destroyOnDetachPlugins: string[],
-  pluginDisplay: 'tabs' | 'sidebar',
-  integration: RozeniteHostIntegration,
-  runtimeVersion?: string,
+  {
+    installedPlugins,
+    destroyOnDetachPlugins,
+    pluginDisplay = 'sidebar',
+    integration = 'react-native',
+    runtimeVersion,
+  }: EntryPointOptions,
 ): string => {
   const bodyTagRegex = /<body[^>]*>/;
   const bodyMatch = html.match(bodyTagRegex);
@@ -63,11 +80,7 @@ const appendScripts = (
 
 export const getEntryPointHTML = (
   rnDevToolsFrontendPath: string,
-  installedPlugins: string[],
-  destroyOnDetachPlugins: string[],
-  pluginDisplay: 'tabs' | 'sidebar' = 'sidebar',
-  integration: RozeniteHostIntegration = 'react-native',
-  runtimeVersion?: string,
+  options: EntryPointOptions,
 ): string => {
   const nonce = crypto.randomUUID();
   const originalEntryPoint = fs.readFileSync(
@@ -75,13 +88,5 @@ export const getEntryPointHTML = (
     'utf8',
   );
 
-  return appendScripts(
-    updateCSP(originalEntryPoint, nonce),
-    nonce,
-    installedPlugins,
-    destroyOnDetachPlugins,
-    pluginDisplay,
-    integration,
-    runtimeVersion,
-  );
+  return appendScripts(updateCSP(originalEntryPoint, nonce), nonce, options);
 };

@@ -117,14 +117,13 @@ export const getMiddleware = (
     app.get('/rn_fusebox.html', (_, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.send(
-        getEntryPointHTML(
-          debuggerFrontend,
-          installedPlugins.map((plugin) => plugin.name),
+        getEntryPointHTML(debuggerFrontend, {
+          installedPlugins: installedPlugins.map((plugin) => plugin.name),
           destroyOnDetachPlugins,
-          options.pluginDisplay ?? 'sidebar',
-          hostIntegration,
+          pluginDisplay: options.pluginDisplay ?? 'sidebar',
+          integration: hostIntegration,
           runtimeVersion,
-        ),
+        }),
       );
     });
   }

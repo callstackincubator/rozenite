@@ -1,16 +1,19 @@
-import path from 'node:path';
-import { createRequire } from 'node:module';
-import { getDevMiddlewarePath } from './resolve.js';
+import { requireDevMiddlewareInternal } from './resolve.js';
 import { RozeniteConfig } from './index.js';
 
-const require = createRequire(import.meta.url);
+type GetDevToolsFrontendUrl = (
+  experiments: unknown,
+  webSocketDebuggerUrl: string,
+  devServerUrl: string,
+  runtimeOptions: unknown,
+) => string;
 
 export const patchDevtoolsFrontendUrl = (options: RozeniteConfig): void => {
-  const getDevToolsFrontendUrlModulePath = path.dirname(getDevMiddlewarePath(options));
-  const getDevToolsFrontendUrlModule = require(
-    path.join(getDevToolsFrontendUrlModulePath, '/utils/getDevToolsFrontendUrl'),
+  const getDevToolsFrontendUrlModule = requireDevMiddlewareInternal(
+    options,
+    'utils/getDevToolsFrontendUrl',
   );
-  const getDevToolsFrontendUrl = getDevToolsFrontendUrlModule.default;
+  const getDevToolsFrontendUrl = getDevToolsFrontendUrlModule.default as GetDevToolsFrontendUrl;
   getDevToolsFrontendUrlModule.default = (
     experiments: unknown,
     webSocketDebuggerUrl: string,
