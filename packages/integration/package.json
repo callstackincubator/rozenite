@@ -1,13 +1,14 @@
 {
-  "name": "@rozenite/lynx-dev",
+  "name": "@rozenite/integration",
   "version": "2.2.0",
-  "description": "Rozenite dev-server integration for Lynx: a DebugRouter to CDP bridge and an rspeedy plugin.",
+  "description": "Host integration abstraction for Rozenite: what differs between serving React Native and Lynx.",
   "keywords": [
     "bundler",
     "devtools",
+    "integration",
     "lynx",
-    "rozenite",
-    "rspeedy"
+    "react-native",
+    "rozenite"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
@@ -45,19 +46,16 @@
     "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
-    "@lynx-js/debug-router-connector": "^0.0.15",
-    "@rozenite/integration": "workspace:*",
-    "@rozenite/middleware": "workspace:*",
     "@rozenite/tools": "workspace:*",
-    "express": "^5.1.0",
-    "tslib": "^2.3.0",
-    "ws": "^8.18.3"
+    "semver": "^7.7.2",
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@rsbuild/core": "2.1.10",
-    "@types/express": "^5.0.3",
+    "@react-native/dev-middleware": "~0.76.0",
+    "@types/semver": "^7.7.0",
     "@types/ws": "^8.18.1",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "ws": "^8.18.3"
   },
   "engines": {
     "node": ">=20.19.0"

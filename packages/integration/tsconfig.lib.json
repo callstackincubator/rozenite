@@ -15,12 +15,6 @@
   "references": [
     {
       "path": "../tools/tsconfig.lib.json"
-    },
-    {
-      "path": "../middleware/tsconfig.lib.json"
-    },
-    {
-      "path": "../integration/tsconfig.lib.json"
     }
   ]
 }

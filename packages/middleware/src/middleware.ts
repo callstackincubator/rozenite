@@ -4,9 +4,9 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { type RozeniteHostIntegration } from '@rozenite/tools';
+import { type RozeniteIntegrationProvider } from '@rozenite/integration';
 import { getEntryPointHTML } from './entry-point.js';
 import { InstalledPlugin } from './auto-discovery.js';
-import { getReactNativeDebuggerFrontendPath } from './resolve.js';
 import { RozeniteConfig } from './config.js';
 import { logger } from './logger.js';
 import type { AgentSessionManager } from './agent/index.js';
@@ -32,9 +32,9 @@ export type RozeniteAppConfigResponse = {
    * The pre-handshake default: which host this dev server serves. Used by
    * the client when the `Rozenite.getEnvironment` CDP domain is
    * unavailable (an older dev-middleware, or the patch in
-   * `integration-domain.ts` failed) - the domain's per-target answer wins
-   * over this when it's there, since it also knows whether the target is
-   * web.
+   * `@rozenite/integration`'s `integration-domain.ts` failed) - the
+   * domain's per-target answer wins over this when it's there, since it
+   * also knows whether the target is web.
    */
   integration: RozeniteHostIntegration;
 };
@@ -57,18 +57,18 @@ export const getNormalizedRequestUrl = (url: string): string => {
 
 export const getMiddleware = (
   options: RozeniteConfig,
+  integration: RozeniteIntegrationProvider,
   installedPlugins: InstalledPlugin[],
   destroyOnDetachPlugins: string[],
   agentSessionManager: AgentSessionManager,
   runtimeVersion?: string,
 ): Application => {
   const app = express();
-  const hostIntegration: RozeniteHostIntegration = options.integration ?? 'react-native';
-  const isLynx = hostIntegration === 'lynx';
-  // Lynx has no react-native install to resolve the Fusebox debugger
-  // frontend from, and doesn't need it: `@rozenite/app` is loaded
-  // standalone there instead of embedded in Fusebox's HTML.
-  const debuggerFrontend = isLynx ? null : require(getReactNativeDebuggerFrontendPath(options));
+  // `null` for a host integration with no debugger frontend of its own
+  // (Lynx): `@rozenite/app` is loaded standalone there instead of embedded
+  // in Fusebox's HTML. Every branch below that used to ask "is this Lynx?"
+  // now asks "does this integration have a frontend to serve?" instead.
+  const debuggerFrontendPath = integration.getDebuggerFrontendPath();
 
   const frameworkPath = path.resolve(require.resolve('@rozenite/runtime'), '..');
   const shellPath = path.join(
@@ -77,8 +77,8 @@ export const getMiddleware = (
   );
   const appPath = path.join(path.dirname(require.resolve('@rozenite/app/package.json')), 'dist');
 
-  if (!isLynx) {
-    logger.debug(`Debugger frontend path: ${debuggerFrontend}`);
+  if (debuggerFrontendPath) {
+    logger.debug(`Debugger frontend path: ${debuggerFrontendPath}`);
   }
   logger.debug(`Framework path: ${frameworkPath}`);
 
@@ -111,17 +111,18 @@ export const getMiddleware = (
     res.end('');
   });
 
-  // Fusebox-only route: Lynx never requests this, so it's skipped rather
-  // than served with a null debugger frontend.
-  if (!isLynx) {
+  // Fusebox-only route: an integration with no debugger frontend (Lynx)
+  // never requests this, so it's skipped rather than served with a null
+  // frontend path.
+  if (debuggerFrontendPath) {
     app.get('/rn_fusebox.html', (_, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.send(
-        getEntryPointHTML(debuggerFrontend, {
+        getEntryPointHTML(debuggerFrontendPath, {
           installedPlugins: installedPlugins.map((plugin) => plugin.name),
           destroyOnDetachPlugins,
           pluginDisplay: options.pluginDisplay ?? 'sidebar',
-          integration: hostIntegration,
+          integration: integration.id,
           runtimeVersion,
         }),
       );
@@ -140,7 +141,7 @@ export const getMiddleware = (
       installedPlugins: installedPlugins.map((plugin) => plugin.name),
       destroyOnDetachPlugins,
       runtimeVersion,
-      integration: hostIntegration,
+      integration: integration.id,
     };
 
     res.json(config);
@@ -170,8 +171,8 @@ export const getMiddleware = (
 
   app.use(createAgentRoutes(agentSessionManager));
 
-  if (!isLynx) {
-    app.use(express.static(debuggerFrontend));
+  if (debuggerFrontendPath) {
+    app.use(express.static(debuggerFrontendPath));
   }
 
   return app;

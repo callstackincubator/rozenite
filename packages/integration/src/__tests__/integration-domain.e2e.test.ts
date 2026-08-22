@@ -15,14 +15,14 @@ import { createRequire } from 'node:module';
 import { afterEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
 import { patchRozeniteIntegrationDomain } from '../integration-domain.js';
-import { getDevMiddlewarePath } from '../resolve.js';
-import type { RozeniteConfig } from '../config.js';
+import { getDevMiddlewarePath, type ProjectResolutionOptions } from '../resolve.js';
 
 const require = createRequire(import.meta.url);
 
-// Mirrors the "standalone app" suite in middleware.test.ts: resolving
-// react-native and @react-native/dev-middleware needs a real install, so
-// point at this package's own directory, where both are hoisted.
+// Mirrors the "standalone app" suite in `@rozenite/middleware`'s
+// `middleware.test.ts`: resolving react-native and
+// @react-native/dev-middleware needs a real install, so point at this
+// package's own directory, where both are hoisted.
 const projectRoot = new URL('../..', import.meta.url).pathname;
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -94,11 +94,11 @@ describe('patchRozeniteIntegrationDomain (real dev-middleware)', () => {
     'answers Rozenite.getEnvironment from the proxy and never forwards it to the device, ' +
       'while composing with an embedder-supplied handler',
     async () => {
-      const options: RozeniteConfig = { projectRoot, integration: 'react-native' };
+      const options: ProjectResolutionOptions = { projectRoot };
 
       // Patch BEFORE requiring/destructuring - see the module doc comment
       // on why the order is load-bearing.
-      patchRozeniteIntegrationDomain(options);
+      patchRozeniteIntegrationDomain(options, 'react-native');
 
       const embedderFactoryCalls: string[] = [];
       const embedderHandled = { deviceMessage: '', debuggerMessage: '' };

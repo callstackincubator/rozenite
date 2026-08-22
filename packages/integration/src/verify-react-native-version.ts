@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import semver from 'semver';
-import { logger } from './logger.js';
+import { logger } from '@rozenite/tools';
 import { getReactNativePackagePath } from './resolve.js';
 
 const REQUIRED_REACT_NATIVE_VERSION = '0.76.0';

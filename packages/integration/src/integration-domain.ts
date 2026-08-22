@@ -13,9 +13,8 @@
  * hazard that makes this safe.
  */
 import { resolveIntegration, type RozeniteHostIntegration } from '@rozenite/tools';
-import { requireDevMiddlewareInternal } from './resolve.js';
-import { logger } from './logger.js';
-import { RozeniteConfig } from './index.js';
+import { requireDevMiddlewareInternal, type ProjectResolutionOptions } from './resolve.js';
+import { logger } from '@rozenite/tools';
 
 const GET_ENVIRONMENT_METHOD = 'Rozenite.getEnvironment';
 
@@ -148,7 +147,8 @@ type PatchableCreateDevMiddleware = ((options: JSONRecord) => unknown) & {
  * This is an `unstable_` API with no semver guarantee, so every failure
  * mode here degrades to a warning: the client falls back to the
  * config-supplied host integration (see `RozeniteAppConfigResponse.integration`
- * in `middleware.ts`) rather than crashing the dev server.
+ * in `@rozenite/middleware`'s `middleware.ts`) rather than crashing the dev
+ * server.
  *
  * Two facts about the package shape make this a patch rather than a plain
  * option, and make ordering load-bearing:
@@ -173,9 +173,11 @@ type PatchableCreateDevMiddleware = ((options: JSONRecord) => unknown) & {
  *   detect the embedder's read from here, which is why the guard below only
  *   verifies our own write stuck.
  */
-export const patchRozeniteIntegrationDomain = (options: RozeniteConfig): void => {
+export const patchRozeniteIntegrationDomain = (
+  options: ProjectResolutionOptions,
+  hostIntegration: RozeniteHostIntegration,
+): void => {
   try {
-    const hostIntegration: RozeniteHostIntegration = options.integration ?? 'react-native';
     const innerModule = requireDevMiddlewareInternal(options, 'createDevMiddleware.js');
     const original = innerModule.default as PatchableCreateDevMiddleware | undefined;
 

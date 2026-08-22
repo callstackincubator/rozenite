@@ -4,11 +4,26 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  createReactNativeIntegration,
+  type RozeniteIntegrationProvider,
+} from '@rozenite/integration';
 import { getMiddleware, getNormalizedRequestUrl } from '../middleware.js';
 import { createScopedMiddleware, type MiddlewareHandler } from '../scoped-middleware.js';
 import { createAgentSessionManager } from '../agent/index.js';
 import type { InstalledPlugin } from '../auto-discovery.js';
 import type { RozeniteConfig } from '../config.js';
+
+// A minimal stand-in for `@rozenite/lynx-dev`'s real integration: no
+// debugger frontend, and nothing to verify or patch. Good enough for
+// exercising `getMiddleware`'s "no frontend" branches without depending on
+// the Lynx package from the middleware's own test suite.
+const createFakeLynxIntegration = (): RozeniteIntegrationProvider => ({
+  id: 'lynx',
+  verifyEnvironment: () => {},
+  getDebuggerFrontendPath: () => null,
+  installInspectorHooks: () => {},
+});
 
 let activeServer: ReturnType<typeof createServer> | null = null;
 
@@ -168,10 +183,12 @@ describe('standalone app', () => {
     runtimeVersion?: string,
   ): MiddlewareHandler => {
     const config: RozeniteConfig = { projectRoot };
+    const integration = createReactNativeIntegration({ projectRoot });
     const agentSessionManager = createAgentSessionManager({ projectRoot });
 
     return getMiddleware(
       config,
+      integration,
       installedPlugins,
       destroyOnDetachPlugins,
       agentSessionManager,
@@ -258,10 +275,17 @@ describe('lynx platform', () => {
   const projectRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 
   const createApp = (): MiddlewareHandler => {
-    const config: RozeniteConfig = { projectRoot, integration: 'lynx' };
+    const config: RozeniteConfig = { projectRoot };
+    const integration = createFakeLynxIntegration();
     const agentSessionManager = createAgentSessionManager({ projectRoot });
 
-    return getMiddleware(config, [], [], agentSessionManager) as unknown as MiddlewareHandler;
+    return getMiddleware(
+      config,
+      integration,
+      [],
+      [],
+      agentSessionManager,
+    ) as unknown as MiddlewareHandler;
   };
 
   it('serves /app/config without touching react-native', async () => {
