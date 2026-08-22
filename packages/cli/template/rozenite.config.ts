@@ -5,4 +5,5 @@ export default {
       source: './src/hello-world.tsx',
     },
   ],
+  integrations: ['react-native'],
 };

@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react';
 import reactNativeWeb from 'vite-plugin-react-native-web';
 import { rozeniteClientPlugin } from './client-plugin.js';
 
+// Re-exported so plugin authors can import it from the package they
+// already use to write `rozenite.config.ts`, rather than adding a direct
+// dependency on `@rozenite/tools` just for this one type.
+export type { RozeniteIntegration } from '@rozenite/tools';
+
 export type RozenitePluginOptions = {
   /**
    * Configure Tailwind CSS v4 for client panels.

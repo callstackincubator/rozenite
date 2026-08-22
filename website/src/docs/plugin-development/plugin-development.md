@@ -130,6 +130,24 @@ export default {
 | `name`   | `string` | Display name in DevTools sidebar |
 | `source` | `string` | Path to your React component     |
 
+### Declaring Supported Integrations
+
+`rozenite.config.ts` can also declare which environments your plugin supports:
+
+```typescript title="rozenite.config.ts"
+export default {
+  panels: [
+    {
+      name: 'My Custom Panel',
+      source: './src/my-panel.tsx',
+    },
+  ],
+  integrations: ['react-native'],
+};
+```
+
+The valid ids are `react-native`, `react-native-web`, `lynx`, and `lynx-web`. Omitting `integrations` defaults to `['react-native']`, the safe assumption for a plugin that predates this field. Declaring an id no integration reports yet (currently `lynx-web`) is harmless — it just means nothing refuses to load on it today.
+
 ### Creating a Panel Component
 
 Create a new panel by adding a React component:
