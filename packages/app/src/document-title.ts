@@ -6,8 +6,6 @@ import type { Framework } from './framework';
  * *which* window this is, and the product name says what it is.
  */
 const APP_NAME = 'Rozenite';
-
-/** Between the framework and the device, matching the footer's own order. */
 const SEPARATOR = ' · ';
 
 export type DocumentTitleParts = {
