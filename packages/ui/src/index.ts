@@ -125,6 +125,9 @@ export type {
 export { Tabs } from './tabs/tabs';
 export type { TabsProps, TabsListProps, TabsTabProps, TabsPanelProps } from './tabs/tabs';
 
+export { ToggleGroup } from './toggle-group/toggle-group';
+export type { ToggleGroupProps, ToggleGroupItemProps } from './toggle-group/toggle-group';
+
 export { ScrollArea } from './scroll-area/scroll-area';
 export type { ScrollAreaProps } from './scroll-area/scroll-area';
 
@@ -184,10 +187,15 @@ export type { SwitchProps } from './switch/switch';
 export { SearchField } from './search-field/search-field';
 export type { SearchFieldProps } from './search-field/search-field';
 
+export { QueryField } from './query-field/query-field';
+export type { QueryFieldProps, QueryToken, QueryTokenKind } from './query-field/query-field';
+
 export { DataTable } from './data-table/data-table';
 export type { DataTableProps, DataTableColumn } from './data-table/data-table';
 export { VirtualizedDataTable } from './virtualized-data-table/virtualized-data-table';
 export type { VirtualizedDataTableProps } from './virtualized-data-table/virtualized-data-table';
+export { VirtualizedList } from './virtualized-list/virtualized-list';
+export type { VirtualizedListProps } from './virtualized-list/virtualized-list';
 export { DataTableEditableCell } from './data-table/data-table-editable-cell';
 export type { DataTableEditableCellProps } from './data-table/data-table-editable-cell';
 export { updateCellValue } from './data-table/data-table-utils';
@@ -225,3 +233,6 @@ export type {
   UseCopyToClipboardOptions,
   UseCopyToClipboardResult,
 } from './use-copy-to-clipboard/use-copy-to-clipboard';
+
+export { RozeniteLoader } from './rozenite-loader/rozenite-loader';
+export type { RozeniteLoaderProps } from './rozenite-loader/rozenite-loader';

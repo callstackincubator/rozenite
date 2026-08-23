@@ -91,6 +91,7 @@ class FakeWebSocket {
 const TARGET: ParsedTarget = {
   webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=1',
   deviceId: 'device-1',
+  pageId: '1',
   appId: 'com.example.app',
 };
 

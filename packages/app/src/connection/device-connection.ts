@@ -552,7 +552,10 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
 
           try {
             if (attempt > 1 || resolveBeforeFirstAttempt) {
-              const resolved = await resolveMetroTarget(currentTarget.deviceId);
+              const resolved = await resolveMetroTarget(
+                currentTarget.deviceId,
+                currentTarget.pageId,
+              );
               if (!isCurrentEpoch(loopEpoch)) {
                 return;
               }
@@ -569,7 +572,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
               // resolves the friendly name best-effort, in the background:
               // it never blocks or delays connecting, and a failure here
               // is silently ignored (the id just stays as the fallback).
-              void resolveMetroTarget(currentTarget.deviceId)
+              void resolveMetroTarget(currentTarget.deviceId, currentTarget.pageId)
                 .then((resolved) => {
                   if (isCurrentEpoch(loopEpoch)) {
                     setDeviceName(resolved.name);

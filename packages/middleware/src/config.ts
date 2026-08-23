@@ -4,6 +4,9 @@ import { RozeniteLogLevel } from './logger.js';
 /** Controls whether plugins are shown as individual tabs or in one sidebar. */
 export type RozenitePluginDisplay = 'tabs' | 'sidebar';
 
+/** Which host platform the dev server serves. See `RozeniteConfig.platform`. */
+export type RozenitePlatform = 'react-native' | 'lynx';
+
 export type RozeniteConfig = {
   projectRoot: string;
   include?: string[];
@@ -34,4 +37,16 @@ export type RozeniteConfig = {
    * @default 'sidebar'
    */
   pluginDisplay?: RozenitePluginDisplay;
+
+  /**
+   * Which host platform the dev server serves.
+   *
+   * `react-native` (the default) resolves React Native and serves the
+   * Fusebox debugger frontend. `lynx` skips every React Native lookup:
+   * Lynx apps have no `react-native` dependency, and `@rozenite/app` is
+   * loaded standalone there rather than embedded in Fusebox's HTML.
+   *
+   * @default 'react-native'
+   */
+  platform?: RozenitePlatform;
 };

@@ -11,7 +11,10 @@ export const getChannel = async (): Promise<Channel> => {
     return channel;
   }
 
-  const isPanel = '__ROZENITE_PANEL__' in window;
+  // `globalThis` (not `window`) so this also works on Lynx's background
+  // runtime, which has no `window`. `useRozeniteDevToolsClient.ts`'s
+  // `isPanelClient()` already checks the identical thing this way.
+  const isPanel = '__ROZENITE_PANEL__' in globalThis;
   const channelPromise = isPanel ? getPanelChannel() : getCdpChannel();
   channel = channelPromise;
 

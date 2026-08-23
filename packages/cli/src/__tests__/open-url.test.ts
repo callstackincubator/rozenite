@@ -4,6 +4,7 @@ import { buildAppOpenUrl } from '../commands/open-url.js';
 
 const target: MetroTarget = {
   id: '2ce2ba5f071e81a9efad6f66a9e029fd6aa11ccd',
+  deviceId: '2ce2ba5f071e81a9efad6f66a9e029fd6aa11ccd',
   name: 'iPhone 15',
   appId: 'com.callstackincubator.rozenite',
   pageId: '1',
