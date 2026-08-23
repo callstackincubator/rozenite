@@ -1,3 +1,4 @@
+import type { LynxClient } from '../types.js';
 import type { HostAction } from './types.js';
 
 /**
@@ -28,6 +29,44 @@ const LOCALLY_ANSWERED_METHODS = new Set<string>([
 ]);
 
 /**
+ * What the host is told the target's framework is.
+ *
+ * Carried in `integrationName` rather than `platform`, because `platform`
+ * means the *device OS* everywhere else in this domain (React Native
+ * sends `ios`/`android` from `RCTPlatformName` and its Android
+ * equivalent), and a Lynx app runs on those same two. `integrationName`
+ * is the free-form "which integration is driving this target" field —
+ * React Native's own values are strings like
+ * "iOS Bridge (RCTBridge)" — so naming Lynx there is exactly what it is
+ * for. `@rozenite/app` reads it back in `src/framework.ts`.
+ */
+const LYNX_INTEGRATION_NAME = 'Lynx';
+
+/**
+ * The `ReactNativeApplication.metadataUpdated` event the bridge sends
+ * after answering `enable`.
+ *
+ * A device with the domain sends this unprompted once enabled; Lynx has
+ * no such domain, so the bridge that just claimed to enable it has to
+ * speak for it here too — otherwise a host that enables the domain and
+ * waits learns nothing, forever. Every field is a real value DebugRouter
+ * reported about this client: nothing is invented to look more like React
+ * Native than it is, and fields Lynx has no answer for
+ * (`reactNativeVersion`) are omitted rather than faked.
+ */
+const buildMetadataUpdatedEvent = (client: LynxClient): unknown => ({
+  method: 'ReactNativeApplication.metadataUpdated',
+  params: {
+    integrationName: LYNX_INTEGRATION_NAME,
+    appDisplayName: client.appName,
+    deviceName: client.deviceName,
+    // Lowercased to match React Native's own casing for the same field.
+    platform: client.os.toLowerCase(),
+    ...(client.bundleId != null ? { appIdentifier: client.bundleId } : null),
+  },
+});
+
+/**
  * Translates one raw host -> device message (a JSON string straight off
  * the host's WebSocket) into what the bridge should do with it.
  *
@@ -35,8 +74,13 @@ const LOCALLY_ANSWERED_METHODS = new Set<string>([
  * or non-numeric `id`, missing `method`) becomes `{ kind: 'drop', ... }`
  * rather than an exception — a rogue or buggy host client must not be
  * able to crash the dev server.
+ *
+ * `client` is the Lynx app this socket is attached to, when one is still
+ * connected. It only affects the locally-answered
+ * `ReactNativeApplication.enable`, which describes that app back to the
+ * host; without it the reply is sent alone, exactly as before.
  */
-export const translateHostMessage = (raw: string): HostAction => {
+export const translateHostMessage = (raw: string, client?: LynxClient): HostAction => {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
@@ -59,7 +103,11 @@ export const translateHostMessage = (raw: string): HostAction => {
   }
 
   if (LOCALLY_ANSWERED_METHODS.has(record.method)) {
-    return { kind: 'reply', message: { id: record.id, result: {} } };
+    const reply: HostAction = { kind: 'reply', message: { id: record.id, result: {} } };
+
+    return record.method === 'ReactNativeApplication.enable' && client
+      ? { ...reply, events: [buildMetadataUpdatedEvent(client)] }
+      : reply;
   }
 
   // Everything else: pass through untouched, including the host's `id` —
