@@ -49,9 +49,9 @@ function TabsTab({ className, size = 'md', ...props }: TabsTabProps) {
     <TabsPrimitive.Tab
       data-slot="tabs-tab"
       className={cn(
-        'inline-flex items-center justify-center rounded-sm font-medium whitespace-nowrap text-muted-foreground',
+        'inline-flex items-center justify-center rounded-sm border border-transparent font-medium whitespace-nowrap text-muted-foreground',
         'outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        'data-[selected]:bg-background data-[selected]:text-foreground data-[selected]:shadow-xs',
+        'data-[active]:border-border data-[active]:bg-background data-[active]:text-foreground data-[active]:shadow-xs',
         'disabled:pointer-events-none disabled:opacity-50',
         tabsTabSize[size],
         className,

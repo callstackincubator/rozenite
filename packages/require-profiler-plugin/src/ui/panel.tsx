@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Flame, Layers, RefreshCw } from 'lucide-react';
+import { Flame, Layers, RefreshCw, X } from 'lucide-react';
 import {
   Badge,
   DescriptionList,
@@ -27,6 +27,7 @@ import {
   toFlameGraphNode,
   type ModuleStat,
 } from './aggregations';
+import { EllipsisStart } from './ellipsis-start';
 import { formatCount, formatDuration, formatOffset } from './format';
 
 import './globals.css';
@@ -38,6 +39,10 @@ const DURATION_THRESHOLDS = [
   { value: '50', label: '≥ 50ms' },
   { value: '100', label: '≥ 100ms' },
 ] as const;
+
+const DURATION_THRESHOLD_LABELS: Record<string, string> = Object.fromEntries(
+  DURATION_THRESHOLDS.map((threshold) => [threshold.value, threshold.label]),
+);
 
 type SelectedModule = {
   name: string;
@@ -155,7 +160,6 @@ const RequireProfilerContent = () => {
   }, [client]);
 
   const currentChain = selectedChainIndex === null ? null : chainData.get(selectedChainIndex);
-  const currentChainMeta = chains.find((chain) => chain.index === selectedChainIndex) ?? null;
   const chainLoading = pendingChainIndex !== null && pendingChainIndex === selectedChainIndex;
 
   const flameGraphData = useMemo(
@@ -199,9 +203,12 @@ const RequireProfilerContent = () => {
         accessorKey: 'name',
         header: 'Module',
         cell: ({ row }) => (
-          <div className="min-w-0">
+          <div className="min-w-0 max-w-64">
             <div className="truncate">{row.original.name}</div>
-            <div className="truncate text-xs text-muted-foreground">{row.original.path}</div>
+            <EllipsisStart
+              text={row.original.path}
+              className="block w-full overflow-hidden whitespace-nowrap text-xs text-muted-foreground"
+            />
           </div>
         ),
       },
@@ -254,7 +261,9 @@ const RequireProfilerContent = () => {
           <div className="px-2">
             <Select value={minDuration} onValueChange={(value) => setMinDuration(String(value))}>
               <Select.Trigger className="w-full" aria-label="Minimum chain duration">
-                <Select.Value />
+                <Select.Value>
+                  {(value: string) => DURATION_THRESHOLD_LABELS[value] ?? value}
+                </Select.Value>
               </Select.Trigger>
               <Select.Content>
                 {DURATION_THRESHOLDS.map((threshold) => (
@@ -300,7 +309,10 @@ const RequireProfilerContent = () => {
                       </Badge>
                     }
                   >
-                    {chain.rootModuleName}
+                    <EllipsisStart
+                      text={chain.rootModuleName}
+                      className="block w-full overflow-hidden whitespace-nowrap"
+                    />
                   </Sidebar.Item>
                 ))}
               </Sidebar.Group>
@@ -337,16 +349,6 @@ const RequireProfilerContent = () => {
                 onClear={() => setQuery('')}
               />
             </div>
-            {currentChainMeta && (
-              <div className="flex shrink-0 items-center gap-3 pr-1 text-xs text-muted-foreground">
-                <span>
-                  Total <Text variant="numeric">{formatDuration(currentChainMeta.duration)}</Text>
-                </span>
-                <span>
-                  Modules <Text variant="numeric">{formatCount(currentChainMeta.moduleCount)}</Text>
-                </span>
-              </div>
-            )}
           </div>
 
           <Tabs.Panel value="flame-graph" className="flex min-h-0 flex-1 flex-col">
@@ -355,26 +357,23 @@ const RequireProfilerContent = () => {
                 <RozeniteLoader />
               </div>
             ) : (
-              <>
-                <FlameGraph
-                  key={selectedChainIndex ?? 'none'}
-                  aria-label="Require timings"
-                  className="min-h-0 flex-1"
-                  data={flameGraphData}
-                  selectedKey={selectedFrameKey}
-                  onSelect={handleFrameSelect}
-                  highlight={query}
-                  formatValue={formatDuration}
-                  emptyState={
-                    <EmptyState
-                      icon={Flame}
-                      title="No require timings for this chain"
-                      description="Reload the app to record startup timings, then pick a chain on the left."
-                    />
-                  }
-                />
-                <FlameGraph.Legend className="shrink-0 border-t border-border" />
-              </>
+              <FlameGraph
+                key={selectedChainIndex ?? 'none'}
+                aria-label="Require timings"
+                className="min-h-0 flex-1"
+                data={flameGraphData}
+                selectedKey={selectedFrameKey}
+                onSelect={handleFrameSelect}
+                highlight={query}
+                formatValue={formatDuration}
+                emptyState={
+                  <EmptyState
+                    icon={Flame}
+                    title="No require timings for this chain"
+                    description="Reload the app to record startup timings, then pick a chain on the left."
+                  />
+                }
+              />
             )}
           </Tabs.Panel>
 
@@ -407,6 +406,15 @@ const RequireProfilerContent = () => {
                 <span className="min-w-0 flex-1 truncate text-xs font-medium">
                   {selectedModule.name}
                 </span>
+                <IconButton
+                  label="Hide details"
+                  size="sm"
+                  variant="ghost"
+                  tone="neutral"
+                  onClick={() => setSelectedModule(null)}
+                >
+                  <X />
+                </IconButton>
               </div>
               <DescriptionList className="p-3">
                 <DescriptionList.Item label="Self time">
