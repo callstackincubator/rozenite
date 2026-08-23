@@ -89,6 +89,28 @@ Where a transformer genuinely cannot leak -- one that only appends run
 statements for modules already in the graph -- say so in the test rather
 than inventing a positive control.
 
+## Integrations that reference files by path
+
+A bundler integration that hands Metro a path on disk must be imported from
+its built entry point, not from source. `withRozeniteRequireProfiler` locates
+`src/metro/setup.js` by walking up from its own directory, and the number of
+levels it walks is fixed by the depth tsc emits the Metro entry point to
+(`dist/metro/src/metro/`). Imported from `../index.js`, the same walk starts
+two directories higher and lands outside the package, so the bundle fails on
+a missing file instead of exercising what ships:
+
+```ts
+const require = createRequire(import.meta.url);
+
+const { withRozeniteRequireProfiler } = require(
+  path.join(packageRoot, 'dist', 'metro', 'metro.js'),
+) as typeof import('../index.js');
+```
+
+Transformers that only rewrap config -- `withRozeniteReduxDevTools`,
+`withRozeniteExpoAtlasPlugin` -- carry no such path and are imported from
+source like any other module under test.
+
 ## Plugins that are not app-importable
 
 `@rozenite/expo-atlas-plugin` exports a Metro config transformer from its
