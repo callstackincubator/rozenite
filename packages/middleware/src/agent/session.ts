@@ -43,11 +43,31 @@ const DEVTOOLS_TOOK_CONNECTION_REASON = '[NEW_DEBUGGER_OPENED]';
 const getCloseReason = (reason: unknown): string =>
   Buffer.isBuffer(reason) ? reason.toString() : String(reason ?? '');
 
-const getDebuggerWebSocketOrigin = (webSocketDebuggerUrl: string): string => {
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+const LOOPBACK_FALLBACK_HOSTNAMES = ['127.0.0.1', 'localhost'];
+
+const getDebuggerWebSocketOrigins = (webSocketDebuggerUrl: string): string[] => {
   const url = new URL(webSocketDebuggerUrl);
   const protocol = url.protocol === 'wss:' ? 'https:' : 'http:';
+  const matchingOrigin = `${protocol}//${url.host}`;
 
-  return `${protocol}//${url.host}`;
+  if (!LOOPBACK_HOSTNAMES.has(url.hostname)) {
+    return [matchingOrigin];
+  }
+
+  // React Native dev-middleware requires an Origin during the upgrade and
+  // accepts common loopback hosts. Expo then applies a second, exact-host check
+  // after the upgrade and terminates mismatches as a 1006 close. Its configured
+  // host may be localhost or 127.0.0.1 depending on the launcher environment.
+  const origins = [matchingOrigin];
+  for (const hostname of LOOPBACK_FALLBACK_HOSTNAMES) {
+    url.hostname = hostname;
+    const fallbackOrigin = `${protocol}//${url.host}`;
+    if (!origins.includes(fallbackOrigin)) {
+      origins.push(fallbackOrigin);
+    }
+  }
+  return origins;
 };
 
 type PendingCommand = {
@@ -797,26 +817,62 @@ export const createAgentSession = (options: {
     }
   };
 
-  const connect = async (generation = connectionGeneration): Promise<void> => {
+  const connect = async (generation = connectionGeneration, originIndex = 0): Promise<void> => {
     status = 'connecting';
+    const origins = getDebuggerWebSocketOrigins(target.webSocketDebuggerUrl);
+    const origin = origins[originIndex] ?? origins[0];
 
     await new Promise<void>((resolve, reject) => {
       const socket = new WebSocket(target.webSocketDebuggerUrl, {
         headers: {
-          Origin: getDebuggerWebSocketOrigin(target.webSocketDebuggerUrl),
+          Origin: origin,
         },
       });
+      let opened = false;
       let settled = false;
+      let fallbackStarted = false;
       const attempt = ++socketAttempt;
       activeSocketAttempt = attempt;
       ws = socket;
+
+      const tryFallback = (): boolean => {
+        if (settled || fallbackStarted || originIndex >= origins.length - 1) {
+          return false;
+        }
+
+        fallbackStarted = true;
+        bindingName = null;
+        bootstrapped = false;
+        connectedAt = undefined;
+        if (opened) {
+          handler.disconnectDevice(options.target.id);
+          for (const service of localServices) {
+            service.onDisconnected();
+          }
+        }
+        for (const [commandId, pending] of pendingCommands.entries()) {
+          pendingCommands.delete(commandId);
+          pending.reject(new Error('CDP connection closed before bootstrap completed'));
+        }
+        clearBootstrapTimer();
+        clearPluginReadiness();
+        if (ws === socket) {
+          ws = null;
+        }
+        activeSocketAttempt += 1;
+        if (socket.readyState !== WebSocket.CLOSED) {
+          socket.close();
+        }
+        void connect(generation, originIndex + 1).then(resolve, reject);
+        return true;
+      };
 
       socket.once('open', () => {
         if (!isCurrentGeneration(generation) || ws !== socket || activeSocketAttempt !== attempt) {
           socket.close();
           return;
         }
-        settled = true;
+        opened = true;
         status = 'connecting';
         connectedAt = Date.now();
         lastError = undefined;
@@ -835,6 +891,7 @@ export const createAgentSession = (options: {
           try {
             await sendCommand('ReactNativeApplication.enable');
             await sendCommand('Runtime.enable');
+            settled = true;
             scheduleBootstrap();
             resolve();
           } catch (error) {
@@ -847,6 +904,9 @@ export const createAgentSession = (options: {
 
             lastError = startupError.message;
             clearBootstrapTimer();
+            if (fallbackStarted || tryFallback()) {
+              return;
+            }
             rejectStartReadiness(startupError);
             socket.close();
             reject(startupError);
@@ -874,17 +934,27 @@ export const createAgentSession = (options: {
           return;
         }
         lastError = error instanceof Error ? error.message : String(error);
-        if (!settled) {
+        if (!settled && !tryFallback()) {
           reject(error);
         }
       });
 
       socket.once('close', (_code: unknown, reason: unknown) => {
         if (ws !== socket || activeSocketAttempt !== attempt) return;
+        if (!settled && tryFallback()) {
+          return;
+        }
+
         ws = null;
         handleSocketClosed(getCloseReason(reason), generation);
         if (!settled) {
-          reject(new Error('CDP websocket closed before session initialization'));
+          reject(
+            new Error(
+              opened
+                ? 'CDP connection closed before bootstrap completed'
+                : 'CDP websocket closed before session initialization',
+            ),
+          );
         }
       });
     });

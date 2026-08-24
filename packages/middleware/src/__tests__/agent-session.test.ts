@@ -360,7 +360,7 @@ describe('agent session', () => {
     });
   });
 
-  it('preserves the debugger websocket host in the origin header', () => {
+  it('preserves an IPv4 loopback debugger host in the primary origin header', () => {
     const target = createTarget({
       webSocketDebuggerUrl: 'ws://127.0.0.1:8081/debug',
     });
@@ -371,6 +371,105 @@ describe('agent session', () => {
     expect(socket.options).toEqual({
       headers: {
         Origin: 'http://127.0.0.1:8081',
+      },
+    });
+  });
+
+  it('preserves an IPv6 loopback debugger host in the origin header', () => {
+    const target = createTarget({
+      webSocketDebuggerUrl: 'ws://[::1]:8081/debug',
+    });
+
+    const { socket } = createStartedSession({ target });
+
+    expect(socket.url).toBe(target.webSocketDebuggerUrl);
+    expect(socket.options).toEqual({
+      headers: {
+        Origin: 'http://[::1]:8081',
+      },
+    });
+  });
+
+  it('falls back to localhost when a numeric loopback origin is rejected', async () => {
+    const target = createTarget({
+      webSocketDebuggerUrl: 'ws://127.0.0.1:8081/debug',
+    });
+    const { startPromise, socket } = createStartedSession({ target });
+
+    socket.emit('error', new Error('Unexpected server response: 401'));
+    await flushMicrotasks();
+
+    const fallbackSocket = mocks.wsInstances[1];
+    expect(fallbackSocket.url).toBe(target.webSocketDebuggerUrl);
+    expect(fallbackSocket.options).toEqual({
+      headers: {
+        Origin: 'http://localhost:8081',
+      },
+    });
+
+    fallbackSocket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    await expect(startPromise).resolves.toBeUndefined();
+  });
+
+  it('falls back after Metro terminates an upgraded numeric-loopback session', async () => {
+    const target = createTarget({
+      webSocketDebuggerUrl: 'ws://127.0.0.1:8081/debug',
+    });
+    const { startPromise, socket } = createStartedSession({ target });
+
+    socket.open();
+    socket.close();
+    await flushMicrotasks();
+
+    const fallbackSocket = mocks.wsInstances[1];
+    expect(fallbackSocket.options).toEqual({
+      headers: {
+        Origin: 'http://localhost:8081',
+      },
+    });
+
+    fallbackSocket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    await expect(startPromise).resolves.toBeUndefined();
+  });
+
+  it('falls back from localhost to numeric loopback', async () => {
+    const { startPromise, socket } = createStartedSession();
+
+    socket.open();
+    socket.close();
+    await flushMicrotasks();
+
+    const fallbackSocket = mocks.wsInstances[1];
+    expect(fallbackSocket.options).toEqual({
+      headers: {
+        Origin: 'http://127.0.0.1:8081',
+      },
+    });
+
+    fallbackSocket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    await expect(startPromise).resolves.toBeUndefined();
+  });
+
+  it('preserves remote hosts and secure protocols in the origin header', () => {
+    const target = createTarget({
+      webSocketDebuggerUrl: 'wss://devtools.example.com:8443/debug',
+    });
+
+    const { socket } = createStartedSession({ target });
+
+    expect(socket.url).toBe(target.webSocketDebuggerUrl);
+    expect(socket.options).toEqual({
+      headers: {
+        Origin: 'https://devtools.example.com:8443',
       },
     });
   });
@@ -691,7 +790,11 @@ describe('agent session', () => {
   });
 
   it('rejects startup if the websocket closes before bootstrap completes', async () => {
-    const { socket, startPromise } = createStartedSession();
+    const { socket, startPromise } = createStartedSession({
+      target: createTarget({
+        webSocketDebuggerUrl: 'ws://metro.internal:8081/debug',
+      }),
+    });
 
     socket.open();
     await flushMicrotasks();
