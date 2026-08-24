@@ -511,11 +511,22 @@ describe('React tree store getComponent', () => {
 
 type MockPhase = 'idle' | 'profiling' | 'processing';
 
+type MockCommitData = {
+  duration: number;
+  timestamp: number;
+  effectDuration?: number | null;
+  passiveEffectDuration?: number | null;
+  priorityLevel?: string | null;
+  fiberActualDurations?: Map<number, number>;
+  updaters?: Array<{ id: number }> | null;
+  changeDescriptions?: Map<number, unknown> | null;
+};
+
 const createConfigurableProfilingBridge = (options: {
   initialPhase?: MockPhase;
-  initialDataForRoots?: Map<number, { commitData: Array<{ duration: number; timestamp: number }> }>;
+  initialDataForRoots?: Map<number, { commitData: MockCommitData[] }>;
   drainAfterStatusCalls?: number;
-  dataOnDrain?: Map<number, { commitData: Array<{ duration: number; timestamp: number }> }>;
+  dataOnDrain?: Map<number, { commitData: MockCommitData[] }>;
 }) => {
   let phase: MockPhase = options.initialPhase ?? 'idle';
   let dataForRoots = options.initialDataForRoots ?? new Map();
@@ -619,6 +630,111 @@ describe('React stopProfiling guard', () => {
       session: { totalCommits: 1 },
       renders: { count: 1 },
     });
+  });
+
+  it('returns every commit chronologically with profiling metadata', async () => {
+    const initialDataForRoots = new Map([
+      [
+        2,
+        {
+          commitData: [
+            {
+              duration: 20,
+              timestamp: 300,
+              effectDuration: 4,
+              passiveEffectDuration: 2,
+              priorityLevel: 'Normal',
+              fiberActualDurations: new Map([
+                [20, 12],
+                [21, 8],
+              ]),
+              updaters: [{ id: 20 }],
+              changeDescriptions: new Map(),
+            },
+            {
+              duration: 5,
+              timestamp: 100,
+              effectDuration: null,
+              passiveEffectDuration: null,
+              priorityLevel: null,
+              fiberActualDurations: new Map([[22, 5]]),
+              updaters: null,
+              changeDescriptions: null,
+            },
+          ],
+        },
+      ],
+      [
+        1,
+        {
+          commitData: [
+            {
+              duration: 17,
+              timestamp: 100,
+              effectDuration: 1,
+              passiveEffectDuration: 3,
+              priorityLevel: 'UserBlocking',
+              fiberActualDurations: new Map([[10, 17]]),
+              updaters: [{ id: 10 }, { id: 11 }],
+              changeDescriptions: new Map(),
+            },
+          ],
+        },
+      ],
+    ]);
+    const bridge = createConfigurableProfilingBridge({
+      initialPhase: 'idle',
+      initialDataForRoots,
+    });
+    const store = createReactTreeStore({
+      createBridge: async () => bridge,
+    });
+    store.registerDevice(DEVICE_ID, { sendMessage: () => undefined });
+
+    const result = await store.stopProfiling(DEVICE_ID, {});
+
+    expect(result.commits).toEqual([
+      {
+        rootId: 1,
+        commitIndex: 0,
+        durationMs: 17,
+        effectDurationMs: 1,
+        passiveEffectDurationMs: 3,
+        timestampMs: 100,
+        priorityLevel: 'UserBlocking',
+        renderedFiberCount: 1,
+        updaterCount: 2,
+        hasChangeDescriptions: true,
+      },
+      {
+        rootId: 2,
+        commitIndex: 1,
+        durationMs: 5,
+        effectDurationMs: null,
+        passiveEffectDurationMs: null,
+        timestampMs: 100,
+        priorityLevel: null,
+        renderedFiberCount: 1,
+        updaterCount: 0,
+        hasChangeDescriptions: false,
+      },
+      {
+        rootId: 2,
+        commitIndex: 0,
+        durationMs: 20,
+        effectDurationMs: 4,
+        passiveEffectDurationMs: 2,
+        timestampMs: 300,
+        priorityLevel: 'Normal',
+        renderedFiberCount: 2,
+        updaterCount: 1,
+        hasChangeDescriptions: true,
+      },
+    ]);
+    expect(result.topSlowCommits).toEqual([
+      { rootId: 2, commitIndex: 0, durationMs: 20, timestampMs: 300 },
+      { rootId: 1, commitIndex: 0, durationMs: 17, timestampMs: 100 },
+    ]);
   });
 
   it('returns a real zero-commit measurement after start then stop with no re-renders', async () => {

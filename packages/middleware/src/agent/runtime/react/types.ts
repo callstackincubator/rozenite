@@ -130,6 +130,15 @@ export interface ReactSlowCommitSummary {
   timestampMs: number;
 }
 
+export interface ReactCommitSummary extends ReactSlowCommitSummary {
+  effectDurationMs: number | null;
+  passiveEffectDurationMs: number | null;
+  priorityLevel: string | null;
+  renderedFiberCount: number;
+  updaterCount: number;
+  hasChangeDescriptions: boolean;
+}
+
 export interface ReactStopProfilingResult {
   session: {
     roots: number[];
@@ -141,6 +150,7 @@ export interface ReactStopProfilingResult {
     slowCount: number;
     slowThresholdMs: number;
   };
+  commits: ReactCommitSummary[];
   topSlowCommits: ReactSlowCommitSummary[];
   truncated: boolean;
   partial?: boolean;

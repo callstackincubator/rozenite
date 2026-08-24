@@ -29,6 +29,12 @@ Search and inspect:
 Profile:
 `startProfiling` -> reproduce interaction -> `stopProfiling` -> `getRenderData`.
 
+`stopProfiling` returns every captured commit in an untruncated, chronological
+`commits` array with render/effect timing, priority, rendered-fiber and updater
+counts, and change-description availability. The duration-ranked,
+size-limited `topSlowCommits` list remains available for quickly finding the
+slowest commits before calling `getRenderData`.
+
 `getRenderData` rows carry `displayName` and timing by default. Add
 `--fields ...,changedKeys` for the exact changed prop, state, and context key
 names behind `changeTypeHints`, which attributes a re-render without a

@@ -1,6 +1,7 @@
 import { hashFilters } from '../pagination/filters-hash.js';
 import type {
   ReactComponentSection,
+  ReactCommitSummary,
   ReactDevToolsBridgeMessage,
   ReactGetChildrenResult,
   ReactGetComponentResult,
@@ -935,15 +936,14 @@ export const createReactTreeStore = (options?: {
     const status = bridge.getProfilingStatus();
     const profilingData = bridge.getProfilingDataSnapshot() as {
       phase?: string;
-      dataForRoots?: Map<number, { commitData?: Array<{ duration: number; timestamp: number }> }>;
+      dataForRoots?: Map<number, { commitData?: ReactCommitData[] }>;
       conflictingRootIds?: Set<number>;
       participatingRendererIds?: Set<number>;
       pendingRendererIds?: Set<number>;
       receivedRendererIds?: Set<number>;
     } | null;
     const dataForRoots =
-      profilingData?.dataForRoots ??
-      new Map<number, { commitData?: Array<{ duration: number; timestamp: number }> }>();
+      profilingData?.dataForRoots ?? new Map<number, { commitData?: ReactCommitData[] }>();
     const conflictingRootCount = profilingData?.conflictingRootIds?.size ?? 0;
     const receivedRendererCount = profilingData?.receivedRendererIds?.size ?? 0;
     const pendingRendererCount = profilingData?.pendingRendererIds?.size ?? 0;
@@ -952,6 +952,7 @@ export const createReactTreeStore = (options?: {
     let totalCommits = 0;
     let totalRenderDurationMs = 0;
     let slowCount = 0;
+    const commits: ReactCommitSummary[] = [];
     const slowCommits: Array<{
       rootId: number;
       commitIndex: number;
@@ -965,19 +966,37 @@ export const createReactTreeStore = (options?: {
       for (let index = 0; index < commitData.length; index += 1) {
         const commit = commitData[index];
         const durationMs = Number(commit.duration) || 0;
+        const timestampMs = Number(commit.timestamp) || 0;
         totalRenderDurationMs += durationMs;
+        commits.push({
+          rootId,
+          commitIndex: index,
+          durationMs,
+          effectDurationMs: commit.effectDuration ?? null,
+          passiveEffectDurationMs: commit.passiveEffectDuration ?? null,
+          timestampMs,
+          priorityLevel: commit.priorityLevel ?? null,
+          renderedFiberCount:
+            commit.fiberActualDurations instanceof Map ? commit.fiberActualDurations.size : 0,
+          updaterCount: Array.isArray(commit.updaters) ? commit.updaters.length : 0,
+          hasChangeDescriptions: commit.changeDescriptions !== null,
+        });
         if (durationMs > slowRenderThresholdMs) {
           slowCount += 1;
           slowCommits.push({
             rootId,
             commitIndex: index,
             durationMs,
-            timestampMs: Number(commit.timestamp) || 0,
+            timestampMs,
           });
         }
       }
     });
 
+    commits.sort(
+      (a, b) =>
+        a.timestampMs - b.timestampMs || a.rootId - b.rootId || a.commitIndex - b.commitIndex,
+    );
     slowCommits.sort((a, b) => b.durationMs - a.durationMs || a.timestampMs - b.timestampMs);
     const truncated = slowCommits.length > TOP_SLOW_COMMITS_LIMIT;
     const partial =
@@ -997,6 +1016,7 @@ export const createReactTreeStore = (options?: {
         slowCount,
         slowThresholdMs: slowRenderThresholdMs,
       },
+      commits,
       topSlowCommits: slowCommits.slice(0, TOP_SLOW_COMMITS_LIMIT),
       truncated,
       ...(partial ? { partial: true } : {}),
