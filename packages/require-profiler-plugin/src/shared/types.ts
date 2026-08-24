@@ -25,17 +25,3 @@ export type RequireChainMeta = {
 export type RequireChainData = RequireChainMeta & {
   tree: RequireTimingNode | null;
 };
-
-export type BundleModuleInfo = {
-  id: number | string;
-  /** Module path where available, otherwise the numeric module id. */
-  name: string;
-  /** Whether the module had been evaluated at capture time. */
-  evaluated: boolean;
-};
-
-export type BundleCoverage = {
-  modules: BundleModuleInfo[];
-  /** Wall-clock timestamp (epoch ms) when the registry was read. */
-  capturedAt: number;
-};

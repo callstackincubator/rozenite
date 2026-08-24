@@ -1,4 +1,4 @@
-import { RequireChainMeta, RequireChainData, BundleCoverage } from '../shared';
+import { RequireChainMeta, RequireChainData } from '../shared';
 
 export const getRequireChainsList = (): RequireChainMeta[] => {
   if (!('getRequireChainsList' in global) || typeof global.getRequireChainsList !== 'function') {
@@ -14,14 +14,6 @@ export const getRequireChainData = (index: number): RequireChainData | null => {
   }
 
   return global.getRequireChainData(index);
-};
-
-export const getBundleModules = (): BundleCoverage => {
-  if (!('getBundleModules' in global) || typeof global.getBundleModules !== 'function') {
-    return { modules: [], capturedAt: Date.now() };
-  }
-
-  return global.getBundleModules();
 };
 
 export const onRequireChainComplete = (

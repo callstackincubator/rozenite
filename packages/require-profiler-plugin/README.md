@@ -16,7 +16,6 @@ The Rozenite Require Profiler Plugin instruments `require()` calls during your R
 - **Package Rollup**: The same chain grouped by npm package, at the granularity dependency decisions are actually made
 - **Require Chains**: For any module, the chain of requires that pulled it in, so "why is this even loaded?" has an answer
 - **Duplicate Detection**: Warns when a package was evaluated from more than one install location
-- **Bundle Coverage**: Which modules shipped but have not been evaluated yet — your code-splitting candidates
 - **Chain Browser**: Every recorded require chain listed with its duration and module count, filterable by a minimum duration
 - **Module Search**: Filter the table and highlight matching frames in the flame graph
 - **Startup Performance Insights**: Identify slow-loading modules that impact Time to Interactive (TTI)
@@ -112,11 +111,6 @@ Once configured, the plugin automatically instruments all `require()` calls in y
   package. Each package shows its own evaluation time and, separately, its
   cost including everything it pulled in. Packages evaluated from two install
   locations are flagged here.
-- **Coverage**: Reads Metro's module registry on demand and reports how much
-  of the bundle was evaluated, ranking packages by how many of their modules
-  have not run yet. Note this reflects the registry at the moment it was read,
-  not at profiling time, so it reports "not yet evaluated" rather than
-  "unused".
 
 ## Use Cases
 

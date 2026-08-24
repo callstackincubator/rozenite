@@ -81,10 +81,9 @@ export type DuplicatePackage = {
  * Packages evaluated from more than one install location, e.g. a top-level
  * `node_modules/lodash` alongside a nested `node_modules/a/node_modules/lodash`.
  *
- * Takes a plain iterable of module paths rather than a require tree, so the
- * same grouping logic can run over the evaluated module set (today) or a
- * full bundle registry (once bundle coverage lands), without reimplementing
- * path parsing at either call site. Application code (`getPackageRoot`
+ * Takes a plain iterable of module paths rather than a require tree, so any
+ * caller with module paths to hand can reuse the grouping logic without
+ * reimplementing path parsing. Application code (`getPackageRoot`
  * returns `null`) is never reported, and duplicate paths in the input never
  * inflate the result: only distinct roots count.
  */
