@@ -619,7 +619,7 @@ const RequireProfilerContent = () => {
                       <Text variant="caption" className="mb-2 block">
                         Required by
                       </Text>
-                      <Column gap={1}>
+                      <Column gap={1} scroll className="max-h-48 pr-1">
                         {requirePathResult.entries.map((entry, index) => {
                           const isTarget = index === requirePathResult.entries.length - 1;
 
