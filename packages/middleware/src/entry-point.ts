@@ -25,13 +25,34 @@ const updateCSP = (html: string, nonce: string): string => {
   );
 };
 
+/**
+ * Everything `__ROZENITE__` carries into the Fusebox-embedded host. An
+ * options object rather than a parameter list: each field otherwise lands
+ * in the middle of a run of same-typed positional arguments, where a
+ * transposition still type-checks.
+ *
+ * There is deliberately no host integration here. This global only exists
+ * on the Fusebox-embedded path, which `getMiddleware` serves solely when
+ * the host is `react-native` — a Lynx dev server never registers
+ * `/rn_fusebox.html` at all — so the embedded host already knows its own
+ * half of the answer without being told.
+ */
+export type EntryPointOptions = {
+  installedPlugins: string[];
+  destroyOnDetachPlugins: string[];
+  pluginDisplay?: 'tabs' | 'sidebar';
+  runtimeVersion?: string;
+};
+
 const appendScripts = (
   html: string,
   nonce: string,
-  installedPlugins: string[],
-  destroyOnDetachPlugins: string[],
-  pluginDisplay: 'tabs' | 'sidebar',
-  runtimeVersion?: string,
+  {
+    installedPlugins,
+    destroyOnDetachPlugins,
+    pluginDisplay = 'sidebar',
+    runtimeVersion,
+  }: EntryPointOptions,
 ): string => {
   const bodyTagRegex = /<body[^>]*>/;
   const bodyMatch = html.match(bodyTagRegex);
@@ -60,10 +81,7 @@ const appendScripts = (
 
 export const getEntryPointHTML = (
   rnDevToolsFrontendPath: string,
-  installedPlugins: string[],
-  destroyOnDetachPlugins: string[],
-  pluginDisplay: 'tabs' | 'sidebar' = 'sidebar',
-  runtimeVersion?: string,
+  options: EntryPointOptions,
 ): string => {
   const nonce = crypto.randomUUID();
   const originalEntryPoint = fs.readFileSync(
@@ -71,12 +89,5 @@ export const getEntryPointHTML = (
     'utf8',
   );
 
-  return appendScripts(
-    updateCSP(originalEntryPoint, nonce),
-    nonce,
-    installedPlugins,
-    destroyOnDetachPlugins,
-    pluginDisplay,
-    runtimeVersion,
-  );
+  return appendScripts(updateCSP(originalEntryPoint, nonce), nonce, options);
 };

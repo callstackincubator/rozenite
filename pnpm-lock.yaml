@@ -481,6 +481,9 @@ importers:
       '@rozenite/shell':
         specifier: workspace:*
         version: link:../shell
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       '@rozenite/ui':
         specifier: workspace:*
         version: link:../ui
@@ -597,6 +600,9 @@ importers:
         specifier: workspace:*
         version: link:../ui
     devDependencies:
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -646,6 +652,9 @@ importers:
         specifier: ^0.4.0
         version: 0.4.3(expo@57.0.10(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-native-web@0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-native-worklets@0.10.0(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.86.0(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1))(react-native@0.86.0(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)(typescript@5.9.3))(supports-color@8.1.1)
     devDependencies:
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/tools':
         specifier: workspace:*
         version: link:../tools
@@ -725,6 +734,9 @@ importers:
         specifier: workspace:*
         version: link:../ui
     devDependencies:
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/testing':
         specifier: workspace:*
         version: link:../testing
@@ -783,6 +795,9 @@ importers:
         specifier: workspace:*
         version: link:../ui
     devDependencies:
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -968,6 +983,9 @@ importers:
       '@radix-ui/react-tabs':
         specifier: ^1.1.12
         version: 1.1.12(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1053,6 +1071,9 @@ importers:
         specifier: workspace:*
         version: link:../ui
     devDependencies:
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1096,6 +1117,9 @@ importers:
         specifier: workspace:*
         version: link:../ui
     devDependencies:
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1163,6 +1187,9 @@ importers:
       '@react-navigation/core':
         specifier: ^7.12.1
         version: 7.12.1(react@19.2.3)
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1233,6 +1260,9 @@ importers:
       '@redux-devtools/app':
         specifier: ^6.2.2
         version: 6.2.2(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(@reduxjs/toolkit@2.8.2(react-redux@9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3))(@types/react@19.2.18)(@types/styled-components@5.1.34)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(styled-components@5.3.11(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.3(react@19.2.3))(react-is@19.2.4)(react@19.2.3))(supports-color@8.1.1)
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1319,6 +1349,12 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0
     devDependencies:
+      '@rozenite/metro':
+        specifier: workspace:*
+        version: link:../metro
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1377,6 +1413,9 @@ importers:
         specifier: ^4.17.21
         version: 4.17.21
     devDependencies:
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1416,6 +1455,9 @@ importers:
 
   packages/runtime:
     dependencies:
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -1505,6 +1547,9 @@ importers:
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1578,6 +1623,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.40.0
         version: 6.40.0
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1645,6 +1693,9 @@ importers:
         specifier: ^3.1.3
         version: 3.1.3
     devDependencies:
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
@@ -1678,6 +1729,30 @@ importers:
       vite:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)
+
+  packages/test-utils:
+    devDependencies:
+      '@react-native/metro-config':
+        specifier: ~0.86.0
+        version: 0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1)
+      expo:
+        specifier: ^57.0.7
+        version: 57.0.10(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.8(react@19.2.8))(react-native-web@0.21.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-native-worklets@0.10.0(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.86.0(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.8)(supports-color@8.1.1))(react@19.2.8)(supports-color@8.1.1))(react-native@0.86.0(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.8)(supports-color@8.1.1))(react@19.2.8)(supports-color@8.1.1)(typescript@5.8.3)
+      metro:
+        specifier: 0.84.4
+        version: 0.84.4(supports-color@8.1.1)
+      metro-config:
+        specifier: 0.84.4
+        version: 0.84.4(supports-color@8.1.1)
+      react-native:
+        specifier: 'catalog:'
+        version: 0.86.0(@babel/core@7.29.0(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.8)(supports-color@8.1.1)
+      typescript:
+        specifier: ~5.8.2
+        version: 5.8.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
 
   packages/testing:
     dependencies:
@@ -1779,6 +1854,9 @@ importers:
 
   packages/vite-plugin:
     dependencies:
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       '@rozenite/ui':
         specifier: workspace:*
         version: link:../ui

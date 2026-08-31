@@ -40,6 +40,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
     "@types/lodash": "^4.17.0",
     "@types/react": "catalog:",
@@ -55,7 +56,6 @@
   },
   "peerDependencies": {
     "react": "*",
-    "react-hook-form": "^7.33.1",
-    "react-native": "*"
+    "react-hook-form": "^7.33.1"
   }
 }

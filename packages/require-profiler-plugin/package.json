@@ -44,6 +44,8 @@
     "nanoevents": "^9.1.0"
   },
   "devDependencies": {
+    "@rozenite/metro": "workspace:*",
+    "@rozenite/test-utils": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "@types/react": "catalog:",

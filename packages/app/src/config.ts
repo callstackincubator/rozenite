@@ -6,10 +6,20 @@
  * inline script.
  */
 
+import type { RozeniteHostIntegration } from '@rozenite/tools/integration';
+
 export type RozeniteAppConfig = {
   installedPlugins: string[];
   destroyOnDetachPlugins: string[];
   runtimeVersion?: string;
+  /**
+   * Which host the dev server serves — half of a target's integration, and
+   * the half only the server knows. The other half (is this target a
+   * browser?) is answered by the device itself; `resolveIntegration`
+   * combines them. See `RozeniteAppConfigResponse.hostIntegration` in
+   * `packages/middleware/src/middleware.ts`.
+   */
+  hostIntegration: RozeniteHostIntegration;
 };
 
 // Derived from `import.meta.env.BASE_URL` (Vite bakes it in from

@@ -45,6 +45,7 @@
     "@rozenite/ui": "workspace:*"
   },
   "devDependencies": {
+    "@rozenite/test-utils": "workspace:*",
     "@rozenite/testing": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
@@ -65,8 +66,7 @@
     "@statsig/js-client": "^3.0.0",
     "@statsig/js-local-overrides": "^3.0.0",
     "@statsig/react-native-bindings": "^3.0.0",
-    "react": "*",
-    "react-native": "*"
+    "react": "*"
   },
   "peerDependenciesMeta": {
     "@launchdarkly/react-native-client-sdk": {

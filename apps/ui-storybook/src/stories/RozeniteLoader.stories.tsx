@@ -20,7 +20,7 @@ const meta = {
     },
     period: {
       control: { type: 'range', min: 800, max: 8000, step: 100 },
-      description: 'Loop duration in ms.',
+      description: 'Loop duration in ms — lower is faster.',
     },
     noise: {
       control: { type: 'range', min: 0, max: 1.4, step: 0.05 },
@@ -40,7 +40,7 @@ export const Playground: Story = {
   args: {
     size: 96,
     cols: 16,
-    period: 3600,
+    period: 2000,
     noise: 0.8,
   },
 };

@@ -148,6 +148,40 @@ describe('createRozeniteLynxServer: the /inspector/debug WebSocket route', () =>
     ws.close();
   });
 
+  it('follows the ReactNativeApplication.enable reply with a metadata event describing the client', async () => {
+    const { transport, logicalDeviceId, sessionId } = setupClientWithSession();
+    const { port } = await startServer(transport);
+
+    const ws = connectInspector(port, logicalDeviceId, sessionId);
+    await waitForOpen(ws);
+
+    const frames: Record<string, unknown>[] = [];
+    ws.on('message', (data: Buffer) => {
+      frames.push(JSON.parse(data.toString()) as Record<string, unknown>);
+    });
+
+    ws.send(JSON.stringify({ id: 1, method: 'ReactNativeApplication.enable' }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    // Order matters: the host is awaiting the reply to its command, and
+    // the event only makes sense once the domain is enabled.
+    expect(frames).toEqual([
+      { id: 1, result: {} },
+      {
+        method: 'ReactNativeApplication.metadataUpdated',
+        params: {
+          integrationName: 'Lynx',
+          appDisplayName: 'com.example.app',
+          deviceName: 'Pixel 7',
+          platform: 'android',
+        },
+      },
+    ]);
+    expect(transport.sentMessages).toHaveLength(0);
+
+    ws.close();
+  });
+
   it('forwards a host message to the transport with the right clientId/sessionId and id intact', async () => {
     const { transport, logicalDeviceId, clientId, sessionId } = setupClientWithSession();
     const { port } = await startServer(transport);

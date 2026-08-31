@@ -6,6 +6,7 @@
 // This is a direct equivalent of ReactDevToolsBindingsModel and could be dropped
 // if built-in models verify whether it has been enabled before
 
+import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
 import { RuntimeEvent, SDK } from './rn-devtools-frontend.js';
 import { DomainMessageListener, JSONValue } from './types.js';
 
@@ -23,6 +24,60 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
   private fuseboxDispatcherIsInitialized = false;
   private messageQueue: JSONValue[] = [];
   private messageListeners: Set<DomainMessageListener> = new Set();
+  private targetIsWeb: boolean | null = null;
+
+  /**
+   * Whether the connected target is a browser, as reported by the device
+   * itself — `null` until the probe has answered, or if it failed.
+   *
+   * Half of the target's integration. The other half is the host, which is
+   * always `react-native` on this path: the Fusebox-embedded shell is only
+   * ever served by a React Native dev server (a Lynx one never registers
+   * `/rn_fusebox.html`), so unlike the standalone app there is nothing to
+   * fetch. `null` means "unknown", never "not web" — a wrong answer here
+   * would be indistinguishable from a right one.
+   */
+  getTargetIsWeb(): boolean | null {
+    return this.targetIsWeb;
+  }
+
+  /**
+   * Asks the device whether it is a browser by evaluating
+   * `IS_WEB_TARGET_EXPRESSION` in its own runtime.
+   *
+   * The device is the only party that knows for certain, and one Rozenite
+   * controls — so it is asked, rather than inferred from React Native's
+   * `ReactNativeApplication.metadataUpdated`, an event we neither emit nor
+   * can order against anything a host does.
+   *
+   * Never throws: this is advisory metadata, and `enable()` must not fail
+   * (taking every Rozenite panel with it) because one extra evaluate did.
+   */
+  private async probeTargetIsWeb(): Promise<void> {
+    const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
+    if (!runtimeModel) {
+      return;
+    }
+
+    try {
+      const response = await runtimeModel.agent.invoke_evaluate({
+        expression: IS_WEB_TARGET_EXPRESSION,
+        returnByValue: true,
+      });
+
+      if (response.exceptionDetails) {
+        throw new Error(response.exceptionDetails.text);
+      }
+
+      if (typeof response.result.value !== 'boolean') {
+        throw new Error(`Expected a boolean, got ${typeof response.result.value}.`);
+      }
+
+      this.targetIsWeb = response.result.value;
+    } catch (error) {
+      console.warn('[rozenite] Could not determine whether the target is a browser.', error);
+    }
+  }
 
   override dispose(): void {
     this.messageQueue = [];
@@ -197,6 +252,10 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     }
 
     await this.waitForFuseboxDispatcherToBeInitialized()
+      // After the dispatcher wait only because that is what establishes a
+      // live execution context to evaluate in; the expression itself reads
+      // plain globals and depends on nothing Rozenite installs.
+      .then(() => this.probeTargetIsWeb())
       .then(() =>
         runtimeModel.agent.invoke_evaluate({
           expression: `${RUNTIME_GLOBAL}.BINDING_NAME`,

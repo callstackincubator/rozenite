@@ -46,6 +46,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@rozenite/tools": "workspace:*",
     "@rozenite/ui": "workspace:*",
     "@tailwindcss/vite": "4.2.2",
     "@vitejs/plugin-react": "^4.3.4",
