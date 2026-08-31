@@ -28,6 +28,7 @@ import {
   createReactDomainService,
   type LocalAgentToolService,
 } from './local-domains.js';
+import { resolveDebuggerOrigin } from './debugger-origin.js';
 import { logger } from '../logger.js';
 
 type AgentMessageHandler = ReturnType<typeof createAgentMessageHandler>;
@@ -51,13 +52,6 @@ const DEVTOOLS_TOOK_CONNECTION_REASON = '[NEW_DEBUGGER_OPENED]';
 
 const getCloseReason = (reason: unknown): string =>
   Buffer.isBuffer(reason) ? reason.toString() : String(reason ?? '');
-
-const getDebuggerWebSocketOrigin = (webSocketDebuggerUrl: string): string => {
-  const url = new URL(webSocketDebuggerUrl);
-  const protocol = url.protocol === 'wss:' ? 'https:' : 'http:';
-
-  return `${protocol}//${url.host}`;
-};
 
 type PendingCommand = {
   /** Retained so a device error can name the method it refused. */
@@ -814,10 +808,17 @@ export const createAgentSession = (options: {
   const connect = async (generation = connectionGeneration): Promise<void> => {
     status = 'connecting';
 
+    const origin = await resolveDebuggerOrigin({
+      host: options.host,
+      port: options.port,
+      appId: target.appId,
+      webSocketDebuggerUrl: target.webSocketDebuggerUrl,
+    });
+
     await new Promise<void>((resolve, reject) => {
       const socket = new WebSocket(target.webSocketDebuggerUrl, {
         headers: {
-          Origin: getDebuggerWebSocketOrigin(target.webSocketDebuggerUrl),
+          Origin: origin,
         },
       });
       let settled = false;
