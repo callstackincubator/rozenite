@@ -80,6 +80,7 @@ const paymentFormSnapshot = {
 };
 
 export default {
+  integrations: ['react-native', 'react-native-web', 'lynx', 'lynx-web'],
   panels: [
     {
       name: 'React Hook Form',
