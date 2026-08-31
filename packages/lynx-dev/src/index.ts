@@ -38,7 +38,7 @@ export {
   type RozeniteLynxServerOptions,
 } from './server/index.js';
 
-export type RozeniteLynxOptions = Omit<RozeniteConfig, 'projectRoot' | 'platform'> & {
+export type RozeniteLynxOptions = Omit<RozeniteConfig, 'projectRoot' | 'integration'> & {
   /**
    * Whether to enable Rozenite.
    *
@@ -108,7 +108,7 @@ export const rozeniteLynxPlugin = (options: RozeniteLynxOptions = {}): RsbuildPl
       const rozenite = await initializeRozenite(
         {
           projectRoot: api.context.rootPath,
-          platform: 'lynx',
+          integration: 'lynx',
           include: options.include,
           exclude: options.exclude,
           destroyOnDetachPlugins: options.destroyOnDetachPlugins,

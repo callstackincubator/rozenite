@@ -1,6 +1,12 @@
 import { transformWithEsbuild } from 'vite';
 import path from 'node:path';
 import fs from 'node:fs';
+import {
+  type RozeniteIntegration,
+  ROZENITE_INTEGRATIONS,
+  DEFAULT_PLUGIN_INTEGRATIONS,
+  isRozeniteIntegration,
+} from '@rozenite/tools';
 
 export type PanelEntry = {
   name: string;
@@ -64,6 +70,44 @@ export type DevConfig = {
 export type RozeniteConfig = {
   panels: PanelEntry[];
   dev?: DevConfig;
+  /**
+   * The target environments this plugin supports. Reported in the plugin
+   * manifest (`rozenite.json`) so a consumer can refuse to load a plugin on
+   * an integration it doesn't declare, instead of loading it and breaking.
+   *
+   * @default ['react-native']
+   */
+  integrations?: RozeniteIntegration[];
+};
+
+/**
+ * Validates a plugin's declared `integrations` and returns the resolved
+ * list — the declaration, or the default when omitted — so the manifest
+ * always answers "which integrations does this plugin support", even for a
+ * plugin authored before this field existed.
+ *
+ * Called eagerly from `client-plugin.ts`'s `config()` hook, right after the
+ * config is loaded: a typo here must fail the build loudly rather than
+ * silently making the plugin unloadable everywhere that later checks it.
+ */
+export const resolveIntegrations = (config: RozeniteConfig): RozeniteIntegration[] => {
+  const integrations = config.integrations ?? DEFAULT_PLUGIN_INTEGRATIONS;
+
+  if (integrations.length === 0) {
+    throw new Error(
+      `"integrations" in rozenite.config.ts must not be empty. Valid ids: ${ROZENITE_INTEGRATIONS.join(', ')}.`,
+    );
+  }
+
+  for (const integration of integrations) {
+    if (!isRozeniteIntegration(integration)) {
+      throw new Error(
+        `Invalid integration "${integration}" in rozenite.config.ts. Valid ids: ${ROZENITE_INTEGRATIONS.join(', ')}.`,
+      );
+    }
+  }
+
+  return [...integrations];
 };
 
 export const loadConfig = async (configPath: string): Promise<RozeniteConfig> => {

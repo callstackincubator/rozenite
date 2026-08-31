@@ -481,6 +481,9 @@ importers:
       '@rozenite/shell':
         specifier: workspace:*
         version: link:../shell
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       '@rozenite/ui':
         specifier: workspace:*
         version: link:../ui
@@ -1446,6 +1449,9 @@ importers:
 
   packages/runtime:
     dependencies:
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -1842,6 +1848,9 @@ importers:
 
   packages/vite-plugin:
     dependencies:
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       '@rozenite/ui':
         specifier: workspace:*
         version: link:../ui

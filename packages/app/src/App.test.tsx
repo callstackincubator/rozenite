@@ -73,6 +73,7 @@ function createFakeConnection(
     send: () => {},
     onMessage: () => () => {},
     getTarget: () => target,
+    getTargetIsWeb: () => false,
     reconnect,
     close: () => {},
   };

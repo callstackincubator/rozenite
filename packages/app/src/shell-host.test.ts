@@ -26,6 +26,7 @@ const createFakeConnection = (): {
       };
     },
     getTarget: () => ({ name: 'Fake Device', appId: 'com.example.app', framework: null }),
+    getTargetIsWeb: () => false,
     reconnect: () => {},
     close: () => {},
   };

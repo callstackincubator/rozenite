@@ -1,9 +1,5 @@
 /**
- * The frameworks this app can be pointed at. Rozenite for Web is debugged
- * in React Native DevTools rather than here, so it never appears — but the
- * mapping below still handles it, since it costs nothing and the reader is
- * the same shape as `@rozenite/runtime`'s `framework-title.ts` (keep the
- * two in sync).
+ * The frameworks this app can be pointed at.
  */
 export type Framework = 'React Native' | 'Web' | 'Lynx';
 
@@ -14,40 +10,66 @@ export type Framework = 'React Native' | 'Web' | 'Lynx';
  * That field is free-form — React Native's own values are host
  * integrations like "iOS Bridge (RCTBridge)" — so this recognises the
  * values Rozenite itself sends and lets everything else fall through to
- * the `platform` reading below. `Lynx` is written by
- * `@rozenite/lynx-dev`'s bridge, which answers the whole
- * `ReactNativeApplication` domain on a Lynx app's behalf.
+ * the readings below. `Lynx` is written by `@rozenite/lynx-dev`'s bridge,
+ * which answers the whole `ReactNativeApplication` domain on a Lynx app's
+ * behalf, and is the only way to tell Lynx apart per target: `platform` is
+ * the device OS there, and Lynx is invisible to the device probe (its
+ * `lynx` binding lives in module scope, not on `globalThis`).
  */
 const FRAMEWORK_BY_INTEGRATION: Record<string, Framework> = {
   Lynx: 'Lynx',
 };
 
-type ApplicationMetadata = {
+export type FrameworkSignals = {
+  /** `integrationName` from `ReactNativeApplication.metadataUpdated`. */
   integrationName?: unknown;
+  /** `platform` from the same event. Only a fallback — see below. */
   platform?: unknown;
+  /**
+   * What the device answered when asked whether it is a browser, or `null`
+   * while that is still unknown. See `IS_WEB_TARGET_EXPRESSION`.
+   */
+  isWebTarget: boolean | null;
 };
 
 /**
- * The framework a connected target belongs to, from its
- * `ReactNativeApplication.metadataUpdated` payload — the only source for
- * it. The dev server is not asked: it knows which platform *it* serves,
- * but that describes the server rather than the target, so the label
- * appears once the handshake has produced this event and not before.
+ * The framework a connected target belongs to.
  *
- * Two readings, in precedence order: an explicit `integrationName` this
- * build knows, then `platform === 'web'` (what
- * `@rozenite/chrome-extension` reports, and the only framework that *is*
- * a platform). Anything else is React Native — `platform` is the device
- * OS there (`ios`/`android`), so a new OS must not cost the label.
+ * Readings in precedence order:
+ *
+ * 1. An `integrationName` this build knows — currently only Lynx, which
+ *    nothing else can identify.
+ * 2. What the device itself said when asked. This is the same signal that
+ *    decides a target's `RozeniteIntegration`, and the reason both come
+ *    from one function: a label and a compatibility gate that disagree
+ *    about whether the target is a browser would be worse than either
+ *    being late.
+ * 3. `platform === 'web'` from the metadata event — what
+ *    `@rozenite/chrome-extension` reports. DISPLAY ONLY, and reached only
+ *    when the probe could not answer, so the label still appears. It is
+ *    deliberately not used to resolve an integration: the event is
+ *    unordered against anything a host does, so reading it early reports a
+ *    browser target as native, indistinguishably from a real answer.
+ *
+ * Anything else is React Native — `platform` is the device OS there
+ * (`ios`/`android`), so a new OS must not cost the label.
  */
-export const getFrameworkFromMetadata = (metadata: ApplicationMetadata): Framework => {
-  if (typeof metadata.integrationName === 'string') {
-    const known = FRAMEWORK_BY_INTEGRATION[metadata.integrationName];
+export const resolveFramework = ({
+  integrationName,
+  platform,
+  isWebTarget,
+}: FrameworkSignals): Framework => {
+  if (typeof integrationName === 'string') {
+    const known = FRAMEWORK_BY_INTEGRATION[integrationName];
 
     if (known) {
       return known;
     }
   }
 
-  return metadata.platform === 'web' ? 'Web' : 'React Native';
+  if (isWebTarget !== null) {
+    return isWebTarget ? 'Web' : 'React Native';
+  }
+
+  return platform === 'web' ? 'Web' : 'React Native';
 };
