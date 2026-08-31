@@ -9,13 +9,26 @@ export const frontmatter = {
 export default function Welcome() {
   const [withPluginsInstalled, setWithPluginsInstalled] = useState(false);
 
+  // Rspress renders this page during static generation, and its markdown SSG
+  // entry flushes passive effects on the server -- where neither `window` nor
+  // `document` exists. Without these guards the build throws
+  // "Reconciler Error: window is not defined", and the rendering process then
+  // never exits, so the build hangs rather than failing.
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     const withPluginsInstalled =
       new URLSearchParams(window.location.search).get('withPluginsInstalled') === 'true';
     setWithPluginsInstalled(withPluginsInstalled);
   }, []);
 
   useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
     // Make sure links open in a new tab
     document.querySelectorAll('a').forEach((linkElement) => {
       linkElement.target = '_blank';
