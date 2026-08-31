@@ -1,0 +1,62 @@
+/*
+ * Design tokens mirrored from `apps/playground/src/app/theme/tokens.ts`, which
+ * in turn ports `packages/ui/styles.css`. Square design language: radius is
+ * always 0.
+ */
+:root {
+  --color-background: #201f24;
+  --color-foreground: #ffffff;
+  --color-muted-foreground: #cfced5;
+  --color-border: #424145;
+  --color-input: #424145;
+  --color-primary: #8232ff;
+  --color-primary-foreground: #ffffff;
+
+  background-color: var(--color-background);
+}
+
+.Screen {
+  height: 100vh;
+  /* Opened with `?fullscreen=true`, so the page owns the status bar area. */
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+}
+
+.Panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  padding: 32px 16px;
+  border: 1px solid var(--color-border);
+}
+
+.Title {
+  margin-top: 24px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.Badge {
+  margin-top: 8px;
+  height: 20px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-primary);
+}
+
+.Badge__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary-foreground);
+}
+
+.Tagline {
+  margin-top: 12px;
+  max-width: 260px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+}

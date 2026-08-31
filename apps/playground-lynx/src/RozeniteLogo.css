@@ -1,0 +1,9 @@
+.Logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.Logo__row {
+  background-color: var(--color-primary);
+}

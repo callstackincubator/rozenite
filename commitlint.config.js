@@ -18,6 +18,7 @@ export default {
         'website',
         'redux-devtools-plugin',
         'playground',
+        'playground-lynx',
         'middleware',
         'repack',
         'performance-monitor-plugin',
