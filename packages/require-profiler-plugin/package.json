@@ -33,7 +33,7 @@
   "scripts": {
     "build": "rozenite build",
     "dev": "rozenite dev",
-    "typecheck": "tsc -p tsconfig.json --noEmit --explainFiles > tsc-explain.txt 2>&1; grep -n -B40 \"middleware/src/agent/metro-discovery\" tsc-explain.txt | head -80; exit 1",
+    "typecheck": "tsc -p tsconfig.json --noEmit --explainFiles > tsc-explain.txt 2>&1; grep -n \"middleware\" tsc-explain.txt | head -30; echo ---CHAIN---; grep -n -B3 \"middleware/src/index.ts$\" tsc-explain.txt | head -40; exit 1",
     "lint": "eslint .",
     "test": "vitest --run --passWithNoTests"
   },
