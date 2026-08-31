@@ -40,21 +40,22 @@
   "dependencies": {
     "@rozenite/plugin-bridge": "workspace:*",
     "@rozenite/tools": "workspace:*",
+    "@rozenite/ui": "workspace:*",
     "nanoevents": "^9.1.0"
   },
   "devDependencies": {
-    "@rozenite/metro": "workspace:*",
     "@rozenite/test-utils": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
+    "@tanstack/react-table": "^8.21.3",
     "@types/react": "catalog:",
     "lucide-react": "^0.263.1",
     "metro-config": "*",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-flame-graph": "^1.4.0",
     "react-json-tree": "^0.20.0",
     "react-native": "catalog:",
     "react-native-web": "^0.21.2",
+    "react-virtuoso": "^4.14.1",
     "rozenite": "workspace:*",
     "typescript": "~5.9.3",
     "vite": "catalog:"

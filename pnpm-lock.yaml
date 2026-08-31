@@ -1342,19 +1342,22 @@ importers:
       '@rozenite/tools':
         specifier: workspace:*
         version: link:../tools
+      '@rozenite/ui':
+        specifier: workspace:*
+        version: link:../ui
       nanoevents:
         specifier: ^9.1.0
         version: 9.1.0
     devDependencies:
-      '@rozenite/metro':
-        specifier: workspace:*
-        version: link:../metro
       '@rozenite/test-utils':
         specifier: workspace:*
         version: link:../test-utils
       '@rozenite/vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
+      '@tanstack/react-table':
+        specifier: ^8.21.3
+        version: 8.21.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.18
@@ -1370,9 +1373,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.3(react@19.2.3)
-      react-flame-graph:
-        specifier: ^1.4.0
-        version: 1.4.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-json-tree:
         specifier: ^0.20.0
         version: 0.20.0(@types/react@19.2.18)(react@19.2.3)
@@ -1382,6 +1382,9 @@ importers:
       react-native-web:
         specifier: ^0.21.2
         version: 0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react-virtuoso:
+        specifier: ^4.14.1
+        version: 4.18.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       rozenite:
         specifier: workspace:*
         version: link:../cli
@@ -9957,11 +9960,6 @@ packages:
   flexsearch@0.8.212:
     resolution: {integrity: sha512-wSyJr1GUWoOOIISRu+X2IXiOcVfg9qqBRyCPRUdLMIGJqPzMo+jMRlvE83t14v1j0dRMEaBbER/adQjp6Du2pw==}
 
-  flow-bin@0.118.0:
-    resolution: {integrity: sha512-jlbUu0XkbpXeXhan5xyTqVK1jmEKNxE8hpzznI3TThHTr76GiFwK0iRzhDo4KNy+S9h/KxHaqVhTP86vA6wHCg==}
-    engines: {node: '>=0.10.0'}
-    hasBin: true
-
   flow-enums-runtime@0.0.6:
     resolution: {integrity: sha512-3PYnM29RFXwvAN6Pc/scUfkI7RwhQ/xqyLUyPNlXUp9S40zI8nup9tUSrTLSVnWGBN38FNiGWbwZOB6uR4OGdw==}
 
@@ -11420,9 +11418,6 @@ packages:
   memfs@4.57.1:
     resolution: {integrity: sha512-WvzrWPwMQT+PtbX2Et64R4qXKK0fj/8pO85MrUCzymX3twwCiJCdvntW3HdhG1teLJcHDDLIKx5+c3HckWYZtQ==}
 
-  memoize-one@3.1.1:
-    resolution: {integrity: sha512-YqVh744GsMlZu6xkhGslPSqSurOv6P+kLN2J3ysBZfagLcL5FdRK/0UpgLoL8hwjjEvvAVkjJZyFP+1T6p1vgA==}
-
   memoize-one@5.2.1:
     resolution: {integrity: sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q==}
 
@@ -12666,13 +12661,6 @@ packages:
     peerDependencies:
       react: ^19.2.8
 
-  react-flame-graph@1.4.0:
-    resolution: {integrity: sha512-DaCK9ZX+xK0mNca72kUE5cu6T8hGe/KLsefQWf+eT9sVt+0WP1dVxZCGD8Svfn2KrZB9Mv011Intg/yG2YWSxA==}
-    engines: {node: '>8.0.0'}
-    peerDependencies:
-      react: ^15.0.0 || ^16.0.0
-      react-dom: ^15.0.0 || ^16.0.0
-
   react-freeze@1.0.4:
     resolution: {integrity: sha512-r4F0Sec0BLxWicc7HEyo2x3/2icUTrRmDjaaRyzzn+7aDyFZliszMDOgLVwSnQnYENOlL1o569Ze2HZefk8clA==}
     engines: {node: '>=10'}
@@ -12989,13 +12977,6 @@ packages:
     peerDependencies:
       react: '>=16 || >=17 || >= 18 || >= 19'
       react-dom: '>=16 || >=17 || >= 18 || >=19'
-
-  react-window@1.8.11:
-    resolution: {integrity: sha512-+SRbUVT2scadgFSWx+R1P754xHPEqvcfSfVX10QYg6POOz+WNgkN48pS+BtZNIMGiL1HYrSEiCkwsMS15QogEQ==}
-    engines: {node: '>8.0.0'}
-    peerDependencies:
-      react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   react@19.1.1:
     resolution: {integrity: sha512-w8nqGImo45dmMIfljjMwOGtbmC/mk4CMYhWIicdSflH91J9TyCyczcPFXJzrZ/ZXcgGRFeP6BU0BEJTw6tZdfQ==}
@@ -26314,8 +26295,6 @@ snapshots:
 
   flexsearch@0.8.212: {}
 
-  flow-bin@0.118.0: {}
-
   flow-enums-runtime@0.0.6: {}
 
   flow-remove-types@2.277.1:
@@ -27986,8 +27965,6 @@ snapshots:
       thingies: 2.6.0(tslib@2.8.1)
       tree-dump: 1.1.0(tslib@2.8.1)
       tslib: 2.8.1
-
-  memoize-one@3.1.1: {}
 
   memoize-one@5.2.1: {}
 
@@ -29961,14 +29938,6 @@ snapshots:
       react: 19.2.8
       scheduler: 0.27.0
 
-  react-flame-graph@1.4.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
-    dependencies:
-      flow-bin: 0.118.0
-      memoize-one: 3.1.1
-      react: 19.2.3
-      react-dom: 19.2.3(react@19.2.3)
-      react-window: 1.8.11(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-
   react-freeze@1.0.4(react@19.2.3):
     dependencies:
       react: 19.2.3
@@ -30436,13 +30405,6 @@ snapshots:
 
   react-virtuoso@4.18.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
-      react: 19.2.3
-      react-dom: 19.2.3(react@19.2.3)
-
-  react-window@1.8.11(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
-    dependencies:
-      '@babel/runtime': 7.29.7
-      memoize-one: 5.2.1
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 

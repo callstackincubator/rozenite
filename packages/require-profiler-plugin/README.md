@@ -12,10 +12,13 @@ The Rozenite Require Profiler Plugin instruments `require()` calls during your R
 
 - **Initial App Loading Profiling**: Automatically instruments `require()` calls during app startup to track initialization times
 - **Flame Graph Visualization**: Interactive flame graph showing the module dependency tree with timing information
+- **Top Modules Table**: Every module in a chain ranked by self time, so the slowest ones are readable without hunting through the graph
+- **Chain Browser**: Every recorded require chain listed with its duration and module count, filterable by a minimum duration
+- **Module Search**: Filter the table and highlight matching frames in the flame graph
 - **Startup Performance Insights**: Identify slow-loading modules that impact Time to Interactive (TTI)
 - **Bundle Optimization Candidates**: Discover modules that are good candidates for code splitting or lazy loading
-- **Dependency Analysis**: Visualize the complete module dependency graph loaded during initial app startup
-- **Real-time Metrics**: View total initialization time, module count, and per-module evaluation times
+- **Sub-millisecond Timings**: Uses `performance.now()` where the runtime provides it, so fast modules no longer all report 0ms
+- **Development Only**: The Metro instrumentation is disabled in production builds and its polyfill is stripped from release bundles
 
 ## Installation
 
@@ -56,6 +59,17 @@ module.exports = withRozenite(
 );
 ```
 
+Keep `withRozenite`'s `enabled` option conditional as above — when it is false,
+`enhanceMetroConfig` never runs and nothing is instrumented. The profiler also
+defends itself for the cases that sit outside that gate: it skips instrumentation
+when `process.env.NODE_ENV` is `production`, and the polyfill it injects is wrapped
+in `__DEV__`, which Metro strips from release bundles. Pass `enabled` to decide for
+yourself:
+
+```javascript
+withRozeniteRequireProfiler(config, { enabled: process.env.PROFILE_REQUIRES === 'true' });
+```
+
 ### 3. Integrate with Your App
 
 Add the DevTools hook to your React Native app:
@@ -80,18 +94,16 @@ Start your development server and open React Native DevTools. You'll find the "M
 
 Once configured, the plugin automatically instruments all `require()` calls in your app and provides:
 
+- **Chain List**: Every recorded require chain, with its total duration and module
+  count. Use the threshold selector to hide chains below a duration you care about.
 - **Flame Graph**: Interactive visualization of your module dependency tree
-  - Color-coded by initialization time (red = slow, blue = fast)
-  - Click to zoom into specific modules
-  - View module details in the sidebar
-- **Module Details**: Click any module in the flame graph to see:
-  - Evaluation time (how long the module took to initialize)
-  - Module name and full path
-  - Direct dependencies count
-- **Performance Metrics**: 
-  - Total initialization time across all modules
-  - Total number of modules loaded
-  - Entry point module information
+  - Color-coded by self time, from red (heaviest) through to grey (no own time)
+  - Click a frame to zoom into it; press `Escape` to zoom back out
+  - Type in the filter box to highlight matching modules
+- **Top Modules**: The same chain as a table, sorted by self time, with total time and
+  the number of times each module was evaluated
+- **Module Details**: Select a module to see its self time, total time, direct
+  dependency count, and full path
 
 ## Use Cases
 

@@ -214,7 +214,7 @@ export const VirtualizedDataTable = <TData,>({
   const fixedHeaderContent = useCallback(
     () =>
       table.getHeaderGroups().map((headerGroup) => (
-        <tr key={headerGroup.id} className="border-b border-border">
+        <tr key={headerGroup.id} className="border-b border-border bg-card">
           {headerGroup.headers.map((header) => {
             const canSort = header.column.getCanSort();
             const sortDirection = header.column.getIsSorted();

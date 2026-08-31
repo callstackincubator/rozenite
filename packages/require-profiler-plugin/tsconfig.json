@@ -14,7 +14,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "customConditions": ["development"]
   },
   "include": ["src/**/*", "react-native.ts", "rozenite.config.ts"],
   "exclude": ["node_modules", "dist", "build"],
@@ -27,6 +28,9 @@
     },
     {
       "path": "../vite-plugin"
+    },
+    {
+      "path": "../ui"
     }
   ]
 }
