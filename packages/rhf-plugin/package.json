@@ -56,7 +56,6 @@
   },
   "peerDependencies": {
     "react": "*",
-    "react-hook-form": "^7.33.1",
-    "react-native": "*"
+    "react-hook-form": "^7.33.1"
   }
 }

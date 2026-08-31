@@ -16,4 +16,6 @@
 'rozenite': minor
 ---
 
-Every official plugin now declares the integrations it supports, so a plugin that cannot work in the environment you are debugging can say so instead of loading and failing. Plugins built on native modules — SQLite, Storage, File System and Performance Monitor — declare React Native only. Plugins that use React Native APIs with web equivalents also declare Rozenite for Web. Controls, React Hook Form and TanStack Query are pure JavaScript on the device and declare every integration, Lynx included.
+Every official plugin now declares the integrations it supports, so a plugin that cannot work in the environment you are debugging can say so instead of loading and failing.
+
+Controls, Feature Flags, React Hook Form and TanStack Query import nothing from `react-native` on the device and declare every integration, Lynx included. Plugins built on native modules — SQLite, Storage, File System and Performance Monitor — declare React Native only, and so do Network Activity and Require Profiler: `react-native-web` provides no `TurboModuleRegistry` or `DevSettings`, which their device code calls. The rest use React Native APIs that do have web equivalents, and also declare Rozenite for Web.

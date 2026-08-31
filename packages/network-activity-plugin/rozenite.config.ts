@@ -1,5 +1,5 @@
 export default {
-  integrations: ['react-native', 'react-native-web'],
+  integrations: ['react-native'],
   panels: [
     {
       name: 'Network Activity',

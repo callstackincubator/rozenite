@@ -166,7 +166,7 @@ const handleFeatureFlagsMethod = (method: string, params: any): unknown => {
 };
 
 export default {
-  integrations: ['react-native', 'react-native-web'],
+  integrations: ['react-native', 'react-native-web', 'lynx', 'lynx-web'],
   panels: [
     {
       name: 'Feature Flags',

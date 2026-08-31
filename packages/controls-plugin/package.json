@@ -58,7 +58,6 @@
     "vite": "catalog:"
   },
   "peerDependencies": {
-    "react": "*",
-    "react-native": "*"
+    "react": "*"
   }
 }
