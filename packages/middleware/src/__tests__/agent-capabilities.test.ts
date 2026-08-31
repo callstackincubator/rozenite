@@ -9,6 +9,7 @@ import { UnsupportedToolError, withCapabilityFilter } from '../agent/capability-
 import {
   createMemoryDomainService,
   createNetworkDomainService,
+  createReactDomainService,
   type LocalAgentToolService,
 } from '../agent/local-domains.js';
 
@@ -39,6 +40,30 @@ const createNetworkService = (): LocalAgentToolService =>
     sendCommand: async () => ({}),
     subscribeToCDPEvent: () => () => {},
   });
+
+const createReactService = (): LocalAgentToolService =>
+  createReactDomainService({
+    sessionId: 's',
+    sendReactDevToolsMessage: () => {},
+  });
+
+/**
+ * The dispatch `session.ts` performs: offer the call to each service in
+ * turn and take the first answer that is not `undefined`.
+ */
+const dispatch = async (
+  services: LocalAgentToolService[],
+  toolName: string,
+): Promise<unknown | undefined> => {
+  for (const service of services) {
+    const result = await service.callTool(toolName, {});
+    if (result !== undefined) {
+      return result;
+    }
+  }
+
+  return undefined;
+};
 
 describe('capability profiles', () => {
   it('leaves React Native declaring no gaps', () => {
@@ -140,5 +165,29 @@ describe('capability filtering', () => {
     const service = createNetworkService();
 
     expect(withCapabilityFilter(service, REACT_NATIVE_PROFILE)).toBe(service);
+  });
+
+  // A wrapped service is still asked about tools belonging to other
+  // domains, because that is how the session finds the owner. Answering
+  // anything but `undefined` there claims a tool it does not own.
+  it('declines a tool it does not declare instead of claiming it', async () => {
+    const filtered = withCapabilityFilter(createReactService(), LYNX_PROFILE);
+
+    await expect(filtered.callTool('takeHeapSnapshot', {})).resolves.toBeUndefined();
+  });
+
+  // The regression this guards: React is first in `localServices`, and on
+  // Lynx it keeps no tools at all. A wrapper that threw for every unknown
+  // name aborted the walk on its first step, so every call on a Lynx
+  // target failed -- reporting React's reason whatever domain was asked
+  // for.
+  it('lets the dispatch walk reach a later service on a fully unsupported first domain', async () => {
+    const services = [
+      withCapabilityFilter(createReactService(), LYNX_PROFILE),
+      withCapabilityFilter(createMemoryService(), LYNX_PROFILE),
+    ];
+
+    expect(services[0].getTools()).toEqual([]);
+    await expect(dispatch(services, 'startSampling')).rejects.toThrow(/PrimJS/);
   });
 });

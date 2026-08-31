@@ -42,6 +42,8 @@ export const withCapabilityFilter = (
     return service;
   }
 
+  const declared = new Set(declaredTools.map((tool) => tool.name));
+
   return {
     ...service,
     getTools: () => service.getTools().filter((tool) => allowed.has(tool.name)),
@@ -49,6 +51,19 @@ export const withCapabilityFilter = (
     // is also reachable by exact tool name from the call-tool route, so
     // it needs the same guard rather than trusting the listing.
     callTool: async (toolName, args) => {
+      // The session dispatches a call by offering it to every local
+      // service in turn and taking the first one that does not answer
+      // `undefined` (see `localServices` in `session.ts`). Returning
+      // `undefined` is how a service says "not mine"; throwing is how it
+      // says "mine, and you cannot have it". A wrapper that threw for
+      // every unknown name would answer for tools it does not own and
+      // abort that walk on its first step -- and because the React
+      // domain is first in the list, an integration that loses React
+      // entirely (Lynx) would fail every call, whatever its domain.
+      if (!declared.has(toolName)) {
+        return undefined;
+      }
+
       if (!allowed.has(toolName)) {
         throw new UnsupportedToolError(profile, service.domainId, toolName);
       }
