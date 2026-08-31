@@ -1,0 +1,38 @@
+{
+  "name": "@rozenite/playground-lynx",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev",
+    "preview": "rspeedy preview",
+    "typecheck": "tsc -b",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@lynx-js/react": "^0.125.0",
+    "@rozenite/controls-plugin": "workspace:*",
+    "@rozenite/feature-flags-plugin": "workspace:*",
+    "@rozenite/lynx": "workspace:*",
+    "@rozenite/rhf-plugin": "workspace:*",
+    "@rozenite/tanstack-query-plugin": "workspace:*",
+    "@tanstack/react-query": "^5.81.5",
+    "react-hook-form": "^7.54.2"
+  },
+  "devDependencies": {
+    "@lynx-js/preact-devtools": "5.0.1-20260721114100-d7da994",
+    "@lynx-js/qrcode-rsbuild-plugin": "^0.6.0",
+    "@lynx-js/react-rsbuild-plugin": "^0.19.1",
+    "@lynx-js/rspeedy": "^0.16.5",
+    "@lynx-js/types": "4.1.0",
+    "@rozenite/lynx-dev": "workspace:*",
+    "@rsbuild/plugin-type-check": "1.6.0",
+    "@types/react": "^19.2.18",
+    "eslint": "^9.25.0",
+    "typescript": "~6.0.3"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}
