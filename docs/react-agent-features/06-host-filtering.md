@@ -1,5 +1,27 @@
 # Host Filtering
 
+> **Status: implemented as opt-in `noHost`, but the premise below is wrong.**
+>
+> This document assumes a React Native tree is dominated by host components. It is
+> not — they never reach Rozenite at all. `getDefaultComponentFilters()` in
+> `react-devtools-core` hides host components **at the backend**, and Rozenite
+> never sends `updateComponentFilters` to override it, so host fibers are filtered
+> before they reach the wire. Confirmed on a live session: `getTree` reports `View`
+> as `elementType: "function"` and returns no host fibers at all.
+>
+> What shipped: `noHost: true` on `getTree`, `getChildren` and `searchNodes`,
+> defaulting to **off**, with the promotion and visible-parent semantics described
+> below. It is a safety net for the one case where host fibers do arrive — a
+> DevTools frontend on the same backend having re-enabled host components — not a
+> token saving. Do not make it default-on: it would change existing tool behaviour
+> and buy nothing.
+>
+> Genuinely exposing host components would mean sending `updateComponentFilters`,
+> which makes the backend re-send the whole tree and invalidates node IDs and
+> labels mid-session. That is a separate, statefuller change and is not
+> implemented.
+
+
 ## Summary
 
 Add an option to hide low-signal host nodes from tree-style React outputs.

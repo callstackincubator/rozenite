@@ -1,5 +1,13 @@
 # Errors And Warnings
 
+> **Status: implemented.** Shipped as designed — `TREE_OPERATION_UPDATE_ERRORS_OR_WARNINGS`
+> is parsed, counts live on node records, non-zero counts appear on tree/node/search
+> results, and `getErrors` lists affected components. The one deviation is field
+> naming: the counts are `errorCount` / `warningCount`, not `errors` / `warnings`.
+> This document is kept for its rationale; the shipped contract is documented in
+> `packages/cli/docs/react.md`.
+
+
 ## Summary
 
 Parse React DevTools `TREE_OPERATION_UPDATE_ERRORS_OR_WARNINGS` operations and expose error/warning counts on nodes, plus a focused tool to list affected components.

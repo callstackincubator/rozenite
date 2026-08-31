@@ -1,5 +1,26 @@
 # Profile Convenience Tools
 
+> **Status: implemented, with one deliberate deviation.** The four tools proposed
+> below shipped as **two**:
+>
+> - `getProfileTimeline` — as specified, plus `isSlow` per commit and a
+>   `slowRenderThresholdMs` input.
+> - `getComponentRenders` — one aggregate-per-component tool that subsumes the
+>   proposed `getSlowRenders`, `getRerenders` and `getProfileReport`. It is sorted
+>   (`total-duration-desc` | `avg-duration-desc` | `max-duration-desc` |
+>   `render-count-desc` | `name-asc`) and filterable to a single component via
+>   `id`/`fiberId`, which covers all three use cases. Three tools that differ only
+>   in sort order and filter would cost three entries in every tool listing an
+>   agent reads, for no added capability.
+>
+> Aggregates are keyed by `(rootId, fiberId)`, since fiber IDs are only unique
+> within a renderer. Roots whose data arrived from more than one renderer are
+> excluded and reported in `summary.skippedRootIds`.
+>
+> This document is kept for its rationale; the shipped contract is documented in
+> `packages/cli/docs/react.md`.
+
+
 ## Summary
 
 Add high-level profiling tools that summarize the profiling data Rozenite already captures.

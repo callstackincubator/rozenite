@@ -13,9 +13,9 @@ The goal is not to copy its WebSocket transport. Rozenite already receives React
 - Rozenite React domain registration: `packages/middleware/src/agent/local-domains.ts`
 - Static SDK domain tool list: `packages/agent-sdk/src/constants.ts`
 - Current CLI skill doc: `packages/cli/docs/react.md`
-- Mirrored CLI runtime copy: `packages/cli/src/commands/agent/runtime/react/*`
+- Shared React-domain pagination helper: `packages/middleware/src/agent/runtime/react/pagination.ts`
 
-When implementing, treat `packages/middleware` as the canonical runtime location. If the CLI copy is still intentionally maintained, mirror equivalent runtime/type changes there after changing middleware.
+`packages/middleware` is the canonical and only runtime location; the mirrored CLI runtime copy referenced by earlier drafts no longer exists.
 
 ## Recommended PR Slicing
 
@@ -30,21 +30,25 @@ Implement these together because they share ID resolution, node summaries, label
 
 This PR should add labels and then expose them through `getTree`, `getComponent`, `searchNodes`, `getNode`, and `getChildren`. Host filtering can be implemented as a `getTree` option in the same traversal code.
 
-### PR 2: Error And Warning Tracking
+### PR 2: Error And Warning Tracking — **done**
 
 - [Errors And Warnings](./04-errors-warnings.md)
 
-This touches operation parsing and tree node state, but does not need to ship with the label/tree/component API.
-
-### PR 3: Profiling Convenience Tools
+### PR 3: Profiling Convenience Tools — **done**
 
 - [Profile Convenience Tools](./05-profile-convenience-tools.md)
 
-This builds on Rozenite's existing profiling store and should stay separate from tree inspection changes to keep review focused.
+PRs 2 and 3 shipped together with host filtering, adding `getErrors`,
+`getComponentRenders`, `getProfileTimeline`, the opt-in `noHost` flag, and a
+`maxValueLength` cap on inspected values. Each brief carries a status note
+recording what shipped and where it deviates. Host filtering turned out to rest
+on a false premise — read [06](./06-host-filtering.md) before proposing further
+work on it.
+
 
 ## Compatibility Rules
 
-- Keep existing tools working: `searchNodes`, `getNode`, `getChildren`, `getProps`, `getState`, `getHooks`, `startProfiling`, `isProfilingStarted`, `stopProfiling`, `getRenderData`.
+- Keep existing tools working: `searchNodes`, `getNode`, `getChildren`, `getProps`, `getState`, `getHooks`, `getErrors`, `startProfiling`, `isProfilingStarted`, `stopProfiling`, `getComponentRenders`, `getProfileTimeline`, `getRenderData`.
 - Add new tools instead of replacing current ones.
 - Keep raw numeric `nodeId` support even after adding labels.
 - Prefer additive result fields such as `label`, `errors`, and `warnings`.
