@@ -13,6 +13,7 @@ export {
   ROZENITE_INTEGRATIONS,
   isRozeniteIntegration,
   DEFAULT_PLUGIN_INTEGRATIONS,
+  IS_WEB_TARGET_EXPRESSION,
   resolveIntegration,
 } from './integration.js';
 export { createLimiter, type Limiter } from './limiter.js';

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDeviceConnection, type DeviceState } from './device-connection';
 import type { ParsedTarget } from './target-from-url';
@@ -19,6 +20,9 @@ const defaultResponder: Responder = (method, params) => {
     }
     if (expression.includes(`${RUNTIME_GLOBAL}.BINDING_NAME`)) {
       return { result: { value: DEFAULT_BINDING_NAME } };
+    }
+    if (expression === IS_WEB_TARGET_EXPRESSION) {
+      return { result: { value: false } };
     }
   }
   return {};
@@ -170,6 +174,7 @@ describe('createDeviceConnection', () => {
         'ReactNativeApplication.enable',
         'Runtime.enable',
         'Runtime.evaluate', // dispatcher poll
+        'Runtime.evaluate', // is-this-a-browser probe
         'Runtime.evaluate', // BINDING_NAME
         'Runtime.addBinding',
         'Runtime.evaluate', // initializeDomain("rozenite")
@@ -177,12 +182,77 @@ describe('createDeviceConnection', () => {
 
       const expressions = getExpressions(socket);
       expect(expressions[0]).toContain(`globalThis.${RUNTIME_GLOBAL} != undefined`);
-      expect(expressions[1]).toContain(`${RUNTIME_GLOBAL}.BINDING_NAME`);
-      expect(expressions[2]).toContain('initializeDomain("rozenite")');
+      expect(expressions[1]).toBe(IS_WEB_TARGET_EXPRESSION);
+      expect(expressions[2]).toContain(`${RUNTIME_GLOBAL}.BINDING_NAME`);
+      expect(expressions[3]).toContain('initializeDomain("rozenite")');
       expect(expressions.some((expression) => expression.includes('react-devtools'))).toBe(false);
 
       const addBinding = socket.sent.find((command) => command.method === 'Runtime.addBinding');
       expect(addBinding?.params).toEqual({ name: DEFAULT_BINDING_NAME });
+    });
+
+    it('reports the target as a browser when the device says so', async () => {
+      const connection = createDeviceConnection(TARGET);
+      const socket = FakeWebSocket.instances[0];
+      socket.responder = (method, params) => {
+        if (method === 'Runtime.evaluate' && params?.expression === IS_WEB_TARGET_EXPRESSION) {
+          return { result: { value: true } };
+        }
+        return defaultResponder(method, params);
+      };
+
+      socket.open();
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      expect(connection.getTargetIsWeb()).toBe(true);
+    });
+
+    it('reports the target as not a browser for a native device', async () => {
+      const { connection } = await connectAndBootstrap();
+
+      expect(connection.getTargetIsWeb()).toBe(false);
+    });
+
+    // The integration is advisory metadata. A device that cannot answer must
+    // still get a working connection - and must report "unknown" rather than
+    // a default that a caller cannot distinguish from a real answer.
+    it('stays unknown, and still connects, when the probe throws on the device', async () => {
+      const connection = createDeviceConnection(TARGET);
+      const socket = FakeWebSocket.instances[0];
+      socket.responder = (method, params) => {
+        if (method === 'Runtime.evaluate' && params?.expression === IS_WEB_TARGET_EXPRESSION) {
+          return { exceptionDetails: { text: 'ReferenceError: window is not defined' } };
+        }
+        return defaultResponder(method, params);
+      };
+
+      socket.open();
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      expect(connection.getState()).toEqual({ status: 'connected' });
+      expect(connection.getTargetIsWeb()).toBe(null);
+    });
+
+    it('stays unknown when the probe answers with something that is not a boolean', async () => {
+      const connection = createDeviceConnection(TARGET);
+      const socket = FakeWebSocket.instances[0];
+      socket.responder = (method, params) => {
+        if (method === 'Runtime.evaluate' && params?.expression === IS_WEB_TARGET_EXPRESSION) {
+          return { result: { value: 'yes' } };
+        }
+        return defaultResponder(method, params);
+      };
+
+      socket.open();
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      expect(connection.getTargetIsWeb()).toBe(null);
+    });
+
+    it('is unknown before the connection has bootstrapped', () => {
+      const connection = createDeviceConnection(TARGET);
+
+      expect(connection.getTargetIsWeb()).toBe(null);
     });
 
     it('becomes rozeniteMissing once the dispatcher poll is exhausted', async () => {

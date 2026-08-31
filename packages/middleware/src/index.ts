@@ -1,6 +1,5 @@
 import { type Application } from 'express';
 import { patchDevtoolsFrontendUrl } from './dev-tools-url-patch.js';
-import { patchRozeniteIntegrationDomain } from './integration-domain.js';
 import { getMiddleware } from './middleware.js';
 import { logger } from './logger.js';
 import { getPackageJSON } from './package-json.js';
@@ -66,9 +65,6 @@ export const initializeRozenite = async (
 
   if (!isLynx) {
     patchDevtoolsFrontendUrl(options);
-    // Lynx does not use dev-middleware, so it has nothing to patch here;
-    // its own bridge answers Rozenite.getEnvironment in a follow-up PR.
-    patchRozeniteIntegrationDomain(options);
   }
 
   return {

@@ -1,3 +1,4 @@
+import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
 /**
  * Connects to a single device over its own CDP WebSocket and exposes it as
  * an opaque channel: a status the UI can render, and a place to send and
@@ -71,6 +72,18 @@ export type DeviceConnection = {
   /** Returns an unsubscribe function. */
   onMessage: (listener: (message: unknown) => void) => () => void;
   getTarget: () => DeviceTarget;
+  /**
+   * Whether the connected target is a browser, as reported by the device
+   * itself — `null` until the probe has answered, or if it failed.
+   *
+   * This is half of the target's integration; the other half (which host
+   * this dev server serves) comes from `RozeniteAppConfig.hostIntegration`,
+   * and `resolveIntegration` combines them. `null` deliberately means
+   * "unknown" rather than defaulting to `false`: a wrong answer here is
+   * indistinguishable from a right one, so callers must decide what to do
+   * without it rather than inherit a guess.
+   */
+  getTargetIsWeb: () => boolean | null;
   /** Manually retries from a terminal state (`disconnected`,
    * `rozeniteMissing`, `metroUnreachable`), or restarts a connection
    * attempt already in progress. */
@@ -117,6 +130,10 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   let framework: Framework | null = null;
 
   let ws: WebSocket | null = null;
+  // Reset per socket, not per execution context: a JS reload cannot turn a
+  // browser target into a native one, but a recovery that re-resolves the
+  // target through Metro's /json/list can land on a different page.
+  let targetIsWeb: boolean | null = null;
   let epoch = 0;
   // Epoch-scoped rather than a plain boolean: a superseded loop's own
   // `finally` must not be able to clear the *current* loop's in-flight
@@ -319,11 +336,58 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     return value;
   };
 
+  /**
+   * Asks the device whether it is a browser, by evaluating
+   * `IS_WEB_TARGET_EXPRESSION` in its own runtime.
+   *
+   * The device is the only party that knows this for certain, and it is one
+   * Rozenite controls — so it is asked rather than inferred from React
+   * Native's `ReactNativeApplication.metadataUpdated`, which is an event we
+   * neither emit nor can order, and which a host can easily read before it
+   * arrives.
+   *
+   * Never throws: the answer is advisory metadata, and a connection that
+   * otherwise works must not be torn down because this one command failed.
+   * A failure leaves `targetIsWeb` at `null`, which callers read as
+   * "unknown".
+   */
+  const probeTargetIsWeb = async (socket: WebSocket): Promise<void> => {
+    try {
+      const response = (await sendCommand(socket, 'Runtime.evaluate', {
+        expression: IS_WEB_TARGET_EXPRESSION,
+        returnByValue: true,
+      })) as CDPEvaluateResult;
+
+      if (response.exceptionDetails) {
+        throw new Error(response.exceptionDetails.text ?? 'unknown error');
+      }
+
+      const value = response.result?.value;
+      if (typeof value !== 'boolean') {
+        throw new Error(`Expected a boolean, got ${typeof value}.`);
+      }
+
+      targetIsWeb = value;
+    } catch (error) {
+      console.warn('[rozenite] Could not determine whether the target is a browser.', error);
+    }
+  };
+
   // Bootstraps (or re-bootstraps, after a JS reload) the "rozenite" domain
   // on `socket`. Deliberately does not initialize "react-devtools" — that
   // domain belongs to `rozenite agent`'s React service, not to this app.
   const runBootstrap = async (socket: WebSocket, attemptEpoch: number): Promise<void> => {
     await waitForDispatcher(socket, attemptEpoch);
+    // After `waitForDispatcher` only because that is what establishes the
+    // device has a live execution context to evaluate in; the expression
+    // itself reads plain globals and depends on nothing Rozenite installs.
+    //
+    // Guarded on `null` so a re-bootstrap (a JS reload on the same socket)
+    // does not re-ask a question whose answer cannot have changed — while a
+    // probe that previously failed still gets another attempt.
+    if (targetIsWeb === null) {
+      await probeTargetIsWeb(socket);
+    }
     const bindingValue = await getBindingName(socket);
 
     if (bindingName !== bindingValue) {
@@ -526,6 +590,9 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
             // A brand-new socket means a brand-new context: always re-add
             // the binding rather than trusting a name cached from before.
             bindingName = null;
+            // ...and possibly a different page, so re-ask rather than
+            // trusting the previous target's answer.
+            targetIsWeb = null;
             await runBootstrap(socket, attemptEpoch);
             if (ws !== socket || !isCurrentEpoch(attemptEpoch)) {
               return;
@@ -783,6 +850,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     send,
     onMessage,
     getTarget,
+    getTargetIsWeb: () => targetIsWeb,
     reconnect,
     close,
   };

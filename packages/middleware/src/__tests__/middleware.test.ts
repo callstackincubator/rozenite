@@ -193,7 +193,7 @@ describe('standalone app', () => {
       installedPlugins: ['@rozenite/network-activity-plugin'],
       destroyOnDetachPlugins: ['@rozenite/some-plugin'],
       runtimeVersion: '2.1.0',
-      integration: 'react-native',
+      hostIntegration: 'react-native',
     });
   });
 
@@ -207,7 +207,7 @@ describe('standalone app', () => {
     expect(payload).toEqual({
       installedPlugins: [],
       destroyOnDetachPlugins: [],
-      integration: 'react-native',
+      hostIntegration: 'react-native',
     });
     expect('runtimeVersion' in payload).toBe(false);
   });
@@ -243,7 +243,7 @@ describe('standalone app', () => {
       expect(JSON.parse(response.body)).toEqual({
         installedPlugins: [],
         destroyOnDetachPlugins: [],
-        integration: 'react-native',
+        hostIntegration: 'react-native',
       });
     } finally {
       fs.rmSync(shadowFile, { force: true });
@@ -273,7 +273,7 @@ describe('lynx platform', () => {
     expect(JSON.parse(response.body)).toEqual({
       installedPlugins: [],
       destroyOnDetachPlugins: [],
-      integration: 'lynx',
+      hostIntegration: 'lynx',
     });
   });
 

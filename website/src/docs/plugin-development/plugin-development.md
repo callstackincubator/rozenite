@@ -148,6 +148,24 @@ export default {
 
 The valid ids are `react-native`, `react-native-web`, `lynx`, and `lynx-web`. Omitting `integrations` defaults to `['react-native']`, the safe assumption for a plugin that predates this field. Declaring an id no integration reports yet (currently `lynx-web`) is harmless — it just means nothing refuses to load on it today.
 
+An unknown id fails the build. To catch one while you type it instead, annotate the config:
+
+```typescript title="rozenite.config.ts"
+import type { RozeniteConfig } from '@rozenite/vite-plugin';
+
+export default {
+  panels: [
+    {
+      name: 'My Custom Panel',
+      source: './src/my-panel.tsx',
+    },
+  ],
+  integrations: ['react-native'],
+} satisfies RozeniteConfig;
+```
+
+Declare an integration only if the plugin's **device-side** code actually runs there. It is the imports that decide this, not the plugin's own logic: a panel that never touches a native API still cannot declare `react-native-web` if the hook it ships imports `TurboModuleRegistry` or `DevSettings`, neither of which `react-native-web` provides.
+
 ### Creating a Panel Component
 
 Create a new panel by adding a React component:

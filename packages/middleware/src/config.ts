@@ -44,11 +44,10 @@ export type RozeniteConfig = {
    * loaded standalone there rather than embedded in Fusebox's HTML.
    *
    * Named `integration`, not `platform`: `platform` means the device OS
-   * everywhere else in this system (`ReactNativeApplication.metadataUpdated`'s
-   * `platform` is `ios`/`android`/`web`), so reusing it here would collide —
-   * especially in `resolveIntegration` (`@rozenite/tools`), which reads both
-   * this value and that device-reported one to answer "which integration is
-   * this target".
+   * everywhere else in this system, so reusing it here would collide —
+   * especially in `resolveIntegration` (`@rozenite/tools`), which combines
+   * this value with what the connected device reports about itself to
+   * answer "which integration is this target".
    *
    * @default 'react-native'
    */

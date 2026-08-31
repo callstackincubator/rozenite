@@ -29,14 +29,19 @@ export type RozeniteAppConfigResponse = {
   destroyOnDetachPlugins: string[];
   runtimeVersion?: string;
   /**
-   * The pre-handshake default: which host this dev server serves. Used by
-   * the client when the `Rozenite.getEnvironment` CDP domain is
-   * unavailable (an older dev-middleware, or the patch in
-   * `integration-domain.ts` failed) - the domain's per-target answer wins
-   * over this when it's there, since it also knows whether the target is
-   * web.
+   * Which host this dev server serves — `react-native` or `lynx`.
+   *
+   * This is a fact about the server, not a guess about the target: it
+   * follows from which Rozenite integration the user installed
+   * (`@rozenite/metro`/`@rozenite/repack` vs `@rozenite/lynx-dev`), so it
+   * cannot be wrong. It is deliberately NOT the target's integration —
+   * one dev server serves a native app and a browser tab at the same
+   * time, so only half the answer lives here. A host combines it with
+   * `IS_WEB_TARGET_EXPRESSION`, evaluated in the connected device, to
+   * resolve the other half. Named `hostIntegration` so the two are never
+   * mistaken for each other.
    */
-  integration: RozeniteHostIntegration;
+  hostIntegration: RozeniteHostIntegration;
 };
 
 export const getNormalizedRequestUrl = (url: string): string => {
@@ -121,7 +126,6 @@ export const getMiddleware = (
           installedPlugins: installedPlugins.map((plugin) => plugin.name),
           destroyOnDetachPlugins,
           pluginDisplay: options.pluginDisplay ?? 'sidebar',
-          integration: hostIntegration,
           runtimeVersion,
         }),
       );
@@ -140,7 +144,7 @@ export const getMiddleware = (
       installedPlugins: installedPlugins.map((plugin) => plugin.name),
       destroyOnDetachPlugins,
       runtimeVersion,
-      integration: hostIntegration,
+      hostIntegration,
     };
 
     res.json(config);

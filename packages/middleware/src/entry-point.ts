@@ -1,7 +1,6 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { type RozeniteHostIntegration } from '@rozenite/tools';
 
 const updateCSP = (html: string, nonce: string): string => {
   const cspRegex = /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/;
@@ -28,16 +27,20 @@ const updateCSP = (html: string, nonce: string): string => {
 
 /**
  * Everything `__ROZENITE__` carries into the Fusebox-embedded host. An
- * options object rather than a parameter list: this is the third field
- * added to that global, and each one otherwise lands in the middle of a
- * run of same-typed positional arguments, where a transposition still
- * type-checks.
+ * options object rather than a parameter list: each field otherwise lands
+ * in the middle of a run of same-typed positional arguments, where a
+ * transposition still type-checks.
+ *
+ * There is deliberately no host integration here. This global only exists
+ * on the Fusebox-embedded path, which `getMiddleware` serves solely when
+ * the host is `react-native` — a Lynx dev server never registers
+ * `/rn_fusebox.html` at all — so the embedded host already knows its own
+ * half of the answer without being told.
  */
 export type EntryPointOptions = {
   installedPlugins: string[];
   destroyOnDetachPlugins: string[];
   pluginDisplay?: 'tabs' | 'sidebar';
-  integration?: RozeniteHostIntegration;
   runtimeVersion?: string;
 };
 
@@ -48,7 +51,6 @@ const appendScripts = (
     installedPlugins,
     destroyOnDetachPlugins,
     pluginDisplay = 'sidebar',
-    integration = 'react-native',
     runtimeVersion,
   }: EntryPointOptions,
 ): string => {
@@ -62,7 +64,6 @@ const appendScripts = (
         installedPlugins: ${JSON.stringify(installedPlugins)},
         destroyOnDetachPlugins: ${JSON.stringify(destroyOnDetachPlugins)},
         pluginDisplay: ${JSON.stringify(pluginDisplay)},
-        integration: ${JSON.stringify(integration)},
         runtimeVersion: ${JSON.stringify(runtimeVersion)},
       };
     </script>

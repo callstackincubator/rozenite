@@ -2,9 +2,13 @@ import { describe, it, expect } from 'vitest';
 import {
   ROZENITE_INTEGRATIONS,
   DEFAULT_PLUGIN_INTEGRATIONS,
+  IS_WEB_TARGET_EXPRESSION,
   isRozeniteIntegration,
   resolveIntegration,
+  type RozeniteHostIntegration,
 } from '../integration.js';
+
+const HOSTS: RozeniteHostIntegration[] = ['react-native', 'lynx'];
 
 describe('isRozeniteIntegration', () => {
   it('accepts every declared integration id', () => {
@@ -30,26 +34,46 @@ describe('DEFAULT_PLUGIN_INTEGRATIONS', () => {
 });
 
 describe('resolveIntegration', () => {
-  // Exhaustive over the table in the PR description: host x targetPlatform.
-  const nonWebPlatforms: unknown[] = ['ios', 'android', 'anything-else', undefined, null, 42, {}];
-
-  describe('host: react-native', () => {
-    it.each(nonWebPlatforms)('resolves %j to react-native', (platform) => {
-      expect(resolveIntegration('react-native', platform)).toBe('react-native');
-    });
-
-    it('resolves "web" to react-native-web', () => {
-      expect(resolveIntegration('react-native', 'web')).toBe('react-native-web');
-    });
+  it('resolves a native target to the host itself', () => {
+    expect(resolveIntegration('react-native', false)).toBe('react-native');
+    expect(resolveIntegration('lynx', false)).toBe('lynx');
   });
 
-  describe('host: lynx', () => {
-    it.each(nonWebPlatforms)('resolves %j to lynx', (platform) => {
-      expect(resolveIntegration('lynx', platform)).toBe('lynx');
-    });
+  it('resolves a browser target to the host web variant', () => {
+    expect(resolveIntegration('react-native', true)).toBe('react-native-web');
+    expect(resolveIntegration('lynx', true)).toBe('lynx-web');
+  });
 
-    it('resolves "web" to lynx-web', () => {
-      expect(resolveIntegration('lynx', 'web')).toBe('lynx-web');
-    });
+  // The derivation and the id list are two statements of the same fact.
+  // This is what stops them drifting: every host x isWeb combination must
+  // land on a declared id, and together they must cover the list exactly.
+  it('generates precisely ROZENITE_INTEGRATIONS across every host', () => {
+    const generated = HOSTS.flatMap((host) => [
+      resolveIntegration(host, false),
+      resolveIntegration(host, true),
+    ]);
+
+    expect([...generated].sort()).toEqual([...ROZENITE_INTEGRATIONS].sort());
+    for (const integration of generated) {
+      expect(isRozeniteIntegration(integration)).toBe(true);
+    }
+  });
+});
+
+describe('IS_WEB_TARGET_EXPRESSION', () => {
+  // Evaluated at global scope in the device runtime, so it must be a bare
+  // expression that reads only genuine globals - never a statement, and
+  // never a reference to anything Rozenite installs.
+  it('evaluates to false in a runtime with no window (a native device)', () => {
+    expect(new Function(`return (${IS_WEB_TARGET_EXPRESSION})`)()).toBe(false);
+  });
+
+  it('evaluates to true against a window carrying a document', () => {
+    const evaluate = new Function('window', `return (${IS_WEB_TARGET_EXPRESSION})`);
+
+    expect(evaluate({ document: {} })).toBe(true);
+    // A `window` without a `document` is not a browser - this is what
+    // separates a real DOM from a runtime that merely defines the global.
+    expect(evaluate({})).toBe(false);
   });
 });
