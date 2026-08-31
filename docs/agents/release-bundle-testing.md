@@ -119,14 +119,23 @@ gets the bundler integration guard instead of the panel guard.
 
 ## Importing `@rozenite/metro` from a plugin suite
 
-Plugins whose `tsconfig.json` sets `customConditions: ["development"]`
-resolve workspace imports to source, so importing `@rozenite/metro` pulls
-`@rozenite/middleware` into that package's TypeScript program and its
-`typecheck` fails on options the plugin config does not set. Guard the
-plugin's own transformer directly in that case, without `withRozenite` --
-`packages/redux-devtools-plugin` does exactly that, while
-`packages/require-profiler-plugin` can import it and guards the wired
-`enabled: false` path.
+Don't. Plugins set `customConditions: ["development"]` in their
+`tsconfig.json`, which resolves workspace imports to source, so importing
+`@rozenite/metro` pulls the `@rozenite/middleware` sources into that
+package's TypeScript program, where they are compiled against options the
+plugin config does not set -- `typecheck` then fails on files the plugin
+does not own.
+
+Guard the plugin's own transformer directly instead, without `withRozenite`.
+`packages/redux-devtools-plugin` and `packages/require-profiler-plugin` both
+do this. The wiring through `withRozenite({ enabled: false })` is covered by
+`@rozenite/metro`'s own suite; what belongs to a plugin suite is the
+plugin's own `enabled` handling.
+
+The failure is easy to miss, because it needs both halves: a plugin only
+breaks once it has *both* the `development` condition and the import. A
+branch adding one while `main` carries the other typechecks green on its own
+and fails only on the merge commit CI builds.
 
 ## Running it
 

@@ -1,7 +1,6 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { withRozenite } from '@rozenite/metro';
 import {
   bundleForRelease,
   RELEASE_BUNDLE_TIMEOUT,
@@ -12,6 +11,15 @@ import { describe, expect, it } from 'vitest';
 // This plugin injects a polyfill into the bundle, so it is exactly the kind
 // of integration that can leak into a shipped app. See
 // docs/agents/release-bundle-testing.md.
+//
+// The transformer is guarded directly, not through `withRozenite`: this
+// package's tsconfig sets `customConditions: ["development"]`, so importing
+// `@rozenite/metro` here would resolve it to source and pull the
+// `@rozenite/middleware` sources into this package's TypeScript program,
+// where they are compiled against options that package does not set. The
+// wiring through `withRozenite({ enabled: false })` is covered by
+// @rozenite/metro's own suite; what is specific to this plugin is its own
+// `enabled` option, which is what the first case below exercises.
 const require = createRequire(import.meta.url);
 const packageRoot = path.resolve(fileURLToPath(import.meta.url), '../../../..');
 
@@ -31,13 +39,10 @@ const bundle = (configureMetro: BundleForReleaseOptions['configureMetro']) =>
 
 describe('withRozeniteRequireProfiler', () => {
   it(
-    'leaves no Rozenite code in a release bundle when Rozenite is disabled',
+    'leaves no Rozenite code in a release bundle when disabled',
     async () => {
       const result = await bundle((config) =>
-        withRozenite(config, {
-          enabled: false,
-          enhanceMetroConfig: withRozeniteRequireProfiler,
-        }),
+        withRozeniteRequireProfiler(config, { enabled: false }),
       );
 
       expect(result.rozeniteModules).toEqual([]);
@@ -46,7 +51,7 @@ describe('withRozeniteRequireProfiler', () => {
   );
 
   it(
-    'does inject its polyfill when applied on its own, so the check above is not vacuous',
+    'does inject its polyfill when enabled, so the check above is not vacuous',
     async () => {
       const result = await bundle((config) => withRozeniteRequireProfiler(config));
 

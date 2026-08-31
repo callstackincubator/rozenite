@@ -1349,9 +1349,6 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0
     devDependencies:
-      '@rozenite/metro':
-        specifier: workspace:*
-        version: link:../metro
       '@rozenite/test-utils':
         specifier: workspace:*
         version: link:../test-utils
