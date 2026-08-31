@@ -2,6 +2,7 @@
 name: react
 description: Search and traverse the React component tree, read props/state/hooks, and record render timelines via profiling.
 domain: react
+integrations: react-native
 ---
 
 Search and traverse the React component tree, read props, state, and hooks for any node, and record render timelines for performance analysis by starting and stopping profiling, then fetching commit data.
@@ -45,3 +46,10 @@ default column set (identifiers and labels, not every field such as `key`,
 `parentId`, `changeTypeHints`, or `changedKeys`). Pass `--fields` or
 `--verbose` to widen the projection. `getProps`, `getState`, and `getHooks`
 always return both of their only two fields (`name`, `value`).
+
+## Platform availability
+
+React Native only. Lynx has no React DevTools backend, so this domain is
+reported `unsupported` on a Lynx session. There is no substitute domain:
+read component structure from source, and use plugin domains for runtime
+state.

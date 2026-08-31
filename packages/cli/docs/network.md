@@ -2,6 +2,7 @@
 name: network
 description: Record HTTP/HTTPS traffic, then list requests, inspect request/response details and bodies, and analyze timing.
 domain: network
+integrations: react-native
 ---
 
 Record HTTP/HTTPS traffic, then list requests, inspect request and response details and bodies, and analyze timing, similar to the browser DevTools Network panel.
@@ -33,3 +34,10 @@ present, and `next` replaces the page envelope when another page is available.
 `url`, `status`, `durationMs`, `outcome`). Pass `--fields` or `--verbose` for
 the remaining fields such as `type`, `startTimeMs`, `endTimeMs`,
 `transferSize`, and `encodedDataLength`.
+
+## Platform availability
+
+React Native only. Lynx registers no CDP `Network` domain at all, so this
+domain is reported `unsupported` on a Lynx session and every tool here
+fails. Use `@rozenite/network-activity-plugin` there — it is the same
+fallback the precedence rule above already names.

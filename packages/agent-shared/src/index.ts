@@ -1,3 +1,22 @@
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
+import type { UnsupportedDomainInfo } from './capabilities.js';
+
+export {
+  createEmptyCapabilityProfile,
+  DEFAULT_AGENT_TARGET_INTEGRATION,
+  getUnsupportedDomains,
+  getUnsupportedToolReason,
+  isToolSupported,
+} from './capabilities.js';
+export type {
+  CapabilityProfile,
+  DomainCapability,
+  ToolAvailability,
+  ToolCapability,
+  UnsupportedDomainInfo,
+  UnsupportedToolInfo,
+} from './capabilities.js';
+
 export {
   DEFAULT_PAGE_LIMIT,
   MAX_PAGE_LIMIT,
@@ -273,6 +292,12 @@ export type AgentSessionInfo = {
   appId: string;
   pageId: string;
   status: AgentSessionStatus;
+  /**
+   * The integration this session resolved a capability profile from.
+   * Optional so a newer CLI can read an older server's session info,
+   * which simply does not carry it.
+   */
+  integration?: RozeniteIntegration;
   createdAt: number;
   lastActivityAt: number;
   connectedAt?: number;
@@ -329,6 +354,14 @@ export type DeleteAgentSessionResponse = {
 
 export type GetAgentSessionToolsResponse = {
   tools: AgentTool[];
+  /**
+   * Both fields are optional on purpose. An older CLI against a newer
+   * server ignores them; a newer CLI against an older server reads
+   * `undefined` and falls back to treating every domain as supported,
+   * which is exactly the pre-capability behaviour. No lockstep upgrade.
+   */
+  integration?: RozeniteIntegration;
+  unsupported?: UnsupportedDomainInfo[];
 };
 
 export type CallAgentSessionToolRequest = {

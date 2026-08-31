@@ -1,12 +1,14 @@
 import {
   DEFAULT_AGENT_HOST,
   DEFAULT_AGENT_PORT,
+  DEFAULT_AGENT_TARGET_INTEGRATION,
   type AgentServerInfo,
   type AgentSessionInfo,
-  type AgentTool,
   type CreateAgentSessionRequest,
   type DevToolsPluginMessage,
+  type GetAgentSessionToolsResponse,
 } from '@rozenite/agent-shared';
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
 import { getMetroTargets, resolveMetroTarget } from './metro-discovery.js';
 import { createAgentSession, type AgentSession } from './session.js';
 import type { TapListener } from './tap.js';
@@ -18,8 +20,11 @@ export const createAgentSessionManager = (options: {
   host?: string;
   port?: number;
   metroVersion?: string;
+  /** The integration this dev server hosts. See `RozeniteConfig.integration`. */
+  integration?: RozeniteIntegration;
 }) => {
   const metroVersion = options.metroVersion;
+  const integration = options.integration ?? DEFAULT_AGENT_TARGET_INTEGRATION;
   const sessions = new Map<string, AgentSession>();
   let currentHost = options.host ?? DEFAULT_AGENT_HOST;
   let currentPort = options.port ?? DEFAULT_AGENT_PORT;
@@ -81,6 +86,7 @@ export const createAgentSessionManager = (options: {
       host: currentHost,
       port: currentPort,
       target,
+      integration,
       cliVersion: request.cliVersion,
       metroVersion,
       resolveTarget: (deviceId) => resolveMetroTarget(currentHost, currentPort, deviceId),
@@ -135,8 +141,14 @@ export const createAgentSessionManager = (options: {
     return { stopped: true };
   };
 
-  const getSessionTools = (sessionId: string): AgentTool[] => {
-    return getSessionOrThrow(sessionId).getTools();
+  const getSessionTools = (sessionId: string): GetAgentSessionToolsResponse => {
+    const session = getSessionOrThrow(sessionId);
+
+    return {
+      tools: session.getTools(),
+      integration: session.getIntegration(),
+      unsupported: session.getUnsupportedDomains(),
+    };
   };
 
   const callSessionTool = async (

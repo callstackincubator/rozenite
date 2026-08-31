@@ -1,4 +1,5 @@
-import type { AgentTool } from '@rozenite/agent-shared';
+import type { AgentTool, UnsupportedDomainInfo } from '@rozenite/agent-shared';
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
 import {
   RESERVED_DOMAIN_NAMES,
   STATIC_DOMAIN_TOOL_NAMES,
@@ -284,6 +285,84 @@ export const formatUnknownDomainError = (token: string, domains: DomainDefinitio
   return new Error(
     `Unknown domain "${token}".${suggestionsText} Run \`rozenite agent domains\` to list available domains.`,
   );
+};
+
+/**
+ * Folds a session's capability gaps onto the domain list.
+ *
+ * Unavailable domains stay in the list on purpose. Dropping `network`
+ * outright would make `rozenite agent network listRequests` fail with
+ * `Unknown domain "network". Did you mean...?`, which reads to an agent
+ * as a typo it should correct rather than an integration limit it should
+ * route around.
+ *
+ * Tool-level gaps are carried through as well, not just summarised into
+ * `degraded`. The server has already filtered those tools out of the
+ * listing, so without them a call to one would fall through to the
+ * generic unknown-tool error -- the same typo-shaped answer this whole
+ * mechanism exists to avoid, just one level down.
+ */
+export const applyCapabilities = (
+  domains: DomainDefinition[],
+  unsupported: UnsupportedDomainInfo[],
+): DomainDefinition[] => {
+  if (unsupported.length === 0) {
+    return domains;
+  }
+
+  const byDomain = new Map(unsupported.map((entry) => [entry.domain, entry]));
+
+  return domains.map((domain) => {
+    const gap = byDomain.get(domain.id);
+    if (!gap) {
+      return domain;
+    }
+
+    return {
+      ...domain,
+      // A gap listing specific tools leaves the rest of the domain
+      // usable; a gap without one takes the whole domain out.
+      availability: gap.tools ? ('degraded' as const) : ('unsupported' as const),
+      unavailableReason: gap.reason,
+      ...(gap.tools ? { unavailableTools: gap.tools } : {}),
+      ...(gap.fallback ? { fallback: gap.fallback } : {}),
+    };
+  });
+};
+
+/**
+ * The error an agent gets instead of a protocol failure. Thrown during
+ * resolution, before anything reaches the wire, so the agent spends no
+ * turn discovering it -- and it names something to do next rather than
+ * just what went wrong.
+ */
+export const formatUnsupportedToolError = (
+  domain: DomainDefinition,
+  toolName: string,
+  integration?: RozeniteIntegration,
+): Error => {
+  const target = integration ? `this ${integration} target` : 'this target';
+  // A tool-level gap explains itself; only fall back to the domain's
+  // reason when the whole domain is out.
+  const toolReason = domain.unavailableTools?.find((tool) => tool.name === toolName)?.reason;
+  const detail = toolReason ?? domain.unavailableReason;
+  const reason = detail ? ` ${detail}` : '';
+  const fallback = domain.fallback ? ` Use the \`${domain.fallback}\` domain instead.` : '';
+
+  return new Error(`Tool "${toolName}" is not supported on ${target}.${reason}${fallback}`);
+};
+
+/**
+ * Whether this specific tool is out on this target -- either because the
+ * whole domain is, or because the domain is degraded and this is one of
+ * the tools it lost.
+ */
+export const isToolUnavailable = (domain: DomainDefinition, toolName: string): boolean => {
+  if (domain.availability === 'unsupported') {
+    return true;
+  }
+
+  return domain.unavailableTools?.some((tool) => tool.name === toolName) ?? false;
 };
 
 export const resolveDomainTool = (

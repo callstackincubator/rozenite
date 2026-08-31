@@ -3,9 +3,12 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { AgentTool } from '@rozenite/agent-shared';
 import {
+  applyCapabilities,
   buildRuntimePluginDomains,
   deriveDomainName,
   formatUnknownDomainError,
+  formatUnsupportedToolError,
+  isToolUnavailable,
   getDomainToolsByDefinition,
   inferPluginId,
   inferToolShortName,
@@ -302,5 +305,70 @@ describe('agent domain utils', () => {
       idempotent: true,
       pagination: entry.pagination,
     });
+  });
+});
+
+describe('capability folding', () => {
+  const domains = [
+    { id: 'memory', kind: 'static' as const, description: 'memory', actions: [] },
+    { id: 'network', kind: 'static' as const, description: 'network', actions: [] },
+    { id: 'console', kind: 'static' as const, description: 'console', actions: [] },
+  ];
+
+  const gaps = [
+    {
+      domain: 'network',
+      reason: 'Lynx registers no CDP Network domain.',
+      fallback: '@rozenite/network-activity-plugin',
+    },
+    {
+      domain: 'memory',
+      reason: 'Not supported on lynx targets.',
+      tools: [
+        { name: 'startSampling', reason: 'PrimJS implements only takeHeapSnapshot.' },
+        { name: 'stopSampling', reason: 'PrimJS implements only takeHeapSnapshot.' },
+      ],
+    },
+  ];
+
+  it('returns the list untouched when there are no gaps', () => {
+    expect(applyCapabilities(domains, [])).toBe(domains);
+  });
+
+  it('marks a whole-domain gap unsupported and a tool-level one degraded', () => {
+    const folded = applyCapabilities(domains, gaps);
+
+    expect(folded.find((domain) => domain.id === 'network')?.availability).toBe('unsupported');
+    expect(folded.find((domain) => domain.id === 'memory')?.availability).toBe('degraded');
+    expect(folded.find((domain) => domain.id === 'console')?.availability).toBeUndefined();
+  });
+
+  // Without the tool list, a call to a filtered tool in a domain that
+  // still works falls through to the generic unknown-tool error, which
+  // reads to an agent as a typo rather than a limit.
+  it('carries tool-level gaps through so a degraded domain can still explain itself', () => {
+    const memory = applyCapabilities(domains, gaps).find((domain) => domain.id === 'memory')!;
+
+    expect(isToolUnavailable(memory, 'startSampling')).toBe(true);
+    expect(isToolUnavailable(memory, 'takeHeapSnapshot')).toBe(false);
+    expect(formatUnsupportedToolError(memory, 'startSampling', 'lynx').message).toContain(
+      'PrimJS implements only takeHeapSnapshot.',
+    );
+  });
+
+  it('reports every tool of an unsupported domain as unavailable, with its fallback', () => {
+    const network = applyCapabilities(domains, gaps).find((domain) => domain.id === 'network')!;
+
+    expect(isToolUnavailable(network, 'listRequests')).toBe(true);
+    expect(formatUnsupportedToolError(network, 'listRequests', 'lynx').message).toBe(
+      'Tool "listRequests" is not supported on this lynx target. Lynx registers no CDP ' +
+        'Network domain. Use the `@rozenite/network-activity-plugin` domain instead.',
+    );
+  });
+
+  it('treats a domain with no capability data as usable', () => {
+    const console = domains.find((domain) => domain.id === 'console')!;
+
+    expect(isToolUnavailable(console, 'anything')).toBe(false);
   });
 });

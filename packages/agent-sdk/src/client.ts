@@ -1,9 +1,18 @@
-import type { AgentSessionInfo, AgentTool, AgentToolDescriptor } from '@rozenite/agent-shared';
+import type {
+  AgentSessionInfo,
+  AgentTool,
+  AgentToolDescriptor,
+  UnsupportedDomainInfo,
+} from '@rozenite/agent-shared';
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
 import { STATIC_DOMAINS } from './constants.js';
 import {
+  applyCapabilities,
   buildRuntimePluginDomains,
   formatUnknownDomainError,
+  formatUnsupportedToolError,
   getDomainToolsByDefinition,
+  isToolUnavailable,
   resolveDomainToken,
   resolveDomainTool,
   toAgentDomainTool,
@@ -21,9 +30,14 @@ import type {
   DomainDefinition,
 } from './types.js';
 
-const getKnownDomains = (tools: AgentTool[]): DomainDefinition[] => {
+const getKnownDomains = (
+  tools: AgentTool[],
+  unsupported: UnsupportedDomainInfo[] = [],
+): DomainDefinition[] => {
   const runtimeDomains = buildRuntimePluginDomains(tools);
-  return [...STATIC_DOMAINS, ...runtimeDomains].sort((a, b) => a.id.localeCompare(b.id));
+  return applyCapabilities([...STATIC_DOMAINS, ...runtimeDomains], unsupported).sort((a, b) =>
+    a.id.localeCompare(b.id),
+  );
 };
 
 const sortTools = <
@@ -40,9 +54,9 @@ export const createAgentClient = (options?: AgentClientOptions): AgentClient => 
   const transport = createAgentTransport(options);
 
   const resolveDomainContext = async (input: { sessionId: string; domain: string }) => {
-    const { tools } = await transport.getSessionTools(input.sessionId);
+    const { tools, integration, unsupported } = await transport.getSessionTools(input.sessionId);
     const sortedTools = sortTools(tools);
-    const knownDomains = getKnownDomains(sortedTools);
+    const knownDomains = getKnownDomains(sortedTools, unsupported);
     const resolvedDomain = resolveDomainToken(input.domain, knownDomains);
     if (!resolvedDomain) {
       throw formatUnknownDomainError(input.domain, knownDomains);
@@ -54,7 +68,32 @@ export const createAgentClient = (options?: AgentClientOptions): AgentClient => 
       knownDomains,
       resolvedDomain,
       domainTools,
+      integration,
     };
+  };
+
+  /**
+   * Resolves a tool, turning "the target cannot do this" into an
+   * actionable error before the call is attempted. An unavailable domain
+   * has no tools left to match against, so without this the caller would
+   * get `Available: none` -- true, and useless. A degraded domain is the
+   * same problem one level down: the tool is missing from a listing that
+   * is otherwise full, which reads as a typo rather than a limit.
+   */
+  const resolveToolOrExplain = (
+    context: {
+      resolvedDomain: DomainDefinition;
+      domainTools: AgentTool[];
+      integration?: RozeniteIntegration;
+    },
+    toolName: string,
+  ): AgentTool => {
+    if (isToolUnavailable(context.resolvedDomain, toolName)) {
+      throw formatUnsupportedToolError(context.resolvedDomain, toolName, context.integration);
+    }
+
+    const domainLabel = context.resolvedDomain.pluginId ?? context.resolvedDomain.id;
+    return resolveDomainTool(context.domainTools, domainLabel, toolName);
   };
 
   const callSessionTool = async <TArgs = unknown, TResult = unknown>(
@@ -63,12 +102,8 @@ export const createAgentClient = (options?: AgentClientOptions): AgentClient => 
     } & AgentDynamicToolCallInput<TArgs>,
   ): Promise<TResult> => {
     const { sessionId, domain, tool, args = {} as TArgs } = input;
-    const { resolvedDomain, domainTools } = await resolveDomainContext({
-      sessionId,
-      domain,
-    });
-    const domainLabel = resolvedDomain.pluginId ?? resolvedDomain.id;
-    const selectedTool = resolveDomainTool(domainTools, domainLabel, tool);
+    const context = await resolveDomainContext({ sessionId, domain });
+    const selectedTool = resolveToolOrExplain(context, tool);
 
     return (
       await transport.callSessionTool(sessionId, {
@@ -82,8 +117,8 @@ export const createAgentClient = (options?: AgentClientOptions): AgentClient => 
     let stopped = sessionInfo.status === 'stopped';
 
     const listDomains = async () => {
-      const { tools } = await transport.getSessionTools(sessionInfo.id);
-      return getKnownDomains(sortTools(tools));
+      const { tools, unsupported } = await transport.getSessionTools(sessionInfo.id);
+      return getKnownDomains(sortTools(tools), unsupported);
     };
 
     const toolsApi: AgentSessionTools = {
@@ -95,13 +130,11 @@ export const createAgentClient = (options?: AgentClientOptions): AgentClient => 
         return domainTools.map((tool) => toAgentDomainTool(tool, resolvedDomain.id));
       },
       getSchema: async ({ domain, tool }) => {
-        const { resolvedDomain, domainTools } = await resolveDomainContext({
+        const context = await resolveDomainContext({
           sessionId: sessionInfo.id,
           domain,
         });
-        const domainLabel = resolvedDomain.pluginId ?? resolvedDomain.id;
-        const selectedTool = resolveDomainTool(domainTools, domainLabel, tool);
-        return toAgentToolSchema(selectedTool);
+        return toAgentToolSchema(resolveToolOrExplain(context, tool));
       },
       resolve: (async ({
         domain,
@@ -110,15 +143,14 @@ export const createAgentClient = (options?: AgentClientOptions): AgentClient => 
         domain: string;
         tool: string;
       }): Promise<AgentResolvedTool> => {
-        const { resolvedDomain, domainTools } = await resolveDomainContext({
+        const context = await resolveDomainContext({
           sessionId: sessionInfo.id,
           domain,
         });
-        const domainLabel = resolvedDomain.pluginId ?? resolvedDomain.id;
-        const selectedTool = resolveDomainTool(domainTools, domainLabel, tool);
+        const selectedTool = resolveToolOrExplain(context, tool);
 
         return {
-          domainId: resolvedDomain.id,
+          domainId: context.resolvedDomain.id,
           schema: toAgentToolSchema(selectedTool),
           call: async (args?: unknown) =>
             (

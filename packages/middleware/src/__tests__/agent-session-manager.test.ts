@@ -19,6 +19,8 @@ const mocks = vi.hoisted(() => {
   const stop = vi.fn();
   const getInfo = vi.fn();
   const getTools = vi.fn();
+  const getIntegration = vi.fn(() => 'react-native');
+  const getUnsupportedDomains = vi.fn(() => []);
   const callTool = vi.fn();
   const isReusable = vi.fn(() => true);
   const subscribeTap = vi.fn(() => vi.fn());
@@ -29,6 +31,8 @@ const mocks = vi.hoisted(() => {
     stop,
     getInfo,
     getTools,
+    getIntegration,
+    getUnsupportedDomains,
     callTool,
     subscribeTap,
     sendTapMessage,
@@ -42,6 +46,8 @@ const mocks = vi.hoisted(() => {
     stop,
     getInfo,
     getTools,
+    getIntegration,
+    getUnsupportedDomains,
     callTool,
     subscribeTap,
     sendTapMessage,
@@ -220,7 +226,11 @@ describe('agent session manager', () => {
     const manager = createAgentSessionManager({ projectRoot: '/app' });
     await manager.createSession({ deviceId: 'device-1' });
 
-    expect(manager.getSessionTools('device-1')).toEqual([{ name: 'startTrace' }]);
+    expect(manager.getSessionTools('device-1')).toEqual({
+      tools: [{ name: 'startTrace' }],
+      integration: 'react-native',
+      unsupported: [],
+    });
     await expect(manager.callSessionTool('device-1', 'startTrace', {})).resolves.toEqual({
       ok: true,
     });

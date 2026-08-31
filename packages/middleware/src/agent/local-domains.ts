@@ -1,5 +1,6 @@
 import type { JSONSchema7, AgentTool, AgentToolPagination } from '@rozenite/agent-shared';
 import { createReactTreeStore } from './runtime/react/store.js';
+import { CdpEventTimeoutError } from './cdp-errors.js';
 import type { ArtifactBucket, ArtifactFileWriter } from './artifacts.js';
 import type {
   ReactTreeNode,
@@ -173,6 +174,14 @@ const DEFAULT_RN_DEVTOOLS_TRACE_CATEGORIES = [
 ] as const;
 
 export type LocalAgentToolService = {
+  /**
+   * The static agent domain this service backs. Used to look the service
+   * up in a capability profile — static tool names are bare
+   * (`takeHeapSnapshot`, not `memory.takeHeapSnapshot`), so without this
+   * the domain would have to be recovered by reverse-searching the tool
+   * name table.
+   */
+  domainId: string;
   getTools: () => AgentTool[];
   callTool: (toolName: string, args: unknown) => Promise<unknown | undefined>;
   captureReactDevToolsMessage?: (message: unknown) => Promise<void>;
@@ -184,6 +193,15 @@ const NAME_HINT_SCHEMA: JSONSchema7 = {
   type: 'string',
   description: 'Optional file naming hint used for the Metro-managed artifact filename.',
 };
+
+/**
+ * Deadlines for device events that complete a long-running capture.
+ * Generous: a real trace or heap snapshot on a slow device legitimately
+ * takes a while, and these exist to convert "never" into an error, not
+ * to police latency.
+ */
+const TRACE_COMPLETION_TIMEOUT_MS = 60_000;
+const HEAP_SNAPSHOT_TIMEOUT_MS = 120_000;
 
 const DEFAULT_DOMAIN_PAGE_LIMIT = 20;
 const MAX_DOMAIN_PAGE_LIMIT = 100;
@@ -420,24 +438,54 @@ const getCDPCommandResult = (value: Record<string, unknown>): Record<string, unk
   return getOptionalRecord(value.result) || value;
 };
 
+/**
+ * Waits for one CDP event, with a deadline.
+ *
+ * The deadline is the point: a device can accept a command and then
+ * never emit the event that completes it — a runtime whose domain shares
+ * a name with Chrome's but not its semantics does exactly that. Without
+ * a timeout the awaiting tool hangs forever, which is strictly worse for
+ * an agent than an error, because there is nothing to react to. This
+ * guard is platform-agnostic on purpose: it catches the case for
+ * runtimes no capability profile has been written for yet.
+ */
 const createCDPEventWaiter = (
   subscribeToCDPEvent: SubscribeToCDPEvent,
   method: string,
+  options: { timeoutMs?: number; hint?: string } = {},
 ): {
   promise: Promise<Record<string, unknown>>;
   cancel: () => void;
 } => {
   let unsubscribe = () => {};
-  const promise = new Promise<Record<string, unknown>>((resolve) => {
+  let timer: NodeJS.Timeout | null = null;
+
+  const cleanup = (): void => {
+    unsubscribe();
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+
+  const promise = new Promise<Record<string, unknown>>((resolve, reject) => {
     unsubscribe = subscribeToCDPEvent(method, (params) => {
-      unsubscribe();
+      cleanup();
       resolve(params);
     });
+
+    const timeoutMs = options.timeoutMs;
+    if (timeoutMs !== undefined) {
+      timer = setTimeout(() => {
+        cleanup();
+        reject(new CdpEventTimeoutError(method, timeoutMs, options.hint));
+      }, timeoutMs);
+    }
   });
 
   return {
     promise,
-    cancel: () => unsubscribe(),
+    cancel: cleanup,
   };
 };
 
@@ -601,21 +649,33 @@ export const createPerformanceDomainService = (deps: {
     const writer = await deps.createArtifactWriter('traces', 'json', getString(input.nameHint));
     let pendingWrites = Promise.resolve();
     let wroteHeader = false;
-    let isFirstEvent = true;
+    // Counts events actually written, not events announced. A device can
+    // emit Tracing.dataCollected with an absent or non-array `value` --
+    // exactly what a runtime whose Tracing domain only shares Chrome's
+    // NAME would do -- and counting the event rather than its contents
+    // would let that through as a successful capture of nothing.
+    let writtenEventCount = 0;
     let traceWindow: { min: number; max: number } | null = null;
     const tracingComplete = createCDPEventWaiter(
       deps.subscribeToCDPEvent,
       'Tracing.tracingComplete',
+      {
+        timeoutMs: TRACE_COMPLETION_TIMEOUT_MS,
+        hint: "The target may implement a tracing protocol other than Chrome's.",
+      },
     );
     const unsubscribeDataCollected = deps.subscribeToCDPEvent('Tracing.dataCollected', (params) => {
       const values = Array.isArray(params.value) ? params.value : [];
       pendingWrites = pendingWrites.then(async () => {
-        if (!wroteHeader) {
-          await writer.write('{"traceEvents":[');
-          wroteHeader = true;
-        }
-
         for (const item of values) {
+          // Written lazily, per event rather than per event batch, so an
+          // empty batch leaves the artifact untouched instead of opening
+          // one that the guard below will then have to abort.
+          if (!wroteHeader) {
+            await writer.write('{"traceEvents":[');
+            wroteHeader = true;
+          }
+
           if (typeof item?.ts === 'number' && Number.isFinite(item.ts)) {
             traceWindow = traceWindow
               ? {
@@ -624,11 +684,11 @@ export const createPerformanceDomainService = (deps: {
                 }
               : { min: item.ts, max: item.ts };
           }
-          if (!isFirstEvent) {
+          if (writtenEventCount > 0) {
             await writer.write(',');
           }
           await writer.write(JSON.stringify(item));
-          isFirstEvent = false;
+          writtenEventCount += 1;
         }
       });
     });
@@ -637,8 +697,16 @@ export const createPerformanceDomainService = (deps: {
       await deps.sendCommand('Tracing.end');
       await tracingComplete.promise;
       await pendingWrites;
-      if (!wroteHeader) {
-        await writer.write('{"traceEvents":[');
+      if (writtenEventCount === 0) {
+        // The device reported the trace complete without handing over a
+        // single event. Writing the empty-but-valid artifact this used
+        // to produce hands back a file that looks like a successful
+        // capture and contains nothing, which is the hardest kind of
+        // failure for an agent to notice.
+        throw new Error(
+          'The trace completed without a single trace event, so nothing was captured. This ' +
+            'target does not appear to implement Chrome-style tracing.',
+        );
       }
       await writer.write(
         `],"metadata":${JSON.stringify(createTraceMetadata(startedAt, traceWindow))}}`,
@@ -656,6 +724,7 @@ export const createPerformanceDomainService = (deps: {
   };
 
   return {
+    domainId: 'performance',
     getTools: () => tools,
     callTool: async (toolName, args) => {
       if (toolName === 'startTrace') {
@@ -1062,6 +1131,7 @@ export const createReactDomainService = (deps: {
   });
 
   return {
+    domainId: 'react',
     getTools: () => tools,
     callTool: async (toolName, args) => {
       switch (toolName) {
@@ -1185,17 +1255,36 @@ export const createMemoryDomainService = (deps: {
       },
     );
     let unsubscribeProgress = () => {};
-    const progressPromise = new Promise<void>((resolve) => {
+    let progressTimer: NodeJS.Timeout | null = null;
+    const clearProgressTimer = (): void => {
+      if (progressTimer) {
+        clearTimeout(progressTimer);
+        progressTimer = null;
+      }
+    };
+    const progressPromise = new Promise<void>((resolve, reject) => {
       unsubscribeProgress = deps.subscribeToCDPEvent(
         'HeapProfiler.reportHeapSnapshotProgress',
         (params) => {
           if (params.finished === true) {
             reportCompleted = true;
+            clearProgressTimer();
             unsubscribeProgress();
             resolve();
           }
         },
       );
+
+      progressTimer = setTimeout(() => {
+        unsubscribeProgress();
+        reject(
+          new CdpEventTimeoutError(
+            'HeapProfiler.reportHeapSnapshotProgress',
+            HEAP_SNAPSHOT_TIMEOUT_MS,
+            'The device accepted takeHeapSnapshot but never reported completion.',
+          ),
+        );
+      }, HEAP_SNAPSHOT_TIMEOUT_MS);
     });
 
     try {
@@ -1214,6 +1303,7 @@ export const createMemoryDomainService = (deps: {
       throw error;
     } finally {
       chunkUnsubscribe();
+      clearProgressTimer();
       unsubscribeProgress();
       heapSnapshotInProgress = false;
     }
@@ -1287,6 +1377,7 @@ export const createMemoryDomainService = (deps: {
   };
 
   return {
+    domainId: 'memory',
     getTools: () => tools,
     callTool: async (toolName, args) => {
       if (toolName === 'takeHeapSnapshot') {
@@ -1877,6 +1968,7 @@ export const createNetworkDomainService = (deps: {
   };
 
   return {
+    domainId: 'network',
     getTools: () => tools,
     callTool: async (toolName, args) => {
       if (toolName === 'startRecording') {

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   createMemoryDomainService,
   createNetworkDomainService,
+  createPerformanceDomainService,
   createReactDomainService,
 } from '../agent/local-domains.js';
 
@@ -342,5 +343,110 @@ describe('network domain service', () => {
     expect(staleContinuation.items).toEqual([]);
     expect(staleContinuation.page.hasMore).toBe(false);
     expect(staleContinuation.page.reset).toBe(true);
+  });
+});
+
+describe('performance domain service', () => {
+  const createTraceHarness = () => {
+    const listeners = new Map<string, Set<(params: Record<string, unknown>) => void>>();
+    const subscribeToCDPEvent = (
+      method: string,
+      listener: (params: Record<string, unknown>) => void,
+    ) => {
+      const entries = listeners.get(method) || new Set();
+      entries.add(listener);
+      listeners.set(method, entries);
+
+      return () => {
+        entries.delete(listener);
+      };
+    };
+    const emit = (method: string, params: Record<string, unknown>) => {
+      for (const listener of [...(listeners.get(method) || [])]) {
+        listener(params);
+      }
+    };
+
+    const write = vi.fn(async () => undefined);
+    const finalize = vi.fn(async () => ({
+      path: '/tmp/trace.json',
+      relativePath: '.rozenite/agent/sessions/device-1/traces/trace.json',
+      bytes: 10,
+      bucket: 'traces' as const,
+      fileName: 'trace.json',
+    }));
+    const abort = vi.fn(async () => undefined);
+
+    const service = createPerformanceDomainService({
+      getSessionInfo: () => ({
+        sessionId: 'session-1',
+        pageId: 'page-1',
+        deviceId: 'device-1',
+      }),
+      sendCommand: async () => ({}),
+      subscribeToCDPEvent,
+      createArtifactWriter: async () => ({
+        path: '/tmp/trace.json',
+        write,
+        finalize,
+        abort,
+      }),
+    });
+
+    // stopTrace awaits the artifact writer before it subscribes, so an
+    // event emitted synchronously after the call would arrive before
+    // anything is listening.
+    const flush = async () => {
+      for (let tick = 0; tick < 10; tick += 1) {
+        await Promise.resolve();
+      }
+    };
+
+    return { service, emit, flush, write, finalize, abort };
+  };
+
+  it('refuses a trace the device completed without sending any event', async () => {
+    const { service, emit, flush, finalize, abort } = createTraceHarness();
+
+    await service.callTool('startTrace', {});
+    const stopped = service.callTool('stopTrace', {});
+    await flush();
+    emit('Tracing.tracingComplete', {});
+
+    await expect(stopped).rejects.toThrow(/without a single trace event/);
+    expect(finalize).not.toHaveBeenCalled();
+    expect(abort).toHaveBeenCalled();
+  });
+
+  // The guard has to count events, not dataCollected notifications: a
+  // runtime that only shares Chrome's domain NAME can announce the event
+  // with a payload that carries nothing.
+  it('refuses a trace whose dataCollected events carry no trace events', async () => {
+    const { service, emit, flush, finalize, abort } = createTraceHarness();
+
+    await service.callTool('startTrace', {});
+    const stopped = service.callTool('stopTrace', {});
+    await flush();
+    emit('Tracing.dataCollected', { value: [] });
+    emit('Tracing.dataCollected', {});
+    emit('Tracing.tracingComplete', {});
+
+    await expect(stopped).rejects.toThrow(/without a single trace event/);
+    expect(finalize).not.toHaveBeenCalled();
+    expect(abort).toHaveBeenCalled();
+  });
+
+  it('finalizes a trace that carried at least one event', async () => {
+    const { service, emit, flush, write, finalize } = createTraceHarness();
+
+    await service.callTool('startTrace', {});
+    const stopped = service.callTool('stopTrace', {});
+    await flush();
+    emit('Tracing.dataCollected', { value: [{ ts: 1, name: 'evt' }] });
+    emit('Tracing.tracingComplete', {});
+
+    await expect(stopped).resolves.toMatchObject({ artifact: expect.anything() });
+    expect(finalize).toHaveBeenCalled();
+    expect(write).toHaveBeenCalledWith('{"traceEvents":[');
   });
 });

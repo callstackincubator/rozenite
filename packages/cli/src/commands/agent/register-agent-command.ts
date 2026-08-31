@@ -10,6 +10,7 @@ import {
   shapePaginatedRows,
   shapeToolResult,
   type AgentToolPagination,
+  type ToolAvailability,
 } from '@rozenite/agent-shared';
 import { printOutput } from './output.js';
 import { formatAgentCommand, paginateRows } from './output-shaping.js';
@@ -73,6 +74,8 @@ type ToolListRow = {
 type DomainListRow = {
   id: string;
   kind: 'static' | 'plugin';
+  availability: ToolAvailability;
+  fallback?: string;
   pluginId?: string;
   slug?: string;
   description: string;
@@ -90,8 +93,19 @@ const DEFAULT_METRO_PORT = DEFAULT_AGENT_PORT;
 
 const TOOL_LIST_FIELDS = ['name', 'description', 'readOnly', 'destructive', 'idempotent'] as const;
 const TOOL_LIST_DEFAULT_FIELDS = TOOL_LIST_FIELDS;
-const DOMAIN_LIST_FIELDS = ['id', 'kind', 'pluginId', 'slug', 'description'] as const;
-const DOMAIN_LIST_DEFAULT_FIELDS = ['id', 'kind'] as const;
+const DOMAIN_LIST_FIELDS = [
+  'id',
+  'kind',
+  'availability',
+  'fallback',
+  'pluginId',
+  'slug',
+  'description',
+] as const;
+// `availability` is a default field, not an opt-in one: an agent that has
+// to pass `--verbose` to learn a domain does not work on this target will
+// not pass it, and will spend a turn finding out the hard way.
+const DOMAIN_LIST_DEFAULT_FIELDS = ['id', 'kind', 'availability', 'fallback'] as const;
 
 const projectSessionOutput = (
   session: Record<string, unknown>,
@@ -582,6 +596,8 @@ export const registerAgentCommand = (program: Command): void => {
             .map<DomainListRow>((domain) => ({
               id: domain.id,
               kind: domain.kind,
+              availability: domain.availability ?? 'supported',
+              fallback: domain.fallback,
               pluginId: domain.pluginId,
               slug: domain.slug,
               description: domain.description,

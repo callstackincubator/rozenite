@@ -1,12 +1,21 @@
 import WebSocket from 'ws';
-import { AGENT_PLUGIN_ID } from '@rozenite/agent-shared';
+import {
+  AGENT_PLUGIN_ID,
+  DEFAULT_AGENT_TARGET_INTEGRATION,
+  getUnsupportedDomains,
+} from '@rozenite/agent-shared';
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
 import type {
   AgentSessionInfo,
   AgentSessionReadyMessage,
   AgentSessionStatus,
   MetroTarget,
+  UnsupportedDomainInfo,
 } from '@rozenite/agent-shared';
 import { createAgentArtifacts } from './artifacts.js';
+import { createCDPCommandError } from './cdp-errors.js';
+import { resolveCapabilityProfile } from './capability-profiles.js';
+import { withCapabilityFilter } from './capability-filter.js';
 import { createAgentMessageHandler } from './runtime/handler.js';
 import { extractConsoleMessage } from './runtime/console/extract.js';
 import { parseRozeniteBindingPayload } from './runtime/bindings.js';
@@ -51,6 +60,8 @@ const getDebuggerWebSocketOrigin = (webSocketDebuggerUrl: string): string => {
 };
 
 type PendingCommand = {
+  /** Retained so a device error can name the method it refused. */
+  method: string;
   resolve: (value: Record<string, unknown>) => void;
   reject: (error: Error) => void;
 };
@@ -97,12 +108,15 @@ export const createAgentSession = (options: {
   host: string;
   port: number;
   target: MetroTarget;
+  integration?: RozeniteIntegration;
   resolveTarget?: (deviceId: string) => Promise<MetroTarget>;
   cliVersion?: string;
   metroVersion?: string;
   onTerminated?: (sessionId: string) => void;
 }) => {
   let target = options.target;
+  const integration = options.integration ?? DEFAULT_AGENT_TARGET_INTEGRATION;
+  const capabilityProfile = resolveCapabilityProfile(integration);
   const handler = createAgentMessageHandler();
   const artifacts = createAgentArtifacts(options.projectRoot, options.target.id);
   const tap = createTapEmitter();
@@ -307,7 +321,7 @@ export const createAgentSession = (options: {
     touch();
 
     const promise = new Promise<Record<string, unknown>>((resolve, reject) => {
-      pendingCommands.set(commandId, { resolve, reject });
+      pendingCommands.set(commandId, { method, resolve, reject });
       ws!.send(payload, (error) => {
         if (!error) {
           return;
@@ -348,7 +362,7 @@ export const createAgentSession = (options: {
       sendCommand,
       subscribeToCDPEvent,
     }),
-  ];
+  ].map((service) => withCapabilityFilter(service, capabilityProfile));
 
   const clearBootstrapTimer = (): void => {
     if (!bootstrapTimer) {
@@ -731,7 +745,7 @@ export const createAgentSession = (options: {
 
       pendingCommands.delete(message.id);
       if (message.error) {
-        pending.reject(new Error(JSON.stringify(message.error)));
+        pending.reject(createCDPCommandError(pending.method, message.error));
         return;
       }
 
@@ -899,6 +913,7 @@ export const createAgentSession = (options: {
     appId: target.appId,
     pageId: target.pageId,
     status,
+    integration,
     createdAt,
     lastActivityAt,
     ...(connectedAt ? { connectedAt } : {}),
@@ -913,6 +928,18 @@ export const createAgentSession = (options: {
       ...localServices.flatMap((service) => service.getTools()),
     ];
   };
+
+  const getIntegration = (): RozeniteIntegration => integration;
+
+  /**
+   * The gaps in this target's capability profile, flattened for the
+   * client. Reported alongside the tool list rather than instead of it:
+   * a domain that is silently missing reads to an agent as a typo, while
+   * one reported as unavailable with a reason reads as an integration
+   * limit.
+   */
+  const getUnsupportedDomainInfo = (): UnsupportedDomainInfo[] =>
+    getUnsupportedDomains(capabilityProfile);
 
   const subscribeTap: (listener: TapListener) => () => void = tap.subscribe;
 
@@ -1040,6 +1067,8 @@ export const createAgentSession = (options: {
     stop,
     getInfo,
     getTools,
+    getIntegration,
+    getUnsupportedDomains: getUnsupportedDomainInfo,
     callTool,
     subscribeTap,
     sendTapMessage,

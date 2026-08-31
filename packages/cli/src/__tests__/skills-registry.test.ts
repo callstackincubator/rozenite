@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SkillsRegistry } from '../skills/registry.js';
 
-const NON_DOMAIN_IDS = ['core', 'cli', 'sdk', 'sdk-patterns'];
+const NON_DOMAIN_IDS = ['core', 'cli', 'sdk', 'sdk-patterns', 'lynx'];
 
 const DOMAIN_IDS = [
   'storage',
@@ -49,6 +49,18 @@ describe('SkillsRegistry', () => {
       const doc = registry.get(id);
       expect(doc?.domain).toBeUndefined();
     }
+  });
+
+  // The field was previously parsed into a doc and then printed by
+  // nothing, which made every integration-specific doc read as
+  // universal.
+  it('parses the integrations frontmatter and leaves other docs without it', () => {
+    const registry = new SkillsRegistry();
+
+    expect(registry.get('lynx')?.integrations).toBe('lynx');
+    expect(registry.get('network')?.integrations).toBe('react-native');
+    expect(registry.get('memory')?.integrations).toBe('react-native, lynx');
+    expect(registry.get('core')?.integrations).toBeUndefined();
   });
 
   it('resolves domain docs by domain token', () => {
