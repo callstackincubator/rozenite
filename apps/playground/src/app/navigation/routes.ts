@@ -14,7 +14,7 @@ export type RouteGroup =
 
 export type RouteDef = {
   name: string;
-  /** Path segment under the `playground://` deep-link prefix. */
+  /** Path segment under the `rozenite://` deep-link prefix. */
   path: string;
   title: string;
   accessibilityLabel: string;
