@@ -85,8 +85,10 @@ the output shape.
   that as "restart this listing from scratch," not "no more rows."
 
 Declared paginated calls include console messages, React
-tree/search/inspection rows, render data, network request listings, and any
-plugin tool registered with pagination metadata. Tool-specific metadata (for
+tree/search/inspection rows, per-commit render data, component render
+aggregates, the profiling timeline, components with logged errors or warnings,
+network request listings, and any plugin tool registered with pagination
+metadata. Tool-specific metadata (for
 example `roots`, `totalCount`, or `recording`) remains alongside the row shape.
 Undeclared tool results, SDK responses, and genuinely non-row command results
 retain their existing shapes.

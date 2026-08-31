@@ -7,6 +7,8 @@ import type {
   ReactNodeSummary,
   ReactInspectableEntry,
   ReactRenderDataItem,
+  ReactProfileTimelineItem,
+  ReactComponentRenderItem,
 } from './runtime/react/types.js';
 
 /**
@@ -754,11 +756,40 @@ export const createReactDomainService = (deps: {
   const nodeIdentifierRequirement = {
     anyOf: [{ required: ['id'] }, { required: ['nodeId'] }],
   };
+  const limitSchema = {
+    type: 'integer',
+    description: 'Page size. Default 20, max 100.',
+  };
+  const cursorSchema = {
+    type: 'string',
+    description: 'Opaque cursor returned by the previous page.',
+  };
+  const noHostSchema = {
+    type: 'boolean',
+    description:
+      'Hide plain host components — the native views React renders into. Defaults to false. ' +
+      'Usually a no-op: React DevTools hides host components at the backend by default, so ' +
+      'they rarely reach this tree at all; set this only when a DevTools frontend on the same ' +
+      'backend has turned them back on. Host nodes with a key, a hyphenated custom element ' +
+      'name, or logged errors or warnings are kept either way.',
+  };
+  const maxValueLengthSchema = {
+    type: 'number',
+    description:
+      'Truncate serialized string values longer than this, marking the cut with ' +
+      '"[+N chars]". Default 512, max 8192.',
+  };
+  const slowRenderThresholdSchema = {
+    type: 'number',
+    description: 'Threshold used to classify slow renders. Default 16ms.',
+  };
   const tools: AgentTool[] = [
     {
       name: 'getTree',
       description:
-        'Get the current React component tree with optional depth limiting and cursor-based pagination.',
+        'Get the current React component tree with optional depth limiting and cursor-based ' +
+        'pagination. With noHost, parentId, childIds and depth describe the filtered tree, so ' +
+        'following childIds always lands on a node the same call returns.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -771,14 +802,9 @@ export const createReactDomainService = (deps: {
             description:
               'Optional max descendant depth relative to the selected root. 0 returns only roots.',
           },
-          limit: {
-            type: 'integer',
-            description: 'Page size. Default 20, max 100.',
-          },
-          cursor: {
-            type: 'string',
-            description: 'Opaque cursor returned by the previous page.',
-          },
+          noHost: noHostSchema,
+          limit: limitSchema,
+          cursor: cursorSchema,
         },
       },
       pagination: cursorPagination<ReactTreeNode>({
@@ -793,8 +819,19 @@ export const createReactDomainService = (deps: {
           'parentLabel',
           'childIds',
           'depth',
+          'errorCount',
+          'warningCount',
         ],
-        defaultFields: ['nodeId', 'label', 'displayName', 'elementType', 'childCount', 'depth'],
+        defaultFields: [
+          'nodeId',
+          'label',
+          'displayName',
+          'elementType',
+          'childCount',
+          'depth',
+          'errorCount',
+          'warningCount',
+        ],
       }),
     },
     {
@@ -824,6 +861,7 @@ export const createReactDomainService = (deps: {
             type: 'integer',
             description: 'Max nested serialization depth. Default 4, max 8.',
           },
+          maxValueLength: maxValueLengthSchema,
         },
         anyOf: [{ required: ['id'] }, { required: ['nodeId'] }],
       },
@@ -848,7 +886,9 @@ export const createReactDomainService = (deps: {
     },
     {
       name: 'getChildren',
-      description: "Get a node's direct children by node ID or label with cursor-based pagination.",
+      description:
+        "Get a node's direct children by node ID or label with cursor-based pagination. With " +
+        'noHost, a hidden host is replaced by its own children.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -860,14 +900,9 @@ export const createReactDomainService = (deps: {
             ...nodeIdentifierSchema,
             description: 'Parent node ID or component label.',
           },
-          limit: {
-            type: 'integer',
-            description: 'Page size. Default 20, max 100.',
-          },
-          cursor: {
-            type: 'string',
-            description: 'Opaque cursor returned by the previous page.',
-          },
+          noHost: noHostSchema,
+          limit: limitSchema,
+          cursor: cursorSchema,
         },
         ...nodeIdentifierRequirement,
       },
@@ -881,8 +916,18 @@ export const createReactDomainService = (deps: {
           'childCount',
           'parentId',
           'parentLabel',
+          'errorCount',
+          'warningCount',
         ],
-        defaultFields: ['nodeId', 'label', 'displayName', 'elementType', 'childCount'],
+        defaultFields: [
+          'nodeId',
+          'label',
+          'displayName',
+          'elementType',
+          'childCount',
+          'errorCount',
+          'warningCount',
+        ],
       }),
     },
     {
@@ -899,14 +944,9 @@ export const createReactDomainService = (deps: {
             ...nodeIdentifierSchema,
             description: 'Node ID or component label to read props for.',
           },
-          limit: {
-            type: 'integer',
-            description: 'Page size. Default 20, max 100.',
-          },
-          cursor: {
-            type: 'string',
-            description: 'Opaque cursor returned by the previous page.',
-          },
+          maxValueLength: maxValueLengthSchema,
+          limit: limitSchema,
+          cursor: cursorSchema,
         },
         ...nodeIdentifierRequirement,
       },
@@ -929,14 +969,9 @@ export const createReactDomainService = (deps: {
             ...nodeIdentifierSchema,
             description: 'Node ID or component label to read state for.',
           },
-          limit: {
-            type: 'integer',
-            description: 'Page size. Default 20, max 100.',
-          },
-          cursor: {
-            type: 'string',
-            description: 'Opaque cursor returned by the previous page.',
-          },
+          maxValueLength: maxValueLengthSchema,
+          limit: limitSchema,
+          cursor: cursorSchema,
         },
         ...nodeIdentifierRequirement,
       },
@@ -966,14 +1001,9 @@ export const createReactDomainService = (deps: {
             },
             description: 'Optional path into hooks tree, e.g. [0, "subHooks"].',
           },
-          limit: {
-            type: 'integer',
-            description: 'Page size. Default 20, max 100.',
-          },
-          cursor: {
-            type: 'string',
-            description: 'Opaque cursor returned by the previous page.',
-          },
+          maxValueLength: maxValueLengthSchema,
+          limit: limitSchema,
+          cursor: cursorSchema,
         },
         ...nodeIdentifierRequirement,
       },
@@ -1001,14 +1031,9 @@ export const createReactDomainService = (deps: {
             enum: ['name', 'name-or-key'],
             description: 'Matching mode. Defaults to "name".',
           },
-          limit: {
-            type: 'integer',
-            description: 'Page size. Default 20, max 100.',
-          },
-          cursor: {
-            type: 'string',
-            description: 'Opaque cursor returned by the previous page.',
-          },
+          noHost: noHostSchema,
+          limit: limitSchema,
+          cursor: cursorSchema,
         },
         required: ['query'],
       },
@@ -1022,6 +1047,8 @@ export const createReactDomainService = (deps: {
           'childCount',
           'parentId',
           'parentLabel',
+          'errorCount',
+          'warningCount',
         ],
         defaultFields: [
           'nodeId',
@@ -1030,7 +1057,42 @@ export const createReactDomainService = (deps: {
           'elementType',
           'childCount',
           'parentLabel',
+          'errorCount',
+          'warningCount',
         ],
+      }),
+    },
+    {
+      name: 'getErrors',
+      description:
+        'List the components React logged errors or warnings against, most errors first. ' +
+        'Covers warnings as well as errors; counts are cumulative and reset when a component ' +
+        'remounts.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          root: {
+            ...nodeIdentifierSchema,
+            description: 'Optional root node ID or component label to scope the search.',
+          },
+          limit: limitSchema,
+          cursor: cursorSchema,
+        },
+      },
+      pagination: cursorPagination<ReactNodeSummary>({
+        fields: [
+          'nodeId',
+          'label',
+          'displayName',
+          'elementType',
+          'key',
+          'childCount',
+          'parentId',
+          'parentLabel',
+          'errorCount',
+          'warningCount',
+        ],
+        defaultFields: ['nodeId', 'label', 'displayName', 'errorCount', 'warningCount'],
       }),
     },
     {
@@ -1065,12 +1127,111 @@ export const createReactDomainService = (deps: {
             description:
               'Max wait for backend profiling data processing. Default 3000ms, max 10000ms.',
           },
-          slowRenderThresholdMs: {
-            type: 'number',
-            description: 'Threshold used to classify slow commits. Default 16ms.',
-          },
+          slowRenderThresholdMs: slowRenderThresholdSchema,
         },
       },
+    },
+    {
+      name: 'getComponentRenders',
+      description:
+        'Get per-component render totals aggregated across every commit of the captured ' +
+        'profiling session: render count, total/average/max render time, and why each ' +
+        'component rendered. This is the tool that answers "what was slow" and "what ' +
+        're-rendered too often" in one call — reach for getRenderData only to drill into a ' +
+        "single commit afterwards. Pass id/fiberId to get one component's report.",
+      inputSchema: {
+        type: 'object',
+        properties: {
+          rootId: {
+            type: 'integer',
+            description: 'Optional React root ID. Defaults to every root in the session.',
+          },
+          id: {
+            ...nodeIdentifierSchema,
+            description: 'Optional node ID or component label to report on a single component.',
+          },
+          fiberId: {
+            ...nodeIdentifierSchema,
+            description: 'Optional node ID or component label to report on a single component.',
+          },
+          sort: {
+            type: 'string',
+            enum: [
+              'total-duration-desc',
+              'avg-duration-desc',
+              'max-duration-desc',
+              'render-count-desc',
+              'name-asc',
+            ],
+            description: 'Sort order. Defaults to "total-duration-desc".',
+          },
+          slowRenderThresholdMs: slowRenderThresholdSchema,
+          limit: limitSchema,
+          cursor: cursorSchema,
+        },
+      },
+      pagination: cursorPagination<ReactComponentRenderItem>({
+        fields: [
+          'rootId',
+          'fiberId',
+          'label',
+          'displayName',
+          'renderCount',
+          'totalDurationMs',
+          'avgDurationMs',
+          'maxDurationMs',
+          'totalSelfDurationMs',
+          'slowRenderCount',
+          'slowestCommitIndex',
+          'changeTypeHints',
+          'changedKeys',
+        ],
+        defaultFields: [
+          'fiberId',
+          'label',
+          'displayName',
+          'renderCount',
+          'totalDurationMs',
+          'avgDurationMs',
+          'maxDurationMs',
+          'changeTypeHints',
+        ],
+      }),
+    },
+    {
+      name: 'getProfileTimeline',
+      description:
+        'List every commit in the captured profiling session with its duration and how many ' +
+        'fibers rendered, chronologically or slowest first. Use it to pick a commitIndex for ' +
+        'getRenderData; unlike stopProfiling it stays queryable and pages through all commits.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          rootId: {
+            type: 'integer',
+            description: 'Optional React root ID. Defaults to every root in the session.',
+          },
+          sort: {
+            type: 'string',
+            enum: ['timeline', 'duration-desc'],
+            description: 'Sort order. Defaults to "timeline" (chronological).',
+          },
+          slowRenderThresholdMs: slowRenderThresholdSchema,
+          limit: limitSchema,
+          cursor: cursorSchema,
+        },
+      },
+      pagination: cursorPagination<ReactProfileTimelineItem>({
+        fields: [
+          'rootId',
+          'commitIndex',
+          'durationMs',
+          'timestampMs',
+          'renderedFiberCount',
+          'isSlow',
+        ],
+        defaultFields: ['rootId', 'commitIndex', 'durationMs', 'renderedFiberCount', 'isSlow'],
+      }),
     },
     {
       name: 'getRenderData',
@@ -1089,14 +1250,6 @@ export const createReactDomainService = (deps: {
             type: 'integer',
             description: 'Zero-based commit index within the selected root.',
           },
-          limit: {
-            type: 'integer',
-            description: 'Page size. Default 20, max 100.',
-          },
-          cursor: {
-            type: 'string',
-            description: 'Opaque cursor returned by the previous page.',
-          },
           sort: {
             type: 'string',
             enum: ['duration-desc', 'name-asc'],
@@ -1106,6 +1259,8 @@ export const createReactDomainService = (deps: {
             type: 'number',
             description: 'Threshold used to classify slow fibers. Default 16ms.',
           },
+          limit: limitSchema,
+          cursor: cursorSchema,
         },
         required: ['rootId', 'commitIndex'],
       },
@@ -1159,6 +1314,12 @@ export const createReactDomainService = (deps: {
           return store.stopProfiling(sessionDeviceId, args);
         case 'getRenderData':
           return store.getRenderData(sessionDeviceId, args);
+        case 'getErrors':
+          return store.getErrors(sessionDeviceId, args);
+        case 'getProfileTimeline':
+          return store.getProfileTimeline(sessionDeviceId, args);
+        case 'getComponentRenders':
+          return store.getComponentRenders(sessionDeviceId, args);
         default:
           return undefined;
       }

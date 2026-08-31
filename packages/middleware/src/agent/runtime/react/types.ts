@@ -7,6 +7,10 @@ export interface ReactNodeSummary {
   childCount: number;
   parentId?: number;
   parentLabel?: string;
+  /** Errors React logged against this component. Omitted when zero. */
+  errorCount?: number;
+  /** Warnings React logged against this component. Omitted when zero. */
+  warningCount?: number;
 }
 
 export interface ReactNodeRecord {
@@ -18,6 +22,8 @@ export interface ReactNodeRecord {
   parentId?: number;
   childIds: number[];
   rendererId?: number;
+  errorCount?: number;
+  warningCount?: number;
 }
 
 export interface ReactInspectedNodeRecord {
@@ -34,6 +40,8 @@ export interface ReactTreeNodeInput {
   parentId?: number;
   rendererId?: number;
   childIds?: number[];
+  errorCount?: number;
+  warningCount?: number;
 }
 
 export interface ReactTreeSyncPayload {
@@ -206,10 +214,93 @@ export interface ReactGetRenderDataResult {
   };
 }
 
-export interface ReactProfilingCursorPayload {
-  v: 1;
-  tool: string;
-  deviceId: string;
-  offset: number;
-  filtersHash: string;
+export interface ReactGetErrorsResult {
+  items: ReactNodeSummary[];
+  totalCount: number;
+  summary: {
+    /** Components carrying at least one error or warning. */
+    nodeCount: number;
+    totalErrors: number;
+    totalWarnings: number;
+  };
+  page: {
+    limit: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  };
+}
+
+export type ReactProfileTimelineSort = 'timeline' | 'duration-desc';
+
+export interface ReactProfileTimelineItem {
+  rootId: number;
+  commitIndex: number;
+  durationMs: number;
+  timestampMs: number;
+  renderedFiberCount: number;
+  isSlow: boolean;
+}
+
+export interface ReactGetProfileTimelineResult {
+  items: ReactProfileTimelineItem[];
+  totalCount: number;
+  summary: {
+    roots: number[];
+    totalCommits: number;
+    totalRenderDurationMs: number;
+    slowCommitCount: number;
+    slowRenderThresholdMs: number;
+    /** Roots left out because their data arrived from more than one renderer. */
+    skippedRootIds?: number[];
+  };
+  page: {
+    limit: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  };
+}
+
+export type ReactComponentRendersSort =
+  | 'total-duration-desc'
+  | 'avg-duration-desc'
+  | 'max-duration-desc'
+  | 'render-count-desc'
+  | 'name-asc';
+
+export interface ReactComponentRenderItem {
+  rootId: number;
+  fiberId: number;
+  /** `@cN` when the fiber is still mounted in the current tree. */
+  label?: string;
+  /** Falls back to `Fiber <id>` for fibers that unmounted before the read. */
+  displayName: string;
+  renderCount: number;
+  totalDurationMs: number;
+  avgDurationMs: number;
+  maxDurationMs: number;
+  totalSelfDurationMs: number;
+  slowRenderCount: number;
+  /** Commit whose `actualDuration` for this fiber was the highest. */
+  slowestCommitIndex: number;
+  /** Union of the reasons React gave across every commit this fiber rendered in. */
+  changeTypeHints?: string[];
+  /** Union of the specific changed keys behind `changeTypeHints`. */
+  changedKeys?: ReactRenderDataChangedKeys;
+}
+
+export interface ReactGetComponentRendersResult {
+  items: ReactComponentRenderItem[];
+  totalCount: number;
+  summary: {
+    roots: number[];
+    totalCommits: number;
+    renderedFiberCount: number;
+    slowRenderThresholdMs: number;
+    hasChangeDescriptions: boolean;
+  };
+  page: {
+    limit: number;
+    hasMore: boolean;
+    nextCursor?: string;
+  };
 }

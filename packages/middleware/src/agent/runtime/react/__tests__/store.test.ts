@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createReactTreeStore } from '../store.js';
+import { createBridgeStub, createCommit, createProfilingSnapshot } from './bridge-stub.js';
+import type { ReactRootProfilingData } from '../profiling-store.js';
 
 const DEVICE_ID = 'device-1';
 
@@ -19,29 +21,13 @@ const waitFor = async (predicate: () => boolean): Promise<void> => {
 
 const createStoreWithBridgeStub = (sent: Array<{ event: string; payload: unknown }>) => {
   return createReactTreeStore({
-    createBridge: async (options) => ({
-      ingest: () => null,
-      send: (event, payload) => {
-        sent.push({ event, payload });
-        options?.sendMessage?.({ event, payload });
-      },
-      startProfiling: () => undefined,
-      stopProfiling: () => undefined,
-      reloadAndProfile: () => undefined,
-      getProfilingStatus: () => ({
-        supportsProfiling: true,
-        supportsReloadAndProfile: false,
-        isProfilingStarted: false,
-        isProcessingData: false,
-        hasProfilingData: false,
-        rootsWithData: 0,
-        rootsCount: 0,
+    createBridge: async (options) =>
+      createBridgeStub({
+        send: (event, payload) => {
+          sent.push({ event, payload });
+          options?.sendMessage?.({ event, payload });
+        },
       }),
-      getProfilingDataSnapshot: () => null,
-      getCommitData: () => {
-        throw new Error('No commit data');
-      },
-    }),
   });
 };
 
@@ -513,24 +499,21 @@ type MockPhase = 'idle' | 'profiling' | 'processing';
 
 const createConfigurableProfilingBridge = (options: {
   initialPhase?: MockPhase;
-  initialDataForRoots?: Map<number, { commitData: Array<{ duration: number; timestamp: number }> }>;
+  initialDataForRoots?: Map<number, ReactRootProfilingData>;
   drainAfterStatusCalls?: number;
-  dataOnDrain?: Map<number, { commitData: Array<{ duration: number; timestamp: number }> }>;
+  dataOnDrain?: Map<number, ReactRootProfilingData>;
 }) => {
   let phase: MockPhase = options.initialPhase ?? 'idle';
-  let dataForRoots = options.initialDataForRoots ?? new Map();
+  let dataForRoots: Map<number, ReactRootProfilingData> = options.initialDataForRoots ?? new Map();
   let statusCallCount = 0;
 
-  return {
-    ingest: () => null,
-    send: () => undefined,
+  return createBridgeStub({
     startProfiling: () => {
       phase = 'profiling';
     },
     stopProfiling: () => {
       phase = 'idle';
     },
-    reloadAndProfile: () => undefined,
     getProfilingStatus: () => {
       statusCallCount += 1;
       if (
@@ -554,18 +537,8 @@ const createConfigurableProfilingBridge = (options: {
         rootsCount: dataForRoots.size,
       };
     },
-    getProfilingDataSnapshot: () => ({
-      phase,
-      dataForRoots,
-      conflictingRootIds: new Set<number>(),
-      participatingRendererIds: new Set([1]),
-      pendingRendererIds: new Set<number>(),
-      receivedRendererIds: new Set([1]),
-    }),
-    getCommitData: () => {
-      throw new Error('No commit data');
-    },
-  };
+    getProfilingDataSnapshot: () => createProfilingSnapshot({ phase, dataForRoots }),
+  });
 };
 
 describe('React stopProfiling guard', () => {
@@ -582,7 +555,9 @@ describe('React stopProfiling guard', () => {
   });
 
   it('still collects data when profiling self-stopped and is still draining', async () => {
-    const dataOnDrain = new Map([[1, { commitData: [{ duration: 5, timestamp: 100 }] }]]);
+    const dataOnDrain = new Map([
+      [1, { commitData: [createCommit({ duration: 5, timestamp: 100 })] }],
+    ]);
     const bridge = createConfigurableProfilingBridge({
       initialPhase: 'processing',
       drainAfterStatusCalls: 2,
@@ -603,7 +578,9 @@ describe('React stopProfiling guard', () => {
   });
 
   it('returns already-collected data for an already-complete session', async () => {
-    const initialDataForRoots = new Map([[1, { commitData: [{ duration: 8, timestamp: 200 }] }]]);
+    const initialDataForRoots = new Map([
+      [1, { commitData: [createCommit({ duration: 8, timestamp: 200 })] }],
+    ]);
     const bridge = createConfigurableProfilingBridge({
       initialPhase: 'idle',
       initialDataForRoots,

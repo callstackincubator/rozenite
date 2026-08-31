@@ -32,12 +32,19 @@ export type ParsedAddNode = {
   isRoot: boolean;
 };
 
+export type ParsedErrorsOrWarningsUpdate = {
+  nodeId: number;
+  errorCount: number;
+  warningCount: number;
+};
+
 export type ParsedTreeOperations = {
   rendererId: number;
   added: ParsedAddNode[];
   removedNodeIds: number[];
   removedRootIds: number[];
   reorderedChildren: Array<{ nodeId: number; childIds: number[] }>;
+  errorsOrWarnings: ParsedErrorsOrWarningsUpdate[];
   usesExtendedAddFormat: boolean;
 };
 
@@ -143,6 +150,7 @@ export const parseTreeOperations = (
     removedNodeIds: [],
     removedRootIds: [],
     reorderedChildren: [],
+    errorsOrWarnings: [],
     usesExtendedAddFormat: options?.extendedAddFormat === true,
   };
 
@@ -281,9 +289,26 @@ export const parseTreeOperations = (
         index += 3;
         break;
 
-      case TREE_OPERATION_UPDATE_ERRORS_OR_WARNINGS:
+      case TREE_OPERATION_UPDATE_ERRORS_OR_WARNINGS: {
+        const nodeId = numericOps[index + 1];
+        const errorCount = numericOps[index + 2];
+        const warningCount = numericOps[index + 3];
+
+        // A malformed update is dropped rather than aborting the batch: the
+        // counts are advisory, and the adds and removes around them are not.
+        if (
+          isInteger(nodeId) &&
+          isInteger(errorCount) &&
+          errorCount >= 0 &&
+          isInteger(warningCount) &&
+          warningCount >= 0
+        ) {
+          parsed.errorsOrWarnings.push({ nodeId, errorCount, warningCount });
+        }
+
         index += 4;
         break;
+      }
 
       case TREE_OPERATION_SET_SUBTREE_MODE:
         index += 3;
