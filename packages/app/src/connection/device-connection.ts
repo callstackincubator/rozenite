@@ -15,7 +15,7 @@ import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
  * need.
  */
 import { parseRozeniteBindingPayload } from './bindings';
-import { getFrameworkFromMetadata, type Framework } from '../framework';
+import { resolveFramework, type Framework } from '../framework';
 import { MetroUnreachableError, resolveMetroTarget } from './metro-target-resolution';
 import type { ParsedTarget } from './target-from-url';
 
@@ -128,6 +128,10 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   // framework mid-session, and keeping the last known one means the
   // footer's label doesn't blink away while reconnecting.
   let framework: Framework | null = null;
+  // The metadata half of that answer, kept raw so the framework can be
+  // recomputed when the other half (the device probe) lands — the two
+  // arrive in either order.
+  let applicationMetadata: { integrationName?: unknown; platform?: unknown } | null = null;
 
   let ws: WebSocket | null = null;
   // Reset per socket, not per execution context: a JS reload cannot turn a
@@ -200,10 +204,35 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     notifyStateListeners();
   };
 
-  /** Display-only, like `setDeviceName` — same notification path, so a
+  /**
+   * Recomputes the framework label from every signal seen so far.
+   *
+   * Called from both sources — the metadata event and the device probe —
+   * because either can land first and the answer combines them. Deriving
+   * the label and the target's integration from one function is the point:
+   * `resolveFramework` and `getTargetIsWeb` must never disagree about
+   * whether the target is a browser.
+   *
+   * Display-only, like `setDeviceName` — same notification path, so a
    * `useSyncExternalStore` reader of `getTarget()` sees it without any
-   * status change. */
-  const setFramework = (next: Framework): void => {
+   * status change.
+   */
+  const refreshFramework = (): void => {
+    // Gated on the metadata event, which is what #449 made the label wait
+    // for. The probe alone must not publish one: it can only say
+    // browser-or-not, so a Lynx target would read as "React Native" until
+    // the integration name arrived and corrected it — a visible flicker in
+    // place of a label that simply appears once.
+    if (applicationMetadata === null) {
+      return;
+    }
+
+    const next = resolveFramework({
+      integrationName: applicationMetadata?.integrationName,
+      platform: applicationMetadata?.platform,
+      isWebTarget: targetIsWeb,
+    });
+
     if (framework === next) {
       return;
     }
@@ -368,6 +397,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
       }
 
       targetIsWeb = value;
+      refreshFramework();
     } catch (error) {
       console.warn('[rozenite] Could not determine whether the target is a browser.', error);
     }
@@ -490,7 +520,8 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     // for the Lynx apps that don't). Everything in it except the
     // framework is already known from `/json/list`, so only that is read.
     if (message.method === 'ReactNativeApplication.metadataUpdated') {
-      setFramework(getFrameworkFromMetadata((message.params ?? {}) as Record<string, unknown>));
+      applicationMetadata = (message.params ?? {}) as Record<string, unknown>;
+      refreshFramework();
       return;
     }
 

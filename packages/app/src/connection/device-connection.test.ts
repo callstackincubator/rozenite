@@ -787,6 +787,74 @@ describe('createDeviceConnection', () => {
       expect(connection.getTarget().framework).toBe('Lynx');
     });
 
+    // The label and `getTargetIsWeb` are the same fact seen twice. This is
+    // the guard that stops them drifting apart: a compatibility gate that
+    // called the target native while the footer said "Web" would be worse
+    // than either being late.
+    it('agrees with the device probe when the reported platform disagrees', async () => {
+      const connection = createDeviceConnection(TARGET);
+      const socket = FakeWebSocket.instances[0];
+      socket.responder = (method, params) => {
+        if (method === 'Runtime.evaluate' && params?.expression === IS_WEB_TARGET_EXPRESSION) {
+          return { result: { value: true } };
+        }
+        return defaultResponder(method, params);
+      };
+
+      socket.open();
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      // The device says "browser"; the metadata event says the platform is
+      // iOS. The probe wins, and the label matches what a gate would use.
+      socket.emitEvent('ReactNativeApplication.metadataUpdated', {
+        integrationName: 'Rozenite',
+        platform: 'ios',
+      });
+
+      expect(connection.getTargetIsWeb()).toBe(true);
+      expect(connection.getTarget().framework).toBe('Web');
+    });
+
+    it('falls back to the reported platform when the probe could not answer', async () => {
+      const connection = createDeviceConnection(TARGET);
+      const socket = FakeWebSocket.instances[0];
+      socket.responder = (method, params) => {
+        if (method === 'Runtime.evaluate' && params?.expression === IS_WEB_TARGET_EXPRESSION) {
+          return { exceptionDetails: { text: 'boom' } };
+        }
+        return defaultResponder(method, params);
+      };
+
+      socket.open();
+      await waitUntil(() => connection.getState().status === 'connected');
+
+      socket.emitEvent('ReactNativeApplication.metadataUpdated', {
+        integrationName: 'Rozenite',
+        platform: 'web',
+      });
+
+      // Display still degrades gracefully - but the gate is told nothing
+      // rather than being handed the same guess.
+      expect(connection.getTarget().framework).toBe('Web');
+      expect(connection.getTargetIsWeb()).toBe(null);
+    });
+
+    it('does not publish a label from the probe alone, so Lynx never flickers', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+
+      // Bootstrap (and therefore the probe) has finished, and the probe
+      // cannot see Lynx - so no label until the integration name lands.
+      expect(connection.getTargetIsWeb()).toBe(false);
+      expect(connection.getTarget().framework).toBeNull();
+
+      socket.emitEvent('ReactNativeApplication.metadataUpdated', {
+        integrationName: 'Lynx',
+        platform: 'android',
+      });
+
+      expect(connection.getTarget().framework).toBe('Lynx');
+    });
+
     it('notifies subscribers without a status change, like the device name does', async () => {
       const { connection, socket } = await connectAndBootstrap();
       const listener = vi.fn();
