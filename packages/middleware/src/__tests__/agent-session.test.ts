@@ -36,6 +36,7 @@ const mocks = vi.hoisted(() => {
     captureReactDevToolsMessage: vi.fn(),
   }));
   const wsInstances: MockWebSocket[] = [];
+  const resolveDebuggerOrigin = vi.fn();
   let bindingName = 'rozenite-binding';
   let stalledRuntimeExpression: string | null = null;
 
@@ -171,6 +172,7 @@ const mocks = vi.hoisted(() => {
     extractConsoleMessage: vi.fn(() => null),
     parseRozeniteBindingPayload: vi.fn(() => null),
     wsInstances,
+    resolveDebuggerOrigin,
     stallRuntimeEvaluationContaining: (expression: string) => {
       stalledRuntimeExpression = expression;
     },
@@ -196,6 +198,13 @@ const mocks = vi.hoisted(() => {
       bindingName = 'rozenite-binding';
       stalledRuntimeExpression = null;
       wsInstances.length = 0;
+      resolveDebuggerOrigin.mockReset();
+      resolveDebuggerOrigin.mockImplementation(
+        async ({ webSocketDebuggerUrl }: { webSocketDebuggerUrl: string }) => {
+          const url = new URL(webSocketDebuggerUrl);
+          return `${url.protocol === 'wss:' ? 'https:' : 'http:'}//${url.host}`;
+        },
+      );
     },
   };
 });
@@ -227,6 +236,10 @@ vi.mock('../agent/runtime/bindings.js', () => ({
   parseRozeniteBindingPayload: mocks.parseRozeniteBindingPayload,
 }));
 
+vi.mock('../agent/debugger-origin.js', () => ({
+  resolveDebuggerOrigin: mocks.resolveDebuggerOrigin,
+}));
+
 vi.mock('../logger.js', () => ({
   logger: {
     info: mocks.loggerInfo,
@@ -256,7 +269,7 @@ const flushMicrotasks = async () => {
   await Promise.resolve();
 };
 
-const createStartedSession = (
+const createStartedSession = async (
   overrides?: Partial<{
     cliVersion: string;
     metroVersion: string;
@@ -273,6 +286,9 @@ const createStartedSession = (
   });
 
   const startPromise = session.start();
+  // The debugger `Origin` is resolved over HTTP before the socket opens,
+  // so the socket only exists once that has settled.
+  await flushMicrotasks();
   const socket = mocks.wsInstances[0];
 
   return { session, socket, startPromise };
@@ -285,7 +301,7 @@ const startSession = async (
     resolveTarget: (deviceId: string) => Promise<MetroTarget>;
   }>,
 ) => {
-  const started = createStartedSession(overrides);
+  const started = await createStartedSession(overrides);
   started.socket.open();
   await vi.advanceTimersByTimeAsync(500);
   await emitRozeniteBindingPayload(started.socket, {
@@ -349,9 +365,15 @@ describe('agent session', () => {
     vi.useRealTimers();
   });
 
-  it('sets an origin header derived from the debugger websocket URL', () => {
-    const { socket } = createStartedSession();
+  it('sets the origin header to the resolved debugger origin', async () => {
+    const { socket } = await createStartedSession();
 
+    expect(mocks.resolveDebuggerOrigin).toHaveBeenCalledWith({
+      host: 'localhost',
+      port: 8081,
+      appId: TARGET.appId,
+      webSocketDebuggerUrl: TARGET.webSocketDebuggerUrl,
+    });
     expect(socket.url).toBe(TARGET.webSocketDebuggerUrl);
     expect(socket.options).toEqual({
       headers: {
@@ -360,12 +382,12 @@ describe('agent session', () => {
     });
   });
 
-  it('preserves the debugger websocket host in the origin header', () => {
+  it('falls back to the debugger websocket host when Expo does not answer', async () => {
     const target = createTarget({
       webSocketDebuggerUrl: 'ws://127.0.0.1:8081/debug',
     });
 
-    const { socket } = createStartedSession({ target });
+    const { socket } = await createStartedSession({ target });
 
     expect(socket.url).toBe(target.webSocketDebuggerUrl);
     expect(socket.options).toEqual({
@@ -375,8 +397,24 @@ describe('agent session', () => {
     });
   });
 
+  it("uses Expo's origin even when it disagrees with the debugger websocket host", async () => {
+    // Expo terminates the socket after the upgrade unless the Origin host
+    // matches its own `serverBaseUrl`, which need not be the host the
+    // target URL was discovered through.
+    mocks.resolveDebuggerOrigin.mockResolvedValue('http://127.0.0.1:8081');
+
+    const { socket } = await createStartedSession();
+
+    expect(socket.url).toBe(TARGET.webSocketDebuggerUrl);
+    expect(socket.options).toEqual({
+      headers: {
+        Origin: 'http://127.0.0.1:8081',
+      },
+    });
+  });
+
   it('does not resolve start before the bootstrap delay elapses', async () => {
-    const { socket, startPromise } = createStartedSession();
+    const { socket, startPromise } = await createStartedSession();
     const onResolved = vi.fn();
     startPromise.then(onResolved);
 
@@ -396,7 +434,7 @@ describe('agent session', () => {
   });
 
   it('resolves start after bootstrap and plugin readiness settles', async () => {
-    const { startPromise, socket } = createStartedSession();
+    const { startPromise, socket } = await createStartedSession();
     const onResolved = vi.fn();
     startPromise.then(onResolved, () => undefined);
 
@@ -416,7 +454,7 @@ describe('agent session', () => {
   });
 
   it('extends plugin readiness wait when activity arrives', async () => {
-    const { startPromise, socket } = createStartedSession();
+    const { startPromise, socket } = await createStartedSession();
     const onResolved = vi.fn();
     startPromise.then(onResolved, () => undefined);
 
@@ -438,7 +476,7 @@ describe('agent session', () => {
   });
 
   it('starts built-in-only sessions without plugin registration', async () => {
-    const { startPromise, socket } = createStartedSession();
+    const { startPromise, socket } = await createStartedSession();
     const onResolved = vi.fn();
     startPromise.then(onResolved);
 
@@ -533,7 +571,7 @@ describe('agent session', () => {
 
   it('heals PAGE_NOT_FOUND before the initial socket opens', async () => {
     const replacementTarget = createTarget({ pageId: 'page-2' });
-    const { startPromise, socket } = createStartedSession({
+    const { startPromise, socket } = await createStartedSession({
       resolveTarget: vi.fn().mockResolvedValue(replacementTarget),
     });
     void startPromise.catch(() => undefined);
@@ -691,7 +729,7 @@ describe('agent session', () => {
   });
 
   it('rejects startup if the websocket closes before bootstrap completes', async () => {
-    const { socket, startPromise } = createStartedSession();
+    const { socket, startPromise } = await createStartedSession();
 
     socket.open();
     await flushMicrotasks();
@@ -816,7 +854,7 @@ describe('agent session', () => {
     });
 
     it('rejects sendTapMessage when the session is not connected', async () => {
-      const { session } = createStartedSession();
+      const { session } = await createStartedSession();
 
       await expect(
         session.sendTapMessage({ pluginId: 'plugin', type: 'type', payload: {} }),
