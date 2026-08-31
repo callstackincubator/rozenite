@@ -50,6 +50,7 @@
     "@heroui/react": "^3.0.1",
     "@heroui/styles": "^3.0.1",
     "@lezer/highlight": "^1.2.3",
+    "@rozenite/test-utils": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.0.0",

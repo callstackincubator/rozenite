@@ -3,6 +3,7 @@ import assert from 'node:assert';
 import path from 'node:path';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import { type RozeniteHostIntegration } from '@rozenite/tools';
 import { getEntryPointHTML } from './entry-point.js';
 import { InstalledPlugin } from './auto-discovery.js';
 import { getReactNativeDebuggerFrontendPath } from './resolve.js';
@@ -27,6 +28,20 @@ export type RozeniteAppConfigResponse = {
   installedPlugins: string[];
   destroyOnDetachPlugins: string[];
   runtimeVersion?: string;
+  /**
+   * Which host this dev server serves — `react-native` or `lynx`.
+   *
+   * This is a fact about the server, not a guess about the target: it
+   * follows from which Rozenite integration the user installed
+   * (`@rozenite/metro`/`@rozenite/repack` vs `@rozenite/lynx-dev`), so it
+   * cannot be wrong. It is deliberately NOT the target's integration —
+   * one dev server serves a native app and a browser tab at the same
+   * time, so only half the answer lives here. A host combines it with
+   * `IS_WEB_TARGET_EXPRESSION`, evaluated in the connected device, to
+   * resolve the other half. Named `hostIntegration` so the two are never
+   * mistaken for each other.
+   */
+  hostIntegration: RozeniteHostIntegration;
 };
 
 export const getNormalizedRequestUrl = (url: string): string => {
@@ -53,7 +68,8 @@ export const getMiddleware = (
   runtimeVersion?: string,
 ): Application => {
   const app = express();
-  const isLynx = options.platform === 'lynx';
+  const hostIntegration: RozeniteHostIntegration = options.integration ?? 'react-native';
+  const isLynx = hostIntegration === 'lynx';
   // Lynx has no react-native install to resolve the Fusebox debugger
   // frontend from, and doesn't need it: `@rozenite/app` is loaded
   // standalone there instead of embedded in Fusebox's HTML.
@@ -106,13 +122,12 @@ export const getMiddleware = (
     app.get('/rn_fusebox.html', (_, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.send(
-        getEntryPointHTML(
-          debuggerFrontend,
-          installedPlugins.map((plugin) => plugin.name),
+        getEntryPointHTML(debuggerFrontend, {
+          installedPlugins: installedPlugins.map((plugin) => plugin.name),
           destroyOnDetachPlugins,
-          options.pluginDisplay ?? 'sidebar',
+          pluginDisplay: options.pluginDisplay ?? 'sidebar',
           runtimeVersion,
-        ),
+        }),
       );
     });
   }
@@ -129,6 +144,7 @@ export const getMiddleware = (
       installedPlugins: installedPlugins.map((plugin) => plugin.name),
       destroyOnDetachPlugins,
       runtimeVersion,
+      hostIntegration,
     };
 
     res.json(config);

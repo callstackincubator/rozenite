@@ -5,7 +5,7 @@ import { logger } from './logger.js';
 import { getPackageJSON } from './package-json.js';
 import { getInstalledPlugins } from './auto-discovery.js';
 import { createScopedMiddleware } from './scoped-middleware.js';
-import type { RozeniteConfig, RozenitePlatform, RozenitePluginDisplay } from './config.js';
+import type { RozeniteConfig, RozenitePluginDisplay } from './config.js';
 import { getDevModePackage } from './dev-mode.js';
 import { verifyReactNativeVersion } from './verify-react-native-version.js';
 import { getReactNativePackagePath } from './resolve.js';
@@ -28,7 +28,7 @@ export const initializeRozenite = async (
   options.logLevel = process.env.ROZENITE_DEBUG === 'true' ? 'debug' : (options.logLevel ?? 'info');
   logger.setLevel(options.logLevel);
 
-  const isLynx = options.platform === 'lynx';
+  const isLynx = options.integration === 'lynx';
 
   if (!isLynx) {
     verifyReactNativeVersion(options.projectRoot);
@@ -82,4 +82,4 @@ export const initializeRozenite = async (
   };
 };
 
-export type { RozeniteConfig, RozenitePlatform, RozenitePluginDisplay };
+export type { RozeniteConfig, RozenitePluginDisplay };

@@ -48,6 +48,7 @@
     "@codemirror/commands": "^6.10.3",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.40.0",
+    "@rozenite/test-utils": "workspace:*",
     "@rozenite/vite-plugin": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-table": "^8.21.3",

@@ -13,8 +13,16 @@ export type CdpResponse = {
 
 /** What the bridge decided to do with one host -> device frame. */
 export type HostAction =
-  /** Answer the host locally; do not forward to the device. */
-  | { kind: 'reply'; message: CdpResponse }
+  /**
+   * Answer the host locally; do not forward to the device.
+   *
+   * `events` are unsolicited CDP events (`{ method, params }`, no `id`) to
+   * send after the reply, in order. The bridge speaks for a domain the
+   * device doesn't implement, so anything the host would normally learn
+   * from that domain's events has to originate here — see
+   * `ReactNativeApplication.enable` in `translate-host-message.ts`.
+   */
+  | { kind: 'reply'; message: CdpResponse; events?: unknown[] }
   /** Send to the device verbatim. */
   | { kind: 'forward'; message: unknown }
   /** Input was malformed or otherwise unusable; do nothing. */

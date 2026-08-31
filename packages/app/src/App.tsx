@@ -12,7 +12,10 @@ import {
 } from '@rozenite/ui';
 import { createDeviceShellHost } from './shell-host';
 import { fetchConfig } from './config';
+import { buildDocumentTitle } from './document-title';
+import type { Framework } from './framework';
 import { loadPlugins } from './plugins';
+import { Splash } from './splash';
 import type { DeviceConnection, DeviceState } from './connection/device-connection';
 import { TargetUrlError } from './connection/target-from-url';
 import { getTitleBarRegionClassName, WindowDragHandle } from './window-controls';
@@ -99,10 +102,12 @@ function StatusBadge({ status }: { status: DeviceState['status'] }) {
 function Footer({
   deviceState,
   targetName,
+  framework,
   runtimeVersion,
 }: {
   deviceState: DeviceState;
   targetName: string;
+  framework: Framework | null;
   runtimeVersion?: string;
 }) {
   return (
@@ -112,6 +117,15 @@ function Footer({
     // see `ShellProps.className` in `@rozenite/shell`.
     <footer className="flex h-9 shrink-0 items-center gap-3 border-t border-border bg-card px-3 text-sm text-muted-foreground">
       <StatusBadge status={deviceState.status} />
+      {/* Not gated on the connection status: the target reports this
+          during the handshake and `getTarget()` keeps the last known
+          answer, so it stays readable while reloading or disconnected. */}
+      {framework && (
+        <>
+          <Separator orientation="vertical" className="h-4" />
+          <span>{framework}</span>
+        </>
+      )}
       {(deviceState.status === 'connected' || deviceState.status === 'reloading') && targetName && (
         <>
           <Separator orientation="vertical" className="h-4" />
@@ -166,10 +180,23 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
   // `setDeviceName`) reaches this render even when `deviceState` itself
   // doesn't change.
   const targetName = useSyncExternalStore(connection.subscribe, () => connection.getTarget().name);
+  // Same store, same reason as `targetName` above: the framework arrives
+  // from the device mid-session, without a status change.
+  const framework = useSyncExternalStore(
+    connection.subscribe,
+    () => connection.getTarget().framework,
+  );
   // `host` must stay referentially stable for as long as `connection` does —
   // `Shell` resubscribes from it whenever the reference changes.
   const host = useMemo(() => createDeviceShellHost(connection), [connection]);
   const [configState, retryConfig] = useConfig();
+
+  // This app owns its window title, unlike the panel embedded in React
+  // Native DevTools (where the frontend owns it) — see
+  // `document-title.ts`.
+  useEffect(() => {
+    document.title = buildDocumentTitle({ framework, targetName });
+  }, [framework, targetName]);
 
   // Sticky latch: once the shell has mounted, it stays mounted forever,
   // regardless of what `deviceState` or `configState` do afterwards.
@@ -228,19 +255,7 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
           sidebarHeaderClassName={getTitleBarRegionClassName()}
         />
       ) : (
-        !configFailed && (
-          <>
-            <WindowDragHandle />
-            <PluginShell.Body className="items-center justify-center">
-              <EmptyState
-                title={
-                  configState.status === 'loading' ? 'Loading plugins…' : 'Connecting to device…'
-                }
-                description={targetName || undefined}
-              />
-            </PluginShell.Body>
-          </>
-        )
+        <WindowDragHandle />
       )}
 
       <StatusDialog
@@ -275,9 +290,14 @@ function ConnectedApp({ connection }: { connection: DeviceConnection }) {
         action={<Button onClick={() => connection.reconnect()}>Reconnect</Button>}
       />
 
+      {/* `fixed`, so it covers the footer below too. Latched on
+          `shellMounted`, so it never returns over a mounted shell. */}
+      <Splash visible={!shellMounted} />
+
       <Footer
         deviceState={deviceState}
         targetName={targetName}
+        framework={framework}
         runtimeVersion={
           configState.status === 'ready'
             ? configState.runtimeVersion

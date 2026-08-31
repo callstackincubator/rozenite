@@ -58,7 +58,7 @@ afterEach(() => {
 /** A controllable `DeviceConnection` double: `setState` drives
  * `useSyncExternalStore` the same way a real device event would. */
 function createFakeConnection(
-  target: DeviceTarget = { name: 'Pixel 8', appId: 'com.example.app' },
+  target: DeviceTarget = { name: 'Pixel 8', appId: 'com.example.app', framework: null },
 ) {
   let state: DeviceState = { status: 'connecting' };
   const listeners = new Set<(state: DeviceState) => void>();
@@ -73,6 +73,7 @@ function createFakeConnection(
     send: () => {},
     onMessage: () => () => {},
     getTarget: () => target,
+    getTargetIsWeb: () => false,
     reconnect,
     close: () => {},
   };
@@ -96,6 +97,12 @@ function createFakeConnection(
     // friendly device name (`setDeviceName`).
     setTargetName: (name: string) => {
       target = { ...target, name };
+      notify();
+    },
+    // Same shape as `setTargetName`: how the real connection reports a
+    // framework read off `ReactNativeApplication.metadataUpdated`.
+    setFramework: (framework: DeviceTarget['framework']) => {
+      target = { ...target, framework };
       notify();
     },
   };
@@ -132,10 +139,46 @@ describe('App', () => {
     expect(document.querySelector('iframe')).toBeNull();
   });
 
+  it('covers the connecting state with the splash, then fades it off once the shell mounts', async () => {
+    const { connection, setState } = createFakeConnection();
+
+    render(<App target={{ kind: 'connection', connection }} />);
+
+    const splash = () => document.querySelector('[data-slot="splash"]');
+    expect(splash()).toBeTruthy();
+    expect(splash()?.className).toMatch(/\bopacity-100\b/);
+    expect(splash()?.className).toMatch(/\bfixed\b/);
+    // Purely visual: the status underneath it is what AT announces.
+    expect(splash()?.getAttribute('aria-hidden')).toBe('true');
+
+    setState({ status: 'connected' });
+    await findPanelIframe();
+
+    // Fades out before it unmounts, rather than popping off.
+    await waitFor(() => expect(splash()?.className).toMatch(/\bopacity-0\b/), { timeout: 3000 });
+    await waitFor(() => expect(splash()).toBeNull(), { timeout: 3000 });
+  });
+
+  it('keeps the splash up behind a pre-connection status dialog', async () => {
+    const { connection, setState } = createFakeConnection();
+
+    render(<App target={{ kind: 'connection', connection }} />);
+    expect(document.querySelector('[data-slot="splash"]')).toBeTruthy();
+
+    setState({ status: 'rozeniteMissing' });
+
+    expect(await screen.findByText(/rozenite isn't set up/i)).toBeTruthy();
+    // Still the backdrop the dialog sits on, and under `Dialog`'s `z-50`.
+    const splash = document.querySelector('[data-slot="splash"]');
+    expect(splash?.className).toMatch(/\bopacity-100\b/);
+    expect(splash?.className).toMatch(/\bz-40\b/);
+  });
+
   it('mounts the shell and shows the target name once connected', async () => {
     const { connection, setState } = createFakeConnection({
       name: 'Pixel 8',
       appId: 'com.example.app',
+      framework: null,
     });
     setState({ status: 'connected' });
 
@@ -145,10 +188,44 @@ describe('App', () => {
     expect(screen.getByText('Pixel 8')).toBeTruthy();
   });
 
+  it('names the framework and device in the window title, which this app owns', async () => {
+    // Unlike the panel embedded in React Native DevTools, where the
+    // frontend owns `document.title` and Rozenite leaves it alone.
+    const { connection, setState, setFramework } = createFakeConnection();
+    setState({ status: 'connected' });
+
+    render(<App target={{ kind: 'connection', connection }} />);
+
+    await findPanelIframe();
+    expect(document.title).toBe('Pixel 8 - Rozenite');
+
+    setFramework('Lynx');
+
+    await waitFor(() => expect(document.title).toBe('Lynx · Pixel 8 - Rozenite'));
+  });
+
+  it('names the framework in the footer once the device reports it, and not before', async () => {
+    // The target is the only source: nothing is shown until the handshake
+    // has produced a `ReactNativeApplication.metadataUpdated`.
+    const { connection, setState, setFramework } = createFakeConnection();
+    setState({ status: 'connected' });
+
+    render(<App target={{ kind: 'connection', connection }} />);
+
+    await findPanelIframe();
+    expect(screen.queryByText('Lynx')).toBeNull();
+    expect(screen.queryByText('React Native')).toBeNull();
+
+    setFramework('Lynx');
+
+    expect(await screen.findByText('Lynx')).toBeTruthy();
+  });
+
   it('reflects a resolved device name even when the connection status does not change (finding 9)', async () => {
     const { connection, setState, setTargetName } = createFakeConnection({
       name: 'device-hash-abc123',
       appId: 'com.example.app',
+      framework: null,
     });
     setState({ status: 'connected' });
 

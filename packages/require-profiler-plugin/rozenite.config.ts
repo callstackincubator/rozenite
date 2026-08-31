@@ -1,4 +1,5 @@
 export default {
+  integrations: ['react-native'],
   panels: [
     {
       name: 'Require profiler',
