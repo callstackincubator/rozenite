@@ -13,6 +13,9 @@ The Rozenite Require Profiler Plugin instruments `require()` calls during your R
 - **Initial App Loading Profiling**: Automatically instruments `require()` calls during app startup to track initialization times
 - **Flame Graph Visualization**: Interactive flame graph showing the module dependency tree with timing information
 - **Top Modules Table**: Every module in a chain ranked by self time, so the slowest ones are readable without hunting through the graph
+- **Package Rollup**: The same chain grouped by npm package, at the granularity dependency decisions are actually made
+- **Require Chains**: For any module, the chain of requires that pulled it in, so "why is this even loaded?" has an answer
+- **Duplicate Detection**: Warns when a package was evaluated from more than one install location
 - **Chain Browser**: Every recorded require chain listed with its duration and module count, filterable by a minimum duration
 - **Module Search**: Filter the table and highlight matching frames in the flame graph
 - **Startup Performance Insights**: Identify slow-loading modules that impact Time to Interactive (TTI)
@@ -103,7 +106,11 @@ Once configured, the plugin automatically instruments all `require()` calls in y
 - **Top Modules**: The same chain as a table, sorted by self time, with total time and
   the number of times each module was evaluated
 - **Module Details**: Select a module to see its self time, total time, direct
-  dependency count, and full path
+  dependency count, full path, and the require chain that pulled it in
+- **Packages**: Switch "Group by" to Packages to roll the chain up per npm
+  package. Each package shows its own evaluation time and, separately, its
+  cost including everything it pulled in. Packages evaluated from two install
+  locations are flagged here.
 
 ## Use Cases
 

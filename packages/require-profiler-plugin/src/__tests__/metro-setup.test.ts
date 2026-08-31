@@ -6,7 +6,7 @@ const PACKAGE_ROOT = path.resolve(__dirname, '..', '..');
 const SETUP_SOURCE_PATH = path.join(PACKAGE_ROOT, 'src', 'metro', 'setup.js');
 const SETUP_SOURCE = fs.readFileSync(SETUP_SOURCE_PATH, 'utf8');
 
-type FakeModule = { verboseName: string };
+type FakeModule = { verboseName?: string; isInitialized?: boolean };
 
 type FakeGlobal = {
   performance?: { now: () => number };

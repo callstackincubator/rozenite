@@ -61,7 +61,9 @@ Once configured, "Metro Require Profiler" appears in your React Native DevTools 
 
 - **Color** reflects self time: red modules spent over 70% of the heaviest module's own time; grey modules have no own time at all.
 - **Click** a frame to zoom into that part of the tree, and press `Escape` to zoom back out. The detail panel shows self time, total time, dependency count, and the full path.
-- **Top modules** shows the same chain as a table ranked by self time — usually the fastest way to find the module worth fixing.
+- **Top modules** shows the same chain as a table ranked by self time — usually the fastest way to find the module worth fixing. Switch **Group by** to _Packages_ to roll it up per npm package, which is the granularity you actually make decisions at: one row reading `lodash — 340ms across 87 modules` beats 87 rows of 4ms each. Each package reports its own evaluation time and, separately, its cost including everything it pulled in.
+- **Selecting a module** shows the require chain that pulled it in, root-first and clickable — the answer to "why is this even loaded?".
+- Packages evaluated from **more than one install location** are flagged. Two copies of a dependency cost evaluation time and bundle bytes twice, and with a stateful library they can break outright.
 - **Filter modules** highlights matching frames in the graph and narrows the table.
 - The sidebar lists every recorded chain with its duration and module count. Use the threshold selector to hide short chains — start around 100ms to focus on what actually matters for startup time.
 
