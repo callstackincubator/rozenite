@@ -9,6 +9,8 @@ type TreeNodeRecord = {
   parentId?: number;
   rendererId?: number;
   childIds: number[];
+  errorCount: number;
+  warningCount: number;
 };
 
 const isInteger = (value: unknown): value is number => {
@@ -60,6 +62,10 @@ export const createComponentTreeStore = () => {
       ...(node.parentId !== undefined ? { parentId: node.parentId } : {}),
       ...(isInteger(node.rendererId) ? { rendererId: node.rendererId } : {}),
       childIds: [],
+      // A remount is an add, and React re-reports counts against the new fiber,
+      // so starting from zero is what keeps a fixed component from looking broken.
+      errorCount: 0,
+      warningCount: 0,
     };
 
     nodesById.set(record.nodeId, record);
@@ -97,6 +103,20 @@ export const createComponentTreeStore = () => {
     }
   };
 
+  const updateErrorsOrWarnings = (
+    nodeId: number,
+    errorCount: number,
+    warningCount: number,
+  ): void => {
+    const node = nodesById.get(nodeId);
+    if (!node) {
+      return;
+    }
+
+    node.errorCount = errorCount;
+    node.warningCount = warningCount;
+  };
+
   const toSnapshot = (): ReactTreeSyncPayload => {
     const sortedRoots = [...rootIds]
       .filter((rootId) => nodesById.has(rootId))
@@ -126,6 +146,8 @@ export const createComponentTreeStore = () => {
         ...(node.key !== undefined ? { key: node.key } : {}),
         ...(node.parentId !== undefined ? { parentId: node.parentId } : {}),
         ...(node.rendererId !== undefined ? { rendererId: node.rendererId } : {}),
+        ...(node.errorCount > 0 ? { errorCount: node.errorCount } : {}),
+        ...(node.warningCount > 0 ? { warningCount: node.warningCount } : {}),
         childIds,
       });
 
@@ -164,6 +186,10 @@ export const createComponentTreeStore = () => {
 
     for (const reorder of parsed.reorderedChildren) {
       reorderChildren(reorder.nodeId, reorder.childIds);
+    }
+
+    for (const update of parsed.errorsOrWarnings) {
+      updateErrorsOrWarnings(update.nodeId, update.errorCount, update.warningCount);
     }
 
     return toSnapshot();

@@ -1,4 +1,4 @@
-type ReactChangeDescription = {
+export type ReactChangeDescription = {
   context: string[] | boolean | null;
   didHooksChange: boolean;
   isFirstMount: boolean;
@@ -6,7 +6,7 @@ type ReactChangeDescription = {
   state: string[] | null;
 };
 
-type ReactCommitData = {
+export type ReactCommitData = {
   changeDescriptions: Map<number, ReactChangeDescription> | null;
   duration: number;
   effectDuration: number | null;
@@ -18,8 +18,18 @@ type ReactCommitData = {
   updaters: Array<{ id: number }> | null;
 };
 
-type ReactRootProfilingData = {
+export type ReactRootProfilingData = {
   commitData: ReactCommitData[];
+};
+
+export type ReactProfilingSnapshot = {
+  phase: ProfilingPhase;
+  dataForRoots: Map<number, ReactRootProfilingData>;
+  rendererIdByRootId: Map<number, number>;
+  participatingRendererIds: Set<number>;
+  pendingRendererIds: Set<number>;
+  receivedRendererIds: Set<number>;
+  conflictingRootIds: Set<number>;
 };
 
 type ProfilingPhase = 'idle' | 'profiling' | 'stopping' | 'processing' | 'complete';
@@ -492,15 +502,7 @@ export const createProfilingStore = () => {
       };
     },
 
-    getSnapshot: (): {
-      phase: ProfilingPhase;
-      dataForRoots: Map<number, ReactRootProfilingData>;
-      rendererIdByRootId: Map<number, number>;
-      participatingRendererIds: Set<number>;
-      pendingRendererIds: Set<number>;
-      receivedRendererIds: Set<number>;
-      conflictingRootIds: Set<number>;
-    } => {
+    getSnapshot: (): ReactProfilingSnapshot => {
       return {
         phase: state.session.phase,
         dataForRoots: state.session.dataForRoots,

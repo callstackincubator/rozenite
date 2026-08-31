@@ -4,6 +4,8 @@ import {
   createProfilingStore,
   normalizeProfilingDataEvent,
   type NormalizedProfilingStatusEvent,
+  type ReactCommitData,
+  type ReactProfilingSnapshot,
 } from './profiling-store.js';
 import type { ReactTreeSyncPayload } from './types.js';
 
@@ -24,8 +26,8 @@ export type ReactDevToolsBridge = {
   stopProfiling: () => void;
   reloadAndProfile: () => void;
   getProfilingStatus: () => ReactProfilingStatus;
-  getProfilingDataSnapshot: () => unknown;
-  getCommitData: (rootId: number, commitIndex: number) => unknown;
+  getProfilingDataSnapshot: () => ReactProfilingSnapshot;
+  getCommitData: (rootId: number, commitIndex: number) => ReactCommitData;
 };
 
 const getRecord = (value: unknown): Record<string, unknown> | null => {
@@ -192,11 +194,11 @@ export const createReactDevToolsBridge = async (options?: {
       return profilingStore.getStatus(componentTreeStore.getRootsCount());
     },
 
-    getProfilingDataSnapshot(): unknown {
+    getProfilingDataSnapshot(): ReactProfilingSnapshot {
       return profilingStore.getSnapshot();
     },
 
-    getCommitData(rootId: number, commitIndex: number): unknown {
+    getCommitData(rootId: number, commitIndex: number): ReactCommitData {
       return profilingStore.getCommitData(rootId, commitIndex);
     },
   };

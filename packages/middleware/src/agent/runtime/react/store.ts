@@ -1,14 +1,21 @@
-import { hashFilters } from '../pagination/filters-hash.js';
+import { paginateReactList } from './pagination.js';
+import type { ReactChangeDescription, ReactCommitData } from './profiling-store.js';
 import type {
   ReactComponentSection,
   ReactDevToolsBridgeMessage,
   ReactGetChildrenResult,
   ReactGetComponentResult,
   ReactGetInspectableResult,
+  ReactComponentRenderItem,
+  ReactComponentRendersSort,
+  ReactGetComponentRendersResult,
+  ReactGetErrorsResult,
+  ReactGetProfileTimelineResult,
   ReactGetRenderDataResult,
   ReactGetTreeResult,
   ReactInspectedNodeRecord,
-  ReactProfilingCursorPayload,
+  ReactProfileTimelineItem,
+  ReactProfileTimelineSort,
   ReactProfilingStatusResult,
   ReactRenderDataChangedKeys,
   ReactRenderDataItem,
@@ -24,51 +31,31 @@ import type {
 } from './types.js';
 import { createReactDevToolsBridge, type ReactDevToolsBridge } from './react-devtools-bridge.js';
 
-const DEFAULT_SEARCH_LIMIT = 20;
-const MAX_SEARCH_LIMIT = 100;
 const GET_TREE_TOOL_NAME = 'getTree';
 const SEARCH_TOOL_NAME = 'searchNodes';
 const GET_CHILDREN_TOOL_NAME = 'getChildren';
 const DEFAULT_COMPONENT_VALUE_DEPTH = 4;
 const MAX_COMPONENT_VALUE_DEPTH = 8;
+/**
+ * Wide enough to leave ordinary strings — URLs, messages, ids — intact, and
+ * narrow enough that one base64 image or serialised blob cannot dominate a
+ * response. `valueDepth` bounds nesting; this bounds the other axis.
+ */
+const DEFAULT_MAX_VALUE_LENGTH = 512;
+const MAX_MAX_VALUE_LENGTH = 8192;
 const GET_PROPS_TOOL_NAME = 'getProps';
 const GET_STATE_TOOL_NAME = 'getState';
 const GET_HOOKS_TOOL_NAME = 'getHooks';
 const GET_RENDER_DATA_TOOL_NAME = 'getRenderData';
+const GET_ERRORS_TOOL_NAME = 'getErrors';
+const GET_PROFILE_TIMELINE_TOOL_NAME = 'getProfileTimeline';
+const GET_COMPONENT_RENDERS_TOOL_NAME = 'getComponentRenders';
 const INSPECT_WAIT_TIMEOUT_MS = 2000;
 const DEFAULT_STOP_PROFILING_WAIT_MS = 3000;
 const MAX_STOP_PROFILING_WAIT_MS = 10000;
 const DEFAULT_SLOW_RENDER_THRESHOLD_MS = 16;
 const TOP_SLOW_COMMITS_LIMIT = 10;
 const MAX_PENDING_REACT_MESSAGES = 1000;
-
-interface ReactCursorPayload {
-  v: 1;
-  tool: string;
-  deviceId: string;
-  offset: number;
-  filtersHash: string;
-}
-
-type ReactCommitData = {
-  changeDescriptions: Map<number, ReactChangeDescription> | null;
-  duration: number;
-  effectDuration: number | null;
-  fiberActualDurations: Map<number, number>;
-  fiberSelfDurations: Map<number, number>;
-  passiveEffectDuration: number | null;
-  priorityLevel: string | null;
-  timestamp: number;
-  updaters: Array<{ id: number }> | null;
-};
-
-type ReactChangeDescription = {
-  context: string[] | boolean | null;
-  didHooksChange: boolean;
-  isFirstMount: boolean;
-  props: string[] | null;
-  state: string[] | null;
-};
 
 /**
  * Collapse a React change description into a short list of category hints
@@ -162,46 +149,6 @@ const getRecord = (value: unknown): Record<string, unknown> | null => {
   return value as Record<string, unknown>;
 };
 
-const encodeCursor = (payload: ReactCursorPayload): string => {
-  return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
-};
-
-const decodeCursor = (raw: string): ReactCursorPayload => {
-  try {
-    const decoded = Buffer.from(raw, 'base64url').toString('utf8');
-    const payload = JSON.parse(decoded) as ReactCursorPayload;
-    if (
-      payload.v !== 1 ||
-      typeof payload.tool !== 'string' ||
-      typeof payload.deviceId !== 'string' ||
-      !Number.isInteger(payload.offset) ||
-      payload.offset < 0 ||
-      typeof payload.filtersHash !== 'string'
-    ) {
-      throw new Error('Invalid cursor payload');
-    }
-
-    return payload;
-  } catch {
-    throw new Error(
-      'Invalid "cursor". Run the command again without cursor to restart pagination.',
-    );
-  }
-};
-
-const normalizeLimit = (value: unknown): number => {
-  if (value === undefined) {
-    return DEFAULT_SEARCH_LIMIT;
-  }
-
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 1) {
-    throw new Error(`"limit" must be an integer between 1 and ${MAX_SEARCH_LIMIT}`);
-  }
-
-  return Math.min(parsed, MAX_SEARCH_LIMIT);
-};
-
 const normalizeDepth = (value: unknown): number | undefined => {
   if (value === undefined) {
     return undefined;
@@ -265,6 +212,107 @@ const normalizeRenderDataSort = (value: unknown): ReactRenderDataSort => {
   return 'duration-desc';
 };
 
+const COMPONENT_RENDERS_SORTS: readonly ReactComponentRendersSort[] = [
+  'total-duration-desc',
+  'avg-duration-desc',
+  'max-duration-desc',
+  'render-count-desc',
+  'name-asc',
+];
+
+const normalizeComponentRendersSort = (value: unknown): ReactComponentRendersSort => {
+  if (value === undefined) {
+    return 'total-duration-desc';
+  }
+
+  const match = COMPONENT_RENDERS_SORTS.find((sort) => sort === value);
+  if (!match) {
+    throw new Error(`"sort" must be one of ${COMPONENT_RENDERS_SORTS.join(', ')}`);
+  }
+
+  return match;
+};
+
+const compareComponentRenders = (
+  sort: ReactComponentRendersSort,
+): ((
+  a: ReactComponentRenderItem & { sortName: string },
+  b: ReactComponentRenderItem & { sortName: string },
+) => number) => {
+  const tieBreak = (
+    a: ReactComponentRenderItem & { sortName: string },
+    b: ReactComponentRenderItem & { sortName: string },
+  ): number => a.rootId - b.rootId || a.fiberId - b.fiberId;
+
+  switch (sort) {
+    case 'avg-duration-desc':
+      return (a, b) => b.avgDurationMs - a.avgDurationMs || tieBreak(a, b);
+    case 'max-duration-desc':
+      return (a, b) => b.maxDurationMs - a.maxDurationMs || tieBreak(a, b);
+    case 'render-count-desc':
+      return (a, b) => b.renderCount - a.renderCount || tieBreak(a, b);
+    case 'name-asc':
+      return (a, b) => a.sortName.localeCompare(b.sortName) || tieBreak(a, b);
+    case 'total-duration-desc':
+      return (a, b) => b.totalDurationMs - a.totalDurationMs || tieBreak(a, b);
+  }
+};
+
+const roundMs = (value: number): number => Math.round(value * 1000) / 1000;
+
+const mergeStringSets = (current: string[] | undefined, incoming: string[]): string[] => {
+  if (incoming.length === 0) {
+    return current ?? [];
+  }
+
+  return [...new Set([...(current ?? []), ...incoming])];
+};
+
+/**
+ * Union two change descriptions from different commits of the same fiber.
+ *
+ * `context` carries two shapes from React: the literal `true` when it only
+ * reported that some context changed, or the names when it knew them. `true`
+ * loses to a name list, since "context changed, and here is which" is strictly
+ * more than "context changed".
+ */
+const mergeChangedKeys = (
+  current: ReactRenderDataChangedKeys | undefined,
+  incoming: ReactRenderDataChangedKeys | undefined,
+): ReactRenderDataChangedKeys | undefined => {
+  if (!incoming) {
+    return current;
+  }
+  if (!current) {
+    return incoming;
+  }
+
+  const merged: ReactRenderDataChangedKeys = {};
+
+  if (current.isFirstMount || incoming.isFirstMount) {
+    merged.isFirstMount = true;
+  }
+  if (current.props || incoming.props) {
+    merged.props = mergeStringSets(current.props, incoming.props ?? []);
+  }
+  if (current.state || incoming.state) {
+    merged.state = mergeStringSets(current.state, incoming.state ?? []);
+  }
+  if (Array.isArray(current.context) || Array.isArray(incoming.context)) {
+    merged.context = mergeStringSets(
+      Array.isArray(current.context) ? current.context : undefined,
+      Array.isArray(incoming.context) ? incoming.context : [],
+    );
+  } else if (current.context === true || incoming.context === true) {
+    merged.context = true;
+  }
+  if (current.hooks || incoming.hooks) {
+    merged.hooks = true;
+  }
+
+  return merged;
+};
+
 const normalizeComponentSections = (value: unknown): ReactComponentSection[] => {
   const defaultSections: ReactComponentSection[] = ['props', 'state', 'hooks'];
   if (value === undefined) {
@@ -305,10 +353,62 @@ const normalizeComponentValueDepth = (value: unknown): number => {
   return Math.min(parsed, MAX_COMPONENT_VALUE_DEPTH);
 };
 
+const normalizeMaxValueLength = (value: unknown): number => {
+  if (value === undefined) {
+    return DEFAULT_MAX_VALUE_LENGTH;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(`"maxValueLength" must be an integer between 1 and ${MAX_MAX_VALUE_LENGTH}`);
+  }
+
+  return Math.min(parsed, MAX_MAX_VALUE_LENGTH);
+};
+
+const normalizeBoolean = (value: unknown, name: string): boolean => {
+  if (value === undefined) {
+    return false;
+  }
+
+  if (typeof value !== 'boolean') {
+    throw new Error(`"${name}" must be a boolean`);
+  }
+
+  return value;
+};
+
 const delay = async (ms: number): Promise<void> => {
   await new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+};
+
+/**
+ * A host node worth keeping even when `noHost` filtering is on.
+ *
+ * A host stops being interchangeable structure once something identifies it: a
+ * `key` React itself needed to tell siblings apart, a hyphenated custom element
+ * name, or a logged error or warning that is the whole reason someone is
+ * reading the tree.
+ *
+ * Note that this filter usually has nothing to do: React DevTools' backend
+ * hides host components by default (`getDefaultComponentFilters` in
+ * `react-devtools-core`) and Rozenite never overrides that, so host fibers
+ * normally never reach this store. It earns its keep only when a DevTools
+ * frontend sharing the same backend has turned host components back on.
+ */
+const isSignificantHost = (node: ReactNodeRecord): boolean => {
+  return (
+    node.key !== undefined ||
+    node.displayName.includes('-') ||
+    (node.errorCount ?? 0) > 0 ||
+    (node.warningCount ?? 0) > 0
+  );
+};
+
+const isHiddenHost = (node: ReactNodeRecord, noHost: boolean): boolean => {
+  return noHost && node.elementType === 'host' && !isSignificantHost(node);
 };
 
 const ensureNodeSummary = (node: ReactNodeRecord): ReactNodeSummary => {
@@ -320,19 +420,34 @@ const ensureNodeSummary = (node: ReactNodeRecord): ReactNodeSummary => {
     ...(node.key !== undefined ? { key: node.key } : {}),
     childCount: node.childIds.length,
     ...(node.parentId !== undefined ? { parentId: node.parentId } : {}),
+    ...((node.errorCount ?? 0) > 0 ? { errorCount: node.errorCount } : {}),
+    ...((node.warningCount ?? 0) > 0 ? { warningCount: node.warningCount } : {}),
   };
 };
 
 const ensureNodeSummaryForState = (
   state: DeviceReactTreeState,
   node: ReactNodeRecord,
+  /**
+   * Parent and children as seen through the caller's filter, replacing the real
+   * ones outright — a `parentId` pointing at a node the same call filtered out
+   * would be worse than none. Omitted by tools that report a node on its own,
+   * where the real React parent is the honest answer.
+   */
+  visible?: {
+    parentId?: number;
+    childIds: number[];
+  },
 ): ReactNodeSummary => {
-  const parentLabel =
-    node.parentId !== undefined ? state.labelByNodeId.get(node.parentId) : undefined;
+  const { parentId: realParentId, ...summary } = ensureNodeSummary(node);
+  const parentId = visible ? visible.parentId : realParentId;
+  const parentLabel = parentId !== undefined ? state.labelByNodeId.get(parentId) : undefined;
 
   return {
-    ...ensureNodeSummary(node),
+    ...summary,
     label: state.labelByNodeId.get(node.nodeId) ?? '@c?',
+    ...(visible ? { childCount: visible.childIds.length } : {}),
+    ...(parentId !== undefined ? { parentId } : {}),
     ...(parentLabel !== undefined ? { parentLabel } : {}),
   };
 };
@@ -342,11 +457,15 @@ const ensureTreeNode = (
   node: ReactNodeRecord,
   options: {
     depth: number;
+    parentId?: number;
     childIds: number[];
   },
 ): ReactTreeNode => {
   return {
-    ...ensureNodeSummaryForState(state, node),
+    ...ensureNodeSummaryForState(state, node, {
+      ...(options.parentId !== undefined ? { parentId: options.parentId } : {}),
+      childIds: options.childIds,
+    }),
     childIds: options.childIds,
     depth: options.depth,
   };
@@ -375,6 +494,14 @@ const resolveNodeId = (state: DeviceReactTreeState, value: unknown, fieldName: s
   }
 
   throw new Error(`"${fieldName}" must be an integer or component label like "@c12"`);
+};
+
+/**
+ * Profiling outlives the tree: a fiber that unmounted before the read still has
+ * timings worth reporting, so it falls back to an ID rather than disappearing.
+ */
+const resolveFiberDisplayName = (state: DeviceReactTreeState, fiberId: number): string => {
+  return state.nodesById.get(fiberId)?.displayName ?? `Fiber ${fiberId}`;
 };
 
 const ensureNodeExists = (state: DeviceReactTreeState, nodeId: number): ReactNodeRecord => {
@@ -412,14 +539,16 @@ const getRequestedNodeId = (
 const createSerializableSnapshot = (
   value: unknown,
   depth = 3,
+  maxValueLength = DEFAULT_MAX_VALUE_LENGTH,
   seen = new Set<unknown>(),
 ): unknown => {
-  if (
-    value === null ||
-    typeof value === 'boolean' ||
-    typeof value === 'number' ||
-    typeof value === 'string'
-  ) {
+  if (typeof value === 'string') {
+    return value.length > maxValueLength
+      ? `${value.slice(0, maxValueLength)}[+${value.length - maxValueLength} chars]`
+      : value;
+  }
+
+  if (value === null || typeof value === 'boolean' || typeof value === 'number') {
     return value;
   }
 
@@ -448,13 +577,15 @@ const createSerializableSnapshot = (
     if (depth <= 0) {
       return `[array(${value.length})]`;
     }
-    return value.slice(0, 50).map((item) => createSerializableSnapshot(item, depth - 1, seen));
+    return value
+      .slice(0, 50)
+      .map((item) => createSerializableSnapshot(item, depth - 1, maxValueLength, seen));
   }
 
   if (value && typeof value === 'object') {
     const record = value as Record<string, unknown>;
     if ('data' in record && 'cleaned' in record && Object.keys(record).length <= 5) {
-      return createSerializableSnapshot(record.data, depth, seen);
+      return createSerializableSnapshot(record.data, depth, maxValueLength, seen);
     }
 
     if (depth <= 0) {
@@ -464,7 +595,8 @@ const createSerializableSnapshot = (
     const entries = Object.entries(record).slice(0, 100);
     return Object.fromEntries(
       entries.map(
-        ([key, nested]) => [key, createSerializableSnapshot(nested, depth - 1, seen)] as const,
+        ([key, nested]) =>
+          [key, createSerializableSnapshot(nested, depth - 1, maxValueLength, seen)] as const,
       ),
     );
   }
@@ -472,8 +604,11 @@ const createSerializableSnapshot = (
   return String(value);
 };
 
-const toInspectableEntries = (value: unknown): Array<{ name: string; value: unknown }> => {
-  const snapshot = createSerializableSnapshot(value);
+const toInspectableEntries = (
+  value: unknown,
+  maxValueLength: number,
+): Array<{ name: string; value: unknown }> => {
+  const snapshot = createSerializableSnapshot(value, DEFAULT_COMPONENT_VALUE_DEPTH, maxValueLength);
   if (Array.isArray(snapshot)) {
     return snapshot.map((entry, index) => ({
       name: String(index),
@@ -496,7 +631,10 @@ const toInspectableEntries = (value: unknown): Array<{ name: string; value: unkn
   ];
 };
 
-const toHookEntries = (value: unknown): Array<{ name: string; value: unknown }> => {
+const toHookEntries = (
+  value: unknown,
+  maxValueLength: number,
+): Array<{ name: string; value: unknown }> => {
   const entries: Array<{ name: string; value: unknown }> = [];
 
   const visit = (current: unknown, pathLabel: string): void => {
@@ -514,8 +652,8 @@ const toHookEntries = (value: unknown): Array<{ name: string; value: unknown }> 
       const label = hookName ? `${pathLabel || 'value'} (${hookName})` : pathLabel || 'value';
       const hookValue =
         'value' in record
-          ? createSerializableSnapshot(record.value, 6)
-          : createSerializableSnapshot(record, 6);
+          ? createSerializableSnapshot(record.value, 6, maxValueLength)
+          : createSerializableSnapshot(record, 6, maxValueLength);
 
       entries.push({
         name: label,
@@ -534,7 +672,7 @@ const toHookEntries = (value: unknown): Array<{ name: string; value: unknown }> 
 
     entries.push({
       name: pathLabel || 'value',
-      value: createSerializableSnapshot(current, 6),
+      value: createSerializableSnapshot(current, 6, maxValueLength),
     });
   };
 
@@ -645,6 +783,8 @@ const toReactNodeRecord = (node: ReactTreeNodeInput): ReactNodeRecord => {
     ...(node.key !== undefined ? { key: node.key } : {}),
     ...(node.parentId !== undefined ? { parentId: node.parentId } : {}),
     ...(node.rendererId !== undefined ? { rendererId: node.rendererId } : {}),
+    ...(node.errorCount !== undefined ? { errorCount: node.errorCount } : {}),
+    ...(node.warningCount !== undefined ? { warningCount: node.warningCount } : {}),
     childCount: childIds.length,
     childIds,
   };
@@ -933,20 +1073,11 @@ export const createReactTreeStore = (options?: {
 
     const finished = await waitForProfilingData(bridge, waitForDataMs);
     const status = bridge.getProfilingStatus();
-    const profilingData = bridge.getProfilingDataSnapshot() as {
-      phase?: string;
-      dataForRoots?: Map<number, { commitData?: Array<{ duration: number; timestamp: number }> }>;
-      conflictingRootIds?: Set<number>;
-      participatingRendererIds?: Set<number>;
-      pendingRendererIds?: Set<number>;
-      receivedRendererIds?: Set<number>;
-    } | null;
-    const dataForRoots =
-      profilingData?.dataForRoots ??
-      new Map<number, { commitData?: Array<{ duration: number; timestamp: number }> }>();
-    const conflictingRootCount = profilingData?.conflictingRootIds?.size ?? 0;
-    const receivedRendererCount = profilingData?.receivedRendererIds?.size ?? 0;
-    const pendingRendererCount = profilingData?.pendingRendererIds?.size ?? 0;
+    const profilingData = bridge.getProfilingDataSnapshot();
+    const dataForRoots = profilingData.dataForRoots;
+    const conflictingRootCount = profilingData.conflictingRootIds.size;
+    const receivedRendererCount = profilingData.receivedRendererIds.size;
+    const pendingRendererCount = profilingData.pendingRendererIds.size;
 
     const roots = Array.from(dataForRoots.keys()).sort((a, b) => a - b);
     let totalCommits = 0;
@@ -960,7 +1091,7 @@ export const createReactTreeStore = (options?: {
     }> = [];
 
     dataForRoots.forEach((rootData, rootId) => {
-      const commitData = Array.isArray(rootData.commitData) ? rootData.commitData : [];
+      const commitData = rootData.commitData;
       totalCommits += commitData.length;
       for (let index = 0; index < commitData.length; index += 1) {
         const commit = commitData[index];
@@ -1002,6 +1133,41 @@ export const createReactTreeStore = (options?: {
       ...(partial ? { partial: true } : {}),
       ...(status.isProcessingData ? { isProcessingData: true } : {}),
     };
+  };
+
+  /**
+   * A node's children as the caller's filter sees them: each hidden host is
+   * replaced by its own first visible descendants, so the list stays consistent
+   * with what `getTree` emits under the same flag.
+   */
+  const getVisibleChildIds = (
+    state: DeviceReactTreeState,
+    node: ReactNodeRecord,
+    noHost: boolean,
+    seen = new Set<number>(),
+  ): number[] => {
+    const visible: number[] = [];
+
+    for (const childId of node.childIds) {
+      if (seen.has(childId)) {
+        continue;
+      }
+      seen.add(childId);
+
+      const child = state.nodesById.get(childId);
+      if (!child) {
+        continue;
+      }
+
+      if (isHiddenHost(child, noHost)) {
+        visible.push(...getVisibleChildIds(state, child, noHost, seen));
+        continue;
+      }
+
+      visible.push(childId);
+    }
+
+    return visible;
   };
 
   const getSearchCandidates = (
@@ -1051,35 +1217,17 @@ export const createReactTreeStore = (options?: {
     }
     const query = rawQuery.trim().toLowerCase();
 
-    const rootId = Number.isInteger(request.rootId) ? Number(request.rootId) : undefined;
+    const rootId =
+      request.rootId !== undefined ? resolveNodeId(state, request.rootId, 'rootId') : undefined;
     const match = normalizeMatch(request.match);
-    const limit = normalizeLimit(request.limit);
+    const noHost = normalizeBoolean(request.noHost, 'noHost');
 
-    const filtersHash = hashFilters({
-      query,
-      rootId,
-      match,
-    });
-
-    let offset = 0;
-    if (typeof request.cursor === 'string' && request.cursor.trim().length > 0) {
-      const decoded = decodeCursor(request.cursor);
-      if (
-        decoded.deviceId !== deviceId ||
-        decoded.tool !== SEARCH_TOOL_NAME ||
-        decoded.filtersHash !== filtersHash
-      ) {
-        throw new Error(
-          'Cursor does not match this request context. Restart pagination without cursor.',
-        );
+    const matched = getSearchCandidates(state, rootId).filter((node) => {
+      if (isHiddenHost(node, noHost)) {
+        return false;
       }
-      offset = decoded.offset;
-    }
 
-    const candidates = getSearchCandidates(state, rootId);
-    const matched = candidates.filter((node) => {
-      const nameMatches = node.displayName.toLowerCase().includes(query);
-      if (nameMatches) {
+      if (node.displayName.toLowerCase().includes(query)) {
         return true;
       }
 
@@ -1090,29 +1238,18 @@ export const createReactTreeStore = (options?: {
       return false;
     });
 
-    const safeOffset = Math.max(0, Math.min(offset, matched.length));
-    const end = Math.min(safeOffset + limit, matched.length);
-    const items = matched
-      .slice(safeOffset, end)
-      .map((node) => ensureNodeSummaryForState(state, node));
-    const hasMore = end < matched.length;
-    const nextCursor = hasMore
-      ? encodeCursor({
-          v: 1,
-          tool: SEARCH_TOOL_NAME,
-          deviceId,
-          offset: end,
-          filtersHash,
-        })
-      : undefined;
+    const { items, page } = paginateReactList({
+      deviceId,
+      tool: SEARCH_TOOL_NAME,
+      filters: { query, rootId, match, noHost },
+      limit: request.limit,
+      cursor: request.cursor,
+      items: matched,
+    });
 
     return {
-      items,
-      page: {
-        limit,
-        hasMore,
-        ...(nextCursor ? { nextCursor } : {}),
-      },
+      items: items.map((node) => ensureNodeSummaryForState(state, node)),
+      page,
     };
   };
 
@@ -1121,41 +1258,25 @@ export const createReactTreeStore = (options?: {
     const state = getOrCreateState(deviceId);
     const rootId = getOptionalRootId(request.root);
     const depth = normalizeDepth(request.depth);
-    const limit = normalizeLimit(request.limit);
+    const noHost = normalizeBoolean(request.noHost, 'noHost');
 
     const traversalRoots =
       rootId === undefined
         ? state.rootIds.filter((id) => state.nodesById.has(id))
         : [ensureNodeExists(state, rootId).nodeId];
 
-    const filtersHash = hashFilters({
-      rootId,
-      depth,
-    });
-
-    let offset = 0;
-    if (typeof request.cursor === 'string' && request.cursor.trim().length > 0) {
-      const decoded = decodeCursor(request.cursor);
-      if (
-        decoded.deviceId !== deviceId ||
-        decoded.tool !== GET_TREE_TOOL_NAME ||
-        decoded.filtersHash !== filtersHash
-      ) {
-        throw new Error(
-          'Cursor does not match this request context. Restart pagination without cursor.',
-        );
-      }
-      offset = decoded.offset;
-    }
-
     const visited = new Set<number>();
     const allItems: ReactTreeNode[] = [];
 
-    const walk = (nodeId: number, currentDepth: number): void => {
+    /**
+     * Hidden nodes do not consume a level: their children are emitted against
+     * the nearest visible ancestor, at that ancestor's depth + 1. `depth` and
+     * `parentId` therefore describe the tree the caller is actually shown, so
+     * following `childIds` from a page always lands on a node the same filter
+     * would return.
+     */
+    const walk = (nodeId: number, currentDepth: number, visibleParentId?: number): void => {
       if (visited.has(nodeId)) {
-        return;
-      }
-      if (depth !== undefined && currentDepth > depth) {
         return;
       }
 
@@ -1164,17 +1285,32 @@ export const createReactTreeStore = (options?: {
         return;
       }
 
+      // An explicitly requested root stays visible; scoping a subtree to a host
+      // node and getting nothing back would be a strange way to answer.
+      const hidden = nodeId !== rootId && isHiddenHost(node, noHost);
+      if (hidden) {
+        visited.add(nodeId);
+        for (const childId of node.childIds) {
+          walk(childId, currentDepth, visibleParentId);
+        }
+        return;
+      }
+
+      if (depth !== undefined && currentDepth > depth) {
+        return;
+      }
+
       visited.add(nodeId);
-      const childIds = node.childIds.filter((childId) => state.nodesById.has(childId));
       allItems.push(
         ensureTreeNode(state, node, {
           depth: currentDepth,
-          childIds,
+          ...(visibleParentId !== undefined ? { parentId: visibleParentId } : {}),
+          childIds: getVisibleChildIds(state, node, noHost),
         }),
       );
 
-      for (const childId of childIds) {
-        walk(childId, currentDepth + 1);
+      for (const childId of node.childIds) {
+        walk(childId, currentDepth + 1, nodeId);
       }
     };
 
@@ -1182,29 +1318,20 @@ export const createReactTreeStore = (options?: {
       walk(traversalRoot, 0);
     }
 
-    const safeOffset = Math.max(0, Math.min(offset, allItems.length));
-    const end = Math.min(safeOffset + limit, allItems.length);
-    const items = allItems.slice(safeOffset, end);
-    const hasMore = end < allItems.length;
-    const nextCursor = hasMore
-      ? encodeCursor({
-          v: 1,
-          tool: GET_TREE_TOOL_NAME,
-          deviceId,
-          offset: end,
-          filtersHash,
-        })
-      : undefined;
+    const { items, totalCount, page } = paginateReactList({
+      deviceId,
+      tool: GET_TREE_TOOL_NAME,
+      filters: { rootId, depth, noHost },
+      limit: request.limit,
+      cursor: request.cursor,
+      items: allItems,
+    });
 
     return {
       roots: traversalRoots,
       items,
-      totalCount: allItems.length,
-      page: {
-        limit,
-        hasMore,
-        ...(nextCursor ? { nextCursor } : {}),
-      },
+      totalCount,
+      page,
     };
   };
 
@@ -1221,50 +1348,65 @@ export const createReactTreeStore = (options?: {
     const state = getOrCreateState(deviceId);
     const nodeId = getRequestedNodeId(state, request);
     const node = ensureNodeExists(state, nodeId);
-    const limit = normalizeLimit(request.limit);
-    const filtersHash = hashFilters({ nodeId });
+    const noHost = normalizeBoolean(request.noHost, 'noHost');
 
-    let offset = 0;
-    if (typeof request.cursor === 'string' && request.cursor.trim().length > 0) {
-      const decoded = decodeCursor(request.cursor);
-      if (
-        decoded.deviceId !== deviceId ||
-        decoded.tool !== GET_CHILDREN_TOOL_NAME ||
-        decoded.filtersHash !== filtersHash
-      ) {
-        throw new Error(
-          'Cursor does not match this request context. Restart pagination without cursor.',
-        );
-      }
-      offset = decoded.offset;
-    }
-
-    const children = node.childIds
+    const children = getVisibleChildIds(state, node, noHost)
       .map((childId) => state.nodesById.get(childId))
       .filter((child): child is ReactNodeRecord => Boolean(child));
-    const safeOffset = Math.max(0, Math.min(offset, children.length));
-    const end = Math.min(safeOffset + limit, children.length);
-    const items = children
-      .slice(safeOffset, end)
-      .map((child) => ensureNodeSummaryForState(state, child));
-    const hasMore = end < children.length;
-    const nextCursor = hasMore
-      ? encodeCursor({
-          v: 1,
-          tool: GET_CHILDREN_TOOL_NAME,
-          deviceId,
-          offset: end,
-          filtersHash,
-        })
-      : undefined;
+
+    const { items, page } = paginateReactList({
+      deviceId,
+      tool: GET_CHILDREN_TOOL_NAME,
+      filters: { nodeId, noHost },
+      limit: request.limit,
+      cursor: request.cursor,
+      items: children,
+    });
 
     return {
-      items,
-      page: {
-        limit,
-        hasMore,
-        ...(nextCursor ? { nextCursor } : {}),
+      items: items.map((child) =>
+        ensureNodeSummaryForState(state, child, {
+          parentId: nodeId,
+          childIds: getVisibleChildIds(state, child, noHost),
+        }),
+      ),
+      page,
+    };
+  };
+
+  const getErrors = (deviceId: string, rawRequest: unknown): ReactGetErrorsResult => {
+    const request = getRecord(rawRequest) || {};
+    const state = getOrCreateState(deviceId);
+    const rootId =
+      request.root !== undefined ? resolveNodeId(state, request.root, 'root') : undefined;
+
+    const affected = getSearchCandidates(state, rootId)
+      .filter((node) => (node.errorCount ?? 0) > 0 || (node.warningCount ?? 0) > 0)
+      .sort(
+        (a, b) =>
+          (b.errorCount ?? 0) - (a.errorCount ?? 0) ||
+          (b.warningCount ?? 0) - (a.warningCount ?? 0) ||
+          a.nodeId - b.nodeId,
+      );
+
+    const { items, totalCount, page } = paginateReactList({
+      deviceId,
+      tool: GET_ERRORS_TOOL_NAME,
+      filters: { rootId },
+      limit: request.limit,
+      cursor: request.cursor,
+      items: affected,
+    });
+
+    return {
+      items: items.map((node) => ensureNodeSummaryForState(state, node)),
+      totalCount,
+      summary: {
+        nodeCount: affected.length,
+        totalErrors: affected.reduce((total, node) => total + (node.errorCount ?? 0), 0),
+        totalWarnings: affected.reduce((total, node) => total + (node.warningCount ?? 0), 0),
       },
+      page,
     };
   };
 
@@ -1296,6 +1438,7 @@ export const createReactTreeStore = (options?: {
     const node = ensureNodeExists(state, nodeId);
     const sections = normalizeComponentSections(request.include);
     const valueDepth = normalizeComponentValueDepth(request.valueDepth);
+    const maxValueLength = normalizeMaxValueLength(request.maxValueLength);
     const inspected = await getInspectedRecord(state, nodeId, sections);
 
     if (!inspected) {
@@ -1320,7 +1463,7 @@ export const createReactTreeStore = (options?: {
         continue;
       }
 
-      result[section] = createSerializableSnapshot(value, valueDepth);
+      result[section] = createSerializableSnapshot(value, valueDepth, maxValueLength);
     }
 
     if (unavailable.length === sections.length) {
@@ -1415,53 +1558,29 @@ export const createReactTreeStore = (options?: {
     }
 
     const scopedValue = path.length > 0 ? getValueAtPath(sourceValue, path) : sourceValue;
-    const limit = normalizeLimit(request.limit);
-    const filtersHash = hashFilters({ nodeId, kind, path });
+    const maxValueLength = normalizeMaxValueLength(request.maxValueLength);
     const toolName =
       kind === 'props'
         ? GET_PROPS_TOOL_NAME
         : kind === 'state'
           ? GET_STATE_TOOL_NAME
           : GET_HOOKS_TOOL_NAME;
-    let offset = 0;
-    if (typeof request.cursor === 'string' && request.cursor.trim().length > 0) {
-      const decoded = decodeCursor(request.cursor);
-      if (
-        decoded.deviceId !== deviceId ||
-        decoded.tool !== toolName ||
-        decoded.filtersHash !== filtersHash
-      ) {
-        throw new Error(
-          'Cursor does not match this request context. Restart pagination without cursor.',
-        );
-      }
-      offset = decoded.offset;
-    }
 
     const entries =
-      kind === 'hooks' ? toHookEntries(scopedValue) : toInspectableEntries(scopedValue);
-    const safeOffset = Math.max(0, Math.min(offset, entries.length));
-    const end = Math.min(safeOffset + limit, entries.length);
-    const items = entries.slice(safeOffset, end);
-    const hasMore = end < entries.length;
-    const nextCursor = hasMore
-      ? encodeCursor({
-          v: 1,
-          tool: toolName,
-          deviceId,
-          offset: end,
-          filtersHash,
-        })
-      : undefined;
+      kind === 'hooks'
+        ? toHookEntries(scopedValue, maxValueLength)
+        : toInspectableEntries(scopedValue, maxValueLength);
 
-    return {
-      items,
-      page: {
-        limit,
-        hasMore,
-        ...(nextCursor ? { nextCursor } : {}),
-      },
-    };
+    const { items, page } = paginateReactList({
+      deviceId,
+      tool: toolName,
+      filters: { nodeId, kind, path, maxValueLength },
+      limit: request.limit,
+      cursor: request.cursor,
+      items: entries,
+    });
+
+    return { items, page };
   };
 
   const getRenderData = async (
@@ -1471,52 +1590,25 @@ export const createReactTreeStore = (options?: {
     const request = getRecord(rawRequest) || {};
     const rootId = normalizeNonNegativeInteger(request.rootId, 'rootId');
     const commitIndex = normalizeNonNegativeInteger(request.commitIndex, 'commitIndex');
-    const limit = normalizeLimit(request.limit);
     const sort = normalizeRenderDataSort(request.sort);
     const slowRenderThresholdMs = normalizeSlowRenderThreshold(request.slowRenderThresholdMs);
 
     const state = getOrCreateState(deviceId);
     const bridge = await ensureProfilingBridge(state);
-    const commitData = bridge.getCommitData(rootId, commitIndex) as ReactCommitData;
-    const fiberActualDurations = commitData.fiberActualDurations ?? new Map<number, number>();
-    const fiberSelfDurations = commitData.fiberSelfDurations ?? new Map<number, number>();
-    const changeDescriptions = commitData.changeDescriptions ?? new Map();
-
-    const filtersHash = hashFilters({
-      rootId,
-      commitIndex,
-      sort,
-      slowRenderThresholdMs,
-    });
-    let offset = 0;
-    if (typeof request.cursor === 'string' && request.cursor.trim().length > 0) {
-      const decoded = decodeCursor(request.cursor) as ReactProfilingCursorPayload;
-      if (
-        decoded.deviceId !== deviceId ||
-        decoded.tool !== GET_RENDER_DATA_TOOL_NAME ||
-        decoded.filtersHash !== filtersHash
-      ) {
-        throw new Error(
-          'Cursor does not match this request context. Restart pagination without cursor.',
-        );
-      }
-      offset = decoded.offset;
-    }
+    const commitData = bridge.getCommitData(rootId, commitIndex);
 
     const allItems: Array<ReactRenderDataItem & { sortName: string }> = [];
-    fiberActualDurations.forEach((actualDurationMs, fiberId) => {
-      const selfDurationMs = fiberSelfDurations.get(fiberId) ?? 0;
-      const rawChangeDescription =
-        changeDescriptions instanceof Map ? changeDescriptions.get(fiberId) : null;
-      const changeTypeHints = rawChangeDescription ? toChangeTypeHints(rawChangeDescription) : [];
-      const changedKeys = toChangedKeys(rawChangeDescription);
-      const displayName = state.nodesById.get(fiberId)?.displayName ?? `Fiber ${fiberId}`;
+    commitData.fiberActualDurations.forEach((actualDurationMs, fiberId) => {
+      const changeDescription = commitData.changeDescriptions?.get(fiberId) ?? null;
+      const changeTypeHints = changeDescription ? toChangeTypeHints(changeDescription) : [];
+      const changedKeys = toChangedKeys(changeDescription);
+      const displayName = resolveFiberDisplayName(state, fiberId);
       allItems.push({
         fiberId,
         displayName,
-        actualDurationMs: Number(actualDurationMs) || 0,
-        selfDurationMs: Number(selfDurationMs) || 0,
-        isSlow: (Number(actualDurationMs) || 0) > slowRenderThresholdMs,
+        actualDurationMs,
+        selfDurationMs: commitData.fiberSelfDurations.get(fiberId) ?? 0,
+        isSlow: actualDurationMs > slowRenderThresholdMs,
         ...(changeTypeHints.length > 0 ? { changeTypeHints } : {}),
         ...(changedKeys ? { changedKeys } : {}),
         sortName: displayName.toLowerCase(),
@@ -1529,47 +1621,267 @@ export const createReactTreeStore = (options?: {
       allItems.sort((a, b) => b.actualDurationMs - a.actualDurationMs || a.fiberId - b.fiberId);
     }
 
-    const safeOffset = Math.max(0, Math.min(offset, allItems.length));
-    const end = Math.min(safeOffset + limit, allItems.length);
-    const pageItems = allItems.slice(safeOffset, end).map((item) => {
-      const { sortName, ...rest } = item;
-      void sortName;
-      return rest;
+    const { items, page } = paginateReactList({
+      deviceId,
+      tool: GET_RENDER_DATA_TOOL_NAME,
+      filters: { rootId, commitIndex, sort, slowRenderThresholdMs },
+      limit: request.limit,
+      cursor: request.cursor,
+      items: allItems,
     });
-    const hasMore = end < allItems.length;
-    const nextCursor = hasMore
-      ? encodeCursor({
-          v: 1,
-          tool: GET_RENDER_DATA_TOOL_NAME,
-          deviceId,
-          offset: end,
-          filtersHash,
-        })
-      : undefined;
 
     return {
       commit: {
         rootId,
         commitIndex,
-        durationMs: Number(commitData.duration) || 0,
-        effectDurationMs: commitData.effectDuration ?? null,
-        passiveEffectDurationMs: commitData.passiveEffectDuration ?? null,
-        timestampMs: Number(commitData.timestamp) || 0,
-        priorityLevel: commitData.priorityLevel ?? null,
+        durationMs: commitData.duration,
+        effectDurationMs: commitData.effectDuration,
+        passiveEffectDurationMs: commitData.passiveEffectDuration,
+        timestampMs: commitData.timestamp,
+        priorityLevel: commitData.priorityLevel,
       },
       summary: {
         renderedFiberCount: allItems.length,
         slowFiberCount: allItems.filter((item) => item.isSlow).length,
         slowRenderThresholdMs,
-        updaterCount: Array.isArray(commitData.updaters) ? commitData.updaters.length : 0,
+        updaterCount: commitData.updaters?.length ?? 0,
         hasChangeDescriptions: commitData.changeDescriptions !== null,
       },
-      items: pageItems,
-      page: {
-        limit,
-        hasMore,
-        ...(nextCursor ? { nextCursor } : {}),
+      items: items.map(({ sortName, ...item }) => {
+        void sortName;
+        return item;
+      }),
+      page,
+    };
+  };
+
+  /**
+   * Every commit of the session, in root then commit order, with the roots
+   * whose data arrived from more than one renderer left out.
+   *
+   * `getCommitData` refuses those roots outright, because reading one commit
+   * from an ambiguous root would quietly hand back the wrong renderer's numbers.
+   * A whole-session view cannot refuse for the same reason without losing every
+   * unambiguous root alongside it, so it drops them and says so in `skippedRootIds`.
+   */
+  const collectSessionCommits = async (
+    deviceId: string,
+    rootFilter: number | undefined,
+  ): Promise<{
+    roots: number[];
+    skippedRootIds: number[];
+    commits: Array<{ rootId: number; commitIndex: number; commit: ReactCommitData }>;
+  }> => {
+    const state = getOrCreateState(deviceId);
+    const bridge = await ensureProfilingBridge(state);
+    const snapshot = bridge.getProfilingDataSnapshot();
+
+    if (snapshot.dataForRoots.size === 0) {
+      throw new Error(
+        'No React profiling data available. Run startProfiling and stopProfiling first.',
+      );
+    }
+
+    const roots: number[] = [];
+    const skippedRootIds: number[] = [];
+    const commits: Array<{ rootId: number; commitIndex: number; commit: ReactCommitData }> = [];
+
+    for (const rootId of [...snapshot.dataForRoots.keys()].sort((a, b) => a - b)) {
+      if (rootFilter !== undefined && rootId !== rootFilter) {
+        continue;
+      }
+
+      if (snapshot.conflictingRootIds.has(rootId)) {
+        skippedRootIds.push(rootId);
+        continue;
+      }
+
+      roots.push(rootId);
+      const commitData = snapshot.dataForRoots.get(rootId)?.commitData ?? [];
+      commitData.forEach((commit, commitIndex) => {
+        commits.push({ rootId, commitIndex, commit });
+      });
+    }
+
+    if (rootFilter !== undefined && roots.length === 0 && skippedRootIds.length === 0) {
+      throw new Error(`No React profiling data available for root "${rootFilter}".`);
+    }
+
+    return { roots, skippedRootIds, commits };
+  };
+
+  const getProfileTimeline = async (
+    deviceId: string,
+    rawRequest: unknown,
+  ): Promise<ReactGetProfileTimelineResult> => {
+    const request = getRecord(rawRequest) || {};
+    const rootId =
+      request.rootId !== undefined
+        ? normalizeNonNegativeInteger(request.rootId, 'rootId')
+        : undefined;
+    const sort: ReactProfileTimelineSort =
+      request.sort === 'duration-desc' ? 'duration-desc' : 'timeline';
+    const slowRenderThresholdMs = normalizeSlowRenderThreshold(request.slowRenderThresholdMs);
+
+    const session = await collectSessionCommits(deviceId, rootId);
+
+    const allItems: ReactProfileTimelineItem[] = session.commits.map(
+      ({ rootId: commitRootId, commitIndex, commit }) => ({
+        rootId: commitRootId,
+        commitIndex,
+        durationMs: commit.duration,
+        timestampMs: commit.timestamp,
+        renderedFiberCount: commit.fiberActualDurations.size,
+        isSlow: commit.duration > slowRenderThresholdMs,
+      }),
+    );
+
+    if (sort === 'duration-desc') {
+      allItems.sort(
+        (a, b) =>
+          b.durationMs - a.durationMs || a.rootId - b.rootId || a.commitIndex - b.commitIndex,
+      );
+    }
+
+    const { items, totalCount, page } = paginateReactList({
+      deviceId,
+      tool: GET_PROFILE_TIMELINE_TOOL_NAME,
+      filters: { rootId, sort, slowRenderThresholdMs },
+      limit: request.limit,
+      cursor: request.cursor,
+      items: allItems,
+    });
+
+    return {
+      items,
+      totalCount,
+      summary: {
+        roots: session.roots,
+        totalCommits: allItems.length,
+        totalRenderDurationMs: allItems.reduce((total, item) => total + item.durationMs, 0),
+        slowCommitCount: allItems.filter((item) => item.isSlow).length,
+        slowRenderThresholdMs,
+        ...(session.skippedRootIds.length > 0 ? { skippedRootIds: session.skippedRootIds } : {}),
       },
+      page,
+    };
+  };
+
+  const getComponentRenders = async (
+    deviceId: string,
+    rawRequest: unknown,
+  ): Promise<ReactGetComponentRendersResult> => {
+    const request = getRecord(rawRequest) || {};
+    const state = getOrCreateState(deviceId);
+    const rootId =
+      request.rootId !== undefined
+        ? normalizeNonNegativeInteger(request.rootId, 'rootId')
+        : undefined;
+    const requestedFiber = request.id !== undefined ? request.id : request.fiberId;
+    const fiberId =
+      requestedFiber !== undefined
+        ? resolveNodeId(state, requestedFiber, request.id !== undefined ? 'id' : 'fiberId')
+        : undefined;
+    const sort = normalizeComponentRendersSort(request.sort);
+    const slowRenderThresholdMs = normalizeSlowRenderThreshold(request.slowRenderThresholdMs);
+
+    const session = await collectSessionCommits(deviceId, rootId);
+
+    // Keyed by root as well as fiber: fiber IDs are only unique within a
+    // renderer, so merging two roots on ID alone would invent a component that
+    // rendered in both.
+    const aggregates = new Map<string, ReactComponentRenderItem & { sortName: string }>();
+
+    for (const { rootId: commitRootId, commitIndex, commit } of session.commits) {
+      commit.fiberActualDurations.forEach((actualDurationMs, currentFiberId) => {
+        if (fiberId !== undefined && currentFiberId !== fiberId) {
+          return;
+        }
+
+        const key = `${commitRootId}:${currentFiberId}`;
+        let aggregate = aggregates.get(key);
+
+        if (!aggregate) {
+          const displayName = resolveFiberDisplayName(state, currentFiberId);
+          aggregate = {
+            rootId: commitRootId,
+            fiberId: currentFiberId,
+            ...(state.labelByNodeId.has(currentFiberId)
+              ? { label: state.labelByNodeId.get(currentFiberId)! }
+              : {}),
+            displayName,
+            renderCount: 0,
+            totalDurationMs: 0,
+            avgDurationMs: 0,
+            maxDurationMs: 0,
+            totalSelfDurationMs: 0,
+            slowRenderCount: 0,
+            slowestCommitIndex: commitIndex,
+            sortName: displayName.toLowerCase(),
+          };
+          aggregates.set(key, aggregate);
+        }
+
+        aggregate.renderCount += 1;
+        aggregate.totalDurationMs += actualDurationMs;
+        aggregate.totalSelfDurationMs += commit.fiberSelfDurations.get(currentFiberId) ?? 0;
+        if (actualDurationMs > aggregate.maxDurationMs) {
+          aggregate.maxDurationMs = actualDurationMs;
+          aggregate.slowestCommitIndex = commitIndex;
+        }
+        if (actualDurationMs > slowRenderThresholdMs) {
+          aggregate.slowRenderCount += 1;
+        }
+
+        const changeDescription = commit.changeDescriptions?.get(currentFiberId);
+        if (changeDescription) {
+          aggregate.changeTypeHints = mergeStringSets(
+            aggregate.changeTypeHints,
+            toChangeTypeHints(changeDescription),
+          );
+          aggregate.changedKeys = mergeChangedKeys(
+            aggregate.changedKeys,
+            toChangedKeys(changeDescription),
+          );
+        }
+      });
+    }
+
+    const allItems = [...aggregates.values()];
+    for (const aggregate of allItems) {
+      // Rounded because it is derived: 7/3 serialises to 2.3333333333333335,
+      // which is seventeen characters of noise per row at microsecond precision
+      // nothing measured here has.
+      aggregate.avgDurationMs = roundMs(aggregate.totalDurationMs / aggregate.renderCount);
+    }
+    allItems.sort(compareComponentRenders(sort));
+
+    const { items, totalCount, page } = paginateReactList({
+      deviceId,
+      tool: GET_COMPONENT_RENDERS_TOOL_NAME,
+      filters: { rootId, fiberId, sort, slowRenderThresholdMs },
+      limit: request.limit,
+      cursor: request.cursor,
+      items: allItems,
+    });
+
+    return {
+      items: items.map(({ sortName, ...item }) => {
+        void sortName;
+        return item;
+      }),
+      totalCount,
+      summary: {
+        roots: session.roots,
+        totalCommits: session.commits.length,
+        renderedFiberCount: allItems.length,
+        slowRenderThresholdMs,
+        hasChangeDescriptions: session.commits.some(
+          ({ commit }) => commit.changeDescriptions !== null,
+        ),
+        ...(session.skippedRootIds.length > 0 ? { skippedRootIds: session.skippedRootIds } : {}),
+      },
+      page,
     };
   };
 
@@ -1596,5 +1908,8 @@ export const createReactTreeStore = (options?: {
     getHooks: (deviceId: string, rawRequest: unknown): Promise<ReactGetInspectableResult> => {
       return getInspectableEntries(deviceId, rawRequest, 'hooks');
     },
+    getErrors,
+    getProfileTimeline,
+    getComponentRenders,
   };
 };
