@@ -1,14 +1,14 @@
 import WebSocket from 'ws';
 import {
   AGENT_PLUGIN_ID,
-  DEFAULT_AGENT_TARGET_PLATFORM,
+  DEFAULT_AGENT_TARGET_INTEGRATION,
   getUnsupportedDomains,
 } from '@rozenite/agent-shared';
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
 import type {
   AgentSessionInfo,
   AgentSessionReadyMessage,
   AgentSessionStatus,
-  AgentTargetPlatform,
   MetroTarget,
   UnsupportedDomainInfo,
 } from '@rozenite/agent-shared';
@@ -108,15 +108,15 @@ export const createAgentSession = (options: {
   host: string;
   port: number;
   target: MetroTarget;
-  platform?: AgentTargetPlatform;
+  integration?: RozeniteIntegration;
   resolveTarget?: (deviceId: string) => Promise<MetroTarget>;
   cliVersion?: string;
   metroVersion?: string;
   onTerminated?: (sessionId: string) => void;
 }) => {
   let target = options.target;
-  const platform = options.platform ?? DEFAULT_AGENT_TARGET_PLATFORM;
-  const capabilityProfile = resolveCapabilityProfile(platform);
+  const integration = options.integration ?? DEFAULT_AGENT_TARGET_INTEGRATION;
+  const capabilityProfile = resolveCapabilityProfile(integration);
   const handler = createAgentMessageHandler();
   const artifacts = createAgentArtifacts(options.projectRoot, options.target.id);
   const tap = createTapEmitter();
@@ -913,7 +913,7 @@ export const createAgentSession = (options: {
     appId: target.appId,
     pageId: target.pageId,
     status,
-    platform,
+    integration,
     createdAt,
     lastActivityAt,
     ...(connectedAt ? { connectedAt } : {}),
@@ -929,13 +929,14 @@ export const createAgentSession = (options: {
     ];
   };
 
-  const getPlatform = (): AgentTargetPlatform => platform;
+  const getIntegration = (): RozeniteIntegration => integration;
 
   /**
    * The gaps in this target's capability profile, flattened for the
    * client. Reported alongside the tool list rather than instead of it:
    * a domain that is silently missing reads to an agent as a typo, while
-   * one reported as unavailable with a reason reads as a platform limit.
+   * one reported as unavailable with a reason reads as an integration
+   * limit.
    */
   const getUnsupportedDomainInfo = (): UnsupportedDomainInfo[] =>
     getUnsupportedDomains(capabilityProfile);
@@ -1066,7 +1067,7 @@ export const createAgentSession = (options: {
     stop,
     getInfo,
     getTools,
-    getPlatform,
+    getIntegration,
     getUnsupportedDomains: getUnsupportedDomainInfo,
     callTool,
     subscribeTap,

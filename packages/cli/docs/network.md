@@ -2,7 +2,7 @@
 name: network
 description: Record HTTP/HTTPS traffic, then list requests, inspect request/response details and bodies, and analyze timing.
 domain: network
-platforms: react-native
+integrations: react-native
 ---
 
 Record HTTP/HTTPS traffic, then list requests, inspect request and response details and bodies, and analyze timing, similar to the browser DevTools Network panel.

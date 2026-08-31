@@ -19,6 +19,7 @@ export const registerSkillsCommand = (program: Command): void => {
         id: doc.id,
         description: doc.description,
         ...(doc.domain ? { domain: doc.domain } : {}),
+        ...(doc.integrations ? { integrations: doc.integrations } : {}),
       }));
 
       const json = options.pretty ? JSON.stringify(payload, null, 2) : JSON.stringify(payload);

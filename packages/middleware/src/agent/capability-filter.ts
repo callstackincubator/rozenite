@@ -2,8 +2,8 @@
  * Applies a capability profile to a local domain service.
  *
  * Deliberately a wrapper rather than a branch inside each service: the
- * four domain services stay ignorant of platforms entirely, and there is
- * exactly one place where "this target cannot do that" is decided.
+ * four domain services stay ignorant of integrations entirely, and there
+ * is exactly one place where "this target cannot do that" is decided.
  */
 import {
   getUnsupportedToolReason,
@@ -17,7 +17,7 @@ export class UnsupportedToolError extends Error {
     const reason = getUnsupportedToolReason(profile, domainId, toolName);
 
     super(
-      `Tool "${toolName}" is not supported on this ${profile.platform} target.` +
+      `Tool "${toolName}" is not supported on this ${profile.integration} target.` +
         (reason ? ` ${reason}` : ''),
     );
     this.name = 'UnsupportedToolError';
@@ -28,9 +28,9 @@ export const withCapabilityFilter = (
   service: LocalAgentToolService,
   profile: CapabilityProfile,
 ): LocalAgentToolService => {
+  const declaredTools = service.getTools();
   const allowed = new Set(
-    service
-      .getTools()
+    declaredTools
       .filter((tool) => isToolSupported(profile, service.domainId, tool.name))
       .map((tool) => tool.name),
   );
@@ -38,7 +38,7 @@ export const withCapabilityFilter = (
   // Nothing was filtered out, so hand back the service untouched rather
   // than wrapping it. Keeps the React Native path allocation-identical to
   // what it was before profiles existed.
-  if (allowed.size === service.getTools().length) {
+  if (allowed.size === declaredTools.length) {
     return service;
   }
 

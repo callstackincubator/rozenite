@@ -649,7 +649,12 @@ export const createPerformanceDomainService = (deps: {
     const writer = await deps.createArtifactWriter('traces', 'json', getString(input.nameHint));
     let pendingWrites = Promise.resolve();
     let wroteHeader = false;
-    let isFirstEvent = true;
+    // Counts events actually written, not events announced. A device can
+    // emit Tracing.dataCollected with an absent or non-array `value` --
+    // exactly what a runtime whose Tracing domain only shares Chrome's
+    // NAME would do -- and counting the event rather than its contents
+    // would let that through as a successful capture of nothing.
+    let writtenEventCount = 0;
     let traceWindow: { min: number; max: number } | null = null;
     const tracingComplete = createCDPEventWaiter(
       deps.subscribeToCDPEvent,
@@ -662,12 +667,15 @@ export const createPerformanceDomainService = (deps: {
     const unsubscribeDataCollected = deps.subscribeToCDPEvent('Tracing.dataCollected', (params) => {
       const values = Array.isArray(params.value) ? params.value : [];
       pendingWrites = pendingWrites.then(async () => {
-        if (!wroteHeader) {
-          await writer.write('{"traceEvents":[');
-          wroteHeader = true;
-        }
-
         for (const item of values) {
+          // Written lazily, per event rather than per event batch, so an
+          // empty batch leaves the artifact untouched instead of opening
+          // one that the guard below will then have to abort.
+          if (!wroteHeader) {
+            await writer.write('{"traceEvents":[');
+            wroteHeader = true;
+          }
+
           if (typeof item?.ts === 'number' && Number.isFinite(item.ts)) {
             traceWindow = traceWindow
               ? {
@@ -676,11 +684,11 @@ export const createPerformanceDomainService = (deps: {
                 }
               : { min: item.ts, max: item.ts };
           }
-          if (!isFirstEvent) {
+          if (writtenEventCount > 0) {
             await writer.write(',');
           }
           await writer.write(JSON.stringify(item));
-          isFirstEvent = false;
+          writtenEventCount += 1;
         }
       });
     });
@@ -689,15 +697,15 @@ export const createPerformanceDomainService = (deps: {
       await deps.sendCommand('Tracing.end');
       await tracingComplete.promise;
       await pendingWrites;
-      if (!wroteHeader) {
-        // The device reported the trace complete without ever sending a
-        // Tracing.dataCollected event. Writing the empty-but-valid
-        // artifact this used to produce hands back a file that looks
-        // like a successful capture and contains nothing, which is the
-        // hardest kind of failure for an agent to notice.
+      if (writtenEventCount === 0) {
+        // The device reported the trace complete without handing over a
+        // single event. Writing the empty-but-valid artifact this used
+        // to produce hands back a file that looks like a successful
+        // capture and contains nothing, which is the hardest kind of
+        // failure for an agent to notice.
         throw new Error(
-          'The trace completed without a single Tracing.dataCollected event, so no trace ' +
-            'was captured. This target does not appear to implement Chrome-style tracing.',
+          'The trace completed without a single trace event, so nothing was captured. This ' +
+            'target does not appear to implement Chrome-style tracing.',
         );
       }
       await writer.write(

@@ -1,5 +1,5 @@
 /**
- * Per-platform capability profiles for the built-in agent domains.
+ * Per-integration capability profiles for the built-in agent domains.
  *
  * Verified against `lynx-family/lynx` and `lynx-family/primjs` rather
  * than inferred: `LynxDevToolNG::RegisterAgents` is the list of CDP
@@ -18,11 +18,8 @@
  * `@rozenite/lynx-dev`'s `translate-device-frame.ts`). Leave that as a
  * future refinement; do not build the table on it.
  */
-import {
-  createEmptyCapabilityProfile,
-  type AgentTargetPlatform,
-  type CapabilityProfile,
-} from '@rozenite/agent-shared';
+import { createEmptyCapabilityProfile, type CapabilityProfile } from '@rozenite/agent-shared';
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
 
 const HEAP_SAMPLING_REASON =
   'Lynx forwards HeapProfiler to the JS engine, and PrimJS implements only ' +
@@ -30,14 +27,14 @@ const HEAP_SAMPLING_REASON =
   'sampling would appear to start and then collect nothing.';
 
 /**
- * React Native is the platform every built-in domain was written
+ * React Native is the integration every built-in domain was written
  * against, so it declares no gaps and every lookup short-circuits to
  * "supported".
  */
 const REACT_NATIVE_PROFILE: CapabilityProfile = createEmptyCapabilityProfile('react-native');
 
 const LYNX_PROFILE: CapabilityProfile = {
-  platform: 'lynx',
+  integration: 'lynx',
   domains: {
     network: {
       availability: 'unsupported',
@@ -75,8 +72,29 @@ const LYNX_PROFILE: CapabilityProfile = {
   },
 };
 
-export const resolveCapabilityProfile = (platform: AgentTargetPlatform): CapabilityProfile => {
-  return platform === 'lynx' ? LYNX_PROFILE : REACT_NATIVE_PROFILE;
+/**
+ * Accepts the full `RozeniteIntegration` union, not just the two a dev
+ * server can host. Sessions resolve from the host integration today, so
+ * only `react-native` and `lynx` are reachable; taking the wider type
+ * means the day a per-target signal lands here, the `-web` variants are
+ * already answered rather than silently falling through to the wrong
+ * profile.
+ */
+export const resolveCapabilityProfile = (integration: RozeniteIntegration): CapabilityProfile => {
+  switch (integration) {
+    case 'lynx':
+      return LYNX_PROFILE;
+    // A web target is a browser, and a browser backs Chrome's CDP
+    // surface in full -- including the Network, Tracing and HeapProfiler
+    // domains Lynx's native runtime does not. `lynx-web` therefore gets
+    // the empty profile and NOT LYNX_PROFILE: those gaps are PrimJS's,
+    // and PrimJS is not what runs there.
+    case 'react-native-web':
+    case 'lynx-web':
+      return createEmptyCapabilityProfile(integration);
+    case 'react-native':
+      return REACT_NATIVE_PROFILE;
+  }
 };
 
 export { LYNX_PROFILE, REACT_NATIVE_PROFILE };

@@ -459,6 +459,9 @@ importers:
       '@rozenite/agent-shared':
         specifier: workspace:*
         version: link:../agent-shared
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -469,6 +472,9 @@ importers:
 
   packages/agent-shared:
     dependencies:
+      '@rozenite/tools':
+        specifier: workspace:*
+        version: link:../tools
       tslib:
         specifier: ^2.3.0
         version: 2.8.1

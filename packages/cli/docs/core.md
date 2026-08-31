@@ -29,7 +29,7 @@ does not replace that setup.
 The built-in domains are `console`, `network`, `react`, `performance`, and
 `memory`. All five are available on a React Native target.
 
-They are not all available on every platform. `rozenite agent domains
+They are not all available on every integration. `rozenite agent domains
 --session <sessionId>` reports an `availability` for each one:
 
 - `supported` — usable as documented.
@@ -44,6 +44,8 @@ Read that column before planning work against a built-in domain, and take
 the `fallback` when one is offered rather than working around the gap. On
 Lynx targets specifically, `network`, `react` and `performance` are
 unsupported and `memory` is degraded — see `npx rozenite skills show lynx`.
+`npx rozenite skills list` reports an `integrations` field on the docs
+that are integration-specific.
 
 ## Plugin domains
 

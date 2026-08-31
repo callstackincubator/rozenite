@@ -1,14 +1,14 @@
 import {
   DEFAULT_AGENT_HOST,
   DEFAULT_AGENT_PORT,
-  DEFAULT_AGENT_TARGET_PLATFORM,
+  DEFAULT_AGENT_TARGET_INTEGRATION,
   type AgentServerInfo,
   type AgentSessionInfo,
-  type AgentTargetPlatform,
   type CreateAgentSessionRequest,
   type DevToolsPluginMessage,
   type GetAgentSessionToolsResponse,
 } from '@rozenite/agent-shared';
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
 import { getMetroTargets, resolveMetroTarget } from './metro-discovery.js';
 import { createAgentSession, type AgentSession } from './session.js';
 import type { TapListener } from './tap.js';
@@ -20,11 +20,11 @@ export const createAgentSessionManager = (options: {
   host?: string;
   port?: number;
   metroVersion?: string;
-  /** The dev server's platform; the default for targets that declare none. */
-  platform?: AgentTargetPlatform;
+  /** The integration this dev server hosts. See `RozeniteConfig.integration`. */
+  integration?: RozeniteIntegration;
 }) => {
   const metroVersion = options.metroVersion;
-  const defaultPlatform = options.platform ?? DEFAULT_AGENT_TARGET_PLATFORM;
+  const integration = options.integration ?? DEFAULT_AGENT_TARGET_INTEGRATION;
   const sessions = new Map<string, AgentSession>();
   let currentHost = options.host ?? DEFAULT_AGENT_HOST;
   let currentPort = options.port ?? DEFAULT_AGENT_PORT;
@@ -86,10 +86,7 @@ export const createAgentSessionManager = (options: {
       host: currentHost,
       port: currentPort,
       target,
-      // A target that declares its own platform wins: one dev server can
-      // in principle front more than one kind of runtime, and the server
-      // default would describe those wrongly.
-      platform: target.platform ?? defaultPlatform,
+      integration,
       cliVersion: request.cliVersion,
       metroVersion,
       resolveTarget: (deviceId) => resolveMetroTarget(currentHost, currentPort, deviceId),
@@ -149,7 +146,7 @@ export const createAgentSessionManager = (options: {
 
     return {
       tools: session.getTools(),
-      platform: session.getPlatform(),
+      integration: session.getIntegration(),
       unsupported: session.getUnsupportedDomains(),
     };
   };

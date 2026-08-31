@@ -2,7 +2,6 @@
 '@rozenite/agent-shared': minor
 '@rozenite/middleware': minor
 '@rozenite/agent-sdk': minor
-'@rozenite/lynx-dev': minor
 'rozenite': minor
 ---
 
@@ -19,7 +18,8 @@ with a raw protocol code, `react` returned nothing, `performance` finalised a
 trace artifact containing zero events, and heap sampling appeared to start and
 collected nothing.
 
-Each session now resolves a capability profile from its target's platform.
+Each session now resolves a capability profile from the integration its dev
+server hosts.
 Unsupported tools are never registered, so `list-tools` is honest; unavailable
 domains stay visible in `rozenite agent domains` with an `availability` column, a
 reason, and — for `network` — the `@rozenite/network-activity-plugin` domain to
@@ -29,12 +29,13 @@ of a dead end. On Lynx that means `console`, plugin domains, app tools and
 `memory.takeHeapSnapshot` are reported supported, `memory` is degraded, and
 `network`, `react` and `performance` are unavailable with reasons.
 
-Three fixes to the CDP command channel apply to every platform, not just Lynx. A
+Three fixes to the CDP command channel apply to every integration, not just
+Lynx. A
 device error now names the method it refused instead of arriving as a stringified
 error object; waits on a device event are bounded, so a capture whose completion
 event never arrives fails with a diagnosis instead of hanging forever; and
-`stopTrace` refuses to hand back an empty trace artifact rather than reporting a
-successful capture of nothing.
+`stopTrace` refuses to hand back a trace artifact containing no events rather
+than reporting a successful capture of nothing.
 
 Both new fields on the session tools response are optional, so a CLI and a Metro
 on different versions keep working together — an older server simply reports no

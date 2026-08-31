@@ -10,6 +10,7 @@ import {
   shapePaginatedRows,
   shapeToolResult,
   type AgentToolPagination,
+  type ToolAvailability,
 } from '@rozenite/agent-shared';
 import { printOutput } from './output.js';
 import { formatAgentCommand, paginateRows } from './output-shaping.js';
@@ -73,7 +74,7 @@ type ToolListRow = {
 type DomainListRow = {
   id: string;
   kind: 'static' | 'plugin';
-  availability: string;
+  availability: ToolAvailability;
   fallback?: string;
   pluginId?: string;
   slug?: string;

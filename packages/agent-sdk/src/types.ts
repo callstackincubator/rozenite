@@ -22,6 +22,7 @@ import type {
   SendAgentSessionTapMessageResponse,
   TapEvent,
   ToolAvailability,
+  UnsupportedToolInfo,
 } from '@rozenite/agent-shared';
 
 export interface DomainDefinition {
@@ -40,6 +41,12 @@ export interface DomainDefinition {
   availability?: ToolAvailability;
   /** Why the domain is unavailable or degraded, written for an agent. */
   unavailableReason?: string;
+  /**
+   * The tools this target cannot back, when the domain as a whole is
+   * still usable. Each carries its own reason: two gaps in one domain
+   * need not share a cause.
+   */
+  unavailableTools?: UnsupportedToolInfo[];
   /** A domain token to try instead. */
   fallback?: string;
 }

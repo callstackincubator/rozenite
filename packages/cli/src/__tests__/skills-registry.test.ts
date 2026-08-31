@@ -51,6 +51,18 @@ describe('SkillsRegistry', () => {
     }
   });
 
+  // The field was previously parsed into a doc and then printed by
+  // nothing, which made every integration-specific doc read as
+  // universal.
+  it('parses the integrations frontmatter and leaves other docs without it', () => {
+    const registry = new SkillsRegistry();
+
+    expect(registry.get('lynx')?.integrations).toBe('lynx');
+    expect(registry.get('network')?.integrations).toBe('react-native');
+    expect(registry.get('memory')?.integrations).toBe('react-native, lynx');
+    expect(registry.get('core')?.integrations).toBeUndefined();
+  });
+
   it('resolves domain docs by domain token', () => {
     const registry = new SkillsRegistry();
 

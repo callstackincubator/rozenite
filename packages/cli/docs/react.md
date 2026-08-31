@@ -2,7 +2,7 @@
 name: react
 description: Search and traverse the React component tree, read props/state/hooks, and record render timelines via profiling.
 domain: react
-platforms: react-native
+integrations: react-native
 ---
 
 Search and traverse the React component tree, read props, state, and hooks for any node, and record render timelines for performance analysis by starting and stopping profiling, then fetching commit data.

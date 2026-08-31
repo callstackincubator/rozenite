@@ -88,7 +88,26 @@ describe('capability profiles', () => {
 
     expect(network?.tools).toBeUndefined();
     expect(network?.fallback).toBe('@rozenite/network-activity-plugin');
-    expect(memory?.tools).toEqual(['startSampling', 'stopSampling']);
+    expect(memory?.tools?.map((tool) => tool.name)).toEqual(['startSampling', 'stopSampling']);
+  });
+
+  // Each tool carries its own reason rather than the domain borrowing
+  // one of them, so a domain with two unrelated gaps explains each.
+  it('carries a reason on every tool-level gap', () => {
+    const memory = getUnsupportedDomains(LYNX_PROFILE).find((gap) => gap.domain === 'memory');
+
+    expect(memory?.tools?.every((tool) => Boolean(tool.reason))).toBe(true);
+    expect(memory?.reason).toBe('Not supported on lynx targets.');
+  });
+
+  // A web target is a browser, which backs Chrome's CDP surface in full.
+  // The Lynx gaps below are PrimJS's, and PrimJS is not what runs there.
+  it('gives the web integrations an empty profile, Lynx included', () => {
+    expect(getUnsupportedDomains(resolveCapabilityProfile('lynx-web'))).toEqual([]);
+    expect(getUnsupportedDomains(resolveCapabilityProfile('react-native-web'))).toEqual([]);
+    expect(isToolSupported(resolveCapabilityProfile('lynx-web'), 'network', 'listRequests')).toBe(
+      true,
+    );
   });
 });
 

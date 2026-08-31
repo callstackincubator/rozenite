@@ -1,10 +1,10 @@
 import type {
   AgentSessionInfo,
-  AgentTargetPlatform,
   AgentTool,
   AgentToolDescriptor,
   UnsupportedDomainInfo,
 } from '@rozenite/agent-shared';
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
 import { STATIC_DOMAINS } from './constants.js';
 import {
   applyCapabilities,
@@ -12,6 +12,7 @@ import {
   formatUnknownDomainError,
   formatUnsupportedToolError,
   getDomainToolsByDefinition,
+  isToolUnavailable,
   resolveDomainToken,
   resolveDomainTool,
   toAgentDomainTool,
@@ -53,7 +54,7 @@ export const createAgentClient = (options?: AgentClientOptions): AgentClient => 
   const transport = createAgentTransport(options);
 
   const resolveDomainContext = async (input: { sessionId: string; domain: string }) => {
-    const { tools, platform, unsupported } = await transport.getSessionTools(input.sessionId);
+    const { tools, integration, unsupported } = await transport.getSessionTools(input.sessionId);
     const sortedTools = sortTools(tools);
     const knownDomains = getKnownDomains(sortedTools, unsupported);
     const resolvedDomain = resolveDomainToken(input.domain, knownDomains);
@@ -67,7 +68,7 @@ export const createAgentClient = (options?: AgentClientOptions): AgentClient => 
       knownDomains,
       resolvedDomain,
       domainTools,
-      platform,
+      integration,
     };
   };
 
@@ -75,18 +76,20 @@ export const createAgentClient = (options?: AgentClientOptions): AgentClient => 
    * Resolves a tool, turning "the target cannot do this" into an
    * actionable error before the call is attempted. An unavailable domain
    * has no tools left to match against, so without this the caller would
-   * get `Available: none` -- true, and useless.
+   * get `Available: none` -- true, and useless. A degraded domain is the
+   * same problem one level down: the tool is missing from a listing that
+   * is otherwise full, which reads as a typo rather than a limit.
    */
   const resolveToolOrExplain = (
     context: {
       resolvedDomain: DomainDefinition;
       domainTools: AgentTool[];
-      platform?: AgentTargetPlatform;
+      integration?: RozeniteIntegration;
     },
     toolName: string,
   ): AgentTool => {
-    if (context.resolvedDomain.availability === 'unsupported') {
-      throw formatUnsupportedToolError(context.resolvedDomain, toolName, context.platform);
+    if (isToolUnavailable(context.resolvedDomain, toolName)) {
+      throw formatUnsupportedToolError(context.resolvedDomain, toolName, context.integration);
     }
 
     const domainLabel = context.resolvedDomain.pluginId ?? context.resolvedDomain.id;

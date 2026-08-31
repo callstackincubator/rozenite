@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "@rozenite/agent-shared": "workspace:*",
+    "@rozenite/tools": "workspace:*",
     "tslib": "^2.3.0"
   },
   "devDependencies": {

@@ -1,19 +1,20 @@
-import type { AgentTargetPlatform, UnsupportedDomainInfo } from './capabilities.js';
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
+import type { UnsupportedDomainInfo } from './capabilities.js';
 
 export {
   createEmptyCapabilityProfile,
-  DEFAULT_AGENT_TARGET_PLATFORM,
+  DEFAULT_AGENT_TARGET_INTEGRATION,
   getUnsupportedDomains,
   getUnsupportedToolReason,
   isToolSupported,
 } from './capabilities.js';
 export type {
-  AgentTargetPlatform,
   CapabilityProfile,
   DomainCapability,
   ToolAvailability,
   ToolCapability,
   UnsupportedDomainInfo,
+  UnsupportedToolInfo,
 } from './capabilities.js';
 
 export {
@@ -273,13 +274,6 @@ export type MetroTarget = {
   title: string;
   description: string;
   webSocketDebuggerUrl: string;
-  /**
-   * The platform this page's runtime is. Sourced from the dev server's
-   * own `/json/list` entry when it declares one, so a server fronting
-   * more than one kind of target still describes each correctly.
-   * Defaults to `react-native` when nothing declares otherwise.
-   */
-  platform?: AgentTargetPlatform;
 };
 
 export type AgentServerInfo = {
@@ -298,8 +292,12 @@ export type AgentSessionInfo = {
   appId: string;
   pageId: string;
   status: AgentSessionStatus;
-  /** The capability profile this session resolved to. */
-  platform: AgentTargetPlatform;
+  /**
+   * The integration this session resolved a capability profile from.
+   * Optional so a newer CLI can read an older server's session info,
+   * which simply does not carry it.
+   */
+  integration?: RozeniteIntegration;
   createdAt: number;
   lastActivityAt: number;
   connectedAt?: number;
@@ -362,7 +360,7 @@ export type GetAgentSessionToolsResponse = {
    * `undefined` and falls back to treating every domain as supported,
    * which is exactly the pre-capability behaviour. No lockstep upgrade.
    */
-  platform?: AgentTargetPlatform;
+  integration?: RozeniteIntegration;
   unsupported?: UnsupportedDomainInfo[];
 };
 

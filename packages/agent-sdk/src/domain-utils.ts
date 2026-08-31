@@ -1,4 +1,5 @@
-import type { AgentTargetPlatform, AgentTool, UnsupportedDomainInfo } from '@rozenite/agent-shared';
+import type { AgentTool, UnsupportedDomainInfo } from '@rozenite/agent-shared';
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
 import {
   RESERVED_DOMAIN_NAMES,
   STATIC_DOMAIN_TOOL_NAMES,
@@ -292,8 +293,14 @@ export const formatUnknownDomainError = (token: string, domains: DomainDefinitio
  * Unavailable domains stay in the list on purpose. Dropping `network`
  * outright would make `rozenite agent network listRequests` fail with
  * `Unknown domain "network". Did you mean...?`, which reads to an agent
- * as a typo it should correct rather than a platform limit it should
+ * as a typo it should correct rather than an integration limit it should
  * route around.
+ *
+ * Tool-level gaps are carried through as well, not just summarised into
+ * `degraded`. The server has already filtered those tools out of the
+ * listing, so without them a call to one would fall through to the
+ * generic unknown-tool error -- the same typo-shaped answer this whole
+ * mechanism exists to avoid, just one level down.
  */
 export const applyCapabilities = (
   domains: DomainDefinition[],
@@ -317,6 +324,7 @@ export const applyCapabilities = (
       // usable; a gap without one takes the whole domain out.
       availability: gap.tools ? ('degraded' as const) : ('unsupported' as const),
       unavailableReason: gap.reason,
+      ...(gap.tools ? { unavailableTools: gap.tools } : {}),
       ...(gap.fallback ? { fallback: gap.fallback } : {}),
     };
   });
@@ -331,13 +339,30 @@ export const applyCapabilities = (
 export const formatUnsupportedToolError = (
   domain: DomainDefinition,
   toolName: string,
-  platform?: AgentTargetPlatform,
+  integration?: RozeniteIntegration,
 ): Error => {
-  const target = platform ? `this ${platform} target` : 'this target';
-  const reason = domain.unavailableReason ? ` ${domain.unavailableReason}` : '';
+  const target = integration ? `this ${integration} target` : 'this target';
+  // A tool-level gap explains itself; only fall back to the domain's
+  // reason when the whole domain is out.
+  const toolReason = domain.unavailableTools?.find((tool) => tool.name === toolName)?.reason;
+  const detail = toolReason ?? domain.unavailableReason;
+  const reason = detail ? ` ${detail}` : '';
   const fallback = domain.fallback ? ` Use the \`${domain.fallback}\` domain instead.` : '';
 
   return new Error(`Tool "${toolName}" is not supported on ${target}.${reason}${fallback}`);
+};
+
+/**
+ * Whether this specific tool is out on this target -- either because the
+ * whole domain is, or because the domain is degraded and this is one of
+ * the tools it lost.
+ */
+export const isToolUnavailable = (domain: DomainDefinition, toolName: string): boolean => {
+  if (domain.availability === 'unsupported') {
+    return true;
+  }
+
+  return domain.unavailableTools?.some((tool) => tool.name === toolName) ?? false;
 };
 
 export const resolveDomainTool = (

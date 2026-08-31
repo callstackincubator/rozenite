@@ -52,10 +52,9 @@ export const initializeRozenite = async (
   const agentSessionManager = createAgentSessionManager({
     projectRoot: options.projectRoot,
     metroVersion: getPackageJSON().version,
-    // The dev server's own platform is the default for every session it
-    // serves. A target that declares its own in `/json/list` overrides
-    // it per target -- see `metro-discovery.ts`.
-    platform: options.platform,
+    // Which integration this dev server hosts. Every session it serves
+    // resolves its CDP capability profile from this.
+    integration: options.integration,
   });
 
   if (allInstalledPlugins.length === 0) {

@@ -1,7 +1,7 @@
 ---
 name: lynx
 description: What changes when the agent session target is a Lynx app rather than React Native — which built-in domains work, which do not, and what to use instead.
-platforms: lynx
+integrations: lynx
 ---
 
 # Lynx targets

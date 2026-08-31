@@ -2,7 +2,7 @@
  * Target capability descriptors.
  *
  * Rozenite's five built-in agent domains were designed against React
- * Native's CDP surface. Other platforms expose a different one, and
+ * Native's CDP surface. Other integrations expose a different one, and
  * "unsupported" is not one behaviour on the wire but three:
  *
  * 1. The device answers `{ error: { code: -32601 } }` — loud, but the
@@ -21,13 +21,19 @@
  *
  * The profile is deliberately a *descriptor*, not a blocklist: the same
  * mechanism that removes `network` on Lynx is the one that would later
- * add a Lynx-only domain there, or describe the next platform after it.
+ * add a Lynx-only domain there, or describe the next integration after
+ * it.
+ *
+ * Keyed by `RozeniteIntegration` rather than a union of its own. The
+ * vocabulary in `@rozenite/tools` is the one the dev server, the Vite
+ * plugin and the DevTools hosts already agree on, and a second union
+ * meaning the same thing would be free to drift from it. Note that
+ * `platform` deliberately does NOT appear here: it means the device OS
+ * everywhere else in this system.
  */
+import type { RozeniteIntegration } from '@rozenite/tools/integration';
 
-/** Which host platform a dev server, and therefore a target, runs. */
-export type AgentTargetPlatform = 'react-native' | 'lynx';
-
-export const DEFAULT_AGENT_TARGET_PLATFORM: AgentTargetPlatform = 'react-native';
+export const DEFAULT_AGENT_TARGET_INTEGRATION: RozeniteIntegration = 'react-native';
 
 /**
  * `degraded` is a domain-level verdict only: the domain stays usable, but
@@ -40,7 +46,7 @@ export type ToolCapability = {
   availability: Exclude<ToolAvailability, 'degraded'>;
   /**
    * Written to be read verbatim by an agent, in an error message. Say
-   * what the platform does instead, not what Rozenite wanted.
+   * what the integration does instead, not what Rozenite wanted.
    */
   reason?: string;
 };
@@ -61,8 +67,23 @@ export type DomainCapability = {
  * tool — only the gaps are written down.
  */
 export type CapabilityProfile = {
-  platform: AgentTargetPlatform;
+  integration: RozeniteIntegration;
   domains: Record<string, DomainCapability>;
+};
+
+/**
+ * One unsupported tool within an otherwise usable domain, carrying its
+ * own reason.
+ *
+ * The reason travels per tool rather than once per domain because two
+ * gaps in one domain need not share a cause, and the agent is shown
+ * whichever tool it actually reached for. Collapsing them onto the
+ * domain would mean picking one arbitrarily and explaining the wrong
+ * thing the first time a domain has two unrelated gaps.
+ */
+export type UnsupportedToolInfo = {
+  name: string;
+  reason?: string;
 };
 
 /** One gap, flattened for transport to the agent client. */
@@ -73,13 +94,16 @@ export type UnsupportedDomainInfo = {
    * the whole domain is unavailable — the distinction is what lets the
    * client render `degraded` separately from `unsupported`.
    */
-  tools?: string[];
+  tools?: UnsupportedToolInfo[];
+  /** The domain-level reason. Tool-level gaps carry their own. */
   reason: string;
   fallback?: string;
 };
 
-export const createEmptyCapabilityProfile = (platform: AgentTargetPlatform): CapabilityProfile => ({
-  platform,
+export const createEmptyCapabilityProfile = (
+  integration: RozeniteIntegration,
+): CapabilityProfile => ({
+  integration,
   domains: {},
 });
 
@@ -136,12 +160,13 @@ export const getUnsupportedToolReason = (
  */
 export const getUnsupportedDomains = (profile: CapabilityProfile): UnsupportedDomainInfo[] => {
   const entries: UnsupportedDomainInfo[] = [];
+  const defaultReason = `Not supported on ${profile.integration} targets.`;
 
   for (const [domainId, domain] of Object.entries(profile.domains)) {
     if (domain.availability === 'unsupported') {
       entries.push({
         domain: domainId,
-        reason: domain.reason ?? `Not supported on ${profile.platform} targets.`,
+        reason: domain.reason ?? defaultReason,
         ...(domain.fallback ? { fallback: domain.fallback } : {}),
       });
       continue;
@@ -149,8 +174,8 @@ export const getUnsupportedDomains = (profile: CapabilityProfile): UnsupportedDo
 
     const unsupportedTools = Object.entries(domain.tools ?? {})
       .filter(([, tool]) => tool.availability === 'unsupported')
-      .map(([toolName]) => toolName)
-      .sort();
+      .map(([name, tool]) => ({ name, ...(tool.reason ? { reason: tool.reason } : {}) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     if (unsupportedTools.length === 0) {
       continue;
@@ -159,10 +184,7 @@ export const getUnsupportedDomains = (profile: CapabilityProfile): UnsupportedDo
     entries.push({
       domain: domainId,
       tools: unsupportedTools,
-      reason:
-        domain.tools?.[unsupportedTools[0]]?.reason ??
-        domain.reason ??
-        `Not supported on ${profile.platform} targets.`,
+      reason: domain.reason ?? defaultReason,
       ...(domain.fallback ? { fallback: domain.fallback } : {}),
     });
   }
