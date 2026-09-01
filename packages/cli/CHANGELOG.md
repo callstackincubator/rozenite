@@ -1,5 +1,103 @@
 # rozenite
 
+## 2.3.0
+
+### Minor Changes
+
+- [#449](https://github.com/callstackincubator/rozenite/pull/449) [`1bbf5d2`](https://github.com/callstackincubator/rozenite/commit/1bbf5d28527639bd4ec5cb0971ac547aa601f0c2) Thanks [@V3RON](https://github.com/V3RON)! - Name the framework being debugged in the UI, now that a Rozenite window can be showing React Native, Lynx or a web app. The standalone app names it in its status footer next to the connection status, and in its own window title ("Lynx · Pixel 8 - Rozenite") — in a browser tab and in the Electron shell alike, so several open Rozenite windows are tellable apart at a glance. React Native DevTools keeps the title it sets itself; Rozenite does not touch it. Each target reports its own framework over the metadata event React Native already sends during the handshake: `@rozenite/lynx-dev` now answers `ReactNativeApplication.enable` with the `metadataUpdated` event a device implementing that domain would send, naming Lynx in `integrationName` while `platform` keeps meaning the device OS.
+
+- [#456](https://github.com/callstackincubator/rozenite/pull/456) [`4afc448`](https://github.com/callstackincubator/rozenite/commit/4afc448f9e7dae4736155f173b7d726e31458d08) Thanks [@V3RON](https://github.com/V3RON)! - Lay the groundwork for refusing a plugin on an integration it doesn't support, instead of loading it and breaking. Plugins can now declare which environments they work in — `react-native`, `react-native-web`, `lynx`, or `lynx-web` — via `integrations` in `rozenite.config.ts`; omitting it defaults to `['react-native']`, and the resolved list is always reported in the plugin manifest. Nothing enforces compatibility yet — that's a follow-up.
+
+  Resolving which integration a connected target actually is takes two halves. The dev server supplies the host it serves (`react-native` or `lynx`), which follows from the installed integration and so cannot be wrong. The other half — whether the target is a browser — is answered by the device itself: both DevTools hosts evaluate a small self-contained expression in the connected runtime during bootstrap, and `resolveIntegration` combines the two. Asking the device is what makes the answer immediate and certain; the alternative was reading React Native's `ReactNativeApplication.metadataUpdated`, an event Rozenite neither emits nor can order, so a host that asked early would report a browser target as native with no way to tell that answer from a real one. A probe that fails leaves the target unknown rather than guessing.
+
+  `@rozenite/middleware`'s `platform` config option, unreleased until now, is renamed to `integration` to avoid colliding with the device-OS meaning `platform` carries everywhere else in the system.
+
+- [#448](https://github.com/callstackincubator/rozenite/pull/448) [`a1f5280`](https://github.com/callstackincubator/rozenite/commit/a1f5280e785e3db34b23b0877d52ad19c831dc88) Thanks [@V3RON](https://github.com/V3RON)! - Teach Rozenite for Agents which built-in domains the connected target can
+  actually back, so a Lynx session no longer looks like a React Native one.
+
+  The five built-in domains were designed against React Native's CDP surface, and
+  Lynx exposes a different one: it registers no `Network` domain at all, has no
+  React DevTools backend, and implements a Perfetto-based `Tracing` domain that
+  shares Chrome's method names but not its protocol. Until now every session
+  advertised all five regardless, so an agent on a Lynx target could only find out
+  by calling — and two of the three ways that fails are silent. `network` errored
+  with a raw protocol code, `react` returned nothing, `performance` finalised a
+  trace artifact containing zero events, and heap sampling appeared to start and
+  collected nothing.
+
+  Each session now resolves a capability profile from the integration its dev
+  server hosts.
+  Unsupported tools are never registered, so `list-tools` is honest; unavailable
+  domains stay visible in `rozenite agent domains` with an `availability` column, a
+  reason, and — for `network` — the `@rozenite/network-activity-plugin` domain to
+  use instead. Calling an unsupported tool fails during resolution with that same
+  explanation rather than a protocol error, so the agent gets a next step instead
+  of a dead end. On Lynx that means `console`, plugin domains, app tools and
+  `memory.takeHeapSnapshot` are reported supported, `memory` is degraded, and
+  `network`, `react` and `performance` are unavailable with reasons.
+
+  Three fixes to the CDP command channel apply to every integration, not just
+  Lynx. A
+  device error now names the method it refused instead of arriving as a stringified
+  error object; waits on a device event are bounded, so a capture whose completion
+  event never arrives fails with a diagnosis instead of hanging forever; and
+  `stopTrace` refuses to hand back a trace artifact containing no events rather
+  than reporting a successful capture of nothing.
+
+  Both new fields on the session tools response are optional, so a CLI and a Metro
+  on different versions keep working together — an older server simply reports no
+  capability data and every domain is treated as supported, exactly as before.
+
+- [#484](https://github.com/callstackincubator/rozenite/pull/484) [`c4a8909`](https://github.com/callstackincubator/rozenite/commit/c4a8909de7cf7339e4a66c68f58f9ecbe16561d7) Thanks [@V3RON](https://github.com/V3RON)! - `rozenite open` now finds Lynx devices too. Without `--port`, it queries the
+  default port of every supported integration — Metro's `8081` and the Lynx dev
+  server's `3000` — and offers everything it finds in one picker, labelling each
+  target with the integration it belongs to. A port that is not listening is
+  skipped, and the selected target is opened on the dev server it was found on.
+  Passing `--port` still queries that one port only.
+
+- [#457](https://github.com/callstackincubator/rozenite/pull/457) [`3a29044`](https://github.com/callstackincubator/rozenite/commit/3a29044d0b72354ff80cb2e044afe7d51b800348) Thanks [@V3RON](https://github.com/V3RON)! - Every official plugin now declares the integrations it supports, so a plugin that cannot work in the environment you are debugging can say so instead of loading and failing.
+
+  Controls, Feature Flags, React Hook Form and TanStack Query import nothing from `react-native` on the device and declare every integration, Lynx included. Plugins built on native modules — SQLite, Storage, File System and Performance Monitor — declare React Native only, and so do Network Activity and Require Profiler: `react-native-web` provides no `TurboModuleRegistry` or `DevSettings`, which their device code calls. The rest use React Native APIs that do have web equivalents, and also declare Rozenite for Web.
+
+- [#472](https://github.com/callstackincubator/rozenite/pull/472) [`312fd97`](https://github.com/callstackincubator/rozenite/commit/312fd9769daa6f357a0027efe825b55cd956145c) Thanks [@V3RON](https://github.com/V3RON)! - Make the React agent domain answer render-performance questions in one call, and
+  cut the noise out of component-tree reads.
+
+  - `getComponentRenders` aggregates a whole profiling session into one row per
+    component — render count, total/average/max render time, and why it rendered —
+    so "what was slow" and "what re-rendered too often" no longer mean paging
+    `getRenderData` once per commit.
+  - `getProfileTimeline` lists every commit with its duration and rendered-fiber
+    count, chronologically or slowest first, and stays queryable after
+    `stopProfiling`.
+  - `getErrors` lists the components React logged errors or warnings against;
+    those counts now appear on ordinary tree and node reads too.
+  - `getTree`, `getChildren`, and `searchNodes` accept `noHost: true`, which hides
+    plain host components and promotes their children to the nearest visible
+    ancestor. Off by default, and largely a safety net: React DevTools already
+    hides host components at the backend, so they rarely reach the tree at all.
+  - `getComponent`, `getProps`, `getState`, and `getHooks` accept `maxValueLength`
+    (default 512) so a single base64 or serialized-blob prop cannot dominate a
+    response.
+
+- [#444](https://github.com/callstackincubator/rozenite/pull/444) [`be13ccc`](https://github.com/callstackincubator/rozenite/commit/be13ccc5a02c9593cfb1c81b6e1b67efc3a02e93) Thanks [@V3RON](https://github.com/V3RON)! - Add Rozenite for Lynx. `@rozenite/lynx` installs the device runtime in a Lynx app's background thread, and `@rozenite/lynx-dev` adds an rspeedy plugin that serves the Rozenite standalone app and bridges Lynx's DebugRouter transport to the inspector protocol the app already speaks — so the same panels, plugin catalogue and CLI work against a Lynx app with no DevTools-side changes. `@rozenite/middleware` gains an `integration` option that skips its React Native lookups, and `@rozenite/plugin-bridge` now runs in Lynx's background runtime. Every plugin's React Native entry point used to treat any runtime without a `window` as a server and quietly install a no-op, which disabled all of them on Lynx; each now also checks for Lynx's `lynx` binding, and asking for a client on Lynx's main-thread runtime fails with an `UnsupportedPlatformError` rather than a `TypeError`.
+
+- [#433](https://github.com/callstackincubator/rozenite/pull/433) [`c5a3cfc`](https://github.com/callstackincubator/rozenite/commit/c5a3cfc90abd6347ab0321590f7ca262896a1465) Thanks [@V3RON](https://github.com/V3RON)! - Add `rozenite agent tap`, a CLI command that streams a Rozenite Agent session's plugin messages to stdout in both directions, without opening a browser or React Native DevTools. `--plugin` filters the stream to one plugin; `--type` and `--payload` send one message before watching, so a plugin's native side can be poked and its response observed directly from the terminal. Pass `--json` for newline-delimited JSON output.
+
+  Because a device serves only one debugger connection at a time, a tap rides the same connection `rozenite agent` uses and replaces React Native DevTools if it is already attached, the same tradeoff `rozenite agent` already makes.
+
+- [#444](https://github.com/callstackincubator/rozenite/pull/444) [`be13ccc`](https://github.com/callstackincubator/rozenite/commit/be13ccc5a02c9593cfb1c81b6e1b67efc3a02e93) Thanks [@V3RON](https://github.com/V3RON)! - Offer every debuggable page of a device, not just one. A device can host several runtimes — every Lynx card is one, and a React Native app gains a page per extra VM — but target discovery collapsed each device to a single page, so the rest were unreachable. In LynxExplorer the surviving page was always its own home screen, which contains no Rozenite, so a developer's card could not be opened at all. Each page is now its own target with its own id, `--deviceId` still accepts a device id (asking which card when that device has more than one), and reconnecting returns to the page being debugged instead of drifting to another one.
+
+- [#438](https://github.com/callstackincubator/rozenite/pull/438) [`40a43df`](https://github.com/callstackincubator/rozenite/commit/40a43df8e88c65c742dd103b23bd7dbb1fc22415) Thanks [@V3RON](https://github.com/V3RON)! - Build plugin React Native, Metro and SDK entry points with `tsc` instead of Vite; Vite now builds only the DevTools panels. Metro and SDK entry points ship as CommonJS behind the `default` condition, so they can be both `require`d from a `metro.config.js` and `import`ed from a `metro.config.mjs`. `rozenite build` no longer prints build tool output unless it fails or `--verbose` is passed.
+
+### Patch Changes
+
+- [#444](https://github.com/callstackincubator/rozenite/pull/444) [`be13ccc`](https://github.com/callstackincubator/rozenite/commit/be13ccc5a02c9593cfb1c81b6e1b67efc3a02e93) Thanks [@V3RON](https://github.com/V3RON)! - Keep looking for Lynx devices after the dev server starts. Device discovery ran once, with a three-second budget, and the connector only watches clients on devices it already knows — so a device missed in that window stayed invisible, with an empty target list and nothing logged, until the dev server was restarted. It now retries on a timer, which also covers plugging a device in or booting an emulator while the dev server is already running.
+
+- Updated dependencies [[`4afc448`](https://github.com/callstackincubator/rozenite/commit/4afc448f9e7dae4736155f173b7d726e31458d08), [`a1f5280`](https://github.com/callstackincubator/rozenite/commit/a1f5280e785e3db34b23b0877d52ad19c831dc88), [`312fd97`](https://github.com/callstackincubator/rozenite/commit/312fd9769daa6f357a0027efe825b55cd956145c), [`c5a3cfc`](https://github.com/callstackincubator/rozenite/commit/c5a3cfc90abd6347ab0321590f7ca262896a1465)]:
+  - @rozenite/tools@2.3.0
+  - @rozenite/agent-shared@2.3.0
+  - @rozenite/agent-sdk@2.3.0
+
 ## 2.2.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/overlay-plugin",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Grid and image overlay plugin for Rozenite.",
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {

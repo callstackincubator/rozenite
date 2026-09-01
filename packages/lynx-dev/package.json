@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/lynx-dev",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Rozenite dev-server integration for Lynx: a DebugRouter to CDP bridge and an rspeedy plugin.",
   "keywords": [
     "bundler",

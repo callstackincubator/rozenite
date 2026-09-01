@@ -1,5 +1,13 @@
 # @rozenite/shell
 
+## 2.3.0
+
+### Patch Changes
+
+- Updated dependencies [[`05939d7`](https://github.com/callstackincubator/rozenite/commit/05939d7b1737a2a9ab483c2df786fa84680c8945), [`b758637`](https://github.com/callstackincubator/rozenite/commit/b758637fd6af638d9b214849d390163ce4efda19), [`40a8ccd`](https://github.com/callstackincubator/rozenite/commit/40a8ccd5a186912ea3dd69564e7efd2c016f611c), [`158f4e5`](https://github.com/callstackincubator/rozenite/commit/158f4e5406d6428e24164bdde82d459030fa7309), [`f788719`](https://github.com/callstackincubator/rozenite/commit/f7887194dd15ff6e165f46d215677899c4e4a1ee)]:
+  - @rozenite/ui@2.3.0
+  - @rozenite/plugin-bridge@2.3.0
+
 ## 2.2.0
 
 ### Minor Changes

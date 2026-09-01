@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/lynx",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Rozenite device runtime for Lynx.",
   "keywords": [
     "devtools",

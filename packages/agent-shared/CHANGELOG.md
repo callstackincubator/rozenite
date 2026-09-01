@@ -1,5 +1,54 @@
 # @rozenite/agent-shared
 
+## 2.3.0
+
+### Minor Changes
+
+- [#448](https://github.com/callstackincubator/rozenite/pull/448) [`a1f5280`](https://github.com/callstackincubator/rozenite/commit/a1f5280e785e3db34b23b0877d52ad19c831dc88) Thanks [@V3RON](https://github.com/V3RON)! - Teach Rozenite for Agents which built-in domains the connected target can
+  actually back, so a Lynx session no longer looks like a React Native one.
+
+  The five built-in domains were designed against React Native's CDP surface, and
+  Lynx exposes a different one: it registers no `Network` domain at all, has no
+  React DevTools backend, and implements a Perfetto-based `Tracing` domain that
+  shares Chrome's method names but not its protocol. Until now every session
+  advertised all five regardless, so an agent on a Lynx target could only find out
+  by calling — and two of the three ways that fails are silent. `network` errored
+  with a raw protocol code, `react` returned nothing, `performance` finalised a
+  trace artifact containing zero events, and heap sampling appeared to start and
+  collected nothing.
+
+  Each session now resolves a capability profile from the integration its dev
+  server hosts.
+  Unsupported tools are never registered, so `list-tools` is honest; unavailable
+  domains stay visible in `rozenite agent domains` with an `availability` column, a
+  reason, and — for `network` — the `@rozenite/network-activity-plugin` domain to
+  use instead. Calling an unsupported tool fails during resolution with that same
+  explanation rather than a protocol error, so the agent gets a next step instead
+  of a dead end. On Lynx that means `console`, plugin domains, app tools and
+  `memory.takeHeapSnapshot` are reported supported, `memory` is degraded, and
+  `network`, `react` and `performance` are unavailable with reasons.
+
+  Three fixes to the CDP command channel apply to every integration, not just
+  Lynx. A
+  device error now names the method it refused instead of arriving as a stringified
+  error object; waits on a device event are bounded, so a capture whose completion
+  event never arrives fails with a diagnosis instead of hanging forever; and
+  `stopTrace` refuses to hand back a trace artifact containing no events rather
+  than reporting a successful capture of nothing.
+
+  Both new fields on the session tools response are optional, so a CLI and a Metro
+  on different versions keep working together — an older server simply reports no
+  capability data and every domain is treated as supported, exactly as before.
+
+- [#433](https://github.com/callstackincubator/rozenite/pull/433) [`c5a3cfc`](https://github.com/callstackincubator/rozenite/commit/c5a3cfc90abd6347ab0321590f7ca262896a1465) Thanks [@V3RON](https://github.com/V3RON)! - Add `rozenite agent tap`, a CLI command that streams a Rozenite Agent session's plugin messages to stdout in both directions, without opening a browser or React Native DevTools. `--plugin` filters the stream to one plugin; `--type` and `--payload` send one message before watching, so a plugin's native side can be poked and its response observed directly from the terminal. Pass `--json` for newline-delimited JSON output.
+
+  Because a device serves only one debugger connection at a time, a tap rides the same connection `rozenite agent` uses and replaces React Native DevTools if it is already attached, the same tradeoff `rozenite agent` already makes.
+
+### Patch Changes
+
+- Updated dependencies [[`4afc448`](https://github.com/callstackincubator/rozenite/commit/4afc448f9e7dae4736155f173b7d726e31458d08)]:
+  - @rozenite/tools@2.3.0
+
 ## 2.2.0
 
 ## 2.1.0

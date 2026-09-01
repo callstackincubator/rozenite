@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/feature-flags-plugin",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Feature Flags Inspector for Rozenite.",
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {

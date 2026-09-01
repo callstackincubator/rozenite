@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/testing",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "In-process test doubles for Rozenite plugin communication — run a panel and its react-native.ts entry against each other in Node, without Metro or a simulator.",
   "keywords": [
     "bridge",

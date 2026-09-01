@@ -1,5 +1,116 @@
 # @rozenite/middleware
 
+## 2.3.0
+
+### Minor Changes
+
+- [#432](https://github.com/callstackincubator/rozenite/pull/432) [`907ba2f`](https://github.com/callstackincubator/rozenite/commit/907ba2ff79125b52577db0ef1bd683e2f8c5ca4d) Thanks [@V3RON](https://github.com/V3RON)! - Make the agent `console` domain usable on long sessions and readable for the
+  logs that matter. Object arguments now render their contents — `console.log({
+userId: 42 })` reports `{userId: 42}` instead of `Object`, and arrays render
+  their elements with an explicit overflow marker — while every rendered value is
+  length-capped, so a single multi-megabyte string can no longer sit in the buffer
+  (and each entry is stored once rather than twice). The per-device buffer is a
+  true ring buffer, so appending costs the same whether it is empty or full, and a
+  read seeks straight to its starting position and stops once the page is filled
+  instead of filtering, sorting, copying, and reversing the whole buffer.
+
+  `getMessages` items now carry a `cursor`, and the tool accepts `before` and
+  `after` bounds, so an agent can find an error under a level filter and then read
+  the entries surrounding it — including under different filters — in one
+  follow-up call. Cursors are now plain opaque positions: they are no longer bound
+  to the filters or sort order of the request that produced them, which is what
+  makes reading around an entry possible and shrinks each cursor by ~96%.
+
+  Breaking: the `argsPreview` field is gone from `getMessages` (it only ever
+  repeated `text`, and was never part of the default projection), and cursors from
+  an older session are not accepted by this version.
+
+- [#456](https://github.com/callstackincubator/rozenite/pull/456) [`4afc448`](https://github.com/callstackincubator/rozenite/commit/4afc448f9e7dae4736155f173b7d726e31458d08) Thanks [@V3RON](https://github.com/V3RON)! - Lay the groundwork for refusing a plugin on an integration it doesn't support, instead of loading it and breaking. Plugins can now declare which environments they work in — `react-native`, `react-native-web`, `lynx`, or `lynx-web` — via `integrations` in `rozenite.config.ts`; omitting it defaults to `['react-native']`, and the resolved list is always reported in the plugin manifest. Nothing enforces compatibility yet — that's a follow-up.
+
+  Resolving which integration a connected target actually is takes two halves. The dev server supplies the host it serves (`react-native` or `lynx`), which follows from the installed integration and so cannot be wrong. The other half — whether the target is a browser — is answered by the device itself: both DevTools hosts evaluate a small self-contained expression in the connected runtime during bootstrap, and `resolveIntegration` combines the two. Asking the device is what makes the answer immediate and certain; the alternative was reading React Native's `ReactNativeApplication.metadataUpdated`, an event Rozenite neither emits nor can order, so a host that asked early would report a browser target as native with no way to tell that answer from a real one. A probe that fails leaves the target unknown rather than guessing.
+
+  `@rozenite/middleware`'s `platform` config option, unreleased until now, is renamed to `integration` to avoid colliding with the device-OS meaning `platform` carries everywhere else in the system.
+
+- [#448](https://github.com/callstackincubator/rozenite/pull/448) [`a1f5280`](https://github.com/callstackincubator/rozenite/commit/a1f5280e785e3db34b23b0877d52ad19c831dc88) Thanks [@V3RON](https://github.com/V3RON)! - Teach Rozenite for Agents which built-in domains the connected target can
+  actually back, so a Lynx session no longer looks like a React Native one.
+
+  The five built-in domains were designed against React Native's CDP surface, and
+  Lynx exposes a different one: it registers no `Network` domain at all, has no
+  React DevTools backend, and implements a Perfetto-based `Tracing` domain that
+  shares Chrome's method names but not its protocol. Until now every session
+  advertised all five regardless, so an agent on a Lynx target could only find out
+  by calling — and two of the three ways that fails are silent. `network` errored
+  with a raw protocol code, `react` returned nothing, `performance` finalised a
+  trace artifact containing zero events, and heap sampling appeared to start and
+  collected nothing.
+
+  Each session now resolves a capability profile from the integration its dev
+  server hosts.
+  Unsupported tools are never registered, so `list-tools` is honest; unavailable
+  domains stay visible in `rozenite agent domains` with an `availability` column, a
+  reason, and — for `network` — the `@rozenite/network-activity-plugin` domain to
+  use instead. Calling an unsupported tool fails during resolution with that same
+  explanation rather than a protocol error, so the agent gets a next step instead
+  of a dead end. On Lynx that means `console`, plugin domains, app tools and
+  `memory.takeHeapSnapshot` are reported supported, `memory` is degraded, and
+  `network`, `react` and `performance` are unavailable with reasons.
+
+  Three fixes to the CDP command channel apply to every integration, not just
+  Lynx. A
+  device error now names the method it refused instead of arriving as a stringified
+  error object; waits on a device event are bounded, so a capture whose completion
+  event never arrives fails with a diagnosis instead of hanging forever; and
+  `stopTrace` refuses to hand back a trace artifact containing no events rather
+  than reporting a successful capture of nothing.
+
+  Both new fields on the session tools response are optional, so a CLI and a Metro
+  on different versions keep working together — an older server simply reports no
+  capability data and every domain is treated as supported, exactly as before.
+
+- [#472](https://github.com/callstackincubator/rozenite/pull/472) [`312fd97`](https://github.com/callstackincubator/rozenite/commit/312fd9769daa6f357a0027efe825b55cd956145c) Thanks [@V3RON](https://github.com/V3RON)! - Make the React agent domain answer render-performance questions in one call, and
+  cut the noise out of component-tree reads.
+
+  - `getComponentRenders` aggregates a whole profiling session into one row per
+    component — render count, total/average/max render time, and why it rendered —
+    so "what was slow" and "what re-rendered too often" no longer mean paging
+    `getRenderData` once per commit.
+  - `getProfileTimeline` lists every commit with its duration and rendered-fiber
+    count, chronologically or slowest first, and stays queryable after
+    `stopProfiling`.
+  - `getErrors` lists the components React logged errors or warnings against;
+    those counts now appear on ordinary tree and node reads too.
+  - `getTree`, `getChildren`, and `searchNodes` accept `noHost: true`, which hides
+    plain host components and promotes their children to the nearest visible
+    ancestor. Off by default, and largely a safety net: React DevTools already
+    hides host components at the backend, so they rarely reach the tree at all.
+  - `getComponent`, `getProps`, `getState`, and `getHooks` accept `maxValueLength`
+    (default 512) so a single base64 or serialized-blob prop cannot dominate a
+    response.
+
+- [#433](https://github.com/callstackincubator/rozenite/pull/433) [`c5a3cfc`](https://github.com/callstackincubator/rozenite/commit/c5a3cfc90abd6347ab0321590f7ca262896a1465) Thanks [@V3RON](https://github.com/V3RON)! - Add `rozenite agent tap`, a CLI command that streams a Rozenite Agent session's plugin messages to stdout in both directions, without opening a browser or React Native DevTools. `--plugin` filters the stream to one plugin; `--type` and `--payload` send one message before watching, so a plugin's native side can be poked and its response observed directly from the terminal. Pass `--json` for newline-delimited JSON output.
+
+  Because a device serves only one debugger connection at a time, a tap rides the same connection `rozenite agent` uses and replaces React Native DevTools if it is already attached, the same tradeoff `rozenite agent` already makes.
+
+### Patch Changes
+
+- [#470](https://github.com/callstackincubator/rozenite/pull/470) [`81227b3`](https://github.com/callstackincubator/rozenite/commit/81227b335ee32a1f16ebb9e35c39c46b7a470a72) Thanks [@V3RON](https://github.com/V3RON)! - Fix Rozenite for Agents failing every tool call on Lynx targets. A capability-filtered domain answered for tools it did not own, which aborted the dispatch walk on its first step and reported the React domain's reason whatever domain was asked for.
+
+- [#468](https://github.com/callstackincubator/rozenite/pull/468) [`1c95b0f`](https://github.com/callstackincubator/rozenite/commit/1c95b0f90f9cacf1ca061a8809fc68073e0c3792) Thanks [@V3RON](https://github.com/V3RON)! - Fix Rozenite for Agents failing to connect with `CDP connection closed before
+bootstrap completed` on Expo dev servers whose configured host differs from the
+  address the agent reached them through, such as when
+  `REACT_NATIVE_PACKAGER_HOSTNAME` is set.
+
+- [#478](https://github.com/callstackincubator/rozenite/pull/478) [`5b033db`](https://github.com/callstackincubator/rozenite/commit/5b033dbae60572c442e370246d18ffae8dd78e14) Thanks [@V3RON](https://github.com/V3RON)! - Expose commit cost beyond render time in the React agent `getProfileTimeline` tool. Each commit can now report `effectDurationMs`, `passiveEffectDurationMs`, `priorityLevel`, `updaterCount` and `hasChangeDescriptions`, so a commit that renders quickly but commits slowly is visible without a separate call.
+
+- [#477](https://github.com/callstackincubator/rozenite/pull/477) [`f74f1be`](https://github.com/callstackincubator/rozenite/commit/f74f1be7920c93c64b2e5561048a33d7c3a66dc9) Thanks [@V3RON](https://github.com/V3RON)! - Fix React DevTools agent tools silently losing their outbound channel after the app restarts. The session now re-binds the React domain to the device when it reconnects, so `getProps`, `getComponent` and profiling keep working instead of failing with an unavailable-channel error or hanging on `isProcessingData`.
+
+- Updated dependencies [[`b758637`](https://github.com/callstackincubator/rozenite/commit/b758637fd6af638d9b214849d390163ce4efda19), [`4afc448`](https://github.com/callstackincubator/rozenite/commit/4afc448f9e7dae4736155f173b7d726e31458d08), [`a1f5280`](https://github.com/callstackincubator/rozenite/commit/a1f5280e785e3db34b23b0877d52ad19c831dc88), [`c5a3cfc`](https://github.com/callstackincubator/rozenite/commit/c5a3cfc90abd6347ab0321590f7ca262896a1465)]:
+  - @rozenite/app@2.3.0
+  - @rozenite/tools@2.3.0
+  - @rozenite/runtime@2.3.0
+  - @rozenite/agent-shared@2.3.0
+  - @rozenite/shell@2.3.0
+
 ## 2.2.0
 
 ### Minor Changes

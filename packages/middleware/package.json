@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/middleware",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Middleware for Rozenite.",
   "keywords": [
     "bundler",

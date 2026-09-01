@@ -1,5 +1,13 @@
 # @rozenite/agent-bridge
 
+## 2.3.0
+
+### Patch Changes
+
+- Updated dependencies [[`a1f5280`](https://github.com/callstackincubator/rozenite/commit/a1f5280e785e3db34b23b0877d52ad19c831dc88), [`c5a3cfc`](https://github.com/callstackincubator/rozenite/commit/c5a3cfc90abd6347ab0321590f7ca262896a1465), [`158f4e5`](https://github.com/callstackincubator/rozenite/commit/158f4e5406d6428e24164bdde82d459030fa7309)]:
+  - @rozenite/agent-shared@2.3.0
+  - @rozenite/plugin-bridge@2.3.0
+
 ## 2.2.0
 
 ### Patch Changes

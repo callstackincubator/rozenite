@@ -1,5 +1,43 @@
 # @rozenite/ui
 
+## 2.3.0
+
+### Minor Changes
+
+- [#453](https://github.com/callstackincubator/rozenite/pull/453) [`05939d7`](https://github.com/callstackincubator/rozenite/commit/05939d7b1737a2a9ab483c2df786fa84680c8945) Thanks [@V3RON](https://github.com/V3RON)! - Rebuild the Require Profiler DevTools panel on `@rozenite/ui`, so it follows the shared theme and the light/dark switch like every other panel. A sidebar lists every recorded require chain with its duration and module count and can hide chains below a duration threshold, replacing the previous prev/next stepper and options modal — and because durations now travel with the chain list, the threshold applies to chains that have not been opened yet. The main pane switches between the flame graph and a "Top modules" table ranking the chain's modules by self time, a filter box highlights matching frames and narrows the table, and selecting a module opens a detail pane with its self time, total time, dependency count, and path. Require timings are now recorded with `performance.now()` where the runtime provides it, so fast modules no longer all report 0ms.
+
+  The Metro instrumentation now defends its own dev-only boundary, underneath `withRozenite`'s `enabled` gate rather than relying on it alone. `withRozeniteRequireProfiler` accepts an `enabled` option that defaults to `process.env.NODE_ENV !== 'production'`, and the polyfill it injects is guarded by `__DEV__` so Metro strips it from release bundles — covering configs that enable Rozenite unconditionally and setups that apply the wrapper without `withRozenite`.
+
+  `@rozenite/ui` gains a `FlameGraph` component — a themed, responsive flame graph with animated zooming, selection, search highlighting, and a heat legend.
+
+- [#446](https://github.com/callstackincubator/rozenite/pull/446) [`40a8ccd`](https://github.com/callstackincubator/rozenite/commit/40a8ccd5a186912ea3dd69564e7efd2c016f611c) Thanks [@V3RON](https://github.com/V3RON)! - Add `RozeniteLoader` — a dithered gem loading spinner masked to the Rozenite
+  logo silhouette, for on-brand loading states in DevTools plugin panels.
+
+- [#442](https://github.com/callstackincubator/rozenite/pull/442) [`f788719`](https://github.com/callstackincubator/rozenite/commit/f7887194dd15ff6e165f46d215677899c4e4a1ee) Thanks [@V3RON](https://github.com/V3RON)! - Add three primitives for building log and stream panels.
+
+  `ToggleGroup` is a segmented control for filters where more than one option
+  can be active at once — log levels, tags, sources. It reads as a sibling of
+  `Tabs`, and supports single or multiple selection, icon-only items, and the
+  three control sizes.
+
+  `VirtualizedList` is the non-tabular counterpart to `VirtualizedDataTable`,
+  for large streams of freely-composed rows that vary in height. Rows need no
+  measurement or fixed height, and `followOutput` pins the view to the newest
+  row while entries stream in, releasing as soon as the reader scrolls away —
+  the affordance a live log tail needs.
+
+  `QueryField` is a query input that highlights the parts of a query as the
+  reader types. It owns no grammar and no operator vocabulary: the caller
+  tokenizes its own query language and hands over ranges, and `QueryField`
+  paints them, so a panel can bring any query syntax. Malformed fragments can
+  be marked so a typo is visible before the query is run.
+
+### Patch Changes
+
+- [#451](https://github.com/callstackincubator/rozenite/pull/451) [`b758637`](https://github.com/callstackincubator/rozenite/commit/b758637fd6af638d9b214849d390163ce4efda19) Thanks [@V3RON](https://github.com/V3RON)! - Speed up `RozeniteLoader`'s animation: the default `period` drops from 3600ms
+  to 2000ms per loop, so it reads as active rather than sluggish. Pass `period`
+  explicitly to keep the old pace.
+
 ## 2.2.0
 
 ### Minor Changes
