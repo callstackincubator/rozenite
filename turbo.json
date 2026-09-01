@@ -32,6 +32,25 @@
       "outputs": [],
       "outputLogs": "errors-only"
     },
+    // The site embeds a Storybook build of `@rozenite/ui` at /storybook. That
+    // build used to be chained inside the website's own `build` script, which
+    // put it outside Turborepo: it could not be cached or skipped, so editing
+    // one .mdx file rebuilt the whole Storybook, and its output was hidden
+    // inside the parent task's `errors-only` logs. Declaring it as a real task
+    // here makes it cache on its own inputs, so a docs-only change restores it
+    // instead of rebuilding it.
+    "@rozenite/docs#build": {
+      "dependsOn": ["^build", "ui-storybook#build-storybook"],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
+      "outputs": ["dist/**", "build/**"],
+      "outputLogs": "errors-only"
+    },
+    "ui-storybook#build-storybook": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
+      "outputs": ["storybook-static/**"],
+      "outputLogs": "errors-only"
+    },
     "lint": {
       "inputs": ["$TURBO_DEFAULT$", "!README.md", "!CHANGELOG.md"],
       "outputs": [],

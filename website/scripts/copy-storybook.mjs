@@ -8,7 +8,10 @@ const dest = resolve(__dirname, '../build/storybook');
 
 if (!existsSync(src)) {
   throw new Error(
-    `Storybook build output not found at ${src}. Run "pnpm --filter ui-storybook build-storybook" first.`,
+    `Storybook build output not found at ${src}. It is produced by the ` +
+      `"ui-storybook#build-storybook" Turborepo task, which "@rozenite/docs#build" ` +
+      `depends on -- build this site with "turbo run build --filter=@rozenite/docs" ` +
+      `rather than by calling rspress directly.`,
   );
 }
 
