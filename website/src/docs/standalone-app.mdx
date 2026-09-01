@@ -35,12 +35,14 @@ Run `rozenite open` in your project:
   }}
 />
 
-This lists all devices currently connected to Metro and opens the standalone app in an Electron window for the one you pick.
+This lists all devices currently connected to your dev server and opens the standalone app in an Electron window for the one you pick.
+
+Both supported integrations are looked up: React Native's Metro on port `8081` and Lynx's dev server on port `3000`. Whichever ones are running contribute their devices to the list, and each entry is labelled with the integration it belongs to, so a project running both is picked apart at the prompt. A port that isn't listening is simply skipped.
 
 ### Options
 
-- `--host <host>` — Metro host to connect to (default `127.0.0.1`).
-- `--port <port>` — Metro port to connect to (default `8081`).
+- `--host <host>` — Dev server host to connect to (default `127.0.0.1`).
+- `--port <port>` — A single dev server port to look at. Without it, both `8081` and `3000` are scanned.
 - `--deviceId <id>` — Open a specific device directly, skipping the picker prompt.
 
 **Examples:**
@@ -63,11 +65,13 @@ This lists all devices currently connected to Metro and opens the standalone app
   }}
 />
 
+Pass `--port` when your dev server listens somewhere other than its default — it then queries that port only, instead of scanning both defaults.
+
 `rozenite open` requires an interactive terminal — it opens an Electron window and (without `--deviceId`) prompts you to pick a device, so it refuses to run in CI or a piped/non-TTY shell.
 
 ## Limitations
 
-- **Metro must be running.** `rozenite open` discovers devices through Metro's own device list, and the app itself is served by Metro. If Metro stops after you've opened the app, it shows a "dev server unreachable" state until Metro is back.
+- **A dev server must be running.** `rozenite open` discovers devices through the dev server's own device list, and the app itself is served by that dev server. If it stops after you've opened the app, the app shows a "dev server unreachable" state until it is back.
 - **It competes for the single debugger slot.** The standalone app connects directly to the device the same way React Native DevTools and `rozenite agent` do. Only one of these can be attached to a given device at a time — the last one to connect wins, disconnecting whichever was attached before it.
 
 ## Troubleshooting
