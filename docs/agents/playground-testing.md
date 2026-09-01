@@ -10,30 +10,36 @@
 
 ## Navigate by deep link
 
-Use `playground://<path>` with `agent-device` (`open_url`) or `xcrun simctl
-openurl booted "playground://<path>"`. Every screen is reachable this way —
+Use `rozenite://<path>` with `agent-device` (`open_url`) or `xcrun simctl
+openurl booted "rozenite://<path>"`. Every screen is reachable this way —
 see `apps/playground/src/app/navigation/routes.ts` for the source of truth.
+
+The scheme is `rozenite://`, matching `expo.scheme` in `app.json`. Do not use
+`playground://`: that scheme is registered by an unrelated app that is commonly
+installed on the same simulator, so iOS routes those links to it instead. If a
+deep link appears to open the wrong app, confirm the bundle id under test is
+`com.callstackcincubator.rozenite`.
 
 | Route | Deep link | Title |
 | --- | --- | --- |
-| Home | `playground://` | Rozenite Playground |
-| ControlsPlugin | `playground://controls` | Controls |
-| ReduxTest | `playground://redux` | Redux |
-| StoragePlugin | `playground://storage` | Storage |
-| FeatureFlagsPlugin | `playground://feature-flags` | Feature Flags |
-| FileSystemTest | `playground://file-system` | File System |
-| NetworkTest | `playground://network` | Network Activity |
-| RequestBodyTest | `playground://network/request-body` | Request Body |
-| PerformanceMonitor | `playground://performance/monitor` | Performance Monitor |
-| RequireProfilerTest | `playground://performance/require-profiler` | Require Profiler |
-| PerfProblem | `playground://performance/perf-problem` | Perf Problem |
-| ReactHookFormPlugin | `playground://forms` | React Hook Form |
-| BottomTabs (Home tab) | `playground://navigation` | React Navigation Demo |
-| BottomTabs (Profile tab) | `playground://navigation/profile` | React Navigation Demo |
-| BottomTabs (Settings tab) | `playground://navigation/tab-settings` | React Navigation Demo |
-| ParameterDisplay | `playground://navigation/parameter-display` | Parameter Display |
-| SuccessiveScreensStack | `playground://navigation/successive` | Successive Screens |
-| Settings | `playground://settings` | Settings |
+| Home | `rozenite://` | Rozenite Playground |
+| ControlsPlugin | `rozenite://controls` | Controls |
+| ReduxTest | `rozenite://redux` | Redux |
+| StoragePlugin | `rozenite://storage` | Storage |
+| FeatureFlagsPlugin | `rozenite://feature-flags` | Feature Flags |
+| FileSystemTest | `rozenite://file-system` | File System |
+| NetworkTest | `rozenite://network` | Network Activity |
+| RequestBodyTest | `rozenite://network/request-body` | Request Body |
+| PerformanceMonitor | `rozenite://performance/monitor` | Performance Monitor |
+| RequireProfilerTest | `rozenite://performance/require-profiler` | Require Profiler |
+| PerfProblem | `rozenite://performance/perf-problem` | Perf Problem |
+| ReactHookFormPlugin | `rozenite://forms` | React Hook Form |
+| BottomTabs (Home tab) | `rozenite://navigation` | React Navigation Demo |
+| BottomTabs (Profile tab) | `rozenite://navigation/profile` | React Navigation Demo |
+| BottomTabs (Settings tab) | `rozenite://navigation/tab-settings` | React Navigation Demo |
+| ParameterDisplay | `rozenite://navigation/parameter-display` | Parameter Display |
+| SuccessiveScreensStack | `rozenite://navigation/successive` | Successive Screens |
+| Settings | `rozenite://settings` | Settings |
 
 ## Navigate by semantics
 

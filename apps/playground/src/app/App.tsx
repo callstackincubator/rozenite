@@ -133,7 +133,10 @@ const Wrapper = () => {
 };
 
 const linking = {
-  prefixes: ['playground://'],
+  // Must match `expo.scheme` in app.json. Deliberately not `playground://`:
+  // that scheme is registered by an unrelated app, so iOS routes those links
+  // elsewhere and they never reach this app at all.
+  prefixes: ['rozenite://'],
   config: {
     screens: {
       [routes.home.name]: routes.home.path,
