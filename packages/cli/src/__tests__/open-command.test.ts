@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { MetroTarget } from '@rozenite/agent-shared';
+import type { OpenTarget } from '../commands/dev-servers.js';
 
 const mocks = vi.hoisted(() => ({
   isInteractive: vi.fn(),
@@ -45,7 +45,7 @@ const { openCommand, selectTargetById, NON_INTERACTIVE_MESSAGE } =
   await import('../commands/open-command.js');
 const { logger } = await import('../utils/logger.js');
 
-const targetA: MetroTarget = {
+const targetA: OpenTarget = {
   id: 'device-a',
   deviceId: 'device-a',
   name: 'iPhone 15',
@@ -54,9 +54,10 @@ const targetA: MetroTarget = {
   title: 'A',
   description: '',
   webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-a&page=1',
+  port: 8081,
 };
 
-const targetB: MetroTarget = {
+const targetB: OpenTarget = {
   id: 'device-b',
   deviceId: 'device-b',
   name: 'Pixel 8',
@@ -65,6 +66,19 @@ const targetB: MetroTarget = {
   title: 'B',
   description: '',
   webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-b&page=1',
+  port: 8081,
+};
+
+const lynxTarget: OpenTarget = {
+  id: 'device-lynx-1',
+  deviceId: 'device-lynx',
+  name: 'iPhone',
+  appId: 'LynxExplorer',
+  pageId: 'device-lynx-1',
+  title: 'http://localhost:3000/main.lynx.bundle?fullscreen=true',
+  description: '',
+  webSocketDebuggerUrl: 'ws://localhost:3000/inspector/debug?device=device-lynx&page=1',
+  port: 3000,
 };
 
 afterEach(() => {
@@ -101,6 +115,107 @@ describe('openCommand non-interactive refusal', () => {
 
     expect(process.exitCode).toBe(1);
     expect(mocks.getMetroTargets).not.toHaveBeenCalled();
+  });
+});
+
+describe('openCommand dev server discovery', () => {
+  const byPort = (targetsByPort: Record<number, OpenTarget[] | Error>) => {
+    return async (_host: string, port: number) => {
+      const result = targetsByPort[port] ?? [];
+
+      if (result instanceof Error) {
+        throw result;
+      }
+
+      return result;
+    };
+  };
+
+  it('scans both default ports when no --port is given, labelling each by integration', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    mocks.getMetroTargets.mockImplementation(byPort({ 8081: [targetA], 3000: [lynxTarget] }));
+    mocks.promptSelect.mockImplementation(
+      async ({ options }: { options: { value: OpenTarget }[] }) => options[1].value,
+    );
+    mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
+
+    await openCommand({ host: '127.0.0.1' });
+
+    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081);
+    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 3000);
+    expect(mocks.promptSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: [
+          expect.objectContaining({ label: 'React Native · iPhone 15 (com.example.a) — A' }),
+          expect.objectContaining({ label: 'Lynx · iPhone (LynxExplorer) — main.lynx.bundle' }),
+        ],
+      }),
+    );
+  });
+
+  it('opens the picked target on the port it was found on', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    mocks.getMetroTargets.mockImplementation(byPort({ 8081: [targetA], 3000: [lynxTarget] }));
+    mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
+
+    await openCommand({ host: '127.0.0.1', deviceId: 'device-lynx-1' });
+
+    expect(mocks.childProcessSpawn).toHaveBeenCalledWith(
+      process.execPath,
+      [expect.any(String), expect.stringContaining('http://127.0.0.1:3000/rozenite/app/')],
+      expect.objectContaining({ detached: true }),
+    );
+  });
+
+  // The common case: nobody runs Metro and a Lynx dev server at once, so
+  // one of the two default ports always refuses the connection.
+  it('ignores a default port that is not listening when the other one answers', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    mocks.getMetroTargets.mockImplementation(
+      byPort({
+        8081: new Error('Unable to reach Metro at http://127.0.0.1:8081/json/list.'),
+        3000: [lynxTarget],
+      }),
+    );
+    mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
+
+    await openCommand({ host: '127.0.0.1', deviceId: 'device-lynx-1' });
+
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(process.exitCode).toBeUndefined();
+  });
+
+  it('reports every scanned port when none of them can be reached', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    mocks.getMetroTargets.mockRejectedValue(new Error('connect ECONNREFUSED'));
+
+    await openCommand({ host: '127.0.0.1' });
+
+    expect(process.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Could not reach a dev server at http://127.0.0.1:8081 (React Native), http://127.0.0.1:3000 (Lynx)',
+      ),
+    );
+  });
+
+  it('queries only the given port, and does not claim to know its integration', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    mocks.getMetroTargets.mockResolvedValue([targetA]);
+    mocks.promptSelect.mockImplementation(
+      async ({ options }: { options: { value: OpenTarget }[] }) => options[0].value,
+    );
+    mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
+
+    await openCommand({ host: '127.0.0.1', port: 9000 });
+
+    expect(mocks.getMetroTargets).toHaveBeenCalledTimes(1);
+    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 9000);
+    expect(mocks.promptSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: [expect.objectContaining({ label: 'iPhone 15 (com.example.a) — A' })],
+      }),
+    );
   });
 });
 
@@ -162,8 +277,8 @@ describe('openCommand target selection', () => {
     expect(mocks.promptSelect).toHaveBeenCalledWith(
       expect.objectContaining({
         options: [
-          { value: targetA, label: 'iPhone 15 (com.example.a) — A' },
-          { value: targetB, label: 'Pixel 8 (com.example.b) — B' },
+          { value: { ...targetA, port: 8081 }, label: 'iPhone 15 (com.example.a) — A' },
+          { value: { ...targetB, port: 8081 }, label: 'Pixel 8 (com.example.b) — B' },
         ],
       }),
     );
@@ -208,7 +323,7 @@ describe('selectTargetById', () => {
   // Two cards of one Lynx app: same device, one target each. This is the
   // shape that used to be unreachable, because a device collapsed to a
   // single target and the lowest page id always won.
-  const cardOne: MetroTarget = {
+  const cardOne: OpenTarget = {
     id: 'device-c-1',
     deviceId: 'device-c',
     name: 'iPhone',
@@ -217,8 +332,9 @@ describe('selectTargetById', () => {
     title: '/Applications/LynxExplorer.app/Resource/homepage.lynx.bundle',
     description: '',
     webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-c&page=1',
+    port: 8081,
   };
-  const cardTwo: MetroTarget = {
+  const cardTwo: OpenTarget = {
     ...cardOne,
     id: 'device-c-2',
     pageId: 'device-c-2',

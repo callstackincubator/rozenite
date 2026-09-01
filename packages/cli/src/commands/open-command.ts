@@ -1,8 +1,12 @@
 import { spawn as spawnChildProcess } from 'node:child_process';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import type { MetroTarget } from '@rozenite/agent-shared';
-import { getMetroTargets } from './metro-discovery.js';
+import {
+  discoverTargets,
+  formatNoTargetsMessage,
+  resolveDevServers,
+  type OpenTarget,
+} from './dev-servers.js';
 import { buildAppOpenUrl } from './open-url.js';
 import { isInteractive } from '../utils/isInteractive.js';
 import { intro, outro, promptSelect } from '../utils/prompts.js';
@@ -12,7 +16,12 @@ const require = createRequire(import.meta.url);
 
 export type OpenCommandOptions = {
   host: string;
-  port: number;
+  /**
+   * The dev server port to look at. Omitted means "look at the default
+   * port of every integration Rozenite supports", which is what makes the
+   * command work for a Lynx project without being told about it.
+   */
+  port?: number;
   deviceId?: string;
 };
 
@@ -44,14 +53,17 @@ const shortenTitle = (title: string): string => {
  * A device can offer several targets, so the label has to say which page
  * each one is -- the device name alone is the same for all of them.
  */
-const formatTargetLabel = (target: MetroTarget): string => {
+const formatTargetLabel = (target: OpenTarget): string => {
   const base = `${target.name} (${target.appId || target.title})`;
   const detail = shortenTitle(target.title);
+  const label = detail.length > 0 && detail !== target.appId ? `${base} — ${detail}` : base;
 
-  return detail.length > 0 && detail !== target.appId ? `${base} — ${detail}` : base;
+  // Scanning several dev servers means the list can mix integrations, and
+  // a device name alone does not say which one a target belongs to.
+  return target.integration ? `${target.integration} · ${label}` : label;
 };
 
-const promptForTarget = async (targets: MetroTarget[]): Promise<MetroTarget> => {
+const promptForTarget = async (targets: OpenTarget[]): Promise<OpenTarget> => {
   return promptSelect({
     message: 'Select a debugging target to open Rozenite DevTools for',
     options: targets.map((target) => ({
@@ -69,9 +81,9 @@ const promptForTarget = async (targets: MetroTarget[]): Promise<MetroTarget> => 
  * asks which page when the device actually has more than one.
  */
 export const selectTargetById = async (
-  targets: MetroTarget[],
+  targets: OpenTarget[],
   deviceId: string,
-): Promise<MetroTarget> => {
+): Promise<OpenTarget> => {
   const exactTarget = targets.find((candidate) => candidate.id === deviceId);
 
   if (exactTarget) {
@@ -129,18 +141,17 @@ export const openCommand = async (options: OpenCommandOptions): Promise<void> =>
 
   intro('Rozenite');
 
-  const targets = await getMetroTargets(options.host, options.port);
+  const servers = resolveDevServers(options.port);
+  const { targets, failures } = await discoverTargets(options.host, servers);
 
   if (targets.length === 0) {
-    logger.error(
-      `No connected device found at http://${options.host}:${options.port}. Open the Rozenite-enabled app on a device or simulator so it registers with Metro, then try again.`,
-    );
+    logger.error(formatNoTargetsMessage(options.host, servers, failures));
     process.exitCode = 1;
     outro('Done');
     return;
   }
 
-  let target: MetroTarget;
+  let target: OpenTarget;
 
   try {
     target = options.deviceId
@@ -153,7 +164,7 @@ export const openCommand = async (options: OpenCommandOptions): Promise<void> =>
     return;
   }
 
-  const url = buildAppOpenUrl(options.host, options.port, target);
+  const url = buildAppOpenUrl(options.host, target.port, target);
 
   if (!tryOpenElectron(url)) {
     logger.error(

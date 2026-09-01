@@ -35,14 +35,16 @@ with the `rozenite` CLI's `open` command.
 
 ## Usage
 
-Start Metro (`rozenite open` needs a running dev server to talk to), then
-run:
+Start your dev server (`rozenite open` needs a running one to talk to),
+then run:
 
 ```bash
 npx rozenite open
 ```
 
-This lists the devices currently connected to Metro and opens this app,
+This looks at the default port of every supported integration — Metro's
+`8081` and the Lynx dev server's `3000` — lists the devices connected to
+whichever is running, labelled by integration, and opens this app,
 in an Electron window (via `@rozenite/electron-app`) for the one you
 pick, or your default browser if Electron isn't available.
 
