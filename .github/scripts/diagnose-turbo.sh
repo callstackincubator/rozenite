@@ -34,7 +34,10 @@ tail -15 "$LOG"
 if [ "$summary_printed" -eq 0 ]; then
   echo "--- $LABEL: processes still alive ---"
   ps -eo pid,ppid,etime,args | grep -E "turbo|node|storybook" | grep -v grep || true
-  pkill -KILL -f turbo 2>/dev/null || true
+  # NOT `pkill -f turbo`: that pattern also matches this script's own
+  # name and kills the step running it, which is how pass 3 lost T2 and T3.
+  pkill -KILL -x turbo 2>/dev/null || true
+  pkill -KILL -f 'rspress build' 2>/dev/null || true
 fi
 
 exit 0

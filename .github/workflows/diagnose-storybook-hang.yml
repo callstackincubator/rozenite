@@ -103,6 +103,10 @@ jobs:
           TURBO_EXTRA_ARGS: '--no-daemon'
         run: .github/scripts/diagnose-turbo.sh "T3-turbo-no-daemon"
 
+      - name: N - build-time network probes and rspress alone
+        if: always()
+        run: .github/scripts/diagnose-network.sh
+
       - name: Summary
         if: always()
         run: cat "$RUNNER_TEMP/diagnose-summary.txt" || echo "no summary written"
