@@ -87,6 +87,22 @@ jobs:
           SB_DROP_ADDONS: 'addon-mcp addon-vitest addon-a11y chromatic-com'
         run: .github/scripts/diagnose-storybook-pipe.sh "P4-pipe-docs-addon-only"
 
+      # Pass 3: the build is innocent in both passes above, so suspect the
+      # supervisor. Same small graph each time; the question is only whether
+      # turbo ever prints its summary and exits.
+      - name: T1 - turbo, as CI runs it
+        run: .github/scripts/diagnose-turbo.sh "T1-turbo-plain"
+
+      - name: T2 - turbo, telemetry disabled
+        env:
+          TURBO_TELEMETRY_DISABLED: '1'
+        run: .github/scripts/diagnose-turbo.sh "T2-turbo-no-telemetry"
+
+      - name: T3 - turbo, no daemon
+        env:
+          TURBO_EXTRA_ARGS: '--no-daemon'
+        run: .github/scripts/diagnose-turbo.sh "T3-turbo-no-daemon"
+
       - name: Summary
         if: always()
         run: cat "$RUNNER_TEMP/diagnose-summary.txt" || echo "no summary written"
