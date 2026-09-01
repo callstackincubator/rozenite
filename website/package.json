@@ -13,13 +13,13 @@
     "@callstack/rspress-theme": "^0.6.0",
     "@neondatabase/serverless": "^1.0.1",
     "@phosphor-icons/react": "^2.1.10",
-    "@rspress/core": "2.0.0",
+    "@rspress/core": "2.0.21",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "simple-icons": "^16.28.0"
   },
   "devDependencies": {
-    "@rspress/shared": "2.0.0",
+    "@rspress/shared": "2.0.21",
     "@types/node": "^18.11.17",
     "@types/react": "^19.1.8",
     "p-throttle": "^7.0.0"
