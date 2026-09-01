@@ -5,6 +5,11 @@ import {
   createPerformanceDomainService,
   createReactDomainService,
 } from '../agent/local-domains.js';
+import {
+  ELEMENT_TYPE_FUNCTION,
+  ELEMENT_TYPE_ROOT,
+  TREE_OPERATION_ADD,
+} from '../agent/runtime/react/operations-parser.js';
 
 const waitForWriteCalls = async (
   fn: { mock: { calls: unknown[] } },
@@ -448,5 +453,72 @@ describe('performance domain service', () => {
     await expect(stopped).resolves.toMatchObject({ artifact: expect.anything() });
     expect(finalize).toHaveBeenCalled();
     expect(write).toHaveBeenCalledWith('{"traceEvents":[');
+  });
+});
+
+/**
+ * `[rendererId, rootId, stringTableSize, ...stringTable, ...operations]` adding
+ * a root and one function component named `App` under it.
+ */
+const addAppUnderRootOperations = (rootId: number, appId: number): number[] => [
+  1,
+  rootId,
+  4,
+  3,
+  ...Array.from('App', (character) => character.codePointAt(0) ?? 0),
+  TREE_OPERATION_ADD,
+  rootId,
+  ELEMENT_TYPE_ROOT,
+  0,
+  0,
+  0,
+  0,
+  TREE_OPERATION_ADD,
+  appId,
+  ELEMENT_TYPE_FUNCTION,
+  rootId,
+  0,
+  1,
+  0,
+];
+
+describe('react domain service outbound channel', () => {
+  it('keeps sending to the device after the app reconnects', async () => {
+    const sent: Array<{ event: string; payload: unknown }> = [];
+    const react = createReactDomainService({
+      sessionId: 'session-1',
+      sendReactDevToolsMessage: (message) => {
+        sent.push(message);
+      },
+    });
+
+    await react.captureReactDevToolsMessage?.({
+      event: 'operations',
+      payload: addAppUnderRootOperations(1, 2),
+    });
+    await expect(react.callTool('getProps', { nodeId: 2 })).rejects.toThrow(
+      /No props snapshot available/,
+    );
+    expect(sent.some((message) => message.event === 'inspectElement')).toBe(true);
+
+    // The app restarts: the socket closes, the session recovers on its own and
+    // the device starts streaming a fresh tree.
+    sent.length = 0;
+    react.onDisconnected();
+    await react.captureReactDevToolsMessage?.({
+      event: 'operations',
+      payload: addAppUnderRootOperations(10, 11),
+    });
+
+    await expect(react.callTool('getTree', {})).resolves.toMatchObject({ roots: [10] });
+    await expect(react.callTool('getProps', { nodeId: 11 })).rejects.toThrow(
+      /No props snapshot available/,
+    );
+    expect(sent.some((message) => message.event === 'inspectElement')).toBe(true);
+
+    await react.callTool('startProfiling', {});
+    expect(sent.some((message) => message.event === 'startProfiling')).toBe(true);
+
+    await react.dispose();
   });
 });

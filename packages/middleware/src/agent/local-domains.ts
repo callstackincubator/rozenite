@@ -1281,9 +1281,12 @@ export const createReactDomainService = (deps: {
 
   const sessionDeviceId = `react-session:${deps.sessionId}`;
   const store = createReactTreeStore();
-  store.registerDevice(sessionDeviceId, {
-    sendMessage: deps.sendReactDevToolsMessage,
-  });
+  const bindDevice = (): void => {
+    store.registerDevice(sessionDeviceId, {
+      sendMessage: deps.sendReactDevToolsMessage,
+    });
+  };
+  bindDevice();
 
   return {
     domainId: 'react',
@@ -1328,7 +1331,17 @@ export const createReactDomainService = (deps: {
       await store.ingestReactDevToolsMessage(sessionDeviceId, message);
     },
     onDisconnected: () => {
+      // Drop the tree, inspections and profiling state captured from the app
+      // process that just went away, then immediately re-bind the outbound
+      // channel. The session recovers on its own after an app relaunch, but
+      // nothing re-registers this device, so without this the recreated state
+      // would come back with no `sendMessage`: inbound operations keep
+      // populating a correct tree while every outbound request
+      // (inspectElement, startProfiling, getProfilingData) is silently
+      // dropped. `sendReactDevToolsMessage` is bound to the session rather
+      // than to one socket generation, so it stays valid across recovery.
       store.unregisterDevice(sessionDeviceId);
+      bindDevice();
     },
     dispose: async () => {
       store.unregisterDevice(sessionDeviceId);
