@@ -13,6 +13,17 @@
 #   exit=124/137 AND saw-completion=0  -> it stalls mid-build: slowness or a
 #                                         deadlock, not an exit problem
 #   exit=0                             -> that variant is healthy
+#
+# Pass 1 answered that: every variant exited in ~15s. But it wrote to a FILE,
+# and Turborepo captures task output through a PIPE, which only reaches EOF
+# once every descendant holding the write end lets go. Pass 2 (the P-*
+# variants) reruns the same matrix with stdout on a pipe and reports whether
+# the pipe drains after the build announces completion:
+#
+#   saw-completion=1 AND pipe-drained=0 -> the build finished but something is
+#                                          still holding the pipe: that is the
+#                                          hang, and the ps dump names it
+#   saw-completion=1 AND pipe-drained=1 -> that variant is clean
 name: Diagnose Storybook hang
 
 on:
@@ -54,23 +65,27 @@ jobs:
       - name: Build @rozenite/ui
         run: pnpm turbo run build --filter=@rozenite/ui
 
-      - name: A - plain build
+      # Control: pass 1 showed this exits in ~15s. Kept as a baseline.
+      - name: A - plain build, output to a file
         run: .github/scripts/diagnose-storybook.sh "A-plain"
 
-      - name: B - telemetry disabled
+      - name: P1 - plain build, output on a pipe
+        run: .github/scripts/diagnose-storybook-pipe.sh "P1-plain-pipe"
+
+      - name: P2 - pipe, telemetry disabled
         env:
           SB_EXTRA_ARGS: '--disable-telemetry'
-        run: .github/scripts/diagnose-storybook.sh "B-no-telemetry"
+        run: .github/scripts/diagnose-storybook-pipe.sh "P2-pipe-no-telemetry"
 
-      - name: C - without addon-mcp
+      - name: P3 - pipe, without addon-mcp
         env:
           SB_DROP_ADDONS: 'addon-mcp'
-        run: .github/scripts/diagnose-storybook.sh "C-no-mcp"
+        run: .github/scripts/diagnose-storybook-pipe.sh "P3-pipe-no-mcp"
 
-      - name: D - docs addon only
+      - name: P4 - pipe, docs addon only
         env:
           SB_DROP_ADDONS: 'addon-mcp addon-vitest addon-a11y chromatic-com'
-        run: .github/scripts/diagnose-storybook.sh "D-docs-addon-only"
+        run: .github/scripts/diagnose-storybook-pipe.sh "P4-pipe-docs-addon-only"
 
       - name: Summary
         if: always()

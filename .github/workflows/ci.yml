@@ -65,10 +65,18 @@ jobs:
         if: github.event_name == 'pull_request'
         run: git fetch origin ${{ github.event.pull_request.base.ref }}
 
+      # `--affected` is spelled out as its equivalent filter so that the
+      # website can be excluded: `--affected` and `--filter` cannot be combined.
+      # This job deliberately ignores `website/**` (see `paths-ignore` above) and
+      # the site is built and deployed by its own workflow, but a commit that
+      # touches both the website and a package still runs here, and
+      # `@rozenite/docs#build` then wedges the job: it shells out of Turborepo to
+      # run a full Storybook build, which never exits on the runner, so the run
+      # hangs until it is cancelled.
       - name: Validate
         env:
           TURBO_SCM_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.event.pull_request.base.ref) || 'HEAD~1' }}
-        run: pnpm turbo run typecheck build lint test --affected
+        run: pnpm turbo run typecheck build lint test --filter="...[$TURBO_SCM_BASE...HEAD]" --filter='!@rozenite/docs'
 
       # Only pushes to main write the cache. A pull request run cannot write to
       # main's cache scope anyway, but this also stops a run from writing a cache
