@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm build",
+  "buildCommand": "pnpm turbo run build --filter=@rozenite/docs",
   "cleanUrls": true,
   "framework": null,
   "installCommand": "pnpm install",
