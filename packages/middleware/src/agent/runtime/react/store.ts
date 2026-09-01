@@ -1733,6 +1733,11 @@ export const createReactTreeStore = (options?: {
         timestampMs: commit.timestamp,
         renderedFiberCount: commit.fiberActualDurations.size,
         isSlow: commit.duration > slowRenderThresholdMs,
+        effectDurationMs: commit.effectDuration,
+        passiveEffectDurationMs: commit.passiveEffectDuration,
+        priorityLevel: commit.priorityLevel,
+        updaterCount: commit.updaters?.length ?? 0,
+        hasChangeDescriptions: commit.changeDescriptions !== null,
       }),
     );
 

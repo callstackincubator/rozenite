@@ -46,6 +46,12 @@ Drill down:
 `getProfileTimeline` lists every commit with its duration, and `getRenderData`
 opens one of them fiber by fiber.
 
+`getProfileTimeline` rows carry render duration and rendered-fiber count by
+default. Add `--fields ...,effectDurationMs,passiveEffectDurationMs` to see
+commits that render fast but commit slowly, `priorityLevel` and `updaterCount`
+for how an update was scheduled and how many fibers scheduled it, and
+`hasChangeDescriptions` to tell whether `getRenderData` can explain that commit.
+
 `getRenderData` and `getComponentRenders` rows carry `displayName` and timing by
 default. Add `--fields ...,changedKeys` for the exact changed prop, state, and
 context key names behind `changeTypeHints`, which attributes a re-render without
