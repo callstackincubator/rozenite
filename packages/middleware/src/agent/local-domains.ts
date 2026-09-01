@@ -1203,7 +1203,9 @@ export const createReactDomainService = (deps: {
       description:
         'List every commit in the captured profiling session with its duration and how many ' +
         'fibers rendered, chronologically or slowest first. Use it to pick a commitIndex for ' +
-        'getRenderData; unlike stopProfiling it stays queryable and pages through all commits.',
+        'getRenderData; unlike stopProfiling it stays queryable and pages through all commits. ' +
+        'Request the effectDurationMs, passiveEffectDurationMs, priorityLevel, updaterCount and ' +
+        'hasChangeDescriptions fields to see commit cost beyond render time.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -1229,6 +1231,11 @@ export const createReactDomainService = (deps: {
           'timestampMs',
           'renderedFiberCount',
           'isSlow',
+          'effectDurationMs',
+          'passiveEffectDurationMs',
+          'priorityLevel',
+          'updaterCount',
+          'hasChangeDescriptions',
         ],
         defaultFields: ['rootId', 'commitIndex', 'durationMs', 'renderedFiberCount', 'isSlow'],
       }),

@@ -239,6 +239,20 @@ export interface ReactProfileTimelineItem {
   timestampMs: number;
   renderedFiberCount: number;
   isSlow: boolean;
+  /**
+   * Time spent in layout effects for this commit, and in passive effects
+   * flushed after it. React only measures these when the renderer supports it,
+   * so both are null rather than 0 when the backend did not report them — a
+   * commit that is quick to render can still be slow to commit.
+   */
+  effectDurationMs: number | null;
+  passiveEffectDurationMs: number | null;
+  /** React scheduler priority for the commit, when the backend reports one. */
+  priorityLevel: string | null;
+  /** How many fibers scheduled the update that produced this commit. */
+  updaterCount: number;
+  /** Whether getRenderData can explain why fibers rendered in this commit. */
+  hasChangeDescriptions: boolean;
 }
 
 export interface ReactGetProfileTimelineResult {

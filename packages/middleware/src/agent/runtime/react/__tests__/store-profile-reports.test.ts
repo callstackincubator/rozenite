@@ -216,6 +216,11 @@ describe('React getProfileTimeline', () => {
         timestampMs: 100,
         renderedFiberCount: 2,
         isSlow: false,
+        effectDurationMs: null,
+        passiveEffectDurationMs: null,
+        priorityLevel: null,
+        updaterCount: 0,
+        hasChangeDescriptions: true,
       },
       {
         rootId: 1,
@@ -224,6 +229,11 @@ describe('React getProfileTimeline', () => {
         timestampMs: 200,
         renderedFiberCount: 2,
         isSlow: true,
+        effectDurationMs: null,
+        passiveEffectDurationMs: null,
+        priorityLevel: null,
+        updaterCount: 0,
+        hasChangeDescriptions: true,
       },
       {
         rootId: 1,
@@ -232,6 +242,11 @@ describe('React getProfileTimeline', () => {
         timestampMs: 300,
         renderedFiberCount: 1,
         isSlow: false,
+        effectDurationMs: null,
+        passiveEffectDurationMs: null,
+        priorityLevel: null,
+        updaterCount: 0,
+        hasChangeDescriptions: true,
       },
       {
         rootId: 2,
@@ -240,6 +255,11 @@ describe('React getProfileTimeline', () => {
         timestampMs: 400,
         renderedFiberCount: 1,
         isSlow: false,
+        effectDurationMs: null,
+        passiveEffectDurationMs: null,
+        priorityLevel: null,
+        updaterCount: 0,
+        hasChangeDescriptions: false,
       },
     ]);
     expect(result.summary).toEqual({
@@ -249,6 +269,50 @@ describe('React getProfileTimeline', () => {
       slowCommitCount: 1,
       slowRenderThresholdMs: 16,
     });
+  });
+
+  it('reports commit cost beyond render time', async () => {
+    const store = createStore(
+      new Map([
+        [
+          1,
+          {
+            commitData: [
+              createCommit({
+                duration: 4,
+                timestamp: 100,
+                effectDuration: 21,
+                passiveEffectDuration: 9.5,
+                priorityLevel: 'Normal',
+                updaters: [{ id: 2 }, { id: 3 }],
+                fiberActualDurations: new Map([[2, 4]]),
+                fiberSelfDurations: new Map([[2, 4]]),
+              }),
+            ],
+          },
+        ],
+      ]),
+    );
+
+    const result = await store.getProfileTimeline(DEVICE_ID, {});
+
+    // A commit that renders in 4ms but spends 21ms in layout effects is not
+    // slow by render duration, and only these fields say so.
+    expect(result.items).toEqual([
+      {
+        rootId: 1,
+        commitIndex: 0,
+        durationMs: 4,
+        timestampMs: 100,
+        renderedFiberCount: 1,
+        isSlow: false,
+        effectDurationMs: 21,
+        passiveEffectDurationMs: 9.5,
+        priorityLevel: 'Normal',
+        updaterCount: 2,
+        hasChangeDescriptions: false,
+      },
+    ]);
   });
 
   it('sorts by duration and paginates', async () => {
