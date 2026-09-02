@@ -1,12 +1,14 @@
 {
   "name": "@rozenite/lynx",
   "version": "2.3.0",
-  "description": "Rozenite device runtime for Lynx.",
+  "description": "Rozenite for Lynx: the device-side runtime, plus an rspeedy/Rsbuild plugin (`@rozenite/lynx/rspeedy`) that wires it in automatically.",
   "keywords": [
+    "bundler",
     "devtools",
     "lynx",
     "plugin",
-    "rozenite"
+    "rozenite",
+    "rspeedy"
   ],
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
@@ -31,24 +33,37 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./rspeedy": {
+      "types": "./dist/rspeedy.d.ts",
+      "import": "./dist/rspeedy.js",
+      "require": "./dist/rspeedy.cjs"
     }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && vite build --config vite.rspeedy.config.ts",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "lint": "eslint .",
     "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
-    "tslib": "^2.3.0"
+    "@lynx-js/debug-router-connector": "^0.0.15",
+    "@rozenite/middleware": "workspace:*",
+    "@rozenite/tools": "workspace:*",
+    "express": "^5.1.0",
+    "tslib": "^2.3.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@rsbuild/core": "2.1.10",
+    "@types/express": "^5.0.3",
+    "@types/ws": "^8.18.1",
     "vitest": "^4.0.18"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19.0"
   }
 }

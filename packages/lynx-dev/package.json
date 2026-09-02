@@ -1,7 +1,7 @@
 {
   "name": "@rozenite/lynx-dev",
   "version": "2.3.0",
-  "description": "Rozenite dev-server integration for Lynx: a DebugRouter to CDP bridge and an rspeedy plugin.",
+  "description": "Deprecated: merged into @rozenite/lynx. Install @rozenite/lynx and import from @rozenite/lynx/rspeedy instead.",
   "keywords": [
     "bundler",
     "devtools",
@@ -45,17 +45,9 @@
     "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
-    "@lynx-js/debug-router-connector": "^0.0.15",
-    "@rozenite/middleware": "workspace:*",
-    "@rozenite/tools": "workspace:*",
-    "express": "^5.1.0",
-    "tslib": "^2.3.0",
-    "ws": "^8.18.3"
+    "@rozenite/lynx": "workspace:*"
   },
   "devDependencies": {
-    "@rsbuild/core": "2.1.10",
-    "@types/express": "^5.0.3",
-    "@types/ws": "^8.18.1",
     "vitest": "^4.0.18"
   },
   "engines": {
