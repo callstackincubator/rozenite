@@ -383,9 +383,6 @@ importers:
       '@rozenite/feature-flags-plugin':
         specifier: workspace:*
         version: link:../../packages/feature-flags-plugin
-      '@rozenite/lynx':
-        specifier: workspace:*
-        version: link:../../packages/lynx
       '@rozenite/rhf-plugin':
         specifier: workspace:*
         version: link:../../packages/rhf-plugin
@@ -414,9 +411,9 @@ importers:
       '@lynx-js/types':
         specifier: 4.1.0
         version: 4.1.0
-      '@rozenite/lynx-dev':
+      '@rozenite/lynx':
         specifier: workspace:*
-        version: link:../../packages/lynx-dev
+        version: link:../../packages/lynx
       '@rsbuild/plugin-type-check':
         specifier: 1.6.0
         version: 1.6.0(@rsbuild/core@2.1.10)(@rspack/core@2.2.1(@swc/helpers@0.5.23))(typescript@6.0.3)
@@ -898,16 +895,6 @@ importers:
 
   packages/lynx:
     dependencies:
-      tslib:
-        specifier: ^2.3.0
-        version: 2.8.1
-    devDependencies:
-      vitest:
-        specifier: ^4.0.18
-        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
-
-  packages/lynx-dev:
-    dependencies:
       '@lynx-js/debug-router-connector':
         specifier: ^0.0.15
         version: 0.0.15(supports-color@8.1.1)
@@ -936,6 +923,16 @@ importers:
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
+      vitest:
+        specifier: ^4.0.18
+        version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
+
+  packages/lynx-dev:
+    dependencies:
+      '@rozenite/lynx':
+        specifier: workspace:*
+        version: link:../lynx
+    devDependencies:
       vitest:
         specifier: ^4.0.18
         version: 4.1.0(@types/node@18.16.9)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@22.1.0(supports-color@8.1.1))(vite@7.3.5(@types/node@18.16.9)(jiti@2.4.2)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
@@ -9213,10 +9210,6 @@ packages:
   cookie-signature@1.2.2:
     resolution: {integrity: sha512-D76uU73ulSXrD1UXF4KE2TMxVVwhsnCgfAyTg9k8P6KGZjlXKrOLe4dJQKI3Bxi5wjesZoFXJWElNWBjPZMbhg==}
     engines: {node: '>=6.6.0'}
-
-  cookie@0.7.1:
-    resolution: {integrity: sha512-6DnInpx7SJ2AK3+CTUE/ZM0vWTUboZCegxhC2xiIydHR9jNuTAASBrfEpHhiGOZw/nX51bHt6YQl8jsGo4y/0w==}
-    engines: {node: '>= 0.6'}
 
   cookie@0.7.2:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
@@ -19035,26 +19028,26 @@ snapshots:
 
   '@internationalized/date@3.12.0':
     dependencies:
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
 
   '@internationalized/message@3.1.8':
     dependencies:
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       intl-messageformat: 10.7.18
 
   '@internationalized/number@3.6.5':
     dependencies:
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
 
   '@internationalized/string@3.2.7':
     dependencies:
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
 
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
       string-width-cjs: string-width@4.2.3
-      strip-ansi: 7.1.0
+      strip-ansi: 7.2.0
       strip-ansi-cjs: strip-ansi@6.0.1
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
@@ -19715,8 +19708,8 @@ snapshots:
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
-      '@emnapi/core': 1.11.2
-      '@emnapi/runtime': 1.11.2
+      '@emnapi/core': 1.11.3
+      '@emnapi/runtime': 1.11.3
       '@tybys/wasm-util': 0.10.1
     optional: true
 
@@ -20453,7 +20446,7 @@ snapshots:
       '@react-types/autocomplete': 3.0.0-alpha.38(react@19.2.3)
       '@react-types/button': 3.15.1(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -20517,7 +20510,7 @@ snapshots:
       '@react-aria/ssr': 3.9.10(react@19.2.3)
       '@react-aria/utils': 3.33.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       use-sync-external-store: 1.6.0(react@19.2.3)
@@ -20618,7 +20611,7 @@ snapshots:
       '@react-stately/dnd': 3.7.4(react@19.2.3)
       '@react-types/button': 3.15.1(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -20627,7 +20620,7 @@ snapshots:
       '@react-aria/interactions': 3.27.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-aria/utils': 3.33.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       clsx: 2.1.1
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
@@ -20694,7 +20687,7 @@ snapshots:
       '@react-aria/utils': 3.33.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-stately/flags': 3.1.2
       '@react-types/shared': 3.33.1(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -20741,7 +20734,7 @@ snapshots:
 
   '@react-aria/live-announcer@3.4.4':
     dependencies:
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
 
   '@react-aria/menu@3.21.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -20801,7 +20794,7 @@ snapshots:
       '@react-types/button': 3.15.1(react@19.2.3)
       '@react-types/overlays': 3.9.4(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -20980,7 +20973,7 @@ snapshots:
       '@react-stately/utils': 3.11.0(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
       '@react-types/textfield': 3.12.8(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -21014,7 +21007,7 @@ snapshots:
       '@react-aria/i18n': 3.12.16(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-aria/utils': 3.33.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -21060,7 +21053,7 @@ snapshots:
       '@react-aria/utils': 3.33.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-stately/virtualizer': 4.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -21540,7 +21533,7 @@ snapshots:
   '@react-stately/autocomplete@3.0.0-beta.4(react@19.2.3)':
     dependencies:
       '@react-stately/utils': 3.11.0(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
 
   '@react-stately/calendar@3.9.3(react@19.2.3)':
@@ -21627,7 +21620,7 @@ snapshots:
 
   '@react-stately/flags@3.1.2':
     dependencies:
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
 
   '@react-stately/form@3.2.4(react@19.2.3)':
     dependencies:
@@ -21652,7 +21645,7 @@ snapshots:
       '@react-types/grid': 3.3.8(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
       '@react-types/table': 3.13.6(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -21721,7 +21714,7 @@ snapshots:
       '@react-stately/collections': 3.12.10(react@19.2.3)
       '@react-stately/utils': 3.11.0(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
 
   '@react-stately/slider@3.7.5(react@19.2.3)':
@@ -21742,7 +21735,7 @@ snapshots:
       '@react-types/grid': 3.3.8(react@19.2.3)
       '@react-types/shared': 3.33.1(react@19.2.3)
       '@react-types/table': 3.13.6(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
 
   '@react-stately/tabs@3.8.9(react@19.2.3)':
@@ -21791,7 +21784,7 @@ snapshots:
   '@react-stately/virtualizer@4.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@react-types/shared': 3.33.1(react@19.2.3)
-      '@swc/helpers': 0.5.18
+      '@swc/helpers': 0.5.23
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -25980,8 +25973,6 @@ snapshots:
 
   cookie-signature@1.2.2: {}
 
-  cookie@0.7.1: {}
-
   cookie@0.7.2: {}
 
   cookie@1.1.1: {}
@@ -26803,7 +26794,7 @@ snapshots:
 
   es-shim-unscopables@1.1.0:
     dependencies:
-      hasown: 2.0.2
+      hasown: 2.0.4
 
   es-to-primitive@1.3.0:
     dependencies:
@@ -27621,7 +27612,7 @@ snapshots:
       body-parser: 1.20.3(supports-color@8.1.1)
       content-disposition: 0.5.4
       content-type: 1.0.5
-      cookie: 0.7.1
+      cookie: 0.7.2
       cookie-signature: 1.0.6
       debug: 2.6.9(supports-color@8.1.1)
       depd: 2.0.0
@@ -27656,7 +27647,7 @@ snapshots:
       body-parser: 2.2.0(supports-color@8.1.1)
       content-disposition: 1.0.0
       content-type: 1.0.5
-      cookie: 0.7.1
+      cookie: 0.7.2
       cookie-signature: 1.2.2
       debug: 4.4.3(supports-color@8.1.1)
       encodeurl: 2.0.0
@@ -28595,7 +28586,7 @@ snapshots:
   internal-slot@1.1.0:
     dependencies:
       es-errors: 1.3.0
-      hasown: 2.0.2
+      hasown: 2.0.4
       side-channel: 1.1.0
 
   internmap@2.0.3: {}
@@ -33259,7 +33250,7 @@ snapshots:
     dependencies:
       eastasianwidth: 0.2.0
       emoji-regex: 9.2.2
-      strip-ansi: 7.1.0
+      strip-ansi: 7.2.0
 
   string.prototype.matchall@4.0.12:
     dependencies:
@@ -34562,7 +34553,7 @@ snapshots:
     dependencies:
       ansi-styles: 6.2.1
       string-width: 5.1.2
-      strip-ansi: 7.1.0
+      strip-ansi: 7.2.0
 
   wrappy@1.0.2: {}
 

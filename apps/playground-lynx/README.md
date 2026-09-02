@@ -30,12 +30,11 @@ Edit `src/App.tsx` to see updates — the page hot-reloads as you save.
 
 ## Rozenite integration
 
-- [`@rozenite/lynx-dev`](../../packages/lynx-dev) is added to
-  `lynx.config.ts`. It discovers installed plugins and bridges Lynx's
-  DebugRouter to the CDP dialect `@rozenite/app` speaks.
-- [`@rozenite/lynx`](../../packages/lynx) is imported once in `src/index.tsx`.
-  It installs the device-side dispatcher that plugins talk to, and must run
-  before any plugin hook does.
+- [`@rozenite/lynx/rspeedy`](../../packages/lynx) is added to
+  `lynx.config.ts`. It discovers installed plugins, bridges Lynx's
+  DebugRouter to the CDP dialect `@rozenite/app` speaks, and injects the
+  device-side dispatcher plugins talk to — there is nothing to import in
+  `src/index.tsx`.
 
 ## Plugins
 

@@ -8,7 +8,7 @@ Rozenite for Lynx is experimental. It has been verified against LynxExplorer on 
 
 Rozenite for Lynx lets you debug a [Lynx](https://lynxjs.org) app with the same DevTools panels, the same plugin catalogue and the same `rozenite` CLI you use for React Native.
 
-You need three things: `@rozenite/lynx-dev` in your dev server, `@rozenite/lynx` in your app, and **Lynx DevTool turned on in the app itself** — that last one is off by default and nothing works without it. Start there.
+You need two things: `@rozenite/lynx` in your dev server, and **Lynx DevTool turned on in the app itself** — that last one is off by default and nothing works without it. Start there.
 
 ## Turn on Lynx DevTool
 
@@ -18,11 +18,11 @@ Lynx ships its DevTool component switched off. With it off, your app never regis
 
 **In your own app**, enable it where you initialise the Lynx environment — `LynxEnv.inst().enableDevtool(true)` on Android, `devtoolEnabled = YES` on iOS. On iOS you also need `enableAllSessions` on `LynxServiceDevToolProtocol`, or your cards won't be offered for debugging. Lynx's [Integrate Lynx DevTool](https://lynxjs.org/guide/start/integrate-lynx-devtool.html) guide has the full setup for each platform.
 
-## Add @rozenite/lynx-dev to your dev server
+## Add @rozenite/lynx to your dev server
 
 ### Installation
 
-<PackageManagerTabs command="install -D @rozenite/lynx-dev" />
+<PackageManagerTabs command="install -D @rozenite/lynx" />
 
 ### Configuration
 
@@ -31,34 +31,20 @@ Add the plugin to your `lynx.config.ts`:
 ```typescript
 import { defineConfig } from '@lynx-js/rspeedy';
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
-import { rozeniteLynxPlugin } from '@rozenite/lynx-dev';
+import { rozeniteLynxPlugin } from '@rozenite/lynx/rspeedy';
 
 export default defineConfig({
   plugins: [pluginReactLynx(), rozeniteLynxPlugin()],
 });
 ```
 
-The plugin is inert in production builds. Pass `enabled` explicitly if you want to control that yourself.
+That's it — there is nothing to add to your app's own source. The plugin
+injects the device runtime for you ahead of your app's entry point, and only
+in development: it is inert in production builds (pass `enabled` explicitly
+if you want to control that yourself), and it never runs at all during
+`rspeedy build`.
 
 Rozenite plugins are discovered from your project's `package.json` exactly as they are for React Native — install a plugin as a dependency and it shows up.
-
-## Add @rozenite/lynx to your app
-
-### Installation
-
-<PackageManagerTabs command="install -D @rozenite/lynx" />
-
-### Entry point
-
-Import it once, as early as possible in your app's entry point. It has to run before any plugin's `useRozeniteDevToolsClient` does.
-
-```typescript
-if (__DEV__) {
-  require('@rozenite/lynx');
-}
-```
-
-It installs itself only in Lynx's background runtime and is a no-op everywhere else.
 
 ## Open DevTools
 
@@ -85,7 +71,7 @@ Note that `enableDesktop` is an iOS Simulator concern only. An Android emulator 
 
 **Your target list is empty.** Nine times out of ten, Lynx DevTool is off — see [Turn on Lynx DevTool](#turn-on-lynx-devtool), and remember it needs an app restart. Otherwise: check the app is a development build, and that a card is actually open (an app sitting on a native screen has no cards to debug). On Android, `adb devices` should list the phone or emulator — if it doesn't, Rozenite can't see it either. On the iOS Simulator, check you haven't turned `enableDesktop` off.
 
-**Your card shows up but panels stay disconnected.** The app is reachable but Rozenite isn't running inside it. Check `@rozenite/lynx` is imported at the entry point and that the import actually runs in your development build.
+**Your card shows up but panels stay disconnected.** The app is reachable but Rozenite isn't running inside it. `rozeniteLynxPlugin()` only injects the device runtime for `rspeedy dev` — never for `rspeedy build`, and not for `rspeedy preview` either, which runs with `NODE_ENV=production`. Check you're on the dev server, and that `enabled` hasn't been explicitly turned off in your `lynx.config.ts`.
 
 **A panel connects but never receives anything.** Most likely the plugin's device half is written against React Native APIs — see [What doesn't work yet](#what-doesnt-work-yet).
 

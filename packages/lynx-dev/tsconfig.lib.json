@@ -7,17 +7,14 @@
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node", "vite/client"],
-    "esModuleInterop": true,
-    "resolveJsonModule": true
+    "types": ["vite/client"],
+    "module": "esnext",
+    "moduleResolution": "bundler"
   },
   "include": ["src/**/*.ts"],
   "references": [
     {
-      "path": "../tools/tsconfig.lib.json"
-    },
-    {
-      "path": "../middleware/tsconfig.lib.json"
+      "path": "../lynx/tsconfig.lib.json"
     }
   ]
 }
