@@ -21,3 +21,4 @@ Status values:
 | ADR | Title | Status |
 |---|---|---|
 | [0000](./0000-single-target-discovery-endpoint.md) | One Rozenite endpoint for debug-target discovery | Accepted |
+| [0002](./0002-lynx-plugins-never-enter-production-bundles.md) | Rozenite plugins never enter Lynx production bundles | Accepted — not yet implemented |
