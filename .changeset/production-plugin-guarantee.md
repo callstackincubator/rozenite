@@ -13,7 +13,13 @@
 'rozenite': minor
 ---
 
-Guarantee that Rozenite plugins never reach a production bundle. Until now the
+Guarantee that Rozenite plugins never reach a production bundle, for **Metro and Re.Pack**
+(Lynx support is tracked separately in
+[#492](https://github.com/callstackincubator/rozenite/issues/492)). The rspack resolver plugin that
+enforces this for Re.Pack now lives in `@rozenite/middleware`, so it can be shared with Lynx without
+`@rozenite/repack` becoming a dependency of it.
+
+Until now the
 only thing keeping plugin code out of a release was a shim each plugin wrote by
 hand, which made inclusion survivable rather than impossible and did nothing at
 all for a third-party plugin that exported a hook from its package index.
