@@ -142,6 +142,7 @@ describe('agent command output', () => {
         appId: 'app.test',
         pageId: 'page-1',
         title: 'title',
+        integration: 'react-native',
       },
     ]);
 
@@ -154,7 +155,9 @@ describe('agent command output', () => {
       from: 'node',
     });
 
-    expect(stdoutWrite).toHaveBeenCalledWith('{"items":[{"id":"device-1","name":"iPhone"}]}\n');
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"items":[{"id":"device-1","name":"iPhone","integration":"react-native"}]}\n',
+    );
     expect(mocks.createAgentClient).toHaveBeenCalledWith({
       host: '127.0.0.1',
       port: 8081,
@@ -171,6 +174,7 @@ describe('agent command output', () => {
         appId: 'app.test',
         pageId: 'page-1',
         title: 'title',
+        integration: 'react-native',
       },
     ]);
 
@@ -183,7 +187,9 @@ describe('agent command output', () => {
       from: 'node',
     });
 
-    expect(stdoutWrite).toHaveBeenCalledWith('{"items":[{"id":"device-1","name":"iPhone"}]}\n');
+    expect(stdoutWrite).toHaveBeenCalledWith(
+      '{"items":[{"id":"device-1","name":"iPhone","integration":"react-native"}]}\n',
+    );
   });
 
   it('prints the slim session for session create', async () => {

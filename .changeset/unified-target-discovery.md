@@ -13,3 +13,6 @@ discovery goes through one Rozenite endpoint on both integrations.
 `page` query parameter of `webSocketDebuggerUrl`) instead of the globally
 unique `<deviceId>-<pageId>` composite, so reconnecting after a disconnect
 correctly lands back on the page that was being debugged.
+
+`rozenite agent targets` now includes each target's `integration` in its
+output.

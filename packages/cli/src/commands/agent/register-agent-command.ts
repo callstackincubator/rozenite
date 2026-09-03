@@ -450,7 +450,7 @@ export const registerAgentCommand = (program: Command): void => {
 
   mcpCommand
     .command('targets')
-    .description('List connected devices from Metro inspector')
+    .description('List connected targets and the integration serving each')
     .action(async (...args: unknown[]) => {
       const command = getActionCommand(args);
       await runAgentAction(command, async () => {
@@ -462,6 +462,7 @@ export const registerAgentCommand = (program: Command): void => {
         const conciseTargets = targets.map((target) => ({
           id: target.id,
           name: target.name,
+          integration: target.integration,
         }));
 
         const payload = {
