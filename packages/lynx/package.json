@@ -64,6 +64,12 @@
   },
   "devDependencies": {
     "@lynx-js/react": "^0.125.0",
+    "@lynx-js/react-rsbuild-plugin": "^0.19.1",
+    "@lynx-js/rspeedy": "^0.16.5",
+    "@rozenite/controls-plugin": "workspace:*",
+    "@rozenite/feature-flags-plugin": "workspace:*",
+    "@rozenite/storage-plugin": "workspace:*",
+    "@rozenite/test-utils": "workspace:*",
     "@rsbuild/core": "2.1.10",
     "@types/express": "^5.0.3",
     "@types/ws": "^8.18.1",
