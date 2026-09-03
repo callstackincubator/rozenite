@@ -6,11 +6,13 @@ import {
   isSeamDevEntryRequest,
   formatProductionGuardError,
   formatDevAdvisory,
+  formatIntegrationMismatchError,
+  formatIntegrationMismatchAdvisory,
   warnOnceForImport,
   getDevEntrySpecifier,
   type RozenitePluginPackage,
 } from './production-guard.js';
-import { logger } from '@rozenite/tools';
+import { logger, type RozeniteIntegration } from '@rozenite/tools';
 
 // We intentionally do NOT import types (or values) from `@rspack/core` here.
 // It's an optional peer dependency of `@callstack/repack` -- not guaranteed
@@ -130,6 +132,22 @@ export type RozeniteResolverPluginOptions = {
    * (`enabled === false`).
    */
   installDevEntryRedirect: boolean;
+  /**
+   * When set, a plugin resolved into this bundle must declare this
+   * integration in its manifest's `integrations` (see
+   * `@rozenite/tools/integration`), or the guard fails it the same way it
+   * fails an undeclared production entry. Omitted entirely (as `@rozenite/repack`
+   * does today) means no integration is checked -- this is additive, not a
+   * behaviour change for existing callers.
+   */
+  targetIntegration?: RozeniteIntegration;
+  /**
+   * The function whose `allowInProduction` option bypasses the production
+   * guard, named in its error message. `withRozenite()` for
+   * `@rozenite/repack`; `@rozenite/lynx` passes `rozeniteLynxPlugin()`.
+   * @default 'withRozenite()'
+   */
+  setupFunctionName?: string;
 };
 
 /**
@@ -369,6 +387,38 @@ export class RozeniteResolverPlugin {
       return;
     }
 
+    const { targetIntegration } = this.options;
+
+    if (targetIntegration && !plugin.integrations.includes(targetIntegration)) {
+      if (!this.options.isDev) {
+        const WebpackError = getWebpackErrorConstructor(compiler);
+        compilation.errors.push(
+          new WebpackError(
+            formatIntegrationMismatchError({
+              plugin,
+              importedFrom: originModulePath,
+              projectRoot: this.options.projectRoot,
+              targetIntegration,
+            }),
+          ),
+        );
+        return;
+      }
+
+      if (!isDevEntryOrigin(originModulePath)) {
+        warnOnceForImport(
+          `${originModulePath}\0${plugin.name}\0integration`,
+          formatIntegrationMismatchAdvisory({
+            plugin,
+            importedFrom: originModulePath,
+            projectRoot: this.options.projectRoot,
+            targetIntegration,
+          }),
+        );
+      }
+      return;
+    }
+
     let declaredEntryPaths: Set<string>;
 
     try {
@@ -396,6 +446,7 @@ export class RozeniteResolverPlugin {
             plugin,
             importedFrom: originModulePath,
             projectRoot: this.options.projectRoot,
+            setupFunctionName: this.options.setupFunctionName,
           }),
         ),
       );

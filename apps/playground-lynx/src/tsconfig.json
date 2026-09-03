@@ -11,5 +11,5 @@
 
     "noEmit": true
   },
-  "include": ["./**/*.ts", "./**/*.tsx"]
+  "include": ["./**/*.ts", "./**/*.tsx", "../rozenite.dev/**/*.ts", "../rozenite.dev/**/*.tsx"]
 }

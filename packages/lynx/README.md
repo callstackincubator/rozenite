@@ -4,13 +4,19 @@
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
-`@rozenite/lynx` brings Rozenite to [Lynx](https://lynxjs.org). It has two
+`@rozenite/lynx` brings Rozenite to [Lynx](https://lynxjs.org). It has three
 entry points:
 
-- **`@rozenite/lynx`** (this package's default export) — the small
-  device-side runtime that installs the global
+- **`@rozenite/lynx`** (this package's default export) — the app-side seam:
+  a `<Rozenite />` component you render once, unconditionally, from your app
+  root. It ships a noop in production and no plugin code is ever included in
+  your bundle.
+- **`@rozenite/lynx/runtime`** — the device-side runtime that installs the
+  global
   [`@rozenite/plugin-bridge`](https://www.npmjs.com/package/@rozenite/plugin-bridge)
-  talks to on the device.
+  talks to on the device. You do not import this by hand; the plugin injects
+  it for you (see [How the runtime gets into your app](#how-the-runtime-gets-into-your-app)
+  below).
 - **`@rozenite/lynx/rspeedy`** — an rspeedy/Rsbuild plugin that runs a small
   dev server on top of your rspeedy/Rsbuild dev server, speaking Metro's
   inspector dialect (`/json/list` and `/inspector/debug`) so the same
@@ -18,16 +24,14 @@ entry points:
   unmodified. Underneath, it discovers Lynx apps over
   [DebugRouter](https://github.com/lynx-family/lynx/tree/main/devtool) and
   bridges DebugRouter's wire protocol to Chrome DevTools Protocol (CDP) on
-  the fly.
-
-You only ever install this one package. **The plugin installs the device
-runtime for you** — see [How the runtime gets into your app](#how-the-runtime-gets-into-your-app)
-below — so there is nothing to import by hand in your app's own source.
+  the fly. It also guards every build — `rspeedy build` included — against
+  Rozenite plugin code reaching a production bundle.
 
 ## Features
 
 - **One package, one install**: no separate dev/device split to keep in sync
-- **Zero manual wiring**: the plugin injects the device runtime for you, only in development — there is nothing to import, and so nothing to get wrong
+- **A production guarantee, not just a convention**: `rspeedy build` fails if it resolves into a Rozenite plugin package through anything other than that plugin's declared production entry — the same guarantee `@rozenite/metro` and `@rozenite/repack` give React Native
+- **Zero manual wiring for the runtime**: the plugin injects the device runtime for you, only in development — there is nothing to import, and so nothing to get wrong
 - **Automatic Plugin Discovery**: discovers installed Rozenite plugins from your project's `package.json`, exactly as `@rozenite/metro` does for React Native
 - **Metro-Compatible Dev Server**: serves `/json/list` and `/inspector/debug` so `@rozenite/app` needs no Lynx-specific code
 - **DebugRouter Bridge**: discovers Lynx apps over USB and translates DebugRouter frames to and from CDP
@@ -57,8 +61,41 @@ export default defineConfig({
 });
 ```
 
-That's the whole setup — no changes to `src/index.tsx` or any other app
-source are needed.
+Then mount the seam once, unconditionally, at your app root:
+
+```tsx
+// src/App.tsx
+import Rozenite from '@rozenite/lynx';
+
+export function App() {
+  return (
+    <view>
+      <Rozenite />
+      {/* ...the rest of your app */}
+    </view>
+  );
+}
+```
+
+Wire your plugins in a `rozenite.dev.tsx` file at your project root — never
+in app source:
+
+```tsx
+// rozenite.dev.tsx
+import { useRozeniteTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
+
+export default function RozeniteDevEntry() {
+  useRozeniteTanStackQueryDevTools(/* ... */);
+  return null;
+}
+```
+
+In development, `rozeniteLynxPlugin()` redirects `<Rozenite />`'s internal
+import to `rozenite.dev.tsx`. In production it resolves to a shipped noop
+instead, and `rspeedy build` fails outright if any plugin import escaped
+into app source some other way — see
+[How the production guarantee works](#how-the-production-guarantee-works)
+below.
 
 ### With Custom Options
 
@@ -85,19 +122,17 @@ Start your rspeedy dev server as usual, plug in a Lynx app, and Rozenite will lo
 
 `rozeniteLynxPlugin()` appends its own device runtime to Rsbuild's
 [`source.preEntry`](https://rsbuild.rs/config/source/pre-entry) — the same
-runtime this package publishes at its `.` export — so it is bundled ahead of
-your app's own entry point automatically, satisfying the one ordering rule
-that matters: it must install `__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__` before
-any plugin's `useRozeniteDevToolsClient` runs.
+runtime this package publishes at its `./runtime` export — so it is bundled
+ahead of your app's own entry point automatically, satisfying the one
+ordering rule that matters: it must install
+`__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__` before any plugin's
+`useRozeniteDevToolsClient` runs.
 
-This only happens in development. The plugin's `setup` — where the injection
-runs — never executes during `rspeedy build` (Rsbuild only calls a plugin
-whose `apply` matches the current action, and this plugin declares
-`apply: 'serve'`), and is additionally gated by an `enabled` option that
-defaults to off whenever `NODE_ENV === 'production'`. Both guards would have
-to be defeated at once for the runtime to reach a production bundle, and
-neither is something your app's code can accidentally get wrong — there is
-no import for you to place correctly or forget.
+This only happens when the plugin is `enabled` (the default whenever
+`NODE_ENV !== 'production'`) *and* the current build is not `rspeedy build`.
+Both conditions are read once, up front, and gate every piece of dev-only
+wiring this plugin does — there is no import for you to place correctly or
+forget.
 
 If you need the device runtime outside of that automatic wiring — for
 example, a non-rspeedy build pipeline — you can still import it directly,
@@ -105,14 +140,33 @@ guarded for development:
 
 ```ts
 if (__DEV__) {
-  require('@rozenite/lynx');
+  require('@rozenite/lynx/runtime');
 }
 ```
 
-Do **not** import `@rozenite/lynx` unguarded at your app's entry point. An
-unguarded `import '@rozenite/lynx'` ships the dispatcher (and the code that
-installs it) into your production bundle, since nothing about a static,
-side-effectful import can be stripped by the bundler on its own.
+Do **not** import `@rozenite/lynx/runtime` unguarded at your app's entry
+point. An unguarded `import '@rozenite/lynx/runtime'` ships the dispatcher
+(and the code that installs it) into your production bundle, since nothing
+about a static, side-effectful import can be stripped by the bundler on its
+own. `@rozenite/lynx`'s root export (`<Rozenite />`, the seam described
+above) is the one import that is always safe to leave in app source
+unconditionally.
+
+## How the production guarantee works
+
+`rozeniteLynxPlugin()` installs a resolver guard (`RozeniteResolverPlugin`,
+shared with `@rozenite/repack` via `@rozenite/middleware`) on every build,
+`rspeedy build` included — not just when the dev server runs. If a
+production build resolves into a Rozenite plugin package through anything
+other than that plugin's declared production entry point, the build fails,
+naming the file that imported it. The same mistake only warns in
+development. `allowInProduction` in `RozeniteLynxOptions` is the escape
+hatch, and every package listed there is logged loudly once per build.
+
+The guard also checks that a plugin declares Lynx support at all: a plugin
+built only for React Native (or one that has not declared any target)
+resolving into a Lynx bundle fails the same way, with a message naming the
+integrations the plugin *does* declare.
 
 ## Configuration
 
@@ -130,12 +184,14 @@ type RozeniteLynxOptions = {
   enableIOS?: boolean; // Discover physical iOS devices over usbmux. Default: true
   enableHarmony?: boolean; // Discover physical HarmonyOS devices. Default: false
   enableDesktop?: boolean; // Discover targets on localhost, including simulators. Default: true
+  allowInProduction?: string[]; // Rozenite plugin packages allowed to bypass the production guard
 };
 ```
 
 **Options:**
 
 - `enabled` - Whether to enable Rozenite (optional, defaults to disabled in production builds)
+- `allowInProduction` - Plugin package names allowed to bypass the production guard described in [How the production guarantee works](#how-the-production-guarantee-works) (optional; prefer declaring `productionEntries` in the plugin's `rozenite.config.ts` instead)
 - `include` - Array of package names to explicitly include (optional)
 - `exclude` - Array of package names to exclude from loading (optional)
 - `destroyOnDetachPlugins` - Array of package names that should be destroyed when switching panels instead of maintaining their state (optional, by default all plugins persist their state)
@@ -173,7 +229,7 @@ For a package to be recognized as a Rozenite plugin, it must:
 ### No DevTools URL is logged
 
 - Make sure the Lynx app is actually connected over USB, and DebugRouter can see it
-- Check that `enabled` was not explicitly set to `false`, and that you are not running a production build (`rozeniteLynxPlugin` never runs during `rspeedy build`)
+- Check that `enabled` was not explicitly set to `false`, and that you are not running a production build (the dev server and device runtime injection never run during `rspeedy build`, though the production guard still does)
 
 ### Device reconnects but DevTools disconnects
 

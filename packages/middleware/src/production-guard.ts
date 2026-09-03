@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  DEFAULT_PLUGIN_INTEGRATIONS,
+  isRozeniteIntegration,
+  type RozeniteIntegration,
+} from '@rozenite/tools';
 import { ROZENITE_MANIFEST } from './constants.js';
 import { logger } from './logger.js';
 
@@ -14,6 +19,13 @@ export type RozenitePluginPackage = {
   root: string;
   /** `productionEntries` as declared in `dist/rozenite.json`; `[]` when absent. */
   productionEntries: string[];
+  /**
+   * `integrations` as declared in `dist/rozenite.json`; falls back to
+   * {@link DEFAULT_PLUGIN_INTEGRATIONS} (`['react-native']`) for a plugin
+   * published before this field existed, or one whose manifest doesn't
+   * carry a valid value.
+   */
+  integrations: RozeniteIntegration[];
 };
 
 type PluginLookupResult = RozenitePluginPackage | null;
@@ -74,6 +86,24 @@ const readProductionEntries = (manifestPath: string): string[] => {
   );
 };
 
+const readIntegrations = (manifestPath: string): RozeniteIntegration[] => {
+  const manifest = readJsonSafe(manifestPath);
+
+  if (
+    manifest === null ||
+    typeof manifest !== 'object' ||
+    !Array.isArray((manifest as Record<string, unknown>).integrations)
+  ) {
+    return [...DEFAULT_PLUGIN_INTEGRATIONS];
+  }
+
+  const integrations = (manifest as { integrations: unknown[] }).integrations.filter(
+    isRozeniteIntegration,
+  );
+
+  return integrations.length > 0 ? integrations : [...DEFAULT_PLUGIN_INTEGRATIONS];
+};
+
 const readPackageNameOrNull = (packageJsonPath: string): string | null => {
   const packageJson = readJsonSafe(packageJsonPath);
   const name =
@@ -128,6 +158,7 @@ const readPluginAtPackageRoot = (packageRoot: string): PluginLookupResult => {
     name,
     root: realpathSafe(packageRoot),
     productionEntries: readProductionEntries(manifestPath),
+    integrations: readIntegrations(manifestPath),
   };
 };
 
@@ -197,13 +228,21 @@ const formatImportedFrom = (importedFrom: string, projectRoot: string): string =
   return isInsideProjectRoot ? relative : importedFrom;
 };
 
-/** The two user-facing messages, so Metro and Re.Pack cannot drift. */
+/** The two user-facing messages, so Metro, Re.Pack and Lynx cannot drift. */
 export const formatProductionGuardError = (args: {
   plugin: RozenitePluginPackage;
   importedFrom: string;
   projectRoot: string;
+  /**
+   * The function whose `allowInProduction` option bypasses this check --
+   * `withRozenite()` for Metro and Re.Pack, `rozeniteLynxPlugin()` for
+   * Lynx. Defaults to `withRozenite()`, the Metro/Re.Pack spelling, so
+   * existing callers that predate this option keep the exact message they
+   * already have tests and docs pinned to.
+   */
+  setupFunctionName?: string;
 }): string => {
-  const { plugin, importedFrom, projectRoot } = args;
+  const { plugin, importedFrom, projectRoot, setupFunctionName = 'withRozenite()' } = args;
   const declaration =
     plugin.productionEntries.length === 0
       ? 'declares no production entry points'
@@ -212,7 +251,38 @@ export const formatProductionGuardError = (args: {
   return [
     `${plugin.name} is a Rozenite plugin and ${declaration}.`,
     `Imported from: ${formatImportedFrom(importedFrom, projectRoot)}`,
-    `Move plugin wiring into rozenite.dev.tsx, or declare this file in productionEntries in rozenite.config.ts. To bypass this check for ${plugin.name} only, pass allowInProduction: ['${plugin.name}'] to withRozenite().`,
+    `Move plugin wiring into rozenite.dev.tsx, or declare this file in productionEntries in rozenite.config.ts. To bypass this check for ${plugin.name} only, pass allowInProduction: ['${plugin.name}'] to ${setupFunctionName}.`,
+  ].join('\n');
+};
+
+/** The two integration-mismatch messages, mirroring the production-guard pair above. */
+export const formatIntegrationMismatchError = (args: {
+  plugin: RozenitePluginPackage;
+  importedFrom: string;
+  projectRoot: string;
+  targetIntegration: RozeniteIntegration;
+}): string => {
+  const { plugin, importedFrom, projectRoot, targetIntegration } = args;
+
+  return [
+    `${plugin.name} is a Rozenite plugin that does not declare "${targetIntegration}" support.`,
+    `Declared integrations: ${plugin.integrations.join(', ')}.`,
+    `Imported from: ${formatImportedFrom(importedFrom, projectRoot)}`,
+    `This plugin was not built for this target and must not be bundled with it.`,
+  ].join('\n');
+};
+
+export const formatIntegrationMismatchAdvisory = (args: {
+  plugin: RozenitePluginPackage;
+  importedFrom: string;
+  projectRoot: string;
+  targetIntegration: RozeniteIntegration;
+}): string => {
+  const { plugin, importedFrom, projectRoot, targetIntegration } = args;
+
+  return [
+    `warning: ${plugin.name} imported from ${formatImportedFrom(importedFrom, projectRoot)}, but it does not declare "${targetIntegration}" support.`,
+    `         Declared integrations: ${plugin.integrations.join(', ')}. This will fail your production build.`,
   ].join('\n');
 };
 
@@ -248,12 +318,19 @@ export const getDevEntrySpecifier = (projectRoot: string): string => {
   return path.join(projectRoot, 'rozenite.dev');
 };
 
-const SEAM_PACKAGE_NAME = '@rozenite/react-native';
+// The app-side seam packages: `@rozenite/react-native` for React Native,
+// `@rozenite/lynx` for Lynx (its `.` export -- see `packages/lynx/src/index.tsx`).
+// Both ship the identical dev-entry-redirect shape, so one set covers them.
+const SEAM_PACKAGE_NAMES = new Set(['@rozenite/react-native', '@rozenite/lynx']);
 
-// The relative specifier `@rozenite/react-native`'s `src/index.tsx` emits for
-// its dev-entry seam (`import DevEntry from './dev-entry.js'`). Matched with
-// and without the extension since the CJS/ESM emit may differ.
-const SEAM_DEV_ENTRY_REQUESTS = new Set(['./dev-entry.js', './dev-entry']);
+// The relative specifier a seam's `index.tsx` emits for its dev-entry seam
+// (`import DevEntry from './dev-entry.js'`). Matched with and without the
+// extension since the CJS/ESM emit may differ -- `@rozenite/react-native`'s
+// unbundled tsc build keeps the literal `./dev-entry.js` from source in
+// both its ESM and CJS output, while `@rozenite/lynx`'s Rollup-bundled
+// build rewrites its CJS chunk's `require()` to the sibling chunk's actual
+// extension, `./dev-entry.cjs`.
+const SEAM_DEV_ENTRY_REQUESTS = new Set(['./dev-entry.js', './dev-entry', './dev-entry.cjs']);
 
 // Separate cache from `pluginCache`: this walk answers "what package is this
 // file inside", not "is this file inside a Rozenite plugin", and the seam
@@ -286,17 +363,19 @@ const findPackageNameForDirectory = (dir: string): string | null => {
 };
 
 /**
- * True when this request is the seam package (`@rozenite/react-native`)
- * asking for its shipped noop -- i.e. `originModulePath` resolves (by
- * walking up to its nearest package.json) to that package, and `request` is
- * its dev-entry specifier. "Seam not installed" (no such package.json found)
- * is "no match", never an error -- an app that does not use `<Rozenite />`
- * must still build.
+ * True when this request is one of the seam packages (`@rozenite/react-native`,
+ * `@rozenite/lynx`) asking for its shipped noop -- i.e. `originModulePath`
+ * resolves (by walking up to its nearest package.json) to that package, and
+ * `request` is its dev-entry specifier. "Seam not installed" (no such
+ * package.json found) is "no match", never an error -- an app that does not
+ * use `<Rozenite />` must still build.
  */
 export const isSeamDevEntryRequest = (originModulePath: string, request: string): boolean => {
   if (!SEAM_DEV_ENTRY_REQUESTS.has(request)) {
     return false;
   }
 
-  return findPackageNameForDirectory(path.dirname(originModulePath)) === SEAM_PACKAGE_NAME;
+  const packageName = findPackageNameForDirectory(path.dirname(originModulePath));
+
+  return packageName !== null && SEAM_PACKAGE_NAMES.has(packageName);
 };

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
 
-import { Button, Group, Row } from '../ui.jsx';
+import { Button, Group, Row } from '../src/ui.jsx';
 
 const queryClient = new QueryClient();
 

@@ -386,6 +386,9 @@ importers:
       '@rozenite/feature-flags-plugin':
         specifier: workspace:*
         version: link:../../packages/feature-flags-plugin
+      '@rozenite/lynx':
+        specifier: workspace:*
+        version: link:../../packages/lynx
       '@rozenite/rhf-plugin':
         specifier: workspace:*
         version: link:../../packages/rhf-plugin
@@ -414,9 +417,6 @@ importers:
       '@lynx-js/types':
         specifier: 4.1.0
         version: 4.1.0
-      '@rozenite/lynx':
-        specifier: workspace:*
-        version: link:../../packages/lynx
       '@rsbuild/plugin-type-check':
         specifier: 1.6.0
         version: 1.6.0(@rsbuild/core@2.1.10)(@rspack/core@2.2.1(@swc/helpers@0.5.23))(typescript@6.0.3)
@@ -920,6 +920,9 @@ importers:
         specifier: ^8.18.3
         version: 8.21.2
     devDependencies:
+      '@lynx-js/react':
+        specifier: ^0.125.0
+        version: 0.125.0(@lynx-js/types@4.1.0)(@types/react@19.2.18)
       '@rsbuild/core':
         specifier: 2.1.10
         version: 2.1.10
