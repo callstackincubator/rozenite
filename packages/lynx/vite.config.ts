@@ -27,7 +27,21 @@ export default defineConfig({
   plugins: [
     dts({
       tsconfigPath: './tsconfig.lib.json',
-      exclude: ['src/index.tsx', 'src/dev-entry.tsx', 'src/rspeedy.ts', 'src/rspeedy/**'],
+      // `src/__tests__/release-bundle.test.ts` imports `../rspeedy.js`
+      // (it exercises `rozeniteLynxPlugin` through a real rspeedy build),
+      // which crosses into the excluded `rspeedy.ts`/`rspeedy/**` island
+      // below -- vite-plugin-dts's program then refuses to resolve that
+      // import, since the file it points to was excluded from this
+      // build's file list. Excluding the test file alongside them keeps
+      // this build's declarations limited to the device runtime it
+      // actually builds, same as the other two exclusions.
+      exclude: [
+        'src/index.tsx',
+        'src/dev-entry.tsx',
+        'src/rspeedy.ts',
+        'src/rspeedy/**',
+        'src/__tests__/release-bundle.test.ts',
+      ],
     }),
   ],
   build: {
