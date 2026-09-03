@@ -1,6 +1,6 @@
 # 0002 — Rozenite plugins never enter Lynx production bundles
 
-**Status:** Accepted — not yet implemented
+**Status:** Accepted
 
 **Related:** [callstackincubator/rozenite#492](https://github.com/callstackincubator/rozenite/issues/492),
 [callstackincubator/rozenite#415](https://github.com/callstackincubator/rozenite/issues/415),
@@ -136,12 +136,15 @@ with `rozenite.dev.tsx` ships zero `rozenite.dev` modules and zero plugin
 - The `@rozenite/lynx` root export changes meaning. Anyone who followed the
   manual `require('@rozenite/lynx')` fallback must move to
   `@rozenite/lynx/runtime`.
-- Something to verify before implementing, not a decision: the seam ships
-  prebuilt JSX, so its emitted `react/jsx-runtime` import must resolve under
-  rspeedy / `pluginReactLynx`. The playground declares no `react` dependency
-  yet uses plugin hooks that import it, so an alias appears to exist. If it
-  does not, the Lynx seam is built against `@lynx-js/react` rather than
-  shared with `@rozenite/react-native`; the decision above does not change.
+- Verified during implementation: `@lynx-js/react` does not depend on
+  `react` at all -- it is its own implementation of the React runtime, not
+  an alias for it -- so the apparent `react` resolution in the playground
+  came from elsewhere in the workspace, not from `@lynx-js/react`. The Lynx
+  seam is therefore built against `@lynx-js/react`'s own `jsx-runtime`
+  (`jsxImportSource: '@lynx-js/react'` at build time, `@lynx-js/react`
+  external in `packages/lynx/vite.seam.config.ts`), not shared source with
+  `@rozenite/react-native`'s seam -- as anticipated above, this does not
+  change the decision, only which JSX runtime the built seam imports.
 
 ## Alternatives considered
 

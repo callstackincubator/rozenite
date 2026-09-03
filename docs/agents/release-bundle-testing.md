@@ -56,6 +56,55 @@ it(
 - `files` replaces the fixture's sources when a case needs the app to
   import something.
 
+## The rspeedy bench
+
+`bundleLynxForRelease()` is the same idea for Lynx: it creates a throwaway
+Lynx app in a temp directory, bundles it through rspeedy's JavaScript API
+(`createRspeedy` + `.build()`) with `mode: 'production'`, and reports what
+ended up inside, from rspack's own module graph rather than emitted source:
+
+```ts
+import { bundleLynxForRelease, RELEASE_BUNDLE_TIMEOUT } from '@rozenite/test-utils';
+import { rozeniteLynxPlugin } from '../rspeedy.js';
+
+it(
+  'fails when an app imports a Rozenite plugin directly',
+  async () => {
+    await expect(
+      bundleLynxForRelease({
+        resolveFrom: packageRoot,
+        files: {
+          'src/index.js': "require('./App.js');\n",
+          'src/App.js':
+            "import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';\nuseRozeniteControlsPlugin;\n",
+        },
+        plugins: [rozeniteLynxPlugin()],
+      }),
+    ).rejects.toThrow(/src.App\.js/);
+  },
+  RELEASE_BUNDLE_TIMEOUT,
+);
+```
+
+- `plugins` is the app's full rspeedy plugin list, in order (typically
+  `[...pluginReactLynx(), rozeniteLynxPlugin(options)]`) -- there is no
+  `configureRspeedy`-style wrapper the way `withRozenite` wraps a Metro
+  config, because `rozeniteLynxPlugin()` is itself an ordinary
+  `RsbuildPlugin`.
+- `resolveFrom` means the same thing as in `bundleForRelease`, but matters
+  more here: under this monorepository's `nodeLinker: hoisted`, a workspace
+  package is symlinked into each of its *consumers'* `node_modules`, not
+  hoisted to the repository root, so a plugin used only to exercise the
+  guard (not a real dependency of `@rozenite/lynx` itself) resolves from the
+  fixture only because `resolveFrom` adds it to rspack's `resolve.modules`.
+- `.build()` rejects with a generic `Error('Rspack build failed.')` rather
+  than the actual message -- the bench captures the real one itself (via
+  `onAfterBuild`, whose `stats` carries it regardless of success) and
+  re-throws with it, so `.rejects.toThrow(/pattern/)` still works against
+  `RozeniteResolverPlugin`'s real error text.
+- See `packages/lynx/src/__tests__/release-bundle.test.ts` for the full
+  suite this pattern comes from.
+
 ## The two result fields
 
 - `rozeniteModules` -- every module in the bundle that belongs to Rozenite:
