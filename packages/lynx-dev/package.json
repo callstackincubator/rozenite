@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/lynx-dev",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Deprecated: merged into @rozenite/lynx. Install @rozenite/lynx and import from @rozenite/lynx/rspeedy instead.",
   "keywords": [
     "bundler",

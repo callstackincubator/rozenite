@@ -1,5 +1,14 @@
 # @rozenite/metro
 
+## 2.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`3c4905f`](https://github.com/callstackincubator/rozenite/commit/3c4905f9e6a46f456b8ddd1dee209353b9e96c34)]:
+  - @rozenite/middleware@2.4.0
+  - @rozenite/runtime@2.4.0
+  - @rozenite/tools@2.4.0
+
 ## 2.3.0
 
 ### Patch Changes

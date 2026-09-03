@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/require-profiler-plugin",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Metro require profiler for Rozenite.",
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {

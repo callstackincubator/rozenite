@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/lynx",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Rozenite for Lynx: the device-side runtime, plus an rspeedy/Rsbuild plugin (`@rozenite/lynx/rspeedy`) that wires it in automatically.",
   "keywords": [
     "bundler",

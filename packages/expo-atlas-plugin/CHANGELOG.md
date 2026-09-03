@@ -1,5 +1,12 @@
 # @rozenite/expo-atlas-plugin
 
+## 2.4.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/plugin-bridge@2.4.0
+
 ## 2.3.0
 
 ### Minor Changes

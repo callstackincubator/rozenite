@@ -1,5 +1,32 @@
 # rozenite
 
+## 2.4.0
+
+### Minor Changes
+
+- [#490](https://github.com/callstackincubator/rozenite/pull/490) [`3c4905f`](https://github.com/callstackincubator/rozenite/commit/3c4905f9e6a46f456b8ddd1dee209353b9e96c34) Thanks [@V3RON](https://github.com/V3RON)! - Targets returned by `rozenite open` and the agent's targets endpoint now
+  report which integration (React Native or Lynx) serves them, and target
+  discovery goes through one Rozenite endpoint on both integrations.
+
+  `MetroTarget.pageId` is now the page's id within its own device (the
+  `page` query parameter of `webSocketDebuggerUrl`) instead of the globally
+  unique `<deviceId>-<pageId>` composite, so reconnecting after a disconnect
+  correctly lands back on the page that was being debugged.
+
+  `rozenite agent targets` now includes each target's `integration` in its
+  output.
+
+  The Lynx dev server no longer drops and re-registers every connected Lynx
+  client on each of its periodic device-discovery sweeps, which showed up in
+  Rozenite as a reconnect every fifteen seconds.
+
+### Patch Changes
+
+- Updated dependencies [[`3c4905f`](https://github.com/callstackincubator/rozenite/commit/3c4905f9e6a46f456b8ddd1dee209353b9e96c34)]:
+  - @rozenite/agent-shared@2.4.0
+  - @rozenite/agent-sdk@2.4.0
+  - @rozenite/tools@2.4.0
+
 ## 2.3.0
 
 ### Minor Changes

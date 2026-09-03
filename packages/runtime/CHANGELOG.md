@@ -1,5 +1,12 @@
 # @rozenite/runtime
 
+## 2.4.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @rozenite/tools@2.4.0
+
 ## 2.3.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/redux-devtools-plugin",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Redux DevTools for Rozenite.",
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {

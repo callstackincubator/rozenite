@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/app",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Standalone Rozenite DevTools application, served directly by Metro and connected to a device over its own CDP WebSocket.",
   "keywords": [
     "app",

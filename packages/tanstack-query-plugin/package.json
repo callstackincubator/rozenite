@@ -1,6 +1,6 @@
 {
   "name": "@rozenite/tanstack-query-plugin",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "TanStack Query for Rozenite.",
   "homepage": "https://github.com/callstackincubator/rozenite#readme",
   "bugs": {
