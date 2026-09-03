@@ -30,6 +30,10 @@ export {
   isSeamDevEntryRequest,
   type RozenitePluginPackage,
 } from './production-guard.js';
+export {
+  RozeniteResolverPlugin,
+  type RozeniteResolverPluginOptions,
+} from './rspack-resolver-plugin.js';
 
 export const initializeRozenite = async (
   options: RozeniteConfig,
