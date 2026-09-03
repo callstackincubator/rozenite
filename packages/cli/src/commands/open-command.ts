@@ -63,8 +63,11 @@ const formatTargetLabel = (target: OpenTarget): string => {
   // a device name alone does not say which one a target belongs to. This
   // always comes from the target's own `integration` field (set by
   // `@rozenite/middleware` from the dev server it actually is), never
-  // guessed from the port it was found on.
-  return `${INTEGRATION_LABELS[target.integration]} · ${label}`;
+  // guessed from the port it was found on. Falls back to the bare label
+  // when an older middleware sends an `integration` this CLI does not
+  // recognise, rather than rendering a literal "undefined ·".
+  const integrationLabel = INTEGRATION_LABELS[target.integration];
+  return integrationLabel ? `${integrationLabel} · ${label}` : label;
 };
 
 const promptForTarget = async (targets: OpenTarget[]): Promise<OpenTarget> => {

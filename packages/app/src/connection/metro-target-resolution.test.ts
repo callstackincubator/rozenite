@@ -102,18 +102,26 @@ describe('resolveMetroTarget', () => {
     // live session off the card being debugged and onto the home screen,
     // which has no Rozenite in it -- surfacing as a "Rozenite isn't set up
     // in this app" that no amount of reloading could clear.
+    // `pageId` is the device-local id -- the `page` query parameter of
+    // `webSocketDebuggerUrl` -- not the globally unique `id` (which is the
+    // `<deviceId>-<pageId>` composite the middleware also returns). A
+    // `preferredPageId` of `'2'`, exactly what `ParsedTarget.pageId` holds,
+    // must match the target whose `pageId` is `'2'`, not one whose `id`
+    // happens to be `'abc-2'`.
     const twoCards = () =>
       targetsResponse([
         target({
           id: 'abc-1',
           deviceId: 'abc',
           name: 'iPhone',
+          pageId: '1',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
         }),
         target({
           id: 'abc-2',
           deviceId: 'abc',
           name: 'iPhone',
+          pageId: '2',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=2',
         }),
       ]);
@@ -121,7 +129,18 @@ describe('resolveMetroTarget', () => {
     it('returns to the page that was being debugged', async () => {
       globalThis.fetch = vi.fn().mockResolvedValue(twoCards());
 
-      await expect(resolveMetroTarget('abc', 'abc-2')).resolves.toEqual({
+      await expect(resolveMetroTarget('abc', '2')).resolves.toEqual({
+        webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=2',
+        name: 'iPhone',
+      });
+    });
+
+    it('matches on the device-local pageId, not the globally unique id', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(twoCards());
+
+      // A naive comparison against `id` would never match ('abc' !== '2'),
+      // silently falling through to the first target instead of 'abc-2'.
+      await expect(resolveMetroTarget('abc', '2')).resolves.toEqual({
         webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=2',
         name: 'iPhone',
       });
@@ -130,7 +149,7 @@ describe('resolveMetroTarget', () => {
     it('falls back to the first target when that page is gone', async () => {
       globalThis.fetch = vi.fn().mockResolvedValue(twoCards());
 
-      await expect(resolveMetroTarget('abc', 'abc-7')).resolves.toEqual({
+      await expect(resolveMetroTarget('abc', '7')).resolves.toEqual({
         webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
         name: 'iPhone',
       });
@@ -204,6 +223,24 @@ describe('resolveMetroTarget', () => {
       status: 200,
       json: () => Promise.reject(new Error('not json')),
     } as unknown as Response);
+
+    await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
+  });
+
+  it('rejects with MetroUnreachableError on a JSON body that is not an envelope', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(jsonResponse({ some: 'unrelated shape' }));
+
+    await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
+  });
+
+  it('rejects with MetroUnreachableError when result.targets is missing or not an array', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(jsonResponse({ ok: true, result: {} }));
+
+    await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
+  });
+
+  it('falls back to a generic message when an ok:false envelope has no error message', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(jsonResponse({ ok: false, error: {} }));
 
     await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
   });

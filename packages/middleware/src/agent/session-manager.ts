@@ -29,8 +29,24 @@ export const createAgentSessionManager = (options: {
   // dev server it came from is either React Native's or Lynx's, and which
   // target on it turned out to be a browser is a separate, per-connection
   // question `integration` above still answers for capability profiles.
-  const hostIntegration: RozeniteHostIntegration =
-    integration === 'lynx' || integration === 'lynx-web' ? 'lynx' : 'react-native';
+  // An exhaustive switch (rather than a ternary that fails open to
+  // `react-native`) means a new `RozeniteIntegration` variant is a
+  // typecheck failure here, not a silently mislabeled host.
+  const toHostIntegration = (value: RozeniteIntegration): RozeniteHostIntegration => {
+    switch (value) {
+      case 'react-native':
+      case 'react-native-web':
+        return 'react-native';
+      case 'lynx':
+      case 'lynx-web':
+        return 'lynx';
+      default: {
+        const exhaustive: never = value;
+        throw new Error(`Unhandled RozeniteIntegration: ${String(exhaustive)}`);
+      }
+    }
+  };
+  const hostIntegration: RozeniteHostIntegration = toHostIntegration(integration);
   const sessions = new Map<string, AgentSession>();
   let currentHost = options.host ?? DEFAULT_AGENT_HOST;
   let currentPort = options.port ?? DEFAULT_AGENT_PORT;

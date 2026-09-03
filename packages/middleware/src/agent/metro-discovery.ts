@@ -78,6 +78,25 @@ const prefersFusebox = (page: JsonPageDescription): boolean =>
   page.reactNative?.capabilities?.prefersFuseboxFrontend === true;
 
 /**
+ * The page's id within its own device, i.e. the `page` query parameter of
+ * its `webSocketDebuggerUrl` (both Metro's inspector proxy and
+ * `@rozenite/lynx-dev`'s `/json/list` encode it there). `page.id` itself is
+ * the globally unique `<deviceId>-<pageId>` composite, which is wrong for
+ * this: a reconnect that wants to land back on the same page compares
+ * against `ParsedTarget.pageId` (`packages/app/src/connection/target-from-url.ts`),
+ * which is that same `page` query parameter, never the composite id. Falls
+ * back to `page.id` if the URL has no `page` param or fails to parse.
+ */
+const extractPageId = (page: JsonPageDescription): string => {
+  try {
+    const url = new URL(page.webSocketDebuggerUrl);
+    return url.searchParams.get('page') ?? page.id;
+  } catch {
+    return page.id;
+  }
+};
+
+/**
  * The pages of one device that are worth offering, in order.
  *
  * Two different things can put several pages on one device, and they need
@@ -126,7 +145,7 @@ export const getMetroTargets = async (
             deviceId,
             name: page.deviceName || deviceId,
             appId: page.appId,
-            pageId: page.id,
+            pageId: extractPageId(page),
             title: page.title,
             description: page.description,
             webSocketDebuggerUrl: page.webSocketDebuggerUrl,

@@ -243,6 +243,42 @@ describe('openCommand dev server discovery', () => {
     );
   });
 
+  it('falls back to the bare label when integration is not recognised (older middleware)', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    mockTargetsByPort({
+      8081: [{ ...targetA, integration: 'unknown-integration' as OpenTarget['integration'] }],
+    });
+    mocks.promptSelect.mockImplementation(
+      async ({ options }: { options: { value: OpenTarget }[] }) => options[0].value,
+    );
+    mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
+
+    await openCommand({ host: '127.0.0.1', port: 8081 });
+
+    expect(mocks.promptSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: [expect.objectContaining({ label: 'iPhone 15 (com.example.a) — A' })],
+      }),
+    );
+  });
+
+  it('reports the dev server error rather than "start your dev server" when it answered', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      jsonResponse({
+        ok: false,
+        error: { message: 'No connected device is available.' },
+      } satisfies AgentResponseEnvelope<never>),
+    );
+
+    await openCommand({ host: '127.0.0.1', port: 9000 });
+
+    expect(logger.error).toHaveBeenCalledWith(expect.not.stringContaining('Start your dev server'));
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('No connected device is available.'),
+    );
+  });
+
   it('labels a target from its own integration field regardless of --port', async () => {
     mocks.isInteractive.mockReturnValue(true);
     mockTargetsByPort({ 9000: [{ ...targetA, port: 9000 }] });

@@ -118,6 +118,24 @@ describe('agent session manager', () => {
     expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081, 'react-native');
   });
 
+  it('derives the lynx host integration for discovery when created with integration: lynx', async () => {
+    mocks.getMetroTargets.mockResolvedValue([]);
+    const manager = createAgentSessionManager({ projectRoot: '/app', integration: 'lynx' });
+
+    await manager.listTargets();
+
+    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081, 'lynx');
+  });
+
+  it('derives the lynx host integration for discovery when created with integration: lynx-web', async () => {
+    mocks.getMetroTargets.mockResolvedValue([]);
+    const manager = createAgentSessionManager({ projectRoot: '/app', integration: 'lynx-web' });
+
+    await manager.listTargets();
+
+    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081, 'lynx');
+  });
+
   it('creates and reuses the same session per device', async () => {
     mocks.resolveMetroTarget.mockResolvedValue(target);
     mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });

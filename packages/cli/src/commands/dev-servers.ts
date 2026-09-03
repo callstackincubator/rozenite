@@ -55,6 +55,15 @@ export type OpenTarget = MetroTarget & Pick<DevServer, 'port'>;
 export type DevServerFailure = {
   server: DevServer;
   message: string;
+  /**
+   * `'unreachable'` when the transport itself failed (nothing was
+   * listening on the port at all); `'error'` when the server answered but
+   * with an HTTP error status or a failure envelope. `formatNoTargetsMessage`
+   * only tells someone to start their dev server for the former -- for the
+   * latter, a dev server is already running and its own message is what
+   * matters.
+   */
+  kind: 'unreachable' | 'error';
 };
 
 export type DevServerDiscovery = {
@@ -83,6 +92,15 @@ const getErrorDetails = (error: unknown): string | null => {
 };
 
 /**
+ * Thrown when the dev server itself could not be reached at all (the
+ * transport failed) -- as opposed to `fetchTargets`' plain `Error`, which
+ * means the dev server answered but with an HTTP error status or a
+ * failure envelope. `discoverTargets` uses this distinction to set
+ * `DevServerFailure.kind`.
+ */
+class DevServerUnreachableError extends Error {}
+
+/**
  * Fetches `GET /rozenite/agent/targets` from one dev server. This is the
  * only way Rozenite code discovers targets (see
  * `docs/adr/0000-single-target-discovery-endpoint.md`): the CLI does not
@@ -102,22 +120,36 @@ const fetchTargets = async (host: string, port: number): Promise<MetroTarget[]> 
   try {
     response = await fetch(url);
   } catch (error) {
-    throw new Error(unreachableMessage(getErrorDetails(error)));
-  }
-
-  let body: AgentResponseEnvelope<GetAgentTargetsResponse>;
-  try {
-    body = (await response.json()) as AgentResponseEnvelope<GetAgentTargetsResponse>;
-  } catch (error) {
-    throw new Error(unreachableMessage(getErrorDetails(error)));
-  }
-
-  if (!body.ok) {
-    throw new Error(`${body.error.message} (${url})`);
+    throw new DevServerUnreachableError(unreachableMessage(getErrorDetails(error)));
   }
 
   if (!response.ok) {
     throw new Error(`Dev server at ${url} responded with status ${response.status}.`);
+  }
+
+  let raw: unknown;
+  try {
+    raw = await response.json();
+  } catch (error) {
+    throw new Error(unreachableMessage(getErrorDetails(error)));
+  }
+
+  if (typeof raw !== 'object' || raw === null || !('ok' in raw)) {
+    throw new Error(`Dev server at ${url} returned an unexpected response.`);
+  }
+
+  const body = raw as AgentResponseEnvelope<GetAgentTargetsResponse>;
+
+  if (!body.ok) {
+    const message =
+      typeof body.error?.message === 'string'
+        ? body.error.message
+        : `Dev server at ${url} reported an error.`;
+    throw new Error(`${message} (${url})`);
+  }
+
+  if (!Array.isArray(body.result?.targets)) {
+    throw new Error(`Dev server at ${url} returned an unexpected response.`);
   }
 
   return body.result.targets;
@@ -152,6 +184,7 @@ export const discoverTargets = async (
             {
               server,
               message: error instanceof Error ? error.message : String(error),
+              kind: error instanceof DevServerUnreachableError ? 'unreachable' : 'error',
             },
           ],
         };
@@ -188,6 +221,16 @@ export const formatNoTargetsMessage = (
   }
 
   const details = failures.map((failure) => failure.message).join(' ');
+
+  // Every scanned server failed, but not necessarily because none of them
+  // are running: an `ok:false` envelope means a dev server answered and
+  // has its own opinion about what's wrong (e.g. "No connected device is
+  // available"), which "start your dev server" would only bury.
+  const allUnreachable = failures.every((failure) => failure.kind === 'unreachable');
+
+  if (!allUnreachable) {
+    return details;
+  }
 
   return `Could not reach a dev server at ${locations}. Start your dev server, or pass --port if it listens on a different port. ${details}`;
 };

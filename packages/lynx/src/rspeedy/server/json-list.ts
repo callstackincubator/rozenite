@@ -48,11 +48,12 @@ const buildPage = (target: InspectorTarget, origin: string): JsonPageDescription
       capabilities: {
         // Unconditionally true: unlike Metro/React Native, there is no
         // legacy (non-Fusebox) frontend for Lynx to fall back to, so every
-        // page is always eligible for it. This is also what
-        // `metro-target-resolution.ts`'s `sortPages` sorts on first —
-        // with every page tied at 1, selection falls through to its `id`
-        // tiebreaker, which is fine, since at most one page ever shares a
-        // `logicalDeviceId` with a given `page` (session) id anyway.
+        // page is always eligible for it. This is also what the
+        // middleware's `metro-discovery.ts` sorts on first (via its own
+        // `sortPages`) — with every page tied at 1, selection falls
+        // through to its `id` tiebreaker, which is fine, since at most one
+        // page ever shares a `logicalDeviceId` with a given `page`
+        // (session) id anyway.
         prefersFuseboxFrontend: true,
       },
     },

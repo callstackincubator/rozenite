@@ -598,7 +598,7 @@ describe('createDeviceConnection', () => {
       expect(globalThis.fetch).toHaveBeenCalledTimes(16);
     });
 
-    it('becomes metroUnreachable when /json/list cannot be reached, without exhausting retries', async () => {
+    it('becomes metroUnreachable when the targets endpoint cannot be reached, without exhausting retries', async () => {
       const { connection, socket } = await connectAndBootstrap();
       globalThis.fetch = vi.fn().mockRejectedValue(new Error('network down'));
 

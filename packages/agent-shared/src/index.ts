@@ -270,6 +270,11 @@ export type MetroTarget = {
   deviceId: string;
   name: string;
   appId: string;
+  /**
+   * The page's id within its own device -- the `page` query parameter of
+   * `webSocketDebuggerUrl` -- not a globally unique id. That is `id`,
+   * above, which is the `<deviceId>-<pageId>` composite.
+   */
   pageId: string;
   title: string;
   description: string;

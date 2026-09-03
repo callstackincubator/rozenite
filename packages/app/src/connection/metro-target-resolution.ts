@@ -42,19 +42,31 @@ export const resolveMetroTarget = async (
     );
   }
 
-  let body: AgentResponseEnvelope<GetAgentTargetsResponse>;
+  if (!response.ok) {
+    throw new MetroUnreachableError(`${url} responded with status ${response.status}.`);
+  }
+
+  let raw: unknown;
   try {
-    body = (await response.json()) as AgentResponseEnvelope<GetAgentTargetsResponse>;
+    raw = await response.json();
   } catch {
     throw new MetroUnreachableError(`${url} returned an unexpected response.`);
   }
 
-  if (!body.ok) {
-    throw new MetroUnreachableError(body.error.message);
+  if (typeof raw !== 'object' || raw === null || !('ok' in raw)) {
+    throw new MetroUnreachableError(`${url} returned an unexpected response.`);
   }
 
-  if (!response.ok) {
-    throw new MetroUnreachableError(`${url} responded with status ${response.status}.`);
+  const body = raw as AgentResponseEnvelope<GetAgentTargetsResponse>;
+
+  if (!body.ok) {
+    const message =
+      typeof body.error?.message === 'string' ? body.error.message : `${url} reported an error.`;
+    throw new MetroUnreachableError(message);
+  }
+
+  if (!Array.isArray(body.result?.targets)) {
+    throw new MetroUnreachableError(`${url} returned an unexpected response.`);
   }
 
   const matching = body.result.targets.filter((target) => target.deviceId === deviceId);
@@ -63,13 +75,14 @@ export const resolveMetroTarget = async (
   }
 
   // Go back to the page that was actually being debugged, if it is still
-  // there. A device can host several pages -- every Lynx card is one -- and
-  // otherwise the first (the endpoint's own preference order) only knows
-  // how to prefer Fusebox and then the lowest id, so without this a
-  // reconnect silently lands on a different page than the one the user
-  // opened. In LynxExplorer that page is its own home screen, which has no
-  // Rozenite in it, so the reconnect surfaced as a permanent "Rozenite
-  // isn't set up in this app" that reloading could not clear.
+  // there: prefer the target whose `pageId` matches the page id we started
+  // from, and otherwise fall back to the first target, which the endpoint
+  // already returns in preference order (Fusebox first, then lowest id). A
+  // device can host several pages -- every Lynx card is one -- so without
+  // this a reconnect silently lands on a different page than the one the
+  // user opened. In LynxExplorer that page is its own home screen, which
+  // has no Rozenite in it, so the reconnect surfaced as a permanent
+  // "Rozenite isn't set up in this app" that reloading could not clear.
   const preferred =
     preferredPageId != null
       ? matching.find((target) => target.pageId === preferredPageId)
