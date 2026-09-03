@@ -961,6 +961,15 @@ importers:
       '@react-native/metro-config':
         specifier: ~0.86.0
         version: 0.86.2(@babel/core@7.29.0(supports-color@8.1.1))(supports-color@8.1.1)
+      '@rozenite/rhf-plugin':
+        specifier: workspace:*
+        version: link:../rhf-plugin
+      '@rozenite/storage-plugin':
+        specifier: workspace:*
+        version: link:../storage-plugin
+      '@rozenite/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       metro-resolver:
         specifier: '*'
         version: 0.84.4
