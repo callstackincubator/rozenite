@@ -53,7 +53,15 @@ describe('withRozenite in a release bundle', () => {
           "require('@rozenite/rhf-plugin/register');\nconsole.log('rozenite release bundle fixture');\n",
       });
 
-      expect(result.code).toBeTruthy();
+      // Non-vacuous: the declared entry really did get bundled (either the
+      // ESM or the CJS build, whichever Metro's resolver conditions pick),
+      // and nothing beyond it -- no panel code -- came along with it.
+      expect(
+        result.rozeniteModules.some((modulePath) =>
+          /rhf-plugin\/dist\/react-native\/(cjs\/)?register\.js$/.test(modulePath),
+        ),
+      ).toBe(true);
+      expect(result.panelModules).toEqual([]);
     },
     RELEASE_BUNDLE_TIMEOUT,
   );
