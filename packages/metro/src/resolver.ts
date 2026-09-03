@@ -18,8 +18,19 @@ const WEB_SOCKET_INTERCEPTOR_MODULE = 'react-native/Libraries/WebSocket/WebSocke
 // not Node's `require.resolve` -- Node applies different export conditions
 // than Metro does and the two can land on different files, which would turn
 // a legitimate import into a false build failure. Memoized per
-// (pluginRoot, platform).
-const declaredEntriesCache = new Map<string, Set<string>>();
+// (pluginRoot, platform), alongside the `productionEntries` it was resolved
+// from: `findRozenitePluginForFile` (in `@rozenite/middleware`) already
+// re-reads a plugin's manifest when it changes underneath `rozenite dev`, so
+// comparing against that fresh value is what tells this cache its resolved
+// paths are stale, without this module re-stat'ing the manifest itself.
+type DeclaredEntriesCacheEntry = {
+  paths: Set<string>;
+  productionEntries: string[];
+};
+const declaredEntriesCache = new Map<string, DeclaredEntriesCacheEntry>();
+
+const sameProductionEntries = (a: string[], b: string[]): boolean =>
+  a.length === b.length && a.every((entry, index) => entry === b[index]);
 
 /**
  * A declared entry is an *export subpath*, so it has to be resolved as the
@@ -50,8 +61,8 @@ const resolveDeclaredEntries = (
   const cacheKey = `${plugin.root}\0${platform ?? ''}`;
   const cached = declaredEntriesCache.get(cacheKey);
 
-  if (cached) {
-    return cached;
+  if (cached && sameProductionEntries(cached.productionEntries, plugin.productionEntries)) {
+    return cached.paths;
   }
 
   const resolvedPaths = new Set<string>();
@@ -92,7 +103,10 @@ const resolveDeclaredEntries = (
     }
   }
 
-  declaredEntriesCache.set(cacheKey, resolvedPaths);
+  declaredEntriesCache.set(cacheKey, {
+    paths: resolvedPaths,
+    productionEntries: [...plugin.productionEntries],
+  });
   return resolvedPaths;
 };
 

@@ -133,7 +133,7 @@ describe('findRozenitePluginForFile', () => {
     expect(plugin?.productionEntries).toEqual([]);
   });
 
-  it('memoizes per directory, including negative results', () => {
+  it('memoizes per directory while the manifest is unchanged', () => {
     const packageRoot = createTempDir();
     createPackage(packageRoot, '@acme/memoized', { hasManifest: true });
 
@@ -141,13 +141,56 @@ describe('findRozenitePluginForFile', () => {
     const first = findRozenitePluginForFile(filePath);
     expect(first).not.toBeNull();
 
-    // Remove the manifest after the first (cached) lookup -- a second
-    // lookup for a file in the same directory must still hit the cache and
-    // return the original (memoized) result rather than re-reading disk.
-    fs.rmSync(path.join(packageRoot, 'dist', 'rozenite.json'));
+    // Same manifest, same mtime -- must hit the cache rather than re-reading
+    // disk on every resolution (`resolveRequest` is synchronous and called
+    // on every module resolution).
+    const readFileSpy = vi.spyOn(fs, 'readFileSync');
     const second = findRozenitePluginForFile(filePath);
 
     expect(second).toEqual(first);
+    expect(readFileSpy).not.toHaveBeenCalled();
+  });
+
+  // `rozenite dev` rebuilds a plugin's `dist/rozenite.json` while the
+  // bundler keeps running (its Vite watcher reacts to source changes). A
+  // cache that never invalidated would keep answering with whatever the
+  // plugin looked like the first time it was resolved for the rest of the
+  // session.
+  it('invalidates the cache when the manifest is rebuilt with different content', () => {
+    const packageRoot = createTempDir();
+    createPackage(packageRoot, '@acme/rebuilt', {
+      hasManifest: true,
+      manifestContents: { productionEntries: ['./register'] },
+    });
+
+    const filePath = path.join(packageRoot, 'src', 'index.ts');
+    const first = findRozenitePluginForFile(filePath);
+    expect(first?.productionEntries).toEqual(['./register']);
+
+    // Rewriting in place can land on the same mtime tick as the original
+    // write on a fast filesystem; bump it explicitly to simulate a rebuild a
+    // moment later, exactly like a real filesystem would report one.
+    const manifestPath = path.join(packageRoot, 'dist', 'rozenite.json');
+    writeJson(manifestPath, { productionEntries: [] });
+    const bumpedMtime = new Date(fs.statSync(manifestPath).mtimeMs + 1000);
+    fs.utimesSync(manifestPath, bumpedMtime, bumpedMtime);
+
+    const second = findRozenitePluginForFile(filePath);
+    expect(second?.productionEntries).toEqual([]);
+  });
+
+  it('invalidates the cache when the manifest is removed', () => {
+    const packageRoot = createTempDir();
+    createPackage(packageRoot, '@acme/removed', { hasManifest: true });
+
+    const filePath = path.join(packageRoot, 'src', 'index.ts');
+    const first = findRozenitePluginForFile(filePath);
+    expect(first).not.toBeNull();
+
+    fs.rmSync(path.join(packageRoot, 'dist', 'rozenite.json'));
+    const second = findRozenitePluginForFile(filePath);
+
+    expect(second).toBeNull();
   });
 });
 

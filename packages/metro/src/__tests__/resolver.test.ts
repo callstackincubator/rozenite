@@ -170,6 +170,51 @@ describe('applyProductionGuard decision table', () => {
 
     expect(result).toEqual(sourceFile(resolvedFilePath));
   });
+
+  // `rozenite dev` rebuilds a plugin's `dist/rozenite.json` while Metro keeps
+  // running. `resolveDeclaredEntries`'s own cache must not keep answering
+  // with a `productionEntries` declaration the plugin no longer has once
+  // `findRozenitePluginForFile` (in `@rozenite/middleware`) picks up the
+  // rebuilt manifest.
+  it('re-resolves declared entries once the plugin manifest changes', () => {
+    const pluginRoot = createTempDir();
+    createPlugin(pluginRoot, '@acme/some-plugin', ['./register']);
+
+    const builtRegisterPath = path.join(pluginRoot, 'dist', 'react-native', 'register.js');
+    const resolveRequest: CustomResolver = (_context, moduleName) => {
+      if (moduleName === '@acme/some-plugin/register') {
+        return sourceFile(builtRegisterPath);
+      }
+      throw new Error(`unexpected moduleName: ${moduleName}`);
+    };
+    const context = createContext({
+      dev: false,
+      originModulePath: '/project/src/App.tsx',
+      resolveRequest,
+    });
+
+    const firstResult = applyProductionGuard(context, sourceFile(builtRegisterPath), null, {
+      projectRoot: '/project',
+      allowInProduction: [],
+    });
+    expect(firstResult).toEqual(sourceFile(builtRegisterPath));
+
+    // Rebuild the manifest with the declaration removed, bumping mtime past
+    // the original write so a fast filesystem can't land on the same tick.
+    createPlugin(pluginRoot, '@acme/some-plugin', []);
+    const manifestPath = path.join(pluginRoot, 'dist', 'rozenite.json');
+    const bumpedMtime = new Date(fs.statSync(manifestPath).mtimeMs + 1000);
+    fs.utimesSync(manifestPath, bumpedMtime, bumpedMtime);
+
+    expect(() =>
+      applyProductionGuard(context, sourceFile(builtRegisterPath), null, {
+        projectRoot: '/project',
+        allowInProduction: [],
+      }),
+    ).toThrowError(
+      /@acme\/some-plugin is a Rozenite plugin and declares no production entry points\./,
+    );
+  });
 });
 
 describe('createRozeniteResolveRequest', () => {
