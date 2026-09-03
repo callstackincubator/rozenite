@@ -110,7 +110,7 @@ const lynxTarget: OpenTarget = {
   deviceId: 'device-lynx',
   name: 'iPhone',
   appId: 'LynxExplorer',
-  pageId: 'device-lynx-1',
+  pageId: '1',
   title: 'http://localhost:3000/main.lynx.bundle?fullscreen=true',
   description: '',
   webSocketDebuggerUrl: 'ws://localhost:3000/inspector/debug?device=device-lynx&page=1',
@@ -228,11 +228,17 @@ describe('openCommand dev server discovery', () => {
 
   it('reports the endpoint error message for a dev server that answers with a failure', async () => {
     mocks.isInteractive.mockReturnValue(true);
+    // The middleware's `sendError` always pairs `ok:false` with an HTTP 400
+    // or 404, never 200 -- this is the shape a real error response has.
     globalThis.fetch = vi.fn().mockResolvedValue(
-      jsonResponse({
-        ok: false,
-        error: { message: 'No connected device is available.' },
-      } satisfies AgentResponseEnvelope<never>),
+      jsonResponse(
+        {
+          ok: false,
+          error: { message: 'No connected device is available.' },
+        } satisfies AgentResponseEnvelope<never>,
+        false,
+        400,
+      ),
     );
 
     await openCommand({ host: '127.0.0.1', port: 9000 });
@@ -241,6 +247,23 @@ describe('openCommand dev server discovery', () => {
     expect(logger.error).toHaveBeenCalledWith(
       expect.stringContaining('No connected device is available.'),
     );
+  });
+
+  it('names the status when a dev server answers with a non-JSON body', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    // A 404 with an HTML body -- an older middleware, or `/rozenite` not
+    // mounted at all -- has no envelope to read a message from, so the
+    // status line is all that is left to report.
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: () => Promise.reject(new SyntaxError('Unexpected token < in JSON')),
+    } as unknown as Response);
+
+    await openCommand({ host: '127.0.0.1', port: 9000 });
+
+    expect(process.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('status 404'));
   });
 
   it('falls back to the bare label when integration is not recognised (older middleware)', async () => {
@@ -265,10 +288,14 @@ describe('openCommand dev server discovery', () => {
   it('reports the dev server error rather than "start your dev server" when it answered', async () => {
     mocks.isInteractive.mockReturnValue(true);
     globalThis.fetch = vi.fn().mockResolvedValue(
-      jsonResponse({
-        ok: false,
-        error: { message: 'No connected device is available.' },
-      } satisfies AgentResponseEnvelope<never>),
+      jsonResponse(
+        {
+          ok: false,
+          error: { message: 'No connected device is available.' },
+        } satisfies AgentResponseEnvelope<never>,
+        false,
+        400,
+      ),
     );
 
     await openCommand({ host: '127.0.0.1', port: 9000 });
@@ -416,7 +443,7 @@ describe('selectTargetById', () => {
     deviceId: 'device-c',
     name: 'iPhone',
     appId: 'LynxExplorer',
-    pageId: 'device-c-1',
+    pageId: '1',
     title: '/Applications/LynxExplorer.app/Resource/homepage.lynx.bundle',
     description: '',
     webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-c&page=1',
@@ -426,7 +453,7 @@ describe('selectTargetById', () => {
   const cardTwo: OpenTarget = {
     ...cardOne,
     id: 'device-c-2',
-    pageId: 'device-c-2',
+    pageId: '2',
     title: 'http://localhost:3000/main.lynx.bundle?fullscreen=true',
     webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-c&page=2',
   };

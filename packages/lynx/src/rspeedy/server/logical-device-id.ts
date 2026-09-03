@@ -12,9 +12,9 @@
  * `resolveMetroTarget` filters the middleware's `GET /rozenite/agent/targets`
  * response (which is itself built from this `/json/list`) on
  * `target.deviceId === deviceId`, and a `client_id` that no longer exists
- * matches nothing there, so it throws "No Metro target is currently
- * available" — even though, from a developer's point of view, the same
- * app on the same device is still right there.
+ * matches nothing there, so it throws `No target is currently available
+ * for device "..."` — even though, from a developer's point of view, the
+ * same app on the same device is still right there.
  *
  * React Native has exactly the same shape of problem — Metro's own
  * `logicalDeviceId` is not the transient id of one debugger connection

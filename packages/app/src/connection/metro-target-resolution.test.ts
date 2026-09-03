@@ -135,17 +135,6 @@ describe('resolveMetroTarget', () => {
       });
     });
 
-    it('matches on the device-local pageId, not the globally unique id', async () => {
-      globalThis.fetch = vi.fn().mockResolvedValue(twoCards());
-
-      // A naive comparison against `id` would never match ('abc' !== '2'),
-      // silently falling through to the first target instead of 'abc-2'.
-      await expect(resolveMetroTarget('abc', '2')).resolves.toEqual({
-        webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=2',
-        name: 'iPhone',
-      });
-    });
-
     it('falls back to the first target when that page is gone', async () => {
       globalThis.fetch = vi.fn().mockResolvedValue(twoCards());
 
@@ -198,23 +187,36 @@ describe('resolveMetroTarget', () => {
     await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
   });
 
-  it('rejects with MetroUnreachableError on a non-OK response', async () => {
-    globalThis.fetch = vi
-      .fn()
-      .mockResolvedValue(jsonResponse({ ok: true, result: { targets: [] } }, false, 500));
-
-    await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
-  });
-
-  it('rejects with MetroUnreachableError when the endpoint reports a failure', async () => {
+  it('rejects with the endpoint error message on a real ok:false envelope (HTTP 400)', async () => {
+    // The middleware's `sendError` always pairs `ok:false` with an HTTP 400
+    // or 404 (`packages/middleware/src/agent/routes.ts`), never 200 -- this
+    // is the shape a real error response actually has.
     globalThis.fetch = vi
       .fn()
       .mockResolvedValue(
-        jsonResponse({ ok: false, error: { message: 'No connected device is available.' } }),
+        jsonResponse(
+          { ok: false, error: { message: 'No connected device is available.' } },
+          false,
+          400,
+        ),
       );
 
     await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
     await expect(resolveMetroTarget('abc')).rejects.toThrow('No connected device is available.');
+  });
+
+  it('rejects naming the status when a non-JSON response cannot be parsed as an envelope', async () => {
+    // A 404 with an HTML body -- an older middleware, or `/rozenite` not
+    // mounted at all -- has no envelope to read a message from, so the
+    // status line is all that is left to report.
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: () => Promise.reject(new SyntaxError('Unexpected token < in JSON')),
+    } as unknown as Response);
+
+    await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
+    await expect(resolveMetroTarget('abc')).rejects.toThrow(/status 404/);
   });
 
   it('rejects with MetroUnreachableError on an unparsable response body', async () => {

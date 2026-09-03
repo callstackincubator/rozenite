@@ -139,6 +139,21 @@ const getExpressions = (socket: FakeWebSocket): string[] =>
     .filter((command) => command.method === 'Runtime.evaluate')
     .map((command) => String(command.params?.expression ?? ''));
 
+/**
+ * The device-local page id a real target would report: the `page` query
+ * parameter of its own `webSocketDebuggerUrl`, exactly like the
+ * middleware's `extractPageId` (`packages/middleware/src/agent/metro-discovery.ts`).
+ * Defaulting to the composite `id` here would silently reintroduce the
+ * `pageId`/`id` mixup this fixture exists to avoid.
+ */
+const pageIdFromUrl = (webSocketDebuggerUrl: string): string | undefined => {
+  try {
+    return new URL(webSocketDebuggerUrl).searchParams.get('page') ?? undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 /** Builds a `MetroTarget` from just the fields a test cares about. */
 const target = (overrides: {
   id: string;
@@ -150,7 +165,7 @@ const target = (overrides: {
   deviceId: overrides.deviceId,
   name: overrides.name ?? overrides.deviceId,
   appId: 'com.example.app',
-  pageId: overrides.pageId ?? overrides.id,
+  pageId: overrides.pageId ?? pageIdFromUrl(overrides.webSocketDebuggerUrl) ?? overrides.id,
   title: '',
   description: '',
   integration: 'react-native',
@@ -562,6 +577,41 @@ describe('createDeviceConnection', () => {
         appId: 'com.example.app',
         framework: null,
       });
+    });
+
+    it('reconnects to the page matching pageId, not merely the first one returned', async () => {
+      // TARGET.pageId is '1'. The endpoint lists the *other* page first, so
+      // a naive `matching[0]` fallback would silently reconnect to the
+      // wrong card -- the fix is matching `pageId`, which is device-local,
+      // never the composite `id`.
+      const { connection, socket } = await connectAndBootstrap();
+
+      mockAgentTargets([
+        target({
+          id: 'device-1-9',
+          deviceId: 'device-1',
+          name: 'iPhone 16',
+          pageId: '9',
+          webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=9',
+        }),
+        target({
+          id: 'device-1-1',
+          deviceId: 'device-1',
+          name: 'iPhone 16',
+          pageId: '1',
+          webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=1',
+        }),
+      ]);
+
+      socket.close('[CONNECTION_LOST]');
+      await waitUntil(() => connection.getState().status === 'connecting');
+
+      await waitUntil(() => FakeWebSocket.instances.length === 2);
+      const newSocket = FakeWebSocket.instances[1];
+      expect(newSocket.url).toBe('ws://localhost:8081/inspector/debug?device=device-1&page=1');
+
+      newSocket.open();
+      await waitUntil(() => connection.getState().status === 'connected');
     });
 
     it('goes straight to disconnected when another debugger took the device', async () => {

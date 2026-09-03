@@ -42,19 +42,30 @@ export const resolveMetroTarget = async (
     );
   }
 
-  if (!response.ok) {
-    throw new MetroUnreachableError(`${url} responded with status ${response.status}.`);
-  }
+  // The middleware's `sendError` always pairs `ok:false` with an HTTP 400
+  // or 404 (`packages/middleware/src/agent/routes.ts`), so the body has to
+  // be parsed before the status is allowed to decide anything -- otherwise
+  // a real error envelope's own message (e.g. "No connected device is
+  // available") is discarded in favour of a bare "responded with status
+  // 400". The status only gets the final word when the body turns out not
+  // to be a usable envelope at all (a non-JSON body, or JSON of some other
+  // shape -- an older middleware, or `/rozenite` not mounted here).
+  const unexpectedResponseError = (): MetroUnreachableError =>
+    new MetroUnreachableError(
+      response.ok
+        ? `${url} returned an unexpected response.`
+        : `${url} responded with status ${response.status}.`,
+    );
 
   let raw: unknown;
   try {
     raw = await response.json();
   } catch {
-    throw new MetroUnreachableError(`${url} returned an unexpected response.`);
+    throw unexpectedResponseError();
   }
 
   if (typeof raw !== 'object' || raw === null || !('ok' in raw)) {
-    throw new MetroUnreachableError(`${url} returned an unexpected response.`);
+    throw unexpectedResponseError();
   }
 
   const body = raw as AgentResponseEnvelope<GetAgentTargetsResponse>;
@@ -66,7 +77,7 @@ export const resolveMetroTarget = async (
   }
 
   if (!Array.isArray(body.result?.targets)) {
-    throw new MetroUnreachableError(`${url} returned an unexpected response.`);
+    throw unexpectedResponseError();
   }
 
   const matching = body.result.targets.filter((target) => target.deviceId === deviceId);

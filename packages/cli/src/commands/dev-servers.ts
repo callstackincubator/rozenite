@@ -123,19 +123,30 @@ const fetchTargets = async (host: string, port: number): Promise<MetroTarget[]> 
     throw new DevServerUnreachableError(unreachableMessage(getErrorDetails(error)));
   }
 
-  if (!response.ok) {
-    throw new Error(`Dev server at ${url} responded with status ${response.status}.`);
-  }
+  // The middleware's `sendError` always pairs `ok:false` with an HTTP 400
+  // or 404 (`packages/middleware/src/agent/routes.ts`), so the body has to
+  // be parsed before the status is allowed to decide anything -- otherwise
+  // a real error envelope's own message (e.g. "No connected device is
+  // available") is discarded in favour of a bare "responded with status
+  // 400". The status only gets the final word when the body turns out not
+  // to be a usable envelope at all (a non-JSON body, or JSON of some other
+  // shape -- an older middleware, or `/rozenite` not mounted here).
+  const unexpectedResponseError = (): Error =>
+    new Error(
+      response.ok
+        ? `Dev server at ${url} returned an unexpected response.`
+        : `Dev server at ${url} responded with status ${response.status}.`,
+    );
 
   let raw: unknown;
   try {
     raw = await response.json();
-  } catch (error) {
-    throw new Error(unreachableMessage(getErrorDetails(error)));
+  } catch {
+    throw unexpectedResponseError();
   }
 
   if (typeof raw !== 'object' || raw === null || !('ok' in raw)) {
-    throw new Error(`Dev server at ${url} returned an unexpected response.`);
+    throw unexpectedResponseError();
   }
 
   const body = raw as AgentResponseEnvelope<GetAgentTargetsResponse>;
@@ -149,7 +160,7 @@ const fetchTargets = async (host: string, port: number): Promise<MetroTarget[]> 
   }
 
   if (!Array.isArray(body.result?.targets)) {
-    throw new Error(`Dev server at ${url} returned an unexpected response.`);
+    throw unexpectedResponseError();
   }
 
   return body.result.targets;
@@ -229,7 +240,7 @@ export const formatNoTargetsMessage = (
   const allUnreachable = failures.every((failure) => failure.kind === 'unreachable');
 
   if (!allUnreachable) {
-    return details;
+    return `${details} Pass --port if your dev server listens on a different port.`;
   }
 
   return `Could not reach a dev server at ${locations}. Start your dev server, or pass --port if it listens on a different port. ${details}`;
