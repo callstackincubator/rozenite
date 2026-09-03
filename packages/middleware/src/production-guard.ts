@@ -18,12 +18,34 @@ export type RozenitePluginPackage = {
 
 type PluginLookupResult = RozenitePluginPackage | null;
 
+type PluginCacheEntry = {
+  result: PluginLookupResult;
+  /** `dist/rozenite.json` this entry's `result` was computed from, or null
+   * when the walk never reached a package root (e.g. filesystem root). */
+  manifestPath: string | null;
+  /** mtime of `manifestPath` at computation time, or null when it did not
+   * exist yet. Re-stat'd on every cache hit below. */
+  manifestMtimeMs: number | null;
+};
+
 // Memoized per directory (both hits and misses), so repeated resolutions in
 // a hot directory cost nothing. `resolveRequest` is synchronous and called
-// on every module resolution, so this cache is process-lifetime and never
-// invalidated -- package.json/rozenite.json contents are not expected to
-// change while a bundler process is running.
-const pluginCache = new Map<string, PluginLookupResult>();
+// on every module resolution, so this cannot afford to re-walk the
+// filesystem per request -- but `rozenite dev` rebuilds a plugin's
+// `dist/rozenite.json` while the bundler keeps running (its Vite watcher
+// reacts to source changes), so a plain process-lifetime cache would keep
+// answering with whatever the plugin looked like the first time it was
+// resolved. Each entry instead carries the manifest's mtime and is re-stat'd
+// on every hit, so a rebuild invalidates it on the next resolution.
+const pluginCache = new Map<string, PluginCacheEntry>();
+
+const statMtimeMs = (filePath: string): number | null => {
+  try {
+    return fs.statSync(filePath).mtimeMs;
+  } catch {
+    return null;
+  }
+};
 
 const readJsonSafe = (filePath: string): unknown => {
   try {
@@ -109,26 +131,34 @@ const readPluginAtPackageRoot = (packageRoot: string): PluginLookupResult => {
   };
 };
 
-const findPluginForDirectory = (dir: string): PluginLookupResult => {
+const findPluginForDirectory = (dir: string): PluginCacheEntry => {
   const cached = pluginCache.get(dir);
 
-  if (cached !== undefined) {
+  if (cached && statMtimeMs(cached.manifestPath ?? '') === cached.manifestMtimeMs) {
     return cached;
   }
 
-  let result: PluginLookupResult;
+  let entry: PluginCacheEntry;
 
   if (isPackageRoot(dir)) {
     // The first *named* package.json going up is the package root, whether
     // or not it turns out to be a Rozenite plugin -- we never look past it.
-    result = readPluginAtPackageRoot(dir);
+    const manifestPath = path.join(dir, 'dist', ROZENITE_MANIFEST);
+    entry = {
+      result: readPluginAtPackageRoot(dir),
+      manifestPath,
+      manifestMtimeMs: statMtimeMs(manifestPath),
+    };
   } else {
     const parentDir = path.dirname(dir);
-    result = parentDir === dir ? null : findPluginForDirectory(parentDir);
+    entry =
+      parentDir === dir
+        ? { result: null, manifestPath: null, manifestMtimeMs: null }
+        : findPluginForDirectory(parentDir);
   }
 
-  pluginCache.set(dir, result);
-  return result;
+  pluginCache.set(dir, entry);
+  return entry;
 };
 
 /**
@@ -137,7 +167,7 @@ const findPluginForDirectory = (dir: string): PluginLookupResult => {
  * that package is a Rozenite plugin iff `dist/rozenite.json` exists there.
  */
 export const findRozenitePluginForFile = (filePath: string): RozenitePluginPackage | null => {
-  return findPluginForDirectory(path.dirname(filePath));
+  return findPluginForDirectory(path.dirname(filePath)).result;
 };
 
 const DEV_ENTRY_BASENAME = 'rozenite.dev';
