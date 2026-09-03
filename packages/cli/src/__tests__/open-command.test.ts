@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { AGENT_TARGETS_ROUTE, type AgentResponseEnvelope } from '@rozenite/agent-shared';
 import type { OpenTarget } from '../commands/dev-servers.js';
 
 const mocks = vi.hoisted(() => ({
   isInteractive: vi.fn(),
-  getMetroTargets: vi.fn(),
   promptSelect: vi.fn(),
   intro: vi.fn(),
   outro: vi.fn(),
@@ -16,10 +16,6 @@ vi.mock('node:child_process', () => ({
 
 vi.mock('../utils/isInteractive.js', () => ({
   isInteractive: mocks.isInteractive,
-}));
-
-vi.mock('../commands/metro-discovery.js', () => ({
-  getMetroTargets: mocks.getMetroTargets,
 }));
 
 vi.mock('../utils/prompts.js', () => ({
@@ -45,6 +41,44 @@ const { openCommand, selectTargetById, NON_INTERACTIVE_MESSAGE } =
   await import('../commands/open-command.js');
 const { logger } = await import('../utils/logger.js');
 
+const originalFetch = globalThis.fetch;
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+});
+
+const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
+  ({
+    ok,
+    status,
+    json: () => Promise.resolve(body),
+  }) as Response;
+
+/**
+ * Stubs `fetch` for `GET .../rozenite/agent/targets`, keyed by port, so
+ * tests can drive `discoverTargets` without a real dev server. A value of
+ * `Error` simulates the port not answering at all (a rejected `fetch`);
+ * an array is wrapped in a success envelope.
+ */
+const mockTargetsByPort = (targetsByPort: Record<number, OpenTarget[] | Error>): void => {
+  globalThis.fetch = vi.fn(async (input: string | URL | Request) => {
+    const url = new URL(typeof input === 'string' ? input : input.toString());
+    expect(url.pathname).toBe(AGENT_TARGETS_ROUTE);
+    const port = Number(url.port);
+    const result = targetsByPort[port] ?? [];
+
+    if (result instanceof Error) {
+      throw result;
+    }
+
+    const envelope: AgentResponseEnvelope<{ targets: OpenTarget[] }> = {
+      ok: true,
+      result: { targets: result },
+    };
+    return jsonResponse(envelope);
+  }) as unknown as typeof fetch;
+};
+
 const targetA: OpenTarget = {
   id: 'device-a',
   deviceId: 'device-a',
@@ -54,6 +88,7 @@ const targetA: OpenTarget = {
   title: 'A',
   description: '',
   webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-a&page=1',
+  integration: 'react-native',
   port: 8081,
 };
 
@@ -66,6 +101,7 @@ const targetB: OpenTarget = {
   title: 'B',
   description: '',
   webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-b&page=1',
+  integration: 'react-native',
   port: 8081,
 };
 
@@ -74,10 +110,11 @@ const lynxTarget: OpenTarget = {
   deviceId: 'device-lynx',
   name: 'iPhone',
   appId: 'LynxExplorer',
-  pageId: 'device-lynx-1',
+  pageId: '1',
   title: 'http://localhost:3000/main.lynx.bundle?fullscreen=true',
   description: '',
   webSocketDebuggerUrl: 'ws://localhost:3000/inspector/debug?device=device-lynx&page=1',
+  integration: 'lynx',
   port: 3000,
 };
 
@@ -89,51 +126,40 @@ afterEach(() => {
 describe('openCommand non-interactive refusal', () => {
   it('refuses and exits non-zero when the terminal is not interactive', async () => {
     mocks.isInteractive.mockReturnValue(false);
+    mockTargetsByPort({});
 
     await openCommand({ host: '127.0.0.1', port: 8081 });
 
     expect(logger.error).toHaveBeenCalledWith(NON_INTERACTIVE_MESSAGE);
     expect(process.exitCode).toBe(1);
-    expect(mocks.getMetroTargets).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it('still refuses when exactly one target would be unambiguous', async () => {
     mocks.isInteractive.mockReturnValue(false);
-    mocks.getMetroTargets.mockResolvedValue([targetA]);
+    mockTargetsByPort({ 8081: [targetA] });
 
     await openCommand({ host: '127.0.0.1', port: 8081 });
 
     expect(process.exitCode).toBe(1);
-    expect(mocks.getMetroTargets).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it('still refuses when --deviceId is passed', async () => {
     mocks.isInteractive.mockReturnValue(false);
-    mocks.getMetroTargets.mockResolvedValue([targetA]);
+    mockTargetsByPort({ 8081: [targetA] });
 
     await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-a' });
 
     expect(process.exitCode).toBe(1);
-    expect(mocks.getMetroTargets).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 });
 
 describe('openCommand dev server discovery', () => {
-  const byPort = (targetsByPort: Record<number, OpenTarget[] | Error>) => {
-    return async (_host: string, port: number) => {
-      const result = targetsByPort[port] ?? [];
-
-      if (result instanceof Error) {
-        throw result;
-      }
-
-      return result;
-    };
-  };
-
   it('scans both default ports when no --port is given, labelling each by integration', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockImplementation(byPort({ 8081: [targetA], 3000: [lynxTarget] }));
+    mockTargetsByPort({ 8081: [targetA], 3000: [lynxTarget] });
     mocks.promptSelect.mockImplementation(
       async ({ options }: { options: { value: OpenTarget }[] }) => options[1].value,
     );
@@ -141,8 +167,8 @@ describe('openCommand dev server discovery', () => {
 
     await openCommand({ host: '127.0.0.1' });
 
-    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081);
-    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 3000);
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8081/rozenite/agent/targets');
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:3000/rozenite/agent/targets');
     expect(mocks.promptSelect).toHaveBeenCalledWith(
       expect.objectContaining({
         options: [
@@ -155,7 +181,7 @@ describe('openCommand dev server discovery', () => {
 
   it('opens the picked target on the port it was found on', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockImplementation(byPort({ 8081: [targetA], 3000: [lynxTarget] }));
+    mockTargetsByPort({ 8081: [targetA], 3000: [lynxTarget] });
     mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
 
     await openCommand({ host: '127.0.0.1', deviceId: 'device-lynx-1' });
@@ -171,12 +197,10 @@ describe('openCommand dev server discovery', () => {
   // one of the two default ports always refuses the connection.
   it('ignores a default port that is not listening when the other one answers', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockImplementation(
-      byPort({
-        8081: new Error('Unable to reach Metro at http://127.0.0.1:8081/json/list.'),
-        3000: [lynxTarget],
-      }),
-    );
+    mockTargetsByPort({
+      8081: new Error('connect ECONNREFUSED'),
+      3000: [lynxTarget],
+    });
     mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
 
     await openCommand({ host: '127.0.0.1', deviceId: 'device-lynx-1' });
@@ -187,7 +211,10 @@ describe('openCommand dev server discovery', () => {
 
   it('reports every scanned port when none of them can be reached', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockRejectedValue(new Error('connect ECONNREFUSED'));
+    mockTargetsByPort({
+      8081: new Error('connect ECONNREFUSED'),
+      3000: new Error('connect ECONNREFUSED'),
+    });
 
     await openCommand({ host: '127.0.0.1' });
 
@@ -199,9 +226,89 @@ describe('openCommand dev server discovery', () => {
     );
   });
 
-  it('queries only the given port, and does not claim to know its integration', async () => {
+  it('reports the endpoint error message for a dev server that answers with a failure', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockResolvedValue([targetA]);
+    // The middleware's `sendError` always pairs `ok:false` with an HTTP 400
+    // or 404, never 200 -- this is the shape a real error response has.
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      jsonResponse(
+        {
+          ok: false,
+          error: { message: 'No connected device is available.' },
+        } satisfies AgentResponseEnvelope<never>,
+        false,
+        400,
+      ),
+    );
+
+    await openCommand({ host: '127.0.0.1', port: 9000 });
+
+    expect(process.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('No connected device is available.'),
+    );
+  });
+
+  it('names the status when a dev server answers with a non-JSON body', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    // A 404 with an HTML body -- an older middleware, or `/rozenite` not
+    // mounted at all -- has no envelope to read a message from, so the
+    // status line is all that is left to report.
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: () => Promise.reject(new SyntaxError('Unexpected token < in JSON')),
+    } as unknown as Response);
+
+    await openCommand({ host: '127.0.0.1', port: 9000 });
+
+    expect(process.exitCode).toBe(1);
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('status 404'));
+  });
+
+  it('falls back to the bare label when integration is not recognised (older middleware)', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    mockTargetsByPort({
+      8081: [{ ...targetA, integration: 'unknown-integration' as OpenTarget['integration'] }],
+    });
+    mocks.promptSelect.mockImplementation(
+      async ({ options }: { options: { value: OpenTarget }[] }) => options[0].value,
+    );
+    mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
+
+    await openCommand({ host: '127.0.0.1', port: 8081 });
+
+    expect(mocks.promptSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: [expect.objectContaining({ label: 'iPhone 15 (com.example.a) — A' })],
+      }),
+    );
+  });
+
+  it('reports the dev server error rather than "start your dev server" when it answered', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      jsonResponse(
+        {
+          ok: false,
+          error: { message: 'No connected device is available.' },
+        } satisfies AgentResponseEnvelope<never>,
+        false,
+        400,
+      ),
+    );
+
+    await openCommand({ host: '127.0.0.1', port: 9000 });
+
+    expect(logger.error).toHaveBeenCalledWith(expect.not.stringContaining('Start your dev server'));
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('No connected device is available.'),
+    );
+  });
+
+  it('labels a target from its own integration field regardless of --port', async () => {
+    mocks.isInteractive.mockReturnValue(true);
+    mockTargetsByPort({ 9000: [{ ...targetA, port: 9000 }] });
     mocks.promptSelect.mockImplementation(
       async ({ options }: { options: { value: OpenTarget }[] }) => options[0].value,
     );
@@ -209,11 +316,13 @@ describe('openCommand dev server discovery', () => {
 
     await openCommand({ host: '127.0.0.1', port: 9000 });
 
-    expect(mocks.getMetroTargets).toHaveBeenCalledTimes(1);
-    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 9000);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:9000/rozenite/agent/targets');
     expect(mocks.promptSelect).toHaveBeenCalledWith(
       expect.objectContaining({
-        options: [expect.objectContaining({ label: 'iPhone 15 (com.example.a) — A' })],
+        options: [
+          expect.objectContaining({ label: 'React Native · iPhone 15 (com.example.a) — A' }),
+        ],
       }),
     );
   });
@@ -222,7 +331,7 @@ describe('openCommand dev server discovery', () => {
 describe('openCommand target selection', () => {
   it('reports no targets and points at opening the app on a device', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockResolvedValue([]);
+    mockTargetsByPort({ 8081: [] });
 
     await openCommand({ host: '127.0.0.1', port: 8081 });
 
@@ -235,7 +344,7 @@ describe('openCommand target selection', () => {
 
   it('selects the target matching --deviceId and spawns Electron for it', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockResolvedValue([targetA, targetB]);
+    mockTargetsByPort({ 8081: [targetA, targetB] });
     mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
 
     await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-b' });
@@ -251,7 +360,7 @@ describe('openCommand target selection', () => {
 
   it('fails gracefully, listing valid ids, for an unknown --deviceId', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockResolvedValue([targetA, targetB]);
+    mockTargetsByPort({ 8081: [targetA, targetB] });
 
     await expect(
       openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'nope' }),
@@ -268,7 +377,7 @@ describe('openCommand target selection', () => {
 
   it('prompts when there is no --deviceId', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockResolvedValue([targetA, targetB]);
+    mockTargetsByPort({ 8081: [targetA, targetB] });
     mocks.promptSelect.mockResolvedValue(targetA);
     mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
 
@@ -277,8 +386,14 @@ describe('openCommand target selection', () => {
     expect(mocks.promptSelect).toHaveBeenCalledWith(
       expect.objectContaining({
         options: [
-          { value: { ...targetA, port: 8081 }, label: 'iPhone 15 (com.example.a) — A' },
-          { value: { ...targetB, port: 8081 }, label: 'Pixel 8 (com.example.b) — B' },
+          {
+            value: { ...targetA, port: 8081 },
+            label: 'React Native · iPhone 15 (com.example.a) — A',
+          },
+          {
+            value: { ...targetB, port: 8081 },
+            label: 'React Native · Pixel 8 (com.example.b) — B',
+          },
         ],
       }),
     );
@@ -286,7 +401,7 @@ describe('openCommand target selection', () => {
 
   it('errors out when Electron cannot be launched, without any browser fallback', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockResolvedValue([targetA]);
+    mockTargetsByPort({ 8081: [targetA] });
     mocks.childProcessSpawn.mockImplementation(() => {
       throw new Error('spawn ENOENT');
     });
@@ -304,7 +419,7 @@ describe('openCommand target selection', () => {
 describe('openCommand Electron opening (default)', () => {
   it('spawns the @rozenite/electron-app launcher', async () => {
     mocks.isInteractive.mockReturnValue(true);
-    mocks.getMetroTargets.mockResolvedValue([targetA]);
+    mockTargetsByPort({ 8081: [targetA] });
     mocks.childProcessSpawn.mockReturnValue({ unref: vi.fn() });
 
     await openCommand({ host: '127.0.0.1', port: 8081, deviceId: 'device-a' });
@@ -328,16 +443,17 @@ describe('selectTargetById', () => {
     deviceId: 'device-c',
     name: 'iPhone',
     appId: 'LynxExplorer',
-    pageId: 'device-c-1',
+    pageId: '1',
     title: '/Applications/LynxExplorer.app/Resource/homepage.lynx.bundle',
     description: '',
     webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-c&page=1',
+    integration: 'lynx',
     port: 8081,
   };
   const cardTwo: OpenTarget = {
     ...cardOne,
     id: 'device-c-2',
-    pageId: 'device-c-2',
+    pageId: '2',
     title: 'http://localhost:3000/main.lynx.bundle?fullscreen=true',
     webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-c&page=2',
   };
@@ -366,8 +482,14 @@ describe('selectTargetById', () => {
     expect(mocks.promptSelect).toHaveBeenCalledWith(
       expect.objectContaining({
         options: [
-          { value: cardOne, label: 'iPhone (LynxExplorer) — homepage.lynx.bundle' },
-          { value: cardTwo, label: 'iPhone (LynxExplorer) — main.lynx.bundle' },
+          {
+            value: cardOne,
+            label: 'Lynx · iPhone (LynxExplorer) — homepage.lynx.bundle',
+          },
+          {
+            value: cardTwo,
+            label: 'Lynx · iPhone (LynxExplorer) — main.lynx.bundle',
+          },
         ],
       }),
     );

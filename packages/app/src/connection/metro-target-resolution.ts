@@ -1,22 +1,18 @@
 /**
- * Re-resolves a device's debugger target through Metro's `/json/list`, for
- * use after a recoverable disconnect (the page id in the original target
- * can change underneath a live connection — see
- * `packages/middleware/src/agent/metro-discovery.ts`, which this mirrors
- * the selection rules of for the Node/agent side of the same problem).
+ * Re-resolves a device's debugger target through `@rozenite/middleware`'s
+ * `GET /rozenite/agent/targets`, for use after a recoverable disconnect
+ * (the page id in the original target can change underneath a live
+ * connection). This is the only way Rozenite code discovers targets — see
+ * `docs/adr/0000-single-target-discovery-endpoint.md` — so this module
+ * does not parse `/json/list` itself; the middleware already applies the
+ * selection rules (`packages/middleware/src/agent/metro-discovery.ts`) and
+ * returns targets in preference order.
  */
-
-type JsonPageDescription = {
-  id: string;
-  deviceName?: string;
-  webSocketDebuggerUrl: string;
-  reactNative?: {
-    logicalDeviceId?: string;
-    capabilities?: {
-      prefersFuseboxFrontend?: boolean;
-    };
-  };
-};
+import {
+  AGENT_TARGETS_ROUTE,
+  type AgentResponseEnvelope,
+  type GetAgentTargetsResponse,
+} from '@rozenite/agent-shared';
 
 export class MetroUnreachableError extends Error {
   constructor(message: string) {
@@ -31,74 +27,82 @@ export type ResolvedMetroTarget = {
   name: string;
 };
 
-// Mirrors metro-discovery.ts's `sortPages`: prefer the page that advertises
-// the modern Fusebox frontend, then break ties by id so selection is
-// deterministic.
-const sortPages = (pages: JsonPageDescription[]): JsonPageDescription[] => {
-  return [...pages].sort((a, b) => {
-    const scoreA = a.reactNative?.capabilities?.prefersFuseboxFrontend ? 1 : 0;
-    const scoreB = b.reactNative?.capabilities?.prefersFuseboxFrontend ? 1 : 0;
-    if (scoreA !== scoreB) {
-      return scoreB - scoreA;
-    }
-    return a.id.localeCompare(b.id);
-  });
-};
-
 export const resolveMetroTarget = async (
   deviceId: string,
   preferredPageId?: string | null,
 ): Promise<ResolvedMetroTarget> => {
+  const url = `${window.location.origin}${AGENT_TARGETS_ROUTE}`;
+
   let response: Response;
   try {
-    response = await fetch(`${window.location.origin}/json/list`);
+    response = await fetch(url);
   } catch {
     throw new MetroUnreachableError(
-      `Unable to reach Metro at ${window.location.origin}. Make sure it is still running.`,
+      `Unable to reach ${url}. Make sure the dev server is still running.`,
     );
   }
 
-  if (!response.ok) {
-    throw new MetroUnreachableError(`Metro responded with status ${response.status}.`);
-  }
+  // The middleware's `sendError` always pairs `ok:false` with an HTTP 400
+  // or 404 (`packages/middleware/src/agent/routes.ts`), so the body has to
+  // be parsed before the status is allowed to decide anything -- otherwise
+  // a real error envelope's own message (e.g. "No connected device is
+  // available") is discarded in favour of a bare "responded with status
+  // 400". The status only gets the final word when the body turns out not
+  // to be a usable envelope at all (a non-JSON body, or JSON of some other
+  // shape -- an older middleware, or `/rozenite` not mounted here).
+  const unexpectedResponseError = (): MetroUnreachableError =>
+    new MetroUnreachableError(
+      response.ok
+        ? `${url} returned an unexpected response.`
+        : `${url} responded with status ${response.status}.`,
+    );
 
-  let pages: JsonPageDescription[];
+  let raw: unknown;
   try {
-    pages = (await response.json()) as JsonPageDescription[];
+    raw = await response.json();
   } catch {
-    throw new MetroUnreachableError('Metro returned an unexpected response for /json/list.');
+    throw unexpectedResponseError();
   }
 
-  const matching = pages.filter((page) => page.reactNative?.logicalDeviceId === deviceId);
+  if (typeof raw !== 'object' || raw === null || !('ok' in raw)) {
+    throw unexpectedResponseError();
+  }
+
+  const body = raw as AgentResponseEnvelope<GetAgentTargetsResponse>;
+
+  if (!body.ok) {
+    const message =
+      typeof body.error?.message === 'string' ? body.error.message : `${url} reported an error.`;
+    throw new MetroUnreachableError(message);
+  }
+
+  if (!Array.isArray(body.result?.targets)) {
+    throw unexpectedResponseError();
+  }
+
+  const matching = body.result.targets.filter((target) => target.deviceId === deviceId);
   if (matching.length === 0) {
-    throw new Error(`No Metro target is currently available for device "${deviceId}".`);
+    throw new Error(`No target is currently available for device "${deviceId}".`);
   }
 
   // Go back to the page that was actually being debugged, if it is still
-  // there. A device can host several pages -- every Lynx card is one -- and
-  // `sortPages` only knows how to prefer Fusebox and then the lowest id,
-  // so without this a reconnect silently lands on a different page than
-  // the one the user opened. In LynxExplorer that page is its own home
-  // screen, which has no Rozenite in it, so the reconnect surfaced as a
-  // permanent "Rozenite isn't set up in this app" that reloading could not
-  // clear.
-  const pageIdOf = (page: JsonPageDescription): string | null => {
-    try {
-      return new URL(page.webSocketDebuggerUrl).searchParams.get('page');
-    } catch {
-      return null;
-    }
-  };
-
+  // there: prefer the target whose `pageId` matches the page id we started
+  // from, and otherwise fall back to the first target, which the endpoint
+  // already returns in preference order (Fusebox first, then lowest id). A
+  // device can host several pages -- every Lynx card is one -- so without
+  // this a reconnect silently lands on a different page than the one the
+  // user opened. In LynxExplorer that page is its own home screen, which
+  // has no Rozenite in it, so the reconnect surfaced as a permanent
+  // "Rozenite isn't set up in this app" that reloading could not clear.
   const preferred =
     preferredPageId != null
-      ? matching.find((page) => pageIdOf(page) === preferredPageId)
+      ? matching.find((target) => target.pageId === preferredPageId)
       : undefined;
 
-  const [selected] = preferred ? [preferred] : sortPages(matching);
+  const selected = preferred ?? matching[0];
 
   return {
     webSocketDebuggerUrl: selected.webSocketDebuggerUrl,
-    name: selected.deviceName || deviceId,
+    name: selected.name || deviceId,
   };
 };

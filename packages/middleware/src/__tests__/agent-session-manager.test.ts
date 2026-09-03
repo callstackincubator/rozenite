@@ -115,7 +115,25 @@ describe('agent session manager', () => {
     const manager = createAgentSessionManager({ projectRoot: '/app' });
 
     await expect(manager.listTargets()).resolves.toEqual([{ id: 'device-1', name: 'Phone' }]);
-    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081);
+    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081, 'react-native');
+  });
+
+  it('derives the lynx host integration for discovery when created with integration: lynx', async () => {
+    mocks.getMetroTargets.mockResolvedValue([]);
+    const manager = createAgentSessionManager({ projectRoot: '/app', integration: 'lynx' });
+
+    await manager.listTargets();
+
+    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081, 'lynx');
+  });
+
+  it('derives the lynx host integration for discovery when created with integration: lynx-web', async () => {
+    mocks.getMetroTargets.mockResolvedValue([]);
+    const manager = createAgentSessionManager({ projectRoot: '/app', integration: 'lynx-web' });
+
+    await manager.listTargets();
+
+    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081, 'lynx');
   });
 
   it('creates and reuses the same session per device', async () => {

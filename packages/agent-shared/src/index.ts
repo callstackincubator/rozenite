@@ -1,4 +1,4 @@
-import type { RozeniteIntegration } from '@rozenite/tools/integration';
+import type { RozeniteHostIntegration, RozeniteIntegration } from '@rozenite/tools/integration';
 import type { UnsupportedDomainInfo } from './capabilities.js';
 
 export {
@@ -270,10 +270,22 @@ export type MetroTarget = {
   deviceId: string;
   name: string;
   appId: string;
+  /**
+   * The page's id within its own device -- the `page` query parameter of
+   * `webSocketDebuggerUrl` -- not a globally unique id. That is `id`,
+   * above, which is the `<deviceId>-<pageId>` composite.
+   */
   pageId: string;
   title: string;
   description: string;
   webSocketDebuggerUrl: string;
+  /**
+   * Which integration serves this target, set from the middleware's own
+   * `RozeniteConfig.integration`. Consumers must read it from here rather
+   * than guess it from a port: a `--port` a user chose says nothing about
+   * which integration listens on it.
+   */
+  integration: RozeniteHostIntegration;
 };
 
 export type AgentServerInfo = {

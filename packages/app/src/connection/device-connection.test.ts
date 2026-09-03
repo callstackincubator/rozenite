@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { MetroTarget } from '@rozenite/agent-shared';
 import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDeviceConnection, type DeviceState } from './device-connection';
@@ -138,11 +139,45 @@ const getExpressions = (socket: FakeWebSocket): string[] =>
     .filter((command) => command.method === 'Runtime.evaluate')
     .map((command) => String(command.params?.expression ?? ''));
 
-const mockMetroList = (pages: unknown[]): void => {
+/**
+ * The device-local page id a real target would report: the `page` query
+ * parameter of its own `webSocketDebuggerUrl`, exactly like the
+ * middleware's `extractPageId` (`packages/middleware/src/agent/metro-discovery.ts`).
+ * Defaulting to the composite `id` here would silently reintroduce the
+ * `pageId`/`id` mixup this fixture exists to avoid.
+ */
+const pageIdFromUrl = (webSocketDebuggerUrl: string): string | undefined => {
+  try {
+    return new URL(webSocketDebuggerUrl).searchParams.get('page') ?? undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/** Builds a `MetroTarget` from just the fields a test cares about. */
+const target = (overrides: {
+  id: string;
+  deviceId: string;
+  webSocketDebuggerUrl: string;
+  name?: string;
+  pageId?: string;
+}): MetroTarget => ({
+  deviceId: overrides.deviceId,
+  name: overrides.name ?? overrides.deviceId,
+  appId: 'com.example.app',
+  pageId: overrides.pageId ?? pageIdFromUrl(overrides.webSocketDebuggerUrl) ?? overrides.id,
+  title: '',
+  description: '',
+  integration: 'react-native',
+  id: overrides.id,
+  webSocketDebuggerUrl: overrides.webSocketDebuggerUrl,
+});
+
+const mockAgentTargets = (targets: MetroTarget[]): void => {
   globalThis.fetch = vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
-    json: () => Promise.resolve(pages),
+    json: () => Promise.resolve({ ok: true, result: { targets } }),
   }) as unknown as typeof fetch;
 };
 
@@ -519,13 +554,13 @@ describe('createDeviceConnection', () => {
     it('recovers from a recoverable close by re-resolving the target and reconnecting', async () => {
       const { connection, socket } = await connectAndBootstrap();
 
-      mockMetroList([
-        {
+      mockAgentTargets([
+        target({
           id: 'page-2',
-          deviceName: 'iPhone 16',
+          deviceId: 'device-1',
+          name: 'iPhone 16',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=2',
-          reactNative: { logicalDeviceId: 'device-1' },
-        },
+        }),
       ]);
 
       socket.close('[CONNECTION_LOST]');
@@ -542,6 +577,41 @@ describe('createDeviceConnection', () => {
         appId: 'com.example.app',
         framework: null,
       });
+    });
+
+    it('reconnects to the page matching pageId, not merely the first one returned', async () => {
+      // TARGET.pageId is '1'. The endpoint lists the *other* page first, so
+      // a naive `matching[0]` fallback would silently reconnect to the
+      // wrong card -- the fix is matching `pageId`, which is device-local,
+      // never the composite `id`.
+      const { connection, socket } = await connectAndBootstrap();
+
+      mockAgentTargets([
+        target({
+          id: 'device-1-9',
+          deviceId: 'device-1',
+          name: 'iPhone 16',
+          pageId: '9',
+          webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=9',
+        }),
+        target({
+          id: 'device-1-1',
+          deviceId: 'device-1',
+          name: 'iPhone 16',
+          pageId: '1',
+          webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=1',
+        }),
+      ]);
+
+      socket.close('[CONNECTION_LOST]');
+      await waitUntil(() => connection.getState().status === 'connecting');
+
+      await waitUntil(() => FakeWebSocket.instances.length === 2);
+      const newSocket = FakeWebSocket.instances[1];
+      expect(newSocket.url).toBe('ws://localhost:8081/inspector/debug?device=device-1&page=1');
+
+      newSocket.open();
+      await waitUntil(() => connection.getState().status === 'connected');
     });
 
     it('goes straight to disconnected when another debugger took the device', async () => {
@@ -566,7 +636,7 @@ describe('createDeviceConnection', () => {
 
     it('gives up after 16 recovery attempts and becomes disconnected', async () => {
       const { connection, socket } = await connectAndBootstrap();
-      mockMetroList([]); // never matches device-1 => resolveMetroTarget always rejects
+      mockAgentTargets([]); // never matches device-1 => resolveMetroTarget always rejects
 
       socket.close('[PAGE_NOT_FOUND]');
       await waitUntil(() => connection.getState().status === 'disconnected', {
@@ -578,7 +648,7 @@ describe('createDeviceConnection', () => {
       expect(globalThis.fetch).toHaveBeenCalledTimes(16);
     });
 
-    it('becomes metroUnreachable when /json/list cannot be reached, without exhausting retries', async () => {
+    it('becomes metroUnreachable when the targets endpoint cannot be reached, without exhausting retries', async () => {
       const { connection, socket } = await connectAndBootstrap();
       globalThis.fetch = vi.fn().mockRejectedValue(new Error('network down'));
 
@@ -593,13 +663,12 @@ describe('createDeviceConnection', () => {
   describe('initial connection retries', () => {
     it('retries a socket-level failure on the very first connection attempt instead of giving up after one', async () => {
       const connection = createDeviceConnection(TARGET);
-      mockMetroList([
-        {
+      mockAgentTargets([
+        target({
           id: 'page-1',
-          deviceName: 'device-1',
+          deviceId: 'device-1',
           webSocketDebuggerUrl: TARGET.webSocketDebuggerUrl,
-          reactNative: { logicalDeviceId: 'device-1' },
-        },
+        }),
       ]);
 
       // The very first socket never even opens (e.g. Metro published the
@@ -617,13 +686,12 @@ describe('createDeviceConnection', () => {
 
     it('still gives up after RECOVERY_MAX_ATTEMPTS if every initial-connection socket fails', async () => {
       const connection = createDeviceConnection(TARGET);
-      mockMetroList([
-        {
+      mockAgentTargets([
+        target({
           id: 'page-1',
-          deviceName: 'device-1',
+          deviceId: 'device-1',
           webSocketDebuggerUrl: TARGET.webSocketDebuggerUrl,
-          reactNative: { logicalDeviceId: 'device-1' },
-        },
+        }),
       ]);
 
       const failEveryNewSocket = () => {
@@ -654,13 +722,13 @@ describe('createDeviceConnection', () => {
       await vi.advanceTimersByTimeAsync(10);
       expect(connection.getState()).toEqual({ status: 'disconnected' });
 
-      mockMetroList([
-        {
+      mockAgentTargets([
+        target({
           id: 'page-3',
-          deviceName: 'iPhone 16',
+          deviceId: 'device-1',
+          name: 'iPhone 16',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=3',
-          reactNative: { logicalDeviceId: 'device-1' },
-        },
+        }),
       ]);
 
       connection.reconnect();
@@ -692,13 +760,13 @@ describe('createDeviceConnection', () => {
       connection.close();
       receivedBeforeClose.length = 0; // drop the 'disconnected' notification from close() itself
 
-      mockMetroList([
-        {
+      mockAgentTargets([
+        target({
           id: 'page-9',
-          deviceName: 'iPhone 16',
+          deviceId: 'device-1',
+          name: 'iPhone 16',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=9',
-          reactNative: { logicalDeviceId: 'device-1' },
-        },
+        }),
       ]);
       connection.reconnect();
       await waitUntil(() => FakeWebSocket.instances.length === 2);
@@ -731,13 +799,13 @@ describe('createDeviceConnection', () => {
 
   describe('device name resolution', () => {
     it('best-effort resolves the friendly device name on the very first connection attempt', async () => {
-      mockMetroList([
-        {
+      mockAgentTargets([
+        target({
           id: 'page-1',
-          deviceName: 'iPhone 15',
+          deviceId: 'device-1',
+          name: 'iPhone 15',
           webSocketDebuggerUrl: TARGET.webSocketDebuggerUrl,
-          reactNative: { logicalDeviceId: 'device-1' },
-        },
+        }),
       ]);
       const connection = createDeviceConnection(TARGET);
       expect(connection.getTarget().name).toBe('device-1'); // starts as the raw id
@@ -908,13 +976,13 @@ describe('createDeviceConnection', () => {
         connection.send({ n: i });
       }
 
-      mockMetroList([
-        {
+      mockAgentTargets([
+        target({
           id: 'page-2',
-          deviceName: 'iPhone 16',
+          deviceId: 'device-1',
+          name: 'iPhone 16',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=device-1&page=2',
-          reactNative: { logicalDeviceId: 'device-1' },
-        },
+        }),
       ]);
       connection.reconnect();
       await waitUntil(() => FakeWebSocket.instances.length === 2);
@@ -1011,14 +1079,19 @@ describe('createDeviceConnection', () => {
           ok: true,
           status: 200,
           json: () =>
-            Promise.resolve([
-              {
-                id: `page-${fetchCall}`,
-                deviceName: 'iPhone 16',
-                webSocketDebuggerUrl: `ws://localhost:8081/inspector/debug?device=device-1&page=${fetchCall}`,
-                reactNative: { logicalDeviceId: 'device-1' },
+            Promise.resolve({
+              ok: true,
+              result: {
+                targets: [
+                  target({
+                    id: `page-${fetchCall}`,
+                    deviceId: 'device-1',
+                    name: 'iPhone 16',
+                    webSocketDebuggerUrl: `ws://localhost:8081/inspector/debug?device=device-1&page=${fetchCall}`,
+                  }),
+                ],
               },
-            ]),
+            }),
         });
       }) as unknown as typeof fetch;
 
@@ -1036,7 +1109,11 @@ describe('createDeviceConnection', () => {
       // epoch 0's long-stale fetch resolve now, while epoch 1 is still
       // mid-flight — this is the moment a non-epoch-scoped flag would be
       // wrongly cleared.
-      resolveStaleFetch({ ok: true, status: 200, json: () => Promise.resolve([]) });
+      resolveStaleFetch({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ ok: true, result: { targets: [] } }),
+      });
       await vi.advanceTimersByTimeAsync(0);
 
       // Epoch 1's socket now closes recoverably before it ever finished

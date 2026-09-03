@@ -92,8 +92,15 @@ export type ClientLike = {
   sendMessage: (message: unknown) => void;
 };
 
+/** The slice of a connector device this package calls. */
+export type DeviceLike = {
+  /** Starts (or restarts) the watcher that discovers this device's clients. */
+  startWatchClient: () => void;
+};
+
 /** The events this package subscribes to on the connector. */
 export type ConnectorEventMap = {
+  'device-connected': DeviceLike;
   'client-connected': ClientLike;
   'client-disconnected': number;
   'usb-client-message': { id: number; message: string };

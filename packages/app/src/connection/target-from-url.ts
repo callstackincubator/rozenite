@@ -14,9 +14,9 @@ export type ParsedTarget = {
   webSocketDebuggerUrl: string;
   /**
    * Device id extracted from the `ws` parameter's `device` query param.
-   * Used to re-resolve the target (via Metro's `/json/list`) after a
-   * recoverable disconnect, since the page id in `webSocketDebuggerUrl` can
-   * change underneath a live connection.
+   * Used to re-resolve the target (via `GET /rozenite/agent/targets`)
+   * after a recoverable disconnect, since the page id in
+   * `webSocketDebuggerUrl` can change underneath a live connection.
    */
   deviceId: string;
   /**

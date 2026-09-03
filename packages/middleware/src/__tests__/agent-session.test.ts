@@ -259,6 +259,7 @@ const createTarget = (overrides: Partial<MetroTarget> = {}): MetroTarget => ({
   title: 'App',
   description: 'Device target',
   webSocketDebuggerUrl: 'ws://localhost:8081/debug',
+  integration: 'react-native',
   ...overrides,
 });
 

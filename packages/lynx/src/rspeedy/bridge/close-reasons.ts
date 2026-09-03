@@ -12,8 +12,9 @@
  * The device is being torn down and recreated (e.g. an app reload made
  * DebugRouter register a fresh client for what the host still thinks is
  * the same device). Recoverable: `handleClose` calls `runConnectLoop`,
- * which re-resolves the target through `/json/list` (`resolveMetroTarget`)
- * and retries, up to `RECOVERY_MAX_ATTEMPTS`.
+ * which re-resolves the target through the middleware's targets endpoint
+ * (`GET /rozenite/agent/targets`, `resolveMetroTarget`) and retries, up to
+ * `RECOVERY_MAX_ATTEMPTS`.
  */
 export const RECREATING_DEVICE_CLOSE_REASON = '[RECREATING_DEVICE]';
 

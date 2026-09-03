@@ -220,7 +220,8 @@ export const createInspectorSocketRoute = (
       // always tears the old registration down first, which the branch
       // above already turns into a close — this is the belt to that
       // braces, and it closes with the same recoverable reason so the
-      // host re-resolves through `/json/list` and reconnects.
+      // host re-resolves through the middleware's targets endpoint
+      // (`GET /rozenite/agent/targets`) and reconnects.
       if (client.clientId !== entry.clientId) {
         sockets.delete(socketKey(entry.logicalDeviceId, entry.sessionId));
         closeEntry(entry, 'client-disconnected');
