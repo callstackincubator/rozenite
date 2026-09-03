@@ -53,6 +53,9 @@
   },
   "devDependencies": {
     "@react-native/metro-config": "~0.86.0",
+    "@rozenite/rhf-plugin": "workspace:*",
+    "@rozenite/storage-plugin": "workspace:*",
+    "@rozenite/test-utils": "workspace:*",
     "metro-resolver": "*",
     "vitest": "^4.0.18"
   },
