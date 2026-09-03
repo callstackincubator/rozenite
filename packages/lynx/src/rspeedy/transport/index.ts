@@ -5,7 +5,7 @@
  * `../types.ts` for the vocabulary-neutral seam it implements.
  */
 import type { DeviceFrame, LynxClient, LynxSession, LynxTransport } from '../types.js';
-import type { ClientLike, ConnectorLike } from './connector-types.js';
+import type { ClientLike, ConnectorLike, DeviceLike } from './connector-types.js';
 import { createRealConnector } from './connector.js';
 import { buildCdpEnvelope, buildListSessionEnvelope, parseInboundMessage } from './wire.js';
 
@@ -303,7 +303,16 @@ export const createLynxTransport = async (
 
   // An unplugged phone is the normal state at startup: discovery failures
   // are logged, never thrown, so they cannot take the dev server down.
-  const discoverDevices = async (): Promise<void> => {
+  //
+  // `force` is only true for the discovery at startup. The connector's
+  // `startWatchAllClients(true)` (its default) tears down and recreates the
+  // client watcher of every device it knows, which drops every connected
+  // client and re-registers it under a new id -- from the host's point of
+  // view a `[RECREATING_DEVICE]` close every sweep. Later sweeps therefore
+  // pass `false`, which the connector treats as a no-op once attached;
+  // devices that show up in a later sweep are watched individually via
+  // the `device-connected` listener below instead.
+  const discoverDevices = async (force: boolean): Promise<void> => {
     try {
       await connector.connectDevices(
         DEVICE_DISCOVERY_TIMEOUT_MS,
@@ -315,13 +324,29 @@ export const createLynxTransport = async (
     }
 
     try {
-      connector.startWatchAllClients();
+      connector.startWatchAllClients(force);
     } catch (error) {
       logger.warn(`[lynx-dev] Failed to start watching Lynx clients: ${String(error)}`);
     }
   };
 
-  await discoverDevices();
+  await discoverDevices(true);
+
+  // A device that appears after startup is registered by a later sweep's
+  // `connectDevices`, but that sweep no longer forces a watch of every
+  // device (see `discoverDevices`), so its clients would never be found.
+  // Watch just that one device. Subscribed only now, after the forced
+  // startup discovery, so devices present at startup are not watched twice.
+  // The connector emits this once per device: a re-enumerated device is
+  // recognised by serial and does not fire it again.
+  const onDeviceConnected = (device: DeviceLike): void => {
+    try {
+      device.startWatchClient();
+    } catch (error) {
+      logger.warn(`[lynx-dev] Failed to start watching a Lynx device's clients: ${String(error)}`);
+    }
+  };
+  connector.on('device-connected', onDeviceConnected);
 
   // Devices already connected are re-reported by `connectDevices` as
   // clients that are already in `clients` -- `onClientConnected` keys on
@@ -332,7 +357,7 @@ export const createLynxTransport = async (
       return;
     }
 
-    void discoverDevices();
+    void discoverDevices(false);
   }, DEVICE_DISCOVERY_RETRY_INTERVAL_MS);
   // Never keep a host process alive solely for this retry.
   discoveryTimer.unref?.();
@@ -380,6 +405,7 @@ export const createLynxTransport = async (
 
       clearInterval(refreshTimer);
       clearInterval(discoveryTimer);
+      connector.off('device-connected', onDeviceConnected);
       connector.off('client-connected', onClientConnected);
       connector.off('client-disconnected', onClientDisconnected);
       connector.off('usb-client-message', onUsbClientMessage);

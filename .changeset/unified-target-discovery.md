@@ -3,6 +3,7 @@
 'rozenite': minor
 '@rozenite/app': minor
 '@rozenite/agent-shared': minor
+'@rozenite/lynx': minor
 ---
 
 Targets returned by `rozenite open` and the agent's targets endpoint now
@@ -16,3 +17,7 @@ correctly lands back on the page that was being debugged.
 
 `rozenite agent targets` now includes each target's `integration` in its
 output.
+
+The Lynx dev server no longer drops and re-registers every connected Lynx
+client on each of its periodic device-discovery sweeps, which showed up in
+Rozenite as a reconnect every fifteen seconds.

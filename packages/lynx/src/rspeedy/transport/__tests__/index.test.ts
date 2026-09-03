@@ -65,10 +65,27 @@ const customizedEnvelope = (
   });
 
 describe('createLynxTransport', () => {
-  it('starts discovery on construction', async () => {
+  it('starts discovery on construction, forcing a watch of every device found', async () => {
     const { connector } = await setup();
     expect(connector.connectDevices).toHaveBeenCalledTimes(1);
     expect(connector.startWatchAllClients).toHaveBeenCalledTimes(1);
+    expect(connector.startWatchAllClients).toHaveBeenCalledWith(true);
+  });
+
+  it('watches the clients of a device that appears after startup, without restarting the others', async () => {
+    const { connector, transport } = await setup();
+    const device = { startWatchClient: vi.fn() };
+
+    connector.emit('device-connected', device);
+
+    expect(device.startWatchClient).toHaveBeenCalledTimes(1);
+    // Still just the forced startup call: a late device is watched on its
+    // own, not by re-watching (and so re-registering) every device.
+    expect(connector.startWatchAllClients).toHaveBeenCalledTimes(1);
+
+    await transport.dispose();
+    connector.emit('device-connected', { startWatchClient: vi.fn() });
+    expect(connector.listenerCount('device-connected')).toBe(0);
   });
 
   describe('device discovery retries', () => {
@@ -93,6 +110,13 @@ describe('createLynxTransport', () => {
 
         await vi.advanceTimersByTimeAsync(15_000);
         expect(connector.connectDevices).toHaveBeenCalledTimes(3);
+
+        // Only the startup sweep forces a watch. A forced
+        // `startWatchAllClients` recreates every device's client watcher,
+        // which drops each connected client and brings it back under a new
+        // id -- observed as a `[RECREATING_DEVICE]` close on the host every
+        // fifteen seconds. Later sweeps must not do that.
+        expect(connector.startWatchAllClients.mock.calls).toEqual([[true], [false], [false]]);
 
         await transport.dispose();
 
