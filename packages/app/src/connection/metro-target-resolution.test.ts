@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { MetroTarget } from '@rozenite/agent-shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MetroUnreachableError, resolveMetroTarget } from './metro-target-resolution';
 
@@ -15,22 +16,43 @@ const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
     json: () => Promise.resolve(body),
   }) as Response;
 
+const targetsResponse = (targets: MetroTarget[]): Response =>
+  jsonResponse({ ok: true, result: { targets } });
+
+const target = (overrides: {
+  id: string;
+  deviceId: string;
+  webSocketDebuggerUrl: string;
+  name?: string;
+  pageId?: string;
+}): MetroTarget => ({
+  deviceId: overrides.deviceId,
+  name: overrides.name ?? overrides.deviceId,
+  appId: 'com.example.app',
+  pageId: overrides.pageId ?? overrides.id,
+  title: '',
+  description: '',
+  integration: 'react-native',
+  id: overrides.id,
+  webSocketDebuggerUrl: overrides.webSocketDebuggerUrl,
+});
+
 describe('resolveMetroTarget', () => {
-  it('picks the page matching the requested device id', async () => {
+  it('picks the target matching the requested device id', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
-      jsonResponse([
-        {
+      targetsResponse([
+        target({
           id: 'page-1',
-          deviceName: 'iPhone 16',
+          deviceId: 'abc',
+          name: 'iPhone 16',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
-          reactNative: { logicalDeviceId: 'abc' },
-        },
-        {
+        }),
+        target({
           id: 'page-2',
-          deviceName: 'Pixel 9',
+          deviceId: 'xyz',
+          name: 'Pixel 9',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=xyz&page=2',
-          reactNative: { logicalDeviceId: 'xyz' },
-        },
+        }),
       ]),
     );
 
@@ -40,26 +62,36 @@ describe('resolveMetroTarget', () => {
     });
   });
 
-  it('prefers the page that advertises the Fusebox frontend when a device has several', async () => {
+  it('requests the response from the middleware targets endpoint', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(targetsResponse([]));
+
+    await expect(resolveMetroTarget('abc')).rejects.toThrow(/abc/);
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${window.location.origin}/rozenite/agent/targets`,
+    );
+  });
+
+  it('takes the first target for a device when several are returned, trusting endpoint order', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
-      jsonResponse([
-        {
+      targetsResponse([
+        target({
           id: 'page-legacy',
-          deviceName: 'iPhone 16',
+          deviceId: 'abc',
+          name: 'iPhone 16',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
-          reactNative: { logicalDeviceId: 'abc', capabilities: { prefersFuseboxFrontend: false } },
-        },
-        {
+        }),
+        target({
           id: 'page-fusebox',
-          deviceName: 'iPhone 16',
+          deviceId: 'abc',
+          name: 'iPhone 16',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=3',
-          reactNative: { logicalDeviceId: 'abc', capabilities: { prefersFuseboxFrontend: true } },
-        },
+        }),
       ]),
     );
 
     await expect(resolveMetroTarget('abc')).resolves.toEqual({
-      webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=3',
+      webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
       name: 'iPhone 16',
     });
   });
@@ -71,34 +103,34 @@ describe('resolveMetroTarget', () => {
     // which has no Rozenite in it -- surfacing as a "Rozenite isn't set up
     // in this app" that no amount of reloading could clear.
     const twoCards = () =>
-      jsonResponse([
-        {
+      targetsResponse([
+        target({
           id: 'abc-1',
-          deviceName: 'iPhone',
+          deviceId: 'abc',
+          name: 'iPhone',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
-          reactNative: { logicalDeviceId: 'abc', capabilities: { prefersFuseboxFrontend: true } },
-        },
-        {
+        }),
+        target({
           id: 'abc-2',
-          deviceName: 'iPhone',
+          deviceId: 'abc',
+          name: 'iPhone',
           webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=2',
-          reactNative: { logicalDeviceId: 'abc', capabilities: { prefersFuseboxFrontend: true } },
-        },
+        }),
       ]);
 
     it('returns to the page that was being debugged', async () => {
       globalThis.fetch = vi.fn().mockResolvedValue(twoCards());
 
-      await expect(resolveMetroTarget('abc', '2')).resolves.toEqual({
+      await expect(resolveMetroTarget('abc', 'abc-2')).resolves.toEqual({
         webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=2',
         name: 'iPhone',
       });
     });
 
-    it('falls back to the usual order when that page is gone', async () => {
+    it('falls back to the first target when that page is gone', async () => {
       globalThis.fetch = vi.fn().mockResolvedValue(twoCards());
 
-      await expect(resolveMetroTarget('abc', '7')).resolves.toEqual({
+      await expect(resolveMetroTarget('abc', 'abc-7')).resolves.toEqual({
         webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
         name: 'iPhone',
       });
@@ -114,13 +146,16 @@ describe('resolveMetroTarget', () => {
     });
   });
 
-  it('falls back to the device id when Metro reports no device name', async () => {
+  it('falls back to the device id when the target reports no name', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(
-      jsonResponse([
+      targetsResponse([
         {
-          id: 'page-1',
-          webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
-          reactNative: { logicalDeviceId: 'abc' },
+          ...target({
+            id: 'page-1',
+            deviceId: 'abc',
+            webSocketDebuggerUrl: 'ws://localhost:8081/inspector/debug?device=abc&page=1',
+          }),
+          name: '',
         },
       ]),
     );
@@ -131,8 +166,8 @@ describe('resolveMetroTarget', () => {
     });
   });
 
-  it('rejects with a plain error when no page matches the device', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(jsonResponse([]));
+  it('rejects with a plain error when no target matches the device', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(targetsResponse([]));
 
     await expect(resolveMetroTarget('missing')).rejects.toThrow(/missing/);
     await expect(resolveMetroTarget('missing')).rejects.not.toBeInstanceOf(MetroUnreachableError);
@@ -145,7 +180,30 @@ describe('resolveMetroTarget', () => {
   });
 
   it('rejects with MetroUnreachableError on a non-OK response', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(jsonResponse([], false, 500));
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ ok: true, result: { targets: [] } }, false, 500));
+
+    await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
+  });
+
+  it('rejects with MetroUnreachableError when the endpoint reports a failure', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse({ ok: false, error: { message: 'No connected device is available.' } }),
+      );
+
+    await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
+    await expect(resolveMetroTarget('abc')).rejects.toThrow('No connected device is available.');
+  });
+
+  it('rejects with MetroUnreachableError on an unparsable response body', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.reject(new Error('not json')),
+    } as unknown as Response);
 
     await expect(resolveMetroTarget('abc')).rejects.toBeInstanceOf(MetroUnreachableError);
   });

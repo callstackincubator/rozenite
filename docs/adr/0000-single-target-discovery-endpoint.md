@@ -1,6 +1,6 @@
 # 0000 — One Rozenite endpoint for debug-target discovery
 
-**Status:** Accepted — not yet implemented
+**Status:** Accepted
 
 **Related:** [callstackincubator/rozenite#482](https://github.com/callstackincubator/rozenite/issues/482)
 

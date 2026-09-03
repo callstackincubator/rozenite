@@ -1,5 +1,6 @@
 import { request as httpRequest } from 'node:http';
 import type { MetroTarget } from '@rozenite/agent-shared';
+import type { RozeniteHostIntegration } from '@rozenite/tools/integration';
 
 type JsonPageDescription = {
   id: string;
@@ -97,7 +98,11 @@ const selectDevicePages = (pages: JsonPageDescription[]): JsonPageDescription[] 
   return sortPages(fuseboxPages.length > 0 ? fuseboxPages : pages);
 };
 
-export const getMetroTargets = async (host: string, port: number): Promise<MetroTarget[]> => {
+export const getMetroTargets = async (
+  host: string,
+  port: number,
+  integration: RozeniteHostIntegration,
+): Promise<MetroTarget[]> => {
   const pages = await requestJson<JsonPageDescription[]>(host, port, '/json/list');
   const byDevice = new Map<string, JsonPageDescription[]>();
 
@@ -125,6 +130,7 @@ export const getMetroTargets = async (host: string, port: number): Promise<Metro
             title: page.title,
             description: page.description,
             webSocketDebuggerUrl: page.webSocketDebuggerUrl,
+            integration,
           }) satisfies MetroTarget,
       ),
     )
@@ -134,9 +140,10 @@ export const getMetroTargets = async (host: string, port: number): Promise<Metro
 export const resolveMetroTarget = async (
   host: string,
   port: number,
+  integration: RozeniteHostIntegration,
   requestedDeviceId?: string,
 ): Promise<MetroTarget> => {
-  const targets = await getMetroTargets(host, port);
+  const targets = await getMetroTargets(host, port, integration);
 
   if (targets.length === 0) {
     throw new Error(

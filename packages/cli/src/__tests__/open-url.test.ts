@@ -12,6 +12,7 @@ const target: MetroTarget = {
   description: '',
   webSocketDebuggerUrl:
     'ws://localhost:8081/inspector/debug?device=2ce2ba5f071e81a9efad6f66a9e029fd6aa11ccd&page=1',
+  integration: 'react-native',
 };
 
 describe('buildAppOpenUrl', () => {

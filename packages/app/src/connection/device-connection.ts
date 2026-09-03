@@ -136,7 +136,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   let ws: WebSocket | null = null;
   // Reset per socket, not per execution context: a JS reload cannot turn a
   // browser target into a native one, but a recovery that re-resolves the
-  // target through Metro's /json/list can land on a different page.
+  // target through GET /rozenite/agent/targets can land on a different page.
   let targetIsWeb: boolean | null = null;
   let epoch = 0;
   // Epoch-scoped rather than a plain boolean: a superseded loop's own
@@ -518,7 +518,8 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     // Sent unprompted by any device implementing the domain once it is
     // enabled (React Native does; `@rozenite/lynx-dev`'s bridge answers
     // for the Lynx apps that don't). Everything in it except the
-    // framework is already known from `/json/list`, so only that is read.
+    // framework is already known from `GET /rozenite/agent/targets`, so
+    // only that is read.
     if (message.method === 'ReactNativeApplication.metadataUpdated') {
       applicationMetadata = (message.params ?? {}) as Record<string, unknown>;
       refreshFramework();
@@ -871,8 +872,9 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   };
 
   // Kick off the initial connection. Unlike a recovery, this uses the
-  // exact target the URL gave us — Metro's /json/list is only consulted
-  // after a recoverable close, once the original page id may be stale.
+  // exact target the URL gave us — GET /rozenite/agent/targets is only
+  // consulted after a recoverable close, once the original page id may be
+  // stale.
   runConnectLoop(epoch, false);
 
   return {

@@ -1,9 +1,11 @@
 /**
  * `GET /json/list` — synthesises the same shape Metro's inspector proxy
- * serves, from a `LynxTransport`, so `@rozenite/app` (which only ever
- * speaks Metro's dialect — see
- * `packages/app/src/connection/metro-target-resolution.ts`) never has to
- * learn that Lynx exists.
+ * serves, from a `LynxTransport`. `@rozenite/app` never reads this
+ * directly: it only speaks `@rozenite/middleware`'s
+ * `GET /rozenite/agent/targets` (see
+ * `packages/app/src/connection/metro-target-resolution.ts`), which reads
+ * this endpoint as an implementation detail and never has to learn that
+ * Lynx exists.
  */
 import type { MiddlewareHandler } from '@rozenite/middleware';
 import type { LynxTransport } from '../types.js';

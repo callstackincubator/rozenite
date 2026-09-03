@@ -1,6 +1,11 @@
-import { DEFAULT_AGENT_PORT, type MetroTarget } from '@rozenite/agent-shared';
+import {
+  AGENT_TARGETS_ROUTE,
+  DEFAULT_AGENT_PORT,
+  type AgentResponseEnvelope,
+  type GetAgentTargetsResponse,
+  type MetroTarget,
+} from '@rozenite/agent-shared';
 import type { RozeniteHostIntegration } from '@rozenite/tools/integration';
-import { getMetroTargets } from './metro-discovery.js';
 
 /**
  * Rspeedy's default dev-server port, which is the port `@rozenite/lynx-dev`
@@ -9,7 +14,7 @@ import { getMetroTargets } from './metro-discovery.js';
  */
 export const DEFAULT_LYNX_PORT = 3000;
 
-const INTEGRATION_LABELS: Record<RozeniteHostIntegration, string> = {
+export const INTEGRATION_LABELS: Record<RozeniteHostIntegration, string> = {
   'react-native': 'React Native',
   lynx: 'Lynx',
 };
@@ -23,7 +28,10 @@ export type DevServer = {
    * the port *is* the integration's documented default. A `--port` the
    * user chose says nothing about which integration listens on it — Metro
    * is perfectly happy on 3000 — so an explicit port carries no name
-   * rather than a guessed (and possibly wrong) one.
+   * rather than a guessed (and possibly wrong) one. This is only ever used
+   * to describe a server that could not be reached at all; a target that
+   * *was* found is always labelled from its own `integration` field
+   * (`@rozenite/agent-shared`'s `MetroTarget`), never from this guess.
    */
   integration?: string;
 };
@@ -42,7 +50,7 @@ export const resolveDevServers = (port: number | undefined): DevServer[] =>
   port === undefined ? [...DEFAULT_DEV_SERVERS] : [{ port }];
 
 /** A target plus the dev server it was found on, which is where it opens. */
-export type OpenTarget = MetroTarget & Pick<DevServer, 'port' | 'integration'>;
+export type OpenTarget = MetroTarget & Pick<DevServer, 'port'>;
 
 export type DevServerFailure = {
   server: DevServer;
@@ -60,6 +68,61 @@ export type DevServerDiscovery = {
   failures: DevServerFailure[];
 };
 
+const getErrorDetails = (error: unknown): string | null => {
+  if (!error) {
+    return null;
+  }
+
+  if (error instanceof AggregateError && error.errors.length > 0) {
+    return error.errors
+      .map((entry) => (entry instanceof Error ? entry.message : String(entry)))
+      .join('; ');
+  }
+
+  return error instanceof Error ? error.message : String(error);
+};
+
+/**
+ * Fetches `GET /rozenite/agent/targets` from one dev server. This is the
+ * only way Rozenite code discovers targets (see
+ * `docs/adr/0000-single-target-discovery-endpoint.md`): the CLI does not
+ * parse `/json/list` itself, and does not fall back to it if the endpoint
+ * is missing — the CLI and `@rozenite/middleware` are released in
+ * lockstep, so a missing endpoint means a mismatched version, which
+ * surfaces as this request's own failure.
+ */
+const fetchTargets = async (host: string, port: number): Promise<MetroTarget[]> => {
+  const url = `http://${host}:${port}${AGENT_TARGETS_ROUTE}`;
+  const unreachableMessage = (details: string | null): string =>
+    `Unable to reach a dev server at ${url}. Make sure it is running and reachable, then try again.${
+      details ? ` Details: ${details}` : ''
+    }`;
+
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (error) {
+    throw new Error(unreachableMessage(getErrorDetails(error)));
+  }
+
+  let body: AgentResponseEnvelope<GetAgentTargetsResponse>;
+  try {
+    body = (await response.json()) as AgentResponseEnvelope<GetAgentTargetsResponse>;
+  } catch (error) {
+    throw new Error(unreachableMessage(getErrorDetails(error)));
+  }
+
+  if (!body.ok) {
+    throw new Error(`${body.error.message} (${url})`);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Dev server at ${url} responded with status ${response.status}.`);
+  }
+
+  return body.result.targets;
+};
+
 /**
  * Asks every candidate dev server for its targets, at the same time, and
  * keeps whatever answers. Servers are queried concurrently because one of
@@ -73,13 +136,12 @@ export const discoverTargets = async (
   const results = await Promise.all(
     servers.map(async (server): Promise<DevServerDiscovery> => {
       try {
-        const targets = await getMetroTargets(host, server.port);
+        const targets = await fetchTargets(host, server.port);
 
         return {
           targets: targets.map((target) => ({
             ...target,
             port: server.port,
-            integration: server.integration,
           })),
           failures: [],
         };

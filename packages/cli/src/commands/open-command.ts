@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
   discoverTargets,
   formatNoTargetsMessage,
+  INTEGRATION_LABELS,
   resolveDevServers,
   type OpenTarget,
 } from './dev-servers.js';
@@ -59,8 +60,11 @@ const formatTargetLabel = (target: OpenTarget): string => {
   const label = detail.length > 0 && detail !== target.appId ? `${base} — ${detail}` : base;
 
   // Scanning several dev servers means the list can mix integrations, and
-  // a device name alone does not say which one a target belongs to.
-  return target.integration ? `${target.integration} · ${label}` : label;
+  // a device name alone does not say which one a target belongs to. This
+  // always comes from the target's own `integration` field (set by
+  // `@rozenite/middleware` from the dev server it actually is), never
+  // guessed from the port it was found on.
+  return `${INTEGRATION_LABELS[target.integration]} · ${label}`;
 };
 
 const promptForTarget = async (targets: OpenTarget[]): Promise<OpenTarget> => {

@@ -8,7 +8,7 @@ import {
   type DevToolsPluginMessage,
   type GetAgentSessionToolsResponse,
 } from '@rozenite/agent-shared';
-import type { RozeniteIntegration } from '@rozenite/tools/integration';
+import type { RozeniteHostIntegration, RozeniteIntegration } from '@rozenite/tools/integration';
 import { getMetroTargets, resolveMetroTarget } from './metro-discovery.js';
 import { createAgentSession, type AgentSession } from './session.js';
 import type { TapListener } from './tap.js';
@@ -25,6 +25,12 @@ export const createAgentSessionManager = (options: {
 }) => {
   const metroVersion = options.metroVersion;
   const integration = options.integration ?? DEFAULT_AGENT_TARGET_INTEGRATION;
+  // `MetroTarget.integration` is host-only (no `-web` refinement): the
+  // dev server it came from is either React Native's or Lynx's, and which
+  // target on it turned out to be a browser is a separate, per-connection
+  // question `integration` above still answers for capability profiles.
+  const hostIntegration: RozeniteHostIntegration =
+    integration === 'lynx' || integration === 'lynx-web' ? 'lynx' : 'react-native';
   const sessions = new Map<string, AgentSession>();
   let currentHost = options.host ?? DEFAULT_AGENT_HOST;
   let currentPort = options.port ?? DEFAULT_AGENT_PORT;
@@ -44,7 +50,7 @@ export const createAgentSessionManager = (options: {
   };
 
   const listTargets = async () => {
-    return await getMetroTargets(currentHost, currentPort);
+    return await getMetroTargets(currentHost, currentPort, hostIntegration);
   };
 
   const getSessionOrThrow = (sessionId: string): AgentSession => {
@@ -65,7 +71,12 @@ export const createAgentSessionManager = (options: {
       request.cliVersion && metroVersion && request.cliVersion !== metroVersion
         ? `Connected Rozenite agent uses version ${request.cliVersion}, but Metro is running version ${metroVersion}. Integration may not work correctly.`
         : undefined;
-    const target = await resolveMetroTarget(currentHost, currentPort, request.deviceId);
+    const target = await resolveMetroTarget(
+      currentHost,
+      currentPort,
+      hostIntegration,
+      request.deviceId,
+    );
     const existing = sessions.get(target.id);
     if (existing) {
       if (existing.isReusable(target)) {
@@ -89,7 +100,8 @@ export const createAgentSessionManager = (options: {
       integration,
       cliVersion: request.cliVersion,
       metroVersion,
-      resolveTarget: (deviceId) => resolveMetroTarget(currentHost, currentPort, deviceId),
+      resolveTarget: (deviceId) =>
+        resolveMetroTarget(currentHost, currentPort, hostIntegration, deviceId),
       onTerminated: (sessionId) => {
         const current = sessions.get(sessionId);
         if (

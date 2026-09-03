@@ -115,7 +115,7 @@ describe('agent session manager', () => {
     const manager = createAgentSessionManager({ projectRoot: '/app' });
 
     await expect(manager.listTargets()).resolves.toEqual([{ id: 'device-1', name: 'Phone' }]);
-    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081);
+    expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081, 'react-native');
   });
 
   it('creates and reuses the same session per device', async () => {
