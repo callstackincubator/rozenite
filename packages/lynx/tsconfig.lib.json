@@ -11,9 +11,11 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@lynx-js/react"
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "references": [
     { "path": "../tools/tsconfig.lib.json" },
     { "path": "../middleware/tsconfig.lib.json" }

@@ -1,9 +1,6 @@
 import './App.css';
+import Rozenite from '@rozenite/lynx';
 import { RozeniteLogo } from './RozeniteLogo.jsx';
-import { ControlsPlayground } from './plugins/ControlsPlayground.jsx';
-import { FeatureFlagsPlayground } from './plugins/FeatureFlagsPlayground.jsx';
-import { RhfPlayground } from './plugins/RhfPlayground.jsx';
-import { TanStackQueryPlayground } from './plugins/TanStackQueryPlayground.jsx';
 
 export function App() {
   return (
@@ -19,10 +16,7 @@ export function App() {
         </text>
       </view>
 
-      <ControlsPlayground />
-      <FeatureFlagsPlayground />
-      <RhfPlayground />
-      <TanStackQueryPlayground />
+      <Rozenite />
     </scroll-view>
   );
 }

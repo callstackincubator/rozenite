@@ -120,7 +120,7 @@ describe('setupRozenite (module install)', () => {
     vi.stubGlobal('__BACKGROUND__', false);
     stubLynxWithDevtool();
 
-    await import('../index.js');
+    await import('../runtime.js');
 
     expect((globalThis as Record<string, unknown>)[GLOBAL_KEY]).toBeUndefined();
   });

@@ -4,9 +4,8 @@
  * `./rspeedy/server/` (the transport-agnostic `/json/list` +
  * `/inspector/debug` HTTP/WS half) into a Lynx dev server — the same shape
  * `@rozenite/metro`'s `withRozenite` gives Metro, and `@rozenite/repack`'s
- * `withRozenite` gives Re.Pack. It also injects `@rozenite/lynx`'s own `.`
- * export (the device runtime) into the app's bundle — see `RUNTIME_ENTRY`
- * below.
+ * `withRozenite` gives Re.Pack. It also injects `@rozenite/lynx/runtime`
+ * (the device runtime) into the app's bundle — see `RUNTIME_ENTRY` below.
  *
  * `@lynx-js/rspeedy` re-exports `RsbuildPlugin` from `@rsbuild/core`
  * unchanged, so this is written directly against `@rsbuild/core`'s types
@@ -19,6 +18,7 @@ import type { RsbuildPlugin } from '@rsbuild/core';
 import {
   createScopedMiddleware,
   initializeRozenite,
+  RozeniteResolverPlugin,
   type RozeniteConfig,
 } from '@rozenite/middleware';
 import { logger } from '@rozenite/tools';
@@ -26,15 +26,20 @@ import { createLynxTransport } from './rspeedy/transport/index.js';
 import { createRozeniteLynxServer, listInspectorTargets } from './rspeedy/server/index.js';
 
 /**
- * The device runtime's own entry point (`@rozenite/lynx`'s `.` export —
- * see `packages/lynx/src/index.ts`), injected into the app's bundle below
- * via `source.preEntry` instead of asking the user to import it by hand.
+ * The device runtime's own entry point (`@rozenite/lynx/runtime` — see
+ * `packages/lynx/src/runtime.ts`), injected into the app's bundle below via
+ * `source.preEntry` instead of asking the user to import it by hand.
  *
  * This is a package *self-reference*: this module lives inside
  * `@rozenite/lynx`, and Node resolves the specifier through this package's
  * own `exports` map by matching the `name` in the nearest `package.json`.
  * It therefore needs no `node_modules` lookup and behaves identically
  * whether the package is symlinked (pnpm workspace) or installed normally.
+ *
+ * The `/runtime` subpath, not the package root: the root export is
+ * `<Rozenite />`, the app-side seam (`packages/lynx/src/index.tsx`), which
+ * must be side-effect-free so it can be rendered unconditionally in
+ * production. Only `/runtime` may install the dispatcher on import.
  *
  * `createRequire(import.meta.url)` rather than a bare `require.resolve`:
  * `require` does not exist in an ESM module, and this package ships both
@@ -43,13 +48,14 @@ import { createRozeniteLynxServer, listInspectorTargets } from './rspeedy/server
  * `packages/repack/src/version-check.ts` and
  * `./rspeedy/transport/connector.ts`.
  *
- * Note this resolves the `require` condition, so it yields `dist/index.cjs`
- * rather than `dist/index.js`. That is fine — the value is only ever handed
- * to Rspack as an entry path, and it bundles either form. What matters is
- * that it is the same physical package the app would have imported itself.
+ * Note this resolves the `require` condition, so it yields
+ * `dist/runtime.cjs` rather than `dist/runtime.js`. That is fine — the
+ * value is only ever handed to Rspack as an entry path, and it bundles
+ * either form. What matters is that it is the same physical package the
+ * app would have imported itself.
  */
 const require = createRequire(import.meta.url);
-const RUNTIME_ENTRY = require.resolve('@rozenite/lynx');
+const RUNTIME_ENTRY = require.resolve('@rozenite/lynx/runtime');
 
 export type { LynxClient, LynxSession, DeviceFrame, LynxTransport } from './rspeedy/types.js';
 export {
@@ -82,6 +88,19 @@ export type RozeniteLynxOptions = Omit<RozeniteConfig, 'projectRoot' | 'integrat
   enableIOS?: boolean;
   enableHarmony?: boolean;
   enableDesktop?: boolean;
+  /**
+   * Rozenite plugin packages that are allowed to reach a production bundle.
+   *
+   * By default, the resolver guard installed by this plugin (see
+   * `RozeniteResolverPlugin` in `@rozenite/middleware`) throws when a
+   * production build resolves into a Rozenite plugin package through
+   * anything other than that plugin's declared `productionEntries`. This is
+   * an escape hatch, not a fix: listing a package here defeats that
+   * guarantee for it. Prefer declaring `productionEntries` in the plugin's
+   * `rozenite.config.ts` instead. Every package listed here is logged
+   * loudly once per build.
+   */
+  allowInProduction?: string[];
 };
 
 const PLUGIN_NAME = 'rozenite-lynx';
@@ -115,22 +134,57 @@ const toBrowsableHost = (host: string): string => (WILDCARD_HOSTS.has(host) ? 'l
 export const rozeniteLynxPlugin = (options: RozeniteLynxOptions = {}): RsbuildPlugin => {
   return {
     name: PLUGIN_NAME,
-    // This plugin only ever adds dev-server middleware and a WebSocket
-    // route — neither exists during a production bundle (`rspeedy build`).
-    // Restricting it to `serve` is a second, structural guard on top of
-    // the `enabled` default below: even a caller who flips `enabled` on
-    // unconditionally for every action still never runs this plugin's
-    // `setup` during a production build.
-    apply: 'serve',
+    // No `apply: 'serve'` here (unlike earlier versions of this plugin):
+    // the resolver guard below must run during `rspeedy build` too, or a
+    // production build is never observed at all (issue #492 / ADR 0002).
+    // `setup` therefore runs for every action; production safety comes
+    // from the two checks inside it, not from Rsbuild skipping the plugin.
     setup: async (api) => {
+      const allowInProduction = options.allowInProduction ?? [];
+
+      if (allowInProduction.length > 0) {
+        logger.warn(
+          `allowInProduction is set for: ${allowInProduction.join(', ')}. ` +
+            'Code from these Rozenite plugin package(s) may reach your production bundle -- ' +
+            'this defeats the production guarantee for them. Prefer declaring productionEntries ' +
+            "in the plugin's rozenite.config.ts instead.",
+        );
+      }
+
       // Mirrors `@rozenite/metro`'s direction of travel (see
-      // `packages/metro/src/index.ts`), but landed here from the start
-      // rather than as a follow-up: Rozenite must never turn itself on by
-      // default in a production build. `apply: 'serve'` above already
-      // rules out `rspeedy build`; this additionally covers a `dev`
-      // server that a caller explicitly wants disabled outside local
-      // development (e.g. a shared/staging Lynx dev server).
-      const enabled = options.enabled ?? process.env.NODE_ENV !== 'production';
+      // `packages/metro/src/index.ts`): Rozenite must never turn itself on
+      // by default in a production build. `action === 'build'` covers
+      // `rspeedy build` even when a caller flips `enabled` on
+      // unconditionally for every action; the `enabled` half covers a
+      // `dev` server that a caller explicitly wants disabled outside local
+      // development (e.g. a shared/staging Lynx dev server). Read once so
+      // the whole plugin body sees one consistent answer regardless of
+      // when `api.context.action` happens to settle.
+      const enabled =
+        (options.enabled ?? process.env.NODE_ENV !== 'production') &&
+        api.context.action !== 'build';
+
+      // The guard is installed unconditionally -- in `build` as much as in
+      // `dev` -- because a production bundle must be checked even when
+      // nothing above wired a dev server into it. `enabled: false` (or a
+      // plain `rspeedy build`) means "no dev server, guard still active",
+      // exactly like `@rozenite/repack`'s `withRozenite`. `isDev` comes
+      // from Rsbuild's own resolved mode for this compilation, not
+      // `process.env.NODE_ENV`, since `rspeedy build` does not reliably
+      // set it before this config is resolved.
+      api.modifyRspackConfig((config, { isDev }) => {
+        config.plugins.push(
+          new RozeniteResolverPlugin({
+            projectRoot: api.context.rootPath,
+            allowInProduction,
+            isDev,
+            installDevEntryRedirect: enabled,
+            targetIntegration: 'lynx',
+            setupFunctionName: 'rozeniteLynxPlugin()',
+          }),
+        );
+      });
+
       if (!enabled) {
         return;
       }
@@ -188,13 +242,12 @@ export const rozeniteLynxPlugin = (options: RozeniteLynxOptions = {}): RsbuildPl
         // needs: it must install `__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__`
         // before any plugin's `useRozeniteDevToolsClient` can run.
         //
-        // This is structurally impossible to leak into production, not
-        // just guarded against it: this whole `setup` callback only runs
-        // when Rsbuild's plugin initializer resolves `apply` to `'serve'`
-        // (see the comment on `apply: 'serve'` above), which never happens
-        // for `rspeedy build`. There is no code path from here to a
-        // production bundle — the previous approach asked every app to get
-        // a `__DEV__` guard right by hand at its own entry point; this one
+        // This whole `modifyRsbuildConfig` callback sits behind the
+        // `enabled` check above, which is `false` for a plain `rspeedy
+        // build` regardless of what a caller passes — see that check's
+        // comment. There is no code path from here to a production
+        // bundle — the previous approach asked every app to get a
+        // `__DEV__` guard right by hand at its own entry point; this one
         // removes the app's entry point from the equation entirely.
         config.source ??= {};
         const prevPreEntry = config.source.preEntry ?? [];

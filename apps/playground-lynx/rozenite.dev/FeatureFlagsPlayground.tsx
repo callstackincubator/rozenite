@@ -6,7 +6,7 @@ import {
   type FeatureFlagInput,
 } from '@rozenite/feature-flags-plugin';
 
-import { Group, Row } from '../ui.jsx';
+import { Group, Row } from '../src/ui.jsx';
 
 const declarations: FeatureFlagInput[] = [
   { key: 'new-splash', value: true, type: 'boolean' },
