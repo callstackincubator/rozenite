@@ -9,7 +9,7 @@ import {
   warnOnceForImport,
   getDevEntrySpecifier,
   type RozenitePluginPackage,
-} from '@rozenite/middleware';
+} from './production-guard.js';
 import { logger } from '@rozenite/tools';
 
 // We intentionally do NOT import types (or values) from `@rspack/core` here.
@@ -142,6 +142,13 @@ export type RozeniteResolverPluginOptions = {
  *    back (with a once-only warning) to the shipped noop when absent.
  * 2. Unconditionally guards production bundles against importing Rozenite
  *    plugin code that was never declared reachable in production.
+ *
+ * Lives in `@rozenite/middleware` rather than `@rozenite/repack` so it can be
+ * shared with `@rozenite/lynx` (issue #492), which installs the same plugin
+ * through Rsbuild's `modifyRspackConfig` and must not depend on
+ * `@rozenite/repack`. It stays free of any `@rspack/core` dependency (see the
+ * hand-written structural types above) so pulling it in adds no rspack
+ * dependency to the middleware.
  */
 export class RozeniteResolverPlugin {
   private readonly options: RozeniteResolverPluginOptions;

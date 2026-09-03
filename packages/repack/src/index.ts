@@ -4,11 +4,11 @@ import {
   initializeRozenite,
   RozeniteConfig,
   RozeniteMiddleware,
+  RozeniteResolverPlugin,
 } from '@rozenite/middleware';
 import { logger } from '@rozenite/tools';
 import { RepackRspackConfig, type RepackRspackConfigExport } from '@callstack/repack';
 import { assertSupportedRePackVersion } from './version-check.js';
-import { RozeniteResolverPlugin } from './resolver-plugin.js';
 
 // Plugin discovery is async, but `setupMiddlewares` is only invoked by the
 // dev server (never for a plain `bundle`/production build) and must return
@@ -104,7 +104,7 @@ export const withRozenite = (
 
     // `RepackRspackConfig` (via `@callstack/repack`) extends rspack's
     // `Configuration`, whose `plugins` field isn't visible here (see the
-    // note atop `resolver-plugin.ts`): `@rspack/core`'s own types aren't
+    // note atop @rozenite/middleware's `rspack-resolver-plugin.ts`): `@rspack/core`'s own types aren't
     // resolvable in every context that type-checks/builds this package, and
     // `@callstack/repack` doesn't re-export them. `unknown[]` is enough to
     // append our plugin without needing that type.
