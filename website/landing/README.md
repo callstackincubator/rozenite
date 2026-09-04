@@ -51,7 +51,9 @@ Three rules are worth knowing before adding anything:
   section means retinting its neighbours, not breaking the run.
 - **The hero owns the first screen.** It is `min-height: calc(100dvh -
   var(--rz-nav-height))`. If the host navigation changes height, retune that
-  token rather than the section.
+  token rather than the section. Everything down to the install command has to
+  fit above the fold at 1440x900 and on a 812px-tall phone -- the mark is sized
+  in JS partly to keep that true, so check both after changing it.
 
 ## Conventions the page holds to
 
@@ -66,10 +68,12 @@ These came out of a design review and are easy to break by accident:
 - **Section headers stack.** Eyebrow, headline, body, in one column. Rozenite
   for Agents is the one exception: it pairs its header with the terminal sample
   on the same line, and takes `className` to drop its stacking margin.
-- **No layout family repeats.** Hero and Rozenite for Web are the only
-  text-and-visual splits, and they are not adjacent. Everything else uses a
-  different composition: Lynx is the page's only ordered rail, and the
-  standalone app is the only centred header over a full-width figure.
+- **No layout family repeats.** Rozenite for Web is the only text-and-visual
+  split. Everything else uses a different composition: the hero is a centred
+  stack, Lynx is the page's only ordered rail, and the standalone app is the
+  only centred header over a full-width figure. The hero and the standalone app
+  both centre, but they are the two ends of the page and hold nothing else in
+  common -- one is type over a mark, the other is a caption over a screenshot.
 - **Icons come from a library.** `@phosphor-icons/react` for UI glyphs,
   `simple-icons` for brand marks via `components/brand-mark`. Nothing is drawn
   by hand. Brand marks render in `currentColor`, never in the brand hex, so a
@@ -150,7 +154,10 @@ build; it is kept only in case the hero ever wants a product shot back.
 ## The animated mark
 
 The hero visual is `RozeniteLoader` from `@rozenite/ui` -- a Bayer-dithered
-light field masked to the Rozenite silhouette.
+light field masked to the Rozenite silhouette. It leads the hero's centred
+stack, and it replaced the static wordmark that used to sit there: the site
+navigation already carries one, and two Rozenite logos above the fold was one
+too many.
 
 Three things about it are deliberate and easy to undo by accident:
 
@@ -169,9 +176,13 @@ Three things about it are deliberate and easy to undo by accident:
   CSS, so `fillStyle = 'var(--rz-accent)'` is silently ignored and paints black.
   The hook resolves the token and re-resolves it when the theme flips.
 
-`cols` is the grain: higher means more, smaller cells. Past roughly 60 the
-silhouette stops reading as the logo and turns into haze, so treat that as the
-ceiling rather than a dial to keep turning.
+`cols` is the grain: higher means more, smaller cells, and it has to be tuned
+against `size` rather than set once. Too fine for the height and the silhouette
+stops reading as the logo and turns into haze; the pairs in `hero.tsx` are the
+two that were checked. Both live in JS because the canvas takes its size as a
+number, so this cannot be a media query in the stylesheet -- which is also why
+the narrow pair exists at all: at the full size the mark pushed "Get started"
+past the fold on a phone.
 
 This is the page's second looping animation, after `connection-diagram`. Like
 that one it is pure progressive enhancement -- it draws a single static frame
