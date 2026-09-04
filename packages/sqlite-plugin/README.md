@@ -20,35 +20,35 @@ npm install expo-sqlite
 
 ## Usage
 
-```ts
+Wire the plugin up in `rozenite.dev.tsx`. Nothing here is reachable in production, so there's no need
+for an `__DEV__` guard of your own:
+
+```ts title="rozenite.dev.tsx"
 import * as SQLite from 'expo-sqlite';
 import {
   createExpoSqliteAdapter,
   useRozeniteSqlitePlugin,
 } from '@rozenite/sqlite-plugin';
 
-const adapters = __DEV__
-  ? [
-      createExpoSqliteAdapter({
-        adapterName: 'Expo SQLite',
-        databases: {
-          app: {
-            name: 'app.db',
-            database: SQLite.openDatabaseSync('app.db'),
-          },
-          analytics: {
-            name: 'analytics.db',
-            database: SQLite.openDatabaseSync('analytics.db'),
-          },
-        },
-      }),
-    ]
-  : [];
+const adapters = [
+  createExpoSqliteAdapter({
+    adapterName: 'Expo SQLite',
+    databases: {
+      app: {
+        name: 'app.db',
+        database: SQLite.openDatabaseSync('app.db'),
+      },
+      analytics: {
+        name: 'analytics.db',
+        database: SQLite.openDatabaseSync('analytics.db'),
+      },
+    },
+  }),
+];
 
-function App() {
+export default function RozeniteDevTools() {
   useRozeniteSqlitePlugin({ adapters });
-
-  return <YourApp />;
+  return null;
 }
 ```
 
@@ -56,7 +56,7 @@ function App() {
 
 You can support any SQLite-like library by normalizing its statement execution API:
 
-```ts
+```ts title="rozenite.dev.tsx"
 import { createSqliteAdapter } from '@rozenite/sqlite-plugin';
 
 const adapters = [
@@ -94,7 +94,7 @@ const adapters = [
 
 ## Notes
 
-- Register adapters in development only. The hook no-ops in production, but your app-level database setup should still stay behind `__DEV__`.
+- Register adapters from `rozenite.dev.tsx`. Nothing imported from there reaches a production bundle, so there's no separate `__DEV__` guard to write.
 - The SQL editor executes multi-statement scripts in order and stops on the first error.
 - Custom adapters receive the full ordered statement array for scripts. To preserve per-statement failure details, throw an error enriched with `completedResults` and `failedStatementIndex`.
 - Explicit `BEGIN`, `COMMIT`, and `ROLLBACK` statements are preserved as written. The plugin does not wrap scripts in an implicit transaction.

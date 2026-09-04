@@ -18,7 +18,7 @@ This plugin was inspired by [RocketSim](https://www.rocketsim.app/) - an enhance
 - **Real-time Configuration**: Adjust grid size, color, opacity, and image settings in real-time
 - **Multiple Resize Modes**: Support for contain, cover, stretch, and center image positioning
 - **Clipboard Integration**: Paste images directly from clipboard for quick reference
-- **Production Safety**: Automatically disabled in production builds
+- **Production Safety**: Wired up only in `rozenite.dev.tsx`, so its code never reaches a production bundle -- importing it anywhere else is a build error
 
 ## Installation
 
@@ -36,19 +36,31 @@ npm install @rozenite/overlay-plugin react-native-svg
 npm install @rozenite/overlay-plugin react-native-svg
 ```
 
-### 2. Integrate with Your App
+### 2. Return It From `rozenite.dev.tsx`
 
-Add the `RozeniteOverlay` component to your React Native app:
+Unlike most plugins, this one's public surface is a rendered component, not a hook, so the dev entry
+returns it instead of `null`:
+
+```typescript title="rozenite.dev.tsx"
+import { RozeniteOverlay } from '@rozenite/overlay-plugin';
+
+export default function RozeniteDevTools() {
+  return <RozeniteOverlay />;
+}
+```
+
+Wherever `<Rozenite />` sits in your app tree is where the overlay renders, so place it after
+everything else:
 
 ```typescript
 // App.tsx
-import { RozeniteOverlay } from '@rozenite/overlay-plugin';
+import Rozenite from '@rozenite/react-native';
 
 function App() {
   return (
     <>
       <YourApp />
-      <RozeniteOverlay />
+      <Rozenite />
     </>
   );
 }

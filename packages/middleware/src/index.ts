@@ -20,6 +20,20 @@ export type RozeniteInstance = {
 
 export { createScopedMiddleware };
 export type { MiddlewareHandler, MiddlewareNext, MiddlewareRequest } from './scoped-middleware.js';
+export {
+  findRozenitePluginForFile,
+  isDevEntryOrigin,
+  formatProductionGuardError,
+  formatDevAdvisory,
+  warnOnceForImport,
+  getDevEntrySpecifier,
+  isSeamDevEntryRequest,
+  type RozenitePluginPackage,
+} from './production-guard.js';
+export {
+  RozeniteResolverPlugin,
+  type RozeniteResolverPluginOptions,
+} from './rspack-resolver-plugin.js';
 
 export const initializeRozenite = async (
   options: RozeniteConfig,

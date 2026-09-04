@@ -12,13 +12,13 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 <PackageManagerTabs command="install -D @rozenite/performance-monitor-plugin react-native-performance" />
 
-```typescript title="App.tsx"
+```typescript title="rozenite.dev.tsx"
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 
-function App() {
+export default function RozeniteDevTools() {
   usePerformanceMonitorDevTools();
 
-  return <YourApp />;
+  return null;
 }
 ```
 

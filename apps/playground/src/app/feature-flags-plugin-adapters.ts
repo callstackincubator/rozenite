@@ -1,8 +1,14 @@
+// FeatureFlagsPluginScreen calls `featureFlagsPluginAdapter.listFlags()` and
+// `featureFlagsOverrides.subscribe(...)` at runtime to render live flag
+// values, so this adapter is production-reachable — `/register` is the
+// declared production entry the build-time guard permits here. Only the
+// `useRozeniteFeatureFlagsPlugin({ providers: ... })` call is dev-only and
+// lives in rozenite.dev/index.tsx.
 import {
   createCustomFlagsAdapter,
   createFlagOverrides,
   type FeatureFlagInput,
-} from '@rozenite/feature-flags-plugin';
+} from '@rozenite/feature-flags-plugin/register';
 
 // The custom/local adapter is Tier B (the plugin owns the override store),
 // but it needs zero call-site changes: the app reads flags straight from

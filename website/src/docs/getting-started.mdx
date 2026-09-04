@@ -21,7 +21,14 @@ Run the `rozenite init` command in your project. It detects your bundler, instal
   }}
 />
 
-That's it — start your app as usual and open React Native DevTools. If everything worked, you'll see plugin panels for anything you've installed (see [Official Plugins](/docs/official-plugins/overview) to add some).
+`rozenite init` installs the bundler package for your project, wraps your bundler config with
+`withRozenite()`, installs `@rozenite/react-native` (the one Rozenite package that ships to
+production), and scaffolds a `rozenite.dev.tsx` file next to your bundler config. It also prints the
+one line you need to add yourself: mounting `<Rozenite />` in your app.
+
+That's it — start your app as usual and open React Native DevTools. If everything worked, you'll see
+plugin panels for anything you've installed (see [Official Plugins](/docs/official-plugins/overview)
+to add some).
 
 If the command fails, or you'd rather wire things up yourself, follow the manual steps below.
 
@@ -78,11 +85,60 @@ export default withRozenite(
 );
 ```
 
-### 3. Start your app
+### 3. Install the app-side seam and mount it
+
+`@rozenite/react-native` is the one Rozenite package that ships to production — it renders a noop and
+imports nothing besides `react`. Install it as a regular dependency (not a dev dependency):
+
+<PackageManagerTabs command="install @rozenite/react-native" />
+
+Then render `<Rozenite />` once, near the root of your app, with nothing to guard:
+
+```tsx title="App.tsx"
+import Rozenite from '@rozenite/react-native';
+
+export default function App() {
+  return (
+    <>
+      <Rozenite />
+      {/* your app */}
+    </>
+  );
+}
+```
+
+There's no `__DEV__` check to write here and none to forget — what `<Rozenite />` resolves to is
+entirely up to the bundler, and it's covered in full on the
+[Production Guarantee](./production-guarantee) page.
+
+### 4. Wire up your plugins in `rozenite.dev.tsx`
+
+Create a `rozenite.dev.tsx` file next to your bundler config. This is where all of your plugin
+wiring lives — it's an ordinary project file, so Fast Refresh works on it, and nothing reachable from
+it can end up in a production bundle:
+
+```tsx title="rozenite.dev.tsx"
+import { useRozeniteStoragePlugin, createMMKVStorageAdapter } from '@rozenite/storage-plugin';
+import { storage } from './src/storage';
+
+export default function RozeniteDevTools() {
+  useRozeniteStoragePlugin({ adapters: [createMMKVStorageAdapter({ mmkv: storage })] });
+  return null;
+}
+```
+
+It can grow into as many files as you need — see each plugin's page under
+[Official Plugins](/docs/official-plugins/overview) for what to add here. Importing a plugin from
+anywhere else in your app is a production build error; see the
+[Production Guarantee](./production-guarantee) page for what that looks like and the rare cases where
+a plugin needs a touchpoint outside this file.
+
+### 5. Start your app
 
 <PackageManagerTabs command="start" />
 
-Open React Native DevTools — any Rozenite plugins you've installed will show up automatically, no extra wiring needed.
+Open React Native DevTools — any Rozenite plugins you've wired up in `rozenite.dev.tsx` will show up
+automatically.
 
 ## Choosing which plugins load
 
@@ -122,10 +178,15 @@ module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
 ## Verifying it worked
 
 - Your bundler's server logs should mention discovering Rozenite plugins.
-- React Native DevTools should show a panel for each plugin you've installed.
+- React Native DevTools should show a panel for each plugin you've wired up in `rozenite.dev.tsx`.
 
-If nothing shows up, double check that `enabled` evaluates to `true` and that you restarted the bundler after changing the config.
+If nothing shows up, double check that `enabled` evaluates to `true`, that `<Rozenite />` is mounted
+in your app, and that you restarted the bundler after changing the config.
 
 ## Using Rozenite with AI coding agents
 
 If you use AI or coding agents in your workflow, continue with the [Rozenite for Agents overview](/docs/agent/overview).
+
+## Next steps
+
+Read the [Production Guarantee](./production-guarantee) page to understand exactly what `<Rozenite />` and `rozenite.dev.tsx` guarantee, what the production build error looks like, and how a plugin can declare a touchpoint that's allowed to run in production.

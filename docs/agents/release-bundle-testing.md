@@ -148,7 +148,7 @@ as the Vitest timeout.
 
 ## What it does not cover
 
-`isBundling()` in `packages/metro/src/is-bundling.ts` sniffs `process.argv`
+`isBundling()` in `packages/tools/src/is-bundling.ts` sniffs `process.argv`
 to detect `react-native bundle` / `expo export`. The bench drives Metro
 directly, so it cannot exercise that path; it is covered by unit tests
 instead.

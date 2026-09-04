@@ -16,7 +16,7 @@ The Rozenite Performance Monitor Plugin offers comprehensive real-time monitorin
 - **Performance Marks**: Monitor key performance milestones and events
 - **Performance Metrics**: Real-time metrics with values and details
 - **Data Export**: Export performance data for analysis
-- **Production Safety**: Automatically disabled in production builds
+- **Production Safety**: Wired up only in `rozenite.dev.tsx`, so its code never reaches a production bundle -- importing it anywhere else is a build error
 
 ## Installation
 
@@ -34,21 +34,14 @@ npm install @rozenite/performance-monitor-plugin react-native-performance
 npm install @rozenite/performance-monitor-plugin react-native-performance
 ```
 
-### 2. Integrate with Your React Native App
+### 2. Wire It Up in `rozenite.dev.tsx`
 
-Add the DevTools hook to your React Native app:
-
-```typescript
-// App.tsx
+```typescript title="rozenite.dev.tsx"
 import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
 
-function App() {
-  // Enable Performance Monitor DevTools in development
+export default function RozeniteDevTools() {
   usePerformanceMonitorDevTools();
-
-  return (
-    // Your app components
-  );
+  return null;
 }
 ```
 
@@ -60,18 +53,7 @@ Start your development server and open React Native DevTools. You'll find the "P
 
 ### Basic Integration
 
-The plugin automatically integrates with your existing React Native setup:
-
-```typescript
-import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
-
-function App() {
-  // DevTools are automatically enabled in development
-  usePerformanceMonitorDevTools();
-
-  return <YourApp />;
-}
-```
+The plugin automatically integrates with your existing React Native setup once wired up in `rozenite.dev.tsx` as shown above.
 
 ### Using Performance API
 

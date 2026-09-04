@@ -30,12 +30,14 @@ npm install -D @rozenite/redux-devtools-plugin
 
 Add the Redux DevTools enhancer to your Redux store:
 
+A store enhancer is set up where the store is created, which is ordinary app code that ships in production - so it's imported from `@rozenite/redux-devtools-plugin/register`, the plugin's declared production entry point, rather than from the package root.
+
 #### For Redux Toolkit (Recommended)
 
 ```typescript
 // store.ts
 import { configureStore } from '@reduxjs/toolkit';
-import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin';
+import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin/register';
 import rootReducer from './reducers';
 
 const store = configureStore({
@@ -52,7 +54,7 @@ export default store;
 ```typescript
 // store.ts
 import { createStore, applyMiddleware } from 'redux';
-import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin';
+import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin/register';
 import rootReducer from './reducers';
 
 const store = createStore(

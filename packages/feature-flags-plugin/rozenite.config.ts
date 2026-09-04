@@ -173,6 +173,10 @@ export default {
       source: './src/ui/panel.tsx',
     },
   ],
+  // Flag evaluation and the LaunchDarkly wrapped-client call site run in
+  // ordinary app code, so they need a touchpoint that survives a production
+  // build. See `register.ts`.
+  productionEntries: ['./register'],
   dev: {
     flows: [
       {

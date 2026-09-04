@@ -11,6 +11,7 @@ import {
   assertTsconfigExists,
   buildTarget,
   PluginTarget,
+  REGISTER_ENTRY_FILE,
   TARGET_LABEL,
 } from '../utils/tsc-build.js';
 
@@ -30,7 +31,8 @@ export const buildCommand = async (targetDir: string) => {
     logger.warn(`Updated package.json builder-managed fields: ${updatedFields.join(', ')}`);
   }
 
-  const { hasReactNativeEntryPoint, hasMetroEntryPoint, hasSdkEntryPoint } = targets;
+  const { hasReactNativeEntryPoint, hasMetroEntryPoint, hasSdkEntryPoint, hasRegisterEntryPoint } =
+    targets;
 
   const tscTargets: PluginTarget[] = [
     ...(hasMetroEntryPoint ? (['metro'] as const) : []),
@@ -84,7 +86,16 @@ export const buildCommand = async (targetDir: string) => {
       start: `Building ${TARGET_LABEL[target]} entry point`,
       stop: `${TARGET_LABEL[target]} entry point built`,
       error: failureLabel(`the ${TARGET_LABEL[target]} entry point`),
-      run: (signal: AbortSignal) => buildTarget(targetDir, target, { signal }),
+      // `register.ts`, when present, compiles as an extra file inside the
+      // `react-native` target's emits rather than as a target of its own -
+      // see the `extraEntryFiles` doc on `TscEmit`.
+      run: (signal: AbortSignal) =>
+        buildTarget(targetDir, target, {
+          signal,
+          ...(target === 'react-native' && hasRegisterEntryPoint
+            ? { extraEntryFiles: [REGISTER_ENTRY_FILE] }
+            : {}),
+        }),
     })),
   ];
 

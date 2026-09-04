@@ -1,18 +1,10 @@
-import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
-import { useRozeniteFeatureFlagsPlugin } from '@rozenite/feature-flags-plugin';
-import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
-import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
-import { useReduxDevToolsAgentTools } from '@rozenite/redux-devtools-plugin';
-import { useRozeniteStoragePlugin } from '@rozenite/storage-plugin';
-import { useRozeniteSqlitePlugin } from '@rozenite/sqlite-plugin';
-import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useRef } from 'react';
+import Rozenite from '@rozenite/react-native';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
-import { usePlaygroundControlsSections } from './hooks/usePlaygroundControlsSections';
+import { navigationRef } from './navigation/navigationRef';
 import { BottomTabNavigator } from './navigation/BottomTabNavigator';
 import { SuccessiveScreensNavigator } from './navigation/SuccessiveScreensNavigator';
 import { routes } from './navigation/routes';
@@ -30,60 +22,16 @@ import { RequireProfilerTestScreen } from './screens/RequireProfilerTestScreen';
 import { FileSystemTestScreen } from './screens/FileSystemTestScreen';
 import { ReactHookFormPluginScreen } from './screens/ReactHookFormPluginScreen';
 import { StoragePluginScreen } from './screens/StoragePluginScreen';
-import { storagePluginAdapters } from './storage-plugin-adapters';
 import { FeatureFlagsPluginScreen } from './screens/FeatureFlagsPluginScreen';
-import { featureFlagsPluginAdapters } from './feature-flags-plugin-adapters';
-import { sqlitePluginAdapters } from './sqlite-plugin-databases';
 import { primaryStore } from './store';
-import { useRequireProfilerDevTools } from '@rozenite/require-profiler-plugin';
-import { RozeniteOverlay } from '@rozenite/overlay-plugin';
-import { useAgentPlaygroundTools } from './useAgentPlaygroundTools';
-import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
-import { useFileSystemDevTools } from '@rozenite/file-system-plugin';
-import * as RNFS from '@dr.pogodin/react-native-fs';
+import { queryClient } from './query-client';
 import { ThemeProvider } from './theme/ThemeContext';
 import { useTheme } from './theme/useTheme';
 
-const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const Wrapper = () => {
   const { theme } = useTheme();
-  const controlsSections = usePlaygroundControlsSections();
-
-  useTanStackQueryDevTools(queryClient);
-  useRozeniteControlsPlugin({
-    sections: controlsSections,
-  });
-  useNetworkActivityDevTools({
-    clientUISettings: {
-      showUrlAsName: true,
-    },
-  });
-  useRozeniteStoragePlugin({
-    storages: storagePluginAdapters,
-  });
-  useRozeniteFeatureFlagsPlugin({
-    providers: featureFlagsPluginAdapters,
-  });
-  useRozeniteSqlitePlugin({
-    adapters: sqlitePluginAdapters,
-  });
-  useReduxDevToolsAgentTools();
-  usePerformanceMonitorDevTools();
-  useRequireProfilerDevTools();
-  useAgentPlaygroundTools();
-  useFileSystemDevTools({
-    rnfs: RNFS,
-    fileTransfer: {
-      import: true,
-      export: true,
-      agent: {
-        import: true,
-        export: true,
-      },
-    },
-  });
 
   return (
     <Stack.Navigator
@@ -172,12 +120,6 @@ const linking = {
 };
 
 export const App = () => {
-  const navigationRef = useRef<NavigationContainerRef<any>>(null);
-
-  useReactNavigationDevTools({
-    ref: navigationRef as any,
-  });
-
   return (
     <ThemeProvider>
       <Provider store={primaryStore}>
@@ -186,7 +128,7 @@ export const App = () => {
             <NavigationContainer ref={navigationRef} linking={linking}>
               <Wrapper />
             </NavigationContainer>
-            <RozeniteOverlay />
+            <Rozenite />
           </SafeAreaProvider>
         </QueryClientProvider>
       </Provider>

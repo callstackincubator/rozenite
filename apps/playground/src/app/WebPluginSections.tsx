@@ -1,42 +1,12 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { QueryClient } from '@tanstack/react-query';
-import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
-import { useRozeniteFeatureFlagsPlugin } from '@rozenite/feature-flags-plugin';
-import { RozeniteOverlay } from '@rozenite/overlay-plugin';
-import { usePerformanceMonitorDevTools } from '@rozenite/performance-monitor-plugin';
-import { useReactNavigationDevTools } from '@rozenite/react-navigation-plugin';
-import {
-  rozeniteDevToolsEnhancer,
-  useReduxDevToolsAgentTools,
-} from '@rozenite/redux-devtools-plugin';
-import { useRozeniteStoragePlugin } from '@rozenite/storage-plugin';
-import { useTanStackQueryDevTools } from '@rozenite/tanstack-query-plugin';
-import { useEffect, useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { usePlaygroundControlsSections } from './hooks/usePlaygroundControlsSections';
-import { storagePluginAdapters } from './storage-plugin-adapters';
-import { featureFlagsPluginAdapters } from './feature-flags-plugin-adapters';
 import { useTheme } from './theme/useTheme';
 
-const tanstackQueryClient = new QueryClient();
-
-const reduxStore = configureStore({
-  reducer: (state = { count: 0 }, action: { type: string }) => {
-    if (action.type === 'web/increment') {
-      return { count: state.count + 1 };
-    }
-
-    return state;
-  },
-  enhancers: (getDefaultEnhancers) =>
-    getDefaultEnhancers().concat(
-      rozeniteDevToolsEnhancer({
-        name: 'playground-web-counter',
-        maxAge: 100,
-      }),
-    ),
-});
-
+// Purely presentational — the plugin hooks that used to live in these
+// components (and the demo Redux store they used) moved to
+// rozenite.dev/index.web.tsx, so this file has no `@rozenite/*` import of
+// any kind. This page is documentation: every card and its copy reads
+// exactly as it did before the split.
 type PluginCardProps = {
   title: string;
   packageName: string;
@@ -69,10 +39,6 @@ const PluginCard = ({ title, packageName, description, notes, children }: Plugin
 };
 
 export const StoragePluginSection = () => {
-  useRozeniteStoragePlugin({
-    storages: storagePluginAdapters,
-  });
-
   return (
     <PluginCard
       title="Storage"
@@ -86,10 +52,6 @@ export const StoragePluginSection = () => {
 };
 
 export const FeatureFlagsPluginSection = () => {
-  useRozeniteFeatureFlagsPlugin({
-    providers: featureFlagsPluginAdapters,
-  });
-
   return (
     <PluginCard
       title="Feature Flags"
@@ -103,12 +65,6 @@ export const FeatureFlagsPluginSection = () => {
 };
 
 export const ReactNavigationPluginSection = () => {
-  const navigationRef = useRef<any>(null);
-
-  useReactNavigationDevTools({
-    ref: navigationRef,
-  });
-
   return (
     <PluginCard
       title="React Navigation"
@@ -122,12 +78,6 @@ export const ReactNavigationPluginSection = () => {
 };
 
 export const ControlsPluginSection = () => {
-  const sections = usePlaygroundControlsSections();
-
-  useRozeniteControlsPlugin({
-    sections,
-  });
-
   return (
     <PluginCard
       title="Controls"
@@ -144,15 +94,11 @@ export const OverlayPluginSection = () => {
       packageName="@rozenite/overlay-plugin"
       description="Alignment grids and image comparison overlays driven from DevTools; works with React Native Web views in development."
       notes={['Mounting RozeniteOverlay enables the plugin runtime bridge.']}
-    >
-      <RozeniteOverlay />
-    </PluginCard>
+    />
   );
 };
 
 export const PerformanceMonitorPluginSection = () => {
-  usePerformanceMonitorDevTools();
-
   return (
     <PluginCard
       title="Performance monitor"
@@ -163,12 +109,6 @@ export const PerformanceMonitorPluginSection = () => {
 };
 
 export const ReduxDevToolsPluginSection = () => {
-  useReduxDevToolsAgentTools();
-
-  useEffect(() => {
-    reduxStore.dispatch({ type: 'web/increment' });
-  }, []);
-
   return (
     <PluginCard
       title="Redux DevTools"
@@ -195,15 +135,6 @@ export const SqlitePluginSection = () => {
 };
 
 export const TanStackQueryPluginSection = () => {
-  useTanStackQueryDevTools(tanstackQueryClient);
-
-  useEffect(() => {
-    tanstackQueryClient.setQueryData(['web-plugin-section', 'demo'], {
-      initializedAt: new Date().toISOString(),
-      status: 'ready',
-    });
-  }, []);
-
   return (
     <PluginCard
       title="TanStack Query"

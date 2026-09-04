@@ -67,19 +67,73 @@ The configuration object for the Metro plugin:
 
 ```typescript
 type RozeniteMetroConfig = {
+  enabled?: boolean; // Whether to enable Rozenite. The production guard is active either way.
   include?: string[]; // Only load these specific plugins
   exclude?: string[]; // Exclude these plugins from loading
   destroyOnDetachPlugins?: string[]; // Plugins that should be destroyed when switching panels
   pluginDisplay?: 'sidebar' | 'tabs'; // How plugins are displayed in DevTools
+  allowInProduction?: string[]; // Plugin packages exempted from the production guard
 };
 ```
 
 **Options:**
 
+- `enabled` - Whether Rozenite's dev server and plugin discovery are active. See
+  [The production guarantee](#the-production-guarantee) below — `false` no longer disables the
+  production guard itself (optional)
 - `include` - Array of package names to explicitly include (optional)
 - `exclude` - Array of package names to exclude from loading (optional)
 - `destroyOnDetachPlugins` - Array of package names that should be destroyed when switching panels instead of maintaining their state (optional, by default all plugins persist their state)
 - `pluginDisplay` - Use `'sidebar'` (default) to show all plugin panels in one Rozenite tab, or `'tabs'` to retain a separate DevTools tab for every plugin panel
+- `allowInProduction` - Array of Rozenite plugin package names exempted from the production guard (optional, last resort — see [The production guarantee](#the-production-guarantee))
+
+## The production guarantee
+
+`withRozenite()` installs a guard on Metro's resolver, unconditionally, that keeps Rozenite plugin
+code out of production bundles. It runs whether or not `enabled` is `true`. See the
+[Production Guarantee](https://www.rozenite.dev/docs/production-guarantee) docs for the full picture;
+the parts that affect this package specifically are below.
+
+### The dev-entry redirect
+
+`@rozenite/react-native`'s `<Rozenite />` component asks for a dev-entry module that, in a plain
+resolution, would resolve to a shipped noop. When `enabled` is `true` and Metro is resolving a
+development bundle, `withRozenite()` intercepts that specific request and redirects it — through
+Metro's own resolver, so your project's `sourceExts` and platform extensions apply — to
+`<projectRoot>/rozenite.dev`. If no matching file exists, resolution falls back to the shipped noop
+and logs once; a missing `rozenite.dev` file is never a build failure.
+
+### The build error
+
+Independent of that redirect, every resolution Metro performs is checked against a simple rule: a
+production build must not resolve into a Rozenite plugin package except through that plugin's declared
+`productionEntries`. A violation throws, naming the plugin and the importing file. In a development
+build the same violation only warns, since Fast Refresh would otherwise force you to hunt down a
+whole batch of stray imports one build at a time.
+
+### `enabled: false` no longer means "do nothing"
+
+**This is a behavior change.** Previously, `enabled: false` (or omitting `enabled`) short-circuited
+`withRozenite()` entirely and returned your config untouched. Now, `enabled: false` still returns a
+config without the dev server or plugin discovery, but the production guard above stays installed. If
+you used `enabled: false` to keep a particular build free of Rozenite altogether, audit that build for
+plugin imports living outside `rozenite.dev.tsx` — they'll now fail it.
+
+### `allowInProduction`
+
+An escape hatch for when you need to unblock a build immediately, before restructuring an import or
+waiting on a plugin author to add a `productionEntries` declaration:
+
+```javascript
+// metro.config.js
+module.exports = withRozenite(config, {
+  allowInProduction: ['@acme/some-plugin'],
+});
+```
+
+Every package listed here is exempted from the guard entirely, through any import path. This is
+printed loudly once per build, since it defeats the production guarantee for the listed package(s) —
+treat it as a last resort, not a fix.
 
 ## Plugin Discovery
 

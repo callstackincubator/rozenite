@@ -78,6 +78,15 @@ export const installDevDependency = async (
   await spawn(packageManager, args, { cwd: projectRoot });
 };
 
+export const installDependency = async (
+  projectRoot: string,
+  packageName: string,
+): Promise<void> => {
+  const packageManager = getPackageManager(projectRoot);
+  const args = ['add', packageName];
+  await spawn(packageManager, args, { cwd: projectRoot });
+};
+
 export const isPackageInstalled = async (
   projectRoot: string,
   packageName: string,

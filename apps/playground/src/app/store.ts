@@ -2,7 +2,10 @@ import 'react-native-get-random-values';
 
 import { configureStore } from '@reduxjs/toolkit';
 import counterReducer from './store/counterSlice';
-import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin';
+// This store is real app state created at module scope, so it needs the
+// enhancer at production runtime — `/register` is the declared production
+// entry that the build-time guard permits from ordinary app code.
+import { rozeniteDevToolsEnhancer } from '@rozenite/redux-devtools-plugin/register';
 
 const createCounterStore = (name: string) =>
   configureStore({

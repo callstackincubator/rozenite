@@ -1,6 +1,11 @@
 import { Alert } from 'react-native';
 import { useRozeniteInAppAgentTool, type AgentTool } from '@rozenite/agent-bridge';
 
+// Moved out of src/app/useAgentPlaygroundTools.ts. @rozenite/agent-bridge is
+// not a Rozenite plugin package, so the production guard does not block it —
+// but it is dev-only in exactly the same way as the plugin hooks, so it
+// lives here with the rest of the dev-only wiring.
+
 type ShowAlertInput = {
   title?: string;
   message?: string;

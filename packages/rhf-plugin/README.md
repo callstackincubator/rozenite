@@ -24,9 +24,11 @@ npm install react-hook-form
 
 Call `useRozeniteRHFPlugin` in any component that has access to your form `control` (typically next to `useForm`).
 
+It's called once per `useForm()` instance inside ordinary screen components, which is code that ships in production - so it's imported from `@rozenite/rhf-plugin/register`, the plugin's declared production entry point.
+
 ```ts
 import { useForm } from 'react-hook-form';
-import { useRozeniteRHFPlugin } from '@rozenite/rhf-plugin';
+import { useRozeniteRHFPlugin } from '@rozenite/rhf-plugin/register';
 
 type FormValues = {
   email: string;

@@ -26,6 +26,11 @@
       "development": "./sdk.ts",
       "types": "./dist/sdk/sdk.d.ts",
       "default": "./dist/sdk/sdk.js"
+    },
+    "./register": {
+      "types": "./dist/react-native/register.d.ts",
+      "import": "./dist/react-native/register.js",
+      "require": "./dist/react-native/cjs/register.js"
     }
   },
   "publishConfig": {
