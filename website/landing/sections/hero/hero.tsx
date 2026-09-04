@@ -9,8 +9,12 @@ import styles from './hero.module.css';
 
 const TARGETS = ['React Native', 'Expo', 'Re.Pack', 'React Native Web', 'Lynx'];
 
-/** Height in px, then grid cells across. Grain has to shrink with the mark, or
- * the silhouette stops reading as the logo and turns into haze. */
+/**
+ * Height in px, then grid cells across. Grain has to shrink with the mark, or
+ * the silhouette stops reading as the logo and turns into haze -- and it goes
+ * to haze sooner on a 1x display than a 2x one, because the loader insets each
+ * cell by a fixed minimum in device pixels. Check both before raising `cols`.
+ */
 const MARK_WIDE = { size: 260, cols: 50 };
 const MARK_NARROW = { size: 176, cols: 40 };
 

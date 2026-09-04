@@ -52,8 +52,8 @@ Three rules are worth knowing before adding anything:
 - **The hero owns the first screen.** It is `min-height: calc(100dvh -
   var(--rz-nav-height))`. If the host navigation changes height, retune that
   token rather than the section. Everything down to the install command has to
-  fit above the fold at 1440x900 and on a 812px-tall phone -- the mark is sized
-  in JS partly to keep that true, so check both after changing it.
+  fit above the fold, on a laptop and on a phone. Check both after changing
+  anything in it.
 
 ## Conventions the page holds to
 
@@ -79,15 +79,9 @@ These came out of a design review and are easy to break by accident:
   by hand. Brand marks render in `currentColor`, never in the brand hex, so a
   logo cannot smuggle a second accent onto the page.
 
-  The Lynx mark is the one exception to "from a library": `simple-icons` has no
-  Lynx entry, so its two paths are vendored into `components/brand-mark` from
-  lynxjs.org's own header -- vendored rather than hotlinked, so the page pulls
-  nothing from a third-party CDN. It is ByteDance/TikTok's mark, used
-  nominatively to identify the project Rozenite integrates with. The Lynx
-  repositories are Apache-2.0, whose section 6 grants no trademark rights, so
-  this rests on nominative use rather than on the licence. `currentColor` is
-  part of that: the mark identifies, it does not imply endorsement. Vendor
-  another mark only on the same terms.
+  The Lynx mark is the one exception: `simple-icons` has no Lynx entry, so its
+  paths are vendored into `components/brand-mark`, which carries the provenance
+  and the licensing reasoning. Vendor another mark only on the same terms.
 - **Grids have no empty cells.** The plugin grid shows `FEATURED_PLUGINS`, six
   of the fourteen, which divides evenly at three, two and one column. The rest
   are counted in a line of copy underneath rather than drawn. Keep the featured
@@ -106,10 +100,12 @@ state, and the animation only attaches inside
 
 `components/connection-diagram` runs two dots along the link between its
 endpoints. It is there because the subject is traffic and a still line cannot
-show a direction. The hero's animated mark is the only other loop -- see
-[The animated mark](#the-animated-mark) -- and a third would need an argument. Same
-progressive-enhancement shape: without `prefers-reduced-motion: no-preference`
-the dots simply sit on the line.
+show a direction. Same progressive-enhancement shape: without
+`prefers-reduced-motion: no-preference` the dots simply sit on the line.
+
+The hero's animated mark is the third. It is a canvas rather than CSS, so its
+rules live in `sections/hero/hero.tsx`; like the other two it degrades to a
+single static frame under `prefers-reduced-motion`.
 
 Everything else is hover, focus and `:active` feedback.
 
@@ -135,14 +131,10 @@ is drafted before its screenshot exists.
 The page has one product capture, and how it is framed follows from what the
 image already contains rather than from a house style.
 
-`standalone-rozenite.png` is a raw window grab. It has macOS traffic lights but
+`standalone-rozenite.png` is a raw window grab: it has macOS traffic lights but
 no border or shadow, and a dark app screen sitting flush on the page reads as a
-hole rather than a window. So the section wraps it in a hairline,
-`--rz-radius-surface` with `overflow: hidden` so the capture's square corners
-take the frame's radius, and a low, diffuse shadow -- the page's only elevated
-surface, with its own dark-mode values because a light-mode shadow vanishes
-against a dark ground. It is held to 80% of the measure, which also keeps it
-near its native 1280px so it stays reasonably crisp on a 2x display.
+hole rather than a window. So the section frames it, and that frame is the
+page's only elevated surface. See `sections/standalone/standalone.module.css`.
 
 Never draw chrome the capture already has. If a future capture arrives without
 traffic lights, that is a reason to recapture it, not to fake a title bar.
@@ -150,51 +142,3 @@ traffic lights, that is a reason to recapture it, not to fake a title bar.
 `website/landing-rozenite.png` is the hero's old DevTools screenshot. Nothing
 imports it since the hero became the animated mark, so it is emitted by no
 build; it is kept only in case the hero ever wants a product shot back.
-
-## The animated mark
-
-The hero visual is `RozeniteLoader` from `@rozenite/ui` -- a Bayer-dithered
-light field masked to the Rozenite silhouette. It leads the hero's centred
-stack, and it replaced the static wordmark that used to sit there: the site
-navigation already carries one, and two Rozenite logos above the fold was one
-too many.
-
-Three things about it are deliberate and easy to undo by accident:
-
-- **It is imported from the workspace source**, through
-  `components/rozenite-loader`, which is the only file in `landing/` that
-  reaches outside the website. `@rozenite/ui` exports only its barrel and
-  declares no `sideEffects: false`, so going through the package entry point
-  would pull Base UI, TanStack Table and Virtuoso into a static docs bundle for
-  one canvas. The website is never published, only bundled, so it can read the
-  source directly and leave `@rozenite/ui` untouched. Keep the deep path in that
-  one module.
-- **It is decorative, so it passes `label=""`.** The component is a loading
-  spinner by origin and defaults to `role="status"` with a "Loading" label;
-  announcing that on a page which is not loading would be a lie.
-- **Its colour comes from `useTokenColor`, not a constant.** Canvas cannot read
-  CSS, so `fillStyle = 'var(--rz-accent)'` is silently ignored and paints black.
-  The hook resolves the token and re-resolves it when the theme flips.
-
-`cols` is the grain: higher means more, smaller cells, and it has to be tuned
-against `size` rather than set once. The pairs in `hero.tsx` are the two that
-were checked.
-
-There is a hard ceiling on how fine it can go, and it is worth knowing before
-turning the dial. The loader lays out cells of `s = width / cols` device pixels
-and insets each one by `gap = max(0.6, s * 0.09)`. Once `s` drops near 2 device
-px that fixed 0.6 floor is most of the cell, so the squares fall below a pixel
-and the whole mark washes out to a smudge -- at `cols: 88` and `size: 260` it
-does exactly that on a 1x display. Because the floor is in device pixels, the
-same `cols` also looks twice as solid on a 2x screen as on a 1x one, so check
-both. `cols: 56` is about as fine as this size survives on a 1x display. Going
-finer than that means changing the `gap` formula in `@rozenite/ui`, not the
-props. Both live in JS because the canvas takes its size as a
-number, so this cannot be a media query in the stylesheet -- which is also why
-the narrow pair exists at all: at the full size the mark pushed "Get started"
-past the fold on a phone.
-
-This is the page's second looping animation, after `connection-diagram`. Like
-that one it is pure progressive enhancement -- it draws a single static frame
-under `prefers-reduced-motion`, and pauses itself when the tab is hidden or the
-canvas scrolls out of view.
