@@ -91,7 +91,7 @@ These came out of a design review and are easy to break by accident:
 
 ## Motion
 
-Two effects, and adding a third needs an argument.
+Three effects, and adding a fourth needs an argument.
 
 `components/reveal` is a fade and lift as a block enters the viewport, so a
 section's header lands before its content. It is built on CSS scroll-driven
@@ -101,8 +101,9 @@ state, and the animation only attaches inside
 `prefers-reduced-motion: no-preference`.
 
 `components/connection-diagram` runs two dots along the link between its
-endpoints. This is the one looping animation on the page, and it is there
-because the subject is traffic and a still line cannot show a direction. Same
+endpoints. It is there because the subject is traffic and a still line cannot
+show a direction. The hero's animated mark is the only other loop -- see
+[The animated mark](#the-animated-mark) -- and a third would need an argument. Same
 progressive-enhancement shape: without `prefers-reduced-motion: no-preference`
 the dots simply sit on the line.
 
@@ -127,18 +128,52 @@ is drafted before its screenshot exists.
 
 ## Framing a real capture
 
-The two captures on the page are framed differently on purpose, and the rule is
-about what the image already contains rather than about consistency:
+The page has one product capture, and how it is framed follows from what the
+image already contains rather than from a house style.
 
-- The hero's `landing-rozenite.png` arrives with its own frame baked in, so the
-  page adds nothing around it.
-- The standalone app's `standalone-rozenite.png` is a raw window capture. It has
-  macOS traffic lights but no border or shadow, and a dark app screen sitting
-  flush on the page reads as a hole rather than a window. So the section wraps
-  it in a hairline, `--rz-radius-surface` with `overflow: hidden` so the
-  capture's square corners take the frame's radius, and a low, diffuse shadow --
-  the page's only elevated surface, with its own dark-mode values because a
-  light-mode shadow vanishes against a dark ground.
+`standalone-rozenite.png` is a raw window grab. It has macOS traffic lights but
+no border or shadow, and a dark app screen sitting flush on the page reads as a
+hole rather than a window. So the section wraps it in a hairline,
+`--rz-radius-surface` with `overflow: hidden` so the capture's square corners
+take the frame's radius, and a low, diffuse shadow -- the page's only elevated
+surface, with its own dark-mode values because a light-mode shadow vanishes
+against a dark ground. It is held to 80% of the measure, which also keeps it
+near its native 1280px so it stays reasonably crisp on a 2x display.
 
 Never draw chrome the capture already has. If a future capture arrives without
 traffic lights, that is a reason to recapture it, not to fake a title bar.
+
+`website/landing-rozenite.png` is the hero's old DevTools screenshot. Nothing
+imports it since the hero became the animated mark, so it is emitted by no
+build; it is kept only in case the hero ever wants a product shot back.
+
+## The animated mark
+
+The hero visual is `RozeniteLoader` from `@rozenite/ui` -- a Bayer-dithered
+light field masked to the Rozenite silhouette.
+
+Three things about it are deliberate and easy to undo by accident:
+
+- **It is imported from the workspace source**, through
+  `components/rozenite-loader`, which is the only file in `landing/` that
+  reaches outside the website. `@rozenite/ui` exports only its barrel and
+  declares no `sideEffects: false`, so going through the package entry point
+  would pull Base UI, TanStack Table and Virtuoso into a static docs bundle for
+  one canvas. The website is never published, only bundled, so it can read the
+  source directly and leave `@rozenite/ui` untouched. Keep the deep path in that
+  one module.
+- **It is decorative, so it passes `label=""`.** The component is a loading
+  spinner by origin and defaults to `role="status"` with a "Loading" label;
+  announcing that on a page which is not loading would be a lie.
+- **Its colour comes from `useTokenColor`, not a constant.** Canvas cannot read
+  CSS, so `fillStyle = 'var(--rz-accent)'` is silently ignored and paints black.
+  The hook resolves the token and re-resolves it when the theme flips.
+
+`cols` is the grain: higher means more, smaller cells. Past roughly 60 the
+silhouette stops reading as the logo and turns into haze, so treat that as the
+ceiling rather than a dial to keep turning.
+
+This is the page's second looping animation, after `connection-diagram`. Like
+that one it is pure progressive enhancement -- it draws a single static frame
+under `prefers-reduced-motion`, and pauses itself when the tab is hidden or the
+canvas scrolls out of view.
