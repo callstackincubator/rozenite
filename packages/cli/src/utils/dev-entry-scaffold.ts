@@ -76,10 +76,10 @@ export const scaffoldDevEntryFile = async (
   return { status: 'created', filePath };
 };
 
-export const getMountInstructions = (): string => {
-  return [
-    'Add <Rozenite /> to your app root:',
-    '',
+export type MountTarget = 'react-native' | 'lynx';
+
+const MOUNT_SNIPPETS: Record<MountTarget, string[]> = {
+  'react-native': [
     "  import Rozenite from '@rozenite/react-native';",
     '',
     '  export default function App() {',
@@ -90,6 +90,26 @@ export const getMountInstructions = (): string => {
     '      </>',
     '    );',
     '  }',
+  ],
+  lynx: [
+    "  import Rozenite from '@rozenite/lynx';",
+    '',
+    '  export function App() {',
+    '    return (',
+    '      <view>',
+    '        <Rozenite />',
+    '        {/* your app */}',
+    '      </view>',
+    '    );',
+    '  }',
+  ],
+};
+
+export const getMountInstructions = (target: MountTarget = 'react-native'): string => {
+  return [
+    'Add <Rozenite /> to your app root:',
+    '',
+    ...MOUNT_SNIPPETS[target],
     '',
     'Then wire your plugins up in rozenite.dev.tsx.',
   ].join('\n');

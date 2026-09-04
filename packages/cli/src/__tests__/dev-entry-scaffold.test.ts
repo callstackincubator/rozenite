@@ -2,7 +2,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { DEV_ENTRY_TEMPLATE, scaffoldDevEntryFile } from '../utils/dev-entry-scaffold.js';
+import {
+  DEV_ENTRY_TEMPLATE,
+  getMountInstructions,
+  scaffoldDevEntryFile,
+} from '../utils/dev-entry-scaffold.js';
 
 const tempDirs: string[] = [];
 
@@ -66,5 +70,33 @@ describe('scaffoldDevEntryFile', () => {
 
     expect(result).toEqual({ status: 'skipped', filePath: existingPath });
     expect(await fs.readdir(projectRoot)).toEqual(['rozenite.dev.ios.tsx']);
+  });
+});
+
+describe('getMountInstructions', () => {
+  it('defaults to the React Native mount snippet', () => {
+    const instructions = getMountInstructions();
+
+    expect(instructions).toContain("import Rozenite from '@rozenite/react-native';");
+    expect(instructions).toContain('<Rozenite />');
+    expect(instructions).toContain('rozenite.dev.tsx');
+    expect(instructions).not.toContain('@rozenite/lynx');
+  });
+
+  it('prints the React Native mount snippet explicitly', () => {
+    const instructions = getMountInstructions('react-native');
+
+    expect(instructions).toContain("import Rozenite from '@rozenite/react-native';");
+    expect(instructions).toContain('<>');
+  });
+
+  it('prints the Lynx mount snippet', () => {
+    const instructions = getMountInstructions('lynx');
+
+    expect(instructions).toContain("import Rozenite from '@rozenite/lynx';");
+    expect(instructions).toContain('<Rozenite />');
+    expect(instructions).toContain('<view>');
+    expect(instructions).toContain('rozenite.dev.tsx');
+    expect(instructions).not.toContain('@rozenite/react-native');
   });
 });

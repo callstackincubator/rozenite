@@ -8,6 +8,8 @@ const CONFIG_BASE_NAMES = {
   repack: 'rspack.config',
 } as const;
 
+const LYNX_CONFIG_BASE_NAME = 'lynx.config';
+
 const MODULE_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts', '.cts', '.mts'] as const;
 
 const WRAPPER_IMPORTS = {
@@ -21,15 +23,18 @@ const WRAPPER_IMPORTS = {
   },
 } as const;
 
-/**
- * Finds the actual config file with any supported extension
- */
-const findConfigFile = async (
-  projectRoot: string,
-  bundlerType: BundlerType,
-): Promise<{ filePath: string; extension: string } | null> => {
-  const baseName = CONFIG_BASE_NAMES[bundlerType];
+const LYNX_PLUGIN_IMPORT = {
+  packageName: '@rozenite/lynx/rspeedy',
+  importName: 'rozeniteLynxPlugin',
+} as const;
 
+/**
+ * Finds a file with the given base name and any supported module extension
+ */
+const findFileWithModuleExtension = async (
+  projectRoot: string,
+  baseName: string,
+): Promise<{ filePath: string; extension: string } | null> => {
   for (const extension of MODULE_EXTENSIONS) {
     const filePath = path.join(projectRoot, baseName + extension);
     try {
@@ -41,6 +46,16 @@ const findConfigFile = async (
   }
 
   return null;
+};
+
+/**
+ * Finds the actual config file with any supported extension
+ */
+const findConfigFile = async (
+  projectRoot: string,
+  bundlerType: BundlerType,
+): Promise<{ filePath: string; extension: string } | null> => {
+  return findFileWithModuleExtension(projectRoot, CONFIG_BASE_NAMES[bundlerType]);
 };
 
 /**
@@ -283,4 +298,166 @@ export const getConfigFilePath = async (
   // If no config file found, return default .js path
   const baseName = CONFIG_BASE_NAMES[bundlerType];
   return path.join(projectRoot, baseName + '.js');
+};
+
+/**
+ * Finds the `plugins: [...]` array in an rspeedy config's source and returns
+ * the index just before its closing bracket, respecting nested `[`/`]`
+ * pairs inside plugin call arguments (e.g. `pluginFoo({ include: [...] })`).
+ * Returns -1 when no `plugins` array is found.
+ */
+const findPluginsArrayInsertionPoint = (sourceCode: string): number => {
+  const arrayStartMatch = sourceCode.match(/plugins\s*:\s*\[/);
+
+  if (!arrayStartMatch || arrayStartMatch.index === undefined) {
+    return -1;
+  }
+
+  let depth = 1;
+  let index = arrayStartMatch.index + arrayStartMatch[0].length;
+
+  while (index < sourceCode.length && depth > 0) {
+    const char = sourceCode[index];
+
+    if (char === '[') {
+      depth += 1;
+    } else if (char === ']') {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+
+    index += 1;
+  }
+
+  return -1;
+};
+
+/**
+ * Inserts `<importName>(),` as a new array element right before the
+ * `plugins` array's closing bracket at `insertionPoint`, matching the
+ * indentation of the array's other elements when the array spans multiple
+ * lines, or inserting inline otherwise.
+ */
+const insertPluginCall = (
+  sourceCode: string,
+  insertionPoint: number,
+  importName: string,
+): string => {
+  const beforeClosing = sourceCode.slice(0, insertionPoint);
+  const afterClosing = sourceCode.slice(insertionPoint);
+
+  const linesBefore = beforeClosing.split('\n');
+  const closingLinePrefix = linesBefore[linesBefore.length - 1];
+  const isMultiline = linesBefore.length > 1 && closingLinePrefix.trim() === '';
+
+  if (!isMultiline) {
+    const arrayStart = beforeClosing.lastIndexOf('[');
+    const hasExistingElements = /\S/.test(beforeClosing.slice(arrayStart + 1));
+    return `${beforeClosing}${hasExistingElements ? ' ' : ''}${importName}(),${afterClosing}`;
+  }
+
+  const previousLine = linesBefore[linesBefore.length - 2] ?? '';
+  const itemIndent = previousLine.match(/^\s*/)?.[0] ?? `${closingLinePrefix}  `;
+  const newBeforeClosing =
+    beforeClosing.slice(0, beforeClosing.length - closingLinePrefix.length) +
+    itemIndent +
+    `${importName}(),\n` +
+    closingLinePrefix;
+
+  return newBeforeClosing + afterClosing;
+};
+
+/**
+ * Wraps an rspeedy (`lynx.config.*`) configuration file by adding
+ * `rozeniteLynxPlugin()` to its `plugins` array, using the same
+ * string-manipulation approach as `wrapConfigFile` so original formatting
+ * is preserved.
+ */
+export const wrapLynxConfigFile = async (projectRoot: string): Promise<void> => {
+  const configFileInfo = await findFileWithModuleExtension(projectRoot, LYNX_CONFIG_BASE_NAME);
+
+  if (!configFileInfo) {
+    throw new Error(
+      `Configuration file ${LYNX_CONFIG_BASE_NAME}.{${MODULE_EXTENSIONS.join(',')}} not found in ${projectRoot}`,
+    );
+  }
+
+  const { filePath: configPath, extension } = configFileInfo;
+
+  let sourceCode = await fs.readFile(configPath, 'utf8');
+  const { packageName, importName } = LYNX_PLUGIN_IMPORT;
+
+  const hasEsmImport =
+    sourceCode.includes(`from '${packageName}'`) || sourceCode.includes(`from "${packageName}"`);
+  const hasCommonJsImport =
+    sourceCode.includes(`require('${packageName}')`) ||
+    sourceCode.includes(`require("${packageName}")`);
+  const hasAnyImport = hasEsmImport || hasCommonJsImport;
+  const hasUsage = sourceCode.includes(`${importName}(`);
+
+  if (hasAnyImport && hasUsage) {
+    // Already configured, nothing to do
+    return;
+  }
+
+  const importStyle = determineImportStyle(sourceCode, extension);
+  const quoteStyle = detectQuoteStyle(sourceCode);
+  const quote = quoteStyle === 'single' ? "'" : '"';
+
+  if (!hasAnyImport) {
+    const lines = sourceCode.split('\n');
+    const firstImportLine = findFirstImportLine(lines);
+
+    const importStatement =
+      importStyle === 'esm'
+        ? `import { ${importName} } from ${quote}${packageName}${quote};`
+        : `const { ${importName} } = require(${quote}${packageName}${quote});`;
+
+    if (firstImportLine >= 0) {
+      lines.splice(firstImportLine, 0, importStatement);
+    } else {
+      let insertIndex = 0;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line && !line.startsWith('//') && !line.startsWith('/*') && !line.startsWith('*')) {
+          insertIndex = i;
+          break;
+        }
+      }
+      lines.splice(insertIndex, 0, importStatement);
+    }
+
+    sourceCode = lines.join('\n');
+  }
+
+  if (!hasUsage) {
+    const insertionPoint = findPluginsArrayInsertionPoint(sourceCode);
+
+    if (insertionPoint === -1) {
+      throw new Error(
+        `Could not find a "plugins" array in ${configPath}. Add ${importName}() to it manually.`,
+      );
+    }
+
+    sourceCode = insertPluginCall(sourceCode, insertionPoint, importName);
+  }
+
+  await fs.writeFile(configPath, sourceCode, 'utf8');
+};
+
+/**
+ * Gets the expected `lynx.config.*` file path.
+ * Returns the first found config file or the default `.ts` version if none
+ * exist.
+ */
+export const getLynxConfigFilePath = async (projectRoot: string): Promise<string> => {
+  const configFileInfo = await findFileWithModuleExtension(projectRoot, LYNX_CONFIG_BASE_NAME);
+
+  if (configFileInfo) {
+    return configFileInfo.filePath;
+  }
+
+  return path.join(projectRoot, LYNX_CONFIG_BASE_NAME + '.ts');
 };

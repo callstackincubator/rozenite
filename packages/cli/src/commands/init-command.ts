@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { getProjectType, type BundlerType } from '@rozenite/tools';
 import { getAvailableBundlerTypes } from '@rozenite/tools';
-import { wrapConfigFile } from '../utils/config-wrapper.js';
+import { wrapConfigFile, wrapLynxConfigFile } from '../utils/config-wrapper.js';
 import { getMountInstructions, scaffoldDevEntryFile } from '../utils/dev-entry-scaffold.js';
 import { isGitRepositoryClean } from '../utils/git.js';
 import { logger } from '../utils/logger.js';
@@ -9,6 +9,7 @@ import {
   getExecForPackageManager,
   installDependency,
   installDevDependency,
+  isLynxProject,
   isProject,
 } from '../utils/packages.js';
 import { intro, note, outro, promptConfirm } from '../utils/prompts.js';
@@ -19,11 +20,78 @@ const formatBundlerType = (bundlerType: BundlerType): string => {
   return bundlerType === 'metro' ? 'Metro' : 'Re.Pack';
 };
 
+const scaffoldDevEntryFileStep = async (projectRoot: string): Promise<void> => {
+  // Scaffold the dev entry. This is best-effort: the bundler config wrapped
+  // above is what actually matters, so a scaffold failure is reported and
+  // swallowed rather than aborting a mostly-successful init.
+  try {
+    const result = await scaffoldDevEntryFile(projectRoot);
+    const relativePath = path.relative(projectRoot, result.filePath);
+
+    if (result.status === 'created') {
+      logger.success(`Created ${relativePath}`);
+    } else {
+      logger.info(`Found existing ${relativePath}, leaving it untouched`);
+    }
+  } catch (err) {
+    logger.warn(
+      `Could not create rozenite.dev.tsx: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+};
+
+const initLynxProject = async (projectRoot: string): Promise<void> => {
+  const isClean = await isGitRepositoryClean(projectRoot);
+
+  if (!isClean) {
+    await promptConfirm({
+      message: 'Your project has uncommitted changes. Continue?',
+    });
+  }
+
+  await step(
+    {
+      start: 'Configuring rspeedy to use Rozenite...',
+      stop: 'rspeedy configuration updated',
+      error: 'Failed to update rspeedy configuration',
+    },
+    async () => {
+      await wrapLynxConfigFile(projectRoot);
+    },
+  );
+
+  // Install the app-side seam. Unlike @rozenite/metro / @rozenite/repack,
+  // this is the one Rozenite package that ships to production (it is also
+  // the same package that provides the rspeedy plugin above), so it is a
+  // normal dependency rather than a dev one.
+  await step(
+    {
+      start: 'Installing @rozenite/lynx...',
+      stop: '@rozenite/lynx installed',
+      error: 'Failed to install @rozenite/lynx',
+    },
+    async () => {
+      await installDependency(projectRoot, '@rozenite/lynx');
+    },
+  );
+
+  await scaffoldDevEntryFileStep(projectRoot);
+
+  note(getMountInstructions('lynx'));
+
+  outro('You are now ready to use Rozenite!');
+};
+
 export const initCommand = async (projectRoot: string) => {
   intro('Rozenite');
 
+  if (isLynxProject(projectRoot)) {
+    await initLynxProject(projectRoot);
+    return;
+  }
+
   if (!isProject(projectRoot)) {
-    logger.error("I couldn't find a React Native project in this directory.");
+    logger.error("I couldn't find a React Native or Lynx project in this directory.");
     return;
   }
 
@@ -108,25 +176,9 @@ export const initCommand = async (projectRoot: string) => {
     },
   );
 
-  // Scaffold the dev entry. This is best-effort: the bundler config wrapped
-  // above is what actually matters, so a scaffold failure is reported and
-  // swallowed rather than aborting a mostly-successful init.
-  try {
-    const result = await scaffoldDevEntryFile(projectRoot);
-    const relativePath = path.relative(projectRoot, result.filePath);
+  await scaffoldDevEntryFileStep(projectRoot);
 
-    if (result.status === 'created') {
-      logger.success(`Created ${relativePath}`);
-    } else {
-      logger.info(`Found existing ${relativePath}, leaving it untouched`);
-    }
-  } catch (err) {
-    logger.warn(
-      `Could not create rozenite.dev.tsx: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
-
-  note(getMountInstructions());
+  note(getMountInstructions('react-native'));
 
   outro('You are now ready to use Rozenite!');
 };

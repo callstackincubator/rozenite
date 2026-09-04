@@ -105,3 +105,19 @@ export const isProject = (projectRoot: string): boolean => {
     fs.readFileSync(packageJsonPath, 'utf8').includes('react-native')
   );
 };
+
+const LYNX_CONFIG_BASE_NAME = 'lynx.config';
+const LYNX_CONFIG_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts', '.cts', '.mts'];
+
+export const isLynxProject = (projectRoot: string): boolean => {
+  const packageJsonPath = path.join(projectRoot, 'package.json');
+  const hasLynxDependency =
+    fs.existsSync(packageJsonPath) &&
+    fs.readFileSync(packageJsonPath, 'utf8').includes('@lynx-js/rspeedy');
+
+  const hasLynxConfigFile = LYNX_CONFIG_EXTENSIONS.some((extension) =>
+    fs.existsSync(path.join(projectRoot, LYNX_CONFIG_BASE_NAME + extension)),
+  );
+
+  return hasLynxDependency || hasLynxConfigFile;
+};
