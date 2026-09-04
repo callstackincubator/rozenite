@@ -53,7 +53,8 @@
   },
   "devDependencies": {
     "@types/ejs": "^3.1.5",
-    "@types/validate-npm-package-name": "^4.0.2"
+    "@types/validate-npm-package-name": "^4.0.2",
+    "typescript": "~5.8.2"
   },
   "optionalDependencies": {
     "@rozenite/electron-app": "workspace:*"

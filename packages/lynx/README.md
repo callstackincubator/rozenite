@@ -41,8 +41,12 @@ entry points:
 ## Installation
 
 ```bash
-npm install --save-dev @rozenite/lynx
+npm install @rozenite/lynx
 ```
+
+Install it as a regular dependency, not a dev one: the app-side seam
+(`<Rozenite />`) is imported unconditionally from your app source and ships
+to production as a noop, so it must be present in a production-only install.
 
 ## Usage
 
