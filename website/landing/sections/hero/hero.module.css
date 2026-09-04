@@ -40,8 +40,8 @@ html.dark .wash,
   margin-inline: auto;
   padding-inline: var(--rz-gutter);
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 56px;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+  gap: 48px;
   align-items: center;
 }
 
@@ -82,14 +82,19 @@ html.dark .wash,
   margin: 0;
   font-family: var(--rz-font-display);
   font-weight: 500;
-  font-size: clamp(2.25rem, 1.35rem + 2.8vw, 3.75rem);
+  font-size: clamp(2.25rem, 1.5rem + 2.2vw, 3.375rem);
   --rz-lh: 1.04;
   --rz-ls: -0.035em;
 }
 
-/* One sentence per line, so the headline is always exactly two lines. */
+/*
+ * One sentence per block, so the two claims never run together mid-line. Each
+ * still wraps within itself; `balance` keeps the first from stranding a single
+ * short word ("Lynx.") on a line of its own.
+ */
 .titleLine {
   display: block;
+  text-wrap: balance;
 }
 
 .titleMuted {
@@ -102,6 +107,29 @@ html.dark .wash,
   font-size: clamp(1rem, 0.95rem + 0.28vw, 1.125rem);
   --rz-lh: 1.6;
   color: var(--rz-text-secondary);
+}
+
+/* Reads as one line of small caps at desktop width, wrapping to two on a
+   phone. Chips, so `--rz-radius-control` rather than `--rz-radius-surface`. */
+.targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.target {
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-control);
+  padding: 4px 9px;
+  font-family: var(--rz-font-mono);
+  font-size: 0.6875rem;
+  --rz-lh: 1.4;
+  --rz-ls: 0.04em;
+  color: var(--rz-text-tertiary);
+  white-space: nowrap;
 }
 
 .actions {

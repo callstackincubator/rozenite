@@ -2,6 +2,8 @@
 
 ## Supported versions
 
+### React Native
+
 | Rozenite         | Expo SDK | React Native | Re.Pack |
 | ---------------- | -------- | ------------ | ------- |
 | 1.13.0, >= 2.0.0 | 52+      | 0.76+        | 5.2+    |
@@ -11,17 +13,28 @@ Expo SDK pins a specific React Native version. If you're on bare React Native
 (no Expo), match your React Native version to the one shipped by the minimum
 supported Expo SDK above.
 
+### Lynx
+
+| Rozenite | rspeedy | @lynx-js/react |
+| -------- | ------- | -------------- |
+| >= 2.4.0 | 0.16+   | 0.125+         |
+
+Lynx support is experimental. These are the versions it is developed and tested
+against; it has not been exercised across the full range of LynxSDK releases.
+
 ## Bundlers
 
 - **Metro** — supported via `@rozenite/metro`, using whichever Metro version ships with
   your React Native version. No separate Metro version requirement beyond the React
   Native minimum above.
 - **Re.Pack** — supported via `@rozenite/repack` for Re.Pack 5.2 and above.
+- **rspeedy / Rsbuild** — supported via `@rozenite/lynx` for rspeedy 0.16 and above.
 
 ## Platforms
 
 - iOS and Android, via React Native DevTools
-- Web, via [Rozenite for Web](/docs/rozenite-for-web) (experimental)
+- Lynx, via [Rozenite for Lynx](/docs/targets/rozenite-for-lynx) (experimental)
+- Web, via [Rozenite for Web](/docs/targets/rozenite-for-web) (experimental)
 - Plugins declare which of these integrations they support in `rozenite.config.ts`; see [Plugin Development](/docs/plugin-development/plugin-development).
 
 ## Notes

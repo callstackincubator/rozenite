@@ -3,7 +3,7 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 # Rozenite for Lynx
 
 :::warning Experimental
-Rozenite for Lynx is experimental. It has been verified against LynxExplorer on the iOS Simulator, the Android emulator, and a physical Android phone over USB. A physical iPhone should work the same way, over DebugRouter's usbmux transport, but that path hasn't been tested yet. It has not been verified across the full range of LynxSDK versions, and the API may change in future releases.
+Rozenite for Lynx is experimental. It is developed and tested against rspeedy 0.16 and `@lynx-js/react` 0.125, and has not been verified across the full range of LynxSDK versions. The API may change in future releases.
 :::
 
 Rozenite for Lynx lets you debug a [Lynx](https://lynxjs.org) app with the same DevTools panels, the same plugin catalogue and the same `rozenite` CLI you use for React Native.
@@ -44,7 +44,7 @@ in development: it is inert in production builds (pass `enabled` explicitly
 if you want to control that yourself), and it never runs at all during
 `rspeedy build`.
 
-Rozenite plugins are discovered from your project's `package.json` exactly as they are for React Native — install a plugin as a dependency and it shows up.
+Rozenite plugins are discovered from your project's `package.json` exactly as they are for React Native — install a plugin as a dependency and it shows up. Not every plugin supports Lynx yet; see [What doesn't work yet](#what-doesnt-work-yet).
 
 ## Open DevTools
 
@@ -81,5 +81,5 @@ Note that `enableDesktop` is an iOS Simulator concern only. An Android emulator 
 
 ## What doesn't work yet
 
-- Plugins whose device half is written against React Native APIs don't work on Lynx: network activity, storage, file system, performance monitor, require profiler and Expo Atlas. Plugins that only move state around do work — Redux DevTools, TanStack Query, React Hook Form, feature flags and controls.
-- Only apps DebugRouter can reach are discovered: Android over adb, physical iPhones over USB, and the iOS Simulator over localhost.
+- Plugins whose device half is written against React Native APIs don't work on Lynx: network activity, storage, file system, performance monitor, require profiler, Redux DevTools and Expo Atlas. Plugins that only move state around do work — TanStack Query, React Hook Form, feature flags and controls.
+- Every plugin declares the targets it supports in its `rozenite.config.ts`, so the list above is the one the plugins themselves agree on.

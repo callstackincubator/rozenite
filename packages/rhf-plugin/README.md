@@ -58,7 +58,7 @@ If you omit `id`, the hook uses React’s `useId()` for a dev-only identifier.
 
 ## Web (React Native for Web)
 
-When you use [Rozenite for Web](https://rozenite.dev/docs/rozenite-for-web) in development, this plugin loads in the browser like on native. It follows the same `control` wiring as in your React Native app, as long as `react-hook-form` is available in the bundle.
+When you use [Rozenite for Web](https://rozenite.dev/docs/targets/rozenite-for-web) in development, this plugin loads in the browser like on native. It follows the same `control` wiring as in your React Native app, as long as `react-hook-form` is available in the bundle.
 
 ## Notes
 

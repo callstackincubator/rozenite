@@ -1,29 +1,40 @@
 ![rozenite-banner](https://www.rozenite.dev/rozenite-banner.jpg)
 
-### React Native DevTools Plugin Framework
+### Plug-and-play DevTools panels for React Native and Lynx
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
-Rozenite brings plug-and-play panels to React Native DevTools. Install plugins, enable them, and start debugging in minutes — no extra windows, servers, or tabs. Works with Expo and bare React Native, across Metro and Re.Pack.
+Rozenite brings plug-and-play panels to React Native DevTools. Install plugins, enable them, and start debugging in minutes — no extra windows, servers, or tabs. Works with Expo and bare React Native across Metro and Re.Pack, with React Native Web and [Lynx](https://lynxjs.org) support in the box.
 
 ![Plugin slideshow](https://rozenite.dev/plugin-slideshow.webp)
 
 ## Features
 
 - **Plug-and-Play Panels**: Install plugins and they auto-appear in DevTools — start debugging in minutes.
-- **Unified DevTools Experience**: All panels live inside React Native DevTools — no extra windows, servers, or browser tabs.
+- **Unified DevTools Experience**: Panels live inside DevTools by default — no extra windows, servers, or browser tabs.
 - **Real-Time Debugging**: Live updates for network requests, storage and performance as you use your app.
 - **Works With Your Setup**: Compatible with Expo and bare React Native projects. Supports Metro and Re.Pack based workflows.
+- **Beyond React Native**: The same panels, plugins and CLI reach Lynx apps through rspeedy, and React Native Web apps through the browser extension. Both are experimental.
 - **Production-Safe Controls**: Plugins are automatically disabled in production builds — no plugin code ships to your users.
 - **Easy to Build Your Own**: When you need something custom, create your own panel with type-safe, isomorphic APIs and great DX.
 
 ## Compatibility
 
-| Rozenite | Expo SDK | React Native | Re.Pack |
-| -------- | -------- | ------------- | ------- |
-| 1.x      | 52+      | 0.76+          | 5.2+    |
+**React Native**
 
-Bare React Native projects are supported too — match your React Native version to the one shipped by the minimum supported Expo SDK above. See the [Compatibility](https://rozenite.dev/docs/compatibility) page for full details.
+| Rozenite         | Expo SDK | React Native | Re.Pack |
+| ---------------- | -------- | ------------ | ------- |
+| 1.13.0, >= 2.0.0 | 52+      | 0.76+        | 5.2+    |
+
+Bare React Native projects are supported too — match your React Native version to the one shipped by the minimum supported Expo SDK above.
+
+**Lynx** (experimental)
+
+| Rozenite | rspeedy | @lynx-js/react |
+| -------- | ------- | -------------- |
+| >= 2.4.0 | 0.16+   | 0.125+         |
+
+See the [Compatibility](https://rozenite.dev/docs/compatibility) page for full details.
 
 ## Documentation
 
@@ -31,6 +42,7 @@ The documentation is available at [rozenite.dev](https://rozenite.dev). You can 
 
 - [Quick Start](https://rozenite.dev/docs/getting-started)
 - [Plugin Directory](https://rozenite.dev/plugin-directory)
+- [Rozenite for Lynx](https://rozenite.dev/docs/targets/rozenite-for-lynx)
 - [Plugin Development](https://rozenite.dev/docs/plugin-development/overview)
 
 ## Made with ❤️ at Callstack

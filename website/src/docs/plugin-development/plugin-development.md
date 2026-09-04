@@ -40,7 +40,7 @@ Your generated plugin has this structure:
 my-plugin/
 ├── src/
 │   └── hello-world.tsx      # Your DevTools panels
-├── react-native.ts          # React Native entry point
+├── react-native.ts          # App-side entry point
 ├── rozenite.config.ts       # Plugin configuration
 ├── vite.config.ts          # Build configuration
 ├── package.json            # Dependencies and scripts
@@ -49,7 +49,7 @@ my-plugin/
 
 ## Step 3: Creating Panels
 
-Panels are React components that appear in the DevTools interface, defined in your `rozenite.config.ts` file. Your React Native side can use any React Native API or library, so a panel can integrate as deeply with the runtime as you need.
+Panels are React components that appear in the DevTools interface, defined in your `rozenite.config.ts` file. Your app side can use any API or library available in the app, so a panel can integrate as deeply with the runtime as you need.
 
 ### Type-safe communication
 
@@ -250,9 +250,9 @@ export default function MyPanel() {
 }
 ```
 
-## Step 4: React Native Integration
+## Step 4: App-Side Integration
 
-Add React Native functionality by creating a `react-native.ts` file. You can use React Native APIs and libraries to enhance your plugin:
+Add app-side functionality by creating a `react-native.ts` file. The filename is the same on every target Rozenite supports. On React Native you can reach for React Native APIs and libraries:
 
 ```typescript title="react-native.ts"
 import { DevToolsPluginClient } from '@rozenite/plugin-bridge';
@@ -381,7 +381,7 @@ rozenite build
 This creates optimized bundles:
 
 - DevTools panels (minified and optimized)
-- React Native entry point (if `react-native.ts` exists)
+- App-side entry point (if `react-native.ts` exists)
 - Ready for distribution
 
 ### Build Output
@@ -389,7 +389,7 @@ This creates optimized bundles:
 The build creates a `dist/` directory with:
 
 - `*.js` - Individual DevTools panel files (one file per panel, names reflect your config)
-- `react-native.js` - React Native integration (if applicable)
+- `react-native.js` - app-side integration (if applicable)
 - `rozenite.json` - Plugin manifest with metadata and configuration
 - Source maps for debugging
 

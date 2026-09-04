@@ -1,6 +1,6 @@
 # Introduction
 
-Rozenite adds plug-and-play debugging panels to React Native DevTools. Install official plugins, open DevTools, and start debugging in minutes — no extra windows or servers.
+Rozenite adds plug-and-play debugging panels to React Native DevTools — for React Native, web and Lynx apps. Install official plugins, open DevTools, and start debugging in minutes — no extra windows or servers.
 
 ![](/rozenite-loaded.png)
 
@@ -31,6 +31,7 @@ Rozenite is a rare mineral first described in 1960 on Ornak Mountain in the West
 - **Developers who want built‑in tooling**: add network, performance, storage and state panels without building anything.
 - **Teams using coding agents**: let agents inspect logs, network activity, and React profiling data through Rozenite for Agents.
 - **Teams that need custom insights**: create tailored panels for your product, internal observability, or business logic.
+- **Teams on Lynx**: the same panels, plugins and CLI, over [Rozenite for Lynx](/docs/targets/rozenite-for-lynx) (experimental).
 
 ## Build your own
 
@@ -38,4 +39,4 @@ Rozenite includes a type‑safe, batteries‑included development experience for
 
 ## Next steps
 
-Ready to try it? Start with the [Getting Started guide](/docs/getting-started), explore the [Rozenite for Agents overview](/docs/agent/overview), or browse the [Plugin Directory](/plugin-directory). When you need something custom, see the [Plugin Development overview](/docs/plugin-development/overview).
+Ready to try it? Start with the [Getting Started guide](/docs/getting-started), explore the [Rozenite for Agents overview](/docs/agent/overview), see which [targets](/docs/targets/rozenite-for-lynx) Rozenite reaches, or browse the [Plugin Directory](/plugin-directory). When you need something custom, see the [Plugin Development overview](/docs/plugin-development/overview).

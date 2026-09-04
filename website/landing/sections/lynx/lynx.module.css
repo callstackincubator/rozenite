@@ -1,0 +1,126 @@
+/*
+ * A numbered rail. Every other section on the page composes as a grid of peers
+ * or a text-and-visual split; this one is the only ordered sequence, which is
+ * what the Lynx setup actually is -- and it puts the easily-missed first step
+ * where it cannot be skimmed past.
+ */
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mark {
+  /* Inherits the eyebrow's accent through `currentColor`. */
+  flex-shrink: 0;
+}
+
+.status {
+  border: 1px solid var(--rz-border-strong);
+  border-radius: var(--rz-radius-control);
+  padding: 1px 6px;
+  color: var(--rz-text-tertiary);
+  --rz-ls: 0.06em;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--rz-border);
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px 32px 32px 0;
+}
+
+/* The rail reads left to right, so the divider belongs between the steps. */
+.step + .step {
+  padding-left: 32px;
+  border-left: 1px solid var(--rz-border);
+}
+
+.stepIndex {
+  font-family: var(--rz-font-mono);
+  font-size: 0.75rem;
+  --rz-ls: 0.07em;
+  color: var(--rz-accent);
+}
+
+.stepTitle {
+  margin: 0;
+  font-family: var(--rz-font-display);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  --rz-ls: -0.015em;
+  --rz-lh: 1.3;
+}
+
+.stepBody {
+  margin: 0;
+  font-size: 0.9375rem;
+  --rz-lh: 1.55;
+  color: var(--rz-text-secondary);
+}
+
+.bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--rz-border);
+}
+
+.setup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.setup > :first-child {
+  width: min(340px, 100%);
+}
+
+.caveat {
+  flex: 1 1 30ch;
+  margin: 0;
+  font-size: 0.875rem;
+  --rz-lh: 1.55;
+  color: var(--rz-text-tertiary);
+}
+
+@media (max-width: 900px) {
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .step {
+    padding: 24px 0;
+  }
+
+  .step + .step {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--rz-border);
+  }
+}
+
+@media (max-width: 560px) {
+  .setup {
+    width: 100%;
+  }
+
+  .setup > * {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

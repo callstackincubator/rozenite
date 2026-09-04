@@ -1,7 +1,7 @@
 {
   "name": "rozenite",
   "version": "2.4.0",
-  "description": "Command-line interface for creating and managing React Native DevTools plugins",
+  "description": "Command-line interface for creating and managing Rozenite DevTools plugins",
   "keywords": [
     "cli",
     "devtools",

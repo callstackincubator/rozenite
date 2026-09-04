@@ -43,9 +43,12 @@ Three rules are worth knowing before adding anything:
 - **Radius.** There are exactly two: `--rz-radius-control` for interactive
   elements and chips, `--rz-radius-surface` for panels, cards and code blocks.
 - **Colour blocks.** `Section` takes `tint="block"`, which remaps the token set
-  locally so its children need no dark-specific styling. The page spends that
-  once, on Rozenite for Agents. A second inverted section would read as a theme
+  locally so its children need no dark-specific styling. Nothing spends it
+  today. Spend it at most once: a second inverted section would read as a theme
   flip mid-scroll.
+- **Tints alternate.** Every section is `subtle` or `default`, strictly
+  alternating down the page, and the `subtle` ones carry `bordered`. Inserting a
+  section means retinting its neighbours, not breaking the run.
 - **The hero owns the first screen.** It is `min-height: calc(100dvh -
   var(--rz-nav-height))`. If the host navigation changes height, retune that
   token rather than the section.
@@ -54,19 +57,33 @@ Three rules are worth knowing before adding anything:
 
 These came out of a design review and are easy to break by accident:
 
-- **Eyebrows are rationed.** Only the three product surfaces carry one: official
-  plugins, Rozenite for Agents, Rozenite for Web. Not every section needs a
-  label above its headline.
+- **Eyebrows are rationed.** Only the product surfaces carry one: official
+  plugins, Rozenite for Agents, Rozenite for Lynx, Rozenite for Web. Not every
+  section needs a label above its headline -- the standalone app is a way of
+  working rather than a surface, so it has none. `eyebrow` takes a `ReactNode`
+  so a surface can pair its label with a brand mark or a status chip on that
+  one line. That is its whole remit; it is not a second headline.
 - **Section headers stack.** Eyebrow, headline, body, in one column. Rozenite
   for Agents is the one exception: it pairs its header with the terminal sample
   on the same line, and takes `className` to drop its stacking margin.
 - **No layout family repeats.** Hero and Rozenite for Web are the only
   text-and-visual splits, and they are not adjacent. Everything else uses a
-  different composition.
+  different composition: Lynx is the page's only ordered rail, and the
+  standalone app is the only centred header over a full-width figure.
 - **Icons come from a library.** `@phosphor-icons/react` for UI glyphs,
   `simple-icons` for brand marks via `components/brand-mark`. Nothing is drawn
   by hand. Brand marks render in `currentColor`, never in the brand hex, so a
   logo cannot smuggle a second accent onto the page.
+
+  The Lynx mark is the one exception to "from a library": `simple-icons` has no
+  Lynx entry, so its two paths are vendored into `components/brand-mark` from
+  lynxjs.org's own header -- vendored rather than hotlinked, so the page pulls
+  nothing from a third-party CDN. It is ByteDance/TikTok's mark, used
+  nominatively to identify the project Rozenite integrates with. The Lynx
+  repositories are Apache-2.0, whose section 6 grants no trademark rights, so
+  this rests on nominative use rather than on the licence. `currentColor` is
+  part of that: the mark identifies, it does not imply endorsement. Vendor
+  another mark only on the same terms.
 - **Grids have no empty cells.** The plugin grid shows `FEATURED_PLUGINS`, six
   of the fourteen, which divides evenly at three, two and one column. The rest
   are counted in a line of copy underneath rather than drawn. Keep the featured
@@ -103,3 +120,6 @@ ratio.
 `components/connection-diagram` is for the places where no screenshot is coming.
 It draws two endpoints and the link between them, which explains an architecture
 better than a picture of a panel would. Rozenite for Web uses it.
+
+The standalone app uses `components/screenshot`, because a window is exactly the
+thing a screenshot is good at showing and a diagram is not.

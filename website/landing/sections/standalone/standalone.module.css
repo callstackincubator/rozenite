@@ -1,0 +1,63 @@
+/*
+ * Centred header over one full-width figure. Every other section either splits
+ * text and visual side by side or lays peers out in a grid, so this is the one
+ * place the page centres -- fitting for a section about a single window.
+ */
+
+.header {
+  max-width: 62ch;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--rz-font-display);
+  font-weight: 500;
+  font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  --rz-lh: 1.08;
+  --rz-ls: -0.028em;
+  text-wrap: balance;
+}
+
+.body {
+  margin: 20px auto 0;
+  max-width: 58ch;
+  font-size: clamp(1rem, 0.97rem + 0.16vw, 1.0625rem);
+  --rz-lh: 1.6;
+  color: var(--rz-text-secondary);
+}
+
+.code {
+  font-family: var(--rz-font-mono);
+  font-size: 0.9em;
+  color: var(--rz-text);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.command {
+  width: min(320px, 100%);
+}
+
+.shot {
+  margin-top: 56px;
+}
+
+@media (max-width: 560px) {
+  .actions > * {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .shot {
+    margin-top: 36px;
+  }
+}

@@ -31,7 +31,7 @@ client.onMessage('cart-updated', (cart) => {
 client.send('clear-cart', { reason: 'devtools' });`;
 
 export const BuildYourOwn = () => (
-  <Section id="build">
+  <Section id="build" tint="subtle" bordered>
     <SectionHeader
       title="Build the panel your app needs"
       body="Use a plugin for app-specific state, controls, or diagnostics. Rozenite provides the DevTools connection and plugin build setup."

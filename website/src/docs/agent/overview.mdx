@@ -1,6 +1,6 @@
 # Rozenite for Agents
 
-Rozenite for Agents is the agent-facing way to interact with React Native DevTools and Rozenite plugins. It gives coding agents a reliable interface for inspecting a running React Native app through Rozenite, including logs, network activity, React profiling data, and plugin-specific tooling.
+Rozenite for Agents is the agent-facing way to interact with your running app and its Rozenite plugins. It gives coding agents a reliable interface for inspecting a running app through Rozenite, including logs, network activity, React profiling data, and plugin-specific tooling.
 
 You can access this workflow through the `rozenite agent` CLI or, if you need direct programmatic access, through [`@rozenite/agent-sdk`](/docs/agent/sdk). For most users, the CLI is still the recommended starting point.
 
@@ -24,13 +24,13 @@ Make sure:
 - Rozenite is installed and configured for the app
 - your app is running in development mode
 - Metro is running
-- at least one React Native target is connected
+- at least one target is connected
 
 If you have more than one simulator, emulator, or device connected, you will need to choose which one to inspect.
 
 Rozenite for Agents requires a project with Rozenite already installed and configured. The agent skills teach your coding agent how to use that setup effectively.
 
-Rozenite for Agents is designed for AI and coding agents first. The underlying CLI can be called directly with `npx rozenite`, but the intended use is for an agent to drive it while debugging or implementing changes in a React Native app.
+Rozenite for Agents is designed for AI and coding agents first. The underlying CLI can be called directly with `npx rozenite`, but the intended use is for an agent to drive it while debugging or implementing changes in your app.
 
 :::warning React Native DevTools will disconnect
 Rozenite for Agents acts as a debugger connection to the running app. Because of a current React Native limitation, starting an agent session will disconnect React Native DevTools if it is already attached.

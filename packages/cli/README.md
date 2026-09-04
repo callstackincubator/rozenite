@@ -1,14 +1,14 @@
 ![rozenite-banner](https://www.rozenite.dev/rozenite-banner.jpg)
 
-### A command-line interface for creating and managing React Native DevTools plugins.
+### A command-line interface for creating and managing Rozenite DevTools plugins.
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 
-The Rozenite CLI is the primary tool for scaffolding, building, and developing React Native DevTools plugins. It provides an intuitive command-line experience with interactive prompts, automated project setup, and development workflows.
+The Rozenite CLI is the primary tool for scaffolding, building, and developing Rozenite DevTools plugins. It provides an intuitive command-line experience with interactive prompts, automated project setup, and development workflows.
 
 ## Features
 
-- **Plugin Generation**: Create new React Native DevTools plugins with a complete project structure
+- **Plugin Generation**: Create new Rozenite DevTools plugins with a complete project structure
 - **Interactive Setup**: Guided prompts for plugin configuration and metadata
 - **Build System**: Compile plugins for different targets
 - **Development Server**: Hot-reload development environment with file watchers
@@ -28,7 +28,7 @@ npm install rozenite
 
 ### Generate a New Plugin
 
-Create a new React Native DevTools plugin:
+Create a new Rozenite DevTools plugin:
 
 ```bash
 npx rozenite generate
