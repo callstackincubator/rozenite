@@ -109,15 +109,15 @@ export const isProject = (projectRoot: string): boolean => {
 const LYNX_CONFIG_BASE_NAME = 'lynx.config';
 const LYNX_CONFIG_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts', '.cts', '.mts'];
 
+/**
+ * A Lynx/rspeedy project always has a `lynx.config.*` file -- that's what
+ * `rspeedy dev`/`rspeedy build` load -- so its presence alone is both
+ * necessary and sufficient. Requiring it (rather than also accepting an
+ * `@lynx-js/rspeedy` package.json dependency on its own) guarantees that
+ * whenever this returns true, `wrapLynxConfigFile` has a file to wrap.
+ */
 export const isLynxProject = (projectRoot: string): boolean => {
-  const packageJsonPath = path.join(projectRoot, 'package.json');
-  const hasLynxDependency =
-    fs.existsSync(packageJsonPath) &&
-    fs.readFileSync(packageJsonPath, 'utf8').includes('@lynx-js/rspeedy');
-
-  const hasLynxConfigFile = LYNX_CONFIG_EXTENSIONS.some((extension) =>
+  return LYNX_CONFIG_EXTENSIONS.some((extension) =>
     fs.existsSync(path.join(projectRoot, LYNX_CONFIG_BASE_NAME + extension)),
   );
-
-  return hasLynxDependency || hasLynxConfigFile;
 };

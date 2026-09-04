@@ -282,25 +282,6 @@ export const wrapConfigFile = async (
 };
 
 /**
- * Gets the expected configuration file path for a bundler type
- * Returns the first found config file or the default .js version if none exist
- */
-export const getConfigFilePath = async (
-  projectRoot: string,
-  bundlerType: BundlerType,
-): Promise<string> => {
-  const configFileInfo = await findConfigFile(projectRoot, bundlerType);
-
-  if (configFileInfo) {
-    return configFileInfo.filePath;
-  }
-
-  // If no config file found, return default .js path
-  const baseName = CONFIG_BASE_NAMES[bundlerType];
-  return path.join(projectRoot, baseName + '.js');
-};
-
-/**
  * Replaces the contents of every template literal (`` `...` ``, including
  * its `${...}` interpolations), line comment, and block comment with spaces
  * (newlines preserved), leaving every other character — including plain
@@ -594,19 +575,4 @@ export const wrapLynxConfigFile = async (projectRoot: string): Promise<void> => 
   }
 
   await fs.writeFile(configPath, sourceCode, 'utf8');
-};
-
-/**
- * Gets the expected `lynx.config.*` file path.
- * Returns the first found config file or the default `.ts` version if none
- * exist.
- */
-export const getLynxConfigFilePath = async (projectRoot: string): Promise<string> => {
-  const configFileInfo = await findFileWithModuleExtension(projectRoot, LYNX_CONFIG_BASE_NAME);
-
-  if (configFileInfo) {
-    return configFileInfo.filePath;
-  }
-
-  return path.join(projectRoot, LYNX_CONFIG_BASE_NAME + '.ts');
 };

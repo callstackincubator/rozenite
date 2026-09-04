@@ -34,7 +34,7 @@ describe('isLynxProject', () => {
     expect(isLynxProject(projectRoot)).toBe(false);
   });
 
-  it('returns true when package.json declares @lynx-js/rspeedy', async () => {
+  it('returns false when package.json declares @lynx-js/rspeedy but no lynx.config file exists', async () => {
     const projectRoot = await createTempDir();
     await fs.writeFile(
       path.join(projectRoot, 'package.json'),
@@ -42,7 +42,11 @@ describe('isLynxProject', () => {
       'utf8',
     );
 
-    expect(isLynxProject(projectRoot)).toBe(true);
+    // A Lynx project always has a lynx.config.* file -- rspeedy loads it to
+    // run at all -- so requiring it (rather than treating the package.json
+    // dependency as sufficient on its own) is what guarantees
+    // wrapLynxConfigFile always has a file to wrap once this is true.
+    expect(isLynxProject(projectRoot)).toBe(false);
   });
 
   it('returns true when a lynx.config.ts file exists, even without package.json', async () => {
@@ -61,11 +65,7 @@ describe('isLynxProject', () => {
 
   it('does not consider a Lynx project a React Native project', async () => {
     const projectRoot = await createTempDir();
-    await fs.writeFile(
-      path.join(projectRoot, 'package.json'),
-      JSON.stringify({ devDependencies: { '@lynx-js/rspeedy': '0.9.0' } }),
-      'utf8',
-    );
+    await fs.writeFile(path.join(projectRoot, 'lynx.config.ts'), 'export default {};\n', 'utf8');
 
     expect(isProject(projectRoot)).toBe(false);
   });

@@ -49,21 +49,12 @@ const initLynxProject = async (projectRoot: string): Promise<void> => {
     });
   }
 
-  await step(
-    {
-      start: 'Configuring rspeedy to use Rozenite...',
-      stop: 'rspeedy configuration updated',
-      error: 'Failed to update rspeedy configuration',
-    },
-    async () => {
-      await wrapLynxConfigFile(projectRoot);
-    },
-  );
-
-  // Install the app-side seam. Unlike @rozenite/metro / @rozenite/repack,
-  // this is the one Rozenite package that ships to production (it is also
-  // the same package that provides the rspeedy plugin above), so it is a
-  // normal dependency rather than a dev one.
+  // Install the app-side seam first, so a failed wrap never leaves
+  // lynx.config.ts referencing a package that isn't there yet. Unlike
+  // @rozenite/metro / @rozenite/repack, this is the one Rozenite package
+  // that ships to production (it is also the same package that provides
+  // the rspeedy plugin below), so it is a normal dependency rather than a
+  // dev one.
   await step(
     {
       start: 'Installing @rozenite/lynx...',
@@ -72,6 +63,17 @@ const initLynxProject = async (projectRoot: string): Promise<void> => {
     },
     async () => {
       await installDependency(projectRoot, '@rozenite/lynx');
+    },
+  );
+
+  await step(
+    {
+      start: 'Configuring rspeedy to use Rozenite...',
+      stop: 'rspeedy configuration updated',
+      error: 'Failed to update rspeedy configuration',
+    },
+    async () => {
+      await wrapLynxConfigFile(projectRoot);
     },
   );
 
