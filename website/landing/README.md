@@ -121,5 +121,24 @@ ratio.
 It draws two endpoints and the link between them, which explains an architecture
 better than a picture of a panel would. Rozenite for Web uses it.
 
-The standalone app uses `components/screenshot`, because a window is exactly the
-thing a screenshot is good at showing and a diagram is not.
+Nothing uses `components/screenshot` right now -- the standalone app's capture
+landed, which is what the slot is for. Keep it around for the next section that
+is drafted before its screenshot exists.
+
+## Framing a real capture
+
+The two captures on the page are framed differently on purpose, and the rule is
+about what the image already contains rather than about consistency:
+
+- The hero's `landing-rozenite.png` arrives with its own frame baked in, so the
+  page adds nothing around it.
+- The standalone app's `standalone-rozenite.png` is a raw window capture. It has
+  macOS traffic lights but no border or shadow, and a dark app screen sitting
+  flush on the page reads as a hole rather than a window. So the section wraps
+  it in a hairline, `--rz-radius-surface` with `overflow: hidden` so the
+  capture's square corners take the frame's radius, and a low, diffuse shadow --
+  the page's only elevated surface, with its own dark-mode values because a
+  light-mode shadow vanishes against a dark ground.
+
+Never draw chrome the capture already has. If a future capture arrives without
+traffic lights, that is a reason to recapture it, not to fake a title bar.

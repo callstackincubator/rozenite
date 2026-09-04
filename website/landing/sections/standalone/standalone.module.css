@@ -47,8 +47,45 @@
   width: min(320px, 100%);
 }
 
-.shot {
-  margin-top: 56px;
+/*
+ * The capture is of the real window, so it already carries macOS traffic
+ * lights. It has no border or shadow of its own, though, and a dark app screen
+ * sitting flush on the page edge reads as a hole rather than a window -- hence
+ * the hairline and the lift below. Nothing here draws chrome the capture
+ * already has.
+ *
+ * `--rz-radius-surface` because this is a frame, and `overflow: hidden` so the
+ * capture's own square corners take the frame's radius.
+ */
+.frame {
+  /* 80% of the measure. The capture is a window, not a hero shot -- at full
+     bleed it competed with the hero's, and holding it back also keeps it
+     nearer its native 1280px so it stays crisp on a 2x display. */
+  width: 80%;
+  margin: 56px auto 0;
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-surface);
+  overflow: hidden;
+  /* The page has no shadow token; this is its only elevated surface. Kept
+     soft and low so it reads as a window resting on the page, not a card
+     floating above it. */
+  box-shadow:
+    0 1px 2px rgba(23, 22, 26, 0.04),
+    0 12px 32px -12px rgba(23, 22, 26, 0.18);
+  background-color: var(--rz-surface);
+}
+
+:global(html.dark) .frame,
+:global([data-theme='dark']) .frame {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 16px 40px -16px rgba(0, 0, 0, 0.55);
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 @media (max-width: 560px) {
@@ -57,7 +94,8 @@
     justify-content: space-between;
   }
 
-  .shot {
+  .frame {
+    width: 100%;
     margin-top: 36px;
   }
 }

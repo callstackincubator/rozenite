@@ -1,7 +1,6 @@
 import { ActionButton } from '../../components/action-button/action-button';
 import { CommandLine } from '../../components/command-line/command-line';
 import { Reveal } from '../../components/reveal/reveal';
-import { ScreenshotSlot } from '../../components/screenshot/screenshot';
 import { Section } from '../../components/section/section';
 import styles from './standalone.module.css';
 
@@ -31,10 +30,15 @@ export const Standalone = () => (
     </Reveal>
 
     <Reveal>
-      <ScreenshotSlot
-        className={styles.shot}
-        shows="The Rozenite standalone app in its own window, with a plugin panel open."
-      />
+      <figure className={styles.frame}>
+        <img
+          className={styles.image}
+          src="/standalone-rozenite.png"
+          width={1280}
+          height={800}
+          alt="The Rozenite standalone app in its own window, showing the File System panel browsing an iOS app's Library directory with a PNG previewed."
+        />
+      </figure>
     </Reveal>
   </Section>
 );
