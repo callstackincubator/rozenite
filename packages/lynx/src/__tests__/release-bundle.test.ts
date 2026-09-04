@@ -139,4 +139,62 @@ describe('rozeniteLynxPlugin in a release bundle', () => {
     },
     RELEASE_BUNDLE_TIMEOUT,
   );
+
+  it(
+    'ships zero rozenite.dev modules and zero plugin code for an app that renders <Rozenite /> with a real rozenite.dev.tsx present',
+    async () => {
+      // The one behaviour unique to the seam itself, not already covered by
+      // the guard-behaviour cases above (which are mirrored from Metro's
+      // suite and would pass even if `<Rozenite />` unconditionally
+      // rendered its dev entry): a production build never installs the
+      // dev-entry redirect, so `<Rozenite />` must resolve to the shipped
+      // noop and never even attempt to reach `rozenite.dev.tsx` -- even
+      // though that file exists right next to the fixture's entry and
+      // imports a real plugin hook.
+      //
+      // `enabled: true` is passed explicitly, the strongest way a caller
+      // could try to force the redirect on for a build. `bundle()`'s
+      // default already computes `false` for a `.build()` call on its own
+      // (`NODE_ENV==='production'`, set by rsbuild itself before this even
+      // runs -- see `build_build` in `@rsbuild/core`'s bundled source), so
+      // this specifically proves the redirect stays off even when that
+      // default is overridden -- defense in depth between `rspeedy.ts`'s
+      // own `enabled` computation and `RozeniteResolverPlugin`'s separate
+      // `isDev` check (from the compilation's actual mode, not `enabled`).
+      // `@rozenite/lynx` is not resolvable as a bare specifier from the
+      // fixture -- this package is not its own dependency (there's no
+      // `packages/lynx/node_modules/@rozenite/lynx` self-link) -- so the
+      // fixture requires its built seam by an absolute path instead,
+      // mirroring the pattern `docs/agents/release-bundle-testing.md`
+      // documents for "integrations that reference files by path".
+      const result = await bundle(
+        {
+          'src/index.js': "require('./App.js');\n",
+          'src/App.js':
+            `const Rozenite = require(${JSON.stringify(path.join(packageRoot, 'dist', 'index.cjs'))}).default;\n` +
+            'module.exports = function App() { return Rozenite(); };\n',
+          'rozenite.dev.tsx':
+            "import { useRozeniteControlsPlugin } from '@rozenite/controls-plugin';\n\n" +
+            'export default function RozeniteDevEntry() {\n' +
+            '  useRozeniteControlsPlugin({ sections: [] });\n' +
+            '  return null;\n' +
+            '}\n',
+        },
+        { enabled: true },
+      );
+
+      // `@rozenite/lynx` itself (the seam) is expected in the bundle -- the
+      // app imports it on purpose, and the ADR's guarantee is about plugin
+      // code and `rozenite.dev`, not about the seam. `panelModules` (a
+      // stricter subset of `rozeniteModules`) is the right assertion, plus
+      // an explicit check that neither `rozenite.dev` nor the plugin the
+      // fixture's `rozenite.dev.tsx` imports made it into the bundle.
+      expect(result.panelModules).toEqual([]);
+      expect(result.modules.some((modulePath) => modulePath.includes('rozenite.dev'))).toBe(false);
+      expect(result.modules.some((modulePath) => modulePath.includes('controls-plugin'))).toBe(
+        false,
+      );
+    },
+    RELEASE_BUNDLE_TIMEOUT,
+  );
 });

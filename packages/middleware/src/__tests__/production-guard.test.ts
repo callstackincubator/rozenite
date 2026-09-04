@@ -383,6 +383,26 @@ describe('formatIntegrationMismatchError', () => {
     );
     expect(lines[1]).toBe('Declared integrations: react-native.');
     expect(lines[2]).toBe('Imported from: rozenite.dev.tsx');
+    // Names the escape hatch, defaulting to the Metro/Re.Pack spelling.
+    expect(lines[3]).toMatch(/allowInProduction/);
+    expect(lines[3]).toMatch(/withRozenite\(\)/);
+  });
+
+  it('names the caller-supplied setup function instead of the withRozenite() default', () => {
+    const message = formatIntegrationMismatchError({
+      plugin: {
+        name: '@acme/rn-only-plugin',
+        root: '/node_modules/@acme/rn-only-plugin',
+        productionEntries: [],
+        integrations: ['react-native'],
+      },
+      importedFrom: '/project/rozenite.dev.tsx',
+      projectRoot: '/project',
+      targetIntegration: 'lynx',
+      setupFunctionName: 'rozeniteLynxPlugin()',
+    });
+
+    expect(message.split('\n')[3]).toMatch(/rozeniteLynxPlugin\(\)/);
   });
 });
 

@@ -399,6 +399,7 @@ export class RozeniteResolverPlugin {
               importedFrom: originModulePath,
               projectRoot: this.options.projectRoot,
               targetIntegration,
+              setupFunctionName: this.options.setupFunctionName,
             }),
           ),
         );
