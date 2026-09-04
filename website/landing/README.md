@@ -177,9 +177,19 @@ Three things about it are deliberate and easy to undo by accident:
   The hook resolves the token and re-resolves it when the theme flips.
 
 `cols` is the grain: higher means more, smaller cells, and it has to be tuned
-against `size` rather than set once. Too fine for the height and the silhouette
-stops reading as the logo and turns into haze; the pairs in `hero.tsx` are the
-two that were checked. Both live in JS because the canvas takes its size as a
+against `size` rather than set once. The pairs in `hero.tsx` are the two that
+were checked.
+
+There is a hard ceiling on how fine it can go, and it is worth knowing before
+turning the dial. The loader lays out cells of `s = width / cols` device pixels
+and insets each one by `gap = max(0.6, s * 0.09)`. Once `s` drops near 2 device
+px that fixed 0.6 floor is most of the cell, so the squares fall below a pixel
+and the whole mark washes out to a smudge -- at `cols: 88` and `size: 260` it
+does exactly that on a 1x display. Because the floor is in device pixels, the
+same `cols` also looks twice as solid on a 2x screen as on a 1x one, so check
+both. `cols: 56` is about as fine as this size survives on a 1x display. Going
+finer than that means changing the `gap` formula in `@rozenite/ui`, not the
+props. Both live in JS because the canvas takes its size as a
 number, so this cannot be a media query in the stylesheet -- which is also why
 the narrow pair exists at all: at the full size the mark pushed "Get started"
 past the fold on a phone.

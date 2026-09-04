@@ -11,8 +11,8 @@ const TARGETS = ['React Native', 'Expo', 'Re.Pack', 'React Native Web', 'Lynx'];
 
 /** Height in px, then grid cells across. Grain has to shrink with the mark, or
  * the silhouette stops reading as the logo and turns into haze. */
-const MARK_WIDE = { size: 260, cols: 30 };
-const MARK_NARROW = { size: 176, cols: 22 };
+const MARK_WIDE = { size: 260, cols: 50 };
+const MARK_NARROW = { size: 176, cols: 40 };
 
 /**
  * The canvas takes its size as a number, so this cannot be a media query in
