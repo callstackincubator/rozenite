@@ -32,15 +32,22 @@ Edit `src/App.tsx` to see updates — the page hot-reloads as you save.
 
 - [`@rozenite/lynx/rspeedy`](../../packages/lynx) is added to
   `lynx.config.ts`. It discovers installed plugins, bridges Lynx's
-  DebugRouter to the CDP dialect `@rozenite/app` speaks, and injects the
-  device-side dispatcher plugins talk to — there is nothing to import in
-  `src/index.tsx`.
+  DebugRouter to the CDP dialect `@rozenite/app` speaks, injects the
+  device-side dispatcher plugins talk to, and guards every build --
+  `rspeedy build` included -- against plugin code reaching a production
+  bundle.
+- `src/App.tsx` renders `<Rozenite />` (`@rozenite/lynx`'s default export)
+  once, unconditionally, exactly where the plugin playgrounds below used to
+  render directly. In development this redirects to
+  [`rozenite.dev/`](./rozenite.dev); in production it resolves to a shipped
+  noop.
 
 ## Plugins
 
 Every official plugin that declares `lynx` in its `rozenite.config.ts`
 `integrations` is installed here, with a minimal playground under
-`src/plugins/`:
+[`rozenite.dev/`](./rozenite.dev) -- never in app source, so the resolver
+guard above can prove none of it reaches a release build:
 
 | Plugin                             | Playground                                                     |
 | ---------------------------------- | -------------------------------------------------------------- |

@@ -49,7 +49,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "vite build --config vite.seam.config.ts && vite build && vite build --config vite.rspeedy.config.ts",
+    "build": "vite build --config vite.seam.config.ts && vite build --config vite.dev-entry.config.ts && vite build && vite build --config vite.rspeedy.config.ts",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "lint": "eslint .",
     "test": "vitest --run --passWithNoTests"

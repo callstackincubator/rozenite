@@ -261,14 +261,21 @@ export const formatIntegrationMismatchError = (args: {
   importedFrom: string;
   projectRoot: string;
   targetIntegration: RozeniteIntegration;
+  setupFunctionName?: string;
 }): string => {
-  const { plugin, importedFrom, projectRoot, targetIntegration } = args;
+  const {
+    plugin,
+    importedFrom,
+    projectRoot,
+    targetIntegration,
+    setupFunctionName = 'withRozenite()',
+  } = args;
 
   return [
     `${plugin.name} is a Rozenite plugin that does not declare "${targetIntegration}" support.`,
     `Declared integrations: ${plugin.integrations.join(', ')}.`,
     `Imported from: ${formatImportedFrom(importedFrom, projectRoot)}`,
-    `This plugin was not built for this target and must not be bundled with it.`,
+    `This plugin was not built for this target and must not be bundled with it. If this is a false positive -- the plugin works fine here but has not declared it -- pass allowInProduction: ['${plugin.name}'] to ${setupFunctionName}.`,
   ].join('\n');
 };
 

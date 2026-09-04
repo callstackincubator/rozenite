@@ -1,6 +1,6 @@
 ![rozenite-banner](https://www.rozenite.dev/rozenite-banner.jpg)
 
-### Rozenite for Lynx: one package for the device runtime and the rspeedy/Rsbuild dev-server plugin.
+### Rozenite for Lynx: one package for the app-side seam, the device runtime, and the rspeedy/Rsbuild dev-server plugin.
 
 [![mit licence][license-badge]][license] [![npm downloads][npm-downloads-badge]][npm-downloads] [![Chat][chat-badge]][chat] [![PRs Welcome][prs-welcome-badge]][prs-welcome]
 

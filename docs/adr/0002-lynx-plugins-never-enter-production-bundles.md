@@ -100,8 +100,19 @@ and Rsbuild leaves `normalModuleFactory` hooks intact.
 ### `rozenite.dev.tsx` is identical
 
 Project root, resolved through `resolve.extensions`, flat file or
-`rozenite.dev/` directory. `rozenite init` scaffolds it for Lynx projects and
-prints the mount snippet.
+`rozenite.dev/` directory.
+
+**Deferred:** `rozenite init` scaffolding this file and printing the mount
+snippet for Lynx projects, as this section originally promised, has not
+landed. `packages/cli`'s `init-command.ts` is entirely React-Native-shaped
+today -- Lynx-project detection, an rspeedy config wrapper, and a
+Lynx-flavoured mount snippet are all new work, not a small addition to the
+existing flow, and tracked separately rather than folded into this change.
+Everything else in this ADR -- the seam, the resolver guard, and the
+integration check -- does not depend on it: a Lynx project can adopt
+`rozeniteLynxPlugin()` and `rozenite.dev.tsx` today by hand, following this
+package's README, exactly as a React Native project could before `rozenite
+init` supported it.
 
 ### Integration gating rides the same resolver
 

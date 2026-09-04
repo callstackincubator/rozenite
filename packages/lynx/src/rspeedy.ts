@@ -172,14 +172,22 @@ export const rozeniteLynxPlugin = (options: RozeniteLynxOptions = {}): RsbuildPl
       // from Rsbuild's own resolved mode for this compilation, not
       // `process.env.NODE_ENV`, since `rspeedy build` does not reliably
       // set it before this config is resolved.
-      api.modifyRspackConfig((config, { isDev }) => {
+      api.modifyRspackConfig((config, { isDev, environment }) => {
         config.plugins.push(
           new RozeniteResolverPlugin({
             projectRoot: api.context.rootPath,
             allowInProduction,
             isDev,
             installDevEntryRedirect: enabled,
-            targetIntegration: 'lynx',
+            // `environment.name` is this compilation's Rsbuild environment
+            // name -- `'lynx'` by default, or ending in `-web` for a web
+            // target (`@lynx-js/react-rsbuild-plugin` itself checks
+            // `environment.name.startsWith('lynx-')` for the same
+            // distinction). Falling back to `'lynx'` for anything else
+            // keeps this a pure addition: every environment name this
+            // plugin has ever been exercised against resolves the same way
+            // it did before this check existed.
+            targetIntegration: environment.name.endsWith('-web') ? 'lynx-web' : 'lynx',
             setupFunctionName: 'rozeniteLynxPlugin()',
           }),
         );
