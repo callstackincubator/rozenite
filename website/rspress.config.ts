@@ -8,7 +8,7 @@ export default withCallstackPreset(
     context: __dirname,
     docs: {
       description:
-        'Build powerful debugging tools and custom panels for React Native DevTools with type-safe, isomorphic communication',
+        'Plug-and-play DevTools panels for React Native and Lynx, with type-safe plugin APIs and runtime tools for agents.',
       icon: '/logo.svg',
       logoDark: '/logo-dark.svg',
       logoLight: '/logo-light.svg',

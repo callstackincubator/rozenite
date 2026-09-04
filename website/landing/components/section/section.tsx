@@ -40,10 +40,12 @@ export const Section = ({
 
 type SectionHeaderProps = {
   /**
-   * Small label above the headline. Rationed on purpose: only the three product
-   * surfaces (plugins, agents, web) carry one.
+   * Small label above the headline. Rationed on purpose: only the product
+   * surfaces (plugins, agents, Lynx, web) carry one. `ReactNode` rather than
+   * `string` so a surface can pair its label with a brand mark or a status
+   * chip on the same line -- not so it can grow into a second headline.
    */
-  eyebrow?: string;
+  eyebrow?: ReactNode;
   title: ReactNode;
   body?: ReactNode;
   /** For sections that place the header inside a layout of their own. */

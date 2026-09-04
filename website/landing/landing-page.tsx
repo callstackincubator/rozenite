@@ -9,7 +9,9 @@ import { Agents } from './sections/agents/agents';
 import { BuildYourOwn } from './sections/build-your-own/build-your-own';
 import { Closing } from './sections/closing/closing';
 import { Hero } from './sections/hero/hero';
+import { Lynx } from './sections/lynx/lynx';
 import { Plugins } from './sections/plugins/plugins';
+import { Standalone } from './sections/standalone/standalone';
 import { Web } from './sections/web/web';
 
 type LandingPageProps = {
@@ -26,8 +28,10 @@ export const LandingPage = ({ footer }: LandingPageProps) => (
       <Hero />
       <Plugins />
       <Agents />
+      <Lynx />
       <Web />
       <BuildYourOwn />
+      <Standalone />
       <Closing />
     </main>
     {footer}

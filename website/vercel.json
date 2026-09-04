@@ -4,7 +4,24 @@
   "cleanUrls": true,
   "framework": null,
   "installCommand": "pnpm install",
-  "rewrites": [{ "source": "/(.*)", "destination": "/404.html" }],
+  "redirects": [
+    {
+      "source": "/docs/rozenite-for-lynx",
+      "destination": "/docs/targets/rozenite-for-lynx",
+      "permanent": true
+    },
+    {
+      "source": "/docs/rozenite-for-web",
+      "destination": "/docs/targets/rozenite-for-web",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/404.html"
+    }
+  ],
   "outputDirectory": "build",
   "trailingSlash": false,
   "git": {

@@ -32,7 +32,7 @@ const POINTS: Point[] = [
 ];
 
 export const Web = () => (
-  <Section id="web" tint="subtle" bordered>
+  <Section id="web">
     <div className={styles.layout}>
       <div className={styles.copy}>
         <SectionHeader
@@ -63,7 +63,7 @@ export const Web = () => (
             <div className={styles.setup}>
               <CommandLine command="npm install -D @rozenite/web" />
               <div className={styles.actions}>
-                <ActionButton href="/docs/rozenite-for-web" variant="outline">
+                <ActionButton href="/docs/targets/rozenite-for-web" variant="outline">
                   Web setup guide
                 </ActionButton>
               </div>

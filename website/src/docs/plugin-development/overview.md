@@ -6,7 +6,7 @@ Plugins add new panels to React Native DevTools through Rozenite — custom debu
 
 A plugin has two parts that talk to each other over a type-safe, event-based bridge:
 
-1. **React Native side** — code that runs in your app.
+1. **App side** — code that runs in your app. Its entry point is `react-native.ts`, on every target Rozenite supports.
 2. **DevTools side** — the panel UI shown in DevTools.
 
 Changes on either side are reflected on the other in real time, and both sides can send data or commands.
@@ -17,7 +17,7 @@ Changes on either side are reflected on the other in real time, and both sides c
 my-plugin/
 ├── src/
 │   └── hello-world.tsx      # Your DevTools panels
-├── react-native.ts          # React Native entry point
+├── react-native.ts          # App-side entry point
 ├── rozenite.config.ts       # Plugin configuration
 ├── vite.config.ts          # Build configuration
 ├── package.json            # Dependencies and scripts

@@ -6,7 +6,7 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 The standalone app is an experiment in alternative DevTools workflows. It may change in future releases.
 :::
 
-The standalone Rozenite app runs your plugin panels in their own window instead of inside React Native DevTools. This is useful if you primarily work with Rozenite plugins and want to keep your plugin state intact when your app reloads — instead of losing everything when React Native DevTools tears down its panel on a Fast Refresh or crash.
+The standalone Rozenite app runs your plugin panels in their own window instead of inside React Native DevTools. It connects straight to the device, so it gives you the plugins you installed and nothing else.
 
 ## Before you start
 
@@ -18,9 +18,13 @@ If you skip this step, `rozenite open` tells you to install it when you run the 
 
 ## Why use it
 
-React Native DevTools reloads its Rozenite panel whenever your app's JS VM reloads (on a Fast Refresh that touches native code, a crash, or a manual reload). That wipes out any panel state — you're back to the default view every time.
+The standalone app is for two situations.
 
-The standalone app keeps your plugins connected through those reloads. Since it connects directly to the device instead of going through React Native DevTools, your plugin panels stay open and preserve their state. This is helpful if you spend most of your debugging time in Rozenite and don't need the full React Native DevTools feature set.
+**You mostly use Rozenite.** If your debugging happens in Rozenite panels rather than in React Native DevTools' built-in tools, the standalone app gives you those panels and nothing else — one window, the plugins you installed, no tab to hunt for.
+
+**You're on another target.** The app connects straight to the device rather than going through React Native DevTools, so it works the same way whichever target you're debugging.
+
+Connecting directly has a useful side effect: your panels aren't torn down when the app's JS VM reloads, so panel state survives a Fast Refresh, a crash or a manual reload.
 
 ## Launching it
 

@@ -29,7 +29,7 @@ Install the browser extension from the [GitHub releases](https://github.com/call
 
 The documentation is available at [rozenite.dev](https://rozenite.dev). You can also use the following links to jump to specific topics:
 
-- [Rozenite for Web](https://rozenite.dev/docs/rozenite-for-web)
+- [Rozenite for Web](https://rozenite.dev/docs/targets/rozenite-for-web)
 - [Quick Start](https://rozenite.dev/docs/getting-started)
 - [Plugin Directory](https://rozenite.dev/plugin-directory)
 - [Plugin Development](https://rozenite.dev/docs/plugin-development/overview)

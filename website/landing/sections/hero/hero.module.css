@@ -33,63 +33,41 @@ html.dark .wash,
     radial-gradient(ellipse 50vw 32vw at 4% 40%, rgba(140, 74, 255, 0.14) 0%, transparent 60%);
 }
 
+/*
+ * One centred column: the mark leads, everything else stacks under it. The
+ * hero used to be a text-and-visual split, which meant a wordmark on the left
+ * and a product shot on the right; the animated mark does the work of both, so
+ * the split had nothing left to hold apart.
+ */
 .container {
   position: relative;
   width: 100%;
   max-width: var(--rz-max-width);
   margin-inline: auto;
   padding-inline: var(--rz-gutter);
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 56px;
-  align-items: center;
-}
-
-.copy {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-}
-
-.logo {
-  width: 172.5px;
-  height: 32px;
-  margin-bottom: 24px;
-}
-
-.logoLight,
-.logoDark {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.logoDark {
-  display: none;
-}
-
-:global(html.dark) .logoLight,
-:global([data-theme='dark']) .logoLight {
-  display: none;
-}
-
-:global(html.dark) .logoDark,
-:global([data-theme='dark']) .logoDark {
-  display: block;
+  align-items: center;
+  text-align: center;
 }
 
 .title {
   margin: 0;
   font-family: var(--rz-font-display);
   font-weight: 500;
-  font-size: clamp(2.25rem, 1.35rem + 2.8vw, 3.75rem);
+  font-size: clamp(2.25rem, 1.5rem + 2.2vw, 3.375rem);
   --rz-lh: 1.04;
   --rz-ls: -0.035em;
 }
 
-/* One sentence per line, so the headline is always exactly two lines. */
+/*
+ * One sentence per block, so the two claims never run together mid-line. Each
+ * still wraps within itself; `balance` keeps the first from stranding a single
+ * short word ("Lynx.") on a line of its own.
+ */
 .titleLine {
   display: block;
+  text-wrap: balance;
 }
 
 .titleMuted {
@@ -97,16 +75,41 @@ html.dark .wash,
 }
 
 .lead {
-  margin: 24px 0 0;
-  max-width: 46ch;
+  margin: 24px auto 0;
+  max-width: 56ch;
   font-size: clamp(1rem, 0.95rem + 0.28vw, 1.125rem);
   --rz-lh: 1.6;
   color: var(--rz-text-secondary);
 }
 
+/* Reads as one line of small caps at desktop width, wrapping to two on a
+   phone. Chips, so `--rz-radius-control` rather than `--rz-radius-surface`. */
+.targets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.target {
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-control);
+  padding: 4px 9px;
+  font-family: var(--rz-font-mono);
+  font-size: 0.6875rem;
+  --rz-lh: 1.4;
+  --rz-ls: 0.04em;
+  color: var(--rz-text-tertiary);
+  white-space: nowrap;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   margin-top: 32px;
 }
@@ -114,25 +117,18 @@ html.dark .wash,
 .install {
   width: min(400px, 100%);
   margin-top: 16px;
+  text-align: left;
 }
 
 .visual {
-  min-width: 0;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 28px;
 }
 
-.screenshot {
-  width: 100%;
-  height: auto;
-}
-
-@media (max-width: 1024px) {
-  .container {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 44px;
-  }
-
-  .copy {
-    max-width: 680px;
+@media (max-width: 720px) {
+  .visual {
+    margin-bottom: 20px;
   }
 }
 

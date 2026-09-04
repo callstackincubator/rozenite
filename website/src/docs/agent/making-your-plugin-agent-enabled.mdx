@@ -8,8 +8,8 @@ This page describes what you need to expose tools from your plugin package.
 
 ## Prerequisites
 
-- You have a Rozenite plugin with a **React Native side** (code that runs inside the app). See [Plugin Development](/docs/plugin-development/overview) if you are new to plugins.
-- Your plugin is already integrated so its React Native entry runs when the app is in development.
+- You have a Rozenite plugin with an **app side** (code that runs inside the app, from its `react-native.ts` entry point). See [Plugin Development](/docs/plugin-development/overview) if you are new to plugins.
+- Your plugin is already integrated so its app entry runs when the app is in development.
 
 ## Add the agent bridge dependency
 
@@ -21,7 +21,7 @@ The bridge provides the same message protocol and tool lifecycle as in-app tools
 
 ## Use the plugin agent tool hook
 
-From your plugin’s React Native code, call `useRozenitePluginAgentTool` with:
+From your plugin’s app-side code, call `useRozenitePluginAgentTool` with:
 
 - **pluginId** – Your plugin’s public ID (e.g. `@rozenite/react-navigation-plugin`). This becomes the **domain** agents use to list and call your tools.
 - **tool** – An `AgentTool`: `name`, `description`, and `inputSchema` (JSON Schema–style).
@@ -59,7 +59,7 @@ export function MyPluginAgentTools() {
 }
 ```
 
-Mount `MyPluginAgentTools` from your plugin’s React Native entry (e.g. next to your DevTools panel registration) so it runs when the app is connected. Agents will see a domain equal to `PLUGIN_ID` and a tool named `echo` (qualified as `@my-org/my-rozenite-plugin.echo`).
+Mount `MyPluginAgentTools` from your plugin’s app entry (e.g. next to your DevTools panel registration) so it runs when the app is connected. Agents will see a domain equal to `PLUGIN_ID` and a tool named `echo` (qualified as `@my-org/my-rozenite-plugin.echo`).
 
 ### Example: plugin-specific tool
 
@@ -111,7 +111,7 @@ The pattern used by Rozenite's official plugins is:
 
 1. Put the **public tool contract** in a non-React module such as `src/shared/agent-tools.ts`.
 2. Define each tool with `defineAgentToolContract<TArgs, TResult>(...)` from `@rozenite/agent-shared`.
-3. Reuse those shared definitions both in your React Native registration hook and in `sdk.ts`.
+3. Reuse those shared definitions both in your app-side registration hook and in `sdk.ts`.
 4. In `sdk.ts`, call `defineAgentToolDescriptors(pluginId, toolDefinitions)` and export the resulting descriptor object.
 
 That split keeps one source of truth for:
@@ -272,7 +272,7 @@ Rozenite derives a short, stable domain name from your `pluginId` alone (for exa
 ## Summary
 
 1. Add **@rozenite/agent-bridge** to your plugin.
-2. In your plugin’s React Native code, call **useRozenitePluginAgentTool** with a stable **pluginId**, a **tool** (name, description, inputSchema), and a **handler**.
+2. In your plugin’s app-side code, call **useRozenitePluginAgentTool** with a stable **pluginId**, a **tool** (name, description, inputSchema), and a **handler**.
 3. Mount the component that registers these tools so it runs when the plugin is active.
 4. Agents will see your plugin as a domain and can list and call your tools via `rozenite agent <pluginId> tools|call ...`.
 
@@ -280,4 +280,4 @@ Rozenite derives a short, stable domain name from your `pluginId` alone (for exa
 
 - [Adding tools to your application](/docs/agent/adding-tools-to-your-application) – expose app-owned tools under the `app` domain.
 - [Rozenite for Agents](/docs/agent/overview) – how agents use domains and tools.
-- [Plugin Development](/docs/plugin-development/overview) for general plugin structure and React Native integration.
+- [Plugin Development](/docs/plugin-development/overview) for general plugin structure and app-side integration.
