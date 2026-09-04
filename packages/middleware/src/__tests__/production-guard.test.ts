@@ -8,6 +8,8 @@ import {
   isSeamDevEntryRequest,
   formatProductionGuardError,
   formatDevAdvisory,
+  formatIntegrationMismatchError,
+  formatIntegrationMismatchAdvisory,
   warnOnceForImport,
   getDevEntrySpecifier,
 } from '../production-guard.js';
@@ -133,6 +135,42 @@ describe('findRozenitePluginForFile', () => {
     expect(plugin?.productionEntries).toEqual([]);
   });
 
+  it('reads integrations out of the manifest', () => {
+    const packageRoot = createTempDir();
+    createPackage(packageRoot, '@acme/lynx-only', {
+      hasManifest: true,
+      manifestContents: { integrations: ['lynx', 'lynx-web'] },
+    });
+
+    const filePath = path.join(packageRoot, 'src', 'index.ts');
+    const plugin = findRozenitePluginForFile(filePath);
+
+    expect(plugin?.integrations).toEqual(['lynx', 'lynx-web']);
+  });
+
+  it('defaults integrations to react-native when the manifest declares none', () => {
+    const packageRoot = createTempDir();
+    createPackage(packageRoot, '@acme/unlabeled', { hasManifest: true });
+
+    const filePath = path.join(packageRoot, 'src', 'index.ts');
+    const plugin = findRozenitePluginForFile(filePath);
+
+    expect(plugin?.integrations).toEqual(['react-native']);
+  });
+
+  it('drops unrecognised integration ids and falls back to react-native if none survive', () => {
+    const packageRoot = createTempDir();
+    createPackage(packageRoot, '@acme/bogus-integrations', {
+      hasManifest: true,
+      manifestContents: { integrations: ['not-a-real-integration', 42] },
+    });
+
+    const filePath = path.join(packageRoot, 'src', 'index.ts');
+    const plugin = findRozenitePluginForFile(filePath);
+
+    expect(plugin?.integrations).toEqual(['react-native']);
+  });
+
   it('memoizes per directory while the manifest is unchanged', () => {
     const packageRoot = createTempDir();
     createPackage(packageRoot, '@acme/memoized', { hasManifest: true });
@@ -232,6 +270,31 @@ describe('isSeamDevEntryRequest', () => {
     expect(isSeamDevEntryRequest(originModulePath, './something-else.js')).toBe(false);
   });
 
+  it('matches the dev-entry specifier requested from inside the Lynx seam package', () => {
+    const packageRoot = createTempDir();
+    createPackage(packageRoot, '@rozenite/lynx');
+
+    const originModulePath = path.join(packageRoot, 'dist', 'index.js');
+
+    expect(isSeamDevEntryRequest(originModulePath, './dev-entry.js')).toBe(true);
+    expect(isSeamDevEntryRequest(originModulePath, './dev-entry')).toBe(true);
+  });
+
+  // Regression: `@rozenite/lynx`'s Rollup-bundled seam rewrites its CJS
+  // chunk's `require()` to the sibling chunk's actual extension
+  // (`./dev-entry.cjs`), unlike `@rozenite/react-native`'s unbundled tsc
+  // build, which keeps the literal `./dev-entry.js` from source in both its
+  // ESM and CJS output. Missing this form silently drops the dev-entry
+  // redirect for every CJS consumer of the Lynx seam.
+  it('matches the .cjs dev-entry specifier a bundled CJS seam build emits', () => {
+    const packageRoot = createTempDir();
+    createPackage(packageRoot, '@rozenite/lynx');
+
+    const originModulePath = path.join(packageRoot, 'dist', 'index.cjs');
+
+    expect(isSeamDevEntryRequest(originModulePath, './dev-entry.cjs')).toBe(true);
+  });
+
   it('does not match when the seam package is not installed (origin outside it)', () => {
     const packageRoot = createTempDir();
     createPackage(packageRoot, '@acme/some-other-package');
@@ -249,6 +312,7 @@ describe('formatProductionGuardError', () => {
         name: '@acme/some-plugin',
         root: '/node_modules/@acme/some-plugin',
         productionEntries: [],
+        integrations: ['react-native'],
       },
       importedFrom: '/project/src/screens/Settings.tsx',
       projectRoot: '/project',
@@ -269,6 +333,7 @@ describe('formatProductionGuardError', () => {
         name: '@acme/some-plugin',
         root: '/node_modules/@acme/some-plugin',
         productionEntries: [],
+        integrations: ['react-native'],
       },
       importedFrom: '/elsewhere/Settings.tsx',
       projectRoot: '/project',
@@ -285,6 +350,7 @@ describe('formatDevAdvisory', () => {
         name: '@rozenite/mmkv-plugin',
         root: '/node_modules/@rozenite/mmkv-plugin',
         productionEntries: [],
+        integrations: ['react-native'],
       },
       importedFrom: '/project/src/screens/Settings.tsx',
       projectRoot: '/project',
@@ -293,6 +359,70 @@ describe('formatDevAdvisory', () => {
     expect(message).toBe(
       'warning: @rozenite/mmkv-plugin imported from src/screens/Settings.tsx.\n' +
         '         Plugin imports belong in rozenite.dev.tsx. This will fail your production build.',
+    );
+  });
+});
+
+describe('formatIntegrationMismatchError', () => {
+  it('matches the documented shape', () => {
+    const message = formatIntegrationMismatchError({
+      plugin: {
+        name: '@acme/rn-only-plugin',
+        root: '/node_modules/@acme/rn-only-plugin',
+        productionEntries: [],
+        integrations: ['react-native'],
+      },
+      importedFrom: '/project/rozenite.dev.tsx',
+      projectRoot: '/project',
+      targetIntegration: 'lynx',
+    });
+
+    const lines = message.split('\n');
+    expect(lines[0]).toBe(
+      '@acme/rn-only-plugin is a Rozenite plugin that does not declare "lynx" support.',
+    );
+    expect(lines[1]).toBe('Declared integrations: react-native.');
+    expect(lines[2]).toBe('Imported from: rozenite.dev.tsx');
+    // Names the escape hatch, defaulting to the Metro/Re.Pack spelling.
+    expect(lines[3]).toMatch(/allowInProduction/);
+    expect(lines[3]).toMatch(/withRozenite\(\)/);
+  });
+
+  it('names the caller-supplied setup function instead of the withRozenite() default', () => {
+    const message = formatIntegrationMismatchError({
+      plugin: {
+        name: '@acme/rn-only-plugin',
+        root: '/node_modules/@acme/rn-only-plugin',
+        productionEntries: [],
+        integrations: ['react-native'],
+      },
+      importedFrom: '/project/rozenite.dev.tsx',
+      projectRoot: '/project',
+      targetIntegration: 'lynx',
+      setupFunctionName: 'rozeniteLynxPlugin()',
+    });
+
+    expect(message.split('\n')[3]).toMatch(/rozeniteLynxPlugin\(\)/);
+  });
+});
+
+describe('formatIntegrationMismatchAdvisory', () => {
+  it('matches the documented shape', () => {
+    const message = formatIntegrationMismatchAdvisory({
+      plugin: {
+        name: '@acme/rn-only-plugin',
+        root: '/node_modules/@acme/rn-only-plugin',
+        productionEntries: [],
+        integrations: ['react-native'],
+      },
+      importedFrom: '/project/src/screens/Settings.tsx',
+      projectRoot: '/project',
+      targetIntegration: 'lynx',
+    });
+
+    expect(message).toBe(
+      'warning: @acme/rn-only-plugin imported from src/screens/Settings.tsx, but it does not declare "lynx" support.\n' +
+        '         Declared integrations: react-native. This will fail your production build.',
     );
   });
 });

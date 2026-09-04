@@ -1,7 +1,7 @@
 import { useMemo, useState } from '@lynx-js/react';
 import { createSection, useRozeniteControlsPlugin } from '@rozenite/controls-plugin';
 
-import { Button, Group, Row } from '../ui.jsx';
+import { Button, Group, Row } from '../src/ui.jsx';
 
 /**
  * Minimal Controls playground: one section the DevTools panel can read and

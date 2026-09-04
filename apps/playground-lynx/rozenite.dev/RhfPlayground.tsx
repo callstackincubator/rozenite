@@ -1,7 +1,7 @@
 import { useController, useForm } from 'react-hook-form';
 import { useRozeniteRHFPlugin } from '@rozenite/rhf-plugin';
 
-import { Group, Row } from '../ui.jsx';
+import { Group, Row } from '../src/ui.jsx';
 
 type DemoForm = {
   email: string;

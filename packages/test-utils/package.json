@@ -17,6 +17,7 @@
     "test": "vitest --run --passWithNoTests"
   },
   "devDependencies": {
+    "@lynx-js/rspeedy": "^0.16.5",
     "@react-native/metro-config": "~0.86.0",
     "expo": "^57.0.7",
     "metro": "0.84.4",
