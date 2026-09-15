@@ -53,6 +53,30 @@ const DEVTOOLS_TOOK_CONNECTION_REASON = '[NEW_DEBUGGER_OPENED]';
 const getCloseReason = (reason: unknown): string =>
   Buffer.isBuffer(reason) ? reason.toString() : String(reason ?? '');
 
+/**
+ * Escapes every non-ASCII code unit as a `\uXXXX` escape sequence, so that the
+ * JS source text handed to `Runtime.evaluate` is pure ASCII.
+ *
+ * Hermes compiles that source text from UTF-8 and fails on a raw astral-plane
+ * code unit with `Invalid UTF-8 code point`, which loses the message without
+ * any visible error. The escape sequence it produces is plain ASCII, and the
+ * device's own parser turns it back into the original code unit, so the payload
+ * the device reconstructs is byte-identical to the one the host serialized.
+ *
+ * This has to run on the output of the second `JSON.stringify`, never before
+ * it: escaped earlier, `JSON.stringify` escapes the backslash instead and the
+ * device receives `\uD83C` as six characters of text.
+ *
+ * Identical in all three hosts that speak this protocol (here, the embedded
+ * bindings model in `@rozenite/runtime`, and the device connection in
+ * `@rozenite/app`), like the dispatcher-wait poll further down.
+ */
+const toAsciiJsSource = (source: string): string =>
+  source.replace(
+    /[^\0-\x7F]/g,
+    (codeUnit) => `\\u${codeUnit.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  );
+
 type PendingCommand = {
   /** Retained so a device error can name the method it refused. */
   method: string;
@@ -376,11 +400,27 @@ export const createAgentSession = (options: {
 
   const sendDomainMessage = (domain: string, message: unknown): Promise<void> => {
     const serializedMessage = JSON.stringify(message);
-    const escapedMessage = JSON.stringify(serializedMessage);
+    const escapedMessage = toAsciiJsSource(JSON.stringify(serializedMessage));
+
     return markPromiseAsHandled(
       sendCommand('Runtime.evaluate', {
         expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify(domain)}, ${escapedMessage})`,
-      }).then(() => undefined),
+      })
+        .then((response) => {
+          // The device rejecting the source text is reported on the response,
+          // so this is the only place a lost message can be noticed. Thrown
+          // rather than logged because the callers that matter await it:
+          // `bootstrap` retries the handshake, and an agent tool call turns it
+          // into an error for the client instead of an empty result.
+          const { exceptionDetails } = response as CDPEvaluateResponse;
+          if (exceptionDetails) {
+            throw new Error(
+              `Failed to send a message to the ${domain} domain: ` +
+                (exceptionDetails.text ?? 'unknown error'),
+            );
+          }
+        })
+        .then(() => undefined),
     );
   };
 

@@ -140,6 +140,23 @@ const getExpressions = (socket: FakeWebSocket): string[] =>
     .map((command) => String(command.params?.expression ?? ''));
 
 /**
+ * Replays what the device does with the injected source text: compile it,
+ * call the dispatcher, and `JSON.parse` the payload it is handed.
+ */
+const evaluateOnDevice = (expression: string): Array<[string, unknown]> => {
+  const delivered: Array<[string, unknown]> = [];
+  const dispatcher = {
+    sendMessage: (domain: string, payload: string): void => {
+      delivered.push([domain, JSON.parse(payload)]);
+    },
+  };
+
+  new Function(RUNTIME_GLOBAL, expression)(dispatcher);
+
+  return delivered;
+};
+
+/**
  * The device-local page id a real target would report: the `page` query
  * parameter of its own `webSocketDebuggerUrl`, exactly like the
  * middleware's `extractPageId` (`packages/middleware/src/agent/metro-discovery.ts`).
@@ -408,6 +425,53 @@ describe('createDeviceConnection', () => {
           expression.includes(JSON.stringify(JSON.stringify({ hello: 3 }))),
         ),
       ).toBe(true);
+    });
+  });
+
+  describe('message encoding', () => {
+    it('keeps the injected expression ASCII-only so Hermes can compile it', async () => {
+      const { connection, socket } = await connectAndBootstrap();
+      const message = { key: 'note', value: 'ship \u{1F389} it \u{2014} \u{65E5}\u{672C}\u{8A9E}' };
+
+      const before = socket.sent.length;
+      connection.send(message);
+      await waitUntil(() => socket.sent.length > before);
+
+      const expressions = getExpressions(socket).filter((expression) =>
+        expression.includes(`${RUNTIME_GLOBAL}.sendMessage("rozenite"`),
+      );
+      expect(expressions).toHaveLength(1);
+
+      // The bug this guards: Hermes compiles the expression as UTF-8 source
+      // and rejects a raw astral-plane code unit with `Invalid UTF-8 code
+      // point`, losing the message. The browser accepts that raw form, so this
+      // ASCII-only assertion is the part that actually reproduces the failure;
+      // the round trip below proves the escaping does not alter the payload.
+      expect(expressions[0]).toMatch(/^[\x20-\x7E]+$/);
+      expect(evaluateOnDevice(expressions[0] ?? '')).toEqual([['rozenite', message]]);
+    });
+
+    it('reports a message the device refused to evaluate', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const { connection, socket } = await connectAndBootstrap();
+
+      socket.responder = (method, params) => {
+        const expression = String(params?.expression ?? '');
+        if (method === 'Runtime.evaluate' && expression.includes('.sendMessage(')) {
+          return { exceptionDetails: { text: 'SyntaxError: Invalid UTF-8 code point' } };
+        }
+        return defaultResponder(method, params);
+      };
+
+      const before = socket.sent.length;
+      connection.send({ key: 'note', value: 'hello' });
+      await waitUntil(() => socket.sent.length > before);
+      await vi.advanceTimersByTimeAsync(50);
+
+      expect(consoleError).toHaveBeenCalledTimes(1);
+      expect(consoleError.mock.calls[0][0]).toContain('Invalid UTF-8 code point');
+
+      consoleError.mockRestore();
     });
   });
 

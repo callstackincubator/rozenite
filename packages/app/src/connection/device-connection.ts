@@ -107,6 +107,30 @@ type CDPEvaluateResult = {
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Escapes every non-ASCII code unit as a `\uXXXX` escape sequence, so that the
+ * JS source text handed to `Runtime.evaluate` is pure ASCII.
+ *
+ * Hermes compiles that source text from UTF-8 and fails on a raw astral-plane
+ * code unit with `Invalid UTF-8 code point`, which loses the message without
+ * any visible error. The escape sequence it produces is plain ASCII, and the
+ * device's own parser turns it back into the original code unit, so the payload
+ * the device reconstructs is byte-identical to the one the host serialized.
+ *
+ * This has to run on the output of the second `JSON.stringify`, never before
+ * it: escaped earlier, `JSON.stringify` escapes the backslash instead and the
+ * device receives `\uD83C` as six characters of text.
+ *
+ * Identical in all three hosts that speak this protocol (here, the embedded
+ * bindings model in `@rozenite/runtime`, and the agent session in
+ * `@rozenite/middleware`), like the dispatcher-wait poll below.
+ */
+const toAsciiJsSource = (source: string): string =>
+  source.replace(
+    /[^\0-\x7F]/g,
+    (codeUnit) => `\\u${codeUnit.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  );
+
 /** A detached `void sendCommand(...)` (queue flushing, fire-and-forget
  * sends) has nothing else attached to observe its rejection. Ported from
  * `session.ts`'s `markPromiseAsHandled` so a socket dying mid-send surfaces
@@ -292,11 +316,27 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
 
   const sendDomainMessage = (socket: WebSocket, message: unknown): Promise<void> => {
     const serializedMessage = JSON.stringify(message);
-    const escapedMessage = JSON.stringify(serializedMessage);
+    const escapedMessage = toAsciiJsSource(JSON.stringify(serializedMessage));
+
     return markPromiseAsHandled(
       sendCommand(socket, 'Runtime.evaluate', {
         expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify('rozenite')}, ${escapedMessage})`,
-      }).then(() => undefined),
+      })
+        .then((response) => {
+          // The device rejecting the source text is reported on the response,
+          // so this is the only place a lost message can be noticed. Reported
+          // rather than thrown because every caller here is a detached
+          // fire-and-forget send (`send`, `flushQueue`) with nothing left to
+          // hand an error to.
+          const { exceptionDetails } = response as CDPEvaluateResult;
+          if (exceptionDetails) {
+            console.error(
+              '[rozenite] Failed to send a message to the rozenite domain: ' +
+                (exceptionDetails.text ?? 'unknown error'),
+            );
+          }
+        })
+        .then(() => undefined),
     );
   };
 
