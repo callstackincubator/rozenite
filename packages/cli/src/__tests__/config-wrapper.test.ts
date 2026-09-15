@@ -179,7 +179,12 @@ describe('wrapConfigFile', () => {
 
   // Helper function to create a config file with given content
   const createConfigFile = async (bundlerType: BundlerType, content: string, extension = '.js') => {
-    const baseName = bundlerType === 'metro' ? 'metro.config' : 'rspack.config';
+    const baseName =
+      bundlerType === 'metro'
+        ? 'metro.config'
+        : bundlerType === 'repack'
+          ? 'rspack.config'
+          : 'lynx.config';
     const filename = baseName + extension;
     const configPath = path.join(tempDir, filename);
     await fs.writeFile(configPath, content, 'utf8');
@@ -413,6 +418,126 @@ describe('wrapConfigFile', () => {
         expect(wrappedContent.replace(/\s+/g, ' ')).toBe(originalContent.replace(/\s+/g, ' '));
         expect(validateJavaScript(wrappedContent)).toBe(true);
       });
+    });
+  });
+
+  describe('lynx', () => {
+    it('should add rozeniteLynxPlugin to a basic lynx.config.ts', async () => {
+      const basicConfig = `import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
+
+export default defineConfig({
+  plugins: [pluginReactLynx()],
+});`;
+
+      const configPath = await createConfigFile('lynx', basicConfig, '.ts');
+
+      await wrapConfigFile(tempDir, 'lynx');
+
+      const wrappedContent = await fs.readFile(configPath, 'utf8');
+
+      expect(wrappedContent).toContain(
+        "import { rozeniteLynxPlugin } from '@rozenite/lynx/rspeedy';",
+      );
+      expect(wrappedContent).toContain('pluginReactLynx()');
+      expect(wrappedContent).toContain('rozeniteLynxPlugin(),');
+      // The plugin call must land inside the plugins array.
+      expect(wrappedContent).toMatch(/plugins:\s*\[[\s\S]*rozeniteLynxPlugin\(\)[\s\S]*\]/);
+    });
+
+    it('should add rozeniteLynxPlugin to a real-world create-rspeedy config', async () => {
+      // Mirrors what `create-rspeedy`'s react template generates.
+      const realWorldConfig = `import { defineConfig } from '@lynx-js/rspeedy'
+
+import { pluginQRCode } from '@lynx-js/qrcode-rsbuild-plugin'
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin'
+import { pluginTypeCheck } from '@rsbuild/plugin-type-check'
+
+export default defineConfig({
+  plugins: [
+    pluginQRCode({
+      schema(url) {
+        // We use \`?fullscreen=true\` to open the page in LynxExplorer in full screen mode
+        return \`\${url}?fullscreen=true\`
+      },
+    }),
+    pluginReactLynx(),
+    pluginTypeCheck(),
+  ],
+})`;
+
+      const configPath = await createConfigFile('lynx', realWorldConfig, '.ts');
+
+      await wrapConfigFile(tempDir, 'lynx');
+
+      const wrappedContent = await fs.readFile(configPath, 'utf8');
+
+      expect(wrappedContent).toContain(
+        "import { rozeniteLynxPlugin } from '@rozenite/lynx/rspeedy';",
+      );
+      expect(wrappedContent).toContain('rozeniteLynxPlugin(),');
+      // All the original plugins must be preserved.
+      expect(wrappedContent).toContain('pluginQRCode({');
+      expect(wrappedContent).toContain('pluginReactLynx()');
+      expect(wrappedContent).toContain('pluginTypeCheck()');
+      // The generated file is otherwise structurally valid JS/TS.
+      const openBraces = (wrappedContent.match(/\{/g) || []).length;
+      const closeBraces = (wrappedContent.match(/\}/g) || []).length;
+      expect(openBraces).toBe(closeBraces);
+      const openParens = (wrappedContent.match(/\(/g) || []).length;
+      const closeParens = (wrappedContent.match(/\)/g) || []).length;
+      expect(openParens).toBe(closeParens);
+    });
+
+    it('should add rozeniteLynxPlugin to an empty plugins array', async () => {
+      const emptyPluginsConfig = `import { defineConfig } from '@lynx-js/rspeedy';
+
+export default defineConfig({
+  plugins: [],
+});`;
+
+      const configPath = await createConfigFile('lynx', emptyPluginsConfig, '.ts');
+
+      await wrapConfigFile(tempDir, 'lynx');
+
+      const wrappedContent = await fs.readFile(configPath, 'utf8');
+
+      expect(wrappedContent).toContain('plugins: [rozeniteLynxPlugin()]');
+    });
+
+    it('should not modify an already configured lynx.config.ts', async () => {
+      const alreadyWrapped = `import { defineConfig } from '@lynx-js/rspeedy';
+import { rozeniteLynxPlugin } from '@rozenite/lynx/rspeedy';
+
+export default defineConfig({
+  plugins: [rozeniteLynxPlugin()],
+});`;
+
+      const configPath = await createConfigFile('lynx', alreadyWrapped, '.ts');
+
+      await wrapConfigFile(tempDir, 'lynx');
+
+      const wrappedContent = await fs.readFile(configPath, 'utf8');
+
+      expect(wrappedContent).toBe(alreadyWrapped);
+    });
+
+    it('should throw when lynx.config.ts does not exist', async () => {
+      await expect(wrapConfigFile(tempDir, 'lynx')).rejects.toThrow(
+        'Configuration file lynx.config.{.js,.mjs,.cjs,.ts,.cts,.mts} not found',
+      );
+    });
+
+    it('should throw when the config has no plugins array', async () => {
+      const noPluginsConfig = `import { defineConfig } from '@lynx-js/rspeedy';
+
+export default defineConfig({});`;
+
+      await createConfigFile('lynx', noPluginsConfig, '.ts');
+
+      await expect(wrapConfigFile(tempDir, 'lynx')).rejects.toThrow(
+        'Could not find a "plugins" array',
+      );
     });
   });
 

@@ -9,14 +9,32 @@ import { spawn } from '../utils/spawn.js';
 import { step } from '../utils/steps.js';
 
 const formatBundlerType = (bundlerType: BundlerType): string => {
-  return bundlerType === 'metro' ? 'Metro' : 'Re.Pack';
+  switch (bundlerType) {
+    case 'metro':
+      return 'Metro';
+    case 'repack':
+      return 'Re.Pack';
+    case 'lynx':
+      return 'Lynx';
+  }
+};
+
+const getPackageName = (bundlerType: BundlerType): string => {
+  switch (bundlerType) {
+    case 'metro':
+      return '@rozenite/metro';
+    case 'repack':
+      return '@rozenite/repack';
+    case 'lynx':
+      return '@rozenite/lynx';
+  }
 };
 
 export const initCommand = async (projectRoot: string) => {
   intro('Rozenite');
 
   if (!isProject(projectRoot)) {
-    logger.error("I couldn't find a React Native project in this directory.");
+    logger.error("I couldn't find a React Native or Lynx project in this directory.");
     return;
   }
 
@@ -54,13 +72,13 @@ export const initCommand = async (projectRoot: string) => {
 
   if (!bundlerTypes.length) {
     throw new Error(
-      'Could not determine bundler type. Please ensure you have a metro.config.js or rspack.config.js file.',
+      'Could not determine bundler type. Please ensure you have a metro.config.js, rspack.config.js, or lynx.config.ts file.',
     );
   }
 
   for (const bundlerType of bundlerTypes) {
     // Install the appropriate Rozenite package
-    const packageName = bundlerType === 'metro' ? '@rozenite/metro' : '@rozenite/repack';
+    const packageName = getPackageName(bundlerType);
 
     await step(
       {
@@ -84,6 +102,12 @@ export const initCommand = async (projectRoot: string) => {
       async () => {
         await wrapConfigFile(projectRoot, bundlerType);
       },
+    );
+  }
+
+  if (bundlerTypes.includes('lynx')) {
+    logger.info(
+      'Lynx DevTool is off by default. Turn it on in LynxExplorer (Settings → Lynx DevTool Switches) or in your app, then relaunch — otherwise Rozenite will find no target to connect to. See https://rozenite.dev/docs/rozenite-for-lynx for details.',
     );
   }
 
