@@ -4,9 +4,11 @@ import path from 'node:path';
 const MODULE_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts', '.cts', '.mts'];
 const METRO_CONFIG_FILE = 'metro.config.js';
 const REPACK_CONFIG_FILE = 'rspack.config.js';
+const LYNX_CONFIG_FILE = 'lynx.config.js';
+const LYNX_RSPEEDY_PACKAGE = '@lynx-js/rspeedy';
 
 export type ProjectType = 'react-native-cli' | 'expo';
-export type BundlerType = 'metro' | 'repack';
+export type BundlerType = 'metro' | 'repack' | 'lynx';
 
 const isExpoProject = (projectRoot: string): boolean => {
   const appJsonPath = path.join(projectRoot, 'app.json');
@@ -21,6 +23,25 @@ const isExpoProject = (projectRoot: string): boolean => {
     return typeof appJson === 'object' && appJson !== null && 'expo' in appJson;
   } catch {
     // If we can't parse the JSON, it's not a valid Expo project
+    return false;
+  }
+};
+
+const hasDependency = (projectRoot: string, packageName: string): boolean => {
+  const packageJsonPath = path.join(projectRoot, 'package.json');
+
+  if (!fs.existsSync(packageJsonPath)) {
+    return false;
+  }
+
+  try {
+    const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+    const packageJson = JSON.parse(packageJsonContent);
+    return Boolean(
+      packageJson?.dependencies?.[packageName] || packageJson?.devDependencies?.[packageName],
+    );
+  } catch {
+    // If we can't parse the JSON, we can't tell.
     return false;
   }
 };
@@ -67,6 +88,13 @@ export const getAvailableBundlerTypes = (projectRoot: string): BundlerType[] => 
 
   if (isSourceFilePresent(projectRoot, REPACK_CONFIG_FILE)) {
     bundlers.push('repack');
+  }
+
+  if (
+    isSourceFilePresent(projectRoot, LYNX_CONFIG_FILE) ||
+    hasDependency(projectRoot, LYNX_RSPEEDY_PACKAGE)
+  ) {
+    bundlers.push('lynx');
   }
 
   return bundlers;

@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-export type BundlerType = 'metro' | 'repack';
+export type BundlerType = 'metro' | 'repack' | 'lynx';
 
 const CONFIG_BASE_NAMES = {
   metro: 'metro.config',
   repack: 'rspack.config',
+  lynx: 'lynx.config',
 } as const;
 
 const MODULE_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts', '.cts', '.mts'] as const;
@@ -18,6 +19,10 @@ const WRAPPER_IMPORTS = {
   repack: {
     packageName: '@rozenite/repack',
     importName: 'withRozenite',
+  },
+  lynx: {
+    packageName: '@rozenite/lynx/rspeedy',
+    importName: 'rozeniteLynxPlugin',
   },
 } as const;
 
@@ -141,6 +146,96 @@ const findFirstImportLine = (lines: string[]): number => {
 };
 
 /**
+ * Finds the index of the `]` matching the `[` at `openIndex`, skipping over
+ * brackets that appear inside string/template literals or comments.
+ */
+const findMatchingBracket = (source: string, openIndex: number): number => {
+  let depth = 0;
+
+  for (let i = openIndex; i < source.length; i++) {
+    const char = source[i];
+
+    if (char === '"' || char === "'" || char === '`') {
+      const quote = char;
+      i++;
+      while (i < source.length && source[i] !== quote) {
+        if (source[i] === '\\') {
+          i++;
+        }
+        i++;
+      }
+      continue;
+    }
+
+    if (char === '/' && source[i + 1] === '/') {
+      while (i < source.length && source[i] !== '\n') {
+        i++;
+      }
+      continue;
+    }
+
+    if (char === '/' && source[i + 1] === '*') {
+      i += 2;
+      while (i < source.length && !(source[i] === '*' && source[i + 1] === '/')) {
+        i++;
+      }
+      i++;
+      continue;
+    }
+
+    if (char === '[') {
+      depth++;
+    } else if (char === ']') {
+      depth--;
+      if (depth === 0) {
+        return i;
+      }
+    }
+  }
+
+  return -1;
+};
+
+/**
+ * Adds `rozeniteLynxPlugin()` as the last entry of the `plugins` array in a
+ * `lynx.config.ts` (rspeedy/Rsbuild) file, rather than wrapping the whole
+ * config export the way Metro/Re.Pack are wrapped — rspeedy plugins are
+ * declared as a list, not composed around the exported config object.
+ */
+const addPluginToLynxConfig = (sourceCode: string, importName: string): string => {
+  const pluginsMatch = /plugins\s*:\s*(\[)/.exec(sourceCode);
+
+  if (!pluginsMatch) {
+    throw new Error('Could not find a "plugins" array in the Lynx configuration file');
+  }
+
+  const openIndex = pluginsMatch.index + pluginsMatch[0].length - 1;
+  const closeIndex = findMatchingBracket(sourceCode, openIndex);
+
+  if (closeIndex === -1) {
+    throw new Error('Could not find the end of the "plugins" array in the Lynx configuration file');
+  }
+
+  const inner = sourceCode.slice(openIndex + 1, closeIndex);
+  const trailingWhitespaceMatch = /\s*$/.exec(inner);
+  const trailingWhitespace = trailingWhitespaceMatch ? trailingWhitespaceMatch[0] : '';
+  const content = inner.slice(0, inner.length - trailingWhitespace.length);
+  const needsComma = content.trim().length > 0 && !content.trimEnd().endsWith(',');
+
+  const newInner =
+    content.trim().length === 0
+      ? `${importName}()`
+      : `${content}${needsComma ? ',' : ''}\n  ${importName}(),`;
+
+  return (
+    sourceCode.slice(0, openIndex + 1) +
+    newInner +
+    trailingWhitespace +
+    sourceCode.slice(closeIndex)
+  );
+};
+
+/**
  * Wraps a bundler configuration file export with withRozenite using smart string manipulation
  * This preserves original formatting while making precise changes
  */
@@ -214,7 +309,9 @@ export const wrapConfigFile = async (
   }
 
   // Wrap the export if not already wrapped
-  if (!hasWrapper) {
+  if (!hasWrapper && bundlerType === 'lynx') {
+    sourceCode = addPluginToLynxConfig(sourceCode, importName);
+  } else if (!hasWrapper) {
     // Handle different export patterns using regex with minimal changes
 
     // Pattern 1: export default { ... }

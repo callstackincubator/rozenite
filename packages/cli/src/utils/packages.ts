@@ -91,8 +91,14 @@ export const isPackageInstalled = async (
 
 export const isProject = (projectRoot: string): boolean => {
   const packageJsonPath = path.join(projectRoot, 'package.json');
-  return (
-    fs.existsSync(packageJsonPath) &&
-    fs.readFileSync(packageJsonPath, 'utf8').includes('react-native')
-  );
+
+  if (!fs.existsSync(packageJsonPath)) {
+    return false;
+  }
+
+  const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+  // 'react-native' covers React Native CLI, Expo and Re.Pack projects.
+  // 'lynx' covers rspeedy/Rsbuild-based Lynx projects, which depend on
+  // '@lynx-js/rspeedy' rather than on react-native itself.
+  return packageJsonContent.includes('react-native') || packageJsonContent.includes('@lynx-js/');
 };
