@@ -90,5 +90,9 @@
   {
     "npmUrl": "https://www.npmjs.com/package/@avasapp/rozenite-plugin-ably",
     "githubUrl": "https://github.com/avas-app/rozenite-plugin-ably"
+  },
+  {
+    "npmUrl": "https://www.npmjs.com/package/rozenite-i18n-devtools",
+    "githubUrl": "https://github.com/sbaiahmed1/rozenite-i18n-devtools"
   }
 ]
