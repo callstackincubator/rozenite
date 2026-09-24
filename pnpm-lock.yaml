@@ -341,6 +341,9 @@ importers:
       '@types/react-dom':
         specifier: ~19.2.3
         version: 19.2.4(@types/react@19.2.18)
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       babel-loader:
         specifier: ^10.1.1
         version: 10.1.1(@babel/core@7.29.0(supports-color@8.1.1))(webpack@5.105.4)
@@ -374,6 +377,9 @@ importers:
       webpack-dev-server:
         specifier: ^5.2.3
         version: 5.2.3(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)(webpack-cli@7.0.2)(webpack@5.105.4)
+      ws:
+        specifier: ^8.18.3
+        version: 8.21.2
 
   apps/playground-lynx:
     dependencies:
