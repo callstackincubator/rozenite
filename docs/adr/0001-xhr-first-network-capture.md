@@ -87,16 +87,22 @@ WebSocket traffic.
    for observed requests exactly as it is today.
 
 2. **One generic fetch wrapper covers every fetch implementation that does
-   not send an XHR.** `wrapFetch(original, source)` is installed on
-   `globalThis.fetch` and on Expo's writable private export
-   `expo/src/winter/fetch/fetch` when it resolves. The wrapper sets a
-   module-level "active fetch" marker before calling the original and
-   clears it afterwards; the patched `send` marks the active call as having
-   sent an XHR; a wrapper whose call sent an XHR records nothing. The global
-   wrapper is not installed when `globalThis.fetch` is already
-   `react-native-nitro-fetch`'s `fetch`, because decision 3 records that
-   traffic. The source label is `expo` when the wrapped function is Expo's
-   implementation and `builtin` otherwise.
+   not send an XHR.** `wrapFetch(original, source)` is installed on Expo's
+   writable private export `expo/src/winter/fetch/fetch` when it resolves,
+   and on `globalThis.fetch` only when the global is, or lazily resolves
+   to, Expo's implementation. The global is read before the private export
+   is patched, so an Expo getter that later resolves to the Expo wrapper is
+   recognised and not wrapped a second time, and disable restores Expo's
+   original. The wrapper sets a module-level "active fetch" marker before
+   calling the original and clears it afterwards; the patched `send` marks
+   the active call as having sent an XHR; a wrapper whose call sent an XHR
+   records nothing. The global is never wrapped when it is React Native's
+   own polyfill or an application wrapper around it: such wrappers commonly
+   send their XHR asynchronously (after awaiting a token, for example),
+   which defeats the synchronous marker and records every request twice.
+   The XHR hook already sees that traffic. The global is also not wrapped
+   when it is `react-native-nitro-fetch`'s `fetch`, because decision 3
+   records that traffic. Every fetch-wrapper event is labelled `expo`.
 
 3. **nitro traffic keeps coming from `react-native-nitro-fetch`'s
    `NetworkInspector`.** Its `Response.clone()` drops streaming bodies and
@@ -137,16 +143,13 @@ WebSocket traffic.
   removing a feature from the list above and needs its own decision.
 - A fix to timing, sizing or body handling is made once in the recorder and
   applies to built-in, Expo and nitro traffic alike.
-- Double counting is prevented by a synchronous invariant: a fetch
-  implementation that sends its XHR asynchronously would be recorded twice.
-  No such implementation is known; `whatwg-fetch` sends synchronously.
+- Double counting is prevented by scope, not only by the synchronous
+  marker: the fetch wrapper is installed only where the wrapped function is
+  known to be a native implementation. A future React Native release that
+  ships a native global `fetch` needs a new decision to wrap it.
 - Expo SDK 54 and 55 lose response bodies for `expo/fetch`; the request row
   itself is still recorded. Expo SDK 56 and newer are unaffected.
 - nitro bodies grow from 4 KiB to 1 MiB; the DevTools panel already handles
   bodies of that size from the built-in path.
 - The SSE inspector's dependency on the XHR hook remains, now through an
   exported lookup rather than a private field.
-- The decision rests on the `whatwg-fetch` behaviour verified in this
-  repository's `node_modules`; a future React Native release that ships a
-  native `fetch` would be caught by the global fetch wrapper and needs no
-  new decision.
