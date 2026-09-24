@@ -113,7 +113,9 @@ export const createNormaliser = ({ fixtureBaseUrl }: NormaliseOptions): Normalis
       .replace(/boundary=("?)[^";\s]+\1/gi, 'boundary=<boundary>')
       // iOS embeds a fresh NSURLSessionTask id (`LocalDataTask <UUID>.<n>`) in
       // every NSURLError description, which reaches the app-side error text.
-      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<uuid>');
+      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<uuid>')
+      // The task counter after the id (`.<3>`) is a per-process sequence.
+      .replace(/(LocalDataTask <<uuid>>)\.<\d+>/g, '$1.<n>');
     return replaced.length > MAX_VERBATIM_STRING_LENGTH ? summariseLongString(replaced) : replaced;
   };
 

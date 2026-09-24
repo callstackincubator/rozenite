@@ -2189,8 +2189,8 @@ exports[`Network Activity on device > nitro-abort > tap 1`] = `
         "payload": {
           "canceled": false,
           "error": "Error: Error Domain=NSURLErrorDomain Code=-999 "cancelled" UserInfo={NSErrorFailingURLStringKey=<fixture>/slow?ms=5000, NSErrorFailingURLKey=<fixture>/slow?ms=5000, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <<uuid>>.<3>"
-), _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <<uuid>>.<3>, NSLocalizedDescription=cancelled}",
+    "LocalDataTask <<uuid>>.<n>"
+), _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <<uuid>>.<n>, NSLocalizedDescription=cancelled}",
           "requestId": "<request-1>",
           "source": "nitro",
           "timestamp": "<number>",

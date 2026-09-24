@@ -112,7 +112,7 @@ describe('createNormaliser', () => {
         error:
           'LocalDataTask <B13FCD88-8DE3-4DB2-A559-46F847796A23>.<3>, NSLocalizedDescription=cancelled',
       }),
-    ).toEqual({ error: 'LocalDataTask <<uuid>>.<3>, NSLocalizedDescription=cancelled' });
+    ).toEqual({ error: 'LocalDataTask <<uuid>>.<n>, NSLocalizedDescription=cancelled' });
   });
 
   it('masks the Metro origin and keeps only the first initiator frames', () => {
