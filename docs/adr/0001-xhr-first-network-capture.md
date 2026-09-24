@@ -43,17 +43,23 @@ silently truncated at nitro's 4 KiB default.
 The question raised was whether wrapping `fetch` could replace the XHR hook
 and collapse all of this into one wrapper. Two facts decide it:
 
-- **In React Native, `fetch` is XHR.** RN 0.86's
+- **React Native's own `fetch` is XHR.** RN 0.86's
   `Libraries/Network/fetch.js` installs the `whatwg-fetch` polyfill, whose
   `fetch()` constructs an `XMLHttpRequest` and calls `open()` and `send()`
-  synchronously inside the promise executor. An XHR hook sees every
-  built-in `fetch` call exactly once, and also sees Axios (whose default RN
+  synchronously inside the promise executor. An XHR hook sees every call
+  to that `fetch` exactly once, and also sees Axios (whose default RN
   adapter is XHR), `react-native-sse` (built on XHR) and any other direct
   XHR user. A fetch-only hook sees none of those.
 - **Expo's `expo/fetch` and `react-native-nitro-fetch` never touch XHR.**
   They are native implementations. The only JavaScript-level way to see
   them is to wrap their `fetch` function, or, for nitro, to consume its
-  first-party `NetworkInspector`.
+  first-party `NetworkInspector`. Expo SDK 56 and newer also make
+  `expo/fetch` the global `fetch` as a side effect of importing `expo`
+  (`expo/src/winter/runtime.native.ts`), unless the app sets
+  `EXPO_PUBLIC_USE_RN_FETCH`. In such an app a plain `fetch()` call is a
+  native fetch and only a wrapper around the global sees it, while Axios
+  and SSE in the same app still go through XHR. Both hooks are therefore
+  needed in one app, not one or the other depending on the app.
 
 A fetch-only wrapper is therefore not a replacement for the XHR hook. The
 design adopted here is XHR first, with a fetch wrapper only for fetch
