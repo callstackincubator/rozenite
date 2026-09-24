@@ -1,17 +1,8 @@
-import { createNanoEvents } from 'nanoevents';
-import { getNetworkRequestsRegistry } from './network-requests-registry';
-import { XHRInterceptor } from './xhr-interceptor';
-import { FetchInterceptor } from './fetch-interceptor';
-import {
-  getRequestBody,
-  getResponseSize,
-  getInitiatorFromStack,
-  setupRequestOverride,
-} from './http-utils';
-import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
-import { getContentType } from '../utils';
-import { getOverridesRegistry } from './overrides-registry';
-import type { HttpEventMap, HttpMethod } from '../../shared/http-events';
+import { getRecorder } from './recorder';
+import { enableXhrHook, disableXhrHook, isXhrHookEnabled } from './xhr-hook';
+import { enableFetchHook, disableFetchHook, isFetchHookEnabled } from './fetch-hook';
+import type { HttpEventMap } from '../../shared/http-events';
+import type { ResponseBody } from '../../shared/client';
 import type { Inspector } from '../inspector';
 
 // HTTP-specific event map for the inspector
@@ -29,180 +20,50 @@ export const isHttpEvent = (type: string): type is keyof HttpEventMap => {
   return (HTTP_EVENTS as readonly string[]).includes(type);
 };
 
-type NanoEventsMap = {
-  [K in keyof HttpEventMap]: (data: HttpEventMap[K]) => void;
-};
-
 export type HTTPInspector = Inspector<HttpEventMap> & {
-  getNetworkRequestsRegistry: () => ReturnType<typeof getNetworkRequestsRegistry>;
+  getResponseBody: (requestId: string) => Promise<ResponseBody>;
+  clearResponseBodies: () => void;
 };
 
-const READY_STATE_HEADERS_RECEIVED = 2;
-
+/**
+ * Thin glue over the recorder and its two adapters. The XHR hook is the
+ * primary capture path for the built-in stack; the fetch hook covers every
+ * fetch implementation that doesn't send an XHR (see `fetch-dedupe.ts`).
+ * nitro traffic is wired up separately, in `network-inspector.ts`, straight
+ * into the same recorder.
+ */
 export const getHTTPInspector = (): HTTPInspector => {
-  const eventEmitter = createNanoEvents<NanoEventsMap>();
-  const networkRequestsRegistry = getNetworkRequestsRegistry();
-
-  const overridesRegistry = getOverridesRegistry();
-  XHRInterceptor.setOverrideCallback((request) => setupRequestOverride(overridesRegistry, request));
+  const recorder = getRecorder();
 
   return {
     enable: () => {
-      if (!XHRInterceptor.isInterceptorEnabled()) {
-        XHRInterceptor.setSendCallback((data, request) => {
-          const initiator = getInitiatorFromStack();
-          const sendTime = Date.now();
-          const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-
-          request._rozeniteRequestId = requestId;
-          networkRequestsRegistry.addEntry(requestId, request);
-
-          let ttfb = 0;
-
-          eventEmitter.emit('request-sent', {
-            requestId: requestId,
-            timestamp: sendTime,
-            request: {
-              url: request._url as string,
-              method: request._method as HttpMethod,
-              headers: request._headers,
-              postData: getRequestBody(data),
-            },
-            type: 'XHR',
-            initiator,
-            source: 'builtin',
-          });
-
-          request.addEventListener('readystatechange', () => {
-            if (request.readyState === READY_STATE_HEADERS_RECEIVED) {
-              ttfb = Date.now() - sendTime;
-            }
-          });
-
-          request.addEventListener('progress', (event) => {
-            eventEmitter.emit('request-progress', {
-              requestId: requestId,
-              timestamp: Date.now(),
-              loaded: event.loaded,
-              total: event.total,
-              lengthComputable: event.lengthComputable,
-              source: 'builtin',
-            });
-          });
-
-          request.addEventListener('load', () => {
-            eventEmitter.emit('response-received', {
-              requestId: requestId,
-              timestamp: Date.now(),
-              type: 'XHR',
-              response: {
-                url: request._url as string,
-                status: request.status,
-                statusText: request.statusText,
-                headers: applyReactNativeResponseHeadersLogic(request.responseHeaders || {}),
-                contentType: getContentType(request),
-                size: getResponseSize(request),
-                responseTime: Date.now(),
-              },
-              source: 'builtin',
-            });
-          });
-
-          request.addEventListener('loadend', () => {
-            eventEmitter.emit('request-completed', {
-              requestId: requestId,
-              timestamp: Date.now(),
-              duration: Date.now() - sendTime,
-              size: getResponseSize(request),
-              ttfb,
-              source: 'builtin',
-            });
-          });
-
-          request.addEventListener('error', () => {
-            eventEmitter.emit('request-failed', {
-              requestId: requestId,
-              timestamp: Date.now(),
-              type: 'XHR',
-              error: 'Failed',
-              canceled: false,
-              source: 'builtin',
-            });
-          });
-
-          request.addEventListener('abort', () => {
-            eventEmitter.emit('request-failed', {
-              requestId: requestId,
-              timestamp: Date.now(),
-              type: 'XHR',
-              error: 'Aborted',
-              canceled: true,
-              source: 'builtin',
-            });
-          });
-
-          request.addEventListener('timeout', () => {
-            eventEmitter.emit('request-failed', {
-              requestId: requestId,
-              timestamp: Date.now(),
-              type: 'XHR',
-              error: 'Timeout',
-              canceled: false,
-              source: 'builtin',
-            });
-          });
-        });
+      if (!isXhrHookEnabled()) {
+        enableXhrHook(recorder);
       }
-
-      FetchInterceptor.setCallbacks({
-        onRequestSent: (event) => {
-          eventEmitter.emit('request-sent', event);
-        },
-        onResponseReceived: (event) => {
-          eventEmitter.emit('response-received', event);
-        },
-        onRequestCompleted: (event) => {
-          eventEmitter.emit('request-completed', event);
-        },
-        onRequestFailed: (event) => {
-          eventEmitter.emit('request-failed', event);
-        },
-        onRequestProgress: (event) => {
-          eventEmitter.emit('request-progress', event);
-        },
-        onResponseBody: (requestId, body) => {
-          networkRequestsRegistry.setResponseBody(requestId, body);
-        },
-      });
-
-      if (!XHRInterceptor.isInterceptorEnabled()) {
-        XHRInterceptor.enableInterception();
-      }
-      if (!FetchInterceptor.isInterceptorEnabled()) {
-        FetchInterceptor.enableInterception();
+      if (!isFetchHookEnabled()) {
+        enableFetchHook(recorder);
       }
     },
 
     disable: () => {
-      XHRInterceptor.disableInterception();
-      FetchInterceptor.disableInterception();
+      disableXhrHook();
+      disableFetchHook();
     },
 
     isEnabled: () => {
-      return XHRInterceptor.isInterceptorEnabled() || FetchInterceptor.isInterceptorEnabled();
+      return isXhrHookEnabled() || isFetchHookEnabled();
     },
 
     dispose: () => {
-      XHRInterceptor.disableInterception();
-      FetchInterceptor.disableInterception();
-      networkRequestsRegistry.clear();
+      disableXhrHook();
+      disableFetchHook();
+      recorder.clear();
     },
 
-    getNetworkRequestsRegistry: () => networkRequestsRegistry,
+    getResponseBody: (requestId: string) => recorder.getResponseBody(requestId),
 
-    on: <TEventType extends keyof HttpEventMap>(
-      event: TEventType,
-      callback: (data: HttpEventMap[TEventType]) => void,
-    ) => eventEmitter.on(event, callback as NanoEventsMap[TEventType]),
+    clearResponseBodies: () => recorder.clear(),
+
+    on: (event, callback) => recorder.on(event, callback),
   };
 };

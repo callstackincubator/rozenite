@@ -1,4 +1,5 @@
 import { getHTTPInspector, HTTPInspector, HTTP_EVENTS } from './http/http-inspector';
+import { getRecorder } from './http/recorder';
 import { getSSEInspector, SSEInspector, SSE_EVENTS } from './sse/sse-inspector';
 import {
   getWebSocketInspector,
@@ -13,7 +14,6 @@ import {
 import { EventsListener } from './events-listener';
 import { NetworkActivityEventMap, ResponseBody } from '../shared/client';
 import type { InspectorsConfig } from './config';
-import { getResponseBody as getHTTPResponseBody } from './http/http-utils';
 
 export type NetworkInspector = {
   readonly http: HTTPInspector;
@@ -31,7 +31,10 @@ const createNetworkInspectorInstance = (): NetworkInspector => {
   const http = getHTTPInspector();
   const sse = getSSEInspector();
   const websocket = getWebSocketInspector();
-  const nitro = getNitroNetworkInspector();
+  // nitro HTTP traffic is routed straight into the same recorder as the XHR
+  // and fetch adapters (see `http-inspector.ts`), so it never needs a
+  // duplicate subscription here — only nitro's WebSocket events do.
+  const nitro = getNitroNetworkInspector(getRecorder());
 
   return {
     http,
@@ -87,17 +90,7 @@ const createNetworkInspectorInstance = (): NetworkInspector => {
     },
 
     async getResponseBody(requestId: string) {
-      const request = http.getNetworkRequestsRegistry().getEntry(requestId);
-      if (request) {
-        return getHTTPResponseBody(request);
-      }
-
-      const capturedResponseBody = http.getNetworkRequestsRegistry().getResponseBody(requestId);
-      if (capturedResponseBody !== undefined) {
-        return capturedResponseBody;
-      }
-
-      return nitro.getResponseBody(requestId);
+      return http.getResponseBody(requestId);
     },
   };
 };

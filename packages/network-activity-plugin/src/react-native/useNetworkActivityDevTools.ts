@@ -4,14 +4,13 @@ import { NetworkActivityEventMap } from '../shared/client';
 import { isHttpEvent } from './http/http-inspector';
 import { isWebSocketEvent } from './websocket/websocket-inspector';
 import { isSSEEvent } from './sse/sse-inspector';
+import { getOverridesRegistry } from './http/overrides-registry';
 import { DEFAULT_CONFIG, NetworkActivityDevToolsConfig, validateConfig } from './config';
 import { createNetworkInspectorsConfiguration } from './boot-recording';
 import { useNetworkActivityAgentTools } from './agent/use-network-activity-agent-tools';
-import { useHttpInspector } from './useHttpInspector';
-import { useWebSocketInspector } from './useWebSocketInspector';
-import { useSSEInspector } from './useSSEInspector';
 
 const inspectorsConfig = createNetworkInspectorsConfiguration();
+const overridesRegistry = getOverridesRegistry();
 
 export const useNetworkActivityDevTools = (
   config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG,
@@ -51,6 +50,14 @@ export const useNetworkActivityDevTools = (
       return;
     }
 
+    const enableInspectors = () => {
+      networkInspector.enable({
+        http: isHttpInspectorEnabled,
+        websocket: isWebSocketInspectorEnabled,
+        sse: isSSEInspectorEnabled,
+      });
+    };
+
     const sendClientUISettings = () => {
       client.send('client-ui-settings', {
         settings: {
@@ -62,11 +69,7 @@ export const useNetworkActivityDevTools = (
     const subscriptions = [
       client.onMessage('network-enable', () => {
         isRecordingEnabledRef.current = true;
-        networkInspector.enable({
-          http: isHttpInspectorEnabled,
-          websocket: isWebSocketInspectorEnabled,
-          sse: isSSEInspectorEnabled,
-        });
+        enableInspectors();
 
         // Connect the events listener to send events through the DevTools client
         // This also automatically flushes any queued messages
@@ -92,7 +95,27 @@ export const useNetworkActivityDevTools = (
       client.onMessage('get-client-ui-settings', () => {
         sendClientUISettings();
       }),
+      ...(isHttpInspectorEnabled
+        ? [
+            client.onMessage('set-overrides', (data) => {
+              overridesRegistry.setOverrides(data.overrides);
+            }),
+            client.onMessage('get-response-body', async ({ requestId }) => {
+              const body = await networkInspector.getResponseBody(requestId);
+
+              client.send('response-body', {
+                requestId,
+                body,
+              });
+            }),
+          ]
+        : []),
     ];
+
+    // If recording was previously enabled, enable the inspectors (hot reload)
+    if (isRecordingEnabledRef.current) {
+      enableInspectors();
+    }
 
     // Inform the DevTools UI of the current recording state so it can detect
     // and resolve desynchronization (e.g. after an app reload)
@@ -105,30 +128,19 @@ export const useNetworkActivityDevTools = (
 
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
+      if (isHttpInspectorEnabled) networkInspector.http.dispose();
+      if (isWebSocketInspectorEnabled) networkInspector.websocket.dispose();
+      if (isSSEInspectorEnabled) networkInspector.sse.dispose();
     };
   }, [
     client,
+    networkInspector,
+    eventsListener,
     showUrlAsName,
     isHttpInspectorEnabled,
     isWebSocketInspectorEnabled,
     isSSEInspectorEnabled,
   ]);
-
-  useHttpInspector(client, networkInspector, isHttpInspectorEnabled, isRecordingEnabledRef.current);
-
-  useWebSocketInspector(
-    client,
-    networkInspector.websocket,
-    isWebSocketInspectorEnabled,
-    isRecordingEnabledRef.current,
-  );
-
-  useSSEInspector(
-    client,
-    networkInspector.sse,
-    isSSEInspectorEnabled,
-    isRecordingEnabledRef.current,
-  );
 
   return client;
 };

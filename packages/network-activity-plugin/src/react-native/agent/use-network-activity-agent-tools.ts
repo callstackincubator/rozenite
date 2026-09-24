@@ -43,10 +43,10 @@ export const useNetworkActivityAgentTools = ({
       networkInspector.http.on('response-received', (event) => state.onResponseReceived(event)),
       networkInspector.http.on('request-completed', (event) => state.onRequestCompleted(event)),
       networkInspector.http.on('request-failed', (event) => state.onRequestFailed(event)),
-      networkInspector.nitro.on('request-sent', (event) => state.onRequestSent(event)),
-      networkInspector.nitro.on('response-received', (event) => state.onResponseReceived(event)),
-      networkInspector.nitro.on('request-completed', (event) => state.onRequestCompleted(event)),
-      networkInspector.nitro.on('request-failed', (event) => state.onRequestFailed(event)),
+      // nitro HTTP traffic is routed into the same recorder as the XHR and
+      // fetch adapters (see `network-inspector.ts`), so it already arrives
+      // through `networkInspector.http` above — subscribing to nitro here too
+      // would deliver every nitro HTTP event twice.
       networkInspector.websocket.on('websocket-connect', (event) =>
         state.onWebSocketConnect(event),
       ),
@@ -108,7 +108,7 @@ export const useNetworkActivityAgentTools = ({
     pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: startRecordingTool,
     handler: () => {
-      networkInspector.http.getNetworkRequestsRegistry().clear();
+      networkInspector.http.clearResponseBodies();
       const result = state.startRecording({ enabledInspectors });
       networkInspector.enable(enabledInspectors);
       return {

@@ -1,13 +1,8 @@
 import { createNanoEvents } from 'nanoevents';
-import type {
-  HttpEventMap,
-  HttpHeaders,
-  HttpMethod,
-  RequestPostData,
-  ResponseBody,
-} from '../../shared/client';
+import type { HttpHeaders, HttpMethod, RequestPostData } from '../../shared/client';
 import type { WebSocketEventMap } from '../../shared/websocket-events';
 import type { Inspector } from '../inspector';
+import type { Recorder } from '../http/recorder';
 import { getNitroModule as loadNitroModule } from './get-nitro-module';
 
 type NitroHttpHeader = {
@@ -66,7 +61,7 @@ type NitroInspectorEntry = NitroHttpEntry | NitroWebSocketEntry;
 
 export type NitroModule = {
   NetworkInspector: {
-    enable: () => void;
+    enable: (options?: { maxBodyCapture?: number }) => void;
     disable: () => void;
     isEnabled: () => boolean;
     onEntry: (callback: (entry: NitroInspectorEntry) => void) => () => void;
@@ -74,12 +69,12 @@ export type NitroModule = {
   };
 };
 
-type NitroNetworkEventMap = Pick<
-  HttpEventMap & WebSocketEventMap,
-  | 'request-sent'
-  | 'response-received'
-  | 'request-completed'
-  | 'request-failed'
+// nitro bodies were silently truncated at nitro's 4 KiB default; the DevTools
+// panel already handles bodies of this size from the built-in path.
+const NITRO_MAX_BODY_CAPTURE = 1024 * 1024;
+
+type NitroWebSocketEventMap = Pick<
+  WebSocketEventMap,
   | 'websocket-connect'
   | 'websocket-open'
   | 'websocket-close'
@@ -89,23 +84,14 @@ type NitroNetworkEventMap = Pick<
 >;
 
 type NanoEventsMap = {
-  [K in keyof NitroNetworkEventMap]: (data: NitroNetworkEventMap[K]) => void;
+  [K in keyof NitroWebSocketEventMap]: (data: NitroWebSocketEventMap[K]) => void;
 };
 
-export type NitroNetworkInspector = Inspector<NitroNetworkEventMap> & {
-  // Returns ResponseBody so the wire shape is consistent across capture
-  // paths. The nitro native module today only surfaces text response
-  // bodies, so at runtime this resolves to string | null — but typing it
-  // as ResponseBody lets future native support for binary slot in without
-  // a wire-format change.
-  getResponseBody: (requestId: string) => ResponseBody;
-};
+export type NitroNetworkInspector = Inspector<NitroWebSocketEventMap>;
 
-export const NITRO_NETWORK_EVENTS: (keyof NitroNetworkEventMap)[] = [
-  'request-sent',
-  'response-received',
-  'request-completed',
-  'request-failed',
+// HTTP entries are one-shot recorder calls now (see `emitHttpEntry` below); only
+// WebSocket events are still delivered through this inspector's own emitter.
+export const NITRO_NETWORK_EVENTS: (keyof NitroWebSocketEventMap)[] = [
   'websocket-connect',
   'websocket-open',
   'websocket-close',
@@ -157,84 +143,58 @@ const getContentType = (headers: NitroHttpHeader[]) => {
 
 const normalizeReadyState = (readyState: string) => readyState.toUpperCase();
 
+/**
+ * Translates one nitro HTTP entry into a single recorder call sequence:
+ * `begin` then either `fail`, or `headers` and `end`. nitro's
+ * `NetworkInspector` notifies HTTP entries exactly once, at the end, so there
+ * is no snapshot diffing to do here — unlike WebSocket entries below.
+ */
+const emitHttpEntry = (recorder: Recorder, entry: NitroHttpEntry): void => {
+  const sendTime = toEpochTime(entry.startTime);
+
+  const handle = recorder.begin({
+    url: entry.url,
+    method: entry.method as HttpMethod,
+    headers: toHeaders(entry.requestHeaders),
+    postData: toPostData(entry.requestBody),
+    type: 'Fetch',
+    source: 'nitro',
+    initiator: { type: 'other' },
+    timestamp: sendTime,
+  });
+
+  const responseTimestamp = toEpochTime(entry.endTime || entry.startTime);
+
+  if (entry.error) {
+    handle.fail(entry.error, entry.error === 'Request canceled', responseTimestamp);
+    return;
+  }
+
+  handle.headers({
+    url: entry.url,
+    status: entry.status,
+    statusText: entry.statusText,
+    headers: toHeaders(entry.responseHeaders),
+    contentType: getContentType(entry.responseHeaders),
+    size: entry.responseBodySize,
+    timestamp: responseTimestamp,
+  });
+
+  handle.end({
+    size: entry.responseBodySize,
+    body: entry.responseBody ?? null,
+    timestamp: responseTimestamp,
+  });
+};
+
 export const createNitroNetworkInspector = (
+  recorder: Recorder,
   getNitroModule: () => NitroModule | null = loadNitroModule,
 ): NitroNetworkInspector => {
   const eventEmitter = createNanoEvents<NanoEventsMap>();
-  const previousEntries = new Map<string, NitroInspectorEntry>();
-  const responseBodies = new Map<string, ResponseBody>();
+  const previousWebSocketEntries = new Map<string, NitroWebSocketEntry>();
   let nitroModule: NitroModule | null = null;
   let unsubscribe: (() => void) | null = null;
-
-  const emitHttpEvents = (entry: NitroHttpEntry, previous?: NitroHttpEntry) => {
-    if (!previous) {
-      eventEmitter.emit('request-sent', {
-        requestId: entry.id,
-        timestamp: toEpochTime(entry.startTime),
-        request: {
-          url: entry.url,
-          method: entry.method as HttpMethod,
-          headers: toHeaders(entry.requestHeaders),
-          postData: toPostData(entry.requestBody),
-        },
-        initiator: { type: 'other' },
-        type: 'Fetch',
-        source: 'nitro',
-      });
-    }
-
-    if (entry.error) {
-      if (!previous || previous.error !== entry.error) {
-        eventEmitter.emit('request-failed', {
-          requestId: entry.id,
-          timestamp: toEpochTime(entry.endTime || entry.startTime),
-          type: 'Fetch',
-          error: entry.error,
-          canceled: entry.error === 'Request canceled',
-          source: 'nitro',
-        });
-      }
-      return;
-    }
-
-    const didResponseChange =
-      !previous ||
-      previous.status !== entry.status ||
-      previous.statusText !== entry.statusText ||
-      previous.responseBodySize !== entry.responseBodySize ||
-      previous.endTime !== entry.endTime;
-
-    if (!didResponseChange) {
-      return;
-    }
-
-    const responseTimestamp = toEpochTime(entry.endTime || entry.startTime);
-
-    eventEmitter.emit('response-received', {
-      requestId: entry.id,
-      timestamp: responseTimestamp,
-      type: 'Fetch',
-      response: {
-        url: entry.url,
-        status: entry.status,
-        statusText: entry.statusText,
-        headers: toHeaders(entry.responseHeaders),
-        contentType: getContentType(entry.responseHeaders),
-        size: entry.responseBodySize,
-        responseTime: responseTimestamp,
-      },
-      source: 'nitro',
-    });
-
-    eventEmitter.emit('request-completed', {
-      requestId: entry.id,
-      timestamp: responseTimestamp,
-      duration: entry.duration,
-      size: entry.responseBodySize,
-      ttfb: entry.duration,
-      source: 'nitro',
-    });
-  };
 
   const emitWebSocketEvents = (entry: NitroWebSocketEntry, previous?: NitroWebSocketEntry) => {
     const socketId = entry.id;
@@ -312,16 +272,14 @@ export const createNitroNetworkInspector = (
   };
 
   const handleEntry = (entry: NitroInspectorEntry) => {
-    const previous = previousEntries.get(entry.id);
-
     if (entry.type === 'http') {
-      responseBodies.set(entry.id, entry.responseBody ?? null);
-      emitHttpEvents(entry, previous as NitroHttpEntry | undefined);
-    } else {
-      emitWebSocketEvents(entry, previous as NitroWebSocketEntry | undefined);
+      emitHttpEntry(recorder, entry);
+      return;
     }
 
-    previousEntries.set(entry.id, cloneEntry(entry));
+    const previous = previousWebSocketEntries.get(entry.id);
+    emitWebSocketEvents(entry, previous);
+    previousWebSocketEntries.set(entry.id, cloneEntry(entry));
   };
 
   return {
@@ -335,11 +293,13 @@ export const createNitroNetworkInspector = (
         return;
       }
 
-      nitroModule.NetworkInspector.enable();
+      nitroModule.NetworkInspector.enable({ maxBodyCapture: NITRO_MAX_BODY_CAPTURE });
+      // Seed already-open WebSocket entries so re-enabling doesn't replay
+      // their `connect`/`open`. Pre-existing HTTP entries are not replayed:
+      // HTTP notifications are one-shot, so there is nothing to diff against.
       for (const entry of nitroModule.NetworkInspector.getEntries()) {
-        previousEntries.set(entry.id, cloneEntry(entry));
-        if (entry.type === 'http') {
-          responseBodies.set(entry.id, entry.responseBody ?? null);
+        if (entry.type === 'websocket') {
+          previousWebSocketEntries.set(entry.id, cloneEntry(entry));
         }
       }
       unsubscribe = nitroModule.NetworkInspector.onEntry(handleEntry);
@@ -358,31 +318,26 @@ export const createNitroNetworkInspector = (
     dispose() {
       unsubscribe?.();
       unsubscribe = null;
-      previousEntries.clear();
-      responseBodies.clear();
+      previousWebSocketEntries.clear();
       nitroModule?.NetworkInspector.disable();
       nitroModule = null;
     },
 
-    getResponseBody(requestId: string) {
-      return responseBodies.get(requestId) ?? null;
-    },
-
-    on<TEventType extends keyof NitroNetworkEventMap>(
+    on<TEventType extends keyof NitroWebSocketEventMap>(
       event: TEventType,
-      callback: (data: NitroNetworkEventMap[TEventType]) => void,
+      callback: (data: NitroWebSocketEventMap[TEventType]) => void,
     ) {
       return eventEmitter.on(event, callback as NanoEventsMap[TEventType]);
     },
   };
 };
 
-export const getNitroNetworkInspector = (() => {
+export const getNitroNetworkInspector = ((): ((recorder: Recorder) => NitroNetworkInspector) => {
   let instance: NitroNetworkInspector | null = null;
 
-  return (): NitroNetworkInspector => {
+  return (recorder: Recorder): NitroNetworkInspector => {
     if (!instance) {
-      instance = createNitroNetworkInspector();
+      instance = createNitroNetworkInspector(recorder);
     }
 
     return instance;

@@ -142,7 +142,17 @@ export const getResponseBody = async (request: XMLHttpRequest): Promise<Response
 };
 
 const STACK_PREVIEW_FRAME_LIMIT = 8;
-const INITIATOR_STACK_FRAME_OFFSET = 3;
+// The first frames are this helper and the adapter's own function that calls
+// it directly (the XHR hook's patched `send`, or the fetch hook's wrapper).
+// The caller starts right after that fixed interception boundary.
+//
+// The fetch hook needs one more: it's an `async function`, and both Hermes
+// and Babel's regenerator-based transform for async functions insert a
+// synchronous runtime frame (`asyncToGenerator`'s `step`) between the
+// function itself and its caller — a frame the synchronous XHR `send` never
+// gets. `extraFrames` accounts for that per call site instead of hardcoding
+// two different constants.
+const INITIATOR_STACK_FRAME_OFFSET = 2;
 
 const parseStackLocation = (
   location: string,
@@ -228,15 +238,19 @@ const getGeneratedFrameLocation = (frame: InitiatorStackFrame) => ({
 const canSymbolicateStack = (stack?: InitiatorStackFrame[]) =>
   stack?.some((frame) => getGeneratedFrameLocation(frame).url?.startsWith('http')) ?? false;
 
-const getStackPreview = (frames: InitiatorStackFrame[]) => {
-  // The first frames are this helper, the HTTP inspector callback and the XHR
-  // wrapper. The caller starts after that fixed interception boundary.
-  const callerFrames = frames.slice(INITIATOR_STACK_FRAME_OFFSET);
+const getStackPreview = (frames: InitiatorStackFrame[], extraFrames: number) => {
+  const callerFrames = frames.slice(INITIATOR_STACK_FRAME_OFFSET + extraFrames);
 
   return (callerFrames.length > 0 ? callerFrames : frames).slice(0, STACK_PREVIEW_FRAME_LIMIT);
 };
 
-export const getInitiatorFromStack = (): Initiator => {
+/**
+ * @param extraFrames Additional interception frames to skip beyond the base
+ * offset, for a call site that isn't a plain synchronous function calling
+ * this helper directly. The fetch hook passes 1 (see the comment on
+ * `INITIATOR_STACK_FRAME_OFFSET`); the XHR hook's synchronous `send` needs 0.
+ */
+export const getInitiatorFromStack = (extraFrames = 0): Initiator => {
   try {
     const stack = new Error().stack;
     if (!stack) {
@@ -248,7 +262,7 @@ export const getInitiatorFromStack = (): Initiator => {
       .map(parseStackFrame)
       .filter((frame): frame is InitiatorStackFrame => frame !== null);
 
-    const stackPreview = getStackPreview(parsedFrames);
+    const stackPreview = getStackPreview(parsedFrames, extraFrames);
     const initiatorFrame = stackPreview[0];
     const generatedStackPreview = stackPreview.map(toGeneratedStackFrame);
 
@@ -281,13 +295,16 @@ export const getInitiatorFromStack = (): Initiator => {
 };
 
 /**
- * Applies override body and status to XMLHttpRequest objects.
+ * Applies override body and status to XMLHttpRequest objects. `url` is the
+ * request URL as captured from `open()`'s own argument, not read off the XHR
+ * instance, which is why it is passed in rather than read from `request`.
  */
 export const setupRequestOverride = (
   overridesRegistry: OverridesRegistry,
   request: XMLHttpRequest,
+  url: string,
 ): void => {
-  const override = overridesRegistry.getOverrideForUrl(request._url as string);
+  const override = overridesRegistry.getOverrideForUrl(url);
   if (!override) return;
 
   request.addEventListener('readystatechange', () => {
