@@ -55,14 +55,11 @@ and collapse all of this into one wrapper. Two facts decide it:
   them is to wrap their `fetch` function, or, for nitro, to consume its
   first-party `NetworkInspector`.
 
-Software Mansion's Argent, which was cited as prior art, patches only
-`globalThis.fetch` on its `main` branch and states in a comment that XHR is
-intentionally not patched to avoid double counting. Its open PR #1175
-reverses that: it patches `XMLHttpRequest.prototype` first, keeps a fetch
-wrapper only for fetch implementations that send no XHR, and deduplicates
-the two with a synchronous flag set around the original `fetch` call. That
-is the design adopted here, because it is the only one that preserves the
-plugin's existing coverage.
+A fetch-only wrapper is therefore not a replacement for the XHR hook. The
+design adopted here is XHR first, with a fetch wrapper only for fetch
+implementations that send no XHR, and a synchronous flag set around the
+original `fetch` call to deduplicate the two. It is the only arrangement
+that preserves the plugin's existing coverage.
 
 Behaviour that exists today and must survive: Axios and other XHR clients,
 SSE via `react-native-sse` (its inspector resolves the request id from the
@@ -143,6 +140,7 @@ WebSocket traffic.
   bodies of that size from the built-in path.
 - The SSE inspector's dependency on the XHR hook remains, now through an
   exported lookup rather than a private field.
-- The Argent evidence rests on an unmerged pull request; the decision does
-  not depend on it merging, only on the `whatwg-fetch` behaviour verified in
-  this repository's `node_modules`.
+- The decision rests on the `whatwg-fetch` behaviour verified in this
+  repository's `node_modules`; a future React Native release that ships a
+  native `fetch` would be caught by the global fetch wrapper and needs no
+  new decision.
