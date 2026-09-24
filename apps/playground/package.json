@@ -14,7 +14,8 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p e2e/network-activity/tsconfig.json --noEmit",
     "lint": "expo lint --no-cache",
     "test": "vitest --run --config e2e/network-activity/vitest.unit.config.ts",
-    "e2e:network": "vitest --run --config e2e/network-activity/vitest.config.ts",
+    "e2e:network": "CI=1 vitest --run --config e2e/network-activity/vitest.config.ts",
+    "e2e:network:record": "ROZENITE_E2E_RECORD=1 vitest --run --update --config e2e/network-activity/vitest.config.ts",
     "e2e:network:fixture": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/network-activity/fixture-server.ts"
   },
   "dependencies": {
@@ -83,6 +84,7 @@
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.0",
     "react-redux": "^9.2.0",
+    "whatwg-fetch": "^3.6.20",
     "zustand": "^5.0.6"
   },
   "devDependencies": {

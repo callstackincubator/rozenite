@@ -313,6 +313,9 @@ importers:
       react-redux:
         specifier: ^9.2.0
         version: 9.2.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1)
+      whatwg-fetch:
+        specifier: ^3.6.20
+        version: 3.6.20
       zustand:
         specifier: ^5.0.6
         version: 5.0.6(@types/react@19.2.18)(immer@10.1.1)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))

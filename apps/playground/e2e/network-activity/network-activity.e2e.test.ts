@@ -2,6 +2,10 @@
  * On-device regression suite for @rozenite/network-activity-plugin
  * (docs/adr/0002-network-activity-on-device-regression-harness.md).
  *
+ * Application-side checks use `expect.soft`, so a scenario the current
+ * implementation breaks still records its capture snapshot next to the
+ * failure.
+ *
  * Needs a running Metro and the playground on a simulator or device; it is
  * not part of `pnpm test`. How to run it and record baselines:
  * docs/agents/network-activity-e2e.md.
@@ -29,7 +33,8 @@ import {
   type EchoResponse,
   type FixtureServer,
 } from './fixture-server';
-import { openHarness, readHarnessConfig, type Harness } from './harness';
+import { readBaselineManifest, writeBaselineManifest } from './baseline';
+import { HarnessSetupError, openHarness, readHarnessConfig, type Harness } from './harness';
 import { createNormaliser } from './normalise';
 import type { CaptureKind } from './observers';
 
@@ -40,15 +45,15 @@ type ScenarioCase = {
 };
 
 const expectResponse = (result: NetworkScenarioResult, status: number) => {
-  expect(result.error, `${result.scenario} should not fail in the app`).toBeUndefined();
-  expect(result.status).toBe(status);
-  expect(result.echoedScenarioHeader).toBe(result.scenario);
+  expect.soft(result.error, `${result.scenario} should not fail in the app`).toBeUndefined();
+  expect.soft(result.status).toBe(status);
+  expect.soft(result.echoedScenarioHeader).toBe(result.scenario);
 };
 
 const expectJsonFixture = (result: NetworkScenarioResult) => {
   expectResponse(result, 200);
-  expect(result.contentType).toMatch(/^application\/json/);
-  expect(result.json).toEqual(FIXTURE_JSON);
+  expect.soft(result.contentType).toMatch(/^application\/json/);
+  expect.soft(result.json).toEqual(FIXTURE_JSON);
 };
 
 const expectEcho = (
@@ -57,27 +62,31 @@ const expectEcho = (
 ): EchoResponse => {
   expectResponse(result, 200);
   const echo = result.json as EchoResponse;
-  expect(echo.method).toBe('POST');
-  expect(echo.path).toBe('/echo');
-  expect(echo.headers['x-rozenite-scenario']).toBe(result.scenario);
-  expect(echo.contentType).toMatch(expected.contentType);
+  expect.soft(echo.method).toBe('POST');
+  expect.soft(echo.path).toBe('/echo');
+  expect.soft(echo.headers['x-rozenite-scenario']).toBe(result.scenario);
+  expect.soft(echo.contentType).toMatch(expected.contentType);
   if (expected.body !== undefined) {
-    expect(echo.body).toBe(expected.body);
-    expect(echo.bodyLength).toBe(Buffer.byteLength(expected.body));
+    expect.soft(echo.body).toBe(expected.body);
+    expect.soft(echo.bodyLength).toBe(Buffer.byteLength(expected.body));
   }
   return echo;
 };
 
-/** Built-in fetch rejects with `AbortError`; expo/fetch wraps it in a `FetchError`. */
+/**
+ * whatwg-fetch (the `fetch-*` scenarios) and react-native-nitro-fetch reject
+ * with an `AbortError`; expo/fetch rejects with a `FetchError` whose message
+ * says the request was aborted or cancelled.
+ */
 const expectAborted = (result: NetworkScenarioResult) => {
-  expect(result.status, `${result.scenario} should not produce a response`).toBeUndefined();
-  expect(result.error).toBeDefined();
-  expect(`${result.error?.name}: ${result.error?.message}`).toMatch(/abort|cancel|timeout/i);
+  expect.soft(result.status, `${result.scenario} should not produce a response`).toBeUndefined();
+  expect.soft(result.error).toBeDefined();
+  expect.soft(`${result.error?.name}: ${result.error?.message}`).toMatch(/abort|cancel|timeout/i);
 };
 
 const expectStatusFixture = (result: NetworkScenarioResult, status: number) => {
   expectResponse(result, status);
-  expect(result.json).toMatchObject({ status });
+  expect.soft(result.json).toMatchObject({ status });
 };
 
 const CASES: ScenarioCase[] = [
@@ -98,9 +107,9 @@ const CASES: ScenarioCase[] = [
       const echo = expectEcho(result, {
         contentType: /^multipart\/form-data; boundary=<boundary>/,
       });
-      expect(echo.parts?.map((part) => [part.name, part.value])).toEqual(
-        Object.entries(FORM_DATA_FIELDS),
-      );
+      expect
+        .soft(echo.parts?.map((part) => [part.name, part.value]))
+        .toEqual(Object.entries(FORM_DATA_FIELDS));
     },
   },
   {
@@ -125,7 +134,7 @@ const CASES: ScenarioCase[] = [
     kind: 'http',
     assertApp: (result) => {
       expectResponse(result, 204);
-      expect(result.bodyLength).toBe(0);
+      expect.soft(result.bodyLength).toBe(0);
     },
   },
   {
@@ -133,7 +142,7 @@ const CASES: ScenarioCase[] = [
     kind: 'http',
     assertApp: (result) => {
       expectJsonFixture(result);
-      expect(result.url).toMatch(new RegExp(`${REDIRECT_TARGET}$`));
+      expect.soft(result.url).toMatch(new RegExp(`${REDIRECT_TARGET}$`));
     },
   },
   {
@@ -141,9 +150,9 @@ const CASES: ScenarioCase[] = [
     kind: 'http',
     assertApp: (result) => {
       expectResponse(result, 200);
-      expect(result.contentType).toBe('image/png');
-      expect(result.bodyLength).toBe(FIXTURE_PNG.byteLength);
-      expect(result.pngSignatureValid).toBe(true);
+      expect.soft(result.contentType).toBe('image/png');
+      expect.soft(result.bodyLength).toBe(FIXTURE_PNG.byteLength);
+      expect.soft(result.pngSignatureValid).toBe(true);
     },
   },
   {
@@ -151,9 +160,9 @@ const CASES: ScenarioCase[] = [
     kind: 'http',
     assertApp: (result) => {
       expectResponse(result, 200);
-      expect(result.contentType).toBe('application/octet-stream');
-      expect(result.bodyLength).toBe(LARGE_BODY_SIZE);
-      expect(result.largeBodyPatternValid).toBe(true);
+      expect.soft(result.contentType).toBe('application/octet-stream');
+      expect.soft(result.bodyLength).toBe(LARGE_BODY_SIZE);
+      expect.soft(result.largeBodyPatternValid).toBe(true);
     },
   },
   {
@@ -165,6 +174,17 @@ const CASES: ScenarioCase[] = [
     scenario: 'fetch-status-500',
     kind: 'http',
     assertApp: (result) => expectStatusFixture(result, 500),
+  },
+  {
+    scenario: 'global-fetch-get-json',
+    kind: 'http',
+    // Which implementation `globalThis.fetch` is gets recorded in the
+    // snapshot rather than asserted: it is the app's configuration, not the
+    // plugin's behaviour.
+    assertApp: (result) => {
+      expectJsonFixture(result);
+      expect.soft(result.globalFetch?.implementation).toBeDefined();
+    },
   },
   { scenario: 'axios-get-json', kind: 'http', assertApp: expectJsonFixture },
   {
@@ -193,8 +213,8 @@ const CASES: ScenarioCase[] = [
     scenario: 'websocket-echo',
     kind: 'websocket',
     assertApp: (result) => {
-      expect(result.error).toBeUndefined();
-      expect(result.websocket).toMatchObject({
+      expect.soft(result.error).toBeUndefined();
+      expect.soft(result.websocket).toMatchObject({
         sent: [...WEBSOCKET_MESSAGES],
         received: [...WEBSOCKET_MESSAGES],
         closeCode: 1000,
@@ -205,8 +225,8 @@ const CASES: ScenarioCase[] = [
     scenario: 'sse-stream',
     kind: 'sse',
     assertApp: (result) => {
-      expect(result.error).toBeUndefined();
-      expect(result.sse).toEqual({
+      expect.soft(result.error).toBeUndefined();
+      expect.soft(result.sse).toEqual({
         opened: true,
         messages: SSE_EVENTS.filter((event) => event.event === 'message').map((e) => e.data),
         pings: SSE_EVENTS.filter((event) => event.event === 'ping').map((e) => e.data),
@@ -224,6 +244,28 @@ let harness: Harness | undefined;
 beforeAll(async () => {
   fixture = await startFixtureServer({ port: config.fixturePort });
   harness = await openHarness(config);
+  const mode = harness.observer.mode;
+
+  if (config.record) {
+    writeBaselineManifest({ platform: config.platform, observer: mode });
+    return;
+  }
+
+  const manifest = readBaselineManifest(config.platform);
+  if (!manifest) {
+    throw new HarnessSetupError(
+      `no baselines are recorded for platform "${config.platform}".`,
+      'Record them with `pnpm --filter @rozenite/playground e2e:network:record` against the implementation to hold changes to.',
+    );
+  }
+  if (manifest.observer !== mode) {
+    throw new HarnessSetupError(
+      `the plugin is being observed through "${mode}", but the ${config.platform} baselines were recorded through "${manifest.observer}".`,
+      mode === 'agent-tools'
+        ? "The tap stream no longer carries the plugin's messages (see the log above); that is a regression, not a reason to re-record."
+        : 'Re-record the baselines only if the change of observer is intended.',
+    );
+  }
 });
 
 afterAll(async () => {

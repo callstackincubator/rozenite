@@ -22,6 +22,9 @@ import { collapseProgressEvents, type CapturedEvent } from './normalise';
  * - `agent-tools`: the plugin's own agent tools, used when the tap carries no
  *   plugin traffic in an agent session. Its snapshots follow those tools'
  *   result shapes instead.
+ *
+ * The mode is chosen once, before any scenario runs, by probing the tap (see
+ * `createNetworkObserver`).
  */
 
 export type ObserverMode = 'tap' | 'agent-tools';
@@ -41,7 +44,7 @@ export type ScenarioCapture<T> = {
 };
 
 export interface NetworkObserver {
-  readonly mode: ObserverMode | 'auto';
+  readonly mode: ObserverMode;
   run<T>(run: ScenarioRun<T>): Promise<ScenarioCapture<T>>;
   close(): Promise<void>;
 }
@@ -49,7 +52,7 @@ export interface NetworkObserver {
 export type ObserverTimeouts = {
   /** How long to wait for a scenario's requests to finish in the plugin. */
   captureMs: number;
-  /** How long to wait for the tap stream to open. */
+  /** How long to wait for the tap stream to open, and for the probe reply. */
   tapOpenMs: number;
 };
 
@@ -108,12 +111,6 @@ export const getScenarioFromUrl = (url: unknown): string | undefined => {
 // ---------------------------------------------------------------------------
 // Tap observer
 // ---------------------------------------------------------------------------
-
-class TapSilentError extends Error {
-  constructor() {
-    super('The tap stream carried no Network Activity plugin messages.');
-  }
-}
 
 type TapState = {
   events: TapEvent[];
@@ -182,9 +179,6 @@ const createTapObserver = async (input: {
       type,
       payload,
     });
-
-  // Same message the DevTools panel sends when it starts recording.
-  await send('network-enable', {});
 
   /** Resolves once `predicate` holds; resolves `false` on timeout. */
   const waitUntil = (predicate: () => boolean, timeoutMs: number): Promise<boolean> =>
@@ -264,7 +258,26 @@ const createTapObserver = async (input: {
 
   return {
     mode: 'tap' as const,
+    /**
+     * Asks the plugin for its UI settings and waits for the reply. The same
+     * effect in `useNetworkActivityDevTools` registers this handler and the
+     * `network-enable` one, so a reply proves both that the tap carries
+     * plugin traffic and that the plugin is listening.
+     */
+    probe: async (timeoutMs: number): Promise<boolean> => {
+      const start = state.events.length;
+      await send('get-client-ui-settings', {});
+      return waitUntil(
+        () => state.events.slice(start).some((event) => event.type === 'client-ui-settings'),
+        timeoutMs,
+      );
+    },
     run: async <T>({ scenario, kind, invoke }: ScenarioRun<T>): Promise<ScenarioCapture<T>> => {
+      // Same message the DevTools panel sends when it starts recording. Sent
+      // before every scenario so a reload or Fast Refresh mid-run does not
+      // leave the rest of the run unrecorded; the plugin treats it as idempotent.
+      await send('network-enable', {});
+
       const start = state.events.length;
       const since = () => state.events.slice(start);
 
@@ -274,10 +287,6 @@ const createTapObserver = async (input: {
         () => isSettled(since(), correlate(since(), scenario, kind), kind),
         timeouts.captureMs,
       );
-
-      if (!complete && state.events.length === 0) {
-        throw new TapSilentError();
-      }
 
       await sleep(QUIET_PERIOD_MS);
 
@@ -336,8 +345,8 @@ const createAgentToolsObserver = async (input: {
   const { session, timeouts } = input;
   const call = session.tools.call;
 
-  // Clears the plugin's buffer and starts capturing.
-  await call(networkActivityTools.startRecording);
+  // Fails early, with the plugin's own error, if its tools are unusable.
+  await call(networkActivityTools.getRecordingStatus);
 
   const isRequestDone = (request: RequestDetails) =>
     request.loadingFinished || request.loadingFailed;
@@ -391,7 +400,14 @@ const createAgentToolsObserver = async (input: {
   };
 
   return {
+    mode: 'agent-tools' as const,
     run: async <T>({ scenario, kind, invoke }: ScenarioRun<T>): Promise<ScenarioCapture<T>> => {
+      // Clears the plugin's buffer before every scenario: each listing then
+      // holds only this scenario's traffic (plus background noise), so earlier
+      // requests are never re-inspected, and a reload mid-run cannot leave
+      // recording off.
+      await call(networkActivityTools.startRecording);
+
       const result = await invoke();
       const cache = new Map<string, RequestDetails>();
       const deadline = Date.now() + timeouts.captureMs;
@@ -476,49 +492,23 @@ export const createNetworkObserver = async (
   const { transport, session, preferred, timeouts } = input;
   const log = input.log ?? (() => undefined);
 
-  if (preferred === 'agent-tools') {
-    const tools = await createAgentToolsObserver({ session, timeouts });
-    return { mode: 'agent-tools', run: tools.run, close: tools.close };
+  if (preferred !== 'agent-tools') {
+    const tap = await createTapObserver({ transport, sessionId: session.id, timeouts });
+    if (await tap.probe(timeouts.tapOpenMs)) {
+      log('Network Activity e2e: observing plugin traffic through the agent tap stream.');
+      return tap;
+    }
+
+    await tap.close();
+    if (preferred === 'tap') {
+      throw new Error(
+        'The plugin did not answer get-client-ui-settings on the agent tap stream (ROZENITE_E2E_OBSERVER=tap).',
+      );
+    }
+    log(
+      'Network Activity e2e: the tap carried no reply from the plugin; using the plugin agent tools instead.',
+    );
   }
 
-  let active: {
-    mode: ObserverMode;
-    run: <T>(run: ScenarioRun<T>) => Promise<ScenarioCapture<T>>;
-    close: () => Promise<void>;
-  } = await createTapObserver({ transport, sessionId: session.id, timeouts });
-  let decided = preferred === 'tap';
-  const observer: NetworkObserver = {
-    get mode() {
-      return decided ? active.mode : 'auto';
-    },
-    run: async <T>(run: ScenarioRun<T>): Promise<ScenarioCapture<T>> => {
-      if (decided) {
-        return active.run(run);
-      }
-
-      try {
-        const captured = await active.run(run);
-        decided = true;
-        log('Network Activity e2e: observing plugin traffic through the agent tap stream.');
-        return captured;
-      } catch (error) {
-        if (!(error instanceof TapSilentError)) {
-          throw error;
-        }
-        log(
-          'Network Activity e2e: the tap carried no plugin traffic; falling back to the plugin agent tools and re-running the scenario.',
-        );
-        await active.close();
-        active = {
-          mode: 'agent-tools',
-          ...(await createAgentToolsObserver({ session, timeouts })),
-        };
-        decided = true;
-        return active.run(run);
-      }
-    },
-    close: () => active.close(),
-  };
-
-  return observer;
+  return createAgentToolsObserver({ session, timeouts });
 };

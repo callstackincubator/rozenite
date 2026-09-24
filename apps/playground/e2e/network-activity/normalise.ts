@@ -40,6 +40,13 @@ const SOURCE_POSITION_KEYS = new Set([
 
 const INITIATOR_URL_KEYS = new Set(['url', 'generatedUrl', 'fileName']);
 
+/**
+ * Initiator stacks keep only their first frames: the frames below the
+ * caller depend on how deep the interception sits, which is exactly what a
+ * capture rewrite changes.
+ */
+export const MAX_INITIATOR_STACK_FRAMES = 3;
+
 /** Response headers that change per request or per connection. */
 export const VOLATILE_RESPONSE_HEADERS = new Set([
   'date',
@@ -57,6 +64,10 @@ const ID_KEY_PREFIXES = new Map([
   ['requestId', 'request'],
   ['socketId', 'socket'],
 ]);
+
+/** Bundle URLs name the Metro host and port, which differ between machines. */
+const maskOrigin = (value: string): string =>
+  value.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]+/i, '<metro>');
 
 const stripQuery = (value: string): string => {
   const index = value.indexOf('?');
@@ -127,13 +138,15 @@ export const createNormaliser = ({ fixtureBaseUrl }: NormaliseOptions): Normalis
         return tokenFor('message', value);
       }
       if (key && ctx.inInitiator && INITIATOR_URL_KEYS.has(key)) {
-        return normaliseString(stripQuery(value));
+        return normaliseString(maskOrigin(stripQuery(value)));
       }
       return normaliseString(value);
     }
 
     if (Array.isArray(value)) {
-      return value.map((item) => walk(item, { ...ctx, key: undefined }));
+      const items =
+        key === 'stack' && ctx.inInitiator ? value.slice(0, MAX_INITIATOR_STACK_FRAMES) : value;
+      return items.map((item) => walk(item, { ...ctx, key: undefined }));
     }
 
     if (value && typeof value === 'object') {
@@ -142,7 +155,7 @@ export const createNormaliser = ({ fixtureBaseUrl }: NormaliseOptions): Normalis
         return {
           content: '<code-frame>',
           ...(typeof frame.fileName === 'string'
-            ? { fileName: normaliseString(stripQuery(frame.fileName)) }
+            ? { fileName: normaliseString(maskOrigin(stripQuery(frame.fileName))) }
             : {}),
           ...(frame.location ? { location: '<location>' } : {}),
         };

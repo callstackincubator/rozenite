@@ -58,7 +58,7 @@ describe('createNormaliser', () => {
           },
           initiator: {
             type: 'script',
-            generatedUrl: 'http://localhost:8081/index.bundle?<query>',
+            generatedUrl: '<metro>/index.bundle?<query>',
             generatedLineNumber: '<number>',
             generatedColumnNumber: '<number>',
             stack: [
@@ -103,6 +103,31 @@ describe('createNormaliser', () => {
     expect(normalised.url).toBe('<fixture-ws>/ws?scenario=websocket-echo');
     expect(normalised.contentType).toBe('multipart/form-data; boundary=<boundary>');
     expect(normalised.body).toMatch(/^<string length=5000 sha256=[0-9a-f]{16}>$/);
+  });
+
+  it('masks the Metro origin and keeps only the first initiator frames', () => {
+    const normalise = createNormaliser({ fixtureBaseUrl });
+    const frame = (functionName: string) => ({
+      functionName,
+      generatedUrl: 'http://10.0.2.2:8081/index.bundle?platform=android',
+      generatedLineNumber: 10,
+    });
+    const normalised = normalise({
+      initiator: {
+        url: 'http://192.168.1.20:8082/src/app/utils/network-activity/e2e-scenarios.ts',
+        stack: [frame('a'), frame('b'), frame('c'), frame('d'), frame('e')],
+      },
+    }) as { initiator: { url: string; stack: Array<Record<string, unknown>> } };
+
+    expect(normalised.initiator.url).toBe(
+      '<metro>/src/app/utils/network-activity/e2e-scenarios.ts',
+    );
+    expect(normalised.initiator.stack.map((item) => item.functionName)).toEqual(['a', 'b', 'c']);
+    expect(normalised.initiator.stack[0]).toEqual({
+      functionName: 'a',
+      generatedUrl: '<metro>/index.bundle?<query>',
+      generatedLineNumber: '<number>',
+    });
   });
 });
 

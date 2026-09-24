@@ -1,8 +1,8 @@
 import { useRozeniteInAppAgentTool, type AgentTool } from '@rozenite/agent-bridge';
 import {
-  NETWORK_SCENARIO_NAMES,
+  ALL_SCENARIO_NAMES,
   NETWORK_SCENARIO_TOOL_NAME,
-  isNetworkScenarioName,
+  isScenarioName,
   type NetworkScenarioResult,
 } from './utils/network-activity/e2e-scenario-contract';
 import { runNetworkScenario } from './utils/network-activity/e2e-scenarios';
@@ -21,7 +21,7 @@ const runNetworkScenarioTool: AgentTool = {
     properties: {
       scenario: {
         type: 'string',
-        enum: [...NETWORK_SCENARIO_NAMES],
+        enum: [...ALL_SCENARIO_NAMES],
         description: 'Scenario name.',
       },
       baseUrl: {
@@ -41,9 +41,9 @@ export const useNetworkScenarioAgentTool = () => {
   useRozeniteInAppAgentTool<RunNetworkScenarioInput, NetworkScenarioResult>({
     tool: runNetworkScenarioTool,
     handler: async ({ scenario, baseUrl } = {}) => {
-      if (!isNetworkScenarioName(scenario)) {
+      if (!isScenarioName(scenario)) {
         throw new Error(
-          `Unknown scenario "${String(scenario)}". Expected one of: ${NETWORK_SCENARIO_NAMES.join(', ')}`,
+          `Unknown scenario "${String(scenario)}". Expected one of: ${ALL_SCENARIO_NAMES.join(', ')}`,
         );
       }
 

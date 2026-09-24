@@ -1,9 +1,14 @@
 import path from 'node:path';
 import { defineConfig } from 'vitest/config';
+import { getSnapshotDir } from './baseline';
 
 /**
- * On-device Network Activity suite. Run with `pnpm --filter @rozenite/playground e2e:network`;
- * see docs/agents/network-activity-e2e.md. Deliberately not part of `pnpm test`.
+ * On-device Network Activity suite; see docs/agents/network-activity-e2e.md.
+ * Deliberately not part of `pnpm test`.
+ *
+ * - `e2e:network` compares. It runs with `CI=1`, which makes Vitest fail on a
+ *   missing snapshot instead of writing it.
+ * - `e2e:network:record` records (`--update`) and rewrites `baseline.json`.
  */
 const platform = process.env.ROZENITE_E2E_PLATFORM || 'ios';
 
@@ -16,14 +21,7 @@ export default defineConfig({
     testTimeout: 60_000,
     // Setup fails fast on its own (see harness.ts); this only bounds a hung device.
     hookTimeout: 120_000,
-    // Wire formats differ between iOS and Android networking stacks, so each
-    // platform keeps its own baselines.
     resolveSnapshotPath: (testPath, snapshotExtension) =>
-      path.join(
-        path.dirname(testPath),
-        '__snapshots__',
-        platform,
-        `${path.basename(testPath)}${snapshotExtension}`,
-      ),
+      path.join(getSnapshotDir(platform), `${path.basename(testPath)}${snapshotExtension}`),
   },
 });

@@ -18,7 +18,14 @@ import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 
 export const DEFAULT_FIXTURE_PORT = 38383;
-export const DEFAULT_FIXTURE_HOST = '0.0.0.0';
+/**
+ * `::` with `ipv6Only: false` accepts IPv4 and IPv6 on every interface, so
+ * `localhost` works on a simulator whichever address it resolves to first,
+ * and an Android emulator still reaches the host at 10.0.2.2. Hosts without
+ * IPv6 fall back to `0.0.0.0`.
+ */
+export const DEFAULT_FIXTURE_HOST = '::';
+const IPV4_FALLBACK_HOST = '0.0.0.0';
 
 export const FIXTURE_JSON = {
   fixture: 'rozenite-network-activity',
@@ -336,7 +343,7 @@ const handleSse = async (req: IncomingMessage, res: ServerResponse) => {
 export const startFixtureServer = async (
   options: StartFixtureServerOptions = {},
 ): Promise<FixtureServer> => {
-  const host = options.host ?? DEFAULT_FIXTURE_HOST;
+  let host = options.host ?? DEFAULT_FIXTURE_HOST;
   let largeBody: Buffer | null = null;
   const sockets = new Set<Socket>();
 
@@ -413,13 +420,26 @@ export const startFixtureServer = async (
     wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
   });
 
-  await new Promise<void>((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(options.port ?? 0, host, () => {
-      server.off('error', reject);
-      resolve();
+  const listen = (listenHost: string) =>
+    new Promise<void>((resolve, reject) => {
+      server.once('error', reject);
+      server.listen({ port: options.port ?? 0, host: listenHost, ipv6Only: false }, () => {
+        server.off('error', reject);
+        resolve();
+      });
     });
-  });
+
+  try {
+    await listen(host);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    const noIpv6 = code === 'EAFNOSUPPORT' || code === 'EADDRNOTAVAIL';
+    if (options.host !== undefined || !noIpv6) {
+      throw error;
+    }
+    host = IPV4_FALLBACK_HOST;
+    await listen(host);
+  }
 
   const { port } = server.address() as AddressInfo;
 
@@ -454,7 +474,7 @@ if (isMainModule()) {
     (fixture) => {
       process.stdout.write(
         [
-          `Rozenite network fixture listening on http://${fixture.host}:${fixture.port}`,
+          `Rozenite network fixture listening on port ${fixture.port} (${fixture.host === '::' ? 'IPv4 and IPv6' : fixture.host})`,
           `  iOS simulator:    http://localhost:${fixture.port}`,
           `  Android emulator: http://10.0.2.2:${fixture.port}`,
           '',

@@ -1,9 +1,11 @@
 import { createAgentClient, type AgentSessionClient } from '@rozenite/agent-sdk';
 import { createAgentTransport, type AgentTransport } from '@rozenite/agent-sdk/transport';
+import { NETWORK_ACTIVITY_AGENT_PLUGIN_ID } from '@rozenite/network-activity-plugin/sdk';
 import {
+  ALL_SCENARIO_NAMES,
   NETWORK_SCENARIO_TOOL_NAME,
-  type NetworkScenarioName,
   type NetworkScenarioResult,
+  type ScenarioName,
 } from '../../src/app/utils/network-activity/e2e-scenario-contract';
 import { DEFAULT_FIXTURE_PORT } from './fixture-server';
 import {
@@ -24,6 +26,10 @@ export type HarnessConfig = {
   deviceId?: string;
   observer: ObserverMode | 'auto';
   captureTimeoutMs: number;
+  /** `Platform.OS` the baselines belong to; also the snapshot directory. */
+  platform: string;
+  /** Recording baselines (`e2e:network:record`) rather than comparing against them. */
+  record: boolean;
 };
 
 const readInteger = (value: string | undefined, fallback: number): number => {
@@ -53,6 +59,8 @@ export const readHarnessConfig = (env: NodeJS.ProcessEnv = process.env): Harness
     deviceId: env.ROZENITE_DEVICE_ID || undefined,
     observer,
     captureTimeoutMs: readInteger(env.ROZENITE_E2E_CAPTURE_TIMEOUT_MS, 10_000),
+    platform: env.ROZENITE_E2E_PLATFORM || 'ios',
+    record: env.ROZENITE_E2E_RECORD === '1' || env.ROZENITE_E2E_RECORD === 'true',
   };
 };
 
@@ -67,15 +75,27 @@ export class HarnessSetupError extends Error {
 
 const METRO_PROBE_TIMEOUT_MS = 5_000;
 const SESSION_OPEN_TIMEOUT_MS = 60_000;
-const TOOL_LOOKUP_TIMEOUT_MS = 15_000;
+/** A freshly launched app registers its tools after the session reports ready. */
+const TOOL_REGISTRATION_TIMEOUT_MS = 15_000;
+const TOOL_POLL_INTERVAL_MS = 500;
 const TAP_OPEN_TIMEOUT_MS = 5_000;
+/** Covers the app-side ping timeout plus the round trip through Metro. */
+const FIXTURE_PING_CALL_TIMEOUT_MS = 10_000;
+
+const APP_TOOL = `app.${NETWORK_SCENARIO_TOOL_NAME}`;
+const PLUGIN_TOOL = `${NETWORK_ACTIVITY_AGENT_PLUGIN_ID}.startRecording`;
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+const sameNames = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && [...a].sort().every((name, index) => name === [...b].sort()[index]);
 
 export type Harness = {
   config: HarnessConfig;
   session: AgentSessionClient;
   transport: AgentTransport;
   observer: NetworkObserver;
-  runScenario: (scenario: NetworkScenarioName) => Promise<NetworkScenarioResult>;
+  runScenario: (scenario: ScenarioName) => Promise<NetworkScenarioResult>;
   close: () => Promise<void>;
 };
 
@@ -123,6 +143,16 @@ export const openHarness = async (config: HarnessConfig): Promise<Harness> => {
     );
   }
 
+  // Sessions are shared per target: if one already exists (a person's own
+  // `rozenite agent` session, say) the harness reuses it and leaves it running.
+  const existingSessions = await guard(
+    transport.listSessions(),
+    METRO_PROBE_TIMEOUT_MS,
+    `could not list agent sessions from Metro at ${endpoint}.`,
+    'Make sure Metro is the playground Metro with Rozenite enabled.',
+  );
+  const existingIds = new Set(existingSessions.sessions.map((session) => session.id));
+
   const session = await guard(
     client.openSession(config.deviceId ? { deviceId: config.deviceId } : {}),
     SESSION_OPEN_TIMEOUT_MS,
@@ -133,18 +163,43 @@ export const openHarness = async (config: HarnessConfig): Promise<Harness> => {
           .join(', ')}.`
       : 'Reload the playground and try again.',
   );
+  const ownsSession = !existingIds.has(session.id);
+  const releaseSession = async () => {
+    if (ownsSession) {
+      await session.stop().catch(() => undefined);
+    }
+  };
+
+  const runScenario = async (scenario: ScenarioName) =>
+    (await session.tools.call({
+      domain: 'app',
+      tool: NETWORK_SCENARIO_TOOL_NAME,
+      args: { scenario, baseUrl: config.fixtureBaseUrl },
+    })) as NetworkScenarioResult;
 
   try {
-    const appTools = await guard(
-      session.tools.list({ domain: 'app' }),
-      TOOL_LOOKUP_TIMEOUT_MS,
-      `the playground does not expose any in-app agent tools.`,
-      'Rebuild or reload the playground so it registers app.run-network-scenario.',
+    await waitForTools(transport, session.id);
+
+    const ping = await guard(
+      runScenario('fixture-ping'),
+      FIXTURE_PING_CALL_TIMEOUT_MS,
+      `the app did not answer the fixture reachability check.`,
+      'Reload the playground and try again.',
     );
-    if (!appTools.some((tool) => tool.shortName === NETWORK_SCENARIO_TOOL_NAME)) {
+    if (ping.platform !== undefined && ping.platform !== config.platform) {
       throw new HarnessSetupError(
-        `the playground does not register app.${NETWORK_SCENARIO_TOOL_NAME}.`,
-        'Reload the playground so it runs the current sources (see src/app/useNetworkScenarioAgentTool.ts).',
+        `the connected app runs on "${ping.platform}" but ROZENITE_E2E_PLATFORM is "${config.platform}".`,
+        `Set ROZENITE_E2E_PLATFORM=${ping.platform} so the right baselines are used.`,
+      );
+    }
+    if (ping.error || ping.status !== 200) {
+      throw new HarnessSetupError(
+        `the app cannot reach the fixture server at ${config.fixtureBaseUrl} (${
+          ping.error ? `${ping.error.name}: ${ping.error.message}` : `status ${ping.status}`
+        }).`,
+        config.platform === 'android'
+          ? `On an emulator set ROZENITE_FIXTURE_BASE_URL=http://10.0.2.2:${config.fixturePort}, or run \`adb reverse tcp:${config.fixturePort} tcp:${config.fixturePort}\`.`
+          : 'Check that the simulator can reach the host and that nothing else holds the fixture port.',
       );
     }
 
@@ -166,19 +221,70 @@ export const openHarness = async (config: HarnessConfig): Promise<Harness> => {
       session,
       transport,
       observer,
-      runScenario: async (scenario) =>
-        (await session.tools.call({
-          domain: 'app',
-          tool: NETWORK_SCENARIO_TOOL_NAME,
-          args: { scenario, baseUrl: config.fixtureBaseUrl },
-        })) as NetworkScenarioResult,
+      runScenario,
       close: async () => {
         await observer.close().catch(() => undefined);
-        await session.stop().catch(() => undefined);
+        await releaseSession();
       },
     };
   } catch (error) {
-    await session.stop().catch(() => undefined);
+    await releaseSession();
     throw error;
+  }
+};
+
+/**
+ * Waits until the app has registered both the scenario tool and the Network
+ * Activity plugin's tools, and checks the scenario list the app knows
+ * matches this suite's.
+ */
+const waitForTools = async (transport: AgentTransport, sessionId: string): Promise<void> => {
+  const deadline = Date.now() + TOOL_REGISTRATION_TIMEOUT_MS;
+  let names = new Set<string>();
+  let appTool: { inputSchema?: unknown } | undefined;
+
+  while (Date.now() < deadline) {
+    const { tools } = await withTimeout(
+      transport.getSessionTools(sessionId),
+      METRO_PROBE_TIMEOUT_MS,
+      'Timed out listing session tools',
+    ).catch((error: unknown) => {
+      throw new HarnessSetupError(
+        'could not list the agent tools the playground registered.',
+        'Reload the playground and try again.',
+        error,
+      );
+    });
+    names = new Set(tools.map((tool) => tool.name));
+    appTool = tools.find((tool) => tool.name === APP_TOOL);
+    if (appTool && names.has(PLUGIN_TOOL)) {
+      break;
+    }
+    await sleep(TOOL_POLL_INTERVAL_MS);
+  }
+
+  if (!appTool) {
+    throw new HarnessSetupError(
+      `the playground does not register ${APP_TOOL} (waited ${TOOL_REGISTRATION_TIMEOUT_MS / 1000} s).`,
+      'Rebuild or reload the playground so it runs the current sources (see src/app/useNetworkScenarioAgentTool.ts).',
+    );
+  }
+
+  if (!names.has(PLUGIN_TOOL)) {
+    throw new HarnessSetupError(
+      `the playground does not register the Network Activity plugin's agent tools (waited ${TOOL_REGISTRATION_TIMEOUT_MS / 1000} s).`,
+      'Check that the playground mounts useNetworkActivityDevTools and that @rozenite/network-activity-plugin is built.',
+    );
+  }
+
+  const schema = appTool.inputSchema as
+    | { properties?: { scenario?: { enum?: unknown } } }
+    | undefined;
+  const known = schema?.properties?.scenario?.enum;
+  if (!Array.isArray(known) || !sameNames(known.map(String), ALL_SCENARIO_NAMES)) {
+    throw new HarnessSetupError(
+      `the playground's ${APP_TOOL} knows a different scenario list than this suite.`,
+      'Reload the playground so it runs the current sources.',
+    );
   }
 };

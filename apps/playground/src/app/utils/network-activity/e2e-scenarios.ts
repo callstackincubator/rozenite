@@ -1,13 +1,16 @@
 import axios from 'axios';
 import { fetch as expoFetch } from 'expo/fetch';
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
+import { Platform } from 'react-native';
 import EventSource from 'react-native-sse';
+import { fetch as xhrFetch } from 'whatwg-fetch';
 import {
   ABORT_AFTER_MS,
   ARRAY_BUFFER_CONTENT_TYPE,
   ARRAY_BUFFER_TEXT,
   BLOB_CONTENT_TYPE,
   BLOB_TEXT,
+  FIXTURE_PING_TIMEOUT_MS,
   FORM_DATA_FIELDS,
   POST_JSON_PAYLOAD,
   SCENARIO_HEADER,
@@ -15,8 +18,8 @@ import {
   SLOW_RESPONSE_MS,
   TIMEOUT_AFTER_MS,
   WEBSOCKET_MESSAGES,
-  type NetworkScenarioName,
   type NetworkScenarioResult,
+  type ScenarioName,
 } from './e2e-scenario-contract';
 
 /**
@@ -25,6 +28,12 @@ import {
  * only when `app.run-network-scenario` is called by the Node suite in
  * `apps/playground/e2e/network-activity`, against its fixture server, and
  * report what the application observed. Nothing here is shown in the UI.
+ *
+ * `fetch-*` scenarios use `whatwg-fetch` (`xhrFetch`), React Native's own
+ * XHR-backed fetch, because `globalThis.fetch` in this app is `expo/fetch`:
+ * importing `expo` replaces it (expo/src/winter/runtime.native.ts). The
+ * `global-fetch-get-json` scenario covers the global and reports which
+ * implementation it was.
  */
 
 type ResponseLike = {
@@ -36,7 +45,7 @@ type ResponseLike = {
 };
 
 type ScenarioContext = {
-  scenario: NetworkScenarioName;
+  scenario: ScenarioName;
   baseUrl: string;
 };
 
@@ -47,7 +56,7 @@ const SSE_SERVER_CLOSE_TIMEOUT_MS = 3000;
 const SSE_EXPECTED_MESSAGES = 3;
 const SSE_EXPECTED_PINGS = 2;
 
-const scenarioHeaders = (scenario: NetworkScenarioName): Record<string, string> => ({
+const scenarioHeaders = (scenario: ScenarioName): Record<string, string> => ({
   [SCENARIO_HEADER]: scenario,
 });
 
@@ -171,19 +180,16 @@ const abortAfter = (ms: number) => {
 
 const slowUrl = (ctx: ScenarioContext) => `${ctx.baseUrl}/slow?ms=${SLOW_RESPONSE_MS}`;
 
-const scenarios: Record<
-  NetworkScenarioName,
-  (ctx: ScenarioContext) => Promise<NetworkScenarioResult>
-> = {
+const scenarios: Record<ScenarioName, (ctx: ScenarioContext) => Promise<NetworkScenarioResult>> = {
   'fetch-get-json': async (ctx) =>
     readJson(
       ctx,
       'fetch',
-      await fetch(`${ctx.baseUrl}/json`, { headers: scenarioHeaders(ctx.scenario) }),
+      await xhrFetch(`${ctx.baseUrl}/json`, { headers: scenarioHeaders(ctx.scenario) }),
     ),
 
   'fetch-post-json': async (ctx) =>
-    readJson(ctx, 'fetch', await fetch(`${ctx.baseUrl}/echo`, postJsonInit(ctx))),
+    readJson(ctx, 'fetch', await xhrFetch(`${ctx.baseUrl}/echo`, postJsonInit(ctx))),
 
   'fetch-post-form-data': async (ctx) => {
     const formData = new FormData();
@@ -191,7 +197,7 @@ const scenarios: Record<
     return readJson(
       ctx,
       'fetch',
-      await fetch(`${ctx.baseUrl}/echo`, {
+      await xhrFetch(`${ctx.baseUrl}/echo`, {
         method: 'POST',
         headers: scenarioHeaders(ctx.scenario),
         body: formData,
@@ -203,7 +209,7 @@ const scenarios: Record<
     readJson(
       ctx,
       'fetch',
-      await fetch(`${ctx.baseUrl}/echo`, {
+      await xhrFetch(`${ctx.baseUrl}/echo`, {
         method: 'POST',
         headers: {
           ...scenarioHeaders(ctx.scenario),
@@ -217,7 +223,7 @@ const scenarios: Record<
     readJson(
       ctx,
       'fetch',
-      await fetch(`${ctx.baseUrl}/echo`, {
+      await xhrFetch(`${ctx.baseUrl}/echo`, {
         method: 'POST',
         headers: {
           ...scenarioHeaders(ctx.scenario),
@@ -230,7 +236,7 @@ const scenarios: Record<
   'fetch-abort': async (ctx) => {
     const abort = abortAfter(ABORT_AFTER_MS);
     try {
-      const response = await fetch(slowUrl(ctx), {
+      const response = await xhrFetch(slowUrl(ctx), {
         headers: scenarioHeaders(ctx.scenario),
         signal: abort.signal,
       });
@@ -251,7 +257,7 @@ const scenarios: Record<
     const timeoutMechanism = manual ? 'manual-abort' : 'AbortSignal.timeout';
 
     try {
-      const response = await fetch(slowUrl(ctx), {
+      const response = await xhrFetch(slowUrl(ctx), {
         headers: scenarioHeaders(ctx.scenario),
         signal,
       });
@@ -267,18 +273,18 @@ const scenarios: Record<
     readText(
       ctx,
       'fetch',
-      await fetch(`${ctx.baseUrl}/no-content`, { headers: scenarioHeaders(ctx.scenario) }),
+      await xhrFetch(`${ctx.baseUrl}/no-content`, { headers: scenarioHeaders(ctx.scenario) }),
     ),
 
   'fetch-redirect': async (ctx) =>
     readJson(
       ctx,
       'fetch',
-      await fetch(`${ctx.baseUrl}/status/301`, { headers: scenarioHeaders(ctx.scenario) }),
+      await xhrFetch(`${ctx.baseUrl}/status/301`, { headers: scenarioHeaders(ctx.scenario) }),
     ),
 
   'fetch-png': async (ctx) => {
-    const response = await fetch(`${ctx.baseUrl}/png`, {
+    const response = await xhrFetch(`${ctx.baseUrl}/png`, {
       headers: scenarioHeaders(ctx.scenario),
     });
     const bytes = new Uint8Array(await response.arrayBuffer());
@@ -292,7 +298,7 @@ const scenarios: Record<
   },
 
   'fetch-large-download': async (ctx) => {
-    const response = await fetch(`${ctx.baseUrl}/large`, {
+    const response = await xhrFetch(`${ctx.baseUrl}/large`, {
       headers: scenarioHeaders(ctx.scenario),
     });
     const bytes = new Uint8Array(await response.arrayBuffer());
@@ -309,15 +315,60 @@ const scenarios: Record<
     readJson(
       ctx,
       'fetch',
-      await fetch(`${ctx.baseUrl}/status/404`, { headers: scenarioHeaders(ctx.scenario) }),
+      await xhrFetch(`${ctx.baseUrl}/status/404`, { headers: scenarioHeaders(ctx.scenario) }),
     ),
 
   'fetch-status-500': async (ctx) =>
     readJson(
       ctx,
       'fetch',
-      await fetch(`${ctx.baseUrl}/status/500`, { headers: scenarioHeaders(ctx.scenario) }),
+      await xhrFetch(`${ctx.baseUrl}/status/500`, { headers: scenarioHeaders(ctx.scenario) }),
     ),
+
+  'global-fetch-get-json': async (ctx) => {
+    const globalFetch = globalThis.fetch as typeof globalThis.fetch & { polyfill?: unknown };
+    const isExpoFetch = globalFetch === (expoFetch as unknown);
+    const isWhatwgFetch = globalFetch === xhrFetch;
+    const hasPolyfillFlag = globalFetch.polyfill === true;
+    const response = await globalFetch(`${ctx.baseUrl}/json`, {
+      headers: scenarioHeaders(ctx.scenario),
+    });
+    return {
+      ...(await readJson(ctx, 'global-fetch', response)),
+      globalFetch: {
+        implementation: isExpoFetch
+          ? 'expo/fetch'
+          : isWhatwgFetch || hasPolyfillFlag
+            ? 'whatwg-fetch'
+            : 'other',
+        isExpoFetch,
+        isWhatwgFetch,
+        hasPolyfillFlag,
+      },
+    };
+  },
+
+  'fixture-ping': async (ctx) => {
+    // Reachability check for the suite's setup: fails fast instead of every
+    // scenario waiting on the tool-call timeout.
+    const abort = abortAfter(FIXTURE_PING_TIMEOUT_MS);
+    try {
+      const response = await xhrFetch(`${ctx.baseUrl}/json`, {
+        headers: scenarioHeaders(ctx.scenario),
+        signal: abort.signal,
+      });
+      return {
+        scenario: ctx.scenario,
+        transport: 'global-fetch',
+        platform: Platform.OS,
+        status: response.status,
+      };
+    } catch (error) {
+      return failure(ctx, 'global-fetch', error, { platform: Platform.OS });
+    } finally {
+      abort.cancel();
+    }
+  },
 
   'axios-get-json': async (ctx) => {
     const response = await axios.get(`${ctx.baseUrl}/json`, {
@@ -532,7 +583,10 @@ const runSSEStream = async (ctx: ScenarioContext): Promise<NetworkScenarioResult
   };
 };
 
-const transportOf = (scenario: NetworkScenarioName): NetworkScenarioResult['transport'] => {
+const transportOf = (scenario: ScenarioName): NetworkScenarioResult['transport'] => {
+  if (scenario === 'global-fetch-get-json' || scenario === 'fixture-ping') {
+    return 'global-fetch';
+  }
   const prefix = scenario.split('-', 1)[0];
   return prefix === 'axios' ||
     prefix === 'expo' ||
@@ -544,7 +598,7 @@ const transportOf = (scenario: NetworkScenarioName): NetworkScenarioResult['tran
 };
 
 export const runNetworkScenario = async (
-  scenario: NetworkScenarioName,
+  scenario: ScenarioName,
   baseUrl: string,
 ): Promise<NetworkScenarioResult> => {
   const ctx: ScenarioContext = { scenario, baseUrl: baseUrl.replace(/\/+$/, '') };

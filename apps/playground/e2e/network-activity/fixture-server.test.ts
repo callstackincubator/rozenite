@@ -15,7 +15,8 @@ let fixture: FixtureServer;
 let base: string;
 
 beforeAll(async () => {
-  fixture = await startFixtureServer({ host: '127.0.0.1' });
+  // Default host: the same dual-stack binding the suite uses.
+  fixture = await startFixtureServer();
   base = `http://127.0.0.1:${fixture.port}`;
 });
 
@@ -178,6 +179,13 @@ describe('fixture server', () => {
       socket.close(1000, 'done');
     });
     expect(code).toBe(1000);
+  });
+
+  it('listens on IPv4 and, when the host has it, IPv6 loopback', async () => {
+    expect((await fetch(`http://127.0.0.1:${fixture.port}/json`)).status).toBe(200);
+    if (fixture.host === '::') {
+      expect((await fetch(`http://[::1]:${fixture.port}/json`)).status).toBe(200);
+    }
   });
 
   it('answers unknown paths with 404', async () => {
