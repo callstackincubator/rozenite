@@ -21,3 +21,5 @@ Status values:
 | ADR | Title | Status |
 |---|---|---|
 | [0000](./0000-single-target-discovery-endpoint.md) | One Rozenite endpoint for debug-target discovery | Accepted |
+| [0001](./0001-xhr-first-network-capture.md) | XHR-first network capture with one recorder | Accepted — not yet implemented |
+| [0002](./0002-network-activity-on-device-regression-harness.md) | On-device regression harness for Network Activity | Accepted — not yet implemented |

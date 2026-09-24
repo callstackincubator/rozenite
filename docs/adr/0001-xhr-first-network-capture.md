@@ -1,0 +1,148 @@
+# 0001 — XHR-first network capture with one recorder
+
+**Status:** Accepted — not yet implemented
+
+**Related:** [0002](./0002-network-activity-on-device-regression-harness.md)
+(the harness that guards this change)
+
+## Context
+
+`@rozenite/network-activity-plugin` records HTTP traffic on the device and
+sends it to the DevTools panel and to the agent tools as the events in
+`packages/network-activity-plugin/src/shared/http-events.ts`
+(`request-sent`, `response-received`, `request-progress`,
+`request-completed`, `request-failed`, plus `response-body` on demand).
+
+Today those events are assembled in three unrelated capture paths under
+`packages/network-activity-plugin/src/react-native/`:
+
+| Path | Hook | Lines |
+|---|---|---|
+| `http/xhr-interceptor.ts` + `http/http-inspector.ts` | `XMLHttpRequest.prototype` (`open`, `setRequestHeader`, `send`) | ~425 |
+| `http/fetch-interceptor.ts` + `http/fetch-utils.ts` | Expo's private `expo/src/winter/fetch/fetch` export and its global alias | ~505 |
+| `nitro-fetch/nitro-network-inspector.ts` | `react-native-nitro-fetch`'s `NetworkInspector.onEntry` | ~390 |
+
+Each path has its own emitter, its own request ids, its own timing and size
+arithmetic, and its own body storage (`http/network-requests-registry.ts`
+keeps live `XMLHttpRequest` instances; the nitro adapter keeps a second map
+of strings). Fixes recorded in the git history for 204 responses, content
+types, timeouts, binary bodies and Axios bodies each had to be applied to
+one path and did not carry to the others.
+
+The XHR interceptor is a copy of React Native's own, with six callback
+types of which the plugin uses two, and it reads the private `_url`,
+`_method` and `_headers` fields of RN's `XMLHttpRequest`. The Expo
+interceptor carries reconciliation logic for Expo SDK 56's lazily installed
+global alias and a fallback for SDK 54–55, where `Response.clone()` throws,
+that decorates `text()` and `arrayBuffer()` on the returned response. The
+nitro adapter diffs entry snapshots on every notification even though
+nitro's `NetworkInspector` notifies HTTP entries exactly once, at the end.
+It also enables that inspector without options, so nitro bodies are
+silently truncated at nitro's 4 KiB default.
+
+The question raised was whether wrapping `fetch` could replace the XHR hook
+and collapse all of this into one wrapper. Two facts decide it:
+
+- **In React Native, `fetch` is XHR.** RN 0.86's
+  `Libraries/Network/fetch.js` installs the `whatwg-fetch` polyfill, whose
+  `fetch()` constructs an `XMLHttpRequest` and calls `open()` and `send()`
+  synchronously inside the promise executor. An XHR hook sees every
+  built-in `fetch` call exactly once, and also sees Axios (whose default RN
+  adapter is XHR), `react-native-sse` (built on XHR) and any other direct
+  XHR user. A fetch-only hook sees none of those.
+- **Expo's `expo/fetch` and `react-native-nitro-fetch` never touch XHR.**
+  They are native implementations. The only JavaScript-level way to see
+  them is to wrap their `fetch` function, or, for nitro, to consume its
+  first-party `NetworkInspector`.
+
+Software Mansion's Argent, which was cited as prior art, patches only
+`globalThis.fetch` on its `main` branch and states in a comment that XHR is
+intentionally not patched to avoid double counting. Its open PR #1175
+reverses that: it patches `XMLHttpRequest.prototype` first, keeps a fetch
+wrapper only for fetch implementations that send no XHR, and deduplicates
+the two with a synchronous flag set around the original `fetch` call. That
+is the design adopted here, because it is the only one that preserves the
+plugin's existing coverage.
+
+Behaviour that exists today and must survive: Axios and other XHR clients,
+SSE via `react-native-sse` (its inspector resolves the request id from the
+underlying XHR), download progress and time to first byte, request
+timeouts and aborts, response overrides for the built-in stack, initiator
+stack capture, text and binary bodies with the 5 MiB binary cap, recording
+before DevTools connects (`withOnBootNetworkActivityRecording`), and nitro
+WebSocket traffic.
+
+## Decision
+
+1. **The `XMLHttpRequest.prototype` hook is the primary capture for the
+   built-in stack.** It patches `open`, `setRequestHeader` and `send`,
+   keeps per-instance state in a `WeakMap`, and reads no underscore-prefixed
+   RN field except where a public API does not exist. It exports a lookup
+   from an XHR instance to its request id; the SSE inspector uses that
+   lookup instead of a field written onto the XHR. Progress and
+   `readystatechange` listeners stay, so RN's incremental mode is entered
+   for observed requests exactly as it is today.
+
+2. **One generic fetch wrapper covers every fetch implementation that does
+   not send an XHR.** `wrapFetch(original, source)` is installed on
+   `globalThis.fetch` and on Expo's writable private export
+   `expo/src/winter/fetch/fetch` when it resolves. The wrapper sets a
+   module-level "active fetch" marker before calling the original and
+   clears it afterwards; the patched `send` marks the active call as having
+   sent an XHR; a wrapper whose call sent an XHR records nothing. The global
+   wrapper is not installed when `globalThis.fetch` is already
+   `react-native-nitro-fetch`'s `fetch`, because decision 3 records that
+   traffic. The source label is `expo` when the wrapped function is Expo's
+   implementation and `builtin` otherwise.
+
+3. **nitro traffic keeps coming from `react-native-nitro-fetch`'s
+   `NetworkInspector`.** Its `Response.clone()` drops streaming bodies and
+   its documentation advises against wrapping its `fetch`. HTTP entries are
+   translated in one shot on notification (sent, received, completed, or
+   failed) with no snapshot diffing; WebSocket entries keep the diffing they
+   need. The inspector is enabled with a 1 MiB `maxBodyCapture`.
+
+4. **One recorder owns the wire format.** A single module creates request
+   ids, computes timestamps, duration and time to first byte, builds every
+   `HttpEventMap` payload, owns the body registry and the event emitter.
+   Adapters call `begin(meta)` and then `headers`, `progress`, `end` or
+   `fail` on the returned handle. The body registry stores one thunk per
+   request id under the existing five-minute TTL: the XHR adapter registers
+   a lazy read of the XHR, the fetch and nitro adapters register the body
+   they captured. Adapters never construct event payloads.
+
+5. **Response bodies from fetch implementations come from
+   `Response.clone()` only.** When `clone()` is unavailable or throws, the
+   request completes without a body and `response-body` answers `null`. The
+   SDK 54–55 decoration of `text()` and `arrayBuffer()` is removed.
+
+6. **Response overrides stay built-in only**, applied at the XHR level as
+   documented in the plugin README.
+
+7. **The public surface does not change.** `useNetworkActivityDevTools`,
+   `withOnBootNetworkActivityRecording`, `NetworkActivityDevToolsConfig`,
+   the event types in `src/shared`, the agent tools and the DevTools UI are
+   untouched. Internally, the three per-protocol React hooks
+   (`useHttpInspector`, `useWebSocketInspector`, `useSSEInspector`) fold
+   into `useNetworkActivityDevTools`, which already handles the same
+   `network-enable` and `network-disable` messages.
+
+## Consequences
+
+- The HTTP capture path drops from roughly 1,900 lines to roughly 850, and
+  the React hooks from roughly 350 to roughly 200. Further reduction means
+  removing a feature from the list above and needs its own decision.
+- A fix to timing, sizing or body handling is made once in the recorder and
+  applies to built-in, Expo and nitro traffic alike.
+- Double counting is prevented by a synchronous invariant: a fetch
+  implementation that sends its XHR asynchronously would be recorded twice.
+  No such implementation is known; `whatwg-fetch` sends synchronously.
+- Expo SDK 54 and 55 lose response bodies for `expo/fetch`; the request row
+  itself is still recorded. Expo SDK 56 and newer are unaffected.
+- nitro bodies grow from 4 KiB to 1 MiB; the DevTools panel already handles
+  bodies of that size from the built-in path.
+- The SSE inspector's dependency on the XHR hook remains, now through an
+  exported lookup rather than a private field.
+- The Argent evidence rests on an unmerged pull request; the decision does
+  not depend on it merging, only on the `whatwg-fetch` behaviour verified in
+  this repository's `node_modules`.
