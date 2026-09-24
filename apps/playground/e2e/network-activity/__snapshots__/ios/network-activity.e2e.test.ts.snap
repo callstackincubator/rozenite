@@ -1,0 +1,2721 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Network Activity on device > axios-get-json > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "axios-get-json",
+    "json": {
+      "fixture": "rozenite-network-activity",
+      "items": [
+        {
+          "id": 1,
+          "name": "alpha",
+        },
+        {
+          "id": 2,
+          "name": "beta",
+        },
+      ],
+      "ok": true,
+    },
+    "scenario": "axios-get-json",
+    "status": 200,
+    "transport": "axios",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "functionName": "dispatchXhrRequest",
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "functionName": "dispatchXhrRequest",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "accept": "application/json, text/plain, */*",
+              "x-rozenite-scenario": "axios-get-json",
+            },
+            "method": "GET",
+            "postData": null,
+            "url": "<fixture>/json",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 106,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 106,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "106",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "axios-get-json",
+            },
+            "responseTime": "<number>",
+            "size": 106,
+            "status": 200,
+            "url": "<fixture>/json",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 106,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"fixture":"rozenite-network-activity","items":[{"id":1,"name":"alpha"},{"id":2,"name":"beta"}],"ok":true}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > axios-post-json > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "axios-post-json",
+    "json": {
+      "body": "{"title":"Rozenite e2e","count":3,"tags":["network","activity"],"nested":{"ok":true}}",
+      "bodyLength": 85,
+      "contentType": "application/json",
+      "headers": {
+        "accept": "application/json, text/plain, */*",
+        "content-length": "85",
+        "content-type": "application/json",
+        "x-rozenite-scenario": "axios-post-json",
+      },
+      "method": "POST",
+      "path": "/echo",
+      "query": {},
+    },
+    "scenario": "axios-post-json",
+    "status": 200,
+    "transport": "axios",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "functionName": "dispatchXhrRequest",
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "functionName": "dispatchXhrRequest",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "accept": "application/json, text/plain, */*",
+              "content-type": "application/json",
+              "x-rozenite-scenario": "axios-post-json",
+            },
+            "method": "POST",
+            "postData": {
+              "type": "text",
+              "value": "{"title":"Rozenite e2e","count":3,"tags":["network","activity"],"nested":{"ok":true}}",
+            },
+            "url": "<fixture>/echo",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 356,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 356,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "356",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "axios-post-json",
+            },
+            "responseTime": "<number>",
+            "size": 356,
+            "status": 200,
+            "url": "<fixture>/echo",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 356,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"method":"POST","path":"/echo","query":{},"headers":{"accept":"application/json, text/plain, */*","content-length":"85","content-type":"application/json","x-rozenite-scenario":"axios-post-json"},"contentType":"application/json","bodyLength":85,"body":"{\\"title\\":\\"Rozenite e2e\\",\\"count\\":3,\\"tags\\":[\\"network\\",\\"activity\\"],\\"nested\\":{\\"ok\\":true}}"}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > expo-abort > tap 1`] = `
+{
+  "app": {
+    "error": {
+      "message": "fetch failed: FetchRequestCanceledException: Fetch request has been canceled (at Expo/NativeResponse.swift:63)",
+      "name": "Error",
+    },
+    "scenario": "expo-abort",
+    "transport": "expo",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "functionName": "step",
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "address at InternalBytecode.js",
+            "stack": [
+              {
+                "functionName": "step",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "X-Rozenite-Scenario": "expo-abort",
+            },
+            "method": "GET",
+            "signal": {},
+            "url": "<fixture>/slow?ms=5000",
+          },
+          "requestId": "<request-1>",
+          "source": "expo",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "canceled": true,
+          "error": "fetch failed: FetchRequestCanceledException: Fetch request has been canceled (at Expo/NativeResponse.swift:63)",
+          "requestId": "<request-1>",
+          "source": "expo",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "request-failed",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > expo-get-json > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "expo-get-json",
+    "json": {
+      "fixture": "rozenite-network-activity",
+      "items": [
+        {
+          "id": 1,
+          "name": "alpha",
+        },
+        {
+          "id": 2,
+          "name": "beta",
+        },
+      ],
+      "ok": true,
+    },
+    "redirected": false,
+    "scenario": "expo-get-json",
+    "status": 200,
+    "statusText": "no error",
+    "transport": "expo",
+    "url": "<fixture>/json",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "functionName": "step",
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "address at InternalBytecode.js",
+            "stack": [
+              {
+                "functionName": "step",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "X-Rozenite-Scenario": "expo-get-json",
+            },
+            "method": "GET",
+            "url": "<fixture>/json",
+          },
+          "requestId": "<request-1>",
+          "source": "expo",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "cache-control": "no-store",
+              "content-length": "106",
+              "content-type": "application/json; charset=utf-8",
+              "x-rozenite-scenario": "expo-get-json",
+            },
+            "responseTime": "<number>",
+            "size": 106,
+            "status": 200,
+            "statusText": "no error",
+            "url": "<fixture>/json",
+          },
+          "source": "expo",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 106,
+          "requestId": "<request-1>",
+          "source": "expo",
+          "total": 106,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 106,
+          "source": "expo",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"fixture":"rozenite-network-activity","items":[{"id":1,"name":"alpha"},{"id":2,"name":"beta"}],"ok":true}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-204 > tap 1`] = `
+{
+  "app": {
+    "bodyLength": 0,
+    "contentType": "text/plain",
+    "echoedScenarioHeader": "fetch-204",
+    "scenario": "fetch-204",
+    "status": 204,
+    "statusText": "",
+    "text": "",
+    "transport": "fetch",
+    "url": "<fixture>/no-content",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "x-rozenite-scenario": "fetch-204",
+            },
+            "method": "GET",
+            "postData": null,
+            "url": "<fixture>/no-content",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/octet-stream",
+            "headers": {
+              "Cache-Control": "no-store",
+              "X-Rozenite-Scenario": "fetch-204",
+            },
+            "responseTime": "<number>",
+            "size": 0,
+            "status": 204,
+            "url": "<fixture>/no-content",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 0,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": {
+            "base64": "",
+            "kind": "binary",
+          },
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-abort > tap 1`] = `
+{
+  "app": {
+    "error": {
+      "message": "Aborted",
+      "name": "AbortError",
+    },
+    "scenario": "fetch-abort",
+    "transport": "fetch",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "x-rozenite-scenario": "fetch-abort",
+            },
+            "method": "GET",
+            "postData": null,
+            "url": "<fixture>/slow?ms=5000",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "canceled": true,
+          "error": "Aborted",
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-failed",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 0,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-get-json > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "fetch-get-json",
+    "json": {
+      "fixture": "rozenite-network-activity",
+      "items": [
+        {
+          "id": 1,
+          "name": "alpha",
+        },
+        {
+          "id": 2,
+          "name": "beta",
+        },
+      ],
+      "ok": true,
+    },
+    "scenario": "fetch-get-json",
+    "status": 200,
+    "statusText": "",
+    "transport": "fetch",
+    "url": "<fixture>/json",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "x-rozenite-scenario": "fetch-get-json",
+            },
+            "method": "GET",
+            "postData": null,
+            "url": "<fixture>/json",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 106,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 106,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "106",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "fetch-get-json",
+            },
+            "responseTime": "<number>",
+            "size": 106,
+            "status": 200,
+            "url": "<fixture>/json",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 106,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"fixture":"rozenite-network-activity","items":[{"id":1,"name":"alpha"},{"id":2,"name":"beta"}],"ok":true}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-large-download > tap 1`] = `
+{
+  "app": {
+    "bodyLength": 2097152,
+    "contentType": "application/octet-stream",
+    "echoedScenarioHeader": "fetch-large-download",
+    "largeBodyPatternValid": true,
+    "scenario": "fetch-large-download",
+    "status": 200,
+    "statusText": "",
+    "transport": "fetch",
+    "url": "<fixture>/large",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "x-rozenite-scenario": "fetch-large-download",
+            },
+            "method": "GET",
+            "postData": null,
+            "url": "<fixture>/large",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 2097152,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 2097152,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/octet-stream",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "2097152",
+              "Content-Type": "application/octet-stream",
+              "X-Rozenite-Scenario": "fetch-large-download",
+            },
+            "responseTime": "<number>",
+            "size": 2097152,
+            "status": 200,
+            "url": "<fixture>/large",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 2097152,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": {
+            "base64": "<string length=2796204 sha256=458a1cf0f6b8d531>",
+            "kind": "binary",
+          },
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-png > tap 1`] = `
+{
+  "app": {
+    "bodyLength": 70,
+    "contentType": "image/png",
+    "echoedScenarioHeader": "fetch-png",
+    "pngSignatureValid": true,
+    "scenario": "fetch-png",
+    "status": 200,
+    "statusText": "",
+    "transport": "fetch",
+    "url": "<fixture>/png",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "x-rozenite-scenario": "fetch-png",
+            },
+            "method": "GET",
+            "postData": null,
+            "url": "<fixture>/png",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 70,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 70,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "image/png",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "70",
+              "Content-Type": "image/png",
+              "X-Rozenite-Scenario": "fetch-png",
+            },
+            "responseTime": "<number>",
+            "size": 70,
+            "status": 200,
+            "url": "<fixture>/png",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 70,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": {
+            "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+            "kind": "binary",
+          },
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-post-array-buffer > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "fetch-post-array-buffer",
+    "json": {
+      "body": "array buffer body from the playground",
+      "bodyLength": 37,
+      "contentType": "application/octet-stream",
+      "headers": {
+        "accept": "*/*",
+        "content-length": "37",
+        "content-type": "application/octet-stream",
+        "x-rozenite-scenario": "fetch-post-array-buffer",
+      },
+      "method": "POST",
+      "path": "/echo",
+      "query": {},
+    },
+    "scenario": "fetch-post-array-buffer",
+    "status": 200,
+    "statusText": "",
+    "transport": "fetch",
+    "url": "<fixture>/echo",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "content-type": "application/octet-stream",
+              "x-rozenite-scenario": "fetch-post-array-buffer",
+            },
+            "method": "POST",
+            "postData": {
+              "type": "binary",
+              "value": {
+                "size": 37,
+              },
+            },
+            "url": "<fixture>/echo",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 286,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 286,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "286",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "fetch-post-array-buffer",
+            },
+            "responseTime": "<number>",
+            "size": 286,
+            "status": 200,
+            "url": "<fixture>/echo",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 286,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"method":"POST","path":"/echo","query":{},"headers":{"accept":"*/*","content-length":"37","content-type":"application/octet-stream","x-rozenite-scenario":"fetch-post-array-buffer"},"contentType":"application/octet-stream","bodyLength":37,"body":"array buffer body from the playground"}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-post-blob > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "fetch-post-blob",
+    "json": {
+      "body": "blob body from the playground",
+      "bodyLength": 29,
+      "contentType": "text/plain",
+      "headers": {
+        "accept": "*/*",
+        "content-length": "29",
+        "content-type": "text/plain",
+        "x-rozenite-scenario": "fetch-post-blob",
+      },
+      "method": "POST",
+      "path": "/echo",
+      "query": {},
+    },
+    "scenario": "fetch-post-blob",
+    "status": 200,
+    "statusText": "",
+    "transport": "fetch",
+    "url": "<fixture>/echo",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "content-type": "text/plain",
+              "x-rozenite-scenario": "fetch-post-blob",
+            },
+            "method": "POST",
+            "postData": {
+              "type": "binary",
+              "value": {
+                "size": 29,
+                "type": "text/plain",
+              },
+            },
+            "url": "<fixture>/echo",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 242,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 242,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "242",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "fetch-post-blob",
+            },
+            "responseTime": "<number>",
+            "size": 242,
+            "status": 200,
+            "url": "<fixture>/echo",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 242,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"method":"POST","path":"/echo","query":{},"headers":{"accept":"*/*","content-length":"29","content-type":"text/plain","x-rozenite-scenario":"fetch-post-blob"},"contentType":"text/plain","bodyLength":29,"body":"blob body from the playground"}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-post-form-data > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "fetch-post-form-data",
+    "json": {
+      "bodyLength": null,
+      "contentType": "multipart/form-data; boundary=<boundary>",
+      "headers": {
+        "accept": "*/*",
+        "content-type": "multipart/form-data; boundary=<boundary>",
+        "x-rozenite-scenario": "fetch-post-form-data",
+      },
+      "method": "POST",
+      "parts": [
+        {
+          "name": "name",
+          "size": 8,
+          "value": "Rozenite",
+        },
+        {
+          "name": "note",
+          "size": 18,
+          "value": "form-data scenario",
+        },
+      ],
+      "path": "/echo",
+      "query": {},
+    },
+    "scenario": "fetch-post-form-data",
+    "status": 200,
+    "statusText": "",
+    "transport": "fetch",
+    "url": "<fixture>/echo",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "x-rozenite-scenario": "fetch-post-form-data",
+            },
+            "method": "POST",
+            "postData": {
+              "type": "form-data",
+              "value": {
+                "name": {
+                  "type": "text",
+                  "value": "Rozenite",
+                },
+                "note": {
+                  "type": "text",
+                  "value": "form-data scenario",
+                },
+              },
+            },
+            "url": "<fixture>/echo",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 357,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 357,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "357",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "fetch-post-form-data",
+            },
+            "responseTime": "<number>",
+            "size": 357,
+            "status": 200,
+            "url": "<fixture>/echo",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 357,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"method":"POST","path":"/echo","query":{},"headers":{"accept":"*/*","content-type":"multipart/form-data; boundary=<boundary>","x-rozenite-scenario":"fetch-post-form-data"},"contentType":"multipart/form-data; boundary=<boundary>","bodyLength":null,"parts":[{"name":"name","size":8,"value":"Rozenite"},{"name":"note","size":18,"value":"form-data scenario"}]}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-post-json > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "fetch-post-json",
+    "json": {
+      "body": "{"title":"Rozenite e2e","count":3,"tags":["network","activity"],"nested":{"ok":true}}",
+      "bodyLength": 85,
+      "contentType": "application/json",
+      "headers": {
+        "accept": "*/*",
+        "content-length": "85",
+        "content-type": "application/json",
+        "x-rozenite-scenario": "fetch-post-json",
+      },
+      "method": "POST",
+      "path": "/echo",
+      "query": {},
+    },
+    "scenario": "fetch-post-json",
+    "status": 200,
+    "statusText": "",
+    "transport": "fetch",
+    "url": "<fixture>/echo",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "content-type": "application/json",
+              "x-rozenite-scenario": "fetch-post-json",
+            },
+            "method": "POST",
+            "postData": {
+              "type": "text",
+              "value": "{"title":"Rozenite e2e","count":3,"tags":["network","activity"],"nested":{"ok":true}}",
+            },
+            "url": "<fixture>/echo",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 326,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 326,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "326",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "fetch-post-json",
+            },
+            "responseTime": "<number>",
+            "size": 326,
+            "status": 200,
+            "url": "<fixture>/echo",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 326,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"method":"POST","path":"/echo","query":{},"headers":{"accept":"*/*","content-length":"85","content-type":"application/json","x-rozenite-scenario":"fetch-post-json"},"contentType":"application/json","bodyLength":85,"body":"{\\"title\\":\\"Rozenite e2e\\",\\"count\\":3,\\"tags\\":[\\"network\\",\\"activity\\"],\\"nested\\":{\\"ok\\":true}}"}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-redirect > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "fetch-redirect",
+    "json": {
+      "fixture": "rozenite-network-activity",
+      "items": [
+        {
+          "id": 1,
+          "name": "alpha",
+        },
+        {
+          "id": 2,
+          "name": "beta",
+        },
+      ],
+      "ok": true,
+    },
+    "scenario": "fetch-redirect",
+    "status": 200,
+    "statusText": "",
+    "transport": "fetch",
+    "url": "<fixture>/json",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "x-rozenite-scenario": "fetch-redirect",
+            },
+            "method": "GET",
+            "postData": null,
+            "url": "<fixture>/status/301",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 106,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 106,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "106",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "fetch-redirect",
+            },
+            "responseTime": "<number>",
+            "size": 106,
+            "status": 200,
+            "url": "<fixture>/status/301",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 106,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"fixture":"rozenite-network-activity","items":[{"id":1,"name":"alpha"},{"id":2,"name":"beta"}],"ok":true}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-status-404 > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "fetch-status-404",
+    "json": {
+      "status": 404,
+      "statusText": "Not Found",
+    },
+    "scenario": "fetch-status-404",
+    "status": 404,
+    "statusText": "",
+    "transport": "fetch",
+    "url": "<fixture>/status/404",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "x-rozenite-scenario": "fetch-status-404",
+            },
+            "method": "GET",
+            "postData": null,
+            "url": "<fixture>/status/404",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 39,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 39,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "39",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "fetch-status-404",
+            },
+            "responseTime": "<number>",
+            "size": 39,
+            "status": 404,
+            "url": "<fixture>/status/404",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 39,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"status":404,"statusText":"Not Found"}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-status-500 > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "fetch-status-500",
+    "json": {
+      "status": 500,
+      "statusText": "Internal Server Error",
+    },
+    "scenario": "fetch-status-500",
+    "status": 500,
+    "statusText": "",
+    "transport": "fetch",
+    "url": "<fixture>/status/500",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "x-rozenite-scenario": "fetch-status-500",
+            },
+            "method": "GET",
+            "postData": null,
+            "url": "<fixture>/status/500",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 51,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": 51,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "51",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "fetch-status-500",
+            },
+            "responseTime": "<number>",
+            "size": 51,
+            "status": 500,
+            "url": "<fixture>/status/500",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 51,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"status":500,"statusText":"Internal Server Error"}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > fetch-timeout > tap 1`] = `
+{
+  "app": {
+    "error": {
+      "message": "Aborted",
+      "name": "AbortError",
+    },
+    "scenario": "fetch-timeout",
+    "timeoutMechanism": "AbortSignal.timeout",
+    "transport": "fetch",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "Promise",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "x-rozenite-scenario": "fetch-timeout",
+            },
+            "method": "GET",
+            "postData": null,
+            "url": "<fixture>/slow?ms=5000",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "canceled": true,
+          "error": "Aborted",
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-failed",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 0,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > global-fetch-get-json > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "global-fetch-get-json",
+    "json": {
+      "fixture": "rozenite-network-activity",
+      "items": [
+        {
+          "id": 1,
+          "name": "alpha",
+        },
+        {
+          "id": 2,
+          "name": "beta",
+        },
+      ],
+      "ok": true,
+    },
+    "redirected": false,
+    "scenario": "global-fetch-get-json",
+    "status": 200,
+    "statusText": "no error",
+    "transport": "global-fetch",
+    "url": "<fixture>/json",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "functionName": "step",
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "address at InternalBytecode.js",
+            "stack": [
+              {
+                "functionName": "step",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
+                "functionName": "tryCallTwo",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "X-Rozenite-Scenario": "global-fetch-get-json",
+            },
+            "method": "GET",
+            "url": "<fixture>/json",
+          },
+          "requestId": "<request-1>",
+          "source": "expo",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json",
+            "headers": {
+              "cache-control": "no-store",
+              "content-length": "106",
+              "content-type": "application/json; charset=utf-8",
+              "x-rozenite-scenario": "global-fetch-get-json",
+            },
+            "responseTime": "<number>",
+            "size": 106,
+            "status": 200,
+            "statusText": "no error",
+            "url": "<fixture>/json",
+          },
+          "source": "expo",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": true,
+          "loaded": 106,
+          "requestId": "<request-1>",
+          "source": "expo",
+          "total": 106,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 106,
+          "source": "expo",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"fixture":"rozenite-network-activity","items":[{"id":1,"name":"alpha"},{"id":2,"name":"beta"}],"ok":true}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+  "globalFetch": {
+    "hasPolyfillFlag": false,
+    "implementation": "other",
+    "name": "",
+  },
+}
+`;
+
+exports[`Network Activity on device > nitro-abort > tap 1`] = `
+{
+  "app": {
+    "error": {
+      "message": "The operation was aborted.",
+      "name": "AbortError",
+    },
+    "scenario": "nitro-abort",
+    "transport": "nitro",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "type": "other",
+          },
+          "request": {
+            "headers": {
+              "X-Rozenite-Scenario": "nitro-abort",
+            },
+            "method": "GET",
+            "url": "<fixture>/slow?ms=5000",
+          },
+          "requestId": "<request-1>",
+          "source": "nitro",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "canceled": false,
+          "error": "Error: Error Domain=NSURLErrorDomain Code=-999 "cancelled" UserInfo={NSErrorFailingURLStringKey=<fixture>/slow?ms=5000, NSErrorFailingURLKey=<fixture>/slow?ms=5000, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <<uuid>>.<3>"
+), _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <<uuid>>.<3>, NSLocalizedDescription=cancelled}",
+          "requestId": "<request-1>",
+          "source": "nitro",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "request-failed",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > nitro-get-json > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "nitro-get-json",
+    "json": {
+      "fixture": "rozenite-network-activity",
+      "items": [
+        {
+          "id": 1,
+          "name": "alpha",
+        },
+        {
+          "id": 2,
+          "name": "beta",
+        },
+      ],
+      "ok": true,
+    },
+    "redirected": false,
+    "scenario": "nitro-get-json",
+    "status": 200,
+    "statusText": "no error",
+    "transport": "nitro",
+    "url": "<fixture>/json",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "type": "other",
+          },
+          "request": {
+            "headers": {
+              "X-Rozenite-Scenario": "nitro-get-json",
+            },
+            "method": "GET",
+            "url": "<fixture>/json",
+          },
+          "requestId": "<request-1>",
+          "source": "nitro",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json; charset=utf-8",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "106",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "nitro-get-json",
+            },
+            "responseTime": "<number>",
+            "size": 106,
+            "status": 200,
+            "statusText": "no error",
+            "url": "<fixture>/json",
+          },
+          "source": "nitro",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 106,
+          "source": "nitro",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"fixture":"rozenite-network-activity","items":[{"id":1,"name":"alpha"},{"id":2,"name":"beta"}],"ok":true}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > nitro-post-json > tap 1`] = `
+{
+  "app": {
+    "contentType": "application/json; charset=utf-8",
+    "echoedScenarioHeader": "nitro-post-json",
+    "json": {
+      "body": "{"title":"Rozenite e2e","count":3,"tags":["network","activity"],"nested":{"ok":true}}",
+      "bodyLength": 85,
+      "contentType": "application/json",
+      "headers": {
+        "accept": "*/*",
+        "content-length": "85",
+        "content-type": "application/json",
+        "x-rozenite-scenario": "nitro-post-json",
+      },
+      "method": "POST",
+      "path": "/echo",
+      "query": {},
+    },
+    "redirected": false,
+    "scenario": "nitro-post-json",
+    "status": 200,
+    "statusText": "no error",
+    "transport": "nitro",
+    "url": "<fixture>/echo",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "type": "other",
+          },
+          "request": {
+            "headers": {
+              "Content-Type": "application/json",
+              "X-Rozenite-Scenario": "nitro-post-json",
+            },
+            "method": "POST",
+            "postData": {
+              "type": "text",
+              "value": "{"title":"Rozenite e2e","count":3,"tags":["network","activity"],"nested":{"ok":true}}",
+            },
+            "url": "<fixture>/echo",
+          },
+          "requestId": "<request-1>",
+          "source": "nitro",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "application/json; charset=utf-8",
+            "headers": {
+              "Cache-Control": "no-store",
+              "Content-Length": "326",
+              "Content-Type": "application/json; charset=utf-8",
+              "X-Rozenite-Scenario": "nitro-post-json",
+            },
+            "responseTime": "<number>",
+            "size": 326,
+            "status": 200,
+            "statusText": "no error",
+            "url": "<fixture>/echo",
+          },
+          "source": "nitro",
+          "timestamp": "<number>",
+          "type": "Fetch",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 326,
+          "source": "nitro",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "body": "{"method":"POST","path":"/echo","query":{},"headers":{"accept":"*/*","content-length":"85","content-type":"application/json","x-rozenite-scenario":"nitro-post-json"},"contentType":"application/json","bodyLength":85,"body":"{\\"title\\":\\"Rozenite e2e\\",\\"count\\":3,\\"tags\\":[\\"network\\",\\"activity\\"],\\"nested\\":{\\"ok\\":true}}"}",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > sse-stream > tap 1`] = `
+{
+  "app": {
+    "scenario": "sse-stream",
+    "sse": {
+      "errors": [],
+      "messages": [
+        "message-1",
+        "message-2",
+        "message-3",
+      ],
+      "opened": true,
+      "pings": [
+        "ping-1",
+        "ping-2",
+      ],
+      "serverClosed": true,
+    },
+    "transport": "sse",
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "initiator": {
+            "functionName": "open",
+            "generatedColumnNumber": "<number>",
+            "generatedLineNumber": "<number>",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+            "stack": [
+              {
+                "functionName": "open",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+            ],
+            "symbolicationStatus": "pending",
+            "type": "script",
+          },
+          "request": {
+            "headers": {
+              "accept": "text/event-stream",
+              "cache-control": "no-cache",
+              "x-requested-with": "XMLHttpRequest",
+              "x-rozenite-scenario": "sse-stream",
+            },
+            "method": "GET",
+            "url": "<fixture>/sse",
+          },
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "request-sent",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "text/event-stream",
+            "headers": {
+              "Cache-Control": "no-cache",
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Transfer-Encoding": "Identity",
+              "X-Rozenite-Scenario": "sse-stream",
+            },
+            "responseTime": "<number>",
+            "size": 0,
+            "status": 200,
+            "url": "<fixture>/sse",
+          },
+          "timestamp": "<number>",
+          "type": "sse-open",
+        },
+        "type": "sse-open",
+      },
+      {
+        "payload": {
+          "payload": {
+            "data": "message-1",
+            "type": "message",
+          },
+          "requestId": "<request-1>",
+          "timestamp": "<number>",
+          "type": "sse-message",
+        },
+        "type": "sse-message",
+      },
+      {
+        "payload": {
+          "collapsedEvents": "<count>",
+          "lengthComputable": false,
+          "loaded": 103,
+          "requestId": "<request-1>",
+          "source": "builtin",
+          "total": -1,
+        },
+        "type": "request-progress",
+      },
+      {
+        "payload": {
+          "payload": {
+            "data": "ping-1",
+            "type": "ping",
+          },
+          "requestId": "<request-1>",
+          "timestamp": "<number>",
+          "type": "sse-message",
+        },
+        "type": "sse-message",
+      },
+      {
+        "payload": {
+          "payload": {
+            "data": "message-2",
+            "type": "message",
+          },
+          "requestId": "<request-1>",
+          "timestamp": "<number>",
+          "type": "sse-message",
+        },
+        "type": "sse-message",
+      },
+      {
+        "payload": {
+          "payload": {
+            "data": "ping-2",
+            "type": "ping",
+          },
+          "requestId": "<request-1>",
+          "timestamp": "<number>",
+          "type": "sse-message",
+        },
+        "type": "sse-message",
+      },
+      {
+        "payload": {
+          "payload": {
+            "data": "message-3",
+            "type": "message",
+          },
+          "requestId": "<request-1>",
+          "timestamp": "<number>",
+          "type": "sse-message",
+        },
+        "type": "sse-message",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "response": {
+            "contentType": "text/event-stream",
+            "headers": {
+              "Cache-Control": "no-cache",
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Transfer-Encoding": "Identity",
+              "X-Rozenite-Scenario": "sse-stream",
+            },
+            "responseTime": "<number>",
+            "size": 103,
+            "status": 200,
+            "url": "<fixture>/sse",
+          },
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "XHR",
+        },
+        "type": "response-received",
+      },
+      {
+        "payload": {
+          "duration": "<number>",
+          "requestId": "<request-1>",
+          "size": 103,
+          "source": "builtin",
+          "timestamp": "<number>",
+          "ttfb": "<number>",
+        },
+        "type": "request-completed",
+      },
+      {
+        "payload": {
+          "requestId": "<request-1>",
+          "timestamp": "<number>",
+          "type": "sse-close",
+        },
+        "type": "sse-close",
+      },
+      {
+        "payload": {
+          "body": "",
+          "requestId": "<request-1>",
+        },
+        "type": "response-body",
+      },
+    ],
+  },
+}
+`;
+
+exports[`Network Activity on device > websocket-echo > tap 1`] = `
+{
+  "app": {
+    "scenario": "websocket-echo",
+    "transport": "websocket",
+    "websocket": {
+      "closeCode": 1000,
+      "closeReason": "scenario complete",
+      "received": [
+        "hello-1",
+        "hello-2",
+      ],
+      "sent": [
+        "hello-1",
+        "hello-2",
+      ],
+      "wasClean": false,
+    },
+  },
+  "capture": {
+    "complete": true,
+    "events": [
+      {
+        "payload": {
+          "options": {
+            "headers": {},
+          },
+          "protocols": null,
+          "socketId": "<socket-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "websocket-connect",
+          "url": "<fixture-ws>/ws?scenario=websocket-echo",
+        },
+        "type": "websocket-connect",
+      },
+      {
+        "payload": {
+          "socketId": "<socket-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "websocket-open",
+          "url": "<fixture-ws>/ws?scenario=websocket-echo",
+        },
+        "type": "websocket-open",
+      },
+      {
+        "payload": {
+          "data": "hello-1",
+          "messageType": "text",
+          "socketId": "<socket-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "websocket-message-sent",
+          "url": "<fixture-ws>/ws?scenario=websocket-echo",
+        },
+        "type": "websocket-message-sent",
+      },
+      {
+        "payload": {
+          "data": "hello-1",
+          "messageType": "text",
+          "socketId": "<socket-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "websocket-message-received",
+          "url": "<fixture-ws>/ws?scenario=websocket-echo",
+        },
+        "type": "websocket-message-received",
+      },
+      {
+        "payload": {
+          "data": "hello-2",
+          "messageType": "text",
+          "socketId": "<socket-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "websocket-message-sent",
+          "url": "<fixture-ws>/ws?scenario=websocket-echo",
+        },
+        "type": "websocket-message-sent",
+      },
+      {
+        "payload": {
+          "data": "hello-2",
+          "messageType": "text",
+          "socketId": "<socket-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "websocket-message-received",
+          "url": "<fixture-ws>/ws?scenario=websocket-echo",
+        },
+        "type": "websocket-message-received",
+      },
+      {
+        "payload": {
+          "code": 1000,
+          "reason": "scenario complete",
+          "socketId": "<socket-1>",
+          "source": "builtin",
+          "timestamp": "<number>",
+          "type": "websocket-close",
+          "url": "<fixture-ws>/ws?scenario=websocket-echo",
+        },
+        "type": "websocket-close",
+      },
+    ],
+  },
+}
+`;
