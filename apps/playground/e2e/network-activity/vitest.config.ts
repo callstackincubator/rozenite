@@ -19,8 +19,9 @@ export default defineConfig({
     environment: 'node',
     fileParallelism: false,
     testTimeout: 60_000,
-    // Setup fails fast on its own (see harness.ts); this only bounds a hung device.
-    hookTimeout: 120_000,
+    // Above the worst-case sum of setup's own step timeouts (125 s, see
+    // harness.ts), so a hang is reported by the step that hung.
+    hookTimeout: 150_000,
     resolveSnapshotPath: (testPath, snapshotExtension) =>
       path.join(getSnapshotDir(platform), `${path.basename(testPath)}${snapshotExtension}`),
   },

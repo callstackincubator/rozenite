@@ -73,8 +73,15 @@ export class HarnessSetupError extends Error {
   }
 }
 
+// Worst case for setup is the sum of these: 3 x METRO_PROBE (Metro info,
+// targets, sessions) + SESSION_OPEN + TOOL_REGISTRATION (+ one METRO_PROBE
+// for its last listing) + FIXTURE_PING_CALL + OBSERVER_START = 125 s.
+// vitest.config.ts sets hookTimeout above that, so a hang is reported by the
+// step that hung, not as a generic hook timeout.
 const METRO_PROBE_TIMEOUT_MS = 5_000;
 const SESSION_OPEN_TIMEOUT_MS = 60_000;
+/** Tap open and probe (5 s each), or the agent tools' first call. */
+const OBSERVER_START_TIMEOUT_MS = 20_000;
 /** A freshly launched app registers its tools after the session reports ready. */
 const TOOL_REGISTRATION_TIMEOUT_MS = 15_000;
 const TOOL_POLL_INTERVAL_MS = 500;
@@ -151,7 +158,9 @@ export const openHarness = async (config: HarnessConfig): Promise<Harness> => {
     `could not list agent sessions from Metro at ${endpoint}.`,
     'Make sure Metro is the playground Metro with Rozenite enabled.',
   );
-  const existingIds = new Set(existingSessions.sessions.map((session) => session.id));
+  const existingCreatedAt = new Map(
+    existingSessions.sessions.map((session) => [session.id, session.createdAt]),
+  );
 
   const session = await guard(
     client.openSession(config.deviceId ? { deviceId: config.deviceId } : {}),
@@ -163,7 +172,9 @@ export const openHarness = async (config: HarnessConfig): Promise<Harness> => {
           .join(', ')}.`
       : 'Reload the playground and try again.',
   );
-  const ownsSession = !existingIds.has(session.id);
+  // Metro replaces a stale or blocked session under the same id, so compare
+  // creation times rather than ids to tell a reused session from a new one.
+  const ownsSession = existingCreatedAt.get(session.id) !== session.info.createdAt;
   const releaseSession = async () => {
     if (ownsSession) {
       await session.stop().catch(() => undefined);
@@ -211,7 +222,7 @@ export const openHarness = async (config: HarnessConfig): Promise<Harness> => {
         timeouts: { captureMs: config.captureTimeoutMs, tapOpenMs: TAP_OPEN_TIMEOUT_MS },
         log: (message) => process.stdout.write(`${message}\n`),
       }),
-      SESSION_OPEN_TIMEOUT_MS,
+      OBSERVER_START_TIMEOUT_MS,
       'could not start observing the Network Activity plugin.',
       'Check that the playground mounts useNetworkActivityDevTools and that the session is connected.',
     );

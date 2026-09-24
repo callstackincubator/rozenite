@@ -100,16 +100,20 @@ export const TIMEOUT_AFTER_MS = 300;
 /** What the application observed. Every field is JSON-serialisable. */
 export type NetworkScenarioResult = {
   scenario: ScenarioName;
-  /** `fetch` is whatwg-fetch over XHR; `global-fetch` is whatever `globalThis.fetch` is. */
+  /** `fetch` is whatwg-fetch over XHR (also `fixture-ping`); `global-fetch` is whatever `globalThis.fetch` is. */
   transport: 'fetch' | 'global-fetch' | 'axios' | 'expo' | 'nitro' | 'websocket' | 'sse';
   /** `Platform.OS`; reported by `fixture-ping`. */
   platform?: string;
-  /** Which implementation `globalThis.fetch` was; reported by `global-fetch-get-json`. */
+  /**
+   * Which implementation `globalThis.fetch` was; reported by
+   * `global-fetch-get-json`. Only uses hints that survive the plugin wrapping
+   * the global (no identity checks): whatwg-fetch marks its function with
+   * `polyfill = true`.
+   */
   globalFetch?: {
-    implementation: 'expo/fetch' | 'whatwg-fetch' | 'other';
-    isExpoFetch: boolean;
-    isWhatwgFetch: boolean;
+    implementation: 'whatwg-fetch' | 'other';
     hasPolyfillFlag: boolean;
+    name: string;
   };
   status?: number;
   statusText?: string;

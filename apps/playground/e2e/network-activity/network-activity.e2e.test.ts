@@ -59,12 +59,14 @@ const expectJsonFixture = (result: NetworkScenarioResult) => {
 const expectEcho = (
   result: NetworkScenarioResult,
   expected: { contentType: RegExp; body?: string },
-): EchoResponse => {
+): Partial<EchoResponse> => {
   expectResponse(result, 200);
-  const echo = result.json as EchoResponse;
+  // A scenario that failed in the app has no `json`; report that through the
+  // soft assertions instead of throwing before the snapshot is taken.
+  const echo = (result.json ?? {}) as Partial<EchoResponse>;
   expect.soft(echo.method).toBe('POST');
   expect.soft(echo.path).toBe('/echo');
-  expect.soft(echo.headers['x-rozenite-scenario']).toBe(result.scenario);
+  expect.soft(echo.headers?.['x-rozenite-scenario']).toBe(result.scenario);
   expect.soft(echo.contentType).toMatch(expected.contentType);
   if (expected.body !== undefined) {
     expect.soft(echo.body).toBe(expected.body);
@@ -293,12 +295,24 @@ describe.sequential('Network Activity on device', () => {
         invoke: () => active.runScenario(testCase.scenario),
       });
 
-      // 1. The plugin did not disturb the application.
-      testCase.assertApp(result);
-
-      // 2. The plugin's capture matches the recorded wire contract.
+      // `globalFetch` describes the app's configuration and can change when
+      // the plugin wraps the global, so it is kept apart from what the app
+      // observed.
+      const { globalFetch, ...app } = result;
       const normalise = createNormaliser({ fixtureBaseUrl: config.fixtureBaseUrl });
-      expect({ app: normalise(result), capture: normalise(capture) }).toMatchSnapshot(mode);
+
+      try {
+        // 1. The plugin did not disturb the application.
+        testCase.assertApp(result);
+      } finally {
+        // 2. The plugin's capture matches the recorded wire contract. Taken
+        // even if an app-side check throws, so a record run keeps the baseline.
+        expect({
+          app: normalise(app),
+          ...(globalFetch ? { globalFetch } : {}),
+          capture: normalise(capture),
+        }).toMatchSnapshot(mode);
+      }
     });
   }
 });

@@ -117,7 +117,7 @@ describe('createNormaliser', () => {
         url: 'http://192.168.1.20:8082/src/app/utils/network-activity/e2e-scenarios.ts',
         stack: [frame('a'), frame('b'), frame('c'), frame('d'), frame('e')],
       },
-    }) as { initiator: { url: string; stack: Array<Record<string, unknown>> } };
+    }) as { initiator: { url: string; stack: Record<string, unknown>[] } };
 
     expect(normalised.initiator.url).toBe(
       '<metro>/src/app/utils/network-activity/e2e-scenarios.ts',

@@ -327,8 +327,6 @@ const scenarios: Record<ScenarioName, (ctx: ScenarioContext) => Promise<NetworkS
 
   'global-fetch-get-json': async (ctx) => {
     const globalFetch = globalThis.fetch as typeof globalThis.fetch & { polyfill?: unknown };
-    const isExpoFetch = globalFetch === (expoFetch as unknown);
-    const isWhatwgFetch = globalFetch === xhrFetch;
     const hasPolyfillFlag = globalFetch.polyfill === true;
     const response = await globalFetch(`${ctx.baseUrl}/json`, {
       headers: scenarioHeaders(ctx.scenario),
@@ -336,14 +334,9 @@ const scenarios: Record<ScenarioName, (ctx: ScenarioContext) => Promise<NetworkS
     return {
       ...(await readJson(ctx, 'global-fetch', response)),
       globalFetch: {
-        implementation: isExpoFetch
-          ? 'expo/fetch'
-          : isWhatwgFetch || hasPolyfillFlag
-            ? 'whatwg-fetch'
-            : 'other',
-        isExpoFetch,
-        isWhatwgFetch,
+        implementation: hasPolyfillFlag ? 'whatwg-fetch' : 'other',
         hasPolyfillFlag,
+        name: globalFetch.name,
       },
     };
   },
@@ -359,12 +352,12 @@ const scenarios: Record<ScenarioName, (ctx: ScenarioContext) => Promise<NetworkS
       });
       return {
         scenario: ctx.scenario,
-        transport: 'global-fetch',
+        transport: 'fetch',
         platform: Platform.OS,
         status: response.status,
       };
     } catch (error) {
-      return failure(ctx, 'global-fetch', error, { platform: Platform.OS });
+      return failure(ctx, 'fetch', error, { platform: Platform.OS });
     } finally {
       abort.cancel();
     }
@@ -584,7 +577,7 @@ const runSSEStream = async (ctx: ScenarioContext): Promise<NetworkScenarioResult
 };
 
 const transportOf = (scenario: ScenarioName): NetworkScenarioResult['transport'] => {
-  if (scenario === 'global-fetch-get-json' || scenario === 'fixture-ping') {
+  if (scenario === 'global-fetch-get-json') {
     return 'global-fetch';
   }
   const prefix = scenario.split('-', 1)[0];
