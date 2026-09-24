@@ -17,7 +17,7 @@ The plugin now integrates with `react-native-nitro-fetch` when it is installed i
 - Nitro HTTP traffic is shown in the same Network Activity panel as built-in React Native requests
 - Nitro WebSocket traffic is supported through the nitro network inspector event stream
 - Requests are labeled with a source badge in the list and details view: `Built-in` or `Nitro`
-- Response body lookup works for both built-in and nitro HTTP entries
+- Response body lookup works for both built-in and nitro HTTP entries, with bodies captured up to 1 MiB (previously 4 KiB)
 - HTTP response overrides remain built-in only and are disabled for nitro entries
 
 ## Expo Fetch Support
@@ -26,10 +26,10 @@ The plugin optionally observes `expo/fetch` on Expo SDK 54 and newer. Expo
 requests appear in the same panel with an `Expo` source badge, including when
 SDK 56+ installs Expo fetch as the default global `fetch` implementation.
 
-On SDK 54–55, response bodies can only be captured after the application
-consumes them with the usual body helpers (such as `text()` or `json()`).
-Unconsumed and directly streamed bodies remain unavailable; the request itself
-is still recorded normally. Expo response overrides are not supported.
+On SDK 54–55, `Response.clone()` is not available, so response bodies for
+`expo/fetch` requests cannot be captured on those SDK versions; the request
+itself (method, URL, headers, status, timing) is still recorded normally.
+SDK 56 and newer are unaffected. Expo response overrides are not supported.
 
 ## Features
 
