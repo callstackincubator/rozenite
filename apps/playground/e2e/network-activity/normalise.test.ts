@@ -105,6 +105,16 @@ describe('createNormaliser', () => {
     expect(normalised.body).toMatch(/^<string length=5000 sha256=[0-9a-f]{16}>$/);
   });
 
+  it('masks UUIDs such as iOS NSURLSessionTask ids inside error text', () => {
+    const normalise = createNormaliser({ fixtureBaseUrl: 'http://localhost:38383' });
+    expect(
+      normalise({
+        error:
+          'LocalDataTask <B13FCD88-8DE3-4DB2-A559-46F847796A23>.<3>, NSLocalizedDescription=cancelled',
+      }),
+    ).toEqual({ error: 'LocalDataTask <<uuid>>.<3>, NSLocalizedDescription=cancelled' });
+  });
+
   it('masks the Metro origin and keeps only the first initiator frames', () => {
     const normalise = createNormaliser({ fixtureBaseUrl });
     const frame = (functionName: string) => ({

@@ -110,7 +110,10 @@ export const createNormaliser = ({ fixtureBaseUrl }: NormaliseOptions): Normalis
       .join('<fixture-ws>')
       .split(httpOrigin)
       .join('<fixture>')
-      .replace(/boundary=("?)[^";\s]+\1/gi, 'boundary=<boundary>');
+      .replace(/boundary=("?)[^";\s]+\1/gi, 'boundary=<boundary>')
+      // iOS embeds a fresh NSURLSessionTask id (`LocalDataTask <UUID>.<n>`) in
+      // every NSURLError description, which reaches the app-side error text.
+      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<uuid>');
     return replaced.length > MAX_VERBATIM_STRING_LENGTH ? summariseLongString(replaced) : replaced;
   };
 
