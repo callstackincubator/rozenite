@@ -276,24 +276,24 @@ exports[`Network Activity on device > expo-abort > tap 1`] = `
       {
         "payload": {
           "initiator": {
-            "functionName": "step",
+            "functionName": "?anon_0_expo-abort",
             "generatedColumnNumber": "<number>",
             "generatedLineNumber": "<number>",
-            "generatedUrl": "address at InternalBytecode.js",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
             "stack": [
               {
+                "functionName": "?anon_0_expo-abort",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
                 "functionName": "step",
-                "generatedColumnNumber": "<number>",
-                "generatedLineNumber": "<number>",
-                "generatedUrl": "address at InternalBytecode.js",
-              },
-              {
-                "generatedColumnNumber": "<number>",
-                "generatedLineNumber": "<number>",
-                "generatedUrl": "address at InternalBytecode.js",
-              },
-              {
-                "functionName": "tryCallTwo",
                 "generatedColumnNumber": "<number>",
                 "generatedLineNumber": "<number>",
                 "generatedUrl": "address at InternalBytecode.js",
@@ -307,7 +307,6 @@ exports[`Network Activity on device > expo-abort > tap 1`] = `
               "X-Rozenite-Scenario": "expo-abort",
             },
             "method": "GET",
-            "signal": {},
             "url": "<fixture>/slow?ms=5000",
           },
           "requestId": "<request-1>",
@@ -365,24 +364,24 @@ exports[`Network Activity on device > expo-get-json > tap 1`] = `
       {
         "payload": {
           "initiator": {
-            "functionName": "step",
+            "functionName": "?anon_0_expo-get-json",
             "generatedColumnNumber": "<number>",
             "generatedLineNumber": "<number>",
-            "generatedUrl": "address at InternalBytecode.js",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
             "stack": [
               {
+                "functionName": "?anon_0_expo-get-json",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
                 "functionName": "step",
-                "generatedColumnNumber": "<number>",
-                "generatedLineNumber": "<number>",
-                "generatedUrl": "address at InternalBytecode.js",
-              },
-              {
-                "generatedColumnNumber": "<number>",
-                "generatedLineNumber": "<number>",
-                "generatedUrl": "address at InternalBytecode.js",
-              },
-              {
-                "functionName": "tryCallTwo",
                 "generatedColumnNumber": "<number>",
                 "generatedLineNumber": "<number>",
                 "generatedUrl": "address at InternalBytecode.js",
@@ -2051,24 +2050,24 @@ exports[`Network Activity on device > global-fetch-get-json > tap 1`] = `
       {
         "payload": {
           "initiator": {
-            "functionName": "step",
+            "functionName": "?anon_0_global-fetch-get-json",
             "generatedColumnNumber": "<number>",
             "generatedLineNumber": "<number>",
-            "generatedUrl": "address at InternalBytecode.js",
+            "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
             "stack": [
               {
+                "functionName": "?anon_0_global-fetch-get-json",
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "<metro>/apps/playground/src/main.bundle//&platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.callstackcincubator.rozenite&transform.routerRoot=src%2Fapp&transform.reactCompiler=true&transform.engine=hermes&transform.bytecode=1&unstable_transformProfile=hermes-stable",
+              },
+              {
+                "generatedColumnNumber": "<number>",
+                "generatedLineNumber": "<number>",
+                "generatedUrl": "address at InternalBytecode.js",
+              },
+              {
                 "functionName": "step",
-                "generatedColumnNumber": "<number>",
-                "generatedLineNumber": "<number>",
-                "generatedUrl": "address at InternalBytecode.js",
-              },
-              {
-                "generatedColumnNumber": "<number>",
-                "generatedLineNumber": "<number>",
-                "generatedUrl": "address at InternalBytecode.js",
-              },
-              {
-                "functionName": "tryCallTwo",
                 "generatedColumnNumber": "<number>",
                 "generatedLineNumber": "<number>",
                 "generatedUrl": "address at InternalBytecode.js",
@@ -2148,7 +2147,7 @@ exports[`Network Activity on device > global-fetch-get-json > tap 1`] = `
   "globalFetch": {
     "hasPolyfillFlag": false,
     "implementation": "other",
-    "name": "",
+    "name": "fn",
   },
 }
 `;
