@@ -48,6 +48,26 @@ describe('xhr-hook', () => {
     });
   });
 
+  it('leaves a patch buried under a third-party patch inert after disable and re-enable', () => {
+    const { recorder, calls } = createFakeRecorder();
+    enableXhrHook(recorder);
+
+    // Another library patches over us, so disable() must leave its patch in
+    // place; our buried patch must then record nothing once re-enabled.
+    const ours = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function (this: XMLHttpRequest, ...args: [unknown?]) {
+      return ours.apply(this, args as [Document | XMLHttpRequestBodyInit | null | undefined]);
+    };
+    disableXhrHook();
+    enableXhrHook(recorder);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://example.com/');
+    xhr.send();
+
+    expect(calls.filter((c) => c.method === 'begin')).toHaveLength(1);
+  });
+
   it('lowercases and stringifies request headers, last value wins', () => {
     const { recorder, calls } = createFakeRecorder();
     enableXhrHook(recorder);

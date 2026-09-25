@@ -41,7 +41,7 @@ type XhrMethods = {
   setRequestHeader: typeof XHRCtor.prototype.setRequestHeader;
 };
 
-let installed: { previous: XhrMethods; patched: XhrMethods } | null = null;
+let installed: { previous: XhrMethods; patched: XhrMethods; retire: () => void } | null = null;
 let activeRecorder: Recorder | null = null;
 
 export const isXhrHookEnabled = (): boolean => installed !== null;
@@ -49,6 +49,9 @@ export const isXhrHookEnabled = (): boolean => installed !== null;
 export const enableXhrHook = (recorder: Recorder): void => {
   if (installed) return;
   activeRecorder = recorder;
+  // Each installation carries its own flag: a patch left inside another
+  // library's chain after `disable()` must stay inert on a later `enable()`.
+  let alive = true;
 
   const previous: XhrMethods = {
     open: XHRCtor.prototype.open,
@@ -90,7 +93,7 @@ export const enableXhrHook = (recorder: Recorder): void => {
     markActiveFetchCallSentXhr();
 
     const meta = pendingMeta.get(this);
-    if (activeRecorder && meta) {
+    if (alive && activeRecorder && meta) {
       setupRequestOverride(overridesRegistry, this, meta.url);
 
       const handle = activeRecorder.begin({
@@ -146,12 +149,14 @@ export const enableXhrHook = (recorder: Recorder): void => {
       send: XHRCtor.prototype.send,
       setRequestHeader: XHRCtor.prototype.setRequestHeader,
     },
+    retire: () => (alive = false),
   };
 };
 
 export const disableXhrHook = (): void => {
   if (!installed) return;
-  const { previous, patched } = installed;
+  const { previous, patched, retire } = installed;
+  retire();
   // Restore only the methods still ours — something else may have patched
   // over us since `enable()`, and clobbering that patch would be worse than
   // leaving it in place.

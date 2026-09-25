@@ -19,8 +19,10 @@ emitters, and duplicate timing/body logic.
 Behavior changes, some of them to the wire format:
 
 - nitro response and request bodies, and nitro WebSocket messages, are now
-  captured up to 1 MiB, up from a 4 KiB cap. nitro also now retains at most
-  100 entries (down from 500) as a trade-off for the larger cap.
+  captured up to 1 MiB, up from a 4 KiB cap.
+- `expo/fetch` response bodies are captured up to 5 MiB; larger bodies are
+  reported by size only. `text/event-stream` responses from `expo/fetch`
+  are recorded without a body and are not read by the plugin at all.
 - Expo SDK 54–55 no longer capture `expo/fetch` response bodies at all (they
   previously did, but only after the app itself consumed the body with
   `text()`/`arrayBuffer()`). The request row itself is still recorded. Expo
@@ -31,11 +33,9 @@ Behavior changes, some of them to the wire format:
 - A fetch request's `AbortSignal` is no longer sent on `request-sent` (it
   serialized to an uninformative `{}` and was never part of the documented
   `Request` wire type).
-- Request headers captured from `XMLHttpRequest` (built-in `fetch`, Axios)
-  now match React Native's own header storage exactly: the header name is
-  lowercased and the value is coerced with `String()`, and a header set more
-  than once keeps only the last value — it is not merged into an array. This
-  fixes a mismatch introduced in the pre-release version of this rewrite.
+- Initiator stacks are parsed in the V8/Hermes `at fn (file:line:col)`
+  format only; the JavaScriptCore `fn@file:line:col` format is no longer
+  parsed, so apps running on JSC get no initiator location.
 - The initiator preview attached to a fetch-captured request now starts at
   the application's own calling frame, matching the XHR path, instead of at
   an internal async-transpilation helper frame.

@@ -31,6 +31,11 @@ On SDK 54–55, `Response.clone()` is not available, so response bodies for
 itself (method, URL, headers, status, timing) is still recorded normally.
 SDK 56 and newer are unaffected. Expo response overrides are not supported.
 
+The global `fetch` is observed only when it is Expo's implementation. A
+wrapper an app or SDK installs around the global before recording starts
+(an error-reporting SDK, for example) is not observed; calls through
+`expo/fetch` itself always are.
+
 ## Features
 
 - **Real-time Network Monitoring**: Track all HTTP/HTTPS requests in real-time

@@ -58,14 +58,6 @@ const observeResponseBody = async (
   contentType: string,
   contentLength: number | undefined,
 ): Promise<void> => {
-  if (contentType === 'text/event-stream') {
-    // An SSE stream never ends on its own; consuming it here would hold the
-    // connection open indefinitely for no benefit — nothing observes a
-    // fetch-based SSE body today.
-    handle.end({ size: contentLength ?? null });
-    return;
-  }
-
   const reader = clone.body?.getReader();
   if (!reader) {
     handle.end({
@@ -131,6 +123,13 @@ const observeResponse = (handle: RecorderHandle, response: Response): void => {
     // A non-standard response can throw while exposing metadata. It is still
     // a successful application fetch, so finish it without a body.
     finishWithoutBody(handle, null);
+    return;
+  }
+
+  if (contentType === 'text/event-stream') {
+    // An SSE stream never ends on its own, and a clone tees it, buffering
+    // every byte for as long as the response lives. Decide before cloning.
+    finishWithoutBody(handle, contentLength ?? null);
     return;
   }
 
@@ -215,6 +214,11 @@ export const wrapFetch = (original: typeof fetch, getRecorder: () => Recorder | 
       },
     );
   } as typeof fetch;
+  try {
+    Object.defineProperty(fn, 'name', { value: original.name, configurable: true });
+  } catch {
+    // A frozen function object keeps the wrapper's own name.
+  }
 
   return { fn, disable: () => (alive = false) };
 };
@@ -237,14 +241,6 @@ const getExpoFetchModule = (): { fetch: typeof fetch } | null => {
     // implementation export keeps normal ESM imports live without trying to
     // assign through that facade.
     return require('expo/src/winter/fetch/fetch') as { fetch: typeof fetch };
-  } catch {
-    return null;
-  }
-};
-
-const getNitroFetch = (): typeof fetch | null => {
-  try {
-    return (require('react-native-nitro-fetch') as { fetch: typeof fetch }).fetch;
   } catch {
     return null;
   }
@@ -280,15 +276,9 @@ export const enableFetchHook = (recorder: Recorder): void => {
     );
     next.disables.push(disable);
 
-    const nitroFetch = getNitroFetch();
-    const globalIsNitro = nitroFetch !== null && originalGlobalFetch === nitroFetch;
-    const globalIsExpo = originalGlobalFetch === originalExpoFetch;
-
-    if (!globalIsNitro && globalIsExpo) {
+    if (originalGlobalFetch === originalExpoFetch) {
       try {
-        next.restores.push(
-          patch(globalThis as unknown as Record<string, typeof fetch>, 'fetch', expoWrapped),
-        );
+        globalThis.fetch = expoWrapped;
       } catch {
         // A hostile global getter must not prevent Expo interception.
       }
@@ -296,7 +286,15 @@ export const enableFetchHook = (recorder: Recorder): void => {
     // Otherwise the global is RN's own polyfill, an application wrapper
     // around it, or nitro's fetch — never wrapped. If Expo later installs a
     // getter aliasing the global to this same private export, it resolves
-    // to `expoWrapped` on its own, with nothing further needed here.
+    // to `expoWrapped` on its own; the restore below covers that case too,
+    // so a re-enable never finds a stale wrapper standing in for Expo.
+    next.restores.push(() => {
+      try {
+        if (globalThis.fetch === expoWrapped) globalThis.fetch = originalExpoFetch;
+      } catch {
+        // Nothing to restore through a hostile getter.
+      }
+    });
   }
 
   installation = next;

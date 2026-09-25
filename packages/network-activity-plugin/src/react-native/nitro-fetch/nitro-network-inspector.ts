@@ -8,10 +8,10 @@ import { appendHeader } from '../http/http-utils';
 // nitro was silently truncating bodies and WebSocket messages at its 4 KiB
 // default; the DevTools panel already handles payloads of this size from the
 // built-in path. It applies to response bodies, request bodies and
-// WebSocket messages alike. `maxEntries` is lowered from nitro's 500-entry
-// default in exchange for the larger body cap.
+// WebSocket messages alike. nitro's entry count is left at its default:
+// nitro drops the oldest entry regardless of type, and a WebSocket entry
+// dropped that way stops reporting messages.
 const NITRO_MAX_BODY_CAPTURE = 1024 * 1024;
-const NITRO_MAX_ENTRIES = 100;
 
 type NitroModule = {
   NetworkInspector: {
@@ -31,14 +31,48 @@ const getNitroModule = (): NitroModule | null => {
   }
 };
 
-// `react-native-nitro-fetch` is an optional peer dependency, resolved for
-// its types only — `NetworkEntry`/`WebSocketEntry`/`InspectorEntry` are
-// erased at compile time, so this import never requires the package.
-import type {
-  NetworkEntry as NitroHttpEntry,
-  WebSocketEntry as NitroWebSocketEntry,
-  InspectorEntry as NitroEntry,
-} from 'react-native-nitro-fetch';
+// Structural copies of nitro's `NetworkEntry`/`WebSocketEntry`, limited to
+// the fields read here. `react-native-nitro-fetch` is an optional peer, so
+// importing its types would leak into the published declarations.
+type NitroHeader = { key: string; value: string };
+
+type NitroHttpEntry = {
+  id: string;
+  type: 'http';
+  url: string;
+  method: string;
+  requestHeaders: NitroHeader[];
+  requestBody?: string;
+  status: number;
+  statusText: string;
+  responseHeaders: NitroHeader[];
+  responseBody?: string;
+  responseBodySize: number;
+  startTime: number;
+  endTime: number;
+  error?: string;
+};
+
+type NitroWebSocketEntry = {
+  id: string;
+  type: 'websocket';
+  url: string;
+  protocols: string[];
+  startTime: number;
+  endTime: number;
+  readyState: string;
+  messages: Array<{
+    direction: 'sent' | 'received';
+    data: string;
+    isBinary: boolean;
+    timestamp: number;
+  }>;
+  closeCode?: number;
+  closeReason?: string;
+  error?: string;
+};
+
+type NitroEntry = NitroHttpEntry | NitroWebSocketEntry;
 
 type NitroWebSocketEventMap = Pick<
   WebSocketEventMap,
@@ -240,7 +274,6 @@ export const createNitroNetworkInspector = (
 
       nitroModule.NetworkInspector.enable({
         maxBodyCapture: NITRO_MAX_BODY_CAPTURE,
-        maxEntries: NITRO_MAX_ENTRIES,
       });
       // Seed already-open WebSocket entries so re-enabling doesn't replay
       // their `connect`/`open`. Pre-existing HTTP entries are not replayed:

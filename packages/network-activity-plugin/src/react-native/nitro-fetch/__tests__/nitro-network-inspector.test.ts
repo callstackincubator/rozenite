@@ -290,7 +290,7 @@ describe('nitro network inspector', () => {
     expect(calls[1]?.args).toEqual(['Request canceled', true, expect.any(Number)]);
   });
 
-  it('enables nitro with a 1 MiB body cap and a lower entry cap', () => {
+  it("enables nitro with a 1 MiB body cap and nitro's default entry count", () => {
     const { recorder } = createFakeRecorder();
     const enable = vi.fn();
     const inspector = createNitroNetworkInspector(recorder, () => ({
@@ -311,11 +311,8 @@ describe('nitro network inspector', () => {
 
     inspector.enable();
 
-    expect(enable).toHaveBeenCalledWith({
-      maxBodyCapture: 1024 * 1024,
-      maxEntries: expect.any(Number),
-    });
-    // The 1 MiB body cap trade-off assumes fewer retained entries.
-    expect(enable.mock.calls[0]?.[0].maxEntries).toBeLessThan(500);
+    // nitro drops its oldest entry regardless of type, and a dropped
+    // WebSocket entry stops reporting messages, so the count stays default.
+    expect(enable).toHaveBeenCalledWith({ maxBodyCapture: 1024 * 1024 });
   });
 });
