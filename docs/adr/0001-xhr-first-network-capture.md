@@ -100,7 +100,9 @@ WebSocket traffic.
    own polyfill or an application wrapper around it: such wrappers commonly
    send their XHR asynchronously (after awaiting a token, for example),
    which defeats the synchronous marker and records every request twice.
-   The XHR hook already sees that traffic. The global is also not wrapped
+   Outside Expo the XHR hook already sees that traffic; in an Expo app a
+   wrapper installed around Expo's global before recording starts is not
+   observed, as before this decision. The global is also not wrapped
    when it is `react-native-nitro-fetch`'s `fetch`, because decision 3
    records that traffic. Every fetch-wrapper event is labelled `expo`.
 
