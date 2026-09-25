@@ -48,6 +48,18 @@ describe('getResponseBody', () => {
     expect(await getResponseBody(xhr)).toBe('{"ok":true,"n":1}');
   });
 
+  it('returns an overridden JSON response body once, not double-encoded', async () => {
+    // A response override sets `.response` directly to its raw body string
+    // (see `setupRequestOverride`) while flipping `responseType` to 'json' —
+    // unlike a real JSON response, `.response` here is already the string to
+    // ship, not a parsed object still needing `safeStringify`.
+    const xhr = makeXHRStub({
+      responseType: 'json',
+      response: '{"overridden":true}',
+    });
+    expect(await getResponseBody(xhr)).toBe('{"overridden":true}');
+  });
+
   it('reads a text blob as text', async () => {
     const blob = new Blob(['<p>hello</p>'], { type: 'text/html' });
     const xhr = makeXHRStub({
@@ -197,11 +209,7 @@ describe('getResponseBody', () => {
   });
 
   it('short-circuits arraybuffer responses above the size cap', async () => {
-    // Stub a buffer whose byteLength lies — the cap check should fire
-    // before any encoding work happens.
-    const oversized = {
-      byteLength: BINARY_CAPTURE_SIZE_CAP + 1,
-    } as unknown as ArrayBuffer;
+    const oversized = new ArrayBuffer(BINARY_CAPTURE_SIZE_CAP + 1);
     const xhr = makeXHRStub({
       responseType: 'arraybuffer',
       response: oversized,

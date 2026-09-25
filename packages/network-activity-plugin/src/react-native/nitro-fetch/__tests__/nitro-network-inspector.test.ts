@@ -289,4 +289,33 @@ describe('nitro network inspector', () => {
     expect(calls.map((call) => call.method)).toEqual(['begin', 'fail']);
     expect(calls[1]?.args).toEqual(['Request canceled', true, expect.any(Number)]);
   });
+
+  it('enables nitro with a 1 MiB body cap and a lower entry cap', () => {
+    const { recorder } = createFakeRecorder();
+    const enable = vi.fn();
+    const inspector = createNitroNetworkInspector(recorder, () => ({
+      NetworkInspector: {
+        enable,
+        disable() {},
+        isEnabled() {
+          return true;
+        },
+        onEntry() {
+          return () => undefined;
+        },
+        getEntries() {
+          return [];
+        },
+      },
+    }));
+
+    inspector.enable();
+
+    expect(enable).toHaveBeenCalledWith({
+      maxBodyCapture: 1024 * 1024,
+      maxEntries: expect.any(Number),
+    });
+    // The 1 MiB body cap trade-off assumes fewer retained entries.
+    expect(enable.mock.calls[0]?.[0].maxEntries).toBeLessThan(500);
+  });
 });

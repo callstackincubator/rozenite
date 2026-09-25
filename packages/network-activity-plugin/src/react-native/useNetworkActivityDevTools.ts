@@ -1,16 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import { NetworkActivityEventMap } from '../shared/client';
-import { isHttpEvent } from './http/http-inspector';
+import { isHttpEvent } from './network-inspector';
 import { isWebSocketEvent } from './websocket/websocket-inspector';
 import { isSSEEvent } from './sse/sse-inspector';
-import { getOverridesRegistry } from './http/overrides-registry';
+import { overridesRegistry } from './http/overrides-registry';
+import { recorder } from './http/recorder';
+import { disableXhrHook } from './http/xhr-hook';
+import { disableFetchHook } from './http/fetch-hook';
 import { DEFAULT_CONFIG, NetworkActivityDevToolsConfig, validateConfig } from './config';
 import { createNetworkInspectorsConfiguration } from './boot-recording';
 import { useNetworkActivityAgentTools } from './agent/use-network-activity-agent-tools';
 
 const inspectorsConfig = createNetworkInspectorsConfiguration();
-const overridesRegistry = getOverridesRegistry();
 
 export const useNetworkActivityDevTools = (
   config: NetworkActivityDevToolsConfig = DEFAULT_CONFIG,
@@ -128,15 +130,37 @@ export const useNetworkActivityDevTools = (
 
     return () => {
       subscriptions.forEach((subscription) => subscription.remove());
-      if (isHttpInspectorEnabled) networkInspector.http.dispose();
-      if (isWebSocketInspectorEnabled) networkInspector.websocket.dispose();
-      if (isSSEInspectorEnabled) networkInspector.sse.dispose();
     };
   }, [
     client,
     networkInspector,
     eventsListener,
     showUrlAsName,
+    isHttpInspectorEnabled,
+    isWebSocketInspectorEnabled,
+    isSSEInspectorEnabled,
+  ]);
+
+  // Kept separate from the effect above: disposing (which clears captured
+  // bodies and re-enables capture on hot reload) must not run every time
+  // `showUrlAsName` or another client-UI setting changes.
+  useEffect(() => {
+    if (!client) {
+      return;
+    }
+
+    return () => {
+      if (isHttpInspectorEnabled) {
+        disableXhrHook();
+        disableFetchHook();
+        recorder.clear();
+      }
+      if (isWebSocketInspectorEnabled) networkInspector.websocket.dispose();
+      if (isSSEInspectorEnabled) networkInspector.sse.dispose();
+    };
+  }, [
+    client,
+    networkInspector,
     isHttpInspectorEnabled,
     isWebSocketInspectorEnabled,
     isSSEInspectorEnabled,

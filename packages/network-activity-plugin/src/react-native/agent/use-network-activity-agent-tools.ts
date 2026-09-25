@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
 import type { NetworkActivityDevToolsClient } from '../../shared/client';
 import type { NetworkInspector } from '../network-inspector';
+import { recorder } from '../http/recorder';
 import { getNetworkActivityAgentState } from './state';
 import {
   NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
@@ -38,14 +39,14 @@ export const useNetworkActivityAgentTools = ({
 
   useEffect(() => {
     const unsubscribe = [
-      networkInspector.http.on('request-sent', (event) => state.onRequestSent(event)),
-      networkInspector.http.on('request-progress', (event) => state.onRequestProgress(event)),
-      networkInspector.http.on('response-received', (event) => state.onResponseReceived(event)),
-      networkInspector.http.on('request-completed', (event) => state.onRequestCompleted(event)),
-      networkInspector.http.on('request-failed', (event) => state.onRequestFailed(event)),
+      recorder.on('request-sent', (event) => state.onRequestSent(event)),
+      recorder.on('request-progress', (event) => state.onRequestProgress(event)),
+      recorder.on('response-received', (event) => state.onResponseReceived(event)),
+      recorder.on('request-completed', (event) => state.onRequestCompleted(event)),
+      recorder.on('request-failed', (event) => state.onRequestFailed(event)),
       // nitro HTTP traffic is routed into the same recorder as the XHR and
       // fetch adapters (see `network-inspector.ts`), so it already arrives
-      // through `networkInspector.http` above — subscribing to nitro here too
+      // through the subscriptions above — subscribing to nitro here too
       // would deliver every nitro HTTP event twice.
       networkInspector.websocket.on('websocket-connect', (event) =>
         state.onWebSocketConnect(event),
@@ -108,7 +109,7 @@ export const useNetworkActivityAgentTools = ({
     pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: startRecordingTool,
     handler: () => {
-      networkInspector.http.clearResponseBodies();
+      recorder.clear();
       const result = state.startRecording({ enabledInspectors });
       networkInspector.enable(enabledInspectors);
       return {

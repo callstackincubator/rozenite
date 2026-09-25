@@ -10,8 +10,8 @@ import {
 } from './http-utils';
 import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
 import { getContentType } from '../utils';
-import { getOverridesRegistry } from './overrides-registry';
-import { markActiveFetchCallSentXhr } from './fetch-dedupe';
+import { overridesRegistry } from './overrides-registry';
+import { markActiveFetchCallSentXhr } from './fetch-hook';
 
 /**
  * The primary HTTP capture path for the built-in stack. Patches
@@ -25,17 +25,8 @@ import { markActiveFetchCallSentXhr } from './fetch-dedupe';
  */
 
 const XHRCtor = global.XMLHttpRequest || window.XMLHttpRequest;
-const originalOpen = XHRCtor.prototype.open;
-const originalSend = XHRCtor.prototype.send;
-const originalSetRequestHeader = XHRCtor.prototype.setRequestHeader;
 
-const READY_STATE_HEADERS_RECEIVED = 2;
-
-type PendingXhrMeta = {
-  method: HttpMethod;
-  url: string;
-  headers: HttpHeaders;
-};
+type PendingXhrMeta = { method: HttpMethod; url: string; headers: HttpHeaders };
 
 const pendingMeta = new WeakMap<XMLHttpRequest, PendingXhrMeta>();
 const requestIdByXhr = new WeakMap<XMLHttpRequest, string>();
@@ -44,25 +35,32 @@ const requestIdByXhr = new WeakMap<XMLHttpRequest, string>();
 export const getRequestIdForXhr = (xhr: XMLHttpRequest): string | null =>
   requestIdByXhr.get(xhr) ?? null;
 
-const overridesRegistry = getOverridesRegistry();
+type XhrMethods = {
+  open: typeof XHRCtor.prototype.open;
+  send: typeof XHRCtor.prototype.send;
+  setRequestHeader: typeof XHRCtor.prototype.setRequestHeader;
+};
 
-let enabled = false;
+let installed: { previous: XhrMethods; patched: XhrMethods } | null = null;
 let activeRecorder: Recorder | null = null;
 
-export const isXhrHookEnabled = (): boolean => enabled;
+export const isXhrHookEnabled = (): boolean => installed !== null;
 
 export const enableXhrHook = (recorder: Recorder): void => {
-  if (enabled) {
-    return;
-  }
+  if (installed) return;
   activeRecorder = recorder;
 
+  const previous: XhrMethods = {
+    open: XHRCtor.prototype.open,
+    send: XHRCtor.prototype.send,
+    setRequestHeader: XHRCtor.prototype.setRequestHeader,
+  };
+  const originalOpen = previous.open;
+  const originalSend = previous.send;
+  const originalSetRequestHeader = previous.setRequestHeader;
+
   XHRCtor.prototype.open = function (this: XMLHttpRequest, method: string, url: string) {
-    pendingMeta.set(this, {
-      method: method.toUpperCase() as HttpMethod,
-      url,
-      headers: {},
-    });
+    pendingMeta.set(this, { method: method.toUpperCase() as HttpMethod, url, headers: {} });
     // @ts-expect-error - forwarding the original arguments
     return originalOpen.apply(this, arguments);
   };
@@ -70,21 +68,17 @@ export const enableXhrHook = (recorder: Recorder): void => {
   XHRCtor.prototype.setRequestHeader = function (
     this: XMLHttpRequest,
     header: string,
-    value: string,
+    value: unknown,
   ) {
     const meta = pendingMeta.get(this);
     if (meta) {
-      // RN's own `setRequestHeader` lowercases the header name before storing
-      // it (see `XMLHttpRequest.js`); match that so captured request headers
-      // keep the same casing they always have on the wire format.
-      const key = header.toLowerCase();
-      const existing = meta.headers[key];
-      meta.headers[key] =
-        existing === undefined
-          ? value
-          : Array.isArray(existing)
-            ? [...existing, value]
-            : [existing, value];
+      // RN's own `setRequestHeader` lowercases the name, stringifies the
+      // value, and *overwrites* any existing value for that name — it does
+      // not accumulate repeats into an array (see `XMLHttpRequest.js:521`,
+      // `this._headers[header.toLowerCase()] = String(value)`). Match that
+      // exactly; this is not the same merge `appendHeader` does for a
+      // `Headers` object's or nitro's repeatable header lists.
+      meta.headers[header.toLowerCase()] = String(value);
     }
     // @ts-expect-error - forwarding the original arguments
     return originalSetRequestHeader.apply(this, arguments);
@@ -110,13 +104,10 @@ export const enableXhrHook = (recorder: Recorder): void => {
       });
 
       requestIdByXhr.set(this, handle.requestId);
-      handle.setBodyThunk(() => getResponseBody(this));
 
       if (this.addEventListener) {
         this.addEventListener('readystatechange', () => {
-          if (this.readyState === READY_STATE_HEADERS_RECEIVED) {
-            handle.markHeadersReceived();
-          }
+          if (this.readyState === this.HEADERS_RECEIVED) handle.markHeadersReceived();
         });
 
         this.addEventListener('progress', (event) => {
@@ -135,20 +126,12 @@ export const enableXhrHook = (recorder: Recorder): void => {
         });
 
         this.addEventListener('loadend', () => {
-          handle.end({ size: getResponseSize(this) });
+          handle.end({ size: getResponseSize(this), body: () => getResponseBody(this) });
         });
 
-        this.addEventListener('error', () => {
-          handle.fail('Failed', false);
-        });
-
-        this.addEventListener('abort', () => {
-          handle.fail('Aborted', true);
-        });
-
-        this.addEventListener('timeout', () => {
-          handle.fail('Timeout', false);
-        });
+        this.addEventListener('error', () => handle.fail('Failed', false));
+        this.addEventListener('abort', () => handle.fail('Aborted', true));
+        this.addEventListener('timeout', () => handle.fail('Timeout', false));
       }
     }
 
@@ -156,16 +139,27 @@ export const enableXhrHook = (recorder: Recorder): void => {
     return originalSend.apply(this, arguments);
   };
 
-  enabled = true;
+  installed = {
+    previous,
+    patched: {
+      open: XHRCtor.prototype.open,
+      send: XHRCtor.prototype.send,
+      setRequestHeader: XHRCtor.prototype.setRequestHeader,
+    },
+  };
 };
 
 export const disableXhrHook = (): void => {
-  if (!enabled) {
-    return;
+  if (!installed) return;
+  const { previous, patched } = installed;
+  // Restore only the methods still ours — something else may have patched
+  // over us since `enable()`, and clobbering that patch would be worse than
+  // leaving it in place.
+  if (XHRCtor.prototype.open === patched.open) XHRCtor.prototype.open = previous.open;
+  if (XHRCtor.prototype.send === patched.send) XHRCtor.prototype.send = previous.send;
+  if (XHRCtor.prototype.setRequestHeader === patched.setRequestHeader) {
+    XHRCtor.prototype.setRequestHeader = previous.setRequestHeader;
   }
-  enabled = false;
-  XHRCtor.prototype.open = originalOpen;
-  XHRCtor.prototype.send = originalSend;
-  XHRCtor.prototype.setRequestHeader = originalSetRequestHeader;
+  installed = null;
   activeRecorder = null;
 };

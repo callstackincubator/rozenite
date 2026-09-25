@@ -115,7 +115,7 @@ describe('createRecorder', () => {
     });
 
     const thunk = vi.fn(async () => 'lazy body');
-    handle.setBodyThunk(thunk);
+    handle.end({ size: null, body: thunk });
 
     expect(thunk).not.toHaveBeenCalled();
     await expect(recorder.getResponseBody(handle.requestId)).resolves.toBe('lazy body');
@@ -150,7 +150,7 @@ describe('createRecorder', () => {
       source: 'builtin',
       initiator: { type: 'other' },
     });
-    handle.setBodyThunk(() => 'hello');
+    handle.end({ size: null, body: () => 'hello' });
 
     await expect(recorder.getResponseBody(handle.requestId)).resolves.toBe('hello');
 

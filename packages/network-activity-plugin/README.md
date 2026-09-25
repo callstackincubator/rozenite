@@ -17,7 +17,7 @@ The plugin now integrates with `react-native-nitro-fetch` when it is installed i
 - Nitro HTTP traffic is shown in the same Network Activity panel as built-in React Native requests
 - Nitro WebSocket traffic is supported through the nitro network inspector event stream
 - Requests are labeled with a source badge in the list and details view: `Built-in` or `Nitro`
-- Response body lookup works for both built-in and nitro HTTP entries, with bodies captured up to 1 MiB (previously 4 KiB)
+- Response body lookup works for both built-in and nitro HTTP entries; nitro bodies (request and response) and WebSocket messages are captured up to 1 MiB (previously 4 KiB)
 - HTTP response overrides remain built-in only and are disabled for nitro entries
 
 ## Expo Fetch Support

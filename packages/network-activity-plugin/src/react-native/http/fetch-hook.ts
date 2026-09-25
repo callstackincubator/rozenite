@@ -1,37 +1,43 @@
-import type { NetworkEventSource } from '../../shared/client';
 import type { Recorder, RecorderHandle } from './recorder';
 import { getInitiatorFromStack } from './http-utils';
-import { getExpoFetchModule } from './get-expo-fetch-module';
-import { getNitroFetchFunction } from '../nitro-fetch/get-nitro-module';
 import {
   BINARY_CAPTURE_SIZE_CAP,
-  captureFetchResponseBodyFromBytes,
+  captureResponseBodyFromBytes,
   createProgressThrottler,
   getFetchContentLength,
   getFetchContentType,
-  getFetchResponseHeaders,
   isFetchAbortError,
+  isTextLikeContentType,
   normalizeFetchRequest,
-} from './fetch-utils';
-import { isTextLikeContentType } from './response-body-utils';
-import { beginActiveFetchCall, endActiveFetchCall } from './fetch-dedupe';
+  normalizeHeaders,
+} from './response-body-utils';
 
 /**
- * Generic fetch wrapper for every fetch implementation that does not send an
- * XHR: Expo's `expo/fetch` and, when an app installs it as the global,
- * `react-native-nitro-fetch` would qualify too, but nitro traffic is
- * recorded from its own `NetworkInspector` instead (see
- * `nitro-fetch/nitro-network-inspector.ts`) — this wrapper is never
- * installed over it.
- *
- * A single module-level "active fetch" marker (`fetch-dedupe.ts`) is set
- * synchronously around the call to the original `fetch`. React Native's own
- * `fetch` (`whatwg-fetch`) and Axios both send an XHR synchronously inside
- * that window; the XHR hook flips the marker, and this wrapper then records
- * nothing for that call — the XHR hook already did.
+ * The one generic fetch wrapper, covering every fetch implementation that
+ * doesn't send an XHR: Expo's `expo/fetch`, and — only when the global is,
+ * or lazily resolves to, that same implementation — the global `fetch`. Per
+ * ADR 0001 decision 2, RN's own polyfill (and any application wrapper
+ * around it) and `react-native-nitro-fetch`'s `fetch` are never wrapped:
+ * the XHR hook and nitro's `NetworkInspector` already record that traffic,
+ * and both can send their request asynchronously, after the marker window
+ * below has already closed, which would double-record it.
  */
 
 type FetchArgs = Parameters<typeof fetch>;
+
+// A single module-level "active fetch call" marker, set synchronously around
+// the call to the original `fetch`. `whatwg-fetch` (RN's own `fetch`, and
+// Axios by default) sends its XMLHttpRequest synchronously inside that
+// window; the XHR hook's patched `send` flips the marker, and a call that
+// sent an XHR is already recorded, so this wrapper records nothing for it.
+// `previous` makes markers stack correctly for a fetch call nested inside
+// another fetch call's synchronous phase.
+type ActiveFetchMarker = { sentXhr: boolean; previous: ActiveFetchMarker | null };
+let activeFetchCall: ActiveFetchMarker | null = null;
+
+export const markActiveFetchCallSentXhr = (): void => {
+  if (activeFetchCall) activeFetchCall.sentXhr = true;
+};
 
 const concatChunks = (chunks: Uint8Array[], totalBytes: number): Uint8Array => {
   const bytes = new Uint8Array(totalBytes);
@@ -43,37 +49,53 @@ const concatChunks = (chunks: Uint8Array[], totalBytes: number): Uint8Array => {
   return bytes;
 };
 
+const finishWithoutBody = (handle: RecorderHandle, size: number | null) =>
+  handle.end({ size, body: null });
+
 const observeResponseBody = async (
   handle: RecorderHandle,
   clone: Response,
   contentType: string,
   contentLength: number | undefined,
-): Promise<number> => {
+): Promise<void> => {
+  if (contentType === 'text/event-stream') {
+    // An SSE stream never ends on its own; consuming it here would hold the
+    // connection open indefinitely for no benefit — nothing observes a
+    // fetch-based SSE body today.
+    handle.end({ size: contentLength ?? null });
+    return;
+  }
+
   const reader = clone.body?.getReader();
   if (!reader) {
     handle.end({
       size: contentLength ?? 0,
-      body: await captureFetchResponseBodyFromBytes(new Uint8Array(), contentType),
+      body: await captureResponseBodyFromBytes(new Uint8Array(), contentType),
     });
-    return 0;
+    return;
   }
 
   const throttle = createProgressThrottler();
   const chunks: Uint8Array[] = [];
-  const textLike = isTextLikeContentType(contentType);
-  let captureBinary = !textLike;
+  let captured = 0;
   let loaded = 0;
+  let capped = false;
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     if (!value) continue;
     loaded += value.byteLength;
-    if (textLike || captureBinary) chunks.push(value);
-    if (!textLike && captureBinary && loaded > BINARY_CAPTURE_SIZE_CAP) {
-      chunks.length = 0;
-      captureBinary = false;
+
+    if (!capped) {
+      chunks.push(value);
+      captured += value.byteLength;
+      if (captured > BINARY_CAPTURE_SIZE_CAP) {
+        capped = true;
+        await reader.cancel().catch(() => undefined);
+      }
     }
+
     if (throttle(Date.now())) {
       handle.progress(loaded, contentLength ?? 0, contentLength !== undefined && contentLength > 0);
     }
@@ -84,12 +106,11 @@ const observeResponseBody = async (
   }
 
   const body =
-    captureBinary || textLike
-      ? await captureFetchResponseBodyFromBytes(concatChunks(chunks, loaded), contentType)
-      : ({ kind: 'binary-too-large', size: loaded } as const);
+    capped && !isTextLikeContentType(contentType)
+      ? ({ kind: 'binary-too-large', size: loaded } as const)
+      : await captureResponseBodyFromBytes(concatChunks(chunks, captured), contentType);
 
   handle.end({ size: contentLength ?? loaded, body });
-  return loaded;
 };
 
 const observeResponse = (handle: RecorderHandle, response: Response): void => {
@@ -102,168 +123,189 @@ const observeResponse = (handle: RecorderHandle, response: Response): void => {
       url: response.url,
       status: response.status,
       statusText: response.statusText,
-      headers: getFetchResponseHeaders(response),
+      headers: normalizeHeaders(response.headers),
       contentType,
       size: contentLength ?? null,
     });
   } catch {
     // A non-standard response can throw while exposing metadata. It is still
     // a successful application fetch, so finish it without a body.
-    handle.end({ size: null, body: null });
+    finishWithoutBody(handle, null);
     return;
   }
 
+  let clone: Response;
   try {
-    const clone = response.clone();
-    void observeResponseBody(handle, clone, contentType, contentLength).catch(() => {
-      handle.end({ size: contentLength ?? null, body: null });
-    });
+    clone = response.clone();
   } catch {
-    // `clone()` is unavailable or throws (Expo SDK 54–55): complete without a
+    // `clone()` is unavailable or throws (Expo SDK 54-55): complete without a
     // body rather than decorating the response's body-consuming methods.
-    handle.end({ size: contentLength ?? null, body: null });
+    finishWithoutBody(handle, contentLength ?? null);
+    return;
   }
+
+  void observeResponseBody(handle, clone, contentType, contentLength).catch(() =>
+    finishWithoutBody(handle, contentLength ?? null),
+  );
 };
 
-export const wrapFetch = (
-  original: typeof fetch,
-  source: NetworkEventSource,
-  getRecorder: () => Recorder | null,
-): typeof fetch => {
-  // Anonymous on purpose: some scenarios report `fetch.name` to distinguish a
-  // wrapped implementation from the original, and the original wrapper here
-  // was likewise anonymous.
-  return async function (this: unknown, ...args: FetchArgs) {
-    const marker = beginActiveFetchCall();
+/** @internal exported for testing only */
+export const wrapFetch = (original: typeof fetch, getRecorder: () => Recorder | null) => {
+  let alive = true;
+
+  // A plain function, not `async`: an `async function`'s transpilation
+  // (Hermes and Babel's regenerator-based helper alike) inserts a
+  // synchronous runtime frame between the function and its caller, which
+  // would need its own initiator-stack offset. Returning the promise chain
+  // instead keeps this the same shape as the XHR hook's synchronous `send`.
+  const fn = function (this: unknown, ...args: FetchArgs) {
+    if (!alive) return original.apply(this, args);
+
+    const marker: ActiveFetchMarker = { sentXhr: false, previous: activeFetchCall };
+    activeFetchCall = marker;
     let pending: ReturnType<typeof fetch>;
     try {
       pending = original.apply(this, args);
     } finally {
-      endActiveFetchCall(marker);
+      activeFetchCall = activeFetchCall === marker ? marker.previous : activeFetchCall;
     }
 
     const recorder = getRecorder();
-    if (!recorder || marker.sentXhr) {
-      return pending;
-    }
+    if (!recorder || marker.sentXhr) return pending;
 
     let handle: RecorderHandle | null = null;
     let signal: AbortSignal | undefined;
     try {
-      const normalizedRequest = normalizeFetchRequest(args[0], args[1] ?? {});
-      signal = normalizedRequest.signal;
+      const normalized = normalizeFetchRequest(args[0], args[1] ?? {});
+      signal = normalized.signal;
       handle = recorder.begin({
-        url: normalizedRequest.url,
-        method: normalizedRequest.method,
-        headers: normalizedRequest.headers,
-        postData: normalizedRequest.postData,
+        url: normalized.url,
+        method: normalized.method,
+        headers: normalized.headers,
+        postData: normalized.postData,
         type: 'Fetch',
-        source,
-        // +1: this wrapper is an `async function` — see the comment on
-        // `INITIATOR_STACK_FRAME_OFFSET` in `http-utils.ts`.
-        initiator: getInitiatorFromStack(1),
-        requestSignal: signal,
+        source: 'expo',
+        initiator: getInitiatorFromStack(),
       });
     } catch {
       // Request normalization and event delivery are best-effort only.
     }
 
-    try {
-      const response = await pending;
-      if (handle) {
-        try {
-          observeResponse(handle, response);
-        } catch {
-          // Return the original response even if observation itself fails.
+    return pending.then(
+      (response) => {
+        if (handle) {
+          try {
+            observeResponse(handle, response);
+          } catch {
+            // Return the original response even if observation itself fails.
+          }
         }
-      }
-      return response;
-    } catch (error) {
-      handle?.fail(
-        error instanceof Error && error.message
-          ? error.message
-          : typeof error === 'string'
-            ? error
-            : 'Failed',
-        isFetchAbortError(error) || signal?.aborted === true,
-      );
-      throw error;
-    }
+        return response;
+      },
+      (error: unknown) => {
+        handle?.fail(
+          error instanceof Error && error.message
+            ? error.message
+            : typeof error === 'string'
+              ? error
+              : 'Failed',
+          isFetchAbortError(error) || signal?.aborted === true,
+        );
+        throw error;
+      },
+    );
   } as typeof fetch;
+
+  return { fn, disable: () => (alive = false) };
 };
 
-type FetchHookState = {
-  expoModule: { fetch: typeof fetch } | null;
-  originalExpoFetch: typeof fetch | null;
-  expoWrapped: typeof fetch | null;
-  globalOriginal: typeof fetch | null;
-  globalWrapped: typeof fetch | null;
+const patch = (
+  obj: Record<string, typeof fetch>,
+  key: string,
+  wrapped: typeof fetch,
+): (() => void) => {
+  const original = obj[key];
+  obj[key] = wrapped;
+  return () => {
+    if (obj[key] === wrapped) obj[key] = original;
+  };
 };
 
-let state: FetchHookState | null = null;
+const getExpoFetchModule = (): { fetch: typeof fetch } | null => {
+  try {
+    // `expo/fetch` is a getter-only public facade. Patching the writable
+    // implementation export keeps normal ESM imports live without trying to
+    // assign through that facade.
+    return require('expo/src/winter/fetch/fetch') as { fetch: typeof fetch };
+  } catch {
+    return null;
+  }
+};
+
+const getNitroFetch = (): typeof fetch | null => {
+  try {
+    return (require('react-native-nitro-fetch') as { fetch: typeof fetch }).fetch;
+  } catch {
+    return null;
+  }
+};
+
+let installation: { restores: (() => void)[]; disables: (() => void)[] } | null = null;
 let activeRecorder: Recorder | null = null;
-
 const getRecorder = () => activeRecorder;
 
-export const isFetchHookEnabled = (): boolean => state !== null;
+export const isFetchHookEnabled = (): boolean => installation !== null;
 
 export const enableFetchHook = (recorder: Recorder): void => {
-  if (state) return;
+  if (installation) return;
   activeRecorder = recorder;
 
-  const next: FetchHookState = {
-    expoModule: null,
-    originalExpoFetch: null,
-    expoWrapped: null,
-    globalOriginal: null,
-    globalWrapped: null,
+  const next: { restores: (() => void)[]; disables: (() => void)[] } = {
+    restores: [],
+    disables: [],
   };
-
   const expoModule = getExpoFetchModule();
+
   if (expoModule && typeof expoModule.fetch === 'function') {
-    next.expoModule = expoModule;
-    next.originalExpoFetch = expoModule.fetch;
-    next.expoWrapped = wrapFetch(next.originalExpoFetch, 'expo', getRecorder);
-    expoModule.fetch = next.expoWrapped;
-  }
+    const originalExpoFetch = expoModule.fetch;
+    // Read before patching: Expo's global `fetch` alias can resolve to
+    // whatever this private export currently holds, so reading it first
+    // tells us whether the global already is Expo's implementation, rather
+    // than mistaking our own wrapper for it a moment later.
+    const originalGlobalFetch = globalThis.fetch;
+    const { fn: expoWrapped, disable } = wrapFetch(originalExpoFetch, getRecorder);
 
-  try {
-    const currentGlobalFetch = globalThis.fetch;
-    const nitroFetch = getNitroFetchFunction();
-    const isNitroInstalledGlobally = nitroFetch !== null && currentGlobalFetch === nitroFetch;
+    next.restores.push(
+      patch(expoModule as unknown as Record<string, typeof fetch>, 'fetch', expoWrapped),
+    );
+    next.disables.push(disable);
 
-    if (!isNitroInstalledGlobally) {
-      next.globalOriginal = currentGlobalFetch;
-      if (
-        next.originalExpoFetch &&
-        currentGlobalFetch === next.originalExpoFetch &&
-        next.expoWrapped
-      ) {
-        // Expo already made its implementation the global; keep the label 'expo'.
-        next.globalWrapped = next.expoWrapped;
-      } else {
-        next.globalWrapped = wrapFetch(currentGlobalFetch, 'builtin', getRecorder);
+    const nitroFetch = getNitroFetch();
+    const globalIsNitro = nitroFetch !== null && originalGlobalFetch === nitroFetch;
+    const globalIsExpo = originalGlobalFetch === originalExpoFetch;
+
+    if (!globalIsNitro && globalIsExpo) {
+      try {
+        next.restores.push(
+          patch(globalThis as unknown as Record<string, typeof fetch>, 'fetch', expoWrapped),
+        );
+      } catch {
+        // A hostile global getter must not prevent Expo interception.
       }
-      globalThis.fetch = next.globalWrapped;
     }
-  } catch {
-    // A hostile global getter must not prevent Expo interception.
+    // Otherwise the global is RN's own polyfill, an application wrapper
+    // around it, or nitro's fetch — never wrapped. If Expo later installs a
+    // getter aliasing the global to this same private export, it resolves
+    // to `expoWrapped` on its own, with nothing further needed here.
   }
 
-  state = next;
+  installation = next;
 };
 
 export const disableFetchHook = (): void => {
-  if (!state) return;
-  const { expoModule, originalExpoFetch, expoWrapped, globalOriginal, globalWrapped } = state;
-
-  if (expoModule && originalExpoFetch && expoModule.fetch === expoWrapped) {
-    expoModule.fetch = originalExpoFetch;
-  }
-  if (globalWrapped && globalOriginal && globalThis.fetch === globalWrapped) {
-    globalThis.fetch = globalOriginal;
-  }
-
-  state = null;
+  if (!installation) return;
+  installation.restores.forEach((restore) => restore());
+  installation.disables.forEach((disable) => disable());
+  installation = null;
   activeRecorder = null;
 };
