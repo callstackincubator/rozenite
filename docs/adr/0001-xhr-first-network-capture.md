@@ -123,9 +123,15 @@ WebSocket traffic.
    they captured. Adapters never construct event payloads.
 
 5. **Response bodies from fetch implementations come from
-   `Response.clone()` only.** When `clone()` is unavailable or throws, the
-   request completes without a body and `response-body` answers `null`. The
-   SDK 54–55 decoration of `text()` and `arrayBuffer()` is removed.
+   `Response.clone()`.** When `clone()` is unavailable or throws (Expo SDK
+   54–55), the request completes at once and the wrapper instead observes
+   the application's own consumption of that one response instance: its
+   `text()` and `arrayBuffer()` are wrapped, the first result is kept, and
+   the body registry's thunk returns it, or `null` when the application
+   never read the body. The thunk never waits for the application, so a
+   body request cannot hang. `blob()` and direct stream readers are not
+   observed on those SDKs. This path is covered by unit tests only, because
+   the playground runs an Expo SDK whose `clone()` works.
 
 6. **Response overrides stay built-in only**, applied at the XHR level as
    documented in the plugin README.
@@ -149,8 +155,9 @@ WebSocket traffic.
   marker: the fetch wrapper is installed only where the wrapped function is
   known to be a native implementation. A future React Native release that
   ships a native global `fetch` needs a new decision to wrap it.
-- Expo SDK 54 and 55 lose response bodies for `expo/fetch`; the request row
-  itself is still recorded. Expo SDK 56 and newer are unaffected.
+- Expo SDK 54 and 55 keep body capture for `expo/fetch`, but only for
+  bodies the application itself reads through `text()`, `json()` or
+  `arrayBuffer()`, as before. Expo SDK 56 and newer capture every body.
 - nitro bodies grow from 4 KiB to 1 MiB; the DevTools panel already handles
   bodies of that size from the built-in path.
 - The SSE inspector's dependency on the XHR hook remains, now through an
