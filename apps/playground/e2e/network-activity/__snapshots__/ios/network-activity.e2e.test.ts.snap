@@ -2147,7 +2147,7 @@ exports[`Network Activity on device > global-fetch-get-json > tap 1`] = `
   "globalFetch": {
     "hasPolyfillFlag": false,
     "implementation": "other",
-    "name": "fn",
+    "name": "fetch",
   },
 }
 `;
