@@ -1,6 +1,6 @@
 # 0001 — XHR-first network capture with one recorder
 
-**Status:** Accepted — not yet implemented
+**Status:** Accepted
 
 **Related:** [0002](./0002-network-activity-on-device-regression-harness.md)
 (the harness that guards this change)

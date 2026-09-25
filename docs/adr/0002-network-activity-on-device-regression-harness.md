@@ -1,6 +1,6 @@
 # 0002 — On-device regression harness for Network Activity
 
-**Status:** Accepted — not yet implemented
+**Status:** Accepted
 
 **Related:** [0001](./0001-xhr-first-network-capture.md) (the rewrite this
 harness guards)
