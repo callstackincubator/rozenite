@@ -26,10 +26,13 @@ The plugin optionally observes `expo/fetch` on Expo SDK 54 and newer. Expo
 requests appear in the same panel with an `Expo` source badge, including when
 SDK 56+ installs Expo fetch as the default global `fetch` implementation.
 
-On SDK 54–55, `Response.clone()` is not available, so response bodies for
-`expo/fetch` requests cannot be captured on those SDK versions; the request
-itself (method, URL, headers, status, timing) is still recorded normally.
-SDK 56 and newer are unaffected. Expo response overrides are not supported.
+On SDK 54–55, `Response.clone()` is not available, so the request completes
+without waiting for a body. The plugin still captures the response body the
+application itself reads via `text()`, `json()` or `arrayBuffer()`; `blob()`
+and direct stream readers are not observed on those SDKs, and a body the
+application never reads is not captured. The request itself (method, URL,
+headers, status, timing) is always recorded normally. SDK 56 and newer are
+unaffected. Expo response overrides are not supported.
 
 The global `fetch` is observed only when it is Expo's implementation. A
 wrapper an app or SDK installs around the global before recording starts

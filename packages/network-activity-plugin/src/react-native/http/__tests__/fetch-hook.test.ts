@@ -100,22 +100,104 @@ describe('wrapFetch', () => {
     expect(calls[1]?.args[0]).toMatchObject({ size: null, body: null });
   });
 
-  it('completes without a body when clone() throws (Expo SDK 54-55)', async () => {
-    const { recorder, calls } = createFakeRecorder();
-    const response = jsonResponse('{"ok":true}');
-    vi.spyOn(response, 'clone').mockImplementation(() => {
-      throw new Error('Response.clone is not supported');
+  describe('when clone() throws (Expo SDK 54-55)', () => {
+    const cloneThrowingResponse = (body: string, headers: Record<string, string> = {}) => {
+      const response = jsonResponse(body, headers);
+      vi.spyOn(response, 'clone').mockImplementation(() => {
+        throw new Error('Response.clone is not supported');
+      });
+      return response;
+    };
+
+    it('completes the request immediately, ahead of any body read', async () => {
+      const { recorder, calls } = createFakeRecorder();
+      const response = cloneThrowingResponse('{"ok":true}');
+      const { fn } = wrapFetch(
+        async () => response,
+        () => recorder,
+      );
+
+      expect(await fn('https://example.com/fallback')).toBe(response);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(calls.map((c) => c.method)).toEqual(['begin', 'headers', 'end']);
+      const end = calls[2]?.args[0] as { body: () => unknown };
+      expect(typeof end.body).toBe('function');
     });
-    const { fn } = wrapFetch(
-      async () => response,
-      () => recorder,
-    );
 
-    expect(await fn('https://example.com/fallback')).toBe(response);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    it('captures the text body the application reads via text()', async () => {
+      const { recorder, calls } = createFakeRecorder();
+      const response = cloneThrowingResponse('{"ok":true}');
+      const { fn } = wrapFetch(
+        async () => response,
+        () => recorder,
+      );
 
-    expect(calls.map((c) => c.method)).toEqual(['begin', 'headers', 'end']);
-    expect(calls[2]?.args[0]).toMatchObject({ body: null });
+      const fetched = (await fn('https://example.com/fallback')) as Response;
+      expect(await fetched.text()).toBe('{"ok":true}');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const end = calls.find((c) => c.method === 'end')?.args[0] as {
+        body: () => unknown;
+      };
+      expect(end.body()).toBe('{"ok":true}');
+    });
+
+    it('captures the binary body the application reads via arrayBuffer()', async () => {
+      const { recorder, calls } = createFakeRecorder();
+      const response = cloneThrowingResponse('binary-payload', {
+        'content-type': 'application/octet-stream',
+      });
+      const { fn } = wrapFetch(
+        async () => response,
+        () => recorder,
+      );
+
+      const fetched = (await fn('https://example.com/fallback')) as Response;
+      await fetched.arrayBuffer();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const end = calls.find((c) => c.method === 'end')?.args[0] as {
+        body: () => unknown;
+      };
+      expect(end.body()).toMatchObject({ kind: 'binary' });
+    });
+
+    it('yields null, without hanging, when the application never reads the body', async () => {
+      const { recorder, calls } = createFakeRecorder();
+      const response = cloneThrowingResponse('{"ok":true}');
+      const { fn } = wrapFetch(
+        async () => response,
+        () => recorder,
+      );
+
+      await fn('https://example.com/fallback');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const end = calls.find((c) => c.method === 'end')?.args[0] as {
+        body: () => unknown;
+      };
+      expect(end.body()).toBeNull();
+    });
+
+    it('yields null, without an unhandled rejection, when text() rejects', async () => {
+      const { recorder, calls } = createFakeRecorder();
+      const response = cloneThrowingResponse('{"ok":true}');
+      vi.spyOn(response, 'text').mockImplementation(() => Promise.reject(new Error('boom')));
+      const { fn } = wrapFetch(
+        async () => response,
+        () => recorder,
+      );
+
+      const fetched = (await fn('https://example.com/fallback')) as Response;
+      await expect(fetched.text()).rejects.toThrow('boom');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const end = calls.find((c) => c.method === 'end')?.args[0] as {
+        body: () => unknown;
+      };
+      expect(end.body()).toBeNull();
+    });
   });
 
   it('sizes the response from loaded bytes when there is no Content-Length', async () => {

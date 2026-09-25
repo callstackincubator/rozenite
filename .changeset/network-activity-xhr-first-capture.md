@@ -23,10 +23,12 @@ Behavior changes, some of them to the wire format:
 - `expo/fetch` response bodies are captured up to 5 MiB; larger bodies are
   reported by size only. `text/event-stream` responses from `expo/fetch`
   are recorded without a body and are not read by the plugin at all.
-- Expo SDK 54–55 no longer capture `expo/fetch` response bodies at all (they
-  previously did, but only after the app itself consumed the body with
-  `text()`/`arrayBuffer()`). The request row itself is still recorded. Expo
-  SDK 56 and newer are unaffected.
+- Expo SDK 54–55 keep capturing `expo/fetch` response bodies the app itself
+  reads via `text()`/`json()`/`arrayBuffer()`, as before; `blob()` and direct
+  stream readers are not observed on those SDKs, and a body the app never
+  reads is not captured. This path is covered by unit tests only, because the
+  playground runs an Expo SDK whose `clone()` works. Expo SDK 56 and newer
+  are unaffected.
 - Requests captured from `react-native-nitro-fetch` now get the same
   `req_<timestamp>_<random>` request id every other transport uses, instead
   of nitro's own entry id.

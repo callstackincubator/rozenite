@@ -1,7 +1,9 @@
-import type { Recorder, RecorderHandle } from './recorder';
+import type { ResponseBody } from '../../shared/client';
+import type { BodyThunk, Recorder, RecorderHandle } from './recorder';
 import { getInitiatorFromStack } from './http-utils';
 import {
   BINARY_CAPTURE_SIZE_CAP,
+  captureResponseBodyFromArrayBuffer,
   captureResponseBodyFromBytes,
   createProgressThrottler,
   getFetchContentLength,
@@ -105,6 +107,58 @@ const observeResponseBody = async (
   handle.end({ size: contentLength ?? loaded, body });
 };
 
+/**
+ * Expo SDK 54-55 fallback (ADR 0001 decision 5): `clone()` is unavailable or
+ * throws, so the request completes at once and this instead observes the
+ * application's own consumption of `response` — its `text()` and
+ * `arrayBuffer()` are wrapped on this one instance, each independently, since
+ * some Response implementations forbid decorating one of them. The first of
+ * the two to settle wins; the thunk never awaits the application, so a body
+ * request cannot hang, and it resolves to `null` when the application never
+ * reads the body (or when both reads reject).
+ */
+const observeConsumedBody = (response: Response, contentType: string): BodyThunk => {
+  let capturedBody: ResponseBody | undefined;
+  let settled = false;
+
+  const settle = (body: ResponseBody) => {
+    if (settled) return;
+    settled = true;
+    capturedBody = body;
+  };
+
+  try {
+    const originalText = response.text;
+    if (typeof originalText === 'function') {
+      response.text = function (this: Response) {
+        const result = originalText.call(this);
+        result.then(settle).catch(() => undefined);
+        return result;
+      };
+    }
+  } catch {
+    // Some Response implementations forbid instance decoration.
+  }
+
+  try {
+    const originalArrayBuffer = response.arrayBuffer;
+    if (typeof originalArrayBuffer === 'function') {
+      response.arrayBuffer = function (this: Response) {
+        const result = originalArrayBuffer.call(this);
+        result
+          .then((buffer) => captureResponseBodyFromArrayBuffer(buffer, contentType))
+          .then(settle)
+          .catch(() => undefined);
+        return result;
+      };
+    }
+  } catch {
+    // See text() above.
+  }
+
+  return () => capturedBody ?? null;
+};
+
 const observeResponse = (handle: RecorderHandle, response: Response): void => {
   let contentLength: number | undefined;
   let contentType = '';
@@ -137,9 +191,9 @@ const observeResponse = (handle: RecorderHandle, response: Response): void => {
   try {
     clone = response.clone();
   } catch {
-    // `clone()` is unavailable or throws (Expo SDK 54-55): complete without a
-    // body rather than decorating the response's body-consuming methods.
-    finishWithoutBody(handle, contentLength ?? null);
+    // `clone()` is unavailable or throws (Expo SDK 54-55): complete at once
+    // and observe whatever the application itself reads from `response`.
+    handle.end({ size: contentLength ?? null, body: observeConsumedBody(response, contentType) });
     return;
   }
 
