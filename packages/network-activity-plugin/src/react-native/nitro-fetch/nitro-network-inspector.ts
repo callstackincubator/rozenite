@@ -3,7 +3,7 @@ import type { HttpHeaders, HttpMethod, RequestPostData } from '../../shared/clie
 import type { WebSocketEventMap } from '../../shared/websocket-events';
 import type { Inspector } from '../inspector';
 import type { Recorder } from '../http/recorder';
-import { appendHeader } from '../http/http-utils';
+import { appendHeader } from '../http/request-utils';
 
 // nitro was silently truncating bodies and WebSocket messages at its 4 KiB
 // default; the DevTools panel already handles payloads of this size from the

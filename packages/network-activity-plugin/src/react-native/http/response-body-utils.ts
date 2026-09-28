@@ -1,7 +1,7 @@
 import type { HttpHeaders, HttpMethod, RequestPostData, ResponseBody } from '../../shared/client';
 import { isJsonContentType, isXmlContentType } from '../../utils/getContentTypeMimeType';
 import { getContentTypeMime } from '../../utils/getContentTypeMimeType';
-import { getRequestBody, appendHeader } from './http-utils';
+import { getRequestBody, appendHeader } from './request-utils';
 
 // Cap on binary capture. Above this, we ship a `binary-too-large` variant
 // with just the size — no bytes cross the bridge. 5MB comfortably covers

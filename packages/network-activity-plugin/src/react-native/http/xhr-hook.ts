@@ -3,11 +3,11 @@ import type { HttpMethod, HttpHeaders, XHRPostData } from '../../shared/client';
 import type { Recorder } from './recorder';
 import {
   getInitiatorFromStack,
-  getRequestBody,
   getResponseBody,
   getResponseSize,
   setupRequestOverride,
 } from './http-utils';
+import { getRequestBody } from './request-utils';
 import { applyReactNativeResponseHeadersLogic } from '../../utils/applyReactNativeResponseHeadersLogic';
 import { getContentType } from '../utils';
 import { overridesRegistry } from './overrides-registry';
