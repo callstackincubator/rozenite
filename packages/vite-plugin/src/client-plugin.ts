@@ -106,7 +106,9 @@ export const rozeniteClientPlugin = (): Plugin => {
 
   const generatePanelHtmlContent = (panel: PanelEntry): string => {
     const template = fs.readFileSync(PANEL_TEMPLATE, 'utf-8');
-    const relativePath = path.relative(projectRoot, panel.sourceFile);
+    // The path ends up in an import specifier, which needs forward slashes
+    // (on Windows `path.relative` returns backslashes).
+    const relativePath = path.relative(projectRoot, panel.sourceFile).split(path.sep).join('/');
     return ejs.render(template, {
       panelName: panel.name,
       panelFile: relativePath,
