@@ -100,6 +100,16 @@ rozeniteDevToolsEnhancer({
 });
 ```
 
+### Hiding frequent actions
+
+Actions that fire constantly (polling, timers, scroll or map updates) push everything else out of the `maxAge` window. List them in `actionsDenylist` to keep them out of the panel. They still run through your reducers, so the next action you see includes their state changes. Entries are strings or regular expression sources; `actionsAllowlist` does the opposite and sends only matching actions.
+
+```ts
+rozeniteDevToolsEnhancer({
+  actionsDenylist: ['map/regionChanged', 'markers/.*Fetched'],
+});
+```
+
 ### Dispatch traces
 
 Set `trace: true` to capture where each action was dispatched from, symbolicated back to your source files through Metro:

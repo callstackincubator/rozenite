@@ -91,6 +91,14 @@ rozeniteDevToolsEnhancer({
 })
 ```
 
+To keep high-frequency actions (polling, timers, scroll or map updates) from filling the `maxAge` window, list them in `actionsDenylist`. They are hidden from the panel but still run through your reducers, so the next action you see includes their state changes. Entries are strings or regular expression sources; `actionsAllowlist` does the opposite and sends only matching actions.
+
+```ts
+rozeniteDevToolsEnhancer({
+  actionsDenylist: ['map/regionChanged', 'markers/.*Fetched'],
+})
+```
+
 `trace` captures the dispatch stack for each action and enables the Trace tab. Rozenite will also try to symbolicate the stack through Metro so React Native traces point to source files instead of generated bundle locations.
 
 ```ts

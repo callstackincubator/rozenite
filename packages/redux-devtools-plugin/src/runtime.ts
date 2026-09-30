@@ -2,7 +2,7 @@ import { parse, stringify } from 'jsan';
 import { Action, Reducer, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux';
 import { instrument } from '@redux-devtools/instrument';
 import type { EnhancedStore, LiftedState, PerformAction } from '@redux-devtools/instrument';
-import { evalAction } from '@redux-devtools/utils';
+import { evalAction, filterStagedActions, getLocalFilter, isFiltered } from '@redux-devtools/utils';
 import {
   getRuntimeConnectionId,
   sendRuntimeMessage,
@@ -78,6 +78,21 @@ export interface RozeniteDevToolsOptions {
    * Useful for omitting large payloads or sensitive values.
    */
   actionSanitizer?: (action: AnyAction, id: number) => unknown;
+
+  /**
+   * Action types that are not sent to DevTools, as strings or regular
+   * expression sources. Matching actions are still recorded and still update
+   * the state; they are just hidden from the action list.
+   * Useful for high-frequency actions (polling, scroll or map updates) that
+   * would otherwise push everything else out of the `maxAge` window.
+   */
+  actionsDenylist?: string | readonly string[];
+
+  /**
+   * If specified, only action types matching these strings or regular
+   * expression sources are sent to DevTools.
+   */
+  actionsAllowlist?: string | readonly string[];
 }
 
 type RuntimeController = {
@@ -128,6 +143,7 @@ const createRuntimeController = (options: RozeniteDevToolsOptions = {}): Runtime
   const trace = options.trace;
   const traceLimit = trace ? (options.traceLimit ?? 25) : options.traceLimit;
   const traceSymbolication = options.traceSymbolication ?? true;
+  const localFilter = getLocalFilter(options);
 
   let store: EnhancedStore<any, AnyAction, unknown> | null = null;
   let monitored = false;
@@ -311,11 +327,21 @@ const createRuntimeController = (options: RozeniteDevToolsOptions = {}): Runtime
   };
 
   const sendStateSnapshot = (): void => {
-    const liftedState = getLiftedStateRaw();
+    const rawLiftedState = getLiftedStateRaw();
 
-    if (!liftedState) {
+    if (!rawLiftedState) {
       return;
     }
+
+    const liftedState = localFilter
+      ? {
+          ...rawLiftedState,
+          ...(filterStagedActions(rawLiftedState, localFilter) as Pick<
+            typeof rawLiftedState,
+            'stagedActionIds' | 'computedStates'
+          >),
+        }
+      : rawLiftedState;
 
     pruneActionTraces(liftedState);
 
@@ -426,6 +452,10 @@ const createRuntimeController = (options: RozeniteDevToolsOptions = {}): Runtime
       return;
     }
 
+    if (localFilter && isFiltered(liftedAction, localFilter)) {
+      return;
+    }
+
     sendRequest({
       type: 'ACTION',
       name: instanceName,
@@ -439,7 +469,10 @@ const createRuntimeController = (options: RozeniteDevToolsOptions = {}): Runtime
       ),
       nextActionId,
       maxAge,
-      isExcess: liftedState.stagedActionIds.length >= maxAge,
+      // The runtime history also holds filtered actions, so its length would
+      // make the panel evict an entry for every action it receives and its
+      // list would stop growing. Let the panel trim itself to maxAge instead.
+      isExcess: !localFilter && liftedState.stagedActionIds.length >= maxAge,
     });
   };
 
