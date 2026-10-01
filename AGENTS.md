@@ -10,6 +10,7 @@
 - For unit-testing guidance, see @./docs/agents/unit-testing.md.
 - For end-to-end testing guidance, see @./docs/agents/e2e-testing.md.
 - For playground testing and navigation (routes, deep links, accessibility), see @./docs/agents/playground-testing.md.
+- For the on-device Network Activity regression suite, see @./docs/agents/network-activity-e2e.md.
 - For plugin-development guidance, see @./docs/agents/plugin-development.md.
 - For version plans, see @./docs/agents/version-plans.md.
 - For new package guidance, see @./agents/package-creation.md.

@@ -1,4 +1,6 @@
-import { getHTTPInspector, HTTPInspector, HTTP_EVENTS } from './http/http-inspector';
+import { recorder } from './http/recorder';
+import { enableXhrHook, disableXhrHook, isXhrHookEnabled } from './http/xhr-hook';
+import { enableFetchHook, disableFetchHook, isFetchHookEnabled } from './http/fetch-hook';
 import { getSSEInspector, SSEInspector, SSE_EVENTS } from './sse/sse-inspector';
 import {
   getWebSocketInspector,
@@ -6,17 +8,26 @@ import {
   WEBSOCKET_EVENTS,
 } from './websocket/websocket-inspector';
 import {
-  getNitroNetworkInspector,
+  createNitroNetworkInspector,
   NitroNetworkInspector,
   NITRO_NETWORK_EVENTS,
 } from './nitro-fetch/nitro-network-inspector';
 import { EventsListener } from './events-listener';
-import { NetworkActivityEventMap, ResponseBody } from '../shared/client';
+import { NetworkActivityEventMap, ResponseBody, HttpEventMap } from '../shared/client';
 import type { InspectorsConfig } from './config';
-import { getResponseBody as getHTTPResponseBody } from './http/http-utils';
+
+export const HTTP_EVENTS: (keyof HttpEventMap)[] = [
+  'request-sent',
+  'response-received',
+  'request-completed',
+  'request-failed',
+  'request-progress',
+];
+
+export const isHttpEvent = (type: string): type is keyof HttpEventMap =>
+  (HTTP_EVENTS as readonly string[]).includes(type);
 
 export type NetworkInspector = {
-  readonly http: HTTPInspector;
   readonly sse: SSEInspector;
   readonly websocket: WebSocketInspector;
   readonly nitro: NitroNetworkInspector;
@@ -28,88 +39,67 @@ export type NetworkInspector = {
 };
 
 const createNetworkInspectorInstance = (): NetworkInspector => {
-  const http = getHTTPInspector();
   const sse = getSSEInspector();
   const websocket = getWebSocketInspector();
-  const nitro = getNitroNetworkInspector();
+  // nitro HTTP traffic is routed straight into the same recorder as the XHR
+  // and fetch adapters below, so it never needs a duplicate subscription
+  // here — only nitro's WebSocket events do.
+  const nitro = createNitroNetworkInspector(recorder);
 
   return {
-    http,
     sse,
     websocket,
     nitro,
 
-    setup(eventsListener: EventsListener<NetworkActivityEventMap>) {
+    setup(eventsListener) {
       HTTP_EVENTS.forEach((event) => {
-        http.on(event, (data) => {
-          eventsListener.send(event, data);
-        });
+        recorder.on(event, (data) => eventsListener.send(event, data));
       });
-
       SSE_EVENTS.forEach((event) => {
-        sse.on(event, (data) => {
-          eventsListener.send(data.type, data);
-        });
+        sse.on(event, (data) => eventsListener.send(data.type, data));
       });
-
       WEBSOCKET_EVENTS.forEach((event) => {
-        websocket.on(event, (data) => {
-          eventsListener.send(data.type, data);
-        });
+        websocket.on(event, (data) => eventsListener.send(data.type, data));
       });
-
       NITRO_NETWORK_EVENTS.forEach((event) => {
-        nitro.on(event, (data) => {
-          eventsListener.send(event, data);
-        });
+        nitro.on(event, (data) => eventsListener.send(event, data));
       });
     },
 
     enable(config: InspectorsConfig = { http: true, sse: true, websocket: true }) {
-      if (config.http) http.enable();
+      if (config.http) {
+        if (!isXhrHookEnabled()) enableXhrHook(recorder);
+        if (!isFetchHookEnabled()) enableFetchHook(recorder);
+      }
       if (config.sse) sse.enable();
       if (config.websocket) websocket.enable();
       if (config.http || config.websocket) nitro.enable();
     },
 
     disable() {
-      http.disable();
+      disableXhrHook();
+      disableFetchHook();
       sse.disable();
       websocket.disable();
       nitro.disable();
     },
 
     dispose() {
-      http.dispose();
+      disableXhrHook();
+      disableFetchHook();
+      recorder.clear();
       sse.dispose();
       websocket.dispose();
       nitro.dispose();
     },
 
     async getResponseBody(requestId: string) {
-      const request = http.getNetworkRequestsRegistry().getEntry(requestId);
-      if (request) {
-        return getHTTPResponseBody(request);
-      }
-
-      const capturedResponseBody = http.getNetworkRequestsRegistry().getResponseBody(requestId);
-      if (capturedResponseBody !== undefined) {
-        return capturedResponseBody;
-      }
-
-      return nitro.getResponseBody(requestId);
+      return recorder.getResponseBody(requestId);
     },
   };
 };
 
-export const getNetworkInspector = (() => {
+export const getNetworkInspector = ((): (() => NetworkInspector) => {
   let instance: NetworkInspector | null = null;
-
-  return (): NetworkInspector => {
-    if (!instance) {
-      instance = createNetworkInspectorInstance();
-    }
-
-    return instance;
-  };
+  return () => (instance ??= createNetworkInspectorInstance());
 })();

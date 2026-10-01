@@ -11,8 +11,12 @@
     "web": "expo start --web",
     "web:webpack": "webpack serve --config webpack.config.js --mode development",
     "web:webpack:build": "webpack --config webpack.config.js --mode production",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "lint": "expo lint --no-cache"
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p e2e/network-activity/tsconfig.json --noEmit",
+    "lint": "expo lint --no-cache",
+    "test": "vitest --run --config e2e/network-activity/vitest.unit.config.ts",
+    "e2e:network": "CI=1 vitest --run --config e2e/network-activity/vitest.config.ts",
+    "e2e:network:record": "ROZENITE_E2E_RECORD=1 vitest --run --update --config e2e/network-activity/vitest.config.ts",
+    "e2e:network:fixture": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/network-activity/fixture-server.ts"
   },
   "dependencies": {
     "@dr.pogodin/react-native-fs": "^2.36.2",
@@ -44,6 +48,7 @@
     "@rozenite/tanstack-query-plugin": "workspace:*",
     "@rozenite/web": "workspace:*",
     "@tanstack/react-query": "^5.81.5",
+    "axios": "^1.19.0",
     "expo": "^57.0.8",
     "expo-constants": "~57.0.7",
     "expo-font": "~57.0.1",
@@ -79,6 +84,7 @@
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.0",
     "react-redux": "^9.2.0",
+    "whatwg-fetch": "^3.6.20",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
@@ -90,6 +96,7 @@
     "@testing-library/react-native": "~12.9.0",
     "@types/react": "catalog:",
     "@types/react-dom": "~19.2.3",
+    "@types/ws": "^8.18.1",
     "babel-loader": "^10.1.1",
     "babel-plugin-react-native-web": "^0.21.2",
     "eslint": "^9.25.0",
@@ -100,7 +107,8 @@
     "typescript": "~6.0.3",
     "webpack": "^5.105.4",
     "webpack-cli": "^7.0.2",
-    "webpack-dev-server": "^5.2.3"
+    "webpack-dev-server": "^5.2.3",
+    "ws": "^8.18.3"
   },
   "expo": {
     "install": {

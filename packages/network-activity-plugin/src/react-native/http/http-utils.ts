@@ -1,20 +1,8 @@
-import type {
-  XHRPostData,
-  RequestPostData,
-  RequestTextPostData,
-  RequestBinaryPostData,
-  RequestFormDataPostData,
-  ResponseBody,
-  Initiator,
-  InitiatorStackFrame,
-} from '../../shared/client';
+import type { ResponseBody, Initiator, InitiatorStackFrame } from '../../shared/client';
 import { safeStringify } from '../../utils/safeStringify';
 import { getStringSizeInBytes } from '../../utils/getStringSizeInBytes';
-import { isBlob, isArrayBuffer, isFormData, isNullOrUndefined } from '../../utils/typeChecks';
 import { getContentType } from '../utils';
 import { isJsonContentType } from '../../utils/getContentTypeMimeType';
-import { getBlobName } from '../utils/getBlobName';
-import { getFormDataEntries } from '../utils/getFormDataEntries';
 import type { OverridesRegistry } from './overrides-registry';
 import {
   captureResponseBodyFromArrayBuffer,
@@ -23,94 +11,17 @@ import {
 
 export { BINARY_CAPTURE_SIZE_CAP } from './response-body-utils';
 
-/**
- * Utility functions for tracking HTTP requests
- */
-
-const getBinaryPostData = (body: Blob): RequestBinaryPostData => ({
-  type: 'binary',
-  value: {
-    size: body.size,
-    type: body.type,
-    name: getBlobName(body),
-  },
-});
-
-const getArrayBufferPostData = (body: ArrayBuffer | ArrayBufferView): RequestBinaryPostData => ({
-  type: 'binary',
-  value: {
-    size: body.byteLength,
-  },
-});
-
-const getTextPostData = (body: unknown): RequestTextPostData => ({
-  type: 'text',
-  value: safeStringify(body),
-});
-
-const getFormDataPostData = (body: FormData): RequestFormDataPostData => ({
-  type: 'form-data',
-  value: Array.from(getFormDataEntries(body)).reduce<RequestFormDataPostData['value']>(
-    (acc, [key, value]) => {
-      if (isBlob(value)) {
-        acc[key] = getBinaryPostData(value);
-      } else if (isArrayBuffer(value)) {
-        acc[key] = getArrayBufferPostData(value);
-      } else {
-        acc[key] = getTextPostData(value);
-      }
-
-      return acc;
-    },
-    {},
-  ),
-});
-
-export const getRequestBody = (body: XHRPostData): RequestPostData => {
-  if (isNullOrUndefined(body)) {
-    return body;
-  }
-
-  if (isBlob(body)) {
-    return getBinaryPostData(body);
-  }
-
-  if (isArrayBuffer(body)) {
-    return getArrayBufferPostData(body);
-  }
-
-  if (isFormData(body)) {
-    return getFormDataPostData(body);
-  }
-
-  return getTextPostData(body);
-};
-
 export const getResponseSize = (request: XMLHttpRequest): number | null => {
   try {
     const { responseType, response } = request;
 
     // Handle a case of 204 where no-content was sent.
-    if (response === null) {
-      return 0;
-    }
-
-    if (responseType === '' || responseType === 'text') {
+    if (response === null) return 0;
+    if (responseType === '' || responseType === 'text')
       return getStringSizeInBytes(request.responseText);
-    }
-
-    if (responseType === 'json') {
-      return getStringSizeInBytes(safeStringify(response));
-    }
-
-    if (responseType === 'blob') {
-      return response.size;
-    }
-
-    if (responseType === 'arraybuffer') {
-      return response.byteLength;
-    }
-
+    if (responseType === 'json') return getStringSizeInBytes(safeStringify(response));
+    if (responseType === 'blob') return response.size;
+    if (responseType === 'arraybuffer') return response.byteLength;
     return 0;
   } catch {
     return null;
@@ -135,24 +46,29 @@ export const getResponseBody = async (request: XMLHttpRequest): Promise<Response
   }
 
   if (responseType === 'json') {
-    return safeStringify(request.response);
+    // A response override sets `.response` directly to its raw body string
+    // (see `setupRequestOverride`), so it is already the wire body — running
+    // it through `safeStringify` again would double-encode it.
+    return typeof request.response === 'string'
+      ? request.response
+      : safeStringify(request.response);
   }
 
   return null;
 };
 
+// Two frames sit between `new Error()` and the real caller: this helper, and
+// the adapter function that calls it directly (the XHR hook's `send`, or the
+// fetch hook's wrapper — both plain, non-async functions, so neither the
+// engine nor a transform inserts anything in between).
+const INITIATOR_STACK_FRAME_OFFSET = 2;
 const STACK_PREVIEW_FRAME_LIMIT = 8;
-const INITIATOR_STACK_FRAME_OFFSET = 3;
 
 const parseStackLocation = (
   location: string,
 ): Pick<InitiatorStackFrame, 'url' | 'lineNumber' | 'columnNumber'> | null => {
   const match = location.match(/^(.*):(\d+):(\d+)$/);
-
-  if (!match) {
-    return null;
-  }
-
+  if (!match) return null;
   return {
     url: match[1],
     lineNumber: Number.parseInt(match[2], 10),
@@ -161,55 +77,27 @@ const parseStackLocation = (
 };
 
 const normalizeFunctionName = (functionName?: string) => {
-  const trimmedFunctionName = functionName?.trim();
-
-  return trimmedFunctionName &&
-    trimmedFunctionName !== '<anonymous>' &&
-    trimmedFunctionName !== 'anonymous' &&
-    trimmedFunctionName !== '<unknown>'
-    ? trimmedFunctionName
+  const trimmed = functionName?.trim();
+  return trimmed && trimmed !== '<anonymous>' && trimmed !== 'anonymous' && trimmed !== '<unknown>'
+    ? trimmed
     : undefined;
 };
 
+// Hermes (and V8) stack frames look like `at fn (file:line:col)` or
+// `at file:line:col`.
 const parseStackFrame = (line: string): InitiatorStackFrame | null => {
   const trimmedLine = line.trim();
+  if (!trimmedLine) return null;
 
-  if (!trimmedLine) {
-    return null;
-  }
-
-  let functionName: string | undefined;
-  let location: string | undefined;
-
-  const v8FunctionFrame = trimmedLine.match(/^at\s+(.*?)\s+\((.*)\)$/);
-  if (v8FunctionFrame) {
-    functionName = v8FunctionFrame[1];
-    location = v8FunctionFrame[2];
-  } else {
-    const v8LocationFrame = trimmedLine.match(/^at\s+(.*)$/);
-    const jscFrame = trimmedLine.match(/^(.*?)@(.*)$/);
-
-    if (v8LocationFrame) {
-      location = v8LocationFrame[1];
-    } else if (jscFrame) {
-      functionName = jscFrame[1];
-      location = jscFrame[2];
-    }
-  }
-
-  if (!location) {
-    return null;
-  }
+  const withFunction = trimmedLine.match(/^at\s+(.*?)\s+\((.*)\)$/);
+  const withoutFunction = withFunction ? null : trimmedLine.match(/^at\s+(.*)$/);
+  const location = withFunction?.[2] ?? withoutFunction?.[1];
+  if (!location) return null;
 
   const parsedLocation = parseStackLocation(location);
-  if (!parsedLocation) {
-    return null;
-  }
+  if (!parsedLocation) return null;
 
-  return {
-    functionName: normalizeFunctionName(functionName),
-    ...parsedLocation,
-  };
+  return { functionName: normalizeFunctionName(withFunction?.[1]), ...parsedLocation };
 };
 
 const toGeneratedStackFrame = (frame: InitiatorStackFrame): InitiatorStackFrame => ({
@@ -219,59 +107,42 @@ const toGeneratedStackFrame = (frame: InitiatorStackFrame): InitiatorStackFrame 
   generatedColumnNumber: frame.columnNumber,
 });
 
-const getGeneratedFrameLocation = (frame: InitiatorStackFrame) => ({
-  url: frame.generatedUrl ?? frame.url,
-  lineNumber: frame.generatedLineNumber ?? frame.lineNumber,
-  columnNumber: frame.generatedColumnNumber ?? frame.columnNumber,
-});
-
-const canSymbolicateStack = (stack?: InitiatorStackFrame[]) =>
-  stack?.some((frame) => getGeneratedFrameLocation(frame).url?.startsWith('http')) ?? false;
+const canSymbolicateStack = (stack: InitiatorStackFrame[]) =>
+  stack.some((frame) => frame.generatedUrl?.startsWith('http'));
 
 const getStackPreview = (frames: InitiatorStackFrame[]) => {
-  // The first frames are this helper, the HTTP inspector callback and the XHR
-  // wrapper. The caller starts after that fixed interception boundary.
   const callerFrames = frames.slice(INITIATOR_STACK_FRAME_OFFSET);
-
   return (callerFrames.length > 0 ? callerFrames : frames).slice(0, STACK_PREVIEW_FRAME_LIMIT);
 };
 
 export const getInitiatorFromStack = (): Initiator => {
   try {
     const stack = new Error().stack;
-    if (!stack) {
-      return { type: 'other' };
-    }
+    if (!stack) return { type: 'other' };
 
     const parsedFrames = stack
       .split('\n')
       .map(parseStackFrame)
       .filter((frame): frame is InitiatorStackFrame => frame !== null);
 
-    const stackPreview = getStackPreview(parsedFrames);
+    const stackPreview = getStackPreview(parsedFrames).map(toGeneratedStackFrame);
     const initiatorFrame = stackPreview[0];
-    const generatedStackPreview = stackPreview.map(toGeneratedStackFrame);
+    const symbolicationStatus = canSymbolicateStack(stackPreview) ? 'pending' : 'unavailable';
 
-    if (initiatorFrame?.url) {
+    if (initiatorFrame?.generatedUrl) {
       return {
         type: 'script',
         functionName: initiatorFrame.functionName,
-        generatedUrl: initiatorFrame.url,
-        generatedLineNumber: initiatorFrame.lineNumber,
-        generatedColumnNumber: initiatorFrame.columnNumber,
-        stack: generatedStackPreview,
-        symbolicationStatus: canSymbolicateStack(generatedStackPreview) ? 'pending' : 'unavailable',
+        generatedUrl: initiatorFrame.generatedUrl,
+        generatedLineNumber: initiatorFrame.generatedLineNumber,
+        generatedColumnNumber: initiatorFrame.generatedColumnNumber,
+        stack: stackPreview,
+        symbolicationStatus,
       };
     }
 
-    if (parsedFrames.length > 0) {
-      const fallbackStack = stackPreview.map(toGeneratedStackFrame);
-
-      return {
-        type: 'other',
-        stack: fallbackStack,
-        symbolicationStatus: canSymbolicateStack(fallbackStack) ? 'pending' : 'unavailable',
-      };
+    if (stackPreview.length > 0) {
+      return { type: 'other', stack: stackPreview, symbolicationStatus };
     }
   } catch {
     // Ignore stack parsing errors
@@ -281,13 +152,16 @@ export const getInitiatorFromStack = (): Initiator => {
 };
 
 /**
- * Applies override body and status to XMLHttpRequest objects.
+ * Applies override body and status to XMLHttpRequest objects. `url` is the
+ * request URL as captured from `open()`'s own argument, not read off the XHR
+ * instance, which is why it is passed in rather than read from `request`.
  */
 export const setupRequestOverride = (
   overridesRegistry: OverridesRegistry,
   request: XMLHttpRequest,
+  url: string,
 ): void => {
-  const override = overridesRegistry.getOverrideForUrl(request._url as string);
+  const override = overridesRegistry.getOverrideForUrl(url);
   if (!override) return;
 
   request.addEventListener('readystatechange', () => {

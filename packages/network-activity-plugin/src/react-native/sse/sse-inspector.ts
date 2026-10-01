@@ -3,6 +3,7 @@ import { SSEInterceptor } from './sse-interceptor';
 import { EventSourceWithInternals } from './types';
 import { SSEEvent, SSEEventMap } from '../../shared/sse-events';
 import { getContentType } from '../utils';
+import { getRequestIdForXhr } from '../http/xhr-hook';
 import type { Inspector } from '../inspector';
 
 type NanoEventsMap = {
@@ -26,7 +27,8 @@ export const getSSEInspector = (): SSEInspector => {
   const eventEmitter = createNanoEvents<NanoEventsMap>();
 
   const getRequestId = (eventSource: EventSourceWithInternals): string | null => {
-    const requestId = eventSource._xhr?._rozeniteRequestId;
+    const xhr = eventSource._xhr;
+    const requestId = xhr ? getRequestIdForXhr(xhr) : null;
 
     if (!requestId) {
       // It means that the EventSource was created before the inspector was enabled.
@@ -53,7 +55,7 @@ export const getSSEInspector = (): SSEInspector => {
           requestId,
           timestamp: Date.now(),
           response: {
-            url: sseXhr._url as string,
+            url: sseEventSource.url,
             status: sseXhr.status,
             statusText: sseXhr.statusText,
             headers: sseXhr.responseHeaders || {},
