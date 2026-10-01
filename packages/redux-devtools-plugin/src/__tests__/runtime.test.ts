@@ -66,6 +66,13 @@ const reducer = (state: TestState = initialState, action: TestAction): TestState
   return state;
 };
 
+// Stands in for a high-frequency action (polling, map updates) that is
+// denylisted but still has to change the state.
+const noisyReducer = (state: TestState = initialState, action: TestAction): TestState =>
+  action.type === 'counter/noise'
+    ? { ...state, counter: state.counter + 10 }
+    : reducer(state, action);
+
 const setupRuntime = async () => {
   vi.resetModules();
   bridge.sentMessages.length = 0;
@@ -231,6 +238,100 @@ describe('redux devtools runtime', () => {
       { counter: 3 },
     ]);
     expect(instanceState.currentStateIndex).toBe(1);
+  });
+
+  it('hides denylisted actions from DevTools without skipping their state changes', async () => {
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } = await setupRuntime();
+
+    const store = createStore(
+      noisyReducer,
+      rozeniteDevToolsEnhancer({
+        actionsDenylist: ['counter/noise'],
+        stateSanitizer: (state) => ({
+          counter: (state as TestState).counter,
+        }),
+      }),
+    );
+
+    store.dispatch({ type: 'counter/add', payload: 1 });
+    store.dispatch({ type: 'counter/noise' });
+
+    sendPanelCommand({ type: 'start' });
+
+    const snapshotActionTypes = getStateUpdateRequests(sentMessages)
+      .filter((request) => request.type === 'PARTIAL_STATE')
+      .flatMap((request) =>
+        Object.values(
+          (parse(request.payload) as { actionsById: Record<number, { action: Action<string> }> })
+            .actionsById,
+        ).map((liftedAction) => liftedAction.action.type),
+      );
+    expect(snapshotActionTypes).toEqual(['counter/add']);
+
+    sentMessages.length = 0;
+    store.dispatch({ type: 'counter/noise' });
+    expect(getStateUpdateRequests(sentMessages)).toEqual([]);
+
+    store.dispatch({ type: 'counter/add', payload: 1 });
+    const [request] = getStateUpdateRequests(sentMessages);
+
+    if (request?.type !== 'ACTION') {
+      throw new Error('Expected ACTION request.');
+    }
+
+    expect(parse(request.action)).toEqual(
+      expect.objectContaining({ action: expect.objectContaining({ type: 'counter/add' }) }),
+    );
+    // 1 + 10 + 10 + 1: both hidden actions still reached the reducer
+    expect(parse(request.payload)).toEqual({ counter: 22 });
+  });
+
+  it('keeps growing the DevTools action list up to maxAge while actions are filtered', async () => {
+    const { rozeniteDevToolsEnhancer, sentMessages, sendPanelCommand } = await setupRuntime();
+
+    const store = createStore(
+      noisyReducer,
+      rozeniteDevToolsEnhancer({
+        maxAge: 3,
+        actionsDenylist: ['counter/noise'],
+      }),
+    );
+
+    sendPanelCommand({ type: 'start' });
+
+    // Fill the runtime history with filtered actions before anything visible arrives.
+    for (let i = 0; i < 5; i++) {
+      store.dispatch({ type: 'counter/noise' });
+    }
+
+    for (let i = 0; i < 4; i++) {
+      store.dispatch({ type: 'counter/add', payload: 1 });
+    }
+
+    const requests = getStateUpdateRequests(sentMessages);
+    const state = requests.reduce(
+      (nextState, request) =>
+        reduceInstances(nextState, {
+          type: UPDATE_STATE,
+          request: request as never,
+          id: 'test-connection',
+        }),
+      undefined as Parameters<typeof reduceInstances>[0] | undefined,
+    );
+
+    if (!state) {
+      throw new Error('Expected Redux DevTools instances state.');
+    }
+
+    const instanceState = state.states[requests[0].instanceId];
+    const visibleActionTypes = instanceState.stagedActionIds.map(
+      (actionId: number) => instanceState.actionsById[actionId].action.type,
+    );
+
+    // Full at maxAge (the first slot is the committed base state). With isExcess
+    // computed from the unfiltered runtime history, the panel evicted an entry
+    // on every update and was left showing no actions at all.
+    expect(visibleActionTypes).toEqual(['@@INIT', 'counter/add', 'counter/add']);
   });
 });
 
