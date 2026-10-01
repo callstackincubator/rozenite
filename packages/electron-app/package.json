@@ -35,9 +35,9 @@
     "test": "node --test"
   },
   "dependencies": {
-    "electron": "^33.4.11"
+    "electron": "^44.4.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12.0"
   }
 }
