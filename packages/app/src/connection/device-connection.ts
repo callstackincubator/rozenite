@@ -1,18 +1,17 @@
 import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
 import {
   BOOTSTRAP_DEBOUNCE_MS,
-  DISPATCHER_INIT_MAX_ATTEMPTS,
-  DISPATCHER_INIT_RETRY_MS,
   MAIN_EXECUTION_CONTEXT_NAME,
   RECOVERY_MAX_ATTEMPTS,
   RECOVERY_RETRY_DELAY_MS,
   ROZENITE_DOMAIN,
-  buildBindingNameExpression,
-  buildDispatcherReadyExpression,
-  buildInitializeDomainExpression,
+  HandshakeCancelledError,
+  RozeniteMissingError,
   buildSendMessageExpression,
   classifyCloseReason,
   parseRozeniteBindingCalled,
+  runDispatcherHandshake,
+  type HandshakeErrorMessages,
 } from '@rozenite/tools/protocol';
 /**
  * Connects to a single device over its own CDP WebSocket and exposes it as
@@ -90,10 +89,6 @@ export type DeviceConnection = {
   close: () => void;
 };
 
-/** The dispatcher never appeared within the polling window: the app is
- * running, but Rozenite isn't installed in it (or hasn't initialized yet). */
-class RozeniteMissingSignal extends Error {}
-
 type PendingCommand = {
   resolve: (result: Record<string, unknown>) => void;
   reject: (error: Error) => void;
@@ -102,6 +97,20 @@ type PendingCommand = {
 type CDPEvaluateResult = {
   result?: { value?: unknown };
   exceptionDetails?: { text?: string };
+};
+
+const handshakeErrors: HandshakeErrorMessages = {
+  dispatcherWaitFailed: (details) =>
+    new Error(
+      'Failed to wait for React DevTools dispatcher initialization: ' +
+        (details.text ?? 'unknown error'),
+    ),
+  bindingNameFailed: (details) =>
+    new Error(
+      'Failed to get binding name for the Rozenite dispatcher: ' +
+        (details.text ?? 'unknown error'),
+    ),
+  invalidBindingName: () => new Error('Rozenite dispatcher did not return a binding name.'),
 };
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -130,7 +139,10 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   // The metadata half of that answer, kept raw so the framework can be
   // recomputed when the other half (the device probe) lands — the two
   // arrive in either order.
-  let applicationMetadata: { integrationName?: unknown; platform?: unknown } | null = null;
+  let applicationMetadata: {
+    integrationName?: unknown;
+    platform?: unknown;
+  } | null = null;
 
   let ws: WebSocket | null = null;
   // Reset per socket, not per execution context: a JS reload cannot turn a
@@ -324,59 +336,6 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     }
   };
 
-  // Polls for the dispatcher global exactly as session.ts does: up to
-  // DISPATCHER_INIT_MAX_ATTEMPTS (20) attempts, each of which evaluates
-  // once and then (if not yet found) waits — so the loop performs 19
-  // evaluates and 19 waits before throwing — ported as-is rather than
-  // rounded off, to keep the retry budget identical between the Node agent
-  // and this app.
-  const waitForDispatcher = async (socket: WebSocket, attemptEpoch: number): Promise<void> => {
-    for (let attempt = 1; attempt < DISPATCHER_INIT_MAX_ATTEMPTS; attempt++) {
-      if (ws !== socket || !isCurrentEpoch(attemptEpoch)) {
-        throw new Error('Connection attempt superseded.');
-      }
-
-      const response = (await sendCommand(socket, 'Runtime.evaluate', {
-        expression: buildDispatcherReadyExpression(),
-        returnByValue: true,
-      })) as CDPEvaluateResult;
-
-      if (response.exceptionDetails) {
-        throw new Error(
-          'Failed to wait for React DevTools dispatcher initialization: ' +
-            (response.exceptionDetails.text ?? 'unknown error'),
-        );
-      }
-
-      if (response.result?.value === true) {
-        return;
-      }
-
-      await wait(DISPATCHER_INIT_RETRY_MS);
-    }
-
-    throw new RozeniteMissingSignal();
-  };
-
-  const getBindingName = async (socket: WebSocket): Promise<string> => {
-    const response = (await sendCommand(socket, 'Runtime.evaluate', {
-      expression: buildBindingNameExpression(),
-    })) as CDPEvaluateResult;
-
-    if (response.exceptionDetails) {
-      throw new Error(
-        'Failed to get binding name for the Rozenite dispatcher: ' +
-          (response.exceptionDetails.text ?? 'unknown error'),
-      );
-    }
-
-    const value = response.result?.value;
-    if (typeof value !== 'string' || value === '') {
-      throw new Error('Rozenite dispatcher did not return a binding name.');
-    }
-    return value;
-  };
-
   /**
    * Asks the device whether it is a browser, by evaluating
    * `IS_WEB_TARGET_EXPRESSION` in its own runtime.
@@ -419,27 +378,54 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   // on `socket`. Deliberately does not initialize "react-devtools" — that
   // domain belongs to `rozenite agent`'s React service, not to this app.
   const runBootstrap = async (socket: WebSocket, attemptEpoch: number): Promise<void> => {
-    await waitForDispatcher(socket, attemptEpoch);
-    // After `waitForDispatcher` only because that is what establishes the
-    // device has a live execution context to evaluate in; the expression
-    // itself reads plain globals and depends on nothing Rozenite installs.
-    //
-    // Guarded on `null` so a re-bootstrap (a JS reload on the same socket)
-    // does not re-ask a question whose answer cannot have changed — while a
-    // probe that previously failed still gets another attempt.
-    if (targetIsWeb === null) {
-      await probeTargetIsWeb(socket);
+    const isCancelled = (): boolean => ws !== socket || !isCurrentEpoch(attemptEpoch);
+    try {
+      await runDispatcherHandshake(
+        {
+          evaluate: (expression, returnByValue) =>
+            sendCommand(socket, 'Runtime.evaluate', {
+              expression,
+              ...(returnByValue ? { returnByValue } : {}),
+            }) as Promise<CDPEvaluateResult>,
+          addBinding: async (name) => {
+            if (bindingName !== name) {
+              await sendCommand(socket, 'Runtime.addBinding', { name });
+              bindingName = name;
+            }
+          },
+        },
+        {
+          domains: [ROZENITE_DOMAIN],
+          errors: handshakeErrors,
+          isCancelled,
+          // After the dispatcher wait only because that is what establishes
+          // the device has a live execution context to evaluate in; the
+          // expression itself reads plain globals and depends on nothing
+          // Rozenite installs.
+          //
+          // Guarded on `null` so a re-bootstrap (a JS reload on the same
+          // socket) does not re-ask a question whose answer cannot have
+          // changed — while a probe that previously failed still gets
+          // another attempt.
+          afterDispatcherReady: async () => {
+            if (targetIsWeb === null) {
+              await probeTargetIsWeb(socket);
+            }
+          },
+        },
+      );
+    } catch (error) {
+      if (error instanceof HandshakeCancelledError) {
+        if (error.step === 'wait-for-dispatcher') {
+          throw new Error('Connection attempt superseded.');
+        }
+        // Past the dispatcher wait a superseded handshake used to run to
+        // completion; every caller re-checks the socket and epoch right after
+        // this returns and drops the result, so stopping early is the same.
+        return;
+      }
+      throw error;
     }
-    const bindingValue = await getBindingName(socket);
-
-    if (bindingName !== bindingValue) {
-      await sendCommand(socket, 'Runtime.addBinding', { name: bindingValue });
-      bindingName = bindingValue;
-    }
-
-    await sendCommand(socket, 'Runtime.evaluate', {
-      expression: buildInitializeDomainExpression(ROZENITE_DOMAIN),
-    });
   };
 
   // Guards against two overlapping re-bootstraps: without it, two
@@ -477,7 +463,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
       if (ws !== socket || !isCurrentEpoch(attemptEpoch)) {
         return;
       }
-      if (error instanceof RozeniteMissingSignal) {
+      if (error instanceof RozeniteMissingError) {
         setState('rozeniteMissing');
         return;
       }
@@ -730,7 +716,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
             if (!isCurrentEpoch(loopEpoch)) {
               return;
             }
-            if (error instanceof RozeniteMissingSignal) {
+            if (error instanceof RozeniteMissingError) {
               setState('rozeniteMissing');
               return;
             }
