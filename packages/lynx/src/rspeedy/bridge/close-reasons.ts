@@ -1,45 +1,29 @@
-/**
- * The Fusebox WebSocket close reasons that
- * `packages/app/src/connection/device-connection.ts`'s `handleClose`
- * keys its recovery behaviour off of. `handleClose` matches with
- * `reason.includes(...)`, not exact equality, so these bracketed tokens
- * just need to appear somewhere in the close reason string the bridge
- * sends — see `getCloseReason` below for the one place that should
- * produce them.
- */
+import {
+  CONNECTION_LOST_CLOSE_REASON,
+  NEW_DEBUGGER_OPENED_CLOSE_REASON,
+  PAGE_NOT_FOUND_CLOSE_REASON,
+  RECREATING_DEVICE_CLOSE_REASON,
+} from '@rozenite/tools/protocol';
+
+// The reason strings are defined once, in `@rozenite/tools/protocol`, next to
+// the classification the hosts apply to them. Re-exported so the bridge's
+// public surface is unchanged.
+export {
+  CONNECTION_LOST_CLOSE_REASON,
+  NEW_DEBUGGER_OPENED_CLOSE_REASON,
+  PAGE_NOT_FOUND_CLOSE_REASON,
+  RECREATING_DEVICE_CLOSE_REASON,
+};
 
 /**
- * The device is being torn down and recreated (e.g. an app reload made
- * DebugRouter register a fresh client for what the host still thinks is
- * the same device). Recoverable: `handleClose` calls `runConnectLoop`,
- * which re-resolves the target through the middleware's targets endpoint
- * (`GET /rozenite/agent/targets`, `resolveMetroTarget`) and retries, up to
- * `RECOVERY_MAX_ATTEMPTS`.
+ * The Fusebox close reasons the hosts key their recovery behaviour off of
+ * (see `classifyCloseReason` in `@rozenite/tools/protocol`). The first three
+ * are recoverable: the host re-resolves the target and reconnects. The last
+ * is terminal: another debugger took the device, and the host must not fight
+ * it by reconnecting. Hosts match with `reason.includes(...)`, so the
+ * bracketed tokens only need to appear somewhere in the close reason string;
+ * `getCloseReason` below is the one place that should produce them.
  */
-export const RECREATING_DEVICE_CLOSE_REASON = '[RECREATING_DEVICE]';
-
-/**
- * The session (LynxView/"card") the host connected to no longer exists on
- * the device — e.g. it was closed. Recoverable, exactly like
- * `RECREATING_DEVICE_CLOSE_REASON` above.
- */
-export const PAGE_NOT_FOUND_CLOSE_REASON = '[PAGE_NOT_FOUND]';
-
-/**
- * The underlying transport to the device dropped (the DebugRouter client
- * disconnected, its socket died, etc). Recoverable, exactly like
- * `RECREATING_DEVICE_CLOSE_REASON` above.
- */
-export const CONNECTION_LOST_CLOSE_REASON = '[CONNECTION_LOST]';
-
-/**
- * Another debugger (React Native DevTools, another Rozenite window) has
- * already taken the device. Terminal, not recoverable: `handleClose` sets
- * `disconnected` and does not retry — the bridge cannot tell what the
- * other debugger is doing, and fighting it for the device isn't its call
- * to make by reconnecting.
- */
-export const NEW_DEBUGGER_OPENED_CLOSE_REASON = '[NEW_DEBUGGER_OPENED]';
 
 /**
  * Bridge-level reasons a device-facing WebSocket the bridge owns can

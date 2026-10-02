@@ -19,6 +19,7 @@ export type RozeniteInstance = {
 };
 
 export { createScopedMiddleware };
+export type { JsonPageDescription } from './agent/json-list.js';
 export type { MiddlewareHandler, MiddlewareNext, MiddlewareRequest } from './scoped-middleware.js';
 
 export const initializeRozenite = async (
