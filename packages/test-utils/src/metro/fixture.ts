@@ -1,4 +1,12 @@
-import { mkdtempSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { monorepoRoot } from './paths.js';
@@ -10,6 +18,15 @@ export type Fixture = {
 };
 
 const FIXTURE_PACKAGE_NAME = 'rozenite-release-bundle-fixture';
+
+/**
+ * Windows only lets unprivileged users create directory symlinks with
+ * Developer Mode or admin rights, so a `'dir'` symlink throws `EPERM`.
+ * Junctions work for local directories without extra privileges.
+ */
+export const getDirectoryLinkType = (
+  platform: NodeJS.Platform = process.platform,
+): 'junction' | 'dir' => (platform === 'win32' ? 'junction' : 'dir');
 
 /**
  * Creates a throwaway React Native app on disk.
@@ -31,7 +48,9 @@ export const createFixture = (files: Record<string, string>): Fixture => {
     path.join(root, 'app.json'),
     JSON.stringify({ expo: { name: FIXTURE_PACKAGE_NAME, slug: FIXTURE_PACKAGE_NAME } }, null, 2),
   );
-  symlinkSync(path.join(monorepoRoot, 'node_modules'), path.join(root, 'node_modules'), 'dir');
+  const nodeModulesLink = path.join(root, 'node_modules');
+  // Junction targets must be absolute.
+  symlinkSync(path.resolve(monorepoRoot, 'node_modules'), nodeModulesLink, getDirectoryLinkType());
 
   for (const [relativePath, contents] of Object.entries(files)) {
     const filePath = path.join(root, relativePath);
@@ -41,6 +60,15 @@ export const createFixture = (files: Record<string, string>): Fixture => {
 
   return {
     root,
-    cleanup: () => rmSync(root, { recursive: true, force: true }),
+    cleanup: () => {
+      // Remove the link itself first so the recursive removal below can never
+      // traverse into the monorepo's real `node_modules`.
+      try {
+        unlinkSync(nodeModulesLink);
+      } catch {
+        // Already gone; nothing to unlink.
+      }
+      rmSync(root, { recursive: true, force: true });
+    },
   };
 };
