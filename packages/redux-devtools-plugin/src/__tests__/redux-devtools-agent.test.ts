@@ -198,6 +198,37 @@ describe('redux devtools agent helpers', () => {
     });
   });
 
+  it('pages actions with a default of 20 and a maximum of 100', () => {
+    const count = 150;
+    const ids = Array.from({ length: count }, (_, index) => index);
+    registerStore({
+      liftedState: createLiftedState({
+        nextActionId: count,
+        actionsById: Object.fromEntries(
+          ids.map((id) => [
+            id,
+            { type: 'PERFORM_ACTION', action: { type: `a/${id}` }, timestamp: id },
+          ]),
+        ) as unknown as ReduxDevToolsLiftedState['actionsById'],
+        stagedActionIds: ids,
+        currentStateIndex: count - 1,
+        computedStates: ids.map(() => ({ state: {} })),
+      }),
+    });
+
+    const byDefault = listReduxActionsResult({});
+    expect(byDefault.limit).toBe(20);
+    expect(byDefault.items).toHaveLength(20);
+
+    const capped = listReduxActionsResult({ limit: 5000 });
+    expect(capped.limit).toBe(100);
+    expect(capped.items).toHaveLength(100);
+
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(listReduxActionsResult({ limit: bad }).limit).toBe(20);
+    }
+  });
+
   it('returns action details with computed state', () => {
     registerStore();
 
