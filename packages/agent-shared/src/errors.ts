@@ -8,7 +8,11 @@ export const getErrorDetails = (error: unknown): string | null => {
     return null;
   }
 
-  if (error instanceof AggregateError && error.errors.length > 0) {
+  if (
+    typeof AggregateError !== 'undefined' &&
+    error instanceof AggregateError &&
+    error.errors.length > 0
+  ) {
     return error.errors
       .map((entry) => (entry instanceof Error ? entry.message : String(entry)))
       .join('; ');

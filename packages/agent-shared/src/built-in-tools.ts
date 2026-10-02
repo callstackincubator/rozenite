@@ -47,11 +47,14 @@ export const NETWORK_TOOL_NAMES = {
   getResponseBody: 'getResponseBody',
 } as const;
 
-/** Tool names per built-in domain id, in declaration order. */
+const names = <T extends Record<string, string>>(map: T): readonly T[keyof T][] =>
+  Object.freeze(Object.values(map) as T[keyof T][]);
+
+/** Tool names per built-in domain id, in declaration order. Frozen. */
 export const BUILT_IN_DOMAIN_TOOL_NAMES = {
-  console: Object.values(CONSOLE_TOOL_NAMES),
-  react: Object.values(REACT_TOOL_NAMES),
-  performance: Object.values(PERFORMANCE_TOOL_NAMES),
-  memory: Object.values(MEMORY_TOOL_NAMES),
-  network: Object.values(NETWORK_TOOL_NAMES),
+  console: names(CONSOLE_TOOL_NAMES),
+  react: names(REACT_TOOL_NAMES),
+  performance: names(PERFORMANCE_TOOL_NAMES),
+  memory: names(MEMORY_TOOL_NAMES),
+  network: names(NETWORK_TOOL_NAMES),
 } as const satisfies Record<string, readonly string[]>;
