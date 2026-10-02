@@ -23,3 +23,4 @@ Status values:
 | [0000](./0000-single-target-discovery-endpoint.md) | One Rozenite endpoint for debug-target discovery | Accepted |
 | [0001](./0001-xhr-first-network-capture.md) | XHR-first network capture with one recorder | Accepted |
 | [0002](./0002-network-activity-on-device-regression-harness.md) | On-device regression harness for Network Activity | Accepted |
+| [0003](./0003-shared-host-protocol.md) | One definition of the Rozenite host protocol | Accepted — not yet implemented |
