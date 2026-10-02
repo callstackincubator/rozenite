@@ -1,4 +1,12 @@
-import { mkdtempSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { monorepoRoot } from './paths.js';
@@ -31,7 +39,14 @@ export const createFixture = (files: Record<string, string>): Fixture => {
     path.join(root, 'app.json'),
     JSON.stringify({ expo: { name: FIXTURE_PACKAGE_NAME, slug: FIXTURE_PACKAGE_NAME } }, null, 2),
   );
-  symlinkSync(path.join(monorepoRoot, 'node_modules'), path.join(root, 'node_modules'), 'dir');
+  const nodeModulesLink = path.join(root, 'node_modules');
+  // Windows needs admin rights or Developer Mode for `'dir'` symlinks (EPERM);
+  // junctions work for local directories without extra privileges.
+  symlinkSync(
+    path.join(monorepoRoot, 'node_modules'),
+    nodeModulesLink,
+    process.platform === 'win32' ? 'junction' : 'dir',
+  );
 
   for (const [relativePath, contents] of Object.entries(files)) {
     const filePath = path.join(root, relativePath);
@@ -41,6 +56,16 @@ export const createFixture = (files: Record<string, string>): Fixture => {
 
   return {
     root,
-    cleanup: () => rmSync(root, { recursive: true, force: true }),
+    cleanup: () => {
+      // Best-effort: `rmSync` below removes the link itself without following
+      // it anyway, so a failure here (e.g. EBUSY) must not mask the real error
+      // or skip the removal.
+      try {
+        unlinkSync(nodeModulesLink);
+      } catch {
+        // Ignored on purpose.
+      }
+      rmSync(root, { recursive: true, force: true });
+    },
   };
 };
