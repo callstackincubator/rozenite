@@ -139,10 +139,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
   // The metadata half of that answer, kept raw so the framework can be
   // recomputed when the other half (the device probe) lands — the two
   // arrive in either order.
-  let applicationMetadata: {
-    integrationName?: unknown;
-    platform?: unknown;
-  } | null = null;
+  let applicationMetadata: { integrationName?: unknown; platform?: unknown } | null = null;
 
   let ws: WebSocket | null = null;
   // Reset per socket, not per execution context: a JS reload cannot turn a

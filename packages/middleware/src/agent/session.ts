@@ -663,9 +663,7 @@ export const createAgentSession = (options: {
         outcome: 'recovered',
         message:
           lostAccumulatedDomains.size > 0
-            ? `Reconnected after ${reason}. Accumulated state was lost for: ${Array.from(
-                lostAccumulatedDomains.values(),
-              ).join(', ')}.`
+            ? `Reconnected after ${reason}. Accumulated state was lost for: ${Array.from(lostAccumulatedDomains.values()).join(', ')}.`
             : `Reconnected after ${reason}.`,
         at: Date.now(),
       };
