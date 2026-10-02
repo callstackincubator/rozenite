@@ -1,4 +1,9 @@
-import { AGENT_PLUGIN_ID, type AgentToolPagination } from '@rozenite/agent-shared';
+import {
+  AGENT_MESSAGE_TYPES,
+  AGENT_PLUGIN_ID,
+  CONSOLE_TOOL_NAMES,
+  type AgentToolPagination,
+} from '@rozenite/agent-shared';
 import { createToolRegistry } from './tool-registry.js';
 import type {
   DevToolsPluginMessage,
@@ -25,11 +30,6 @@ const cursorPagination = <TRow>(config: {
   fields: config.fields,
   ...(config.defaultFields ? { defaultFields: config.defaultFields } : {}),
 });
-
-const CONSOLE_TOOL_NAMES = {
-  getMessages: 'getMessages',
-  clearMessages: 'clearMessages',
-} as const;
 
 const CONSOLE_TOOLS: AgentTool[] = [
   {
@@ -249,19 +249,19 @@ export const createAgentMessageHandler = () => {
     }
 
     switch (message.type) {
-      case 'register-tool': {
+      case AGENT_MESSAGE_TYPES.registerTool: {
         const payload = message.payload as RegisterToolPayload;
         registry.registerTools(deviceId, payload.tools);
         notifyToolsChanged();
         break;
       }
-      case 'unregister-tool': {
+      case AGENT_MESSAGE_TYPES.unregisterTool: {
         const payload = message.payload as UnregisterToolPayload;
         registry.unregisterTools(deviceId, payload.toolNames);
         notifyToolsChanged();
         break;
       }
-      case 'tool-result': {
+      case AGENT_MESSAGE_TYPES.toolResult: {
         const payload = message.payload as ToolResultPayload;
         const pending = pendingCalls.get(payload.callId);
         if (!pending) {
@@ -335,7 +335,7 @@ export const createAgentMessageHandler = () => {
 
     const message: DevToolsPluginMessage = {
       pluginId: AGENT_PLUGIN_ID,
-      type: 'tool-call',
+      type: AGENT_MESSAGE_TYPES.toolCall,
       payload: {
         callId,
         toolName,

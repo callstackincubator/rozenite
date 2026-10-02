@@ -6,18 +6,7 @@ export interface PageRequest {
   order?: PageOrder;
 }
 
-export interface PageEnvelope {
-  limit: number;
-  hasMore: boolean;
-  nextCursor?: string;
-  reset?: boolean;
-}
-
-export interface PageResult<TItem, TMeta = unknown> {
-  items: TItem[];
-  page: PageEnvelope;
-  meta?: TMeta;
-}
+export type { PageEnvelope, PageResult } from '@rozenite/agent-shared';
 
 export interface ListFromResult<TCheckpoint, TItem> {
   items: TItem[];

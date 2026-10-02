@@ -1,5 +1,6 @@
 import type { RozeniteHostIntegration, RozeniteIntegration } from '@rozenite/tools/integration';
 import type { UnsupportedDomainInfo } from './capabilities.js';
+import { AGENT_MESSAGE_TYPES } from './message-types.js';
 
 export {
   createEmptyCapabilityProfile,
@@ -26,6 +27,19 @@ export {
   shapePaginatedRows,
   shapeToolResult,
 } from './output-shaping.js';
+
+export { getErrorDetails } from './errors.js';
+export { AGENT_MESSAGE_TYPES } from './message-types.js';
+export {
+  BUILT_IN_DOMAIN_TOOL_NAMES,
+  CONSOLE_TOOL_NAMES,
+  MEMORY_TOOL_NAMES,
+  NETWORK_TOOL_NAMES,
+  PERFORMANCE_TOOL_NAMES,
+  REACT_TOOL_NAMES,
+} from './built-in-tools.js';
+export { parseAgentTargetsResponse } from './targets-response.js';
+export type { ParsedTargetsResponse } from './targets-response.js';
 
 export const AGENT_PLUGIN_ID = 'rozenite-agent';
 
@@ -439,27 +453,27 @@ export type AgentSessionReadyPayload = {
 };
 
 export type RegisterToolMessage = {
-  type: 'register-tool';
+  type: typeof AGENT_MESSAGE_TYPES.registerTool;
   payload: RegisterToolPayload;
 };
 
 export type UnregisterToolMessage = {
-  type: 'unregister-tool';
+  type: typeof AGENT_MESSAGE_TYPES.unregisterTool;
   payload: UnregisterToolPayload;
 };
 
 export type ToolCallMessage = {
-  type: 'tool-call';
+  type: typeof AGENT_MESSAGE_TYPES.toolCall;
   payload: ToolCallPayload;
 };
 
 export type ToolResultMessage = {
-  type: 'tool-result';
+  type: typeof AGENT_MESSAGE_TYPES.toolResult;
   payload: ToolResultPayload;
 };
 
 export type AgentSessionReadyMessage = {
-  type: 'agent-session-ready';
+  type: typeof AGENT_MESSAGE_TYPES.agentSessionReady;
   payload: AgentSessionReadyPayload;
 };
 
@@ -469,3 +483,12 @@ export type AgentMessage =
   | ToolCallMessage
   | ToolResultMessage
   | AgentSessionReadyMessage;
+
+/** Payload type for each agent message `type`, as a device-bridge event map. */
+export type AgentEventMap = {
+  [AGENT_MESSAGE_TYPES.agentSessionReady]: AgentSessionReadyPayload;
+  [AGENT_MESSAGE_TYPES.registerTool]: RegisterToolPayload;
+  [AGENT_MESSAGE_TYPES.unregisterTool]: UnregisterToolPayload;
+  [AGENT_MESSAGE_TYPES.toolCall]: ToolCallPayload;
+  [AGENT_MESSAGE_TYPES.toolResult]: ToolResultPayload;
+};
