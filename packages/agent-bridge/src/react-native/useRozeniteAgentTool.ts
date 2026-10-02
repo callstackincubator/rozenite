@@ -1,25 +1,14 @@
 import { useEffect, useRef } from 'react';
-import type { InferAgentToolArgs, InferAgentToolResult } from '@rozenite/agent-shared';
-import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
 import {
-  AGENT_PLUGIN_ID,
-  type AgentTool,
-  type AgentSessionReadyMessage,
-  type RegisterToolMessage,
-  type UnregisterToolMessage,
-  type ToolCallMessage,
-  type ToolResultMessage,
-} from '../types.js';
+  AGENT_MESSAGE_TYPES,
+  type AgentEventMap,
+  type InferAgentToolArgs,
+  type InferAgentToolResult,
+} from '@rozenite/agent-shared';
+import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { AGENT_PLUGIN_ID, type AgentTool, type ToolResultMessage } from '../types.js';
 
 type MaybePromise<T> = Promise<T> | T;
-
-type AgentEventMap = {
-  'agent-session-ready': AgentSessionReadyMessage['payload'];
-  'register-tool': RegisterToolMessage['payload'];
-  'unregister-tool': UnregisterToolMessage['payload'];
-  'tool-call': ToolCallMessage['payload'];
-  'tool-result': ToolResultMessage['payload'];
-};
 
 interface UseRozeniteAgentToolRuntimeOptions {
   tool: AgentTool;
@@ -105,12 +94,12 @@ function useRozeniteDomainAgentTool(
         return;
       }
 
-      client.send('register-tool', {
+      client.send(AGENT_MESSAGE_TYPES.registerTool, {
         tools: [qualifiedTool],
       });
     };
 
-    const toolCallSubscription = client.onMessage('tool-call', async (payload) => {
+    const toolCallSubscription = client.onMessage(AGENT_MESSAGE_TYPES.toolCall, async (payload) => {
       if (!enabled || payload.toolName !== toolName) {
         return;
       }
@@ -124,7 +113,7 @@ function useRozeniteDomainAgentTool(
           result,
         };
 
-        client.send('tool-result', response);
+        client.send(AGENT_MESSAGE_TYPES.toolResult, response);
       } catch (error) {
         const response: ToolResultMessage['payload'] = {
           callId: payload.callId,
@@ -132,11 +121,11 @@ function useRozeniteDomainAgentTool(
           error: error instanceof Error ? error.message : String(error),
         };
 
-        client.send('tool-result', response);
+        client.send(AGENT_MESSAGE_TYPES.toolResult, response);
       }
     });
 
-    const sessionReadySubscription = client.onMessage('agent-session-ready', () => {
+    const sessionReadySubscription = client.onMessage(AGENT_MESSAGE_TYPES.agentSessionReady, () => {
       registerTool();
     });
 
@@ -144,7 +133,7 @@ function useRozeniteDomainAgentTool(
 
     return () => {
       if (enabled) {
-        client.send('unregister-tool', {
+        client.send(AGENT_MESSAGE_TYPES.unregisterTool, {
           toolNames: [toolName],
         });
       }

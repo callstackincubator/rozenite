@@ -1,5 +1,6 @@
 import WebSocket from 'ws';
 import {
+  AGENT_MESSAGE_TYPES,
   AGENT_PLUGIN_ID,
   DEFAULT_AGENT_TARGET_INTEGRATION,
   getUnsupportedDomains,
@@ -426,7 +427,7 @@ export const createAgentSession = (options: {
 
   const sendAgentSessionReady = async (): Promise<void> => {
     const message: AgentSessionReadyMessage = {
-      type: 'agent-session-ready',
+      type: AGENT_MESSAGE_TYPES.agentSessionReady,
       payload: {
         sessionId: options.target.id,
       },
@@ -833,7 +834,7 @@ export const createAgentSession = (options: {
         tap.emit('in', devToolsMessage);
       }
       handler.handleDeviceMessage(options.target.id, devToolsMessage);
-      if (devToolsMessage.type === 'register-tool') {
+      if (devToolsMessage.type === AGENT_MESSAGE_TYPES.registerTool) {
         notePluginReadinessActivity();
       }
     } else if (bindingPayload.domain === 'react-devtools') {

@@ -1,4 +1,12 @@
-import type { JSONSchema7, AgentTool, AgentToolPagination } from '@rozenite/agent-shared';
+import {
+  MEMORY_TOOL_NAMES,
+  NETWORK_TOOL_NAMES,
+  PERFORMANCE_TOOL_NAMES,
+  REACT_TOOL_NAMES,
+  type AgentTool,
+  type AgentToolPagination,
+  type JSONSchema7,
+} from '@rozenite/agent-shared';
 import { createReactTreeStore } from './runtime/react/store.js';
 import { CdpEventTimeoutError } from './cdp-errors.js';
 import type { ArtifactBucket, ArtifactFileWriter } from './artifacts.js';
@@ -580,7 +588,7 @@ export const createPerformanceDomainService = (deps: {
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
-      name: 'startTrace',
+      name: PERFORMANCE_TOOL_NAMES.startTrace,
       description: 'Start a CDP performance trace for the current session target.',
       inputSchema: {
         type: 'object',
@@ -598,7 +606,7 @@ export const createPerformanceDomainService = (deps: {
       },
     },
     {
-      name: 'stopTrace',
+      name: PERFORMANCE_TOOL_NAMES.stopTrace,
       description: 'Stop the active trace and write the result to a Metro-managed artifact path.',
       inputSchema: {
         type: 'object',
@@ -785,7 +793,7 @@ export const createReactDomainService = (deps: {
   };
   const tools: AgentTool[] = [
     {
-      name: 'getTree',
+      name: REACT_TOOL_NAMES.getTree,
       description:
         'Get the current React component tree with optional depth limiting and cursor-based ' +
         'pagination. With noHost, parentId, childIds and depth describe the filtered tree, so ' +
@@ -835,7 +843,7 @@ export const createReactDomainService = (deps: {
       }),
     },
     {
-      name: 'getComponent',
+      name: REACT_TOOL_NAMES.getComponent,
       description:
         'Get a React node summary plus inspected props, state, and hooks in one response.',
       inputSchema: {
@@ -867,7 +875,7 @@ export const createReactDomainService = (deps: {
       },
     },
     {
-      name: 'getNode',
+      name: REACT_TOOL_NAMES.getNode,
       description: 'Get a single React node summary by node ID or label.',
       inputSchema: {
         type: 'object',
@@ -885,7 +893,7 @@ export const createReactDomainService = (deps: {
       },
     },
     {
-      name: 'getChildren',
+      name: REACT_TOOL_NAMES.getChildren,
       description:
         "Get a node's direct children by node ID or label with cursor-based pagination. With " +
         'noHost, a hidden host is replaced by its own children.',
@@ -931,7 +939,7 @@ export const createReactDomainService = (deps: {
       }),
     },
     {
-      name: 'getProps',
+      name: REACT_TOOL_NAMES.getProps,
       description: 'Get inspected props for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
@@ -956,7 +964,7 @@ export const createReactDomainService = (deps: {
       }),
     },
     {
-      name: 'getState',
+      name: REACT_TOOL_NAMES.getState,
       description: 'Get inspected state for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
@@ -981,7 +989,7 @@ export const createReactDomainService = (deps: {
       }),
     },
     {
-      name: 'getHooks',
+      name: REACT_TOOL_NAMES.getHooks,
       description: 'Get inspected hooks for a node with cursor-based pagination.',
       inputSchema: {
         type: 'object',
@@ -1013,7 +1021,7 @@ export const createReactDomainService = (deps: {
       }),
     },
     {
-      name: 'searchNodes',
+      name: REACT_TOOL_NAMES.searchNodes,
       description: 'Search React component tree nodes by display name or key.',
       inputSchema: {
         type: 'object',
@@ -1063,7 +1071,7 @@ export const createReactDomainService = (deps: {
       }),
     },
     {
-      name: 'getErrors',
+      name: REACT_TOOL_NAMES.getErrors,
       description:
         'List the components React logged errors or warnings against, most errors first. ' +
         'Covers warnings as well as errors; counts are cumulative and reset when a component ' +
@@ -1096,7 +1104,7 @@ export const createReactDomainService = (deps: {
       }),
     },
     {
-      name: 'startProfiling',
+      name: REACT_TOOL_NAMES.startProfiling,
       description: 'Start React profiling or request reload-and-profile when supported.',
       inputSchema: {
         type: 'object',
@@ -1109,7 +1117,7 @@ export const createReactDomainService = (deps: {
       },
     },
     {
-      name: 'isProfilingStarted',
+      name: REACT_TOOL_NAMES.isProfilingStarted,
       description: 'Get current React profiling status and recorded data availability.',
       inputSchema: {
         type: 'object',
@@ -1117,7 +1125,7 @@ export const createReactDomainService = (deps: {
       },
     },
     {
-      name: 'stopProfiling',
+      name: REACT_TOOL_NAMES.stopProfiling,
       description: 'Stop React profiling and return a compact summary of the captured session.',
       inputSchema: {
         type: 'object',
@@ -1132,7 +1140,7 @@ export const createReactDomainService = (deps: {
       },
     },
     {
-      name: 'getComponentRenders',
+      name: REACT_TOOL_NAMES.getComponentRenders,
       description:
         'Get per-component render totals aggregated across every commit of the captured ' +
         'profiling session: render count, total/average/max render time, and why each ' +
@@ -1199,7 +1207,7 @@ export const createReactDomainService = (deps: {
       }),
     },
     {
-      name: 'getProfileTimeline',
+      name: REACT_TOOL_NAMES.getProfileTimeline,
       description:
         'List every commit in the captured profiling session with its duration and how many ' +
         'fibers rendered, chronologically or slowest first. Use it to pick a commitIndex for ' +
@@ -1241,7 +1249,7 @@ export const createReactDomainService = (deps: {
       }),
     },
     {
-      name: 'getRenderData',
+      name: REACT_TOOL_NAMES.getRenderData,
       description:
         'Get a paged summary of a single React commit by rootId and commitIndex. Each ' +
         'item is a fiber that rendered, with its displayName, timing, and why it rendered ' +
@@ -1364,7 +1372,7 @@ export const createMemoryDomainService = (deps: {
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
-      name: 'takeHeapSnapshot',
+      name: MEMORY_TOOL_NAMES.takeHeapSnapshot,
       description: 'Capture a heap snapshot and write it to a Metro-managed artifact path.',
       inputSchema: {
         type: 'object',
@@ -1374,7 +1382,7 @@ export const createMemoryDomainService = (deps: {
       },
     },
     {
-      name: 'startSampling',
+      name: MEMORY_TOOL_NAMES.startSampling,
       description: 'Start heap allocation sampling for the current session target.',
       inputSchema: {
         type: 'object',
@@ -1395,7 +1403,7 @@ export const createMemoryDomainService = (deps: {
       },
     },
     {
-      name: 'stopSampling',
+      name: MEMORY_TOOL_NAMES.stopSampling,
       description:
         'Stop heap allocation sampling and write the profile to a Metro-managed artifact path.',
       inputSchema: {
@@ -1590,7 +1598,7 @@ export const createNetworkDomainService = (deps: {
 }): LocalAgentToolService => {
   const tools: AgentTool[] = [
     {
-      name: 'startRecording',
+      name: NETWORK_TOOL_NAMES.startRecording,
       description: 'Start recording raw CDP network activity for the current session target.',
       inputSchema: {
         type: 'object',
@@ -1598,7 +1606,7 @@ export const createNetworkDomainService = (deps: {
       },
     },
     {
-      name: 'stopRecording',
+      name: NETWORK_TOOL_NAMES.stopRecording,
       description: 'Stop recording network activity without clearing the captured request buffer.',
       inputSchema: {
         type: 'object',
@@ -1606,7 +1614,7 @@ export const createNetworkDomainService = (deps: {
       },
     },
     {
-      name: 'getRecordingStatus',
+      name: NETWORK_TOOL_NAMES.getRecordingStatus,
       description: 'Return network recording state and buffer metadata for the current session.',
       inputSchema: {
         type: 'object',
@@ -1614,7 +1622,7 @@ export const createNetworkDomainService = (deps: {
       },
     },
     {
-      name: 'listRequests',
+      name: NETWORK_TOOL_NAMES.listRequests,
       description: 'List captured network request summaries with cursor pagination.',
       inputSchema: {
         type: 'object',
@@ -1647,7 +1655,7 @@ export const createNetworkDomainService = (deps: {
       }),
     },
     {
-      name: 'getRequestDetails',
+      name: NETWORK_TOOL_NAMES.getRequestDetails,
       description: 'Return detailed metadata for a captured network request without bodies.',
       inputSchema: {
         type: 'object',
@@ -1661,7 +1669,7 @@ export const createNetworkDomainService = (deps: {
       },
     },
     {
-      name: 'getRequestBody',
+      name: NETWORK_TOOL_NAMES.getRequestBody,
       description:
         'Fetch the request body for a captured network request when supported by the target.',
       inputSchema: {
@@ -1676,7 +1684,7 @@ export const createNetworkDomainService = (deps: {
       },
     },
     {
-      name: 'getResponseBody',
+      name: NETWORK_TOOL_NAMES.getResponseBody,
       description:
         'Fetch the response body for a captured network request when supported by the target.',
       inputSchema: {

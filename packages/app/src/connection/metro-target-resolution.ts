@@ -8,11 +8,7 @@
  * selection rules (`packages/middleware/src/agent/metro-discovery.ts`) and
  * returns targets in preference order.
  */
-import {
-  AGENT_TARGETS_ROUTE,
-  type AgentResponseEnvelope,
-  type GetAgentTargetsResponse,
-} from '@rozenite/agent-shared';
+import { AGENT_TARGETS_ROUTE, parseAgentTargetsResponse } from '@rozenite/agent-shared';
 
 export class MetroUnreachableError extends Error {
   constructor(message: string) {
@@ -42,45 +38,28 @@ export const resolveMetroTarget = async (
     );
   }
 
-  // The middleware's `sendError` always pairs `ok:false` with an HTTP 400
-  // or 404 (`packages/middleware/src/agent/routes.ts`), so the body has to
-  // be parsed before the status is allowed to decide anything -- otherwise
-  // a real error envelope's own message (e.g. "No connected device is
-  // available") is discarded in favour of a bare "responded with status
-  // 400". The status only gets the final word when the body turns out not
-  // to be a usable envelope at all (a non-JSON body, or JSON of some other
-  // shape -- an older middleware, or `/rozenite` not mounted here).
-  const unexpectedResponseError = (): MetroUnreachableError =>
-    new MetroUnreachableError(
-      response.ok
-        ? `${url} returned an unexpected response.`
-        : `${url} responded with status ${response.status}.`,
-    );
-
   let raw: unknown;
   try {
     raw = await response.json();
   } catch {
-    throw unexpectedResponseError();
+    raw = undefined;
   }
 
-  if (typeof raw !== 'object' || raw === null || !('ok' in raw)) {
-    throw unexpectedResponseError();
+  const parsed = parseAgentTargetsResponse(response.status, raw);
+
+  if (parsed.kind === 'error-envelope') {
+    throw new MetroUnreachableError(parsed.message ?? `${url} reported an error.`);
   }
 
-  const body = raw as AgentResponseEnvelope<GetAgentTargetsResponse>;
-
-  if (!body.ok) {
-    const message =
-      typeof body.error?.message === 'string' ? body.error.message : `${url} reported an error.`;
-    throw new MetroUnreachableError(message);
+  if (parsed.kind === 'unexpected') {
+    throw new MetroUnreachableError(
+      parsed.httpOk
+        ? `${url} returned an unexpected response.`
+        : `${url} responded with status ${response.status}.`,
+    );
   }
 
-  if (!Array.isArray(body.result?.targets)) {
-    throw unexpectedResponseError();
-  }
-
-  const matching = body.result.targets.filter((target) => target.deviceId === deviceId);
+  const matching = parsed.targets.filter((target) => target.deviceId === deviceId);
   if (matching.length === 0) {
     throw new Error(`No target is currently available for device "${deviceId}".`);
   }

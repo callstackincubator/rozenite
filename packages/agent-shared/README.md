@@ -51,6 +51,11 @@ This package exports:
 - `ToolCallMessage`
 - `ToolResultMessage`
 - `AgentMessage`
+- `AgentEventMap`
+- `AGENT_MESSAGE_TYPES`
+- `getErrorDetails`
+- `parseAgentTargetsResponse` and `ParsedTargetsResponse`
+- `BUILT_IN_DOMAIN_TOOL_NAMES`, `CONSOLE_TOOL_NAMES`, `REACT_TOOL_NAMES`, `PERFORMANCE_TOOL_NAMES`, `MEMORY_TOOL_NAMES`, `NETWORK_TOOL_NAMES`
 
 ## Usage
 

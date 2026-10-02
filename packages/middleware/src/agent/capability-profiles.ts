@@ -18,7 +18,11 @@
  * `@rozenite/lynx-dev`'s `translate-device-frame.ts`). Leave that as a
  * future refinement; do not build the table on it.
  */
-import { createEmptyCapabilityProfile, type CapabilityProfile } from '@rozenite/agent-shared';
+import {
+  createEmptyCapabilityProfile,
+  MEMORY_TOOL_NAMES,
+  type CapabilityProfile,
+} from '@rozenite/agent-shared';
 import type { RozeniteIntegration } from '@rozenite/tools/integration';
 
 const HEAP_SAMPLING_REASON =
@@ -61,9 +65,15 @@ const LYNX_PROFILE: CapabilityProfile = {
       // are the reason to reach for this domain in the first place.
       availability: 'degraded',
       tools: {
-        takeHeapSnapshot: { availability: 'supported' },
-        startSampling: { availability: 'unsupported', reason: HEAP_SAMPLING_REASON },
-        stopSampling: { availability: 'unsupported', reason: HEAP_SAMPLING_REASON },
+        [MEMORY_TOOL_NAMES.takeHeapSnapshot]: { availability: 'supported' },
+        [MEMORY_TOOL_NAMES.startSampling]: {
+          availability: 'unsupported',
+          reason: HEAP_SAMPLING_REASON,
+        },
+        [MEMORY_TOOL_NAMES.stopSampling]: {
+          availability: 'unsupported',
+          reason: HEAP_SAMPLING_REASON,
+        },
       },
     },
     // `console` has no entry: PrimJS emits Runtime.consoleAPICalled and
