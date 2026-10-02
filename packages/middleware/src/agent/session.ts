@@ -7,20 +7,19 @@ import {
 import type { RozeniteIntegration } from '@rozenite/tools/integration';
 import {
   BOOTSTRAP_DEBOUNCE_MS,
-  DISPATCHER_INIT_MAX_ATTEMPTS,
-  DISPATCHER_INIT_RETRY_MS,
   MAIN_EXECUTION_CONTEXT_NAME,
   REACT_DEVTOOLS_DOMAIN,
   RECOVERY_MAX_ATTEMPTS,
   RECOVERY_RETRY_DELAY_MS,
   ROZENITE_DOMAIN,
-  buildBindingNameExpression,
-  buildDispatcherReadyExpression,
-  buildInitializeDomainExpression,
+  RozeniteMissingError,
   buildSendMessageExpression,
   classifyCloseReason,
   findRecoverableCloseReason,
   parseRozeniteBindingCalled,
+  runDispatcherHandshake,
+  type HandshakeErrorMessages,
+  type HandshakeTransport,
 } from '@rozenite/tools/protocol';
 import type {
   AgentSessionInfo,
@@ -58,18 +57,6 @@ const COMMAND_TIMEOUT_MS = 10_000;
 // While `start()` is pending, give up after this many failed bootstrap
 // attempts (counted per start, not reset by a retry) so a device that never answers cannot hang start forever.
 const START_BOOTSTRAP_MAX_FAILURES = 3;
-
-/** The dispatcher global never appeared within the polling window: the app is
- * running, but Rozenite is not installed in it (or never initialized). */
-class RozeniteMissingError extends Error {
-  constructor() {
-    super(
-      'Rozenite runtime was not found in the app. Make sure the app is built with Rozenite enabled ' +
-        '(see https://rozenite.dev/docs/getting-started), then reload the app and try again.',
-    );
-    this.name = 'RozeniteMissingError';
-  }
-}
 
 const getCloseReason = (reason: unknown): string =>
   Buffer.isBuffer(reason) ? reason.toString() : String(reason ?? '');
@@ -479,59 +466,31 @@ export const createAgentSession = (options: {
     });
   };
 
-  const waitForFuseboxDispatcherToBeInitialized = async (attempt = 1): Promise<void> => {
-    if (attempt >= DISPATCHER_INIT_MAX_ATTEMPTS) {
-      throw new RozeniteMissingError();
-    }
-
-    const response = await evaluateRuntime(buildDispatcherReadyExpression(), true);
-
-    if (response.exceptionDetails) {
-      throw new Error(
-        'Failed to wait for React DevTools dispatcher initialization: ' +
-          response.exceptionDetails.text,
-      );
-    }
-
-    if (response.result?.value !== true) {
-      await new Promise((resolve) => {
-        setTimeout(resolve, DISPATCHER_INIT_RETRY_MS);
-      });
-      return waitForFuseboxDispatcherToBeInitialized(attempt + 1);
-    }
+  const handshakeTransport: HandshakeTransport = {
+    evaluate: (expression, returnByValue) => evaluateRuntime(expression, returnByValue),
+    addBinding: async (name) => {
+      if (bindingName !== name) {
+        await sendCommand('Runtime.addBinding', { name });
+        bindingName = name;
+      }
+    },
   };
 
-  const getBindingName = async (): Promise<string> => {
-    const response = await evaluateRuntime(buildBindingNameExpression());
-
-    if (response.exceptionDetails) {
-      throw new Error(
-        'Failed to get binding name for Agent session on a global: ' +
-          response.exceptionDetails.text,
-      );
-    }
-
-    const bindingValue = response.result?.value;
-    if (bindingValue === null || bindingValue === undefined) {
-      throw new Error(
-        'Failed to get binding name for Agent session on a global: returned value is ' +
-          String(bindingValue),
-      );
-    }
-
-    if (bindingValue === '') {
-      throw new Error(
-        'Failed to get binding name for Agent session on a global: returned value is an empty string',
-      );
-    }
-
-    if (typeof bindingValue !== 'string') {
-      throw new Error(
-        'Failed to get binding name for Agent session on a global: returned value is not a string',
-      );
-    }
-
-    return bindingValue;
+  const handshakeErrors: HandshakeErrorMessages = {
+    dispatcherWaitFailed: (details) =>
+      new Error('Failed to wait for React DevTools dispatcher initialization: ' + details.text),
+    bindingNameFailed: (details) =>
+      new Error('Failed to get binding name for Agent session on a global: ' + details.text),
+    invalidBindingName: (value) => {
+      const prefix = 'Failed to get binding name for Agent session on a global: ';
+      if (value === null || value === undefined) {
+        return new Error(prefix + 'returned value is ' + String(value));
+      }
+      if (value === '') {
+        return new Error(prefix + 'returned value is an empty string');
+      }
+      return new Error(prefix + 'returned value is not a string');
+    },
   };
 
   const bootstrap = async (): Promise<void> => {
@@ -544,22 +503,17 @@ export const createAgentSession = (options: {
     const generation = bootstrapGeneration;
 
     try {
-      await waitForFuseboxDispatcherToBeInitialized();
-      const bindingValue = await getBindingName();
-
-      if (bindingName !== bindingValue) {
-        await sendCommand('Runtime.addBinding', { name: bindingValue });
-        bindingName = bindingValue;
-      }
-
-      await sendCommand('Runtime.evaluate', {
-        expression: buildInitializeDomainExpression(ROZENITE_DOMAIN),
-      });
-      // Arm before notifying the plugin: registration may be synchronous.
-      beginPluginReadinessWait();
-      await sendAgentSessionReady();
-      await sendCommand('Runtime.evaluate', {
-        expression: buildInitializeDomainExpression(REACT_DEVTOOLS_DOMAIN),
+      await runDispatcherHandshake(handshakeTransport, {
+        domains: [ROZENITE_DOMAIN, REACT_DEVTOOLS_DOMAIN],
+        errors: handshakeErrors,
+        afterDomainInitialized: async (domain) => {
+          if (domain !== ROZENITE_DOMAIN) {
+            return;
+          }
+          // Arm before notifying the plugin: registration may be synchronous.
+          beginPluginReadinessWait();
+          await sendAgentSessionReady();
+        },
       });
 
       bootstrapped = true;

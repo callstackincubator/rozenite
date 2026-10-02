@@ -201,3 +201,162 @@ export const buildBindingCalledEvent = (payload: string) => ({
     payload,
   },
 });
+
+// ---------------------------------------------------------------------------
+// The handshake
+// ---------------------------------------------------------------------------
+
+/**
+ * The dispatcher global never appeared within the polling window: the app is
+ * running, but Rozenite is not installed in it (or never initialized).
+ */
+export class RozeniteMissingError extends Error {
+  constructor() {
+    super(
+      'Rozenite runtime was not found in the app. Make sure the app is built with Rozenite enabled ' +
+        '(see https://rozenite.dev/docs/getting-started), then reload the app and try again.',
+    );
+    this.name = 'RozeniteMissingError';
+  }
+}
+
+/** The step of the handshake that was about to run when it was cancelled. */
+export type HandshakeStep =
+  | 'wait-for-dispatcher'
+  | 'before-binding'
+  | 'read-binding-name'
+  | 'add-binding'
+  | 'initialize-domain';
+
+/**
+ * Thrown by {@link runDispatcherHandshake} when `isCancelled()` reported true.
+ * It is not a failure: the host that cancelled it ignores it.
+ */
+export class HandshakeCancelledError extends Error {
+  readonly step: HandshakeStep;
+
+  constructor(step: HandshakeStep) {
+    super('Handshake cancelled.');
+    this.name = 'HandshakeCancelledError';
+    this.step = step;
+  }
+}
+
+/** The part of a `Runtime.evaluate` response the handshake reads. */
+export type HandshakeEvaluateResult = {
+  result?: { value?: unknown };
+  exceptionDetails?: { text?: string };
+};
+
+/**
+ * How the handshake reaches the device. Each host adapts its own socket and
+ * command plumbing (pending-command map, timeouts) to this.
+ */
+export type HandshakeTransport = {
+  /**
+   * `Runtime.evaluate` of `expression`. `returnByValue` is true only for the
+   * dispatcher-ready poll. Resolves to the raw CDP response.
+   */
+  evaluate(expression: string, returnByValue: boolean): Promise<HandshakeEvaluateResult>;
+  /**
+   * `Runtime.addBinding`. The handshake calls it on every run; a host that
+   * wants to skip a binding it already added does so here.
+   */
+  addBinding(name: string): Promise<void>;
+};
+
+export type HandshakeErrorDetails = { text?: string };
+
+/** The host's wording for each failure, so user-visible text stays its own. */
+export type HandshakeErrorMessages = {
+  /** The dispatcher-ready evaluate reported an exception. */
+  dispatcherWaitFailed(details: HandshakeErrorDetails): Error;
+  /** The binding-name evaluate reported an exception. */
+  bindingNameFailed(details: HandshakeErrorDetails): Error;
+  /** The binding name was not a non-empty string. */
+  invalidBindingName(value: unknown): Error;
+};
+
+export type DispatcherHandshakeOptions = {
+  /** Domains to `initializeDomain`, in order. */
+  domains: readonly string[];
+  errors: HandshakeErrorMessages;
+  /**
+   * Checked before every poll attempt and before every later step. When it
+   * returns true the handshake rejects with a {@link HandshakeCancelledError}.
+   */
+  isCancelled?: () => boolean;
+  /** Runs once the dispatcher is ready, before the binding name is read. */
+  afterDispatcherReady?: () => Promise<void>;
+  /** Runs after each domain was initialized, before the next one. */
+  afterDomainInitialized?: (domain: string) => Promise<void>;
+};
+
+const waitMs = (ms: number): Promise<void> =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+/**
+ * The handshake every host performs against a device: wait for the dispatcher
+ * global, read the binding name, register the binding, and start delivering
+ * each requested domain. Rejects with {@link RozeniteMissingError} when the
+ * dispatcher never appears; any transport error propagates unchanged.
+ *
+ * The poll evaluates `DISPATCHER_INIT_MAX_ATTEMPTS - 1` times, waiting
+ * `DISPATCHER_INIT_RETRY_MS` after each miss, then gives up.
+ */
+export const runDispatcherHandshake = async (
+  transport: HandshakeTransport,
+  options: DispatcherHandshakeOptions,
+): Promise<void> => {
+  const { errors, isCancelled } = options;
+  const checkCancelled = (step: HandshakeStep): void => {
+    if (isCancelled?.()) {
+      throw new HandshakeCancelledError(step);
+    }
+  };
+
+  let ready = false;
+  for (let attempt = 1; attempt < DISPATCHER_INIT_MAX_ATTEMPTS; attempt++) {
+    checkCancelled('wait-for-dispatcher');
+
+    const response = await transport.evaluate(buildDispatcherReadyExpression(), true);
+    if (response.exceptionDetails) {
+      throw errors.dispatcherWaitFailed(response.exceptionDetails);
+    }
+    if (response.result?.value === true) {
+      ready = true;
+      break;
+    }
+
+    await waitMs(DISPATCHER_INIT_RETRY_MS);
+  }
+  if (!ready) {
+    throw new RozeniteMissingError();
+  }
+
+  if (options.afterDispatcherReady) {
+    checkCancelled('before-binding');
+    await options.afterDispatcherReady();
+  }
+
+  checkCancelled('read-binding-name');
+  const bindingResponse = await transport.evaluate(buildBindingNameExpression(), false);
+  if (bindingResponse.exceptionDetails) {
+    throw errors.bindingNameFailed(bindingResponse.exceptionDetails);
+  }
+  const bindingName = bindingResponse.result?.value;
+  if (typeof bindingName !== 'string' || bindingName === '') {
+    throw errors.invalidBindingName(bindingName);
+  }
+
+  checkCancelled('add-binding');
+  await transport.addBinding(bindingName);
+
+  for (const domain of options.domains) {
+    checkCancelled('initialize-domain');
+    await transport.evaluate(buildInitializeDomainExpression(domain), false);
+    await options.afterDomainInitialized?.(domain);
+  }
+};
