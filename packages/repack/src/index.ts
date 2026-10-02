@@ -46,7 +46,7 @@ const patchConfig = (
       ...config.devServer,
       setupMiddlewares: (middlewares, devServer) => {
         const userMiddlewares = userSetupMiddlewares
-          ? userSetupMiddlewares(middlewares, devServer)
+          ? userSetupMiddlewares.call(config.devServer, middlewares, devServer)
           : middlewares;
         userMiddlewares.unshift(createLazyRozeniteMiddleware(rozeniteConfig));
         return userMiddlewares;

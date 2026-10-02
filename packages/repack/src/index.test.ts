@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { initializeRozenite, rozeniteMiddleware } = vi.hoisted(() => ({
+const { initializeRozenite, rozeniteMiddleware, createScopedMiddleware } = vi.hoisted(() => ({
+  createScopedMiddleware: vi.fn((_prefix: string, middleware: unknown) => middleware),
   initializeRozenite: vi.fn(),
   rozeniteMiddleware: vi.fn(),
 }));
 
 vi.mock('@rozenite/middleware', () => ({
   initializeRozenite,
-  createScopedMiddleware: (_prefix: string, middleware: unknown) => middleware,
+  createScopedMiddleware,
 }));
 
 vi.mock('@rozenite/runtime/package.json', () => ({
@@ -77,7 +78,7 @@ describe('withRozenite (Re.Pack)', () => {
     expect(result[1]).toBe(existing);
   });
 
-  it('forwards the runtime version and initializes only once', async () => {
+  it('forwards the runtime version and initializes and scopes only once', async () => {
     const setup = await resolveSetupMiddlewares({});
     const [middleware] = setup([], {}) as ((...args: unknown[]) => Promise<void>)[];
 
@@ -85,6 +86,8 @@ describe('withRozenite (Re.Pack)', () => {
     await middleware({}, {}, vi.fn());
 
     expect(initializeRozenite).toHaveBeenCalledTimes(1);
+    expect(createScopedMiddleware).toHaveBeenCalledTimes(1);
+    expect(createScopedMiddleware).toHaveBeenCalledWith('/rozenite', rozeniteMiddleware);
     expect(initializeRozenite).toHaveBeenCalledWith(
       expect.objectContaining({ projectRoot: '/project' }),
       '9.9.9',
