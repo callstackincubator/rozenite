@@ -87,16 +87,19 @@ describe('runDispatcherHandshake', () => {
     expect(evaluates()).toBe(4 + 2);
   });
 
-  it('rejects with RozeniteMissingError after exactly 19 evaluates', async () => {
-    const { transport, evaluates } = createTransport(() => ({
-      result: { value: false },
-    }));
-    const done = runDispatcherHandshake(transport, {
-      domains: [ROZENITE_DOMAIN],
-      errors,
-    });
+  it('rejects with RozeniteMissingError after exactly 19 evaluates and 19 waits', async () => {
+    const { transport, evaluates } = createTransport(() => ({ result: { value: false } }));
+    const done = runDispatcherHandshake(transport, { domains: [ROZENITE_DOMAIN], errors });
+    const settled = vi.fn();
     const assertion = expect(done).rejects.toBeInstanceOf(RozeniteMissingError);
-    await vi.advanceTimersByTimeAsync(DISPATCHER_INIT_RETRY_MS * DISPATCHER_INIT_MAX_ATTEMPTS);
+    done.then(settled, settled);
+
+    // The last evaluate is followed by a full sleep before giving up.
+    await vi.advanceTimersByTimeAsync(DISPATCHER_INIT_RETRY_MS * 19 - 1);
+    expect(settled).not.toHaveBeenCalled();
+    expect(evaluates()).toBe(19);
+
+    await vi.advanceTimersByTimeAsync(1);
     await assertion;
     expect(evaluates()).toBe(19);
     expect(DISPATCHER_INIT_MAX_ATTEMPTS - 1).toBe(19);
@@ -176,6 +179,23 @@ describe('runDispatcherHandshake', () => {
     ).rejects.toBe(failure);
   });
 
+  it.each(['afterDispatcherReady', 'afterDomainInitialized'] as const)(
+    'propagates a rejection from %s unchanged',
+    async (hook) => {
+      const failure = new Error(`${hook} failed`);
+      const { transport } = createTransport(happy);
+      await expect(
+        runDispatcherHandshake(transport, {
+          domains: [ROZENITE_DOMAIN],
+          errors,
+          [hook]: async () => {
+            throw failure;
+          },
+        }),
+      ).rejects.toBe(failure);
+    },
+  );
+
   describe('cancellation', () => {
     it('cancels before the first poll', async () => {
       const { transport } = createTransport(happy);
@@ -249,6 +269,22 @@ describe('runDispatcherHandshake', () => {
       expect(calls.some((c) => c.includes(buildInitializeDomainExpression(ROZENITE_DOMAIN)))).toBe(
         false,
       );
+    });
+
+    it('cancels before reading the binding name when there is no ready hook', async () => {
+      let cancelled = false;
+      const { transport } = createTransport((expression) => {
+        if (expression === buildDispatcherReadyExpression()) cancelled = true;
+        return happy(expression);
+      });
+      await expect(
+        runDispatcherHandshake(transport, {
+          domains: [ROZENITE_DOMAIN],
+          errors,
+          isCancelled: () => cancelled,
+        }),
+      ).rejects.toMatchObject({ step: 'read-binding-name' });
+      expect(transport.evaluate).toHaveBeenCalledTimes(1);
     });
 
     it('cancels between domains', async () => {
