@@ -16,7 +16,8 @@ side that holds such a CDP socket and drives the Rozenite handshake:
    The runtime and app then evaluate `IS_WEB_TARGET_EXPRESSION` to tell a
    browser target from a native one; the middleware does not.
 3. Read the dispatcher's `BINDING_NAME` from the device, call
-   `Runtime.addBinding`, evaluate `initializeDomain('rozenite')`.
+   `Runtime.addBinding`, and call the dispatcher's `initializeDomain` for
+   `rozenite`.
 4. Exchange messages: device → host as `Runtime.bindingCalled` events whose
    `payload` is `JSON.stringify({ domain, message })`; host → device by
    evaluating `__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.sendMessage(domain, "<json>")`.
@@ -87,9 +88,11 @@ browser, so no server-side endpoint sits in the message path.
    is not created.
 
    The subpath may import only `@rozenite/tools`'s own import-free modules
-   (for example `./integration`). It is typechecked with `types: []` and an
-   ES-only `lib`, so Node and DOM globals fail the build rather than leaking
-   into the browser bundles and the published `.d.ts`.
+   (for example `./integration`). It is typechecked with `types: []`, an
+   ES-only `lib` and a minimal ambient declaration of `setTimeout` and
+   `clearTimeout` (the only host globals allowed), so any other Node or DOM
+   global fails the build rather than leaking into the browser bundles and
+   the published `.d.ts`.
 
 2. **The `/json/list` page shape lives in `@rozenite/middleware`**, next to
    the discovery that consumes it. The Lynx bridge already imports from the
@@ -142,8 +145,11 @@ browser, so no server-side endpoint sits in the message path.
    - The option forwarding from Metro, Re.Pack and Lynx to
      `initializeRozenite` becomes one helper in `@rozenite/middleware` that
      copies only known `RozeniteConfig` fields. Metro and Re.Pack spread all
-     options today; the extra keys they pass are ignored by the middleware,
-     and the helper must keep it that way for every key it does read.
+     options today; the extra keys they pass (`enabled`,
+     `enhanceMetroConfig`) are ignored by the middleware. The helper forwards
+     exactly the `RozeniteConfig` fields the middleware reads and drops the
+     rest. `projectRoot` always comes from the bundler, which, unlike today's
+     spread, a user option can no longer override.
 
 ## Consequences
 
