@@ -39,6 +39,7 @@ const mocks = vi.hoisted(() => {
   const resolveDebuggerOrigin = vi.fn();
   let bindingName = 'rozenite-binding';
   let stalledRuntimeExpression: string | null = null;
+  let refusedRuntimeExpression: string | null = null;
 
   class MockWebSocket {
     static readonly CONNECTING = 0;
@@ -151,6 +152,17 @@ const mocks = vi.hoisted(() => {
       };
     }
 
+    // Models the device refusing to compile the injected source text (the
+    // `Invalid UTF-8 code point` failure of issue #407): the command itself
+    // succeeds, and the rejection is reported on the response.
+    if (refusedRuntimeExpression && expression.includes(refusedRuntimeExpression)) {
+      return {
+        exceptionDetails: {
+          text: 'Compiling JS failed: Invalid UTF-8 code point',
+        },
+      };
+    }
+
     return {};
   };
 
@@ -176,6 +188,9 @@ const mocks = vi.hoisted(() => {
     stallRuntimeEvaluationContaining: (expression: string) => {
       stalledRuntimeExpression = expression;
     },
+    refuseRuntimeEvaluationContaining: (expression: string) => {
+      refusedRuntimeExpression = expression;
+    },
     reset: () => {
       commandLog.length = 0;
       loggerInfo.mockReset();
@@ -197,6 +212,7 @@ const mocks = vi.hoisted(() => {
       });
       bindingName = 'rozenite-binding';
       stalledRuntimeExpression = null;
+      refusedRuntimeExpression = null;
       wsInstances.length = 0;
       resolveDebuggerOrigin.mockReset();
       resolveDebuggerOrigin.mockImplementation(
@@ -326,6 +342,26 @@ const getExpressions = (): string[] => {
     .filter((command) => command.method === 'Runtime.evaluate')
     .map((command) => String(command.params?.expression ?? ''));
 };
+
+/**
+ * Replays what the device does with the injected source text: compile it,
+ * call the dispatcher, and `JSON.parse` the payload it is handed.
+ */
+const evaluateOnDevice = (expression: string): Array<[string, unknown]> => {
+  const delivered: Array<[string, unknown]> = [];
+  const dispatcher = {
+    sendMessage: (domain: string, payload: string): void => {
+      delivered.push([domain, JSON.parse(payload)]);
+    },
+  };
+
+  new Function(RUNTIME_GLOBAL, expression)(dispatcher);
+
+  return delivered;
+};
+
+const sendMessageExpressions = (expressions: string[]): string[] =>
+  expressions.filter((expression) => expression.includes('sendMessage("rozenite"'));
 
 const emitRozeniteBindingPayload = async (
   socket: InstanceType<typeof mocks.MockWebSocket>,
@@ -533,6 +569,58 @@ describe('agent session', () => {
     );
 
     expect(readyExpressions).toHaveLength(2);
+  });
+
+  it('keeps the injected expression ASCII-only so Hermes can compile it', async () => {
+    await startSession();
+
+    const sender = mocks.handler.connectDevice.mock.calls[0]?.[2] as
+      | { sendMessage: (message: unknown) => void }
+      | undefined;
+    expect(sender).toBeDefined();
+
+    const message = {
+      pluginId: '@rozenite/storage-plugin',
+      type: 'set-entry',
+      payload: { value: 'ship \u{1F389} it' },
+    };
+    sender?.sendMessage(message);
+    await flushMicrotasks();
+
+    const expressions = sendMessageExpressions(getExpressions()).filter((expression) =>
+      expression.includes('set-entry'),
+    );
+    expect(expressions).toHaveLength(1);
+
+    // The bug this guards: Hermes compiles the expression as UTF-8 source and
+    // rejects a raw astral-plane code unit with `Invalid UTF-8 code point`,
+    // losing the message. Node accepts that raw form, so this ASCII-only
+    // assertion is the part that actually reproduces the failure; the round
+    // trip below proves the escaping the fix adds does not alter the payload.
+    expect(expressions[0]).toMatch(/^[\x20-\x7E]+$/);
+    expect(evaluateOnDevice(expressions[0])).toEqual([['rozenite', message]]);
+  });
+
+  it('retries the handshake when the device refuses the message', async () => {
+    // The device refuses the evaluation while the command itself succeeds:
+    // precisely the shape a lost message used to have.
+    mocks.refuseRuntimeEvaluationContaining('agent-session-ready');
+
+    const { socket, startPromise } = await createStartedSession();
+    const onResolved = vi.fn();
+    startPromise.then(onResolved);
+
+    socket.open();
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    expect(sendMessageExpressions(getExpressions())).toHaveLength(1);
+    expect(onResolved).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(500);
+    await flushMicrotasks();
+
+    expect(sendMessageExpressions(getExpressions())).toHaveLength(2);
   });
 
   it('heals a relaunched app with the same device id and a new page id', async () => {

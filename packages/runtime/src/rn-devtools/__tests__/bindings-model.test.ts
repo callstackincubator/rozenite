@@ -28,7 +28,12 @@ vi.mock('../rn-devtools-frontend.js', () => {
   }
 
   return {
-    SDK: { SDKModel: { SDKModel: FakeSDKModel } },
+    SDK: {
+      SDKModel: { SDKModel: FakeSDKModel },
+      // `sendMessage` names `SDK.RuntimeModel.RuntimeModel` when asking the
+      // target for its runtime model; only the identity of that value matters.
+      RuntimeModel: { RuntimeModel: class FakeRuntimeModel {} },
+    },
   };
 });
 
@@ -41,7 +46,7 @@ const BINDING_NAME = '__CHROME_DEVTOOLS_FRONTEND_BINDING__';
 // keeping access typed instead of poking at an untyped `any`.
 type TestableModel = Pick<
   InstanceType<typeof RozeniteBindingsModel>,
-  'subscribeToDomainMessages' | 'unsubscribeFromDomainMessages'
+  'subscribeToDomainMessages' | 'unsubscribeFromDomainMessages' | 'sendMessage'
 > & {
   messagingBindingName: string | null;
   fuseboxDispatcherIsInitialized: boolean;
@@ -131,5 +136,89 @@ describe('RozeniteBindingsModel bindingCalled', () => {
     expect(() => model.bindingCalled({ data: { name: BINDING_NAME, payload } })).toThrow(
       'Failed to parse bindingCalled event payload',
     );
+  });
+});
+
+const DISPATCHER_GLOBAL = '__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__';
+
+/**
+ * Replays what the device does with the injected source text: compile it,
+ * call the dispatcher, and `JSON.parse` the payload it is handed.
+ */
+const evaluateOnDevice = (expression: string): Array<[string, unknown]> => {
+  const delivered: Array<[string, unknown]> = [];
+  const dispatcher = {
+    sendMessage: (domain: string, payload: string): void => {
+      delivered.push([domain, JSON.parse(payload)]);
+    },
+  };
+
+  new Function(DISPATCHER_GLOBAL, expression)(dispatcher);
+
+  return delivered;
+};
+
+describe('RozeniteBindingsModel sendMessage', () => {
+  const createSendingModel = (response: unknown, expressions: string[]): TestableModel => {
+    const model = new RozeniteBindingsModel({
+      model: () => ({
+        agent: {
+          invoke_evaluate: async (params: { expression: string }) => {
+            expressions.push(params.expression);
+            return response;
+          },
+        },
+      }),
+    } as never) as unknown as TestableModel;
+    model.fuseboxDispatcherIsInitialized = true;
+    return model;
+  };
+
+  it('keeps the injected expression ASCII-only so Hermes can compile it', async () => {
+    const message = {
+      pluginId: '@rozenite/storage-plugin',
+      payload: { value: 'ship \u{1F389} it \u{2014} \u{65E5}\u{672C}\u{8A9E}' },
+    };
+    const expressions: string[] = [];
+
+    await createSendingModel({ result: { type: 'string' } }, expressions).sendMessage(message);
+
+    // The bug this guards: Hermes compiles the expression as UTF-8 source and
+    // rejects a raw astral-plane code unit with `Invalid UTF-8 code point`,
+    // losing the message. V8 accepts that raw form, so this ASCII-only
+    // assertion is the part that actually reproduces the failure; the round
+    // trip below proves the escaping the fix adds does not alter the payload.
+    expect(expressions).toHaveLength(1);
+    expect(expressions[0]).toMatch(/^[\x20-\x7E]+$/);
+    expect(evaluateOnDevice(expressions[0])).toEqual([['rozenite', message]]);
+  });
+
+  it('reports a message the device refused to evaluate', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const expressions: string[] = [];
+
+    // The DevTools frontend's generated `invoke_*` methods never reject, so
+    // this is the only shape in which a lost message can surface at all.
+    const model = createSendingModel(
+      {
+        exceptionDetails: {
+          exceptionId: 1,
+          text: 'Uncaught SyntaxError',
+          lineNumber: 0,
+          columnNumber: 0,
+        },
+        result: { type: 'object' },
+      },
+      expressions,
+    );
+
+    await expect(
+      model.sendMessage({ pluginId: '@rozenite/storage-plugin' }),
+    ).resolves.toBeUndefined();
+
+    expect(consoleError).toHaveBeenCalledTimes(1);
+    expect(consoleError.mock.calls[0][0]).toContain('Uncaught SyntaxError');
+
+    consoleError.mockRestore();
   });
 });

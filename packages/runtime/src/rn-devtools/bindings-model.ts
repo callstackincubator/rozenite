@@ -18,6 +18,30 @@ const DOMAIN_NAME = 'rozenite';
 const MAIN_EXECUTION_CONTEXT_NAME = 'main';
 const RUNTIME_GLOBAL = '__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__';
 
+/**
+ * Escapes every non-ASCII code unit as a `\uXXXX` escape sequence, so that the
+ * JS source text handed to `Runtime.evaluate` is pure ASCII.
+ *
+ * Hermes compiles that source text from UTF-8 and fails on a raw astral-plane
+ * code unit with `Invalid UTF-8 code point`, which loses the message without
+ * any visible error. The escape sequence it produces is plain ASCII, and the
+ * device's own parser turns it back into the original code unit, so the payload
+ * the device reconstructs is byte-identical to the one the host serialized.
+ *
+ * This has to run on the output of the second `JSON.stringify`, never before
+ * it: escaped earlier, `JSON.stringify` escapes the backslash instead and the
+ * device receives `\uD83C` as six characters of text.
+ *
+ * Identical in all three hosts that speak this protocol (here, the agent
+ * session in `@rozenite/middleware`, and the device connection in
+ * `@rozenite/app`), like the dispatcher-wait poll below.
+ */
+const toAsciiJsSource = (source: string): string =>
+  source.replace(
+    /[^\0-\x7F]/g,
+    (codeUnit) => `\\u${codeUnit.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  );
+
 export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
   private messagingBindingName: string | null = null;
   private enabled = false;
@@ -233,12 +257,26 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     }
 
     const serializedMessage = JSON.stringify(message);
-    const escapedMessage = JSON.stringify(serializedMessage);
+    const escapedMessage = toAsciiJsSource(JSON.stringify(serializedMessage));
 
     // Note: Double quote must be used in case we get a string with a nested JSON object.
-    await runtimeModel.agent.invoke_evaluate({
+    const response = await runtimeModel.agent.invoke_evaluate({
       expression: `${RUNTIME_GLOBAL}.sendMessage('${DOMAIN_NAME}', ${escapedMessage})`,
     });
+
+    // The generated `invoke_*` methods never reject, so a `.catch()` would be
+    // dead code: a JS-level failure while evaluating reaches us here. Before
+    // it was dropped on the floor, so a message the device never received
+    // looked exactly like a message the device received. This host's only
+    // caller is the plugin-iframe relay in `plugin-view.ts`, which does not
+    // await, so this reports rather than throws: a rejected promise there
+    // would surface as an `unhandledrejection` in the DevTools page itself.
+    if (response.exceptionDetails) {
+      console.error(
+        `[rozenite] Failed to send a message to the ${DOMAIN_NAME} domain: ` +
+          response.exceptionDetails.text,
+      );
+    }
   }
 
   async enable(): Promise<void> {
