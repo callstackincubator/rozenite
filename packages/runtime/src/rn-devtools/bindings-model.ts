@@ -7,40 +7,18 @@
 // if built-in models verify whether it has been enabled before
 
 import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
+import {
+  DISPATCHER_INIT_MAX_ATTEMPTS,
+  DISPATCHER_INIT_RETRY_MS,
+  MAIN_EXECUTION_CONTEXT_NAME,
+  ROZENITE_DOMAIN,
+  buildBindingNameExpression,
+  buildDispatcherReadyExpression,
+  buildInitializeDomainExpression,
+  buildSendMessageExpression,
+} from '@rozenite/tools/protocol';
 import { RuntimeEvent, SDK } from './rn-devtools-frontend.js';
 import { DomainMessageListener, JSONValue } from './types.js';
-
-const DOMAIN_NAME = 'rozenite';
-
-// Hermes doesn't support Workers API yet, so there is a single execution context at the moment
-// This will be used for an extra-check to future-proof this logic
-// See https://github.com/facebook/react-native/blob/40b54ee671e593d125630391119b880aebc8393d/packages/react-native/ReactCommon/jsinspector-modern/InstanceTarget.cpp#L61
-const MAIN_EXECUTION_CONTEXT_NAME = 'main';
-const RUNTIME_GLOBAL = '__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__';
-
-/**
- * Escapes every non-ASCII code unit as a `\uXXXX` escape sequence, so that the
- * JS source text handed to `Runtime.evaluate` is pure ASCII.
- *
- * Hermes compiles that source text from UTF-8 and fails on a raw astral-plane
- * code unit with `Invalid UTF-8 code point`, which loses the message without
- * any visible error. The escape sequence it produces is plain ASCII, and the
- * device's own parser turns it back into the original code unit, so the payload
- * the device reconstructs is byte-identical to the one the host serialized.
- *
- * This has to run on the output of the second `JSON.stringify`, never before
- * it: escaped earlier, `JSON.stringify` escapes the backslash instead and the
- * device receives `\uD83C` as six characters of text.
- *
- * Identical in all three hosts that speak this protocol (here, the agent
- * session in `@rozenite/middleware`, and the device connection in
- * `@rozenite/app`), like the dispatcher-wait poll below.
- */
-const toAsciiJsSource = (source: string): string =>
-  source.replace(
-    /[^\0-\x7F]/g,
-    (codeUnit) => `\\u${codeUnit.charCodeAt(0).toString(16).padStart(4, '0')}`,
-  );
 
 export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
   private messagingBindingName: string | null = null;
@@ -135,7 +113,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     // React DevTools bridge message (which can carry full component trees and be very
     // large). Those messages are for the `react-devtools` domain, not ours, and would
     // otherwise be JSON.parse'd here only to be discarded a few lines down once we see
-    // `parsedMessage.domain !== DOMAIN_NAME`.
+    // `parsedMessage.domain !== ROZENITE_DOMAIN`.
     //
     // As a cheap pre-parse fast path, bail out without parsing if the raw string cannot
     // possibly contain our domain marker. This is intentionally a conservative substring
@@ -149,7 +127,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     // the plain letters), which `JSON.stringify` -- used on the React Native side to build
     // this payload -- never does. So in practice a message with domain "rozenite" always
     // contains that literal substring in the raw payload.
-    if (!serializedMessage.includes(DOMAIN_NAME)) {
+    if (!serializedMessage.includes(ROZENITE_DOMAIN)) {
       return;
     }
 
@@ -164,7 +142,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     if (parsedMessage) {
       const domainName = parsedMessage.domain;
 
-      if (parsedMessage.domain !== DOMAIN_NAME) {
+      if (parsedMessage.domain !== ROZENITE_DOMAIN) {
         // Ignore messages for other domains
         return;
       }
@@ -237,7 +215,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     }
 
     await runtimeModel.agent.invoke_evaluate({
-      expression: `void ${RUNTIME_GLOBAL}.initializeDomain('${DOMAIN_NAME}')`,
+      expression: buildInitializeDomainExpression(ROZENITE_DOMAIN),
     });
   }
 
@@ -256,12 +234,8 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       );
     }
 
-    const serializedMessage = JSON.stringify(message);
-    const escapedMessage = toAsciiJsSource(JSON.stringify(serializedMessage));
-
-    // Note: Double quote must be used in case we get a string with a nested JSON object.
     const response = await runtimeModel.agent.invoke_evaluate({
-      expression: `${RUNTIME_GLOBAL}.sendMessage('${DOMAIN_NAME}', ${escapedMessage})`,
+      expression: buildSendMessageExpression(ROZENITE_DOMAIN, message),
     });
 
     // The generated `invoke_*` methods never reject, so a `.catch()` would be
@@ -273,7 +247,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     // would surface as an `unhandledrejection` in the DevTools page itself.
     if (response.exceptionDetails) {
       console.error(
-        `[rozenite] Failed to send a message to the ${DOMAIN_NAME} domain: ` +
+        `[rozenite] Failed to send a message to the ${ROZENITE_DOMAIN} domain: ` +
           response.exceptionDetails.text,
       );
     }
@@ -296,7 +270,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       .then(() => this.probeTargetIsWeb())
       .then(() =>
         runtimeModel.agent.invoke_evaluate({
-          expression: `${RUNTIME_GLOBAL}.BINDING_NAME`,
+          expression: buildBindingNameExpression(),
         }),
       )
       .then((response) => {
@@ -390,7 +364,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
   private async waitForFuseboxDispatcherToBeInitialized(attempt = 1): Promise<void> {
     // Ideally, this should not be polling, but rather one `Runtime.evaluate` request with `awaitPromise` option
     // We need to support it in Hermes first, then we can migrate this to awaitPromise
-    if (attempt >= 20) {
+    if (attempt >= DISPATCHER_INIT_MAX_ATTEMPTS) {
       // ~5 seconds
       throw new Error('Failed to wait for initialization: it took too long');
     }
@@ -404,7 +378,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
 
     await runtimeModel.agent
       .invoke_evaluate({
-        expression: `globalThis.${RUNTIME_GLOBAL} != undefined`,
+        expression: buildDispatcherReadyExpression(),
         returnByValue: true,
       })
       .then((response) => {
@@ -416,8 +390,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
         }
 
         if (response.result.value === false) {
-          // Wait for 250 ms and restart
-          return new Promise((resolve) => setTimeout(resolve, 250)).then(() =>
+          return new Promise((resolve) => setTimeout(resolve, DISPATCHER_INIT_RETRY_MS)).then(() =>
             this.waitForFuseboxDispatcherToBeInitialized(attempt + 1),
           );
         }
