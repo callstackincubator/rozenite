@@ -1,27 +1,6 @@
+import { MAIN_EXECUTION_CONTEXT_NAME, buildBindingCalledEvent } from '@rozenite/tools/protocol';
 import type { DeviceFrame } from '../types.js';
 import type { DeviceAction } from './types.js';
-
-/**
- * Fusebox's binding name for the frontend-side `Runtime.bindingCalled`
- * listener, normally installed via `Runtime.addBinding` (which this bridge
- * answers locally — see `translate-host-message.ts` — rather than actually
- * installing on the device). Included so the synthesized event is
- * well-formed CDP, but it is decoration: `packages/app/src/connection/
- * bindings.ts`'s `parseRozeniteBindingPayload` matches only on
- * `method === 'Runtime.bindingCalled'` and reads `params.payload`; it never
- * reads `params.name`. Routing to the right plugin happens on the `domain`
- * field *inside* the JSON string carried by `payload`, not on this name.
- */
-const BINDING_NAME = '__CHROME_DEVTOOLS_FRONTEND_BINDING__';
-
-/**
- * Lynx has no concept of the CDP "execution context" this field nominally
- * identifies, and — like `name` above — the host never reads it either
- * (`parseRozeniteBindingPayload` only looks at `params.payload`). A fixed
- * placeholder keeps the synthesized event well-formed CDP without implying
- * a real execution context exists.
- */
-const EXECUTION_CONTEXT_ID = 0;
 
 /** The one `Customized` message type this bridge understands: how
  * `lynx.getDevtool().dispatchEvent({ type: 'rozenite', data })` on the
@@ -37,12 +16,6 @@ const ROZENITE_CUSTOMIZED_TYPE = 'rozenite';
  * `kTargetJSPrefix` in `.../inspector_const_extend.h:37`).
  */
 const BACKGROUND_CONTEXT_NAME_PREFIX = 'Background:';
-
-/** The exact context name `MAIN_EXECUTION_CONTEXT_NAME` in
- * `packages/app/src/connection/device-connection.ts` matches on to decide
- * which execution context to bootstrap against, and later watches for
- * `executionContextDestroyed` to detect a JS reload. */
-const HOST_MAIN_CONTEXT_NAME = 'main';
 
 /**
  * Lynx never emits `Runtime.executionContextCreated` on the QuickJS/PrimJS
@@ -98,23 +71,6 @@ const HOST_MAIN_CONTEXT_NAME = 'main';
  * surface the channel that way. This is the path a real device takes.
  */
 const LYNX_VM_EVENT_METHOD = 'Lynx.onVMEvent';
-
-/** Builds the `Runtime.bindingCalled` event the host's binding parser
- * (`packages/app/src/connection/bindings.ts`) understands, from the raw
- * JSON string the device sent. Shared by both device -> host paths so they
- * can never drift apart. */
-const buildBindingCalled = (payload: string) => ({
-  method: 'Runtime.bindingCalled',
-  params: {
-    name: BINDING_NAME,
-    executionContextId: EXECUTION_CONTEXT_ID,
-    // The device's raw string, passed through untouched. Do not
-    // parse-and-restringify: that would silently normalise key order
-    // (and any other formatting) and lose fidelity with what the device
-    // actually sent.
-    payload,
-  },
-});
 
 /**
  * Recognises a `Lynx.onVMEvent` carrying a Rozenite devtool-channel
@@ -179,7 +135,7 @@ const rewriteBackgroundContextAsMain = (message: unknown): unknown => {
       ...paramsRecord,
       context: {
         ...contextRecord,
-        name: HOST_MAIN_CONTEXT_NAME,
+        name: MAIN_EXECUTION_CONTEXT_NAME,
       },
     },
   };
@@ -210,7 +166,7 @@ export const translateDeviceFrame = (frame: DeviceFrame): DeviceAction => {
     // pass-through below.
     const vmEventPayload = readRozeniteVmEventPayload(frame.message);
     if (vmEventPayload !== null) {
-      return { kind: 'send', message: buildBindingCalled(vmEventPayload) };
+      return { kind: 'send', message: buildBindingCalledEvent(vmEventPayload) };
     }
 
     // A CDP response or event — forwarded to the host, save for the one
@@ -231,7 +187,7 @@ export const translateDeviceFrame = (frame: DeviceFrame): DeviceAction => {
       };
     }
 
-    return { kind: 'send', message: buildBindingCalled(frame.data) };
+    return { kind: 'send', message: buildBindingCalledEvent(frame.data) };
   }
 
   return {

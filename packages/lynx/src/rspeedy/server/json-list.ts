@@ -7,21 +7,17 @@
  * this endpoint as an implementation detail and never has to learn that
  * Lynx exists.
  */
-import type { MiddlewareHandler } from '@rozenite/middleware';
+import type { JsonPageDescription, MiddlewareHandler } from '@rozenite/middleware';
 import type { LynxTransport } from '../types.js';
 import { type InspectorTarget, listInspectorTargets } from './inspector-targets.js';
 import { resolveWebSocketOrigin } from './request-origin.js';
 
 const JSON_LIST_PATH = '/json/list';
 
-type JsonPageDescription = {
-  id: string;
-  title: string;
-  description: string;
-  appId: string;
+/** What this server always sends: the shared `/json/list` entry, with the
+ * fields it never omits made required. */
+type ServedPage = JsonPageDescription & {
   type: 'node';
-  deviceName: string;
-  webSocketDebuggerUrl: string;
   reactNative: {
     logicalDeviceId: string;
     capabilities: {
@@ -30,7 +26,7 @@ type JsonPageDescription = {
   };
 };
 
-const buildPage = (target: InspectorTarget, origin: string): JsonPageDescription => {
+const buildPage = (target: InspectorTarget, origin: string): ServedPage => {
   const { client, logicalDeviceId, sessionId, title } = target;
   return {
     id: `${logicalDeviceId}-${sessionId}`,

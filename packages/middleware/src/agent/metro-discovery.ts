@@ -1,21 +1,7 @@
 import { request as httpRequest } from 'node:http';
 import type { MetroTarget } from '@rozenite/agent-shared';
 import type { RozeniteHostIntegration } from '@rozenite/tools/integration';
-
-type JsonPageDescription = {
-  id: string;
-  title: string;
-  description: string;
-  appId: string;
-  deviceName: string;
-  webSocketDebuggerUrl: string;
-  reactNative?: {
-    logicalDeviceId?: string;
-    capabilities?: {
-      prefersFuseboxFrontend?: boolean;
-    };
-  };
-};
+import type { JsonPageDescription } from './json-list.js';
 
 const getErrorDetails = (error: unknown): string | null => {
   if (!error) {

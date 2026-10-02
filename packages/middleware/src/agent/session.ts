@@ -5,6 +5,23 @@ import {
   getUnsupportedDomains,
 } from '@rozenite/agent-shared';
 import type { RozeniteIntegration } from '@rozenite/tools/integration';
+import {
+  BOOTSTRAP_DEBOUNCE_MS,
+  DISPATCHER_INIT_MAX_ATTEMPTS,
+  DISPATCHER_INIT_RETRY_MS,
+  MAIN_EXECUTION_CONTEXT_NAME,
+  REACT_DEVTOOLS_DOMAIN,
+  RECOVERY_MAX_ATTEMPTS,
+  RECOVERY_RETRY_DELAY_MS,
+  ROZENITE_DOMAIN,
+  buildBindingNameExpression,
+  buildDispatcherReadyExpression,
+  buildInitializeDomainExpression,
+  buildSendMessageExpression,
+  classifyCloseReason,
+  findRecoverableCloseReason,
+  parseRozeniteBindingCalled,
+} from '@rozenite/tools/protocol';
 import type {
   AgentSessionInfo,
   AgentSessionReadyMessage,
@@ -18,7 +35,6 @@ import { resolveCapabilityProfile } from './capability-profiles.js';
 import { withCapabilityFilter } from './capability-filter.js';
 import { createAgentMessageHandler } from './runtime/handler.js';
 import { extractConsoleMessage } from './runtime/console/extract.js';
-import { parseRozeniteBindingPayload } from './runtime/bindings.js';
 import { createTapEmitter, isDevToolsPluginMessage, type TapListener } from './tap.js';
 import type { DevToolsPluginMessage } from './runtime/types.js';
 import {
@@ -33,15 +49,8 @@ import { logger } from '../logger.js';
 
 type AgentMessageHandler = ReturnType<typeof createAgentMessageHandler>;
 
-const RUNTIME_GLOBAL = '__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__';
-const MAIN_EXECUTION_CONTEXT_NAME = 'main';
-const BOOTSTRAP_DELAY_MS = 500;
-const DISPATCHER_INIT_MAX_ATTEMPTS = 20;
-const DISPATCHER_INIT_RETRY_MS = 250;
 const PLUGIN_READINESS_QUIET_WINDOW_MS = 50;
 const PLUGIN_READINESS_MAX_WAIT_MS = 250;
-const RECOVERY_RETRY_DELAY_MS = 500;
-const RECOVERY_MAX_ATTEMPTS = 16;
 // A wedged JS thread on the device never answers a CDP command. Without a
 // deadline, `start()` and tool calls would hang forever. Matches
 // `COMMAND_TIMEOUT_MS` in `@rozenite/app`'s device connection.
@@ -62,39 +71,8 @@ class RozeniteMissingError extends Error {
   }
 }
 
-const RECOVERABLE_CLOSE_REASONS = new Set([
-  '[RECREATING_DEVICE]',
-  '[PAGE_NOT_FOUND]',
-  '[CONNECTION_LOST]',
-]);
-const DEVTOOLS_TOOK_CONNECTION_REASON = '[NEW_DEBUGGER_OPENED]';
-
 const getCloseReason = (reason: unknown): string =>
   Buffer.isBuffer(reason) ? reason.toString() : String(reason ?? '');
-
-/**
- * Escapes every non-ASCII code unit as a `\uXXXX` escape sequence, so that the
- * JS source text handed to `Runtime.evaluate` is pure ASCII.
- *
- * Hermes compiles that source text from UTF-8 and fails on a raw astral-plane
- * code unit with `Invalid UTF-8 code point`, which loses the message without
- * any visible error. The escape sequence it produces is plain ASCII, and the
- * device's own parser turns it back into the original code unit, so the payload
- * the device reconstructs is byte-identical to the one the host serialized.
- *
- * This has to run on the output of the second `JSON.stringify`, never before
- * it: escaped earlier, `JSON.stringify` escapes the backslash instead and the
- * device receives `\uD83C` as six characters of text.
- *
- * Identical in all three hosts that speak this protocol (here, the embedded
- * bindings model in `@rozenite/runtime`, and the device connection in
- * `@rozenite/app`), like the dispatcher-wait poll further down.
- */
-const toAsciiJsSource = (source: string): string =>
-  source.replace(
-    /[^\0-\x7F]/g,
-    (codeUnit) => `\\u${codeUnit.charCodeAt(0).toString(16).padStart(4, '0')}`,
-  );
 
 type PendingCommand = {
   /** Retained so a device error can name the method it refused. */
@@ -427,16 +405,13 @@ export const createAgentSession = (options: {
     clearBootstrapTimer();
     bootstrapTimer = setTimeout(() => {
       void bootstrap();
-    }, BOOTSTRAP_DELAY_MS);
+    }, BOOTSTRAP_DEBOUNCE_MS);
   };
 
   const sendDomainMessage = (domain: string, message: unknown): Promise<void> => {
-    const serializedMessage = JSON.stringify(message);
-    const escapedMessage = toAsciiJsSource(JSON.stringify(serializedMessage));
-
     return markPromiseAsHandled(
       sendCommand('Runtime.evaluate', {
-        expression: `${RUNTIME_GLOBAL}.sendMessage(${JSON.stringify(domain)}, ${escapedMessage})`,
+        expression: buildSendMessageExpression(domain, message),
       })
         .then((response) => {
           // The device rejecting the source text is reported on the response,
@@ -464,7 +439,7 @@ export const createAgentSession = (options: {
       },
     };
 
-    await sendDomainMessage('rozenite', {
+    await sendDomainMessage(ROZENITE_DOMAIN, {
       pluginId: AGENT_PLUGIN_ID,
       type: message.type,
       payload: message.payload,
@@ -509,7 +484,7 @@ export const createAgentSession = (options: {
       throw new RozeniteMissingError();
     }
 
-    const response = await evaluateRuntime(`globalThis.${RUNTIME_GLOBAL} != undefined`, true);
+    const response = await evaluateRuntime(buildDispatcherReadyExpression(), true);
 
     if (response.exceptionDetails) {
       throw new Error(
@@ -527,7 +502,7 @@ export const createAgentSession = (options: {
   };
 
   const getBindingName = async (): Promise<string> => {
-    const response = await evaluateRuntime(`${RUNTIME_GLOBAL}.BINDING_NAME`);
+    const response = await evaluateRuntime(buildBindingNameExpression());
 
     if (response.exceptionDetails) {
       throw new Error(
@@ -578,13 +553,13 @@ export const createAgentSession = (options: {
       }
 
       await sendCommand('Runtime.evaluate', {
-        expression: `void ${RUNTIME_GLOBAL}.initializeDomain("rozenite")`,
+        expression: buildInitializeDomainExpression(ROZENITE_DOMAIN),
       });
       // Arm before notifying the plugin: registration may be synchronous.
       beginPluginReadinessWait();
       await sendAgentSessionReady();
       await sendCommand('Runtime.evaluate', {
-        expression: `void ${RUNTIME_GLOBAL}.initializeDomain("react-devtools")`,
+        expression: buildInitializeDomainExpression(REACT_DEVTOOLS_DOMAIN),
       });
 
       bootstrapped = true;
@@ -790,7 +765,7 @@ export const createAgentSession = (options: {
       return;
     }
 
-    if (reason.includes(DEVTOOLS_TOOK_CONNECTION_REASON)) {
+    if (classifyCloseReason(reason) === 'taken-by-another-debugger') {
       status = 'stopped';
       stopped = true;
       const message = 'React Native DevTools took the connection — close it and retry.';
@@ -802,9 +777,7 @@ export const createAgentSession = (options: {
       return;
     }
 
-    const recoveryReason = Array.from(RECOVERABLE_CLOSE_REASONS).find((candidate) =>
-      reason.includes(candidate),
-    );
+    const recoveryReason = findRecoverableCloseReason(reason);
     if (recoveryReason) {
       expectedPluginToolNames = previousPluginToolNames;
       rememberLostAccumulatedState();
@@ -871,13 +844,13 @@ export const createAgentSession = (options: {
       handler.captureConsoleMessage(options.target.id, consoleMessage);
     }
 
-    const bindingPayload = parseRozeniteBindingPayload(message);
+    const bindingPayload = parseRozeniteBindingCalled(message);
     if (!bindingPayload) {
       return;
     }
 
     logger.debug('Received Rozenite binding payload.', bindingPayload);
-    if (bindingPayload.domain === 'rozenite') {
+    if (bindingPayload.domain === ROZENITE_DOMAIN) {
       if (!bindingPayload.message || typeof bindingPayload.message !== 'object') {
         return;
       }
@@ -938,7 +911,7 @@ export const createAgentSession = (options: {
             if (isDevToolsPluginMessage(message)) {
               tap.emit('out', message);
             }
-            void sendDomainMessage('rozenite', message);
+            void sendDomainMessage(ROZENITE_DOMAIN, message);
           },
         });
         logConnected();
@@ -1049,7 +1022,7 @@ export const createAgentSession = (options: {
     // Injected the same way `handler`-originated messages are: teed for
     // observers, then handed to the device over the existing CDP socket.
     tap.emit('out', message);
-    await sendDomainMessage('rozenite', message);
+    await sendDomainMessage(ROZENITE_DOMAIN, message);
   };
 
   const callTool = async (toolName: string, args: unknown): Promise<unknown> => {
