@@ -31,6 +31,7 @@ export const REACT_DEVTOOLS_DOMAIN = 'react-devtools';
  *
  * Hermes doesn't support the Workers API yet, so there is a single execution
  * context at the moment; this is an extra check to future-proof the logic.
+ * See https://github.com/facebook/react-native/blob/40b54ee671e593d125630391119b880aebc8393d/packages/react-native/ReactCommon/jsinspector-modern/InstanceTarget.cpp#L61
  */
 export const MAIN_EXECUTION_CONTEXT_NAME = 'main';
 
@@ -53,11 +54,9 @@ export const RECOVERY_RETRY_DELAY_MS = 500;
 /** Coalesces a burst of `executionContextCreated("main")` into one bootstrap. */
 export const BOOTSTRAP_DEBOUNCE_MS = 500;
 
-/**
- * The bracketed reasons the inspector proxy (and the Lynx bridge) close a
- * host socket with. Matching is by `includes`, so they only need to appear
- * somewhere in the close reason.
- */
+// The bracketed reasons the inspector proxy (and the Lynx bridge) close a
+// host socket with. Matching is by `includes`, so they only need to appear
+// somewhere in the close reason.
 
 /** The device is being torn down and recreated (e.g. an app reload). Recoverable. */
 export const RECREATING_DEVICE_CLOSE_REASON = '[RECREATING_DEVICE]';
@@ -195,7 +194,7 @@ export const parseRozeniteBindingCalled = (frame: unknown): BindingPayload | nul
  * placeholder that keeps the event well-formed CDP.
  */
 export const buildBindingCalledEvent = (payload: string) => ({
-  method: 'Runtime.bindingCalled',
+  method: 'Runtime.bindingCalled' as const,
   params: {
     name: LYNX_BRIDGE_BINDING_NAME,
     executionContextId: 0,

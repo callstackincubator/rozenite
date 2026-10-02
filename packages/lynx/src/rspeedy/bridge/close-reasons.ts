@@ -15,15 +15,13 @@ export {
   RECREATING_DEVICE_CLOSE_REASON,
 };
 
-/**
- * The Fusebox close reasons the hosts key their recovery behaviour off of
- * (see `classifyCloseReason` in `@rozenite/tools/protocol`). The first three
- * are recoverable: the host re-resolves the target and reconnects. The last
- * is terminal: another debugger took the device, and the host must not fight
- * it by reconnecting. Hosts match with `reason.includes(...)`, so the
- * bracketed tokens only need to appear somewhere in the close reason string;
- * `getCloseReason` below is the one place that should produce them.
- */
+// The Fusebox close reasons the hosts key their recovery behaviour off of
+// (see `classifyCloseReason` in `@rozenite/tools/protocol`). The first three
+// are recoverable: the host re-resolves the target and reconnects. The last
+// is terminal: another debugger took the device, and the host must not fight
+// it by reconnecting. Hosts match with `reason.includes(...)`, so the
+// bracketed tokens only need to appear somewhere in the close reason string;
+// `getCloseReason` below is the one place that should produce them.
 
 /**
  * Bridge-level reasons a device-facing WebSocket the bridge owns can

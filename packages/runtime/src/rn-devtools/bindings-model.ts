@@ -99,6 +99,8 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
   }
 
   private bindingCalled(event: RuntimeEvent<{ name: string; payload: string }>): void {
+    // Deliberately keeps its own throwing parse below instead of `parseBindingPayload`
+    // (behaviour preservation, ADR 0003 decision 5).
     // If binding name is not initialized, then we failed to get its name
     if (this.messagingBindingName === null || event.data.name !== this.messagingBindingName) {
       return;
