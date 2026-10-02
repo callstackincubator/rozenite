@@ -3,9 +3,10 @@ import {
   createScopedMiddleware,
   initializeRozenite,
   RozeniteConfig,
-  RozeniteMiddleware,
+  type MiddlewareHandler,
 } from '@rozenite/middleware';
 import { RepackRspackConfig, type RepackRspackConfigExport } from '@callstack/repack';
+import runtimePackage from '@rozenite/runtime/package.json' with { type: 'json' };
 import { assertSupportedRePackVersion } from './version-check.js';
 
 // Plugin discovery is async, but `setupMiddlewares` is only invoked by the
@@ -14,11 +15,11 @@ import { assertSupportedRePackVersion } from './version-check.js';
 // lifetime of this dev server instance, and requests wait on it instead of
 // the config-resolution step blocking on it upfront.
 const createLazyRozeniteMiddleware = (rozeniteConfig: RozeniteConfig) => {
-  let middlewarePromise: Promise<RozeniteMiddleware> | null = null;
+  let middlewarePromise: Promise<MiddlewareHandler> | null = null;
 
-  const getRozeniteMiddleware = (): Promise<RozeniteMiddleware> => {
-    middlewarePromise ??= initializeRozenite(rozeniteConfig).then(
-      (instance) => instance.middleware,
+  const getRozeniteMiddleware = (): Promise<MiddlewareHandler> => {
+    middlewarePromise ??= initializeRozenite(rozeniteConfig, runtimePackage.version).then(
+      (instance) => createScopedMiddleware('/rozenite', instance.middleware),
     );
     return middlewarePromise;
   };
@@ -26,7 +27,7 @@ const createLazyRozeniteMiddleware = (rozeniteConfig: RozeniteConfig) => {
   return async (req: IncomingMessage, res: ServerResponse, next: (error?: unknown) => void) => {
     try {
       const rozeniteMiddleware = await getRozeniteMiddleware();
-      createScopedMiddleware('/rozenite', rozeniteMiddleware)(req, res, next);
+      rozeniteMiddleware(req, res, next);
     } catch (error) {
       next(error);
     }
@@ -37,13 +38,18 @@ const patchConfig = (
   config: RepackRspackConfig,
   rozeniteConfig: RozeniteConfig,
 ): RepackRspackConfig => {
+  const userSetupMiddlewares = config.devServer?.setupMiddlewares;
+
   return {
     ...config,
     devServer: {
       ...config.devServer,
-      setupMiddlewares: (middlewares) => {
-        middlewares.unshift(createLazyRozeniteMiddleware(rozeniteConfig));
-        return middlewares;
+      setupMiddlewares: (middlewares, devServer) => {
+        const userMiddlewares = userSetupMiddlewares
+          ? userSetupMiddlewares.call(config.devServer, middlewares, devServer)
+          : middlewares;
+        userMiddlewares.unshift(createLazyRozeniteMiddleware(rozeniteConfig));
+        return userMiddlewares;
       },
     },
   };
