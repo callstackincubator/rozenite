@@ -2,6 +2,8 @@ import {
   AGENT_MESSAGE_TYPES,
   AGENT_PLUGIN_ID,
   CONSOLE_TOOL_NAMES,
+  DEFAULT_PAGE_LIMIT,
+  MAX_PAGE_LIMIT,
   type AgentToolPagination,
 } from '@rozenite/agent-shared';
 import { createToolRegistry } from './tool-registry.js';
@@ -54,7 +56,7 @@ const CONSOLE_TOOLS: AgentTool[] = [
       properties: {
         limit: {
           type: 'integer',
-          description: 'Page size. Default 50, max 200.',
+          description: `Page size. Default ${DEFAULT_PAGE_LIMIT}, max ${MAX_PAGE_LIMIT}.`,
         },
         cursor: {
           type: 'string',

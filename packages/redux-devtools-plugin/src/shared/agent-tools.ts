@@ -142,7 +142,7 @@ export const reduxDevToolsToolDefinitions = {
         },
         limit: {
           type: 'number',
-          description: 'Pagination size. Defaults to 50.',
+          description: 'Pagination size. Defaults to 20 and is capped at 100.',
         },
       },
     },

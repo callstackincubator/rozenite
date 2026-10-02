@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import type {
   HttpEventMap,
   Request,
@@ -11,8 +12,6 @@ import type { WebSocketEventMap } from '../../shared/websocket-events';
 import type { SSEEventMap } from '../../shared/sse-events';
 import { safeStringify } from '../../utils/safeStringify';
 
-const DEFAULT_PAGE_LIMIT = 20;
-const MAX_PAGE_LIMIT = 100;
 const HTTP_BUFFER_CAPACITY = 500;
 const REALTIME_BUFFER_CAPACITY = 200;
 const MAX_WEBSOCKET_MESSAGES_PER_CONNECTION = 32;
