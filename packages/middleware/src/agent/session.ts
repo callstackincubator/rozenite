@@ -42,6 +42,22 @@ const PLUGIN_READINESS_QUIET_WINDOW_MS = 50;
 const PLUGIN_READINESS_MAX_WAIT_MS = 250;
 const RECOVERY_RETRY_DELAY_MS = 500;
 const RECOVERY_MAX_ATTEMPTS = 16;
+// A wedged JS thread on the device never answers a CDP command. Without a
+// deadline, `start()` and tool calls would hang forever. Matches
+// `COMMAND_TIMEOUT_MS` in `@rozenite/app`'s device connection.
+const COMMAND_TIMEOUT_MS = 10_000;
+
+/** The dispatcher global never appeared within the polling window: the app is
+ * running, but Rozenite is not installed in it (or never initialized). */
+class RozeniteMissingError extends Error {
+  constructor() {
+    super(
+      'Rozenite runtime was not found in the app. Make sure the app is built with Rozenite enabled ' +
+        '(see https://rozenite.dev/docs/getting-started), then reload the app and try again.',
+    );
+    this.name = 'RozeniteMissingError';
+  }
+}
 
 const RECOVERABLE_CLOSE_REASONS = new Set([
   '[RECREATING_DEVICE]',
@@ -82,6 +98,7 @@ type PendingCommand = {
   method: string;
   resolve: (value: Record<string, unknown>) => void;
   reject: (error: Error) => void;
+  timeoutId: ReturnType<typeof setTimeout>;
 };
 
 type StartReadiness = {
@@ -339,12 +356,18 @@ export const createAgentSession = (options: {
     touch();
 
     const promise = new Promise<Record<string, unknown>>((resolve, reject) => {
-      pendingCommands.set(commandId, { method, resolve, reject });
+      const timeoutId = setTimeout(() => {
+        if (pendingCommands.delete(commandId)) {
+          reject(new Error(`CDP command "${method}" timed out after ${COMMAND_TIMEOUT_MS}ms`));
+        }
+      }, COMMAND_TIMEOUT_MS);
+      pendingCommands.set(commandId, { method, resolve, reject, timeoutId });
       ws!.send(payload, (error) => {
         if (!error) {
           return;
         }
 
+        clearTimeout(timeoutId);
         pendingCommands.delete(commandId);
         reject(error);
       });
@@ -474,7 +497,7 @@ export const createAgentSession = (options: {
 
   const waitForFuseboxDispatcherToBeInitialized = async (attempt = 1): Promise<void> => {
     if (attempt >= DISPATCHER_INIT_MAX_ATTEMPTS) {
-      throw new Error('Failed to wait for initialization: it took too long');
+      throw new RozeniteMissingError();
     }
 
     const response = await evaluateRuntime(`globalThis.${RUNTIME_GLOBAL} != undefined`, true);
@@ -486,7 +509,7 @@ export const createAgentSession = (options: {
       );
     }
 
-    if (response.result?.value === false) {
+    if (response.result?.value !== true) {
       await new Promise((resolve) => {
         setTimeout(resolve, DISPATCHER_INIT_RETRY_MS);
       });
@@ -514,7 +537,7 @@ export const createAgentSession = (options: {
 
     if (bindingValue === '') {
       throw new Error(
-        'Failed to get binding name for ReactDevToolsBindingsModel on a global: returned value is an empty string',
+        'Failed to get binding name for Agent session on a global: returned value is an empty string',
       );
     }
 
@@ -560,6 +583,12 @@ export const createAgentSession = (options: {
       touch();
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
+      if (error instanceof RozeniteMissingError) {
+        // Terminal: retrying cannot help when the app does not ship Rozenite.
+        // A later `executionContextCreated` (app reload) still re-bootstraps.
+        rejectStartReadiness(error);
+        return;
+      }
       scheduleBootstrap();
     }
   };
@@ -617,6 +646,7 @@ export const createAgentSession = (options: {
     }
     for (const [commandId, pending] of pendingCommands.entries()) {
       pendingCommands.delete(commandId);
+      clearTimeout(pending.timeoutId);
       pending.reject(new Error('CDP connection closed'));
     }
     clearBootstrapTimer();
@@ -723,6 +753,7 @@ export const createAgentSession = (options: {
 
     for (const [commandId, pending] of pendingCommands.entries()) {
       pendingCommands.delete(commandId);
+      clearTimeout(pending.timeoutId);
       pending.reject(new Error('CDP connection closed'));
     }
 
@@ -778,6 +809,7 @@ export const createAgentSession = (options: {
       }
 
       pendingCommands.delete(message.id);
+      clearTimeout(pending.timeoutId);
       if (message.error) {
         pending.reject(createCDPCommandError(pending.method, message.error));
         return;

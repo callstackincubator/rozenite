@@ -40,6 +40,7 @@ const mocks = vi.hoisted(() => {
   let bindingName = 'rozenite-binding';
   let stalledRuntimeExpression: string | null = null;
   let refusedRuntimeExpression: string | null = null;
+  let dispatcherReadyValue: unknown = true;
 
   class MockWebSocket {
     static readonly CONNECTING = 0;
@@ -138,9 +139,8 @@ const mocks = vi.hoisted(() => {
 
     if (expression.includes(`globalThis.${RUNTIME_GLOBAL} != undefined`)) {
       return {
-        result: {
-          value: true,
-        },
+        // `undefined` models a response with no `value` at all.
+        result: dispatcherReadyValue === undefined ? {} : { value: dispatcherReadyValue },
       };
     }
 
@@ -188,6 +188,9 @@ const mocks = vi.hoisted(() => {
     stallRuntimeEvaluationContaining: (expression: string) => {
       stalledRuntimeExpression = expression;
     },
+    setDispatcherReadyValue: (value: unknown) => {
+      dispatcherReadyValue = value;
+    },
     refuseRuntimeEvaluationContaining: (expression: string) => {
       refusedRuntimeExpression = expression;
     },
@@ -213,6 +216,7 @@ const mocks = vi.hoisted(() => {
       bindingName = 'rozenite-binding';
       stalledRuntimeExpression = null;
       refusedRuntimeExpression = null;
+      dispatcherReadyValue = true;
       wsInstances.length = 0;
       resolveDebuggerOrigin.mockReset();
       resolveDebuggerOrigin.mockImplementation(
@@ -829,6 +833,140 @@ describe('agent session', () => {
 
     socket.close();
     await rejection;
+  });
+
+  describe('bounded bootstrap and command timeout', () => {
+    const countDispatcherChecks = () =>
+      getExpressions().filter((expression) =>
+        expression.includes(`globalThis.${RUNTIME_GLOBAL} != undefined`),
+      ).length;
+
+    it('rejects a CDP command the device never answers and cleans it up', async () => {
+      const { session, socket } = await startSession();
+      mocks.stallRuntimeEvaluationContaining('unanswered-message');
+
+      const sender = mocks.handler.connectDevice.mock.calls[0]?.[2] as
+        | { sendMessage: (message: unknown) => void }
+        | undefined;
+      expect(sender).toBeDefined();
+      sender?.sendMessage({ marker: 'unanswered-message' });
+      await flushMicrotasks();
+
+      // A late answer after the timeout must be ignored without throwing.
+      await vi.advanceTimersByTimeAsync(9_999);
+      expect(session.getInfo().status).toBe('connected');
+      await vi.advanceTimersByTimeAsync(1);
+
+      const sent = socket.send.mock.calls.at(-1)?.[0] as string;
+      const { id } = JSON.parse(sent) as { id: number };
+      socket.emit('message', JSON.stringify({ id, result: {} }));
+      await flushMicrotasks();
+      expect(socket.close).not.toHaveBeenCalled();
+    });
+
+    it('times out an unanswered bootstrap command, names the method, and retries', async () => {
+      mocks.stallRuntimeEvaluationContaining(`${RUNTIME_GLOBAL} != undefined`);
+      const { session, socket, startPromise } = await createStartedSession();
+      const onSettled = vi.fn();
+      startPromise.then(onSettled, onSettled);
+
+      socket.open();
+      await vi.advanceTimersByTimeAsync(500 + 9_999);
+      expect(session.getInfo().lastError).toBeUndefined();
+      expect(countDispatcherChecks()).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(1);
+      await flushMicrotasks();
+      expect(session.getInfo().lastError).toBe(
+        'CDP command "Runtime.evaluate" timed out after 10000ms',
+      );
+      // A timeout is transient: the bootstrap is retried, start stays pending.
+      expect(onSettled).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(500);
+      expect(countDispatcherChecks()).toBe(2);
+      await session.stop();
+      await startPromise.catch(() => undefined);
+    });
+
+    it('gives up and rejects start when the Rozenite runtime never appears', async () => {
+      mocks.setDispatcherReadyValue(false);
+      const { session, socket, startPromise } = await createStartedSession();
+      const rejection = expect(startPromise).rejects.toThrow(
+        'Rozenite runtime was not found in the app',
+      );
+
+      socket.open();
+      await vi.advanceTimersByTimeAsync(500 + 20 * 250);
+      await flushMicrotasks();
+      await rejection;
+      expect(session.getInfo().lastError).toContain('Rozenite runtime was not found');
+
+      const checks = countDispatcherChecks();
+      expect(checks).toBeGreaterThan(1);
+      await vi.advanceTimersByTimeAsync(60_000);
+      await flushMicrotasks();
+      expect(countDispatcherChecks()).toBe(checks);
+    });
+
+    it('does not treat a missing readiness value as ready', async () => {
+      mocks.setDispatcherReadyValue(undefined);
+      const { socket, startPromise } = await createStartedSession();
+      const rejection = expect(startPromise).rejects.toThrow(
+        'Rozenite runtime was not found in the app',
+      );
+
+      socket.open();
+      await vi.advanceTimersByTimeAsync(500 + 20 * 250);
+      await flushMicrotasks();
+      await rejection;
+
+      expect(getExpressions().some((expression) => expression.includes('BINDING_NAME'))).toBe(
+        false,
+      );
+    });
+
+    it('still re-bootstraps on a later main execution context after a successful start', async () => {
+      const { socket } = await startSession();
+      const checksBefore = countDispatcherChecks();
+
+      socket.emit(
+        'message',
+        JSON.stringify({
+          method: 'Runtime.executionContextCreated',
+          params: { context: { name: 'main' } },
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(500);
+      await flushMicrotasks();
+
+      expect(countDispatcherChecks()).toBe(checksBefore + 1);
+    });
+
+    it('re-bootstraps after a reload even once the runtime was reported missing', async () => {
+      mocks.setDispatcherReadyValue(false);
+      const { session, socket, startPromise } = await createStartedSession();
+      const rejection = expect(startPromise).rejects.toThrow(
+        'Rozenite runtime was not found in the app',
+      );
+      socket.open();
+      await vi.advanceTimersByTimeAsync(500 + 20 * 250);
+      await flushMicrotasks();
+      await rejection;
+
+      mocks.setDispatcherReadyValue(true);
+      socket.emit(
+        'message',
+        JSON.stringify({
+          method: 'Runtime.executionContextCreated',
+          params: { context: { name: 'main' } },
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(500);
+      await flushMicrotasks();
+
+      expect(getExpressions().some((expression) => expression.includes('BINDING_NAME'))).toBe(true);
+      expect(session.getInfo().lastError).toBeUndefined();
+    });
   });
 
   describe('tap', () => {
