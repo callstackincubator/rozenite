@@ -46,8 +46,8 @@ const RECOVERY_MAX_ATTEMPTS = 16;
 // deadline, `start()` and tool calls would hang forever. Matches
 // `COMMAND_TIMEOUT_MS` in `@rozenite/app`'s device connection.
 const COMMAND_TIMEOUT_MS = 10_000;
-// While `start()` is pending, give up after this many consecutive failed
-// bootstrap attempts so a device that never answers cannot hang start forever.
+// While `start()` is pending, give up after this many failed bootstrap
+// attempts (counted per start, not reset by a retry) so a device that never answers cannot hang start forever.
 const START_BOOTSTRAP_MAX_FAILURES = 3;
 
 /** The dispatcher global never appeared within the polling window: the app is
@@ -421,6 +421,9 @@ export const createAgentSession = (options: {
   };
 
   const scheduleBootstrap = (): void => {
+    // Supersede any bootstrap still in flight right away, not only once the
+    // debounced one starts, so the older one cannot reject start meanwhile.
+    bootstrapGeneration += 1;
     clearBootstrapTimer();
     bootstrapTimer = setTimeout(() => {
       void bootstrap();
@@ -563,7 +566,7 @@ export const createAgentSession = (options: {
 
     // Only the latest bootstrap may reject start readiness or reschedule; an
     // older one that overlaps (reload while a handshake is in flight) bails.
-    const generation = ++bootstrapGeneration;
+    const generation = bootstrapGeneration;
 
     try {
       await waitForFuseboxDispatcherToBeInitialized();
@@ -592,7 +595,7 @@ export const createAgentSession = (options: {
       lastError = undefined;
       touch();
     } catch (error) {
-      if (generation !== bootstrapGeneration) {
+      if (stopped || generation !== bootstrapGeneration) {
         return;
       }
       lastError = error instanceof Error ? error.message : String(error);
@@ -658,6 +661,7 @@ export const createAgentSession = (options: {
   const teardownConnection = (): void => {
     bindingName = null;
     bootstrapped = false;
+    bootstrapGeneration += 1;
     connectedAt = undefined;
     rejectStartReadiness(new Error('CDP connection closed before bootstrap completed'));
     handler.disconnectDevice(options.target.id);
@@ -759,6 +763,7 @@ export const createAgentSession = (options: {
     logDisconnected();
     bindingName = null;
     bootstrapped = false;
+    bootstrapGeneration += 1;
     connectedAt = undefined;
     rejectStartReadiness(new Error('CDP connection closed before bootstrap completed'));
 
@@ -1138,6 +1143,7 @@ export const createAgentSession = (options: {
     stopped = true;
     connectionGeneration += 1;
     recoveryPromise = null;
+    bootstrapGeneration += 1;
     clearBootstrapTimer();
     clearPluginReadiness();
     rejectStartReadiness(new Error('Agent session stopped before bootstrap completed'));

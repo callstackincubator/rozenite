@@ -974,6 +974,45 @@ describe('agent session', () => {
       expect(countDispatcherChecks()).toBe(checksBefore + 1);
     });
 
+    it('ignores an older bootstrap exhausting after a reload superseded it', async () => {
+      mocks.setDispatcherReadyValue(false);
+      const { socket, startPromise } = await createStartedSession();
+      const onSettled = vi.fn();
+      startPromise.then(
+        () => onSettled('resolved'),
+        () => onSettled('rejected'),
+      );
+
+      socket.open();
+      await vi.advanceTimersByTimeAsync(500 + 1_000);
+      // Reload mid-poll: the first bootstrap is now stale, even though the
+      // replacement is still inside its debounce.
+      socket.emit(
+        'message',
+        JSON.stringify({
+          method: 'Runtime.executionContextCreated',
+          params: { context: { name: 'main' } },
+        }),
+      );
+
+      // The older poll exhausts at roughly 500 + 19 * 250 ms.
+      await vi.advanceTimersByTimeAsync(4_100);
+      await flushMicrotasks();
+      expect(onSettled).not.toHaveBeenCalled();
+
+      mocks.setDispatcherReadyValue(true);
+      await vi.advanceTimersByTimeAsync(500);
+      await emitRozeniteBindingPayload(socket, {
+        pluginId: '@rozenite/test-plugin',
+        type: 'register-tool',
+        payload: {},
+      });
+      await vi.advanceTimersByTimeAsync(50);
+      await flushMicrotasks();
+      await startPromise;
+      expect(onSettled).toHaveBeenCalledWith('resolved');
+    });
+
     it('keeps retrying when the runtime is missing after a reload, then recovers', async () => {
       const { session, socket } = await startSession();
       expect(session.getInfo().status).toBe('connected');
