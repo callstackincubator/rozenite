@@ -57,15 +57,13 @@ export const createFixture = (files: Record<string, string>): Fixture => {
   return {
     root,
     cleanup: () => {
-      // Remove the link itself first so the recursive removal below can never
-      // traverse into the monorepo's real `node_modules`. A missing link
-      // (ENOENT) is fine; any other error is rethrown.
+      // Best-effort: `rmSync` below removes the link itself without following
+      // it anyway, so a failure here (e.g. EBUSY) must not mask the real error
+      // or skip the removal.
       try {
         unlinkSync(nodeModulesLink);
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-          throw error;
-        }
+      } catch {
+        // Ignored on purpose.
       }
       rmSync(root, { recursive: true, force: true });
     },
