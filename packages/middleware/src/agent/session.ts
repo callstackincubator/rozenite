@@ -13,7 +13,7 @@ import type {
   UnsupportedDomainInfo,
 } from '@rozenite/agent-shared';
 import { createAgentArtifacts } from './artifacts.js';
-import { createCDPCommandError } from './cdp-errors.js';
+import { CdpCommandTimeoutError, createCDPCommandError } from './cdp-errors.js';
 import { resolveCapabilityProfile } from './capability-profiles.js';
 import { withCapabilityFilter } from './capability-filter.js';
 import { createAgentMessageHandler } from './runtime/handler.js';
@@ -42,6 +42,25 @@ const PLUGIN_READINESS_QUIET_WINDOW_MS = 50;
 const PLUGIN_READINESS_MAX_WAIT_MS = 250;
 const RECOVERY_RETRY_DELAY_MS = 500;
 const RECOVERY_MAX_ATTEMPTS = 16;
+// A wedged JS thread on the device never answers a CDP command. Without a
+// deadline, `start()` and tool calls would hang forever. Matches
+// `COMMAND_TIMEOUT_MS` in `@rozenite/app`'s device connection.
+const COMMAND_TIMEOUT_MS = 10_000;
+// While `start()` is pending, give up after this many failed bootstrap
+// attempts (counted per start, not reset by a retry) so a device that never answers cannot hang start forever.
+const START_BOOTSTRAP_MAX_FAILURES = 3;
+
+/** The dispatcher global never appeared within the polling window: the app is
+ * running, but Rozenite is not installed in it (or never initialized). */
+class RozeniteMissingError extends Error {
+  constructor() {
+    super(
+      'Rozenite runtime was not found in the app. Make sure the app is built with Rozenite enabled ' +
+        '(see https://rozenite.dev/docs/getting-started), then reload the app and try again.',
+    );
+    this.name = 'RozeniteMissingError';
+  }
+}
 
 const RECOVERABLE_CLOSE_REASONS = new Set([
   '[RECREATING_DEVICE]',
@@ -82,6 +101,7 @@ type PendingCommand = {
   method: string;
   resolve: (value: Record<string, unknown>) => void;
   reject: (error: Error) => void;
+  timeoutId: ReturnType<typeof setTimeout>;
 };
 
 type StartReadiness = {
@@ -150,6 +170,8 @@ export const createAgentSession = (options: {
   let bootstrapTimer: NodeJS.Timeout | null = null;
   let bindingName: string | null = null;
   let bootstrapped = false;
+  let bootstrapGeneration = 0;
+  let startBootstrapFailures = 0;
   let terminationNotified = false;
   let disconnectLogged = false;
   let startReadiness: StartReadiness | null = null;
@@ -226,6 +248,7 @@ export const createAgentSession = (options: {
   };
 
   const createStartReadiness = (): Promise<void> => {
+    startBootstrapFailures = 0;
     let resolve!: () => void;
     let reject!: (error: Error) => void;
     const promise = new Promise<void>((resolvePromise, rejectPromise) => {
@@ -339,12 +362,18 @@ export const createAgentSession = (options: {
     touch();
 
     const promise = new Promise<Record<string, unknown>>((resolve, reject) => {
-      pendingCommands.set(commandId, { method, resolve, reject });
+      const timeoutId = setTimeout(() => {
+        if (pendingCommands.delete(commandId)) {
+          reject(new CdpCommandTimeoutError(method, COMMAND_TIMEOUT_MS));
+        }
+      }, COMMAND_TIMEOUT_MS);
+      pendingCommands.set(commandId, { method, resolve, reject, timeoutId });
       ws!.send(payload, (error) => {
         if (!error) {
           return;
         }
 
+        clearTimeout(timeoutId);
         pendingCommands.delete(commandId);
         reject(error);
       });
@@ -392,6 +421,9 @@ export const createAgentSession = (options: {
   };
 
   const scheduleBootstrap = (): void => {
+    // Supersede any bootstrap still in flight right away, not only once the
+    // debounced one starts, so the older one cannot reject start meanwhile.
+    bootstrapGeneration += 1;
     clearBootstrapTimer();
     bootstrapTimer = setTimeout(() => {
       void bootstrap();
@@ -474,7 +506,7 @@ export const createAgentSession = (options: {
 
   const waitForFuseboxDispatcherToBeInitialized = async (attempt = 1): Promise<void> => {
     if (attempt >= DISPATCHER_INIT_MAX_ATTEMPTS) {
-      throw new Error('Failed to wait for initialization: it took too long');
+      throw new RozeniteMissingError();
     }
 
     const response = await evaluateRuntime(`globalThis.${RUNTIME_GLOBAL} != undefined`, true);
@@ -486,7 +518,7 @@ export const createAgentSession = (options: {
       );
     }
 
-    if (response.result?.value === false) {
+    if (response.result?.value !== true) {
       await new Promise((resolve) => {
         setTimeout(resolve, DISPATCHER_INIT_RETRY_MS);
       });
@@ -514,7 +546,7 @@ export const createAgentSession = (options: {
 
     if (bindingValue === '') {
       throw new Error(
-        'Failed to get binding name for ReactDevToolsBindingsModel on a global: returned value is an empty string',
+        'Failed to get binding name for Agent session on a global: returned value is an empty string',
       );
     }
 
@@ -531,6 +563,10 @@ export const createAgentSession = (options: {
     if (stopped || !ws || ws.readyState !== WebSocket.OPEN || bootstrapped) {
       return;
     }
+
+    // Only the latest bootstrap may reject start readiness or reschedule; an
+    // older one that overlaps (reload while a handshake is in flight) bails.
+    const generation = bootstrapGeneration;
 
     try {
       await waitForFuseboxDispatcherToBeInitialized();
@@ -559,7 +595,23 @@ export const createAgentSession = (options: {
       lastError = undefined;
       touch();
     } catch (error) {
+      if (stopped || generation !== bootstrapGeneration) {
+        return;
+      }
       lastError = error instanceof Error ? error.message : String(error);
+      // Outcomes are terminal only while a start is pending. Once started,
+      // the session keeps self-healing by rescheduling.
+      if (startReadiness) {
+        const failure = error instanceof Error ? error : new Error(String(error));
+        startBootstrapFailures += 1;
+        if (
+          error instanceof RozeniteMissingError ||
+          startBootstrapFailures >= START_BOOTSTRAP_MAX_FAILURES
+        ) {
+          rejectStartReadiness(failure);
+          return;
+        }
+      }
       scheduleBootstrap();
     }
   };
@@ -609,6 +661,7 @@ export const createAgentSession = (options: {
   const teardownConnection = (): void => {
     bindingName = null;
     bootstrapped = false;
+    bootstrapGeneration += 1;
     connectedAt = undefined;
     rejectStartReadiness(new Error('CDP connection closed before bootstrap completed'));
     handler.disconnectDevice(options.target.id);
@@ -617,6 +670,7 @@ export const createAgentSession = (options: {
     }
     for (const [commandId, pending] of pendingCommands.entries()) {
       pendingCommands.delete(commandId);
+      clearTimeout(pending.timeoutId);
       pending.reject(new Error('CDP connection closed'));
     }
     clearBootstrapTimer();
@@ -709,6 +763,7 @@ export const createAgentSession = (options: {
     logDisconnected();
     bindingName = null;
     bootstrapped = false;
+    bootstrapGeneration += 1;
     connectedAt = undefined;
     rejectStartReadiness(new Error('CDP connection closed before bootstrap completed'));
 
@@ -723,6 +778,7 @@ export const createAgentSession = (options: {
 
     for (const [commandId, pending] of pendingCommands.entries()) {
       pendingCommands.delete(commandId);
+      clearTimeout(pending.timeoutId);
       pending.reject(new Error('CDP connection closed'));
     }
 
@@ -778,6 +834,7 @@ export const createAgentSession = (options: {
       }
 
       pendingCommands.delete(message.id);
+      clearTimeout(pending.timeoutId);
       if (message.error) {
         pending.reject(createCDPCommandError(pending.method, message.error));
         return;
@@ -1086,9 +1143,15 @@ export const createAgentSession = (options: {
     stopped = true;
     connectionGeneration += 1;
     recoveryPromise = null;
+    bootstrapGeneration += 1;
     clearBootstrapTimer();
     clearPluginReadiness();
     rejectStartReadiness(new Error('Agent session stopped before bootstrap completed'));
+    for (const [commandId, pending] of pendingCommands.entries()) {
+      pendingCommands.delete(commandId);
+      clearTimeout(pending.timeoutId);
+      pending.reject(new Error('Agent session stopped'));
+    }
     await disposeServices();
     logDisconnected();
 
