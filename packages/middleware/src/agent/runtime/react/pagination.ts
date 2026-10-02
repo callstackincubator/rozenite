@@ -1,7 +1,5 @@
+import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import { hashFilters } from '../pagination/filters-hash.js';
-
-export const DEFAULT_REACT_PAGE_LIMIT = 20;
-export const MAX_REACT_PAGE_LIMIT = 100;
 
 /**
  * The React domain keeps its own cursor rather than using the shared one from
@@ -58,15 +56,15 @@ const decodeCursor = (raw: string): ReactCursorPayload => {
 
 export const normalizeReactLimit = (value: unknown): number => {
   if (value === undefined) {
-    return DEFAULT_REACT_PAGE_LIMIT;
+    return DEFAULT_PAGE_LIMIT;
   }
 
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 1) {
-    throw new Error(`"limit" must be an integer between 1 and ${MAX_REACT_PAGE_LIMIT}`);
+    throw new Error(`"limit" must be an integer between 1 and ${MAX_PAGE_LIMIT}`);
   }
 
-  return Math.min(parsed, MAX_REACT_PAGE_LIMIT);
+  return Math.min(parsed, MAX_PAGE_LIMIT);
 };
 
 /**

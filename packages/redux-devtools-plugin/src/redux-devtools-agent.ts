@@ -1,6 +1,7 @@
 import { ActionCreators } from '@redux-devtools/instrument';
 import type { Action } from 'redux';
 import { parse, stringify } from 'jsan';
+import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import {
   getReduxDevToolsStore,
   listReduxDevToolsStores,
@@ -27,7 +28,6 @@ import type { ReduxActionTrace, ReduxActionWithTrace } from './shared/trace';
 import { parseStack } from './symbolication/parse';
 
 type AnyAction = Action<string> & Record<string, unknown>;
-const DEFAULT_PAGE_LIMIT = 50;
 export const listStoresTool = reduxDevToolsToolDefinitions.listStores;
 export const getStoreStateTool = reduxDevToolsToolDefinitions.getStoreState;
 export const listActionsTool = reduxDevToolsToolDefinitions.listActions;
@@ -267,7 +267,9 @@ export const listReduxActionsResult = ({
   const { store, liftedState } = getStoreAndLiftedState(instanceId);
   const actionIds = getVisibleActionIds(liftedState);
   const safeOffset = Math.max(0, Math.floor(offset));
-  const safeLimit = Math.max(1, Math.floor(limit));
+  const safeLimit = Number.isFinite(limit)
+    ? Math.min(MAX_PAGE_LIMIT, Math.max(1, Math.floor(limit)))
+    : DEFAULT_PAGE_LIMIT;
   const selectedIds = actionIds.slice(safeOffset, safeOffset + safeLimit);
 
   return {

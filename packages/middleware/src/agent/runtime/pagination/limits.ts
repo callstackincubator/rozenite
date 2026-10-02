@@ -1,5 +1,4 @@
-export const DEFAULT_PAGE_LIMIT = 50;
-export const MAX_PAGE_LIMIT = 200;
+import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 
 export const normalizePageLimit = (rawLimit: unknown): number => {
   if (rawLimit === undefined) {

@@ -6,6 +6,8 @@ import {
   type AgentTool,
   type AgentToolPagination,
   type JSONSchema7,
+  DEFAULT_PAGE_LIMIT,
+  MAX_PAGE_LIMIT,
 } from '@rozenite/agent-shared';
 import { createReactTreeStore } from './runtime/react/store.js';
 import { CdpEventTimeoutError } from './cdp-errors.js';
@@ -213,8 +215,6 @@ const NAME_HINT_SCHEMA: JSONSchema7 = {
 const TRACE_COMPLETION_TIMEOUT_MS = 60_000;
 const HEAP_SNAPSHOT_TIMEOUT_MS = 120_000;
 
-const DEFAULT_DOMAIN_PAGE_LIMIT = 20;
-const MAX_DOMAIN_PAGE_LIMIT = 100;
 const NETWORK_BUFFER_CAPACITY = 500;
 
 const getRecord = (value: unknown): Record<string, unknown> => {
@@ -1629,7 +1629,7 @@ export const createNetworkDomainService = (deps: {
         properties: {
           limit: {
             type: 'number',
-            description: `Maximum number of requests to return. Defaults to ${DEFAULT_DOMAIN_PAGE_LIMIT}, max ${MAX_DOMAIN_PAGE_LIMIT}.`,
+            description: `Maximum number of requests to return. Defaults to ${DEFAULT_PAGE_LIMIT}, max ${MAX_PAGE_LIMIT}.`,
           },
           cursor: {
             type: 'string',
@@ -1974,8 +1974,8 @@ export const createNetworkDomainService = (deps: {
   const listRequests = async (args: unknown) => {
     const input = getRecord(args);
     const limit = Math.min(
-      getOptionalPositiveInteger(input.limit) ?? DEFAULT_DOMAIN_PAGE_LIMIT,
-      MAX_DOMAIN_PAGE_LIMIT,
+      getOptionalPositiveInteger(input.limit) ?? DEFAULT_PAGE_LIMIT,
+      MAX_PAGE_LIMIT,
     );
     const cursor = getString(input.cursor);
     const rows = state.requestOrder

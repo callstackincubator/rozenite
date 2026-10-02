@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import type {
   Mutation,
   MutationCacheNotifyEvent,
@@ -20,9 +21,6 @@ import {
   type TanStackQueryMutationOptionsSummary,
   type TanStackQueryObserverOptionsSummary,
 } from '../../shared/agent-tools';
-
-const DEFAULT_PAGE_LIMIT = 20;
-const MAX_PAGE_LIMIT = 100;
 
 type CursorKind = 'queries' | 'mutations';
 
