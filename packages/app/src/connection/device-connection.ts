@@ -576,7 +576,7 @@ export const createDeviceConnection = (target: ParsedTarget): DeviceConnection =
     }
 
     const bindingPayload = parseRozeniteBindingCalled(message);
-    if (bindingPayload && bindingPayload.domain === 'rozenite') {
+    if (bindingPayload && bindingPayload.domain === ROZENITE_DOMAIN) {
       for (const listener of messageListeners) {
         listener(bindingPayload.message);
       }
