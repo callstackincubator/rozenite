@@ -6,6 +6,7 @@ import {
   type MiddlewareNext,
   type MiddlewareRequest,
   type RozeniteConfig,
+  toRozeniteConfig,
 } from '@rozenite/middleware';
 import { logger } from '@rozenite/tools';
 import runtimePackage from '@rozenite/runtime/package.json' with { type: 'json' };
@@ -49,10 +50,7 @@ export const withRozenite = <T extends MetroConfig>(
     }
 
     const { devModePackage, middleware: rozeniteMiddleware } = await initializeRozenite(
-      {
-        projectRoot,
-        ...options,
-      },
+      toRozeniteConfig(options, { projectRoot }),
       runtimePackage.version,
     );
 

@@ -6,7 +6,8 @@ const { initializeRozenite, rozeniteMiddleware, createScopedMiddleware } = vi.ho
   rozeniteMiddleware: vi.fn(),
 }));
 
-vi.mock('@rozenite/middleware', () => ({
+vi.mock('@rozenite/middleware', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@rozenite/middleware')>()),
   initializeRozenite,
   createScopedMiddleware,
 }));
@@ -25,11 +26,13 @@ type SetupMiddlewares = (middlewares: unknown[], devServer: unknown) => unknown[
 
 const resolveSetupMiddlewares = async (
   config: Record<string, unknown>,
+  options: Record<string, unknown> = {},
+  env: Record<string, unknown> = { context: '/project' },
 ): Promise<SetupMiddlewares> => {
-  const factory = withRozenite(config as never, { enabled: true }) as (
+  const factory = withRozenite(config as never, { enabled: true, ...options } as never) as (
     env: unknown,
   ) => Promise<{ devServer: { setupMiddlewares: SetupMiddlewares } }>;
-  const resolved = await factory({ context: '/project' });
+  const resolved = await factory(env);
   return resolved.devServer.setupMiddlewares;
 };
 
@@ -92,5 +95,24 @@ describe('withRozenite (Re.Pack)', () => {
       expect.objectContaining({ projectRoot: '/project' }),
       '9.9.9',
     );
+  });
+
+  it('forwards only Rozenite options and takes projectRoot from env.context', async () => {
+    const setup = await resolveSetupMiddlewares({}, { include: ['a'], projectRoot: '/evil' });
+    const [middleware] = setup([], {}) as ((...args: unknown[]) => Promise<void>)[];
+    await middleware({}, {}, vi.fn());
+
+    expect(initializeRozenite).toHaveBeenCalledWith(
+      { include: ['a'], projectRoot: '/project' },
+      '9.9.9',
+    );
+  });
+
+  it('falls back to process.cwd() when env.context is missing', async () => {
+    const setup = await resolveSetupMiddlewares({}, {}, {});
+    const [middleware] = setup([], {}) as ((...args: unknown[]) => Promise<void>)[];
+    await middleware({}, {}, vi.fn());
+
+    expect(initializeRozenite).toHaveBeenCalledWith({ projectRoot: process.cwd() }, '9.9.9');
   });
 });
