@@ -10,12 +10,14 @@ import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
 import {
   DISPATCHER_INIT_MAX_ATTEMPTS,
   DISPATCHER_INIT_RETRY_MS,
+  HandshakeCancelledError,
   MAIN_EXECUTION_CONTEXT_NAME,
   ROZENITE_DOMAIN,
-  buildBindingNameExpression,
   buildDispatcherReadyExpression,
-  buildInitializeDomainExpression,
   buildSendMessageExpression,
+  runDispatcherHandshake,
+  type HandshakeErrorMessages,
+  type HandshakeTransport,
 } from '@rozenite/tools/protocol';
 import { RuntimeEvent, SDK } from './rn-devtools-frontend.js';
 import { DomainMessageListener, JSONValue } from './types.js';
@@ -27,6 +29,8 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
   private messageQueue: JSONValue[] = [];
   private messageListeners: Set<DomainMessageListener> = new Set();
   private targetIsWeb: boolean | null = null;
+  private disposed = false;
+  private bindingListenerAttached = false;
 
   /**
    * Whether the connected target is a browser, as reported by the device
@@ -82,6 +86,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
   }
 
   override dispose(): void {
+    this.disposed = true;
     this.messageQueue = [];
 
     const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
@@ -208,19 +213,6 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     }
   }
 
-  async initializeDomain(): Promise<void> {
-    const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
-    if (!runtimeModel) {
-      throw new Error(
-        `Failed to initialize domain for RozeniteBindingsModel: runtime model is not available`,
-      );
-    }
-
-    await runtimeModel.agent.invoke_evaluate({
-      expression: buildInitializeDomainExpression(ROZENITE_DOMAIN),
-    });
-  }
-
   async sendMessage(message: JSONValue): Promise<void> {
     // If Execution Context is destroyed, do not attempt to send a message (evaluate anything)
     // This could happen when we destroy Bridge from ReactDevToolsModel, which attempts to send `shutdown` event
@@ -260,59 +252,84 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       throw new Error('RozeniteBindingsModel is already enabled');
     }
 
-    const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
-    if (!runtimeModel) {
+    if (!this.target().model(SDK.RuntimeModel.RuntimeModel)) {
       throw new Error('Failed to enable RozeniteBindingsModel: runtime model is not available');
     }
 
-    await this.waitForFuseboxDispatcherToBeInitialized()
+    try {
+      await this.runHandshake();
+    } catch (error) {
+      if (error instanceof HandshakeCancelledError) {
+        throw new Error('RozeniteBindingsModel was disposed while it was being enabled');
+      }
+      throw error;
+    }
+
+    // The handshake can resolve right as the model is disposed.
+    if (this.disposed) {
+      throw new Error('RozeniteBindingsModel was disposed while it was being enabled');
+    }
+
+    this.enabled = true;
+    this.initializeExecutionContextListeners();
+    this.fuseboxDispatcherIsInitialized = true;
+    this.flushOutDomainMessagesQueues();
+  }
+
+  /**
+   * The dispatcher handshake (wait for the dispatcher, read the binding name,
+   * add the binding, initialize the `rozenite` domain) over the frontend SDK.
+   * Shared with the other hosts through `runDispatcherHandshake`.
+   *
+   * Messages that arrive while it runs are queued, because
+   * `fuseboxDispatcherIsInitialized` is only set once it has finished.
+   */
+  private runHandshake(): Promise<void> {
+    const isCancelled = (): boolean => this.disposed;
+
+    const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
+    if (!runtimeModel) {
+      return Promise.reject(
+        new Error(
+          'Failed to wait for React DevTools dispatcher initialization: runtime model is not available',
+        ),
+      );
+    }
+
+    const transport: HandshakeTransport = {
+      evaluate: (expression, returnByValue) =>
+        runtimeModel.agent.invoke_evaluate({
+          expression,
+          ...(returnByValue ? { returnByValue } : {}),
+        }),
+      addBinding: async (name) => {
+        this.messagingBindingName = name;
+        if (!this.bindingListenerAttached) {
+          this.bindingListenerAttached = true;
+          runtimeModel.addEventListener('BindingCalled', this.bindingCalled, this);
+        }
+
+        const response = await runtimeModel.agent.invoke_addBinding({ name });
+        const possiblyError = response.getError();
+        if (possiblyError) {
+          throw new Error('Failed to add binding for RozeniteBindingsModel: ' + possiblyError);
+        }
+      },
+    };
+
+    return runDispatcherHandshake(transport, {
+      domains: [ROZENITE_DOMAIN],
+      errors: handshakeErrors,
+      isCancelled,
       // After the dispatcher wait only because that is what establishes a
       // live execution context to evaluate in; the expression itself reads
       // plain globals and depends on nothing Rozenite installs.
-      .then(() => this.probeTargetIsWeb())
-      .then(() =>
-        runtimeModel.agent.invoke_evaluate({
-          expression: buildBindingNameExpression(),
-        }),
-      )
-      .then((response) => {
-        if (response.exceptionDetails) {
-          throw new Error(
-            'Failed to get binding name for RozeniteBindingsModel on a global: ' +
-              response.exceptionDetails.text,
-          );
+      afterDispatcherReady: async () => {
+        if (this.targetIsWeb === null) {
+          await this.probeTargetIsWeb();
         }
-
-        if (response.result.value === null || response.result.value === undefined) {
-          throw new Error(
-            'Failed to get binding name for RozeniteBindingsModel on a global: returned value is ' +
-              String(response.result.value),
-          );
-        }
-
-        if (response.result.value === '') {
-          throw new Error(
-            'Failed to get binding name for ReactDevToolsBindingsModel on a global: returned value is an empty string',
-          );
-        }
-
-        return response.result.value;
-      })
-      .then((bindingName) => {
-        this.messagingBindingName = bindingName;
-        runtimeModel.addEventListener('BindingCalled', this.bindingCalled, this);
-
-        return runtimeModel.agent.invoke_addBinding({ name: bindingName });
-      })
-      .then((response) => {
-        const possiblyError = response.getError();
-        if (possiblyError) {
-          throw new Error('Failed to add binding for ReactDevToolsBindingsModel: ' + possiblyError);
-        }
-
-        this.enabled = true;
-        this.initializeExecutionContextListeners();
-      });
+      },
+    });
   }
 
   isEnabled(): boolean {
@@ -402,6 +419,20 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       });
   }
 }
+
+const handshakeErrors: HandshakeErrorMessages = {
+  dispatcherWaitFailed: ({ text }) =>
+    new Error('Failed to wait for React DevTools dispatcher initialization: ' + text),
+  bindingNameFailed: ({ text }) =>
+    new Error('Failed to get binding name for RozeniteBindingsModel on a global: ' + text),
+  invalidBindingName: (value) =>
+    new Error(
+      value === ''
+        ? 'Failed to get binding name for RozeniteBindingsModel on a global: returned value is an empty string'
+        : 'Failed to get binding name for RozeniteBindingsModel on a global: returned value is ' +
+            String(value),
+    ),
+};
 
 SDK.SDKModel.SDKModel.register(RozeniteBindingsModel, {
   capabilities: 4,

@@ -68,13 +68,15 @@ export class RozenitePluginModel extends SDK.SDKModel.SDKModel {
     try {
       const bindingsModel = this.#bindingsModel;
 
+      // Subscribe before `enable()`: its handshake initializes the domain, and
+      // it flushes the messages queued meanwhile to the listeners present when
+      // it resolves, so a listener added after it would miss them. Registered
+      // once only, because `#initialize` runs once.
+      bindingsModel.subscribeToDomainMessages((message) => this.#handleMessage(message));
+
       if (!bindingsModel.isEnabled()) {
         await bindingsModel.enable();
       }
-
-      bindingsModel.subscribeToDomainMessages((message) => this.#handleMessage(message));
-
-      await bindingsModel.initializeDomain();
 
       this.#initialized = true;
       this.#finishInitializationAndNotify();
