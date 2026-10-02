@@ -35,6 +35,9 @@ export default defineConfig({
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
         integration: resolve(__dirname, 'src/integration.ts'),
+        // Same idea as `integration`: import-free apart from that module, so
+        // browser hosts can share the wire contract.
+        protocol: resolve(__dirname, 'src/protocol.ts'),
       },
       formats: ['es' as const, 'cjs' as const],
     },
