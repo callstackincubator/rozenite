@@ -20,15 +20,6 @@ export type Fixture = {
 const FIXTURE_PACKAGE_NAME = 'rozenite-release-bundle-fixture';
 
 /**
- * Windows only lets unprivileged users create directory symlinks with
- * Developer Mode or admin rights, so a `'dir'` symlink throws `EPERM`.
- * Junctions work for local directories without extra privileges.
- */
-export const getDirectoryLinkType = (
-  platform: NodeJS.Platform = process.platform,
-): 'junction' | 'dir' => (platform === 'win32' ? 'junction' : 'dir');
-
-/**
  * Creates a throwaway React Native app on disk.
  *
  * `node_modules` is symlinked to the monorepository's hoisted
@@ -49,8 +40,13 @@ export const createFixture = (files: Record<string, string>): Fixture => {
     JSON.stringify({ expo: { name: FIXTURE_PACKAGE_NAME, slug: FIXTURE_PACKAGE_NAME } }, null, 2),
   );
   const nodeModulesLink = path.join(root, 'node_modules');
-  // Junction targets must be absolute.
-  symlinkSync(path.resolve(monorepoRoot, 'node_modules'), nodeModulesLink, getDirectoryLinkType());
+  // Windows needs admin rights or Developer Mode for `'dir'` symlinks (EPERM);
+  // junctions work for local directories without extra privileges.
+  symlinkSync(
+    path.join(monorepoRoot, 'node_modules'),
+    nodeModulesLink,
+    process.platform === 'win32' ? 'junction' : 'dir',
+  );
 
   for (const [relativePath, contents] of Object.entries(files)) {
     const filePath = path.join(root, relativePath);
@@ -62,11 +58,14 @@ export const createFixture = (files: Record<string, string>): Fixture => {
     root,
     cleanup: () => {
       // Remove the link itself first so the recursive removal below can never
-      // traverse into the monorepo's real `node_modules`.
+      // traverse into the monorepo's real `node_modules`. A missing link
+      // (ENOENT) is fine; any other error is rethrown.
       try {
         unlinkSync(nodeModulesLink);
-      } catch {
-        // Already gone; nothing to unlink.
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+          throw error;
+        }
       }
       rmSync(root, { recursive: true, force: true });
     },

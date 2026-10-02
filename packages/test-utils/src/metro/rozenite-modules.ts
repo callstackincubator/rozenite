@@ -31,7 +31,9 @@ export const isRozeniteModule = (modulePath: string): boolean => {
 export const formatModulePath = (modulePath: string): string => {
   const relative = path.relative(monorepoRoot, modulePath);
 
-  return relative.startsWith('..') ? modulePath : relative;
+  // Forward slashes keep assertions identical on Windows, where
+  // `path.relative` returns backslashes.
+  return relative.startsWith('..') ? modulePath : relative.split(path.sep).join('/');
 };
 
 export const getRozeniteModules = (modulePaths: readonly string[]): string[] =>
