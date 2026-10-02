@@ -286,10 +286,7 @@ export const rozeniteLynxPlugin = (options: RozeniteLynxOptions = {}): RsbuildPl
       const unsubscribeTopologyLogging = transport.onTopologyChanged(logNewTargets);
 
       api.onAfterStartDevServer(({ port }) => {
-        devServerAddress = {
-          host: toBrowsableHost(api.getNormalizedConfig().server.host),
-          port,
-        };
+        devServerAddress = { host: toBrowsableHost(api.getNormalizedConfig().server.host), port };
         // Devices discovered before the server finished starting (USB
         // discovery in `createLynxTransport` begins immediately, on its
         // own schedule) would otherwise never get logged: their
