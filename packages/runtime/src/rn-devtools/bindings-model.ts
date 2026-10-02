@@ -8,12 +8,11 @@
 
 import { IS_WEB_TARGET_EXPRESSION } from '@rozenite/tools/integration';
 import {
-  DISPATCHER_INIT_MAX_ATTEMPTS,
-  DISPATCHER_INIT_RETRY_MS,
+  BOOTSTRAP_DEBOUNCE_MS,
   HandshakeCancelledError,
+  RozeniteMissingError,
   MAIN_EXECUTION_CONTEXT_NAME,
   ROZENITE_DOMAIN,
-  buildDispatcherReadyExpression,
   buildSendMessageExpression,
   runDispatcherHandshake,
   type HandshakeErrorMessages,
@@ -30,6 +29,10 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
   private messageListeners: Set<DomainMessageListener> = new Set();
   private targetIsWeb: boolean | null = null;
   private disposed = false;
+  // Bumped every time a handshake is (re)scheduled or the model is disposed;
+  // a handshake whose generation is no longer current stops at its next step.
+  private handshakeGeneration = 0;
+  private reloadTimer: ReturnType<typeof setTimeout> | null = null;
   private bindingListenerAttached = false;
 
   /**
@@ -87,6 +90,11 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
 
   override dispose(): void {
     this.disposed = true;
+    this.handshakeGeneration++;
+    if (this.reloadTimer !== null) {
+      clearTimeout(this.reloadTimer);
+      this.reloadTimer = null;
+    }
     this.messageQueue = [];
 
     const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
@@ -256,8 +264,9 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       throw new Error('Failed to enable RozeniteBindingsModel: runtime model is not available');
     }
 
+    const generation = ++this.handshakeGeneration;
     try {
-      await this.runHandshake();
+      await this.runHandshake(generation);
     } catch (error) {
       if (error instanceof HandshakeCancelledError) {
         throw new Error('RozeniteBindingsModel was disposed while it was being enabled');
@@ -266,7 +275,7 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
     }
 
     // The handshake can resolve right as the model is disposed.
-    if (this.disposed) {
+    if (this.isStale(generation)) {
       throw new Error('RozeniteBindingsModel was disposed while it was being enabled');
     }
 
@@ -284,8 +293,12 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
    * Messages that arrive while it runs are queued, because
    * `fuseboxDispatcherIsInitialized` is only set once it has finished.
    */
-  private runHandshake(): Promise<void> {
-    const isCancelled = (): boolean => this.disposed;
+  private isStale(generation: number): boolean {
+    return this.disposed || generation !== this.handshakeGeneration;
+  }
+
+  private runHandshake(generation: number): Promise<void> {
+    const isCancelled = (): boolean => this.isStale(generation);
 
     const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
     if (!runtimeModel) {
@@ -323,7 +336,9 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       isCancelled,
       // After the dispatcher wait only because that is what establishes a
       // live execution context to evaluate in; the expression itself reads
-      // plain globals and depends on nothing Rozenite installs.
+      // plain globals and depends on nothing Rozenite installs. Not repeated
+      // after a reload: the answer cannot have changed, and a probe that
+      // failed still gets another attempt.
       afterDispatcherReady: async () => {
         if (this.targetIsWeb === null) {
           await this.probeTargetIsWeb();
@@ -359,14 +374,47 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       return;
     }
 
-    void this.waitForFuseboxDispatcherToBeInitialized()
-      .then(() => {
-        this.dispatchEventToListeners('BackendExecutionContextCreated');
-        this.flushOutDomainMessagesQueues();
-      })
-      .catch((error: Error) =>
-        this.dispatchEventToListeners('BackendExecutionContextUnavailable', error.message),
+    // A new `main` context is a reloaded app: its dispatcher is brand new, so
+    // the handshake runs again, like in the app and the agent session. The
+    // debounce coalesces the burst of contexts a reload can produce, and the
+    // generation cancels a run a newer context has made stale.
+    const generation = ++this.handshakeGeneration;
+    if (this.reloadTimer !== null) {
+      clearTimeout(this.reloadTimer);
+    }
+    this.reloadTimer = setTimeout(() => {
+      this.reloadTimer = null;
+      void this.rehandshake(generation);
+    }, BOOTSTRAP_DEBOUNCE_MS);
+  }
+
+  private async rehandshake(generation: number): Promise<void> {
+    try {
+      await this.runHandshake(generation);
+    } catch (error) {
+      if (error instanceof HandshakeCancelledError || this.isStale(generation)) {
+        return;
+      }
+      // The shared "Rozenite is not installed" wording would be wrong here:
+      // it was installed a moment ago, the reload is just slow.
+      this.dispatchEventToListeners(
+        'BackendExecutionContextUnavailable',
+        error instanceof RozeniteMissingError
+          ? 'The app did not finish reloading in time. Reload the app or reopen React Native DevTools.'
+          : (error as Error).message,
       );
+      return;
+    }
+
+    // The handshake can resolve right as a newer context arrives or the model
+    // is disposed; the newer run (or nobody) owns the notification then.
+    if (this.isStale(generation)) {
+      return;
+    }
+
+    this.fuseboxDispatcherIsInitialized = true;
+    this.dispatchEventToListeners('BackendExecutionContextCreated');
+    this.flushOutDomainMessagesQueues();
   }
 
   private onExecutionContextDestroyed({
@@ -376,47 +424,16 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
       return;
     }
 
+    // Whatever handshake was scheduled or running belongs to the context that
+    // just went away.
+    this.handshakeGeneration++;
+    if (this.reloadTimer !== null) {
+      clearTimeout(this.reloadTimer);
+      this.reloadTimer = null;
+    }
+
     this.fuseboxDispatcherIsInitialized = false;
     this.dispatchEventToListeners('BackendExecutionContextDestroyed');
-  }
-
-  private async waitForFuseboxDispatcherToBeInitialized(attempt = 1): Promise<void> {
-    // Ideally, this should not be polling, but rather one `Runtime.evaluate` request with `awaitPromise` option
-    // We need to support it in Hermes first, then we can migrate this to awaitPromise
-    if (attempt >= DISPATCHER_INIT_MAX_ATTEMPTS) {
-      // ~5 seconds
-      throw new Error('Failed to wait for initialization: it took too long');
-    }
-
-    const runtimeModel = this.target().model(SDK.RuntimeModel.RuntimeModel);
-    if (!runtimeModel) {
-      throw new Error(
-        'Failed to wait for React DevTools dispatcher initialization: runtime model is not available',
-      );
-    }
-
-    await runtimeModel.agent
-      .invoke_evaluate({
-        expression: buildDispatcherReadyExpression(),
-        returnByValue: true,
-      })
-      .then((response) => {
-        if (response.exceptionDetails) {
-          throw new Error(
-            'Failed to wait for React DevTools dispatcher initialization: ' +
-              response.exceptionDetails.text,
-          );
-        }
-
-        if (response.result.value === false) {
-          return new Promise((resolve) => setTimeout(resolve, DISPATCHER_INIT_RETRY_MS)).then(() =>
-            this.waitForFuseboxDispatcherToBeInitialized(attempt + 1),
-          );
-        }
-
-        this.fuseboxDispatcherIsInitialized = true;
-        return;
-      });
   }
 }
 
