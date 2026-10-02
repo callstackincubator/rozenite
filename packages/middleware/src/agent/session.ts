@@ -13,7 +13,7 @@ import type {
   UnsupportedDomainInfo,
 } from '@rozenite/agent-shared';
 import { createAgentArtifacts } from './artifacts.js';
-import { createCDPCommandError } from './cdp-errors.js';
+import { CdpCommandTimeoutError, createCDPCommandError } from './cdp-errors.js';
 import { resolveCapabilityProfile } from './capability-profiles.js';
 import { withCapabilityFilter } from './capability-filter.js';
 import { createAgentMessageHandler } from './runtime/handler.js';
@@ -46,6 +46,9 @@ const RECOVERY_MAX_ATTEMPTS = 16;
 // deadline, `start()` and tool calls would hang forever. Matches
 // `COMMAND_TIMEOUT_MS` in `@rozenite/app`'s device connection.
 const COMMAND_TIMEOUT_MS = 10_000;
+// While `start()` is pending, give up after this many consecutive failed
+// bootstrap attempts so a device that never answers cannot hang start forever.
+const START_BOOTSTRAP_MAX_FAILURES = 3;
 
 /** The dispatcher global never appeared within the polling window: the app is
  * running, but Rozenite is not installed in it (or never initialized). */
@@ -167,6 +170,8 @@ export const createAgentSession = (options: {
   let bootstrapTimer: NodeJS.Timeout | null = null;
   let bindingName: string | null = null;
   let bootstrapped = false;
+  let bootstrapGeneration = 0;
+  let startBootstrapFailures = 0;
   let terminationNotified = false;
   let disconnectLogged = false;
   let startReadiness: StartReadiness | null = null;
@@ -243,6 +248,7 @@ export const createAgentSession = (options: {
   };
 
   const createStartReadiness = (): Promise<void> => {
+    startBootstrapFailures = 0;
     let resolve!: () => void;
     let reject!: (error: Error) => void;
     const promise = new Promise<void>((resolvePromise, rejectPromise) => {
@@ -358,7 +364,7 @@ export const createAgentSession = (options: {
     const promise = new Promise<Record<string, unknown>>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         if (pendingCommands.delete(commandId)) {
-          reject(new Error(`CDP command "${method}" timed out after ${COMMAND_TIMEOUT_MS}ms`));
+          reject(new CdpCommandTimeoutError(method, COMMAND_TIMEOUT_MS));
         }
       }, COMMAND_TIMEOUT_MS);
       pendingCommands.set(commandId, { method, resolve, reject, timeoutId });
@@ -555,6 +561,10 @@ export const createAgentSession = (options: {
       return;
     }
 
+    // Only the latest bootstrap may reject start readiness or reschedule; an
+    // older one that overlaps (reload while a handshake is in flight) bails.
+    const generation = ++bootstrapGeneration;
+
     try {
       await waitForFuseboxDispatcherToBeInitialized();
       const bindingValue = await getBindingName();
@@ -582,12 +592,22 @@ export const createAgentSession = (options: {
       lastError = undefined;
       touch();
     } catch (error) {
-      lastError = error instanceof Error ? error.message : String(error);
-      if (error instanceof RozeniteMissingError) {
-        // Terminal: retrying cannot help when the app does not ship Rozenite.
-        // A later `executionContextCreated` (app reload) still re-bootstraps.
-        rejectStartReadiness(error);
+      if (generation !== bootstrapGeneration) {
         return;
+      }
+      lastError = error instanceof Error ? error.message : String(error);
+      // Outcomes are terminal only while a start is pending. Once started,
+      // the session keeps self-healing by rescheduling.
+      if (startReadiness) {
+        const failure = error instanceof Error ? error : new Error(String(error));
+        startBootstrapFailures += 1;
+        if (
+          error instanceof RozeniteMissingError ||
+          startBootstrapFailures >= START_BOOTSTRAP_MAX_FAILURES
+        ) {
+          rejectStartReadiness(failure);
+          return;
+        }
       }
       scheduleBootstrap();
     }
@@ -1121,6 +1141,11 @@ export const createAgentSession = (options: {
     clearBootstrapTimer();
     clearPluginReadiness();
     rejectStartReadiness(new Error('Agent session stopped before bootstrap completed'));
+    for (const [commandId, pending] of pendingCommands.entries()) {
+      pendingCommands.delete(commandId);
+      clearTimeout(pending.timeoutId);
+      pending.reject(new Error('Agent session stopped'));
+    }
     await disposeServices();
     logDisconnected();
 

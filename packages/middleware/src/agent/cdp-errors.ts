@@ -55,6 +55,17 @@ export class CdpEventTimeoutError extends Error {
   }
 }
 
+/** The device accepted a command but never answered it (a wedged JS thread). */
+export class CdpCommandTimeoutError extends Error {
+  readonly method: string;
+
+  constructor(method: string, timeoutMs: number) {
+    super(`CDP command "${method}" timed out after ${timeoutMs}ms`);
+    this.name = 'CdpCommandTimeoutError';
+    this.method = method;
+  }
+}
+
 const getErrorDetail = (error: unknown): string => {
   if (error && typeof error === 'object' && !Array.isArray(error)) {
     const message = (error as Record<string, unknown>).message;
