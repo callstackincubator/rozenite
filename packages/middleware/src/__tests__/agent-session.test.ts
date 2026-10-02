@@ -984,9 +984,10 @@ describe('agent session', () => {
       );
 
       socket.open();
-      await vi.advanceTimersByTimeAsync(500 + 1_000);
-      // Reload mid-poll: the first bootstrap is now stale, even though the
-      // replacement is still inside its debounce.
+      await vi.advanceTimersByTimeAsync(500 + 4_600);
+      // Reload just before the first poll exhausts (~5250ms): the first
+      // bootstrap is stale even though the replacement is still inside its
+      // 500ms debounce when it fails.
       socket.emit(
         'message',
         JSON.stringify({
@@ -995,8 +996,8 @@ describe('agent session', () => {
         }),
       );
 
-      // The older poll exhausts at roughly 500 + 19 * 250 ms.
-      await vi.advanceTimersByTimeAsync(4_100);
+      // The older poll exhausts at 500 + 19 * 250 ms, inside the debounce.
+      await vi.advanceTimersByTimeAsync(300);
       await flushMicrotasks();
       expect(onSettled).not.toHaveBeenCalled();
 
