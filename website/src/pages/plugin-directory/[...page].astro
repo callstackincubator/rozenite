@@ -1,10 +1,12 @@
 ---
-import Page from '../../layouts/Page.astro';
-import DirectoryPage from '../../plugin-directory/plugin-directory-page/plugin-directory-page';
+// The plugin directory: every plugin listed in plugin-directory.json, twelve to a page, as
+// hairline cells in the site's look. `/plugin-directory` and `/plugin-directory/<n>`.
+import Site from '../../layouts/Site.astro';
+import Footer from '../../components/site/Footer.astro';
+import Nav from '../../components/site/Nav.astro';
 import { getTotalPages, loadPluginDirectoryPage } from '../../plugin-directory/load-page';
-import '../../../landing/styles/tokens.css';
+import { docs, site } from '../../site/content';
 
-// `/plugin-directory` and `/plugin-directory/<n>`, as before.
 export async function getStaticPaths() {
   const totalPages = await getTotalPages();
   return [
@@ -18,7 +20,159 @@ export async function getStaticPaths() {
 
 const { pageNumber } = Astro.props;
 const page = await loadPluginDirectoryPage(pageNumber);
+const { totalPages } = page;
+const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+const href = (n: number) => `/plugin-directory/${n}`;
 ---
-<Page title="Plugin Directory | Rozenite">
-  <DirectoryPage page={page} />
-</Page>
+
+<Site title="Plugin directory · Rozenite" description="Official and community Rozenite plugins for React Native DevTools.">
+  <Nav />
+  <main class="frame">
+    <section class="intro intro--top" aria-labelledby="dir-title">
+      <p class="label accent">Plugin directory</p>
+      <h1 class="h1" id="dir-title">Panels for the libraries <em>your app runs on.</em></h1>
+      <p class="lede">
+        Official and community plugins for React Native DevTools. Install one as a dev dependency and its panel shows up the
+        next time you open DevTools.
+      </p>
+    </section>
+
+    <section aria-labelledby="list-title">
+      <p class="section-head label">
+        <b>[01]</b>
+        <span id="list-title">Plugins</span>
+        <span class="count">Page {page.pageNumber} of {totalPages} · {page.data.length} on this page</span>
+      </p>
+      {
+        page.data.length > 0 ? (
+          <ul class="cells cells--3 dir">
+            {page.data.map((p) => (
+              <li class="cell">
+                <span class="cell-top">
+                  <span class="chip">v{p.version}</span>
+                  {p.isOfficial && <span class="chip chip--agent">Official</span>}
+                </span>
+                <h2 class="h3 name">{p.packageName}</h2>
+                <p class="body">{p.description || 'A Rozenite plugin for React Native DevTools.'}</p>
+                <span class="meta label">
+                  <span class="stars" aria-label={`${p.stars.toLocaleString('en-US')} GitHub stars`}>
+                    ★ {p.stars.toLocaleString('en-US')}
+                  </span>
+                  <a class="more" href={p.githubUrl} rel="noopener">
+                    GitHub
+                  </a>
+                  <a class="more" href={p.npmUrl} rel="noopener">
+                    npm
+                  </a>
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="body empty">The directory could not be loaded right now. Try again in a moment.</p>
+        )
+      }
+      {
+        totalPages > 1 && (
+          <nav class="pager label" aria-label="Plugin directory pages">
+            {page.pageNumber > 1 ? <a href={href(page.pageNumber - 1)}>← Previous</a> : <span class="off">← Previous</span>}
+            <span class="nums">
+              {pages.map((n) => (
+                <a href={href(n)} aria-current={n === page.pageNumber ? 'page' : undefined}>
+                  {String(n).padStart(2, '0')}
+                </a>
+              ))}
+            </span>
+            {page.pageNumber < totalPages ? <a href={href(page.pageNumber + 1)}>Next →</a> : <span class="off">Next →</span>}
+          </nav>
+        )
+      }
+    </section>
+
+    <section aria-labelledby="add-title">
+      <p class="section-head label"><b>[02]</b> Add yours</p>
+      <div class="cells cells--2">
+        <a class="cell cell--link" href={site.repo}>
+          <h2 class="h3" id="add-title">Built something useful?</h2>
+          <p class="body">Add your plugin to the directory with a pull request to the Rozenite repository.</p>
+          <span class="label more">View repository <span aria-hidden="true">→</span></span>
+        </a>
+        <a class="cell cell--link" href={docs.pluginDev}>
+          <h2 class="h3">Build a plugin</h2>
+          <p class="body">A panel for your app's own state, with a type-safe bridge between the app and DevTools.</p>
+          <span class="label more">Plugin development <span aria-hidden="true">→</span></span>
+        </a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Site>
+
+<style>
+  .intro--top {
+    padding-block: var(--rhythm);
+  }
+  .count {
+    margin-inline-start: auto;
+    color: var(--faint);
+  }
+  .name {
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .stars {
+    margin-inline-end: auto;
+  }
+  .empty {
+    padding: var(--pad);
+    border-top: 1px solid var(--line);
+  }
+  .pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem var(--pad);
+    border-bottom: 1px solid var(--line);
+  }
+  .pager a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  .pager a:hover {
+    color: var(--accent);
+  }
+  .pager .off {
+    color: var(--faint);
+  }
+  .nums {
+    display: flex;
+    gap: 0.25rem;
+  }
+  .nums a {
+    padding: 0.375rem 0.5rem;
+    color: var(--muted);
+  }
+  .nums a[aria-current='page'] {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  @media (max-width: 40rem) {
+    .count {
+      display: none;
+    }
+  }
+</style>

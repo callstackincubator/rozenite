@@ -104,7 +104,8 @@ const scenes: Record<string, SceneBuilder> = {
     // small loose ones in the upper field. Sizes are in cells per step.
     // Crystal sizes follow the shorter side, so a tall phone-width scene doesn't get huge steps.
     const size = Math.min(rows, cols * 0.8);
-    const unit = size / 10;
+    // Capped, so steps never grow past about 28px and stop reading as pixels.
+    const unit = Math.min(size / 10, 28);
     const crystals: Crystal[] = [];
     const add = (u: number, baseFromBottom: number, h: number, depth: number, seed: number) =>
       crystals.push({
