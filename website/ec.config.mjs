@@ -16,7 +16,10 @@ function rozeniteTheme(type, c) {
       'editor.foreground': c.fg,
     },
     tokenColors: [
-      { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: c.com, fontStyle: 'italic' } },
+      {
+        scope: ['comment', 'punctuation.definition.comment'],
+        settings: { foreground: c.com, fontStyle: 'italic' },
+      },
       {
         scope: [
           'keyword',
@@ -29,12 +32,23 @@ function rozeniteTheme(type, c) {
         ],
         settings: { foreground: c.kw },
       },
-      { scope: ['string', 'string.quoted', 'string.template', 'markup.inline.raw'], settings: { foreground: c.str } },
       {
-        scope: ['entity.name.function', 'support.function', 'meta.function-call', 'entity.name.tag'],
+        scope: ['string', 'string.quoted', 'string.template', 'markup.inline.raw'],
+        settings: { foreground: c.str },
+      },
+      {
+        scope: [
+          'entity.name.function',
+          'support.function',
+          'meta.function-call',
+          'entity.name.tag',
+        ],
         settings: { foreground: c.fn },
       },
-      { scope: ['constant.numeric', 'constant.other', 'support.constant'], settings: { foreground: c.num } },
+      {
+        scope: ['constant.numeric', 'constant.other', 'support.constant'],
+        settings: { foreground: c.num },
+      },
       {
         scope: [
           'entity.name.type',
@@ -45,8 +59,14 @@ function rozeniteTheme(type, c) {
         ],
         settings: { foreground: c.type },
       },
-      { scope: ['punctuation', 'meta.brace', 'keyword.operator'], settings: { foreground: c.punc } },
-      { scope: ['variable', 'variable.other', 'meta.object-literal.key'], settings: { foreground: c.fg } },
+      {
+        scope: ['punctuation', 'meta.brace', 'keyword.operator'],
+        settings: { foreground: c.punc },
+      },
+      {
+        scope: ['variable', 'variable.other', 'meta.object-literal.key'],
+        settings: { foreground: c.fg },
+      },
     ],
   };
   return ExpressiveCodeTheme.fromJSONString(JSON.stringify(theme));
@@ -96,7 +116,8 @@ export default defineEcConfig({
       terminalTitlebarBackground: ({ theme }) => (theme.type === 'dark' ? '#0a0a0a' : '#efefed'),
       terminalBackground: ({ theme }) => (theme.type === 'dark' ? '#111111' : '#f6f6f5'),
       terminalTitlebarDotsOpacity: '0.35',
-      terminalTitlebarBorderBottomColor: ({ theme }) => (theme.type === 'dark' ? '#ffffff1a' : '#dededb'),
+      terminalTitlebarBorderBottomColor: ({ theme }) =>
+        theme.type === 'dark' ? '#ffffff1a' : '#dededb',
       tooltipSuccessBackground: '#ff4f7b',
       tooltipSuccessForeground: '#0a0a0a',
       inlineButtonBorder: ({ theme }) => (theme.type === 'dark' ? '#ffffff40' : '#00000030'),

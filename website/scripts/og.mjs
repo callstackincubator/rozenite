@@ -43,14 +43,23 @@ try {
   const shots = [
     { query: '', width: 1200, height: 630, scale: 1, path: 'public/og-image.jpg' },
     // 1245x384 at 4/3 gives the banner's 1660x512.
-    { query: '?format=banner', width: 1245, height: 384, scale: 4 / 3, path: 'public/rozenite-banner.jpg' },
+    {
+      query: '?format=banner',
+      width: 1245,
+      height: 384,
+      scale: 4 / 3,
+      path: 'public/rozenite-banner.jpg',
+    },
   ];
   for (const { query, width, height, scale, path } of shots) {
     const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: scale });
     await page.goto(`http://127.0.0.1:${port}/og/og.html${query}`);
     await page.waitForFunction(() => /** @type {any} */ (window).ogReady === true);
     const png = await page.screenshot({ type: 'png' });
-    await writeFile(join(root, path), await sharp(png).jpeg({ quality: 90, mozjpeg: true }).toBuffer());
+    await writeFile(
+      join(root, path),
+      await sharp(png).jpeg({ quality: 90, mozjpeg: true }).toBuffer(),
+    );
     await page.close();
   }
 } finally {
@@ -59,12 +68,22 @@ try {
 }
 
 // The icons: the mark in the accent, on the page background for the ones a home screen shows.
-const mark = (size, padding, background) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-padding} ${-padding} ${7 + padding * 2} ${10 + padding * 2}" width="${size}" height="${size}" shape-rendering="crispEdges">${background ? `<rect x="${-padding - 10}" y="${-padding - 10}" width="40" height="40" fill="${background}"/>` : ''}<path d="M3 0h1v1h1v2h1v2h1v3h-1v1h-1v1h-3v-1h-1v-1h-1v-3h1v-2h1v-2h1z" fill="#ff4f7b"/></svg>`;
+const mark = (size, padding, background) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-padding} ${-padding} ${7 + padding * 2} ${10 + padding * 2}" width="${size}" height="${size}" shape-rendering="crispEdges">${background ? `<rect x="${-padding - 10}" y="${-padding - 10}" width="40" height="40" fill="${background}"/>` : ''}<path d="M3 0h1v1h1v2h1v2h1v3h-1v1h-1v1h-3v-1h-1v-1h-1v-3h1v-2h1v-2h1z" fill="#ff4f7b"/></svg>`;
 for (const [name, size, padding, background] of [
   ['favicon-32.png', 32, 0, ''],
   ['apple-touch-icon.png', 180, 2, '#0a0a0a'],
 ]) {
   const svg = Buffer.from(mark(size, padding, background));
-  await writeFile(join(root, 'public', name), await sharp(svg).resize(size, size, { fit: 'contain', background: background || { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer());
+  await writeFile(
+    join(root, 'public', name),
+    await sharp(svg)
+      .resize(size, size, {
+        fit: 'contain',
+        background: background || { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .png()
+      .toBuffer(),
+  );
 }
 console.log('Wrote public/og-image.jpg, public/rozenite-banner.jpg and the PNG icons');

@@ -63,9 +63,15 @@ export default defineConfig({
         { tag: 'meta', attrs: { name: 'twitter:image', content: `${site}/og-image.jpg` } },
         { tag: 'meta', attrs: { name: 'twitter:image:alt', content: meta.ogAlt } },
         { tag: 'meta', attrs: { name: 'theme-color', content: '#0a0a0a' } },
-        { tag: 'link', attrs: { rel: 'icon', href: '/favicon-32.png', type: 'image/png', sizes: '32x32' } },
+        {
+          tag: 'link',
+          attrs: { rel: 'icon', href: '/favicon-32.png', type: 'image/png', sizes: '32x32' },
+        },
         { tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } },
-        { tag: 'link', attrs: { rel: 'alternate', type: 'text/plain', title: 'llms.txt', href: '/llms.txt' } },
+        {
+          tag: 'link',
+          attrs: { rel: 'alternate', type: 'text/plain', title: 'llms.txt', href: '/llms.txt' },
+        },
       ],
       sidebar: [
         doc('introduction', 'Introduction'),

@@ -686,7 +686,8 @@ dl.cells dd {
   max-width: 9rem;
   min-width: 3rem;
   height: 2.25rem;
-  background: repeating-linear-gradient(90deg, var(--track) 0 4px, transparent 4px 8px) center / 100% 2px no-repeat;
+  background: repeating-linear-gradient(90deg, var(--track) 0 4px, transparent 4px 8px) center /
+    100% 2px no-repeat;
 }
 .duct.is-live {
   --track: var(--accent);
@@ -711,7 +712,8 @@ dl.cells dd {
     min-width: 0;
     max-width: none;
     height: 3rem;
-    background: repeating-linear-gradient(180deg, var(--track) 0 4px, transparent 4px 8px) center / 2px 100% no-repeat;
+    background: repeating-linear-gradient(180deg, var(--track) 0 4px, transparent 4px 8px) center /
+      2px 100% no-repeat;
   }
   .pkt {
     top: 0;
