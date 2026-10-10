@@ -209,18 +209,6 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
           ))
         }
       </div>
-      <div class="split split--top">
-        <div class="split-copy">
-          <p class="lede">
-            Plugins with several panels share one sidebar by default. Set <code>pluginDisplay: 'tabs'</code> to give each
-            panel its own DevTools tab.
-          </p>
-          <a class="label more" href={docs.compatibility}>Compatibility <span aria-hidden="true">→</span></a>
-        </div>
-        <Window title="metro.config.js">
-          <CodeBlock code={code.include} lang="js" wrap />
-        </Window>
-      </div>
     </section>
 
     <section aria-labelledby="beyond-title">

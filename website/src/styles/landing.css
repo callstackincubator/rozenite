@@ -406,9 +406,6 @@ dl.cells dd {
   align-items: center;
   padding: var(--rhythm) var(--pad);
 }
-.split--top {
-  align-items: start;
-}
 .split-copy {
   display: flex;
   flex-direction: column;

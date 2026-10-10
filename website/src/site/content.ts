@@ -230,11 +230,6 @@ npx rozenite agent console call \\
   --tool getMessages \\
   --args '{"levels":["error"]}' \\
   --session <session-id>`,
-  include: `module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
-  enabled: process.env.WITH_ROZENITE === 'true',
-  include: ['@rozenite/storage-plugin', '@rozenite/network-activity-plugin'],
-  pluginDisplay: 'tabs',
-});`,
 };
 
 /** Questions people ask, answered only from the docs. */
