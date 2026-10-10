@@ -313,7 +313,8 @@ export function drawDither(
   rows: number,
   focus: number,
 ) {
-  const build = scenes[name];
+  // Only the scene table's own keys: a name like `constructor` must not reach Object.prototype.
+  const build = Object.hasOwn(scenes, name) ? scenes[name] : undefined;
   const ctx = canvas.getContext('2d') as
     | CanvasRenderingContext2D
     | OffscreenCanvasRenderingContext2D
