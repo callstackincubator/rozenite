@@ -78,7 +78,7 @@ For more detailed information about plugin development, see the [Plugin Developm
 
 ## Working on documentation
 
-The documentation is a part of the website, which is stored in the `website` directory and uses `rspress` - an SSG framework that leverages `rspack`. To start working on the docs, run `pnpm run dev` from inside the `website` directory.
+The documentation is a part of the website, which is stored in the `website` directory and is built with Astro and Starlight (docs live in `website/src/content/docs`). To start working on the docs, run `pnpm run dev` from inside the `website` directory.
 
 ## If you need help
 

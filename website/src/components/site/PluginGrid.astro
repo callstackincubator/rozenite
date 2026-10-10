@@ -1,0 +1,75 @@
+---
+// The fourteen official plugins as link cells, plus two cells that close the grid: the plugin
+// directory and building your own. Sixteen cells divide evenly at four, two and one column.
+import { docs, plugins } from '../../site/content';
+import PixelIcon from './PixelIcon.astro';
+---
+
+<ul class="cells cells--4 plugin-grid">
+  {
+    plugins.map((p) => (
+      <li class="cell-wrap">
+        <a class="cell cell--link" href={p.href}>
+          <span class="cell-top">
+            <PixelIcon name={p.icon} size={27} class="accent" />
+          </span>
+          <h3 class="h3">{p.name}</h3>
+          <code class="pkg">{p.pkg}</code>
+          <p class="body">{p.about}</p>
+        </a>
+      </li>
+    ))
+  }
+  <li class="cell-wrap">
+    <a class="cell cell--link cell--more" href={docs.directory}>
+      <span class="cell-top"><PixelIcon name="package" size={27} class="accent" /></span>
+      <h3 class="h3">Community plugins</h3>
+      <p class="body">More panels built and shared by other teams, in the plugin directory.</p>
+      <span class="label more">Browse the directory <span aria-hidden="true">→</span></span>
+    </a>
+  </li>
+  <li class="cell-wrap">
+    <a class="cell cell--link cell--more" href={docs.pluginDev}>
+      <span class="cell-top"><PixelIcon name="code" size={27} class="accent" /></span>
+      <h3 class="h3">Your own</h3>
+      <p class="body">A panel for your app's state, with a type-safe bridge to the app.</p>
+      <span class="label more">Build a plugin <span aria-hidden="true">→</span></span>
+    </a>
+  </li>
+</ul>
+
+<style>
+  /* The list items carry the grid borders; the link inside fills them. */
+  .plugin-grid > .cell-wrap {
+    display: flex;
+    min-width: 0;
+    border-bottom: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+  }
+  .plugin-grid > .cell-wrap:nth-child(4n) {
+    border-right: 0;
+  }
+  .plugin-grid .cell {
+    flex: 1;
+    border: 0;
+  }
+  .plugin-grid .h3 {
+    margin-top: 0.25rem;
+  }
+  .cell--more .h3 {
+    color: var(--text);
+  }
+  @media (max-width: 64rem) {
+    .plugin-grid > .cell-wrap:nth-child(n) {
+      border-right: 1px solid var(--line);
+    }
+    .plugin-grid > .cell-wrap:nth-child(2n) {
+      border-right: 0;
+    }
+  }
+  @media (max-width: 48rem) {
+    .plugin-grid > .cell-wrap:nth-child(n) {
+      border-right: 0;
+    }
+  }
+</style>

@@ -1,0 +1,133 @@
+---
+title: 'Quick start'
+---
+
+import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
+
+## Pre-requisites
+
+Rozenite assumes you're comfortable with a React Native project. If you're new to React Native, start with the [React Native documentation](https://reactnative.dev/) first.
+
+On Lynx, `rozenite init` also works, but see [Rozenite for Lynx](/docs/targets/rozenite-for-lynx) for the extra step of turning on Lynx DevTool in your app — nothing is discoverable until it is on.
+
+## Install
+
+Run the `rozenite init` command in your project. It detects your bundler (Metro, Re.Pack, or Lynx's rspeedy), installs the right package, and updates your config for you.
+
+<PackageManagerTabs
+  command={{
+    npm: 'npx rozenite@latest init',
+    yarn: 'yarn dlx rozenite@latest init',
+    pnpm: 'pnpm dlx rozenite@latest init',
+    bun: 'bunx rozenite@latest init',
+  }}
+/>
+
+That's it — start your app as usual and open React Native DevTools. If everything worked, you'll see plugin panels for anything you've installed (see [Official Plugins](/docs/official-plugins/overview) to add some).
+
+If the command fails, or you'd rather wire things up yourself, follow the manual steps below.
+
+## Manual setup
+
+### 1. Install the package for your bundler
+
+**Metro** (the default React Native bundler):
+
+<PackageManagerTabs command="install -D @rozenite/metro" />
+
+**Re.Pack**:
+
+<PackageManagerTabs command="install -D @rozenite/repack" />
+
+### 2. Enable Rozenite in your bundler config
+
+Rozenite is off by default, so it never runs in production by accident. Enable it explicitly, typically behind an environment variable so you can turn it on and off per run:
+
+```bash
+# Enable Rozenite in development
+WITH_ROZENITE=true npm start
+```
+
+**Metro** — update `metro.config.js`:
+
+```javascript title="metro.config.js"
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { withRozenite } = require('@rozenite/metro');
+
+const defaultConfig = getDefaultConfig(__dirname);
+
+const customConfig = {
+  // Your existing Metro configuration
+};
+
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  enabled: process.env.WITH_ROZENITE === 'true',
+});
+```
+
+**Re.Pack** — update `rspack.config.mjs`:
+
+```javascript title="rspack.config.mjs"
+import { withRozenite } from '@rozenite/repack';
+
+export default withRozenite(
+  {
+    // Your existing Re.Pack configuration
+  },
+  {
+    enabled: process.env.WITH_ROZENITE === 'true',
+  },
+);
+```
+
+### 3. Start your app
+
+<PackageManagerTabs command="start" />
+
+Open React Native DevTools — any Rozenite plugins you've installed will show up automatically, no extra wiring needed.
+
+## Choosing which plugins load
+
+By default, every installed plugin loads automatically. If you want to limit that, pass `include` or `exclude` to `withRozenite`:
+
+```javascript title="metro.config.js"
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  enabled: process.env.WITH_ROZENITE === 'true',
+  include: ['@rozenite/storage-plugin', '@rozenite/network-activity-plugin'], // only load these
+  // or
+  exclude: ['@rozenite/storage-plugin'], // load everything except these
+});
+```
+
+The same options work in `withRozenite` for Re.Pack. If both `include` and `exclude` are set, `exclude` is applied after `include`.
+
+## Panel layout
+
+Plugins with multiple panels are grouped together in one sidebar by default; plugins with a single panel appear directly in the list. If you'd rather give every panel its own DevTools tab, set `pluginDisplay: 'tabs'`:
+
+```javascript title="metro.config.js"
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  enabled: process.env.WITH_ROZENITE === 'true',
+  pluginDisplay: 'tabs',
+});
+```
+
+Rozenite also keeps a plugin's UI state in memory when you switch away from its panel, so you don't lose data by navigating around. For plugins that use a lot of memory, you can opt out per plugin with `destroyOnDetachPlugins` — the trade-off is that the plugin resets and reloads each time you come back to it:
+
+```javascript title="metro.config.js"
+module.exports = withRozenite(mergeConfig(defaultConfig, customConfig), {
+  enabled: process.env.WITH_ROZENITE === 'true',
+  destroyOnDetachPlugins: ['@rozenite/network-activity-plugin'],
+});
+```
+
+## Verifying it worked
+
+- Your bundler's server logs should mention discovering Rozenite plugins.
+- React Native DevTools should show a panel for each plugin you've installed.
+
+If nothing shows up, double check that `enabled` evaluates to `true` and that you restarted the bundler after changing the config.
+
+## Using Rozenite with AI coding agents
+
+If you use AI or coding agents in your workflow, continue with the [Rozenite for Agents overview](/docs/agent/overview).

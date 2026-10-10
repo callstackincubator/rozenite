@@ -1,0 +1,23 @@
+---
+// The mark: the stepped crystal from public/logo.svg on its 7x10 step grid, in currentColor.
+// Give it a height that is a multiple of 10px where crisp steps matter.
+import { MARK, bitmapPath } from './icons';
+
+interface Props {
+  height?: number;
+  class?: string;
+  label?: string;
+}
+const { height = 20, class: className, label } = Astro.props;
+---
+
+<svg
+  class={className}
+  width={(height * 7) / 10}
+  height={height}
+  viewBox="0 0 7 10"
+  fill="currentColor"
+  shape-rendering="crispEdges"
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}><path d={bitmapPath(MARK)} /></svg>

@@ -16,6 +16,7 @@
 - For new package guidance, see @./agents/package-creation.md.
 - For welcome dialog release content, see @./agents/release-content.md.
 - When working on `@rozenite/ui`, follow @./agents/working-on-ui-components.md.
+- For anything visual (the website, social cards, slides, diagrams, videos), follow @./docs/DESIGN.md.
 - Before preparing or opening a pull request, see @./docs/agents/pull-requests.md.
 - For testing Metro-related changes, see @./docs/agents/metro-testing.md.
 - For proving a plugin ships no Rozenite code in a release bundle, see @./docs/agents/release-bundle-testing.md.
