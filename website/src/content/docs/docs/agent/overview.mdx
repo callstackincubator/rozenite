@@ -6,10 +6,6 @@ Rozenite for Agents is the agent-facing way to interact with your running app an
 
 You can access this workflow through the `rozenite agent` CLI or, if you need direct programmatic access, through [`@rozenite/agent-sdk`](/docs/agent/sdk). For most users, the CLI is still the recommended starting point.
 
-:::caution[Experimental]
-This functionality is experimental and may not work in all cases. If you run into a bug, please [open an issue](https://github.com/callstackincubator/rozenite/issues).
-:::
-
 ## What coding agents use it for
 
 - Read app logs while debugging a failure
@@ -33,12 +29,6 @@ If you have more than one simulator, emulator, or device connected, you will nee
 Rozenite for Agents requires a project with Rozenite already installed and configured. The agent skills teach your coding agent how to use that setup effectively.
 
 Rozenite for Agents is designed for AI and coding agents first. The underlying CLI can be called directly with `npx rozenite`, but the intended use is for an agent to drive it while debugging or implementing changes in your app.
-
-:::caution[React Native DevTools will disconnect]
-Rozenite for Agents acts as a debugger connection to the running app. Because of a current React Native limitation, starting an agent session will disconnect React Native DevTools if it is already attached.
-
-This is a platform limitation rather than a Rozenite-specific design choice. Support for multiple simultaneous debugger connections is being worked on, and once React Native allows that, Rozenite for Agents will be able to coexist with React Native DevTools.
-:::
 
 ## How agents usually work with it
 
