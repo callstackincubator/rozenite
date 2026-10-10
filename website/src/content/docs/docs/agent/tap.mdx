@@ -73,9 +73,9 @@ Each line has this shape:
 - `--json` — newline-delimited JSON output instead of the human-readable format.
 - `--host <host>` / `--port <port>` — Metro host and port, inherited from `rozenite agent`, so they go before `tap`: `npx rozenite agent --host 192.168.1.10 --port 8082 tap --session <id>` (defaults to `127.0.0.1:8081`).
 
-## `tap` replaces React Native DevTools
+## `tap` and React Native DevTools
 
-A device serves only one debugger connection at a time. `tap` rides the same connection `rozenite agent` uses, so starting a tap — like starting an agent session — disconnects React Native DevTools if it's already attached, and a tap keeps that same device from being opened in DevTools while it's running. This matches the point of `tap` (working entirely from the terminal), but it will surprise you if you don't expect it. Stop the tap (Ctrl-C) to free the connection back up.
+`tap` rides the same connection `rozenite agent` uses, and neither disconnects React Native DevTools. You can keep a plugin's panel open in DevTools and watch the same messages in the terminal. Stop the tap with Ctrl-C when you're done.
 
 ## Next steps
 

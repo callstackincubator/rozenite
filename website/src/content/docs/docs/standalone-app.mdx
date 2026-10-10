@@ -78,7 +78,6 @@ Pass `--port` when your dev server listens somewhere other than its default — 
 ## Limitations
 
 - **A dev server must be running.** `rozenite open` discovers devices through the dev server's own device list, and the app itself is served by that dev server. If it stops after you've opened the app, the app shows a "dev server unreachable" state until it is back.
-- **It competes for the single debugger slot.** The standalone app connects directly to the device the same way React Native DevTools and `rozenite agent` do. Only one of these can be attached to a given device at a time — the last one to connect wins, disconnecting whichever was attached before it.
 
 ## Troubleshooting
 
