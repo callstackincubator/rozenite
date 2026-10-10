@@ -9,27 +9,27 @@ import Nav from '../../components/site/Nav.astro';
 const variants = [
   {
     id: 'a',
-    name: 'Panels',
-    who: 'React Native developers debugging their app.',
-    headline: 'Plug-and-play panels <em>for React Native DevTools.</em>',
-    hero: 'An app on a phone and React Native DevTools beside it. Network Activity, TanStack Query and Storage tabs appear one by one and fill with rows as the app loads, adds to the cart and stores the count.',
-    sections: ['How it works', 'Official plugins', 'Safe by default', 'Beyond React Native', 'Agents', 'FAQ'],
+    name: 'Both views',
+    who: 'React Native developers and the agents they work with, side by side.',
+    headline: 'See inside your running app. <em>So can your agent.</em>',
+    hero: 'React Native DevTools, the app and the agent’s terminal in a row. The Network Activity panel shows the app’s requests and a failing `GET /api/cart`; then the agent attaches and gets the same request back from `network · listRequests`, plus the error behind it. The two take turns on the app’s one debugger connection.',
+    sections: ['How it works', 'Agents', 'Official plugins', 'Safe by default', 'Beyond React Native', 'FAQ'],
   },
   {
     id: 'b',
-    name: 'Agents',
-    who: 'Teams whose coding agents work on the app.',
-    headline: 'Give your agent <em>the running app.</em>',
-    hero: 'An agent window and a phone. The agent opens a session, reads the error in the console and the failing request in the network domain, then navigates the app with a React Navigation tool and reports back.',
-    sections: ['How it works', 'Domains', 'Plugin tools', 'Your app’s tools', 'Skill, SDK and tap', 'FAQ'],
+    name: 'Agent-led',
+    who: 'Teams whose coding agents work on the app, with a human checking the result.',
+    headline: 'Your agent works in the app. <em>You check it in DevTools.</em>',
+    hero: 'The agent’s terminal leads: it resets onboarding with `storage · edit-entry`, opens it with `react-navigation · navigate` and stops its session. Then React Native DevTools attaches, and the Storage panel shows the value the agent changed.',
+    sections: ['How it works', 'Domains', 'Plugin tools', 'Your app’s tools', 'Skill and SDK', 'Panels for you', 'FAQ'],
   },
   {
     id: 'c',
-    name: 'Build',
-    who: 'Teams who need a panel nobody has built yet.',
-    headline: 'Fourteen official plugins. <em>Then the one you build.</em>',
-    hero: 'A grid of the official plugins lights up cell by cell, then `npx rozenite generate checkout-inspector` types out and your plugin fills the last cell.',
-    sections: ['Anatomy of a plugin', 'Official plugins', 'Develop and test', 'Targets', 'Agent tools', 'Directory'],
+    name: 'Build-led',
+    who: 'Teams who write their own plugin, for themselves and for their agents.',
+    headline: 'One plugin. <em>A panel for you, tools for your agent.</em>',
+    hero: 'A plugin’s app side in two halves, each above the view it feeds. The message handler fills a Checkout Inspector panel in DevTools; then the agent calls the plugin’s `get-cart` tool from the terminal and gets the same cart.',
+    sections: ['Anatomy of a plugin', 'Agent tools', 'Official plugins', 'Develop and test', 'Targets', 'Directory'],
   },
 ];
 
@@ -51,7 +51,8 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
       <h1 class="h1">Three takes on <em>Rozenite.</em></h1>
       <p class="lede">
         The Appduct look, adapted to Rozenite. Same type, frame, cells and motion; a crimson accent and a crystal scene
-        made from the mark. Each variant tells the product from a different reader's side. The rules are in
+        made from the mark. Every hero shows both ways in: panels in React Native DevTools for you, and the same runtime as
+        tools for your coding agent, in a terminal. The variants differ in who leads. The rules are in
         <code>docs/DESIGN.md</code>.
       </p>
     </section>

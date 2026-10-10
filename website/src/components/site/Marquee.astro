@@ -59,17 +59,9 @@ import { marquee } from '../../site/content';
     }
   }
   @media (prefers-reduced-motion: reduce) {
+    /* One still row, its ends faded like the moving one. */
     .track {
       animation: none;
-      flex-wrap: wrap;
-      width: auto;
-      mask-image: none;
-    }
-    .run + .run {
-      display: none;
-    }
-    .run {
-      flex-wrap: wrap;
     }
   }
 </style>

@@ -28,7 +28,6 @@ export const docs = {
   appTools: '/docs/agent/adding-tools-to-your-application',
   pluginTools: '/docs/agent/making-your-plugin-agent-enabled',
   sdk: '/docs/agent/sdk',
-  tap: '/docs/agent/tap',
   lynx: '/docs/targets/rozenite-for-lynx',
   web: '/docs/targets/rozenite-for-web',
   standalone: '/docs/standalone-app',
@@ -307,9 +306,6 @@ const requests = await client.withSession(async (session) => {
     args: { limit: 20 },
   });
 });`,
-  tap: `$ npx rozenite agent tap --session <id> --plugin @acme/sqlite-plugin
-← 12:04:31.220  sqlite:list-tables-request   {"requestId":"a1"}
-→ 12:04:31.244  sqlite:list-tables-response  {"requestId":"a1","tables":["users","posts"]}`,
   panelClient: `const client = useRozeniteDevToolsClient<EventMap>({
   pluginId: 'checkout-inspector',
 });

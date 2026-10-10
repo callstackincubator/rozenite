@@ -1,0 +1,53 @@
+---
+// The official plugins that register agent tools, with their domain and a few real tool names,
+// plus a cell for your own plugin.
+import { agentPlugins, docs } from '../../site/content';
+import PixelIcon from './PixelIcon.astro';
+---
+
+<ul class="cells cells--4">
+  {
+    agentPlugins.map((p) => (
+      <li class="cell">
+        <span class="cell-top">
+          <PixelIcon name={p.icon} size={27} class="accent" />
+          <code class="pkg dom">{p.agent}</code>
+        </span>
+        <h3 class="h3">
+          <a class="plain" href={p.href}>
+            {p.name}
+          </a>
+        </h3>
+        <p class="tools label">{p.tools?.join(' · ')}</p>
+      </li>
+    ))
+  }
+  <li class="cell">
+    <span class="cell-top">
+      <PixelIcon name="code" size={27} class="accent" />
+      <code class="pkg dom">@your/plugin</code>
+    </span>
+    <h3 class="h3"><a class="plain" href={docs.pluginTools}>Your plugin</a></h3>
+    <p class="tools label">useRozenitePluginAgentTool</p>
+  </li>
+</ul>
+
+<style>
+  .dom {
+    font-size: 0.8125rem;
+  }
+  .tools {
+    margin: 0;
+    color: var(--faint);
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 0.6875rem;
+    overflow-wrap: anywhere;
+  }
+  .plain {
+    text-decoration: none;
+  }
+  .plain:hover {
+    color: var(--accent);
+  }
+</style>

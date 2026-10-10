@@ -1,19 +1,21 @@
 ---
-// Variant B · Agents: for teams whose coding agents work on the app.
+// Variant B · Agent-led: the agent works in the app; you check the result in DevTools panels.
 import Site from '../../layouts/Site.astro';
+import AgentPlugins from '../../components/site/AgentPlugins.astro';
 import CodeBlock from '../../components/site/CodeBlock.astro';
 import Closing from '../../components/site/Closing.astro';
 import CopyCommand from '../../components/site/CopyCommand.astro';
 import Dither from '../../components/site/Dither.astro';
+import Domains from '../../components/site/Domains.astro';
 import Faq from '../../components/site/Faq.astro';
 import Footer from '../../components/site/Footer.astro';
 import Marquee from '../../components/site/Marquee.astro';
 import Nav from '../../components/site/Nav.astro';
-import PixelIcon from '../../components/site/PixelIcon.astro';
+import PluginGrid from '../../components/site/PluginGrid.astro';
 import VariantSwitch from '../../components/site/VariantSwitch.astro';
 import Window from '../../components/site/Window.astro';
 import HeroAgents from '../../components/variants/HeroAgents.astro';
-import { agentClients, agentPlugins, code, docs, domains, site } from '../../site/content';
+import { agentClients, code, docs, site } from '../../site/content';
 
 const steps = [
   {
@@ -35,7 +37,7 @@ const steps = [
 const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
 ---
 
-<Site title="Rozenite · Variant B · Agents" noindex>
+<Site title="Rozenite · Variant B · Agent-led" noindex>
   <Nav />
   <main class="frame">
     <HeroAgents />
@@ -76,28 +78,7 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
         <h2 class="h2" id="domains-title">Five built in. <em>One for your app.</em></h2>
         <p class="lede">Every React Native target has the five built-in domains. Register a tool in your app and an <code>app</code> domain appears beside them.</p>
       </div>
-      <div class="cells cells--3">
-        {
-          domains.map((d) => (
-            <article class="cell">
-              <span class="cell-top">
-                <code class="pkg dom">{d.id}</code>
-                <span class="chip">Built-in</span>
-              </span>
-              <p class="body">{d.about}</p>
-              <p class="tools label">{d.tools.join(' · ')}</p>
-            </article>
-          ))
-        }
-        <a class="cell cell--link" href={docs.appTools}>
-          <span class="cell-top">
-            <code class="pkg dom">app</code>
-            <span class="chip chip--agent">Yours</span>
-          </span>
-          <p class="body">Tools your app registers with one hook, named <code>app.&lt;name&gt;</code>.</p>
-          <span class="label more">Add a tool <span aria-hidden="true">→</span></span>
-        </a>
-      </div>
+      <Domains />
     </section>
 
     <section id="plugins" aria-labelledby="plugins-title">
@@ -106,32 +87,7 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
         <h2 class="h2" id="plugins-title">Install a plugin. <em>Your agent gets its tools.</em></h2>
         <p class="lede">These official plugins register agent tools when their integration is enabled in the app.</p>
       </div>
-      <ul class="cells cells--4">
-        {
-          agentPlugins.map((p) => (
-            <li class="cell">
-              <span class="cell-top">
-                <PixelIcon name={p.icon} size={27} class="accent" />
-                <code class="pkg dom">{p.agent}</code>
-              </span>
-              <h3 class="h3">
-                <a class="plain" href={p.href}>
-                  {p.name}
-                </a>
-              </h3>
-              <p class="tools label">{p.tools?.join(' · ')}</p>
-            </li>
-          ))
-        }
-        <li class="cell">
-          <span class="cell-top">
-            <PixelIcon name="code" size={27} class="accent" />
-            <code class="pkg dom">@your/plugin</code>
-          </span>
-          <h3 class="h3"><a class="plain" href={docs.pluginTools}>Your plugin</a></h3>
-          <p class="tools label">useRozenitePluginAgentTool</p>
-        </li>
-      </ul>
+      <AgentPlugins />
     </section>
 
     <section id="app-tools" aria-labelledby="app-title">
@@ -158,7 +114,7 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
     </section>
 
     <section id="skill" aria-labelledby="skill-title">
-      <p class="section-head label"><b>[05]</b> Skill, SDK and tap</p>
+      <p class="section-head label"><b>[05]</b> Skill and SDK</p>
       <div class="split">
         <div class="split-copy">
           <h2 class="h2" id="skill-title">Teach the agent. <em>Or script it yourself.</em></h2>
@@ -177,22 +133,21 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
         <Dither scene="flow" />
         <CopyCommand command={site.skill} />
       </div>
-      <div class="split split--top">
-        <div class="split-copy">
-          <h3 class="h2">Watch a plugin’s messages <em>from the terminal.</em></h3>
-          <p class="lede">
-            <code>rozenite agent tap</code> prints a plugin's messages in both directions without a browser, and can send
-            one to see what comes back. Pass <code>--json</code> for another program to read.
-          </p>
-          <a class="label more" href={docs.tap}>Tap <span aria-hidden="true">→</span></a>
-        </div>
-        <Window title="zsh">
-          <CodeBlock code={code.tap} lang="text" wrap />
-        </Window>
-      </div>
     </section>
 
-    <Faq num="06" />
+    <section id="panels" aria-labelledby="panels-title">
+      <p class="section-head label"><b>[06]</b> Panels for you</p>
+      <div class="intro">
+        <h2 class="h2" id="panels-title">The same plugins, <em>as panels in DevTools.</em></h2>
+        <p class="lede">
+          Every plugin adds a panel to React Native DevTools, so you can look at the same state your agent reads and changes.
+          A device serves one debugger connection at a time: stop the agent's session, then open DevTools.
+        </p>
+      </div>
+      <PluginGrid />
+    </section>
+
+    <Faq num="07" />
     <Closing />
   </main>
   <Footer />
@@ -206,22 +161,5 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
   }
   .band :global(.band-window) {
     width: min(100%, 44rem);
-  }
-  .dom {
-    font-size: 0.8125rem;
-  }
-  .tools {
-    margin: 0;
-    color: var(--faint);
-    text-transform: none;
-    letter-spacing: 0.02em;
-    font-size: 0.6875rem;
-    overflow-wrap: anywhere;
-  }
-  .plain {
-    text-decoration: none;
-  }
-  .plain:hover {
-    color: var(--accent);
   }
 </style>

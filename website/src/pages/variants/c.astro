@@ -1,5 +1,5 @@
 ---
-// Variant C · Build: for teams who need a panel nobody has built yet.
+// Variant C · Build-led: one plugin gives you a panel and your agent tools.
 import Site from '../../layouts/Site.astro';
 import CodeBlock from '../../components/site/CodeBlock.astro';
 import Closing from '../../components/site/Closing.astro';
@@ -63,7 +63,7 @@ const targets = [
 const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
 ---
 
-<Site title="Rozenite · Variant C · Build" noindex>
+<Site title="Rozenite · Variant C · Build-led" noindex>
   <Nav />
   <main class="frame">
     <HeroBuild />
@@ -112,10 +112,28 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
       </div>
     </section>
 
+    <section id="agents" aria-labelledby="agents-title">
+      <p class="section-head label"><b>[02]</b> Agent tools</p>
+      <div class="split split--top">
+        <div class="split-copy">
+          <h2 class="h2" id="agents-title">The same app side, <em>as tools for agents.</em></h2>
+          <p class="lede">
+            Register tools from the app side with <code>useRozenitePluginAgentTool</code>. Coding agents find them under a
+            domain named after your plugin, next to <code>console</code> and <code>network</code>, and call them while your
+            panel shows the same state to you.
+          </p>
+          <a class="label more" href={docs.pluginTools}>Making your plugin agent-enabled <span aria-hidden="true">→</span></a>
+        </div>
+        <Window title="agent-tools.tsx">
+          <CodeBlock code={code.pluginTool} lang="tsx" wrap />
+        </Window>
+      </div>
+    </section>
+
     <section id="plugins" aria-labelledby="plugins-title">
-      <p class="section-head label"><b>[02]</b> Official plugins</p>
+      <p class="section-head label"><b>[03]</b> Official plugins</p>
       <div class="intro">
-        <h2 class="h2" id="plugins-title">Fourteen to install, <em>fourteen to read.</em></h2>
+        <h2 class="h2" id="plugins-title">Fourteen to install, <em>fourteen to learn from.</em></h2>
         <p class="lede">
           Every official plugin lives in the Rozenite repo, built on the same APIs as yours. When you start a plugin, start
           by reading the closest one.
@@ -125,7 +143,7 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
     </section>
 
     <section id="develop" aria-labelledby="develop-title">
-      <p class="section-head label"><b>[03]</b> Develop and test</p>
+      <p class="section-head label"><b>[04]</b> Develop and test</p>
       <div class="intro">
         <h2 class="h2" id="develop-title">Iterate on the panel <em>without a simulator.</em></h2>
       </div>
@@ -155,7 +173,7 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
     </section>
 
     <section id="targets" aria-labelledby="targets-title">
-      <p class="section-head label"><b>[04]</b> Targets</p>
+      <p class="section-head label"><b>[05]</b> Targets</p>
       <div class="split split--top">
         <div class="split-copy">
           <h2 class="h2" id="targets-title">Say where it runs. <em>Rozenite holds you to it.</em></h2>
@@ -178,24 +196,6 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
             </article>
           ))
         }
-      </div>
-    </section>
-
-    <section id="agents" aria-labelledby="agents-title">
-      <p class="section-head label"><b>[05]</b> Agent tools</p>
-      <div class="split split--top">
-        <div class="split-copy">
-          <span class="chip">Experimental</span>
-          <h2 class="h2" id="agents-title">Give your plugin <em>tools for agents.</em></h2>
-          <p class="lede">
-            Register tools from the app side with <code>useRozenitePluginAgentTool</code>. Coding agents find them under a
-            domain named after your plugin, next to <code>console</code> and <code>network</code>.
-          </p>
-          <a class="label more" href={docs.pluginTools}>Making your plugin agent-enabled <span aria-hidden="true">→</span></a>
-        </div>
-        <Window title="agent-tools.tsx">
-          <CodeBlock code={code.pluginTool} lang="tsx" wrap />
-        </Window>
       </div>
     </section>
 

@@ -20,7 +20,6 @@ const { title = 'Store', count = 0, kind = 'ios', class: className } = Astro.pro
     <div class="app-body">
       <slot />
     </div>
-    <span class="tap-ring" data-ring></span>
   </div>
 </div>
 
@@ -110,28 +109,5 @@ const { title = 'Store', count = 0, kind = 'ios', class: className } = Astro.pro
     position: relative;
     flex: 1;
     min-height: 0;
-  }
-  .tap-ring {
-    position: absolute;
-    z-index: 5;
-    width: 1.5rem;
-    height: 1.5rem;
-    margin: -0.75rem 0 0 -0.75rem;
-    border: 2px solid var(--text);
-    background: rgb(255 255 255 / 0.12);
-    opacity: 0;
-    transition:
-      left 0.38s ease,
-      top 0.38s ease,
-      opacity 0.2s,
-      scale 0.12s;
-    pointer-events: none;
-  }
-  .tap-ring.is-on {
-    opacity: 1;
-  }
-  .tap-ring.is-down {
-    scale: 0.7;
-    background: rgb(255 255 255 / 0.3);
   }
 </style>

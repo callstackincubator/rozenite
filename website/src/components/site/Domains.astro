@@ -1,0 +1,41 @@
+---
+// The agent domains as cells: the five built-in ones and `app` for your own tools.
+import { docs, domains } from '../../site/content';
+---
+
+<div class="cells cells--3">
+  {
+    domains.map((d) => (
+      <article class="cell">
+        <span class="cell-top">
+          <code class="pkg dom">{d.id}</code>
+          <span class="chip">Built-in</span>
+        </span>
+        <p class="body">{d.about}</p>
+        <p class="tools label">{d.tools.join(' · ')}</p>
+      </article>
+    ))
+  }
+  <a class="cell cell--link" href={docs.appTools}>
+    <span class="cell-top">
+      <code class="pkg dom">app</code>
+      <span class="chip chip--agent">Yours</span>
+    </span>
+    <p class="body">Tools your app registers with one hook, named <code>app.&lt;name&gt;</code>.</p>
+    <span class="label more">Add a tool <span aria-hidden="true">→</span></span>
+  </a>
+</div>
+
+<style>
+  .dom {
+    font-size: 0.8125rem;
+  }
+  .tools {
+    margin: 0;
+    color: var(--faint);
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 0.6875rem;
+    overflow-wrap: anywhere;
+  }
+</style>

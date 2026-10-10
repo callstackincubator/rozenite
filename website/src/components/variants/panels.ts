@@ -1,133 +1,116 @@
-// Variant A's hero: plugin tabs appear in DevTools and fill with live rows from the app.
+// Variant A's hero: the same failing request seen by a human in DevTools, then by an agent in
+// the terminal. One debugger connection at a time, so the two sides take turns.
 // Loaded on demand by HeroPanels.astro.
-import { sendPacket, sleep, whenVisible } from '../site/anim';
+import { ghostLine, sendPacket, sleep, whenVisible } from '../site/anim';
+
+const DOT = '<span class="p">●</span> ';
+const LINES = [
+  { text: '> Why does the cart screen fail?', cls: 'user', type: true },
+  { text: 'session · create', cls: 'tool', prefix: DOT, call: true },
+  { text: 'network · listRequests', args: ' {"limit":5}', cls: 'tool', prefix: DOT, call: true },
+  { text: '  GET  /api/cart  500  212 ms', cls: 'out' },
+  {
+    text: 'console · getMessages',
+    args: ' {"levels":["error"]}',
+    cls: 'tool',
+    prefix: DOT,
+    call: true,
+  },
+  { text: "  ERR  TypeError: Cannot read property 'price' of undefined", cls: 'out' },
+  {
+    text: '✓ /api/cart returns 500, and CartScreen reads items before they load.',
+    cls: 'ok',
+    type: true,
+  },
+];
 
 export default function runPanels(viz: HTMLElement) {
   const q = <T extends HTMLElement = HTMLElement>(sel: string) => viz.querySelector<T>(sel)!;
-  const qa = (sel: string) => [...viz.querySelectorAll<HTMLElement>(sel)];
-  const duct = q('[data-duct]');
-  const pkt = q('[data-pkt]');
-  const ring = q('[data-ring]');
-  const count = q('[data-count]');
-  const screen = q('.screen');
-  const cartValue = q('[data-cart-value]');
-  const qStatus = q('[data-q-status]');
+  const devtools = q('.rig-devtools');
+  const agent = q('.rig-agent');
+  const term = q('[data-term]');
+  const ductH = q('[data-duct-human]');
+  const ductA = q('[data-duct-agent]');
+  const pktH = q('[data-pkt-human]');
+  const pktA = q('[data-pkt-agent]');
+  const pktCall = q('[data-pkt-call]');
+  const views = [...viz.querySelectorAll<HTMLElement>('[data-view]')];
+  const title = q('[data-title]');
+  const rows = ['n0', 'n1', 'n2'].map((id) => q(`[data-row="${id}"]`));
 
-  // The phone sits left of the window, or below it when the layout stacks.
-  const toDevTools = () => sendPacket(duct, pkt, duct.clientHeight > duct.clientWidth);
-
-  const reveal = (id: string) => q(`[data-tab="${id}"]`).removeAttribute('data-hidden');
-  const strip = q('.dt-tabs');
-  const select = (id: string) => {
-    for (const t of qa('[data-tab]')) t.setAttribute('aria-selected', String(t.dataset.tab === id));
-    // Keep the selected tab in view when the strip is narrower than its tabs.
-    const tab = q(`[data-tab="${id}"]`);
-    strip.scrollLeft = Math.max(0, tab.offsetLeft + tab.offsetWidth - strip.clientWidth);
-    for (const p of qa('[data-pane]')) p.classList.toggle('is-on', p.dataset.pane === id);
+  const show = (view: 'home' | 'cart') => {
+    for (const v of views) v.classList.toggle('is-on', v.dataset.view === view);
+    title.textContent = view === 'home' ? 'Store' : 'Cart';
   };
-  const row = (id: string, on = true) => q(`[data-row="${id}"]`).classList.toggle('is-on', on);
-  const item = (i: number) => q(`[data-item="${i}"]`).classList.add('is-on');
-  const setCount = (n: number) => {
-    count.textContent = String(n);
-    count.classList.toggle('is-full', n > 0);
+  // DevTools sits left of the app, or above it when stacked: either way, against the duct.
+  const toDevTools = () => sendPacket(ductH, pktH, true);
+  const attach = (side: 'human' | 'agent' | 'both') => {
+    devtools.classList.toggle('is-idle', side === 'agent');
+    ductH.classList.toggle('is-idle', side === 'agent');
+    agent.classList.toggle('is-idle', side === 'human');
+    ductA.classList.toggle('is-idle', side === 'human');
   };
 
-  const tap = async (name: string) => {
-    const target = q(`[data-tap="${name}"]`);
-    const s = screen.getBoundingClientRect();
-    const t = target.getBoundingClientRect();
-    ring.style.left = `${t.left - s.left + t.width / 2}px`;
-    ring.style.top = `${t.top - s.top + t.height / 2}px`;
-    ring.classList.add('is-on');
-    await sleep(420);
-    ring.classList.add('is-down');
-    target.classList.add('is-pressed');
-    await sleep(140);
-    ring.classList.remove('is-down');
-    target.classList.remove('is-pressed');
-    await sleep(160);
-    ring.classList.remove('is-on');
+  const prepare = () => {
+    term.textContent = '';
+    return LINES.map((l) => {
+      const g = ghostLine(term, l.text + (l.args ?? ''), l.cls, l.prefix ?? '');
+      return { ...l, g };
+    });
   };
-
+  const dimArgs = (el: HTMLElement, text: string, args?: string) => {
+    if (!args) return;
+    const typed = el.children[el.children.length - 2] as HTMLElement;
+    typed.innerHTML = `${text}<span class="dim">${args}</span>`;
+  };
   const reset = () => {
-    for (const id of ['network', 'query', 'storage'])
-      q(`[data-tab="${id}"]`).setAttribute('data-hidden', '');
-    select('console');
-    for (const r of qa('[data-row]')) r.classList.remove('is-on');
-    for (const i of qa('[data-item]')) i.classList.remove('is-on');
-    q('[data-empty]').style.visibility = 'visible';
-    setCount(0);
-    cartValue.textContent = '1';
-    cartValue.classList.remove('flash');
-    qStatus.textContent = 'fetching';
-    qStatus.className = 'live';
+    show('home');
+    for (const r of rows) r.classList.remove('is-on', 'is-picked');
+    return prepare();
   };
 
   const play = async () => {
-    reset();
-    await sleep(900);
-
-    // Network Activity: the app loads, each request lands as a row.
-    reveal('network');
-    await sleep(240);
-    select('network');
-    await sleep(500);
-    await toDevTools();
-    row('n0');
-    q('[data-empty]').style.visibility = 'hidden';
-    for (let i = 0; i < 3; i++) {
-      item(i);
-      await sleep(90);
+    const lines = reset();
+    // The human's turn: DevTools is attached; the app's requests land as rows.
+    attach('human');
+    await sleep(800);
+    for (const r of rows.slice(0, 2)) {
+      await toDevTools();
+      r.classList.add('is-on');
     }
+    await sleep(400);
+    show('cart');
     await toDevTools();
-    row('n1');
-    await sleep(200);
-    await toDevTools();
-    row('n2');
-    await sleep(1400);
+    rows[2]!.classList.add('is-on', 'is-picked');
+    await sleep(1800);
 
-    // TanStack Query: adding to the cart refetches ["cart"].
-    reveal('query');
-    await sleep(240);
-    select('query');
-    row('q0');
-    row('q1');
-    await sleep(700);
-    await tap('add-1');
-    setCount(1);
-    await toDevTools();
-    row('q2');
-    row('q3');
-    await sleep(700);
-    qStatus.textContent = 'fresh';
-    qStatus.className = 'mut';
-    await sleep(1400);
-
-    // Storage: the stored count follows the app.
-    reveal('storage');
-    await sleep(240);
-    select('storage');
-    for (const r of ['s0', 's1', 's2']) row(r);
-    await sleep(700);
-    await tap('add-2');
-    setCount(2);
-    await toDevTools();
-    cartValue.textContent = '2';
-    cartValue.classList.add('flash');
+    // The agent's turn: it attaches from the terminal and asks for the same data.
+    attach('agent');
     await sleep(500);
-    cartValue.classList.remove('flash');
-    cartValue.classList.add('live');
-    await sleep(2600);
-    cartValue.classList.remove('live');
+    for (const l of lines) {
+      if (l.type) await l.g.type(20);
+      else {
+        await sleep(280);
+        l.g.show();
+        dimArgs(l.g.el, l.text, l.args);
+      }
+      if (l.call) {
+        await sendPacket(ductA, pktCall, true);
+        await sendPacket(ductA, pktA);
+      }
+    }
+    await sleep(3200);
   };
 
   whenVisible(viz, play, () => {
-    reset();
-    for (const id of ['network', 'query', 'storage']) reveal(id);
-    select('network');
-    for (const r of ['n0', 'n1', 'n2']) row(r);
-    for (let i = 0; i < 3; i++) item(i);
-    q('[data-empty]').style.visibility = 'hidden';
-    setCount(2);
+    const lines = reset();
+    attach('both');
+    for (const r of rows) r.classList.add('is-on');
+    rows[2]!.classList.add('is-picked');
+    show('cart');
+    for (const l of lines) {
+      l.g.show();
+      dimArgs(l.g.el, l.text, l.args);
+    }
   });
 }

@@ -708,3 +708,34 @@ dl.cells dd {
 .band .cmd {
   width: min(100%, 48rem);
 }
+
+/* A visual that is not attached to the app right now: a device serves one debugger
+   connection at a time, so DevTools and an agent take turns. */
+.is-idle,
+.is-active {
+  transition: opacity 0.3s steps(4);
+}
+/* Windows keep their solid fill; only what is inside them dims, so text never sits on dither. */
+.window.is-idle > *,
+.duct.is-idle {
+  opacity: 0.4;
+  transition: opacity 0.3s steps(4);
+}
+.window > * {
+  transition: opacity 0.3s steps(4);
+}
+/* A row picked out in a pictured panel: selection, never status. */
+.pane-row.is-picked {
+  position: relative;
+  background: var(--surface);
+}
+.pane-row.is-picked::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--accent);
+}
+.intro--sub {
+  padding-top: clamp(2rem, 4vw, 3rem);
+}

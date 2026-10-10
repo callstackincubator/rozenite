@@ -1,7 +1,9 @@
 ---
-// Variant A's hero: an app on a phone and React Native DevTools beside it. Plugin tabs appear
-// one by one (Network Activity, TanStack Query, Storage) and fill with rows as the app runs,
-// each row arriving as a packet across the duct. No captions: the tabs and rows tell it.
+// Variant A's hero: one running app between its two views. On the left React Native DevTools,
+// the human's view, where the Network Activity panel fills with the app's requests. On the
+// right the agent's terminal, where the same failing request comes back from
+// `network · listRequests`. A device serves one debugger connection at a time, so the two take
+// turns: the idle side dims while the other is attached.
 import CopyCommand from '../site/CopyCommand.astro';
 import DevTools from '../site/DevTools.astro';
 import Dither from '../site/Dither.astro';
@@ -16,22 +18,18 @@ const products = [
 ];
 const tabs = [
   { id: 'console', label: 'Console' },
-  { id: 'sources', label: 'Sources' },
-  { id: 'network-builtin', label: 'Network' },
-  { id: 'memory', label: 'Memory' },
-  { id: 'network', label: 'Network Activity', plugin: true, hidden: true },
-  { id: 'query', label: 'TanStack Query', plugin: true, hidden: true },
-  { id: 'storage', label: 'Storage', plugin: true, hidden: true },
+  { id: 'network', label: 'Network Activity', plugin: true },
+  { id: 'storage', label: 'Storage', plugin: true },
 ];
 ---
 
 <section class="hero" aria-labelledby="hero-title">
   <div class="hero-top hero-top--split">
     <div class="hero-copy">
-      <h1 class="h1" id="hero-title">Plug-and-play panels <em>for React Native DevTools.</em></h1>
+      <h1 class="h1" id="hero-title">See inside your running app. <em>So can your agent.</em></h1>
       <p class="lede">
-        Install a plugin and its panel shows up in React Native DevTools, with live data from your running app. Expo or
-        bare React Native, on Metro or Re.Pack.
+        Rozenite puts plugin panels in React Native DevTools for you, and gives your coding agent the same data as tools it
+        calls from the terminal: logs, network requests, React profiles and plugin state.
       </p>
       <div class="actions">
         <a class="btn" href={docs.start}>Get started <span aria-hidden="true">→</span></a>
@@ -42,8 +40,11 @@ const tabs = [
       <div class="term">
         <div class="ln"><span class="p">$</span> npx rozenite@latest init</div>
         <div class="ln"><span class="p">$</span> npm install -D @rozenite/network-activity-plugin</div>
-        <div class="ln"><span class="p">$</span> npm start</div>
-        <div class="ln dim"># press j to open React Native DevTools</div>
+        <div class="ln dim"># for you: press j to open React Native DevTools</div>
+        <div class="ln">
+          <span class="p">$</span> {site.skill.replace(' --skill rozenite', '')} <span class="nw">--skill rozenite</span>
+        </div>
+        <div class="ln dim"># for your agent: the rozenite skill</div>
       </div>
     </Window>
   </div>
@@ -52,52 +53,51 @@ const tabs = [
     class="viz"
     data-hero-panels
     role="img"
-    aria-label="An app runs on a phone. In React Native DevTools beside it, Network Activity, TanStack Query and Storage panels appear and fill with the app's requests, queries and stored values as it runs."
+    aria-label="One running app with two views. In React Native DevTools, the Network Activity panel shows the app's requests, including a failing GET /api/cart. Then a coding agent attaches from the terminal, lists the same requests, finds the same failing request and the error behind it."
   >
     <Dither scene="crystals" focus={0.5} />
     <div class="rig">
-      <Phone title="Store" count={0} class="rig-phone">
-        <p class="store-empty" data-empty>Loading</p>
-        <ul class="store">
-          {
-            products.map((p, i) => (
-              <li class="item" data-item={i}>
-                <span class:list={['art', `art-${p.art}`]} />
-                <span class="item-name">{p.name}</span>
-                <span class="item-price">{p.price}</span>
-                <span class="item-add" data-tap={`add-${i}`}>+</span>
-              </li>
-            ))
-          }
-        </ul>
-      </Phone>
-
-      <div class="duct" data-duct><span class="pkt" data-pkt></span></div>
-
-      <DevTools tabs={tabs} selected="console" class="rig-devtools">
-        <div class="pane is-on" data-pane="console" style="--cols: 3rem 1fr">
-          <div class="pane-row"><span class="dim">LOG</span><span class="mut">Running "Store" with {'{"rootTag":1}'}</span></div>
-        </div>
-        <div class="pane" data-pane="network" style="--cols: 3rem minmax(0,1fr) 3rem 4rem">
+      <DevTools tabs={tabs} selected="network" class="rig-devtools">
+        <div class="pane is-on" data-pane="network" style="--cols: 2.75rem minmax(0,1fr) 2.75rem 3.75rem">
           <div class="pane-row pane-head"><span>Method</span><span>URL</span><span>Status</span><span>Time</span></div>
-          <div class="pane-row" data-row="n0"><span>GET</span><span>/api/products</span><span class="live">200</span><span class="mut">142 ms</span></div>
-          <div class="pane-row" data-row="n1"><span>GET</span><span>/api/user</span><span class="live">200</span><span class="mut">88 ms</span></div>
-          <div class="pane-row" data-row="n2"><span>WS</span><span>/live/stock</span><span class="live">101</span><span class="mut">open</span></div>
-        </div>
-        <div class="pane" data-pane="query" style="--cols: minmax(0,1fr) 5.5rem 4rem">
-          <div class="pane-row pane-head"><span>Query key</span><span>Status</span><span>Observers</span></div>
-          <div class="pane-row" data-row="q0"><span>["products"]</span><span class="mut">fresh</span><span class="mut">1</span></div>
-          <div class="pane-row" data-row="q1"><span>["user"]</span><span class="mut">fresh</span><span class="mut">1</span></div>
-          <div class="pane-row" data-row="q2"><span>["cart"]</span><span class="live" data-q-status>fetching</span><span class="mut">2</span></div>
-          <div class="pane-row" data-row="q3"><span class="mut">mutation · addToCart</span><span class="live">success</span><span class="mut">–</span></div>
-        </div>
-        <div class="pane" data-pane="storage" style="--cols: 6.5rem minmax(0,1fr) 4.5rem">
-          <div class="pane-row pane-head"><span>Storage</span><span>Key</span><span>Value</span></div>
-          <div class="pane-row" data-row="s0"><span class="mut">mmkv</span><span>cart.count</span><span><b class="val" data-cart-value>1</b></span></div>
-          <div class="pane-row" data-row="s1"><span class="mut">async-storage</span><span>onboarding.done</span><span>true</span></div>
-          <div class="pane-row" data-row="s2"><span class="mut">secure-store</span><span>session.token</span><span class="mut">••••••</span></div>
+          <div class="pane-row" data-row="n0"><span>GET</span><span>/api/products</span><span class="mut">200</span><span class="mut">142 ms</span></div>
+          <div class="pane-row" data-row="n1"><span>GET</span><span>/api/user</span><span class="mut">200</span><span class="mut">88 ms</span></div>
+          <div class="pane-row" data-row="n2"><span>GET</span><span>/api/cart</span><span>500</span><span class="mut">212 ms</span></div>
         </div>
       </DevTools>
+
+      <div class="duct" data-duct-human><span class="pkt" data-pkt-human></span></div>
+
+      <Phone title="Store" count={2} class="rig-phone">
+        <div class="view is-on" data-view="home">
+          <ul class="store">
+            {
+              products.map((p) => (
+                <li class="item">
+                  <span class:list={['art', `art-${p.art}`]} />
+                  <span class="item-name">{p.name}</span>
+                  <span class="item-price">{p.price}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div class="view" data-view="cart">
+          <div class="err">
+            <span class="label">Error</span>
+            <p>Couldn’t load your cart.</p>
+          </div>
+        </div>
+      </Phone>
+
+      <div class="duct" data-duct-agent>
+        <span class="pkt" data-pkt-agent></span>
+        <span class="pkt pkt--back" data-pkt-call></span>
+      </div>
+
+      <Window title="agent" class="rig-agent">
+        <div class="term" data-term></div>
+      </Window>
     </div>
   </div>
 </section>
@@ -111,40 +111,56 @@ const tabs = [
 
 <style>
   .hero-top--split {
-    grid-template-columns: minmax(0, 1fr) 23rem;
+    grid-template-columns: minmax(0, 1fr) 24rem;
     align-items: center;
     padding-block: clamp(2rem, 4.5vw, 3.75rem);
   }
   .hero-top--split .h1 {
-    max-width: 22ch;
+    max-width: 16ch;
   }
   :global(.hero-side) .term {
     font-size: 0.75rem;
+    overflow-wrap: normal;
+  }
+  .nw {
+    white-space: nowrap;
   }
   .rig {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0;
     padding: clamp(2rem, 5vw, 3.5rem) var(--pad);
   }
   .rig :global(.rig-devtools) {
-    flex: 0 1 42rem;
-    height: 20rem;
+    flex: 1 1 22rem;
+    max-width: 26rem;
+    height: 15rem;
+  }
+  .rig :global(.rig-agent) {
+    flex: 1 1 22rem;
+    max-width: 26rem;
+    min-height: 15rem;
+  }
+  .rig :global(.rig-agent) .term {
+    font-size: 0.6875rem;
+    line-height: 1.65;
+  }
+  .rig .duct {
+    max-width: 4.5rem;
+  }
+  .rig :global(.rig-phone) {
+    --w: 11.5rem;
   }
 
-  /* The app on the phone: a product list with an add button per row. */
-  .store-empty {
+  .view {
     position: absolute;
-    top: 1rem;
-    left: 0.75rem;
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    letter-spacing: var(--label-tracking);
-    text-transform: uppercase;
-    color: var(--faint);
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.28s ease;
+  }
+  .view.is-on {
+    opacity: 1;
   }
   .store {
     margin: 0;
@@ -153,21 +169,16 @@ const tabs = [
   }
   .item {
     display: grid;
-    grid-template-columns: 1.75rem minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
     column-gap: 0.5rem;
     align-items: center;
-    padding: 0.5rem 0;
+    padding: 0.4375rem 0;
     border-bottom: 1px solid var(--line);
-    font-size: 0.75rem;
-    visibility: hidden;
-  }
-  .item.is-on {
-    visibility: visible;
+    font-size: 0.6875rem;
   }
   .art {
     grid-row: span 2;
-    width: 1.75rem;
+    width: 1.5rem;
     aspect-ratio: 1;
     background-color: var(--field);
     background-size: 4px 4px;
@@ -182,32 +193,27 @@ const tabs = [
     background-image: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.6) 1.5px, transparent 1.5px);
   }
   .item-price {
-    grid-column: 2;
     font-family: var(--font-mono);
-    font-size: 0.625rem;
+    font-size: 0.5625rem;
     color: var(--muted);
   }
-  .item-add {
-    grid-column: 3;
-    grid-row: 1 / span 2;
-    display: grid;
-    place-items: center;
-    width: 1.375rem;
-    height: 1.375rem;
+  /* An error, drawn without the accent: status never borrows the brand colour. */
+  .err {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin: 0.75rem;
+    padding: 0.625rem;
     border: 1px solid var(--line-strong);
-    font-family: var(--font-mono);
+    background: #0d0d0d;
     font-size: 0.75rem;
-    transition: background-color 0.15s;
   }
-  .item-add.is-pressed {
-    background: var(--line-strong);
+  .err .label {
+    font-size: 0.5625rem;
+    color: var(--faint);
   }
-  .val {
-    padding: 0 0.25rem;
-    font-weight: 400;
-    transition:
-      background-color 0.3s,
-      color 0.3s;
+  .err p {
+    margin: 0;
   }
 
   @media (max-width: 64rem) {
@@ -217,18 +223,36 @@ const tabs = [
     :global(.hero-side) {
       display: none;
     }
-  }
-  @media (max-width: 48rem) {
+    /* Too narrow for three across: the two views stack, the app between them. */
     .rig {
-      flex-direction: column-reverse;
+      flex-direction: column;
+    }
+    .rig :global(.rig-devtools),
+    .rig :global(.rig-agent) {
+      flex: none;
+      width: min(100%, 30rem);
+      max-width: none;
+    }
+    .rig :global(.rig-agent) {
+      min-height: 0;
+    }
+    .rig .duct {
+      flex: 0 0 2.5rem;
+      width: 2.25rem;
+      min-width: 0;
+      height: 2.5rem;
+      max-width: none;
+      background: repeating-linear-gradient(180deg, var(--track) 0 4px, transparent 4px 8px) center / 2px 100% no-repeat;
+    }
+    .rig .duct :global(.pkt) {
+      top: 0;
+      left: 50%;
     }
     .rig :global(.rig-devtools) {
-      flex: none;
-      width: 100%;
-      height: 15.5rem;
+      height: 12.5rem;
     }
     .rig :global(.rig-phone) {
-      --w: 11rem;
+      --w: 9.5rem;
     }
   }
 </style>

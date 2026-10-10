@@ -1,97 +1,91 @@
 ---
-// Variant B's hero: an agent works on a running app through Rozenite for Agents. It opens a
-// session, navigates the app to the broken screen with a React Navigation plugin tool, then
-// reads the error from the console domain and the failing request from the network domain.
-// Calls step across the duct toward the app, data steps back.
+// Variant B's hero, agent-led: the agent resets onboarding and opens it in the running app,
+// through the Storage and React Navigation plugin tools. When it stops its session, React
+// Native DevTools attaches and the human sees in the Storage panel what the agent changed.
+// One debugger connection at a time, so the two take turns.
 import CopyCommand from '../site/CopyCommand.astro';
+import DevTools from '../site/DevTools.astro';
 import Dither from '../site/Dither.astro';
 import Phone from '../site/Phone.astro';
 import Window from '../site/Window.astro';
 import { docs, site } from '../../site/content';
 
-const listed = [
-  { id: 'console', kind: 'built-in' },
-  { id: 'network', kind: 'built-in' },
-  { id: 'react', kind: 'built-in' },
-  { id: 'performance', kind: 'built-in' },
-  { id: 'memory', kind: 'built-in' },
-  { id: 'storage', kind: 'plugin' },
-  { id: 'react-navigation', kind: 'plugin' },
-  { id: 'app', kind: 'your tools' },
-];
 const products = [
   { name: 'Runner Low', price: '$120', art: 'a' },
   { name: 'Cotton Tee', price: '$32', art: 'b' },
   { name: 'Field Cap', price: '$24', art: 'c' },
 ];
+const tabs = [
+  { id: 'console', label: 'Console' },
+  { id: 'storage', label: 'Storage', plugin: true },
+  { id: 'nav', label: 'React Navigation', plugin: true },
+];
 ---
 
-<section class="hero" aria-labelledby="hero-title">
-  <div class="hero-top hero-top--b">
-    <div class="hero-copy">
-      <span class="chip">Rozenite for Agents · Experimental</span>
-      <h1 class="h1" id="hero-title">Give your agent <em>the running app.</em></h1>
+<section class="hero b-grid" aria-labelledby="hero-title">
+    <div class="hero-copy b-copy">
+      <span class="chip">Rozenite for Agents</span>
+      <h1 class="h1" id="hero-title">Your agent works in the app. <em>You check it in DevTools.</em></h1>
       <p class="lede">
-        Your coding agent opens a session on your React Native app, reads its logs, network requests and React profiles,
-        and calls the tools your plugins and your app register.
+        Coding agents get the running app's logs, network requests, React tree and plugin tools from the terminal. The same
+        plugins give you panels in React Native DevTools, so you can see what your agent changed.
       </p>
       <div class="actions">
         <a class="btn" href={docs.agents}>Set up agents <span aria-hidden="true">→</span></a>
         <CopyCommand command={site.install} />
       </div>
     </div>
-    <Window title="agent · domains" class="hero-domains">
-      <p class="dom-app"><i aria-hidden="true"></i>Store · iOS Simulator<span>{listed.length} domains</span></p>
-      <ul class="dom-list">
-        {
-          listed.map((d) => (
-            <li>
-              <code>{d.id}</code>
-              <span class="label">{d.kind}</span>
-            </li>
-          ))
-        }
-      </ul>
-    </Window>
-  </div>
 
   <div
-    class="viz"
+    class="viz b-viz"
     data-hero-agents
     role="img"
-    aria-label="A coding agent asks why the cart screen shows an error. Through Rozenite it opens the cart screen in the running app, reads the TypeError from the console and a failing request from the network domain, and explains the cause."
+    aria-label="A coding agent resets onboarding in the running app with a Storage plugin tool, opens the onboarding screen with a React Navigation tool and stops its session. Then React Native DevTools attaches, and its Storage panel shows the onboarding.done value the agent set to false."
   >
-    <Dither scene="crystals" focus={0.62} />
+    <Dither scene="crystals" focus={0.7} />
     <div class="rig">
       <Window title="agent" class="rig-agent">
         <div class="term" data-term></div>
       </Window>
-      <div class="duct" data-duct>
-        <span class="pkt" data-pkt></span>
-        <span class="pkt pkt--back" data-pkt-back></span>
+      <div class="duct duct--a" data-duct-agent>
+        <span class="pkt" data-pkt-agent></span>
+        <span class="pkt pkt--back" data-pkt-call></span>
       </div>
-      <Phone title="Store" count={2} class="rig-phone">
-        <div class="view is-on" data-view="home">
-          <ul class="store">
-            {
-              products.map((p) => (
-                <li class="item">
-                  <span class:list={['art', `art-${p.art}`]} />
-                  <span class="item-name">{p.name}</span>
-                  <span class="item-price">{p.price}</span>
-                </li>
-              ))
-            }
-          </ul>
+      <DevTools tabs={tabs} selected="storage" class="rig-devtools">
+        <div class="pane is-on" style="--cols: 3.5rem minmax(0,1fr) 3.5rem">
+          <div class="pane-row pane-head"><span>Storage</span><span>Key</span><span>Value</span></div>
+          <div class="pane-row" data-row><span class="mut">mmkv</span><span>onboarding.done</span><span>false</span></div>
+          <div class="pane-row" data-row><span class="mut">mmkv</span><span>cart.count</span><span>2</span></div>
+          <div class="pane-row" data-row><span class="mut">secure</span><span>session.token</span><span class="mut">••••</span></div>
         </div>
-        <div class="view" data-view="cart">
-          <div class="err">
-            <span class="label">Error</span>
-            <p>Couldn’t load your cart.</p>
-            <span class="retry label">Try again</span>
+      </DevTools>
+      <div class="duct duct--h" data-duct-human><span class="pkt" data-pkt-human></span></div>
+      <div class="rig-app">
+        <Phone title="Store" count={2}>
+          <div class="view is-on" data-view="home">
+            <ul class="store">
+              {
+                products.map((p) => (
+                  <li class="item">
+                    <span class:list={['art', `art-${p.art}`]} />
+                    <span class="item-name">{p.name}</span>
+                    <span class="item-price">{p.price}</span>
+                  </li>
+                ))
+              }
+            </ul>
           </div>
-        </div>
-      </Phone>
+          <div class="view" data-view="onboarding">
+            <div class="onb">
+              <span class="onb-art art art-a"></span>
+              <p class="onb-title">Welcome to Store</p>
+              <p class="onb-body">Save items, check out in two steps.</p>
+              <span class="onb-dots"><i class="on"></i><i></i><i></i></span>
+              <span class="onb-btn">Continue</span>
+            </div>
+          </div>
+        </Phone>
+      </div>
     </div>
   </div>
 </section>
@@ -104,85 +98,75 @@ const products = [
 </script>
 
 <style>
-  .hero-top--b {
-    grid-template-columns: minmax(0, 1fr) 22rem;
-    align-items: center;
-    padding-block: clamp(2rem, 4.5vw, 3.75rem);
+  /* Copy on the left, the whole scene on the right: the agent's terminal leads it. */
+  .b-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 25rem) minmax(0, 1fr);
   }
-  .hero-top--b .h1 {
-    max-width: 14ch;
+  .b-copy {
+    align-self: center;
+    padding: var(--rhythm) var(--pad);
   }
-
-  /* The domains the agent sees on this app: what "the running app" means here. */
-  :global(.hero-domains) {
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
+  .b-copy .h1 {
+    margin-top: -0.18em;
+    font-size: clamp(2rem, 1.4rem + 1.6vw, 2.875rem);
   }
-  .dom-app {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--line);
-    color: var(--text);
+  .b-viz {
+    display: grid;
+    align-content: center;
+    border-top: 0;
+    border-left: 1px solid var(--line);
   }
-  .dom-app i {
-    width: 6px;
-    height: 6px;
-    background: var(--accent);
-  }
-  .dom-app span {
-    margin-inline-start: auto;
-    color: var(--faint);
-  }
-  .dom-list {
-    margin: 0;
-    padding: 0.5rem 0;
-    list-style: none;
-  }
-  .dom-list li {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.3125rem 1rem;
-  }
-  .dom-list code {
-    font-family: inherit;
-    color: var(--accent);
-  }
-  .dom-list .label {
-    font-size: 0.625rem;
-    color: var(--faint);
-  }
-
+  /* The agent's terminal leads, top left; DevTools sits under it; the app on the right. */
   .rig {
     position: relative;
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(2rem, 3.5rem) auto;
+    grid-template-rows: auto auto;
     justify-content: center;
+    align-items: center;
+    row-gap: 1.25rem;
     padding: clamp(2rem, 5vw, 3.5rem) var(--pad);
   }
   .rig :global(.rig-agent) {
-    flex: 0 1 34rem;
+    grid-column: 1;
+    grid-row: 1;
   }
   .rig :global(.rig-agent) .term {
-    font-size: 0.75rem;
-    line-height: 1.7;
+    font-size: 0.6875rem;
+    line-height: 1.65;
+  }
+  .rig :global(.rig-devtools) {
+    grid-column: 1;
+    grid-row: 2;
+    height: 13.25rem;
+  }
+  .duct--a {
+    grid-column: 2;
+    grid-row: 1;
+    max-width: none;
+  }
+  .duct--h {
+    grid-column: 2;
+    grid-row: 2;
+    max-width: none;
+  }
+  .rig-app {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+  .rig-app :global(.device) {
+    --w: 10.5rem;
   }
 
   .view {
     position: absolute;
     inset: 0;
     opacity: 0;
-    translate: 8px 0;
-    transition:
-      opacity 0.28s ease,
-      translate 0.28s ease;
+    transition: opacity 0.28s ease;
   }
   .view.is-on {
     opacity: 1;
-    translate: 0 0;
   }
   .store {
     margin: 0;
@@ -191,16 +175,16 @@ const products = [
   }
   .item {
     display: grid;
-    grid-template-columns: 1.75rem minmax(0, 1fr);
+    grid-template-columns: 1.5rem minmax(0, 1fr);
     column-gap: 0.5rem;
     align-items: center;
-    padding: 0.5rem 0;
+    padding: 0.4375rem 0;
     border-bottom: 1px solid var(--line);
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
   }
   .art {
     grid-row: span 2;
-    width: 1.75rem;
+    width: 1.5rem;
     aspect-ratio: 1;
     background-color: var(--field);
     background-size: 4px 4px;
@@ -216,58 +200,99 @@ const products = [
   }
   .item-price {
     font-family: var(--font-mono);
-    font-size: 0.625rem;
+    font-size: 0.5625rem;
     color: var(--muted);
   }
-  /* An error, drawn without the accent: status never borrows the brand colour. */
-  .err {
+  .onb {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    margin: 0.875rem 0.75rem;
-    padding: 0.75rem;
-    border: 1px solid var(--line-strong);
-    background: #0d0d0d;
-    font-size: 0.8125rem;
+    height: 100%;
+    padding: 0.875rem 0.75rem 1.25rem;
   }
-  .err .label {
-    font-size: 0.5625rem;
-    color: var(--faint);
+  .onb-art {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-size: 5px 5px;
   }
-  .err p {
+  .onb-title {
+    margin: 0.25rem 0 0;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .onb-body {
     margin: 0;
+    font-size: 0.6875rem;
+    color: var(--muted);
   }
-  .retry {
-    align-self: flex-start;
-    margin-top: 0.25rem;
-    padding: 0.375rem 0.5rem;
-    border: 1px solid var(--line-strong);
-    color: var(--text) !important;
+  .onb-dots {
+    display: flex;
+    gap: 4px;
+    margin-top: auto;
+  }
+  .onb-dots i {
+    width: 6px;
+    height: 6px;
+    background: var(--line-strong);
+  }
+  .onb-dots i.on {
+    background: var(--accent);
+  }
+  .onb-btn {
+    display: grid;
+    place-items: center;
+    height: 1.875rem;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   @media (max-width: 64rem) {
-    .hero-top--b {
+    .b-grid {
       grid-template-columns: minmax(0, 1fr);
     }
-    :global(.hero-domains) {
-      display: none;
+    .b-viz {
+      border-left: 0;
+      border-top: 1px solid var(--line);
     }
   }
   @media (max-width: 48rem) {
+    /* Stacked: the agent, the app, then what you see in DevTools. */
     .rig {
-      flex-direction: column;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: none;
+      justify-items: center;
+      row-gap: 0;
     }
-    .rig :global(.rig-agent) {
-      flex: none;
+    .rig > :global(*) {
+      grid-column: 1 !important;
+      grid-row: auto !important;
+    }
+    .rig :global(.rig-agent),
+    .rig :global(.rig-devtools) {
       width: 100%;
     }
-    .rig :global(.rig-agent) .term {
-      font-size: 0.6875rem;
-      line-height: 1.6;
-      padding: 0.75rem;
+    .rig :global(.rig-agent) {
+      order: 1;
     }
-    .rig :global(.rig-phone) {
-      --w: 10.5rem;
+    .duct--a {
+      order: 2;
+    }
+    .rig-app {
+      order: 3;
+    }
+    .duct--h {
+      order: 4;
+    }
+    .rig :global(.rig-devtools) {
+      order: 5;
+    }
+    .rig-app :global(.device) {
+      --w: 9.5rem;
     }
   }
 </style>

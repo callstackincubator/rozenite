@@ -1,11 +1,11 @@
 ---
-// Variant A · Panels: for React Native developers debugging their app.
+// Variant A · Both views: you in React Native DevTools, your agent in the terminal, one app.
 import Site from '../../layouts/Site.astro';
+import AgentPlugins from '../../components/site/AgentPlugins.astro';
 import CodeBlock from '../../components/site/CodeBlock.astro';
 import Closing from '../../components/site/Closing.astro';
 import ConfigTabs from '../../components/site/ConfigTabs.astro';
-import CopyCommand from '../../components/site/CopyCommand.astro';
-import Dither from '../../components/site/Dither.astro';
+import Domains from '../../components/site/Domains.astro';
 import Faq from '../../components/site/Faq.astro';
 import Footer from '../../components/site/Footer.astro';
 import Marquee from '../../components/site/Marquee.astro';
@@ -24,14 +24,14 @@ const steps = [
     cmd: site.install,
   },
   {
-    title: 'Add the plugins you need',
-    body: 'Each one installs as a dev dependency. Most also need a small hook in your app; its page has the line.',
+    title: 'Add plugins',
+    body: 'Each plugin adds a panel to React Native DevTools for you. Seven of the official ones also give your agent tools.',
     cmd: 'npm install -D @rozenite/tanstack-query-plugin',
   },
   {
-    title: 'Open React Native DevTools',
-    body: 'Start your app as usual. Every installed plugin shows up as a panel, with no extra wiring.',
-    cmd: 'npm start',
+    title: 'Give your agent the skill',
+    body: 'The rozenite skill teaches a coding agent the `rozenite agent` CLI, with docs that match your installed version.',
+    cmd: site.skill,
   },
 ];
 
@@ -81,7 +81,7 @@ const beyond = [
 const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
 ---
 
-<Site title="Rozenite · Variant A · Panels" noindex>
+<Site title="Rozenite · Variant A · Both views" noindex>
   <Nav />
   <main class="frame">
     <HeroPanels />
@@ -90,7 +90,7 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
     <section id="how" aria-labelledby="how-title">
       <p class="section-head label"><b>[01]</b> How it works</p>
       <div class="intro">
-        <h2 class="h2" id="how-title">One command to set up. <em>Then install panels.</em></h2>
+        <h2 class="h2" id="how-title">Set it up once. <em>You and your agent both use it.</em></h2>
       </div>
       <ol class="cells cells--3">
         {
@@ -98,7 +98,7 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
             <li class="cell">
               <span class="label cell-num">{String(i + 1).padStart(2, '0')}</span>
               <h3 class="h3">{s.title}</h3>
-              <p class="body">{s.body}</p>
+              <p class="body" set:html={md(s.body)} />
               <code class="pkg">$ {s.cmd}</code>
             </li>
           ))
@@ -107,20 +107,42 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
       <ConfigTabs />
     </section>
 
+    <section id="agents" aria-labelledby="agents-title">
+      <p class="section-head label"><b>[02]</b> Agents</p>
+      <div class="split">
+        <div class="split-copy">
+          <h2 class="h2" id="agents-title">The same runtime, <em>as tools your agent calls.</em></h2>
+          <p class="lede">
+            Rozenite for Agents opens a session on the running app. Your agent reads logs, network requests and React
+            profiles, and calls the tools your plugins and your app register.
+          </p>
+          <a class="label more" href={docs.agents}>Rozenite for Agents <span aria-hidden="true">→</span></a>
+        </div>
+        <Window title="zsh">
+          <CodeBlock code={code.agentCli} lang="shell" minLines={6} />
+        </Window>
+      </div>
+      <Domains />
+      <div class="intro intro--sub">
+        <h3 class="h2">Plugins bring their own tools.</h3>
+      </div>
+      <AgentPlugins />
+    </section>
+
     <section id="plugins" aria-labelledby="plugins-title">
-      <p class="section-head label"><b>[02]</b> Official plugins</p>
+      <p class="section-head label"><b>[03]</b> Official plugins</p>
       <div class="intro">
         <h2 class="h2" id="plugins-title">Panels for the libraries <em>you already use.</em></h2>
         <p class="lede">
           Each official plugin is a thin bridge between a library and a DevTools panel. The ones marked agent also give
-          coding agents tools.
+          your coding agent tools for the same library.
         </p>
       </div>
       <PluginGrid />
     </section>
 
     <section aria-labelledby="safe-title">
-      <p class="section-head label"><b>[03]</b> Safe by default</p>
+      <p class="section-head label"><b>[04]</b> Safe by default</p>
       <div class="intro">
         <h2 class="h2" id="safe-title">Development only. <em>Nothing in production.</em></h2>
       </div>
@@ -152,7 +174,7 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
     </section>
 
     <section aria-labelledby="beyond-title">
-      <p class="section-head label"><b>[04]</b> Beyond React Native</p>
+      <p class="section-head label"><b>[05]</b> Beyond React Native</p>
       <div class="intro">
         <h2 class="h2" id="beyond-title">Same panels, <em>more places.</em></h2>
       </div>
@@ -172,28 +194,6 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
             </a>
           ))
         }
-      </div>
-    </section>
-
-    <section id="agents" aria-labelledby="agents-title">
-      <p class="section-head label"><b>[05]</b> Agents</p>
-      <div class="split">
-        <div class="split-copy">
-          <span class="chip">Experimental</span>
-          <h2 class="h2" id="agents-title">Your agent reads <em>the same data.</em></h2>
-          <p class="lede">
-            Rozenite for Agents opens a session on the running app. Coding agents read logs, network requests and React
-            profiles, and call the tools your plugins register.
-          </p>
-          <a class="label more" href={docs.agents}>Rozenite for Agents <span aria-hidden="true">→</span></a>
-        </div>
-        <Window title="zsh">
-          <CodeBlock code={code.agentCli} lang="shell" minLines={6} />
-        </Window>
-      </div>
-      <div class="band">
-        <Dither scene="flow" />
-        <CopyCommand command={site.skill} />
       </div>
     </section>
 
