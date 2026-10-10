@@ -226,6 +226,11 @@ All imagery is ordered dithering of a generated scene, drawn on canvas.
   behind an IntersectionObserver), and loops run only while on screen. Under
   `prefers-reduced-motion` everything shows one meaningful still frame: the moment that tells
   the story (the panel full of rows, the agent's conclusion), not the empty first frame.
+- An animation ships that still frame in the server HTML, text included, so crawlers and
+  readers without JavaScript see the whole story; the script resets it when it starts to play.
+- Dither scenes start after the page's `load` event and run in a Web Worker on an
+  OffscreenCanvas (main-thread fallback where that is missing), so building a scene never
+  blocks the page. Canvases fill boxes that are already sized, so nothing shifts when they start.
 - Vanilla scripts in Astro components; no framework islands on marketing pages.
 
 ## Home page
@@ -298,7 +303,8 @@ Both are generated from one page, `website/og/og.html`, with `pnpm --filter @roz
 - Fonts: `website/src/fonts/` (woff2 files, no `@fontsource` dependency)
 - Page shell for non-docs pages: `website/src/layouts/Site.astro`; Starlight overrides
   (lockup, dark default, header links, footer) in `website/src/components/starlight/`
-- Dithered scenes: `website/src/components/site/dither.ts`
+- Dithered scenes: `website/src/components/site/dither.ts`, run by `dither-host.ts` in
+  `dither.worker.ts`
 - Components: `website/src/components/site/`; the home hero in `website/src/components/home/`
 - Pages: `website/src/pages/index.astro` (home), `404.astro`, `welcome.astro`,
   `plugin-directory/`

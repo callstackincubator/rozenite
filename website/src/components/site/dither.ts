@@ -283,8 +283,10 @@ const scenes: Record<string, SceneBuilder> = {
   },
 };
 
+/** A canvas on the page, or one handed to the dither worker (dither.worker.ts). */
+type Surface = HTMLCanvasElement | OffscreenCanvas;
 type Painted = { key: string; scene: Scene; image: ImageData; px: Uint32Array; palette: number[] };
-const cache = new WeakMap<HTMLCanvasElement, Painted>();
+const cache = new WeakMap<Surface, Painted>();
 
 /** Packs the three tones (background, a dark mix of the accent, the accent) as RGBA words. */
 function palette(rgb: number[]) {
@@ -301,7 +303,7 @@ function palette(rgb: number[]) {
  * only when its size changes. Tones are ordered-dithered between neighbouring colours.
  */
 export function drawDither(
-  canvas: HTMLCanvasElement,
+  canvas: Surface,
   name: string,
   t: number,
   rgb: number[],
@@ -310,7 +312,10 @@ export function drawDither(
   focus: number,
 ) {
   const build = scenes[name];
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D
+    | null;
   if (!build || !ctx || cols < 2 || rows < 2) return;
   const key = `${name}:${cols}x${rows}:${focus}`;
   let entry = cache.get(canvas);
@@ -343,44 +348,53 @@ export function drawDither(
 
 const FRAME_MS = 1000 / 12; // a deliberately low frame rate keeps the pixels reading as pixels
 
+export type DitherOptions = {
+  scene: string;
+  focus: number;
+  cell: number;
+  rgb: number[];
+  still: boolean;
+};
+
 /**
- * Animates a `canvas.dither` (see Dither.astro) while it is on screen, at 12 frames a second;
- * one still frame under reduced motion.
+ * Animates a scene on a canvas at 12 frames a second while it is visible, or draws one still
+ * frame under reduced motion. Runs the same in the dither worker and, as a fallback, on the
+ * page; the caller reports the canvas's CSS size and whether it is on screen.
  */
-export function animateDither(canvas: HTMLCanvasElement) {
-  const scene = canvas.dataset.scene ?? 'crystals';
-  const focus = Number(canvas.dataset.focus ?? 0.72);
-  const cell = Number(canvas.dataset.cell ?? 2);
-  const rgb = getComputedStyle(document.documentElement)
-    .getPropertyValue('--accent-rgb')
-    .trim()
-    .split(/\s+/)
-    .map(Number);
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+export function animate(canvas: Surface, o: DitherOptions) {
   const start = performance.now() - Math.random() * 20000;
+  let width = 0;
+  let height = 0;
   let visible = false;
-  let last = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
 
-  const draw = (now: number) => {
-    const cols = Math.ceil(canvas.clientWidth / cell);
-    const rows = Math.ceil(canvas.clientHeight / cell);
+  const draw = () => {
+    const cols = Math.ceil(width / o.cell);
+    const rows = Math.ceil(height / o.cell);
     // The still frame is taken nine seconds in, when the glint is on the cluster.
-    const t = still ? 9 : (now - start) / 1000;
-    drawDither(canvas, scene, t, rgb, cols, rows, focus);
+    const t = o.still ? 9 : (performance.now() - start) / 1000;
+    drawDither(canvas, o.scene, t, o.rgb, cols, rows, o.focus);
   };
-  const loop = (now: number) => {
-    if (!visible) return;
-    if (now - last >= FRAME_MS) {
-      last = now;
-      draw(now);
-    }
-    requestAnimationFrame(loop);
+  const loop = () => {
+    timer = undefined;
+    if (!visible || !width) return;
+    draw();
+    if (!o.still) timer = setTimeout(loop, FRAME_MS);
   };
 
-  new IntersectionObserver(([entry]) => {
-    visible = !!entry?.isIntersecting;
-    if (visible && !still) requestAnimationFrame(loop);
-    else if (visible) draw(performance.now());
-  }).observe(canvas);
-  new ResizeObserver(() => draw(performance.now())).observe(canvas);
+  return {
+    setSize(w: number, h: number) {
+      width = w;
+      height = h;
+      if (visible && !timer) loop();
+    },
+    setVisible(on: boolean) {
+      visible = on;
+      if (on && !timer) loop();
+      if (!on && timer) {
+        clearTimeout(timer);
+        timer = undefined;
+      }
+    },
+  };
 }

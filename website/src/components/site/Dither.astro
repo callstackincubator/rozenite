@@ -22,10 +22,15 @@ const { scene = 'crystals', focus = 0.72, cell = 2, class: className } = Astro.p
   aria-hidden="true"></canvas>
 
 <script>
-  // The scene code loads only when the canvas first comes near the viewport.
+  // Dithering starts after the page has loaded, and each canvas only when it first comes near
+  // the viewport, so it never competes with the first paint.
   import { whenNear } from './lazy';
 
-  for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas.dither')) {
-    whenNear(canvas, () => void import('./dither').then((m) => m.animateDither(canvas)));
-  }
+  const start = () => {
+    for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas.dither')) {
+      whenNear(canvas, () => void import('./dither-host').then((m) => m.host(canvas)));
+    }
+  };
+  if (document.readyState === 'complete') start();
+  else addEventListener('load', start, { once: true });
 </script>

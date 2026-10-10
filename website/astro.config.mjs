@@ -23,6 +23,8 @@ export default defineConfig({
   outDir: './build',
   trailingSlash: 'never',
   build: { format: 'file' },
+  // Responsive images: Markdown screenshots get a srcset, so phones don't download 2272px files.
+  image: { layout: 'constrained' },
   devToolbar: { enabled: false },
   integrations: [
     // Starlight would add the sitemap itself; listed so the pages outside Starlight are included.
