@@ -274,7 +274,9 @@ const scenes: Record<string, SceneBuilder> = {
             const band =
               0.5 + 0.5 * Math.sin((u * 1.6 * aspect * 0.35 + v * 1.3) * Math.PI + w + t * 0.15);
             const edges = smooth(0, 0.3, u) * smooth(1, 0.7, u) * 0.4 + 0.6;
-            out[row + x] = smooth(0.35, 1, band) * edges * (1 - Math.abs(u - 0.5) * 0.6);
+            // Capped just above the midtone, so the bands stay dark crimson with only a few accent
+            // pixels at their crests, as quiet as the crystals' rock.
+            out[row + x] = smooth(0.35, 1, band) * edges * (1 - Math.abs(u - 0.5) * 0.6) * 0.55;
           }
         }
         return out;
