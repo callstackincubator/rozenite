@@ -328,6 +328,17 @@ section {
   overflow-wrap: anywhere;
 }
 
+/* A shell command in running text: the prompt in the accent, the command in white. */
+.cmdline {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.cmdline .p {
+  color: var(--accent);
+}
+
 /* Hairline cells. */
 .cells {
   display: grid;
@@ -542,6 +553,13 @@ dl.cells dd {
 .term .ok {
   color: var(--accent);
 }
+/* Tool-call arguments: keys in muted white, values in the accent, punctuation faint. */
+.term .k {
+  color: var(--muted);
+}
+.term .s {
+  color: var(--accent);
+}
 
 /* The close: the accent bar and the wordmark set as wide as the frame. */
 .finale {
@@ -709,21 +727,6 @@ dl.cells dd {
   width: min(100%, 48rem);
 }
 
-/* A visual that is not attached to the app right now: a device serves one debugger
-   connection at a time, so DevTools and an agent take turns. */
-.is-idle,
-.is-active {
-  transition: opacity 0.3s steps(4);
-}
-/* Windows keep their solid fill; only what is inside them dims, so text never sits on dither. */
-.window.is-idle > *,
-.duct.is-idle {
-  opacity: 0.4;
-  transition: opacity 0.3s steps(4);
-}
-.window > * {
-  transition: opacity 0.3s steps(4);
-}
 /* A row picked out in a pictured panel: selection, never status. */
 .pane-row.is-picked {
   position: relative;

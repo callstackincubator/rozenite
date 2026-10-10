@@ -1,9 +1,8 @@
 ---
-// Variant A's hero: one running app between its two views. On the left React Native DevTools,
-// the human's view, where the Network Activity panel fills with the app's requests. On the
-// right the agent's terminal, where the same failing request comes back from
-// `network · listRequests`. A device serves one debugger connection at a time, so the two take
-// turns: the idle side dims while the other is attached.
+// The home page hero: one running app between its two views, both attached at the same time.
+// On the left React Native DevTools, the human's view, where the Network Activity panel in the
+// Rozenite tab fills with the app's requests. On the right the agent's terminal, where the same
+// failing request comes back from `network · listRequests`.
 import CopyCommand from '../site/CopyCommand.astro';
 import DevTools from '../site/DevTools.astro';
 import Dither from '../site/Dither.astro';
@@ -15,11 +14,6 @@ const products = [
   { name: 'Runner Low', price: '$120', art: 'a' },
   { name: 'Cotton Tee', price: '$32', art: 'b' },
   { name: 'Field Cap', price: '$24', art: 'c' },
-];
-const tabs = [
-  { id: 'console', label: 'Console' },
-  { id: 'network', label: 'Network Activity', plugin: true },
-  { id: 'storage', label: 'Storage', plugin: true },
 ];
 ---
 
@@ -41,9 +35,7 @@ const tabs = [
         <div class="ln"><span class="p">$</span> npx rozenite@latest init</div>
         <div class="ln"><span class="p">$</span> npm install -D @rozenite/network-activity-plugin</div>
         <div class="ln dim"># for you: press j to open React Native DevTools</div>
-        <div class="ln">
-          <span class="p">$</span> {site.skill.replace(' --skill rozenite', '')} <span class="nw">--skill rozenite</span>
-        </div>
+        <div class="ln"><span class="p">$</span> {site.skill}</div>
         <div class="ln dim"># for your agent: the rozenite skill</div>
       </div>
     </Window>
@@ -51,18 +43,18 @@ const tabs = [
 
   <div
     class="viz"
-    data-hero-panels
+    data-hero
     role="img"
-    aria-label="One running app with two views. In React Native DevTools, the Network Activity panel shows the app's requests, including a failing GET /api/cart. Then a coding agent attaches from the terminal, lists the same requests, finds the same failing request and the error behind it."
+    aria-label="One running app with two views open at once. In React Native DevTools, the Network Activity panel shows the app's requests, including a failing GET /api/cart. In the terminal, a coding agent lists the same requests, gets the same failing request back and finds the error behind it."
   >
     <Dither scene="crystals" focus={0.5} />
     <div class="rig">
-      <DevTools tabs={tabs} selected="network" class="rig-devtools">
-        <div class="pane is-on" data-pane="network" style="--cols: 2.75rem minmax(0,1fr) 2.75rem 3.75rem">
-          <div class="pane-row pane-head"><span>Method</span><span>URL</span><span>Status</span><span>Time</span></div>
-          <div class="pane-row" data-row="n0"><span>GET</span><span>/api/products</span><span class="mut">200</span><span class="mut">142 ms</span></div>
-          <div class="pane-row" data-row="n1"><span>GET</span><span>/api/user</span><span class="mut">200</span><span class="mut">88 ms</span></div>
-          <div class="pane-row" data-row="n2"><span>GET</span><span>/api/cart</span><span>500</span><span class="mut">212 ms</span></div>
+      <DevTools selected="Network Activity" class="rig-devtools">
+        <div class="pane is-on net">
+          <div class="pane-row pane-head"><span>Request</span><span>Status</span><span class="t">Time</span></div>
+          <div class="pane-row" data-row="n0"><span>GET /api/products</span><span class="mut">200</span><span class="mut t">142 ms</span></div>
+          <div class="pane-row" data-row="n1"><span>GET /api/user</span><span class="mut">200</span><span class="mut t">88 ms</span></div>
+          <div class="pane-row" data-row="n2"><span>GET /api/cart</span><span>500</span><span class="mut t">212 ms</span></div>
         </div>
       </DevTools>
 
@@ -105,13 +97,13 @@ const tabs = [
 <script>
   import { whenNear } from '../site/lazy';
 
-  const root = document.querySelector<HTMLElement>('[data-hero-panels]');
-  if (root) whenNear(root, () => void import('./panels').then((m) => m.default(root)));
+  const root = document.querySelector<HTMLElement>('[data-hero]');
+  if (root) whenNear(root, () => void import('./hero').then((m) => m.default(root)));
 </script>
 
 <style>
   .hero-top--split {
-    grid-template-columns: minmax(0, 1fr) 24rem;
+    grid-template-columns: minmax(0, 1fr) 28.5rem;
     align-items: center;
     padding-block: clamp(2rem, 4.5vw, 3.75rem);
   }
@@ -119,11 +111,8 @@ const tabs = [
     max-width: 16ch;
   }
   :global(.hero-side) .term {
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     overflow-wrap: normal;
-  }
-  .nw {
-    white-space: nowrap;
   }
   .rig {
     position: relative;
@@ -133,9 +122,12 @@ const tabs = [
     padding: clamp(2rem, 5vw, 3.5rem) var(--pad);
   }
   .rig :global(.rig-devtools) {
-    flex: 1 1 22rem;
-    max-width: 26rem;
-    height: 15rem;
+    flex: 1 1 24rem;
+    max-width: 28rem;
+    height: 16.5rem;
+  }
+  .net {
+    --cols: minmax(0, 1fr) 3rem 3.5rem;
   }
   .rig :global(.rig-agent) {
     flex: 1 1 22rem;
@@ -216,6 +208,15 @@ const tabs = [
     margin: 0;
   }
 
+  @media (max-width: 30rem) {
+    /* On a phone the table drops its time column, so the request stays readable. */
+    .net {
+      --cols: minmax(0, 1fr) 2.75rem;
+    }
+    .net .t {
+      display: none;
+    }
+  }
   @media (max-width: 64rem) {
     .hero-top--split {
       grid-template-columns: minmax(0, 1fr);
@@ -249,7 +250,7 @@ const tabs = [
       left: 50%;
     }
     .rig :global(.rig-devtools) {
-      height: 12.5rem;
+      height: 14rem;
     }
     .rig :global(.rig-phone) {
       --w: 9.5rem;

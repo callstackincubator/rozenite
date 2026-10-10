@@ -1,50 +1,73 @@
 ---
-// A diagram of React Native DevTools with Rozenite in it: window chrome, a tab strip of the
-// built-in tabs, then Rozenite plugin tabs (each led by a 6px accent square). The panel body is
-// the slot. Plugin tabs can start hidden (data-hidden) for an animation to reveal.
+// A diagram of React Native DevTools with Rozenite in it, the way it looks today: the DevTools
+// tab row with one Rozenite tab selected, and inside it a narrow sidebar (the mark, then the
+// installed plugins, the selected one picked out) beside the selected plugin's panel, which is
+// the slot. Our design language, not a copy of Chrome or of the Rozenite UI theme.
+import Mark from './Mark.astro';
 import Window from './Window.astro';
 
-interface Tab {
-  id: string;
-  label: string;
-  plugin?: boolean;
-  hidden?: boolean;
-}
 interface Props {
-  tabs: Tab[];
-  selected?: string;
+  /** The plugin whose panel is shown. */
+  selected: string;
   title?: string;
   class?: string;
 }
-const { tabs, selected, title = 'React Native DevTools', class: className } = Astro.props;
+const { selected, title = 'React Native DevTools', class: className } = Astro.props;
+
+// The official plugins as the Rozenite sidebar lists them. The list starts two above the
+// selected plugin, so it is always in view, and is clipped by the window's height, so it reads
+// as a longer list rather than ending on an empty slot.
+const installed = [
+  'Controls',
+  'Expo Atlas',
+  'Feature Flags',
+  'File System',
+  'Network Activity',
+  'Overlay',
+  'Performance Monitor',
+  'React Navigation',
+  'Redux DevTools',
+  'Require Profiler',
+  'React Hook Form',
+  'SQLite',
+  'Storage',
+  'TanStack Query',
+];
+const from = Math.max(0, installed.indexOf(selected) - 2);
+const shown = installed.slice(from);
+const tabs = ['Console', 'Sources', 'Network', 'Memory'];
 ---
 
 <Window title={title} class:list={['devtools', className]}>
-  <div class="dt-tabs label">
-    {
-      tabs.map((t) => (
-        <span
-          class:list={['dt-tab', { 'dt-tab--plugin': t.plugin }]}
-          data-tab={t.id}
-          data-hidden={t.hidden ? '' : undefined}
-          aria-selected={t.id === selected ? 'true' : 'false'}
-        >
-          {t.plugin && <i />}
-          {t.label}
-        </span>
-      ))
-    }
-  </div>
-  <div class="dt-body">
-    <slot />
+  <div class="dt">
+    <div class="dt-tabs label">
+      {tabs.map((t) => <span class="dt-tab">{t}</span>)}
+      <span class="dt-tab dt-tab--rz" aria-selected="true"><Mark height={10} />Rozenite</span>
+    </div>
+    <div class="dt-main">
+      <nav class="dt-side" aria-hidden="true">
+        <span class="dt-brand"><Mark height={10} class="accent" />Rozenite</span>
+        <ul>
+          {shown.map((p) => <li class:list={{ 'is-on': p === selected }}>{p}</li>)}
+        </ul>
+      </nav>
+      <div class="dt-body">
+        <slot />
+      </div>
+    </div>
   </div>
 </Window>
 
 <style>
+  .dt {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
   .dt-tabs {
     display: flex;
-    overflow-x: auto;
-    scrollbar-width: none;
+    flex-shrink: 0;
+    overflow: hidden;
     border-bottom: 1px solid var(--line);
     font-size: 0.625rem;
     letter-spacing: 0.06em;
@@ -53,38 +76,85 @@ const { tabs, selected, title = 'React Native DevTools', class: className } = As
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
-    gap: 0.4375rem;
-    padding: 0.625rem 0.75rem;
+    gap: 0.375rem;
+    padding: 0.5625rem 0.6875rem;
     border-right: 1px solid var(--line);
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
     color: var(--faint);
     white-space: nowrap;
   }
-  .dt-tab i {
-    width: 6px;
-    height: 6px;
-    background: var(--accent);
-  }
-  .dt-tab--plugin {
-    color: var(--muted);
-  }
-  .dt-tab[aria-selected='true'] {
+  .dt-tab--rz {
     color: var(--text);
     border-bottom-color: var(--accent);
   }
-  .dt-tab[data-hidden] {
-    display: none;
+  .dt-tab--rz :global(svg) {
+    color: var(--accent);
   }
-  /* On a phone only Console stays of the built-in tabs, so the plugin tabs have room. */
-  @media (max-width: 40rem) {
-    .dt-tab:not(.dt-tab--plugin):not(:first-child) {
-      display: none;
-    }
+  .dt-main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 7.75rem minmax(0, 1fr);
+  }
+  .dt-side {
+    min-width: 0;
+    overflow: hidden;
+    border-right: 1px solid var(--line);
+    font-size: 0.6875rem;
+  }
+  .dt-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5625rem 0.625rem;
+    border-bottom: 1px solid var(--line);
+    font-weight: 500;
+    color: var(--text);
+  }
+  .dt-side ul {
+    margin: 0;
+    padding: 0.25rem 0;
+    list-style: none;
+  }
+  .dt-side li {
+    position: relative;
+    padding: 0.3125rem 0.625rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dt-side li.is-on {
+    background: var(--surface);
+    color: var(--text);
+  }
+  .dt-side li.is-on::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: var(--accent);
   }
   .dt-body {
     position: relative;
-    height: 100%;
+    min-width: 0;
     overflow: hidden;
+  }
+  /* On a phone only Console stays of the built-in tabs, and the sidebar narrows. */
+  @media (max-width: 40rem) {
+    .dt-tab:not(.dt-tab--rz):not(:first-child) {
+      display: none;
+    }
+    .dt-main {
+      grid-template-columns: 6.25rem minmax(0, 1fr);
+    }
+    .dt-side {
+      font-size: 0.625rem;
+    }
+    .dt-side li,
+    .dt-brand {
+      padding-inline: 0.5rem;
+    }
   }
 </style>

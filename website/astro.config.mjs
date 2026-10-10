@@ -1,5 +1,4 @@
 // @ts-check
-import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import starlight from '@astrojs/starlight';
 import { defineConfig } from 'astro/config';
@@ -24,13 +23,14 @@ export default defineConfig({
   build: { format: 'file' },
   devToolbar: { enabled: false },
   integrations: [
-    react(),
     // Starlight would add the sitemap itself; listed so the landing page is included.
     sitemap(),
     starlight({
       title: 'Rozenite',
       description,
       favicon: '/favicon.svg',
+      // src/pages/404.astro replaces Starlight's 404, in the site's look (docs/DESIGN.md).
+      disable404Route: true,
       // The look follows docs/DESIGN.md: the same tokens, fonts and lockup as the landing pages.
       customCss: ['./src/fonts/font-face.css', './src/styles/theme.css', './src/styles/docs.css'],
       components: {

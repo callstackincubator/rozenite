@@ -1,8 +1,207 @@
 ---
-// The landing page lives in website/landing and has no framework imports; this file only hosts it.
-import Page from '../layouts/Page.astro';
-import { LandingPage } from '../../landing';
+// The home page: panels in React Native DevTools for you, the same runtime as tools for your
+// coding agent, on one running app. The look follows docs/DESIGN.md.
+import Site from '../layouts/Site.astro';
+import CodeBlock from '../components/site/CodeBlock.astro';
+import Closing from '../components/site/Closing.astro';
+import ConfigTabs from '../components/site/ConfigTabs.astro';
+import Domains from '../components/site/Domains.astro';
+import Faq from '../components/site/Faq.astro';
+import Footer from '../components/site/Footer.astro';
+import Marquee from '../components/site/Marquee.astro';
+import Nav from '../components/site/Nav.astro';
+import PixelIcon from '../components/site/PixelIcon.astro';
+import PluginGrid from '../components/site/PluginGrid.astro';
+import Window from '../components/site/Window.astro';
+import Hero from '../components/home/Hero.astro';
+import { code, docs, site } from '../site/content';
+
+const steps = [
+  {
+    title: 'Run init',
+    body: 'It detects Metro, Re.Pack or rspeedy, installs the right package and updates your bundler config.',
+    cmd: site.install,
+  },
+  {
+    title: 'Add plugins',
+    body: 'Each plugin adds a panel to React Native DevTools. Most also need a small hook in your app; its page has the line.',
+    cmd: 'npm install -D @rozenite/tanstack-query-plugin',
+  },
+  {
+    title: 'Give your agent the skill',
+    body: 'The rozenite skill teaches a coding agent the `rozenite agent` CLI, with docs that match your installed version.',
+    cmd: site.skill,
+  },
+];
+
+const safety = [
+  {
+    icon: 'lock',
+    title: 'Off until you turn it on',
+    body: 'Rozenite only runs when `enabled` is true in your bundler config, usually behind `WITH_ROZENITE=true`.',
+  },
+  {
+    icon: 'test',
+    title: 'Nothing ships to users',
+    body: 'Plugins are disabled in production builds, so no plugin code reaches your release bundle.',
+  },
+  {
+    icon: 'faders',
+    title: 'Choose what loads',
+    body: 'Every installed plugin loads by default. Narrow it with `include` or `exclude` in `withRozenite`.',
+  },
+  {
+    icon: 'panel',
+    title: 'Panels keep their state',
+    body: 'Switch away and back without losing data. Opt out per plugin with `destroyOnDetachPlugins`.',
+  },
+] as const;
+
+const beyond = [
+  {
+    title: 'Rozenite for Lynx',
+    pkg: '@rozenite/lynx',
+    body: 'The same panels, plugin catalogue and CLI for Lynx apps, through rspeedy.',
+    href: docs.lynx,
+  },
+  {
+    title: 'Rozenite for Web',
+    pkg: '@rozenite/web',
+    body: 'Your React Native Web app as a DevTools target, with the browser extension.',
+    href: docs.web,
+  },
+  {
+    title: 'Standalone app',
+    pkg: '',
+    cmd: 'npx rozenite open',
+    body: 'Just your plugin panels in their own window. They survive reloads and Fast Refresh.',
+    href: docs.standalone,
+  },
+];
+const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
 ---
-<Page title="Rozenite">
-  <LandingPage client:load />
-</Page>
+
+<Site title={site.title}>
+  <Nav />
+  <main class="frame">
+    <Hero />
+    <Marquee />
+
+    <section id="how" aria-labelledby="how-title">
+      <p class="section-head label"><b>[01]</b> How it works</p>
+      <div class="intro">
+        <h2 class="h2" id="how-title">Set it up once. <em>You and your agent both use it.</em></h2>
+      </div>
+      <ol class="cells cells--3">
+        {
+          steps.map((s, i) => (
+            <li class="cell">
+              <span class="label cell-num">{String(i + 1).padStart(2, '0')}</span>
+              <h3 class="h3">{s.title}</h3>
+              <p class="body" set:html={md(s.body)} />
+              <code class="cmdline">
+                <span class="p">$</span> {s.cmd}
+              </code>
+            </li>
+          ))
+        }
+      </ol>
+      <ConfigTabs />
+    </section>
+
+    <section id="agents" aria-labelledby="agents-title">
+      <p class="section-head label"><b>[02]</b> Agents</p>
+      <div class="split">
+        <div class="split-copy">
+          <h2 class="h2" id="agents-title">The same runtime, <em>as tools your agent calls.</em></h2>
+          <p class="lede">
+            Rozenite for Agents opens a session on the running app. Your agent reads logs, network requests, React
+            profiles, performance traces and heap snapshots, and calls the tools your app and your plugins register.
+          </p>
+          <a class="label more" href={docs.agents}>Rozenite for Agents <span aria-hidden="true">→</span></a>
+        </div>
+        <Window title="zsh">
+          <CodeBlock code={code.agentCli} lang="shell" minLines={6} />
+        </Window>
+      </div>
+      <Domains />
+    </section>
+
+    <section id="plugins" aria-labelledby="plugins-title">
+      <p class="section-head label"><b>[03]</b> Official plugins</p>
+      <div class="intro">
+        <h2 class="h2" id="plugins-title">Panels for the libraries <em>you already use.</em></h2>
+        <p class="lede">
+          Each official plugin is a thin bridge between a library and a DevTools panel, in the Rozenite tab.
+        </p>
+      </div>
+      <PluginGrid />
+    </section>
+
+    <section aria-labelledby="safe-title">
+      <p class="section-head label"><b>[04]</b> Safe by default</p>
+      <div class="intro">
+        <h2 class="h2" id="safe-title">Development only. <em>Nothing in production.</em></h2>
+      </div>
+      <div class="cells cells--4">
+        {
+          safety.map((s) => (
+            <article class="cell">
+              <span class="cell-top">
+                <PixelIcon name={s.icon} size={27} class="accent" />
+              </span>
+              <h3 class="h3">{s.title}</h3>
+              <p class="body" set:html={md(s.body)} />
+            </article>
+          ))
+        }
+      </div>
+      <div class="split split--top">
+        <div class="split-copy">
+          <p class="lede">
+            Plugins with several panels share one sidebar by default. Set <code>pluginDisplay: 'tabs'</code> to give each
+            panel its own DevTools tab.
+          </p>
+          <a class="label more" href={docs.compatibility}>Compatibility <span aria-hidden="true">→</span></a>
+        </div>
+        <Window title="metro.config.js">
+          <CodeBlock code={code.include} lang="js" wrap />
+        </Window>
+      </div>
+    </section>
+
+    <section aria-labelledby="beyond-title">
+      <p class="section-head label"><b>[05]</b> Beyond React Native</p>
+      <div class="intro">
+        <h2 class="h2" id="beyond-title">Same panels, <em>more places.</em></h2>
+      </div>
+      <div class="cells cells--3">
+        {
+          beyond.map((b) => (
+            <a class="cell cell--link" href={b.href}>
+              <span class="cell-top">
+                {b.pkg ? (
+                  <code class="pkg">{b.pkg}</code>
+                ) : (
+                  <code class="cmdline">
+                    <span class="p">$</span> {b.cmd}
+                  </code>
+                )}
+                <span class="chip">Experimental</span>
+              </span>
+              <h3 class="h3">{b.title}</h3>
+              <p class="body">{b.body}</p>
+              <span class="label more">
+                Set up <span aria-hidden="true">→</span>
+              </span>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    <Faq num="06" />
+    <Closing />
+  </main>
+  <Footer />
+</Site>

@@ -12,7 +12,6 @@ import PixelIcon from './PixelIcon.astro';
         <a class="cell cell--link" href={p.href}>
           <span class="cell-top">
             <PixelIcon name={p.icon} size={27} class="accent" />
-            {p.agent && <span class="chip chip--agent">Agent</span>}
           </span>
           <h3 class="h3">{p.name}</h3>
           <code class="pkg">{p.pkg}</code>

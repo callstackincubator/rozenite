@@ -1,6 +1,7 @@
-// Variant A's hero: the same failing request seen by a human in DevTools, then by an agent in
-// the terminal. One debugger connection at a time, so the two sides take turns.
-// Loaded on demand by HeroPanels.astro.
+// The home page hero: one running app with DevTools and an agent attached at the same time. The
+// failing request lands as a row in the Network Activity panel, and the agent gets the same
+// request back from `network · listRequests`.
+// Loaded on demand by Hero.astro.
 import { ghostLine, sendPacket, sleep, whenVisible } from '../site/anim';
 
 const DOT = '<span class="p">●</span> ';
@@ -24,10 +25,20 @@ const LINES = [
   },
 ];
 
-export default function runPanels(viz: HTMLElement) {
+// Colours a JSON argument object the way code blocks do: keys, values, punctuation.
+const colorArgs = (json: string) =>
+  json.replace(
+    /("(?:[^"\\]|\\.)*")(\s*:)?|(-?\d+(?:\.\d+)?)|([{}[\],:])/g,
+    (_, str, colon, num, punc) => {
+      if (str && colon) return `<span class="k">${str}</span><span class="dim">${colon}</span>`;
+      if (str) return `<span class="s">${str}</span>`;
+      if (num) return `<span class="s">${num}</span>`;
+      return `<span class="dim">${punc}</span>`;
+    },
+  );
+
+export default function runHero(viz: HTMLElement) {
   const q = <T extends HTMLElement = HTMLElement>(sel: string) => viz.querySelector<T>(sel)!;
-  const devtools = q('.rig-devtools');
-  const agent = q('.rig-agent');
   const term = q('[data-term]');
   const ductH = q('[data-duct-human]');
   const ductA = q('[data-duct-agent]');
@@ -44,24 +55,31 @@ export default function runPanels(viz: HTMLElement) {
   };
   // DevTools sits left of the app, or above it when stacked: either way, against the duct.
   const toDevTools = () => sendPacket(ductH, pktH, true);
-  const attach = (side: 'human' | 'agent' | 'both') => {
-    devtools.classList.toggle('is-idle', side === 'agent');
-    ductH.classList.toggle('is-idle', side === 'agent');
-    agent.classList.toggle('is-idle', side === 'human');
-    ductA.classList.toggle('is-idle', side === 'human');
+  // The agent sits right of the app, or below it: calls travel back, data forward.
+  const agentCall = async () => {
+    await sendPacket(ductA, pktCall, true);
+    await sendPacket(ductA, pktA);
   };
 
   const prepare = () => {
     term.textContent = '';
-    return LINES.map((l) => {
-      const g = ghostLine(term, l.text + (l.args ?? ''), l.cls, l.prefix ?? '');
-      return { ...l, g };
-    });
+    return LINES.map((l) => ({
+      ...l,
+      g: ghostLine(term, l.text + (l.args ?? ''), l.cls, l.prefix ?? ''),
+    }));
   };
   const dimArgs = (el: HTMLElement, text: string, args?: string) => {
     if (!args) return;
     const typed = el.children[el.children.length - 2] as HTMLElement;
-    typed.innerHTML = `${text}<span class="dim">${args}</span>`;
+    typed.innerHTML = `${text} ${colorArgs(args.trim())}`;
+  };
+  const reveal = async (l: ReturnType<typeof prepare>[number]) => {
+    if (l.type) await l.g.type(20);
+    else {
+      await sleep(260);
+      l.g.show();
+      dimArgs(l.g.el, l.text, l.args);
+    }
   };
   const reset = () => {
     show('home');
@@ -71,40 +89,39 @@ export default function runPanels(viz: HTMLElement) {
 
   const play = async () => {
     const lines = reset();
-    // The human's turn: DevTools is attached; the app's requests land as rows.
-    attach('human');
-    await sleep(800);
-    for (const r of rows.slice(0, 2)) {
-      await toDevTools();
-      r.classList.add('is-on');
-    }
-    await sleep(400);
+    const [ask, session, list, listOut, logs, logsOut, done] = lines;
+    await sleep(700);
+    // The app loads; its requests land in the panel while the agent is asked to look.
+    const loading = (async () => {
+      for (const r of rows.slice(0, 2)) {
+        await toDevTools();
+        r.classList.add('is-on');
+      }
+    })();
+    await reveal(ask!);
+    await loading;
+    await reveal(session!);
+    await agentCall();
+    // The cart fails: the request shows up in the panel...
     show('cart');
     await toDevTools();
-    rows[2]!.classList.add('is-on', 'is-picked');
-    await sleep(1800);
-
-    // The agent's turn: it attaches from the terminal and asks for the same data.
-    attach('agent');
+    rows[2]!.classList.add('is-on');
     await sleep(500);
-    for (const l of lines) {
-      if (l.type) await l.g.type(20);
-      else {
-        await sleep(280);
-        l.g.show();
-        dimArgs(l.g.el, l.text, l.args);
-      }
-      if (l.call) {
-        await sendPacket(ductA, pktCall, true);
-        await sendPacket(ductA, pktA);
-      }
-    }
-    await sleep(3200);
+    // ...and the agent asks for the requests and gets the same one back.
+    await reveal(list!);
+    await agentCall();
+    await reveal(listOut!);
+    rows[2]!.classList.add('is-picked');
+    await sleep(400);
+    await reveal(logs!);
+    await agentCall();
+    await reveal(logsOut!);
+    await reveal(done!);
+    await sleep(3400);
   };
 
   whenVisible(viz, play, () => {
     const lines = reset();
-    attach('both');
     for (const r of rows) r.classList.add('is-on');
     rows[2]!.classList.add('is-picked');
     show('cart');

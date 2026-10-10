@@ -1,5 +1,5 @@
 ---
-// The agent domains as cells: the five built-in ones and `app` for your own tools.
+// The agent domains as cells: the five built-in ones, then the tools your app and plugins add.
 import { docs, domains } from '../../site/content';
 ---
 
@@ -18,10 +18,12 @@ import { docs, domains } from '../../site/content';
   }
   <a class="cell cell--link" href={docs.appTools}>
     <span class="cell-top">
-      <code class="pkg dom">app</code>
+      <code class="pkg dom">app · plugins</code>
       <span class="chip chip--agent">Yours</span>
     </span>
-    <p class="body">Tools your app registers with one hook, named <code>app.&lt;name&gt;</code>.</p>
+    <p class="body">
+      Your app and your plugins register their own tools with one hook, for the state and actions only they know about.
+    </p>
     <span class="label more">Add a tool <span aria-hidden="true">→</span></span>
   </a>
 </div>

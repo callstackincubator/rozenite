@@ -50,6 +50,13 @@ const theme = {
       settings: { foreground: 'var(--code-type)' },
     },
     { scope: ['punctuation', 'meta.brace', 'keyword.operator'], settings: { foreground: 'var(--code-punc)' } },
+    // Shell: only quoted strings are strings. Plain arguments read as text, options dimmed like
+    // keywords, line continuations like punctuation.
+    { scope: ['string.unquoted'], settings: { foreground: 'var(--code-fg)' } },
+    { scope: ['constant.other.option'], settings: { foreground: 'var(--code-kw)' } },
+    { scope: ['constant.character.escape.line-continuation'], settings: { foreground: 'var(--code-punc)' } },
+    // JSON: keys white, values in the accent.
+    { scope: ['support.type.property-name.json'], settings: { foreground: 'var(--code-type)' } },
   ],
 };
 ---

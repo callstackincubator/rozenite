@@ -1,9 +1,10 @@
 ---
 // A dithered pixel scene in the accent, drawn on a canvas. It fills its positioned parent. The
 // scenes live in dither.ts: `crystals` (the signature: stepped crystals of the mark in dark
-// rock), `traffic` (messages crossing both ways) and `flow` (soft bands of light).
+// rock), `hollow` (the same with one crystal missing, for the 404 page) and `flow` (soft bands
+// of light).
 interface Props {
-  scene?: 'crystals' | 'traffic' | 'flow';
+  scene?: 'crystals' | 'hollow' | 'flow';
   /** Where the crystal cluster stands, 0..1 across: put it behind the product visual. */
   focus?: number;
   /** Size of one dither cell in CSS pixels. */

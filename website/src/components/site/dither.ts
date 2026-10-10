@@ -50,7 +50,7 @@ const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 /** A scene at one size: `frame(t)` fills and returns the tone (0..1) of every cell. */
 type Scene = { frame: (t: number) => Float32Array };
-type SceneBuilder = (cols: number, rows: number, focus: number) => Scene;
+type SceneBuilder = (cols: number, rows: number, focus: number, hollow?: boolean) => Scene;
 
 /** A horizontally wrapping noise texture, sampled with a sliding offset. */
 function mistTexture(cols: number, rows: number, scaleX: number, scaleY: number) {
@@ -74,13 +74,15 @@ type Crystal = {
   depth: number;
   speed: number;
   phase: number;
+  /** The missing one (404 page): only a dashed outline of its socket is drawn. */
+  hollow?: boolean;
 };
 
 const scenes: Record<string, SceneBuilder> = {
   // Crystals: a druse of the mark. Stepped crystals rise from the bottom edge and cluster around
   // `focus` (0..1 across), shaded as faceted stones in dark rock, with a glint sweeping across
   // them and pulses climbing from base to tip.
-  crystals: (cols, rows, focus) => {
+  crystals: (cols, rows, focus, hollow = false) => {
     const out = new Float32Array(cols * rows);
     const aspect = cols / rows;
     const owner = new Int16Array(cols * rows).fill(-1);
@@ -143,6 +145,14 @@ const scenes: Record<string, SceneBuilder> = {
         0.62 + 0.38 * (1 - Math.abs(o)),
         k + 70,
       );
+      // On the 404 page the middle, tallest crystal is the one that is missing.
+      if (hollow && k === (n - 1) / 2) {
+        // Taller than the rest and uncapped: an outline does not turn into a skyline.
+        const c = crystals[crystals.length - 1]!;
+        c.hollow = true;
+        c.step = Math.max(2, Math.round((0.82 * size) / 10));
+        c.base = Math.round(rows + 0.04 * size);
+      }
     }
 
     // Rasterise back to front: smaller (further) crystals first, so the cluster sits in front.
@@ -166,6 +176,25 @@ const scenes: Record<string, SceneBuilder> = {
             }
           }
         }
+      }
+      if (c.hollow) {
+        // The empty socket: dark inside, a dashed line along the stepped outline.
+        const inside = (x: number, y: number) => {
+          const r = Math.floor((y - top) / s);
+          return r >= 0 && r < 10 && Math.abs(x - c.cx + 0.5) < (MARK_ROWS[r]! * s) / 2;
+        };
+        const w = Math.max(1, Math.round(s * 0.08));
+        for (let y = Math.max(0, top); y < Math.min(rows, c.base); y++) {
+          for (let x = Math.max(0, c.cx - 4 * s); x < Math.min(cols, c.cx + 4 * s); x++) {
+            if (!inside(x, y)) continue;
+            const i = y * cols + x;
+            const edge =
+              !inside(x - w, y) || !inside(x + w, y) || !inside(x, y - w) || !inside(x, y + w);
+            owner[i] = edge && (x + y) % 8 < 4 ? -2 : -3;
+            rock[i] = 0;
+          }
+        }
+        return;
       }
       for (let r = 0; r < 10; r++) {
         const half = (MARK_ROWS[r]! * s) / 2;
@@ -199,6 +228,12 @@ const scenes: Record<string, SceneBuilder> = {
         const sweep = ((t * 0.09) % 1.9) - 0.3; // the glint's position along the diagonal
         for (let i = 0; i < out.length; i++) {
           const k = owner[i]!;
+          if (k === -2) {
+            // The missing crystal's outline: faint, flaring as the glint crosses it.
+            const g = (diag[i]! - sweep * (1 + aspect * 0.55)) / 0.08;
+            out[i] = clamp01(0.36 + Math.exp(-g * g) * 0.7);
+            continue;
+          }
           if (k < 0) {
             out[i] = rock[i]!;
             continue;
@@ -218,63 +253,9 @@ const scenes: Record<string, SceneBuilder> = {
     };
   },
 
-  // Traffic: lanes of short dashes, alternate lanes moving right and left, denser around the
-  // centre line. Messages crossing the bridge between the app and its panel, both ways.
-  traffic: (cols, rows) => {
-    const out = new Float32Array(cols * rows);
-    const pitch = 7; // a lane every 7 cells, 2 cells tall
-    const lanes = Math.ceil(rows / pitch);
-    // Per lane, a wrapping 1D pattern of dashes, a direction, a speed and a weight.
-    const pattern: Float32Array[] = [];
-    const meta: { dir: number; speed: number; weight: number }[] = [];
-    for (let l = 0; l < lanes; l++) {
-      const row = new Float32Array(cols);
-      let x = Math.floor(hash(l, 1) * 30);
-      const v = (l * pitch) / rows;
-      const weight = Math.exp(-(((v - 0.5) / 0.3) ** 2));
-      const density = 0.25 + 0.6 * weight;
-      while (x < cols) {
-        const len = 3 + Math.floor(hash(l, x) * 12);
-        if (hash(x, l + 7) < density) {
-          for (let j = 0; j < len && x + j < cols; j++) row[x + j] = j === len - 1 ? 1 : 0.62;
-        }
-        x += len + 4 + Math.floor(hash(l + 3, x) * 26);
-      }
-      pattern.push(row);
-      const dir = l % 2 === 0 ? 1 : -1;
-      meta.push({ dir, speed: 6 + 10 * hash(l, 5), weight });
-    }
-    const haze = new Float32Array(cols * rows);
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        haze[y * cols + x] = 0.05 + 0.06 * fbm((x / cols) * 6, (y / rows) * 4, 3);
-      }
-    }
-    return {
-      frame: (t) => {
-        for (let y = 0; y < rows; y++) {
-          const l = Math.floor(y / pitch);
-          const inLane = y % pitch < 2;
-          const m = meta[l]!;
-          const row = pattern[l]!;
-          const shift = Math.floor(t * m.speed) % cols;
-          for (let x = 0; x < cols; x++) {
-            const i = y * cols + x;
-            if (!inLane) {
-              out[i] = haze[i]!;
-              continue;
-            }
-            // Heads lead the way they travel: mirror the pattern for lanes moving left.
-            const sx = m.dir > 0 ? (x - shift + cols) % cols : cols - 1 - ((x + shift) % cols);
-            const cell = row[sx]!;
-            const edge = smooth(0, 0.12, x / cols) * smooth(1, 0.88, x / cols);
-            out[i] = Math.max(haze[i]!, cell * (0.3 + 0.62 * m.weight) * (0.5 + 0.5 * edge));
-          }
-        }
-        return out;
-      },
-    };
-  },
+  // Hollow: the same druse with its tallest crystal missing, for the 404 page. A dashed outline
+  // marks the empty socket, and the glint flares along it as it passes.
+  hollow: (cols, rows, focus) => scenes.crystals!(cols, rows, focus, true),
 
   // Soft, slowly turning bands of light on black: a quiet backdrop for code and commands.
   flow: (cols, rows) => {
