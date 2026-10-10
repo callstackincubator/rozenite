@@ -1,41 +1,9 @@
 // The home page hero: one running app with DevTools and an agent attached at the same time. The
 // failing request lands as a row in the Network Activity panel, and the agent gets the same
 // request back from `network · listRequests`.
-// Loaded on demand by Hero.astro.
+// The page renders the final state; the loop resets it and plays it. Loaded on demand by Hero.astro.
 import { ghostLine, sendPacket, sleep, whenVisible } from '../site/anim';
-
-const DOT = '<span class="p">●</span> ';
-const LINES = [
-  { text: '> Why does the cart screen fail?', cls: 'user', type: true },
-  { text: 'session · create', cls: 'tool', prefix: DOT, call: true },
-  { text: 'network · listRequests', args: ' {"limit":5}', cls: 'tool', prefix: DOT, call: true },
-  { text: '  GET  /api/cart  500  212 ms', cls: 'out' },
-  {
-    text: 'console · getMessages',
-    args: ' {"levels":["error"]}',
-    cls: 'tool',
-    prefix: DOT,
-    call: true,
-  },
-  { text: "  ERR  TypeError: Cannot read property 'price' of undefined", cls: 'out' },
-  {
-    text: '✓ /api/cart returns 500, and CartScreen reads items before they load.',
-    cls: 'ok',
-    type: true,
-  },
-];
-
-// Colours a JSON argument object the way code blocks do: keys, values, punctuation.
-const colorArgs = (json: string) =>
-  json.replace(
-    /("(?:[^"\\]|\\.)*")(\s*:)?|(-?\d+(?:\.\d+)?)|([{}[\],:])/g,
-    (_, str, colon, num, punc) => {
-      if (str && colon) return `<span class="k">${str}</span><span class="dim">${colon}</span>`;
-      if (str) return `<span class="s">${str}</span>`;
-      if (num) return `<span class="s">${num}</span>`;
-      return `<span class="dim">${punc}</span>`;
-    },
-  );
+import { DOT, LINES, colorArgs } from './transcript';
 
 export default function runHero(viz: HTMLElement) {
   const q = <T extends HTMLElement = HTMLElement>(sel: string) => viz.querySelector<T>(sel)!;
@@ -65,13 +33,13 @@ export default function runHero(viz: HTMLElement) {
     term.textContent = '';
     return LINES.map((l) => ({
       ...l,
-      g: ghostLine(term, l.text + (l.args ?? ''), l.cls, l.prefix ?? ''),
+      g: ghostLine(term, l.text + (l.args ? ` ${l.args}` : ''), l.cls, l.call ? DOT : ''),
     }));
   };
   const dimArgs = (el: HTMLElement, text: string, args?: string) => {
     if (!args) return;
     const typed = el.children[el.children.length - 2] as HTMLElement;
-    typed.innerHTML = `${text} ${colorArgs(args.trim())}`;
+    typed.innerHTML = `${text} ${colorArgs(args)}`;
   };
   const reveal = async (l: ReturnType<typeof prepare>[number]) => {
     if (l.type) await l.g.type(20);
@@ -120,14 +88,6 @@ export default function runHero(viz: HTMLElement) {
     await sleep(3400);
   };
 
-  whenVisible(viz, play, () => {
-    const lines = reset();
-    for (const r of rows) r.classList.add('is-on');
-    rows[2]!.classList.add('is-picked');
-    show('cart');
-    for (const l of lines) {
-      l.g.show();
-      dimArgs(l.g.el, l.text, l.args);
-    }
-  });
+  // Under reduced motion the server-rendered final state is the still frame: nothing to do.
+  whenVisible(viz, play, () => {});
 }

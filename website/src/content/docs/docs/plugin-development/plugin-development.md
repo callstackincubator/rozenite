@@ -4,7 +4,7 @@ title: "Plugin Development"
 
 This guide will walk you through the complete process of creating a React Native DevTools plugin, from initial generation to building for production.
 
-> **Tip**: Before creating your own plugin, check out the [Official Plugins](../official-plugins/overview.md) to see if there's already a plugin that meets your needs!
+> **Tip**: Before creating your own plugin, check out the [Official Plugins](/docs/official-plugins/overview) to see if there's already a plugin that meets your needs!
 
 ## Quick Start
 
@@ -370,7 +370,7 @@ Your development workflow supports automatic hot reloading:
 3. Add new panels - remember to restart DevTools with `Ctrl+R`
 4. Test communication between your panels and React Native code
 
-To cover the last one with automated tests instead - running your panel and your `react-native.ts` code against each other in Node, without Metro or a simulator - see [Testing](./testing.md).
+To cover the last one with automated tests instead - running your panel and your `react-native.ts` code against each other in Node, without Metro or a simulator - see [Testing](/docs/plugin-development/testing).
 
 ## Step 6: Building for Production
 
@@ -397,6 +397,6 @@ The build creates a `dist/` directory with:
 
 ## Next Steps
 
-- Write tests for your plugin's communication with [Testing](./testing.md)
-- Check out [Official Plugins](../official-plugins/overview.md) to see available plugins
+- Write tests for your plugin's communication with [Testing](/docs/plugin-development/testing)
+- Check out [Official Plugins](/docs/official-plugins/overview) to see available plugins
 - Join the community to share your plugins and get help

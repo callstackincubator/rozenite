@@ -14,7 +14,7 @@ import PixelIcon from '../components/site/PixelIcon.astro';
 import PluginGrid from '../components/site/PluginGrid.astro';
 import Window from '../components/site/Window.astro';
 import Hero from '../components/home/Hero.astro';
-import { code, docs, site } from '../site/content';
+import { code, docs, faq, site } from '../site/content';
 
 const steps = [
   {
@@ -78,10 +78,63 @@ const beyond = [
     href: docs.standalone,
   },
 ];
+// Structured data: the site, Callstack, Rozenite as an application and as source code, and
+// the FAQ on this page.
+const home = new URL('/', Astro.site).href;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${home}#website`,
+      url: home,
+      name: 'Rozenite',
+      description: site.description,
+      publisher: { '@id': 'https://callstack.com/#organization' },
+    },
+    {
+      '@type': 'Organization',
+      '@id': 'https://callstack.com/#organization',
+      name: 'Callstack',
+      url: 'https://callstack.com/',
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': `${home}#software`,
+      name: 'Rozenite',
+      description: site.description,
+      url: home,
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'iOS, Android, Web',
+      license: 'https://opensource.org/licenses/MIT',
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      softwareHelp: new URL(docs.intro, Astro.site).href,
+      sameAs: [site.repo, 'https://www.npmjs.com/package/rozenite'],
+      publisher: { '@id': 'https://callstack.com/#organization' },
+    },
+    {
+      '@type': 'SoftwareSourceCode',
+      name: 'Rozenite',
+      codeRepository: site.repo,
+      programmingLanguage: 'TypeScript',
+      license: 'https://opensource.org/licenses/MIT',
+      targetProduct: { '@id': `${home}#software` },
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: faq.map(({ q, a }) => ({
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a.replace(/`/g, '') },
+      })),
+    },
+  ],
+};
 const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
 ---
 
-<Site title={site.title}>
+<Site title={site.title} description={site.description} jsonLd={jsonLd}>
   <Nav />
   <main class="frame">
     <Hero />

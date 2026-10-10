@@ -25,7 +25,13 @@ const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 const href = (n: number) => `/plugin-directory/${n}`;
 ---
 
-<Site title="Plugin directory · Rozenite" description="Official and community Rozenite plugins for React Native DevTools.">
+<Site
+  title={page.pageNumber === 1 ? 'Plugin directory · Rozenite' : `Plugin directory, page ${page.pageNumber} · Rozenite`}
+  description={page.pageNumber === 1
+    ? 'Official and community Rozenite plugins for React Native DevTools: install one and its panel shows up in DevTools.'
+    : `Official and community Rozenite plugins for React Native DevTools, page ${page.pageNumber} of ${totalPages}.`}
+  canonicalPath={page.pageNumber === 1 ? '/plugin-directory' : undefined}
+>
   <Nav />
   <main class="frame">
     <section class="intro intro--top" aria-labelledby="dir-title">

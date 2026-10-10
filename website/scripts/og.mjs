@@ -63,7 +63,6 @@ const mark = (size, padding, background) => `<svg xmlns="http://www.w3.org/2000/
 for (const [name, size, padding, background] of [
   ['favicon-32.png', 32, 0, ''],
   ['apple-touch-icon.png', 180, 2, '#0a0a0a'],
-  ['icon-512.png', 512, 2, '#0a0a0a'],
 ]) {
   const svg = Buffer.from(mark(size, padding, background));
   await writeFile(join(root, 'public', name), await sharp(svg).resize(size, size, { fit: 'contain', background: background || { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer());

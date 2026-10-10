@@ -9,7 +9,11 @@ import Nav from '../components/site/Nav.astro';
 import { docs, site } from '../site/content';
 ---
 
-<Site title="Page not found · Rozenite" noindex>
+<Site
+  title="Page not found · Rozenite"
+  description="There is no page at this address. Go to the Rozenite home page, the docs or the plugin directory."
+  noindex
+>
   <Nav />
   <main class="frame">
     <section class="nf" aria-labelledby="nf-title">

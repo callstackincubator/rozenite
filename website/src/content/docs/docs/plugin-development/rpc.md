@@ -3,7 +3,7 @@ title: "RPC"
 ---
 
 The `RozeniteDevToolsClient` you get from `getRozeniteDevToolsClient` (see the
-[Plugin Development Guide](./plugin-development.md)) is fire-and-forget:
+[Plugin Development Guide](/docs/plugin-development/plugin-development)) is fire-and-forget:
 `send(type, payload)` and `onMessage(type, listener)`. That's the right tool
 for events, but it isn't an answer to "call this and give me a result."
 

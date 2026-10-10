@@ -88,7 +88,7 @@ that never arrived.
 
 ## Test an RPC method
 
-[RPC methods](./rpc.md) work over the same pair — register a handler on one
+[RPC methods](/docs/plugin-development/rpc) work over the same pair — register a handler on one
 side and call it from the other:
 
 ```typescript
@@ -282,5 +282,5 @@ in-process, so a message that hasn't arrived in a second is not on its way.
 These tests prove the two sides agree on the messages they exchange. They say
 nothing about how your panel looks, whether DevTools loads your plugin, or how
 your code behaves against a real device — for that, run the plugin in the
-[development workflow](./plugin-development.md) and check it by hand before you
+[development workflow](/docs/plugin-development/plugin-development) and check it by hand before you
 release.

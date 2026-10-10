@@ -4,7 +4,7 @@ title: "Redux DevTools Plugin"
 
 import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
 
-![](/redux-devtools-plugin.png)
+![The Redux DevTools panel in React Native DevTools](/redux-devtools-plugin.png)
 
 The Redux DevTools plugin brings the familiar Redux DevTools experience into React Native DevTools: state inspection, action history, and state diffs for your store.
 
@@ -16,7 +16,7 @@ Make sure to go through the [Getting Started guide](/docs/getting-started) befor
 
 Add the enhancer to your store:
 
-#### Redux Toolkit (recommended)
+### Redux Toolkit (recommended)
 
 ```typescript title="store.ts"
 import { configureStore } from '@reduxjs/toolkit';
@@ -31,7 +31,7 @@ const store = configureStore({
 export default store;
 ```
 
-#### Classic Redux
+### Classic Redux
 
 ```typescript title="store.ts"
 import { createStore, applyMiddleware } from 'redux';
@@ -47,7 +47,7 @@ const store = createStore(
 export default store;
 ```
 
-#### Rematch
+### Rematch
 
 Follow the [Rematch documentation](https://rematchjs.org/docs/guides/devtools/) and use `composeWithRozeniteDevTools` as the `devtoolComposer`:
 
@@ -141,4 +141,4 @@ function App() {
 
 This registers curated tools under the `@rozenite/redux-devtools-plugin` domain for listing stores/actions, dispatching actions, and driving history (jump/rollback/commit) — rather than exposing raw eval-based commands.
 
-**Next**: Learn about [Plugin Development](../plugin-development/plugin-development.md), or explore other [Official Plugins](./overview.md).
+**Next**: Learn about [Plugin Development](/docs/plugin-development/plugin-development), or explore other [Official Plugins](/docs/official-plugins/overview).

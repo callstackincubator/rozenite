@@ -4,6 +4,8 @@ import starlight from '@astrojs/starlight';
 import { defineConfig } from 'astro/config';
 import starlightLlmsTxt from 'starlight-llms-txt';
 
+import { site as meta } from './src/site/content.ts';
+
 const site = 'https://rozenite.dev';
 const repo = 'https://github.com/callstackincubator/rozenite';
 const description =
@@ -23,14 +25,20 @@ export default defineConfig({
   build: { format: 'file' },
   devToolbar: { enabled: false },
   integrations: [
-    // Starlight would add the sitemap itself; listed so the landing page is included.
-    sitemap(),
+    // Starlight would add the sitemap itself; listed so the pages outside Starlight are included.
+    // Left out: the DevTools welcome page (noindex) and /plugin-directory/1, a copy of
+    // /plugin-directory. The 404 is never listed.
+    sitemap({
+      filter: (page) => !['/welcome', '/plugin-directory/1'].includes(new URL(page).pathname),
+    }),
     starlight({
       title: 'Rozenite',
       description,
       favicon: '/favicon.svg',
       // src/pages/404.astro replaces Starlight's 404, in the site's look (docs/DESIGN.md).
       disable404Route: true,
+      // Per-page descriptions and breadcrumbs for docs pages.
+      routeMiddleware: './src/routeData.ts',
       // The look follows docs/DESIGN.md: the same tokens, fonts and lockup as the landing pages.
       customCss: ['./src/fonts/font-face.css', './src/styles/theme.css', './src/styles/docs.css'],
       components: {
@@ -45,9 +53,17 @@ export default defineConfig({
       ],
       editLink: { baseUrl: `${repo}/edit/main/website/src/content/docs/` },
       head: [
+        // Starlight sets og:title, og:description and a large Twitter card, but no image.
         { tag: 'meta', attrs: { property: 'og:image', content: `${site}/og-image.jpg` } },
+        { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
+        { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
+        { tag: 'meta', attrs: { property: 'og:image:alt', content: meta.ogAlt } },
         { tag: 'meta', attrs: { name: 'twitter:image', content: `${site}/og-image.jpg` } },
+        { tag: 'meta', attrs: { name: 'twitter:image:alt', content: meta.ogAlt } },
         { tag: 'meta', attrs: { name: 'theme-color', content: '#0a0a0a' } },
+        { tag: 'link', attrs: { rel: 'icon', href: '/favicon-32.png', type: 'image/png', sizes: '32x32' } },
+        { tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } },
+        { tag: 'link', attrs: { rel: 'alternate', type: 'text/plain', title: 'llms.txt', href: '/llms.txt' } },
       ],
       sidebar: [
         doc('introduction', 'Introduction'),

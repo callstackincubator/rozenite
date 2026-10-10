@@ -14,6 +14,9 @@ export const site = {
   license: 'https://github.com/callstackincubator/rozenite/blob/main/LICENSE',
   callstack: 'https://callstack.com/?utm_source=rozenite&utm_medium=referral',
   install: 'npx rozenite@latest init',
+  /** Alt text for the social card (public/og-image.jpg). */
+  ogAlt:
+    'Rozenite by Callstack. See inside your running app. So can your agent. React Native DevTools with a Rozenite panel and an agent terminal showing the same failing request.',
   skill: 'npx skills add callstackincubator/rozenite --skill rozenite',
 };
 

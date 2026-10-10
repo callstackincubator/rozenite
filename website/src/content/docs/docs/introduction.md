@@ -4,7 +4,7 @@ title: "Introduction"
 
 Rozenite adds plug-and-play debugging panels to React Native DevTools — for React Native, web and Lynx apps. Install official plugins, open DevTools, and start debugging in minutes — no extra windows or servers.
 
-![](/rozenite-loaded.png)
+![React Native DevTools with Rozenite loaded](/rozenite-loaded.png)
 
 It also gives teams a safe, scalable way to standardize debugging across projects. Plugins auto‑discover and load during development, are easy to configure, and are automatically disabled in production builds so no plugin code ships to your users.
 

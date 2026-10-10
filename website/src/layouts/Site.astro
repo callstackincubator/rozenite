@@ -1,6 +1,7 @@
 ---
 // The shell for pages outside Starlight (home, plugin directory, welcome page, 404): fonts,
-// tokens, social tags and the pointers agents use. Pages add the nav and footer themselves.
+// tokens, search and social tags, and the pointers agents use. Pages add the nav and footer
+// themselves.
 import '../fonts/font-face.css';
 import '../styles/landing.css';
 
@@ -11,13 +12,23 @@ import { site } from '../site/content';
 
 interface Props {
   title: string;
-  description?: string;
-  /** Prototype pages stay out of search results. */
+  description: string;
+  /** Pages that should stay out of search results (404, the DevTools welcome page). */
   noindex?: boolean;
+  /** The canonical path, when it differs from this page's own (a duplicate page). */
+  canonicalPath?: string;
+  /** Structured data for this page, rendered as JSON-LD. */
+  jsonLd?: object;
 }
 
-const { title, description = site.description, noindex = false } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const { title, description, noindex = false, canonicalPath, jsonLd } = Astro.props;
+// Pages are built as files (`build.format: 'file'`) and served without `.html` or a trailing
+// slash (`cleanUrls`, `trailingSlash: false` in vercel.json), so the canonical drops both.
+const path = (canonicalPath ?? Astro.url.pathname)
+  .replace(/\.html$/, '')
+  .replace(/(^|\/)index$/, '$1')
+  .replace(/(.)\/$/, '$1');
+const canonical = new URL(path, Astro.site).href;
 const ogImage = new URL('/og-image.jpg', Astro.site).href;
 ---
 
@@ -28,27 +39,38 @@ const ogImage = new URL('/og-image.jpg', Astro.site).href;
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
-    {noindex && <meta name="robots" content="noindex" />}
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
 
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0a0a0a" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Rozenite" />
+    <meta property="og:locale" content="en" />
     <meta property="og:url" content={canonical} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={site.ogAlt} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={site.ogAlt} />
 
     <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
 
     <link rel="preload" href={switzerMedium} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={switzerRegular} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={geistMono} as="font" type="font/woff2" crossorigin />
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
   </head>
   <body>
     <slot />

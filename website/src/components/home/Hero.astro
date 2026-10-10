@@ -9,6 +9,7 @@ import Dither from '../site/Dither.astro';
 import Phone from '../site/Phone.astro';
 import Window from '../site/Window.astro';
 import { docs, site } from '../../site/content';
+import { LINES, lineHtml } from './transcript';
 
 const products = [
   { name: 'Runner Low', price: '$120', art: 'a' },
@@ -52,16 +53,16 @@ const products = [
       <DevTools selected="Network Activity" class="rig-devtools">
         <div class="pane is-on net">
           <div class="pane-row pane-head"><span>Request</span><span>Status</span><span class="t">Time</span></div>
-          <div class="pane-row" data-row="n0"><span>GET /api/products</span><span class="mut">200</span><span class="mut t">142 ms</span></div>
-          <div class="pane-row" data-row="n1"><span>GET /api/user</span><span class="mut">200</span><span class="mut t">88 ms</span></div>
-          <div class="pane-row" data-row="n2"><span>GET /api/cart</span><span>500</span><span class="mut t">212 ms</span></div>
+          <div class="pane-row is-on" data-row="n0"><span>GET /api/products</span><span class="mut">200</span><span class="mut t">142 ms</span></div>
+          <div class="pane-row is-on" data-row="n1"><span>GET /api/user</span><span class="mut">200</span><span class="mut t">88 ms</span></div>
+          <div class="pane-row is-on is-picked" data-row="n2"><span>GET /api/cart</span><span>500</span><span class="mut t">212 ms</span></div>
         </div>
       </DevTools>
 
       <div class="duct" data-duct-human><span class="pkt" data-pkt-human></span></div>
 
-      <Phone title="Store" count={2} class="rig-phone">
-        <div class="view is-on" data-view="home">
+      <Phone title="Cart" count={2} class="rig-phone">
+        <div class="view" data-view="home">
           <ul class="store">
             {
               products.map((p) => (
@@ -74,7 +75,7 @@ const products = [
             }
           </ul>
         </div>
-        <div class="view" data-view="cart">
+        <div class="view is-on" data-view="cart">
           <div class="err">
             <span class="label">Error</span>
             <p>Couldn’t load your cart.</p>
@@ -88,7 +89,9 @@ const products = [
       </div>
 
       <Window title="agent" class="rig-agent">
-        <div class="term" data-term></div>
+        <div class="term" data-term>
+          {LINES.map((l) => <div class={`ln ${l.cls}`} set:html={lineHtml(l)} />)}
+        </div>
       </Window>
     </div>
   </div>

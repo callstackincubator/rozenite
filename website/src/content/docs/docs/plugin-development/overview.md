@@ -30,12 +30,12 @@ my-plugin/
 
 Anything that benefits from a live view into your running app: custom debugging tools, performance monitors, state inspectors, network tools, storage inspectors, or development-time analytics.
 
-To develop without wiring up a playground app first, `rozenite dev` opens an in-browser dev host where you can preview panels, read the message log, and dispatch commands — see the [Plugin Development guide](./plugin-development.md#step-5-local-development-workflow). You can also define reusable presets and scripted dev flows in `rozenite.config.ts` to speed up local iteration.
+To develop without wiring up a playground app first, `rozenite dev` opens an in-browser dev host where you can preview panels, read the message log, and dispatch commands — see the [Plugin Development guide](/docs/plugin-development/plugin-development#step-5-local-development-workflow). You can also define reusable presets and scripted dev flows in `rozenite.config.ts` to speed up local iteration.
 
 ## Getting started
 
-Ready to build one? Follow the [Plugin Development Guide](./plugin-development.md) for a full walkthrough, or browse the [Official Plugins](../official-plugins/overview.md) for examples of what's possible.
+Ready to build one? Follow the [Plugin Development Guide](/docs/plugin-development/plugin-development) for a full walkthrough, or browse the [Official Plugins](/docs/official-plugins/overview) for examples of what's possible.
 
 ## Contributing
 
-We welcome contributions to both our maintained plugins and the community ecosystem. See the [Plugin Development Guide](./plugin-development.md) to get started, or reach out to the community to discuss an idea.
+We welcome contributions to both our maintained plugins and the community ecosystem. See the [Plugin Development Guide](/docs/plugin-development/plugin-development) to get started, or reach out to the community to discuss an idea.
