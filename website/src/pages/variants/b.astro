@@ -1,0 +1,227 @@
+---
+// Variant B · Agents: for teams whose coding agents work on the app.
+import Site from '../../layouts/Site.astro';
+import CodeBlock from '../../components/site/CodeBlock.astro';
+import Closing from '../../components/site/Closing.astro';
+import CopyCommand from '../../components/site/CopyCommand.astro';
+import Dither from '../../components/site/Dither.astro';
+import Faq from '../../components/site/Faq.astro';
+import Footer from '../../components/site/Footer.astro';
+import Marquee from '../../components/site/Marquee.astro';
+import Nav from '../../components/site/Nav.astro';
+import PixelIcon from '../../components/site/PixelIcon.astro';
+import VariantSwitch from '../../components/site/VariantSwitch.astro';
+import Window from '../../components/site/Window.astro';
+import HeroAgents from '../../components/variants/HeroAgents.astro';
+import { agentClients, agentPlugins, code, docs, domains, site } from '../../site/content';
+
+const steps = [
+  {
+    title: 'Connect',
+    body: 'The agent creates or reuses a session on the running app. With several devices, it picks one from `agent targets`.',
+    cmd: 'npx rozenite agent session create',
+  },
+  {
+    title: 'Discover',
+    body: 'It lists the domains this app has: the built-in ones, one per agent-enabled plugin, and `app` for your own tools.',
+    cmd: 'npx rozenite agent domains --session <id>',
+  },
+  {
+    title: 'Inspect and act',
+    body: 'It calls a tool in a domain and reads the result: logs, requests, the component tree, or an action in the app.',
+    cmd: 'npx rozenite agent <domain> call --tool <name>',
+  },
+];
+const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
+---
+
+<Site title="Rozenite · Variant B · Agents" noindex>
+  <Nav />
+  <main class="frame">
+    <HeroAgents />
+    <Marquee />
+
+    <section id="how" aria-labelledby="how-title">
+      <p class="section-head label"><b>[01]</b> How it works</p>
+      <div class="intro">
+        <h2 class="h2" id="how-title">A session on the app. <em>Domains of tools inside.</em></h2>
+        <p class="lede">
+          Rozenite for Agents needs Rozenite set up in the app, Metro running and a device connected. The agent drives the
+          <code>rozenite agent</code> CLI, or your script uses the SDK.
+        </p>
+      </div>
+      <ol class="cells cells--3">
+        {
+          steps.map((s, i) => (
+            <li class="cell">
+              <span class="label cell-num">{String(i + 1).padStart(2, '0')}</span>
+              <h3 class="h3">{s.title}</h3>
+              <p class="body" set:html={md(s.body)} />
+              <code class="pkg">$ {s.cmd}</code>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="stage">
+        <Dither scene="flow" />
+        <Window title="zsh" class="stage-window">
+          <CodeBlock code={code.agentCli} lang="shell" minLines={7} />
+        </Window>
+      </div>
+    </section>
+
+    <section id="domains" aria-labelledby="domains-title">
+      <p class="section-head label"><b>[02]</b> Domains</p>
+      <div class="intro">
+        <h2 class="h2" id="domains-title">Five built in. <em>One for your app.</em></h2>
+        <p class="lede">Every React Native target has the five built-in domains. Register a tool in your app and an <code>app</code> domain appears beside them.</p>
+      </div>
+      <div class="cells cells--3">
+        {
+          domains.map((d) => (
+            <article class="cell">
+              <span class="cell-top">
+                <code class="pkg dom">{d.id}</code>
+                <span class="chip">Built-in</span>
+              </span>
+              <p class="body">{d.about}</p>
+              <p class="tools label">{d.tools.join(' · ')}</p>
+            </article>
+          ))
+        }
+        <a class="cell cell--link" href={docs.appTools}>
+          <span class="cell-top">
+            <code class="pkg dom">app</code>
+            <span class="chip chip--agent">Yours</span>
+          </span>
+          <p class="body">Tools your app registers with one hook, named <code>app.&lt;name&gt;</code>.</p>
+          <span class="label more">Add a tool <span aria-hidden="true">→</span></span>
+        </a>
+      </div>
+    </section>
+
+    <section id="plugins" aria-labelledby="plugins-title">
+      <p class="section-head label"><b>[03]</b> Plugin tools</p>
+      <div class="intro">
+        <h2 class="h2" id="plugins-title">Install a plugin. <em>Your agent gets its tools.</em></h2>
+        <p class="lede">These official plugins register agent tools when their integration is enabled in the app.</p>
+      </div>
+      <ul class="cells cells--4">
+        {
+          agentPlugins.map((p) => (
+            <li class="cell">
+              <span class="cell-top">
+                <PixelIcon name={p.icon} size={27} class="accent" />
+                <code class="pkg dom">{p.agent}</code>
+              </span>
+              <h3 class="h3">
+                <a class="plain" href={p.href}>
+                  {p.name}
+                </a>
+              </h3>
+              <p class="tools label">{p.tools?.join(' · ')}</p>
+            </li>
+          ))
+        }
+        <li class="cell">
+          <span class="cell-top">
+            <PixelIcon name="code" size={27} class="accent" />
+            <code class="pkg dom">@your/plugin</code>
+          </span>
+          <h3 class="h3"><a class="plain" href={docs.pluginTools}>Your plugin</a></h3>
+          <p class="tools label">useRozenitePluginAgentTool</p>
+        </li>
+      </ul>
+    </section>
+
+    <section id="app-tools" aria-labelledby="app-title">
+      <p class="section-head label"><b>[04]</b> Your app’s tools</p>
+      <div class="split split--top">
+        <div class="split-copy">
+          <h2 class="h2" id="app-title">Things only your app knows. <em>One hook away.</em></h2>
+          <p class="lede">
+            Register a tool from any mounted component with <code>@rozenite/agent-bridge</code>: a name, a description, an
+            input schema and a handler. It shows up under the <code>app</code> domain while the component is mounted.
+          </p>
+          <a class="label more" href={docs.appTools}>Adding tools to your application <span aria-hidden="true">→</span></a>
+        </div>
+        <Window title="AppAgentTools.tsx">
+          <CodeBlock code={code.appTool} lang="tsx" wrap />
+        </Window>
+      </div>
+      <div class="band">
+        <Dither scene="flow" />
+        <Window title="zsh" class="band-window">
+          <CodeBlock code={code.appToolCall} lang="shell" wrap />
+        </Window>
+      </div>
+    </section>
+
+    <section id="skill" aria-labelledby="skill-title">
+      <p class="section-head label"><b>[05]</b> Skill, SDK and tap</p>
+      <div class="split">
+        <div class="split-copy">
+          <h2 class="h2" id="skill-title">Teach the agent. <em>Or script it yourself.</em></h2>
+          <p class="lede">
+            The <code>rozenite</code> skill points your agent at <code>npx rozenite skills list</code>, which serves the
+            workflow docs for the Rozenite version in your project.
+          </p>
+          <p class="chips">{agentClients.map((c) => <span class="chip chip--line">{c}</span>)}</p>
+          <a class="label more" href={docs.skills}>Agent skills <span aria-hidden="true">→</span></a>
+        </div>
+        <Window title="agent-sdk-script.ts">
+          <CodeBlock code={code.sdk} lang="ts" wrap />
+        </Window>
+      </div>
+      <div class="band">
+        <Dither scene="flow" />
+        <CopyCommand command={site.skill} />
+      </div>
+      <div class="split split--top">
+        <div class="split-copy">
+          <h3 class="h2">Watch a plugin’s messages <em>from the terminal.</em></h3>
+          <p class="lede">
+            <code>rozenite agent tap</code> prints a plugin's messages in both directions without a browser, and can send
+            one to see what comes back. Pass <code>--json</code> for another program to read.
+          </p>
+          <a class="label more" href={docs.tap}>Tap <span aria-hidden="true">→</span></a>
+        </div>
+        <Window title="zsh">
+          <CodeBlock code={code.tap} lang="text" wrap />
+        </Window>
+      </div>
+    </section>
+
+    <Faq num="06" />
+    <Closing />
+  </main>
+  <Footer />
+  <VariantSwitch current="b" />
+</Site>
+
+<style>
+  .stage :global(.stage-window) {
+    max-width: 44rem;
+    margin-inline: auto;
+  }
+  .band :global(.band-window) {
+    width: min(100%, 44rem);
+  }
+  .dom {
+    font-size: 0.8125rem;
+  }
+  .tools {
+    margin: 0;
+    color: var(--faint);
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 0.6875rem;
+    overflow-wrap: anywhere;
+  }
+  .plain {
+    text-decoration: none;
+  }
+  .plain:hover {
+    color: var(--accent);
+  }
+</style>

@@ -1,0 +1,200 @@
+---
+// Variant C's hero: the official plugins as a grid of tiles that light up one by one, then
+// `npx rozenite generate checkout-inspector` types out and your own plugin fills the last tile.
+import CopyCommand from '../site/CopyCommand.astro';
+import Dither from '../site/Dither.astro';
+import PixelIcon from '../site/PixelIcon.astro';
+import Window from '../site/Window.astro';
+import { docs, plugins, site } from '../../site/content';
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-top hero-top--c">
+    <div class="hero-copy">
+      <h1 class="h1" id="hero-title">Fourteen official plugins. <em>Then the one you build.</em></h1>
+      <p class="lede">
+        Rozenite gives React Native DevTools a plugin system. Install panels for the libraries you use, or write your own
+        with a type-safe bridge between your app and its panel.
+      </p>
+      <div class="actions">
+        <a class="btn" href={docs.start}>Get started <span aria-hidden="true">→</span></a>
+        <CopyCommand command={site.install} />
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="viz"
+    data-hero-build
+    role="img"
+    aria-label="The fourteen official Rozenite plugins and the community directory light up one by one. Then a terminal runs npx rozenite generate checkout-inspector, and a new plugin fills the last tile."
+  >
+    <Dither scene="crystals" focus={0.5} />
+    <div class="rig">
+      <ul class="tiles">
+        {
+          plugins.map((p) => (
+            <li class="tile" data-tile>
+              <PixelIcon name={p.icon} size={27} />
+              <span class="tile-name">{p.name}</span>
+            </li>
+          ))
+        }
+        <li class="tile" data-tile>
+          <PixelIcon name="package" size={27} />
+          <span class="tile-name">Community</span>
+        </li>
+        <li class="tile tile--yours" data-yours>
+          <span class="tile-plus">+</span>
+          <PixelIcon name="code" size={27} />
+          <span class="tile-name">Checkout Inspector</span>
+        </li>
+      </ul>
+      <Window title="zsh" class="rig-term">
+        <div class="term" data-term></div>
+      </Window>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { whenNear } from '../site/lazy';
+
+  const root = document.querySelector<HTMLElement>('[data-hero-build]');
+  if (root) whenNear(root, () => void import('./build').then((m) => m.default(root)));
+</script>
+
+<style>
+  .hero-top--c {
+    justify-items: center;
+    text-align: center;
+    padding-block: clamp(2.5rem, 5vw, 4.5rem);
+  }
+  .hero-top--c .hero-copy {
+    align-items: center;
+  }
+  .hero-top--c .h1 {
+    max-width: 18ch;
+  }
+  .hero-top--c .lede {
+    max-width: 38rem;
+  }
+  .hero-top--c .actions {
+    justify-content: center;
+  }
+
+  .rig {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: clamp(2rem, 5vw, 3.5rem) var(--pad);
+  }
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    width: min(100%, 62rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: var(--bg);
+    border-top: 1px solid var(--line-strong);
+    border-left: 1px solid var(--line-strong);
+  }
+  .tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+    min-height: 7rem;
+    padding: 0.875rem;
+    border-right: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--line-strong);
+    color: var(--faint);
+    transition:
+      color 0.12s steps(2),
+      background-color 0.12s steps(2);
+  }
+  .tile :global(svg) {
+    opacity: 0.45;
+  }
+  .tile-name {
+    font-size: 0.8125rem;
+    line-height: 1.3;
+  }
+  .tile.is-on {
+    color: var(--text);
+  }
+  .tile.is-on :global(svg) {
+    opacity: 1;
+    color: var(--accent);
+  }
+  /* Your plugin: an empty slot until it is generated, then the one accent fill on the grid. */
+  .tile--yours {
+    outline: 1px dashed var(--line-strong);
+    outline-offset: -0.5rem;
+  }
+  .tile--yours :global(svg),
+  .tile--yours .tile-name {
+    visibility: hidden;
+  }
+  .tile-plus {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    color: var(--faint);
+  }
+  .tile--yours.is-on {
+    outline: 0;
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .tile--yours.is-on :global(svg) {
+    color: var(--on-accent);
+  }
+  .tile--yours.is-on :global(svg),
+  .tile--yours.is-on .tile-name {
+    visibility: visible;
+  }
+  .tile--yours.is-on .tile-plus {
+    display: none;
+  }
+  .rig :global(.rig-term) {
+    width: min(100%, 36rem);
+  }
+  .rig :global(.rig-term) .term {
+    padding-block: 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  @media (max-width: 64rem) {
+    .tiles {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      width: min(100%, 36rem);
+    }
+  }
+  @media (max-width: 40rem) {
+    /* On a phone the tiles are icons only; the names are in the label. */
+    .tile {
+      min-height: 0;
+      aspect-ratio: 1;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem;
+    }
+    .tile-name {
+      display: none;
+    }
+    .tile--yours .tile-name {
+      display: none;
+    }
+    .rig :global(.rig-term) .term {
+      font-size: 0.6875rem;
+    }
+  }
+</style>

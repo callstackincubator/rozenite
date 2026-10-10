@@ -18,6 +18,12 @@ const { current } = Astro.props;
 </nav>
 
 <style>
+  /* Room under the footer, so the switcher never covers its links on a phone. */
+  @media (max-width: 48rem) {
+    :global(body) {
+      padding-bottom: 3.5rem;
+    }
+  }
   .variant-switch {
     position: fixed;
     right: 1rem;

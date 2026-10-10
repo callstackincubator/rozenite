@@ -551,7 +551,7 @@ dl.cells dd {
   padding: 7cqi 0 5cqi;
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 19.2cqi;
+  font-size: 21.6cqi;
   line-height: 0.8;
   letter-spacing: -0.045em;
   text-align: center;
@@ -700,4 +700,9 @@ dl.cells dd {
     top: 0;
     left: 50%;
   }
+}
+
+/* Long commands (the skill install) get more room on a band. */
+.band .cmd {
+  width: min(100%, 48rem);
 }

@@ -1,0 +1,235 @@
+---
+// Variant C · Build: for teams who need a panel nobody has built yet.
+import Site from '../../layouts/Site.astro';
+import CodeBlock from '../../components/site/CodeBlock.astro';
+import Closing from '../../components/site/Closing.astro';
+import CopyCommand from '../../components/site/CopyCommand.astro';
+import Dither from '../../components/site/Dither.astro';
+import Footer from '../../components/site/Footer.astro';
+import Marquee from '../../components/site/Marquee.astro';
+import Nav from '../../components/site/Nav.astro';
+import PixelIcon from '../../components/site/PixelIcon.astro';
+import PluginGrid from '../../components/site/PluginGrid.astro';
+import VariantSwitch from '../../components/site/VariantSwitch.astro';
+import Window from '../../components/site/Window.astro';
+import Anatomy from '../../components/variants/Anatomy.astro';
+import HeroBuild from '../../components/variants/HeroBuild.astro';
+import { code, docs, site } from '../../site/content';
+
+const halves = [
+  {
+    icon: 'plug',
+    title: 'The app side',
+    file: 'react-native.ts',
+    body: 'Runs in your app and can use React Native APIs and your existing dependencies. Same file name on every target.',
+  },
+  {
+    icon: 'panel',
+    title: 'The DevTools side',
+    file: 'src/*.tsx',
+    body: 'React panels in DevTools, declared in `rozenite.config.ts`, talking to the app through a typed event bridge.',
+  },
+] as const;
+
+const develop = [
+  {
+    icon: 'window',
+    title: 'Preview without an app',
+    cmd: 'rozenite dev',
+    body: 'Opens a dev host in the browser: every panel as a tab, a message log, and dispatch, presets and flows to drive it.',
+    href: docs.pluginGuide,
+  },
+  {
+    icon: 'test',
+    title: 'Test both sides in Node',
+    cmd: '@rozenite/testing',
+    body: 'Two ends of an in-memory channel, so your panel and your app side run against each other in milliseconds.',
+    href: docs.testing,
+  },
+  {
+    icon: 'stack',
+    title: 'Build and publish',
+    cmd: 'rozenite build',
+    body: 'One bundle per panel, the app-side entry and a manifest, ready to publish as an npm package.',
+    href: docs.pluginGuide,
+  },
+] as const;
+
+const targets = [
+  { id: 'react-native', name: 'React Native', note: 'The default when a plugin declares nothing.' },
+  { id: 'react-native-web', name: 'React Native Web', note: 'Only if the device-side imports exist on web.' },
+  { id: 'lynx', name: 'Lynx', note: 'For plugins that move state rather than call native APIs.' },
+];
+const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
+---
+
+<Site title="Rozenite · Variant C · Build" noindex>
+  <Nav />
+  <main class="frame">
+    <HeroBuild />
+    <Marquee />
+
+    <section id="anatomy" aria-labelledby="anatomy-title">
+      <p class="section-head label"><b>[01]</b> Anatomy of a plugin</p>
+      <div class="intro">
+        <h2 class="h2" id="anatomy-title">Two halves, <em>one typed bridge.</em></h2>
+        <p class="lede">
+          Both sides share an event map, so event names and payloads are checked at compile time and autocomplete in your
+          editor. Either side can send.
+        </p>
+      </div>
+      <div class="cells cells--2">
+        {
+          halves.map((h) => (
+            <article class="cell">
+              <span class="cell-top">
+                <PixelIcon name={h.icon} size={27} class="accent" />
+                <code class="pkg">{h.file}</code>
+              </span>
+              <h3 class="h3">{h.title}</h3>
+              <p class="body" set:html={md(h.body)} />
+            </article>
+          ))
+        }
+      </div>
+      <Anatomy />
+      <div class="split split--top">
+        <div class="split-copy">
+          <h3 class="h2">Start from a working plugin.</h3>
+          <p class="lede">
+            <code>rozenite generate</code> creates the TypeScript project, the Vite build, a sample panel and a git repository
+            with everything installed.
+          </p>
+          <a class="label more" href={docs.pluginGuide}>Plugin development guide <span aria-hidden="true">→</span></a>
+        </div>
+        <Window title="panel.tsx">
+          <CodeBlock code={code.panelClient} lang="tsx" wrap />
+        </Window>
+      </div>
+      <div class="band">
+        <Dither scene="flow" />
+        <CopyCommand command="npx rozenite generate my-plugin" />
+      </div>
+    </section>
+
+    <section id="plugins" aria-labelledby="plugins-title">
+      <p class="section-head label"><b>[02]</b> Official plugins</p>
+      <div class="intro">
+        <h2 class="h2" id="plugins-title">Fourteen to install, <em>fourteen to read.</em></h2>
+        <p class="lede">
+          Every official plugin lives in the Rozenite repo, built on the same APIs as yours. When you start a plugin, start
+          by reading the closest one.
+        </p>
+      </div>
+      <PluginGrid />
+    </section>
+
+    <section id="develop" aria-labelledby="develop-title">
+      <p class="section-head label"><b>[03]</b> Develop and test</p>
+      <div class="intro">
+        <h2 class="h2" id="develop-title">Iterate on the panel <em>without a simulator.</em></h2>
+      </div>
+      <div class="cells cells--3">
+        {
+          develop.map((d) => (
+            <a class="cell cell--link" href={d.href}>
+              <span class="cell-top">
+                <PixelIcon name={d.icon} size={27} class="accent" />
+                <code class="pkg">{d.cmd}</code>
+              </span>
+              <h3 class="h3">{d.title}</h3>
+              <p class="body">{d.body}</p>
+              <span class="label more">
+                Read more <span aria-hidden="true">→</span>
+              </span>
+            </a>
+          ))
+        }
+      </div>
+      <div class="stage">
+        <Dither scene="flow" />
+        <Window title="cache-inspector.test.ts" class="stage-window">
+          <CodeBlock code={code.testing} lang="ts" wrap />
+        </Window>
+      </div>
+    </section>
+
+    <section id="targets" aria-labelledby="targets-title">
+      <p class="section-head label"><b>[04]</b> Targets</p>
+      <div class="split split--top">
+        <div class="split-copy">
+          <h2 class="h2" id="targets-title">Say where it runs. <em>Rozenite holds you to it.</em></h2>
+          <p class="lede">
+            A plugin lists the integrations its device side supports in <code>rozenite.config.ts</code>. An unknown id fails
+            the build; annotate the config with <code>RozeniteConfig</code> to catch it while you type.
+          </p>
+        </div>
+        <Window title="rozenite.config.ts">
+          <CodeBlock code={code.config} lang="ts" wrap />
+        </Window>
+      </div>
+      <div class="cells cells--3">
+        {
+          targets.map((t) => (
+            <article class="cell">
+              <code class="pkg">'{t.id}'</code>
+              <h3 class="h3">{t.name}</h3>
+              <p class="body">{t.note}</p>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section id="agents" aria-labelledby="agents-title">
+      <p class="section-head label"><b>[05]</b> Agent tools</p>
+      <div class="split split--top">
+        <div class="split-copy">
+          <span class="chip">Experimental</span>
+          <h2 class="h2" id="agents-title">Give your plugin <em>tools for agents.</em></h2>
+          <p class="lede">
+            Register tools from the app side with <code>useRozenitePluginAgentTool</code>. Coding agents find them under a
+            domain named after your plugin, next to <code>console</code> and <code>network</code>.
+          </p>
+          <a class="label more" href={docs.pluginTools}>Making your plugin agent-enabled <span aria-hidden="true">→</span></a>
+        </div>
+        <Window title="agent-tools.tsx">
+          <CodeBlock code={code.pluginTool} lang="tsx" wrap />
+        </Window>
+      </div>
+    </section>
+
+    <section id="directory" aria-labelledby="directory-title">
+      <p class="section-head label"><b>[06]</b> Directory</p>
+      <div class="intro">
+        <h2 class="h2" id="directory-title">Built something useful? <em>List it.</em></h2>
+        <p class="lede">The plugin directory reads a list in the Rozenite repo. Add your package with a pull request.</p>
+      </div>
+      <div class="cells cells--2">
+        <a class="cell cell--link" href={docs.directory}>
+          <span class="cell-top"><PixelIcon name="grid" size={27} class="accent" /></span>
+          <h3 class="h3">Browse the plugin directory</h3>
+          <p class="body">Official and community plugins, with their versions, stars and links.</p>
+          <span class="label more">Plugin directory <span aria-hidden="true">→</span></span>
+        </a>
+        <a class="cell cell--link" href={site.repo}>
+          <span class="cell-top"><PixelIcon name="code" size={27} class="accent" /></span>
+          <h3 class="h3">Add yours</h3>
+          <p class="body">Open a pull request that adds your npm and GitHub links to the directory list.</p>
+          <span class="label more">GitHub <span aria-hidden="true">→</span></span>
+        </a>
+      </div>
+    </section>
+
+    <Closing />
+  </main>
+  <Footer />
+  <VariantSwitch current="c" />
+</Site>
+
+<style>
+  .stage :global(.stage-window) {
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+</style>

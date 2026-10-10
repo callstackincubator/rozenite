@@ -1,0 +1,273 @@
+---
+// Variant B's hero: an agent works on a running app through Rozenite for Agents. It opens a
+// session, navigates the app to the broken screen with a React Navigation plugin tool, then
+// reads the error from the console domain and the failing request from the network domain.
+// Calls step across the duct toward the app, data steps back.
+import CopyCommand from '../site/CopyCommand.astro';
+import Dither from '../site/Dither.astro';
+import Phone from '../site/Phone.astro';
+import Window from '../site/Window.astro';
+import { docs, site } from '../../site/content';
+
+const listed = [
+  { id: 'console', kind: 'built-in' },
+  { id: 'network', kind: 'built-in' },
+  { id: 'react', kind: 'built-in' },
+  { id: 'performance', kind: 'built-in' },
+  { id: 'memory', kind: 'built-in' },
+  { id: 'storage', kind: 'plugin' },
+  { id: 'react-navigation', kind: 'plugin' },
+  { id: 'app', kind: 'your tools' },
+];
+const products = [
+  { name: 'Runner Low', price: '$120', art: 'a' },
+  { name: 'Cotton Tee', price: '$32', art: 'b' },
+  { name: 'Field Cap', price: '$24', art: 'c' },
+];
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-top hero-top--b">
+    <div class="hero-copy">
+      <span class="chip">Rozenite for Agents · Experimental</span>
+      <h1 class="h1" id="hero-title">Give your agent <em>the running app.</em></h1>
+      <p class="lede">
+        Your coding agent opens a session on your React Native app, reads its logs, network requests and React profiles,
+        and calls the tools your plugins and your app register.
+      </p>
+      <div class="actions">
+        <a class="btn" href={docs.agents}>Set up agents <span aria-hidden="true">→</span></a>
+        <CopyCommand command={site.install} />
+      </div>
+    </div>
+    <Window title="agent · domains" class="hero-domains">
+      <p class="dom-app"><i aria-hidden="true"></i>Store · iOS Simulator<span>{listed.length} domains</span></p>
+      <ul class="dom-list">
+        {
+          listed.map((d) => (
+            <li>
+              <code>{d.id}</code>
+              <span class="label">{d.kind}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </Window>
+  </div>
+
+  <div
+    class="viz"
+    data-hero-agents
+    role="img"
+    aria-label="A coding agent asks why the cart screen shows an error. Through Rozenite it opens the cart screen in the running app, reads the TypeError from the console and a failing request from the network domain, and explains the cause."
+  >
+    <Dither scene="crystals" focus={0.62} />
+    <div class="rig">
+      <Window title="agent" class="rig-agent">
+        <div class="term" data-term></div>
+      </Window>
+      <div class="duct" data-duct>
+        <span class="pkt" data-pkt></span>
+        <span class="pkt pkt--back" data-pkt-back></span>
+      </div>
+      <Phone title="Store" count={2} class="rig-phone">
+        <div class="view is-on" data-view="home">
+          <ul class="store">
+            {
+              products.map((p) => (
+                <li class="item">
+                  <span class:list={['art', `art-${p.art}`]} />
+                  <span class="item-name">{p.name}</span>
+                  <span class="item-price">{p.price}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div class="view" data-view="cart">
+          <div class="err">
+            <span class="label">Error</span>
+            <p>Couldn’t load your cart.</p>
+            <span class="retry label">Try again</span>
+          </div>
+        </div>
+      </Phone>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { whenNear } from '../site/lazy';
+
+  const root = document.querySelector<HTMLElement>('[data-hero-agents]');
+  if (root) whenNear(root, () => void import('./agents').then((m) => m.default(root)));
+</script>
+
+<style>
+  .hero-top--b {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    align-items: center;
+    padding-block: clamp(2rem, 4.5vw, 3.75rem);
+  }
+  .hero-top--b .h1 {
+    max-width: 14ch;
+  }
+
+  /* The domains the agent sees on this app: what "the running app" means here. */
+  :global(.hero-domains) {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  .dom-app {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--text);
+  }
+  .dom-app i {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+  }
+  .dom-app span {
+    margin-inline-start: auto;
+    color: var(--faint);
+  }
+  .dom-list {
+    margin: 0;
+    padding: 0.5rem 0;
+    list-style: none;
+  }
+  .dom-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3125rem 1rem;
+  }
+  .dom-list code {
+    font-family: inherit;
+    color: var(--accent);
+  }
+  .dom-list .label {
+    font-size: 0.625rem;
+    color: var(--faint);
+  }
+
+  .rig {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(2rem, 5vw, 3.5rem) var(--pad);
+  }
+  .rig :global(.rig-agent) {
+    flex: 0 1 34rem;
+  }
+  .rig :global(.rig-agent) .term {
+    font-size: 0.75rem;
+    line-height: 1.7;
+  }
+
+  .view {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    translate: 8px 0;
+    transition:
+      opacity 0.28s ease,
+      translate 0.28s ease;
+  }
+  .view.is-on {
+    opacity: 1;
+    translate: 0 0;
+  }
+  .store {
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    list-style: none;
+  }
+  .item {
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+    column-gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.75rem;
+  }
+  .art {
+    grid-row: span 2;
+    width: 1.75rem;
+    aspect-ratio: 1;
+    background-color: var(--field);
+    background-size: 4px 4px;
+  }
+  .art-a {
+    background-image: radial-gradient(rgb(var(--accent-rgb) / 0.9) 1px, transparent 1.2px);
+  }
+  .art-b {
+    background-image: radial-gradient(rgb(255 255 255 / 0.55) 1px, transparent 1.2px);
+  }
+  .art-c {
+    background-image: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.6) 1.5px, transparent 1.5px);
+  }
+  .item-price {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    color: var(--muted);
+  }
+  /* An error, drawn without the accent: status never borrows the brand colour. */
+  .err {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0.875rem 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--line-strong);
+    background: #0d0d0d;
+    font-size: 0.8125rem;
+  }
+  .err .label {
+    font-size: 0.5625rem;
+    color: var(--faint);
+  }
+  .err p {
+    margin: 0;
+  }
+  .retry {
+    align-self: flex-start;
+    margin-top: 0.25rem;
+    padding: 0.375rem 0.5rem;
+    border: 1px solid var(--line-strong);
+    color: var(--text) !important;
+  }
+
+  @media (max-width: 64rem) {
+    .hero-top--b {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    :global(.hero-domains) {
+      display: none;
+    }
+  }
+  @media (max-width: 48rem) {
+    .rig {
+      flex-direction: column;
+    }
+    .rig :global(.rig-agent) {
+      flex: none;
+      width: 100%;
+    }
+    .rig :global(.rig-agent) .term {
+      font-size: 0.6875rem;
+      line-height: 1.6;
+      padding: 0.75rem;
+    }
+    .rig :global(.rig-phone) {
+      --w: 10.5rem;
+    }
+  }
+</style>
