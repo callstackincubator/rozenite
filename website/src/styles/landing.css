@@ -415,6 +415,8 @@ dl.cells dd {
 .band {
   position: relative;
   display: grid;
+  /* A shrinkable track, or the grid sizes to a long command's full width and clips it. */
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   min-height: clamp(9rem, 18vw, 13rem);
   padding: 2rem var(--pad);

@@ -84,7 +84,7 @@ narrowing to the base. As a 7×10 bitmap:
 | Body | Switzer | 0.9375rem | 400 | 0 | 1.55, `muted` |
 | Label | Geist Mono | 0.75rem | 400 | 0.08em, UPPERCASE | — |
 | Code | Geist Mono | 0.8125rem | 400 | 0 | 1.75 |
-| Closing wordmark | Switzer | as wide as the frame (~19.2% of its width for ROZENITE) | 500 | -0.045em | 0.8, `accent` |
+| Closing wordmark | Switzer | as wide as the frame (`21.6cqi`, as Appduct's) | 500 | -0.045em | 0.8, `accent` |
 
 - Fonts are free: Switzer (Fontshare, ITF Free Font License) and Geist Mono (OFL), both
   self-hosted as woff2 files in `website/src/fonts/`. No paid or proprietary fonts.
@@ -180,10 +180,13 @@ All imagery is ordered dithering of a generated scene, drawn on canvas.
   makes the scenes look like the mineral.
 - **Scenes:**
   - *Crystals* (the signature): a druse of the mark. Stepped crystals with the mark's
-    silhouette, built on a coarse step grid so every step reads as a pixel step, rise from
-    the bottom edge and cluster around the `focus` (where the product visual sits, about 72%
-    across): tallest beside it, smaller and dimmer toward the edges, a few small ones loose
-    in the upper field. Each crystal is shaded as a faceted stone: the left half lit, the
+    silhouette rise from the bottom edge: a dense cluster of about thirteen medium crystals
+    around the `focus` (where the product visual sits), tallest at the centre, smaller and
+    dimmer toward the edges; a bed of small dim ones along the whole bottom; a few tiny ones
+    loose in the upper field. Keep them medium: sizes follow the shorter side of the scene
+    and a step never grows past about 28px, or the crystals start to read as a city skyline.
+    Each crystal carries a dark gap around its silhouette so it separates from the ones
+    behind. Each crystal is shaded as a faceted stone: the left half lit, the
     right half at about 60%, a bright rim on its top steps, a vertical facet line, darker
     toward the base. Behind them, dark rock: low noise in the bottom tones with a faint glow
     around the focus. Motion: a glint band sweeps diagonally across the facets every few
@@ -233,8 +236,14 @@ The three angles:
   beside it; plugin tabs appear and fill with live rows as the app runs.
 - **B · Agents**, for teams with coding agents: an agent window and a phone; the agent opens
   a session, reads errors and requests, and drives the app through plugin tools.
-- **C · Build**, for teams that need their own panel: the app side and the panel of a plugin
-  on either side of the bridge, typed messages stepping across both ways.
+- **C · Build**, for teams that need their own panel: the official plugins as a grid of
+  tiles that light up one by one, then `npx rozenite generate checkout-inspector` types out
+  and your plugin fills the last tile (the one accent fill). Its first section shows the
+  plugin anatomy: the app side and the panel either side of the bridge on the traffic scene,
+  typed messages stepping across both ways.
+
+Pages outside the landing (plugin directory, welcome page) use the same shell, nav and
+footer. The welcome page is shown inside DevTools, so every link on it opens a new tab.
 
 ## Words
 
@@ -259,7 +268,9 @@ Not yet redrawn in this look. When they are:
 - Landing tokens and base styles: `website/src/styles/landing.css`
 - Docs theme, dark and light: `website/src/styles/theme.css`, `website/src/styles/docs.css`,
   `website/ec.config.mjs`
-- Fonts: `website/src/fonts/`
+- Fonts: `website/src/fonts/` (woff2 files, no `@fontsource` dependency)
+- Page shell for non-docs pages: `website/src/layouts/Site.astro`; Starlight overrides
+  (lockup, dark default, header links, footer) in `website/src/components/starlight/`
 - Dithered scenes: `website/src/components/site/dither.ts`
 - Components: `website/src/components/site/`; hero animations in
   `website/src/components/variants/`
