@@ -1,0 +1,57 @@
+---
+// The shell for pages outside Starlight in the new look (landing variants, plugin directory,
+// welcome page): fonts, tokens, social tags and the pointers agents use. Pages add the nav and
+// footer themselves so the welcome page can drop them.
+import '../fonts/font-face.css';
+import '../styles/landing.css';
+
+import geistMono from '../fonts/GeistMono-Regular.woff2?url';
+import switzerMedium from '../fonts/Switzer-Medium.woff2?url';
+import switzerRegular from '../fonts/Switzer-Regular.woff2?url';
+import { site } from '../site/content';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Prototype pages stay out of search results. */
+  noindex?: boolean;
+}
+
+const { title, description = site.description, noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImage = new URL('/og-image.jpg', Astro.site).href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Rozenite" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
+
+    <link rel="preload" href={switzerMedium} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={switzerRegular} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={geistMono} as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

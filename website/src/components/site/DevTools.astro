@@ -1,0 +1,89 @@
+---
+// A diagram of React Native DevTools with Rozenite in it: window chrome, a tab strip of the
+// built-in tabs, then Rozenite plugin tabs (each led by a 6px accent square). The panel body is
+// the slot. Plugin tabs can start hidden (data-hidden) for an animation to reveal.
+import Window from './Window.astro';
+
+interface Tab {
+  id: string;
+  label: string;
+  plugin?: boolean;
+  hidden?: boolean;
+}
+interface Props {
+  tabs: Tab[];
+  selected?: string;
+  title?: string;
+  class?: string;
+}
+const { tabs, selected, title = 'React Native DevTools', class: className } = Astro.props;
+---
+
+<Window title={title} class:list={['devtools', className]}>
+  <div class="dt-tabs label">
+    {
+      tabs.map((t) => (
+        <span
+          class:list={['dt-tab', { 'dt-tab--plugin': t.plugin }]}
+          data-tab={t.id}
+          data-hidden={t.hidden ? '' : undefined}
+          aria-selected={t.id === selected ? 'true' : 'false'}
+        >
+          {t.plugin && <i />}
+          {t.label}
+        </span>
+      ))
+    }
+  </div>
+  <div class="dt-body">
+    <slot />
+  </div>
+</Window>
+
+<style>
+  .dt-tabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+  }
+  .dt-tab {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.4375rem;
+    padding: 0.625rem 0.75rem;
+    border-right: 1px solid var(--line);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+  .dt-tab i {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+  }
+  .dt-tab--plugin {
+    color: var(--muted);
+  }
+  .dt-tab[aria-selected='true'] {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+  .dt-tab[data-hidden] {
+    display: none;
+  }
+  /* On a phone only Console stays of the built-in tabs, so the plugin tabs have room. */
+  @media (max-width: 40rem) {
+    .dt-tab:not(.dt-tab--plugin):not(:first-child) {
+      display: none;
+    }
+  }
+  .dt-body {
+    position: relative;
+    height: 100%;
+  }
+</style>

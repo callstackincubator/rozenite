@@ -1,0 +1,234 @@
+---
+// Variant A's hero: an app on a phone and React Native DevTools beside it. Plugin tabs appear
+// one by one (Network Activity, TanStack Query, Storage) and fill with rows as the app runs,
+// each row arriving as a packet across the duct. No captions: the tabs and rows tell it.
+import CopyCommand from '../site/CopyCommand.astro';
+import DevTools from '../site/DevTools.astro';
+import Dither from '../site/Dither.astro';
+import Phone from '../site/Phone.astro';
+import Window from '../site/Window.astro';
+import { docs, site } from '../../site/content';
+
+const products = [
+  { name: 'Runner Low', price: '$120', art: 'a' },
+  { name: 'Cotton Tee', price: '$32', art: 'b' },
+  { name: 'Field Cap', price: '$24', art: 'c' },
+];
+const tabs = [
+  { id: 'console', label: 'Console' },
+  { id: 'sources', label: 'Sources' },
+  { id: 'network-builtin', label: 'Network' },
+  { id: 'memory', label: 'Memory' },
+  { id: 'network', label: 'Network Activity', plugin: true, hidden: true },
+  { id: 'query', label: 'TanStack Query', plugin: true, hidden: true },
+  { id: 'storage', label: 'Storage', plugin: true, hidden: true },
+];
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-top hero-top--split">
+    <div class="hero-copy">
+      <h1 class="h1" id="hero-title">Plug-and-play panels <em>for React Native DevTools.</em></h1>
+      <p class="lede">
+        Install a plugin and its panel shows up in React Native DevTools, with live data from your running app. Expo or
+        bare React Native, on Metro or Re.Pack.
+      </p>
+      <div class="actions">
+        <a class="btn" href={docs.start}>Get started <span aria-hidden="true">→</span></a>
+        <CopyCommand command={site.install} />
+      </div>
+    </div>
+    <Window title="zsh" class="hero-side">
+      <div class="term">
+        <div class="ln"><span class="p">$</span> npx rozenite@latest init</div>
+        <div class="ln"><span class="p">$</span> npm install -D @rozenite/network-activity-plugin</div>
+        <div class="ln"><span class="p">$</span> npm start</div>
+        <div class="ln dim"># press j to open React Native DevTools</div>
+      </div>
+    </Window>
+  </div>
+
+  <div
+    class="viz"
+    data-hero-panels
+    role="img"
+    aria-label="An app runs on a phone. In React Native DevTools beside it, Network Activity, TanStack Query and Storage panels appear and fill with the app's requests, queries and stored values as it runs."
+  >
+    <Dither scene="crystals" focus={0.5} />
+    <div class="rig">
+      <Phone title="Store" count={0} class="rig-phone">
+        <p class="store-empty" data-empty>Loading</p>
+        <ul class="store">
+          {
+            products.map((p, i) => (
+              <li class="item" data-item={i}>
+                <span class:list={['art', `art-${p.art}`]} />
+                <span class="item-name">{p.name}</span>
+                <span class="item-price">{p.price}</span>
+                <span class="item-add" data-tap={`add-${i}`}>+</span>
+              </li>
+            ))
+          }
+        </ul>
+      </Phone>
+
+      <div class="duct" data-duct><span class="pkt" data-pkt></span></div>
+
+      <DevTools tabs={tabs} selected="console" class="rig-devtools">
+        <div class="pane is-on" data-pane="console" style="--cols: 3rem 1fr">
+          <div class="pane-row"><span class="dim">LOG</span><span class="mut">Running "Store" with {'{"rootTag":1}'}</span></div>
+        </div>
+        <div class="pane" data-pane="network" style="--cols: 3rem minmax(0,1fr) 3rem 4rem">
+          <div class="pane-row pane-head"><span>Method</span><span>URL</span><span>Status</span><span>Time</span></div>
+          <div class="pane-row" data-row="n0"><span>GET</span><span>/api/products</span><span class="live">200</span><span class="mut">142 ms</span></div>
+          <div class="pane-row" data-row="n1"><span>GET</span><span>/api/user</span><span class="live">200</span><span class="mut">88 ms</span></div>
+          <div class="pane-row" data-row="n2"><span>WS</span><span>/live/stock</span><span class="live">101</span><span class="mut">open</span></div>
+        </div>
+        <div class="pane" data-pane="query" style="--cols: minmax(0,1fr) 5.5rem 4rem">
+          <div class="pane-row pane-head"><span>Query key</span><span>Status</span><span>Observers</span></div>
+          <div class="pane-row" data-row="q0"><span>["products"]</span><span class="mut">fresh</span><span class="mut">1</span></div>
+          <div class="pane-row" data-row="q1"><span>["user"]</span><span class="mut">fresh</span><span class="mut">1</span></div>
+          <div class="pane-row" data-row="q2"><span>["cart"]</span><span class="live" data-q-status>fetching</span><span class="mut">2</span></div>
+          <div class="pane-row" data-row="q3"><span class="mut">mutation · addToCart</span><span class="live">success</span><span class="mut">–</span></div>
+        </div>
+        <div class="pane" data-pane="storage" style="--cols: 6.5rem minmax(0,1fr) 4.5rem">
+          <div class="pane-row pane-head"><span>Storage</span><span>Key</span><span>Value</span></div>
+          <div class="pane-row" data-row="s0"><span class="mut">mmkv</span><span>cart.count</span><span><b class="val" data-cart-value>1</b></span></div>
+          <div class="pane-row" data-row="s1"><span class="mut">async-storage</span><span>onboarding.done</span><span>true</span></div>
+          <div class="pane-row" data-row="s2"><span class="mut">secure-store</span><span>session.token</span><span class="mut">••••••</span></div>
+        </div>
+      </DevTools>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { whenNear } from '../site/lazy';
+
+  const root = document.querySelector<HTMLElement>('[data-hero-panels]');
+  if (root) whenNear(root, () => void import('./panels').then((m) => m.default(root)));
+</script>
+
+<style>
+  .hero-top--split {
+    grid-template-columns: minmax(0, 1fr) 23rem;
+    align-items: center;
+    padding-block: clamp(2rem, 4.5vw, 3.75rem);
+  }
+  .hero-top--split .h1 {
+    max-width: 22ch;
+  }
+  :global(.hero-side) .term {
+    font-size: 0.75rem;
+  }
+  .rig {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: clamp(2rem, 5vw, 3.5rem) var(--pad);
+  }
+  .rig :global(.rig-devtools) {
+    flex: 0 1 38rem;
+    height: 20rem;
+  }
+
+  /* The app on the phone: a product list with an add button per row. */
+  .store-empty {
+    position: absolute;
+    top: 1rem;
+    left: 0.75rem;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: var(--label-tracking);
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .store {
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    list-style: none;
+  }
+  .item {
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.75rem;
+    visibility: hidden;
+  }
+  .item.is-on {
+    visibility: visible;
+  }
+  .art {
+    grid-row: span 2;
+    width: 1.75rem;
+    aspect-ratio: 1;
+    background-color: var(--field);
+    background-size: 4px 4px;
+  }
+  .art-a {
+    background-image: radial-gradient(rgb(var(--accent-rgb) / 0.9) 1px, transparent 1.2px);
+  }
+  .art-b {
+    background-image: radial-gradient(rgb(255 255 255 / 0.55) 1px, transparent 1.2px);
+  }
+  .art-c {
+    background-image: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.6) 1.5px, transparent 1.5px);
+  }
+  .item-price {
+    grid-column: 2;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    color: var(--muted);
+  }
+  .item-add {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    display: grid;
+    place-items: center;
+    width: 1.375rem;
+    height: 1.375rem;
+    border: 1px solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    transition: background-color 0.15s;
+  }
+  .item-add.is-pressed {
+    background: var(--line-strong);
+  }
+  .val {
+    padding: 0 0.25rem;
+    font-weight: 400;
+    transition:
+      background-color 0.3s,
+      color 0.3s;
+  }
+
+  @media (max-width: 64rem) {
+    .hero-top--split {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    :global(.hero-side) {
+      display: none;
+    }
+  }
+  @media (max-width: 48rem) {
+    .rig {
+      flex-direction: column-reverse;
+    }
+    .rig :global(.rig-devtools) {
+      flex: none;
+      width: 100%;
+      height: 15.5rem;
+    }
+    .rig :global(.rig-phone) {
+      --w: 11rem;
+    }
+  }
+</style>

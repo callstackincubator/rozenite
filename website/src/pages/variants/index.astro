@@ -1,0 +1,256 @@
+---
+// The overview of the three landing page variants, the colour rationale and the scenes.
+import Site from '../../layouts/Site.astro';
+import Dither from '../../components/site/Dither.astro';
+import Footer from '../../components/site/Footer.astro';
+import Mark from '../../components/site/Mark.astro';
+import Nav from '../../components/site/Nav.astro';
+
+const variants = [
+  {
+    id: 'a',
+    name: 'Panels',
+    who: 'React Native developers debugging their app.',
+    headline: 'Plug-and-play panels <em>for React Native DevTools.</em>',
+    hero: 'An app on a phone and React Native DevTools beside it. Network Activity, TanStack Query and Storage tabs appear one by one and fill with rows as the app loads, adds to the cart and stores the count.',
+    sections: ['How it works', 'Official plugins', 'Safe by default', 'Beyond React Native', 'Agents', 'FAQ'],
+  },
+  {
+    id: 'b',
+    name: 'Agents',
+    who: 'Teams whose coding agents work on the app.',
+    headline: 'Give your agent <em>the running app.</em>',
+    hero: 'An agent window and a phone. The agent opens a session, reads the error in the console and the failing request in the network domain, then navigates the app with a React Navigation tool and reports back.',
+    sections: ['How it works', 'Domains', 'Plugin tools', 'Your app’s tools', 'Skill, SDK and tap', 'FAQ'],
+  },
+  {
+    id: 'c',
+    name: 'Build',
+    who: 'Teams who need a panel nobody has built yet.',
+    headline: 'Fourteen official plugins. <em>Then the one you build.</em>',
+    hero: 'A grid of the official plugins lights up cell by cell, then `npx rozenite generate checkout-inspector` types out and your plugin fills the last cell.',
+    sections: ['Anatomy of a plugin', 'Official plugins', 'Develop and test', 'Targets', 'Agent tools', 'Directory'],
+  },
+];
+
+// Hex values only where the sibling's design file states them.
+const siblings = [
+  { name: 'Apex', hex: '', note: 'lime' },
+  { name: 'Simlock', hex: '', note: 'orange' },
+  { name: 'Appduct', hex: '#3ddcff', note: 'cyan' },
+  { name: 'agent-device', hex: '#a47bff', note: 'violet' },
+];
+const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
+---
+
+<Site title="Rozenite · Landing page variants" noindex>
+  <Nav />
+  <main class="frame">
+    <section class="intro intro--top">
+      <p class="label accent">Landing page redesign · three variants</p>
+      <h1 class="h1">Three takes on <em>Rozenite.</em></h1>
+      <p class="lede">
+        The Appduct look, adapted to Rozenite. Same type, frame, cells and motion; a crimson accent and a crystal scene
+        made from the mark. Each variant tells the product from a different reader's side. The rules are in
+        <code>docs/DESIGN.md</code>.
+      </p>
+    </section>
+
+    <section aria-labelledby="v-title">
+      <p class="section-head label"><b>[01]</b> Variants</p>
+      <h2 class="sr-only" id="v-title">Variants</h2>
+      <div class="cells cells--3 variants">
+        {
+          variants.map((v) => (
+            <a class="cell cell--link" href={`/variants/${v.id}`}>
+              <span class="label accent">
+                {v.id.toUpperCase()} · {v.name}
+              </span>
+              <p class="h3" set:html={v.headline} />
+              <p class="body">
+                <b>For:</b> {v.who}
+              </p>
+              <p class="body" set:html={md(v.hero)} />
+              <ol class="secs">
+                {v.sections.map((s, i) => (
+                  <li>
+                    <b>[{String(i + 1).padStart(2, '0')}]</b>
+                    {s}
+                  </li>
+                ))}
+              </ol>
+              <span class="label more">
+                Open variant {v.id.toUpperCase()} <span aria-hidden="true">→</span>
+              </span>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    <section aria-labelledby="c-title">
+      <p class="section-head label"><b>[02]</b> Colour</p>
+      <div class="split split--top">
+        <div class="split-copy">
+          <h2 class="h2" id="c-title">Crimson-rose, <em>the colour of the stone.</em></h2>
+          <p class="lede">
+            Rozenite is a mineral, and the accent is the red of its crystals in dark rock: the dither's dark crimson
+            midtones on black read as crystal in stone. Hue 345°, 6.3:1 on the background, dark text on fills. It sits
+            apart from the sibling products, and retires Rozenite's old violet, which agent-device now uses.
+          </p>
+        </div>
+        <div class="swatches">
+          <div class="swatch swatch--main">
+            <span class="chip-block" style="background:#ff4f7b">Rozenite</span>
+            <code class="label">#ff4f7b · accent</code>
+            <code class="label dim">hover #ff9fb2 · docs light #c2143f</code>
+          </div>
+          <div class="swatch">
+            <span class="chip-block" style="background:#541f2c;color:#fff">Midtone</span>
+            <code class="label">#541f2c · dither middle tone</code>
+          </div>
+          <div class="swatch swatch--mark">
+            <Mark height={60} class="accent" />
+            <code class="label">The mark, recoloured</code>
+          </div>
+        </div>
+      </div>
+      <div class="cells cells--4">
+        {
+          siblings.map((s) => (
+            <div class="cell">
+              {s.hex ? (
+                <span class="chip-block" style={`background:${s.hex}`}>
+                  {s.name}
+                </span>
+              ) : (
+                <span class="chip-block chip-block--line">{s.name}</span>
+              )}
+              <code class="label dim">
+                {s.note}
+                {s.hex && ` · ${s.hex}`}
+              </code>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section aria-labelledby="s-title">
+      <p class="section-head label"><b>[03]</b> Scenes</p>
+      <h2 class="sr-only" id="s-title">Dither scenes</h2>
+      <div class="cells cells--3 scenes">
+        <div class="cell">
+          <div class="scene"><Dither scene="crystals" focus={0.5} /></div>
+          <h3 class="h3">Crystals <span class="label accent">signature</span></h3>
+          <p class="body">A druse of the mark: stepped crystals in dark rock, a glint sweeping across, pulses climbing.</p>
+        </div>
+        <div class="cell">
+          <div class="scene"><Dither scene="traffic" /></div>
+          <h3 class="h3">Traffic</h3>
+          <p class="body">Messages crossing between the app and its panel, both ways. Behind bridges.</p>
+        </div>
+        <div class="cell">
+          <div class="scene"><Dither scene="flow" /></div>
+          <h3 class="h3">Flow</h3>
+          <p class="body">Soft bands of light. Behind code and commands.</p>
+        </div>
+      </div>
+      <div class="scene scene--wide"><Dither scene="crystals" focus={0.72} /></div>
+    </section>
+  </main>
+  <Footer />
+</Site>
+
+<style>
+  .intro--top {
+    padding-block: var(--rhythm);
+  }
+  .variants .h3 {
+    font-size: 1.375rem;
+    letter-spacing: -0.02em;
+  }
+  .variants .h3 :global(em) {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .variants b {
+    font-weight: 500;
+    color: var(--text);
+  }
+  .secs {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+  .secs li {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .secs b {
+    font-family: var(--font-mono);
+    font-weight: 400 !important;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: var(--faint) !important;
+  }
+  .swatches {
+    display: grid;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .swatch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    padding: 1.25rem;
+    background: var(--bg);
+  }
+  .swatch--main {
+    background: var(--surface);
+  }
+  .chip-block {
+    padding: 0.0625rem 0.3125rem;
+    color: #0a0a0a;
+    font-weight: 500;
+    font-size: 1.125rem;
+    text-transform: uppercase;
+    align-self: flex-start;
+  }
+  .chip-block--line {
+    color: var(--text);
+    border: 1px solid var(--line-strong);
+  }
+  .label.dim {
+    color: var(--faint);
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .swatch code.label {
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .scene {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .scene--wide {
+    aspect-ratio: auto;
+    height: clamp(18rem, 40vw, 34rem);
+    border: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .scenes .h3 {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+  }
+</style>

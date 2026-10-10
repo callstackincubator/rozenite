@@ -1,0 +1,30 @@
+---
+// A dithered pixel scene in the accent, drawn on a canvas. It fills its positioned parent. The
+// scenes live in dither.ts: `crystals` (the signature: stepped crystals of the mark in dark
+// rock), `traffic` (messages crossing both ways) and `flow` (soft bands of light).
+interface Props {
+  scene?: 'crystals' | 'traffic' | 'flow';
+  /** Where the crystal cluster stands, 0..1 across: put it behind the product visual. */
+  focus?: number;
+  /** Size of one dither cell in CSS pixels. */
+  cell?: number;
+  class?: string;
+}
+const { scene = 'crystals', focus = 0.72, cell = 2, class: className } = Astro.props;
+---
+
+<canvas
+  class:list={['dither', className]}
+  data-scene={scene}
+  data-focus={focus}
+  data-cell={cell}
+  aria-hidden="true"></canvas>
+
+<script>
+  // The scene code loads only when the canvas first comes near the viewport.
+  import { whenNear } from './lazy';
+
+  for (const canvas of document.querySelectorAll<HTMLCanvasElement>('canvas.dither')) {
+    whenNear(canvas, () => void import('./dither').then((m) => m.animateDither(canvas)));
+  }
+</script>

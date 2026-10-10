@@ -1,0 +1,50 @@
+---
+// One line: the copyright on the left, mono links on the right.
+import { docs, site } from '../../site/content';
+
+const links = [
+  { text: 'Docs', href: docs.intro },
+  { text: 'Plugin directory', href: docs.directory },
+  { text: 'llms.txt', href: docs.llms },
+  { text: 'GitHub', href: site.repo },
+  { text: 'Discord', href: site.discord },
+  { text: 'MIT license', href: site.license },
+  { text: 'Callstack', href: site.callstack },
+];
+---
+
+<footer class="frame footer">
+  <p class="label">© 2026 Rozenite by Callstack</p>
+  <nav class="links" aria-label="Footer">
+    {links.map(({ text, href }) => <a class="label" href={href}>{text}</a>)}
+  </nav>
+</footer>
+
+<style>
+  .footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 4rem;
+    padding: 0.75rem var(--pad);
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .footer p {
+    margin: 0;
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+  }
+  .links a {
+    text-decoration: none;
+    transition: color 120ms;
+  }
+  .links a:hover {
+    color: var(--text);
+  }
+</style>
