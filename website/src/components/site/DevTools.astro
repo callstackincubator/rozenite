@@ -9,10 +9,12 @@ import Window from './Window.astro';
 interface Props {
   /** The plugin whose panel is shown. */
   selected: string;
+  /** Your own plugins, listed after the official ones. */
+  extra?: string[];
   title?: string;
   class?: string;
 }
-const { selected, title = 'React Native DevTools', class: className } = Astro.props;
+const { selected, extra = [], title = 'React Native DevTools', class: className } = Astro.props;
 
 // The official plugins as the Rozenite sidebar lists them. The list starts two above the
 // selected plugin, so it is always in view, and is clipped by the window's height, so it reads
@@ -32,8 +34,10 @@ const installed = [
   'SQLite',
   'Storage',
   'TanStack Query',
+  ...extra,
 ];
-const from = Math.max(0, installed.indexOf(selected) - 2);
+// Near the end of the list it starts earlier instead, so the list still fills the sidebar.
+const from = Math.max(0, Math.min(installed.indexOf(selected) - 2, installed.length - 4));
 const shown = installed.slice(from);
 const tabs = ['Console', 'Sources', 'Network', 'Memory'];
 ---

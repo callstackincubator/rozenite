@@ -1,0 +1,225 @@
+---
+// "Build your own": one plugin you write, split into its two halves, each above the view it
+// feeds. The app side answers the panel through the typed bridge (the panel in the Rozenite
+// tab below it); the agent tool answers the agent (the terminal below it). Code follows
+// docs/plugin-development/plugin-development.md and docs/agent/making-your-plugin-agent-enabled.mdx.
+// A still composition; one stepped highlight pass when it first comes into view.
+import CodeBlock from '../site/CodeBlock.astro';
+import CopyCommand from '../site/CopyCommand.astro';
+import DevTools from '../site/DevTools.astro';
+import Dither from '../site/Dither.astro';
+import Window from '../site/Window.astro';
+import { docs } from '../../site/content';
+import { lineHtml, type Line } from './transcript';
+
+// The app side, as the plugin guide's react-native.ts: answer the panel's request.
+const forPanel = `import { DevToolsPluginClient } from '@rozenite/plugin-bridge';
+
+export default function setupPlugin(
+  client: DevToolsPluginClient<PluginEvents>
+) {
+  client.onMessage('request-user-data', () => {
+    client.send('user-data', getUser());
+  });
+}`;
+// The same plugin's agent tool, as the agent-enabled plugin guide registers one.
+const forAgent = `import { useRozenitePluginAgentTool } from '@rozenite/agent-bridge';
+
+export function UserPanelAgentTools() {
+  useRozenitePluginAgentTool({
+    pluginId: '@my-org/user-panel',
+    tool: getUserTool,
+    handler: () => getUser(),
+  });
+  return null;
+}`;
+const transcript: Line[] = [
+  { text: '> Who is signed in on the simulator?', cls: 'user' },
+  { text: 'session · create', cls: 'tool', call: true },
+  { text: '@my-org/user-panel · get-user', cls: 'tool', call: true },
+  { text: '  John Doe · user-123 · john@example.com', cls: 'out' },
+  { text: '✓ John Doe is signed in.', cls: 'ok' },
+];
+---
+
+<section id="build" aria-labelledby="build-title">
+  <p class="section-head label"><b>[04]</b> Build your own</p>
+  <div class="intro">
+    <h2 class="h2" id="build-title">And the one you write, <em>for you and your agent.</em></h2>
+    <p class="lede">
+      A plugin's app side and its panel share one typed event map through <code>@rozenite/plugin-bridge</code>:
+      <code>DevToolsPluginClient</code> in the app, <code>useRozeniteDevToolsClient</code> in the panel. Register a tool
+      with <code>useRozenitePluginAgentTool</code> and the same plugin gives your agent tools too.
+    </p>
+  </div>
+
+  <div class="stage build-stage" data-build>
+    <Dither scene="flow" />
+    <div
+      class="tree"
+      role="img"
+      aria-label="A plugin's react-native.ts in two halves. The first answers the panel through the plugin bridge, and the User Panel in the Rozenite tab of React Native DevTools shows the user. The second registers an agent tool, and a coding agent calling it from the terminal gets the same user back."
+    >
+      <Window title="user-panel/react-native.ts" class="tree-code">
+        <div class="halves">
+          <div class="half" data-half="panel"><CodeBlock code={forPanel} lang="ts" wrap /></div>
+          <div class="half half--b" data-half="agent"><CodeBlock code={forAgent} lang="tsx" wrap /></div>
+        </div>
+      </Window>
+      <div class="duct duct--v duct--h" data-duct="panel"></div>
+      <div class="duct duct--v duct--a" data-duct="agent"></div>
+      <DevTools selected="User Panel" extra={['User Panel']} class="tree-devtools">
+        <div class="pane is-on user">
+          <div class="pane-row pane-head"><span>Field</span><span>Value</span></div>
+          <div class="pane-row"><span class="dim">id</span><span>user-123</span></div>
+          <div class="pane-row"><span class="dim">name</span><span>John Doe</span></div>
+          <div class="pane-row"><span class="dim">email</span><span>john@example.com</span></div>
+        </div>
+      </DevTools>
+      <Window title="agent" class="tree-agent">
+        <div class="term">
+          {transcript.map((l) => <div class={`ln ${l.cls}`} set:html={lineHtml(l)} />)}
+        </div>
+      </Window>
+    </div>
+  </div>
+
+  <div class="build-foot">
+    <CopyCommand command="npx rozenite generate" />
+    <p class="build-links">
+      <a class="label more" href={docs.pluginDev}>Plugin development <span aria-hidden="true">→</span></a>
+      <a class="label more" href={docs.pluginTools}>Agent-enabled plugins <span aria-hidden="true">→</span></a>
+    </p>
+  </div>
+</section>
+
+<script>
+  // One stepped highlight pass when the section first comes into view: the panel's half and
+  // its duct, then the agent's half and its duct, then back to the still composition.
+  import { whenNear } from '../site/lazy';
+
+  const root = document.querySelector<HTMLElement>('[data-build]');
+  if (root && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    whenNear(
+      root,
+      async () => {
+        const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+        for (const side of ['panel', 'agent']) {
+          root.querySelector(`[data-half="${side}"]`)?.classList.add('is-hot');
+          root.querySelector(`[data-duct="${side}"]`)?.classList.add('is-live');
+          await wait(1400);
+          root.querySelector(`[data-half="${side}"]`)?.classList.remove('is-hot');
+          root.querySelector(`[data-duct="${side}"]`)?.classList.remove('is-live');
+        }
+      },
+      '-30% 0px',
+    );
+  }
+</script>
+
+<style>
+  .build-stage {
+    padding-inline: 0;
+  }
+  /* A tree: the plugin at the top, branching down into its two views. */
+  .tree {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 26rem));
+    justify-content: center;
+    column-gap: clamp(1.5rem, 4vw, 3.5rem);
+    padding-inline: var(--pad);
+  }
+  .tree :global(.tree-code) {
+    grid-column: 1 / -1;
+  }
+  /* The two halves of the file, each above the view it feeds. */
+  .halves {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .half {
+    min-width: 0;
+    transition: background-color 0.3s steps(3);
+  }
+  .half + .half {
+    border-left: 1px solid var(--line);
+  }
+  .half :global(.astro-code) {
+    font-size: 0.75rem;
+    line-height: 1.6;
+  }
+  .half.is-hot {
+    background: rgb(var(--accent-rgb) / 0.1);
+  }
+  .duct--v {
+    flex: none;
+    justify-self: center;
+    width: 2.25rem;
+    min-width: 0;
+    max-width: none;
+    height: 2.5rem;
+    background: repeating-linear-gradient(180deg, var(--track) 0 4px, transparent 4px 8px) center / 2px 100% no-repeat;
+  }
+  .tree :global(.tree-devtools) {
+    height: 14rem;
+  }
+  .user {
+    --cols: 4rem minmax(0, 1fr);
+  }
+  .tree :global(.tree-agent) .term {
+    font-size: 0.6875rem;
+    line-height: 1.65;
+  }
+  .build-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    padding: 1.25rem var(--pad);
+    border-top: 1px solid var(--line);
+  }
+  .build-foot :global(.cmd) {
+    width: min(100%, 24rem);
+  }
+  .build-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+    margin: 0;
+  }
+
+  @media (max-width: 48rem) {
+    /* Stacked: the plugin, then its panel, then the agent's terminal. */
+    .tree {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .halves {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .half + .half {
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+    .duct--a {
+      display: none;
+    }
+    .tree > :global(*) {
+      grid-column: 1 !important;
+    }
+    .tree :global(.tree-code) {
+      order: 0;
+    }
+    .duct--h {
+      order: 1;
+    }
+    .tree :global(.tree-devtools) {
+      order: 2;
+    }
+    .tree :global(.tree-agent) {
+      order: 3;
+      margin-top: 1.25rem;
+    }
+  }
+</style>

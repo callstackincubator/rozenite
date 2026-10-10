@@ -27,6 +27,7 @@ export const docs = {
   directory: '/plugin-directory',
   agents: '/docs/agent/overview',
   appTools: '/docs/agent/adding-tools-to-your-application',
+  pluginTools: '/docs/agent/making-your-plugin-agent-enabled',
   lynx: '/docs/targets/rozenite-for-lynx',
   web: '/docs/targets/rozenite-for-web',
   standalone: '/docs/standalone-app',

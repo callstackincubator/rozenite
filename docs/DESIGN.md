@@ -169,6 +169,13 @@ narrowing to the base. As a 7×10 bitmap:
   own 7×10 grid, never squeezed into 9×9.
 - **Plugin cell.** Pixel icon in the accent, plugin name as a card title, the package name in
   accent mono, one line on what the panel shows.
+- **Plugin tree.** A plugin's `react-native.ts` in one window, split into two halves side by
+  side: the app side answering its panel through the bridge, and the agent tool registered
+  with `useRozenitePluginAgentTool`. Under each half a dotted duct, then the view it feeds: a
+  DevTools window with the plugin selected in the Rozenite sidebar, and the agent's terminal
+  calling the tool. A still composition; on first view one stepped pass lights each half and
+  its duct in turn. On phones it stacks: the file, its panel, the terminal. Code in it is the
+  docs' API, simplified but never invented.
 - **Device frames.** Phones are dark (`#050505`) rectangles with pixel-stepped corners (4px
   steps, never rounded) and a 1px `#313131` outline that follows every step without a break,
   a black notch block (iPhone) or punch hole and three-square nav bar (Android). Apps inside
@@ -254,9 +261,13 @@ In order, each section in the frame:
    react, performance, memory) and a cell for the tools your app and your plugins register.
    Do not list which official plugins expose agent tools; it tells a user nothing they act on.
 6. **[03] Official plugins:** fourteen link cells plus the directory and building your own.
-7. **[04] Safe by default**, **[05] Beyond React Native** (Lynx, Web, standalone app, each
-   `EXPERIMENTAL`), **[06] FAQ.**
-8. **Closing:** CTA bar, giant wordmark, footer row.
+7. **[04] Build your own:** "And the one you write, *for you and your agent.*", a lede naming
+   the bridge (`@rozenite/plugin-bridge`: `DevToolsPluginClient`, `useRozeniteDevToolsClient`)
+   and `useRozenitePluginAgentTool`, then a plugin tree on a flow backdrop, then
+   `npx rozenite generate` and links to the plugin development and agent-enabled plugin guides.
+8. **[05] Safe by default**, **[06] Beyond React Native** (Lynx, Web, standalone app, each
+   `EXPERIMENTAL`), **[07] FAQ.**
+9. **Closing:** CTA bar, giant wordmark, footer row.
 
 Every hero tells both stories on the same app and the same data: a DevTools panel for the
 human and a terminal for the agent, both live at once.

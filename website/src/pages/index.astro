@@ -13,6 +13,7 @@ import Nav from '../components/site/Nav.astro';
 import PixelIcon from '../components/site/PixelIcon.astro';
 import PluginGrid from '../components/site/PluginGrid.astro';
 import Window from '../components/site/Window.astro';
+import BuildYourOwn from '../components/home/BuildYourOwn.astro';
 import Hero from '../components/home/Hero.astro';
 import { code, docs, faq, site } from '../site/content';
 
@@ -191,8 +192,10 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
       <PluginGrid />
     </section>
 
+    <BuildYourOwn />
+
     <section aria-labelledby="safe-title">
-      <p class="section-head label"><b>[04]</b> Safe by default</p>
+      <p class="section-head label"><b>[05]</b> Safe by default</p>
       <div class="intro">
         <h2 class="h2" id="safe-title">Development only. <em>Nothing in production.</em></h2>
       </div>
@@ -212,7 +215,7 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
     </section>
 
     <section aria-labelledby="beyond-title">
-      <p class="section-head label"><b>[05]</b> Beyond React Native</p>
+      <p class="section-head label"><b>[06]</b> Beyond React Native</p>
       <div class="intro">
         <h2 class="h2" id="beyond-title">Same panels, <em>more places.</em></h2>
       </div>
@@ -241,7 +244,7 @@ const md = (s: string) => s.replace(/`([^`]+)`/g, '<code>$1</code>');
       </div>
     </section>
 
-    <Faq num="06" />
+    <Faq num="07" />
     <Closing />
   </main>
   <Footer />
