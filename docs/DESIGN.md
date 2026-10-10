@@ -129,26 +129,37 @@ narrowing to the base. As a 7×10 bitmap:
 - **Window.** For code and terminals: `bg` fill, `line-strong` border, a bar with a mini
   accent wordmark tag, a mono title in `faint` (file name, `zsh` or `agent`) and three thin
   window controls (×, –, □) on the right.
-- **DevTools window.** The picture of React Native DevTools with Rozenite in it: a Window
-  titled `React Native DevTools`, then a tab strip. Built-in tabs (Console, Sources, Network,
-  Memory) are mono labels in `faint`; Rozenite plugin tabs carry a 6px accent square before
-  the label; the selected tab is white with a 2px accent underline. The panel body is a mono
-  table: a header row of `faint` uppercase labels, rows divided by `line`, values in white,
-  a value that just changed flashed in the accent. HTTP status codes and errors stay white:
-  status never takes the accent. The row the story is about is picked out with a `surface`
-  fill and a 2px accent bar on its left. Never draw Chrome's real UI or icons; this is a
-  diagram of it.
+- **DevTools window.** The picture of React Native DevTools with Rozenite in it, laid out the
+  way it looks today (see `website/public/standalone-rozenite.png`) but drawn in our language:
+  a Window titled `React Native DevTools`, then the DevTools tab row with the built-in tabs
+  (Console, Sources, Network, Memory) as mono labels in `faint` and one `ROZENITE` tab, led by
+  the mark, selected (white, 2px accent underline). Inside it, a narrow sidebar: the mark and
+  "Rozenite" at the top over a hairline, then the installed plugins as a list in Switzer
+  `muted`, the selected plugin on `surface` with a 2px accent bar on its left. The list starts
+  two items above the selected one and is clipped by the window, so it reads as longer and
+  never ends on an empty slot. The selected plugin's panel fills the rest: a mono table, a
+  header row of `faint` uppercase labels, rows divided by `line`, values in white, a value
+  that just changed flashed in the accent. HTTP status codes and errors stay white: status
+  never takes the accent. The row the story is about is picked out like the selected plugin.
+  On phones only Console stays of the built-in tabs, the sidebar narrows, and the table drops
+  its least important column. Never draw Chrome's real UI, icons or the Rozenite UI's own
+  colours; this is a diagram of it.
 - **Code.** Zero-padded line numbers (`01`, `02`) in `faint`, keywords and punctuation in
-  dimmed white, functions and types in white, strings and numbers in the accent. Empty
-  numbered lines pad short snippets to a common height. In the docs, code blocks are framed
+  dimmed white, functions and types in white, strings and numbers in the accent, comments in
+  `faint`. Shell: the command in white, plain arguments as text (never as strings), options
+  dimmed like keywords, only quoted strings in the accent. JSON: keys white, values in the
+  accent. Empty numbered lines pad short snippets to a common height. A command in running
+  text (a cell, a caption) is `$` in the accent and the command in white mono. In the docs, code blocks are framed
   by a hairline only: no accent rule, no line numbers. No ASCII diagrams; they overflow.
 - **Command bar.** `$` in the accent, the command in mono, a `COPY` label button on the right,
-  `line-strong` border. The install command is `npx rozenite@latest init`.
+  `line-strong` border. The install command is `npx rozenite@latest init`; the agent skill is
+  `npx skills add callstackincubator/rozenite --skill rozenite` (the short owner/repo form).
 - **Agent transcript.** In an `agent` window: the user's request in white after `>`, each
   Rozenite call on its own line as `● domain · tool {args}` with the dot in the accent and the
-  arguments in `faint`, results indented in `muted`, the agent's conclusion after `✓` in the
-  accent. Domain and tool names are real (`console · getMessages`, `network · listRequests`,
-  `react-navigation · navigate`).
+  arguments coloured like JSON (keys `muted`, values in the accent, punctuation `faint`),
+  results indented in `muted`, the agent's conclusion after `✓` in the accent. Domain and tool
+  names are real and come from the built-in domains (`console · getMessages`,
+  `network · listRequests`).
 - **Tabs.** Equal-width cells across the frame, mono labels in `faint`; the selected tab is
   white with a 2px accent underline.
 - **Marquee.** A hairline row of mono labels scrolling left (about 38s per loop), each led by
@@ -157,16 +168,13 @@ narrowing to the base. As a 7×10 bitmap:
   multiples of 9px with crisp edges. Each official plugin has one; the mark is drawn on its
   own 7×10 grid, never squeezed into 9×9.
 - **Plugin cell.** Pixel icon in the accent, plugin name as a card title, the package name in
-  accent mono, one line on what the panel shows, and an `AGENT` label when the plugin also
-  registers agent tools.
+  accent mono, one line on what the panel shows.
 - **Device frames.** Phones are dark (`#050505`) rectangles with pixel-stepped corners (4px
   steps, never rounded) and a 1px `#313131` outline that follows every step without a break,
   a black notch block (iPhone) or punch hole and three-square nav bar (Android). Apps inside
   are minimal: a header with the screen title flush left and a count in a small square on the
   right (accent when non-zero), Switzer UI text, mono prices and labels, product imagery as
   dot or line patterns.
-- **Variant switcher.** Only on prototype pages: a fixed mono `A B C` strip bottom right,
-  `bg` fill, `line-strong` border, the current one filled with the accent.
 - **Closing.** CTA bar, then the giant accent wordmark, then a single footer row:
   `© YEAR ROZENITE BY CALLSTACK` left, mono links right (Docs, Plugin directory, llms.txt,
   GitHub, Discord, MIT license, Callstack).
@@ -195,9 +203,9 @@ All imagery is ordered dithering of a generated scene, drawn on canvas.
     around the focus. Motion: a glint band sweeps diagonally across the facets every few
     seconds, and short pulses climb each crystal from base to tip, each at its own speed.
     It reads as red crystals in dark rock, and as what is inside the app rising into view.
-  - *Traffic*: horizontal lanes of short dashes, alternate lanes moving right and left, like
-    messages crossing the bridge between the app and its panel, both ways. Denser around the centre line. For backdrops behind a
-    bridge, a pipeline or the plugin anatomy.
+  - *Hollow*: the crystals scene with its tallest crystal missing, larger than the rest. Its
+    socket is dark, a dashed stepped outline marks where it should be, and the glint flares
+    along the outline as it passes. Only for the 404 page.
   - *Flow*: soft diagonal bands of light on black, slowly turning. For quieter backdrops
     behind code or commands.
 - Windows and devices sit on top of the imagery with solid `bg` fills, so text never sits on
@@ -210,11 +218,6 @@ All imagery is ordered dithering of a generated scene, drawn on canvas.
 - Animations tell the product story without captions: real commands are typed, panel tabs
   appear, rows land in panels as the app does something, packets step between app and
   DevTools.
-- **One connection at a time.** A device serves one debugger connection, and an agent
-  session disconnects React Native DevTools. Never show DevTools and an agent attached to the
-  same app at the same moment: they take turns. The side that is not attached dims what is
-  inside its window to 40% (the window fill stays solid, so no text lands on dither), and so
-  does its duct. A reduced-motion still may show both filled, as a summary.
 - Pixel motion moves in steps (`steps(16)` easing, dither at about 12 fps), never smoothly.
 - UI transitions: 120ms for hovers, about 300ms for screen changes.
 - Text that types in is laid out at full length first and revealed, so nothing reflows. A
@@ -225,46 +228,50 @@ All imagery is ordered dithering of a generated scene, drawn on canvas.
   the story (the panel full of rows, the agent's conclusion), not the empty first frame.
 - Vanilla scripts in Astro components; no framework islands on marketing pages.
 
-## Landing page
+## Home page
 
-Three variants are being compared at `/variants`; `/` keeps the old page until one is picked.
-Update this section with the chosen one. All three share, in order, each section in the frame:
+In order, each section in the frame:
 
 1. **Nav.**
-2. **Hero:** two-beat headline covering both readers (you and your agent), a one- or
-   two-sentence lede, a primary button and the install command bar, then the hero animation
-   on the crystals scene.
+2. **Hero:** "See inside your running app. *So can your agent.*", a lede naming both readers,
+   a `GET STARTED` button and the install command bar. Beside them on wide screens, a `zsh`
+   window with the setup for both: `init`, a plugin, the `rozenite` skill (hidden below
+   64rem). Then the hero animation on the crystals scene: React Native DevTools, the phone and
+   the agent's terminal in a row, both attached to the app at the same time (stacked on
+   phones, the app between them). The app's requests land in the Network Activity panel of
+   the Rozenite tab, ending on a failing `GET /api/cart`; the agent runs
+   `network · listRequests` and gets the same request back, picked out in the panel as it
+   arrives, then reads the error from `console · getMessages`.
 3. **Marquee** of targets and bundlers, in the order above.
-4. **Sections**, each opened by a `[0N]  NAME` row. Agent content comes early, never last.
-5. **Closing:** CTA bar, giant wordmark, footer row.
+4. **[01] How it works:** three steps (init, a plugin, the skill), then bundler and target
+   tabs (Metro, Re.Pack, Web, Lynx) with their config over a flow backdrop.
+5. **[02] Agents:** the agent CLI in a window, then the built-in domains (console, network,
+   react, performance, memory) and a cell for the tools your app and your plugins register.
+   Do not list which official plugins expose agent tools; it tells a user nothing they act on.
+6. **[03] Official plugins:** fourteen link cells plus the directory and building your own.
+7. **[04] Safe by default**, **[05] Beyond React Native** (Lynx, Web, standalone app, each
+   `EXPERIMENTAL`), **[06] FAQ.**
+8. **Closing:** CTA bar, giant wordmark, footer row.
 
-Agents are first-class users of Rozenite, so every hero tells both stories on the same app
-and the same data: a DevTools panel for the human, and a terminal for the agent (the agent's
-transcript, or a shell). The same row of data shows up in both, such as the failing request
-as a Network Activity row and as the agent's `network · listRequests` result.
+Every hero tells both stories on the same app and the same data: a DevTools panel for the
+human and a terminal for the agent, both live at once.
 
-The three angles:
-
-- **A · Both views**: React Native DevTools, the phone and the agent's terminal in a row
-  (stacked on phones, the app between them). The panel fills with the app's requests; then
-  the agent attaches and gets the same failing request back. The hero top keeps a `zsh`
-  window with the setup for both: `init`, a plugin, the `rozenite` skill.
-- **B · Agent-led**: copy on the left, the scene on the right. The agent's terminal leads,
-  top left; it changes the app through plugin tools and stops its session. Then DevTools,
-  under the terminal, attaches and its Storage panel shows what the agent changed.
-- **C · Build-led**: a plugin's `react-native.ts` in one window, split into its two halves
-  (the message handler, the agent tool), each above the view it feeds: a panel in DevTools
-  and the agent's terminal. Its first section shows the plugin anatomy on the traffic scene.
-
-Pages outside the landing (plugin directory, welcome page) use the same shell, nav and
+Pages outside the home page (plugin directory, welcome page, 404) use the same shell, nav and
 footer. The welcome page is shown inside DevTools, so every link on it opens a new tab.
+
+## 404 page
+
+The hollow crystals scene fills the first screen behind a solid card: a `404` accent chip and
+`PAGE NOT FOUND` label, a two-beat line ("This address is empty. *The rest of Rozenite
+isn't.*"), the requested path read client-side and set as text only, a `HOME` button, a dark
+`DOCS` button and mono links to the plugin directory and GitHub. Then the giant wordmark and
+the footer. Starlight's own 404 is disabled; the page is `website/src/pages/404.astro`.
 
 ## Words
 
 Short, plain, colleague-to-colleague. Speak to both readers: Rozenite gives you panels in
 React Native DevTools and gives your coding agent the same runtime as tools; you can build
-plugins that do both. No
-marketing adjectives, no "just" or "simply". Headlines in two beats; ledes one or two
+plugins that do both. No marketing adjectives, no "just" or "simply". Headlines in two beats; ledes one or two
 sentences. Only facts from the docs and the repo: real commands, package names, tool names
 and targets. No invented numbers, adopters, logos or testimonials.
 
@@ -287,6 +294,7 @@ Not yet redrawn in this look. When they are:
 - Page shell for non-docs pages: `website/src/layouts/Site.astro`; Starlight overrides
   (lockup, dark default, header links, footer) in `website/src/components/starlight/`
 - Dithered scenes: `website/src/components/site/dither.ts`
-- Components: `website/src/components/site/`; hero animations in
-  `website/src/components/variants/`
+- Components: `website/src/components/site/`; the home hero in `website/src/components/home/`
+- Pages: `website/src/pages/index.astro` (home), `404.astro`, `welcome.astro`,
+  `plugin-directory/`
 - Facts the pages use: `website/src/site/content.ts`
