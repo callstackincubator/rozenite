@@ -1,0 +1,98 @@
+// @ts-check
+import react from '@astrojs/react';
+import sitemap from '@astrojs/sitemap';
+import starlight from '@astrojs/starlight';
+import { defineConfig } from 'astro/config';
+import starlightLlmsTxt from 'starlight-llms-txt';
+
+const site = 'https://rozenite.dev';
+const repo = 'https://github.com/callstackincubator/rozenite';
+const description =
+  'Plug-and-play DevTools panels for React Native and Lynx, with type-safe plugin APIs and runtime tools for agents.';
+
+const doc = (name, label) => ({ label, slug: `docs/${name}` });
+const group = (label, dir, items) => ({
+  label,
+  items: items.map(([name, itemLabel]) => doc(`${dir}/${name}`, itemLabel)),
+});
+
+export default defineConfig({
+  site,
+  // Same output shape as the Rspress site: `docs/introduction.html`, `404.html`.
+  outDir: './build',
+  trailingSlash: 'never',
+  build: { format: 'file' },
+  devToolbar: { enabled: false },
+  integrations: [
+    react(),
+    // Starlight would add the sitemap itself; listed so the landing page is included.
+    sitemap(),
+    starlight({
+      title: 'Rozenite',
+      description,
+      logo: { light: './src/assets/logo-light.svg', dark: './src/assets/logo-dark.svg', alt: 'Rozenite' },
+      favicon: '/logo.svg',
+      social: [
+        { icon: 'github', label: 'GitHub', href: repo },
+        { icon: 'discord', label: 'Discord', href: 'https://discord.gg/xgGt7KAjxv' },
+      ],
+      editLink: { baseUrl: `${repo}/edit/main/website/src/content/docs/` },
+      head: [
+        { tag: 'meta', attrs: { property: 'og:image', content: `${site}/og-image.jpg` } },
+        { tag: 'meta', attrs: { name: 'twitter:image', content: `${site}/og-image.jpg` } },
+      ],
+      sidebar: [
+        doc('introduction', 'Introduction'),
+        doc('prior-art', 'Prior Art'),
+        doc('getting-started', 'Getting started'),
+        doc('compatibility', 'Compatibility'),
+        group('Targets', 'targets', [
+          ['rozenite-for-lynx', 'Rozenite for Lynx'],
+          ['rozenite-for-web', 'Rozenite for Web'],
+        ]),
+        group('Rozenite for Agents', 'agent', [
+          ['overview', 'Overview'],
+          ['skills', 'Agent Skills'],
+          ['adding-tools-to-your-application', 'Adding tools to your application'],
+          ['making-your-plugin-agent-enabled', 'Making your plugin agent-enabled'],
+          ['sdk', 'Agent SDK'],
+          ['tap', 'Tap'],
+        ]),
+        doc('standalone-app', 'Standalone App'),
+        {
+          label: 'Plugin Development',
+          items: [
+            doc('plugin-development/overview', 'Overview'),
+            doc('plugin-development/plugin-development', 'Plugin Development Guide'),
+            doc('plugin-development/rpc', 'RPC'),
+            doc('plugin-development/testing', 'Testing'),
+            { label: 'Rozenite UI Storybook', link: '/storybook' },
+          ],
+        },
+        group('Official Plugins', 'official-plugins', [
+          ['overview', 'Overview'],
+          ['expo-atlas', 'Expo Atlas'],
+          ['tanstack-query', 'TanStack Query'],
+          ['react-navigation', 'React Navigation'],
+          ['network-activity', 'Network Activity'],
+          ['overlay', 'Overlay'],
+          ['redux-devtools', 'Redux DevTools'],
+          ['performance-monitor', 'Performance Monitor'],
+          ['storage', 'Storage'],
+          ['feature-flags', 'Feature Flags'],
+          ['sqlite', 'SQLite'],
+          ['file-system', 'File System'],
+          ['react-hook-form', 'React Hook Form'],
+          ['controls', 'Controls'],
+          ['require-profiler', 'Require Profiler'],
+        ]),
+      ],
+      plugins: [
+        starlightLlmsTxt({
+          projectName: 'Rozenite',
+          description,
+        }),
+      ],
+    }),
+  ],
+});

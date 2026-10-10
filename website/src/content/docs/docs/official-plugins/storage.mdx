@@ -1,0 +1,125 @@
+---
+title: "Storage Plugin"
+---
+
+import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
+
+The Storage plugin is a single DevTools panel for MMKV, AsyncStorage, and Expo SecureStore. Register whichever adapters your app uses and inspect them all from one place.
+
+## Installation
+
+Make sure to go through the [Getting Started guide](/docs/getting-started) before installing the plugin.
+
+<PackageManagerTabs command="install -D @rozenite/storage-plugin" />
+
+Install the peer dependencies for the storages you use:
+
+<PackageManagerTabs command="install -D react-native-mmkv @react-native-async-storage/async-storage expo-secure-store" />
+
+## Setup
+
+```ts title="App.tsx"
+import {
+  createAsyncStorageAdapter,
+  createExpoSecureStorageAdapter,
+  createMMKVStorageAdapter,
+  useRozeniteStoragePlugin,
+} from '@rozenite/storage-plugin';
+
+const storages = [
+  createMMKVStorageAdapter({
+    storages: { user: userStorage, cache: cacheStorage },
+  }),
+  createAsyncStorageAdapter({
+    storage: AsyncStorage,
+  }),
+  createExpoSecureStorageAdapter({
+    storage: SecureStore,
+    keys: ['token', 'session'],
+  }),
+];
+
+function App() {
+  useRozeniteStoragePlugin({ storages });
+  return <YourApp />;
+}
+```
+
+## Web (React Native for Web)
+
+With [Rozenite for Web](/docs/targets/rozenite-for-web), this plugin is also available when debugging your React Native web app — showing entries from whichever Async Storage / Expo Secure Store adapters you configure for the browser.
+
+## Adapters
+
+### MMKV
+
+```ts title="App.tsx"
+createMMKVStorageAdapter({
+  storages: { 'user-storage': userStorage, 'settings-storage': settingsStorage },
+  blacklist: { 'user-storage': /token|secret|password/ },
+});
+```
+
+MMKV v4 arrays aren't supported — pass a record (`{ id: instance }`) instead.
+
+### AsyncStorage
+
+```ts title="App.tsx"
+// v2 style
+createAsyncStorageAdapter({ storage: AsyncStorage });
+
+// v3 style (instance-based)
+createAsyncStorageAdapter({
+  storages: {
+    auth: authStorageInstance,
+    cache: { storage: cacheStorageInstance, name: 'Cache Instance', blacklist: /debug|temp/ },
+  },
+});
+```
+
+### Expo SecureStore
+
+```ts title="App.tsx"
+createExpoSecureStorageAdapter({
+  storage: SecureStore,
+  keys: async () => ['token', 'session', 'refreshToken'],
+  storageName: 'Auth Secure Storage',
+});
+```
+
+SecureStore doesn't support key enumeration, so you provide known keys via `keys`.
+
+## Binary values
+
+MMKV storages that hold binary values render and edit them through a hex viewer with a Base64 mode for copy/paste. AsyncStorage and Expo SecureStore don't support binary values.
+
+## Hiding sensitive keys
+
+`blacklist` is configured per storage and matched against the key in that storage:
+
+```ts title="App.tsx"
+createAsyncStorageAdapter({
+  storages: {
+    cache: { storage: cacheStorageInstance, blacklist: /temp|debug|internal/ },
+  },
+});
+```
+
+## Large storages
+
+The panel loads entries in bounded, key-sorted pages with value previews only — it doesn't read your whole storage up front. Search runs on the device before pagination. Open an entry to load its full value; closing it, switching storage, or refreshing discards that loaded value again.
+
+Storages with native subscriptions (like MMKV) update live. Others don't poll — use **Refresh** to pick up external changes.
+
+## Import / export
+
+Export the currently selected storage to a JSON snapshot, and import one back — handy for reproducing a bug from a captured state or sharing a scenario with a teammate.
+
+- Import and export always target the **currently selected storage** — switch the dropdown first to target a different one.
+- Import is an upsert: existing keys are overwritten, missing keys are created, keys not in the file are left alone. There's no "replace all".
+- The file is validated before anything is written. If validation fails, nothing changes.
+- Keys matching the target storage's `blacklist` are skipped, and the preview shows you which ones before you apply.
+
+Exports are versioned (`version: 1` today); a mismatched version is rejected rather than silently coerced.
+
+**Next**: See [Network Activity](./network-activity.md) and [Plugin Development](../plugin-development/plugin-development.md).

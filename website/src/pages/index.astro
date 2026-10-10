@@ -1,0 +1,8 @@
+---
+// The landing page lives in website/landing and has no framework imports; this file only hosts it.
+import Page from '../layouts/Page.astro';
+import { LandingPage } from '../../landing';
+---
+<Page title="Rozenite">
+  <LandingPage client:load />
+</Page>

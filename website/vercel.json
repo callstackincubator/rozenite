@@ -18,6 +18,10 @@
   ],
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/sitemap-index.xml"
+    },
+    {
       "source": "/(.*)",
       "destination": "/404.html"
     }

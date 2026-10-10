@@ -1,0 +1,30 @@
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+type Props = { command: string | Record<string, string> };
+const { command } = Astro.props;
+
+const managers = ['npm', 'yarn', 'pnpm', 'bun'] as const;
+
+// A string is the npm subcommand ("install -D pkg", "start"); the other managers get their spelling.
+const forManager = (manager: (typeof managers)[number], cmd: string) => {
+  const [sub, ...rest] = cmd.split(' ');
+  if (sub === 'install') {
+    if (manager === 'npm') return `npm ${cmd}`;
+    return `${manager} add ${rest.join(' ')}`;
+  }
+  return manager === 'npm' ? `npm run ${cmd}` : `${manager} ${cmd}`;
+};
+
+const commands = managers
+  .filter((manager) => typeof command === 'string' || command[manager])
+  .map((manager) => [manager, typeof command === 'string' ? forManager(manager, command) : command[manager]] as const);
+---
+
+<Tabs syncKey="package-manager">
+  {commands.map(([manager, text]) => (
+    <TabItem label={manager}>
+      <pre><code>{text}</code></pre>
+    </TabItem>
+  ))}
+</Tabs>

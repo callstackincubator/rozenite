@@ -1,0 +1,24 @@
+---
+import Page from '../../layouts/Page.astro';
+import DirectoryPage from '../../plugin-directory/plugin-directory-page/plugin-directory-page';
+import { getTotalPages, loadPluginDirectoryPage } from '../../plugin-directory/load-page';
+import '../../../landing/styles/tokens.css';
+
+// `/plugin-directory` and `/plugin-directory/<n>`, as before.
+export async function getStaticPaths() {
+  const totalPages = await getTotalPages();
+  return [
+    { params: { page: undefined }, props: { pageNumber: 1 } },
+    ...Array.from({ length: totalPages }, (_, i) => ({
+      params: { page: String(i + 1) },
+      props: { pageNumber: i + 1 },
+    })),
+  ];
+}
+
+const { pageNumber } = Astro.props;
+const page = await loadPluginDirectoryPage(pageNumber);
+---
+<Page title="Plugin Directory | Rozenite">
+  <DirectoryPage page={page} />
+</Page>

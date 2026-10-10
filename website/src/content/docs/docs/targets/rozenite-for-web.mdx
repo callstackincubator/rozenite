@@ -1,0 +1,79 @@
+---
+title: "Rozenite for Web"
+---
+
+import PackageManagerTabs from '@/components/PackageManagerTabs.astro';
+
+:::caution[Experimental]
+Rozenite for Web is an experimental feature. The API and behavior may change in future releases.
+:::
+
+Rozenite for Web lets you debug your React Native web app from React Native DevTools — the same plugin panels you use on iOS and Android, in the browser.
+
+You'll need a Chromium-based browser, the Rozenite browser extension, and the `@rozenite/web` package in your app. It works whether Metro bundles your web app directly, or you use Webpack Dev Server for web.
+
+## Install the Chrome extension
+
+1. Download the latest extension from the [releases page](https://github.com/callstackincubator/rozenite/releases).
+2. Open Chrome, go to `chrome://extensions`, and enable **Developer mode** (top-right toggle).
+3. Install the extension.
+
+If you get stuck, see Chrome's [extension loading guide](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-an-unpacked-extension).
+
+## Add @rozenite/web to your app
+
+### Installation
+
+<PackageManagerTabs command="install -D @rozenite/web" />
+
+### Metro-only web configuration
+
+Wrap your Metro config with `withRozeniteWeb`:
+
+```javascript
+const { getDefaultConfig } = require('expo/metro-config');
+const { withRozeniteWeb } = require('@rozenite/web/metro');
+
+const config = getDefaultConfig(__dirname);
+
+module.exports = withRozeniteWeb(config);
+```
+
+### Entry point
+
+Add `require('@rozenite/web')` to your web entry point — commonly `main.tsx` or your Expo Router root `_layout.tsx`. It already gates itself to development, so there's no need to wrap it in `__DEV__` yourself.
+
+```javascript
+require('@rozenite/web');
+```
+
+### Webpack configuration
+
+Wrap your Webpack config with `withRozeniteWeb`:
+
+```javascript
+const { withRozeniteWeb } = require('@rozenite/web/webpack');
+
+module.exports = withRozeniteWeb({
+  // your existing webpack config
+});
+```
+
+### Web entry point
+
+Use the same entry pattern when using Webpack too.
+
+## How to use it
+
+1. Start your app in development mode.
+2. Open the web app in a Chromium-based browser.
+3. Press `j` in the terminal running your app.
+4. New debugging targets should now be available.
+5. Select the browser tab you want to debug.
+
+## Troubleshooting
+
+- Make sure the extension is installed and enabled.
+- Make sure your app is running on `localhost`.
+- If you use Metro-only web, make sure `withRozeniteWeb` is added to Metro and `require('@rozenite/web')` is loaded in your web entry.
+- If you use Webpack, make sure your config is wrapped with `withRozeniteWeb`.
