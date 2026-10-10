@@ -1,0 +1,47 @@
+---
+// Docs pages keep Starlight's footer (edit link, pagination) and end with the brand strip.
+import Default from '@astrojs/starlight/components/Footer.astro';
+---
+
+<Default />
+<div class="cs-footer">
+  <span>© 2026 Rozenite by Callstack</span>
+  <nav class="links" aria-label="Footer">
+    <a href="/plugin-directory">Plugin directory</a>
+    <a href="/llms.txt">llms.txt</a>
+    <a href="https://github.com/callstackincubator/rozenite">GitHub</a>
+    <a href="https://discord.gg/xgGt7KAjxv">Discord</a>
+    <a href="https://github.com/callstackincubator/rozenite/blob/main/LICENSE">MIT license</a>
+    <a href="https://callstack.com/?utm_source=rozenite-docs&utm_medium=referral">Callstack</a>
+  </nav>
+</div>
+
+<style>
+  .cs-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--cs-line);
+    font-family: var(--cs-font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+    color: var(--cs-muted);
+  }
+  .cs-footer a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .cs-footer a:hover {
+    color: var(--sl-color-white);
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+  }
+</style>

@@ -30,8 +30,15 @@ export default defineConfig({
     starlight({
       title: 'Rozenite',
       description,
-      logo: { light: './src/assets/logo-light.svg', dark: './src/assets/logo-dark.svg', alt: 'Rozenite' },
-      favicon: '/logo.svg',
+      favicon: '/favicon.svg',
+      // The look follows docs/DESIGN.md: the same tokens, fonts and lockup as the landing pages.
+      customCss: ['./src/fonts/font-face.css', './src/styles/theme.css', './src/styles/docs.css'],
+      components: {
+        ThemeProvider: './src/components/starlight/ThemeProvider.astro',
+        SiteTitle: './src/components/starlight/SiteTitle.astro',
+        SocialIcons: './src/components/starlight/SocialIcons.astro',
+        Footer: './src/components/starlight/Footer.astro',
+      },
       social: [
         { icon: 'github', label: 'GitHub', href: repo },
         { icon: 'discord', label: 'Discord', href: 'https://discord.gg/xgGt7KAjxv' },
@@ -40,6 +47,7 @@ export default defineConfig({
       head: [
         { tag: 'meta', attrs: { property: 'og:image', content: `${site}/og-image.jpg` } },
         { tag: 'meta', attrs: { name: 'twitter:image', content: `${site}/og-image.jpg` } },
+        { tag: 'meta', attrs: { name: 'theme-color', content: '#0a0a0a' } },
       ],
       sidebar: [
         doc('introduction', 'Introduction'),
