@@ -2012,6 +2012,9 @@ importers:
       '@types/node':
         specifier: ^18.11.17
         version: 18.16.9
+      playwright-core:
+        specifier: ^1.62.1
+        version: 1.62.1
 
 packages:
 

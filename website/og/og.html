@@ -1,0 +1,343 @@
+<!doctype html>
+<!--
+  The social card (1200x630) and, with ?format=banner, the README banner.
+  scripts/og.mjs serves the website folder, opens this page in Chromium and saves screenshots
+  to public/og-image.jpg and public/rozenite-banner.jpg. Edit here, then run
+  `pnpm --filter @rozenite/docs og`. The look follows docs/DESIGN.md.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Switzer';
+        src: url('/src/fonts/Switzer-Medium.woff2') format('woff2');
+        font-weight: 500;
+      }
+      @font-face {
+        font-family: 'Geist Mono';
+        src: url('/src/fonts/GeistMono-Regular.woff2') format('woff2');
+        font-weight: 400;
+      }
+      :root {
+        --accent: #ff4f7b;
+        --line: rgb(255 255 255 / 0.1);
+        --line-strong: rgb(255 255 255 / 0.2);
+        --muted: rgb(255 255 255 / 0.62);
+        --faint: rgb(255 255 255 / 0.5);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        background: #0a0a0a;
+        color: #fff;
+        font-family: 'Switzer', sans-serif;
+      }
+      .card {
+        position: absolute;
+        inset: 0 48px;
+        border-inline: 1px solid var(--line);
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 52px 56px 0;
+      }
+      .mark {
+        width: 28px;
+        height: 40px;
+        margin-right: 4px;
+        color: var(--accent);
+      }
+      .wordmark {
+        padding: 2px 9px;
+        background: var(--accent);
+        color: #0a0a0a;
+        font-weight: 500;
+        font-size: 34px;
+        line-height: 1.2;
+        text-transform: uppercase;
+      }
+      .mono {
+        font-family: 'Geist Mono', monospace;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .by {
+        padding: 6px 10px;
+        background: #1a1a1a;
+        color: var(--faint);
+        font-size: 15px;
+      }
+      h1 {
+        margin: 32px 56px 0;
+        font-weight: 500;
+        font-size: 70px;
+        line-height: 1.04;
+        letter-spacing: -0.035em;
+      }
+      h1 em {
+        font-style: normal;
+        color: var(--accent);
+      }
+      .band {
+        position: absolute;
+        inset: auto 0 0;
+        height: 250px;
+        border-top: 1px solid var(--line);
+      }
+      canvas {
+        image-rendering: pixelated;
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .windows {
+        position: absolute;
+        left: 56px;
+        top: 34px;
+        display: flex;
+        gap: 24px;
+      }
+      .window {
+        background: #0a0a0a;
+        border: 1px solid var(--line-strong);
+        font-family: 'Geist Mono', monospace;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+        color: var(--faint);
+      }
+      .tag {
+        padding: 0 4px;
+        background: var(--accent);
+        color: #0a0a0a;
+        font-family: 'Switzer', sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+      /* The DevTools window: one Rozenite tab, the plugin sidebar, the panel. */
+      .devtools {
+        width: 470px;
+      }
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .tabs > span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-right: 1px solid var(--line);
+        color: var(--faint);
+      }
+      .tmark {
+        width: 7px;
+        height: 10px;
+        color: var(--accent);
+      }
+      .tabs .on {
+        color: #fff;
+        border-bottom: 2px solid var(--accent);
+        margin-bottom: -1px;
+      }
+      .main {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        font-size: 14px;
+      }
+      .side {
+        border-right: 1px solid var(--line);
+        font-family: 'Switzer', sans-serif;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .side div {
+        padding: 6px 12px;
+      }
+      .side .sel {
+        position: relative;
+        background: #111;
+        color: #fff;
+      }
+      .side .sel::before {
+        content: '';
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 2px;
+        background: var(--accent);
+      }
+      .rows div {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 14px;
+        border-bottom: 1px solid var(--line);
+        color: #e9e9e9;
+      }
+      .rows .head {
+        color: var(--faint);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .rows .pick {
+        position: relative;
+        background: #111;
+        color: #fff;
+      }
+      .rows .pick::before {
+        content: '';
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 2px;
+        background: var(--accent);
+      }
+      /* The agent's terminal. */
+      .agent {
+        width: 512px;
+        align-self: flex-start;
+      }
+      .term {
+        padding: 12px 16px 14px;
+        font-size: 15px;
+        line-height: 1.7;
+        white-space: nowrap;
+        color: #e9e9e9;
+      }
+      .accent {
+        color: var(--accent);
+      }
+      .dim {
+        color: var(--faint);
+      }
+      .out {
+        color: var(--muted);
+      }
+      .targets {
+        position: absolute;
+        right: 56px;
+        bottom: 24px;
+        padding: 6px 10px;
+        background: #0a0a0a;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      /* The README banner: copy on the left, the two views stacked on the right. */
+      body[data-format='banner'] {
+        width: 1245px;
+        height: 384px;
+      }
+      /* No frame hairlines: on GitHub they read as a stray border. */
+      [data-format='banner'] .card {
+        inset: 0;
+        border-inline: 0;
+      }
+      [data-format='banner'] .top {
+        padding: 44px 64px 0;
+      }
+      [data-format='banner'] h1 {
+        margin: 28px 64px 0;
+        max-width: 480px;
+        font-size: 50px;
+      }
+      [data-format='banner'] .band {
+        inset: 0 0 0 600px;
+        height: auto;
+        border-top: 0;
+        border-left: 1px solid var(--line);
+      }
+      [data-format='banner'] .windows {
+        left: 40px;
+        top: 50%;
+        translate: 0 -50%;
+        flex-direction: column;
+        gap: 16px;
+      }
+      [data-format='banner'] .targets {
+        left: -536px;
+        right: auto;
+        bottom: 40px;
+        padding: 0;
+        background: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="top">
+        <svg class="mark" viewBox="0 0 7 10" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">
+          <path d="M3 0h1v1h1v2h1v2h1v3h-1v1h-1v1h-3v-1h-1v-1h-1v-3h1v-2h1v-2h1z" />
+        </svg>
+        <span class="wordmark">Rozenite</span>
+        <span class="by mono">by Callstack</span>
+      </div>
+      <h1>See inside your running app.<br /><em>So can your agent.</em></h1>
+      <div class="band">
+        <canvas id="dither"></canvas>
+        <div class="windows">
+          <div class="window devtools">
+            <div class="bar"><span class="tag">Rozenite</span>React Native DevTools</div>
+            <div class="tabs">
+              <span>Console</span>
+              <span class="on"
+                ><svg class="tmark" viewBox="0 0 7 10" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">
+                  <path d="M3 0h1v1h1v2h1v2h1v3h-1v1h-1v1h-3v-1h-1v-1h-1v-3h1v-2h1v-2h1z" /></svg
+                >Rozenite</span
+              >
+            </div>
+            <div class="main">
+              <div class="side">
+                <div>File System</div>
+                <div class="sel">Network Activity</div>
+                <div>Overlay</div>
+              </div>
+              <div class="rows">
+                <div class="head"><span>Request</span><span>Status</span></div>
+                <div><span>GET /api/user</span><span class="out">200</span></div>
+                <div class="pick"><span>GET /api/cart</span><span>500</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="window agent">
+            <div class="bar"><span class="tag">Rozenite</span>agent</div>
+            <div class="term">
+              <div><span class="accent">●</span> network · listRequests <span class="dim">{</span><span class="out">"limit"</span><span class="dim">:</span><span class="accent">5</span><span class="dim">}</span></div>
+              <div class="out">&nbsp;&nbsp;GET&nbsp;&nbsp;/api/cart&nbsp;&nbsp;500&nbsp;&nbsp;212 ms</div>
+              <div class="accent">✓ /api/cart returns 500.</div>
+            </div>
+          </div>
+        </div>
+        <span class="targets mono">React Native · Expo · Re.Pack · Web · Lynx</span>
+      </div>
+    </div>
+    <script type="module">
+      import { drawDither } from '/og/dither.js';
+
+      const banner = new URLSearchParams(location.search).get('format') === 'banner';
+      if (banner) document.body.dataset.format = 'banner';
+      await document.fonts.ready;
+      const canvas = document.getElementById('dither');
+      const cols = Math.round(canvas.clientWidth / 2);
+      const rows = Math.round(canvas.clientHeight / 2);
+      drawDither(canvas, 'crystals', 9, [255, 79, 123], cols, rows, banner ? 0.86 : 0.9);
+      window.ogReady = true;
+    </script>
+  </body>
+</html>

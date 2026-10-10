@@ -277,13 +277,18 @@ and targets. No invented numbers, adopters, logos or testimonials.
 
 ## Social card and banner
 
-Not yet redrawn in this look. When they are:
+Both are generated from one page, `website/og/og.html`, with `pnpm --filter @rozenite/docs og`
+(`website/scripts/og.mjs` renders it in Chromium and also writes the PNG icons).
 
-- Open Graph card, 1200×630: the lockup top left, the chosen headline large (first beat in
-  white, second in the accent), a band of crystals dither across the bottom with a DevTools
-  window showing one plugin tab, and the targets in a mono row bottom right.
-- README banner, 1300×400 rendered at 2×: the same pieces side by side, copy on the left,
-  the crystals and the window on the right.
+- Social card, `website/public/og-image.jpg`, 1200×630: the lockup top left, the home page
+  headline large ("See inside your running app." in white, "So can your agent." in the
+  accent), then a band of crystals dither across the bottom with a DevTools window (the
+  Rozenite tab, Network Activity selected, the failing request picked out) beside the agent's
+  terminal showing the same request, and the targets in a mono row bottom right.
+- README banner, `website/public/rozenite-banner.jpg`, 1660×512: the same pieces side by
+  side, copy on the left, the two windows stacked on the crystals on the right, no frame
+  hairlines. The READMEs load it from `https://www.rozenite.dev/rozenite-banner.jpg`, so they
+  pick up a new banner when the site deploys.
 
 ## Where it is implemented
 
