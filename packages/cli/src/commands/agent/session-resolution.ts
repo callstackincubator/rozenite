@@ -103,6 +103,47 @@ export const createOrReuseSession = async (
   }
 };
 
+/**
+ * How long a freshly created session is given to collect the device's
+ * tools before the command runs. The server reports a session connected as
+ * soon as the debugger handshake completes; plugins and the app register
+ * their tools a moment later, so the first command on a brand-new session
+ * used to see only the built-in domains. Polling stops once `toolCount`
+ * has not changed across `SETTLE_STABLE_READS` consecutive reads.
+ */
+export const SETTLE_INTERVAL_MS = 200;
+export const SETTLE_STABLE_READS = 3;
+export const SETTLE_MAX_WAIT_MS = 3000;
+
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+export const waitForToolsToSettle = async (
+  transport: Pick<AgentTransport, 'getSession'>,
+  sessionId: string,
+  initialToolCount: number,
+  options: { intervalMs?: number; stableReads?: number; maxWaitMs?: number } = {},
+): Promise<void> => {
+  const intervalMs = options.intervalMs ?? SETTLE_INTERVAL_MS;
+  const stableReads = options.stableReads ?? SETTLE_STABLE_READS;
+  const maxWaitMs = options.maxWaitMs ?? SETTLE_MAX_WAIT_MS;
+  const startedAt = Date.now();
+  let lastCount = initialToolCount;
+  let stable = 1;
+
+  while (stable < stableReads && Date.now() - startedAt < maxWaitMs) {
+    await sleep(intervalMs);
+    let count: number;
+    try {
+      count = (await transport.getSession(sessionId)).session.toolCount;
+    } catch {
+      // A read that fails here is the command's problem to report, not ours.
+      return;
+    }
+    stable = count === lastCount ? stable + 1 : 1;
+    lastCount = count;
+  }
+};
+
 export type ResolvedSession = {
   sessionId: string;
   /** Present when the session was resolved for a device, not given as an id. */
@@ -116,9 +157,10 @@ export type ResolvedSession = {
  * debugger connection.
  */
 export const resolveAgentSession = async (
-  transport: Pick<AgentTransport, 'createSession' | 'listTargets'>,
+  transport: Pick<AgentTransport, 'createSession' | 'listTargets' | 'getSession'>,
   selection: SessionSelection,
   env: Env = process.env,
+  settle: Parameters<typeof waitForToolsToSettle>[3] = {},
 ): Promise<ResolvedSession> => {
   const target = selectSessionTarget(selection, env);
   if ('session' in target) {
@@ -139,6 +181,10 @@ export const resolveAgentSession = async (
         device ? ` --device ${device}` : ''
       }\n`,
     );
+  }
+
+  if (created === true) {
+    await waitForToolsToSettle(transport, session.id, session.toolCount, settle);
   }
 
   return { sessionId: session.id, info: session };
