@@ -92,6 +92,9 @@ follows the same shape:
   or the tool does the paging. The default page is 20 rows, the maximum 100.
 - The last page has no `next`. Any other page has `next`: the same command
   with `--cursor` set. Run it to get the following page.
+- Treat a cursor as opaque unless a domain doc says otherwise. The
+  `console` domain's cursor is the row's `seq`, so `--cursor 120` resumes
+  after message 120.
 - A stale cursor (for example after an app relaunch) answers
   `{"page":{"reset":true},"items":[]}`. That means "start this listing
   again without `--cursor`", not "no more rows".
