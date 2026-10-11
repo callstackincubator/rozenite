@@ -1,4 +1,4 @@
-import { paginateArray } from '@rozenite/agent-shared';
+import { paginateArray, truncateString } from '@rozenite/agent-shared';
 import { reactListScope } from './pagination.js';
 import type { ReactChangeDescription, ReactCommitData } from './profiling-store.js';
 import type {
@@ -539,9 +539,8 @@ const createSerializableSnapshot = (
   seen = new Set<unknown>(),
 ): unknown => {
   if (typeof value === 'string') {
-    return value.length > maxValueLength
-      ? `${value.slice(0, maxValueLength)}[+${value.length - maxValueLength} chars]`
-      : value;
+    // Shared cut: never ends on the first half of a surrogate pair.
+    return truncateString(value, maxValueLength).text;
   }
 
   if (value === null || typeof value === 'boolean' || typeof value === 'number') {

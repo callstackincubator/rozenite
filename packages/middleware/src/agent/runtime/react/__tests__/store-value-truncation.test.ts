@@ -75,6 +75,14 @@ describe('React inspected value truncation', () => {
     expect(result.items).toEqual([{ name: 'meta', value: { note: 'abcd[+6 chars]' } }]);
   });
 
+  it('never splits a surrogate pair when an emoji sits at the cut', async () => {
+    const store = createStore({ label: 'ab😀cd' });
+
+    const result = await store.getProps(DEVICE_ID, { nodeId: 2, maxValueLength: 3 });
+
+    expect(result.items).toEqual([{ name: 'label', value: 'ab[+4 chars]' }]);
+  });
+
   it('applies the budget to getComponent too', async () => {
     const store = createStore({ blob: 'x'.repeat(50) });
 

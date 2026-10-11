@@ -14,15 +14,22 @@ they returned before still one argument away.
 - `network.getRequestBody` and `network.getResponseBody` return at most
   `maxBytes` bytes (default 16384, previously the whole body) starting at
   `offset` (default 0). Results gain `totalBytes`, `truncated` and, when
-  bytes remain, `nextOffset`. Bytes are counted on the decoded text when
-  `decoded` is `true`, otherwise on the returned string.
+  bytes remain, `nextOffset`, the byte index of the first byte not returned.
+  A window never ends inside a multi-byte character and never runs past
+  `maxBytes`, and an `offset` inside a character moves to the next one; the
+  network-activity plugin cuts its bodies the same way. Bytes are counted on
+  the decoded text when `decoded` is `true`, otherwise on the returned
+  string.
 - `network.getRequestDetails` takes `include` (default `["headers"]`;
   accepts `headers`, `timing`, `initiator`, `cookies`, `redirectChain`).
   By default `initiator` carries only its `type` (previously the full
   initiator with its stack), `response.timing`, `requestAssociatedCookies`,
   `responseBlockedCookies` and `redirectChain` are left out (previously
-  always present), and keys whose value would be `null` are omitted from
-  `request` (previously present as `null`).
+  always present). `getRequestDetails` omits keys whose value would be
+  `null` (`type`, `priority`, `failureText`, `blockedReason`,
+  `corsErrorStatus`, `request`, `response`, `requestHeadersExtra`,
+  `responseHeadersExtra`; previously present as `null`): a missing key reads
+  as `undefined` where it read as `null`.
 - `react.getTree` default columns change from
   `nodeId,label,displayName,elementType,childCount,depth,errorCount,warningCount`
   to `label,displayName,childCount,depth`.
@@ -32,7 +39,18 @@ they returned before still one argument away.
 - `react.searchNodes` default columns change from
   `nodeId,label,displayName,elementType,childCount,parentLabel,errorCount,warningCount`
   to `label,displayName,childCount,parentLabel`.
+- `react.getErrors` default columns change from
+  `nodeId,label,displayName,errorCount,warningCount` to
+  `label,displayName,errorCount,warningCount`.
 - `react.getComponentRenders` default columns drop `avgDurationMs`.
+- An invalid `limit` (0, negative, fractional or not a number) on
+  `network.listRequests` is now an error instead of falling back to the
+  default of 20.
+- `POST /rozenite/agent/sessions` answers `created: true` when it started
+  the session and `created: false` when it reused a running one, so the CLI
+  can say when a command opened a new session.
+- React inspected values (`getComponent`, `getProps`, …) no longer end a cut
+  string on the first half of a surrogate pair.
 - `react.getTree` accepts a component label (`@c12`) for `root`, like every
   other React tool that takes a node.
 - React profiling results round every duration and timestamp to at most

@@ -9,6 +9,7 @@ import {
   type AgentToolPagination,
   type JSONSchema7,
   paginateArray,
+  sliceUtf8,
 } from '@rozenite/agent-shared';
 import { createReactTreeStore } from './runtime/react/store.js';
 import { CdpEventTimeoutError } from './cdp-errors.js';
@@ -334,47 +335,19 @@ const readBodyWindow = (input: Record<string, unknown>): { maxBytes: number; off
   };
 };
 
-const isUtf8ContinuationByte = (byte: number | undefined): boolean =>
-  byte !== undefined && (byte & 0xc0) === 0x80;
-
 /**
- * Cut one window out of a body, counting UTF-8 bytes.
- *
- * Both edges are moved onto character boundaries so a multi-byte character is
- * never split: the start moves forward, the end moves back (or forward, when
- * `maxBytes` is smaller than the character at the start). For a base64 body
- * every character is one byte, so the window counts base64 characters.
+ * Cut one window out of a body with the shared `sliceUtf8`, so `offset` and
+ * `nextOffset` mean the same as in the network-activity plugin: an offset
+ * inside a character moves forward to the next one, and the window ends on
+ * the last whole character that fits in `maxBytes`. For a base64 body every
+ * character is one byte, so the window counts base64 characters.
  */
 const sliceBody = (
   body: string,
   window: { maxBytes: number; offset: number },
 ): Pick<NetworkBodyResult, 'body' | 'totalBytes' | 'truncated' | 'nextOffset'> => {
-  const bytes = Buffer.from(body, 'utf8');
-  const totalBytes = bytes.length;
-
-  let start = Math.min(window.offset, totalBytes);
-  while (start < totalBytes && isUtf8ContinuationByte(bytes[start])) {
-    start += 1;
-  }
-
-  let end = Math.min(start + window.maxBytes, totalBytes);
-  while (end > start && end < totalBytes && isUtf8ContinuationByte(bytes[end])) {
-    end -= 1;
-  }
-  if (end === start && start < totalBytes) {
-    end = start + 1;
-    while (end < totalBytes && isUtf8ContinuationByte(bytes[end])) {
-      end += 1;
-    }
-  }
-
-  const truncated = end < totalBytes;
-  return {
-    body: start === 0 && end === totalBytes ? body : bytes.subarray(start, end).toString('utf8'),
-    totalBytes,
-    truncated,
-    ...(truncated ? { nextOffset: end } : {}),
-  };
+  const { slice, ...range } = sliceUtf8(body, window);
+  return { body: slice, ...range };
 };
 
 const readDetailSections = (value: unknown): Set<NetworkDetailSection> => {
@@ -1099,7 +1072,7 @@ export const createReactDomainService = (deps: {
           'errorCount',
           'warningCount',
         ],
-        defaultFields: ['nodeId', 'label', 'displayName', 'errorCount', 'warningCount'],
+        defaultFields: ['label', 'displayName', 'errorCount', 'warningCount'],
       }),
     },
     {

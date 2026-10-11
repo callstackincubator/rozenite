@@ -317,6 +317,7 @@ describe('agent session manager', () => {
         id: 'device-1',
         deviceName: 'Phone',
       },
+      created: true,
     });
   });
 

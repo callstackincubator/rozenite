@@ -90,7 +90,7 @@ columns, or `--fields all` for every column the tool declares.
 - `searchNodes`: `label`, `displayName`, `childCount`, `parentLabel`. Also
   available: `nodeId`, `elementType`, `key`, `parentId`, `errorCount`,
   `warningCount`.
-- `getErrors`: `nodeId`, `label`, `displayName`, `errorCount`, `warningCount`.
+- `getErrors`: `label`, `displayName`, `errorCount`, `warningCount`.
 - `getComponentRenders`: `fiberId`, `label`, `displayName`, `renderCount`,
   `totalDurationMs`, `maxDurationMs`, `changeTypeHints`. Also available:
   `rootId`, `avgDurationMs`, `totalSelfDurationMs`, `slowRenderCount`,
