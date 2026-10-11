@@ -131,10 +131,13 @@ change of default that an argument can undo.
    - `maxDepth` (default 4) and `maxValueLength` (default 512) for
      `get-store-state`, `get-action-details`, `get-query-details`,
      `get-mutation-details`; `path` selects a sub-tree.
-   - `read-image-file` and `export-file` write a Metro-managed artifact and
-     return `{ path, bytes, mime }` unless `inline: true` asks for today's
-     base64. `read-text-file` keeps its 10 MB ceiling only as the `maxBytes`
-     maximum.
+   - `read-image-file` answers with metadata only (`path`, `mimeTypeHint`,
+     `size`) unless `inline: true` asks for the data URI, and the inline
+     form is bounded by `maxBytes` (default 262 144). Plugin tools run on
+     the device, so a Metro-managed artifact is not available to them.
+     `export-file` exists to move bytes and is unchanged apart from
+     `maxBytes` defaulting to 1 048 576. `read-text-file` keeps its 10 MB
+     ceiling only as the `maxBytes` maximum.
    - `getRequestDetails` takes `include` (default `["headers"]`); `timing`,
      `initiator.stack`, cookies and `redirectChain` are opt-in.
      `initiator.type` is always present.
