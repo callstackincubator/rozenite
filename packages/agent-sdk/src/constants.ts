@@ -35,9 +35,24 @@ export const STATIC_DOMAINS: DomainDefinition[] = [
   },
 ];
 
-export const RESERVED_DOMAIN_NAMES: ReadonlySet<string> = new Set(
-  STATIC_DOMAINS.map((domain) => domain.id),
-);
+/**
+ * Tokens that sit where a domain name goes in `rozenite agent <domain>` but
+ * name a CLI command instead. A plugin that derived one of them as its
+ * domain would be unreachable, because the command always wins.
+ */
+export const CLI_COMMAND_NAMES: readonly string[] = [
+  'session',
+  'sessions',
+  'targets',
+  'domains',
+  'tap',
+  'help',
+];
+
+export const RESERVED_DOMAIN_NAMES: ReadonlySet<string> = new Set([
+  ...STATIC_DOMAINS.map((domain) => domain.id),
+  ...CLI_COMMAND_NAMES,
+]);
 
 export const STATIC_DOMAIN_TOOL_PREFIXES: Record<string, string> = {};
 
