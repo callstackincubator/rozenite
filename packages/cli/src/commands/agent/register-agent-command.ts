@@ -160,13 +160,35 @@ const getSessionSelection = (command: Command): SessionSelection => {
 };
 
 /**
- * The `--device` a `next` command repeats: only one the user typed, since
- * the environment that supplied any other still applies to the next run.
+ * The global options a `next` command repeats (ADR 0005, decision 4): each
+ * one the user typed, as typed, so the next page goes to the same server,
+ * session and device. A value that came from a default or from the
+ * environment is left out, since it still applies to the next run.
  */
-const getTypedDeviceArgs = (command: Command): string[] => {
+const getTypedGlobalArgs = (command: Command): string[] => {
   const options = getGlobals(command);
-  const device = options.device ?? options.deviceId;
-  return device ? ['--device', device] : [];
+  const typed = (key: keyof AgentGlobalOptions): boolean =>
+    command.getOptionValueSourceWithGlobals(key) === 'cli';
+  const args: string[] = [];
+
+  if (typed('session') && options.session) {
+    args.push('--session', options.session);
+  }
+  if (typed('device') && options.device) {
+    args.push('--device', options.device);
+  } else if (typed('deviceId') && options.deviceId) {
+    args.push('--device', options.deviceId);
+  }
+  if (typed('host') && options.host) {
+    args.push('--host', options.host);
+  }
+  if (typed('port') && options.port !== undefined) {
+    args.push('--port', String(options.port));
+  }
+  if (typed('pretty') && options.pretty) {
+    args.push('--pretty');
+  }
+  return args;
 };
 
 const outputAgentError = (command: Command, error: unknown): void => {
@@ -191,9 +213,13 @@ const getActionCommand = (args: unknown[]): Command => {
   return candidate;
 };
 
+/** Whether `--fields` itself was typed with a value. */
+const hasTypedFields = (options: ListingOptions): boolean =>
+  options.fields !== undefined && options.fields.trim().length > 0;
+
 /** Whether the caller chose the columns, which turns off sparse-column elision. */
 const hasExplicitFields = (options: ListingOptions): boolean =>
-  !!options.verbose || (options.fields !== undefined && options.fields.trim().length > 0);
+  !!options.verbose || hasTypedFields(options);
 
 /** `--fields`/`--limit` as the user typed them, for a listing's `next` command. */
 const getListingNextArgs = (options: ListingOptions, nextCursor: string): string[] => [
@@ -349,7 +375,7 @@ const listDomainTools = async (
     scope: `domain:${domainId}`,
     fieldSet: { fields: TOOL_LIST_FIELDS },
     options: cli,
-    commandArgs: [domainId, ...getTypedDeviceArgs(command)],
+    commandArgs: [domainId, ...getTypedGlobalArgs(command)],
   });
 };
 
@@ -408,9 +434,15 @@ const callDomainTool = async (
     },
     toolLabel: toolToken,
     requireObject: !!pagination,
+    onIgnored: (flag) => {
+      process.stderr.write(`Note: ${toolToken} does not page; ${flag} was ignored.\n`);
+    },
   });
 
-  if (!fieldSet && hasExplicitFields(cli)) {
+  // `--fields` is new grammar and never worked here, so silently printing
+  // everything would hide the mistake. `-v`/`--verbose` meant "all fields"
+  // and was ignored for such a tool before; it still is (ADR 0005, decision 11).
+  if (!fieldSet && hasTypedFields(cli)) {
     throw new Error(`Tool "${toolToken}" does not declare row fields; --fields does not apply.`);
   }
 
@@ -461,7 +493,7 @@ const callDomainTool = async (
               : cli.fields !== undefined
                 ? ['--fields', cli.fields]
                 : []),
-            ...getTypedDeviceArgs(command),
+            ...getTypedGlobalArgs(command),
             '--cursor',
             nextCursor,
           ])
@@ -480,7 +512,9 @@ const runDomainCommand = async (command: Command, tokens: string[]): Promise<voi
   const { positionals, cli, toolTokens } = parseDomainInvocation(tokens);
   const [domainToken, actionToken, ...extra] = positionals;
 
-  if (domainToken === undefined) {
+  // `rozenite agent help` alone prints this command's help; a plugin domain
+  // named `help` is still reachable for its tools (`rozenite agent help <tool>`).
+  if (domainToken === undefined || (domainToken === 'help' && actionToken === undefined)) {
     command.outputHelp();
     return;
   }
@@ -601,7 +635,7 @@ export const registerAgentCommand = (program: Command): void => {
           scope: 'targets',
           fieldSet: TARGET_ROWS,
           options: command.opts<ListingOptions>(),
-          commandArgs: ['targets'],
+          commandArgs: ['targets', ...getTypedGlobalArgs(command)],
         }),
         true,
         connection.pretty,
@@ -654,7 +688,7 @@ export const registerAgentCommand = (program: Command): void => {
           scope: 'sessions',
           fieldSet: SESSION_ROWS,
           options: command.opts<ListingOptions>(),
-          commandArgs: ['session', 'list'],
+          commandArgs: ['session', 'list', ...getTypedGlobalArgs(command)],
         }),
         true,
         connection.pretty,
@@ -719,7 +753,7 @@ export const registerAgentCommand = (program: Command): void => {
           scope: 'domains',
           fieldSet: { fields: DOMAIN_LIST_FIELDS, defaultFields: DOMAIN_LIST_DEFAULT_FIELDS },
           options: command.opts<ListingOptions>(),
-          commandArgs: ['domains', ...getTypedDeviceArgs(command)],
+          commandArgs: ['domains', ...getTypedGlobalArgs(command)],
         }),
         true,
         connection.pretty,

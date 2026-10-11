@@ -3,13 +3,17 @@
  * needs a session resolves one in this order:
  *
  * 1. `--session <id>`;
- * 2. `ROZENITE_SESSION`;
- * 3. the session for `--device <id>` (or `--deviceId`, or `ROZENITE_DEVICE`),
+ * 2. the session for `--device <id>` (or the undocumented `--deviceId`),
  *    created or reused by the server;
- * 4. the session for the only connected device, created or reused;
- * 5. otherwise an error that lists the targets to choose from.
+ * 3. `ROZENITE_SESSION`;
+ * 4. the session for `ROZENITE_DEVICE`, created or reused;
+ * 5. the session for the only connected device, created or reused;
+ * 6. otherwise an error that lists the targets to choose from.
  *
- * Steps 3 and 4 are one `POST /rozenite/agent/sessions`, the request
+ * The environment variables are defaults for the flags, so a flag the user
+ * typed always beats either of them.
+ *
+ * Steps 2, 4 and 5 are one `POST /rozenite/agent/sessions`, the request
  * `session create` makes: the server already creates a session or hands back
  * the running one for a device.
  */
@@ -38,11 +42,32 @@ export const getRequestedDevice = (
 ): string | undefined =>
   nonEmpty(selection.device) ?? nonEmpty(selection.deviceId) ?? nonEmpty(env[DEVICE_ENV]);
 
-/** `--session`, then `ROZENITE_SESSION`. */
-export const getExplicitSession = (
+/** What a command runs against: a session id, or the device to resolve one for. */
+export type SessionTarget = { session: string } | { device: string | undefined };
+
+/**
+ * Applies the precedence above without contacting the server:
+ * `--session` → `--device`/`--deviceId` → `ROZENITE_SESSION` →
+ * `ROZENITE_DEVICE` → the only connected device (`device: undefined`).
+ */
+export const selectSessionTarget = (
   selection: SessionSelection,
   env: Env = process.env,
-): string | undefined => nonEmpty(selection.session) ?? nonEmpty(env[SESSION_ENV]);
+): SessionTarget => {
+  const session = nonEmpty(selection.session);
+  if (session) {
+    return { session };
+  }
+  const device = nonEmpty(selection.device) ?? nonEmpty(selection.deviceId);
+  if (device) {
+    return { device };
+  }
+  const envSession = nonEmpty(env[SESSION_ENV]);
+  if (envSession) {
+    return { session: envSession };
+  }
+  return { device: nonEmpty(env[DEVICE_ENV]) };
+};
 
 /** The server's answer when no device was named and more than one is connected. */
 const isMultipleDevicesError = (error: unknown): boolean =>
@@ -63,7 +88,7 @@ const createMultipleTargetsError = (targets: readonly MetroTarget[]): Error =>
 export const createOrReuseSession = async (
   transport: Pick<AgentTransport, 'createSession' | 'listTargets'>,
   device: string | undefined,
-): Promise<{ session: AgentSessionInfo; versionCheck?: string }> => {
+): Promise<{ session: AgentSessionInfo; created?: boolean; versionCheck?: string }> => {
   try {
     return await transport.createSession({
       deviceId: device,
@@ -80,7 +105,7 @@ export const createOrReuseSession = async (
 
 export type ResolvedSession = {
   sessionId: string;
-  /** Present when the session came from steps 3–4, not from an explicit id. */
+  /** Present when the session was resolved for a device, not given as an id. */
   info?: AgentSessionInfo;
 };
 
@@ -95,21 +120,20 @@ export const resolveAgentSession = async (
   selection: SessionSelection,
   env: Env = process.env,
 ): Promise<ResolvedSession> => {
-  const explicit = getExplicitSession(selection, env);
-  if (explicit) {
-    return { sessionId: explicit };
+  const target = selectSessionTarget(selection, env);
+  if ('session' in target) {
+    return { sessionId: target.session };
   }
 
-  const device = getRequestedDevice(selection, env);
-  const requestedAt = Date.now();
-  const { session, versionCheck } = await createOrReuseSession(transport, device);
+  const { device } = target;
+  const { session, created, versionCheck } = await createOrReuseSession(transport, device);
 
   if (versionCheck) {
     process.stderr.write(`${versionCheck}\n`);
   }
-  // The server reports when a session was created, not whether this request
-  // created it; a session younger than the request is one it just made.
-  if (typeof session.createdAt === 'number' && session.createdAt >= requestedAt) {
+  // Only a server that says it created the session gets the notice; an
+  // older server does not send `created`, and a guess would be wrong.
+  if (created === true) {
     process.stderr.write(
       `Started an agent session on ${session.deviceName || session.deviceId || 'the device'}. Stop it when done: npx rozenite agent session stop${
         device ? ` --device ${device}` : ''
@@ -135,12 +159,12 @@ export const findSessionToStop = async (
   selection: SessionSelection,
   env: Env = process.env,
 ): Promise<string> => {
-  const explicit = getExplicitSession(selection, env);
-  if (explicit) {
-    return explicit;
+  const target = selectSessionTarget(selection, env);
+  if ('session' in target) {
+    return target.session;
   }
 
-  const device = getRequestedDevice(selection, env);
+  const { device } = target;
   const running = (await transport.listSessions()).sessions.filter(
     (session) => session.status !== 'stopped',
   );

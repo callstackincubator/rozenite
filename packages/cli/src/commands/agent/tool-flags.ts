@@ -389,6 +389,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * Builds the arguments a tool is called with: `--args` first, then the
  * derived flags, then `--limit`/`--cursor` for a tool that takes them.
  * Explicit flags win over `--args`.
+ *
+ * `--limit`/`--cursor` on a tool that takes neither used to be ignored, so
+ * they still are (ADR 0005, decision 11); `onIgnored` hears about each one
+ * so the caller can say so.
  */
 export const buildToolArguments = (input: {
   argsJson: unknown;
@@ -399,23 +403,22 @@ export const buildToolArguments = (input: {
   acceptsPaging: { limit: boolean; cursor: boolean };
   toolLabel: string;
   requireObject: boolean;
+  onIgnored?: (flag: '--limit' | '--cursor') => void;
 }): unknown => {
   const paging: Record<string, unknown> = {};
   if (input.limit !== undefined) {
-    if (!input.acceptsPaging.limit) {
-      throw new Error(
-        `Tool "${input.toolLabel}" does not page its results; --limit does not apply.`,
-      );
+    if (input.acceptsPaging.limit) {
+      paging.limit = parseLimit(input.limit);
+    } else {
+      input.onIgnored?.('--limit');
     }
-    paging.limit = parseLimit(input.limit);
   }
   if (input.cursor !== undefined) {
-    if (!input.acceptsPaging.cursor) {
-      throw new Error(
-        `Tool "${input.toolLabel}" does not page its results; --cursor does not apply.`,
-      );
+    if (input.acceptsPaging.cursor) {
+      paging.cursor = input.cursor;
+    } else {
+      input.onIgnored?.('--cursor');
     }
-    paging.cursor = input.cursor;
   }
 
   const hasOverrides = Object.keys(input.flagArgs).length > 0 || Object.keys(paging).length > 0;

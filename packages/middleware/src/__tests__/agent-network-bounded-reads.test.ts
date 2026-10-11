@@ -172,6 +172,26 @@ describe('network body reads', () => {
     expect(rest).toMatchObject({ body: 'ą'.repeat(8), truncated: false });
   });
 
+  it('ends a window before an emoji that would cross maxBytes, like network-activity', async () => {
+    const harness = createHarness({
+      'Network.getResponseBody': { body: 'ab😀cd', base64Encoded: false },
+    });
+    await recordFinishedRequest(harness);
+
+    const first = (await harness.service.callTool('getResponseBody', {
+      requestId: 'req-1',
+      maxBytes: 4,
+    })) as Record<string, unknown>;
+    expect(first).toMatchObject({ body: 'ab', totalBytes: 8, truncated: true, nextOffset: 2 });
+
+    const second = (await harness.service.callTool('getResponseBody', {
+      requestId: 'req-1',
+      offset: 2,
+      maxBytes: 4,
+    })) as Record<string, unknown>;
+    expect(second).toMatchObject({ body: '😀', truncated: true, nextOffset: 6 });
+  });
+
   it('counts the raw string for a body left base64-encoded', async () => {
     const raw = Buffer.from(new Uint8Array(30)).toString('base64');
     const harness = createHarness({

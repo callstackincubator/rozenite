@@ -1,9 +1,10 @@
 /**
- * Byte-range reads for captured bodies (ADR 0004, decision 7).
- *
- * Runs on the device (Hermes), so it counts UTF-8 bytes by hand rather than
- * relying on `TextEncoder` or `Buffer`.
+ * Byte-range reads for captured bodies (ADR 0004, decision 7), cut by the
+ * shared `sliceUtf8` so `offset`/`nextOffset` mean the same as in the
+ * built-in `network` domain.
  */
+import { sliceUtf8 } from '@rozenite/agent-shared';
+
 export const DEFAULT_BODY_MAX_BYTES = 16_384;
 
 export type BodyRangeArgs = {
@@ -39,60 +40,6 @@ export const normalizeBodyRangeArgs = (args: BodyRangeArgs = {}) => {
   return { offset, maxBytes };
 };
 
-const codePointByteLength = (codePoint: number): number => {
-  if (codePoint < 0x80) return 1;
-  if (codePoint < 0x800) return 2;
-  if (codePoint < 0x10000) return 3;
-  return 4;
-};
-
-/**
- * Returns the code points of `text` whose first UTF-8 byte falls in
- * `[offset, offset + maxBytes)`. Ranges with consecutive offsets therefore
- * partition the text exactly, never splitting or repeating a character; a
- * range may run up to three bytes past `maxBytes` to finish its last
- * character.
- */
-export const sliceUtf8 = (
-  text: string,
-  offset: number,
-  maxBytes: number,
-): BodyRange & { text: string } => {
-  const end = offset + maxBytes;
-  let position = 0;
-  let startIndex = -1;
-  let endIndex = text.length;
-  let endPosition = -1;
-
-  for (let index = 0; index < text.length;) {
-    const codePoint = text.codePointAt(index) ?? 0;
-    const units = codePoint > 0xffff ? 2 : 1;
-
-    if (startIndex === -1 && position >= offset) {
-      startIndex = index;
-    }
-    if (endIndex === text.length && position >= end) {
-      endIndex = index;
-      endPosition = position;
-    }
-
-    position += codePointByteLength(codePoint);
-    index += units;
-  }
-
-  if (startIndex === -1) {
-    return { text: '', totalBytes: position, truncated: false };
-  }
-
-  const truncated = endIndex < text.length;
-  return {
-    text: text.slice(startIndex, endIndex),
-    totalBytes: position,
-    truncated,
-    ...(truncated ? { nextOffset: endPosition } : {}),
-  };
-};
-
 type BodyResultLike = {
   available: boolean;
   body?: string;
@@ -112,6 +59,6 @@ export const applyBodyRange = <TResult extends BodyResultLike>(
     return result;
   }
 
-  const { text, ...range } = sliceUtf8(result.body, offset, maxBytes);
-  return { ...result, body: text, ...range };
+  const { slice, ...range } = sliceUtf8(result.body, { offset, maxBytes });
+  return { ...result, body: slice, ...range };
 };

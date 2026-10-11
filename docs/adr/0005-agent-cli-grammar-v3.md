@@ -85,7 +85,9 @@ major removes it.
    would have been resolved. `session create`, `list`, `show <id>` and
    `stop <id>` remain for scripts and for the multi-device case.
    `ROZENITE_DEVICE` and `ROZENITE_SESSION` environment variables are read
-   as defaults for `--device` and `--session`.
+   as defaults for `--device` and `--session`, so a flag the user typed
+   always wins over either: `--session` → `--device` → `ROZENITE_SESSION`
+   → `ROZENITE_DEVICE` → the only connected target.
 
 4. **One paging channel.** `--limit <n>` and `--cursor <token>` mean "page
    this listing" on every command: for a tool that declares `pagination`
@@ -93,7 +95,10 @@ major removes it.
    listing, `targets` and `session list` they drive the CLI's own pager,
    which uses `paginateArray` from ADR 0004. The `next` command on a page is
    the command that produced the page, as the user typed it, with `--cursor`
-   replaced or appended — no connection options, no session id, no JSON.
+   replaced or appended. It repeats the flags the user typed (`--session`,
+   `--device`, `--host`, `--port`, `--pretty`, `--fields`) and nothing the
+   CLI would otherwise inject: no default connection options, no session id
+   from the environment, no JSON.
 
 5. **Projection is `--fields`.** `--fields <csv>` selects columns,
    `--fields all` selects every declared one. `-v, --verbose` is no longer
@@ -121,9 +126,11 @@ major removes it.
 9. **Flags are one word.** `--deviceId` becomes `--device`, accepted on
    every agent command; `--deviceId` keeps working undocumented.
 
-10. **Reserved names.** `session`, `sessions`, `targets`, `domains`, `tap`
-    and `help` join `RESERVED_DOMAIN_NAMES`, so a plugin cannot derive a
-    domain token that shadows a CLI command. The CLI-owned flags
+10. **Reserved names.** `session`, `targets`, `domains` and `tap` join
+    `RESERVED_DOMAIN_NAMES`, so a plugin cannot derive a domain token that
+    shadows a CLI command. (`sessions` and `help` are not commands, and
+    reserving them would make an unscoped plugin of that name break every
+    domain call; `rozenite agent help` alone prints the agent help.) The CLI-owned flags
     `--session`, `--device`, `--host`, `--port`, `--pretty`, `--fields`,
     `--limit`, `--cursor`, `--args`, `--schema` are never derived from a
     tool's schema; a tool argument with one of those names is reachable
@@ -135,8 +142,10 @@ major removes it.
     `--json`, `--deviceId`, `tap --plugin/--type/--payload` and the legacy
     domain slug all continue to be parsed exactly as today. They disappear
     from `--help`, from the bundled docs and from the website; their removal
-    is a major. The one message the CLI prints about them is the `next`
-    command, which is always emitted in the new grammar.
+    is a major. `-v`/`--verbose` stays a no-op for a tool that declares no
+    columns, and `--limit`/`--cursor` stay ignored for a tool that does not
+    page (with a one-line note on stderr); only the new `--fields` fails
+    there. The `next` command is always emitted in the new grammar.
 
 12. **Docs teach only the new grammar.** `packages/cli/docs/*.md`,
     `packages/cli/skills/rozenite/SKILL.md`, the package READMEs and

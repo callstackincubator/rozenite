@@ -133,4 +133,19 @@ describe('react navigation action details', () => {
       items: [{ id: 1 }],
     });
   });
+
+  it('rejects unknown include values with the accepted ones', () => {
+    expect(() => listReactNavigationActions(history, { include: ['stat' as 'state'] })).toThrow(
+      'Unknown "include" value "stat". Use state, origin.',
+    );
+    expect(() =>
+      listReactNavigationActions(history, { include: 'state' as unknown as ['state'] }),
+    ).toThrow('"include" must be an array of state, origin.');
+    expect(() =>
+      getReactNavigationActionDetails(history, { id: 1, include: ['nope' as 'state'] }),
+    ).toThrow('Unknown "include" value "nope". Use state, origin.');
+    expect(getReactNavigationActionDetails(history, { id: 1, include: ['state'] })).toMatchObject({
+      id: 1,
+    });
+  });
 });

@@ -11,7 +11,11 @@ stack that dispatched it. Its descriptor is exported from `./sdk`.
 the last action returned. `offset` keeps working but is deprecated. The
 result keeps `total`, `offset` (the index of the first action returned) and
 `limit`, and gains `page`. Rows gain `type` and `routeName`, the route the
-action targeted.
+action targeted. An invalid `limit` (0, negative or fractional) is now an
+error instead of being rounded to a whole number between 1 and 100. An
+unknown `include` value, or an `include` that is not an array, is an error
+that lists the accepted values (`state`, `origin`), on `list-actions` and
+`get-action-details` alike.
 
 Default changes, each reachable through an argument:
 

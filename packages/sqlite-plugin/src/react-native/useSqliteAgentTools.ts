@@ -12,10 +12,16 @@ type ExecuteSqlInput = {
 
 const pluginId = '@rozenite/sqlite-plugin';
 
-const listDatabasesTool: AgentTool = {
+export const listDatabasesTool: AgentTool = {
   name: 'list-databases',
   description: 'List all registered SQLite databases.',
   inputSchema: { type: 'object', properties: {} },
+  // Columns the CLI prints for the `databases` list (ADR 0004, decision 5).
+  rows: {
+    key: 'databases',
+    fields: ['id', 'name', 'adapterId', 'adapterName'],
+    defaultFields: ['id', 'name', 'adapterName'],
+  },
 };
 
 const executeSqlTool: AgentTool = {

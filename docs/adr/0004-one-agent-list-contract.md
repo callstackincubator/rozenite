@@ -128,9 +128,13 @@ change of default that an argument can undo.
    - `maxBytes` (default 16 384) and `offset` for `getRequestBody`,
      `getResponseBody` (both network domains), `read-text-file`; the result
      reports `totalBytes` and `truncated`.
-   - `maxDepth` (default 4) and `maxValueLength` (default 512) for
+   - `maxDepth` (default 4), `maxValueLength` (default 512) and `maxItems`
+     (default 100, at most 10 000: array items or object keys kept per
+     level, the rest marked `"[+N items]"` / `"[+N keys]": true`) for
      `get-store-state`, `get-action-details`, `get-query-details`,
-     `get-mutation-details`; `path` selects a sub-tree.
+     `get-mutation-details`; `path` selects a sub-tree. One implementation,
+     `boundValue` in `@rozenite/agent-shared`, serves all four, and no cut
+     splits a UTF-16 surrogate pair.
    - `read-image-file` answers with metadata only (`path`, `mimeTypeHint`,
      `size`) unless `inline: true` asks for the data URI, and the inline
      form is bounded by `maxBytes` (default 262 144). Plugin tools run on
@@ -171,11 +175,17 @@ change of default that an argument can undo.
   full state and stack per entry, 10 MB file reads, unbounded bodies and
   Redux state) become one page of short rows or 16 KB, with the rest one
   argument away.
+- `paginateArray` requires `keyOf` to return a unique key per row and
+  throws on a duplicate, since a cursor that names a key shared by two rows
+  cannot say which one it means.
 - `AgentTool` grows three optional fields; nothing that exists today becomes
   invalid. Tools from older plugins keep printing exactly as before.
 - Cursors issued before the upgrade stop working across it. They are
-  documented as opaque and short-lived, and a stale cursor already answers
-  `reset: true` rather than an error.
+  documented as opaque and short-lived. The shared pager cannot decode an
+  old cursor, so it rejects it as invalid ("Run the command again without
+  cursor") rather than answering `reset: true`; upgrading restarts Metro or
+  rebuilds the app, which empties the lists those cursors pointed into
+  anyway. The console domain's cursors are the exception and keep working.
 - Tests that pinned null-filled columnar rows, `--cursor` payload formats or
   the exact set of keys on a page are updated with the change that invalidates
   them; the drift test from ADR 0003 keeps `BUILT_IN_DOMAIN_TOOL_NAMES`

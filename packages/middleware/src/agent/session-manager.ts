@@ -5,6 +5,7 @@ import {
   type AgentServerInfo,
   type AgentSessionInfo,
   type CreateAgentSessionRequest,
+  type CreateAgentSessionResponse,
   type DevToolsPluginMessage,
   type GetAgentSessionToolsResponse,
 } from '@rozenite/agent-shared';
@@ -79,10 +80,7 @@ export const createAgentSessionManager = (options: {
 
   const createSession = async (
     request: CreateAgentSessionRequest = {},
-  ): Promise<{
-    session: AgentSessionInfo;
-    versionCheck?: string;
-  }> => {
+  ): Promise<CreateAgentSessionResponse> => {
     const versionCheck =
       request.cliVersion && metroVersion && request.cliVersion !== metroVersion
         ? `Connected Rozenite agent uses version ${request.cliVersion}, but Metro is running version ${metroVersion}. Integration may not work correctly.`
@@ -98,6 +96,7 @@ export const createAgentSessionManager = (options: {
       if (existing.isReusable(target)) {
         return {
           session: existing.getInfo(),
+          created: false,
           versionCheck,
         };
       }
@@ -139,6 +138,7 @@ export const createAgentSessionManager = (options: {
       sessions.set(target.id, session);
       return {
         session: session.getInfo(),
+        created: true,
         versionCheck,
       };
     } catch (error) {

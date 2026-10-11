@@ -3,10 +3,10 @@ import {
   definePaginatedAgentToolContract,
   defineRowsAgentToolContract,
   type AgentToolContract,
+  type BoundedValueArgs,
   type PageEnvelope,
 } from '@rozenite/agent-shared';
 import type { ReduxActionTrace } from './trace';
-import type { BoundedValueArgs } from './bounded-value';
 
 export const REDUX_DEVTOOLS_AGENT_PLUGIN_ID = '@rozenite/redux-devtools-plugin';
 
@@ -74,7 +74,7 @@ export type ReduxDevToolsGetStoreStateResult = {
   store: ReduxDevToolsStoreSummary;
   currentActionId: number | null;
   currentAction: ReduxDevToolsActionSummary | null;
-  /** The store state (or the sub-tree at `path`), cut to `maxDepth` / `maxValueLength`. */
+  /** The store state (or the sub-tree at `path`), cut to `maxDepth` / `maxValueLength` / `maxItems`. */
   state: unknown;
   /** The `path` the state was narrowed to, when one was given. */
   path?: string;
@@ -98,7 +98,10 @@ export type ReduxDevToolsGetActionDetailsInclude = 'state';
 
 export type ReduxDevToolsGetActionDetailsArgs = ReduxDevToolsActionInput &
   BoundedValueArgs & {
-    /** Opt-in parts of the result. `state` adds the state computed after the action. */
+    /**
+     * Parts of the result to return. Defaults to every part (`["state"]`);
+     * `[]` leaves out the state computed after the action.
+     */
     include?: ReduxDevToolsGetActionDetailsInclude[];
   };
 
@@ -106,7 +109,11 @@ export type ReduxDevToolsGetActionDetailsResult = {
   store: ReduxDevToolsStoreSummary;
   action: ReduxDevToolsActionSummary;
   liftedAction: unknown;
-  /** Present only with `include: ["state"]` or a `path` starting with `state`. */
+  /**
+   * The state computed after the action, bounded like `liftedAction`. Left
+   * out only when `include` is given without `"state"` and `path` does not
+   * start with `state`.
+   */
   state?: unknown;
   error: unknown;
   trace: ReduxActionTrace | null;
@@ -147,6 +154,11 @@ const boundedValueProperties = {
     description:
       'Truncate string values longer than this, marking the cut with "[+N chars]". Defaults to 512.',
   },
+  maxItems: {
+    type: 'integer',
+    description:
+      'Most array items or object keys returned per level; the rest are marked with a last "[+N items]" item or "[+N keys]" key. Defaults to 100, max 10000.',
+  },
 } as const;
 
 export const reduxDevToolsToolDefinitions = {
@@ -180,7 +192,7 @@ export const reduxDevToolsToolDefinitions = {
   >({
     name: 'get-store-state',
     description:
-      'Return the current Redux store state together with lifted Redux DevTools metadata. The state is cut to maxDepth levels and maxValueLength characters per string; use path to read a deeper sub-tree.',
+      'Return the current Redux store state together with lifted Redux DevTools metadata. The state is cut to maxDepth levels, maxValueLength characters per string and maxItems entries per array or object; use path to read a deeper sub-tree.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -243,7 +255,7 @@ export const reduxDevToolsToolDefinitions = {
   >({
     name: 'get-action-details',
     description:
-      'Return the lifted action payload and metadata for a Redux action history entry. The state computed after the action is returned only with include ["state"]. Values are cut to maxDepth levels and maxValueLength characters per string.',
+      'Return the lifted action payload, the state computed after the action and metadata for a Redux action history entry. Pass include [] to leave the state out. Values are cut to maxDepth levels, maxValueLength characters per string and maxItems entries per array or object.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -256,12 +268,12 @@ export const reduxDevToolsToolDefinitions = {
           type: 'array',
           items: { type: 'string', enum: ['state'] },
           description:
-            'Opt-in parts of the result. "state" adds the state computed after the action.',
+            'Parts of the result to return. Defaults to every part: "state", the state computed after the action. Pass [] to leave it out.',
         },
         path: {
           type: 'string',
           description:
-            'Dot path selecting a sub-tree, starting with "liftedAction" or "state", for example "state.todos" or "liftedAction.action.payload". A path into state implies include ["state"].',
+            'Dot path selecting a sub-tree, starting with "liftedAction" or "state", for example "state.todos" or "liftedAction.action.payload". A path into state returns the state even when include leaves it out.',
         },
         ...boundedValueProperties,
       },

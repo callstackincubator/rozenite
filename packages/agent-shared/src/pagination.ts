@@ -11,7 +11,7 @@
  * Everything here must run in a browser, in Hermes and in Lynx as well as in
  * Node, so it uses no `Buffer`, no `node:` imports and no `btoa`/`atob`.
  */
-import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from './output-shaping.js';
+import { normalizeLimit } from './limits.js';
 import type { PageResult } from './index.js';
 
 export type CursorKey = string | number;
@@ -46,7 +46,6 @@ export type PaginateArrayOptions<TItem> = {
   generation?: string | number;
 };
 
-const INVALID_LIMIT_MESSAGE = `"limit" must be an integer between 1 and ${MAX_PAGE_LIMIT}`;
 const INVALID_CURSOR_MESSAGE =
   'Invalid "cursor". Run the command again without cursor to restart pagination.';
 const SCOPE_MISMATCH_MESSAGE =
@@ -54,23 +53,11 @@ const SCOPE_MISMATCH_MESSAGE =
 
 /**
  * Normalises a raw `limit` tool argument with the same rules the CLI applies
- * to `--limit`: absent means {@link DEFAULT_PAGE_LIMIT}, values above
- * {@link MAX_PAGE_LIMIT} are capped, anything that is not a positive integer
+ * to `--limit`: absent means `DEFAULT_PAGE_LIMIT` (20), values above
+ * `MAX_PAGE_LIMIT` (100) are capped, anything that is not a positive integer
  * throws.
  */
-export const normalizePageLimit = (value: unknown): number => {
-  if (value === undefined || value === null || value === '') {
-    return DEFAULT_PAGE_LIMIT;
-  }
-
-  const parsed =
-    typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    throw new Error(INVALID_LIMIT_MESSAGE);
-  }
-
-  return Math.min(parsed, MAX_PAGE_LIMIT);
-};
+export const normalizePageLimit = (value: unknown): number => normalizeLimit(value, '"limit"');
 
 // --- UTF-8 -----------------------------------------------------------------
 
@@ -283,8 +270,30 @@ const parseCursorPayload = (raw: unknown): CursorPayload => {
 };
 
 /**
+ * A cursor names a row by its key, so two rows with one key would make a
+ * page resume at the wrong one (or loop forever on the same row).
+ */
+const assertUniqueKeys = <TItem>(
+  rows: readonly TItem[],
+  keyOf: (row: TItem) => CursorKey,
+): void => {
+  const seen = new Set<CursorKey>();
+  for (const row of rows) {
+    const key = keyOf(row);
+    if (seen.has(key)) {
+      throw new Error(
+        `paginateArray: keyOf must return a unique key per row (duplicate: ${String(key)})`,
+      );
+    }
+    seen.add(key);
+  }
+};
+
+/**
  * Returns one page of `rows`, resuming after the row a previous page's
  * `nextCursor` pointed at.
+ *
+ * `keyOf` must return a different key for every row; a duplicate throws.
  *
  * - No cursor: the first `limit` rows.
  * - A cursor that cannot be decoded: throws.
@@ -298,6 +307,7 @@ export const paginateArray = <TItem>(
 ): PageResult<TItem> => {
   const { keyOf, scope, generation } = options;
   const limit = normalizePageLimit(options.limit);
+  assertUniqueKeys(rows, keyOf);
 
   let start = 0;
   if (options.cursor !== undefined && options.cursor !== null && options.cursor !== '') {

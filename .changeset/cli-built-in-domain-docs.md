@@ -7,3 +7,6 @@ agent docs now use the `rozenite agent <domain> <tool> --<arg>` grammar,
 describe the new default columns, bounded body reads and request-detail
 `include` sections, and correct earlier mistakes (`fields` is a CLI flag, not
 a tool argument; the React host filter is `noHost`).
+
+New bundled docs for the `sqlite` and `feature-flags` plugin domains, so
+`npx rozenite skills list` covers every official plugin with agent tools.

@@ -10,18 +10,24 @@ explicit flags win over it. `rozenite agent <domain>` lists a domain's tools,
 `<tool> --schema` prints a tool's schema and `<tool> --help` describes its
 arguments. An unknown flag fails and lists the tool's arguments.
 
-`--session` is now optional on every agent command. Without it the CLI uses
-`ROZENITE_SESSION`, then creates or reuses the session for `--device <id>`
-(or `ROZENITE_DEVICE`), then for the only connected device, and otherwise
-fails with the list of targets. The first command that creates a session
-says so on stderr. `rozenite agent session stop` with no id stops that
-session.
+`--session` is now optional on every agent command. The CLI picks the
+session in this order: `--session <id>`, the session for `--device <id>`,
+`ROZENITE_SESSION`, the session for `ROZENITE_DEVICE`, then the session for
+the only connected device; otherwise it fails with the list of targets. A
+flag you type always wins over an environment variable. When the server
+reports that a command started a new session, the CLI says so on stderr
+(Metro servers from earlier releases do not report it, so no notice is
+printed). `rozenite agent session stop` with no id stops the session the
+other commands would use.
 
 Other changes:
 
 - `--limit` and `--cursor` page every listing, including a tool's own
-  results, and a page's `next` is the command you ran with `--cursor` set;
-  it no longer repeats the host, port or session id.
+  results, and a page's `next` is the command you ran with `--cursor` set.
+  It repeats every flag you typed (`--session`, `--device`, `--host`,
+  `--port`, `--pretty`, `--fields`) and none you did not, so it no longer
+  injects the default host and port or a session id from the environment.
+- `rozenite agent help` prints the agent help.
 - `--fields all` selects every column. `targets` and `session list` print
   rows like every other listing and accept `--fields`, `--limit` and
   `--cursor`. `session list` used to print a bare array.
@@ -42,4 +48,7 @@ Other changes:
 The previous spellings keep working: `<domain> call|call-tool --tool …
 --args …`, `<domain> tools|list-tools`, `<domain> schema|get-tool-schema
 --tool …`, `list-domains`, `--verbose`, `--json`, `--deviceId`, and
-`tap --plugin/--type/-a`.
+`tap --plugin/--type/-a`. As before, `-v`/`--verbose` is ignored for a tool
+that declares no columns, and `--limit`/`--cursor` are ignored for a tool
+that does not page (the CLI now prints a one-line note on stderr). The new
+`--fields` flag fails for a tool that declares no columns.

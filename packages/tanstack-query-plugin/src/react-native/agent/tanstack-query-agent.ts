@@ -6,14 +6,14 @@ import type {
   QueryClient,
 } from '@tanstack/react-query';
 import { onlineManager } from '@tanstack/react-query';
-import { paginateArray } from '@rozenite/agent-shared';
-import { applyTanStackQueryDevtoolsAction } from '../devtools-actions';
 import {
   boundValue,
   normalizeBoundedValueArgs,
+  paginateArray,
   selectValuePath,
   type BoundedValueArgs,
-} from '../../shared/bounded-value';
+} from '@rozenite/agent-shared';
+import { applyTanStackQueryDevtoolsAction } from '../devtools-actions';
 import {
   tanstackQueryToolDefinitions,
   type TanStackQueryAgentMutationIdInput as MutationIdInput,
@@ -215,7 +215,7 @@ const getMutationSummary = (mutation: Mutation<unknown, Error, unknown, unknown>
 };
 
 /**
- * Applies `path`, `maxDepth` and `maxValueLength` to the named value fields
+ * Applies `path`, `maxDepth`, `maxValueLength` and `maxItems` to the named value fields
  * of a details result. `path` must start with one of `fields`.
  */
 const createValueBounder = <TField extends string>(
@@ -235,7 +235,11 @@ const createValueBounder = <TField extends string>(
         bounds.path && pathField === field
           ? selectValuePath(value, bounds.path.slice(1), [field])
           : value;
-      const result = boundValue(selected, bounds);
+      const result = boundValue(selected, {
+        maxDepth: bounds.maxDepth,
+        maxValueLength: bounds.maxValueLength,
+        maxItems: bounds.maxItems,
+      });
       truncated = truncated || result.truncated;
       return result.value as AgentSafeValue;
     },

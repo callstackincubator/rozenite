@@ -236,7 +236,8 @@ export const listEntriesTool = definePaginatedAgentToolContract<ListEntriesArgs,
 ```
 
 `fields` is the stable set available to agents, while `defaultFields` is the
-smaller projection used unless the caller passes `--fields` or `--verbose`.
+smaller projection used unless the caller passes `--fields` (`--fields all`
+selects every field).
 Both arrays are validated against the row type, and the CLI never infers
 columns from observed values. Tools without pagination metadata keep their
 original output unchanged.
@@ -334,19 +335,23 @@ When `enabled` is false, the tool is not registered and will not appear under yo
 Agents discover domains and tools at runtime:
 
 ```bash
-rozenite agent domains --session <sessionId> --json
-rozenite agent my-rozenite tools --session <sessionId> --json
-rozenite agent my-rozenite call --tool echo --args '{"value":"hello"}' --session <sessionId> --json
+rozenite agent domains
+rozenite agent my-org/my-rozenite
+rozenite agent my-org/my-rozenite echo --value hello
 ```
 
-Rozenite derives a short, stable domain name from your `pluginId` alone (for example, `@my-org/my-rozenite-plugin` becomes `my-org/my-rozenite`; an official `@rozenite/*` plugin drops the scope entirely, e.g. `@rozenite/storage-plugin` becomes `storage`). The full `pluginId` always works as a domain token too, so `rozenite agent @my-org/my-rozenite-plugin tools ...` is equally valid — the derived name is just shorter and computable by an agent without a lookup. Document your plugin’s agent tools (names, arguments, and return shapes) so agent users know what they can call.
+Each `--<name>` flag comes from your tool's `inputSchema`, so `echo` above
+takes `--value`. The session for the connected device is created on first
+use.
+
+Rozenite derives a short, stable domain name from your `pluginId` alone (for example, `@my-org/my-rozenite-plugin` becomes `my-org/my-rozenite`; an official `@rozenite/*` plugin drops the scope entirely, e.g. `@rozenite/storage-plugin` becomes `storage`). The full `pluginId` always works as a domain token too, so `rozenite agent @my-org/my-rozenite-plugin echo --value hello` is equally valid — the derived name is just shorter and computable by an agent without a lookup. Document your plugin’s agent tools (names, arguments, and return shapes) so agent users know what they can call.
 
 ## Summary
 
 1. Add **@rozenite/agent-bridge** to your plugin.
 2. In your plugin’s app-side code, call **useRozenitePluginAgentTool** with a stable **pluginId**, a **tool** (name, description, inputSchema), and a **handler**.
 3. Mount the component that registers these tools so it runs when the plugin is active.
-4. Agents will see your plugin as a domain and can list and call your tools via `rozenite agent <pluginId> tools|call ...`.
+4. Agents will see your plugin as a domain and can list your tools with `rozenite agent <domain>` and call one with `rozenite agent <domain> <tool> --<arg> <value>`.
 
 ## Next steps
 

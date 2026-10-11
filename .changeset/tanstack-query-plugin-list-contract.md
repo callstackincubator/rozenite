@@ -16,7 +16,8 @@ Default changes, each reachable through an argument:
 - Pages printed by the CLI: the full cache summary → `total` only. The SDK
   result still carries the summary, and `get-cache-summary` returns it.
 - `get-query-details` / `get-mutation-details` values: unbounded → 4 levels
-  deep and 512 characters per string, with cuts marked `[object(N keys)]`,
-  `[array(N)]` or `[+N chars]` and `truncated: true`. Raise them with
-  `maxDepth` / `maxValueLength`, or read one sub-tree with `path`
-  (for example `data.items.0`).
+  deep, 512 characters per string and 100 items per array or object, with
+  cuts marked `[object(N keys)]`, `[array(N)]`, `[+N chars]`, a last
+  `"[+N items]"` array item or a last `"[+N keys]": true` object entry, and
+  `truncated: true`. Raise them with `maxDepth` / `maxValueLength` /
+  `maxItems`, or read one sub-tree with `path` (for example `data.items.0`).

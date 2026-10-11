@@ -274,10 +274,43 @@ describe('createFileSystemAgentHandlers', () => {
     const rest = await handlers.readTextFile({ path: '/tmp/big.txt', offset: first.nextOffset });
     expect(rest.content).toHaveLength(20_000 - 16_384);
     expect(rest.truncated).toBe(false);
+  });
+
+  it('reads files over 10 MB when the requested range reaches past 10 MB', async () => {
+    const text = `${'a'.repeat(10)}😀tail`;
+    const provider = createProvider({ readTextFile: vi.fn(async () => text) }, [
+      createEntry({ path: '/tmp/huge.txt', size: 15_000_000 }),
+    ]);
+    const handlers = createFileSystemAgentHandlers(async () => provider);
+
+    // A range inside the first 10 MB keeps the 10 MB ceiling.
+    await handlers.readTextFile({ path: '/tmp/huge.txt', maxBytes: 1_000 });
+    expect(provider.readTextFile).toHaveBeenLastCalledWith('/tmp/huge.txt', 10_000_000);
+
+    // maxBytes above 10 MB lifts it and reads the whole file.
+    await expect(
+      handlers.readTextFile({ path: '/tmp/huge.txt', maxBytes: 20_000_000 }),
+    ).resolves.toMatchObject({ content: text, truncated: false });
+    expect(provider.readTextFile).toHaveBeenLastCalledWith('/tmp/huge.txt', 0);
+
+    // So does an offset that reaches past it, and the old maxBytes: 0.
+    await handlers.readTextFile({ path: '/tmp/huge.txt', offset: 12_000_000 });
+    expect(provider.readTextFile).toHaveBeenLastCalledWith('/tmp/huge.txt', 0);
+    await expect(
+      handlers.readTextFile({ path: '/tmp/huge.txt', maxBytes: 0 }),
+    ).resolves.toMatchObject({ content: text, truncated: false });
+    expect(provider.readTextFile).toHaveBeenLastCalledWith('/tmp/huge.txt', 0);
+  });
+
+  it('never splits a character at the end of a range', async () => {
+    const provider = createProvider({ readTextFile: vi.fn(async () => 'ab😀cd') }, [
+      createEntry({ path: '/tmp/emoji.txt', size: 8 }),
+    ]);
+    const handlers = createFileSystemAgentHandlers(async () => provider);
 
     await expect(
-      handlers.readTextFile({ path: '/tmp/big.txt', maxBytes: 10_000_001 }),
-    ).rejects.toThrow('"maxBytes" must be at most 10000000');
+      handlers.readTextFile({ path: '/tmp/emoji.txt', maxBytes: 4 }),
+    ).resolves.toMatchObject({ content: 'ab', totalBytes: 8, truncated: true, nextOffset: 2 });
   });
 
   it('supports binary fallback text previews through the provider', async () => {

@@ -15,8 +15,9 @@
  * {@link shapePaginatedRows} and {@link shapeToolResult}.
  */
 
-export const DEFAULT_PAGE_LIMIT = 20;
-export const MAX_PAGE_LIMIT = 100;
+import { normalizeLimit } from './limits.js';
+
+export { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from './limits.js';
 
 /**
  * The `--fields` value that selects every declared field. A listing that
@@ -68,22 +69,9 @@ export const parseFields = <T extends string>(
   return requested;
 };
 
-// Not delegated to `normalizePageLimit`: `pagination.ts` imports this
-// module's constants, so importing it back would form an import cycle whose
-// module-level constants are read before they are initialised. The rules are
-// the same; only the error names the flag.
-export const parseLimit = (rawLimit: string | undefined): number => {
-  if (!rawLimit) {
-    return DEFAULT_PAGE_LIMIT;
-  }
-
-  const parsed = Number(rawLimit);
-  if (!Number.isFinite(parsed) || parsed < 1 || !Number.isInteger(parsed)) {
-    throw new Error(`--limit must be an integer between 1 and ${MAX_PAGE_LIMIT}`);
-  }
-
-  return Math.min(parsed, MAX_PAGE_LIMIT);
-};
+/** Normalises the CLI's `--limit` with the same rules as a tool's `limit`. */
+export const parseLimit = (rawLimit: string | undefined): number =>
+  normalizeLimit(rawLimit, '--limit');
 
 /**
  * Projects rows onto the selected fields for columnar encoding, where each

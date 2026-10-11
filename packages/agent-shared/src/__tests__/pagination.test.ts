@@ -91,6 +91,13 @@ describe('paginateArray', () => {
     );
   });
 
+  it('rejects rows that share a key instead of looping on them', () => {
+    const rows = ['a', 'b', 'b'].map((key, value) => ({ key, value }));
+    expect(() => paginateArray(rows, { keyOf, limit: 1 })).toThrow(
+      'paginateArray: keyOf must return a unique key per row (duplicate: b)',
+    );
+  });
+
   it('normalises limit to the shared default and cap', () => {
     const rows = makeRows(150);
 

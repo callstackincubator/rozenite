@@ -15,10 +15,17 @@ truncated, `nextOffset`.
 
 Default changes, each reachable through an argument:
 
-- `list-entries` page size: 100 → 20 (`limit` up to 100); default columns:
-  every field → `name,isDirectory,size` (`--fields all` brings back the rest).
-- `read-text-file` `maxBytes`: 10000000 → 16384. Larger files are now cut
-  rather than refused; 10000000 stays the maximum.
+- `list-entries` page size: 100 → 20; `limit` is now capped at 100 (it had
+  no cap); default columns: every field → `name,isDirectory,size`
+  (`--fields all` brings back the rest). An invalid `limit` (0, negative or
+  fractional) is now an error instead of being rounded to a whole number of
+  at least 1.
+- `read-text-file` `maxBytes`: 10000000 → 16384. A file within 10 MB is now
+  cut to the requested range rather than refused when it is larger than
+  `maxBytes`. A file over 10 MB is read when the range reaches past 10 MB:
+  `maxBytes` above 10000000 (or `maxBytes: 0`, as before) reads the whole
+  file on the device, and an `offset` past 10 MB reads from there. A range
+  never ends inside a multi-byte character.
 - `read-image-file`: a base64 data URI → metadata only (`path`,
   `mimeTypeHint`, `size`). `inline: true` returns the data URI, for images
   up to `maxBytes` (default 262144, previously 10000000).
