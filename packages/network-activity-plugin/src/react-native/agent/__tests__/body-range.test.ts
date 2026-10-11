@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyBodyRange, DEFAULT_BODY_MAX_BYTES, sliceUtf8 } from '../body-range';
+import { applyBodyRange, DEFAULT_BODY_MAX_BYTES } from '../body-range';
 import { createNetworkActivityAgentState } from '../state';
 
 describe('network activity body ranges', () => {
@@ -32,18 +32,22 @@ describe('network activity body ranges', () => {
 
   it('counts UTF-8 bytes and never splits or repeats a character across ranges', () => {
     const text = 'aé€😀b';
-    expect(sliceUtf8(text, 0, 1000).totalBytes).toBe(1 + 2 + 3 + 4 + 1);
+    const read = (offset: number, maxBytes: number) =>
+      applyBodyRange({ requestId: 'r', available: true, body: text }, { offset, maxBytes });
+    expect(read(0, 1000).totalBytes).toBe(1 + 2 + 3 + 4 + 1);
 
     const pieces: string[] = [];
     let offset: number | undefined = 0;
     while (offset !== undefined) {
-      const range = sliceUtf8(text, offset, 2);
-      pieces.push(range.text);
+      const range = read(offset, 2);
+      pieces.push(range.body ?? '');
       offset = range.nextOffset;
     }
     expect(pieces.join('')).toBe(text);
     // A range starting inside a character skips to the next one.
-    expect(sliceUtf8(text, 2, 2).text).toBe('€');
+    expect(read(2, 2).body).toBe('€');
+    // An emoji at the cut is left for the next range, never split.
+    expect(read(0, 8)).toMatchObject({ body: 'aé€', truncated: true, nextOffset: 6 });
   });
 
   it('leaves unavailable bodies untouched and rejects invalid ranges', () => {
