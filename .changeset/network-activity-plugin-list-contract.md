@@ -11,7 +11,8 @@ invalid `limit` is now an error instead of quietly falling back to 20.
 Default changes, each reachable through an argument:
 
 - `getRequestBody` / `getResponseBody`: the whole body → at most 16384 bytes.
-  `offset` and `maxBytes` read any range, and the result reports `offset`,
-  `totalBytes` and `truncated`.
+  `offset` and `maxBytes` read any range, and the result reports
+  `totalBytes`, `truncated` and, when truncated, `nextOffset`, like the
+  built-in `network` domain.
 - Pages printed by the CLI: the full `recording` block → nothing but the
   rows. The SDK result still carries it, and `getRecordingStatus` returns it.

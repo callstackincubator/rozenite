@@ -254,7 +254,6 @@ describe('createFileSystemAgentHandlers', () => {
       mimeTypeHint: null,
       size: 42,
       content: 'hello world',
-      offset: 0,
       totalBytes: 11,
       truncated: false,
     });
@@ -269,10 +268,10 @@ describe('createFileSystemAgentHandlers', () => {
 
     const first = await handlers.readTextFile({ path: '/tmp/big.txt' });
     expect(first.content).toHaveLength(16_384);
-    expect(first).toMatchObject({ offset: 0, totalBytes: 20_000, truncated: true });
+    expect(first).toMatchObject({ totalBytes: 20_000, truncated: true, nextOffset: 16_384 });
     expect(provider.readTextFile).toHaveBeenCalledWith('/tmp/big.txt', 10_000_000);
 
-    const rest = await handlers.readTextFile({ path: '/tmp/big.txt', offset: 16_384 });
+    const rest = await handlers.readTextFile({ path: '/tmp/big.txt', offset: first.nextOffset });
     expect(rest.content).toHaveLength(20_000 - 16_384);
     expect(rest.truncated).toBe(false);
 

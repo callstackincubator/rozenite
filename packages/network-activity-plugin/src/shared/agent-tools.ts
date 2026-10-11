@@ -82,12 +82,12 @@ const bodyRangeProperties = {
   offset: {
     type: 'integer',
     description:
-      'Byte offset to start reading from. Defaults to 0. Pass the previous offset plus the bytes returned to read the next range.',
+      'Byte offset to start reading from. Defaults to 0. Pass the nextOffset of a truncated result to read the next range.',
   },
   maxBytes: {
     type: 'integer',
     description:
-      'Maximum number of body bytes to return. Defaults to 16384. The result reports totalBytes and truncated.',
+      'Maximum number of body bytes to return. Defaults to 16384. The result reports totalBytes, truncated and, when truncated, nextOffset.',
   },
 } as const;
 

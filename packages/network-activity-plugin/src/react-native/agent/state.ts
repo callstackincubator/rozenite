@@ -1,4 +1,3 @@
-import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from '@rozenite/agent-shared';
 import type {
   HttpEventMap,
   Request,
@@ -93,12 +92,12 @@ export type NetworkActivityAgentBodyResult = {
   decoded?: boolean;
   mimeType?: string;
   reason?: string;
-  /** Byte offset of the returned slice of `body`. */
-  offset?: number;
   /** Size of the whole body in bytes (base64 characters when `base64Encoded`). */
   totalBytes?: number;
   /** Whether bytes after the returned slice were left out. */
   truncated?: boolean;
+  /** Where the next slice starts, when `truncated`. */
+  nextOffset?: number;
 };
 
 type RecordingMetadata = {

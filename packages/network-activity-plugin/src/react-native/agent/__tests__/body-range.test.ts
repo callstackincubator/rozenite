@@ -9,9 +9,9 @@ describe('network activity body ranges', () => {
 
     expect(result.body).toHaveLength(DEFAULT_BODY_MAX_BYTES);
     expect(result).toMatchObject({
-      offset: 0,
       totalBytes: DEFAULT_BODY_MAX_BYTES + 10,
       truncated: true,
+      nextOffset: DEFAULT_BODY_MAX_BYTES,
     });
   });
 
@@ -21,7 +21,13 @@ describe('network activity body ranges', () => {
       { offset: 4, maxBytes: 10 },
     );
 
-    expect(result).toMatchObject({ body: 'ef', offset: 4, totalBytes: 6, truncated: false });
+    expect(result).toEqual({
+      requestId: 'r',
+      available: true,
+      body: 'ef',
+      totalBytes: 6,
+      truncated: false,
+    });
   });
 
   it('counts UTF-8 bytes and never splits or repeats a character across ranges', () => {
@@ -29,10 +35,15 @@ describe('network activity body ranges', () => {
     expect(sliceUtf8(text, 0, 1000).totalBytes).toBe(1 + 2 + 3 + 4 + 1);
 
     const pieces: string[] = [];
-    for (let offset = 0; offset < 11; offset += 3) {
-      pieces.push(sliceUtf8(text, offset, 3).text);
+    let offset: number | undefined = 0;
+    while (offset !== undefined) {
+      const range = sliceUtf8(text, offset, 2);
+      pieces.push(range.text);
+      offset = range.nextOffset;
     }
     expect(pieces.join('')).toBe(text);
+    // A range starting inside a character skips to the next one.
+    expect(sliceUtf8(text, 2, 2).text).toBe('€');
   });
 
   it('leaves unavailable bodies untouched and rejects invalid ranges', () => {
@@ -63,9 +74,9 @@ describe('network activity body ranges', () => {
       available: true,
       body: '234',
       base64Encoded: false,
-      offset: 2,
       totalBytes: 10,
       truncated: true,
+      nextOffset: 5,
     });
   });
 });

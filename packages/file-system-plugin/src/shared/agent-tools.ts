@@ -70,12 +70,12 @@ export type FileSystemReadTextFileResult = {
   size: number | null;
   /** The text between `offset` and `offset + maxBytes`. */
   content: string;
-  /** Byte offset of the first byte of `content`. */
-  offset: number;
   /** Size in bytes of the whole text the provider read. */
   totalBytes: number;
   /** Whether bytes after `content` were left out. */
   truncated: boolean;
+  /** Where the next range starts, when `truncated`. */
+  nextOffset?: number;
 };
 
 export type FileSystemReadImageFileArgs = FileSystemReadFileArgs & {
@@ -205,7 +205,7 @@ export const fileSystemToolDefinitions = {
   readTextFile: defineAgentToolContract<FileSystemReadTextFileArgs, FileSystemReadTextFileResult>({
     name: 'read-text-file',
     description:
-      'Read a text-style preview for a file path, up to maxBytes (16384 by default) starting at offset. The result reports totalBytes and truncated. Non-text files fall back to a hex-style binary preview.',
+      'Read a text-style preview for a file path, up to maxBytes (16384 by default) starting at offset. The result reports totalBytes, truncated and, when truncated, nextOffset. Non-text files fall back to a hex-style binary preview.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -216,7 +216,7 @@ export const fileSystemToolDefinitions = {
         offset: {
           type: 'integer',
           description:
-            'Byte offset to start reading from. Defaults to 0. Pass the previous offset plus maxBytes to read the next range.',
+            'Byte offset to start reading from. Defaults to 0. Pass the nextOffset of a truncated result to read the next range.',
         },
         maxBytes: {
           type: 'integer',

@@ -167,17 +167,15 @@ export const createFileSystemAgentHandlers = (
     // Providers refuse files above their limit rather than cutting them, so
     // read up to the ceiling and take the requested range here.
     const content = await provider.readTextFile(entry.path, FILE_SYSTEM_MAX_TEXT_BYTES);
-    const range = sliceUtf8(content, offset, maxBytes);
+    const { text, ...range } = sliceUtf8(content, offset, maxBytes);
 
     return {
       provider: provider.provider,
       path: entry.path,
       mimeTypeHint: entry.mimeTypeHint ?? null,
       size: entry.size ?? null,
-      content: range.text,
-      offset: range.offset,
-      totalBytes: range.totalBytes,
-      truncated: range.truncated,
+      content: text,
+      ...range,
     };
   },
 

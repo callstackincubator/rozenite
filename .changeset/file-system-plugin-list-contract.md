@@ -8,7 +8,8 @@ the last entry returned, so files created or deleted while an agent pages are
 never skipped or repeated. `offset` keeps working but is deprecated. The
 result keeps its `entries` key, `total`, `offset` (the index of the first
 entry returned) and `limit`, and gains `page`. `read-text-file` gains
-`offset`, and its result gains `offset`, `totalBytes` and `truncated`.
+`offset`, and its result gains `totalBytes`, `truncated` and, when
+truncated, `nextOffset`.
 `list-roots` declares its rows, so agents can project its columns with
 `--fields`.
 

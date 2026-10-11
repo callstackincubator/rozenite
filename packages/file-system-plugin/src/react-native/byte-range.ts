@@ -21,11 +21,12 @@ export const sliceUtf8 = (
   text: string,
   offset: number,
   maxBytes: number,
-): { text: string; offset: number; totalBytes: number; truncated: boolean } => {
+): { text: string; totalBytes: number; truncated: boolean; nextOffset?: number } => {
   const end = offset + maxBytes;
   let position = 0;
   let startIndex = -1;
   let endIndex = text.length;
+  let endPosition = -1;
 
   for (let index = 0; index < text.length;) {
     const codePoint = text.codePointAt(index) ?? 0;
@@ -35,6 +36,7 @@ export const sliceUtf8 = (
     }
     if (endIndex === text.length && position >= end) {
       endIndex = index;
+      endPosition = position;
     }
 
     position += codePointByteLength(codePoint);
@@ -42,14 +44,15 @@ export const sliceUtf8 = (
   }
 
   if (startIndex === -1) {
-    return { text: '', offset, totalBytes: position, truncated: false };
+    return { text: '', totalBytes: position, truncated: false };
   }
 
+  const truncated = endIndex < text.length;
   return {
     text: text.slice(startIndex, endIndex),
-    offset,
     totalBytes: position,
-    truncated: endIndex < text.length,
+    truncated,
+    ...(truncated ? { nextOffset: endPosition } : {}),
   };
 };
 

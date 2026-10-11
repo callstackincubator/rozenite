@@ -48,7 +48,7 @@ Rows show identifiers, status and duration by default. Pass `--fields` with colu
 
 ## Bodies
 
-`getRequestBody` and `getResponseBody` return at most 16384 bytes, starting at `--offset` (default 0). The result reports `totalBytes` and `truncated`; to read on, call again with `--offset` set to the previous offset plus the bytes returned. `--maxBytes` changes the range size. For a `base64Encoded` body, offsets count base64 characters.
+`getRequestBody` and `getResponseBody` return the first 16 KB of the body by default. The result says how big the whole body is (`totalBytes`) and whether more remains (`truncated`); when it does, `nextOffset` is where the next slice starts. Read the rest with `--offset <nextOffset>`, and raise `--maxBytes` to take more at once. For a `base64Encoded` body, byte counts refer to the base64 string.
 
 ## Minimal Flow
 

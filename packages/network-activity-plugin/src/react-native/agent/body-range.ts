@@ -12,12 +12,12 @@ export type BodyRangeArgs = {
 };
 
 export type BodyRange = {
-  /** Byte offset of the first byte returned. */
-  offset: number;
   /** Size of the whole body in bytes. */
   totalBytes: number;
   /** Whether bytes after this range were left out. */
   truncated: boolean;
+  /** Where the next range starts, when `truncated`. */
+  nextOffset?: number;
 };
 
 const assertNonNegativeInteger = (value: unknown, name: string): number => {
@@ -62,6 +62,7 @@ export const sliceUtf8 = (
   let position = 0;
   let startIndex = -1;
   let endIndex = text.length;
+  let endPosition = -1;
 
   for (let index = 0; index < text.length;) {
     const codePoint = text.codePointAt(index) ?? 0;
@@ -72,22 +73,23 @@ export const sliceUtf8 = (
     }
     if (endIndex === text.length && position >= end) {
       endIndex = index;
+      endPosition = position;
     }
 
     position += codePointByteLength(codePoint);
     index += units;
   }
 
-  const totalBytes = position;
   if (startIndex === -1) {
-    return { text: '', offset, totalBytes, truncated: false };
+    return { text: '', totalBytes: position, truncated: false };
   }
 
+  const truncated = endIndex < text.length;
   return {
     text: text.slice(startIndex, endIndex),
-    offset,
-    totalBytes,
-    truncated: endIndex < text.length,
+    totalBytes: position,
+    truncated,
+    ...(truncated ? { nextOffset: endPosition } : {}),
   };
 };
 
@@ -98,7 +100,8 @@ type BodyResultLike = {
 
 /**
  * Narrows an available body to the requested byte range and reports
- * `offset`, `totalBytes` and `truncated`. Unavailable bodies pass through.
+ * `totalBytes`, `truncated` and `nextOffset`, like the built-in `network`
+ * domain. Unavailable bodies pass through.
  */
 export const applyBodyRange = <TResult extends BodyResultLike>(
   result: TResult,
@@ -109,12 +112,6 @@ export const applyBodyRange = <TResult extends BodyResultLike>(
     return result;
   }
 
-  const range = sliceUtf8(result.body, offset, maxBytes);
-  return {
-    ...result,
-    body: range.text,
-    offset: range.offset,
-    totalBytes: range.totalBytes,
-    truncated: range.truncated,
-  };
+  const { text, ...range } = sliceUtf8(result.body, offset, maxBytes);
+  return { ...result, body: text, ...range };
 };
