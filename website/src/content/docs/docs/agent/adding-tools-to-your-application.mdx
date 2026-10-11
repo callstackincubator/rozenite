@@ -113,9 +113,9 @@ You can register multiple tools by calling `useRozeniteInAppAgentTool` multiple 
 Agents discover app tools like any other domain:
 
 ```bash
-rozenite agent domains --session <sessionId> --json
-rozenite agent app tools --session <sessionId> --json
-rozenite agent app call --tool get-build-info --args '{}' --session <sessionId> --json
+rozenite agent domains
+rozenite agent app
+rozenite agent app get-build-info
 ```
 
 The **app** domain is created when at least one in-app tool is registered. When all such tools are unregistered (e.g. components unmount), the domain may no longer appear.
