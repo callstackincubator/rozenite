@@ -308,7 +308,7 @@ describe('redux devtools agent helpers', () => {
     expect(reduxDevToolsToolDefinitions.listStores.rows).toMatchObject({ key: 'stores' });
   });
 
-  it('returns action details without computed state by default', () => {
+  it('returns action details with the bounded computed state by default', () => {
     registerStore();
 
     expect(getReduxActionDetailsResult({ actionId: 1 })).toEqual({
@@ -340,19 +340,23 @@ describe('redux devtools agent helpers', () => {
         timestamp: expect.any(Number),
         stack: undefined,
       },
+      state: { count: 1 },
       error: null,
       trace: null,
       truncated: false,
     });
   });
 
-  it('returns the computed state of an action only when asked for it', () => {
+  it('leaves the computed state out only when include omits it', () => {
     registerStore();
 
-    expect(getReduxActionDetailsResult({ actionId: 1 })).not.toHaveProperty('state');
+    expect(getReduxActionDetailsResult({ actionId: 1, include: [] })).not.toHaveProperty('state');
     expect(getReduxActionDetailsResult({ actionId: 1, include: ['state'] }).state).toEqual({
       count: 1,
     });
+    expect(
+      getReduxActionDetailsResult({ actionId: 1, include: [], path: 'state.count' }),
+    ).toMatchObject({ state: 1 });
     expect(getReduxActionDetailsResult({ actionId: 1, path: 'state.count' })).toMatchObject({
       path: 'state.count',
       state: 1,
@@ -363,6 +367,37 @@ describe('redux devtools agent helpers', () => {
     expect(() => getReduxActionDetailsResult({ actionId: 1, path: 'count' })).toThrow(
       '"path" must start with "liftedAction" or "state".',
     );
+  });
+
+  it('rejects unknown include values with the accepted ones', () => {
+    registerStore();
+
+    expect(() =>
+      getReduxActionDetailsResult({ actionId: 1, include: ['stat' as 'state'] }),
+    ).toThrow('Unknown "include" value "stat". Use state.');
+    expect(() =>
+      getReduxActionDetailsResult({ actionId: 1, include: 5 as unknown as ['state'] }),
+    ).toThrow('"include" must be an array of state.');
+  });
+
+  it('caps arrays and objects at maxItems entries per level', () => {
+    const byId = Object.fromEntries(
+      Array.from({ length: 5_000 }, (_, id) => [String(id), { id, title: `todo ${id}` }]),
+    );
+    registerStore({ currentState: { todos: { byId } } });
+
+    const result = getReduxStoreStateResult({ maxItems: 2 });
+    expect(result.truncated).toBe(true);
+    expect(result.state).toEqual({
+      todos: {
+        byId: {
+          '0': { id: 0, title: 'todo 0' },
+          '1': { id: 1, title: 'todo 1' },
+          '[+4998 keys]': true,
+        },
+      },
+    });
+    expect(JSON.stringify(getReduxStoreStateResult({}).state).length).toBeLessThan(5_000);
   });
 
   it('dispatches a normal Redux action through the real store', () => {

@@ -1,5 +1,10 @@
 import { ActionCreators } from '@redux-devtools/instrument';
-import { paginateArray } from '@rozenite/agent-shared';
+import {
+  boundValue,
+  normalizeBoundedValueArgs,
+  paginateArray,
+  selectValuePath,
+} from '@rozenite/agent-shared';
 import type { Action } from 'redux';
 import { parse, stringify } from 'jsan';
 import {
@@ -15,6 +20,7 @@ import {
   type ReduxDevToolsDispatchActionInput as DispatchActionInput,
   type ReduxDevToolsDispatchActionResult,
   type ReduxDevToolsGetActionDetailsArgs,
+  type ReduxDevToolsGetActionDetailsInclude,
   type ReduxDevToolsGetActionDetailsResult,
   type ReduxDevToolsGetStoreStateArgs,
   type ReduxDevToolsGetStoreStateResult,
@@ -27,7 +33,6 @@ import {
   type ReduxDevToolsStoreSummary,
 } from './shared/agent-tools';
 import type { ReduxActionTrace, ReduxActionWithTrace } from './shared/trace';
-import { boundValue, normalizeBoundedValueArgs, selectValuePath } from './shared/bounded-value';
 import { parseStack } from './symbolication/parse';
 
 type AnyAction = Action<string> & Record<string, unknown>;
@@ -253,7 +258,11 @@ export const getReduxStoreStateResult = ({
   const { store, enhancedStore, liftedState } = getStoreAndLiftedState(instanceId);
   const currentActionId = liftedState.stagedActionIds[liftedState.currentStateIndex] ?? null;
   const state = serializeForAgent(enhancedStore.getState());
-  const bounded = boundValue(bounds.path ? selectValuePath(state, bounds.path) : state, bounds);
+  const bounded = boundValue(bounds.path ? selectValuePath(state, bounds.path) : state, {
+    maxDepth: bounds.maxDepth,
+    maxValueLength: bounds.maxValueLength,
+    maxItems: bounds.maxItems,
+  });
 
   return {
     store: buildStoreSummary(store),
@@ -310,6 +319,25 @@ export const listReduxActionsResult = ({
 };
 
 const ACTION_DETAILS_VALUE_FIELDS = ['liftedAction', 'state'] as const;
+const ACTION_DETAILS_INCLUDE: readonly ReduxDevToolsGetActionDetailsInclude[] = ['state'];
+
+/** `include` as given, or every section when it is left out. */
+const readActionDetailsInclude = (value: unknown): Set<ReduxDevToolsGetActionDetailsInclude> => {
+  if (value === undefined) {
+    return new Set(ACTION_DETAILS_INCLUDE);
+  }
+  if (!Array.isArray(value)) {
+    throw new Error(`"include" must be an array of ${ACTION_DETAILS_INCLUDE.join(', ')}.`);
+  }
+  for (const entry of value) {
+    if (!ACTION_DETAILS_INCLUDE.includes(entry)) {
+      throw new Error(
+        `Unknown "include" value ${JSON.stringify(entry)}. Use ${ACTION_DETAILS_INCLUDE.join(', ')}.`,
+      );
+    }
+  }
+  return new Set(value as ReduxDevToolsGetActionDetailsInclude[]);
+};
 
 export const getReduxActionDetailsResult = ({
   instanceId,
@@ -327,7 +355,7 @@ export const getReduxActionDetailsResult = ({
       `"path" must start with ${ACTION_DETAILS_VALUE_FIELDS.map((field) => `"${field}"`).join(' or ')}.`,
     );
   }
-  const includeState = (include ?? []).includes('state') || pathField === 'state';
+  const includeState = readActionDetailsInclude(include).has('state') || pathField === 'state';
 
   const { store, liftedState } = getStoreAndLiftedState(instanceId);
   assertKnownAction(store, liftedState, actionId);
@@ -342,7 +370,11 @@ export const getReduxActionDetailsResult = ({
       bounds.path && pathField === field
         ? selectValuePath(value, bounds.path.slice(1), [field])
         : value;
-    const result = boundValue(selected, bounds);
+    const result = boundValue(selected, {
+      maxDepth: bounds.maxDepth,
+      maxValueLength: bounds.maxValueLength,
+      maxItems: bounds.maxItems,
+    });
     truncated = truncated || result.truncated;
     return result.value;
   };

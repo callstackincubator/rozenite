@@ -21,7 +21,7 @@ npx rozenite agent redux-devtools get-store-state
 npx rozenite agent redux-devtools get-store-state --path todos.items --maxDepth 6
 npx rozenite agent redux-devtools list-actions
 npx rozenite agent redux-devtools get-action-details --actionId 2
-npx rozenite agent redux-devtools get-action-details --actionId 2 --include state
+npx rozenite agent redux-devtools get-action-details --actionId 2 --path state.todos
 npx rozenite agent redux-devtools dispatch-action --action '{"type":"todos/add","payload":{"text":"Buy milk"}}'
 npx rozenite agent redux-devtools jump-to-action --actionId 2
 npx rozenite agent redux-devtools toggle-action --actionId 2
@@ -41,12 +41,12 @@ If more than one store is registered, add `--instanceId <instanceId>` from `list
 
 ## State and Action Details
 
-`get-store-state` and `get-action-details` cut values to 4 levels of nesting and 512 characters per string. Deeper objects read `[object(N keys)]` or `[array(N)]`, cut strings end in `[+N chars]`, and `truncated: true` says something was cut. To read further:
+`get-store-state` and `get-action-details` cut values to 4 levels of nesting, 512 characters per string and 100 items per array or object. Deeper objects read `[object(N keys)]` or `[array(N)]`, cut strings end in `[+N chars]`, a cut array ends in a `"[+N items]"` item, a cut object ends in a `"[+N keys]": true` entry, and `truncated: true` says something was cut. To read further:
 
 - `--path` selects one sub-tree. For `get-store-state` it is a path into the state (`--path todos.items.0`). For `get-action-details` it starts with `liftedAction` or `state` (`--path liftedAction.action.payload`).
-- `--maxDepth` and `--maxValueLength` raise the limits.
+- `--maxDepth`, `--maxValueLength` and `--maxItems` raise the limits.
 
-`get-action-details` returns the state computed after the action only with `--include state` (or a `--path` starting with `state`).
+`get-action-details` returns the lifted action and the state computed after the action. `--include '[]'` leaves the state out; an unknown `--include` value fails and lists the accepted ones.
 
 ## Minimal Flow
 
