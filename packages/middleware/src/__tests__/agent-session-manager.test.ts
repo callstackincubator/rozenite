@@ -136,17 +136,21 @@ describe('agent session manager', () => {
     expect(mocks.getMetroTargets).toHaveBeenCalledWith('127.0.0.1', 8081, 'lynx');
   });
 
-  it('creates and reuses the same session per device', async () => {
+  it('creates and reuses the same session per device, saying which it did', async () => {
     mocks.resolveMetroTarget.mockResolvedValue(target);
     mocks.getInfo.mockReturnValue({ id: 'device-1', deviceName: 'Phone' });
 
     const manager = createAgentSessionManager({ projectRoot: '/app' });
 
-    await expect(manager.createSession({ deviceId: 'device-1' })).resolves.toEqual({
+    await expect(manager.createSession({ deviceId: 'device-1' })).resolves.toStrictEqual({
       session: { id: 'device-1', deviceName: 'Phone' },
+      created: true,
+      versionCheck: undefined,
     });
-    await expect(manager.createSession({ deviceId: 'device-1' })).resolves.toEqual({
+    await expect(manager.createSession({ deviceId: 'device-1' })).resolves.toStrictEqual({
       session: { id: 'device-1', deviceName: 'Phone' },
+      created: false,
+      versionCheck: undefined,
     });
 
     expect(mocks.createAgentSession).toHaveBeenCalledTimes(1);
@@ -217,6 +221,7 @@ describe('agent session manager', () => {
       manager.createSession({ deviceId: 'device-1', cliVersion: '1.5.0' }),
     ).resolves.toEqual({
       session: { id: 'device-1', deviceName: 'Phone' },
+      created: true,
       versionCheck:
         'Connected Rozenite agent uses version 1.5.0, but Metro is running version 1.6.0. Integration may not work correctly.',
     });

@@ -469,6 +469,11 @@ export type CreateAgentSessionRequest = {
 
 export type CreateAgentSessionResponse = {
   session: AgentSessionInfo;
+  /**
+   * `true` when this request started the session, `false` when it reused a
+   * running one. Absent from servers older than the field.
+   */
+  created?: boolean;
   versionCheck?: string;
 };
 
