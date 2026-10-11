@@ -1,4 +1,8 @@
-import { defineAgentToolContract, type AgentToolContract } from '@rozenite/agent-shared';
+import {
+  defineAgentToolContract,
+  defineRowsAgentToolContract,
+  type AgentToolContract,
+} from '@rozenite/agent-shared';
 import type { ControlsItem, ControlsItemSnapshot } from './types';
 
 export const CONTROLS_AGENT_PLUGIN_ID = '@rozenite/controls-plugin';
@@ -54,11 +58,19 @@ export type ControlsPressButtonResult = {
 };
 
 export const controlsToolDefinitions = {
-  listSections: defineAgentToolContract<ControlsListSectionsArgs, ControlsListSectionsResult>({
+  listSections: defineRowsAgentToolContract<
+    ControlsListSectionsArgs,
+    ControlsListSectionsResult,
+    'sections'
+  >({
     name: 'list-sections',
     description:
       'List all controls sections with their item IDs, types, and titles. Does not include values — call get-item for that.',
     inputSchema: { type: 'object', properties: {} },
+    rows: {
+      key: 'sections',
+      fields: ['id', 'title', 'description', 'items'],
+    },
   }),
   getItem: defineAgentToolContract<ControlsGetItemArgs, ControlsGetItemResult>({
     name: 'get-item',
