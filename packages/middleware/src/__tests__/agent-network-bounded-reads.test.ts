@@ -192,8 +192,9 @@ describe('network body reads', () => {
     expect(second).toMatchObject({ body: '😀', truncated: true, nextOffset: 6 });
   });
 
-  it('counts the raw string for a body left base64-encoded', async () => {
-    const raw = Buffer.from(new Uint8Array(30)).toString('base64');
+  it('slices a body left base64-encoded by decoded bytes and re-encodes the window', async () => {
+    const bytes = Uint8Array.from({ length: 30 }, (_, index) => index);
+    const raw = Buffer.from(bytes).toString('base64');
     const harness = createHarness({
       'Network.getResponseBody': { body: raw, base64Encoded: true },
     });
@@ -203,18 +204,30 @@ describe('network body reads', () => {
       response: { status: 200, mimeType: 'image/png' },
     });
 
-    const result = (await harness.service.callTool('getResponseBody', {
+    const first = (await harness.service.callTool('getResponseBody', {
       requestId: 'req-1',
       maxBytes: 8,
     })) as Record<string, unknown>;
-
-    expect(result).toMatchObject({
+    expect(first).toMatchObject({
       decoded: false,
       base64Encoded: true,
-      body: raw.slice(0, 8),
-      totalBytes: raw.length,
+      body: Buffer.from(bytes.subarray(0, 8)).toString('base64'),
+      totalBytes: 30,
       truncated: true,
+      nextOffset: 8,
     });
+
+    const rest = (await harness.service.callTool('getResponseBody', {
+      requestId: 'req-1',
+      offset: 8,
+      maxBytes: 64,
+    })) as Record<string, unknown>;
+    expect(rest).toMatchObject({
+      body: Buffer.from(bytes.subarray(8)).toString('base64'),
+      totalBytes: 30,
+      truncated: false,
+    });
+    expect(rest).not.toHaveProperty('nextOffset');
   });
 
   it('bounds the request body the same way', async () => {
