@@ -4,14 +4,20 @@ export type {
   UseRozeniteInAppAgentToolOptions,
 } from './src/react-native/useRozeniteAgentTool';
 export {
+  BOUNDED_VALUE_DEFAULTS,
+  BOUNDED_VALUE_LIMITS,
+  boundValue,
   decodeCursor,
   definePaginatedAgentToolContract,
   defineRowsAgentToolContract,
   encodeCursor,
   isAgentToolPagination,
   isAgentToolRows,
+  normalizeBoundedValueArgs,
   normalizePageLimit,
   paginateArray,
+  selectValuePath,
+  sliceUtf8,
 } from '@rozenite/agent-shared';
 export type {
   JSONSchema7,
@@ -20,6 +26,11 @@ export type {
   AgentToolPagination,
   AgentToolRows,
   PaginateArrayOptions,
+  BoundedValue,
+  BoundedValueArgs,
+  BoundedValueOptions,
+  SliceUtf8Options,
+  SliceUtf8Result,
   PageEnvelope,
   PageResult,
   AgentMessage,

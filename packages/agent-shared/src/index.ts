@@ -31,6 +31,19 @@ export {
 export { decodeCursor, encodeCursor, normalizePageLimit, paginateArray } from './pagination.js';
 export type { CursorKey, CursorPayload, PaginateArrayOptions } from './pagination.js';
 
+export {
+  BOUNDED_VALUE_DEFAULTS,
+  BOUNDED_VALUE_LIMITS,
+  boundValue,
+  normalizeBoundedValueArgs,
+  parseValuePath,
+  selectValuePath,
+  truncateString,
+} from './bounded-value.js';
+export type { BoundedValue, BoundedValueArgs, BoundedValueOptions } from './bounded-value.js';
+export { sliceUtf8 } from './slice-utf8.js';
+export type { SliceUtf8Options, SliceUtf8Result } from './slice-utf8.js';
+
 export { getErrorDetails } from './errors.js';
 export { AGENT_MESSAGE_TYPES } from './message-types.js';
 export {
