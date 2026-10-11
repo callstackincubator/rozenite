@@ -13,42 +13,14 @@
  *   next-page affordance is a `page` argument to the call-tool, not a
  *   command to run).
  */
-import type { PageResult } from '@rozenite/agent-shared';
-
-type ListingCursor = {
-  v: 2;
-  /** Key of the last row returned. */
-  k: string;
-  /** What was listed, so a cursor from one listing is not used on another. */
-  s: string;
-};
-
-const INVALID_CURSOR_MESSAGE = 'Invalid --cursor. Run the command again without --cursor.';
-
-const encodeListingCursor = (payload: ListingCursor): string =>
-  Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
-
-const decodeListingCursor = (raw: string): ListingCursor => {
-  try {
-    const payload = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8')) as ListingCursor;
-    if (payload.v !== 2 || typeof payload.k !== 'string' || typeof payload.s !== 'string') {
-      throw new Error('Invalid cursor payload');
-    }
-    return payload;
-  } catch {
-    throw new Error(INVALID_CURSOR_MESSAGE);
-  }
-};
+import { paginateArray, type PageResult } from '@rozenite/agent-shared';
 
 /**
- * Pages a listing the CLI builds itself. A cursor resumes after the row it
- * names, the way ADR 0004 asks every pager to, so a row that appears or
- * disappears between two pages cannot shift the next one; when the named
- * row is gone the page is empty with `reset: true`.
- *
- * This is the one place the CLI pages. ADR 0004 moves the same algorithm
- * into `@rozenite/agent-shared` as `paginateArray`; once that export
- * exists, this function becomes a call to it.
+ * Pages a listing the CLI builds itself with the shared pager
+ * (`paginateArray`, ADR 0004): a cursor resumes after the row it names, so
+ * a row that appears or disappears between two pages cannot shift the next
+ * one, and when the named row is gone the page is empty with `reset: true`.
+ * `scope` keeps a cursor from one listing off another.
  */
 export const paginateListing = <T>(
   rows: readonly T[],
@@ -58,43 +30,13 @@ export const paginateListing = <T>(
     limit: number;
     cursor?: string;
   },
-): PageResult<T> => {
-  let start = 0;
-  if (options.cursor) {
-    const cursor = decodeListingCursor(options.cursor);
-    if (cursor.s !== options.scope) {
-      throw new Error(
-        '--cursor belongs to a different listing. Run the command again without --cursor.',
-      );
-    }
-
-    const anchor = rows.findIndex((row) => options.keyOf(row) === cursor.k);
-    if (anchor === -1) {
-      return { items: [], page: { limit: options.limit, hasMore: false, reset: true } };
-    }
-    start = anchor + 1;
-  }
-
-  const items = rows.slice(start, start + options.limit);
-  const hasMore = start + items.length < rows.length && items.length > 0;
-
-  return {
-    items,
-    page: {
-      limit: options.limit,
-      hasMore,
-      ...(hasMore
-        ? {
-            nextCursor: encodeListingCursor({
-              v: 2,
-              k: options.keyOf(items[items.length - 1]!),
-              s: options.scope,
-            }),
-          }
-        : {}),
-    },
-  };
-};
+): PageResult<T> =>
+  paginateArray(rows, {
+    keyOf: options.keyOf,
+    scope: options.scope,
+    limit: options.limit,
+    cursor: options.cursor,
+  });
 
 const shellEscape = (value: string): string => {
   if (/^[A-Za-z0-9_@%+=:,./-]+$/.test(value)) {

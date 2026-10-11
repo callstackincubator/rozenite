@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { encodeCursor } from '@rozenite/agent-shared';
 import { getPackageJSON } from '../package-json.js';
 import { registerAgentCommand } from '../commands/agent/register-agent-command.js';
 
@@ -118,8 +119,7 @@ describe('agent command output', () => {
     mocks.createAgentTransport.mockReturnValue(mocks.transport);
   };
 
-  const listingCursor = (key: string, scope: string) =>
-    Buffer.from(JSON.stringify({ v: 2, k: key, s: scope }), 'utf8').toString('base64url');
+  const listingCursor = (key: string, scope: string) => encodeCursor({ k: key, s: scope });
 
   it('does not expose SDK auto-pagination flags', () => {
     const program = new Command();

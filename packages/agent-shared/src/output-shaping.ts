@@ -68,6 +68,10 @@ export const parseFields = <T extends string>(
   return requested;
 };
 
+// Not delegated to `normalizePageLimit`: `pagination.ts` imports this
+// module's constants, so importing it back would form an import cycle whose
+// module-level constants are read before they are initialised. The rules are
+// the same; only the error names the flag.
 export const parseLimit = (rawLimit: string | undefined): number => {
   if (!rawLimit) {
     return DEFAULT_PAGE_LIMIT;

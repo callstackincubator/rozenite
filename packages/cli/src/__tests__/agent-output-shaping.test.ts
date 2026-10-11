@@ -69,7 +69,7 @@ describe('agent output shaping (CLI-only)', () => {
     const rows = [{ name: 'a' }, { name: 'b' }];
     expect(() =>
       paginateListing(rows, { keyOf, scope: 'domains', limit: 1, cursor: 'bad-cursor' }),
-    ).toThrow(/Invalid --cursor/);
+    ).toThrow(/Invalid "cursor"/);
 
     const first = paginateListing(rows, { keyOf, scope: 'domains', limit: 1 });
     expect(() =>
@@ -79,7 +79,7 @@ describe('agent output shaping (CLI-only)', () => {
         limit: 1,
         cursor: first.page.nextCursor!,
       }),
-    ).toThrow(/different listing/);
+    ).toThrow(/does not match this listing/);
   });
 
   it('makes next commands safe to paste into a POSIX shell', () => {
