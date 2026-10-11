@@ -339,8 +339,7 @@ const readBodyWindow = (input: Record<string, unknown>): { maxBytes: number; off
  * Cut one window out of a body with the shared `sliceUtf8`, so `offset` and
  * `nextOffset` mean the same as in the network-activity plugin: an offset
  * inside a character moves forward to the next one, and the window ends on
- * the last whole character that fits in `maxBytes`. For a base64 body every
- * character is one byte, so the window counts base64 characters.
+ * the last whole character that fits in `maxBytes`.
  */
 const sliceBody = (
   body: string,
@@ -348,6 +347,28 @@ const sliceBody = (
 ): Pick<NetworkBodyResult, 'body' | 'totalBytes' | 'truncated' | 'nextOffset'> => {
   const { slice, ...range } = sliceUtf8(body, window);
   return { body: slice, ...range };
+};
+
+/**
+ * The same window over a body that stays base64-encoded (binary content):
+ * `offset`, `maxBytes`, `totalBytes` and `nextOffset` count the decoded
+ * bytes, and the returned window is re-encoded, so the units match the text
+ * case instead of counting base64 characters (64 of which are 48 bytes).
+ */
+const sliceBase64Body = (
+  base64: string,
+  window: { maxBytes: number; offset: number },
+): Pick<NetworkBodyResult, 'body' | 'totalBytes' | 'truncated' | 'nextOffset'> => {
+  const bytes = Buffer.from(base64, 'base64');
+  const start = Math.min(window.offset, bytes.length);
+  const end = Math.min(start + window.maxBytes, bytes.length);
+  const truncated = end < bytes.length;
+  return {
+    body: bytes.subarray(start, end).toString('base64'),
+    totalBytes: bytes.length,
+    truncated,
+    ...(truncated ? { nextOffset: end } : {}),
+  };
 };
 
 const readDetailSections = (value: unknown): Set<NetworkDetailSection> => {
@@ -2186,7 +2207,7 @@ export const createNetworkDomainService = (deps: {
         base64Encoded,
         decoded: false,
         mimeType,
-        ...sliceBody(body, window),
+        ...(base64Encoded ? sliceBase64Body(body, window) : sliceBody(body, window)),
       };
     } catch (error) {
       return {
