@@ -137,11 +137,12 @@ export const networkActivityToolDefinitions = {
       properties: {
         limit: {
           type: 'number',
-          description: 'Maximum number of requests to return. Defaults to 20.',
+          description: 'Maximum number of requests to return. Defaults to 20, max 100.',
         },
         cursor: {
           type: 'string',
-          description: 'Opaque pagination cursor from a previous listRequests call.',
+          description:
+            'Opaque cursor from a previous listRequests page; the next page starts after the last request returned.',
         },
       },
     },
@@ -161,6 +162,7 @@ export const networkActivityToolDefinitions = {
         'outcome',
       ],
       defaultFields: ['requestId', 'method', 'url', 'status', 'durationMs', 'outcome'],
+      meta: [],
     },
   }),
   getRequestDetails: defineAgentToolContract<
@@ -230,11 +232,12 @@ export const networkActivityToolDefinitions = {
       properties: {
         limit: {
           type: 'number',
-          description: 'Maximum number of realtime connections to return. Defaults to 20.',
+          description: 'Maximum number of realtime connections to return. Defaults to 20, max 100.',
         },
         cursor: {
           type: 'string',
-          description: 'Opaque pagination cursor from a previous listRealtimeConnections call.',
+          description:
+            'Opaque cursor from a previous listRealtimeConnections page; the next page starts after the last connection returned.',
         },
       },
     },
@@ -254,6 +257,7 @@ export const networkActivityToolDefinitions = {
         'httpStatus',
       ],
       defaultFields: ['requestId', 'kind', 'url', 'status', 'durationMs', 'messageCount'],
+      meta: [],
     },
   }),
   getRealtimeConnectionDetails: defineAgentToolContract<

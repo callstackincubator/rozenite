@@ -10,6 +10,7 @@ import type {
 } from '../../shared/client';
 import type { WebSocketEventMap } from '../../shared/websocket-events';
 import type { SSEEventMap } from '../../shared/sse-events';
+import { paginateArray } from '@rozenite/agent-shared';
 import { safeStringify } from '../../utils/safeStringify';
 import { applyBodyRange, type BodyRangeArgs } from './body-range';
 
@@ -127,15 +128,6 @@ type NetworkActivityAgentStateInternal = {
   recordingMetadata: RecordingMetadata;
 };
 
-type Page<T> = {
-  items: T[];
-  page: {
-    limit: number;
-    hasMore: boolean;
-    nextCursor?: string;
-  };
-};
-
 const createInitialState = (): NetworkActivityAgentStateInternal => ({
   isRecording: false,
   generation: 0,
@@ -158,52 +150,6 @@ const createInitialState = (): NetworkActivityAgentStateInternal => ({
     },
   },
 });
-
-const getLimit = (value: unknown): number => {
-  if (
-    typeof value !== 'number' ||
-    !Number.isInteger(value) ||
-    !Number.isFinite(value) ||
-    value < 1
-  ) {
-    return DEFAULT_PAGE_LIMIT;
-  }
-
-  return Math.min(value, MAX_PAGE_LIMIT);
-};
-
-const encodeCursor = (scope: string, index: number): string => {
-  return `${scope}:${index}`;
-};
-
-const decodeCursor = (cursor: string, scope: string): number => {
-  const [cursorScope, rawIndex] = cursor.split(':', 2);
-  if (cursorScope !== scope || !rawIndex) {
-    throw new Error('Cursor does not match the requested listing. Run the command again.');
-  }
-
-  const index = Number(rawIndex);
-  if (!Number.isInteger(index) || index < 0) {
-    throw new Error('Cursor is invalid. Run the command again.');
-  }
-
-  return index;
-};
-
-const paginate = <T>(rows: T[], scope: string, limit: number, cursor?: string): Page<T> => {
-  const startIndex = cursor ? decodeCursor(cursor, scope) : 0;
-  const endIndex = Math.min(startIndex + limit, rows.length);
-  const hasMore = endIndex < rows.length;
-
-  return {
-    items: rows.slice(startIndex, endIndex),
-    page: {
-      limit,
-      hasMore,
-      ...(hasMore ? { nextCursor: encodeCursor(scope, endIndex) } : {}),
-    },
-  };
-};
 
 const serializeRequestBody = (
   requestId: string,
@@ -426,7 +372,6 @@ export const createNetworkActivityAgentState = () => {
     },
 
     listRequests(input: { limit?: number; cursor?: string }) {
-      const limit = getLimit(input.limit);
       const rows = state.httpOrder
         .map((requestId) => state.httpRecords.get(requestId))
         .filter((record): record is HttpAgentRecord => !!record)
@@ -434,12 +379,17 @@ export const createNetworkActivityAgentState = () => {
         .map(createHttpSummary);
       return {
         ...getStatus(),
-        ...paginate(rows, `http-${state.generation}`, limit, input.cursor),
+        ...paginateArray(rows, {
+          keyOf: (row) => row.requestId,
+          limit: input.limit,
+          cursor: input.cursor,
+          scope: 'http',
+          generation: state.generation,
+        }),
       };
     },
 
     listRealtimeConnections(input: { limit?: number; cursor?: string }) {
-      const limit = getLimit(input.limit);
       const rows = state.realtimeOrder
         .map((requestId) => state.realtimeRecords.get(requestId))
         .filter((record): record is RealtimeAgentRecord => !!record)
@@ -447,7 +397,13 @@ export const createNetworkActivityAgentState = () => {
         .map(getRealtimeSummary);
       return {
         ...getStatus(),
-        ...paginate(rows, `realtime-${state.generation}`, limit, input.cursor),
+        ...paginateArray(rows, {
+          keyOf: (row) => row.requestId,
+          limit: input.limit,
+          cursor: input.cursor,
+          scope: 'realtime',
+          generation: state.generation,
+        }),
       };
     },
 

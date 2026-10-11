@@ -257,29 +257,46 @@ describe('network activity agent state', () => {
     expect(sseDetails.connection.messages).toHaveLength(1);
   });
 
-  it('invalidates old cursors after a new recording starts', () => {
+  it('pages requests newest first by requestId and answers reset after a new recording starts', () => {
     const state = createNetworkActivityAgentState();
     state.startRecording();
-    state.onRequestSent({
-      requestId: 'req-1',
-      timestamp: 100,
-      request: createRequest(),
-      type: 'XHR',
-      initiator: { type: 'other' },
-    });
-    state.onRequestSent({
-      requestId: 'req-2',
-      timestamp: 101,
-      request: createRequest({ url: 'https://example.com/api/2' }),
-      type: 'XHR',
-      initiator: { type: 'other' },
-    });
+    const send = (requestId: string, timestamp: number) =>
+      state.onRequestSent({
+        requestId,
+        timestamp,
+        request: createRequest({ url: `https://example.com/${requestId}` }),
+        type: 'XHR',
+        initiator: { type: 'other' },
+      });
+    send('req-1', 100);
+    send('req-2', 101);
+    send('req-3', 102);
 
-    const firstPage = state.listRequests({ limit: 1 });
+    const firstPage = state.listRequests({ limit: 2 });
+    expect(firstPage.items.map((item) => item.requestId)).toEqual(['req-3', 'req-2']);
+
+    // A request captured while paging lands on top and does not shift the next page.
+    send('req-4', 103);
+    const secondPage = state.listRequests({ limit: 2, cursor: firstPage.page.nextCursor });
+    expect(secondPage.items.map((item) => item.requestId)).toEqual(['req-1']);
+    expect(secondPage.page).toEqual({ limit: 2, hasMore: false });
+
+    const restartPage = state.listRequests({ limit: 1 });
     state.startRecording();
+    send('req-1', 200);
+    send('req-2', 201);
 
-    expect(() => state.listRequests({ limit: 1, cursor: firstPage.page.nextCursor })).toThrow(
-      'Cursor does not match the requested listing. Run the command again.',
-    );
+    expect(state.listRequests({ limit: 1, cursor: restartPage.page.nextCursor })).toMatchObject({
+      items: [],
+      page: { limit: 1, hasMore: false, reset: true },
+    });
+    expect(() =>
+      state.listRealtimeConnections({ cursor: state.listRequests({ limit: 1 }).page.nextCursor }),
+    ).toThrow('Cursor does not match this listing');
+  });
+
+  it('declares no page metadata for its lists', () => {
+    expect(networkActivityToolDefinitions.listRequests.pagination?.meta).toEqual([]);
+    expect(networkActivityToolDefinitions.listRealtimeConnections.pagination?.meta).toEqual([]);
   });
 });
