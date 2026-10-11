@@ -49,11 +49,20 @@ export type NetworkActivityGetRequestDetailsResult = ReturnType<
   NetworkActivityAgentState['getRequestDetails']
 >;
 
-export type NetworkActivityGetRequestBodyArgs = NetworkActivityRequestIdArgs;
+export type NetworkActivityBodyRangeArgs = {
+  /** Byte offset to start reading from. Defaults to 0. */
+  offset?: number;
+  /** Maximum number of bytes to return. Defaults to 16384. */
+  maxBytes?: number;
+};
+
+export type NetworkActivityGetRequestBodyArgs = NetworkActivityRequestIdArgs &
+  NetworkActivityBodyRangeArgs;
 
 export type NetworkActivityGetRequestBodyResult = NetworkActivityAgentBodyResult;
 
-export type NetworkActivityGetResponseBodyArgs = NetworkActivityRequestIdArgs;
+export type NetworkActivityGetResponseBodyArgs = NetworkActivityRequestIdArgs &
+  NetworkActivityBodyRangeArgs;
 
 export type NetworkActivityGetResponseBodyResult = NetworkActivityAgentBodyResult;
 
@@ -68,6 +77,19 @@ export type NetworkActivityGetRealtimeConnectionDetailsArgs = NetworkActivityReq
 export type NetworkActivityGetRealtimeConnectionDetailsResult = ReturnType<
   NetworkActivityAgentState['getRealtimeConnectionDetails']
 >;
+
+const bodyRangeProperties = {
+  offset: {
+    type: 'integer',
+    description:
+      'Byte offset to start reading from. Defaults to 0. Pass the previous offset plus the bytes returned to read the next range.',
+  },
+  maxBytes: {
+    type: 'integer',
+    description:
+      'Maximum number of body bytes to return. Defaults to 16384. The result reports totalBytes and truncated.',
+  },
+} as const;
 
 export const networkActivityToolDefinitions = {
   startRecording: defineAgentToolContract<
@@ -165,7 +187,7 @@ export const networkActivityToolDefinitions = {
   >({
     name: 'getRequestBody',
     description:
-      'Return the captured request body for a plugin-recorded HTTP request when available.',
+      'Return the captured request body for a plugin-recorded HTTP request when available, up to maxBytes (16384 by default) starting at offset.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -173,6 +195,7 @@ export const networkActivityToolDefinitions = {
           type: 'string',
           description: 'Captured plugin request ID to inspect.',
         },
+        ...bodyRangeProperties,
       },
       required: ['requestId'],
     },
@@ -183,7 +206,7 @@ export const networkActivityToolDefinitions = {
   >({
     name: 'getResponseBody',
     description:
-      'Return the captured response body for a plugin-recorded HTTP request when available.',
+      'Return the captured response body for a plugin-recorded HTTP request when available, up to maxBytes (16384 by default) starting at offset.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -191,6 +214,7 @@ export const networkActivityToolDefinitions = {
           type: 'string',
           description: 'Captured plugin request ID to inspect.',
         },
+        ...bodyRangeProperties,
       },
       required: ['requestId'],
     },

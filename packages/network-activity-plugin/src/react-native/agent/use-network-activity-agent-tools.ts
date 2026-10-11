@@ -4,6 +4,7 @@ import type { NetworkActivityDevToolsClient } from '../../shared/client';
 import type { NetworkInspector } from '../network-inspector';
 import { recorder } from '../http/recorder';
 import { getNetworkActivityAgentState } from './state';
+import { applyBodyRange, normalizeBodyRangeArgs } from './body-range';
 import {
   NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
   type NetworkActivityGetResponseBodyResult,
@@ -153,13 +154,19 @@ export const useNetworkActivityAgentTools = ({
   useRozenitePluginAgentTool({
     pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getRequestBodyTool,
-    handler: ({ requestId }) => state.getRequestBody(requestId),
+    handler: ({ requestId, offset, maxBytes }) =>
+      state.getRequestBody(requestId, { offset, maxBytes }),
   });
 
   useRozenitePluginAgentTool({
     pluginId: NETWORK_ACTIVITY_AGENT_PLUGIN_ID,
     tool: getResponseBodyTool,
-    handler: async ({ requestId }): Promise<NetworkActivityGetResponseBodyResult> => {
+    handler: async ({
+      requestId,
+      offset,
+      maxBytes,
+    }): Promise<NetworkActivityGetResponseBodyResult> => {
+      const range = normalizeBodyRangeArgs({ offset, maxBytes });
       const record = state.getHttpRecord(requestId);
       if (!record) {
         throw new Error(`Unknown request "${requestId}"`);
@@ -198,24 +205,30 @@ export const useNetworkActivityAgentTools = ({
             reason: `Response body exceeded the in-capture size cap (${body.size} bytes).`,
           };
         }
-        return {
-          requestId,
-          available: true,
-          body: body.base64,
-          base64Encoded: true,
-          decoded: false,
-          mimeType: record.response?.contentType,
-        };
+        return applyBodyRange(
+          {
+            requestId,
+            available: true,
+            body: body.base64,
+            base64Encoded: true,
+            decoded: false,
+            mimeType: record.response?.contentType,
+          },
+          range,
+        );
       }
 
-      return {
-        requestId,
-        available: true,
-        body,
-        base64Encoded: false,
-        decoded: false,
-        mimeType: record.response?.contentType,
-      };
+      return applyBodyRange(
+        {
+          requestId,
+          available: true,
+          body,
+          base64Encoded: false,
+          decoded: false,
+          mimeType: record.response?.contentType,
+        },
+        range,
+      );
     },
   });
 

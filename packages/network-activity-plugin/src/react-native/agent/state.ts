@@ -11,6 +11,7 @@ import type {
 import type { WebSocketEventMap } from '../../shared/websocket-events';
 import type { SSEEventMap } from '../../shared/sse-events';
 import { safeStringify } from '../../utils/safeStringify';
+import { applyBodyRange, type BodyRangeArgs } from './body-range';
 
 const HTTP_BUFFER_CAPACITY = 500;
 const REALTIME_BUFFER_CAPACITY = 200;
@@ -91,6 +92,12 @@ export type NetworkActivityAgentBodyResult = {
   decoded?: boolean;
   mimeType?: string;
   reason?: string;
+  /** Byte offset of the returned slice of `body`. */
+  offset?: number;
+  /** Size of the whole body in bytes (base64 characters when `base64Encoded`). */
+  totalBytes?: number;
+  /** Whether bytes after the returned slice were left out. */
+  truncated?: boolean;
 };
 
 type RecordingMetadata = {
@@ -523,13 +530,13 @@ export const createNetworkActivityAgentState = () => {
       };
     },
 
-    getRequestBody(requestId: string): NetworkActivityAgentBodyResult {
+    getRequestBody(requestId: string, range?: BodyRangeArgs): NetworkActivityAgentBodyResult {
       const record = state.httpRecords.get(requestId);
       if (!record) {
         throw new Error(`Unknown request "${requestId}"`);
       }
 
-      return serializeRequestBody(requestId, record.request.postData);
+      return applyBodyRange(serializeRequestBody(requestId, record.request.postData), range);
     },
 
     onRequestSent(event: HttpEventMap['request-sent']) {

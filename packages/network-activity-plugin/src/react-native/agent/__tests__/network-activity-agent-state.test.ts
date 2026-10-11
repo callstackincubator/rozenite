@@ -130,6 +130,9 @@ describe('network activity agent state', () => {
       available: true,
       body: '{"hello":"world"}',
       base64Encoded: false,
+      offset: 0,
+      totalBytes: 17,
+      truncated: false,
     });
   });
 
