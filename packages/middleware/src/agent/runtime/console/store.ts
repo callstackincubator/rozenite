@@ -1,6 +1,6 @@
 import { CircularBuffer } from '../collections/circular-buffer.js';
 import { createCircularBufferSource } from '../pagination/circular-buffer-source.js';
-import { decodeCursor, encodeCursor } from '../pagination/cursor.js';
+import { decodeCursor, hasCursorValue, SEQ_OFFSET } from '../pagination/cursor.js';
 import { paginateSource } from '../pagination/paginate.js';
 import type { PaginatedSource } from '../pagination/types.js';
 import type {
@@ -11,9 +11,6 @@ import type {
 } from './types.js';
 
 const DEFAULT_CONSOLE_BUFFER_CAPACITY = 5000;
-
-/** `seq` is the buffer index shifted so the first entry reads as 1 rather than 0. */
-const SEQ_OFFSET = 1;
 
 type DeviceLogState = {
   buffer: CircularBuffer<ConsoleLogEntry>;
@@ -162,7 +159,7 @@ export const createConsoleLogStore = (capacity = DEFAULT_CONSOLE_BUFFER_CAPACITY
   };
 
   const readAnchor = (value: unknown, field: string): number | undefined => {
-    if (typeof value !== 'string' || value.trim().length === 0) {
+    if (!hasCursorValue(value)) {
       return undefined;
     }
 
@@ -211,9 +208,10 @@ export const createConsoleLogStore = (capacity = DEFAULT_CONSOLE_BUFFER_CAPACITY
       ...paged,
       items: paged.items.map((entry) => ({
         ...entry,
-        // Identical in shape and meaning to the cursor `next` hands back, so an
-        // item's cursor can resume a listing just as a page cursor can bound one.
-        cursor: encodeCursor(entry.seq - SEQ_OFFSET),
+        // The row's seq, identical in shape and meaning to the cursor `next`
+        // hands back, so an item's cursor can resume a listing just as a page
+        // cursor can bound one. Kept as its own field for SDK consumers.
+        cursor: String(entry.seq),
       })),
       meta: {
         droppedCount: state.droppedCount,

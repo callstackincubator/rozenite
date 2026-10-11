@@ -333,6 +333,61 @@ describe('console log store', () => {
     ).toEqual(['message-1', 'message-0']);
   });
 
+  it('uses the row seq as its cursor and as the page cursor', () => {
+    const store = createConsoleLogStore(50);
+    appendMessages(store, 6);
+
+    const page = store.getMessages(DEVICE, { order: 'asc', limit: 3 });
+
+    expect(page.items.map((item) => item.cursor)).toEqual(['1', '2', '3']);
+    expect(page.page.nextCursor).toBe('3');
+  });
+
+  it('accepts a seq as a number or numeric string for cursor, before and after', () => {
+    const store = createConsoleLogStore(50);
+    appendMessages(store, 6);
+
+    // seq 3 is message-2.
+    expect(texts(store.getMessages(DEVICE, { cursor: 3, order: 'asc', limit: 2 }))).toEqual([
+      'message-3',
+      'message-4',
+    ]);
+    expect(texts(store.getMessages(DEVICE, { cursor: '3', order: 'asc', limit: 2 }))).toEqual([
+      'message-3',
+      'message-4',
+    ]);
+    expect(texts(store.getMessages(DEVICE, { before: 3, order: 'desc' }))).toEqual([
+      'message-1',
+      'message-0',
+    ]);
+    expect(texts(store.getMessages(DEVICE, { after: '5', order: 'asc' }))).toEqual(['message-5']);
+  });
+
+  it('still reads the base64 position cursors earlier releases handed out', () => {
+    const store = createConsoleLogStore(50);
+    appendMessages(store, 6);
+
+    // Position 2 (seq 3), encoded the way 2.4 encoded cursors.
+    const legacy = Buffer.from('2', 'utf8').toString('base64url');
+
+    expect(texts(store.getMessages(DEVICE, { cursor: legacy, order: 'asc', limit: 2 }))).toEqual([
+      'message-3',
+      'message-4',
+    ]);
+    expect(texts(store.getMessages(DEVICE, { before: legacy, order: 'desc' }))).toEqual([
+      'message-1',
+      'message-0',
+    ]);
+  });
+
+  it('rejects a seq below 1', () => {
+    const store = createConsoleLogStore(50);
+    appendMessages(store, 2);
+
+    expect(() => store.getMessages(DEVICE, { cursor: '0' })).toThrow(/Invalid "cursor"/);
+    expect(() => store.getMessages(DEVICE, { before: -1 })).toThrow(/Invalid "before"/);
+  });
+
   it('keeps devices isolated and drops state on unregister', () => {
     const store = createConsoleLogStore(10);
     appendMessages(store, 2);

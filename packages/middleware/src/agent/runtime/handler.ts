@@ -60,7 +60,8 @@ const CONSOLE_TOOLS: AgentTool[] = [
         },
         cursor: {
           type: 'string',
-          description: 'Opaque cursor returned by the previous page.',
+          description:
+            'Resume after this row: a "seq" from a previous response (the page\'s nextCursor is the last row\'s seq). Also accepts a number.',
         },
         order: {
           type: 'string',
@@ -86,20 +87,20 @@ const CONSOLE_TOOLS: AgentTool[] = [
         before: {
           type: 'string',
           description:
-            'Anchor cursor from an item\'s "cursor" field. Returns only entries older than it, so pairing it with order "desc" reads the entries leading up to that item.',
+            'An item\'s "seq". Returns only entries older than it, so pairing it with order "desc" reads the entries leading up to that item. Also accepts a number.',
         },
         after: {
           type: 'string',
           description:
-            'Anchor cursor from an item\'s "cursor" field. Returns only entries newer than it, so pairing it with order "asc" reads the entries that followed it.',
+            'An item\'s "seq". Returns only entries newer than it, so pairing it with order "asc" reads the entries that followed it. Also accepts a number.',
         },
       },
     },
     pagination: cursorPagination<ConsoleLogRow>({
       fields: ['seq', 'timestamp', 'level', 'source', 'text', 'context', 'cursor'],
-      // Drop the heaviest column from the default projection; it remains
-      // available via --fields/--verbose.
-      defaultFields: ['seq', 'timestamp', 'level', 'source', 'text'],
+      // `context` is the heaviest column, `source` is "console" on nearly every
+      // row, and `cursor` repeats `seq`. All three stay reachable via --fields.
+      defaultFields: ['seq', 'timestamp', 'level', 'text'],
     }),
   },
 ];
